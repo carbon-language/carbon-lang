@@ -87,6 +87,10 @@ Output/%.ll: $(SourceDir)%.c $(LCC1) Output/.dir $(INCLUDES)
 Output/%.ll: $(SourceDir)%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
 	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
+# Compile from X.cc to Output/X.ll
+Output/%.ll: $(SourceDir)%.cc $(LCC1XX) Output/.dir $(INCLUDES)
+	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
 # from GCC output, so use GCCAS.
 #
