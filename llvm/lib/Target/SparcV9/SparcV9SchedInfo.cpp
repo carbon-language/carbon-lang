@@ -457,8 +457,6 @@ static const InstrIssueDelta  SparcV9InstrIssueDeltas[] = {
 //{ V9::FLUSH,		true,	true,	9 },
 //{ V9::FLUSHW,		true,	true,	9 },
 //{ V9::ALIGNADDR,	true,	true,	0 },
-  { V9::RETURNr,	true,	true,	0 },
-  { V9::RETURNi,	true,	true,	0 },
 //{ V9::DONE,		true,	true,	0 },
 //{ V9::RETRY,		true,	true,	0 },
 //{ V9::TCC,		true,	true,	0 },

@@ -205,7 +205,6 @@ convertOpcodeFromRegToImm(unsigned Opcode) {
     /* jump & return */
   case V9::JMPLCALLr: return V9::JMPLCALLi;
   case V9::JMPLRETr:  return V9::JMPLRETi;
-  case V9::RETURNr:   return V9::RETURNi;
 
   /* save and restore */
   case V9::SAVEr:     return V9::SAVEi;

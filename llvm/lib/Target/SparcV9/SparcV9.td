@@ -667,12 +667,6 @@ let rs1 = 2 in {
   def RDCCR : F3_17<2, 0b101000, "rd">;             // rd %ccr, r
 }
 
-// Section A.45: RETURN - p216
-let isReturn = 1 in {
-  def RETURNr : F3_3<2, 0b111001, "return">;      // return
-  def RETURNi : F3_4<2, 0b111001, "return">;      // return
-}
-
 // Section A.46: SAVE and RESTORE - p217
 def SAVEr    : F3_1<2, 0b111100, "save">;       // save    r, r, r
 def SAVEi    : F3_2<2, 0b111100, "save">;       // save    r, i, r
