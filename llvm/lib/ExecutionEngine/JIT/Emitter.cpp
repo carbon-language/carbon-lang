@@ -116,7 +116,7 @@ void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
 
 
 namespace {
-  /// Emitter - The JIT implementation of the MachineCodeEmiter, which is used
+  /// Emitter - The JIT implementation of the MachineCodeEmitter, which is used
   /// to output functions to memory for execution.
   class Emitter : public MachineCodeEmitter {
     JITMemoryManager MemMgr;
@@ -214,7 +214,6 @@ void Emitter::emitWord(unsigned W) {
   *(unsigned*)CurByte = W;
   CurByte += sizeof(unsigned);
 }
-
 
 uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
   // Try looking up the function to see if it is already compiled, if not return
