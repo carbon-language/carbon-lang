@@ -181,6 +181,18 @@ namespace {
         error("Expecting '='");
     }
 
+    void parseVersion() {
+      if (next() == EQUALS) {
+        while (next_is_real()) {
+          if (token == STRING || token == OPTION)
+            confDat->version = ConfigLexerState.StringVal;
+          else
+            error("Expecting a version string");
+        }
+      } else
+        error("Expecting '='");
+    }
+
     void parseLang() {
       switch (next() ) {
         case NAME: 
@@ -357,6 +369,7 @@ namespace {
 
     void parseAssignment() {
       switch (token) {
+        case VERSION:       parseVersion(); break;
         case LANG:          parseLang(); break;
         case PREPROCESSOR:  parsePreprocessor(); break;
         case TRANSLATOR:    parseTranslator(); break;

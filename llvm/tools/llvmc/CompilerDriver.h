@@ -89,6 +89,7 @@ namespace llvm {
 
       struct ConfigData {
         ConfigData();
+        std::string version;    ///< The version number.
         std::string langName;   ///< The name of the source language 
         StringTable opts;       ///< The o10n options for each level
         Action PreProcessor;    ///< PreProcessor command line
