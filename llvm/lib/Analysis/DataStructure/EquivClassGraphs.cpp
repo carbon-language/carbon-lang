@@ -29,7 +29,7 @@
 using namespace llvm;
 
 namespace {
-  RegisterAnalysis<PA::EquivClassGraphs> X("equivdatastructure",
+  RegisterAnalysis<EquivClassGraphs> X("equivdatastructure",
                     "Equivalence-class Bottom-up Data Structure Analysis");
   Statistic<> NumEquivBUInlines("equivdatastructures",
                                 "Number of graphs inlined");
@@ -58,8 +58,7 @@ static void CheckAllGraphs(Module *M, GT &ECGraphs) {
 
 // getSomeCalleeForCallSite - Return any one callee function at a call site.
 // 
-Function *PA::EquivClassGraphs::
-getSomeCalleeForCallSite(const CallSite &CS) const {
+Function *EquivClassGraphs:: getSomeCalleeForCallSite(const CallSite &CS) const{
   Function *thisFunc = CS.getCaller();
   assert(thisFunc && "getSomeCalleeForCallSite(): Not a valid call site?");
   DSGraph &DSG = getDSGraph(*thisFunc);
@@ -72,7 +71,7 @@ getSomeCalleeForCallSite(const CallSite &CS) const {
 // runOnModule - Calculate the bottom up data structure graphs for each function
 // in the program.
 //
-bool PA::EquivClassGraphs::runOnModule(Module &M) {
+bool EquivClassGraphs::runOnModule(Module &M) {
   CBU = &getAnalysis<CompleteBUDataStructures>();
   DEBUG(CheckAllGraphs(&M, *CBU));
 
@@ -112,7 +111,7 @@ bool PA::EquivClassGraphs::runOnModule(Module &M) {
 // calls to functions.  If a call site can invoke any functions [F1, F2... FN],
 // unify the N functions together in the FuncECs set.
 //
-void PA::EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
+void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
   const ActualCalleesTy& AC = CBU->getActualCallees();
   
   // Loop over all of the indirect calls in the program.  If a call site can
@@ -252,7 +251,7 @@ void PA::EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
 }
 
 
-DSGraph &PA::EquivClassGraphs::getOrCreateGraph(Function &F) {
+DSGraph &EquivClassGraphs::getOrCreateGraph(Function &F) {
   // Has the graph already been created?
   DSGraph *&Graph = DSInfo[&F];
   if (Graph) return *Graph;
@@ -277,7 +276,7 @@ DSGraph &PA::EquivClassGraphs::getOrCreateGraph(Function &F) {
 }
 
 
-unsigned PA::EquivClassGraphs::
+unsigned EquivClassGraphs::
 processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID, 
            std::map<DSGraph*, unsigned> &ValMap) {
   std::map<DSGraph*, unsigned>::iterator It = ValMap.lower_bound(&FG);
@@ -347,7 +346,7 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
 
 /// processGraph - Process the CBU graphs for the program in bottom-up order on
 /// the SCC of the __ACTUAL__ call graph.  This builds final folded CBU graphs.
-void PA::EquivClassGraphs::processGraph(DSGraph &G) {
+void EquivClassGraphs::processGraph(DSGraph &G) {
   DEBUG(std::cerr << "    ProcessGraph for function "
                   << G.getFunctionNames() << "\n");
 

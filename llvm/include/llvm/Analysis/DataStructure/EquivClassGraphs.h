@@ -23,11 +23,9 @@
 #include <ext/hash_map>
 
 namespace llvm {
+  class Module;
+  class Function;
 
-class Module;
-class Function;
-
-namespace PA {
   /// EquivClassGraphs - This is the same as the complete bottom-up graphs, but
   /// with functions partitioned into equivalence classes and a single merged
   /// DS graph for all functions in an equivalence class.  After this merging,
@@ -106,7 +104,4 @@ namespace PA {
 
     DSGraph &getOrCreateGraph(Function &F);
   };
-
-}; // end PA namespace
-
 }; // end llvm namespace
