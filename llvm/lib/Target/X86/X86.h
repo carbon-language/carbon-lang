@@ -13,6 +13,7 @@
 #include <iosfwd>
 class MachineFunction;
 class Function;
+class TargetMachine;
 
 /// X86PrintCode - Print out the specified machine code function to the
 /// specified stream.  This function should work regardless of whether or not
@@ -24,7 +25,7 @@ void X86PrintCode(const MachineFunction *MF, std::ostream &O);
 /// a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
-MachineFunction *X86SimpleInstructionSelection(Function &F);
+MachineFunction *X86SimpleInstructionSelection(Function &F, TargetMachine &TM);
 
 /// X86SimpleRegisterAllocation - This function converts the specified machine
 /// code function from SSA form to use explicit registers by spilling every
