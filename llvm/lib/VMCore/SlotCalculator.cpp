@@ -18,10 +18,10 @@
 
 #include "llvm/SlotCalculator.h"
 #include "llvm/Analysis/ConstantsScanner.h"
-#include "llvm/Module.h"
-#include "llvm/iOther.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/iOther.h"
+#include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/STLExtras.h"
@@ -97,6 +97,36 @@ void SlotCalculator::processModule() {
     if (I->hasInitializer())
       getOrCreateSlot(I->getInitializer());
 
+  // Now that all global constants have been added, rearrange constant planes
+  // that contain constant strings so that the strings occur at the start of the
+  // plane, not somewhere in the middle.
+  //
+  if (BuildBytecodeInfo) {
+    TypePlane &Types = Table[Type::TypeTyID];
+    for (unsigned plane = 0, e = Table.size(); plane != e; ++plane) {
+      if (const ArrayType *AT = dyn_cast<ArrayType>(Types[plane]))
+        if (AT->getElementType() == Type::SByteTy ||
+            AT->getElementType() == Type::UByteTy) {
+          TypePlane &Plane = Table[plane];
+          unsigned FirstNonStringID = 0;
+          for (unsigned i = 0, e = Plane.size(); i != e; ++i)
+            if (cast<ConstantArray>(Plane[i])->isString()) {
+              // Check to see if we have to shuffle this string around.  If not,
+              // don't do anything.
+              if (i != FirstNonStringID) {
+                // Swap the plane entries....
+                std::swap(Plane[i], Plane[FirstNonStringID]);
+                
+                // Keep the NodeMap up to date.
+                NodeMap[Plane[i]] = i;
+                NodeMap[Plane[FirstNonStringID]] = FirstNonStringID;
+              }
+              ++FirstNonStringID;
+            }
+        }
+    }
+  }
+  
 #if 0
   // FIXME: Empirically, this causes the bytecode files to get BIGGER, because
   // it explodes the operand size numbers to be bigger than can be handled
@@ -305,12 +335,25 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
 
   if (!isa<GlobalValue>(V))
     if (const Constant *C = dyn_cast<Constant>(V)) {
-      // This makes sure that if a constant has uses (for example an array of
-      // const ints), that they are inserted also.
-      //
-      for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
-           I != E; ++I)
-        getOrCreateSlot(*I);
+      // If we are emitting a bytecode file, do not index the characters that
+      // make up constant strings.  We emit constant strings as special
+      // entities that don't require their individual characters to be emitted.
+      if (!BuildBytecodeInfo || !isa<ConstantArray>(C) ||
+          !cast<ConstantArray>(C)->isString()) {
+        // This makes sure that if a constant has uses (for example an array of
+        // const ints), that they are inserted also.
+        //
+        for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
+             I != E; ++I)
+          getOrCreateSlot(*I);
+      } else {
+        assert(ModuleLevel.empty() &&
+               "How can a constant string be directly accessed in a function?");
+        // Otherwise, if we are emitting a bytecode file and this IS a string,
+        // remember it.
+        if (!C->isNullValue())
+          ConstantStrings.push_back(cast<ConstantArray>(C));
+      }
     }
 
   return insertValue(V);
