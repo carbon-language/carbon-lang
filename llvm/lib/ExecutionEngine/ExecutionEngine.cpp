@@ -130,11 +130,17 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
     EE = JIT::create(MP, IL);
 
   // If we can't make a JIT, make an interpreter instead.
-  try {
-    if (EE == 0)
-      EE = Interpreter::create(MP->materializeModule(), IL);
-  } catch (...) {
-    EE = 0;
+  if (EE == 0) {
+    try {
+      Module *M = MP->materializeModule();
+      try {
+        EE = Interpreter::create(M, IL);
+      } catch (...) {
+        std::cerr << "Error creating the interpreter!\n";
+      }
+    } catch (...) {
+      std::cerr << "Error reading the bytecode file!\n";
+    }
   }
 
   if (EE == 0) delete IL;
