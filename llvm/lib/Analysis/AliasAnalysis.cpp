@@ -35,6 +35,64 @@ namespace {
   RegisterAnalysisGroup<AliasAnalysis> Z("Alias Analysis");
 }
 
+//===----------------------------------------------------------------------===//
+// Default chaining methods
+//===----------------------------------------------------------------------===//
+
+AliasAnalysis::AliasResult
+AliasAnalysis::alias(const Value *V1, unsigned V1Size,
+                     const Value *V2, unsigned V2Size) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return AA->alias(V1, V1Size, V2, V2Size);
+}
+
+void AliasAnalysis::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return AA->getMustAliases(P, RetVals);
+}
+
+bool AliasAnalysis::pointsToConstantMemory(const Value *P) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return AA->pointsToConstantMemory(P);
+}
+
+bool AliasAnalysis::doesNotAccessMemory(Function *F) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return AA->doesNotAccessMemory(F);
+}
+
+bool AliasAnalysis::onlyReadsMemory(Function *F) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return doesNotAccessMemory(F) || AA->onlyReadsMemory(F);
+}
+
+bool AliasAnalysis::hasNoModRefInfoForCalls() const {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return AA->hasNoModRefInfoForCalls();
+}
+
+void AliasAnalysis::deleteValue(Value *V) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  AA->deleteValue(V);
+}
+
+void AliasAnalysis::copyValue(Value *From, Value *To) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  AA->copyValue(From, To);
+}
+
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
+  // FIXME: we can do better.
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  return AA->getModRefInfo(CS1, CS2);
+}
+
+
+//===----------------------------------------------------------------------===//
+// AliasAnalysis non-virtual helper method implementation
+//===----------------------------------------------------------------------===//
+
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(LoadInst *L, Value *P, unsigned Size) {
   return alias(L->getOperand(0), TD->getTypeSize(L->getType()),
@@ -56,23 +114,22 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  ModRefResult Mask = ModRef;
   if (Function *F = CS.getCalledFunction())
     if (onlyReadsMemory(F)) {
       if (doesNotAccessMemory(F)) return NoModRef;
-      return Ref;
+      Mask = Ref;
     }
+
+  if (!AA) return Mask;
 
   // If P points to a constant memory location, the call definitely could not
   // modify the memory location.
-  return pointsToConstantMemory(P) ? Ref : ModRef;
-}
+  if ((Mask & Mod) && AA->pointsToConstantMemory(P))
+    Mask = Ref;
 
-AliasAnalysis::ModRefResult
-AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
-  // FIXME: could probably do better.
-  return ModRef;
+  return ModRefResult(Mask & AA->getModRefInfo(CS, P, Size));
 }
-
 
 // AliasAnalysis destructor: DO NOT move this to the header file for
 // AliasAnalysis or else clients of the AliasAnalysis class may not depend on
@@ -86,6 +143,7 @@ AliasAnalysis::~AliasAnalysis() {}
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
   TD = &P->getAnalysis<TargetData>();
+  AA = &P->getAnalysis<AliasAnalysis>();
 }
 
 // getAnalysisUsage - All alias analysis implementations should invoke this
@@ -93,6 +151,7 @@ void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
 // TargetData is required by the pass.
 void AliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetData>();            // All AA's need TargetData.
+  AU.addRequired<AliasAnalysis>();         // All AA's chain
 }
 
 /// canBasicBlockModify - Return true if it is possible for execution of the
@@ -130,23 +189,3 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
 //
 extern void llvm::BasicAAStub();
 static IncludeFile INCLUDE_BASICAA_CPP((void*)&BasicAAStub);
-
-
-namespace {
-  struct NoAA : public ImmutablePass, public AliasAnalysis {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AliasAnalysis::getAnalysisUsage(AU);
-    }
-    
-    virtual void initializePass() {
-      InitializeAliasAnalysis(this);
-    }
-  };
- 
-  // Register this pass...
-  RegisterOpt<NoAA>
-  X("no-aa", "No Alias Analysis (always returns 'may' alias)");
-
-  // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<AliasAnalysis, NoAA> Y;
-}  // End of anonymous namespace
