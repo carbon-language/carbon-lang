@@ -1,5 +1,7 @@
 proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext} {
 
+    set timeout 60
+
     set path [file join $objdir $subdir]
     
     #Make Output Directory if it does not exist already
