@@ -1034,17 +1034,6 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals) {
   std::for_each(DeadNodes.begin(), DeadNodes.end(), deleter<DSNode>);
 }
 
-
-
-// maskNodeTypes - Apply a mask to all of the node types in the graph.  This
-// is useful for clearing out markers like Scalar or Incomplete.
-//
-void DSGraph::maskNodeTypes(unsigned char Mask) {
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    Nodes[i]->NodeType &= Mask;
-}
-
-
 #if 0
 //===----------------------------------------------------------------------===//
 // GlobalDSGraph Implementation
