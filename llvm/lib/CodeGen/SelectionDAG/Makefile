@@ -1,5 +1,5 @@
 LEVEL = ../../..
 PARALLEL_DIRS =
-LIBRARYNAME = selection
+LIBRARYNAME = selectiondag
 
 include $(LEVEL)/Makefile.common
