@@ -14,12 +14,14 @@
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 using std::vector;
@@ -36,16 +38,16 @@ InsertCodeToLoadConstant(Value* opValue,
   vector<TmpInstruction*> tempVec;
   
   // Create a tmp virtual register to hold the constant.
-  TmpInstruction* tmpReg =
-    new TmpInstruction(TMP_INSTRUCTION_OPCODE, opValue, NULL);
-  vmInstr->getMachineInstrVec().addTempValue(tmpReg);
+  TmpInstruction* tmpReg = new TmpInstruction(opValue);
+  MachineCodeForInstruction &MCFI = MachineCodeForInstruction::get(vmInstr);
+  MCFI.addTemp(tmpReg);
   
   target.getInstrInfo().CreateCodeToLoadConst(opValue, tmpReg,
                                               loadConstVec, tempVec);
   
   // Register the new tmp values created for this m/c instruction sequence
   for (unsigned i=0; i < tempVec.size(); i++)
-    vmInstr->getMachineInstrVec().addTempValue(tempVec[i]);
+    MCFI.addTemp(tempVec[i]);
   
   // Record the mapping from the tmp VM instruction to machine instruction.
   // Do this for all machine instructions that were not mapped to any
