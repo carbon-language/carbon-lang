@@ -47,8 +47,8 @@ error.
 
 =head1 EXIT STATUS
 
-B<llvm-prof|llvm-prof> returns 1 if it cannot load the bytecode file or the
-profile information. Otherwise, it exits with zero.
+B<llvm-prof> returns 1 if it cannot load the bytecode file or the profile
+information. Otherwise, it exits with zero.
 
 =head1 AUTHOR
 
