@@ -152,10 +152,10 @@ protected:
   void registerPass(PassInfo *);
   void unregisterPass(PassInfo *);
 
-  /// setPreservesCFG - Notice that this pass only depends on the CFG, so
+  /// setOnlyUsesCFG - Notice that this pass only depends on the CFG, so
   /// transformations that do not modify the CFG do not invalidate this pass.
   ///
-  void setPreservesCFG();
+  void setOnlyUsesCFG();
 };
 
 template<typename PassName>
@@ -196,25 +196,29 @@ struct RegisterPass : public RegisterPassBase {
 ///
 template<typename PassName>
 struct RegisterOpt : public RegisterPassBase {
-  RegisterOpt(const char *PassArg, const char *Name) {
+  RegisterOpt(const char *PassArg, const char *Name, bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization,
                               callDefaultCtor<PassName>));
+    if (CFGOnly) setOnlyUsesCFG();
   }
 
   /// Register Pass using default constructor explicitly...
   ///
-  RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)()) {
+  RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)(),
+              bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization, ctor));
+    if (CFGOnly) setOnlyUsesCFG();
   }
 
   /// Register Pass using TargetMachine constructor...
   ///
   RegisterOpt(const char *PassArg, const char *Name,
-               Pass *(*targetctor)(TargetMachine &)) {
+               Pass *(*targetctor)(TargetMachine &), bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization, 0, targetctor));
+    if (CFGOnly) setOnlyUsesCFG();
   }
 };
 
@@ -231,8 +235,7 @@ struct RegisterAnalysis : public RegisterPassBase {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Analysis,
                               callDefaultCtor<PassName>));
-    if (CFGOnly)
-      setPreservesCFG();
+    if (CFGOnly) setOnlyUsesCFG();
   }
 };
 
