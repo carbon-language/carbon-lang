@@ -243,9 +243,10 @@ endif
 #--------------------------------------------------------------------------
 # Utilities used while building the LLVM tree, which live in the utils dir
 #
-BURG    := $(LLVMTOOLCURRENT)/burg
-RunBurg := $(BURG) $(BURG_OPTS)
-TBLGEN  := $(LLVMTOOLCURRENT)/tblgen
+BURG       := $(LLVMTOOLCURRENT)/burg
+RunBurg    := $(BURG) $(BURG_OPTS)
+TBLGEN     := $(LLVMTOOLCURRENT)/tblgen
+LGCCLDPROG := $(LLVMTOOLCURRENT)/gccld
 
 #--------------------------------------------------------------------------
 # The LLVM GCC front-end in C and C++ flavors
@@ -374,11 +375,10 @@ endif
 # Libtool Objects
 #
 Srcs := $(sort $(basename $(Source)))
-Objs := $(addsuffix .lo, $(Srcs))
-ObjectsO := $(addprefix $(BUILD_OBJ_DIR)/Release/,$(Objs))
-ObjectsP := $(addprefix $(BUILD_OBJ_DIR)/Profile/,$(Objs))
-ObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(Objs))
-ObjectsBC := $(addprefix $(BUILD_OBJ_DIR)/BytecodeObj/,$(addsuffix .bc, $(Srcs)))
+ObjectsO  := $(Srcs:%=$(BUILD_OBJ_DIR)/Release/%.lo)
+ObjectsP  := $(Srcs:%=$(BUILD_OBJ_DIR)/Profile/%.lo)
+ObjectsG  := $(Srcs:%=$(BUILD_OBJ_DIR)/Debug/%.lo)
+ObjectsBC := $(Srcs:%=$(BUILD_OBJ_DIR)/BytecodeObj/%.bc)
 
 #
 # The real objects underlying the libtool objects
