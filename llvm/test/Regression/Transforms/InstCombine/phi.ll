@@ -53,3 +53,15 @@ Exit:
         ret int %B
 }
 
+uint %test6(int %A, bool %b) {
+BB0:
+        %X = cast int %A to uint
+        br bool %b, label %BB1, label %BB2
+BB1:
+        %Y = cast int %A to uint
+        br label %BB2
+BB2:
+        %B = phi uint [%X, %BB0], [%Y, %BB1] ;; Suck casts into phi
+        ret uint %B
+}
+
