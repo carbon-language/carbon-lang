@@ -233,7 +233,8 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 // insertEntry - Insert a value into the symbol table with the specified
 // name...
 //
-void SymbolTable::insertEntry(const std::string& Name, const Type* T) {
+void SymbolTable::insert(const std::string& Name, const Type* T) {
+  assert(T && "Can't insert null type into symbol table!");
 
   // Check to see if there is a naming conflict.  If so, rename this type!
   std::string UniqueName = Name;
