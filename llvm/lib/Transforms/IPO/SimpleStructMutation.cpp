@@ -10,7 +10,8 @@
 #include "llvm/Transforms/MutateStructTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
-#include "llvm/DerivedTypes.h"
+#include "TransformInternals.h"
+#include <algorithm>
 
 #include "llvm/Assembly/Writer.h"
 
@@ -39,11 +40,51 @@ static void PruneTypes(const Type *Ty, set<const StructType*> &TypesToModify,
   }
 }
 
+static bool FirstLess(const pair<unsigned, unsigned> &LHS,
+                      const pair<unsigned, unsigned> &RHS) {
+  return LHS.second < RHS.second;
+}
 
+static unsigned getIndex(const vector<pair<unsigned, unsigned> > &Vec,
+                         unsigned Field) {
+  for (unsigned i = 0; ; ++i)
+    if (Vec[i].first == Field) return i;
+}
+
+static inline void GetTransformation(const StructType *ST,
+                                     vector<int> &Transform,
+                                enum PrebuiltStructMutation::Transform XForm) {
+  unsigned NumElements = ST->getElementTypes().size();
+  Transform.reserve(NumElements);
+
+  switch (XForm) {
+  case PrebuiltStructMutation::SwapElements:
+    // The transformation to do is: just simply swap the elements
+    for (unsigned i = 0; i < NumElements; ++i)
+      Transform.push_back(NumElements-i-1);
+    break;
+
+  case PrebuiltStructMutation::SortElements: {
+    vector<pair<unsigned, unsigned> > ElList;
+
+    // Build mapping from index to size
+    for (unsigned i = 0; i < NumElements; ++i)
+      ElList.push_back(make_pair(i, TD.getTypeSize(ST->getElementTypes()[i])));
+
+    sort(ElList.begin(), ElList.end(), ptr_fun(FirstLess));
+
+    for (unsigned i = 0; i < NumElements; ++i)
+      Transform.push_back(getIndex(ElList, i));
+
+    break;
+  }
+  }
+}
 
 // doPassInitialization - This does all of the work of the pass
 //
-bool SwapStructContents::doPassInitialization(Module *M) {
+PrebuiltStructMutation::TransformsType
+  PrebuiltStructMutation::getTransforms(Module *M, enum Transform XForm) {
   // We need to know which types to modify, and which types we CAN'T modify
   FindUsedTypes          FUT/*(true)*/; // TODO: Do symbol tables as well
   FindUnsafePointerTypes FUPT;
@@ -89,20 +130,11 @@ bool SwapStructContents::doPassInitialization(Module *M) {
   for (set<const StructType*>::iterator I = TypesToModify.begin(),
          E = TypesToModify.end(); I != E; ++I) {
     const StructType *ST = *I;
-    unsigned NumElements = ST->getElementTypes().size();
 
     vector<int> &Transform = Transforms[ST];  // Fill in the map directly
-    Transform.reserve(NumElements);
-
-    // The transformation to do is: just simply swap the elements
-    for (unsigned i = 0; i < NumElements; ++i)
-      Transform.push_back(NumElements-i-1);
+    GetTransformation(ST, Transform, XForm);
   }
   
-  // Create the Worker to do our stuff for us...
-  StructMutator = new MutateStructTypes(Transforms);
-  
-  // Do initial work.
-  return StructMutator->doPassInitialization(M);
+  return Transforms;
 }
 
