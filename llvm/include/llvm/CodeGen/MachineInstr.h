@@ -192,9 +192,8 @@ public:
     return *this;
   }
 
-  // Accessor methods.  Caller is responsible for checking the
-  // operand type before invoking the corresponding accessor.
-  // 
+  /// getType - Returns the MachineOperandType for this operand.
+  /// 
   MachineOperandType getType() const { return opType; }
 
   /// isPCRelative - This returns the value of the PCRELATIVE flag, which
@@ -203,7 +202,6 @@ public:
   /// MachineBasicBlock, GlobalAddress, ExternalSymbol
   ///
   bool isPCRelative() const { return (flags & PCRELATIVE) != 0; }
-
 
   /// isRegister - Return true if this operand is a register operand.  The X86
   /// backend currently can't decide whether to use MO_MR or MO_VR to represent
