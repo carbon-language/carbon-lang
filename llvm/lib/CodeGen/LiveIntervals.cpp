@@ -115,7 +115,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
             for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
                 MachineOperand& mop = mi->getOperand(i);
-                if (mop.isVirtualRegister()) {
+                if (mop.isRegister() &&
+                    MRegisterInfo::isVirtualRegister(mop.getReg())) {
                     unsigned reg = mop.getAllocatedRegNum();
                     Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
                     assert(r2iit != r2iMap_.end());

@@ -522,8 +522,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).isUse() &&
-          !MI->getOperand(i).isDef() &&
-          MI->getOperand(i).isVirtualRegister()){
+          !MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
+          MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
         unsigned VirtSrcReg = MI->getOperand(i).getAllocatedRegNum();
         unsigned PhysSrcReg = reloadVirtReg(MBB, I, VirtSrcReg);
         MI->SetMachineOperandReg(i, PhysSrcReg);  // Assign the input register
@@ -589,8 +589,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // we need to scavenge a register.
     //
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-      if (MI->getOperand(i).isDef() &&
-          MI->getOperand(i).isVirtualRegister()) {
+      if (MI->getOperand(i).isDef() && MI->getOperand(i).isRegister() &&
+          MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg())) {
         unsigned DestVirtReg = MI->getOperand(i).getAllocatedRegNum();
         unsigned DestPhysReg;
 

@@ -116,12 +116,12 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       } else {
 	for (unsigned i = 0, e = (*I)->getNumOperands(); i != e; ++i) {
 	  MachineOperand &MO = (*I)->getOperand(i);
-	  assert(!MO.isVirtualRegister() &&
-		 "Register allocation must be performed!");
-	  if (MO.isRegister() && MO.isDef() &&
-              MRegisterInfo::isPhysicalRegister(MO.getReg()))
+	  if (MO.isRegister() && MO.isDef()) {
+            assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+                   "Register allocation must be performed!");
 	    ModifiedRegs[MO.getReg()] = true;         // Register is modified
-	}
+          }
+        }
 	++I;
       }
 

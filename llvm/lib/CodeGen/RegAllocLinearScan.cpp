@@ -405,8 +405,9 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
                  i != e; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister()) {
-                    unsigned virtReg = op.getAllocatedRegNum();
+                if (op.isRegister() &&
+                    MRegisterInfo::isVirtualRegister(op.getReg())) {
+                    unsigned virtReg = op.getReg();
                     Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
                     if (it != v2pMap_.end()) {
                         DEBUG(std::cerr << "\t\t\t%reg" << it->first
@@ -441,7 +442,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                   "registers:\n");
             for (unsigned i = 0; i != numOperands; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && op.isUse()) {
+                if (op.isRegister() && op.isUse() &&
+                    MRegisterInfo::isVirtualRegister(op.getReg())) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = 0;
                     Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
@@ -471,9 +473,10 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                   "registers:\n");
             for (unsigned i = 0; i != numOperands; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister()) {
+                if (op.isRegister() &&
+                    MRegisterInfo::isVirtualRegister(op.getReg())) {
                     assert(!op.isUse() && "we should not have uses here!");
-                    unsigned virtReg = op.getAllocatedRegNum();
+                    unsigned virtReg = op.getReg();
                     unsigned physReg = 0;
                     Virt2PhysMap::iterator it = v2pMap_.find(virtReg);
                     if (it != v2pMap_.end()) {

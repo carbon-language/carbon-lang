@@ -73,7 +73,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
     MBB.erase(MBB.begin());
 
-    assert(MI->getOperand(0).isVirtualRegister() &&
+    assert(MRegisterInfo::isVirtualRegister(MI->getOperand(0).getReg()) &&
            "PHI node doesn't write virt reg?");
 
     unsigned DestReg = MI->getOperand(0).getAllocatedRegNum();
@@ -174,7 +174,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
         MachineInstr *PrevInst = *(I-1);
         for (unsigned i = 0, e = PrevInst->getNumOperands(); i != e; ++i) {
           MachineOperand &MO = PrevInst->getOperand(i);
-          if (MO.isVirtualRegister() && MO.getReg() == IncomingReg)
+          if (MO.isRegister() && MO.getReg() == IncomingReg)
             if (MO.isDef()) {
               HaveNotEmitted = false;
               break;
@@ -183,7 +183,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       }
 
       if (HaveNotEmitted) { // If the copy has not already been emitted, do it.
-        assert(opVal.isVirtualRegister() &&
+        assert(MRegisterInfo::isVirtualRegister(opVal.getReg()) &&
                "Machine PHI Operands must all be virtual registers!");
         unsigned SrcReg = opVal.getReg();
         RegInfo->copyRegToReg(opBlock, I, IncomingReg, SrcReg, RC);
