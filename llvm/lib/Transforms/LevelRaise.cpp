@@ -37,6 +37,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Optimizations/ConstantHandling.h"
+#include "llvm/Optimizations/DCE.h"
 #include <map>
 #include <algorithm>
 
@@ -137,7 +138,8 @@ static const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
     if (Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1])
       break;
   
-  assert(Offset >= SL->MemberOffsets[i] && Offset <  SL->MemberOffsets[i+1]);
+  assert(Offset >= SL->MemberOffsets[i] &&
+         (i == SL->MemberOffsets.size()-1 || Offset <  SL->MemberOffsets[i+1]));
 
   // Make sure to save the current index...
   Offsets.push_back(ConstPoolUInt::get(Type::UByteTy, i));
@@ -459,8 +461,6 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = *BI;
-  // TODO: replace this with a DCE call
-  if (I->use_size() == 0 && I->getType() != Type::VoidTy) return false;
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
     Value       *Src    = CI->getOperand(0);
@@ -642,7 +642,8 @@ static bool DoRaisePass(Method *M) {
     BasicBlock::InstListType &BIL = BB->getInstList();
 
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      if (PeepholeOptimize(BB, BI))
+      if (opt::DeadCodeElimination::dceInstruction(BIL, BI) ||
+          PeepholeOptimize(BB, BI))
         Changed = true;
       else
         ++BI;
@@ -658,6 +659,10 @@ static bool DoRaisePass(Method *M) {
 bool RaisePointerReferences::doit(Method *M) {
   if (M->isExternal()) return false;
   bool Changed = false;
+
+#ifdef DEBUG_PEEPHOLE_INSTS
+  cerr << "\n\n\nStarting to work on Method '" << M->getName() << "'\n";
+#endif
 
   while (DoRaisePass(M)) Changed = true;
 
