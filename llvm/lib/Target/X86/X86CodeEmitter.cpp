@@ -240,7 +240,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BasicBlockAddrs[BBRefs[i].first];
     unsigned Ref = BBRefs[i].second;
-    *(unsigned*)(intptr_t)Ref = Location-Ref-4;
+    MCE.emitWordAt (Location-Ref-4, (unsigned*)(intptr_t)Ref);
   }
   BBRefs.clear();
   BasicBlockAddrs.clear();
