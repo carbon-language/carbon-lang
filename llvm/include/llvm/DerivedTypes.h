@@ -264,13 +264,13 @@ public:
     return ElementType.get();
   }
   virtual bool indexValid(const Value *V) const {
-    return V->getType() == Type::UIntTy;   // Must be an unsigned int index
+    return V->getType() == Type::LongTy;   // Must be a 'long' index
   }
 
   // getIndexType() - Return the type required of indices for this composite.
   // For structures, this is ubyte, for arrays, this is uint
   //
-  virtual const Type *getIndexType() const { return Type::UIntTy; }
+  virtual const Type *getIndexType() const { return Type::LongTy; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SequentialType *T) { return true; }
