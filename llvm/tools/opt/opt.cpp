@@ -43,7 +43,7 @@ enum Opts {
   raiseallocs, funcresolve, cleangcc, lowerrefs,
 
   // Printing and verifying...
-  print, verify,
+  print, printm, verify,
 
   // More powerful optimizations
   indvars, instcombine, sccp, adce, raise, mem2reg,
@@ -55,8 +55,12 @@ enum Opts {
   globaldce, swapstructs, sortstructs, poolalloc,
 };
 
-static Pass *createPrintMethodPass() {
-  return new PrintFunctionPass("Current Method: \n", &cerr);
+static Pass *createPrintFunctionPass() {
+  return new PrintFunctionPass("Current Function: \n", &cerr);
+}
+
+static Pass *createPrintModulePass() {
+  return new PrintModulePass(&cerr);
 }
 
 // OptTable - Correlate enum Opts to Pass constructors...
@@ -86,7 +90,8 @@ struct {
   { tracem     , createTraceValuesPassForMethod },
   { paths      , createProfilePathsPass },
 
-  { print      , createPrintMethodPass },
+  { print      , createPrintFunctionPass },
+  { printm     , createPrintModulePass },
   { verify     , createVerifierPass },
 
   { raiseallocs, createRaiseAllocationsPass },
@@ -111,11 +116,11 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce        , "Dead Code Elimination"),
   clEnumVal(die        , "Dead Instruction Elimination"),
   clEnumVal(constprop  , "Simple constant propogation"),
- clEnumValN(inlining   , "inline", "Method integration"),
+ clEnumValN(inlining   , "inline", "Function integration"),
   clEnumVal(constmerge , "Merge identical global constants"),
   clEnumVal(strip      , "Strip symbols"),
   clEnumVal(mstrip     , "Strip module symbols"),
-  clEnumVal(mergereturn, "Unify method exit nodes"),
+  clEnumVal(mergereturn, "Unify function exit nodes"),
 
   clEnumVal(indvars    , "Simplify Induction Variables"),
   clEnumVal(instcombine, "Combine redundant instructions"),
@@ -132,10 +137,11 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(cleangcc   , "Cleanup GCC Output"),
   clEnumVal(funcresolve, "Resolve calls to foo(...) to foo(<concrete types>)"),
   clEnumVal(raise      , "Raise to Higher Level"),
-  clEnumVal(trace      , "Insert BB & Method trace code"),
-  clEnumVal(tracem     , "Insert Method trace code only"),
+  clEnumVal(trace      , "Insert BB and Function trace code"),
+  clEnumVal(tracem     , "Insert Function trace code only"),
   clEnumVal(paths      , "Insert path profiling instrumentation"),
-  clEnumVal(print      , "Print working method to stderr"),
+  clEnumVal(print      , "Print working function to stderr"),
+  clEnumVal(printm     , "Print working module to stderr"),
   clEnumVal(verify     , "Verify module is well formed"),
   clEnumVal(lowerrefs  , "Decompose multi-dimensional structure/array refs to use one index per instruction"),
 0);
