@@ -48,6 +48,7 @@ public:
   static void setNext(MachineBasicBlock* N, MachineBasicBlock* next) {
     N->Next = next;
   }
+
   static MachineBasicBlock* createNode();
   void addNodeToList(MachineBasicBlock* N);
   void removeNodeFromList(MachineBasicBlock* N);
@@ -117,6 +118,7 @@ public:
 
   /// getConstantPool - Return the constant pool object for the current
   /// function.
+  ///
   MachineConstantPool *getConstantPool() const { return ConstantPool; }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
@@ -128,6 +130,7 @@ public:
   /// are inserted into the machine function.  The block number for a machine
   /// basic block can be found by using the MBB::getBlockNumber method, this
   /// method provides the inverse mapping.
+  ///
   MachineBasicBlock *getBlockNumbered(unsigned N) {
     assert(N < MBBNumbering.size() && "Illegal block number");
     assert(MBBNumbering[N] && "Block was removed from the machine function!");
