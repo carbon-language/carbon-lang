@@ -48,10 +48,10 @@ namespace {
 
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
 
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand); //Should this be Promote?  Chris?
+      setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
 
-      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand); //Should this be Promote?  Chris?
+      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
 
@@ -148,7 +148,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
         argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(getValueType(I->getType()))));
         argPreg.push_back(args_float[count - 1]);
         argOpc.push_back(Alpha::CPYS);
-        newroot = DAG.getCopyFromReg(argVreg[count], getValueType(I->getType()), DAG.getRoot());
+        newroot = DAG.getCopyFromReg(argVreg[count-1], getValueType(I->getType()), DAG.getRoot());
         break;
       case MVT::i1:
       case MVT::i8:
@@ -159,7 +159,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
         argVreg.push_back(MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64)));
         argPreg.push_back(args_int[count - 1]);
         argOpc.push_back(Alpha::BIS);
-        argt = newroot = DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
+        argt = newroot = DAG.getCopyFromReg(argVreg[count-1], MVT::i64, DAG.getRoot());
         if (getValueType(I->getType()) != MVT::i64)
           argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
         break;
@@ -170,7 +170,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
   BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
   BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
-  count = 0;
   for (int i = 0; i < count; ++i)
     BuildMI(&BB, argOpc[i], 2, argVreg[i]).addReg(argPreg[i]).addReg(argPreg[i]);
   
@@ -201,6 +200,8 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
           Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].first);
         break;
       case MVT::i64:
+      case MVT::f64:
+      case MVT::f32:
         break;
       }
       args_to_use.push_back(Args[i].first);
@@ -258,6 +259,7 @@ namespace {
     /// ExprMap - As shared expressions are codegen'd, we keep track of which
     /// vreg the value is produced in, so we only emit one copy of each compiled
     /// tree.
+    static const unsigned notIn = (unsigned)(-1);
     std::map<SDOperand, unsigned> ExprMap;
 
   public:
@@ -292,7 +294,33 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   default:
     Node->dump();
     assert(0 && "Node not handled!\n");
-    
+  case ISD::LOAD:
+    {
+      // Make sure we generate both values.
+      if (Result != notIn)
+	ExprMap[N.getValue(1)] = notIn;   // Generate the token
+      else
+	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+      
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      
+      if (Address.getOpcode() == ISD::GlobalAddress)
+	{
+	  Select(Chain);
+	  AlphaLowering.restoreGP(BB);
+	  Opc = DestType == MVT::f64 ? Alpha::LDS : Alpha::LDT;
+	  BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+	}
+      else
+	{
+	  Select(Chain);
+	  Tmp2 = SelectExpr(Address);
+	  Opc = DestType == MVT::f64 ? Alpha::LDS : Alpha::LDT;
+	  BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp2);
+	}
+      return Result;
+    }
   case ISD::ConstantFP:
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
       if (CN->isExactlyValue(+0.0)) {
@@ -349,18 +377,18 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   if (N.getOpcode() != ISD::CALL)
     Reg = Result = (N.getValueType() != MVT::Other) ?
-      MakeReg(N.getValueType()) : 1;
+      MakeReg(N.getValueType()) : notIn;
   else {
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
     if (Node->getNumValues() == 1)
-      Reg = Result = 1;  // Void call, just a chain.
+      Reg = Result = notIn;  // Void call, just a chain.
     else {
       Result = MakeReg(Node->getValueType(0));
       ExprMap[N.getValue(0)] = Result;
       for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
         ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
-      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
+      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = notIn;
     }
   }
 
@@ -379,8 +407,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   
   case ISD::EXTLOAD:
     // Make sure we generate both values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    if (Result != notIn)
+      ExprMap[N.getValue(1)] = notIn;   // Generate the token
     else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
     
@@ -403,7 +431,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16:
 	BuildMI(BB, Alpha::LDWU, 2, Result).addImm(0).addReg(Tmp1);
         break;
-      case MVT::i1: //Treat i1 as i8 since there are problems otherwise
+      case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
       case MVT::i8:
 	BuildMI(BB, Alpha::LDBU, 2, Result).addImm(0).addReg(Tmp1);
         break;
@@ -414,8 +442,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SEXTLOAD:
     // Make sure we generate both values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    if (Result != notIn)
+      ExprMap[N.getValue(1)] = notIn;   // Generate the token
     else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
     
@@ -438,8 +466,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::ZEXTLOAD:
     // Make sure we generate both values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    if (Result != notIn)
+      ExprMap[N.getValue(1)] = notIn;   // Generate the token
     else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
     
@@ -475,7 +503,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       Select(N.getOperand(0));
       
       // The chain for this call is now lowered.
-      ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), 1));
+      ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), notIn));
       
       //grab the arguments
       std::vector<unsigned> argvregs;
@@ -525,17 +553,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
       else 
 	{
 	  Tmp1 = SelectExpr(N.getOperand(1));
-	  BuildMI(BB, Alpha::CALL, 1).addReg(Tmp1);
 	  AlphaLowering.restoreGP(BB);
+	  BuildMI(BB, Alpha::CALL, 1).addReg(Tmp1);
 	}
       
       //push the result into a virtual register
-      //    if (Result != 1)
-      //      BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
       
       switch (Node->getValueType(0)) {
       default: Node->dump(); assert(0 && "Unknown value type for call result!");
-      case MVT::Other: return 1;
+      case MVT::Other: return notIn;
       case MVT::i1:
       case MVT::i8:
       case MVT::i16:
@@ -556,6 +582,37 @@ unsigned ISel::SelectExpr(SDOperand N) {
     
   case ISD::SIGN_EXTEND_INREG:
     {
+      //Alpha has instructions for a bunch of signed 32 bit stuff
+      if( dyn_cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i32)
+        {     
+          switch (N.getOperand(0).getOpcode()) {
+          case ISD::ADD:
+          case ISD::SUB:
+          case ISD::MUL:
+            {
+              bool isAdd = N.getOperand(0).getOpcode() == ISD::ADD;
+              bool isMul = N.getOperand(0).getOpcode() == ISD::MUL;
+              //FIXME: first check for Scaled Adds and Subs!
+              if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+                 cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() <= 255)
+                { //Normal imm add/sub
+                  Opc = isAdd ? Alpha::ADDLi : (isMul ? Alpha::MULLi : Alpha::SUBLi);
+                  Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+                  Tmp2 = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
+                  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+                }
+              else
+                { //Normal add/sub
+                  Opc = isAdd ? Alpha::ADDL : (isMul ? Alpha::MULLi : Alpha::SUBL);
+                  Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+                  Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+                  BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+                }
+              return Result;
+            }
+          default: break; //Fall Though;
+          }
+        } //Every thing else fall though too, including unhandled opcodes above
       Tmp1 = SelectExpr(N.getOperand(0));
       MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
       //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
@@ -611,11 +668,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
           //Tmp1 = SelectExpr(N.getOperand(0));
           if(N.getOperand(0).getOpcode() == ISD::Constant &&
-             cast<ConstantSDNode>(N.getOperand(0))->getValue() >= 0 &&
              cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
             isConst1 = true;
           if(N.getOperand(1).getOpcode() == ISD::Constant &&
-             cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
              cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
             isConst2 = true;
 
@@ -638,7 +693,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
             Tmp3 = MakeReg(MVT::i64);
             BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
             //and invert
-            BuildMI(BB,Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
+            BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
+	    //BuildMI(BB,Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
             return Result;
           }
           }
@@ -693,8 +749,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::CopyFromReg:
     {
       // Make sure we generate both values.
-      if (Result != 1)
-	ExprMap[N.getValue(1)] = 1;   // Generate the token
+      if (Result != notIn)
+	ExprMap[N.getValue(1)] = notIn;   // Generate the token
       else
 	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
         
@@ -717,7 +773,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::MUL:
     assert (DestType == MVT::i64 && "Only do arithmetic on i64s!");
     if(N.getOperand(1).getOpcode() == ISD::Constant &&
-       cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
        cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
       {
         switch(opcode) {
@@ -757,7 +812,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
       //FIXME: first check for Scaled Adds and Subs!
       if(N.getOperand(1).getOpcode() == ISD::Constant &&
-         cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
          cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
         { //Normal imm add/sub
           Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
@@ -766,7 +820,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
         }
       else if(N.getOperand(1).getOpcode() == ISD::Constant &&
-              cast<ConstantSDNode>(N.getOperand(1))->getValue() >= 0 &&
               cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767)
         { //LDA  //FIXME: expand the above condition a bit
           Tmp1 = SelectExpr(N.getOperand(0));
@@ -836,8 +889,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::LOAD: 
     {
       // Make sure we generate both values.
-      if (Result != 1)
-	ExprMap[N.getValue(1)] = 1;   // Generate the token
+      if (Result != notIn)
+	ExprMap[N.getValue(1)] = notIn;   // Generate the token
       else
 	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
       
@@ -867,7 +920,7 @@ void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
 
   // FIXME: Disable for our current expansion model!
-  if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, 1)).second)
+  if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, notIn)).second)
     return;  // Already selected.
 
   SDNode *Node = N.Val;
