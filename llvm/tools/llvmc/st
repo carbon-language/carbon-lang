@@ -4,19 +4,11 @@
 # Language definitions
 ##########################################################
   lang.name=Stacker 
-  lang.opt1=-simplifycfg -instcombine -mem2reg
-  lang.opt2=-simplifycfg -instcombine -mem2reg -load-vn \
-    -gcse -dse -scalarrepl -sccp 
-  lang.opt3=-simplifycfg -instcombine -mem2reg -load-vn \
-    -gcse -dse -scalarrepl -sccp -branch-combine -adce \
-    -globaldce -inline -licm 
-  lang.opt4=-simplifycfg -instcombine -mem2reg -load-vn \
-    -gcse -dse -scalarrepl -sccp -ipconstprop \
-    -branch-combine -adce -globaldce -inline -licm 
-  lang.opt5=-simplifycfg -instcombine -mem2reg --load-vn \
-    -gcse -dse scalarrepl -sccp -ipconstprop \
-    -branch-combine -adce -globaldce -inline -licm \
-    -block-placement
+  lang.opt1=-O1
+  lang.opt2=-O2
+  lang.opt3=-O3
+  lang.opt4=-O4
+  lang.opt5=-O5
 
 ##########################################################
 # Pre-processor definitions
@@ -33,15 +25,15 @@
 
   # To compile stacker source, we just run the stacker
   # compiler with a default stack size of 2048 entries.
-  translator.command=stkrc -s 2048 %in% -o %out% %time% \
-    %stats% %force% %args%
+  translator.command=stkrc -s 2048 %in% -o %out% %opt% \
+    %time% %stats% %force% %args%
 
   # stkrc doesn't preprocess but we set this to true so
   # that we don't run the cp command by default.
   translator.preprocesses=true
 
   # The translator is required to run.
-  translator.required=true
+  translator.required=false
 
   # stkrc doesn't handle the -On options
   translator.output=bytecode
@@ -51,16 +43,16 @@
 ##########################################################
   
   # For optimization, we use the LLVM "opt" program
-  optimizer.command=opt %in% -o %out% %opt% %time% %stats% \
-    %force% %args%
+  optimizer.command=stkrc -s 2048 %in% -o %out% %opt% \
+    %time% %stats% %force% %args%
 
-  optimizer.required = true
+  optimizer.required = yes
 
   # opt doesn't translate
-  optimizer.translates = no
+  optimizer.translates = yes
 
   # opt doesn't preprocess
-  optimizer.preprocesses=no
+  optimizer.preprocesses=yes
 
   # opt produces bytecode
   optimizer.output = bc
