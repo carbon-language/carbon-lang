@@ -377,6 +377,8 @@ by the I<length> field. Note that is allowed (but unwise) to use non-printing
 characters (even 0x00) in the symbol. This allows for multiple encodings of 
 symbol names.
 
+=back
+
 =head1 EXIT STATUS
 
 If B<llvm-as> succeeds, it will exit with 0.  A usage error, results
@@ -386,7 +388,7 @@ exit code of 3.
 
 =head1 SEE ALSO
 
-L<llvm-ld|llvm-ld>, L<llvm-ranlib|llvm-ranlib>
+L<llvm-ranlib|llvm-ranlib>
 
 =head1 AUTHORS
 
