@@ -1172,13 +1172,6 @@ DSGraph::DSGraph(const DSGraph &G, EquivalenceClasses<GlobalValue*> &ECs,
   cloneInto(G, NodeMap, CloneFlags);
 }
 
-DSGraph::DSGraph(const DSGraph &G, NodeMapTy &NodeMap,
-                 EquivalenceClasses<GlobalValue*> &ECs)
-  : GlobalsGraph(0), ScalarMap(ECs), TD(G.TD) {
-  PrintAuxCalls = false;
-  cloneInto(G, NodeMap);
-}
-
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
   AuxFunctionCalls.clear();

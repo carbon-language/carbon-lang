@@ -225,8 +225,6 @@ public:
   //
   DSGraph(const DSGraph &DSG, EquivalenceClasses<GlobalValue*> &ECs,
           unsigned CloneFlags = 0);
-  DSGraph(const DSGraph &DSG, NodeMapTy &NodeMap,
-          EquivalenceClasses<GlobalValue*> &ECs);
   ~DSGraph();
 
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
