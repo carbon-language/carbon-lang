@@ -14,17 +14,6 @@
 
  * Machine dependent work: All parts of the register coloring algorithm
    except coloring of an individual node are machine independent.
-
-   Register allocation must be done  as:	
-
-      FunctionLiveVarInfo LVI(*FunctionI );           // compute LV info
-      LVI.analyze();
-
-      TargetMachine &target = ....	                        
-
-
-      PhyRegAlloc PRA(*FunctionI, target, &LVI);     // allocate regs
-      PRA.allocateRegisters();
 */ 
 
 #ifndef PHY_REG_ALLOC_H
@@ -32,7 +21,6 @@
 
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
-#include <vector>
 #include <map>
 
 class MachineFunction;
@@ -55,19 +43,13 @@ struct AddedInstrns {
   std::vector<MachineInstr*> InstrnsAfter; //Insts added AFTER an existing inst
 };
 
-typedef std::map<const MachineInstr *, AddedInstrns> AddedInstrMapType;
-
-
-
 //----------------------------------------------------------------------------
 // class PhyRegAlloc:
 // Main class the register allocator. Call allocateRegisters() to allocate
 // registers for a Function.
 //----------------------------------------------------------------------------
 
-
 class PhyRegAlloc: public NonCopyable {
-
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Function *Fn;                   // name of the function we work on
@@ -79,7 +61,9 @@ class PhyRegAlloc: public NonCopyable {
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
   
-  AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
+  // AddedInstrMap - Used to store instrns added in this phase
+  std::map<const MachineInstr *, AddedInstrns> AddedInstrMap;
+
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   LoopInfo *LoopDepthCalc;              // to calculate loop depths 
   ReservedColorListType ResColList;     // A set of reserved regs if desired.
@@ -105,11 +89,6 @@ public:
   
   
 private:
-
-
-
-  //------- ------------------ private methods---------------------------------
-
   void addInterference(const Value *Def, const ValueSet *LVSet, 
 		       bool isCallInst);
 
@@ -140,8 +119,8 @@ private:
   void printLabel(const Value *const Val);
   void printMachineCode();
 
-  friend class UltraSparcRegInfo;
 
+  friend class UltraSparcRegInfo;  // FIXME: remove this
 
   int getUsableUniRegAtMI(int RegType, 
 			  const ValueSet *LVSetBef,
