@@ -3014,6 +3014,19 @@ void PPC32ISel::visitCastInst(CastInst &CI) {
   unsigned DestReg = getReg(CI);
   MachineBasicBlock::iterator MI = BB->end();
 
+  // If this is a cast from an integer type to a ubyte, with one use where the
+  // use is the shift amount argument of a shift instruction, just emit a move
+  // instead (since the shift instruction will only look at the low 5 bits
+  // regardless of how it is sign extended)
+  if (CI.getType() == Type::UByteTy && SrcClass <= cInt && CI.hasOneUse()) {
+    ShiftInst *SI = dyn_cast<ShiftInst>(*(CI.use_begin()));
+    if (SI && (SI->getOperand(1) == &CI)) {
+      unsigned SrcReg = getReg(Op, BB, MI);
+      BuildMI(*BB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+      return; 
+    }
+  }
+
   // If this is a cast from an byte, short, or int to an integer type of equal
   // or lesser width, and all uses of the cast are store instructions then dont
   // emit them, as the store instruction will implicitly not store the zero or
