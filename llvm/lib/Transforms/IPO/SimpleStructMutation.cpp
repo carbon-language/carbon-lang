@@ -90,7 +90,7 @@ static void PruneTypes(const Type *Ty,
   //
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
-    if (!isa<PointerType>(*I))
+    if (!isa<PointerType>(I->get()))
       PruneTypes(*I, TypesToModify, ProcessedTypes);
   }
 }
