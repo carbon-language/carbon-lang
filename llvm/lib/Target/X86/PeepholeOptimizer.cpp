@@ -51,6 +51,46 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     }
     return false;
 
+    // A large number of X86 instructions have forms which take an 8-bit
+    // immediate despite the fact that the operands are 16 or 32 bits.  Because
+    // this can save three bytes of code size (and icache space), we want to
+    // shrink them if possible.
+  case X86::ADDri16:  case X86::ADDri32:
+  case X86::SUBri16:  case X86::SUBri32:
+  case X86::IMULri16: case X86::IMULri32:
+  case X86::ANDri16:  case X86::ANDri32:
+  case X86::ORri16:   case X86::ORri32:
+  case X86::XORri16:  case X86::XORri32:
+    assert(MI->getNumOperands() == 3 && "These should all have 3 operands!");
+    if (MI->getOperand(2).isImmediate()) {
+      int Val = MI->getOperand(2).getImmedValue();
+      // If the value is the same when signed extended from 8 bits...
+      if (Val == (signed int)(signed char)Val) {
+        unsigned Opcode;
+        switch (MI->getOpcode()) {
+        default: assert(0 && "Unknown opcode value!");
+        case X86::ADDri16:  Opcode = X86::ADDri16b; break;
+        case X86::ADDri32:  Opcode = X86::ADDri32b; break;
+        case X86::SUBri16:  Opcode = X86::SUBri16b; break;
+        case X86::SUBri32:  Opcode = X86::SUBri32b; break;
+        case X86::IMULri16: Opcode = X86::IMULri16b; break;
+        case X86::IMULri32: Opcode = X86::IMULri32b; break;
+        case X86::ANDri16:  Opcode = X86::ANDri16b; break;
+        case X86::ANDri32:  Opcode = X86::ANDri32b; break;
+        case X86::ORri16:   Opcode = X86::ORri16b; break;
+        case X86::ORri32:   Opcode = X86::ORri32b; break;
+        case X86::XORri16:  Opcode = X86::XORri16b; break;
+        case X86::XORri32:  Opcode = X86::XORri32b; break;
+        }
+        unsigned R0 = MI->getOperand(0).getReg();
+        unsigned R1 = MI->getOperand(1).getReg();
+        *I = BuildMI(Opcode, 2, R0).addReg(R1).addZImm((char)Val);
+        delete MI;
+        return true;
+      }
+    }
+    return false;
+
 #if 0
   case X86::MOVir32: Size++;
   case X86::MOVir16: Size++;

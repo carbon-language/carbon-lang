@@ -243,6 +243,8 @@ def ADDrr32  : I2A32<"add", 0x01, MRMDestReg>,         Pattern<(set R32, (plus R
 def ADDri8   : I2A8 <"add", 0x80, MRMS0r    >,         Pattern<(set R8 , (plus R8 , imm))>;
 def ADDri16  : I2A16<"add", 0x81, MRMS0r    >, OpSize, Pattern<(set R16, (plus R16, imm))>;
 def ADDri32  : I2A32<"add", 0x81, MRMS0r    >,         Pattern<(set R32, (plus R32, imm))>;
+def ADDri16b : I2A8 <"add", 0x83, MRMS0r    >, OpSize;   // ADDri with sign extended 8 bit imm
+def ADDri32b : I2A8 <"add", 0x83, MRMS0r    >;
 
 def ADCrr32  : I2A32<"adc", 0x11, MRMDestReg>;                // R32 += imm32+Carry
 
@@ -252,6 +254,8 @@ def SUBrr32  : I2A32<"sub", 0x29, MRMDestReg>,         Pattern<(set R32, (minus 
 def SUBri8   : I2A8 <"sub", 0x80, MRMS5r    >,         Pattern<(set R8 , (minus R8 , imm))>;
 def SUBri16  : I2A16<"sub", 0x81, MRMS5r    >, OpSize, Pattern<(set R16, (minus R16, imm))>;
 def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >,         Pattern<(set R32, (minus R32, imm))>;
+def SUBri16b : I2A8 <"sub", 0x83, MRMS5r    >, OpSize;
+def SUBri32b : I2A8 <"sub", 0x83, MRMS5r    >;
 
 def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carry
 
@@ -259,6 +263,9 @@ def IMULrr16 : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (ti
 def IMULrr32 : I2A32<"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
 def IMULri16 : I2A16<"imul", 0x69, MRMSrcReg>,     OpSize;
 def IMULri32 : I2A32<"imul", 0x69, MRMSrcReg>;
+def IMULri16b : I2A8<"imul", 0x6B, MRMSrcReg>,     OpSize;
+def IMULri32b : I2A8<"imul", 0x6B, MRMSrcReg>;
+
 
 // Logical operators...
 def ANDrr8   : I2A8 <"and", 0x20, MRMDestReg>,         Pattern<(set R8 , (and R8 , R8 ))>;
@@ -267,6 +274,8 @@ def ANDrr32  : I2A32<"and", 0x21, MRMDestReg>,         Pattern<(set R32, (and R3
 def ANDri8   : I2A8 <"and", 0x80, MRMS4r    >,         Pattern<(set R8 , (and R8 , imm))>;
 def ANDri16  : I2A16<"and", 0x81, MRMS4r    >, OpSize, Pattern<(set R16, (and R16, imm))>;
 def ANDri32  : I2A32<"and", 0x81, MRMS4r    >,         Pattern<(set R32, (and R32, imm))>;
+def ANDri16b : I2A8 <"and", 0x83, MRMS4r    >, OpSize;
+def ANDri32b : I2A8 <"and", 0x83, MRMS4r    >;
 
 def ORrr8    : I2A8 <"or" , 0x08, MRMDestReg>,         Pattern<(set R8 , (or  R8 , R8 ))>;
 def ORrr16   : I2A16<"or" , 0x09, MRMDestReg>, OpSize, Pattern<(set R16, (or  R16, R16))>;
@@ -274,6 +283,9 @@ def ORrr32   : I2A32<"or" , 0x09, MRMDestReg>,         Pattern<(set R32, (or  R3
 def ORri8    : I2A8 <"or" , 0x80, MRMS1r    >,         Pattern<(set R8 , (or  R8 , imm))>;
 def ORri16   : I2A16<"or" , 0x81, MRMS1r    >, OpSize, Pattern<(set R16, (or  R16, imm))>;
 def ORri32   : I2A32<"or" , 0x81, MRMS1r    >,         Pattern<(set R32, (or  R32, imm))>;
+def ORri16b  : I2A8 <"or" , 0x83, MRMS1r    >, OpSize;
+def ORri32b  : I2A8 <"or" , 0x83, MRMS1r    >;
+
 
 def XORrr8   : I2A8 <"xor", 0x30, MRMDestReg>,         Pattern<(set R8 , (xor R8 , R8 ))>;
 def XORrr16  : I2A16<"xor", 0x31, MRMDestReg>, OpSize, Pattern<(set R16, (xor R16, R16))>;
@@ -281,6 +293,8 @@ def XORrr32  : I2A32<"xor", 0x31, MRMDestReg>,         Pattern<(set R32, (xor R3
 def XORri8   : I2A8 <"xor", 0x80, MRMS6r    >,         Pattern<(set R8 , (xor R8 , imm))>;
 def XORri16  : I2A16<"xor", 0x81, MRMS6r    >, OpSize, Pattern<(set R16, (xor R16, imm))>;
 def XORri32  : I2A32<"xor", 0x81, MRMS6r    >,         Pattern<(set R32, (xor R32, imm))>;
+def XORri16b : I2A8 <"xor", 0x83, MRMS6r    >, OpSize;
+def XORri32b : I2A8 <"xor", 0x83, MRMS6r    >;
 
 // Test instructions are just like AND, except they don't generate a result.
 def TESTrr8  : X86Inst<"test", 0x84, MRMDestReg, Arg8 >;          // flags = R8  & R8
