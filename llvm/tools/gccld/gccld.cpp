@@ -22,6 +22,7 @@
 #include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
+#include <algorithm>
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
 
@@ -86,8 +87,18 @@ int main(int argc, char **argv) {
   unsigned BaseArg = 0;
   std::string ErrorMessage;
 
-  if (!Libraries.empty())
-    cerr << "LLVM Linker Warning:  Linking to libraries is unimplemented!\n";
+  if (!Libraries.empty()) {
+    // Sort libraries list...
+    sort(Libraries.begin(), Libraries.end());
+
+    // Remove duplicate libraries entries...
+    Libraries.erase(unique(Libraries.begin(), Libraries.end()),
+                    Libraries.end());
+
+    // Add all of the libraries to the end of the link line...
+    for (unsigned i = 0; i < Libraries.size(); ++i)
+      InputFilenames.push_back("lib" + Libraries[i] + ".bc");
+  }
 
   std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
   if (Composite.get() == 0) return 1;
@@ -121,7 +132,7 @@ int main(int argc, char **argv) {
     cerr << "Error openeing '" << OutputFilename << "' for writing!\n";
     return 1;
   }
-  Out2 << "#!/bin/sh\nlli -q $0.bc\n";
+  Out2 << "#!/bin/sh\nlli -q $0.bc $*\n";
   Out2.close();
   
   // Make the script executable...
