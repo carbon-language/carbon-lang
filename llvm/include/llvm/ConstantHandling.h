@@ -12,10 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// WARNING: These operators return pointers to newly 'new'd objects.  You MUST
-//          make sure to free them if you don't want them hanging around. Also,
-//          note that these may return a null object if I don't know how to 
-//          perform those operations on the specified constant types.
+// WARNING: These operators may return a null object if I don't know how to 
+//          perform the specified operation on the specified constant types.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -42,13 +40,18 @@
 namespace opt {
 
 //===----------------------------------------------------------------------===//
-//  Implement == directly...
+//  Implement == and != directly...
 //===----------------------------------------------------------------------===//
 
 inline ConstPoolBool *operator==(const ConstPoolVal &V1, 
                                  const ConstPoolVal &V2) {
   assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return new ConstPoolBool(V1.equals(&V2));
+  return ConstPoolBool::get(&V1 == &V2);
+}
+
+inline ConstPoolBool *operator!=(const ConstPoolVal &V1, 
+                                 const ConstPoolVal &V2) {
+  return ConstPoolBool::get(&V1 != &V2);
 }
 
 //===----------------------------------------------------------------------===//
@@ -156,25 +159,14 @@ inline ConstPoolBool *operator>(const ConstPoolVal &V1,
   return V2 < V1;
 }
 
-inline ConstPoolBool *operator!=(const ConstPoolVal &V1, 
-                                 const ConstPoolVal &V2) {
-  ConstPoolBool *Result = V1 == V2;
-  Result->setValue(!Result->getValue());     // Invert value
-  return Result;     // !(V1 == V2)
-}
-
 inline ConstPoolBool *operator>=(const ConstPoolVal &V1, 
                                  const ConstPoolVal &V2) {
-  ConstPoolBool *Result = V1 < V2;
-  Result->setValue(!Result->getValue());     // Invert value
-  return Result;      // !(V1 < V2)
+  return (V1 < V2)->inverted();      // !(V1 < V2)
 }
 
 inline ConstPoolBool *operator<=(const ConstPoolVal &V1, 
                                  const ConstPoolVal &V2) {
-  ConstPoolBool *Result = V1 > V2;
-  Result->setValue(!Result->getValue());     // Invert value
-  return Result;      // !(V1 > V2)
+  return (V1 > V2)->inverted();      // !(V1 > V2)
 }
 
 
