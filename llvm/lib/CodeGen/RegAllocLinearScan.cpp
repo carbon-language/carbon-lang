@@ -269,6 +269,18 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             }
         }
     }
+    // expire any remaining active intervals
+    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+        unsigned reg = (*i)->reg;
+        DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
+        if (reg < MRegisterInfo::FirstVirtualRegister) {
+            clearReservedPhysReg(reg);
+        }
+        else {
+            p2vMap_[v2pMap_[reg]] = 0;
+        }
+        // remove interval from active
+    }
     
     DEBUG(std::cerr << "finished register allocation\n");
     DEBUG(printVirt2PhysMap());
