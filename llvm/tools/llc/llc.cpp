@@ -68,8 +68,6 @@ int main(int argc, char **argv) {
 
   // Allocate target machine.  First, check whether the user has
   // explicitly specified an architecture to compile for.
-  unsigned Config = (mod.isLittleEndian()   ? TM::LittleEndian : TM::BigEndian)|
-                    (mod.has32BitPointers() ? TM::PtrSize32    : TM::PtrSize64);
   TargetMachine* (*TargetMachineAllocator)(unsigned) = 0;
   switch (Arch) {
   case x86:
@@ -83,16 +81,28 @@ int main(int argc, char **argv) {
     // the module. This heuristic (ILP32, LE -> IA32; LP64, BE ->
     // SPARCV9) is kind of gross, but it will work until we have more
     // sophisticated target information to work from.
-    if (mod.isLittleEndian() && mod.has32BitPointers()) { 
+    if (mod.getEndianness()  == Module::LittleEndian &&
+        mod.getPointerSize() == Module::Pointer32) { 
       TargetMachineAllocator = allocateX86TargetMachine;
-    } else if (mod.isBigEndian() && mod.has64BitPointers()) {
+    } else if (mod.getEndianness()  == Module::BigEndian &&
+               mod.getPointerSize() == Module::Pointer64) { 
       TargetMachineAllocator = allocateSparcTargetMachine;
     } else {
-      assert(0 && "You must specify -march; I could not guess the default");
+      // If the module is target independent, favor a target which matches the
+      // current build system.
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+      TargetMachineAllocator = allocateX86TargetMachine;
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+      TargetMachineAllocator = allocateSparcTargetMachine;
+#else
+      std::cerr << argv[0] << ": module does not specify a target to use.  "
+                << "You must use the -march option.\n";
+      return 1;
+#endif
     } 
     break;
   }
-  std::auto_ptr<TargetMachine> target((*TargetMachineAllocator)(Config));
+  std::auto_ptr<TargetMachine> target((*TargetMachineAllocator)(0));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
   const TargetData &TD = Target.getTargetData();
