@@ -406,6 +406,13 @@ derive from the <tt>C</tt> class.  Because of this, they both get the <tt>V</tt>
 bit value.  The <tt>Y</tt> definition also gets the Greeting member as well.
 </p>
 
+<p>
+In general, classes are useful for collecting together the commonality between a
+group of records, and isolating it in a single places.  Also, classes permit the
+specification of default values for their subclasses, allowing the subclasses to
+override them as they wish.
+</p>
+
 </div>
 
 <!----------------------------------------------------------------------------->
@@ -456,7 +463,84 @@ because the <tt>D</tt> class overrode its value.
 </div>
 
 <div class="doc_text">
-and default values...
+<p>
+TableGen permits the definition of parameterized classes as well as normal
+concrete classes.  Parameterized TableGen classes specify a list of variable
+bindings (which may optionally have defaults) that are bound when used.  Here is
+a simple example:</p>
+
+<p><pre>
+<b>class</b> FPFormat&lt;<b>bits</b>&lt;3&gt; val&gt; {
+  <b>bits</b>&lt;3&gt; Value = val;
+}
+<b>def</b> NotFP      : FPFormat&lt;0&gt;;
+<b>def</b> ZeroArgFP  : FPFormat&lt;1&gt;;
+<b>def</b> OneArgFP   : FPFormat&lt;2&gt;;
+<b>def</b> OneArgFPRW : FPFormat&lt;3&gt;;
+<b>def</b> TwoArgFP   : FPFormat&lt;4&gt;;
+<b>def</b> SpecialFP  : FPFormat&lt;5&gt;;
+</pre></p>
+
+<p>
+In this case, template arguments are used as a space efficient way to specify a
+list of "enumeration values", each with a "Value" field set to the specified
+integer.</p>
+
+<p>The more esoteric forms of <a href="#values">TableGen expressions</a> are
+useful in conjunction with template arguments.  As an example:</p>
+
+<p><pre>
+<b>class</b> ModRefVal&lt;<b>bits</b>&lt;2&gt; val&gt; {
+  <b>bits</b>&lt;2&gt; Value = val;
+}
+
+<b>def</b> None   : ModRefVal&lt;0&gt;;
+<b>def</b> Mod    : ModRefVal&lt;1&gt;;
+<b>def</b> Ref    : ModRefVal&lt;2&gt;;
+<b>def</b> ModRef : ModRefVal&lt;3&gt;;
+
+<b>class</b> Value&lt;ModRefVal MR&gt; {
+  <i>// decode some information into a more convenient format, while providing
+  // a nice interface to the user of the "Value" class.</i>
+  <b>bit</b> isMod = MR.Value{0};
+  <b>bit</b> isRef = MR.Value{1};
+
+  <i>// other stuff...</i>
+}
+
+<i>// Example uses</i>
+<b>def</b> bork : Value&lt;Mod&gt;;
+<b>def</b> zork : Value&lt;Ref&gt;;
+<b>def</b> hork : Value&lt;ModRef&gt;;
+</pre></p>
+
+<p>
+This is obviously a contrived example, but it shows how template arguments can
+be used to decouple the interface provided to the user of the class from the
+actual internal data representation expected by the class.  In this case,
+running <tt>tblgen</tt> on the example prints the following definitions:</p>
+
+<p><pre>
+<b>def</b> bork {      <i>// Value</i>
+  bit isMod = 1;
+  bit isRef = 0;
+}
+<b>def</b> hork {      <i>// Value</i>
+  bit isMod = 1;
+  bit isRef = 1;
+}
+<b>def</b> zork {      <i>// Value</i>
+  bit isMod = 0;
+  bit isRef = 1;
+}
+</pre></p>
+
+<p>
+This shows that TableGen was able to dig into the argument and extract a piece
+of information that was requested by the designer of the "Value" class.  For
+more realistic examples, please see existing users of TableGen, such as the X86
+backend.</p>
+
 </div>
 
 
@@ -479,7 +563,7 @@ specified as a double quoted string immediately after the '<tt>include</tt>'
 keyword.  Example:
 
 <p><pre>
-  <b>include</b> "foo.td"
+<b>include</b> "foo.td"
 </pre></p>
 
 </div>
