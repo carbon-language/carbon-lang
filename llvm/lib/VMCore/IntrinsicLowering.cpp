@@ -105,8 +105,8 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
         EnsureFunctionExists(M, "memset", I->abegin(), --I->aend(),
                              I->abegin()->getType());
         break;
-      case Intrinsic::isnan:
-        EnsureFunctionExists(M, "isnan", I->abegin(), I->aend(), Type::BoolTy);
+      case Intrinsic::isunordered:
+        EnsureFunctionExists(M, "isunordered", I->abegin(), I->aend(), Type::BoolTy);
         break;
       }
 
@@ -198,14 +198,6 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     static Function *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
-    break;
-  }
-  case Intrinsic::isnan: {
-    // FIXME: This should force the argument to be a double.  There may be
-    // multiple isnans for different FP arguments.
-    static Function *isnanFCache = 0;
-    ReplaceCallWith("isnan", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::BoolTy, isnanFCache);
     break;
   }
   case Intrinsic::isunordered: {
