@@ -192,6 +192,11 @@ namespace {
                           Value *Src, User::op_iterator IdxBegin,
                           User::op_iterator IdxEnd, unsigned TargetReg);
 
+    /// emitCastOperation - Common code shared between visitCastInst and
+    /// constant expression cast support.
+    void emitCastOperation(MachineBasicBlock *BB,MachineBasicBlock::iterator&IP,
+                           Value *Src, const Type *DestTy, unsigned TargetReg);
+
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
@@ -307,10 +312,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       emitGEPOperation(MBB, IP, CE->getOperand(0),
                        CE->op_begin()+1, CE->op_end(), R);
       return;
-    } else if (CE->getOpcode() == Instruction::Cast &&
-               isa<PointerType>(CE->getType()) &&
-               isa<PointerType>(CE->getOperand(0)->getType())) {
-      copyConstantToRegister(MBB, IP, cast<Constant>(CE->getOperand(0)), R);
+    } else if (CE->getOpcode() == Instruction::Cast) {
+      emitCastOperation(MBB, IP, CE->getOperand(0), CE->getType(), R);
       return;
     }
 
@@ -446,7 +449,7 @@ void ISel::SelectPHINodes() {
     // Loop over all of the PHI nodes in the LLVM basic block...
     unsigned NumPHIs = 0;
     for (BasicBlock::const_iterator I = BB->begin();
-         PHINode *PN = (PHINode*)dyn_cast<PHINode>(&*I); ++I) {
+         PHINode *PN = (PHINode*)dyn_cast<PHINode>(I); ++I) {
 
       // Create a new machine instr PHI node, and insert it.
       unsigned PHIReg = getReg(*PN);
@@ -1387,22 +1390,30 @@ void ISel::visitStoreInst(StoreInst &I) {
 /// visitCastInst - Here we have various kinds of copying with or without
 /// sign extension going on.
 void ISel::visitCastInst(CastInst &CI) {
-  const Type *DestTy = CI.getType();
-  Value *Src = CI.getOperand(0);
+  unsigned DestReg = getReg(CI);
+  MachineBasicBlock::iterator MI = BB->end();
+  emitCastOperation(BB, MI, CI.getOperand(0), CI.getType(), DestReg);
+}
+
+/// emitCastOperation - Common code shared between visitCastInst and
+/// constant expression cast support.
+void ISel::emitCastOperation(MachineBasicBlock *BB,
+                             MachineBasicBlock::iterator &IP,
+                             Value *Src, const Type *DestTy,
+                             unsigned DestReg) {
   unsigned SrcReg = getReg(Src);
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
-  unsigned DestReg = getReg(CI);
   unsigned DestClass = getClassB(DestTy);
 
   // Implement casts to bool by using compare on the operand followed by set if
   // not zero on the result.
   if (DestTy == Type::BoolTy) {
     if (SrcClass == cFP || SrcClass == cLong)
-      visitInstruction(CI);
+      abort();  // FIXME: implement cast (long & FP) to bool
     
-    BuildMI(BB, X86::CMPri8, 2).addReg(SrcReg).addZImm(0);
-    BuildMI(BB, X86::SETNEr, 1, DestReg);
+    BMI(BB, IP, X86::CMPri8, 2).addReg(SrcReg).addZImm(0);
+    BMI(BB, IP, X86::SETNEr, 1, DestReg);
     return;
   }
 
@@ -1414,11 +1425,11 @@ void ISel::visitCastInst(CastInst &CI) {
   // getClass) by using a register-to-register move.
   if (SrcClass == DestClass) {
     if (SrcClass <= cInt || (SrcClass == cFP && SrcTy == DestTy)) {
-      BuildMI(BB, RegRegMove[SrcClass], 1, DestReg).addReg(SrcReg);
+      BMI(BB, IP, RegRegMove[SrcClass], 1, DestReg).addReg(SrcReg);
     } else if (SrcClass == cFP) {
       if (SrcTy == Type::FloatTy) {  // double -> float
 	assert(DestTy == Type::DoubleTy && "Unknown cFP member!");
-	BuildMI(BB, X86::FpMOV, 1, DestReg).addReg(SrcReg);
+	BMI(BB, IP, X86::FpMOV, 1, DestReg).addReg(SrcReg);
       } else {                       // float -> double
 	assert(SrcTy == Type::DoubleTy && DestTy == Type::FloatTy &&
 	       "Unknown cFP member!");
@@ -1426,14 +1437,14 @@ void ISel::visitCastInst(CastInst &CI) {
 	// reading it back.
 	unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FrameIdx = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-	addFrameReference(BuildMI(BB, X86::FSTr32, 5), FrameIdx).addReg(SrcReg);
-	addFrameReference(BuildMI(BB, X86::FLDr32, 5, DestReg), FrameIdx);
+	addFrameReference(BMI(BB, IP, X86::FSTr32, 5), FrameIdx).addReg(SrcReg);
+	addFrameReference(BMI(BB, IP, X86::FLDr32, 5, DestReg), FrameIdx);
       }
     } else if (SrcClass == cLong) {
-      BuildMI(BB, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
-      BuildMI(BB, X86::MOVrr32, 1, DestReg+1).addReg(SrcReg+1);
+      BMI(BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
+      BMI(BB, IP, X86::MOVrr32, 1, DestReg+1).addReg(SrcReg+1);
     } else {
-      visitInstruction(CI);
+      abort();
     }
     return;
   }
@@ -1451,21 +1462,21 @@ void ISel::visitCastInst(CastInst &CI) {
     };
     
     bool isUnsigned = SrcTy->isUnsigned();
-    BuildMI(BB, Opc[isUnsigned][SrcClass + DestClass - 1], 1,
-            DestReg).addReg(SrcReg);
+    BMI(BB, IP, Opc[isUnsigned][SrcClass + DestClass - 1], 1,
+        DestReg).addReg(SrcReg);
 
     if (isLong) {  // Handle upper 32 bits as appropriate...
       if (isUnsigned)     // Zero out top bits...
-	BuildMI(BB, X86::MOVir32, 1, DestReg+1).addZImm(0);
+	BMI(BB, IP, X86::MOVir32, 1, DestReg+1).addZImm(0);
       else                // Sign extend bottom half...
-	BuildMI(BB, X86::SARir32, 2, DestReg+1).addReg(DestReg).addZImm(31);
+	BMI(BB, IP, X86::SARir32, 2, DestReg+1).addReg(DestReg).addZImm(31);
     }
     return;
   }
 
   // Special case long -> int ...
   if (SrcClass == cLong && DestClass == cInt) {
-    BuildMI(BB, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
+    BMI(BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
     return;
   }
   
@@ -1474,8 +1485,8 @@ void ISel::visitCastInst(CastInst &CI) {
   if ((SrcClass <= cInt || SrcClass == cLong) && DestClass <= cInt
       && SrcClass > DestClass) {
     static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX, 0, X86::EAX };
-    BuildMI(BB, RegRegMove[SrcClass], 1, AReg[SrcClass]).addReg(SrcReg);
-    BuildMI(BB, RegRegMove[DestClass], 1, DestReg).addReg(AReg[DestClass]);
+    BMI(BB, IP, RegRegMove[SrcClass], 1, AReg[SrcClass]).addReg(SrcReg);
+    BMI(BB, IP, RegRegMove[DestClass], 1, DestReg).addReg(AReg[DestClass]);
     return;
   }
 
@@ -1484,14 +1495,14 @@ void ISel::visitCastInst(CastInst &CI) {
     // unsigned int -> load as 64 bit int.
     // unsigned long long -> more complex
     if (SrcTy->isUnsigned() && SrcTy != Type::UByteTy)
-      visitInstruction(CI);  // don't handle unsigned src yet!
+      abort();  // don't handle unsigned src yet!
 
     // We don't have the facilities for directly loading byte sized data from
     // memory.  Promote it to 16 bits.
     if (SrcClass == cByte) {
       unsigned TmpReg = makeAnotherReg(Type::ShortTy);
-      BuildMI(BB, SrcTy->isSigned() ? X86::MOVSXr16r8 : X86::MOVZXr16r8,
-	      1, TmpReg).addReg(SrcReg);
+      BMI(BB, IP, SrcTy->isSigned() ? X86::MOVSXr16r8 : X86::MOVZXr16r8,
+          1, TmpReg).addReg(SrcReg);
       SrcTy = Type::ShortTy;     // Pretend the short is our input now!
       SrcClass = cShort;
       SrcReg = TmpReg;
@@ -1502,18 +1513,18 @@ void ISel::visitCastInst(CastInst &CI) {
       F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
-      if (SrcTy == Type::ULongTy) visitInstruction(CI);
-      addFrameReference(BuildMI(BB, X86::MOVrm32, 5), FrameIdx).addReg(SrcReg);
-      addFrameReference(BuildMI(BB, X86::MOVrm32, 5),
+      if (SrcTy == Type::ULongTy) abort();  // FIXME: Handle ulong -> FP
+      addFrameReference(BMI(BB, IP, X86::MOVrm32, 5), FrameIdx).addReg(SrcReg);
+      addFrameReference(BMI(BB, IP, X86::MOVrm32, 5),
 			FrameIdx, 4).addReg(SrcReg+1);
     } else {
       static const unsigned Op1[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
-      addFrameReference(BuildMI(BB, Op1[SrcClass], 5), FrameIdx).addReg(SrcReg);
+      addFrameReference(BMI(BB, IP, Op1[SrcClass], 5), FrameIdx).addReg(SrcReg);
     }
 
     static const unsigned Op2[] =
       { 0, X86::FILDr16, X86::FILDr32, 0, X86::FILDr64 };
-    addFrameReference(BuildMI(BB, Op2[SrcClass], 5, DestReg), FrameIdx);
+    addFrameReference(BMI(BB, IP, Op2[SrcClass], 5, DestReg), FrameIdx);
     return;
   }
 
@@ -1523,20 +1534,20 @@ void ISel::visitCastInst(CastInst &CI) {
     // mode when truncating to an integer value.
     //
     int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
-    addFrameReference(BuildMI(BB, X86::FNSTCWm16, 4), CWFrameIdx);
+    addFrameReference(BMI(BB, IP, X86::FNSTCWm16, 4), CWFrameIdx);
 
     // Load the old value of the high byte of the control word...
     unsigned HighPartOfCW = makeAnotherReg(Type::UByteTy);
-    addFrameReference(BuildMI(BB, X86::MOVmr8, 4, HighPartOfCW), CWFrameIdx, 1);
+    addFrameReference(BMI(BB, IP, X86::MOVmr8, 4, HighPartOfCW), CWFrameIdx, 1);
 
     // Set the high part to be round to zero...
-    addFrameReference(BuildMI(BB, X86::MOVim8, 5), CWFrameIdx, 1).addZImm(12);
+    addFrameReference(BMI(BB, IP, X86::MOVim8, 5), CWFrameIdx, 1).addZImm(12);
 
     // Reload the modified control word now...
-    addFrameReference(BuildMI(BB, X86::FLDCWm16, 4), CWFrameIdx);
+    addFrameReference(BMI(BB, IP, X86::FLDCWm16, 4), CWFrameIdx);
     
     // Restore the memory image of control word to original value
-    addFrameReference(BuildMI(BB, X86::MOVrm8, 5),
+    addFrameReference(BMI(BB, IP, X86::MOVrm8, 5),
 		      CWFrameIdx, 1).addReg(HighPartOfCW);
 
     // We don't have the facilities for directly storing byte sized data to
@@ -1549,7 +1560,7 @@ void ISel::visitCastInst(CastInst &CI) {
       case cByte:  StoreTy = Type::ShortTy; StoreClass = cShort; break;
       case cShort: StoreTy = Type::IntTy;   StoreClass = cInt;   break;
       case cInt:   StoreTy = Type::LongTy;  StoreClass = cLong;  break;
-      case cLong:  visitInstruction(CI); // unsigned long long -> more complex
+      case cLong:  abort(); // FIXME: unsigned long long -> more complex
       default: assert(0 && "Unknown store class!");
       }
 
@@ -1559,23 +1570,23 @@ void ISel::visitCastInst(CastInst &CI) {
 
     static const unsigned Op1[] =
       { 0, X86::FISTr16, X86::FISTr32, 0, X86::FISTPr64 };
-    addFrameReference(BuildMI(BB, Op1[StoreClass], 5), FrameIdx).addReg(SrcReg);
+    addFrameReference(BMI(BB, IP, Op1[StoreClass], 5), FrameIdx).addReg(SrcReg);
 
     if (DestClass == cLong) {
-      addFrameReference(BuildMI(BB, X86::MOVmr32, 4, DestReg), FrameIdx);
-      addFrameReference(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), FrameIdx, 4);
+      addFrameReference(BMI(BB, IP, X86::MOVmr32, 4, DestReg), FrameIdx);
+      addFrameReference(BMI(BB, IP, X86::MOVmr32, 4, DestReg+1), FrameIdx, 4);
     } else {
       static const unsigned Op2[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
-      addFrameReference(BuildMI(BB, Op2[DestClass], 4, DestReg), FrameIdx);
+      addFrameReference(BMI(BB, IP, Op2[DestClass], 4, DestReg), FrameIdx);
     }
 
     // Reload the original control word now...
-    addFrameReference(BuildMI(BB, X86::FLDCWm16, 4), CWFrameIdx);
+    addFrameReference(BMI(BB, IP, X86::FLDCWm16, 4), CWFrameIdx);
     return;
   }
 
   // Anything we haven't handled already, we can't (yet) handle at all.
-  visitInstruction (CI);
+  abort();
 }
 
 // ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
