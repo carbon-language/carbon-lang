@@ -21,7 +21,6 @@
   <li><a href="#interfaces">Interfaces for user programs</a>
     <ul>
     <li><a href="#roots">Identifying GC roots on the stack: <tt>llvm.gcroot</tt></a></li>
-    <li><a href="#gcdescriptors">GC descriptor format for heap objects</a></li>
     <li><a href="#allocate">Allocating memory from the GC</a></li>
     <li><a href="#barriers">Reading and writing references to the heap</a></li>
     <li><a href="#explicit">Explicit invocation of the garbage collector</a></li>
@@ -31,9 +30,12 @@
   <li><a href="#gcimpl">Implementing a garbage collector</a>
     <ul>
     <li><a href="#llvm_gc_readwrite">Implementing <tt>llvm_gc_read</tt> and <tt>llvm_gc_write</tt></a></li>
-    <li><a href="#traceroots">Tracing the GC roots from the program stack</a></li>
-    <li><a href="#gcimpls">GC implementations available</a></li>
+    <li><a href="#callbacks">Callback functions used to implement the garbage collector</a></li>
     </ul>
+  </li>
+  <li><a href="#gcimpls">GC implementations available</a>
+    <ul>
+    <li><a href="#semispace">SemiSpace - A simple copying garbage collector</a></li>
   </li>
 
 <!--
@@ -208,20 +210,6 @@ CodeBlock:
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="gcdescriptors">GC descriptor format for heap objects</a>
-</div>
-
-<div class="doc_text">
-
-<p>
-TODO: Either from root meta data, or from object headers.  Front-end can provide a
-call-back to get descriptor from object without meta-data.
-</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
   <a name="allocate">Allocating memory from the GC</a>
 </div>
 
@@ -282,13 +270,14 @@ normal LLVM loads/stores.</p>
 <div class="doc_text">
 
 <div class="doc_code"><tt>
-  void %llvm_gc_initialize()
+  void %llvm_gc_initialize(unsigned %InitialHeapSize)
 </tt></div>
 
 <p>
 The <tt>llvm_gc_initialize</tt> function should be called once before any other
 garbage collection functions are called.  This gives the garbage collector the
-chance to initialize itself and allocate the heap spaces.
+chance to initialize itself and allocate the heap spaces.  The initial heap size
+to allocate should be specified as an argument.
 </p>
 
 </div>
@@ -323,7 +312,14 @@ the garbage collector.
 <div class="doc_text">
 
 <p>
-Implementing a garbage collector for LLVM is fairly straight-forward.  The
+Implementing a garbage collector for LLVM is fairly straight-forward.  The LLVM
+garbage collectors are provided in a form that makes them easy to link into the
+language-specific runtime that a language front-end would use.  They require
+functionality from the language-specific runtime to get information about <a
+href="#gcdescriptors">where pointers are located in heap objects</a>.
+</p>
+
+<p>The
 implementation must include the <a
 href="#allocate"><tt>llvm_gc_allocate</tt></a> and <a
 href="#explicit"><tt>llvm_gc_collect</tt></a> functions, and it must implement
@@ -363,7 +359,15 @@ as a parameter in the future, if needed.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="traceroots">Tracing the GC roots from the program stack</a>
+  <a name="callbacks">Callback functions used to implement the garbage collector</a></li>
+</div>
+
+Garbage collector implementations make use of call-back functions that are
+implemented by other parts of the LLVM system.
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">
+  <a name="traceroots">Tracing GC pointers from the program stack</a>
 </div>
 
 <div class="doc_text">
@@ -380,25 +384,129 @@ href="#gcroot"><tt>llvm.gcroot</tt></a> intrinsic) are provided.
 </p>
 </div>
 
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">
+  <a name="staticroots">Tracing GC pointers from static roots</a>
+</div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
+<div class="doc_text">
+TODO
+</div>
+
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">
+  <a name="gcdescriptors">Tracing GC pointers from heap objects</a>
+</div>
+
+<div class="doc_text">
+<p>
+The three most common ways to keep track of where pointers live in heap objects
+are (listed in order of space overhead required):</p>
+
+<ol>
+<li>In languages with polymorphic objects, pointers from an object header are
+usually used to identify the GC pointers in the heap object.  This is common for
+object-oriented languages like Self, Smalltalk, Java, or C#.</li>
+
+<li>If heap objects are not polymorphic, often the "shape" of the heap can be
+determined from the roots of the heap or from some other meta-data [<a
+href="#appel89">Appel89</a>, <a href="#goldberg91">Goldberg91</a>, <a
+href="#tolmach94">Tolmach94</a>].  In this case, the garbage collector can
+propagate the information around from meta data stored with the roots.  This
+often eliminates the need to have a header on objects in the heap.  This is
+common in the ML family.</li>
+
+<li>If all heap objects have pointers in the same locations, or pointers can be
+distinguished just by looking at them (e.g., the low order bit is clear), no
+book-keeping is needed at all.  This is common for Lisp-like languages.</li>
+</ol>
+
+<p>The LLVM garbage collectors are capable of supporting all of these styles of
+language, including ones that mix various implementations.  To do this, it
+allows the source-language to associate meta-data with the <a
+href="#roots">stack roots</a>, and the heap tracing routines can propagate the
+information.  In addition, LLVM allows the front-end to extract GC information
+from in any form from a specific object pointer (this supports situations #1 and
+#3).
+</p>
+
+<p><b>Making this efficient</b></p>
+
+
+
+</div>
+
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
   <a name="gcimpls">GC implementations available</a>
 </div>
+<!-- *********************************************************************** -->
 
 <div class="doc_text">
 
 <p>
 To make this more concrete, the currently implemented LLVM garbage collectors
-all live in the llvm/runtime/GC directory in the LLVM source-base.
-</p>
-
-<p>
-TODO: Brief overview of each.
+all live in the <tt>llvm/runtime/GC/*</tt> directories in the LLVM source-base.
+If you are interested in implementing an algorithm, there are many interesting
+possibilities (mark/sweep, a generational collector, a reference counting
+collector, etc), or you could choose to improve one of the existing algorithms.
 </p>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="semispace">SemiSpace - A simple copying garbage collector</a></li>
+</div>
+
+<div class="doc_text">
+<p>
+SemiSpace is a very simple copying collector.  When it starts up, it allocates
+two blocks of memory for the heap.  It uses a simple bump-pointer allocator to
+allocate memory from the first block until it runs out of space.  When it runs
+out of space, it traces through all of the roots of the program, copying blocks
+to the other half of the memory space.
+</p>
+
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">
+  Possible Improvements
+</div>
+
+<div class="doc_text">
+
+<p>
+If a collection cycle happens and the heap is not compacted very much (say less
+than 25% of the allocated memory was freed), the memory regions should be
+doubled in size.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="references">References</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p><a name="appel89">[Appel89]</a> Runtime Tags Aren't Necessary. Andrew
+W. Appel. Lisp and Symbolic Computation 19(7):703-705, July 1989.</p>
+
+<p><a name="goldberg91">[Goldberg91]</a> Tag-free garbage collection for
+strongly typed programming languages.  Benjamin Goldberg. ACM SIGPLAN
+PLDI'91.</p>
+
+<p><a name="tolmach94">[Tolmach94]</a> Tag-free garbage collection using
+explicit type parameters.  Andrew Tolmach.  Proceedings of the 1994 ACM
+conference on LISP and functional programming.</p>
+
+</div>
 
 <!-- *********************************************************************** -->
 
