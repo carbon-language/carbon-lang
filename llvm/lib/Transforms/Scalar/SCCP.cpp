@@ -107,28 +107,28 @@ private:
   // is not already a constant, add it to the instruction work list so that 
   // the users of the instruction are updated later.
   //
-  inline bool markConstant(Instruction *I, Constant *V) {
-    if (ValueState[I].markConstant(V)) {
-      DEBUG(std::cerr << "markConstant: " << V << " = " << I);
+  inline void markConstant(InstVal &IV, Instruction *I, Constant *C) {
+    if (IV.markConstant(C)) {
+      DEBUG(std::cerr << "markConstant: " << *C << ": " << *I);
       InstWorkList.push_back(I);
-      return true;
     }
-    return false;
+  }
+  inline void markConstant(Instruction *I, Constant *C) {
+    markConstant(ValueState[I], I, C);
   }
 
   // markValueOverdefined - Make a value be marked as "overdefined". If the
   // value is not already overdefined, add it to the instruction work list so
   // that the users of the instruction are updated later.
   //
-  inline bool markOverdefined(Value *V) {
-    if (ValueState[V].markOverdefined()) {
-      if (Instruction *I = dyn_cast<Instruction>(V)) {
-	DEBUG(std::cerr << "markOverdefined: " << V);
-	InstWorkList.push_back(I);  // Only instructions go on the work list
-      }
-      return true;
+  inline void markOverdefined(InstVal &IV, Instruction *I) {
+    if (IV.markOverdefined()) {
+      DEBUG(std::cerr << "markOverdefined: " << *I);
+      InstWorkList.push_back(I);  // Only instructions go on the work list
     }
-    return false;
+  }
+  inline void markOverdefined(Instruction *I) {
+    markOverdefined(ValueState[I], I);
   }
 
   // getValueState - Return the InstVal object that corresponds to the value.
@@ -193,7 +193,7 @@ private:
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (Instruction &I) { markOverdefined(&I); }
   void visitInvokeInst    (TerminatorInst &I) {
-    markOverdefined(&I);
+    if (I.getType() != Type::VoidTy) markOverdefined(&I);
     visitTerminatorInst(I);
   }
   void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
@@ -442,7 +442,8 @@ bool SCCP::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 //    successors executable.
 //
 void SCCP::visitPHINode(PHINode &PN) {
-  if (getValueState(&PN).isOverdefined()) return;  // Quick exit
+  InstVal &PNIV = getValueState(&PN);
+  if (PNIV.isOverdefined()) return;  // Quick exit
 
   // Look at all of the executable operands of the PHI node.  If any of them
   // are overdefined, the PHI becomes overdefined as well.  If they are all
@@ -457,7 +458,7 @@ void SCCP::visitPHINode(PHINode &PN) {
     
     if (isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent())) {
       if (IV.isOverdefined()) {   // PHI node becomes overdefined!
-        markOverdefined(&PN);
+        markOverdefined(PNIV, &PN);
         return;
       }
 
@@ -473,7 +474,7 @@ void SCCP::visitPHINode(PHINode &PN) {
           // Yes there is.  This means the PHI node is not constant.
           // You must be overdefined poor PHI.
           //
-          markOverdefined(&PN);         // The PHI node now becomes overdefined
+          markOverdefined(PNIV, &PN);    // The PHI node now becomes overdefined
           return;    // I'm done analyzing you
         }
       }
@@ -486,7 +487,7 @@ void SCCP::visitPHINode(PHINode &PN) {
   // this is the case, the PHI remains undefined.
   //
   if (OperandVal)
-    markConstant(&PN, OperandVal);      // Aquire operand value
+    markConstant(PNIV, &PN, OperandVal);      // Aquire operand value
 }
 
 void SCCP::visitTerminatorInst(TerminatorInst &TI) {
@@ -510,12 +511,10 @@ void SCCP::visitCastInst(CastInst &I) {
     Constant *Result =
       ConstantFoldCastInstruction(VState.getConstant(), I.getType());
 
-    if (Result) {
-      // This instruction constant folds!
+    if (Result)   // If this instruction constant folds!
       markConstant(&I, Result);
-    } else {
+    else
       markOverdefined(&I);   // Don't know how to fold this instruction.  :(
-    }
   }
 }
 
