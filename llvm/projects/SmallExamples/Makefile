@@ -10,7 +10,6 @@ LEVEL=../..
 
 include $(LEVEL)/Makefile.config
 
-DIRS=
-OPTIONAL_DIRS:=$(basename $(shell ls $(SourceDir) | grep -v CVS | grep -v Makefile))
+DIRS = Fibonacci HowToUseJIT
 
 include $(BUILD_SRC_ROOT)/Makefile.rules
