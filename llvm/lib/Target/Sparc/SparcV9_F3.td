@@ -142,6 +142,29 @@ class F3_4<bits<2> opVal, bits<6> op3Val, string name> : F3_rs1simm13 {
   set Inst{12-0} = simm;
 }
 
+class F3_5<bits<2> opVal, bits<6> op3Val, bits<3> rcondVal,
+           string name> : F3_rs1rs2rd {
+  set op  = opVal;
+  set op3 = op3Val;
+  set Name = name;
+  set Inst{13} = 0;           // i field = 0
+  set Inst{12-10} = rcondVal; // rcond field
+}
+
+class F3_6<bits<2> opVal, bits<6> op3Val, bits<3> rcondVal,
+           string name> : F3_rs1 {
+  bits<10> simm10;
+  bits<5>  rd;
+
+  set op  = opVal;
+  set op3 = op3Val;
+  set Name = name;
+  set Inst{13} = 1;           // i field = 1
+  set Inst{12-10} = rcondVal; // rcond field
+}
+
+//FIXME: classes 7-10 not defined!!
+
 class F3_11<bits<2> opVal, bits<6> op3Val, string name> : F3_rdrs1rs2 {
   bit x;
   set op = opVal;

@@ -235,12 +235,18 @@ I(FBULE, "fbule",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLA
 I(FBO  , "fbo",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
 
 // Conditional move on integer comparison with zero.
-I(MOVRZ  , "movrz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
-I(MOVRLEZ, "movrlez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
-I(MOVRLZ , "movrlz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
-I(MOVRNZ , "movrnz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
-I(MOVRGZ , "movrgz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
-I(MOVRGEZ, "movrgez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRZr  , "movrz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRZi  , "movrz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRLEZr, "movrlez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRLEZi, "movrlez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRLZr , "movrlz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRLZi , "movrlz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRNZr , "movrnz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRNZi , "movrnz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRGZr , "movrgz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRGZi , "movrgz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRGEZr, "movrgez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
+I(MOVRGEZi, "movrgez",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  M_CONDL_FLAG | M_INT_FLAG)
 
 // Conditional move on integer condition code.
 // The first argument specifies the ICC register: %icc or %xcc

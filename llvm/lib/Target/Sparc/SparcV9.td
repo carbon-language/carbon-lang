@@ -448,8 +448,19 @@ def MOVFULEi : F4_4<2, 0b101100, 0b1110, "movfule">;   // mova i/xcc, rs2, rd
 def MOVFOr   : F4_3<2, 0b101100, 0b1111, "movfo">;     // mova i/xcc, rs2, rd
 def MOVFOi   : F4_4<2, 0b101100, 0b1111, "movfo">;     // mova i/xcc, rs2, rd
 
-// FIXME: Section A.36: Move Integer Register on Register Condition (MOVR)
-
+// Section A.36: Move Integer Register on Register Condition (MOVR)
+def MOVRZr   : F3_5<2, 0b101111, 0b001, "movrz">;      // movrz rs1, rs2, rd
+def MOVRZi   : F3_6<2, 0b101111, 0b001, "movrz">;      // movrz rs1, imm, rd
+def MOVRLEZr : F3_5<2, 0b101111, 0b010, "movrlez">;    // movrz rs1, rs2, rd
+def MOVRLEZi : F3_6<2, 0b101111, 0b010, "movrlez">;    // movrz rs1, imm, rd
+def MOVRLZr  : F3_5<2, 0b101111, 0b011, "movrlz">;     // movrz rs1, rs2, rd
+def MOVRLZi  : F3_6<2, 0b101111, 0b011, "movrlz">;     // movrz rs1, imm, rd
+def MOVRNZr  : F3_5<2, 0b101111, 0b101, "movrnz">;     // movrz rs1, rs2, rd
+def MOVRNZi  : F3_6<2, 0b101111, 0b101, "movrnz">;     // movrz rs1, imm, rd
+def MOVRGZr  : F3_5<2, 0b101111, 0b110, "movrgz">;     // movrz rs1, rs2, rd
+def MOVRGZi  : F3_6<2, 0b101111, 0b110, "movrgz">;     // movrz rs1, imm, rd
+def MOVRGEZr : F3_5<2, 0b101111, 0b111, "movrgez">;    // movrz rs1, rs2, rd
+def MOVRGEZi : F3_6<2, 0b101111, 0b111, "movrgez">;    // movrz rs1, imm, rd
 
 // Section A.37: Multiply and Divide (64-bit) - p199
 def MULXr  : F3_1<2, 0b001001, "mulx">;        // mulx  r, r, r
