@@ -245,6 +245,8 @@ ConstantFP::ConstantFP(const Type *Ty, double V) : Constant(Ty) {
 
 ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V) : Constant(T) {
+  assert(V.size() == T->getNumElements() &&
+         "Invalid initializer vector for constant array");
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert((V[i]->getType() == T->getElementType() ||
