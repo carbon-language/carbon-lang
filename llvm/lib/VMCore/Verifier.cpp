@@ -689,20 +689,24 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   }
 
   case Intrinsic::isnan:
-    Assert1(FT->getNumParams() == 1 && FT->getParamType(0)->isFloatingPoint(),
-            "Illegal prototype for llvm.isnan", IF);
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
     Assert1(FT->getReturnType() == Type::BoolTy,
-            "Illegal prototype for llvm.isnan", IF);
+            "Return type is not bool!", IF);
+    Assert1(FT->getParamType(0)->isFloatingPoint(),
+            "Argument is not a floating point type!", IF);
     NumArgs = 1;
     break;
 
   case Intrinsic::isunordered:
-    Assert1(FT->getNumParams() == 2 &&
-            FT->getParamType(0)->isFloatingPoint() &&
-            FT->getParamType(1)->isFloatingPoint(),
-            "Illegal prototype for llvm.isunordered", IF);
+    Assert1(FT->getNumParams() == 2,
+            "Illegal # arguments for intrinsic function!", IF);
     Assert1(FT->getReturnType() == Type::BoolTy,
-            "Illegal prototype for llvm.isunordered", IF);
+            "Return type is not bool!", IF);
+    Assert1(FT->getParamType(0) == FT->getParamType(1),
+            "Arguments must be of the same type!", IF);
+    Assert1(FT->getParamType(0)->isFloatingPoint(),
+            "Argument is not a floating point type!", IF);
     NumArgs = 2;
     break;
 
