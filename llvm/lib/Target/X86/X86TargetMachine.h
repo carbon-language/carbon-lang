@@ -15,7 +15,7 @@ class X86TargetMachine : public TargetMachine {
 public:
   X86TargetMachine();
 
-  virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
+  virtual const X86InstrInfo     &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { abort(); }
   virtual const MachineRegInfo   &getRegInfo()   const { abort(); }
   virtual const MachineFrameInfo &getFrameInfo() const { abort(); }
