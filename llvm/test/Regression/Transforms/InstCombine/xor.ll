@@ -122,3 +122,9 @@ uint %test18(uint %A) {             ; C - ~X == X + (1+C)
 	%C = sub uint 123, %B
 	ret uint %C
 }
+
+uint %test19(uint %A, uint %B) {
+	%C = xor uint %A, %B
+	%D = xor uint %C, %A  ; A terms cancel, D = B
+	ret uint %D
+}
