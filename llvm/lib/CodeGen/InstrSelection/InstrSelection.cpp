@@ -22,9 +22,12 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 
-static bool SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
-				      TargetMachine &target);
 
+//******************** Internal Data Declarations ************************/
+
+// Use a static vector to avoid allocating a new one per VM instruction
+static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
+  
 
 enum SelectDebugLevel_t {
   Select_NoDebugInfo,
@@ -41,6 +44,21 @@ cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags,
    clEnumValN(Select_DebugInstTrees,   "i", "print debugging info for instruction selection "),
    clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"), 0);
 
+
+//******************** Forward Function Declarations ***********************/
+
+
+static bool SelectInstructionsForTree   (InstrTreeNode* treeRoot,
+                                         int goalnt,
+                                         TargetMachine &target);
+
+static void PostprocessMachineCodeForTree(InstructionNode* instrNode,
+                                          int ruleForNode,
+                                          short* nts,
+                                          TargetMachine &target);
+
+
+//******************* Externally Visible Functions *************************/
 
 
 //---------------------------------------------------------------------------
@@ -110,8 +128,9 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
   
   if (SelectDebugLevel >= Select_PrintMachineCode)
     {
-      cout << endl << "*** Machine instructions after INSTRUCTION SELECTION" << endl;
-      PrintMachineInstructions(method);
+      cout << endl
+           << "*** Machine instructions after INSTRUCTION SELECTION" << endl;
+      method->getMachineCode().dump();
     }
   
   return false;
@@ -122,13 +141,32 @@ SelectInstructionsForMethod(Method* method, TargetMachine &target)
 
 
 //---------------------------------------------------------------------------
+// Function AppendMachineCodeForVMInstr
+// 
+// Append machine instr sequence to the machine code vec for a VM instr
+//---------------------------------------------------------------------------
+
+inline void
+AppendMachineCodeForVMInstr(MachineInstr** minstrVec,
+                            unsigned int N,
+                            Instruction* vmInstr)
+{
+  if (N == 0)
+    return;
+  MachineCodeForVMInstr& mvec = vmInstr->getMachineInstrVec();
+  mvec.insert(mvec.end(), minstrVec, minstrVec+N); 
+}
+
+
+
+//---------------------------------------------------------------------------
 // Function PostprocessMachineCodeForTree
 // 
 // Apply any final cleanups to machine code for the root of a subtree
 // after selection for all its children has been completed.
 //---------------------------------------------------------------------------
 
-void
+static void
 PostprocessMachineCodeForTree(InstructionNode* instrNode,
                               int ruleForNode,
                               short* nts,
@@ -170,9 +208,6 @@ bool
 SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
 			  TargetMachine &target)
 {
-  // Use a static vector to avoid allocating a new one per VM instruction
-  static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
-  
   // Get the rule that matches this node.
   // 
   int ruleForNode = burm_rule(treeRoot->state, goalnt);
@@ -196,15 +231,14 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
     {
       InstructionNode* instrNode = (InstructionNode*)treeRoot;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
-    
+      
       unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, target,
 					 minstrVec);
-      assert(N <= MAX_INSTR_PER_VMINSTR);
-      for (unsigned i=0; i < N; i++)
-	{
-	  assert(minstrVec[i] != NULL);
-	  instrNode->getInstruction()->addMachineInstruction(minstrVec[i]);
-	}
+      if (N > 0)
+        {
+          assert(N <= MAX_INSTR_PER_VMINSTR);
+          AppendMachineCodeForVMInstr(minstrVec,N,instrNode->getInstruction());
+        }
     }
   
   // Then, recursively compile the child nodes, if any.
