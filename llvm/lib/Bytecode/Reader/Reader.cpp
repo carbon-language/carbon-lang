@@ -639,8 +639,19 @@ Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
                             std::string *ErrorStr) {
   BytecodeParser Parser;
+  unsigned char *PtrToDelete = 0;
+  if ((intptr_t)Buffer & 3) {         // If the buffer is not 4 byte aligned...
+    // Allocate a new buffer to hold the bytecode...
+    PtrToDelete = new unsigned char[Length+4];
+    unsigned Offset = 4-((intptr_t)PtrToDelete & 3);  // Make sure it's aligned
+    memcpy(PtrToDelete+Offset, Buffer, Length);       // Copy it over
+    Buffer = PtrToDelete+Offset;
+  }
+
   Module *R = Parser.ParseBytecode(Buffer, Buffer+Length);
   if (ErrorStr) *ErrorStr = Parser.getError();
+
+  delete [] PtrToDelete;   // Delete alignment buffer if neccesary
   return R;
 }
 
