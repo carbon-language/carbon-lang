@@ -11,6 +11,11 @@
 ;
 ; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | not grep 'cast.*int'
 
+
+; Some of these cases were miscompiling programs so they were disabled, see 
+; bugzilla for details.
+; XFAIL: *
+
 implementation   ; Functions:
 
 ; 
