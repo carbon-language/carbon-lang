@@ -29,7 +29,7 @@
 //
 //  And this class would be used like this:
 //    CountMallocVistor CMV;
-//    CMV.visit(method);
+//    CMV.visit(function);
 //    NumMallocs = CMV.Count;
 //
 //===----------------------------------------------------------------------===//
@@ -65,11 +65,20 @@ struct InstVisitor {
       visit(*Start++);
   }
 
-  // Define visitors for modules, methods and basic blocks...
+  // Define visitors for modules, functions and basic blocks...
   //
-  void visit(Module *M) { visit(M->begin(), M->end()); }
-  void visit(Function *F) { visit(F->begin(), F->end()); }
-  void visit(BasicBlock *BB) { visit(BB->begin(), BB->end()); }
+  void visit(Module *M) {
+    ((SubClass*)this)->visitModule(M);
+    visit(M->begin(), M->end());
+  }
+  void visit(Function *F) {
+    ((SubClass*)this)->visitFunction(F);
+    visit(F->begin(), F->end());
+  }
+  void visit(BasicBlock *BB) {
+    ((SubClass*)this)->visitBasicBlock(BB);
+    visit(BB->begin(), BB->end());
+  }
 
   // visit - Finally, code to visit an instruction...
   //
@@ -91,6 +100,13 @@ struct InstVisitor {
   // and try visiting the subtype.  All of this should be inlined perfectly,
   // because there are no virtual functions to get in the way.
   //
+
+  // When visiting a module, function or basic block directly, these methods get
+  // called to indicate when transitioning into a new unit.
+  //
+  void visitModule    (Module *M) {}
+  void visitFunction  (Function *F) {}
+  void visitBasicBlock(BasicBlock *BB) {}
   
   // Specific Instruction type classes... note that all of the casts are
   // neccesary because we use the instruction classes as opaque types...
