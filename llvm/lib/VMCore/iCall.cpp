@@ -15,10 +15,9 @@ CallInst::CallInst(Method *M, const vector<Value*> &params,
   Operands.reserve(1+params.size());
   Operands.push_back(Use(M, this));
 
-  const MethodType* MT = M->getMethodType();
-  const MethodType::ParamTypes &PL = MT->getParamTypes();
+  const MethodType::ParamTypes &PL = M->getType()->getParamTypes();
   assert((params.size() == PL.size()) || 
-	 (MT->isVarArg() && params.size() > PL.size()) &&
+	 (M->getType()->isVarArg() && params.size() > PL.size()) &&
 	 "Calling a function with bad signature");
 #ifndef NDEBUG
   MethodType::ParamTypes::const_iterator It = PL.begin();

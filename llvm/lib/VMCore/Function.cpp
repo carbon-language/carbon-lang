@@ -66,10 +66,6 @@ const Type *Method::getReturnType() const {
   return ((const MethodType *)getType())->getReturnType(); 
 }
 
-const MethodType *Method::getMethodType() const { 
-  return (const MethodType *)getType();
-}
-
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to
 // 'delete' a whole class at a time, even though there may be circular
@@ -88,9 +84,9 @@ void Method::dropAllReferences() {
 
 GlobalVariable::GlobalVariable(const Type *Ty, const string &Name = "")
   : Value(Ty, Value::GlobalVal, Name), Parent(0) {
-  assert(Ty->isPointerType() && 
-	 (!Ty->isPointerType()->isArrayType() || // No unsized array pointers
-	  Ty->isPointerType()->isArrayType()->isSized()) &&
+  assert(Ty->isPointerType() &&                   // No unsized array pointers
+	 (!Ty->dyncastPointerType()->isArrayType() ||
+	  Ty->dyncastPointerType()->dyncastArrayType()->isSized()) &&
 	 "Global Variables must be pointers to a sized type!");
 }
 

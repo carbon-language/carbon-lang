@@ -115,20 +115,20 @@ static struct TypeType : public Type {
 //                           Static 'Type' data
 //===----------------------------------------------------------------------===//
 
-const Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
-           *Type::BoolTy   = new            Type("bool"  , BoolTyID),
-           *Type::SByteTy  = new   SignedIntType("sbyte" , SByteTyID, 1),
-           *Type::UByteTy  = new UnsignedIntType("ubyte" , UByteTyID, 1),
-           *Type::ShortTy  = new   SignedIntType("short" ,  ShortTyID, 2),
-           *Type::UShortTy = new UnsignedIntType("ushort", UShortTyID, 2),
-           *Type::IntTy    = new   SignedIntType("int"   ,  IntTyID, 4), 
-           *Type::UIntTy   = new UnsignedIntType("uint"  , UIntTyID, 4),
-           *Type::LongTy   = new   SignedIntType("long"  ,  LongTyID, 8),
-           *Type::ULongTy  = new UnsignedIntType("ulong" , ULongTyID, 8),
-           *Type::FloatTy  = new            Type("float" , FloatTyID),
-           *Type::DoubleTy = new            Type("double", DoubleTyID),
-           *Type::TypeTy   =        &TheTypeType,
-           *Type::LabelTy  = new            Type("label" , LabelTyID);
+Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
+     *Type::BoolTy   = new            Type("bool"  , BoolTyID),
+     *Type::SByteTy  = new   SignedIntType("sbyte" , SByteTyID, 1),
+     *Type::UByteTy  = new UnsignedIntType("ubyte" , UByteTyID, 1),
+     *Type::ShortTy  = new   SignedIntType("short" ,  ShortTyID, 2),
+     *Type::UShortTy = new UnsignedIntType("ushort", UShortTyID, 2),
+     *Type::IntTy    = new   SignedIntType("int"   ,  IntTyID, 4), 
+     *Type::UIntTy   = new UnsignedIntType("uint"  , UIntTyID, 4),
+     *Type::LongTy   = new   SignedIntType("long"  ,  LongTyID, 8),
+     *Type::ULongTy  = new UnsignedIntType("ulong" , ULongTyID, 8),
+     *Type::FloatTy  = new            Type("float" , FloatTyID),
+     *Type::DoubleTy = new            Type("double", DoubleTyID),
+     *Type::TypeTy   =        &TheTypeType,
+     *Type::LabelTy  = new            Type("label" , LabelTyID);
 
 
 //===----------------------------------------------------------------------===//
