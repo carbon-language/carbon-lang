@@ -25,10 +25,10 @@ using std::cerr;
 // FIXME: This should eventually be parameterized...
 static TargetData TD("opt target");
 
-static cl::opt<string>
+static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input llvm assembly>"), cl::Required);
 
-static cl::opt<string> 
+static cl::opt<std::string> 
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 

@@ -17,13 +17,13 @@
 #include <memory>
 
 // InputFilename - The filename to read from.
-static cl::opt<string>
+static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode file>"),
               cl::init("-"), cl::value_desc("filename"));
               
 
 // ExtractFunc - The function to extract from the module... defaults to main.
-static cl::opt<string>
+static cl::opt<std::string>
 ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
             cl::value_desc("function"));
 

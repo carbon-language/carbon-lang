@@ -20,7 +20,7 @@
 #include <algorithm>
 
 using std::cerr;
-
+using std::string;
 
 //===----------------------------------------------------------------------===//
 // PassNameParser class - Make use of the pass registration mechanism to

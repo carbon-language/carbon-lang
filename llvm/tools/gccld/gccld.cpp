@@ -30,22 +30,22 @@
 #include <sys/stat.h>
 using std::cerr;
 
-static cl::list<string> 
+static cl::list<std::string> 
 InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
                cl::OneOrMore);
 
-static cl::opt<string> 
+static cl::opt<std::string> 
 OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
                cl::value_desc("filename"));
 
 static cl::opt<bool>    
 Verbose("v", cl::desc("Print information about actions taken"));
 
-static cl::list<string> 
+static cl::list<std::string> 
 LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
          cl::value_desc("directory"));
 
-static cl::list<string> 
+static cl::list<std::string> 
 Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
           cl::value_desc("library prefix"));
 
