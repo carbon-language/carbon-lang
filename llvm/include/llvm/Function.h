@@ -3,21 +3,21 @@
 // This file contains the declaration of the Function class, which represents a 
 // single function/procedure in the VM.
 //
-// Note that basic blocks in the method are value's, because they are referenced
-// by instructions like calls and can go into virtual function tables and stuff.
+// Note that BasicBlock's in the Function are Value's, because they are
+// referenced by instructions like calls and can go into virtual function tables
+// and stuff.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_FUNCTION_H
 #define LLVM_FUNCTION_H
 
-#include "llvm/SymTabValue.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/ValueHolder.h"
 
 class FunctionType;
 
-class Function : public GlobalValue, public SymTabValue {
+class Function : public GlobalValue {
 public:
   typedef ValueHolder<Argument  , Function, Function> ArgumentListType;
   typedef ValueHolder<BasicBlock, Function, Function> BasicBlocksType;
@@ -30,9 +30,11 @@ public:
 
 private:
 
-  // Important things that make up a method!
+  // Important things that make up a function!
   BasicBlocksType  BasicBlocks;         // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
+
+  SymbolTable *SymTab, *ParentSymTab;
   
   friend class ValueHolder<Function, Module, Module>;
   void setParent(Module *parent);
@@ -47,12 +49,12 @@ public:
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me
 
-  // Is the body of this method unknown? (the basic block list is empty if so)
-  // this is true for external methods, defined as forward "declare"ations
+  // Is the body of this function unknown? (the basic block list is empty if so)
+  // this is true for external functions, defined as forward "declare"ations
   bool isExternal() const { return BasicBlocks.empty(); }
 
   // Get the underlying elements of the Function... both the argument list and
-  // basic block list are empty for external methods.
+  // basic block list are empty for external functions.
   //
   inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }
   inline       ArgumentListType &getArgumentList()      { return ArgumentList; }
@@ -62,6 +64,27 @@ public:
 
   inline const BasicBlock       *getEntryNode() const   { return front(); }
   inline       BasicBlock       *getEntryNode()         { return front(); }
+
+  //===--------------------------------------------------------------------===//
+  // Symbol Table Accessing functions...
+
+  // hasSymbolTable() - Returns true if there is a symbol table allocated to
+  // this object AND if there is at least one name in it!
+  //
+  bool hasSymbolTable() const;
+
+  // CAUTION: The current symbol table may be null if there are no names (ie, 
+  // the symbol table is empty) 
+  //
+  inline       SymbolTable *getSymbolTable()       { return SymTab; }
+  inline const SymbolTable *getSymbolTable() const { return SymTab; }
+
+  // getSymbolTableSure is guaranteed to not return a null pointer, because if
+  // the function does not already have a symtab, one is created.  Use this if
+  // you intend to put something into the symbol table for the function.
+  //
+  SymbolTable *getSymbolTableSure();  // Implemented in Value.cpp
+
   
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions
