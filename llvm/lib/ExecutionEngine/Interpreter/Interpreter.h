@@ -119,10 +119,13 @@ public:
   void visitLoadInst(LoadInst &I);
   void visitStoreInst(StoreInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
-
   void visitPHINode(PHINode &PN) { assert(0 && "PHI nodes already handled!"); }
   void visitCastInst(CastInst &I);
-  void visitCallInst(CallInst &I);
+
+  void visitCallSite(CallSite CS);
+  void visitCallInst(CallInst &I) { visitCallSite (CallSite (&I)); }
+  void visitInvokeInst(InvokeInst &I) { visitCallSite (CallSite (&I)); }
+
   void visitShl(ShiftInst &I);
   void visitShr(ShiftInst &I);
   void visitVANextInst(VANextInst &I);

@@ -637,9 +637,9 @@ void Interpreter::visitStoreInst(StoreInst &I) {
 //                 Miscellaneous Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-void Interpreter::visitCallInst(CallInst &I) {
+void Interpreter::visitCallSite(CallSite CS) {
   ExecutionContext &SF = ECStack.back();
-  SF.Caller = CallSite(&I);
+  SF.Caller = CS;
   std::vector<GenericValue> ArgVals;
   const unsigned NumArgs = SF.Caller.arg_size();
   ArgVals.reserve(NumArgs);
