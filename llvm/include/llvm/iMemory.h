@@ -193,7 +193,7 @@ public:
 
   const vector<ConstPoolVal*> &getIndices() const { return indexVec; }
   inline bool hasIndices() const {
-    return getNumOperands() <= getFirstIndexOperandNumber();
+    return getNumOperands() > getFirstIndexOperandNumber();
   }
 };
 
