@@ -1,5 +1,4 @@
-//===----------------------------------------------------------------------===//
-// LLVM 'GCCAS' UTILITY 
+//===-- gccas.cpp - The "optimizing assembler" used by the GCC frontend ---===//
 //
 // This utility is designed to be used by the GCC frontend for creating bytecode
 // files from its intermediate LLVM assembly.  The requirements for this utility
