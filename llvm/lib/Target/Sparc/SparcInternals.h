@@ -98,9 +98,9 @@ public:
     bool ignore;
     if (this->maxImmedConstant(opCode, ignore) != 0)
       {
-        assert(! this->isStore((MachineOpCode) STB - 1)); // first store is STB
-        assert(! this->isStore((MachineOpCode) STD + 1)); // last  store is STD
-        return (opCode >= STB && opCode <= STD)? 2 : 1;
+        assert(! this->isStore((MachineOpCode) STB - 1)); // 1st  store opcode
+        assert(! this->isStore((MachineOpCode) STXFSR+1));// last store opcode
+        return (opCode >= STB && opCode <= STXFSR)? 2 : 1;
       }
     else
       return -1;
@@ -247,21 +247,13 @@ class UltraSparcRegInfo : public MachineRegInfo {
   // function args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation.
   //
-  void setCallOrRetArgCol(LiveRange *LR, unsigned RegNo,
-                          const MachineInstr *MI, 
-                          std::hash_map<const MachineInstr *,
-                                        AddedInstrns *> &AIMap) const;
-
-  MachineInstr *getCopy2RegMI(const Value *SrcVal, unsigned Reg,
-                              unsigned RegClassID) const;
-
-  void suggestReg4RetAddr(const MachineInstr *RetMI, 
+  void suggestReg4RetAddr(MachineInstr *RetMI, 
 			  LiveRangeInfo &LRI) const;
 
-  void suggestReg4CallAddr(const MachineInstr *CallMI, LiveRangeInfo &LRI,
+  void suggestReg4CallAddr(MachineInstr *CallMI, LiveRangeInfo &LRI,
 			   std::vector<RegClass *> RCList) const;
-
-  void InitializeOutgoingArg(const MachineInstr* CallMI, AddedInstrns *CallAI,
+  
+  void InitializeOutgoingArg(MachineInstr* CallMI, AddedInstrns *CallAI,
                              PhyRegAlloc &PRA, LiveRange* LR,
                              unsigned regType, unsigned RegClassID,
                              int  UniArgReg, unsigned int argNo,
@@ -269,18 +261,14 @@ class UltraSparcRegInfo : public MachineRegInfo {
     const;
   
   // The following 4 methods are used to find the RegType (see enum above)
-  // of a LiveRange, Value and using the unified RegClassID
+  // for a reg class and a given primitive type, a LiveRange, a Value,
+  // or a particular machine register.
+  // The fifth function gives the reg class of the given RegType.
+  // 
   int getRegType(unsigned regClassID, const Type* type) const;
   int getRegType(const LiveRange *LR) const;
   int getRegType(const Value *Val) const;
-  int getRegType(int reg) const;
-
-
-  // The following methods are used to generate copy instructions to move
-  // data between condition code registers
-  //
-  MachineInstr *cpCCR2IntMI(unsigned IntReg) const;
-  MachineInstr *cpInt2CCRMI(unsigned IntReg) const;
+  int getRegType(int unifiedRegNum) const;
 
   // Used to generate a copy instruction based on the register class of
   // value.
@@ -324,28 +312,8 @@ public:
 
   // To find the register class used for a specified Type
   //
-  inline unsigned getRegClassIDOfType(const Type *type,
-                                      bool isCCReg = false) const {
-    Type::PrimitiveID ty = type->getPrimitiveID();
-    unsigned res;
-    
-    // FIXME: Comparing types like this isn't very safe...
-    if ((ty && ty <= Type::LongTyID) || (ty == Type::LabelTyID) ||
-	(ty == Type::FunctionTyID) ||  (ty == Type::PointerTyID) )
-      res = IntRegClassID;             // sparc int reg (ty=0: void)
-    else if (ty <= Type::DoubleTyID)
-      res = FloatRegClassID;           // sparc float reg class
-    else { 
-      //std::cerr << "TypeID: " << ty << "\n";
-      assert(0 && "Cannot resolve register class for type");
-      return 0;
-    }
-
-    if(isCCReg)
-      return res + 2;      // corresponidng condition code regiser 
-    else 
-      return res;
-  }
+  unsigned getRegClassIDOfType(const Type *type,
+                               bool isCCReg = false) const;
 
   // To find the register class of a Value
   //
@@ -354,8 +322,11 @@ public:
     return getRegClassIDOfType(Val->getType(), isCCReg);
   }
 
+  // To find the register class to which a specified register belongs
+  //
+  unsigned getRegClassIDOfReg(int unifiedRegNum) const;
+  unsigned getRegClassIDOfRegType(int regType) const;
   
-
   // getZeroRegNum - returns the register that contains always zero this is the
   // unified register number
   //
@@ -385,51 +356,71 @@ public:
   void suggestRegs4MethodArgs(const Function *Meth, 
 			      LiveRangeInfo& LRI) const;
 
-  void suggestRegs4CallArgs(const MachineInstr *CallMI, 
+  void suggestRegs4CallArgs(MachineInstr *CallMI, 
 			    LiveRangeInfo& LRI,
                             std::vector<RegClass *> RCL) const; 
 
-  void suggestReg4RetValue(const MachineInstr *RetMI, 
+  void suggestReg4RetValue(MachineInstr *RetMI, 
                            LiveRangeInfo& LRI) const;
-
-
+  
   void colorMethodArgs(const Function *Meth,  LiveRangeInfo &LRI,
 		       AddedInstrns *FirstAI) const;
 
-  void colorCallArgs(const MachineInstr *CallMI, LiveRangeInfo &LRI,
+  void colorCallArgs(MachineInstr *CallMI, LiveRangeInfo &LRI,
 		     AddedInstrns *CallAI,  PhyRegAlloc &PRA,
 		     const BasicBlock *BB) const;
 
-  void colorRetValue(const MachineInstr *RetI,   LiveRangeInfo& LRI,
+  void colorRetValue(MachineInstr *RetI,   LiveRangeInfo& LRI,
 		     AddedInstrns *RetAI) const;
-
 
 
   // method used for printing a register for debugging purposes
   //
   static void printReg(const LiveRange *LR);
 
-  // this method provides a unique number for each register 
+  // Each register class has a seperate space for register IDs. To convert
+  // a regId in a register class to a common Id, or vice versa,
+  // we use the folloing methods.
   //
-  inline int getUnifiedRegNum(int RegClassID, int reg) const {
-
-    if( RegClassID == IntRegClassID && reg < 32 ) 
+  // This method provides a unique number for each register 
+  inline int getUnifiedRegNum(unsigned regClassID, int reg) const {
+    
+    if (regClassID == IntRegClassID) {
+      assert(reg < 32 && "Invalid reg. number");
       return reg;
-    else if ( RegClassID == FloatRegClassID && reg < 64)
+    }
+    else if (regClassID == FloatRegClassID) {
+      assert(reg < 64 && "Invalid reg. number");
       return reg + 32;                  // we have 32 int regs
-    else if( RegClassID == FloatCCRegClassID && reg < 4)
+    }
+    else if (regClassID == FloatCCRegClassID) {
+      assert(reg < 4 && "Invalid reg. number");
       return reg + 32 + 64;             // 32 int, 64 float
-    else if( RegClassID == IntCCRegClassID ) 
-      return reg + 4+ 32 + 64;                // only int cc reg
-    else if (reg==InvalidRegNum)                
+    }
+    else if (regClassID == IntCCRegClassID ) {
+      assert(reg == 0 && "Invalid reg. number");
+      return reg + 4+ 32 + 64;          // only one int CC reg
+    }
+    else if (reg==InvalidRegNum) {
       return InvalidRegNum;
+    }
     else  
-      assert(0 && "Invalid register class or reg number");
+      assert(0 && "Invalid register class");
     return 0;
   }
-
-  // given the unified register number, this gives the name
-  // for generating assembly code or debugging.
+  
+  // This method converts the unified number to the number in its class,
+  // and returns the class ID in regClassID.
+  inline int getClassRegNum(int ureg, unsigned& regClassID) const {
+    if      (ureg < 32)     { regClassID = IntRegClassID;     return ureg;    }
+    else if (ureg < 32+64)  { regClassID = FloatRegClassID;   return ureg-32; }
+    else if (ureg < 4 +96)  { regClassID = FloatCCRegClassID; return ureg-96; }
+    else if (ureg < 1 +100) { regClassID = IntCCRegClassID;   return ureg-100;}
+    else if (ureg == InvalidRegNum) { return InvalidRegNum; }
+    else { assert(0 && "Invalid unified register number"); }
+  }
+  
+  // Returns the assembly-language name of the specified machine register.
   //
   virtual const std::string getUnifiedRegName(int reg) const;
 
@@ -453,14 +444,26 @@ public:
   // The following methods are used to generate "copy" machine instructions
   // for an architecture.
   //
-  void cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
-                   int RegType, std::vector<MachineInstr*>& mvec) const;
-  
-  void cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
-                   int Offset, int RegType, std::vector<MachineInstr*>& mvec) const;
+  // The function regTypeNeedsScratchReg() can be used to check whether a
+  // scratch register is needed to copy a register of type `regType' to
+  // or from memory.  If so, such a scratch register can be provided by
+  // the caller (e.g., if it knows which regsiters are free); otherwise
+  // an arbitrary one will be chosen and spilled by the copy instructions.
+  //
+  bool regTypeNeedsScratchReg(int RegType,
+                              int& scratchRegClassId) const;
 
-  void cpMem2RegMI(unsigned SrcPtrReg, int Offset, unsigned DestReg,
-                   int RegType, std::vector<MachineInstr*>& mvec) const;
+  void cpReg2RegMI(std::vector<MachineInstr*>& mvec,
+                   unsigned SrcReg, unsigned DestReg,
+                   int RegType) const;
+
+  void cpReg2MemMI(std::vector<MachineInstr*>& mvec,
+                   unsigned SrcReg, unsigned DestPtrReg,
+                   int Offset, int RegType, int scratchReg = -1) const;
+
+  void cpMem2RegMI(std::vector<MachineInstr*>& mvec,
+                   unsigned SrcPtrReg, int Offset, unsigned DestReg,
+                   int RegType, int scratchReg = -1) const;
 
   void cpValue2Value(Value *Src, Value *Dest,
                      std::vector<MachineInstr*>& mvec) const;
@@ -482,7 +485,7 @@ public:
 
   // This method inserts the caller saving code for call instructions
   //
-  void insertCallerSavingCode(const MachineInstr *MInst, 
+  void insertCallerSavingCode(MachineInstr *MInst, 
 			      const BasicBlock *BB, PhyRegAlloc &PRA ) const;
 };
 
