@@ -79,6 +79,87 @@ int X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   return 1;
 }
 
+bool X86RegisterInfo::canFoldMemoryOperand(MachineInstr* MI,
+                                           unsigned i) const
+{
+  switch(MI->getOpcode()) {
+  case X86::ADDrr8:  case X86::ADDrr16: case X86::ADDrr32:
+  case X86::ADDri8:  case X86::ADDri16: case X86::ADDri32:
+  case X86::MOVrr8:  case X86::MOVrr16: case X86::MOVrr32:
+    return true;
+  default:
+    return false;
+  }
+}
+
+int X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
+                                       unsigned i,
+                                       int FrameIndex) const
+{
+  MachineBasicBlock& MBB = *MI->getParent();
+  MachineInstr* NI = 0;
+  if (i == 0)
+      switch(MI->getOpcode()) {
+      case X86::MOVrr8:
+    NI = addFrameReference(BuildMI(X86::MOVmr8, 5), FrameIndex).addReg(MI->getOperand(1).getReg());
+    break;
+      case X86::MOVrr16:
+    NI = addFrameReference(BuildMI(X86::MOVmr16, 5), FrameIndex).addReg(MI->getOperand(1).getReg());
+    break;
+      case X86::MOVrr32:
+    NI = addFrameReference(BuildMI(X86::MOVmr32, 5), FrameIndex).addReg(MI->getOperand(1).getReg());
+    break;
+  case X86::ADDrr8:
+    NI = addFrameReference(BuildMI(X86::ADDmr8, 5), FrameIndex).addReg(MI->getOperand(1).getReg());
+    break;
+  case X86::ADDrr16:
+    NI = addFrameReference(BuildMI(X86::ADDmr16, 5), FrameIndex).addReg(MI->getOperand(1).getReg());
+    break;
+  case X86::ADDrr32:
+    NI = addFrameReference(BuildMI(X86::ADDmr32, 5), FrameIndex).addReg(MI->getOperand(1).getReg());
+    break;
+  case X86::ADDri8:
+    NI = addFrameReference(BuildMI(X86::ADDmi8, 5), FrameIndex).addZImm(MI->getOperand(1).getImmedValue());
+    break;
+  case X86::ADDri16:
+    NI = addFrameReference(BuildMI(X86::ADDmi16, 5), FrameIndex).addZImm(MI->getOperand(1).getImmedValue());
+    break;
+  case X86::ADDri32:
+    NI = addFrameReference(BuildMI(X86::ADDmi32, 5), FrameIndex).addZImm(MI->getOperand(1).getImmedValue());
+    break;
+  default:
+    assert(0 && "Operand cannot be folded");
+  }
+  else if (i == 1)
+      switch(MI->getOpcode()) {
+  case X86::MOVrr8:
+    NI = addFrameReference(BuildMI(X86::MOVrm8, 5).addReg(MI->getOperand(0).getReg()), FrameIndex);
+    break;
+  case X86::MOVrr16:
+    NI = addFrameReference(BuildMI(X86::MOVrm16, 5).addReg(MI->getOperand(0).getReg()), FrameIndex);
+    break;
+  case X86::MOVrr32:
+    NI = addFrameReference(BuildMI(X86::MOVrm32, 5).addReg(MI->getOperand(0).getReg()), FrameIndex);
+    break;
+  case X86::ADDrr8:
+    NI = addFrameReference(BuildMI(X86::ADDrm8, 5).addReg(MI->getOperand(0).getReg()), FrameIndex);
+    break;
+  case X86::ADDrr16:
+    NI = addFrameReference(BuildMI(X86::ADDrm16, 5).addReg(MI->getOperand(0).getReg()), FrameIndex);
+    break;
+  case X86::ADDrr32:
+    NI = addFrameReference(BuildMI(X86::ADDrm32, 5).addReg(MI->getOperand(0).getReg()), FrameIndex);
+    break;
+  default:
+    assert(0 && "Operand cannot be folded");
+  }
+  else
+    assert(0 && "Operand cannot be folded");
+
+  MBB.insert(MBB.erase(MI), NI);
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//

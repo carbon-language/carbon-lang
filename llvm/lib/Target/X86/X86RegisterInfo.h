@@ -42,6 +42,11 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
 		   unsigned DestReg, unsigned SrcReg,
 		   const TargetRegisterClass *RC) const;
 
+  virtual bool canFoldMemoryOperand(MachineInstr* MI, unsigned i) const;
+
+  virtual int foldMemoryOperand(MachineInstr* MI, unsigned i,
+                                int FrameIndex) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI) const;

@@ -242,6 +242,16 @@ public:
                            const TargetRegisterClass *RC) const = 0;
 
 
+  virtual bool canFoldMemoryOperand(MachineInstr* MI, unsigned i) const {
+    return false;
+  }
+
+  virtual int foldMemoryOperand(MachineInstr* MI,
+                                unsigned i,
+                                int FrameIndex) const {
+    return 0;
+  }
+
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
   /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
   /// targets use pseudo instructions in order to abstract away the difference
