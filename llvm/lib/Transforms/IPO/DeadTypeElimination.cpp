@@ -46,7 +46,7 @@ Pass *createDeadTypeEliminationPass() {
 
 
 
-// ShouldNukSymtabEntry - Return true if this module level symbol table entry
+// ShouldNukeSymtabEntry - Return true if this module level symbol table entry
 // should be eliminated.
 //
 static inline bool ShouldNukeSymtabEntry(const std::pair<std::string,Value*>&E){
