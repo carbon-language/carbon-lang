@@ -143,13 +143,8 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
       rv = (CI->getRawValue() - MCE.getCurrentPCValue()) / 4;
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       unsigned Reloc;
-      bool isLocal = false;
       if (MI.getOpcode() == V9::CALL) {
         Reloc = V9::reloc_pcrel_call;
-#if 0   // FIXME: No need to emit stubs for internal functions.
-        if (!GV->hasExternalLinkage() && isa<Function>(GV))
-          isLocal = true;
-#endif
       } else if (MI.getOpcode() == V9::SETHI) {
         if (MO.isHiBits64())
           Reloc = V9::reloc_sethi_hh;
@@ -168,8 +163,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
         assert(0 && "Unknown relocation!");
       }
 
-      MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(), Reloc, GV,
-                                          0, isLocal));
+      MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(), Reloc, GV));
       rv = 0;
     } else {
       std::cerr << "ERROR: PC relative disp unhandled:" << MO << "\n";
@@ -306,8 +300,5 @@ void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     }
 }
 
-
-namespace llvm {
 #include "SparcV9CodeEmitter.inc"
-} // End llvm namespace
 
