@@ -53,7 +53,10 @@ def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 
 let isBranch = 1, isTerminator = 1 in {
   def COND_BRANCH : Pseudo<(ops), "; COND_BRANCH">;
-  def B : IForm<18, 0, 0, 0, 0, (ops target:$func), "b $func">;
+  def B   : IForm<18, 0, 0, 0, 0, (ops target:$func), "b $func">;
+  def BA  : IForm<18, 1, 0, 0, 0, (ops target:$func), "ba $func">;
+  def BL  : IForm<18, 0, 1, 0, 0, (ops target:$func), "bl $func">;
+  def BLA : IForm<18, 1, 1, 0, 0, (ops target:$func), "bla $func">;
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
   def BLT : BForm_ext<16, 0, 0, 12, 0, 0, 0, (ops CRRC:$crS, target:$block),
