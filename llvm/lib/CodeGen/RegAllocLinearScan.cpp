@@ -547,6 +547,9 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     // for each fixed interval that overlaps
     for (IntervalPtrs::const_iterator i = fixed_.begin(), e = fixed_.end();
          i != e; ++i) {
+         if (!cur->overlaps(**i))
+             continue;
+
         assert((*i)->reg < MRegisterInfo::FirstVirtualRegister &&
                "virtual register interval in fixed set?");
         updateWeight(regWeight, (*i)->reg, (*i)->weight);
