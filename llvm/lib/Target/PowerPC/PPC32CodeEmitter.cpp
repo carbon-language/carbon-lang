@@ -156,9 +156,7 @@ bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   return true;
 
   // Machine code emitter pass for PowerPC
-  MachineCodeEmitter *M = &MCE;
-  DEBUG(M = MachineCodeEmitter::createDebugEmitter());
-  PM.add(new PPC32CodeEmitter(*this, *M)); 
+  PM.add(new PPC32CodeEmitter(*this, MCE)); 
   // Delete machine code for this function after emitting it
   PM.add(createMachineCodeDeleter());
   return false;
