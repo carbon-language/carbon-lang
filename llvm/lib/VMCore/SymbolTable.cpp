@@ -192,9 +192,6 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 // This function is called when one of the types in the type plane are refined
 void SymbolTable::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
-  if (OldType == NewType && OldType->isAbstract())
-    return;  // Noop, don't waste time dinking around
-
   // Search to see if we have any values of the type oldtype.  If so, we need to
   // move them into the newtype plane...
   iterator TPI = find(OldType);
