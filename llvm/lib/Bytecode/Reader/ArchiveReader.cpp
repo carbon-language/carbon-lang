@@ -47,14 +47,12 @@ namespace {
 /// This is capable of parsing the variety of special sections used for various
 /// purposes.
 ///
-static enum ObjectType getObjectType(ar_hdr *H, unsigned char *MemberData,
-                                     unsigned Size) {
+static enum ObjectType getObjectType(ar_hdr *H, std::string MemberName,
+                                     unsigned char *MemberData, unsigned Size) {
   // Check for sections with special names...
-  if (!memcmp(H->name, "__.SYMDEF       ", 16))
+  if (MemberName == "__.SYMDEF       " || MemberName == "__.SYMDEF SORTED")
     return ArchiveSymbolTable;
-  if (!memcmp(H->name, "__.SYMDEF SORTED", 16))
-    return ArchiveSymbolTable;
-  if (!memcmp(H->name, "//              ", 16))
+  else if (MemberName == "//              ")
     return SVR4LongFilename;
 
   // Check to see if it looks like an llvm object file...
@@ -113,6 +111,11 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
               && "SVR4-style long filename for archive member not found");
       startp = &LongFilenames[NameIndex];
       endp = strchr (startp, '/');
+    } else if (startp == endp && Hdr->name[1] == '/') {
+      // This is for the SVR4 long filename table (there might be other
+      // names starting with // but I don't know about them). Make sure that
+      // getObjectType sees it.
+      endp = &Hdr->name[sizeof (Hdr->name)];
     }
     if (!endp) {
       // 4.4BSD/MacOSX *short* filenames are not guaranteed to have a
@@ -124,7 +127,7 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
     std::string MemberName (startp, endp);
     std::string FullMemberName = ArchiveName + "(" + MemberName + ")";
 
-    switch (getObjectType(Hdr, MemberData, MemberSize)) {
+    switch (getObjectType(Hdr, MemberName, MemberData, MemberSize)) {
     case SVR4LongFilename:
       // If this is a long filename section, read all of the file names into the
       // LongFilenames vector.
