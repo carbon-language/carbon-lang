@@ -335,28 +335,3 @@ void Module::destroyConstantPointerRef(ConstantPointerRef *CPR) {
     GVRefMap = 0;
   }
 }
-
-void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
-  assert(OldGV != NewGV && "Cannot mutate to the same global!");
-  GlobalValueRefMap::iterator I = GVRefMap->Map.find(OldGV);
-  assert(I != GVRefMap->Map.end() && 
-	 "mutateConstantPointerRef; OldGV not in table!");
-  ConstantPointerRef *Ref = I->second;
-
-  // Remove the old entry...
-  GVRefMap->Map.erase(I);
-
-  // Check to see if a CPR already exists for NewGV
-  I = GVRefMap->Map.lower_bound(NewGV);
-
-  if (I == GVRefMap->Map.end() || I->first != NewGV) {
-    // Insert the new entry...
-    GVRefMap->Map.insert(I, std::make_pair(NewGV, Ref));
-  } else {
-    // Otherwise, an entry already exists for the current global value.
-    // Completely replace the old CPR with the existing one...
-    Ref->replaceAllUsesWith(I->second);
-    delete Ref;
-  }
-}
-
