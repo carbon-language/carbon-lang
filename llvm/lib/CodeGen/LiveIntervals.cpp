@@ -185,6 +185,16 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     return true;
 }
 
+namespace {
+    /// CompareIntervalStar - This is a simple comparison function for interval
+    /// pointers.  It compares based on their starting point.
+    struct CompareIntervalStar {
+        bool operator()(LiveInterval *LHS, LiveInterval* RHS) const {
+            return LHS->start() < RHS->start();
+        }
+    };
+}
+
 std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
     const LiveInterval& li,
     VirtRegMap& vrm,
@@ -210,7 +220,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
             MachineBasicBlock::iterator mi = getInstructionFromIndex(index);
 
         for_operand:
-            for (unsigned i = 0; i < mi->getNumOperands(); ++i) {
+            for (unsigned i = 0; i != mi->getNumOperands(); ++i) {
                 MachineOperand& mop = mi->getOperand(i);
                 if (mop.isRegister() && mop.getReg() == li.reg) {
                     if (MachineInstr* fmi =
@@ -267,6 +277,15 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
         }
     }
 
+    // FIXME: This method MUST return intervals in sorted order.  If a 
+    // particular machine instruction both uses and defines the vreg being
+    // spilled (e.g.,  vr = vr + 1) and if the def is processed before the
+    // use, the list ends up not sorted.
+    //
+    // The proper way to fix this is to process all uses of the vreg before we 
+    // process any defs.  However, this would require refactoring the above 
+    // blob of code, which I'm not feeling up to right now.
+    std::sort(added.begin(), added.end(), CompareIntervalStar());
     return added;
 }
 
