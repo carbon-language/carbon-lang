@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcInternals.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
@@ -22,7 +21,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
-using std::string;
+#include "SparcInternals.h"
+#include <string>
 
 namespace {
 
@@ -108,8 +108,8 @@ public:
     toAsm << "\n";
   }
 
-  static string getValidSymbolName(const string &S) {
-    string Result;
+  static std::string getValidSymbolName(const std::string &S) {
+    std::string Result;
     
     // Symbol names in Sparc assembly language have these rules:
     // (a) Must match { letter | _ | . | $ } { letter | _ | . | $ | digit }*
@@ -138,10 +138,10 @@ public:
   // use a numbered value based on prefix otherwise.
   // FPrefix is always prepended to the output identifier.
   //
-  string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
-    string Result = FPrefix ? FPrefix : "";  // "Forced prefix"
+  std::string getID(const Value *V, const char *Prefix, const char *FPrefix = 0) {
+    std::string Result = FPrefix ? FPrefix : "";  // "Forced prefix"
 
-    Result +=  V->hasName() ? V->getName() : string(Prefix);
+    Result += V->hasName() ? V->getName() : std::string(Prefix);
 
     // Qualify all internal names with a unique id.
     if (!isExternal(V)) {
@@ -163,19 +163,19 @@ public:
   }
   
   // getID Wrappers - Ensure consistent usage...
-  string getID(const Function *F) {
+  std::string getID(const Function *F) {
     return getID(F, "LLVMFunction_");
   }
-  string getID(const BasicBlock *BB) {
+  std::string getID(const BasicBlock *BB) {
     return getID(BB, "LL", (".L_"+getID(BB->getParent())+"_").c_str());
   }
-  string getID(const GlobalVariable *GV) {
+  std::string getID(const GlobalVariable *GV) {
     return getID(GV, "LLVMGlobal_");
   }
-  string getID(const Constant *CV) {
+  std::string getID(const Constant *CV) {
     return getID(CV, "LLVMConst_", ".C_");
   }
-  string getID(const GlobalValue *GV) {
+  std::string getID(const GlobalValue *GV) {
     if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
       return getID(V);
     else if (const Function *F = dyn_cast<Function>(GV))
@@ -184,17 +184,25 @@ public:
     return "";
   }
 
+  // Combines expressions 
+  inline std::string ConstantArithExprToString(const ConstantExpr* CE,
+                                               const TargetMachine &TM,
+                                               const std::string &op) {
+    return "(" + valToExprString(CE->getOperand(0), TM) + op
+               + valToExprString(CE->getOperand(1), TM) + ")";
+  }
+
   // ConstantExprToString() - Convert a ConstantExpr to an asm expression
   // and return this as a string.
-  string ConstantExprToString(const ConstantExpr* CE,
-                              const TargetMachine& target) {
-    string S;
+  std::string ConstantExprToString(const ConstantExpr* CE,
+                                   const TargetMachine& target) {
+    std::string S;
     switch(CE->getOpcode()) {
     case Instruction::GetElementPtr:
       { // generate a symbolic expression for the byte address
         const Value* ptrVal = CE->getOperand(0);
         std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-	const TargetData &TD = target.getTargetData();
+        const TargetData &TD = target.getTargetData();
         S += "(" + valToExprString(ptrVal, target) + ") + ("
           + utostr(TD.getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
         break;
@@ -209,48 +217,40 @@ public:
       break;
 
     case Instruction::Add:
-      S += "(" + valToExprString(CE->getOperand(0), target) + ") + ("
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target, ") + (");
       break;
 
     case Instruction::Sub:
-      S += "(" + valToExprString(CE->getOperand(0), target) + ") - ("
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target, ") - (");
       break;
 
     case Instruction::Mul:
-      S += "(" + valToExprString(CE->getOperand(0), target) + ") * ("
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target, ") * (");
       break;
 
     case Instruction::Div:
-      S += "(" + valToExprString(CE->getOperand(0), target) + ") / ("
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target, ") / (");
       break;
 
     case Instruction::Rem:
-      S += "(" + valToExprString(CE->getOperand(0), target) + ") % ("
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target, ") % (");
       break;
 
     case Instruction::And:
       // Logical && for booleans; bitwise & otherwise
-      S += "(" + valToExprString(CE->getOperand(0), target)
-               + ((CE->getType() == Type::BoolTy)? ") && (" : ") & (")
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target,
+               ((CE->getType() == Type::BoolTy)? ") && (" : ") & ("));
       break;
 
     case Instruction::Or:
       // Logical || for booleans; bitwise | otherwise
-      S += "(" + valToExprString(CE->getOperand(0), target)
-               + ((CE->getType() == Type::BoolTy)? ") || (" : ") | (")
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target,
+               ((CE->getType() == Type::BoolTy)? ") || (" : ") | ("));
       break;
 
     case Instruction::Xor:
       // Bitwise ^ for all types
-      S += "(" + valToExprString(CE->getOperand(0), target) + ") ^ ("
-               + valToExprString(CE->getOperand(1), target) + ")";
+      S += ConstantArithExprToString(CE, target, ") ^ (");
       break;
 
     default:
@@ -264,13 +264,13 @@ public:
   // valToExprString - Helper function for ConstantExprToString().
   // Appends result to argument string S.
   // 
-  string valToExprString(const Value* V, const TargetMachine& target) {
-    string S;
+  std::string valToExprString(const Value* V, const TargetMachine& target) {
+    std::string S;
     bool failed = false;
     if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
 
       if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV))
-        S += string(CB == ConstantBool::True ? "1" : "0");
+        S += std::string(CB == ConstantBool::True ? "1" : "0");
       else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
         S += itostr(CI->getValue());
       else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
@@ -525,7 +525,7 @@ SparcFunctionAsmPrinter::emitBasicBlock(const MachineBasicBlock &MBB)
 void
 SparcFunctionAsmPrinter::emitFunction(const Function &F)
 {
-  string methName = getID(&F);
+  std::string methName = getID(&F);
   toAsm << "!****** Outputing Function: " << methName << " ******\n";
   enterSection(AsmPrinter::Text);
   toAsm << "\t.align\t4\n\t.global\t" << methName << "\n";
@@ -588,7 +588,7 @@ private:
   void PrintZeroBytesToPad      (int numBytes);
   void printSingleConstantValue (const Constant* CV);
   void printConstantValueOnly   (const Constant* CV, int numPadBytesAfter = 0);
-  void printConstant            (const Constant* CV, string valID = "");
+  void printConstant            (const Constant* CV, std::string valID = "");
 
   static void FoldConstants     (const Module &M,
                                  hash_set<const Constant*> &moduleConstants);
@@ -618,10 +618,10 @@ static inline char toOctal(int X) {
 // getAsCString - Return the specified array as a C compatible string, only if
 // the predicate isStringCompatible is true.
 //
-static string getAsCString(const ConstantArray *CVA) {
+static std::string getAsCString(const ConstantArray *CVA) {
   assert(isStringCompatible(CVA) && "Array is not string compatible!");
 
-  string Result;
+  std::string Result;
   const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
   Result = "\"";
   for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
@@ -653,7 +653,7 @@ ArrayTypeIsString(const ArrayType* arrayType)
 }
 
 
-inline const string
+inline const std::string
 TypeToDataDirective(const Type* type)
 {
   switch(type->getPrimitiveID())
@@ -866,7 +866,7 @@ SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
 // appropriate directives.  Uses printConstantValueOnly() to print the
 // value or values.
 void
-SparcModuleAsmPrinter::printConstant(const Constant* CV, string valID)
+SparcModuleAsmPrinter::printConstant(const Constant* CV, std::string valID)
 {
   if (valID.length() == 0)
     valID = getID(CV);
