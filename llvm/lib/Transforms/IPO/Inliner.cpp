@@ -7,8 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements the code shared between the LLVM inliners.  This
-// implements all of the boring mechanics of the bottom-up inlining.
+// This file implements the mechanics required to implement inlining without
+// missing any calls and updating the call graph.  The decisions of which calls
+// are profitable to inline are implemented elsewhere.
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +24,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -35,8 +37,41 @@ namespace {
 
 Inliner::Inliner() : InlineThreshold(InlineLimit) {}
 
-int Inliner::getRecursiveInlineCost(CallSite CS) {
-  return getInlineCost(CS);
+// InlineCallIfPossible - If it is possible to inline the specified call site,
+// do so and update the CallGraph for this operation.
+static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
+                                 const std::set<Function*> &SCCFunctions) {
+  Function *Caller = CS.getInstruction()->getParent()->getParent();
+  Function *Callee = CS.getCalledFunction();
+  if (!InlineFunction(CS)) return false;
+
+  // Update the call graph by deleting the edge from Callee to Caller
+  CallGraphNode *CalleeNode = CG[Callee];
+  CallGraphNode *CallerNode = CG[Caller];
+  CallerNode->removeCallEdgeTo(CalleeNode);
+
+  // Since we inlined all uninlined call sites in the callee into the caller,
+  // add edges from the caller to all of the callees of the callee.
+  for (CallGraphNode::iterator I = CalleeNode->begin(),
+         E = CalleeNode->end(); I != E; ++I)
+    CallerNode->addCalledFunction(*I);
+  
+  // If we inlined the last possible call site to the function,
+  // delete the function body now.
+  if (Callee->use_empty() && Callee->hasInternalLinkage() &&
+      !SCCFunctions.count(Callee)) {
+    DEBUG(std::cerr << "    -> Deleting dead function: "
+                    << Callee->getName() << "\n");
+    
+    // Remove any call graph edges from the callee to its callees.
+    while (CalleeNode->begin() != CalleeNode->end())
+      CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
+              
+    // Removing the node for callee from the call graph and delete it.
+    delete CG.removeFunctionFromModule(CalleeNode);
+    ++NumDeleted;
+  }
+  return true;
 }
 
 bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
@@ -45,88 +80,82 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   std::set<Function*> SCCFunctions;
   DEBUG(std::cerr << "Inliner visiting SCC:");
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-    SCCFunctions.insert(SCC[i]->getFunction());
-    DEBUG(std::cerr << " " << (SCC[i]->getFunction() ?
-              SCC[i]->getFunction()->getName() : "INDIRECTNODE"));
+    Function *F = SCC[i]->getFunction();
+    if (F) SCCFunctions.insert(F);
+    DEBUG(std::cerr << " " << (F ? F->getName() : "INDIRECTNODE"));
   }
-  DEBUG(std::cerr << "\n");
 
-  bool Changed = false;
+  // Scan through and identify all call sites ahead of time so that we only
+  // inline call sites in the original functions, not call sites that result
+  // from inlining other functions.
+  std::vector<CallSite> CallSites;
+
   for (std::set<Function*>::iterator SCCI = SCCFunctions.begin(),
-         E = SCCFunctions.end(); SCCI != E; ++SCCI) {
-    Function *F = *SCCI;
-    if (F == 0 || F->isExternal()) continue;
-    DEBUG(std::cerr << "  Inspecting function: " << F->getName() << "\n");
+         E = SCCFunctions.end(); SCCI != E; ++SCCI)
+    if (Function *F = *SCCI)
+      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+        for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+          CallSite CS = CallSite::get(I);
+          if (CS.getInstruction() && (!CS.getCalledFunction() ||
+                                      !CS.getCalledFunction()->isExternal()))
+            CallSites.push_back(CS);
+        }
 
-    // Scan through and identify all call sites ahead of time so that we only
-    // inline call sites in the original functions, not call sites that result
-    // in inlining other functions.
-    std::vector<CallSite> CallSites;
-    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-        CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() && CS.getCalledFunction() &&
-            !CS.getCalledFunction()->isExternal())
-          CallSites.push_back(CS);
-      }
+  DEBUG(std::cerr << ": " << CallSites.size() << " call sites.\n");
+  
+  // Now that we have all of the call sites, move the ones to functions in the
+  // current SCC to the end of the list.
+  unsigned FirstCallInSCC = CallSites.size();
+  for (unsigned i = 0; i < FirstCallInSCC; ++i)
+    if (Function *F = CallSites[i].getCalledFunction())
+      if (SCCFunctions.count(F))
+        std::swap(CallSites[i--], CallSites[--FirstCallInSCC]);
+  
+  // Now that we have all of the call sites, loop over them and inline them if
+  // it looks profitable to do so.
+  bool Changed = false;
+  bool LocalChange;
+  do {
+    LocalChange = false;
+    // Iterate over the outer loop because inlining functions can cause indirect
+    // calls to become direct calls.
+    for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi)
+      if (Function *Callee = CallSites[CSi].getCalledFunction()) {
+        // Calls to external functions are never inlinable.
+        if (Callee->isExternal() ||
+            CallSites[CSi].getInstruction()->getParent()->getParent() ==Callee){
+          std::swap(CallSites[CSi], CallSites.back());
+          --CSi;
+          continue;
+        }
 
-    // Now that we have all of the call sites, loop over them and inline them if
-    // it looks profitable to do so.
-    for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
-      CallSite CS = CallSites[i];
-      Function *Callee = CS.getCalledFunction();
-      // Determine whether this is a function IN the SCC...
-      bool inSCC = SCCFunctions.count(Callee);
-    
-      // If the policy determines that we should inline this function,
-      // try to do so...
-      int InlineCost = inSCC ? getRecursiveInlineCost(CS) : getInlineCost(CS);
-      if (InlineCost >= (int)InlineThreshold) {
-        DEBUG(std::cerr << "    NOT Inlining: cost=" << InlineCost
-              << ", Call: " << *CS.getInstruction());
-      } else {
-        DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
-              << ", Call: " << *CS.getInstruction());
-      
-        Function *Caller = CS.getInstruction()->getParent()->getParent();
+        // If the policy determines that we should inline this function,
+        // try to do so.
+        CallSite CS = CallSites[CSi];
+        int InlineCost = getInlineCost(CS);
+        if (InlineCost >= (int)InlineThreshold) {
+          DEBUG(std::cerr << "    NOT Inlining: cost=" << InlineCost
+                << ", Call: " << *CS.getInstruction());
+        } else {
+          DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
+                << ", Call: " << *CS.getInstruction());
+          
+          Function *Caller = CS.getInstruction()->getParent()->getParent();
 
-        // Attempt to inline the function...
-        if (InlineFunction(CS)) {
-          ++NumInlined;
+          // Attempt to inline the function...
+          if (InlineCallIfPossible(CS, CG, SCCFunctions)) {
+            // Remove this call site from the list.
+            std::swap(CallSites[CSi], CallSites.back());
+            CallSites.pop_back();
+            --CSi;
 
-          // Update the call graph by deleting the edge from Callee to Caller
-          CallGraphNode *CalleeNode = CG[Callee];
-          CallGraphNode *CallerNode = CG[Caller];
-          CallerNode->removeCallEdgeTo(CalleeNode);
-
-          // Since we inlined all uninlinable call sites in the callee into the
-          // caller, add edges from the caller to all of the callees of the
-          // callee.
-          for (CallGraphNode::iterator I = CalleeNode->begin(),
-                 E = CalleeNode->end(); I != E; ++I)
-            CallerNode->addCalledFunction(*I);
-        
-          // If we inlined the last possible call site to the function,
-          // delete the function body now.
-          if (Callee->use_empty() && Callee != Caller &&
-              Callee->hasInternalLinkage()) {
-            DEBUG(std::cerr << "    -> Deleting dead function: "
-                            << Callee->getName() << "\n");
-            SCCFunctions.erase(Callee);    // Remove function from this SCC.
-
-            // Remove any call graph edges from the callee to its callees.
-            while (CalleeNode->begin() != CalleeNode->end())
-              CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
-
-            // Removing the node for callee from the call graph and delete it.
-            delete CG.removeFunctionFromModule(CalleeNode);
-            ++NumDeleted;
+            ++NumInlined;
+            Changed = true;
+            LocalChange = true;
           }
-          Changed = true;
         }
       }
-    }
-  }
+  } while (LocalChange);
 
   return Changed;
 }
