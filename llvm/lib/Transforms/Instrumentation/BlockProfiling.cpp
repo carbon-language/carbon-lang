@@ -101,11 +101,30 @@ void FunctionProfiler::insertInitializationCall(Function *MainFn,
   Args[0] = Constant::getNullValue(Type::IntTy);
   Args[1] = Constant::getNullValue(ArgVTy);
 
-  /* FIXME: We should pass in the command line arguments here! */
+  // Skip over any allocas in the entry block.
+  BasicBlock *Entry = MainFn->begin();
+  BasicBlock::iterator InsertPos = Entry->begin();
+  while (isa<AllocaInst>(InsertPos)) ++InsertPos;
+
+  Function::aiterator AI;
   switch (MainFn->asize()) {
   default:
   case 2:
+    AI = MainFn->abegin(); ++AI;
+    if (AI->getType() != ArgVTy) {
+      Args[1] = new CastInst(AI, ArgVTy, "argv.cast", InsertPos);
+    } else {
+      Args[1] = AI;
+    }
+
   case 1:
+    AI = MainFn->abegin();
+    if (AI->getType() != Type::IntTy) {
+      Args[0] = new CastInst(AI, Type::IntTy, "argc.cast", InsertPos);
+    } else {
+      Args[0] = AI;
+    }
+    
   case 0:
     break;
   }
@@ -118,10 +137,5 @@ void FunctionProfiler::insertInitializationCall(Function *MainFn,
     cast<ArrayType>(Array->getType()->getElementType())->getNumElements();
   Args[3] = ConstantUInt::get(Type::UIntTy, NumElements);
   
-  // Skip over any allocas in the entry block.
-  BasicBlock *Entry = MainFn->begin();
-  BasicBlock::iterator InsertPos = Entry->begin();
-  while (isa<AllocaInst>(InsertPos)) ++InsertPos;
-
   new CallInst(InitFn, Args, "", InsertPos);
 }
