@@ -529,6 +529,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
+  case ISD::TRUNCATE:
   case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {

@@ -477,9 +477,20 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       if (!isa<Constant>(Idx) || !cast<Constant>(Idx)->isNullValue()) {
         // N = N + Idx * ElementSize;
         uint64_t ElementSize = TD.getTypeSize(Ty);
-        SDOperand IdxN = getValue(Idx);
-        IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN,
-			   getIntPtrConstant(ElementSize));
+        SDOperand IdxN = getValue(Idx), Scale = getIntPtrConstant(ElementSize);
+
+        // If the index is smaller or larger than intptr_t, truncate or extend
+        // it.
+        if (IdxN.getValueType() < Scale.getValueType()) {
+          if (Idx->getType()->isSigned())
+            IdxN = DAG.getNode(ISD::SIGN_EXTEND, Scale.getValueType(), IdxN);
+          else
+            IdxN = DAG.getNode(ISD::ZERO_EXTEND, Scale.getValueType(), IdxN);
+        } else if (IdxN.getValueType() > Scale.getValueType())
+          IdxN = DAG.getNode(ISD::TRUNCATE, Scale.getValueType(), IdxN);
+
+        IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
+			   
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
       }
     }
