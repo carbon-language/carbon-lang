@@ -13,8 +13,6 @@
 #include "llvm/Constants.h"
 #include <algorithm>
 
-using std::make_pair;
-
 const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
 					      const uchar *EndBuf) {
   unsigned PrimType;
@@ -336,7 +334,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
         if (!(GV = dyn_cast<GlobalValue>(Val))) return true;
         BCR_TRACE(5, "Value Found in ValueTable!\n");
       } else {         // Nope... find or create a forward ref. for it
-        GlobalRefsType::iterator I = GlobalRefs.find(make_pair(PT, Slot));
+        GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PT, Slot));
 
         if (I != GlobalRefs.end()) {
           BCR_TRACE(5, "Previous forward ref found!\n");
@@ -349,7 +347,7 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
             new GlobalVariable(PT->getElementType(), false, true);
           
 	  // Keep track of the fact that we have a forward ref to recycle it
-          GlobalRefs.insert(make_pair(make_pair(PT, Slot), GVar));
+          GlobalRefs.insert(std::make_pair(std::make_pair(PT, Slot), GVar));
           
           // Must temporarily push this value into the module table...
           TheModule->getGlobalList().push_back(GVar);

@@ -23,9 +23,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <algorithm>
-using std::cerr;
-using std::pair;
-using std::make_pair;
 
 bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
   if (Ty->isPrimitiveType()) {
@@ -115,8 +112,8 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   Value *d = 0;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID:
-    cerr << "Creating method pholder! : " << type << ":" << oNum << " " 
-	 << Ty->getName() << "\n";
+    std::cerr << "Creating method pholder! : " << type << ":" << oNum << " " 
+              << Ty->getName() << "\n";
     d = new FunctionPHolder(Ty, oNum);
     if (insertValue(d, LateResolveModuleValues) == -1) return 0;
     return d;
@@ -143,7 +140,7 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
   if (Value *V = getValue(Ty, Slot, false))
     return dyn_cast<Constant>(V);      // If we already have the value parsed...
 
-  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(Ty, Slot));
+  GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(Ty, Slot));
   if (I != GlobalRefs.end()) {
     BCR_TRACE(5, "Previous forward ref found!\n");
     return cast<Constant>(I->second);
@@ -154,7 +151,7 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
     Constant *C = new ConstPHolder(Ty, Slot);
     
     // Keep track of the fact that we have a forward ref to recycle it
-    GlobalRefs.insert(make_pair(make_pair(Ty, Slot), C));
+    GlobalRefs.insert(std::make_pair(std::make_pair(Ty, Slot), C));
     return C;
   }
 }
@@ -175,8 +172,8 @@ bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
       Value *NewDef = getValue(D->getType(), IDNumber, false);
       if (NewDef == 0) {
 	Error = true;  // Unresolved thinger
-	cerr << "Unresolvable reference found: <"
-	      << D->getType()->getDescription() << ">:" << IDNumber << "!\n";
+	std::cerr << "Unresolvable reference found: <"
+                  << D->getType()->getDescription() << ">:" << IDNumber <<"!\n";
       } else {
 	// Fixup all of the uses of this placeholder def...
         D->replaceAllUsesWith(NewDef);
@@ -241,7 +238,7 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
 	return true;
       }
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << D;
-		if (!isa<Instruction>(D)) cerr << "\n");
+		if (!isa<Instruction>(D)) std::cerr << "\n");
 
       D->setName(Name, ST);
     }
@@ -252,7 +249,8 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
 }
 
 void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
-  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(NewV->getType(),Slot));
+  GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(NewV->getType(),
+                                                              Slot));
   if (I == GlobalRefs.end()) return;   // Never forward referenced?
 
   BCR_TRACE(3, "Mutating forward refs!\n");
@@ -476,7 +474,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     // methods are loaded...
     //
     FunctionSignatureList.push_back(
-           make_pair(cast<const PointerType>(Val->getType()), SlotNo));
+           std::make_pair(cast<const PointerType>(Val->getType()), SlotNo));
     if (read_vbr(Buf, End, FnSignature)) return true;
     BCR_TRACE(2, "Function of type: " << Ty << "\n");
   }
