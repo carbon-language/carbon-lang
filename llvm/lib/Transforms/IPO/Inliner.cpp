@@ -170,28 +170,20 @@ bool Inliner::doFinalization(CallGraph &CG) {
     CallGraphNode *CGN = I->second;
     Function *F = CGN ? CGN->getFunction() : 0;
 
-    // If the only remaining use of the function is a dead constant
-    // pointer ref, remove it.
-    if (F && F->hasOneUse())
-      if (Function *GV = dyn_cast<Function>(F->use_back()))
-        if (GV->removeDeadConstantUsers()) {
-          if (F->hasInternalLinkage()) {
-            // There *MAY* be an edge from the external call node to this
-            // function.  If so, remove it.
-            CallGraphNode *EN = CG.getExternalCallingNode();
-            CallGraphNode::iterator I = std::find(EN->begin(), EN->end(), CGN);
-            if (I != EN->end()) EN->removeCallEdgeTo(CGN);
-          }
-        }
+    // If the only remaining users of the function are dead constants,
+    // remove them.
+    if (F) F->removeDeadConstantUsers();
 
     if (F && (F->hasLinkOnceLinkage() || F->hasInternalLinkage()) &&
         F->use_empty()) {
+
       // Remove any call graph edges from the function to its callees.
       while (CGN->begin() != CGN->end())
         CGN->removeCallEdgeTo(*(CGN->end()-1));
       
       // If the function has external linkage (basically if it's a linkonce
-      // function) remove the edge from the external node to the callee node.
+      // function) remove the edge from the external node to the callee
+      // node.
       if (!F->hasInternalLinkage())
         CG.getExternalCallingNode()->removeCallEdgeTo(CGN);
       
