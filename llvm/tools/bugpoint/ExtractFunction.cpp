@@ -195,7 +195,9 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
     bool funcFound = false;
     for (std::vector<Function*>::const_iterator FI = F.begin(), Fe = F.end();
          FI != Fe; ++FI)
-      if (I->getName() == (*FI)->getName()) funcFound = true;
+      if (I->getName() == (*FI)->getName() &&
+          I->getType() == (*FI)->getType())
+        funcFound = true;
 
     if (!funcFound)
       DeleteFunctionBody(I);
