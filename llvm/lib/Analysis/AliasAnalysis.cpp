@@ -114,11 +114,13 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   ModRefResult Mask = ModRef;
-  if (Function *F = CS.getCalledFunction())
-    if (onlyReadsMemory(F)) {
-      if (doesNotAccessMemory(F)) return NoModRef;
+  if (Function *F = CS.getCalledFunction()) {
+    ModRefBehavior MRB = getModRefBehavior(F, CallSite());
+    if (MRB == OnlyReadsMemory)
       Mask = Ref;
-    }
+    else if (MRB == DoesNotAccessMemory)
+      return NoModRef;
+  }
 
   if (!AA) return Mask;
 
