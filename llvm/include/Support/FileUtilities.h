@@ -17,6 +17,11 @@
 
 #include <string>
 
+/// FileOpenable - Returns true IFF Filename names an existing regular
+/// file which we can successfully open.
+///
+bool FileOpenable (const std::string &Filename);
+
 /// DiffFiles - Compare the two files specified, returning true if they are
 /// different or if there is a file error.  If you specify a string to fill in
 /// for the error option, it will set the string to an error message if an error
