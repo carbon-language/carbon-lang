@@ -38,6 +38,16 @@ Here are the currently-expected MultiSource failures for V8:
   (llc) MultiSource/Benchmarks/Prolangs-C++/deriv1
   (llc) MultiSource/Benchmarks/Prolangs-C++/deriv2
 
+Known SPEC failures for V8 (probably not an exhaustive list):
+
+  (llc) 134.perl
+  (llc) 177.mesa
+  (llc) 188.ammp -- FPMover bug?
+  (llc) 256.bzip2
+  (llc,cbe) 130.li
+  (native,llc,cbe) 126.gcc
+  (native,llc,cbe) 255.vortex
+
 To-do
 -----
 
