@@ -815,11 +815,6 @@ void Interpreter::callFunction(Function *F,
     return;
   }
 
-  // Process the function, assigning instruction numbers to the instructions in
-  // the function.  Also calculate the number of values for each type slot
-  // active.
-  //
-
   // Make a new stack frame... and fill it in.
   ECStack.push_back(ExecutionContext());
   ExecutionContext &StackFrame = ECStack.back();
