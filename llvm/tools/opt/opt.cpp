@@ -78,7 +78,7 @@ struct {
   { sccp       , createSCCPPass },
   { adce       , createAgressiveDCEPass },
   { raise      , createRaisePointerReferencesPass },
-  { mem2reg    , newPromoteMemoryToRegister },
+  { mem2reg    , createPromoteMemoryToRegister },
 
   { trace      , createTraceValuesPassForBasicBlocks },
   { tracem     , createTraceValuesPassForMethod },
