@@ -18,11 +18,15 @@ set label "llvm-db\ncheckin" at "2004-01-04:", 145000
 set label "llvm/projects" at "2004-01-04:", 151000
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 plot "running_loc.txt" using 1:2 title '' with lines, \
      "running_loc.txt" using 1:2 title "Date vs. Lines of Code" with lines
 
 ##------- Plot large Date vs LOC ----
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_loc_large.png"
 plot "running_loc.txt" using 1:2 title '', \
      "running_loc.txt" using 1:2 title "Date vs. Lines of Code" with lines
@@ -34,6 +38,8 @@ set nolabel
 ##------- Olden CBE performance ----
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 set output "running_Olden_cbe_time.png"
 set ylabel "CBE compiled execution time (s)"
 plot "running_Olden_cbe_time.txt" u 1:2 t '' with lines, \
@@ -50,6 +56,8 @@ plot "running_Olden_cbe_time.txt" u 1:2 t '' with lines, \
    with lines
 
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_Olden_cbe_time_large.png"
 plot "running_Olden_cbe_time.txt" u 1:2 t '' with lines, \
      "running_Olden_cbe_time.txt" u 1:2 t "bh" with lines, \
@@ -67,6 +75,8 @@ plot "running_Olden_cbe_time.txt" u 1:2 t '' with lines, \
 ##------- Olden JIT performance ----
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 set output "running_Olden_jit_time.png"
 set ylabel "JIT execution time (s)"
 plot "running_Olden_jit_time.txt" u 1:2 t '' with lines, \
@@ -83,6 +93,8 @@ plot "running_Olden_jit_time.txt" u 1:2 t '' with lines, \
    with lines
 
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_Olden_jit_time_large.png"
 plot "running_Olden_jit_time.txt" u 1:2 t '' with lines, \
      "running_Olden_jit_time.txt" u 1:2 t "bh" with lines, \
@@ -100,6 +112,8 @@ plot "running_Olden_jit_time.txt" u 1:2 t '' with lines, \
 ##------- Olden LLC performance ----
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 set output "running_Olden_llc_time.png"
 set ylabel "LLC compiled execution time (s)"
 plot "running_Olden_llc_time.txt" u 1:2 t '' with lines, \
@@ -116,6 +130,8 @@ plot "running_Olden_llc_time.txt" u 1:2 t '' with lines, \
    with lines
 
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_Olden_llc_time_large.png"
 plot "running_Olden_llc_time.txt" u 1:2 t '' with lines, \
      "running_Olden_llc_time.txt" u 1:2 t "bh" with lines, \
@@ -134,6 +150,8 @@ plot "running_Olden_llc_time.txt" u 1:2 t '' with lines, \
 ##------- Olden optimizer time ----
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 set output "running_Olden_opt_time.png"
 set ylabel "Time to run the optimizer (s)"
 plot "running_Olden_opt_time.txt" u 1:2 t '' with lines, \
@@ -150,6 +168,8 @@ plot "running_Olden_opt_time.txt" u 1:2 t '' with lines, \
    with lines
 
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_Olden_opt_time_large.png"
 plot "running_Olden_opt_time.txt" u 1:2 t '' with lines, \
      "running_Olden_opt_time.txt" u 1:2 t "bh" with lines, \
@@ -168,6 +188,8 @@ plot "running_Olden_opt_time.txt" u 1:2 t '' with lines, \
 ##------- Machine code size ----
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 set output "running_Olden_machcode.png"
 set ylabel "Program machine code size (bytes)"
 plot "running_Olden_machcode.txt" u 1:2 t '' with lines, \
@@ -184,6 +206,8 @@ plot "running_Olden_machcode.txt" u 1:2 t '' with lines, \
    with lines
 
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_Olden_machcode_large.png"
 plot "running_Olden_machcode.txt" u 1:2 t '' with lines, \
      "running_Olden_machcode.txt" u 1:2 t "bh" with lines, \
@@ -202,6 +226,8 @@ plot "running_Olden_machcode.txt" u 1:2 t '' with lines, \
 ##------- Bytecode size ----
 
 set size .75,.75
+set xtics rotate by 90
+set xlabel 0,-1
 set output "running_Olden_bytecode.png"
 set ylabel "Program bytecode size (bytes)"
 plot "running_Olden_bytecode.txt" u 1:2 t '' with lines, \
@@ -218,6 +244,8 @@ plot "running_Olden_bytecode.txt" u 1:2 t '' with lines, \
    with lines
 
 set size 1.5,1.5
+set xtics norotate
+set xlabel 0,0
 set output "running_Olden_bytecode_large.png"
 plot "running_Olden_bytecode.txt" u 1:2 t '' with lines, \
      "running_Olden_bytecode.txt" u 1:2 t "bh" with lines, \
