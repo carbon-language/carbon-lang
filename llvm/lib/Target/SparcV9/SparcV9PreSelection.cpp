@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcV9Internals.h"
-#include "SparcV9InstrSelectionSupport.h"
+#include "SparcV9BurgISel.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
