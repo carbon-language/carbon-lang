@@ -217,9 +217,8 @@ string GlobalDSNode::getCaption() const {
 }
 
 
-ShadowDSNode::ShadowDSNode(DSNode *P, Module *M, bool C = false)
-  : DSNode(ShadowNode, cast<PointerType>(P->getType())->getElementType()) {
-  Parent = P;
+ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, bool C = false)
+  : DSNode(ShadowNode, Ty) {
   Mod = M;
   ShadowParent = 0;
   CriticalNode = C;
@@ -227,7 +226,6 @@ ShadowDSNode::ShadowDSNode(DSNode *P, Module *M, bool C = false)
 
 ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, ShadowDSNode *ShadParent)
   : DSNode(ShadowNode, Ty) {
-  Parent = 0;
   Mod = M;
   ShadowParent = ShadParent;
   CriticalNode = false;
