@@ -158,6 +158,17 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     }
 }
 
+static unsigned getEncodedLinkage(const GlobalValue *GV) {
+  switch (GV->getLinkage()) {
+  default: assert(0 && "Invalid linkage!");
+  case GlobalValue::ExternalLinkage:  return 0;
+  case GlobalValue::LinkOnceLinkage:  return 1;
+  case GlobalValue::WeakLinkage:      return 1;
+  case GlobalValue::AppendingLinkage: return 2;
+  case GlobalValue::InternalLinkage:  return 3;
+  }
+}
+
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfo, Out);
   
@@ -168,7 +179,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3=Linkage,
     // bit4+ = Slot # for type
-    unsigned oSlot = ((unsigned)Slot << 4) | ((unsigned)I->getLinkage() << 2) |
+    unsigned oSlot = ((unsigned)Slot << 4) | (getEncodedLinkage(I) << 2) |
                      (I->hasInitializer() << 1) | I->isConstant();
     output_vbr(oSlot, Out);
 
@@ -195,7 +206,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
 void BytecodeWriter::outputFunction(const Function *F) {
   BytecodeBlock FunctionBlock(BytecodeFormat::Function, Out);
-  output_vbr((unsigned)F->getLinkage(), Out);
+  output_vbr(getEncodedLinkage(F), Out);
   // Only output the constant pool and other goodies if needed...
   if (!F->isExternal()) {
 

@@ -318,7 +318,12 @@ void BytecodeParser::materializeFunction(Function* F) {
       throw std::string("ParseFunction: Error reading from buffer.");
     if (LinkageType & ~0x3) 
       throw std::string("Invalid linkage type for Function.");
-    Linkage = (GlobalValue::LinkageTypes)LinkageType;
+    switch (LinkageType) {
+    case 0: Linkage = GlobalValue::ExternalLinkage; break;
+    case 1: Linkage = GlobalValue::WeakLinkage; break;
+    case 2: Linkage = GlobalValue::AppendingLinkage; break;
+    case 3: Linkage = GlobalValue::InternalLinkage; break;
+    }
   } else {
     // We used to only support two linkage models: internal and external
     unsigned isInternal;
@@ -436,7 +441,12 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
       // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
       // bit2,3 = Linkage, bit4+ = slot#
       SlotNo = VarType >> 4;
-      Linkage = (GlobalValue::LinkageTypes)((VarType >> 2) & 3);
+      switch ((VarType >> 2) & 3) {
+      case 0: Linkage = GlobalValue::ExternalLinkage;  break;
+      case 1: Linkage = GlobalValue::WeakLinkage;      break;
+      case 2: Linkage = GlobalValue::AppendingLinkage; break;
+      case 3: Linkage = GlobalValue::InternalLinkage;  break;
+      }
     } else {
       // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
       // bit2 = isInternal, bit3+ = slot#
