@@ -492,7 +492,6 @@ Instruction *InstCombiner::visitShiftInst(Instruction &I) {
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
     unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
     if (CUI->getValue() >= TypeBits &&
-        TypeBits && // FIXME: Handle pointer operands here.  This should go away
         !(Op0->getType()->isSigned() && I.getOpcode() == Instruction::Shr))
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
   }
