@@ -570,7 +570,7 @@ public:
     Args.push_back(getScalarRef(I->getOperand(0)).Pool.Handle);
     Instruction *NewCall = new CallInst(PoolAllocator.PoolFree, Args);
     ReplaceInstWith(I, NewCall);
-    ReferencesToUpdate.push_back(RefToUpdate(NewCall, 0, I->getOperand(0)));
+    ReferencesToUpdate.push_back(RefToUpdate(NewCall, 1, I->getOperand(0)));
   }
 
   // visitCallInst - Create a new call instruction with the extra arguments for
