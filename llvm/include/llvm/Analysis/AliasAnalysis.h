@@ -100,6 +100,28 @@ public:
   ///
   virtual bool pointsToConstantMemory(const Value *P) { return false; }
 
+  /// doesNotAccessMemory - If the specified function is known to never read or
+  /// write memory, return true.
+  ///
+  /// Many optimizations (such as CSE and LICM) can be performed on calls to it,
+  /// without worrying about aliasing properties, and many functions have this
+  /// property (e.g. 'sin' and 'cos').
+  ///
+  /// This property corresponds to the GCC 'const' attribute.
+  ///
+  virtual bool doesNotAccessMemory(Function *F) { return false; }
+
+  /// onlyReadsMemory - If the specified function is known to only read from
+  /// non-volatile memory (or not access memory at all), return true.
+  ///
+  /// This property allows many common optimizations to be performed in the
+  /// absence of interfering store instructions, such as CSE of strlen calls.
+  ///
+  /// This property corresponds to the GCC 'pure' attribute.
+  ///
+  virtual bool onlyReadsMemory(Function *F) { return doesNotAccessMemory(F); }
+
+
   //===--------------------------------------------------------------------===//
   /// Simple mod/ref information...
   ///
