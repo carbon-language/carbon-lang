@@ -54,6 +54,16 @@ namespace llvm {
   public:
     SCEV(unsigned SCEVTy) : SCEVType(SCEVTy), RefCount(0) {}
 
+    /// getNegativeSCEV - Return the SCEV object corresponding to -V.
+    ///
+    static SCEVHandle getNegativeSCEV(const SCEVHandle &V);
+
+    /// getMinusSCEV - Return LHS-RHS.
+    ///
+    static SCEVHandle getMinusSCEV(const SCEVHandle &LHS,
+                                   const SCEVHandle &RHS);
+
+
     unsigned getSCEVType() const { return SCEVType; }
 
     /// getValueRange - Return the tightest constant bounds that this value is
