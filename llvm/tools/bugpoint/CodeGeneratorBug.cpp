@@ -41,8 +41,6 @@ public:
   
   bool TestFuncs(const std::vector<Function*> &CodegenTest,
                  bool KeepFiles = false);
-
-  void DisambiguateGlobalSymbols(Module *M);
 };
 
 
@@ -64,7 +62,6 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   for (Module::giterator I=SafeModule->gbegin(),E = SafeModule->gend();I!=E;++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
 
-  DisambiguateGlobalSymbols(SafeModule);
   Module *TestModule = CloneModule(SafeModule);
 
   // Make sure global initializers exist only in the safe module (CBE->.so)
@@ -75,6 +72,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
     Function *TNOF = SafeModule->getFunction(Funcs[i]->getName(),
                                              Funcs[i]->getFunctionType());
+    DEBUG(std::cerr << "Removing function " << Funcs[i]->getName() << "\n");
     assert(TNOF && "Function doesn't exist in module!");
     DeleteFunctionBody(TNOF);       // Function is now external in this module!
   }
@@ -96,6 +94,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   if (BD.isExecutingJIT()) {
     // Must delete `main' from Safe module if it has it
     Function *safeMain = SafeModule->getNamedFunction("main");
+    assert(safeMain && "`main' function not found in safe module!");
     DeleteFunctionBody(safeMain);
 
     // Add an external function "getPointerToNamedFunction" that JIT provides
@@ -283,7 +282,7 @@ namespace {
   };
 }
 
-void ReduceMisCodegenFunctions::DisambiguateGlobalSymbols(Module *M) {
+void DisambiguateGlobalSymbols(Module *M) {
   // First, try not to cause collisions by minimizing chances of renaming an
   // already-external symbol, so take in external globals and functions as-is.
   Disambiguator D;
@@ -317,6 +316,7 @@ bool BugDriver::debugCodeGenerator() {
   if (isExecutingJIT()) {
     // Get the `main' function
     Function *oldMain = Program->getNamedFunction("main");
+    assert(oldMain && "`main' function not found in program!");
     // Rename it
     oldMain->setName("old_main");
     // Create a NEW `main' function with same type
@@ -343,6 +343,8 @@ bool BugDriver::debugCodeGenerator() {
     BB->getInstList().push_back(ret);
   }
 
+  DisambiguateGlobalSymbols(Program);
+
   // Do the reduction...
   ReduceMisCodegenFunctions(*this).reduceList(MisCodegenFunctions);
 
@@ -355,4 +357,3 @@ bool BugDriver::debugCodeGenerator() {
 
   return false;
 }
-
