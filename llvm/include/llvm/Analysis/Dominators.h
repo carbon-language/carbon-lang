@@ -2,13 +2,21 @@
 //
 // This file defines the following classes:
 //  1. DominatorSet: Calculates the [reverse] dominator set for a method
-//  2. ImmediateDominators: Calculates and holds the immediate dominator tree
-//     for a method.
+//  2. ImmediateDominators: Calculates and holds a mapping between BasicBlocks
+//     and their immediate dominator.
+//  3. DominatorTree: Represent the ImmediateDominator as an explicit tree
+//     structure.
+//  4. DominanceFrontier: Calculate and hold the dominance frontier for a 
+//     method.
+//
+//  These data structures are listed in increasing order of complexity.  It
+//  takes longer to calculate the dominator frontier, for example, than the 
+//  ImmediateDominator mapping.
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DOMINATOR_SET_H
-#define LLVM_DOMINATOR_SET_H
+#ifndef LLVM_DOMINATORS_H
+#define LLVM_DOMINATORS_H
 
 #include <set>
 #include <map>
