@@ -172,8 +172,8 @@ ISel::visitShiftInst (ShiftInst & I)
 {
   unsigned Op0r = getReg (I.getOperand (0));
   unsigned DestReg = getReg (I);
-  bool isRightShift = (I.getOpcode () == Instruction::Shr);
-  bool isOperandUnsigned = I.getType ()->isUnsigned ();
+  bool isLeftShift = I.getOpcode() == Instruction::Shl;
+  bool isOperandSigned = I.getType()->isUnsigned();
   unsigned OperandClass = getClass(I.getType());
 
   if (OperandClass > 2)
@@ -185,31 +185,15 @@ ISel::visitShiftInst (ShiftInst & I)
       assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
       unsigned char shAmt = CUI->getValue();
 
-      // This is a shift right (SHR).
-      static const unsigned SHRUnsignedConstantOperand[] = {
-        X86::SHRir8, X86::SHRir16, X86::SHRir32
+      static const unsigned ConstantOperand[][4] = {
+        { X86::SHRir8, X86::SHRir16, X86::SHRir32, 0 },  // SHR
+        { X86::SARir8, X86::SARir16, X86::SARir32, 0 },  // SAR
+        { X86::SHLir8, X86::SHLir16, X86::SHLir32, 0 },  // SHL
+        { X86::SHLir8, X86::SHLir16, X86::SHLir32, 0 },  // SAL = SHL
       };
 
-      // This is a shift right arithmetic (SAR).
-      static const unsigned SHRSignedConstantOperand[] = {
-        X86::SARir8, X86::SARir16, X86::SARir32
-      };
-
-      // This is a shift left (SHL).
-      static const unsigned SHLConstantOperand[] = {
-        X86::SHLir8, X86::SHLir16, X86::SHLir32
-      };
-
-      const unsigned *OpTab = 0;  // Figure out the operand table to use
-      if (isRightShift) {
-        if (isOperandUnsigned)
-          OpTab = SHRUnsignedConstantOperand;
-        else
-          OpTab = SHRSignedConstantOperand;
-      } else {
-        // This is a left shift (SHL).
-        OpTab = SHLConstantOperand;
-      }
+      const unsigned *OpTab = // Figure out the operand table to use
+        ConstantOperand[isLeftShift*2+isOperandSigned];
 
       // Emit: <insn> reg, shamt  (shift-by-immediate opcode "ir" form.)
       BuildMI(BB, OpTab[OperandClass], 2, DestReg).addReg(Op0r).addZImm(shAmt);
@@ -222,41 +206,22 @@ ISel::visitShiftInst (ShiftInst & I)
       // that amount is already in the CL register, so we have to put it
       // there first.
       //
-      // Get it from the register it's in.
-      unsigned Op1r = getReg (I.getOperand (1));
+
       // Emit: move cl, shiftAmount (put the shift amount in CL.)
-      BuildMI (BB, X86::MOVrr8, 2, X86::CL).addReg (Op1r);
+      BuildMI (BB, X86::MOVrr8, 2, X86::CL).addReg(getReg(I.getOperand(1)));
 
       // This is a shift right (SHR).
-      static const unsigned SHRUnsignedOperand[] = {
-        X86::SHRrr8, X86::SHRrr16, X86::SHRrr32
+      static const unsigned NonConstantOperand[][4] = {
+        { X86::SHRrr8, X86::SHRrr16, X86::SHRrr32, 0 },  // SHR
+        { X86::SARrr8, X86::SARrr16, X86::SARrr32, 0 },  // SAR
+        { X86::SHLrr8, X86::SHLrr16, X86::SHLrr32, 0 },  // SHL
+        { X86::SHLrr8, X86::SHLrr16, X86::SHLrr32, 0 },  // SAL = SHL
       };
 
-      // This is a shift right arithmetic (SAR).
-      static const unsigned SHRSignedOperand[] = {
-        X86::SARrr8, X86::SARrr16, X86::SARrr32
-      };
+      const unsigned *OpTab = // Figure out the operand table to use
+        NonConstantOperand[isLeftShift*2+isOperandSigned];
 
-      // This is a shift left (SHL).
-      static const unsigned SHLOperand[] = {
-        X86::SHLrr8, X86::SHLrr16, X86::SHLrr32
-      };
-
-      // Emit: <insn> reg, cl       (shift-by-CL opcode; "rr" form.)
-      const unsigned *OpTab = 0;  // Figure out the operand table to use
-      if (isRightShift) {
-        if (isOperandUnsigned)
-          OpTab = SHRUnsignedOperand;
-        else
-          OpTab = SHRSignedOperand;
-      } else {
-        // This is a left shift (SHL).
-        OpTab = SHLOperand;
-      }
-
-
-      BuildMI (BB, X86::SHLrr32, 2,
-               DestReg).addReg (Op0r).addReg (X86::CL);
+      BuildMI(BB, OpTab[OperandClass], 2, DestReg).addReg(Op0r).addReg(X86::CL);
     }
 }
 
