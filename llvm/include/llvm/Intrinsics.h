@@ -42,6 +42,7 @@ namespace Intrinsic {
     dbg_region_start, // Start of a region
     dbg_region_end,   // End of a region
     dbg_func_start,   // Start of a function
+    dbg_declare,      // Declare a local object
 
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha
