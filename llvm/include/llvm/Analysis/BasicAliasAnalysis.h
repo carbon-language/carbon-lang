@@ -13,17 +13,7 @@
 #include "llvm/Pass.h"
 
 struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
-  
-  // Pass Implementation stuff.  This isn't much of a pass.
-  //
-  bool runOnFunction(Function &) { return false; }
-    
-  // getAnalysisUsage - Does not modify anything.
-  //
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
-  
+
   // alias - This is the only method here that does anything interesting...
   //
   Result alias(const Value *V1, const Value *V2) const;
