@@ -40,19 +40,26 @@ bool PromotePass::runOnFunction(Function &F) {
 
   BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
 
-  // Find allocas that are safe to promote, by looking at all instructions in
-  // the entry node
-  for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))       // Is it an alloca?
-      if (isAllocaPromotable(AI, TD))
-        Allocas.push_back(AI);
+  bool Changed  = false;
+  
+  while (1) {
+    Allocas.clear();
 
-  if (!Allocas.empty()) {
+    // Find allocas that are safe to promote, by looking at all instructions in
+    // the entry node
+    for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I))       // Is it an alloca?
+        if (isAllocaPromotable(AI, TD))
+          Allocas.push_back(AI);
+
+    if (Allocas.empty()) break;
+
     PromoteMemToReg(Allocas, getAnalysis<DominanceFrontier>(), TD);
     NumPromoted += Allocas.size();
-    return true;
+    Changed = true;
   }
-  return false;
+
+  return Changed;
 }
 
 // createPromoteMemoryToRegister - Provide an entry point to create this pass.
