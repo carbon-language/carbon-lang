@@ -11,7 +11,7 @@ void %test() {
   %D = getelementptr %T* %G, long 0, ubyte 0
   %E = getelementptr %T* %G, long 0, ubyte 1, long 5
   %F = getelementptr uint* getelementptr (%T* %G, long 0, ubyte 0), long 0
-  %G = getelementptr [10 x ubyte]* getelementptr (%T* %G, long 0, ubyte 1), long 0, long 5
+  %X = getelementptr [10 x ubyte]* getelementptr (%T* %G, long 0, ubyte 1), long 0, long 5
 
   ret void
 }
