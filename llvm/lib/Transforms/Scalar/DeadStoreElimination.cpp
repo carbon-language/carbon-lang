@@ -73,7 +73,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         unsigned Size = ~0U;
         if (!AI->isArrayAllocation() &&
             AI->getType()->getElementType()->isSized())
-          Size = TD.getTypeSize(AI->getType()->getElementType());
+          Size = (unsigned)TD.getTypeSize(AI->getType()->getElementType());
         KillLocs.add(AI, Size);
       }
   }
@@ -106,7 +106,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // the stored location is already in the tracker, then this is a dead
     // store.  We can just delete it here, but while we're at it, we also
     // delete any trivially dead expression chains.
-    unsigned ValSize = TD.getTypeSize(I->getOperand(0)->getType());
+    unsigned ValSize = (unsigned)TD.getTypeSize(I->getOperand(0)->getType());
     Value *Ptr = I->getOperand(1);
 
     if (AliasSet *AS = KillLocs.getAliasSetForPointerIfExists(Ptr, ValSize))

@@ -2274,7 +2274,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
-              unsigned ShAmtVal = ShAmt->getValue();
+              unsigned ShAmtVal = (unsigned)ShAmt->getValue();
               unsigned TypeBits = CI->getType()->getPrimitiveSize()*8;
               uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
 
@@ -2317,7 +2317,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             }
               
             if (LHSI->hasOneUse() || CI->isNullValue()) {
-              unsigned ShAmtVal = ShAmt->getValue();
+              unsigned ShAmtVal = (unsigned)ShAmt->getValue();
 
               // Otherwise strength reduce the shift into an and.
               uint64_t Val = ~0ULL;          // All ones.
@@ -2931,8 +2931,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
     if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0))
       if (ConstantUInt *ShiftAmt1C =
                                  dyn_cast<ConstantUInt>(Op0SI->getOperand(1))) {
-        unsigned ShiftAmt1 = ShiftAmt1C->getValue();
-        unsigned ShiftAmt2 = CUI->getValue();
+        unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getValue();
+        unsigned ShiftAmt2 = (unsigned)CUI->getValue();
         
         // Check for (A << c1) << c2   and   (A >> c1) >> c2
         if (I.getOpcode() == Op0SI->getOpcode()) {
@@ -3169,8 +3169,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         const Type *AllocElTy = AI->getAllocatedType();
         const Type *CastElTy = PTy->getElementType();
         if (AllocElTy->isSized() && CastElTy->isSized()) {
-          unsigned AllocElTySize = TD->getTypeSize(AllocElTy);
-          unsigned CastElTySize = TD->getTypeSize(CastElTy);
+          uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
+          uint64_t CastElTySize = TD->getTypeSize(CastElTy);
 
           // If the allocation is for an even multiple of the cast type size
           if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
@@ -4190,12 +4190,13 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
       ConstantUInt *CU = cast<ConstantUInt>(I.getOperand());
       assert(CU->getValue() < STy->getNumElements() &&
              "Struct index out of range!");
+      unsigned El = (unsigned)CU->getValue();
       if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-        C = CS->getOperand(CU->getValue());
+        C = CS->getOperand(El);
       } else if (isa<ConstantAggregateZero>(C)) {
-	C = Constant::getNullValue(STy->getElementType(CU->getValue()));
+	C = Constant::getNullValue(STy->getElementType(El));
       } else if (isa<UndefValue>(C)) {
-	C = UndefValue::get(STy->getElementType(CU->getValue()));
+	C = UndefValue::get(STy->getElementType(El));
       } else {
         return 0;
       }
@@ -4203,7 +4204,7 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
       const ArrayType *ATy = cast<ArrayType>(*I);
       if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
       if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-        C = CA->getOperand(CI->getRawValue());
+        C = CA->getOperand((unsigned)CI->getRawValue());
       else if (isa<ConstantAggregateZero>(C))
         C = Constant::getNullValue(ATy->getElementType());
       else if (isa<UndefValue>(C))
