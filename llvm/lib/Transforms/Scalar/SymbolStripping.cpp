@@ -10,9 +10,9 @@
 // This file implements stripping symbols out of symbol tables.
 //
 // Specifically, this allows you to strip all of the symbols out of:
-//   * A function
 //   * All functions in a module
-//   * All symbols in a module (all function symbols + all module scope symbols)
+//   * All non-essential symbols in a module (all function symbols + all module
+//     scope symbols)
 //
 // Notice that:
 //   * This pass makes code much less readable, so it should only be used in
@@ -30,12 +30,15 @@ using namespace llvm;
 static bool StripSymbolTable(SymbolTable &SymTab) {
   bool RemovedSymbol = false;
 
-  for (SymbolTable::iterator I = SymTab.begin(); I != SymTab.end(); ++I) {
-    std::map<const std::string, Value *> &Plane = I->second;
+  for (SymbolTable::iterator I = SymTab.begin(); I != SymTab.end();) {
+    // Removing items from the plane can cause the plane itself to get deleted.
+    // If this happens, make sure we incremented our plane iterator already!
+    std::map<const std::string, Value *> &Plane = (I++)->second;
     
-    SymbolTable::type_iterator B = Plane.begin();
-    while (B != Plane.end()) {   // Found nonempty type plane!
+    SymbolTable::type_iterator B = Plane.begin(), Bend = Plane.end();
+    while (B != Bend) {   // Found nonempty type plane!
       Value *V = B->second;
+
       if (isa<Constant>(V) || isa<Type>(V)) {
 	SymTab.type_remove(B++);
         RemovedSymbol = true;
