@@ -21,7 +21,7 @@ bool isExecutableFile(const std::string &ExeFileName);
 /// in the PATH.  If the executable cannot be found, return an empty string.
 /// 
 std::string FindExecutable(const std::string &ExeName,
-			   const std::string &ProgramPath);
+                           const std::string &ProgramPath);
 
 /// RunProgramWithTimeout - This function executes the specified program, with
 /// the specified null-terminated argument array, with the stdin/out/err fd's
@@ -30,16 +30,12 @@ std::string FindExecutable(const std::string &ExeName,
 /// It returns the return value of the program, or -1 if a timeout is detected.
 ///
 int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
-			  const std::string &StdInFile = "",
-			  const std::string &StdOutFile = "",
-			  const std::string &StdErrFile = "");
+                          const std::string &StdInFile = "",
+                          const std::string &StdOutFile = "",
+                          const std::string &StdErrFile = "");
 
-///
-/// Function: ExecWait()
-///
-/// Description:
-///  Execute a program with the given arguments and environment and 
-///  wait for it to terminate.
+/// ExecWait - Execute a program with the given arguments and environment and 
+/// wait for it to terminate.
 ///
 int ExecWait (const char * const argv[], const char * const envp[]);
 #endif
