@@ -72,61 +72,61 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
   if (Verify) Passes.add(createVerifierPass());
 
   // Add an appropriate TargetData instance for this module...
-  addPass (Passes, new TargetData("gccld", M));
+  addPass(Passes, new TargetData("gccld", M));
 
   if (!DisableOptimizations) {
     // Linking modules together can lead to duplicated global constants, only
     // keep one copy of each constant...
-    addPass (Passes, createConstantMergePass());
+    addPass(Passes, createConstantMergePass());
 
     // If the -s command line option was specified, strip the symbols out of the
     // resulting program to make it smaller.  -s is a GCC option that we are
     // supporting.
     if (Strip)
-      addPass (Passes, createSymbolStrippingPass());
+      addPass(Passes, createSymbolStrippingPass());
 
     // Often if the programmer does not specify proper prototypes for the
     // functions they are calling, they end up calling a vararg version of the
     // function that does not get a body filled in (the real function has typed
     // arguments).  This pass merges the two functions.
-    addPass (Passes, createFunctionResolvingPass());
+    addPass(Passes, createFunctionResolvingPass());
 
     if (Internalize) {
       // Now that composite has been compiled, scan through the module, looking
       // for a main function.  If main is defined, mark all other functions
       // internal.
-      addPass (Passes, createInternalizePass());
+      addPass(Passes, createInternalizePass());
     }
 
     // Propagate constants at call sites into the functions they call.
-    addPass (Passes, createIPConstantPropagationPass());
+    addPass(Passes, createIPConstantPropagationPass());
 
     // Remove unused arguments from functions...
-    addPass (Passes, createDeadArgEliminationPass());
+    addPass(Passes, createDeadArgEliminationPass());
 
     if (!DisableInline)
-      addPass (Passes, createFunctionInliningPass()); // Inline small functions
+      addPass(Passes, createFunctionInliningPass()); // Inline small functions
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
     // Eventually we should put an IP AA in place here.
 
-    addPass (Passes, createLICMPass());               // Hoist loop invariants
-    addPass (Passes, createLoadValueNumberingPass()); // GVN for load instrs
-    addPass (Passes, createGCSEPass());               // Remove common subexprs
+    addPass(Passes, createLICMPass());               // Hoist loop invariants
+    addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
+    addPass(Passes, createGCSEPass());               // Remove common subexprs
 
     // The FuncResolve pass may leave cruft around if functions were prototyped
     // differently than they were defined.  Remove this cruft.
-    addPass (Passes, createInstructionCombiningPass());
+    addPass(Passes, createInstructionCombiningPass());
 
     // Delete basic blocks, which optimization passes may have killed...
-    addPass (Passes, createCFGSimplificationPass());
+    addPass(Passes, createCFGSimplificationPass());
 
     // Now that we have optimized the program, discard unreachable functions...
-    addPass (Passes, createGlobalDCEPass());
+    addPass(Passes, createGlobalDCEPass());
   }
 
   // Add the pass that writes bytecode to the output file...
-  addPass (Passes, new WriteBytecodePass(Out));
+  addPass(Passes, new WriteBytecodePass(Out));
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
