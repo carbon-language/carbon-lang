@@ -2580,7 +2580,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // obvious.
       Value *Op = GEP.getOperand(i);
       if (Op->getType()->getPrimitiveSize() > TD->getPointerSize())
-        if (!isa<Constant>(Op)) {
+        if (Constant *C = dyn_cast<Constant>(Op)) {
+          GEP.setOperand(i, ConstantExpr::getCast(C, TD->getIntPtrType()));
+          MadeChange = true;
+        } else {
           Op = InsertNewInstBefore(new CastInst(Op, TD->getIntPtrType(),
                                                 Op->getName()), GEP);
           GEP.setOperand(i, Op);
