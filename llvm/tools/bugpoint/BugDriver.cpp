@@ -122,13 +122,12 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
 /// variables are set up from command line arguments.
 ///
 bool BugDriver::run() {
-  // The first thing that we must do is determine what the problem is.  Does the
-  // optimization series crash the compiler, or does it produce illegal code? We
-  // make the top-level decision by trying to run all of the passes on the the
-  // input program, which should generate a bytecode file.  If it does generate
-  // a bytecode file, then we know the compiler didn't crash, so try to diagnose
-  // a miscompilation.
-  //
+  // The first thing that we must do is determine what the problem is. Does the
+  // optimization series crash the compiler, or does it produce illegal code?
+  // We make the top-level decision by trying to run all of the passes on the
+  // the input program, which should generate a bytecode file.  If it does
+  // generate a bytecode file, then we know the compiler didn't crash, so try
+  // to diagnose a miscompilation.
   if (!PassesToRun.empty()) {
     std::cout << "Running selected passes on program to test for crash: ";
     if (runPasses(PassesToRun))
