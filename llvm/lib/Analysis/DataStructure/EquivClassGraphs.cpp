@@ -16,6 +16,7 @@
 
 #define DEBUG_TYPE "ECGraphs"
 #include "llvm/Analysis/DataStructure/EquivClassGraphs.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
@@ -122,6 +123,29 @@ bool EquivClassGraphs::runOnModule(Module &M) {
     MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
                                   DSGraph::IgnoreGlobals);
   }
+
+  // Final processing.  Note that dead node elimination may actually remove
+  // globals from a function graph that are immediately used.  If there are no
+  // scalars pointing to the node (e.g. because the only use is a direct store
+  // to a scalar global) we have to make sure to rematerialize the globals back
+  // into the graphs here, or clients will break!
+  for (Module::global_iterator GI = M.global_begin(), E = M.global_end();
+       GI != E; ++GI)
+    // This only happens to first class typed globals.
+    if (GI->getType()->getElementType()->isFirstClassType())
+      for (Value::use_iterator UI = GI->use_begin(), E = GI->use_end();
+           UI != E; ++UI)
+        // This only happens to direct uses by instructions.
+        if (Instruction *User = dyn_cast<Instruction>(*UI)) {
+          DSGraph &DSG = getOrCreateGraph(*User->getParent()->getParent());
+          if (!DSG.getScalarMap().count(GI)) {
+            // If this global does not exist in the graph, but it is immediately
+            // used by an instruction in the graph, clone it over from the
+            // globals graph.
+            ReachabilityCloner RC(DSG, *GlobalsGraph, 0);
+            RC.getClonedNH(GlobalsGraph->getNodeForValue(GI));
+          }
+        }
 
   return false;
 }
