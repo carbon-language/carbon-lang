@@ -24,21 +24,35 @@
 
 
 static inline MachineInstr*
-CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest)
+CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest,
+                        vector<TmpInstruction*>& tempVec)
 {
   MachineInstr* minstr;
+  uint64_t absC = (C >= 0)? C : -C;
+  if (absC > (unsigned int) ~0)
+    { // C does not fit in 32 bits
+      TmpInstruction* tmpReg =
+        new TmpInstruction(Instruction::UserOp1, NULL, NULL);
+      tempVec.push_back(tmpReg);
+      
+      minstr = new MachineInstr(SETX);
+      minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
+      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, tmpReg,
+                                   /*isdef*/ true);
+      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,dest);
+    }
   if (isSigned)
     {
       minstr = new MachineInstr(SETSW);
       minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
+      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, dest);
     }
   else
     {
       minstr = new MachineInstr(SETUW);
       minstr->SetMachineOperand(0, MachineOperand::MO_UnextendedImmed, C);
+      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, dest);
     }
-  
-  minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, dest);
   
   return minstr;
 }
@@ -92,19 +106,23 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
       bool isValidConstant;
       int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
       assert(isValidConstant && "Unrecognized constant");
-      minstr = CreateIntSetInstruction(C, valType->isSigned(), dest);
+      minstr = CreateIntSetInstruction(C, valType->isSigned(), dest, tempVec);
       minstrVec.push_back(minstr);
     }
   else
     {
       // Make an instruction sequence to load the constant, viz:
-      //            SETSW <addr-of-constant>, addrReg
+      //            SETX <addr-of-constant>, tmpReg, addrReg
       //            LOAD  /*addr*/ addrReg, /*offset*/ 0, dest
-      // Only the SETSW is needed if `val' is a GlobalValue, i.e,. it is
+      // Only the SETX is needed if `val' is a GlobalValue, i.e,. it is
       // itself a constant address.  Otherwise, both are needed.
       
       Value* addrVal;
       int64_t zeroOffset = 0; // to avoid ambiguity with (Value*) 0
+      
+      TmpInstruction* tmpReg =
+        new TmpInstruction(Instruction::UserOp1, val, NULL);
+      tempVec.push_back(tmpReg);
       
       if (isa<ConstPoolVal>(val))
         {
@@ -117,9 +135,11 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
       else
         addrVal = dest;
       
-      minstr = new MachineInstr(SETUW);
+      minstr = new MachineInstr(SETX);
       minstr->SetMachineOperand(0, MachineOperand::MO_PCRelativeDisp, val);
-      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister,addrVal);
+      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, tmpReg,
+                                   /*isdef*/ true);
+      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,addrVal);
       minstrVec.push_back(minstr);
       
       if (isa<ConstPoolVal>(val))
