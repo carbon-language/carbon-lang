@@ -89,6 +89,22 @@ extern const MachineInstrDescriptor SparcMachineInstrDesc[];
 class UltraSparcInstrInfo : public MachineInstrInfo {
 public:
   /*ctor*/	UltraSparcInstrInfo(const TargetMachine& tgt);
+
+  //
+  // All immediate constants are in position 0 except the
+  // store instructions.
+  // 
+  virtual int getImmmedConstantPos(MachineOpCode opCode) const {
+    bool ignore;
+    if (this->maxImmedConstant(opCode, ignore) != 0)
+      {
+        assert(! this->isStore((MachineOpCode) STB - 1)); // first store is STB
+        assert(! this->isStore((MachineOpCode) STD + 1)); // last  store is STD
+        return (opCode >= STB || opCode <= STD)? 2 : 1;
+      }
+    else
+      return -1;
+  }
   
   virtual bool		hasResultInterlock	(MachineOpCode opCode) const
   {

@@ -209,6 +209,13 @@ public:
   virtual int maxLatency(MachineOpCode opCode) const {
     return getDescriptor(opCode).latency;
   }
+
+  //
+  // Which operand holds an immediate constant?  Returns -1 if none
+  // 
+  virtual int getImmmedConstantPos(MachineOpCode opCode) const {
+    return -1; // immediate position is machine specific, so say -1 == "none"
+  }
   
   // Check if the specified constant fits in the immediate field
   // of this machine instruction
