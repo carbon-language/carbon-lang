@@ -108,8 +108,7 @@ namespace {  // Anonymous namespace for class
         visitGlobalValue(*I);
 
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-        if (I->isExternal() && I->hasInternalLinkage())
-          CheckFailed("Global Variable is external with internal linkage!", I);
+        visitGlobalValue(*I);
 
       // If the module is broken, abort at this time.
       abortIfBroken();
@@ -203,7 +202,7 @@ namespace {  // Anonymous namespace for class
 
 void Verifier::visitGlobalValue(GlobalValue &GV) {
   Assert1(!GV.isExternal() || GV.hasExternalLinkage(),
-          "Global value has Internal Linkage!", &GV);
+          "Global is external, but doesn't have external linkage!", &GV);
   Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
           "Only global variables can have appending linkage!", &GV);
 
