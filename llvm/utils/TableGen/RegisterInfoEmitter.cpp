@@ -85,8 +85,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   // a set of registers which belong to a register class, this is to ensure that
   // each register is only in a single register class.
   //
-  std::vector<Record*> RegisterClasses =
-    Records.getAllDerivedDefinitions("RegisterClass");
+  const std::vector<CodeGenRegisterClass> &RegisterClasses =
+    Target.getRegisterClasses();
 
   std::set<Record*> RegistersFound;
   std::vector<std::string> RegClassNames;
@@ -95,9 +95,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "namespace {     // Register classes...\n";
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
-    Record *RC = RegisterClasses[rc];
+    const CodeGenRegisterClass &RC = RegisterClasses[rc];
 
-    std::string Name = RC->getName();
+    std::string Name = RC.getName();
     if (Name.size() > 9 && Name[9] == '.') {
       static unsigned AnonCounter = 0;
       Name = "AnonRegClass_"+utostr(AnonCounter++);
@@ -108,14 +108,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     // Emit the register list now...
     OS << "  // " << Name << " Register Class...\n  const unsigned " << Name
        << "[] = {\n    ";
-    ListInit *RegList = RC->getValueAsListInit("MemberList");
-    for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
-      DefInit *RegDef = dynamic_cast<DefInit*>(RegList->getElement(i));
-      if (!RegDef) throw "Register class member is not a record!";      
-      Record *Reg = RegDef->getDef();
-      if (!Reg->isSubClassOf("Register"))
-        throw "Register Class member '" + Reg->getName() +
-              " does not derive from the Register class!";
+    for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
+      Record *Reg = RC.Elements[i];
       if (RegistersFound.count(Reg))
         throw "Register '" + Reg->getName() +
               "' included in multiple register classes!";
@@ -126,15 +120,15 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
     OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
        << "    " << Name << "Class() : TargetRegisterClass("
-       << RC->getValueAsInt("Size")/8 << ", " << RC->getValueAsInt("Alignment")
-       << ", " << Name << ", " << Name << " + " << RegList->getSize()
-       << ") {}\n";
+       << RC.SpillSize/8 << ", " << RC.SpillAlignment << ", " << Name << ", "
+       << Name << " + " << RC.Elements.size() << ") {}\n";
     
-    if (CodeInit *CI = dynamic_cast<CodeInit*>(RC->getValueInit("Methods")))
+    if (CodeInit *CI =
+        dynamic_cast<CodeInit*>(RC.TheDef->getValueInit("Methods")))
       OS << CI->getValue();
     else
       throw "Expected 'code' fragment for 'Methods' value in register class '"+
-            RC->getName() + "'!";
+            RC.getName() + "'!";
 
     OS << "  } " << Name << "Instance;\n\n";
   }
@@ -215,7 +209,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   OS << "namespace " << Target.getName() << " { // Register classes\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-    const std::string &Name = RegisterClasses[i]->getName();
+    const std::string &Name = RegisterClasses[i].getName();
     if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
       OS << "  TargetRegisterClass *" << Name << "RegisterClass = &"
          << Name << "Instance;\n";

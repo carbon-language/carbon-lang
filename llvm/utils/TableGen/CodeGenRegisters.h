@@ -16,6 +16,7 @@
 #define CODEGEN_REGISTERS_H
 
 #include <string>
+#include <vector>
 
 namespace llvm {
   class Record;
@@ -31,7 +32,14 @@ namespace llvm {
 
 
   struct CodeGenRegisterClass {
+    Record *TheDef;
+    std::vector<Record*> Elements;
+    unsigned SpillSize;
+    unsigned SpillAlignment;
 
+    const std::string &getName() const;
+
+    CodeGenRegisterClass(Record *R);
   };
 }
 

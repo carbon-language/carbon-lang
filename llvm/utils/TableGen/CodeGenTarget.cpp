@@ -121,6 +121,38 @@ const std::string &CodeGenRegister::getName() const {
   return TheDef->getName();
 }
 
+void CodeGenTarget::ReadRegisterClasses() const {
+  std::vector<Record*> RegClasses =
+    Records.getAllDerivedDefinitions("RegisterClass");
+  if (RegClasses.empty())
+    throw std::string("No 'RegisterClass' subclasses defined!");
+
+  RegisterClasses.reserve(RegClasses.size());
+  RegisterClasses.assign(RegClasses.begin(), RegClasses.end());
+}
+
+CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
+  SpillSize = R->getValueAsInt("Size");
+  SpillAlignment = R->getValueAsInt("Alignment");
+
+  ListInit *RegList = R->getValueAsListInit("MemberList");
+  for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
+    DefInit *RegDef = dynamic_cast<DefInit*>(RegList->getElement(i));
+    if (!RegDef) throw "Register class member is not a record!";      
+    Record *Reg = RegDef->getDef();
+
+    if (!Reg->isSubClassOf("Register"))
+      throw "Register Class member '" + Reg->getName() +
+            "' does not derive from the Register class!";
+    Elements.push_back(Reg);
+  }
+}
+
+const std::string &CodeGenRegisterClass::getName() const {
+  return TheDef->getName();
+}
+
+
 
 void CodeGenTarget::ReadInstructions() const {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");

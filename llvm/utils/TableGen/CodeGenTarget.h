@@ -46,8 +46,10 @@ class CodeGenTarget {
 
   mutable std::map<std::string, CodeGenInstruction> Instructions;
   mutable std::vector<CodeGenRegister> Registers;
-  void ReadInstructions() const;
+  mutable std::vector<CodeGenRegisterClass> RegisterClasses;
   void ReadRegisters() const;
+  void ReadRegisterClasses() const;
+  void ReadInstructions() const;
 public:
   CodeGenTarget();
 
@@ -72,6 +74,12 @@ public:
     if (Registers.empty()) ReadRegisters();
     return Registers;
   }
+
+  const std::vector<CodeGenRegisterClass> getRegisterClasses() {
+    if (RegisterClasses.empty()) ReadRegisterClasses();
+    return RegisterClasses;
+  }
+
 
   /// getInstructions - Return all of the instructions defined for this target.
   ///
