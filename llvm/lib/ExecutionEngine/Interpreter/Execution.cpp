@@ -25,20 +25,20 @@ using std::cerr;
 
 namespace {
   Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
+
+  cl::opt<bool>
+  QuietMode("quiet", cl::desc("Do not emit any non-program output"));
+
+  cl::alias 
+  QuietModeA("q", cl::desc("Alias for -quiet"), cl::aliasopt(QuietMode));
+
+  cl::opt<bool>
+  ArrayChecksEnabled("array-checks", cl::desc("Enable array bound checks"));
+
+  cl::opt<bool>
+  AbortOnExceptions("abort-on-exception",
+                    cl::desc("Halt execution on a machine exception"));
 }
-
-static cl::opt<bool>
-QuietMode("quiet", cl::desc("Do not emit any non-program output"));
-
-static cl::alias 
-QuietModeA("q", cl::desc("Alias for -quiet"), cl::aliasopt(QuietMode));
-
-static cl::opt<bool>
-ArrayChecksEnabled("array-checks", cl::desc("Enable array bound checks"));
-
-static cl::opt<bool>
-AbortOnExceptions("abort-on-exception",
-                  cl::desc("Halt execution on a machine exception"));
 
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
