@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvm-prof
+llvm-prof - print execution profile of LLVM program
 
 =head1 SYNOPSIS
 
