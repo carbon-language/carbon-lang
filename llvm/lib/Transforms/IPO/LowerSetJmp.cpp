@@ -41,6 +41,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Transforms/Utils/DemoteRegToStack.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
@@ -376,6 +377,34 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
                                    ConstantUInt::get(Type::UIntTy,
                                                      SetJmpIDMap[Func]++), 0),
                "", Inst);
+
+  // We are guaranteed that there are no values live across basic blocks
+  // (because we are "not in SSA form" yet), but there can still be values live
+  // in basic blocks.  Because of this, splitting the setjmp block can cause
+  // values above the setjmp to not dominate uses which are after the setjmp
+  // call.  For all of these occasions, we must spill the value to the stack.
+  //
+  std::set<Instruction*> InstrsAfterCall;
+
+  // The call is probably very close to the end of the basic block, for the
+  // common usage pattern of: 'if (setjmp(...))', so keep track of the
+  // instructions after the call.
+  for (BasicBlock::iterator I = ++BasicBlock::iterator(Inst), E = ABlock->end();
+       I != E; ++I)
+    InstrsAfterCall.insert(I);    
+
+  for (BasicBlock::iterator II = ABlock->begin();
+       II != BasicBlock::iterator(Inst); ++II)
+    // Loop over all of the uses of instruction.  If any of them are after the
+    // call, "spill" the value to the stack.
+    for (Value::use_iterator UI = II->use_begin(), E = II->use_end();
+         UI != E; ++UI)
+      if (cast<Instruction>(*UI)->getParent() != ABlock ||
+          InstrsAfterCall.count(cast<Instruction>(*UI))) {
+        DemoteRegToStack(*II);
+        break;
+      }
+  InstrsAfterCall.clear();
 
   // Change the setjmp call into a branch statement. We'll remove the
   // setjmp call in a little bit. No worries.
