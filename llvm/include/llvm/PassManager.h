@@ -60,7 +60,7 @@ public:
   /// track of whether any of the passes modifies the function, and if
   /// so, return true.
   ///
-  bool run(Function &M);
+  bool run(Function &F);
 };
 
 #endif
