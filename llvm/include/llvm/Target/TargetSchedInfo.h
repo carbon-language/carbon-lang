@@ -9,6 +9,7 @@
 
 #include "llvm/Target/MachineInstrInfo.h"
 #include "Support/hash_map"
+#include <string>
 
 typedef long long cycles_t; 
 static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
@@ -174,7 +175,7 @@ private:
 //   Common interface to machine information for instruction scheduling
 //---------------------------------------------------------------------------
 
-class MachineSchedInfo : public NonCopyableV {
+class MachineSchedInfo {
 public:
   const TargetMachine& target;
   
@@ -200,7 +201,10 @@ protected:
     assert(sc < numSchedClasses);
     return classRUsages[sc];
   }
-  
+
+private:
+  MachineSchedInfo(const MachineSchedInfo &);  // DO NOT IMPLEMENT
+  void operator=(const MachineSchedInfo &);  // DO NOT IMPLEMENT
 public:
   /*ctor*/	   MachineSchedInfo	(const TargetMachine& tgt,
                                          int                  _numSchedClasses,
