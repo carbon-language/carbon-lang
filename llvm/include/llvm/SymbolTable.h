@@ -255,17 +255,6 @@ public:
     return pmap.find(Typ); 
   }
 
-  /// This method returns a ValueMap* for a specific type plane. This
-  /// interface is deprecated and may go away in the future.
-  /// @deprecated
-  /// @brief Find a type plane
-  inline const ValueMap* findPlane(const Type* Typ) const {
-    assert(Typ && "Can't find type plane with null type!");
-    plane_const_iterator I = pmap.find(Typ);
-    if (I == pmap.end()) return 0;
-    return &I->second;
-  }
-
 /// @}
 /// @name Internal Methods
 /// @{
