@@ -54,8 +54,8 @@ public:
   const MethodType *getMethodType() const;
 
   // Is the body of this method unknown? (the basic block list is empty if so)
-  // this is true for "extern"al methods.
-  bool isMethodExternal() const { return BasicBlocks.empty(); }
+  // this is true for external methods, defined as forward "declare"ations
+  bool isExternal() const { return BasicBlocks.empty(); }
 
 
   // Get the class structure that this method is contained inside of...
