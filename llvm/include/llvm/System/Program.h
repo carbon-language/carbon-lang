@@ -56,25 +56,22 @@ namespace sys {
       /// @brief Executes the program with the given set of \p args.
       static int ExecuteAndWait(
         const Path& path,  ///< The path to the program to execute
-        const char** args,
-          ///< A vector of strings that are passed to the program.
-          ///< The first element should be the name of the program. The list
-          ///< *must* be terminated by a null char* entry.
-        const char ** env = 0,
-          ///< An optional vector of strings to use for the program's 
-          ///< environment. If not provided, the current program's environment
-          ///< will be used.
-        const sys::Path** redirects = 0,
-          ///< An optional array of pointers to Paths. If the array is null,
-          ///< no redirection is done. The array should have a size of at least
-          ///< three. If the pointer in the array are not null, then the 
-          ///< inferior process's stdin(0), stdout(1), and stderr(2) will be 
-          ///< redirected to the corresponding Paths. 
-        unsigned secondsToWait = 0
-          ///< If non-zero, this specifies the amount of time to wait for the
-          ///< child process to exit. If the time expires, the child is killed
-          ///< and this call returns. If zero, this function will wait until
-          ///< the child finishes or forever if it doesn't.
+        const char** args, ///< A vector of strings that are passed to the 
+          ///< program.  The first element should be the name of the program. 
+          ///< The list *must* be terminated by a null char* entry.
+        const char ** env = 0, ///< An optional vector of strings to use for 
+          ///< the program's environment. If not provided, the current program's
+          ///< environment will be used.
+        const sys::Path** redirects = 0, ///< An optional array of pointers to 
+          ///< Paths. If the array is null, no redirection is done. The array 
+          ///< should have a size of at least three. If the pointer in the array
+          ///< are not null, then the inferior process's stdin(0), stdout(1), 
+          ///< and stderr(2) will be redirected to the corresponding Paths. 
+        unsigned secondsToWait = 0 ///< If non-zero, this specifies the amount 
+          ///< of time to wait for the child process to exit. If the time 
+          ///< expires, the child is killed and this call returns. If zero, 
+          ///< this function will wait until the child finishes or forever if 
+          ///< it doesn't.
       );
   };
 }
