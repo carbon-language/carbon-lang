@@ -1,4 +1,4 @@
-//===- ExprTypeConvert.cpp - Code to change an LLVM Expr Type ---------------=//
+//===- ExprTypeConvert.cpp - Code to change an LLVM Expr Type -------------===//
 //
 // This file implements the part of level raising that checks to see if it is
 // possible to coerce an entire expression tree into a different type.  If
@@ -193,9 +193,11 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
       return false;
     break;
   case Instruction::Shr:
+    if (!Ty->isInteger()) return false;
     if (Ty->isSigned() != V->getType()->isSigned()) return false;
     // FALL THROUGH
   case Instruction::Shl:
+    if (!Ty->isInteger()) return false;
     if (!ExpressionConvertableToType(I->getOperand(0), Ty, CTMap))
       return false;
     break;
@@ -633,6 +635,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     // FALL THROUGH
   case Instruction::Shl:
     assert(I->getOperand(0) == V);
+    if (!Ty->isInteger()) return false;
     return ValueConvertableToType(I, Ty, CTMap);
 
   case Instruction::Free:
