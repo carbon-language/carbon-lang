@@ -33,7 +33,7 @@ namespace DataStructureAnalysis {
 //
 class LocalDataStructures : public Pass {
   // DSInfo, one graph for each function
-  hash_map<const Function*, DSGraph*> DSInfo;
+  hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
 public:
   ~LocalDataStructures() { releaseMemory(); }
@@ -41,12 +41,13 @@ public:
   virtual bool run(Module &M);
 
   bool hasGraph(const Function &F) const {
-    return DSInfo.find(&F) != DSInfo.end();
+    return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
-    hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    hash_map<Function*, DSGraph*>::const_iterator I =
+      DSInfo.find(const_cast<Function*>(&F));
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
@@ -72,7 +73,7 @@ public:
 //
 class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
-  hash_map<const Function*, DSGraph*> DSInfo;
+  hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
 public:
   ~BUDataStructures() { releaseMemory(); }
@@ -80,12 +81,13 @@ public:
   virtual bool run(Module &M);
 
   bool hasGraph(const Function &F) const {
-    return DSInfo.find(&F) != DSInfo.end();
+    return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
-    hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    hash_map<Function*, DSGraph*>::const_iterator I =
+      DSInfo.find(const_cast<Function*>(&F));
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
@@ -103,7 +105,7 @@ public:
     AU.addRequired<LocalDataStructures>();
   }
 private:
-  DSGraph &calculateGraph(Function &F);
+  void calculateGraph(DSGraph &G);
 
   // inlineNonSCCGraphs - This method is almost like the other two calculate
   // graph methods.  This one is used to inline function graphs (from functions
@@ -132,7 +134,7 @@ private:
 //
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
-  hash_map<const Function*, DSGraph*> DSInfo;
+  hash_map<Function*, DSGraph*> DSInfo;
   hash_set<const Function*> GraphDone;
   DSGraph *GlobalsGraph;
 public:
@@ -141,12 +143,13 @@ public:
   virtual bool run(Module &M);
 
   bool hasGraph(const Function &F) const {
-    return DSInfo.find(&F) != DSInfo.end();
+    return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
   // getDSGraph - Return the data structure graph for the specified function.
   DSGraph &getDSGraph(const Function &F) const {
-    hash_map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+    hash_map<Function*, DSGraph*>::const_iterator I =
+      DSInfo.find(const_cast<Function*>(&F));
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
