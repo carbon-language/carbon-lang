@@ -21,6 +21,7 @@
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -165,6 +166,9 @@ bool GCSE::EliminateRedundancies(Instruction *I,
 //
 void GCSE::ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI) {
   Instruction &Second = *SI;
+
+  DEBUG(std::cerr << "GCSE: Substituting %" << First->getName() << " for: "
+                  << Second);
   
   //cerr << "DEL " << (void*)Second << Second;
 
