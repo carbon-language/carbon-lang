@@ -1,11 +1,6 @@
 ; RUN: as < %s | opt -licm -disable-output
-target endian = big
-target pointersize = 64
-	%struct..apr_array_header_t = type { %struct..apr_pool_t*, int, int, int, sbyte* }
-	%struct..apr_pool_t = type opaque
+	%struct..apr_array_header_t = type { int*, int, int, int, sbyte* }
 	%struct..apr_table_t = type { %struct..apr_array_header_t, uint, [32 x int], [32 x int] }
-
-implementation   ; Functions:
 
 void %table_reindex(%struct..apr_table_t* %t.1) {		; No predecessors!
 	br label %loopentry
