@@ -1,6 +1,14 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 
+//----------------------------------------------------------------------------
+// 
+//----------------------------------------------------------------------------
 
+
+
+//----------------------------------------------------------------------------
+// Constructor: Init local composite objects and create register classes.
+//----------------------------------------------------------------------------
 PhyRegAlloc::PhyRegAlloc(const Method *const M, 
 			 const TargetMachine& tm, 
 			 MethodLiveVarInfo *const Lvi) 
@@ -21,10 +29,10 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 
 }
 
-
-
-
-
+//----------------------------------------------------------------------------
+// This method initally creates interference graphs (one in each reg class)
+// and IGNodeList (one in each IG). The actual nodes will be pushed later. 
+//----------------------------------------------------------------------------
 
 void PhyRegAlloc::createIGNodeListsAndIGs()
 {
@@ -64,11 +72,12 @@ void PhyRegAlloc::createIGNodeListsAndIGs()
 
 
 
-
+//----------------------------------------------------------------------------
+// This method will add all interferences at for a given instruction.
 // Interence occurs only if the LR of Def (Inst or Arg) is of the same reg 
 // class as that of live var. The live var passed to this function is the 
 // LVset AFTER the instruction
-
+//----------------------------------------------------------------------------
 
 void PhyRegAlloc::addInterference(const Value *const Def, 
 				  const LiveVarSet *const LVSet,
@@ -123,7 +132,10 @@ void PhyRegAlloc::addInterference(const Value *const Def,
  
 }
 
-
+//----------------------------------------------------------------------------
+// This method will walk thru code and create interferences in the IG of
+// each RegClass.
+//----------------------------------------------------------------------------
 
 void PhyRegAlloc::buildInterferenceGraphs()
 {
@@ -190,6 +202,9 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
 
 
+//----------------------------------------------------------------------------
+// This method will add interferences for incoming arguments to a method.
+//----------------------------------------------------------------------------
 void PhyRegAlloc::addInterferencesForArgs()
 {
                                               // get the InSet of root BB
@@ -213,6 +228,11 @@ void PhyRegAlloc::addInterferencesForArgs()
 }
 
 
+//----------------------------------------------------------------------------
+// This method is called after register allocation is complete to set the
+// allocated reisters in the machine code. This code will add register numbers
+// to MachineOperands that contain a Value.
+//----------------------------------------------------------------------------
 
 void PhyRegAlloc::updateMachineCode()
 {
@@ -244,6 +264,7 @@ void PhyRegAlloc::updateMachineCode()
 	  // delete this condition checking later (must assert if Val is null)
 	  if( !Val ) { 
 	    cout << "Error: NULL Value found in instr." << endl;
+	    Op.setRegForValue( 10000 ); // an invalid value is set
 	    continue;
 	  }
 	  assert( Val && "Value is NULL");   
@@ -276,6 +297,148 @@ void PhyRegAlloc::updateMachineCode()
 
 
 
+
+//----------------------------------------------------------------------------
+// This method prints the code with registers after register allocation is
+// complete.
+//----------------------------------------------------------------------------
+void PhyRegAlloc::printMachineCode()
+{
+
+  cout << endl << ";************** Method ";
+  cout << Meth->getName() << " *****************" << endl;
+
+  Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
+
+  for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
+
+    cout << endl ; printLabel( *BBI); cout << ": ";
+
+    // get the iterator for machine instructions
+    MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
+
+    // iterate over all the machine instructions in BB
+    for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
+      
+      MachineInstr *const MInst = *MInstIterator; 
+
+
+      cout << endl << "\t";
+      cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+      
+
+      //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
+
+      for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
+
+	MachineOperand& Op = MInst->getOperand(OpNum);
+
+	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
+	    Op.getOperandType() ==  MachineOperand::MO_CCRegister ||
+	    Op.getOperandType() ==  MachineOperand::MO_MachineRegister ) {
+
+	  const int RegNum = Op.getAllocatedRegNum();
+
+	  // ****this code is temporary till NULL Values are fixed
+	  if( RegNum == 10000) {
+	    cout << "\t<*NULL Value*>";
+	    continue;
+	  }
+
+	  cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum);
+
+	}	   
+	else if( Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp ) {
+	  const Value *const Val = Op.getVRegValue () ;
+	  if( !Val ) {
+	    cout << "\t<*NULL Value*>";
+	    continue;
+	  }
+	  if( (Val->getValueType() == Value::BasicBlockVal))
+	    { cout << "\t"; printLabel(	Op.getVRegValue	() ); }
+	  else { cout << "\t"; printValue( Val ); }
+	}
+
+	else 
+	  cout << "\t" << Op;      // use dump field
+      }
+
+    }
+
+    cout << endl;
+
+  }
+
+  cout << endl;
+}
+
+void PhyRegAlloc::printLabel(const Value *const Val)
+{
+  if( Val->hasName() )
+    cout  << Val->getName();
+  else
+    cout << "Label" <<  Val;
+}
+
+
+
+
+
+
+
+
+void PhyRegAlloc::allocateRegisters()
+{
+  constructLiveRanges();                // create LR info
+
+  if( DEBUG_RA)
+    LRI.printLiveRanges();
+
+  createIGNodeListsAndIGs();            // create IGNode list and IGs
+
+  buildInterferenceGraphs();            // build IGs in all reg classes
+
+  
+  if( DEBUG_RA) {
+    // print all LRs in all reg classes
+    for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
+      RegClassList[ rc ]->printIGNodeList(); 
+
+    // print IGs in all register classes
+    for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
+      RegClassList[ rc ]->printIG();       
+  }
+
+  LRI.coalesceLRs();                    // coalesce all live ranges
+
+  if( DEBUG_RA) {
+    // print all LRs in all reg classes
+    for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
+      RegClassList[ rc ]->printIGNodeList(); 
+
+    // print IGs in all register classes
+    for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
+      RegClassList[ rc ]->printIG();       
+  }
+
+  MRI.colorArgs(Meth, LRI);             // color method args
+                                        // color call args of call instrns
+  MRI.colorCallArgs(CallInstrList, LRI, AddedInstrMap); 
+
+                                        // color all register classes
+  for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
+    RegClassList[ rc ]->colorAllRegs();    
+
+  updateMachineCode(); 
+  PrintMachineInstructions(Meth);
+  printMachineCode();                   // only for DEBUGGING
+}
+
+
+
+
+#if 0
 
 void PhyRegAlloc::printMachineCode()
 {
@@ -384,60 +547,4 @@ void PhyRegAlloc::printLabel(const Value *const Val)
     cout << "Label" <<  Val;
 }
 
-
-
-
-
-
-
-
-void PhyRegAlloc::allocateRegisters()
-{
-  constructLiveRanges();                // create LR info
-
-  if( DEBUG_RA)
-    LRI.printLiveRanges();
-
-  createIGNodeListsAndIGs();            // create IGNode list and IGs
-
-  buildInterferenceGraphs();            // build IGs in all reg classes
-
-  
-  if( DEBUG_RA) {
-    // print all LRs in all reg classes
-    for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
-      RegClassList[ rc ]->printIGNodeList(); 
-
-    // print IGs in all register classes
-    for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
-      RegClassList[ rc ]->printIG();       
-  }
-
-  LRI.coalesceLRs();                    // coalesce all live ranges
-
-  if( DEBUG_RA) {
-    // print all LRs in all reg classes
-    for( unsigned int rc=0; rc < NumOfRegClasses  ; rc++)  
-      RegClassList[ rc ]->printIGNodeList(); 
-
-    // print IGs in all register classes
-    for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
-      RegClassList[ rc ]->printIG();       
-  }
-
-  MRI.colorArgs(Meth, LRI);             // color method args
-                                        // color call args of call instrns
-  MRI.colorCallArgs(CallInstrList, LRI, AddedInstrMap); 
-
-                                        // color all register classes
-  for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
-    RegClassList[ rc ]->colorAllRegs();    
-
-  //updateMachineCode(); 
-  PrintMachineInstructions(Meth);
-  printMachineCode();                   // only for DEBUGGING
-}
-
-
-
-
+#endif
