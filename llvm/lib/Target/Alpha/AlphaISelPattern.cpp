@@ -537,15 +537,19 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     Node->dump();
     assert(0 && "Node not handled!\n");
 
+  case ISD::UNDEF: {
+    BuildMI(BB, Alpha::IDEF, 0, Result);
+    return Result;
+  }
+
   case ISD::FNEG:
     if(ISD::FABS == N.getOperand(0).getOpcode())
       {
 	Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-	BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
+	BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
       } else {
 	Tmp1 = SelectExpr(N.getOperand(0));
-	Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS ;
-	BuildMI(BB, Opc, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+	BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
       }
     return Result;
 
@@ -850,6 +854,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
  
+
+  case ISD::UNDEF: {
+    BuildMI(BB, Alpha::IDEF, 0, Result);
+    return Result;
+  }
+    
   case ISD::DYNAMIC_STACKALLOC:
     // Generate both result values.
     if (Result != notIn)
