@@ -92,7 +92,8 @@ void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
 
   // Loop over all pointer arguments, resolving them to their provided pointers
   unsigned PtrArgIdx = 0;
-  for (Function::aiterator AI = F->abegin(), AE = F->aend(); AI != AE; ++AI) {
+  for (Function::aiterator AI = F->abegin(), AE = F->aend();
+       AI != AE && PtrArgIdx < Call.getNumPtrArgs(); ++AI) {
     hash_map<Value*, DSNodeHandle>::iterator I = ValMap.find(AI);
     if (I != ValMap.end())    // If its a pointer argument...
       I->second.mergeWith(Call.getPtrArg(PtrArgIdx++));
