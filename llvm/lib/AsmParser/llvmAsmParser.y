@@ -346,6 +346,8 @@ static const Type *checkNewType(const Type *Ty) {
                           CurMeth.CurrentMethod->getConstantPool() : 
                           CurModule.CurrentModule->getConstantPool();
 
+  // TODO: This should use ConstantPool::ensureTypeAvailable
+
   // Get the type type plane...
   ConstantPool::PlaneType &P = CP.getPlane(Type::TypeTy);
   ConstantPool::PlaneType::const_iterator PI = find_if(P.begin(), P.end(), 

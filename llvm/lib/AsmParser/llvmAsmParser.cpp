@@ -405,6 +405,8 @@ static const Type *checkNewType(const Type *Ty) {
                           CurMeth.CurrentMethod->getConstantPool() : 
                           CurModule.CurrentModule->getConstantPool();
 
+  // TODO: This should use ConstantPool::ensureTypeAvailable
+
   // Get the type type plane...
   ConstantPool::PlaneType &P = CP.getPlane(Type::TypeTy);
   ConstantPool::PlaneType::const_iterator PI = find_if(P.begin(), P.end(), 
@@ -440,7 +442,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 }
 
 
-#line 385 "llvmAsmParser.y"
+#line 387 "llvmAsmParser.y"
 typedef union {
   Module                  *ModuleVal;
   Method                  *MethodVal;
@@ -593,20 +595,20 @@ static const short yyrhs[] = {     5,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-   484,   485,   492,   493,   504,   504,   504,   504,   504,   504,
-   504,   505,   505,   505,   505,   505,   505,   505,   508,   508,
-   513,   514,   514,   514,   514,   514,   515,   515,   515,   515,
-   515,   515,   516,   516,   520,   520,   520,   520,   521,   521,
-   521,   521,   522,   522,   523,   523,   526,   529,   536,   541,
-   546,   549,   552,   555,   561,   564,   577,   581,   599,   606,
-   614,   628,   631,   641,   658,   669,   676,   682,   688,   697,
-   697,   699,   707,   711,   716,   719,   723,   764,   768,   772,
-   772,   780,   783,   786,   789,   792,   795,   800,   803,   806,
-   813,   821,   826,   830,   833,   836,   841,   844,   849,   853,
-   858,   862,   871,   876,   885,   889,   893,   896,   899,   902,
-   907,   918,   926,   936,   944,   949,   956,   960,   966,   966,
-   968,   973,   978,   982,   985,   996,  1033,  1038,  1040,  1044,
-  1047,  1054,  1057,  1065,  1071,  1080,  1092
+   486,   487,   494,   495,   506,   506,   506,   506,   506,   506,
+   506,   507,   507,   507,   507,   507,   507,   507,   510,   510,
+   515,   516,   516,   516,   516,   516,   517,   517,   517,   517,
+   517,   517,   518,   518,   522,   522,   522,   522,   523,   523,
+   523,   523,   524,   524,   525,   525,   528,   531,   538,   543,
+   548,   551,   554,   557,   563,   566,   579,   583,   601,   608,
+   616,   630,   633,   643,   660,   671,   678,   684,   690,   699,
+   699,   701,   709,   713,   718,   721,   725,   766,   770,   774,
+   774,   782,   785,   788,   791,   794,   797,   802,   805,   808,
+   815,   823,   828,   832,   835,   838,   843,   846,   851,   855,
+   860,   864,   873,   878,   887,   891,   895,   898,   901,   904,
+   909,   920,   928,   938,   946,   951,   958,   962,   968,   968,
+   970,   975,   980,   984,   987,   998,  1035,  1040,  1042,  1046,
+  1049,  1056,  1059,  1067,  1073,  1082,  1094
 };
 #endif
 
@@ -1415,7 +1417,7 @@ yyreduce:
   switch (yyn) {
 
 case 2:
-#line 485 "llvmAsmParser.y"
+#line 487 "llvmAsmParser.y"
 {
   if (yyvsp[0].UIntVal > (uint32_t)INT32_MAX)     // Outside of my range!
     ThrowException("Value too large for type!");
@@ -1423,7 +1425,7 @@ case 2:
 ;
     break;}
 case 4:
-#line 493 "llvmAsmParser.y"
+#line 495 "llvmAsmParser.y"
 {
   if (yyvsp[0].UInt64Val > (uint64_t)INT64_MAX)     // Outside of my range!
     ThrowException("Value too large for type!");
@@ -1431,19 +1433,19 @@ case 4:
 ;
     break;}
 case 47:
-#line 526 "llvmAsmParser.y"
+#line 528 "llvmAsmParser.y"
 {
     yyval.StrVal = yyvsp[-1].StrVal;
   ;
     break;}
 case 48:
-#line 529 "llvmAsmParser.y"
+#line 531 "llvmAsmParser.y"
 { 
     yyval.StrVal = 0; 
   ;
     break;}
 case 49:
-#line 536 "llvmAsmParser.y"
+#line 538 "llvmAsmParser.y"
 {     // integral constants
     if (!ConstPoolSInt::isValueValidForType(yyvsp[-1].TypeVal, yyvsp[0].SInt64Val))
       ThrowException("Constant value doesn't fit in type!");
@@ -1451,7 +1453,7 @@ case 49:
   ;
     break;}
 case 50:
-#line 541 "llvmAsmParser.y"
+#line 543 "llvmAsmParser.y"
 {           // integral constants
     if (!ConstPoolUInt::isValueValidForType(yyvsp[-1].TypeVal, yyvsp[0].UInt64Val))
       ThrowException("Constant value doesn't fit in type!");
@@ -1459,25 +1461,25 @@ case 50:
   ;
     break;}
 case 51:
-#line 546 "llvmAsmParser.y"
+#line 548 "llvmAsmParser.y"
 {                     // Boolean constants
     yyval.ConstVal = new ConstPoolBool(true);
   ;
     break;}
 case 52:
-#line 549 "llvmAsmParser.y"
+#line 551 "llvmAsmParser.y"
 {                    // Boolean constants
     yyval.ConstVal = new ConstPoolBool(false);
   ;
     break;}
 case 53:
-#line 552 "llvmAsmParser.y"
+#line 554 "llvmAsmParser.y"
 {                   // Float & Double constants
     yyval.ConstVal = new ConstPoolFP(yyvsp[-1].TypeVal, yyvsp[0].FPVal);
   ;
     break;}
 case 54:
-#line 555 "llvmAsmParser.y"
+#line 557 "llvmAsmParser.y"
 {         // String constants
     cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
     abort();
@@ -1486,13 +1488,13 @@ case 54:
   ;
     break;}
 case 55:
-#line 561 "llvmAsmParser.y"
+#line 563 "llvmAsmParser.y"
 {                    // Type constants
     yyval.ConstVal = new ConstPoolType(yyvsp[0].TypeVal);
   ;
     break;}
 case 56:
-#line 564 "llvmAsmParser.y"
+#line 566 "llvmAsmParser.y"
 {      // Nonempty array constant
     // Verify all elements are correct type!
     const ArrayType *AT = ArrayType::getArrayType(yyvsp[-4].TypeVal);
@@ -1508,14 +1510,14 @@ case 56:
   ;
     break;}
 case 57:
-#line 577 "llvmAsmParser.y"
+#line 579 "llvmAsmParser.y"
 {                  // Empty array constant
     vector<ConstPoolVal*> Empty;
     yyval.ConstVal = new ConstPoolArray(ArrayType::getArrayType(yyvsp[-3].TypeVal), Empty);
   ;
     break;}
 case 58:
-#line 581 "llvmAsmParser.y"
+#line 583 "llvmAsmParser.y"
 {
     // Verify all elements are correct type!
     const ArrayType *AT = ArrayType::getArrayType(yyvsp[-4].TypeVal, (int)yyvsp[-6].UInt64Val);
@@ -1536,7 +1538,7 @@ case 58:
   ;
     break;}
 case 59:
-#line 599 "llvmAsmParser.y"
+#line 601 "llvmAsmParser.y"
 {
     if (yyvsp[-5].UInt64Val != 0) 
       ThrowException("Type mismatch: constant sized array initialized with 0"
@@ -1546,7 +1548,7 @@ case 59:
   ;
     break;}
 case 60:
-#line 606 "llvmAsmParser.y"
+#line 608 "llvmAsmParser.y"
 {
     StructType::ElementTypes Types(yyvsp[-4].TypeList->begin(), yyvsp[-4].TypeList->end());
     delete yyvsp[-4].TypeList;
@@ -1557,7 +1559,7 @@ case 60:
   ;
     break;}
 case 61:
-#line 614 "llvmAsmParser.y"
+#line 616 "llvmAsmParser.y"
 {
     const StructType *St = 
       StructType::getStructType(StructType::ElementTypes());
@@ -1566,20 +1568,20 @@ case 61:
   ;
     break;}
 case 62:
-#line 628 "llvmAsmParser.y"
+#line 630 "llvmAsmParser.y"
 {
     (yyval.ConstVector = yyvsp[-2].ConstVector)->push_back(addConstValToConstantPool(yyvsp[0].ConstVal));
   ;
     break;}
 case 63:
-#line 631 "llvmAsmParser.y"
+#line 633 "llvmAsmParser.y"
 {
     yyval.ConstVector = new vector<ConstPoolVal*>();
     yyval.ConstVector->push_back(addConstValToConstantPool(yyvsp[0].ConstVal));
   ;
     break;}
 case 64:
-#line 641 "llvmAsmParser.y"
+#line 643 "llvmAsmParser.y"
 { 
     if (yyvsp[-1].StrVal) {
       yyvsp[0].ConstVal->setName(yyvsp[-1].StrVal);
@@ -1590,19 +1592,19 @@ case 64:
   ;
     break;}
 case 65:
-#line 658 "llvmAsmParser.y"
+#line 660 "llvmAsmParser.y"
 { 
   ;
     break;}
 case 66:
-#line 669 "llvmAsmParser.y"
+#line 671 "llvmAsmParser.y"
 {
   yyval.ModuleVal = ParserResult = yyvsp[0].ModuleVal;
   CurModule.ModuleDone();
 ;
     break;}
 case 67:
-#line 676 "llvmAsmParser.y"
+#line 678 "llvmAsmParser.y"
 {
     yyval.ModuleVal = yyvsp[-1].ModuleVal;
     if (!yyvsp[0].MethodVal->getParent())
@@ -1611,7 +1613,7 @@ case 67:
   ;
     break;}
 case 68:
-#line 682 "llvmAsmParser.y"
+#line 684 "llvmAsmParser.y"
 {
     yyval.ModuleVal = yyvsp[-1].ModuleVal;
     if (!yyvsp[0].MethodVal->getParent())
@@ -1620,17 +1622,17 @@ case 68:
   ;
     break;}
 case 69:
-#line 688 "llvmAsmParser.y"
+#line 690 "llvmAsmParser.y"
 {
     yyval.ModuleVal = CurModule.CurrentModule;
   ;
     break;}
 case 71:
-#line 697 "llvmAsmParser.y"
+#line 699 "llvmAsmParser.y"
 { yyval.StrVal = 0; ;
     break;}
 case 72:
-#line 699 "llvmAsmParser.y"
+#line 701 "llvmAsmParser.y"
 {
   yyval.MethArgVal = new MethodArgument(yyvsp[-1].TypeVal);
   if (yyvsp[0].StrVal) {      // Was the argument named?
@@ -1640,33 +1642,33 @@ case 72:
 ;
     break;}
 case 73:
-#line 707 "llvmAsmParser.y"
+#line 709 "llvmAsmParser.y"
 {
     yyval.MethodArgList = yyvsp[0].MethodArgList;
     yyvsp[0].MethodArgList->push_front(yyvsp[-2].MethArgVal);
   ;
     break;}
 case 74:
-#line 711 "llvmAsmParser.y"
+#line 713 "llvmAsmParser.y"
 {
     yyval.MethodArgList = new list<MethodArgument*>();
     yyval.MethodArgList->push_front(yyvsp[0].MethArgVal);
   ;
     break;}
 case 75:
-#line 716 "llvmAsmParser.y"
+#line 718 "llvmAsmParser.y"
 {
     yyval.MethodArgList = yyvsp[0].MethodArgList;
   ;
     break;}
 case 76:
-#line 719 "llvmAsmParser.y"
+#line 721 "llvmAsmParser.y"
 {
     yyval.MethodArgList = 0;
   ;
     break;}
 case 77:
-#line 723 "llvmAsmParser.y"
+#line 725 "llvmAsmParser.y"
 {
   MethodType::ParamTypes ParamTypeList;
   if (yyvsp[-1].MethodArgList)
@@ -1709,83 +1711,83 @@ case 77:
 ;
     break;}
 case 78:
-#line 764 "llvmAsmParser.y"
+#line 766 "llvmAsmParser.y"
 {
   yyval.MethodVal = CurMeth.CurrentMethod;
 ;
     break;}
 case 79:
-#line 768 "llvmAsmParser.y"
+#line 770 "llvmAsmParser.y"
 {
   yyval.MethodVal = yyvsp[-1].MethodVal;
 ;
     break;}
 case 80:
-#line 772 "llvmAsmParser.y"
+#line 774 "llvmAsmParser.y"
 { CurMeth.isDeclare = true; ;
     break;}
 case 81:
-#line 772 "llvmAsmParser.y"
+#line 774 "llvmAsmParser.y"
 {
   yyval.MethodVal = CurMeth.CurrentMethod;
 ;
     break;}
 case 82:
-#line 780 "llvmAsmParser.y"
+#line 782 "llvmAsmParser.y"
 {    // A reference to a direct constant
     yyval.ValIDVal = ValID::create(yyvsp[0].SInt64Val);
   ;
     break;}
 case 83:
-#line 783 "llvmAsmParser.y"
+#line 785 "llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create(yyvsp[0].UInt64Val);
   ;
     break;}
 case 84:
-#line 786 "llvmAsmParser.y"
+#line 788 "llvmAsmParser.y"
 {                     // Perhaps it's an FP constant?
     yyval.ValIDVal = ValID::create(yyvsp[0].FPVal);
   ;
     break;}
 case 85:
-#line 789 "llvmAsmParser.y"
+#line 791 "llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create((int64_t)1);
   ;
     break;}
 case 86:
-#line 792 "llvmAsmParser.y"
+#line 794 "llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create((int64_t)0);
   ;
     break;}
 case 87:
-#line 795 "llvmAsmParser.y"
+#line 797 "llvmAsmParser.y"
 {        // Quoted strings work too... especially for methods
     yyval.ValIDVal = ValID::create_conststr(yyvsp[0].StrVal);
   ;
     break;}
 case 88:
-#line 800 "llvmAsmParser.y"
+#line 802 "llvmAsmParser.y"
 {           // Is it an integer reference...?
     yyval.ValIDVal = ValID::create(yyvsp[0].SIntVal);
   ;
     break;}
 case 89:
-#line 803 "llvmAsmParser.y"
+#line 805 "llvmAsmParser.y"
 {                 // Is it a named reference...?
     yyval.ValIDVal = ValID::create(yyvsp[0].StrVal);
   ;
     break;}
 case 90:
-#line 806 "llvmAsmParser.y"
+#line 808 "llvmAsmParser.y"
 {
     yyval.ValIDVal = yyvsp[0].ValIDVal;
   ;
     break;}
 case 91:
-#line 813 "llvmAsmParser.y"
+#line 815 "llvmAsmParser.y"
 {
     Value *D = getVal(Type::TypeTy, yyvsp[0].ValIDVal, true);
     if (D == 0) ThrowException("Invalid user defined type: " + yyvsp[0].ValIDVal.getName());
@@ -1796,7 +1798,7 @@ case 91:
   ;
     break;}
 case 92:
-#line 821 "llvmAsmParser.y"
+#line 823 "llvmAsmParser.y"
 {               // Method derived type?
     MethodType::ParamTypes Params(yyvsp[-1].TypeList->begin(), yyvsp[-1].TypeList->end());
     delete yyvsp[-1].TypeList;
@@ -1804,26 +1806,26 @@ case 92:
   ;
     break;}
 case 93:
-#line 826 "llvmAsmParser.y"
+#line 828 "llvmAsmParser.y"
 {               // Method derived type?
     MethodType::ParamTypes Params;     // Empty list
     yyval.TypeVal = checkNewType(MethodType::getMethodType(yyvsp[-2].TypeVal, Params));
   ;
     break;}
 case 94:
-#line 830 "llvmAsmParser.y"
+#line 832 "llvmAsmParser.y"
 {
     yyval.TypeVal = checkNewType(ArrayType::getArrayType(yyvsp[-1].TypeVal));
   ;
     break;}
 case 95:
-#line 833 "llvmAsmParser.y"
+#line 835 "llvmAsmParser.y"
 {
     yyval.TypeVal = checkNewType(ArrayType::getArrayType(yyvsp[-1].TypeVal, (int)yyvsp[-3].UInt64Val));
   ;
     break;}
 case 96:
-#line 836 "llvmAsmParser.y"
+#line 838 "llvmAsmParser.y"
 {
     StructType::ElementTypes Elements(yyvsp[-1].TypeList->begin(), yyvsp[-1].TypeList->end());
     delete yyvsp[-1].TypeList;
@@ -1831,46 +1833,46 @@ case 96:
   ;
     break;}
 case 97:
-#line 841 "llvmAsmParser.y"
+#line 843 "llvmAsmParser.y"
 {
     yyval.TypeVal = checkNewType(StructType::getStructType(StructType::ElementTypes()));
   ;
     break;}
 case 98:
-#line 844 "llvmAsmParser.y"
+#line 846 "llvmAsmParser.y"
 {
     yyval.TypeVal = checkNewType(PointerType::getPointerType(yyvsp[-1].TypeVal));
   ;
     break;}
 case 99:
-#line 849 "llvmAsmParser.y"
+#line 851 "llvmAsmParser.y"
 {
     yyval.TypeList = new list<const Type*>();
     yyval.TypeList->push_back(yyvsp[0].TypeVal);
   ;
     break;}
 case 100:
-#line 853 "llvmAsmParser.y"
+#line 855 "llvmAsmParser.y"
 {
     (yyval.TypeList=yyvsp[-2].TypeList)->push_back(yyvsp[0].TypeVal);
   ;
     break;}
 case 101:
-#line 858 "llvmAsmParser.y"
+#line 860 "llvmAsmParser.y"
 {
     yyvsp[-1].MethodVal->getBasicBlocks().push_back(yyvsp[0].BasicBlockVal);
     yyval.MethodVal = yyvsp[-1].MethodVal;
   ;
     break;}
 case 102:
-#line 862 "llvmAsmParser.y"
+#line 864 "llvmAsmParser.y"
 { // Do not allow methods with 0 basic blocks   
     yyval.MethodVal = yyvsp[-1].MethodVal;                  // in them...
     yyvsp[-1].MethodVal->getBasicBlocks().push_back(yyvsp[0].BasicBlockVal);
   ;
     break;}
 case 103:
-#line 871 "llvmAsmParser.y"
+#line 873 "llvmAsmParser.y"
 {
     yyvsp[-1].BasicBlockVal->getInstList().push_back(yyvsp[0].TermInstVal);
     InsertValue(yyvsp[-1].BasicBlockVal);
@@ -1878,7 +1880,7 @@ case 103:
   ;
     break;}
 case 104:
-#line 876 "llvmAsmParser.y"
+#line 878 "llvmAsmParser.y"
 {
     yyvsp[-1].BasicBlockVal->getInstList().push_back(yyvsp[0].TermInstVal);
     yyvsp[-1].BasicBlockVal->setName(yyvsp[-2].StrVal);
@@ -1889,38 +1891,38 @@ case 104:
   ;
     break;}
 case 105:
-#line 885 "llvmAsmParser.y"
+#line 887 "llvmAsmParser.y"
 {
     yyvsp[-1].BasicBlockVal->getInstList().push_back(yyvsp[0].InstVal);
     yyval.BasicBlockVal = yyvsp[-1].BasicBlockVal;
   ;
     break;}
 case 106:
-#line 889 "llvmAsmParser.y"
+#line 891 "llvmAsmParser.y"
 {
     yyval.BasicBlockVal = new BasicBlock();
   ;
     break;}
 case 107:
-#line 893 "llvmAsmParser.y"
+#line 895 "llvmAsmParser.y"
 {              // Return with a result...
     yyval.TermInstVal = new ReturnInst(getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
   ;
     break;}
 case 108:
-#line 896 "llvmAsmParser.y"
+#line 898 "llvmAsmParser.y"
 {                                       // Return with no result...
     yyval.TermInstVal = new ReturnInst();
   ;
     break;}
 case 109:
-#line 899 "llvmAsmParser.y"
+#line 901 "llvmAsmParser.y"
 {                         // Unconditional Branch...
     yyval.TermInstVal = new BranchInst((BasicBlock*)getVal(Type::LabelTy, yyvsp[0].ValIDVal));
   ;
     break;}
 case 110:
-#line 902 "llvmAsmParser.y"
+#line 904 "llvmAsmParser.y"
 {  
     yyval.TermInstVal = new BranchInst((BasicBlock*)getVal(Type::LabelTy, yyvsp[-3].ValIDVal), 
 			(BasicBlock*)getVal(Type::LabelTy, yyvsp[0].ValIDVal),
@@ -1928,7 +1930,7 @@ case 110:
   ;
     break;}
 case 111:
-#line 907 "llvmAsmParser.y"
+#line 909 "llvmAsmParser.y"
 {
     SwitchInst *S = new SwitchInst(getVal(yyvsp[-7].TypeVal, yyvsp[-6].ValIDVal), 
                                    (BasicBlock*)getVal(Type::LabelTy, yyvsp[-3].ValIDVal));
@@ -1941,7 +1943,7 @@ case 111:
   ;
     break;}
 case 112:
-#line 918 "llvmAsmParser.y"
+#line 920 "llvmAsmParser.y"
 {
     yyval.JumpTable = yyvsp[-5].JumpTable;
     ConstPoolVal *V = (ConstPoolVal*)getVal(yyvsp[-4].TypeVal, yyvsp[-3].ValIDVal, true);
@@ -1952,7 +1954,7 @@ case 112:
   ;
     break;}
 case 113:
-#line 926 "llvmAsmParser.y"
+#line 928 "llvmAsmParser.y"
 {
     yyval.JumpTable = new list<pair<ConstPoolVal*, BasicBlock*> >();
     ConstPoolVal *V = (ConstPoolVal*)getVal(yyvsp[-4].TypeVal, yyvsp[-3].ValIDVal, true);
@@ -1964,7 +1966,7 @@ case 113:
   ;
     break;}
 case 114:
-#line 936 "llvmAsmParser.y"
+#line 938 "llvmAsmParser.y"
 {
   if (yyvsp[-1].StrVal)              // Is this definition named??
     yyvsp[0].InstVal->setName(yyvsp[-1].StrVal);   // if so, assign the name...
@@ -1974,7 +1976,7 @@ case 114:
 ;
     break;}
 case 115:
-#line 944 "llvmAsmParser.y"
+#line 946 "llvmAsmParser.y"
 {    // Used for PHI nodes
     yyval.PHIList = new list<pair<Value*, BasicBlock*> >();
     yyval.PHIList->push_back(make_pair(getVal(yyvsp[-5].TypeVal, yyvsp[-3].ValIDVal), 
@@ -1982,7 +1984,7 @@ case 115:
   ;
     break;}
 case 116:
-#line 949 "llvmAsmParser.y"
+#line 951 "llvmAsmParser.y"
 {
     yyval.PHIList = yyvsp[-6].PHIList;
     yyvsp[-6].PHIList->push_back(make_pair(getVal(yyvsp[-6].PHIList->front().first->getType(), yyvsp[-3].ValIDVal),
@@ -1990,25 +1992,25 @@ case 116:
   ;
     break;}
 case 117:
-#line 956 "llvmAsmParser.y"
+#line 958 "llvmAsmParser.y"
 {    // Used for call statements...
     yyval.ValueList = new list<Value*>();
     yyval.ValueList->push_back(getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
   ;
     break;}
 case 118:
-#line 960 "llvmAsmParser.y"
+#line 962 "llvmAsmParser.y"
 {
     yyval.ValueList = yyvsp[-3].ValueList;
     yyvsp[-3].ValueList->push_back(getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
   ;
     break;}
 case 120:
-#line 966 "llvmAsmParser.y"
+#line 968 "llvmAsmParser.y"
 { yyval.ValueList = 0; ;
     break;}
 case 121:
-#line 968 "llvmAsmParser.y"
+#line 970 "llvmAsmParser.y"
 {
     yyval.InstVal = BinaryOperator::create(yyvsp[-4].BinaryOpVal, getVal(yyvsp[-3].TypeVal, yyvsp[-2].ValIDVal), getVal(yyvsp[-3].TypeVal, yyvsp[0].ValIDVal));
     if (yyval.InstVal == 0)
@@ -2016,7 +2018,7 @@ case 121:
   ;
     break;}
 case 122:
-#line 973 "llvmAsmParser.y"
+#line 975 "llvmAsmParser.y"
 {
     yyval.InstVal = UnaryOperator::create(yyvsp[-2].UnaryOpVal, getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
     if (yyval.InstVal == 0)
@@ -2024,20 +2026,20 @@ case 122:
   ;
     break;}
 case 123:
-#line 978 "llvmAsmParser.y"
+#line 980 "llvmAsmParser.y"
 {
     if (yyvsp[-1].TypeVal != Type::UByteTy) ThrowException("Shift amount must be ubyte!");
     yyval.InstVal = new ShiftInst(yyvsp[-5].OtherOpVal, getVal(yyvsp[-4].TypeVal, yyvsp[-3].ValIDVal), getVal(yyvsp[-1].TypeVal, yyvsp[0].ValIDVal));
   ;
     break;}
 case 124:
-#line 982 "llvmAsmParser.y"
+#line 984 "llvmAsmParser.y"
 {
     yyval.InstVal = new CastInst(getVal(yyvsp[-3].TypeVal, yyvsp[-2].ValIDVal), yyvsp[0].TypeVal);
   ;
     break;}
 case 125:
-#line 985 "llvmAsmParser.y"
+#line 987 "llvmAsmParser.y"
 {
     const Type *Ty = yyvsp[0].PHIList->front().first->getType();
     yyval.InstVal = new PHINode(Ty);
@@ -2051,7 +2053,7 @@ case 125:
   ;
     break;}
 case 126:
-#line 996 "llvmAsmParser.y"
+#line 998 "llvmAsmParser.y"
 {
     if (!yyvsp[-4].TypeVal->isMethodType())
       ThrowException("Can only call methods: invalid type '" + 
@@ -2091,31 +2093,31 @@ case 126:
   ;
     break;}
 case 127:
-#line 1033 "llvmAsmParser.y"
+#line 1035 "llvmAsmParser.y"
 {
     yyval.InstVal = yyvsp[0].InstVal;
   ;
     break;}
 case 128:
-#line 1038 "llvmAsmParser.y"
+#line 1040 "llvmAsmParser.y"
 { 
   yyval.ConstVector = yyvsp[0].ConstVector; 
 ;
     break;}
 case 129:
-#line 1040 "llvmAsmParser.y"
+#line 1042 "llvmAsmParser.y"
 { 
   yyval.ConstVector = new vector<ConstPoolVal*>(); 
 ;
     break;}
 case 130:
-#line 1044 "llvmAsmParser.y"
+#line 1046 "llvmAsmParser.y"
 {
     yyval.InstVal = new MallocInst(checkNewType(PointerType::getPointerType(yyvsp[0].TypeVal)));
   ;
     break;}
 case 131:
-#line 1047 "llvmAsmParser.y"
+#line 1049 "llvmAsmParser.y"
 {
     if (!yyvsp[-3].TypeVal->isArrayType() || ((const ArrayType*)yyvsp[-3].TypeVal)->isSized())
       ThrowException("Trying to allocate " + yyvsp[-3].TypeVal->getName() + 
@@ -2125,13 +2127,13 @@ case 131:
   ;
     break;}
 case 132:
-#line 1054 "llvmAsmParser.y"
+#line 1056 "llvmAsmParser.y"
 {
     yyval.InstVal = new AllocaInst(checkNewType(PointerType::getPointerType(yyvsp[0].TypeVal)));
   ;
     break;}
 case 133:
-#line 1057 "llvmAsmParser.y"
+#line 1059 "llvmAsmParser.y"
 {
     if (!yyvsp[-3].TypeVal->isArrayType() || ((const ArrayType*)yyvsp[-3].TypeVal)->isSized())
       ThrowException("Trying to allocate " + yyvsp[-3].TypeVal->getName() + 
@@ -2142,7 +2144,7 @@ case 133:
   ;
     break;}
 case 134:
-#line 1065 "llvmAsmParser.y"
+#line 1067 "llvmAsmParser.y"
 {
     if (!yyvsp[-1].TypeVal->isPointerType())
       ThrowException("Trying to free nonpointer type " + yyvsp[-1].TypeVal->getName() + "!");
@@ -2150,7 +2152,7 @@ case 134:
   ;
     break;}
 case 135:
-#line 1071 "llvmAsmParser.y"
+#line 1073 "llvmAsmParser.y"
 {
     if (!yyvsp[-2].TypeVal->isPointerType())
       ThrowException("Can't load from nonpointer type: " + yyvsp[-2].TypeVal->getName());
@@ -2162,7 +2164,7 @@ case 135:
   ;
     break;}
 case 136:
-#line 1080 "llvmAsmParser.y"
+#line 1082 "llvmAsmParser.y"
 {
     if (!yyvsp[-2].TypeVal->isPointerType())
       ThrowException("Can't store to a nonpointer type: " + yyvsp[-2].TypeVal->getName());
@@ -2177,7 +2179,7 @@ case 136:
   ;
     break;}
 case 137:
-#line 1092 "llvmAsmParser.y"
+#line 1094 "llvmAsmParser.y"
 {
     if (!yyvsp[-2].TypeVal->isPointerType())
       ThrowException("getelementptr insn requires pointer operand!");
@@ -2410,7 +2412,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 1102 "llvmAsmParser.y"
+#line 1104 "llvmAsmParser.y"
 
 int yyerror(const char *ErrorMsg) {
   ThrowException(string("Parse error: ") + ErrorMsg);
