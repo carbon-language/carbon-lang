@@ -876,7 +876,7 @@ using namespace llvm;
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CALL CAST SHL SHR VAARG VANEXT
+%token <OtherOpVal> PHI_TOK CALL CAST SELECT SHL SHR VAARG VANEXT
 %token VA_ARG // FIXME: OBSOLETE
 
 %start Module
@@ -1250,6 +1250,13 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     delete $4;
 
     $$ = ConstantExpr::getGetElementPtr($3, IdxVec);
+  }
+  | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
+    if ($3->getType() != Type::BoolTy)
+      ThrowException("Select condition must be of boolean type!");
+    if ($5->getType() != $7->getType())
+      ThrowException("Select operand types must match!");
+    $$ = ConstantExpr::getSelect($3, $5, $7);
   }
   | BinaryOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
@@ -1801,6 +1808,13 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
                      $4->get()->getDescription() + "'!");
     $$ = new CastInst($2, *$4);
     delete $4;
+  }
+  | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
+    if ($2->getType() != Type::BoolTy)
+      ThrowException("select condition must be boolean!");
+    if ($4->getType() != $6->getType())
+      ThrowException("select value types should match!");
+    $$ = new SelectInst($2, $4, $6);
   }
   | VA_ARG ResolvedVal ',' Types {
     // FIXME: This is emulation code for an obsolete syntax.  This should be

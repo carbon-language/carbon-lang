@@ -234,6 +234,7 @@ setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 phi             { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
 call            { RET_TOK(OtherOpVal, Call, CALL); }
 cast            { RET_TOK(OtherOpVal, Cast, CAST); }
+select          { RET_TOK(OtherOpVal, Select, SELECT); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
 shr             { RET_TOK(OtherOpVal, Shr, SHR); }
 va_arg          { return VA_ARG; /* FIXME: OBSOLETE */}
