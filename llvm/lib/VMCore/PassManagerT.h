@@ -1,4 +1,4 @@
-//===- PassManagerT.h - Container for Passes ------------------------------===//
+//===- PassManagerT.h - Container for Passes --------------------*- C++ -*-===//
 //
 // This file defines the PassManagerT class.  This class is used to hold,
 // maintain, and optimize execution of Pass's.  The PassManager class ensures
