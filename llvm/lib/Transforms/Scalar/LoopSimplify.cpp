@@ -17,8 +17,9 @@
 //
 // Loop exit-block insertion guarantees that all exit blocks from the loop
 // (blocks which are outside of the loop that have predecessors inside of the
-// loop) are dominated by the loop header.  This simplifies transformations such
-// as store-sinking that are built into LICM.
+// loop) only have predecessors from inside of the loop (and are thus dominated
+// by the loop header).  This simplifies transformations such as store-sinking
+// that are built into LICM.
 //
 // This pass also guarantees that loops will have exactly one backedge.
 //
@@ -42,12 +43,11 @@
 #include "Support/SetOperations.h"
 #include "Support/Statistic.h"
 #include "Support/DepthFirstIterator.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<>
-  NumInserted("loopsimplify", "Number of pre-header blocks inserted");
+  NumInserted("loopsimplify", "Number of pre-header or exit blocks inserted");
 
   struct LoopSimplify : public FunctionPass {
     virtual bool runOnFunction(Function &F);
@@ -81,8 +81,8 @@ namespace {
 }
 
 // Publically exposed interface to pass...
-const PassInfo *LoopSimplifyID = X.getPassInfo();
-Pass *createLoopSimplifyPass() { return new LoopSimplify(); }
+const PassInfo *llvm::LoopSimplifyID = X.getPassInfo();
+Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 
 /// runOnFunction - Run down all loops in the CFG (recursively, but we could do
 /// it in any convenient order) inserting preheaders...
@@ -111,18 +111,20 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
     Changed = true;
   }
 
-  // Regardless of whether or not we added a preheader to the loop we must
-  // guarantee that the preheader dominates all exit nodes.  If there are any
-  // exit nodes not dominated, split them now.
-  DominatorSet &DS = getAnalysis<DominatorSet>();
-  BasicBlock *Header = L->getHeader();
-  for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i)
-    if (!DS.dominates(Header, L->getExitBlocks()[i])) {
-      RewriteLoopExitBlock(L, L->getExitBlocks()[i]);
-      assert(DS.dominates(Header, L->getExitBlocks()[i]) &&
-             "RewriteLoopExitBlock failed?");
-      NumInserted++;
-      Changed = true;
+  // Next, check to make sure that all exit nodes of the loop only have
+  // predecessors that are inside of the loop.  This check guarantees that the
+  // loop preheader/header will dominate the exit blocks.  If the exit block has
+  // predecessors from outside of the loop, split the edge now.
+  for (unsigned i = 0, e = L->getExitBlocks().size(); i != e; ++i) {
+    BasicBlock *ExitBlock = L->getExitBlocks()[i];
+    for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
+         PI != PE; ++PI)
+      if (!L->contains(*PI)) {
+        RewriteLoopExitBlock(L, ExitBlock);
+        NumInserted++;
+        Changed = true;
+        break;
+      }
     }
 
   // The preheader may have more than two predecessors at this point (from the
@@ -342,8 +344,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
 void LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
-  assert(!DS.dominates(L->getHeader(), Exit) &&
-         "Loop already dominates exit block??");
   assert(std::find(L->getExitBlocks().begin(), L->getExitBlocks().end(), Exit)
          != L->getExitBlocks().end() && "Not a current exit block!");
   
@@ -576,4 +576,3 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   }
 }
 
-} // End llvm namespace
