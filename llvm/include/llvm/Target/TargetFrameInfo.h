@@ -20,6 +20,7 @@
 //************************* Forward Declarations **************************/
 
 class MachineCodeForMethod;
+class TargetMachine;
 
 
 //*************************** External Classes ****************************/
@@ -45,21 +46,28 @@ public:
   // These methods compute offsets using the frame contents for a
   // particular method.  The frame contents are obtained from the
   // MachineCodeInfoForMethod object for the given method.
+  // The first few methods have default machine-independent implementations.
+  // The rest must be implemented by the machine-specific subclass.
   // 
+  virtual int getIncomingArgOffset              (MachineCodeForMethod& mcInfo,
+                                                 unsigned argNum) const;
+  virtual int getOutgoingArgOffset              (MachineCodeForMethod& mcInfo,
+                                                 unsigned argNum) const;
+  
   virtual int getFirstIncomingArgOffset         (MachineCodeForMethod& mcInfo,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
   virtual int getFirstOutgoingArgOffset         (MachineCodeForMethod& mcInfo,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
   virtual int getFirstOptionalOutgoingArgOffset (MachineCodeForMethod&,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
   virtual int getFirstAutomaticVarOffset        (MachineCodeForMethod& mcInfo,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
   virtual int getRegSpillAreaOffset             (MachineCodeForMethod& mcInfo,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
   virtual int getTmpAreaOffset                  (MachineCodeForMethod& mcInfo,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
   virtual int getDynamicAreaOffset              (MachineCodeForMethod& mcInfo,
-                                                 bool& pos) const=0;
+                                                 bool& growUp) const=0;
 
   //
   // These methods specify the base register used for each stack area
