@@ -125,9 +125,14 @@ static void RedirectFD(const std::string &File, int FD) {
   close(InFD);      // Close the original FD
 }
 
+static bool Timeout = false;
+static void TimeOutHandler(int Sig) {
+  Timeout = true;
+}
+
 /// RunProgramWithTimeout - This function executes the specified program, with
 /// the specified null-terminated argument array, with the stdin/out/err fd's
-/// redirected, with a timeout specified on the command line.  This terminates
+/// redirected, with a timeout specified by the last argument.  This terminates
 /// the calling program if there is an error executing the specified program.
 /// It returns the return value of the program, or -1 if a timeout is detected.
 ///
@@ -135,9 +140,8 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
                                 const char **Args,
                                 const std::string &StdInFile,
                                 const std::string &StdOutFile,
-                                const std::string &StdErrFile) {
-  // FIXME: install sigalarm handler here for timeout...
-
+                                const std::string &StdErrFile,
+                                unsigned NumSeconds) {
 #ifdef HAVE_SYS_WAIT_H
   int Child = fork();
   switch (Child) {
@@ -165,24 +169,50 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
   // Make sure all output has been written while waiting
   std::cout << std::flush;
 
+  // Install a timeout handler.
+  Timeout = false;
+  struct sigaction Act, Old;
+  Act.sa_sigaction = 0;
+  Act.sa_handler = TimeOutHandler;
+  Act.sa_flags = SA_NOMASK;
+  sigaction(SIGALRM, &Act, &Old);
+
+  // Set the timeout if one is set.
+  if (NumSeconds)
+    alarm(NumSeconds);
+
   int Status;
-  if (wait(&Status) != Child) {
+  while (wait(&Status) != Child) {
     if (errno == EINTR) {
-      static bool FirstTimeout = true;
-      if (FirstTimeout) {
-        std::cout <<
+      if (Timeout) {
+        static bool FirstTimeout = true;
+        if (FirstTimeout) {
+          std::cout <<
  "*** Program execution timed out!  This mechanism is designed to handle\n"
  "    programs stuck in infinite loops gracefully.  The -timeout option\n"
  "    can be used to change the timeout threshold or disable it completely\n"
  "    (with -timeout=0).  This message is only displayed once.\n";
-        FirstTimeout = false;
+          FirstTimeout = false;
+        }
       }
-      return -1;   // Timeout detected
-    }
 
-    std::cerr << "Error waiting for child process!\n";
-    exit(1);
+      // Kill the child.
+      kill(Child, SIGKILL);
+
+      if (wait(&Status) != Child)
+        std::cerr << "Something funny happened waiting for the child!\n";
+
+      alarm(0);
+      sigaction(SIGALRM, &Old, 0);
+      return -1;   // Timeout detected
+    } else {
+      std::cerr << "Error waiting for child process!\n";
+      exit(1);
+    }
   }
+
+  alarm(0);
+  sigaction(SIGALRM, &Old, 0);
   return Status;
 
 #else

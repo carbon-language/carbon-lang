@@ -38,14 +38,15 @@ std::string FindExecutable(const std::string &ExeName,
 
 /// RunProgramWithTimeout - This function executes the specified program, with
 /// the specified null-terminated argument array, with the stdin/out/err fd's
-/// redirected, with a timeout specified on the commandline.  This terminates
+/// redirected, with a timeout specified by the last argument.  This terminates
 /// the calling program if there is an error executing the specified program.
 /// It returns the return value of the program, or -1 if a timeout is detected.
 ///
 int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
                           const std::string &StdInFile = "",
                           const std::string &StdOutFile = "",
-                          const std::string &StdErrFile = "");
+                          const std::string &StdErrFile = "",
+                          unsigned NumSeconds = 0);
 
 /// ExecWait - Execute a program with the given arguments and environment and 
 /// wait for it to terminate.
