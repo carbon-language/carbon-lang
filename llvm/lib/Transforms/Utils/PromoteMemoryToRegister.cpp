@@ -79,6 +79,9 @@ static inline bool isSafeAlloca(const AllocaInst *AI) {
 
     // Only allow nonindexed memory access instructions...
     if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(*UI)) {
+      if (MAI->getPointerOperand() != (Value*)AI)
+        return false;  // Reject stores of alloca pointer into some other loc.
+
       if (MAI->hasIndices()) {  // indexed?
         // Allow the access if there is only one index and the index is
         // zero.
