@@ -242,8 +242,8 @@ main(int argc, char **argv)
       }
       Out = new std::ofstream(OutputFilename.c_str());
 
-    // Make sure that the Out file gets unlink'd from the disk if we get a
-    // SIGINT
+      // Make sure that the Out file gets unlink'd from the disk if we get a
+      // SIGINT
       RemoveFileOnSignal(OutputFilename);
     }
   else
@@ -286,6 +286,7 @@ main(int argc, char **argv)
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M.get());
 
+  // Delete the ostream if it's not a stdout stream
   if (Out != &std::cout) delete Out;
 
   return 0;
