@@ -49,13 +49,13 @@ ubyte %test8(ubyte %A) {    ; AND associates
 
 bool %test9(int %A) {
 	%B = and int %A, -2147483648   ; Test of sign bit, convert to setle %A, 0 
-	%C = cast int %B to bool
+	%C = setne int %B, 0
 	ret bool %C
 }
 
 bool %test9(uint %A) {
 	%B = and uint %A, 2147483648   ; Test of sign bit, convert to setle %A, 0 
-	%C = cast uint %B to bool
+	%C = setne uint %B, 0
 	ret bool %C
 }
 
