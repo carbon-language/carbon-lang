@@ -436,7 +436,6 @@ bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getPrimitiveID()) {
   default:
     return false;         // These can't be represented as integers!!!
-
     // Signed types...
   case Type::SByteTyID:
     return (Val <= INT8_MAX && Val >= INT8_MIN);
@@ -447,8 +446,6 @@ bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
   case Type::LongTyID:
     return true;          // This is the largest type...
   }
-  assert(0 && "WTF?");
-  return false;
 }
 
 bool ConstantUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
@@ -466,8 +463,6 @@ bool ConstantUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   case Type::ULongTyID:
     return true;          // This is the largest type...
   }
-  assert(0 && "WTF?");
-  return false;
 }
 
 bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
