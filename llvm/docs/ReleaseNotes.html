@@ -22,7 +22,7 @@
     <li><a href="#c-fe">Known problems with the C Front-end</a>
     <li><a href="#c++-fe">Known problems with the C++ Front-end</a>
     <li><a href="#x86-be">Known problems with the X86 Back-end</a>
-    <li><a href="#sparc-be">Known problems with the Sparc Back-end</a>
+    <li><a href="#sparcv9-be">Known problems with the SparcV9 Back-end</a>
     <li><a href="#c-be">Known problems with the C back-end</a>
   </ul></li>
   <li><a href="#additionalinfo">Additional Information</a></li>
@@ -278,7 +278,7 @@ missing external functions encountered</a></li>
 asssertion</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable
 code that unwinds</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR333">[sparc] LLC can't emit 2 functions
+<li><a href="http://llvm.cs.uiuc.edu/PR333">[sparcv9] LLC can't emit 2 functions
 of the same name, both having constant pools</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR337">[livevar] Live variables missed
 physical register use of aliased definition</a></li>
@@ -682,13 +682,14 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="sparc-be">Known problems with the Sparc back-end</a>
+  <a name="sparcv9-be">Known problems with the SparcV9 back-end</a>
 </div>
 
 <div class="doc_text">
 
 <ul>
-<li>There are several programs in the LLVM testsuite that the Sparc code generator is known to miscompile.</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR60">[sparcv9] SparcV9 backend miscompiles
+several programs in the LLVM test suite</a></li>
 </ul>
 
 </div>
