@@ -1,4 +1,4 @@
-// RUN: llvmg++ -xc++ 2003-08-24-Cleanup.cpp.tr -c -o - | dis | grep 'call void %llvm.unwind'
+// RUN: llvmg++ -xc++ %s -c -o - | llvm-dis | grep unwind
 
 struct S { ~S(); };
 
