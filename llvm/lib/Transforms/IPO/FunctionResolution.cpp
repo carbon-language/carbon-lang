@@ -48,7 +48,10 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   // argument types don't agree.
   //
   BasicBlock::iterator BBI = CI;
-  if (CI->getNumOperands()-1 != ParamTys.size()) {
+  unsigned NumArgsToCopy = CI->getNumOperands()-1;
+  if (CI->getNumOperands()-1 != ParamTys.size() &&
+      !(CI->getNumOperands()-1 > ParamTys.size() &&
+        Dest->getFunctionType()->isVarArg())) {
     std::cerr << "WARNING: Call arguments do not match expected number of"
               << " parameters.\n";
     std::cerr << "WARNING: In function '"
@@ -62,11 +65,13 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
 
   // Convert all of the call arguments over... inserting cast instructions if
   // the types are not compatible.
-  for (unsigned i = 1; i <= ParamTys.size(); ++i) {
+  for (unsigned i = 1; i <= NumArgsToCopy; ++i) {
     Value *V = CI->getOperand(i);
 
-    if (V->getType() != ParamTys[i-1])  // Must insert a cast...
+    if (i-1 < ParamTys.size() && V->getType() != ParamTys[i-1]) {
+      // Must insert a cast...
       V = new CastInst(V, ParamTys[i-1], "argcast", BBI);
+    }
 
     Params.push_back(V);
   }
