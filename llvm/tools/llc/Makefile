@@ -5,8 +5,8 @@ all:: llc
 clean::	
 	rm -f llc
 
-llc : $(ObjectsG)
+llc : $(ObjectsG) $(LibsG)
 	$(LinkG) -o $@ $(ObjectsG) \
-		-lselect -lsparc -ltarget \
-		-lopt -lbcreader -lbcwriter \
+		-lsched -lselect -lsparc -ltarget \
+		-lopt -llivevar -lbcreader -lbcwriter \
 		-lvmcore -lasmwriter -lanalysis -lsupport
