@@ -179,13 +179,13 @@ inline ConstPoolBool *operator<=(const ConstPoolVal &V1,
 //  Implement higher level instruction folding type instructions
 //===----------------------------------------------------------------------===//
 
-inline ConstPoolVal *ConstantFoldCastInstruction(ConstPoolVal *V,
+inline ConstPoolVal *ConstantFoldCastInstruction(const ConstPoolVal *V,
                                                  const Type *DestTy) {
   return ConstRules::get(*V)->castTo(V, DestTy);
 }
 
 inline ConstPoolVal *ConstantFoldUnaryInstruction(unsigned Opcode, 
-                                                  ConstPoolVal *V) {
+                                                  const ConstPoolVal *V) {
   switch (Opcode) {
   case Instruction::Not:  return !*V;
     // TODO: Handle get element ptr instruction here in the future? GEP null?
@@ -194,8 +194,8 @@ inline ConstPoolVal *ConstantFoldUnaryInstruction(unsigned Opcode,
 }
 
 inline ConstPoolVal *ConstantFoldBinaryInstruction(unsigned Opcode,
-                                                   ConstPoolVal *V1, 
-                                                   ConstPoolVal *V2) {
+                                                   const ConstPoolVal *V1, 
+                                                   const ConstPoolVal *V2) {
   switch (Opcode) {
   case Instruction::Add:     return *V1 + *V2;
   case Instruction::Sub:     return *V1 - *V2;
