@@ -44,6 +44,8 @@ Method::~Method() {
   // Delete all of the method arguments and unlink from symbol table...
   ArgumentList.delete_all();
   ArgumentList.setParent(0);
+
+  delete machineCode;
 }
 
 // Specialize setName to take care of symbol table majik
