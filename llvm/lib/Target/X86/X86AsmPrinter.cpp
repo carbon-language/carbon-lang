@@ -312,25 +312,33 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
 void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
-  if (MI->getOperand(Op).isFrameIndex()) {
-    O << "[frame slot #" << MI->getOperand(Op).getFrameIndex();
-    if (MI->getOperand(Op+3).getImmedValue())
-      O << " + " << MI->getOperand(Op+3).getImmedValue();
-    O << "]";
-    return;
-  } else if (MI->getOperand(Op).isConstantPoolIndex()) {
-    O << "[.CPI" << CurrentFnName << "_"
-      << MI->getOperand(Op).getConstantPoolIndex();
-    if (MI->getOperand(Op+3).getImmedValue())
-      O << " + " << MI->getOperand(Op+3).getImmedValue();
-    O << "]";
-    return;
-  }
-
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
+
+  if (BaseReg.isFrameIndex()) {
+    O << "[frame slot #" << BaseReg.getFrameIndex();
+    if (DispSpec.getImmedValue())
+      O << " + " << DispSpec.getImmedValue();
+    O << "]";
+    return;
+  } else if (BaseReg.isConstantPoolIndex()) {
+    O << "[.CPI" << CurrentFnName << "_"
+      << BaseReg.getConstantPoolIndex();
+
+    if (IndexReg.getReg()) {
+      O << " + ";
+      if (ScaleVal != 1)
+        O << ScaleVal << "*";
+      printOp(IndexReg);
+    }
+    
+    if (DispSpec.getImmedValue())
+      O << " + " << DispSpec.getImmedValue();
+    O << "]";
+    return;
+  }
 
   O << "[";
   bool NeedPlus = false;
@@ -520,24 +528,31 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
 void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
-  if (MI->getOperand(Op).isFrameIndex()) {
-    O << "[frame slot #" << MI->getOperand(Op).getFrameIndex();
-    if (MI->getOperand(Op+3).getImmedValue())
-      O << " + " << MI->getOperand(Op+3).getImmedValue();
-    O << "]";
-    return;
-  } else if (MI->getOperand(Op).isConstantPoolIndex()) {
-    O << ".CPI" << CurrentFnName << "_"
-      << MI->getOperand(Op).getConstantPoolIndex();
-    if (MI->getOperand(Op+3).getImmedValue())
-      O << " + " << MI->getOperand(Op+3).getImmedValue();
-    return;
-  }
-
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
+
+  if (BaseReg.isFrameIndex()) {
+    O << "[frame slot #" << BaseReg.getFrameIndex();
+    if (DispSpec.getImmedValue())
+      O << " + " << DispSpec.getImmedValue();
+    O << "]";
+    return;
+  } else if (BaseReg.isConstantPoolIndex()) {
+    O << ".CPI" << CurrentFnName << "_"
+      << BaseReg.getConstantPoolIndex();
+    if (DispSpec.getImmedValue())
+      O << "+" << DispSpec.getImmedValue();
+    if (IndexReg.getReg()) {
+      O << "(,";
+      printOp(IndexReg);
+      if (ScaleVal != 1)
+        O << "," << ScaleVal;
+      O << ")";
+    }
+    return;
+  }
 
   if (DispSpec.isGlobalAddress()) {
     printOp(DispSpec, true);
