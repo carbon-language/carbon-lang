@@ -19,12 +19,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/LeakDetector.h"
 #include <iostream>
+#include <algorithm>
 using namespace llvm;
 
 MachineBasicBlock::~MachineBasicBlock() {
   LeakDetector::removeGarbageObject(this);
 }
-
 
 
 // MBBs start out as #-1. When a MBB is added to a MachineFunction, it
@@ -52,15 +52,13 @@ MachineInstr* ilist_traits<MachineInstr>::createNode() {
   return dummy;
 }
 
-void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N)
-{
+void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
   assert(N->parent == 0 && "machine instruction already in a basic block");
   N->parent = parent;
   LeakDetector::removeGarbageObject(N);
 }
 
-void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N)
-{
+void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
   assert(N->parent != 0 && "machine instruction not in a basic block");
   N->parent = 0;
   LeakDetector::addGarbageObject(N);
@@ -69,15 +67,13 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N)
 void ilist_traits<MachineInstr>::transferNodesFromList(
   iplist<MachineInstr, ilist_traits<MachineInstr> >& toList,
   ilist_iterator<MachineInstr> first,
-  ilist_iterator<MachineInstr> last)
-{
+  ilist_iterator<MachineInstr> last) {
   if (parent != toList.parent)
     for (; first != last; ++first)
       first->parent = toList.parent;
 }
 
-MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator()
-{
+MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   const TargetInstrInfo& TII = *getParent()->getTarget().getInstrInfo();
   iterator I = end();
   while (I != begin() && TII.isTerminatorInstr((--I)->getOpcode()));
@@ -85,15 +81,14 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator()
   return I;
 }
 
-void MachineBasicBlock::dump() const
-{
+void MachineBasicBlock::dump() const {
   print(std::cerr);
 }
 
-void MachineBasicBlock::print(std::ostream &OS) const
-{
+void MachineBasicBlock::print(std::ostream &OS) const {
   if(!getParent()) {
-    OS << "Can't print out MachineBasicBlock because parent MachineFunction is null\n";
+    OS << "Can't print out MachineBasicBlock because parent MachineFunction"
+       << " is null\n";
     return;
   }
 
@@ -105,4 +100,33 @@ void MachineBasicBlock::print(std::ostream &OS) const
     OS << "\t";
     I->print(OS, &getParent()->getTarget());
   }
+}
+
+void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ) {
+  Successors.push_back(succ);
+  succ->addPredecessor(this);
+}
+
+void MachineBasicBlock::removeSuccessor(MachineBasicBlock *succ) {
+  succ->removePredecessor(this);
+  succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
+  assert(I != Successors.end() && "Not a current successor!");
+  Successors.erase(I);
+}
+
+void MachineBasicBlock::removeSuccessor(succ_iterator I) {
+  assert(I != Successors.end() && "Not a current successor!");
+  (*I)->removePredecessor(this);
+  Successors.erase(I);
+}
+
+void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {
+  Predecessors.push_back(pred);
+}
+
+void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
+  std::vector<MachineBasicBlock *>::iterator I = 
+    std::find(Predecessors.begin(), Predecessors.end(), pred);
+  assert(I != Predecessors.end() && "Pred is not a predecessor of this block!");
+  Predecessors.erase(I);
 }
