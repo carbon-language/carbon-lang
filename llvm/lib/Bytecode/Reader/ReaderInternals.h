@@ -16,7 +16,7 @@
 #include <list>
 
 // Enable to trace to figure out what the heck is going on when parsing fails
-#define TRACE_LEVEL 10
+#define TRACE_LEVEL 0
 
 #if TRACE_LEVEL    // ByteCodeReading_TRACEer
 #include "llvm/Assembly/Writer.h"
