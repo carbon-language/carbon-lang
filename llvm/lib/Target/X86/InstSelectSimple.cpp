@@ -292,7 +292,7 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R,
                                   MachineBasicBlock::iterator &IP) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     if (CE->getOpcode() == Instruction::GetElementPtr) {
-      emitGEPOperation(BB, IP, CE->getOperand(0),
+      emitGEPOperation(MBB, IP, CE->getOperand(0),
                        CE->op_begin()+1, CE->op_end(), R);
       return;
     }
@@ -322,7 +322,7 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R,
     // Copy zero (null pointer) to the register.
     BMI(MBB, IP, X86::MOVir32, 1, R).addZImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-    unsigned SrcReg = getReg(CPR->getValue(), BB, IP);
+    unsigned SrcReg = getReg(CPR->getValue(), MBB, IP);
     BMI(MBB, IP, X86::MOVrr32, 1, R).addReg(SrcReg);
   } else {
     std::cerr << "Offending constant: " << C << "\n";
@@ -888,12 +888,12 @@ ISel::visitCastInst (CastInst &CI)
 
   // 2) Implement casts between values of the same type class (as determined
   // by getClass) by using a register-to-register move.
-  unsigned srcClass = getClassB(sourceType);
+  unsigned srcClass = getClassB (sourceType);
   unsigned targClass = getClass (targetType);
   static const unsigned regRegMove[] = {
     X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
   };
-  if ((srcClass < 3) && (targClass < 3) && (srcClass == targClass))
+  if ((srcClass < cLong) && (targClass < cLong) && (srcClass == targClass))
     {
       BuildMI (BB, regRegMove[srcClass], 1, destReg).addReg (operandReg);
       return;
@@ -901,7 +901,7 @@ ISel::visitCastInst (CastInst &CI)
   // 3) Handle cast of SMALLER int to LARGER int using a move with sign
   // extension or zero extension, depending on whether the source type
   // was signed.
-  if ((srcClass < 3) && (targClass < 3) && (srcClass < targClass))
+  if ((srcClass < cLong) && (targClass < cLong) && (srcClass < targClass))
     {
       static const unsigned ops[] = {
 	X86::MOVSXr16r8, X86::MOVSXr32r8, X86::MOVSXr32r16,
@@ -914,7 +914,7 @@ ISel::visitCastInst (CastInst &CI)
     }
   // 4) Handle cast of LARGER int to SMALLER int using a move to EAX
   // followed by a move out of AX or AL.
-  if ((srcClass < 3) && (targClass < 3) && (srcClass > targClass))
+  if ((srcClass < cLong) && (targClass < cLong) && (srcClass > targClass))
     {
       static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
       BuildMI (BB, regRegMove[srcClass], 1,
@@ -943,9 +943,10 @@ ISel::visitCastInst (CastInst &CI)
 void
 ISel::visitGetElementPtrInst (GetElementPtrInst &I)
 {
+  unsigned outputReg = getReg (I);
   MachineBasicBlock::iterator MI = BB->end();
   emitGEPOperation(BB, MI, I.getOperand(0),
-                   I.op_begin()+1, I.op_end(), getReg(I));
+                   I.op_begin()+1, I.op_end(), outputReg);
 }
 
 void ISel::emitGEPOperation(MachineBasicBlock *MBB,
@@ -954,7 +955,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
   const Type *Ty = Src->getType();
-  unsigned basePtrReg = getReg(Src, BB, IP);
+  unsigned basePtrReg = getReg(Src, MBB, IP);
 
   // GEPs have zero or more indices; we must perform a struct access
   // or array access for each one.
@@ -999,14 +1000,14 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       unsigned elementSizeReg = makeAnotherReg(typeOfSequentialTypeIndex);
       copyConstantToRegister(ConstantSInt::get(typeOfSequentialTypeIndex,
                                               elementSize), elementSizeReg,
-                             BB, IP);
+                             MBB, IP);
                              
-      unsigned idxReg = getReg(idx, BB, IP);
+      unsigned idxReg = getReg(idx, MBB, IP);
       // Emit a MUL to multiply the register holding the index by
       // elementSize, putting the result in memberOffsetReg.
       unsigned memberOffsetReg = makeAnotherReg(Type::UIntTy);
       doMultiply (memberOffsetReg, typeOfSequentialTypeIndex,
-		  elementSizeReg, idxReg, BB, IP);
+		  elementSizeReg, idxReg, MBB, IP);
       // Emit an ADD to add memberOffsetReg to the basePtr.
       BMI(MBB, IP, X86::ADDrr32, 2,
           nextBasePtrReg).addReg (basePtrReg).addReg (memberOffsetReg);
