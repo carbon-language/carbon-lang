@@ -46,21 +46,11 @@ def ADJCALLSTACKUP : InstV8 {
   let Name = "ADJCALLSTACKUP";
 }
 
-// Section B.20: SAVE and RESTORE - p117
-def SAVEr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
-def SAVEi    : F3_2<2, 0b111100, "save">;           // save    r, i, r
-def RESTOREr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
-def RESTOREi : F3_2<2, 0b111101, "restore">;        // restore r, i, r
-
-// Section B.24: Call and Link - p125
-// This is the only Format 1 instruction
-def CALL : InstV8 {
-  bits<30> disp;
-
-  let op = 1;
-  let Inst{29-0} = disp;
-  let Name = "call";
-}
+// Section A.3 - Synthetic Instructions, p. 85
+let isReturn = 1, isTerminator = 1, simm13 = 8 in
+  def RET : F3_2<2, 0b111000, "ret">;
+let isReturn = 1, isTerminator = 1, simm13 = 8 in
+  def RETL : F3_2<2, 0b111000, "retl">;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100, "sethi">;
@@ -81,7 +71,23 @@ def ADDrr : F3_1<2, 0b000000, "add">;
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr : F3_1<2, 0b000100, "sub">;
 
+// Section B.20 - SAVE and RESTORE, p. 117
+def SAVErr    : F3_1<2, 0b111100, "save">;           // save    r, r, r
+def SAVEri    : F3_2<2, 0b111100, "save">;           // save    r, i, r
+def RESTORErr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
+def RESTOREri : F3_2<2, 0b111101, "restore">;        // restore r, i, r
+
+// Section B.24 - Call and Link, p. 125
+// This is the only Format 1 instruction
+def CALL : InstV8 {
+  bits<30> disp;
+  let op = 1;
+  let Inst{29-0} = disp;
+  let Name = "call";
+  let isCall = 1;
+}
+
 // Section B.25 - Jump and Link, p. 126
-def JMPLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
-def JMPLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
+def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
+def JMPLri : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
