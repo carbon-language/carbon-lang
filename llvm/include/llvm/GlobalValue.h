@@ -17,14 +17,14 @@
 #ifndef LLVM_GLOBALVALUE_H
 #define LLVM_GLOBALVALUE_H
 
-#include "llvm/User.h"
+#include "llvm/Constant.h"
 
 namespace llvm {
 
 class PointerType;
 class Module;
 
-class GlobalValue : public User {
+class GlobalValue : public Constant {
   GlobalValue(const GlobalValue &);             // do not implement
 public:
   enum LinkageTypes {
@@ -37,12 +37,19 @@ public:
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, LinkageTypes linkage,
 	      const std::string &name = "")
-    : User(Ty, vty, name), Linkage(linkage), Parent(0) {}
+    : Constant(Ty, vty, name), Linkage(linkage), Parent(0) { }
 
   LinkageTypes Linkage;   // The linkage of this global
   Module *Parent;
 public:
-  ~GlobalValue() {}
+  virtual ~GlobalValue();
+
+  /// If the usage is empty (except transitively dead constants), then this
+  /// global value can can be safely deleted since the destructor wll 
+  /// delete the dead constants as well.
+  /// @brief Determine if theusage of this global value is empty except 
+  /// for transitively dead constants.
+  bool use_empty_except_constants();
 
   /// getType - Global values are always pointers.
   inline const PointerType *getType() const {
@@ -56,6 +63,13 @@ public:
   bool hasInternalLinkage()  const { return Linkage == InternalLinkage; }
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
+
+  /// Override from Constant class. No GlobalValue's have null values so
+  /// this always returns false.
+  virtual bool isNullValue() const { return false; }
+
+  /// Override from Constant class.
+  virtual void destroyConstant();
 
   /// isExternal - Return true if the primary definition of this global value is
   /// outside of the current translation unit...
