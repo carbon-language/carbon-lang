@@ -35,10 +35,9 @@
 //
 //===--------------------------------------------------------------------===//
 
-#include "llvm/Reoptimizer/Mapping/MappingInfo.h"
+#include "MappingInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 

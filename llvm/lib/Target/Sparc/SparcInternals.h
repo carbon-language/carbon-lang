@@ -650,8 +650,13 @@ struct UltraSparcOptInfo: public TargetOptInfo {
 /// instructions. This pass enables the usage of the JIT register allocator(s).
 Pass *createAddRegNumToValuesPass();
 
+/// createStackSlotsPass - External interface to stack-slots pass that enters 2
+/// empty slots at the top of each function stack
+Pass *createStackSlotsPass(const TargetMachine &TM);
+
+
 //---------------------------------------------------------------------------
-// class UltraSparcMachine 
+// class UltraSparc 
 // 
 // Purpose:
 //   Primary interface to machine description for the UltraSPARC.

@@ -6,22 +6,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "MappingInfo.h" 
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/PreSelection.h"
-#include "llvm/CodeGen/StackSlots.h"
 #include "llvm/CodeGen/PeepholeOpts.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/Reoptimizer/Mapping/MappingInfo.h" 
+#include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
-#include "llvm/Assembly/PrintModulePass.h"
 
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...

@@ -6,8 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/StackSlots.h"
-#include "llvm/Target/TargetMachine.h"
+#include "SparcInternals.h"
 #include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
