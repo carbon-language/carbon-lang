@@ -30,32 +30,17 @@ namespace {
   OutputFilename("o", cl::desc("Override output filename"),
                  cl::value_desc("filename"));
 
-  cl::opt<int>
-  RunNPasses("stopAfterNPasses",
-             cl::desc("Only run the first N passes of gccas"), cl::Hidden,
-             cl::value_desc("# passes"));
-
   cl::opt<bool>   
   Verify("verify", cl::desc("Verify each pass result"));
 }
 
 
 static inline void addPass(PassManager &PM, Pass *P) {
-  static int NumPassesCreated = 0;
+  // Add the pass to the pass manager...
+  PM.add(P);
   
-  // If we haven't already created the number of passes that was requested...
-  if (RunNPasses == 0 || RunNPasses > NumPassesCreated) {
-    // Add the pass to the pass manager...
-    PM.add(P);
-
-    // If we are verifying all of the intermediate steps, add the verifier...
-    if (Verify) PM.add(createVerifierPass());
-
-    // Keep track of how many passes we made for -stopAfterNPasses
-    ++NumPassesCreated;
-  } else {
-    delete P;             // We don't want this pass to run, just delete it now
-  }
+  // If we are verifying all of the intermediate steps, add the verifier...
+  if (Verify) PM.add(createVerifierPass());
 }
 
 
