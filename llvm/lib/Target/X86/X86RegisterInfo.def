@@ -61,60 +61,60 @@
 R(NoReg,"none",          0, 0, 0/*noalias*/)
 
 // 32 bit registers, ordered as the processor does...
-R32(EAX, "EAX", MRF::INT32, 0, A_EAX)
-R32(ECX, "ECX", MRF::INT32, 0, A_ECX)
-R32(EDX, "EDX", MRF::INT32, 0, A_EDX)
-R32(EBX, "EBX", MRF::INT32, 0, A_EBX)
-R32(ESP, "ESP", MRF::INT32, 0, A_ESP)
-R32(EBP, "EBP", MRF::INT32, 0, A_EBP)
-R32(ESI, "ESI", MRF::INT32, 0, A_ESI)
-R32(EDI, "EDI", MRF::INT32, 0, A_EDI)
+R32(EAX, "EAX", MVT::i32, 0, A_EAX)
+R32(ECX, "ECX", MVT::i32, 0, A_ECX)
+R32(EDX, "EDX", MVT::i32, 0, A_EDX)
+R32(EBX, "EBX", MVT::i32, 0, A_EBX)
+R32(ESP, "ESP", MVT::i32, 0, A_ESP)
+R32(EBP, "EBP", MVT::i32, 0, A_EBP)
+R32(ESI, "ESI", MVT::i32, 0, A_ESI)
+R32(EDI, "EDI", MVT::i32, 0, A_EDI)
 
 // 16 bit registers, aliased with the corresponding 32 bit registers above
-R16( AX, "AX" , MRF::INT16, 0, A_AX)
-R16( CX, "CX" , MRF::INT16, 0, A_CX)
-R16( DX, "DX" , MRF::INT16, 0, A_DX)
-R16( BX, "BX" , MRF::INT16, 0, A_BX)
-R16( SP, "SP" , MRF::INT16, 0, A_SP)
-R16( BP, "BP" , MRF::INT16, 0, A_BP)
-R16( SI, "SI" , MRF::INT16, 0, A_SI)
-R16( DI, "DI" , MRF::INT16, 0, A_DI)
+R16( AX, "AX" , MVT::i16, 0, A_AX)
+R16( CX, "CX" , MVT::i16, 0, A_CX)
+R16( DX, "DX" , MVT::i16, 0, A_DX)
+R16( BX, "BX" , MVT::i16, 0, A_BX)
+R16( SP, "SP" , MVT::i16, 0, A_SP)
+R16( BP, "BP" , MVT::i16, 0, A_BP)
+R16( SI, "SI" , MVT::i16, 0, A_SI)
+R16( DI, "DI" , MVT::i16, 0, A_DI)
 
 // 8 bit registers aliased with registers above as well
-R8 ( AL, "AL" , MRF::INT8 , 0, A_AL)
-R8 ( CL, "CL" , MRF::INT8 , 0, A_CL)
-R8 ( DL, "DL" , MRF::INT8 , 0, A_DL)
-R8 ( BL, "BL" , MRF::INT8 , 0, A_BL)
-R8 ( AH, "AH" , MRF::INT8 , 0, A_AH)
-R8 ( CH, "CH" , MRF::INT8 , 0, A_CH)
-R8 ( DH, "DH" , MRF::INT8 , 0, A_DH)
-R8 ( BH, "BH" , MRF::INT8 , 0, A_BH)
+R8 ( AL, "AL" , MVT::i8 , 0, A_AL)
+R8 ( CL, "CL" , MVT::i8 , 0, A_CL)
+R8 ( DL, "DL" , MVT::i8 , 0, A_DL)
+R8 ( BL, "BL" , MVT::i8 , 0, A_BL)
+R8 ( AH, "AH" , MVT::i8 , 0, A_AH)
+R8 ( CH, "CH" , MVT::i8 , 0, A_CH)
+R8 ( DH, "DH" , MVT::i8 , 0, A_DH)
+R8 ( BH, "BH" , MVT::i8 , 0, A_BH)
 
 // Pseudo Floating Point Registers
-PFP(FP0, "FP0", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP1, "FP1", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP2, "FP2", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP3, "FP3", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP4, "FP4", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP5, "FP5", MRF::FP80 , 0, 0 /*noalias*/)
-PFP(FP6, "FP6", MRF::FP80 , 0, 0 /*noalias*/)
+PFP(FP0, "FP0", MVT::f80 , 0, 0 /*noalias*/)
+PFP(FP1, "FP1", MVT::f80 , 0, 0 /*noalias*/)
+PFP(FP2, "FP2", MVT::f80 , 0, 0 /*noalias*/)
+PFP(FP3, "FP3", MVT::f80 , 0, 0 /*noalias*/)
+PFP(FP4, "FP4", MVT::f80 , 0, 0 /*noalias*/)
+PFP(FP5, "FP5", MVT::f80 , 0, 0 /*noalias*/)
+PFP(FP6, "FP6", MVT::f80 , 0, 0 /*noalias*/)
 
 // Floating point stack registers
-FPS(ST0, "ST(0)", MRF::FP80, 0, 0)
-FPS(ST1, "ST(1)", MRF::FP80, 0, 0)
-FPS(ST2, "ST(2)", MRF::FP80, 0, 0)
-FPS(ST3, "ST(3)", MRF::FP80, 0, 0)
-FPS(ST4, "ST(4)", MRF::FP80, 0, 0)
-FPS(ST5, "ST(5)", MRF::FP80, 0, 0)
-FPS(ST6, "ST(6)", MRF::FP80, 0, 0)
-FPS(ST7, "ST(7)", MRF::FP80, 0, 0)
+FPS(ST0, "ST(0)", MVT::f80, 0, 0)
+FPS(ST1, "ST(1)", MVT::f80, 0, 0)
+FPS(ST2, "ST(2)", MVT::f80, 0, 0)
+FPS(ST3, "ST(3)", MVT::f80, 0, 0)
+FPS(ST4, "ST(4)", MVT::f80, 0, 0)
+FPS(ST5, "ST(5)", MVT::f80, 0, 0)
+FPS(ST6, "ST(6)", MVT::f80, 0, 0)
+FPS(ST7, "ST(7)", MVT::f80, 0, 0)
 
 // Flags, Segment registers, etc...
 
 // This is a slimy hack to make it possible to say that flags are clobbered...
 // Ideally we'd model instructions based on which particular flag(s) they
 // could clobber. 
-R(EFLAGS, "EFLAGS", MRF::INT16, 0, 0 /*noalias*/)
+R(EFLAGS, "EFLAGS", MVT::i16, 0, 0 /*noalias*/)
 
 
 //===----------------------------------------------------------------------===//

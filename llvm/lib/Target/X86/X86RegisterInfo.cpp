@@ -10,6 +10,7 @@
 #include "X86InstrBuilder.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
