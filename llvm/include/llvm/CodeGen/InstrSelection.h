@@ -68,22 +68,12 @@ class TmpInstruction : public Instruction {
 public:
   // Constructor that uses the type of S1 as the type of the temporary.
   // s1 must be a valid value.  s2 may be NULL.
-  TmpInstruction(Value *s1, Value *s2 = 0, const std::string &name = "")
-    : Instruction(s1->getType(), Instruction::UserOp1, name) {
-    Operands.push_back(Use(s1, this));  // s1 must be nonnull
-    if (s2) {
-      Operands.push_back(Use(s2, this));
-    }
-  }
+  TmpInstruction(Value *s1, Value *s2 = 0, const std::string &name = "");
   
   // Constructor that requires the type of the temporary to be specified.
   // Both S1 and S2 may be NULL.
   TmpInstruction(const Type *Ty, Value *s1 = 0, Value* s2 = 0,
-                 const std::string &name = "")
-    : Instruction(Ty, Instruction::UserOp1, name) {
-    if (s1) { Operands.push_back(Use(s1, this)); }
-    if (s2) { Operands.push_back(Use(s2, this)); }
-  }
+                 const std::string &name = "");
   
   virtual Instruction *clone() const { return new TmpInstruction(*this); }
   virtual const char *getOpcodeName() const {
