@@ -5,8 +5,9 @@
 declare void %exit(int)
 
 int %test(sbyte %C, short %S) {
-  %X = cast short %S to int
-  ret int %X
+  %X = cast short %S to ubyte
+  %Y = cast ubyte %X to int
+  ret int %Y
 }
 
 void %FP(void(int) * %F) {
