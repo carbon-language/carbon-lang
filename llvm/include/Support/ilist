@@ -280,7 +280,7 @@ public:
       Head = NextNode;
     setPrev(NextNode, PrevNode);
     IT = NextNode;
-    removeNodeFromList(Node);  // Notify traits that we added a node...
+    removeNodeFromList(Node);  // Notify traits that we removed a node...
     return Node;
   }
 
