@@ -178,6 +178,11 @@ public:
   ///
   Module *performFinalCleanups(Module *M, bool MayModifySemantics = false);
 
+  /// ExtractLoop - Given a module, extract up to one loop from it into a new
+  /// function.  This returns null if there are no extractable loops in the
+  /// program or if the loop extractor crashes.
+  Module *ExtractLoop(Module *M);
+
 private:
   /// ParseInputFile - Given a bytecode or assembly input filename, parse and
   /// return it, or return null if not possible.

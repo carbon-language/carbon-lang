@@ -117,7 +117,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   std::swap(Program, M);
 
   if (Failed) {
-    std::cerr << "Final cleanups failed.  Sorry.  :(\n";
+    std::cerr << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
   } else {
     delete M;
     M = ParseInputFile(Filename);
@@ -129,6 +129,42 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
     removeFile(Filename);
   }
   return M;
+}
+
+
+/// ExtractLoop - Given a module, extract up to one loop from it into a new
+/// function.  This returns null if there are no extractable loops in the
+/// program or if the loop extractor crashes.
+Module *BugDriver::ExtractLoop(Module *M) {
+  std::vector<const PassInfo*> LoopExtractPasses;
+  LoopExtractPasses.push_back(getPI(createSingleLoopExtractorPass()));
+
+  std::swap(Program, M);
+  std::string Filename;
+  bool Failed = runPasses(LoopExtractPasses, Filename);
+  std::swap(Program, M);
+
+  if (Failed) {
+    std::cerr << "Loop extraction failed.  Sorry. :(  Please report a bug!\n";
+    return 0;
+  } else {
+    Module *NewM = ParseInputFile(Filename);
+    if (NewM == 0) {
+      std::cerr << getToolName() << ": Error reading bytecode file '"
+                << Filename << "'!\n";
+      exit(1);
+    }
+    removeFile(Filename);
+
+    // Check to see if we created any new functions.  If not, no loops were
+    // extracted and we should return null.
+    if (M->size() != NewM->size()) {
+      delete NewM;
+      return 0;
+    }
+
+    return NewM;
+  }
 }
 
 
