@@ -8,7 +8,6 @@
 #define READER_INTERNALS_H
 
 #include "llvm/Bytecode/Primitives.h"
-#include "llvm/SymTabValue.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
