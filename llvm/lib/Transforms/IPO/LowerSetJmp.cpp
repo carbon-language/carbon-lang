@@ -60,10 +60,7 @@ namespace {
                                  "Number of invokes modified");
 
   //===--------------------------------------------------------------------===//
-  // LowerSetJmp pass implementation. This is subclassed from the "Pass"
-  // class because it works on a module as a whole, not a function at a
-  // time.
-
+  // LowerSetJmp pass implementation.
   class LowerSetJmp : public ModulePass,
                       public InstVisitor<LowerSetJmp> {
     // LLVM library functions...
