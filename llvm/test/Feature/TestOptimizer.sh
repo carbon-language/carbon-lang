@@ -8,8 +8,8 @@ export LD_LIBRARY_PATH
 # Should not be able to optimize further!
 ../tools/opt/opt -q -constprop -dce < $1.bc.1 > $1.bc.2 || exit 2
 
-dis < $1.bc.1 > $1.ll.1 || exit 3
-dis < $1.bc.2 > $1.ll.2 || exit 3
+../tools/dis/dis < $1.bc.1 > $1.ll.1 || exit 3
+../tools/dis/dis < $1.bc.2 > $1.ll.2 || exit 3
 diff $1.ll.[12] || exit 3
 
 # Try out SCCP
