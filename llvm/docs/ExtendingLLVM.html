@@ -100,12 +100,13 @@ function and then be turned into an instruction if warranted.</p>
     not access memory or does not write to memory, add it to the relevant list
     of functions.</li>
 
-<li><tt>llvm/lib/Transforms/Utils/Local.cpp</tt>: If it is possible to constant
-    propagate your intrinsic, add support to it in the
+<li><tt>llvm/lib/Transforms/Utils/Local.cpp</tt>: If it is possible to
+    constant-propagate your intrinsic, add support to it in the
     <tt>canConstantFoldCallTo</tt> and <tt>ConstantFoldCall</tt> functions.</li>
 
 <li>Test your intrinsic</li>
-<li><tt>llvm/test/Regression/*</tt>: add your test cases to the test suite.</li>
+
+<li><tt>llvm/test/Regression/*</tt>: add your test cases to the test suite</li>
 </ol>
 
 <p>If this intrinsic requires code generator support (i.e., it cannot be
@@ -153,6 +154,14 @@ necessary.</p>
 <li><tt>llvm/lib/VMCore/Instructions.cpp</tt>:
     implement the class you defined in
     <tt>llvm/include/llvm/Instructions.h</tt></li>
+
+<li>Test your instruction</li>
+
+<li><tt>llvm/lib/Target/*</tt>: 
+    Add support for your instruction to code generators, or add a lowering
+    pass.</li>
+
+<li><tt>llvm/test/Regression/*</tt>: add your test cases to the test suite.</li>
 
 </ol>
 
