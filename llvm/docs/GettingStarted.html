@@ -26,9 +26,9 @@
               <li><a href="#software">Software</a>
           </ol>
       </ol>
+      <li><a href="#quickstart">Getting Started Quickly (A Summary)</a>
       <li><a href="#starting">Getting started with LLVM</a>
         <ol>
-          <li><a href="#quickstart">Getting Started Quickly (A Summary)</a>
           <li><a href="#terminology">Terminology and Notation</tt></a>
           <li><a href="#environment">Setting Up Your Environment</a>
           <li><a href="#unpack">Unpacking the LLVM Archives</a>
@@ -47,7 +47,7 @@
         <li><a href="#tools"><tt>llvm/tools</tt></a>  
         <li><a href="#utils"><tt>llvm/utils</tt></a>
     	</ol>
-      <li><a href="#cfront">Compiling the LLVM C Front End</a>
+      <li><a href="#cfront">Compiling the LLVM GCC Front End</a>
       <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
       <li><a href="#problems">Common Problems</a>
       <li><a href="#links">Links</a>
@@ -58,6 +58,7 @@
     <center>
     <h2><a name="overview"><b>Overview</b></a></h2>
     </center>
+    <hr>
     <!--=====================================================================-->
 
     Welcome to LLVM!  In order to get started, you first need to know some
@@ -67,13 +68,13 @@
     First, LLVM comes in two pieces.  The first piece is the LLVM suite.  This
     contains all of the tools, libraries, and header files needed to use the
     low level virtual machine.  It also contains a test suite that can be used
-    to test the LLVM tools and the C front end.
+    to test the LLVM tools and the GCC front end.
     <p>
-    The second piece is the C front end.  This component provides a version
-    of GCC that compiles C code into LLVM bytecode.  Currently, the C front end
-    is a modified version of GCC 3.4 (we track the GCC 3.4 development).
-    Once compiled into LLVM bytecode, a program can be manipulated with the
-    LLVM tools from the LLVM suite.
+    The second piece is the GCC front end.  This component provides a version
+    of GCC that compiles C  and C++ code into LLVM bytecode.  Currently, the
+    GCC front end is a modified version of GCC 3.4 (we track the GCC 3.4
+    development).  Once compiled into LLVM bytecode, a program can be
+    manipulated with the LLVM tools from the LLVM suite.
 
     <!--=====================================================================-->
     <h3><a name="requirements"><b>Requirements</b></a></h3>
@@ -94,7 +95,7 @@
             <ul>
                 <li>Source code: 30 MB
                 <li>Object code: 670 MB
-                <li>C front end: 60 MB
+                <li>GCC front end: 60 MB
             </ul>
         </ul>
 
@@ -106,13 +107,13 @@
             <ul>
                 <li>Source code: 30 MB
                 <li>Object code: 1000 MB
-                <li>C front end: 210 MB
+                <li>GCC front end: 210 MB
             </ul>
         </ul>
     </ul>
 
     <p>
-    If you want to compile your own version of the C front end, you will need
+    If you want to compile your own version of the GCC front end, you will need
     additional disk space:
     </p>
 
@@ -210,11 +211,11 @@
     </ul>
 
 
-    <p>The <a href="starting">next section</a> of this guide is meant to get
-    you up and running with LLVM and to give you some basic information about
-    the LLVM environment.  The <a href"#quickstart">first subsection</a> gives
-    a short summary for those who are already familiar with the system and
-    want to get started as quickly as possible.
+    <p>The remainder of this guide is meant to get you up and running with
+    LLVM and to give you some basic information about the LLVM environment.
+    The <a href"#quickstart">next section</a> gives a short summary for those
+    who are already familiar with the system and want to get started as quickly
+    as possible.  A more complete description is provided after that.
 
     <p>The later sections of this guide describe the <a
     href="#layout">general layout</a> of the the LLVM source-tree, a <a
@@ -224,17 +225,14 @@
 
     <!--=====================================================================-->
     <center>
-    <h2><a name="starting"><b>Getting Started with LLVM</b></a></h2>
+    <h2><a name="quickstart"><b>Getting Started Quickly (A Summary)</b></a></h2>
     </center>
-    <!--=====================================================================-->
-
-    <!--=====================================================================-->
-    <h3><a name="quickstart"><b>Getting Started Quickly (A Summary)</b></a></h3>
+    <hr>
     <!--=====================================================================-->
 
     Here's the short story for getting up and running quickly with LLVM:
     <ol>
-        <li>Install the C front end:
+        <li>Install the GCC front end:
         <ol>
             <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt>
             <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf
@@ -249,8 +247,6 @@
             <ol>
                 <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
                 <li><tt>gunzip --stdout llvm.tar.gz | tar -xvf -</tt>
-                <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar
-                -xvf -</tt>
                 <li><tt>cd llvm</tt>
             </ol>
 
@@ -271,18 +267,14 @@
 
         <li>Configure the LLVM Build Environment
         <ol>
-            <li>Run <tt>configure</tt> to configure the Makefiles and header
-            files for the default platform.
+            <li>Change directory to where you want to store the LLVM object
+            files and run <tt>configure</tt> to configure the Makefiles and
+            header files for the default platform.
             Useful options include:
                 <ul>
-                    <li><tt>--with-objroot=<i>directory</i></tt>
-                    <br>
-                    Specify where object files should be placed during the
-                    build.
-
                     <li><tt>--with-llvmgccdir=<i>directory</i></tt>
                     <br>
-                    Specify where the LLVM C frontend is going to be installed.
+                    Specify where the LLVM GCC frontend is installed.
                 </ul>
         </ol>
 
@@ -301,11 +293,18 @@
 
     <p>See <a href="#environment">Setting Up Your Environment</a> on tips to
     simplify working with the LLVM front-end and compiled tools.  See the
-    other sub-sections below for other useful details in working with LLVM,
+    next section for other useful details in working with LLVM,
     or go straight to <a href="#layout">Program Layout</a> to learn about the
-    layout of the source code tree.  For information on building the C front
-    end yourself, see <a href="#cfront">Compiling the LLVM C Front End</a> for
+    layout of the source code tree.  For information on building the GCC front
+    end yourself, see <a href="#cfront">Compiling the LLVM GCC Front End</a> for
     information.
+
+    <!--=====================================================================-->
+    <center>
+    <h2><a name="starting"><b>Getting Started with LLVM</b></a></h2>
+    </center>
+    <hr>
+    <!--=====================================================================-->
 
     <!------------------------------------------------------------------------->
     <h3><a name="terminology">Terminology and Notation</a></h3>
@@ -325,33 +324,36 @@
         give you this path.
         <p>
 
+        <dt>SRC_ROOT
+        <dd>
+        This is the top level directory of the LLVM source tree.
+        <p>
+
         <dt>OBJ_ROOT
         <dd>
-        This is the top level directory for where the LLVM suite object files
-        will be placed during the build.
+        This is the top level directory of the LLVM object tree (i.e. the
+        tree where object files and compiled programs will be placed.  It
+        can be the same as SRC_ROOT).
         <p>
 
         <dt>LLVMGCCDIR
         <dd>
-        This is the pathname to the location where the LLVM C Front End will
-        be installed.  Note that the C front end does not need to be installed
-        during the LLVM suite build; you will just need to know where it will
-        go for configuring the build system and running the test suite later.
+        This is the where the LLVM GCC Front End is installed.
         <p>
-	For the pre-built C front end binaries, the LLVMGCCDIR is
+        For the pre-built GCC front end binaries, the LLVMGCCDIR is the
         <tt>cfrontend/<i>platform</i>/llvm-gcc</tt>.
 
         <dt>GCCSRC
         <dd>
-        This is the pathname of the directory where the LLVM C front end source
-        code can be found.
+        This is the location of the LLVM GCC front end source code (used
+        only if the LLVM GCC front end is being compiled).
         <p>
 
         <dt>GCCOBJ
         <dd>
-        This is the pathname of the directory where the LLVM C front end object
-        code will be placed during the build.  It can be safely removed once
-        the build is complete.
+        This is the location of the LLVM GCC front end object code (used
+        only if the LLVM GCC front end is being compiled).  It can be
+        safely removed once the LLVM GCC front end is built and installed.
     </dl>
 
     <!------------------------------------------------------------------------->
@@ -367,14 +369,15 @@
     <dl compact>
         <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/llvm-gcc/bytecode-libs</tt>
         <dd>
-        This environment variable helps the LLVM C front end find bytecode
+        This environment variable helps the LLVM GCC front end find bytecode
         libraries that it will need for compilation.
         <p>
 
         <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/llvm-gcc</tt>
+        <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/llvm-g++</tt>
         <dd>
-        This alias allows you to use the LLVM C front end without putting it in
-        your <tt>PATH</tt> or typing in its complete pathname.
+        This alias allows you to use the LLVM C and C++ front ends without putting
+        them in your <tt>PATH</tt> or typing in their complete pathnames.
     </dl>
 
     <!------------------------------------------------------------------------->
@@ -394,15 +397,15 @@
         <p>
 
         <dt>cfrontend.sparc.tar.gz
-        <dd>This is the binary release of the C front end for Solaris/Sparc.
+        <dd>This is the binary release of the GCC front end for Solaris/Sparc.
         <p>
 
         <dt>cfrontend.x86.tar.gz
-        <dd>This is the binary release of the C front end for Linux/x86.
+        <dd>This is the binary release of the GCC front end for Linux/x86.
         <p>
 
         <dt>cfrontend-src.tar.gz
-        <dd>This is the source code release of the C front end.
+        <dd>This is the source code release of the GCC front end.
         <p>
     </dl>
 
@@ -423,24 +426,24 @@
     test directories, and local copies of documentation files.</p>
 
     <p>
-    Note that the C front end is not included in the CVS repository.  You
+    Note that the GCC front end is not included in the CVS repository.  You
     should have either downloaded the source, or better yet, downloaded the
     binary distribution for your platform.
     </p>
 
     <!------------------------------------------------------------------------->
-    <h3><a name="installcf">Install the C Front End</a></h3>
+    <h3><a name="installcf">Install the GCC Front End</a></h3>
     <!------------------------------------------------------------------------->
 
     <p>
-    Before configuring and compiling the LLVM suite, it is best to extract the
-    LLVM C front end.  While not used in building, the C front end is used by
-    the LLVM test suite, and its location must be given to the
-    <tt>configure</tt> script before the LLVM suite can be built.
+    Before configuring and compiling the LLVM suite, you need to extract the
+    LLVM GCC front end from the binary distribution.  It is used for building the
+    bytecode libraries later used by the GCC front end for linking programs, and
+    its location must be specified when the LLVM suite is configured.
     </p>
 
     <p>
-    To install the C front end, do the following:
+    To install the GCC front end, do the following:
     <ol>
         <li><tt>cd <i>where-you-want-the-front-end-to-live</i></tt>
         <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf
@@ -454,7 +457,8 @@
     <p>Once checked out from the CVS repository, the LLVM suite source code
     must be configured via the <tt>configure</tt> script.  This script sets
     variables in <tt>llvm/Makefile.config</tt> and
-    <tt>llvm/include/Config/config.h</tt>.
+    <tt>llvm/include/Config/config.h</tt>.  It also populates OBJ_ROOT with
+    the Makefiles needed to build LLVM.
 
     <p>
     The following environment variables are used by the <tt>configure</tt>
@@ -495,26 +499,6 @@
     </p>
 
     <dl compact>
-    <dt><i>--with-objroot=OBJ_ROOT</i>
-    <dd>
-        Path to the directory where
-		object files, libraries, and executables should be placed.
-        If this is set to <tt>.</tt>, then the object files will be placed
-        within the source code tree.  If left unspecified, the default value is
-        the following:
-        <ul>
-                <li>
-                If the USER environment variable is specified and the directory
-                <tt>/localhome/$USER</tt> exists, then the default value is
-                <tt>/localhome/$USER</tt>.
-
-                <li>
-                Otherwise, the default value is <tt>.</tt>.
-        </ul>
-		(See the Section on <a href=#objfiles>
-		The Location of LLVM Object Files</a>
-		for more information.)
-        <p>
     <dt><i>--with-llvmgccdir=LLVMGCCDIR</i>
     <dd>
         Path to the location where the LLVM C front end binaries and
@@ -522,22 +506,47 @@
         <p>
     <dt><i>--enable-optimized</i>
     <dd>
-        Enables optimized compilation (debugging symbols are removed and GCC
-        optimization flags are enabled).  The default is to use an unoptimized
-        build (also known as a debug build).
+        Enables optimized compilation by defaulat (debugging symbols are removed
+        and GCC optimization flags are enabled).  The default is to use an
+        unoptimized build (also known as a debug build).
         <p>
     <dt><i>--enable-jit</i>
     <dd>
         Compile the Just In Time (JIT) functionality.  This is not available
         on all platforms.  The default is dependent on platform, so it is best
         to explicitly enable it if you want it.
+        <p>
+    <dt><i>--enable-spec2000</i>
+    <dt><i>--enable-spec2000=&lt;<tt>directory</tt>&gt;</i>
+    <dd>
+        Enable the use of SPEC2000 when testing LLVM.  This is disabled by default
+        (unless <tt>configure</tt> find SPEC2000 installed).  By specifying
+        <tt>directory</tt>, you can tell configure where to find the SPEC2000
+        benchmarks.  If <tt>directory</tt> is left unspecified, it
+        <tt>configure</tt> uses a default value for our internal
+        installation of SPEC2000.
     </dl>
+
+    <p>
+    To configure LLVM, follow these steps:
+    <ol>
+        <li>Change directory into the object root directory:
+        <br>
+        <tt>cd <i>OBJ_ROOT</i></tt>
+        <p>
+
+        <li>Run the <ttconfigure</tt> script located in the LLVM source tree:
+        <br>
+        <tt><i>SRC_ROOT</i>/configure</tt>
+        <p>
+    </ol>
+    </p>
 
     In addition to running <tt>configure</tt>, you must set the
     <tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup scripts.
     This environment variable is used to locate "system" libraries like
     "<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set
-    to the absolute path for the bytecode-libs subdirectory of the C front-end
+    to the absolute path for the bytecode-libs subdirectory of the GCC front end
     install, or LLVMGCCDIR/llvm-gcc/bytecode-libs.  For example, one might
     set <tt>LLVM_LIB_SEARCH_PATH</tt> to
     <tt>/home/vadve/lattner/local/x86/llvm-gcc/bytecode-libs</tt> for the X86
@@ -553,14 +562,16 @@
     <dl compact>
         <dt>Debug Builds
         <dd>
-        These builds are the default.  They compile the tools and libraries
-        with debugging information.
+        These builds are the default when one types <tt>gmake</tt> (unless the
+        <tt>--enable-optimized</tt> option was used during configuration).  They
+        compile the tools and libraries with debugging information.
         <p>
 
         <dt>Release (Optimized) Builds
         <dd>
         These builds are enabled with the <tt>--enable-optimized</tt> option to
-        <tt>configure</tt>.  They compile the tools and libraries with GCC
+        <tt>configure</tt> or by specifying <tt>ENABLE_OPTIMIZED=1</tt> on the
+        <tt>gmake</tt> command line.  They compile the tools and libraries with GCC
         optimizer flags on and strip debugging information from the libraries
         and executables it generates. 
         <p>
@@ -569,12 +580,12 @@
         <dd>
         These builds are for use with profiling.  They compile profiling
         information into the code for use with programs like <tt>gprof</tt>.
-        Profile builds must be started by setting variables on the
-        <tt>gmake</tt> command line.
+        Profile builds must be started by specifying <tt>ENABLE_PROFILING=1</tt>
+        on the <tt>gmake</tt> command line.
     </dl>
 
-    Once you have LLVM configured, you can build it by entering the top level
-    <tt>llvm</tt> directory and issuing the following command:
+    Once you have LLVM configured, you can build it by entering the OBJ_ROOT
+    directory and issuing the following command:
     <p>
     <tt>gmake</tt>
 
@@ -588,7 +599,7 @@
     <tt>gmake -j2</tt>
 
     <p>
-    There are several other targets which are useful when working with the LLVM
+    There are several special targets which are useful when working with the LLVM
     source code:
 
     <dl compact>
@@ -604,6 +615,16 @@
         files generated by <tt>configure</tt>.  It attempts to return the
         source tree to the original state in which it was shipped.
         <p>
+
+        <dt><tt>gmake install</tt>
+        <dd>
+        Installs LLVM files into the proper location.  For the most part,
+        this does nothing, but it does install bytecode libraries into the
+        GCC front end's bytecode library directory.  If you need to update
+        your bytecode libraries, this is the target to use once you've built
+        them.
+        <p>
+
     </dl>
 
     It is also possible to override default values from <tt>configure</tt> by
@@ -626,47 +647,30 @@
         <p>
     </dl>
 
-    Every directory in the LLVM source tree includes a <tt>Makefile</tt> to
+    Every directory in the LLVM object tree includes a <tt>Makefile</tt> to
     build it and any subdirectories that it contains.  Entering any directory
-    inside the LLVM source tree and typing <tt>gmake</tt> should rebuild
+    inside the LLVM object tree and typing <tt>gmake</tt> should rebuild
     anything in or below that directory that is out of date.
 
     <!------------------------------------------------------------------------->
     <h3><a name="objfiles">The Location of LLVM Object Files</a></h3>
     <!------------------------------------------------------------------------->
 
-    <p>The LLVM build system sends most output files generated during the build
-    into the directory defined by the variable <i>OBJ_ROOT</i> in
-    <tt>llvm/Makefile.config</tt>, which is set by the <i>--with-objroot</i>
-    option in <tt>configure</tt>.  This can be either just your normal LLVM
-    source tree or some other directory writable by you.  You may wish to put
-    object files on a different filesystem either to keep them from being backed
-    up or to speed up local builds.
-
     <p>
-    If <i>OBJ_ROOT</i> is specified, then the build system will create a
-    directory tree underneath it that resembles the source code's pathname
-    relative to your home directory (unless <i>OBJ_ROOT</i> is set to
-    <tt>.</tt>, in which case object files are placed within the LLVM source
-    tree).
-    </p>
-
+    The LLVM build system is capable of sharing a single LLVM source tree among
+    several LLVM builds.  Hence, it is possible to build LLVM for several
+    different platforms or configurations using the same source tree.
     <p>
-    Note that
-    <i>--with-objroot</i>=<tt>.</tt>
-    and
-    <i>--with-objroot</i>=<tt>`pwd`</tt>
-    are not the same thing.  The former will simply place object files within
-    the source tree, while the latter will set the location of object files
-    using the source tree's relative path from the home directory.
-    </p>
+    This is accomplished in the typical autoconf manner:
+    <ul>
+        <li>Change directory to where the LLVM object files should live:
+        <p>
+        <tt>cd <i>OBJ_ROOT</i></tt>
 
-    <p>
-    For example, suppose that <i>OBJ_ROOT</i> is set to <tt>/tmp</tt> and the
-    LLVM suite source code is located in <tt>/usr/home/joe/src/llvm</tt>, where
-    <tt>/usr/home/joe</tt> is the home directory of a user named Joe.  Then,
-    the object files will be placed in <tt>/tmp/src/llvm</tt>.
-    </p>
+        <li>Run the <tt>configure</tt> script found in the LLVM source directory:
+        <p>
+        <tt><i>SRC_ROOT</i>/configure</tt>
+    </ul>
 
     <p>
     The LLVM build will place files underneath <i>OBJ_ROOT</i> in directories
@@ -678,9 +682,9 @@
         <dd>
         <dl compact>
             <dt>Tools
-            <dd><tt><i>OBJ_ROOT</i>/llvm/tools/Debug</tt>
+            <dd><tt><i>OBJ_ROOT</i>/tools/Debug</tt>
             <dt>Libraries
-            <dd><tt><i>OBJ_ROOT</i>/llvm/lib/Debug</tt>
+            <dd><tt><i>OBJ_ROOT</i>/lib/Debug</tt>
         </dl>
         <p>
 
@@ -688,9 +692,9 @@
         <dd>
         <dl compact>
             <dt>Tools
-            <dd><tt><i>OBJ_ROOT</i>/llvm/tools/Release</tt>
+            <dd><tt><i>OBJ_ROOT</i>/tools/Release</tt>
             <dt>Libraries
-            <dd><tt><i>OBJ_ROOT</i>/llvm/lib/Release</tt>
+            <dd><tt><i>OBJ_ROOT</i>/lib/Release</tt>
         </dl>
         <p>
 
@@ -698,9 +702,9 @@
         <dd>
         <dl compact>
             <dt>Tools
-            <dd><tt><i>OBJ_ROOT</i>/llvm/tools/Profile</tt>
+            <dd><tt><i>OBJ_ROOT</i>/tools/Profile</tt>
             <dt>Libraries
-            <dd><tt><i>OBJ_ROOT</i>/llvm/lib/Profile</tt>
+            <dd><tt><i>OBJ_ROOT</i>/lib/Profile</tt>
         </dl>
     </dl>
 
@@ -708,13 +712,15 @@
     <center>
     <h2><a name="layout"><b>Program Layout</b></a></h2>
     </center>
+    <hr>
     <!--=====================================================================-->
 
-    <p>One useful source of information about the LLVM source base is the LLVM <a
+    <p>
+    One useful source of information about the LLVM source base is the LLVM <a
     href="http://www.doxygen.org">doxygen</a> documentation, available at <tt><a
-    href="http://llvm.cs.uiuc.edu/doxygen/">http://llvm.cs.uiuc.edu/doxygen/</a></tt>. The
-    following is a brief introduction to code layout:</p>
-
+    href="http://llvm.cs.uiuc.edu/doxygen/">http://llvm.cs.uiuc.edu/doxygen/</a></tt>.
+    The following is a brief introduction to code layout:
+    </p>
 
     <!------------------------------------------------------------------------->
     <h3><a name="cvsdir"><tt>CVS</tt> directories</a></h3>
@@ -735,7 +741,7 @@
        <li><tt>llvm/include/llvm</tt> - This directory contains all of the LLVM
        specific header files.  This directory also has subdirectories for
        different portions of LLVM: <tt>Analysis</tt>, <tt>CodeGen</tt>,
-       <tt>Reoptimizer</tt>, <tt>Target</tt>, <tt>Transforms</tt>, etc...
+       <tt>Target</tt>, <tt>Transforms</tt>, etc...
 
        <li><tt>llvm/include/Support</tt> - This directory contains generic
        support libraries that are independent of LLVM, but are used by LLVM.
@@ -790,20 +796,34 @@
       of the code generator: Instruction Selector, Instruction Scheduling, and
       Register Allocation.
 
-      <dt><tt>llvm/lib/Reoptimizer/</tt><dd> This directory holds code related
-      to the runtime reoptimizer framework that is currently under development.
-	      
       <dt><tt>llvm/lib/Support/</tt><dd> This directory contains the source code
       that corresponds to the header files located in
       <tt>llvm/include/Support/</tt>.
     </dl>
 
     <!------------------------------------------------------------------------->
+    <h3><a name="runtime"><tt>llvm/runtime</tt></a></h3>
+    <!------------------------------------------------------------------------->
+
+    <p>
+    This directory contains libraries which are compiled into LLVM bytecode and
+    used when linking programs with the GCC front end.  Most of these libraries
+    are skeleton versions of real libraries; for example, libc is a stripped down
+    version of glibc.
+    </p>
+
+    <p>
+    Unlike the rest of the LLVM suite, this directory needs the LLVM GCC front end
+    to compile.
+    </p>
+
+    <!------------------------------------------------------------------------->
     <h3><a name="test"><tt>llvm/test</tt></a></h3>
     <!------------------------------------------------------------------------->
 
     <p>This directory contains regression tests and source code that is used to
-    test the LLVM infrastructure...</p>
+    test the LLVM infrastructure.
+    </p>
 
     <!------------------------------------------------------------------------->
     <h3><a name="tools"><tt>llvm/tools</tt></a></h3>
@@ -960,20 +980,21 @@
     </dl>
 
     <!--=====================================================================-->
-    <h2><center><a name="cfront">Compiling the LLVM C Front End</center></h2>
+    <h2><center><a name="cfront">Compiling the LLVM GCC Front End</center></h2>
+    <hr>
     <!--=====================================================================-->
 
     <p>
     <b>
-    This step is optional if you have the C front end binary distribution for
+    This step is optional if you have the GCC front end binary distribution for
     your platform.
     </b>
     </p>
 
-    Now that you have the LLVM suite built, you can build the C front end.  For
+    Now that you have the LLVM suite built, you can build the GCC front end.  For
     those of you that have built GCC before, the process is very similar.
     <p>
-    Be forewarned, though: the build system for the C front end is not as
+    Be forewarned, though: the build system for the GCC front end is not as
     polished as the rest of the LLVM code, so there will be many warnings and
     errors that you will need to ignore for now:
 
@@ -1018,6 +1039,7 @@
     <h2>
     <center><a name="tutorial">An Example Using the LLVM Tool Chain</center>
     </h2>
+    <hr>
     <!--=====================================================================-->
 
     <ol>
@@ -1074,6 +1096,7 @@
     <h2>
     <center><a name="problems">Common Problems</a></center>
     </h2>
+    <hr>
     <!--=====================================================================-->
 
     Below are common problems and their remedies:
@@ -1139,6 +1162,7 @@
 
     <!--=====================================================================-->
     <h2><center><a name="links">Links</a></center></h2>
+    <hr>
     <!--=====================================================================-->
 
     <p>This document is just an <b>introduction</b> to how to use LLVM to do
