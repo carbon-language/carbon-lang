@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
+#include "llvm/CodeGen/IGNode.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"

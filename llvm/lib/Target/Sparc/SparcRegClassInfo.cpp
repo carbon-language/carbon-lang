@@ -8,6 +8,7 @@
 #include "SparcInternals.h"
 #include "llvm/Type.h"
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
+#include "llvm/CodeGen/IGNode.h"
 
 //-----------------------------------------------------------------------------
 // Int Register Class - method for coloring a node in the interference graph.
@@ -160,6 +161,19 @@ void SparcIntCCRegClass::colorIGNode(IGNode *Node,
 
   Node->setColor(ccReg);                // only one int cc reg is available
 }
+
+
+void SparcFloatCCRegClass::colorIGNode(IGNode *Node,
+                                const std::vector<bool> &IsColorUsedArr) const {
+  for(unsigned c = 0; c != 4; ++c)
+    if (!IsColorUsedArr[c]) { // find unused color
+      Node->setColor(c);   
+      return;
+    }
+  
+  Node->getParentLR()->markForSpill();
+}
+
 
 
 //-----------------------------------------------------------------------------

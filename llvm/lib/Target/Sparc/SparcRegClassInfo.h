@@ -8,7 +8,6 @@
 #define SPARC_REG_CLASS_INFO_H
 
 #include "llvm/Target/TargetRegInfo.h"
-#include "llvm/CodeGen/IGNode.h"
 
 //-----------------------------------------------------------------------------
 // Integer Register Class
@@ -175,15 +174,7 @@ struct SparcFloatCCRegClass : public TargetRegClassInfo {
     : TargetRegClassInfo(ID, 4, 5) {  }
 
   void colorIGNode(IGNode *Node,
-                   const std::vector<bool> &IsColorUsedArr) const {
-    for(unsigned c = 0; c != 4; ++c)
-      if (!IsColorUsedArr[c]) { // find unused color
-        Node->setColor(c);   
-        return;
-      }
-
-    Node->getParentLR()->markForSpill();
-  }
+                   const std::vector<bool> &IsColorUsedArr) const;
   
   // according to  Sparc 64 ABI, all %fp CC regs are volatile
   //
