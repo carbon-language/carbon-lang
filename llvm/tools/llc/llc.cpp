@@ -1,15 +1,9 @@
-// $Id$
-//***************************************************************************
-// File:
-//	llc.cpp
-// 
-// Purpose:
-//	Driver for llc compiler.
-// 
-// History:
-//	7/15/01	 -  Vikram Adve  -  Created
-// 
-//**************************************************************************/
+//===------------------------------------------------------------------------===
+// LLVM 'LLC' UTILITY 
+//
+// This is the llc compiler driver.
+//
+//===------------------------------------------------------------------------===
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Optimizations/Normalize.h"
@@ -23,7 +17,6 @@
 cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
 
-
 static void NormalizeMethod(Method* method) {
   NormalizePhiConstantArgs(method);
 }
@@ -36,8 +29,8 @@ static bool CompileModule(Module *M, TargetMachine &Target) {
     NormalizeMethod(Meth);
       
     if (SelectInstructionsForMethod(Meth, Target)) {
-      cerr << "Instruction selection failed for method "
-	   << Meth->getName() << "\n\n";
+      cerr << "Instruction selection failed for method " << Meth->getName()
+	   << "\n\n";
       return true;
     }
 
