@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Support/CFG.h"
+#include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
@@ -44,6 +45,11 @@ namespace {
                                       "Live Interval Analysis");
 
     Statistic<> numIntervals("liveintervals", "Number of intervals");
+
+    cl::opt<bool>
+    join("join-liveintervals",
+         cl::desc("Join compatible live intervals"),
+         cl::init(false));
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
@@ -69,6 +75,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     mi2iMap_.clear();
     r2iMap_.clear();
     r2iMap_.clear();
+    r2rMap_.clear();
     intervals_.clear();
 
     // number MachineInstrs
@@ -95,18 +102,17 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
     const TargetInstrInfo& tii = tm_->getInstrInfo();
 
-    for (MbbIndex2MbbMap::iterator
-             it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
-         it != itEnd; ++it) {
-        MachineBasicBlock* mbb = it->second;
-
+    for (MachineFunction::const_iterator mbbi = mf_->begin(),
+             mbbe = mf_->end(); mbbi != mbbe; ++mbbi) {
+        const MachineBasicBlock* mbb = mbbi;
         unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
 
-        for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
-             mi != miEnd; ++mi) {
-            MachineInstr* instr = *mi;
-            for (int i = instr->getNumOperands() - 1; i >= 0; --i) {
-                MachineOperand& mop = instr->getOperand(i);
+        for (MachineBasicBlock::const_iterator mii = mbb->begin(),
+                 mie = mbb->end(); mii != mie; ++mii) {
+            MachineInstr* mi = *mii;
+
+            for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
+                MachineOperand& mop = mi->getOperand(i);
 
                 if (!mop.isVirtualRegister())
                     continue;
@@ -118,6 +124,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             }
         }
     }
+
+    // join intervals if requested
+    if (join) joinIntervals();
 
     numIntervals += intervals_.size();
 
@@ -326,46 +335,109 @@ void LiveIntervals::computeIntervals()
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
 }
 
+unsigned LiveIntervals::rep(unsigned reg)
+{
+    Reg2RegMap::iterator it = r2rMap_.find(reg);
+    if (it != r2rMap_.end())
+        return it->second = rep(it->second);
+    return reg;
+}
+
+void LiveIntervals::joinIntervals()
+{
+    DEBUG(std::cerr << "joining compatible intervals:\n");
+
+    const TargetInstrInfo& tii = tm_->getInstrInfo();
+
+    for (MachineFunction::const_iterator mbbi = mf_->begin(),
+             mbbe = mf_->end(); mbbi != mbbe; ++mbbi) {
+        const MachineBasicBlock* mbb = mbbi;
+        DEBUG(std::cerr << "machine basic block: "
+              << mbb->getBasicBlock()->getName() << "\n");
+
+        for (MachineBasicBlock::const_iterator mii = mbb->begin(),
+                 mie = mbb->end(); mii != mie; ++mii) {
+            MachineInstr* mi = *mii;
+            const TargetInstrDescriptor& tid =
+                tm_->getInstrInfo().get(mi->getOpcode());
+            DEBUG(std::cerr << "\t\tinstruction["
+                  << getInstructionIndex(mi) << "]: ";
+                  mi->print(std::cerr, *tm_););
+
+            unsigned srcReg, dstReg;
+            if (tii.isMoveInstr(*mi, srcReg, dstReg) &&
+                (srcReg >= MRegisterInfo::FirstVirtualRegister ||
+                 lv_->getAllocatablePhysicalRegisters()[srcReg]) &&
+                (dstReg >= MRegisterInfo::FirstVirtualRegister ||
+                 lv_->getAllocatablePhysicalRegisters()[dstReg])) {
+
+                // get representative registers
+                srcReg = rep(srcReg);
+                dstReg = rep(dstReg);
+
+                // if they are already joined we continue
+                if (srcReg == dstReg)
+                    continue;
+
+                Reg2IntervalMap::iterator r2iSrc = r2iMap_.find(srcReg);
+                assert(r2iSrc != r2iMap_.end());
+                Reg2IntervalMap::iterator r2iDst = r2iMap_.find(dstReg);
+                assert(r2iDst != r2iMap_.end());
+
+                Intervals::iterator srcInt = r2iSrc->second;
+                Intervals::iterator dstInt = r2iDst->second;
+
+                if (srcInt->reg < MRegisterInfo::FirstVirtualRegister) {
+                    if (dstInt->reg == srcInt->reg ||
+                        (dstInt->reg >= MRegisterInfo::FirstVirtualRegister &&
+                         !dstInt->overlaps(*srcInt))) {
+                        srcInt->join(*dstInt);
+                        r2iDst->second = r2iSrc->second;
+                        r2rMap_.insert(std::make_pair(dstInt->reg, srcInt->reg));
+                        intervals_.erase(dstInt);
+                    }
+                }
+                else if (dstInt->reg < MRegisterInfo::FirstVirtualRegister) {
+                    if (srcInt->reg == dstInt->reg ||
+                        (srcInt->reg >= MRegisterInfo::FirstVirtualRegister &&
+                         !srcInt->overlaps(*dstInt))) {
+                        dstInt->join(*srcInt);
+                        r2iSrc->second = r2iDst->second;
+                        r2rMap_.insert(std::make_pair(srcInt->reg, dstInt->reg));
+                        intervals_.erase(srcInt);
+                    }
+                }
+                else {
+                    const TargetRegisterClass *srcRc, *dstRc;
+                    srcRc = mf_->getSSARegMap()->getRegClass(srcInt->reg);
+                    dstRc = mf_->getSSARegMap()->getRegClass(dstInt->reg);
+
+                    if (srcRc == dstRc && !dstInt->overlaps(*srcInt)) {
+                        srcInt->join(*dstInt);
+                        r2iDst->second = r2iSrc->second;
+                        r2rMap_.insert(std::make_pair(dstInt->reg, srcInt->reg));
+                        intervals_.erase(dstInt);
+                    }
+                }
+            }
+        }
+    }
+
+    intervals_.sort(StartPointComp());
+    DEBUG(std::copy(intervals_.begin(), intervals_.end(),
+                    std::ostream_iterator<Interval>(std::cerr, "\n")));
+    DEBUG(for (Reg2RegMap::const_iterator i = r2rMap_.begin(),
+                   e = r2rMap_.end(); i != e; ++i)
+          std::cerr << i->first << " -> " << i->second << '\n';);
+               
+}
+
 LiveIntervals::Interval::Interval(unsigned r)
-    : reg(r), hint(0),
+    : reg(r),
       weight((r < MRegisterInfo::FirstVirtualRegister ?
               std::numeric_limits<float>::max() : 0.0F))
 {
 
-}
-
-void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
-{
-    DEBUG(std::cerr << "\t\t\tadding range: [" << start <<','<< end << ") -> ");
-    //assert(start < end && "invalid range?");
-    Range range = std::make_pair(start, end);
-    Ranges::iterator it =
-        ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), range),
-                      range);
-
-    mergeRangesForward(it);
-    mergeRangesBackward(it);
-    DEBUG(std::cerr << *this << '\n');
-}
-
-void LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
-{
-    for (Ranges::iterator next = it + 1;
-         next != ranges.end() && it->second >= next->first; ) {
-        it->second = std::max(it->second, next->second);
-        next = ranges.erase(next);
-    }
-}
-
-void LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
-{
-    for (Ranges::iterator prev = it - 1;
-         it != ranges.begin() && it->first <= prev->second; ) {
-        it->first = std::min(it->first, prev->first);
-        it->second = std::max(it->second, prev->second);
-        it = ranges.erase(prev);
-        prev = it - 1;
-    }
 }
 
 bool LiveIntervals::Interval::liveAt(unsigned index) const
@@ -407,6 +479,63 @@ bool LiveIntervals::Interval::overlaps(const Interval& other) const
     }
 
     return false;
+}
+
+void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
+{
+    DEBUG(std::cerr << "\t\t\tadding range: [" << start <<','<< end << ") -> ");
+    //assert(start < end && "invalid range?");
+    Range range = std::make_pair(start, end);
+    Ranges::iterator it =
+        ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), range),
+                      range);
+
+    it = mergeRangesForward(it);
+    it = mergeRangesBackward(it);
+    DEBUG(std::cerr << "\t\t\t\tafter merging: " << *this << '\n');
+}
+
+void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
+{
+    DEBUG(std::cerr << "\t\t\t\tjoining intervals: "
+          << other << " and " << *this << '\n');
+    Ranges::iterator cur = ranges.begin();
+
+    for (Ranges::const_iterator i = other.ranges.begin(),
+             e = other.ranges.end(); i != e; ++i) {
+        cur = ranges.insert(std::upper_bound(cur, ranges.end(), *i), *i);
+        cur = mergeRangesForward(cur);
+        cur = mergeRangesBackward(cur);
+    }
+    if (reg >= MRegisterInfo::FirstVirtualRegister)
+        weight += other.weight;
+
+    DEBUG(std::cerr << "\t\t\t\tafter merging: " << *this << '\n');
+}
+
+LiveIntervals::Interval::Ranges::iterator
+LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
+{
+    for (Ranges::iterator next = it + 1;
+         next != ranges.end() && it->second >= next->first; ) {
+        it->second = std::max(it->second, next->second);
+        next = ranges.erase(next);
+    }
+    return it;
+}
+
+LiveIntervals::Interval::Ranges::iterator
+LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
+{
+    for (Ranges::iterator prev = it - 1;
+         it != ranges.begin() && it->first <= prev->second; ) {
+        it->first = std::min(it->first, prev->first);
+        it->second = std::max(it->second, prev->second);
+        it = ranges.erase(prev);
+        prev = it - 1;
+    }
+
+    return it;
 }
 
 std::ostream& llvm::operator<<(std::ostream& os,

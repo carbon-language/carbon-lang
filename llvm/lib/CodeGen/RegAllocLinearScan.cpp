@@ -32,12 +32,15 @@ using namespace llvm;
 namespace {
     Statistic<> numSpilled ("ra-linearscan", "Number of registers spilled");
     Statistic<> numReloaded("ra-linearscan", "Number of registers reloaded");
+    Statistic<> numPeep    ("ra-linearscan",
+                            "Number of identity moves eliminated");
 
     class RA : public MachineFunctionPass {
     private:
         MachineFunction* mf_;
         const TargetMachine* tm_;
         const MRegisterInfo* mri_;
+        LiveIntervals* li_;
         MachineFunction::iterator currentMbb_;
         MachineBasicBlock::iterator currentInstr_;
         typedef std::vector<const LiveIntervals::Interval*> IntervalPtrs;
@@ -203,8 +206,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     mf_ = &fn;
     tm_ = &fn.getTarget();
     mri_ = tm_->getRegisterInfo();
-
-    initIntervalSets(getAnalysis<LiveIntervals>().getIntervals());
+    li_ = &getAnalysis<LiveIntervals>();
+    initIntervalSets(li_->getIntervals());
 
     v2pMap_.clear();
     v2ssMap_.clear();
@@ -231,6 +234,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     reserved_[29] = true; /* FP6 */
 
     // linear scan algorithm
+    DEBUG(std::cerr << "Machine Function\n");
 
     DEBUG(printIntervals("\tunhandled", unhandled_.begin(), unhandled_.end()));
     DEBUG(printIntervals("\tfixed", fixed_.begin(), fixed_.end()));
@@ -324,15 +328,54 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     active_.clear();
     inactive_.clear();
 
-    DEBUG(std::cerr << "finished register allocation\n");
+    typedef LiveIntervals::Reg2RegMap Reg2RegMap;
+    const Reg2RegMap& r2rMap = li_->getJoinedRegMap();
+
     DEBUG(printVirtRegAssignment());
+    DEBUG(std::cerr << "Performing coalescing on joined intervals\n");
+    // perform coalescing if we were passed joined intervals
+    for(Reg2RegMap::const_iterator i = r2rMap.begin(), e = r2rMap.end();
+        i != e; ++i) {
+        unsigned reg = i->first;
+        unsigned rep = li_->rep(reg);
+
+        assert((rep < MRegisterInfo::FirstVirtualRegister ||
+                v2pMap_.find(rep) != v2pMap_.end() ||
+                v2ssMap_.find(rep) != v2ssMap_.end()) &&
+               "representative register is not allocated!");
+
+        assert(reg >= MRegisterInfo::FirstVirtualRegister &&
+               v2pMap_.find(reg) == v2pMap_.end() &&
+               v2ssMap_.find(reg) == v2ssMap_.end() &&
+               "coalesced register is already allocated!");
+
+        if (rep < MRegisterInfo::FirstVirtualRegister) {
+            v2pMap_.insert(std::make_pair(reg, rep));
+        }
+        else {
+            Virt2PhysMap::const_iterator pr = v2pMap_.find(rep);
+            if (pr != v2pMap_.end()) {
+                v2pMap_.insert(std::make_pair(reg, pr->second));
+            }
+            else {
+                Virt2StackSlotMap::const_iterator ss = v2ssMap_.find(rep);
+                assert(ss != v2ssMap_.end());
+                v2ssMap_.insert(std::make_pair(reg, ss->second));
+            }
+        }
+    }
+
+    DEBUG(printVirtRegAssignment());
+    DEBUG(std::cerr << "finished register allocation\n");
+
+    const TargetInstrInfo& tii = tm_->getInstrInfo();
 
     DEBUG(std::cerr << "Rewrite machine code:\n");
     for (currentMbb_ = mf_->begin(); currentMbb_ != mf_->end(); ++currentMbb_) {
         instrAdded_ = 0;
 
         for (currentInstr_ = currentMbb_->begin();
-             currentInstr_ != currentMbb_->end(); ++currentInstr_) {
+             currentInstr_ != currentMbb_->end(); ) {
 
             DEBUG(std::cerr << "\tinstruction: ";
                   (*currentInstr_)->print(std::cerr, *tm_););
@@ -355,6 +398,21 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 }
             }
 
+            unsigned srcReg, dstReg;
+            if (tii.isMoveInstr(**currentInstr_, srcReg, dstReg) &&
+                ((srcReg < MRegisterInfo::FirstVirtualRegister &&
+                  dstReg < MRegisterInfo::FirstVirtualRegister &&
+                  srcReg == dstReg) ||
+                 (srcReg >= MRegisterInfo::FirstVirtualRegister &&
+                  dstReg >= MRegisterInfo::FirstVirtualRegister &&
+                  v2ssMap_[srcReg] == v2ssMap_[dstReg]))) {
+                delete *currentInstr_;
+                currentInstr_ = currentMbb_->erase(currentInstr_);
+                ++numPeep;
+                DEBUG(std::cerr << "\t\tdeleting instruction\n");
+                continue;
+            }
+                        
             DEBUG(std::cerr << "\t\tloading temporarily used operands to "
                   "registers:\n");
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
@@ -416,6 +474,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             }
             --currentInstr_; // restore currentInstr_ iterator
             tempDefOperands_.clear();
+            ++currentInstr_;
         }
     }
 
