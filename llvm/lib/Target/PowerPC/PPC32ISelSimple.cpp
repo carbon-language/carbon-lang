@@ -618,13 +618,14 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     unsigned GlobalBase = makeAnotherReg(Type::IntTy);
     unsigned Reg1 = makeAnotherReg(Type::IntTy);
     unsigned Reg2 = makeAnotherReg(Type::IntTy);
+    unsigned Opcode = (Ty == Type::FloatTy) ? PPC::LFS : PPC::LFD;
     // Move value at base + distance into return reg
     copyGlobalBaseToRegister(MBB, IP, GlobalBase);
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, Reg1).addReg(GlobalBase)
       .addConstantPoolIndex(CPI);
     BuildMI(*MBB, IP, PPC::LOADLoDirect, 2, Reg2).addReg(Reg1)
       .addConstantPoolIndex(CPI);
-    BuildMI(*MBB, IP, PPC::LFD, 2, R).addSImm(0).addReg(Reg2);
+    BuildMI(*MBB, IP, Opcode, 2, R).addSImm(0).addReg(Reg2);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC::LI, 1, R).addSImm(0);
@@ -1824,16 +1825,10 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
     const Type *Ty = Op1->getType();
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
-    unsigned Opcode = OpcodeTab[1][OperatorClass];
-    unsigned Op1Reg = getReg(Op1C, BB, IP);
+    unsigned Opcode = OpcodeTab[Ty == Type::DoubleTy][OperatorClass];
     unsigned Op0Reg = getReg(Op0, BB, IP);
-    if (Ty == Type::DoubleTy) {
-      BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
-    } else {
-      unsigned TmpReg = makeAnotherReg(Type::DoubleTy);
-      BuildMI(*BB, IP, Opcode, 2, TmpReg).addReg(Op0Reg).addReg(Op1Reg);
-      BuildMI(*BB, IP, PPC::FRSP, 1, DestReg).addReg(TmpReg);
-    }
+    unsigned Op1Reg = getReg(Op1C, BB, IP);
+    BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
     return;
   }
   
@@ -1851,21 +1846,14 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       const Type *Ty = Op0C->getType();
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
-      unsigned Opcode = OpcodeTab[1][OperatorClass];
+      unsigned Opcode = OpcodeTab[Ty == Type::DoubleTy][OperatorClass];
       unsigned Op0Reg = getReg(Op0C, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
-      if (Ty == Type::DoubleTy) {
-        BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
-      } else {
-        unsigned TmpReg = makeAnotherReg(Type::DoubleTy);
-        BuildMI(*BB, IP, Opcode, 2, TmpReg).addReg(Op0Reg).addReg(Op1Reg);
-        BuildMI(*BB, IP, PPC::FRSP, 1, DestReg).addReg(TmpReg);
-      }
+      BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0Reg).addReg(Op1Reg);
       return;
     }
 
   unsigned Opcode = OpcodeTab[Op0->getType() != Type::FloatTy][OperatorClass];
-  //unsigned Opcode = OpcodeTab[OperatorClass];
   unsigned Op0r = getReg(Op0, BB, IP);
   unsigned Op1r = getReg(Op1, BB, IP);
   BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
