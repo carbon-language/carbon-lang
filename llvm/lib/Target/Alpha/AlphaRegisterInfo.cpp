@@ -49,8 +49,12 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        unsigned SrcReg, int FrameIdx) const {
   //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
-  BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-  //  assert(0 && "TODO");
+  if (getClass(SrcReg) == Alpha::FPRCRegisterClass)
+    BuildMI(MBB, MI, Alpha::STT, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (getClass(SrcReg) == Alpha::GPRCRegisterClass)
+    BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else
+    abort();
 }
 
 void
@@ -58,9 +62,12 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx) const{
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
-  //BuildMI(MBB, MI, Alpha::WTF, 0, DestReg);
-  BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-  //  assert(0 && "TODO");
+  if (getClass(DestReg) == Alpha::FPRCRegisterClass)
+    BuildMI(MBB, MI, Alpha::LDT, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (getClass(DestReg) == Alpha::GPRCRegisterClass)
+    BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else
+    abort();
 }
 
 void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
