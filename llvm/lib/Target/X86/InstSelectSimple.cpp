@@ -978,10 +978,12 @@ void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
     return;
 
   case LLVMIntrinsic::longjmp:
+  case LLVMIntrinsic::siglongjmp:
     BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
     return;
 
   case LLVMIntrinsic::setjmp:
+  case LLVMIntrinsic::sigsetjmp:
     // Setjmp always returns zero...
     BuildMI(BB, X86::MOVir32, 1, getReg(CI)).addZImm(0);
     return;

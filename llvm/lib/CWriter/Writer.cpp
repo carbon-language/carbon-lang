@@ -1139,6 +1139,7 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
         
       case LLVMIntrinsic::setjmp:
+      case LLVMIntrinsic::sigsetjmp:
         // This instrinsic should never exist in the program, but until we get
         // setjmp/longjmp transformations going on, we should codegen it to
         // something reasonable.  This will allow code that never calls longjmp
@@ -1146,7 +1147,9 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << "0";
         return;
       case LLVMIntrinsic::longjmp:
-        // Treat longjmp the same as setjmp
+      case LLVMIntrinsic::siglongjmp:
+        // Longjmp is not implemented, and never will be.  It would cause an
+        // exception throw.
         Out << "abort()";
         return;
       }

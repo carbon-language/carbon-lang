@@ -1433,6 +1433,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
                    addReg(callInstr.getOperand(1)));
     return true;
 
+  case LLVMIntrinsic::sigsetjmp:
   case LLVMIntrinsic::setjmp: {
     // act as if we return 0
     unsigned g0 = target.getRegInfo().getZeroRegNum();
@@ -1441,6 +1442,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     return true;
   }
 
+  case LLVMIntrinsic::siglongjmp:
   case LLVMIntrinsic::longjmp: {
     // call abort()
     Module* M = callInstr.getParent()->getParent()->getParent();
