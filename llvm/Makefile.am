@@ -7,9 +7,9 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-SUBDIRS = lib/System lib/Support utils lib tools
+SUBDIRS = lib/System lib/Support utils lib tools runtime
 
 EXTRA_DIST = CREDITS.txt LICENSE.txt llvm.spec README.txt include docs autoconf
 
