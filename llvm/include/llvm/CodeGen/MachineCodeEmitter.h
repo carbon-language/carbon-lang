@@ -15,6 +15,7 @@ class MachineBasicBlock;
 class Value;
 
 struct MachineCodeEmitter {
+  virtual ~MachineCodeEmitter() {}
 
   /// startFunction - This callback is invoked when the specified function is
   /// about to be code generated.
@@ -41,6 +42,13 @@ struct MachineCodeEmitter {
   /// and jump instructions typically.
   ///
   virtual void emitPCRelativeDisp(Value *V) {}
+
+
+  /// createDebugMachineCodeEmitter - Return a dynamically allocated machine
+  /// code emitter, which just prints the opcodes and fields out the cout.  This
+  /// can be used for debugging users of the MachineCodeEmitter interface.
+  ///
+  static MachineCodeEmitter *createDebugMachineCodeEmitter();
 };
 
 #endif
