@@ -161,6 +161,9 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
   
+  // decompose multi-dimensional array references into single-dim refs
+  PM.add(createDecomposeMultiDimRefsPass());
+  
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(*this));
 
