@@ -5,20 +5,34 @@
 #  immediately after a "RUN:" string.
 #
 #  This runner recognizes and replaces the following strings in the command:
-#     %s   -  Replaced with the input name of the program
+#
+#     %s - Replaced with the input name of the program, or the program to
+#          execute, as appropriate.
 #
 
-grep 'RUN:' $1 | sed "s/^.*RUN:\(.*\)$/\1/g;s/%s/$1/g" > Output/$1.script
-OUTPUT=Output/$1.out
+FILENAME=$1
+SUBST=$1
+OUTPUT=$FILENAME.out
+
+if test $# != 1; then
+  # If more than one parameter is passed in, there must be three parameters:
+  # The filename to read from (already processed), the command used to execute,
+  # and the file to output to.
+  SUBST=$2
+  OUTPUT=$3
+fi
+
+SCRIPT=Output/$OUTPUT.script
+grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g" > $SCRIPT
 
 
-/bin/sh Output/$1.script > $OUTPUT 2>&1 || (
-  echo "******************** TEST '$1' FAILED! ********************"
+/bin/sh $SCRIPT > $OUTPUT 2>&1 || (
+  echo "******************** TEST '$FILENAME' FAILED! ********************"
   echo "Command: "
-  cat Output/$1.script
+  cat $SCRIPT
   echo "Output:"
   cat $OUTPUT
   rm $OUTPUT
-  echo "******************** TEST '$1' FAILED! ********************"
+  echo "******************** TEST '$FILENAME' FAILED! ********************"
 )
 
