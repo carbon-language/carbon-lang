@@ -748,18 +748,20 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
       Out << "<badref>"; 
   }
   
-  // Output predecessors for the block...
-  Out << "\t\t;";
-  pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
-
-  if (PI == PE) {
-    Out << " No predecessors!";
-  } else {
-    Out << " preds =";
-    writeOperand(*PI, false, true);
-    for (++PI; PI != PE; ++PI) {
-      Out << ",";
+  if (BB != &BB->getParent()->front()) {  // Not the entry block?
+    // Output predecessors for the block...
+    Out << "\t\t;";
+    pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    
+    if (PI == PE) {
+      Out << " No predecessors!";
+    } else {
+      Out << " preds =";
       writeOperand(*PI, false, true);
+      for (++PI; PI != PE; ++PI) {
+        Out << ",";
+        writeOperand(*PI, false, true);
+      }
     }
   }
   
