@@ -70,37 +70,22 @@ void removeFile(const std::string &Filename);
 ///
 std::string getUniqueFilename(const std::string &FilenameBase);
 
+/// MakeFileExecutable - This method turns on whatever access attributes are
+/// needed to make the specified file executable.  It returns true on success.
+/// In case of failure, the file's access attributes are unspecified.
 ///
-/// Method: MakeFileExecutable()
-///
-/// Description:
-///	This method turns on whatever access attributes are needed to make the
-///	specified file executable.
-///
-/// Return value:
-///	True  - The operation succeeded.
-///	False - The operation failed.
-///
-/// Notes:
-///	In case of failure, the file's access attributes are unspecified.
-///
-bool MakeFileExecutable (const std::string & Filename);
+bool MakeFileExecutable(const std::string &Filename);
 
+/// MakeFileReadable - This method turns on whatever access attributes are
+/// needed to make the specified file readable.  It returns true on success.
+/// In case of failure, the file's access attributes are unspecified.
 ///
-/// Method: MakeFileReadable()
-///
-/// Description:
-///	This method turns on whatever access attributes are needed to make the
-///	specified file readable.
-///
-/// Return value:
-///	True  - The operation succeeded.
-///	False - The operation failed.
-///
-/// Notes:
-///	In case of failure, the file's access attributes are unspecified.
-///
-bool MakeFileReadable (const std::string & Filename);
+bool MakeFileReadable(const std::string &Filename);
+
+/// getFileSize - Return the size of the specified file in bytes, or -1 if the
+/// file cannot be read or does not exist.
+long long getFileSize(const std::string &Filename);
+
 
 
 /// FDHandle - Simple handle class to make sure a file descriptor gets closed
