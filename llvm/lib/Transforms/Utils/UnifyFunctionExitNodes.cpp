@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
@@ -17,6 +18,11 @@ using std::vector;
 
 static RegisterOpt<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
+
+void UnifyFunctionExitNodes::getAnalysisUsage(AnalysisUsage &AU) const{
+  // We preserve the non-critical-edgeness property
+  AU.addPreservedID(BreakCriticalEdgesID);
+}
 
 // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
 // BasicBlock, and converting all returns to unconditional branches to this
@@ -47,18 +53,11 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   //
   BasicBlock *NewRetBlock = new BasicBlock("UnifiedExitNode", &F);
 
+  PHINode *PN = 0;
   if (F.getReturnType() != Type::VoidTy) {
     // If the function doesn't return void... add a PHI node to the block...
-    PHINode *PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
+    PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
-
-    // Add an incoming element to the PHI node for every return instruction that
-    // is merging into this new block...
-    for (vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
-                                       E = ReturningBlocks.end(); I != E; ++I)
-      PN->addIncoming((*I)->getTerminator()->getOperand(0), *I);
-
-    // Add a return instruction to return the result of the PHI node...
     NewRetBlock->getInstList().push_back(new ReturnInst(PN));
   } else {
     // If it returns void, just add a return void instruction to the block
@@ -70,9 +69,16 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   //
   for (vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
                                      E = ReturningBlocks.end(); I != E; ++I) {
-    (*I)->getInstList().pop_back();  // Remove the return insn
-    (*I)->getInstList().push_back(new BranchInst(NewRetBlock));
+    BasicBlock *BB = *I;
+
+    // Add an incoming element to the PHI node for every return instruction that
+    // is merging into this new block...
+    if (PN) PN->addIncoming(BB->getTerminator()->getOperand(0), BB);
+
+    BB->getInstList().pop_back();  // Remove the return insn
+    BB->getInstList().push_back(new BranchInst(NewRetBlock));
   }
   ExitNode = NewRetBlock;
+
   return true;
 }
