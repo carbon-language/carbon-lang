@@ -48,11 +48,7 @@ private:
   void* getGlobalAddress(GlobalValue *V, MachineInstr &MI,
                          bool isPCRelative);
   bool isFPInstr(MachineInstr &MI);
-  unsigned getRealRegNumByType(unsigned fakeReg, unsigned regType,
-                               MachineInstr &MI);
-  unsigned getRealRegNumByClass(unsigned fakeReg, unsigned regClass,
-                                MachineInstr &MI);
-
+  unsigned getRealRegNum(unsigned fakeReg, MachineInstr &MI);
 };
 
 #endif
