@@ -19,6 +19,7 @@
     </ul>
   <li><a href="#passtype">Pass classes and requirements</a>
      <ul>
+     <li><a href="#ImmutablePass">The <tt>ImmutablePass</tt> class</a>
      <li><a href="#Pass">The <tt>Pass</tt> class</a>
         <ul>
         <li><a href="#run">The <tt>run</tt> method</a>
@@ -364,6 +365,27 @@ listed.  This gives the LLVM Pass Infrastructure information neccesary to
 optimize how passes are run, so that the resultant compiler isn't unneccesarily
 slow.<p>
 
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp;</td><td width="100%">&nbsp; 
+<font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="ImmutablePass">The <tt>ImmutablePass</tt> class
+</b></font></td></tr></table><ul>
+
+The most plain and boring type of pass is the "<tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/structImmutablePass.html">ImmutablePass</a></tt>"
+class.  This pass type is used for passes that do not have to be run, do not
+change state, and never need to be updated.  This is not a normal type of
+transformation or analysis, but can provide information about the current
+compiler configuration.<p>
+
+Although this pass class is very infrequently used, it is important for
+providing information about the current target machine being compiled for, and
+other static information that can affect the various transformations.<p>
+
+<tt>ImmutablePass</tt>'s never invalidate other transformations, are never
+invalidated, and are never "run".<p>
 
 
 <!-- ======================================================================= -->
@@ -1201,6 +1223,6 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Mon Sep 16 17:37:27 CDT 2002
+Last modified: Wed Sep 25 17:20:10 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
