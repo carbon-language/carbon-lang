@@ -3,7 +3,7 @@ LEVEL = ../..
 
 LIBRARYNAME = analysis
 
-DIRS = LiveVar
+DIRS = LiveVar IPA
 
 include $(LEVEL)/Makefile.common
 
