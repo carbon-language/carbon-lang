@@ -28,6 +28,7 @@ Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode),
 
   // Initialize the "backend"
   initializeExecutionEngine();
+  initializeExternalMethods();
 }
 
 //===----------------------------------------------------------------------===//
