@@ -844,10 +844,17 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
+  if (I.getType()->isSigned())
+    if (Value *RHSNeg = dyn_castNegVal(I.getOperand(1)))
+      if (RHSNeg != I.getOperand(1)) {           // Avoid problems with MININT
+        // X % -Y -> X % Y
+        AddUsesToWorkList(I);
+        I.setOperand(1, RHSNeg);
+        return &I;
+      }
+
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(I.getOperand(1))) {
     if (RHS->equalsInt(1))  // X % 1 == 0
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-    if (RHS->isAllOnesValue())  // X % -1 == 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
     // Check to see if this is an unsigned remainder with an exact power of 2,
