@@ -1,4 +1,4 @@
-The moduloScheduling pass includes two passes
+The modulo scheduling pass impliment modulo scheduling for llvm instruction. It includes two passes
 
 
 1. building graph
