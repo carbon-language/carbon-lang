@@ -60,19 +60,32 @@ public:
 
   ~ModuloScheduling() {};
 
-  ///the method to compute schedule and instert epilogue and prologue
+  // for debug information selecton
+  enum DebugLevel_t {
+    DebugLevel_NoDebugInfo,
+    DebugLevel_PrintSchedule,
+    DebugLevel_PrintScheduleProcess,
+  };
+
+  static DebugLevel_t DebugLevel;
+
+  static bool printSchedule() { return DebugLevel >= DebugLevel_PrintSchedule; }
+  static bool printScheduleProcess() {
+    return DebugLevel >= DebugLevel_PrintScheduleProcess;
+  }
+
+  // The method to compute schedule and instert epilogue and prologue
   void instrScheduling();
 
-  ///debug functions:
-  ///dump the schedule and core schedule
-  void
-   dumpScheduling();
+  // Debug functions:
+  // Dump the schedule and core schedule
+  void dumpScheduling();
 
-  ///dump the input vector of nodes
-  //sch: the input vector of nodes
-  void dumpSchedule(std::vector<std::vector<ModuloSchedGraphNode*>> sch);
+  // Dump the input vector of nodes
+  // sch: the input vector of nodes
+  void dumpSchedule(std::vector<std::vector<ModuloSchedGraphNode*> > sch);
 
-  ///dump the resource usage table
+  // Dump the resource usage table
   void dumpResourceUsageTable();
 
   //*******************internal functions*******************************
@@ -94,13 +107,13 @@ private:
   // update the resource table at the startCycle
   // vec: the resouce usage
   // startCycle: the start cycle the resouce usage is
-  void updateResourceTable(std::vector<std::vector<unsigned int>> vec,
+  void updateResourceTable(std::vector<std::vector<unsigned> > vec,
                            int startCycle);
 
   // un-do the update in the resource table in the startCycle
   // vec: the resouce usage
   // startCycle: the start cycle the resouce usage is
-  void undoUpdateResourceTable(std::vector<vector<unsigned int>> vec,
+  void undoUpdateResourceTable(std::vector<std::vector<unsigned> > vec,
                                int startCycle);
 
   // return whether the resourcetable has negative element

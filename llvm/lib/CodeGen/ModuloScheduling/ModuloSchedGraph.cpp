@@ -12,35 +12,41 @@
 #include "llvm/Target/TargetSchedInfo.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
+#include "Support/hash_map"
+#include "Support/Statistic.h"
+#include "ModuloScheduling.h"
 #include "ModuloSchedGraph.h"
 #include <algorithm>
+#include <ostream>
+#include <vector>
+
+// FIXME: Should be using #include <cmath>
 #include <math.h>
 //#include <swig.h>
 
 #define UNIDELAY 1
 
-extern std::ostream modSched_os;
-extern ModuloSchedDebugLevel_t ModuloSchedDebugLevel;
+
 //*********************** Internal Data Structures *************************/
 
 // The following two types need to be classes, not typedefs, so we can use
 // opaque declarations in SchedGraph.h
 // 
-struct RefVec:public std::vector < std::pair < ModuloSchedGraphNode *, int >> {
+struct RefVec:public std::vector<std::pair<ModuloSchedGraphNode*,int> > {
   typedef std::vector<std::pair<ModuloSchedGraphNode*,
                                 int> >::iterator iterator;
   typedef std::vector<std::pair<ModuloSchedGraphNode*,
                                 int> >::const_iterator const_iterator;
 };
 
-struct RegToRefVecMap:public std::hash_map < int, RefVec > {
-  typedef std::hash_map<int,RefVec>::iterator iterator;
-  typedef std::hash_map<int,RefVec>::const_iterator const_iterator;
+struct RegToRefVecMap:public hash_map<int,RefVec> {
+  typedef hash_map<int,RefVec>::iterator iterator;
+  typedef hash_map<int,RefVec>::const_iterator const_iterator;
 };
 
-struct ValueToDefVecMap:public std::hash_map < const Instruction *, RefVec > {
-  typedef std::hash_map<const Instruction*, RefVec>::iterator iterator;
-  typedef std::hash_map<const Instruction*,
+struct ValueToDefVecMap:public hash_map<const Instruction*,RefVec> {
+  typedef hash_map<const Instruction*, RefVec>::iterator iterator;
+  typedef hash_map<const Instruction*,
                         RefVec>::const_iterator const_iterator;
 };
 
@@ -603,21 +609,21 @@ SchedGraphEdge *ModuloSchedGraph::getMaxDelayEdge(unsigned srcId,
 
 void ModuloSchedGraph::dumpCircuits()
 {
-  modSched_os << "dumping circuits for graph: " << "\n";
+  DEBUG(std::cerr << "dumping circuits for graph:\n");
   int j = -1;
   while (circuits[++j][0] != 0) {
     int k = -1;
     while (circuits[j][++k] != 0)
-      modSched_os << circuits[j][k] << "\t";
-    modSched_os << "\n";
+      DEBUG(std::cerr << circuits[j][k] << "\t");
+    DEBUG(std::cerr << "\n");
   }
 }
 
 void ModuloSchedGraph::dumpSet(std::vector < ModuloSchedGraphNode * >set)
 {
   for (unsigned i = 0; i < set.size(); i++)
-    modSched_os << set[i]->getNodeId() << "\t";
-  modSched_os << "\n";
+    DEBUG(std::cerr << set[i]->getNodeId() << "\t");
+  DEBUG(std::cerr << "\n");
 }
 
 std::vector<ModuloSchedGraphNode*>
@@ -674,7 +680,7 @@ void ModuloSchedGraph::orderNodes() {
   const BasicBlock *bb = bbVec[0];
   unsigned numNodes = bb->size();
 
-  //first order all the sets
+  // first order all the sets
   int j = -1;
   int totalDelay = -1;
   int preDelay = -1;
@@ -691,7 +697,7 @@ void ModuloSchedGraph::orderNodes() {
       totalDelay += edge->getMinDelay();
     }
     if (preDelay != -1 && totalDelay > preDelay) {
-      //swap circuits[j][] and cuicuits[j-1][]
+      // swap circuits[j][] and cuicuits[j-1][]
       unsigned temp[MAXNODE];
       for (int k = 0; k < MAXNODE; k++) {
         temp[k] = circuits[j - 1][k];
@@ -703,11 +709,11 @@ void ModuloSchedGraph::orderNodes() {
     }
   }
 
-  //build the first set
+  // build the first set
   int backEdgeSrc;
   int backEdgeSink;
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-    modSched_os << "building the first set" << "\n";
+  if (ModuloScheduling::printScheduleProcess())
+    DEBUG(std::cerr << "building the first set" << "\n");
   int setSeq = -1;
   int k = -1;
   setSeq++;
@@ -717,17 +723,17 @@ void ModuloSchedGraph::orderNodes() {
     backEdgeSrc = circuits[setSeq][k - 1];
     backEdgeSink = circuits[setSeq][0];
   }
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess) {
-    modSched_os << "the first set is:";
+  if (ModuloScheduling::printScheduleProcess()) {
+    DEBUG(std::cerr << "the first set is:");
     dumpSet(set);
   }
-  //implement the ordering algorithm
+  // implement the ordering algorithm
   enum OrderSeq { bottom_up, top_down };
   OrderSeq order;
   std::vector<ModuloSchedGraphNode*> R;
   while (!set.empty()) {
-    std::vector < ModuloSchedGraphNode * >pset = predSet(oNodes);
-    std::vector < ModuloSchedGraphNode * >sset = succSet(oNodes);
+    std::vector<ModuloSchedGraphNode*> pset = predSet(oNodes);
+    std::vector<ModuloSchedGraphNode*> sset = succSet(oNodes);
 
     if (!pset.empty() && !vectorConj(pset, set).empty()) {
       R = vectorConj(pset, set);
@@ -751,8 +757,8 @@ void ModuloSchedGraph::orderNodes() {
 
     while (!R.empty()) {
       if (order == top_down) {
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << "in top_down round" << "\n";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << "in top_down round\n");
         while (!R.empty()) {
           int maxHeight = -1;
           NodeVec::iterator chosenI;
@@ -795,8 +801,8 @@ void ModuloSchedGraph::orderNodes() {
         order = bottom_up;
         R = vectorConj(predSet(oNodes), set);
       } else {
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << "in bottom up round" << "\n";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << "in bottom up round\n");
         while (!R.empty()) {
           int maxDepth = -1;
           NodeVec::iterator chosenI;
@@ -822,17 +828,17 @@ void ModuloSchedGraph::orderNodes() {
         R = vectorConj(succSet(oNodes), set);
       }
     }
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess) {
-      modSched_os << "order finished" << "\n";
-      modSched_os << "dumping the ordered nodes: " << "\n";
+    if (ModuloScheduling::printScheduleProcess()) {
+      DEBUG(std::cerr << "order finished\n");
+      DEBUG(std::cerr << "dumping the ordered nodes:\n");
       dumpSet(oNodes);
       dumpCircuits();
     }
     //create a new set
     //FIXME: the nodes between onodes and this circuit should also be include in
     //this set
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-      modSched_os << "building the next set" << "\n";
+    if (ModuloScheduling::printScheduleProcess())
+      DEBUG(std::cerr << "building the next set\n");
     set.clear();
     int k = -1;
     setSeq++;
@@ -845,9 +851,8 @@ void ModuloSchedGraph::orderNodes() {
     if (set.empty()) {
       //no circuits any more
       //collect all other nodes
-      if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-        modSched_os << "no circuits any more, collect the rest nodes" <<
-            "\n";
+      if (ModuloScheduling::printScheduleProcess())
+        DEBUG(std::cerr << "no circuits any more, collect the rest nodes\n");
       for (unsigned i = 2; i < numNodes + 2; i++) {
         bool inset = false;
         for (unsigned j = 0; j < oNodes.size(); j++)
@@ -859,16 +864,13 @@ void ModuloSchedGraph::orderNodes() {
           set.push_back(getNode(i));
       }
     }
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess) {
-      modSched_os << "next set is: " << "\n";
+    if (ModuloScheduling::printScheduleProcess()) {
+      DEBUG(std::cerr << "next set is:\n");
       dumpSet(set);
     }
   }                             //while(!set.empty())
 
 }
-
-
-
 
 
 
@@ -888,7 +890,7 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
   // We use this to add memory dependence edges without a second full walk.
   // 
   // vector<const Instruction*> memVec;
-  std::vector < ModuloSchedGraphNode * >memNodeVec;
+  std::vector<ModuloSchedGraphNode*> memNodeVec;
 
   // Use this data structure to note any uses or definitions of
   // machine registers so we can add edges for those later without
@@ -899,8 +901,6 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
   // by the pair: <node, operand-number>.
   // 
   RegToRefVecMap regToRefVecMap;
-
-
 
   // Make a dummy root node.  We'll add edges to the real roots later.
   graphRoot = new ModuloSchedGraphNode(0, NULL, NULL, -1, target);
@@ -919,11 +919,11 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
   //dump only the blocks which are from loops
 
 
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
+  if (ModuloScheduling::printScheduleProcess())
     this->dump(bb);
 
   if (!isLoop(bb)) {
-    modSched_os << " dumping non-loop BB:\n";
+    DEBUG(std::cerr << " dumping non-loop BB:\n");
     dump(bb);
   }
   if (isLoop(bb)) {
@@ -937,21 +937,21 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
     //this->dump();
 
     int ResII = this->computeResII(bb);
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-      modSched_os << "ResII is " << ResII << "\n";;
+    if (ModuloScheduling::printScheduleProcess())
+      DEBUG(std::cerr << "ResII is " << ResII << "\n");
     int RecII = this->computeRecII(bb);
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-      modSched_os << "RecII is " << RecII << "\n";
+    if (ModuloScheduling::printScheduleProcess())
+      DEBUG(std::cerr << "RecII is " << RecII << "\n");
 
     this->MII = std::max(ResII, RecII);
 
     this->computeNodeProperty(bb);
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
+    if (ModuloScheduling::printScheduleProcess())
       this->dumpNodeProperty();
 
     this->orderNodes();
 
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
+    if (ModuloScheduling::printScheduleProcess())
       this->dump();
     //this->instrScheduling();
 
@@ -974,7 +974,6 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
 
   //os<<"begining computerRecII()"<<"\n";
 
-
   //FIXME: only deal with circuits starting at the first node: the phi node
   //nodeId=2;
 
@@ -983,7 +982,6 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
 
   unsigned path[MAXNODE];
   unsigned stack[MAXNODE][MAXNODE];
-
 
   for (int j = 0; j < MAXNODE; j++) {
     path[j] = 0;
@@ -1004,19 +1002,19 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
 
   while (currentNode != NULL) {
     unsigned currentNodeId = currentNode->getNodeId();
-    //      modSched_os<<"current node is "<<currentNodeId<<"\n";
+    // DEBUG(std::cerr<<"current node is "<<currentNodeId<<"\n");
 
     ModuloSchedGraphNode *nextNode = NULL;
     for (ModuloSchedGraphNode::const_iterator I =
          currentNode->beginOutEdges(), E = currentNode->endOutEdges();
          I != E; I++) {
-      //modSched_os <<" searching in outgoint edges of node
+      //DEBUG(std::cerr <<" searching in outgoint edges of node
       //"<<currentNodeId<<"\n";
       unsigned nodeId = ((SchedGraphEdge *) * I)->getSink()->getNodeId();
       bool inpath = false, instack = false;
       int k;
 
-      //modSched_os<<"nodeId is "<<nodeId<<"\n";
+      //DEBUG(std::cerr<<"nodeId is "<<nodeId<<"\n");
 
       k = -1;
       while (path[++k] != 0)
@@ -1040,7 +1038,7 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
     }
 
     if (nextNode != NULL) {
-      //modSched_os<<"find the next Node "<<nextNode->getNodeId()<<"\n";
+      //DEBUG(std::cerr<<"find the next Node "<<nextNode->getNodeId()<<"\n");
 
       int j = 0;
       while (stack[i][j] != 0)
@@ -1051,7 +1049,7 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
       path[i] = nextNode->getNodeId();
       currentNode = nextNode;
     } else {
-      //modSched_os<<"no expansion any more"<<"\n";
+      //DEBUG(std::cerr<<"no expansion any more"<<"\n");
       //confirmCircuit();
       for (ModuloSchedGraphNode::const_iterator I =
            currentNode->beginOutEdges(), E = currentNode->endOutEdges();
@@ -1077,16 +1075,16 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
     }
     if (i == 0) {
 
-      if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-        modSched_os << "circuits found are: " << "\n";
+      if (ModuloScheduling::printScheduleProcess())
+        DEBUG(std::cerr << "circuits found are:\n");
       int j = -1;
       while (circuits[++j][0] != 0) {
         int k = -1;
         while (circuits[j][++k] != 0)
-          if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-            modSched_os << circuits[j][k] << "\t";
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << "\n";
+          if (ModuloScheduling::printScheduleProcess())
+            DEBUG(std::cerr << circuits[j][k] << "\t");
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << "\n");
 
         //for this circuit, compute the sum of all edge delay
         int sumDelay = 0;
@@ -1115,9 +1113,9 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
         //       assume we have distance 1, in this case the sumDelay is RecII
         //       this is correct for SSA form only
         //      
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << "The total Delay in the circuit is " << sumDelay
-              << "\n";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << "The total Delay in the circuit is " << sumDelay
+                << "\n");
 
         RecII = RecII > sumDelay ? RecII : sumDelay;
 
@@ -1133,7 +1131,7 @@ int ModuloSchedGraph::computeRecII(const BasicBlock *bb)
 void ModuloSchedGraph::addResourceUsage(std::vector<std::pair<int,int> > &ruVec,
                                         int rid)
 {
-  //modSched_os<<"\nadding a resouce , current resouceUsage vector size is
+  //DEBUG(std::cerr<<"\nadding a resouce , current resouceUsage vector size is
   //"<<ruVec.size()<<"\n";
   bool alreadyExists = false;
   for (unsigned i = 0; i < ruVec.size(); i++) {
@@ -1145,26 +1143,26 @@ void ModuloSchedGraph::addResourceUsage(std::vector<std::pair<int,int> > &ruVec,
   }
   if (!alreadyExists)
     ruVec.push_back(std::make_pair(rid, 1));
-  //modSched_os<<"current resouceUsage vector size is "<<ruVec.size()<<"\n";
+  //DEBUG(std::cerr<<"current resouceUsage vector size is "<<ruVec.size()<<"\n";
 
 }
 void ModuloSchedGraph::dumpResourceUsage(std::vector<std::pair<int,int> > &ru)
 {
   TargetSchedInfo & msi = (TargetSchedInfo &) target.getSchedInfo();
 
-  std::vector<std::pair<int,int>> resourceNumVector = msi.resourceNumVector;
-  modSched_os << "resourceID\t" << "resourceNum" << "\n";
+  std::vector<std::pair<int,int> > resourceNumVector = msi.resourceNumVector;
+  DEBUG(std::cerr << "resourceID\t" << "resourceNum\n");
   for (unsigned i = 0; i < resourceNumVector.size(); i++)
-    modSched_os << resourceNumVector[i].
-        first << "\t" << resourceNumVector[i].second << "\n";
+    DEBUG(std::cerr << resourceNumVector[i].
+        first << "\t" << resourceNumVector[i].second << "\n");
 
-  modSched_os << " maxNumIssueTotal(issue slot in one cycle) = " << msi.
-      maxNumIssueTotal << "\n";
-  modSched_os << "resourceID\t resourceUsage\t ResourceNum" << "\n";
+  DEBUG(std::cerr << " maxNumIssueTotal(issue slot in one cycle) = " << msi.
+        maxNumIssueTotal << "\n");
+  DEBUG(std::cerr << "resourceID\t resourceUsage\t ResourceNum\n");
   for (unsigned i = 0; i < ru.size(); i++) {
-    modSched_os << ru[i].first << "\t" << ru[i].second;
+    DEBUG(std::cerr << ru[i].first << "\t" << ru[i].second);
     const unsigned resNum = msi.getCPUResourceNum(ru[i].first);
-    modSched_os << "\t" << resNum << "\n";
+    DEBUG(std::cerr << "\t" << resNum << "\n");
   }
 }
 
@@ -1175,7 +1173,7 @@ int ModuloSchedGraph::computeResII(const BasicBlock * bb)
   const TargetSchedInfo & msi = target.getSchedInfo();
 
   int ResII;
-  std::vector<std::pair<int,int>> resourceUsage;
+  std::vector<std::pair<int,int> > resourceUsage;
   //pair<int resourceid, int resourceUsageTimes_in_the_whole_block>
 
   //FIXME: number of functional units the target machine can provide should be
@@ -1183,15 +1181,15 @@ int ModuloSchedGraph::computeResII(const BasicBlock * bb)
 
   for (BasicBlock::const_iterator I = bb->begin(), E = bb->end(); I != E;
        I++) {
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess) {
-      modSched_os << "machine instruction for llvm instruction( node " <<
-          getGraphNodeForInst(I)->getNodeId() << ")" << "\n";
-      modSched_os << "\t" << *I;
+    if (ModuloScheduling::printScheduleProcess()) {
+      DEBUG(std::cerr << "machine instruction for llvm instruction( node " <<
+            getGraphNodeForInst(I)->getNodeId() << ")\n");
+      DEBUG(std::cerr << "\t" << *I);
     }
     MachineCodeForInstruction & tempMvec =
         MachineCodeForInstruction::get(I);
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-      modSched_os << "size =" << tempMvec.size() << "\n";
+    if (ModuloScheduling::printScheduleProcess())
+      DEBUG(std::cerr << "size =" << tempMvec.size() << "\n");
     for (unsigned i = 0; i < tempMvec.size(); i++) {
       MachineInstr *minstr = tempMvec[i];
 
@@ -1201,27 +1199,27 @@ int ModuloSchedGraph::computeResII(const BasicBlock * bb)
           msi.getClassRUsage(mii.getSchedClass(minstr->getOpCode()));
       unsigned totCycles = classRUsage.totCycles;
 
-      std::vector<std::vector<resourceId_t>> resources =rUsage.resourcesByCycle;
+      std::vector<std::vector<resourceId_t> > resources=rUsage.resourcesByCycle;
       assert(totCycles == resources.size());
-      if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-        modSched_os << "resources Usage for this Instr(totCycles=" <<
-            totCycles << ",mindLatency=" << mii.minLatency(minstr->
-                                                           getOpCode()) <<
-            "): " << *minstr << "\n";
+      if (ModuloScheduling::printScheduleProcess())
+        DEBUG(std::cerr << "resources Usage for this Instr(totCycles="
+              << totCycles << ",mindLatency="
+              << mii.minLatency(minstr->getOpCode()) << "): " << *minstr
+              << "\n");
       for (unsigned j = 0; j < resources.size(); j++) {
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << "cycle " << j << ": ";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << "cycle " << j << ": ");
         for (unsigned k = 0; k < resources[j].size(); k++) {
-          if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-            modSched_os << "\t" << resources[j][k];
+          if (ModuloScheduling::printScheduleProcess())
+            DEBUG(std::cerr << "\t" << resources[j][k]);
           addResourceUsage(resourceUsage, resources[j][k]);
         }
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << "\n";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << "\n");
       }
     }
   }
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
+  if (ModuloScheduling::printScheduleProcess())
     this->dumpResourceUsage(resourceUsage);
 
   //compute ResII
@@ -1240,8 +1238,8 @@ int ModuloSchedGraph::computeResII(const BasicBlock * bb)
   return ResII;
 }
 
-ModuloSchedGraphSet::ModuloSchedGraphSet(const Function * function,
-                                         const TargetMachine & target)
+ModuloSchedGraphSet::ModuloSchedGraphSet(const Function *function,
+                                         const TargetMachine &target)
 :  method(function)
 {
   buildGraphsForMethod(method, target);
@@ -1257,20 +1255,20 @@ ModuloSchedGraphSet::~ModuloSchedGraphSet()
 
 void ModuloSchedGraphSet::dump() const
 {
-  modSched_os << " ====== ModuloSched graphs for function `" << 
-    method->getName() << "' =========\n\n";
+  DEBUG(std::cerr << " ====== ModuloSched graphs for function `" << 
+        method->getName() << "' =========\n\n");
   for (const_iterator I = begin(); I != end(); ++I)
     (*I)->dump();
 
-  modSched_os << "\n=========End graphs for funtion` " << method->getName()
-      << "' ==========\n\n";
+  DEBUG(std::cerr << "\n=========End graphs for function `" << method->getName()
+        << "' ==========\n\n");
 }
 
 void ModuloSchedGraph::dump(const BasicBlock * bb)
 {
-  modSched_os << "dumping basic block:";
-  modSched_os << (bb->hasName()? bb->getName() : "block")
-      << " (" << bb << ")" << "\n";
+  DEBUG(std::cerr << "dumping basic block:");
+  DEBUG(std::cerr << (bb->hasName()? bb->getName() : "block")
+        << " (" << bb << ")" << "\n");
 
 }
 
@@ -1283,27 +1281,27 @@ void ModuloSchedGraph::dump(const BasicBlock * bb, std::ostream & os)
 
 void ModuloSchedGraph::dump() const
 {
-  modSched_os << " ModuloSchedGraph for basic Blocks:";
+  DEBUG(std::cerr << " ModuloSchedGraph for basic Blocks:");
   for (unsigned i = 0, N = bbVec.size(); i < N; i++) {
-    modSched_os << (bbVec[i]->hasName()? bbVec[i]->getName() : "block")
-        << " (" << bbVec[i] << ")" << ((i == N - 1) ? "" : ", ");
+    DEBUG(std::cerr << (bbVec[i]->hasName()? bbVec[i]->getName() : "block")
+          << " (" << bbVec[i] << ")" << ((i == N - 1) ? "" : ", "));
   }
 
-  modSched_os << "\n\n    Actual Root nodes : ";
+  DEBUG(std::cerr << "\n\n    Actual Root nodes : ");
   for (unsigned i = 0, N = graphRoot->outEdges.size(); i < N; i++)
-    modSched_os << graphRoot->outEdges[i]->getSink()->getNodeId()
-        << ((i == N - 1) ? "" : ", ");
+    DEBUG(std::cerr << graphRoot->outEdges[i]->getSink()->getNodeId()
+          << ((i == N - 1) ? "" : ", "));
 
-  modSched_os << "\n    Graph Nodes:\n";
+  DEBUG(std::cerr << "\n    Graph Nodes:\n");
   //for (const_iterator I=begin(); I != end(); ++I)
-  //modSched_os << "\n" << *I->second;
+  //DEBUG(std::cerr << "\n" << *I->second;
   unsigned numNodes = bbVec[0]->size();
   for (unsigned i = 2; i < numNodes + 2; i++) {
     ModuloSchedGraphNode *node = getNode(i);
-    modSched_os << "\n" << *node;
+    DEBUG(std::cerr << "\n" << *node);
   }
 
-  modSched_os << "\n";
+  DEBUG(std::cerr << "\n");
 }
 
 void ModuloSchedGraph::dumpNodeProperty() const
@@ -1312,13 +1310,12 @@ void ModuloSchedGraph::dumpNodeProperty() const
   unsigned numNodes = bb->size();
   for (unsigned i = 2; i < numNodes + 2; i++) {
     ModuloSchedGraphNode *node = getNode(i);
-    modSched_os << "NodeId " << node->getNodeId() << "\t";
-    modSched_os << "ASAP " << node->getASAP() << "\t";
-    modSched_os << "ALAP " << node->getALAP() << "\t";
-    modSched_os << "mov " << node->getMov() << "\t";
-    modSched_os << "depth " << node->getDepth() << "\t";
-    modSched_os << "height " << node->getHeight() << "\t";
-    modSched_os << "\n";
+    DEBUG(std::cerr << "NodeId " << node->getNodeId() << "\t");
+    DEBUG(std::cerr << "ASAP " << node->getASAP() << "\t");
+    DEBUG(std::cerr << "ALAP " << node->getALAP() << "\t");
+    DEBUG(std::cerr << "mov " << node->getMov() << "\t");
+    DEBUG(std::cerr << "depth " << node->getDepth() << "\t");
+    DEBUG(std::cerr << "height " << node->getHeight() << "\t\n");
   }
 }
 

@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/CommandLine.h"
+#include "Support/Statistic.h"
 #include "ModuloSchedGraph.h"
 #include "ModuloScheduling.h"
 #include <algorithm>
@@ -34,29 +35,26 @@
 // see ModuloSchedulingPass::runOnFunction()
 //************************************************************
 
-ModuloSchedDebugLevel_t ModuloSchedDebugLevel;
-static cl::opt<ModuloSchedDebugLevel_t,true>
-SDL_opt("modsched", cl::Hidden, cl::location(ModuloSchedDebugLevel),
-        cl::desc("enable modulo scheduling debugging information"),
-        cl::values(clEnumValN
-                   (ModuloSched_NoDebugInfo, "n", "disable debug output"),
-                   clEnumValN(ModuloSched_Disable, "off",
-                              "disable modulo scheduling"),
-                   clEnumValN(ModuloSched_PrintSchedule, "psched",
-                              "print original and new schedule"),
-                   clEnumValN(ModuloSched_PrintScheduleProcess, "pschedproc",
-                              "print how the new schdule is produced"), 0));
-
-std::filebuf modSched_fb;
-std::ostream modSched_os(&modSched_fb);
+namespace {
+  cl::opt<ModuloScheduling::DebugLevel_t,true>
+    SDL_opt("modsched", cl::Hidden, cl::location(ModuloScheduling::DebugLevel),
+            cl::desc("enable modulo scheduling debugging information"),
+            cl::values(clEnumValN(ModuloScheduling::DebugLevel_NoDebugInfo,
+                                  "none", "disable debug output"),
+                       clEnumValN(ModuloScheduling::DebugLevel_PrintSchedule,
+                                  "psched", "print original and new schedule"),
+                       clEnumValN(ModuloScheduling::DebugLevel_PrintScheduleProcess,
+                                  "pschedproc",
+                                  "print how the new schdule is produced"),
+                       0));
+}
 
 // Computes the schedule and inserts epilogue and prologue
 //
 void ModuloScheduling::instrScheduling()
 {
-
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-    modSched_os << "*************** computing modulo schedule **************\n";
+  if (ModuloScheduling::printScheduleProcess())
+    DEBUG(std::cerr << "************ computing modulo schedule ***********\n");
 
   const TargetSchedInfo & msi = target.getSchedInfo();
 
@@ -74,13 +72,13 @@ void ModuloScheduling::instrScheduling()
 
     if (!success) {
       II++;
-      if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-        modSched_os << "increase II  to " << II << "\n";
+      if (ModuloScheduling::printScheduleProcess())
+        DEBUG(std::cerr << "increase II  to " << II << "\n");
     }
   }
 
   //print the final schedule if necessary
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintSchedule)
+  if (ModuloScheduling::printSchedule())
     dumpScheduling();
 
   //the schedule has been computed
@@ -90,8 +88,8 @@ void ModuloScheduling::instrScheduling()
   BasicBlock *succ_bb = getSuccBB(bb);
 
   //print the original BasicBlock if necessary
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintSchedule) {
-    modSched_os << "dumping the orginal block\n";
+  if (ModuloScheduling::printSchedule()) {
+    DEBUG(std::cerr << "dumping the orginal block\n");
     graph.dump(bb);
   }
   //construction of prologue, kernel and epilogue
@@ -109,12 +107,12 @@ void ModuloScheduling::instrScheduling()
   constructEpilogue(epilogue, succ_bb);
 
   //print the BasicBlocks if necessary
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintSchedule) {
-    modSched_os << "dumping the prologue block:\n";
+  if (ModuloScheduling::printSchedule()) {
+    DEBUG(std::cerr << "dumping the prologue block:\n");
     graph.dump(prologue);
-    modSched_os << "dumping the kernel block\n";
+    DEBUG(std::cerr << "dumping the kernel block\n");
     graph.dump(kernel);
-    modSched_os << "dumping the epilogue block\n";
+    DEBUG(std::cerr << "dumping the epilogue block\n");
     graph.dump(epilogue);
   }
 }
@@ -125,11 +123,10 @@ void ModuloScheduling::clearInitMem(const TargetSchedInfo & msi)
 {
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   // clear nodeScheduled from the last round
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess) {
-    modSched_os << "***** new round  with II= " << II <<
-        " *******************\n";
-    modSched_os <<
-        " ************clear the vector nodeScheduled*************\n";
+  if (ModuloScheduling::printScheduleProcess()) {
+    DEBUG(std::cerr << "***** new round  with II= " << II << " ***********\n");
+    DEBUG(std::cerr <<
+        " ************clear the vector nodeScheduled*************\n");
   }
   nodeScheduled.clear();
 
@@ -158,13 +155,13 @@ void ModuloScheduling::clearInitMem(const TargetSchedInfo & msi)
 bool ModuloScheduling::computeSchedule()
 {
 
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-    modSched_os << "start to compute schedule\n";
+  if (ModuloScheduling::printScheduleProcess())
+    DEBUG(std::cerr << "start to compute schedule\n");
 
   // Loop over the ordered nodes
   for (NodeVec::const_iterator I = oNodes.begin(); I != oNodes.end(); ++I) {
     // Try to schedule for node I
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
+    if (ModuloScheduling::printScheduleProcess())
       dumpScheduling();
     ModuloSchedGraphNode *node = *I;
 
@@ -255,8 +252,8 @@ bool ModuloScheduling::computeSchedule()
       endTime = node->getEarlyStart() + II - 1;
     }
     //try to schedule this node based on the startTime and endTime
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-      modSched_os << "scheduling the node " << (*I)->getNodeId() << "\n";
+    if (ModuloScheduling::printScheduleProcess())
+      DEBUG(std::cerr << "scheduling the node " << (*I)->getNodeId() << "\n");
 
     bool success =
         this->ScheduleNode(node, startTime, endTime, nodeScheduled);
@@ -337,10 +334,9 @@ BasicBlock *ModuloScheduling::getPredBB(BasicBlock *bb)
 //
 void ModuloScheduling::constructPrologue(BasicBlock *prologue)
 {
-
   InstListType & prologue_ist = prologue->getInstList();
   vvNodeType & tempSchedule_prologue =
-      *(new vector < std::vector < ModuloSchedGraphNode * >>(schedule));
+      *(new std::vector<std::vector<ModuloSchedGraphNode*> >(schedule));
 
   //compute the schedule for prologue
   unsigned round = 0;
@@ -395,7 +391,6 @@ void ModuloScheduling::constructKernel(BasicBlock *prologue,
                                        BasicBlock *kernel,
                                        BasicBlock *epilogue)
 {
-
   //*************fill instructions in the kernel****************
   InstListType & kernel_ist = kernel->getInstList();
   BranchInst *brchInst;
@@ -472,8 +467,8 @@ void ModuloScheduling::constructEpilogue(BasicBlock *epilogue,
 {
 
   //compute the schedule for epilogue
-  vvNodeType & tempSchedule_epilogue =
-      *(new vector < std::vector < ModuloSchedGraphNode * >>(schedule));
+  vvNodeType &tempSchedule_epilogue =
+      *(new std::vector<std::vector<ModuloSchedGraphNode*> >(schedule));
   unsigned scheduleSize = schedule.size();
   int round = 0;
   while (round < ceil(1.0 * scheduleSize / II) - 1) {
@@ -626,17 +621,17 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned int numIssueSlots = msi.maxNumIssueTotal;
 
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-    modSched_os << "startTime= " << start << " endTime= " << end << "\n";
+  if (ModuloScheduling::printScheduleProcess())
+    DEBUG(std::cerr << "startTime= " << start << " endTime= " << end << "\n");
   bool isScheduled = false;
   for (unsigned i = start; i <= end; i++) {
-    if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-      modSched_os << " now try cycle " << i << ":" << "\n";
+    if (ModuloScheduling::printScheduleProcess())
+      DEBUG(std::cerr << " now try cycle " << i << ":" << "\n");
     for (unsigned j = 0; j < numIssueSlots; j++) {
       unsigned int core_i = i % II;
       unsigned int core_j = j;
-      if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-        modSched_os << "\t Trying slot " << j << "...........";
+      if (ModuloScheduling::printScheduleProcess())
+        DEBUG(std::cerr << "\t Trying slot " << j << "...........");
       //check the resouce table, make sure there is no resource conflicts
       const Instruction *instr = node->getInst();
       MachineCodeForInstruction & tempMvec =
@@ -675,10 +670,9 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
         }
       }
       if (!resourceConflict && !coreSchedule[core_i][core_j]) {
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess) {
-          modSched_os << " OK!" << "\n";
-          modSched_os << "Node " << node->
-              getNodeId() << " is scheduleed." << "\n";
+        if (ModuloScheduling::printScheduleProcess()) {
+          DEBUG(std::cerr << " OK!" << "\n");
+          DEBUG(std::cerr << "Node " << node->getNodeId() << " scheduled.\n");
         }
         //schedule[i][j]=node;
         while (schedule.size() <= i) {
@@ -688,7 +682,7 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
             newCycle->push_back(NULL);
           schedule.push_back(*newCycle);
         }
-        vector < ModuloSchedGraphNode * >::iterator startIterator;
+        std::vector<ModuloSchedGraphNode*>::iterator startIterator;
         startIterator = schedule[i].begin();
         schedule[i].insert(startIterator + j, node);
         startIterator = schedule[i].begin();
@@ -697,8 +691,8 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
         //update coreSchedule
         //coreSchedule[core_i][core_j]=node;
         while (coreSchedule.size() <= core_i) {
-          std::vector < ModuloSchedGraphNode * >*newCycle =
-              new std::vector < ModuloSchedGraphNode * >();
+          std::vector<ModuloSchedGraphNode*> *newCycle =
+              new std::vector<ModuloSchedGraphNode*>();
           for (unsigned k = 0; k < numIssueSlots; k++)
             newCycle->push_back(NULL);
           coreSchedule.push_back(*newCycle);
@@ -715,11 +709,11 @@ bool ModuloScheduling::ScheduleNode(ModuloSchedGraphNode * node,
 
         break;
       } else if (coreSchedule[core_i][core_j]) {
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << " Slot not available " << "\n";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << " Slot not available\n");
       } else {
-        if (ModuloSchedDebugLevel >= ModuloSched_PrintScheduleProcess)
-          modSched_os << " Resource conflicts" << "\n";
+        if (ModuloScheduling::printScheduleProcess())
+          DEBUG(std::cerr << " Resource conflicts\n");
       }
     }
     if (isScheduled)
@@ -804,12 +798,12 @@ bool ModuloScheduling::resourceTableNegative()
 
 void ModuloScheduling::dumpResourceUsageTable()
 {
-  modSched_os << "dumping resource usage table" << "\n";
+  DEBUG(std::cerr << "dumping resource usage table\n");
   for (unsigned i = 0; i < resourceTable.size(); i++) {
     for (unsigned j = 0; j < resourceTable[i].size(); j++)
-      modSched_os << resourceTable[i][j].
-          first << ":" << resourceTable[i][j].second << " ";
-    modSched_os << "\n";
+      DEBUG(std::cerr << resourceTable[i][j].first 
+            << ":" << resourceTable[i][j].second << " ");
+    DEBUG(std::cerr << "\n");
   }
 
 }
@@ -825,18 +819,17 @@ void ModuloScheduling::dumpSchedule(vvNodeType thisSchedule)
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   for (unsigned i = 0; i < numIssueSlots; i++)
-    modSched_os << "\t#";
-  modSched_os << "\n";
+    DEBUG(std::cerr << "\t#");
+  DEBUG(std::cerr << "\n");
   for (unsigned i = 0; i < thisSchedule.size(); i++) {
-    modSched_os << "cycle" << i << ": ";
+    DEBUG(std::cerr << "cycle" << i << ": ");
     for (unsigned j = 0; j < thisSchedule[i].size(); j++)
       if (thisSchedule[i][j] != NULL)
-        modSched_os << thisSchedule[i][j]->getNodeId() << "\t";
+        DEBUG(std::cerr << thisSchedule[i][j]->getNodeId() << "\t");
       else
-        modSched_os << "\t";
-    modSched_os << "\n";
+        DEBUG(std::cerr << "\t");
+    DEBUG(std::cerr << "\n");
   }
-
 }
 
 
@@ -849,34 +842,34 @@ void ModuloScheduling::dumpSchedule(vvNodeType thisSchedule)
 
 void ModuloScheduling::dumpScheduling()
 {
-  modSched_os << "dump schedule:" << "\n";
+  DEBUG(std::cerr << "dump schedule:" << "\n");
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
   for (unsigned i = 0; i < numIssueSlots; i++)
-    modSched_os << "\t#";
-  modSched_os << "\n";
+    DEBUG(std::cerr << "\t#");
+  DEBUG(std::cerr << "\n");
   for (unsigned i = 0; i < schedule.size(); i++) {
-    modSched_os << "cycle" << i << ": ";
+    DEBUG(std::cerr << "cycle" << i << ": ");
     for (unsigned j = 0; j < schedule[i].size(); j++)
       if (schedule[i][j] != NULL)
-        modSched_os << schedule[i][j]->getNodeId() << "\t";
+        DEBUG(std::cerr << schedule[i][j]->getNodeId() << "\t");
       else
-        modSched_os << "\t";
-    modSched_os << "\n";
+        DEBUG(std::cerr << "\t");
+    DEBUG(std::cerr << "\n");
   }
 
-  modSched_os << "dump coreSchedule:" << "\n";
+  DEBUG(std::cerr << "dump coreSchedule:" << "\n");
   for (unsigned i = 0; i < numIssueSlots; i++)
-    modSched_os << "\t#";
-  modSched_os << "\n";
+    DEBUG(std::cerr << "\t#");
+  DEBUG(std::cerr << "\n");
   for (unsigned i = 0; i < coreSchedule.size(); i++) {
-    modSched_os << "cycle" << i << ": ";
+    DEBUG(std::cerr << "cycle" << i << ": ");
     for (unsigned j = 0; j < coreSchedule[i].size(); j++)
       if (coreSchedule[i][j] != NULL)
-        modSched_os << coreSchedule[i][j]->getNodeId() << "\t";
+        DEBUG(std::cerr << coreSchedule[i][j]->getNodeId() << "\t");
       else
-        modSched_os << "\t";
-    modSched_os << "\n";
+        DEBUG(std::cerr << "\t");
+    DEBUG(std::cerr << "\n");
   }
 }
 
@@ -893,12 +886,15 @@ void ModuloScheduling::dumpScheduling()
 
 namespace {
   class ModuloSchedulingPass:public FunctionPass {
-    const TargetMachine & target;
+    const TargetMachine &target;
+
   public:
-    ModuloSchedulingPass(const TargetMachine &T):target(T) {
-    } const char *getPassName() const {
+    ModuloSchedulingPass(const TargetMachine &T):target(T) {}
+
+    const char *getPassName() const {
       return "Modulo Scheduling";
     }
+
     // getAnalysisUsage - We use LiveVarInfo...
         virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       //AU.addRequired(FunctionLiveVarInfo::ID);
@@ -909,23 +905,8 @@ namespace {
 
 bool ModuloSchedulingPass::runOnFunction(Function &F)
 {
-
-  //if necessary , open the output for debug purpose
-  if (ModuloSchedDebugLevel == ModuloSched_Disable)
-    return false;
-
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintSchedule) {
-    modSched_fb.open("moduloSchedDebugInfo.output", std::ios::out);
-    modSched_os <<
-        "******************Modula Scheduling debug information****************"
-        << "\n ";
-  }
-
   ModuloSchedGraphSet *graphSet = new ModuloSchedGraphSet(&F, target);
   ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
-
-  if (ModuloSchedDebugLevel >= ModuloSched_PrintSchedule)
-    modSched_fb.close();
 
   return false;
 }

@@ -13,16 +13,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "Support/HashExtras.h"
 #include "Support/GraphTraits.h"
+#include "Support/hash_map"
 #include "../InstrSched/SchedGraphCommon.h"
 #include <iostream>
-
-//for debug information selecton
-enum ModuloSchedDebugLevel_t {
-  ModuloSched_NoDebugInfo,
-  ModuloSched_Disable,
-  ModuloSched_PrintSchedule,
-  ModuloSched_PrintScheduleProcess,
-};
 
 //===----------------------------------------------------------------------===//
 // ModuloSchedGraphNode - Implement a data structure based on the
@@ -160,20 +153,20 @@ private:
   typedef std::vector<ModuloSchedGraphNode*> NodeVec;
 
   //the function to compute properties
-  void computeNodeASAP(const BasicBlock * bb);
-  void computeNodeALAP(const BasicBlock * bb);
-  void computeNodeMov(const BasicBlock * bb);
-  void computeNodeDepth(const BasicBlock * bb);
-  void computeNodeHeight(const BasicBlock * bb);
+  void computeNodeASAP(const BasicBlock *bb);
+  void computeNodeALAP(const BasicBlock *bb);
+  void computeNodeMov(const BasicBlock *bb);
+  void computeNodeDepth(const BasicBlock *bb);
+  void computeNodeHeight(const BasicBlock *bb);
 
   //the function to compute node property
-  void computeNodeProperty(const BasicBlock * bb);
+  void computeNodeProperty(const BasicBlock *bb);
 
   //the function to sort nodes
   void orderNodes();
 
   //add the resource usage 
-void addResourceUsage(std::vector<pair<int,int>>&, int);
+void addResourceUsage(std::vector<std::pair<int,int> > &, int);
 
   //debug functions:
   //dump circuits
@@ -181,7 +174,7 @@ void addResourceUsage(std::vector<pair<int,int>>&, int);
   //dump the input set of nodes
   void dumpSet(std::vector<ModuloSchedGraphNode*> set);
   //dump the input resource usage table  
-  void dumpResourceUsage(std::vector<pair<int,int>> &);
+  void dumpResourceUsage(std::vector<std::pair<int,int> > &);
 
 public:
   //help functions
@@ -195,16 +188,16 @@ public:
   NodeVec predSet(NodeVec set);
 
   //get the predessor set of the node
-  NodeVec predSet(ModuloSchedGraphNode * node, unsigned, unsigned);
-  NodeVec predSet(ModuloSchedGraphNode * node);
+  NodeVec predSet(ModuloSchedGraphNode *node, unsigned, unsigned);
+  NodeVec predSet(ModuloSchedGraphNode *node);
 
   //get the successor set of the set
   NodeVec succSet(NodeVec set, unsigned, unsigned);
   NodeVec succSet(NodeVec set);
 
   //get the succssor set of the node
-  NodeVec succSet(ModuloSchedGraphNode * node, unsigned, unsigned);
-  NodeVec succSet(ModuloSchedGraphNode * node);
+  NodeVec succSet(ModuloSchedGraphNode *node, unsigned, unsigned);
+  NodeVec succSet(ModuloSchedGraphNode *node);
 
   //return the uniton of the two vectors
   NodeVec vectorUnion(NodeVec set1, NodeVec set2);
@@ -248,17 +241,22 @@ public:
   //return this basibBlock contains a loop
   bool isLoop();
 
-
   //return the node for the input instruction
   ModuloSchedGraphNode *getGraphNodeForInst(const Instruction * inst) const {
     const_iterator onePair = this->find(inst);
     return (onePair != this->end()) ? (*onePair).second : NULL;
   }
-  //Debugging support//dump the graph void dump() const;
-  //dump the basicBlock
+
+  // Debugging support
+  //dump the graph
+  void dump() const;
+
+  // dump the basicBlock
   void dump(const BasicBlock * bb);
+
   //dump the basicBlock into 'os' stream
   void dump(const BasicBlock * bb, std::ostream & os);
+
   //dump the node property
   void dumpNodeProperty() const;
   
@@ -267,7 +265,8 @@ private:
 
 public:
   ModuloSchedGraph(const BasicBlock *bb, const TargetMachine &_target)
-    :SchedGraphCommon(bb), target(_target) {
+    :SchedGraphCommon(bb), target(_target)
+  {
     buildGraph(target);
   }
 
@@ -276,8 +275,8 @@ public:
       delete I->second;
   }
 
-  //unorder iterators
-  //return values are pair<const Instruction*, ModuloSchedGraphNode*>
+  // Unorder iterators
+  // return values are pair<const Instruction*, ModuloSchedGraphNode*>
   using map_base::begin;
   using map_base::end;
 
@@ -348,8 +347,8 @@ public:
   using baseVector::begin;
   using baseVector::end;
 
-// Debugging support
-void dump() const;
+  // Debugging support
+  void dump() const;
 
 private:
   void addGraph(ModuloSchedGraph *graph) {
@@ -360,6 +359,6 @@ private:
   // Graph builder
   void buildGraphsForMethod(const Function *F,
                             const TargetMachine &target);
-}
+};
 
 #endif
