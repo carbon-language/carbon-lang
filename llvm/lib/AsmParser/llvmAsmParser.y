@@ -523,7 +523,7 @@ static void setValueName(Value *V, char *NameStr) {
                      V->getType()->getDescription() + "' type plane!");
     
     // Set the name.
-    V->setName(Name, &ST);
+    V->setName(Name);
   }
 }
 
