@@ -1,0 +1,10 @@
+; RUN: llvm-as < %s 2>&1 | not grep Asserti
+
+void %test() {
+	%tmp.1 = add int 0, 1
+	br label %return
+return:
+	%tmp.1 = add int 0, 1
+	ret void
+}
+
