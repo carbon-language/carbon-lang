@@ -90,7 +90,7 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
 
   char *val;
 
-  if( DEBUG_RA >= RA_DEBUG_Interference > 1) 
+  if( DEBUG_RA >= RA_DEBUG_Interference) 
     cerr << "setting intf for: [" << row << "][" <<  col << "]\n"; 
 
   ( row > col) ?  val = &IG[row][col]: val = &IG[col][row]; 
@@ -145,7 +145,7 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
   assertIGNode( DestNode );
   assertIGNode( SrcNode );
 
-  if( DEBUG_RA >= RA_DEBUG_Interference > 1) {
+  if( DEBUG_RA >= RA_DEBUG_Interference) {
     cerr << "Merging LRs: \""; printSet(*LR1); 
     cerr << "\" and \""; printSet(*LR2);
     cerr << "\"\n";
