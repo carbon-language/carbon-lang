@@ -21,6 +21,14 @@ namespace llvm {
   class Module;
   class IntrinsicLowering;
   
+  // allocateCTargetMachine - Allocate and return a subclass of TargetMachine
+  // that implements emits C code.  This takes ownership of the
+  // IntrinsicLowering pointer, deleting it when the target machine is
+  // destroyed.
+  //
+  TargetMachine *allocateCTargetMachine(const Module &M,
+                                        IntrinsicLowering *IL = 0);
+
   // allocateSparcTargetMachine - Allocate and return a subclass of
   // TargetMachine that implements the Sparc backend.  This takes ownership of
   // the IntrinsicLowering pointer, deleting it when the target machine is
