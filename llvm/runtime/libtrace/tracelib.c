@@ -20,7 +20,7 @@
 
 typedef int64_t Generic;
 typedef uint64_t Index;
-typedef ptrdiff_t Pointer;
+typedef uint64_t Pointer;
 
 /* Index IntegerHashFunc(const Generic value, const Index size) */
 #define IntegerHashFunc(value, size) \
@@ -262,7 +262,6 @@ HashPointerToSeqNum(char* ptr)
 void
 ReleasePointerSeqNum(char* ptr)
 { /* if a sequence number was assigned to this ptr, release it */
-  SequenceNumber seqnum;
   if (SequenceNumberTable != NULL)
     Delete(SequenceNumberTable, ptr);
 }
