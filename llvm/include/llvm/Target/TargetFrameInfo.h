@@ -1,76 +1,95 @@
-//===-- llvm/CodeGen/MachineFrameInfo.h -------------------------*- C++ -*-===//
+//===-- llvm/Target/TargetFrameInfo.h ---------------------------*- C++ -*-===//
 //
-// Interface to layout of stack frame on target machine.
+// Interface to describe the layout of a stack frame on the target machine.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_FRAMEINFO_H
-#define LLVM_CODEGEN_FRAMEINFO_H
-
-#include "Support/NonCopyable.h"
-#include <vector>
+#ifndef LLVM_TARGET_TARGETFRAMEINFO_H
+#define LLVM_TARGET_TARGETFRAMEINFO_H
 
 class MachineFunction;
-class TargetMachine;
 
-struct MachineFrameInfo : public NonCopyableV {
-  const TargetMachine &target;
-  
+struct TargetFrameInfo {
+  enum StackDirection {
+    StackGrowsUp,        // Adding to the stack increases the stack address
+    StackGrowsDown       // Adding to the stack decreases the stack address
+  };
+private:
+  StackDirection StackDir;
+  unsigned StackAlignment;
+  int LocalAreaOffset;
 public:
-  MachineFrameInfo(const TargetMachine& tgt) : target(tgt) {}
-  
-  // These methods provide constant parameters of the frame layout.
-  // 
-  virtual int  getStackFrameSizeAlignment       () const = 0;
-  virtual int  getMinStackFrameSize             () const = 0;
-  virtual int  getNumFixedOutgoingArgs          () const = 0;
-  virtual int  getSizeOfEachArgOnStack          () const = 0;
-  virtual bool argsOnStackHaveFixedSize         () const = 0;
+  TargetFrameInfo(StackDirection D, unsigned StackAl, int LAO)
+    : StackDir(D), StackAlignment(StackAl), LocalAreaOffset(LAO) {}
+
+  // These methods return information that describes the abstract stack layout
+  // of the target machine.
+
+  /// getStackGrowthDirection - Return the direction the stack grows
+  ///
+  StackDirection getStackGrowthDirection() const { return StackDir; }
+
+  /// getStackAlignment - This method returns the number of bytes that the stack
+  /// pointer must be aligned to.  Typically, this is the largest alignment for
+  /// any data object in the target.
+  ///
+  unsigned getStackAlignment() const { return StackAlignment; }
+
+  /// getOffsetOfLocalArea - This method returns the offset of the local area
+  /// from the stack pointer on entrance to a function.
+  ///
+  int getOffsetOfLocalArea() const { return LocalAreaOffset; }
+
+  //===--------------------------------------------------------------------===//
+  // These methods provide details of the stack frame used by Sparc, thus they
+  // are Sparc specific.
+  //===--------------------------------------------------------------------===//
+
+  virtual int  getStackFrameSizeAlignment       () const { abort(); }
+  virtual int  getMinStackFrameSize             () const { abort(); }
+  virtual int  getNumFixedOutgoingArgs          () const { abort(); }
+  virtual int  getSizeOfEachArgOnStack          () const { abort(); }
+  virtual bool argsOnStackHaveFixedSize         () const { abort(); }
 
   // This method adjusts a stack offset to meet alignment rules of target.
-  // 
-  virtual int  adjustAlignment                  (int unalignedOffset,
-                                                 bool growUp,
-                                                 unsigned int align) const {
-    return unalignedOffset + (growUp? +1:-1)*(unalignedOffset % align);
-  }
+  virtual int adjustAlignment(int unalignedOffset, bool growUp,
+			      unsigned align) const { abort(); }
 
-  // These methods compute offsets using the frame contents for a
-  // particular method.  The frame contents are obtained from the
-  // MachineCodeInfoForMethod object for the given method.
-  // The first few methods have default machine-independent implementations.
-  // The rest must be implemented by the machine-specific subclass.
+  // These methods compute offsets using the frame contents for a particular
+  // function.  The frame contents are obtained from the MachineFunction object
+  // for the given function.  The rest must be implemented by the
+  // machine-specific subclass.
   // 
   virtual int getIncomingArgOffset              (MachineFunction& mcInfo,
-                                                 unsigned argNum) const;
+						 unsigned argNum)const{abort();}
   virtual int getOutgoingArgOffset              (MachineFunction& mcInfo,
-                                                 unsigned argNum) const;
+						 unsigned argNum)const{abort();}
   
   virtual int getFirstIncomingArgOffset         (MachineFunction& mcInfo,
-                                                 bool& growUp) const=0;
+						 bool& growUp) const { abort();}
   virtual int getFirstOutgoingArgOffset         (MachineFunction& mcInfo,
-                                                 bool& growUp) const=0;
+						 bool& growUp) const {abort();}
   virtual int getFirstOptionalOutgoingArgOffset (MachineFunction&,
-                                                 bool& growUp) const=0;
+                                                 bool& growUp) const {abort();}
   virtual int getFirstAutomaticVarOffset        (MachineFunction& mcInfo,
-                                                 bool& growUp) const=0;
+                                                 bool& growUp) const {abort();}
   virtual int getRegSpillAreaOffset             (MachineFunction& mcInfo,
-                                                 bool& growUp) const=0;
+                                                 bool& growUp) const {abort();}
   virtual int getTmpAreaOffset                  (MachineFunction& mcInfo,
-                                                 bool& growUp) const=0;
+                                                 bool& growUp) const {abort();}
   virtual int getDynamicAreaOffset              (MachineFunction& mcInfo,
-                                                 bool& growUp) const=0;
+                                                 bool& growUp) const {abort();}
 
   //
   // These methods specify the base register used for each stack area
   // (generally FP or SP)
   // 
-  virtual int getIncomingArgBaseRegNum()               const=0;
-  virtual int getOutgoingArgBaseRegNum()               const=0;
-  virtual int getOptionalOutgoingArgBaseRegNum()       const=0;
-  virtual int getAutomaticVarBaseRegNum()              const=0;
-  virtual int getRegSpillAreaBaseRegNum()              const=0;
-  virtual int getDynamicAreaBaseRegNum()               const=0;
+  virtual int getIncomingArgBaseRegNum()               const { abort(); }
+  virtual int getOutgoingArgBaseRegNum()               const { abort(); }
+  virtual int getOptionalOutgoingArgBaseRegNum()       const { abort(); }
+  virtual int getAutomaticVarBaseRegNum()              const { abort(); }
+  virtual int getRegSpillAreaBaseRegNum()              const { abort(); }
+  virtual int getDynamicAreaBaseRegNum()               const { abort(); }
 };
 
 #endif
