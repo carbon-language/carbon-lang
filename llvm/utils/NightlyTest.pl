@@ -98,15 +98,13 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 die "Must specify 0 or 3 options!" if (@ARGV != 0 and @ARGV != 3);
 
-# FIXME: This should just be utils/...
-my $Template   = "$HOME/llvm/utils/NightlyTestTemplate.html";
-
 if (@ARGV == 3) {
   $CVSRootDir = $ARGV[0];
   $BuildDir   = $ARGV[1];
   $WebDir     = $ARGV[2];
 }
 
+my $Template = "$BuildDir/llvm/utils/NightlyTestTemplate.html";
 my $Prefix = "$WebDir/$DATE";
 
 if (0) {
@@ -121,9 +119,9 @@ if (0) {
 # Create the CVS repository directory
 #
 if (!$NOCHECKOUT) {
-  mkdir $BuildDir or die "Could not create CVS checkout directory!";
+  mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
 }
-chdir $BuildDir or die "Could not change to CVS checkout directory!";
+chdir $BuildDir or die "Could not change to CVS checkout directory $BuildDir!";
 
 
 #
@@ -145,7 +143,7 @@ my $TemplateContents = ReadFile $Template;
 # Get some static statistics about the current state of CVS
 #
 my $CVSCheckoutTime = GetRegex "([0-9.]+)", `grep '^real' $Prefix-CVS-Log.txt`;
-my $NumFilesInCVS = `grep ^U $Prefix-CVS-Log.txt | wc -l` + 0;
+my $NumFilesInCVS = `grep '^U' $Prefix-CVS-Log.txt | wc -l` + 0;
 my $NumDirsInCVS  = `grep '^cvs checkout' $Prefix-CVS-Log.txt | wc -l` + 0;
 $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 
@@ -153,7 +151,7 @@ $LOC = GetRegex "([0-9]+) +total", `wc -l \`utils/getsrcs.sh\` | grep total`;
 # Build the entire tree, saving build messages to the build log
 #
 if (!$NOCHECKOUT) {
-  system "(time -p ./configure) > $Prefix-Build-Log.txt 2>&1";
+  system "(time -p ./configure --enable-jit) > $Prefix-Build-Log.txt 2>&1";
   # Change the Makefile.config to not strip executables...
   system "echo 'KEEP_SYMBOLS := 1' >> Makefile.config";
 
@@ -183,7 +181,7 @@ if (`grep '^gmake: .*Error' $Prefix-Build-Log.txt | wc -l` + 0) {
 #
 # Get warnings from the build
 #
-my @Warn = split "\n", `grep -E 'warning:|Entering dir' $Prefix-Build-Log.txt`;
+my @Warn = split "\n", `egrep 'warning:|Entering dir' $Prefix-Build-Log.txt`;
 my @Warnings;
 my $CurDir = "";
 
@@ -216,19 +214,18 @@ $WarningsRemoved = AddPreTag $WarningsRemoved;
 
 # Extract some information from the CVS history... use a hash so no duplicate
 # stuff is stored.
-my (%AddedFiles, %ModifiedFiles, %RemovedFiles,
-    %UsersCommitted, %UsersUpdated);
+my (%AddedFiles, %ModifiedFiles, %RemovedFiles, %UsersCommitted, %UsersUpdated);
 
 my $DateRE = "[-:0-9 ]+\\+[0-9]+";
 
 # Loop over every record from the CVS history, filling in the hashes.
 foreach $File (@CVSHistory) {
   my ($Type, $Date, $UID, $Rev, $Filename);
-  if ($File =~ /([AMRUGC])\s($DateRE)\s([^\s].......) (.[0-9.]*)\s+([^\s]+)\s+([^\s]+)/) {
+  if ($File =~ /([AMRUGC]) ($DateRE) ([^ ]+) +([0-9\.]+) +([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
-  } elsif ($File =~ /([W])\s($DateRE)\s([^\s]+) +([^\s]+)\s+([^\s]+)/) {
+  } elsif ($File =~ /([W]) ($DateRE) ([^ ]+) +([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
-  } elsif ($File =~ /([O]) ($DateRE) ([^ ]+) +([^\s]+)/) {
+  } elsif ($File =~ /([O]) ($DateRE) ([^ ]+) +([^ ]+)/) {
     ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$4/");
   } else {
     print "UNMATCHABLE: $File\n";
@@ -286,7 +283,7 @@ if ($BuildError eq "") {
     #
     # Create a list of the tests which were run...
     #
-    system "grep -E 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
+    system "egrep 'TEST-(PASS|FAIL)' < $Prefix-ProgramTest.txt "
          . "| sort > $Prefix-Tests.txt";
   }
 
