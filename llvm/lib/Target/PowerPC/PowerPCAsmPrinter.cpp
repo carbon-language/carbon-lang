@@ -427,7 +427,9 @@ void Printer::printOp(const MachineOperand &MO,
     return;
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) {
-      if (isa<Function>(MO.getGlobal())) {
+      // Dynamically-resolved functions need a stub for the function
+      Function *F = dyn_cast<Function>(MO.getGlobal());
+      if (F && F->isExternal()) {
         Stubs.insert(Mang->getValueName(MO.getGlobal()));
         O << "L" << Mang->getValueName(MO.getGlobal()) << "$stub";
       } else {
