@@ -682,13 +682,14 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   MI->getOperand(0).setReg(getSTReg(Op1));
 
   // If we kill the second operand, make sure to pop it from the stack.
-  for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	 E = LV->killed_end(MI); KI != E; ++KI)
-    if (KI->second == X86::FP0+Op1) {
-      // Get this value off of the register stack.
-      freeStackSlotAfter(I, Op1);
-      break;
-    }
+  if (Op0 != Op1) 
+    for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
+           E = LV->killed_end(MI); KI != E; ++KI)
+      if (KI->second == X86::FP0+Op1) {
+        // Get this value off of the register stack.
+        freeStackSlotAfter(I, Op1);
+        break;
+      }
 }
 
 
