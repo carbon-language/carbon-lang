@@ -372,10 +372,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
-                                         MachineBasicBlock::iterator II) const {
+void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
   unsigned i = 0;
   MachineInstr &MI = *II;
+  MachineFunction &MF = *MI.getParent()->getParent();
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");

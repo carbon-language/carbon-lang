@@ -57,8 +57,7 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI) const;
 
-  void eliminateFrameIndex(MachineFunction &MF,
-                           MachineBasicBlock::iterator MI) const;
+  void eliminateFrameIndex(MachineBasicBlock::iterator MI) const;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
