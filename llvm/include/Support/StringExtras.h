@@ -84,6 +84,13 @@ static inline std::string utostr(unsigned X, bool isNeg = false) {
   return std::string(BufPtr);
 }
 
+static inline std::string itostr(long X) {
+  if (X < 0) 
+    return utostr(static_cast<uint64_t>(-X), true);
+  else
+    return utostr(static_cast<uint64_t>(X));
+}
+
 static inline std::string itostr(int X) {
   if (X < 0) 
     return utostr(static_cast<unsigned>(-X), true);
