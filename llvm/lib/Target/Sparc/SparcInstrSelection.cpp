@@ -239,12 +239,11 @@ ChooseMovpccAfterSub(const InstructionNode* instrNode,
 }
 
 static inline MachineOpCode
-ChooseConvertToFloatInstr(const InstructionNode* instrNode,
-                          const Type* opType)
+ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
 {
   MachineOpCode opCode = INVALID_OPCODE;
   
-  switch(instrNode->getOpLabel())
+  switch(vopCode)
     {
     case ToFloatTy: 
       if (opType == Type::SByteTy || opType == Type::ShortTy || opType == Type::IntTy)
@@ -285,14 +284,11 @@ ChooseConvertToFloatInstr(const InstructionNode* instrNode,
 }
 
 static inline MachineOpCode 
-ChooseConvertToIntInstr(const InstructionNode* instrNode,
-                        const Type* opType)
+ChooseConvertToIntInstr(OpLabel vopCode, const Type* opType)
 {
   MachineOpCode opCode = INVALID_OPCODE;;
   
-  int instrType = (int) instrNode->getOpLabel();
-  
-  if (instrType == ToSByteTy || instrType == ToShortTy || instrType == ToIntTy)
+  if (vopCode == ToSByteTy || vopCode == ToShortTy || vopCode == ToIntTy)
     {
       switch (opType->getPrimitiveID())
         {
@@ -303,7 +299,7 @@ ChooseConvertToIntInstr(const InstructionNode* instrNode,
           break;
         }
     }
-  else if (instrType == ToLongTy)
+  else if (vopCode == ToLongTy)
     {
       switch (opType->getPrimitiveID())
         {
@@ -320,6 +316,17 @@ ChooseConvertToIntInstr(const InstructionNode* instrNode,
   return opCode;
 }
 
+MachineInstr*
+CreateConvertToIntInstr(OpLabel vopCode, Value* srcVal, Value* destVal)
+{
+  MachineOpCode opCode = ChooseConvertToIntInstr(vopCode, srcVal->getType());
+  assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
+  
+  MachineInstr* M = new MachineInstr(opCode);
+  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, srcVal);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, destVal);
+  return M;
+}
 
 static inline MachineOpCode 
 ChooseAddInstructionByType(const Type* resultType)
@@ -1565,9 +1572,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                   (dest->getType() == Type::LongTy)? Type::DoubleTy
                                                    : Type::FloatTy;
                 destForCast = new TmpInstruction(destTypeToUse, leftVal);
-                MachineCodeForInstruction &MCFI = 
+                MachineCodeForInstruction &destMCFI = 
                   MachineCodeForInstruction::get(dest);
-                MCFI.addTemp(destForCast);
+                destMCFI.addTemp(destForCast);
                 
                 vector<TmpInstruction*> tempVec;
                 target.getInstrInfo().CreateCodeToCopyFloatToInt(
@@ -1576,21 +1583,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                     minstrVec, tempVec, target);
                 
                 for (unsigned i=0; i < tempVec.size(); ++i)
-                  MCFI.addTemp(tempVec[i]);
+                  destMCFI.addTemp(tempVec[i]);
               }
             else
               destForCast = leftVal;
             
-            MachineOpCode opCode=ChooseConvertToIntInstr(subtreeRoot, opType);
-            assert(opCode != INVALID_OPCODE && "Expected to need conversion!");
-            
-            M = new MachineInstr(opCode);
-            M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                    leftVal);
-            M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-                                    destForCast);
+            M = CreateConvertToIntInstr(subtreeRoot->getOpLabel(),
+                                        leftVal, destForCast);
             mvec.push_back(M);
-
+            
             // Append the copy code, if any, after the conversion instr.
             mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
           }
@@ -1616,7 +1617,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           {
             Value* leftVal = subtreeRoot->leftChild()->getValue();
             const Type* opType = leftVal->getType();
-            MachineOpCode opCode=ChooseConvertToFloatInstr(subtreeRoot,opType);
+            MachineOpCode opCode=ChooseConvertToFloatInstr(
+                                       subtreeRoot->getOpLabel(), opType);
             if (opCode == INVALID_OPCODE)	// no conversion needed
               {
                 forwardOperandNum = 0;      // forward first operand to user
@@ -1641,9 +1643,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                                           : Type::FloatTy;
                     
                     srcForCast = new TmpInstruction(srcTypeToUse, dest);
-                    MachineCodeForInstruction &DestMCFI = 
+                    MachineCodeForInstruction &destMCFI = 
                       MachineCodeForInstruction::get(dest);
-                    DestMCFI.addTemp(srcForCast);
+                    destMCFI.addTemp(srcForCast);
                     
                     vector<MachineInstr*> minstrVec;
                     vector<TmpInstruction*> tempVec;
@@ -1655,7 +1657,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                     mvec.insert(mvec.end(), minstrVec.begin(),minstrVec.end());
                     
                     for (unsigned i=0; i < tempVec.size(); ++i)
-                       DestMCFI.addTemp(tempVec[i]);
+                       destMCFI.addTemp(tempVec[i]);
                   }
                 else
                   srcForCast = leftVal;
@@ -2003,13 +2005,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       }
       
       case 61:	// reg:   Call
-      {         // Generate a call-indirect (i.e., jmpl) for now to expose
-                // the potential need for registers.  If an absolute address
-                // is available, replace this with a CALL instruction.
-                // Mark both the indirection register and the return-address
-        	// register as hidden virtual registers.
+      {         // Generate a direct (CALL) or indirect (JMPL). depending
+                // Mark the return-address register and the indirection
+                // register (if any) as hidden virtual registers.
                 // Also, mark the operands of the Call and return value (if
                 // any) as implicit operands of the CALL machine instruction.
+                // 
+                // If this is a varargs function, floating point arguments
+                // have to passed in integer registers so insert
+                // copy-float-to-int instructions for each float operand.
                 // 
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
@@ -2048,9 +2052,43 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         //          in register allocation.
         // 
         // Add the call operands and return value as implicit refs
+        // const Type* funcType = isa<Function>(callee)? callee->getType()
+        //   : cast<PointerType>(callee->getType())->getElementType();
+        const Type* funcType = callee->getType();
+        bool isVarArgs = cast<FunctionType>(cast<PointerType>(funcType)
+                                            ->getElementType())->isVarArg();
+        
         for (unsigned i=0, N=callInstr->getNumOperands(); i < N; ++i)
           if (callInstr->getOperand(i) != callee)
-            mvec.back()->addImplicitRef(callInstr->getOperand(i));
+            {
+              Value* argVal = callInstr->getOperand(i);
+              
+              // Check for FP arguments to varargs functions
+              if (isVarArgs && argVal->getType()->isFloatingPoint())
+                { // Add a copy-float-to-int instruction
+                  MachineCodeForInstruction &destMCFI = 
+                    MachineCodeForInstruction::get(callInstr);   
+                  Instruction* intArgReg =
+                    new TmpInstruction(Type::IntTy, argVal);
+                  destMCFI.addTemp(intArgReg);
+                  
+                  vector<MachineInstr*> minstrVec;
+                  vector<TmpInstruction*> tempVec;
+                  target.getInstrInfo().CreateCodeToCopyFloatToInt(
+                         callInstr->getParent()->getParent(),
+                         argVal, (TmpInstruction*) intArgReg,
+                         minstrVec, tempVec, target);
+                  
+                  mvec.insert(mvec.begin(), minstrVec.begin(),minstrVec.end());
+                  
+                  for (unsigned i=0; i < tempVec.size(); ++i)
+                    destMCFI.addTemp(tempVec[i]);
+                  
+                  argVal = intArgReg;
+                }
+              
+              mvec.back()->addImplicitRef(argVal);
+            }
         
         if (callInstr->getType() != Type::VoidTy)
           mvec.back()->addImplicitRef(callInstr, /*isDef*/ true);
