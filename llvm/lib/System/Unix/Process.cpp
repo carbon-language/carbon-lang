@@ -92,10 +92,14 @@ Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
 #if defined(HAVE_GETRUSAGE)
   struct rusage usage;
   ::getrusage(RUSAGE_SELF, &usage);
-  user_time.seconds( usage.ru_utime.tv_sec );
-  user_time.microseconds( usage.ru_utime.tv_usec );
-  sys_time.seconds( usage.ru_stime.tv_sec );
-  sys_time.microseconds( usage.ru_stime.tv_usec );
+  user_time = TimeValue( 
+    static_cast<TimeValue::SecondsType>( usage.ru_utime.tv_sec ), 
+    static_cast<TimeValue::NanoSecondsType>( usage.ru_utime.tv_usec * 
+      TimeValue::NANOSECONDS_PER_MICROSECOND ) );
+  sys_time = TimeValue( 
+    static_cast<TimeValue::SecondsType>( usage.ru_stime.tv_sec ), 
+    static_cast<TimeValue::NanoSecondsType>( usage.ru_stime.tv_usec * 
+      TimeValue::NANOSECONDS_PER_MICROSECOND ) );
 #else
 #warning Cannot get usage times on this platform
   user_time.seconds(0);
