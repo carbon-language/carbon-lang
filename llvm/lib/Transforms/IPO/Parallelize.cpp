@@ -1,4 +1,4 @@
-//===- Parallelize.cpp - Auto parallelization using DS Graphs ---*- C++ -*-===//
+//===- Parallelize.cpp - Auto parallelization using DS Graphs -------------===//
 //
 // This file implements a pass that automatically parallelizes a program,
 // using the Cilk multi-threaded runtime system to execute parallel code.
@@ -28,19 +28,16 @@
 // -- Excessive overhead at "spawned" function calls, which has no benefit
 //    once all threads are busy (especially common when the degree of
 //    parallelism is low).
+//
 //===----------------------------------------------------------------------===//
 
-
-#include "llvm/Transforms/Parallelize.h"
 #include "llvm/Transforms/Utils/DemoteRegToStack.h"
 #include "llvm/Analysis/PgmDependenceGraph.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/iOther.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstVisitor.h"
@@ -49,8 +46,6 @@
 #include "Support/STLExtras.h"
 #include "Support/hash_set"
 #include "Support/hash_map"
-#include <vector>
-#include <stack>
 #include <functional>
 #include <algorithm>
 
@@ -221,14 +216,14 @@ void Cilkifier::visitCallInst(CallInst& CI)
   // Now find all outgoing SSA dependences to the eventual non-Phi users of
   // the call value (i.e., direct users that are not phis, and for any
   // user that is a Phi, direct non-Phi users of that Phi, and recursively).
-  std::stack<const PHINode*> phiUsers;
+  std::vector<const PHINode*> phiUsers;
   hash_set<const PHINode*> phisSeen;    // ensures we don't visit a phi twice
   for (Value::use_iterator UI=CI.use_begin(), UE=CI.use_end(); UI != UE; ++UI)
     if (const PHINode* phiUser = dyn_cast<PHINode>(*UI))
       {
         if (phisSeen.find(phiUser) == phisSeen.end())
           {
-            phiUsers.push(phiUser);
+            phiUsers.push_back(phiUser);
             phisSeen.insert(phiUser);
           }
       }
@@ -237,16 +232,16 @@ void Cilkifier::visitCallInst(CallInst& CI)
 
   // Now we've found the non-Phi users and immediate phi users.
   // Recursively walk the phi users and add their non-phi users.
-  for (const PHINode* phiUser; !phiUsers.empty(); phiUsers.pop())
+  for (const PHINode* phiUser; !phiUsers.empty(); phiUsers.pop_back())
     {
-      phiUser = phiUsers.top();
+      phiUser = phiUsers.back();
       for (Value::use_const_iterator UI=phiUser->use_begin(),
              UE=phiUser->use_end(); UI != UE; ++UI)
         if (const PHINode* pn = dyn_cast<PHINode>(*UI))
           {
             if (phisSeen.find(pn) == phisSeen.end())
               {
-                phiUsers.push(pn);
+                phiUsers.push_back(pn);
                 phisSeen.insert(pn);
               }
           }
