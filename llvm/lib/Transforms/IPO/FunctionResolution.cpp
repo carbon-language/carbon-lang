@@ -81,7 +81,8 @@ static void ConvertCallTo(CallInst *CI, Function *Dest) {
   BB->getInstList().remove(BBI);
 
   // Transfer the name over...
-  NewCall->setName(CI->getName());
+  if (NewCall->getType() != Type::VoidTy)
+    NewCall->setName(CI->getName());
 
   // Replace uses of the old instruction with the appropriate values...
   //
