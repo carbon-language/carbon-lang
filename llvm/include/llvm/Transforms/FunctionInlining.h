@@ -7,7 +7,6 @@
 #ifndef LLVM_TRANSFORMS_FUNCTION_INLINING_H
 #define LLVM_TRANSFORMS_FUNCTION_INLINING_H
 
-#include "llvm/BasicBlock.h"
 class CallInst;
 class Pass;
 
@@ -24,6 +23,5 @@ Pass *createFunctionInliningPass();
 // function by one level.
 //
 bool InlineFunction(CallInst *C);
-bool InlineFunction(BasicBlock::iterator CI);  // *CI must be CallInst
 
 #endif

@@ -75,7 +75,7 @@ public:
     return T->isDerivedType();
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -377,7 +377,7 @@ public:
     return T->getPrimitiveID() == OpaqueTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 

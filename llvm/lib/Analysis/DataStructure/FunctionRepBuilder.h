@@ -27,9 +27,9 @@ class InitVisitor : public InstVisitor<InitVisitor> {
 public:
   InitVisitor(FunctionRepBuilder *R, Function *F) : Rep(R), Func(F) {}
 
-  void visitCallInst(CallInst *CI);
-  void visitAllocationInst(AllocationInst *AI);
-  void visitInstruction(Instruction *I);
+  void visitCallInst(CallInst &CI);
+  void visitAllocationInst(AllocationInst &AI);
+  void visitInstruction(Instruction &I);
 
   // visitOperand - If the specified instruction operand is a global value, add
   // a node for it...
@@ -90,7 +90,7 @@ public:
   const map<Value*, PointerValSet> &getValueMap() const { return ValueMap; }
 private:
   static PointerVal getIndexedPointerDest(const PointerVal &InP,
-                                          const MemAccessInst *MAI);
+                                          const MemAccessInst &MAI);
 
   void initializeWorkList(Function *Func);
   void processWorkList() {
@@ -101,7 +101,7 @@ private:
       cerr << "Processing worklist inst: " << I;
 #endif
     
-      visit(I);  // Dispatch to a visitXXX function based on instruction type...
+      visit(*I); // Dispatch to a visitXXX function based on instruction type...
 #ifdef DEBUG_DATA_STRUCTURE_CONSTRUCTION
       if (I->hasName() && ValueMap.count(I)) {
         cerr << "Inst %" << I->getName() << " value is:\n";
@@ -117,18 +117,16 @@ private:
   // Allow the visitor base class to invoke these methods...
   friend class InstVisitor<FunctionRepBuilder>;
 
-  void visitGetElementPtrInst(GetElementPtrInst *GEP);
-  void visitReturnInst(ReturnInst *RI);
-  void visitLoadInst(LoadInst *LI);
-  void visitStoreInst(StoreInst *SI);
-  void visitCallInst(CallInst *CI);
-  void visitPHINode(PHINode *PN);
-  void visitSetCondInst(SetCondInst *SCI) {}  // SetEQ & friends are ignored
-  void visitFreeInst(FreeInst *FI) {}         // Ignore free instructions
-  void visitInstruction(Instruction *I) {
-    std::cerr << "\n\n\nUNKNOWN INSTRUCTION type: ";
-    I->dump();
-    std::cerr << "\n\n\n";
+  void visitGetElementPtrInst(GetElementPtrInst &GEP);
+  void visitReturnInst(ReturnInst &RI);
+  void visitLoadInst(LoadInst &LI);
+  void visitStoreInst(StoreInst &SI);
+  void visitCallInst(CallInst &CI);
+  void visitPHINode(PHINode &PN);
+  void visitSetCondInst(SetCondInst &SCI) {}  // SetEQ & friends are ignored
+  void visitFreeInst(FreeInst &FI) {}         // Ignore free instructions
+  void visitInstruction(Instruction &I) {
+    std::cerr << "\n\n\nUNKNOWN INSTRUCTION type: " << I << "\n\n\n";
     assert(0 && "Cannot proceed");
   }
 };

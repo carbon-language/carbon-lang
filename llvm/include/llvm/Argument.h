@@ -13,7 +13,10 @@
 class Argument : public Value {  // Defined in the InstrType.cpp file
   Function *Parent;
 
-  friend class ValueHolder<Argument, Function, Function>;
+  Argument *Prev, *Next; // Next and Prev links for our intrusive linked list
+  void setNext(Argument *N) { Next = N; }
+  void setPrev(Argument *N) { Prev = N; }
+  friend class SymbolTableListTraits<Argument, Function, Function>;
   inline void setParent(Function *parent) { Parent = parent; }
 
 public:
@@ -27,6 +30,12 @@ public:
 
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
+ 
+  // getNext/Prev - Return the next or previous argument in the list.
+        Argument *getNext()       { return Next; }
+  const Argument *getNext() const { return Next; }
+        Argument *getPrev()       { return Prev; }
+  const Argument *getPrev() const { return Prev; }
 
   virtual void print(std::ostream &OS) const;
 

@@ -7,8 +7,9 @@ class Value;
 // RAV - Used to print values in a form used by the register allocator.  
 //
 struct RAV {  // Register Allocator Value
-  const Value *V;
-  RAV(const Value *v) : V(v) {}
+  const Value &V;
+  RAV(const Value *v) : V(*v) {}
+  RAV(const Value &v) : V(v) {}
 };
 std::ostream &operator<<(std::ostream &out, RAV Val);
 

@@ -98,7 +98,7 @@ public:
   // --------- Implement the FunctionPass interface ----------------------
 
   // runOnFunction - Perform analysis, update internal data structures.
-  virtual bool runOnFunction(Function *F);
+  virtual bool runOnFunction(Function &F);
 
   // releaseMemory - After LiveVariable analysis has been used, forget!
   virtual void releaseMemory();

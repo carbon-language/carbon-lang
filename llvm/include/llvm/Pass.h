@@ -50,7 +50,7 @@ public:
   // run - Run this pass, returning true if a modification was made to the
   // module argument.  This should be implemented by all concrete subclasses.
   //
-  virtual bool run(Module *M) = 0;
+  virtual bool run(Module &M) = 0;
 
   // getAnalysisUsage - This function should be overriden by passes that need
   // analysis information to do their job.  If a pass specifies that it uses a
@@ -122,26 +122,26 @@ struct FunctionPass : public Pass {
   // doInitialization - Virtual method overridden by subclasses to do
   // any neccesary per-module initialization.
   //
-  virtual bool doInitialization(Module *M) { return false; }
+  virtual bool doInitialization(Module &M) { return false; }
 
   // runOnFunction - Virtual method overriden by subclasses to do the
   // per-function processing of the pass.
   //
-  virtual bool runOnFunction(Function *F) = 0;
+  virtual bool runOnFunction(Function &F) = 0;
 
   // doFinalization - Virtual method overriden by subclasses to do any post
   // processing needed after all passes have run.
   //
-  virtual bool doFinalization(Module *M) { return false; }
+  virtual bool doFinalization(Module &M) { return false; }
 
   // run - On a module, we run this pass by initializing, ronOnFunction'ing once
   // for every function in the module, then by finalizing.
   //
-  virtual bool run(Module *M);
+  virtual bool run(Module &M);
 
   // run - On a function, we simply initialize, run the function, then finalize.
   //
-  bool run(Function *F);
+  bool run(Function &F);
 
 private:
   friend class PassManagerT<Module>;
@@ -167,17 +167,17 @@ struct BasicBlockPass : public FunctionPass {
   // runOnBasicBlock - Virtual method overriden by subclasses to do the
   // per-basicblock processing of the pass.
   //
-  virtual bool runOnBasicBlock(BasicBlock *M) = 0;
+  virtual bool runOnBasicBlock(BasicBlock &BB) = 0;
 
   // To run this pass on a function, we simply call runOnBasicBlock once for
   // each function.
   //
-  virtual bool runOnFunction(Function *F);
+  virtual bool runOnFunction(Function &F);
 
   // To run directly on the basic block, we initialize, runOnBasicBlock, then
   // finalize.
   //
-  bool run(BasicBlock *BB);
+  bool run(BasicBlock &BB);
 
 private:
   friend class PassManagerT<Function>;

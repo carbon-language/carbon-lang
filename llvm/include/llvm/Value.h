@@ -25,8 +25,6 @@ class GlobalValue;
 class Function;
 class GlobalVariable;
 class SymbolTable;
-template<class ValueSubclass, class ItemParentType, class SymTabType> 
-  class ValueHolder;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -128,6 +126,11 @@ inline std::ostream &operator<<(std::ostream &OS, const Value *V) {
   return OS;
 }
 
+inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
+  V.print(OS);
+  return OS;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                                 UseTy Class
@@ -178,61 +181,46 @@ public:
 
 typedef UseTy<Value> Use;    // Provide Use as a common UseTy type
 
-// Provide a specialization of real_type to work with use's... to make them a
-// bit more transparent.
-//
-template <class X> class real_type <class UseTy<X> > { typedef X *Type; };
-
+template<typename From> struct simplify_type<UseTy<From> > {
+  typedef typename simplify_type<From*>::SimpleType SimpleType;
+  
+  static SimpleType getSimplifiedValue(const UseTy<From> &Val) {
+    return (SimpleType)Val.get();
+  }
+};
+template<typename From> struct simplify_type<const UseTy<From> > {
+  typedef typename simplify_type<From*>::SimpleType SimpleType;
+  
+  static SimpleType getSimplifiedValue(const UseTy<From> &Val) {
+    return (SimpleType)Val.get();
+  }
+};
 
 // isa - Provide some specializations of isa so that we don't have to include
 // the subtype header files to test to see if the value is a subclass...
 //
-template <> inline bool isa<Type, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::TypeVal;
+template <> inline bool isa_impl<Type, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::TypeVal;
 }
-template <> inline bool isa<Type, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::TypeVal;
+template <> inline bool isa_impl<Constant, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::ConstantVal; 
 }
-template <> inline bool isa<Constant, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::ConstantVal; 
+template <> inline bool isa_impl<Argument, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::ArgumentVal;
 }
-template <> inline bool isa<Constant, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::ConstantVal; 
+template <> inline bool isa_impl<Instruction, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::InstructionVal;
 }
-template <> inline bool isa<Argument, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::ArgumentVal;
+template <> inline bool isa_impl<BasicBlock, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::BasicBlockVal;
 }
-template <> inline bool isa<Argument, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::ArgumentVal;
+template <> inline bool isa_impl<Function, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::FunctionVal;
 }
-template <> inline bool isa<Instruction, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::InstructionVal;
+template <> inline bool isa_impl<GlobalVariable, Value>(const Value &Val) { 
+  return Val.getValueType() == Value::GlobalVariableVal;
 }
-template <> inline bool isa<Instruction, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::InstructionVal;
-}
-template <> inline bool isa<BasicBlock, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::BasicBlockVal;
-}
-template <> inline bool isa<BasicBlock, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::BasicBlockVal;
-}
-template <> inline bool isa<Function, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::FunctionVal;
-}
-template <> inline bool isa<Function, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::FunctionVal;
-}
-template <> inline bool isa<GlobalVariable, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::GlobalVariableVal;
-}
-template <> inline bool isa<GlobalVariable, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::GlobalVariableVal;
-}
-template <> inline bool isa<GlobalValue, const Value*>(const Value *Val) { 
-  return isa<GlobalVariable>(Val) || isa<Function>(Val);
-}
-template <> inline bool isa<GlobalValue, Value*>(Value *Val) { 
+template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) { 
   return isa<GlobalVariable>(Val) || isa<Function>(Val);
 }
 

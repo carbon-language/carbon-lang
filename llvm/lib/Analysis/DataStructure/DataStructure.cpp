@@ -6,7 +6,6 @@
 
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include <fstream>
 #include <algorithm>
 
@@ -42,9 +41,9 @@ void DataStructure::print(std::ostream &O, Module *M) const {
     timeval TV1, TV2;
     gettimeofday(&TV1, 0);
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      if (!(*I)->isExternal()) {
-        getDSGraph(*I);
-        getClosedDSGraph(*I);
+      if (!I->isExternal() && I->getName() == "main") {
+        //getDSGraph(*I);
+        getClosedDSGraph(I);
       }
     gettimeofday(&TV2, 0);
     cerr << "Analysis took "
@@ -53,9 +52,9 @@ void DataStructure::print(std::ostream &O, Module *M) const {
   }
 
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!(*I)->isExternal()) {
+    if (!I->isExternal()) {
 
-      string Filename = "ds." + (*I)->getName() + ".dot";
+      string Filename = "ds." + I->getName() + ".dot";
       O << "Writing '" << Filename << "'...";
       ofstream F(Filename.c_str());
       if (F.good()) {
@@ -65,8 +64,8 @@ void DataStructure::print(std::ostream &O, Module *M) const {
           << "\tsize=\"10,7.5\";\n"
           << "\trotate=\"90\";\n";
 
-        getDSGraph(*I).printFunction(F, "Local");
-        getClosedDSGraph(*I).printFunction(F, "Closed");
+        getDSGraph(I).printFunction(F, "Local");
+        getClosedDSGraph(I).printFunction(F, "Closed");
 
         F << "}\n";
       } else {
@@ -74,8 +73,8 @@ void DataStructure::print(std::ostream &O, Module *M) const {
       }
 
       if (Time) 
-        O << " [" << getDSGraph(*I).getGraphSize() << ", "
-          << getClosedDSGraph(*I).getGraphSize() << "]\n";
+        O << " [" << getDSGraph(I).getGraphSize() << ", "
+          << getClosedDSGraph(I).getGraphSize() << "]\n";
       else
         O << "\n";
     }

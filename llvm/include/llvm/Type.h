@@ -294,11 +294,8 @@ template <> struct GraphTraits<const Type*> {
   }
 };
 
-template <> inline bool isa<PointerType, const Type*>(const Type *Ty) { 
-  return Ty->getPrimitiveID() == Type::PointerTyID;
-}
-template <> inline bool isa<PointerType, Type*>(Type *Ty) { 
-  return Ty->getPrimitiveID() == Type::PointerTyID;
+template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) { 
+  return Ty.getPrimitiveID() == Type::PointerTyID;
 }
 
 #endif

@@ -23,7 +23,7 @@ public:
   BasicBlock *getExitNode() const { return ExitNode; }
 
   virtual const char *getPassName() const { return "Unify Function Exit Nodes";}
-  virtual bool runOnFunction(Function *F);
+  virtual bool runOnFunction(Function &F);
   virtual void getAnalysisUsage(AnalysisUsage &AU) const { AU.addProvided(ID); }
 };
 

@@ -13,31 +13,59 @@
 #define LLVM_FUNCTION_H
 
 #include "llvm/GlobalValue.h"
-#include "llvm/ValueHolder.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Argument.h"
 
 class FunctionType;
 
+// Traits for intrusive list of instructions...
+template<> struct ilist_traits<BasicBlock>
+  : public SymbolTableListTraits<BasicBlock, Function, Function> {
+
+  // createNode is used to create a node that marks the end of the list...
+  static BasicBlock *createNode() { return new BasicBlock(); }
+
+  static iplist<BasicBlock> &getList(Function *F);
+};
+
+template<> struct ilist_traits<Argument>
+  : public SymbolTableListTraits<Argument, Function, Function> {
+
+  // createNode is used to create a node that marks the end of the list...
+  static Argument *createNode();
+  static iplist<Argument> &getList(Function *F);
+};
+
 class Function : public GlobalValue {
 public:
-  typedef ValueHolder<Argument  , Function, Function> ArgumentListType;
-  typedef ValueHolder<BasicBlock, Function, Function> BasicBlocksType;
+  typedef iplist<Argument> ArgumentListType;
+  typedef iplist<BasicBlock> BasicBlockListType;
 
   // BasicBlock iterators...
-  typedef BasicBlocksType::iterator iterator;
-  typedef BasicBlocksType::const_iterator const_iterator;
+  typedef BasicBlockListType::iterator iterator;
+  typedef BasicBlockListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
+
+  typedef ArgumentListType::iterator aiterator;
+  typedef ArgumentListType::const_iterator const_aiterator;
+  typedef std::reverse_iterator<const_aiterator> const_reverse_aiterator;
+  typedef std::reverse_iterator<aiterator>             reverse_aiterator;
 
 private:
 
   // Important things that make up a function!
-  BasicBlocksType  BasicBlocks;         // The basic blocks
+  BasicBlockListType  BasicBlocks;         // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
 
   SymbolTable *SymTab, *ParentSymTab;
   
-  friend class ValueHolder<Function, Module, Module>;
+  friend class SymbolTableListTraits<Function, Module, Module>;
+
   void setParent(Module *parent);
+  Function *Prev, *Next;
+  void setNext(Function *N) { Next = N; }
+  void setPrev(Function *N) { Prev = N; }
 
 public:
   Function(const FunctionType *Ty, bool isInternal, const std::string &N = "");
@@ -53,17 +81,24 @@ public:
   // this is true for external functions, defined as forward "declare"ations
   bool isExternal() const { return BasicBlocks.empty(); }
 
+  // getNext/Prev - Return the next or previous instruction in the list.  The
+  // last node in the list is a terminator instruction.
+        Function *getNext()       { return Next; }
+  const Function *getNext() const { return Next; }
+        Function *getPrev()       { return Prev; }
+  const Function *getPrev() const { return Prev; }
+
   // Get the underlying elements of the Function... both the argument list and
   // basic block list are empty for external functions.
   //
-  inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }
-  inline       ArgumentListType &getArgumentList()      { return ArgumentList; }
+  const ArgumentListType &getArgumentList() const { return ArgumentList; }
+        ArgumentListType &getArgumentList()       { return ArgumentList; }
 
-  inline const BasicBlocksType  &getBasicBlocks() const { return BasicBlocks; }
-  inline       BasicBlocksType  &getBasicBlocks()       { return BasicBlocks; }
+  const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
+        BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
 
-  inline const BasicBlock       *getEntryNode() const   { return front(); }
-  inline       BasicBlock       *getEntryNode()         { return front(); }
+  const BasicBlock       &getEntryNode() const   { return front(); }
+        BasicBlock       &getEntryNode()         { return front(); }
 
   //===--------------------------------------------------------------------===//
   // Symbol Table Accessing functions...
@@ -89,22 +124,42 @@ public:
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions
   //
-  inline iterator                begin()       { return BasicBlocks.begin(); }
-  inline const_iterator          begin() const { return BasicBlocks.begin(); }
-  inline iterator                end  ()       { return BasicBlocks.end();   }
-  inline const_iterator          end  () const { return BasicBlocks.end();   }
+  iterator                begin()       { return BasicBlocks.begin(); }
+  const_iterator          begin() const { return BasicBlocks.begin(); }
+  iterator                end  ()       { return BasicBlocks.end();   }
+  const_iterator          end  () const { return BasicBlocks.end();   }
 
-  inline reverse_iterator       rbegin()       { return BasicBlocks.rbegin(); }
-  inline const_reverse_iterator rbegin() const { return BasicBlocks.rbegin(); }
-  inline reverse_iterator       rend  ()       { return BasicBlocks.rend();   }
-  inline const_reverse_iterator rend  () const { return BasicBlocks.rend();   }
+  reverse_iterator       rbegin()       { return BasicBlocks.rbegin(); }
+  const_reverse_iterator rbegin() const { return BasicBlocks.rbegin(); }
+  reverse_iterator       rend  ()       { return BasicBlocks.rend();   }
+  const_reverse_iterator rend  () const { return BasicBlocks.rend();   }
 
-  inline unsigned                 size() const { return BasicBlocks.size(); }
-  inline bool                    empty() const { return BasicBlocks.empty(); }
-  inline const BasicBlock       *front() const { return BasicBlocks.front(); }
-  inline       BasicBlock       *front()       { return BasicBlocks.front(); }
-  inline const BasicBlock        *back() const { return BasicBlocks.back(); }
-  inline       BasicBlock        *back()       { return BasicBlocks.back(); }
+  unsigned                 size() const { return BasicBlocks.size(); }
+  bool                    empty() const { return BasicBlocks.empty(); }
+  const BasicBlock       &front() const { return BasicBlocks.front(); }
+        BasicBlock       &front()       { return BasicBlocks.front(); }
+  const BasicBlock        &back() const { return BasicBlocks.back(); }
+        BasicBlock        &back()       { return BasicBlocks.back(); }
+
+  //===--------------------------------------------------------------------===//
+  // Argument iterator forwarding functions
+  //
+  aiterator                abegin()       { return ArgumentList.begin(); }
+  const_aiterator          abegin() const { return ArgumentList.begin(); }
+  aiterator                aend  ()       { return ArgumentList.end();   }
+  const_aiterator          aend  () const { return ArgumentList.end();   }
+
+  reverse_aiterator       arbegin()       { return ArgumentList.rbegin(); }
+  const_reverse_aiterator arbegin() const { return ArgumentList.rbegin(); }
+  reverse_aiterator       arend  ()       { return ArgumentList.rend();   }
+  const_reverse_aiterator arend  () const { return ArgumentList.rend();   }
+
+  unsigned                 asize() const { return ArgumentList.size(); }
+  bool                    aempty() const { return ArgumentList.empty(); }
+  const Argument       &afront() const { return ArgumentList.front(); }
+        Argument       &afront()       { return ArgumentList.front(); }
+  const Argument        &aback() const { return ArgumentList.back(); }
+        Argument        &aback()       { return ArgumentList.back(); }
 
   virtual void print(std::ostream &OS) const;
 

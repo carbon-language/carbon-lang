@@ -24,7 +24,7 @@ enum LiveVarDebugLevel_t {
 extern LiveVarDebugLevel_t DEBUG_LV;
 
 class BBLiveVar : public Annotation {
-  const BasicBlock *BB;         // pointer to BasicBlock
+  const BasicBlock &BB;         // pointer to BasicBlock
   unsigned POID;                // Post-Order ID
 
   ValueSet DefSet;              // Def set (with no preceding uses) for LV analysis
@@ -49,12 +49,12 @@ class BBLiveVar : public Annotation {
 
   void calcDefUseSets();         // calculates the Def & Use sets for this BB
 
-  BBLiveVar(const BasicBlock *BB, unsigned POID);
+  BBLiveVar(const BasicBlock &BB, unsigned POID);
   ~BBLiveVar() {}                // make dtor private
  public:
-  static BBLiveVar *CreateOnBB(const BasicBlock *BB, unsigned POID);
-  static BBLiveVar *GetFromBB(const BasicBlock *BB);
-  static void RemoveFromBB(const BasicBlock *BB);
+  static BBLiveVar *CreateOnBB(const BasicBlock &BB, unsigned POID);
+  static BBLiveVar *GetFromBB(const BasicBlock &BB);
+  static void RemoveFromBB(const BasicBlock &BB);
 
   inline bool isInSetChanged() const  { return InSetChanged; }    
   inline bool isOutSetChanged() const { return OutSetChanged; }

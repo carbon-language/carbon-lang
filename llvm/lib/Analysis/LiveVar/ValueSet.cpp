@@ -6,13 +6,13 @@
 #include <iostream>
 
 std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value 
-  const Value *v = V.V;
-  if (v->hasName())
-    return O << (void*)v << "(" << v->getName() << ") ";
+  const Value &v = V.V;
+  if (v.hasName())
+    return O << (void*)&v << "(" << v.getName() << ") ";
   else if (isa<Constant>(v))
-    return O << (void*)v << "(" << v << ") ";
+    return O << (void*)&v << "(" << v << ") ";
   else
-    return O << (void*)v << " ";
+    return O << (void*)&v << " ";
 }
 
 void printSet(const ValueSet &S) {

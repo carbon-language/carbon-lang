@@ -36,10 +36,9 @@ static inline void RemapInstruction(Instruction *I,
 //
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        const std::vector<Value*> &ArgMap) {
-  assert(OldFunc->getArgumentList().empty() ||
-         !NewFunc->getArgumentList().empty() &&
+  assert(OldFunc->aempty() || !NewFunc->aempty() &&
          "Synthesization of arguments is not implemented yet!");
-  assert(OldFunc->getArgumentList().size() == ArgMap.size() &&
+  assert(OldFunc->asize() == ArgMap.size() &&
          "Improper number of argument values to map specified!");
   
   // Keep a mapping between the original function's values and the new
@@ -49,8 +48,10 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   std::map<const Value *, Value*> ValueMap;
 
   // Add all of the function arguments to the mapping...
-  for (unsigned i = 0, e = ArgMap.size(); i != e; ++i)
-    ValueMap[(Value*)OldFunc->getArgumentList()[i]] = ArgMap[i];
+  unsigned i = 0;
+  for (Function::const_aiterator I = OldFunc->abegin(), E = OldFunc->aend();
+       I != E; ++I, ++i)
+    ValueMap[I] = ArgMap[i];
 
 
   // Loop over all of the basic blocks in the function, cloning them as
@@ -58,33 +59,32 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   //
   for (Function::const_iterator BI = OldFunc->begin(), BE = OldFunc->end();
        BI != BE; ++BI) {
-    const BasicBlock *BB = *BI;
-    assert(BB->getTerminator() && "BasicBlock doesn't have terminator!?!?");
+    const BasicBlock &BB = *BI;
+    assert(BB.getTerminator() && "BasicBlock doesn't have terminator!?!?");
     
     // Create a new basic block to copy instructions into!
-    BasicBlock *CBB = new BasicBlock(BB->getName(), NewFunc);
-    ValueMap[BB] = CBB;                       // Add basic block mapping.
+    BasicBlock *CBB = new BasicBlock(BB.getName(), NewFunc);
+    ValueMap[&BB] = CBB;                       // Add basic block mapping.
 
     // Loop over all instructions copying them over...
-    for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
+    for (BasicBlock::const_iterator II = BB.begin(), IE = BB.end();
          II != IE; ++II) {
-      Instruction *NewInst = (*II)->clone();
-      NewInst->setName((*II)->getName());       // Name is not cloned...
+      Instruction *NewInst = II->clone();
+      NewInst->setName(II->getName());       // Name is not cloned...
       CBB->getInstList().push_back(NewInst);
-      ValueMap[*II] = NewInst;                  // Add instruction map to value.
+      ValueMap[II] = NewInst;                // Add instruction map to value.
     }
   }
 
   // Loop over all of the instructions in the function, fixing up operand 
   // references as we go.  This uses ValueMap to do all the hard work.
   //
-  for (Function::const_iterator BI = OldFunc->begin(), BE = OldFunc->end();
-       BI != BE; ++BI) {
-    const BasicBlock *BB = *BI;
+  for (Function::const_iterator BB = OldFunc->begin(), BE = OldFunc->end();
+       BB != BE; ++BB) {
     BasicBlock *NBB = cast<BasicBlock>(ValueMap[BB]);
     
     // Loop over all instructions, fixing each one as we find it...
-    for (BasicBlock::iterator II = NBB->begin(); II != NBB->end(); II++)
-      RemapInstruction(*II, ValueMap);
+    for (BasicBlock::iterator II = NBB->begin(); II != NBB->end(); ++II)
+      RemapInstruction(II, ValueMap);
   }
 }

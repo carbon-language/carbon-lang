@@ -46,7 +46,7 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 
   // Loop over all of the PHI nodes in the successor BB
   for (BasicBlock::iterator I = Succ->begin();
-       PHINode *PN = dyn_cast<PHINode>(*I); ++I) {
+       PHINode *PN = dyn_cast<PHINode>(&*I); ++I) {
     Value *OldVal = PN->removeIncomingValue(BB);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
@@ -69,13 +69,12 @@ static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 //
 // WARNING:  The entry node of a function may not be simplified.
 //
-bool SimplifyCFG(Function::iterator &BBIt) {
-  BasicBlock *BB = *BBIt;
+bool SimplifyCFG(BasicBlock *BB) {
   Function *M = BB->getParent();
 
   assert(BB && BB->getParent() && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
-  assert(BB->getParent()->front() != BB && "Can't Simplify entry block!");
+  assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
 
 
   // Remove basic blocks that have no predecessors... which are unreachable.
@@ -89,20 +88,20 @@ bool SimplifyCFG(Function::iterator &BBIt) {
 	     std::bind2nd(std::mem_fun(&BasicBlock::removePredecessor), BB));
 
     while (!BB->empty()) {
-      Instruction *I = BB->back();
+      Instruction &I = BB->back();
       // If this instruction is used, replace uses with an arbitrary
       // constant value.  Because control flow can't get here, we don't care
       // what we replace the value with.  Note that since this block is 
       // unreachable, and all values contained within it must dominate their
       // uses, that all uses will eventually be removed.
-      if (!I->use_empty()) 
+      if (!I.use_empty()) 
         // Make all users of this instruction reference the constant instead
-        I->replaceAllUsesWith(Constant::getNullValue(I->getType()));
+        I.replaceAllUsesWith(Constant::getNullValue(I.getType()));
       
       // Remove the instruction from the basic block
-      delete BB->getInstList().pop_back();
+      BB->getInstList().pop_back();
     }
-    delete M->getBasicBlocks().remove(BBIt);
+    M->getBasicBlockList().erase(BB);
     return true;
   }
 
@@ -110,7 +109,7 @@ bool SimplifyCFG(Function::iterator &BBIt) {
   // successor.  If so, replace block references with successor.
   succ_iterator SI(succ_begin(BB));
   if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
-    if (BB->front()->isTerminator()) {   // Terminator is the only instruction!
+    if (BB->front().isTerminator()) {   // Terminator is the only instruction!
       BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
      
       if (Succ != BB) {   // Arg, don't hurt infinite loops!
@@ -125,11 +124,13 @@ bool SimplifyCFG(Function::iterator &BBIt) {
           //cerr << "Killing Trivial BB: \n" << BB;
 
           BB->replaceAllUsesWith(Succ);
-          BB = M->getBasicBlocks().remove(BBIt);
+          std::string OldName = BB->getName();
+
+          // Delete the old basic block...
+          M->getBasicBlockList().erase(BB);
 	
-          if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
-            Succ->setName(BB->getName());
-          delete BB;                              // Delete basic block
+          if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
+            Succ->setName(OldName);
           
           //cerr << "Function after removal: \n" << M;
           return true;
@@ -168,28 +169,24 @@ bool SimplifyCFG(Function::iterator &BBIt) {
       TerminatorInst *Term = OnlyPred->getTerminator();
 
       // Delete the unconditional branch from the predecessor...
-      BasicBlock::iterator DI = OnlyPred->end();
-      delete OnlyPred->getInstList().remove(--DI);       // Destroy branch
+      OnlyPred->getInstList().pop_back();
       
       // Move all definitions in the succecessor to the predecessor...
-      std::vector<Instruction*> Insts(BB->begin(), BB->end());
-      BB->getInstList().remove(BB->begin(), BB->end());
-      OnlyPred->getInstList().insert(OnlyPred->end(),
-                                     Insts.begin(), Insts.end());
-      
-      // Remove basic block from the function... and advance iterator to the
-      // next valid block...
-      M->getBasicBlocks().remove(BBIt);
-
+      OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
+                                     
       // Make all PHI nodes that refered to BB now refer to Pred as their
       // source...
       BB->replaceAllUsesWith(OnlyPred);
-      
+
+      std::string OldName = BB->getName();
+
+      // Erase basic block from the function... 
+      M->getBasicBlockList().erase(BB);
+
       // Inherit predecessors name if it exists...
-      if (BB->hasName() && !OnlyPred->hasName())
-        OnlyPred->setName(BB->getName());
+      if (!OldName.empty() && !OnlyPred->hasName())
+        OnlyPred->setName(OldName);
       
-      delete BB; // You ARE the weakest link... goodbye
       return true;
     }
   }

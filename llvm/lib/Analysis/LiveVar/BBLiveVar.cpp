@@ -18,23 +18,23 @@ using std::cerr;
 
 static AnnotationID AID(AnnotationManager::getID("Analysis::BBLiveVar"));
 
-BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock *BB, unsigned POID) {
+BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock &BB, unsigned POID) {
   BBLiveVar *Result = new BBLiveVar(BB, POID);
-  BB->addAnnotation(Result);
+  BB.addAnnotation(Result);
   return Result;
 }
 
-BBLiveVar *BBLiveVar::GetFromBB(const BasicBlock *BB) {
-  return (BBLiveVar*)BB->getAnnotation(AID);
+BBLiveVar *BBLiveVar::GetFromBB(const BasicBlock &BB) {
+  return (BBLiveVar*)BB.getAnnotation(AID);
 }
 
-void BBLiveVar::RemoveFromBB(const BasicBlock *BB) {
-  bool Deleted = BB->deleteAnnotation(AID);
+void BBLiveVar::RemoveFromBB(const BasicBlock &BB) {
+  bool Deleted = BB.deleteAnnotation(AID);
   assert(Deleted && "BBLiveVar annotation did not exist!");
 }
 
 
-BBLiveVar::BBLiveVar(const BasicBlock *bb, unsigned id)
+BBLiveVar::BBLiveVar(const BasicBlock &bb, unsigned id)
   : Annotation(AID), BB(bb), POID(id) {
   InSetChanged = OutSetChanged = false;
 
@@ -50,7 +50,7 @@ BBLiveVar::BBLiveVar(const BasicBlock *bb, unsigned id)
 
 void BBLiveVar::calcDefUseSets() {
   // get the iterator for machine instructions
-  const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
+  const MachineCodeForBasicBlock &MIVec = BB.getMachineInstrVec();
 
   // iterate over all the machine instructions in BB
   for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
@@ -129,7 +129,7 @@ void BBLiveVar::calcDefUseSets() {
 //-----------------------------------------------------------------------------
 // To add an operand which is a def
 //-----------------------------------------------------------------------------
-void  BBLiveVar::addDef(const Value *Op) {
+void BBLiveVar::addDef(const Value *Op) {
   DefSet.insert(Op);     // operand is a def - so add to def set
   InSet.erase(Op);       // this definition kills any later uses
   InSetChanged = true; 
@@ -211,9 +211,9 @@ bool BBLiveVar::applyFlowFunc() {
   //
   bool needAnotherIt = false;  
 
-  for (pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
+  for (pred_const_iterator PI = pred_begin(&BB), PE = pred_end(&BB);
        PI != PE ; ++PI) {
-    BBLiveVar *PredLVBB = BBLiveVar::GetFromBB(*PI);
+    BBLiveVar *PredLVBB = BBLiveVar::GetFromBB(**PI);
 
     // do set union
     if (setPropagate(&PredLVBB->OutSet, &InSet, *PI)) {  

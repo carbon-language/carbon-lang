@@ -17,13 +17,12 @@
 // them together...
 //
 bool doConstantPropogation(BasicBlock::iterator &II) {
-  Instruction *Inst = *II;
-  if (Constant *C = ConstantFoldInstruction(Inst)) {
+  if (Constant *C = ConstantFoldInstruction(II)) {
     // Replaces all of the uses of a variable with uses of the constant.
-    Inst->replaceAllUsesWith(C);
+    II->replaceAllUsesWith(C);
     
     // Remove the instruction from the basic block...
-    delete Inst->getParent()->getInstList().remove(II);
+    II = II->getParent()->getInstList().erase(II);
     return true;
   }
 
@@ -102,9 +101,8 @@ bool isInstructionTriviallyDead(Instruction *I) {
 //
 bool dceInstruction(BasicBlock::iterator &BBI) {
   // Look for un"used" definitions...
-  Instruction *I = *BBI;
-  if (isInstructionTriviallyDead(I)) {
-    delete I->getParent()->getInstList().remove(BBI);   // Bye bye
+  if (isInstructionTriviallyDead(BBI)) {
+    BBI = BBI->getParent()->getInstList().erase(BBI);   // Bye bye
     return true;
   }
   return false;

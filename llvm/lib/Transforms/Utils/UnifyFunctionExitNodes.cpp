@@ -24,14 +24,14 @@ AnalysisID UnifyFunctionExitNodes::ID(AnalysisID::create<UnifyFunctionExitNodes>
 //
 // If there are no return stmts in the Function, a null pointer is returned.
 //
-bool UnifyFunctionExitNodes::runOnFunction(Function *M) {
+bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //
   vector<BasicBlock*> ReturningBlocks;
-  for(Function::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (isa<ReturnInst>((*I)->getTerminator()))
-      ReturningBlocks.push_back(*I);
+  for(Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (isa<ReturnInst>(I->getTerminator()))
+      ReturningBlocks.push_back(I);
 
   if (ReturningBlocks.empty()) {
     ExitNode = 0;
@@ -45,11 +45,11 @@ bool UnifyFunctionExitNodes::runOnFunction(Function *M) {
   // node (if the function returns a value), and convert all of the return 
   // instructions into unconditional branches.
   //
-  BasicBlock *NewRetBlock = new BasicBlock("UnifiedExitNode", M);
+  BasicBlock *NewRetBlock = new BasicBlock("UnifiedExitNode", &F);
 
-  if (M->getReturnType() != Type::VoidTy) {
+  if (F.getReturnType() != Type::VoidTy) {
     // If the function doesn't return void... add a PHI node to the block...
-    PHINode *PN = new PHINode(M->getReturnType(), "UnifiedRetVal");
+    PHINode *PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
 
     // Add an incoming element to the PHI node for every return instruction that
@@ -70,7 +70,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function *M) {
   //
   for (vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
                                      E = ReturningBlocks.end(); I != E; ++I) {
-    delete (*I)->getInstList().pop_back();  // Remove the return insn
+    (*I)->getInstList().pop_back();  // Remove the return insn
     (*I)->getInstList().push_back(new BranchInst(NewRetBlock));
   }
   ExitNode = NewRetBlock;

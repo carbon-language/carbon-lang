@@ -8,7 +8,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
@@ -18,6 +17,7 @@
 bool AllocDSNode::isEquivalentTo(DSNode *Node) const {
   if (AllocDSNode *N = dyn_cast<AllocDSNode>(Node))
     return getType() == Node->getType();
+  //&& isAllocaNode() == N->isAllocaNode();
   return false;
 }
 
@@ -423,12 +423,11 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
 
   // Convert over the arguments...
   Function *OF = DSG.getFunction();
-  for (Function::ArgumentListType::iterator I = OF->getArgumentList().begin(),
-         E = OF->getArgumentList().end(); I != E; ++I)
-    if (isa<PointerType>(((Value*)*I)->getType())) {
+  for (Function::aiterator I = OF->abegin(), E = OF->aend(); I != E; ++I)
+    if (isa<PointerType>(I->getType())) {
       PointerValSet ArgPVS;
-      assert(DSG.getValueMap().find((Value*)*I) != DSG.getValueMap().end());
-      MapPVS(ArgPVS, DSG.getValueMap().find((Value*)*I)->second, NodeMap);
+      assert(DSG.getValueMap().find(I) != DSG.getValueMap().end());
+      MapPVS(ArgPVS, DSG.getValueMap().find(I)->second, NodeMap);
       assert(!ArgPVS.empty() && "Argument has no links!");
       Args.push_back(ArgPVS);
     }

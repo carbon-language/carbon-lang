@@ -20,23 +20,37 @@
 #ifndef LLVM_BASICBLOCK_H
 #define LLVM_BASICBLOCK_H
 
-#include "llvm/ValueHolder.h"
-#include "llvm/Value.h"
+#include "llvm/Instruction.h"
+#include "llvm/SymbolTableListTraits.h"
+#include "Support/ilist"
 
 class TerminatorInst;
 class MachineCodeForBasicBlock;
 template <class _Term, class _BB> class SuccIterator;  // Successor Iterator
 template <class _Ptr, class _USE_iterator> class PredIterator;
 
+template<> struct ilist_traits<Instruction>
+  : public SymbolTableListTraits<Instruction, BasicBlock, Function> {
+  // createNode is used to create a node that marks the end of the list...
+  static Instruction *createNode();
+  static iplist<Instruction> &getList(BasicBlock *BB);
+};
+
 class BasicBlock : public Value {       // Basic blocks are data objects also
 public:
-  typedef ValueHolder<Instruction, BasicBlock, Function> InstListType;
+  typedef iplist<Instruction> InstListType;
 private :
   InstListType InstList;
   MachineCodeForBasicBlock* machineInstrVec;
+  BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
 
-  friend class ValueHolder<BasicBlock,Function,Function>;
-  void setParent(Function *parent);
+  void setParent(Function *parent) { InstList.setParent(parent); }
+  void setNext(BasicBlock *N) { Next = N; }
+  void setPrev(BasicBlock *N) { Prev = N; }
+  friend class SymbolTableListTraits<BasicBlock, Function, Function>;
+
+  BasicBlock(const BasicBlock &);     // Do not implement
+  void operator=(const BasicBlock &); // Do not implement
 
 public:
   // Instruction iterators...
@@ -55,6 +69,12 @@ public:
   // getParent - Return the enclosing method, or null if none
   const Function *getParent() const { return InstList.getParent(); }
         Function *getParent()       { return InstList.getParent(); }
+
+  // getNext/Prev - Return the next or previous basic block in the list.
+        BasicBlock *getNext()       { return Next; }
+  const BasicBlock *getNext() const { return Next; }
+        BasicBlock *getPrev()       { return Prev; }
+  const BasicBlock *getPrev() const { return Prev; }
 
   // getTerminator() - If this is a well formed basic block, then this returns
   // a pointer to the terminator instruction.  If it is not, then you get a null
@@ -93,10 +113,10 @@ public:
 
   inline unsigned                 size() const { return InstList.size(); }
   inline bool                    empty() const { return InstList.empty(); }
-  inline const Instruction      *front() const { return InstList.front(); }
-  inline       Instruction      *front()       { return InstList.front(); }
-  inline const Instruction       *back()  const { return InstList.back(); }
-  inline       Instruction       *back()        { return InstList.back(); }
+  inline const Instruction      &front() const { return InstList.front(); }
+  inline       Instruction      &front()       { return InstList.front(); }
+  inline const Instruction       &back()  const { return InstList.back(); }
+  inline       Instruction       &back()        { return InstList.back(); }
 
   // getInstList() - Return the underlying instruction list container.  You need
   // to access it directly if you want to modify it currently.

@@ -33,12 +33,12 @@ static cl::Enum<LiveVarDebugLevel_t> DEBUG_LV_opt(DEBUG_LV, "dlivevar", cl::Hidd
 
 // gets OutSet of a BB
 const ValueSet &FunctionLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
-  return BBLiveVar::GetFromBB(BB)->getOutSet();
+  return BBLiveVar::GetFromBB(*BB)->getOutSet();
 }
 
 // gets InSet of a BB
 const ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
-  return BBLiveVar::GetFromBB(BB)->getInSet();
+  return BBLiveVar::GetFromBB(*BB)->getInSet();
 }
 
 
@@ -46,15 +46,15 @@ const ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
 // Performs live var analysis for a function
 //-----------------------------------------------------------------------------
 
-bool FunctionLiveVarInfo::runOnFunction(Function *Meth) {
-  M = Meth;
+bool FunctionLiveVarInfo::runOnFunction(Function &F) {
+  M = &F;
   if (DEBUG_LV) std::cerr << "Analysing live variables ...\n";
 
   // create and initialize all the BBLiveVars of the CFG
-  constructBBs(Meth);
+  constructBBs(M);
 
   unsigned int iter=0;
-  while (doSingleBackwardPass(Meth, iter++))
+  while (doSingleBackwardPass(M, iter++))
     ; // Iterate until we are done.
   
   if (DEBUG_LV) std::cerr << "Live Variable Analysis complete!\n";
@@ -71,7 +71,7 @@ void FunctionLiveVarInfo::constructBBs(const Function *M) {
   
   for(po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
       BBI != BBE; ++BBI, ++POId) { 
-    const BasicBlock *BB = *BBI;        // get the current BB 
+    const BasicBlock &BB = **BBI;        // get the current BB 
 
     if (DEBUG_LV) std::cerr << " For BB " << RAV(BB) << ":\n";
 
@@ -105,7 +105,7 @@ bool FunctionLiveVarInfo::doSingleBackwardPass(const Function *M,
   bool NeedAnotherIteration = false;
   for (po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
        BBI != BBE; ++BBI) {
-    BBLiveVar *LVBB = BBLiveVar::GetFromBB(*BBI);
+    BBLiveVar *LVBB = BBLiveVar::GetFromBB(**BBI);
     assert(LVBB && "BasicBlock information not set for block!");
 
     if (DEBUG_LV) std::cerr << " For BB " << (*BBI)->getName() << ":\n";

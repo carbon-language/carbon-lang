@@ -96,20 +96,20 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
   }
 
   // Check to see if it's a constant that we are interesting in transforming...
-  if (Constant *CPV = dyn_cast<Constant>(In)) {
+  if (const Constant *CPV = dyn_cast<Constant>(In)) {
     if (!isa<DerivedType>(CPV->getType()))
-      return CPV;              // Simple constants stay identical...
+      return const_cast<Constant*>(CPV);   // Simple constants stay identical...
 
     Constant *Result = 0;
 
-    if (ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
+    if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
       const std::vector<Use> &Ops = CPA->getValues();
       std::vector<Constant*> Operands(Ops.size());
       for (unsigned i = 0; i < Ops.size(); ++i)
         Operands[i] = 
           cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
       Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
-    } else if (ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
+    } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
       const std::vector<Use> &Ops = CPS->getValues();
       std::vector<Constant*> Operands(Ops.size());
       for (unsigned i = 0; i < Ops.size(); ++i)
@@ -117,8 +117,9 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
           cast<Constant>(RemapOperand(Ops[i], LocalMap, GlobalMap));
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV)) {
-      Result = CPV;
-    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
+      Result = const_cast<Constant*>(CPV);
+    } else if (const ConstantPointerRef *CPR =
+                      dyn_cast<ConstantPointerRef>(CPV)) {
       Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
       Result = ConstantPointerRef::get(cast<GlobalValue>(V));
     } else {
@@ -126,7 +127,7 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     }
 
     // Cache the mapping in our local map structure...
-    LocalMap.insert(std::make_pair(In, CPV));
+    LocalMap.insert(std::make_pair(In, const_cast<Constant*>(CPV)));
     return Result;
   }
 
@@ -158,7 +159,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   // Loop over all of the globals in the src module, mapping them over as we go
   //
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
-    const GlobalVariable *SGV = *I;
+    const GlobalVariable *SGV = I;
     Value *V;
 
     // If the global variable has a name, and that name is already in use in the
@@ -211,7 +212,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
   // Loop over all of the globals in the src module, mapping them over as we go
   //
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
-    const GlobalVariable *SGV = *I;
+    const GlobalVariable *SGV = I;
 
     if (SGV->hasInitializer()) {      // Only process initialized GV's
       // Figure out what the initializer looks like in the dest module...
@@ -249,41 +250,41 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   // go
   //
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const Function *SM = *I;   // SrcFunction
+    const Function *SF = I;   // SrcFunction
     Value *V;
 
     // If the function has a name, and that name is already in use in the Dest
     // module, make sure that the name is a compatible function...
     //
-    if (SM->hasExternalLinkage() && SM->hasName() &&
-	(V = ST->lookup(SM->getType(), SM->getName())) &&
+    if (SF->hasExternalLinkage() && SF->hasName() &&
+	(V = ST->lookup(SF->getType(), SF->getName())) &&
 	cast<Function>(V)->hasExternalLinkage()) {
       // The same named thing is a Function, because the only two things
       // that may be in a module level symbol table are Global Vars and
       // Functions, and they both have distinct, nonoverlapping, possible types.
       // 
-      Function *DM = cast<Function>(V);   // DestFunction
+      Function *DF = cast<Function>(V);   // DestFunction
 
       // Check to make sure the function is not defined in both modules...
-      if (!SM->isExternal() && !DM->isExternal())
+      if (!SF->isExternal() && !DF->isExternal())
         return Error(Err, "Function '" + 
-                     SM->getFunctionType()->getDescription() + "':\"" + 
-                     SM->getName() + "\" - Function is already defined!");
+                     SF->getFunctionType()->getDescription() + "':\"" + 
+                     SF->getName() + "\" - Function is already defined!");
 
       // Otherwise, just remember this mapping...
-      ValueMap.insert(std::make_pair(SM, DM));
+      ValueMap.insert(std::make_pair(SF, DF));
     } else {
       // Function does not already exist, simply insert an external function
-      // signature identical to SM into the dest module...
-      Function *DM = new Function(SM->getFunctionType(),
-                                  SM->hasInternalLinkage(),
-                                  SM->getName());
+      // signature identical to SF into the dest module...
+      Function *DF = new Function(SF->getFunctionType(),
+                                  SF->hasInternalLinkage(),
+                                  SF->getName());
 
       // Add the function signature to the dest module...
-      Dest->getFunctionList().push_back(DM);
+      Dest->getFunctionList().push_back(DF);
 
       // ... and remember this mapping...
-      ValueMap.insert(std::make_pair(SM, DM));
+      ValueMap.insert(std::make_pair(SF, DF));
     }
   }
   return false;
@@ -300,27 +301,22 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
   map<const Value*, Value*> LocalMap;   // Map for function local values
 
   // Go through and convert function arguments over...
-  for (Function::ArgumentListType::const_iterator 
-         I = Src->getArgumentList().begin(),
-         E = Src->getArgumentList().end(); I != E; ++I) {
-    const Argument *SMA = *I;
-
+  for (Function::const_aiterator I = Src->abegin(), E = Src->aend();
+       I != E; ++I) {
     // Create the new function argument and add to the dest function...
-    Argument *DMA = new Argument(SMA->getType(), SMA->getName());
-    Dest->getArgumentList().push_back(DMA);
+    Argument *DFA = new Argument(I->getType(), I->getName());
+    Dest->getArgumentList().push_back(DFA);
 
     // Add a mapping to our local map
-    LocalMap.insert(std::make_pair(SMA, DMA));
+    LocalMap.insert(std::make_pair(I, DFA));
   }
 
   // Loop over all of the basic blocks, copying the instructions over...
   //
   for (Function::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const BasicBlock *SBB = *I;
-
     // Create new basic block and add to mapping and the Dest function...
-    BasicBlock *DBB = new BasicBlock(SBB->getName(), Dest);
-    LocalMap.insert(std::make_pair(SBB, DBB));
+    BasicBlock *DBB = new BasicBlock(I->getName(), Dest);
+    LocalMap.insert(std::make_pair(I, DBB));
 
     // Loop over all of the instructions in the src basic block, copying them
     // over.  Note that this is broken in a strict sense because the cloned
@@ -328,13 +324,12 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
     // the remapped values.  In our case, however, we will not get caught and 
     // so we can delay patching the values up until later...
     //
-    for (BasicBlock::const_iterator II = SBB->begin(), IE = SBB->end(); 
+    for (BasicBlock::const_iterator II = I->begin(), IE = I->end(); 
          II != IE; ++II) {
-      const Instruction *SI = *II;
-      Instruction *DI = SI->clone();
-      DI->setName(SI->getName());
+      Instruction *DI = II->clone();
+      DI->setName(II->getName());
       DBB->getInstList().push_back(DI);
-      LocalMap.insert(std::make_pair(SI, DI));
+      LocalMap.insert(std::make_pair(II, DI));
     }
   }
 
@@ -343,17 +338,11 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
   // the Source function as operands.  Loop through all of the operands of the
   // functions and patch them up to point to the local versions...
   //
-  for (Function::iterator BI = Dest->begin(), BE = Dest->end();
-       BI != BE; ++BI) {
-    BasicBlock *BB = *BI;
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      Instruction *Inst = *I;
-      
-      for (Instruction::op_iterator OI = Inst->op_begin(), OE = Inst->op_end();
+  for (Function::iterator BB = Dest->begin(), BE = Dest->end(); BB != BE; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
         *OI = RemapOperand(*OI, LocalMap, &GlobalMap);
-    }
-  }
 
   return false;
 }
@@ -370,20 +359,19 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
   // Loop over all of the functions in the src module, mapping them over as we
   // go
   //
-  for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    const Function *SM = *I;                  // Source Function
-    if (!SM->isExternal()) {                  // No body if function is external
-      Function *DM = cast<Function>(ValueMap[SM]); // Destination function
+  for (Module::const_iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF){
+    if (!SF->isExternal()) {                  // No body if function is external
+      Function *DF = cast<Function>(ValueMap[SF]); // Destination function
 
-      // DM not external SM external?
-      if (!DM->isExternal()) {
+      // DF not external SF external?
+      if (!DF->isExternal()) {
         if (Err)
-          *Err = "Function '" + (SM->hasName() ? SM->getName() : string("")) +
+          *Err = "Function '" + (SF->hasName() ? SF->getName() : string("")) +
                  "' body multiply defined!";
         return true;
       }
 
-      if (LinkFunctionBody(DM, SM, ValueMap, Err)) return true;
+      if (LinkFunctionBody(DF, SF, ValueMap, Err)) return true;
     }
   }
   return false;

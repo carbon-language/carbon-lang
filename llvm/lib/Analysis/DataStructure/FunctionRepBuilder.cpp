@@ -68,12 +68,12 @@ void InitVisitor::visitOperand(Value *V) {
 // node if the call returns a pointer value.  Check to see if the call node
 // uses any global variables...
 //
-void InitVisitor::visitCallInst(CallInst *CI) {
-  CallDSNode *C = new CallDSNode(CI);
+void InitVisitor::visitCallInst(CallInst &CI) {
+  CallDSNode *C = new CallDSNode(&CI);
   Rep->CallNodes.push_back(C);
-  Rep->CallMap[CI] = C;
+  Rep->CallMap[&CI] = C;
       
-  if (PointerType *PT = dyn_cast<PointerType>(CI->getType())) {
+  if (const PointerType *PT = dyn_cast<PointerType>(CI.getType())) {
     // Create a critical shadow node to represent the memory object that the
     // return value points to...
     ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
@@ -86,17 +86,17 @@ void InitVisitor::visitCallInst(CallInst *CI) {
     C->getLink(0).add(Shad);
 
     // The call instruction returns a pointer to the shadow block...
-    Rep->ValueMap[CI].add(Shad, CI);
+    Rep->ValueMap[&CI].add(Shad, &CI);
     
     // If the call returns a value with pointer type, add all of the users
     // of the call instruction to the work list...
-    Rep->addAllUsesToWorkList(CI);
+    Rep->addAllUsesToWorkList(&CI);
   }
 
   // Loop over all of the operands of the call instruction (except the first
   // one), to look for global variable references...
   //
-  for_each(CI->op_begin(), CI->op_end(),
+  for_each(CI.op_begin(), CI.op_end(),
            bind_obj(this, &InitVisitor::visitOperand));
 }
 
@@ -105,22 +105,22 @@ void InitVisitor::visitCallInst(CallInst *CI) {
 // allocation instructions do not take pointer arguments, they cannot refer to
 // global vars...
 //
-void InitVisitor::visitAllocationInst(AllocationInst *AI) {
-  AllocDSNode *N = new AllocDSNode(AI);
+void InitVisitor::visitAllocationInst(AllocationInst &AI) {
+  AllocDSNode *N = new AllocDSNode(&AI);
   Rep->AllocNodes.push_back(N);
   
-  Rep->ValueMap[AI].add(N, AI);
+  Rep->ValueMap[&AI].add(N, &AI);
   
   // Add all of the users of the malloc instruction to the work list...
-  Rep->addAllUsesToWorkList(AI);
+  Rep->addAllUsesToWorkList(&AI);
 }
 
 
 // Visit all other instruction types.  Here we just scan, looking for uses of
 // global variables...
 //
-void InitVisitor::visitInstruction(Instruction *I) {
-  for_each(I->op_begin(), I->op_end(),
+void InitVisitor::visitInstruction(Instruction &I) {
+  for_each(I.op_begin(), I.op_end(),
            bind_obj(this, &InitVisitor::visitOperand));
 }
 
@@ -150,20 +150,18 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
   // Add all of the arguments to the method to the graph and add all users to
   // the worklists...
   //
-  for (Function::ArgumentListType::iterator I = Func->getArgumentList().begin(),
-         E = Func->getArgumentList().end(); I != E; ++I) {
-    Value *Arg = (Value*)(*I);
+  for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I) {
     // Only process arguments that are of pointer type...
-    if (PointerType *PT = dyn_cast<PointerType>(Arg->getType())) {
+    if (const PointerType *PT = dyn_cast<PointerType>(I->getType())) {
       // Add a shadow value for it to represent what it is pointing to and add
       // this to the value map...
       ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
                                             Func->getParent());
       ShadowNodes.push_back(Shad);
-      ValueMap[Arg].add(PointerVal(Shad), Arg);
+      ValueMap[I].add(PointerVal(Shad), I);
       
       // Make sure that all users of the argument are processed...
-      addAllUsesToWorkList(Arg);
+      addAllUsesToWorkList(I);
     }
   }
 
@@ -179,15 +177,15 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
 
 
 PointerVal FunctionRepBuilder::getIndexedPointerDest(const PointerVal &InP,
-                                                     const MemAccessInst *MAI) {
+                                                     const MemAccessInst &MAI) {
   unsigned Index = InP.Index;
-  const Type *SrcTy = MAI->getPointerOperand()->getType();
+  const Type *SrcTy = MAI.getPointerOperand()->getType();
 
-  for (MemAccessInst::const_op_iterator I = MAI->idx_begin(),
-         E = MAI->idx_end(); I != E; ++I)
+  for (MemAccessInst::const_op_iterator I = MAI.idx_begin(),
+         E = MAI.idx_end(); I != E; ++I)
     if ((*I)->getType() == Type::UByteTy) {     // Look for struct indices...
-      StructType *STy = cast<StructType>(SrcTy);
-      unsigned StructIdx = cast<ConstantUInt>(*I)->getValue();
+      const StructType *STy = cast<StructType>(SrcTy);
+      unsigned StructIdx = cast<ConstantUInt>(I->get())->getValue();
       for (unsigned i = 0; i != StructIdx; ++i)
         Index += countPointerFields(STy->getContainedType(i));
 
@@ -211,11 +209,11 @@ static PointerValSet &getField(const PointerVal &DestPtr) {
 // changing.  This means that the set of possible values for the GEP
 // needs to be expanded.
 //
-void FunctionRepBuilder::visitGetElementPtrInst(GetElementPtrInst *GEP) {
-  PointerValSet &GEPPVS = ValueMap[GEP];   // PointerValSet to expand
+void FunctionRepBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
+  PointerValSet &GEPPVS = ValueMap[&GEP];   // PointerValSet to expand
       
   // Get the input pointer val set...
-  const PointerValSet &SrcPVS = ValueMap[GEP->getOperand(0)];
+  const PointerValSet &SrcPVS = ValueMap[GEP.getOperand(0)];
       
   bool Changed = false;  // Process each input value... propogating it.
   for (unsigned i = 0, e = SrcPVS.size(); i != e; ++i) {
@@ -230,20 +228,20 @@ void FunctionRepBuilder::visitGetElementPtrInst(GetElementPtrInst *GEP) {
   // If our current value set changed, notify all of the users of our
   // value.
   //
-  if (Changed) addAllUsesToWorkList(GEP);        
+  if (Changed) addAllUsesToWorkList(&GEP);        
 }
 
-void FunctionRepBuilder::visitReturnInst(ReturnInst *RI) {
-  RetNode.add(ValueMap[RI->getOperand(0)]);
+void FunctionRepBuilder::visitReturnInst(ReturnInst &RI) {
+  RetNode.add(ValueMap[RI.getOperand(0)]);
 }
 
-void FunctionRepBuilder::visitLoadInst(LoadInst *LI) {
+void FunctionRepBuilder::visitLoadInst(LoadInst &LI) {
   // Only loads that return pointers are interesting...
-  const PointerType *DestTy = dyn_cast<PointerType>(LI->getType());
+  const PointerType *DestTy = dyn_cast<PointerType>(LI.getType());
   if (DestTy == 0) return;
 
-  const PointerValSet &SrcPVS = ValueMap[LI->getOperand(0)];        
-  PointerValSet &LIPVS = ValueMap[LI];
+  const PointerValSet &SrcPVS = ValueMap[LI.getOperand(0)];        
+  PointerValSet &LIPVS = ValueMap[&LI];
 
   bool Changed = false;
   for (unsigned si = 0, se = SrcPVS.size(); si != se; ++si) {
@@ -264,18 +262,18 @@ void FunctionRepBuilder::visitLoadInst(LoadInst *LI) {
     }
   }
 
-  if (Changed) addAllUsesToWorkList(LI);
+  if (Changed) addAllUsesToWorkList(&LI);
 }
 
-void FunctionRepBuilder::visitStoreInst(StoreInst *SI) {
+void FunctionRepBuilder::visitStoreInst(StoreInst &SI) {
   // The only stores that are interesting are stores the store pointers
   // into data structures...
   //
-  if (!isa<PointerType>(SI->getOperand(0)->getType())) return;
-  if (!ValueMap.count(SI->getOperand(0))) return;  // Src scalar has no values!
+  if (!isa<PointerType>(SI.getOperand(0)->getType())) return;
+  if (!ValueMap.count(SI.getOperand(0))) return;  // Src scalar has no values!
         
-  const PointerValSet &SrcPVS = ValueMap[SI->getOperand(0)];
-  const PointerValSet &PtrPVS = ValueMap[SI->getOperand(1)];
+  const PointerValSet &SrcPVS = ValueMap[SI.getOperand(0)];
+  const PointerValSet &PtrPVS = ValueMap[SI.getOperand(1)];
 
   for (unsigned si = 0, se = SrcPVS.size(); si != se; ++si) {
     const PointerVal &SrcPtr = SrcPVS[si];
@@ -301,24 +299,24 @@ void FunctionRepBuilder::visitStoreInst(StoreInst *SI) {
   }
 }
 
-void FunctionRepBuilder::visitCallInst(CallInst *CI) {
-  CallDSNode *DSN = CallMap[CI];
+void FunctionRepBuilder::visitCallInst(CallInst &CI) {
+  CallDSNode *DSN = CallMap[&CI];
   unsigned PtrNum = 0;
-  for (unsigned i = 0, e = CI->getNumOperands(); i != e; ++i)
-    if (isa<PointerType>(CI->getOperand(i)->getType()))
-      DSN->addArgValue(PtrNum++, ValueMap[CI->getOperand(i)]);
+  for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
+    if (isa<PointerType>(CI.getOperand(i)->getType()))
+      DSN->addArgValue(PtrNum++, ValueMap[CI.getOperand(i)]);
 }
 
-void FunctionRepBuilder::visitPHINode(PHINode *PN) {
-  assert(isa<PointerType>(PN->getType()) && "Should only update ptr phis");
+void FunctionRepBuilder::visitPHINode(PHINode &PN) {
+  assert(isa<PointerType>(PN.getType()) && "Should only update ptr phis");
 
-  PointerValSet &PN_PVS = ValueMap[PN];
+  PointerValSet &PN_PVS = ValueMap[&PN];
   bool Changed = false;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    Changed |= PN_PVS.add(ValueMap[PN->getIncomingValue(i)],
-                          PN->getIncomingValue(i));
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+    Changed |= PN_PVS.add(ValueMap[PN.getIncomingValue(i)],
+                          PN.getIncomingValue(i));
 
-  if (Changed) addAllUsesToWorkList(PN);
+  if (Changed) addAllUsesToWorkList(&PN);
 }
 
 

@@ -30,7 +30,7 @@ public:
   // run - Execute all of the passes scheduled for execution.  Keep track of
   // whether any of the functions modifies the program, and if so, return true.
   //
-  bool run(Module *M);
+  bool run(Module &M);
 };
 
 #endif

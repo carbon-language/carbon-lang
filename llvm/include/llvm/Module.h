@@ -12,18 +12,31 @@
 #ifndef LLVM_MODULE_H
 #define LLVM_MODULE_H
 
-#include "llvm/Value.h"
-#include "llvm/ValueHolder.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class ConstantPointerRef;
 class FunctionType;
 class SymbolTable;
 
+template<> struct ilist_traits<Function>
+  : public SymbolTableListTraits<Function, Module, Module> {
+  // createNode is used to create a node that marks the end of the list...
+  static Function *createNode();
+  static iplist<Function> &getList(Module *M);
+};
+template<> struct ilist_traits<GlobalVariable>
+  : public SymbolTableListTraits<GlobalVariable, Module, Module> {
+  // createNode is used to create a node that marks the end of the list...
+  static GlobalVariable *createNode();
+  static iplist<GlobalVariable> &getList(Module *M);
+};
+
 class Module : public Annotable {
 public:
-  typedef ValueHolder<GlobalVariable, Module, Module> GlobalListType;
-  typedef ValueHolder<Function, Module, Module> FunctionListType;
+  typedef iplist<GlobalVariable> GlobalListType;
+  typedef iplist<Function> FunctionListType;
 
   // Global Variable iterators...
   typedef GlobalListType::iterator                             giterator;
@@ -119,10 +132,10 @@ public:
 
   inline unsigned                  gsize() const { return GlobalList.size(); }
   inline bool                     gempty() const { return GlobalList.empty(); }
-  inline const GlobalVariable    *gfront() const { return GlobalList.front(); }
-  inline       GlobalVariable    *gfront()       { return GlobalList.front(); }
-  inline const GlobalVariable     *gback() const { return GlobalList.back(); }
-  inline       GlobalVariable     *gback()       { return GlobalList.back(); }
+  inline const GlobalVariable    &gfront() const { return GlobalList.front(); }
+  inline       GlobalVariable    &gfront()       { return GlobalList.front(); }
+  inline const GlobalVariable     &gback() const { return GlobalList.back(); }
+  inline       GlobalVariable     &gback()       { return GlobalList.back(); }
 
 
 
@@ -138,10 +151,10 @@ public:
 
   inline unsigned                 size() const { return FunctionList.size(); }
   inline bool                    empty() const { return FunctionList.empty(); }
-  inline const Function         *front() const { return FunctionList.front(); }
-  inline       Function         *front()       { return FunctionList.front(); }
-  inline const Function          *back() const { return FunctionList.back(); }
-  inline       Function          *back()       { return FunctionList.back(); }
+  inline const Function         &front() const { return FunctionList.front(); }
+  inline       Function         &front()       { return FunctionList.front(); }
+  inline const Function          &back() const { return FunctionList.back(); }
+  inline       Function          &back()       { return FunctionList.back(); }
 
   void print(std::ostream &OS) const;
 

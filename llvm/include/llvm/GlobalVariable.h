@@ -17,10 +17,18 @@
 class Module;
 class Constant;
 class PointerType;
+template<typename SC> struct ilist_traits;
+template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
+         typename SubClass> class SymbolTableListTraits;
 
 class GlobalVariable : public GlobalValue {
-  friend class ValueHolder<GlobalVariable, Module, Module>;
+  friend class SymbolTableListTraits<GlobalVariable, Module, Module,
+                                     ilist_traits<GlobalVariable> >;
   void setParent(Module *parent) { Parent = parent; }
+
+  GlobalVariable *Prev, *Next;
+  void setNext(GlobalVariable *N) { Next = N; }
+  void setPrev(GlobalVariable *N) { Prev = N; }
 
   bool isConstantGlobal;               // Is this a global constant?
 public:
@@ -52,6 +60,12 @@ public:
     }
   }
 
+  // getNext/Prev - Return the next or previous instruction in the list.  The
+  // last node in the list is a terminator instruction.
+        GlobalVariable *getNext()       { return Next; }
+  const GlobalVariable *getNext() const { return Next; }
+        GlobalVariable *getPrev()       { return Prev; }
+  const GlobalVariable *getPrev() const { return Prev; }
 
   // If the value is a global constant, its value is immutable throughout the
   // runtime execution of the program.  Assigning a value into the constant

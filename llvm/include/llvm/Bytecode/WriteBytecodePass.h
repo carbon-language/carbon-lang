@@ -25,8 +25,8 @@ public:
     if (DeleteStream) delete Out;
   }
   
-  bool run(Module *M) {
-    WriteBytecodeToFile(M, *Out);    
+  bool run(Module &M) {
+    WriteBytecodeToFile(&M, *Out);    
     return false;
   }
 };

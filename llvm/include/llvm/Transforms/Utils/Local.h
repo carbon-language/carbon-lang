@@ -52,12 +52,11 @@ bool dceInstruction(BasicBlock::iterator &BBI);
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
 // eliminates unreachable basic blocks, and does other "peephole" optimization
-// of the CFG.  It returns true if a modification was made, and returns an 
-// iterator that designates the first element remaining after the block that
-// was deleted.
+// of the CFG.  It returns true if a modification was made, possibly deleting
+// the basic block that was pointed to.
 //
 // WARNING:  The entry node of a method may not be simplified.
 //
-bool SimplifyCFG(Function::iterator &BBIt);
+bool SimplifyCFG(BasicBlock *BB);
 
 #endif

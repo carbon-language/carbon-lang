@@ -9,11 +9,19 @@
 #define LLVM_INSTRUCTION_H
 
 #include "llvm/User.h"
+template<typename SC> struct ilist_traits;
+template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
+         typename SubClass> class SymbolTableListTraits;
 
 class Instruction : public User {
   BasicBlock *Parent;
+  Instruction *Prev, *Next; // Next and Prev links for our intrusive linked list
 
-  friend class ValueHolder<Instruction,BasicBlock,Function>;
+  void setNext(Instruction *N) { Next = N; }
+  void setPrev(Instruction *N) { Prev = N; }
+
+  friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
+                                     ilist_traits<Instruction> >;
   inline void setParent(BasicBlock *P) { Parent = P; }
 protected:
   unsigned iType;      // InstructionType
@@ -37,6 +45,14 @@ public:
   //
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
+
+  // getNext/Prev - Return the next or previous instruction in the list.  The
+  // last node in the list is a terminator instruction.
+        Instruction *getNext()       { return Next; }
+  const Instruction *getNext() const { return Next; }
+        Instruction *getPrev()       { return Prev; }
+  const Instruction *getPrev() const { return Prev; }
+
   virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
 
   // ---------------------------------------------------------------------------
