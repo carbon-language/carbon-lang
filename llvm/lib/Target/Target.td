@@ -70,11 +70,9 @@ class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
   //
   list<Register> MemberList = regList;
 
-  // allocation_order_* - These methods define the order that the registers
-  // should be allocated.  See the MRegister.h file for more information.
-  //
-  code allocation_order_begin;
-  code allocation_order_end;
+  // Methods - This member can be used to insert arbitrary code into a generated
+  // register class.   The normal usage of this is to overload virtual methods.
+  code Methods = [{}];
 }
 
 // RegisterInfo - This class should only be instantiated once to provide
