@@ -501,6 +501,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         getValueDest(*CS.getInstruction()).
           mergeWith(getValueDest(**(CS.arg_begin())));
         return;
+        // FIXME: the #undef is a quick fix for compilation on Sparc
+#undef va_end
       case Intrinsic::va_end:
         return;  // noop
       case Intrinsic::memmove:
