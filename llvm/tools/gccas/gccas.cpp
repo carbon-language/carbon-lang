@@ -14,6 +14,7 @@
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
+#include "llvm/Transforms/Scalar/InstructionCombining.h"
 #include "llvm/Bytecode/Writer.h"
 #include "Support/CommandLine.h"
 #include <memory>
@@ -66,8 +67,10 @@ int main(int argc, char **argv) {
   Passes.push_back(new opt::DeadCodeElimination());  // Remove Dead code/vars
   Passes.push_back(new CleanupGCCOutput());          // Fix gccisms
   Passes.push_back(new InductionVariableSimplify()); // Simplify indvars
-  Passes.push_back(new RaisePointerReferences());    // Fix general low level code
-  Passes.push_back(new ConstantMerge());             // Merge dup global constants
+  Passes.push_back(new RaisePointerReferences());    // Eliminate casts
+  Passes.push_back(new ConstantMerge());             // Merge dup global consts
+  Passes.push_back(new InstructionCombining());      // Combine silly seq's
+  Passes.push_back(new opt::DeadCodeElimination());  // Remove Dead code/vars
 
   // Run our queue of passes all at once now, efficiently.  This form of
   // runAllPasses frees the Pass objects after runAllPasses completes.
