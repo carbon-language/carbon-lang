@@ -574,7 +574,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::PCMARKER:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Result = DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp1, Node->getOperand(1));
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp1,Node->getOperand(1));
     break;
   case ISD::TRUNCSTORE:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -839,8 +840,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     if (Changed)
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Ops);
-    break;
+
+    // Since these produce multiple values, make sure to remember that we
+    // legalized all of them.
+    for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+      AddLegalizedOperand(SDOperand(Node, i), Result.getValue(i));
+    return Result.getValue(Op.ResNo);
   }
+
+    // Binary operators
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
@@ -860,6 +868,33 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp2 != Node->getOperand(1))
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
     break;
+
+    // Unary operators
+  case ISD::FABS:
+  case ISD::FNEG:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+      break;
+    case TargetLowering::Promote:
+    case TargetLowering::Custom:
+      assert(0 && "Cannot promote/custom handle this yet!");
+    case TargetLowering::Expand:
+      if (Node->getOpcode() == ISD::FNEG) {
+        // Expand Y = FNEG(X) ->  Y = SUB -0.0, X
+        Tmp2 = DAG.getConstantFP(-0.0, Node->getValueType(0));
+        Result = LegalizeOp(DAG.getNode(ISD::SUB, Node->getValueType(0),
+                                        Tmp2, Tmp1));
+      } else {
+        assert(0 && "Expand fneg not impl yet!");
+      }
+      break;
+    }
+    break;
+
+    // Conversion operators.  The source and destination have different types.
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::TRUNCATE:
@@ -882,17 +917,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                Node->getValueType(0), Node->getOperand(0));
         Result = LegalizeOp(Result);
         break;
+      } else if (Node->getOpcode() == ISD::TRUNCATE) {
+        // In the expand case, we must be dealing with a truncate, because
+        // otherwise the result would be larger than the source.
+        ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
+        
+        // Since the result is legal, we should just be able to truncate the low
+        // part of the source.
+        Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
+        break;
       }
-      // In the expand case, we must be dealing with a truncate, because
-      // otherwise the result would be larger than the source.
-      assert(Node->getOpcode() == ISD::TRUNCATE &&
-             "Shouldn't need to expand other operators here!");
-      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-
-      // Since the result is legal, we should just be able to truncate the low
-      // part of the source.
-      Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
-      break;
+      assert(0 && "Shouldn't need to expand other operators here!");
 
     case Promote:
       switch (Node->getOpcode()) {
@@ -1170,6 +1205,16 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       assert(0 && "not implemented");
     }
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    break;
+
+  case ISD::FABS:
+  case ISD::FNEG:
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    assert(Tmp1.getValueType() == NVT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    // NOTE: we do not have to do any extra rounding here for
+    // NoExcessFPPrecision, because we know the input will have the appropriate
+    // precision, and these operations don't modify precision at all.
     break;
 
   case ISD::AND:
