@@ -940,6 +940,8 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
                               Constant *C1, Constant *C2) {
+  if (Opcode == Instruction::Shl || Opcode == Instruction::Shr)
+    return getShiftTy(ReqTy, Opcode, C1, C2);
   // Check the operands for consistency first
   assert((Opcode >= Instruction::BinaryOpsBegin &&
           Opcode < Instruction::BinaryOpsEnd) &&
