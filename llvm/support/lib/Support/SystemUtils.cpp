@@ -37,17 +37,18 @@ bool isExecutableFile(const std::string &ExeFileName) {
 }
 
 
-// FindExecutable - Find a named executable, giving the argv[0] of bugpoint.
-// This assumes the executable is in the same directory as bugpoint itself.
-// If the executable cannot be found, return an empty string.
+// FindExecutable - Find a named executable, giving the argv[0] of program being
+// executed. This allows us to find another LLVM tool if it is built into the
+// same directory, but that directory is neither the current directory, nor in
+// the PATH.  If the executable cannot be found, return an empty string.
 //
 std::string FindExecutable(const std::string &ExeName,
-			   const std::string &BugPointPath) {
+			   const std::string &ProgramPath) {
   // First check the directory that bugpoint is in.  We can do this if
   // BugPointPath contains at least one / character, indicating that it is a
   // relative path to bugpoint itself.
   //
-  std::string Result = BugPointPath;
+  std::string Result = ProgramPath;
   while (!Result.empty() && Result[Result.size()-1] != '/')
     Result.erase(Result.size()-1, 1);
 
@@ -56,8 +57,8 @@ std::string FindExecutable(const std::string &ExeName,
     if (isExecutableFile(Result)) return Result; // Found it?
   }
 
-  // Okay, if the path to bugpoint didn't tell us anything, try using the PATH
-  // environment variable.
+  // Okay, if the path to the program didn't tell us anything, try using the
+  // PATH environment variable.
   const char *PathStr = getenv("PATH");
   if (PathStr == 0) return "";
 
