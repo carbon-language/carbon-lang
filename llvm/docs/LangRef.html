@@ -1603,6 +1603,11 @@ When casting to bool, any value that would be considered true in the context of
 a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>' values,
 all else are '<tt>false</tt>'.<p>
 
+When extending an integral value from a type of one signness to another (for
+example '<tt>sbyte</tt>' to '<tt>ulong</tt>'), the value is sign-extended if the
+<b>source</b> value is signed, and zero-extended if the source value is
+unsigned.<p>
+
 <h5>Example:</h5>
 <pre>
   %X = cast int 257 to ubyte              <i>; yields ubyte:1</i>
@@ -1736,7 +1741,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Jun 25 15:19:34 CDT 2002
+Last modified: Tue Aug 13 15:50:47 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
