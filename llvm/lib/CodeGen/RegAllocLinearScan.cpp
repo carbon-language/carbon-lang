@@ -238,17 +238,17 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     // aliasing) number of temp registers to reserve so that we have 2
     // registers for each register class available.
 
-    // reserve R32: EDI, EBX,
-    //         R16:  DI,  BX,
-    //         R8:   BH,  BL
+    // reserve R8:   CH,  CL
+    //         R16:  CX,  DI,
+    //         R32: ECX, EDI,
     //         RFP: FP5, FP6
     reserved_.assign(MRegisterInfo::FirstVirtualRegister, false);
-    reserved_[19] = true; /* EDI */
-    reserved_[17] = true; /* EBX */
+    reserved_[ 8] = true; /*  CH */
+    reserved_[ 9] = true; /*  CL */
+    reserved_[10] = true; /*  CX */
     reserved_[12] = true; /*  DI */
-    reserved_[ 7] = true; /*  BX */
-    reserved_[ 4] = true; /*  BH */
-    reserved_[ 5] = true; /*  BL */
+    reserved_[18] = true; /* ECX */
+    reserved_[19] = true; /* EDI */
     reserved_[28] = true; /* FP5 */
     reserved_[29] = true; /* FP6 */
 
