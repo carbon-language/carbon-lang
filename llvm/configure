@@ -465,7 +465,7 @@ ac_includes_default="\
 #endif"
 
 ac_unique_file=""Makefile.config.in""
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST HAVE_PTHREAD_MUTEX_LOCK INCLUDE_SYS_TYPES_H INCLUDE_INTTYPES_H ENDIAN HAVE_STD_EXT_HASH_MAP HAVE_GNU_EXT_HASH_MAP HAVE_GLOBAL_HASH_MAP HAVE_STD_EXT_HASH_SET HAVE_GNU_EXT_HASH_SET HAVE_GLOBAL_HASH_SET HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC2000_ROOT USE_SPEC2000 SPEC95_ROOT USE_SPEC95 POVRAY_ROOT USE_POVRAY UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS subdirs INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVMGCCDIR ARCH CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC CPP ifGNUmake LEX LEXLIB LEX_OUTPUT_ROOT YACC BISON EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL DOT ETAGS ETAGSFLAGS PYTHON QMTEST HAVE_PTHREAD_MUTEX_LOCK INCLUDE_SYS_TYPES_H INCLUDE_INTTYPES_H ENDIAN HAVE_STD_EXT_HASH_MAP HAVE_GNU_EXT_HASH_MAP HAVE_GLOBAL_HASH_MAP HAVE_STD_EXT_HASH_SET HAVE_GNU_EXT_HASH_SET HAVE_GLOBAL_HASH_SET HAVE_STD_ITERATOR HAVE_BI_ITERATOR HAVE_FWD_ITERATOR ALLOCA MMAP_FILE ENABLE_OPTIMIZED SPEC95_ROOT USE_SPEC95 SPEC2000_ROOT USE_SPEC2000 POVRAY_ROOT USE_POVRAY UPB DISABLE_LLC_DIFFS JIT LLVMCC1 LLVMCC1PLUS BCR PAPIDIR SHLIBEXT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1031,9 +1031,9 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-optimized      Compile with optimizations enabled (default is NO)
-  --enable-spec2000       Compile SPEC 2000 benchmarks (default is NO)
-  --enable-spec95         Compile SPEC 95 benchmarks (default is NO)
-  --enable-povray=ARG     Use POV-Ray as a benchmark (srcs in DIR)
+  --enable-spec95=ARG     Use spec95 as a benchmark (srcs in DIR)
+  --enable-spec2000=ARG   Use spec2000 as a benchmark (srcs in DIR)
+  --enable-povray=ARG     Use povray as a benchmark (srcs in DIR)
   --enable-precompiled_bytecode
                           Use pre-compiled bytecode (default is NO)
   --enable-llc_diffs      Enable LLC Diffs when testing (default is YES)
@@ -21831,118 +21831,149 @@ else
 
 fi
 
-# Check whether --enable-spec2000 or --disable-spec2000 was given.
-if test "${enable_spec2000+set}" = set; then
-  enableval="$enable_spec2000"
-
-else
-  enableval=no
-fi;
-if test ${enableval} = "no"
-then
-	if test -d /home/vadve/shared/benchmarks/speccpu2000/benchspec
-	then
-		SPEC2000_ROOT=/home/vadve/shared/benchmarks/speccpu2000/benchspec
-
-		USE_SPEC2000=USE_SPEC2000=1
-
-	else
-		USE_SPEC2000=
 
 
-	fi
-else
-	if test ${enableval} = ""
-	then
-		SPEC2000_ROOT=/home/vadve/shared/benchmarks/speccpu2000/benchspec
 
-	else
-		SPEC2000_ROOT=${enableval}
-
-	fi
-	USE_SPEC2000=USE_SPEC2000=1
-
-fi
-
-# Check whether --enable-spec95 or --disable-spec95 was given.
+ # Check whether --enable-spec95 or --disable-spec95 was given.
 if test "${enable_spec95+set}" = set; then
   enableval="$enable_spec95"
-
+  checkresult=$enableval
 else
-  enableval=no
+  checkresult=auto
 fi;
-if test ${enableval} = "no"
-then
-	if test -d /home/vadve/shared/benchmarks/spec95/benchspec
+echo "$as_me:$LINENO: checking for spec95 benchmark sources" >&5
+echo $ECHO_N "checking for spec95 benchmark sources... $ECHO_C" >&6
+case "$checkresult" in
+auto|yes)
+    defaultdir=/home/vadve/shared/benchmarks/spec95/benchspec
+	if test -d "$defaultdir"
 	then
-		SPEC95_ROOT=/home/vadve/shared/benchmarks/spec95/benchspec
+		SPEC95_ROOT=$defaultdir
 
 		USE_SPEC95=USE_SPEC95=1
 
-	else
-		USE_SPEC95=
+        checkresult="yes, found in $defaultdir"
+    else
+        checkresult=no
+    fi
+    ;;
+no)
 
 
-	fi
+    checkresult=no
+    ;;
+*)  if test -d "$checkresult"
+    then
+        SPEC95_ROOT="$checkresult"
+
+        USE_SPEC95=USE_SPEC95=1
+
+        checkresult="yes, in $checkresult"
+    else
+
+
+        checkresult="no, not found in $checkresult"
+    fi
+    ;;
+esac
+echo "$as_me:$LINENO: result: $checkresult" >&5
+echo "${ECHO_T}$checkresult" >&6
+
+
+
+ # Check whether --enable-spec2000 or --disable-spec2000 was given.
+if test "${enable_spec2000+set}" = set; then
+  enableval="$enable_spec2000"
+  checkresult=$enableval
 else
-	if test ${enableval} = ""
+  checkresult=auto
+fi;
+echo "$as_me:$LINENO: checking for spec2000 benchmark sources" >&5
+echo $ECHO_N "checking for spec2000 benchmark sources... $ECHO_C" >&6
+case "$checkresult" in
+auto|yes)
+    defaultdir=/home/vadve/shared/benchmarks/speccpu2000/benchspec
+	if test -d "$defaultdir"
 	then
-		SPEC95_ROOT=/home/vadve/shared/benchmarks/spec95/benchspec
+		SPEC2000_ROOT=$defaultdir
 
-	else
-		SPEC95_ROOT=${enableval}
+		USE_SPEC2000=USE_SPEC2000=1
 
-	fi
-	USE_SPEC95=USE_SPEC95=1
+        checkresult="yes, found in $defaultdir"
+    else
+        checkresult=no
+    fi
+    ;;
+no)
 
-fi
 
-# Check whether --enable-povray or --disable-povray was given.
+    checkresult=no
+    ;;
+*)  if test -d "$checkresult"
+    then
+        SPEC2000_ROOT="$checkresult"
+
+        USE_SPEC2000=USE_SPEC2000=1
+
+        checkresult="yes, in $checkresult"
+    else
+
+
+        checkresult="no, not found in $checkresult"
+    fi
+    ;;
+esac
+echo "$as_me:$LINENO: result: $checkresult" >&5
+echo "${ECHO_T}$checkresult" >&6
+
+
+
+ # Check whether --enable-povray or --disable-povray was given.
 if test "${enable_povray+set}" = set; then
   enableval="$enable_povray"
-  povray=$enableval
+  checkresult=$enableval
 else
-  povray=auto
+  checkresult=auto
 fi;
-echo "$as_me:$LINENO: checking for POV-Ray benchmark sources" >&5
-echo $ECHO_N "checking for POV-Ray benchmark sources... $ECHO_C" >&6
-case "$povray" in
+echo "$as_me:$LINENO: checking for povray benchmark sources" >&5
+echo $ECHO_N "checking for povray benchmark sources... $ECHO_C" >&6
+case "$checkresult" in
 auto|yes)
     defaultdir=/home/vadve/shared/benchmarks/povray31
-	if test -d $defaultdir
+	if test -d "$defaultdir"
 	then
 		POVRAY_ROOT=$defaultdir
 
 		USE_POVRAY=USE_POVRAY=1
 
-        povray="yes, found in $defaultdir"
+        checkresult="yes, found in $defaultdir"
     else
-        povray=no
+        checkresult=no
     fi
     ;;
 no)
 
-    USE_POVRAY=
 
-    povray=no
+    checkresult=no
     ;;
-*)  if test -d "$povray"
+*)  if test -d "$checkresult"
     then
-        POVRAY_ROOT="$povray"
+        POVRAY_ROOT="$checkresult"
 
         USE_POVRAY=USE_POVRAY=1
 
-        povray="yes, in $povray"
+        checkresult="yes, in $checkresult"
     else
 
-        USE_POVRAY=
 
-        povray="no, not found in $povray"
+        checkresult="no, not found in $checkresult"
     fi
     ;;
 esac
-echo "$as_me:$LINENO: result: $povray" >&5
-echo "${ECHO_T}$povray" >&6
+echo "$as_me:$LINENO: result: $checkresult" >&5
+echo "${ECHO_T}$checkresult" >&6
+
+
 
 # Check whether --enable-precompiled_bytecode or --disable-precompiled_bytecode was given.
 if test "${enable_precompiled_bytecode+set}" = set; then
@@ -22884,10 +22915,10 @@ s,@HAVE_FWD_ITERATOR@,$HAVE_FWD_ITERATOR,;t t
 s,@ALLOCA@,$ALLOCA,;t t
 s,@MMAP_FILE@,$MMAP_FILE,;t t
 s,@ENABLE_OPTIMIZED@,$ENABLE_OPTIMIZED,;t t
-s,@SPEC2000_ROOT@,$SPEC2000_ROOT,;t t
-s,@USE_SPEC2000@,$USE_SPEC2000,;t t
 s,@SPEC95_ROOT@,$SPEC95_ROOT,;t t
 s,@USE_SPEC95@,$USE_SPEC95,;t t
+s,@SPEC2000_ROOT@,$SPEC2000_ROOT,;t t
+s,@USE_SPEC2000@,$USE_SPEC2000,;t t
 s,@POVRAY_ROOT@,$POVRAY_ROOT,;t t
 s,@USE_POVRAY@,$USE_POVRAY,;t t
 s,@UPB@,$UPB,;t t
