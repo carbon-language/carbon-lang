@@ -370,7 +370,7 @@ namespace {
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
     bool TryToFoldLoadOpStore(SDNode *Node);
 
-    bool EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg);
+    bool EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg);
     void EmitCMP(SDOperand LHS, SDOperand RHS, bool isOnlyUse);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
     void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
@@ -1142,11 +1142,11 @@ void ISel::EmitFoldedLoad(SDOperand Op, X86AddressMode &AM) {
     assert(0 && "Load emitted more than once!");
 }
 
-// EmitDoubleShift - Pattern match the expression (Op1|Op2), where we know that
-// op1 and op2 are i32 values with one use each (the or).  If we can form a SHLD
-// or SHRD, emit the instruction (generating the value into DestReg) and return
-// true.
-bool ISel::EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
+// EmitOrOpOp - Pattern match the expression (Op1|Op2), where we know that op1
+// and op2 are i8/i16/i32 values with one use each (the or).  If we can form a
+// SHLD or SHRD, emit the instruction (generating the value into DestReg) and
+// return true.
+bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
   if (Op1.getOpcode() == ISD::SHL && Op2.getOpcode() == ISD::SRL) {
     // good!
   } else if (Op2.getOpcode() == ISD::SHL && Op1.getOpcode() == ISD::SRL) {
@@ -1160,10 +1160,12 @@ bool ISel::EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
   SDOperand ShrVal = Op2.getOperand(0);
   SDOperand ShrAmt = Op2.getOperand(1);
 
+  unsigned RegSize = MVT::getSizeInBits(Op1.getValueType());
+
   // Find out if ShrAmt = 32-ShlAmt  or  ShlAmt = 32-ShrAmt.
   if (ShlAmt.getOpcode() == ISD::SUB && ShlAmt.getOperand(1) == ShrAmt)
     if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShlAmt.getOperand(0)))
-      if (SubCST->getValue() == 32) {
+      if (SubCST->getValue() == RegSize && RegSize != 8) {
         // (A >> ShrAmt) | (B << (32-ShrAmt)) ==> SHRD A, B, ShrAmt
         unsigned AReg, BReg;
         if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
@@ -1175,13 +1177,14 @@ bool ISel::EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
         }
         unsigned ShAmt = SelectExpr(ShrAmt);
         BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
-        BuildMI(BB, X86::SHRD32rrCL,2,DestReg).addReg(AReg).addReg(BReg);
+        unsigned Opc = RegSize == 16 ? X86::SHRD16rrCL : X86::SHRD32rrCL;
+        BuildMI(BB, Opc, 2, DestReg).addReg(AReg).addReg(BReg);
         return true;
       }
 
   if (ShrAmt.getOpcode() == ISD::SUB && ShrAmt.getOperand(1) == ShlAmt)
     if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShrAmt.getOperand(0)))
-      if (SubCST->getValue() == 32) {
+      if (SubCST->getValue() == RegSize && RegSize != 8) {
         // (A << ShlAmt) | (B >> (32-ShlAmt)) ==> SHLD A, B, ShrAmt
         unsigned AReg, BReg;
         if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
@@ -1193,14 +1196,15 @@ bool ISel::EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
         }
         unsigned ShAmt = SelectExpr(ShlAmt);
         BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
-        BuildMI(BB, X86::SHLD32rrCL,2,DestReg).addReg(AReg).addReg(BReg);
+        unsigned Opc = RegSize == 16 ? X86::SHLD16rrCL : X86::SHLD32rrCL;
+        BuildMI(BB, Opc, 2, DestReg).addReg(AReg).addReg(BReg);
         return true;
       }
 
   if (ConstantSDNode *ShrCst = dyn_cast<ConstantSDNode>(ShrAmt))
     if (ConstantSDNode *ShlCst = dyn_cast<ConstantSDNode>(ShlAmt))
-      if (ShrCst->getValue() < 32 && ShlCst->getValue() < 32) {
-        if (ShrCst->getValue() == 32-ShlCst->getValue()) {
+      if (ShrCst->getValue() < RegSize && ShlCst->getValue() < RegSize) {
+        if (ShrCst->getValue() == RegSize-ShlCst->getValue() && RegSize != 8) {
           // (A >> 5) | (B << 27) --> SHRD A, B, 5
           unsigned AReg, BReg;
           if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
@@ -1210,7 +1214,8 @@ bool ISel::EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
             BReg = SelectExpr(ShlVal);
             AReg = SelectExpr(ShrVal);
           }
-          BuildMI(BB, X86::SHRD32rri8, 3, DestReg).addReg(AReg).addReg(BReg)
+          unsigned Opc = RegSize == 16 ? X86::SHRD16rri8 : X86::SHRD32rri8;
+          BuildMI(BB, Opc, 3, DestReg).addReg(AReg).addReg(BReg)
             .addImm(ShrCst->getValue());
           return true;
         }
@@ -1737,9 +1742,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Op0 = Node->getOperand(0);
     Op1 = Node->getOperand(1);
 
-    if (Node->getOpcode() == ISD::OR && N.getValueType() == MVT::i32 &&
-        Op0.hasOneUse() && Op1.hasOneUse())          // Match SHLD and SHRD.
-      if (EmitDoubleShift(Op0, Op1, Result))
+    if (Node->getOpcode() == ISD::OR && Op0.hasOneUse() && Op1.hasOneUse())
+      if (EmitOrOpOp(Op0, Op1, Result)) // Match SHLD, SHRD, and rotates.
         return Result;
 
     if (Node->getOpcode() == ISD::SUB)
