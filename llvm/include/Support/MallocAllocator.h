@@ -44,11 +44,11 @@ struct MallocAllocator {
   const_pointer address(const_reference x) const { return &x; }
   size_type max_size() const { return ~0 / sizeof(T); }
   
-  pointer allocate(size_t n, void* hint = 0) {
+  static pointer allocate(size_t n, void* hint = 0) {
     return (pointer)malloc(n*sizeof(T));
   }
 
-  void deallocate(pointer p, size_t n) {
+  static void deallocate(pointer p, size_t n) {
     free((void*)p);
   }
 
@@ -68,5 +68,16 @@ template<typename T>
 inline bool operator!=(const MallocAllocator<T>&, const MallocAllocator<T>&) {
   return false;
 }
+
+namespace std {
+  template<typename Type, typename Type2>
+  struct _Alloc_traits<Type, ::MallocAllocator<Type2> > {
+    static const bool _S_instanceless = true;
+    typedef ::MallocAllocator<Type> base_alloc_type;
+    typedef ::MallocAllocator<Type> _Alloc_type;
+    typedef ::MallocAllocator<Type> allocator_type;
+  };
+}
+
 
 #endif
