@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ..
 
-DIRS = Burg TableGen
+DIRS = Burg TableGen Spiff
 
 include $(LEVEL)/Makefile.common
 
