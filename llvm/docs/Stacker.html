@@ -4,10 +4,6 @@
 <head>
   <title>Stacker: An Example Of Using LLVM</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <style>
-    table, tr, td { border: 2px solid gray }
-    table { border-collapse: collapse; margin-bottom: 2em }
-  </style>
 </head>
 <body>
 
@@ -515,16 +511,16 @@ using the following construction:</p>
 </ol>
 </div>
 <div class="doc_text" >
-    <table class="doc_table">
-<tr class="doc_table"><td colspan="4">Definition Of Operation Of Built In Words</td></tr>
-<tr class="doc_table"><td colspan="4"><b>LOGICAL OPERATIONS</b></td></tr>
-<tr class="doc_table">
+    <table>
+<tr><th colspan="4">Definition Of Operation Of Built In Words</th></tr>
+<tr><th colspan="4"><b>LOGICAL OPERATIONS</b></th></tr>
+<tr>
     <td>Word</td>
     <td>Name</td>
     <td>Operation</td>
     <td>Description</td>
 </tr>
-<tr class="doc_table">
+<tr>
     <td>&lt;</td>
     <td>LT</td>
     <td>w1 w2 -- b</td>
@@ -581,7 +577,7 @@ using the following construction:</p>
     <td> -- b</td>
     <td>The boolean value TRUE (-1) is pushed on to the stack.</td>
 </tr>
-<tr><td colspan="4"><b>BITWISE OPERATORS</b></td></tr>
+<tr><th colspan="4"><b>BITWISE OPERATORS</b></th></tr>
 <tr>
     <td>Word</td>
     <td>Name</td>
@@ -623,7 +619,7 @@ using the following construction:</p>
     are bitwise exclusive OR'd together and pushed back on the stack. 
     For example, The sequence 1 3 XOR yields 2.</td>
 </tr>
-<tr><td colspan="4"><b>ARITHMETIC OPERATORS</b></td></tr>
+<tr><th colspan="4"><b>ARITHMETIC OPERATORS</b></th></tr>
 <tr>
     <td>Word</td>
     <td>Name</td>
@@ -704,7 +700,7 @@ using the following construction:</p>
     <td>Two values are popped off the stack. The larger value is pushed back
 	on to the stack.</td>
 </tr>
-<tr><td colspan="4"><b>STACK MANIPULATION OPERATORS</b></td></tr>
+<tr><th colspan="4"><b>STACK MANIPULATION OPERATORS</b></th></tr>
 <tr>
     <td>Word</td>
     <td>Name</td>
@@ -849,7 +845,7 @@ using the following construction:</p>
     how much to rotate. That is, ROLL with n=1 is the same as ROT and 
     ROLL with n=2 is the same as ROT2.</td>
 </tr>
-<tr><td colspan="4"><b>MEMORY OPERATORS</b></td></tr>
+<tr><th colspan="4"><b>MEMORY OPERATORS</b></th></tr>
 <tr>
     <td>Word</td>
     <td>Name</td>
@@ -902,7 +898,7 @@ using the following construction:</p>
 	pushed back on the stack so this doesn't count as a "use ptr"
 	in the FREE idiom.</td>
 </tr>
-<tr><td colspan="4"><b>CONTROL FLOW OPERATORS</b></td></tr>
+<tr><th colspan="4"><b>CONTROL FLOW OPERATORS</b></th></tr>
 <tr>
     <td>Word</td>
     <td>Name</td>
@@ -969,7 +965,7 @@ using the following construction:</p>
 	the top of stack is decremented to 0 at which the WHILE test fails and control is
 	transfered to the word after the END.</td>
 </tr>
-<tr><td colspan="4"><b>INPUT &amp; OUTPUT OPERATORS</b></td></tr>
+<tr><th colspan="4"><b>INPUT &amp; OUTPUT OPERATORS</b></th></tr>
 <tr>
     <td>Word</td>
     <td>Name</td>
