@@ -53,7 +53,7 @@ IMPREGSLIST(C_CLOBBER, X86::EAX, X86::ECX, X86::EDX, 0)  // Callee clobber regs
 //
 
 // The first instruction must always be the PHI instruction:
-I(PHI         , "phi",      0,             0, 0, NoIR, NoIR)
+I(PHI         , "phi",      0,             0, X86II::Pseudo              , NoIR, NoIR)
 
 // The second instruction must always be the noop instruction:
 I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void, NoIR, NoIR)       // nop
@@ -65,7 +65,7 @@ I(JNE         , "jne",   0x85, M_BRANCH_FLAG, X86II::RawFrm | X86II::TB | X86II:
                                                                                        NoIR) // jne foo
 I(JE          , "je",    0x84, M_BRANCH_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR,
                                                                                        NoIR) // je foo
-I(CALLpcrel32 , "call",  0xE8, M_BRANCH_FLAG, X86II::Void, NoIR, C_CLOBBER)                  // call pc+42
+I(CALLpcrel32 , "call",  0xE8, M_BRANCH_FLAG, X86II::Void | X86II::RawFrm, NoIR, C_CLOBBER)  // call pc+42
 I(CALLr32     , "call",  0xFF, M_BRANCH_FLAG, X86II::Void | X86II::MRMS2r | X86II::Arg32,
                                               NoIR, C_CLOBBER)                               // call [r32]
 I(CALLm32     , "call",  0xFF, M_BRANCH_FLAG, X86II::Void | X86II::MRMS2m | X86II::Arg32,
@@ -75,8 +75,9 @@ I(CALLm32     , "call",  0xFF, M_BRANCH_FLAG, X86II::Void | X86II::MRMS2m | X86I
 I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm, O_EBP, O_EBP)                   // leave
 I(BSWAPr32    , "bswap", 0xC8, M_2_ADDR_FLAG, X86II::AddRegFrm | X86II::TB |
                                               X86II::Arg32, NoIR, NoIR)                      // R32 = bswap R32
-I(BSWAPr16    , "bswap", 0xC8, M_2_ADDR_FLAG, X86II::AddRegFrm | X86II::TB |
-                                              X86II::OpSize | X86II::Arg16, NoIR, NoIR)      // R16 = bswap R16
+I(XCHGrr8     , "xchg" , 0x86,             0, X86II::MRMDestReg | X86II::Arg8, NoIR, NoIR)                   // xchg(R8, R8)
+I(XCHGrr16    , "xchg" , 0x87,             0, X86II::MRMDestReg | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // xchg(R16, R16)
+I(XCHGrr32    , "xchg" , 0x87,             0, X86II::MRMDestReg | X86II::Arg32, NoIR, NoIR)                  // xchg(R32, R32)
 
 // Move instructions
 I(MOVrr8      , "movb",  0x88,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  = R8
@@ -158,16 +159,6 @@ I(SARir8      , "sarb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8, NoIR,
 I(SARir16     , "sarw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16  >>= imm8
 I(SARir32     , "sarl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)                     // R32  >>= imm8
 
-// Floating point loads
-I(FLDr32      , "flds", 0xD9,              0, X86II::MRMS0m, NoIR, NoIR)                     // push float
-I(FLDr64      , "fldl", 0xDD,              0, X86II::MRMS0m, NoIR, NoIR)                     // push double
-
-// Floating point compares
-I(FUCOMPP     , "fucompp", 0xDA,           0, X86II::Void, NoIR, NoIR)                       // compare+pop2x
-
-// Floating point flag ops
-I(FNSTSWr8    , "fnstsw", 0xDF,            0, X86II::Void, NoIR, O_AX)                       // AX = fp flags
-
 // Condition code ops, incl. set if equal/not equal/...
 I(SAHF        , "sahf",  0x9E,             0, X86II::RawFrm, O_AH, NoIR)                     // flags = AH
 I(SETBr       , "setb",  0x92,             0, X86II::TB | X86II::MRMS0r, NoIR, NoIR)         // R8 = < unsign
@@ -199,6 +190,44 @@ I(MOVZXr16r8  , "movzx", 0xB6,             0, X86II::MRMSrcReg | X86II::TB |    
                                               X86II::OpSize, NoIR, NoIR)
 I(MOVZXr32r8  , "movzx", 0xB6,             0, X86II::MRMSrcReg | X86II::TB, NoIR, NoIR)      // R32 = zeroext(R8)
 I(MOVZXr32r16 , "movzx", 0xB7,             0, X86II::MRMSrcReg | X86II::TB, NoIR, NoIR)      // R32 = zeroext(R16)
+
+
+//===----------------------------------------------------------------------===//
+// Floating point support
+//===----------------------------------------------------------------------===//
+
+// FIXME: These need to indicate mod/ref sets for FP regs... & FP 'TOP'
+// FIXME: Remove Pseudo encodings from some insts
+
+// Floating point loads & stores...            PREFIX      ARGTYPE         ENCODING       REF   MOD
+I(FLDr32      , "flds" , 0xD9,              0,             X86II::ArgF32 | X86II::Pseudo, NoIR, NoIR)   // load float     MRMS0m
+I(FLDr64      , "fldl" , 0xDD,              0,             X86II::ArgF64 | X86II::Pseudo, NoIR, NoIR)   // load double    MRMS0m
+I(FLDr80      , "fldx" , 0xDB,              0,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // store extended MRMS5m
+I(FSTr32      , "fsts" , 0xD9,              0,             X86II::ArgF32 | X86II::Pseudo, NoIR, NoIR)   // store float    MRMS2m
+I(FSTr64      , "fstl" , 0xDD,              0,             X86II::ArgF64 | X86II::Pseudo, NoIR, NoIR)   // store double   MRMS2m
+I(FSTPr80     , "fstpx", 0xDB,              0,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // store extended MRMS7m
+
+
+// Floating point constant loads...
+I(FLD0        , "fld0" , 0xEE,              0, X86II::D9 | X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // load +0.0    RawFrm
+I(FLD1        , "fld1" , 0xE8,              0, X86II::D9 | X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // load +1.0    RawFrm
+
+// Floating point pseudo instructions...
+I(FpMOV       , "FMOV" ,    0,  M_PSEUDO_FLAG,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // f1 = fmov f2
+I(FpADD       , "FADD" ,    0,  M_PSEUDO_FLAG,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // f1 = fadd f2, f3
+I(FpSUB       , "FSUB" ,    0,  M_PSEUDO_FLAG,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // f1 = fsub f2, f3
+I(FpMUL       , "FMUL" ,    0,  M_PSEUDO_FLAG,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // f1 = fmul f2, f3
+I(FpDIV       , "FDIV" ,    0,  M_PSEUDO_FLAG,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // f1 = fdiv f2, f3
+I(FpREM       , "FREM" ,    0,  M_PSEUDO_FLAG,             X86II::ArgF80 | X86II::Pseudo, NoIR, NoIR)   // f1 = frem f2, f3
+
+
+// Floating point compares
+//I(FUCOMPP     , "fucompp", 0xDA,           0, X86II::Void, NoIR, NoIR)                       // compare+pop2x
+
+// Floating point flag ops
+//I(FNSTSWr8    , "fnstsw", 0xDF,            0, X86II::Void, NoIR, O_AX)                       // AX = fp flags
+
+
 
 // At this point, I is dead, so undefine the macro
 #undef I
