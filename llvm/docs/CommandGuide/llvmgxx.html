@@ -1,0 +1,111 @@
+<html>
+<title>
+LLVM: llvmg++ tool
+</title>
+
+<body>
+
+<center>
+<h1>LLVM: llvmg++ tool</h1>
+</center>
+<HR>
+
+<h3>
+NAME
+</h3>
+
+llvmg++
+
+<h3>
+SYNOPSIS
+</h3>
+
+llvmg++ [options] filename
+<h3>
+DESCRIPTION
+</h3>
+
+The llvmg++ command is the LLVM C++ front end.  It is a modified version of g++
+that takes C++ programs and compiles them into LLVM bytecode or assembly
+language, depending upon the options.
+<p>
+
+The llvmg++ program uses the LLVM assembler gccas and the LLVM linker gccld to
+do the work of creating complete programs.
+<p>
+
+Being derived from the GNU Compiler Collection, llvmg++ has many of g++'s
+features and accepts most of g++'s options.  It handles a number of g++'s
+extensions to the C++ programming language.
+<p>
+
+Below you will find several commonly used options:
+
+<h3>
+OPTIONS
+</h3>
+
+<ul>
+	<li> -S
+	<br>
+	Do not generate an LLVM bytecode file.  Rather, compile the source file
+	into an LLVM assembly language file.
+	<p>
+
+	<li> -c
+	<br>
+	Do not generate a linked executable.  Rather, compile the source file into
+	an LLVM bytecode file.  This bytecode file can then be linked with other
+	bytecode files later on to generate a full LLVM executable.
+	<p>
+
+	<li> -o <i>filename</i>
+	<br>
+	Specify the output file to be <i>filename</i>.  If <i>filename</i> is -,
+	then llvmgcc sends its output to standard output.
+	<p>
+
+	<li> -I <i>directory</i>
+	<br>
+	Add a directory to the header file search path.  This option can be
+	repeated.
+	<p>
+
+	<li> -L <i>directory</i>
+	<br>
+	Add <i>directory</i> to the library search path.  This option can be
+	repeated.
+	<p>
+
+	<li> -l<i>name</i>
+	<br>
+	Link in the library lib<i>name</i>.[bc | a | so].  This library should be
+	a bytecode library.
+	<p>
+
+	<li>-Wl,<i>option</i>
+	<br>
+	Pass <i>option</i> to the linker (usually gccld).
+	<p>
+
+</ul>
+
+<h3>
+EXIT STATUS
+</h3>
+
+If llvmg++ succeeds, it will exit with 0.  Otherwise, if an error occurs, it
+will exit with a non-zero value.
+
+<h3>
+SEE ALSO
+</h3>
+<A HREF="llvmgcc.html">llvmg++</A>,
+<A HREF="gccas.html">gccas</A>,
+<A HREF="gccld.html">gccld</A>
+
+<HR>
+<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
+</body>
+</html>
+
