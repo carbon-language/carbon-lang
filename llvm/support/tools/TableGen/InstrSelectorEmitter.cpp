@@ -19,7 +19,7 @@ NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   if (Name == "DNVT_arg0") return Arg0;
   if (Name == "DNVT_arg1") return Arg1;
   if (Name == "DNVT_ptr" ) return Ptr;
-  if (Name == "DNVT_bool") return Bool;
+  if (Name == "DNVT_i8"  ) return I8;
   throw "Unknown DagNodeValType '" + Name + "'!";
 }
 
@@ -276,7 +276,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     AnyUnset |= InferTypes(Child, MadeChange);
 
     switch (NT.ArgTypes[i]) {
-    case NodeType::Bool:
+    case NodeType::I8:
       MadeChange |= Child->updateNodeType(MVT::i1, TheRecord->getName());
       break;
     case NodeType::Arg0:
@@ -304,7 +304,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
   case NodeType::Void:
     MadeChange |= N->updateNodeType(MVT::isVoid, TheRecord->getName());
     break;
-  case NodeType::Bool:
+  case NodeType::I8:
     MadeChange |= N->updateNodeType(MVT::i1, TheRecord->getName());
     break;
   case NodeType::Arg0:
