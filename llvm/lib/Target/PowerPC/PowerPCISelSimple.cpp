@@ -493,8 +493,21 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     const Type *Ty = CFP->getType();
 
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+
+    // Load addr of constant to reg; constant is located at PC + distance
+    unsigned CurPC = makeAnotherReg(Type::IntTy);
+    unsigned Reg1 = makeAnotherReg(Type::IntTy);
+    unsigned Reg2 = makeAnotherReg(Type::IntTy);
+    // Move PC to destination reg
+    BuildMI(*MBB, IP, PPC32::MovePCtoLR, 0, CurPC);
+    // Move value at PC + distance into return reg
+    BuildMI(*MBB, IP, PPC32::LOADHiAddr, 2, Reg1).addReg(CurPC)
+      .addConstantPoolIndex(CPI);
+    BuildMI(*MBB, IP, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)
+      .addConstantPoolIndex(CPI);
+
     unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC32::LFS : PPC32::LFD;
-    addConstantPoolReference(BuildMI(*MBB, IP, LoadOpcode, 2, R), CPI);
+    BuildMI(*MBB, IP, LoadOpcode, 2, R).addImm(0).addReg(Reg2);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(0);
@@ -1182,6 +1195,19 @@ void ISel::visitBranchInst(BranchInst &BI) {
   }
 }
 
+static Constant* minUConstantForValue(uint64_t val) {
+  if (val <= 1)
+    return ConstantBool::get(val);
+  else if (ConstantUInt::isValueValidForType(Type::UShortTy, val))
+    return ConstantUInt::get(Type::UShortTy, val);
+  else if (ConstantUInt::isValueValidForType(Type::UIntTy, val))
+    return ConstantUInt::get(Type::UIntTy, val);
+  else if (ConstantUInt::isValueValidForType(Type::ULongTy, val))
+    return ConstantUInt::get(Type::ULongTy, val);
+
+  std::cerr << "Value: " << val << " not accepted for any integral type!\n";
+  abort();
+}
 
 /// doCall - This emits an abstract call instruction, setting up the arguments
 /// and the return value as appropriate.  For the actual function call itself,
@@ -1213,6 +1239,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
     int GPR_remaining = 8, FPR_remaining = 13;
+    unsigned GPR_idx = 0, FPR_idx = 0;
     static const unsigned GPR[] = { 
       PPC32::R3, PPC32::R4, PPC32::R5, PPC32::R6,
       PPC32::R7, PPC32::R8, PPC32::R9, PPC32::R10,
@@ -1222,7 +1249,6 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       PPC32::F7, PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, 
       PPC32::F13
     };
-    unsigned GPR_idx = 0, FPR_idx = 0;
     
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       unsigned ArgReg;
@@ -1277,6 +1303,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       case cFP:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         if (Args[i].Ty == Type::FloatTy) {
+          assert(!isVarArg && "Cannot pass floats to vararg functions!");
           // Reg or stack?
           if (FPR_remaining > 0) {
             BuildMI(BB, PPC32::FMR, 1, FPR[FPR_idx]).addReg(ArgReg);
@@ -1286,7 +1313,6 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset)
               .addReg(PPC32::R1);
           }
-          assert(!isVarArg && "Cannot pass floats to vararg functions!");
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
           // Reg or stack?
@@ -1296,13 +1322,21 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             FPR_idx++;
             // For vararg functions, must pass doubles via int regs as well
             if (isVarArg) {
-              BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
-                .addReg(PPC32::R1);
+              union DU {
+                double FVal;
+                struct {
+                  uint32_t hi32;
+                  uint32_t lo32;
+                } UVal;
+              } U;
+              U.FVal = cast<ConstantFP>(Args[i].Val)->getValue();
+              if (GPR_remaining > 0) {
+                Constant *hi32 = minUConstantForValue(U.UVal.hi32);
+                copyConstantToRegister(BB, BB->end(), hi32, GPR[GPR_idx]);
+              }
               if (GPR_remaining > 1) {
-                BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx]).addImm(ArgOffset)
-                  .addReg(PPC32::R1);
-                BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx + 1])
-                  .addImm(ArgOffset+4).addReg(PPC32::R1);
+                Constant *lo32 = minUConstantForValue(U.UVal.lo32);
+                copyConstantToRegister(BB, BB->end(), lo32, GPR[GPR_idx+1]);
               }
             }
           } else {
@@ -1311,7 +1345,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           }
 
           ArgOffset += 4;       // 8 byte entry, not 4.
-          GPR_remaining--;    // uses up 2 GPRs
+          GPR_remaining--;      // uses up 2 GPRs
           GPR_idx++;
         }
         break;
