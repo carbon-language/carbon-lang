@@ -60,7 +60,7 @@ bool TDDataStructures::run(Module &M) {
   // they are accessible outside this compilation unit.  Currently, these
   // arguments are functions which are reachable by global variables in the
   // globals graph.
-  const DSGraph::ScalarMapTy &GGSM = GlobalsGraph->getScalarMap();
+  const DSScalarMap &GGSM = GlobalsGraph->getScalarMap();
   hash_set<DSNode*> Visited;
   for (DSScalarMap::global_iterator I = GGSM.global_begin(), E = GGSM.global_end();
        I != E; ++I)
@@ -260,14 +260,13 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
     ReachabilityCloner RC(CalleeGraph, Graph, DSGraph::StripModRefBits);
 
     // Clone over any global nodes that appear in both graphs.
-    for (DSGraph::ScalarMapTy::const_iterator
-           SI = CalleeGraph.getScalarMap().begin(),
-           SE = CalleeGraph.getScalarMap().end(); SI != SE; ++SI)
-      if (GlobalValue *GV = dyn_cast<GlobalValue>(SI->first)) {
-        DSGraph::ScalarMapTy::const_iterator GI = Graph.getScalarMap().find(GV);
-        if (GI != Graph.getScalarMap().end())
-          RC.merge(SI->second, GI->second);
-      }
+    for (DSScalarMap::global_iterator
+           SI = CalleeGraph.getScalarMap().global_begin(),
+           SE = CalleeGraph.getScalarMap().global_end(); SI != SE; ++SI) {
+      DSScalarMap::const_iterator GI = Graph.getScalarMap().find(*SI);
+      if (GI != Graph.getScalarMap().end())
+        RC.merge(CalleeGraph.getNodeForValue(*SI), GI->second);
+    }
 
     // Loop over all of the distinct call sites in the caller of the callee.
     for (; CSI != CallSites.end() && CSI->first == &CalleeGraph; ++CSI) {
