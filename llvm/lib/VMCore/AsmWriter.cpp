@@ -765,6 +765,12 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType,
 
 
 void AssemblyWriter::printModule(const Module *M) {
+  if (!M->getModuleIdentifier().empty() &&
+      // Don't print hte ID if it will start a new line (which would 
+      // require a comment char before it).
+      M->getModuleIdentifier().find('\n') == std::string::npos)
+    Out << "; ModuleID = '" << M->getModuleIdentifier() << "'\n";
+
   switch (M->getEndianness()) {
   case Module::LittleEndian: Out << "target endian = little\n"; break;
   case Module::BigEndian:    Out << "target endian = big\n";    break;
