@@ -47,6 +47,8 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy,
 				  const Type *NewTy) = 0;
+  // for debugging...
+  virtual void dump() const = 0;
 };
 
 
@@ -119,12 +121,10 @@ public:
 // as both a handle (as above) and an AbstractTypeUser.  It uses the callback to
 // keep its pointer member updated to the current version of the type.
 //
-template <class TypeSC>
-class PATypeHolder : public AbstractTypeUser, public PATypeHandle<TypeSC> {
-public:
-  inline PATypeHolder(const TypeSC *ty) : PATypeHandle<TypeSC>(ty, this) {}
+struct PATypeHolder : public AbstractTypeUser, public PATypeHandle<Type> {
+  inline PATypeHolder(const Type *ty) : PATypeHandle<Type>(ty, this) {}
   inline PATypeHolder(const PATypeHolder &T)
-    : AbstractTypeUser(T), PATypeHandle<TypeSC>(T, this) {}
+    : AbstractTypeUser(T), PATypeHandle<Type>(T, this) {}
 
   // refineAbstractType - All we do is update our PATypeHandle member to point
   // to the new type.
@@ -137,22 +137,23 @@ public:
     removeUserFromConcrete();
 
     if ((const Type*)OldTy != NewTy)
-      PATypeHandle<TypeSC>::operator=((const TypeSC*)NewTy);
+      PATypeHandle<Type>::operator=(NewTy);
   }
 
   // operator= - Allow assignment to handle
-  inline const TypeSC *operator=(const TypeSC *ty) {
-    return PATypeHandle<TypeSC>::operator=(ty);
+  inline const Type *operator=(const Type *ty) {
+    return PATypeHandle<Type>::operator=(ty);
   }
 
   // operator= - Allow assignment to handle
-  inline const TypeSC *operator=(const PATypeHandle<TypeSC> &T) {
-    return PATypeHandle<TypeSC>::operator=(T);
+  inline const Type *operator=(const PATypeHandle<Type> &T) {
+    return PATypeHandle<Type>::operator=(T);
   }
-  inline const TypeSC *operator=(const PATypeHolder<TypeSC> &H) {
-    return PATypeHandle<TypeSC>::operator=(H);
+  inline const Type *operator=(const PATypeHolder &H) {
+    return PATypeHandle<Type>::operator=(H);
   }
+
+  void dump() const;
 };
-
 
 #endif
