@@ -453,8 +453,11 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
         ++NumExtraMaxRegUsers;
       }
     }
-  
-    Result = MaxRegUse+NumExtraMaxRegUsers;
+
+    if (O.getOpcode() != ISD::TokenFactor)
+      Result = MaxRegUse+NumExtraMaxRegUsers;
+    else
+      Result = std::max(MaxRegUse-1, 1);
   }
 
   //std::cerr << " WEIGHT: " << Result << " ";  N->dump(); std::cerr << "\n";
