@@ -116,7 +116,7 @@ void TreePatternNode::dump() const { std::cerr << *this; }
 //
 Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
                  InstrSelectorEmitter &ise)
-  : PTy(pty), TheRecord(TheRec), ISE(ise) {
+  : PTy(pty), Result(0), TheRecord(TheRec), ISE(ise) {
 
   // First, parse the pattern...
   Tree = ParseTreePattern(RawPat);
