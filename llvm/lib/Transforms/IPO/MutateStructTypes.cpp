@@ -56,15 +56,15 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
-    const FunctionType *MT = cast<FunctionType>(Ty);
-    const Type *RetTy = ConvertType(MT->getReturnType());
+    const FunctionType *FT = cast<FunctionType>(Ty);
+    const Type *RetTy = ConvertType(FT->getReturnType());
     std::vector<const Type*> ArgTypes;
 
-    for (FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin(),
-           E = MT->getParamTypes().end(); I != E; ++I)
+    for (FunctionType::ParamTypes::const_iterator I = FT->getParamTypes().begin(),
+           E = FT->getParamTypes().end(); I != E; ++I)
       ArgTypes.push_back(ConvertType(*I));
     
-    DestTy = FunctionType::get(RetTy, ArgTypes, MT->isVarArg());
+    DestTy = FunctionType::get(RetTy, ArgTypes, FT->isVarArg());
     break;
   }
   case Type::StructTyID: {
@@ -123,7 +123,7 @@ void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
       assert(ElNum < I->second.second.size());
       // Apply the XForm specified by Transforms map...
       unsigned NewElNum = I->second.second[ElNum];
-      Idx[i] = ConstantUInt::get(Type::UByteTy, NewElNum);
+      Idx[i] = ConstantUInt::get(Idx[i]->getType(), NewElNum);
     }
   }
 
