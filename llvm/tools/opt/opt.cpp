@@ -36,6 +36,7 @@ struct {
   enum Opts OptID;
   Pass *ThePass;
 } OptTable[] = {
+  { swapstructs, 0 },
   { dce      , new opt::DeadCodeElimination() },
   { constprop, new opt::ConstantPropogation() }, 
   { inlining , new opt::MethodInlining() },
@@ -50,7 +51,6 @@ struct {
   { tracem   , new InsertTraceCode(false, true) },
   { print    , new PrintModulePass("Current Method: \n",&cerr) },
   { cleangcc , new CleanupGCCOutput() },
-  { swapstructs, new SwapStructContents() },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -81,12 +81,16 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
- 
-  Module *C = ParseBytecodeFile(InputFilename);
-  if (C == 0) {
+
+  // FIXME: Use smartptr
+  Module *M = ParseBytecodeFile(InputFilename);
+  if (M == 0) {
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
+
+  // FIXME: Absurdly nasty hack.
+  OptTable[0].ThePass = new PrebuiltStructMutation(M, PrebuiltStructMutation::SortElements);
 
   for (unsigned i = 0; i < OptimizationList.size(); ++i) {
     enum Opts Opt = OptimizationList[i];
@@ -94,7 +98,7 @@ int main(int argc, char **argv) {
     unsigned j;
     for (j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j) {
       if (Opt == OptTable[j].OptID) {
-        if (OptTable[j].ThePass->run(C) && !Quiet)
+        if (OptTable[j].ThePass->run(M) && !Quiet)
           cerr << OptimizationList.getArgName(Opt)
 	       << " pass made modifications!\n";
         break;
@@ -111,14 +115,14 @@ int main(int argc, char **argv) {
                        (Force ? 0 : ios::noreplace)|ios::out);
     if (!Out->good()) {
       cerr << "Error opening " << OutputFilename << "!\n";
-      delete C;
+      delete M;
       return 1;
     }
   }
 
   // Okay, we're done now... write out result...
-  WriteBytecodeToFile(C, *Out);
-  delete C;
+  WriteBytecodeToFile(M, *Out);
+  delete M;
 
   if (Out != &cout) delete Out;
   return 0;
