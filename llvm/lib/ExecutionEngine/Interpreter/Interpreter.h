@@ -103,7 +103,6 @@ public:
 
   // User Interation Methods...
   bool callFunction(const std::string &Name);      // return true on failure
-  void print(const std::string &Name);
   static void print(const Type *Ty, GenericValue V);
   static void printValue(const Type *Ty, GenericValue V);
 
@@ -180,20 +179,6 @@ private:  // Helper functions
   // at, or fail silently if no program is running.
   //
   void printCurrentInstruction();
-
-  // LookupMatchingNames - Search the current function namespace, then the
-  // global namespace looking for values that match the specified name.  Return
-  // ALL matches to that name.  This is obviously slow, and should only be used
-  // for user interaction.
-  //
-  std::vector<Value*> LookupMatchingNames(const std::string &Name);
-
-  // ChooseOneOption - Prompt the user to choose among the specified options to
-  // pick one value.  If no options are provided, emit an error.  If a single 
-  // option is provided, just return that option.
-  //
-  Value *ChooseOneOption(const std::string &Name,
-                         const std::vector<Value*> &Opts);
 
   void initializeExecutionEngine();
   void initializeExternalFunctions();

@@ -1086,20 +1086,3 @@ void Interpreter::print(const Type *Ty, GenericValue V) {
   CW << Ty << " ";
   printValue(Ty, V);
 }
-
-void Interpreter::print(const std::string &Name) {
-  Value *PickedVal = ChooseOneOption(Name, LookupMatchingNames(Name));
-  if (!PickedVal) return;
-
-  if (const Function *F = dyn_cast<Function>(PickedVal)) {
-    CW << F;  // Print the function
-  } else if (const Type *Ty = dyn_cast<Type>(PickedVal)) {
-    CW << "type %" << Name << " = " << Ty->getDescription() << "\n";
-  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(PickedVal)) {
-    CW << BB;   // Print the basic block
-  } else {      // Otherwise there should be an annotation for the slot#
-    print(PickedVal->getType(), 
-          getOperandValue(PickedVal, ECStack[CurFrame]));
-    std::cout << "\n";
-  }
-}
