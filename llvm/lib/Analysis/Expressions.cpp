@@ -11,6 +11,7 @@
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Instruction.h"
 #include <iostream>
 
 using namespace analysis;
