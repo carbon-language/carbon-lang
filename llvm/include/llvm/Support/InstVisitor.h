@@ -156,6 +156,7 @@ struct InstVisitor {
   RetTy visitBranchInst(BranchInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitSwitchInst(SwitchInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitInvokeInst(InvokeInst &I)              { DELEGATE(TerminatorInst);}
+  RetTy visitUnwindInst(UnwindInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitSetCondInst(SetCondInst &I)            { DELEGATE(BinaryOperator);}
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(AllocationInst);}
