@@ -31,7 +31,6 @@
 #include <hash_set>
 #include <sstream>
 
-const string PRINT_FUNC_NAME = "printVal";
 
 static const char*
 PrintMethodNameForType(const Type* type)
@@ -211,15 +210,15 @@ CreatePrintfInstr(Value* val,
     case Type::UIntTyID:  case Type::ULongTyID:
     case Type::SByteTyID: case Type::ShortTyID:
     case Type::IntTyID:   case Type::LongTyID:
-      fmtString << " %d\\n";
+      fmtString << " %d\n";
       break;
       
     case Type::FloatTyID:     case Type::DoubleTyID:
-      fmtString << " %g\\n";
+      fmtString << " %g\n";
       break;
       
     case Type::PointerTyID:
-      fmtString << " %p\\n";
+      fmtString << " %p\n";
       break;
       
     default:
@@ -302,7 +301,7 @@ InsertPrintInsts(Value *Val,
   BBI = BB->getInstList().insert(BBI, I)+1;
 
   // Print out a newline
-  fmtVal = GetStringRef(Mod, "\\n");
+  fmtVal = GetStringRef(Mod, "\n");
   I = new CallInst(GetPrintMethodForType(Mod, fmtVal->getType()),
                    vector<Value*>(1, fmtVal));
   BBI = BB->getInstList().insert(BBI, I)+1;
@@ -396,7 +395,7 @@ CreateMethodTraceInst(Method* method,
   string fmtString(indent, ' ');
   ostringstream methodNameString;
   WriteAsOperand(methodNameString, method);
-  fmtString += msg + methodNameString.str() + "\\n";
+  fmtString += msg + methodNameString.str() + '\n';
   
   GlobalVariable *fmtVal = GetStringRef(method->getParent(), fmtString);
   Instruction *printInst =
@@ -453,7 +452,6 @@ InsertTraceCode::doInsertTraceCode(Method *M,
   vector<BasicBlock*> exitBlocks;
 
   if (M->isExternal() ||
-      (M->hasName() && M->getName() == PRINT_FUNC_NAME) ||
       (! traceBasicBlockExits && ! traceMethodExits))
     return false;
   
