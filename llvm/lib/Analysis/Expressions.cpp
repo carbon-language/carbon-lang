@@ -317,7 +317,9 @@ ExprType ClassifyExpression(Value *Expr) {
     if (isa<PointerType>(DestTy))
       DestTy = Type::ULongTy;  // Pointer types are represented as ulong
 
-    if (!Src.getExprType(0)->isLosslesslyConvertibleTo(DestTy)) {
+    const Type *SrcValTy = Src.getExprType(0);
+    if (!SrcValTy) return I;
+    if (!SrcValTy->isLosslesslyConvertibleTo(DestTy)) {
       if (Src.ExprTy != ExprType::Constant)
         return I;  // Converting cast, and not a constant value...
     }
