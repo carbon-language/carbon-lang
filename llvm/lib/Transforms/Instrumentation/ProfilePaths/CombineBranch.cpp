@@ -110,7 +110,7 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
       sameTarget.push_back(MI->first);
 
       BasicBlock *newBB = new BasicBlock("newCommon", MI->first->getParent());
-      BranchInst *newBranch = new BranchInst(MI->second, 0, 0, newBB);
+      BranchInst *newBranch = new BranchInst(MI->second, newBB);
 
       std::map<PHINode *, std::vector<unsigned int> > phiMap;
 
