@@ -52,14 +52,6 @@ public:
   Module();
   ~Module();
 
-  // reduceApply - Apply the specified function to all of the methods in this 
-  // module.  The result values are or'd together and the result is returned.
-  //
-  bool reduceApply(bool (*Func)(GlobalVariable*));
-  bool reduceApply(bool (*Func)(const GlobalVariable*)) const;
-  bool reduceApply(bool (*Func)(Function*));
-  bool reduceApply(bool (*Func)(const Function*)) const;
-
   // Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
   inline       GlobalListType &getGlobalList()        { return GlobalList; }

@@ -71,22 +71,6 @@ void Module::dropAllReferences() {
   }
 }
 
-// reduceApply - Apply the specified function to all of the methods in this 
-// module.  The result values are or'd together and the result is returned.
-//
-bool Module::reduceApply(bool (*Func)(GlobalVariable*)) {
-  return reduce_apply_bool(gbegin(), gend(), Func);
-}
-bool Module::reduceApply(bool (*Func)(const GlobalVariable*)) const {
-  return reduce_apply_bool(gbegin(), gend(), Func);
-}
-bool Module::reduceApply(bool (*Func)(Function*)) {
-  return reduce_apply_bool(begin(), end(), Func);
-}
-bool Module::reduceApply(bool (*Func)(const Function*)) const {
-  return reduce_apply_bool(begin(), end(), Func);
-}
-
 // Accessor for the underlying GlobalValRefMap...
 ConstantPointerRef *Module::getConstantPointerRef(GlobalValue *V){
   // Create ref map lazily on demand...
