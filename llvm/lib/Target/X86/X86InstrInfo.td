@@ -339,6 +339,19 @@ def MUL16m : I<0xF7, MRM4m, (ops i16mem:$src),
 def MUL32m : I<0xF7, MRM4m, (ops i32mem:$src),
                "mul{l} $src">, Imp<[EAX],[EAX,EDX]>;   // EAX,EDX = EAX*[mem32]
 
+def IMUL8r  : I<0xF6, MRM5r, (ops R8:$src), "imul{b} $src">,
+              Imp<[AL],[AX]>;               // AL,AH = AL*R8
+def IMUL16r : I<0xF7, MRM5r, (ops R16:$src), "imul{w} $src">,
+              Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*R16
+def IMUL32r : I<0xF7, MRM5r, (ops R32:$src), "imul{l} $src">,
+              Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*R32
+def IMUL8m  : I<0xF6, MRM5m, (ops i8mem :$src),
+                "imul{b} $src">, Imp<[AL],[AX]>;           // AL,AH = AL*[mem8]
+def IMUL16m : I<0xF7, MRM5m, (ops i16mem:$src),
+                "imul{w} $src">, Imp<[AX],[AX,DX]>, OpSize;// AX,DX = AX*[mem16]
+def IMUL32m : I<0xF7, MRM5m, (ops i32mem:$src),
+                "imul{l} $src">, Imp<[EAX],[EAX,EDX]>;  // EAX,EDX = EAX*[mem32]
+
 // unsigned division/remainder
 def DIV8r  : I<0xF6, MRM6r, (ops R8:$src),          // AX/r8 = AL,AH
                "div{b} $src">, Imp<[AX],[AX]>;

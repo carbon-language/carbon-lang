@@ -149,6 +149,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::MUL8r:     return MakeMInst( X86::MUL8m ,  FrameIndex, MI);
     case X86::MUL16r:    return MakeMInst( X86::MUL16m,  FrameIndex, MI);
     case X86::MUL32r:    return MakeMInst( X86::MUL32m,  FrameIndex, MI);
+    case X86::IMUL8r:    return MakeMInst( X86::IMUL8m , FrameIndex, MI);
+    case X86::IMUL16r:   return MakeMInst( X86::IMUL16m, FrameIndex, MI);
+    case X86::IMUL32r:   return MakeMInst( X86::IMUL32m, FrameIndex, MI);
     case X86::DIV8r:     return MakeMInst( X86::DIV8m ,  FrameIndex, MI);
     case X86::DIV16r:    return MakeMInst( X86::DIV16m,  FrameIndex, MI);
     case X86::DIV32r:    return MakeMInst( X86::DIV32m,  FrameIndex, MI);
