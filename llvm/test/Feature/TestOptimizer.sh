@@ -22,8 +22,9 @@ diff $1.ll.[12] || exit 3
 $AS < $1 | $OPT -q -inline -dce -cleangcc -sccp -dce | $DIS | $AS > $1.bc.3 || exit 1
 
 # Should not be able to optimize further!
-#$OPT -q -sccp -dce < $1.bc.3 > $1.bc.4 || exit 2
-
-#diff $1.bc.[34] || exit 3
-rm $1.bc.[123] $1.ll.[12]
+$OPT -q -sccp -dce < $1.bc.3 > $1.bc.4 || exit 2
+$DIS < $1.bc.3 > $1.ll.3 || exit 3
+$DIS < $1.bc.4 > $1.ll.4 || exit 3
+diff $1.ll.[34] || exit 3
+rm $1.bc.[1234] $1.ll.[1234]
 
