@@ -301,36 +301,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
   assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
 
-  // Check to see if the first instruction in this block is just an unwind.  If
-  // so, replace any invoke instructions which use this as an exception
-  // destination with call instructions.
-  //
-  if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator()))
-    if (BB->begin() == BasicBlock::iterator(UI)) {  // Empty block?
-      std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
-      while (!Preds.empty()) {
-        BasicBlock *Pred = Preds.back();
-        if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
-          if (II->getUnwindDest() == BB) {
-            // Insert a new branch instruction before the invoke, because this
-            // is now a fall through...
-            BranchInst *BI = new BranchInst(II->getNormalDest(), II);
-            Pred->getInstList().remove(II);   // Take out of symbol table
-            
-            // Insert the call now...
-            std::vector<Value*> Args(II->op_begin()+3, II->op_end());
-            CallInst *CI = new CallInst(II->getCalledValue(), Args,
-                                        II->getName(), BI);
-            // If the invoke produced a value, the Call now does instead
-            II->replaceAllUsesWith(CI);
-            delete II;
-            Changed = true;
-          }
-        
-        Preds.pop_back();
-      }
-    }
-
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB)) {
     //cerr << "Removing BB: \n" << BB;
@@ -472,6 +442,33 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         
         return true;
       }
+    }
+  } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->begin())) {
+    // Check to see if the first instruction in this block is just an unwind.
+    // If so, replace any invoke instructions which use this as an exception
+    // destination with call instructions.
+    //
+    std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+    while (!Preds.empty()) {
+      BasicBlock *Pred = Preds.back();
+      if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
+        if (II->getUnwindDest() == BB) {
+          // Insert a new branch instruction before the invoke, because this
+          // is now a fall through...
+          BranchInst *BI = new BranchInst(II->getNormalDest(), II);
+          Pred->getInstList().remove(II);   // Take out of symbol table
+          
+          // Insert the call now...
+          std::vector<Value*> Args(II->op_begin()+3, II->op_end());
+          CallInst *CI = new CallInst(II->getCalledValue(), Args,
+                                      II->getName(), BI);
+          // If the invoke produced a value, the Call now does instead
+          II->replaceAllUsesWith(CI);
+          delete II;
+          Changed = true;
+        }
+      
+      Preds.pop_back();
     }
   }
 
