@@ -178,12 +178,6 @@ public:
   ///
   virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
 
-  /// createNOPinstr - returns the target's implementation of NOP, which is
-  /// usually a pseudo-instruction, implemented by a degenerate version of
-  /// another instruction, e.g. X86: `xchg ax, ax'; SparcV9: `sethi r0, r0, r0'
-  ///
-  MachineInstr* createNOPinstr() const;
-
   //
   // Return true if the instruction is a register to register move and
   // leave the source and dest operands in the passed parameters.
@@ -191,12 +185,6 @@ public:
   virtual bool isMoveInstr(const MachineInstr& MI,
                            unsigned& sourceReg,
                            unsigned& destReg) const;
-
-  /// isNOPinstr - not having a special NOP opcode, we need to know if a given
-  /// instruction is interpreted as an `official' NOP instr, i.e., there may be
-  /// more than one way to `do nothing' but only one canonical way to slack off.
-  ///
-  bool isNOPinstr(const MachineInstr &MI) const;
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified opcode number.

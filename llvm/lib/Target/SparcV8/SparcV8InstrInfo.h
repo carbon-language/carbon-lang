@@ -29,18 +29,6 @@ public:
   /// always be able to get register info as well (through this method).
   ///
   virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
-
-  /// createNOPinstr - returns the target's implementation of NOP, which is
-  /// usually a pseudo-instruction, implemented by a degenerate version of
-  /// another instruction.
-  ///
-  MachineInstr* createNOPinstr() const;
-
-  /// isNOPinstr - not having a special NOP opcode, we need to know if a given
-  /// instruction is interpreted as an `official' NOP instr, i.e., there may be
-  /// more than one way to `do nothing' but only one canonical way to slack off.
-  ///
-  bool isNOPinstr(const MachineInstr &MI) const;
 };
 
 }
