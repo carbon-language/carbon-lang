@@ -91,4 +91,11 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 ///
 bool InlineFunction(CallInst *C);
 
+
+/// CloneTrace - Returns a copy of the specified trace. It removes internal phi
+/// nodes, copies the basic blocks, remaps variables, and returns a new vector
+/// of basic blocks (the cloned trace).
+///
+std::vector<BasicBlock *> cloneTrace(std::vector<BasicBlock*> &origTrace);
+
 #endif
