@@ -682,6 +682,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   // integers at the end of their ranges...
   //
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+    if (CI->isNullValue() && I.getOpcode() == Instruction::SetNE)
+      return new CastInst(Op0, Type::BoolTy, I.getName());
+
     // Check to see if we are comparing against the minimum or maximum value...
     if (CI->isMinValue()) {
       if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
