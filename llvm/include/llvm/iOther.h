@@ -66,7 +66,7 @@ public:
 class CastInst : public Instruction {
   CastInst(const CastInst &CI) : Instruction(CI.getType(), Cast) {
     Operands.reserve(1);
-    Operands.push_back(Use(Operands[0], this));
+    Operands.push_back(Use(CI.Operands[0], this));
   }
 public:
   CastInst(Value *S, const Type *Ty, const string &Name = "")
@@ -97,7 +97,7 @@ public:
   }
 
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name);
+  virtual void setName(const string &name, SymbolTable *ST = 0);
 
   inline const Method *getParent() const { return Parent; }
   inline       Method *getParent()       { return Parent; }
@@ -135,10 +135,10 @@ public:
 // ShiftInst - This class represents left and right shift instructions.
 //
 class ShiftInst : public Instruction {
-  ShiftInst(const ShiftInst &CI) : Instruction(CI.getType(), CI.getOpcode()) {
+  ShiftInst(const ShiftInst &SI) : Instruction(SI.getType(), SI.getOpcode()) {
     Operands.reserve(2);
-    Operands.push_back(Use(Operands[0], this));
-    Operands.push_back(Use(Operands[1], this));
+    Operands.push_back(Use(SI.Operands[0], this));
+    Operands.push_back(Use(SI.Operands[1], this));
   }
 public:
   ShiftInst(OtherOps Opcode, Value *S, Value *SA, const string &Name = "")
