@@ -1776,17 +1776,17 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
   unsigned Class = getClass (ResultTy);
   
   static const unsigned ConstantOperand[][4] = {
-    { X86::SHRri8, X86::SHRri16, X86::SHRri32, X86::SHRDri32 },  // SHR
-    { X86::SARri8, X86::SARri16, X86::SARri32, X86::SHRDri32 },  // SAR
-    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDri32 },  // SHL
-    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDri32 },  // SAL = SHL
+    { X86::SHRri8, X86::SHRri16, X86::SHRri32, X86::SHRDrri32 },  // SHR
+    { X86::SARri8, X86::SARri16, X86::SARri32, X86::SHRDrri32 },  // SAR
+    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrri32 },  // SHL
+    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrri32 },  // SAL = SHL
   };
 
   static const unsigned NonConstantOperand[][4] = {
-    { X86::SHRrr8, X86::SHRrr16, X86::SHRrr32 },  // SHR
-    { X86::SARrr8, X86::SARrr16, X86::SARrr32 },  // SAR
-    { X86::SHLrr8, X86::SHLrr16, X86::SHLrr32 },  // SHL
-    { X86::SHLrr8, X86::SHLrr16, X86::SHLrr32 },  // SAL = SHL
+    { X86::SHRrCL8, X86::SHRrCL16, X86::SHRrCL32 },  // SHR
+    { X86::SARrCL8, X86::SARrCL16, X86::SARrCL32 },  // SAR
+    { X86::SHLrCL8, X86::SHLrCL16, X86::SHLrCL32 },  // SHL
+    { X86::SHLrCL8, X86::SHLrCL16, X86::SHLrCL32 },  // SAL = SHL
   };
 
   // Longs, as usual, are handled specially...
@@ -1842,9 +1842,9 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
       if (isLeftShift) {
         // TmpReg2 = shld inHi, inLo
-        BMI(MBB, IP, X86::SHLDrr32, 2, TmpReg2).addReg(SrcReg+1).addReg(SrcReg);
+        BMI(MBB, IP, X86::SHLDrrCL32,2,TmpReg2).addReg(SrcReg+1).addReg(SrcReg);
         // TmpReg3 = shl  inLo, CL
-        BMI(MBB, IP, X86::SHLrr32, 1, TmpReg3).addReg(SrcReg);
+        BMI(MBB, IP, X86::SHLrCL32, 1, TmpReg3).addReg(SrcReg);
 
         // Set the flags to indicate whether the shift was by more than 32 bits.
         BMI(MBB, IP, X86::TESTri8, 2).addReg(X86::CL).addZImm(32);
@@ -1857,9 +1857,9 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
             DestReg).addReg(TmpReg3).addReg(TmpReg);
       } else {
         // TmpReg2 = shrd inLo, inHi
-        BMI(MBB, IP, X86::SHRDrr32, 2, TmpReg2).addReg(SrcReg).addReg(SrcReg+1);
+        BMI(MBB, IP, X86::SHRDrrCL32,2,TmpReg2).addReg(SrcReg).addReg(SrcReg+1);
         // TmpReg3 = s[ah]r  inHi, CL
-        BMI(MBB, IP, isSigned ? X86::SARrr32 : X86::SHRrr32, 1, TmpReg3)
+        BMI(MBB, IP, isSigned ? X86::SARrCL32 : X86::SHRrCL32, 1, TmpReg3)
                        .addReg(SrcReg+1);
 
         // Set the flags to indicate whether the shift was by more than 32 bits.

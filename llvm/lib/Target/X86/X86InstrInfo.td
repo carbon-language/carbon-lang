@@ -452,29 +452,32 @@ def TESTmi32 : X86Inst<"test", 0xF7, MRMS0m    , Arg32>;          // flags = [me
 // Shift instructions
 class UsesCL { list<Register> Uses = [CL]; bit printImplicitUses = 1; }
 
-def SHLrr8   : I2A8 <"shl", 0xD2, MRMS4r    >        , UsesCL; // R8  <<= cl
-def SHLrr16  : I2A8 <"shl", 0xD3, MRMS4r    >, OpSize, UsesCL; // R16 <<= cl
-def SHLrr32  : I2A8 <"shl", 0xD3, MRMS4r    >        , UsesCL; // R32 <<= cl
+def SHLrCL8  : I2A8 <"shl", 0xD2, MRMS4r    >        , UsesCL; // R8  <<= cl
+def SHLrCL16 : I2A8 <"shl", 0xD3, MRMS4r    >, OpSize, UsesCL; // R16 <<= cl
+def SHLrCL32 : I2A8 <"shl", 0xD3, MRMS4r    >        , UsesCL; // R32 <<= cl
 def SHLri8   : I2A8 <"shl", 0xC0, MRMS4r    >;                 // R8  <<= imm8
 def SHLri16  : I2A8 <"shl", 0xC1, MRMS4r    >, OpSize;         // R16 <<= imm16
 def SHLri32  : I2A8 <"shl", 0xC1, MRMS4r    >;                 // R32 <<= imm32
-def SHRrr8   : I2A8 <"shr", 0xD2, MRMS5r    >        , UsesCL; // R8  >>= cl
-def SHRrr16  : I2A8 <"shr", 0xD3, MRMS5r    >, OpSize, UsesCL; // R16 >>= cl
-def SHRrr32  : I2A8 <"shr", 0xD3, MRMS5r    >        , UsesCL; // R32 >>= cl
+
+def SHRrCL8  : I2A8 <"shr", 0xD2, MRMS5r    >        , UsesCL; // R8  >>= cl
+def SHRrCL16 : I2A8 <"shr", 0xD3, MRMS5r    >, OpSize, UsesCL; // R16 >>= cl
+def SHRrCL32 : I2A8 <"shr", 0xD3, MRMS5r    >        , UsesCL; // R32 >>= cl
 def SHRri8   : I2A8 <"shr", 0xC0, MRMS5r    >;                 // R8  >>= imm8
 def SHRri16  : I2A8 <"shr", 0xC1, MRMS5r    >, OpSize;         // R16 >>= imm16
 def SHRri32  : I2A8 <"shr", 0xC1, MRMS5r    >;                 // R32 >>= imm32
-def SARrr8   : I2A8 <"sar", 0xD2, MRMS7r    >        , UsesCL; // R8  >>>= cl
-def SARrr16  : I2A8 <"sar", 0xD3, MRMS7r    >, OpSize, UsesCL; // R16 >>>= cl
-def SARrr32  : I2A8 <"sar", 0xD3, MRMS7r    >        , UsesCL; // R32 >>>= cl
+
+def SARrCL8  : I2A8 <"sar", 0xD2, MRMS7r    >        , UsesCL; // R8  >>>= cl
+def SARrCL16 : I2A8 <"sar", 0xD3, MRMS7r    >, OpSize, UsesCL; // R16 >>>= cl
+def SARrCL32 : I2A8 <"sar", 0xD3, MRMS7r    >        , UsesCL; // R32 >>>= cl
 def SARri8   : I2A8 <"sar", 0xC0, MRMS7r    >;                 // R8  >>>= imm8
 def SARri16  : I2A8 <"sar", 0xC1, MRMS7r    >, OpSize;         // R16 >>>= imm16
 def SARri32  : I2A8 <"sar", 0xC1, MRMS7r    >;                 // R32 >>>= imm32
 
-def SHLDrr32 : I2A8 <"shld", 0xA5, MRMDestReg>, TB, UsesCL;   // R32 <<= R32,R32 cl
-def SHLDri32 : I2A8 <"shld", 0xA4, MRMDestReg>, TB;           // R32 <<= R32,R32 imm8
-def SHRDrr32 : I2A8 <"shrd", 0xAD, MRMDestReg>, TB, UsesCL;   // R32 >>= R32,R32 cl
-def SHRDri32 : I2A8 <"shrd", 0xAC, MRMDestReg>, TB;           // R32 >>= R32,R32 imm8
+def SHLDrrCL32 : I2A8 <"shld", 0xA5, MRMDestReg>, TB, UsesCL;   // R32 <<= R32,R32 cl
+def SHLDrri32  : I2A8 <"shld", 0xA4, MRMDestReg>, TB;           // R32 <<= R32,R32 imm8
+
+def SHRDrrCL32 : I2A8 <"shrd", 0xAD, MRMDestReg>, TB, UsesCL;   // R32 >>= R32,R32 cl
+def SHRDrri32  : I2A8 <"shrd", 0xAC, MRMDestReg>, TB;           // R32 >>= R32,R32 imm8
 
 // Condition code ops, incl. set if equal/not equal/...
 def SAHF     : X86Inst<"sahf" , 0x9E, RawFrm, Arg8>, Imp<[AH],[]>;  // flags = AH
