@@ -118,14 +118,14 @@ different forms of LLVM are all equivalent.  This document describes the human
 readable representation and notation.<p>
 
 The LLVM representation aims to be a light weight and low level while being
-expressive, type safe, and extensible at the same time.  It aims to be a
-"universal IR" of sorts, by being at a low enough level that high level ideas
-may be cleanly mapped to it (similar to how microprocessors are "universal
-IR's", allowing many source languages to be mapped to them).  By providing type
-safety, LLVM can be used as the target of optimizations: for example, through
-pointer analysis, it can be proven that a C automatic variable is never accessed
-outside of the current function... allowing it to be promoted to a simple SSA
-value instead of a memory location.<p>
+expressive, typed, and extensible at the same time.  It aims to be a "universal
+IR" of sorts, by being at a low enough level that high level ideas may be
+cleanly mapped to it (similar to how microprocessors are "universal IR's",
+allowing many source languages to be mapped to them).  By providing type
+information, LLVM can be used as the target of optimizations: for example,
+through pointer analysis, it can be proven that a C automatic variable is never
+accessed outside of the current function... allowing it to be promoted to a
+simple SSA value instead of a memory location.<p>
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="wellformed"><h4><hr size=0>Well Formedness</h4><ul>
@@ -232,11 +232,11 @@ constants.<p>
 <!-- *********************************************************************** -->
 
 The LLVM type system is one of the most important features of the intermediate
-representation.  Being strongly typed enables a number of optimizations to be
-performed on the IR directly, without having to do extra analyses on the side
-before the transformation.  A strong type system makes it easier to read the
-generated code and enables novel analyses and transformations that are not
-feasible to perform on normal three address code representations.<p>
+representation.  Being typed enables a number of optimizations to be performed
+on the IR directly, without having to do extra analyses on the side before the
+transformation.  A strong type system makes it easier to read the generated code
+and enables novel analyses and transformations that are not feasible to perform
+on normal three address code representations.<p>
 
 <!-- The written form for the type system was heavily influenced by the
 syntactic problems with types in the C language<sup><a
@@ -1736,7 +1736,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Tue Jun 25 13:05:52 CDT 2002
+Last modified: Tue Jun 25 15:19:34 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
