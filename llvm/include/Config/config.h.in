@@ -54,10 +54,20 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* define if the compiler has ext/hash_map */
+/* Define if the compiler has a header <hash_map> that defines template class
+   ::hash_map. */
+#undef HAVE_GLOBAL_HASH_MAP
+
+/* Define if the compiler has a header <hash_set> that defines template class
+   ::hash_set. */
+#undef HAVE_GLOBAL_HASH_SET
+
+/* Define if the compiler has a header <ext/hash_map> that defines template
+   class __gnu_cxx::hash_map. */
 #undef HAVE_GNU_EXT_HASH_MAP
 
-/* define if the compiler has ext/hash_set in __gnu_cc */
+/* Define if the compiler has a header <ext/hash_set> that defines template
+   class __gnu_cxx::hash_set. */
 #undef HAVE_GNU_EXT_HASH_SET
 
 /* Define to 1 if the system has the type `int64_t'. */
@@ -100,6 +110,9 @@
 /* define if the compiler implements namespaces */
 #undef HAVE_NAMESPACES
 
+/* Define to have the %a format string */
+#undef HAVE_PRINTF_A
+
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
@@ -109,10 +122,12 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* define if the compiler has ext/hash_map */
+/* Define if the compiler has a header <ext/hash_map> that defines template
+   class std::hash_map. */
 #undef HAVE_STD_EXT_HASH_MAP
 
-/* define if the compiler has ext/hash_set in std */
+/* Define if the compiler has a header <ext/hash_set> that defines template
+   class std::hash_set. */
 #undef HAVE_STD_EXT_HASH_SET
 
 /* define if the compiler has STL iterators */
@@ -226,6 +241,3 @@
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
-
-/* Define to have the %a format string in printf() */
-#undef HAVE_PRINTF_A

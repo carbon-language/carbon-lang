@@ -20846,9 +20846,9 @@ _ACEOF
 
 fi
 
-echo "$as_me:$LINENO: checking whether the compiler has ext/hash_map" >&5
-echo $ECHO_N "checking whether the compiler has ext/hash_map... $ECHO_C" >&6
-if test "${ac_cv_cxx_have_ext_hash_map+set}" = set; then
+echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_map> defining template class std::hash_map" >&5
+echo $ECHO_N "checking whether the compiler has <ext/hash_map> defining template class std::hash_map... $ECHO_C" >&6
+if test "${ac_cv_cxx_have_std_ext_hash_map+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
 
@@ -20874,7 +20874,7 @@ using namespace std;
 int
 main ()
 {
-hash_map<int, int> t; return 0;
+hash_map<int, int> t;
   ;
   return 0;
 }
@@ -20891,51 +20891,12 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_cxx_have_ext_hash_map=std
+  ac_cv_cxx_have_std_ext_hash_map=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_cxx_have_ext_hash_map=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <ext/hash_map>
-#ifdef HAVE_NAMESPACES
-using namespace __gnu_cxx;
-#endif
-int
-main ()
-{
-hash_map<int, int> t; return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_cxx_have_ext_hash_map=gnu
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_cxx_have_ext_hash_map=no
+ac_cv_cxx_have_std_ext_hash_map=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
   ac_ext=c
@@ -20944,28 +20905,154 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-
 fi
-echo "$as_me:$LINENO: result: $ac_cv_cxx_have_ext_hash_map" >&5
-echo "${ECHO_T}$ac_cv_cxx_have_ext_hash_map" >&6
-if test "$ac_cv_cxx_have_ext_hash_map" = std; then
+echo "$as_me:$LINENO: result: $ac_cv_cxx_have_std_ext_hash_map" >&5
+echo "${ECHO_T}$ac_cv_cxx_have_std_ext_hash_map" >&6
+ if test "$ac_cv_cxx_have_std_ext_hash_map" = yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_STD_EXT_HASH_MAP
 _ACEOF
 
+ fi
+ echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_map> defining template class __gnu_cxx::hash_map" >&5
+echo $ECHO_N "checking whether the compiler has <ext/hash_map> defining template class __gnu_cxx::hash_map... $ECHO_C" >&6
+if test "${ac_cv_cxx_have_gnu_ext_hash_map+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+
+
+  ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <ext/hash_map>
+#ifdef HAVE_NAMESPACES
+using namespace __gnu_cxx;
+#endif
+int
+main ()
+{
+hash_map<int,int> t;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_cxx_have_gnu_ext_hash_map=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_cxx_have_gnu_ext_hash_map=no
 fi
-if test "$ac_cv_cxx_have_ext_hash_map" = gnu; then
+rm -f conftest.$ac_objext conftest.$ac_ext
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_cxx_have_gnu_ext_hash_map" >&5
+echo "${ECHO_T}$ac_cv_cxx_have_gnu_ext_hash_map" >&6
+ if test "$ac_cv_cxx_have_gnu_ext_hash_map" = yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_GNU_EXT_HASH_MAP
 _ACEOF
 
-fi
+ fi
+ echo "$as_me:$LINENO: checking whether the compiler has <hash_map> defining template class ::hash_map" >&5
+echo $ECHO_N "checking whether the compiler has <hash_map> defining template class ::hash_map... $ECHO_C" >&6
+if test "${ac_cv_cxx_have_global_hash_map+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
 
-echo "$as_me:$LINENO: checking whether the compiler has ext/hash_set" >&5
-echo $ECHO_N "checking whether the compiler has ext/hash_set... $ECHO_C" >&6
-if test "${ac_cv_cxx_have_ext_hash_set+set}" = set; then
+
+
+  ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <hash_map>
+int
+main ()
+{
+hash_map<int,int> t;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_cxx_have_global_hash_map=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_cxx_have_global_hash_map=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_cxx_have_global_hash_map" >&5
+echo "${ECHO_T}$ac_cv_cxx_have_global_hash_map" >&6
+ if test "$ac_cv_cxx_have_global_hash_map" = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GLOBAL_HASH_MAP
+_ACEOF
+
+ fi
+echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_set> defining template class std::hash_set" >&5
+echo $ECHO_N "checking whether the compiler has <ext/hash_set> defining template class std::hash_set... $ECHO_C" >&6
+if test "${ac_cv_cxx_have_std_ext_hash_set+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
 
@@ -20991,7 +21078,7 @@ using namespace std;
 int
 main ()
 {
-hash_set<int> t; return 0;
+hash_set<int> t;
   ;
   return 0;
 }
@@ -21008,14 +21095,44 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_cxx_have_ext_hash_set=std
+  ac_cv_cxx_have_std_ext_hash_set=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_cxx_have_ext_hash_set=no
+ac_cv_cxx_have_std_ext_hash_set=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_cxx_have_std_ext_hash_set" >&5
+echo "${ECHO_T}$ac_cv_cxx_have_std_ext_hash_set" >&6
+ if test "$ac_cv_cxx_have_std_ext_hash_set" = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STD_EXT_HASH_SET
+_ACEOF
+
+ fi
+ echo "$as_me:$LINENO: checking whether the compiler has <ext/hash_set> defining template class __gnu_cxx::hash_set" >&5
+echo $ECHO_N "checking whether the compiler has <ext/hash_set> defining template class __gnu_cxx::hash_set... $ECHO_C" >&6
+if test "${ac_cv_cxx_have_gnu_ext_hash_set+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+
+
+  ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -21027,6 +21144,72 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef HAVE_NAMESPACES
 using namespace __gnu_cxx;
 #endif
+int
+main ()
+{
+hash_set<int> t;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_cxx_have_gnu_ext_hash_set=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_cxx_have_gnu_ext_hash_set=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_cxx_have_gnu_ext_hash_set" >&5
+echo "${ECHO_T}$ac_cv_cxx_have_gnu_ext_hash_set" >&6
+ if test "$ac_cv_cxx_have_gnu_ext_hash_set" = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GNU_EXT_HASH_SET
+_ACEOF
+
+ fi
+ echo "$as_me:$LINENO: checking whether the compiler has <hash_set> defining template class ::hash_set" >&5
+echo $ECHO_N "checking whether the compiler has <hash_set> defining template class ::hash_set... $ECHO_C" >&6
+if test "${ac_cv_cxx_have_global_hash_set+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+
+
+  ac_ext=cc
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <hash_set>
 int
 main ()
 {
@@ -21047,12 +21230,12 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_cxx_have_ext_hash_set=gnu
+  ac_cv_cxx_have_global_hash_set=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_cxx_have_ext_hash_set=no
+ac_cv_cxx_have_global_hash_set=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
   ac_ext=c
@@ -21061,25 +21244,16 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-
 fi
-echo "$as_me:$LINENO: result: $ac_cv_cxx_have_ext_hash_set" >&5
-echo "${ECHO_T}$ac_cv_cxx_have_ext_hash_set" >&6
-if test "$ac_cv_cxx_have_ext_hash_set" = std; then
+echo "$as_me:$LINENO: result: $ac_cv_cxx_have_global_hash_set" >&5
+echo "${ECHO_T}$ac_cv_cxx_have_global_hash_set" >&6
+ if test "$ac_cv_cxx_have_global_hash_set" = yes; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_STD_EXT_HASH_SET
+#define HAVE_GLOBAL_HASH_SET
 _ACEOF
 
-fi
-if test "$ac_cv_cxx_have_ext_hash_set" = gnu; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GNU_EXT_HASH_SET
-_ACEOF
-
-fi
-
+ fi
 echo "$as_me:$LINENO: checking whether the compiler has ext/slist" >&5
 echo $ECHO_N "checking whether the compiler has ext/slist... $ECHO_C" >&6
 if test "${ac_cv_cxx_have_ext_slist+set}" = set; then
