@@ -16,7 +16,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/iOther.h"
 #include "llvm/Method.h"
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Support/StringExtras.h"
 
@@ -134,6 +134,13 @@ public:
   int getLineNum() const { return LineNum; }
 };
 
+struct TypePlaceHolderHelper : public OpaqueType {
+  TypePlaceHolderHelper(const Type *Ty) : OpaqueType() {
+    assert(Ty == Type::TypeTy);
+  }
+};
+
+
 struct InstPlaceHolderHelper : public Instruction {
   InstPlaceHolderHelper(const Type *Ty) : Instruction(Ty, UserOp1, "") {}
 
@@ -154,20 +161,23 @@ struct MethPlaceHolderHelper : public Method {
   }
 };
 
+typedef PlaceholderValue<TypePlaceHolderHelper>  TypePlaceHolder;
 typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
 typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
 typedef PlaceholderValue<MethPlaceHolderHelper>  MethPlaceHolder;
 
-static inline ValID &getValIDFromPlaceHolder(Value *Val) {
+static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
   switch (Val->getType()->getPrimitiveID()) {
+  case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getDef();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
   case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getDef();
   default:               return ((ValuePlaceHolder*)Val)->getDef();
   }
 }
 
-static inline int getLineNumFromPlaceHolder(Value *Val) {
+static inline int getLineNumFromPlaceHolder(const Value *Val) {
   switch (Val->getType()->getPrimitiveID()) {
+  case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getLineNum();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
   case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getLineNum();
   default:               return ((ValuePlaceHolder*)Val)->getLineNum();
