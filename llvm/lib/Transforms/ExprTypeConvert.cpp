@@ -206,6 +206,9 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
   }
   case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(I);
+    // Be conservative if we find a giant PHI node.
+    if (PN->getNumIncomingValues() > 32) return false;
+
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertibleToType(PN->getIncomingValue(i), Ty, CTMap, TD))
         return false;
@@ -815,6 +818,9 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 
   case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(I);
+    // Be conservative if we find a giant PHI node.
+    if (PN->getNumIncomingValues() > 32) return false;
+
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertibleToType(PN->getIncomingValue(i), Ty, CTMap, TD))
         return false;
