@@ -36,7 +36,8 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
 		  (Config & TM::EndianMask) == TM::LittleEndian,
 		  1, 4, 
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
-		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4) {
+		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4),
+  FrameInfo(TargetFrameInfo::StackGrowsDown, 1/*16*/, 0) {
 }
 
 
@@ -60,12 +61,18 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
 
   // Perform register allocation to convert to a concrete x86 representation
   if (NoLocalRA)
-    PM.add(createSimpleRegisterAllocator(*this));
+    PM.add(createSimpleRegisterAllocator());
   else
-    PM.add(createLocalRegisterAllocator(*this));
+    PM.add(createLocalRegisterAllocator());
+
+  if (PrintCode)
+    PM.add(createMachineFunctionPrinterPass());
+
+  // Insert prolog/epilog code.  Eliminate abstract frame index references...
+  PM.add(createPrologEpilogCodeInserter());
 
   if (PrintCode)  // Print the register-allocated code
-    PM.add(createX86CodePrinterPass(*this, std::cerr));
+    PM.add(createX86CodePrinterPass(std::cerr));
 
   PM.add(createMachineCodeDestructionPass());
 
