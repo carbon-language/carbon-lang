@@ -8,10 +8,8 @@ LD_LIBRARY_PATH=../lib/Assembly/Parser/Debug:../lib/Assembly/Writer/Debug:../lib
 export LD_LIBRARY_PATH
 
 # Two full cycles are needed for bitwise stability
-# FIXME: We must strip symbols, because the symbol tables are not output in 
-# sorted order in the bytecode :(
 
-../tools/as/as   < $1      | ../tools/opt/opt -q -strip > $1.bc.1 || exit 1
+../tools/as/as   < $1      > $1.bc.1 || exit 1
 ../tools/dis/dis < $1.bc.1 > $1.ll.1 || exit 2
 ../tools/as/as   < $1.ll.1 > $1.bc.2 || exit 3
 ../tools/dis/dis < $1.bc.2 > $1.ll.2 || exit 4
