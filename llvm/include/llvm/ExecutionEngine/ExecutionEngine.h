@@ -62,6 +62,14 @@ public:
     CurVal = Addr;
   }
 
+  // getPointerToGlobalIfAvailable - This returns the address of the specified
+  // global value if it is available, otherwise it returns null.
+  //
+  void *getPointerToGlobalIfAvailable(const GlobalValue *GV) {
+    std::map<const GlobalValue*, void*>::iterator I = GlobalAddress.find(GV);
+    return I != GlobalAddress.end() ? I->second : 0;
+  }
+
   // getPointerToGlobal - This returns the address of the specified global
   // value.  This may involve code generation if it's a function.
   //
