@@ -36,6 +36,7 @@
   <li><a href="#gcimpls">GC implementations available</a>
     <ul>
     <li><a href="#semispace">SemiSpace - A simple copying garbage collector</a></li>
+    </ul>
   </li>
 
 <!--
@@ -360,11 +361,15 @@ as a parameter in the future, if needed.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="callbacks">Callback functions used to implement the garbage collector</a></li>
+  <a name="callbacks">Callback functions used to implement the garbage collector</a>
 </div>
 
+<div class="doc_text">
+<p>
 Garbage collector implementations make use of call-back functions that are
 implemented by other parts of the LLVM system.
+</p>
+</div>
 
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection">
@@ -460,7 +465,7 @@ collector, etc), or you could choose to improve one of the existing algorithms.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="semispace">SemiSpace - A simple copying garbage collector</a></li>
+  <a name="semispace">SemiSpace - A simple copying garbage collector</a>
 </div>
 
 <div class="doc_text">
