@@ -757,10 +757,10 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
         if (op.isHiBits64()) { hiBits64=true; }
         MI->SetMachineOperandConst(ii, MachineOperand::MO_SignExtendedImmed,
                                    branchTarget);
-        if (loBits32) { MI->setOperandLo32(ii); }
-        else if (hiBits32) { MI->setOperandHi32(ii); }
-        else if (loBits64) { MI->setOperandLo64(ii); }
-        else if (hiBits64) { MI->setOperandHi64(ii); }
+        if (loBits32) { MI->getOperand(ii).markLo32(); }
+        else if (hiBits32) { MI->getOperand(ii).markHi32(); }
+        else if (loBits64) { MI->getOperand(ii).markLo64(); }
+        else if (hiBits64) { MI->getOperand(ii).markHi64(); }
         DEBUG(std::cerr << "Rewrote BB ref: ");
         unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
         MCE.emitWordAt (fixedInstr, Ref);

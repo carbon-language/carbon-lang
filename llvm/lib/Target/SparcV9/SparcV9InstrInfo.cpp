@@ -164,7 +164,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
   if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM) {
     miSETHI = BuildMI(V9::SETHI, 2).addZImm(C).addRegDef(dest);
-    miSETHI->setOperandHi32(0);
+    miSETHI->getOperand(0).markHi32();
     mvec.push_back(miSETHI);
   }
   
@@ -174,7 +174,7 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
     if (miSETHI) {
       // unsigned value with high-order bits set using SETHI
       miOR = BuildMI(V9::ORi,3).addReg(dest).addZImm(C).addRegDef(dest);
-      miOR->setOperandLo32(1);
+      miOR->getOperand(1).markLo32();
     } else {
       // unsigned or small signed value that fits in simm13 field of OR
       assert(smallNegValue || (C & ~MAXSIMM) == 0);
@@ -261,12 +261,12 @@ CreateSETUWLabel(const TargetMachine& target, Value* val,
   
   // Set the high 22 bits in dest
   MI = BuildMI(V9::SETHI, 2).addReg(val).addRegDef(dest);
-  MI->setOperandHi32(0);
+  MI->getOperand(0).markHi32();
   mvec.push_back(MI);
   
   // Set the low 10 bits in dest
   MI = BuildMI(V9::ORr, 3).addReg(dest).addReg(val).addRegDef(dest);
-  MI->setOperandLo32(1);
+  MI->getOperand(1).markLo32();
   mvec.push_back(MI);
 }
 
@@ -288,24 +288,24 @@ CreateSETXLabel(const TargetMachine& target,
   MachineInstr* MI;
   
   MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(tmpReg);
-  MI->setOperandHi64(0);
+  MI->getOperand(0).markHi64();
   mvec.push_back(MI);
   
   MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
-  MI->setOperandLo64(1);
+  MI->getOperand(1).markLo64();
   mvec.push_back(MI);
   
   mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
                  .addRegDef(tmpReg));
   MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(dest);
-  MI->setOperandHi32(0);
+  MI->getOperand(0).markHi32();
   mvec.push_back(MI);
   
   MI = BuildMI(V9::ORr, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
   mvec.push_back(MI);
   
   MI = BuildMI(V9::ORi, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
-  MI->setOperandLo32(1);
+  MI->getOperand(1).markLo32();
   mvec.push_back(MI);
 }
 
@@ -512,18 +512,18 @@ SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
     MachineInstr* MI;
   
     MI = BuildMI(V9::SETHI, 2).addConstantPoolIndex(CPI).addRegDef(tmpReg);
-    MI->setOperandHi64(0);
+    MI->getOperand(0).markHi64();
     mvec.push_back(MI);
   
     MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addConstantPoolIndex(CPI)
       .addRegDef(tmpReg);
-    MI->setOperandLo64(1);
+    MI->getOperand(1).markLo64();
     mvec.push_back(MI);
   
     mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
                    .addRegDef(tmpReg));
     MI = BuildMI(V9::SETHI, 2).addConstantPoolIndex(CPI).addRegDef(addrReg);
-    MI->setOperandHi32(0);
+    MI->getOperand(0).markHi32();
     mvec.push_back(MI);
   
     MI = BuildMI(V9::ORr, 3).addReg(addrReg).addReg(tmpReg).addRegDef(addrReg);
@@ -531,7 +531,7 @@ SparcV9InstrInfo::CreateCodeToLoadConst(const TargetMachine& target,
   
     MI = BuildMI(V9::ORi, 3).addReg(addrReg).addConstantPoolIndex(CPI)
       .addRegDef(addrReg);
-    MI->setOperandLo32(1);
+    MI->getOperand(1).markLo32();
     mvec.push_back(MI);
 
     // Now load the constant from out ConstantPool label

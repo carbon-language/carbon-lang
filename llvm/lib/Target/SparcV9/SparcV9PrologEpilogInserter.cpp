@@ -93,12 +93,12 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 
     MachineInstr* M = BuildMI(V9::SETHI, 2).addSImm(C)
       .addMReg(uregNum, MachineOperand::Def);
-    M->setOperandHi32(0);
+    M->getOperand(0).markHi32();
     mvec.push_back(M);
     
     M = BuildMI(V9::ORi, 3).addMReg(uregNum).addSImm(C)
       .addMReg(uregNum, MachineOperand::Def);
-    M->setOperandLo32(1);
+    M->getOperand(1).markLo32();
     mvec.push_back(M);
     
     M = BuildMI(V9::SRAi5, 3).addMReg(uregNum).addZImm(0)
