@@ -753,10 +753,19 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             FalseSucc->removePredecessor(BI->getParent());
 
             // Insert a new select instruction.
-            Value *NewRetVal = new SelectInst(BI->getCondition(), TrueValue,
-                                              FalseValue, "retval", BI);
+            Value *NewRetVal;
+            Value *BrCond = BI->getCondition();
+            if (TrueValue != FalseValue)
+              NewRetVal = new SelectInst(BrCond, TrueValue,
+                                         FalseValue, "retval", BI);
+            else
+              NewRetVal = TrueValue;
+
             new ReturnInst(NewRetVal, BI);
             BI->getParent()->getInstList().erase(BI);
+            if (BrCond->use_empty())
+              if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
+                BrCondI->getParent()->getInstList().erase(BrCondI);
             return true;
           }
         }
