@@ -55,6 +55,11 @@ public:
 
   void erase(Value *V) { erase(find(V)); }
 
+  void eraseIfExists(Value *V) {
+    iterator I = find(V);
+    if (I != end()) erase(I);
+  }
+
   /// replaceScalar - When an instruction needs to be modified, this method can
   /// be used to update the scalar map to remove the old and insert the new.
   ///
@@ -63,6 +68,14 @@ public:
     assert(I != end() && "Old value is not in the map!");
     ValueMap.insert(std::make_pair(New, I->second));
     erase(I);
+  }
+
+  /// copyScalarIfExists - If Old exists in the scalar map, make New point to
+  /// whatever Old did.
+  void copyScalarIfExists(Value *Old, Value *New) {
+    iterator I = find(Old);
+    if (I != end())
+      ValueMap.insert(std::make_pair(New, I->second));
   }
 
   DSNodeHandle &operator[](Value *V) {
