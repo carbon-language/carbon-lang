@@ -30,6 +30,16 @@ typedef uint32_t Elf32_Off;  // File offset
 typedef int32_t  Elf32_Sword;
 typedef uint32_t Elf32_Word;
 
+typedef uint64_t Elf64_Addr;
+typedef uint64_t Elf64_Off;
+typedef int32_t  Elf64_Shalf;
+typedef int32_t  Elf64_Sword;
+typedef uint32_t Elf64_Word;
+typedef int64_t  Elf64_Sxword;
+typedef uint64_t Elf64_Xword;
+typedef uint32_t Elf64_Half;
+typedef uint16_t Elf64_Quarter;
+
 // Object file magic string.
 static const char ElfMagic[] = { 0x7f, 'E', 'L', 'F', '\0' };
 
@@ -55,6 +65,25 @@ struct Elf32_Ehdr {
   unsigned char getDataEncoding () { return e_ident[5]; }
 };
 
+// 64-bit ELF header. Fields are the same as for ELF32, but with different
+// types (see above).
+typedef struct {
+  unsigned char e_ident[16];
+  Elf64_Quarter e_type;
+  Elf64_Quarter e_machine;
+  Elf64_Half    e_version;
+  Elf64_Addr    e_entry;
+  Elf64_Off     e_phoff;
+  Elf64_Off     e_shoff;
+  Elf64_Half    e_flags;
+  Elf64_Quarter e_ehsize;
+  Elf64_Quarter e_phentsize;
+  Elf64_Quarter e_phnum;
+  Elf64_Quarter e_shentsize;
+  Elf64_Quarter e_shnum;
+  Elf64_Quarter e_shstrndx;
+} Elf64_Ehdr;
+
 // File types
 enum {
   ET_NONE   = 0,      // No file type
@@ -74,8 +103,13 @@ enum {
   EM_386 = 3,   // Intel 386
   EM_68K = 4,   // Motorola 68000
   EM_88K = 5,   // Motorola 88000
+  EM_486 = 6,   // Intel 486 (deprecated)
   EM_860 = 7,   // Intel 80860
-  EM_MIPS = 8   // MIPS R3000
+  EM_MIPS = 8,     // MIPS R3000
+  EM_PPC = 20,     // PowerPC
+  EM_ARM = 40,     // ARM
+  EM_ALPHA = 41,   // DEC Alpha
+  EM_SPARCV9 = 43  // SPARC V9
 };
 
 // Object file classes.
@@ -103,6 +137,20 @@ struct Elf32_Shdr {
   Elf32_Word sh_addralign; // Section address alignment
   Elf32_Word sh_entsize;   // Size of records contained within the section
 };
+
+// Section header for ELF64 - same fields as ELF32, different types.
+typedef struct {
+  Elf64_Half  sh_name;
+  Elf64_Half  sh_type;
+  Elf64_Xword sh_flags;
+  Elf64_Addr  sh_addr;
+  Elf64_Off   sh_offset;
+  Elf64_Xword sh_size;
+  Elf64_Half  sh_link;
+  Elf64_Half  sh_info;
+  Elf64_Xword sh_addralign;
+  Elf64_Xword sh_entsize;
+} Elf64_Shdr;
 
 // Special section indices.
 enum {
