@@ -53,14 +53,24 @@
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-This document attempts to describe a few coding standards that are being used in the LLVM source tree.  Although no coding standards should be regarded as absolute requirements to be followed in all instances, coding standards can be useful.<p>
+This document attempts to describe a few coding standards that are being used in
+the LLVM source tree.  Although no coding standards should be regarded as
+absolute requirements to be followed in all instances, coding standards can be
+useful.<p>
 
-This document intentionally does not prescribe fixed standards for religious issues such as brace placement and space usage.  For issues like this, follow the golden rule:
+This document intentionally does not prescribe fixed standards for religious
+issues such as brace placement and space usage.  For issues like this, follow
+the golden rule:
 
 <a name="goldenrule">
-<blockquote><b>If you are adding a significant body of source to a project, feel free to use whatever style you are most comfortable with.  If you are extending, enhancing, or bug fixing already implemented code, use the style that is already being used so that the source is uniform and easy to follow.</b></blockquote>
+<blockquote><b>If you are adding a significant body of source to a project, feel
+free to use whatever style you are most comfortable with.  If you are extending,
+enhancing, or bug fixing already implemented code, use the style that is already
+being used so that the source is uniform and easy to follow.</b></blockquote>
 
-The ultimate goal of these guidelines is the increase readability and maintainability of our common source base. If you have suggestions for topics to be included, please mail them to <a href="mailto:sabre@nondot.org">Chris</a>.<p>
+The ultimate goal of these guidelines is the increase readability and
+maintainability of our common source base. If you have suggestions for topics to
+be included, please mail them to <a href="mailto:sabre@nondot.org">Chris</a>.<p>
 
 
 <!-- *********************************************************************** -->
@@ -78,11 +88,17 @@ The ultimate goal of these guidelines is the increase readability and maintainab
 <!-- _______________________________________________________________________ -->
 </ul><a name="scf_commenting"><h4><hr size=0>Commenting</h4><ul>
 
-Comments are one critical part of readability and maintainability.  Everyone knows they should comment, so should you.  :)  Although we all should probably comment our code more than we do, there are a few very critical places that documentation is very useful:<p>
+Comments are one critical part of readability and maintainability.  Everyone
+knows they should comment, so should you.  :)  Although we all should probably
+comment our code more than we do, there are a few very critical places that
+documentation is very useful:<p>
 
 <ol>
 <h4><li>File Headers</h4>
-Every source file should have a header on it that describes the basic purpose of the file.  If a file does not have a header, it should not be checked into CVS.  Most source trees will probably have a standard file header format.  The standard format for the LLVM source tree looks like this:<p>
+Every source file should have a header on it that describes the basic purpose of
+the file.  If a file does not have a header, it should not be checked into CVS.
+Most source trees will probably have a standard file header format.  The
+standard format for the LLVM source tree looks like this:<p>
 
 <pre>
 //===-- llvm/Instruction.h - Instruction class definition --------*- C++ -*--=//
@@ -93,36 +109,59 @@ Every source file should have a header on it that describes the basic purpose of
 //===----------------------------------------------------------------------===//
 </pre>
 
-A few things to note about this particular format.  The "<tt>-*- C++ -*-</tt>" string on the first line is there to tell Emacs that the source file is a C++ file, not a C file (Emacs assumes .h files are C files by default [Note that tag this is not necessary in .cpp files]).  The name of the file is also on the first line, along with a very short description of the purpose of the file.  This is important when printing out code and flipping though lots of pages.<p>
+A few things to note about this particular format.  The "<tt>-*- C++ -*-</tt>"
+string on the first line is there to tell Emacs that the source file is a C++
+file, not a C file (Emacs assumes .h files are C files by default [Note that tag
+this is not necessary in .cpp files]).  The name of the file is also on the
+first line, along with a very short description of the purpose of the file.
+This is important when printing out code and flipping though lots of pages.<p>
 
-The main body of the description does not have to be very long in most cases.  Here it's only two lines.  If an algorithm is being implemented or something tricky is going on, a reference to the paper where it is published should be included, as well as any notes or "gotchas" in the code to watch out for.<p>
+The main body of the description does not have to be very long in most cases.
+Here it's only two lines.  If an algorithm is being implemented or something
+tricky is going on, a reference to the paper where it is published should be
+included, as well as any notes or "gotchas" in the code to watch out for.<p>
 
 
 <h4><li>Class overviews</h4>
 
-Classes are one fundemental part of a good object oriented design.  As such, a class definition should have a comment block that explains what the class is used for... if it's not obvious.  If it's so completely obvious your grandma could figure it out, it's probably safe to leave it out.  Naming classes something sane goes a long ways towards avoiding writing documentation.  :)<p>
+Classes are one fundemental part of a good object oriented design.  As such, a
+class definition should have a comment block that explains what the class is
+used for... if it's not obvious.  If it's so completely obvious your grandma
+could figure it out, it's probably safe to leave it out.  Naming classes
+something sane goes a long ways towards avoiding writing documentation.  :)<p>
 
 
 <h4><li>Method information</h4>
 
-Methods defined in a class (as well as any global functions) should also be documented properly.  A quick note about what it does any a description of the borderline behaviour is all that is necessary here (unless something particularly tricky or insideous is going on).  The hope is that people can figure out how to use your interfaces without reading the code itself... that is the goal metric.<p>
+Methods defined in a class (as well as any global functions) should also be
+documented properly.  A quick note about what it does any a description of the
+borderline behaviour is all that is necessary here (unless something
+particularly tricky or insideous is going on).  The hope is that people can
+figure out how to use your interfaces without reading the code itself... that is
+the goal metric.<p>
 
-Good things to talk about here are what happens when something unexpected happens: does the method return null?  Abort?  Format your hard disk?<p>
+Good things to talk about here are what happens when something unexpected
+happens: does the method return null?  Abort?  Format your hard disk?<p>
 </ol>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="scf_commentformat"><h4><hr size=0>Comment Formatting</h4><ul>
 
-In general, prefer C++ style (<tt>//</tt>) comments.  They take less space, require less typing, don't have nesting problems, etc.  There are a few cases when it is useful to use C style (<tt>/* */</tt>) comments however:<p>
+In general, prefer C++ style (<tt>//</tt>) comments.  They take less space,
+require less typing, don't have nesting problems, etc.  There are a few cases
+when it is useful to use C style (<tt>/* */</tt>) comments however:<p>
 
 <ol>
-<li>When writing a C code: Obviously if you are writing C code, use C style comments.  :)
+<li>When writing a C code: Obviously if you are writing C code, use C style
+comments.  :)
 <li>When writing a header file that may be #included by a C source file.
-<li>When writing a source file that is used by a tool that only accepts C style comments.
+<li>When writing a source file that is used by a tool that only accepts C style
+comments.
 </ol><p>
 
-To comment out a large block of code, use <tt>#if 0</tt> and <tt>#endif</tt>.  These nest properly and are better behaved in general than C style comments.<p>
+To comment out a large block of code, use <tt>#if 0</tt> and <tt>#endif</tt>.
+These nest properly and are better behaved in general than C style comments.<p>
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="scf_includes"><h4><hr size=0>#include Style</h4><ul>
@@ -167,15 +206,25 @@ Write your code to fit within 80 columns of text.  This helps those of us who li
 <!-- _______________________________________________________________________ -->
 </ul><a name="scf_spacestabs"><h4><hr size=0>Use Spaces Instead of Tabs</h4><ul>
 
-In all cases, prefer spaces to tabs in source files.  People have different prefered indentation levels, and different styles of indentation that they like... this is fine.  What isn't is that different editors/viewers expand tabs out to different tab stops.  This can cause your code to look completely unreadable, and it is not worth dealing with.<p>
+In all cases, prefer spaces to tabs in source files.  People have different
+prefered indentation levels, and different styles of indentation that they
+like... this is fine.  What isn't is that different editors/viewers expand tabs
+out to different tab stops.  This can cause your code to look completely
+unreadable, and it is not worth dealing with.<p>
 
-As always, follow the <a href="#goldenrule">Golden Rule</a> above: follow the style of existing code if your are modifying and extending it.  If you like four spaces of indentation, <b>DO NOT</b> do that in the middle of a chunk of code with two spaces of indentation.  Also, do not reindent a whole source file: it make for incredible diffs that are absolutely worthless.<p>
+As always, follow the <a href="#goldenrule">Golden Rule</a> above: follow the
+style of existing code if your are modifying and extending it.  If you like four
+spaces of indentation, <b>DO NOT</b> do that in the middle of a chunk of code
+with two spaces of indentation.  Also, do not reindent a whole source file: it
+makes for incredible diffs that are absolutely worthless.<p>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="scf_indentation"><h4><hr size=0>Indent Code Consistently</h4><ul>
 
-Okay, your first year of programming you were told that indentation is important.  If you didn't believe and internalize this then, now is the time.  Just do it.<p>
+Okay, your first year of programming you were told that indentation is
+important.  If you didn't believe and internalize this then, now is the time.
+Just do it.<p>
 
 
 
@@ -189,9 +238,17 @@ Okay, your first year of programming you were told that indentation is important
 <!-- _______________________________________________________________________ -->
 </ul><a name="ci_warningerrors"><h4><hr size=0>Treat Compiler Warnings Like Errors</h4><ul>
 
-If your code has compiler warnings in it, something is wrong: you aren't casting values correctly, your have "questionable" constructs in your code, or you are doing something legitimately wrong.  Compiler warnings can cover up legitimate errors in output and make dealing with a translation unit difficult.<p>
+If your code has compiler warnings in it, something is wrong: you aren't casting
+values correctly, your have "questionable" constructs in your code, or you are
+doing something legitimately wrong.  Compiler warnings can cover up legitimate
+errors in output and make dealing with a translation unit difficult.<p>
 
-It is not possible to prevent all warnings from all compilers, nor is it desirable.  Instead, pick a standard compiler (like <tt>gcc</tt>) that provides a good thorough set of warnings, and stick to them.  At least in the case of <tt>gcc</tt>, it is possible to work around any spurious errors by changing the syntax of the code slightly.  For example, an warning that annoys me occurs when I write code like this:<p>
+It is not possible to prevent all warnings from all compilers, nor is it
+desirable.  Instead, pick a standard compiler (like <tt>gcc</tt>) that provides
+a good thorough set of warnings, and stick to them.  At least in the case of
+<tt>gcc</tt>, it is possible to work around any spurious errors by changing the
+syntax of the code slightly.  For example, an warning that annoys me occurs when
+I write code like this:<p>
 
 <pre>
   if (V = getValue()) {
@@ -199,7 +256,10 @@ It is not possible to prevent all warnings from all compilers, nor is it desirab
   }
 </pre><p>
 
-<tt>gcc</tt> will warn me that I probably want to use the <tt>==</tt> operator, and that I probably mistyped it.  In most cases, I haven't, and I really don't want the spurious errors.  To fix this particular problem, I rewrite the code like this:<p>
+<tt>gcc</tt> will warn me that I probably want to use the <tt>==</tt> operator,
+and that I probably mistyped it.  In most cases, I haven't, and I really don't
+want the spurious errors.  To fix this particular problem, I rewrite the code
+like this:<p>
 
 <pre>
   if ((V = getValue())) {
@@ -429,7 +489,9 @@ for you.  C++ is just a tool that wants you to master it. :)<p>
 <a name="iterators">Writing Iterators
 </b></font></td></tr></table><ul>
 
-Here's a pretty good summary of how to write your own data structure iterators in a way that is compatible with the STL, and with a lot of other code out there (slightly edited by Chris):<p>
+Here's a pretty good summary of how to write your own data structure iterators
+in a way that is compatible with the STL, and with a lot of other code out there
+(slightly edited by Chris):<p>
 
 <pre>
 From: Ross Smith <ross.s@ihug.co.nz>
@@ -750,14 +812,16 @@ Ross Smith &lt;ross.s@ihug.co.nz&gt; The Internet Group, Auckland, New Zealand
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-A lot of these comments and recommendations have been culled for other sources.  Two particularly important books for our work are:<p>
+A lot of these comments and recommendations have been culled for other sources.
+Two particularly important books for our work are:<p>
 
 <ol>
 <li><a href="http://www.aw.com/product/0,2627,0201924889,00.html">Effective C++</a> by Scott Meyers.  There is an online version of the book (only some chapters though) <a href="http://www.awlonline.com/cseng/meyerscddemo/">available as well</a>.
 <li><a href="http://cseng.aw.com/book/0,3828,0201633620,00.html">Large-Scale C++ Software Design</a> by John Lakos
 </ol><p>
 
-If you get some free time, and you haven't read them: do so, you might learn something. :)
+If you get some free time, and you haven't read them: do so, you might learn
+something. :)
 
 
 <!-- *********************************************************************** -->
