@@ -727,6 +727,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
 
     break;
+  case ISD::BRCOND:
+    if (N2C)
+      if (N2C->getValue()) // Unconditional branch
+        return getNode(ISD::BR, MVT::Other, N1, N3);
+      else
+        return N1;         // Never-taken branch
   }
 
   SDNode *N = new SDNode(Opcode, N1, N2, N3);
