@@ -27,13 +27,15 @@
    R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3)
 #endif
 
-// Arguments passed into the R macro
+// Arguments passed into the R macros
 //  #1: Enum Name - This ends up being a symbol in the X86 namespace
 //  #2: Register name - The name of the register as used by the gnu assembler
 //  #3: Register Flags - A bitfield of flags or'd together from the
 //      MRegisterInfo.h file.
 //  #4: Target Specific Flags - Another bitfield containing X86 specific flags
 //      as neccesary.
+//
+//  #5,6,7: Registers aliased to this register, or 0 if none.
 
 
 // The first register must always be a 'noop' register for all backends.  This
