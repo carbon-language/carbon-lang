@@ -15,6 +15,7 @@
 #include <dlfcn.h>
 #include <link.h>
 #include <math.h>
+#include <stdio.h>
 
 typedef GenericValue (*ExFunc)(MethodType *, const vector<GenericValue> &);
 static map<const Method *, ExFunc> Functions;
@@ -207,17 +208,26 @@ GenericValue lle_X_malloc(MethodType *M, const vector<GenericValue> &Args) {
 
 // void free(void *)
 GenericValue lle_X_free(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
   free((void*)Args[0].PointerVal);
   return GenericValue();
 }
 
 // double pow(double, double)
 GenericValue lle_X_pow(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
   GenericValue GV;
   GV.DoubleVal = pow(Args[0].DoubleVal, Args[1].DoubleVal);
   return GV;
 }
 
+// double sqrt(double)
+GenericValue lle_X_sqrt(MethodType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.DoubleVal = sqrt(Args[0].DoubleVal);
+  return GV;
+}
 
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
 GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
@@ -249,22 +259,26 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
         FmtStr++;
       }
 
-      switch (*FmtStr) {
-      case '%': cout << *FmtStr; break;                             // %%
-      case 'd':                                                     // %d %i
-      case 'i': cout << Args[ArgNo++].IntVal; break;
-      case 'u': cout << Args[ArgNo++].UIntVal; break;               // %u
-      case 'o': cout << oct << Args[ArgNo++].UIntVal << dec; break; // %o
-      case 'x':
-      case 'X': cout << hex << Args[ArgNo++].UIntVal << dec; break; // %x %X
-      case 'e': case 'E': case 'g': case 'G':                       // %[eEgG]
-        cout /*<< std::scientific*/ << Args[ArgNo++].DoubleVal
-             /*<< std::fixed*/; break;
-      case 'f': cout << Args[ArgNo++].DoubleVal; break;             // %f
-      case 'c': cout << Args[ArgNo++].UByteVal; break;              // %c
-      case 's': cout << (char*)Args[ArgNo++].PointerVal; break;     // %s
-      default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
-                ArgNo++; break;
+      if (*FmtStr == '%') 
+        cout << *FmtStr;                  // %%
+      else {
+        char Fmt[] = "%d", Buffer[1000] = "";
+        Fmt[1] = *FmtStr;
+
+        switch (*FmtStr) {
+        case 'c':
+          sprintf(Buffer, Fmt, Args[ArgNo++].SByteVal); break;
+        case 'd': case 'i':
+        case 'u': case 'o':
+        case 'x': case 'X':
+          sprintf(Buffer, Fmt, Args[ArgNo++].IntVal); break;
+        case 'e': case 'E': case 'g': case 'G': case 'f':
+          sprintf(Buffer, Fmt, Args[ArgNo++].DoubleVal); break;
+        case 's': cout << (char*)Args[ArgNo++].PointerVal; break;     // %s
+        default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
+          ArgNo++; break;
+        }
+        cout << Buffer;
       }
       ++FmtStr;
       break;
@@ -300,5 +314,6 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_malloc"]       = lle_X_malloc;
   FuncNames["lle_X_free"]         = lle_X_free;
   FuncNames["lle_X_pow"]          = lle_X_pow;
+  FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
   FuncNames["lle_X_printf"]       = lle_X_printf;
 }
