@@ -120,6 +120,7 @@ int callAsMain(ExecutionEngine *EE, ModuleProvider *MP,
   GVArgc.IntVal = Args.size();
   GVArgs.push_back(GVArgc); // Arg #0 = argc.
   GVArgs.push_back(PTOGV(CreateArgv(EE, Args))); // Arg #1 = argv.
+  assert(((char **)GVTOP(GVArgs[1]))[0] && "argv[0] was null after CreateArgv");
   GVArgs.push_back(PTOGV(CreateArgv(EE, EnvVars))); // Arg #2 = envp.
   return EE->run(Fn, GVArgs).IntVal;
 }
@@ -137,7 +138,7 @@ int main(int argc, char **argv, char * const *envp) {
   try {
     MP = getBytecodeModuleProvider(InputFile);
   } catch (std::string &err) {
-    std::cerr << "Error parsing '" << InputFile << "': " << err << "\n";
+    std::cerr << "Error loading program '" << InputFile << "': " << err << "\n";
     exit(1);
   }
 
