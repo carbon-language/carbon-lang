@@ -9,16 +9,78 @@ particular pass.  Runs that are all '*'d out were not completed because they
 were taking too long (time listed show how long I waited).<p>
 
 Fields that appear in bold have changes from the last entry on the page.
-Floating point entries are only highlighted if they double or half their
-previous value.<p>
+Floating point entries are only highlighted if they change significantly from
+their previous value.<p>
+
+<hr>
+<a name="20021112"><h2>Nov 12, 2002:</h2>
+
+<a
+href="http://mail.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20021111/001567.html">This
+small change</a> is important to programs with large SCC's.  It basically makes
+sure to inline calls to non-scc functions before we inline <b>any</b> intra-scc
+calls.  The problem is that inlining an SCC call could add <b>more</b> call
+sites that would slow things down.<p>
+
+Note that the total time underestimates the improvement.  Take a look at the
+change on BU time/total time to get an accurate accessment.  I had some of the
+graph IO printing code commented out in the last run, which affected Analyze
+time, but not total time.<p>
+
+<pre>
+Name:                     Anlyz: LocTime: BUTime:  TDTime:  TotTime: BCTime:      LocSize: BUSize:  TDSize:  TotSize: BCSize:    NumFold  NumNodes   main   __main GlobGr
+254.gap.lib                17.69 0.8298   4.1158   2.4087   8.9138   2.9912   |   2024984  <b>2840288</b>  <b>2024560</b>  <b>6889832</b>  16554904 |    <b>5985</b>  <b>24035+3950</b> 44+9   0+0    0+0    
+255.vortex.lib             14.99 0.5988   1.8871   3.6557   7.3284   2.4054   |   1381056  <b>1259144</b>  <b>1997120</b>  <b>4637320</b>  11689312 |    <b>5853</b>  <b>7328+2841</b>  166+11 0+0    0+0    
+300.twolf.lib               3.34 0.2774   0.2827   0.5115   1.5475   1.0153   |   466528   391512   396552   1254592  6936728  |    749   4128+784   90+53  0+0    0+0    
+197.parser.lib              1.85 0.1485   0.3190   0.2156   0.8689   0.6872   |   408392   <b>225184</b>   <b>212552</b>   <b>965384</b>   4447944  |    <b>1343</b>  2257+707   14+6   0+0    0+0    
+burg.llvm.lib               1.22 0.1027   0.1926   0.1739   0.5598   0.4947   |   530600   <b>474592</b>   185792   <b>1190984</b>  3040208  |    <b>758</b>   2273+576   45+7   0+0    0+0    
+164.gzip.llvm.lib           0.74 0.0398   0.0559   0.0350   0.1957   0.4561   |   145952   184776   70872    499912   1876248  |    24    971+87     8+2    0+0    0+0    
+optimizer-eval.llvm.lib     0.43 0.0183   0.0485   0.2054   0.3047   0.0839   |   101184   79456    61760    242400   624688   |    *     309+41     72+27  0+0    0+0    
+256.bzip2.lib               0.34 0.0241   0.0404   0.0113   0.1250   0.1624   |   139504   83400    39712    335144   1373216  |    *     563+37     8+2    0+0    0+0    
+181.mcf.lib                 0.23 0.0216   0.0279   0.0301   0.1126   0.0795   |   115448   146520   43680    322864   589440   |    166   388+51     22+10  0+0    0+0    
+sim.llvm.lib                0.20 0.0137   0.0138   0.0131   0.0800   0.0876   |   81632    51496    21872    226584   734152   |    *     260+35     39+22  0+0    0+0    
+voronoi.llvm.lib            0.17 0.0139   0.0246   0.0282   0.0811   0.0591   |   79824    84152    27112    204904   420568   |    18    299+77     15+8   0+0    0+0    
+sgefa.llvm.lib              0.16 0.0090   0.0195   0.0201   0.0848   0.0542   |   85688    100456   67024    277864   368680   |    *     130+24     24+14  0+0    0+0    
+bh.llvm.lib                 0.16 0.0121   0.0164   0.0115   0.0581   0.0682   |   75000    51080    27760    217632   470720   |    61    194+35     6+2    0+0    0+0    
+power.llvm.lib              <b>0.13</b> 0.0044   <b>0.0122</b>   0.0037   0.0282   0.0484   |   27776    17688    18144    71424    213760   |    *     81+18      11+2   0+0    0+0    
+em3d.llvm.lib               0.11 0.0060   0.0110   0.0059   0.0308   0.0561   |   33040    36256    13008    90632    227520   |    1     178+28     12+4   0+0    0+0    
+health.llvm.lib             0.10 0.0052   <b>0.0203</b>   0.0073   0.0406   0.0421   |   30632    31432    12704    89592    199888   |    18    97+31      12+4   0+0    0+0    
+tsp.llvm.lib                0.07 0.0051   0.0063   0.0027   0.0217   0.0332   |   18232    14336    4920     51888    180744   |    21    43+15      8+4    0+0    0+0    
+mst.llvm.lib                0.07 0.0040   0.0065   0.0037   0.0215   0.0296   |   18624    25576    7040     65808    178832   |    10    97+15      12+3   0+0    0+0    
+lists.llvm.lib              0.07 0.0043   0.0131   0.0071   0.0299   0.0269   |   24552    16920    14440    68024    141480   |    30    67+26      3+1    0+0    0+0    
+fib2.llvm.lib               <b>0.07</b> <b>0.0053</b>   <b>0.0217</b>   0.0008   <b>0.0313</b>   <b>0.0076</b>   |   7960     6288     1640     28408    42256    |    *     21+5       8+3    0+0    0+0    
+perimeter.llvm.lib          0.06 0.0031   0.0064   0.0021   0.0190   0.0275   |   15016    14192    3936     45912    156352   |    *     35+15      7+4    0+0    0+0    
+hash.llvm.lib               0.06 0.0031   0.0050   0.0052   0.0200   0.0211   |   25728    16608    8208     63576    151680   |    *     117+17     14+6   0+0    0+0    
+bisort.llvm.lib             0.06 0.0030   0.0055   0.0019   0.0318   <b>0.0126</b>   |   13288    11408    3712     39448    127360   |    *     35+13      7+4    0+0    0+0    
+sumarraymalloc.llvm.lib     0.04 0.0009   0.0014   0.0009   0.0075   <b>0.0240</b>   |   7040     2672     2048     25872    54352    |    *     23+5       7+4    0+0    0+0    
+objinst.llvm.lib            0.04 0.0019   0.0050   0.0032   0.0154   <b>0.0100</b>   |   11280    15784    4112     45296    89856    |    34    45+14      16+10  0+0    0+0    
+methcall.llvm.lib           0.04 0.0018   0.0047   0.0031   0.0145   <b>0.0122</b>   |   11008    9880     3928     38624    87976    |    30    43+12      14+8   0+0    0+0    
+matrix.llvm.lib             0.04 0.0013   0.0021   0.0014   0.0106   <b>0.0198</b>   |   8808     8872     3072     33144    69112    |    *     38+9       12+8   0+0    0+0    
+llubenchmark.llvm.lib       0.04 0.0024   0.0026   0.0015   0.0142   0.0118   |   11072    11760    2624     36480    124344   |    *     31+7       15+5   0+0    0+0    
+heapsort.llvm.lib           0.04 0.0009   0.0019   0.0007   0.0073   <b>0.0137</b>   |   2856     6968     2008     26976    63160    |    *     26+3       7+2    0+0    0+0    
+ary3.llvm.lib               0.04 0.0013   0.0020   0.0011   0.0090   <b>0.0134</b>   |   10240    13104    10888    45832    73064    |    6     44+5       12+3   0+0    0+0    
+ackermann.llvm.lib          0.04 0.0007   0.0015   0.0004   0.0066   0.0262   |   1744     5728     1200     22056    46448    |    *     13+2       3+1    0+0    0+0    
+treeadd.llvm.lib            0.03 0.0015   0.0028   0.0010   0.0090   0.0084   |   3856     7384     2200     29784    72064    |    *     25+7       6+3    0+0    0+0    
+sieve.llvm.lib              0.03 0.0008   0.0012   0.0006   0.0061   0.0162   |   2176     6176     1632     23432    216840   |    *     22+2       12+1   0+0    0+0    
+random.llvm.lib             <b>0.03</b> 0.0008   0.0017   0.0004   0.0059   <b>0.0133</b>   |   2056     5720     1320     22080    45264    |    *     15+2       3+1    0+0    0+0    
+matrixTranspose.llvm.lib    0.03 0.0005   0.0010   0.0003   0.0032   0.0129   |   4272     1144     736      8560     68448    |    *     8+1        5+1    0+0    0+0    
+hello.llvm.lib              0.03 0.0004   0.0015   0.0001   0.0066   0.0107   |   752      2952     472      6512     14160    |    *     2+0        0+0    0+0    0+0    
+sumarray2d.llvm.lib         <b>0.02</b> 0.0005   0.0009   0.0002   0.0034   <b>0.0055</b>   |   1568     3584     848      8264     23288    |    *     10+1       7+1    0+0    0+0    
+printargs.llvm.lib          <b>0.02</b> 0.0004   0.0013   0.0002   0.0032   0.0058   |   1240     1048     696      5128     19160    |    *     6+1        4+1    0+0    0+0    
+pi.llvm.lib                 0.02 0.0008   0.0021   0.0005   0.0052   0.0036   |   5392     1560     1392     8344     36032    |    *     17+2       13+2   0+0    0+0    
+indvars.llvm.lib            0.02 0.0006   0.0010   0.0003   0.0037   0.0036   |   4744     1072     4208     12544    31336    |    *     13+1       8+1    0+0    0+0    
+sumarray.llvm.lib           <b>0.01</b> 0.0004   0.0008   0.0002   0.0026   <b>0.0029</b>   |   904      3192     624      4720     15152    |    *     6+1        4+1    0+0    0+0    
+</pre><p>
 
 <hr>
 <a name="20021111-2"><h2>Nov 11, 2002 #2:</h2>
 
-This is the result after fixing some major bugs.  The globals list was supposed
-to be kept sorted, but there was one minor, tiny, little, bug that caused it to
-get screwed up sometimes.  This caused vortex to explode, fixing it gets things
-back in control where you'd expect.  Viola.<p>
+This is the result after <a
+href="http://mail.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20021111/001565.html">fixing
+some major bugs</a>.  The globals list was supposed to be kept sorted, but there
+was one minor, tiny, little, bug that caused it to get screwed up sometimes.
+This caused vortex to explode, fixing it gets things back in control where you'd
+expect.  Viola.<p>
 
 This also includes a merging bug that caused some things to be merged and some
 other things to happen when they shouldn't, which accounts for folding
@@ -646,7 +708,7 @@ burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:7
     <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Nov  6 19:57:57 CST 2002 -->
 <!-- hhmts start -->
-Last modified: Tue Nov 12 00:49:40 CST 2002
+Last modified: Tue Nov 12 10:06:27 CST 2002
 <!-- hhmts end -->
   </body>
 </html>
