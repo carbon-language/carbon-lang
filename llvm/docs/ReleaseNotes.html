@@ -132,7 +132,7 @@ builds tools into llvm/Debug/bin by default instead of llvm/tools/Debug.</p>
   C/C++ and Stacker front ends support generating the required dependencies. 
   The linker now supports using this information to ensure required libaries are
   linked into the module. This minimizes the need to use the <tt>-l</tt> option
-  when using <a href="CommandGuide/html/llvmc.html"><tt>llvmc</tt></a>
+  when using <a href="CommandGuide/html/llvmc.html"><tt>llvmc</tt></a>.
   </li>
   <li>The LLVM makefiles have been improved to build LLVM much faster and 
   includes new targets (like dist-check, uninstall). One important user-visible
@@ -297,7 +297,7 @@ were fixed:</a>
 
 <div class="doc_text">
 
-<p>LLVM is known to work in the following platforms:</p>
+<p>LLVM is known to work on the following platforms:</p>
 
 <ul>
 <li>Intel and AMD machines running Red Hat Linux and FreeBSD (and probably 
@@ -472,10 +472,11 @@ work:
       return.<br>
 
       <b>Supported:</b> <tt>format</tt>, <tt>format_arg</tt>, <tt>non_null</tt>,
-      <tt>constructor</tt>, <tt>destructor</tt>, <tt>unused</tt>,
+      <tt>noreturn</tt>, <tt>constructor</tt>, <tt>destructor</tt>,
+      <tt>unused</tt>,
       <tt>deprecated</tt>, <tt>warn_unused_result</tt>, <tt>weak</tt><br>
 
-      <b>Ignored:</b> <tt>noreturn</tt>, <tt>noinline</tt>,
+      <b>Ignored:</b> <tt>noinline</tt>,
       <tt>always_inline</tt>, <tt>pure</tt>, <tt>const</tt>, <tt>nothrow</tt>,
       <tt>malloc</tt>, <tt>no_instrument_function</tt>, <tt>cdecl</tt><br>
 
