@@ -32,9 +32,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> GEPFolds("ppc-codegen", "Number of GEPs folded");
-  Statistic<> NumSetCC("ppc-codegen", "Number of SetCC straight-lined");
-
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
   /// PPC Representation.
   ///
@@ -283,7 +280,7 @@ namespace {
 
     unsigned ExtendOrClear(MachineBasicBlock *MBB,
                            MachineBasicBlock::iterator IP,
-                           unsigned Reg, const Type *CompTy);
+                           Value *Op0, Value *Op1);
 
     /// promote32 - Make a value 32-bits wide, and put it somewhere.
     ///
@@ -917,13 +914,11 @@ static GetElementPtrInst *canFoldGEPIntoLoadOrStore(Value *V) {
           GEPI->getParent() == User->getParent() &&
           User->getOperand(0) != GEPI &&
           User->getOperand(1) == GEPI) {
-        ++GEPFolds;
         return GEPI;
       }
       if (isa<LoadInst>(User) &&
           GEPI->getParent() == User->getParent() &&
           User->getOperand(0) == GEPI) {
-        ++GEPFolds;
         return GEPI;
       }
     }
@@ -966,7 +961,9 @@ void ISel::emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 
 unsigned ISel::ExtendOrClear(MachineBasicBlock *MBB,
                              MachineBasicBlock::iterator IP,
-                             unsigned Reg, const Type *CompTy) {
+                             Value *Op0, Value *Op1) {
+  const Type *CompTy = Op0->getType();
+  unsigned Reg = getReg(Op0, MBB, IP);
   unsigned Class = getClassB(CompTy);
 
   // Before we do a comparison or SetCC, we have to make sure that we truncate
@@ -1000,7 +997,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   // The arguments are already supposed to be of the same type.
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
-  unsigned Op0r = ExtendOrClear(MBB, IP, getReg(Op0, MBB, IP), CompTy);
+  unsigned Op0r = ExtendOrClear(MBB, IP, Op0, Op1);
   
   // Use crand for lt, gt and crandc for le, ge
   unsigned CROpcode = (OpNum == 2 || OpNum == 4) ? PPC::CRAND : PPC::CRANDC;
@@ -2384,6 +2381,27 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
   }
 }
 
+/// LoadNeedsSignExtend - On PowerPC, there is no load byte with sign extend.
+/// Therefore, if this is a byte load and the destination type is signed, we
+/// would normall need to also emit a sign extend instruction after the load.
+/// However, store instructions don't care whether a signed type was sign
+/// extended across a whole register.  Also, a SetCC instruction will emit its
+/// own sign extension to force the value into the appropriate range, so we
+/// need not emit it here.  Ideally, this kind of thing wouldn't be necessary
+/// once LLVM's type system is improved.
+static bool LoadNeedsSignExtend(LoadInst &LI) {
+  if (cByte == getClassB(LI.getType()) && LI.getType()->isSigned()) {
+    bool AllUsesAreStoresOrSetCC = true;
+    for (Value::use_iterator I = LI.use_begin(), E = LI.use_end(); I != E; ++I)
+      if (!isa<StoreInst>(*I) && !isa<SetCondInst>(*I)) {
+        AllUsesAreStoresOrSetCC = false;
+        break;
+      }
+    if (!AllUsesAreStoresOrSetCC)
+      return true;
+  }
+  return false;
+}
 
 /// visitLoadInst - Implement LLVM load instructions.  Pretty straightforward
 /// mapping of LLVM classes to PPC load instructions, with the exception of
@@ -2415,7 +2433,7 @@ void ISel::visitLoadInst(LoadInst &I) {
     if (Class == cLong) {
       addFrameReference(BuildMI(BB, ImmOpcode, 2, DestReg), FI);
       addFrameReference(BuildMI(BB, ImmOpcode, 2, DestReg+1), FI, 4);
-    } else if (Class == cByte && I.getType()->isSigned()) {
+    } else if (LoadNeedsSignExtend(I)) {
       unsigned TmpReg = makeAnotherReg(I.getType());
       addFrameReference(BuildMI(BB, ImmOpcode, 2, TmpReg), FI);
       BuildMI(BB, PPC::EXTSB, 1, DestReg).addReg(TmpReg);
@@ -2441,7 +2459,7 @@ void ISel::visitLoadInst(LoadInst &I) {
 
     if (pendingAdd == 0 && Class != cLong && 
         canUseAsImmediateForOpcode(offset, 0)) {
-      if (Class == cByte && I.getType()->isSigned()) {
+      if (LoadNeedsSignExtend(I)) {
         unsigned TmpReg = makeAnotherReg(I.getType());
         BuildMI(BB, ImmOpcode, 2, TmpReg).addSImm(offset->getValue())
           .addReg(baseReg);
@@ -2460,7 +2478,7 @@ void ISel::visitLoadInst(LoadInst &I) {
       BuildMI(BB, PPC::ADDI, 2, indexPlus4).addReg(indexReg).addSImm(4);
       BuildMI(BB, IdxOpcode, 2, DestReg).addReg(indexReg).addReg(baseReg);
       BuildMI(BB, IdxOpcode, 2, DestReg+1).addReg(indexPlus4).addReg(baseReg);
-    } else if (Class == cByte && I.getType()->isSigned()) {
+    } else if (LoadNeedsSignExtend(I)) {
       unsigned TmpReg = makeAnotherReg(I.getType());
       BuildMI(BB, IdxOpcode, 2, TmpReg).addReg(indexReg).addReg(baseReg);
       BuildMI(BB, PPC::EXTSB, 1, DestReg).addReg(TmpReg);
@@ -2477,7 +2495,7 @@ void ISel::visitLoadInst(LoadInst &I) {
   if (Class == cLong) {
     BuildMI(BB, ImmOpcode, 2, DestReg).addSImm(0).addReg(SrcAddrReg);
     BuildMI(BB, ImmOpcode, 2, DestReg+1).addSImm(4).addReg(SrcAddrReg);
-  } else if (Class == cByte && I.getType()->isSigned()) {
+  } else if (LoadNeedsSignExtend(I)) {
     unsigned TmpReg = makeAnotherReg(I.getType());
     BuildMI(BB, ImmOpcode, 2, TmpReg).addSImm(0).addReg(SrcAddrReg);
     BuildMI(BB, PPC::EXTSB, 1, DestReg).addReg(TmpReg);
