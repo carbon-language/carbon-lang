@@ -37,6 +37,14 @@ extern unsigned	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 TargetMachine &Target,
 					 MachineInstr** minstrVec);
 
+extern unsigned	GetInstructionsForProlog(BasicBlock* entryBB,
+					 TargetMachine &Target,
+					 MachineInstr** minstrVec);
+
+extern unsigned	GetInstructionsForEpilog(BasicBlock* anExitBB,
+					 TargetMachine &Target,
+					 MachineInstr** minstrVec);
+
 extern bool	ThisIsAChainRule	(int eruleno);
 
 
