@@ -13,6 +13,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ConstPoolVals.h"
+#include "llvm/Tools/STLExtras.h"
 #include <map>
 
 // processModule - Driver function to call all of my subclasses virtual methods.
@@ -87,7 +88,7 @@ bool ModuleAnalyzer::processConstPool(const ConstantPool &CP, bool isMethod) {
     if (processConstPoolPlane(CP, Plane, isMethod)) return true;
 
     for (ConstantPool::PlaneType::const_iterator CI = Plane.begin(); 
-	 CI != Plane.end(); CI++) {
+	 CI != Plane.end(); ++CI) {
       if ((*CI)->getType() == Type::TypeTy)
 	if (handleType(TypeSet, ((const ConstPoolType*)(*CI))->getValue())) 
 	  return true;
@@ -98,11 +99,9 @@ bool ModuleAnalyzer::processConstPool(const ConstantPool &CP, bool isMethod) {
   }
   
   if (!isMethod) {
-    assert(CP.getParent()->getValueType() == Value::ModuleVal);
-    const Module *M = (const Module*)CP.getParent();
+    const Module *M = CP.getParent()->castModuleAsserting();
     // Process the method types after the constant pool...
-    for (Module::MethodListType::const_iterator I = M->getMethodList().begin();
-	 I != M->getMethodList().end(); I++) {
+    for (Module::const_iterator I = M->begin(); I != M->end(); ++I) {
       if (handleType(TypeSet, (*I)->getType())) return true;
       if (visitMethod(*I)) return true;
     }
@@ -111,34 +110,28 @@ bool ModuleAnalyzer::processConstPool(const ConstantPool &CP, bool isMethod) {
 }
 
 bool ModuleAnalyzer::processMethods(const Module *M) {
-  for (Module::MethodListType::const_iterator I = M->getMethodList().begin();
-       I != M->getMethodList().end(); I++)
-    if (processMethod(*I)) return true;
-
-  return false;
+  return apply_until(M->begin(), M->end(),
+		     bind_obj(this, &ModuleAnalyzer::processMethod));
 }
 
 bool ModuleAnalyzer::processMethod(const Method *M) {
   // Loop over the arguments, processing them...
-  const Method::ArgumentListType &ArgList = M->getArgumentList();
-  for (Method::ArgumentListType::const_iterator AI = ArgList.begin(); 
-       AI != ArgList.end(); AI++)
-    if (processMethodArgument(*AI)) return true;
+  if (apply_until(M->getArgumentList().begin(), M->getArgumentList().end(),
+		  bind_obj(this, &ModuleAnalyzer::processMethodArgument)))
+    return true;
 
   // Loop over the constant pool, adding the constants to the table...
   processConstPool(M->getConstantPool(), true);
   
   // Loop over all the basic blocks, in order...
-  Method::BasicBlocksType::const_iterator BBI = M->getBasicBlocks().begin();
-  for (; BBI != M->getBasicBlocks().end(); BBI++) 
-    if (processBasicBlock(*BBI)) return true;
-  return false;
+  return apply_until(M->begin(), M->end(),
+		     bind_obj(this, &ModuleAnalyzer::processBasicBlock));
 }
 
 bool ModuleAnalyzer::processBasicBlock(const BasicBlock *BB) {
   // Process all of the instructions in the basic block
-  BasicBlock::InstListType::const_iterator Inst = BB->getInstList().begin();
-  for (; Inst != BB->getInstList().end(); Inst++) {
+  BasicBlock::const_iterator Inst = BB->begin();
+  for (; Inst != BB->end(); Inst++) {
     if (preProcessInstruction(*Inst) || processInstruction(*Inst)) return true;
   }
   return false;

@@ -85,9 +85,8 @@ void ConstantPool::delete_all() {
 
 void ConstantPool::dropAllReferences() {
   for (unsigned i = 0; i < Planes.size(); i++)
-    for (PlaneType::iterator I = Planes[i]->begin();
-	 I != Planes[i]->end(); I++)
-      (*I)->dropAllReferences();
+    for_each(Planes[i]->begin(), Planes[i]->end(),
+	     mem_fun(&ConstPoolVal::dropAllReferences));
 }
 
 struct EqualsConstant {
@@ -280,10 +279,7 @@ ConstPoolStruct::ConstPoolStruct(const ConstPoolStruct &CPS)
 //                          getStrValue implementations
 
 string ConstPoolBool::getStrValue() const {
-  if (Val)
-    return "true";
-  else
-    return "false";
+  return Val ? "true" : "false";
 }
 
 string ConstPoolSInt::getStrValue() const {

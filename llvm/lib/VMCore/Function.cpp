@@ -29,8 +29,8 @@ Method::~Method() {
   dropAllReferences();    // After this it is safe to delete instructions.
 
   // TODO: Should remove from the end, not the beginning of vector!
-  BasicBlocksType::iterator BI = BasicBlocks.begin();
-  while ((BI = BasicBlocks.begin()) != BasicBlocks.end())
+  iterator BI = begin();
+  while ((BI = begin()) != end())
     delete BasicBlocks.remove(BI);
 
   // Delete all of the method arguments and unlink from symbol table...
@@ -70,6 +70,5 @@ const MethodType *Method::getMethodType() const {
 // delete.
 //
 void Method::dropAllReferences() {
-  for_each(BasicBlocks.begin(), BasicBlocks.end(), 
-	   std::mem_fun(&BasicBlock::dropAllReferences));
+  for_each(begin(), end(), std::mem_fun(&BasicBlock::dropAllReferences));
 }

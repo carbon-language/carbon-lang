@@ -15,9 +15,9 @@
 SymbolTable::~SymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   bool Good = true;
-  for (iterator i = begin(); i != end(); i++) {
+  for (iterator i = begin(); i != end(); ++i) {
     if (i->second.begin() != i->second.end()) {
-      for (type_iterator I = i->second.begin(); I != i->second.end(); I++)
+      for (type_iterator I = i->second.begin(); I != i->second.end(); ++I)
         cerr << "Value still in symbol table! Type = " << i->first->getName() 
              << "  Name = " << I->first << endl;
       Good = false;

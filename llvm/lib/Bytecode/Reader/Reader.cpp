@@ -46,11 +46,8 @@ const Type *BytecodeParser::getType(unsigned ID) {
   const Value *D = getValue(Type::TypeTy, ID, false);
   if (D == 0) return 0;
 
-  assert(D->getType() == Type::TypeTy &&
-	 D->getValueType() == Value::ConstantVal);
-
-
-  return ((const ConstPoolType*)D)->getValue();;
+  assert(D->getType() == Type::TypeTy);
+  return ((const ConstPoolType*)D->castConstantAsserting())->getValue();
 }
 
 bool BytecodeParser::insertValue(Value *Def, vector<ValueList> &ValueTab) {
@@ -63,7 +60,7 @@ bool BytecodeParser::insertValue(Value *Def, vector<ValueList> &ValueTab) {
   //cerr << "insertValue Values[" << type << "][" << ValueTab[type].size() 
   //     << "] = " << Def << endl;
 
-  if (type == Type::TypeTyID && Def->getValueType() == Value::ConstantVal) {
+  if (type == Type::TypeTyID && Def->isConstant()) {
     const Type *Ty = ((const ConstPoolType*)Def)->getValue();
     unsigned ValueOffset = FirstDerivedTyID;
 
@@ -123,7 +120,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
 
 bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
   bool Error = false;
-  for (unsigned ty = 0; ty < ValTab.size(); ty++) {
+  for (unsigned ty = 0; ty < ValTab.size(); ++ty) {
     ValueList &DL = ValTab[ty];
     unsigned Size;
     while ((Size = DL.size())) {
@@ -180,7 +177,7 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf) {
     const Type *Ty = getType(Typ);
     if (Ty == 0) return true;
 
-    for (unsigned i = 0; i < NumEntries; i++) {
+    for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot;
       if (read_vbr(Buf, EndBuf, slot)) return true;
@@ -211,7 +208,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   const MethodType::ParamTypes &Params = MTy->getParamTypes();
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
-       It != Params.end(); It++) {
+       It != Params.end(); ++It) {
     MethodArgument *MA = new MethodArgument(*It);
     if (insertValue(MA, Values)) { delete M; return true; }
     M->getArgumentList().push_back(MA);
@@ -267,7 +264,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   Value *MethPHolder = getValue(MTy, MethSlot, false);
   assert(MethPHolder && "Something is broken no placeholder found!");
-  assert(MethPHolder->getValueType() == Value::MethodVal && "Not a method?");
+  assert(MethPHolder->isMethod() && "Not a method?");
 
   unsigned type;  // Type slot
   assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");

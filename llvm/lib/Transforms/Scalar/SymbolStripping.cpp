@@ -23,7 +23,7 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
   if (SymTab == 0) return false;    // No symbol table?  No problem.
   bool RemovedSymbol = false;
 
-  for (SymbolTable::iterator I = SymTab->begin(); I != SymTab->end(); I++) {
+  for (SymbolTable::iterator I = SymTab->begin(); I != SymTab->end(); ++I) {
     map<const string, Value *> &Plane = I->second;
     
     map<const string, Value *>::iterator B;

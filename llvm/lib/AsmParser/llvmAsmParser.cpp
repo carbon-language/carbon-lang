@@ -1569,7 +1569,7 @@ case 74:
 {
   MethodType::ParamTypes ParamTypeList;
   if (yyvsp[-1].MethodArgList)
-    for (list<MethodArgument*>::iterator I = yyvsp[-1].MethodArgList->begin(); I != yyvsp[-1].MethodArgList->end(); I++)
+    for (list<MethodArgument*>::iterator I = yyvsp[-1].MethodArgList->begin(); I != yyvsp[-1].MethodArgList->end(); ++I)
       ParamTypeList.push_back((*I)->getType());
 
   const MethodType *MT = MethodType::getMethodType(yyvsp[-4].TypeVal, ParamTypeList);
@@ -1585,7 +1585,7 @@ case 74:
   if (yyvsp[-1].MethodArgList) {        // Is null if empty...
     Method::ArgumentListType &ArgList = M->getArgumentList();
 
-    for (list<MethodArgument*>::iterator I = yyvsp[-1].MethodArgList->begin(); I != yyvsp[-1].MethodArgList->end(); I++) {
+    for (list<MethodArgument*>::iterator I = yyvsp[-1].MethodArgList->begin(); I != yyvsp[-1].MethodArgList->end(); ++I) {
       InsertValue(*I);
       ArgList.push_back(*I);
     }
@@ -1658,9 +1658,9 @@ case 85:
 {
     Value *D = getVal(Type::TypeTy, yyvsp[0].ValIDVal, true);
     if (D == 0) ThrowException("Invalid user defined type: " + yyvsp[0].ValIDVal.getName());
-    assert (D->getValueType() == Value::ConstantVal &&
-            "Internal error!  User defined type not in const pool!");
-    ConstPoolType *CPT = (ConstPoolType*)D;
+
+    // User defined type not in const pool!
+    ConstPoolType *CPT = (ConstPoolType*)D->castConstantAsserting();
     yyval.TypeVal = CPT->getValue();
   ;
     break;}
@@ -1805,7 +1805,7 @@ case 105:
 
     list<pair<ConstPoolVal*, BasicBlock*> >::iterator I = yyvsp[-1].JumpTable->begin(), 
                                                       end = yyvsp[-1].JumpTable->end();
-    for (; I != end; I++)
+    for (; I != end; ++I)
       S->dest_push_back(I->first, I->second);
   ;
     break;}
@@ -1916,7 +1916,7 @@ case 118:
     const MethodType *Ty = (const MethodType*)yyvsp[-4].TypeVal;
 
     Value *V = getVal(Ty, yyvsp[-3].ValIDVal);
-    if (V->getValueType() != Value::MethodVal || V->getType() != Ty)
+    if (!V->isMethod() || V->getType() != Ty)
       ThrowException("Cannot call: " + yyvsp[-3].ValIDVal.getName() + "!");
 
     // Create or access a new type that corresponds to the function call...

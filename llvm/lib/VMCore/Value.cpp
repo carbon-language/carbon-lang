@@ -34,7 +34,7 @@ Value::~Value() {
   // a <badref>
   //
   if (Uses.begin() != Uses.end()) {
-    for (use_const_iterator I = Uses.begin(); I != Uses.end(); I++)
+    for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
       cerr << "Use still stuck around after Def is destroyed:" << *I << endl;
   }
 #endif
@@ -88,7 +88,7 @@ User::User(const Type *Ty, ValueTy vty, const string &name)
 void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 
-  for (unsigned OpNum = 0; Value *D = getOperand(OpNum); OpNum++) {   
+  for (unsigned OpNum = 0; Value *D = getOperand(OpNum); ++OpNum) {   
     if (D == From) {  // Okay, this operand is pointing to our fake def.
       // The side effects of this setOperand call include linking to
       // "To", adding "this" to the uses list of To, and
@@ -140,7 +140,7 @@ bool SymTabValue::hasSymbolTable() const {
   if (!SymTab) return false;
 
   for (SymbolTable::const_iterator I = SymTab->begin(); 
-       I != SymTab->end(); I++) {
+       I != SymTab->end(); ++I) {
     if (I->second.begin() != I->second.end())
       return true;                                // Found nonempty type plane!
   }

@@ -176,12 +176,11 @@ void SlotCalculator::insertVal(const Value *D) {
   // Insert node into table and NodeMap...
   NodeMap[D] = Table[Ty].size();
 
-  if (Typ == Type::TypeTy &&      // If it's a type constant, add the Type also
-      D->getValueType() != Value::TypeVal) {
-    assert(D->getValueType() == Value::ConstantVal && 
-           "All Type instances should be constant types!");
-
-    const ConstPoolType *CPT = (const ConstPoolType*)D;
+  if (Typ == Type::TypeTy && !D->isType()) {
+    // If it's a type constant, add the Type also
+      
+    // All Type instances should be constant types!
+    const ConstPoolType *CPT = (const ConstPoolType*)D->castConstantAsserting();
     int Slot = getValSlot(CPT->getValue());
     if (Slot == -1) {
       // Only add if it's not already here!

@@ -73,7 +73,7 @@ void BasicBlock::dropAllReferences() {
 //
 bool BasicBlock::hasConstantPoolReferences() const {
   for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if ((*I)->getValueType() == ConstantVal)
+    if ((*I)->isConstant())
       return true;
 
   return false;
@@ -91,7 +91,7 @@ bool BasicBlock::hasConstantPoolReferences() const {
 // cause a degenerate basic block to be formed, having a terminator inside of
 // the basic block). 
 //
-BasicBlock *BasicBlock::splitBasicBlock(InstListType::iterator I) {
+BasicBlock *BasicBlock::splitBasicBlock(iterator I) {
   assert(getTerminator() && "Can't use splitBasicBlock on degenerate BB!");
   assert(I != InstList.end() && 
 	 "Trying to get me to create degenerate basic block!");
@@ -102,7 +102,7 @@ BasicBlock *BasicBlock::splitBasicBlock(InstListType::iterator I) {
   // to the new basic block...
   Instruction *Inst = 0;
   do {
-    InstListType::iterator EndIt = InstList.end();
+    iterator EndIt = end();
     Inst = InstList.remove(--EndIt);                  // Remove from end
     New->InstList.push_front(Inst);                   // Add to front
   } while (Inst != *I);   // Loop until we move the specified instruction.

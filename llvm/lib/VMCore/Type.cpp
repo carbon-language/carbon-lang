@@ -157,13 +157,13 @@ PointerType::PointerType(const Type *E)
 const MethodType *MethodType::getMethodType(const Type *ReturnType, 
                                             const vector<const Type*> &Params) {
   static vector<const MethodType*> ExistingMethodTypesCache;
-  for (unsigned i = 0; i < ExistingMethodTypesCache.size(); i++) {
+  for (unsigned i = 0; i < ExistingMethodTypesCache.size(); ++i) {
     const MethodType *T = ExistingMethodTypesCache[i];
     if (T->getReturnType() == ReturnType) {
       const ParamTypes &EParams = T->getParamTypes();
       ParamTypes::const_iterator I = Params.begin(); 
       ParamTypes::const_iterator J = EParams.begin(); 
-      for (; I != Params.end() && J != EParams.end(); I++, J++)
+      for (; I != Params.end() && J != EParams.end(); ++I, ++J)
         if (*I != *J) break;  // These types aren't equal!
 
       if (I == Params.end() && J == EParams.end()) {
@@ -189,7 +189,7 @@ const MethodType *MethodType::getMethodType(const Type *ReturnType,
   // Calculate the string name for the new type...
   string Name = ReturnType->getName() + " (";
   for (ParamTypes::const_iterator I = Params.begin();  
-       I != Params.end(); I++) {
+       I != Params.end(); ++I) {
     if (I != Params.begin())
       Name += ", ";
     Name += (*I)->getName();
@@ -211,7 +211,7 @@ const ArrayType *ArrayType::getArrayType(const Type *ElementType,
   static vector<const ArrayType*> ExistingTypesCache;
 
   // Search cache for value...
-  for (unsigned i = 0; i < ExistingTypesCache.size(); i++) {
+  for (unsigned i = 0; i < ExistingTypesCache.size(); ++i) {
     const ArrayType *T = ExistingTypesCache[i];
 
     if (T->getElementType() == ElementType && 
@@ -237,13 +237,13 @@ const ArrayType *ArrayType::getArrayType(const Type *ElementType,
 const StructType *StructType::getStructType(const ElementTypes &ETypes) {
   static vector<const StructType*> ExistingStructTypesCache;
 
-  for (unsigned i = 0; i < ExistingStructTypesCache.size(); i++) {
+  for (unsigned i = 0; i < ExistingStructTypesCache.size(); ++i) {
     const StructType *T = ExistingStructTypesCache[i];
 
     const ElementTypes &Elements = T->getElementTypes();
     ElementTypes::const_iterator I = ETypes.begin(); 
     ElementTypes::const_iterator J = Elements.begin(); 
-    for (; I != ETypes.end() && J != Elements.end(); I++, J++)
+    for (; I != ETypes.end() && J != Elements.end(); ++I, ++J)
       if (*I != *J) break;  // These types aren't equal!
     
     if (I == ETypes.end() && J == Elements.end()) {
@@ -269,7 +269,7 @@ const StructType *StructType::getStructType(const ElementTypes &ETypes) {
   // Calculate the string name for the new type...
   string Name = "{ ";
   for (ElementTypes::const_iterator I = ETypes.begin();  
-       I != ETypes.end(); I++) {
+       I != ETypes.end(); ++I) {
     if (I != ETypes.begin())
       Name += ", ";
     Name += (*I)->getName();
@@ -290,7 +290,7 @@ const PointerType *PointerType::getPointerType(const Type *ValueType) {
   static vector<const PointerType*> ExistingTypesCache;
 
   // Search cache for value...
-  for (unsigned i = 0; i < ExistingTypesCache.size(); i++) {
+  for (unsigned i = 0; i < ExistingTypesCache.size(); ++i) {
     const PointerType *T = ExistingTypesCache[i];
 
     if (T->getValueType() == ValueType)

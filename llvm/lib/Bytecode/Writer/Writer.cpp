@@ -67,7 +67,7 @@ bool BytecodeWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
     
     unsigned NumConstants = 0;
     for (unsigned vn = ValNo; vn < Plane.size(); vn++)
-      if (Plane[vn]->getValueType() == Value::ConstantVal)
+      if (Plane[vn]->isConstant())
 	NumConstants++;
 
     if (NumConstants == 0) continue;  // Skip empty type planes...
@@ -85,21 +85,19 @@ bool BytecodeWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
 
     for (; ValNo < Plane.size(); ValNo++) {
       const Value *V = Plane[ValNo];
-      if (V->getValueType() == Value::ConstantVal) {
+      if (const ConstPoolVal *CPV = V->castConstant()) {
 	//cerr << "Serializing value: <" << V->getType() << ">: " 
 	//     << ((const ConstPoolVal*)V)->getStrValue() << ":" 
 	//     << Out.size() << "\n";
-	outputConstant((const ConstPoolVal*)V);
+	outputConstant(CPV);
       }
     }
   }
 
   delete CPool;  // End bytecode block section!
 
-  if (!isMethod) { // The ModuleInfoBlock follows directly after the c-pool
-    assert(CP.getParent()->getValueType() == Value::ModuleVal);
-    outputModuleInfoBlock((const Module*)CP.getParent());
-  }
+  if (!isMethod) // The ModuleInfoBlock follows directly after the c-pool
+    outputModuleInfoBlock(CP.getParent()->castModuleAsserting());
 
   return false;
 }
@@ -108,13 +106,11 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfo, Out);
   
   // Output the types of the methods in this class
-  Module::MethodListType::const_iterator I = M->getMethodList().begin();
-  while (I != M->getMethodList().end()) {
+  for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
     int Slot = Table.getValSlot((*I)->getType());
     assert(Slot != -1 && "Module const pool is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
     output_vbr((unsigned)Slot, Out);
-    I++;
   }
   output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
   align32(Out);
@@ -144,7 +140,7 @@ bool BytecodeWriter::processBasicBlock(const BasicBlock *BB) {
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   BytecodeBlock MethodBlock(BytecodeFormat::SymbolTable, Out);
 
-  for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); TI++) {
+  for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); ++TI) {
     SymbolTable::type_const_iterator I = MST.type_begin(TI->first);
     SymbolTable::type_const_iterator End = MST.type_end(TI->first);
     int Slot;
@@ -158,7 +154,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
     assert(Slot != -1 && "Type in symtab, but not in table!");
     output_vbr((unsigned)Slot, Out);
 
-    for (; I != End; I++) {
+    for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
       Slot = Table.getValSlot(I->second);
       assert (Slot != -1 && "Value in symtab but not in method!!");

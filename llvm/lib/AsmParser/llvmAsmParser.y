@@ -643,7 +643,7 @@ ArgList : ArgListH {
 MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
   MethodType::ParamTypes ParamTypeList;
   if ($4)
-    for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); I++)
+    for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I)
       ParamTypeList.push_back((*I)->getType());
 
   const MethodType *MT = MethodType::getMethodType($1, ParamTypeList);
@@ -659,7 +659,7 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
   if ($4) {        // Is null if empty...
     Method::ArgumentListType &ArgList = M->getArgumentList();
 
-    for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); I++) {
+    for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I) {
       InsertValue(*I);
       ArgList.push_back(*I);
     }
@@ -713,9 +713,9 @@ ValueRef : INTVAL {           // Is it an integer reference...?
 Types : ValueRef {
     Value *D = getVal(Type::TypeTy, $1, true);
     if (D == 0) ThrowException("Invalid user defined type: " + $1.getName());
-    assert (D->getValueType() == Value::ConstantVal &&
-            "Internal error!  User defined type not in const pool!");
-    ConstPoolType *CPT = (ConstPoolType*)D;
+
+    // User defined type not in const pool!
+    ConstPoolType *CPT = (ConstPoolType*)D->castConstantAsserting();
     $$ = CPT->getValue();
   }
   | TypesV '(' TypeList ')' {               // Method derived type?
@@ -811,7 +811,7 @@ BBTerminatorInst : RET Types ValueRef {              // Return with a result...
 
     list<pair<ConstPoolVal*, BasicBlock*> >::iterator I = $8->begin(), 
                                                       end = $8->end();
-    for (; I != end; I++)
+    for (; I != end; ++I)
       S->dest_push_back(I->first, I->second);
   }
 
@@ -894,7 +894,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     const MethodType *Ty = (const MethodType*)$2;
 
     Value *V = getVal(Ty, $3);
-    if (V->getValueType() != Value::MethodVal || V->getType() != Ty)
+    if (!V->isMethod() || V->getType() != Ty)
       ThrowException("Cannot call: " + $3.getName() + "!");
 
     // Create or access a new type that corresponds to the function call...

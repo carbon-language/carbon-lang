@@ -68,8 +68,7 @@ bool PHINode::setOperand(unsigned i, Value *Val) {
   if (i >= IncomingValues.size()*2) return false;
 
   if (i & 1) {
-    assert(Val->getValueType() == BasicBlockVal && "Not a BB!");
-    IncomingValues[i/2].second = (BasicBlock*)Val;
+    IncomingValues[i/2].second = Val->castBasicBlockAsserting();
   } else {
     IncomingValues[i/2].first  = Val;
   }

@@ -36,9 +36,9 @@
 static inline void RemapInstruction(Instruction *I, 
 				    map<const Value *, Value*> &ValueMap) {
 
-  for (unsigned op = 0; const Value *Op = I->getOperand(op); op++) {
+  for (unsigned op = 0; const Value *Op = I->getOperand(op); ++op) {
     Value *V = ValueMap[Op];
-    if (!V && Op->getValueType() == Value::MethodVal) 
+    if (!V && Op->isMethod()) 
       continue;  // Methods don't get relocated
 
     if (!V) {
@@ -60,7 +60,7 @@ static inline void RemapInstruction(Instruction *I,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // method by one level.
 //
-bool InlineMethod(BasicBlock::InstListType::iterator CIIt) {
+bool InlineMethod(BasicBlock::iterator CIIt) {
   assert((*CIIt)->getInstType() == Instruction::Call && 
 	 "InlineMethod only works on CallInst nodes!");
   assert((*CIIt)->getParent() && "Instruction not embedded in basic block!");
@@ -124,9 +124,8 @@ bool InlineMethod(BasicBlock::InstListType::iterator CIIt) {
   // Loop over all of the basic blocks in the method, inlining them as 
   // appropriate.  Keep track of the first basic block of the method...
   //
-  for (Method::BasicBlocksType::const_iterator BI = 
-	 CalledMeth->getBasicBlocks().begin(); 
-       BI != CalledMeth->getBasicBlocks().end(); BI++) {
+  for (Method::const_iterator BI = CalledMeth->begin(); 
+       BI != CalledMeth->end(); ++BI) {
     const BasicBlock *BB = *BI;
     assert(BB->getTerminator() && "BasicBlock doesn't have terminator!?!?");
     
@@ -143,8 +142,8 @@ bool InlineMethod(BasicBlock::InstListType::iterator CIIt) {
    
     // Loop over all instructions copying them over...
     Instruction *NewInst;
-    for (BasicBlock::InstListType::const_iterator II = BB->getInstList().begin();
-	 II != (BB->getInstList().end()-1); II++) {
+    for (BasicBlock::const_iterator II = BB->begin();
+	 II != (BB->end()-1); ++II) {
       IBB->getInstList().push_back((NewInst = (*II)->clone()));
       ValueMap[*II] = NewInst;                  // Add instruction map to value.
     }
@@ -193,16 +192,14 @@ bool InlineMethod(BasicBlock::InstListType::iterator CIIt) {
   // Loop over all of the instructions in the method, fixing up operand 
   // references as we go.  This uses ValueMap to do all the hard work.
   //
-  for (Method::BasicBlocksType::const_iterator BI = 
-	 CalledMeth->getBasicBlocks().begin(); 
-       BI != CalledMeth->getBasicBlocks().end(); BI++) {
+  for (Method::const_iterator BI = CalledMeth->begin(); 
+       BI != CalledMeth->end(); ++BI) {
     const BasicBlock *BB = *BI;
     BasicBlock *NBB = (BasicBlock*)ValueMap[BB];
 
     // Loop over all instructions, fixing each one as we find it...
     //
-    for (BasicBlock::InstListType::iterator II = NBB->getInstList().begin();
-	 II != NBB->getInstList().end(); II++)
+    for (BasicBlock::iterator II = NBB->begin(); II != NBB->end(); II++)
       RemapInstruction(*II, ValueMap);
   }
 
@@ -214,7 +211,7 @@ bool InlineMethod(BasicBlock::InstListType::iterator CIIt) {
   TerminatorInst *Br = OrigBB->getTerminator();
   assert(Br && Br->getInstType() == Instruction::Br && 
 	 "splitBasicBlock broken!");
-  Br->setOperand(0, ValueMap[CalledMeth->getBasicBlocks().front()]);
+  Br->setOperand(0, ValueMap[CalledMeth->front()]);
 
   // Since we are now done with the CallInst, we can finally delete it.
   delete CI;
@@ -225,10 +222,9 @@ bool InlineMethod(CallInst *CI) {
   assert(CI->getParent() && "CallInst not embeded in BasicBlock!");
   BasicBlock *PBB = CI->getParent();
 
-  BasicBlock::InstListType::iterator CallIt = find(PBB->getInstList().begin(),
-						   PBB->getInstList().end(),
-						   CI);
-  assert(CallIt != PBB->getInstList().end() && 
+  BasicBlock::iterator CallIt = find(PBB->begin(), PBB->end(), CI);
+
+  assert(CallIt != PBB->end() && 
 	 "CallInst has parent that doesn't contain CallInst?!?");
   return InlineMethod(CallIt);
 }
@@ -241,10 +237,10 @@ static inline bool ShouldInlineMethod(const CallInst *CI, const Method *M) {
   if (CI->getParent()->getParent() == M) return false;
 
   // Don't inline something too big.  This is a really crappy heuristic
-  if (M->getBasicBlocks().size() > 3) return false;
+  if (M->size() > 3) return false;
 
   // Don't inline into something too big. This is a **really** crappy heuristic
-  if (CI->getParent()->getParent()->getBasicBlocks().size() > 10) return false;
+  if (CI->getParent()->getParent()->size() > 10) return false;
 
   // Go ahead and try just about anything else.
   return true;
@@ -252,8 +248,7 @@ static inline bool ShouldInlineMethod(const CallInst *CI, const Method *M) {
 
 
 static inline bool DoMethodInlining(BasicBlock *BB) {
-  for (BasicBlock::InstListType::iterator I = BB->getInstList().begin();
-       I != BB->getInstList().end(); I++) {
+  for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
     if ((*I)->getInstType() == Instruction::Call) {
       // Check to see if we should inline this method
       CallInst *CI = (CallInst*)*I;
@@ -266,15 +261,14 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
 }
 
 bool DoMethodInlining(Method *M) {
-  Method::BasicBlocksType &BBs = M->getBasicBlocks();
   bool Changed = false;
 
   // Loop through now and inline instructions a basic block at a time...
-  for (Method::BasicBlocksType::iterator I = BBs.begin(); I != BBs.end(); )
+  for (Method::iterator I = M->begin(); I != M->end(); )
     if (DoMethodInlining(*I)) {
       Changed = true;
       // Iterator is now invalidated by new basic blocks inserted
-      I = BBs.begin();
+      I = M->begin();
     } else {
       ++I;
     }

@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/IntervalIterator.h"
+#include "llvm/Tools/STLExtras.h"
 
 using namespace cfg;
 
@@ -49,22 +50,24 @@ void IntervalPartition::updatePredecessors(cfg::Interval *Int) {
 // specified method...
 //
 IntervalPartition::IntervalPartition(Method *M) {
-  assert(M->getBasicBlocks().front() && "Cannot operate on prototypes!");
+  assert(M->front() && "Cannot operate on prototypes!");
 
   // Pass false to intervals_begin because we take ownership of it's memory
   method_interval_iterator I = intervals_begin(M, false);
-  method_interval_iterator End = intervals_end(M);
-  assert(I != End && "No intervals in method!?!?!");
+  assert(I != intervals_end(M) && "No intervals in method!?!?!");
 
   addIntervalToPartition(RootInterval = *I);
 
-  for (++I; I != End; ++I)
-    addIntervalToPartition(*I);
+  ++I;  // After the first one...
+
+  // Add the rest of the intervals to the partition...
+  for_each(I, intervals_end(M),
+	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
 
   // Now that we know all of the successor information, propogate this to the
   // predecessors for each block...
-  for(iterator It = begin(), E = end(); It != E; ++It)
-    updatePredecessors(*It);
+  for_each(begin(), end(), 
+	   bind_obj(this, &IntervalPartition::updatePredecessors));
 }
 
 
@@ -78,16 +81,18 @@ IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
 
   // Pass false to intervals_begin because we take ownership of it's memory
   interval_part_interval_iterator I = intervals_begin(IP, false);
-  interval_part_interval_iterator End = intervals_end(IP);
-  assert(I != End && "No intervals in interval partition!?!?!");
+  assert(I != intervals_end(IP) && "No intervals in interval partition!?!?!");
 
   addIntervalToPartition(RootInterval = *I);
 
-  for (++I; I != End; ++I)
-    addIntervalToPartition(*I);
+  ++I;  // After the first one...
+
+  // Add the rest of the intervals to the partition...
+  for_each(I, intervals_end(IP),
+	   bind_obj(this, &IntervalPartition::addIntervalToPartition));
 
   // Now that we know all of the successor information, propogate this to the
   // predecessors for each block...
-  for(iterator I = begin(), E = end(); I != E; ++I)
-    updatePredecessors(*I);
+  for_each(begin(), end(), 
+	   bind_obj(this, &IntervalPartition::updatePredecessors));
 }

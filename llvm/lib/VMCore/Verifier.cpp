@@ -71,10 +71,9 @@ static bool verify(const BasicBlock *BB, vector<string> &ErrorMsgs) {
 bool verify(const Method *M, vector<string> &ErrorMsgs) {
   bool Bad = false;
   
-  for (Method::BasicBlocksType::const_iterator BBIt = M->getBasicBlocks().begin();
-       BBIt != M->getBasicBlocks().end(); BBIt++) {
+  for (Method::const_iterator BBIt = M->begin();
+       BBIt != M->end(); ++BBIt)
     Bad |= verify(*BBIt, ErrorMsgs);
-  }
 
   return Bad;
 }
@@ -84,11 +83,8 @@ bool verify(const Module *C, vector<string> &ErrorMsgs) {
   assert(Type::FirstDerivedTyID-1 < sizeof(long)*8 && 
 	 "Resize ValidTypes table to handle more than 32 primitive types!");
 
-  for (Module::MethodListType::const_iterator MI = C->getMethodList().begin();
-       MI != C->getMethodList().end(); MI++) {
-    const Method *M = *MI;
-    Bad |= verify(M, ErrorMsgs);
-  }
+  for (Module::const_iterator MI = C->begin(); MI != C->end(); ++MI)
+    Bad |= verify(*MI, ErrorMsgs);
   
   return Bad;
 }

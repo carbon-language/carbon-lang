@@ -14,7 +14,7 @@ CallInst::CallInst(Method *m, vector<Value*> &params,
 
   const MethodType* MT = M->getMethodType();
   const MethodType::ParamTypes &PL = MT->getParamTypes();
-  assert(params.size() == PL.size());
+  assert(params.size() == PL.size() && "Calling a function with bad signature");
 #ifndef NDEBUG
   MethodType::ParamTypes::const_iterator It = PL.begin();
 #endif
@@ -38,8 +38,7 @@ void CallInst::dropAllReferences() {
 bool CallInst::setOperand(unsigned i, Value *Val) {
   if (i > Params.size()) return false;
   if (i == 0) {
-    assert(Val->getValueType() == Value::MethodVal);
-    M = (Method*)Val;
+    M = Val->castMethodAsserting();
   } else {
     // TODO: assert = method arg type
     Params[i-1] = Val;

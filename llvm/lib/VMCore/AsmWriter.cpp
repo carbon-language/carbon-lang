@@ -178,7 +178,7 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
       writeOperand(I->getOperand(op+1), true);
     }
     Out << "\n\t]";
-  } else if (I->getInstType() == Instruction::PHINode) {
+  } else if (I->isPHINode()) {
     Out << " " << Operand->getType();
 
     Out << " [";  writeOperand(Operand, false); Out << ",";
@@ -262,7 +262,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType,
   } else {
     int Slot = Table.getValSlot(Operand);
     
-    if (Operand->getValueType() == Value::ConstantVal) {
+    if (Operand->isConstant()) {
       Out << " " << ((ConstPoolVal*)Operand)->getStrValue();
     } else {
       if (Slot >= 0)  Out << " %" << Slot;
@@ -313,12 +313,11 @@ void WriteToAssembly(const ConstPoolVal *CPV, ostream &o) {
   // A Constant pool value may have a parent that is either a method or a 
   // module.  Untangle this now...
   //
-  if (CPV->getParent() == 0 || 
-      CPV->getParent()->getValueType() == Value::MethodVal) {
+  if (CPV->getParent() == 0 || CPV->getParent()->isMethod()) {
     SlotTable = new SlotCalculator((Method*)CPV->getParent(), true);
   } else {
-    assert(CPV->getParent()->getValueType() == Value::ModuleVal);
-    SlotTable = new SlotCalculator((Module*)CPV->getParent(), true);
+    SlotTable =
+      new SlotCalculator(CPV->getParent()->castModuleAsserting(), true);
   }
 
   AssemblyWriter W(o, *SlotTable);

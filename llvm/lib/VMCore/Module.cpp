@@ -37,6 +37,6 @@ Module::~Module() {
 //
 void Module::dropAllReferences() {
   MethodListType::iterator MI = MethodList.begin();
-  for (; MI != MethodList.end(); MI++)
+  for (; MI != MethodList.end(); ++MI)
     (*MI)->dropAllReferences();
 }

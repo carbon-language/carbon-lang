@@ -48,12 +48,15 @@ public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   
   typedef bidirectional_iterator_tag iterator_category;
+  typedef _Ptr &reference;
+  typedef unsigned difference_type;
+  typedef _Ptr value_type;
   typedef _Ptr pointer;
   
   inline void advancePastConstPool() {
     // Loop to ignore constant pool references
     while (It != BB->use_end() && 
-	   (((*It)->getValueType() != Value::InstructionVal) ||
+	   ((!(*It)->isInstruction()) ||
 	    !(((Instruction*)(*It))->isTerminator())))
       ++It;
   }
@@ -67,8 +70,7 @@ public:
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
   
   inline pointer operator*() const { 
-    assert ((*It)->getValueType() == Value::InstructionVal);
-    return ((Instruction *)(*It))->getParent(); 
+    return (*It)->castInstructionAsserting()->getParent(); 
   }
   inline pointer *operator->() const { return &(operator*()); }
   
@@ -113,6 +115,9 @@ public:
   typedef SuccIterator<_Term, _BB> _Self;
   // TODO: This can be random access iterator, need operator+ and stuff tho
   typedef bidirectional_iterator_tag iterator_category;
+  typedef _BB &reference;
+  typedef unsigned difference_type;
+  typedef _BB value_type;
   typedef _BB pointer;
   
   inline SuccIterator(_Term T) : Term(T), idx(0) {}         // begin iterator
@@ -242,11 +247,11 @@ public:
 };
 
 inline df_iterator df_begin(Method *M, bool Reverse = false) {
-  return df_iterator(M->getBasicBlocks().front(), Reverse);
+  return df_iterator(M->front(), Reverse);
 }
 
 inline df_const_iterator df_begin(const Method *M, bool Reverse = false) {
-  return df_const_iterator(M->getBasicBlocks().front(), Reverse);
+  return df_const_iterator(M->front(), Reverse);
 }
 inline df_iterator       df_end(Method*) { 
   return df_iterator(); 
@@ -334,10 +339,10 @@ public:
 };
 
 inline po_iterator       po_begin(      Method *M) {
-  return po_iterator(M->getBasicBlocks().front());
+  return po_iterator(M->front());
 }
 inline po_const_iterator po_begin(const Method *M) {
-  return po_const_iterator(M->getBasicBlocks().front());
+  return po_const_iterator(M->front());
 }
 inline po_iterator       po_end  (      Method *M) {
   return po_iterator();
@@ -371,7 +376,7 @@ class ReversePostOrderTraversal {
   }
 public:
   inline ReversePostOrderTraversal(Method *M) {
-    Initialize(M->getBasicBlocks().front());
+    Initialize(M->front());
   }
   inline ReversePostOrderTraversal(BasicBlock *BB) {
     Initialize(BB);

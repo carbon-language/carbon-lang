@@ -94,8 +94,7 @@ int main(int argc, char **argv) {
     // methods... more should definately be printed.  It should be valid output
     // consumable by the assembler.
     //
-    for (Module::MethodListType::iterator I = C->getMethodList().begin(); 
-	 I != C->getMethodList().end(); I++) {
+    for (Module::iterator I = C->begin(), End = C->end(); I != End; ++I) {
       Method *M = *I;
       (*Out) << "-------------- Method: " << M->getName() << " -------------\n";
 
