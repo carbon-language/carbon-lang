@@ -540,10 +540,20 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-  // X + 0 --> X
-  if (!I.getType()->isFloatingPoint() &&    // -0 + +0 = +0, so it's not a noop
-      RHS == Constant::getNullValue(I.getType()))
-    return ReplaceInstUsesWith(I, LHS);
+  if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
+    // X + 0 --> X
+    if (!I.getType()->isFloatingPoint() && // -0 + +0 = +0, so it's not a noop
+        RHSC->isNullValue())
+      return ReplaceInstUsesWith(I, LHS);
+    
+    // X + (signbit) --> X ^ signbit
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
+      unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
+      uint64_t Val = CI->getRawValue() & (1ULL << NumBits)-1;
+      if (Val == (1ULL << NumBits-1))
+        return BinaryOperator::create(Instruction::Xor, LHS, RHS);
+    }
+  }
 
   // X + X --> X << 1
   if (I.getType()->isInteger())
