@@ -573,7 +573,7 @@ void CWriter::printConstant(Constant *CPV) {
         char Buffer[100];
 
         DHex.d = FPC->getValue();
-        sprintf(Buffer, "0x%llx", DHex.ll);
+        sprintf(Buffer, "0x%llx", (unsigned long long)DHex.ll);
 
         std::string Num(&Buffer[0], &Buffer[6]);
         unsigned long Val = strtoul(Num.c_str(), 0, 16);
