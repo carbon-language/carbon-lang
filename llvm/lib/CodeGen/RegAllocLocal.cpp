@@ -12,29 +12,6 @@
 #include "Support/Statistic.h"
 #include <iostream>
 
-/// PhysRegClassMap - Construct a mapping of physical register numbers to their
-/// register classes.
-///
-/// NOTE: This class will eventually be pulled out to somewhere shared.
-///
-class PhysRegClassMap {
-  std::map<unsigned, const TargetRegisterClass*> PhysReg2RegClassMap;
-public:
-  PhysRegClassMap(const MRegisterInfo &RI) {
-    for (MRegisterInfo::const_iterator I = RI.regclass_begin(),
-           E = RI.regclass_end(); I != E; ++I)
-      for (unsigned i=0; i < (*I)->getNumRegs(); ++i)
-        PhysReg2RegClassMap[(*I)->getRegister(i)] = *I;
-  }
-
-  const TargetRegisterClass *operator[](unsigned Reg) {
-    assert(PhysReg2RegClassMap[Reg] && "Register is not a known physreg!");
-    return PhysReg2RegClassMap[Reg];
-  }
-
-  const TargetRegisterClass *get(unsigned Reg) { return operator[](Reg); }
-};
-
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
@@ -45,7 +22,6 @@ namespace {
     const MRegisterInfo &RegInfo;
     const MachineInstrInfo &MIInfo;
     unsigned NumBytesAllocated;
-    PhysRegClassMap PhysRegClasses;
     
     // Maps SSA Regs => offsets on the stack where these values are stored
     std::map<unsigned, unsigned> VirtReg2OffsetMap;
@@ -89,8 +65,7 @@ namespace {
   public:
 
     RA(TargetMachine &tm)
-      : TM(tm), RegInfo(*tm.getRegisterInfo()), MIInfo(tm.getInstrInfo()),
-        PhysRegClasses(RegInfo) {
+      : TM(tm), RegInfo(*tm.getRegisterInfo()), MIInfo(tm.getInstrInfo()) {
       cleanupAfterFunction();
     }
 
@@ -302,7 +277,7 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
       unsigned R = PhysRegsUseOrder[i];
       // If the current register is compatible, use it.
       if (isAllocatableRegister(R)) {
-        if (PhysRegClasses[R] == RegClass) {
+        if (RegInfo.getRegClass(R) == RegClass) {
           PhysReg = R;
           break;
         } else {
@@ -310,7 +285,7 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
           // compatible, use it.
           if (const unsigned *AliasSet = RegInfo.getAliasSet(R))
             for (unsigned a = 0; AliasSet[a]; ++a)
-              if (PhysRegClasses[AliasSet[a]] == RegClass) {
+              if (RegInfo.getRegClass(AliasSet[a]) == RegClass) {
                 PhysReg = AliasSet[a];    // Take an aliased register
                 break;
               }
@@ -561,7 +536,7 @@ void RA::EmitPrologue() {
 
   const unsigned *CSRegs = RegInfo.getCalleeSaveRegs();
   for (unsigned i = 0; CSRegs[i]; ++i) {
-    const TargetRegisterClass *RegClass = PhysRegClasses[CSRegs[i]];
+    const TargetRegisterClass *RegClass = RegInfo.getRegClass(CSRegs[i]);
     unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
 
     // Insert the spill to the stack frame...
@@ -584,7 +559,7 @@ void RA::EmitEpilogue(MachineBasicBlock &MBB) {
 
   const unsigned *CSRegs = RegInfo.getCalleeSaveRegs();
   for (unsigned i = 0; CSRegs[i]; ++i) {
-    const TargetRegisterClass *RegClass = PhysRegClasses[CSRegs[i]];
+    const TargetRegisterClass *RegClass = RegInfo.getRegClass(CSRegs[i]);
     unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
     ++NumReloaded;
     I = RegInfo.loadRegOffset2Reg(MBB, I, CSRegs[i], RegInfo.getFramePointer(),
@@ -606,8 +581,9 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   // blocks.
   // FIXME: In this pass, count how many uses of each VReg exist!
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
-       MBB != MBBe; ++MBB)
+       MBB != MBBe; ++MBB) {
     EliminatePHINodes(*MBB);
+  }
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();

@@ -62,6 +62,13 @@ namespace {
     /// in predecessor basic blocks.
     void EliminatePHINodes(MachineBasicBlock &MBB);
 
+    /// EmitPrologue/EmitEpilogue - Use the register info object to add a
+    /// prologue/epilogue to the function and save/restore any callee saved
+    /// registers we are responsible for.
+    ///
+    void EmitPrologue();
+    void EmitEpilogue(MachineBasicBlock &MBB);
+
 
     /// getStackSpaceFor - This returns the offset of the specified virtual
     /// register on the stack, allocating space if neccesary.
@@ -307,6 +314,55 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
   }
 }
 
+
+/// EmitPrologue - Use the register info object to add a prologue to the
+/// function and save any callee saved registers we are responsible for.
+///
+void RegAllocSimple::EmitPrologue() {
+  // Get a list of the callee saved registers, so that we can save them on entry
+  // to the function.
+  //
+  MachineBasicBlock &MBB = MF->front();   // Prolog goes in entry BB
+  MachineBasicBlock::iterator I = MBB.begin();
+
+  const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
+  for (unsigned i = 0; CSRegs[i]; ++i) {
+    const TargetRegisterClass *RegClass = RegInfo->getRegClass(CSRegs[i]);
+    unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
+
+    // Insert the spill to the stack frame...
+    I = RegInfo->storeReg2RegOffset(MBB, I,CSRegs[i],RegInfo->getFramePointer(),
+                                    -Offset, RegClass->getDataSize());
+    ++NumSpilled;
+  }
+
+  // Add prologue to the function...
+  RegInfo->emitPrologue(*MF, NumBytesAllocated);
+}
+
+
+/// EmitEpilogue - Use the register info object to add a epilogue to the
+/// function and restore any callee saved registers we are responsible for.
+///
+void RegAllocSimple::EmitEpilogue(MachineBasicBlock &MBB) {
+  // Insert instructions before the return.
+  MachineBasicBlock::iterator I = --MBB.end();
+
+  const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
+  for (unsigned i = 0; CSRegs[i]; ++i) {
+    const TargetRegisterClass *RegClass = RegInfo->getRegClass(CSRegs[i]);
+    unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
+
+    I = RegInfo->loadRegOffset2Reg(MBB, I, CSRegs[i],RegInfo->getFramePointer(),
+                                   -Offset, RegClass->getDataSize());
+    --I;  // Insert in reverse order
+    ++NumReloaded;
+  }
+
+  RegInfo->emitEpilogue(MBB, NumBytesAllocated);
+}
+
+
 /// runOnMachineFunction - Register allocate the whole function
 ///
 bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
@@ -328,8 +384,8 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   // FIXME: This is X86 specific!  Move to frame manager
   NumBytesAllocated = (NumBytesAllocated + 3) & ~3;
 
-  // Add prologue to the function...
-  RegInfo->emitPrologue(Fn, NumBytesAllocated);
+  // Emit a prologue for the function...
+  EmitPrologue();
 
   const MachineInstrInfo &MII = TM.getInstrInfo();
 
@@ -338,7 +394,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
        MBB != MBBe; ++MBB) {
     // If last instruction is a return instruction, add an epilogue
     if (MII.isReturn(MBB->back()->getOpcode()))
-      RegInfo->emitEpilogue(*MBB, NumBytesAllocated);
+      EmitEpilogue(*MBB);
   }
 
   cleanupAfterFunction();
