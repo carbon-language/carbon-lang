@@ -209,17 +209,17 @@ bool Steens::run(Module &M) {
 AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) {
   assert(ResultGraph && "Result graph has not been computed yet!");
 
-  hash_map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
+  hash_map<Value*, DSNodeHandle> &GSM = ResultGraph->getScalarMap();
 
-  hash_map<Value*, DSNodeHandle>::iterator I = GVM.find(const_cast<Value*>(V1));
-  if (I != GVM.end() && I->second.getNode()) {
+  hash_map<Value*, DSNodeHandle>::iterator I = GSM.find(const_cast<Value*>(V1));
+  if (I != GSM.end() && I->second.getNode()) {
     DSNodeHandle &V1H = I->second;
-    hash_map<Value*, DSNodeHandle>::iterator J=GVM.find(const_cast<Value*>(V2));
-    if (J != GVM.end() && J->second.getNode()) {
+    hash_map<Value*, DSNodeHandle>::iterator J=GSM.find(const_cast<Value*>(V2));
+    if (J != GSM.end() && J->second.getNode()) {
       DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they
       // cannot alias!
-      if (V1H.getNode() != V2H.getNode()) {
+      if (V1H.getNode() != V2H.getNode()) {  // FIXME: Handle incompleteness!
         ++NumNoAlias;
         return NoAlias;
       }
