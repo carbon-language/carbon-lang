@@ -74,7 +74,7 @@ DSNode::DSNode(const Type *T, DSGraph *G)
   : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(0) {
   // Add the type entry if it is specified...
   if (T) mergeTypeInfo(T, 0);
-  G->addNode(this);
+  if (G) G->addNode(this);
   ++NumNodeAllocated;
 }
 
