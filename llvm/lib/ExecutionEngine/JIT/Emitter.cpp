@@ -76,20 +76,16 @@ static void *getMemory(unsigned NumPages) {
   /* Linux and *BSD tend to have these flags named differently. */
 #if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
 # define MAP_ANONYMOUS MAP_ANON
-#endif
-  pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-            MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);  /* fd = 0  */
+#endif /* defined(MAP_ANON) && !defined(MAP_ANONYMOUS) */
+#define fd  0
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  static unsigned long Counter = 0;
-  pa = mmap((void*)(0x140000000UL+Counter), pageSize*NumPages,
-            PROT_READ|PROT_WRITE|PROT_EXEC,
-            MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0); /* fd = -1 */
-  Counter += pageSize*NumPages;
+#define fd -1
 #else
-  std::cerr << "This architecture is not supported by the JIT\n";
+  std::cerr << "This architecture is not supported by the JIT!\n";
   abort();
 #endif
-
+  pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
+            MAP_PRIVATE|MAP_ANONYMOUS, fd, 0);
   if (pa == MAP_FAILED) {
     perror("mmap");
     abort();
