@@ -45,11 +45,6 @@ Disable the inlining pass.  By default, it is enabled.
 
 Disable all assembler-time optimization passes.
 
-=item B<--enable-correct-eh-support>
-
-Instruct the B<-lowerinvoke> pass to insert code for correct exception handling
-support.  This is expensive and is by default omitted for efficiency.
-
 =item B<--stats>
 
 Print statistics.
