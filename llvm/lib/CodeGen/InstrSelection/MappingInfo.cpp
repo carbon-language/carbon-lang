@@ -24,19 +24,19 @@ namespace {
   class getMappingInfoForFunction : public Pass { 
     std::ostream &Out;
   private:
-    std::map<const Function*, int> Fkey; //key of function to num
-    std::map<const MachineInstr*, int> BBkey; //key basic block to num
-    std::map<const MachineInstr*, int> MIkey; //key machine instruction to num
-    vector<vector<int> > BBmap;
-    vector<vector<int> > MImap;
-
+    std::map<const Function*, unsigned> Fkey; //key of function to num
+    std::map<const MachineInstr*, unsigned> BBkey; //key basic block to num
+    std::map<const MachineInstr*, unsigned> MIkey; //key machine instruction to num
+    vector<vector<unsigned> > BBmap;
+    vector<vector<unsigned> > MImap;
+ 
     void createFunctionKey(Module &M);
     void createBasicBlockKey(Module &M);    
     void createMachineInstructionKey(Module &M);
     void createBBToMImap(Module &M);
     void createLLVMToMImap(Module &M);
-    void writeNumber(int X);
-
+    unsigned writeNumber(unsigned X);
+    
   public:
     getMappingInfoForFunction(std::ostream &out) : Out(out){}
 
@@ -57,6 +57,7 @@ Pass *MappingInfoForFunction(std::ostream &out){
 //function definitions :
 //create and output maps to the .s file
 bool getMappingInfoForFunction::run(Module &M) {
+
   //  Module *M = &m;
 
   //map for Function to Function number
@@ -75,7 +76,20 @@ bool getMappingInfoForFunction::run(Module &M) {
   //map of LLVM Instruction to Machine Instruction 
   createLLVMToMImap(M);
   
-  
+  //unsigned r =0;
+  //for (Module::iterator FI = M.begin(), FE = M.end(); 
+  //FI != FE; ++FI){
+  //unsigned r = 0;
+  //  if(FI->isExternal()) continue;
+  //for (Function::iterator BI = FI->begin(), BE = FI->end(); 
+  // BI != BE; ++BI){
+  //r++;
+  //}
+  //Out <<"#BB in F: "<<r<<"\n";
+  //}
+  //Out <<"#BB: "<< r <<"\n";
+  //Out <<"BBkey.size() "<<BBkey.size()<<"\n";
+  //Out <<"BBmap.size() "<<BBmap.size()<<"\n";
   // Write map to the sparc assembly stream
   // Start by writing out the basic block to first and last
   // machine instruction map to the .s file
@@ -85,14 +99,19 @@ bool getMappingInfoForFunction::run(Module &M) {
   Out << "BBMIMap:\n";
   //add stream object here that will contain info about the map
   //add object to write this out to the .s file
-  for (vector<vector<int> >::iterator BBmapI = 
+  //int x=0;
+  unsigned sizeBBmap=0;
+  unsigned sizeLImap=0;
+  for (vector<vector<unsigned> >::iterator BBmapI = 
 	 BBmap.begin(), BBmapE = BBmap.end(); BBmapI != BBmapE;
        ++BBmapI){
-    writeNumber((*BBmapI)[0]);
-    writeNumber((*BBmapI)[1]);
-    writeNumber((*BBmapI)[2]);
-    writeNumber((*BBmapI)[3]);
+    sizeBBmap += writeNumber((*BBmapI)[0]);
+    sizeBBmap += writeNumber((*BBmapI)[1]);
+    sizeBBmap += writeNumber((*BBmapI)[2]);
+    sizeBBmap += writeNumber((*BBmapI)[3]);
+    //x++;
   }
+  //Out <<"sizeOutputed = "<<x<<"\n";
   
   Out << "\t.type BBMIMap,#object\n";
   Out << "\t.size BBMIMap,"<<BBmap.size() << "\n";
@@ -101,7 +120,7 @@ bool getMappingInfoForFunction::run(Module &M) {
   Out <<"\n\n!LLVM BB MAP Length\n\t.section \".bbdata";
   Out << "\",#alloc,#write\n\t.global BBMIMap_length\n\t.align 4\n\t.type BBMIMap_length,";
   Out <<"#object\n\t.size BBMIMap_length,4\nBBMIMap_length:\n\t.word "
-      << ((BBmap.size())*4)<<"\n\n\n\n";
+      << sizeBBmap <<"\n\n\n\n";
  
 
   //Now write out the LLVM instruction to the corresponding
@@ -112,13 +131,13 @@ bool getMappingInfoForFunction::run(Module &M) {
   Out << "LMIMap:\n";
   //add stream object here that will contain info about the map
   //add object to write this out to the .s file
-  for (vector<vector<int> >::iterator MImapI = 
+  for (vector<vector<unsigned> >::iterator MImapI = 
 	 MImap.begin(), MImapE = MImap.end(); MImapI != MImapE;
        ++MImapI){
-    writeNumber((*MImapI)[0]);
-    writeNumber((*MImapI)[1]);
-    writeNumber((*MImapI)[2]);
-    writeNumber((*MImapI)[3]);
+    sizeLImap += writeNumber((*MImapI)[0]);
+    sizeLImap += writeNumber((*MImapI)[1]);
+    sizeLImap += writeNumber((*MImapI)[2]);
+    sizeLImap += writeNumber((*MImapI)[3]);
   }
   Out << "\t.type LMIMap,#object\n";
   Out << "\t.size LMIMap,"<<MImap.size() << "\n";
@@ -132,19 +151,22 @@ bool getMappingInfoForFunction::run(Module &M) {
 }  
 
 //write out information as .byte directives
-void getMappingInfoForFunction::writeNumber(int X) {
+unsigned getMappingInfoForFunction::writeNumber(unsigned X) {
+  unsigned i=0;
   do {
-    int tmp = X & 127;
+    unsigned tmp = X & 127;
     X >>= 7;
     if (X) tmp |= 128;
-    Out << "\t.byte " << tmp << "\n";    
+    Out << "\t.byte " << tmp << "\n";
+    ++i;
   } while(X);
+  return i;
 }
 
 //Assign a number to each Function 
 void getMappingInfoForFunction::createFunctionKey(Module &M){
-  int i = 0;
-  int j = 0;
+  unsigned i = 0;
+  unsigned j = 0;
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
     //dont count F with 0 BBs
@@ -156,10 +178,10 @@ void getMappingInfoForFunction::createFunctionKey(Module &M){
      
 //Assign a Number to each BB
 void getMappingInfoForFunction::createBasicBlockKey(Module &M){
-  //int i = 0;
+  //unsigned i = 0;
   for (Module::iterator FI = M.begin(), FE = M.end(); 
        FI != FE; ++FI){
-    int i = 0;
+    unsigned i = 0;
     if(FI->isExternal()) continue;
     for (Function::iterator BI = FI->begin(), BE = FI->end(); 
 	 BI != BE; ++BI){
@@ -178,7 +200,7 @@ void getMappingInfoForFunction::createMachineInstructionKey(Module &M){
     for (Function::iterator BI=FI->begin(), BE=FI->end(); 
 	 BI != BE; ++BI){
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
-      int j = 0;
+      unsigned j = 0;
       for (MachineCodeForBasicBlock::iterator miI = miBB.begin(),
 	     miE = miBB.end(); miI != miE; ++miI, ++j){
 	MIkey[*miI] = j;
@@ -194,13 +216,13 @@ void getMappingInfoForFunction::createBBToMImap(Module &M){
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){	
     if(FI->isExternal())continue;
-    int i = 0;
+    unsigned i = 0;
     for (Function::iterator BI = FI->begin(), 
 	   BE = FI->end(); BI != BE; ++BI){
       MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
      //add record into the map
-      BBmap.push_back(vector<int>());
-      vector<int> &oneBB = BBmap.back();
+      BBmap.push_back(vector<unsigned>());
+      vector<unsigned> &oneBB = BBmap.back();
       oneBB.reserve(4);
 
       //add F#
@@ -224,10 +246,10 @@ void getMappingInfoForFunction::createLLVMToMImap(Module &M){
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
     if(FI->isExternal()) continue;
-    int i =0;
+    unsigned i =0;
     for (Function::iterator BI = FI->begin(),  BE = FI->end(); 
 	 BI != BE; ++BI, ++i){
-      int j = 0;
+      unsigned j = 0;
       for (BasicBlock::iterator II = BI->begin(), 
 	     IE = BI->end(); II != IE; ++II, ++j){
 	MachineCodeForInstruction& miI = 
@@ -236,8 +258,8 @@ void getMappingInfoForFunction::createLLVMToMImap(Module &M){
 	for (MachineCodeForInstruction::iterator miII = miI.begin(), 
 	       miIE = miI.end(); miII != miIE; ++miII){
 
-	  MImap.push_back(vector<int>());
-	  vector<int> &oneMI = MImap.back();
+	  MImap.push_back(vector<unsigned>());
+	  vector<unsigned> &oneMI = MImap.back();
 	  oneMI.reserve(4);
 	  
 	  //add F#
