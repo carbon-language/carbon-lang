@@ -68,6 +68,9 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     Passes.add(createInternalizePass());
   }
 
+  // Propagate constants at call sites into the functions they call.
+  Passes.add(createIPConstantPropagationPass());
+
   // Remove unused arguments from functions...
   Passes.add(createDeadArgEliminationPass());
 

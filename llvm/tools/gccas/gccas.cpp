@@ -56,8 +56,12 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
   addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
+  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
   addPass(PM, createGlobalDCEPass());            // Remove unused globals
+  addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
+  addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
+
   addPass(PM, createPruneEHPass());              // Remove dead EH info
 
   if (!DisableInline)
