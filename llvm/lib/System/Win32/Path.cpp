@@ -242,10 +242,13 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
 
 bool 
 Path::isBytecodeFile() const {
-  if (readable()) {
-    return hasMagicNumber("llvm");
-  }
-  return false;
+  char buffer[ 4];
+  buffer[0] = 0;
+  std::ifstream f(path.c_str());
+  f.read(buffer, 4);
+  if (f.bad())
+    ThrowErrno("can't read file signature");
+  return 0 == memcmp(buffer,"llvc",4) || 0 == memcmp(buffer,"llvm",4);
 }
 
 bool
