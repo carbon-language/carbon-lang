@@ -306,7 +306,7 @@ public:
 
   /// This method returns a plane_iterator for iteration over the
   /// type planes starting at a specific plane, given by \p Ty.
-  /// @breif Find a type plane.
+  /// @brief Find a type plane.
   inline plane_iterator find( const Type* Typ ) { 
     assert(Typ && "Can't find type plane with null type!");
     return pmap.find(Typ); 
