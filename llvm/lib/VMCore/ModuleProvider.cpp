@@ -13,8 +13,7 @@
 
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// ctor - always have a valid Module
 ///
@@ -37,5 +36,3 @@ Module* ModuleProvider::materializeModule() {
 
   return TheModule;
 }
-
-} // End llvm namespace

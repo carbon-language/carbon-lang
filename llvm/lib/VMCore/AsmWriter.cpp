@@ -32,8 +32,7 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr",PassInfo::Analysis|PassInfo::Optimization);
@@ -233,8 +232,8 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
 // type, iff there is an entry in the modules symbol table for the specified
 // type or one of it's component types.  This is slower than a simple x << Type;
 //
-std::ostream &WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
-                                const Module *M) {
+std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
+                                      const Module *M) {
   Out << " "; 
 
   // If they want us to print out a type, attempt to make it symbolic if there
@@ -447,7 +446,8 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.
 //
-std::ostream &WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType, 
+std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
+                                   bool PrintType, 
                              bool PrintName, const Module *Context) {
   std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
@@ -465,7 +465,7 @@ std::ostream &WriteAsOperand(std::ostream &Out, const Value *V, bool PrintType,
   return Out;
 }
 
-
+namespace llvm {
 
 class AssemblyWriter {
   std::ostream &Out;
@@ -520,7 +520,7 @@ private :
   // which slot it occupies.
   void printInfoComment(const Value &V);
 };
-
+}  // end of anonymous namespace
 
 // printTypeAtLeastOneLevel - Print out one level of the possibly complex type
 // without considering any symbolic types that we may have equal to it.
@@ -1063,5 +1063,3 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   }
   return *this;
 }
-
-} // End llvm namespace

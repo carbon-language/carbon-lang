@@ -57,8 +57,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {  // Anonymous namespace for class
 
@@ -158,9 +157,11 @@ namespace {  // Anonymous namespace for class
 
     void WriteValue(const Value *V) {
       if (!V) return;
-      if (isa<Instruction>(V))
+      if (isa<Instruction>(V)) {
         std::cerr << *V;
-      else {
+      } else if (const Type *Ty = dyn_cast<Type>(V)) {
+        WriteTypeSymbolic(std::cerr, Ty, Mod);
+      } else {
         WriteAsOperand (std::cerr, V, true, true, Mod);
         std::cerr << "\n";
       }
@@ -184,6 +185,8 @@ namespace {  // Anonymous namespace for class
   };
 
   RegisterOpt<Verifier> X("verify", "Module Verifier");
+} // End anonymous namespace
+
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \
@@ -569,19 +572,18 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
           "Illegal # arguments for intrinsic function!", IF);
 }
 
-} // End anonymous namespace
 
 //===----------------------------------------------------------------------===//
 //  Implement the public interfaces to this file...
 //===----------------------------------------------------------------------===//
 
-FunctionPass *createVerifierPass() {
+FunctionPass *llvm::createVerifierPass() {
   return new Verifier();
 }
 
 
 // verifyFunction - Create 
-bool verifyFunction(const Function &f) {
+bool llvm::verifyFunction(const Function &f) {
   Function &F = (Function&)f;
   assert(!F.isExternal() && "Cannot verify external functions");
 
@@ -600,12 +602,10 @@ bool verifyFunction(const Function &f) {
 // verifyModule - Check a module for errors, printing messages on stderr.
 // Return true if the module is corrupt.
 //
-bool verifyModule(const Module &M) {
+bool llvm::verifyModule(const Module &M) {
   PassManager PM;
   Verifier *V = new Verifier();
   PM.add(V);
   PM.run((Module&)M);
   return V->Broken;
 }
-
-} // End llvm namespace

@@ -26,8 +26,7 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 #if 0
 #define SC_DEBUG(X) std::cerr << X
@@ -363,5 +362,3 @@ int SlotCalculator::doInsertValue(const Value *D) {
   SC_DEBUG("]\n");
   return (int)DestSlot;
 }
-
-} // End llvm namespace

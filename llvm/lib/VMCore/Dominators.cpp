@@ -19,8 +19,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
-
-namespace llvm {
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //  DominatorSet Implementation
@@ -120,7 +119,7 @@ void DominatorSet::recalculate() {
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) Doms[I];
 }
 
-
+namespace llvm {
 static std::ostream &operator<<(std::ostream &o,
                                 const std::set<BasicBlock*> &BBs) {
   for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
@@ -130,6 +129,7 @@ static std::ostream &operator<<(std::ostream &o,
     else
       o << " <<exit node>>";
   return o;
+}
 }
 
 void DominatorSetBase::print(std::ostream &o) const {
@@ -361,4 +361,3 @@ void DominanceFrontierBase::print(std::ostream &o) const {
   }
 }
 
-} // End llvm namespace

@@ -21,8 +21,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <map>
-
-namespace llvm {
+using namespace llvm;
 
 Function *ilist_traits<Function>::createNode() {
   FunctionType *FTy =
@@ -55,11 +54,13 @@ template class SymbolTableListTraits<Function, Module, Module>;
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>
 //
-struct GlobalValueRefMap {
-  typedef std::map<GlobalValue*, ConstantPointerRef*> MapTy;
-  typedef MapTy::iterator iterator;
-  std::map<GlobalValue*, ConstantPointerRef*> Map;
-};
+namespace llvm {
+  struct GlobalValueRefMap {
+    typedef std::map<GlobalValue*, ConstantPointerRef*> MapTy;
+    typedef MapTy::iterator iterator;
+    std::map<GlobalValue*, ConstantPointerRef*> Map;
+  };
+}
 
 
 Module::Module(const std::string &MID)
@@ -310,4 +311,3 @@ void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
   }
 }
 
-} // End llvm namespace

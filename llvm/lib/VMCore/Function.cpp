@@ -18,8 +18,7 @@
 #include "llvm/Intrinsics.h"
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
-
-namespace llvm {
+using namespace llvm;
 
 BasicBlock *ilist_traits<BasicBlock>::createNode() {
   BasicBlock *Ret = new BasicBlock();
@@ -259,5 +258,3 @@ void GlobalVariable::setName(const std::string &name, SymbolTable *ST) {
   Value::setName(name);
   if (P && getName() != "") P->getSymbolTable().insert(this);
 }
-
-} // End llvm namespace

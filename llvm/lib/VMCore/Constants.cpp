@@ -19,8 +19,7 @@
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
 ConstantBool *ConstantBool::False = new ConstantBool(false);
@@ -540,20 +539,22 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
 // something strange that needs to be done to interface to the ctor for the
 // constant.
 //
-template<class ConstantClass, class TypeClass, class ValType>
-struct ConstantCreator {
-  static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
-    return new ConstantClass(Ty, V);
-  }
-};
-
-template<class ConstantClass, class TypeClass>
-struct ConvertConstantType {
-  static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
-    assert(0 && "This type cannot be converted!\n");
-    abort();
-  }
-};
+namespace llvm {
+  template<class ConstantClass, class TypeClass, class ValType>
+  struct ConstantCreator {
+    static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
+      return new ConstantClass(Ty, V);
+    }
+  };
+  
+  template<class ConstantClass, class TypeClass>
+  struct ConvertConstantType {
+    static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
+      assert(0 && "This type cannot be converted!\n");
+      abort();
+    }
+  };
+}
 
 namespace {
   template<class ValType, class TypeClass, class ConstantClass>
@@ -712,21 +713,21 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
 
 //---- ConstantArray::get() implementation...
 //
-
-template<>
-struct ConvertConstantType<ConstantArray, ArrayType> {
-  static void convert(ConstantArray *OldC, const ArrayType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    std::vector<Constant*> C;
-    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-      C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = ConstantArray::get(NewTy, C);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
-  }
-};
-
+namespace llvm {
+  template<>
+  struct ConvertConstantType<ConstantArray, ArrayType> {
+    static void convert(ConstantArray *OldC, const ArrayType *NewTy) {
+      // Make everyone now use a constant of the new type...
+      std::vector<Constant*> C;
+      for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
+        C.push_back(cast<Constant>(OldC->getOperand(i)));
+      Constant *New = ConstantArray::get(NewTy, C);
+      assert(New != OldC && "Didn't replace constant??");
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();    // This constant is now dead, destroy it.
+    }
+  };
+}
 
 static ValueMap<std::vector<Constant*>, ArrayType,
                 ConstantArray> ArrayConstants;
@@ -778,20 +779,22 @@ std::string ConstantArray::getAsString() const {
 //---- ConstantStruct::get() implementation...
 //
 
-template<>
-struct ConvertConstantType<ConstantStruct, StructType> {
-  static void convert(ConstantStruct *OldC, const StructType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    std::vector<Constant*> C;
-    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-      C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = ConstantStruct::get(NewTy, C);
-    assert(New != OldC && "Didn't replace constant??");
-
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
-  }
-};
+namespace llvm {
+  template<>
+  struct ConvertConstantType<ConstantStruct, StructType> {
+    static void convert(ConstantStruct *OldC, const StructType *NewTy) {
+      // Make everyone now use a constant of the new type...
+      std::vector<Constant*> C;
+      for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
+        C.push_back(cast<Constant>(OldC->getOperand(i)));
+      Constant *New = ConstantStruct::get(NewTy, C);
+      assert(New != OldC && "Didn't replace constant??");
+      
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();    // This constant is now dead, destroy it.
+    }
+  };
+}
 
 static ValueMap<std::vector<Constant*>, StructType, 
                 ConstantStruct> StructConstants;
@@ -811,24 +814,26 @@ void ConstantStruct::destroyConstant() {
 //---- ConstantPointerNull::get() implementation...
 //
 
-// ConstantPointerNull does not take extra "value" argument...
-template<class ValType>
-struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
-  static ConstantPointerNull *create(const PointerType *Ty, const ValType &V){
-    return new ConstantPointerNull(Ty);
-  }
-};
+namespace llvm {
+  // ConstantPointerNull does not take extra "value" argument...
+  template<class ValType>
+  struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
+    static ConstantPointerNull *create(const PointerType *Ty, const ValType &V){
+      return new ConstantPointerNull(Ty);
+    }
+  };
 
-template<>
-struct ConvertConstantType<ConstantPointerNull, PointerType> {
-  static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    Constant *New = ConstantPointerNull::get(NewTy);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();     // This constant is now dead, destroy it.
-  }
-};
+  template<>
+  struct ConvertConstantType<ConstantPointerNull, PointerType> {
+    static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
+      // Make everyone now use a constant of the new type...
+      Constant *New = ConstantPointerNull::get(NewTy);
+      assert(New != OldC && "Didn't replace constant??");
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();     // This constant is now dead, destroy it.
+    }
+  };
+}
 
 static ValueMap<char, PointerType, ConstantPointerNull> NullPtrConstants;
 
@@ -865,56 +870,58 @@ void ConstantPointerRef::destroyConstant() {
 //
 typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
 
-template<>
-struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
-  static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V) {
-    if (V.first == Instruction::Cast)
-      return new ConstantExpr(Instruction::Cast, V.second[0], Ty);
-    if ((V.first >= Instruction::BinaryOpsBegin &&
-         V.first < Instruction::BinaryOpsEnd) ||
-        V.first == Instruction::Shl || V.first == Instruction::Shr)
-      return new ConstantExpr(V.first, V.second[0], V.second[1]);
-    
-    assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
-    
-    std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
-    return new ConstantExpr(V.second[0], IdxList, Ty);
-  }
-};
-
-template<>
-struct ConvertConstantType<ConstantExpr, Type> {
-  static void convert(ConstantExpr *OldC, const Type *NewTy) {
-    Constant *New;
-    switch (OldC->getOpcode()) {
-    case Instruction::Cast:
-      New = ConstantExpr::getCast(OldC->getOperand(0), NewTy);
-      break;
-    case Instruction::Shl:
-    case Instruction::Shr:
-      New = ConstantExpr::getShiftTy(NewTy, OldC->getOpcode(),
-                                     OldC->getOperand(0), OldC->getOperand(1));
-      break;
-    default:
-      assert(OldC->getOpcode() >= Instruction::BinaryOpsBegin &&
-             OldC->getOpcode() < Instruction::BinaryOpsEnd);
-      New = ConstantExpr::getTy(NewTy, OldC->getOpcode(), OldC->getOperand(0),
-                                OldC->getOperand(1));
-      break;
-    case Instruction::GetElementPtr:
-      // Make everyone now use a constant of the new type... 
-      std::vector<Constant*> C;
-      for (unsigned i = 1, e = OldC->getNumOperands(); i != e; ++i)
-        C.push_back(cast<Constant>(OldC->getOperand(i)));
-      New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0), C);
-      break;
+namespace llvm {
+  template<>
+  struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
+    static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V) {
+      if (V.first == Instruction::Cast)
+        return new ConstantExpr(Instruction::Cast, V.second[0], Ty);
+      if ((V.first >= Instruction::BinaryOpsBegin &&
+           V.first < Instruction::BinaryOpsEnd) ||
+          V.first == Instruction::Shl || V.first == Instruction::Shr)
+        return new ConstantExpr(V.first, V.second[0], V.second[1]);
+      
+      assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
+      
+      std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
+      return new ConstantExpr(V.second[0], IdxList, Ty);
     }
+  };
 
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
-  }
-};
+  template<>
+  struct ConvertConstantType<ConstantExpr, Type> {
+    static void convert(ConstantExpr *OldC, const Type *NewTy) {
+      Constant *New;
+      switch (OldC->getOpcode()) {
+      case Instruction::Cast:
+        New = ConstantExpr::getCast(OldC->getOperand(0), NewTy);
+        break;
+      case Instruction::Shl:
+      case Instruction::Shr:
+        New = ConstantExpr::getShiftTy(NewTy, OldC->getOpcode(),
+                                     OldC->getOperand(0), OldC->getOperand(1));
+        break;
+      default:
+        assert(OldC->getOpcode() >= Instruction::BinaryOpsBegin &&
+               OldC->getOpcode() < Instruction::BinaryOpsEnd);
+        New = ConstantExpr::getTy(NewTy, OldC->getOpcode(), OldC->getOperand(0),
+                                  OldC->getOperand(1));
+        break;
+      case Instruction::GetElementPtr:
+        // Make everyone now use a constant of the new type... 
+        std::vector<Constant*> C;
+        for (unsigned i = 1, e = OldC->getNumOperands(); i != e; ++i)
+          C.push_back(cast<Constant>(OldC->getOperand(i)));
+        New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0), C);
+        break;
+      }
+      
+      assert(New != OldC && "Didn't replace constant??");
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();    // This constant is now dead, destroy it.
+    }
+  };
+} // end namespace llvm
 
 
 static ValueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
@@ -1039,4 +1046,3 @@ unsigned Constant::mutateReferences(Value *OldV, Value *NewV) {
   }
 }
 
-} // End llvm namespace
