@@ -88,8 +88,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 }
 
 void
-SparcV8RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
-                                         MachineBasicBlock::iterator II) const {
+SparcV8RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
   while (!MI.getOperand(i).isFrameIndex()) {
@@ -103,6 +102,7 @@ SparcV8RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   MI.SetMachineOperandReg (i, V8::FP);
 
   // Addressable stack objects are accessed using neg. offsets from %fp
+  MachineFunction &MF = *MI.getParent()->getParent();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                MI.getOperand(i+1).getImmedValue();
   // note: Offset < 0
