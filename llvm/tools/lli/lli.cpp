@@ -10,13 +10,13 @@
 #include "Interpreter.h"
 #include "Support/CommandLine.h"
 
-static cl::opt<string>
+static cl::opt<std::string>
 InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
 
 static cl::list<std::string>
 InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
 
-static cl::opt<string>
+static cl::opt<std::string>
 MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
               cl::value_desc("function name"));
 
