@@ -410,7 +410,7 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
   
     Result = MaxRegUse+NumExtraMaxRegUsers;
   }
-  std::cerr << " WEIGHT: " << Result << " ";  N->dump(); std::cerr << "\n";
+  //std::cerr << " WEIGHT: " << Result << " ";  N->dump(); std::cerr << "\n";
   return Result;
 }
 
@@ -2063,7 +2063,6 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N);
     return;
   case ISD::STORE: {
-    // Select the address.
     X86AddressMode AM;
 
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
@@ -2089,6 +2088,89 @@ void ISel::Select(SDOperand N) {
         return;
       }
     }
+
+    // Check to see if this is a load/op/store combination.
+    if (N.getOperand(1).Val->hasOneUse() &&
+        isFoldableLoad(N.getOperand(0).getValue(0))) {
+      SDOperand TheLoad = N.getOperand(0).getValue(0);
+      // Check to see if we are loading the same pointer that we're storing to.
+      if (TheLoad.getOperand(1) == N.getOperand(2)) {
+        // See if the stored value is a simple binary operator that uses the
+        // load as one of its operands.
+        SDOperand Op = N.getOperand(1);
+        if (Op.Val->getNumOperands() == 2 &&
+            (Op.getOperand(0) == TheLoad || Op.getOperand(1) == TheLoad)) {
+          // Finally, check to see if this is one of the ops we can handle!
+          static const unsigned ADDTAB[] = {
+            X86::ADD8mi, X86::ADD16mi, X86::ADD32mi,
+            X86::ADD8mr, X86::ADD16mr, X86::ADD32mr, 0, 0,
+          };
+
+          const unsigned *TabPtr = 0;
+          switch (Op.getOpcode()) {
+          default: break;
+          case ISD::ADD: TabPtr = ADDTAB; break;
+          }
+          
+          if (TabPtr) {
+            // Handle: [mem] op= CST
+            SDOperand Op0 = Op.getOperand(0);
+            SDOperand Op1 = Op.getOperand(1);
+            if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
+              switch (CN->getValueType(0)) {
+              default: break;
+              case MVT::i1:
+              case MVT::i8:  Opc = TabPtr[0]; break;
+              case MVT::i16: Opc = TabPtr[1]; break;
+              case MVT::i32: Opc = TabPtr[2]; break;
+              }
+
+              if (Opc) {
+                if (getRegPressure(TheLoad.getOperand(0)) >
+                    getRegPressure(TheLoad.getOperand(1))) {
+                  Select(TheLoad.getOperand(0));
+                  SelectAddress(TheLoad.getOperand(1), AM);
+                } else {
+                  SelectAddress(TheLoad.getOperand(1), AM);
+                  Select(TheLoad.getOperand(0));
+                }            
+
+                addFullAddress(BuildMI(BB, Opc, 4+1),AM).addImm(CN->getValue());
+                return;
+              }
+            }
+            
+            // If we have [mem] = V op [mem], try to turn it into:
+            // [mem] = [mem] op V.
+            if (Op1 == TheLoad && 1 /*iscommutative*/)
+              std::swap(Op0, Op1);
+
+            if (Op0 == TheLoad) {
+              switch (Op0.getValueType()) {
+              default: break;
+              case MVT::i1:
+              case MVT::i8:  Opc = TabPtr[3]; break;
+              case MVT::i16: Opc = TabPtr[4]; break;
+              case MVT::i32: Opc = TabPtr[5]; break;
+              case MVT::f32: Opc = TabPtr[6]; break;
+              case MVT::f64: Opc = TabPtr[7]; break;
+              }
+              
+              if (Opc) {
+                Select(TheLoad.getOperand(0));
+                SelectAddress(TheLoad.getOperand(1), AM);
+                unsigned Reg = SelectExpr(Op1);
+                addFullAddress(BuildMI(BB, Opc, 4+1),AM).addReg(Reg);
+                return;
+              }
+            }
+            //Opc = TabPtr[Opc];
+          }
+        }
+      }
+    }
+
+
     switch (N.getOperand(1).getValueType()) {
     default: assert(0 && "Cannot store this type!");
     case MVT::i1:
