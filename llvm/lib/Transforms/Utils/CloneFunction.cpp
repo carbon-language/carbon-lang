@@ -10,6 +10,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "ValueMapper.h"
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
@@ -18,10 +19,7 @@ static inline void RemapInstruction(Instruction *I,
                                     std::map<const Value *, Value*> &ValueMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     const Value *Op = I->getOperand(op);
-    Value *V = ValueMap[Op];
-    if (!V && (isa<GlobalValue>(Op) || isa<Constant>(Op)))
-      continue;  // Globals and constants don't get relocated
-
+    Value *V = MapValue(Op, ValueMap);
 #ifndef NDEBUG
     if (!V) {
       std::cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
