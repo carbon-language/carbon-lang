@@ -1,4 +1,4 @@
-//===- Target.td - Target Independent TableGen interface --------*- C++ -*-===//
+//===- Target.td - Target Independent TableGen interface ---*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -105,13 +105,22 @@ class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
 // Instruction set description - These classes correspond to the C++ classes in
 // the Target/TargetInstrInfo.h file.
 //
-
 class Instruction {
-  string Name;          // The opcode string for this instruction
+  string Name;              // The opcode string for this instruction
   string Namespace = "";
 
-  list<Register> Uses = [];  // Default to using no non-operand registers
-  list<Register> Defs = [];  // Default to modifying no non-operand registers
+  dag OperandList;          // An dag containing the MI operand list.
+  string AsmString;         // The .s format to print the instruction with.
+
+  // Pattern - Set to the DAG pattern for this instruction, if we know of one,
+  // otherwise, uninitialized.
+  list<dag> Pattern;
+
+  // The follow state will eventually be inferred automatically from the
+  // instruction pattern.
+
+  list<Register> Uses = []; // Default to using no non-operand registers
+  list<Register> Defs = []; // Default to modifying no non-operand registers
 
   // These bits capture information about the high-level semantics of the
   // instruction.
@@ -121,15 +130,6 @@ class Instruction {
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
-
-  // Pattern - Set to the DAG pattern for this instruction, if we know of one,
-  // otherwise, uninitialized.
-  dag Pattern;
-}
-
-class Expander<dag pattern, list<dag> result> {
-  dag Pattern      = pattern;
-  list<dag> Result = result;
 }
 
 
@@ -166,8 +166,16 @@ class Target {
 
 
 //===----------------------------------------------------------------------===//
-// DAG node definitions used by the instruction selector...
+// DAG node definitions used by the instruction selector.
 //
+// NOTE: all of this is a work-in-progress and should be ignored for now.
+//
+
+class Expander<dag pattern, list<dag> result> {
+  dag Pattern      = pattern;
+  list<dag> Result = result;
+}
+
 class DagNodeValType;
 def DNVT_any   : DagNodeValType;  // No constraint on tree node
 def DNVT_void  : DagNodeValType;  // Tree node always returns void
