@@ -20,9 +20,9 @@
 class PhysRegClassMap {
   std::map<unsigned, const TargetRegisterClass*> PhysReg2RegClassMap;
 public:
-  PhysRegClassMap(const MRegisterInfo *RI) {
-    for (MRegisterInfo::const_iterator I = RI->regclass_begin(),
-           E = RI->regclass_end(); I != E; ++I)
+  PhysRegClassMap(const MRegisterInfo &RI) {
+    for (MRegisterInfo::const_iterator I = RI.regclass_begin(),
+           E = RI.regclass_end(); I != E; ++I)
       for (unsigned i=0; i < (*I)->getNumRegs(); ++i)
         PhysReg2RegClassMap[(*I)->getRegister(i)] = *I;
   }
@@ -42,7 +42,8 @@ namespace {
   class RA : public FunctionPass {
     TargetMachine &TM;
     MachineFunction *MF;
-    const MRegisterInfo *RegInfo;
+    const MRegisterInfo &RegInfo;
+    const MachineInstrInfo &MIInfo;
     unsigned NumBytesAllocated;
     PhysRegClassMap PhysRegClasses;
     
@@ -88,7 +89,8 @@ namespace {
   public:
 
     RA(TargetMachine &tm)
-      : TM(tm), RegInfo(tm.getRegisterInfo()), PhysRegClasses(RegInfo) {
+      : TM(tm), RegInfo(*tm.getRegisterInfo()), MIInfo(tm.getInstrInfo()),
+        PhysRegClasses(RegInfo) {
       cleanupAfterFunction();
     }
 
@@ -111,16 +113,23 @@ namespace {
     /// in predecessor basic blocks.
     void EliminatePHINodes(MachineBasicBlock &MBB);
 
+    /// EmitPrologue/EmitEpilogue - Use the register info object to add a
+    /// prologue/epilogue to the function and save/restore any callee saved
+    /// registers we are responsible for.
+    ///
+    void EmitPrologue();
+    void EmitEpilogue(MachineBasicBlock &MBB);
+
     /// isAllocatableRegister - A register may be used by the program if it's
     /// not the stack or frame pointer.
     bool isAllocatableRegister(unsigned R) const {
-      unsigned FP = RegInfo->getFramePointer(), SP = RegInfo->getStackPointer();
+      unsigned FP = RegInfo.getFramePointer(), SP = RegInfo.getStackPointer();
       // Don't allocate the Frame or Stack pointers
       if (R == FP || R == SP)
         return false;
 
       // Check to see if this register aliases the stack or frame pointer...
-      if (const unsigned *AliasSet = RegInfo->getAliasSet(R)) {
+      if (const unsigned *AliasSet = RegInfo.getAliasSet(R)) {
         for (unsigned i = 0; AliasSet[i]; ++i)
           if (AliasSet[i] == FP || AliasSet[i] == SP)
             return false;
@@ -151,13 +160,18 @@ namespace {
     //
     void spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned PhysReg) {
-      assert(PhysRegsUsed.find(PhysReg) != PhysRegsUsed.end() &&
-             "Physical register is not used: cannot spill it!");
-      spillVirtReg(MBB, I, PhysRegsUsed[PhysReg], PhysReg);
+      std::map<unsigned, unsigned>::iterator PI = PhysRegsUsed.find(PhysReg);
+      if (PI != PhysRegsUsed.end())   // Only spill it if it's used!
+        spillVirtReg(MBB, I, PI->second, PhysReg);
     }
 
     void AssignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg);
 
+    /// isPhysRegAvailable - Return true if the specified physical register is
+    /// free and available for use.  This also includes checking to see if
+    /// aliased registers are all free...
+    ///
+    bool RA::isPhysRegAvailable(unsigned PhysReg) const;
     
     /// getFreeReg - Find a physical register to hold the specified virtual
     /// register.  If all compatible physical registers are used, this method
@@ -176,8 +190,8 @@ namespace {
     unsigned reloadVirtReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &I, unsigned VirtReg);
   };
-
 }
+
 
 /// getStackSpaceFor - This allocates space for the specified virtual
 /// register to be held on the stack.
@@ -206,6 +220,7 @@ unsigned RA::getStackSpaceFor(unsigned VirtReg,
   return NumBytesAllocated-RegSize;
 }
 
+
 /// spillVirtReg - This method spills the value specified by PhysReg into the
 /// virtual register slot specified by VirtReg.  It then updates the RA data
 /// structures to indicate the fact that PhysReg is now available.
@@ -218,8 +233,8 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     unsigned stackOffset = getStackSpaceFor(VirtReg, RegClass);
 
     // Add move instruction(s)
-    I = RegInfo->storeReg2RegOffset(MBB, I, PhysReg, RegInfo->getFramePointer(),
-                                    -stackOffset, RegClass->getDataSize());
+    I = RegInfo.storeReg2RegOffset(MBB, I, PhysReg, RegInfo.getFramePointer(),
+                                   -stackOffset, RegClass->getDataSize());
     ++NumSpilled;   // Update statistics
     Virt2PhysRegMap.erase(VirtReg);   // VirtReg no longer available
   }
@@ -232,6 +247,25 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
   PhysRegsUseOrder.erase(It);
 }
 
+
+/// isPhysRegAvailable - Return true if the specified physical register is free
+/// and available for use.  This also includes checking to see if aliased
+/// registers are all free...
+///
+bool RA::isPhysRegAvailable(unsigned PhysReg) const {
+  if (PhysRegsUsed.count(PhysReg)) return false;
+
+  // If the selected register aliases any other allocated registers, it is
+  // not free!
+  if (const unsigned *AliasSet = RegInfo.getAliasSet(PhysReg))
+    for (unsigned i = 0; AliasSet[i]; ++i)
+      if (PhysRegsUsed.count(AliasSet[i])) // Aliased register in use?
+        return false;                      // Can't use this reg then.
+  return true;
+}
+
+
+
 /// getFreeReg - Find a physical register to hold the specified virtual
 /// register.  If all compatible physical registers are used, this method spills
 /// the last used virtual register to the stack, and uses that register.
@@ -240,46 +274,71 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                         unsigned VirtReg) {
   const TargetRegisterClass *RegClass = MF->getRegClass(VirtReg);
   unsigned PhysReg = 0;
-  
+
+  // First check to see if we have a free register of the requested type...
   for (TargetRegisterClass::iterator It = RegClass->begin(),E = RegClass->end();
        It != E; ++It) {
     unsigned R = *It;
-    if (PhysRegsUsed.find(R) == PhysRegsUsed.end())   // Is reg unused?
-      if (isAllocatableRegister(R)) {
+    if (isPhysRegAvailable(R)) {       // Is reg unused?
+      if (isAllocatableRegister(R)) {  // And is not a frame register?
         // Found an unused register!
         PhysReg = R;
         break;
       }
+    }
   }
 
-  // If we didn't find an unused register, scavange one now!
+  // If we didn't find an unused register, scavenge one now!
   if (PhysReg == 0) {
-    unsigned i = 0;
     assert(!PhysRegsUseOrder.empty() && "No allocated registers??");
-    while (PhysRegClasses[PhysRegsUseOrder[i]] != RegClass) {
-      ++i;
+
+    // Loop over all of the preallocated registers from the least recently used
+    // to the most recently used.  When we find one that is capable of holding
+    // our register, use it.
+    for (unsigned i = 0; PhysReg == 0; ++i) {
       assert(i != PhysRegsUseOrder.size() &&
              "Couldn't find a register of the appropriate class!");
+      
+      unsigned R = PhysRegsUseOrder[i];
+      // If the current register is compatible, use it.
+      if (isAllocatableRegister(R)) {
+        if (PhysRegClasses[R] == RegClass) {
+          PhysReg = R;
+          break;
+        } else {
+          // If one of the registers aliased to the current register is
+          // compatible, use it.
+          if (const unsigned *AliasSet = RegInfo.getAliasSet(R))
+            for (unsigned a = 0; AliasSet[a]; ++a)
+              if (PhysRegClasses[AliasSet[a]] == RegClass) {
+                PhysReg = AliasSet[a];    // Take an aliased register
+                break;
+              }
+        }
+      }
     }
+
+    assert(isAllocatableRegister(PhysReg) && "Register is not allocatable!");
+
+    assert(PhysReg && "Physical register not assigned!?!?");
 
     // At this point PhysRegsUseOrder[i] is the least recently used register of
     // compatible register class.  Spill it to memory and reap its remains.
-    PhysReg = PhysRegsUseOrder[i];
     spillPhysReg(MBB, I, PhysReg);
+
+    // If the selected register aliases any other registers, we must make sure
+    // to spill them as well...
+    if (const unsigned *AliasSet = RegInfo.getAliasSet(PhysReg))
+      for (unsigned i = 0; AliasSet[i]; ++i)
+        if (PhysRegsUsed.count(AliasSet[i]))     // Spill aliased register...
+          spillPhysReg(MBB, I, AliasSet[i]);
   }
-
-  // If the selected register aliases any other registers, we must make sure to
-  // spill them as well...
-  if (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg))
-    for (unsigned i = 0; AliasSet[i]; ++i)
-      if (PhysRegsUsed.count(AliasSet[i]))     // Spill aliased register...
-        spillPhysReg(MBB, I, AliasSet[i]);
-
 
   // Now that we know which register we need to assign this to, do it now!
   AssignVirtToPhysReg(VirtReg, PhysReg);
   return PhysReg;
 }
+
 
 void RA::AssignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
   assert(PhysRegsUsed.find(PhysReg) == PhysRegsUsed.end() &&
@@ -312,11 +371,12 @@ unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
   unsigned StackOffset = getStackSpaceFor(VirtReg, RegClass);
 
   // Add move instruction(s)
-  I = RegInfo->loadRegOffset2Reg(MBB, I, PhysReg, RegInfo->getFramePointer(),
-                                 -StackOffset, RegClass->getDataSize());
+  I = RegInfo.loadRegOffset2Reg(MBB, I, PhysReg, RegInfo.getFramePointer(),
+                                -StackOffset, RegClass->getDataSize());
   ++NumReloaded;    // Update statistics
   return PhysReg;
 }
+
 
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
@@ -375,12 +435,12 @@ void RA::EliminatePHINodes(MachineBasicBlock &MBB) {
         // Retrieve the constant value from this op, move it to target
         // register of the phi
         if (opVal.isImmediate()) {
-          opI = RegInfo->moveImm2Reg(opBlock, opI, virtualReg,
-                                     (unsigned) opVal.getImmedValue(),
-                                     dataSize);
+          opI = RegInfo.moveImm2Reg(opBlock, opI, virtualReg,
+                                    (unsigned) opVal.getImmedValue(),
+                                    dataSize);
         } else {
-          opI = RegInfo->moveReg2Reg(opBlock, opI, virtualReg,
-                                     opVal.getAllocatedRegNum(), dataSize);
+          opI = RegInfo.moveReg2Reg(opBlock, opI, virtualReg,
+                                    opVal.getAllocatedRegNum(), dataSize);
         }
       }
     }
@@ -390,31 +450,39 @@ void RA::EliminatePHINodes(MachineBasicBlock &MBB) {
   }
 }
 
+
 void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator I = MBB.begin();
   for (; I != MBB.end(); ++I) {
     MachineInstr *MI = *I;
+    const MachineInstrDescriptor &MID = MIInfo.get(MI->getOpcode());
 
     // Loop over all of the operands of the instruction, spilling registers that
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).opIsDef() &&
           MI->getOperand(i).isPhysicalRegister()) {
-        unsigned Reg  = MI->getOperand(i).getAllocatedRegNum();
-        unsigned VMap = PhysRegsUsed[Reg];
-        if (VMap) {  // Spill the value in this register...
-          spillVirtReg(MBB, I, VMap, Reg);
-          PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
-        }
+        unsigned Reg = MI->getOperand(i).getAllocatedRegNum();
+        spillPhysReg(MBB, I, Reg);
+        PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
         PhysRegsUseOrder.push_back(Reg);
       }
 
-    // FIXME: Loop over the implicit defs, spilling them, as above.
+    // Loop over the implicit defs, spilling them, as above.
+    if (const unsigned *ImplicitDefs = MID.ImplicitDefs)
+      for (unsigned i = 0; ImplicitDefs[i]; ++i) {
+        unsigned Reg = ImplicitDefs[i];
+        spillPhysReg(MBB, I, Reg);
+        PhysRegsUsed[Reg] = 0;  // It's free now, and it's reserved
+        PhysRegsUseOrder.push_back(Reg);
+      }
 
-
-    // FIXME: Loop over the implicit uses, making sure that they are at the head
-    // of the use order list, so they don't get reallocated.
+    // Loop over the implicit uses, making sure that they are at the head of the
+    // use order list, so they don't get reallocated.
+    if (const unsigned *ImplicitUses = MID.ImplicitUses)
+      for (unsigned i = 0; ImplicitUses[i]; ++i)
+        MarkPhysRegRecentlyUsed(ImplicitUses[i]);
 
     // Loop over all of the operands again, getting the used operands into
     // registers.  This has the potiential to spill incoming values because we
@@ -479,6 +547,52 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   assert(PhysRegsUseOrder.empty() && "Physical regs still allocated?");
 }
 
+/// EmitPrologue - Use the register info object to add a prologue to the
+/// function and save any callee saved registers we are responsible for.
+///
+void RA::EmitPrologue() {
+  // Get a list of the callee saved registers, so that we can save them on entry
+  // to the function.
+  //
+
+  MachineBasicBlock &MBB = MF->front();   // Prolog goes in entry BB
+  MachineBasicBlock::iterator I = MBB.begin();
+
+  const unsigned *CSRegs = RegInfo.getCalleeSaveRegs();
+  for (unsigned i = 0; CSRegs[i]; ++i) {
+    const TargetRegisterClass *RegClass = PhysRegClasses[CSRegs[i]];
+    unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
+
+    // Insert the spill to the stack frame...
+    I = RegInfo.storeReg2RegOffset(MBB, I, CSRegs[i], RegInfo.getFramePointer(),
+                                   -Offset, RegClass->getDataSize());
+  }
+
+  // Round stack allocation up to a nice alignment to keep the stack aligned
+  // FIXME: This is X86 specific!  Move to RegInfo.emitPrologue()!
+  NumBytesAllocated = (NumBytesAllocated + 3) & ~3;
+
+  // Add prologue to the function...
+  RegInfo.emitPrologue(*MF, NumBytesAllocated);
+}
+
+void RA::EmitEpilogue(MachineBasicBlock &MBB) {
+  // Insert instructions before the return.
+  MachineBasicBlock::iterator I = --MBB.end();
+
+  const unsigned *CSRegs = RegInfo.getCalleeSaveRegs();
+  for (unsigned i = 0; CSRegs[i]; ++i) {
+    const TargetRegisterClass *RegClass = PhysRegClasses[CSRegs[i]];
+    unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
+    I = RegInfo.loadRegOffset2Reg(MBB, I, CSRegs[i], RegInfo.getFramePointer(),
+                                  -Offset, RegClass->getDataSize());
+    --I;  // Insert in reverse order
+  }
+
+  RegInfo.emitEpilogue(MBB, NumBytesAllocated);
+}
+
+
 /// runOnMachineFunction - Register allocate the whole function
 ///
 bool RA::runOnMachineFunction(MachineFunction &Fn) {
@@ -497,12 +611,9 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
        MBB != MBBe; ++MBB)
     AllocateBasicBlock(*MBB);
 
-  // Round stack allocation up to a nice alignment to keep the stack aligned
-  // FIXME: This is X86 specific!  Move to frame manager
-  NumBytesAllocated = (NumBytesAllocated + 3) & ~3;
 
-  // Add prologue to the function...
-  RegInfo->emitPrologue(Fn, NumBytesAllocated);
+  // Emit a prologue for the function...
+  EmitPrologue();
 
   const MachineInstrInfo &MII = TM.getInstrInfo();
 
@@ -511,7 +622,7 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
        MBB != MBBe; ++MBB) {
     // If last instruction is a return instruction, add an epilogue
     if (MII.isReturn(MBB->back()->getOpcode()))
-      RegInfo->emitEpilogue(*MBB, NumBytesAllocated);
+      EmitEpilogue(*MBB);
   }
 
   cleanupAfterFunction();
