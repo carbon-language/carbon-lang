@@ -273,6 +273,20 @@ public:
     return true;                        // safe but very conservative
   }
 
+
+  /// createNOPinstr - returns the target's implementation of NOP, which is
+  /// usually a pseudo-instruction, implemented by a degenerate version of
+  /// another instruction, e.g. X86: xchg ax, ax; SparcV9: sethi g0, 0
+  ///
+  virtual MachineInstr* createNOPinstr() const = 0;
+
+  /// isNOPinstr - since we no longer have a special NOP opcode, we need to know
+  /// if a given instruction is interpreted as an `official' NOP instr, i.e.,
+  /// there may be more than one way to `do nothing' but only one canonical
+  /// way to slack off.
+  ///
+  virtual bool isNOPinstr(const MachineInstr &MI) const = 0;
+
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
   //
