@@ -447,15 +447,6 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   // Copy the function calls list...
   CopyFunctionCallsList(G.FunctionCalls, FunctionCalls, OldNodeMap);
 
-#if 0
-  if (CopyOrigCalls) 
-    CopyFunctionCallsList(G.OrigFunctionCalls, OrigFunctionCalls, OldNodeMap);
-
-  // Copy the list of unresolved callers
-  if (CopyCallers)
-    PendingCallers.insert(G.PendingCallers.begin(), G.PendingCallers.end());
-#endif
-
   // Return the returned node pointer...
   return DSNodeHandle(OldNodeMap[G.RetNode.getNode()], G.RetNode.getOffset());
 }

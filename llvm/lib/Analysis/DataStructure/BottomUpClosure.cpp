@@ -113,25 +113,12 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 #if 0
   // Populate the GlobalsGraph with globals from this one.
   Graph->GlobalsGraph->cloneGlobals(*Graph, /*cloneCalls*/ false);
-
-  // Save a copy of the original call nodes for the top-down pass
-  Graph->saveOrigFunctionCalls();
 #endif
 
   // Start resolving calls...
   std::vector<std::vector<DSNodeHandle> > &FCs = Graph->getFunctionCalls();
 
   DEBUG(std::cerr << "  [BU] Inlining: " << F.getName() << "\n");
-
-#if 0
-  // Add F to the PendingCallers list of each direct callee for use in the
-  // top-down pass so we don't have to compute this again.  We don't want
-  // to do it for indirect callees inlined later, so remember which calls
-  // are in the original FCs set.
-  std::set<const DSNode*> directCallees;
-  for (unsigned i = 0; i < FCs.size(); ++i)
-    directCallees.insert(FCs[i][1]); // ptr to function node
-#endif
 
   bool Inlined;
   do {
@@ -209,12 +196,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             //
             MergeGlobalNodes(*Graph, OldValMap);
 
-#if 0
-            // If this was an original call, add F to the PendingCallers list
-            if (directCallees.find(Call[1]) != directCallees.end())
-              GI.addCaller(F);
-#endif
-
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
 
@@ -249,13 +230,6 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
       Graph->removeDeadNodes(/*KeepAllGlobals*/ true, /*KeepCalls*/ true);
     }
   } while (Inlined && !FCs.empty());
-
-#if 0
-  // Copy any unresolved call nodes into the Globals graph and
-  // filter out unresolved call nodes inlined from the callee.
-  if (!FCs.empty())
-    Graph->GlobalsGraph->cloneCalls(*Graph);
-#endif
 
   Graph->maskIncompleteMarkers();
   Graph->markIncompleteNodes();
