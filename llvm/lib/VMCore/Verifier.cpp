@@ -747,6 +747,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::memcpy:          NumArgs = 4; break;
   case Intrinsic::memmove:         NumArgs = 4; break;
   case Intrinsic::memset:          NumArgs = 4; break;
+
+  case Intrinsic::prefetch:        NumArgs = 3; break;
  
   case Intrinsic::not_intrinsic: 
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
