@@ -274,34 +274,9 @@ int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI,
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress()) {
-    GlobalValue *GV = MO.getGlobal();
-    rv = MCE.getGlobalValueAddress(GV);
-    if (rv == 0) {
-      if (Function *F = dyn_cast<Function>(GV)) {
-        if (F->isExternal())
-          rv = getAddressOfExternalFunction(F);
-        else {
-          // Function has not yet been code generated!  Use lazy resolution.
-          getResolver(MCE).addFunctionReference(MCE.getCurrentPCValue(), F);
-          rv = getResolver(MCE).getLazyResolver(F);
-        }
-      } else if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-        if (GVar->isExternal()) {
-          rv = MCE.getGlobalValueAddress(MO.getSymbolName());
-          if (!rv) {
-            std::cerr << "PPC32CodeEmitter: External global addr not found: " 
-                      << *GVar;
-            abort();
-          }
-        } else {
-          std::cerr << "PPC32CodeEmitter: global addr not found: " << *GVar;
-          abort();
-        }
-      }
-    }
-    if (MO.isPCRelative()) { // Global variable reference
-      rv = (rv - MCE.getCurrentPCValue()) >> 2;
-    }
+    //GlobalValue *GV = MO.getGlobal();
+    // FIXME: Emit a relocation here.
+    rv = 0;
   } else if (MO.isMachineBasicBlock()) {
     const BasicBlock *BB = MO.getMachineBasicBlock()->getBasicBlock();
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
