@@ -105,3 +105,13 @@ ubyte %test17(ubyte %A, ubyte %B) {  ; Test that (A|c1)|(B|c2) == (A|B)|(c1|c2)
 	%E = or ubyte %C, %D
 	ret ubyte %E
 }
+
+ubyte %test18(bool %c) {
+	%d = xor bool %c, true    ; invert the condition
+	br bool %d, label %True, label %False
+True:
+	ret ubyte 1
+False:
+	ret ubyte 3
+}
+
