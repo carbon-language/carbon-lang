@@ -33,7 +33,9 @@
                      font-weight: bold;
                      border-top: 2px solid #cecece }
 
-.doc_text       { text-align: left;   padding-left: 20pt }
+.doc_text       { text-align: left; padding-left: 20pt }
+
+.doc_footer     { text-align: left; padding: 0 0 0 0; font-size 12pt }
 
 /* Publications */
 .pub_title  { font-family: "Georgia,Palatino,Times,Roman";
