@@ -85,7 +85,7 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
 	if (DSN->isIncomplete())
 	  std::cerr << "Incomplete node " << CSI->getCallInst();
 	// assert(DSN->isGlobalNode());
-	std::vector<GlobalValue*> &Callees = DSN->getGlobals();
+	const std::vector<GlobalValue*> &Callees = DSN->getGlobals();
 	if (Callees.size() > 0) {
 	  Function *firstCalledF = dyn_cast<Function>(*Callees.begin());
 	  FuncECs.addElement(firstCalledF);
@@ -93,7 +93,7 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
 				 (&CSI->getCallInst(),
 				  firstCalledF));
 	  if (Callees.size() > 1) {
-	    for (std::vector<GlobalValue*>::iterator CalleesI = 
+	    for (std::vector<GlobalValue*>::const_iterator CalleesI = 
 		   Callees.begin()+1, CalleesE = Callees.end(); 
 		 CalleesI != CalleesE; ++CalleesI) {
 	      Function *calledF = dyn_cast<Function>(*CalleesI);
@@ -577,7 +577,7 @@ Function* FuncTransform::getFuncClass(Value *V) {
   if (!DSN) {
     return 0;
   }
-  std::vector<GlobalValue*> &Callees = DSN->getGlobals();
+  const std::vector<GlobalValue*> &Callees = DSN->getGlobals();
   if (Callees.size() > 0) {
     Function *calledF = dyn_cast<Function>(*Callees.begin());
     assert(PAInfo.FuncECs.findClass(calledF) && "should exist in some eq. class");
