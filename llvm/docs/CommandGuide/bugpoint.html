@@ -17,9 +17,9 @@
 
 The <tt>bugpoint</tt> tool narrows down the source of
 problems in LLVM tools and passes.  It can be used to debug three types of
-failures: optimizer crashes, miscompilations by optimizers, or invalid native
-code generation.  It aims to reduce large test cases to small, useful ones. 
-For example,
+failures: optimizer crashes, miscompilations by optimizers, or bad native
+code generation (including problems in the static and JIT compilers).  It aims 
+to reduce large test cases to small, useful ones.  For example,
 if <tt><a href="gccas.html">gccas</a></tt> crashes while optimizing a file, it
 will identify the optimization (or combination of optimizations) that causes the
 crash, and reduce the file down to a small example which triggers the crash.<p>
@@ -30,11 +30,13 @@ crash, and reduce the file down to a small example which triggers the crash.<p>
 <tt>bugpoint</tt> is designed to be a useful tool without requiring any
 hooks into the LLVM infrastructure at all.  It works with any and all LLVM
 passes and code generators, and does not need to "know" how they work.  Because
-of this, it may appear to do a lot of stupid things or miss obvious
+of this, it may appear to do stupid things or miss obvious
 simplifications.  <tt>bugpoint</tt> is also designed to trade off programmer
 time for computer time in the compiler-debugging process; consequently, it may
 take a long period of (unattended) time to reduce a test case, but we feel it
-is still worth it. :-) <p>
+is still worth it. Note that <tt>bugpoint</tt> is generally very quick unless
+debugging a miscompilation where each test of the program (which requires 
+executing it) takes a long time.<p>
 
 <a name="automaticdebuggerselection">
 <h4>Automatic Debugger Selection</h4>
@@ -43,7 +45,8 @@ is still worth it. :-) <p>
 specified on the command line and links them together into a single module,
 called the test program.  If any LLVM passes are
 specified on the command line, it runs these passes on the test program.  If
-any of the passes crash, or if they produce malformed output,
+any of the passes crash, or if they produce malformed output (which causes the 
+verifier to abort),
 <tt>bugpoint</tt> starts the <a href="#crashdebug">crash debugger</a>.<p>
 
 Otherwise, if the <a href="#opt_output"><tt>-output</tt></a> option was not
@@ -71,8 +74,7 @@ If an optimizer or code generator crashes, <tt>bugpoint</tt> will try as hard as
 it can to reduce the list of passes (for optimizer crashes) and the size of the
 test program.  First, <tt>bugpoint</tt> figures out which combination of
 optimizer passes triggers the bug. This is useful when debugging a problem
-exposed by <tt>gccas</tt>, for example, because it runs over 25
-optimizations.<p>
+exposed by <tt>gccas</tt>, for example, because it runs over 38 passes.<p>
 
 Next, <tt>bugpoint</tt> tries removing functions from the test program, to
 reduce its size.  Usually it is able to reduce a test program to a single
@@ -126,7 +128,7 @@ non-obvious ways.  Here are some hints and tips:<p>
 <ol>
 <li>In the code generator and miscompilation debuggers, <tt>bugpoint</tt> only
     works with programs that have deterministic output.  Thus, if the program
-    outputs the date, time, or any other "random" data, <tt>bugpoint</tt> may
+    outputs <tt>argv[0]</tt>, the date, time, or any other "random" data, <tt>bugpoint</tt> may
     misinterpret differences in these data, when output, as the result of a
     miscompilation.  Programs should be temporarily modified to disable
     outputs that are likely to vary from run to run.
@@ -148,7 +150,7 @@ non-obvious ways.  Here are some hints and tips:<p>
     <br>to get a copy of <tt>bugpoint</tt>'s output in the file
     <tt>bugpoint.log</tt>, as well as on your terminal.
 
-<li><tt>bugpoint</tt> cannot debug problems with the linker. If
+<li><tt>bugpoint</tt> cannot debug problems with the LLVM linker. If
     <tt>bugpoint</tt> crashes before you see its "All input ok" message,
     you might try <tt>llvm-link -v</tt> on the same set of input files. If
     that also crashes, you may be experiencing a linker bug.
