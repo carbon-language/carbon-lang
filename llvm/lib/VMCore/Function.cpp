@@ -263,7 +263,7 @@ unsigned Function::getIntrinsicID() const {
   return 0;
 }
 
-Value *MemIntrinsic::StripPointerCasts(Value *Ptr) {
+Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
     if (CE->getOpcode() == Instruction::Cast) {
       if (isa<PointerType>(CE->getOperand(0)->getType()))
@@ -281,11 +281,11 @@ Value *MemIntrinsic::StripPointerCasts(Value *Ptr) {
     if (isa<PointerType>(CI->getOperand(0)->getType()))
       return StripPointerCasts(CI->getOperand(0));
   } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
-    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-      if (!isa<Constant>(CE->getOperand(i)) ||
-          !cast<Constant>(CE->getOperand(i))->isNullValue())
+    for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(GEP->getOperand(i)) ||
+          !cast<Constant>(GEP->getOperand(i))->isNullValue())
         return Ptr;
-    return StripPointerCasts(CE->getOperand(0));
+    return StripPointerCasts(GEP->getOperand(0));
   }
   return Ptr;
 }
