@@ -20,8 +20,9 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 
 /// addDirectMem - This function is used to add a direct memory reference to the
-/// current instruction -- that is, a dereference of an address in a register, with
-/// no scale, index or displacement. An example is: DWORD PTR [EAX].
+/// current instruction -- that is, a dereference of an address in a register,
+/// with no scale, index or displacement. An example is: DWORD PTR [EAX].
+///
 inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
                                                unsigned Reg) {
   // Because memory references are always represented with four
@@ -30,12 +31,23 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
 }
 
 
-/// addRegOffset - This function is used to add a memory reference of
-/// the form [Reg + Offset], i.e., one with no scale or index, but
-/// with a displacement. An example is: DWORD PTR [EAX + 4].
+/// addRegOffset - This function is used to add a memory reference of the form
+/// [Reg + Offset], i.e., one with no scale or index, but with a
+/// displacement. An example is: DWORD PTR [EAX + 4].
+///
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
-                                               unsigned Reg, unsigned Offset) {
+                                               unsigned Reg, int Offset) {
   return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(Offset);
+}
+
+/// addFrameReference - This function is used to add a reference to the base of
+/// an abstract object on the stack frame of the current function.  This
+/// reference has base register <noreg> and a FrameIndex offset until it is
+/// resolved.
+///
+inline const MachineInstrBuilder &
+addFrameReference(const MachineInstrBuilder &MIB, int FI) {
+  return MIB.addReg(0).addZImm(1).addMReg(0).addFrameIndex(FI);
 }
 
 #endif
