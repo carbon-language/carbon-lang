@@ -33,7 +33,7 @@
    ;; Special instructions
    '("phi\\|call\\|cast\\|to\\|shl\\|shr\\|vaarg\\|vanext" . font-lock-keyword-face)
    ;; Control instructions
-   '("ret\\|br\\|switch\\|invoke" . font-lock-keyword-face)
+   '("ret\\|br\\|switch\\|invoke\\|unwind" . font-lock-keyword-face)
    ;; Memory operators
    '("malloc\\|alloca\\|free\\|load\\|store\\|getelementptr" . font-lock-keyword-face)
    )
