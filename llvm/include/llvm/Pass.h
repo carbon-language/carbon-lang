@@ -18,21 +18,80 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
-#include "llvm/Module.h"
-#include "llvm/Method.h"
-
-class MethodPassBatcher;
+#include <vector>
+#include <map>
+class Value;
+class BasicBlock;
+class Method;
+class Module;
+class AnalysisID;
+class Pass;
+template<class UnitType> class PassManagerT;
+struct AnalysisResolver;
 
 //===----------------------------------------------------------------------===//
 // Pass interface - Implemented by all 'passes'.  Subclass this if you are an
 // interprocedural optimization or you do not fit into any of the more
 // constrained passes described below.
 //
-struct Pass {
-  // Destructor - Virtual so we can be subclassed
-  inline virtual ~Pass() {}
+class Pass {
+  friend class AnalysisResolver;
+  AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
+public:
+  typedef std::vector<AnalysisID> AnalysisSet;
 
+  inline Pass(AnalysisResolver *AR = 0) : Resolver(AR) {}
+  inline virtual ~Pass() {} // Destructor is virtual so we can be subclassed
+
+
+  // run - Run this pass, returning true if a modification was made to the
+  // module argument.  This should be implemented by all concrete subclasses.
+  //
   virtual bool run(Module *M) = 0;
+
+  // getAnalysisUsageInfo - This function should be overriden by passes that
+  // need analysis information to do their job.  If a pass specifies that it
+  // uses a particular analysis result to this function, it can then use the
+  // getAnalysis<AnalysisType>() function, below.
+  //
+  // The Destroyed vector is used to communicate what analyses are invalidated
+  // by this pass.  This is critical to specify so that the PassManager knows
+  // which analysis must be rerun after this pass has proceeded.  Analysis are
+  // only invalidated if run() returns true.
+  //
+  // The Provided vector is used for passes that provide analysis information,
+  // these are the analysis passes themselves.  All analysis passes should
+  // override this method to return themselves in the provided set.
+  //
+  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
+                                    AnalysisSet &Destroyed,
+                                    AnalysisSet &Provided) {
+    // By default, no analysis results are used or destroyed.
+  }
+
+#ifndef NDEBUG
+  // dumpPassStructure - Implement the -debug-passes=PassStructure option
+  virtual void dumpPassStructure(unsigned Offset = 0);
+#endif
+
+protected:
+  // getAnalysis<AnalysisType>() - This function is used by subclasses to get to
+  // the analysis information that they claim to use by overriding the
+  // getAnalysisUsageInfo function.
+  //
+  template<typename AnalysisType>
+  AnalysisType &getAnalysis(AnalysisID AID = AnalysisType::ID) {
+    assert(Resolver && "Pass not resident in a PassManager object!");
+    return *(AnalysisType*)Resolver->getAnalysis(AID);
+  }
+
+private:
+  friend class PassManagerT<Module>;
+  friend class PassManagerT<Method>;
+  friend class PassManagerT<BasicBlock>;
+  virtual void addToPassManager(PassManagerT<Module> *PM,
+                                AnalysisSet &Destroyed,
+                                AnalysisSet &Provided);
 };
 
 
@@ -60,38 +119,25 @@ struct MethodPass : public Pass {
   //
   virtual bool doFinalization(Module *M) { return false; }
 
+  // run - On a module, we run this pass by initializing, ronOnMethod'ing once
+  // for every method in the module, then by finalizing.
+  //
+  virtual bool run(Module *M);
 
-  virtual bool run(Module *M) {
-    bool Changed = doInitialization(M);
+  // run - On a method, we simply initialize, run the method, then finalize.
+  //
+  bool run(Method *M);
 
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      Changed |= runOnMethod(*I);
-
-    return Changed | doFinalization(M);
-  }
-
- bool run(Method *M) {
-   return doInitialization(M->getParent()) | runOnMethod(M)
-        | doFinalization(M->getParent());
-  }
+private:
+  friend class PassManagerT<Module>;
+  friend class PassManagerT<Method>;
+  friend class PassManagerT<BasicBlock>;
+  virtual void addToPassManager(PassManagerT<Module> *PM,AnalysisSet &Destroyed,
+                                AnalysisSet &Provided);
+  virtual void addToPassManager(PassManagerT<Method> *PM,AnalysisSet &Destroyed,
+                                AnalysisSet &Provided);
 };
 
-
-
-//===----------------------------------------------------------------------===//
-// CFGSafeMethodPass class - This class is used to implement global
-// optimizations that do not modify the CFG of a method.  Optimizations should
-// subclass this class if they meet the following constraints:
-//   1. Optimizations are global, operating on a method at a time.
-//   2. Optimizations do not modify the CFG of the contained method, by adding,
-//      removing, or changing the order of basic blocks in a method.
-//   3. Optimizations conform to all of the contstraints of MethodPass's.
-//
-struct CFGSafeMethodPass : public MethodPass {
-
-  // TODO: Differentiation from MethodPass will come later
-
-};
 
 
 //===----------------------------------------------------------------------===//
@@ -102,52 +148,98 @@ struct CFGSafeMethodPass : public MethodPass {
 //      instruction at a time.
 //   2. Optimizations do not modify the CFG of the contained method, or any
 //      other basic block in the method.
-//   3. Optimizations conform to all of the contstraints of CFGSafeMethodPass's.
+//   3. Optimizations conform to all of the contstraints of MethodPass's.
 //
-struct BasicBlockPass : public CFGSafeMethodPass {
+struct BasicBlockPass : public MethodPass {
   // runOnBasicBlock - Virtual method overriden by subclasses to do the
   // per-basicblock processing of the pass.
   //
   virtual bool runOnBasicBlock(BasicBlock *M) = 0;
 
-  virtual bool runOnMethod(Method *M) {
-    bool Changed = false;
-    for (Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      Changed |= runOnBasicBlock(*I);
-    return Changed;
+  // To run this pass on a method, we simply call runOnBasicBlock once for each
+  // method.
+  //
+  virtual bool runOnMethod(Method *BB);
+
+  // To run directly on the basic block, we initialize, runOnBasicBlock, then
+  // finalize.
+  //
+  bool run(BasicBlock *BB);
+
+private:
+  friend class PassManagerT<Method>;
+  friend class PassManagerT<BasicBlock>;
+  virtual void addToPassManager(PassManagerT<Method> *PM,AnalysisSet &Destroyed,
+                                AnalysisSet &Provided);
+  virtual void addToPassManager(PassManagerT<BasicBlock> *PM,
+                                AnalysisSet &Destroyed,
+                                AnalysisSet &Provided);
+};
+
+
+// CreatePass - Helper template to invoke the constructor for the AnalysisID
+// class. Note that this should be a template internal to AnalysisID, but
+// GCC 2.95.3 crashes if we do that, doh.
+//
+template<class AnalysisType>
+static Pass *CreatePass(AnalysisID ID) { return new AnalysisType(ID); }
+
+//===----------------------------------------------------------------------===//
+// AnalysisID - This class is used to uniquely identify an analysis pass that
+//              is referenced by a transformation.
+//
+class AnalysisID {
+  static unsigned NextID;               // Next ID # to deal out...
+  unsigned ID;                          // Unique ID for this analysis
+  Pass *(*Constructor)(AnalysisID);     // Constructor to return the Analysis
+
+  AnalysisID();                         // Disable default ctor
+  AnalysisID(unsigned id, Pass *(*Ct)(AnalysisID)) : ID(id), Constructor(Ct) {}
+public:
+  // create - the only way to define a new AnalysisID.  This static method is
+  // supposed to be used to define the class static AnalysisID's that are
+  // provided by analysis passes.  In the implementation (.cpp) file for the
+  // class, there should be a line that looks like this (using CallGraph as an
+  // example):
+  //
+  //  AnalysisID CallGraph::ID(AnalysisID::create<CallGraph>());
+  //
+  template<class AnalysisType>
+  static AnalysisID create() {
+    return AnalysisID(NextID++, CreatePass<AnalysisType>);
   }
 
-  bool run(BasicBlock *BB) {
-    Module *M = BB->getParent()->getParent();
-    return doInitialization(M) | runOnBasicBlock(BB) | doFinalization(M);
+  inline Pass *createPass() const { return Constructor(*this); }
+
+  inline bool operator==(const AnalysisID &A) const {
+    return A.ID == ID;
+  }
+  inline bool operator!=(const AnalysisID &A) const {
+    return A.ID != ID;
+  }
+  inline bool operator<(const AnalysisID &A) const {
+    return ID < A.ID;
   }
 };
 
 
 //===----------------------------------------------------------------------===//
-// PassManager - Container object for passes.  The PassManager destructor
-// deletes all passes contained inside of the PassManager, so you shouldn't 
-// delete passes manually, and all passes should be dynamically allocated.
+// AnalysisResolver - Simple interface implemented by PassManagers objects that
+// is used to pull analysis information out of them.
 //
-class PassManager {
-  std::vector<Pass*> Passes;
-  MethodPassBatcher *Batcher;
-public:
-  PassManager() : Batcher(0) {}
-  ~PassManager();
-
-  // run - Run all of the queued passes on the specified module in an optimal
-  // way.
-  bool run(Module *M);
-
-  // add - Add a pass to the queue of passes to run.  This passes ownership of
-  // the Pass to the PassManager.  When the PassManager is destroyed, the pass
-  // will be destroyed as well, so there is no need to delete the pass.  Also,
-  // all passes MUST be new'd.
-  //
-  void add(Pass *P);
-  void add(MethodPass *P);
-  void add(BasicBlockPass *P);
+struct AnalysisResolver {
+  virtual Pass *getAnalysisOrNullUp(AnalysisID ID) = 0;
+  virtual Pass *getAnalysisOrNullDown(AnalysisID ID) = 0;
+  Pass *getAnalysis(AnalysisID ID) {
+    Pass *Result = getAnalysisOrNullUp(ID);
+    assert(Result && "Pass has an incorrect analysis uses set!");
+    return Result;
+  }
+  virtual unsigned getDepth() const = 0;
+protected:
+  void setAnalysisResolver(Pass *P, AnalysisResolver *AR);
 };
+
+
 
 #endif
