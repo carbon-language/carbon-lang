@@ -48,11 +48,12 @@ namespace sys {
       static MemoryBlock AllocateRWX(unsigned NumBytes);
 
       /// This method releases a block of Read/Write/Execute memory that was
-      /// allocated with the AllocateRWX method. It should not be used to release
-      /// any memory block allocated any other way.
+      /// allocated with the AllocateRWX method. It should not be used to 
+      /// release any memory block allocated any other way.
       /// @throws std::string if an error occurred.
       /// @brief Release Read/Write/Execute memory.
       static void ReleaseRWX(MemoryBlock& block);
+
     /// @}
   };
 }
