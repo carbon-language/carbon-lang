@@ -161,9 +161,8 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
         std::swap(V1Size, V2Size);
       }
 
-      // FIXME: This is not correct because we do not handle array
-      // indexing correctly with this check!
-      //if (O1+V1Size <= O2) return NoAlias;
+      if (O1+V1Size <= O2)
+        return NoAlias;
     }
   }
 
