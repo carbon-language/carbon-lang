@@ -86,6 +86,10 @@ class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
   // Methods - This member can be used to insert arbitrary code into a generated
   // register class.   The normal usage of this is to overload virtual methods.
   code Methods = [{}];
+
+  // isDummyClass - If this is set to true, this register class is not really
+  // part of the target, it is just used for other purposes.
+  bit isDummyClass = 0;
 }
 
 
@@ -156,6 +160,7 @@ class Target {
 // DAG node definitions used by the instruction selector...
 //
 class DagNodeValType;
+def DNVT_any   : DagNodeValType;  // No constraint on tree node
 def DNVT_void  : DagNodeValType;  // Tree node always returns void
 def DNVT_val   : DagNodeValType;  // A non-void type
 def DNVT_arg0  : DagNodeValType;  // Tree node returns same type as Arg0
@@ -177,7 +182,14 @@ class BuiltinDagNode<DagNodeValType Ret, list<DagNodeValType> Args,
 }
 
 // Magic nodes...
-def set     : DagNode<DNVT_void, [DNVT_val, DNVT_arg0]>;
+def Void       : RegisterClass<isVoid,0,[]> { let isDummyClass = 1; }
+def set        : DagNode<DNVT_void, [DNVT_val, DNVT_arg0]>;
+def chain      : BuiltinDagNode<DNVT_void, [DNVT_void, DNVT_void], "ChainNode">;
+def blockchain : BuiltinDagNode<DNVT_void, [DNVT_void, DNVT_void],
+                                "BlockChainNode">;
+def ChainExpander      : Expander<(chain Void, Void), []>;
+def BlockChainExpander : Expander<(blockchain Void, Void), []>;
+
 
 // Terminals...
 def imm        : BuiltinDagNode<DNVT_val, [], "Constant">;
@@ -213,6 +225,9 @@ def retvoid : BuiltinDagNode<DNVT_void, [], "RetVoid">;
 def br      : BuiltinDagNode<DNVT_void, [DNVT_ptr], "Br">;
 def brcond  : BuiltinDagNode<DNVT_void, [DNVT_i8, DNVT_ptr, DNVT_ptr],
                              "BrCond">;
+
+def unspec1 : BuiltinDagNode<DNVT_any , [DNVT_val], "Unspec1">;
+def unspec2 : BuiltinDagNode<DNVT_any , [DNVT_val, DNVT_val], "Unspec2">;
 
 //===----------------------------------------------------------------------===//
 // DAG nonterminals definitions used by the instruction selector...
