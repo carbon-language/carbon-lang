@@ -3,6 +3,7 @@
 // This library converts LLVM code to C code, compilable by GCC.
 //
 //===----------------------------------------------------------------------===//
+
 #include "llvm/Assembly/CWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -103,7 +104,7 @@ namespace {
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
 
-    void visitPHINode(PHINode &I) {}
+    void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
 
     void visitCastInst (CastInst &I);
@@ -771,6 +772,12 @@ void CWriter::printFunction(Function *F) {
       Out << "  ";
       printType(Out, (*I)->getType(), getValueName(*I));
       Out << ";\n";
+
+      if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
+        Out << "  ";
+        printType(Out, (*I)->getType(), getValueName(*I)+"__PHI_TEMPORARY");
+        Out << ";\n";
+      }
     }
 
   Out << "\n";
@@ -825,7 +832,7 @@ void CWriter::printFunction(Function *F) {
 
     // Output all of the instructions in the basic block...
     for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E; ++II){
-      if (!isInlinableInst(*II) && !isa<PHINode>(*II)) {
+      if (!isInlinableInst(*II)) {
         if (II->getType() != Type::VoidTy)
           outputLValue(II);
         else
@@ -898,7 +905,7 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     //  now we have to do the printing
     Out << std::string(Indent, ' ');
-    outputLValue(PN);
+    Out << "  " << getValueName(I) << "__PHI_TEMPORARY = ";
     writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
     Out << ";   /* for PHI node */\n";
   }
@@ -940,6 +947,14 @@ void CWriter::visitBranchInst(BranchInst &I) {
     printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
   }
   Out << "\n";
+}
+
+// PHI nodes get copied into temporary values at the end of predecessor basic
+// blocks.  We now need to copy these temporary values into the REAL value for
+// the PHI.
+void CWriter::visitPHINode(PHINode &I) {
+  writeOperand(&I);
+  Out << "__PHI_TEMPORARY";
 }
 
 
