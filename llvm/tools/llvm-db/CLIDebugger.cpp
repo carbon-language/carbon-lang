@@ -125,7 +125,10 @@ CLIDebugger::CLIDebugger()
   //
   addCommand("info", new BuiltinCLICommand(
     "Generic command for showing things about the program being debugged",
-    "FIXME: document\n",
+    "info functions: display information about functions in the program.\ninfo"
+    " source : display information about the current source file.\ninfo source"
+    "s : Display source file names for the program\ninfo target : print status"
+    " of inferior process\n",
     &CLIDebugger::infoCommand));
 
   addCommand("list", C = new BuiltinCLICommand(

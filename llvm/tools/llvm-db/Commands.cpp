@@ -505,8 +505,11 @@ void CLIDebugger::breakCommand(std::string &Options) {
 void CLIDebugger::infoCommand(std::string &Options) {
   std::string What = getToken(Options);
 
-  if (What.empty() || !getToken(Options).empty())
-    throw "info command expects exactly one argument.";
+  if (What.empty() || !getToken(Options).empty()){
+    std::string infoStr("info");
+    helpCommand(infoStr);
+    return;
+  }
 
   if (What == "frame") {
   } else if (What == "functions") {
