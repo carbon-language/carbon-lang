@@ -46,6 +46,19 @@ ifdef ENABLE_SPARC_JIT
               sparcv9regalloc
 endif
 
+# You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
+# ENABLE_PPC_JIT on the make command line. If not, it will still be
+# enabled automagically on an PowerPC host.
+ifeq ($(ARCH), PowerPC)
+  ENABLE_PPC_JIT = 1
+endif
+
+# What the PowerPC JIT requires
+ifdef ENABLE_PPC_JIT
+  CPPFLAGS += -DENABLE_PPC_JIT
+  JITLIBS  += powerpc
+endif
+
 USEDLIBS = lli-interpreter $(JITLIBS) $(ARCHLIBS) scalaropts analysis.a \
            transformutils.a bcreader vmcore support target.a LLVMsystem.a
 
