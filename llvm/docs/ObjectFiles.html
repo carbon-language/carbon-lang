@@ -1,0 +1,292 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+	<title>Object Files: Understanding The Result Of LLVM Compilation</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+<div class="doc_title">Object Files: Understanding The Result Of LLVM Compilation</div>
+<hr>
+<ol>
+  <li><a href="#abstract">Abstract</a></li>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#files">File Contents</a></li>
+  <li><a href="#rot">Linkage Rules Of Thumb</a>
+	  <ol>
+			<li><a href="#always">Always Link vmcore.o, support.a</a>
+			<li><a href="#placeholder">Placeholder</a>
+		</ol>
+	</li>
+</ol>
+<div class="doc_text">
+<p><b>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a> </b></p>
+<p> </p>
+</div>
+<hr>
+<!-- ======================================================================= -->
+<div class="doc_section"><a name="abstract">Abstract</a></div>
+<div class="doc_text">
+<p>This document describes the contents of the many objects files and libraries
+that are produced by compiling LLVM. To make use of LLVM this information is 
+needed in order to understand what files should be linked into your program.
+</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="introduction">Introduction</a></div>
+<div class="doc_text">
+<p>If you're writing a compiler, virtual machine, or any other utility for
+	 LLVM, you'll need to figure out which of the many .a (archive) and .o
+	 (object) files you will need to link with to be successful. An
+	 understanding of the contents of these files and their inter-relationships
+	 will be useful in coming up with an optimal specification for the objects
+	 and libraries to link with. 
+</p>
+<p>The purpose of this document is to hopefully reduce some of the trial and
+   error that the author experienced in using LLVM.
+</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_section"><a name="files"></a>File Contents</div>
+<div class="doc_text">
+<p>The table below provides a summary of the basic contents of each file.</p>
+<table class="doc_table" 
+	style="width:80%; text-align: left; border: 2px solid blue; border-collapse: collapse;">
+<tr class="doc_table">
+	<td colspan="2" class="doc_section">Summary Of LLVM Library And Object Files
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue"><h2><u>Library</u></h2></td>
+	<td style="border: 2px solid blue"><h2><u>Description</u></h2></td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libipo.a</td>
+	<td style="border: 2px solid blue">
+		An archive of all inter-procedural optimizations.
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libscalaropts.a</td>
+	<td style="border: 2px solid blue">
+		An archive of all scalar optimizations.
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libtransforms.a</td>
+	<td style="border: 2px solid blue">
+		An archive of all code transformations.
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libtarget.a</td>
+	<td style="border: 2px solid blue">
+		An archive containing target (machine) specific code.
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libanalysis.a</td>
+	<td style="border: 2px solid blue">
+		An archive containing analysis code.
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libdatastructure.a</td>
+	<td style="border: 2px solid blue">
+		An archive containing optimizations for data structures.
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libinstrument.a</td>
+	<td style="border: 2px solid blue">No idea.</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libregalloc.a</td>
+	<td style="border: 2px solid blue">Register Allocation code.</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libipa.a</td>
+	<td style="border: 2px solid blue">Inter-procedural ??</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libtransformutils.a</td>
+	<td style="border: 2px solid blue">
+		Utiltities for transformations?
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">libsupport.a</td>
+	<td style="border: 2px solid blue">General support utilities</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue"><h2><u>Object File</u></h2></td>
+	<td style="border: 2px solid blue"><h2><u>Description</u></h2></td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">support.o</td>
+	<td style="border: 2px solid blue">General support utilities</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">asmparser.o</td>
+	<td style="border: 2px solid blue">Assembler Parser</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">bcreader.o</td>
+	<td style="border: 2px solid blue">Byte Code Reader</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">bcwriter.o</td>
+	<td style="border: 2px solid blue">Byte Code Writer</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">sched.o</td>
+	<td style="border: 2px solid blue">Scheduler? For What?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">selectiondag.o</td>
+	<td style="border: 2px solid blue">Selection Directed Acyclic Graph?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">transformutils.o</td>
+	<td style="border: 2px solid blue">Utilities for code transformations</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">ipa.o</td>
+	<td style="border: 2px solid blue">Inter-Procedural Analysis Optimizations</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">select.o</td>
+	<td style="border: 2px solid blue">Select Statement?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">cwriter.o</td>
+	<td style="border: 2px solid blue">"C" Code Writer</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">profpaths.o</td>
+	<td style="border: 2px solid blue">Profile Paths?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">regalloc.o</td>
+	<td style="border: 2px solid blue">Register Allocation</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">instrument.o</td>
+	<td style="border: 2px solid blue">Instrumentation? Of What?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">datastructure.o</td>
+	<td style="border: 2px solid blue">Data Structure Analysis</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">codegen.o</td>
+	<td style="border: 2px solid blue">Native code generation</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">livevar.o</td>
+	<td style="border: 2px solid blue">Live Variable Analysis</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">vmcore.o</td>
+	<td style="border: 2px solid blue">Virtual Machine Core</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">lli-interpreter.o</td>
+	<td style="border: 2px solid blue">Interpreter for LLVM ByteCode</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">lli-jit.o</td>
+	<td style="border: 2px solid blue">
+		Just-In-Time Compiler For LLVM ByteCode
+	</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">executionengine.o</td>
+	<td style="border: 2px solid blue">Engine for LLI</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">debugger.o</td>
+	<td style="border: 2px solid blue">Source Level Debugging Support</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">analysis.o</td>
+	<td style="border: 2px solid blue">General Framework For Analysis?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">sparc.o</td>
+	<td style="border: 2px solid blue">Sun SPARC Processor Specific</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">target.o</td>
+	<td style="border: 2px solid blue">Target Machine Support?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">transforms.o</td>
+	<td style="border: 2px solid blue">Code Transformations</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">x86.o</td>
+	<td style="border: 2px solid blue">Intel x86 Processor Specific</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">powerpc.o</td>
+	<td style="border: 2px solid blue">PowerPC Processor Specific</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">scalaropts.o</td>
+	<td style="border: 2px solid blue">Optimizations For Scalars</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">ipo.o</td>
+	<td style="border: 2px solid blue">Inter-Procedural Optimization</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">trace.o</td>
+	<td style="border: 2px solid blue">Support For Tracing/Debugging?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">profile_rt.o</td>
+	<td style="border: 2px solid blue">Runtime Library For Profiler</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">sample.o</td>
+	<td style="border: 2px solid blue">Sample Program ?</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">stkr_compiler.o</td>
+	<td style="border: 2px solid blue">Stacker Language Compiler Library</td>
+</tr>
+<tr class="doc_table">
+	<td style="border: 2px solid blue">stkr_runtime.o</td>
+	<td style="border: 2px solid blue">Stacker Language Runtime Library</td>
+</tr>
+</table>
+</div>
+<p></p>
+<!-- ======================================================================= -->
+<div class="doc_section"><a name="rot">Linkage Rules Of Thumb</a></div>
+<div class="doc_text">
+	<p>This section contains various "rules of thumb" about what files you
+	should link into your programs.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="always">Always Link vmcore.o support.a</a>
+</div>
+<div class="doc_text">
+	<p>No matter what you do with LLVM, you'll always need to link with vmcore.o 
+	and support.a.</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="Placeholder">Placeholder</a></div>
+<div class="doc_text">
+	<p>Need more rules of thumb here.</p>
+</div>
+<!-- ======================================================================= -->
+<hr>
+<div class="doc_footer">
+<address><a href="mailto:rspencer@x10sys.com">Reid Spencer</a></address>
+<a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a> 
+<br>Last modified: $Date$ </div>
+</body>
+</html>
+<!-- vim: sw=2 ts=2 ai
+-->
