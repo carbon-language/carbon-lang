@@ -34,7 +34,7 @@ namespace llvm {
 class DominatorSet;
 class LoopInfo;
 class PHINode;
-  class Instruction;
+class Instruction;
 
 //===----------------------------------------------------------------------===//
 /// Loop class - Instances of this class are used to represent loops that are 
@@ -83,6 +83,10 @@ public:
   /// getNumBackEdges - Calculate the number of back edges to the loop header
   ///
   unsigned getNumBackEdges() const;
+
+  /// isLoopInvariant - Return true if the specified value is loop invariant
+  ///
+  bool isLoopInvariant(Value *V) const;
 
   //===--------------------------------------------------------------------===//
   // APIs for simple analysis of the loop.
