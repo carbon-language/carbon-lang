@@ -13,6 +13,7 @@
 
 #include "Win32.h"
 #include <llvm/System/Signals.h>
+#include <stdio.h>
 #include <vector>
 
 #ifdef __MINGW_H
@@ -29,7 +30,7 @@
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep);
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 
-static std::vector<std::string> *FilesToRemove = NULL;
+static std::vector<llvm::sys::Path> *FilesToRemove = NULL;
 static std::vector<llvm::sys::Path> *DirectoriesToRemove = NULL;
 static bool RegisteredUnhandledExceptionFilter = false;
 static bool CleanupExecuted = false;
@@ -78,9 +79,9 @@ void sys::RemoveFileOnSignal(const std::string &Filename) {
     throw std::string("Process terminating -- cannot register for removal");
 
   if (FilesToRemove == NULL)
-    FilesToRemove = new std::vector<std::string>;
+    FilesToRemove = new std::vector<sys::Path>;
 
-  FilesToRemove->push_back(Filename);
+  FilesToRemove->push_back(sys::Path(Filename));
 
   LeaveCriticalSection(&CriticalSection);
 }
@@ -123,7 +124,7 @@ static void Cleanup() {
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
       try {
-        std::remove(FilesToRemove->back().c_str());
+        FilesToRemove->back().destroy_file();
       } catch (...) {
       }
       FilesToRemove->pop_back();
