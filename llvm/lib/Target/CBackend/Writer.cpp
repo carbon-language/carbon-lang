@@ -1720,7 +1720,7 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 
 bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
   PM.add(createLowerGCPass());
-  PM.add(createLowerAllocationsPass());
+  PM.add(createLowerAllocationsPass(true));
   PM.add(createLowerInvokePass());
   PM.add(new CBackendNameAllUsedStructs());
   PM.add(new CWriter(o, getIntrinsicLowering()));
