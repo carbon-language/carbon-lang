@@ -1,9 +1,13 @@
-//===-- SparcInternals.h - Header file for Sparc backend ---------*- C++ -*--=//
-//
-// This file defines stuff that is to be private to the Sparc backend, but is 
-// shared among different portions of the backend.
-//
-//===----------------------------------------------------------------------===//
+// $Id$ -*- C++ -*--
+//***************************************************************************
+// File:
+//	SparcInternals.h
+// 
+// Purpose:
+//       This file defines stuff that is to be private to the Sparc
+//       backend, but is shared among different portions of the backend.
+//**************************************************************************/
+
 
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
@@ -12,7 +16,7 @@
 #include "SparcRegClassInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
-
+#include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/Type.h"
@@ -83,7 +87,7 @@ extern const MachineInstrDescriptor SparcMachineInstrDesc[];
 
 class UltraSparcInstrInfo : public MachineInstrInfo {
 public:
-  /*ctor*/	UltraSparcInstrInfo();
+  /*ctor*/	UltraSparcInstrInfo(const TargetMachine& tgt);
   
   virtual bool		hasResultInterlock	(MachineOpCode opCode) const
   {
@@ -109,10 +113,21 @@ public:
                                       Instruction* dest,
                                       vector<MachineInstr*>& minstrVec,
                                       vector<TmpInstruction*>& tempVec) const;
+
+  
+  // Create an instruction sequence to copy an integer value `val' from an
+  // integer to a floating point register `dest'.  val must be an integral
+  // type.  dest must be a Float or Double.
+  // The generated instructions are returned in `minstrVec'.
+  // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
+  // 
+  virtual void  CreateCodeToCopyIntToFloat(Method* method,
+                                           Value* val,
+                                           Instruction* dest,
+                                           vector<MachineInstr*>& minstrVec,
+                                           vector<TmpInstruction*>& tempVec,
+                                           TargetMachine& target) const;
 };
-
-
-
 
 
 //----------------------------------------------------------------------------
@@ -260,7 +275,8 @@ class UltraSparcRegInfo : public MachineRegInfo
  public:
 
 
-  UltraSparcRegInfo(const UltraSparc *const USI ) : UltraSparcInfo(USI), 
+  UltraSparcRegInfo(const TargetMachine& tgt ) :    MachineRegInfo(tgt),
+                                                    UltraSparcInfo(& (const UltraSparc&) tgt), 
 						    NumOfIntArgRegs(6), 
 						    NumOfFloatArgRegs(32),
 						    InvalidRegNum(1000),
@@ -1131,7 +1147,7 @@ const InstrRUsageDelta SparcInstrUsageDeltas[] = {
 
 class UltraSparcSchedInfo: public MachineSchedInfo {
 public:
-  /*ctor*/	   UltraSparcSchedInfo	(const MachineInstrInfo* mii);
+  /*ctor*/	   UltraSparcSchedInfo	(const TargetMachine& tgt);
   /*dtor*/ virtual ~UltraSparcSchedInfo	() {}
 protected:
   virtual void	initializeResources	();
@@ -1143,21 +1159,84 @@ protected:
 // 
 // Purpose:
 //   Interface to stack frame layout info for the UltraSPARC.
-//   Note that there is no machine-independent interface to this information
 //---------------------------------------------------------------------------
 
-class UltraSparcFrameInfo: public NonCopyable {
+class UltraSparcFrameInfo: public MachineFrameInfo {
 public:
+  /*ctor*/ UltraSparcFrameInfo(const TargetMachine& tgt) : MachineFrameInfo(tgt) {}
+  
+public:
+  int  getStackFrameSizeAlignment   () const { return StackFrameSizeAlignment;}
+  int  getMinStackFrameSize         () const { return MinStackFrameSize; }
+  int  getNumFixedOutgoingArgs      () const { return NumFixedOutgoingArgs; }
+  int  getSizeOfEachArgOnStack      () const { return SizeOfEachArgOnStack; }
+  bool argsOnStackHaveFixedSize     () const { return true; }
+
+  //
+  // These methods compute offsets using the frame contents for a
+  // particular method.  The frame contents are obtained from the
+  // MachineCodeInfoForMethod object for the given method.
+  // 
+  int getFirstIncomingArgOffset  (MachineCodeForMethod& mcInfo,
+                                  bool& pos) const
+  {
+    pos = true;                         // arguments area grows upwards
+    return FirstIncomingArgOffsetFromFP;
+  }
+  int getFirstOutgoingArgOffset  (MachineCodeForMethod& mcInfo,
+                                  bool& pos) const
+  {
+    pos = true;                         // arguments area grows upwards
+    return FirstOutgoingArgOffsetFromSP;
+  }
+  int getFirstOptionalOutgoingArgOffset(MachineCodeForMethod& mcInfo,
+                                        bool& pos)const
+  {
+    pos = true;                         // arguments area grows upwards
+    return FirstOptionalOutgoingArgOffsetFromSP;
+  }
+  
+  int getFirstAutomaticVarOffset (MachineCodeForMethod& mcInfo,
+                                  bool& pos) const;
+  int getRegSpillAreaOffset      (MachineCodeForMethod& mcInfo,
+                                  bool& pos) const;
+  int getTmpAreaOffset           (MachineCodeForMethod& mcInfo,
+                                  bool& pos) const;
+  int getDynamicAreaOffset       (MachineCodeForMethod& mcInfo,
+                                  bool& pos) const;
+
+  //
+  // These methods specify the base register used for each stack area
+  // (generally FP or SP)
+  // 
+  virtual int getIncomingArgBaseRegNum()               const {
+    return (int) target.getRegInfo().getFramePointer();
+  }
+  virtual int getOutgoingArgBaseRegNum()               const {
+    return (int) target.getRegInfo().getStackPointer();
+  }
+  virtual int getOptionalOutgoingArgBaseRegNum()       const {
+    return (int) target.getRegInfo().getStackPointer();
+  }
+  virtual int getAutomaticVarBaseRegNum()              const {
+    return (int) target.getRegInfo().getFramePointer();
+  }
+  virtual int getRegSpillAreaBaseRegNum()              const {
+    return (int) target.getRegInfo().getFramePointer();
+  }
+  virtual int getDynamicAreaBaseRegNum()               const {
+    return (int) target.getRegInfo().getStackPointer();
+  }
+  
+private:
+  static const int StackFrameSizeAlignment                 =  16;
   static const int MinStackFrameSize                       = 176;
+  static const int NumFixedOutgoingArgs                    =   6;
+  static const int SizeOfEachArgOnStack                    =   8;
+  static const int StaticAreaOffsetFromFP                  =  -1;
+  static const int FirstIncomingArgOffsetFromFP            = 126;
   static const int FirstOutgoingArgOffsetFromSP            = 128;
   static const int FirstOptionalOutgoingArgOffsetFromSP    = 176;
-  static const int StaticStackAreaOffsetFromFP             =  -1;
-
-  static const int FirstIncomingArgOffsetFromFP           = 126;
-
-  static int       getFirstAutomaticVarOffsetFromFP (const Method* method);
-  static int       getRegSpillAreaOffsetFromFP      (const Method* method);
-  static int       getFrameSizeBelowDynamicArea     (const Method* method);
 };
 
 
@@ -1185,8 +1264,7 @@ public:
   virtual const MachineInstrInfo &getInstrInfo() const { return instrInfo; }
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
-       const UltraSparcFrameInfo &getFrameInfo() const { return frameInfo; }
-  
+  virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
   
   // compileMethod - For the sparc, we do instruction selection, followed by
   // delay slot scheduling, then register allocation.

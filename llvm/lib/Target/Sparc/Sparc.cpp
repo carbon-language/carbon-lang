@@ -65,14 +65,6 @@ void AllocateRegisters(Method *M, TargetMachine &target)
 }
 
 
-// Initialize the required area of the stack frame.
-static void
-InitializeFrameLayout(Method *method, TargetMachine &target)
-{
-  int minFrameSize = ((UltraSparc&) target).getFrameInfo().MinStackFrameSize;
-  method->getMachineCode().incrementStackSize(minFrameSize);
-}
-
 //---------------------------------------------------------------------------
 // Function InsertPrologCode
 // Function InsertEpilogCode
@@ -141,7 +133,7 @@ InsertEpilogCode(Method* method, TargetMachine& target)
 static void
 InsertPrologEpilog(Method *method, TargetMachine &target)
 {
-  MachineCodeForMethod& mcodeInfo = method->getMachineCode();
+  MachineCodeForMethod& mcodeInfo = MachineCodeForMethod::get(method);
   if (mcodeInfo.isCompiledAsLeafMethod())
     return;                             // nothing to do
   
@@ -160,9 +152,9 @@ InsertPrologEpilog(Method *method, TargetMachine &target)
 //---------------------------------------------------------------------------
 
 /*ctor*/
-UltraSparcSchedInfo::UltraSparcSchedInfo(const MachineInstrInfo* mii)
-  : MachineSchedInfo((unsigned int) SPARC_NUM_SCHED_CLASSES,
-		     mii,
+UltraSparcSchedInfo::UltraSparcSchedInfo(const TargetMachine& tgt)
+  : MachineSchedInfo(tgt,
+                     (unsigned int) SPARC_NUM_SCHED_CLASSES,
 		     SparcRUsageDesc,
 		     SparcInstrUsageDeltas,
 		     SparcInstrIssueDeltas,
@@ -205,26 +197,40 @@ UltraSparcSchedInfo::initializeResources()
 //---------------------------------------------------------------------------
 
 int
-UltraSparcFrameInfo::getFirstAutomaticVarOffsetFromFP (const Method* method)
+UltraSparcFrameInfo::getFirstAutomaticVarOffset(MachineCodeForMethod& ,
+                                                bool& pos) const
 {
-  return StaticStackAreaOffsetFromFP;
+  pos = false;                          // static stack area grows downwards
+  return StaticAreaOffsetFromFP;
 }
 
 int
-UltraSparcFrameInfo::getRegSpillAreaOffsetFromFP(const Method* method)
+UltraSparcFrameInfo::getRegSpillAreaOffset(MachineCodeForMethod& mcInfo,
+                                           bool& pos) const
 {
-  unsigned int autoVarsSize = method->getMachineCode().getAutomaticVarsSize();
-  return  StaticStackAreaOffsetFromFP + autoVarsSize;
+  pos = false;                          // static stack area grows downwards
+  unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
+  return  StaticAreaOffsetFromFP - autoVarsSize;
 }
 
 int
-UltraSparcFrameInfo::getFrameSizeBelowDynamicArea(const Method* method)
+UltraSparcFrameInfo::getTmpAreaOffset(MachineCodeForMethod& mcInfo,
+                                      bool& pos) const
 {
-  unsigned int optArgsSize =
-    method->getMachineCode().getOptionalOutgoingArgsSize();
+  pos = false;                          // static stack area grows downwards
+  unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
+  unsigned int spillAreaSize = mcInfo.getRegSpillsSize();
+  return StaticAreaOffsetFromFP - (autoVarsSize + spillAreaSize);
+}
+
+int
+UltraSparcFrameInfo::getDynamicAreaOffset(MachineCodeForMethod& mcInfo,
+                                          bool& pos) const
+{
+  // dynamic stack area grows downwards starting at top of opt-args area
+  unsigned int optArgsSize = mcInfo.getMaxOptionalArgsSize();
   return optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
 }
-
 
 
 //---------------------------------------------------------------------------
@@ -240,10 +246,10 @@ UltraSparcFrameInfo::getFrameSizeBelowDynamicArea(const Method* method)
 
 UltraSparc::UltraSparc()
   : TargetMachine("UltraSparc-Native"),
-    instrInfo(),
-    schedInfo(&instrInfo),
-    regInfo( this ),
-    frameInfo()
+    instrInfo(*this),
+    schedInfo(*this),
+    regInfo(*this),
+    frameInfo(*this)
 {
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
@@ -265,29 +271,30 @@ ApplyPeepholeOptimizations(Method *method, TargetMachine &target)
 
 
 bool
-UltraSparc::compileMethod(Method *M)
+UltraSparc::compileMethod(Method *method)
 {
-  InitializeFrameLayout(M, *this);        // initialize the required area of
-                                          // the stack frame
-  if (SelectInstructionsForMethod(M, *this))
+  // Construct and initialize the MachineCodeForMethod object for this method.
+  (void) MachineCodeForMethod::construct(method, *this);
+  
+  if (SelectInstructionsForMethod(method, *this))
     {
-      cerr << "Instruction selection failed for method " << M->getName()
+      cerr << "Instruction selection failed for method " << method->getName()
 	   << "\n\n";
       return true;
     }
   
-  if (ScheduleInstructionsWithSSA(M, *this))
+  if (ScheduleInstructionsWithSSA(method, *this))
     {
       cerr << "Instruction scheduling before allocation failed for method "
-	   << M->getName() << "\n\n";
+	   << method->getName() << "\n\n";
       return true;
     }
   
-  AllocateRegisters(M, *this);          // allocate registers
+  AllocateRegisters(method, *this);          // allocate registers
   
-  ApplyPeepholeOptimizations(M, *this); // machine-dependent peephole opts
+  ApplyPeepholeOptimizations(method, *this); // machine-dependent peephole opts
   
-  InsertPrologEpilog(M, *this);
+  InsertPrologEpilog(method, *this);
   
   return false;
 }
