@@ -22,6 +22,7 @@
 #include <vector>
 
 namespace llvm {
+  class Value;
   class Constant;
   struct Type;
   
@@ -33,7 +34,7 @@ namespace llvm {
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                           const Constant *V2);
   Constant *ConstantFoldGetElementPtr(const Constant *C,
-                                      const std::vector<Constant*> &IdxList);
+                                      const std::vector<Value*> &IdxList);
 } // End llvm namespace
 
 #endif

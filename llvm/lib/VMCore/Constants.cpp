@@ -1148,10 +1148,8 @@ namespace llvm {
         break;
       case Instruction::GetElementPtr:
         // Make everyone now use a constant of the new type... 
-        std::vector<Constant*> C;
-        for (unsigned i = 1, e = OldC->getNumOperands(); i != e; ++i)
-          C.push_back(cast<Constant>(OldC->getOperand(i)));
-        New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0), C);
+        std::vector<Value*> Idx(OldC->op_begin()+1, OldC->op_end());
+        New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0), Idx);
         break;
       }
       
@@ -1298,9 +1296,8 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
 
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
-                                        const std::vector<Constant*> &IdxList) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(),
-                   std::vector<Value*>(IdxList.begin(), IdxList.end()), true) &&
+                                           const std::vector<Value*> &IdxList) {
+  assert(GetElementPtrInst::getIndexedType(C->getType(), IdxList, true) &&
          "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(C, IdxList))
@@ -1309,9 +1306,12 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
   assert(isa<PointerType>(C->getType()) &&
          "Non-pointer type for constant GetElementPtr expression");
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> argVec(1, C);
-  argVec.insert(argVec.end(), IdxList.begin(), IdxList.end());
-  const ExprMapKeyType &Key = std::make_pair(Instruction::GetElementPtr,argVec);
+  std::vector<Constant*> ArgVec;
+  ArgVec.reserve(IdxList.size()+1);
+  ArgVec.push_back(C);
+  for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
+    ArgVec.push_back(cast<Constant>(IdxList[i]));
+  const ExprMapKeyType &Key = std::make_pair(Instruction::GetElementPtr,ArgVec);
   return ExprConstants.getOrCreate(ReqTy, Key);
 }
 
@@ -1321,6 +1321,15 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
   std::vector<Value*> VIdxList(IdxList.begin(), IdxList.end());
 
   const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), VIdxList,
+                                                     true);
+  assert(Ty && "GEP indices invalid!");
+  return getGetElementPtrTy(PointerType::get(Ty), C, VIdxList);
+}
+
+Constant *ConstantExpr::getGetElementPtr(Constant *C,
+                                         const std::vector<Value*> &IdxList) {
+  // Get the result type of the getelementptr!
+  const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), IdxList,
                                                      true);
   assert(Ty && "GEP indices invalid!");
   return getGetElementPtrTy(PointerType::get(Ty), C, IdxList);

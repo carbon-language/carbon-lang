@@ -905,7 +905,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X & 0 == 0
         if (CE1->getOpcode() == Instruction::Cast &&
             isa<GlobalValue>(CE1->getOperand(0))) {
-          GlobalValue *CPR =cast<GlobalValue>(CE1->getOperand(0));
+          GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
 
           // Functions are at least 4-byte aligned.  If and'ing the address of a
           // function with a constant < 4, fold it to zero.
@@ -960,21 +960,21 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
-                                        const std::vector<Constant*> &IdxList) {
+                                          const std::vector<Value*> &IdxList) {
   if (IdxList.size() == 0 ||
-      (IdxList.size() == 1 && IdxList[0]->isNullValue()))
+      (IdxList.size() == 1 && cast<Constant>(IdxList[0])->isNullValue()))
     return const_cast<Constant*>(C);
+  Constant *Idx0 = cast<Constant>(IdxList[0]);
 
   if (C->isNullValue()) {
     bool isNull = true;
     for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
-      if (!IdxList[i]->isNullValue()) {
+      if (!cast<Constant>(IdxList[i])->isNullValue()) {
         isNull = false;
         break;
       }
     if (isNull) {
-      std::vector<Value*> VIdxList(IdxList.begin(), IdxList.end());
-      const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), VIdxList,
+      const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), IdxList,
                                                          true);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty));
@@ -986,8 +986,8 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         // gep null, C is equal to C*sizeof(nullty).  If nullty is a known llvm
         // type, we can statically fold this.
         Constant *R = ConstantUInt::get(Type::UIntTy, ElSize);
-        R = ConstantExpr::getCast(R, IdxList[0]->getType());
-        R = ConstantExpr::getMul(R, IdxList[0]);
+        R = ConstantExpr::getCast(R, Idx0->getType());
+        R = ConstantExpr::getMul(R, Idx0);
         return ConstantExpr::getCast(R, C->getType());
       }
     }
@@ -1004,21 +1004,22 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
            I != E; ++I)
         LastTy = *I;
 
-      if ((LastTy && isa<ArrayType>(LastTy)) || IdxList[0]->isNullValue()) {
-        std::vector<Constant*> NewIndices;
+      if ((LastTy && isa<ArrayType>(LastTy)) || Idx0->isNullValue()) {
+        std::vector<Value*> NewIndices;
         NewIndices.reserve(IdxList.size() + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
-          NewIndices.push_back(cast<Constant>(CE->getOperand(i)));
+          NewIndices.push_back(CE->getOperand(i));
 
         // Add the last index of the source with the first index of the new GEP.
         // Make sure to handle the case when they are actually different types.
         Constant *Combined = CE->getOperand(CE->getNumOperands()-1);
-        if (!IdxList[0]->isNullValue()) {  // Otherwise it must be an array
+        // Otherwise it must be an array.
+        if (!Idx0->isNullValue()) {
           const Type *IdxTy = Combined->getType();
-          if (IdxTy != IdxList[0]->getType()) IdxTy = Type::LongTy;
+          if (IdxTy != Idx0->getType()) IdxTy = Type::LongTy;
           Combined = 
             ConstantExpr::get(Instruction::Add,
-                              ConstantExpr::getCast(IdxList[0], IdxTy),
+                              ConstantExpr::getCast(Idx0, IdxTy),
                               ConstantExpr::getCast(Combined, IdxTy));
         }
         
@@ -1034,7 +1035,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
     //
     if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1 &&
-        IdxList[0]->isNullValue())
+        Idx0->isNullValue())
       if (const PointerType *SPT = 
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))

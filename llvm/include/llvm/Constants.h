@@ -533,7 +533,7 @@ protected:
   static Constant *getSelectTy(const Type *Ty,
                                Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
-                                      const std::vector<Constant*> &IdxList);
+                                      const std::vector<Value*> &IdxList);
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -584,10 +584,13 @@ public:
   static Constant *getUShr(Constant *C1, Constant *C2); // unsigned shr
   static Constant *getSShr(Constant *C1, Constant *C2); // signed shr
 
-  /// Getelementptr form...
+  /// Getelementptr form.  std::vector<Value*> is only accepted for convenience:
+  /// all elements must be Constant's.
   ///
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Constant*> &IdxList);
+  static Constant *getGetElementPtr(Constant *C,
+                                    const std::vector<Value*> &IdxList);
   
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
