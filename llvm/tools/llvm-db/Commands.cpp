@@ -483,7 +483,7 @@ void CLIDebugger::breakCommand(std::string &Options) {
     Options = Option + Options;  // reconstruct string
 
     // Parse the line specifier.
-    parseLineSpec(FirstLineSpec, File, LineNo);
+    parseLineSpec(Options, File, LineNo);
   } else {
     // Build a line specifier for the current stack frame.
     throw "FIXME: breaking at the current location is not implemented yet!";
