@@ -28,7 +28,6 @@ namespace llvm {
 /// @breif A vector that has set insertion semantics.
 template <typename T>
 class SetVector {
-
 public:
   typedef T value_type;
   typedef T key_type;
@@ -39,6 +38,15 @@ public:
   typedef typename vector_type::iterator iterator;
   typedef typename vector_type::const_iterator const_iterator;
   typedef typename vector_type::size_type size_type;
+
+  /// @brief Construct an empty SetVector
+  SetVector() {}
+
+  /// @brief Initialize a SetVector with a range of elements
+  template<typename It>
+  SetVector( It Start, It End ) {
+    insert(Start, End);
+  }
 
   /// @brief Completely clear the SetVector
   void clear() {
@@ -89,6 +97,14 @@ public:
       vector_.push_back(X);
     }
     return result;
+  }
+
+  /// @brief Insert a range of elements into the SetVector.
+  template<typename It>
+  void insert( It Start, It End ) {
+    for (; Start != End; ++Start)
+      if ( set_.insert(*Start).second )
+        vector_.push_back(*Start);
   }
 
   /// @returns 0 if the element is not in the SetVector, 1 if it is.
