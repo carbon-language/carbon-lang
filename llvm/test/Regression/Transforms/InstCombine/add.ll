@@ -57,3 +57,4 @@ int %test8(int %A, int %B) {     ; (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1
 	%C = add int %A1, %B1
 	ret int %C
 }
+

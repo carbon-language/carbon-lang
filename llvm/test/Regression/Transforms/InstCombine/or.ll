@@ -99,3 +99,9 @@ int %test16(int %A, int %B) {     ; (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C
         ret int %OROK
 }
 
+ubyte %test17(ubyte %A, ubyte %B) {  ; Test that (A|c1)|(B|c2) == (A|B)|(c1|c2)
+	%C = or ubyte %A, 1
+	%D = or ubyte %B, 254
+	%E = or ubyte %C, %D
+	ret ubyte %E
+}
