@@ -33,6 +33,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -1144,26 +1145,25 @@ void PhyRegAlloc::saveState () {
   std::vector<AllocInfo> &state = FnAllocState[Fn];
   unsigned Insn = 0;
   LiveRangeMapType::const_iterator HMIEnd = LRI->getLiveRangeMap ()->end ();   
-  for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II != IE; ++II)
+  for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II){
     for (unsigned i = 0; i < (*II)->getNumOperands (); ++i) {
       const Value *V = (*II)->getOperand (i);
       // Don't worry about it unless it's something whose reg. we'll need.
       if (!isa<Argument> (V) && !isa<Instruction> (V))
         continue;
       LiveRangeMapType::const_iterator HMI = LRI->getLiveRangeMap ()->find (V);
-      static const unsigned NotAllocated = 0, Allocated = 1, Spilled = 2;
-      unsigned AllocState = NotAllocated;
+      AllocInfo::AllocStateTy AllocState = AllocInfo::NotAllocated;
       int Placement = -1;
       if ((HMI != HMIEnd) && HMI->second) {
         LiveRange *L = HMI->second;
         assert ((L->hasColor () || L->isMarkedForSpill ())
                 && "Live range exists but not colored or spilled");
         if (L->hasColor()) {
-          AllocState = Allocated;
+          AllocState = AllocInfo::Allocated;
           Placement = MRI.getUnifiedRegNum (L->getRegClassID (),
                                             L->getColor ());
         } else if (L->isMarkedForSpill ()) {
-          AllocState = Spilled;
+          AllocState = AllocInfo::Spilled;
           assert (L->hasSpillOffset ()
                   && "Live range marked for spill but has no spill offset");
           Placement = L->getSpillOffFromFP ();
@@ -1171,6 +1171,8 @@ void PhyRegAlloc::saveState () {
       }
       state.push_back (AllocInfo (Insn, i, AllocState, Placement));
     }
+    ++Insn;
+  }
 }
 
 
@@ -1178,7 +1180,28 @@ void PhyRegAlloc::saveState () {
 /// wrong. Only used when debugging.
 ///
 void PhyRegAlloc::verifySavedState () {
-  /// not yet implemented
+  std::vector<AllocInfo> &state = FnAllocState[Fn];
+  unsigned Insn = 0;
+  for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II) {
+    const Instruction *I = *II;
+    MachineCodeForInstruction &Instrs = MachineCodeForInstruction::get (I);
+    std::cerr << "Instruction:\n" << "  " << *I << "\n"
+              << "MachineCodeForInstruction:\n";
+    for (unsigned i = 0, n = Instrs.size (); i != n; ++i)
+      std::cerr << "  " << *Instrs[i] << "\n";
+    std::cerr << "FnAllocState:\n";
+    for (unsigned i = 0; i < state.size (); ++i) {
+      AllocInfo &S = state[i];
+      if (Insn == S.Instruction) {
+        std::cerr << "  (Instruction " << S.Instruction
+                  << ", Operand " << S.Operand
+                  << ", AllocState " << S.allocStateToString ()
+                  << ", Placement " << S.Placement << ")\n";
+      }
+    }
+    std::cerr << "----------\n";
+    ++Insn;
+  }
 }
 
 /// Finish the job of saveState(), by collapsing FnAllocState into an LLVM
