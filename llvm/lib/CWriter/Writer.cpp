@@ -563,9 +563,8 @@ void CWriter::printModule(Module *M) {
   if (!M->gempty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
-      if (I->hasExternalLinkage())
-        continue;                       // printed above!
-      Out << "static ";
+      if (I->hasInternalLinkage())
+        Out << "static ";
       printType(I->getType()->getElementType(), getValueName(I));
       
       if (I->hasInitializer()) {
