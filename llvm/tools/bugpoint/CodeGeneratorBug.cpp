@@ -259,7 +259,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 #else
               << " -shared"       // `-shared' for Linux/X86, maybe others
 #endif
-              << "\n";
+              << " -fno-strict-aliasing\n";
   } else {
     removeFile(TestModuleBC);
     removeFile(SafeModuleBC);
