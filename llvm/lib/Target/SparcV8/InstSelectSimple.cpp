@@ -905,16 +905,24 @@ void V8ISel::visitAllocaInst(AllocaInst &I) {
   unsigned TmpReg1 = makeAnotherReg (Type::UIntTy);
   unsigned TmpReg2 = makeAnotherReg (Type::UIntTy);
   unsigned StackAdjReg = makeAnotherReg (Type::UIntTy);
-  unsigned DestReg = getReg (I);
 
   // StackAdjReg = (ArraySize * TySize) rounded up to nearest doubleword boundary
   BuildMI (BB, V8::UMULrr, 2, TmpReg1).addReg (ArraySizeReg).addReg (TySizeReg);
+
   // Round up TmpReg1 to nearest doubleword boundary:
   BuildMI (BB, V8::ADDri, 2, TmpReg2).addReg (TmpReg1).addSImm (7);
   BuildMI (BB, V8::ANDri, 2, StackAdjReg).addReg (TmpReg2).addSImm (-8);
-  // Adjust stack, push pointer past trap frame space, put result in DestReg
+
+  // Subtract size from stack pointer, thereby allocating some space.
   BuildMI (BB, V8::SUBrr, 2, V8::SP).addReg (V8::SP).addReg (StackAdjReg);
-  BuildMI (BB, V8::ADDri, 2, DestReg).addReg (V8::SP).addSImm (96);
+
+  // Put a pointer to the space into the result register, by copying
+  // the stack pointer.
+  BuildMI (BB, V8::ADDri, 2, getReg(I)).addReg (V8::SP).addSImm (96);
+
+  // Inform the Frame Information that we have just allocated a variable-sized
+  // object.
+  F->getFrameInfo()->CreateVariableSizedObject();
 }
 
 /// LowerUnknownIntrinsicFunctionCalls - This performs a prepass over the
