@@ -77,7 +77,7 @@ OptimizerEval:      llvm/test/Programs/MultiSource/Benchmarks/OptimizerEval
 Ptrdist:            llvm/test/Programs/MultiSource/Benchmarks/Ptrdist
 LLUBenchmark:       llvm/test/Programs/MultiSource/Benchmarks/llubenchmark
 SIM:                llvm/test/Programs/MultiSource/Benchmarks/sim
-cfrac:               llvm/test/Programs/MultiSource/Benchmarks/MallocBench/cfrac
+cfrac:              llvm/test/Programs/MultiSource/Benchmarks/MallocBench/cfrac
 espresso:           llvm/test/Programs/MultiSource/Benchmarks/MallocBench/espresso
 gs:                 llvm/test/Programs/MultiSource/Benchmarks/MallocBench/gs
 p2c:                llvm/test/Programs/MultiSource/Benchmarks/MallocBench/p2c
@@ -88,7 +88,6 @@ Dhrystone:          llvm/test/Programs/SingleSource/Benchmarks/Dhrystone
 SingleSource Tests: llvm/test/Programs/SingleSource/Benchmarks/Misc
                     llvm/test/Programs/SingleSource/CustomChecked
                     llvm/test/Programs/SingleSource/Gizmos
-Boost:              llvm/include/boost
 GNU Libc:           llvm/runtime/GCCLibraries/libc
 Zlib Library:       llvm/runtime/zlib
 PNG Library:        llvm/runtime/libpng
