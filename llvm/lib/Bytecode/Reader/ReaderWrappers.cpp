@@ -106,7 +106,7 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
     MustDelete = true;
   } else {
     // If we don't need to copy it over, just use the caller's copy
-    Buffer = Buf;
+    ParseBegin = Buffer = Buf;
     Length = Len;
     MustDelete = false;
   }
