@@ -13,6 +13,9 @@ ifdef TEST
 test::
 endif
 
+# We do not want to make .d files for tests! 
+DISABLE_AUTO_DEPENDENCIES=1
+
 include ${LEVEL}/Makefile.common
 
 # Specify ENABLE_STATS on the command line to enable -stats and -time-passes
@@ -20,7 +23,6 @@ include ${LEVEL}/Makefile.common
 ifdef ENABLE_STATS
 STATS = -stats -time-passes
 endif
-
 
 .PHONY: clean default
 
