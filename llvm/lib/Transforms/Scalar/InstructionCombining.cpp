@@ -2700,7 +2700,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Value *Op = GEP.getOperand(i);
       if (Op->getType()->getPrimitiveSize() > TD->getPointerSize())
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          GEP.setOperand(i, ConstantExpr::getCast(C, TD->getIntPtrType()));
+          GEP.setOperand(i, ConstantExpr::getCast(C,
+                                     TD->getIntPtrType()->getSignedVersion()));
           MadeChange = true;
         } else {
           Op = InsertNewInstBefore(new CastInst(Op, TD->getIntPtrType(),
@@ -2708,6 +2709,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           GEP.setOperand(i, Op);
           MadeChange = true;
         }
+
+      // If this is a constant idx, make sure to canonicalize it to be a signed
+      // operand, otherwise CSE and other optimizations are pessimized.
+      if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op)) {
+        GEP.setOperand(i, ConstantExpr::getCast(CUI,
+                                          CUI->getType()->getSignedVersion()));
+        MadeChange = true;
+      }
     }
   if (MadeChange) return &GEP;
 
