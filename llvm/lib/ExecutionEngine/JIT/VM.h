@@ -44,6 +44,12 @@ public:
 
   void *resolveFunctionReference(void *RefAddr);
 
+  /// getPointerToNamedFunction - This method returns the address of the
+  /// specified function by using the dlsym function call.  As such it is only
+  /// useful for resolving library symbols, not code generated symbols.
+  ///
+  void *getPointerToNamedFunction(const std::string &Name);
+
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();
