@@ -90,7 +90,7 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
 
-MachineBasicBlock* ilist_traits<MachineBasicBlock>::createSentinal() {
+MachineBasicBlock* ilist_traits<MachineBasicBlock>::createSentinel() {
   MachineBasicBlock* dummy = new MachineBasicBlock();
   LeakDetector::removeGarbageObject(dummy);
   return dummy;

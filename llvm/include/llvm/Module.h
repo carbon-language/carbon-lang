@@ -32,16 +32,16 @@ class SymbolTable;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module, Module> {
-  // createSentinal is used to create a node that marks the end of the list.
-  static Function *createSentinal();
-  static void destroySentinal(Function *F) { delete F; }
+  // createSentinel is used to create a node that marks the end of the list.
+  static Function *createSentinel();
+  static void destroySentinel(Function *F) { delete F; }
   static iplist<Function> &getList(Module *M);
 };
 template<> struct ilist_traits<GlobalVariable>
   : public SymbolTableListTraits<GlobalVariable, Module, Module> {
-  // createSentinal is used to create a node that marks the end of the list.
-  static GlobalVariable *createSentinal();
-  static void destroySentinal(GlobalVariable *GV) { delete GV; }
+  // createSentinel is used to create a node that marks the end of the list.
+  static GlobalVariable *createSentinel();
+  static void destroySentinel(GlobalVariable *GV) { delete GV; }
   static iplist<GlobalVariable> &getList(Module *M);
 };
 

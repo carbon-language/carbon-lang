@@ -84,12 +84,12 @@ struct ilist_traits<Use> {
   static void setPrev(Use *N, Use *Prev) { N->UseLinks.Prev = Prev; }
   static void setNext(Use *N, Use *Next) { N->UseLinks.Next = Next; }
 
-  /// createSentinal - this is used to create the end marker for the use list.
+  /// createSentinel - this is used to create the end marker for the use list.
   /// Note that we only allocate a UseLinks structure, which is just enough to
   /// hold the next/prev pointers.  This saves us 8 bytes of memory for every
   /// Value allocated.
-  static Use *createSentinal() { return (Use*)new Use::NextPrevPtrs(); }
-  static void destroySentinal(Use *S) { delete (Use::NextPrevPtrs*)S; }
+  static Use *createSentinel() { return (Use*)new Use::NextPrevPtrs(); }
+  static void destroySentinel(Use *S) { delete (Use::NextPrevPtrs*)S; }
 
   void addNodeToList(Use *NTy) {}
   void removeNodeFromList(Use *NTy) {}

@@ -369,8 +369,8 @@ struct ilist_traits<DSNode> {
   static void setPrev(DSNode *N, DSNode *Prev) { N->Prev = Prev; }
   static void setNext(DSNode *N, DSNode *Next) { N->Next = Next; }
 
-  static DSNode *createSentinal() { return new DSNode(0,0); }
-  static void destroySentinal(DSNode *N) { delete N; }
+  static DSNode *createSentinel() { return new DSNode(0,0); }
+  static void destroySentinel(DSNode *N) { delete N; }
   //static DSNode *createNode(const DSNode &V) { return new DSNode(V); }
 
 

@@ -40,9 +40,9 @@ template <class Ptr, class USE_iterator> class PredIterator;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock, Function> {
-  // createSentinal is used to create a node that marks the end of the list...
-  static Instruction *createSentinal();
-  static void destroySentinal(Instruction *I) { delete I; }
+  // createSentinel is used to create a node that marks the end of the list...
+  static Instruction *createSentinel();
+  static void destroySentinel(Instruction *I) { delete I; }
   static iplist<Instruction> &getList(BasicBlock *BB);
 };
 
