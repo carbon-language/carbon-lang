@@ -69,6 +69,7 @@ Burg:               llvm/utils/Burg
 Aha:                llvm/test/Programs/MultiSource/Applications/aha
 SGEFA:              llvm/test/Programs/MultiSource/Applications/sgefa
 SIOD:               llvm/test/Programs/MultiSource/Applications/siod
+Spiff:              llvm/test/Programs/MultiSource/Applications/spiff
 D:                  llvm/test/Programs/MultiSource/Applications/d
 Lambda:             llvm/test/Programs/MultiSource/Applications/lambda-0.1.3
 hbd:                llvm/test/Programs/MultiSource/Applications/hbd
