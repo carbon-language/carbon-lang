@@ -15,6 +15,7 @@
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Pass.h"
 #include "llvm/iMemory.h"
 #include "llvm/BasicBlock.h"
@@ -72,6 +73,7 @@ void LoadVN::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   AU.addRequired<ValueNumbering>();
   AU.addRequired<DominatorSet>();
+  AU.addRequired<TargetData>();
 }
 
 // getEqualNumberNodes - Return nodes with the same value number as the
@@ -81,7 +83,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
                                  std::vector<Value*> &RetVals) const {
 
   if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
-    // If we have a load instruction find all of the load instructions that use
+    // If we have a load instruction, find all of the load instructions that use
     // the same source operand.  We implement this recursively, because there
     // could be a load of a load of a load that are all identical.  We are
     // guaranteed that this cannot be an infinite recursion because load
@@ -147,7 +149,8 @@ void LoadVN::getEqualNumberNodes(Value *V,
 // (until DestBB) contain an instruction that might invalidate Ptr.
 //
 static bool CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
-                                     Value *Ptr, AliasAnalysis &AA,
+                                     Value *Ptr, unsigned Size,
+                                     AliasAnalysis &AA,
                                      std::set<BasicBlock*> &VisitedSet) {
   // Found the termination point!
   if (BB == DestBB || VisitedSet.count(BB)) return false;
@@ -156,12 +159,12 @@ static bool CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
   VisitedSet.insert(BB);
 
   // Can this basic block modify Ptr?
-  if (AA.canBasicBlockModify(*BB, Ptr))
+  if (AA.canBasicBlockModify(*BB, Ptr, Size))
     return true;
 
   // Check all of our predecessor blocks...
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    if (CheckForInvalidatingInst(*PI, DestBB, Ptr, AA, VisitedSet))
+    if (CheckForInvalidatingInst(*PI, DestBB, Ptr, Size, AA, VisitedSet))
       return true;
 
   // None of our predecessor blocks contain an invalidating instruction, and we
@@ -192,6 +195,12 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
   BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
   Value *LoadAddress = L1->getOperand(0);
 
+  assert(L1->getType() == L2->getType() &&
+         "How could the same source pointer return different types?");
+
+  // Find out how many bytes of memory are loaded by the load instruction...
+  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(L1->getType());
+
   // L1 now dominates L2.  Check to see if the intervening instructions between
   // the two loads include a store or call...
   //
@@ -199,7 +208,7 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
     // In this degenerate case, no checking of global basic blocks has to occur
     // just check the instructions BETWEEN L1 & L2...
     //
-    if (AA.canInstructionRangeModify(*L1, *L2, LoadAddress))
+    if (AA.canInstructionRangeModify(*L1, *L2, LoadAddress, LoadSize))
       return false;   // Cannot eliminate load
 
     // No instructions invalidate the loads, they produce the same value!
@@ -208,13 +217,14 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
     // Make sure that there are no store instructions between L1 and the end of
     // it's basic block...
     //
-    if (AA.canInstructionRangeModify(*L1, *BB1->getTerminator(), LoadAddress))
+    if (AA.canInstructionRangeModify(*L1, *BB1->getTerminator(), LoadAddress,
+                                     LoadSize))
       return false;   // Cannot eliminate load
 
     // Make sure that there are no store instructions between the start of BB2
     // and the second load instruction...
     //
-    if (AA.canInstructionRangeModify(BB2->front(), *L2, LoadAddress))
+    if (AA.canInstructionRangeModify(BB2->front(), *L2, LoadAddress, LoadSize))
       return false;   // Cannot eliminate load
 
     // Do a depth first traversal of the inverse CFG starting at L2's block,
@@ -223,7 +233,8 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
     //
     std::set<BasicBlock*> VisitedSet;
     for (pred_iterator PI = pred_begin(BB2), PE = pred_end(BB2); PI != PE; ++PI)
-      if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, AA, VisitedSet))
+      if (CheckForInvalidatingInst(*PI, BB1, LoadAddress, LoadSize, AA,
+                                   VisitedSet))
         return false;
 
     // If we passed all of these checks then we are sure that the two loads
