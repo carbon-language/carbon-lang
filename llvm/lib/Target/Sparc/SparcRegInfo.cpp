@@ -655,9 +655,11 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
       // the LR is colored with UniLRReg but has to go into  UniArgReg
       // to pass it as an argument
 
-      if( isArgInReg ) 
+      if( isArgInReg ) {
 	AdMI = cpReg2RegMI(UniLRReg, UniArgReg, RegType );
-
+	AddedInstrnsBefore.push_back( AdMI ); 
+      }
+      
       else {
 	// Now, we have to pass the arg on stack. Since LR received a register
 	// we just have to move that register to the stack position where
@@ -666,13 +668,16 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	int argOffset = PRA.mcInfo.allocateOptionalArg(target, LR->getType()); 
 
 	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, RegType );
+
+	// Now add the instruction. We can directly add to
+	// CallAI->InstrnsBefore since we are just saving a reg on stack
+	//
+	CallAI->InstrnsBefore.push_back( AdMI ); 
+
+	//cerr << "\nCaution: Passing a reg on stack";
       }
 
-      // Now add the instruction. We can directly add to
-      // CallAI->InstrnsBefore since we are just saving a reg on stack
-      //
-      CallAI->InstrnsBefore.push_back( AdMI ); 
-      //cerr << "\nCaution: Passing a reg on stack";
+
     }
 
     else {                          // LR is not colored (i.e., spilled)      
