@@ -156,7 +156,7 @@ unsigned TargetData::getIndexedOffset(const Type *ptrTy,
   for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
     if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
-      unsigned FieldNo = ((ConstPoolUInt*)Idx[CurIDX++])->getValue();
+      unsigned FieldNo = ((ConstPoolUInt*)Idx[CurIDX])->getValue();
 
       // Get structure layout information...
       const StructLayout *Layout = getStructLayout(STy);
