@@ -27,39 +27,6 @@ namespace llvm {
 //     Extra additions to <functional>
 //===----------------------------------------------------------------------===//
 
-// bind_obj - Often times you want to apply the member function of an object
-// as a unary functor.  This macro is shorthand that makes it happen less
-// verbosely.
-//
-// Example:
-//  struct Summer { void accumulate(int x); }
-//  vector<int> Numbers;
-//  Summer MyS;
-//  for_each(Numbers.begin(), Numbers.end(),
-//           bind_obj(&MyS, &Summer::accumulate));
-//
-// TODO: When I get lots of extra time, convert this from an evil macro
-//
-#define bind_obj(OBJ, METHOD) std::bind1st(std::mem_fun(METHOD), OBJ)
-
-
-// bitwise_or - This is a simple functor that applys operator| on its two 
-// arguments to get a boolean result.
-//
-template<class Ty>
-struct bitwise_or : public std::binary_function<Ty, Ty, bool> {
-  bool operator()(const Ty& left, const Ty& right) const {
-    return left | right;
-  }
-};
-
-template<class Ty>
-struct less_ptr : public std::binary_function<Ty, Ty, bool> {
-  bool operator()(const Ty* left, const Ty* right) const {
-    return *left < *right;
-  }
-};
-
 template<class Ty>
 struct greater_ptr : public std::binary_function<Ty, Ty, bool> {
   bool operator()(const Ty* left, const Ty* right) const {
