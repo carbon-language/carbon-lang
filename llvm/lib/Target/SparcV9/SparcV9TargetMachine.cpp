@@ -61,7 +61,7 @@ namespace {
                       cl::desc("Do not strip the LLVM bytecode in executable"));
 
   // Register the target.
-  RegisterTarget<SparcV9TargetMachine> X("sparcv9", "SPARC V9");
+  RegisterTarget<SparcV9TargetMachine> X("sparcv9", "  SPARC V9");
 }
 
 unsigned SparcV9TargetMachine::getJITMatchQuality() {

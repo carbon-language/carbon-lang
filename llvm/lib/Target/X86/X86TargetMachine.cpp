@@ -38,7 +38,7 @@ namespace {
 	     cl::desc("Use the hand coded 'simple' X86 instruction selector"));
 
   // Register the target.
-  RegisterTarget<X86TargetMachine> X("x86", "IA-32 (Pentium and above)");
+  RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine

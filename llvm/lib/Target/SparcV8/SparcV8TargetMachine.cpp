@@ -24,7 +24,7 @@ using namespace llvm;
 
 namespace {
   // Register the target.
-  RegisterTarget<SparcV8TargetMachine> X("sparcv8", "SPARC V8 (experimental)");
+  RegisterTarget<SparcV8TargetMachine> X("sparcv8","  SPARC V8 (experimental)");
 }
 
 // allocateSparcV8TargetMachine - Allocate and return a subclass of 

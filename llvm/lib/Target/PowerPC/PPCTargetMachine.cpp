@@ -25,7 +25,7 @@ using namespace llvm;
 
 namespace {
   // Register the target.
-  RegisterTarget<PowerPCTargetMachine> X("powerpc", "PowerPC (experimental)");
+  RegisterTarget<PowerPCTargetMachine> X("powerpc", "  PowerPC (experimental)");
 }
 
 // allocatePowerPCTargetMachine - Allocate and return a subclass of 

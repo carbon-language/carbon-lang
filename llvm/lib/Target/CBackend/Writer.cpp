@@ -42,7 +42,7 @@ using namespace llvm;
 
 namespace {
   // Register the target.
-  RegisterTarget<CTargetMachine> X("c", "C backend");
+  RegisterTarget<CTargetMachine> X("c", "  C backend");
 
   /// NameAllUsedStructs - This pass inserts names for any unnamed structure
   /// types that are used by the program.
