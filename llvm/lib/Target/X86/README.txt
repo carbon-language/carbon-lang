@@ -132,7 +132,7 @@ Representing memory in MachineInstrs
 ------------------------------------
 
 The x86 has a very, uhm, flexible, way of accessing memory.  It is capable of
-addressing memory addresses of the following form directly in integer
+forming memory addresses of the following expression directly in integer
 instructions (which use ModR/M addressing):
 
    Base+[1,2,4,8]*IndexReg+Disp32
