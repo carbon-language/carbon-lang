@@ -324,6 +324,10 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
        MBB != MBBe; ++MBB)
     AllocateBasicBlock(*MBB);
 
+  // Round stack allocation up to a nice alignment to keep the stack aligned
+  // FIXME: This is X86 specific!  Move to frame manager
+  NumBytesAllocated = (NumBytesAllocated + 3) & ~3;
+
   // Add prologue to the function...
   RegInfo->emitPrologue(Fn, NumBytesAllocated);
 
