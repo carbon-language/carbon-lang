@@ -224,7 +224,7 @@ void InterferenceGraph::printIG() const
     if(Node) {
       cerr << " [" << i << "] ";
 
-      for( unsigned int j=0; j < i; j++) {
+      for( unsigned int j=0; j < Size; j++) {
 	if(IG[i][j])
           cerr << "(" << i << "," << j << ") ";
       }
