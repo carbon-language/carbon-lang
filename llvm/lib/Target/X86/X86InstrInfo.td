@@ -121,10 +121,10 @@ let isTerminator = 1, isReturn = 1 in
 let isBranch = 1, isTerminator = 1 in
   class IBr<string name, bits<8> opcode> : X86Inst<name, opcode, RawFrm, NoArg>;
 
-def JMP : IBr<"jmp", 0xE9>;
+def JMP : IBr<"jmp", 0xE9>, Pattern<(br basicblock)>;
 def JB  : IBr<"jb" , 0x82>, TB;
 def JAE : IBr<"jae", 0x83>, TB;
-def JE  : IBr<"je" , 0x84>, TB;
+def JE  : IBr<"je" , 0x84>, TB, Pattern<(isVoid (unspec1 basicblock))>;
 def JNE : IBr<"jne", 0x85>, TB;
 def JBE : IBr<"jbe", 0x86>, TB;
 def JA  : IBr<"ja" , 0x87>, TB;
@@ -318,7 +318,8 @@ def CMOVNErr32: I2A32<"cmovne",0x45, MRMSrcReg>, TB;                // if !=, R3
 // Integer comparisons
 def CMPrr8  : X86Inst<"cmp", 0x38, MRMDestReg, Arg8 >;              // compare R8, R8
 def CMPrr16 : X86Inst<"cmp", 0x39, MRMDestReg, Arg16>, OpSize;      // compare R16, R16
-def CMPrr32 : X86Inst<"cmp", 0x39, MRMDestReg, Arg32>;              // compare R32, R32
+def CMPrr32 : X86Inst<"cmp", 0x39, MRMDestReg, Arg32>,              // compare R32, R32
+              Pattern<(isVoid (unspec2 R32, R32))>;
 def CMPri8  : X86Inst<"cmp", 0x80, MRMS7r    , Arg8 >;              // compare R8, imm8
 def CMPri16 : X86Inst<"cmp", 0x81, MRMS7r    , Arg16>, OpSize;      // compare R16, imm16
 def CMPri32 : X86Inst<"cmp", 0x81, MRMS7r    , Arg32>;              // compare R32, imm32
@@ -451,3 +452,14 @@ def LOAD_FI32 : Expander<(set R32:$dest, (load frameidx:$fi)),
                          [(MOVmr32 R32:$dest, frameidx:$fi, 1, 0/*NoReg*/, 0)]>;
 
 
+def LOAD_R16 : Expander<(set R16:$dest, (load R32:$src)),
+                         [(MOVmr16 R16:$dest, R32:$src, 1, 0/*NoReg*/, 0)]>;
+
+def LOAD_R32 : Expander<(set R32:$dest, (load R32:$src)),
+                         [(MOVmr32 R32:$dest, R32:$src, 1, 0/*NoReg*/, 0)]>;
+
+def BR_EQ : Expander<(brcond (seteq R32:$a1, R32:$a2),
+                             basicblock:$d1, basicblock:$d2),
+                     [(CMPrr32 R32:$a1, R32:$a2),
+                      (JE basicblock:$d1),
+                      (JMP basicblock:$d2)]>;
