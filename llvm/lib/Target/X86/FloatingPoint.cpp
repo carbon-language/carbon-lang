@@ -245,20 +245,20 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     }
     
     // Print out all of the instructions expanded to if -debug
-    DEBUG(if (&*I == PrevMI) {
-            std::cerr<< "Just deleted pseudo instruction\n";
-          } else {
-	    MachineBasicBlock::iterator Start = I;
-	    // Rewind to first instruction newly inserted.
-	    while (Start != BB.begin() &&
-                   --Start != MachineBasicBlock::iterator(PrevMI));
-            ++Start;
-	    std::cerr << "Inserted instructions:\n\t";
-	    Start->print(std::cerr, MF.getTarget());
-	    while (++Start != I); ++Start;
-	  }
-	  dumpStack();
-	  );
+    DEBUG(
+      MachineBasicBlock::iterator PrevI(PrevMI);
+      if (I == PrevI) {
+        std::cerr<< "Just deleted pseudo instruction\n";
+      } else {
+        MachineBasicBlock::iterator Start = I;
+        // Rewind to first instruction newly inserted.
+        while (Start != BB.begin() && prior(Start) != PrevI) --Start;
+        std::cerr << "Inserted instructions:\n\t";
+        Start->print(std::cerr, MF.getTarget());
+        while (++Start != next(I));
+      }
+      dumpStack();
+    );
 
     Changed = true;
   }
