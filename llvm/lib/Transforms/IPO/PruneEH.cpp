@@ -22,6 +22,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
+#include <algorithm>
 using namespace llvm;
 
 namespace {
