@@ -125,6 +125,8 @@ cases).</li>
 
 <li>Methods and functions in anonymous namespaces <a href="http://llvm.cs.uiuc.edu/PR85">now get internal linkage</a>.</li>
 
+<li>Constant initializers now generate loops instead of potentially <a href="http://llvm.cs.uiuc.edu/PR75">huge amounts of straight-line code</a>.</li>
+
 </ol>
 
 <p>In this release, the following bugs in the previous release were fixed:</p>
@@ -178,13 +180,14 @@ many platforms, such as X86.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR113">crash assigning into an array in a struct which contains a bitfield</a>.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR6">Oversized integer bitfields cause crash</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR140">gccld produces a runner script that includes command-line options to load the necessary shared objects</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR141">[llvm-gcc] Bitfields & large array don't mix well</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR141">[llvm-gcc] Bitfields &amp; large array don't mix well</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR132">[llvm-gcc] Complex division is not supported</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR143">[llvm-gcc] Illegal union field reference</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR148">[llvmg++] Front-end attempts to return structure by value</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR152">[llvmg++] Pointer to member initializers not supported in constructors</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR155">[llvm-gcc] crash on union initialization</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR124">[llvm-g++] ?: expressions do not run correct number of destructors!</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR157">[llvm-gcc] Pointer & constant results in invalid shift</a></li>
 </ol><p>
 
 <p>At this time, LLVM is known to work properly with SPEC CPU 2000 (X86 only),
