@@ -129,7 +129,6 @@ public:
   // stores.
   bool isVolatile() const { return Volatile; }
 
-
   /// isForwardingAliasSet - Return true if this alias set should be ignored as
   /// part of the AliasSetTracker object.
   bool isForwardingAliasSet() const { return Forward; }
@@ -143,6 +142,7 @@ public:
   class iterator;
   iterator begin() const { return iterator(PtrList); }
   iterator end()   const { return iterator(); }
+  bool empty() const { return PtrList == 0; }
 
   void print(std::ostream &OS) const;
   void dump() const;
@@ -168,6 +168,9 @@ public:
       return *CurNode;
     }
     value_type *operator->() const { return &operator*(); }
+
+    Value *getPointer() const { return CurNode->first; }
+    unsigned getSize() const { return CurNode->second.getSize(); }
   
     iterator& operator++() {                // Preincrement
       assert(CurNode && "Advancing past AliasSet.end()!");
@@ -267,6 +270,18 @@ public:
   void add(BasicBlock &BB);       // Add all instructions in basic block
   void add(const AliasSetTracker &AST); // Add alias relations from another AST
 
+  /// remove methods - These methods are used to remove all entries that might
+  /// be aliased by the specified instruction.  These methods return true if any
+  /// alias sets were eliminated.
+  bool remove(LoadInst *LI);
+  bool remove(StoreInst *SI);
+  bool remove(CallSite CS);
+  bool remove(CallInst *CI)   { return remove(CallSite(CI)); }
+  bool remove(InvokeInst *II) { return remove(CallSite(II)); }
+  bool remove(Instruction *I);
+  void remove(AliasSet &AS);
+
+
   /// deleteValue method - This method is used to remove a pointer value from
   /// the AliasSetTracker entirely.  It should be used when an instruction is
   /// deleted from the program to update the AST.  If you don't use this, you
@@ -282,6 +297,12 @@ public:
   /// true if a new alias set is created to contain the pointer (because the
   /// pointer didn't alias anything).
   AliasSet &getAliasSetForPointer(Value *P, unsigned Size, bool *New = 0);
+
+  /// getAliasSetForPointerIfExists - Return the alias set containing the
+  /// location specified if one exists, otherwise return null.
+  AliasSet *getAliasSetForPointerIfExists(Value *P, unsigned Size) {
+    return findAliasSetForPointer(P, Size);
+  }
 
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.
