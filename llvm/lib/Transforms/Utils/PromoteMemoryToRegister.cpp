@@ -38,21 +38,20 @@ protected:
   vector<AllocaInst*>          Allocas;      // the alloca instruction..
   map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
   
-  vector<vector<BasicBlock*> > WriteSets;    // index corresponds to Allocas
   vector<vector<BasicBlock*> > PhiNodes;     // index corresponds to Allocas
-  vector<vector<Value*> >      CurrentValue; // the current value stack
   
   //list of instructions to remove at end of pass :)
   vector<Instruction *>        KillList;
 
-  set<BasicBlock*> visited;       // the basic blocks we've already visited
   map<BasicBlock*, vector<PHINode*> > NewPhiNodes; // the phinodes we're adding
 
-  void traverse(BasicBlock *f, BasicBlock * predecessor);
+  bool didchange;
+
+  void traverse(BasicBlock *BB, BasicBlock *Pred, vector<Value*> &IncVals,
+                set<BasicBlock*> &Visited);
   bool PromoteFunction(Function *F, DominanceFrontier &DF);
   bool QueuePhiNode(BasicBlock *bb, unsigned alloca_index);
   void findSafeAllocas(Function *M);
-  bool didchange;
 public:
   // I do this so that I can force the deconstruction of the local variables
   PromoteInstance(Function *F, DominanceFrontier &DF) {
@@ -65,6 +64,29 @@ public:
 }  // end of anonymous namespace
 
 
+// isSafeAlloca - This predicate controls what types of alloca instructions are
+// allowed to be promoted...
+//
+static inline bool isSafeAlloca(const AllocaInst *AI) {
+  if (AI->isArrayAllocation()) return false;
+
+  for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
+       UI != UE; ++UI) {   // Loop over all of the uses of the alloca
+
+    // Only allow nonindexed memory access instructions...
+    if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(*UI)) {
+      if (MAI->hasIndices()) {  // indexed?
+        // Allow the access if there is only one index and the index is
+        // zero.
+        if (*MAI->idx_begin() != ConstantUInt::get(Type::UIntTy, 0) ||
+            MAI->idx_begin()+1 != MAI->idx_end())
+          return false;
+      }
+    } else {
+      return false;   // Not a load or store?
+    }
+  }
+}
 
 // findSafeAllocas - Find allocas that are safe to promote
 //
@@ -74,30 +96,9 @@ void PromoteInstance::findSafeAllocas(Function *F) {
   // Look at all instructions in the entry node
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(*I))       // Is it an alloca?
-      if (!AI->isArrayAllocation()) {
-	bool isSafe = true;
-	for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
-	     UI != UE; ++UI) {   // Loop over all of the uses of the alloca
-
-	  // Only allow nonindexed memory access instructions...
-	  if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(*UI)) {
-	    if (MAI->hasIndices()) {  // indexed?
-	      // Allow the access if there is only one index and the index is
-              // zero.
-	      if (*MAI->idx_begin() != ConstantUInt::get(Type::UIntTy, 0) ||
-		  MAI->idx_begin()+1 != MAI->idx_end()) {
-		isSafe = false;
-                break;
-	      }
-	    }
-	  } else {
-	    isSafe = false; break;   // Not a load or store?
-	  }
-	}
-	if (isSafe) {            // If all checks pass, add alloca to safe list
-          AllocaLookup[AI] = Allocas.size();
-          Allocas.push_back(AI);
-        }
+      if (isSafeAlloca(AI)) {   // If safe alloca, add alloca to safe list
+        AllocaLookup[AI] = Allocas.size();  // Keep reverse mapping
+        Allocas.push_back(AI);
       }
 }
 
@@ -113,6 +114,7 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
 
   // Calculate the set of write-locations for each alloca.  This is analogous to
   // counting the number of 'redefinitions' of each variable.
+  vector<vector<BasicBlock*> > WriteSets;    // index corresponds to Allocas
   WriteSets.resize(Allocas.size());
   for (unsigned i = 0; i != Allocas.size(); ++i) {
     AllocaInst *AI = Allocas[i];
@@ -150,15 +152,15 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
   // the alloca's.  We do this in case there is a load of a value that has not
   // been stored yet.  In this case, it will get this null value.
   //
-  CurrentValue.push_back(vector<Value *>(Allocas.size()));
+  vector<Value *> Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
-    CurrentValue[0][i] =
-      Constant::getNullValue(Allocas[i]->getType()->getElementType());
+    Values[i] = Constant::getNullValue(Allocas[i]->getType()->getElementType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  traverse(F->front(), 0);  // there is no predecessor of the root node
+  set<BasicBlock*> Visited;         // The basic blocks we've already visited
+  traverse(F->front(), 0, Values, Visited);
 
   // Remove all instructions marked by being placed in the KillList...
   //
@@ -178,29 +180,29 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier &DF) {
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
 //
-bool PromoteInstance::QueuePhiNode(BasicBlock *BB, unsigned i /*the alloca*/) {
+bool PromoteInstance::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // Look up the basic-block in question
   vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
 
   // If the BB already has a phi node added for the i'th alloca then we're done!
-  if (BBPNs[i]) return false;
+  if (BBPNs[AllocaNo]) return false;
 
   // Create a phi-node using the dereferenced type...
-  PHINode *PN = new PHINode(Allocas[i]->getType()->getElementType(),
-                            Allocas[i]->getName()+".mem2reg");
-  BBPNs[i] = PN;
+  PHINode *PN = new PHINode(Allocas[AllocaNo]->getType()->getElementType(),
+                            Allocas[AllocaNo]->getName()+".mem2reg");
+  BBPNs[AllocaNo] = PN;
 
   // Add the phi-node to the basic-block
   BB->getInstList().push_front(PN);
 
-  PhiNodes[i].push_back(BB);
+  PhiNodes[AllocaNo].push_back(BB);
   return true;
 }
 
-void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred) {
-  vector<Value *> &TOS = CurrentValue.back(); // look at top
-
+void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred,
+                               vector<Value*> &IncomingVals,
+                               set<BasicBlock*> &Visited) {
   // If this is a BB needing a phi node, lookup/create the phinode for each
   // variable we need phinodes for.
   vector<PHINode *> &BBPNs = NewPhiNodes[BB];
@@ -208,17 +210,17 @@ void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred) {
     if (PHINode *PN = BBPNs[k]) {
       // at this point we can assume that the array has phi nodes.. let's add
       // the incoming data
-      PN->addIncoming(TOS[k], Pred);
+      PN->addIncoming(IncomingVals[k], Pred);
 
       // also note that the active variable IS designated by the phi node
-      TOS[k] = PN;
+      IncomingVals[k] = PN;
     }
 
   // don't revisit nodes
-  if (visited.count(BB)) return;
+  if (Visited.count(BB)) return;
   
   // mark as visited
-  visited.insert(BB);
+  Visited.insert(BB);
 
   // keep track of the value of each variable we're watching.. how?
   for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
@@ -228,9 +230,9 @@ void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred) {
       Value *Ptr = LI->getPointerOperand();
 
       if (AllocaInst *Src = dyn_cast<AllocaInst>(Ptr)) {
-        map<Instruction*, unsigned>::iterator ai = AllocaLookup.find(Src);
-        if (ai != AllocaLookup.end()) {
-          Value *V = TOS[ai->second];
+        map<Instruction*, unsigned>::iterator AI = AllocaLookup.find(Src);
+        if (AI != AllocaLookup.end()) {
+          Value *V = IncomingVals[AI->second];
 
           // walk the use list of this load and replace all uses with r
           LI->replaceAllUsesWith(V);
@@ -245,7 +247,7 @@ void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred) {
         map<Instruction *, unsigned>::iterator ai = AllocaLookup.find(Dest);
         if (ai != AllocaLookup.end()) {
           // what value were we writing?
-          TOS[ai->second] = SI->getOperand(0);
+          IncomingVals[ai->second] = SI->getOperand(0);
           KillList.push_back(SI);  // Mark the store to be deleted
         }
       }
@@ -253,9 +255,8 @@ void PromoteInstance::traverse(BasicBlock *BB, BasicBlock *Pred) {
     } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(I)) {
       // Recurse across our successors
       for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
-        CurrentValue.push_back(CurrentValue.back());
-        traverse(TI->getSuccessor(i), BB); // This node becomes the predecessor
-        CurrentValue.pop_back();
+        vector<Value*> OutgoingVals(IncomingVals);
+        traverse(TI->getSuccessor(i), BB, OutgoingVals, Visited);
       }
     }
   }
