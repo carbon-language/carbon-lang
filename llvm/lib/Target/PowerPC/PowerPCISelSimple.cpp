@@ -441,8 +441,7 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
 /// is okay to use as an immediate argument to a certain binary operator.
 ///
 /// Operator is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for Xor.
-bool ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Operator)
-{
+bool ISel::canUseAsImmediateForOpcode(ConstantInt *CI, unsigned Operator) {
   ConstantSInt *Op1Cs;
   ConstantUInt *Op1Cu;
       
@@ -795,8 +794,7 @@ void ISel::SelectPHINodes() {
           // We already inserted an initialization of the register for this
           // predecessor.  Recycle it.
           ValReg = EntryIt->second;
-
-        } else {        
+        } else {
           // Get the incoming value into a virtual register.
           //
           Value *Val = PN->getIncomingValue(i);
@@ -815,11 +813,11 @@ void ISel::SelectPHINodes() {
             // might be arbitrarily complex if it is a constant expression),
             // just insert the computation at the top of the basic block.
             MachineBasicBlock::iterator PI = PredMBB->begin();
-            
+
             // Skip over any PHI nodes though!
             while (PI != PredMBB->end() && PI->getOpcode() == PPC32::PHI)
               ++PI;
-            
+
             ValReg = getReg(Val, PredMBB, PI);
           }
 
@@ -918,7 +916,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   const Type *CompTy = Op0->getType();
   unsigned Class = getClassB(CompTy);
   unsigned Op0r = getReg(Op0, MBB, IP);
-  
+
   // Use crand for lt, gt and crandc for le, ge
   unsigned CROpcode = (OpNum == 2 || OpNum == 4) ? PPC32::CRAND : PPC32::CRANDC;
   // ? cr1[lt] : cr1[gt]
@@ -951,7 +949,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         unsigned HiLow = makeAnotherReg(Type::IntTy);
         unsigned HiTmp = makeAnotherReg(Type::IntTy);
         unsigned FinalTmp = makeAnotherReg(Type::IntTy);
-        
+
         BuildMI(*MBB, IP, PPC32::XORI, 2, LoLow).addReg(Op0r+1)
           .addImm(LowCst & 0xFFFF);
         BuildMI(*MBB, IP, PPC32::XORIS, 2, LoTmp).addReg(LoLow)
@@ -965,7 +963,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       } else {
         unsigned ConstReg = makeAnotherReg(CompTy);
         copyConstantToRegister(MBB, IP, CI, ConstReg);
-        
+
         // cr0 = r3 ccOpcode r5 or (r3 == r5 AND r4 ccOpcode r6)
         BuildMI(*MBB, IP, Opcode, 2, PPC32::CR0).addReg(Op0r)
           .addReg(ConstReg);
@@ -1029,9 +1027,9 @@ void ISel::visitSetCondInst(SetCondInst &I) {
   unsigned DestReg = getReg(I);
   unsigned OpNum = I.getOpcode();
   const Type *Ty = I.getOperand (0)->getType();
-                   
+
   EmitComparison(OpNum, I.getOperand(0), I.getOperand(1), BB, BB->end());
- 
+  
   unsigned Opcode = getPPCOpcodeForSetCCNumber(OpNum);
   MachineBasicBlock *thisMBB = BB;
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -1108,14 +1106,11 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   // to get the register of the Cond value
   if (SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(Cond)) {
     // We successfully folded the setcc into the select instruction.
-    
     unsigned OpNum = getSetCCNumber(SCI->getOpcode());
-    OpNum = EmitComparison(OpNum, SCI->getOperand(0), SCI->getOperand(1), MBB,
-                           IP);
+    OpNum = EmitComparison(OpNum, SCI->getOperand(0),SCI->getOperand(1),MBB,IP);
     Opcode = getPPCOpcodeForSetCCNumber(SCI->getOpcode());
   } else {
     unsigned CondReg = getReg(Cond, MBB, IP);
-
     BuildMI(*MBB, IP, PPC32::CMPI, 2, PPC32::CR0).addReg(CondReg).addSImm(0);
     Opcode = getPPCOpcodeForSetCCNumber(Instruction::SetNE);
   }
@@ -1209,7 +1204,6 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 
   // Make sure we have the register number for this value...
   unsigned Reg = Val ? getReg(Val) : VR.Reg;
-
   switch (getClassB(Ty)) {
   case cByte:
     // Extend value into target register (8->32)
@@ -2886,11 +2880,8 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
     }
   }
   // Do some statistical accounting
-  if (ops.empty())
-    ++GEPConsts;
-
-  if (anyCombined)
-    ++GEPSplits;
+  if (ops.empty()) ++GEPConsts; 
+  if (anyCombined) ++GEPSplits;
     
   // Emit instructions for all the collapsed ops
   for(std::vector<CollapsedGepOp *>::iterator cgo_i = ops.begin(),
