@@ -52,7 +52,8 @@ public:
     freeTable(ModuleValues);
   }
 
-  Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf);
+  Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf,
+                        const std::string &ModuleID);
 
   std::string getError() const { return Error; }
 

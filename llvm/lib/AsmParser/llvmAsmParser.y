@@ -591,7 +591,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   CurFilename = Filename;
   llvmAsmlineno = 1;      // Reset the current line number...
 
-  CurModule.CurrentModule = new Module();  // Allocate a new module to read
+  // Allocate a new module to read
+  CurModule.CurrentModule = new Module(Filename);
   yyparse();       // Parse the file.
   Module *Result = ParserResult;
   llvmAsmin = stdin;    // F is about to go away, don't use it anymore...

@@ -82,7 +82,8 @@ static bool ParseLongFilenameSection(unsigned char *Buffer, unsigned Size,
 }
 
 
-static bool ReadArchiveBuffer(unsigned char *Buffer, unsigned Length,
+static bool ReadArchiveBuffer(const std::string &Filename,
+                              unsigned char *Buffer, unsigned Length,
                               std::vector<Module*> &Objects,
                               std::string *ErrorStr) {
   if (Length < 8 || memcmp(Buffer, "!<arch>\n", 8))
@@ -107,7 +108,8 @@ static bool ReadArchiveBuffer(unsigned char *Buffer, unsigned Length,
         return true;
       break;
     case UserObject: {
-      Module *M = ParseBytecodeBuffer(Buffer+sizeof(ar_hdr), Size, ErrorStr);
+      Module *M = ParseBytecodeBuffer(Buffer+sizeof(ar_hdr), Size,
+                                      Filename+":somefile", ErrorStr);
       if (!M) return true;
       Objects.push_back(M);
       break;
@@ -151,7 +153,7 @@ bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
     return Error(ErrorStr, "Error mmapping file!");
   
   // Parse the archive files we mmap'ped in
-  bool Result = ReadArchiveBuffer(Buffer, Length, Objects, ErrorStr);
+  bool Result = ReadArchiveBuffer(Filename, Buffer, Length, Objects, ErrorStr);
   
   // Unmmap the archive...
   munmap((char*)Buffer, Length);

@@ -620,14 +620,15 @@ static inline Module *Error(std::string *ErrorStr, const char *Message) {
   return 0;
 }
 
-Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
+Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf,
+                                      const std::string &ModuleID) {
   unsigned Sig;
   // Read and check signature...
   if (read(Buf, EndBuf, Sig) ||
       Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24))
     return ::Error(&Error, "Invalid bytecode signature!");
 
-  TheModule = new Module();
+  TheModule = new Module(ModuleID);
   if (ParseModule(Buf, EndBuf)) {
     delete TheModule;
     TheModule = 0;
@@ -637,7 +638,7 @@ Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
 
 
 Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
-                            std::string *ErrorStr) {
+                            const std::string &ModuleID, std::string *ErrorStr){
   BytecodeParser Parser;
   unsigned char *PtrToDelete = 0;
   if ((intptr_t)Buffer & 3) {         // If the buffer is not 4 byte aligned...
@@ -648,7 +649,7 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
     Buffer = PtrToDelete+Offset;
   }
 
-  Module *R = Parser.ParseBytecode(Buffer, Buffer+Length);
+  Module *R = Parser.ParseBytecode(Buffer, Buffer+Length, ModuleID);
   if (ErrorStr) *ErrorStr = Parser.getError();
 
   delete [] PtrToDelete;   // Delete alignment buffer if neccesary
@@ -691,7 +692,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
       return Error(ErrorStr, "Error mmapping file!");
 
     // Parse the bytecode we mmapped in
-    Result = ParseBytecodeBuffer(Buffer, Length, ErrorStr);
+    Result = ParseBytecodeBuffer(Buffer, Length, Filename, ErrorStr);
 
     // Unmmap the bytecode...
     munmap((char*)Buffer, Length);
@@ -721,7 +722,7 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     unsigned char *Buf = &FileData[0];
 #endif
 
-    Result = ParseBytecodeBuffer(Buf, FileData.size(), ErrorStr);
+    Result = ParseBytecodeBuffer(Buf, FileData.size(), "<stdin>", ErrorStr);
 
 #if ALIGN_PTRS
     munmap((char*)Buf, FileData.size());   // Free mmap'd data area
