@@ -7,21 +7,23 @@
 
 implementation
 
-int *"foo"(int * %I)
-begin
-	%A = getelementptr int* %I, uint 17
-	store int 23, int* %A
-
-	%B = load int* %A
-	store int %B, int* %A, uint 0
-
-	%C = getelementptr int* %A
-	ret int* %C
-end
-
-int *"foo2"(int * %I)
-begin
-	%A = getelementptr int* %I, uint 0  ; Noop
+int *"foo1"(int * %I) { ; Test noop elimination
+	%A = getelementptr int* %I, uint 0
 	ret int * %A
-end
+}
 
+int* %foo2(int* %I) {  ; Test noop elimination
+	%A = getelementptr int* %I
+	ret int* %A
+}
+int* %foo3(int * %I) { ; Test that two array indexing geps fold
+	%A = getelementptr int* %I, uint 17
+	%B = getelementptr int* %A, uint 4
+	ret int* %B
+}
+
+int* %foo4({int} *%I) { ; Test that two getelementptr insts fold
+	%A = getelementptr {int}* %I, uint 1
+	%B = getelementptr {int}* %A, uint 0, ubyte 0
+	ret int* %B
+}
