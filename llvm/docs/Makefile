@@ -15,7 +15,8 @@ include $(LEVEL)/Makefile.common
 HTML       := $(wildcard $(BUILD_SRC_DIR)/*.html) \
               $(wildcard $(BUILD_SRC_DIR)/*.css)
 IMAGES     := $(wildcard $(BUILD_SRC_DIR)/img/*.*)
-DOXYFILES  := $(wildcard $(BUILD_SRC_DIR)/doxygen.*)
+DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
+              doxygen.intro
 EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
 
 .PHONY: install-html install-doxygen doxygen
@@ -54,6 +55,9 @@ doxygen: $(BUILD_OBJ_DIR)/doxygen.tar.gz
 
 $(BUILD_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(BUILD_OBJ_DIR)/doxygen.cfg
 	$(Echo) Building doxygen documentation
+	$(Verb) if test -e $(BUILD_OBJ_DIR)/doxygen ; then \
+	  $(RM) -rf $(BUILD_OBJ_DIR)/doxygen ; \
+	fi
 	$(Verb) $(DOXYGEN) $(BUILD_OBJ_DIR)/doxygen.cfg
 	$(Echo) Packaging doxygen documentation
 	$(Verb) $(RM) -rf $@ $(BUILD_OBJ_DIR)/doxygen.tar
