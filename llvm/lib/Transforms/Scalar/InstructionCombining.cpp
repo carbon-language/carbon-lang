@@ -146,6 +146,16 @@ static unsigned Log2(uint64_t Val) {
   return Count;
 }
 
+static inline Value *dyn_castFoldableMul(Value *V) {
+  if (V->use_size() == 1 && V->getType()->isInteger())
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      if (I->getOpcode() == Instruction::Mul)
+        if (isa<Constant>(I->getOperand(1)))
+          return I->getOperand(0);
+  return 0;
+}
+
+
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyBinOp(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
@@ -180,6 +190,22 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         }
       }
     }
+  }
+
+  // X*C + X --> X * (C+1)
+  if (dyn_castFoldableMul(LHS) == RHS) {
+    Constant *CP1 = *cast<Constant>(cast<Instruction>(LHS)->getOperand(1)) +
+                    *ConstantInt::get(I.getType(), 1);
+    assert(CP1 && "Couldn't constant fold C + 1?");
+    return BinaryOperator::create(Instruction::Mul, RHS, CP1);
+  }
+
+  // X + X*C --> X * (C+1)
+  if (dyn_castFoldableMul(RHS) == LHS) {
+    Constant *CP1 = *cast<Constant>(cast<Instruction>(RHS)->getOperand(1)) +
+                    *ConstantInt::get(I.getType(), 1);
+    assert(CP1 && "Couldn't constant fold C + 1?");
+    return BinaryOperator::create(Instruction::Mul, LHS, CP1);
   }
 
   return Changed ? &I : 0;
@@ -231,7 +257,23 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Instruction *NewNot = BinaryOperator::createNot(OtherOp, "B.not", &I);
         return BinaryOperator::create(Instruction::And, Op0, NewNot);
       }
+
+      // X - X*C --> X * (1-C)
+      if (dyn_castFoldableMul(Op1I) == Op0) {
+        Constant *CP1 = *ConstantInt::get(I.getType(), 1) -
+                        *cast<Constant>(cast<Instruction>(Op1)->getOperand(1));
+        assert(CP1 && "Couldn't constant fold 1-C?");
+        return BinaryOperator::create(Instruction::Mul, Op0, CP1);
+      }
     }
+
+  // X*C - X --> X * (C-1)
+  if (dyn_castFoldableMul(Op0) == Op1) {
+    Constant *CP1 = *cast<Constant>(cast<Instruction>(Op0)->getOperand(1)) -
+                    *ConstantInt::get(I.getType(), 1);
+    assert(CP1 && "Couldn't constant fold C - 1?");
+    return BinaryOperator::create(Instruction::Mul, Op1, CP1);
+  }
 
   return 0;
 }
