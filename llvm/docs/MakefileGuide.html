@@ -563,6 +563,12 @@
     <dt><a name="TOOLNAME"><tt>TOOLNAME</tt></a></dt>
     <dd>Specifies the name of the tool that the current directory should
     build.</dd>
+    <dt><a name="TOOL_VERBOSE"><tt>TOOL_VERBOSE</tt></a></dt>
+    <dd>Implies VERBOSE and also tells each tool invoked to be verbose. This is
+    handy when you're trying to see the sub-tools invoked by each tool invoked 
+    by the makefile. For example, this will pass <tt>-v</tt> to the GCC 
+    compilers which causes it to print out the command lines it uses to invoke
+    sub-tools (compiler, assembler, linker).</dd>
     <dt><a name="USEDLIBS"><tt>USEDLIBS</tt></a></dt>
     <dd>Specifies the list of project libraries that will be linked into the
     tool or library.</dd>

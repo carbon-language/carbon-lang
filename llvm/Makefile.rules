@@ -222,6 +222,14 @@ else
   LD.Flags += -rpath $(LibDir)
 endif
 
+ifdef TOOL_VERBOSE
+  C.Flags += -v
+  CXX.Flags += -v
+  LD.Flags += -v
+  BCLinkLib.Flags += -v
+  VERBOSE := 1
+endif
+
 # Adjust settings for verbose mode
 ifndef VERBOSE
   Verb := @
@@ -268,7 +276,7 @@ Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 	        $(CompileCommonOpts) $(LD.Flags) $(Strip)
 Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
                 $(CompileCommonOpts)
-BCLinkLib     = $(LLVMGCC) -shared -nostdlib
+BCLinkLib     = $(LLVMGCC) -shared -nostdlib $(BCLinkLib.Flags)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL)
 Burg          = $(BURG) -I $(BUILD_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(BUILD_SRC_DIR)
