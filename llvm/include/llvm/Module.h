@@ -27,6 +27,13 @@ public:
   Module();
   ~Module();
 
+  // reduceApply - Apply the specified function to all of the methods in this 
+  // module.  The result values are or'd together and the result is returned.
+  //
+  bool reduceApply(bool (*Func)(Method*));
+  bool reduceApply(bool (*Func)(const Method*)) const;
+
+
   // Get the underlying elements of the Module...
   inline const MethodListType &getMethodList() const  { return MethodList; }
   inline       MethodListType &getMethodList()        { return MethodList; }
