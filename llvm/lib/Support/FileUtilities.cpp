@@ -119,7 +119,20 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
   try {
-    // Map in the files into memory.
+    // Check for zero length files becasue some systems croak when you try to
+    // mmap an empty file.
+    size_t A_size = FileA.getSize();
+    size_t B_size = FileB.getSize();
+
+    // If they are both zero sized then they're the same
+    if (A_size == 0 && B_size == 0)
+      return 0;
+    // If only one of them is zero sized then they can't be the same
+    if ((A_size == 0 || B_size == 0))
+      return 1;
+
+    // Now its safe to mmap the files into memory becasue both files
+    // have a non-zero size. 
     sys::MappedFile F1(FileA);
     sys::MappedFile F2(FileB);
     F1.map();
@@ -133,15 +146,18 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
     char *F1P = File1Start;
     char *F2P = File2Start;
 
-    // Scan for the end of file or first difference.
-    while (F1P < File1End && F2P < File2End && *F1P == *F2P)
-      ++F1P, ++F2P;
+    if (A_size == B_size) {
+      // Scan for the end of file or first difference.
+      while (F1P < File1End && F2P < File2End && *F1P == *F2P)
+        ++F1P, ++F2P;
 
-    // Common case: identifical files.
-    if (F1P == File1End && F2P == File2End) return 0;
+      // Common case: identifical files.
+      if (F1P == File1End && F2P == File2End) 
+        return 0; // Scanned to end, files same
 
-    if (AbsTol == 0 && RelTol == 0)
-      return 1;   // Files different!
+      if (AbsTol == 0 && RelTol == 0)
+        return 1;   // Files different!
+    }
 
     char *OrigFile1Start = File1Start;
     char *OrigFile2Start = File2Start;
