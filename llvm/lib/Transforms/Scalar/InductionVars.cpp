@@ -191,8 +191,8 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
 
   // Create the neccesary instructions...
   PHINode        *PN      = new PHINode(Type::UIntTy, PHIName);
-  ConstPoolVal   *One     = new ConstPoolUInt(Type::UIntTy, 1);
-  ConstPoolVal   *Zero    = new ConstPoolUInt(Type::UIntTy, 0);
+  ConstPoolVal   *One     = ConstPoolUInt::get(Type::UIntTy, 1);
+  ConstPoolVal   *Zero    = ConstPoolUInt::get(Type::UIntTy, 0);
   BinaryOperator *AddNode = BinaryOperator::create(Instruction::Add, 
 						   PN, One, AddName);
 
@@ -228,10 +228,6 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   BasicBlock::iterator I = IL.begin();
   while ((*I)->isPHINode()) ++I;
   IL.insert(I, AddNode);
-
-  // Insert the constants into the constant pool for the method...
-  M->getConstantPool().insert(One);
-  M->getConstantPool().insert(Zero);
   return PN;
 }
 
