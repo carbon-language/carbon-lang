@@ -536,13 +536,16 @@ void CWriter::printConstant(Constant *CPV) {
     Out << cast<ConstantSInt>(CPV)->getValue(); break;
   case Type::IntTyID:
     if ((int)cast<ConstantSInt>(CPV)->getValue() == (int)0x80000000)
-      Out << "((int)0x80000000)";   // Handle MININT specially to avoid warning
+      Out << "((int)0x80000000U)";   // Handle MININT specially to avoid warning
     else
       Out << cast<ConstantSInt>(CPV)->getValue();
     break;
 
   case Type::LongTyID:
-    Out << cast<ConstantSInt>(CPV)->getValue() << "ll"; break;
+    if (cast<ConstantSInt>(CPV)->isMinValue())
+      Out << "(/*INT64_MIN*/(-9223372036854775807LL)-1)";
+    else
+      Out << cast<ConstantSInt>(CPV)->getValue() << "ll"; break;
 
   case Type::UByteTyID:
   case Type::UShortTyID:
