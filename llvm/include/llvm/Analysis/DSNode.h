@@ -7,6 +7,8 @@
 #ifndef LLVM_ANALYSIS_DSNODE_H
 #define LLVM_ANALYSIS_DSNODE_H
 
+#include "llvm/Analysis/DSSupport.h"
+
 template<typename BaseType>
 class DSNodeIterator;          // Data structure graph traversal iterator
 
