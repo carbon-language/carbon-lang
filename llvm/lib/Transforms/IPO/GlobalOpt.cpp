@@ -231,8 +231,10 @@ static Constant *TraverseGEPInitializer(User *GEP, Constant *Init) {
 
 /// CleanupConstantGlobalUsers - We just marked GV constant.  Loop over all
 /// users of the global, cleaning up the obvious ones.  This is largely just a
-/// quick scan over the use list to clean up the easy and obvious cruft.
-static void CleanupConstantGlobalUsers(Value *V, Constant *Init) {
+/// quick scan over the use list to clean up the easy and obvious cruft.  This
+/// returns true if it made a change.
+static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
+  bool Changed = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;) {
     User *U = *UI++;
     
@@ -240,20 +242,27 @@ static void CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       // Replace the load with the initializer.
       LI->replaceAllUsesWith(Init);
       LI->getParent()->getInstList().erase(LI);
+      Changed = true;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       // Store must be unreachable or storing Init into the global.
       SI->getParent()->getInstList().erase(SI);
+      Changed = true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         if (Constant *SubInit = TraverseGEPInitializer(CE, Init))
-          CleanupConstantGlobalUsers(CE, SubInit);
-        if (CE->use_empty()) CE->destroyConstant();
+          Changed |= CleanupConstantGlobalUsers(CE, SubInit);
+        if (CE->use_empty()) {
+          CE->destroyConstant();
+          Changed = true;
+        }
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
       if (Constant *SubInit = TraverseGEPInitializer(GEP, Init))
-        CleanupConstantGlobalUsers(GEP, SubInit);
-      if (GEP->use_empty())
+        Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
+      if (GEP->use_empty()) {
         GEP->getParent()->getInstList().erase(GEP);
+        Changed = true;
+      }
     } else if (Constant *C = dyn_cast<Constant>(U)) {
       // If we have a chain of dead constantexprs or other things dangling from
       // us, and if they are all dead, nuke them without remorse.
@@ -261,10 +270,11 @@ static void CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         C->destroyConstant();
         // This could have incalidated UI, start over from scratch.x
         CleanupConstantGlobalUsers(V, Init);
-        return;
+        return true;
       }
     }
   }
+  return Changed;
 }
 
 /// SRAGlobal - Perform scalar replacement of aggregates on the specified global
@@ -472,14 +482,10 @@ static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
     // Delete it now.
     if (!GS.isLoaded) {
       DEBUG(std::cerr << "GLOBAL NEVER LOADED: " << *GV);
-      unsigned NumUsers = GV->use_size();
 
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.
-      CleanupConstantGlobalUsers(GV, GV->getInitializer());
-
-      // Did we delete any stores?
-      bool Changed = NumUsers != GV->use_size();
+      bool Changed = CleanupConstantGlobalUsers(GV, GV->getInitializer());
 
       // If the global is dead now, delete it.
       if (GV->use_empty()) {
