@@ -54,6 +54,18 @@ public:
   }
 };
 
+
+/// ExistingModuleProvider - Allow conversion from a fully materialized Module
+/// into a ModuleProvider, allowing code that expects a ModuleProvider to work
+/// if we just have a Module.  Note that the ModuleProvider takes ownership of
+/// the Module specified.
+struct ExistingModuleProvider : public ModuleProvider {
+  ExistingModuleProvider(Module *M) {
+    TheModule = M;
+  }
+  void materializeFunction(Function *F) {}
+};
+
 } // End llvm namespace
 
 #endif
