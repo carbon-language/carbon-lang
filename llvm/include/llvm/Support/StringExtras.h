@@ -64,7 +64,7 @@ static inline string itostr(int X) {
 
 static inline string ftostr(double V) {
   char Buffer[200];
-  snprintf(Buffer, 200, "%f", V);
+  snprintf(Buffer, 200, "%e", V);
   return Buffer;
 }
 
