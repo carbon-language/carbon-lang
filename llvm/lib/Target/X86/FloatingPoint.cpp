@@ -449,11 +449,17 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 }
 
 
-/// handleOneArgFPRW - fchs - ST(0) = -ST(0)
+/// handleOneArgFPRW: Handle instructions that read from the top of stack and
+/// replace the value with a newly computed value.  These instructions may have
+/// non-fp operands after their FP operands.
+///
+///  Examples:
+///     R1 = fchs R2
+///     R1 = fadd R2, [mem]
 ///
 void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  assert(MI->getNumOperands() == 2 && "Can only handle fst* instructions!");
+  assert(MI->getNumOperands() >= 2 && "FPRW instructions must have 2 ops!!");
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(1));
