@@ -231,10 +231,8 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
   GlobalVariable *fmtVal = getStringRef(Mod, Message+getPrintfCodeFor(V)+"\n");
 
   // Turn the format string into an sbyte *
-  Instruction *GEP = 
-    new GetElementPtrInst(fmtVal,
-                          vector<Value*>(2,ConstantSInt::get(Type::LongTy, 0)),
-                          "trstrp", InsertBefore);
+  Constant *GEP =ConstantExpr::getGetElementPtr(ConstantPointerRef::get(fmtVal),
+                     vector<Constant*>(2,Constant::getNullValue(Type::LongTy)));
   
   // Insert a call to the hash function if this is a pointer value
   if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
