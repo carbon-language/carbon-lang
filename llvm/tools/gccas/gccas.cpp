@@ -26,6 +26,8 @@
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode",
                           cl::Required, "");
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");
+cl::Flag   StopAtLevelRaise("stopraise", "Stop optimization before level raise",
+                            cl::Hidden);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
@@ -69,10 +71,12 @@ int main(int argc, char **argv) {
   Passes.add(createRaiseAllocationsPass());       // call %malloc -> malloc inst
   Passes.add(createCleanupGCCOutputPass());       // Fix gccisms
   Passes.add(createIndVarSimplifyPass());         // Simplify indvars
-  Passes.add(createRaisePointerReferencesPass()); // Eliminate casts
-  Passes.add(createConstantMergePass());          // Merge dup global consts
-  Passes.add(createInstructionCombiningPass());   // Combine silly seq's
-  Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
+  if (!StopAtLevelRaise) {
+    Passes.add(createRaisePointerReferencesPass()); // Eliminate casts
+    Passes.add(createConstantMergePass());          // Merge dup global consts
+    Passes.add(createInstructionCombiningPass());   // Combine silly seq's
+    Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
+  }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
 
   // Run our queue of passes all at once now, efficiently.
