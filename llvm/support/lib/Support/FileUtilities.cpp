@@ -98,12 +98,14 @@ std::string getUniqueFilename(const std::string &FilenameBase) {
 ///
 /// Description:
 ///	This method makes the specified filename executable by giving it
-///	execute permission.
+///	execute permission.  It respects the umask value of the process, and it
+///	does not enable any unnecessary access bits.
 ///
-///	For the UNIX version of this method, we turn on all of the read and
-///	execute bits and then turn off anything specified in the umask.  This
-///	should help ensure that access to the file remains at the level that
-///	the user desires.
+/// Algorithm:
+///	o Get file's current permissions.
+///	o Get the process's current umask.
+///	o Take the set of all execute bits and disable those found in the umask.
+///	o Add the remaining permissions to the file's permissions.
 ///
 bool
 MakeFileExecutable (const std::string & Filename)
@@ -134,8 +136,13 @@ MakeFileExecutable (const std::string & Filename)
     return false;
   }
 
-  // Make the script executable...
-  chmod(Filename.c_str(), (fstat.st_mode | (0111 & ~mask)));
+  //
+  // Make the file executable...
+  //
+  if ((chmod(Filename.c_str(), (fstat.st_mode | (0111 & ~mask)))) == -1)
+  {
+    return false;
+  }
 
   return true;
 }
