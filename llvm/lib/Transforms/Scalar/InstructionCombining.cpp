@@ -108,6 +108,7 @@ namespace {
     Instruction *visitSetCondInst(BinaryOperator &I);
     Instruction *visitShiftInst(ShiftInst &I);
     Instruction *visitCastInst(CastInst &CI);
+    Instruction *visitSelectInst(SelectInst &CI);
     Instruction *visitCallInst(CallInst &CI);
     Instruction *visitInvokeInst(InvokeInst &II);
     Instruction *visitPHINode(PHINode &PN);
@@ -1930,6 +1931,20 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   
   return 0;
 }
+
+Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
+  if (ConstantBool *C = dyn_cast<ConstantBool>(SI.getCondition()))
+    if (C == ConstantBool::True)
+      return ReplaceInstUsesWith(SI, SI.getTrueValue());
+    else {
+      assert(C == ConstantBool::False);
+      return ReplaceInstUsesWith(SI, SI.getFalseValue());
+    }
+  // Other transformations are possible!
+
+  return 0;
+}
+
 
 // CallInst simplification
 //
