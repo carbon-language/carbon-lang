@@ -123,6 +123,15 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
             bool regAisPhysical = regA < MRegisterInfo::FirstVirtualRegister;
             bool regBisPhysical = regB < MRegisterInfo::FirstVirtualRegister;
 
+            // first make sure we do not have a use of a in the
+            // instruction (a = b + a for example) because our
+            // transofrmation will not work. This should never occur
+            // because of SSA.
+            for (unsigned i = 1; i < mi->getNumOperands(); ++i) {
+                assert(!mi->getOperand(i).isRegister() ||
+                       mi->getOperand(i).getAllocatedRegNum() != regA);
+            }
+
             const TargetRegisterClass* rc = regAisPhysical ?
                 mri_->getRegClass(regA) :
                 mf_->getSSARegMap()->getRegClass(regA);
