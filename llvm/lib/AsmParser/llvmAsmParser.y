@@ -1198,6 +1198,11 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
       if (!CurMeth.isDeclare && !M->isExternal())
 	ThrowException("Redefinition of function '" + FunctionName + "'!");
 
+      // Make sure that we keep track of the internal marker, even if there was
+      // a previous "declare".
+      if ($1)
+        M->setInternalLinkage(true);
+
       // If we found a preexisting function prototype, remove it from the
       // module, so that we don't get spurious conflicts with global & local
       // variables.
