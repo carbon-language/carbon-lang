@@ -50,7 +50,8 @@ ifdef PROG
   endif
 
   $(PROG).linked.bc: $(BCOBJS)
-	$(LLINK) -f $(BCOBJS) -o $@
+	$(LLINK) -f $(BCOBJS) -o $(PROG).tmp.bc
+	$(LOPT) -cleangcc -raise -constprop -dce $(PROG).tmp.bc -o $@
 
   $(PROG).native: $(OBJS:.o=.c)
 	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
@@ -87,8 +88,9 @@ clean :
 %.bc: %.ll
 	$(LAS) -f $<
 
+## There is just one file so omit link step and just clean
 %.linked.bc: %.bc
-	$(CP) $< $@
+	$(LOPT) -cleangcc -raise -constprop -dce $< -o $@
 
 %.clean.bc: %.bc
 	$(LOPT) -cleangcc -raise -constprop -dce $< -o $@
