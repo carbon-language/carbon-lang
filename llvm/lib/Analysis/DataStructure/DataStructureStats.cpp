@@ -1,4 +1,4 @@
-//===- DSGraphStats.cpp - Various statistics for DS Graphs -----*- C++ -*--===//
+//===- DSGraphStats.cpp - Various statistics for DS Graphs ----------------===//
 //
 //===----------------------------------------------------------------------===//
 
@@ -6,7 +6,9 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
+#include "llvm/iMemory.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
 #include <vector>
 
@@ -18,9 +20,19 @@ namespace {
   Statistic<> NumPoolNodes("numpools",
                   "Number of allocation nodes that could be pool allocated");
 
-  class DSGraphStats: public FunctionPass {
-    void countCallees(const Function& F, const DSGraph& tdGraph);
+  // Typed/Untyped memory accesses: If DSA can infer that the types the loads
+  // and stores are accessing are correct (ie, the node has not been collapsed),
+  // increment the appropriate counter.
+  Statistic<> NumTypedMemAccesses("numtypedmemaccesses",
+                                "Number of loads/stores which are fully typed");
+  Statistic<> NumUntypedMemAccesses("numuntypedmemaccesses",
+                                "Number of loads/stores which are untyped");
 
+  class DSGraphStats : public FunctionPass, public InstVisitor<DSGraphStats> {
+    void countCallees(const Function &F);
+    const DSGraph *TDGraph;
+
+    DSNode *getNodeForValue(Value *V);
   public:
     /// Driver functions to compute the Load/Store Dep. Graph per function.
     bool runOnFunction(Function& F);
@@ -31,9 +43,11 @@ namespace {
       AU.addRequired<TDDataStructures>();
     }
 
+    void visitLoad(LoadInst &LI);
+    void visitStore(StoreInst &SI);
+
     /// Debugging support methods
     void print(std::ostream &O) const { }
-    void dump() const;
   };
 
   static RegisterAnalysis<DSGraphStats> Z("dsstats", "DS Graph Statistics");
@@ -48,43 +62,61 @@ static bool isIndirectCallee(Value *V) {
 }
 
 
-void DSGraphStats::countCallees(const Function& F, const DSGraph& tdGraph) {
+void DSGraphStats::countCallees(const Function& F) {
   unsigned numIndirectCalls = 0, totalNumCallees = 0;
 
-  const std::vector<DSCallSite>& callSites = tdGraph.getFunctionCalls();
-  for (unsigned i=0, N = callSites.size(); i < N; ++i)
-    if (isIndirectCallee(callSites[i].getCallInst().getCalledValue()))
-      { // This is an indirect function call
-        std::vector<GlobalValue*> Callees =
-          callSites[i].getCalleeNode()->getGlobals();
-        if (Callees.size() > 0) {
-          totalNumCallees  += Callees.size();
-          ++numIndirectCalls;
-        }
-#ifndef NDEBUG
-        else
-          std::cerr << "WARNING: No callee in Function " << F.getName()
-                      << "at call:\n" << callSites[i].getCallInst();
-#endif
-      }
-
+  const std::vector<DSCallSite> &callSites = TDGraph->getFunctionCalls();
+  for (unsigned i = 0, N = callSites.size(); i != N; ++i)
+    if (isIndirectCallee(callSites[i].getCallInst().getCalledValue())) {
+      // This is an indirect function call
+      const std::vector<GlobalValue*> &Callees =
+        callSites[i].getCalleeNode()->getGlobals();
+      if (Callees.size() > 0) {
+        totalNumCallees  += Callees.size();
+        ++numIndirectCalls;
+      } else
+        std::cerr << "WARNING: No callee in Function " << F.getName()
+                  << "at call:\n" << callSites[i].getCallInst();
+    }
+  
   TotalNumCallees  += totalNumCallees;
   NumIndirectCalls += numIndirectCalls;
-
+  
   if (numIndirectCalls)
     std::cout << "  In function " << F.getName() << ":  "
               << (totalNumCallees / (double) numIndirectCalls)
               << " average callees per indirect call\n";
 }
 
+DSNode *DSGraphStats::getNodeForValue(Value *V) {
+  const DSGraph *G = TDGraph;
+  if (isa<GlobalValue>(V))
+    G = TDGraph->getGlobalsGraph();
 
-bool DSGraphStats::runOnFunction(Function& F) {
-  const DSGraph& tdGraph = getAnalysis<TDDataStructures>().getDSGraph(F);
-  countCallees(F, tdGraph);
-  return true;
+  return G->getNodeForValue(V).getNode();
 }
 
-void DSGraphStats::dump() const
-{
-  this->print(std::cerr);
+void DSGraphStats::visitLoad(LoadInst &LI) {
+  if (getNodeForValue(LI.getOperand(0))->isNodeCompletelyFolded()) {
+    NumUntypedMemAccesses++;
+  } else {
+    NumTypedMemAccesses++;
+  }
+}
+
+void DSGraphStats::visitStore(StoreInst &SI) {
+  if (getNodeForValue(SI.getOperand(1))->isNodeCompletelyFolded()) {
+    NumUntypedMemAccesses++;
+  } else {
+    NumTypedMemAccesses++;
+  }
+}
+
+
+
+bool DSGraphStats::runOnFunction(Function& F) {
+  TDGraph = &getAnalysis<TDDataStructures>().getDSGraph(F);
+  countCallees(F);
+  visit(F);
+  return true;
 }
