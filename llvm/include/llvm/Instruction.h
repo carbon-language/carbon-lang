@@ -29,7 +29,7 @@ public:
   virtual ~Instruction();  // Virtual dtor == good.
 
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name);
+  virtual void setName(const string &name, SymbolTable *ST = 0);
   
   // clone() - Create a copy of 'this' instruction that is identical in all ways
   // except the following:
