@@ -49,7 +49,11 @@ namespace {
       addRegisterClass(MVT::f32, X86::RFPRegisterClass);
       
       computeRegisterProperties();
-      
+
+      setOperationUnsupported(ISD::MEMSET, MVT::Other);
+      setOperationUnsupported(ISD::MEMCPY, MVT::Other);
+      setOperationUnsupported(ISD::MEMMOVE, MVT::Other);
+
       setOperationUnsupported(ISD::MUL, MVT::i8);
       setOperationUnsupported(ISD::SELECT, MVT::i1);
       setOperationUnsupported(ISD::SELECT, MVT::i8);
