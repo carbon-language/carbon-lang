@@ -15,23 +15,9 @@
 // information about the function, including the number of types present in the
 // function, and the number of values for each type.
 //
-// This annotation object is created on demand, and attaches other annotation
-// objects to the instructions in the function when it's created.
-//
-static AnnotationID FunctionInfoAID(
-	            AnnotationManager::getID("Interpreter::FunctionInfo"));
-
-struct FunctionInfo : public Annotation {
+struct FunctionInfo {
   FunctionInfo(Function *F);
   std::vector<unsigned> NumPlaneElements;
-
-  // Create - Factory function to allow FunctionInfo annotations to be
-  // created on demand.
-  //
-  static Annotation *Create(AnnotationID AID, const Annotable *O, void *) {
-    assert(AID == FunctionInfoAID);
-    return new FunctionInfo(cast<Function>((Value*)O));
-  }
 
 private:
   unsigned getValueSlot(const Value *V);

@@ -82,6 +82,8 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   // AtExitHandlers - List of functions to call when the program exits,
   // registered with the atexit() library function.
   std::vector<Function*> AtExitHandlers;
+
+  std::map<Function*, FunctionInfo*> FunctionInfoMap;
 public:
   Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
               bool TraceMode);

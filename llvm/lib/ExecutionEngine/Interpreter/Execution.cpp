@@ -120,8 +120,6 @@ static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
 
 void Interpreter::initializeExecutionEngine() {
   TheEE = this;
-  AnnotationManager::registerAnnotationFactory(FunctionInfoAID,
-                                               &FunctionInfo::Create);
   initializeSignalHandlers();
 }
 
@@ -899,7 +897,7 @@ void Interpreter::visitVarArgInst(VarArgInst &I) {
 //                        Dispatch and Execution Code
 //===----------------------------------------------------------------------===//
 
-FunctionInfo::FunctionInfo(Function *F) : Annotation(FunctionInfoAID) {
+FunctionInfo::FunctionInfo(Function *F) {
   // Assign slot numbers to the function arguments...
   for (Function::const_aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI)
     AI->addAnnotation(new SlotNumber(getValueSlot(AI)));
@@ -959,11 +957,12 @@ void Interpreter::callFunction(Function *F,
   // the function.  Also calculate the number of values for each type slot
   // active.
   //
-  FunctionInfo *FuncInfo =
-    (FunctionInfo*)F->getOrCreateAnnotation(FunctionInfoAID);
-  ECStack.push_back(ExecutionContext());         // Make a new stack frame...
+  FunctionInfo *&FuncInfo = FunctionInfoMap[F];
+  if (!FuncInfo) FuncInfo = new FunctionInfo(F);
 
-  ExecutionContext &StackFrame = ECStack.back(); // Fill it in...
+  // Make a new stack frame... and fill it in.
+  ECStack.push_back(ExecutionContext());
+  ExecutionContext &StackFrame = ECStack.back();
   StackFrame.CurFunction = F;
   StackFrame.CurBB     = F->begin();
   StackFrame.CurInst   = StackFrame.CurBB->begin();
