@@ -235,7 +235,17 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 bool llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
   return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt" ||
-         Name == "log" || Name == "log10" || Name == "exp" || Name == "pow";
+         Name == "log" || Name == "log10" || Name == "exp" || Name == "pow" ||
+         Name == "acos" || Name == "asin";
+}
+
+static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
+                                const Type *Ty) {
+  errno = 0;
+  V = NativeFP(V);
+  if (errno == 0)
+    return ConstantFP::get(Ty, V);
+  return 0;
 }
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
@@ -245,49 +255,40 @@ Constant *llvm::ConstantFoldCall(Function *F,
   const std::string &Name = F->getName();
   const Type *Ty = F->getReturnType();
 
-  if (Name == "sin") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        return ConstantFP::get(Ty, sin(CFP->getValue()));
-    
-  } else if (Name == "cos") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        return ConstantFP::get(Ty, cos(CFP->getValue()));
-
-  } else if (Name == "tan") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        return ConstantFP::get(Ty, tan(CFP->getValue()));
-
-  } else if (Name == "sqrt") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        if (CFP->getValue() >= 0)
-          return ConstantFP::get(Ty, sqrt(CFP->getValue()));
-  } else if (Name == "exp") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        return ConstantFP::get(Ty, exp(CFP->getValue()));
-  } else if (Name == "log") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        if (CFP->getValue() > 0)
-          return ConstantFP::get(Ty, log(CFP->getValue()));
-  } else if (Name == "log10") {
-    if (Operands.size() == 1)
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(Operands[0]))
-        if (CFP->getValue() > 0)
-          return ConstantFP::get(Ty, log10(CFP->getValue()));
-  } else if (Name == "pow") {
-    if (Operands.size() == 2)
-      if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0]))
-        if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
+  if (Operands.size() == 1) {
+    if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
+      double V = Op->getValue();
+      if (Name == "sin")
+        return ConstantFP::get(Ty, sin(V));
+      else if (Name == "cos")
+        return ConstantFP::get(Ty, cos(V));
+      else if (Name == "tan")
+        return ConstantFP::get(Ty, tan(V));
+      else if (Name == "sqrt" && V >= 0)
+        return ConstantFP::get(Ty, sqrt(V));
+      else if (Name == "exp")
+        return ConstantFP::get(Ty, exp(V));
+      else if (Name == "log" && V > 0)
+        return ConstantFP::get(Ty, log(V));
+      else if (Name == "log10")
+        return ConstantFoldFP(log10, V, Ty);
+      else if (Name == "acos")
+        return ConstantFoldFP(acos, V, Ty);
+      else if (Name == "asin")
+        return ConstantFoldFP(asin, V, Ty);
+      else if (Name == "atan")
+        return ConstantFP::get(Ty, atan(V));
+    }
+  } else if (Operands.size() == 2) {
+    if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0]))
+      if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
+        if (Name == "pow") {
           errno = 0;
           double V = pow(Op1->getValue(), Op2->getValue());
           if (errno == 0)
             return ConstantFP::get(Ty, V);
         }
+      }
   }
   return 0;
 }
