@@ -252,10 +252,10 @@ def FSQRTQ : F3_14<2, 0b110100, 0b000101011, "fsqrts">;  // fsqrts r, r
 // FIXME: A.21: Flush Register Windows - p169
 
 // A.22: Illegal instruction Trap - p170
-// Not used
+// Not currently used
 
 // A.23: Implementation-Dependent Instructions - p171
-// Not used
+// Not currently used
 
 // Section A.24: Jump and Link - p172
 // Mimicking the Sparc's instr def...
@@ -337,8 +337,8 @@ def XNORcci : F3_2<2, 0b010111, "xnorcc">;       // xnorcc r, r, i
 // Section A.32: Memory Barrier - p186
 // Not currently used in the Sparc backend
 
-#if 0
 // Section A.33: Move Floating-Point Register on Condition (FMOVcc)
+#if 0
 // For integer condition codes
 def FMOVA   : F4_7<2, 0b110101, 0b1000, "fmova">;        // fmova r, r
 def FMOVN   : F4_7<2, 0b110101, 0b0000, "fmovn">;        // fmovn r, r
@@ -376,7 +376,27 @@ def FMOVFULE : F4_7<2, 0b110101, 0b1110, "fmovfule">;    // fmovfule r, r
 def FMOVFO   : F4_7<2, 0b110101, 0b1111, "fmovfo">;      // fmovfo r, r
 #endif
 
-// FIXME: Section A.34: Move F-P Register on Integer Register (FMOVr)
+// Section A.34: Move FP Register on Integer Register condition (FMOVr) - p192
+def FMOVRSZ   : F4_6<2, 0b110101, 0b001, 0b00101, "fmovrsz">;  //fmovsrz r,r,rd
+def FMOVRSLEZ : F4_6<2, 0b110101, 0b010, 0b00101, "fmovrslez">;//fmovsrz r,r,rd
+def FMOVRSLZ  : F4_6<2, 0b110101, 0b011, 0b00101, "fmovrslz">; //fmovsrz r,r,rd
+def FMOVRSNZ  : F4_6<2, 0b110101, 0b101, 0b00101, "fmovrsne">; //fmovsrz r,r,rd
+def FMOVRSGZ  : F4_6<2, 0b110101, 0b110, 0b00101, "fmovrsgz">; //fmovsrz r,r,rd
+def FMOVRSGEZ : F4_6<2, 0b110101, 0b111, 0b00101, "fmovrsgez">;//fmovsrz r,r,rd
+
+def FMOVRDZ   : F4_6<2, 0b110101, 0b001, 0b00110, "fmovrdz">;  //fmovsrz r,r,rd
+def FMOVRDLEZ : F4_6<2, 0b110101, 0b010, 0b00110, "fmovrdlez">;//fmovsrz r,r,rd
+def FMOVRDLZ  : F4_6<2, 0b110101, 0b011, 0b00110, "fmovrdlz">; //fmovsrz r,r,rd
+def FMOVRDNZ  : F4_6<2, 0b110101, 0b101, 0b00110, "fmovrdne">; //fmovsrz r,r,rd
+def FMOVRDGZ  : F4_6<2, 0b110101, 0b110, 0b00110, "fmovrdgz">; //fmovsrz r,r,rd
+def FMOVRDGEZ : F4_6<2, 0b110101, 0b111, 0b00110, "fmovrdgez">;//fmovsrz r,r,rd
+
+def FMOVRQZ   : F4_6<2, 0b110101, 0b001, 0b00111, "fmovrqz">;  //fmovsrz r,r,rd
+def FMOVRQLEZ : F4_6<2, 0b110101, 0b010, 0b00111, "fmovrqlez">;//fmovsrz r,r,rd
+def FMOVRQLZ  : F4_6<2, 0b110101, 0b011, 0b00111, "fmovrqlz">; //fmovsrz r,r,rd
+def FMOVRQNZ  : F4_6<2, 0b110101, 0b101, 0b00111, "fmovrqne">; //fmovsrz r,r,rd
+def FMOVRQGZ  : F4_6<2, 0b110101, 0b110, 0b00111, "fmovrqgz">; //fmovsrz r,r,rd
+def FMOVRQGEZ : F4_6<2, 0b110101, 0b111, 0b00111, "fmovrqgez">;//fmovsrz r,r,rd
 
 
 // Section A.35: Move Integer Register on Condition (MOVcc) - p194
@@ -487,7 +507,8 @@ set Inst{13} = 1 in {
 }
 #endif
 
-// Section A.39: FIXME
+// Section A.39: Multiply Step - p202
+// Not currently used in the Sparc backend
 
 // Section A.40: No operation - p204
 // NOP is really a pseudo-instruction (special case of SETHI)
@@ -499,9 +520,14 @@ set op2 = 0b100 in {
   }
 }
 
-// Section A.41: FIXME
-// Section A.42: FIXME
-// Section A.43: FIXME
+// Section A.41: Population Count - p205
+// Not currently used in the Sparc backend
+
+// Section A.42: Prefetch Data - p206
+// Not currently used in the Sparc backend
+
+// Section A.43: Read Privileged Register - p211
+// Not currently used in the Sparc backend
 
 // Section A.44: Read State Register
 // The only instr from this section currently used is RDCCR
@@ -570,9 +596,11 @@ def SLLXi6 : F3_13<2, 0b100101, "sllx">;                 // sllx r, shcnt64, r
 def SRLXi6 : F3_13<2, 0b100110, "srlx">;                 // srlx r, shcnt64, r
 def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
 
-// Section A.50: FIXME
+// Section A.50: Sofware-Initiated Reset - p223
+// Not currently used in the Sparc backend
 
-// Section A.51: FIXME
+// Section A.51: Store Barrier - p224
+// Not currently used in the Sparc backend
 
 // Section A.52: Store Floating-point -p225
 def STFr  : F3_1<3, 0b100100, "st">;                      // st r, [r+r]
@@ -593,7 +621,8 @@ set isDeprecated = 1 in {
 def STXFSRr : F3_1<3, 0b100101, "stq">;                   // stx r, [r+r]
 def STXFSRi : F3_2<3, 0b100101, "stq">;                   // stx r, [r+i]
 
-// Section A.53: FIXME
+// Section A.53: Store Floating-Point into Alternate Space - p227
+// Not currently used in the Sparc backend
 
 // Section A.54: Store Integer - p229
 def STBr : F3_1<3, 0b000101, "stb">;                     // stb r, [r+r]
@@ -605,8 +634,8 @@ def STWi : F3_2<3, 0b000100, "stb">;                     // stb r, [r+i]
 def STXr : F3_1<3, 0b001110, "stb">;                     // stb r, [r+r]
 def STXi : F3_2<3, 0b001110, "stb">;                     // stb r, [r+i]
 
-// Floating point store...
-// Section A.55: FIXME
+// Section A.55: Store Integer into Alternate Space - p231
+// Not currently used in the Sparc backend
 
 // Section A.56: Subtract - p233
 def SUBr    : F3_1<2, 0b000100, "sub">;                   // sub r, r, r
