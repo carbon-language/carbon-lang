@@ -61,10 +61,18 @@ let Namespace = "V8" in {
 // FIXME: the register order should be defined in terms of the preferred
 // allocation order...
 //
-def IntRegs : RegisterClass<i32, 8, [G1, G2, G3, G4, G5, G6, G7, G0,
-                                     O0, O1, O2, O3, O4, O5, O6, O7,
+def IntRegs : RegisterClass<i32, 8, [G1, G2, G3, G4, G5, G6, G7,
+                                     O0, O1, O2, O3, O4, O5, O7,
                                      L0, L1, L2, L3, L4, L5, L6, L7,
-                                     I0, I1, I2, I3, I4, I5, I6, I7]>;
+                                     I0, I1, I2, I3, I4, I5,
+                                     // Non-allocatable regs
+                                     O6, I6, I7, G0]> {
+  let Methods = [{
+    iterator allocation_order_end(MachineFunction &MF) const {
+      return end()-4;  // Don't allocate special registers
+    }
+  }];
+}
 
 def FPRegs : RegisterClass<f32, 4, [F0, F1, F2, F3, F4, F5, F6, F7, F8,
   F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22,
