@@ -87,13 +87,6 @@ namespace {
 
     Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
 
-    /// We name each basic block in a Function with a unique number, so
-    /// that we can consistently refer to them later. This is cleared
-    /// at the beginning of each call to runOnMachineFunction().
-    ///
-    typedef std::map<const Value *, unsigned> ValueMapTy;
-    ValueMapTy NumberForBB;
-
     /// Cache of mangled name for current function. This is
     /// recalculated at the beginning of each call to
     /// runOnMachineFunction().
@@ -366,10 +359,6 @@ void Printer::printConstantPool(MachineConstantPool *MCP) {
 /// method to print assembly for each instruction.
 ///
 bool Printer::runOnMachineFunction(MachineFunction &MF) {
-  // BBNumber is used here so that a given Printer will never give two
-  // BBs the same name. (If you have a better way, please let me know!)
-  static unsigned BBNumber = 0;
-
   O << "\n\n";
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
@@ -385,19 +374,11 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
-  // Number each basic block so that we can consistently refer to them
-  // in PC-relative references.
-  NumberForBB.clear();
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    NumberForBB[I->getBasicBlock()] = BBNumber++;
-  }
-
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << NumberForBB[I->getBasicBlock()] << ":\t# "
+    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t# "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
 	 II != E; ++II) {
@@ -449,13 +430,17 @@ void Printer::printOp(const MachineOperand &MO,
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
     return;
-  case MachineOperand::MO_PCRelativeDisp: {
-    ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
-    assert (i != NumberForBB.end()
-            && "Could not find a BB in the NumberForBB map!");
-    O << ".LBB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
+  case MachineOperand::MO_MachineBasicBlock: {
+    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
+    O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+      << "_" << MBBOp->getNumber () << "\t# "
+      << MBBOp->getBasicBlock ()->getName ();
     return;
   }
+  case MachineOperand::MO_PCRelativeDisp:
+    std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
+    abort ();
+    return;
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword)
       O << "OFFSET ";
@@ -682,13 +667,13 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   {
     // The accepted forms of Raw instructions are:
     //   1. nop     - No operand required
-    //   2. jmp foo - PC relative displacement operand
+    //   2. jmp foo - MachineBasicBlock operand
     //   3. call bar - GlobalAddress Operand or External Symbol Operand
     //   4. in AL, imm - Immediate operand
     //
     assert(MI->getNumOperands() == 0 ||
            (MI->getNumOperands() == 1 &&
-	    (MI->getOperand(0).isPCRelativeDisp() ||
+	    (MI->getOperand(0).isMachineBasicBlock() ||
 	     MI->getOperand(0).isGlobalAddress() ||
 	     MI->getOperand(0).isExternalSymbol() ||
              MI->getOperand(0).isImmediate())) &&
