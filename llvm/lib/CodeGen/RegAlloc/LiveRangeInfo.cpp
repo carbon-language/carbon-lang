@@ -58,7 +58,7 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *const L1, LiveRange *L2)
 
     //assert(( L1->getTypeID() == L2->getTypeID()) && "Merge:Different types");
 
-    L1->add( *L2It );                   // add the var in L2 to L1
+    L1->insert(*L2It);                  // add the var in L2 to L1
     LiveRangeMap[ *L2It ] = L1;         // now the elements in L2 should map 
                                         //to L1    
   }
@@ -105,11 +105,9 @@ void LiveRangeInfo::constructLiveRanges()
              
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {     // for each argument
     LiveRange * ArgRange = new LiveRange();      // creates a new LR and 
-    const Value *const Val = (const Value *) *ArgIt;
+    const Value *Val = (const Value *) *ArgIt;
 
-    assert( Val);
-
-    ArgRange->add(Val);     // add the arg (def) to it
+    ArgRange->insert(Val);     // add the arg (def) to it
     LiveRangeMap[Val] = ArgRange;
 
     // create a temp machine op to find the register class of value
@@ -173,8 +171,8 @@ void LiveRangeInfo::constructLiveRanges()
 	}
 
 	// create a new LR iff this operand is a def
-	if( OpI.isDef() ) {     
-	  const Value *const Def = *OpI;
+	if (OpI.isDef()) {     
+	  const Value *Def = *OpI;
 
 	  // Only instruction values are accepted for live ranges here
 	  if( Def->getValueType() != Value::InstructionVal ) {
@@ -188,10 +186,10 @@ void LiveRangeInfo::constructLiveRanges()
 	  // see LR already there (because of multiple defs)
 	  if( !DefRange) {                  // if it is not in LiveRangeMap
 	    DefRange = new LiveRange();     // creates a new live range and 
-	    DefRange->add( Def );           // add the instruction (def) to it
+	    DefRange->insert(Def);          // add the instruction (def) to it
 	    LiveRangeMap[ Def ] = DefRange; // update the map
 
-	    if( DEBUG_RA > 1) { 	    
+	    if (DEBUG_RA > 1) { 	    
 	      cerr << "  creating a LR for def: ";    
 	      printValue(Def); cerr  << "\n";
 	    }
@@ -215,7 +213,7 @@ void LiveRangeInfo::constructLiveRanges()
 
 	  }
 	  else {
-	    DefRange->add( Def );           // add the opearand to def range
+	    DefRange->insert(Def);          // add the opearand to def range
                                             // update the map - Operand points 
 	                                    // to the merged set
 	    LiveRangeMap[ Def ] = DefRange; 

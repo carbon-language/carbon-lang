@@ -17,6 +17,7 @@
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
+#include "llvm/Method.h"
 #include <iostream>
 #include <math.h>
 using std::cerr;
@@ -423,7 +424,7 @@ void PhyRegAlloc::addInterferencesForArgs()
 
 
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {  // for each argument
-    addInterference( *ArgIt, InSet, false );  // add interferences between 
+    addInterference((Value*)*ArgIt, InSet, false); // add interferences between 
                                               // args and LVars at start
     if( DEBUG_RA > 1) {
        cerr << " - %% adding interference for  argument ";    
