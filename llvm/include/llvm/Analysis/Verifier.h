@@ -13,16 +13,17 @@
 #ifndef LLVM_ANALYSIS_VERIFIER_H
 #define LLVM_ANALYSIS_VERIFIER_H
 
-#include <vector>
-#include <string>
+class Pass;
 class Module;
-class Method;
 
-// verify - Check a module or method for validity.  If errors are detected, 
-// error messages corresponding to the problem are added to the errorMsgs 
-// vectors, and a value of true is returned. 
+// createVerifierPass - Check a module or method for validity.  If errors are
+// detected, error messages corresponding to the problem are printed to stderr.
 //
-bool verify(const Module *M, std::vector<std::string> &ErrorMsgs);
-bool verify(const Method *M, std::vector<std::string> &ErrorMsgs);
+Pass *createVerifierPass();
+
+// verifyModule - Check a module for errors, printing messages on stderr.
+// Return true if the module is corrupt.
+//
+bool verifyModule(Module *M);
 
 #endif
