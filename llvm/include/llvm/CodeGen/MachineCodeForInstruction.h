@@ -24,15 +24,22 @@ class MachineInstr;
 class Instruction;
 class Value;
 
+extern AnnotationID MCFI_AID;
+
 class MachineCodeForInstruction : public Annotation {
   std::vector<Value*> tempVec;         // used by m/c instr but not VM instr
   std::vector<MachineInstr*> Contents;
 public:
-  MachineCodeForInstruction();
+  MachineCodeForInstruction() : Annotation(MCFI_AID) {}
   ~MachineCodeForInstruction();
   
-  static MachineCodeForInstruction &get(const Instruction *I);
-  static void destroy(const Instruction *I);
+  static MachineCodeForInstruction &get(const Instruction *I) {
+    assert(I != NULL);
+    return *(MachineCodeForInstruction*)I->getOrCreateAnnotation(MCFI_AID);
+  }
+  static void destroy(const Instruction *I) {
+    I->deleteAnnotation(MCFI_AID);
+  }
 
   // Access to underlying machine instructions...
   typedef std::vector<MachineInstr*>::iterator iterator;

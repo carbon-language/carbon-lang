@@ -1,8 +1,8 @@
-//===-- llvm/CodeGen/MachineCodeForBasicBlock.cpp ---------------*- C++ -*--=//
+//===-- MachineCodeForBasicBlock.cpp --------------------------------------===//
 // 
-// Purpose:
-//   Collect the sequence of machine instructions for a basic block.
-//===---------------------------------------------------------------------===//
+// Collect the sequence of machine instructions for a basic block.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 
@@ -20,9 +20,4 @@ static struct MCFBBInitializer {
     AnnotationManager::registerAnnotationFactory(MCFBB_AID, &CreateMCFBB);
   }
 } RegisterCreateMCFBB;
-
-
-MachineBasicBlock::MachineBasicBlock()
-  : Annotation(MCFBB_AID)
-{}
 
