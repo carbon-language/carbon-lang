@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Process.h"
+#include "llvm/Config/config.h"
 
 namespace llvm {
 using namespace sys;
@@ -24,6 +25,11 @@ using namespace sys;
 }
 
 // Include the platform-specific parts of this class.
-#include "platform/Process.cpp"
+#ifdef LLVM_ON_UNIX
+#include "Unix/Process.cpp"
+#endif
+#ifdef LLVM_ON_WIN32
+#include "Win32/Process.cpp"
+#endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
