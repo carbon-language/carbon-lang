@@ -18,6 +18,7 @@
   <li><a href="#install-instructions">Installation Instructions</a></li>
   <li><a href="#knownproblems">Known Problems</a>
   <ul>
+    <li><a href="#experimental">Experimental features included with this release</a>
     <li><a href="#core">Known problems with the LLVM Core</a>
     <li><a href="#c-fe">Known problems with the C Front-end</a>
     <li><a href="#c++-fe">Known problems with the C++ Front-end</a>
@@ -276,11 +277,32 @@ there isn't already one.</p>
 
 </div>
 
-<!-- _______________________________________________________________________ -->
-<!--
-</ul><h4><a name="portability"><hr size=0>Portability Problems</h4><ul>
--->
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="experimental">Experimental features included with this release</a>
+</div>
 
+<div class="doc_text">
+
+<p>
+The following components of this LLVM release are either untested, known to be
+broken or unreliable, or are in early development.  These components should not
+be relied on, and bugs should not be filed against them, but they may be useful
+to some people.  In particular, if you would like to work on one of these
+components, please contact us on the llvmdev list.
+</p>
+
+<ul>
+<li>The following passes are incomplete or buggy: <tt>-pgmdep, -memdep,
+    -ipmodref, -sortstructs, -swapstructs, -cee</tt></li>
+
+<li>The <tt>-pre</tt> pass is incomplete (there are cases it doesn't handle that
+    it should) and not thoroughly tested.</li>
+<li>The <tt>llvm-ar</tt> tool is incomplete and probably buggy.</li>
+<li>The <tt>llvm-db</tt> tool is in a very early stage of development.</li>
+</ul>
+
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
