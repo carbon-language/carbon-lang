@@ -31,7 +31,7 @@ namespace {
        clEnumVal(linearscan,    "  linear scan register allocator"),
        clEnumVal(iterativescan, "  iterative scan register allocator"),
        clEnumValEnd),
-    cl::init(local));
+    cl::init(linearscan));
 }
 
 FunctionPass *llvm::createRegisterAllocator() {
