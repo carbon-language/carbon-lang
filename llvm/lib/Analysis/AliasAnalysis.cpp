@@ -220,5 +220,22 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
     return NoAlias;                    // Unique values don't alias null
   }
 
+  // Check to see if these two pointers are related by a getelementptr
+  // instruction.  If one pointer is a GEP with a non-zero index of the other
+  // pointer, we know they cannot alias.
+  //
+  if (isa<GetElementPtrInst>(V2))
+    std::swap(V1, V2);
+
+  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1))
+    if (GEP->getOperand(0) == V2) {
+      // If there is at least one non-zero constant index, we know they cannot
+      // alias.
+      for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+        if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
+          if (!C->isNullValue())
+            return NoAlias;
+    }
+
   return MayAlias;
 }
