@@ -307,7 +307,9 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (!isa<Argument>(O1) && isa<ConstantPointerNull>(V2))
       return NoAlias;                    // Unique values don't alias null
 
-    if (isa<GlobalVariable>(O1) || isa<AllocationInst>(O1))
+    if (isa<GlobalVariable>(O1) || 
+        (isa<AllocationInst>(O1) &&
+         !cast<AllocationInst>(O1)->isArrayAllocation()))
       if (cast<PointerType>(O1->getType())->getElementType()->isSized()) {
         // If the size of the other access is larger than the total size of the
         // global/alloca/malloc, it cannot be accessing the global (it's
@@ -323,7 +325,9 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (!isa<Argument>(O2) && isa<ConstantPointerNull>(V1))
       return NoAlias;                    // Unique values don't alias null
 
-    if (isa<GlobalVariable>(O2) || isa<AllocationInst>(O2))
+    if (isa<GlobalVariable>(O2) ||
+        (isa<AllocationInst>(O2) &&
+         !cast<AllocationInst>(O2)->isArrayAllocation()))
       if (cast<PointerType>(O2->getType())->getElementType()->isSized()) {
         // If the size of the other access is larger than the total size of the
         // global/alloca/malloc, it cannot be accessing the object (it's
