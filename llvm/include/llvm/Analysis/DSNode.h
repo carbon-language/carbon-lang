@@ -8,6 +8,8 @@
 #define LLVM_ANALYSIS_DSNODE_H
 
 #include "llvm/Analysis/DSSupport.h"
+template<typename BaseType>
+class DSNodeIterator;          // Data structure graph traversal iterator
 
 //===----------------------------------------------------------------------===//
 /// DSNode - Data structure node class
@@ -34,11 +36,11 @@ class DSNode {
   ///
   std::vector<GlobalValue*> Globals;
 
-  /// Type - Keep track of the current outer most type of this object, in
-  /// addition to whether or not it has been indexed like an array or not.  If
-  /// the isArray bit is set, the node cannot grow.
+  /// Ty - Keep track of the current outer most type of this object, in addition
+  /// to whether or not it has been indexed like an array or not.  If the
+  /// isArray bit is set, the node cannot grow.
   ///
-  DSTypeRec Ty;
+  const Type *Ty;                 // The type itself...
 
   /// Size - The current size of the node.  This should be equal to the size of
   /// the current type record.
@@ -56,8 +58,9 @@ public:
     Incomplete  = 1 << 4,   // This node may not be complete
     Modified    = 1 << 5,   // This node is modified in this context
     Read        = 1 << 6,   // This node is read in this context
+    Array       = 1 << 7,   // This node is treated like an array
 #if 1
-    DEAD        = 1 << 7,   // This node is dead and should not be pointed to
+    DEAD        = 1 << 8,   // This node is dead and should not be pointed to
 #endif
   };
   
@@ -66,7 +69,7 @@ public:
   /// with a value of 0 for their NodeType.  Scalar and Alloca markers go away
   /// when function graphs are inlined.
   ///
-  unsigned char NodeType;
+  unsigned short NodeType;
 
   DSNode(enum NodeTy NT, const Type *T);
   DSNode(const DSNode &);
@@ -76,11 +79,13 @@ public:
     assert(Referrers.empty() && "Referrers to dead node exist!");
   }
 
-  // Iterator for graph interface...
-  typedef DSNodeIterator iterator;
-  typedef DSNodeIterator const_iterator;
-  inline iterator begin() const;   // Defined in DSGraphTraits.h
-  inline iterator end() const;
+  // Iterator for graph interface... Defined in DSGraphTraits.h
+  typedef DSNodeIterator<DSNode> iterator;
+  typedef DSNodeIterator<const DSNode> const_iterator;
+  inline iterator begin();
+  inline iterator end();
+  inline const_iterator begin() const;
+  inline const_iterator end() const;
 
   //===--------------------------------------------------
   // Accessors
@@ -90,7 +95,8 @@ public:
   unsigned getSize() const { return Size; }
 
   // getType - Return the node type of this object...
-  const DSTypeRec &getType() const { return Ty; }
+  const Type *getType() const { return Ty; }
+  bool isArray() const { return NodeType & Array; }
 
   /// getReferrers - Return a list of the pointers to this node...
   ///
