@@ -41,7 +41,7 @@ ASFLAGS = -c $(CFLAGS)
 ## 
 ifdef PROG
 
-  default:    $(PROG) $(PROG).native
+  default:    $(PROG).clean.bc $(PROG).native $(PROG)
 
   ifeq ($(strip $(OBJS)),)
     BCOBJS = $(PROG).bc
@@ -53,7 +53,7 @@ ifdef PROG
 	$(LLINK) -f $(BCOBJS) -o $@
 
   $(PROG).clean.bc: $(PROG).linked.bc
-	$(LOPT) -cleangcc -raise -constprop -dce < $< > $@
+	$(LOPT) -cleangcc -raise -constprop -dce -o $@ -f $<
 
   $(PROG).native: $(OBJS:.o=.c)
 	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
@@ -84,9 +84,7 @@ clean :
 ## 	$(LCC) $(LCFLAGS) -S $< -o $*.ll
 
 %.bc: %.c
-	$(LCC) $(LCFLAGS) -c $< -o $*.tmp.bc
-	$(LOPT) -cleangcc -raise -constprop -dce $*.tmp.bc -o $@
-	$(RM) $*.tmp.bc
+	$(LCC) $(LCFLAGS) -c $< -o $@
 
 %.bc: %.ll
 	$(LAS) -f $<
