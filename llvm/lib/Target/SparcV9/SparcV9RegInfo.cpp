@@ -929,11 +929,11 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
 
 void
 SparcV9RegInfo::cpValue2Value(Value *Src, Value *Dest,
-                                 std::vector<MachineInstr*>& mvec) const {
+                              std::vector<MachineInstr*>& mvec) const {
   int RegType = getRegTypeForDataType(Src->getType());
   MachineInstr * MI = NULL;
 
-  switch( RegType ) {
+  switch (RegType) {
   case IntRegType:
     MI = BuildMI(V9::ADDr, 3).addReg(Src).addMReg(getZeroRegNum())
       .addRegDef(Dest);
@@ -945,7 +945,7 @@ SparcV9RegInfo::cpValue2Value(Value *Src, Value *Dest,
     MI = BuildMI(V9::FMOVD, 2).addReg(Src).addRegDef(Dest);
     break;
   default:
-    assert(0 && "Unknow RegType in CpValu2Value");
+    assert(0 && "Unknown RegType in cpValue2Value");
   }
 
   mvec.push_back(MI);
