@@ -164,7 +164,8 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
 void BytecodeWriter::outputConstants(bool isFunction) {
   ConstantTotalBytes -= Out.size();
   if (isFunction) FunctionConstantTotalBytes -= Out.size();
-  BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
+  BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out,
+                      true  /* Elide block if empty */);
 
   unsigned NumPlanes = Table.getNumPlanes();
 
@@ -286,7 +287,8 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 
   SymTabBytes -= Out.size();
   
-  BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out);
+  BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out,
+                            true/* ElideIfEmpty*/);
 
   for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); ++TI) {
     SymbolTable::type_const_iterator I = MST.type_begin(TI->first);

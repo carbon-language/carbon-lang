@@ -50,27 +50,41 @@ private:
 
 
 
-// BytecodeBlock - Little helper class that helps us do backpatching of bytecode
-// block sizes really easily.  It backpatches when it goes out of scope.
-//
+/// BytecodeBlock - Little helper class is used by the bytecode writer to help
+/// do backpatching of bytecode block sizes really easily.  It backpatches when
+/// it goes out of scope.
+///
 class BytecodeBlock {
   unsigned Loc;
   std::deque<unsigned char> &Out;
 
+  /// ElideIfEmpty - If this is true and the bytecode block ends up being empty,
+  /// the block can remove itself from the output stream entirely.
+  bool ElideIfEmpty;
+
   BytecodeBlock(const BytecodeBlock &);   // do not implement
   void operator=(const BytecodeBlock &);  // do not implement
 public:
-  inline BytecodeBlock(unsigned ID, std::deque<unsigned char> &o) : Out(o) {
+  inline BytecodeBlock(unsigned ID, std::deque<unsigned char> &o,
+                       bool elideIfEmpty = false)
+    : Out(o), ElideIfEmpty(elideIfEmpty) {
     output(ID, Out);
-    output((unsigned)0, Out);         // Reserve the space for the block size...
+    output(0U, Out);         // Reserve the space for the block size...
     Loc = Out.size();
   }
 
   inline ~BytecodeBlock() {           // Do backpatch when block goes out
                                       // of scope...
+    if (Loc == Out.size() && ElideIfEmpty) {
+      // If the block is empty, and we are allowed to, do not emit the block at
+      // all!
+      Out.resize(Out.size()-8);
+      return;
+    }
+
     //cerr << "OldLoc = " << Loc << " NewLoc = " << NewLoc << " diff = "
     //     << (NewLoc-Loc) << endl;
-    output((unsigned)(Out.size()-Loc), Out, (int)Loc-4);
+    output(unsigned(Out.size()-Loc), Out, int(Loc-4));
     align32(Out);  // Blocks must ALWAYS be aligned
   }
 };
