@@ -8,6 +8,7 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/DSGraphTraits.h"
 #include "llvm/Module.h"
+#include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
 #include "Support/GraphWriter.h"
@@ -99,7 +100,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     // Add scalar nodes to the graph...
     const DSGraph::ScalarMapTy &VM = G->getScalarMap();
     for (DSGraph::ScalarMapTy::const_iterator I = VM.begin(); I != VM.end();++I)
-      if (!isa<GlobalValue>(I->first)) {
+      if (!isa<GlobalValue>(I->first) && !isa<ConstantPointerRef>(I->first)) {
         std::stringstream OS;
         WriteAsOperand(OS, I->first, false, true, CurMod);
         GW.emitSimpleNode(I->first, "", OS.str());
