@@ -713,8 +713,8 @@ For example:<p>
 
 <pre>
   <a href="#Instruction">Instruction</a> *I = .. ;
-  <a href="#BasicBlock">BasicBlock</a> *BB = I->getParent();
-  BB->getInstList().erase(I);
+  <a href="#BasicBlock">BasicBlock</a> *BB = I-&gt;getParent();
+  BB-&gt;getInstList().erase(I);
 </pre><p>
 
 <!--_______________________________________________________________________-->
@@ -724,13 +724,13 @@ For example:<p>
 <p><i>Replacing individual instructions</i></p>
 <p>
 Including "<a
-href="/doxygen/BasicBlock_8h-source.html">llvm/Transforms/Utils/BasicBlock.h
+href="/doxygen/BasicBlockUtils_8h-source.html">llvm/Transforms/Utils/BasicBlockUtils.h
 </a>" permits use of two very useful replace functions:
 <tt>ReplaceInstWithValue</tt> and <tt>ReplaceInstWithInst</tt>.  
 
 <ul>
 
-<li>ReplaceInstWithValue
+<li><tt>ReplaceInstWithValue</tt>
 
 <p>This function replaces all uses (within a basic block) of a given
 instruction with a value, and then removes the original instruction.
@@ -740,11 +740,11 @@ integer with an null pointer to an integer.</p>
 
 <pre>
 AllocaInst* instToReplace = ...;
-ReplaceInstWithValue(*instToReplace->getParent(), instToReplace,
+ReplaceInstWithValue(*instToReplace-&gt;getParent(), instToReplace,
                      Constant::getNullValue(PointerType::get(Type::IntTy)));
 </pre>
 
-<li>ReplaceInstWithInst
+<li><tt>ReplaceInstWithInst</tt>
 
 <p>This function replaces a particular instruction with another
 instruction.  The following example illustrates the replacement of one
@@ -752,7 +752,7 @@ instruction.  The following example illustrates the replacement of one
 
 <pre>
 AllocaInst* instToReplace = ...;
-ReplaceInstWithInst(*instToReplace->getParent(), instToReplace,
+ReplaceInstWithInst(*instToReplace-&gt;getParent(), instToReplace,
                     new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt");
 </pre>
 
