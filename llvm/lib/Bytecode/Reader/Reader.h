@@ -21,6 +21,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Bytecode/Analyzer.h"
 #include <utility>
 #include <map>
 
@@ -71,7 +72,7 @@ public:
   /// globals section.
   /// @brief A list of values as a User of those Values.
   struct ValueList : public User {
-    ValueList() : User(Type::TypeTy, Value::TypeVal) {}
+    ValueList() : User(Type::VoidTy, Value::OtherVal) {}
 
     // vector compatibility methods
     unsigned size() const { return getNumOperands(); }
@@ -82,9 +83,9 @@ public:
     // must override this 
     virtual void print(std::ostream& os) const {
       for ( unsigned i = 0; i < size(); i++ ) {
-	os << i << " ";
-	getOperand(i)->print(os);
-	os << "\n";
+        os << i << " ";
+        getOperand(i)->print(os);
+        os << "\n";
       }
     }
   };
@@ -124,8 +125,6 @@ public:
 /// @name Methods
 /// @{
 public:
-  /// This function completely parses a bytecode buffer given by the \p Buf
-  /// and \p Length parameters. The
   /// @brief Main interface to parsing a bytecode buffer.
   void ParseBytecode(
      const unsigned char *Buf,   ///< Beginning of the bytecode buffer
@@ -133,24 +132,11 @@ public:
      const std::string &ModuleID ///< An identifier for the module constructed.
   );
 
-  /// The ParseAllFunctionBodies method parses through all the previously
-  /// unparsed functions in the bytecode file. If you want to completely parse
-  /// a bytecode file, this method should be called after Parsebytecode because
-  /// Parsebytecode only records the locations in the bytecode file of where
-  /// the function definitions are located. This function uses that information
-  /// to materialize the functions.
-  /// @see ParseBytecode
   /// @brief Parse all function bodies
-  void ParseAllFunctionBodies  ();
+  void ParseAllFunctionBodies();
 
-  /// The ParserFunction method lazily parses one function. Use this method to 
-  /// casue the parser to parse a specific function in the module. Note that 
-  /// this will remove the function from what is to be included by 
-  /// ParseAllFunctionBodies.
-  /// @see ParseAllFunctionBodies
-  /// @see ParseBytecode
   /// @brief Parse the next function of specific type
-  void ParseFunction (Function* Func) ;
+  void ParseFunction(Function* Func) ;
 
   /// This method is abstract in the parent ModuleProvider class. Its
   /// implementation is identical to the ParseFunction method.
@@ -198,15 +184,14 @@ protected:
   /// @brief Parse a symbol table
   void ParseSymbolTable( Function* Func, SymbolTable *ST);
 
-  /// This function parses LLVM functions lazily. It obtains the type of the
-  /// function and records where the body of the function is in the bytecode
-  /// buffer. The caller can then use the ParseNextFunction and 
-  /// ParseAllFunctionBodies to get handler events for the functions.
   /// @brief Parse functions lazily.
   void ParseFunctionLazily();
 
   ///  @brief Parse a function body
   void ParseFunctionBody(Function* Func);
+
+  /// @brief Parse the type list portion of a compaction table
+  void BytecodeReader::ParseCompactionTypes( unsigned NumEntries );
 
   /// @brief Parse a compaction table
   void ParseCompactionTable();
@@ -214,20 +199,15 @@ protected:
   /// @brief Parse global types
   void ParseGlobalTypes();
 
-  /// @returns The basic block constructed.
   /// @brief Parse a basic block (for LLVM 1.0 basic block blocks)
   BasicBlock* ParseBasicBlock(unsigned BlockNo);
 
-  /// @returns Rhe number of basic blocks encountered.
   /// @brief parse an instruction list (for post LLVM 1.0 instruction lists
   /// with blocks differentiated by terminating instructions.
   unsigned ParseInstructionList(
     Function* F   ///< The function into which BBs will be inserted
   );
   
-  /// This method parses a single instruction. The instruction is
-  /// inserted at the end of the \p BB provided. The arguments of
-  /// the instruction are provided in the \p Args vector.
   /// @brief Parse a single instruction.
   void ParseInstruction(
     std::vector<unsigned>& Args,   ///< The arguments to be filled in
@@ -235,7 +215,8 @@ protected:
   );
 
   /// @brief Parse the whole constant pool
-  void ParseConstantPool(ValueTable& Values, TypeListTy& Types);
+  void ParseConstantPool(ValueTable& Values, TypeListTy& Types, 
+                         bool isFunction);
 
   /// @brief Parse a single constant value
   Constant* ParseConstantValue(unsigned TypeID);
@@ -259,24 +240,32 @@ private:
   BufPtr BlockEnd;     ///< End of current block being parsed
   BufPtr At;           ///< Where we're currently parsing at
 
-  // Information about the module, extracted from the bytecode revision number.
+  /// Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
 
-  // Flags to distinguish LLVM 1.0 & 1.1 bytecode formats (revision #0)
+  /// Flags to distinguish LLVM 1.0 & 1.1 bytecode formats (revision #0)
 
-  // Revision #0 had an explicit alignment of data only for the ModuleGlobalInfo
-  // block.  This was fixed to be like all other blocks in 1.2
+  /// Revision #0 had an explicit alignment of data only for the ModuleGlobalInfo
+  /// block.  This was fixed to be like all other blocks in 1.2
   bool hasInconsistentModuleGlobalInfo;
 
-  // Revision #0 also explicitly encoded zero values for primitive types like
-  // int/sbyte/etc.
+  /// Revision #0 also explicitly encoded zero values for primitive types like
+  /// int/sbyte/etc.
   bool hasExplicitPrimitiveZeros;
 
   // Flags to control features specific the LLVM 1.2 and before (revision #1)
 
-  // LLVM 1.2 and earlier required that getelementptr structure indices were
-  // ubyte constants and that sequential type indices were longs.
+  /// LLVM 1.2 and earlier required that getelementptr structure indices were
+  /// ubyte constants and that sequential type indices were longs.
   bool hasRestrictedGEPTypes;
+
+  /// LLVM 1.2 and earlier had class Type deriving from Value and the Type
+  /// objects were located in the "Type Type" plane of various lists in read
+  /// by the bytecode reader. In LLVM 1.3 this is no longer the case. Types are
+  /// completely distinct from Values. Consequently, Types are written in fixed
+  /// locations in LLVM 1.3. This flag indicates that the older Type derived
+  /// from Value style of bytecode file is being read.
+  bool hasTypeDerivedFromValue;
 
   /// CompactionTable - If a compaction table is active in the current function,
   /// this is the mapping that it contains.
@@ -353,41 +342,36 @@ private:
   /// @brief Converts a type slot number to its Type*
   const Type *getType(unsigned ID);
 
+  /// @brief Converts a pre-sanitized type slot number to its Type* and
+  /// sanitizes the type id.
+  inline const Type* getSanitizedType(unsigned& ID );
+
+  /// @brief Read in and get a sanitized type id
+  inline const Type* BytecodeReader::readSanitizedType();
+
   /// @brief Converts a Type* to its type slot number
   unsigned getTypeSlot(const Type *Ty);
 
   /// @brief Converts a normal type slot number to a compacted type slot num.
   unsigned getCompactionTypeSlot(unsigned type);
 
-  /// This is just like getType, but when a compaction table is in use, it is 
-  /// ignored.  Also, no forward references or other fancy features are 
-  /// supported.
-  const Type *getGlobalTableType(unsigned Slot);
+  /// @brief Gets the global type corresponding to the TypeId
+  const Type *getGlobalTableType(unsigned TypeId);
 
   /// This is just like getTypeSlot, but when a compaction table is in use,
   /// it is ignored. 
   unsigned getGlobalTableTypeSlot(const Type *Ty);
   
-  /// Retrieve a value of a given type and slot number, possibly creating 
-  /// it if it doesn't already exist. 
+  /// @brief Get a value from its typeid and slot number
   Value* getValue(unsigned TypeID, unsigned num, bool Create = true);
 
-  /// This is just like getValue, but when a compaction table is in use, it 
-  /// is ignored.  Also, no forward references or other fancy features are 
-  /// supported.
+  /// @brief Get a value from its type and slot number, ignoring compaction tables.
   Value *getGlobalTableValue(const Type *Ty, unsigned SlotNo);
 
-  /// This function is used when construction phi, br, switch, and other 
-  /// instructions that reference basic blocks. Blocks are numbered 
-  /// sequentially as they appear in the function.
   /// @brief Get a basic block for current function
   BasicBlock *getBasicBlock(unsigned ID);
 
-  /// Just like getValue, except that it returns a null pointer
-  /// only on error.  It always returns a constant (meaning that if the value is
-  /// defined, but is not a constant, that is an error).  If the specified
-  /// constant hasn't been parsed yet, a placeholder is defined and used.  
-  /// Later, after the real value is parsed, the placeholder is eliminated.
+  /// @brief Get a constant value from its typeid and value slot.
   Constant* getConstantValue(unsigned typeSlot, unsigned valSlot);
 
   /// @brief Convenience function for getting a constant value when
@@ -396,9 +380,6 @@ private:
     return getConstantValue(getTypeSlot(Ty), valSlot);
   }
 
-  /// As values are created, they are inserted into the appropriate place
-  /// with this method. The ValueTable argument must be one of ModuleValues
-  /// or FunctionValues data members of this class.
   /// @brief Insert a newly created value
   unsigned insertValue(Value *V, unsigned Type, ValueTable &Table);
 
@@ -458,11 +439,21 @@ private:
   /// @brief Read an arbitrary data chunk of fixed length
   inline void read_data(void *Ptr, void *End);
 
-  /// Read a bytecode block header
+  /// @brief Read a bytecode block header
   inline void read_block(unsigned &Type, unsigned &Size);
 
+  /// @brief Read a type identifier and sanitize it.
+  inline bool read_typeid(unsigned &TypeId);
+
+  /// @brief Recalculate type ID for pre 1.3 bytecode files.
+  inline bool sanitizeTypeId(unsigned &TypeId );
 /// @}
 };
+
+/// @brief A function for creating a BytecodeAnalzer as a handler
+/// for the Bytecode reader.
+BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca );
+
 
 } // End llvm namespace
 
