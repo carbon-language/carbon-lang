@@ -28,6 +28,8 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 static std::vector<std::string> *FilesToRemove = NULL;
 static std::vector<llvm::sys::Path> *DirectoriesToRemove = NULL;
 static bool RegisteredUnhandledExceptionFilter = false;
+static bool CleanupExecuted = false;
+static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
 
 // Windows creates a new thread to execute the console handler when an event
 // (such as CTRL/C) occurs.  This causes concurrency issues with the above
@@ -43,8 +45,7 @@ namespace llvm {
 
 
 static void RegisterHandler() { 
-  if (RegisteredUnhandledExceptionFilter)
-  {
+  if (RegisteredUnhandledExceptionFilter) {
     EnterCriticalSection(&CriticalSection);
     return;
   }
@@ -58,7 +59,7 @@ static void RegisterHandler() {
   EnterCriticalSection(&CriticalSection);
 
   RegisteredUnhandledExceptionFilter = true;
-  SetUnhandledExceptionFilter(LLVMUnhandledExceptionFilter);
+  OldFilter = SetUnhandledExceptionFilter(LLVMUnhandledExceptionFilter);
   SetConsoleCtrlHandler(LLVMConsoleCtrlHandler, TRUE);
 
   // IMPORTANT NOTE: Caller must call LeaveCriticalSection(&CriticalSection) or
@@ -68,6 +69,9 @@ static void RegisterHandler() {
 // RemoveFileOnSignal - The public API
 void sys::RemoveFileOnSignal(const std::string &Filename) {
   RegisterHandler();
+
+  if (CleanupExecuted)
+    throw std::string("Process terminating -- cannot register for removal");
 
   if (FilesToRemove == NULL)
     FilesToRemove = new std::vector<std::string>;
@@ -80,6 +84,9 @@ void sys::RemoveFileOnSignal(const std::string &Filename) {
 // RemoveDirectoryOnSignal - The public API
 void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
   RegisterHandler();
+
+  if (CleanupExecuted)
+    throw std::string("Process terminating -- cannot register for removal");
 
   if (path.is_directory()) {
     if (DirectoriesToRemove == NULL)
@@ -102,6 +109,12 @@ void sys::PrintStackTraceOnErrorSignal() {
 
 static void Cleanup() {
   EnterCriticalSection(&CriticalSection);
+
+  // Prevent other thread from registering new files and directories for
+  // removal, should we be executing because of the console handler callback.
+  CleanupExecuted = true;
+
+  // FIXME: open files cannot be deleted.
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
@@ -144,7 +157,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
     // Initialize the symbol handler.
     SymSetOptions(SYMOPT_DEFERRED_LOADS|SYMOPT_LOAD_LINES);
-    SymInitialize(GetCurrentProcess(), NULL, TRUE);
+    SymInitialize(hProcess, NULL, TRUE);
 
     while (true) {
       if (!StackWalk(IMAGE_FILE_MACHINE_I386, hProcess, hThread, &StackFrame,
@@ -158,7 +171,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
       // Print the PC in hexadecimal.
       DWORD PC = StackFrame.AddrPC.Offset;
-      fprintf(stderr, "%04X:%08X", ep->ContextRecord->SegCs, PC);
+      fprintf(stderr, "%08X", PC);
 
       // Print the parameters.  Assume there are four.
       fprintf(stderr, " (0x%08X 0x%08X 0x%08X 0x%08X)", StackFrame.Params[0],
@@ -166,7 +179,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
       // Verify the PC belongs to a module in this process.
       if (!SymGetModuleBase(hProcess, PC)) {
-        fputc('\n', stderr);
+        fputs(" <unknown module>\n", stderr);
         continue;
       }
 
@@ -201,21 +214,18 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
       fputc('\n', stderr);
     }
-  }
-  catch (...)
-  {
+  } catch (...) {
       assert(!"Crashed in LLVMUnhandledExceptionFilter");
   }
 
   // Allow dialog box to pop up allowing choice to start debugger.
-  return EXCEPTION_CONTINUE_SEARCH;
+  if (OldFilter)
+    return (*OldFilter)(ep);
+  else
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
-  // FIXME: This handler executes on a different thread.  The main thread
-  // is still running, potentially creating new files to be cleaned up
-  // in the tiny window between the call to Cleanup() and process termination.
-  // Also, any files currently open cannot be deleted.
   Cleanup();
 
   // Allow normal processing to take place; i.e., the process dies.
