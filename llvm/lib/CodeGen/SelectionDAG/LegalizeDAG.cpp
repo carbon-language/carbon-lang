@@ -125,7 +125,9 @@ private:
                           SDOperand Source);
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
-  void ExpandByParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
+  void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
+                        SDOperand &Lo, SDOperand &Hi);
+  void ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
                      SDOperand &Lo, SDOperand &Hi);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
@@ -825,7 +827,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
   case ISD::ADD_PARTS:
-  case ISD::SUB_PARTS: {
+  case ISD::SUB_PARTS:
+  case ISD::SHL_PARTS:
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS: {
     std::vector<SDOperand> Ops;
     bool Changed = false;
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
@@ -1307,6 +1312,22 @@ ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
   Hi = Lo.getValue(1);
 }
 
+void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
+                                            SDOperand Op, SDOperand Amt,
+                                            SDOperand &Lo, SDOperand &Hi) {
+  // Expand the subcomponents.
+  SDOperand LHSL, LHSH;
+  ExpandOp(Op, LHSL, LHSH);
+
+  std::vector<SDOperand> Ops;
+  Ops.push_back(LHSL);
+  Ops.push_back(LHSH);
+  Ops.push_back(Amt);
+  Lo = DAG.getNode(NodeOp, LHSL.getValueType(), Ops);
+  Hi = Lo.getValue(1);
+}
+
+
 /// ExpandShift - Try to find a clever way to expand this shift operation out to
 /// smaller elements.  If we can't find a way that is more efficient than a
 /// libcall on this target, return false.  Otherwise, return true with the
@@ -1753,8 +1774,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     // If this target supports SHL_PARTS, use it.
     if (TLI.getOperationAction(ISD::SHL_PARTS, NVT) == TargetLowering::Legal) {
-      ExpandByParts(ISD::SHL_PARTS, Node->getOperand(0), Node->getOperand(1),
-                    Lo, Hi);
+      ExpandShiftParts(ISD::SHL_PARTS, Node->getOperand(0), Node->getOperand(1),
+                       Lo, Hi);
       break;
     }
 
@@ -1769,8 +1790,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     // If this target supports SRA_PARTS, use it.
     if (TLI.getOperationAction(ISD::SRA_PARTS, NVT) == TargetLowering::Legal) {
-      ExpandByParts(ISD::SRA_PARTS, Node->getOperand(0), Node->getOperand(1),
-                    Lo, Hi);
+      ExpandShiftParts(ISD::SRA_PARTS, Node->getOperand(0), Node->getOperand(1),
+                       Lo, Hi);
       break;
     }
 
@@ -1784,8 +1805,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     // If this target supports SRL_PARTS, use it.
     if (TLI.getOperationAction(ISD::SRL_PARTS, NVT) == TargetLowering::Legal) {
-      ExpandByParts(ISD::SRL_PARTS, Node->getOperand(0), Node->getOperand(1),
-                    Lo, Hi);
+      ExpandShiftParts(ISD::SRL_PARTS, Node->getOperand(0), Node->getOperand(1),
+                       Lo, Hi);
       break;
     }
 

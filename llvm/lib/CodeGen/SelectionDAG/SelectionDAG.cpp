@@ -907,6 +907,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::DYNAMIC_STACKALLOC: // DYNAMIC_STACKALLOC produces pointer and chain
     N->setValueTypes(VT, MVT::Other);
     break;
+
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS:
+  case ISD::SHL_PARTS: {
+    std::vector<MVT::ValueType> V(N->getNumOperands()-1, VT);
+    N->setValueTypes(V);
+    break;
+  }
   }
 
   // FIXME: memoize NODES
@@ -924,9 +932,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   default:
     // FIXME: MEMOIZE!!
     SDNode *N = new SDNode(Opcode, Children);
-    if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS &&
-        Opcode != ISD::SRA_PARTS && Opcode != ISD::SRL_PARTS &&
-        Opcode != ISD::SHL_PARTS) {
+    if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS) {
       N->setValueTypes(VT);
     } else {
       std::vector<MVT::ValueType> V(N->getNumOperands()/2, VT);
