@@ -164,29 +164,31 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     }
   }
 
-  DEBUG(std::cerr << "********** INTERVALS **********\n");
-  DEBUG (for (iterator I = begin(), E = end(); I != E; ++I)
-         std::cerr << I->second << "\n");
-  DEBUG(std::cerr << "********** MACHINEINSTRS **********\n");
-  DEBUG(
-    for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
-         mbbi != mbbe; ++mbbi) {
-      std::cerr << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
-      for (MachineBasicBlock::iterator mii = mbbi->begin(),
-             mie = mbbi->end(); mii != mie; ++mii) {
-        std::cerr << getInstructionIndex(mii) << '\t';
-        mii->print(std::cerr, tm_);
-      }
-    });
-
+  DEBUG(dump());
   return true;
 }
 
-std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
-  const LiveInterval& li,
-  VirtRegMap& vrm,
-  int slot)
-{
+/// print - Implement the dump method.
+void LiveIntervals::print(std::ostream &O) const {
+  O << "********** INTERVALS **********\n";
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    O << I->second << "\n";
+
+  O << "********** MACHINEINSTRS **********\n";
+  for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
+       mbbi != mbbe; ++mbbi) {
+    O << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
+    for (MachineBasicBlock::iterator mii = mbbi->begin(),
+           mie = mbbi->end(); mii != mie; ++mii) {
+      O << getInstructionIndex(mii) << '\t';
+      mii->print(O, tm_);
+    }
+  }
+}
+
+
+std::vector<LiveInterval*> LiveIntervals::
+addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
   // since this is called after the analysis is done we don't know if
   // LiveVariables is available
   lv_ = getAnalysisToUpdate<LiveVariables>();
@@ -230,20 +232,18 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
             goto for_operand;
           }
           else {
-            // This is tricky. We need to add information in
-            // the interval about the spill code so we have to
-            // use our extra load/store slots.
+            // This is tricky. We need to add information in the interval about
+            // the spill code so we have to use our extra load/store slots.
             //
-            // If we have a use we are going to have a load so
-            // we start the interval from the load slot
-            // onwards. Otherwise we start from the def slot.
+            // If we have a use we are going to have a load so we start the
+            // interval from the load slot onwards. Otherwise we start from the
+            // def slot.
             unsigned start = (mop.isUse() ?
                               getLoadIndex(index) :
                               getDefIndex(index));
-            // If we have a def we are going to have a store
-            // right after it so we end the interval after the
-            // use of the next instruction. Otherwise we end
-            // after the use of this instruction.
+            // If we have a def we are going to have a store right after it so
+            // we end the interval after the use of the next
+            // instruction. Otherwise we end after the use of this instruction.
             unsigned end = 1 + (mop.isDef() ?
                                 getStoreIndex(index) :
                                 getUseIndex(index));
@@ -255,6 +255,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
             vrm.assignVirt2StackSlot(nReg, slot);
             LiveInterval& nI = getOrCreateInterval(nReg);
             assert(nI.empty());
+
             // the spill weight is now infinity as it
             // cannot be spilled again
             nI.weight = HUGE_VAL;
@@ -262,6 +263,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
             DEBUG(std::cerr << " +" << LR);
             nI.addRange(LR);
             added.push_back(&nI);
+
             // update live variables if it is available
             if (lv_)
               lv_->addVirtualRegisterKilled(nReg, mi);

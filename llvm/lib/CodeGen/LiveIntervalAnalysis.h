@@ -81,8 +81,10 @@ namespace llvm {
       return getBaseIndex(index) + InstrSlots::STORE;
     }
 
-    // FIXME: this should really be a const_iterator
     typedef Reg2IntervalMap::iterator iterator;
+    typedef Reg2IntervalMap::const_iterator const_iterator;
+    const_iterator begin() const { return r2iMap_.begin(); }
+    const_iterator end() const { return r2iMap_.end(); }
     iterator begin() { return r2iMap_.begin(); }
     iterator end() { return r2iMap_.end(); }
     unsigned getNumIntervals() const { return r2iMap_.size(); }
@@ -124,6 +126,9 @@ namespace llvm {
 
     /// runOnMachineFunction - pass entry point
     virtual bool runOnMachineFunction(MachineFunction&);
+
+    /// print - Implement the dump method.
+    virtual void print(std::ostream &O) const;
 
   private:
     /// computeIntervals - compute live intervals
