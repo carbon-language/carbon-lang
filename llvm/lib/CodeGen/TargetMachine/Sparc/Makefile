@@ -12,6 +12,3 @@ Source  = \
 
 include $(LEVEL)/Makefile.common
 
-%.burm.cpp: %.burg
-	$(RunBurg) -o $@ $<
-
