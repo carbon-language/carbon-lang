@@ -202,12 +202,26 @@ class F3_13<bits<2> opVal, bits<6> op3Val, string name> : F3_rs1 {
 }
 
 class F3_14<bits<2> opVal, bits<6> op3Val,
-            bits<9> opfval, string name> : F3_rs2rd {
+            bits<9> opfVal, string name> : F3_rs2rd {
   set op  = opVal;
   set op3 = op3Val;
   set Name = name;
   //set Inst{18-14} = dontcare;
-  set Inst{13-5} = opfval;
+  set Inst{13-5} = opfVal;
+}
+
+class F3_15<bits<2> opVal, bits<6> op3Val,
+            bits<9> opfVal, string name> : F3 {
+  bits<2> cc;
+  bits<5> rs1;
+  bits<5> rs2;
+
+  set op  = opVal;
+  set op3 = op3Val;
+  set Inst{26-25} = cc;
+  set Inst{18-14} = rs1;
+  set Inst{13-5}  = opfVal;
+  set Inst{4-0}   = rs2;
 }
   
 class F3_16<bits<2> opVal,  bits<6> op3Val,
