@@ -32,6 +32,7 @@
 #define SUPPORT_SLOW_OPERATION_INFORMER_H
 
 #include <string>
+#include <cassert>
 
 namespace llvm {
   class SlowOperationInformer {
@@ -49,6 +50,15 @@ namespace llvm {
     /// along the operation is, given in 1/10ths of a percent (in other words,
     /// Amount should range from 0 to 1000).
     void progress(unsigned Amount);
+
+    /// progress - Same as the method above, but this performs the division for
+    /// you, and helps you avoid overflow if you are dealing with largish
+    /// numbers.
+    void progress(unsigned Current, unsigned Maximum) {
+      assert(Maximum != 0 &&
+             "Shouldn't be doing work if there is nothing to do!");
+      progress(Current*1000ULL/Maximum);
+    }
   };
 } // end namespace llvm
 

@@ -59,8 +59,12 @@ SlowOperationInformer::SlowOperationInformer(const std::string &Name)
 
 SlowOperationInformer::~SlowOperationInformer() {
   NestedSOI = false;
-  if (LastPrintAmount)
-    std::cout << "\n";
+  if (LastPrintAmount) {
+    // If we have printed something, make _sure_ we print the 100% amount, and
+    // also print a newline.
+    std::cout << std::string(LastPrintAmount, '\b') << "Progress "
+              << OperationName << ": 100%  \n";
+  }
 
   alarm(0);
   signal(SIGALRM, SIG_DFL);
@@ -87,8 +91,11 @@ void SlowOperationInformer::progress(unsigned Amount) {
   std::string ToPrint = std::string(LastPrintAmount, '\b');
 
   std::ostringstream OS;
-  OS << "Progress " << OperationName << ": " << Amount/10 << "." << Amount % 10
-     << "%";
+  OS << "Progress " << OperationName << ": " << Amount/10;
+  if (unsigned Rem = Amount % 10)
+    OS << "." << Rem << "%";
+  else
+    OS << "%  ";
 
   LastPrintAmount = OS.str().size();
   std::cout << ToPrint+OS.str() << std::flush;
