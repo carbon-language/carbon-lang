@@ -1,7 +1,7 @@
 implementation
 
 void "test function"(int %i0, int %j0)
-	%x = int 1
+	%x = const int 1
 begin
 Startup:                               ; Basic block #0
 	%i1 = add int %i0, 1
@@ -28,8 +28,8 @@ end
 ; format looks anyways (except for negative vs positive offsets)...
 ;
 void "void"(int, int)   ; Def %0, %1
-	int 0          ; Def 2
-	int -4         ; Def 3
+	const int 0          ; Def 2
+	const int -4         ; Def 3
 begin
 	add int %0, %1    ; Def 4
 	sub int %4, %3    ; Def 5
@@ -44,8 +44,8 @@ end
 
 ; This function always returns zero
 int "zarro"()
-	uint 4000000000        ; Def 0 - uint plane
-	int 0                  ; Def 0 - int plane
+	const uint 4000000000        ; Def 0 - uint plane
+	const int 0                  ; Def 0 - int plane
 begin
 Startup:
 	ret int %0

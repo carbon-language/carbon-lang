@@ -1,9 +1,9 @@
 implementation
 
 int "test function"(int %i0, int %j0)
-	%i1 = int 1
-	%j1 = int 1
-	%k1 = int 0
+	%i1 = const int 1
+	%j1 = const int 1
+	%k1 = const int 0
 begin
 BB1:
 	br label %BB2

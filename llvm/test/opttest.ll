@@ -1,18 +1,18 @@
-  long 12
+  const long 12
 
 implementation
 
 ulong "const removal"() 
-	long 12345
-	%q = uint 4000000000   ; Def 0 - uint plane
-	ulong 123              ; Def 0 - ulong plane
-	ulong 4000000000000    ; Def 1 - ulong plane
+	const long 12345
+	%q = const uint 4000000000   ; Def %q - uint plane
+	const ulong 123              ; Def 0 - ulong plane
+	const ulong 4000000000000    ; Def 1 - ulong plane
 begin
         ret ulong %1
 end
 
 void "dce #1"() 
-        int 0
+        const int 0
 begin
         ret void
 
@@ -31,9 +31,9 @@ TestName:
 end
 
 void "const prop #1"()
-   %x = int 0                  ; Def %x - int plane
-        int 0                  ; Def 0 - int plane
-        bool false
+   %x = const int 0                  ; Def %x - int plane
+        const int 0                  ; Def 0 - int plane
+        const bool false
 begin
 Startup:
         %x = seteq int %0, %x

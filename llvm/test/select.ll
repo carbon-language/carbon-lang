@@ -42,8 +42,8 @@ end
 ; 2. cannot be folded because result of comparison is used twice
 ;
 void "testbool"(int, int)   ; Def %0, %1
-	int 0          ; Def 2
-	int -4         ; Def 3
+	const int 0          ; Def 2
+	const int -4         ; Def 3
 begin
 	add int %0, %1    ; Def 4
 	sub int %4, %3    ; Def 5

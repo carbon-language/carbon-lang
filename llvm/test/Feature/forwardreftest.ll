@@ -7,8 +7,8 @@ implementation
 
 ; This function always returns zero
 int "zarro"(int %Func)
-	%q = uint 4000000000
-	%p = int 0
+	%q = const uint 4000000000
+	%p = const int 0
 begin
 Startup:
     add int %p, 10
