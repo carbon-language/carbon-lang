@@ -1,8 +1,8 @@
-/*===-- Lexer.l - Scanner for llvm assembly files ----------------*- C++ -*--=//
+/*===-- Lexer.l - Scanner for llvm assembly files --------------*- C++ -*--===//
 //
 //  This file implements the flex scanner for LLVM assembly languages files.
 //
-//===------------------------------------------------------------------------=*/
+//===----------------------------------------------------------------------===*/
 
 %option prefix="llvmAsm"
 %option yylineno
@@ -162,6 +162,7 @@ string          { return STRING; }
 null            { return NULL_TOK; }
 to              { return TO; }
 except          { return EXCEPT; }
+not             { return NOT; }  /* Deprecated, turned into XOR */
 
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
@@ -178,9 +179,6 @@ double          { llvmAsmlval.PrimType = Type::DoubleTy; return DOUBLE; }
 type            { llvmAsmlval.PrimType = Type::TypeTy  ; return TYPE;   }
 label           { llvmAsmlval.PrimType = Type::LabelTy ; return LABEL;  }
 opaque          { return OPAQUE; }
-
-
-not             { RET_TOK(UnaryOpVal, Not, NOT); }
 
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }

@@ -22,7 +22,6 @@ using std::pair;
 using std::map;
 using std::pair;
 using std::make_pair;
-using std::cerr;
 using std::string;
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
@@ -37,7 +36,7 @@ string CurFilename;
 //
 //#define DEBUG_UPREFS 1
 #ifdef DEBUG_UPREFS
-#define UR_OUT(X) cerr << X
+#define UR_OUT(X) std::cerr << X
 #else
 #define UR_OUT(X)
 #endif
@@ -494,7 +493,7 @@ static bool setValueName(Value *V, char *NameStr) {
     // is defined the same as the old one...
     if (const Type *Ty = dyn_cast<const Type>(Existing)) {
       if (Ty == cast<const Type>(V)) return true;  // Yes, it's equal.
-      // cerr << "Type: " << Ty->getDescription() << " != "
+      // std::cerr << "Type: " << Ty->getDescription() << " != "
       //      << cast<const Type>(V)->getDescription() << "!\n";
     } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
       // We are allowed to redefine a global variable in two circumstances:
@@ -621,7 +620,6 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   char                             *StrVal;   // This memory is strdup'd!
   ValID                             ValIDVal; // strdup'd memory maybe!
 
-  Instruction::UnaryOps             UnaryOpVal;
   Instruction::BinaryOps            BinaryOpVal;
   Instruction::TermOps              TermOpVal;
   Instruction::MemoryOps            MemOpVal;
@@ -672,14 +670,10 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT UNINIT
-%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL OPAQUE
+%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL OPAQUE NOT
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
-
-// Unary Operators 
-%type  <UnaryOpVal> UnaryOps  // all the unary operators
-%token <UnaryOpVal> NOT
 
 // Binary Operators 
 %type  <BinaryOpVal> BinaryOps  // all the binary operators
@@ -717,7 +711,6 @@ EINT64VAL : EUINT64VAL {
 // Operations that are notably excluded from this list include: 
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
-UnaryOps  : NOT;
 BinaryOps : ADD | SUB | MUL | DIV | REM | AND | OR | XOR;
 BinaryOps : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 ShiftOps  : SHL | SHR;
@@ -970,7 +963,6 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 // FIXME: ConstExpr::get never return null!  Do checking here in the parser.
 ConstExpr: Types CAST ConstVal {
     $$ = ConstantExpr::get(Instruction::Cast, $3, $1->get());
-    if ($$ == 0) ThrowException("constant expression builder returned null!");
     delete $1;
   }
   | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
@@ -996,10 +988,6 @@ ConstExpr: Types CAST ConstVal {
     $$ = ConstantExpr::getGetElementPtr($4, IdxVec);
     delete $1;
   }
-  | Types UnaryOps ConstVal {
-    $$ = ConstantExpr::get($2, $3, $1->get());
-    delete $1;
-  }
   | Types BinaryOps ConstVal ',' ConstVal {
     if ($3->getType() != $5->getType())
       ThrowException("Binary operator types must match!");
@@ -1016,8 +1004,7 @@ ConstExpr: Types CAST ConstVal {
     
     $$ = ConstantExpr::get($2, $3, $5);
     delete $1;
-  }
-  ;
+  };
 
 
 ConstVal : SIntType EINT64VAL {     // integral constants
@@ -1510,10 +1497,17 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
       ThrowException("binary operator returned null!");
     delete $2;
   }
-  | UnaryOps ResolvedVal {
-    $$ = UnaryOperator::create($1, $2);
+  | NOT ResolvedVal {
+    std::cerr << "WARNING: Use of eliminated 'not' instruction:"
+              << " Replacing with 'xor'.\n";
+
+    Value *Ones = ConstantIntegral::getAllOnesValue($2->getType());
+    if (Ones == 0)
+      ThrowException("Expected integral type for not instruction!");
+
+    $$ = BinaryOperator::create(Instruction::Xor, $2, Ones);
     if ($$ == 0)
-      ThrowException("unary operator returned null!");
+      ThrowException("Could not create a xor instruction!");
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if ($4->getType() != Type::UByteTy)
