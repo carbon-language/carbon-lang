@@ -119,8 +119,11 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   //
   for (BasicBlock::iterator I = DestBB->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-    // We no longer enter through TIBB, now we come in through NewBB.
-    PN->replaceUsesOfWith(TIBB, NewBB);
+    // We no longer enter through TIBB, now we come in through NewBB.  Revector
+    // exactly one entry in the PHI node that used to come from TIBB to come
+    // from NewBB.
+    Value *InVal = PN->removeIncomingValue(TIBB, false);
+    PN->addIncoming(InVal, NewBB);
   }
 
   // If we don't have a pass object, we can't update anything...
