@@ -103,9 +103,8 @@ void Emitter::finishFunction(MachineFunction &F) {
   ConstantPoolAddresses.clear();
   NumBytes += CurByte-CurBlock;
 
-  DEBUG(std::cerr << "Finished CodeGen of [0x" << std::hex
-                  << (unsigned)(intptr_t)CurBlock
-                  << std::dec << "] Function: " << F.getFunction()->getName()
+  DEBUG(std::cerr << "Finished CodeGen of [0x" << (void*)CurBlock
+                  << "] Function: " << F.getFunction()->getName()
                   << ": " << CurByte-CurBlock << " bytes of text\n");
 }
 
