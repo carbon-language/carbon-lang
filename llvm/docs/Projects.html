@@ -275,6 +275,21 @@
 		For example, to link libsample.a, you would set USEDLIBS to
 		<tt>sample</tt>.
 		<p>
+		Note that this works only for statically linked libraries.
+		<p>
+
+		<dt>LIBS
+		<dd>
+		To link dynamic libraries, add <tt>-l&lt;library base name&gt;</tt> to
+		the LIBS variable.  The LLVM build system will look in the same places
+		for dynamic libraries as it does for static libraries.
+		<p>
+		For example, to link <tt>libsample.so</tt>, you would have the
+		following line in your <tt>Makefile</tt>:
+		<p>
+		<tt>
+		LIBS+=-lsample
+		</tt>
 	</dl>
 
 	<h3> Miscellaneous Variables</h3>
