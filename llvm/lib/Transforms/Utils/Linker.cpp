@@ -81,7 +81,7 @@ static void PrintMap(const map<const Value*, Value*> &M) {
 // automatically handle constant references correctly as well...
 //
 static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
-                           const map<const Value*, Value*> *GlobalMap = 0) {
+                           map<const Value*, Value*> *GlobalMap = 0) {
   map<const Value*,Value*>::const_iterator I = LocalMap.find(In);
   if (I != LocalMap.end()) return I->second;
 
@@ -148,7 +148,10 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
     }
 
     // Cache the mapping in our local map structure...
-    LocalMap.insert(std::make_pair(In, Result));
+    if (GlobalMap)
+      GlobalMap->insert(std::make_pair(In, Result));
+    else
+      LocalMap.insert(std::make_pair(In, Result));
     return Result;
   }
 
@@ -314,7 +317,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 // function, and that Src is not.
 //
 static bool LinkFunctionBody(Function *Dest, const Function *Src,
-                             const map<const Value*, Value*> &GlobalMap,
+                             map<const Value*, Value*> &GlobalMap,
                              string *Err = 0) {
   assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
   map<const Value*, Value*> LocalMap;   // Map for function local values
