@@ -68,9 +68,6 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
 			      " llvm .bc -> .bc modular optimizer\n");
 
-  // FIXME: The choice of target should be controllable on the command line.
-  TargetData TD("opt target");
-
   // Allocate a full target machine description only if necessary...
   // FIXME: The choice of target should be controllable on the command line.
   std::auto_ptr<TargetMachine> target;
@@ -122,8 +119,6 @@ int main(int argc, char **argv) {
     
     if (Opt->getNormalCtor())
       Passes.add(Opt->getNormalCtor()());
-    else if (Opt->getDataCtor())
-      Passes.add(Opt->getDataCtor()(TD));    // Provide dummy target data...
     else if (Opt->getTargetCtor()) {
 #if 0
       if (target.get() == NULL)

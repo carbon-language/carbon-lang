@@ -200,8 +200,6 @@ main(int argc, char **argv)
         { // handle other passes as normal optimization passes
           if (Opt->getNormalCtor())
             Passes.add(Opt->getNormalCtor()());
-          else if (Opt->getDataCtor())
-            Passes.add(Opt->getDataCtor()(Target.getTargetData()));
           else if (Opt->getTargetCtor())
             Passes.add(Opt->getTargetCtor()(Target));
           else

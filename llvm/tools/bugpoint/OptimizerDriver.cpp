@@ -65,9 +65,6 @@ void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
   std::cout << getPassesString(PassesToRun) << "\n";
 }
 
-/// FIXME: This should be parameterizable!!
-static TargetData TD("bugpoint target");
-
 static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
                      const std::string &OutFilename) {
   std::ofstream OutFile(OutFilename.c_str());
@@ -80,8 +77,6 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
   for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
     if (Passes[i]->getNormalCtor())
       PM.add(Passes[i]->getNormalCtor()());
-    else if (Passes[i]->getDataCtor())
-      PM.add(Passes[i]->getDataCtor()(TD));    // Provide dummy target data...
     else
       std::cerr << "Cannot create pass yet: " << Passes[i]->getPassName()
                 << "\n";
