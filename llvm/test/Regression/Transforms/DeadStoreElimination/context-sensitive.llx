@@ -1,0 +1,15 @@
+; RUN: llvm-as < %s | opt -dse | llvm-dis | not grep DEAD
+
+declare void %ext() 
+
+int* %caller() {
+	%P = malloc int
+	%DEAD = load int* %P
+	%DEAD2 = add int %DEAD, 1
+	store int %DEAD2, int* %P  ;; dead store
+
+	call void %ext()         ; Can not clobber *P
+
+	store int 0, int* %P
+	ret int* %P
+}
