@@ -151,6 +151,7 @@ bool BugDriver::run() {
   std::cout << "Running the code generator to test for a crash: ";
   try {
     compileProgram(Program);
+    std::cout << "\n";
   } catch (ToolExecutionError &TEE) {
     std::cout << TEE.what();
     return debugCodeGeneratorCrash();
