@@ -20,7 +20,14 @@ class StructValType;
 class PointerValType;
 
 class DerivedType : public Type, public AbstractTypeUser {
-  char isRefining;                                   // Used for recursive types
+  /// RefCount - This counts the number of PATypeHolders that are pointing to
+  /// this type.  When this number falls to zero, if the type is abstract and
+  /// has no AbstractTypeUsers, the type is deleted.
+  ///
+  mutable unsigned RefCount;
+  
+  // isRefining - Used for recursive types
+  char isRefining;
 
   // AbstractTypeUsers - Implement a list of the users that need to be notified
   // if I am a type, and I get resolved into a more concrete type.
@@ -29,8 +36,7 @@ class DerivedType : public Type, public AbstractTypeUser {
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
 protected:
-  inline DerivedType(PrimitiveID id) : Type("", id) {
-    isRefining = 0;
+  DerivedType(PrimitiveID id) : Type("", id), RefCount(0), isRefining(0) {
   }
   ~DerivedType() {
     assert(AbstractTypeUsers.empty());
@@ -61,7 +67,10 @@ public:
   // addAbstractTypeUser - Notify an abstract type that there is a new user of
   // it.  This function is called primarily by the PATypeHandle class.
   //
-  void addAbstractTypeUser(AbstractTypeUser *U) const;
+  void addAbstractTypeUser(AbstractTypeUser *U) const {
+    assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
+    AbstractTypeUsers.push_back(U);
+  }
 
   // removeAbstractTypeUser - Notify an abstract type that a user of the class
   // no longer has a handle to the type.  This function is called primarily by
@@ -79,6 +88,22 @@ public:
   void refineAbstractTypeTo(const Type *NewType) {
     refineAbstractTypeToInternal(NewType, true);
   }
+
+  void addRef() const {
+    assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
+    ++RefCount;
+  }
+
+  void dropRef() const {
+    assert(isAbstract() && "Cannot drop a refernce to a non-abstract type!");
+    assert(RefCount && "No objects are currently referencing this object!");
+
+    // If this is the last PATypeHolder using this object, and there are no
+    // PATypeHandles using it, the type is dead, delete it now.
+    if (--RefCount == 0 && AbstractTypeUsers.empty())
+      delete this;
+  }
+
 
   void dump() const { Value::dump(); }
 
@@ -451,6 +476,28 @@ inline void PATypeHandle::removeUser() {
 inline void PATypeHandle::removeUserFromConcrete() {
   if (!Ty->isAbstract())
     cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
+}
+
+// Define inline methods for PATypeHolder...
+
+inline void PATypeHolder::addRef() {
+  if (Ty->isAbstract())
+    cast<DerivedType>(Ty)->addRef();
+}
+
+inline void PATypeHolder::dropRef() {
+  if (Ty->isAbstract())
+    cast<DerivedType>(Ty)->dropRef();
+}
+
+/// get - This implements the forwarding part of the union-find algorithm for
+/// abstract types.  Before every access to the Type*, we check to see if the
+/// type we are pointing to is forwarding to a new type.  If so, we drop our
+/// reference to the type.
+inline const Type* PATypeHolder::get() const {
+  const Type *NewTy = Ty->getForwardedType();
+  if (!NewTy) return Ty;
+  return *const_cast<PATypeHolder*>(this) = NewTy;
 }
 
 #endif

@@ -32,13 +32,8 @@ static std::vector<const Type *> UIDMappings;
 static std::map<const Type*, std::string> ConcreteTypeDescriptions;
 static std::map<const Type*, std::string> AbstractTypeDescriptions;
 
-void PATypeHolder::dump() const {
-  std::cerr << "PATypeHolder(" << (void*)this << ")\n";
-}
-
-
 Type::Type(const std::string &name, PrimitiveID id)
-  : Value(Type::TypeTy, Value::TypeVal) {
+  : Value(Type::TypeTy, Value::TypeVal), ForwardType(0) {
   if (!name.empty())
     ConcreteTypeDescriptions[this] = name;
   ID = id;
@@ -121,6 +116,30 @@ unsigned Type::getPrimitiveSize() const {
   }
 }
 
+
+/// getForwardedTypeInternal - This method is used to implement the union-find
+/// algorithm for when a type is being forwarded to another type.
+const Type *Type::getForwardedTypeInternal() const {
+  assert(ForwardType && "This type is not being forwarded to another type!");
+  
+  // Check to see if the forwarded type has been forwarded on.  If so, collapse
+  // the forwarding links.
+  const Type *RealForwardedType = ForwardType->getForwardedType();
+  if (!RealForwardedType)
+    return ForwardType;  // No it's not forwarded again
+
+  // Yes, it is forwarded again.  First thing, add the reference to the new
+  // forward type.
+  if (RealForwardedType->isAbstract())
+    cast<DerivedType>(RealForwardedType)->addRef();
+
+  // Now drop the old reference.  This could cause ForwardType to get deleted.
+  cast<DerivedType>(ForwardType)->dropRef();
+  
+  // Return the updated type.
+  ForwardType = RealForwardedType;
+  return ForwardType;
+}
 
 // getTypeDescription - This is a recursive function that walks a type hierarchy
 // calculating the description for a type.
@@ -950,21 +969,6 @@ void debug_type_tables() {
 //                     Derived Type Refinement Functions
 //===----------------------------------------------------------------------===//
 
-// addAbstractTypeUser - Notify an abstract type that there is a new user of
-// it.  This function is called primarily by the PATypeHandle class.
-//
-void DerivedType::addAbstractTypeUser(AbstractTypeUser *U) const {
-  assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-
-#if DEBUG_MERGE_TYPES
-  std::cerr << "  addAbstractTypeUser[" << (void*)this << ", "
-            << *this << "][" << AbstractTypeUsers.size()
-            << "] User = " << U << "\n";
-#endif
-  AbstractTypeUsers.push_back(U);
-}
-
-
 // removeAbstractTypeUser - Notify an abstract type that a user of the class
 // no longer has a handle to the type.  This function is called primarily by
 // the PATypeHandle class.  When there are no users of the abstract type, it
@@ -989,7 +993,7 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
             << *this << "][" << i << "] User = " << U << "\n";
 #endif
     
-  if (AbstractTypeUsers.empty() && isAbstract()) {
+  if (AbstractTypeUsers.empty() && RefCount == 0 && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "DELETEing unused abstract type: <" << *this
               << ">[" << (void*)this << "]" << "\n";
@@ -1022,6 +1026,10 @@ void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   // refined, that we will not continue using a dead reference...
   //
   PATypeHolder NewTy(NewType);
+
+  ForwardType = NewType;
+  if (NewType->isAbstract())
+    cast<DerivedType>(NewType)->addRef();
 
   // Add a self use of the current type so that we don't delete ourself until
   // after this while loop.  We are careful to never invoke refine on ourself,

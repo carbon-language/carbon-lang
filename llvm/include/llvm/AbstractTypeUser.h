@@ -61,9 +61,9 @@ public:
 };
 
 
-// PATypeHandle - Handle to a Type subclass.  This class is used to keep the use
-// list of abstract types up-to-date.
-//
+/// PATypeHandle - Handle to a Type subclass.  This class is used to keep the
+/// use list of abstract types up-to-date.
+///
 class PATypeHandle {
   const Type *Ty;
   AbstractTypeUser * const User;
@@ -123,50 +123,43 @@ public:
 };
 
 
-// PATypeHolder - Holder class for a potentially abstract type.  This functions
-// as both a handle (as above) and an AbstractTypeUser.  It uses the callback to
-// keep its pointer member updated to the current version of the type.
-//
-class PATypeHolder : public AbstractTypeUser {
-  PATypeHandle Handle;
+/// PATypeHolder - Holder class for a potentially abstract type.  This uses
+/// efficient union-find techniques to handle dynamic type resolution.  Unless
+/// you need to do custom processing when types are resolved, you should always
+/// use PATypeHolders in preference to PATypeHandles.
+///
+class PATypeHolder {
+  mutable const Type *Ty;
 public:
-  PATypeHolder(const Type *ty) : Handle(ty, this) {}
-  PATypeHolder(const PATypeHolder &T) : AbstractTypeUser(), Handle(T, this) {}
+  PATypeHolder(const Type *ty) : Ty(ty) {
+    addRef();
+  }
+  PATypeHolder(const PATypeHolder &T) : Ty(T.Ty) {
+    addRef();
+  }
 
-  operator const Type *() const { return Handle; }
-  const Type *get() const { return Handle; }
+  operator const Type *() const { return get(); }
+  const Type *get() const;
 
   // operator-> - Allow user to dereference handle naturally...
-  inline const Type *operator->() const { return Handle; }
-
-  // refineAbstractType - All we do is update our PATypeHandle member to point
-  // to the new type.
-  //
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    assert(get() == (const Type*)OldTy && "Can't refine to unknown value!");
-
-    // Check to see if the type just became concrete.  If so, we have to
-    // removeUser to get off its AbstractTypeUser list
-    Handle.removeUserFromConcrete();
-
-    if ((const Type*)OldTy != NewTy)
-      Handle.operator=(NewTy);
-  }
+  const Type *operator->() const { return get(); }
 
   // operator= - Allow assignment to handle
   const Type *operator=(const Type *ty) {
-    return Handle = ty;
-  }
-
-  // operator= - Allow assignment to handle
-  const Type *operator=(const PATypeHandle &T) {
-    return Handle = T;
+    if (Ty != ty) {   // Don't accidentally drop last ref to Ty.
+      dropRef();
+      Ty = ty;
+      addRef();
+    }
+    return get();
   }
   const Type *operator=(const PATypeHolder &H) {
-    return Handle = H;
+    return operator=(H.Ty);
   }
 
-  void dump() const;
+private:
+  void addRef();
+  void dropRef();
 };
 
 #endif

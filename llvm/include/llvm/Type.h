@@ -73,6 +73,7 @@ private:
   unsigned    UID;       // The unique ID number for this class
   bool        Abstract;  // True if type contains an OpaqueType
 
+  const Type *getForwardedTypeInternal() const;
 protected:
   /// ctor is protected, so only subclasses can create Type objects...
   Type(const std::string &Name, PrimitiveID id);
@@ -90,6 +91,12 @@ protected:
   /// isTypeAbstract - This method is used to calculate the Abstract bit.
   ///
   bool isTypeAbstract();
+
+  /// ForwardType - This field is used to implement the union find scheme for
+  /// abstract types.  When types are refined to other types, this field is set
+  /// to the more refined type.  Only abstract types can be forwarded.
+  mutable const Type *ForwardType;
+
 public:
   virtual void print(std::ostream &O) const;
 
@@ -177,6 +184,13 @@ public:
   ///
   unsigned getPrimitiveSize() const;
 
+  /// getForwaredType - Return the type that this type has been resolved to if
+  /// it has been resolved to anything.  This is used to implement the
+  /// union-find algorithm for type resolution.
+  const Type *getForwardedType() const {
+    if (!ForwardType) return 0;
+    return getForwardedTypeInternal();
+  }
 
   //===--------------------------------------------------------------------===//
   // Type Iteration support
