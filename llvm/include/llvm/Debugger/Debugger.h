@@ -67,6 +67,10 @@ namespace llvm {
     void setProgramArguments(It I, It E) {
       ProgramArguments.assign(I, E);
     }
+    unsigned getNumProgramArguments() const { return ProgramArguments.size(); }
+    const std::string &getProgramArgument(unsigned i) const {
+      return ProgramArguments[i];
+    }
 
 
     //===------------------------------------------------------------------===//
