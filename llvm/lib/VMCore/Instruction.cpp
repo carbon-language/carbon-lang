@@ -97,6 +97,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   // Other instructions...
   case PHI:     return "phi";
   case Cast:    return "cast";
+  case Select:  return "select";
   case Call:    return "call";
   case Shl:     return "shl";
   case Shr:     return "shr";
