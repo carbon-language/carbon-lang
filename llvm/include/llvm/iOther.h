@@ -56,6 +56,9 @@ public:
 //                                 CallInst Class
 //===----------------------------------------------------------------------===//
 
+/// CallInst - This class represents a function call, abstracting a target
+/// machine's calling convention.
+///
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
@@ -63,10 +66,10 @@ public:
            const std::string &Name = "", Instruction *InsertBefore = 0);
 
   // Alternate CallInst ctors w/ no actuals & one actual, respectively.
-  CallInst(Value *F, const std::string &Name = "",
-           Instruction  *InsertBefore = 0);
+  CallInst(Value *F, const std::string &Name = "", 
+           Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *Actual, const std::string& Name = "",
-           Instruction* InsertBefore = 0);
+           Instruction *InsertBefore = 0);
 
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool mayWriteToMemory() const { return true; }
@@ -95,8 +98,8 @@ public:
 //                                 ShiftInst Class
 //===----------------------------------------------------------------------===//
 
-// ShiftInst - This class represents left and right shift instructions.
-//
+/// ShiftInst - This class represents left and right shift instructions.
+///
 class ShiftInst : public Instruction {
   ShiftInst(const ShiftInst &SI) : Instruction(SI.getType(), SI.getOpcode()) {
     Operands.reserve(2);
