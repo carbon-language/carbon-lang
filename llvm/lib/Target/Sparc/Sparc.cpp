@@ -47,13 +47,15 @@ static cl::opt<bool> DisableSched("disable-sched",
 static cl::opt<bool> DisablePeephole("disable-peephole",
                                 cl::desc("Disable peephole optimization pass"));
 
-static cl::opt<bool>
-DisableStrip("disable-strip",
-	  cl::desc("Do not strip the LLVM bytecode included in the executable"));
+static cl::opt<bool> EmitMappingInfo("emitmaps",
+             cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
-static cl::opt<bool>
-DumpInput("dump-input",cl::desc("Print bytecode before native code generation"),
-          cl::Hidden);
+static cl::opt<bool> DisableStrip("disable-strip",
+	     cl::desc("Do not strip the LLVM bytecode included in executable"));
+
+static cl::opt<bool> DumpInput("dump-input",
+                      cl::desc("Print bytecode before native code generation"),
+                      cl::Hidden);
 
 //----------------------------------------------------------------------------
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
@@ -197,7 +199,8 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(*this));
 
-  PM.add(getMappingInfoCollector(Out));  
+  if (EmitMappingInfo)
+    PM.add(getMappingInfoCollector(Out));  
 
   // Output assembly language to the .s file.  Assembly emission is split into
   // two parts: Function output and Global value output.  This is because
@@ -212,8 +215,11 @@ bool UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   PM.add(getModuleAsmPrinterPass(Out));
 
   // Emit bytecode to the assembly file into its special section next
-  PM.add(getEmitBytecodeToAsmPass(Out));
-  PM.add(getFunctionInfo(Out)); 
+  if (EmitMappingInfo) {
+    PM.add(getEmitBytecodeToAsmPass(Out));
+    PM.add(getFunctionInfo(Out)); 
+  }
+
   return false;
 }
 
