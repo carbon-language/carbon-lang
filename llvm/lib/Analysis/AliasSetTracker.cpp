@@ -47,9 +47,14 @@ void AliasSet::mergeSetIn(AliasSet &AS) {
   RefCount++;         // AS is now pointing to us...
 
   // Merge the list of constituent pointers...
-  PtrListTail->second.setTail(AS.PtrListHead);
-  PtrListTail = AS.PtrListTail;
-  AS.PtrListHead = AS.PtrListTail = 0;
+  if (AS.PtrList) {
+    *PtrListEnd = AS.PtrList;
+    AS.PtrList->second.setPrevInList(PtrListEnd);
+    PtrListEnd = AS.PtrListEnd;
+
+    AS.PtrList = 0;
+    AS.PtrListEnd = &AS.PtrList;
+  }
 }
 
 void AliasSetTracker::removeAliasSet(AliasSet *AS) {
@@ -82,11 +87,9 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
   Entry.second.updateSize(Size);
 
   // Add it to the end of the list...
-  if (PtrListTail)
-    PtrListTail->second.setTail(&Entry);
-  else
-    PtrListHead = &Entry;
-  PtrListTail = &Entry;
+  assert(*PtrListEnd == 0 && "End of list is not null?");
+  *PtrListEnd = &Entry;
+  PtrListEnd = Entry.second.setPrevInList(PtrListEnd);
   RefCount++;               // Entry points to alias set...
 }
 
@@ -252,6 +255,31 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
                    (AliasSet::AccessType)AS.AccessTy);
     }
 }
+
+
+// remove method - This method is used to remove a pointer value from the
+// AliasSetTracker entirely.  It should be used when an instruction is deleted
+// from the program to update the AST.  If you don't use this, you would have
+// dangling pointers to deleted instructions.
+//
+void AliasSetTracker::remove(Value *PtrVal) {
+  // First, look up the PointerRec for this pointer...
+  hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(PtrVal);
+  if (I == PointerMap.end()) return;  // Noop
+
+  // If we found one, remove the pointer from the alias set it is in.
+  AliasSet::HashNodePair &PtrValEnt = *I;
+  AliasSet *AS = PtrValEnt.second.getAliasSet(*this);
+
+  // Unlink from the list of values...
+  PtrValEnt.second.removeFromList();
+  // Stop using the alias set
+  if (--AS->RefCount == 0)
+    AS->removeFromTracker(*this);
+
+  PointerMap.erase(I);
+}
+
 
 //===----------------------------------------------------------------------===//
 //               AliasSet/AliasSetTracker Printing Support

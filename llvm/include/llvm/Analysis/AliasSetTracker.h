@@ -37,14 +37,19 @@ class AliasSet {
   typedef std::pair<Value* const, PointerRec> HashNodePair;
 
   class PointerRec {
-    HashNodePair *NextInList;
+    HashNodePair **PrevInList, *NextInList;
     AliasSet *AS;
     unsigned Size;
   public:
-    PointerRec() : NextInList(0), AS(0), Size(0) {}
+    PointerRec() : PrevInList(0), NextInList(0), AS(0), Size(0) {}
 
     HashNodePair *getNext() const { return NextInList; }
     bool hasAliasSet() const { return AS != 0; }
+
+    HashNodePair** setPrevInList(HashNodePair **PIL) {
+      PrevInList = PIL;
+      return &NextInList;
+    }
 
     void updateSize(unsigned NewSize) {
       if (NewSize > Size) Size = NewSize;
@@ -68,13 +73,14 @@ class AliasSet {
       assert(AS == 0 && "Already have an alias set!");
       AS = as;
     }
-    void setTail(HashNodePair *T) {
-      assert(NextInList == 0 && "Already have tail!");
-      NextInList = T;
+
+    void removeFromList() {
+      if (NextInList) NextInList->second.PrevInList = PrevInList;
+      *PrevInList = NextInList;
     }
   };
 
-  HashNodePair *PtrListHead, *PtrListTail; // Singly linked list of nodes
+  HashNodePair *PtrList, **PtrListEnd;  // Doubly linked list of nodes
   AliasSet *Forward;             // Forwarding pointer
   AliasSet *Next, *Prev;         // Doubly linked list of AliasSets
 
@@ -135,7 +141,7 @@ public:
   // Alias Set iteration - Allow access to all of the pointer which are part of
   // this alias set...
   class iterator;
-  iterator begin() const { return iterator(PtrListHead); }
+  iterator begin() const { return iterator(PtrList); }
   iterator end()   const { return iterator(); }
 
   void print(std::ostream &OS) const;
@@ -175,11 +181,22 @@ public:
 
 private:
   // Can only be created by AliasSetTracker
-  AliasSet() : PtrListHead(0), PtrListTail(0), Forward(0), RefCount(0),
+  AliasSet() : PtrList(0), PtrListEnd(&PtrList), Forward(0), RefCount(0),
                AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
   }
+  AliasSet(const AliasSet &AS) {
+    // AliasSet's only get copy constructed in simple circumstances.  In
+    // particular, they cannot have any pointers in their list.  Despite this,
+    // we have to be sure to update the PtrListEnd to not point to the source
+    // AliasSet's list.
+    assert(AS.PtrList == 0 && "AliasSet has pointers in it!");
+    PtrList = 0; PtrListEnd = &PtrList;
+    Forward = AS.Forward; RefCount = AS.RefCount;
+    AccessTy = AS.AccessTy; AliasTy = AS.AliasTy; Volatile = AS.Volatile;
+  }
+
   HashNodePair *getSomePointer() const {
-    return PtrListHead ? PtrListHead : 0;
+    return PtrList;
   }
 
   /// getForwardedTarget - Return the real alias set this represents.  If this
@@ -246,6 +263,13 @@ public:
   void add(Instruction *I);       // Dispatch to one of the other add methods...
   void add(BasicBlock &BB);       // Add all instructions in basic block
   void add(const AliasSetTracker &AST); // Add alias relations from another AST
+
+  /// remove method - This method is used to remove a pointer value from the
+  /// AliasSetTracker entirely.  It should be used when an instruction is
+  /// deleted from the program to update the AST.  If you don't use this, you
+  /// would have dangling pointers to deleted instructions.
+  ///
+  void remove(Value *PtrVal);
 
   /// getAliasSets - Return the alias sets that are active.
   const ilist<AliasSet> &getAliasSets() const { return AliasSets; }
