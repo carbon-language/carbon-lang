@@ -52,7 +52,7 @@
 #include "llvm/Instruction.def"
 
 // Forward declare the intermediate types...
-class TerminatorInst; class UnaryOperator; class BinaryOperator;
+class TerminatorInst; class BinaryOperator;
 class AllocationInst; class MemAccessInst;
 
 
@@ -158,7 +158,6 @@ struct InstVisitor {
   RetTy visitBranchInst(BranchInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitSwitchInst(SwitchInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitInvokeInst(InvokeInst &I)              { DELEGATE(TerminatorInst);}
-  RetTy visitGenericUnaryInst(GenericUnaryInst &I)  { DELEGATE(UnaryOperator); }
   RetTy visitGenericBinaryInst(GenericBinaryInst &I){ DELEGATE(BinaryOperator);}
   RetTy visitSetCondInst(SetCondInst &I)            { DELEGATE(BinaryOperator);}
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
@@ -177,7 +176,6 @@ struct InstVisitor {
   // of instructions...
   //
   RetTy visitTerminatorInst(TerminatorInst &I) { DELEGATE(Instruction); }
-  RetTy visitUnaryOperator (UnaryOperator  &I) { DELEGATE(Instruction); }
   RetTy visitBinaryOperator(BinaryOperator &I) { DELEGATE(Instruction); }
   RetTy visitAllocationInst(AllocationInst &I) { DELEGATE(Instruction); }
   RetTy visitMemAccessInst (MemAccessInst  &I) { DELEGATE(Instruction); }
