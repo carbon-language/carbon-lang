@@ -7,6 +7,66 @@ This page records information and the progress the data structure analysis
 passes have been making.  Times are in seconds, sizes are #bytes allocated for a
 particular pass.  Runs that are all '*'d out were not completed because they
 were taking too long (time listed show how long I waited).<p>
+
+<hr>
+<a name="20021108-3"><h2>Nov 8, 2002 #3:</h2>
+
+Same as the <a href="#20021108-2">previous run</a>, but now we automatically
+collapse arrays down to a single element in the representation.  The graphs
+produced should be exactly the same, it's just memory consumption that goes
+dramatically down, for example: 197.parser (64M-&gt;14M), 164.gzip
+(14M-&gt;2.7M), 256.bzip (9M -&gt; 1.9M), etc.<p>
+
+With reduced memory consumption comes higher performance of course (better cache
+behavior n stuff).<p>
+
+<pre>
+Name:                     Anlyz: LocTime: BUTime:  TDTime:  TotTime:      LocSize: BUSize:  TDSize:    TotSize:     NumFold  NumNodes   main   __main
+254.gap.lib                71.65 *        *        *        *        |    *        *        *          *          |    *     *          *      *      
+255.vortex.lib              4.62 *        *        *        *        |    *        *        *          *          |    *     *          *      *      
+300.twolf.lib              12.22 0.2369   0.8840   8.0785   9.9177   |    573880   770752   10364040   11708672   |    3514  161528+1101 854+0  854+0  
+197.parser.lib             11.73 0.1216   0.5217   9.3368   10.3099  |    461720   619960   12948496   14266336   |    2641  196932+1184 601+0  601+0  
+burg.llvm.lib               5.35 0.0857   0.2873   3.9878   4.5484   |    650608   906016   4691952    6248576    |    1555  72533+902  436+0  436+0  
+164.gzip.llvm.lib           1.33 0.0309   0.1085   0.5445   0.7708   |    284312   521048   1877416    2779368    |    67    16632+232  171+0  171+0  
+256.bzip2.lib               0.73 0.0191   0.0588   0.3611   0.4995   |    156760   336272   1390240    1956528    |    20    11456+201  148+0  148+0  
+optimizer-eval.llvm.lib     0.56 0.0129   0.0957   0.2881   0.4359   |    85720    178016   750424     1032352    |    *     3693+101   63+0   63+0   
+sim.llvm.lib                0.29 0.0126   0.0237   0.0731   0.1630   |    93240    106144   331688     626088     |    *     2739+67    99+0   99+0   
+181.mcf.lib                 0.28 0.0153   0.0379   0.0649   0.1457   |    136744   155416   202496     511544     |    178   1914+72    44+0   44+0   
+voronoi.llvm.lib            0.22 0.0122   0.0296   0.0728   0.1324   |    83568    94008    212560     404128     |    17    1733+106   30+0   30+0   
+sgefa.llvm.lib              0.19 0.0072   0.0375   0.0491   0.1131   |    102144   109744   117064     353720     |    *     634+55     31+0   31+0   
+bh.llvm.lib                 0.17 0.0098   0.0164   0.0260   0.0728   |    78048    82616    86688      311168     |    66    715+64     13+0   13+0   
+em3d.llvm.lib               0.11 0.0046   0.0114   0.0327   0.0590   |    36344    64760    125360     243088     |    9     1031+59    28+0   28+0   
+power.llvm.lib              0.09 0.0043   0.0053   0.0100   0.0296   |    22840    33912    30440      103016     |    *     277+35     9+0    9+0    
+tsp.llvm.lib                0.08 0.0043   0.0057   0.0066   0.0276   |    20640    25416    25784      86464      |    19    247+31     10+0   10+0   
+mst.llvm.lib                0.08 0.0033   0.0060   0.0123   0.0308   |    29088    31400    51632      126792     |    10    470+36     21+0   21+0   
+lists.llvm.lib              0.08 0.0035   0.0080   0.0111   0.0294   |    25048    33872    25520      96760      |    50    246+34     10+0   10+0   
+health.llvm.lib             0.08 0.0043   0.0083   0.0120   0.0344   |    31232    31256    45008      122464     |    71    361+40     14+0   14+0   
+perimeter.llvm.lib          0.07 0.0036   0.0047   0.0049   0.0251   |    15336    22904    15968      66864      |    *     105+24     4+0    4+0    
+objinst.llvm.lib            0.06 0.0016   0.0024   0.0090   0.0191   |    11032    15560    12416      52664      |    33    73+17      3+0    3+0    
+bisort.llvm.lib             0.06 0.0023   0.0036   0.0065   0.0202   |    14376    20968    22152      68568      |    *     210+27     10+0   10+0   
+llubenchmark.llvm.lib       0.05 0.0018   0.0024   0.0042   0.0166   |    11824    15464    23480      61776      |    *     144+20     15+0   15+0   
+hash.llvm.lib               0.05 0.0026   0.0044   0.0062   0.0206   |    18192    24928    23976      80496      |    *     241+23     7+0    7+0    
+methcall.llvm.lib           0.04 0.0014   0.0019   0.0031   0.0120   |    10824    9704     11128      45312      |    26    58+14      2+0    2+0    
+ary3.llvm.lib               0.04 0.0010   0.0015   0.0014   0.0102   |    8752     17136    4168       45720      |    6     50+7       1+0    1+0    
+treeadd.llvm.lib            0.03 0.0011   0.0016   0.0023   0.0098   |    9080     8408     9944       39424      |    *     76+14      5+0    5+0    
+sieve.llvm.lib              0.03 0.0006   0.0006   0.0009   0.0063   |    7856     6056     2480       26760      |    *     30+4       2+0    2+0    
+pi.llvm.lib                 0.03 0.0006   0.0007   0.0012   0.0050   |    5696     5272     5584       16552      |    *     34+6       3+0    3+0    
+matrix.llvm.lib             0.03 0.0010   0.0017   0.0018   0.0096   |    8584     17680    4208       46232      |    *     46+11      1+0    1+0    
+heapsort.llvm.lib           0.03 0.0010   0.0009   0.0013   0.0076   |    2936     7224     3912       29240      |    *     45+6       3+0    3+0    
+sumarraymalloc.llvm.lib     0.02 0.0007   0.0009   0.0015   0.0072   |    2720     6872     7128       31152      |    *     38+8       2+0    2+0    
+sumarray.llvm.lib           0.02 0.0003   0.0002   0.0003   0.0025   |    864      3144     592        6712       |    *     7+2        0+0    0+0    
+random.llvm.lib             0.02 0.0006   0.0006   0.0009   0.0057   |    6184     1808     2752       23600      |    *     31+5       3+0    3+0    
+printargs.llvm.lib          0.02 0.0003   0.0004   0.0006   0.0028   |    1360     816      3480       5656       |    *     13+4       1+0    1+0    
+matrixTranspose.llvm.lib    0.02 0.0004   0.0004   0.0006   0.0034   |    5888     1224     4864       11976      |    *     17+4       3+0    3+0    
+indvars.llvm.lib            0.02 0.0005   0.0005   0.0005   0.0037   |    4680     3552     1200       9432       |    *     18+3       1+0    1+0    
+fib2.llvm.lib               0.02 0.0007   0.0008   0.0009   0.0059   |    6176     1808     2400       23008      |    *     25+6       1+0    1+0    
+sumarray2d.llvm.lib         0.01 0.0004   0.0004   0.0004   0.0030   |    1648     6024     4144       14136      |    *     15+3       1+0    1+0    
+hello.llvm.lib              0.01 0.0003   0.0003   0.0003   0.0022   |    880      592      2944       6672       |    *     8+3        1+0    1+0    
+ackermann.llvm.lib          0.00 0.0000   0.0000   0.0002   0.0004   |    0        0        832        832        |    *     0+0        *      *      
+</pre><p>
+
+
+
 <hr>
 <a name="20021108-2"><h2>Nov 8, 2002 #2:</h2>
 
@@ -289,7 +349,7 @@ burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:7
     <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Nov  6 19:57:57 CST 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Nov  8 16:26:15 CST 2002
+Last modified: Fri Nov  8 16:49:01 CST 2002
 <!-- hhmts end -->
   </body>
 </html>
