@@ -13,7 +13,7 @@
 class InstV9 : Instruction {          // Sparc instruction baseline
   field bits<32> Inst;
 
-  set Namespace = "SparcV9";
+  set Namespace = "V9";
 
   bits<2> op;
   set Inst{31-30} = op;               // Top two bits are the 'op' field
@@ -202,7 +202,16 @@ def FSQRTS : F3_14<2, 0b110100, 0b000101001, "fsqrts">;  // fsqrts r, r
 def FSQRTD : F3_14<2, 0b110100, 0b000101010, "fsqrts">;  // fsqrts r, r
 def FSQRTQ : F3_14<2, 0b110100, 0b000101011, "fsqrts">;  // fsqrts r, r
 
-// Section A.24: Jump and Link
+// FIXME: A.20: Flush Instruction Memory - p167
+// FIXME: A.21: Flush Register Windows - p169
+
+// A.22: Illegal instruction Trap - p170
+// Not used
+
+// A.23: Implementation-Dependent Instructions - p171
+// Not used
+
+// Section A.24: Jump and Link - p172
 // Mimicking the Sparc's instr def...
 def JMPLCALLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
 def JMPLCALLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
@@ -319,11 +328,14 @@ def FMOVFULE : F4_7<2, 0b110101, 0b1110, "fmovfule">;    // fmovfule r, r
 def FMOVFO   : F4_7<2, 0b110101, 0b1111, "fmovfo">;      // fmovfo r, r
 #endif
 
-// Section A.34: Move F-P Register on Integer Register (FMOVr)
+// FIXME: Section A.34: Move F-P Register on Integer Register (FMOVr)
 
-// Section A.35: Move Integer Register on Condition (MOVcc)
 
-// Section A.36: Move Integer Register on Register Condition (MOVR)
+// FIXME: Section A.35: Move Integer Register on Condition (MOVcc)
+
+
+// FIXME: Section A.36: Move Integer Register on Register Condition (MOVR)
+
 
 // Section A.37: Multiply and Divide (64-bit) - p199
 def MULXr  : F3_1<2, 0b001001, "mulx">;        // mulx  r, r, r
@@ -425,6 +437,7 @@ def SRLXi6 : F3_13<2, 0b100110, "srlx">;                 // srlx r, shcnt64, r
 def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
 
 // Section A.50: FIXME
+
 // Section A.51: FIXME
 
 // Section A.52: Store Floating-point -p225
