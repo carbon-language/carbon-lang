@@ -64,6 +64,8 @@ void Constant::destroyConstantImpl() {
   delete this;
 }
 
+static std::map<const Type *, Constant*> NullValues;
+
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
@@ -117,18 +119,33 @@ Constant *Constant::getNullValue(const Type *Ty) {
     return ConstantPointerNull::get(cast<PointerType>(Ty));
 
   case Type::StructTyID: {
+    if (!Ty->isAbstract())
+      if (Constant *V = NullValues[Ty])
+        return V;
+
     const StructType *ST = cast<StructType>(Ty);
     std::vector<Constant*> Elements;
     Elements.resize(ST->getNumElements());
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
       Elements[i] = Constant::getNullValue(ST->getElementType(i));
-    return ConstantStruct::get(ST, Elements);
+    Constant *Ret = ConstantStruct::get(ST, Elements);
+    if (!Ty->isAbstract())
+      NullValues[Ty] = Ret;
+    return Ret;
   }
   case Type::ArrayTyID: {
+    if (!Ty->isAbstract())
+      if (Constant *V = NullValues[Ty])
+        return V;
+
     const ArrayType *AT = cast<ArrayType>(Ty);
     Constant *El = Constant::getNullValue(AT->getElementType());
     unsigned NumElements = AT->getNumElements();
-    return ConstantArray::get(AT, std::vector<Constant*>(NumElements, El));
+    Constant *Ret = ConstantArray::get(AT,
+                                       std::vector<Constant*>(NumElements, El));
+    if (!Ty->isAbstract())
+      NullValues[Ty] = Ret;
+    return Ret;
   }
   default:
     // Function, Type, Label, or Opaque type?
