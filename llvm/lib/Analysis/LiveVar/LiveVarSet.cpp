@@ -12,13 +12,13 @@
 void LiveVarSet::applyTranferFuncForMInst(const MachineInstr *MInst) {
   for (MachineInstr::val_const_op_iterator OpI(MInst); !OpI.done(); ++OpI) {
     if (OpI.isDef())      // kill only if this operand is a def
-         remove(*OpI);        // this definition kills any uses
+      insert(*OpI);        // this definition kills any uses
   }
 
   // do for implicit operands as well
   for ( unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
     if (MInst->implicitRefIsDefined(i))
-      remove(MInst->getImplicitRef(i));
+      erase(MInst->getImplicitRef(i));
   }
 
 
@@ -26,12 +26,12 @@ void LiveVarSet::applyTranferFuncForMInst(const MachineInstr *MInst) {
     if ((*OpI)->getType()->isLabelType()) continue; // don't process labels
     
     if (!OpI.isDef())      // add only if this operand is a use
-       add(*OpI);            // An operand is a use - so add to use set
+      insert(*OpI);            // An operand is a use - so add to use set
   }
 
   // do for implicit operands as well
   for (unsigned i=0; i < MInst->getNumImplicitRefs(); ++i) {
     if (!MInst->implicitRefIsDefined(i))
-      add(MInst->getImplicitRef(i));
+      insert(MInst->getImplicitRef(i));
   }
 }

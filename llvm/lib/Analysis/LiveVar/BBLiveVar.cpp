@@ -1,6 +1,7 @@
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/BasicBlock.h"
 
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
@@ -123,8 +124,8 @@ void BBLiveVar::calcDefUseSets()
 //-----------------------------------------------------------------------------
 void  BBLiveVar::addDef(const Value *Op) 
 {
-  DefSet.add( Op );     // operand is a def - so add to def set
-  InSet.remove( Op);    // this definition kills any uses
+  DefSet.insert(Op);     // operand is a def - so add to def set
+  InSet.erase(Op);    // this definition kills any uses
   InSetChanged = true; 
 
   if( DEBUG_LV > 1) {   
@@ -138,8 +139,8 @@ void  BBLiveVar::addDef(const Value *Op)
 //-----------------------------------------------------------------------------
 void  BBLiveVar::addUse(const Value *Op) 
 {
-  InSet.add( Op );      // An operand is a use - so add to use set
-  OutSet.remove( Op );  // remove if there is a def below this use
+  InSet.insert(Op);   // An operand is a use - so add to use set
+  OutSet.erase(Op);   // remove if there is a def below this use
   InSetChanged = true; 
 
   if( DEBUG_LV > 1) {   // debug msg of level 2

@@ -1,16 +1,16 @@
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/ConstantVals.h"
+#include <algorithm>
 #include <iostream>
 using std::cerr;
 using std::endl;
 using std::pair;
 using std::hash_set;
 
-void printValue( const Value *const v)  // func to print a Value 
-{
+void printValue(const Value *v) { // func to print a Value 
   if (v->hasName())
-    cerr << v << "(" << ((*v).getName()) << ") ";
+    cerr << v << "(" << v->getName() << ") ";
   else if (Constant *C = dyn_cast<Constant>(v))
     cerr << v << "(" << C->getStrValue() << ") ";
   else
@@ -20,15 +20,14 @@ void printValue( const Value *const v)  // func to print a Value
 
 //---------------- Method implementations --------------------------
                                              // for performing two set unions
-bool ValueSet::setUnion( const ValueSet *const set1) {   
-  const_iterator set1it;
+bool ValueSet::setUnion( const ValueSet *set1) {   
   pair<iterator, bool> result;
   bool changed = false;
 
-  for( set1it = set1->begin() ; set1it != set1->end(); ++set1it) {  
+  for(const_iterator set1it = set1->begin() ; set1it != set1->end(); ++set1it) {
                                              // for all all elements in set1
-    result = insert( *set1it );              // insert to this set
-      if( result.second == true) changed = true;
+    result = insert(*set1it);                // insert to this set
+    if(result.second == true) changed = true;
   }
 
   return changed;

@@ -11,6 +11,7 @@
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/BasicBlock.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
 using std::cout;
