@@ -139,12 +139,11 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // Record that the original DSCallSite was a call site of FI.
             // This may or may not have been known when the DSCallSite was
             // originally created.
-#if 1  /// FIXME: Reenable
             std::vector<DSCallSite> &CallSitesForFunc = CallSites[&FI];
             CallSitesForFunc.push_back(Call);
             CallSitesForFunc.back().setResolvingCaller(&F);
             CallSitesForFunc.back().setCallee(0);
-#endif
+
             // Clone the callee's graph into the current graph, keeping
             // track of where scalars in the old graph _used_ to point,
             // and of the new nodes matching nodes of the old graph.
