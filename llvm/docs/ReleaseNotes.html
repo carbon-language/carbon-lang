@@ -97,6 +97,7 @@ In this release, the following bugs in the previous release were fixed:<p>
 <li><a href="http://llvm.cs.uiuc.edu/PR80">C front-end crash on empty structure</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR81">CFrontend crashes when compiling C99 compound expressions</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR83">[X86] Emission of global bool initializers broken</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR87">llvm-gcc infinite loops on "case MAXINT:"</a></li>
 </ol><p>
 
 At this time, LLVM is known to work properly with SPEC CPU 2000, the Olden
@@ -150,7 +151,13 @@ sections.
 <li>It is not possible to <tt>dlopen</tt> an LLVM bytecode file in the JIT.<p>
 
 <li>Linking in static archive files (.a files) is very slow (there is no symbol
-table in the archive).
+table in the archive).<p>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR88">Interpreter does not support invoke
+or unwind</a>.<p>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR82">LLVM cannot handle structures with
+more than 256 elements</a>.<p>
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="c-fe"><hr size=0>Known problems with the C front-end</h4><ul>
@@ -356,13 +363,17 @@ problem probably cannot be fixed.<p>
 <li><a href="http://llvm.cs.uiuc.edu/PR33">Initializers for global variables</a>
 cannot include special floating point numbers like Not-A-Number or Infinity.<p>
 
-<li><a href="http://zion.cs.uiuc.edu/PR56">Zero arg vararg functions are not 
+<li><a href="http://llvm.cs.uiuc.edu/PR56">Zero arg vararg functions are not 
 supported</a>.  This should not affect LLVM produced by the C or C++ 
 frontends.<p>
 
-<li>The code produces by the C back-end has only been tested with the Sun CC and
-GCC compilers.  It is possible that it will have to be adjusted to support other
-C compilers.<p>
+<li><a href="http://llvm.cs.uiuc.edu/PR77">Variables in scope of output setjmp
+calls should be volatile</a>.  Note that this does not effect correctness on
+many platforms.<p>
+
+<li>The code produces by the C back-end has only been tested with the Sun CC,
+GCC, and Intel compilers.  It is possible that it will have to be adjusted to
+support other C compilers.<p>
 
 
 
@@ -393,6 +404,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Mon Nov  3 14:07:07 CST 2003
+Last modified: Tue Nov  4 14:05:01 CST 2003
 <!-- hhmts end -->
 </body></html>
