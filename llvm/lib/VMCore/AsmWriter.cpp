@@ -337,7 +337,7 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
     Out << CE->getOpcodeName();
 
     bool isGEP = CE->getOpcode() == Instruction::GetElementPtr;
-    Out << (isGEP ? " (" : " ");
+    Out << " (";
     
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       printTypeInt(Out, (*OI)->getType(), TypeTable);
@@ -346,12 +346,11 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
         Out << ", ";
     }
     
-    if (isGEP)
-      Out << ")";
-    else if (CE->getOpcode() == Instruction::Cast) {
+    if (CE->getOpcode() == Instruction::Cast) {
       Out << " to ";
       printTypeInt(Out, CE->getType(), TypeTable);
     }
+    Out << ")";
 
   } else {
     Out << "<placeholder or erroneous Constant>";
