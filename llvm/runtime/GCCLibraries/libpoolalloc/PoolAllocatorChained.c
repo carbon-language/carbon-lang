@@ -242,6 +242,7 @@ void poolfree(PoolTy *Pool, char *Node) {
     
     if (!ALLOCATION_BEGINS(PS, Idx)) { 
       printf("poolfree: Attempt to free middle of allocated array\n");
+      exit(1);
     }
 
     /* Free the first node */
