@@ -527,5 +527,14 @@ void BUDataStructures::copyValue(Value *From, Value *To) {
     return;
   }
 
-  assert(!isa<GlobalVariable>(From) && "Do not know how to copy GV's yet!");
+  if (const Function *F = getFnForValue(To)) {
+    DSGraph &G = getDSGraph(*F);
+    G.getScalarMap().copyScalarIfExists(From, To);
+    return;
+  }
+
+  std::cerr << *From;
+  std::cerr << *To;
+  assert(0 && "Do not know how to copy this yet!");
+  abort();
 }
