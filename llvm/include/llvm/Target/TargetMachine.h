@@ -14,7 +14,7 @@ class MachineInstrInfo;
 class MachineInstrDescriptor;
 class MachineSchedInfo;
 class MachineRegInfo;
-class MachineFrameInfo;
+class TargetFrameInfo;
 class MachineCacheInfo;
 class MachineOptInfo;
 class MachineCodeEmitter;
@@ -22,19 +22,14 @@ class MRegisterInfo;
 class PassManager;
 class Pass;
 
-//---------------------------------------------------------------------------
-// class TargetMachine
-// 
-// Purpose:
-//   Primary interface to the complete machine description for the
-//   target machine.  All target-specific information should be
-//   accessible through this interface.
-// 
-//---------------------------------------------------------------------------
-
+//===----------------------------------------------------------------------===//
+///
+/// TargetMachine - Primary interface to the complete machine description for
+/// the target machine.  All target-specific information should be accessible
+/// through this interface.
+/// 
 class TargetMachine : public NonCopyableV {
   const std::string Name;
-public:
   const TargetData DataLayout;		// Calculates type size & alignment
   
 protected:
@@ -53,7 +48,6 @@ public:
 
   const std::string &getName() const { return Name; }
   
-  // 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
@@ -65,14 +59,14 @@ public:
   virtual const MachineInstrInfo&       getInstrInfo() const = 0;
   virtual const MachineSchedInfo&       getSchedInfo() const = 0;
   virtual const MachineRegInfo&	        getRegInfo()   const = 0;
-  virtual const MachineFrameInfo&       getFrameInfo() const = 0;
+  virtual const TargetFrameInfo&        getFrameInfo() const = 0;
   virtual const MachineCacheInfo&       getCacheInfo() const = 0;
   virtual const MachineOptInfo&         getOptInfo()   const = 0;
   const TargetData &getTargetData() const { return DataLayout; }
 
   /// getRegisterInfo - If register information is available, return it.  If
-  /// not, return null.  This is kept separate from RegInfo until RegInfo gets
-  /// straightened out.
+  /// not, return null.  This is kept separate from RegInfo until RegInfo has
+  /// details of graph coloring register allocation removed from it.
   ///
   virtual const MRegisterInfo*          getRegisterInfo() const { return 0; }
 
