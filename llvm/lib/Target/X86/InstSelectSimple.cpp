@@ -1690,7 +1690,9 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       case cByte:  StoreTy = Type::ShortTy; StoreClass = cShort; break;
       case cShort: StoreTy = Type::IntTy;   StoreClass = cInt;   break;
       case cInt:   StoreTy = Type::LongTy;  StoreClass = cLong;  break;
-      case cLong:  abort(); // FIXME: unsigned long long -> more complex
+      case cLong:
+        assert(0 &&"FIXME not implemented: cast FP to unsigned long long");
+        abort();
       default: assert(0 && "Unknown store class!");
       }
 
