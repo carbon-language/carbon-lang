@@ -1,7 +1,7 @@
 
-; RUN: llvm-as < %s > Output/%s.out1.bc
-; RUN: echo "%S = type { int, int* }" | llvm-as > Output/%s.out2.bc
-; RUN: llvm-link Output/%s.out[12].bc
+; RUN: llvm-as < %s > %t.out1.bc
+; RUN: echo "%S = type { int, int* }" | llvm-as > %t.out2.bc
+; RUN: llvm-link %t.out[12].bc
 
 %T = type opaque
 %S = type { int, %T* }
