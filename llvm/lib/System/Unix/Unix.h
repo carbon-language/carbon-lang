@@ -77,7 +77,7 @@ inline void ThrowErrno(const std::string& prefix) {
     // Copy the thread un-safe result of strerror into
     // the buffer as fast as possible to minimize impact
     // of collision of strerror in multiple threads.
-    if (Errno)
+    if (errno)
       strncpy(buffer,strerror(errno),MAXPATHLEN-1);
     buffer[MAXPATHLEN-1] = 0;
 #else
