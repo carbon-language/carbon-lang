@@ -606,6 +606,26 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 1;
     break;
 
+  // Verify that read and write port have integral parameters of the correct
+  // signed-ness.
+  case Intrinsic::writeport:
+    Assert1(FT->getNumParams() == 2,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getParamType(0)->isUnsigned(),
+            "First argument not unsigned int!", IF);
+    Assert1(FT->getParamType(1)->isIntegral(),
+            "First argument not unsigned int!", IF);
+    NumArgs = 2;
+    break;
+
+  case Intrinsic::readport:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getParamType(0)->isUnsigned(),
+            "First argument not unsigned int!", IF);
+    NumArgs = 1;
+    break;
+
   case Intrinsic::setjmp:          NumArgs = 1; break;
   case Intrinsic::longjmp:         NumArgs = 2; break;
   case Intrinsic::sigsetjmp:       NumArgs = 2; break;

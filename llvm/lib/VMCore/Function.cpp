@@ -227,6 +227,7 @@ unsigned Function::getIntrinsicID() const {
     break;
   case 'r':
     if (getName() == "llvm.returnaddress")  return Intrinsic::returnaddress;
+    if (getName() == "llvm.readport")       return Intrinsic::readport;
     break;
   case 's':
     if (getName() == "llvm.setjmp")     return Intrinsic::setjmp;
@@ -237,6 +238,8 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.va_copy")  return Intrinsic::vacopy;
     if (getName() == "llvm.va_end")   return Intrinsic::vaend;
     if (getName() == "llvm.va_start") return Intrinsic::vastart;
+  case 'w':
+    if (getName() == "llvm.writeport") return Intrinsic::writeport;
     break;
   }
   // The "llvm." namespace is reserved!
