@@ -36,7 +36,7 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 
 void PhyRegAlloc::createIGNodeListsAndIGs()
 {
-  if(DEBUG_RA ) cout << "Creating LR lists ..." << endl;
+  if(DEBUG_RA ) cerr << "Creating LR lists ..." << endl;
 
   // hash map iterator
   LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
@@ -52,8 +52,8 @@ void PhyRegAlloc::createIGNodeListsAndIGs()
 
 	if( !L) { 
 	  if( DEBUG_RA) {
-	    cout << "\n*?!?Warning: Null liver range found for: ";
-	    printValue( (*HMI).first) ; cout << endl;
+	    cerr << "\n*?!?Warning: Null liver range found for: ";
+	    printValue( (*HMI).first) ; cerr << endl;
 	  }
 	  continue;
 	}
@@ -75,7 +75,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs()
     RegClassList[ rc ]->createInterferenceGraph();
 
   if( DEBUG_RA)
-    cout << "LRLists Created!" << endl;
+    cerr << "LRLists Created!" << endl;
 }
 
 
@@ -105,8 +105,8 @@ void PhyRegAlloc::addInterference(const Value *const Def,
   for( ; LIt != LVSet->end(); ++LIt) {
 
     if( DEBUG_RA > 1) {
-      cout << "< Def="; printValue(Def);     
-      cout << ", Lvar=";  printValue( *LIt); cout  << "> ";
+      cerr << "< Def="; printValue(Def);     
+      cerr << ", Lvar=";  printValue( *LIt); cerr  << "> ";
     }
 
     //  get the live range corresponding to live var
@@ -133,8 +133,8 @@ void PhyRegAlloc::addInterference(const Value *const Def,
     else if(DEBUG_RA > 1)  { 
       // we will not have LRs for values not explicitly allocated in the
       // instruction stream (e.g., constants)
-      cout << " warning: no live range for " ; 
-      printValue( *LIt); cout << endl; }
+      cerr << " warning: no live range for " ; 
+      printValue( *LIt); cerr << endl; }
     
   }
  
@@ -148,7 +148,7 @@ void PhyRegAlloc::addInterference(const Value *const Def,
 void PhyRegAlloc::buildInterferenceGraphs()
 {
 
-  if(DEBUG_RA) cout << "Creating interference graphs ..." << endl;
+  if(DEBUG_RA) cerr << "Creating interference graphs ..." << endl;
 
   Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
 
@@ -215,7 +215,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
   addInterferencesForArgs();            // add interference for method args
 
   if( DEBUG_RA)
-    cout << "Interference graphs calculted!" << endl;
+    cerr << "Interference graphs calculted!" << endl;
 
 }
 
@@ -241,8 +241,8 @@ void PhyRegAlloc::addInterferencesForArgs()
     addInterference( *ArgIt, InSet, false );  // add interferences between 
                                               // args and LVars at start
     if( DEBUG_RA > 1) {
-      cout << " - %% adding interference for  argument ";    
-      printValue( (const Value *) *ArgIt); cout  << endl;
+      cerr << " - %% adding interference for  argument ";    
+      printValue( (const Value *) *ArgIt); cerr  << endl;
     }
   }
 }
@@ -326,7 +326,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 	    
 	    PushedRegSet.insert( Reg );
 	    StackOff += 4; // ****TODO: Correct ??????
-	    cout << "Inserted caller saving instr");
+	    cerr << "Inserted caller saving instr");
 	    
 	  } // if not already pushed
 
@@ -378,9 +378,9 @@ void PhyRegAlloc::updateMachineCode()
 
 	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
 
-	    cout << "*ADDED instr opcode: ";
-	    cout << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
-	    cout << endl;
+	    cerr << "*ADDED instr opcode: ";
+	    cerr << TargetInstrDescriptors[(*AdIt)->getOpCode()].opCodeString;
+	    cerr << endl;
 	    
 	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
 	    ++MInstIterator;
@@ -409,7 +409,7 @@ void PhyRegAlloc::updateMachineCode()
 	  // delete this condition checking later (must assert if Val is null)
 	  if( !Val) {
             if (DEBUG_RA)
-              cout << "Warning: NULL Value found for operand" << endl;
+              cerr << "Warning: NULL Value found for operand" << endl;
 	    continue;
 	  }
 	  assert( Val && "Value is NULL");   
@@ -421,8 +421,8 @@ void PhyRegAlloc::updateMachineCode()
 	    // nothing to worry if it's a const or a label
 
             if (DEBUG_RA) {
-              cout << "*NO LR for inst opcode: ";
-              cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+              cerr << "*NO LR for inst opcode: ";
+              cerr << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
             }
 
 	    if( Op.getAllocatedRegNum() == -1)
@@ -442,16 +442,16 @@ void PhyRegAlloc::updateMachineCode()
 
 	    //TM.getInstrInfo().isReturn(MInst->getOpCode())
 	    else if(TM.getInstrInfo().isReturn(MInst->getOpCode()) ) {
-	      if (DEBUG_RA) cout << endl << "RETURN found" << endl;
+	      if (DEBUG_RA) cerr << endl << "RETURN found" << endl;
  	      Op.setRegForValue( MRI.getReturnAddressReg() );
 
 	    }
 
 	    if (Val->getValueType() == Value::InstructionVal)
 	    {
-	      cout << "!Warning: No LiveRange for: ";
-	      printValue( Val); cout << " Type: " << Val->getValueType();
-	      cout << " RegVal=" <<  Op.getAllocatedRegNum() << endl;
+	      cerr << "!Warning: No LiveRange for: ";
+	      printValue( Val); cerr << " Type: " << Val->getValueType();
+	      cerr << " RegVal=" <<  Op.getAllocatedRegNum() << endl;
 	    }
 
 #endif
@@ -483,14 +483,14 @@ void PhyRegAlloc::updateMachineCode()
 void PhyRegAlloc::printMachineCode()
 {
 
-  cout << endl << ";************** Method ";
-  cout << Meth->getName() << " *****************" << endl;
+  cerr << endl << ";************** Method ";
+  cerr << Meth->getName() << " *****************" << endl;
 
   Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
 
   for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
 
-    cout << endl ; printLabel( *BBI); cout << ": ";
+    cerr << endl ; printLabel( *BBI); cerr << ": ";
 
     // get the iterator for machine instructions
     MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
@@ -502,8 +502,8 @@ void PhyRegAlloc::printMachineCode()
       MachineInstr *const MInst = *MInstIterator; 
 
 
-      cout << endl << "\t";
-      cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+      cerr << endl << "\t";
+      cerr << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
       
 
       //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
@@ -519,14 +519,14 @@ void PhyRegAlloc::printMachineCode()
 	  const Value *const Val = Op.getVRegValue () ;
 	  // ****this code is temporary till NULL Values are fixed
 	  if( ! Val ) {
-	    cout << "\t<*NULL*>";
+	    cerr << "\t<*NULL*>";
 	    continue;
 	  }
 
 	  // if a label or a constant
 	  if( (Val->getValueType() == Value::BasicBlockVal)  ) {
 
-	    cout << "\t"; printLabel(	Op.getVRegValue	() );
+	    cerr << "\t"; printLabel(	Op.getVRegValue	() );
 	  }
 	  else {
 	    // else it must be a register value
@@ -534,27 +534,27 @@ void PhyRegAlloc::printMachineCode()
 
 	    //if( RegNum != 1000)
 
-	      cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
-	    // else cout << "\t<*NoReg*>";
+	      cerr << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
+	    // else cerr << "\t<*NoReg*>";
 
 	  }
 
 	} 
 	else if(Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
-	  cout << "\t" << "%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
+	  cerr << "\t" << "%" << MRI.getUnifiedRegName(Op.getMachineRegNum());
 	}
 
 	else 
-	  cout << "\t" << Op;      // use dump field
+	  cerr << "\t" << Op;      // use dump field
       }
 
     }
 
-    cout << endl;
+    cerr << endl;
 
   }
 
-  cout << endl;
+  cerr << endl;
 }
 
 
@@ -617,9 +617,9 @@ void PhyRegAlloc::colorIncomingArgs()
 void PhyRegAlloc::printLabel(const Value *const Val)
 {
   if( Val->hasName() )
-    cout  << Val->getName();
+    cerr  << Val->getName();
   else
-    cout << "Label" <<  Val;
+    cerr << "Label" <<  Val;
 }
 
 

@@ -9,7 +9,7 @@ RegClass::RegClass(const Method *const M,
                      IG(this), IGNodeStack(), ReservedColorList(RCL)
 {
   if( DEBUG_RA)
-    cout << "Created Reg Class: " << RegClassID << endl;
+    cerr << "Created Reg Class: " << RegClassID << endl;
 
   // This constructor inits IG. The actual matrix is created by a call to 
   // createInterferenceGraph() above.
@@ -21,7 +21,7 @@ RegClass::RegClass(const Method *const M,
 
 void RegClass::colorAllRegs()
 {
-  if(DEBUG_RA) cout << "Coloring IGs ..." << endl;
+  if(DEBUG_RA) cerr << "Coloring IGs ..." << endl;
 
   //preColorIGNodes();                    // pre-color IGNodes
   pushAllIGNodes();                     // push all IG Nodes
@@ -55,9 +55,9 @@ void RegClass::pushAllIGNodes()
   bool PushedAll  = pushUnconstrainedIGNodes(); 
 
   if( DEBUG_RA) {
-    cout << " Puhsed all-unconstrained IGNodes. ";
-    if( PushedAll ) cout << " No constrained nodes left.";
-    cout << endl;
+    cerr << " Puhsed all-unconstrained IGNodes. ";
+    if( PushedAll ) cerr << " No constrained nodes left.";
+    cerr << endl;
   }
 
   if( PushedAll )                       // if NO constrained nodes left
@@ -112,8 +112,8 @@ bool  RegClass::pushUnconstrainedIGNodes()
       IGNode->pushOnStack();            // set OnStack and dec deg of neighs
 
       if (DEBUG_RA > 1) {
-	cout << " pushed un-constrained IGNode " << IGNode->getIndex() ;
-	cout << " on to stack" << endl;
+	cerr << " pushed un-constrained IGNode " << IGNode->getIndex() ;
+	cerr << " on to stack" << endl;
       }
     }
     else pushedall = false;             // we didn't push all live ranges
@@ -170,16 +170,16 @@ void RegClass::colorIGNode(IGNode *const Node)
   }
   else {
     if( DEBUG_RA ) {
-      cout << " Node " << Node->getIndex();
-      cout << " already colored with color " << Node->getColor() << endl;
+      cerr << " Node " << Node->getIndex();
+      cerr << " already colored with color " << Node->getColor() << endl;
     }
   }
 
 
   if( !Node->hasColor() ) {
     if( DEBUG_RA ) {
-      cout << " Node " << Node->getIndex();
-      cout << " - could not find a color (needs spilling)" << endl;
+      cerr << " Node " << Node->getIndex();
+      cerr << " - could not find a color (needs spilling)" << endl;
     }
   }
 

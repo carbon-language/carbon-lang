@@ -43,8 +43,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
       return;
     }
     else {                              // can't allocate the suggested col
-      cout << " Coud NOT allocate the suggested color for LR ";
-      LR->printSet(); cout << endl;
+      cerr << " Could NOT allocate the suggested color for LR ";
+      LR->printSet(); cerr << endl;
     }
   }
 
@@ -193,8 +193,8 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
       return;
     }
     else {                              // can't allocate the suggested col
-      cout << " Coud NOT allocate the suggested color for LR ";
-      LR->printSet(); cout << endl;
+      cerr << " Could NOT allocate the suggested color for LR ";
+      LR->printSet(); cerr << endl;
     }
   }
 

@@ -269,17 +269,14 @@ class UltraSparcRegInfo : public MachineRegInfo
     else if( ty <= Type::DoubleTyID)
       res = FloatRegClassID;           // sparc float reg class
     else { 
-      cout << "TypeID: " << ty << endl;
+      cerr << "TypeID: " << ty << endl;
       assert(0 && "Cannot resolve register class for type");
-
     }
 
     if(isCCReg)
       return res + 2;      // corresponidng condition code regiser 
-
     else 
       return res;
-
   }
 
   // returns the register tha contains always zero

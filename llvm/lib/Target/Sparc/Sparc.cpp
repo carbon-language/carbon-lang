@@ -47,8 +47,8 @@ void AllocateRegisters(Method *M, TargetMachine &TM)
     return;
     
   if( DEBUG_RA ) {
-    cout << endl << "******************** Method "<< (M)->getName();
-    cout <<        " ********************" <<endl;
+    cerr << endl << "******************** Method "<< (M)->getName();
+    cerr <<        " ********************" <<endl;
   }
     
   MethodLiveVarInfo LVI(M );   // Analyze live varaibles
@@ -59,7 +59,7 @@ void AllocateRegisters(Method *M, TargetMachine &TM)
   PRA.allocateRegisters();
     
 
-  if( DEBUG_RA )  cout << endl << "Register allocation complete!" << endl;
+  if( DEBUG_RA )  cerr << endl << "Register allocation complete!" << endl;
 
 }
 

@@ -102,7 +102,7 @@ void UltraSparcRegInfo::suggestRegs4MethodArgs(const Method *const Meth,
   
       else {
 	// Do NOTHING as this will be colored as a normal value.
-	if (DEBUG_RA) cout << " Int Regr not suggested for method arg\n";
+	if (DEBUG_RA) cerr << " Int Regr not suggested for method arg\n";
       }
      
     }
@@ -288,8 +288,8 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
     // must be defined before
     if( !LR ) {          
       if( DEBUG_RA) {
-	cout << " ERROR: In call instr, no LR for arg:  " ;
-	printValue(CallArg); cout << endl;
+	cerr << " ERROR: In call instr, no LR for arg:  " ;
+	printValue(CallArg); cerr << endl;
       }
       assert(0 && "NO LR for call arg");  
       // continue;
@@ -305,7 +305,7 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *const CallMI,
 
       else if (DEBUG_RA) 
 	// Do NOTHING as this will be colored as a normal value.
-	cout << " Regr not suggested for int call arg" << endl;
+	cerr << " Regr not suggested for int call arg" << endl;
       
     }
     else if( RegType == FPSingleRegType &&  (argNo*2 +1)< NumOfFloatArgRegs) 
@@ -357,9 +357,9 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
       LiveRange * RetValLR = LRI.getLiveRangeForValue( RetVal );
 
       if( !RetValLR ) {
-	cout << "\nNo LR for:";
+	cerr << "\nNo LR for:";
 	printValue( RetVal );
-	cout << endl;
+	cerr << endl;
 	assert( RetValLR && "ERR:No LR for non-void return value");
 	//return;
       }
@@ -449,8 +449,8 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
     // must be defined before
     if( !LR ) {          
       if( DEBUG_RA) {
-	cout << " ERROR: In call instr, no LR for arg:  " ;
-	printValue(CallArg); cout << endl;
+	cerr << " ERROR: In call instr, no LR for arg:  " ;
+	printValue(CallArg); cerr << endl;
       }
       assert(0 && "NO LR for call arg");  
       // continue;
@@ -516,9 +516,9 @@ void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *const RetMI,
     LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
 
     if( !LR ) {
-     cout << "\nNo LR for:";
+     cerr << "\nNo LR for:";
      printValue( RetVal );
-     cout << endl;
+     cerr << endl;
      assert( LR && "No LR for return value of non-void method");
      //return;
    }
@@ -554,9 +554,9 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
     LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
 
     if( ! LR ) {
-	cout << "\nNo LR for:";
+	cerr << "\nNo LR for:";
 	printValue( RetVal );
-	cout << endl;
+	cerr << endl;
 	// assert( LR && "No LR for return value of non-void method");
 	return;
    }
@@ -684,7 +684,7 @@ MachineInstr * UltraSparcRegInfo::cpValue2RegMI(Value * Val,
     break;
 
   default:
-    cout << "Value Type: " << Val->getValueType() << endl;
+    cerr << "Value Type: " << Val->getValueType() << endl;
     assert(0 && "Unknown val type - Only constants/globals/labels are valid");
   }
 
@@ -736,33 +736,26 @@ void UltraSparcRegInfo::printReg(const LiveRange *const LR) {
 
   unsigned RegClassID = (LR->getRegClass())->getID();
 
-  cout << " *Node " << (LR->getUserIGNode())->getIndex();
+  cerr << " *Node " << (LR->getUserIGNode())->getIndex();
 
   if( ! LR->hasColor() ) {
-    cout << " - could not find a color" << endl;
+    cerr << " - could not find a color" << endl;
     return;
   }
   
   // if a color is found
 
-  cout << " colored with color "<< LR->getColor();
+  cerr << " colored with color "<< LR->getColor();
 
   if( RegClassID == IntRegClassID ) {
 
-    cout<< " [" << SparcIntRegOrder::getRegName(LR->getColor()) ;
-    cout << "]" << endl;
+    cerr<< " [" << SparcIntRegOrder::getRegName(LR->getColor()) ;
+    cerr << "]" << endl;
   }
   else if ( RegClassID == FloatRegClassID) {
-    cout << "[" << SparcFloatRegOrder::getRegName(LR->getColor());
+    cerr << "[" << SparcFloatRegOrder::getRegName(LR->getColor());
     if( LR->getTypeID() == Type::DoubleTyID )
-      cout << "+" << SparcFloatRegOrder::getRegName(LR->getColor()+1);
-    cout << "]" << endl;
+      cerr << "+" << SparcFloatRegOrder::getRegName(LR->getColor()+1);
+    cerr << "]" << endl;
   }
-
-
 }
-
-
-
-
-
