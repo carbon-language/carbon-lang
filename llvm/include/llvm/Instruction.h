@@ -38,10 +38,6 @@ public:
   //
   virtual Instruction *clone() const = 0;
   
-  // Add a machine instruction used to implement this instruction
-  //
-  void addMachineInstruction(MachineInstr* minstr);
-  
   // Accessor methods...
   //
   inline const BasicBlock *getParent() const { return Parent; }
@@ -54,6 +50,10 @@ public:
   inline MachineCodeForVMInstr &getMachineInstrVec() {
     return *machineInstrVec; 
   }
+  
+  // Add a machine instruction used to implement this instruction
+  //
+  void addMachineInstruction(MachineInstr* minstr);
   
   // ---------------------------------------------------------------------------
   // Subclass classification... getInstType() returns a member of 
