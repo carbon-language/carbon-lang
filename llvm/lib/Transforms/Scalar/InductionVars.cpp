@@ -37,7 +37,7 @@ using std::cerr;
 // an interval invariant computation.
 //
 static bool isLoopInvariant(cfg::Interval *Int, Value *V) {
-  assert(isa<Constant>(V) || isa<Instruction>(V) || isa<FunctionArgument>(V));
+  assert(isa<Constant>(V) || isa<Instruction>(V) || isa<Argument>(V));
 
   if (!isa<Instruction>(V))
     return true;  // Constants and arguments are always loop invariant

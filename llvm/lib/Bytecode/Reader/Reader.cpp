@@ -19,6 +19,7 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
+#include "llvm/Argument.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -280,7 +281,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   const FunctionType::ParamTypes &Params = MTy->getParamTypes();
   for (FunctionType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
-    FunctionArgument *FA = new FunctionArgument(*It);
+    Argument *FA = new Argument(*It);
     if (insertValue(FA, Values) == -1) {
       Error = "Error reading method arguments!\n";
       delete M; return failure(true); 

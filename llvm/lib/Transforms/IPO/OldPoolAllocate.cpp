@@ -20,6 +20,7 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Argument.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -677,8 +678,8 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
   // Add arguments to the function... starting with all of the old arguments
   vector<Value*> ArgMap;
   for (unsigned i = 0, e = TFI.Func->getArgumentList().size(); i != e; ++i) {
-    const FunctionArgument *OFA = TFI.Func->getArgumentList()[i];
-    FunctionArgument *NFA = new FunctionArgument(OFA->getType(),OFA->getName());
+    const Argument *OFA = TFI.Func->getArgumentList()[i];
+    Argument *NFA = new Argument(OFA->getType(), OFA->getName());
     NewFunc->getArgumentList().push_back(NFA);
     ArgMap.push_back(NFA);  // Keep track of the arguments 
   }
@@ -690,7 +691,7 @@ void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
       Name = "retpool";
     else
       Name = ArgMap[TFI.ArgInfo[i].ArgNo]->getName();  // Get the arg name
-    FunctionArgument *NFA = new FunctionArgument(PoolTy, Name+".pool");
+    Argument *NFA = new Argument(PoolTy, Name+".pool");
     NewFunc->getArgumentList().push_back(NFA);
   }
 

@@ -298,7 +298,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	&& !instr->isTerminator();
     
       if (includeAddressOperand || isa<Instruction>(operand) ||
-	  isa<Constant>(operand) || isa<FunctionArgument>(operand) ||
+	  isa<Constant>(operand) || isa<Argument>(operand) ||
 	  isa<GlobalVariable>(operand))
 	{
 	  // This operand is a data value

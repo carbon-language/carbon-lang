@@ -73,7 +73,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
       ValNo = Type::FirstDerivedTyID; // Start emitting at the derived types...
     
     // Scan through and ignore function arguments...
-    for (; ValNo < Plane.size() && isa<FunctionArgument>(Plane[ValNo]); ValNo++)
+    for (; ValNo < Plane.size() && isa<Argument>(Plane[ValNo]); ValNo++)
       /*empty*/;
 
     unsigned NC = ValNo;              // Number of constants

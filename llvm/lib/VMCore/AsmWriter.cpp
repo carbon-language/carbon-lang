@@ -20,6 +20,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Argument.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -30,7 +31,7 @@ using std::vector;
 using std::ostream;
 
 static const Module *getModuleFromVal(const Value *V) {
-  if (const FunctionArgument *MA = dyn_cast<const FunctionArgument>(V))
+  if (const Argument *MA = dyn_cast<const Argument>(V))
     return MA->getParent() ? MA->getParent()->getParent() : 0;
   else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V))
     return BB->getParent() ? BB->getParent()->getParent() : 0;
@@ -46,7 +47,7 @@ static const Module *getModuleFromVal(const Value *V) {
 
 static SlotCalculator *createSlotCalculator(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
-  if (const FunctionArgument *FA = dyn_cast<const FunctionArgument>(V)) {
+  if (const Argument *FA = dyn_cast<const Argument>(V)) {
     return new SlotCalculator(FA->getParent(), true);
   } else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
     return new SlotCalculator(I->getParent()->getParent(), true);
@@ -286,7 +287,7 @@ private :
   void printConstant(const Constant *CPV);
   void printGlobal(const GlobalVariable *GV);
   void printFunction(const Function *F);
-  void printFunctionArgument(const FunctionArgument *FA);
+  void printArgument(const Argument *FA);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction *I);
   ostream &printType(const Type *Ty);
@@ -397,7 +398,7 @@ void AssemblyWriter::printFunction(const Function *M) {
 
   if (!M->isExternal()) {
     for_each(M->getArgumentList().begin(), M->getArgumentList().end(),
-	     bind_obj(this, &AssemblyWriter::printFunctionArgument));
+	     bind_obj(this, &AssemblyWriter::printArgument));
   } else {
     // Loop over the arguments, printing them...
     const FunctionType *MT = M->getFunctionType();
@@ -432,10 +433,10 @@ void AssemblyWriter::printFunction(const Function *M) {
   Table.purgeFunction();
 }
 
-// printFunctionArgument - This member is called for every argument that 
+// printArgument - This member is called for every argument that 
 // is passed into the function.  Simply print it out
 //
-void AssemblyWriter::printFunctionArgument(const FunctionArgument *Arg) {
+void AssemblyWriter::printArgument(const Argument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
   if (Arg != Arg->getParent()->getArgumentList().front()) Out << ", ";
 
@@ -679,7 +680,7 @@ void Type::print(std::ostream &o) const {
     o << getDescription();
 }
 
-void FunctionArgument::print(std::ostream &o) const {
+void Argument::print(std::ostream &o) const {
   o << getType() << " " << getName();
 }
 
@@ -710,7 +711,7 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   case Value::ConstantVal:
     Out << " "; AW->write(V->getType());
     Out << " " << cast<Constant>(V)->getStrValue(); break;
-  case Value::FunctionArgumentVal: 
+  case Value::ArgumentVal: 
     AW->write(V->getType()); Out << " " << V->getName(); break;
   case Value::TypeVal:           AW->write(cast<const Type>(V)); break;
   case Value::InstructionVal:    AW->write(cast<Instruction>(V)); break;

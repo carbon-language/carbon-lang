@@ -245,7 +245,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     std::cerr << "Bizarre thing to expr classify: " << Expr << "\n";
     return Expr;
   case Value::GlobalVariableVal:        // Global Variable & Function argument:
-  case Value::FunctionArgumentVal:      // nothing known, return variable itself
+  case Value::ArgumentVal:              // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
     Constant *CPV = cast<Constant>(Expr);

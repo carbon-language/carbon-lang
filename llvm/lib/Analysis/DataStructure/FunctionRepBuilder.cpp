@@ -143,26 +143,28 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
   // the worklists...
   //
   for (Function::ArgumentListType::iterator I = Func->getArgumentList().begin(),
-         E = Func->getArgumentList().end(); I != E; ++I)
+         E = Func->getArgumentList().end(); I != E; ++I) {
+    Value *Arg = (Value*)(*I);
     // Only process arguments that are of pointer type...
-    if (PointerType *PT = dyn_cast<PointerType>((*I)->getType())) {
-      ArgDSNode *Arg = new ArgDSNode(*I);
-      ArgNodes.push_back(Arg);
+    if (PointerType *PT = dyn_cast<PointerType>(Arg->getType())) {
+      ArgDSNode *ArgNode = new ArgDSNode(*I);
+      ArgNodes.push_back(ArgNode);
       
       // Add a critical shadow value for it to represent what it is pointing
       // to and add this to the value map...
       ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
                                             Func->getParent(), true);
       ShadowNodes.push_back(Shad);
-      ValueMap[*I].add(PointerVal(Shad), *I);
+      ValueMap[Arg].add(PointerVal(Shad), Arg);
       
       // The value of the argument is the shadow value...
-      Arg->getLink(0).add(Shad);
+      ArgNode->getLink(0).add(Shad);
       
       // Make sure that all users of the argument are processed...
-      addAllUsesToWorkList(*I);
+      addAllUsesToWorkList(Arg);
     }
-  
+  }
+
   // Iterate over the instructions in the method.  Create nodes for malloc and
   // call instructions.  Add all uses of these to the worklist of instructions
   // to process.

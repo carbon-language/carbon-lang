@@ -22,6 +22,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/Argument.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 using std::map;
@@ -337,9 +338,8 @@ void MutateStructTypes::transformMethod(Function *m) {
 
   // Okay, first order of business, create the arguments...
   for (unsigned i = 0, e = M->getArgumentList().size(); i != e; ++i) {
-    const FunctionArgument *OFA = M->getArgumentList()[i];
-    FunctionArgument *NFA = new FunctionArgument(ConvertType(OFA->getType()),
-                                                 OFA->getName());
+    const Argument *OFA = M->getArgumentList()[i];
+    Argument *NFA = new Argument(ConvertType(OFA->getType()), OFA->getName());
     NewMeth->getArgumentList().push_back(NFA);
     LocalValueMap[OFA] = NFA; // Keep track of value mapping
   }

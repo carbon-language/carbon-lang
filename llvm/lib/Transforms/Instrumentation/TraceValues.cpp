@@ -257,7 +257,7 @@ static inline void InsertCodeToShowFunctionEntry(Function *M, Function *Printf){
   unsigned ArgNo = 0;
   for (Function::ArgumentListType::const_iterator
          I = argList.begin(), E = argList.end(); I != E; ++I, ++ArgNo) {
-    InsertVerbosePrintInst(*I, BB, BBI,
+    InsertVerbosePrintInst((Value*)*I, BB, BBI,
                            "  Arg #" + utostr(ArgNo), Printf);
   }
 }

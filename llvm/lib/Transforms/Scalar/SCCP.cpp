@@ -140,7 +140,7 @@ private:
 
   // getValueState - Return the InstVal object that corresponds to the value.
   // This function is neccesary because not all values should start out in the
-  // underdefined state... FunctionArgument's should be overdefined, and
+  // underdefined state... Argument's should be overdefined, and
   // constants should be marked as constants.  If a value is not known to be an
   // Instruction object, then use this accessor to get its value from the map.
   //
@@ -150,7 +150,7 @@ private:
       
     if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
       ValueState[CPV].markConstant(CPV);
-    } else if (isa<FunctionArgument>(V)) {        // FuncArgs are overdefined
+    } else if (isa<Argument>(V)) {                // Arguments are overdefined
       ValueState[V].markOverdefined();
     } 
     // All others are underdefined by default...

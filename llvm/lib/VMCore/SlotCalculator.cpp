@@ -19,6 +19,7 @@
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Argument.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include <algorithm>

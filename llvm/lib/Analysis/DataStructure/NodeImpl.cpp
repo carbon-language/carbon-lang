@@ -11,6 +11,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
+#include "llvm/Argument.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <sstream>
@@ -288,7 +289,7 @@ void CallDSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap,
     MapPVS(ArgLinks[i], Old->ArgLinks[i], NodeMap);
 }
 
-ArgDSNode::ArgDSNode(FunctionArgument *FA)
+ArgDSNode::ArgDSNode(Argument *FA)
   : DSNode(ArgNode, FA->getType()), FuncArg(FA) {
 }
 

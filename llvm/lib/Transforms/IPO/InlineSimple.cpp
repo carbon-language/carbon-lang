@@ -23,6 +23,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/Type.h"
+#include "llvm/Argument.h"
 #include <algorithm>
 #include <map>
 #include <iostream>

@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
 #include "llvm/ConstantVals.h"
+#include "llvm/Argument.h"
 #include <iostream>
 using std::cerr;
 using std::string;
@@ -301,10 +302,10 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
   for (Function::ArgumentListType::const_iterator 
          I = Src->getArgumentList().begin(),
          E = Src->getArgumentList().end(); I != E; ++I) {
-    const FunctionArgument *SMA = *I;
+    const Argument *SMA = *I;
 
     // Create the new method argument and add to the dest method...
-    FunctionArgument *DMA = new FunctionArgument(SMA->getType(),SMA->getName());
+    Argument *DMA = new Argument(SMA->getType(), SMA->getName());
     Dest->getArgumentList().push_back(DMA);
 
     // Add a mapping to our local map
