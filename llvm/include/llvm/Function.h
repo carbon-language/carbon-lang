@@ -168,12 +168,12 @@ public:
   reverse_iterator       rend  ()       { return BasicBlocks.rend();   }
   const_reverse_iterator rend  () const { return BasicBlocks.rend();   }
 
-  unsigned                 size() const { return BasicBlocks.size(); }
+  unsigned                 size() const { return BasicBlocks.size();  }
   bool                    empty() const { return BasicBlocks.empty(); }
   const BasicBlock       &front() const { return BasicBlocks.front(); }
         BasicBlock       &front()       { return BasicBlocks.front(); }
-  const BasicBlock        &back() const { return BasicBlocks.back(); }
-        BasicBlock        &back()       { return BasicBlocks.back(); }
+  const BasicBlock        &back() const { return BasicBlocks.back();  }
+        BasicBlock        &back()       { return BasicBlocks.back();  }
 
   //===--------------------------------------------------------------------===//
   // Argument iterator forwarding functions
@@ -188,12 +188,12 @@ public:
   reverse_aiterator       arend  ()       { return ArgumentList.rend();   }
   const_reverse_aiterator arend  () const { return ArgumentList.rend();   }
 
-  unsigned                  asize() const { return ArgumentList.size(); }
+  unsigned                  asize() const { return ArgumentList.size();  }
   bool                     aempty() const { return ArgumentList.empty(); }
   const Argument          &afront() const { return ArgumentList.front(); }
         Argument          &afront()       { return ArgumentList.front(); }
-  const Argument           &aback() const { return ArgumentList.back(); }
-        Argument           &aback()       { return ArgumentList.back(); }
+  const Argument           &aback() const { return ArgumentList.back();  }
+        Argument           &aback()       { return ArgumentList.back();  }
 
   virtual void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
