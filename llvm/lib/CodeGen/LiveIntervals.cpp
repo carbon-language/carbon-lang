@@ -436,7 +436,7 @@ bool LiveIntervals::overlapsAliases(const Interval& lhs,
 LiveIntervals::Interval::Interval(unsigned r)
     : reg(r),
       weight((MRegisterInfo::isPhysicalRegister(r) ?
-              std::numeric_limits<float>::max() : 0.0F))
+              std::numeric_limits<float>::infinity() : 0.0F))
 {
 
 }
