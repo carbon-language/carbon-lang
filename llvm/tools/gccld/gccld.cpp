@@ -35,7 +35,6 @@
 #include "Support/SystemUtils.h"
 #include <fstream>
 #include <memory>
-
 using namespace llvm;
 
 namespace {
@@ -107,6 +106,22 @@ static int PrintAndReturn(const char *progname, const std::string &Message) {
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
 /// bytecode file for the program.
 static void EmitShellScript(char **argv) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+  // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
+  // support windows systems, we copy the llvm-stub.exe executable from the
+  // build tree to the destination file.
+  std::string llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
+  if (llvmstub.empty()) {
+    std::cerr << "Could not find llvm-stub.exe executable!\n";
+    exit(1);
+  }
+  if (CopyFile(OutputFilename, llvmstub)) {
+    std::cerr << "Could not copy the llvm-stub.exe executable!\n";
+    exit(1);
+  }
+  return;
+#endif
+
   // Output the script to start the program...
   std::ofstream Out2(OutputFilename.c_str());
   if (!Out2.good())
