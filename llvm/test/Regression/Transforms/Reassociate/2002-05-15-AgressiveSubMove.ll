@@ -1,4 +1,4 @@
-; RUN: if as < %s | opt -reassociate -instcombine | dis | grep add
+; RUN: if as < %s | opt -reassociate -instcombine -constprop -dce | dis | grep add
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
