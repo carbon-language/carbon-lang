@@ -126,7 +126,7 @@ endif
 # Special tools used while building the LLVM tree.  Burg is built as part of the
 # utils directory.
 #
-BURG    := $(LEVEL)/utils/Burg/burg
+BURG    := $(LEVEL)/utils/Burg/burg.$(UNAME)
 RunBurg := $(BURG) $(BURG_OPTS)
 
 
@@ -167,7 +167,7 @@ Link     := $(CXX)
 endif
 LinkG    := $(Link) -g  -L $(LIBDEBUG) $(STRIP)
 LinkO    := $(Link) -O3 -L $(LIBRELEASE)
-LinkP    := $(LinkO) $(PROFILE)
+LinkP    := $(Link) -O3 -L $(LIBPROFILE) $(PROFILE)
 
 # Create one .o file from a bunch of .o files...
 Relink = ld -r
@@ -358,9 +358,9 @@ ifndef ENABLE_OPTIMIZED
   TOOLEXENAMES  := $(TOOLEXENAME_G)
 else
   ifdef ENABLE_PROFILING
-    TOOLEXENAMES := $(TOOLEXENAME_O)
-  else
     TOOLEXENAMES := $(TOOLEXENAME_P)
+  else
+    TOOLEXENAMES := $(TOOLEXENAME_O)
   endif
 endif
 
