@@ -87,12 +87,11 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       MachineInstr *PHICopy = *(AfterPHIsIt-1);
 
       // Add information to LiveVariables to know that the incoming value is
-      // dead.  This says that the register is dead, not killed, because we
-      // cannot use the live variable information to indicate that the variable
-      // is defined in multiple entry blocks.  Instead, we pretend that this
-      // instruction defined it and killed it at the same time.
+      // killed.  Note that because the value is defined in several places (once
+      // each for each incoming block), the "def" block and instruction fields
+      // for the VarInfo is not filled in.
       //
-      LV->addVirtualRegisterDead(IncomingReg, &MBB, PHICopy);
+      LV->addVirtualRegisterKilled(IncomingReg, &MBB, PHICopy);
 
       // Since we are going to be deleting the PHI node, if it is the last use
       // of any registers, or if the value itself is dead, we need to move this
