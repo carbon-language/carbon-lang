@@ -24,7 +24,7 @@ USEDLIBS = \
 	LLVMSparcV9LiveVar \
 	LLVMipa.a \
 	LLVMTransforms.a \
-	LLVMScalarOpts.a \
+	LLVMScalarOpts \
 	LLVMAnalysis.a \
 	LLVMTransformUtils.a \
 	LLVMBCReader \
