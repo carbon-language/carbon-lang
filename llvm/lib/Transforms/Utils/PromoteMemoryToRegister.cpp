@@ -220,8 +220,8 @@ void PromoteMem2Reg::run() {
         // (unspecified) ordering of basic blocks in the dominance frontier,
         // which would give PHI nodes non-determinstic subscripts.  Fix this by
         // processing blocks in order of the occurance in the function.
-        for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
-             P != PE; ++P)
+        for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
+             PE = S.end(); P != PE; ++P)
           DFBlocks.push_back(BBNumbers.getNumber(*P));
 
         // Sort by which the block ordering in the function.

@@ -30,6 +30,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include <cstdio>
 #include <set>
+#include <algorithm>
+
 using namespace llvm;
 
 namespace {

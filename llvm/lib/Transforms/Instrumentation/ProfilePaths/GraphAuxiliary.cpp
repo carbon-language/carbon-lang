@@ -638,7 +638,7 @@ void processGraph(Graph &g,
 #ifdef DEBUG_PATH_PROFILES
   //debugging info
   cerr<<"After moving dummy code\n";
-  for(map<Edge, getEdgeCode *>::iterator cd_i=codeInsertions.begin(), 
+  for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator cd_i=codeInsertions.begin(), 
 	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
     printEdge(cd_i->first);
     cerr<<cd_i->second->getCond()<<":"
@@ -650,7 +650,7 @@ void processGraph(Graph &g,
 
   //see what it looks like...
   //now insert code along edges which have codes on them
-  for(map<Edge, getEdgeCode *>::iterator MI=codeInsertions.begin(), 
+  for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator MI=codeInsertions.begin(), 
 	ME=codeInsertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
     insertBB(ed, MI->second, rInst, countInst, numPaths, MethNo, threshold);

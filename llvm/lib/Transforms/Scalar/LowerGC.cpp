@@ -143,8 +143,8 @@ static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
     if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum))) 
       I->setOperand(OpNum, ConstantExpr::getCast(C, Ty));
     else {
-      CastInst *C = new CastInst(I->getOperand(OpNum), Ty, "", I);
-      I->setOperand(OpNum, C);
+      CastInst *CI = new CastInst(I->getOperand(OpNum), Ty, "", I);
+      I->setOperand(OpNum, CI);
     }
   }
 }
