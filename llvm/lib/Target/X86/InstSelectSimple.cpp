@@ -340,9 +340,12 @@ void ISel::SelectPHINodes() {
         // Get the incoming value into a virtual register.  If it is not already
         // available in a virtual register, insert the computation code into
         // PredMBB
-        MachineBasicBlock::iterator PI = PredMBB->end()-1;
+        //
+
+        MachineBasicBlock::iterator PI = PredMBB->begin();
+        while ((*PI)->getOpcode() == X86::PHI) ++PI;
+        
         MI->addRegOperand(getReg(PN->getIncomingValue(i), PredMBB, PI));
-                                 
 
         // FIXME: Pass in the MachineBasicBlocks instead of the basic blocks...
         MI->addPCDispOperand(PN->getIncomingBlock(i));  // PredMBB
