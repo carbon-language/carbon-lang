@@ -251,16 +251,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         // if this register is preallocated, look for an interval that
         // overlaps with it and assign it to a memory location
         if (i->reg < MRegisterInfo::FirstVirtualRegister) {
-            for (IntervalPtrs::iterator
-                     ai = active_.begin(), ae = active_.end(); ai != ae; ++ai) {
-                unsigned virtReg = (*ai)->reg;
-                Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
-                if (it != v2pMap_.end() && it->second == i->reg) {
-                    active_.erase(ai);
-                    clearVirtReg(virtReg);
-                    break;
-                }
-            }
             reservePhysReg(i->reg);
             active_.push_back(&*i);
         }
@@ -607,7 +597,7 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
 
 void RA::reservePhysReg(unsigned physReg)
 {
-    DEBUG(std::cerr << "\t\t\treserving physical physical register: "
+    DEBUG(std::cerr << "\t\t\treserving physical register: "
           << mri_->getName(physReg) << '\n');
     // if this register holds a value spill it
     unsigned virtReg = p2vMap_[physReg];
@@ -621,14 +611,14 @@ void RA::reservePhysReg(unsigned physReg)
                 break;
             }
         }
-        spillVirtReg(virtReg);
+        assignVirt2StackSlot(virtReg);
     }
     p2vMap_[physReg] = physReg; // this denotes a reserved physical register
 }
 
 void RA::clearReservedPhysReg(unsigned physReg)
 {
-    DEBUG(std::cerr << "\t\t\tclearing reserved physical physical register: "
+    DEBUG(std::cerr << "\t\t\tclearing reserved physical register: "
           << mri_->getName(physReg) << '\n');
     assert(p2vMap_[physReg] == physReg &&
            "attempt to clear a non reserved physical register");
