@@ -51,6 +51,12 @@
 /* Define to 1 if you have the `isatty' function. */
 #undef HAVE_ISATTY
 
+/* Define to 1 if your compiler defines isinf in the <cmath> header file. */
+#undef HAVE_ISINF_IN_CMATH
+
+/* Define to 1 if your compiler defines isinf in the <math.h> header file. */
+#undef HAVE_ISINF_IN_MATH_H
+
 /* Define to 1 if your compiler defines isnan in the <cmath> header file. */
 #undef HAVE_ISNAN_IN_CMATH
 
@@ -104,6 +110,10 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
+/* Define to 1 if your compiler defines std::isinf in the <cmath> header file.
+   */
+#undef HAVE_STD_ISINF_IN_CMATH
+
 /* Define to 1 if your compiler defines std::isnan in the <cmath> header file.
    */
 #undef HAVE_STD_ISNAN_IN_CMATH
@@ -149,9 +159,6 @@
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
-
-/* Define to 1 if you have the isnan() function */
-#undef HAVE_ISNAN
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
