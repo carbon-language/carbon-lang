@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
   // Call the `foo' function with argument n:
   std::vector<GenericValue> Args(1);
-  args[0].IntVal = n;
+  Args[0].IntVal = n;
   GenericValue GV = EE->runFunction(FibF, Args);
 
   // import result of execution
