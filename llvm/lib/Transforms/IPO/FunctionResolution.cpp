@@ -251,8 +251,7 @@ static bool ProcessGlobalsWithSameName(Module &M,
       // to 'int (int)' or 'int ()' or whatever else is not completely generic.
       //
       Function *F = cast<Function>(Globals[i]);
-      if (!F->getFunctionType()->isVarArg() ||
-          F->getFunctionType()->getNumParams()) {
+      if (!F->isExternal()) {
         if (Concrete)
           return false;   // Found two different functions types.  Can't choose!
         
