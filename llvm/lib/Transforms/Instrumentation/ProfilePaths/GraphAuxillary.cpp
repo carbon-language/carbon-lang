@@ -511,7 +511,7 @@ void processGraph(Graph &g,
   //This would hold all 
   //right as long as number of paths in the graph
   //is less than this
-  const int INFINITY=99999999;
+  const int Infinity=99999999;
 
 
   //step 1-3 are already done on the graph when this function is called
@@ -521,14 +521,14 @@ void processGraph(Graph &g,
 
   //now insert exit to root edge
   //if its there earlier, remove it!
-  //assign it weight INFINITY
+  //assign it weight Infinity
   //so that this edge IS ALWAYS IN spanning tree
   //Note than edges in spanning tree do not get 
   //instrumented: and we do not want the
   //edge exit->root to get instrumented
   //as it MAY BE a dummy edge
-  Edge ed(g.getExit(),g.getRoot(),INFINITY);
-  g.addEdge(ed,INFINITY);
+  Edge ed(g.getExit(),g.getRoot(),Infinity);
+  g.addEdge(ed,Infinity);
   Graph g2=g;
 
   //make g2 undirectional: this gives a better
