@@ -1638,3 +1638,34 @@ void DSGraph::mergeInGlobalsGraph() {
   OldRetNodes.clear();
   removeTriviallyDeadNodes();
 }
+
+/// computeNodeMapping - Given roots in two different DSGraphs, traverse the
+/// nodes reachable from the two graphs, computing the mapping of nodes from
+/// the first to the second graph.
+///
+void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
+                                 const DSNodeHandle &NH2, NodeMapTy &NodeMap) {
+  DSNode *N1 = NH1.getNode(), *N2 = NH2.getNode();
+  if (N1 == 0 || N2 == 0) return;
+
+  DSNodeHandle &Entry = NodeMap[N1];
+  if (Entry.getNode()) {
+    // Termination of recursion!
+    assert(Entry.getNode() == N2 &&
+           Entry.getOffset() == (NH1.getOffset()+NH2.getOffset()) &&
+           "Inconsistent mapping detected!");
+    return;
+  }
+  
+  Entry.setNode(N2);
+  Entry.setOffset(NH1.getOffset()+NH2.getOffset());
+
+  // Loop over all of the fields that N1 and N2 have in common, recursively
+  // mapping the edges together now.
+  int N2Idx = NH2.getOffset()-NH1.getOffset();
+  unsigned N2Size = N2->getSize();
+  for (unsigned i = 0, e = N1->getSize(); i < e; i += DS::PointerSize)
+    if (unsigned(N2Idx)+i < N2Size)
+      computeNodeMapping(N1->getLink(i), N2->getLink(N2Idx+i), NodeMap);
+}
+
