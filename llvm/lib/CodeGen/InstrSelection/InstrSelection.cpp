@@ -220,7 +220,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
   // 
   if (treeRoot->opLabel != VRegListOp)
     {
-      InstructionNode* instrNode = (InstructionNode*) MainTreeNode(treeRoot);
+      InstructionNode* instrNode = (InstructionNode*)treeRoot->treeNodePtr;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
       
       unsigned N = GetInstructionsByRule(instrNode, ruleForNode, nts, Target,
@@ -259,7 +259,7 @@ SelectInstructionsForTree(BasicTreeNode* treeRoot,
 	{
 	  assert(i < 2);
 	  InstrTreeNode::InstrTreeNodeType
-	    nodeType = MainTreeNode(kids[i])->getNodeType();
+	    nodeType = kids[i]->treeNodePtr->getNodeType();
 	  if (nodeType == InstrTreeNode::NTVRegListNode ||
 	      nodeType == InstrTreeNode::NTInstructionNode)
 	    {

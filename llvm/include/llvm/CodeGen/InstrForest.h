@@ -24,26 +24,17 @@
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
 
-//************************** System Include Files **************************/
-
-#include <hash_map>
-#include <hash_set>
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/HashExtras.h"
 #include "llvm/Instruction.h"
-
-//************************* Opaque Declarations ****************************/
+#include <hash_map>
+#include <hash_set>
 
 class ConstPoolVal;
 class BasicBlock;
 class Method;
 class InstrTreeNode;
 class InstrForest;
-
-/******************** Exported Data Types and Constants ********************/
 
 //--------------------------------------------------------------------------
 // OpLabel values for special-case nodes created for instruction selection.
@@ -110,7 +101,7 @@ extern StateLabel	burm_state	(OpLabel op, StateLabel leftState,
 
 extern StateLabel	burm_rule	(StateLabel state, int goalNT);
   
-extern BasicTreeNode** burm_kids	(BasicTreeNode* p, int eruleno,
+extern BasicTreeNode**  burm_kids	(BasicTreeNode* p, int eruleno,
 					 BasicTreeNode* kids[]);
   
 extern void		printcover	(BasicTreeNode*, int, int);
@@ -119,20 +110,12 @@ extern int		treecost	(BasicTreeNode*, int, int);
 extern void		printMatches	(BasicTreeNode*);
 
 
-//*********************** Public Class Declarations ************************/
-
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
 // 
 // A single tree node in the instruction tree used for
 // instruction selection via BURG.
 //------------------------------------------------------------------------ 
-
-inline InstrTreeNode*
-MainTreeNode(BasicTreeNode* node) {
-  return node->treeNodePtr;
-}
-
 
 class InstrTreeNode : public NonCopyableV {
 public:
@@ -168,9 +151,9 @@ public:
   inline InstrTreeNode* rightChild	() const {
     return (InstrTreeNode*)
       (basicNode.rightChild
-       ? (MainTreeNode(basicNode.rightChild)->getOpLabel() == VRegListOp
-	  ? MainTreeNode(basicNode.rightChild)->leftChild()
-	  : MainTreeNode(basicNode.rightChild))
+       ? (basicNode.rightChild->treeNodePtr->getOpLabel() == VRegListOp
+	  ? basicNode.rightChild->treeNodePtr->leftChild()
+	  : basicNode.rightChild->treeNodePtr)
        : NULL);
   }
   

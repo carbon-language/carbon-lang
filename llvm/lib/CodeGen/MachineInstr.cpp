@@ -153,7 +153,8 @@ ostream &operator<<(ostream &os, const MachineOperand &mop) {
 // 
 // For the common case of 2- and 3-operand arithmetic/logical instructions,
 // set the m/c instr. operands directly from the VM instruction's operands.
-// Check whether the first or second operand is 0 and can use a dedicated "0" register.
+// Check whether the first or second operand is 0 and can use a dedicated "0"
+// register.
 // Check whether the second operand should use an immediate field or register.
 // (First and third operands are never immediates for such instructions.)
 // 
