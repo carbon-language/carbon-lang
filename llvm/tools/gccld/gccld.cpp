@@ -24,6 +24,7 @@
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <fstream>
 #include <memory>
 #include <algorithm>
@@ -160,6 +161,9 @@ int main(int argc, char **argv) {
     return 1;
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
+
+  // Make sure that the Out file gets unlink'd from the disk if we get a SIGINT
+  RemoveFileOnSignal(OutputFilename+".bc");
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(Composite.get());

@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/PassManager.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <memory>
 #include <string>
 #include <fstream>
@@ -141,6 +142,10 @@ int main(int argc, char **argv) {
       return 1;
     }
     Out = new std::ofstream(OutputFilename.c_str());
+
+    // Make sure that the Out file gets unlink'd from the disk if we get a
+    // SIGINT
+    RemoveFileOnSignal(OutputFilename);
   } else {
     if (InputFilename == "-") {
       OutputFilename = "-";
@@ -162,6 +167,9 @@ int main(int argc, char **argv) {
         delete Out;
         return 1;
       }
+      // Make sure that the Out file gets unlink'd from the disk if we get a
+      // SIGINT
+      RemoveFileOnSignal(OutputFilename);
     }
   }
   

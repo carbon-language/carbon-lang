@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <fstream>
 #include <memory>
 
@@ -174,6 +175,10 @@ int main(int argc, char **argv) {
       cerr << "Error opening " << OutputFilename << "!\n";
       return 1;
     }
+
+    // Make sure that the Output file gets unlink'd from the disk if we get a
+    // SIGINT
+    RemoveFileOnSignal(OutputFilename);
   }
 
   // Create a PassManager to hold and optimize the collection of passes we are

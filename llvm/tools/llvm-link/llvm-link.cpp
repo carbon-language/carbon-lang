@@ -14,6 +14,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Module.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <fstream>
 #include <memory>
 #include <sys/types.h>     // For FileExists
@@ -126,6 +127,10 @@ int main(int argc, char **argv) {
       cerr << "Error opening '" << OutputFilename << "'!\n";
       return 1;
     }
+
+    // Make sure that the Out file gets unlink'd from the disk if we get a
+    // SIGINT
+    RemoveFileOnSignal(OutputFilename);
   }
 
   if (Verbose) cerr << "Writing bytecode...\n";

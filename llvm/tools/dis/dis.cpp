@@ -23,6 +23,7 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <fstream>
 #include <iostream>
 using std::cerr;
@@ -85,6 +86,10 @@ int main(int argc, char **argv) {
              << "': File exists! Sending to standard output.\n";
       } else {
         Out = new std::ofstream(OutputFilename.c_str());
+
+        // Make sure that the Out file gets unlink'd from the disk if we get a
+        // SIGINT
+        RemoveFileOnSignal(OutputFilename);
       }
     }
   }

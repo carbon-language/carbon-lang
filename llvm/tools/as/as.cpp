@@ -13,6 +13,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Writer.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <fstream>
 #include <string>
 #include <memory>
@@ -70,6 +71,9 @@ int main(int argc, char **argv) {
         }
 
 	Out = new std::ofstream(OutputFilename.c_str());
+        // Make sure that the Out file gets unlink'd from the disk if we get a
+        // SIGINT
+        RemoveFileOnSignal(OutputFilename);
       }
     }
   

@@ -20,6 +20,7 @@
 #include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <memory>
 #include <fstream>
 #include <string>
@@ -63,6 +64,9 @@ int main(int argc, char **argv) {
     cerr << "Error opening " << OutputFilename << "!\n";
     return 1;
   }
+
+  // Make sure that the Out file gets unlink'd from the disk if we get a SIGINT
+  RemoveFileOnSignal(OutputFilename);
 
   // In addition to just parsing the input from GCC, we also want to spiff it up
   // a little bit.  Do this now.
