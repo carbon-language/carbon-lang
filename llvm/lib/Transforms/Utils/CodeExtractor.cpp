@@ -488,8 +488,20 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             // For an invoke, the normal destination is the only one that is
             // dominated by the result of the invocation
             BasicBlock *DefBlock = cast<Instruction>(outputs[out])->getParent();
-            if (InvokeInst *Invoke = dyn_cast<InvokeInst>(outputs[out]))
+            if (InvokeInst *Invoke = dyn_cast<InvokeInst>(outputs[out])) {
               DefBlock = Invoke->getNormalDest();
+
+              // Make sure we are looking at the original successor block, not
+              // at a newly inserted exit block, which won't be in the dominator
+              // info.
+              for (std::map<BasicBlock*, BasicBlock*>::iterator I =
+                     ExitBlockMap.begin(), E = ExitBlockMap.end(); I != E; ++I)
+                if (DefBlock == I->second) {
+                  DefBlock = I->first;
+                  break;
+                }
+            }
+
             if (!DS || DS->dominates(DefBlock, TI->getParent()))
               if (AggregateArgs) {
                 std::vector<Value*> Indices;
