@@ -10,47 +10,30 @@
 # This directory contains the C and C++ runtime libraries for the LLVM GCC
 # front-ends.  See the README.txt file for more details.
 #
-# Since this archive has strange requirements, we use almost all custom rules
-# for building it.
+# Since this archive has strange requirements, we use some custom rules for 
+# building it.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
+LEVEL=../../..
 DONT_BUILD_RELINKED=1
+BYTECODE_LIBRARY=1
+LIBRARYNAME=crtend
+
+# Note: We're fooling Makefile.rules here. The sources listed don't exist but
+# it doesn't matter. Makefile.rules just uses $(SOURCES) to generate the set of
+# object files to put in the library. Since we've specified BYTECODE_LIBRARY
+# above, it changes the .c suffix to .bc suffix. Below are rules to build 
+# each of those bytecode objects from the sources we do have in this directory.
+SOURCES=comp_main.c comp_genericeh.c comp_sjljeh.c
 
 EXTRA_DIST   := comp_main.lst comp_genericeh.lst comp_sjljeh.lst
+
+include $(LEVEL)/Makefile.common
 
 MainSrc      := crtend.c listend.ll
 GenericEHSrc := Exception.cpp
 SJLJEHSrc    := SJLJ-Exception.cpp
-Source       := $(MainSrc) $(GenericEHSrc) $(SJLJEHSrc) $(CXXEHSrc)
-
-include $(LEVEL)/Makefile.common
-
-# CRTEND_A - The result of making 'all' - the final archive file.
-CRTEND_A   = $(LibDir)/libcrtend.a
-all:: $(CRTEND_A)
-
-# Installation simply requires copying the archive to it's new home.
-$(bytecode_libdir)/libcrtend.a: $(CRTEND_A) $(bytecode_libdir)
-	$(Echo) Installing $(CRTEND_A)
-	$(Verb) $(INSTALL) $(CRTEND_A) $(bytecode_libdir)
-
-install:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
-install-bytecode:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
-
-clean-local::
-	$(Verb)$(RM) -f $(CRTEND_A)
-
-# The three components described in the README
-Components := main genericeh sjljeh
-ComponentLibs := $(Components:%=$(ObjDir)/comp_%.bc)
-
-
-# We build libcrtend.a from the four components described in the README.
-$(CRTEND_A) : $(ComponentLibs) $(LibDir)/.dir
-	$(Echo) Building final libcrtend.a file from components
-	$(Verb) $(LArchive) $@ $(ComponentLibs)
 
 MainObj      := $(ObjDir)/crtend.bc $(ObjDir)/listend.bc
 GenericEHObj := $(ObjDir)/Exception.bc
