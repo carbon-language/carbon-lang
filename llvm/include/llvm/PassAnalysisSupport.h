@@ -110,4 +110,20 @@ protected:
   void setAnalysisResolver(Pass *P, AnalysisResolver *AR);
 };
 
+/// getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
+/// to get to the analysis information that might be around that needs to be
+/// updated.  This is different than getAnalysis in that it can fail (ie the
+/// analysis results haven't been computed), so should only be used if you
+/// provide the capability to update an analysis that exists.  This method is
+/// often used by transformation APIs to update analysis results for a pass
+/// automatically as the transform is performed.
+///
+template<typename AnalysisType>
+AnalysisType *Pass::getAnalysisToUpdate() const {
+  assert(Resolver && "Pass not resident in a PassManager object!");
+  const PassInfo *PI = getClassPassInfo<AnalysisType>();
+  if (PI == 0) return 0;
+  return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
+}
+
 #endif

@@ -136,12 +136,7 @@ public:
   /// automatically as the transform is performed.
   ///
   template<typename AnalysisType>
-  AnalysisType *getAnalysisToUpdate() const {
-    assert(Resolver && "Pass not resident in a PassManager object!");
-    const PassInfo *PI = getClassPassInfo<AnalysisType>();
-    if (PI == 0) return 0;
-    return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
-  }
+  AnalysisType *getAnalysisToUpdate() const; // Defined in PassAnalysisSupport.h
 
   /// mustPreserveAnalysisID - This method serves the same function as
   /// getAnalysisToUpdate, but works if you just have an AnalysisID.  This
