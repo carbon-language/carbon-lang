@@ -14,6 +14,7 @@
 #include "X86.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "Support/Statistic.h"
 using namespace llvm;
 

@@ -28,6 +28,7 @@
 
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CFG.h"
