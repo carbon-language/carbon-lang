@@ -114,9 +114,15 @@ protected:
   // getAnalysisUsage function.
   //
   template<typename AnalysisType>
-  AnalysisType &getAnalysis(AnalysisID AID = AnalysisType::ID) {
+  AnalysisType &getAnalysis() {
     assert(Resolver && "Pass not resident in a PassManager object!");
-    return *(AnalysisType*)Resolver->getAnalysis(AID);
+    return *(AnalysisType*)Resolver->getAnalysis(AnalysisType::ID);
+  }
+
+  template<typename AnalysisType>
+  AnalysisType &getAnalysisID(const PassInfo *PI) {
+    assert(Resolver && "Pass not resident in a PassManager object!");
+    return *(AnalysisType*)Resolver->getAnalysis(PI);
   }
 
   // getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
@@ -126,9 +132,9 @@ protected:
   // provide the capability to update an analysis that exists.
   //
   template<typename AnalysisType>
-  AnalysisType *getAnalysisToUpdate(AnalysisID AID = AnalysisType::ID) {
+  AnalysisType *getAnalysisToUpdate() {
     assert(Resolver && "Pass not resident in a PassManager object!");
-    return (AnalysisType*)Resolver->getAnalysisToUpdate(AID);
+    return (AnalysisType*)Resolver->getAnalysisToUpdate(AnalysisType::ID);
   }
 
 
