@@ -134,6 +134,39 @@ ChooseBFpccInstruction(const InstructionNode* instrNode,
 }
 
 
+// Create a unique TmpInstruction for a boolean value,
+// representing the CC register used by a branch on that value.
+// For now, hack this using a little static cache of TmpInstructions.
+// Eventually the entire BURG instruction selection should be put
+// into a separate class that can hold such information.
+// The static cache is not too bad because that memory for these
+// TmpInstructions will be freed elsewhere in any case.
+// 
+static TmpInstruction*
+GetTmpForCC(Value* boolVal, const Method* method)
+{
+  typedef  hash_map<const Value*, TmpInstruction*> BoolTmpCache;
+  static BoolTmpCache boolToTmpCache;     // Map boolVal -> TmpInstruction*
+  static const Method* lastMethod = NULL; // Use to flush cache between methods
+  
+  assert(boolVal->getType() == Type::BoolTy && "Weird but ok! Delete assert");
+  
+  if (lastMethod != method)
+    {
+      lastMethod = method;
+      boolToTmpCache.clear();
+    }
+  
+  // Look for tmpI and create a new one otherswise.
+  // new value is directly written to map using 
+  TmpInstruction*& tmpI = boolToTmpCache[boolVal];
+  if (tmpI == NULL)
+    tmpI = new TmpInstruction(TMP_INSTRUCTION_OPCODE, boolVal, NULL);
+  
+  return tmpI;
+}
+
+
 static inline MachineOpCode 
 ChooseBccInstruction(const InstructionNode* instrNode,
                      bool& isFPBranch)
@@ -1123,12 +1156,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       switch(ruleForNode) {
       case 1:	// stmt:   Ret
       case 2:	// stmt:   RetValue(reg)
-                // NOTE: Prepass of register allocation is responsible
+      {         // NOTE: Prepass of register allocation is responsible
                 //	 for moving return value to appropriate register.
                 // Mark the return-address register as a hidden virtual reg.
                 // Mark the return value   register as an implicit ref of
                 // the machine instruction.
-        {	// Finally put a NOP in the delay slot.
+         	// Finally put a NOP in the delay slot.
         ReturnInst* returnInstr = (ReturnInst*) subtreeRoot->getInstruction();
         assert(returnInstr->getOpcode() == Instruction::Ret);
         Method* method = returnInstr->getParent()->getParent();
@@ -1150,7 +1183,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[n] = new MachineInstr(NOP);
         
         break;
-        }  
+      }  
         
       case 3:	// stmt:   Store(reg,reg)
       case 4:	// stmt:   Store(reg,ptrreg)
@@ -1172,11 +1205,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 206:	// stmt:   BrCond(setCCconst)
-        // setCCconst => boolean was computed with `%b = setCC type reg1 const'
+      { // setCCconst => boolean was computed with `%b = setCC type reg1 const'
         // If the constant is ZERO, we can use the branch-on-integer-register
         // instructions and avoid the SUBcc instruction entirely.
         // Otherwise this is just the same as case 5, so just fall through.
-        {
+        // 
         InstrTreeNode* constNode = subtreeRoot->leftChild()->rightChild();
         assert(constNode &&
                constNode->getNodeType() ==InstrTreeNode::NTConstNode);
@@ -1188,13 +1221,15 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
             && isValidConst)
           {
+            BranchInst* brInst=cast<BranchInst>(subtreeRoot->getInstruction());
+            
             // That constant is a zero after all...
             // Use the left child of setCC as the first argument!
             mvec[0] = new MachineInstr(ChooseBprInstruction(subtreeRoot));
             mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                           subtreeRoot->leftChild()->leftChild()->getValue());
             mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-              ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(0));
+                                          brInst->getSuccessor(0));
 
             // delay slot
             mvec[numInstr++] = new MachineInstr(NOP);
@@ -1205,7 +1240,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
                                           (Value*) NULL);
             mvec[n]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-               ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(1));
+                                          brInst->getSuccessor(1));
             
             // delay slot
             mvec[numInstr++] = new MachineInstr(NOP);
@@ -1213,41 +1248,47 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             break;
           }
         // ELSE FALL THROUGH
-        }
+      }
 
       case 6:	// stmt:   BrCond(bool)
-        // bool => boolean was computed with some boolean operator
+      { // bool => boolean was computed with some boolean operator
         // (SetCC, Not, ...).  We need to check whether the type was a FP,
         // signed int or unsigned int, and check the branching condition in
         // order to choose the branch to use.
+        // If it is an integer CC, we also need to find the unique
+        // TmpInstruction representing that CC.
         // 
-        {
+        BranchInst* brInst = cast<BranchInst>(subtreeRoot->getInstruction());
         bool isFPBranch;
         mvec[0] = new MachineInstr(ChooseBccInstruction(subtreeRoot,
                                                         isFPBranch));
-        mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                      subtreeRoot->leftChild()->getValue());
+        
+        Value* ccValue = isFPBranch? subtreeRoot->leftChild()->getValue()
+          : GetTmpForCC(subtreeRoot->leftChild()->getValue(),
+                        brInst->getParent()->getParent());
+        
+        mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister, ccValue);
         mvec[0]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-              ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(0));
-
+                                      brInst->getSuccessor(0));
+        
         // delay slot
         mvec[numInstr++] = new MachineInstr(NOP);
-
+        
         // false branch
         int n = numInstr++;
         mvec[n] = new MachineInstr(BA);
         mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
                                       (Value*) NULL);
         mvec[n]->SetMachineOperand(1, MachineOperand::MO_PCRelativeDisp,
-              ((BranchInst*) subtreeRoot->getInstruction())->getSuccessor(1));
+                                      brInst->getSuccessor(1));
         
         // delay slot
         mvec[numInstr++] = new MachineInstr(NOP);
         break;
-        }
+      }
         
       case 208:	// stmt:   BrCond(boolconst)
-        {
+      {
         // boolconst => boolean is a constant; use BA to first or second label
         ConstPoolVal* constVal = 
           cast<ConstPoolVal>(subtreeRoot->leftChild()->getValue());
@@ -1262,13 +1303,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // delay slot
         mvec[numInstr++] = new MachineInstr(NOP);
         break;
-        }
+      }
         
       case   8:	// stmt:   BrCond(boolreg)
-        // boolreg   => boolean is stored in an existing register.
+      { // boolreg   => boolean is stored in an existing register.
         // Just use the branch-on-integer-register instruction!
         // 
-        {
         mvec[0] = new MachineInstr(BRNZ);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
                                       subtreeRoot->leftChild()->getValue());
@@ -1289,7 +1329,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // delay slot
         mvec[numInstr++] = new MachineInstr(NOP);
         break;
-        }  
+      }  
       
       case 9:	// stmt:   Switch(reg)
         assert(0 && "*** SWITCH instruction is not implemented yet.");
@@ -1518,24 +1558,32 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 42:	// bool:   SetCC(reg, reg):
       {
-        // If result of the SetCC is only used for a single branch, we can
-        // discard the boolean result and keep only the condition code.
-        // Otherwise, the boolean value must go into an integer register.
-        // To put the boolean result in a register we use a conditional move,
-        // unless the result of the SUBCC instruction can be used as the bool!
-        // This assumes that zero is FALSE and any non-zero integer is TRUE.
+        // This generates a SUBCC instruction, putting the difference in
+        // a result register, and setting a condition code.
         // 
-        bool keepBoolVal = (subtreeRoot->parent() == NULL ||
-                            ((InstructionNode*) subtreeRoot->parent())
-                            ->getInstruction()->getOpcode() !=Instruction::Br);
-        bool subValIsBoolVal =
-          subtreeRoot->getInstruction()->getOpcode() == Instruction::SetNE;
+        // If the boolean result of the SetCC is used by anything other
+        // than a single branch instruction, the boolean must be
+        // computed and stored in the result register.  Otherwise, discard
+        // the difference (by using %g0) and keep only the condition code.
+        // 
+        // To compute the boolean result in a register we use a conditional
+        // move, unless the result of the SUBCC instruction can be used as
+        // the bool!  This assumes that zero is FALSE and any non-zero
+        // integer is TRUE.
+        // 
+        InstructionNode* parentNode = (InstructionNode*) subtreeRoot->parent();
+        Instruction* setCCInstr = subtreeRoot->getInstruction();
+        bool keepBoolVal = (parentNode == NULL ||
+                            parentNode->getInstruction()->getOpcode()
+                                != Instruction::Br);
+        bool subValIsBoolVal = setCCInstr->getOpcode() == Instruction::SetNE;
         bool keepSubVal = keepBoolVal && subValIsBoolVal;
         bool computeBoolVal = keepBoolVal && ! subValIsBoolVal;
         
         bool mustClearReg;
         int valueToMove;
         MachineOpCode movOpCode;
+        Value* ccValue = NULL;
         
         if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||
             subtreeRoot->leftChild()->getValue()->getType()->isPointerType())
@@ -1548,22 +1596,32 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             mvec[0] = new MachineInstr(SUBcc);
             Set3OperandsFromInstr(mvec[0], subtreeRoot, target, ! keepSubVal);
             
-            // mark the 4th operand as being a CC register, and a "result"
+            // Mark the 4th operand as being a CC register, and as a def
+            // A TmpInstruction is created to represent the int CC "result".
+            // Unlike other instances of TmpInstruction, this one is used by
+            // used by machine code of multiple LLVM instructions, viz.,
+            // the SetCC and the branch.  Make sure to get the same one!
+            // 
+            TmpInstruction* tmpForCC = GetTmpForCC(setCCInstr,
+                                         setCCInstr->getParent()->getParent());
+            setCCInstr->getMachineInstrVec().addTempValue(tmpForCC);
+            
             mvec[0]->SetMachineOperand(3, MachineOperand::MO_CCRegister,
-                                          subtreeRoot->getValue(),/*def*/true);
+                                          tmpForCC, /*def*/true);
             
             if (computeBoolVal)
               { // recompute bool using the integer condition codes
                 movOpCode =
                   ChooseMovpccAfterSub(subtreeRoot,mustClearReg,valueToMove);
+                ccValue = tmpForCC;
               }
           }
         else
           {
             // FP condition: dest of FCMP should be some FCCn register
             mvec[0] = new MachineInstr(ChooseFcmpInstruction(subtreeRoot));
-            mvec[0]->SetMachineOperand(0,MachineOperand::MO_CCRegister,
-                                         subtreeRoot->getValue());
+            mvec[0]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
+                                          setCCInstr);
             mvec[0]->SetMachineOperand(1,MachineOperand::MO_VirtualRegister,
                                          subtreeRoot->leftChild()->getValue());
             mvec[0]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,
@@ -1574,11 +1632,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 mustClearReg = true;
                 valueToMove = 1;
                 movOpCode = ChooseMovFpccInstruction(subtreeRoot);
+                ccValue = setCCInstr;
               }
           }
         
         if (computeBoolVal)
           {
+            assert(ccValue && "Inconsistent logic above and here");
+            
             if (mustClearReg)
               {// Unconditionally set register to 0
                int n = numInstr++;
@@ -1586,18 +1647,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                mvec[n]->SetMachineOperand(0,MachineOperand::MO_UnextendedImmed,
                                             s0);
                mvec[n]->SetMachineOperand(1,MachineOperand::MO_VirtualRegister,
-                                            subtreeRoot->getValue());
+                                            setCCInstr);
               }
             
             // Now conditionally move `valueToMove' (0 or 1) into the register
             int n = numInstr++;
             mvec[n] = new MachineInstr(movOpCode);
             mvec[n]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
-                                          subtreeRoot->getValue());
+                                          ccValue);
             mvec[n]->SetMachineOperand(1, MachineOperand::MO_UnextendedImmed,
                                           valueToMove);
             mvec[n]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
-                                          subtreeRoot->getValue());
+                                          setCCInstr);
           }
         break;
       }    
@@ -1637,8 +1698,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         SetOperandsForMemInstr(mvec[0], subtreeRoot, target);
         break;
 
-      case 57:	// reg:   Alloca: Implement as 1 instruction:
-        {	//	add %fp, offsetFromFP -> result
+      case 57:	// reg:  Alloca: Implement as 1 instruction:
+      {         //	    add %fp, offsetFromFP -> result
         Instruction* instr = subtreeRoot->getInstruction();
         const PointerType* instrType = (const PointerType*) instr->getType();
         assert(instrType->isPointerType());
@@ -1666,12 +1727,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec[0]->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,
                                       instr);
         break;
-        }
+      }
         
       case 58:	// reg:   Alloca(reg): Implement as 3 instructions:
                 //	mul num, typeSz -> tmp
                 //	sub %sp, tmp    -> %sp
-        {	//	add %sp, frameSizeBelowDynamicArea -> result
+      {         //	add %sp, frameSizeBelowDynamicArea -> result
         Instruction* instr = subtreeRoot->getInstruction();
         const PointerType* instrType = (const PointerType*) instr->getType();
         assert(instrType->isPointerType() &&
@@ -1730,17 +1791,17 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                       lowerAreaSizeVal);
         mvec[2]->SetMachineOperand(2,MachineOperand::MO_VirtualRegister,instr);
         break;
-        }
+      }
 
       case 61:	// reg:   Call
-                // Generate a call-indirect (i.e., jmpl) for now to expose
+      {         // Generate a call-indirect (i.e., jmpl) for now to expose
                 // the potential need for registers.  If an absolute address
                 // is available, replace this with a CALL instruction.
                 // Mark both the indirection register and the return-address
         	// register as hidden virtual registers.
                 // Also, mark the operands of the Call and return value (if
                 // any) as implicit operands of the CALL machine instruction.
-        {
+                // 
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
         
@@ -1792,7 +1853,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         mvec[numInstr++] = new MachineInstr(NOP); // delay slot
         break;
-        }
+      }
 
       case 62:	// reg:   Shl(reg, reg)
         opType = subtreeRoot->leftChild()->getValue()->getType();

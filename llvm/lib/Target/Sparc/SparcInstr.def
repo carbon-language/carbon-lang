@@ -426,15 +426,14 @@ I(CALL  , "call",	1, -1, B29, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_F
 I(JMPLCALL, "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG )
 I(JMPLRET, "jmpl",	3, -1, B12, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
 I(RETURN, "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_RET_FLAG)
-  
+
 // SAVE and restore instructions
 I(SAVE  , "save",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
 I(RESTORE, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_ARITH_FLAG)
 
 // Read and Write CCR register from/to an int reg
-I(RDCCR,  "rd",         2,   1, 0, false,  0,  1,  SPARC_IEUN,  M_INT_FLAG)
-I(WRCCR,  "wr",         3,   2, 0, false,  0,  1,  SPARC_IEUN,  M_INT_FLAG)
-
+I(RDCCR,  "rd",         2,   1, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(WRCCR,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.

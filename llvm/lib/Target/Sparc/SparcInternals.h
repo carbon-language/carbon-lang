@@ -871,10 +871,6 @@ const InstrIssueDelta  SparcInstrIssueDeltas[] = {
   { RETURN,	true,	true,	0 },
 //{ DONE,	true,	true,	0 },
 //{ RETRY,	true,	true,	0 },
-//{ WR,		true,	true,	0 },
-//{ WRPR,	true,	true,	4 },
-//{ RD,		true,	true,	0 },
-//{ RDPR,	true,	true,	0 },
 //{ TCC,	true,	true,	0 },
 //{ SHUTDOWN,	true,	true,	0 },
   
@@ -902,8 +898,10 @@ const InstrIssueDelta  SparcInstrIssueDeltas[] = {
   { UDIVX,	true,	true,	68 },
 //{ SDIVcc,	true,	true,	36 },
 //{ UDIVcc,	true,	true,	37 },
-//{ WR,		false,	false,	4 },
-//{ WRPR,	false,	false,	4 },
+  { WRCCR,	true,	true,	4 },
+//{ WRPR,	true,	true,	4 },
+//{ RDCCR,	true,	true,	0 }, // no bubbles after, but see below
+//{ RDPR,	true,	true,	0 },
 };
 
 
@@ -950,7 +948,7 @@ const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   
   // 
   // Some instructions are stalled in the GROUP stage if a CTI is in
-  // the E or C stage
+  // the E or C stage.  We model that with a fake resource CTIDelayCycle.
   // 
   { LDD,      CTIDelayCycle.rid,  1, 1 },
 //{ LDDA,     CTIDelayCycle.rid,  1, 1 },
@@ -976,6 +974,17 @@ const InstrRUsageDelta SparcInstrUsageDeltas[] = {
   { LDSW,    LdReturn.rid,  2, -1 },
   { LDSW,    LdReturn.rid,  3,  1 },
 
+  //
+  // RDPR from certain registers and RD from any register are not dispatchable
+  // until four clocks after they reach the head of the instr. buffer.
+  // Together with their single-issue requirement, this means all four issue
+  // slots are effectively blocked for those cycles, plus the issue cycle.
+  // This does not increase the latency of the instruction itself.
+  // 
+  { RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { RDCCR,   AllIssueSlots.rid,     0,  5 },
+  { RDCCR,   AllIssueSlots.rid,     0,  5 },
 
 #undef EXPLICIT_BUBBLES_NEEDED
 #ifdef EXPLICIT_BUBBLES_NEEDED
