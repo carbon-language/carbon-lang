@@ -309,6 +309,8 @@ void MachineConstantPool::dump() const { print(std::cerr); }
 
 //===----------------------------------------------------------------------===//
 //  MachineFunctionInfo implementation
+//  NOTE: MachineFunctionInfo and its methods are specific to the SparcV9
+//  target - don't use them in other targets.
 //===----------------------------------------------------------------------===//
 
 static unsigned
