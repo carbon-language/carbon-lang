@@ -1164,14 +1164,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
 void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
+  unsigned opcode = N.getOpcode();
 
   // FIXME: Disable for our current expansion model!
   if (/*!N->hasOneUse() &&*/ !ExprMap.insert(std::make_pair(N, notIn)).second)
     return;  // Already selected.
 
   SDNode *Node = N.Val;
+  
 
-  switch (N.getOpcode()) {
+  switch (opcode) {
 
   default:
     Node->dump(); std::cerr << "\n";
@@ -1267,16 +1269,24 @@ void ISel::Select(SDOperand N) {
       Select(Chain);
 
       Tmp1 = SelectExpr(Value); //value
-      switch(Value.getValueType()) {
-      default: assert(0 && "unknown Type in store");
-      case MVT::i64: Opc = Alpha::STQ; break;
-      case MVT::f64: Opc = Alpha::STT; break;
-      case MVT::f32: Opc = Alpha::STS; break;
-      case MVT::i1: //FIXME: DAG does not promote this load
-      case MVT::i8: Opc = Alpha::STB; break;
-      case MVT::i16: Opc = Alpha::STW; break;
-      case MVT::i32: Opc = Alpha::STL; break;
+
+      if (opcode == ISD::STORE) {
+        switch(Value.getValueType()) {
+        default: assert(0 && "unknown Type in store");
+        case MVT::i64: Opc = Alpha::STQ; break;
+        case MVT::f64: Opc = Alpha::STT; break;
+        case MVT::f32: Opc = Alpha::STS; break;
+        }
+      } else { //ISD::TRUNCSTORE
+        switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+        default: assert(0 && "unknown Type in store");
+        case MVT::i1: //FIXME: DAG does not promote this load
+        case MVT::i8: Opc = Alpha::STB; break;
+        case MVT::i16: Opc = Alpha::STW; break;
+        case MVT::i32: Opc = Alpha::STL; break;
+        }
       }
+
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
           AlphaLowering.restoreGP(BB);

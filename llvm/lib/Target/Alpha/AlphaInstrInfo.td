@@ -358,7 +358,7 @@ def ITOFT : FPForm<0x14, 0x024, (ops FPRC:$RC, GPRC:$RA), "itoft $RA,$RC">; //In
 //CVTQL F-P 17.030 Convert quadword to longword
 def CVTQS : FPForm<0x16, 0x0BC,  (ops FPRC:$RC, FPRC:$RA), "cvtqs $RA,$RC">; //Convert quadword to S_floating
 def CVTQT : FPForm<0x16, 0x0BE,  (ops FPRC:$RC, FPRC:$RA), "cvtqt $RA,$RC">; //Convert quadword to T_floating
-def CVTST : FPForm<0x16, 0x2AC, (ops FPRC:$RC, FPRC:$RA), "cvtst $RA,$RC">; //Convert S_floating to T_floating
+def CVTST : FPForm<0x16, 0x2AC, (ops FPRC:$RC, FPRC:$RA), "cvtsts $RA,$RC">; //Convert S_floating to T_floating (use completion, may not have function code for that set right)
 def CVTTQ : FPForm<0x16, 0x0AF,  (ops FPRC:$RC, FPRC:$RA), "cvttq $RA,$RC">; //Convert T_floating to quadword
 def CVTTS : FPForm<0x16, 0x2AC, (ops FPRC:$RC, FPRC:$RA), "cvtts $RA,$RC">; //Convert T_floating to S_floating
 
