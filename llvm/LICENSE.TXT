@@ -18,10 +18,11 @@ evaluation only.  This version of the LLVM software or modifications thereof
 should not be distributed to third parties for any purpose.  Any third parties
 interested in it can request a copy directly by sending e-mail to
 llvmdev@cs.uiuc.edu.  As this is an evaluation release, we would appreciate any
-and all feedback, ideas, and reports of bugs that you encounter.  These can be
-submitted through the llvmbugs@cs.uiuc.edu or llvmdev@cs.uiuc.edu mailing lists
-as appropriate.  We thank you for your interest in LLVM and look forward to any
-comments or feedback you may have.
+and all feedback, ideas, and reports of bugs that you encounter.  You may
+discuss development of LLVM on llvmdev@cs.uiuc.edu, and bugs can be submitted
+through the LLVM Bug Tracker at http://llvm.cs.uiuc.edu/bugzilla/ .  We thank
+you for your interest in LLVM and look forward to any comments or feedback you
+may have.
 
 THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -37,7 +38,8 @@ LLVM Release License
 University of Illinois/NCSA
 Open Source License
 
-Copyright © 2003, University of Illinois at Urbana-Champaign.  All rights reserved.
+Copyright (c) 2003, University of Illinois at Urbana-Champaign.  All rights
+reserved.
 
 Developed by:
 
