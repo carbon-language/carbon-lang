@@ -40,5 +40,14 @@ bool DoInductionVariableCannonicalize(Method *M) {
   // This currently just prints out information about the interval structure
   // of the method...
   for_each(Intervals.begin(), Intervals.end(), PrintIntervalInfo);
+
+  cerr << "*************Reduced Interval**************\n\n";
+
+  cfg::IntervalPartition Intervals2(Intervals, false);
+  
+  // This currently just prints out information about the interval structure
+  // of the method...
+  for_each(Intervals2.begin(), Intervals2.end(), PrintIntervalInfo);
+
   return false;
 }
