@@ -56,11 +56,10 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
       Instruction *TheCall = CSI->getCallSite().getInstruction();
 
       if (CSI->isIndirectCall()) { // indirect call: insert all callees
-        const std::vector<GlobalValue*> &Callees =
-          CSI->getCalleeNode()->getGlobals();
+        std::vector<Function*> Callees;
+        CSI->getCalleeNode()->addFullFunctionList(Callees);
         for (unsigned i = 0, e = Callees.size(); i != e; ++i)
-          if (Function *F = dyn_cast<Function>(Callees[i]))
-            ActualCallees.insert(std::make_pair(TheCall, F));
+          ActualCallees.insert(std::make_pair(TheCall, Callees[i]));
       } else {        // direct call: insert the single callee directly
         ActualCallees.insert(std::make_pair(TheCall,
                                             CSI->getCalleeFunc()));
