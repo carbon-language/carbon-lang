@@ -112,11 +112,11 @@ static TimeRecord getTimeRecord(bool Start) {
 
   ssize_t MemUsed = 0;
   if (Start) {
-    sys::Process::GetTimeUsage(now,user,sys);
     MemUsed = getMemUsage();
+    sys::Process::GetTimeUsage(now,user,sys);
   } else {
-    MemUsed = getMemUsage();
     sys::Process::GetTimeUsage(now,user,sys);
+    MemUsed = getMemUsage();
   }
 
   Result.Elapsed  = now.seconds()  + now.microseconds()  / 1000000.0;
