@@ -20,16 +20,24 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/CFG.h"
 #include "Support/StatisticReporter.h"
 #include <algorithm>
 
 static Statistic<> NumInstRemoved("gcse\t\t- Number of instructions removed");
+static Statistic<> NumLoadRemoved("gcse\t\t- Number of loads removed");
 
 namespace {
   class GCSE : public FunctionPass, public InstVisitor<GCSE, bool> {
-    set<Instruction*> WorkList;
-    DominatorSet        *DomSetInfo;
-    ImmediateDominators *ImmDominator;
+    set<Instruction*>       WorkList;
+    DominatorSet           *DomSetInfo;
+    ImmediateDominators    *ImmDominator;
+
+    // BBContainsStore - Contains a value that indicates whether a basic block
+    // has a store or call instruction in it.  This map is demand populated, so
+    // not having an entry means that the basic block has not been scanned yet.
+    //
+    map<BasicBlock*, bool>  BBContainsStore;
   public:
     const char *getPassName() const {
       return "Global Common Subexpression Elimination";
@@ -48,11 +56,26 @@ namespace {
     bool visitShiftInst(ShiftInst *I) {
       return visitBinaryOperator((Instruction*)I);
     }
+    bool visitLoadInst(LoadInst *LI);
     bool visitInstruction(Instruction *) { return false; }
 
   private:
     void ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI);
     void CommonSubExpressionFound(Instruction *I, Instruction *Other);
+
+    // TryToRemoveALoad - Try to remove one of L1 or L2.  The problem with
+    // removing loads is that intervening stores might make otherwise identical
+    // load's yield different values.  To ensure that this is not the case, we
+    // check that there are no intervening stores or calls between the
+    // instructions.
+    //
+    bool TryToRemoveALoad(LoadInst *L1, LoadInst *L2);
+
+    // CheckForInvalidatingInst - Return true if BB or any of the predecessors
+    // of BB (until DestBB) contain a store (or other invalidating) instruction.
+    //
+    bool CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
+                                  set<BasicBlock*> &VisitedSet);
 
     // This transformation requires dominator and immediate dominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -95,6 +118,9 @@ bool GCSE::runOnFunction(Function *F) {
     //
     Changed |= visit(I);
   }
+
+  // Clear out data structure so that next function starts fresh
+  BBContainsStore.clear();
   
   // When the worklist is empty, return whether or not we changed anything...
   return Changed;
@@ -129,9 +155,9 @@ void GCSE::ReplaceInstWithInst(Instruction *First, BasicBlock::iterator SI) {
 // of them, and for fixing the worklist to be correct.
 //
 void GCSE::CommonSubExpressionFound(Instruction *I, Instruction *Other) {
-  // I has already been removed from the worklist, Other needs to be.
-  assert(I != Other && WorkList.count(I) == 0 && "I shouldn't be on worklist!");
+  assert(I != Other);
 
+  WorkList.erase(I);
   WorkList.erase(Other); // Other may not actually be on the worklist anymore...
 
   ++NumInstRemoved;   // Keep track of number of instructions eliminated
@@ -253,6 +279,21 @@ bool GCSE::visitBinaryOperator(Instruction *I) {
   return false;
 }
 
+// IdenticalComplexInst - Return true if the two instructions are the same, by
+// using a brute force comparison.
+//
+static bool IdenticalComplexInst(const Instruction *I1, const Instruction *I2) {
+  assert(I1->getOpcode() == I2->getOpcode());
+  // Equal if they are in the same function...
+  return I1->getParent()->getParent() == I2->getParent()->getParent() &&
+    // And return the same type...
+    I1->getType() == I2->getType() &&
+    // And have the same number of operands...
+    I1->getNumOperands() == I2->getNumOperands() &&
+    // And all of the operands are equal.
+    std::equal(I1->op_begin(), I1->op_end(), I2->op_begin());
+}
+
 bool GCSE::visitGetElementPtrInst(GetElementPtrInst *I) {
   Value *Op = I->getOperand(0);
   Function *F = I->getParent()->getParent();
@@ -260,21 +301,138 @@ bool GCSE::visitGetElementPtrInst(GetElementPtrInst *I) {
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
     if (GetElementPtrInst *Other = dyn_cast<GetElementPtrInst>(*UI))
-      // Check to see if this new binary operator is not I, but same operand...
-      if (Other != I && Other->getParent()->getParent() == F &&
-          Other->getType() == I->getType()) {
-
-        // Check to see that all operators past the 0th are the same...
-        unsigned i = 1, e = I->getNumOperands();
-        for (; i != e; ++i)
-          if (I->getOperand(i) != Other->getOperand(i)) break;
-        
-        if (i == e) {
-          // These instructions are identical.  Handle the situation.
-          CommonSubExpressionFound(I, Other);
-          return true;   // One instruction eliminated!
-        }
+      // Check to see if this new getelementptr is not I, but same operand...
+      if (Other != I && IdenticalComplexInst(I, Other)) {
+        // These instructions are identical.  Handle the situation.
+        CommonSubExpressionFound(I, Other);
+        return true;   // One instruction eliminated!
       }
   
+  return false;
+}
+
+bool GCSE::visitLoadInst(LoadInst *LI) {
+  Value *Op = LI->getOperand(0);
+  Function *F = LI->getParent()->getParent();
+  
+  for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
+       UI != UE; ++UI)
+    if (LoadInst *Other = dyn_cast<LoadInst>(*UI))
+      // Check to see if this new load is not LI, but has the same operands...
+      if (Other != LI && IdenticalComplexInst(LI, Other) &&
+          TryToRemoveALoad(LI, Other))
+        return true;   // An instruction was eliminated!
+  
+  return false;
+}
+
+static inline bool isInvalidatingInst(const Instruction *I) {
+  return I->getOpcode() == Instruction::Store ||
+         I->getOpcode() == Instruction::Call ||
+         I->getOpcode() == Instruction::Invoke;
+}
+
+// TryToRemoveALoad - Try to remove one of L1 or L2.  The problem with removing
+// loads is that intervening stores might make otherwise identical load's yield
+// different values.  To ensure that this is not the case, we check that there
+// are no intervening stores or calls between the instructions.
+//
+bool GCSE::TryToRemoveALoad(LoadInst *L1, LoadInst *L2) {
+  // Figure out which load dominates the other one.  If neither dominates the
+  // other we cannot eliminate one...
+  //
+  if (DomSetInfo->dominates(L2, L1)) 
+    std::swap(L1, L2);   // Make L1 dominate L2
+  else if (!DomSetInfo->dominates(L1, L2))
+    return false;  // Neither instruction dominates the other one...
+
+  BasicBlock *BB1 = L1->getParent(), *BB2 = L2->getParent();
+
+  // FIXME: This is incredibly painful with broken rep
+  BasicBlock::iterator L1I = std::find(BB1->begin(), BB1->end(), L1);
+  assert(L1I != BB1->end() && "Inst not in own parent?");
+
+  // L1 now dominates L2.  Check to see if the intervening instructions between
+  // the two loads include a store or call...
+  //
+  if (BB1 == BB2) {  // In same basic block?
+    // In this degenerate case, no checking of global basic blocks has to occur
+    // just check the instructions BETWEEN L1 & L2...
+    //
+    for (++L1I; *L1I != L2; ++L1I)
+      if (isInvalidatingInst(*L1I))
+        return false;   // Cannot eliminate load
+
+    ++NumLoadRemoved;
+    CommonSubExpressionFound(L1, L2);
+    return true;
+  } else {
+    // Make sure that there are no store instructions between L1 and the end of
+    // it's basic block...
+    //
+    for (++L1I; L1I != BB1->end(); ++L1I)
+      if (isInvalidatingInst(*L1I)) {
+        BBContainsStore[BB1] = true;
+        return false;   // Cannot eliminate load
+      }
+
+    // Make sure that there are no store instructions between the start of BB2
+    // and the second load instruction...
+    //
+    for (BasicBlock::iterator II = BB2->begin(); *II != L2; ++II)
+      if (isInvalidatingInst(*II)) {
+        BBContainsStore[BB2] = true;
+        return false;   // Cannot eliminate load
+      }
+
+    // Do a depth first traversal of the inverse CFG starting at L2's block,
+    // looking for L1's block.  The inverse CFG is made up of the predecessor
+    // nodes of a block... so all of the edges in the graph are "backward".
+    //
+    set<BasicBlock*> VisitedSet;
+    for (pred_iterator PI = pred_begin(BB2), PE = pred_end(BB2); PI != PE; ++PI)
+      if (CheckForInvalidatingInst(*PI, BB1, VisitedSet))
+        return false;
+    
+    ++NumLoadRemoved;
+    CommonSubExpressionFound(L1, L2);
+    return true;
+  }
+  return false;
+}
+
+// CheckForInvalidatingInst - Return true if BB or any of the predecessors of BB
+// (until DestBB) contain a store (or other invalidating) instruction.
+//
+bool GCSE::CheckForInvalidatingInst(BasicBlock *BB, BasicBlock *DestBB,
+                                    set<BasicBlock*> &VisitedSet) {
+  // Found the termination point!
+  if (BB == DestBB || VisitedSet.count(BB)) return false;
+
+  // Avoid infinite recursion!
+  VisitedSet.insert(BB);
+
+  // Have we already checked this block?
+  map<BasicBlock*, bool>::iterator MI = BBContainsStore.find(BB);
+  
+  if (MI != BBContainsStore.end()) {
+    // If this block is known to contain a store, exit the recursion early...
+    if (MI->second) return true;
+    // Otherwise continue checking predecessors...
+  } else {
+    // We don't know if this basic block contains an invalidating instruction.
+    // Check now:
+    bool HasStore = std::find_if(BB->begin(), BB->end(),
+                                 isInvalidatingInst) != BB->end();
+    if ((BBContainsStore[BB] = HasStore))   // Update map
+      return true;   // Exit recursion early...
+  }
+
+  // Check all of our predecessor blocks...
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
+    if (CheckForInvalidatingInst(*PI, DestBB, VisitedSet))
+      return true;
+
+  // None of our predecessor blocks contain a store, and we don't either!
   return false;
 }
