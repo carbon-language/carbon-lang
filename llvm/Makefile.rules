@@ -87,7 +87,7 @@ ifndef Source
 Source   = $(wildcard *.cpp *.c *.y *.l)
 endif
 
-Objs = $(addsuffix .o,$(basename $(Source)))
+Objs = $(sort $(addsuffix .o,$(basename $(Source))))
 ObjectsO = $(addprefix Release/,$(Objs))
 ObjectsG = $(addprefix Debug/,$(Objs))
 
@@ -117,6 +117,7 @@ LIBNAME_AO := Release/lib$(LIBRARYNAME).a
 LIBNAME_AG := Debug/lib$(LIBRARYNAME).a
 
 all:: $(LIBNAME_AG)
+###all:: $(LIBNAME_G)
 # TODO: Enable optimized builds
 
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) Release/.dir Depend/.dir
