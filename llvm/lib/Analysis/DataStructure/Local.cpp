@@ -220,10 +220,13 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
   // Otherwise we need to create a new node to point to.
   // Check first for constant expressions that must be traversed to
   // extract the actual value.
-  if (Constant *C = dyn_cast<Constant>(V))
-    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-      return NH = getValueDest(*CPR->getValue());
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+  DSNode* N;
+  if (GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
+    // Create a new global node for this global variable...
+    N = createNode(GV->getType()->getElementType());
+    N->addGlobal(GV);
+  } else if (Constant *C = dyn_cast<Constant>(V)) {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       if (CE->getOpcode() == Instruction::Cast)
         NH = getValueDest(*CE->getOperand(0));
       else if (CE->getOpcode() == Instruction::GetElementPtr) {
@@ -247,13 +250,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     } else {
       assert(0 && "Unknown constant type!");
     }
-
-  // Otherwise we need to create a new node to point to...
-  DSNode *N;
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    // Create a new global node for this global variable...
-    N = createNode(GV->getType()->getElementType());
-    N->addGlobal(GV);
+    N = createNode(); // just create a shadow node
   } else {
     // Otherwise just create a shadow node
     N = createNode();
@@ -491,8 +488,6 @@ void GraphBuilder::visitInvokeInst(InvokeInst &II) {
 
 void GraphBuilder::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Callee))
-    Callee = CPR->getValue();
 
   // Special case handling of certain libc allocation functions here.
   if (Function *F = dyn_cast<Function>(Callee))

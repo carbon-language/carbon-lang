@@ -143,8 +143,8 @@ static const Value *getUnderlyingObject(const Value *V) {
     if (CE->getOpcode() == Instruction::Cast ||
         CE->getOpcode() == Instruction::GetElementPtr)
       return getUnderlyingObject(CE->getOperand(0));
-  } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V)) {
-    return CPR->getValue();
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    return GV;
   }
   return 0;
 }
@@ -166,7 +166,7 @@ static const Value *GetGEPOperands(const Value *V, std::vector<Value*> &GEPOps){
   V = cast<User>(V)->getOperand(0);
 
   while (const User *G = isGEP(V)) {
-    if (!isa<Constant>(GEPOps[0]) ||
+    if (!isa<Constant>(GEPOps[0]) || isa<GlobalValue>(GEPOps[0]) ||
         !cast<Constant>(GEPOps[0])->isNullValue())
       break;  // Don't handle folding arbitrary pointer offsets yet...
     GEPOps.erase(GEPOps.begin());   // Drop the zero index
@@ -217,7 +217,7 @@ static bool AddressMightEscape(const Value *V) {
 //
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  if (!isa<Constant>(P) && !isa<GlobalValue>(P))
+  if (!isa<Constant>(P))
     if (const AllocationInst *AI =
                   dyn_cast_or_null<AllocationInst>(getUnderlyingObject(P))) {
       // Okay, the pointer is to a stack allocated object.  If we can prove that
@@ -245,12 +245,6 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V2))
     if (CE->getOpcode() == Instruction::Cast)
       V2 = CE->getOperand(0);
-
-  // Strip off constant pointer refs if they exist
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V1))
-    V1 = CPR->getValue();
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V2))
-    V2 = CPR->getValue();
 
   // Are we checking for alias of the same value?
   if (V1 == V2) return MustAlias;
@@ -380,7 +374,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           // the arguments provided, except substitute 0's for any variable
           // indexes we find...
           for (unsigned i = 0; i != GEPOperands.size(); ++i)
-            if (!isa<Constant>(GEPOperands[i]) ||
+            if (!isa<Constant>(GEPOperands[i]) || isa<GlobalValue>(GEPOperands[i]) ||
                 isa<ConstantExpr>(GEPOperands[i]))
               GEPOperands[i] =Constant::getNullValue(GEPOperands[i]->getType());
           int64_t Offset = getTargetData().getIndexedOffset(BasePtr->getType(),
@@ -453,7 +447,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     
     bool AllAreZeros = true;
     for (unsigned i = UnequalOper; i != MaxOperands; ++i)
-      if (!isa<Constant>(GEP1Ops[i]) ||
+      if (!isa<Constant>(GEP1Ops[i]) || 
           !cast<Constant>(GEP1Ops[i])->isNullValue()) {
         AllAreZeros = false;
         break;

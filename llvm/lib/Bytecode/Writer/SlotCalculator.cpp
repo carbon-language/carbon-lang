@@ -77,8 +77,6 @@ SlotCalculator::SlotCalculator(const Function *M ) {
 unsigned SlotCalculator::getGlobalSlot(const Value *V) const {
   assert(!CompactionTable.empty() &&
          "This method can only be used when compaction is enabled!");
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
-    V = CPR->getValue();
   std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
   assert(I != NodeMap.end() && "Didn't find global slot entry!");
   return I->second;
@@ -169,17 +167,14 @@ void SlotCalculator::processModule() {
       }
   }
   
-  // If we are emitting a bytecode file, scan all of the functions for their
-  // constants, which allows us to emit more compact modules.  This is optional,
-  // and is just used to compactify the constants used by different functions
-  // together.
+  // Scan all of the functions for their constants, which allows us to emit 
+  // more compact modules.  This is optional, and is just used to compactify 
+  // the constants used by different functions together.
   //
-  // This functionality is completely optional for the bytecode writer, but
-  // tends to produce smaller bytecode files.  This should not be used in the
-  // future by clients that want to, for example, build and emit functions on
-  // the fly.  For now, however, it is unconditionally enabled when building
-  // bytecode information.
-  //
+  // This functionality tends to produce smaller bytecode files.  This should 
+  // not be used in the future by clients that want to, for example, build and 
+  // emit functions on the fly.  For now, however, it is unconditionally 
+  // enabled.
   ModuleContainsAllFunctionConstants = true;
 
   SC_DEBUG("Inserting function constants:\n");
@@ -187,7 +182,8 @@ void SlotCalculator::processModule() {
        F != E; ++F) {
     for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I){
       for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-        if (isa<Constant>(I->getOperand(op)))
+        if (isa<Constant>(I->getOperand(op)) && 
+            !isa<GlobalValue>(I->getOperand(op)))
           getOrCreateSlot(I->getOperand(op));
       getOrCreateSlot(I->getType());
       if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
@@ -265,7 +261,8 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
        PE = ST->plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
            VE = PI->second.end(); VI != VE; ++VI)
-      if (isa<Constant>(VI->second))
+      if (isa<Constant>(VI->second) &&
+          !isa<GlobalValue>(VI->second))
         getOrCreateSlot(VI->second);
 }
 
@@ -397,8 +394,6 @@ static inline bool hasNullValue(unsigned TyID) {
 /// getOrCreateCompactionTableSlot - This method is used to build up the initial
 /// approximation of the compaction table.
 unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
-    V = CPR->getValue();
   std::map<const Value*, unsigned>::iterator I =
     CompactionNodeMap.lower_bound(V);
   if (I != CompactionNodeMap.end() && I->first == V)
@@ -473,8 +468,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     getOrCreateCompactionTableSlot(I->getType());
     for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-      if (isa<Constant>(I->getOperand(op)) ||
-          isa<GlobalValue>(I->getOperand(op)))
+      if (isa<Constant>(I->getOperand(op)))
         getOrCreateCompactionTableSlot(I->getOperand(op));
     if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
       getOrCreateCompactionTableSlot(VAN->getArgType());
@@ -491,7 +485,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
        PE = ST.plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
            VE = PI->second.end(); VI != VE; ++VI)
-      if (isa<Constant>(VI->second) || isa<GlobalValue>(VI->second))
+      if (isa<Constant>(VI->second) && !isa<GlobalValue>(VI->second))
         getOrCreateCompactionTableSlot(VI->second);
 
   // Now that we have all of the values in the table, and know what types are
@@ -643,10 +637,6 @@ int SlotCalculator::getSlot(const Value *V) const {
   if (I != NodeMap.end())
     return (int)I->second;
 
-  // Do not number ConstantPointerRef's at all.  They are an abomination.
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
-    return getSlot(CPR->getValue());
-
   return -1;
 }
 
@@ -673,10 +663,6 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
 
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
-
-  // Do not number ConstantPointerRef's at all.  They are an abomination.
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
-    return getOrCreateSlot(CPR->getValue());
 
   if (!isa<GlobalValue>(V))  // Initializers for globals are handled explicitly
     if (const Constant *C = dyn_cast<Constant>(V)) {
@@ -720,8 +706,8 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   // insert the value into the compaction map, not into the global map.
   if (!CompactionNodeMap.empty()) {
     if (D->getType() == Type::VoidTy) return -1;  // Do not insert void values
-    assert(!isa<Constant>(D) && !isa<GlobalValue>(D) &&
-           "Types, constants, and globals should be in global SymTab!");
+    assert(!isa<Constant>(D) &&
+           "Types, constants, and globals should be in global table!");
 
     int Plane = getSlot(D->getType());
     assert(Plane != -1 && CompactionTable.size() > (unsigned)Plane &&
@@ -774,7 +760,7 @@ int SlotCalculator::insertType(const Type *Ty, bool dontIgnore) {
       if (getSlot(SubTy) == -1) {
         SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
         doInsertType(SubTy);
-        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription());
+        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << "\n");
       }
     }
   }

@@ -1498,9 +1498,9 @@ static Constant *ConstantFold(const Instruction *I,
   case Instruction::Select:
     return ConstantExpr::getSelect(Operands[0], Operands[1], Operands[2]);
   case Instruction::Call:
-    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0])) {
+    if (Function *GV = dyn_cast<Function>(Operands[0])) {
       Operands.erase(Operands.begin());
-      return ConstantFoldCall(cast<Function>(CPR->getValue()), Operands);
+      return ConstantFoldCall(cast<Function>(GV), Operands);
     }
 
     return 0;
@@ -1560,9 +1560,9 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
 /// reason, return null.
 static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
   if (isa<PHINode>(V)) return PHIVal;
-  if (Constant *C = dyn_cast<Constant>(V)) return C;
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return ConstantPointerRef::get(GV);
+    return GV;
+  if (Constant *C = dyn_cast<Constant>(V)) return C;
   Instruction *I = cast<Instruction>(V);
 
   std::vector<Constant*> Operands;
@@ -1718,8 +1718,6 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
           Value *Op = I->getOperand(i);
           if (Constant *C = dyn_cast<Constant>(Op)) {
             Operands.push_back(C);
-          } else if (GlobalValue *GV = dyn_cast<GlobalValue>(Op)) {
-            Operands.push_back(ConstantPointerRef::get(GV));
           } else {
             SCEVHandle OpV = getSCEVAtScope(getSCEV(Op), L);
             if (SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))

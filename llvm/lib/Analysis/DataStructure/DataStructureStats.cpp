@@ -102,7 +102,7 @@ void DSGraphStats::countCallees(const Function& F) {
 
 DSNode *DSGraphStats::getNodeForValue(Value *V) {
   const DSGraph *G = TDGraph;
-  if (isa<GlobalValue>(V) || isa<Constant>(V))
+  if (isa<Constant>(V))
     G = TDGraph->getGlobalsGraph();
 
   const DSGraph::ScalarMapTy &ScalarMap = G->getScalarMap();

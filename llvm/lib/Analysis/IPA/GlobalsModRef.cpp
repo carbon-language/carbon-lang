@@ -165,8 +165,8 @@ bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
       } else {
         return true;
       }        
-    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(*UI)) {
-      if (AnalyzeUsesOfGlobal(CPR, Readers, Writers)) return true;
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*UI)) {
+      if (AnalyzeUsesOfGlobal(GV, Readers, Writers)) return true;
     } else {
       return true;
     }
@@ -257,8 +257,6 @@ static const GlobalValue *getUnderlyingObject(const Value *V) {
     if (CE->getOpcode() == Instruction::Cast ||
         CE->getOpcode() == Instruction::GetElementPtr)
       return getUnderlyingObject(CE->getOperand(0));
-  } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V)) {
-    return CPR->getValue();
   }
   return 0;
 }

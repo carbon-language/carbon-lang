@@ -48,9 +48,10 @@ void FindUsedTypes::IncorporateValue(const Value *V) {
   
   // If this is a constant, it could be using other types...
   if (const Constant *C = dyn_cast<Constant>(V)) {
-    for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
-         OI != OE; ++OI)
-      IncorporateValue(*OI);
+    if (!isa<GlobalValue>(C))
+      for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
+	   OI != OE; ++OI)
+	IncorporateValue(*OI);
   }
 }
 

@@ -479,8 +479,8 @@ Andersens::Node *Andersens::getNodeForConstantPointer(Constant *C) {
 
   if (isa<ConstantPointerNull>(C))
     return &GraphNodes[NullPtr];
-  else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C))
-    return getNode(CPR->getValue());
+  else if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    return getNode(GV);
   else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr:
@@ -507,8 +507,8 @@ Andersens::Node *Andersens::getNodeForConstantPointerTarget(Constant *C) {
 
   if (isa<ConstantPointerNull>(C))
     return &GraphNodes[NullObject];
-  else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C))
-    return getObject(CPR->getValue());
+  else if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    return getObject(GV);
   else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr:

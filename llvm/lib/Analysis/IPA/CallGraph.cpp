@@ -73,10 +73,8 @@ void CallGraph::addToCallGraph(Function *F) {
         getNodeFor(Inst->getParent()->getParent())->addCalledFunction(Node);
       else
         isUsedExternally = true;
-    } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(*I)) {
-      // THIS IS A DISGUSTING HACK.  Brought to you by the power of
-      // ConstantPointerRefs!
-      for (Value::use_iterator I = CPR->use_begin(), E = CPR->use_end();
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*I)) {
+      for (Value::use_iterator I = GV->use_begin(), E = GV->use_end();
            I != E; ++I)
         if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
           if (isOnlyADirectCall(F, CallSite::get(Inst)))
