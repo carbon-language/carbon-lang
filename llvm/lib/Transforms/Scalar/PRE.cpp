@@ -307,6 +307,17 @@ bool PRE::ProcessExpression(Instruction *Expr) {
   std::vector<Value*> Values;
   VN->getEqualNumberNodes(Expr, Values);
 
+#if 0
+  // FIXME: This should handle PHI nodes correctly.  To do this, we need to
+  // consider expressions of the following form equivalent to this set of
+  // expressions:
+  //
+  // If an operand is a PHI node, add any occurances of the expression with the
+  // PHI operand replaced with the PHI node operands.  This is only valid if the
+  // PHI operand occurances exist in blocks post-dominated by the incoming edge
+  // of the PHI node.
+#endif
+
   // We have to be careful to handle expression definitions which dominated by
   // other expressions.  These can be directly eliminated in favor of their
   // dominating value.  Keep track of which blocks contain definitions (the key)
