@@ -147,6 +147,30 @@ const ConstPoolVal *ConstantPool::find(const Type *Ty) const {
   return *PI;
 }
 
+struct EqualsType {
+  const Type *T;
+  inline EqualsType(const Type *t) { T = t; }
+  inline bool operator()(const ConstPoolVal *CPV) const {
+    return static_cast<const ConstPoolType*>(CPV)->getValue() == T;
+  }
+};
+
+// ensureTypeAvailable - This is used to make sure that the specified type is
+// in the constant pool.  If it is not already in the constant pool, it is
+// added.
+//
+const Type *ConstantPool::ensureTypeAvailable(const Type *Ty) {
+  // Get the type type plane...
+  PlaneType &P = getPlane(Type::TypeTy);
+  PlaneType::const_iterator PI = find_if(P.begin(), P.end(), EqualsType(Ty));
+					 
+  if (PI == P.end()) {
+    ConstPoolVal *CPT = new ConstPoolType(Ty);
+    insert(CPT);
+  }
+  return Ty;
+}
+
 //===----------------------------------------------------------------------===//
 //                              ConstPoolVal Class
 //===----------------------------------------------------------------------===//
@@ -194,23 +218,26 @@ ConstPoolBool::ConstPoolBool(bool V, const string &Name = "")
   Val = V;
 }
 
+ConstPoolInt::ConstPoolInt(const Type *Ty, uint64_t V, const string &Name)
+  : ConstPoolVal(Ty, Name) { Val.Unsigned = V; }
+ConstPoolInt::ConstPoolInt(const Type *Ty, int64_t V, const string &Name)
+  : ConstPoolVal(Ty, Name) { Val.Signed = V; }
+
 ConstPoolSInt::ConstPoolSInt(const Type *Ty, int64_t V, const string &Name)
-  : ConstPoolVal(Ty, Name) {
+  : ConstPoolInt(Ty, V, Name) {
   //cerr << "value = " << (int)V << ": " << Ty->getName() << endl;
-  assert(isValueValidForType(Ty, V) && "Value to large for type!");
-  Val = V;
+  assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
 ConstPoolUInt::ConstPoolUInt(const Type *Ty, uint64_t V, const string &Name)
-  : ConstPoolVal(Ty, Name) {
+  : ConstPoolInt(Ty, V, Name) {
   //cerr << "Uvalue = " << (int)V << ": " << Ty->getName() << endl;
-  assert(isValueValidForType(Ty, V) && "Value to large for type!");
-  Val = V;
+  assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
 ConstPoolFP::ConstPoolFP(const Type *Ty, double V, const string &Name)
   : ConstPoolVal(Ty, Name) {
-  assert(isValueValidForType(Ty, V) && "Value to large for type!");
+  assert(isValueValidForType(Ty, V) && "Value too large for type!");
   Val = V;
 }
 
@@ -249,14 +276,9 @@ ConstPoolBool::ConstPoolBool(const ConstPoolBool &CPB)
   Val = CPB.Val;
 }
 
-ConstPoolSInt::ConstPoolSInt(const ConstPoolSInt &CPSI)
-  : ConstPoolVal(CPSI.getType()) {
-  Val = CPSI.Val;
-}
-
-ConstPoolUInt::ConstPoolUInt(const ConstPoolUInt &CPUI)
-  : ConstPoolVal(CPUI.getType()) {
-  Val = CPUI.Val;
+ConstPoolInt::ConstPoolInt(const ConstPoolInt &CPI)
+  : ConstPoolVal(CPI.getType()) {
+  Val.Signed = CPI.Val.Signed;
 }
 
 ConstPoolFP::ConstPoolFP(const ConstPoolFP &CPFP)
@@ -288,11 +310,11 @@ string ConstPoolBool::getStrValue() const {
 }
 
 string ConstPoolSInt::getStrValue() const {
-  return itostr(Val);
+  return itostr(Val.Signed);
 }
 
 string ConstPoolUInt::getStrValue() const {
-  return utostr(Val);
+  return utostr(Val.Unsigned);
 }
 
 string ConstPoolFP::getStrValue() const {
@@ -337,14 +359,9 @@ bool ConstPoolBool::equals(const ConstPoolVal *V) const {
   return ((ConstPoolBool*)V)->getValue() == Val;
 }
 
-bool ConstPoolSInt::equals(const ConstPoolVal *V) const {
+bool ConstPoolInt::equals(const ConstPoolVal *V) const {
   assert(getType() == V->getType());
-  return ((ConstPoolSInt*)V)->getValue() == Val;
-}
-
-bool ConstPoolUInt::equals(const ConstPoolVal *V) const {
-  assert(getType() == V->getType());
-  return ((ConstPoolUInt*)V)->getValue() == Val;
+  return ((ConstPoolInt*)V)->Val.Signed == Val.Signed;
 }
 
 bool ConstPoolFP::equals(const ConstPoolVal *V) const {
@@ -436,3 +453,13 @@ bool ConstPoolFP::isValueValidForType(const Type *Ty, double Val) {
     return true;          // This is the largest type...
   }
 };
+
+
+//===----------------------------------------------------------------------===//
+//                      Extra Method implementations
+
+ConstPoolInt *ConstPoolInt::get(const Type *Ty, unsigned char V) {
+  assert(V <= 127 && "equals: Can only be used with very small constants!");
+  if (Ty->isSigned()) return new ConstPoolSInt(Ty, V);
+  return new ConstPoolUInt(Ty, V);
+}
