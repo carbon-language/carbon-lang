@@ -8,7 +8,7 @@
 #include "SchedPriorities.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/Target/TargetMachine.h"
@@ -631,14 +631,14 @@ AssignInstructionsToSlots(class SchedulingManager& S, unsigned maxIssue)
 static void
 RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
 {
-  MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
+  MachineBasicBlock& mvec = MachineBasicBlock::get(bb);
   const MachineInstrInfo& mii = S.schedInfo.getInstrInfo();
   
 #ifndef NDEBUG
   // Lets make sure we didn't lose any instructions, except possibly
   // some NOPs from delay slots.  Also, PHIs are not included in the schedule.
   unsigned numInstr = 0;
-  for (MachineCodeForBasicBlock::iterator I=mvec.begin(); I != mvec.end(); ++I)
+  for (MachineBasicBlock::iterator I=mvec.begin(); I != mvec.end(); ++I)
     if (! mii.isNop((*I)->getOpCode()) &&
 	! mii.isDummyPhiInstr((*I)->getOpCode()))
       ++numInstr;
@@ -650,7 +650,7 @@ RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
     return;				// empty basic block!
   
   // First find the dummy instructions at the start of the basic block
-  MachineCodeForBasicBlock::iterator I = mvec.begin();
+  MachineBasicBlock::iterator I = mvec.begin();
   for ( ; I != mvec.end(); ++I)
     if (! mii.isDummyPhiInstr((*I)->getOpCode()))
       break;
@@ -1220,7 +1220,7 @@ ReplaceNopsWithUsefulInstr(SchedulingManager& S,
   // fill delay slots, otherwise, just discard them.
   //  
   unsigned int firstDelaySlotIdx = node->getOrigIndexInBB() + 1;
-  MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(node->getBB());
+  MachineBasicBlock& bbMvec = MachineBasicBlock::get(node->getBB());
   assert(bbMvec[firstDelaySlotIdx - 1] == brInstr &&
          "Incorrect instr. index in basic block for brInstr");
   
@@ -1325,8 +1325,8 @@ ChooseInstructionsForDelaySlots(SchedulingManager& S,
   // Simply passing in an empty delayNodeVec will have this effect.
   // 
   delayNodeVec.clear();
-  const MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(bb);
-  for (unsigned i=0; i < bbMvec.size(); i++)
+  const MachineBasicBlock& bbMvec = MachineBasicBlock::get(bb);
+  for (unsigned i=0; i < bbMvec.size(); ++i)
     if (bbMvec[i] != brInstr &&
         mii.getNumDelaySlots(bbMvec[i]->getOpCode()) > 0)
       {

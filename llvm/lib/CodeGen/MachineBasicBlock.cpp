@@ -1,10 +1,10 @@
-//===-- MachineCodeForBasicBlock.cpp --------------------------------------===//
+//===-- MachineBasicBlock.cpp ---------------------------------------------===//
 // 
 // Collect the sequence of machine instructions for a basic block.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 
 AnnotationID MCFBB_AID(
              AnnotationManager::getID("CodeGen::MachineBasicBlock"));

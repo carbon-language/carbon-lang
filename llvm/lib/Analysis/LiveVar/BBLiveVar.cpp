@@ -7,10 +7,9 @@
 #include "BBLiveVar.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
-#include <iostream>
 
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
@@ -51,10 +50,10 @@ BBLiveVar::BBLiveVar(const BasicBlock &bb, unsigned id)
 
 void BBLiveVar::calcDefUseSets() {
   // get the iterator for machine instructions
-  const MachineCodeForBasicBlock &MIVec = MachineCodeForBasicBlock::get(&BB);
+  const MachineBasicBlock &MIVec = MachineBasicBlock::get(&BB);
 
   // iterate over all the machine instructions in BB
-  for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
+  for (MachineBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
          MIE = MIVec.rend(); MII != MIE; ++MII) {
     const MachineInstr *MI = *MII;
     

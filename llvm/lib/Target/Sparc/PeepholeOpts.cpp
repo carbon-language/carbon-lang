@@ -1,16 +1,12 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	PeepholeOpts.h
+//===-- PeepholeOpts.cpp --------------------------------------------------===//
 // 
-// Purpose:
-//	Support for performing several peephole opts in one or a few passes
-//      over the machine code of a method.
-//**************************************************************************/
-
+// Support for performing several peephole opts in one or a few passes over the
+// machine code of a method.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/PeepholeOpts.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
@@ -18,15 +14,11 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 
-
-//********************* Internal Class Declarations ************************/
-
-
 //************************* Internal Functions *****************************/
 
 inline void
-DeleteInstruction(MachineCodeForBasicBlock& mvec,
-                  MachineCodeForBasicBlock::iterator& BBI,
+DeleteInstruction(MachineBasicBlock& mvec,
+                  MachineBasicBlock::iterator& BBI,
                   const TargetMachine& target)
 {
   // Check if this instruction is in a delay slot of its predecessor.
@@ -55,8 +47,8 @@ DeleteInstruction(MachineCodeForBasicBlock& mvec,
 
 
 inline bool
-RemoveUselessCopies(MachineCodeForBasicBlock& mvec,
-                    MachineCodeForBasicBlock::iterator& BBI,
+RemoveUselessCopies(MachineBasicBlock& mvec,
+                    MachineBasicBlock::iterator& BBI,
                     const TargetMachine& target)
 {
   if (target.getOptInfo().IsUselessCopy(*BBI))
@@ -72,8 +64,8 @@ RemoveUselessCopies(MachineCodeForBasicBlock& mvec,
 
 class PeepholeOpts: public BasicBlockPass {
   const TargetMachine &target;
-  bool visit(MachineCodeForBasicBlock& mvec,
-             MachineCodeForBasicBlock::iterator BBI) const;
+  bool visit(MachineBasicBlock& mvec,
+             MachineBasicBlock::iterator BBI) const;
 public:
   PeepholeOpts(const TargetMachine &T): target(T) { }
   bool runOnBasicBlock(BasicBlock &BB); // apply this pass to each BB
@@ -90,8 +82,8 @@ X("peephole", "Peephole Optimization", createPeepholeOptsPass);
  * instruction before MI, but not 
  */
 bool
-PeepholeOpts::visit(MachineCodeForBasicBlock& mvec,
-                    MachineCodeForBasicBlock::iterator BBI) const
+PeepholeOpts::visit(MachineBasicBlock& mvec,
+                    MachineBasicBlock::iterator BBI) const
 {
   bool changed = false;
 
@@ -108,16 +100,16 @@ bool
 PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
 {
   // Get the machine instructions for this BB
-  MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(&BB);
+  MachineBasicBlock& mvec = MachineBasicBlock::get(&BB);
 
   // Iterate over all machine instructions in the BB
   // Use a reverse iterator to allow deletion of MI or any instruction after it.
   // Insertions or deletions *before* MI are not safe.
   // 
-  for (MachineCodeForBasicBlock::reverse_iterator RI=mvec.rbegin(),
+  for (MachineBasicBlock::reverse_iterator RI=mvec.rbegin(),
          RE=mvec.rend(); RI != RE; )
     {
-      MachineCodeForBasicBlock::iterator BBI = RI.base()-1; // save before incr
+      MachineBasicBlock::iterator BBI = RI.base()-1; // save before incr
       ++RI;             // pre-increment to delete MI or after it
       visit(mvec, BBI);
     }

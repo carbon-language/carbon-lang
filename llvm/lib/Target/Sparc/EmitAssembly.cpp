@@ -13,7 +13,7 @@
 
 #include "SparcInternals.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -469,11 +469,11 @@ SparcFunctionAsmPrinter::emitBasicBlock(const BasicBlock *BB)
   toAsm << getID(BB) << ":\n";
 
   // Get the vector of machine instructions corresponding to this bb.
-  const MachineCodeForBasicBlock &MIs = MachineCodeForBasicBlock::get(BB);
-  MachineCodeForBasicBlock::const_iterator MII = MIs.begin(), MIE = MIs.end();
+  const MachineBasicBlock &MIs = MachineBasicBlock::get(BB);
 
   // Loop over all of the instructions in the basic block...
-  for (; MII != MIE; ++MII)
+  for (MachineBasicBlock::const_iterator MII = MIs.begin(), MIE = MIs.end();
+       MII != MIE; ++MII)
     emitMachineInst(*MII);
   toAsm << "\n";  // Seperate BB's with newlines
 }

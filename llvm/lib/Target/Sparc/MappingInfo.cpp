@@ -10,7 +10,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include <map>
 using std::vector;
@@ -126,7 +126,7 @@ void getMappingInfoForFunction::create_BB_to_MInumber_Key(Function &FI){
   unsigned i = 0;
   for (Function::iterator BI = FI.begin(), BE = FI.end(); 
        BI != BE; ++BI){
-    MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
+    MachineBasicBlock &miBB = MachineBasicBlock::get(BI);
     BBkey[miBB[0]] = i;
     i = i+(miBB.size());
   }
@@ -136,9 +136,9 @@ void getMappingInfoForFunction::create_BB_to_MInumber_Key(Function &FI){
 void getMappingInfoForFunction::create_MI_to_number_Key(Function &FI){
   for (Function::iterator BI=FI.begin(), BE=FI.end(); 
        BI != BE; ++BI){
-    MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
+    MachineBasicBlock &miBB = MachineBasicBlock::get(BI);
     unsigned j = 0;
-    for(MachineCodeForBasicBlock::iterator miI=miBB.begin(), miE=miBB.end();
+    for(MachineBasicBlock::iterator miI=miBB.begin(), miE=miBB.end();
 	miI!=miE; ++miI, ++j){
       MIkey[*miI]=j;
     }
@@ -151,7 +151,7 @@ void getMappingInfoForFunction::writeBBToMImap(Function &FI){
   unsigned bb=0;
   for (Function::iterator BI = FI.begin(), 
 	 BE = FI.end(); BI != BE; ++BI, ++bb){
-    MachineCodeForBasicBlock &miBB = MachineCodeForBasicBlock::get(BI);
+    MachineBasicBlock &miBB = MachineBasicBlock::get(BI);
     writeNumber(bb);
     //Out << " BB: "<<(void *)BI<<"\n";
     //for(int i=0; i<miBB.size(); ++i)

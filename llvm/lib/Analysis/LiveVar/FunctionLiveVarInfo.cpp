@@ -8,12 +8,11 @@
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
-#include <iostream>
 
 static RegisterAnalysis<FunctionLiveVarInfo>
 X("livevar", "Live Variable Analysis");
@@ -241,7 +240,7 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 //-----------------------------------------------------------------------------
 
 void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
-  const MachineCodeForBasicBlock &MIVec = MachineCodeForBasicBlock::get(BB);
+  const MachineBasicBlock &MIVec = MachineBasicBlock::get(BB);
 
   if (DEBUG_LV >= LV_DEBUG_Instr)
     std::cerr << "\n======For BB " << BB->getName()
@@ -252,7 +251,7 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   set_union(CurSet, *SetAI);                   // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB
-  for (MachineCodeForBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
+  for (MachineBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
          MIE = MIVec.rend(); MII != MIE; ++MII) {  
     // MI is cur machine inst
     const MachineInstr *MI = *MII;  

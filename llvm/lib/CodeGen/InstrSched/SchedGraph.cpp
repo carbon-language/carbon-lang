@@ -9,7 +9,7 @@
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
@@ -387,7 +387,7 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   // all preceding instructions in the basic block.  Use 0 latency again.
   // 
   const BasicBlock* bb = firstBrNode->getBB();
-  const MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
+  const MachineBasicBlock& mvec = MachineBasicBlock::get(bb);
   for (unsigned i=0, N=mvec.size(); i < N; i++) 
     {
       if (mvec[i] == termMvec[first])   // reached the first branch
@@ -480,7 +480,7 @@ SchedGraph::addMemEdges(const vector<SchedGraphNode*>& memNodeVec,
 // 
 void
 SchedGraph::addCallCCEdges(const vector<SchedGraphNode*>& memNodeVec,
-                           MachineCodeForBasicBlock& bbMvec,
+                           MachineBasicBlock& bbMvec,
                            const TargetMachine& target)
 {
   const MachineInstrInfo& mii = target.getInstrInfo();
@@ -753,7 +753,7 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
   
   // Build graph nodes for each VM instruction and gather def/use info.
   // Do both those together in a single pass over all machine instructions.
-  const MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
+  const MachineBasicBlock& mvec = MachineBasicBlock::get(bb);
   for (unsigned i=0; i < mvec.size(); i++)
     if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
       {
@@ -789,7 +789,7 @@ SchedGraph::buildNodesforBB(const TargetMachine& target,
         
         // Find the machine instruction that makes a copy of inval to (*PI).
         // This must be in the current basic block (bb).
-        const MachineCodeForVMInstr& mvec = MachineCodeForBasicBlock::get(*PI);
+        const MachineCodeForVMInstr& mvec = MachineBasicBlock::get(*PI);
         const MachineInstr* theCopy = NULL;
         for (unsigned i=0; i < mvec.size() && theCopy == NULL; i++)
           if (! mii.isDummyPhiInstr(mvec[i]->getOpCode()))
@@ -882,7 +882,7 @@ SchedGraph::buildGraph(const TargetMachine& target)
   // 
   //----------------------------------------------------------------
       
-  MachineCodeForBasicBlock& bbMvec = MachineCodeForBasicBlock::get(bb);
+  MachineBasicBlock& bbMvec = MachineBasicBlock::get(bb);
   
   // First, add edges to the terminator instruction of the basic block.
   this->addCDEdges(bb->getTerminator(), target);
