@@ -96,7 +96,7 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
                     const MRegisterInfo &RI) {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
-    if (Value *V = MO.getVRegValue()) {
+    if (Value *V = MO.getVRegValueOrNull()) {
       O << "<" << V->getName() << ">";
       return;
     }

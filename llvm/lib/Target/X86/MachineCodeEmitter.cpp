@@ -225,7 +225,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2) {
       unsigned Size = 4;
-      if (Value *V = MI.getOperand(1).getVRegValue()) {
+      if (Value *V = MI.getOperand(1).getVRegValueOrNull()) {
         assert(Size == 4 && "Don't know how to emit non-pointer values!");
         MCE.emitGlobalAddress(cast<GlobalValue>(V));
       } else {
