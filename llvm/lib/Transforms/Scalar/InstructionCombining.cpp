@@ -3456,21 +3456,37 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   PHINode *NewPN = new PHINode(FirstInst->getOperand(0)->getType(),
                                PN.getName()+".in");
   NewPN->op_reserve(PN.getNumOperands());
-  InsertNewInstBefore(NewPN, PN);
+
+  Value *InVal = FirstInst->getOperand(0);
+  NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
 
   // Add all operands to the new PHI.
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-    NewPN->addIncoming(cast<Instruction>(PN.getIncomingValue(i))->getOperand(0),
-                       PN.getIncomingBlock(i));
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+    Value *NewInVal = cast<Instruction>(PN.getIncomingValue(i))->getOperand(0);
+    if (NewInVal != InVal)
+      InVal = 0;
+    NewPN->addIncoming(NewInVal, PN.getIncomingBlock(i));
+  }
+
+  Value *PhiVal;
+  if (InVal) {
+    // The new PHI unions all of the same values together.  This is really
+    // common, so we handle it intelligently here for compile-time speed.
+    PhiVal = InVal;
+    delete NewPN;
+  } else {
+    InsertNewInstBefore(NewPN, PN);
+    PhiVal = NewPN;
+  }
   
   // Insert and return the new operation.
   if (isa<CastInst>(FirstInst))
-    return new CastInst(NewPN, PN.getType());
+    return new CastInst(PhiVal, PN.getType());
   else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
-    return BinaryOperator::create(BinOp->getOpcode(), NewPN, ConstantOp);
+    return BinaryOperator::create(BinOp->getOpcode(), PhiVal, ConstantOp);
   else
     return new ShiftInst(cast<ShiftInst>(FirstInst)->getOpcode(),
-                         NewPN, ConstantOp);
+                         PhiVal, ConstantOp);
 }
 
 // PHINode simplification
