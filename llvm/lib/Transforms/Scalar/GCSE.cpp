@@ -78,8 +78,7 @@ bool GCSE::runOnFunction(Function &F) {
       VN.getEqualNumberNodes(AI, EqualValues);
       if (!EqualValues.empty()) {
         for (unsigned i = 0, e = EqualValues.size(); i != e; ++i)
-          if (isa<Constant>(EqualValues[i]) ||
-              isa<GlobalValue>(EqualValues[i])) {
+          if (isa<Constant>(EqualValues[i])) {
             AI->replaceAllUsesWith(EqualValues[i]);
             ++NumArgsRepl;
             Changed = true;
@@ -186,7 +185,7 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
 
   // If we are not replacing the instruction with a constant, we cannot do
   // anything special.
-  if (!isa<Constant>(V)) {
+  if (!isa<Constant>(V) || isa<GlobalValue>(V)) {
     I->replaceAllUsesWith(V);
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {

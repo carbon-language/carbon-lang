@@ -211,8 +211,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB, bool AllowAggressive){
         if (cast<LoadInst>(I)->isVolatile())
           return false;
         if (!isa<AllocaInst>(I->getOperand(0)) &&
-            !isa<Constant>(I->getOperand(0)) &&
-            !isa<GlobalValue>(I->getOperand(0)))
+            !isa<Constant>(I->getOperand(0)))
           return false;
 
         // Finally, we have to check to make sure there are no instructions

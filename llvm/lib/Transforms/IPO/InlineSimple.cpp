@@ -78,8 +78,7 @@ static unsigned CountCodeReductionForConstant(Value *V) {
       Instruction &Inst = cast<Instruction>(**UI);
       bool AllOperandsConstant = true;
       for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
-        if (!isa<Constant>(Inst.getOperand(i)) &&
-            !isa<GlobalValue>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
+        if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
           AllOperandsConstant = false;
           break;
         }
@@ -205,7 +204,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
     // If this is a constant being passed into the function, use the argument
     // weights calculated for the callee to determine how much will be folded
     // away with this information.
-    } else if (isa<Constant>(I) || isa<GlobalVariable>(I)) {
+    } else if (isa<Constant>(I)) {
       if (ArgNo < CalleeFI.ArgumentWeights.size())
         InlineCost -= CalleeFI.ArgumentWeights[ArgNo].ConstantWeight;
     }

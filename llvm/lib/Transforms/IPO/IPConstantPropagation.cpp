@@ -82,9 +82,8 @@ bool IPCP::processFunction(Function &F) {
         if (*AI == &F) return false;  // Passes the function into itself
 
         if (!ArgumentConstants[i].second) {
-          if (isa<Constant>(*AI) || isa<GlobalValue>(*AI)) {
+          if (isa<Constant>(*AI)) {
             Constant *C = dyn_cast<Constant>(*AI);
-            if (!C) C = ConstantPointerRef::get(cast<GlobalValue>(*AI));
             
             if (!ArgumentConstants[i].first)
               ArgumentConstants[i].first = C;
@@ -114,9 +113,6 @@ bool IPCP::processFunction(Function &F) {
     if (!ArgumentConstants[i].second && !AI->use_empty()) {
       assert(ArgumentConstants[i].first && "Unknown constant value!");
       Value *V = ArgumentConstants[i].first;
-      if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
-        V = CPR->getValue();
-
       AI->replaceAllUsesWith(V);
       ++NumArgumentsProped;
       MadeChange = true;
