@@ -20,20 +20,23 @@ DONT_BUILD_RELINKED = 1
 BYTECODE_LIBRARY = 1
 LIBRARYNAME = crtend
 
-# Note: We're fooling Makefile.rules here. The sources listed don't exist but
-# it doesn't matter. Makefile.rules just uses $(SOURCES) to generate the set of
-# object files to put in the library. Since we've specified BYTECODE_LIBRARY
-# above, it changes the .c suffix to .bc suffix. Below are rules to build 
-# each of those bytecode objects from the sources we do have in this directory.
-SOURCES = comp_main.c comp_genericeh.c comp_sjljeh.c
+# Note: We're using FAKE_SOURCES because the comp_*.c don't really exists. 
+# However this makefile builds comp_*.bc and that's what we want in the library.
+# The FAKE_SOURCES variable supports this kind of construction. It uses the
+# FAKE_SOURCES to determine a list of things to build, but doesn't use 
+# FAKE_SOURCES for dependencies, distribution, etc. It is assumed the makefile
+# will know how to build the objects eventhough the sources don't exist.
 
-EXTRA_DIST   := comp_main.lst comp_genericeh.lst comp_sjljeh.lst
-
-include $(LEVEL)/Makefile.common
+FAKE_SOURCES := comp_main.c comp_genericeh.c comp_sjljeh.c
 
 MainSrc      := crtend.c listend.ll
 GenericEHSrc := Exception.cpp
 SJLJEHSrc    := SJLJ-Exception.cpp
+
+EXTRA_DIST   := $(MainSrc) $(GenericEHSrc) $(SJLJEHSrc) \
+                comp_main.lst comp_genericeh.lst comp_sjljeh.lst
+
+include $(LEVEL)/Makefile.common
 
 MainObj      := $(ObjDir)/crtend.bc $(ObjDir)/listend.bc
 GenericEHObj := $(ObjDir)/Exception.bc
