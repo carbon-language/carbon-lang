@@ -56,7 +56,10 @@ ifdef PROG
 	$(LOPT) -cleangcc -raise -constprop -dce -o $@ -f $<
 
   $(PROG).native: $(OBJS:.o=.c)
-	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
+	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) $(LOCAL_LIBS) -Wall -o $@
+
+  clean::
+	rm -f $(PROG).native $(PROG)
 
 endif
 
@@ -69,8 +72,8 @@ $(LLCLIB):
 runtime.o: runtime.c
 	$(CC) -c $(CCFLAGS) $<
 
-clean :
-	$(RM) *.[123] *.bc *.mc *.s *.o a.out core $(PROG) 
+clean ::
+	$(RM) *.[123] *.bc *.mc *.s *.o a.out core *~
 
 %.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
