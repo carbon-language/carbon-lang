@@ -3,9 +3,9 @@
 # This directory contains regression tests for the LLVM sparc backend.  
 #
 LEVEL = ../../..
-include $(LEVEL)/test/Makefile.tests
+include $(LEVEL)/test/Programs/SingleSource/Makefile.singlesrc
 
-TESTS := $(wildcard *.ll)
+TESTS := $(wildcard *.ll) $(wildcard *.c)
 
 all:: $(addprefix Output/, $(TESTS:%.ll=%.ts))
 
