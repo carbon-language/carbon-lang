@@ -406,7 +406,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 #elif (defined(__POWERPC__) || defined(__ppc__)) && defined(__APPLE__)
     "-dynamiclib",               // `-dynamiclib' for MacOS X/PowerPC
     "-fno-common",               // allow global vars w/o initializers to live
-                                 // in data segment, rather than generating
+    "-undefined",                // in data segment, rather than generating
     "dynamic_lookup",            // blocks. dynamic_lookup requires that you set
                                  // MACOSX_DEPLOYMENT_TARGET=10.3 in your env.
 #else
