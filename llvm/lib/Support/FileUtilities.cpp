@@ -239,9 +239,9 @@ int llvm::DiffFilesWithTolerance(const std::string &FileA,
     }
 
     if (OrigFile1Start != File1Start)
-      delete[] File1Start;
+      delete[] File1Start-1;   // Back up past null byte
     if (OrigFile2Start != File2Start)
-      delete[] File2Start;
+      delete[] File2Start-1;   // Back up past null byte
     return CompareFailed;
   } catch (const std::string &Msg) {
     if (Error) *Error = Msg;
