@@ -38,6 +38,8 @@ namespace {
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
             cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
+
+  enum FileType { AsmFile, CFile };
 }
 
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
@@ -84,7 +86,7 @@ public:
 int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
-  if (SharedLib != "") {
+  if (!SharedLib.empty()) {
     std::cerr << "LLI currently does not support loading shared libraries.\n"
               << "Exiting.\n";
     exit(1);
@@ -109,10 +111,11 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
 // This is not a *real* AbstractInterpreter as it does not accept bytecode
 // files, but only input acceptable to GCC, i.e. C, C++, and assembly files
 //
-class GCC : public AbstractInterpreter {
+class GCC {
   std::string GCCPath;          // The path to the gcc executable
 public:
   GCC(const std::string &gccPath) : GCCPath(gccPath) { }
+  virtual ~GCC() {}
 
   // GCC create method - Try to find the `gcc' executable
   static GCC *create(BugDriver *BD, std::string &Message) {
@@ -127,16 +130,19 @@ public:
   }
 
   virtual int ExecuteProgram(const std::string &ProgramFile,
+                             FileType fileType,
                              const std::string &OutputFile,
                              const std::string &SharedLib = "");
 
   int MakeSharedObject(const std::string &InputFile,
+                       FileType fileType,
                        std::string &OutputFile);
   
   void ProcessFailure(const char **Args);
 };
 
 int GCC::ExecuteProgram(const std::string &ProgramFile,
+                        FileType fileType,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
   std::string OutputBinary = "bugpoint.gcc.exe";
@@ -144,6 +150,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   const char *ArgsWithoutSO[] = {
     GCCPath.c_str(),
+    "-x", (fileType == AsmFile) ? "assembler" : "c",
     ProgramFile.c_str(),         // Specify the input filename...
     "-o", OutputBinary.c_str(),  // Output to the right filename...
     "-lm",                       // Hard-code the math library...
@@ -152,6 +159,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   };
   const char *ArgsWithSO[] = {
     GCCPath.c_str(),
+    "-x", (fileType == AsmFile) ? "assembler" : "c",
     ProgramFile.c_str(),         // Specify the input filename...
     SharedLib.c_str(),           // Specify the shared library to link in...
     "-o", OutputBinary.c_str(),  // Output to the right filename...
@@ -160,12 +168,12 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     0
   };
 
-  GCCArgs = (SharedLib == "") ? ArgsWithoutSO : ArgsWithSO;
+  GCCArgs = (SharedLib.empty()) ? ArgsWithoutSO : ArgsWithSO;
   std::cout << "<gcc>";
-  if (RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null",
-                            "/dev/null", "/dev/null")) {
+  if (RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
+                            "/dev/null")) {
     ProcessFailure(GCCArgs);
-    exit(1);  // Leave stuff around for the user to inspect or debug the CBE
+    exit(1);
   }
 
   const char *ProgramArgs[] = {
@@ -184,11 +192,13 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile,
+                          FileType fileType,
                           std::string &OutputFile) {
   OutputFile = "./bugpoint.so";
   // Compile the C/asm file into a shared object
   const char* GCCArgs[] = {
     GCCPath.c_str(),
+    "-x", (fileType == AsmFile) ? "assembler" : "c",
     InputFile.c_str(),           // Specify the input filename...
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
     "-G",                        // Compile a shared library, `-G' for Sparc
@@ -254,6 +264,10 @@ public:
 
     Message = "Found llc: " + LLCPath + "\n";
     GCC *gcc = GCC::create(BD, Message);
+    if (!gcc) {
+      std::cerr << Message << "\n";
+      exit(1);
+    }
     return new LLC(LLCPath, gcc);
   }
 
@@ -300,7 +314,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
   }
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  int Result = gcc->ExecuteProgram(OutputAsmFile, OutputFile, SharedLib);
+  int Result = gcc->ExecuteProgram(OutputAsmFile,AsmFile,OutputFile,SharedLib);
   removeFile(OutputAsmFile);
   return Result;
 }
@@ -333,18 +347,20 @@ public:
 int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
-  if (SharedLib == "") {
+  if (SharedLib.empty()) {
     const char* Args[] = {
-      LLIPath.c_str(), "-quiet", "-force-interpreter=false", Bytecode.c_str(),
+      LLIPath.c_str(),
+      "-quiet",
+      "-force-interpreter=false",
+      Bytecode.c_str(),
       0
     };
     return RunProgramWithTimeout(LLIPath, Args,
                                  InputFile, OutputFile, OutputFile);
   } else {
-    std::string SharedLibOpt = "-load=" + SharedLib;
     const char* Args[] = {
       LLIPath.c_str(), "-quiet", "-force-interpreter=false", 
-      SharedLibOpt.c_str(),
+      "-load", SharedLib.c_str(),
       Bytecode.c_str(),
       0
     };
@@ -374,6 +390,10 @@ public:
     Message = "Found dis: " + DISPath + "\n";
 
     GCC *gcc = GCC::create(BD, Message);
+    if (!gcc) {
+      std::cerr << Message << "\n";
+      exit(1);
+    }
     return new CBE(DISPath, gcc);
   }
 
@@ -421,7 +441,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
     exit(1);
   }
 
-  int Result = gcc->ExecuteProgram(OutputCFile, OutputFile, SharedLib);
+  int Result = gcc->ExecuteProgram(OutputCFile, CFile, OutputFile, SharedLib);
   removeFile(OutputCFile);
 
   return Result;
@@ -455,6 +475,12 @@ bool BugDriver::initializeExecutionEnvironment() {
   }
 
   std::cout << Message;
+
+  // Initialize auxiliary tools for debugging
+  cbe = CBE::create(this, Message);
+  if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  gcc = GCC::create(this, Message);
+  if (!gcc) { std::cout << Message << "\nExiting.\n"; exit(1); }
 
   // If there was an error creating the selected interpreter, quit with error.
   return Interpreter == 0;
@@ -503,11 +529,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 std::string BugDriver::executeProgramWithCBE(std::string OutputFile,
                                              std::string BytecodeFile,
                                              std::string SharedObject) {
-  std::string Output;
-  CBE *cbe = CBE::create(this, Output);
-  Output = executeProgram(OutputFile, BytecodeFile, SharedObject, cbe);
-  delete cbe;
-  return Output;
+  return executeProgram(OutputFile, BytecodeFile, SharedObject, cbe);
 }
 
 int BugDriver::compileSharedObject(const std::string &BytecodeFile,
@@ -516,7 +538,6 @@ int BugDriver::compileSharedObject(const std::string &BytecodeFile,
   std::string Message, OutputCFile;
 
   // Using CBE
-  CBE *cbe = CBE::create(this, Message);
   cbe->OutputC(BytecodeFile, OutputCFile);
 
 #if 0 /* This is an alternative, as yet unimplemented */
@@ -528,15 +549,10 @@ int BugDriver::compileSharedObject(const std::string &BytecodeFile,
   }
 #endif
 
-  GCC *gcc = GCC::create(this, Message);
-  gcc->MakeSharedObject(OutputCFile, SharedObject);
+  gcc->MakeSharedObject(OutputCFile, CFile, SharedObject);
 
   // Remove the intermediate C file
   removeFile(OutputCFile);
-
-  // We are done with the CBE & GCC
-  delete cbe;
-  delete gcc;
 
   return 0;
 }

@@ -9,7 +9,6 @@
 #ifndef BUGDRIVER_H
 #define BUGDRIVER_H
 
-#include "Support/CommandLine.h"
 #include <vector>
 #include <string>
 
@@ -25,12 +24,17 @@ class ReduceMiscompilingFunctions;
 class ReduceCrashingFunctions;
 class ReduceCrashingBlocks;
 
+class CBE;
+class GCC;
+
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
-  cl::opt<std::string> ReferenceOutputFile; // Name of `good' output file
+  std::string ReferenceOutputFile; // Name of `good' output file
   Module *Program;             // The raw program, linked together
   std::vector<const PassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
+  CBE *cbe;
+  GCC *gcc;
 
   // FIXME: sort out public/private distinctions...
   friend class DebugCrashes;
@@ -128,6 +132,7 @@ private:
   }
 
   /// PrintFunctionList - prints out list of problematic functions
+  ///
   static void PrintFunctionList(const std::vector<Function*> &Funcs);
 
   /// deleteInstructionFromProgram - This method clones the current Program and

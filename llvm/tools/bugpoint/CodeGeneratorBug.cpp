@@ -17,9 +17,6 @@
 #include <algorithm>
 #include <set>
 
-// Passed as a command-line argument to Bugpoint
-extern cl::opt<std::string> Output;
-
 class ReduceMisCodegenFunctions : public ListReducer<Function*> {
   BugDriver &BD;
 public:
@@ -59,8 +56,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs)
   for (Module::giterator I=TestModule->gbegin(),E = TestModule->gend();I!=E;++I)
     I->setInitializer(0);  // Delete the initializer to make it external
 
-  // Remove the Test functions from the Safe module, and
-  // all of the global variables.
+  // Remove the Test functions from the Safe module
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
     Function *TNOF = SafeModule->getFunction(Funcs[i]->getName(),
                                              Funcs[i]->getFunctionType());
@@ -100,25 +96,25 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs)
 
   // Run the code generator on the `Test' code, loading the shared library.
   // The function returns whether or not the new output differs from reference.
-  return BD.diffProgram(TestModuleBC, SharedObject, false);
+  int Result =  BD.diffProgram(TestModuleBC, SharedObject, false);
+  removeFile(SharedObject);
+  return Result;
 }
 
 namespace {
-  struct Disambiguator /*: public unary_function<GlobalValue&, void>*/ {
+  struct Disambiguator {
     std::set<std::string> SymbolNames;
-    std::set<Value*> Symbols;
     uint64_t uniqueCounter;
     bool externalOnly;
-
+  public:
     Disambiguator() : uniqueCounter(0), externalOnly(true) {}
     void setExternalOnly(bool value) { externalOnly = value; }
-    void operator() (GlobalValue &V) {
+    void add(GlobalValue &V) {
       if (externalOnly && !V.isExternal()) return;
 
       if (SymbolNames.count(V.getName()) == 0) {
         DEBUG(std::cerr << "Disambiguator: adding " << V.getName() 
                         << ", no conflicts.\n");
-        Symbols.insert(&V);
         SymbolNames.insert(V.getName());
       } else { 
         // Mangle name before adding
@@ -133,7 +129,6 @@ namespace {
                         << ", adding: " << newName << "\n");
         V.setName(newName);
         SymbolNames.insert(newName);
-        Symbols.insert(&V);
       }
     }
   };
@@ -142,14 +137,15 @@ namespace {
 void ReduceMisCodegenFunctions::DisambiguateGlobalSymbols(Module *M) {
   // First, try not to cause collisions by minimizing chances of renaming an
   // already-external symbol, so take in external globals and functions as-is.
-  Disambiguator D = std::for_each(M->gbegin(), M->gend(), Disambiguator());
-  std::for_each(M->begin(), M->end(), D);
+  Disambiguator D;
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) D.add(*I);
+  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I) D.add(*I);
 
   // Now just rename functions and globals as necessary, keeping what's already
   // in the set unique.
   D.setExternalOnly(false);
-  std::for_each(M->gbegin(), M->gend(), D);
-  std::for_each(M->begin(), M->end(), D);
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) D.add(*I);
+  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I) D.add(*I);
 }
 
 
@@ -169,7 +165,7 @@ bool BugDriver::debugCodeGenerator() {
   std::cout << "\n";
 
   // Output a bunch of bytecode files for the user...
-  ReduceMisCodegenFunctions(*this).TestFuncs(MisCodegenFunctions);
+  // ReduceMisCodegenFunctions(*this).TestFuncs(MisCodegenFunctions);
 
   return false;
 }

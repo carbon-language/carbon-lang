@@ -66,7 +66,7 @@ void DeleteFunctionBody(Function *F) {
 
 BugDriver::BugDriver(const char *toolname)
   : ToolName(toolname), ReferenceOutputFile(OutputFile),
-    Program(0), Interpreter(0) {}
+    Program(0), Interpreter(0), cbe(0), gcc(0) {}
 
 
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
