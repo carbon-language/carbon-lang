@@ -248,6 +248,100 @@ void PhyRegAlloc::addInterferencesForArgs()
 }
 
 
+#if 0
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+
+
+void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst, 
+					 const BasicBlock *BB  ) 
+{
+  assert( (TM.getInstrInfo()).isCall( MInst->getOpCode() ) );
+
+  int StackOff = 10;  // ****TODO : Change
+  set<unsigned> PushedRegSet();
+
+  // Now find the LR of the return value of the call
+  // The last *implicit operand* is the return value of a call
+  // Insert it to to he PushedRegSet since we must not save that register
+  // and restore it after the call.
+  // We do this because, we look at the LV set *after* the instruction
+  // to determine, which LRs must be saved across calls. The return value
+  // of the call is live in this set - but we must not save/restore it.
+
+  unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
+  if(  NumOfImpRefs > 0 ) {
+    
+    if(  MInst->implicitRefIsDefined(NumOfImpRefs-1) ) {
+
+      const Value *RetVal = CallMI->getImplicitRef(NumOfImpRefs-1); 
+      LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
+      assert( RetValLR && "No LR for RetValue of call");
+
+      PushedRegSet.insert(  
+	MRI.getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
+			     RetValLR->getColor() ) );
+    }
+
+  }
+
+
+  LiveVarSet *LVSetAft =  LVI->getLiveVarSetAfterMInst(MInst, BB);
+
+  LiveVarSet::const_iterator LIt = LVSetAft->begin();
+
+  // for each live var in live variable set after machine inst
+  for( ; LIt != LVSetAft->end(); ++LIt) {
+
+   //  get the live range corresponding to live var
+    LiveRange *const LR = LRI.getLiveRangeForValue(*LIt );    
+
+    // LROfVar can be null if it is a const since a const 
+    // doesn't have a dominating def - see Assumptions above
+    if( LR )   {  
+      
+      if( LR->hasColor() ) {
+
+	unsigned RCID = (LR->getRegClass())->getID();
+	unsigned Color = LR->getColor();
+
+	if ( MRI.isRegVolatile(RCID, Color) ) {
+
+	  // if the value is in both LV sets (i.e., live before and after 
+	  // the call machine instruction)
+	  
+	  unsigned Reg =   MRI.getUnifiedRegNum(RCID, Color);
+	  
+	  if( PuhsedRegSet.find(Reg) == PhusedRegSet.end() ) {
+	    
+	    // if we haven't already pushed that register
+	    
+	    MachineInstr *AdI = 
+	      MRI.saveRegOnStackMI(Reg, MRI.getFPReg(), StackOff ); 
+	    
+	    ((AddedInstrMap[MInst])->InstrnsBefore).push_front(AdI);
+	    ((AddedInstrMap[MInst])->InstrnsAfter).push_back(AdI);
+	    
+	    
+	    PushedRegSet.insert( Reg );
+	    StackOff += 4; // ****TODO: Correct ??????
+	    cout << "Inserted caller saving instr");
+	    
+	  } // if not already pushed
+
+	} // if LR has a volatile color
+	
+      } // if LR has color
+
+    } // if there is a LR for Var
+    
+  } // for each value in the LV set after instruction
+  
+}
+
+#endif
+
 //----------------------------------------------------------------------------
 // This method is called after register allocation is complete to set the
 // allocated reisters in the machine code. This code will add register numbers
@@ -275,12 +369,12 @@ void PhyRegAlloc::updateMachineCode()
       // ***TODO: Add InstrnsAfter as well
       if( AddedInstrMap[ MInst ] ) {
 
-	vector<MachineInstr *> &IBef =
+	deque<MachineInstr *> &IBef =
 	  (AddedInstrMap[MInst])->InstrnsBefore;
 
 	if( ! IBef.empty() ) {
 
-	  vector<MachineInstr *>::iterator AdIt; 
+	  deque<MachineInstr *>::iterator AdIt; 
 
 	  for( AdIt = IBef.begin(); AdIt != IBef.end() ; ++AdIt ) {
 
@@ -331,7 +425,8 @@ void PhyRegAlloc::updateMachineCode()
               cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
             }
 
-	    Op.setRegForValue( 1000 ); // mark register as invalid
+	    if( Op.getAllocatedRegNum() == -1)
+	      Op.setRegForValue( 1000 ); // mark register as invalid
 	    
 #if 0
 	    if(  ((Val->getType())->isLabelType()) || 
@@ -475,16 +570,9 @@ void PhyRegAlloc::colorCallRetArgs()
 
   for( ; It != CallRetInstList.end(); ++It ) {
 
-    const Instruction *const CallRetI = *It;
-    unsigned OpCode =  (CallRetI)->getOpcode();
+    const MachineInstr *const CRMI = *It;
+    unsigned OpCode =  CRMI->getOpCode();
  
-    const MachineInstr *CRMI = *((CallRetI->getMachineInstrVec()).begin());
-
-    
-    assert( (TM.getInstrInfo().isReturn(CRMI->getOpCode()) ||  
-	     TM.getInstrInfo().isCall(CRMI->getOpCode()) )
-	    && "First Machine Instruction is not a Call/Retrunr" );
-    
     // get the added instructions for this Call/Ret instruciton
     AddedInstrns *AI = AddedInstrMap[ CRMI ];
     if ( !AI ) { 
@@ -492,14 +580,12 @@ void PhyRegAlloc::colorCallRetArgs()
       AddedInstrMap[ CRMI ] = AI;
     }
 
-    if( (OpCode == Instruction::Call) )
-        MRI.colorCallArgs( (CallInst *) CallRetI, LRI, AI );
+    if( (TM.getInstrInfo()).isCall( OpCode ) )
+      MRI.colorCallArgs( CRMI, LRI, AI );
     
-
-    else if (OpCode == Instruction::Ret ) 
-      MRI.colorRetValue( (ReturnInst *) CallRetI, LRI, AI	);
+    else if (  (TM.getInstrInfo()).isReturn(OpCode) ) 
+      MRI.colorRetValue( CRMI, LRI, AI );
     
-
     else assert( 0 && "Non Call/Ret instrn in CallRetInstrList\n" );
 
   }

@@ -108,30 +108,27 @@ void LiveRangeInfo::constructLiveRanges()
       
       const MachineInstr * MInst = *MInstIterator; 
 
-      // Now if the machine instruction has special operands that must be
-      // set with a "suggested color", do it here.
-      // This will be true for call/return instructions
+      // Now if the machine instruction is a  call/return instruction,
+      // add it to CallRetInstrList for processing its implicit operands
 
-
-      if(  MRI.handleSpecialMInstr(MInst, *this, RegClassList) )
-	continue;
-       
-      
+      if( (TM.getInstrInfo()).isReturn( MInst->getOpCode()) ||
+	  (TM.getInstrInfo()).isCall( MInst->getOpCode()) )
+	CallRetInstrList.push_back( MInst ); 
+ 
+             
       // iterate over  MI operands to find defs
       for( MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done(); ++OpI) {
 	
+	if( DEBUG_RA) {
+	  MachineOperand::MachineOperandType OpTyp = 
+	    OpI.getMachineOperand().getOperandType();
 
-      	// delete later from here ************
-	MachineOperand::MachineOperandType OpTyp = 
-	  OpI.getMachineOperand().getOperandType();
-
-	if (DEBUG_RA && OpTyp == MachineOperand::MO_CCRegister) {
-	  cout << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
-	  printValue( OpI.getMachineOperand().getVRegValue() );
-	  cout << endl;
+	  if ( OpTyp == MachineOperand::MO_CCRegister) {
+	    cout << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
+	    printValue( OpI.getMachineOperand().getVRegValue() );
+	    cout << endl;
+	  }
 	}
-	// ************* to here
-
 
 	// create a new LR iff this operand is a def
 	if( OpI.isDef() ) {     
@@ -193,57 +190,53 @@ void LiveRangeInfo::constructLiveRanges()
 	    }
 	  }
 
-
-
-
 	} // if isDef()
 	
       } // for all opereands in machine instructions
 
     } // for all machine instructions in the BB
 
-
   } // for all BBs in method
   
-  // go thru LLVM instructions in the basic block and suggest colors
-  // for their args. Also  record all CALL 
-  // instructions and Return instructions in the CallRetInstrList
-  // This is done because since there are no reverse pointers in machine
-  // instructions to find the llvm instruction, when we encounter a call
-  // or a return whose args must be specailly colored (e.g., %o's for args)
-  // We have to makes sure that all LRs of call/ret args are added before 
-  // doing this. But return value of call will not have a LR.
 
-  BBI = Meth->begin();                  // random iterator for BBs   
+  // Now we have to suggest clors for call and return arg live ranges.
+  // Also, if there are implicit defs (e.g., retun value of a call inst)
+  // they must be added to the live range list
 
-  for( ; BBI != Meth->end(); ++BBI) {   // go thru BBs in random order
-
-    BasicBlock::const_iterator InstIt = (*BBI)->begin();
-
-    for( ; InstIt != (*BBI)->end() ; ++InstIt) {
-
-      const Instruction *const CallRetI = *InstIt;
-      unsigned OpCode =  (CallRetI)->getOpcode();
-      
-      if( (OpCode == Instruction::Call) ) {
-	CallRetInstrList.push_back(CallRetI );      
-	MRI.suggestRegs4CallArgs( (CallInst *) CallRetI, *this, RegClassList );
-      }
-
-      else if (OpCode == Instruction::Ret ) {
-	CallRetInstrList.push_back( CallRetI );  
-	MRI.suggestReg4RetValue( (ReturnInst *) CallRetI, *this);
-      }
-
-
-    } // for each llvm instr in BB
-
-  } // for all BBs in method
+  suggestRegs4CallRets();
 
   if( DEBUG_RA) 
     cout << "Initial Live Ranges constructed!" << endl;
 
 }
+
+
+
+// Suggest colors for call and return args. 
+// Also create new LRs for implicit defs
+
+void LiveRangeInfo::suggestRegs4CallRets()
+{
+
+  CallRetInstrListType::const_iterator It =  CallRetInstrList.begin();
+
+  for( ; It !=  CallRetInstrList.end(); ++It ) {
+
+    const MachineInstr *MInst = *It;
+    MachineOpCode OpCode =  MInst->getOpCode();
+
+    if( (TM.getInstrInfo()).isReturn(OpCode)  )
+      MRI.suggestReg4RetValue( MInst, *this);
+
+    else if( (TM.getInstrInfo()).isCall( OpCode ) )
+      MRI.suggestRegs4CallArgs( MInst, *this, RegClassList );
+    
+    else 
+      assert( 0 && "Non call/ret instr in  CallRetInstrList" );
+  }
+
+}
+
 
 
 
@@ -317,8 +310,6 @@ void LiveRangeInfo::coalesceLRs()
 	    RegClass *const RCOfUse = LROfUse->getRegClass();
 
 	    if( RCOfDef == RCOfUse ) {  // if the reg classes are the same
-
-	      // if( LROfUse->getTypeID() == LROfDef->getTypeID() ) { 
 
 	      if( ! RCOfDef->getInterference(LROfDef, LROfUse) ) {
 
