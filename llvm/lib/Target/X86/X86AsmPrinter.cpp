@@ -365,7 +365,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     printOp(DispSpec, true);
   } else {
     int DispVal = DispSpec.getImmedValue();
-    if (DispVal) {
+    if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {
       if (NeedPlus)
         if (DispVal > 0)
           O << " + ";
