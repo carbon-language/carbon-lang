@@ -100,6 +100,93 @@ public:
   ///
   virtual bool pointsToConstantMemory(const Value *P);
 
+  //===--------------------------------------------------------------------===//
+  /// Simple mod/ref information...
+  ///
+
+  /// ModRefResult - Represent the result of a mod/ref query.  Mod and Ref are
+  /// bits which may be or'd together.
+  ///
+  enum ModRefResult { NoModRef = 0, Ref = 1, Mod = 2, ModRef = 3 };
+ 
+  
+  /// ModRefBehavior - Summary of how a function affects memory in the program.
+  /// Loads from constant globals are not considered memory accesses for this
+  /// interface.  Also, functions may freely modify stack space local to their
+  /// invocation without having to report it through these interfaces.
+  enum ModRefBehavior {
+    // DoesNotAccessMemory - This function does not perform any non-local loads
+    // or stores to memory.
+    //
+    // This property corresponds to the GCC 'const' attribute.
+    DoesNotAccessMemory,
+    
+    // AccessesArguments - This function accesses function arguments in
+    // non-volatile and well known ways, but does not access any other memory.
+    //
+    // Clients may call getArgumentAccesses to get specific information about
+    // how pointer arguments are used.
+    AccessesArguments,
+    
+    // AccessesArgumentsAndGlobals - This function has accesses function
+    // arguments and global variables in non-volatile and well-known ways, but
+    // does not access any other memory.
+    //
+    // Clients may call getArgumentAccesses to get specific information about
+    // how pointer arguments and globals are used.
+    AccessesArgumentsAndGlobals,
+    
+    // OnlyReadsMemory - This function does not perform any non-local stores or
+    // volatile loads, but may read from any memory location.
+    //
+    // This property corresponds to the GCC 'pure' attribute.
+    OnlyReadsMemory,
+    
+    // UnknownModRefBehavior - This indicates that the function could not be
+    // classified into one of the behaviors above.
+    UnknownModRefBehavior
+  };
+  
+  /// PointerAccessInfo - This struct is used to return results for pointers,
+  /// globals, and the return value of a function.
+  struct PointerAccessInfo {
+    /// V - The value this record corresponds to.  This may be an Argument for
+    /// the function, a GlobalVariable, or null, corresponding to the return
+    /// value for the function.
+    Value *V;
+    
+    /// ModRefInfo - Whether the pointer is loaded or stored to/from.
+    ///
+    ModRefResult ModRefInfo;
+    
+    /// AccessType - Specific fine-grained access information for the argument.
+    /// If none of these classifications is general enough, the
+    /// getModRefBehavior method should not return AccessesArguments*.  If a
+    /// record is not returned for a particular argument, the argument is never
+    /// dead and never dereferenced.
+    enum AccessType {
+      /// ScalarAccess - The pointer is dereferenced.
+      ///
+      ScalarAccess,
+      
+      /// ArrayAccess - The pointer is indexed through as an array of elements.
+      ///
+      ArrayAccess,
+      
+      /// ElementAccess ?? P->F only?
+      
+      /// CallsThrough - Indirect calls are made through the specified function
+      /// pointer.
+      CallsThrough,
+    };
+  }; 
+  
+  /// getModRefBehavior - Return the behavior of the specified function if
+  /// called from the specified call site.  The call site may be null in which
+  /// case the most generic behavior of this function should be returned.
+  virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+                                           std::vector<PointerAccessInfo> *Info = 0);
+    
   /// doesNotAccessMemory - If the specified function is known to never read or
   /// write memory, return true.  If the function only reads from known-constant
   /// memory, it is also legal to return true.  Functions that unwind the stack
@@ -111,7 +198,9 @@ public:
   ///
   /// This property corresponds to the GCC 'const' attribute.
   ///
-  virtual bool doesNotAccessMemory(Function *F);
+  bool doesNotAccessMemory(Function *F) {
+    return getModRefBehavior(F, CallSite()) == DoesNotAccessMemory;
+  }
 
   /// onlyReadsMemory - If the specified function is known to only read from
   /// non-volatile memory (or not access memory at all), return true.  Functions
@@ -122,17 +211,11 @@ public:
   ///
   /// This property corresponds to the GCC 'pure' attribute.
   ///
-  virtual bool onlyReadsMemory(Function *F);
+  bool onlyReadsMemory(Function *F) {
+    /// FIXME: If the analysis returns more precise info, we can reduce it to this.
+    return getModRefBehavior(F, CallSite()) == OnlyReadsMemory;
+  }
 
-
-  //===--------------------------------------------------------------------===//
-  /// Simple mod/ref information...
-  ///
-
-  /// ModRefResult - Represent the result of a mod/ref query.  Mod and Ref are
-  /// bits which may be or'd together.
-  ///
-  enum ModRefResult { NoModRef = 0, Ref = 1, Mod = 2, ModRef = 3 };
 
   /// getModRefInfo - Return information about whether or not an instruction may
   /// read or write memory specified by the pointer operand.  An instruction
