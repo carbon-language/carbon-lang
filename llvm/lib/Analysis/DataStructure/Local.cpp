@@ -143,6 +143,16 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : Func(&F), GlobalsGraph(GG) {
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
+
+  // Remove all integral constants from the scalarmap!
+  for (hash_map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin();
+       I != ScalarMap.end();)
+    if (isa<ConstantIntegral>(I->first)) {
+      hash_map<Value*, DSNodeHandle>::iterator J = I++;
+      ScalarMap.erase(J);
+    } else
+      ++I;
+
   markIncompleteNodes(DSGraph::MarkFormalArgs);
 
   // Remove any nodes made dead due to merging...
