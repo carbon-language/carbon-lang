@@ -349,8 +349,15 @@ Then you can run your pass like this:<p>
 
 Using the <tt>DEBUG()</tt> macro instead of a home brewed solution allows you to
 now have to create "yet another" command line option for the debug output for
-your pass.  Note that <tt>DEBUG()</tt> macros are disabled for optimized
-builds, so they do not cause a performance impact at all.<p>
+your pass.  Note that <tt>DEBUG()</tt> macros are disabled for optimized builds,
+so they do not cause a performance impact at all (for the same reason, they
+should also not contain side-effects!).<p>
+
+One additional nice thing about the <tt>DEBUG()</tt> macro is that you can
+enable or disable it directly in gdb.  Just use "<tt>set DebugFlag=0</tt>" or
+"<tt>set DebugFlag=1</tt>" from the gdb if the program is running.  If the
+program hasn't been started yet, you can always just run it with
+<tt>-debug</tt>.<p>
 
 
 <!-- ======================================================================= -->
@@ -1769,6 +1776,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Sun Oct 20 21:37:06 CDT 2002
+Last modified: Fri Nov  8 00:48:37 CST 2002
 <!-- hhmts end -->
 </font></body></html>
