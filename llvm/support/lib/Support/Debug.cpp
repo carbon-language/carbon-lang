@@ -49,5 +49,9 @@ namespace {
 // with the -debug-only=X option.
 //
 bool isCurrentDebugType(const char *DebugType) {
+#ifndef NDEBUG
   return CurrentDebugType.empty() || DebugType == CurrentDebugType;
+#else
+  return false;
+#endif
 }
