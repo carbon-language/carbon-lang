@@ -78,56 +78,51 @@ class scc_iterator
   // The stack-based DFS traversal; defined below.
   void DFSVisitChildren() {
     assert(!VisitStack.empty());
-    while (VisitStack.back().second != GT::child_end(VisitStack.back().first))
-      { // TOS has at least one more child so continue DFS
-        NodeType *childN = *VisitStack.back().second++;
-        if (nodeVisitNumbers.find(childN) == nodeVisitNumbers.end())
-          { // this node has never been seen
-            DFSVisitOne(childN);
-          }
-        else
-          {
-            unsigned childNum = nodeVisitNumbers[childN];
-            if (MinVisitNumStack.back() > childNum)
-              MinVisitNumStack.back() = childNum;
-          }
+    while (VisitStack.back().second != GT::child_end(VisitStack.back().first)) {
+      // TOS has at least one more child so continue DFS
+      NodeType *childN = *VisitStack.back().second++;
+      if (!nodeVisitNumbers.count(childN)) {
+        // this node has never been seen
+        DFSVisitOne(childN);
+      } else {
+        unsigned childNum = nodeVisitNumbers[childN];
+        if (MinVisitNumStack.back() > childNum)
+          MinVisitNumStack.back() = childNum;
       }
+    }
   }
 
   // Compute the next SCC using the DFS traversal.
   void GetNextSCC() {
     assert(VisitStack.size() == MinVisitNumStack.size());
     CurrentSCC.clear();                 // Prepare to compute the next SCC
-    while (! VisitStack.empty())
-      {
-        DFSVisitChildren();
+    while (!VisitStack.empty()) {
+      DFSVisitChildren();
+      assert(VisitStack.back().second ==GT::child_end(VisitStack.back().first));
+      NodeType* visitingN = VisitStack.back().first;
+      unsigned minVisitNum = MinVisitNumStack.back();
+      VisitStack.pop_back();
+      MinVisitNumStack.pop_back();
+      if (!MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
+        MinVisitNumStack.back() = minVisitNum;
 
-        assert(VisitStack.back().second ==
-               GT::child_end(VisitStack.back().first));
-        NodeType* visitingN = VisitStack.back().first;
-        unsigned minVisitNum = MinVisitNumStack.back();
-        VisitStack.pop_back();
-        MinVisitNumStack.pop_back();
-        if (! MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
-          MinVisitNumStack.back() = minVisitNum;
+      //DEBUG(std::cerr << "TarjanSCC: Popped node " << visitingN <<
+      //      " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
+      //      nodeVisitNumbers[visitingN] << "\n");
 
-        //DEBUG(std::cerr << "TarjanSCC: Popped node " << visitingN <<
-        //      " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
-        //      nodeVisitNumbers[visitingN] << "\n");
-
-        if (minVisitNum == nodeVisitNumbers[visitingN])
-          { // A full SCC is on the SCCNodeStack!  It includes all nodes below
-            // visitingN on the stack.  Copy those nodes to CurrentSCC,
-            // reset their minVisit values, and return (this suspends
-            // the DFS traversal till the next ++).
-            do {
-              CurrentSCC.push_back(SCCNodeStack.back());
-              SCCNodeStack.pop_back();
-              nodeVisitNumbers[CurrentSCC.back()] = ~0UL; 
-            } while (CurrentSCC.back() != visitingN);
-            return;
-          }
-      }
+      if (minVisitNum == nodeVisitNumbers[visitingN]) {
+        // A full SCC is on the SCCNodeStack!  It includes all nodes below
+          // visitingN on the stack.  Copy those nodes to CurrentSCC,
+          // reset their minVisit values, and return (this suspends
+          // the DFS traversal till the next ++).
+          do {
+            CurrentSCC.push_back(SCCNodeStack.back());
+            SCCNodeStack.pop_back();
+            nodeVisitNumbers[CurrentSCC.back()] = ~0UL; 
+          } while (CurrentSCC.back() != visitingN);
+          return;
+        }
+    }
   }
 
   inline scc_iterator(NodeType *entryN) : visitNum(0) {
