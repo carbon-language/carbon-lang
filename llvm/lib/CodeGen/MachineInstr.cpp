@@ -6,7 +6,12 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
+//
+// Methods common to all machine instructions.
+//
+// FIXME: Now that MachineInstrs have parent pointers, they should always
+// print themselves using their MachineFunction's TargetMachine.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstr.h"
@@ -40,11 +45,8 @@ MachineInstr::MachineInstr(short opcode, unsigned numOperands)
 /// add* methods below to fill up the operands, instead of the Set methods.
 /// Eventually, the "resizing" ctors will be phased out.
 ///
-MachineInstr::MachineInstr(short opcode, unsigned numOperands,
-                           bool XX, bool YY)
-  : Opcode(opcode),
-    numImplicitRefs(0),
-    parent(0) {
+MachineInstr::MachineInstr(short opcode, unsigned numOperands, bool XX, bool YY)
+  : Opcode(opcode), numImplicitRefs(0), parent(0) {
   operands.reserve(numOperands);
 }
 
@@ -53,16 +55,14 @@ MachineInstr::MachineInstr(short opcode, unsigned numOperands,
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
                            unsigned numOperands)
-  : Opcode(opcode),
-    numImplicitRefs(0),
-    parent(0) {
+  : Opcode(opcode), numImplicitRefs(0), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   operands.reserve(numOperands);
   MBB->push_back(this);  // Add instruction to end of basic block!
 }
 
-
-// OperandComplete - Return true if it's illegal to add a new operand
+/// OperandComplete - Return true if it's illegal to add a new operand
+///
 bool MachineInstr::OperandsComplete() const {
   int NumOperands = TargetInstrDescriptors[Opcode].numOperands;
   if (NumOperands >= 0 && getNumOperands() >= (unsigned)NumOperands)
@@ -70,12 +70,10 @@ bool MachineInstr::OperandsComplete() const {
   return false;
 }
 
-
-// 
-// Support for replacing opcode and operands of a MachineInstr in place.
-// This only resets the size of the operand vector and initializes it.
-// The new operands must be set explicitly later.
-// 
+/// replace - Support for replacing opcode and operands of a MachineInstr in
+/// place. This only resets the size of the operand vector and initializes it.
+/// The new operands must be set explicitly later.
+/// 
 void MachineInstr::replace(short opcode, unsigned numOperands) {
   assert(getNumImplicitRefs() == 0 &&
          "This is probably broken because implicit refs are going to be lost.");
@@ -95,13 +93,13 @@ void MachineInstr::SetMachineOperandVal(unsigned i,
 
 void
 MachineInstr::SetMachineOperandConst(unsigned i,
-				MachineOperand::MachineOperandType operandType,
+                                     MachineOperand::MachineOperandType opTy,
                                      int64_t intValue) {
   assert(i < getNumOperands());          // must be explicit op
   assert(TargetInstrDescriptors[Opcode].resultPos != (int) i &&
          "immed. constant cannot be defined");
 
-  operands[i].opType = operandType;
+  operands[i].opType = opTy;
   operands[i].value = NULL;
   operands[i].immedVal = intValue;
   operands[i].regNum = -1;
@@ -116,19 +114,24 @@ void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   operands[i].regNum = regNum;
 }
 
+// Used only by the SPARC back-end.
 void MachineInstr::SetRegForOperand(unsigned i, int regNum) {
   assert(i < getNumOperands());          // must be explicit op
   operands[i].setRegForValue(regNum);
 }
 
+// Used only by the SPARC back-end.
 void MachineInstr::SetRegForImplicitRef(unsigned i, int regNum) {
   getImplicitOp(i).setRegForValue(regNum);
 }
 
-
-// Substitute all occurrences of Value* oldVal with newVal in all operands
-// and all implicit refs.
-// If defsOnly == true, substitute defs only.
+/// substituteValue - Substitute all occurrences of Value* oldVal with newVal
+/// in all operands and all implicit refs. If defsOnly == true, substitute defs
+/// only.
+///
+/// FIXME: Fold this into its single caller, at SparcInstrSelection.cpp:2865,
+/// or make it a static function in that file.
+///
 unsigned
 MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
                               bool defsOnly, bool notDefsAndUses,
@@ -168,20 +171,16 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
   return numSubst;
 }
 
-
-void
-MachineInstr::dump() const 
-{
+void MachineInstr::dump() const {
   std::cerr << "  " << *this;
 }
 
-static inline std::ostream&
-OutputValue(std::ostream &os, const Value* val)
-{
+static inline std::ostream& OutputValue(std::ostream &os, const Value* val) {
   os << "(val ";
   os << (void*) val;                    // print address always
   if (val && val->hasName())
-    os << " " << val->getName() << ")"; // print name also, if available
+    os << " " << val->getName(); // print name also, if available
+  os << ")";
   return os;
 }
 
@@ -317,9 +316,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
   OS << "\n";
 }
 
-
-std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
-{
+std::ostream &operator<<(std::ostream& os, const MachineInstr& MI) {
   os << TargetInstrDescriptors[MI.getOpcode()].Name;
   
   for (unsigned i=0, N=MI.getNumOperands(); i < N; i++) {
@@ -349,8 +346,7 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& MI)
   return os << "\n";
 }
 
-std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO)
-{
+std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
   if (MO.isHiBits32())
     OS << "%lm(";
   else if (MO.isLoBits32())
