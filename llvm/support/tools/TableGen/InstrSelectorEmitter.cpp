@@ -318,6 +318,41 @@ std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
 
 
 //===----------------------------------------------------------------------===//
+// PatternOrganizer implementation
+//
+
+/// addPattern - Add the specified pattern to the appropriate location in the
+/// collection.
+void PatternOrganizer::addPattern(Pattern *P) {
+  std::string ValueName;
+  if (P->getPatternType() == Pattern::Nonterminal) {
+    // Just use the nonterminal name, which will already include the type if
+    // it has been cloned.
+    ValueName = P->getRecord()->getName();
+  } else {
+    if (P->getResult())
+      ValueName += P->getResult()->getName()+"_";
+    else
+      ValueName += "Void_";
+    ValueName += getName(P->getTree()->getType());
+  }
+
+  NodesForSlot &Nodes = AllPatterns[ValueName];
+  if (!P->getTree()->isLeaf())
+    Nodes[P->getTree()->getOperator()].push_back(P);
+  else {
+    // Right now we only support DefInit's with node types...
+    DefInit *Val = dynamic_cast<DefInit*>(P->getTree()->getValue());
+    if (!Val)
+      throw std::string("We only support def inits in PatternOrganizer"
+                        "::addPattern so far!");
+    Nodes[Val->getDef()].push_back(P);
+  }
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // InstrSelectorEmitter implementation
 //
 
@@ -432,10 +467,11 @@ Record *InstrSelectorEmitter::InstantiateNonterminal(Pattern *NT,
   Record* &Slot = InstantiatedNTs[std::make_pair(NT, ResultTy)];
   if (Slot) return Slot;
   
-  DEBUG(std::cerr << "  Nonterminal '" << NT->getRecord()->getName()
-                  << "' for type '" << getName(ResultTy) << "'\n");
-
   Record *New = new Record(NT->getRecord()->getName()+"_"+getName(ResultTy));
+
+  DEBUG(std::cerr << "  Nonterminal '" << NT->getRecord()->getName()
+                  << "' for type '" << getName(ResultTy) << "', producing '"
+                  << New->getName() << "'\n");
 
   // Copy the pattern...
   Pattern *NewPat = NT->clone(New);
@@ -457,6 +493,15 @@ Record *InstrSelectorEmitter::InstantiateNonterminal(Pattern *NT,
   return Slot = New;
 }
 
+// CalculateComputableValues - Fill in the ComputableValues map through
+// analysis of the patterns we are playing with.
+void InstrSelectorEmitter::CalculateComputableValues() {
+  // Loop over all of the patterns, adding them to the ComputableValues map
+  for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
+         E = Patterns.end(); I != E; ++I)
+    if (I->second->isResolved())
+      ComputableValues.addPattern(I->second);
+}
 
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
@@ -471,10 +516,103 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   // that they are used in.
   InstantiateNonterminals();
 
+  // Clear InstantiatedNTs, we don't need it anymore...
+  InstantiatedNTs.clear();
 
   std::cerr << "Patterns aquired:\n";
   for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
          E = Patterns.end(); I != E; ++I)
     if (I->second->isResolved())
       std::cerr << "  " << *I->second << "\n";
+
+  CalculateComputableValues();
+  
+  // Output the slot number enums...
+  OS << "\n\nenum { // Slot numbers...\n"
+     << "  LastBuiltinSlot = ISD::NumBuiltinSlots-1, // Start numbering here\n";
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I)
+    OS << "  " << I->first << "_Slot,\n";
+  OS << "  NumSlots\n};\n\n// Reduction value typedefs...\n";
+
+  // Output the reduction value typedefs...
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I)
+    OS << "typedef ReduceValue<unsigned, " << I->first
+       << "_Slot> ReducedValue_" << I->first << ";\n";
+
+  // Output the pattern enums...
+  OS << "\n\n"
+     << "enum { // Patterns...\n"
+     << "  NotComputed = 0,\n"
+     << "  NoMatchPattern, \n";
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I) {
+    OS << "  // " << I->first << " patterns...\n";
+    for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
+           E = I->second.end(); J != E; ++J)
+      for (unsigned i = 0, e = J->second.size(); i != e; ++i)
+        OS << "  " << J->second[i]->getRecord()->getName() << "_Pattern,\n";
+  }
+  OS << "};\n\n";
+
+  // Start emitting the class...
+  OS << "namespace {\n"
+     << "  class " << Target.getName() << "ISel {\n"
+     << "    SelectionDAG &DAG;\n"
+     << "  public:\n"
+     << "    X86ISel(SelectionDag &D) : DAG(D) {}\n"
+     << "    void generateCode();\n"
+     << "  private:\n"
+     << "    unsigned makeAnotherReg(const TargetRegisterClass *RC) {\n"
+     << "      return DAG.getMachineFunction().getSSARegMap()->createVirt"
+                                       "ualRegister(RC);\n"
+     << "    }\n\n"
+     << "    // DAG matching methods for classes... all of these methods"
+                                       " return the cost\n"
+     <<"    // of producing a value of the specified class and type, which"
+                                       " also gets\n"
+     << "    // added to the DAG node.\n";
+
+  // Output all of the matching prototypes for slots...
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I)
+    OS << "  unsigned Match_" << I->first << "(SelectionDAGNode *N);\n";
+  OS << "\n  // DAG matching methods for DAG nodes...\n";
+
+  // Output all of the matching prototypes for slot/node pairs
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I)
+    for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
+           E = I->second.end(); J != E; ++J)
+      OS << "  unsigned Match_" << I->first << "_" << J->first->getName()
+         << "(SelectionDAGNode *N);\n";
+
+  // Output all of the dag reduction methods prototypes...
+  OS << "\n  // DAG reduction methods...\n";
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I)
+    OS << "  ReducedValue_" << I->first << " *Reduce_" << I->first
+       << "(SelectionDAGNode *N,\n" << std::string(25+2*I->first.size(), ' ')
+       << "MachineBasicBlock *MBB);\n";
+  OS << "  };\n}\n\n";
+
+  OS << "void X86ISel::generateCode() {\n"
+     << "  SelectionDAGNode *Root = DAG.getRoot();\n"
+     << "  assert(Root->getValueType() == ISD::Void && "
+                                       "\"Root of DAG produces value??\");\n\n"
+     << "  std::cerr << \"\\n\";\n"
+     << "  unsigned Cost = Match_Void_Void(Root);\n"
+     << "  if (Cost >= ~0U >> 1) {\n"
+     << "    std::cerr << \"Match failed!\\n\";\n"
+     << "    Root->dump();\n"
+     << "    abort();\n"
+     << "  }\n\n"
+     << "  std::cerr << \"Total DAG Cost: \" << Cost << \"\\n\\n\";\n\n"
+     << "  Reduce_Void_Void(Root, 0);\n"
+     << "}\n\n"
+     << "//===" << std::string(70, '-') << "===//\n"
+     << "//  Matching methods...\n"
+     << "//\n";
 }
+

@@ -67,7 +67,10 @@ public:
     : Operator(o), Type(MVT::Other), Children(c), Value(0) {}
   TreePatternNode(Init *V) : Operator(0), Type(MVT::Other), Value(V) {}
 
-  Record *getOperator() const { return Operator; }
+  Record *getOperator() const {
+    assert(Operator && "This is a leaf node!");
+    return Operator;
+  }
   MVT::ValueType getType() const { return Type; }
   void setType(MVT::ValueType T) { Type = T; }
 
@@ -204,6 +207,36 @@ private:
 std::ostream &operator<<(std::ostream &OS, const Pattern &P);
 
 
+/// PatternOrganizer - This class represents all of the patterns which are
+/// useful for the instruction selector, neatly catagorized in a hierarchical
+/// structure.
+struct PatternOrganizer {
+  /// PatternsForNode - The list of patterns which can produce a value of a
+  /// particular slot type, given a particular root node in the tree.  All of
+  /// the patterns in this vector produce the same value type and have the same
+  /// root DAG node.
+  typedef std::vector<Pattern*> PatternsForNode;
+
+  /// NodesForSlot - This map keeps track of all of the root DAG nodes which can
+  /// lead to the production of a value for this slot.  All of the patterns in
+  /// this data structure produces values of the same slot.
+  typedef std::map<Record*, PatternsForNode> NodesForSlot;
+
+  /// AllPatterns - This data structure contains all patterns in the instruction
+  /// selector.
+  std::map<std::string, NodesForSlot> AllPatterns;
+
+  // Forwarding functions...
+  typedef std::map<std::string, NodesForSlot>::iterator iterator;
+  iterator begin() { return AllPatterns.begin(); }
+  iterator end()   { return AllPatterns.end(); }
+
+
+  /// addPattern - Add the specified pattern to the appropriate location in the
+  /// collection.
+  void addPattern(Pattern *P);
+};
+
 
 /// InstrSelectorEmitter - The top-level class which coordinates construction
 /// and emission of the instruction selector.
@@ -222,6 +255,13 @@ class InstrSelectorEmitter : public TableGenBackend {
   /// have been instantiated already...
   ///
   std::map<std::pair<Pattern*,MVT::ValueType>, Record*> InstantiatedNTs;
+
+  /// ComputableValues - This map indicates which patterns can be used to
+  /// generate a value that is used by the selector.  The keys of this map
+  /// implicitly define the values that are used by the selector.
+  ///
+  PatternOrganizer ComputableValues;
+
 public:
   InstrSelectorEmitter(RecordKeeper &R) : Records(R) {}
   
@@ -269,6 +309,10 @@ private:
   // InstantiateNonterminals - Instantiate any unresolved nonterminals with
   // information from the context that they are used in.
   void InstantiateNonterminals();
+  
+  // CalculateComputableValues - Fill in the ComputableValues map through
+  // analysis of the patterns we are playing with.
+  void CalculateComputableValues();
 };
 
 #endif
