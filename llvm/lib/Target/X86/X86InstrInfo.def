@@ -81,9 +81,19 @@ I(ADJCALLSTACKUP  , "adjcallstackup"  , 0, 0, X86II::Pseudo,               NoIR,
 
 // Flow control instructions
 I(RET         , "ret",   0xC3,    M_RET_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::Void, NoIR, NoIR)             // ret
+
 I(JMP         , "jmp",   0xE9, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::Void, NoIR, NoIR)             // jmp foo
-I(JNE         , "jne",   0x85, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JB          , "jb" ,   0x82, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JAE         , "jae",   0x83, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
 I(JE          , "je",    0x84, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // je foo
+I(JNE         , "jne",   0x85, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JBE         , "jbe",   0x86, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JA          , "ja" ,   0x87, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JL          , "jl" ,   0x8C, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JGE         , "jge",   0x8D, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JLE         , "jle",   0x8E, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+I(JG          , "jg" ,   0x8F, M_BRANCH_FLAG | M_TERMINATOR_FLAG, X86II::RawFrm | X86II::TB | X86II::Void, NoIR, NoIR) // jne foo
+
 I(CALLpcrel32 , "call",  0xE8,   M_CALL_FLAG, X86II::Void | X86II::RawFrm, NoIR, C_CLOBBER)        // call pc+42
 I(CALLr32     , "call",  0xFF,   M_CALL_FLAG, X86II::Void | X86II::MRMS2r | X86II::Arg32,
                                               NoIR, C_CLOBBER)                                     // call [r32]
