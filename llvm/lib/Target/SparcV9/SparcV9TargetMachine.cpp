@@ -195,7 +195,7 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   if (!DisableSched)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
 
-  if(PrintMachineCode)
+  if(PrintMachineCode && EnableModSched)
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before modulo scheduling:\n"));
 
   //Use ModuloScheduling if enabled, otherwise use local scheduling if not disabled.
