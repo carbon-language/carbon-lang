@@ -9,8 +9,10 @@
 #ifndef BUGDRIVER_H
 #define BUGDRIVER_H
 
+#include "Support/CommandLine.h"
 #include <vector>
 #include <string>
+
 class PassInfo;
 class Module;
 class Function;
@@ -25,6 +27,7 @@ class ReduceCrashingBlocks;
 
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
+  cl::opt<std::string> ReferenceOutputFile; // Name of `good' output file
   Module *Program;             // The raw program, linked together
   std::vector<const PassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
@@ -33,11 +36,12 @@ class BugDriver {
   friend class DebugCrashes;
   friend class ReduceMiscompilingPasses;
   friend class ReduceMiscompilingFunctions;
+  friend class ReduceMisCodegenFunctions;
   friend class ReduceCrashingFunctions;
   friend class ReduceCrashingBlocks;
+
 public:
-  BugDriver(const char *toolname)
-    : ToolName(toolname), Program(0), Interpreter(0) {}
+  BugDriver(const char *toolname);
 
   const std::string &getToolName() const { return ToolName; }
 
@@ -72,6 +76,17 @@ public:
   ///
   bool debugPassMiscompilation(const PassInfo *ThePass,
 			       const std::string &ReferenceOutput);
+
+
+  /// compileSharedObject - This method creates a SharedObject from a given
+  /// BytecodeFile for debugging a code generator.
+  int compileSharedObject(const std::string &BytecodeFile,
+                          std::string &SharedObject);
+
+  /// debugCodeGenerator - This method narrows down a module to a function or
+  /// set of functions, using the CBE as a ``safe'' code generator for other
+  /// functions that are not under consideration.
+  bool debugCodeGenerator();
 
 private:
   /// ParseInputFile - Given a bytecode or assembly input filename, parse and
@@ -112,6 +127,9 @@ private:
     return runPasses(PassesToRun, Filename, DeleteOutput);
   }
 
+  /// PrintFunctionList - prints out list of problematic functions
+  static void PrintFunctionList(const std::vector<Function*> &Funcs);
+
   /// deleteInstructionFromProgram - This method clones the current Program and
   /// deletes the specified instruction from the cloned module.  It then runs a
   /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code
@@ -135,14 +153,22 @@ private:
   /// filename may be optionally specified.
   ///
   std::string executeProgram(std::string RequestedOutputFilename = "",
-			     std::string Bytecode = "");
+                             std::string Bytecode = "",
+                             std::string SharedObject = "",
+                             AbstractInterpreter *AI = 0);
+
+  /// executeProgramWithCBE - Used to create reference output with the C
+  /// backend, if reference output is not provided.
+  std::string executeProgramWithCBE(std::string RequestedOutputFilename = "",
+                                    std::string Bytecode = "",
+                                    std::string SharedObject = "");
 
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output
   /// is different, true is returned.
   ///
-  bool diffProgram(const std::string &ReferenceOutputFile,
-		   const std::string &BytecodeFile = "",
+  bool diffProgram(const std::string &BytecodeFile = "",
+                   const std::string &SharedObject = "",
                    bool RemoveBytecode = false);
 };
 

@@ -11,7 +11,7 @@ BUGPOINT NOTES:
 1. Bugpoint should not leave any files behind if the program works properly
 2. There should be an option to specify the program name, which specifies a
    unique string to put into output files.  This allows operation in the
-   SingleSource directory f.e.  Default to the first input filename.
+   SingleSource directory, e.g. default to the first input filename.
 */
 
 #include "BugDriver.h"
@@ -29,11 +29,11 @@ namespace {
   };
   cl::opt<OutputType>
   InterpreterSel(cl::desc("Specify how LLVM code should be executed:"),
-		 cl::values(clEnumValN(RunLLI, "run-lli", "Execute with LLI"),
-			    clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
-			    clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
-			    clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
-			    0));
+                 cl::values(clEnumValN(RunLLI, "run-lli", "Execute with LLI"),
+                            clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
+                            clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
+                            clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
+                            0));
 
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
@@ -52,8 +52,8 @@ struct AbstractInterpreter {
   /// specified filename.  This returns the exit code of the program.
   ///
   virtual int ExecuteProgram(const std::string &Bytecode,
-			     const std::string &OutputFile) = 0;
-
+                             const std::string &OutputFile,
+                             const std::string &SharedLib = "") = 0;
 };
 
 
@@ -73,27 +73,238 @@ public:
       return new LLI(LLIPath);
     }
 
-    Message = "Cannot find 'lli' in bugpoint executable directory or PATH!\n";
+    Message = "Cannot find `lli' in bugpoint executable directory or PATH!\n";
     return 0;
   }
   virtual int ExecuteProgram(const std::string &Bytecode,
-			     const std::string &OutputFile);
+                             const std::string &OutputFile,
+                             const std::string &SharedLib = "");
 };
 
 int LLI::ExecuteProgram(const std::string &Bytecode,
-			const std::string &OutputFile) {
+                        const std::string &OutputFile,
+                        const std::string &SharedLib) {
+  if (SharedLib != "") {
+    std::cerr << "LLI currently does not support loading shared libraries.\n"
+              << "Exiting.\n";
+    exit(1);
+  }
+
   const char *Args[] = {
-    "lli",
+    LLIPath.c_str(),
     "-abort-on-exception",
     "-quiet",
     "-force-interpreter=true",
     Bytecode.c_str(),
     0
   };
-  
+
   return RunProgramWithTimeout(LLIPath, Args,
-			       InputFile, OutputFile, OutputFile);
+                               InputFile, OutputFile, OutputFile);
 }
+
+//===----------------------------------------------------------------------===//
+// GCC Implementation of AbstractIntepreter interface
+//
+// This is not a *real* AbstractInterpreter as it does not accept bytecode
+// files, but only input acceptable to GCC, i.e. C, C++, and assembly files
+//
+class GCC : public AbstractInterpreter {
+  std::string GCCPath;          // The path to the gcc executable
+public:
+  GCC(const std::string &gccPath) : GCCPath(gccPath) { }
+
+  // GCC create method - Try to find the `gcc' executable
+  static GCC *create(BugDriver *BD, std::string &Message) {
+    std::string GCCPath = FindExecutable("gcc", BD->getToolName());
+    if (GCCPath.empty()) {
+      Message = "Cannot find `gcc' in bugpoint executable directory or PATH!\n";
+      return 0;
+    }
+
+    Message = "Found gcc: " + GCCPath + "\n";
+    return new GCC(GCCPath);
+  }
+
+  virtual int ExecuteProgram(const std::string &ProgramFile,
+                             const std::string &OutputFile,
+                             const std::string &SharedLib = "");
+
+  int MakeSharedObject(const std::string &InputFile,
+                       std::string &OutputFile);
+  
+  void ProcessFailure(const char **Args);
+};
+
+int GCC::ExecuteProgram(const std::string &ProgramFile,
+                        const std::string &OutputFile,
+                        const std::string &SharedLib) {
+  std::string OutputBinary = "bugpoint.gcc.exe";
+  const char **GCCArgs;
+
+  const char *ArgsWithoutSO[] = {
+    GCCPath.c_str(),
+    ProgramFile.c_str(),         // Specify the input filename...
+    "-o", OutputBinary.c_str(),  // Output to the right filename...
+    "-lm",                       // Hard-code the math library...
+    "-O2",                       // Optimize the program a bit...
+    0
+  };
+  const char *ArgsWithSO[] = {
+    GCCPath.c_str(),
+    ProgramFile.c_str(),         // Specify the input filename...
+    SharedLib.c_str(),           // Specify the shared library to link in...
+    "-o", OutputBinary.c_str(),  // Output to the right filename...
+    "-lm",                       // Hard-code the math library...
+    "-O2",                       // Optimize the program a bit...
+    0
+  };
+
+  GCCArgs = (SharedLib == "") ? ArgsWithoutSO : ArgsWithSO;
+  std::cout << "<gcc>";
+  if (RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null",
+                            "/dev/null", "/dev/null")) {
+    ProcessFailure(GCCArgs);
+    exit(1);  // Leave stuff around for the user to inspect or debug the CBE
+  }
+
+  const char *ProgramArgs[] = {
+    OutputBinary.c_str(),
+    0
+  };
+
+  std::cout << "<program>";
+
+  // Now that we have a binary, run it!
+  int ProgramResult = RunProgramWithTimeout(OutputBinary, ProgramArgs,
+                                            InputFile, OutputFile, OutputFile);
+  std::cout << "\n";
+  removeFile(OutputBinary);
+  return ProgramResult;
+}
+
+int GCC::MakeSharedObject(const std::string &InputFile,
+                          std::string &OutputFile) {
+  OutputFile = "./bugpoint.so";
+  // Compile the C/asm file into a shared object
+  const char* GCCArgs[] = {
+    GCCPath.c_str(),
+    InputFile.c_str(),           // Specify the input filename...
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+    "-G",                        // Compile a shared library, `-G' for Sparc
+#else                             
+    "-shared",                   // `-shared' for Linux/X86, maybe others
+#endif
+    "-o", OutputFile.c_str(),    // Output to the right filename...
+    "-O2",                       // Optimize the program a bit...
+    0
+  };
+  
+  std::cout << "<gcc>";
+  if(RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
+                           "/dev/null")) {
+    ProcessFailure(GCCArgs);
+    exit(1);
+  }
+  return 0;
+}
+
+void GCC::ProcessFailure(const char** GCCArgs) {
+  std::cerr << "\n*** bugpoint error: invocation of the C compiler failed!\n";
+  for (const char **Arg = GCCArgs; *Arg; ++Arg)
+    std::cerr << " " << *Arg;
+  std::cerr << "\n";
+
+  // Rerun the compiler, capturing any error messages to print them.
+  std::string ErrorFilename = getUniqueFilename("bugpoint.gcc.errors");
+  RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", ErrorFilename.c_str(),
+                        ErrorFilename.c_str());
+
+  // Print out the error messages generated by GCC if possible...
+  std::ifstream ErrorFile(ErrorFilename.c_str());
+  if (ErrorFile) {
+    std::copy(std::istreambuf_iterator<char>(ErrorFile),
+              std::istreambuf_iterator<char>(),
+              std::ostreambuf_iterator<char>(std::cerr));
+    ErrorFile.close();
+    std::cerr << "\n";      
+  }
+
+  removeFile(ErrorFilename);
+}
+
+//===----------------------------------------------------------------------===//
+// LLC Implementation of AbstractIntepreter interface
+//
+class LLC : public AbstractInterpreter {
+  std::string LLCPath;          // The path to the LLC executable
+  GCC *gcc;
+public:
+  LLC(const std::string &llcPath, GCC *Gcc)
+    : LLCPath(llcPath), gcc(Gcc) { }
+  ~LLC() { delete gcc; }
+
+  // LLC create method - Try to find the LLC executable
+  static LLC *create(BugDriver *BD, std::string &Message) {
+    std::string LLCPath = FindExecutable("llc", BD->getToolName());
+    if (LLCPath.empty()) {
+      Message = "Cannot find `llc' in bugpoint executable directory or PATH!\n";
+      return 0;
+    }
+
+    Message = "Found llc: " + LLCPath + "\n";
+    GCC *gcc = GCC::create(BD, Message);
+    return new LLC(LLCPath, gcc);
+  }
+
+  virtual int ExecuteProgram(const std::string &Bytecode,
+                             const std::string &OutputFile,
+                             const std::string &SharedLib = "");
+
+  int OutputAsm(const std::string &Bytecode,
+                std::string &OutputAsmFile);
+
+};
+
+int LLC::OutputAsm(const std::string &Bytecode,
+                   std::string &OutputAsmFile) {
+  OutputAsmFile = "bugpoint.llc.s";
+  const char *LLCArgs[] = {
+    LLCPath.c_str(),
+    "-o", OutputAsmFile.c_str(), // Output to the Asm file
+    "-f",                        // Overwrite as necessary...
+    Bytecode.c_str(),            // This is the input bytecode
+    0
+  };
+
+  std::cout << "<llc>";
+  if (RunProgramWithTimeout(LLCPath, LLCArgs, "/dev/null", "/dev/null",
+                            "/dev/null")) {                            
+    // If LLC failed on the bytecode, print error...
+    std::cerr << "bugpoint error: `llc' failed!\n";
+    removeFile(OutputAsmFile);
+    return 1;
+  }
+
+  return 0;
+}
+
+int LLC::ExecuteProgram(const std::string &Bytecode,
+                        const std::string &OutputFile,
+                        const std::string &SharedLib) {
+
+  std::string OutputAsmFile;
+  if (OutputAsm(Bytecode, OutputAsmFile)) {
+    std::cerr << "Could not generate asm code with `llc', exiting.\n";
+    exit(1);
+  }
+
+  // Assuming LLC worked, compile the result with GCC and run it.
+  int Result = gcc->ExecuteProgram(OutputAsmFile, OutputFile, SharedLib);
+  removeFile(OutputAsmFile);
+  return Result;
+}
+
 
 //===----------------------------------------------------------------------===//
 // JIT Implementation of AbstractIntepreter interface
@@ -111,25 +322,35 @@ public:
       return new JIT(LLIPath);
     }
 
-    Message = "Cannot find 'lli' in bugpoint executable directory or PATH!\n";
+    Message = "Cannot find `lli' in bugpoint executable directory or PATH!\n";
     return 0;
   }
   virtual int ExecuteProgram(const std::string &Bytecode,
-			     const std::string &OutputFile);
+                             const std::string &OutputFile,
+                             const std::string &SharedLib = "");
 };
 
 int JIT::ExecuteProgram(const std::string &Bytecode,
-			const std::string &OutputFile) {
-  const char *Args[] = {
-    "-lli",
-    "-quiet",
-    "-force-interpreter=false",
-    Bytecode.c_str(),
-    0
-  };
-  
-  return RunProgramWithTimeout(LLIPath, Args,
-			       InputFile, OutputFile, OutputFile);
+                        const std::string &OutputFile,
+                        const std::string &SharedLib) {
+  if (SharedLib == "") {
+    const char* Args[] = {
+      LLIPath.c_str(), "-quiet", "-force-interpreter=false", Bytecode.c_str(),
+      0
+    };
+    return RunProgramWithTimeout(LLIPath, Args,
+                                 InputFile, OutputFile, OutputFile);
+  } else {
+    std::string SharedLibOpt = "-load=" + SharedLib;
+    const char* Args[] = {
+      LLIPath.c_str(), "-quiet", "-force-interpreter=false", 
+      SharedLibOpt.c_str(),
+      Bytecode.c_str(),
+      0
+    };
+    return RunProgramWithTimeout(LLIPath, Args,
+                                 InputFile, OutputFile, OutputFile);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -137,37 +358,39 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
 //
 class CBE : public AbstractInterpreter {
   std::string DISPath;          // The path to the LLVM 'dis' executable
-  std::string GCCPath;          // The path to the gcc executable
+  GCC *gcc;
 public:
-  CBE(const std::string &disPath, const std::string &gccPath)
-    : DISPath(disPath), GCCPath(gccPath) { }
+  CBE(const std::string &disPath, GCC *Gcc) : DISPath(disPath), gcc(Gcc) { }
+  ~CBE() { delete gcc; }
 
   // CBE create method - Try to find the 'dis' executable
   static CBE *create(BugDriver *BD, std::string &Message) {
     std::string DISPath = FindExecutable("dis", BD->getToolName());
     if (DISPath.empty()) {
-      Message = "Cannot find 'dis' in bugpoint executable directory or PATH!\n";
+      Message = "Cannot find `dis' in bugpoint executable directory or PATH!\n";
       return 0;
     }
 
     Message = "Found dis: " + DISPath + "\n";
 
-    std::string GCCPath = FindExecutable("gcc", BD->getToolName());
-    if (GCCPath.empty()) {
-      Message = "Cannot find 'gcc' in bugpoint executable directory or PATH!\n";
-      return 0;
-    }
-
-    Message += "Found gcc: " + GCCPath + "\n";
-    return new CBE(DISPath, GCCPath);
+    GCC *gcc = GCC::create(BD, Message);
+    return new CBE(DISPath, gcc);
   }
+
   virtual int ExecuteProgram(const std::string &Bytecode,
-			     const std::string &OutputFile);
+                             const std::string &OutputFile,
+                             const std::string &SharedLib = "");
+
+  // Sometimes we just want to go half-way and only generate the C file,
+  // not necessarily compile it with GCC and run the program
+  virtual int OutputC(const std::string &Bytecode,
+                      std::string &OutputCFile);
+
 };
 
-int CBE::ExecuteProgram(const std::string &Bytecode,
-			const std::string &OutputFile) {
-  std::string OutputCFile = getUniqueFilename("bugpoint.cbe.c");
+int CBE::OutputC(const std::string &Bytecode,
+                 std::string &OutputCFile) {
+  OutputCFile = "bugpoint.cbe.c";
   const char *DisArgs[] = {
     DISPath.c_str(),
     "-o", OutputCFile.c_str(),   // Output to the C file
@@ -181,73 +404,29 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
   if (RunProgramWithTimeout(DISPath, DisArgs, "/dev/null", "/dev/null",
                             "/dev/null")) {                            
     // If dis failed on the bytecode, print error...
-    std::cerr << "bugpoint error: dis -c failed!?\n";
-    removeFile(OutputCFile);
+    std::cerr << "bugpoint error: `dis -c' failed!\n";
     return 1;
   }
 
-  // Assuming the c backend worked, compile the result with GCC...
-  std::string OutputBinary = getUniqueFilename("bugpoint.cbe.exe");
-  const char *GCCArgs[] = {
-    GCCPath.c_str(),
-    "-x", "c",                   // Force recognition as a C file
-    "-o", OutputBinary.c_str(),  // Output to the right filename...
-    OutputCFile.c_str(),         // Specify the input filename...
-    "-O2",                       // Optimize the program a bit...
-    0
-  };
-  
-  // FIXME: Eventually the CC program and arguments for it should be settable on
-  // the bugpoint command line!
+  return 0;
+}
 
-  std::cout << "<gcc>";
 
-  // Run the C compiler on the output of the C backend...
-  if (RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
-                            "/dev/null")) {
-    std::cerr << "\n*** bugpoint error: invocation of the C compiler "
-      "failed on CBE result!\n";
-    for (const char **Arg = DisArgs; *Arg; ++Arg)
-      std::cerr << " " << *Arg;
-    std::cerr << "\n";
-    for (const char **Arg = GCCArgs; *Arg; ++Arg)
-      std::cerr << " " << *Arg;
-    std::cerr << "\n";
-
-    // Rerun the compiler, capturing any error messages to print them.
-    std::string ErrorFilename = getUniqueFilename("bugpoint.cbe.errors");
-    RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", ErrorFilename.c_str(),
-                          ErrorFilename.c_str());
-
-    // Print out the error messages generated by GCC if possible...
-    std::ifstream ErrorFile(ErrorFilename.c_str());
-    if (ErrorFile) {
-      std::copy(std::istreambuf_iterator<char>(ErrorFile),
-                std::istreambuf_iterator<char>(),
-                std::ostreambuf_iterator<char>(std::cerr));
-      ErrorFile.close();
-      std::cerr << "\n";      
-    }
-
-    removeFile(ErrorFilename);
-    exit(1);  // Leave stuff around for the user to inspect or debug the CBE
+int CBE::ExecuteProgram(const std::string &Bytecode,
+                        const std::string &OutputFile,
+                        const std::string &SharedLib) {
+  std::string OutputCFile;
+  if (OutputC(Bytecode, OutputCFile)) {
+    std::cerr << "Could not generate C code with `dis', exiting.\n";
+    exit(1);
   }
 
-  const char *ProgramArgs[] = {
-    OutputBinary.c_str(),
-    0
-  };
-
-  std::cout << "<program>";
-
-  // Now that we have a binary, run it!
-  int Result =  RunProgramWithTimeout(OutputBinary, ProgramArgs,
-                                      InputFile, OutputFile, OutputFile);
-  std::cout << " ";
+  int Result = gcc->ExecuteProgram(OutputCFile, OutputFile, SharedLib);
   removeFile(OutputCFile);
-  removeFile(OutputBinary);
+
   return Result;
 }
+
 
 //===----------------------------------------------------------------------===//
 // BugDriver method implementation
@@ -267,6 +446,7 @@ bool BugDriver::initializeExecutionEnvironment() {
   std::string Message;
   switch (InterpreterSel) {
   case RunLLI: Interpreter = LLI::create(this, Message); break;
+  case RunLLC: Interpreter = LLC::create(this, Message); break;
   case RunJIT: Interpreter = JIT::create(this, Message); break;
   case RunCBE: Interpreter = CBE::create(this, Message); break;
   default:
@@ -286,8 +466,10 @@ bool BugDriver::initializeExecutionEnvironment() {
 /// filename may be optionally specified.
 ///
 std::string BugDriver::executeProgram(std::string OutputFile,
-				      std::string BytecodeFile) {
-  assert(Interpreter && "Interpreter should have been created already!");
+                                      std::string BytecodeFile,
+                                      std::string SharedObject,
+                                      AbstractInterpreter *AI) {
+  assert((Interpreter || AI) &&"Interpreter should have been created already!");
   bool CreatedBytecode = false;
   if (BytecodeFile.empty()) {
     // Emit the program to a bytecode file...
@@ -295,42 +477,85 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 
     if (writeProgramToFile(BytecodeFile, Program)) {
       std::cerr << ToolName << ": Error emitting bytecode to file '"
-		<< BytecodeFile << "'!\n";
+                << BytecodeFile << "'!\n";
       exit(1);
     }
     CreatedBytecode = true;
   }
 
   if (OutputFile.empty()) OutputFile = "bugpoint-execution-output";
-  
+
   // Check to see if this is a valid output filename...
   OutputFile = getUniqueFilename(OutputFile);
 
   // Actually execute the program!
-  int RetVal = Interpreter->ExecuteProgram(BytecodeFile, OutputFile);
+  int RetVal = (AI != 0) ?
+    AI->ExecuteProgram(BytecodeFile, OutputFile, SharedObject) :
+    Interpreter->ExecuteProgram(BytecodeFile, OutputFile, SharedObject);
 
   // Remove the temporary bytecode file.
-  if (CreatedBytecode)
-    removeFile(BytecodeFile);
+  if (CreatedBytecode) removeFile(BytecodeFile);
 
   // Return the filename we captured the output to.
   return OutputFile;
 }
 
+std::string BugDriver::executeProgramWithCBE(std::string OutputFile,
+                                             std::string BytecodeFile,
+                                             std::string SharedObject) {
+  std::string Output;
+  CBE *cbe = CBE::create(this, Output);
+  Output = executeProgram(OutputFile, BytecodeFile, SharedObject, cbe);
+  delete cbe;
+  return Output;
+}
+
+int BugDriver::compileSharedObject(const std::string &BytecodeFile,
+                                   std::string &SharedObject) {
+  assert(Interpreter && "Interpreter should have been created already!");
+  std::string Message, OutputCFile;
+
+  // Using CBE
+  CBE *cbe = CBE::create(this, Message);
+  cbe->OutputC(BytecodeFile, OutputCFile);
+
+#if 0 /* This is an alternative, as yet unimplemented */
+  // Using LLC
+  LLC *llc = LLC::create(this, Message);
+  if (llc->OutputAsm(BytecodeFile, OutputFile)) {
+    std::cerr << "Could not generate asm code with `llc', exiting.\n";
+    exit(1);
+  }
+#endif
+
+  GCC *gcc = GCC::create(this, Message);
+  gcc->MakeSharedObject(OutputCFile, SharedObject);
+
+  // Remove the intermediate C file
+  removeFile(OutputCFile);
+
+  // We are done with the CBE & GCC
+  delete cbe;
+  delete gcc;
+
+  return 0;
+}
+
+
 /// diffProgram - This method executes the specified module and diffs the output
 /// against the file specified by ReferenceOutputFile.  If the output is
 /// different, true is returned.
 ///
-bool BugDriver::diffProgram(const std::string &ReferenceOutputFile,
-			    const std::string &BytecodeFile,
+bool BugDriver::diffProgram(const std::string &BytecodeFile,
+                            const std::string &SharedObject,
                             bool RemoveBytecode) {
   // Execute the program, generating an output file...
-  std::string Output = executeProgram("", BytecodeFile);
+  std::string Output = executeProgram("", BytecodeFile, SharedObject);
 
   std::ifstream ReferenceFile(ReferenceOutputFile.c_str());
   if (!ReferenceFile) {
     std::cerr << "Couldn't open reference output file '"
-	      << ReferenceOutputFile << "'\n";
+              << ReferenceOutputFile << "'\n";
     exit(1);
   }
 

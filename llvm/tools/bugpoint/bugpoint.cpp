@@ -18,7 +18,7 @@ InputFilenames(cl::Positional, cl::OneOrMore,
 // PassNameParser.
 //
 static cl::list<const PassInfo*, bool, PassNameParser>
-PassList(cl::desc("Passes available:"), cl::OneOrMore);
+PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
 //cl::list<std::string>
 //InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
@@ -26,7 +26,6 @@ PassList(cl::desc("Passes available:"), cl::OneOrMore);
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
 
-  
   BugDriver D(argv[0]);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());

@@ -11,21 +11,6 @@
 #include "llvm/Module.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Linker.h"
-#include "Support/CommandLine.h"
-
-// Anonymous namespace to define command line options for miscompilation
-// debugging.
-//
-namespace {
-  // Output - The user can specify a file containing the expected output of the
-  // program.  If this filename is set, it is used as the reference diff source,
-  // otherwise the raw input run through an interpreter is used as the reference
-  // source.
-  //
-  cl::opt<std::string> 
-  Output("output", cl::desc("Specify a reference program output "
-			    "(for miscompilation detection)"));
-}
 
 class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
   BugDriver &BD;
@@ -33,7 +18,7 @@ public:
   ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
 
   virtual TestResult doTest(std::vector<const PassInfo*> &Prefix,
-                            std::vector<const PassInfo*> &Kept);
+                            std::vector<const PassInfo*> &Suffix);
 };
 
 ReduceMiscompilingPasses::TestResult
@@ -52,7 +37,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
 
   // Check to see if the finished program matches the reference output...
-  if (BD.diffProgram(Output, BytecodeResult, true /*delete bytecode*/)) {
+  if (BD.diffProgram(BytecodeResult, "", true /*delete bytecode*/)) {
     std::cout << "nope.\n";
     return KeepSuffix;        // Miscompilation detected!
   }
@@ -78,7 +63,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
 
   // If the prefix maintains the predicate by itself, only keep the prefix!
-  if (BD.diffProgram(Output, BytecodeResult)) {
+  if (BD.diffProgram(BytecodeResult)) {
     std::cout << "nope.\n";
     removeFile(BytecodeResult);
     return KeepPrefix;
@@ -109,7 +94,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   }
 
   // Run the result...
-  if (BD.diffProgram(Output, BytecodeResult, true/*delete bytecode*/)) {
+  if (BD.diffProgram(BytecodeResult, "", true/*delete bytecode*/)) {
     std::cout << "nope.\n";
     delete OriginalInput;     // We pruned down the original input...
     return KeepSuffix;
@@ -121,14 +106,6 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   delete PrefixOutput;        // Free experiment
   return NoFailure;
 }
-
-static void PrintFunctionList(const std::vector<Function*> &Funcs) {
-  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
-    if (i) std::cout << ", ";
-    std::cout << Funcs[i]->getName();
-  }
-}
-
 
 class ReduceMiscompilingFunctions : public ListReducer<Function*> {
   BugDriver &BD;
@@ -154,7 +131,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   if (!EmitBytecode) {
     std::cout << "Checking to see if the program is misoptimized when these "
               << "functions are run\nthrough the passes: ";
-    PrintFunctionList(Funcs);
+    BD.PrintFunctionList(Funcs);
     std::cout << "\n";
   } else {
     std::cout <<"Outputting reduced bytecode files which expose the problem:\n";
@@ -269,7 +246,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 
   // Eighth step: Execute the program.  If it does not match the expected
   // output, then 'Funcs' are being misoptimized!
-  bool Broken = BD.diffProgram(Output);
+  bool Broken = BD.diffProgram();
 
   delete BD.Program;  // Delete the hacked up program
   BD.Program = OldProgram;   // Restore the original
@@ -284,24 +261,10 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 /// input.
 ///
 bool BugDriver::debugMiscompilation() {
-  std::cout << "*** Debugging miscompilation!\n";
 
-  // Set up the execution environment, selecting a method to run LLVM bytecode.
-  if (initializeExecutionEnvironment()) return true;
-
-  // Run the raw input to see where we are coming from.  If a reference output
-  // was specified, make sure that the raw output matches it.  If not, it's a
-  // problem in the front-end or whatever produced the input code.
-  //
-  bool CreatedOutput = false;
-  if (Output.empty()) {
-    std::cout << "Generating reference output from raw program...";
-    Output = executeProgram("bugpoint.reference.out");
-    CreatedOutput = true;
-    std::cout << " done! Reference output is: " << Output << "\n";
-  } else if (diffProgram(Output)) {
+  if (diffProgram()) {
     std::cout << "\n*** Input program does not match reference diff!\n"
-	      << "    Must be problem with input source!\n";
+              << "    Must be problem with input source!\n";
     return false;  // Problem found
   }
 
@@ -320,7 +283,6 @@ bool BugDriver::debugMiscompilation() {
             << (PassesToRun.size() == 1 ? "" : "es") << ": "
             << getPassesString(PassesToRun) << "\n";
   EmitProgressBytecode("passinput");
-
 
   // Okay, now that we have reduced the list of passes which are causing the
   // failure, see if we can pin down which functions are being
@@ -341,6 +303,5 @@ bool BugDriver::debugMiscompilation() {
   // Output a bunch of bytecode files for the user...
   ReduceMiscompilingFunctions(*this).TestFuncs(MiscompiledFunctions, true);
 
-  if (CreatedOutput) removeFile(Output);
   return false;
 }

@@ -7,12 +7,35 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "SystemUtils.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "llvm/Pass.h"
+#include "Support/CommandLine.h"
 #include <memory>
+
+// Anonymous namespace to define command line options for debugging.
+//
+namespace {
+  // Output - The user can specify a file containing the expected output of the
+  // program.  If this filename is set, it is used as the reference diff source,
+  // otherwise the raw input run through an interpreter is used as the reference
+  // source.
+  //
+  cl::opt<std::string> 
+  OutputFile("output", cl::desc("Specify a reference program output "
+                                "(for miscompilation detection)"));
+
+  enum DebugType { DebugCompile, DebugCodegen };
+  cl::opt<DebugType>
+  DebugMode("mode", cl::desc("Debug mode for bugpoint:"), cl::Prefix,
+            cl::values(clEnumValN(DebugCompile, "compile", "  Compilation"),
+                       clEnumValN(DebugCodegen, "codegen", "  Code generation"),
+                       0),
+            cl::init(DebugCompile));
+}
 
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
@@ -40,6 +63,11 @@ void DeleteFunctionBody(Function *F) {
   F->setLinkage(GlobalValue::ExternalLinkage);
   assert(F->isExternal() && "This didn't make the function external!");
 }
+
+BugDriver::BugDriver(const char *toolname)
+  : ToolName(toolname), ReferenceOutputFile(OutputFile),
+    Program(0), Interpreter(0) {}
+
 
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
 /// return it, or return null if not possible.
@@ -108,6 +136,44 @@ bool BugDriver::run() {
   std::cout << "Running selected passes on program to test for crash: ";
   if (runPasses(PassesToRun))
     return debugCrash();
-  else
-    return debugMiscompilation();
+
+  std::cout << "Checking for a miscompilation...\n";
+
+  // Set up the execution environment, selecting a method to run LLVM bytecode.
+  if (initializeExecutionEnvironment()) return true;
+
+  // Run the raw input to see where we are coming from.  If a reference output
+  // was specified, make sure that the raw output matches it.  If not, it's a
+  // problem in the front-end or the code generator.
+  //
+  bool CreatedOutput = false, Result;
+  if (ReferenceOutputFile.empty()) {
+    std::cout << "Generating reference output from raw program...";
+    if (DebugCodegen) {
+      ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
+    } else {
+      ReferenceOutputFile = executeProgram("bugpoint.reference.out");
+    }
+    CreatedOutput = true;
+    std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
+  } 
+
+  if (DebugMode == DebugCompile) {
+    std::cout << "\n*** Debugging miscompilation!\n";
+    Result = debugMiscompilation();
+  } else if (DebugMode == DebugCodegen) {
+    std::cout << "Debugging code generator problem!\n";
+    Result = debugCodeGenerator();
+  }
+
+  if (CreatedOutput) removeFile(ReferenceOutputFile);
+  return Result;
+}
+
+void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs)
+{
+  for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
+    if (i) std::cout << ", ";
+    std::cout << Funcs[i]->getName();
+  }
 }
