@@ -1,7 +1,10 @@
+//===-- llvm/CodeGen/ValueSet.h ---------------------------------*- C++ -*-===//
 //
-// VALUESET.H - This header is OBSOLETE, do not use it for new code.
+// This header is OBSOLETE, do not use it for new code.
 //
 // FIXME: Eliminate this file.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef VALUE_SET_H
 #define VALUE_SET_H
@@ -17,7 +20,6 @@ struct RAV {  // Register Allocator Value
   RAV(const Value &v) : V(v) {}
 };
 std::ostream &operator<<(std::ostream &out, RAV Val);
-
 
 typedef std::set<const Value*> ValueSet;
 void printSet(const ValueSet &S);
