@@ -33,7 +33,7 @@ use POSIX qw(strftime);
 
 my $HOME = $ENV{'HOME'};
 my $CVSRootDir = $ENV{'CVSROOT'};
-my $CVSRootDir = "/home/vadve/vadve/Research/DynOpt/CVSRepository"
+my $CVSRootDir = "/home/vadve/shared/PublicCVS"
     unless $CVSRootDir;
 my $BuildDir   = "$HOME/buildtest";
 my $WebDir     = "$HOME/cvs/testresults-X86";
