@@ -1213,7 +1213,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp2 = SelectExpr(N.getOperand(1));
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
-    case MVT::i8: assert(0 && "FIXME: MUL i8 not implemented yet!");
+    case MVT::i8:
+      // Must use the MUL instruction, which forces use of AL.
+      BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(Tmp1);
+      BuildMI(BB, X86::MUL8r, 1).addReg(Tmp2);
+      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+      return Result;
     case MVT::i16: Opc = X86::IMUL16rr; break;
     case MVT::i32: Opc = X86::IMUL32rr; break;
     case MVT::f32: 
