@@ -1,5 +1,5 @@
 LEVEL = ../..
-DIRS = Sparc X86
+DIRS = Sparc #X86
 LIBRARYNAME = target
 BUILD_ARCHIVE = 1
 
