@@ -1,4 +1,4 @@
-//===-- LiveIntervals.cpp - Live Interval Analysis ------------------------===//
+//===-- LiveIntervalAnalysis.cpp - Live Interval Analysis -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "liveintervals"
-#include "LiveIntervals.h"
+#include "LiveIntervalAnalysis.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"

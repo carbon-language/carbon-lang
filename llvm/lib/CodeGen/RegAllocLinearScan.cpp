@@ -23,7 +23,7 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
-#include "LiveIntervals.h"
+#include "LiveIntervalAnalysis.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include <algorithm>

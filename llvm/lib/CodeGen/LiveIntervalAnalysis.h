@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/LiveInterval.h - Live Interval Analysis ----*- C++ -*-===//
+//===-- LiveIntervalAnalysis.h - Live Interval Analysis ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_LIVEINTERVALS_H
-#define LLVM_CODEGEN_LIVEINTERVALS_H
+#ifndef LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
+#define LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "LiveInterval.h"
