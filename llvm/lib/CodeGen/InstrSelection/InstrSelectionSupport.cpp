@@ -472,8 +472,8 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
             {
               constantThatMustBeLoaded = true;
               opValue = isSigned
-                ? ConstantSInt::get(Type::LongTy, immedValue)
-                : ConstantUInt::get(Type::ULongTy, (uint64_t) immedValue);
+                ? (Value*)ConstantSInt::get(Type::LongTy, immedValue)
+                : (Value*)ConstantUInt::get(Type::ULongTy,(uint64_t)immedValue);
             }
         }
 
