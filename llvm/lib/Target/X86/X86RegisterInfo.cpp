@@ -56,8 +56,8 @@ X86RegisterInfo::loadRegOffset2Reg(MachineBasicBlock &MBB,
   const
 {
   static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
-  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 5)
-                                  .addReg(DestReg), SrcReg, ImmOffset);
+  MachineInstr *MI = addRegOffset(BuildMI(Opcode[getIdx(dataSize)], 4, DestReg),
+                                  SrcReg, ImmOffset);
   return ++MBB.insert(MBBI, MI);
 }
 
@@ -68,8 +68,7 @@ X86RegisterInfo::moveReg2Reg(MachineBasicBlock &MBB,
                              unsigned dataSize) const
 {
   static const unsigned Opcode[] = { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  MachineInstr *MI = 
-    BuildMI(Opcode[getIdx(dataSize)], 2).addReg(DestReg).addReg(SrcReg);
+  MachineInstr *MI = BuildMI(Opcode[getIdx(dataSize)],1,DestReg).addReg(SrcReg);
   return ++MBB.insert(MBBI, MI);
 }
 
@@ -80,8 +79,7 @@ X86RegisterInfo::moveImm2Reg(MachineBasicBlock &MBB,
   const
 {
   static const unsigned Opcode[] = { X86::MOVir8, X86::MOVir16, X86::MOVir32 };
-  MachineInstr *MI = 
-    BuildMI(Opcode[getIdx(dataSize)], 2).addReg(DestReg).addReg(Imm);
+  MachineInstr *MI = BuildMI(Opcode[getIdx(dataSize)], 1, DestReg).addReg(Imm);
   return ++MBB.insert(MBBI, MI);
 }
 
@@ -113,15 +111,15 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = MBB.begin();
 
   // PUSH ebp
-  MachineInstr *MI = BuildMI (X86::PUSHr32, 1).addReg(X86::EBP);
+  MachineInstr *MI = BuildMI(X86::PUSHr32, 1).addReg(X86::EBP);
   MBBI = ++MBB.insert(MBBI, MI);
 
   // MOV ebp, esp
-  MI = BuildMI (X86::MOVrr32, 2).addReg(X86::EBP).addReg(X86::ESP);
+  MI = BuildMI(X86::MOVrr32, 1, X86::EBP).addReg(X86::ESP);
   MBBI = ++MBB.insert(MBBI, MI);
 
-  // adjust stack pointer
-  MI  = BuildMI(X86::SUBri32, 2).addReg(X86::ESP).addZImm(numBytes);
+  // adjust stack pointer: ESP -= numbytes
+  MI  = BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(numBytes);
   MBBI = ++MBB.insert(MBBI, MI);
 
   // PUSH all callee-save registers
@@ -144,7 +142,7 @@ void X86RegisterInfo::emitEpilogue(MachineBasicBlock &MBB,
                                    MRegisterInfo::NoRegister };
   unsigned idx = 0;
   while (regs[idx]) {
-    MachineInstr *MI = BuildMI(X86::POPr32, 1).addReg(regs[idx++]);
+    MachineInstr *MI = BuildMI(X86::POPr32, 0, regs[idx++]);
     MBBI = ++(MBB.insert(MBBI, MI));
   }
   
