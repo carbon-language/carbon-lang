@@ -218,7 +218,7 @@ void JITResolver::SaveRestoreRegisters() {
 
   __asm__ __volatile__ (// Save Double FP registers
                         "std %%f32, %0;\n\t"  "std %%f34, %1;\n\t"
-                        "std %%f32, %0;\n\t"  "std %%f34, %1;\n\t"
+                        "std %%f36, %2;\n\t"  "std %%f38, %3;\n\t"
                         "std %%f40, %4;\n\t"  "std %%f42, %5;\n\t"
                         "std %%f44, %6;\n\t"  "std %%f46, %7;\n\t"
                         "std %%f48, %8;\n\t"  "std %%f50, %9;\n\t"
