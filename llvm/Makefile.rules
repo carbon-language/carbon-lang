@@ -210,7 +210,7 @@ PROJTOOLCURRENT := $(BUILD_OBJ_ROOT)/tools/$(CONFIGURATION)
 #
 # Libtool is found in the current directory.
 #
-LIBTOOL := $(LLVM_OBJ_ROOT)/libtool
+LIBTOOL := $(LLVM_OBJ_ROOT)/mklib
 
 #
 # If we're not building a shared library, use the disable-shared tag with
