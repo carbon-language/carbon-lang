@@ -159,8 +159,6 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
 // ExpressionConvertableToType - Return true if it is possible
 bool ExpressionConvertableToType(Value *V, const Type *Ty,
                                  ValueTypeCache &CTMap) {
-  if (V->getType() == Ty) return true;  // Expression already correct type!
-
   // Expression type must be holdable in a register.
   if (!Ty->isFirstClassType())
     return false;
@@ -169,6 +167,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
 
   CTMap[V] = Ty;
+  if (V->getType() == Ty) return true;  // Expression already correct type!
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
@@ -341,6 +340,8 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
   if (VMCI != VMC.ExprMap.end()) {
+    const Value *GV = VMCI->second;
+    const Type *GTy = VMCI->second->getType();
     assert(VMCI->second->getType() == Ty);
 
     if (Instruction *I = dyn_cast<Instruction>(V))
@@ -996,10 +997,42 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   case Instruction::Store: {
     if (I->getOperand(0) == OldVal) {  // Replace the source value
-      const PointerType *NewPT = PointerType::get(NewTy);
-      Res = new StoreInst(NewVal, Constant::getNullValue(NewPT));
-      VMC.ExprMap[I] = Res;
-      Res->setOperand(1, ConvertExpressionToType(I->getOperand(1), NewPT, VMC));
+      // Check to see if operand #1 has already been converted...
+      ValueMapCache::ExprMapTy::iterator VMCI =
+        VMC.ExprMap.find(I->getOperand(1));
+      if (VMCI != VMC.ExprMap.end()) {
+        // Comments describing this stuff are in the OperandConvertableToType
+        // switch statement for Store...
+        //
+        const Type *ElTy =
+          cast<PointerType>(VMCI->second->getType())->getElementType();
+        if (ElTy == NewTy) {
+          // If it happens to be converted to exactly the right type, use it
+          // directly...
+          Res = new StoreInst(NewVal, VMCI->second);
+        } else {
+          // We check that this is a struct in the initial scan...
+          const StructType *SElTy = cast<StructType>(ElTy);
+          
+          unsigned Offset = 0;
+          std::vector<Value*> Indices;
+          Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+          const Type *Ty = getStructOffsetType(ElTy, Offset, Indices, false);
+          assert(Offset == 0 && "Offset changed!");
+          assert(NewTy == Ty && "Did not convert to correct type!");
+
+          Res = new StoreInst(NewVal, VMCI->second, Indices);
+        }
+
+        VMC.ExprMap[I] = Res;
+      } else {
+        // Otherwise, we haven't converted Operand #1 over yet...
+        const PointerType *NewPT = PointerType::get(NewTy);
+        Res = new StoreInst(NewVal, Constant::getNullValue(NewPT));
+        VMC.ExprMap[I] = Res;
+        Res->setOperand(1, ConvertExpressionToType(I->getOperand(1),
+                                                   NewPT, VMC));
+      }
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
       std::vector<Value*> Indices;
