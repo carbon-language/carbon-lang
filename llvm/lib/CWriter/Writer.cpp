@@ -208,7 +208,7 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
   case Type::FunctionTyID: {
     const FunctionType *MTy = cast<FunctionType>(Ty);
     printType(MTy->getReturnType(), "");
-    Out << " " << NameSoFar << " (";
+    Out << " (" << NameSoFar << ") (";
 
     for (FunctionType::ParamTypes::const_iterator
            I = MTy->getParamTypes().begin(),
