@@ -12,6 +12,7 @@
 #include "Support/hash_set"
 
 class Type;
+class CallInst;
 class DSGraph;
 class DSNode;
 class DSCallSite;
@@ -75,6 +76,7 @@ class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
+  hash_multimap<CallInst*, Function*> ActualCallees;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -104,19 +106,15 @@ public:
     AU.setPreservesAll();
     AU.addRequired<LocalDataStructures>();
   }
+
+  typedef hash_multimap<CallInst*, Function*> ActualCalleesTy;
+  const ActualCalleesTy &getActualCallees() const {
+    return ActualCallees;
+  }
+
 private:
   void calculateGraph(DSGraph &G);
 
-  // inlineNonSCCGraphs - This method is almost like the other two calculate
-  // graph methods.  This one is used to inline function graphs (from functions
-  // outside of the SCC) into functions in the SCC.  It is not supposed to touch
-  // functions IN the SCC at all.
-  //
-  DSGraph &inlineNonSCCGraphs(Function &F,
-                              hash_set<Function*> &SCCFunctions);
- 
-  DSGraph &calculateSCCGraph(Function &F,
-                             hash_set<Function*> &InlinedSCCFunctions);
   void calculateReachableGraphs(Function *F);
 
 
@@ -135,7 +133,6 @@ private:
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
-  hash_set<const Function*> GraphDone;
   DSGraph *GlobalsGraph;
 public:
   ~TDDataStructures() { releaseMyMemory(); }
@@ -169,8 +166,12 @@ public:
   }
 
 private:
-  void calculateGraph(Function &F);
+  void calculateGraphFrom(Function &F);
+  void inlineGraphIntoCallees(DSGraph &G);
   DSGraph &getOrCreateDSGraph(Function &F);
+  void ComputePostOrder(Function &F, hash_set<DSGraph*> &Visited,
+                        std::vector<DSGraph*> &PostOrder,
+                        const BUDataStructures::ActualCalleesTy &ActualCallees);
 };
 
 #endif
