@@ -37,6 +37,7 @@ MVT::ValueType SelectionDAG::getValueType(const Type *Ty) const {
   case Type::ULongTyID:   return MVT::i64;
   case Type::FloatTyID:   return MVT::f32;
   case Type::DoubleTyID:  return MVT::f64;
+  case Type::LabelTyID:
   case Type::PointerTyID: return PointerType;
   }
 }
@@ -79,8 +80,11 @@ void SelectionDAGNode::printit(unsigned Offset, unsigned &LastID,
   case ISD::ChainNode:      std::cerr << "ChainNode"; break;
   case ISD::BlockChainNode: std::cerr << "BlockChainNode"; break;
   case ISD::ProtoNode:      std::cerr << "ProtoNode"; break;
+
   case ISD::Constant:       std::cerr << "Constant"; break;
   case ISD::FrameIndex:     std::cerr << "FrameIndex"; break;
+  case ISD::BasicBlock:     std::cerr << "BasicBlock"; break;
+
   case ISD::Plus:           std::cerr << "Plus"; break;
   case ISD::Minus:          std::cerr << "Minus"; break;
   case ISD::Times:          std::cerr << "Times"; break;
@@ -91,7 +95,16 @@ void SelectionDAGNode::printit(unsigned Offset, unsigned &LastID,
   case ISD::And:            std::cerr << "And"; break;
   case ISD::Or:             std::cerr << "Or"; break;
   case ISD::Xor:            std::cerr << "Xor"; break;
+
+  case ISD::SetEQ:          std::cerr << "SetEQ"; break;
+  case ISD::SetNE:          std::cerr << "SetNE"; break;
+  case ISD::SetLT:          std::cerr << "SetLT"; break;
+  case ISD::SetLE:          std::cerr << "SetLE"; break;
+  case ISD::SetGT:          std::cerr << "SetGT"; break;
+  case ISD::SetGE:          std::cerr << "SetGE"; break;
+
   case ISD::Br:             std::cerr << "Br"; break;
+  case ISD::BrCond:         std::cerr << "BrCond"; break;
   case ISD::Switch:         std::cerr << "Switch"; break;
   case ISD::Ret:            std::cerr << "Ret"; break;
   case ISD::RetVoid:        std::cerr << "RetVoid"; break;
@@ -99,6 +112,9 @@ void SelectionDAGNode::printit(unsigned Offset, unsigned &LastID,
   case ISD::Store:          std::cerr << "Store"; break;
   case ISD::PHI:            std::cerr << "PHI"; break;
   case ISD::Call:           std::cerr << "Call"; break;
+
+  case ISD::Unspec1:        std::cerr << "Unspec1"; break;
+  case ISD::Unspec2:        std::cerr << "Unspec2"; break;
   }
 
   std::cerr << "\n";

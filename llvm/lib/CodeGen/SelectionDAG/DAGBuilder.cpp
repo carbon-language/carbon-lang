@@ -6,17 +6,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Support/InstVisitor.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Type.h"
-#include "llvm/Constants.h"
+#include "llvm/Support/InstVisitor.h"
 
 struct SelectionDAGBuilder : public InstVisitor<SelectionDAGBuilder> {
   // DAG - the current dag we are building.
   SelectionDAG &DAG;
+
+  // SDTB - The target-specific builder interface, which indicates how to expand
+  // extremely target-specific aspects of the representation, such as function
+  // calls and arguments.
+  SelectionDAGTargetBuilder &SDTB;
 
   // BB - The current machine basic block we are working on.
   MachineBasicBlock *BB;
@@ -24,7 +29,8 @@ struct SelectionDAGBuilder : public InstVisitor<SelectionDAGBuilder> {
   // CurRoot - The root built for the current basic block.
   SelectionDAGNode *CurRoot;
 
-  SelectionDAGBuilder(SelectionDAG &dag) : DAG(dag), BB(0), CurRoot(0) {}
+  SelectionDAGBuilder(SelectionDAG &dag, SelectionDAGTargetBuilder &sdtb)
+    : DAG(dag), SDTB(sdtb), BB(0), CurRoot(0) {}
 
   void visitBB(BasicBlock &bb);
 
@@ -33,14 +39,21 @@ struct SelectionDAGBuilder : public InstVisitor<SelectionDAGBuilder> {
   void visitAdd(BinaryOperator &BO);
   void visitSub(BinaryOperator &BO);
   void visitMul(BinaryOperator &BO);
-  void visitRet(ReturnInst &RI);
 
   void visitAnd(BinaryOperator &BO);
   void visitOr (BinaryOperator &BO);
   void visitXor(BinaryOperator &BO);
 
+  void visitSetEQ(BinaryOperator &BO);
+
+  void visitLoad(LoadInst &LI);
+  void visitCall(CallInst &CI);
+
+  void visitBr(BranchInst &BI);
+  void visitRet(ReturnInst &RI);
+
   void visitInstruction(Instruction &I) {
-    std::cerr << "Instruction Selection cannot select: " << I;
+    std::cerr << "DAGBuilder: Cannot instruction select: " << I;
     abort();
   }
 
@@ -116,6 +129,10 @@ SelectionDAGNode *SelectionDAGBuilder::getNodeFor(Value *V) {
         Entry->addValue(new ReducedValue_Constant_f64(CFP->getValue()));
     }
     if (Entry) return Entry;
+  } else if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
+    Entry = new SelectionDAGNode(ISD::BasicBlock, ValueType);
+    Entry->addValue(new ReducedValue_BasicBlock_i32(DAG.BlockMap[BB]));
+    return Entry;
   }
 
   std::cerr << "Unhandled LLVM value in DAG Builder!: " << *V << "\n";
@@ -144,9 +161,9 @@ void SelectionDAGBuilder::visitBB(BasicBlock &bb) {
     else {
       // The previous basic block AND this basic block had roots, insert a
       // block chain node now...
-        CurRoot = DAG.addNode(new SelectionDAGNode(ISD::BlockChainNode,
-                                                   MVT::isVoid,
-                                                   BB, OldRoot, CurRoot));
+      CurRoot = DAG.addNode(new SelectionDAGNode(ISD::BlockChainNode,
+                                                 MVT::isVoid,
+                                                 BB, OldRoot, CurRoot));
     }
   }
 }
@@ -180,6 +197,11 @@ void SelectionDAGBuilder::visitXor(BinaryOperator &BO) {
   getNodeFor(BO)->setNode(ISD::Xor, BB, getNodeFor(BO.getOperand(0)),
                           getNodeFor(BO.getOperand(1)));
 }
+void SelectionDAGBuilder::visitSetEQ(BinaryOperator &BO) {
+  getNodeFor(BO)->setNode(ISD::SetEQ, BB, getNodeFor(BO.getOperand(0)),
+                          getNodeFor(BO.getOperand(1)));
+}
+
 
 void SelectionDAGBuilder::visitRet(ReturnInst &RI) {
   if (RI.getNumOperands()) {         // Value return
@@ -191,9 +213,30 @@ void SelectionDAGBuilder::visitRet(ReturnInst &RI) {
 }
 
 
+void SelectionDAGBuilder::visitBr(BranchInst &BI) {
+  if (BI.isUnconditional())
+    addSeqNode(new SelectionDAGNode(ISD::Br, MVT::isVoid, BB,
+                                    getNodeFor(BI.getOperand(0))));
+  else
+    addSeqNode(new SelectionDAGNode(ISD::BrCond, MVT::isVoid, BB,
+                                    getNodeFor(BI.getCondition()),
+                                    getNodeFor(BI.getSuccessor(0)),
+                                    getNodeFor(BI.getSuccessor(1))));
+}
 
 
-// SelectionDAG constructor - Just use the SeelectionDAGBuilder to do all of the
+void SelectionDAGBuilder::visitLoad(LoadInst &LI) {
+  // FIXME: this won't prevent reordering of loads!
+  getNodeFor(LI)->setNode(ISD::Load, BB, getNodeFor(LI.getOperand(0)));  
+}
+
+void SelectionDAGBuilder::visitCall(CallInst &CI) {
+  SDTB.expandCall(DAG, CI);
+}
+
+
+
+// SelectionDAG constructor - Just use the SelectionDAGBuilder to do all of the
 // dirty work...
 SelectionDAG::SelectionDAG(MachineFunction &f, const TargetMachine &tm,
                            SelectionDAGTargetBuilder &SDTB)
@@ -213,9 +256,9 @@ SelectionDAG::SelectionDAG(MachineFunction &f, const TargetMachine &tm,
   for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     F.getBasicBlockList().push_back(BlockMap[I] = new MachineBasicBlock(I));
 
-  SDTB.expandArguments(*this, f);
+  SDTB.expandArguments(*this);
 
-  SelectionDAGBuilder SDB(*this);
+  SelectionDAGBuilder SDB(*this, SDTB);
   for (Function::const_iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SDB.visitBB(const_cast<BasicBlock&>(*I));
   Root = SDB.CurRoot;
