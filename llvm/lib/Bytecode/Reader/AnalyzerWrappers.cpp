@@ -293,21 +293,27 @@ void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
         double(bca.BlockSizes[BytecodeFormat::CompactionTable]),
         double(bca.byteSize));
 
-    std::map<unsigned,BytecodeAnalysis::BytecodeFunctionInfo>::iterator I = 
+    std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator I = 
       bca.FunctionInfo.begin();
-    std::map<unsigned,BytecodeAnalysis::BytecodeFunctionInfo>::iterator E = 
+    std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator E = 
       bca.FunctionInfo.end();
 
     while ( I != E ) {
       Out << std::left << std::setw(0);
-      Out << "Function: " << I->second.name << " Slot=" << I->first << "\n";
-      print(Out,"Type:", I->second.description);
-      print(Out,"Byte Size", I->second.byteSize);
-      print(Out,"Instructions", I->second.numInstructions);
-      print(Out,"Basic Blocks", I->second.numBasicBlocks);
-      print(Out,"Operand", I->second.numOperands);
-      print(Out,"Function Density", I->second.density);
-      print(Out,"VBR Effectiveness", I->second.vbrEffectiveness);
+      Out << "Function: " << I->second.name << "\n";
+      print(Out, "Type:", I->second.description);
+      print(Out, "Byte Size", I->second.byteSize);
+      print(Out, "Instructions", I->second.numInstructions);
+      print(Out, "Basic Blocks", I->second.numBasicBlocks);
+      print(Out, "Operand", I->second.numOperands);
+      print(Out, "Function Density", I->second.density);
+      print(Out, "Number of VBR 32-bit Integers",   I->second.vbrCount32);
+      print(Out, "Number of VBR 64-bit Integers",   I->second.vbrCount64);
+      print(Out, "Number of VBR Compressed Bytes",  I->second.vbrCompBytes);
+      print(Out, "Number of VBR Expanded Bytes",    I->second.vbrExpdBytes);
+      print(Out, "VBR Savings", 
+	double(I->second.vbrExpdBytes)-double(I->second.vbrCompBytes),
+	double(I->second.byteSize));
       ++I;
     }
   }

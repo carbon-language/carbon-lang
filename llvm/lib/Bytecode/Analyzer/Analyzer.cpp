@@ -22,19 +22,18 @@ namespace {
 
 class AnalyzerHandler : public BytecodeHandler {
   BytecodeAnalysis& bca;
+  BytecodeAnalysis::BytecodeFunctionInfo* currFunc;
 public:
   AnalyzerHandler(BytecodeAnalysis& TheBca) 
-    : bca(TheBca)
-  {
-  }  
+    : bca(TheBca) 
+    , currFunc(0)
+    { }  
 
-  bool handleError(const std::string& str )
-  {
+  virtual bool handleError(const std::string& str ) {
     return false;
   }
 
-  void handleStart()
-  {
+  virtual void handleStart() {
     bca.ModuleId.clear();
     bca.numBlocks = 0;
     bca.numTypes = 0;
@@ -70,8 +69,7 @@ public:
     bca.BlockSizes[BytecodeFormat::CompactionTable] = 0;
   }
 
-  void handleFinish()
-  {
+  virtual void handleFinish() {
     bca.fileDensity = double(bca.byteSize) / double( bca.numTypes + bca.numValues );
     double globalSize = 0.0;
     globalSize += double(bca.BlockSizes[BytecodeFormat::ConstantPool]);
@@ -83,198 +81,143 @@ public:
       double(bca.numFunctions);
   }
 
-  void handleModuleBegin(const std::string& id)
-  {
+  virtual void handleModuleBegin(const std::string& id) {
     bca.ModuleId = id;
   }
 
-  void handleModuleEnd(const std::string& id)
-  {
-  }
+  virtual void handleModuleEnd(const std::string& id) { }
 
-  void handleVersionInfo(
+  virtual void handleVersionInfo(
     unsigned char RevisionNum,        ///< Byte code revision number
     Module::Endianness Endianness,    ///< Endianness indicator
     Module::PointerSize PointerSize   ///< PointerSize indicator
-  )
-  {
-  }
+  ) { }
 
-  void handleModuleGlobalsBegin(unsigned size)
-  {
-    // bca.globalBytesize += size;
-  }
+  virtual void handleModuleGlobalsBegin(unsigned size) { }
 
-  void handleGlobalVariable( 
+  virtual void handleGlobalVariable( 
     const Type* ElemType,     ///< The type of the global variable
     bool isConstant,          ///< Whether the GV is constant or not
     GlobalValue::LinkageTypes ///< The linkage type of the GV
-  )
-  {
+  ) {
     bca.numGlobalVars++;
     bca.numValues++;
   }
 
-  void handleInitializedGV( 
+  virtual void handleInitializedGV( 
     const Type* ElemType,     ///< The type of the global variable
     bool isConstant,          ///< Whether the GV is constant or not
     GlobalValue::LinkageTypes,///< The linkage type of the GV
     unsigned initSlot         ///< Slot number of GV's initializer
-  )
-  {
+  ) {
     bca.numGlobalVars++;
     bca.numValues++;
   }
 
-  virtual void handleType( const Type* Ty ) 
-  {
-    bca.numTypes++;
-  }
+  virtual void handleType( const Type* Ty ) { bca.numTypes++; }
 
-  void handleFunctionDeclaration( 
-    const Type* FuncType      ///< The type of the function
-  )
-  {
+  virtual void handleFunctionDeclaration( 
+    Function* Func,	    ///< The function
+    const FunctionType* FuncType    ///< The type of the function
+  ) {
     bca.numFunctions++;
     bca.numValues++;
   }
 
-  void handleModuleGlobalsEnd()
-  {
-  }
+  virtual void handleModuleGlobalsEnd() { }
 
-  void handleCompactionTableBegin()
-  {
-  }
+  virtual void handleCompactionTableBegin() { }
 
-  void handleCompactionTablePlane( 
-    unsigned Ty, 
-    unsigned NumEntries
-  )
-  {
+  virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries) {
     bca.numCmpctnTables++;
   }
 
-  void handleCompactionTableType( 
-    unsigned i, 
-    unsigned TypSlot, 
-    const Type* 
-  )
-  {
-  }
+  virtual void handleCompactionTableType( unsigned i, unsigned TypSlot, 
+      const Type* ) {}
 
-  void handleCompactionTableValue( 
+  virtual void handleCompactionTableValue( 
     unsigned i, 
     unsigned ValSlot, 
-    const Type* 
-  )
-  {
+    const Type* ) { }
+
+  virtual void handleCompactionTableEnd() { }
+
+  virtual void handleSymbolTableBegin() { bca.numSymTab++; }
+
+  virtual void handleSymbolTablePlane( unsigned Ty, unsigned NumEntries, 
+    const Type* Typ) { }
+
+  virtual void handleSymbolTableType( unsigned i, unsigned slot, 
+    const std::string& name ) { }
+
+  virtual void handleSymbolTableValue( unsigned i, unsigned slot, 
+    const std::string& name ) { }
+
+  virtual void handleSymbolTableEnd() { }
+
+  virtual void handleFunctionBegin( Function* Func, unsigned Size) {
+    const FunctionType* FType = 
+      cast<FunctionType>(Func->getType()->getElementType());
+    currFunc = &bca.FunctionInfo[Func];
+    currFunc->description = FType->getDescription();
+    currFunc->name = Func->getName();
+    currFunc->byteSize = Size;
+    currFunc->numInstructions = 0;
+    currFunc->numBasicBlocks = 0;
+    currFunc->numPhis = 0;
+    currFunc->numOperands = 0;
+    currFunc->density = 0.0;
+    currFunc->vbrCount32 = 0;
+    currFunc->vbrCount64 = 0;
+    currFunc->vbrCompBytes = 0;
+    currFunc->vbrExpdBytes = 0;
   }
 
-  void handleCompactionTableEnd()
-  {
+  virtual void handleFunctionEnd( Function* Func) {
+    currFunc->density = double(currFunc->byteSize) /
+      double(currFunc->numInstructions+currFunc->numBasicBlocks);
   }
 
-  void handleSymbolTableBegin()
-  {
-    bca.numSymTab++;
-  }
-
-  void handleSymbolTablePlane( 
-    unsigned Ty, 
-    unsigned NumEntries, 
-    const Type* Typ
-  )
-  {
-  }
-
-  void handleSymbolTableType( 
-    unsigned i, 
-    unsigned slot, 
-    const std::string& name 
-  )
-  {
-  }
-
-  void handleSymbolTableValue( 
-    unsigned i, 
-    unsigned slot, 
-    const std::string& name 
-  )
-  {
-  }
-
-  void handleSymbolTableEnd()
-  {
-  }
-
-  void handleFunctionBegin(
-    const Type* FType, 
-    GlobalValue::LinkageTypes linkage 
-  )
-  {
-  }
-
-  void handleFunctionEnd(
-    const Type* FType
-  )
-  {
-  }
-
-  void handleBasicBlockBegin(
-    unsigned blocknum
-  )
-  {
+  virtual void handleBasicBlockBegin( unsigned blocknum) {
     bca.numBasicBlocks++;
     bca.numValues++;
+    if ( currFunc ) currFunc->numBasicBlocks++;
   }
 
-  bool handleInstruction(
-    unsigned Opcode, 
-    const Type* iType, 
-    std::vector<unsigned>& Operands,
-    unsigned Size
-  )
-  {
+  virtual bool handleInstruction( unsigned Opcode, const Type* iType, 
+    std::vector<unsigned>& Operands, unsigned Size) {
     bca.numInstructions++;
     bca.numValues++;
     bca.numOperands += Operands.size();
+    if ( currFunc ) {
+      currFunc->numInstructions++;
+      if ( Instruction::isPhiNode(Opcode) ) currFunc->numPhis++;
+    }
     return Instruction::isTerminator(Opcode); 
   }
 
-  void handleBasicBlockEnd(unsigned blocknum)
-  {
-  }
+  virtual void handleBasicBlockEnd(unsigned blocknum) { }
 
-  void handleGlobalConstantsBegin()
-  {
-  }
+  virtual void handleGlobalConstantsBegin() { }
 
-  void handleConstantExpression( 
-      unsigned Opcode, 
-      const Type* Typ, 
-      std::vector<std::pair<const Type*,unsigned> > ArgVec 
-    )
-  {
+  virtual void handleConstantExpression( unsigned Opcode, const Type* Typ, 
+      std::vector<std::pair<const Type*,unsigned> > ArgVec ) {
     bca.numConstants++;
     bca.numValues++;
   }
 
-  void handleConstantValue( Constant * c )
-  {
+  virtual void handleConstantValue( Constant * c ) {
     bca.numConstants++;
     bca.numValues++;
   }
 
-  void handleConstantArray( 
-          const ArrayType* AT, 
-          std::vector<unsigned>& Elements )
-  {
+  virtual void handleConstantArray( const ArrayType* AT, 
+          std::vector<unsigned>& Elements ) {
     bca.numConstants++;
     bca.numValues++;
   }
 
-  void handleConstantStruct(
+  virtual void handleConstantStruct(
         const StructType* ST,
         std::vector<unsigned>& ElementSlots)
   {
@@ -282,27 +225,23 @@ public:
     bca.numValues++;
   }
 
-  void handleConstantPointer(
-        const PointerType* PT, unsigned Slot)
-  {
+  virtual void handleConstantPointer( const PointerType* PT, unsigned Slot) {
     bca.numConstants++;
     bca.numValues++;
   }
 
-  void handleConstantString( const ConstantArray* CA ) 
-  {
+  virtual void handleConstantString( const ConstantArray* CA ) {
     bca.numConstants++;
     bca.numValues++;
   }
 
+  virtual void handleGlobalConstantsEnd() { }
 
-  void handleGlobalConstantsEnd() { }
-
-  void handleAlignment(unsigned numBytes) {
+  virtual void handleAlignment(unsigned numBytes) {
     bca.numAlignment += numBytes;
   }
 
-  void handleBlock(
+  virtual void handleBlock(
     unsigned BType, const unsigned char* StartPtr, unsigned Size) {
     bca.numBlocks++;
     bca.BlockSizes[llvm::BytecodeFormat::FileBlockIDs(BType)] += Size;
@@ -312,11 +251,22 @@ public:
     bca.vbrCount32++;
     bca.vbrCompBytes += Size;
     bca.vbrExpdBytes += sizeof(uint32_t);
+    if (currFunc) {
+      currFunc->vbrCount32++;
+      currFunc->vbrCompBytes += Size;
+      currFunc->vbrExpdBytes += sizeof(uint32_t);
+    }
   }
+
   virtual void handleVBR64(unsigned Size ) {
     bca.vbrCount64++;
     bca.vbrCompBytes += Size;
     bca.vbrExpdBytes += sizeof(uint64_t);
+    if ( currFunc ) {
+      currFunc->vbrCount64++;
+      currFunc->vbrCompBytes += Size;
+      currFunc->vbrExpdBytes += sizeof(uint64_t);
+    }
   }
 };
 
