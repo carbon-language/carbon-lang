@@ -107,6 +107,15 @@ public:
     assert(find(BB) == end() && "Block already in DominatorSet!");
     Doms.insert(std::make_pair(BB, Dominators));
   }
+
+  // addDominator - If a new block is inserted into the CFG, then method may be
+  // called to notify the blocks it dominates that it is in their set.
+  //
+  void addDominator(BasicBlock *BB, BasicBlock *NewDominator) {
+    iterator I = find(BB);
+    assert(I != end() && "BB is not in DominatorSet!");
+    I->second.insert(NewDominator);
+  }
 };
 
 
