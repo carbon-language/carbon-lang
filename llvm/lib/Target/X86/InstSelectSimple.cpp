@@ -1375,7 +1375,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   switch (Class) {
   case cFP:              // Floating point divide
     if (isDiv) {
-      BuildMI(BB, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+      BMI(BB, IP, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
     } else {               // Floating point remainder...
       MachineInstr *TheCall =
         BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("fmod", true);
@@ -1420,26 +1420,26 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   unsigned ExtReg = ExtRegs[Class];
 
   // Put the first operand into one of the A registers...
-  BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
+  BMI(BB, IP, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
 
   if (isSigned) {
     // Emit a sign extension instruction...
     unsigned ShiftResult = makeAnotherReg(Ty);
-    BuildMI(BB, SarOpcode[Class], 2, ShiftResult).addReg(Op0Reg).addZImm(31);
-    BuildMI(BB, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
+    BMI(BB, IP, SarOpcode[Class], 2, ShiftResult).addReg(Op0Reg).addZImm(31);
+    BMI(BB, IP, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
   } else {
     // If unsigned, emit a zeroing instruction... (reg = xor reg, reg)
-    BuildMI(BB, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
+    BMI(BB, IP, ClrOpcode[Class], 2, ExtReg).addReg(ExtReg).addReg(ExtReg);
   }
 
   // Emit the appropriate divide or remainder instruction...
-  BuildMI(BB, DivOpcode[isSigned][Class], 1).addReg(Op1Reg);
+  BMI(BB, IP, DivOpcode[isSigned][Class], 1).addReg(Op1Reg);
 
   // Figure out which register we want to pick the result out of...
   unsigned DestReg = isDiv ? Reg : ExtReg;
   
   // Put the result into the destination register...
-  BuildMI(BB, MovOpcode[Class], 1, ResultReg).addReg(DestReg);
+  BMI(BB, IP, MovOpcode[Class], 1, ResultReg).addReg(DestReg);
 }
 
 
