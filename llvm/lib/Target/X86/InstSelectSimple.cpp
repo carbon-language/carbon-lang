@@ -980,6 +980,8 @@ void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
 
   case LLVMIntrinsic::longjmp:
     BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
+    return;
+
   case LLVMIntrinsic::setjmp:
     // Setjmp always returns zero...
     BuildMI(BB, X86::MOVir32, 1, getReg(CI)).addZImm(0);
@@ -1814,9 +1816,10 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       case cByte:  StoreTy = Type::ShortTy; StoreClass = cShort; break;
       case cShort: StoreTy = Type::IntTy;   StoreClass = cInt;   break;
       case cInt:   StoreTy = Type::LongTy;  StoreClass = cLong;  break;
-      case cLong:
-        assert(0 &&"FIXME not implemented: cast FP to unsigned long long");
-        abort();
+      // The following treatment of cLong may not be perfectly right,
+      // but it survives chains of casts of the form
+      // double->ulong->double.
+      case cLong:  StoreTy = Type::LongTy;  StoreClass = cLong;  break;
       default: assert(0 && "Unknown store class!");
       }
 
