@@ -39,7 +39,7 @@ void VM::setupPassManager() {
 /// getPointerToFunction - This method is used to get the address of the
 /// specified function, compiling it if neccesary.
 ///
-void *VM::getPointerToFunction(const Function *F) {
+void *VM::getPointerToFunction(Function *F) {
   void *&Addr = GlobalAddress[F];   // Function already code gen'd
   if (Addr) return Addr;
 
@@ -49,11 +49,9 @@ void *VM::getPointerToFunction(const Function *F) {
   static bool isAlreadyCodeGenerating = false;
   assert(!isAlreadyCodeGenerating && "ERROR: RECURSIVE COMPILATION DETECTED!");
 
-  // FIXME: JIT all of the functions in the module.  Eventually this will JIT
-  // functions on demand.  This has the effect of populating all of the
-  // non-external functions into the GlobalAddress table.
+  // JIT the function
   isAlreadyCodeGenerating = true;
-  PM.run(getModule());
+  PM.run(*F);
   isAlreadyCodeGenerating = false;
 
   assert(Addr && "Code generation didn't add function to GlobalAddress table!");
