@@ -14,7 +14,6 @@
 #include "llvm/DerivedTypes.h"
 #include <map>
 #include <dlfcn.h>
-#include <iostream>
 #include <link.h>
 #include <math.h>
 #include <stdio.h>

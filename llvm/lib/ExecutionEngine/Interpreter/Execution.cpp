@@ -823,7 +823,7 @@ static GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
 
       // Get the index number for the array... which must be uint type...
       assert((*I)->getType() == Type::LongTy);
-      unsigned Idx = getOperandValue(*I, SF).UIntVal;
+      unsigned Idx = getOperandValue(*I, SF).LongVal;
       if (const ArrayType *AT = dyn_cast<ArrayType>(ST))
         if (Idx >= AT->getNumElements() && ArrayChecksEnabled) {
           cerr << "Out of range memory access to element #" << Idx
