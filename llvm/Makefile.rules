@@ -352,7 +352,7 @@ Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS)
 DependC  := $(CC)  -MM -I$(LEVEL)/include $(CPPFLAGS) 
 
 # Archive a bunch of .o files into a .a file...
-AR       = ${AR_PATH} cq 
+AR       = $(AR_PATH) cr
 
 #----------------------------------------------------------
 
