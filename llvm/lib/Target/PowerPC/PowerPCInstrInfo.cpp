@@ -26,32 +26,32 @@ bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
                                    unsigned& sourceReg,
                                    unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
-  if (oc == PPC32::OR) {                      // or r1, r2, r2
+  if (oc == PPC::OR) {                      // or r1, r2, r2
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isRegister() &&
-           "invalid PPC32 OR instruction!");
+           "invalid PPC OR instruction!");
     if (MI.getOperand(1).getReg() == MI.getOperand(2).getReg()) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
     }
-  } else if (oc == PPC32::ADDI) {             // addi r1, r2, 0
+  } else if (oc == PPC::ADDI) {             // addi r1, r2, 0
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(2).isImmediate() &&
-           "invalid PPC32 ADDI instruction!");
+           "invalid PPC ADDI instruction!");
     if (MI.getOperand(1).isRegister() && MI.getOperand(2).getImmedValue()==0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
     }
-  } else if (oc == PPC32::FMR) {              // fmr r1, r2
+  } else if (oc == PPC::FMR) {              // fmr r1, r2
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
-           "invalid PPC32 FMR instruction");
+           "invalid PPC FMR instruction");
     sourceReg = MI.getOperand(1).getReg();
     destReg = MI.getOperand(0).getReg();
     return true;

@@ -31,8 +31,8 @@
 using namespace llvm;
 
 PowerPCRegisterInfo::PowerPCRegisterInfo()
-  : PowerPCGenRegisterInfo(PPC32::ADJCALLSTACKDOWN,
-                           PPC32::ADJCALLSTACKUP) {}
+  : PowerPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN,
+                           PPC::ADJCALLSTACKUP) {}
 
 static unsigned getIdx(const TargetRegisterClass *RC) {
   if (RC == PowerPC::GPRCRegisterClass) {
@@ -59,12 +59,12 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = { 
-    PPC32::STB, PPC32::STH, PPC32::STW, PPC32::STFS, PPC32::STFD 
+    PPC::STB, PPC::STH, PPC::STW, PPC::STFS, PPC::STFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
-  if (SrcReg == PPC32::LR) {
-    MBB.insert(MI, BuildMI(PPC32::MFLR, 0, PPC32::R0));
-    MBB.insert(MI, addFrameReference(BuildMI(OC,3).addReg(PPC32::R0),FrameIdx));
+  if (SrcReg == PPC::LR) {
+    MBB.insert(MI, BuildMI(PPC::MFLR, 0, PPC::R0));
+    MBB.insert(MI, addFrameReference(BuildMI(OC,3).addReg(PPC::R0),FrameIdx));
     return 2;
   } else {
     MBB.insert(MI, addFrameReference(BuildMI(OC, 3).addReg(SrcReg),FrameIdx));
@@ -78,12 +78,12 @@ PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = { 
-    PPC32::LBZ, PPC32::LHZ, PPC32::LWZ, PPC32::LFS, PPC32::LFD 
+    PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD 
   };
   unsigned OC = Opcode[getIdx(RC)];
-  if (DestReg == PPC32::LR) {
-    MBB.insert(MI, addFrameReference(BuildMI(OC, 2, PPC32::R0), FrameIdx));
-    MBB.insert(MI, BuildMI(PPC32::MTLR, 1).addReg(PPC32::R0));
+  if (DestReg == PPC::LR) {
+    MBB.insert(MI, addFrameReference(BuildMI(OC, 2, PPC::R0), FrameIdx));
+    MBB.insert(MI, BuildMI(PPC::MTLR, 1).addReg(PPC::R0));
     return 2;
   } else {
     MBB.insert(MI, addFrameReference(BuildMI(OC, 2, DestReg), FrameIdx));
@@ -98,9 +98,9 @@ int PowerPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   MachineInstr *I;
 
   if (RC == PowerPC::GPRCRegisterClass) {
-    I = BuildMI(PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    I = BuildMI(PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PowerPC::FPRCRegisterClass) {
-    I = BuildMI(PPC32::FMR, 1, DestReg).addReg(SrcReg);
+    I = BuildMI(PPC::FMR, 1, DestReg).addReg(SrcReg);
   } else { 
     std::cerr << "Attempt to copy register that is not GPR or FPR";
     abort();
@@ -138,12 +138,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       Amount = (Amount+Align-1)/Align*Align;
       
       MachineInstr *New;
-      if (Old->getOpcode() == PPC32::ADJCALLSTACKDOWN) {
-        New = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1)
+      if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
+        New = BuildMI(PPC::ADDI, 2, PPC::R1).addReg(PPC::R1)
                 .addSImm(-Amount);
       } else {
-        assert(Old->getOpcode() == PPC32::ADJCALLSTACKUP);
-        New = BuildMI(PPC32::ADDI, 2, PPC32::R1).addReg(PPC32::R1)
+        assert(Old->getOpcode() == PPC::ADJCALLSTACKUP);
+        New = BuildMI(PPC::ADDI, 2, PPC::R1).addReg(PPC::R1)
                 .addSImm(Amount);
       }
       
@@ -168,7 +168,7 @@ PowerPCRegisterInfo::eliminateFrameIndex(MachineFunction &MF,
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Replace the FrameIndex with base register with GPR1.
-  MI.SetMachineOperandReg(i, PPC32::R1);
+  MI.SetMachineOperandReg(i, PPC::R1);
 
   // Take into account whether it's an add or mem instruction
   unsigned OffIdx = (i == 2) ? 1 : 2;
@@ -213,7 +213,7 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  unsigned Size = getRegClass(PPC32::R1)->getSize();
+  unsigned Size = getRegClass(PPC::R1)->getSize();
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
@@ -221,18 +221,18 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes <= 32768) {
-    MI = BuildMI(PPC32::STWU, 3).addReg(PPC32::R1).addSImm(-NumBytes)
-      .addReg(PPC32::R1);
+    MI = BuildMI(PPC::STWU, 3).addReg(PPC::R1).addSImm(-NumBytes)
+      .addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   } else {
     int NegNumbytes = -NumBytes;
-    MI = BuildMI(PPC32::LIS, 1, PPC32::R0).addSImm(NegNumbytes >> 16);
+    MI = BuildMI(PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::ORI, 2, PPC32::R0).addReg(PPC32::R0)
+    MI = BuildMI(PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
       .addImm(NegNumbytes & 0xFFFF);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC32::STWUX, 3).addReg(PPC32::R1).addReg(PPC32::R1)
-      .addReg(PPC32::R0);
+    MI = BuildMI(PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
+      .addReg(PPC::R0);
     MBB.insert(MBBI, MI);
   }
 }
@@ -242,14 +242,14 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
-  assert(MBBI->getOpcode() == PPC32::BLR &&
+  assert(MBBI->getOpcode() == PPC::BLR &&
          "Can only insert epilog into returning blocks");
   
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
   if (NumBytes != 0) {
-    MI = BuildMI(PPC32::LWZ, 2, PPC32::R1).addSImm(0).addReg(PPC32::R1);
+    MI = BuildMI(PPC::LWZ, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   }
 }

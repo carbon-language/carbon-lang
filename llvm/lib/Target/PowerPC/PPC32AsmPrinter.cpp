@@ -478,16 +478,16 @@ void Printer::printOp(const MachineOperand &MO,
 
 void Printer::printImmOp(const MachineOperand &MO, unsigned ArgType) {
   int Imm = MO.getImmedValue();
-  if (ArgType == PPC32II::Simm16 || ArgType == PPC32II::Disimm16) {
+  if (ArgType == PPCII::Simm16 || ArgType == PPCII::Disimm16) {
     O << (short)Imm;
-  } else if (ArgType == PPC32II::Zimm16) {
+  } else if (ArgType == PPCII::Zimm16) {
     O << (unsigned short)Imm;
   } else {
     O << Imm;
   }
 }
 
-/// printMachineInstruction -- Print out a single PPC32 LLVM instruction
+/// printMachineInstruction -- Print out a single PPC LLVM instruction
 /// MI in Darwin syntax to the current output stream.
 ///
 void Printer::printMachineInstruction(const MachineInstr *MI) {
@@ -498,15 +498,15 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   unsigned ArgCount = MI->getNumOperands();
   unsigned ArgType[] = {
-    (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask,
-    (Desc.TSFlags >> PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask,
-    (Desc.TSFlags >> PPC32II::Arg2TypeShift) & PPC32II::ArgTypeMask,
-    (Desc.TSFlags >> PPC32II::Arg3TypeShift) & PPC32II::ArgTypeMask,
-    (Desc.TSFlags >> PPC32II::Arg4TypeShift) & PPC32II::ArgTypeMask
+    (Desc.TSFlags >> PPCII::Arg0TypeShift) & PPCII::ArgTypeMask,
+    (Desc.TSFlags >> PPCII::Arg1TypeShift) & PPCII::ArgTypeMask,
+    (Desc.TSFlags >> PPCII::Arg2TypeShift) & PPCII::ArgTypeMask,
+    (Desc.TSFlags >> PPCII::Arg3TypeShift) & PPCII::ArgTypeMask,
+    (Desc.TSFlags >> PPCII::Arg4TypeShift) & PPCII::ArgTypeMask
   };
-  assert(((Desc.TSFlags & PPC32II::VMX) == 0) &&
+  assert(((Desc.TSFlags & PPCII::VMX) == 0) &&
          "Instruction requires VMX support");
-  assert(((Desc.TSFlags & PPC32II::PPC64) == 0) &&
+  assert(((Desc.TSFlags & PPCII::PPC64) == 0) &&
          "Instruction requires 64 bit support");
   ++EmittedInsts;
 
@@ -514,27 +514,27 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   // appropriate number of args that the assembler expects.  This is because
   // may have many arguments appended to record the uses of registers that are
   // holding arguments to the called function.
-  if (Opcode == PPC32::COND_BRANCH) {
+  if (Opcode == PPC::COND_BRANCH) {
     std::cerr << "Error: untranslated conditional branch psuedo instruction!\n";
     abort();
-  } else if (Opcode == PPC32::IMPLICIT_DEF) {
+  } else if (Opcode == PPC::IMPLICIT_DEF) {
     O << "; IMPLICIT DEF ";
     printOp(MI->getOperand(0));
     O << "\n";
     return;
-  } else if (Opcode == PPC32::CALLpcrel) {
+  } else if (Opcode == PPC::CALLpcrel) {
     O << TII.getName(Opcode) << " ";
     printOp(MI->getOperand(0));
     O << "\n";
     return;
-  } else if (Opcode == PPC32::CALLindirect) {
+  } else if (Opcode == PPC::CALLindirect) {
     O << TII.getName(Opcode) << " ";
     printImmOp(MI->getOperand(0), ArgType[0]);
     O << ", ";
     printImmOp(MI->getOperand(1), ArgType[0]);
     O << "\n";
     return;
-  } else if (Opcode == PPC32::MovePCtoLR) {
+  } else if (Opcode == PPC::MovePCtoLR) {
     // FIXME: should probably be converted to cout.width and cout.fill
     O << "bl \"L0000" << LabelNumber << "$pb\"\n";
     O << "\"L0000" << LabelNumber << "$pb\":\n";
@@ -545,34 +545,34 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   O << TII.getName(Opcode) << " ";
-  if (Opcode == PPC32::LOADLoDirect || Opcode == PPC32::LOADLoIndirect) {
+  if (Opcode == PPC::LOADLoDirect || Opcode == PPC::LOADLoIndirect) {
     printOp(MI->getOperand(0));
     O << ", lo16(";
     printOp(MI->getOperand(2));
     O << "-\"L0000" << LabelNumber << "$pb\")";
     O << "(";
-    if (MI->getOperand(1).getReg() == PPC32::R0)
+    if (MI->getOperand(1).getReg() == PPC::R0)
       O << "0";
     else
       printOp(MI->getOperand(1));
     O << ")\n";
-  } else if (Opcode == PPC32::LOADHiAddr) {
+  } else if (Opcode == PPC::LOADHiAddr) {
     printOp(MI->getOperand(0));
     O << ", ";
-    if (MI->getOperand(1).getReg() == PPC32::R0)
+    if (MI->getOperand(1).getReg() == PPC::R0)
       O << "0";
     else
       printOp(MI->getOperand(1));
     O << ", ha16(" ;
     printOp(MI->getOperand(2));
      O << "-\"L0000" << LabelNumber << "$pb\")\n";
-  } else if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
+  } else if (ArgCount == 3 && ArgType[1] == PPCII::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";
     printImmOp(MI->getOperand(1), ArgType[1]);
     O << "(";
     if (MI->getOperand(2).hasAllocatedReg() &&
-        MI->getOperand(2).getReg() == PPC32::R0)
+        MI->getOperand(2).getReg() == PPC::R0)
       O << "0";
     else
       printOp(MI->getOperand(2));
@@ -580,9 +580,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   } else {
     for (i = 0; i < ArgCount; ++i) {
       // addi and friends
-      if (i == 1 && ArgCount == 3 && ArgType[2] == PPC32II::Simm16 &&
+      if (i == 1 && ArgCount == 3 && ArgType[2] == PPCII::Simm16 &&
           MI->getOperand(1).hasAllocatedReg() && 
-          MI->getOperand(1).getReg() == PPC32::R0) {
+          MI->getOperand(1).getReg() == PPC::R0) {
         O << "0";
       // for long branch support, bc $+8
       } else if (i == 1 && ArgCount == 2 && MI->getOperand(1).isImmediate() &&

@@ -35,17 +35,17 @@ namespace {
     ///
     static unsigned bytesForOpcode(unsigned opcode) {
       switch (opcode) {
-      case PPC32::COND_BRANCH:
+      case PPC::COND_BRANCH:
         // while this will be 4 most of the time, if we emit 12 it is just a
         // minor pessimization that saves us from having to worry about 
         // keeping the offsets up to date later when we emit long branch glue.
         return 12;
-      case PPC32::MovePCtoLR:
+      case PPC::MovePCtoLR:
         // MovePCtoLR is actually a combination of a branch-and-link (bl)
         // followed by a move from link register to dest reg (mflr)
         return 8;
         break;
-      case PPC32::IMPLICIT_DEF: // no asm emitted
+      case PPC::IMPLICIT_DEF: // no asm emitted
         return 0;
         break;
       default: 
@@ -91,7 +91,7 @@ namespace {
         
         for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
              MBBI != EE; ++MBBI) {
-          if (MBBI->getOpcode() == PPC32::COND_BRANCH) {
+          if (MBBI->getOpcode() == PPC::COND_BRANCH) {
             // condbranch operands:
             // 0. CR0 register
             // 1. bc opcode
@@ -108,11 +108,11 @@ namespace {
 
             MachineInstr *MI = MBBI;
             if (Displacement >= -32768 && Displacement <= 32767) {
-              BuildMI(*MBB, MBBI, Opcode, 2).addReg(PPC32::CR0).addMBB(trueMBB);
+              BuildMI(*MBB, MBBI, Opcode, 2).addReg(PPC::CR0).addMBB(trueMBB);
             } else {
-              BuildMI(*MBB, MBBI, Inverted, 2).addReg(PPC32::CR0).addSImm(8);
-              BuildMI(*MBB, MBBI, PPC32::B, 1).addMBB(trueMBB);
-              BuildMI(*MBB, MBBI, PPC32::B, 1).addMBB(falseMBB);
+              BuildMI(*MBB, MBBI, Inverted, 2).addReg(PPC::CR0).addSImm(8);
+              BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(trueMBB);
+              BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(falseMBB);
             }
             MBB->erase(MI);
           }

@@ -42,7 +42,7 @@ def Vpr : Format<22>;
 //
 // PowerPC instruction formats
 
-class PPC32I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
+class I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
   field bits<32> Inst;
 
   bits<3> ArgCount;
@@ -55,13 +55,13 @@ class PPC32I<string name, bits<6> opcode, bit ppc64, bit vmx> : Instruction {
   bit VMX = vmx;
 
   let Name = name;
-  let Namespace = "PPC32";
+  let Namespace = "PPC";
   let Inst{0-5} = opcode;
 }
 
 // 1.7.1 I-Form
 class IForm<string name, bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx>
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<24> LI;
 
   let ArgCount = 1;
@@ -78,7 +78,7 @@ class IForm<string name, bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx>
 
 // 1.7.2 B-Form
 class BForm<string name, bits<6> opcode, bit aa, bit lk, bit ppc64, bit vmx>
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<5>  BO;
   field bits<5>  BI;
   field bits<14> BD;
@@ -110,7 +110,7 @@ class BForm_ext<string name, bits<6> opcode, bit aa, bit lk, bits<5> bo,
 
 // 1.7.4 D-Form
 class DForm_base<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<5>  A;
   field bits<5>  B;
   field bits<16> C;
@@ -162,7 +162,7 @@ class DForm_4_zero<string name, bits<6> opcode, bit ppc64, bit vmx>
 }
 
 class DForm_5<string name, bits<6> opcode, bit ppc64, bit vmx> 
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<3>  BF;
   field bits<1>  L;
   field bits<5>  RA;
@@ -224,7 +224,7 @@ class DForm_9<string name, bits<6> opcode, bit ppc64, bit vmx>
 
 // 1.7.6 X-Form
 class XForm_base_r3xo<string name, bits<6> opcode, bits<10> xo, bit rc, 
-                      bit ppc64, bit vmx> : PPC32I<name, opcode, ppc64, vmx> {
+                      bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
   let ArgCount = 3;
   field bits<5>  ST;
   field bits<5>  A;
@@ -278,7 +278,7 @@ class XForm_11<string name, bits<6> opcode, bits<10> xo, bit rc, bit ppc64,
 }
 
 class XForm_16<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<3>  BF;
   field bits<1>  L; 
   field bits<5>  RA;
@@ -306,7 +306,7 @@ class XForm_16_ext<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
 }
 
 class XForm_17<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx> 
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<3> BF;
   field bits<5> FRA;
   field bits<5> FRB;
@@ -356,7 +356,7 @@ class XLForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
 }
 
 class XLForm_2<string name, bits<6> opcode, bits<10> xo, bit lk, bit ppc64, 
-               bit vmx> : PPC32I<name, opcode, ppc64, vmx> {
+               bit vmx> : I<name, opcode, ppc64, vmx> {
   field bits<5>  BO;
   field bits<5>  BI;
   field bits<2>  BH;
@@ -390,7 +390,7 @@ class XLForm_2_ext<string name, bits<6> opcode, bits<10> xo, bits<5> bo,
 
 // 1.7.8 XFX-Form
 class XFXForm_1<string name, bits<6> opcode, bits<10> xo, bit ppc64, bit vmx>
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   field bits<5>  ST;
   field bits<10> SPR;
 
@@ -428,7 +428,7 @@ class XFXForm_7_ext<string name, bits<6> opcode, bits<10> xo, bits<10> spr,
 
 // 1.7.11 XO-Form
 class XOForm_1<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc, 
-               bit ppc64, bit vmx> : PPC32I<name, opcode, ppc64, vmx> {
+               bit ppc64, bit vmx> : I<name, opcode, ppc64, vmx> {
   field bits<5>  RT;
   field bits<5>  RA;
   field bits<5>  RB;
@@ -468,7 +468,7 @@ class XOForm_3<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc,
 
 // 1.7.12 A-Form
 class AForm_1<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
-              bit vmx> : PPC32I<name, opcode, ppc64, vmx> {
+              bit vmx> : I<name, opcode, ppc64, vmx> {
   let ArgCount = 4;
   field bits<5>  FRT;
   field bits<5>  FRA;
@@ -514,7 +514,7 @@ class AForm_4<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64,
 
 // 1.7.13 M-Form
 class MForm_1<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx> 
-  : PPC32I<name, opcode, ppc64, vmx> {
+  : I<name, opcode, ppc64, vmx> {
   let ArgCount = 5;
   field bits<5>  RS;
   field bits<5>  RA;
@@ -543,7 +543,7 @@ class MForm_2<string name, bits<6> opcode, bit rc, bit ppc64, bit vmx>
 
 //===----------------------------------------------------------------------===//
 
-class Pseudo<string name> : PPC32I<name, 0, 0, 0> {
+class Pseudo<string name> : I<name, 0, 0, 0> {
 	let Name = name;
 	let ArgCount = 0;
 	let PPC64 = 0;
@@ -555,5 +555,5 @@ class Pseudo<string name> : PPC32I<name, 0, 0, 0> {
 	let Arg3Type = Pseudo.Value;
 	let Arg4Type = 0;
 
-	let Inst {31-0} = 0;
+	let Inst{31-0} = 0;
 }

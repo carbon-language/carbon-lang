@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 class PPCReg : Register {
-  let Namespace = "PPC32";
+  let Namespace = "PPC";
 }
 
 // We identify all our registers with a 5-bit ID, for consistency's sake.

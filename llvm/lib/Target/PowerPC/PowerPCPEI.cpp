@@ -170,7 +170,7 @@ void PPCPEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     unsigned RegSize = RegInfo->getRegClass(RegsToSave[i])->getSize();
     int FrameIdx;
     
-    if (RegsToSave[i] == PPC32::LR) {
+    if (RegsToSave[i] == PPC::LR) {
       FrameIdx = FFI->CreateFixedObject(RegSize, 8); // LR lives at +8
     } else {
       Offset -= RegSize;
