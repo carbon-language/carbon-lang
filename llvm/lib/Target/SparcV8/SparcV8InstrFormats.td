@@ -23,7 +23,6 @@ class F2 : InstV8 {                   // Format 2 instructions
 //
 class F2_1<bits<3> op2Val, string name> : F2 {
   bits<5>  rd;
-  bits<22> imm;
 
   let op2         = op2Val;
   let Name        = name;
