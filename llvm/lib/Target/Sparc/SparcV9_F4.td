@@ -80,11 +80,13 @@ class F4_2<bits<2> opVal, bits<6> op3Val, string name> : F4_rs1simm11rd {
 class F4_3<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
            string name> : F4_condcc {
   bits<5> rs2;
+  bits<5> rd;
 
   set op = opVal;
   set op3 = op3Val;
   set cond = condVal;
   set Name = name;
+  set Inst{29-25} = rd;
   set Inst{13} = 0; // i bit
   //set Inst{10-5} = dontcare;
   set Inst{4-0} = rs2;
@@ -99,6 +101,7 @@ class F4_4<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
   set op3  = op3Val;
   set cond = condVal;
   set Name = name;
+  set Inst{29-25} = rd;
   set Inst{13} = 1; // i bit
   set Inst{10-0} = sim11;
 }  
