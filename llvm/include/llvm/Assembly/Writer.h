@@ -12,9 +12,6 @@
 // can print LLVM code at a variety of granularities, including Modules,
 // BasicBlocks, and Instructions.  This makes it useful for debugging.
 //
-// This library uses the Analysis library to figure out offsets for
-// variables in the method tables.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ASSEMBLY_WRITER_H
