@@ -2,9 +2,9 @@
 ; RUN: as < testlink2.ll > Output/testlink2.bc
 ; RUN: link Output/%s.bc Output/testlink2.bc
 
-%MyVar     = uninitialized global int
+%MyVar     = external global int
 %MyIntList = global { \2 *, int } { { \2, int }* null, int 17 }
-             uninitialized global int      ; int*:0
+             external global int      ; int*:0
 
 %AConst    = constant int 123
 
@@ -25,7 +25,7 @@ begin
 	%v1 = load int* %MyVar
 	call void %print(int %v1)    ;; Should start out 4
 
-	%idx = getelementptr { \2 *, int }* %MyIntList, uint 0, ubyte 1
+	%idx = getelementptr { \2 *, int }* %MyIntList, long 0, ubyte 1
 	%v2 = load int* %idx
 	call void %print(int %v2)    ;; Should start out 17
 

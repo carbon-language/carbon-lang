@@ -3,7 +3,7 @@
 ; RUN: echo
 
 %MyVar     = global int 4
-%MyIntList = uninitialized global { \2 *, int }
+%MyIntList = external global { \2 *, int }
 
 %AConst    = constant int 123
 
@@ -20,7 +20,7 @@ implementation
 int "foo"(int %blah)
 begin
 	store int %blah, int *%MyVar
-	%idx = getelementptr { \2 *, int } * %MyIntList, uint 0, ubyte 1
+	%idx = getelementptr { \2 *, int } * %MyIntList, long 0, ubyte 1
 	store int 12, int* %idx
 
 	%ack = load int * %0   ;; Load from the unnamed constant
