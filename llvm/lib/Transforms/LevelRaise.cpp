@@ -505,7 +505,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
       // Create a new cast, inserting it right before the function call...
       CastInst *NewCast = new CastInst(CI->getCalledValue(), NewPFunTy,
-                                       CI->getCalledValue()->getName(), CI);
+                                       CI->getCalledValue()->getName()+"_c",CI);
 
       // Create a new call instruction...
       CallInst *NewCall = new CallInst(NewCast,
