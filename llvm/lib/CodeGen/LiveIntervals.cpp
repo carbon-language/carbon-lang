@@ -286,9 +286,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
     LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
-    // iterate over all of the blocks that the variable is completely
-    // live in, adding them to the live interval. obviously we only
-    // need to do this once.
+    // Iterate over all of the blocks that the variable is completely
+    // live in, adding [insrtIndex(begin), instrIndex(end)+4) to the
+    // live interval. Obviously we only need to do this once.
     if (interval.empty()) {
         for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
             if (vi.AliveBlocks[i]) {
@@ -337,6 +337,8 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                               MachineBasicBlock::iterator mi,
                                               LiveInterval& interval)
 {
+    // A physical register cannot be live across basic block, so its
+    // lifetime must end somewhere in its defining basic block.
     DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
     typedef LiveVariables::killed_iterator KillIter;
 
@@ -345,7 +347,9 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     unsigned start = getDefIndex(baseIndex);
     unsigned end = start;
 
-    // a variable can be dead by the instruction defining it
+    // If it is not used after definition, it is considered dead at
+    // the instruction defining it. Hence its interval is:
+    // [defSlot(def), defSlot(def)+1)
     for (KillIter ki = lv_->dead_begin(mi), ke = lv_->dead_end(mi);
          ki != ke; ++ki) {
         if (interval.reg == ki->second) {
@@ -355,7 +359,9 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
         }
     }
 
-    // a variable can only be killed by subsequent instructions
+    // If it is not dead on definition, it must be killed by a
+    // subsequent instruction. Hence its interval is:
+    // [defSlot(def), useSlot(def)+1)
     do {
         ++mi;
         baseIndex += InstrSlots::NUM;
