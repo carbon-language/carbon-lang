@@ -153,6 +153,7 @@ public:
     StripAllocaBit        = 1 << 0, KeepAllocaBit     = 0 << 0,
     DontCloneCallNodes    = 1 << 1, CloneCallNodes    = 0 << 0,
     DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0 << 0,
+    StripModRefBits       = 1 << 3, KeepModRefBits    = 0 << 0,
   };
 
   // cloneInto - Clone the specified DSGraph into the current graph, returning
