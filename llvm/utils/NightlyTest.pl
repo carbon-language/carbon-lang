@@ -551,7 +551,7 @@ if($RUNDEJAGNU) {
   
   #Run the feature and regression tests, results are put into testrun.sum
   #Full log in testrun.log
-  system "time -p gmake $MAKEOPTS check-dejagnu >& $dejagnu_output";
+  system "time -p gmake $MAKEOPTS check-dejagnu > $dejagnu_output 2>&1";
 
   #Extract time of dejagnu tests
   my $DejagnuTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$dejagnu_output";
