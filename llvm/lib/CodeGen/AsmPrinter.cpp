@@ -41,7 +41,7 @@ void AsmPrinter::emitAlignment(unsigned NumBits) const {
 
 /// emitZeros - Emit a block of zeros.
 ///
-void AsmPrinter::emitZeros(unsigned NumZeros) const {
+void AsmPrinter::emitZeros(uint64_t NumZeros) const {
   if (NumZeros) {
     if (ZeroDirective)
       O << ZeroDirective << NumZeros << "\n";
@@ -78,7 +78,7 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
       // generate a symbolic expression for the byte address
       const Constant *ptrVal = CE->getOperand(0);
       std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-      if (unsigned Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
+      if (uint64_t Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
         O << "(";
         emitConstantValueOnly(ptrVal);
         O << ") + " << Offset;
@@ -139,7 +139,8 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
 
   O << "\"";
   for (unsigned i = 0; i != CVA->getNumOperands(); ++i) {
-    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
+    unsigned char C = 
+        (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
     if (C == '"') {
       O << "\\\"";
@@ -187,13 +188,13 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     // Print the fields in successive locations. Pad to align if needed!
     const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
-    unsigned sizeSoFar = 0;
+    uint64_t sizeSoFar = 0;
     for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
       const Constant* field = CVS->getOperand(i);
 
       // Check if padding is needed and insert one or more 0s.
-      unsigned fieldSize = TD.getTypeSize(field->getType());
-      unsigned padSize = ((i == e-1? cvsLayout->StructSize
+      uint64_t fieldSize = TD.getTypeSize(field->getType());
+      uint64_t padSize = ((i == e-1? cvsLayout->StructSize
                            : cvsLayout->MemberOffsets[i+1])
                           - cvsLayout->MemberOffsets[i]) - fieldSize;
       sizeSoFar += fieldSize + padSize;
@@ -242,7 +243,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
         float FVal;
         int32_t UVal;
       } U;
-      U.FVal = Val;
+      U.FVal = (float)Val;
       
       O << Data32bitsDirective << U.UVal << "\t" << CommentString
         << " float " << Val << "\n";
