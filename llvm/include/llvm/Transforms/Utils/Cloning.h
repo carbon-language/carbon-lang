@@ -83,8 +83,9 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
 
 /// InlineFunction - This function inlines the called function into the basic
-/// block of the caller.  This returns true if it is not possible to inline this
-/// call.  The program is still in a well defined state if this occurs though.
+/// block of the caller.  This returns false if it is not possible to inline
+/// this call.  The program is still in a well defined state if this occurs
+/// though.
 ///
 /// Note that this only does one level of inlining.  For example, if the 
 /// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
