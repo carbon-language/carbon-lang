@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 
 %X = global int 7
 %msg = internal global [13 x sbyte] c"Hello World\0A\00"

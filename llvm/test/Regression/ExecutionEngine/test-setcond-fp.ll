@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 
 int %main() {
 	%double1 = add double 0.0, 0.0

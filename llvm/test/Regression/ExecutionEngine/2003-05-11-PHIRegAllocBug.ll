@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 target endian = little
 target pointersize = 32
 

@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 %A = global int 0
 
 int %main() {

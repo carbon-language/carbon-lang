@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 ; test return instructions
 
 void %test() { ret void }

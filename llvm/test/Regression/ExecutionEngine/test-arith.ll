@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 int %main() {
 	%A = add sbyte 0, 12
 	%B = sub sbyte %A, 1

@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 ; We were accidentally inverting the signedness of right shifts.  Whoops.
 
 int %main() {

@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 ; This testcase exposes a bug in the local register allocator where it runs out
 ; of registers (due to too many overlapping live ranges), but then attempts to
 ; use the ESP register (which is not allocatable) to hold a value.

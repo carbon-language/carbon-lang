@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 %.LC0 = internal global [12 x sbyte] c"Hello World\00"
 
 implementation

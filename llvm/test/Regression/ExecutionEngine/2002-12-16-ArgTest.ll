@@ -1,3 +1,6 @@
+; RUN: llvm-as -f %s -o %t.bc
+; RUN: lli %t.bc > /dev/null
+
 %.LC0 = internal global [10 x sbyte] c"argc: %d\0A\00"
 
 implementation   ; Functions:
