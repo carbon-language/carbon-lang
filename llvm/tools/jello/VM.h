@@ -12,9 +12,10 @@
 #include <map>
 #include <vector>
 
-class TargetMachine;
 class Function;
 class GlobalValue;
+class Constant;
+class TargetMachine;
 class MachineCodeEmitter;
 
 class VM {
@@ -39,6 +40,7 @@ public:
     MCE = createEmitter(*this);  // Initialize MCE
     setupPassManager();
     registerCallback();
+    emitGlobals();
   }
 
   ~VM();
@@ -64,6 +66,8 @@ private:
   void setupPassManager();
   void *getPointerToFunction(Function *F);
   void registerCallback();
+  void emitGlobals();
+  void emitConstantToMemory(Constant *Init, void *Addr);
 };
 
 #endif
