@@ -165,8 +165,9 @@ public:
   /// @brief Insert a constant or type.
   inline void insert(const std::string &Name, Value *Val) {
     assert(Val && "Can't insert null type into symbol table!");
-    assert((isa<Type>(Val) || isa<Constant>(Val)) &&
-           "Can only insert types and constants into a symbol table!");
+    assert(!isa<Type>(Val) && "Cannot insert types with this interface!");
+    assert(isa<Constant>(Val) &&
+           "Can only insert constants into a symbol table!");
     insertEntry(Name, Val->getType(), Val);
   }
 
@@ -201,6 +202,7 @@ public:
   /// @brief Remove a constant or type from the symbol table.
   inline Value* remove(const std::string &Name, Value *Val) {
     assert(Val && "Can't remove null value from symbol table!");
+    assert(!isa<Type>(Val) && "Can't remove types with this interface!");
     plane_iterator PI = pmap.find(Val->getType());
     return removeEntry(PI, PI->second.find(Name));
   }
