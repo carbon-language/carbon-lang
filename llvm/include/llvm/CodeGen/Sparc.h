@@ -288,15 +288,15 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
   
   // Add or add with carry.
   { "ADD",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
-  { "ADDcc",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
+  { "ADDcc",	4,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
   { "ADDC",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
-  { "ADDCcc",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
+  { "ADDCcc",	4,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
 
   // Sub tract or subtract with carry.
   { "SUB",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
-  { "SUBcc",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
+  { "SUBcc",	4,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
   { "SUBC",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
-  { "SUBCcc",	3,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
+  { "SUBCcc",	4,  2,  (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_ARITH_FLAG },
 
   // Integer multiply, signed divide, unsigned divide.
   // Note that the deprecated 32-bit multiply and multiply-step are not used.
@@ -329,17 +329,17 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
   
   // Logical operations
   { "AND",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
-  { "ANDcc",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
+  { "ANDcc",	4,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
   { "ANDN",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
-  { "ANDNcc",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
+  { "ANDNcc",	4,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
   { "OR",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
-  { "ORcc",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
+  { "ORcc",	4,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
   { "ORN",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
-  { "ORNcc",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
+  { "ORNcc",	4,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
   { "XOR",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
-  { "XORcc",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
+  { "XORcc",	4,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
   { "XNOR",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
-  { "XNORcc",	3,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
+  { "XNORcc",	4,  2, (1 << 12) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
   
   // Shift operations
   { "SLL",	3,  2, (1 << 5) - 1, true, 0, 1, M_INT_FLAG | M_LOGICAL_FLAG},
