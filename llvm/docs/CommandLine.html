@@ -1,0 +1,359 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>CommandLine Library Manual</title></head>
+<body bgcolor=white>
+
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp; <font size=+5 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>CommandLine Library Manual</b></font></td>
+</tr></table>
+
+<ol>
+  <li><a href="#introduction">Introduction</a>
+  <li><a href="#quickstart">Quick Start Guide</a>
+    <ol>
+      <li><a href="#flags">Flag Arguments</a>
+      <li><a href="#aliases">Argument Aliases</a>
+      <li><a href="#onealternative">Selecting one alternative from a set</a>
+      <li><a href="#namedalternatives">Named alternatives</a>
+      <li><a href="#enumlist">Parsing a list of options</a>
+    </ol>
+  <li><a href="#referenceguide">Reference Guide</a>
+  <li><a href="#extensionguide">Extension Guide</a>
+</ol><p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="introduction">Introduction
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+This document describes the CommandLine argument processing library.  It will show you how to use it, and what it can do.<p>
+
+Although there are a <b>lot</b> of command line argument parsing libraries out there in many different languages, none of them fit well with what I needed.  By looking at the features and problems of other libraries, I designed the CommandLine library to have the following features:<p>
+
+<ol>
+<li>Speed: The CommandLine library is very quick and uses little resources.  The parsing time of the library is directly proportional to the number of arguments parsed, not the the number of options recognized.  Additionally, command line argument values are captured transparently into user defined variables, which can be accessed like any other variable (and with the same performance).<p>
+
+<li>Type Safe: As a user of CommandLine, you don't have to worry about remembering the type of arguments that you want (is it an int?  a string? a bool? an enum?) and keep casting it around.  Not only does this help prevent error prone constructs, it also leads to dramatically cleaner source code.<p>
+
+<li>No subclasses required: To use CommandLine, you instantiate variables that correspond to the arguments that you would like to capture, you don't subclass a parser.  This leads to much less boilerplate code.<p>
+
+<li>Globally accessible: Libraries can specify command line arguments that are automatically enabled in any tool that links to the library.  This is possible because the application doesn't have to keep a "list" of arguments to pass to the parser.<p>
+
+<li>More Clean: CommandLine supports enum types directly, meaning that there is less error and more security built into the library.  You don't have to worry about whether your integral command line argument accidentally got assigned a value that is not valid for your enum type.<p>
+
+<li>Powerful: The CommandLine library supports many different types of arguments, from simple boolean flags to scalars arguments (strings, integers, enums, doubles), to lists of arguments.  This is possible because CommandLine is...<p>
+
+<li>Extensible: It is very simple to add a new argument type to CommandLine.  Simply subclass the <tt>cl::Option</tt> and customize its behaviour however you would like.<p>
+
+<li>Labor Saving: The CommandLine library cuts down on the amount of grunt work that you, the user, have to do.  For example, it automatically provides a --help option that shows the available command line options for your tool.<p>
+</ol>
+
+This document will hopefully let you jump in and start using CommandLine in your utility quickly and painlessly.  Additionally it should be a simple reference manual to figure out how stuff works.  If it is failing in some area, nag the author, <a href="mailto:sabre@nondot.org">Chris Lattner</a>.<p>
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="quickstart">Quick Start Guide
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+This section of the manual runs through a simple CommandLine'ification of a utility, a program optimizer.  This is intended to show you how to jump into using the CommandLine library in your own program, and show you some of the cool things it can do.<p>
+
+To start out, you need to include the CommandLine header file into your program:<p>
+
+<pre>
+  #include "llvm/Support/CommandLine.h"
+</pre><p>
+
+Additionally, you need to add this as the first line of your main program:<p>
+
+<pre>
+int main(int argc, char **argv) {
+  cl::ParseCommandLineOptions(argc, argv);
+  ...
+}
+</pre><p>
+
+... which actually parses the arguments and fills in the variable declarations.<p>
+
+Now that you are ready to support command line arguments, we need to tell the system which ones we want, and what type of argument they are.  The CommandLine library uses the model of variable declarations to capture command line arguments.  This means that for every command line option that you would like to support, there should be a variable declaration to capture the result.  For example, in our optimizer, we would like to support the unix standard '<tt>-o &lt;filename&gt;</tt>' option to specify where to put the output.  With the CommandLine library, this is represented like this:<p>
+
+<pre>
+cl::String OutputFilename("<i>o</i>", "<i>Specify output filename</i>");
+</pre><p>
+
+or more verbosely, like this:<p>
+
+<pre>
+cl::String OutputFilename("<i>o</i>", "<i>Specify output filename</i>", cl::NoFlags, "");
+</pre><p>
+
+This declares a variable "<tt>OutputFilename</tt>" that is used to capture the result of the "<tt>o</tt>" argument (first parameter).  The help text that is associated with the option is specified as the second argument to the constructor.  The type of the variable is "<tt>cl::String</tt>", which stands for CommandLine string argument.  This variable may be used in any context that a normal C++ string object may be used.  For example:<p>
+
+<pre>
+  ...
+  ofstream Output(OutputFilename.c_str());
+  if (Out.good()) ...
+  ...
+</pre><p>
+
+The two optional arguments (shown in the verbose example) show that you can pass "flags" to control the behavior of the argument (discussed later), and a default value for the argument (which is normally just an empty string, but you can override it if you would like).<p>
+
+In addition, we would like to specify an input filename as well, but without an associated flag (i.e. we would like for the optimizer to be run like this: "<tt>opt [flags] sourcefilename.c</tt>").  To support this style of argument, the CommandLine library allows one "unnamed" argument to be specified for the program.  In our case it would look like this:<p>
+
+<pre>
+cl::String InputFilename("", "<i>Source file to optimize</i>", cl::NoFlags, "<i>-</i>");
+</pre>
+
+This declaration indicates that an unbound option should be treated as the input filename... and if one is not specified, a default value of "-" is desired (which is commonly used to refer to standard input).  If you would like to require that the user of your tool specify an input filename, you can mark the argument as such with the "<tt>cl::Required</tt>" flag:<p>
+
+<pre>
+cl::String InputFilename("", "<i>Source file to optimize</i>", <b>cl::Required</b>, "<i>-</i>");
+</pre>
+
+The CommandLine library will then issue an error if the argument is not specified (this flag can, of course, be applied to any argument type).  This is one example of how using flags can alter the default behaviour of the library, on a per-option basis.<p>
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="flags">Flag Arguments
+</b></font></td></tr></table><ul>
+
+In addition to input and output filenames, we would like the optimizer to support three boolean flags: "<tt>-f</tt>" to force overwriting of the output file, "<tt>--quiet</tt>" to enable quiet mode, and "<tt>-q</tt>" for backwards compatibility with some of our users.  We can support these with the "<tt>cl::Flag</tt>" declaration like this:<p>
+
+<pre>
+cl::Flag Force ("<i>f</i>", "<i>Overwrite output files</i>", cl::NoFlags, false);
+cl::Flag Quiet ("<i>q</i>", "<i>Don't print informational messages</i>", cl::Hidden);
+cl::Flag Quiet2("<i>quiet</i>", "<i>Don't print informational messages</i>", cl::NoFlags);
+</pre><p>
+
+This does what you would expect: it declares three boolean variables ("<tt>Force</tt>", "<tt>Quiet</tt>", and "<tt>Quiet2</tt>") to recognize these options.  Note that the "<tt>-q</tt>" option is specified with the "<tt>cl::Hidden</tt>" flag.  This prevents it from being shown by the standard "<tt>--help</tt>" command line argument provided.  With these declarations, "<tt>opt --help</tt>" emits this:<p>
+
+<pre>
+USAGE: opt [options]
+
+OPTIONS:
+  -f     - Overwrite output files
+  -o     - Override output filename
+  -quiet - Don't print informational messages
+  -help  - display available options (--help-hidden for more)
+</pre><p>
+
+and "<tt>opt --help-hidden</tt>" emits this:<p>
+
+<pre>
+USAGE: opt [options]
+
+OPTIONS:
+  -f     - Overwrite output files
+  -o     - Override output filename
+  -q     - Don't print informational messages
+  -quiet - Don't print informational messages
+  -help  - display available options (--help-hidden for more)
+</pre><p>
+
+This brief example has shown you how to use simple scalar command line arguments, by using the "<tt>cl::String</tt>" and "<tt>cl::Flag</tt>" classes.  In addition to these classes, there are also "<tt>cl::Int</tt>" and "<tt>cl::Double</tt>" classes that work analagously.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="aliases">Argument Aliases
+</b></font></td></tr></table><ul>
+
+This works well, except for the fact that we need to check the quiet condition like this now:<p>
+
+<pre>
+...
+  if (!Quiet &amp;&amp; !Quiet2) printInformationalMessage(...);
+...
+</pre><p>
+
+... which is a real pain!  Instead of defining two values for the same condition, we can use the "<tt>cl::Alias</tt>" to make the "<tt>-q</tt>" option an <b>alias</b> for "<tt>-quiet</tt>" instead of a value itself:<p>
+
+<pre>
+cl::Flag  Force ("<i>f</i>", "<i>Overwrite output files</i>", cl::NoFlags, false);
+cl::Flag  Quiet ("<i>quiet</i>", "<i>Don't print informational messages</i>", cl::NoFlags, false);
+cl::Alias QuietA("<i>q</i>", "<i>Alias for -quiet</i>", cl::NoFlags, Quiet);
+</pre><p>
+
+Which does exactly what we want... and the alias is automatically hidden from the "<tt>--help</tt>" output.  Note how the alias specifies the variable that it wants to alias to, the alias argument name, and the help description (shown by "<tt>--help-hidden</tt>") of the alias.  Now your user code can simply use:<p>
+
+<pre>
+...
+  if (!Quiet) printInformationalMessage(...);
+...
+</pre><p>
+
+... which is much nicer!  The "<tt>cl::Alias</tt>" can be used to specify an alternative name for any variable type, and has many uses.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="onealternative">Selecting one alternative from a set
+</b></font></td></tr></table><ul>
+
+Often we would like to be able to enable one option from a set of options.  The CommandLine library has a couple of different ways to do this... the first is with the "<tt>cl::EnumFlags</tt> class.<p>
+
+Lets say that we would like to add four optimizations levels to our optimizer, using the standard flags "<tt>-g</tt>", "<tt>-O0</tt>", "<tt>-O1</tt>", and "<tt>-O2</tt>".  We could easily implement this with the "<tt>cl::Flag</tt>" class above, but there are several problems with this strategy:<p>
+
+<ol>
+<li>A user could specify more than one of the options at a time, for example, "<tt>opt -O3 -O2</tt>".  The CommandLine library would not catch this erroneous input for us.
+<li>We would have to test 4 different variables to see which ones are set.
+<li>This doesn't map to the numeric levels that we want... so we cannot easily see if some level &gt;= "<tt>-O1</tt>" is enabled.
+</ol><p>
+
+To cope with these problems, the CommandLine library provides the "<tt>cl::EnumFlags</tt> class, which is used like this:<p>
+
+<pre>
+enum OptLevel {
+  g, O1, O2, O3
+};
+
+cl::EnumFlags&lt;enum OptLevel&gt; OptimizationLevel(cl::NoFlags,
+  clEnumVal(g , "<i>No optimizations, enable debugging</i>"),
+  clEnumVal(O1, "<i>Enable trivial optimizations</i>"),
+  clEnumVal(O2, "<i>Enable default optimizations</i>"),
+  clEnumVal(O3, "<i>Enable expensive optimizations</i>"),
+ 0);
+
+...
+  if (OptimizationLevel &gt;= O2) doGCSE(...);
+...
+</pre><p>
+
+This declaration defines a variable "<tt>OptimizationLevel</tt>" of the "<tt>OptLevel</tt>" enum type.  This variable can be assigned any of the values that are listed in the declaration (Note that the declaration list must be terminated with the "<tt>0</tt>" argument!).  The CommandLine library enforces that the user can only specify one of the options, and it ensure that only valid enum values can be specified.  The default value of the flag is the first value listed.
+
+
+In addition to all of this, the CommandLine library automatically names the flag values the same as the enum values.<p>
+
+In this case, it is sort of awkward that flag names correspond directly to enum names, because we probably don't want a enum definition named "<tt>g</tt>" in our program.  We could alternatively write this example like this:<p>
+
+<pre>
+enum OptLevel {
+  Debug, O1, O2, O3
+};
+
+cl::EnumFlags&lt;enum OptLevel&gt; OptimizationLevel(cl::NoFlags,
+ clEnumValN(Debug, "g", "<i>No optimizations, enable debugging</i>"),
+  clEnumVal(O1        , "<i>Enable trivial optimizations</i>"),
+  clEnumVal(O2        , "<i>Enable default optimizations</i>"),
+  clEnumVal(O3        , "<i>Enable expensive optimizations</i>"),
+ 0);
+
+...
+  if (OptimizationLevel == Debug) outputDebugInfo(...);
+...
+</pre><p>
+
+By using the "<tt>clEnumValN</tt>" token instead of "<tt>clEnumVal</tt>", we can directly specify the name that the flag should get.<p>
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="namedalternatives">Named Alternatives
+</b></font></td></tr></table><ul>
+
+Another useful argument form is a named alternative style.  We shall use this style in our optimizer to specify different debug levels that can be used.  Instead of each debug level being its own switch, we want to support the following options, of which only one can be specified at a time: "<tt>--debug-level=none</tt>", "<tt>--debug-level=quick</tt>", "<tt>--debug-level=detailed</tt>".  To do this, we use the CommandLine "<tt>cl::Enum</tt>" class:<p>
+
+<pre>
+enum DebugLev {
+  nodebuginfo, quick, detailed
+};
+
+// Enable Debug Options to be specified on the command line
+cl::Enum&lt;enum DebugLev&gt; DebugLevel("<i>debug_level</i>", cl::NoFlags,
+   "select debugging level",
+  clEnumValN(nodebuginfo, "none", "<i>disable debug information</i>"),
+   clEnumVal(quick,               "<i>enable quick debug information</i>"),
+   clEnumVal(detailed,            "<i>enable detailed debug information</i>"),
+ 0);
+</pre>
+
+This definition defines an enumerated command line variable of type "<tt>enum DebugLev</tt>", with the same semantics as the "<tt>EnumFlags</tt>" definition does.  The difference here is just the interface exposed to the user of your program and the help output by the "<tt>--help</tt>" option:<p>
+
+<pre>
+...
+OPTIONS:
+  -debug_level - select debugging level
+    =none      - disable debug information
+    =quick     - enable quick debug information
+    =detailed  - enable detailed debug information
+  -g           - No optimizations, enable debugging
+  -O1          - Enable trivial optimizations
+  -O2          - Enable default optimizations
+  -O3          - Enable expensive optimizations
+  ...
+</pre><p>
+
+By providing both of these forms of command line argument, the CommandLine library lets the application developer choose the appropriate interface for the job.<p>
+
+
+<!-- ======================================================================= -->
+</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
+<a name="enumlist">Parsing a list of options
+</b></font></td></tr></table><ul>
+
+Now that we have the standard run of the mill argument types out of the way, lets get a little wild and crazy.  Lets say that we want our optimizer to accept a <b>list</b> of optimizations to perform, allowing duplicates.  For example, we might want to run: "<tt>opt -dce -constprop -inline -dce -strip</tt>".  For this case, the order of the arguments and the number of appearances is very important.  This is what the "<tt>cl::EnumList</tt>" definition is for.  First, start by defining an enum of the optimizations that you would like to perform:<p>
+
+<pre>
+enum Opts {
+  // 'inline' is a C++ reserved word, so name it 'inlining'
+  dce, constprop, inlining, strip
+}
+</pre><p>
+
+Then define your "<tt>cl::EnumList</tt>" variable:<p>
+
+<pre>
+cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
+  clEnumVal(dce               , "<i>Dead Code Elimination</i>"),
+  clEnumVal(constprop         , "<i>Constant Propogation</i>"),
+ clEnumValN(inlining, "<i>inline</i>", "<i>Procedure Integration</i>"),
+  clEnumVal(strip             , "<i>Strip Symbols</i>"),
+0);
+</pre><p>
+
+This defines a variable that is conceptually of the type "<tt>vector&lt;enum Opts&gt;</tt>".  Thus, you can do operations like this:<p>
+
+<pre>
+  for (unsigned i = 0; i &lt; OptimizationList.size(); ++i)
+    switch (OptimizationList[i])
+       ...
+</pre>
+
+... to iterate through the list of options specified.
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="referenceguide">Reference Guide
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Reference Guide: TODO
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="extensionguide">Extension Guide
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Extension Guide: TODO
+
+
+
+
+<!-- *********************************************************************** -->
+</ul>
+<!-- *********************************************************************** -->
+
+<hr>
+<font size=-1>
+<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+<!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
+<!-- hhmts start -->
+Last modified: Mon Jul 23 17:33:57 CDT 2001
+<!-- hhmts end -->
+</font>
+</body></html>
