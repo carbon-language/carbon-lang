@@ -22,6 +22,7 @@
 #define LLVM_ANALYSIS_PROFILEINFO_H
 
 #include <string>
+#include <map>
 
 namespace llvm {
   class BasicBlock;
@@ -32,13 +33,19 @@ namespace llvm {
   /// it available to the optimizers.
   Pass *createProfileLoaderPass(const std::string &Filename);
 
-  struct ProfileInfo {
+  class ProfileInfo {
+  protected:
+    std::map<BasicBlock*, unsigned> ExecutionCounts;
+  public:
     virtual ~ProfileInfo();  // We want to be subclassed
     
     //===------------------------------------------------------------------===//
     /// Profile Information Queries
     ///
-    virtual unsigned getExecutionCount(BasicBlock *BB) = 0;
+    unsigned getExecutionCount(BasicBlock *BB) {
+      std::map<BasicBlock*, unsigned>::iterator I = ExecutionCounts.find(BB);
+      return I != ExecutionCounts.end() ? I->second : 0;
+    }
     
     //===------------------------------------------------------------------===//
     /// Analysis Update Methods
