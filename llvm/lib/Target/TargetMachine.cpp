@@ -54,10 +54,3 @@ TargetMachine::~TargetMachine() {
   delete IL;
 }
 
-unsigned TargetMachine::findOptimalStorageSize(const Type *Ty) const {
-  // All integer types smaller than ints promote to 4 byte integers.
-  if (Ty->isIntegral() && Ty->getPrimitiveSize() < 4)
-    return 4;
-
-  return DataLayout.getTypeSize(Ty);
-}
