@@ -939,6 +939,12 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
 
 
 
+// Check for a constant (uint) 0.
+inline bool
+IsZero(Value* idx)
+{
+  return (isa<ConstantInt>(idx) && cast<ConstantInt>(idx)->isNullValue());
+}
 
 
 //------------------------------------------------------------------------ 
@@ -973,45 +979,35 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
   vector<Value*> idxVec;
   bool allConstantIndices = true;
   Value* ptrVal = memInst->getPointerOperand();
-  
+
   // If there is a GetElemPtr instruction to fold in to this instr,
   // it must be in the left child for Load and GetElemPtr, and in the
   // right child for Store instructions.
   InstrTreeNode* ptrChild = (vmInstrNode->getOpLabel() == Instruction::Store
                              ? vmInstrNode->rightChild()
                              : vmInstrNode->leftChild()); 
-  
+
   // Check if all indices are constant for this instruction
-  for (MemAccessInst::op_iterator OI=memInst->idx_begin();
-       OI != memInst->idx_end(); ++OI)
-    if (! isa<ConstantUInt>(*OI))
-      {
-        allConstantIndices = false; 
-        break;
-      }
-  
+  for (MemAccessInst::op_iterator OI=memInst->idx_begin(),OE=memInst->idx_end();
+       allConstantIndices && OI != OE; ++OI)
+    if (! isa<Constant>(*OI))
+      allConstantIndices = false; 
+
   // If we have only constant indices, fold chains of constant indices
   // in this and any preceding GetElemPtr instructions.
   if (allConstantIndices &&
-      ptrChild->getOpLabel() == Instruction::GetElementPtr ||
-      ptrChild->getOpLabel() == GetElemPtrIdx)
-    {
-      Value* newPtr = FoldGetElemChain((InstructionNode*) ptrChild, idxVec);
-      if (newPtr)
-        ptrVal = newPtr;
-    }
-  
+      (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
+       ptrChild->getOpLabel() == GetElemPtrIdx))
+    if (Value* newPtr = FoldGetElemChain((InstructionNode*) ptrChild, idxVec))
+      ptrVal = newPtr;
+
   // Append the index vector of the current instruction, if any.
   // Discard any leading [0] index.
-  if (memInst->idx_begin() != memInst->idx_end())
-    {
-      const ConstantUInt* CV = dyn_cast<ConstantUInt>(memInst->idx_begin()->get());
-      unsigned zeroOrIOne = (CV && CV->getType() == Type::UIntTy &&
-                             (CV->getValue() == 0))? 1 : 0;
-      idxVec.insert(idxVec.end(),
-                    memInst->idx_begin()+zeroOrIOne, memInst->idx_end());
-    }
-  
+  if (memInst->getNumIndices() > 0)
+    idxVec.insert(idxVec.end(), memInst->idx_begin()
+                    + (IndexIsZero(*memInst->idx_begin())? 1 : 0),
+                  memInst->idx_end());
+
   // Now create the appropriate operands for the machine instruction
   SetMemOperands_Internal(mvec, mvecI, vmInstrNode,
                           ptrVal, idxVec, allConstantIndices, target);
@@ -1035,7 +1031,8 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
   // Initialize so we default to storing the offset in a register.
   int64_t smallConstOffset = 0;
   Value* valueForRegOffset = NULL;
-  MachineOperand::MachineOperandType offsetOpType =MachineOperand::MO_VirtualRegister;
+  MachineOperand::MachineOperandType offsetOpType =
+    MachineOperand::MO_VirtualRegister;
 
   // Check if there is an index vector and if so, compute the
   // right offset for structures and for arrays 
@@ -1055,57 +1052,45 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
       else
         {
           // There is at least one non-constant offset.  Therefore, this must
-          // be an array ref, and must have been lowered to a single offset.
-          assert((memInst->getNumOperands()
-                  == (unsigned) 1 + memInst->getFirstIndexOperandNumber())
-                 && "Array refs must be lowered before Instruction Selection");
-          
-          Value* arrayOffsetVal =  * memInst->idx_begin();
-          
-          // Handle special common case of leading [0] index.
-          ConstantUInt* CV = dyn_cast<ConstantUInt>(idxVec.front());
-          bool firstIndexIsZero = bool(CV && CV->getType() == Type::UIntTy &&
-                                       (CV->getValue() == 0));
-      
-          // If index is 0, the offset value is just 0.  Otherwise, 
-          // generate a MUL instruction to compute address from index.
-          // The call to getTypeSize() will fail if size is not constant.
-          // CreateMulInstruction() folds constants intelligently enough.
+          // be an array ref, and must have been lowered to a single non-zero
+          // offset.  (An extra leading zero offset, if any, can be ignored.)
+          // Generate code sequence to compute address from index.
           // 
-          if (firstIndexIsZero)
-            {
-              offsetOpType = MachineOperand::MO_SignExtendedImmed;
-              smallConstOffset = 0;
-            }
-          else
-            {
-              vector<MachineInstr*> mulVec;
-              Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
-              MachineCodeForInstruction::get(memInst).addTemp(addr);
-              
-              unsigned int eltSize =
-                target.DataLayout.getTypeSize(ptrType->getElementType());
-              assert(eltSize > 0 && "Invalid or non-const array element size");
-              ConstantUInt* eltVal = ConstantUInt::get(Type::UIntTy, eltSize);
-              
-              CreateMulInstruction(target,
-                                   memInst->getParent()->getParent(),
-                                   arrayOffsetVal, /* lval, not likely const */
-                                   eltVal,         /* rval, likely constant */
-                                   addr,           /* result*/
-                                   mulVec,
-                                   MachineCodeForInstruction::get(memInst),
-                                   INVALID_MACHINE_OPCODE);
-              assert(mulVec.size() > 0 && "No multiply instruction created?");
-              for (vector<MachineInstr*>::const_iterator I = mulVec.begin();
-                   I != mulVec.end(); ++I)
-                {
-                  mvecI = mvec.insert(mvecI, *I);   // ptr to inserted value
-                  ++mvecI;                          // ptr to mem. instr.
-                }
-              
-              valueForRegOffset = addr;
-            }
+          bool firstIndexIsZero = IndexIsZero(idxVec[0]);
+
+          assert(idxVec.size() == 1 + (unsigned) (firstIndexIsZero? 1 : 0)
+                 && "Array refs must be lowered before Instruction Selection");
+
+          Value* idxVal = idxVec[(firstIndexIsZero? 1 : 0)];
+
+          vector<MachineInstr*> mulVec;
+          Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
+          MachineCodeForInstruction::get(memInst).addTemp(addr);
+
+          // The call to getTypeSize() will fail if size is not constant.
+          unsigned int eltSize =
+            target.DataLayout.getTypeSize(ptrType->getElementType());
+          assert(eltSize > 0 && "Invalid or non-const array element size");
+          ConstantUInt* eltVal = ConstantUInt::get(Type::UIntTy, eltSize);
+
+          // CreateMulInstruction() folds constants intelligently enough.
+          CreateMulInstruction(target,
+                               memInst->getParent()->getParent(),
+                               idxVal,         /* lval, not likely const */
+                               eltVal,         /* rval, likely constant */
+                               addr,           /* result*/
+                               mulVec,
+                               MachineCodeForInstruction::get(memInst),
+                               INVALID_MACHINE_OPCODE);
+
+          // Insert mulVec[] before *mvecI in mvec[] and update mvecI
+          // to point to the same instruction it pointed to before.
+          assert(mulVec.size() > 0 && "No multiply code created?");
+          vector<MachineInstr*>::iterator oldMvecI = mvecI;
+          for (unsigned i=0, N=mulVec.size(); i < N; ++i)
+            mvecI = mvec.insert(mvecI, mulVec[i]) + 1;  // pts to mem instr
+
+          valueForRegOffset = addr;
         }
     }
   else
@@ -1113,7 +1098,7 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
       offsetOpType = MachineOperand::MO_SignExtendedImmed;
       smallConstOffset = 0;
     }
-  
+
   // For STORE:
   //   Operand 0 is value, operand 1 is ptr, operand 2 is offset
   // For LOAD or GET_ELEMENT_PTR,
