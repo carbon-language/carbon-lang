@@ -18,8 +18,8 @@ echo "======== Running optimizier test on $1"
   $DIS < $1.bc.2 > $1.ll.2 || exit 3
   gdiff -u $1.ll.[12] || exit 3
 
-  # Try out SCCP & CleanGCC
-  $AS < $1 | $OPT -q -inline -dce -cleangcc -sccp -dce \
+  # Try out SCCP 
+  $AS < $1 | $OPT -q -inline -dce -sccp -dce \
            | $DIS | $AS > $1.bc.3 || exit 1
 
   # Should not be able to optimize further!
