@@ -1973,6 +1973,18 @@ void DSGraph::AssertGraphOK() const {
   }
   AssertCallNodesInGraph();
   AssertAuxCallNodesInGraph();
+
+  // Check that all pointer arguments to any functions in this graph have
+  // destinations.
+  for (ReturnNodesTy::const_iterator RI = ReturnNodes.begin(),
+         E = ReturnNodes.end();
+       RI != E; ++RI) {
+    Function &F = *RI->first;
+    for (Function::aiterator AI = F.abegin(); AI != F.aend(); ++AI)
+      if (isPointerType(AI->getType()))
+        assert(!getNodeForValue(AI).isNull() &&
+               "Pointer argument must be in the scalar map!");
+  }
 }
 
 /// computeNodeMapping - Given roots in two different DSGraphs, traverse the
