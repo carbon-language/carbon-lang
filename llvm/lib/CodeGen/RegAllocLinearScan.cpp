@@ -706,7 +706,7 @@ unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
     for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
          i != rc->allocation_order_end(*mf_); ++i) {
         unsigned reg = *i;
-        if (prt_.isPhysRegAvail(reg))
+        if (prt_.isRegAvail(reg))
             return reg;
     }
     return 0;

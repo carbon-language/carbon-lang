@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/LiveInterval.h - Live Interval Analysis ----*- C++ -*-===//
+//===-- llvm/CodeGen/PhysRegTracker.h - Physical Register Tracker -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements a physical register tracker. The tracker
-// tracks physical register usage through addPhysRegUse and
-// delPhysRegUse functions while abstracting away register aliases.
+// tracks physical register usage through addRegUse and
+// delRegUse. isRegAvail checks if a physical register is available or
+// not taking into consideration register aliases.
 //
 //===----------------------------------------------------------------------===//
 
@@ -67,7 +68,7 @@ namespace llvm {
             }
         }
 
-        bool isPhysRegAvail(unsigned physReg) const {
+        bool isRegAvail(unsigned physReg) const {
             assert(MRegisterInfo::isPhysicalRegister(physReg) &&
                    "should be physical register!");
             return regUse_[physReg] == 0;
