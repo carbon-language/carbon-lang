@@ -200,17 +200,27 @@ static bool LinkInArchive(Module *M,
       const std::set<std::string> &DefSymbols = DefinedSymbols[i];
 
       bool ObjectRequired = false;
-      for (std::set<std::string>::iterator I = UndefinedSymbols.begin(),
-             E = UndefinedSymbols.end(); I != E; ++I)
-        if (DefSymbols.count(*I)) {
-          if (Verbose)
-            std::cerr << "  Found object '"
-                      << Objects[i]->getModuleIdentifier ()
-                      << "' providing symbol '" << *I << "'...\n";
-          ObjectRequired = true;
-          break;
-        }
-      
+
+      //
+      // If the object defines main(), then it is automatically required.
+      // Otherwise, look to see if it defines a symbol that is currently
+      // undefined.
+      //
+      if ((DefSymbols.find ("main")) == DefSymbols.end()) {
+        for (std::set<std::string>::iterator I = UndefinedSymbols.begin(),
+               E = UndefinedSymbols.end(); I != E; ++I)
+          if (DefSymbols.count(*I)) {
+            if (Verbose)
+              std::cerr << "  Found object '"
+                        << Objects[i]->getModuleIdentifier ()
+                        << "' providing symbol '" << *I << "'...\n";
+            ObjectRequired = true;
+            break;
+          }
+      } else {
+        ObjectRequired = true;
+      }
+
       // We DO need to link this object into the program...
       if (ObjectRequired) {
         if (LinkModules(M, Objects[i], &ErrorMessage))
