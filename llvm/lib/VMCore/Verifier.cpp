@@ -506,18 +506,24 @@ void Verifier::visitInstruction(Instruction &I) {
               "Cannot take the address of an intrinsic!", &I);
 
     else if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
+      BasicBlock *OpBlock = Op->getParent();
+      // Invoke results are only usable in the normal destination, not in the
+      // exceptional destination.
+      if (InvokeInst *II = dyn_cast<InvokeInst>(Op))
+        OpBlock = II->getNormalDest();
+
       // Check that a definition dominates all of its uses.
       //
       if (!isa<PHINode>(I)) {
         // Definition must dominate use unless use is unreachable!
-        Assert2(DS->dominates(Op->getParent(), BB) ||
+        Assert2(DS->dominates(OpBlock, BB) ||
                 !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
                 "Instruction does not dominate all uses!", Op, &I);
       } else {
         // PHI nodes are more difficult than other nodes because they actually
         // "use" the value in the predecessor basic blocks they correspond to.
         BasicBlock *PredBB = cast<BasicBlock>(I.getOperand(i+1));
-        Assert2(DS->dominates(Op->getParent(), PredBB) ||
+        Assert2(DS->dominates(OpBlock, PredBB) ||
                 !DS->dominates(&BB->getParent()->getEntryBlock(), PredBB),
                 "Instruction does not dominate all uses!", Op, &I);
       }
