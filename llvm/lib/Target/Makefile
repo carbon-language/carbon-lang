@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-PARALLEL_DIRS = CBackend X86 SparcV8 SparcV9 PowerPC Alpha Skeleton
+PARALLEL_DIRS = CBackend X86 SparcV8 SparcV9 PowerPC Alpha IA64 Skeleton
 LIBRARYNAME = LLVMTarget
 BUILD_ARCHIVE = 1
 

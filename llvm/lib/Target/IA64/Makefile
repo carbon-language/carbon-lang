@@ -7,6 +7,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 LIBRARYNAME = LLVMIA64
+SHARED_LIBRARY = 1
+LOADABLE_MODULE = 1
 TARGET = IA64
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = IA64GenRegisterInfo.h.inc IA64GenRegisterNames.inc \
