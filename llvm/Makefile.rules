@@ -126,7 +126,7 @@ endif
 # Special tools used while building the LLVM tree.  Burg is built as part of the
 # utils directory.
 #
-BURG    := $(TOOLDEBUG)/burg
+BURG    := $(LEVEL)/utils/Burg/burg.$(UNAME)
 RunBurg := $(BURG) $(BURG_OPTS)
 
 
@@ -198,7 +198,9 @@ BISON    = bison
 # source files...
 # The local Makefile can list other Source files via ExtraSource = ...
 # 
+ifndef Source
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
+endif
 
 Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
 ObjectsO := $(addprefix $(BUILD_ROOT)/Release/,$(Objs))
