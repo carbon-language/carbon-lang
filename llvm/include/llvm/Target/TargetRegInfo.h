@@ -78,7 +78,10 @@ public:
   const TargetMachine &target;
 
   MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
-
+  ~MachineRegInfo() {
+    for (unsigned i = 0, e = MachineRegClassArr.size(); i != e; ++i)
+      delete MachineRegClassArr[i];
+  }
 
   // According the definition of a MachineOperand class, a Value in a
   // machine instruction can go into either a normal register or a 
