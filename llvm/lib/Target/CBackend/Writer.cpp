@@ -570,9 +570,9 @@ void CWriter::printConstant(Constant *CPV) {
       if (IsNAN(FPC->getValue())) {
         // The value is NaN
         if (FPC->getType() == Type::FloatTy)
-          Out << "LLVM_NANF(\"" << Num << "\") /*nan*/ ";
+          Out << "LLVM_NANF(\"0\") /*nan*/ ";
         else
-          Out << "LLVM_NAN(\"" << Num << "\") /*nan*/ ";
+          Out << "LLVM_NAN(\"0\") /*nan*/ ";
       } else if (IsInf(FPC->getValue())) {
         // The value is Inf
         if (FPC->getValue() < 0) Out << "-";
