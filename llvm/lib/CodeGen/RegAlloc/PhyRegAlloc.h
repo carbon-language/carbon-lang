@@ -51,8 +51,8 @@ class LoopInfo;
 //----------------------------------------------------------------------------
 
 struct AddedInstrns {
-  std::vector<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
-  std::vector<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
+  std::vector<MachineInstr*> InstrnsBefore;//Insts added BEFORE an existing inst
+  std::vector<MachineInstr*> InstrnsAfter; //Insts added AFTER an existing inst
 };
 
 typedef std::map<const MachineInstr *, AddedInstrns> AddedInstrMapType;
@@ -70,8 +70,8 @@ class PhyRegAlloc: public NonCopyable {
 
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
-  const Function *Meth;                 // name of the function we work on
-  MachineFunction &mcInfo;              // descriptor for method's native code
+  const Function *Fn;                   // name of the function we work on
+  MachineFunction &MF;                  // descriptor for method's native code
   FunctionLiveVarInfo *const LVI;       // LV information for this method 
                                         // (already computed for BBs) 
   LiveRangeInfo LRI;                    // LR info  (will be computed)
