@@ -2058,25 +2058,19 @@ fi
           ac_config_commands="$ac_config_commands projects/ModuleMaker/tools/ModuleMaker/Makefile"
 
 
-          ac_config_commands="$ac_config_commands support/Makefile"
+          ac_config_commands="$ac_config_commands lib/Support/Makefile"
 
 
-          ac_config_commands="$ac_config_commands support/lib/Makefile"
+          ac_config_commands="$ac_config_commands utils/Makefile"
 
 
-          ac_config_commands="$ac_config_commands support/lib/Support/Makefile"
+          ac_config_commands="$ac_config_commands utils/Burg/Makefile"
 
 
-          ac_config_commands="$ac_config_commands support/tools/Makefile"
+          ac_config_commands="$ac_config_commands utils/Burg/Doc/Makefile"
 
 
-          ac_config_commands="$ac_config_commands support/tools/Burg/Makefile"
-
-
-          ac_config_commands="$ac_config_commands support/tools/Burg/Doc/Makefile"
-
-
-          ac_config_commands="$ac_config_commands support/tools/TableGen/Makefile"
+          ac_config_commands="$ac_config_commands utils/TableGen/Makefile"
 
 
 
@@ -23531,13 +23525,11 @@ ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/Makefile.common`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/tools/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname projects/ModuleMaker/tools/ModuleMaker/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/lib/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/lib/Support/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/tools/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/tools/Burg/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/tools/Burg/Doc/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname support/tools/TableGen/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname lib/Support/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname utils/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname utils/Burg/Doc/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname utils/TableGen/Makefile`
 
 _ACEOF
 
@@ -23722,13 +23714,11 @@ do
   "projects/ModuleMaker/Makefile.common" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/ModuleMaker/Makefile.common" ;;
   "projects/ModuleMaker/tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/ModuleMaker/tools/Makefile" ;;
   "projects/ModuleMaker/tools/ModuleMaker/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS projects/ModuleMaker/tools/ModuleMaker/Makefile" ;;
-  "support/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/Makefile" ;;
-  "support/lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/lib/Makefile" ;;
-  "support/lib/Support/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/lib/Support/Makefile" ;;
-  "support/tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/tools/Makefile" ;;
-  "support/tools/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/tools/Burg/Makefile" ;;
-  "support/tools/Burg/Doc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/tools/Burg/Doc/Makefile" ;;
-  "support/tools/TableGen/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS support/tools/TableGen/Makefile" ;;
+  "lib/Support/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Support/Makefile" ;;
+  "utils/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
+  "utils/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Makefile" ;;
+  "utils/Burg/Doc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Burg/Doc/Makefile" ;;
+  "utils/TableGen/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS utils/TableGen/Makefile" ;;
   "include/Config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/Config/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -24544,13 +24534,11 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     projects/ModuleMaker/Makefile.common ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/ModuleMaker/Makefile.common projects/ModuleMaker/Makefile.common ;;
     projects/ModuleMaker/tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/ModuleMaker/tools/Makefile projects/ModuleMaker/tools/Makefile ;;
     projects/ModuleMaker/tools/ModuleMaker/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/projects/ModuleMaker/tools/ModuleMaker/Makefile projects/ModuleMaker/tools/ModuleMaker/Makefile ;;
-    support/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/Makefile support/Makefile ;;
-    support/lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/lib/Makefile support/lib/Makefile ;;
-    support/lib/Support/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/lib/Support/Makefile support/lib/Support/Makefile ;;
-    support/tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/tools/Makefile support/tools/Makefile ;;
-    support/tools/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/tools/Burg/Makefile support/tools/Burg/Makefile ;;
-    support/tools/Burg/Doc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/tools/Burg/Doc/Makefile support/tools/Burg/Doc/Makefile ;;
-    support/tools/TableGen/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/support/tools/TableGen/Makefile support/tools/TableGen/Makefile ;;
+    lib/Support/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/Support/Makefile lib/Support/Makefile ;;
+    utils/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
+    utils/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Makefile utils/Burg/Makefile ;;
+    utils/Burg/Doc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/Burg/Doc/Makefile utils/Burg/Doc/Makefile ;;
+    utils/TableGen/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/utils/TableGen/Makefile utils/TableGen/Makefile ;;
   esac
 done
 _ACEOF
