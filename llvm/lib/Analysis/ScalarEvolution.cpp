@@ -2320,7 +2320,6 @@ void ScalarEvolution::releaseMemory() {
 
 void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequiredID(LoopSimplifyID);
   AU.addRequiredTransitive<LoopInfo>();
 }
 
