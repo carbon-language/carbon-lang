@@ -64,6 +64,7 @@ namespace {
          << " times.\n;;;\n";
     }
     virtual void emitBasicBlockAnnot(const BasicBlock *BB, std::ostream &OS) {
+      if (BlockFreqs.empty()) return;
       if (unsigned Count = BlockFreqs[BB])
         OS << ";;; Executed " << Count << " times.\n";
       else
