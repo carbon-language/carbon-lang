@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
-#include "llvm/CodeGen/IGNode.h"
+#include "llvm/CodeGen/LiveRange.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
@@ -941,7 +941,7 @@ UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest,
 
 void UltraSparcRegInfo::printReg(const LiveRange *LR) const {
   unsigned RegClassID = LR->getRegClassID();
-  std::cerr << " *Node " << (LR->getUserIGNode())->getIndex();
+  std::cerr << " Node ";
 
   if (!LR->hasColor()) {
     std::cerr << " - could not find a color\n";
