@@ -9,5 +9,5 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-prof
-USEDLIBS = bcreader vmcore support.a
+USEDLIBS = analysis.a bcreader vmcore support.a
 include $(LEVEL)/Makefile.common

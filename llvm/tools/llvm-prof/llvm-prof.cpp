@@ -13,12 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ProfileInfo.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/AsmAnnotationWriter.h"
+#include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
-#include <iostream>
 #include <cstdio>
 #include <map>
 #include <set>
@@ -92,7 +91,7 @@ int main(int argc, char **argv) {
   }
 
   // Read the profiling information
-  ProfileInfo PI(argv[0], ProfileDataFile, *M);
+  ProfileInfoLoader PI(argv[0], ProfileDataFile, *M);
 
   std::map<const Function  *, unsigned> FuncFreqs;
   std::map<const BasicBlock*, unsigned> BlockFreqs;
