@@ -1086,68 +1086,6 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   }
 }
 
-// This structure retains the context when compressing the bytecode file. The
-// WriteCompressedData function below uses it to keep track of the previously
-// filled chunk of memory (which it writes) and how many bytes have been 
-// written.
-struct CompressionContext {
-  // Initialize the context
-  CompressionContext(std::ostream*OS, unsigned CS) 
-    : chunk(0), sz(0), written(0), compSize(CS), Out(OS) {}
-
-  // Make sure we clean up memory
-  ~CompressionContext() {
-    if (chunk)
-      delete [] chunk;
-  }
-
-  // Write the chunk
-  void write(unsigned size = 0) {
-    unsigned write_size = (size == 0 ? sz : size);
-    Out->write(chunk,write_size);
-    written += write_size;
-    delete [] chunk;
-    chunk = 0;
-    sz = 0;
-  }
-
-  char* chunk;       // pointer to the chunk of memory filled by compression
-  unsigned sz;       // size of chunk
-  unsigned written;  // aggregate total of bytes written in all chunks
-  unsigned compSize; // size of the uncompressed buffer
-  std::ostream* Out; // The stream we write the data to.
-};
-
-// This function is a callback used by the Compressor::compress function to 
-// allocate memory for the compression buffer. This function fulfills that
-// responsibility but also writes the previous (now filled) buffer out to the
-// stream. 
-static unsigned WriteCompressedData(char*&buffer, unsigned& size, void* context) {
-  // Cast the context to the structure it must point to.
-  CompressionContext* ctxt = reinterpret_cast<CompressionContext*>(context);
-
-  // If there's a previously allocated chunk, it must now be filled with
-  // compressed data, so we write it out and deallocate it.
-  if (ctxt->chunk != 0 && ctxt->sz > 0 ) {
-    ctxt->write();
-  }
-
-  // Compute the size of the next chunk to allocate. We attempt to allocate
-  // enough memory to handle the compression in a single memory allocation. In
-  // general, the worst we do on compression of bytecode is about 50% so we
-  // conservatively estimate compSize / 2 as the size needed for the
-  // compression buffer. compSize is the size of the compressed data, provided
-  // by WriteBytecodeToFile.
-  size = ctxt->sz = ctxt->compSize / 2;
-
-  // Allocate the chunks
-  buffer = ctxt->chunk = new char [size];
-
-  // We must return 1 if the allocation failed so that the Compressor knows
-  // not to use the buffer pointer.
-  return (ctxt->chunk == 0 ? 1 : 0);
-}
-
 void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
                                bool compress ) {
   assert(M && "You can't write a null module!!");
@@ -1184,21 +1122,14 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
 
     Out.write(compressed_magic,4);
 
-    // Do the compression, writing as we go.
-    CompressionContext ctxt(&Out,Buffer.size());
-
-    // Compress everything after the magic number (which we'll alter)
-    uint64_t zipSize = Compressor::compress(
+    // Compress everything after the magic number (which we altered)
+    uint64_t zipSize = Compressor::compressToStream(
       (char*)(FirstByte+4),        // Skip the magic number
       Buffer.size()-4,             // Skip the magic number
-      WriteCompressedData,         // use this function to allocate / write
-      Compressor::COMP_TYPE_BZIP2, // Try bzip2 compression first
-      (void*)&ctxt                 // Keep track of allocated memory
+      Out,                         // Where to write compressed data
+      Compressor::COMP_TYPE_BZIP2  // Try bzip2 compression first
     );
 
-    if (ctxt.chunk) {
-      ctxt.write(zipSize - ctxt.written);
-    }
   } else {
 
     // We're not compressing, so just write the entire block.
