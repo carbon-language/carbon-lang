@@ -1537,7 +1537,7 @@ ScheduleInstructionsWithSSA(Method* method,
     {
       cout << endl
 	   << "*** Machine instructions after INSTRUCTION SCHEDULING" << endl;
-      method->getMachineCode().dump();
+      MachineCodeForMethod::get(method).dump();
     }
   
   return false;					 // no reason to fail yet
