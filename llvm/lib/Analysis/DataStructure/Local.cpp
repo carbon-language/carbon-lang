@@ -7,14 +7,11 @@
 
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
@@ -96,11 +93,13 @@ namespace {
     void visitLoadInst(LoadInst &LI);
     void visitStoreInst(StoreInst &SI);
     void visitCallInst(CallInst &CI);
+    void visitInvokeInst(InvokeInst &II);
     void visitSetCondInst(SetCondInst &SCI) {}  // SetEQ & friends are ignored
     void visitFreeInst(FreeInst &FI);
     void visitCastInst(CastInst &CI);
     void visitInstruction(Instruction &I);
 
+    void visitCallSite(CallSite CS);
   private:
     // Helper functions used to implement the visitation functions...
 
@@ -405,29 +404,38 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
 }
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
+  visitCallSite(&CI);
+}
+
+void GraphBuilder::visitInvokeInst(InvokeInst &II) {
+  visitCallSite(&II);
+}
+
+void GraphBuilder::visitCallSite(CallSite CS) {
   // Set up the return value...
   DSNodeHandle RetVal;
-  if (isPointerType(CI.getType()))
-    RetVal = getValueDest(CI);
+  Instruction *I = CS.getInstruction();
+  if (isPointerType(I->getType()))
+    RetVal = getValueDest(*I);
 
   DSNode *Callee = 0;
-  if (DisableDirectCallOpt || !isa<Function>(CI.getOperand(0)))
-    Callee = getValueDest(*CI.getOperand(0)).getNode();
+  if (DisableDirectCallOpt || !isa<Function>(CS.getCalledValue()))
+    Callee = getValueDest(*CS.getCalledValue()).getNode();
 
   std::vector<DSNodeHandle> Args;
-  Args.reserve(CI.getNumOperands()-1);
+  Args.reserve(CS.arg_end()-CS.arg_begin());
 
   // Calculate the arguments vector...
-  for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
-    if (isPointerType(CI.getOperand(i)->getType()))
-      Args.push_back(getValueDest(*CI.getOperand(i)));
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
+    if (isPointerType((*I)->getType()))
+      Args.push_back(getValueDest(**I));
 
   // Add a new function call entry...
   if (Callee)
-    FunctionCalls.push_back(DSCallSite(CI, RetVal, Callee, Args));
+    FunctionCalls.push_back(DSCallSite(CS, RetVal, Callee, Args));
   else
-    FunctionCalls.push_back(DSCallSite(CI, RetVal,
-                                       cast<Function>(CI.getOperand(0)), Args));
+    FunctionCalls.push_back(DSCallSite(CS, RetVal, CS.getCalledFunction(),
+                                       Args));
 }
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {

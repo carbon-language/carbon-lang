@@ -61,7 +61,7 @@ FunctionModRefInfo::FunctionModRefInfo(const Function& func,
 
 FunctionModRefInfo::~FunctionModRefInfo()
 {
-  for(std::map<const CallInst*, ModRefInfo*>::iterator
+  for(std::map<const Instruction*, ModRefInfo*>::iterator
         I=callSiteModRefInfo.begin(), E=callSiteModRefInfo.end(); I != E; ++I)
     delete(I->second);
 
@@ -98,7 +98,7 @@ void FunctionModRefInfo::computeModRef(const Function &func)
   // The call sites are recorded in the TD graph.
   const std::vector<DSCallSite>& callSites = funcTDGraph->getFunctionCalls();
   for (unsigned i = 0, N = callSites.size(); i < N; ++i)
-    computeModRef(callSites[i].getCallInst());
+    computeModRef(callSites[i].getCallSite());
 }
 
 
@@ -117,25 +117,22 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 //       requested information (because the call site calls an external
 //       function or we cannot determine the complete set of functions invoked).
 //
-DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
+DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallSite CS,
                                hash_map<const DSNode*, DSNodeHandle> &NodeMap)
 {
   // Step #0: Quick check if we are going to fail anyway: avoid
   // all the graph cloning and map copying in steps #1 and #2.
   // 
-  if (const Function *F = CI.getCalledFunction())
-    {
-      if (F->isExternal())
-        return 0;   // We cannot compute Mod/Ref info for this callsite...
-    }
-  else
-    {
-      // Eventually, should check here if any callee is external.
-      // For now we are not handling this case anyway.
-      std::cerr << "IP Mod/Ref indirect call not implemented yet: "
-              << "Being conservative\n";
+  if (const Function *F = CS.getCalledFunction()) {
+    if (F->isExternal())
       return 0;   // We cannot compute Mod/Ref info for this callsite...
-    }
+  } else {
+    // Eventually, should check here if any callee is external.
+    // For now we are not handling this case anyway.
+    std::cerr << "IP Mod/Ref indirect call not implemented yet: "
+              << "Being conservative\n";
+    return 0;   // We cannot compute Mod/Ref info for this callsite...
+  }
 
   // Step #1: Clone the top-down graph...
   DSGraph *Result = new DSGraph(*funcTDGraph, NodeMap);
@@ -144,7 +141,7 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
   Result->maskNodeTypes(~(DSNode::Modified | DSNode::Read));
 
   // Step #3: clone the bottom up graphs for the callees into the caller graph
-  if (Function *F = CI.getCalledFunction())
+  if (Function *F = CS.getCalledFunction())
     {
       assert(!F->isExternal());
 
@@ -152,17 +149,18 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
 
       // If the call returns a value, make sure to merge the nodes...
       DSNodeHandle RetVal;
-      if (DS::isPointerType(CI.getType()))
-        RetVal = Result->getNodeForValue(&CI);
+      if (DS::isPointerType(CS.getInstruction()->getType()))
+        RetVal = Result->getNodeForValue(CS.getInstruction());
 
       // Populate the arguments list...
       std::vector<DSNodeHandle> Args;
-      for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
-        if (DS::isPointerType(CI.getOperand(i)->getType()))
-          Args.push_back(Result->getNodeForValue(CI.getOperand(i)));
+      for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+           I != E; ++I)
+        if (DS::isPointerType((*I)->getType()))
+          Args.push_back(Result->getNodeForValue(*I));
 
       // Build the call site...
-      DSCallSite CS(CI, RetVal, F, Args);
+      DSCallSite CS(CS, RetVal, F, Args);
 
       // Perform the merging now of the graph for the callee, which will
       // come with mod/ref bits set...
@@ -187,16 +185,15 @@ DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
 // and then inlining the callee's BU graph into the caller's TD graph.
 // 
 void
-FunctionModRefInfo::computeModRef(const CallInst& callInst)
+FunctionModRefInfo::computeModRef(CallSite CS)
 {
   // Allocate the mod/ref info for the call site.  Bits automatically cleared.
   ModRefInfo* callModRefInfo = new ModRefInfo(funcTDGraph->getGraphSize());
-  callSiteModRefInfo[&callInst] = callModRefInfo;
+  callSiteModRefInfo[CS.getInstruction()] = callModRefInfo;
 
   // Get a copy of the graph for the callee with the callee inlined
   hash_map<const DSNode*, DSNodeHandle> NodeMap;
-  DSGraph* csgp = ResolveCallSiteModRefInfo(const_cast<CallInst&>(callInst),
-                                            NodeMap);
+  DSGraph* csgp = ResolveCallSiteModRefInfo(CS, NodeMap);
   if (!csgp)
     { // Callee's side effects are unknown: mark all nodes Mod and Ref.
       // Eventually this should only mark nodes visible to the callee, i.e.,
@@ -323,7 +320,7 @@ void FunctionModRefInfo::print(std::ostream &O) const
 
   // Second: Print Globals and Locals modified at each call site in function
   // 
-  for (std::map<const CallInst*, ModRefInfo*>::const_iterator
+  for (std::map<const Instruction *, ModRefInfo*>::const_iterator
          CI = callSiteModRefInfo.begin(), CE = callSiteModRefInfo.end();
        CI != CE; ++CI)
     {

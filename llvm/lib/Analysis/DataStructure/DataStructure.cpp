@@ -709,7 +709,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
 
 // Define here to avoid including iOther.h and BasicBlock.h in DSGraph.h
 Function &DSCallSite::getCaller() const {
-  return *Inst->getParent()->getParent();
+  return *Site.getInstruction()->getParent()->getParent();
 }
 
 
@@ -1044,7 +1044,7 @@ DSCallSite DSGraph::getCallSiteForArguments(Function &F) const {
     if (isPointerType(I->getType()))
       Args.push_back(getScalarMap().find(I)->second);
 
-  return DSCallSite(*(CallInst*)0, getReturnNodeFor(F), &F, Args);
+  return DSCallSite(CallSite(), getReturnNodeFor(F), &F, Args);
 }
 
 

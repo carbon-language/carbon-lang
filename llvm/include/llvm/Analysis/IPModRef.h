@@ -45,7 +45,10 @@
 
 class Module;
 class Function;
+class CallSite;
+class Instruction;
 class CallInst;
+class InvokeInst;
 class DSNode;
 class DSGraph;
 class DSNodeHandle;
@@ -117,15 +120,15 @@ class FunctionModRefInfo {
   IPModRef&             IPModRefObj;        // The IPModRef Object owning this
   DSGraph*              funcTDGraph;        // Top-down DS graph for function
   ModRefInfo            funcModRefInfo;     // ModRefInfo for the function body
-  std::map<const CallInst*, ModRefInfo*>
+  std::map<const Instruction*, ModRefInfo*>
                         callSiteModRefInfo; // ModRefInfo for each callsite
   std::map<const DSNode*, unsigned> NodeIds;
 
   friend class IPModRef;
 
   void          computeModRef   (const Function &func);
-  void          computeModRef   (const CallInst& callInst);
-  DSGraph *ResolveCallSiteModRefInfo(CallInst &CI,
+  void          computeModRef   (CallSite call);
+  DSGraph *ResolveCallSiteModRefInfo(CallSite CS,
                                 hash_map<const DSNode*, DSNodeHandle> &NodeMap);
 
 public:
@@ -145,9 +148,14 @@ public:
     return &funcModRefInfo;
   }
   const ModRefInfo*     getModRefInfo  (const CallInst& callInst) const {
-    std::map<const CallInst*, ModRefInfo*>::const_iterator I = 
-      callSiteModRefInfo.find(&callInst);
-    return (I == callSiteModRefInfo.end())? NULL : I->second;
+    std::map<const Instruction*, ModRefInfo*>::const_iterator I = 
+      callSiteModRefInfo.find((Instruction*)&callInst);
+    return (I == callSiteModRefInfo.end()) ? NULL : I->second;
+  }
+  const ModRefInfo*     getModRefInfo  (const InvokeInst& II) const {
+    std::map<const Instruction*, ModRefInfo*>::const_iterator I = 
+      callSiteModRefInfo.find((Instruction*)&II);
+    return (I == callSiteModRefInfo.end()) ? NULL : I->second;
   }
 
   // Get the nodeIds used to index all Mod/Ref information for current function

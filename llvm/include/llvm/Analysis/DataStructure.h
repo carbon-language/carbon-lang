@@ -11,10 +11,9 @@
 #include "Support/hash_set"
 
 class Type;
-class CallInst;
+class Instruction;
 class DSGraph;
 class DSNode;
-class DSCallSite;
 
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
@@ -75,7 +74,7 @@ class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
-  hash_multimap<CallInst*, Function*> ActualCallees;
+  hash_multimap<Instruction*, Function*> ActualCallees;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
@@ -106,7 +105,7 @@ public:
     AU.addRequired<LocalDataStructures>();
   }
 
-  typedef hash_multimap<CallInst*, Function*> ActualCalleesTy;
+  typedef hash_multimap<Instruction*, Function*> ActualCalleesTy;
   const ActualCalleesTy &getActualCallees() const {
     return ActualCallees;
   }

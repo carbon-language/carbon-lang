@@ -7,11 +7,9 @@
 #ifndef LLVM_ANALYSIS_DSSUPPORT_H
 #define LLVM_ANALYSIS_DSSUPPORT_H
 
-#include <vector>
 #include <functional>
-#include <string>
-#include <cassert>
 #include "Support/hash_set"
+#include "llvm/Support/CallSite.h"
 
 class Function;
 class CallInst;
@@ -127,7 +125,7 @@ namespace std {
 /// the DSNode handles for the function arguments.
 /// 
 class DSCallSite {
-  CallInst    *Inst;                 // Actual call site
+  CallSite     Site;                 // Actual call site
   Function    *CalleeF;              // The function called (direct call)
   DSNodeHandle CalleeN;              // The function node called (indirect call)
   DSNodeHandle RetVal;               // Returned value
@@ -160,21 +158,21 @@ public:
   /// Constructor.  Note - This ctor destroys the argument vector passed in.  On
   /// exit, the argument vector is empty.
   ///
-  DSCallSite(CallInst &inst, const DSNodeHandle &rv, DSNode *Callee,
+  DSCallSite(CallSite CS, const DSNodeHandle &rv, DSNode *Callee,
              std::vector<DSNodeHandle> &Args)
-    : Inst(&inst), CalleeF(0), CalleeN(Callee), RetVal(rv) {
+    : Site(CS), CalleeF(0), CalleeN(Callee), RetVal(rv) {
     assert(Callee && "Null callee node specified for call site!");
     Args.swap(CallArgs);
   }
-  DSCallSite(CallInst &inst, const DSNodeHandle &rv, Function *Callee,
+  DSCallSite(CallSite CS, const DSNodeHandle &rv, Function *Callee,
              std::vector<DSNodeHandle> &Args)
-    : Inst(&inst), CalleeF(Callee), RetVal(rv) {
+    : Site(CS), CalleeF(Callee), RetVal(rv) {
     assert(Callee && "Null callee function specified for call site!");
     Args.swap(CallArgs);
   }
 
   DSCallSite(const DSCallSite &DSCS)   // Simple copy ctor
-    : Inst(DSCS.Inst), CalleeF(DSCS.CalleeF), CalleeN(DSCS.CalleeN),
+    : Site(DSCS.Site), CalleeF(DSCS.CalleeF), CalleeN(DSCS.CalleeN),
       RetVal(DSCS.RetVal), CallArgs(DSCS.CallArgs) {}
 
   /// Mapping copy constructor - This constructor takes a preexisting call site
@@ -183,7 +181,7 @@ public:
   ///
   template<typename MapTy>
   DSCallSite(const DSCallSite &FromCall, const MapTy &NodeMap) {
-    Inst = FromCall.Inst;
+    Site = FromCall.Site;
     InitNH(RetVal, FromCall.RetVal, NodeMap);
     InitNH(CalleeN, FromCall.CalleeN, NodeMap);
     CalleeF = FromCall.CalleeF;
@@ -194,7 +192,7 @@ public:
   }
 
   const DSCallSite &operator=(const DSCallSite &RHS) {
-    Inst     = RHS.Inst;
+    Site     = RHS.Site;
     CalleeF  = RHS.CalleeF;
     CalleeN  = RHS.CalleeN;
     RetVal   = RHS.RetVal;
@@ -212,7 +210,7 @@ public:
 
   // Accessor functions...
   Function           &getCaller()     const;
-  CallInst           &getCallInst()   const { return *Inst; }
+  CallSite            getCallSite()   const { return Site; }
         DSNodeHandle &getRetVal()           { return RetVal; }
   const DSNodeHandle &getRetVal()     const { return RetVal; }
 
@@ -236,7 +234,7 @@ public:
 
   void swap(DSCallSite &CS) {
     if (this != &CS) {
-      std::swap(Inst, CS.Inst);
+      std::swap(Site, CS.Site);
       std::swap(RetVal, CS.RetVal);
       std::swap(CalleeN, CS.CalleeN);
       std::swap(CalleeF, CS.CalleeF);

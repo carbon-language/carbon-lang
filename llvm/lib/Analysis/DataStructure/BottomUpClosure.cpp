@@ -253,7 +253,8 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       Graph.mergeInGraph(CS, *Callee, Graph, 0);
 
     } else {
-      ActualCallees.insert(std::make_pair(&CS.getCallInst(), Callee));
+      ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
+                                          Callee));
 
       // Get the data structure graph for the called function.
       //

@@ -96,9 +96,10 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
   const std::vector<DSCallSite> &FunctionCalls = G.getFunctionCalls();
 
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
+    Instruction *CallI = FunctionCalls[i].getCallSite().getInstruction();
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
       BUDataStructures::ActualCalleesTy::const_iterator>
-         IP = ActualCallees.equal_range(&FunctionCalls[i].getCallInst());
+         IP = ActualCallees.equal_range(CallI);
 
     for (BUDataStructures::ActualCalleesTy::const_iterator I = IP.first;
          I != IP.second; ++I)
@@ -191,10 +192,11 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
   // Clone and merge the reachable subgraph from the call into callee's graph.
   // 
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
+    Instruction *CallI = FunctionCalls[i].getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
     std::pair<BUDataStructures::ActualCalleesTy::const_iterator,
       BUDataStructures::ActualCalleesTy::const_iterator>
-          IP = ActualCallees.equal_range(&FunctionCalls[i].getCallInst());
+          IP = ActualCallees.equal_range(CallI);
 
     // Multiple callees may have the same graph, so try to inline and merge
     // only once for each <callSite,calleeGraph> pair, not once for each
