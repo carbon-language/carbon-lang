@@ -127,9 +127,10 @@ public:
 public:
   /// @brief Main interface to parsing a bytecode buffer.
   void ParseBytecode(
-     const unsigned char *Buf,   ///< Beginning of the bytecode buffer
-     unsigned Length,            ///< Length of the bytecode buffer
-     const std::string &ModuleID ///< An identifier for the module constructed.
+     const unsigned char *Buf,    ///< Beginning of the bytecode buffer
+     unsigned Length,             ///< Length of the bytecode buffer
+     const std::string &ModuleID, ///< An identifier for the module constructed.
+     bool processFunctions=false  ///< Process all function bodies fully.
   );
 
   /// @brief Parse all function bodies

@@ -185,9 +185,9 @@ public:
   }
 
   virtual void handleGlobalInitializer(GlobalVariable* GV, Constant* CV) {
-    dump << "      Initializer: GV=";
+    dump << "    Initializer: GV=";
     GV->print(dump);
-    dump << " CV=";
+    dump << "      CV=";
     CV->print(dump);
     dump << "\n";
   }
@@ -204,17 +204,17 @@ public:
   }
 
   virtual void handleCompactionTableBegin() { 
-    dump << "    BLOCK: CompactionTable {\n";
+    dump << "      BLOCK: CompactionTable {\n";
   }
 
   virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries) {
     bca.numCmpctnTables++;
-    dump << "      Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
+    dump << "        Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
   }
 
   virtual void handleCompactionTableType( unsigned i, unsigned TypSlot, 
       const Type* Ty ) {
-    dump << "        Type: " << i << " Slot:" << TypSlot 
+    dump << "          Type: " << i << " Slot:" << TypSlot 
               << " is " << Ty->getDescription() << "\n"; 
   }
 
@@ -223,13 +223,13 @@ public:
     unsigned TypSlot,
     unsigned ValSlot, 
     const Type* Ty ) { 
-    dump << "        Value: " << i << " TypSlot: " << TypSlot 
+    dump << "          Value: " << i << " TypSlot: " << TypSlot 
          << " ValSlot:" << ValSlot << " is " << Ty->getDescription() 
          << "\n";
   }
 
   virtual void handleCompactionTableEnd() { 
-    dump << "    } END BLOCK: CompactionTable\n";
+    dump << "      } END BLOCK: CompactionTable\n";
   }
 
   virtual void handleSymbolTableBegin(Function* CF, SymbolTable* ST) { 
@@ -260,9 +260,9 @@ public:
   }
 
   virtual void handleFunctionBegin(Function* Func, unsigned Size) {
-    dump << "BLOCK: Function {\n";
-    dump << "  Linkage: " << Func->getLinkage() << "\n";
-    dump << "  Type: " << Func->getType()->getDescription() << "\n";
+    dump << "    BLOCK: Function {\n";
+    dump << "      Linkage: " << Func->getLinkage() << "\n";
+    dump << "      Type: " << Func->getType()->getDescription() << "\n";
     const FunctionType* FType = 
       cast<FunctionType>(Func->getType()->getElementType());
     currFunc = &bca.FunctionInfo[Func];
@@ -284,7 +284,7 @@ public:
   }
 
   virtual void handleFunctionEnd( Function* Func) {
-    dump << "} END BLOCK: Function\n";
+    dump << "    } END BLOCK: Function\n";
     currFunc->density = double(currFunc->byteSize) /
       double(currFunc->numInstructions+currFunc->numBasicBlocks);
 
@@ -298,7 +298,7 @@ public:
   }
 
   virtual void handleBasicBlockBegin( unsigned blocknum) {
-    dump << "  BLOCK: BasicBlock #" << blocknum << "{\n";
+    dump << "      BLOCK: BasicBlock #" << blocknum << "{\n";
     bca.numBasicBlocks++;
     bca.numValues++;
     if ( currFunc ) currFunc->numBasicBlocks++;
@@ -306,11 +306,12 @@ public:
 
   virtual bool handleInstruction( unsigned Opcode, const Type* iType, 
                                 std::vector<unsigned>& Operands, unsigned Size){
-    dump << "    INST: OpCode=" 
-         << Instruction::getOpcodeName(Opcode) << " Type=" 
-         << iType->getDescription() << "\n";
+    dump << "        INST: OpCode=" 
+         << Instruction::getOpcodeName(Opcode) << " Type=\"" 
+         << iType->getDescription() << "\"";
     for ( unsigned i = 0; i < Operands.size(); ++i ) 
-      dump << "      Op#" << i << " Slot=" << Operands[i] << "\n";
+      dump << " Op(" << i << ")=Slot(" << Operands[i] << ")";
+    dump << "\n";
 
     bca.numInstructions++;
     bca.numValues++;
@@ -327,7 +328,7 @@ public:
   }
 
   virtual void handleBasicBlockEnd(unsigned blocknum) { 
-    dump << "  } END BLOCK: BasicBlock #" << blocknum << "{\n";
+    dump << "      } END BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
   virtual void handleGlobalConstantsBegin() { 

@@ -894,7 +894,6 @@ unsigned BytecodeReader::ParseInstructionList(Function* F) {
       BB = ParsedBasicBlocks[BlockNo] = new BasicBlock();
     else
       BB = ParsedBasicBlocks[BlockNo];
-    if (Handler) Handler->handleBasicBlockEnd( BlockNo );
     ++BlockNo;
     F->getBasicBlockList().push_back(BB);
 
@@ -904,6 +903,8 @@ unsigned BytecodeReader::ParseInstructionList(Function* F) {
 
     if (!BB->getTerminator())
       throw std::string("Non-terminated basic block found!");
+
+    if (Handler) Handler->handleBasicBlockEnd( BlockNo-1 );
   }
 
   return BlockNo;
@@ -1898,7 +1899,8 @@ void BytecodeReader::ParseModule() {
 /// and \p Length parameters.
 void BytecodeReader::ParseBytecode(
        BufPtr Buf, unsigned Length,
-       const std::string &ModuleID) {
+       const std::string &ModuleID,
+       bool processFunctions) {
 
   try {
     At = MemStart = BlockStart = Buf;
@@ -1934,14 +1936,19 @@ void BytecodeReader::ParseBytecode(
     // Parse the module contents
     this->ParseModule();
 
-    // Tell the handler we're done
-    if (Handler) Handler->handleModuleEnd(ModuleID);
-
     // Check for missing functions
     if ( hasFunctions() )
       throw std::string("Function expected, but bytecode stream ended!");
 
-    // Tell the handler we're
+    // Process all the function bodies now, if requested
+    if ( processFunctions )
+      ParseAllFunctionBodies();
+
+    // Tell the handler we're done with the module
+    if (Handler) 
+      Handler->handleModuleEnd(ModuleID);
+
+    // Tell the handler we're finished the parse
     if (Handler) Handler->handleFinish();
 
   } catch (std::string& errstr ) {

@@ -58,7 +58,7 @@ BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
 
   try {
     // Parse the bytecode we mmapped in
-    ParseBytecode(Buffer, Length, Filename);
+    ParseBytecode(Buffer, Length, Filename, H != 0);
   } catch (...) {
     UnmapFileFromAddressSpace(Buffer, Length);
     throw;
@@ -114,7 +114,7 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
     MustDelete = false;
   }
   try {
-    ParseBytecode(ParseBegin, Length, ModuleID);
+    ParseBytecode(ParseBegin, Length, ModuleID, H != 0);
   } catch (...) {
     if (MustDelete) delete [] Buffer;
     throw;
@@ -163,7 +163,7 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
     throw std::string("Standard Input empty!");
 
   FileBuf = &FileData[0];
-  ParseBytecode(FileBuf, FileData.size(), "<stdin>");
+  ParseBytecode(FileBuf, FileData.size(), "<stdin>", H != 0 );
 }
 
 //===----------------------------------------------------------------------===//
