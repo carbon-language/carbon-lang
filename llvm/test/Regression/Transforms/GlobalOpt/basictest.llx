@@ -1,0 +1,9 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
+
+%X = internal global int 4
+
+
+int %foo() {
+	%V = load int* %X
+	ret int %V
+}

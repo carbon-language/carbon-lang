@@ -1,0 +1,29 @@
+; Test that PHI nodes and select instructions do not necessarily make stuff
+; non-constant.
+
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
+
+%X = internal global int 4
+%Y = internal global int 5
+
+int %test1(bool %C) {
+	%P = select bool %C, int* %X, int* %Y
+	%V = load int* %P
+	ret int %V
+}
+
+
+int %test2(bool %C) {
+	br bool %C, label %T, label %Cont
+T:
+	br label %Cont
+Cont:
+	%P = phi int* [%X, %0], [%Y, %T]
+	%V = load int* %P
+	ret int %V
+}
+
+
+
+
+

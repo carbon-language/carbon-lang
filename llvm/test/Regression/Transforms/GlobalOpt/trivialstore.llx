@@ -1,0 +1,17 @@
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep G
+
+%G = internal global int 17
+
+void %foo() {
+	store int 17, int* %G   ;; Doesn't change the value
+	ret void
+}
+int %bar() {
+	%X = load int* %G
+	ret int %X
+}
+
+internal void %dead() {
+	store int 123, int* %G
+	ret void
+}
