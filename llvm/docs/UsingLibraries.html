@@ -2,23 +2,15 @@
                       "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
 <head>
-	<title>Object Files: Understanding The Result Of LLVM Compilation</title>
+	<title>Using The LLVM Libraries</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <style>
-  <!--
-    td { border: 2px solid gray }
-  -->
-  </style>
 </head>
 <body>
-<div class="doc_title">
-  Object Files: Understanding The Result Of LLVM Compilation
-</div>
-
+<div class="doc_title">Using The LLVM Libraries</div>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#introduction">Introduction</a></li>
-  <li><a href="#files">File Contents</a></li>
+  <li><a href="#descriptions">Library Descriptions</a></li>
   <li><a href="#rot">Linkage Rules Of Thumb</a>
 	  <ol>
 			<li><a href="#always">Always Link vmcore.o, support.a</a>
@@ -34,232 +26,97 @@
 <!-- ======================================================================= -->
 <div class="doc_section"><a name="abstract">Abstract</a></div>
 <div class="doc_text">
-<p>This document describes the contents of the many objects files and libraries
-that are produced by compiling LLVM. To make use of LLVM this information is 
-needed in order to understand what files should be linked into your program.
+  <p>Amongst other things, LLVM is a toolkit for building compilers, linkers,
+  runtime executives, virtual machines, and other program execution related
+  tools. In addition to the LLVM tool set, the functionality of LLVM is
+  available through a set of libraries.  To use LLVM as a toolkit for
+  constructing tools, a developer needs to understand what is contained in the
+  various libraries, what they depend on, and how to use them.  This document 
+  describes the contents of the libraries and how and when to use them.
 </p>
 </div>
+
 <!-- ======================================================================= -->
 <div class="doc_section"> <a name="introduction">Introduction</a></div>
 <div class="doc_text">
-<p>If you're writing a compiler, virtual machine, or any other utility for
-	 LLVM, you'll need to figure out which of the many .a (archive) and .o
-	 (object) files you will need to link with to be successful. An
-	 understanding of the contents of these files and their inter-relationships
-	 will be useful in coming up with an optimal specification for the objects
-	 and libraries to link with. 
-</p>
-<p>The purpose of this document is to hopefully reduce some of the trial and
-   error that the author experienced in using LLVM.
-</p>
+  <p>If you're writing a compiler, virtual machine, or any other utility based 
+  on LLVM, you'll need to figure out which of the many libraries files you will 
+  need to link with to be successful. An understanding of the contents of these 
+  files and their inter-relationships will be useful in coming up with an optimal 
+  specification for the libraries to link with. The purpose of this document is 
+  to reduce some of the trial and error that the author experienced in using 
+  LLVM.</p>
+  <p>LLVM produces two types of libraries: archives (ending in <tt>.a</tt>) and
+  objects (ending in <tt>.o</tt>). However, both are libraries. Libraries ending
+  in <tt>.o</tt> are known as re-linked libraries because they contain all the
+  compilation units of the library linked together as a single <tt>.o</tt> file.
+  Furthermore, many of the libraries have <em>both</em> forms of library. The
+  re-linked libraries are used whenever you want to include all symbols from the
+  library. The archive libraries are used whenever you want to only resolve
+  outstanding symbols at that point in the link without including everything in
+  the library. </p>
+  <p>When linking your tools, you will use the <tt>LLVMLIBS</tt> make variable. 
+  (see the <a href="MakefileGuide.html#LLVMLIBS">Makefile Guide</a> for 
+  details). This variable specifies which LLVM libraries to link into your tool 
+  and the order in which they will be linked. You specify re-linked libraries by
+  naming the library without a suffix. You specify archive libraries by naming
+  the library with a <tt>.a</tt> suffix but without the <tt>lib</tt> prefix. The
+  order in which the libraries appear in the <tt>LLVMLIBS</tt> variable
+  definition is the order in which they will be linked. Getting this order
+  correct for your tool can sometimes be challenging.
 </div>
 <!-- ======================================================================= -->
-<div class="doc_section"><a name="files"></a>File Contents</div>
+<div class="doc_section"><a name="descriptions"></a>Library Descriptions</div>
 <div class="doc_text">
-<p>The table below provides a summary of the basic contents of each file.</p>
-<table class="doc_table" 
-	style="width:80%; text-align: left; border: 2px solid gray; border-collapse: collapse;">
-<tr class="doc_table">
-	<td colspan="2" class="doc_section">Summary Of LLVM Library And Object Files
-	</td>
-</tr>
-<tr class="doc_table">
-	<td><h2><u>Library</u></h2></td>
-	<td><h2><u>Description</u></h2></td>
-</tr>
-<tr class="doc_table">
-	<td>libipo.a</td>
-	<td>
-		An archive of all interprocedural optimizations.
-	</td>
-</tr>
-<tr class="doc_table">
-	<td>libscalaropts.a</td>
-	<td>
-		An archive of all scalar optimizations.
-	</td>
-</tr>
-<tr class="doc_table">
-	<td>libtransforms.a</td>
-	<td>Uncategorized transformations.</td>
-</tr>
-<tr class="doc_table">
-	<td>libtarget.a</td>
-	<td>An archive containing generic code generator support.</td>
-</tr>
-<tr class="doc_table">
-	<td>libanalysis.a</td>
-	<td>An archive containing intraprocedural analyses.</td>
-</tr>
-<tr class="doc_table">
-	<td>libdatastructure.a</td>
-	<td>An archive containing Data Structure Analysis.</td>
-</tr>
-<tr class="doc_table">
-	<td>libinstrument.a</td>
-	<td>Intraprocedural instrumentation and utilities.</td>
-</tr>
-<tr class="doc_table">
-	<td>libsparcv9regalloc.a</td>
-	<td>SparcV9 graph-coloring register allocator.</td>
-</tr>
-<tr class="doc_table">
-	<td>libipa.a</td>
-	<td>An archive containing interprocedural analyses</td>
-</tr>
-<tr class="doc_table">
-	<td>libtransformutils.a</td>
-	<td>Utility functions for transformations.</td>
-</tr>
-<tr class="doc_table">
-	<td>libsupport.a</td>
-	<td>General support utilities</td>
-</tr>
-<tr class="doc_table">
-	<td><h2><u>Object File</u></h2></td>
-	<td><h2><u>Description</u></h2></td>
-</tr>
-<tr class="doc_table">
-	<td>support.o</td>
-	<td>General support utilities</td>
-</tr>
-<tr class="doc_table">
-	<td>asmparser.o</td>
-	<td>Assembler Parser</td>
-</tr>
-<tr class="doc_table">
-	<td>bcreader.o</td>
-	<td>Bytecode Reader</td>
-</tr>
-<tr class="doc_table">
-	<td>bcwriter.o</td>
-	<td>Bytecode Writer</td>
-</tr>
-<tr class="doc_table">
-	<td>sched.o</td>
-	<td>SparcV9 instruction scheduler</td>
-</tr>
-<tr class="doc_table">
-	<td>selectiondag.o</td>
-	<td>Aggressive instruction selector for Directed Acyclic Graphs</td>
-</tr>
-<tr class="doc_table">
-	<td>transformutils.o</td>
-	<td>Utilities for code transformations</td>
-</tr>
-<tr class="doc_table">
-	<td>ipa.o</td>
-	<td>Interprocedural Analyses</td>
-</tr>
-<tr class="doc_table">
-	<td>sparcv9select.o</td>
-	<td>SparcV9 instruction selector</td>
-</tr>
-<tr class="doc_table">
-	<td>cwriter.o</td>
-	<td>"C" Code Writer</td>
-</tr>
-<tr class="doc_table">
-	<td>profpaths.o</td>
-	<td>Path profiling instrumentation</td>
-</tr>
-<tr class="doc_table">
-	<td>sparcv9regalloc.o</td>
-	<td>SparcV9 graph-coloring register allocator</td>
-</tr>
-<tr class="doc_table">
-	<td>instrument.o</td>
-	<td>Intraprocedural instrumentation and utilities.</td>
-</tr>
-<tr class="doc_table">
-	<td>datastructure.o</td>
-	<td>Data Structure Analysis</td>
-</tr>
-<tr class="doc_table">
-	<td>codegen.o</td>
-	<td>Native code generation</td>
-</tr>
-<tr class="doc_table">
-	<td>sparcv9livevar.o</td>
-	<td>SparcV9 Live Variable Analysis</td>
-</tr>
-<tr class="doc_table">
-	<td>vmcore.o</td>
-	<td>Virtual Machine Core</td>
-</tr>
-<tr class="doc_table">
-	<td>lli-interpreter.o</td>
-	<td>Interpreter for LLVM ByteCode</td>
-</tr>
-<tr class="doc_table">
-	<td>lli-jit.o</td>
-	<td>
-		Just-In-Time Compiler For LLVM ByteCode
-	</td>
-</tr>
-<tr class="doc_table">
-	<td>executionengine.o</td>
-	<td>Engine for LLI</td>
-</tr>
-<tr class="doc_table">
-	<td>debugger.o</td>
-	<td>Source Level Debugging Support</td>
-</tr>
-<tr class="doc_table">
-	<td>analysis.o</td>
-	<td>General framework for Analysis</td>
-</tr>
-<tr class="doc_table">
-	<td>sparcv9.o</td>
-	<td>SparcV9 backend</td>
-</tr>
-<tr class="doc_table">
-	<td>target.o</td>
-	<td>Generic backend support</td>
-</tr>
-<tr class="doc_table">
-	<td>transforms.o</td>
-	<td>Uncategorized transformations.</td>
-</tr>
-<tr class="doc_table">
-	<td>x86.o</td>
-	<td>Intel x86 backend</td>
-</tr>
-<tr class="doc_table">
-	<td>powerpc.o</td>
-	<td>PowerPC backend</td>
-</tr>
-<tr class="doc_table">
-	<td>scalaropts.o</td>
-	<td>Optimizations For Scalars</td>
-</tr>
-<tr class="doc_table">
-	<td>ipo.o</td>
-	<td>Interprocedural Optimizations</td>
-</tr>
-<tr class="doc_table">
-	<td>trace.o</td>
-	<td>Support For Tracing/Debugging?</td>
-</tr>
-<tr class="doc_table">
-	<td>profile_rt.o</td>
-	<td>Runtime Library For Profiler</td>
-</tr>
-<tr class="doc_table">
-	<td>sample.o</td>
-	<td>Sample Program ?</td>
-</tr>
-<tr class="doc_table">
-	<td>stkr_compiler.o</td>
-	<td>Stacker Language Compiler Library</td>
-</tr>
-<tr class="doc_table">
-	<td>stkr_runtime.o</td>
-	<td>Stacker Language Runtime Library</td>
-</tr>
+  <p>The table below categorizes each library
+<table style="text-align:left">
+  <tr><th>Library</th><th>Forms</th><th>Description</th></tr>
+  <tr><th colspan=3">Core Libraries</th></tr>
+  <tr><td>LLVMAsmParser</td><td><tt>.o</tt></td><td>LLVM Assembly Parsing</td></tr>
+  <tr><td>LLVMBCReader</td><td><tt>.o</tt></td><td>LLVM Bytecode Reading</td></tr>
+  <tr><td>LLVMBCWriter</td><td><tt>.o</tt></td><td>LLVM Bytecode Writing</td></tr>
+  <tr><td>LLVMDebugger</td><td><tt>.o</tt></td><td>Source Level Debugging Support</td></tr>
+  <tr><td>LLVMSupport</td><td><tt>.a .o</tt></td><td>General support utilities</td></tr>
+  <tr><td>LLVMSystem</td><td><tt>.a .o</tt></td><td>Operating system abstraction</td></tr>
+  <tr><td>LLVMCore</td><td><tt>.o</tt></td><td>LLVM Core IR</td></tr>
+
+  <tr><th colspan=3">Analysis Libraries</th></tr>
+  <tr><td>LLVMAnalysis</td><td><tt>.a .o</tt></td><td>Various analysis passes.</td></tr>
+  <tr><td>LLVMDataStructure</td><td><tt>.a .o</tt></td><td>Data structure analysis passes.</td></tr>
+  <tr><td>LLVMipa</td><td><tt>.a .o</tt></td><td>Inter-procedural analysis passes.</td></tr>
+
+  <tr><th colspan=3">Transformation Libraries</th>
+  <tr><td>LLVMInstrumentation</td><td><tt>.a .o</tt></td><td>Instrumentation passes.</td></tr>
+  <tr><td>LLVMipo</td><td><tt>.a .o</tt></td><td>All inter-procedural optimization passes.</td></tr>
+  <tr><td>LLVMScalarOpts</td><td><tt>.a .o</tt></td><td>All scalar optimization passes.</td></tr>
+  <tr><td>LLVMTransforms</td><td><tt>.a .o</tt></td><td>Uncategorized transformation passes.</td></tr>
+  <tr><td>LLVMTransformUtils</td><td><tt>.a .o</tt></td><td>Transformation utilities.</td></tr>
+  <tr><td>LLVMProfilePaths</td><td><tt>.o</tt></td><td>Profile paths for instrumentation.</td></tr>
+
+  <tr><th colspan=3">Code Generation Libraries </th></tr>
+  <tr><td>LLVMCodeGen</td><td><tt>.o</tt></td><td>Native code generation infrastructure</td></tr>
+
+  <tr><th colspan=3">Target Libraries</th></tr>
+  <tr><td>LLVMCBackend</td><td><tt>.o</tt></td><td>'C' language code generator.</td></tr>
+  <tr><td>LLVMPowerPC</td><td><tt>.o</tt></td><td>PowerPC code generation backend</td></tr>
+  <tr><td>LLVMSelectionDAG</td><td><tt>.o</tt></td><td>Aggressive instruction selector for Directed Acyclic Graphs.</td></tr>
+  <tr><td>LLVMSkeleton</td><td><tt>.a .o</tt></td><td>Skeleton for a code generation backend.</td></tr>
+  <tr><td>LLVMSparcV9</td><td><tt>.o</tt></td><td>Code generation for SparcV9.</td></tr>
+  <tr><td>LLVMSparcV9RegAlloc</td><td><tt>.a .o</tt></td><td>Graph-coloring register allocator for SparcV9.</td></tr>
+  <tr><td>LLVMSparcV9InstrSched</td><td><tt>.o</tt></td><td>Instruction scheduling for SparcV9.</td></tr>
+  <tr><td>LLVMSparcV9LiveVar</td><td><tt>.o</tt></td><td>Live variable analysis SparcV9.</td></tr>
+  <tr><td>LLVMSparcV9ModuloSched</td><td><tt>.o</tt></td><td>Modulo scheduling for SparcV9.</td></tr>
+  <tr><td>LLVMTarget</td><td><tt>.a .o</tt></td><td>Generic code generation utilities.</td></tr>
+  <tr><td>LLVMX86</td><td><tt>.o</tt></td><td>Intel x86 code generation backend</td></tr>
+
+  <tr><th colspan=3">Runtime Libraries</th></tr>
+  <tr><td>LLVMInterpreter</td><td><tt>.o</tt></td><td>Bytecode Interpreter</td></tr>
+  <tr><td>LLVMJIT</td><td><tt>.o</tt></td><td>Bytecode JIT Compiler</td></tr>
+  <tr><td>LLVMExecutionEngine</td><td><tt>.o</tt></td><td>Virtual machine engine</td></tr>
+  <tr><td>LLVMexecve</td><td><tt>.o</tt></td><td>execve(2) replacement for llee</td></tr>
 </table>
 </div>
-<p></p>
+
 <!-- ======================================================================= -->
 <div class="doc_section"><a name="rot">Linkage Rules Of Thumb</a></div>
 <div class="doc_text">
@@ -267,16 +124,21 @@ needed in order to understand what files should be linked into your program.
 	should link into your programs.</p>
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="always">Always Link vmcore.o support.a</a>
-</div>
+<div class="doc_subsection"><a name="always">Always Link LLVMCore LLVMSupport
+    LLVMSystem</a></div>
 <div class="doc_text">
-	<p>No matter what you do with LLVM, you'll always need to link with vmcore.o 
-	and support.a.</p>
+  <p>No matter what you do with LLVM, the last three entries in your linke line
+  should always be: <tt>LLVMCore LLVMSupport.a LLVMSystem.a</tt>.</p>
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="Placeholder">Placeholder</a></div>
+<div class="doc_subsection"><a name="onlyone">Never link both archive and
+    re-linked library</a></div>
 <div class="doc_text">
-	<p>Need more rules of thumb here.</p>
+  <p>There is never any point to linking both the re-linked (<tt>.o</tt>) and
+  the archive (<tt>.a</tt>) versions of a library. Since the re-linked version
+  includes the entire library, the archive version will not resolve any symbols.
+  You could even end up with link error is you place the archive version before
+  the re-linked version on the linker's command line.</p>
 </div>
 <!-- ======================================================================= -->
 <hr>
