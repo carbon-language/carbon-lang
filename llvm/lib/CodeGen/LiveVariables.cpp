@@ -302,12 +302,19 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   // the instruction.
   for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = OldMI->getOperand(i);
-    if (MO.isRegister() && MO.isDef() && MO.getReg() &&
+    if (MO.isRegister() && MO.getReg() &&
         MRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       VarInfo &VI = getVarInfo(Reg);
-      if (VI.DefInst == OldMI)
-        VI.DefInst = NewMI;
+      if (MO.isDef()) {
+        // Update the defining instruction.
+        if (VI.DefInst == OldMI)
+          VI.DefInst = NewMI;
+      } else if (MO.isUse()) {
+        // If this is a kill of the value, update the VI kills list.
+        if (VI.removeKill(OldMI))
+          VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
+      }
     }
   }
 
