@@ -127,7 +127,8 @@ private:
 } // End llvm namespace
 
 namespace std {
-  inline void swap(llvm::DSNodeHandle &NH1, llvm::DSNodeHandle &NH2) { NH1.swap(NH2); }
+  template<>
+  inline void swap<llvm::DSNodeHandle>(llvm::DSNodeHandle &NH1, llvm::DSNodeHandle &NH2) { NH1.swap(NH2); }
 }
 
 namespace llvm {
@@ -296,6 +297,8 @@ public:
 } // End llvm namespace
 
 namespace std {
-  inline void swap(llvm::DSCallSite &CS1, llvm::DSCallSite &CS2) { CS1.swap(CS2); }
+  template<>
+  inline void swap<llvm::DSCallSite>(llvm::DSCallSite &CS1,
+                                     llvm::DSCallSite &CS2) { CS1.swap(CS2); }
 }
 #endif
