@@ -24,8 +24,6 @@
   <li><a href="#starting">Getting Started with LLVM</a>
     <ol>
       <li><a href="#terminology">Terminology and Notation</a>
-      <li><a href="#unpack">Unpacking the LLVM Archives</a>
-      <li><a href="#checkout">Checkout LLVM from CVS</a>
       <li><a href="#objfiles">The Location of LLVM Object Files</a>
     </ol></li>
 
@@ -36,7 +34,7 @@
 
 <div class="doc_author">
   <p>Written by: 
-    <a href="mailto:jeffc@jolt-lang.org">Jeff Cohen</a>, 
+    <a href="mailto:jeffc@jolt-lang.org">Jeff Cohen</a>
   </p>
 </div>
 
@@ -55,12 +53,13 @@
   functional, but it is currently not possible to directly generate an
   executable file.  You can do so indirectly by using the C back end.</p>
 
-  <p>To emphasize, there is no C/C++ front end currently available.  llvm-gcc
-  is based on GCC, which cannot be bootstrapped using VC++.  Eventually there
-  should be a llvm-gcc based on Cygwin or Mingw that is usable.  There is also
-  the option of generating bytecode files on Unix and copying them over to
-  Windows.  But be aware the odds of linking C++ code compiled with llvm-gcc
-  with code compiled with VC++ is essentially zero.</p>
+  <p>To emphasize, there is no C/C++ front end currently available.
+  <tt>llvm-gcc</tt> is based on GCC, which cannot be bootstrapped using VC++.
+  Eventually there should be a <tt>llvm-gcc</tt> based on Cygwin or MinGW that
+  is usable.  There is also the option of generating bytecode files on Unix and
+  copying them over to Windows.  But be aware the odds of linking C++ code
+  compiled with <tt>llvm-gcc</tt> with code compiled with VC++ is essentially
+  zero.</p>
 
   <p>The LLVM test suite cannot be run on the Visual Studio port at this
   time.</p>
@@ -95,7 +94,7 @@
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
       <li><tt>gunzip --stdout llvm-<i>version</i>.tar.gz | tar -xvf -</tt>
-      <i>or use WinZip</i>
+      <i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or use WinZip</i>
       <li><tt>cd llvm</tt></li>
     </ol></li>
 
@@ -127,6 +126,9 @@
   </ol></li>
 
 </ol>
+
+<p>It is strongly encouraged that you get the latest version from CVS.  Much
+progress has been made since the 1.4 release.</p>
 
 </div>
 
@@ -218,84 +220,6 @@ All these paths are absolute:</p>
     <p>
 </dl>
 
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="unpack">Unpacking the LLVM Archives</a>
-</div>
-
-<div class="doc_text">
-
-<p>
-If you have the LLVM distribution, you will need to unpack it before you
-can begin to compile it.  LLVM is distributed as a set of two files: the LLVM
-suite and the LLVM GCC front end compiled for your platform.  There is an
-additional test suite that is optional.  Each file is a TAR archive that is
-compressed with the gzip program.  The WinZip program can also unpack this
-archive.  Only the LLVM suite is usable with Visual Studio.
-</p>
-
-<p> The files are as follows:
-<dl>
-  <dt><tt>llvm-1.4.tar.gz</tt></dt>
-  <dd>This is the source code for the LLVM libraries and tools.<br/></dd>
-</dl>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="checkout">Checkout LLVM from CVS</a>
-</div>
-
-<div class="doc_text">
-
-<p>If you have access to our CVS repository, you can get a fresh copy of
-the entire source code.  Note that significant progress has been made on the
-Visual Studio port since 1.4 was released.  All you need to do is check it out
-from CVS as follows:</p>
-
-<ul>
-<li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-  <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
-  <li>Hit the return key when prompted for the password.
-  <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co
-      llvm</tt>
-</ul>
-
-<p>This will create an '<tt>llvm</tt>' directory in the current
-directory and fully populate it with the LLVM source code, Makefiles,
-test directories, and local copies of documentation files.</p>
-
-<p>If you want to get a specific release (as opposed to the most recent
-revision), you can specify a label.  The following releases have the following
-label:</p>
-
-<ul>
-<li>Release 1.4: <b>RELEASE_14</b></li>
-<li>Release 1.3: <b>RELEASE_13</b></li>
-<li>Release 1.2: <b>RELEASE_12</b></li>
-<li>Release 1.1: <b>RELEASE_11</b></li>
-<li>Release 1.0: <b>RELEASE_1</b></li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="mirrors">LLVM CVS Mirrors</a>
-</div>
-
-<div class="doc_text">
-
-<p>If the main CVS server is overloaded or inaccessible, you can try one of
-these user-hosted mirrors:</p>
-
-<ul>
-<li><a href="http://llvm.x10sys.com/">Mirror hosted by eXtensible Systems
-Inc.</a></li>
-</ul>
 </div>
 
 <!-- ======================================================================= -->
@@ -424,8 +348,7 @@ out:</p>
   <a href="http://validator.w3.org/check/referer"><img
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
 
-  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
-  <a href="http://llvm.x10sys.com/rspencer/">Reid Spencer</a><br>
+  <a href="mailto:jeffc@jolt-lang.org">Jeff Cohen</a><br>
   <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
   Last modified: $Date$
 </address>
