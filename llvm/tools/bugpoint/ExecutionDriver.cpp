@@ -394,7 +394,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
 // CBE Implementation of AbstractIntepreter interface
 //
 class CBE : public AbstractInterpreter {
-  std::string DISPath;          // The path to the LLVM 'dis' executable
+  std::string DISPath;          // The path to the `llvm-dis' executable
   GCC *gcc;
 public:
   CBE(const std::string &disPath, GCC *Gcc) : DISPath(disPath), gcc(Gcc) { }
@@ -402,13 +402,14 @@ public:
 
   // CBE create method - Try to find the 'dis' executable
   static CBE *create(BugDriver *BD, std::string &Message) {
-    std::string DISPath = FindExecutable("dis", BD->getToolName());
+    std::string DISPath = FindExecutable("llvm-dis", BD->getToolName());
     if (DISPath.empty()) {
-      Message = "Cannot find `dis' in bugpoint executable directory or PATH!\n";
+      Message = 
+        "Cannot find `llvm-dis' in bugpoint executable directory or PATH!\n";
       return 0;
     }
 
-    Message = "Found dis: " + DISPath + "\n";
+    Message = "Found llvm-dis: " + DISPath + "\n";
 
     GCC *gcc = GCC::create(BD, Message);
     if (!gcc) {
@@ -445,7 +446,7 @@ int CBE::OutputC(const std::string &Bytecode,
   if (RunProgramWithTimeout(DISPath, DisArgs, "/dev/null", "/dev/null",
                             "/dev/null")) {                            
     // If dis failed on the bytecode, print error...
-    std::cerr << "bugpoint error: `dis -c' failed!\n";
+    std::cerr << "bugpoint error: `llvm-dis -c' failed!\n";
     return 1;
   }
 
@@ -458,7 +459,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::string &SharedLib) {
   std::string OutputCFile;
   if (OutputC(Bytecode, OutputCFile)) {
-    std::cerr << "Could not generate C code with `dis', exiting.\n";
+    std::cerr << "Could not generate C code with `llvm-dis', exiting.\n";
     exit(1);
   }
 
