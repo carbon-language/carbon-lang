@@ -60,6 +60,7 @@ static void *getMemory(unsigned NumBytes) {
   static const long pageSize = sysconf(_SC_PAGESIZE);
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
 
+/* FIXME: This should use the proper autoconf flags */
 #if defined(i386) || defined(__i386__) || defined(__x86__)
   /* Linux and *BSD tend to have these flags named differently. */
 #if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
@@ -70,8 +71,10 @@ static void *getMemory(unsigned NumBytes) {
 #else
   std::cerr << "This architecture is not supported by the JIT!\n";
   abort();
+  return 0;
 #endif
 
+#ifdef HAVE_MMAP
   int fd = -1;
 #if defined(__linux__)
   fd = 0;
@@ -89,6 +92,11 @@ static void *getMemory(unsigned NumBytes) {
     abort();
   }
   return pa;
+#else
+  std::cerr << "Do not know how to allocate mem for the JIT without mmap!\n";
+  abort();
+  return 0;
+#endif
 }
 
 JITMemoryManager::JITMemoryManager() {
