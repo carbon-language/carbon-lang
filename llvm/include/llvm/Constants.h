@@ -136,7 +136,7 @@ public:
   ///
   bool equalsInt(unsigned char V) const {
     assert(V <= 127 &&
-	   "equals: Can only be used with very small positive constants!");
+           "equalsInt: Can only be used with very small positive constants!");
     return Val.Unsigned == V;
   }
 
