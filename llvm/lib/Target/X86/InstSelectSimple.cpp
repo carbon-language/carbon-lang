@@ -2621,20 +2621,40 @@ void ISel::visitLoadInst(LoadInst &I) {
   // instruction, like add.  If so, we don't want to emit it.  Wouldn't a real
   // pattern matching instruction selector be nice?
   unsigned Class = getClassB(I.getType());
-  if (I.hasOneUse() && Class != cLong) {
+  if (I.hasOneUse()) {
     Instruction *User = cast<Instruction>(I.use_back());
     switch (User->getOpcode()) {
+    case Instruction::Cast:
+      // If this is a cast from a signed-integer type to a floating point type,
+      // fold the cast here.
+      if (getClass(User->getType()) == cFP &&
+          (I.getType() == Type::ShortTy || I.getType() == Type::IntTy ||
+           I.getType() == Type::LongTy)) {
+        unsigned DestReg = getReg(User);
+        static const unsigned Opcode[] = {
+          0/*BYTE*/, X86::FILD16m, X86::FILD32m, 0/*FP*/, X86::FILD64m
+        };
+
+        unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
+        getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
+        addFullAddress(BuildMI(BB, Opcode[Class], 5, DestReg),
+                       BaseReg, Scale, IndexReg, Disp);
+        return;
+      } else {
+        User = 0;
+      }
+      break;
     case Instruction::Add:
     case Instruction::Sub:
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
+      if (Class == cLong) User = 0;
       break;
     case Instruction::Mul:
     case Instruction::Div:
-      if (Class == cFP)
-        break;  // Folding only implemented for floating point.
-      // fall through.
+      if (Class == cFP) User = 0;
+      break;  // Folding only implemented for floating point.
     default: User = 0; break;
     }
 
@@ -2771,10 +2791,18 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
                              MachineBasicBlock::iterator IP,
                              Value *Src, const Type *DestTy,
                              unsigned DestReg) {
-  unsigned SrcReg = getReg(Src, BB, IP);
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
   unsigned DestClass = getClassB(DestTy);
+
+  // If this cast converts a load from a short,int, or long integer to a FP
+  // value, we will have folded this cast away.
+  if (DestClass == cFP && isa<LoadInst>(Src) &&
+      (Src->getType() == Type::ShortTy || Src->getType() == Type::IntTy ||
+       Src->getType() == Type::LongTy))
+    return;
+
+  unsigned SrcReg = getReg(Src, BB, IP);
 
   // Implement casts to bool by using compare on the operand followed by set if
   // not zero on the result.
