@@ -51,8 +51,6 @@ namespace {
       std::cout << "<relocation> ";
     }
 
-    uint64_t getGlobalValueAddress(GlobalValue *V) { return 0; }
-    uint64_t getGlobalValueAddress(const char *Name) { return 0; }
     uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
     uint64_t getCurrentPCValue() { return 0; }
     uint64_t getCurrentPCOffset() { return 0; }
@@ -149,12 +147,6 @@ namespace {
     }
     void emitWordAt(unsigned W, unsigned *Ptr) {
       MCE.emitWordAt(W, Ptr);
-    }
-    uint64_t getGlobalValueAddress(GlobalValue *V) {
-      return MCE.getGlobalValueAddress(V);
-    }
-    uint64_t getGlobalValueAddress(const char *Name) {
-      return MCE.getGlobalValueAddress(Name);
     }
     uint64_t getConstantPoolEntryAddress(unsigned Num) {
       return MCE.getConstantPoolEntryAddress(Num);

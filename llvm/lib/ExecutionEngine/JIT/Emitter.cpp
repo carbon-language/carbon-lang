@@ -169,7 +169,7 @@ void *JITResolver::getFunctionStub(Function *F) {
   }
 
   DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
-                  << F->getName() << "\n");
+                  << F->getName() << "'\n");
 
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
@@ -250,8 +250,6 @@ namespace {
 
     virtual uint64_t getCurrentPCValue();
     virtual uint64_t getCurrentPCOffset();
-    virtual uint64_t getGlobalValueAddress(GlobalValue *V);
-    virtual uint64_t getGlobalValueAddress(const char *Name);
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
 
     // forceCompilationOf - Force the compilation of the specified function, and
@@ -396,24 +394,6 @@ void Emitter::emitWord(unsigned W) {
 
 void Emitter::emitWordAt(unsigned W, unsigned *Ptr) {
   *Ptr = W;
-}
-
-uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
-  // Try looking up the function to see if it is already compiled, if not return
-  // 0.
-  if (Function *F = dyn_cast<Function>(V)) {
-    void *Addr = TheJIT->getPointerToGlobalIfAvailable(F);
-    if (Addr == 0 && F->hasExternalLinkage()) {
-      // Do not output stubs for external functions.
-      Addr = TheJIT->getPointerToFunction(F);
-    }
-    return (intptr_t)Addr;
-  } else {
-    return (intptr_t)TheJIT->getOrEmitGlobalVariable(cast<GlobalVariable>(V));
-  }
-}
-uint64_t Emitter::getGlobalValueAddress(const char *Name) {
-  return (intptr_t)TheJIT->getPointerToNamedFunction(Name);
 }
 
 // getConstantPoolEntryAddress - Return the address of the 'ConstantNum' entry
