@@ -23,7 +23,7 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTRBUILDER_H
 #define LLVM_CODEGEN_MACHINEINSTRBUILDER_H
 
-#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 
 namespace llvm {
 
@@ -150,12 +150,33 @@ inline MachineInstrBuilder BuildMI(
 }
 
 
+/// BuildMI - Insert the instruction before a specified location in the basic
+/// block.
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineBasicBlock::iterator I,
+                                   int Opcode, unsigned NumOperands,
+                                   unsigned DestReg) {
+  MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
+  BB.insert(I, MI);
+  return MachineInstrBuilder(MI).addReg(DestReg, MachineOperand::Def);
+}
+
+/// BMI - A special BuildMI variant that takes an iterator to insert the
+/// instruction at as well as a basic block.
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineBasicBlock::iterator I,
+                                   int Opcode, unsigned NumOperands) {
+  MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
+  BB.insert(I, MI);
+  return MachineInstrBuilder(MI);
+}
+
 /// BuildMI - This version of the builder inserts the built MachineInstr into
 /// the specified MachineBasicBlock.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands) {
-  return MachineInstrBuilder(new MachineInstr(BB, Opcode, NumOperands));
+  return BuildMI(*BB, BB->end(), Opcode, NumOperands);
 }
 
 /// BuildMI - This version of the builder inserts the built MachineInstr into
@@ -165,9 +186,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                    unsigned NumOperands, unsigned DestReg) {
-  return MachineInstrBuilder(
-    new MachineInstr(BB, Opcode, NumOperands+1))
-      .addReg(DestReg, MachineOperand::Def);
+  return BuildMI(*BB, BB->end(), Opcode, NumOperands, DestReg);
 }
 
 } // End llvm namespace
