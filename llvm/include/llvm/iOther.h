@@ -138,20 +138,23 @@ public:
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
-  CallInst(Method *M, const vector<Value*> &params, const string &Name = "");
+  CallInst(Value *Meth, const vector<Value*> &params, const string &Name = "");
 
   virtual const char *getOpcodeName() const { return "call"; }
 
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool hasSideEffects() const { return true; }
 
-
   const Method *getCalledMethod() const {
-    return cast<Method>(Operands[0]);
+    return dyn_cast<Method>(Operands[0]);
   }
   Method *getCalledMethod() {
-    return cast<Method>(Operands[0]); 
+    return dyn_cast<Method>(Operands[0]); 
   }
+
+  // getCalledValue - Get a pointer to a method that is invoked by this inst.
+  inline const Value *getCalledValue() const { return Operands[0]; }
+  inline       Value *getCalledValue()       { return Operands[0]; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }
