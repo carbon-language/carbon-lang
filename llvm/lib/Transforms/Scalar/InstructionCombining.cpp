@@ -1870,11 +1870,13 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   if (isa<UndefValue>(Op1))                  // X setcc undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::BoolTy));
 
-  // setcc <global/alloca*>, 0 - Global/Stack value addresses are never null!
-  if (isa<ConstantPointerNull>(Op1) && 
-      (isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0)))
+  // setcc <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
+  // addresses never equal each other!  We already know that Op0 != Op1.
+  if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) || 
+       isa<ConstantPointerNull>(Op0)) && 
+      (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) || 
+       isa<ConstantPointerNull>(Op1)))
     return ReplaceInstUsesWith(I, ConstantBool::get(!isTrueWhenEqual(I)));
-
 
   // setcc's with boolean values can always be turned into bitwise operations
   if (Ty == Type::BoolTy) {
