@@ -1,12 +1,12 @@
 LLC  := ../tools/Debug/llc
 AS   := ../tools/Debug/as
 LLCOPTS := -dsched y
-ARCHFLAGS = ## -xarch=v9
+ARCHFLAGS =
 
 CC = /opt/SUNWspro/bin/cc
-CCFLAGS = -g $(ARCHFLAGS)
+CCFLAGS = -g -xarch=v9
 ## CC = gcc
-## CCFLAGS = -g $(ARCHFLAGS) ## -mcpu=v9
+## CCFLAGS = -g -xarch=v9 ## -mcpu=v9
 
 TESTS := $(wildcard *.ll)
 
@@ -55,9 +55,9 @@ clean :
 
 
 %.o: %.s
-	$(CC) -c $(CCFLAGS) $< -xarch=v9
+	$(CC) -c $(CCFLAGS) $<
 
 %: %.o
-	$(CC) -o $@ $< -xarch=v9
+	$(CC) -o $@ $(CCFLAGS) $<
 
 
