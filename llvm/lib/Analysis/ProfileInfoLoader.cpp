@@ -123,6 +123,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, EdgeCounts);
       break;
 
+    case BBTraceInfo:
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, BBTrace);
+      break;
+
     default:
       std::cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       exit(1);
@@ -257,3 +261,15 @@ void ProfileInfoLoader::getEdgeCounts(std::vector<std::pair<Edge,
           return;
       }
 }
+
+// getBBTrace - This method is used by consumers of basic-block trace
+// information.
+//
+void ProfileInfoLoader::getBBTrace(std::vector<BasicBlock *> &Trace) {
+  if (BBTrace.empty ()) {
+    std::cerr << "Basic block trace is not available!\n";
+    return;
+  }
+  std::cerr << "Basic block trace loading is not implemented yet!\n";
+}
+
