@@ -147,16 +147,14 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 
 unsigned TargetData::getIndexedOffset(const Type *ptrTy,
 				      const vector<ConstPoolVal*> &Idx) const {
-  const PointerType *PtrTy = ptrTy->isPointerType();   // Returns null if not
-  assert(PtrTy && "getIndexedOffset on nonpointer!");
-
+  const PointerType *PtrTy = ptrTy->castPointerType();
   unsigned Result = 0;
 
   // Get the type pointed to...
   const Type *Ty = PtrTy->getValueType();
 
   for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
-    if (const StructType *STy = Ty->isStructType()) {
+    if (const StructType *STy = Ty->dyncastStructType()) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
       unsigned FieldNo = ((ConstPoolUInt*)Idx[CurIDX++])->getValue();
 
@@ -170,7 +168,7 @@ unsigned TargetData::getIndexedOffset(const Type *ptrTy,
       // Update Ty to refer to current element
       Ty = STy->getElementTypes()[FieldNo];
 
-    } else if (const ArrayType *ATy = Ty->isArrayType()) {
+    } else if (const ArrayType *ATy = Ty->dyncastArrayType()) {
       assert(0 && "Loading from arrays not implemented yet!");
     } else {
       assert(0 && "Indexing type that is not struct or array?");
