@@ -43,8 +43,8 @@ DIS     = /usr/ccs/bin/dis
 CP	= /bin/cp -f
 CFLAGS  += -g -xarch=v9
 
-LLCLIB   = $(LEVEL)/test/Libraries/runtime.o
-LIBS    += $(LLCLIB)
+#LLCLIB   = $(LEVEL)/test/Libraries/runtime.o
+#LIBS    += $(LLCLIB)
 
 
 
