@@ -231,7 +231,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
         Indices.push_back(ConstantUInt::get(Type::UIntTy, Index));
         Offset -= Index*ElSize;               // Consume part of the offset
 
-      } else if (!isa<PointerType>(CompTy) || CompTy == Ty) {
+      } else if (isa<ArrayType>(CompTy) || Indices.empty()) {
         // Must be indexing a small amount into the first cell of the array
         // Just index into element zero of the array here.
         //
