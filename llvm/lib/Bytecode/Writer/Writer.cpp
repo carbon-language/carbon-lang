@@ -340,8 +340,6 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
-      const Value *V = I->second;
-
       Slot = Table.getSlot(I->second);
       assert(Slot != -1 && "Value in symtab but has no slot number!!");
       output_vbr((unsigned)Slot, Out);
@@ -380,7 +378,7 @@ void llvm::WriteBytecodeToFile(const Module *C, std::ostream &Out) {
     }
     
     // Write out the chunk...
-    Out.write((char*)ChunkPtr, LastPtr-ChunkPtr);
+    Out.write((char*)ChunkPtr, unsigned(LastPtr-ChunkPtr));
   }
 
   Out.flush();
