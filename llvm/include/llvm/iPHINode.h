@@ -38,11 +38,12 @@ public:
 
   virtual Instruction *clone() const { return new PHINode(*this); }
 
-  /// getNumIncomingValues - Return the number of incoming edges the PHI node
-  /// has
+  /// getNumIncomingValues - Return the number of incoming edges
+  ///
   unsigned getNumIncomingValues() const { return Operands.size()/2; }
 
   /// getIncomingValue - Return incoming value #x
+  ///
   Value *getIncomingValue(unsigned i) const {
     assert(i*2 < Operands.size() && "Invalid value number!");
     return Operands[i*2];
@@ -56,6 +57,7 @@ public:
   }
 
   /// getIncomingBlock - Return incoming basic block #x
+  ///
   BasicBlock *getIncomingBlock(unsigned i) const { 
     assert(i*2+1 < Operands.size() && "Invalid value number!");
     return reinterpret_cast<BasicBlock*>(Operands[i*2+1].get());
@@ -69,6 +71,7 @@ public:
   }
 
   /// addIncoming - Add an incoming value to the end of the PHI list
+  ///
   void addIncoming(Value *D, BasicBlock *BB) {
     assert(getType() == D->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
