@@ -60,8 +60,13 @@ void *FunctionPointers[] = {
 };
 #endif // __linux__
 
-// NoopFn - Used if we have nothing else to call...
-static void NoopFn() {}
+// __mainFunc - If the program does not have a linked in __main function, allow
+// it to run, but print a warning.
+static void __mainFunc() {
+  fprintf(stderr, "WARNING: Program called __main but was not linked to "
+          "libcrtend.a.\nThis probably won't hurt anything unless the "
+          "program is written in C++.\n");
+}
 
 // jit_exit - Used to intercept the "exit" library call.
 static void jit_exit(int Status) {
@@ -86,13 +91,16 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
   if (Name == "exit") return (void*)&jit_exit;
   if (Name == "atexit") return (void*)&jit_atexit;
 
+  // If the program does not have a linked in __main function, allow it to run,
+  // but print a warning.
+  if (Name == "__main") return (void*)&__mainFunc;
+
   // If it's an external function, look it up in the process image...
   void *Ptr = GetAddressOfSymbol(Name);
-  if (Ptr == 0) {
-    std::cerr << "WARNING: Cannot resolve fn '" << Name
-	      << "' using a dummy noop function instead!\n";
-    Ptr = (void*)NoopFn;
-  }
-  
-  return Ptr;
+  if (Ptr) return Ptr;
+
+  std::cerr << "ERROR: Program used external function '" << Name
+            << "' which could not be resolved!\n";
+  abort();
+  return 0;
 }
