@@ -192,21 +192,31 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   DSGraph::ScalarMapTy &GSM = ResultGraph->getScalarMap();
 
   DSGraph::ScalarMapTy::iterator I = GSM.find(const_cast<Value*>(V1));
-  if (I != GSM.end() && I->second.getNode()) {
+  if (I != GSM.end() && !I->second.isNull() &&
+      I->second.getNode()->isComplete()) {
     DSNodeHandle &V1H = I->second;
     DSGraph::ScalarMapTy::iterator J=GSM.find(const_cast<Value*>(V2));
-    if (J != GSM.end() && J->second.getNode()) {
+    if (J != GSM.end() && !J->second.isNull() &&
+        J->second.getNode()->isComplete()) {
       DSNodeHandle &V2H = J->second;
       // If the two pointers point to different data structure graph nodes, they
       // cannot alias!
-      if (V1H.getNode() != V2H.getNode())    // FIXME: Handle incompleteness!
+      if (V1H.getNode() != V2H.getNode())
         return NoAlias;
 
-      // FIXME: If the two pointers point to the same node, and the offsets are
-      // different, and the LinkIndex vector doesn't alias the section, then the
-      // two pointers do not alias.  We need access size information for the two
-      // accesses though!
-      //
+      // See if they point to different offsets...  if so, we may be able to
+      // determine that they do not alias...
+      unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
+      if (O1 != O2) {
+        if (O2 < O1) {    // Ensure that O1 <= O2
+          std::swap(V1, V2);
+          std::swap(O1, O2);
+          std::swap(V1Size, V2Size);
+        }
+
+        if (O1+V1Size <= O2)
+          return NoAlias;
+      }
     }
   }
 
