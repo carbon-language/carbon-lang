@@ -29,9 +29,10 @@ static bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
   std::vector<CallGraphNode*> FunctionsToDelete;   // Track unused functions
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     CallGraphNode *N = CallGraph[I];
+
     if (!ReachableNodes.count(N)) {              // Not reachable??
       I->dropAllReferences();
-      N->removeAllCalledMethods();
+      N->removeAllCalledFunctions();
       FunctionsToDelete.push_back(N);
       ++NumRemoved;
     }
@@ -45,7 +46,7 @@ static bool RemoveUnreachableFunctions(Module &M, CallGraph &CallGraph) {
   //
   for (std::vector<CallGraphNode*>::iterator I = FunctionsToDelete.begin(),
 	 E = FunctionsToDelete.end(); I != E; ++I)
-    delete CallGraph.removeMethodFromModule(*I);
+    delete CallGraph.removeFunctionFromModule(*I);
 
   return true;
 }
