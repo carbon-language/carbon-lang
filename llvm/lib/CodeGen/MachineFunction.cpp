@@ -319,8 +319,6 @@ static unsigned
 ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
                            unsigned &maxOptionalNumArgs)
 {
-  const TargetFrameInfo &frameInfo = *target.getFrameInfo();
-  
   unsigned maxSize = 0;
   
   for (Function::const_iterator BB = F->begin(), BBE = F->end(); BB !=BBE; ++BB)
@@ -328,7 +326,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
       if (const CallInst *callInst = dyn_cast<CallInst>(I))
         {
           unsigned numOperands = callInst->getNumOperands() - 1;
-          int numExtra = (int)numOperands-frameInfo.getNumFixedOutgoingArgs();
+          int numExtra = numOperands-6;
           if (numExtra <= 0)
             continue;
           
@@ -370,8 +368,7 @@ void MachineFunctionInfo::CalculateArgSize() {
   maxOptionalArgsSize = ComputeMaxOptionalArgsSize(MF.getTarget(),
 						   MF.getFunction(),
                                                    maxOptionalNumArgs);
-  staticStackSize = maxOptionalArgsSize
-    + MF.getTarget().getFrameInfo()->getMinStackFrameSize();
+  staticStackSize = maxOptionalArgsSize + 176;
 }
 
 int
