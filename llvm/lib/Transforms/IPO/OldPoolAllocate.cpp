@@ -388,9 +388,18 @@ public:
 };
 
 
-static void addCallInfo(TransformFunctionInfo &TFI, CallInst *CI, int Arg, 
+static void addCallInfo(DataStructure *DS,
+                        TransformFunctionInfo &TFI, CallInst *CI, int Arg, 
                         DSNode *GraphNode,
                         map<DSNode*, Value*> &PoolDescriptors) {
+  assert(CI->getCalledFunction() && "Cannot handle indirect calls yet!");
+  assert(TFI.Func == 0 || TFI.Func == CI->getCalledFunction() &&
+         "Function call record should always call the same function!");
+  assert(TFI.Call == 0 || TFI.Call == CI &&
+         "Call element already filled in with different value!");
+  TFI.Func = CI->getCalledFunction();
+  TFI.Call = CI;
+  //FunctionDSGraph &CalledGraph = DS->getClosedDSGraph(TFI.Func);
 
   // For now, add the entire graph that is pointed to by the call argument.
   // This graph can and should be pruned to only what the function itself will
@@ -401,14 +410,6 @@ static void addCallInfo(TransformFunctionInfo &TFI, CallInst *CI, int Arg,
        I != E; ++I) {
     TFI.ArgInfo.push_back(CallArgInfo(Arg, *I, PoolDescriptors[*I]));
   }
-
-  assert(CI->getCalledFunction() && "Cannot handle indirect calls yet!");
-  assert(TFI.Func == 0 || TFI.Func == CI->getCalledFunction() &&
-         "Function call record should always call the same function!");
-  assert(TFI.Call == 0 || TFI.Call == CI &&
-         "Call element already filled in with different value!");
-  TFI.Func = CI->getCalledFunction();
-  TFI.Call = CI;
 }
 
 
@@ -477,7 +478,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
     // Check to see if the scalar _IS_ a call...
     if (CallInst *CI = dyn_cast<CallInst>(ScalarVal))
       // If so, add information about the pool it will be returning...
-      addCallInfo(CallMap[CI], CI, -1, Scalars[i].Node, PoolDescriptors);
+      addCallInfo(DS, CallMap[CI], CI, -1, Scalars[i].Node, PoolDescriptors);
 
     // Check to see if the scalar is an operand to a call...
     for (Value::use_iterator UI = ScalarVal->use_begin(),
@@ -492,7 +493,7 @@ void PoolAllocate::transformFunctionBody(Function *F, FunctionDSGraph &IPFGraph,
         // than once!  It will get multiple entries for the first pointer.
 
         // Add the operand number and pool handle to the call table...
-        addCallInfo(CallMap[CI], CI, OI-CI->op_begin()-1, Scalars[i].Node,
+        addCallInfo(DS, CallMap[CI], CI, OI-CI->op_begin()-1, Scalars[i].Node,
                     PoolDescriptors);
       }
     }
@@ -635,6 +636,13 @@ static void CalculateNodeMapping(Function *F, TransformFunctionInfo &TFI,
 void PoolAllocate::transformFunction(TransformFunctionInfo &TFI,
                                      FunctionDSGraph &CallerIPGraph) {
   if (getTransformedFunction(TFI)) return;  // Function xformation already done?
+
+  cerr << "**********\nEntering transformFunction for "
+       << TFI.Func->getName() << ":\n";
+  for (unsigned i = 0, e = TFI.ArgInfo.size(); i != e; ++i)
+    cerr << "  ArgInfo[" << i << "] = " << TFI.ArgInfo[i].ArgNo << "\n";
+  cerr << "\n";
+
 
   const FunctionType *OldFuncType = TFI.Func->getFunctionType();
 
