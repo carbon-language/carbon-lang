@@ -309,7 +309,7 @@ public:
     return ElementType.get();
   }
   virtual bool indexValid(const Value *V) const {
-    return V->getType() == Type::LongTy;   // Must be a 'long' index
+    return V->getType()->isInteger();
   }
 
   // getIndexType() - Return the type required of indices for this composite.
