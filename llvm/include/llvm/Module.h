@@ -54,18 +54,12 @@ public:
   // Global Variable iterators...
   typedef GlobalListType::iterator                                   global_iterator;
   typedef GlobalListType::const_iterator                       const_global_iterator;
-  typedef std::reverse_iterator<global_iterator>             reverse_global_iterator;
-  typedef std::reverse_iterator<const_global_iterator> const_reverse_global_iterator;
   typedef global_iterator giterator; // these are legacy, deprecated
   typedef const_global_iterator const_giterator;
-  typedef reverse_global_iterator reverse_giterator;
-  typedef const_reverse_global_iterator const_reverse_giterator;
 
   // Function iterators...
   typedef FunctionListType::iterator                          iterator;
   typedef FunctionListType::const_iterator              const_iterator;
-  typedef std::reverse_iterator<iterator>             reverse_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
   // Library list iterators
   typedef LibraryListType::const_iterator lib_iterator;
@@ -196,18 +190,7 @@ public:
   inline const_global_iterator          global_begin() const { return GlobalList.begin(); }
   inline global_iterator                global_end  ()       { return GlobalList.end();   }
   inline const_global_iterator          global_end  () const { return GlobalList.end();   }
-
-  inline reverse_global_iterator       global_rbegin()       { return GlobalList.rbegin(); }
-  inline const_reverse_global_iterator global_rbegin() const { return GlobalList.rbegin(); }
-  inline reverse_global_iterator       global_rend  ()       { return GlobalList.rend();   }
-  inline const_reverse_global_iterator global_rend  () const { return GlobalList.rend();   }
-
-  inline size_t                         global_size () const { return GlobalList.size();  }
   inline bool                           global_empty() const { return GlobalList.empty(); }
-  inline const GlobalVariable          &global_front() const { return GlobalList.front(); }
-  inline       GlobalVariable          &global_front()       { return GlobalList.front(); }
-  inline const GlobalVariable          &global_back () const { return GlobalList.back();  }
-  inline       GlobalVariable          &global_back ()       { return GlobalList.back();  }
 
   //===--------------------------------------------------------------------===//
   // Module iterator forwarding functions (legacy, deprecated, will be removed)
@@ -217,18 +200,7 @@ public:
   inline const_global_iterator          gbegin() const { return GlobalList.begin(); }
   inline global_iterator                gend  ()       { return GlobalList.end();   }
   inline const_global_iterator          gend  () const { return GlobalList.end();   }
-
-  inline reverse_global_iterator       grbegin()       { return GlobalList.rbegin(); }
-  inline const_reverse_global_iterator grbegin() const { return GlobalList.rbegin(); }
-  inline reverse_global_iterator       grend  ()       { return GlobalList.rend();   }
-  inline const_reverse_global_iterator grend  () const { return GlobalList.rend();   }
-
-  inline size_t                          gsize() const { return GlobalList.size();  }
   inline bool                           gempty() const { return GlobalList.empty(); }
-  inline const GlobalVariable          &gfront() const { return GlobalList.front(); }
-  inline       GlobalVariable          &gfront()       { return GlobalList.front(); }
-  inline const GlobalVariable           &gback() const { return GlobalList.back();  }
-  inline       GlobalVariable           &gback()       { return GlobalList.back();  }
 
   // FunctionList interface
   inline iterator                begin()       { return FunctionList.begin(); }
@@ -236,17 +208,8 @@ public:
   inline iterator                end  ()       { return FunctionList.end();   }
   inline const_iterator          end  () const { return FunctionList.end();   }
 
-  inline reverse_iterator       rbegin()       { return FunctionList.rbegin(); }
-  inline const_reverse_iterator rbegin() const { return FunctionList.rbegin(); }
-  inline reverse_iterator       rend  ()       { return FunctionList.rend();   }
-  inline const_reverse_iterator rend  () const { return FunctionList.rend();   }
-
   inline size_t                   size() const { return FunctionList.size(); }
   inline bool                    empty() const { return FunctionList.empty(); }
-  inline const Function         &front() const { return FunctionList.front(); }
-  inline       Function         &front()       { return FunctionList.front(); }
-  inline const Function          &back() const { return FunctionList.back(); }
-  inline       Function          &back()       { return FunctionList.back(); }
 
   //===--------------------------------------------------------------------===//
   // List of dependent library access functions
