@@ -326,6 +326,25 @@ public:
 };
 }
 
+//These describe LDAx
+static const int64_t IMM_LOW  = 0xffffffffffff8000LL;
+static const int IMM_HIGH = 0x0000000000007fffLL;
+static const int IMM_MULT = 65536;
+
+static long getUpper16(long l)
+{
+  long y = l / IMM_MULT;
+  if (l % IMM_MULT > IMM_HIGH)
+    ++y;
+  return y;
+}
+
+static long getLower16(long l)
+{
+  long h = getUpper16(l);
+  return l - h * IMM_MULT;
+}
+
 static unsigned GetSymVersion(unsigned opcode)
 {
   switch (opcode) {
@@ -1447,9 +1466,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::Constant:
     {
-      unsigned long val = cast<ConstantSDNode>(N)->getValue();
-      if (val < 32000 && (long)val > -32000)
-        BuildMI(BB, Alpha::LOAD_IMM, 1, Result).addImm((long)val);
+      int64_t val = (long)cast<ConstantSDNode>(N)->getValue();
+      if (val <= IMM_HIGH && val >= IMM_LOW) {
+	BuildMI(BB, Alpha::LDA, 2, Result).addImm(val).addReg(Alpha::R31);
+      }
+      else if (val <= (int64_t)IMM_HIGH + (int64_t)IMM_HIGH * (int64_t)IMM_MULT &&
+	       val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT) {
+	Tmp1 = MakeReg(MVT::i64);
+	BuildMI(BB, Alpha::LDAH, 2, Tmp1).addImm(getUpper16(val)).addReg(Alpha::R31);
+	BuildMI(BB, Alpha::LDA, 2, Result).addImm(getLower16(val)).addReg(Tmp1);
+      }
       else {
         MachineConstantPool *CP = BB->getParent()->getConstantPool();
         ConstantUInt *C = ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
