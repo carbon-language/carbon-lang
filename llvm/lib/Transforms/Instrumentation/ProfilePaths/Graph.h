@@ -9,18 +9,12 @@
 #ifndef LLVM_GRAPH_H
 #define LLVM_GRAPH_H
 
-#include "Support/StatisticReporter.h"
-
+#include "llvm/BasicBlock.h"
 #include <map>
-#include <vector>
 #include <cstdlib>
 
-#include "llvm/BasicBlock.h"
-
-class BasicBlock;
 class Module;
 class Function;
-class Instruction;
 
 //Class Node
 //It forms the vertex for the graph
