@@ -95,7 +95,7 @@ HANDLE_TERM_INST  ( 4, Invoke, InvokeInst)
 
 // The single unary instruction... a binary inverse.
  FIRST_UNARY_INST ( 5)
-HANDLE_UNARY_INST ( 5, Not   , GenericUnaryInst)
+HANDLE_UNARY_INST ( 5, Not   , GenericBinaryInst)  // THIS IS WRONG.  *REMOVEME*
   LAST_UNARY_INST ( 5)
 
 // Standard binary operators...
