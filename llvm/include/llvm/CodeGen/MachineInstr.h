@@ -434,10 +434,54 @@ MachineInstr::setImplicitRef(unsigned int i,
 //---------------------------------------------------------------------------
 
 
-class MachineCodeForBasicBlock: public std::vector<MachineInstr*> {
+class MachineCodeForBasicBlock {
+  std::vector<MachineInstr*> Insts;
 public:
+  ~MachineCodeForBasicBlock() {
+#if 0
+    for (unsigned i = 0, e = Insts.size(); i != e; ++i)
+      delete Insts[i];
+#endif
+  }
+
   typedef std::vector<MachineInstr*>::iterator iterator;
   typedef std::vector<MachineInstr*>::const_iterator const_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>             reverse_iterator;
+
+  unsigned size() const { return Insts.size(); }
+  bool empty() const { return Insts.empty(); }
+
+  MachineInstr * operator[](unsigned i) const { return Insts[i]; }
+  MachineInstr *&operator[](unsigned i)       { return Insts[i]; }
+
+  MachineInstr *front() const { return Insts.front(); }
+  MachineInstr *back()  const { return Insts.back(); }
+
+  iterator                begin()       { return Insts.begin();  }
+  const_iterator          begin() const { return Insts.begin();  }
+  iterator                  end()       { return Insts.end();    }
+  const_iterator            end() const { return Insts.end();    }
+  reverse_iterator       rbegin()       { return Insts.rbegin(); }
+  const_reverse_iterator rbegin() const { return Insts.rbegin(); }
+  reverse_iterator       rend  ()       { return Insts.rend();   }
+  const_reverse_iterator rend  () const { return Insts.rend();   }
+
+  void push_back(MachineInstr *MI) { Insts.push_back(MI); }
+  template<typename IT>
+  void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
+  iterator insert(iterator I, MachineInstr *M) { return Insts.insert(I, M); }
+
+  // erase - Remove the specified range from the instruction list.  This does
+  // not delete in instructions removed.
+  //
+  iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
+
+  MachineInstr *pop_back() {
+    MachineInstr *R = back();
+    Insts.pop_back();
+    return R;
+  }
 };
 
 
@@ -453,8 +497,5 @@ std::ostream& operator<<    (std::ostream& os, const MachineOperand& mop);
 					 
 
 void	PrintMachineInstructions(const Function *F);
-
-
-//**************************************************************************/
 
 #endif
