@@ -5,7 +5,9 @@
 LEVEL = ../../..
 include $(LEVEL)/test/Programs/SingleSource/Makefile.singlesrc
 
-TESTS := $(wildcard *.ll) $(wildcard *.c)
+# Only .ll tests here.  C tests are run via Makefile.singlesrc above.
+# 
+TESTS := $(wildcard *.ll)
 
 all:: $(addprefix Output/, $(filter-out %.c, $(TESTS:%.ll=%.ts)))
 
