@@ -252,8 +252,10 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createPreSelectionPass(*this));
   // Run basic dataflow optimizations on LLVM code
   PM.add(createReassociatePass());
-  PM.add(createLICMPass());
-  PM.add(createGCSEPass());
+
+  // FIXME: these passes crash the FunctionPassManager when being added...
+  //PM.add(createLICMPass());
+  //PM.add(createGCSEPass());
 
   PM.add(createInstructionSelectionPass(*this));
 
