@@ -53,8 +53,11 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
 
   OS << "namespace " << TargetName << " { // Register classes\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+    if (RegisterClasses[i]->getValueAsBit("isDummyClass"))
+      continue; // Ignore dummies
+
     const std::string &Name = RegisterClasses[i]->getName();
-    if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
+    if (Name.size() < 9 || Name[9] != '.')       // Ignore anonymous classes
       OS << "  extern TargetRegisterClass *" << Name << "RegisterClass;\n";
   }
   OS << "} // end of namespace " << TargetName << "\n\n";
@@ -82,6 +85,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     Record *RC = RegisterClasses[rc];
+    if (RC->getValueAsBit("isDummyClass")) continue; // Ignore dummies
+
     std::string Name = RC->getName();
     if (Name.size() > 9 && Name[9] == '.') {
       static unsigned AnonCounter = 0;
@@ -197,6 +202,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   OS << "namespace " << Target.getName() << " { // Register classes\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+    if (RegisterClasses[i]->getValueAsBit("isDummyClass"))
+      continue; // Ignore dummies
+
     const std::string &Name = RegisterClasses[i]->getName();
     if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
       OS << "  TargetRegisterClass *" << Name << "RegisterClass = &"
