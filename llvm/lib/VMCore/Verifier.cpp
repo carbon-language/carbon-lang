@@ -410,6 +410,7 @@ void Verifier::visitSelectInst(SelectInst &SI) {
           "Select values must have identical types!", &SI);
   Assert1(SI.getTrueValue()->getType() == SI.getType(),
           "Select values must have same type as select instruction!", &SI);
+  visitInstruction(SI);
 }
 
 
