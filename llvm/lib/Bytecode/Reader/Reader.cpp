@@ -19,17 +19,8 @@
 #include "ReaderInternals.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Format.h"
-#include "llvm/Constants.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
 #include "llvm/Module.h"
 #include "Support/StringExtras.h"
-#include "Config/unistd.h"
-#include "Config/sys/mman.h"
-#include "Config/sys/stat.h"
-#include "Config/sys/types.h"
-#include <algorithm>
-#include <memory>
 using namespace llvm;
 
 static inline void ALIGN32(const unsigned char *&begin,
