@@ -7,13 +7,13 @@
 # 
 #===------------------------------------------------------------------------===#
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
-libexec_PROGRAMS = LLVMModuloScheduling.o
+lib_LIBRARIES = libLLVMSparcV9ModuloScheduling.a
 
-LLVMModuloScheduling_o_SOURCES = \
+libLLVMSparcV9ModuloScheduling_a_SOURCES = \
   ModuloScheduling.cpp \
   MSchedGraph.cpp \
   MSSchedule.cpp
 
-LIBS=
+PRELINK = $(lib_LIBRARIES)
