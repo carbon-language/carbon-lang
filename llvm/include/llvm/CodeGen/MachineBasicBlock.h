@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/ilist"
+#include <iosfwd>
 
 namespace llvm {
 
@@ -126,6 +127,10 @@ public:
   iterator erase(iterator I)             { return Insts.erase(I); }
   iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
   MachineInstr* remove(iterator &I)      { return Insts.remove(I); }
+
+  // Debugging methods.
+  void dump() const;
+  void print(std::ostream &OS) const;
 
 private:   // Methods used to maintain doubly linked list of blocks...
   friend class ilist_traits<MachineBasicBlock>;
