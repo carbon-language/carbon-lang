@@ -287,7 +287,7 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     const Type *Ty = CFP->getType();
 
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-    unsigned LoadOpcode = Ty == Type::FloatTy ? V8::LDFmr : V8::LDDFmr;
+    unsigned LoadOpcode = Ty == Type::FloatTy ? V8::LDFri : V8::LDDFri;
     BuildMI (*MBB, IP, LoadOpcode, 2, R).addConstantPoolIndex (CPI).addSImm (0);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
@@ -520,9 +520,21 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
       }
     }
   } else {
-    std::cerr << "Casts w/ long, fp, double still unsupported: SrcTy = "
-              << *SrcTy << ", DestTy = " << *DestTy << "\n";
-    abort ();
+    if (oldTyClass < cLong && newTyClass == cFloat) {
+      // cast int to float.  Store it to a stack slot and then load
+      // it using ldf into a floating point register. then do fitos.
+      std::cerr << "Casts to float still unsupported: SrcTy = "
+                << *SrcTy << ", DestTy = " << *DestTy << "\n";
+      abort ();
+    } else if (oldTyClass < cLong && newTyClass == cDouble) {
+      std::cerr << "Casts to double still unsupported: SrcTy = "
+                << *SrcTy << ", DestTy = " << *DestTy << "\n";
+      abort ();
+    } else {
+      std::cerr << "Cast still unsupported: SrcTy = "
+                << *SrcTy << ", DestTy = " << *DestTy << "\n";
+      abort ();
+    }
   }
 }
 
@@ -532,22 +544,28 @@ void V8ISel::visitLoadInst(LoadInst &I) {
   switch (getClassB (I.getType ())) {
    case cByte:
     if (I.getType ()->isSigned ())
-      BuildMI (BB, V8::LDSBmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDSB, 2, DestReg).addReg (PtrReg).addSImm(0);
     else
-      BuildMI (BB, V8::LDUBmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDUB, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cShort:
     if (I.getType ()->isSigned ())
-      BuildMI (BB, V8::LDSHmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDSH, 2, DestReg).addReg (PtrReg).addSImm(0);
     else
-      BuildMI (BB, V8::LDUHmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDUH, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cInt:
-    BuildMI (BB, V8::LDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::LD, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cLong:
-    BuildMI (BB, V8::LDmr, 1, DestReg).addReg (PtrReg).addSImm(0);
-    BuildMI (BB, V8::LDmr, 1, DestReg+1).addReg (PtrReg).addSImm(4);
+    BuildMI (BB, V8::LD, 2, DestReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::LD, 2, DestReg+1).addReg (PtrReg).addSImm(4);
+    return;
+   case cFloat:
+    BuildMI (BB, V8::LDFri, 2, DestReg).addReg (PtrReg).addSImm(0);
+    return;
+   case cDouble:
+    BuildMI (BB, V8::LDDFri, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    default:
     std::cerr << "Load instruction not handled: " << I;
@@ -562,17 +580,23 @@ void V8ISel::visitStoreInst(StoreInst &I) {
   unsigned PtrReg = getReg (I.getOperand (1));
   switch (getClassB (SrcVal->getType ())) {
    case cByte:
-    BuildMI (BB, V8::STBrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STB, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cShort:
-    BuildMI (BB, V8::STHrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STH, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cInt:
-    BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::ST, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cLong:
-    BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
-    BuildMI (BB, V8::STrm, 3).addReg (PtrReg).addSImm (4).addReg (SrcReg+1);
+    BuildMI (BB, V8::ST, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::ST, 3).addReg (PtrReg).addSImm (4).addReg (SrcReg+1);
+    return;
+   case cFloat:
+    BuildMI (BB, V8::STFri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    return;
+   case cDouble:
+    BuildMI (BB, V8::STDFri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    default:
     std::cerr << "Store instruction not handled: " << I;
