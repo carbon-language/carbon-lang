@@ -1,6 +1,0 @@
-A set of project files is available for Netware.  Get
-libpng-1.2.5-project-netware.zip from a libpng distribution
-site such as http://libpng.sourceforge.net
-
-Put the zip file in this directory (projects) and then run
-"unzip -a libpng-1.2.5-project-netware.zip"
