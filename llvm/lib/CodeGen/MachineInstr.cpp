@@ -153,29 +153,43 @@ MachineInstr::SetRegForImplicitRef(unsigned i, int regNum)
 
 
 // Subsitute all occurrences of Value* oldVal with newVal in all operands
-// and all implicit refs.  If defsOnly == true, substitute defs only.
+// and all implicit refs.
+// If defsOnly == true, substitute defs only.
 unsigned
-MachineInstr::substituteValue(const Value* oldVal, Value* newVal, bool defsOnly)
+MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
+                              bool defsOnly, bool notDefsAndUses,
+                              bool& someArgsWereIgnored)
 {
+  assert((defsOnly || !notDefsAndUses) &&
+         "notDefsAndUses is irrelevant if defsOnly == false.");
+  
   unsigned numSubst = 0;
 
   // Subsitute operands
   for (MachineInstr::val_op_iterator O = begin(), E = end(); O != E; ++O)
     if (*O == oldVal)
-      if (!defsOnly || !O.isUseOnly())
+      if (!defsOnly ||
+          notDefsAndUses && O.isDefOnly() ||
+          !notDefsAndUses && !O.isUseOnly())
         {
           O.getMachineOperand().value = newVal;
           ++numSubst;
         }
+      else
+        someArgsWereIgnored = true;
 
   // Subsitute implicit refs
   for (unsigned i=0, N=getNumImplicitRefs(); i < N; ++i)
     if (getImplicitRef(i) == oldVal)
-      if (!defsOnly || !getImplicitOp(i).opIsUse())
+      if (!defsOnly ||
+          notDefsAndUses && getImplicitOp(i).opIsDefOnly() ||
+          !notDefsAndUses && !getImplicitOp(i).opIsUse())
         {
           getImplicitOp(i).value = newVal;
           ++numSubst;
         }
+      else
+        someArgsWereIgnored = true;
 
   return numSubst;
 }
@@ -191,10 +205,10 @@ static inline std::ostream&
 OutputValue(std::ostream &os, const Value* val)
 {
   os << "(val ";
+  os << (void*) val;                    // print address always
   if (val && val->hasName())
-    return os << val->getName() << ")";
-  else
-    return os << (void*) val << ")";              // print address only
+    os << " " << val->getName() << ")"; // print name also, if available
+  return os;
 }
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,

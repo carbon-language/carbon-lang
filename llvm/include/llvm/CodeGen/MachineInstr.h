@@ -646,7 +646,8 @@ public:
 
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
-                           bool defsOnly = true);
+                           bool defsOnly, bool notDefsAndUses,
+                           bool& someArgsWereIgnored);
 
   void setOperandHi32(unsigned i) { operands[i].markHi32(); }
   void setOperandLo32(unsigned i) { operands[i].markLo32(); }
