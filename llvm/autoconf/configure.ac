@@ -203,6 +203,7 @@ dnl Checks for other tools
 AC_PROG_FLEX
 AC_PROG_BISON
 AC_PROG_LIBTOOL
+AC_PATH_PROG(TAR,[tar],[gtar])
 
 dnl Checks for tools we can get away with not having:
 AC_PATH_PROG(DOT,[dot],[true dot])
