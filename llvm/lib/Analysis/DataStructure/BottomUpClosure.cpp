@@ -56,7 +56,7 @@ bool BUDataStructures::run(Module &M) {
 // call.
 //
 static void ResolveArguments(DSCallSite &Call, Function &F,
-                             map<Value*, DSNodeHandle> &ValueMap) {
+                             map<Value*, DSNodeHandle> &ScalarMap) {
   // Resolve all of the function arguments...
   Function::aiterator AI = F.abegin();
   for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i, ++AI) {
@@ -64,7 +64,7 @@ static void ResolveArguments(DSCallSite &Call, Function &F,
     while (!isPointerType(AI->getType())) ++AI;
     
     // Add the link from the argument scalar to the provided value
-    ValueMap[AI].mergeWith(Call.getPtrArg(i));
+    ScalarMap[AI].mergeWith(Call.getPtrArg(i));
   }
 }
 
@@ -118,7 +118,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             Graph->getRetNode().mergeWith(Call.getRetVal());
 
             // Resolve the arguments in the call to the actual values...
-            ResolveArguments(Call, F, Graph->getValueMap());
+            ResolveArguments(Call, F, Graph->getScalarMap());
 
             // Erase the entry in the callees vector
             Callees.erase(Callees.begin()+c--);

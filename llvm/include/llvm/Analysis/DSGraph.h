@@ -16,7 +16,7 @@ class DSGraph {
   Function *Func;
   std::vector<DSNode*> Nodes;
   DSNodeHandle RetNode;                          // Node that gets returned...
-  std::map<Value*, DSNodeHandle> ValueMap;
+  std::map<Value*, DSNodeHandle> ScalarMap;
 
 #if 0
   // GlobalsGraph -- Reference to the common graph of globally visible objects.
@@ -58,11 +58,11 @@ public:
   ///
   void addNode(DSNode *N) { Nodes.push_back(N); }
 
-  /// getValueMap - Get a map that describes what the nodes the scalars in this
+  /// getScalarMap - Get a map that describes what the nodes the scalars in this
   /// function point to...
   ///
-  std::map<Value*, DSNodeHandle> &getValueMap() { return ValueMap; }
-  const std::map<Value*, DSNodeHandle> &getValueMap() const { return ValueMap;}
+  std::map<Value*, DSNodeHandle> &getScalarMap() { return ScalarMap; }
+  const std::map<Value*, DSNodeHandle> &getScalarMap() const {return ScalarMap;}
 
   std::vector<DSCallSite> &getFunctionCalls() {
     return FunctionCalls;
@@ -74,7 +74,7 @@ public:
   /// getNodeForValue - Given a value that is used or defined in the body of the
   /// current function, return the DSNode that it points to.
   ///
-  DSNodeHandle &getNodeForValue(Value *V) { return ValueMap[V]; }
+  DSNodeHandle &getNodeForValue(Value *V) { return ScalarMap[V]; }
 
   const DSNodeHandle &getRetNode() const { return RetNode; }
         DSNodeHandle &getRetNode()       { return RetNode; }
@@ -119,10 +119,10 @@ public:
   void removeDeadNodes(bool KeepAllGlobals = false, bool KeepCalls = true);
 
   // cloneInto - Clone the specified DSGraph into the current graph, returning
-  // the Return node of the graph.  The translated ValueMap for the old function
-  // is filled into the OldValMap member.
-  // If StripScalars (StripAllocas) is set to true, Scalar (Alloca) markers
-  // are removed from the graph as the graph is being cloned.
+  // the Return node of the graph.  The translated ScalarMap for the old
+  // function is filled into the OldValMap member.  If StripScalars
+  // (StripAllocas) is set to true, Scalar (Alloca) markers are removed from the
+  // graph as the graph is being cloned.
   //
   DSNodeHandle cloneInto(const DSGraph &G,
                          std::map<Value*, DSNodeHandle> &OldValMap,
@@ -135,8 +135,8 @@ public:
   // 
   DSNode* cloneGlobalInto(const DSNode* GNode);
   DSNode* cloneGlobalInto(GlobalValue* GV) {
-    assert(!GV || (((DSGraph*) GlobalsGraph)->ValueMap[GV] != 0));
-    return GV? cloneGlobalInto(((DSGraph*) GlobalsGraph)->ValueMap[GV]) : 0;
+    assert(!GV || (((DSGraph*) GlobalsGraph)->ScalarMap[GV] != 0));
+    return GV? cloneGlobalInto(((DSGraph*) GlobalsGraph)->ScalarMap[GV]) : 0;
   }
 #endif
 

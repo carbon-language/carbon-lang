@@ -60,14 +60,14 @@ namespace {
     DSGraph &G;
     vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
-    map<Value*, DSNodeHandle> &ValueMap;
+    map<Value*, DSNodeHandle> &ScalarMap;
     vector<DSCallSite> &FunctionCalls;
 
   public:
     GraphBuilder(DSGraph &g, vector<DSNode*> &nodes, DSNodeHandle &retNode,
-                 map<Value*, DSNodeHandle> &vm,
+                 map<Value*, DSNodeHandle> &SM,
                  vector<DSCallSite> &fc)
-      : G(g), Nodes(nodes), RetNode(retNode), ValueMap(vm), FunctionCalls(fc) {
+      : G(g), Nodes(nodes), RetNode(retNode), ScalarMap(SM), FunctionCalls(fc) {
 
       // Create scalar nodes for all pointer arguments...
       for (Function::aiterator I = G.getFunction().abegin(),
@@ -112,7 +112,7 @@ namespace {
       return N;
     }
 
-    /// setDestTo - Set the ValueMap entry for the specified value to point to
+    /// setDestTo - Set the ScalarMap entry for the specified value to point to
     /// the specified destination.  If the Value already points to a node, make
     /// sure to merge the two destinations together.
     ///
@@ -135,7 +135,7 @@ namespace {
 // graph.
 DSGraph::DSGraph(Function &F) : Func(&F) {
   // Use the graph builder to construct the local version of the graph
-  GraphBuilder B(*this, Nodes, RetNode, ValueMap, FunctionCalls);
+  GraphBuilder B(*this, Nodes, RetNode, ScalarMap, FunctionCalls);
   markIncompleteNodes();
 }
 
@@ -155,7 +155,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &V) {
     return 0;   // Constant doesn't point to anything.
   }
 
-  DSNodeHandle &NH = ValueMap[&V];
+  DSNodeHandle &NH = ScalarMap[&V];
   if (NH.getNode())
     return NH;     // Already have a node?  Just return it...
 
@@ -194,12 +194,12 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
 }
 
 
-/// setDestTo - Set the ValueMap entry for the specified value to point to the
+/// setDestTo - Set the ScalarMap entry for the specified value to point to the
 /// specified destination.  If the Value already points to a node, make sure to
 /// merge the two destinations together.
 ///
 void GraphBuilder::setDestTo(Value &V, const DSNodeHandle &NH) {
-  DSNodeHandle &AINH = ValueMap[&V];
+  DSNodeHandle &AINH = ScalarMap[&V];
   if (AINH.getNode() == 0)   // Not pointing to anything yet?
     AINH = NH;               // Just point directly to NH
   else
@@ -224,7 +224,7 @@ void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
 void GraphBuilder::visitPHINode(PHINode &PN) {
   if (!isPointerType(PN.getType())) return; // Only pointer PHIs
 
-  DSNodeHandle &PNDest = ValueMap[&PN];
+  DSNodeHandle &PNDest = ScalarMap[&PN];
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
     PNDest.mergeWith(getValueDest(*PN.getIncomingValue(i)));
 }

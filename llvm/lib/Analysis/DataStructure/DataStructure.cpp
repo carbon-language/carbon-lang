@@ -488,17 +488,17 @@ Function &DSCallSite::getCaller() const {
 
 DSGraph::DSGraph(const DSGraph &G) : Func(G.Func) {
   std::map<const DSNode*, DSNode*> NodeMap;
-  RetNode = cloneInto(G, ValueMap, NodeMap);
+  RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
 DSGraph::DSGraph(const DSGraph &G, std::map<const DSNode*, DSNode*> &NodeMap)
   : Func(G.Func) {
-  RetNode = cloneInto(G, ValueMap, NodeMap);
+  RetNode = cloneInto(G, ScalarMap, NodeMap);
 }
 
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
-  ValueMap.clear();
+  ScalarMap.clear();
   RetNode.setNode(0);
 
 #ifndef NDEBUG
@@ -536,7 +536,7 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
 
 
 // cloneInto - Clone the specified DSGraph into the current graph, returning the
-// Return node of the graph.  The translated ValueMap for the old function is
+// Return node of the graph.  The translated ScalarMap for the old function is
 // filled into the OldValMap member.  If StripAllocas is set to true, Alloca
 // markers are removed from the graph, as the graph is being cloned into a
 // calling function's graph.
@@ -570,18 +570,18 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
       Nodes[i]->NodeType &= ~StripBits;
 
   // Copy the value map... and merge all of the global nodes...
-  for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ValueMap.begin(),
-         E = G.ValueMap.end(); I != E; ++I) {
+  for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
+         E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &H = OldValMap[I->first];
     H.setNode(OldNodeMap[I->second.getNode()]);
     H.setOffset(I->second.getOffset());
 
     if (isa<GlobalValue>(I->first)) {  // Is this a global?
-      std::map<Value*, DSNodeHandle>::iterator GVI = ValueMap.find(I->first);
-      if (GVI != ValueMap.end()) {   // Is the global value in this fun already?
+      std::map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
+      if (GVI != ScalarMap.end()) {   // Is the global value in this fn already?
         GVI->second.mergeWith(H);
       } else {
-        ValueMap[I->first] = H;      // Add global pointer to this graph
+        ScalarMap[I->first] = H;      // Add global pointer to this graph
       }
     }
   }
@@ -601,7 +601,7 @@ DSNode *DSGraph::cloneGlobalInto(const DSNode *GNode) {
   if (GNode == 0 || GNode->getGlobals().size() == 0) return 0;
 
   // If a clone has already been created for GNode, return it.
-  DSNodeHandle& ValMapEntry = ValueMap[GNode->getGlobals()[0]];
+  DSNodeHandle& ValMapEntry = ScalarMap[GNode->getGlobals()[0]];
   if (ValMapEntry != 0)
     return ValMapEntry;
 
@@ -610,7 +610,7 @@ DSNode *DSGraph::cloneGlobalInto(const DSNode *GNode) {
   ValMapEntry = NewNode;                // j=0 case of loop below!
   Nodes.push_back(NewNode);
   for (unsigned j = 1, N = NewNode->getGlobals().size(); j < N; ++j)
-    ValueMap[NewNode->getGlobals()[j]] = NewNode;
+    ScalarMap[NewNode->getGlobals()[j]] = NewNode;
 
   // Rewrite the links in the new node to point into the current graph.
   for (unsigned j = 0, e = GNode->getNumLinks(); j != e; ++j)
@@ -655,8 +655,8 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
   // Mark any incoming arguments as incomplete...
   if (markFormalArgs && Func)
     for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I)
-      if (isPointerType(I->getType()) && ValueMap.find(I) != ValueMap.end())
-        markIncompleteNode(ValueMap[I].getNode());
+      if (isPointerType(I->getType()) && ScalarMap.find(I) != ScalarMap.end())
+        markIncompleteNode(ScalarMap[I].getNode());
 
   // Mark stuff passed into functions calls as being incomplete...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
@@ -681,13 +681,13 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
 }
 
 // removeRefsToGlobal - Helper function that removes globals from the
-// ValueMap so that the referrer count will go down to zero.
+// ScalarMap so that the referrer count will go down to zero.
 static void removeRefsToGlobal(DSNode* N,
-                               std::map<Value*, DSNodeHandle> &ValueMap) {
+                               std::map<Value*, DSNodeHandle> &ScalarMap) {
   while (!N->getGlobals().empty()) {
     GlobalValue *GV = N->getGlobals().back();
     N->getGlobals().pop_back();      
-    ValueMap.erase(GV);
+    ScalarMap.erase(GV);
   }
 }
 
@@ -705,9 +705,9 @@ bool DSGraph::isNodeDead(DSNode *N) {
   if ((N->NodeType & ~DSNode::GlobalNode) == 0 && N->getSize() == 0 &&
       N->getReferrers().size() == N->getGlobals().size()) {
 
-    // Remove the globals from the ValueMap, so that the referrer count will go
+    // Remove the globals from the ScalarMap, so that the referrer count will go
     // down to zero.
-    removeRefsToGlobal(N, ValueMap);
+    removeRefsToGlobal(N, ScalarMap);
     assert(N->getReferrers().empty() && "Referrers should all be gone now!");
     return true;
   }
@@ -881,11 +881,11 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
   // This would be a simple iterative loop if function calls were real nodes!
   markGlobalsIteration(GlobalNodes, Calls, Alive, FilterCalls);
 
-  // Free up references to dead globals from the ValueMap
+  // Free up references to dead globals from the ScalarMap
   std::set<DSNode*>::iterator I = GlobalNodes.begin(), E = GlobalNodes.end();
   for( ; I != E; ++I)
     if (Alive.count(*I) == 0)
-      removeRefsToGlobal(*I, G.getValueMap());
+      removeRefsToGlobal(*I, G.getScalarMap());
 
   // Delete dead function calls
   if (FilterCalls)
@@ -927,13 +927,13 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
     }
 
   // Mark all nodes reachable by scalar nodes as alive...
-  for (std::map<Value*, DSNodeHandle>::iterator I = ValueMap.begin(),
-         E = ValueMap.end(); I != E; ++I)
+  for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
+         E = ScalarMap.end(); I != E; ++I)
     markAlive(I->second.getNode(), Alive);
 
 #if 0
   // Marge all nodes reachable by global nodes, as alive.  Isn't this covered by
-  // the ValueMap?
+  // the ScalarMap?
   //
   if (KeepAllGlobals)
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
@@ -1039,7 +1039,7 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
   // an identical list of globals and return it if it exists.
   //
   for (unsigned j = 0, N = OldNode->getGlobals().size(); j != N; ++j)
-    if (DSNode *PrevNode = ValueMap[OldNode->getGlobals()[j]].getNode()) {
+    if (DSNode *PrevNode = ScalarMap[OldNode->getGlobals()[j]].getNode()) {
       if (NewNode == 0) {
         NewNode = PrevNode;             // first existing node found
         if (GlobalsAreFinal && j == 0)
@@ -1051,11 +1051,11 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
       else if (NewNode != PrevNode) {   // found another, different from prev
         // update ValMap *before* merging PrevNode into NewNode
         for (unsigned k = 0, NK = PrevNode->getGlobals().size(); k < NK; ++k)
-          ValueMap[PrevNode->getGlobals()[k]] = NewNode;
+          ScalarMap[PrevNode->getGlobals()[k]] = NewNode;
         NewNode->mergeWith(PrevNode);
       }
     } else if (NewNode != 0) {
-      ValueMap[OldNode->getGlobals()[j]] = NewNode; // add the merged node
+      ScalarMap[OldNode->getGlobals()[j]] = NewNode; // add the merged node
     }
 
   // If no existing node was found, clone the node and update the ValMap.
@@ -1065,7 +1065,7 @@ DSNode* GlobalDSGraph::cloneNodeInto(DSNode *OldNode,
     for (unsigned j = 0, e = NewNode->getNumLinks(); j != e; ++j)
       NewNode->setLink(j, 0);
     for (unsigned j = 0, N = NewNode->getGlobals().size(); j < N; ++j)
-      ValueMap[NewNode->getGlobals()[j]] = NewNode;
+      ScalarMap[NewNode->getGlobals()[j]] = NewNode;
   }
   else
     NewNode->NodeType |= OldNode->NodeType; // Markers may be different!

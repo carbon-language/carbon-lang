@@ -84,7 +84,7 @@ void Steens::ResolveFunctionCall(Function *F,
                                  const DSCallSite &Call,
                                  DSNodeHandle &RetVal) {
   assert(ResultGraph != 0 && "Result graph not allocated!");
-  std::map<Value*, DSNodeHandle> &ValMap = ResultGraph->getValueMap();
+  std::map<Value*, DSNodeHandle> &ValMap = ResultGraph->getScalarMap();
 
   // Handle the return value of the function...
   if (Call.getRetVal().getNode() && RetVal.getNode())
@@ -135,8 +135,9 @@ bool Steens::run(Module &M) {
           RetValMap[I] = RetNode;
       }
 
-      // Incorporate the inlined Function's ValueMap into the global ValueMap...
-      std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getValueMap();
+      // Incorporate the inlined Function's ScalarMap into the global
+      // ScalarMap...
+      std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
 
       while (!ValMap.empty()) { // Loop over value map, moving entries over...
         const std::pair<Value*, DSNodeHandle> &DSN = *ValMap.begin();
@@ -198,7 +199,7 @@ bool Steens::run(Module &M) {
 AliasAnalysis::Result Steens::alias(const Value *V1, const Value *V2) const {
   assert(ResultGraph && "Result grcaph has not yet been computed!");
 
-  std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getValueMap();
+  std::map<Value*, DSNodeHandle> &GVM = ResultGraph->getScalarMap();
 
   std::map<Value*, DSNodeHandle>::iterator I = GVM.find(const_cast<Value*>(V1));
   if (I != GVM.end() && I->second.getNode()) {
