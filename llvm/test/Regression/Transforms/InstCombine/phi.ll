@@ -43,7 +43,7 @@ L2:
 	br label %Loop
 }
 
-int %test5(int %a, bool %b) {
+int %test5(int %A, bool %b) {
 BB0: br label %Loop
 
 Loop:
