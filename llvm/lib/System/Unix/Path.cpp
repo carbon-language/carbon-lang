@@ -52,12 +52,16 @@ static inline bool IsLibrary(Path& path, const std::string& basename) {
       return true;
     else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
       return true;
+    else if (path.elide_suffix() && path.append_suffix("bc") && path.readable())
+      return true;
   } else if (path.elide_file() && path.append_file(basename)) {
     if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
       return true;
     else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
       return true;
     else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+      return true;
+    else if (path.elide_suffix() && path.append_suffix("bc") && path.readable())
       return true;
   }
   path.clear();
@@ -75,6 +79,10 @@ Path::GetLibraryPath(const std::string& basename,
     if (result.set_directory(*I) && IsLibrary(result,basename))
       return result;
   }
+
+  // Try the LLVM lib directory in the LLVM install area
+  if (result.set_directory(LLVM_LIBDIR) && IsLibrary(result,basename))
+    return result;
 
   // Try /usr/lib
   if (result.set_directory("/usr/lib/") && IsLibrary(result,basename))
