@@ -3,6 +3,7 @@ TOOLNAME = llc
 USEDLIBS = mapping \
            sparc \
            x86 \
+	   selection \
            regalloc \
            sched \
            select \
