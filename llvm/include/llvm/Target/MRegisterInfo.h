@@ -10,6 +10,7 @@
 #define LLVM_TARGET_MREGISTERINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include <map>
 #include <assert.h>
 
 class Type;
@@ -59,6 +60,15 @@ public:
   virtual unsigned getRegister(unsigned idx) const { return 0; }
 
   virtual unsigned getDataSize() const { return 0; }
+
+  virtual void
+  buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
+                       Reg2RegClassMap) const
+  {
+    for (unsigned i=0; i < getNumRegs(); ++i) {
+      Reg2RegClassMap[getRegister(i)] = this;
+    }
+  }
 
   //const std::vector<unsigned> &getRegsInClass(void) { return Regs; }
   //void getAliases(void);
@@ -119,6 +129,9 @@ public:
                     unsigned DestReg, unsigned SrcReg,
                     unsigned ImmOffset, unsigned dataSize) const = 0;
 
+  virtual const unsigned* getCalleeSaveRegs() const = 0;
+  virtual const unsigned* getCallerSaveRegs() const = 0;
+
   virtual unsigned getFramePointer() const = 0;
   virtual unsigned getStackPointer() const = 0;
 
@@ -130,6 +143,10 @@ public:
 
   virtual unsigned getNumRegClasses() const = 0;
   virtual const TargetRegisterClass* getRegClassForType(const Type* Ty) const=0;
+
+  virtual void
+  buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
+                       Reg2RegClassMap) const=0;
 };
 
 #endif
