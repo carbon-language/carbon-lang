@@ -14,7 +14,7 @@ EXTRA_DIST = fibonacci.st hello.st prime.st goof.st
 
 SAMPLES = fibonacci hello prime goof
 
-LLVMC_EXEC = $(TOOLDIR)/llvmc
+LLVMC_EXEC = LLVM_CONFIG_DIR=$(BUILD_SRC_ROOT)/tools/llvmc $(TOOLDIR)/llvmc
 
 all :: $(SAMPLES)
 
