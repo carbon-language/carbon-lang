@@ -1109,17 +1109,20 @@ bool IPSCCP::runOnModule(Module &M) {
         }
       }
 
+    std::vector<BasicBlock*> BlocksToErase;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       if (!ExecutableBBs.count(BB)) {
         DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
         ++IPNumDeadBlocks;
+        BlocksToErase.push_back(BB);
 
         // Delete the instructions backwards, as it has a reduced likelihood of
         // having to update as many def-use and use-def chains.
         std::vector<Instruction*> Insts;
-        for (BasicBlock::iterator I = BB->begin(), E = BB->getTerminator();
-             I != E; ++I)
+        TerminatorInst *TI = BB->getTerminator();
+        for (BasicBlock::iterator I = BB->begin(), E = TI; I != E; ++I)
           Insts.push_back(I);
+
         while (!Insts.empty()) {
           Instruction *I = Insts.back();
           Insts.pop_back();
@@ -1129,6 +1132,14 @@ bool IPSCCP::runOnModule(Module &M) {
           MadeChanges = true;
           ++IPNumInstRemoved;
         }
+        
+        for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
+          BasicBlock *Succ = TI->getSuccessor(i);
+          if (Succ->begin() != Succ->end() && isa<PHINode>(Succ->begin()))
+            TI->getSuccessor(i)->removePredecessor(BB);
+        }
+        BB->getInstList().erase(TI);
+
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
           Instruction *Inst = BI++;
@@ -1155,6 +1166,22 @@ bool IPSCCP::runOnModule(Module &M) {
           }
         }
       }
+
+    // Now that all instructions in the function are constant folded, erase dead
+    // blocks, because we can now use ConstantFoldTerminator to get rid of
+    // in-edges.
+    for (unsigned i = 0, e = BlocksToErase.size(); i != e; ++i) {
+      // If there are any PHI nodes in this successor, drop entries for BB now.
+      BasicBlock *DeadBB = BlocksToErase[i];
+      while (!DeadBB->use_empty()) {
+        Instruction *I = cast<Instruction>(DeadBB->use_back());
+        bool Folded = ConstantFoldTerminator(I->getParent());
+        assert(Folded && "Didn't fold away reference to block!");
+      }
+        
+      // Finally, delete the basic block.
+      F->getBasicBlockList().erase(DeadBB);
+    }
   }
   return MadeChanges;
 }
