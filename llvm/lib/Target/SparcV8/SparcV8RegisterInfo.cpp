@@ -131,8 +131,8 @@ SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
   case Type::FloatTyID:  return &FPRegsInstance;
   case Type::DoubleTyID: return &DFPRegsInstance;
   case Type::LongTyID:
-  case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
-  default:              assert(0 && "Invalid type to getClass!");
+  case Type::ULongTyID:  return &LongRegsInstance;
+  default:               assert(0 && "Invalid type to getClass!");
   case Type::BoolTyID:
   case Type::SByteTyID:
   case Type::UByteTyID:
