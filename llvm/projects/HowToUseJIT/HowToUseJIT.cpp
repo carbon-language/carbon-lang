@@ -7,10 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-//  This tool provides a single point of access to the LLVM compilation tools.
-//  It has many options. To discover the options supported please refer to the
-//  tools' manual page (docs/CommandGuide/html/llvmc.html) or run the tool with
-//  the --help option.
+//  This small program provides an example of how to quickly build a small
+//  module with two functions and execute it with the JIT. 
 // 
 //===------------------------------------------------------------------------===
 
