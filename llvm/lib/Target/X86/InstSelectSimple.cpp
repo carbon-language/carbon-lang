@@ -1207,7 +1207,7 @@ void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator &MBBI,
     return;
   case cInt:
   case cShort:
-    BMI(BB, MBBI, Class == cInt ? X86::IMULr32 : X86::IMULr16, 2, DestReg)
+    BMI(BB, MBBI, Class == cInt ? X86::IMULrr32 : X86::IMULrr16, 2, DestReg)
       .addReg(op0Reg).addReg(op1Reg);
     return;
   case cByte:
@@ -1255,6 +1255,14 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
       return;
     }
   }
+  
+  if (Class == cShort) {
+    BMI(MBB, IP, X86::IMULri16, 2, DestReg).addReg(op0Reg).addZImm(ConstRHS);
+    return;
+  } else if (Class == cInt) {
+    BMI(MBB, IP, X86::IMULri32, 2, DestReg).addReg(op0Reg).addZImm(ConstRHS);
+    return;
+  }
 
   // Most general case, emit a normal multiply...
   static const unsigned MOVirTab[] = {
@@ -1301,7 +1309,7 @@ void ISel::visitMul(BinaryOperator &I) {
 
     MachineBasicBlock::iterator MBBI = BB->end();
     unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
-    BMI(BB, MBBI, X86::IMULr32, 2, AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
+    BMI(BB, MBBI, X86::IMULrr32, 2, AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
 
     unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
     BuildMI(BB, X86::ADDrr32, 2,                         // AH*BL+(AL*BL >> 32)
@@ -1309,7 +1317,7 @@ void ISel::visitMul(BinaryOperator &I) {
     
     MBBI = BB->end();
     unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
-    BMI(BB, MBBI, X86::IMULr32, 2, ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
+    BMI(BB, MBBI, X86::IMULrr32, 2, ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
     
     BuildMI(BB, X86::ADDrr32, 2,               // AL*BH + AH*BL + (AL*BL >> 32)
 	    DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);

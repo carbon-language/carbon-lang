@@ -722,19 +722,24 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 
   case X86II::MRMSrcReg: {
-    // There is a two forms that are acceptable for MRMSrcReg instructions,
+    // There is are three forms that are acceptable for MRMSrcReg instructions,
     // those with 3 and 2 operands:
     //
     // 3 Operands: in this form, the last register (the second input) is the
     // ModR/M input.  The first two operands should be the same, post register
     // allocation.  This is for things like: add r32, r/m32
     //
+    // 3 Operands: in this form, we can have 'INST R, R, imm', which is used for
+    // instructions like the IMULri instructions.
+    //
     // 2 Operands: this is for things like mov that do not read a second input
     //
     assert(MI->getOperand(0).isRegister() &&
            MI->getOperand(1).isRegister() &&
            (MI->getNumOperands() == 2 || 
-            (MI->getNumOperands() == 3 && MI->getOperand(2).isRegister()))
+            (MI->getNumOperands() == 3 && 
+             (MI->getOperand(2).isRegister() ||
+              MI->getOperand(2).isImmediate())))
            && "Bad format for MRMSrcReg!");
     if (MI->getNumOperands() == 3 &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
@@ -742,6 +747,13 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
     O << TII.getName(MI->getOpCode()) << " ";
     printOp(MI->getOperand(0));
+
+    // If this is IMULri* instructions, print the non-two-address operand.
+    if (MI->getNumOperands() == 3 && MI->getOperand(2).isImmediate()) {
+      O << ", ";
+      printOp(MI->getOperand(1));
+    }
+
     O << ", ";
     printOp(MI->getOperand(MI->getNumOperands()-1));
     O << "\n";

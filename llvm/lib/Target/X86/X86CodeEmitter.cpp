@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Value.h"
+#include "llvm/Function.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Config/alloca.h"
@@ -243,15 +243,12 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
   // Get the address from the backend...
   unsigned Address = MCE.getGlobalValueAddress(GV);
   
-  // If the machine code emitter doesn't know what the address IS yet, we have
-  // to take special measures.
-  //
   if (Address == 0) {
     // FIXME: this is JIT specific!
     if (TheJITResolver == 0)
       TheJITResolver = new JITResolver(MCE);
     Address = TheJITResolver->addFunctionReference(MCE.getCurrentPCValue(),
-                                                   (Function*)GV);
+                                                   cast<Function>(GV));
   }
   emitMaybePCRelativeValue(Address, true);
 }
@@ -536,8 +533,19 @@ void Emitter::emitInstruction(MachineInstr &MI) {
 
   case X86II::MRMSrcReg:
     MCE.emitByte(BaseOpcode);
-    emitRegModRMByte(MI.getOperand(MI.getNumOperands()-1).getReg(),
-                     getX86RegNum(MI.getOperand(0).getReg()));
+
+    if (MI.getNumOperands() == 2) {
+      emitRegModRMByte(MI.getOperand(MI.getNumOperands()-1).getReg(),
+                       getX86RegNum(MI.getOperand(0).getReg()));
+    } else if (MI.getOperand(2).isImmediate()) {
+      emitRegModRMByte(MI.getOperand(1).getReg(),
+                       getX86RegNum(MI.getOperand(0).getReg()));
+
+      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfPtr(Desc));
+    } else {
+      emitRegModRMByte(MI.getOperand(2).getReg(),
+                       getX86RegNum(MI.getOperand(0).getReg()));
+    }
     break;
 
   case X86II::MRMSrcMem:

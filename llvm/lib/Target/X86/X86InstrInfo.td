@@ -255,8 +255,10 @@ def SUBri32  : I2A32<"sub", 0x81, MRMS5r    >,         Pattern<(set R32, (minus 
 
 def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carry
 
-def IMULr16  : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (times R16, R16))>;
-def IMULr32  : I2A32<"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
+def IMULrr16 : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (times R16, R16))>;
+def IMULrr32 : I2A32<"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
+def IMULri16 : I2A16<"imul", 0x69, MRMSrcReg>,     OpSize;
+def IMULri32 : I2A32<"imul", 0x69, MRMSrcReg>;
 
 // Logical operators...
 def ANDrr8   : I2A8 <"and", 0x20, MRMDestReg>,         Pattern<(set R8 , (and R8 , R8 ))>;
