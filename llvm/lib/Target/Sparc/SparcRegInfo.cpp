@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "../../CodeGen/RegAlloc/LiveRangeInfo.h"   // FIXME!!
-#include "llvm/CodeGen/LiveRange.h"
+#include "../../CodeGen/RegAlloc/LiveRange.h"       // FIXME!!
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Function.h"

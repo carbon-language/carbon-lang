@@ -25,7 +25,7 @@
 #ifndef IG_NODE_H
 #define IG_NODE_H
 
-#include "llvm/CodeGen/LiveRange.h"
+#include "LiveRange.h"
 class RegClass;
 
 //----------------------------------------------------------------------------
