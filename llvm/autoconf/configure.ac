@@ -38,6 +38,7 @@ AC_CONFIG_MAKEFILE(test/QMTest/llvm.py)
 AC_CONFIG_MAKEFILE(test/QMTest/llvmdb.py)
 AC_CONFIG_MAKEFILE(test/Programs/Makefile)
 AC_CONFIG_MAKEFILE(test/Programs/Makefile.programs)
+AC_CONFIG_MAKEFILE(test/Programs/Makefile.tests)
 AC_CONFIG_MAKEFILE(test/Programs/TEST.aa.Makefile)
 AC_CONFIG_MAKEFILE(test/Programs/TEST.dsgraph.report)
 AC_CONFIG_MAKEFILE(test/Programs/TEST.aa.report)
@@ -285,7 +286,7 @@ then
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace isatty mkstemp getrusage)
+AC_CHECK_FUNCS(getcwd gettimeofday strdup strtoq strtoll backtrace isatty mkstemp getrusage isnan)
 AC_CHECK_FUNC(mprotect,,AC_MSG_ERROR([Function mprotect() required but not found]))
 
 dnl Determine if the linker supports the -R option.

@@ -140,6 +140,9 @@
 /* Define to have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
 
+/* Define to 1 if you have the isnan() function */
+#undef HAVE_ISNAN
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
