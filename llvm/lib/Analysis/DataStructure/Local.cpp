@@ -1069,6 +1069,88 @@ void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
 }
 
 
+/// BuildGlobalECs - Look at all of the nodes in the globals graph.  If any node
+/// contains multiple globals, DSA will never, ever, be able to tell the globals
+/// apart.  Instead of maintaining this information in all of the graphs
+/// throughout the entire program, store only a single global (the "leader") in
+/// the graphs, and build equivalence classes for the rest of the globals.
+static void BuildGlobalECs(DSGraph &GG, std::set<GlobalValue*> &ECGlobals) {
+  DSScalarMap &SM = GG.getScalarMap();
+  EquivalenceClasses<GlobalValue*> &GlobalECs = SM.getGlobalECs();
+  for (DSGraph::node_iterator I = GG.node_begin(), E = GG.node_end();
+       I != E; ++I) {
+    if (I->getGlobalsList().size() <= 1) continue;
+
+    // First, build up the equivalence set for this block of globals.
+    const std::vector<GlobalValue*> &GVs = I->getGlobalsList();
+    GlobalValue *First = GVs[0];
+    for (unsigned i = 1, e = GVs.size(); i != e; ++i)
+      GlobalECs.unionSets(First, GVs[i]);
+    
+    // Next, get the leader element.
+    assert(First == GlobalECs.getLeaderValue(First) &&
+           "First did not end up being the leader?");
+    
+    // Next, remove all globals from the scalar map that are not the leader.
+    assert(GVs[0] == First && "First had to be at the front!");
+    for (unsigned i = 1, e = GVs.size(); i != e; ++i) {
+      ECGlobals.insert(GVs[i]);
+      SM.erase(SM.find(GVs[i]));
+    }
+    
+    // Finally, change the global node to only contain the leader.
+    I->clearGlobals();
+    I->addGlobal(First);
+  }
+  
+  DEBUG(GG.AssertGraphOK());
+}
+
+/// EliminateUsesOfECGlobals - Once we have determined that some globals are in
+/// really just equivalent to some other globals, remove the globals from the
+/// specified DSGraph (if present), and merge any nodes with their leader nodes.
+static void EliminateUsesOfECGlobals(DSGraph &G,
+                                     const std::set<GlobalValue*> &ECGlobals) {
+  DSScalarMap &SM = G.getScalarMap();
+  EquivalenceClasses<GlobalValue*> &GlobalECs = SM.getGlobalECs();
+
+  bool MadeChange = false;
+  for (DSScalarMap::global_iterator GI = SM.global_begin(), E = SM.global_end();
+       GI != E; ) {
+    GlobalValue *GV = *GI++;
+    if (!ECGlobals.count(GV)) continue;
+
+    const DSNodeHandle &GVNH = SM[GV];
+    assert(!GVNH.isNull() && "Global has null NH!?");
+
+    // Okay, this global is in some equivalence class.  Start by finding the
+    // leader of the class.
+    GlobalValue *Leader = GlobalECs.getLeaderValue(GV);
+
+    // If the leader isn't already in the graph, insert it into the node
+    // corresponding to GV.
+    if (!SM.global_count(Leader)) {
+      GVNH.getNode()->addGlobal(Leader);
+      SM[Leader] = GVNH;
+    } else {
+      // Otherwise, the leader is in the graph, make sure the nodes are the
+      // merged in the specified graph.
+      const DSNodeHandle &LNH = SM[Leader];
+      if (LNH.getNode() != GVNH.getNode())
+        LNH.mergeWith(GVNH);
+    }
+
+    // Next step, remove the global from the DSNode.
+    GVNH.getNode()->removeGlobal(GV);
+
+    // Finally, remove the global from the ScalarMap.
+    SM.erase(GV);
+    MadeChange = true;
+  }
+
+  DEBUG(if(MadeChange) G.AssertGraphOK());
+}
+
 bool LocalDataStructures::runOnModule(Module &M) {
   const TargetData &TD = getAnalysis<TargetData>();
 
@@ -1086,29 +1168,10 @@ bool LocalDataStructures::runOnModule(Module &M) {
 
   // Next step, iterate through the nodes in the globals graph, unioning
   // together the globals into equivalence classes.
-  for (DSGraph::node_iterator I = GlobalsGraph->node_begin(),
-         E = GlobalsGraph->node_end(); I != E; ++I)
-    if (I->getGlobalsList().size() > 1) {
-      // First, build up the equivalence set for this block of globals.
-      const std::vector<GlobalValue*> &GVs = I->getGlobalsList();
-      GlobalValue *First = GVs[0];
-      for (unsigned i = 1, e = GVs.size(); i != e; ++i)
-        GlobalECs.unionSets(First, GVs[i]);
-
-      // Next, get the leader element.
-      First = GlobalECs.getLeaderValue(First);
-
-      // Next, remove all globals from the scalar map that are not the leader.
-      DSScalarMap &SM = GlobalsGraph->getScalarMap();
-      for (unsigned i = 0, e = GVs.size(); i != e; ++i)
-        if (GVs[i] != First)
-          SM.erase(SM.find(GVs[i]));
-
-      // Finally, change the global node to only contain the leader.
-      I->clearGlobals();
-      I->addGlobal(First);
-    }
-  DEBUG(GlobalsGraph->AssertGraphOK());
+  std::set<GlobalValue*> ECGlobals;
+  BuildGlobalECs(*GlobalsGraph, ECGlobals);
+  DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
+  ECGlobals.clear();
 
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -1118,6 +1181,19 @@ bool LocalDataStructures::runOnModule(Module &M) {
 
   GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->markIncompleteNodes(DSGraph::MarkFormalArgs);
+
+  // Now that we've computed all of the graphs, and merged all of the info into
+  // the globals graph, see if we have further constrained the globals in the
+  // program if so, update GlobalECs and remove the extraneous globals from the
+  // program.
+  BuildGlobalECs(*GlobalsGraph, ECGlobals);
+  if (!ECGlobals.empty()) {
+    DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
+    for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
+           E = DSInfo.end(); I != E; ++I)
+      EliminateUsesOfECGlobals(*I->second, ECGlobals);
+  }
+
   return false;
 }
 
