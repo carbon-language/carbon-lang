@@ -29,13 +29,13 @@
 #include <cmath>
 #include <set>
 #include <queue>
-
 using namespace llvm;
 
 namespace {
 
   Statistic<double> efficiency
   ("regalloc", "Ratio of intervals processed over total intervals");
+  Statistic<> NumBacktracks("regalloc", "Number of times we had to backtrack");
 
   static unsigned numIterations = 0;
   static unsigned numIntervals = 0;
@@ -196,8 +196,8 @@ void RA::linearScan()
       handled_.push_back(cur);
     } else {
       // otherwise we are allocating a virtual register. try to find a free
-      // physical register or spill an interval in order to assign it one (we
-      // could spill the current though).
+      // physical register or spill an interval (possibly this one) in order to
+      // assign it one.
       assignRegOrStackSlotAtInterval(cur);
     }
 
@@ -342,6 +342,15 @@ static RA::IntervalPtrs::iterator FindIntervalInVector(RA::IntervalPtrs &IP,
   return IP.end();
 }
 
+static void RevertVectorIteratorsTo(RA::IntervalPtrs &V, unsigned Point) {
+  for (unsigned i = 0, e = V.size(); i != e; ++i) {
+    RA::IntervalPtr &IP = V[i];
+    LiveInterval::iterator I = std::upper_bound(IP.first->begin(),
+                                                IP.second, Point);
+    if (I != IP.first->begin()) --I;
+    IP.second = I;
+  }
+}
 
 
 /// assignRegOrStackSlotAtInterval - assign a register if one is available, or
@@ -367,7 +376,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // register as not free and update spill weights
   for (IntervalPtrs::const_iterator i = inactive_.begin(),
          e = inactive_.end(); i != e; ++i) {
-    if (cur->overlaps(*i->first)) {
+    if (cur->overlapsFrom(*i->first, i->second-1)) {
       unsigned reg = i->first->reg;
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
@@ -376,16 +385,15 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     }
   }
 
-  // for every interval in fixed we overlap with,
-  // mark the register as not free and update spill weights
+  // For every interval in fixed we overlap with, mark the register as not free
+  // and update spill weights.
   for (IntervalPtrs::const_iterator i = fixed_.begin(),
-         e = fixed_.end(); i != e; ++i) {
-    if (cur->overlaps(*i->first)) {
+         e = fixed_.end(); i != e; ++i)
+    if (cur->overlapsFrom(*i->first, i->second)) {
       unsigned reg = i->first->reg;
       prt_->addRegUse(reg);
       updateSpillWeights(reg, i->first->weight);
     }
-  }
 
   unsigned physReg = getFreePhysReg(cur);
   // restore the physical register tracker
@@ -438,6 +446,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     return;
   }
 
+  ++NumBacktracks;
+
   // push the current interval back to unhandled since we are going
   // to re-run at least this iteration. Since we didn't modify it it
   // should go back right in the front of the list
@@ -450,7 +460,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   assert(MRegisterInfo::isPhysicalRegister(minReg) &&
          "did not choose a register to spill?");
   std::vector<bool> toSpill(mri_->getNumRegs(), false);
-  // we are going to spill minReg and all its aliases
+
+  // We are going to spill minReg and all its aliases.
   toSpill[minReg] = true;
   for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
     toSpill[*as] = true;
@@ -462,18 +473,16 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // set of spilled vregs (used later to rollback properly)
   std::set<unsigned> spilled;
 
-  // spill live intervals of virtual regs mapped to the physical
-  // register we want to clear (and its aliases). we only spill
-  // those that overlap with the current interval as the rest do not
-  // affect its allocation. we also keep track of the earliest start
-  // of all spilled live intervals since this will mark our rollback
-  // point
-  for (IntervalPtrs::iterator
-         i = active_.begin(); i != active_.end(); ++i) {
+  // spill live intervals of virtual regs mapped to the physical register we
+  // want to clear (and its aliases).  We only spill those that overlap with the
+  // current interval as the rest do not affect its allocation. we also keep
+  // track of the earliest start of all spilled live intervals since this will
+  // mark our rollback point.
+  for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
     unsigned reg = i->first->reg;
     if (MRegisterInfo::isVirtualRegister(reg) &&
         toSpill[vrm_->getPhys(reg)] &&
-        cur->overlaps(*i->first)) {
+        cur->overlapsFrom(*i->first, i->second)) {
       DEBUG(std::cerr << "\t\t\tspilling(a): " << *i->first << '\n');
       earliestStart = std::min(earliestStart, i->first->beginNumber());
       int slot = vrm_->assignVirt2StackSlot(i->first->reg);
@@ -483,12 +492,11 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       spilled.insert(reg);
     }
   }
-  for (IntervalPtrs::iterator
-         i = inactive_.begin(); i != inactive_.end(); ++i) {
+  for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end(); ++i){
     unsigned reg = i->first->reg;
     if (MRegisterInfo::isVirtualRegister(reg) &&
         toSpill[vrm_->getPhys(reg)] &&
-        cur->overlaps(*i->first)) {
+        cur->overlapsFrom(*i->first, i->second-1)) {
       DEBUG(std::cerr << "\t\t\tspilling(i): " << *i->first << '\n');
       earliestStart = std::min(earliestStart, i->first->beginNumber());
       int slot = vrm_->assignVirt2StackSlot(reg);
@@ -542,6 +550,12 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       unhandled_.push(i);
     }
   }
+
+  // Rewind the iterators in the active, inactive, and fixed lists back to the
+  // point we reverted to.
+  RevertVectorIteratorsTo(active_, earliestStart);
+  RevertVectorIteratorsTo(inactive_, earliestStart);
+  RevertVectorIteratorsTo(fixed_, earliestStart);
 
   // scan the rest and undo each interval that expired after t and
   // insert it in active (the next iteration of the algorithm will
