@@ -78,6 +78,7 @@ ifdef BYTECODE_LIBRARY
 # if BYTECODE_LIBRARY is specified, the default is to build the bytecode lib
 all:: bytecodelib
 install:: install-bytecode-library
+install-bytecode:: install-bytecode-library
 endif
 
 # Default Rule:  Make sure it's also a :: rule
@@ -91,6 +92,9 @@ test::
 
 # Default rule for building only bytecode.
 bytecode::
+
+# Default rule for installing only bytecode.
+install-bytecode::
 
 # Print out the directories used for building
 prdirs::
@@ -391,7 +395,7 @@ RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
 #---------------------------------------------------------
 
 ifdef DIRS
-all install clean test bytecode stripped-bytecode::
+all install clean test bytecode stripped-bytecode install-bytecode::
 	$(VERB) for dir in ${DIRS}; do \
 		if [ ! -f $$dir/Makefile ]; \
 		then \
@@ -410,8 +414,9 @@ clean    :: $(addsuffix /.makeclean   , $(PARALLEL_DIRS))
 test     :: $(addsuffix /.maketest    , $(PARALLEL_DIRS))
 bytecode :: $(addsuffix /.makebytecode, $(PARALLEL_DIRS))
 stripped-bytecode :: $(addsuffix /.makestripped-bytecode, $(PARALLEL_DIRS))
+install-bytecode :: $(addsuffix /.makeinstall-bytecode, $(PARALLEL_DIRS))
 
-%/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode %/.makestripped-bytecode:
+%/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode %/.makestripped-bytecode %/.makeinstall-bytecode:
 	$(VERB) if [ ! -f $(@D)/Makefile ]; \
 	then \
 		$(MKDIR) $(@D); \
@@ -422,7 +427,7 @@ endif
 
 # Handle directories that may or may not exist
 ifdef OPTIONAL_DIRS
-all install clean test bytecode stripped-bytecode::
+all install clean test bytecode stripped-bytecode install-bytecode::
 	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
 		if [ -d $(SourceDir)/$$dir ]; \
 		then\
