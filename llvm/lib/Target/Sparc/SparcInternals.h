@@ -727,4 +727,6 @@ public:
 
 int64_t GetConstantValueAsSignedInt(const Value *V, bool &isValidConstant);
 
+Pass *getFunctionInfo(std::ostream &out);
+
 #endif
