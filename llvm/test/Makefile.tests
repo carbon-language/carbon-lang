@@ -54,8 +54,9 @@ LCCFLAGS  += -O2 -Wall
 LCXXFLAGS += -O2 -Wall
 LLCFLAGS =
 FAILURE  = $(LEVEL)/test/Failure.sh
-TESTRUNR = PATH=$(LLVMTOOLCURRENT):$(LEVEL)/test/Scripts:$(PATH) \
-               $(LEVEL)/test/TestRunner.sh
+TESTRUNR = @echo Running test: $<; \
+             PATH=$(LLVMTOOLCURRENT):$(LEVEL)/test/Scripts:$(PATH) \
+                  $(LEVEL)/test/TestRunner.sh
 
 # Native Tool Definitions
 NATGCC  = $(CC)
