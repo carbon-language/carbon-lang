@@ -2,8 +2,6 @@
 //
 // This file contains random notes and points of interest about the X86 backend.
 //
-// Snippets of this document will probably become the final report for CS497
-//
 //===----------------------------------------------------------------------===//
 
 ===========
@@ -81,38 +79,6 @@ operand, they simply have #operands = #uses.  To create them, simply do not
 specify a destination register to the BuildMI call.
 
 
-======================================
-III. Lazy Function Resolution in Jello
-======================================
-
-Jello is a designed to be a JIT compiler for LLVM code.  This implies that call
-instructions may be emitted before the function they call is compiled.  In order
-to support this, Jello currently emits unresolved call instructions to call to a
-null pointer.  When the call instruction is executed, a segmentation fault will
-be generated.
-
-Jello installs a trap handler for SIGSEGV, in order to trap these events.  When
-a SIGSEGV occurs, first we check to see if it's due to lazy function resolution,
-if so, we look up the return address of the function call (which was pushed onto
-the stack by the call instruction).  Given the return address of the call, we
-consult a map to figure out which function was supposed to be called from that
-location.
-
-If the function has not been code generated yet, it is at this time.  Finally,
-the EIP of the process is modified to point to the real function address, the
-original call instruction is updated, and the SIGSEGV handler returns, causing
-execution to start in the called function.  Because we update the original call
-instruction, we should only get at most one signal for each call site.
-
-Note that this approach does not work for indirect calls.  The problem with
-indirect calls is that taking the address of a function would not cause a fault
-(it would simply copy null into a register), so we would only find out about the
-problem when the indirect call itself was made.  At this point we would have no
-way of knowing what the intended function destination was.  Because of this, we
-immediately code generate functions whenever they have their address taken,
-side-stepping the problem completely.
-
-
 ======================
 IV. Source Code Layout
 ======================
@@ -148,7 +114,7 @@ rest of the compiler working.  It contains any code that is truly specific to
 the X86 backend, for example the instruction selector and machine code emitter.
 
 tools/lli/JIT
------------
+-------------
 This directory contains the top-level code for the JIT compiler.  This code
 basically boils down to a call to TargetMachine::addPassesToJITCompile.  As we
 progress with the project, this will also contain the compile-dispatch-recompile
@@ -156,8 +122,7 @@ loop.
 
 test/Regression/Jello
 ---------------------
-This directory contains regression tests for the JIT.  Initially it contains a
-bunch of really trivial testcases that we should build up to supporting.
+This directory contains regression tests for the JIT.
 
 
 ==================================================
@@ -191,11 +156,6 @@ VI. TODO / Future Projects
 
 There are a large number of things remaining to do.  Here is a partial list:
 
-Critical path:
--------------
-
-1. Finish dumb instruction selector
-
 Next Phase:
 -----------
 1. Implement linear time optimal instruction selector
@@ -216,11 +176,3 @@ Infrastructure Improvements:
 
 2. PassManager needs to be able to run just a single function through a pipeline
    of FunctionPass's.
-
-3. llvmgcc needs to be modified to output 32-bit little endian LLVM files.
-   Preferably it will be parameterizable so that multiple binaries need not
-   exist.  Until this happens, we will be restricted to using type safe
-   programs (most of the Olden suite and many smaller tests), which should be
-   sufficient for our 497 project.  Additionally there are a few places in the
-   LLVM infrastructure where we assume Sparc TargetData layout.  These should
-   be easy to factor out and identify though.
