@@ -425,7 +425,7 @@ if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
 if ($BuildError) { $NODEJAGNU=1; }
 
 my $DejangnuTestResults; # String containing the results of the dejagnu
-if($RUNDEJAGNU) {
+if(!$NODEJAGNU) {
   if($VERBOSE) { print "DEJAGNU FEATURE/REGRESSION TEST STAGE\n"; }
   
   my $dejagnu_output = "$DejagnuTestsLog";
