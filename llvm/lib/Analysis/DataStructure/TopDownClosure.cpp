@@ -42,36 +42,6 @@ bool TDDataStructures::run(Module &M) {
   return false;
 }
 
-#if 0
-
-// MergeGlobalNodes - Merge all existing global nodes with globals
-// inlined from the callee or with globals from the GlobalsGraph.
-//
-static void MergeGlobalNodes(DSGraph &Graph,
-                             map<Value*, DSNodeHandle> &OldValMap) {
-  map<Value*, DSNodeHandle> &ValMap = Graph.getValueMap();
-  for (map<Value*, DSNodeHandle>::iterator I = ValMap.begin(), E = ValMap.end();
-       I != E; ++I)
-    if (GlobalValue* GV = dyn_cast<GlobalValue>(I->first)) {
-      map<Value*, DSNodeHandle>:: iterator NHI = OldValMap.find(GV);
-      if (NHI != OldValMap.end())       // was it inlined from the callee?
-        I->second->mergeWith(NHI->second);
-      else                              // get it from the GlobalsGraph
-        I->second->mergeWith(Graph.cloneGlobalInto(GV));
-    }
-
-  // Add unused inlined global nodes into the value map
-  for (map<Value*, DSNodeHandle>::iterator I = OldValMap.begin(),
-         E = OldValMap.end(); I != E; ++I)
-    if (isa<GlobalValue>(I->first)) {
-      DSNodeHandle &NH = ValMap[I->first];  // If global is not in ValMap...
-      if (NH == 0)
-        NH = I->second;                     // Add the one just inlined.
-    }
-}
-
-#endif
-
 /// ResolveCallSite - This method is used to link the actual arguments together
 /// with the formal arguments for a function call in the top-down closure.  This
 /// method assumes that the call site arguments have been mapped into nodes
@@ -167,7 +137,6 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
       ResolveCallSite(*Graph, CallSite);
     }
   }
-  
 
   // Recompute the Incomplete markers and eliminate unreachable nodes.
   Graph->maskIncompleteMarkers();
