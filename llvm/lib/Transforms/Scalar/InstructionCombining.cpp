@@ -2456,10 +2456,8 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (!isa<ConstantExpr>(CS.getCalledValue())) return false;
   ConstantExpr *CE = cast<ConstantExpr>(CS.getCalledValue());
-  if (CE->getOpcode() != Instruction::Cast ||
-      !isa<GlobalValue>(CE->getOperand(0)))
+  if (CE->getOpcode() != Instruction::Cast || !isa<Function>(CE->getOperand(0)))
     return false;
-  if (!isa<Function>(CE->getOperand(0))) return false;
   Function *Callee = cast<Function>(CE->getOperand(0));
   Instruction *Caller = CS.getInstruction();
 
@@ -2809,8 +2807,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Indices.push_back(cast<Constant>(*I));
 
     if (I == E) {  // If they are all constants...
-      Constant *CE =
-        ConstantExpr::getGetElementPtr(GV, Indices);
+      Constant *CE = ConstantExpr::getGetElementPtr(GV, Indices);
 
       // Replace all uses of the GEP with the new constexpr...
       return ReplaceInstUsesWith(GEP, CE);
@@ -2977,8 +2974,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (Constant *C = dyn_cast<Constant>(Op))
     if (C->isNullValue())  // load null -> 0
       return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
-    else if (isa<GlobalValue>(C))
-      Op = C;
 
   // Instcombine load (constant global) into the value loaded...
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
