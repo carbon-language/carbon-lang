@@ -265,7 +265,6 @@ bool AliasSetTracker::add(FreeInst *FI) {
 
 
 bool AliasSetTracker::add(CallSite CS) {
-  bool NewPtr;
   if (Function *F = CS.getCalledFunction())
     if (AA.doesNotAccessMemory(F))
       return true; // doesn't alias anything
