@@ -1,3 +1,4 @@
+
 //===-- ModuloScheduling.cpp - ModuloScheduling  ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -122,6 +123,7 @@ namespace llvm {
 bool ModuloSchedulingPass::runOnFunction(Function &F) {
   
   bool Changed = false;
+  int numMS = 0;
   
   DEBUG(std::cerr << "Creating ModuloSchedGraph for each valid BasicBlock in " + F.getName() + "\n");
   
@@ -139,37 +141,14 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   
   defaultInst = 0;
 
-  //If we have a basic block to schedule, create our def map
-  if(Worklist.size() > 0) {
-    for(MachineFunction::iterator BI = MF.begin(); BI != MF.end(); ++BI) {
-      for(MachineBasicBlock::iterator I = BI->begin(), E = BI->end(); I != E; ++I) {
-	for(unsigned opNum = 0; opNum < I->getNumOperands(); ++opNum) {
-	  const MachineOperand &mOp = I->getOperand(opNum);
-	  if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
-	    defMap[mOp.getVRegValue()] = &*I;
-	  }
-	  
-	    //See if we can use this Value* as our defaultInst
-	  if(!defaultInst && mOp.getType() == MachineOperand::MO_VirtualRegister) {
-	    Value *V = mOp.getVRegValue();
-	    if(!isa<TmpInstruction>(V) && !isa<Argument>(V) && !isa<Constant>(V))
-	      defaultInst = (Instruction*) V;
-	  }
-	}
-      }
-    }
-  }
-
-  assert(defaultInst && "We must have a default instruction to use as our main point to add to machine code for instruction\n");
-
-  DEBUG(std::cerr << "Default Instruction: " << *defaultInst << "\n");
-
   DEBUG(if(Worklist.size() == 0) std::cerr << "No single basic block loops in function to ModuloSchedule\n");
 
   //Iterate over the worklist and perform scheduling
   for(std::vector<MachineBasicBlock*>::iterator BI = Worklist.begin(),  
 	BE = Worklist.end(); BI != BE; ++BI) {
     
+    CreateDefMap(*BI);
+
     MSchedGraph *MSG = new MSchedGraph(*BI, target);
     
     //Write Graph out to file
@@ -234,11 +213,13 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     //Print out final schedule
     DEBUG(schedule.print(std::cerr));
     
-
     //Final scheduling step is to reconstruct the loop only if we actual have
     //stage > 0
-    if(schedule.getMaxStage() != 0)
+    if(schedule.getMaxStage() != 0) {
       reconstructLoop(*BI);
+      numMS++;
+      Changed = true;
+    }
     else
       DEBUG(std::cerr << "Max stage is 0, so no change in loop\n");
 
@@ -248,7 +229,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     recurrenceList.clear();
     FinalNodeOrder.clear();
     schedule.clear();
-
+    defMap.clear();
     //Clean up. Nuke old MachineBB and llvmBB
     //BasicBlock *llvmBB = (BasicBlock*) (*BI)->getBasicBlock();
     //Function *parent = (Function*) llvmBB->getParent();
@@ -261,10 +242,32 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   }
   
  
+  DEBUG(std::cerr << "Number of Loop Candidates: " << Worklist.size() << "\n Number ModuloScheduled: " << numMS << "\n");
+
   return Changed;
 }
 
+void ModuloSchedulingPass::CreateDefMap(MachineBasicBlock *BI) {
+  defaultInst = 0;
 
+  for(MachineBasicBlock::iterator I = BI->begin(), E = BI->end(); I != E; ++I) {
+    for(unsigned opNum = 0; opNum < I->getNumOperands(); ++opNum) {
+      const MachineOperand &mOp = I->getOperand(opNum);
+      if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
+	defMap[mOp.getVRegValue()] = &*I;
+      }
+      
+      //See if we can use this Value* as our defaultInst
+      if(!defaultInst && mOp.getType() == MachineOperand::MO_VirtualRegister) {
+	Value *V = mOp.getVRegValue();
+	if(!isa<TmpInstruction>(V) && !isa<Argument>(V) && !isa<Constant>(V) && !isa<PHINode>(V))
+	  defaultInst = (Instruction*) V;
+      }
+    }
+  }
+  assert(defaultInst && "We must have a default instruction to use as our main point to add to machine code for instruction\n");
+  
+}
 /// This function checks if a Machine Basic Block is valid for modulo
 /// scheduling. This means that it has no control flow (if/else or
 /// calls) in the block.  Currently ModuloScheduling only works on
@@ -1482,6 +1485,8 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
    //Insert into machine basic block
    machineBB->push_back(instClone);
 
+   DEBUG(std::cerr <<  "Cloned Inst: " << *instClone << "\n");
+
    if(I->first->isBranch()) {
      //Add kernel noop
      BuildMI(machineBB, V9::NOP, 0);
@@ -1502,18 +1507,26 @@ void ModuloSchedulingPass::writeKernel(BasicBlock *llvmBB, MachineBasicBlock *ma
 
 	 //If its in the value saved, we need to create a temp instruction and use that instead
 	 if(valuesToSave.count(mOp.getVRegValue())) {
-	   TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
-	   	
-	   //Get machine code for this instruction
-	   MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
-	   tempMvec.addTemp((Value*) tmp);
-	   
-	   //Update the operand in the cloned instruction
-	   instClone->getOperand(i).setValueReg(tmp);
-	   
-	   //save this as our final phi
-	   finalPHIValue[mOp.getVRegValue()] = tmp;
-	   newValLocation[tmp] = machineBB;
+
+	   //Check if we already have a final PHI value for this
+	   if(!finalPHIValue.count(mOp.getVRegValue())) {
+	     TmpInstruction *tmp = new TmpInstruction(mOp.getVRegValue());
+	     
+	     //Get machine code for this instruction
+	     MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(defaultInst);
+	     tempMvec.addTemp((Value*) tmp);
+	     
+	     //Update the operand in the cloned instruction
+	     instClone->getOperand(i).setValueReg(tmp);
+	     
+	     //save this as our final phi
+	     finalPHIValue[mOp.getVRegValue()] = tmp;
+	     newValLocation[tmp] = machineBB;
+	   }
+	   else {
+	     //Use the previous final phi value
+	     instClone->getOperand(i).setValueReg(finalPHIValue[mOp.getVRegValue()]); 
+	   }
 	 }
        }
      }
@@ -1802,7 +1815,7 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 	  //find the value in the map
 	  if (const Value* srcI = mOp.getVRegValue()) {
 
-	    if(isa<Constant>(srcI) || isa<Argument>(srcI))
+	    if(isa<Constant>(srcI) || isa<Argument>(srcI) || isa<PHINode>(srcI))
 	      continue;
 
 	    //Before we declare this Value* one that we should save
@@ -1813,13 +1826,18 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 	    //Should we save this value?
 	    bool save = true;
 
-	    //Assert if not in the def map
-	    assert(defMap.count(srcI) && "No entry for this Value* definition in our map"); 
+	    //Continue if not in the def map, loop invariant code does not need to be saved
+	    if(!defMap.count(srcI))
+	      continue;
+
 	    MachineInstr *defInstr = defMap[srcI];
 	    
+
 	    if(lastInstrs.count(defInstr)) {
-	      if(lastInstrs[defInstr] == I->second) 
+	      if(lastInstrs[defInstr] == I->second) {
 		save = false;
+		
+	      }
 	    }
 	    
 	    if(save)

@@ -67,6 +67,7 @@ namespace llvm {
     int II;
 
     //Internal functions
+    void CreateDefMap(MachineBasicBlock *BI);
     bool MachineBBisValid(const MachineBasicBlock *BI);
     int calculateResMII(const MachineBasicBlock *BI);
     int calculateRecMII(MSchedGraph *graph, int MII);
