@@ -22,6 +22,40 @@
 
 //#define DEBUG_NODE_ELIMINATE 1
 
+static void DestroyFirstNodeOfPair(DSNode *N1, DSNode *N2) {
+#ifdef DEBUG_NODE_ELIMINATE
+  cerr << "Found Indistinguishable Node:\n";
+  N1->print(cerr);
+#endif
+
+  // The nodes can be merged.  Make sure that N2 contains all of the
+  // outgoing edges (fields) that N1 does...
+  //
+  assert(N1->getNumLinks() == N2->getNumLinks() &&
+         "Same type, diff # fields?");
+  for (unsigned i = 0, e = N1->getNumLinks(); i != e; ++i)
+    N2->getLink(i).add(N1->getLink(i));
+  
+  // Now make sure that all of the nodes that point to N1 also point to the node
+  // that we are merging it with...
+  //
+  const std::vector<PointerValSet*> &Refs = N1->getReferrers();
+  for (unsigned i = 0, e = Refs.size(); i != e; ++i) {
+    PointerValSet &PVS = *Refs[i];
+
+    bool RanOnce = false;
+    for (unsigned j = 0, je = PVS.size(); j != je; ++j)
+      if (PVS[j].Node == N1) {
+        RanOnce = true;
+        PVS.add(PointerVal(N2, PVS[j].Index));
+      }
+
+    assert(RanOnce && "Node on user set but cannot find the use!");
+  }
+
+  N1->removeAllIncomingEdges();
+  delete N1;
+}
 
 // isIndistinguishableNode - A node is indistinguishable if some other node
 // has exactly the same incoming links to it and if the node considers itself
@@ -84,29 +118,7 @@ static bool isIndistinguishableNode(DSNode *DN) {
   if (IndFrom == 0)
     return false;     // Otherwise, nothing found, perhaps next time....
 
-  // The nodes can be merged.  Make sure that IndFrom contains all of the
-  // outgoing edges (fields) that DN does...
-  //
-  assert(DN->getNumLinks() == IndFrom->getNumLinks() &&
-         "Same type, diff # fields?");
-  for (unsigned i = 0, e = DN->getNumLinks(); i != e; ++i)
-    IndFrom->getLink(i).add(DN->getLink(i));
-  
-  // Now make sure that all of the nodes that point to the shadow node also
-  // point to the node that we are merging it with...
-  //
-  for (unsigned i = 0, e = Refs.size(); i != e; ++i) {
-    PointerValSet &PVS = *Refs[i];
-
-    bool RanOnce = false;
-    for (unsigned j = 0, je = PVS.size(); j != je; ++j)
-      if (PVS[j].Node == DN) {
-        RanOnce = true;
-        PVS.add(PointerVal(IndFrom, PVS[j].Index));
-      }
-
-    assert(RanOnce && "Node on user set but cannot find the use!");
-  }
+  DestroyFirstNodeOfPair(DN, IndFrom);
   return true;
 }
 
@@ -116,12 +128,6 @@ static bool removeIndistinguishableNodes(std::vector<NodeTy*> &Nodes) {
   std::vector<NodeTy*>::iterator I = Nodes.begin();
   while (I != Nodes.end()) {
     if (isIndistinguishableNode(*I)) {
-#ifdef DEBUG_NODE_ELIMINATE
-      cerr << "Found Indistinguishable Node:\n";
-      (*I)->print(cerr);
-#endif
-      (*I)->removeAllIncomingEdges();
-      delete *I;
       I = Nodes.erase(I);
       Changed = true;
     } else {
@@ -141,12 +147,7 @@ static bool removeIndistinguishableNodePairs(std::vector<NodeTy*> &Nodes) {
          I2 != I2E; ++I2) {
       NodeTy *N2 = *I2;
       if (N1->isEquivalentTo(N2)) {
-#ifdef DEBUG_NODE_ELIMINATE
-        cerr << "Found Indistinguishable Node:\n";
-        N1->print(cerr);
-#endif
-        N1->removeAllIncomingEdges();
-        delete N1;
+        DestroyFirstNodeOfPair(N1, N2);
         --I;
         I = Nodes.erase(I);
         Changed = true;
