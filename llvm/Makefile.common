@@ -39,7 +39,7 @@ BURG = /home/vadve/vadve/Research/DynOpt/Burg/burg
 BURG_OPTS = -I
 
 
-PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="/home/vadve/lattner/purifycache" -chain-length="10" -messages=all
+PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="$(HOME)/purifycache" -chain-length="30" -messages=all 
 
 #---------------------------------------------------------
 # Compilation options...
