@@ -435,7 +435,7 @@ public:
   typedef DataType parser_data_type;
 
   // Implement virtual functions needed by generic_parser_base
-  unsigned getNumOptions() const { return Values.size(); }
+  unsigned getNumOptions() const { return (unsigned)Values.size(); }
   const char *getOption(unsigned N) const { return Values[N].first; }
   const char *getDescription(unsigned N) const {
     return Values[N].second.second;

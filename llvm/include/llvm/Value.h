@@ -89,8 +89,9 @@ public:
   //
   typedef UseListIteratorWrapper      use_iterator;
   typedef UseListConstIteratorWrapper use_const_iterator;
+  typedef iplist<Use>::size_type      size_type;
 
-  unsigned           use_size()  const { return Uses.size();  }
+  size_type          use_size()  const { return Uses.size();  }
   bool               use_empty() const { return Uses.empty(); }
   use_iterator       use_begin()       { return Uses.begin(); }
   use_const_iterator use_begin() const { return Uses.begin(); }

@@ -246,7 +246,8 @@ public:
 
   /// getNumContainedTypes - Return the number of types in the derived type.
   ///
-  unsigned getNumContainedTypes() const { return ContainedTys.size(); }
+  typedef std::vector<PATypeHandle>::size_type size_type;
+  size_type getNumContainedTypes() const { return ContainedTys.size(); }
 
   //===--------------------------------------------------------------------===//
   // Static members exported by the Type class itself.  Useful for getting
