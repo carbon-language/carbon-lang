@@ -894,7 +894,8 @@ void CWriter::printFunction(Function *F) {
          UI != UE; ++UI)
       if (TerminatorInst *TI = dyn_cast<TerminatorInst>(*UI))
         if (TI != Prev->getTerminator() ||
-            isa<SwitchInst>(Prev->getTerminator())) {
+            isa<SwitchInst>(Prev->getTerminator()) ||
+            isa<InvokeInst>(Prev->getTerminator())) {
           NeedsLabel = true;
           break;        
         }
@@ -968,6 +969,8 @@ void CWriter::visitInvokeInst(InvokeInst &II) {
   Out << "    }\n"
       << "    __llvm_jmpbuf_list = &Entry;\n"
       << "    ";
+
+  if (II.getType() != Type::VoidTy) outputLValue(&II);
   visitCallSite(&II);
   Out << ";\n"
       << "    __llvm_jmpbuf_list = Entry.next;\n"
@@ -998,7 +1001,7 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
     Out << ";   /* for PHI node */\n";
   }
 
-  if (CurBB->getNext() != Succ) {
+  if (CurBB->getNext() != Succ || isa<InvokeInst>(CurBB->getTerminator())) {
     Out << std::string(Indent, ' ') << "  goto ";
     writeOperand(Succ);
     Out << ";\n";
