@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvmc
-USEDLIBS = bcreader vmcore support.a LLVMsystem.a
+USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMSystem.a
 CONFIG_FILES = st ll
 EXTRA_DIST = st ll
 
