@@ -163,7 +163,7 @@ bool InlineFunction(CallInst *CI) {
       }
 
       // Add a branch to the code that was after the original Call.
-      new BranchInst(NewBB, IBB->end());
+      IBB->getInstList().push_back(new BranchInst(NewBB));
       break;
     }
     case Instruction::Br:
