@@ -151,6 +151,9 @@ bool Type::isSizedDerivedType() const {
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy->getElementType()->isSized();
 
+  if (const PackedType *PTy = dyn_cast<PackedType>(this))
+    return PTy->getElementType()->isSized();
+
   if (!isa<StructType>(this)) return false;
 
   // Okay, our struct is sized if all of the elements are...
