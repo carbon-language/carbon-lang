@@ -55,3 +55,9 @@ bool %test9(ubyte %A) {
 	ret bool %C
 } 
 
+uint %test10(uint %X, bool %C) {
+        %V = select bool %C, uint 64, uint 8
+        %R = div uint %X, %V
+        ret uint %R
+}
+

@@ -25,3 +25,9 @@ bool %test3(int %A) {
 	%C = setne int %B, 0
 	ret bool %C
 }
+
+uint %test4(uint %X, bool %C) {
+	%V = select bool %C, uint 1, uint 8
+	%R = rem uint %X, %V
+	ret uint %R
+}
