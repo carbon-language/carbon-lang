@@ -1049,7 +1049,6 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 ///
 void ISel::visitReturnInst(ReturnInst &I) {
   Value *RetVal = I.getOperand(0);
-
   switch (getClassB(RetVal->getType())) {
   case cByte:   // integral return values: extend or move into r3 and return
   case cShort:
@@ -1303,6 +1302,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     case cInt:
       // Integral results are in r3
       BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
+      break;
     case cFP:     // Floating-point return values live in f1
       BuildMI(BB, PPC32::FMR, 1, Ret.Reg).addReg(PPC32::F1);
       break;
