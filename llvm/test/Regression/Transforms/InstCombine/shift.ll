@@ -33,3 +33,7 @@ uint "test5"(uint %A) {
 	ret uint %B
 }
 
+uint %test6(uint %A) {
+	%B = shl uint %A, ubyte 1   ;; convert to an add instruction
+	ret uint %B
+}
