@@ -125,19 +125,6 @@ InstructionNode::InstructionNode(Instruction* _instr)
   basicNode.opLabel = opLabel;
 }
 
-void
-InstructionNode::reverseBinaryArgumentOrder()
-{
-  assert(getInstruction()->isBinaryOp());
-  
-  // switch arguments for the instruction
-  ((BinaryOperator*) getInstruction())->swapOperands();
-  
-  // switch arguments for this tree node itself
-  BasicTreeNode* leftCopy = basicNode.leftChild;
-  basicNode.leftChild = basicNode.rightChild;
-  basicNode.rightChild = leftCopy;
-}
 
 void
 InstructionNode::dumpNode(int indent) const
