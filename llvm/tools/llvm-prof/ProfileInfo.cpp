@@ -141,8 +141,15 @@ ProfileInfo::ProfileInfo(const char *ToolName, const std::string &Filename,
 void ProfileInfo::getFunctionCounts(std::vector<std::pair<Function*,
                                                          unsigned> > &Counts) {
   if (FunctionCounts.empty()) {
-    std::cerr << "Function counts not available, and no synthesis "
-              << "is implemented yet!\n";
+    // Synthesize function frequency information from the number of times their
+    // entry blocks were executed.
+    std::vector<std::pair<BasicBlock*, unsigned> > BlockCounts;
+    getBlockCounts(BlockCounts);
+
+    for (unsigned i = 0, e = BlockCounts.size(); i != e; ++i)
+      if (&BlockCounts[i].first->getParent()->front() == BlockCounts[i].first)
+        Counts.push_back(std::make_pair(BlockCounts[i].first->getParent(),
+                                        BlockCounts[i].second));
     return;
   }
   

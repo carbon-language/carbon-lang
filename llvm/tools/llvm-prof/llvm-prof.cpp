@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     unsigned BlocksToPrint = Counts.size();
     if (BlocksToPrint > 20) BlocksToPrint = 20;
     for (unsigned i = 0; i != BlocksToPrint; ++i)
-      printf("%3d. %5d/%d %s - %s\n", i+1, Counts[i].second, TotalExecutions,
+      printf("%3d. %5d/%d %s() - %s\n", i+1, Counts[i].second, TotalExecutions,
              Counts[i].first->getParent()->getName().c_str(),
              Counts[i].first->getName().c_str());
 
