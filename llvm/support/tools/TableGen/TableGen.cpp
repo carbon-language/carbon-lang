@@ -236,7 +236,7 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
   unsigned Offset = 0;
   for (unsigned f = 0, e = Vals.size(); f != e; ++f)
     if (Vals[f].getPrefix()) {
-      BitsInit *FieldInit = (BitsInit*)Vals[f].getValue();
+      BitsInit *FieldInitializer = (BitsInit*)Vals[f].getValue();
       if (&Vals[f] == &Val) {
 	// Read the bits directly now...
 	for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
@@ -246,13 +246,19 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
       
       // Scan through the field looking for bit initializers of the current
       // variable...
-      for (unsigned i = 0, e = FieldInit->getNumBits(); i != e; ++i)
+      for (unsigned i = 0, e = FieldInitializer->getNumBits(); i != e; ++i)
 	if (VarBitInit *VBI =
-	    dynamic_cast<VarBitInit*>(FieldInit->getBit(i))) {
-	  if (VBI->getVariable()->getName() == Val.getName())
-	    Value |= getMemoryBit(Ptr, Offset+i) << VBI->getBitNum();
+	    dynamic_cast<VarBitInit*>(FieldInitializer->getBit(i))) {
+          TypedInit *TI = VBI->getVariable();
+          if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
+            if (VI->getName() == Val.getName())
+              Value |= getMemoryBit(Ptr, Offset+i) << VBI->getBitNum();
+          } else if (FieldInit *FI = dynamic_cast<FieldInit*>(TI)) {
+            // FIXME: implement this!
+            std::cerr << "FIELD INIT not implemented yet!\n";
+          }
 	}	
-      Offset += FieldInit->getNumBits();
+      Offset += FieldInitializer->getNumBits();
     }
 
   std::cout << "0x" << std::hex << Value << std::dec;
