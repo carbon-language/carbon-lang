@@ -24,8 +24,8 @@ class GlobalVariable : public GlobalValue {
 
   bool Constant;                   // Is this a global constant?
 public:
-  GlobalVariable(const Type *Ty, bool isConstant, ConstPoolVal *Initializer = 0,
-		 const string &Name = "");
+  GlobalVariable(const Type *Ty, bool isConstant, bool isInternal,
+		 ConstPoolVal *Initializer = 0, const string &Name = "");
   ~GlobalVariable() {}
 
   // Specialize setName to handle symbol table majik...

@@ -16,9 +16,11 @@ class PointerType;
 class GlobalValue : public User {
   GlobalValue(const GlobalValue &);             // do not implement
 protected:
-  GlobalValue(const Type *Ty, ValueTy vty, const string &name = "")
-    : User(Ty, vty, name) { Parent = 0; }
+  GlobalValue(const Type *Ty, ValueTy vty, bool hasInternalLinkage,
+	      const string &name = "")
+    : User(Ty, vty, name), HasInternalLinkage(hasInternalLinkage), Parent(0) {}
 
+  bool HasInternalLinkage;    // Is this value accessable externally?
   Module *Parent;
 public:
   ~GlobalValue() {}
@@ -27,6 +29,11 @@ public:
   inline const PointerType *getType() const {
     return (const PointerType*)User::getType();
   }
+
+  // Internal Linkage - True if the global value is inaccessible to 
+  bool hasInternalLinkage() const { return HasInternalLinkage; }
+  bool hasExternalLinkage() const { return !HasInternalLinkage; }
+  void setInternalLinkage(bool HIL) { HasInternalLinkage = HIL; }
 
   // Get the module that this global value is contained inside of...
   inline Module *getParent() { return Parent; }

@@ -42,7 +42,7 @@ private:
   void setParent(Module *parent);
 
 public:
-  Method(const MethodType *Ty, const string &Name = "");
+  Method(const MethodType *Ty, bool isInternal, const string &Name = "");
   ~Method();
 
   // Specialize setName to handle symbol table majik...
