@@ -143,3 +143,15 @@ Function *InvokeInst::getCalledFunction() {
     return cast<Function>(CPR->getValue());
   return 0;
 }
+
+#include "llvm/Support/CallSite.h"
+
+Function *CallSite::getCalledFunction() const {
+  Value *Callee = getCalledValue();
+  if (Function *F = dyn_cast<Function>(Callee))
+    return F;
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Callee))
+    return cast<Function>(CPR->getValue());
+  return 0;
+}
+
