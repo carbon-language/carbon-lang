@@ -270,7 +270,7 @@ chdir "test/Programs" or die "Could not change into programs testdir!";
 # Run the programs tests... creating a report.nightly.html file
 if (!$NOTEST) {
   system "gmake $MAKEOPTS report.nightly.html TEST=nightly "
-       . "> $Prefix-ProgramTest.txt 2>&1";
+       . "RUNTIMELIMIT=300 > $Prefix-ProgramTest.txt 2>&1";
 } else {
   system "gunzip $Prefix-ProgramTest.txt.gz";
 }
