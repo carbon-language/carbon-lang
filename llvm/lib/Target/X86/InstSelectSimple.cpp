@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/InstVisitor.h"
-#include <map>
 
 namespace {
   struct ISel : public FunctionPass, InstVisitor<ISel> {
@@ -113,26 +112,33 @@ namespace {
   };
 }
 
+/// TypeClass - Used by the X86 backend to group LLVM types by their basic X86
+/// Representation.
+///
+enum TypeClass {
+  cByte, cShort, cInt, cLong, cFloat, cDouble
+};
+
 /// getClass - Turn a primitive type into a "class" number which is based on the
 /// size of the type, and whether or not it is floating point.
 ///
-static inline unsigned getClass(const Type *Ty) {
+static inline TypeClass getClass(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
   case Type::SByteTyID:
-  case Type::UByteTyID:   return 0;          // Byte operands are class #0
+  case Type::UByteTyID:   return cByte;      // Byte operands are class #0
   case Type::ShortTyID:
-  case Type::UShortTyID:  return 1;          // Short operands are class #1
+  case Type::UShortTyID:  return cShort;     // Short operands are class #1
   case Type::IntTyID:
   case Type::UIntTyID:
-  case Type::PointerTyID: return 2;          // Int's and pointers are class #2
+  case Type::PointerTyID: return cInt;       // Int's and pointers are class #2
 
   case Type::LongTyID:
-  case Type::ULongTyID:   return 3;          // Longs are class #3
-  case Type::FloatTyID:   return 4;          // Float is class #4
-  case Type::DoubleTyID:  return 5;          // Doubles are class #5
+  case Type::ULongTyID:   return cLong;      // Longs are class #3
+  case Type::FloatTyID:   return cFloat;     // Float is class #4
+  case Type::DoubleTyID:  return cDouble;    // Doubles are class #5
   default:
     assert(0 && "Invalid type to getClass!");
-    return 0;  // not reached
+    return cByte;  // not reached
   }
 }
 
@@ -319,71 +325,58 @@ ISel::visitSetCondInst (SetCondInst & I)
 ///   ret long, ulong  : Move value into EAX/EDX (?) and return
 ///   ret float/double : ?  Top of FP stack?  XMM0?
 ///
-void
-ISel::visitReturnInst (ReturnInst & I)
-{
-  if (I.getNumOperands () == 1)
-    {
-      bool unsignedReturnValue = I.getOperand(0)->getType()->isUnsigned();
-      unsigned val = getReg (I.getOperand (0));
-      unsigned operandSize =
-	I.getOperand (0)->getType ()->getPrimitiveSize ();
-      bool isFP = I.getOperand (0)->getType ()->isFloatingPoint ();
-      if (isFP)
-	{
-	  // ret float/double: top of FP stack
-	  // FLD <val>
-	  switch (operandSize)
-	    {
-	    case 4:
-	      BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (val);
-	      break;
-	    case 8:
-	      BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (val);
-	      break;
-	    default:
-	      visitInstruction (I);
-	      break;
-	    }
-	}
-      else
-	{
-	  switch (operandSize)
-	    {
-	    case 1:
-	      // ret sbyte, ubyte: Extend value into EAX and return
-		if (unsignedReturnValue) {
-		  BuildMI (BB, X86::MOVZXr32r8, 1, X86::EAX).addReg (val);
-		} else {
-		  BuildMI (BB, X86::MOVSXr32r8, 1, X86::EAX).addReg (val);
-		}
-	      break;
-	    case 2:
-	      // ret short, ushort: Extend value into EAX and return
-		if (unsignedReturnValue) {
-		  BuildMI (BB, X86::MOVZXr32r16, 1, X86::EAX).addReg (val);
-		} else {
-		  BuildMI (BB, X86::MOVSXr32r16, 1, X86::EAX).addReg (val);
-		}
-	      break;
-	    case 4:
-	      // ret int, uint, ptr: Move value into EAX and return
-	      BuildMI (BB, X86::MOVrr32, 1, X86::EAX).addReg (val);
-	      break;
-	    case 8:
-	      // ret long: use EAX(least significant 32 bits)/EDX (most
-	      // significant 32)...uh, I think so Brain, but how do i call
-	      // up the two parts of the value from inside this mouse
-	      // cage? *zort*
-	    default:
-	      // abort
-	      visitInstruction (I);
-	      break;
-	    }
-	}
+void ISel::visitReturnInst (ReturnInst & I) {
+  if (I.getNumOperands() == 0) {
+    // Emit a 'ret' instruction
+    BuildMI(BB, X86::RET, 0);
+    return;
+  }
+
+  unsigned val = getReg(I.getOperand(0));
+  unsigned Class = getClass(I.getType());
+  bool isUnsigned = I.getOperand(0)->getType()->isUnsigned();
+  switch (Class) {
+  case cByte:
+    // ret sbyte, ubyte: Extend value into EAX and return
+    if (isUnsigned) {
+      BuildMI (BB, X86::MOVZXr32r8, 1, X86::EAX).addReg (val);
+    } else {
+      BuildMI (BB, X86::MOVSXr32r8, 1, X86::EAX).addReg (val);
     }
-  // Emit a 'ret' -- the 'leave' will be added by the reg allocator, I guess?
-  BuildMI (BB, X86::RET, 0);
+    break;
+  case cShort:
+    // ret short, ushort: Extend value into EAX and return
+    if (unsignedReturnValue) {
+      BuildMI (BB, X86::MOVZXr32r16, 1, X86::EAX).addReg (val);
+    } else {
+      BuildMI (BB, X86::MOVSXr32r16, 1, X86::EAX).addReg (val);
+    }
+    break;
+  case cInt:
+    // ret int, uint, ptr: Move value into EAX and return
+    // MOV EAX, <val>
+    BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(val);
+    break;
+
+    // ret float/double: top of FP stack
+    // FLD <val>
+  case cFloat:  // Floats
+    BuildMI(BB, X86::FLDr4, 1).addReg(val);
+    break;
+  case cDouble:  // Doubles
+    BuildMI(BB, X86::FLDr8, 1).addReg(val);
+    break;
+  case cLong:
+    // ret long: use EAX(least significant 32 bits)/EDX (most
+    // significant 32)...uh, I think so Brain, but how do i call
+    // up the two parts of the value from inside this mouse
+    // cage? *zort*
+  default:
+    visitInstruction(I);
+  }
+
+  // Emit a 'ret' instruction
+  BuildMI(BB, X86::RET, 0);
 }
 
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
