@@ -387,8 +387,9 @@ void AsmPrinter::printConstantValueOnly(const Constant* CV,
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
-  }
-  else
+  } else if (isa<ConstantAggregateZero>(CV)) {
+    PrintZeroBytesToPad(Target.getTargetData().getTypeSize(CV->getType()));
+  } else
     printSingleConstantValue(CV);
 
   if (numPadBytesAfter)

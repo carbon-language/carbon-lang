@@ -288,12 +288,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
            "assuming that double is 64 bits!");
     Out << "0x" << utohexstr(*(uint64_t*)Ptr);
 
+  } else if (isa<ConstantAggregateZero>(CV)) {
+    Out << "zeroinitializer";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-    if (CA->getNumOperands() > 5 && CA->isNullValue()) {
-      Out << "zeroinitializer";
-      return;
-    }
-
     // As a special case, print the array as a string if it is an array of
     // ubytes or an array of sbytes with positive values.
     // 
@@ -339,11 +336,6 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       Out << " ]";
     }
   } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
-    if (CS->getNumOperands() > 5 && CS->isNullValue()) {
-      Out << "zeroinitializer";
-      return;
-    }
-
     Out << "{";
     if (CS->getNumOperands()) {
       Out << " ";

@@ -284,7 +284,8 @@ static Value *RemapOperand(const Value *In,
 
   // Check to see if it's a constant that we are interesting in transforming...
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
-    if (!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV))
+    if ((!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV)) ||
+        isa<ConstantAggregateZero>(CPV))
       return const_cast<Constant*>(CPV);   // Simple constants stay identical...
 
     Constant *Result = 0;
@@ -796,12 +797,24 @@ static bool LinkAppendingVars(Module *M,
 
       // Merge the initializer...
       Inits.reserve(NewSize);
-      ConstantArray *I = cast<ConstantArray>(G1->getInitializer());
-      for (unsigned i = 0, e = T1->getNumElements(); i != e; ++i)
-        Inits.push_back(cast<Constant>(I->getValues()[i]));
-      I = cast<ConstantArray>(G2->getInitializer());
-      for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
-        Inits.push_back(cast<Constant>(I->getValues()[i]));
+      if (ConstantArray *I = dyn_cast<ConstantArray>(G1->getInitializer())) {
+        for (unsigned i = 0, e = T1->getNumElements(); i != e; ++i)
+          Inits.push_back(cast<Constant>(I->getValues()[i]));
+      } else {
+        assert(isa<ConstantAggregateZero>(G1->getInitializer()));
+        Constant *CV = Constant::getNullValue(T1->getElementType());
+        for (unsigned i = 0, e = T1->getNumElements(); i != e; ++i)
+          Inits.push_back(CV);
+      }
+      if (ConstantArray *I = dyn_cast<ConstantArray>(G2->getInitializer())) {
+        for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
+          Inits.push_back(cast<Constant>(I->getValues()[i]));
+      } else {
+        assert(isa<ConstantAggregateZero>(G2->getInitializer()));
+        Constant *CV = Constant::getNullValue(T2->getElementType());
+        for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
+          Inits.push_back(CV);
+      }
       NG->setInitializer(ConstantArray::get(NewType, Inits));
       Inits.clear();
 

@@ -689,14 +689,16 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
   // addressing...
   for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
     if (ConstantUInt *CU = dyn_cast<ConstantUInt>(CE->getOperand(i))) {
-      ConstantStruct *CS = cast<ConstantStruct>(C);
+      ConstantStruct *CS = dyn_cast<ConstantStruct>(C);
+      if (CS == 0) return 0;
       if (CU->getValue() >= CS->getValues().size()) return 0;
       C = cast<Constant>(CS->getValues()[CU->getValue()]);
     } else if (ConstantSInt *CS = dyn_cast<ConstantSInt>(CE->getOperand(i))) {
-      ConstantArray *CA = cast<ConstantArray>(C);
+      ConstantArray *CA = dyn_cast<ConstantArray>(C);
+      if (CA == 0) return 0;
       if ((uint64_t)CS->getValue() >= CA->getValues().size()) return 0;
       C = cast<Constant>(CA->getValues()[CS->getValue()]);
-    } else 
+    } else
       return 0;
   return C;
 }
