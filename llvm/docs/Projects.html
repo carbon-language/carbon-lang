@@ -31,15 +31,14 @@
 		<p>
 
 		For example, if the LLVM source tree is in
-		<tt>/usr/home/joe/src/llvm</tt>, and you configured it with
-		<tt>--with-objroot=/tmp</tt> when his home directory is
-		<tt>/usr/home/joe</tt>, then
+		<tt>/usr/home/joe/src/llvm</tt>, and you built LLVM in
+		/tmp/llvmobj</tt>, then
 		LLVM_SRC_ROOT=<tt>/usr/home/joe/src/llvm</tt> and
-		LLVM_OBJ_ROOT=<tt>/tmp/src/llvm</tt>.
+		LLVM_OBJ_ROOT=<tt>/tmp/llvmobj</tt>.
 		<p>
 
 		<li>
-		Add your source code to the source tree.
+		Add your source code to your source tree.
 		<p>
 
 		<li>
@@ -73,7 +72,7 @@
 		Libraries can be object files, archives, or dynamic libraries.
 		The <b>lib</b> directory is just a good place for these as it
 		places them all in a directory from which they can be linked
-		later on.
+		later.
 
 		<dt><b>include</b>
 		<dd>
@@ -203,19 +202,5 @@
 		<p>
 	</dl>
 
-	<!--===============================================================-->
-	<h2><a name="Caveats">Caveats</a><hr></h2>
-	<!--===============================================================-->
-
-	Some caveats and known issues:
-	<ol>
-		<li>
-		The projects system currently uses the $HOME environment
-		variable in determining where object files should go.  If $HOME
-		is not set, then your path relative to the root directory may
-		be used to determine where your object files go.  It is
-		therefore advised that your source directory reside underneath
-		your home directory.
-	</ol>
 </body>
 </html>
