@@ -795,7 +795,7 @@ RecordSchedule(const BasicBlock* bb, const SchedulingManager& S)
   
   InstrSchedule::const_iterator NIend = S.isched.end();
   for (InstrSchedule::const_iterator NI = S.isched.begin(); NI != NIend; ++NI)
-    mvec.push_back((*NI)->getMachineInstr());
+    mvec.push_back(const_cast<MachineInstr*>((*NI)->getMachineInstr()));
 }
 
 
