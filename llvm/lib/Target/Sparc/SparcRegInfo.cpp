@@ -259,13 +259,12 @@ UltraSparcRegInfo::getCallInstNumArgs(const MachineInstr *CallMI) const {
 // Finds whether a call is an indirect call
 //---------------------------------------------------------------------------
 bool UltraSparcRegInfo::isVarArgCall(const MachineInstr *CallMI) const {
+  assert(UltraSparcInfo->getInstrInfo().isCall(CallMI->getOpCode()));
 
-  assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
+  const MachineOperand &calleeOp = CallMI->getOperand(0);
+  Value *calleeVal = calleeOp.getVRegValue();
 
-  const MachineOperand & calleeOp = CallMI->getOperand(0);
-  Value *calleeVal =  calleeOp.getVRegValue();
-
-  PointerType *PT =  cast<PointerType>(calleeVal->getType());
+  PointerType *PT = cast<PointerType>(calleeVal->getType());
   return cast<FunctionType>(PT->getElementType())->isVarArg();
 }
 
@@ -702,9 +701,8 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
 
   unsigned NumOfCallArgs =  getCallInstNumArgs( CallMI );
 
-  bool VarArgCall = isVarArgCall( CallMI );
-
-  if(VarArgCall) cerr << "\nVar arg call found!!\n";
+  bool VarArgCall = isVarArgCall(CallMI);
+  if (DEBUG_RA && VarArgCall) cerr << "\nVar arg call found!!\n";
 
   for(unsigned argNo=0, i=0; i < NumOfCallArgs; ++i, ++argNo ) {
 
