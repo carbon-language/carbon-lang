@@ -101,7 +101,7 @@ TargetSchedInfo::TargetSchedInfo(const TargetMachine&    tgt,
                                  unsigned NumUsageDeltas,
                                  unsigned NumIssueDeltas)
   : target(tgt),
-    numSchedClasses(NumSchedClasses), mii(& tgt.getInstrInfo()),
+    numSchedClasses(NumSchedClasses), mii(tgt.getInstrInfo()),
     classRUsages(ClassRUsages), usageDeltas(UsageDeltas),
     issueDeltas(IssueDeltas), numUsageDeltas(NumUsageDeltas),
     numIssueDeltas(NumIssueDeltas)
