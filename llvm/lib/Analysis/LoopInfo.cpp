@@ -151,11 +151,14 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   Loop *L = new Loop(BB);
   BBMap[BB] = L;
 
+  BasicBlock *EntryBlock = &BB->getParent()->getEntryBlock();
+
   while (!TodoStack.empty()) {  // Process all the nodes in the loop
     BasicBlock *X = TodoStack.back();
     TodoStack.pop_back();
 
-    if (!L->contains(X)) {         // As of yet unprocessed??
+    if (!L->contains(X) &&         // As of yet unprocessed??
+        DS.dominates(EntryBlock, X)) {   // X is reachable from entry block?
       // Check to see if this block already belongs to a loop.  If this occurs
       // then we have a case where a loop that is supposed to be a child of the
       // current loop was processed before the current loop.  When this occurs,
