@@ -412,7 +412,7 @@ StructType::StructType(const std::vector<const Type*> &Types)
   ContainedTys.reserve(Types.size());
   bool isAbstract = false;
   for (unsigned i = 0; i < Types.size(); ++i) {
-    assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
+    assert(Types[i] != Type::VoidTy && "Void type for structure field!!");
     ContainedTys.push_back(PATypeHandle(Types[i], this));
     isAbstract |= Types[i]->isAbstract();
   }
