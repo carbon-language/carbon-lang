@@ -103,7 +103,6 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
 
-  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createLICMPass());                 // Hoist loop invariants
