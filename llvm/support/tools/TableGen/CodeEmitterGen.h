@@ -16,8 +16,8 @@ class CodeEmitterGen {
 public:
   CodeEmitterGen(RecordKeeper &R) : Records(R) {}
   
-  // run - Output the code emitter, returning true on failure.
-  bool run(std::ostream &o);
+  // run - Output the code emitter
+  void run(std::ostream &o);
 private:
   void emitMachineOpEmitter(std::ostream &o, const std::string &Namespace);
   void emitGetValueBit(std::ostream &o, const std::string &Namespace);

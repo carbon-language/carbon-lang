@@ -8,9 +8,8 @@
 #include "Record.h"
 #include "Support/Statistic.h"
 
-bool CodeEmitterGen::run(std::ostream &o) {
-  std::vector<Record*> Insts;
-  if (Records.getAllDerivedDefinitions("Instruction", Insts)) return true;
+void CodeEmitterGen::run(std::ostream &o) {
+  std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   std::string Namespace = "V9::";
   std::string ClassName = "SparcV9CodeEmitter::";
@@ -28,10 +27,8 @@ bool CodeEmitterGen::run(std::ostream &o) {
       << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
 
     const RecordVal *InstVal = R->getValue("Inst");
-    if (!InstVal) {
-      std::cerr << "No 'Inst' record found in target description file!\n";
-      return true;
-    }
+    if (!InstVal)
+      throw std::string("No 'Inst' record found in target description file!");
 
     Init *InitVal = InstVal->getValue();
     assert(dynamic_cast<BitsInit*>(InitVal) &&
@@ -226,5 +223,4 @@ bool CodeEmitterGen::run(std::ostream &o) {
     << "  }\n"
     << "  return Value;\n"
     << "}\n";
-  return false;
 }
