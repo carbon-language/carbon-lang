@@ -5,8 +5,14 @@
 
 ## NOTE: This is preliminary and will change in the future
 
-
 include ${LEVEL}/Makefile.common
+
+# Specify ENABLE_STATS on the command line to enable -stats output from gccas
+# and gccld.
+ifdef ENABLE_STATS
+STATS = -stats
+endif
+
 
 .PHONY: clean default
 
@@ -74,7 +80,7 @@ Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
 # from GCC output, so use GCCAS.
 #
 Output/%.bc: Output/%.ll $(LGCCAS)
-	$(LGCCAS) $< -o $@
+	$(LGCCAS) $(STATS) $< -o $@
 
 # LLVM Assemble from X.ll to Output/X.bc.  Because we are coming directly from
 # LLVM source, use the non-transforming assembler.
