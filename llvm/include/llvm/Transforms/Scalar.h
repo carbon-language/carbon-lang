@@ -158,29 +158,6 @@ FunctionPass *createLoopUnrollPass();
 
 //===----------------------------------------------------------------------===//
 //
-// PiNodeInsertion - This pass inserts single entry Phi nodes into basic blocks
-// that are preceeded by a conditional branch, where the branch gives
-// information about the operands of the condition.  For example, this C code:
-//   if (x == 0) { ... = x + 4;
-// becomes:
-//   if (x == 0) {
-//     x2 = phi(x);    // Node that can hold data flow information about X
-//     ... = x2 + 4;
-//
-// Since the direction of the condition branch gives information about X itself
-// (whether or not it is zero), some passes (like value numbering or ABCD) can
-// use the inserted Phi/Pi nodes as a place to attach information, in this case
-// saying that X has a value of 0 in this scope.  The power of this analysis
-// information is that "in the scope" translates to "for all uses of x2".
-//
-// This special form of Phi node is refered to as a Pi node, following the
-// terminology defined in the "Array Bounds Checks on Demand" paper.
-//
-Pass *createPiNodeInsertionPass();
-
-
-//===----------------------------------------------------------------------===//
-//
 // This pass is used to promote memory references to be register references.  A
 // simple example of the transformation performed by this pass is:
 //
