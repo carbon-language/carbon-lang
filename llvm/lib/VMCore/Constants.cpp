@@ -7,6 +7,7 @@
 #define __STDC_LIMIT_MACROS           // Get defs for INT64_MAX and friends...
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/SlotCalculator.h"
@@ -75,12 +76,12 @@ void Constant::destroyConstantImpl() {
       std::cerr << "\n";
     }
 #endif
-    assert(isa<Constant>(V) && "References remain to ConstantPointerRef!");
+    assert(isa<Constant>(V) && "References remain to Constant being destroyed");
     Constant *CPV = cast<Constant>(V);
     CPV->destroyConstant();
 
     // The constant should remove itself from our use list...
-    assert((use_empty() || use_back() == V) && "Constant not removed!");
+    assert((use_empty() || use_back() != V) && "Constant not removed!");
   }
 
   // Value has no outstanding references it is safe to delete it now...
@@ -126,7 +127,8 @@ ConstantArray::ConstantArray(const ArrayType *T,
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V) : Constant(T) {
   const StructType::ElementTypes &ETypes = T->getElementTypes();
-  
+  assert(V.size() == ETypes.size() &&
+         "Invalid initializer vector for constant structure");
   for (unsigned i = 0; i < V.size(); i++) {
     assert(V[i]->getType() == ETypes[i]);
     Operands.push_back(Use(V[i], this));
@@ -138,33 +140,56 @@ ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
   Operands.push_back(Use(GV, this));
 }
 
+ConstantExpr::ConstantExpr(unsigned opCode, Constant *C,  const Type *Ty)
+  : Constant(Ty), iType(opCode) {
+  Operands.push_back(Use(C, this));
+}
+
+ConstantExpr::ConstantExpr(unsigned opCode, Constant* C1,
+                           Constant* C2, const Type *Ty)
+  : Constant(Ty), iType(opCode) {
+  Operands.push_back(Use(C1, this));
+  Operands.push_back(Use(C2, this));
+}
+
+ConstantExpr::ConstantExpr(unsigned opCode, Constant* C,
+                           const std::vector<Value*>& IdxList, const Type *Ty)
+  : Constant(Ty), iType(opCode) {
+  Operands.reserve(1+IdxList.size());
+  Operands.push_back(Use(C, this));
+  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+    Operands.push_back(Use(IdxList[i], this));
+}
+
 
 
 //===----------------------------------------------------------------------===//
 //                           classof implementations
 
 bool ConstantInt::classof(const Constant *CPV) {
-  return CPV->getType()->isIntegral();
+  return CPV->getType()->isIntegral() && ! isa<ConstantExpr>(CPV);
 }
 bool ConstantSInt::classof(const Constant *CPV) {
-  return CPV->getType()->isSigned();
+  return CPV->getType()->isSigned() && ! isa<ConstantExpr>(CPV);
 }
 bool ConstantUInt::classof(const Constant *CPV) {
-  return CPV->getType()->isUnsigned();
+  return CPV->getType()->isUnsigned() && ! isa<ConstantExpr>(CPV);
 }
 bool ConstantFP::classof(const Constant *CPV) {
   const Type *Ty = CPV->getType();
-  return Ty == Type::FloatTy || Ty == Type::DoubleTy;
+  return ((Ty == Type::FloatTy || Ty == Type::DoubleTy) &&
+          ! isa<ConstantExpr>(CPV));
 }
 bool ConstantArray::classof(const Constant *CPV) {
-  return isa<ArrayType>(CPV->getType());
+  return isa<ArrayType>(CPV->getType()) && ! isa<ConstantExpr>(CPV);
 }
 bool ConstantStruct::classof(const Constant *CPV) {
-  return isa<StructType>(CPV->getType());
+  return isa<StructType>(CPV->getType()) && ! isa<ConstantExpr>(CPV);
 }
 bool ConstantPointer::classof(const Constant *CPV) {
-  return isa<PointerType>(CPV->getType());
+  return (isa<PointerType>(CPV->getType()) && ! isa<ConstantExpr>(CPV));
 }
+
 
 
 //===----------------------------------------------------------------------===//
@@ -357,13 +382,105 @@ ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
 //
 ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
   assert(GV->getParent() && "Global Value must be attached to a module!");
-
+  
   // The Module handles the pointer reference sharing...
   return GV->getParent()->getConstantPointerRef(GV);
 }
 
+//---- ConstantExpr::get() implementations...
+// Return NULL on invalid expressions.
+//
+ConstantExpr*
+ConstantExpr::get(unsigned opCode, Constant *C, const Type *Ty) {
+  if (opCode != Instruction::Cast &&
+      (opCode < Instruction::FirstUnaryOp ||
+       opCode >= Instruction::NumUnaryOps)) {
+    cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
+         << " in unary constant expression" << endl;
+    return NULL;       // Not Cast or other unary opcode
+  }
+  // type of operand will not match result for Cast operation
+  if (opCode != Instruction::Cast && Ty != C->getType()) {
+    cerr << "Type of operand in unary constant expression should match result" << endl;
+    return NULL;
+  }
+  return new ConstantExpr(opCode, C, Ty);
+}
 
-void ConstantPointerRef::mutateReference(GlobalValue *NewGV) {
+ConstantExpr*
+ConstantExpr::get(unsigned opCode, Constant *C1, Constant *C2,const Type *Ty) {
+  if (opCode < Instruction::FirstBinaryOp ||
+      opCode >= Instruction::NumBinaryOps) {
+    cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
+         << " in binary constant expression" << endl;
+    return NULL;
+  }
+  if (Ty != C1->getType() || Ty != C2->getType()) {
+    cerr << "Types of both operands in binary constant expression should match result" << endl;
+    return NULL;
+  }
+  return new ConstantExpr(opCode, C1, C2, Ty);
+}
+
+ConstantExpr*
+ConstantExpr::get(unsigned opCode, Constant*C,
+                   const std::vector<Value*>& idxList, const Type *Ty) {
+  // Must be a getElementPtr.  Check for valid getElementPtr expression.
+  // 
+  if (opCode != Instruction::GetElementPtr) {
+    cerr << "operator other than GetElementPtr used with an index list" << endl;
+    return NULL;
+  }
+  if (!isa<ConstantPointer>(C)) {
+    cerr << "Constant GelElementPtr expression using something other than a constant pointer" << endl;
+    return NULL;
+  }
+  if (!isa<PointerType>(Ty)) {
+    cerr << "Non-pointer type for constant GelElementPtr expression" << endl;
+    return NULL;
+  }
+  const Type* fldType = GetElementPtrInst::getIndexedType(C->getType(),
+                                                          idxList, true);
+  if (!fldType) {
+    cerr << "Invalid index list for constant GelElementPtr expression" << endl;
+    return NULL;
+  }
+  if (cast<PointerType>(Ty)->getElementType() != fldType) {
+    cerr << "Type for constant GelElementPtr expression does not match field type" << endl;
+    return NULL;
+  }
+  
+  return new ConstantExpr(opCode, C, idxList, Ty);
+}
+
+const char*
+ConstantExpr::getOpcodeName(unsigned opCode) {
+  return Instruction::getOpcodeName(opCode);
+}
+
+
+//---- ConstantPointerRef::mutateReferences() implementation...
+//
+unsigned
+ConstantPointerRef::mutateReferences(Value* OldV, Value *NewV) {
+  assert(getValue() == OldV && "Cannot mutate old value if I'm not using it!");
+  GlobalValue* NewGV = cast<GlobalValue>(NewV);
   getValue()->getParent()->mutateConstantPointerRef(getValue(), NewGV);
   Operands[0] = NewGV;
+  return 1;
+}
+
+
+//---- ConstantPointerExpr::mutateReferences() implementation...
+//
+unsigned
+ConstantExpr::mutateReferences(Value* OldV, Value *NewV) {
+  unsigned numReplaced = 0;
+  Constant* NewC = cast<Constant>(NewV);
+  for (unsigned i=0, N = getNumOperands(); i < N; ++i)
+    if (Operands[i] == OldV) {
+      ++numReplaced;
+      Operands[i] = NewC;
+    }
+  return numReplaced;
 }
