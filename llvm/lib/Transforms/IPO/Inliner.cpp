@@ -105,14 +105,6 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
           for (CallGraphNode::iterator I = CalleeNode->begin(),
                  E = CalleeNode->end(); I != E; ++I)
             CallerNode->addCalledFunction(*I);
-  
-          // If the only remaining use of the function is a dead constant
-          // pointer ref, remove it.
-          if (Callee->hasOneUse())
-            if (ConstantPointerRef *CPR =
-                dyn_cast<ConstantPointerRef>(Callee->use_back()))
-              if (CPR->use_empty())
-                CPR->destroyConstant();
         
           // If we inlined the last possible call site to the function,
           // delete the function body now.
@@ -142,27 +134,55 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
 // doFinalization - Remove now-dead linkonce functions at the end of
 // processing to avoid breaking the SCC traversal.
 bool Inliner::doFinalization(CallGraph &CG) {
-  bool Changed = false;
-  for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ) {
-    CallGraphNode *CGN = (I++)->second;
+  std::set<CallGraphNode*> FunctionsToRemove;
+
+  // Scan for all of the functions, looking for ones that should now be removed
+  // from the program.  Insert the dead ones in the FunctionsToRemove set.
+  for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ++I) {
+    CallGraphNode *CGN = I->second;
     Function *F = CGN ? CGN->getFunction() : 0;
+
+    // If the only remaining use of the function is a dead constant
+    // pointer ref, remove it.
+    if (F && F->hasOneUse())
+      if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(F->use_back()))
+        if (CPR->use_empty()) {
+          CPR->destroyConstant();
+          if (F->hasInternalLinkage()) {
+            // There *MAY* be an edge from the external call node to this
+            // function.  If so, remove it.
+            CallGraphNode *EN = CG.getExternalCallingNode();
+            CallGraphNode::iterator I = std::find(EN->begin(), EN->end(), CGN);
+            if (I != EN->end()) EN->removeCallEdgeTo(CGN);
+          }
+        }
+
     if (F && (F->hasLinkOnceLinkage() || F->hasInternalLinkage()) &&
         F->use_empty()) {
-      // Remove any call graph edges from the callee to its callees.
+      // Remove any call graph edges from the function to its callees.
       while (CGN->begin() != CGN->end())
         CGN->removeCallEdgeTo(*(CGN->end()-1));
       
-      // If the function has external linkage (basically if it's a
-      // linkonce function) remove the edge from the external node to the
-      // callee node.
+      // If the function has external linkage (basically if it's a linkonce
+      // function) remove the edge from the external node to the callee node.
       if (!F->hasInternalLinkage())
         CG.getExternalCallingNode()->removeCallEdgeTo(CGN);
       
       // Removing the node for callee from the call graph and delete it.
-      delete CG.removeFunctionFromModule(CGN);
-      ++NumDeleted;
-      Changed = true;
+      FunctionsToRemove.insert(CGN);
     }
   }
+
+  // Now that we know which functions to delete, do so.  We didn't want to do
+  // this inline, because that would invalidate our CallGraph::iterator
+  // objects. :(
+  bool Changed = false;
+  for (std::set<CallGraphNode*>::iterator I = FunctionsToRemove.begin(),
+         E = FunctionsToRemove.end(); I != E; ++I) {
+    delete CG.removeFunctionFromModule(*I);
+    ++NumDeleted;
+    Changed = true;
+  }
+
   return Changed;
 }
