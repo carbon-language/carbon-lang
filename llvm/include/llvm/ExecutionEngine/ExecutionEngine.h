@@ -8,7 +8,6 @@
 #ifndef EXECUTION_ENGINE_H
 #define EXECUTION_ENGINE_H
 
-#include "llvm/ModuleProvider.h"
 #include <vector>
 #include <string>
 #include <map>
@@ -18,6 +17,7 @@ class Function;
 union GenericValue;
 class GlobalValue;
 class Module;
+class ModuleProvider;
 class TargetData;
 class Type;
 
@@ -36,12 +36,8 @@ protected:
   }
 
 public:
-  ExecutionEngine(ModuleProvider *P) : CurMod(*(P->getModule())), MP(P) {
-    assert(P && "ModuleProvider is null?");
-  }
-  ExecutionEngine(Module *M) : CurMod(*M), MP(0) {
-     assert(M && "Module is null?");
-  }
+  ExecutionEngine(ModuleProvider *P);
+  ExecutionEngine(Module *M);
   virtual ~ExecutionEngine();
   
   Module &getModule() const { return CurMod; }
