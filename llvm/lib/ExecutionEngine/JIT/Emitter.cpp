@@ -150,6 +150,7 @@ namespace {
     virtual void* finishFunctionStub(const Function &F);
     virtual void emitByte(unsigned char B);
     virtual void emitWord(unsigned W);
+    virtual void emitWordAt(unsigned W, unsigned *Ptr);
 
     virtual uint64_t getGlobalValueAddress(GlobalValue *V);
     virtual uint64_t getGlobalValueAddress(const std::string &Name);
@@ -242,6 +243,10 @@ void Emitter::emitWord(unsigned W) {
   // a JIT this can't happen though.  :)
   *(unsigned*)CurByte = W;
   CurByte += sizeof(unsigned);
+}
+
+void Emitter::emitWordAt(unsigned W, unsigned *Ptr) {
+  *Ptr = W;
 }
 
 uint64_t Emitter::getGlobalValueAddress(GlobalValue *V) {
