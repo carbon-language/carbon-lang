@@ -18,6 +18,7 @@
 #define LLVM_SUPPORT_CONSTANT_RANGE_H
 
 #include "Support/DataTypes.h"
+#include <iosfwd>
 class ConstantIntegral;
 class Type;
 
@@ -92,6 +93,19 @@ class ConstantRange {
   /// set before.
   ///
   ConstantRange unionWith(const ConstantRange &CR) const;
+
+  /// print - Print out the bounds to a stream...
+  ///
+  void print(std::ostream &OS) const;
+
+  /// dump - Allow printing from a debugger easily...
+  ///
+  void dump() const;
 };
+
+inline std::ostream &operator<<(std::ostream &OS, const ConstantRange &CR) {
+  CR.print(OS);
+  return OS;
+}
 
 #endif
