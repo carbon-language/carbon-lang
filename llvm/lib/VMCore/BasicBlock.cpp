@@ -10,7 +10,6 @@
 #include "llvm/Method.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Type.h"
-#include "llvm/CFG.h"
 #include "llvm/iOther.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
@@ -91,12 +90,11 @@ bool BasicBlock::hasConstantPoolReferences() const {
 // called while the predecessor still refers to this block.
 //
 void BasicBlock::removePredecessor(BasicBlock *Pred) {
-  using cfg::pred_begin; using cfg::pred_end; using cfg::pred_iterator;
-  assert(find(pred_begin(this), pred_end(this), Pred) != pred_end(this) &&
+  assert(find(pred_begin(), pred_end(), Pred) != pred_end() &&
 	 "removePredecessor: BB is not a predecessor!");
   if (!front()->isPHINode()) return;   // Quick exit.
 
-  pred_iterator PI(pred_begin(this)), EI(pred_end(this));
+  pred_iterator PI(pred_begin()), EI(pred_end());
   unsigned max_idx;
 
   // Loop over the rest of the predecessors until we run out, or until we find

@@ -1,4 +1,4 @@
-/* Title:   BBLiveVar.h
+/* Title:   BBLiveVar.h                  -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: This is a wrapper class for BasicBlock which is used by live 
@@ -13,7 +13,6 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
-#include "llvm/CFG.h"
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
 

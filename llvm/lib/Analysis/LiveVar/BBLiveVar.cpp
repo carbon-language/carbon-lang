@@ -162,9 +162,9 @@ bool BBLiveVar::applyFlowFunc(BBToBBLiveVarMapType LVMap)
                               // whose POId is lower
 
 
-  cfg::pred_const_iterator PredBBI = cfg::pred_begin(BaseBB);
+  BasicBlock::pred_const_iterator PredBBI = BaseBB->pred_begin();
 
-  for( ; PredBBI != cfg::pred_end(BaseBB) ; PredBBI++) {
+  for( ; PredBBI != BaseBB->pred_end() ; PredBBI++) {
     assert( *PredBBI );       // assert that the predecessor is valid
     BBLiveVar  *PredLVBB = LVMap[*PredBBI];
 

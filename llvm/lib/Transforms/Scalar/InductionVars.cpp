@@ -26,7 +26,6 @@
 #include "llvm/Support/STLExtras.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/iOther.h"
-#include "llvm/CFG.h"
 #include <algorithm>
 
 #include "llvm/Analysis/LoopDepth.h"
@@ -199,12 +198,12 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
   // Figure out which predecessors I have to play with... there should be
   // exactly two... one of which is a loop predecessor, and one of which is not.
   //
-  cfg::pred_iterator PI = cfg::pred_begin(Header);
-  assert(PI != cfg::pred_end(Header) && "Header node should have 2 preds!");
+  BasicBlock::pred_iterator PI = Header->pred_begin();
+  assert(PI != Header->pred_end() && "Header node should have 2 preds!");
   BasicBlock *Pred1 = *PI; ++PI;
-  assert(PI != cfg::pred_end(Header) && "Header node should have 2 preds!");
+  assert(PI != Header->pred_end() && "Header node should have 2 preds!");
   BasicBlock *Pred2 = *PI;
-  assert(++PI == cfg::pred_end(Header) && "Header node should have 2 preds!");
+  assert(++PI == Header->pred_end() && "Header node should have 2 preds!");
 
   // Make Pred1 be the loop entrance predecessor, Pred2 be the Loop predecessor
   if (Int->contains(Pred1)) swap(Pred1, Pred2);

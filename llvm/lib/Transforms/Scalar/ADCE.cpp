@@ -264,7 +264,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, set<BasicBlock*> &VisitedBlocks,
     }
 
     // Recursively traverse successors of this basic block.  
-    cfg::succ_iterator SI = cfg::succ_begin(BB), SE = cfg::succ_end(BB);
+    BasicBlock::succ_iterator SI = BB->succ_begin(), SE = BB->succ_end();
     for (; SI != SE; ++SI) {
       BasicBlock *Succ = *SI;
       BasicBlock *Repl = fixupCFG(Succ, VisitedBlocks, AliveBlocks);
@@ -278,7 +278,7 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, set<BasicBlock*> &VisitedBlocks,
     BasicBlock *ReturnBB = 0;              // Default to nothing live down here
     
     // Recursively traverse successors of this basic block.  
-    cfg::succ_iterator SI = cfg::succ_begin(BB), SE = cfg::succ_end(BB);
+    BasicBlock::succ_iterator SI = BB->succ_begin(), SE = BB->succ_end();
     for (; SI != SE; ++SI) {
       BasicBlock *RetBB = fixupCFG(*SI, VisitedBlocks, AliveBlocks);
       if (RetBB) {

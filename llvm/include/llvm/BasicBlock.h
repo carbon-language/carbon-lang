@@ -22,11 +22,11 @@
 #ifndef LLVM_BASICBLOCK_H
 #define LLVM_BASICBLOCK_H
 
-#include "llvm/Value.h"               // Get the definition of Value
+#include "llvm/Value.h"
 #include "llvm/ValueHolder.h"
 #include "llvm/Support/GraphTraits.h"
-
-#include "llvm/CFGdecls.h"   // TODO FIXME: remove
+#include "llvm/InstrTypes.h"
+#include <iterator>
 
 class Instruction;
 class Method;
@@ -34,6 +34,8 @@ class TerminatorInst;
 class MachineCodeForBasicBlock;
 
 class BasicBlock : public Value {       // Basic blocks are data objects also
+  template <class _Ptr, class _USE_iterator> class PredIterator;
+  template <class _Term, class _BB> class SuccIterator;
 public:
   typedef ValueHolder<Instruction, BasicBlock, Method> InstListType;
 private :
@@ -50,17 +52,22 @@ public:
   typedef reverse_iterator<const_iterator> const_reverse_iterator;
   typedef reverse_iterator<iterator>             reverse_iterator;
 
-  typedef cfg::succ_iterator succ_iterator;   // Include CFG.h to use these
-  typedef cfg::pred_iterator pred_iterator;
-  typedef cfg::succ_const_iterator succ_const_iterator;
-  typedef cfg::pred_const_iterator pred_const_iterator;
+  // Predecessor and successor iterators...
+  typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
+  typedef PredIterator<const BasicBlock, 
+                       Value::use_const_iterator> pred_const_iterator;
+  typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
+  typedef SuccIterator<const TerminatorInst*, 
+                       const BasicBlock> succ_const_iterator;
 
+  // Ctor, dtor
   BasicBlock(const string &Name = "", Method *Parent = 0);
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
   virtual void setName(const string &name, SymbolTable *ST = 0);
 
+  // getParent - Return the enclosing method, or null if none
   const Method *getParent() const { return InstList.getParent(); }
         Method *getParent()       { return InstList.getParent(); }
 
@@ -70,7 +77,6 @@ public:
   //
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
-
   
   // Machine code accessor...
   inline MachineCodeForBasicBlock& getMachineInstrVec() const {
@@ -79,6 +85,7 @@ public:
   
   //===--------------------------------------------------------------------===//
   // Instruction iterator methods
+  //
   inline iterator                begin()       { return InstList.begin(); }
   inline const_iterator          begin() const { return InstList.begin(); }
   inline iterator                end  ()       { return InstList.end();   }
@@ -140,9 +147,111 @@ public:
   // the basic block).
   //
   BasicBlock *splitBasicBlock(iterator I);
+
+
+  //===--------------------------------------------------------------------===//
+  // Predecessor and Successor Iterators
+  //
+  template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
+  class PredIterator : public std::bidirectional_iterator<_Ptr, ptrdiff_t> {
+    _Ptr *BB;
+    _USE_iterator It;
+  public:
+    typedef PredIterator<_Ptr,_USE_iterator> _Self;
+  
+    inline void advancePastConstPool() {
+      // TODO: This is bad
+      // Loop to ignore constant pool references
+      while (It != BB->use_end() && 
+             ((!(*It)->isInstruction()) ||
+              !(((Instruction*)(*It))->isTerminator())))
+        ++It;
+    }
+  
+    inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
+      advancePastConstPool();
+    }
+    inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
+    
+    inline bool operator==(const _Self& x) const { return It == x.It; }
+    inline bool operator!=(const _Self& x) const { return !operator==(x); }
+    
+    inline pointer operator*() const { 
+      return (*It)->castInstructionAsserting()->getParent(); 
+    }
+    inline pointer *operator->() const { return &(operator*()); }
+    
+    inline _Self& operator++() {   // Preincrement
+      ++It; advancePastConstPool();
+      return *this; 
+    }
+    
+    inline _Self operator++(int) { // Postincrement
+      _Self tmp = *this; ++*this; return tmp; 
+    }
+    
+    inline _Self& operator--() { --It; return *this; }  // Predecrement
+    inline _Self operator--(int) { // Postdecrement
+      _Self tmp = *this; --*this; return tmp;
+    }
+  };
+  
+  inline pred_iterator pred_begin() { return pred_iterator(this); }
+  inline pred_const_iterator pred_begin() const {
+    return pred_const_iterator(this);
+  }
+  inline pred_iterator pred_end() { return pred_iterator(this, true); }
+  inline pred_const_iterator pred_end() const {
+    return pred_const_iterator(this, true);
+  }
+
+  template <class _Term, class _BB>           // Successor Iterator
+  class SuccIterator : public std::bidirectional_iterator<_BB, ptrdiff_t> {
+    const _Term Term;
+    unsigned idx;
+  public:
+    typedef SuccIterator<_Term, _BB> _Self;
+    // TODO: This can be random access iterator, need operator+ and stuff tho
+    
+    inline SuccIterator(_Term T) : Term(T), idx(0) {         // begin iterator
+      assert(T && "getTerminator returned null!");
+    }
+    inline SuccIterator(_Term T, bool)                       // end iterator
+      : Term(T), idx(Term->getNumSuccessors()) {
+      assert(T && "getTerminator returned null!");
+    }
+    
+    inline bool operator==(const _Self& x) const { return idx == x.idx; }
+    inline bool operator!=(const _Self& x) const { return !operator==(x); }
+    
+    inline pointer operator*() const { return Term->getSuccessor(idx); }
+    inline pointer operator->() const { return operator*(); }
+    
+    inline _Self& operator++() { ++idx; return *this; } // Preincrement
+    inline _Self operator++(int) { // Postincrement
+      _Self tmp = *this; ++*this; return tmp; 
+    }
+    
+    inline _Self& operator--() { --idx; return *this; }  // Predecrement
+    inline _Self operator--(int) { // Postdecrement
+      _Self tmp = *this; --*this; return tmp;
+    }
+  };
+  
+  inline succ_iterator succ_begin() { return succ_iterator(getTerminator()); }
+  inline succ_const_iterator succ_begin() const {
+    return succ_const_iterator(getTerminator());
+  }
+  inline succ_iterator succ_end() {return succ_iterator(getTerminator(), true);}
+  inline succ_const_iterator succ_end() const {
+    return succ_const_iterator(getTerminator(), true);
+  }
 };
 
-#include "llvm/CFG.h"  // TODO FIXME when succ iterators are in BB.h
+
+//===--------------------------------------------------------------------===//
+// GraphTraits specializations for basic block graphs (CFGs)
+//===--------------------------------------------------------------------===//
 
 // Provide specializations of GraphTraits to be able to treat a method as a 
 // graph of basic blocks...
@@ -153,10 +262,10 @@ template <> struct GraphTraits<BasicBlock*> {
 
   static NodeType *getEntryNode(BasicBlock *BB) { return BB; }
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return cfg::succ_begin(N); 
+    return N->succ_begin(); 
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return cfg::succ_end(N); 
+    return N->succ_end(); 
   }
 };
 
@@ -167,10 +276,10 @@ template <> struct GraphTraits<const BasicBlock*> {
   static NodeType *getEntryNode(const BasicBlock *BB) { return BB; }
 
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return cfg::succ_begin(N); 
+    return N->succ_begin(); 
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return cfg::succ_end(N); 
+    return N->succ_end(); 
   }
 };
 
@@ -184,10 +293,10 @@ template <> struct GraphTraits<Inverse<BasicBlock*> > {
   typedef BasicBlock::pred_iterator ChildIteratorType;
   static NodeType *getEntryNode(Inverse<BasicBlock *> G) { return G.Graph; }
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return cfg::pred_begin(N); 
+    return N->pred_begin(); 
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return cfg::pred_end(N); 
+    return N->pred_end(); 
   }
 };
 
@@ -198,10 +307,10 @@ template <> struct GraphTraits<Inverse<const BasicBlock*> > {
     return G.Graph; 
   }
   static inline ChildIteratorType child_begin(NodeType *N) { 
-    return cfg::pred_begin(N); 
+    return N->pred_begin(); 
   }
   static inline ChildIteratorType child_end(NodeType *N) { 
-    return cfg::pred_end(N); 
+    return N->pred_end(); 
   }
 };
 

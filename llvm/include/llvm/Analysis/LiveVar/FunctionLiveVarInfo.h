@@ -1,4 +1,4 @@
-/* Title:   MethodLiveVarInfo.h
+/* Title:   MethodLiveVarInfo.h             -*- C++ -*-
    Author:  Ruchira Sasanka
    Date:    Jun 30, 01
    Purpose: 
@@ -73,7 +73,6 @@ static const int DEBUG_LV = 0;
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 #include "llvm/Method.h"
-#include "llvm/CFG.h"
 
 #include "LiveVarMap.h"
 #include "BBLiveVar.h"
