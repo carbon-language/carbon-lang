@@ -75,7 +75,7 @@ public:
   inline bool               hasName() const { return !Name.empty(); }
   inline const std::string &getName() const { return Name; }
 
-  virtual void setName(const std::string &name, SymbolTable * = 0) {
+  virtual void setName(const std::string &name) {
     Name = name;
   }
   

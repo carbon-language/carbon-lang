@@ -51,8 +51,8 @@ public:
 		 Constant *Initializer = 0, const std::string &Name = "",
                  Module *Parent = 0);
 
-  // Specialize setName to handle symbol table majik...
-  virtual void setName(const std::string &name, SymbolTable *ST = 0);
+  // Specialize setName to handle symbol table majik.
+  virtual void setName(const std::string &name);
 
   /// isExternal - Is this global variable lacking an initializer?  If so, the
   /// global variable is defined in some other translation unit, and is thus

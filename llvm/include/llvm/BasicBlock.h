@@ -77,7 +77,7 @@ public:
   ~BasicBlock();
 
   // Specialize setName to take care of symbol table majik
-  virtual void setName(const std::string &name, SymbolTable *ST = 0);
+  virtual void setName(const std::string &name);
 
   /// getParent - Return the enclosing method, or null if none
   ///

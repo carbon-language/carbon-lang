@@ -26,8 +26,8 @@ protected:
 
   void destroyConstantImpl();
 public:
-  // setName - Specialize setName to handle symbol table majik...
-  virtual void setName(const std::string &name, SymbolTable *ST = 0);
+  // setName - Specialize setName to handle symbol table majik.
+  virtual void setName(const std::string &name);
 
   /// Static constructor to get a '0' constant of arbitrary type...
   ///
