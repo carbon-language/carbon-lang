@@ -20,7 +20,7 @@
 #include "Support/Statistic.h"
 #include <map>
 
-namespace {
+//namespace {
   struct RegAllocSimple : public FunctionPass {
     TargetMachine &TM;
     MachineBasicBlock *CurrMBB;
@@ -82,21 +82,24 @@ namespace {
     void cleanupAfterFunction() {
       RegMap.clear();
       SSA2PhysRegMap.clear();
-      NumBytesAllocated = 4;
+      NumBytesAllocated = ByteAlignment;
     }
 
     /// Moves value from memory into that register
     MachineBasicBlock::iterator
-    moveUseToReg (MachineBasicBlock::iterator I, unsigned VirtReg,
+    moveUseToReg (MachineBasicBlock *MBB,
+                  MachineBasicBlock::iterator I, unsigned VirtReg,
                   unsigned &PhysReg);
 
     /// Saves reg value on the stack (maps virtual register to stack value)
     MachineBasicBlock::iterator
-    saveVirtRegToStack (MachineBasicBlock::iterator I, unsigned VirtReg,
+    saveVirtRegToStack (MachineBasicBlock *MBB,
+                        MachineBasicBlock::iterator I, unsigned VirtReg,
                         unsigned PhysReg);
 
     MachineBasicBlock::iterator
-    savePhysRegToStack (MachineBasicBlock::iterator I, unsigned PhysReg);
+    savePhysRegToStack (MachineBasicBlock *MBB,
+                        MachineBasicBlock::iterator I, unsigned PhysReg);
 
     /// runOnFunction - Top level implementation of instruction selection for
     /// the entire function.
@@ -108,7 +111,7 @@ namespace {
     }
   };
 
-}
+//}
 
 unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
                                             const TargetRegisterClass *regClass)
@@ -126,7 +129,7 @@ unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
 #endif
     // FIXME: forcing each arg to take 4 bytes on the stack
     RegMap[VirtReg] = NumBytesAllocated;
-    NumBytesAllocated += 4;
+    NumBytesAllocated += ByteAlignment;
   }
   return RegMap[VirtReg];
 }
@@ -153,7 +156,8 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
 }
 
 MachineBasicBlock::iterator
-RegAllocSimple::moveUseToReg (MachineBasicBlock::iterator I,
+RegAllocSimple::moveUseToReg (MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator I,
                               unsigned VirtReg, unsigned &PhysReg)
 {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
@@ -162,16 +166,15 @@ RegAllocSimple::moveUseToReg (MachineBasicBlock::iterator I,
   unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
   PhysReg = getFreeReg(VirtReg);
 
-  // FIXME: increment the frame pointer
-
   // Add move instruction(s)
-  return RegInfo->loadRegOffset2Reg(CurrMBB, I, PhysReg,
+  return RegInfo->loadRegOffset2Reg(MBB, I, PhysReg,
                                     RegInfo->getFramePointer(),
                                     -stackOffset, regClass->getDataSize());
 }
 
 MachineBasicBlock::iterator
-RegAllocSimple::saveVirtRegToStack (MachineBasicBlock::iterator I,
+RegAllocSimple::saveVirtRegToStack (MachineBasicBlock *MBB,
+                                    MachineBasicBlock::iterator I,
                                     unsigned VirtReg, unsigned PhysReg)
 {
   const TargetRegisterClass* regClass = MF->getRegClass(VirtReg);
@@ -180,13 +183,14 @@ RegAllocSimple::saveVirtRegToStack (MachineBasicBlock::iterator I,
   unsigned stackOffset = allocateStackSpaceFor(VirtReg, regClass);
 
   // Add move instruction(s)
-  return RegInfo->storeReg2RegOffset(CurrMBB, I, PhysReg,
+  return RegInfo->storeReg2RegOffset(MBB, I, PhysReg,
                                      RegInfo->getFramePointer(),
                                      -stackOffset, regClass->getDataSize());
 }
 
 MachineBasicBlock::iterator
-RegAllocSimple::savePhysRegToStack (MachineBasicBlock::iterator I,
+RegAllocSimple::savePhysRegToStack (MachineBasicBlock *MBB,
+                                    MachineBasicBlock::iterator I,
                                     unsigned PhysReg)
 {
   const TargetRegisterClass* regClass = MF->getRegClass(PhysReg);
@@ -195,7 +199,7 @@ RegAllocSimple::savePhysRegToStack (MachineBasicBlock::iterator I,
   unsigned offset = allocateStackSpaceFor(PhysReg, regClass);
 
   // Add move instruction(s)
-  return RegInfo->storeReg2RegOffset(CurrMBB, I, PhysReg,
+  return RegInfo->storeReg2RegOffset(MBB, I, PhysReg,
                                      RegInfo->getFramePointer(),
                                      offset, regClass->getDataSize());
 }
@@ -212,20 +216,90 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   {
     CurrMBB = &(*MBB);
 
+    // Handle PHI instructions specially: add moves to each pred block
+    while (MBB->front()->getOpcode() == 0) {
+      MachineInstr *MI = MBB->front();
+      // get rid of the phi
+      MBB->erase(MBB->begin());
+    
+      DEBUG(std::cerr << "num ops: " << MI->getNumOperands() << "\n");
+      MachineOperand &targetReg = MI->getOperand(0);
+
+      // If it's a virtual register, allocate a physical one
+      // otherwise, just use whatever register is there now
+      // note: it MUST be a register -- we're assigning to it
+      virtualReg = (unsigned) targetReg.getAllocatedRegNum();
+      if (targetReg.isVirtualRegister()) {
+        physReg = getFreeReg(virtualReg);
+      } else {
+        physReg = targetReg.getAllocatedRegNum();
+      }
+
+      // Find the register class of the target register: should be the
+      // same as the values we're trying to store there
+      const TargetRegisterClass* regClass = PhysReg2RegClassMap[physReg];
+      assert(regClass && "Target register class not found!");
+      unsigned dataSize = regClass->getDataSize();
+
+      for (int i = MI->getNumOperands() - 1; i >= 2; i-=2) {
+        MachineOperand &opVal = MI->getOperand(i-1);
+
+        // Get the MachineBasicBlock equivalent of the BasicBlock that is the
+        // source path the phi
+        BasicBlock *opBB =
+          cast<BasicBlock>(MI->getOperand(i).getVRegValue());
+        MachineBasicBlock *opBlock = NULL;
+        for (MachineFunction::iterator opFi = Fn.begin(), opFe = Fn.end();
+             opFi != opFe; ++opFi)
+        {
+          if (opFi->getBasicBlock() == opBB) {
+            opBlock = opFi; break;
+          }
+        }
+        assert(opBlock && "MachineBasicBlock object not found for specified block!");
+
+        MachineBasicBlock::iterator opI = opBlock->end();
+        MachineInstr *opMI = *(--opI);
+        const MachineInstrInfo &MII = TM.getInstrInfo();
+
+        // insert the move just before the return/branch
+        if (MII.isReturn(opMI->getOpcode()) || MII.isBranch(opMI->getOpcode()))
+        {
+          // Retrieve the constant value from this op, move it to target
+          // register of the phi
+          if (opVal.getType() == MachineOperand::MO_SignExtendedImmed ||
+              opVal.getType() == MachineOperand::MO_UnextendedImmed)
+          {
+            opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
+                                       (unsigned) opVal.getImmedValue(),
+                                       dataSize);
+            saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
+          } else {
+            // Allocate a physical register and add a move in the BB
+            unsigned opVirtualReg = (unsigned) opVal.getAllocatedRegNum();
+            unsigned opPhysReg; // = getFreeReg(opVirtualReg);
+            opI = moveUseToReg(opBlock, opI, opVirtualReg, opPhysReg);
+            opI = RegInfo->moveReg2Reg(opBlock, opI, physReg, opPhysReg,
+                                       dataSize);
+            // Save that register value to the stack of the TARGET REG
+            saveVirtRegToStack(opBlock, opI, virtualReg, opPhysReg);
+          }
+        } 
+      }
+      
+      // really delete the instruction
+      delete MI;
+    }
+
     //loop over each basic block
     for (MachineBasicBlock::iterator I = MBB->begin(); I != MBB->end(); ++I)
     {
       MachineInstr *MI = *I;
 
-      DEBUG(std::cerr << "instr: ";
-            MI->print(std::cerr, TM));
-
       // FIXME: add a preliminary pass that will invalidate any registers that
       // are used by the instruction (including implicit uses)
 
-
-      // Loop over each instruction:
-      // uses, move from memory into registers
+      // Loop over uses, move from memory into registers
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
         MachineOperand &op = MI->getOperand(i);
 
@@ -253,10 +327,10 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
                 physReg = getFreeReg(virtualReg);
               }
               MachineBasicBlock::iterator J = I;
-              J = saveVirtRegToStack(++J, virtualReg, physReg);
+              J = saveVirtRegToStack(CurrMBB, ++J, virtualReg, physReg);
               I = --J;
             } else {
-              I = moveUseToReg(I, virtualReg, physReg);
+              I = moveUseToReg(CurrMBB, I, virtualReg, physReg);
             }
             VirtReg2PhysRegMap[virtualReg] = physReg;
           }
