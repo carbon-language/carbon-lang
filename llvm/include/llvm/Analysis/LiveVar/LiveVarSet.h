@@ -16,7 +16,7 @@ struct LiveVarSet : public ValueSet {
   // This function applies a machine instr to a live var set (accepts OutSet)
   // and makes necessary changes to it (produces InSet).
   //
-  void applyTranferFuncForMInst(const MachineInstr *const MInst);
+  void applyTranferFuncForMInst(const MachineInstr *MInst);
 };
 
 

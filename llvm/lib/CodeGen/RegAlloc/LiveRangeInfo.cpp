@@ -118,8 +118,8 @@ void LiveRangeInfo::constructLiveRanges()
 
     			   
     if( DEBUG_RA > 1) {     
-      cerr << " adding LiveRange for argument ";    
-      printValue((const Value *) *ArgIt); cerr << "\n";
+      cerr << " adding LiveRange for argument "
+           << RAV((const Value *)*ArgIt) << "\n";
     }
   }
 
@@ -163,11 +163,9 @@ void LiveRangeInfo::constructLiveRanges()
 	  MachineOperand::MachineOperandType OpTyp = 
 	    OpI.getMachineOperand().getOperandType();
 
-	  if (OpTyp == MachineOperand::MO_CCRegister) {
-	    cerr << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:";
-	    printValue( OpI.getMachineOperand().getVRegValue() );
-	    cerr << "\n";
-	  }
+	  if (OpTyp == MachineOperand::MO_CCRegister)
+	    cerr << "\n**CC reg found. Is Def=" << OpI.isDef() << " Val:"
+                 << RAV(OpI.getMachineOperand().getVRegValue()) << "\n";
 	}
 
 	// create a new LR iff this operand is a def
@@ -175,9 +173,9 @@ void LiveRangeInfo::constructLiveRanges()
 	  const Value *Def = *OpI;
 
 	  // Only instruction values are accepted for live ranges here
-	  if( Def->getValueType() != Value::InstructionVal ) {
-	    cerr << "\n**%%Error: Def is not an instruction val. Def=";
-	    printValue( Def ); cerr << "\n";
+	  if (Def->getValueType() != Value::InstructionVal ) {
+	    cerr << "\n**%%Error: Def is not an instruction val. Def="
+                 << RAV(Def) << "\n";
 	    continue;
 	  }
 
@@ -189,10 +187,8 @@ void LiveRangeInfo::constructLiveRanges()
 	    DefRange->insert(Def);          // add the instruction (def) to it
 	    LiveRangeMap[ Def ] = DefRange; // update the map
 
-	    if (DEBUG_RA > 1) { 	    
-	      cerr << "  creating a LR for def: ";    
-	      printValue(Def); cerr  << "\n";
-	    }
+	    if (DEBUG_RA > 1)
+	      cerr << "  creating a LR for def: " << RAV(Def) << "\n";
 
 	    // set the register class of the new live range
 	    //assert( RegClassList.size() );
@@ -204,24 +200,20 @@ void LiveRangeInfo::constructLiveRanges()
 			    OpI.getMachineOperand().getVRegValue(), isCC );
 
 
-	    if(isCC && DEBUG_RA) {
-	      cerr  << "\a**created a LR for a CC reg:";
-	      printValue( OpI.getMachineOperand().getVRegValue() );
-	    }
+	    if (isCC && DEBUG_RA)
+	      cerr  << "\a**created a LR for a CC reg:"
+                    << RAV(OpI.getMachineOperand().getVRegValue());
 
-	    DefRange->setRegClass( RegClassList[ rcid ] );
-
-	  }
-	  else {
+	    DefRange->setRegClass(RegClassList[rcid]);
+	  } else {
 	    DefRange->insert(Def);          // add the opearand to def range
                                             // update the map - Operand points 
 	                                    // to the merged set
-	    LiveRangeMap[ Def ] = DefRange; 
+	    LiveRangeMap[Def] = DefRange; 
 
-	    if( DEBUG_RA > 1) { 
-	      cerr << "   added to an existing LR for def: ";  
-	      printValue( Def ); cerr  << "\n";
-	    }
+	    if (DEBUG_RA > 1)
+	      cerr << "   added to an existing LR for def: "
+                   << RAV(Def) << "\n";
 	  }
 
 	} // if isDef()
@@ -336,10 +328,8 @@ void LiveRangeInfo::coalesceLRs()
 	    if( ! LROfUse ) {           // if LR of use is not found
 
 	      //don't warn about labels
-	      if (!((*UseI)->getType())->isLabelType() && DEBUG_RA) {
-		cerr<<" !! Warning: No LR for use "; printValue(*UseI);
-		cerr << "\n";
-	      }
+	      if (!((*UseI)->getType())->isLabelType() && DEBUG_RA)
+		cerr << " !! Warning: No LR for use " << RAV(*UseI) << "\n";
 	      continue;                 // ignore and continue
 	    }
 
@@ -398,13 +388,12 @@ void LiveRangeInfo::coalesceLRs()
 /*--------------------------- Debug code for printing ---------------*/
 
 
-void LiveRangeInfo::printLiveRanges()
-{
+void LiveRangeInfo::printLiveRanges() {
   LiveRangeMapType::iterator HMI = LiveRangeMap.begin();   // hash map iterator
   cerr << "\nPrinting Live Ranges from Hash Map:\n";
-  for( ; HMI != LiveRangeMap.end() ; ++HMI) {
-    if( HMI->first && HMI->second ) {
-      cerr <<" "; printValue((*HMI).first);  cerr << "\t: "; 
+  for( ; HMI != LiveRangeMap.end(); ++HMI) {
+    if (HMI->first && HMI->second) {
+      cerr << " " << RAV(HMI->first) << "\t: "; 
       HMI->second->printSet(); cerr << "\n";
     }
   }

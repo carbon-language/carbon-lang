@@ -8,12 +8,19 @@
 #ifndef VALUE_SET_H
 #define VALUE_SET_H
 
-class Value;
 #include <set>
+class Value;
+
+// RAV - Used to print values in a form used by the register allocator.  
+//
+struct RAV {  // Register Allocator Value
+  const Value *V;
+  RAV(const Value *v) : V(v) {}
+};
+ostream &operator<<(ostream &out, RAV Val);
+
 
 //------------------- Class Definition for ValueSet --------------------------
-
-void printValue( const Value *v);  // func to print a Value 
 
 struct ValueSet : public std::set<const Value*> {
   bool setUnion( const ValueSet *const set1);     // for performing set union

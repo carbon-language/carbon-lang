@@ -1,64 +1,42 @@
 
+
+
 #include "llvm/Analysis/LiveVar/ValueSet.h"
 #include "llvm/ConstantVals.h"
-#include <algorithm>
 #include <iostream>
-using std::cerr;
-using std::endl;
-using std::pair;
-using std::hash_set;
 
-void printValue(const Value *v) { // func to print a Value 
+ostream &operator<<(ostream &O, RAV V) { // func to print a Value 
+  const Value *v = V.V;
   if (v->hasName())
-    cerr << v << "(" << v->getName() << ") ";
+    return O << v << "(" << v->getName() << ") ";
   else if (Constant *C = dyn_cast<Constant>(v))
-    cerr << v << "(" << C->getStrValue() << ") ";
+    return O << v << "(" << C->getStrValue() << ") ";
   else
-    cerr << v  << " ";
+    return O << v  << " ";
 }
 
+bool ValueSet::setUnion( const ValueSet *S) {   
+  bool Changed = false;
 
-//---------------- Method implementations --------------------------
-                                             // for performing two set unions
-bool ValueSet::setUnion( const ValueSet *set1) {   
-  pair<iterator, bool> result;
-  bool changed = false;
+  for (const_iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
+    if (insert(*SI).second)
+      Changed = true;
 
-  for(const_iterator set1it = set1->begin() ; set1it != set1->end(); ++set1it) {
-                                             // for all all elements in set1
-    result = insert(*set1it);                // insert to this set
-    if(result.second == true) changed = true;
-  }
-
-  return changed;
+  return Changed;
 }
 
-
-                                             // for performing set difference
-void ValueSet::setDifference( const ValueSet *const set1, 
-			      const ValueSet *const set2) { 
-
-  const_iterator set1it, set2it;
-  for( set1it = set1->begin() ; set1it != set1->end(); ++set1it) {  
-                                             // for all elements in set1
-    iterator set2it = set2->find( *set1it ); // find wether the elem is in set2
-    if( set2it == set2->end() )              // if the element is not in set2
-      insert( *set1it );                     // insert to this set
-  }
+void ValueSet::setDifference(const ValueSet *S1, const ValueSet *S2) {
+  for (const_iterator SI = S1->begin(), SE = S1->end() ; SI != SE; ++SI)
+    if (S2->find(*SI) == S2->end())       // if the element is not in set2
+      insert(*SI);
 }
 
-
-                                        // for performing set subtraction
-void ValueSet::setSubtract( const ValueSet *const set1) { 
-  const_iterator set1it;
-  for( set1it = set1->begin() ; set1it != set1->end(); ++set1it)  
-                                        // for all elements in set1
-    erase( *set1it );                   // erase that element from this set
+void ValueSet::setSubtract(const ValueSet *S) { 
+  for (const_iterator SI = S->begin() ; SI != S->end(); ++SI)  
+    erase(*SI);
 }
 
-
-
-
-void ValueSet::printSet()  const {     // for printing a live variable set
-  for_each(begin(), end(), printValue);
+void ValueSet::printSet() const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    std::cerr << RAV(*I);
 }

@@ -62,7 +62,7 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
       BBI != BBE; ++BBI, ++POId) { 
     const BasicBlock *BB = *BBI;        // get the current BB 
 
-    if (DEBUG_LV) { std::cerr << " For BB "; printValue(BB); cerr << ":\n"; }
+    if (DEBUG_LV) std::cerr << " For BB " << RAV(BB) << ":\n";
 
     // create a new BBLiveVar
     BBLiveVar *LVBB = new BBLiveVar(BB, POId);  

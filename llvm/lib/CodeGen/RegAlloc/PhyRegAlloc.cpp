@@ -118,8 +118,8 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
       LiveRange *L = HMI->second;   // get the LiveRange
       if (!L) { 
         if( DEBUG_RA) {
-          cerr << "\n*?!?Warning: Null liver range found for: ";
-          printValue(HMI->first); cerr << "\n";
+          cerr << "\n*?!?Warning: Null liver range found for: "
+               << RAV(HMI->first) << "\n";
         }
         continue;
       }
@@ -170,14 +170,12 @@ void PhyRegAlloc::addInterference(const Value *const Def,
   //
   for( ; LIt != LVSet->end(); ++LIt) {
 
-    if( DEBUG_RA > 1) {
-      cerr << "< Def="; printValue(Def);     
-      cerr << ", Lvar=";  printValue( *LIt); cerr  << "> ";
-    }
+    if (DEBUG_RA > 1)
+      cerr << "< Def=" << RAV(Def) << ", Lvar=" << RAV(*LIt) << "> ";
 
     //  get the live range corresponding to live var
     //
-    LiveRange *const LROfVar = LRI.getLiveRangeForValue(*LIt );    
+    LiveRange *LROfVar = LRI.getLiveRangeForValue(*LIt);
 
     // LROfVar can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
@@ -188,13 +186,12 @@ void PhyRegAlloc::addInterference(const Value *const Def,
 
       // if 2 reg classes are the same set interference
       //
-      if(RCOfDef == LROfVar->getRegClass()) {
+      if (RCOfDef == LROfVar->getRegClass()) {
 	RCOfDef->setInterference( LROfDef, LROfVar);  
-      } else if(DEBUG_RA > 1)  { 
+      } else if (DEBUG_RA > 1)  { 
         // we will not have LRs for values not explicitly allocated in the
         // instruction stream (e.g., constants)
-        cerr << " warning: no live range for " ; 
-        printValue(*LIt); cerr << "\n";
+        cerr << " warning: no live range for " << RAV(*LIt) << "\n";
       }
     }
   }
@@ -434,10 +431,9 @@ void PhyRegAlloc::addInterferencesForArgs()
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {  // for each argument
     addInterference((Value*)*ArgIt, InSet, false); // add interferences between 
                                               // args and LVars at start
-    if( DEBUG_RA > 1) {
-       cerr << " - %% adding interference for  argument ";    
-      printValue((const Value *)*ArgIt); cerr << "\n";
-    }
+    if( DEBUG_RA > 1)
+      cerr << " - %% adding interference for  argument "
+           << RAV((const Value *)*ArgIt) << "\n";
   }
 }
 
@@ -1051,15 +1047,11 @@ void PhyRegAlloc::printMachineCode()
     
 
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
-      if(  NumOfImpRefs > 0 ) {
-	
+      if( NumOfImpRefs > 0) {
 	cerr << "\tImplicit:";
 
-	for(unsigned z=0; z < NumOfImpRefs; z++) {
-	  printValue(  MInst->getImplicitRef(z) );
-	  cerr << "\t";
-	}
-	
+	for(unsigned z=0; z < NumOfImpRefs; z++)
+	  cerr << RAV(MInst->getImplicitRef(z)) << "\t";
       }
 
     } // for all machine instructions

@@ -563,11 +563,8 @@ void UltraSparcRegInfo::suggestRegs4CallArgs(const MachineInstr *CallMI,
 
     // not possible to have a null LR since all args (even consts)  
     // must be defined before
-    if( !LR ) {          
-      if( DEBUG_RA) {
-	cerr << " ERROR: In call instr, no LR for arg:  " ;
-	printValue(CallArg); cerr << "\n";
-      }
+    if (!LR) {          
+      cerr << " ERROR: In call instr, no LR for arg: " << RAV(CallArg) << "\n";
       assert(0 && "NO LR for call arg");  
     }
     
@@ -624,16 +621,12 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
 
   const Value *RetVal = getCallInstRetVal( CallMI );
 
-  if( RetVal ) {
+  if (RetVal) {
+    LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
 
-    LiveRange * RetValLR = LRI.getLiveRangeForValue( RetVal );
-
-    if( !RetValLR ) {
-      cerr << "\nNo LR for:";
-      printValue( RetVal );
-      cerr << "\n";
-      assert( RetValLR && "ERR:No LR for non-void return value");
-      //return;
+    if (!RetValLR) {
+      cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
+      assert(0 && "ERR:No LR for non-void return value");
     }
 
     unsigned RegClassID = (RetValLR->getRegClass())->getID();    
@@ -755,13 +748,9 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *CallMI,
 
     // not possible to have a null LR since all args (even consts)  
     // must be defined before
-    if( !LR ) {          
-      if( DEBUG_RA) {
-	cerr << " ERROR: In call instr, no LR for arg:  " ;
-	printValue(CallArg); cerr << "\n";
-      }
+    if (!LR) {          
+      cerr << " ERROR: In call instr, no LR for arg:  " << RAV(CallArg) << "\n";
       assert(0 && "NO LR for call arg");  
-      // continue;
     }
 
 
@@ -942,13 +931,10 @@ void UltraSparcRegInfo::suggestReg4RetValue(const MachineInstr *RetMI,
 
     LiveRange *const LR = LRI.getLiveRangeForValue( RetVal ); 
 
-    if( !LR ) {
-     cerr << "\nNo LR for:";
-     printValue( RetVal );
-     cerr << "\n";
-     assert( LR && "No LR for return value of non-void method");
-     //return;
-   }
+    if (!LR) {
+      cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
+      assert(0 && "No LR for return value of non-void method");
+    }
 
     unsigned RegClassID = (LR->getRegClass())->getID();
       
@@ -981,12 +967,10 @@ void UltraSparcRegInfo::colorRetValue(const MachineInstr *RetMI,
 
     LiveRange *LR = LRI.getLiveRangeForValue(RetVal); 
 
-    if( ! LR ) {
-	cerr << "\nNo LR for:";
-	printValue( RetVal );
-	cerr << "\n";
-	// assert( LR && "No LR for return value of non-void method");
-	return;
+    if (!LR) {
+      cerr << "\nNo LR for:" << RAV(RetVal) << "\n";
+      // assert( LR && "No LR for return value of non-void method");
+      return;
     }
 
     unsigned RegClassID =  getRegClassIDOfValue(RetVal);

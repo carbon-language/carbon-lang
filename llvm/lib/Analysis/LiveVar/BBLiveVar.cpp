@@ -70,13 +70,9 @@ void BBLiveVar::calcDefUseSets() {
 	  
 	  PhiArgMap[ArgVal] = cast<BasicBlock>(BBVal); 
 	  
-	  if (DEBUG_LV > 1) {
-	    cerr << "   - phi operand "; 
-	    printValue(ArgVal); 
-	    cerr << " came from BB "; 
-	    printValue(PhiArgMap[ArgVal]); 
-	    cerr << "\n";
-	  }
+	  if (DEBUG_LV > 1)
+	    cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
+                 << RAV(PhiArgMap[ArgVal]) << "\n";
 	} // if( IsPhi )
       } // if a use
     } // for all operands
@@ -105,9 +101,7 @@ void  BBLiveVar::addDef(const Value *Op) {
   InSet.erase(Op);       // this definition kills any uses
   InSetChanged = true; 
 
-  if (DEBUG_LV > 1) {
-    cerr << "  +Def: "; printValue( Op ); cerr << "\n";
-  }
+  if (DEBUG_LV > 1) cerr << "  +Def: " << RAV(Op) << "\n";
 }
 
 
@@ -119,9 +113,7 @@ void  BBLiveVar::addUse(const Value *Op) {
   OutSet.erase(Op);   // remove if there is a def below this use
   InSetChanged = true; 
 
-  if (DEBUG_LV > 1) {
-    cerr << "   Use: "; printValue( Op ); cerr << "\n";
-  }
+  if (DEBUG_LV > 1) cerr << "   Use: " << RAV(Op) << "\n";
 }
 
 
