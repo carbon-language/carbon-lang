@@ -261,13 +261,6 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 /// input.
 ///
 bool BugDriver::debugMiscompilation() {
-
-  if (diffProgram()) {
-    std::cout << "\n*** Input program does not match reference diff!\n"
-              << "    Must be problem with input source!\n";
-    return false;  // Problem found
-  }
-
   // Make sure something was miscompiled...
   if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun)) {
     std::cerr << "*** Optimized program matches reference output!  No problem "

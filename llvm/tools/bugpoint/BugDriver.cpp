@@ -27,14 +27,6 @@ namespace {
   cl::opt<std::string> 
   OutputFile("output", cl::desc("Specify a reference program output "
                                 "(for miscompilation detection)"));
-
-  enum DebugType { DebugCompile, DebugCodegen };
-  cl::opt<DebugType>
-  DebugMode("mode", cl::desc("Debug mode for bugpoint:"), cl::Prefix,
-            cl::values(clEnumValN(DebugCompile, "compile", "  Compilation"),
-                       clEnumValN(DebugCodegen, "codegen", "  Code generation"),
-                       0),
-            cl::init(DebugCompile));
 }
 
 /// getPassesString - Turn a list of passes into a string which indicates the
@@ -134,8 +126,6 @@ bool BugDriver::run() {
       return debugCrash();
   }
 
-  std::cout << "Checking for a miscompilation...\n";
-
   // Set up the execution environment, selecting a method to run LLVM bytecode.
   if (initializeExecutionEnvironment()) return true;
 
@@ -146,33 +136,36 @@ bool BugDriver::run() {
   bool CreatedOutput = false;
   if (ReferenceOutputFile.empty()) {
     std::cout << "Generating reference output from raw program...";
-    if (DebugCodegen) {
-      ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
-    } else {
-      ReferenceOutputFile = executeProgram("bugpoint.reference.out");
-    }
+    ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
     CreatedOutput = true;
     std::cout << "Reference output is: " << ReferenceOutputFile << "\n";
-  } 
-
-  bool Result;
-  switch (DebugMode) {
-  default: assert(0 && "Bad value for DebugMode!");
-  case DebugCompile:
-    std::cout << "\n*** Debugging miscompilation!\n";
-    Result = debugMiscompilation();
-    break;
-  case DebugCodegen:
-    std::cout << "Debugging code generator problem!\n";
-    Result = debugCodeGenerator();
   }
 
-  if (CreatedOutput) removeFile(ReferenceOutputFile);
-  return Result;
+  // Make sure the reference output file gets deleted on exit from this
+  // function, if appropriate.
+  struct Remover {
+    bool DeleteIt; const std::string &Filename;
+    Remover(bool deleteIt, const std::string &filename)
+      : DeleteIt(deleteIt), Filename(filename) {}
+    ~Remover() {
+      if (DeleteIt) removeFile(Filename);
+    }
+  } RemoverInstance(CreatedOutput, ReferenceOutputFile);
+
+  // Diff the output of the raw program against the reference output.  If it
+  // matches, then we have a miscompilation bug.
+  std::cout << "*** Checking the code generator...\n";
+  if (!diffProgram()) {
+    std::cout << "\n*** Debugging miscompilation!\n";
+    return debugMiscompilation();
+  }
+
+  std::cout << "\n*** Input program does not match reference diff!\n";
+  std::cout << "Debugging code generator problem!\n";
+  return debugCodeGenerator();
 }
 
-void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs)
-{
+void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs) {
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
     if (i) std::cout << ", ";
     std::cout << Funcs[i]->getName();
