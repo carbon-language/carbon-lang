@@ -798,7 +798,7 @@ static PointerTy getElementOffset(Instruction *I, unsigned ArgOff) {
 }
 
 static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I->getPtrOperand(), SF);
+  GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
 
   GenericValue Result;
@@ -807,7 +807,7 @@ static void executeGEPInst(GetElementPtrInst *I, ExecutionContext &SF) {
 }
 
 static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I->getPtrOperand(), SF);
+  GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
   PointerTy Offset = getElementOffset(I, 0);  // Handle any structure indices
   SrcPtr += Offset;
@@ -836,7 +836,7 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
 }
 
 static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
-  GenericValue SRC = getOperandValue(I->getPtrOperand(), SF);
+  GenericValue SRC = getOperandValue(I->getPointerOperand(), SF);
   PointerTy SrcPtr = SRC.PointerVal;
   SrcPtr += getElementOffset(I, 1);  // Handle any structure indices
 
