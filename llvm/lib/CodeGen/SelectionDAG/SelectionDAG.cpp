@@ -17,6 +17,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include <iostream>
+#include <set>
 #include <cmath>
 using namespace llvm;
 
@@ -97,6 +98,124 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
   // Combine all of the condition bits.
   return ISD::CondCode(Op1 & Op2);
 }
+
+/// RemoveDeadNodes - This method deletes all unreachable nodes in the
+/// SelectionDAG, including nodes (like loads) that have uses of their token
+/// chain but no other uses and no side effect.  If a node is passed in as an
+/// argument, it is used as the seed for node deletion.
+void SelectionDAG::RemoveDeadNodes(SDNode *N) {
+  std::set<SDNode*> AllNodeSet(AllNodes.begin(), AllNodes.end());
+
+  // Create a dummy node (which is not added to allnodes), that adds a reference
+  // to the root node, preventing it from being deleted.
+  SDNode *DummyNode = new SDNode(ISD::EntryToken, getRoot());
+
+  DeleteNodeIfDead(N, &AllNodeSet);
+
+ Restart:
+  unsigned NumNodes = AllNodeSet.size();
+  for (std::set<SDNode*>::iterator I = AllNodeSet.begin(), E = AllNodeSet.end();
+       I != E; ++I) {
+    // Try to delete this node.
+    DeleteNodeIfDead(*I, &AllNodeSet);
+
+    // If we actually deleted any nodes, do not use invalid iterators in
+    // AllNodeSet.
+    if (AllNodeSet.size() != NumNodes)
+      goto Restart;
+  }
+
+  // Restore AllNodes.
+  if (AllNodes.size() != NumNodes)
+    AllNodes.assign(AllNodeSet.begin(), AllNodeSet.end());
+
+  // If the root changed (e.g. it was a dead load, update the root).
+  setRoot(DummyNode->getOperand(0));
+
+  // Now that we are done with the dummy node, delete it.
+  DummyNode->getOperand(0).Val->removeUser(DummyNode);
+  delete DummyNode;
+}
+
+void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
+  if (!N->use_empty())
+    return;
+
+  // Okay, we really are going to delete this node.  First take this out of the
+  // appropriate CSE map.
+  switch (N->getOpcode()) {
+  case ISD::Constant:
+    Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
+                                   N->getValueType(0)));
+    break;
+  case ISD::ConstantFP:
+    ConstantFPs.erase(std::make_pair(cast<ConstantFPSDNode>(N)->getValue(),
+                                     N->getValueType(0)));
+    break;
+  case ISD::GlobalAddress:
+    GlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
+    break;
+  case ISD::FrameIndex:
+    FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
+    break;
+  case ISD::ConstantPool:
+    ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->getIndex());
+    break;
+  case ISD::BasicBlock:
+    BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
+    break;
+  case ISD::ExternalSymbol:
+    ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
+    break;
+
+  case ISD::LOAD:
+    Loads.erase(std::make_pair(N->getOperand(1),
+                               std::make_pair(N->getOperand(0),
+                                              N->getValueType(0))));
+    break;
+  case ISD::SETCC:
+    SetCCs.erase(std::make_pair(std::make_pair(N->getOperand(0),
+                                               N->getOperand(1)),
+                                cast<SetCCSDNode>(N)->getCondition()));
+    break;
+  default:
+    if (N->getNumOperands() == 1)
+      UnaryOps.erase(std::make_pair(N->getOpcode(),
+                                    std::make_pair(N->getOperand(0),
+                                                   N->getValueType(0))));
+    else if (N->getNumOperands() == 2)
+      BinaryOps.erase(std::make_pair(N->getOpcode(),
+                                     std::make_pair(N->getOperand(0),
+                                                    N->getOperand(1))));
+    break;
+  }
+
+  // Next, brutally remove the operand list.
+  std::vector<SDNode*> Operands;
+  while (!N->Operands.empty()) {
+    SDOperand O = N->Operands.back();
+    N->Operands.pop_back();
+    Operands.push_back(O.Val);
+    O.Val->removeUser(N);
+  }
+  
+  // Remove the node from the nodes set and delete it.
+  std::set<SDNode*> &AllNodeSet = *(std::set<SDNode*>*)NodeSet;
+  AllNodeSet.erase(N);
+  delete N;
+
+  // Now that the node is gone, check to see if any of the operands of this node
+  // are dead now.
+
+  // Remove duplicate operand entries.
+  std::sort(Operands.begin(), Operands.end());
+  Operands.erase(std::unique(Operands.begin(), Operands.end()),
+                 Operands.end());
+  
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    DeleteNodeIfDead(Operands[i], NodeSet);
+}
+
 
 SelectionDAG::~SelectionDAG() {
   for (unsigned i = 0, e = AllNodes.size(); i != e; ++i)
