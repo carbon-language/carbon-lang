@@ -565,6 +565,21 @@ GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int fprintf(FILE *,sbyte *, ...) - a very rough implementation to make output
+// useful.
+GenericValue lle_X_fprintf(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() > 2);
+  char Buffer[10000];
+  vector<GenericValue> NewArgs;
+  GenericValue GV; GV.PointerVal = (PointerTy)Buffer;
+  NewArgs.push_back(GV);
+  NewArgs.insert(NewArgs.end(), Args.begin()+1, Args.end());
+  GV = lle_X_sprintf(M, NewArgs);
+
+  fputs(Buffer, getFILE(Args[0].PointerVal));
+  return GV;
+}
+
 } // End extern "C"
 
 
@@ -616,4 +631,5 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_getc"]         = lle_X_getc;
   FuncNames["lle_X_fputc"]        = lle_X_fputc;
   FuncNames["lle_X_ungetc"]       = lle_X_ungetc;
+  FuncNames["lle_X_fprintf"]      = lle_X_fprintf;
 }
