@@ -30,24 +30,32 @@
 #include <memory>
 #include <set>
 
-/// FileExists - Returns true IFF a file named FN exists and is readable.
-///
-static inline bool FileExists(const std::string &FN) {
-  return access(FN.c_str(), R_OK | F_OK) != -1;
-}
-
 /// IsArchive - Returns true IFF the file named FN appears to be a "ar" library
 /// archive. The file named FN must exist.
 ///
 static inline bool IsArchive(const std::string &FN) {
   // Inspect the beginning of the file to see if it contains the "ar" magic
   // string.
-  std::string ArchiveMagic("!<arch>\012");
-  char buf[1 + ArchiveMagic.size()];
+  std::string Magic("!<arch>\012");
+  char buf[1 + Magic.size()];
   std::ifstream f(FN.c_str());
-  f.read(buf, ArchiveMagic.size());
-  buf[ArchiveMagic.size()] = '\0';
-  return ArchiveMagic == buf;
+  f.read(buf, Magic.size());
+  buf[Magic.size()] = '\0';
+  return Magic == buf;
+}
+
+/// IsBytecode - Returns true IFF the file named FN appears to be an
+/// LLVM bytecode file. The file named FN must exist.
+///
+static inline bool IsBytecode(const std::string &FN) {
+  // Inspect the beginning of the file to see if it contains the LLVM
+  // bytecode format magic string.
+  std::string Magic("llvm");
+  char buf[1 + Magic.size()];
+  std::ifstream f(FN.c_str());
+  f.read(buf, Magic.size());
+  buf[Magic.size()] = '\0';
+  return Magic == buf;
 }
 
 /// FindLib - locates a particular library.  It will prepend and append
@@ -67,7 +75,7 @@ static inline bool IsArchive(const std::string &FN) {
 static std::string
 FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
   // Determine if the pathname can be found as it stands.
-  if (FileExists(Filename))
+  if (FileOpenable(Filename))
     return Filename;
 
   // If that doesn't work, convert the name into a library name.
@@ -78,13 +86,13 @@ FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
   for (unsigned Index = 0; Index != Paths.size(); ++Index) {
     std::string Directory = Paths[Index] + "/";
 
-    if (FileExists(Directory + LibName + ".bc"))
+    if (FileOpenable(Directory + LibName + ".bc"))
       return Directory + LibName + ".bc";
 
-    if (FileExists(Directory + LibName + ".so"))
+    if (FileOpenable(Directory + LibName + ".so"))
       return Directory + LibName + ".so";
 
-    if (FileExists(Directory + LibName + ".a"))
+    if (FileOpenable(Directory + LibName + ".a"))
       return Directory + LibName + ".a";
   }
 
@@ -94,7 +102,7 @@ FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
     return std::string();
 
   LibName = std::string(SearchPath) + "/" + LibName;
-  if (FileExists(LibName))
+  if (FileOpenable(LibName))
     return LibName;
 
   return std::string();
@@ -329,7 +337,7 @@ bool LinkFiles(const char *progname,
 
   for (unsigned i = 0; i < Files.size(); ++i) {
     // Determine where this file lives.
-    if (FileExists(Files[i])) {
+    if (FileOpenable(Files[i])) {
       Pathname = Files[i];
     } else {
       if (SearchPath == NULL) {
@@ -341,7 +349,7 @@ bool LinkFiles(const char *progname,
       }
 
       Pathname = std::string(SearchPath)+"/"+Files[i];
-      if (!FileExists(Pathname)) {
+      if (!FileOpenable(Pathname)) {
         std::cerr << progname << ": Cannot find linker input file '"
                   << Files[i] << "'\n";
         return true;
@@ -359,7 +367,7 @@ bool LinkFiles(const char *progname,
                        ": Error linking in archive '" + Pathname + "'");
         return true;
       }
-    } else {
+    } else if (IsBytecode(Pathname)) {
       if (Verbose)
         std::cerr << "Trying to link bytecode file '" << Pathname << "'\n";
 
@@ -426,7 +434,7 @@ bool LinkLibraries(const char *progname,
                        ": Error linking in archive '" + Pathname + "' (-l" + Libraries[i] + ")");
         return true;
       }
-    } else {
+    } else if (IsBytecode(Pathname)) {
       if (Verbose)
         std::cerr << "Trying to link bytecode file '" << Pathname << "' (-l" << Libraries[i] << ")\n";
 
