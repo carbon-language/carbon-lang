@@ -26,7 +26,6 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/DynamicLinker.h"
-#include "Config/dlfcn.h"
 using namespace llvm;
 
 namespace {
