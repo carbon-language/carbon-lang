@@ -972,6 +972,26 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     $$ = $1;
   };
 
+ConstVal : SIntType EINT64VAL {     // integral constants
+    if (!ConstantSInt::isValueValidForType($1, $2))
+      ThrowException("Constant value doesn't fit in type!");
+    $$ = ConstantSInt::get($1, $2);
+  } 
+  | UIntType EUINT64VAL {           // integral constants
+    if (!ConstantUInt::isValueValidForType($1, $2))
+      ThrowException("Constant value doesn't fit in type!");
+    $$ = ConstantUInt::get($1, $2);
+  } 
+  | BOOL TRUE {                     // Boolean constants
+    $$ = ConstantBool::True;
+  }
+  | BOOL FALSE {                    // Boolean constants
+    $$ = ConstantBool::False;
+  }
+  | FPType FPVAL {                   // Float & Double constants
+    $$ = ConstantFP::get($1, $2);
+  };
+
 
 ConstExpr: Types CAST ConstVal {
     $$ = ConstantExpr::getCast($3, $1->get());
@@ -1018,26 +1038,6 @@ ConstExpr: Types CAST ConstVal {
     delete $1;
   };
 
-
-ConstVal : SIntType EINT64VAL {     // integral constants
-    if (!ConstantSInt::isValueValidForType($1, $2))
-      ThrowException("Constant value doesn't fit in type!");
-    $$ = ConstantSInt::get($1, $2);
-  } 
-  | UIntType EUINT64VAL {           // integral constants
-    if (!ConstantUInt::isValueValidForType($1, $2))
-      ThrowException("Constant value doesn't fit in type!");
-    $$ = ConstantUInt::get($1, $2);
-  } 
-  | BOOL TRUE {                     // Boolean constants
-    $$ = ConstantBool::True;
-  }
-  | BOOL FALSE {                    // Boolean constants
-    $$ = ConstantBool::False;
-  }
-  | FPType FPVAL {                   // Float & Double constants
-    $$ = ConstantFP::get($1, $2);
-  };
 
 // ConstVector - A list of comma seperated constants.
 ConstVector : ConstVector ',' ConstVal {
