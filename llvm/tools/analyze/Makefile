@@ -1,6 +1,6 @@
 LEVEL = ../..
 TOOLNAME = analyze
-USEDLIBS = analysis asmparser bcreader scalaropts vmcore analysis ipa datastructure transforms support
+USEDLIBS = asmparser bcreader scalaropts transforms analysis ipa datastructure transformutils vmcore support
 
 include $(LEVEL)/Makefile.common
 

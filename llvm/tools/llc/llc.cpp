@@ -9,7 +9,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/ChangeAllocations.h"
-#include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
