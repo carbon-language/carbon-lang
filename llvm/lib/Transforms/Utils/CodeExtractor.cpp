@@ -353,17 +353,18 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 void CodeExtractor::moveCodeToFunction(const std::vector<BasicBlock*> &code,
                                        Function *newFunction)
 {
+  Function *oldFunc = code[0]->getParent();
+  Function::BasicBlockListType &oldBlocks = oldFunc->getBasicBlockList();
+    Function::BasicBlockListType &newBlocks = newFunction->getBasicBlockList();
+
   for (std::vector<BasicBlock*>::const_iterator i = code.begin(), e =code.end();
        i != e; ++i) {
     BasicBlock *BB = *i;
-    Function *oldFunc = BB->getParent();
-    Function::BasicBlockListType &oldBlocks = oldFunc->getBasicBlockList();
 
     // Delete the basic block from the old function, and the list of blocks
     oldBlocks.remove(BB);
 
     // Insert this basic block into the new function
-    Function::BasicBlockListType &newBlocks = newFunction->getBasicBlockList();
     newBlocks.push_back(BB);
   }
 }
@@ -569,22 +570,19 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
 /// function
 ///
 Function* llvm::ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
-  CodeExtractor CE;
-  return CE.ExtractCodeRegion(code);
+  return CodeExtractor().ExtractCodeRegion(code);
 }
 
 /// ExtractBasicBlock - slurp a natural loop into a brand new function
 ///
 Function* llvm::ExtractLoop(Loop *L) {
-  CodeExtractor CE;
-  return CE.ExtractCodeRegion(L->getBlocks());
+  return CodeExtractor().ExtractCodeRegion(L->getBlocks());
 }
 
 /// ExtractBasicBlock - slurp a basic block into a brand new function
 ///
 Function* llvm::ExtractBasicBlock(BasicBlock *BB) {
-  CodeExtractor CE;
   std::vector<BasicBlock*> Blocks;
   Blocks.push_back(BB);
-  return CE.ExtractCodeRegion(Blocks);  
+  return CodeExtractor().ExtractCodeRegion(Blocks);  
 }
