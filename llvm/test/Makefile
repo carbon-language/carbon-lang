@@ -124,7 +124,7 @@ RUNTESTFLAGS := --tool $(TESTSUITE)
 endif
 
 check-dejagnu: site.exp
-	PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
+	-PATH=$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
 	$(RUNTEST) $(RUNTESTFLAGS)
 
 
