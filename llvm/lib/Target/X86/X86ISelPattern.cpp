@@ -358,6 +358,10 @@ namespace {
     ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
     }
 
+    virtual const char *getPassName() const {
+      return "X86 Pattern Instruction Selection";
+    }
+
     unsigned getRegPressure(SDOperand O) {
       return RegPressureMap[O.Val];
     }
