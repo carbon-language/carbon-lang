@@ -13,8 +13,8 @@
 #include "llvm/GlobalValue.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
-#endif
 #include <set>
+#endif
 
 class Type;
 class GlobalValue;
@@ -34,34 +34,6 @@ namespace DataStructureAnalysis {
   bool isPointerType(const Type *Ty);
 }
 
-
-#if 0
-// GlobalDSGraph - A common graph for all the globals and their outgoing links
-// to externally visible nodes.  This includes GlobalValues, New nodes,
-// Cast nodes, and Calls.  This graph can only be used by one of the
-// individual function graphs, and it goes away when they all go away.
-// 
-class GlobalDSGraph : public DSGraph {
-  hash_set<const DSGraph*> Referrers;
-  void addReference(const DSGraph* referrer);
-  void removeReference(const DSGraph* referrer);
-  friend class DSGraph;                           // give access to Referrers
-  
-  GlobalDSGraph(const GlobalDSGraph &GlobalDSG);  // Do not implement
-
-  // Helper function for cloneGlobals and cloneCalls
-  DSNode* cloneNodeInto(DSNode *OldNode,
-                        std::map<const DSNode*, DSNode*> &NodeCache,
-                        bool GlobalsAreFinal = false);
-
-public:
-  GlobalDSGraph();                                // Create an empty DSGraph
-  virtual ~GlobalDSGraph();
-
-  void    cloneGlobals(DSGraph& Graph, bool CloneCalls = false);
-  void    cloneCalls  (DSGraph& Graph);
-};
-#endif
 
 // LocalDataStructures - The analysis that computes the local data structure
 // graphs for all of the functions in the program.
@@ -167,6 +139,34 @@ private:
   void pushGraphIntoCallee(DSGraph &callerGraph, DSGraph &calleeGraph,
                            std::map<Value*, DSNodeHandle> &OldValMap,
                            std::map<const DSNode*, DSNode*> &OldNodeMap);
+};
+#endif
+
+#if 0
+// GlobalDSGraph - A common graph for all the globals and their outgoing links
+// to externally visible nodes.  This includes GlobalValues, New nodes,
+// Cast nodes, and Calls.  This graph can only be used by one of the
+// individual function graphs, and it goes away when they all go away.
+// 
+class GlobalDSGraph : public DSGraph {
+  hash_set<const DSGraph*> Referrers;
+  void addReference(const DSGraph* referrer);
+  void removeReference(const DSGraph* referrer);
+  friend class DSGraph;                           // give access to Referrers
+  
+  GlobalDSGraph(const GlobalDSGraph &GlobalDSG);  // Do not implement
+
+  // Helper function for cloneGlobals and cloneCalls
+  DSNode* cloneNodeInto(DSNode *OldNode,
+                        std::map<const DSNode*, DSNode*> &NodeCache,
+                        bool GlobalsAreFinal = false);
+
+public:
+  GlobalDSGraph();                                // Create an empty DSGraph
+  virtual ~GlobalDSGraph();
+
+  void    cloneGlobals(DSGraph& Graph, bool CloneCalls = false);
+  void    cloneCalls  (DSGraph& Graph);
 };
 #endif
 
