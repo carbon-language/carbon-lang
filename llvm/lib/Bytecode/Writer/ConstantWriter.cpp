@@ -30,7 +30,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
     // Output all of the arguments...
     MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
-    for (; I != MT->getParamTypes().end(); I++) {
+    for (; I != MT->getParamTypes().end(); ++I) {
       Slot = Table.getValSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_vbr((unsigned)Slot, Out);
@@ -57,7 +57,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
     // Output all of the element types...
     StructType::ElementTypes::const_iterator I = ST->getElementTypes().begin();
-    for (; I != ST->getElementTypes().end(); I++) {
+    for (; I != ST->getElementTypes().end(); ++I) {
       int Slot = Table.getValSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_vbr((unsigned)Slot, Out);
