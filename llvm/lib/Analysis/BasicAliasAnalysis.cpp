@@ -22,7 +22,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Argument.h"
 #include "llvm/iOther.h"
-#include "llvm/ConstantHandling.h"
+#include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
@@ -359,17 +359,18 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     const Value *G1Oper = GEP1Ops[FirstConstantOper];
     const Value *G2Oper = GEP2Ops[FirstConstantOper];
     
-    if (G1Oper != G2Oper &&   // Found non-equal constant indexes...
-        isa<Constant>(G1Oper) && isa<Constant>(G2Oper)) {
-      // Make sure they are comparable (ie, not constant expressions)...  and
-      // make sure the GEP with the smaller leading constant is GEP1.
-      ConstantBool *Compare = *cast<Constant>(G1Oper) > *cast<Constant>(G2Oper);
-      if (Compare) {  // If they are comparable...
-        if (Compare->getValue())
-          std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
-        break;
-      }
-    }
+    if (G1Oper != G2Oper)   // Found non-equal constant indexes...
+      if (Constant *G1OC = dyn_cast<Constant>(const_cast<Value*>(G1Oper)))
+        if (Constant *G2OC = dyn_cast<Constant>(const_cast<Value*>(G2Oper))) {
+          // Make sure they are comparable (ie, not constant expressions)...
+          // and make sure the GEP with the smaller leading constant is GEP1.
+          Constant *Compare = ConstantExpr::get(Instruction::SetGT, G1OC, G2OC);
+          if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
+            if (CV->getValue())   // If they are comparable and G2 > G1
+              std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
+            break;
+          }
+        }
     BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(G1Oper);
   }
   
