@@ -208,14 +208,38 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
 
     case Instruction::Add:
-      if (CE->getOperand(0)->getType() == Type::LongTy ||
-          CE->getOperand(0)->getType() == Type::ULongTy)
+      switch (CE->getOperand(0)->getType()->getTypeID()) {
+      default: assert(0 && "Bad add type!"); abort();
+      case Type::LongTyID:
+      case Type::ULongTyID:
         Result.LongVal = getConstantValue(CE->getOperand(0)).LongVal +
                          getConstantValue(CE->getOperand(1)).LongVal;
-      else
         break;
+      case Type::IntTyID:
+      case Type::UIntTyID:
+        Result.IntVal = getConstantValue(CE->getOperand(0)).IntVal +
+                        getConstantValue(CE->getOperand(1)).IntVal;
+        break;
+      case Type::ShortTyID:
+      case Type::UShortTyID:
+        Result.ShortVal = getConstantValue(CE->getOperand(0)).ShortVal +
+                          getConstantValue(CE->getOperand(1)).ShortVal;
+        break;
+      case Type::SByteTyID:
+      case Type::UByteTyID:
+        Result.SByteVal = getConstantValue(CE->getOperand(0)).SByteVal +
+                          getConstantValue(CE->getOperand(1)).SByteVal;
+        break;
+      case Type::FloatTyID:
+        Result.FloatVal = getConstantValue(CE->getOperand(0)).FloatVal +
+                          getConstantValue(CE->getOperand(1)).FloatVal;
+        break;
+      case Type::DoubleTyID:
+        Result.DoubleVal = getConstantValue(CE->getOperand(0)).DoubleVal +
+                           getConstantValue(CE->getOperand(1)).DoubleVal;
+        break;
+      }
       return Result;
-
     default:
       break;
     }
