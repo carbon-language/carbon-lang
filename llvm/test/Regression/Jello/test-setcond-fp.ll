@@ -1,5 +1,5 @@
 
-void %main() {
+int %main() {
 	%double1 = add double 0.0, 0.0
 	%double2 = add double 0.0, 0.0
 	%float1 = add float 0.0, 0.0
@@ -16,5 +16,5 @@ void %main() {
 	%test58 = setle double %double1, %double2
 	%test59 = setlt double %double1, %double2
 	%test60 = setne double %double1, %double2
-	ret void
+	ret int 0
 }
