@@ -125,9 +125,10 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
     RedirectFD(StdErrFile, 2);
 
     execv(ProgramPath.c_str(), (char *const *)Args);
-    std::cerr << "Error executing program '" << ProgramPath;
+    std::cerr << "Error executing program: '" << ProgramPath;
     for (; *Args; ++Args)
       std::cerr << " " << *Args;
+    std::cerr << "'\n";
     exit(1);
 
   default: break;
