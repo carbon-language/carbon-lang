@@ -91,14 +91,15 @@ register:
 	$(QMTEST) register test llvm.CXXTest
 	$(QMTEST) register database llvmdb.llvmdb
 
-#
 # Start up the QMTest GUI
-#
 gui::
 	$(QMTEST) gui --no-browser --daemon
 
+# Also get rid of qmtest garbage when we 'make clean' in this directory.
 clean::
 	$(RM) -rf $(LLVM_OBJ_ROOT)/test/tmp
 	$(RM) -f $(LLVM_SRC_ROOT)/test/QMTest/*.pyo \
 		$(LLVM_OBJ_ROOT)/test/QMTest/*.pyo
+	$(RM) -f $(LLVM_SRC_ROOT)/test/results.qmr \
+		$(LLVM_OBJ_ROOT)/test/results.qmr
 
