@@ -9,8 +9,8 @@ this space for more news coming soon!
 Current expected test failures
 ------------------------------
 
-SingleSource/Benchmarks: 
-fldry heapsort objinst Oscar Queens chomp misr pi whetstone
+SingleSource/Benchmarks (excluding Shootout-C++): 
+fldry heapsort objinst Queens chomp misr pi whetstone bigfib
 
 SingleSource/UnitTests:
 C++Catch SimpleC++Test 2002-05-02-ArgumentTest 2002-05-03-NotTest
