@@ -495,9 +495,10 @@ void ISel::SelectBranchCC(SDOperand N)
   Select(N.getOperand(0));  //chain
   SDOperand CC = N.getOperand(1);
   
-  //Giveup and do the stupid thing
+  //Give up and do the stupid thing
   unsigned Tmp1 = SelectExpr(CC);
-  BuildMI(BB, PPC::BNE, 2).addReg(Tmp1).addMBB(Dest);
+  BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
+  BuildMI(BB, PPC::BNE, 2).addReg(PPC::CR0).addMBB(Dest);
   return;
 }
 
@@ -514,8 +515,52 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     Node->dump();
     assert(0 && "Node not handled!\n");
 
-  case ISD::SELECT:
-    abort();
+  case ISD::SELECT: {
+    Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+
+    // FIXME: generate FSEL here
+
+    // Create an iterator with which to insert the MBB for copying the false 
+    // value and the MBB to hold the PHI instruction for this SetCC.
+    MachineBasicBlock *thisMBB = BB;
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    ilist<MachineBasicBlock>::iterator It = BB;
+    ++It;
+
+    //  thisMBB:
+    //  ...
+    //   TrueVal = ...
+    //   cmpTY cr0, r1, r2
+    //   bCC copy1MBB
+    //   fallthrough --> copy0MBB
+    BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(0);
+    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+    unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
+    BuildMI(BB, PPC::BNE, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+    MachineFunction *F = BB->getParent();
+    F->getBasicBlockList().insert(It, copy0MBB);
+    F->getBasicBlockList().insert(It, sinkMBB);
+    // Update machine-CFG edges
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
+
+    //  copy0MBB:
+    //   %FalseValue = ...
+    //   # fallthrough to sinkMBB
+    BB = copy0MBB;
+    unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
+
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
+      .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
+    return Result;
+  }
     
   case ISD::FP_ROUND:
     assert (DestType == MVT::f32 && 
