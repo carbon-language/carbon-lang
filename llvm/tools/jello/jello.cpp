@@ -58,6 +58,6 @@ int main(int argc, char **argv) {
   // on demand.
   Passes.run(*M.get());
   
-  return 1;
+  return 0;
 }
 
