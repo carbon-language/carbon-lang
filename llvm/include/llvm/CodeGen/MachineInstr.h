@@ -197,6 +197,13 @@ public:
   /// 
   MachineOperandType getType() const { return opType; }
 
+  /// getUseType - Returns the MachineOperandUseType of this operand.
+  ///
+  MOTy::UseType getUseType() const {
+      return isUse() ^ isDef() ? MOTy::UseAndDef :
+          (isUse() ? MOTy::Use : MOTy::Def);
+  }
+
   /// isPCRelative - This returns the value of the PCRELATIVE flag, which
   /// indicates whether this operand should be emitted as a PC relative value
   /// instead of a global address.  This is used for operands of the forms:
