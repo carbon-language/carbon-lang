@@ -22079,10 +22079,16 @@ if test "${with_purify+set}" = set; then
 
 fi;
 
-if test -d /localhome
+if test ${USER}
 then
-	OBJROOT=/localhome/$USER
+	if test -d /localhome/${USER}
+	then
+		OBJROOT=/localhome/${USER}
 
+	else
+		OBJROOT=.
+
+	fi
 else
 	OBJROOT=.
 

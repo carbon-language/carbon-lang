@@ -311,9 +311,14 @@ dnl Location of the purify program
 AC_ARG_WITH(purify,AC_HELP_STRING([--with-purify],[Location of purify program]),AC_SUBST(PURIFY,[$withval]))
 
 dnl Location for placing object files and built programs, libraries, etc
-if test -d /localhome
+if test ${USER}
 then
-	AC_SUBST(OBJROOT,[/localhome/$USER])
+	if test -d /localhome/${USER}
+	then
+		AC_SUBST(OBJROOT,[/localhome/${USER}])
+	else
+		AC_SUBST(OBJROOT,[.])
+	fi
 else
 	AC_SUBST(OBJROOT,[.])
 fi
