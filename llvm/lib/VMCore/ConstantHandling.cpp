@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ConstantHandling.h"
+#include "ConstantHandling.h"
 #include "llvm/iPHINode.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"

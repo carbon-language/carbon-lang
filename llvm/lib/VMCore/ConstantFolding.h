@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CONSTANTHANDLING_H
-#define LLVM_CONSTANTHANDLING_H
+#ifndef CONSTANTHANDLING_H
+#define CONSTANTHANDLING_H
 
 #include "llvm/Constants.h"
 #include "llvm/Type.h"

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
-#include "llvm/ConstantHandling.h"
+#include "ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
