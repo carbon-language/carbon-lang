@@ -64,6 +64,8 @@ namespace {
     /// FunctionEffect - Capture whether or not this function reads or writes to
     /// ANY memory.  If not, we can do a lot of aggressive analysis on it.
     unsigned FunctionEffect;
+
+    FunctionRecord() : FunctionEffect(0) {}
   };
 
   /// GlobalsModRef - The actual analysis pass.
@@ -232,9 +234,27 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
   // We do a bottom-up SCC traversal of the call graph.  In other words, we
   // visit all callees before callers (leaf-first).
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG); I!=E; ++I)
-    // Do not call AnalyzeSCC on the external function node.
-    if ((*I).size() != 1 || (*I)[0]->getFunction())
+    if ((*I).size() != 1) {
       AnalyzeSCC(*I);
+    } else if (Function *F = (*I)[0]->getFunction()) {
+      if (!F->isExternal()) {
+        // Nonexternal function.
+        AnalyzeSCC(*I);
+      } else {
+        // Otherwise external function.  Handle intrinsics and other special
+        // cases here.
+        if (getAnalysis<AliasAnalysis>().doesNotAccessMemory(F))
+          // If it does not access memory, process the function, causing us to
+          // realize it doesn't do anything (the body is empty).
+          AnalyzeSCC(*I);
+        else {
+          // Otherwise, don't process it.  This will cause us to conservatively
+          // assume the worst.
+        }
+      }
+    } else {
+      // Do not process the external node, assume the worst.
+    }
 }
 
 void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
