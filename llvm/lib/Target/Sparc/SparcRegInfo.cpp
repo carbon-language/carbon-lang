@@ -942,14 +942,23 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
   for(unsigned i=0; i < ReorderedVec.size(); i++)
     CallAI->InstrnsBefore.push_back( ReorderedVec[i] );
 
-  //Insert machine instructions before and after call into the
-  //call instructions map --- Anand
-  const CallInst *callInst = argDesc->getCallInst();
-  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(callInst);
-  mvec.insert(mvec.begin(), CallAI->InstrnsBefore.begin(), 
-	      CallAI->InstrnsBefore.end());
-  mvec.insert(mvec.end(), CallAI->InstrnsAfter.begin(), 
-	      CallAI->InstrnsAfter.end());
+#ifndef NDEBUG
+  // Temporary sanity checking code to detect whether the same machine
+  // instruction is ever inserted twice before/after a call.
+  // I suspect this is happening but am not sure. --Vikram, 7/1/03.
+  // 
+  std::set<const MachineInstr*> instrsSeen;
+  for (int i = 0, N = CallAI->InstrnsBefore.size(); i < N; ++i) {
+    assert(instrsSeen.find(CallAI->InstrnsBefore[i]) == instrsSeen.end() &&
+           "Duplicate machine instruction in InstrnsBefore!");
+    instrsSeen.insert(CallAI->InstrnsBefore[i]);
+  } 
+  for (int i = 0, N = CallAI->InstrnsAfter.size(); i < N; ++i) {
+    assert(instrsSeen.find(CallAI->InstrnsAfter[i]) == instrsSeen.end() &&
+           "Duplicate machine instruction in InstrnsBefore/After!");
+    instrsSeen.insert(CallAI->InstrnsAfter[i]);
+  } 
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -1361,9 +1370,9 @@ UltraSparcRegInfo::insertCallerSavingCode
 	    int StackOff =
               PRA.MF.getInfo()->pushTempValue(getSpilledRegSize(RegType));
             
-	    std::vector<MachineInstr*> AdIBef, AdIAft;
-            
 	    //---- Insert code for pushing the reg on stack ----------
+            
+	    std::vector<MachineInstr*> AdIBef, AdIAft;
             
             // We may need a scratch register to copy the saved value
             // to/from memory.  This may itself have to insert code to
@@ -1395,6 +1404,9 @@ UltraSparcRegInfo::insertCallerSavingCode
             
 	    //---- Insert code for popping the reg from the stack ----------
 
+	    AdIBef.clear();
+            AdIAft.clear();
+            
             // We may need a scratch register to copy the saved value
             // from memory.  This may itself have to insert code to
             // free up a scratch register.  Any such code should go

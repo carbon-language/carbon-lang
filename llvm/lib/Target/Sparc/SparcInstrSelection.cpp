@@ -477,14 +477,15 @@ ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
       opType == Type::ShortTy || opType == Type::UShortTy ||
       opType == Type::IntTy   || opType == Type::UIntTy)
       opCode = (vopCode == ToFloatTy? V9::FITOS : V9::FITOD);
-  else if (opType == Type::LongTy || opType == Type::ULongTy)
+  else if (opType == Type::LongTy || opType == Type::ULongTy ||
+           isa<PointerType>(opType))
       opCode = (vopCode == ToFloatTy? V9::FXTOS : V9::FXTOD);
   else if (opType == Type::FloatTy)
       opCode = (vopCode == ToFloatTy? V9::INVALID_OPCODE : V9::FSTOD);
   else if (opType == Type::DoubleTy)
       opCode = (vopCode == ToFloatTy? V9::FDTOS : V9::INVALID_OPCODE);
   else
-    assert(0 && "Cannot convert this type to DOUBLE on SPARC");
+    assert(0 && "Trying to convert a non-scalar type to DOUBLE?");
   
   return opCode;
 }
