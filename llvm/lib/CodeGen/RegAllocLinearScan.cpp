@@ -145,6 +145,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
   li_ = &getAnalysis<LiveIntervals>();
+
   if (!prt_.get()) prt_.reset(new PhysRegTracker(*mri_));
   vrm_.reset(new VirtRegMap(*mf_));
   if (!spiller_.get()) spiller_.reset(createSpiller());
@@ -393,12 +394,16 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
     IntervalPtr &IP = fixed_[i];
     LiveInterval *I = IP.first;
-    LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
-    IP.second = II;
-    if (cur->overlapsFrom(*I, II)) {
-      unsigned reg = I->reg;
-      prt_->addRegUse(reg);
-      updateSpillWeights(reg, I->weight);
+    if (I->endNumber() > StartPosition) {
+      LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
+      IP.second = II;
+      if (II != I->begin() && II->start > StartPosition)
+        --II;
+      if (cur->overlapsFrom(*I, II)) {
+        unsigned reg = I->reg;
+        prt_->addRegUse(reg);
+        updateSpillWeights(reg, I->weight);
+      }
     }
   }
 
