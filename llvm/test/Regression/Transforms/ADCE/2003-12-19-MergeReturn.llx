@@ -1,0 +1,28 @@
+; This testcase was failing because without merging the return blocks, ADCE
+; didn't know that it could get rid of the then.0 block.
+
+; RUN: llvm-as < %s | opt -adce | llvm-dis | not grep load
+
+
+implementation   ; Functions:
+
+void %main(uint %argc, sbyte** %argv) {
+entry:
+	call void %__main( )
+	%tmp.1 = setle uint %argc, 5		; <bool> [#uses=1]
+	br bool %tmp.1, label %then.0, label %return
+
+then.0:		; preds = %entry
+	%tmp.8 = load sbyte** %argv		; <sbyte*> [#uses=1]
+	%tmp.10 = load sbyte* %tmp.8		; <sbyte> [#uses=1]
+	%tmp.11 = seteq sbyte %tmp.10, 98		; <bool> [#uses=1]
+	br bool %tmp.11, label %then.1, label %return
+
+then.1:		; preds = %then.0
+	ret void
+
+return:		; preds = %entry, %then.0
+	ret void
+}
+
+declare void %__main()
