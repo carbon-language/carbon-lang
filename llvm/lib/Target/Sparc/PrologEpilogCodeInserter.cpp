@@ -63,7 +63,8 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   int32_t C = - (int) staticStackSize;
   int SP = TM.getRegInfo().getStackPointer();
   if (TM.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)) {
-    mvec.push_back(BuildMI(SAVE, 3).addMReg(SP).addSImm(C).addMReg(SP));
+    mvec.push_back(BuildMI(SAVE, 3).addMReg(SP).addSImm(C).addMReg(SP,
+                                                                   MOTy::Def));
   } else {
     // We have to put the stack size value into a register before SAVE.
     // Use register %g1 since it is volatile across calls.  Note that the
@@ -74,19 +75,19 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
 			 TM.getRegInfo().getRegClassIDOfType(Type::IntTy),
 			 SparcIntRegClass::g1);
 
-    MachineInstr* M = BuildMI(SETHI, 2).addSImm(C).addMReg(uregNum);
+    MachineInstr* M = BuildMI(SETHI, 2).addSImm(C).addMReg(uregNum, MOTy::Def);
     M->setOperandHi32(0);
     mvec.push_back(M);
     
-    M = BuildMI(OR, 3).addMReg(uregNum).addSImm(C).addMReg(uregNum);
+    M = BuildMI(OR, 3).addMReg(uregNum).addSImm(C).addMReg(uregNum, MOTy::Def);
     M->setOperandLo32(1);
     mvec.push_back(M);
     
-    M = BuildMI(SRA, 3).addMReg(uregNum).addZImm(0).addMReg(uregNum);
+    M = BuildMI(SRA, 3).addMReg(uregNum).addZImm(0).addMReg(uregNum, MOTy::Def);
     mvec.push_back(M);
     
     // Now generate the SAVE using the value in register %g1
-    M = BuildMI(SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP);
+    M = BuildMI(SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP, MOTy::Def);
     mvec.push_back(M);
   }
 
@@ -106,7 +107,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
       {
         int ZR = TM.getRegInfo().getZeroRegNum();
         MachineInstr *Restore =
-          BuildMI(RESTORE, 3).addMReg(ZR).addSImm(0).addMReg(ZR);
+          BuildMI(RESTORE, 3).addMReg(ZR).addSImm(0).addMReg(ZR, MOTy::Def);
         
         MachineCodeForInstruction &termMvec =
           MachineCodeForInstruction::get(TermInst);

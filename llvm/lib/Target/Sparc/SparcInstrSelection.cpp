@@ -8,7 +8,7 @@
 #include "SparcInstrSelectionSupport.h"
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
-#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
@@ -546,8 +546,10 @@ CreateShiftInstructions(const TargetMachine& target,
     }
   
   MachineInstr* M = (optArgVal2 != NULL)
-    ? Create3OperandInstr(shiftOpCode, argVal1, optArgVal2, shiftDest)
-    : Create3OperandInstr_UImmed(shiftOpCode, argVal1, optShiftNum, shiftDest);
+    ? BuildMI(shiftOpCode, 3).addReg(argVal1).addReg(optArgVal2)
+                             .addReg(shiftDest, MOTy::Def)
+    : BuildMI(shiftOpCode, 3).addReg(argVal1).addZImm(optShiftNum)
+                             .addReg(shiftDest, MOTy::Def);
   mvec.push_back(M);
   
   if (shiftDest != destVal)
@@ -601,14 +603,10 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
           if (C == 0 || C == 1)
             {
               cost = target.getInstrInfo().minLatency(ADD);
+              unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
               MachineInstr* M = (C == 0)
-                ? Create3OperandInstr_Reg(ADD,
-                                          target.getRegInfo().getZeroRegNum(),
-                                          target.getRegInfo().getZeroRegNum(),
-                                          destVal)
-                : Create3OperandInstr_Reg(ADD, lval,
-                                          target.getRegInfo().getZeroRegNum(),
-                                          destVal);
+                ? Create3OperandInstr_Reg(ADD, ZeroReg, ZeroReg, destVal)
+                : Create3OperandInstr_Reg(ADD, lval, ZeroReg, destVal);
               mvec.push_back(M);
             }
           else if (isPowerOf2(C, pow))
@@ -1728,10 +1726,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,quot);
         mvec.push_back(M);
         
-        M = Create3OperandInstr(ChooseMulInstructionByType(
-                                   subtreeRoot->getInstruction()->getType()),
-                                quot, subtreeRoot->rightChild()->getValue(),
-                                prod);
+        unsigned MulOpcode =
+          ChooseMulInstructionByType(subtreeRoot->getInstruction()->getType());
+        Value *MulRHS = subtreeRoot->rightChild()->getValue();
+        M = BuildMI(MulOpcode, 3).addReg(quot).addReg(MulRHS).addReg(prod,
+                                                                     MOTy::Def);
         mvec.push_back(M);
         
         M = new MachineInstr(ChooseSubInstructionByType(
@@ -1759,9 +1758,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(notNode->getInstruction()));
         notNode->markFoldedIntoParent();
-        mvec.push_back(Create3OperandInstr(ANDN,
-                                           subtreeRoot->leftChild()->getValue(),
-                                           notArg, subtreeRoot->getValue()));
+        Value *LHS = subtreeRoot->leftChild()->getValue();
+        Value *Dest = subtreeRoot->getValue();
+        mvec.push_back(BuildMI(ANDN, 3).addReg(LHS).addReg(notArg)
+                                       .addReg(Dest, MOTy::Def));
         break;
       }
 
@@ -1781,9 +1781,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(notNode->getInstruction()));
         notNode->markFoldedIntoParent();
-        mvec.push_back(Create3OperandInstr(ORN,
-                                           subtreeRoot->leftChild()->getValue(),
-                                           notArg, subtreeRoot->getValue()));
+        Value *LHS = subtreeRoot->leftChild()->getValue();
+        Value *Dest = subtreeRoot->getValue();
+        mvec.push_back(BuildMI(ORN, 3).addReg(LHS).addReg(notArg)
+                                      .addReg(Dest, MOTy::Def));
         break;
       }
 
@@ -1803,9 +1804,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(notNode->getInstruction()));
         notNode->markFoldedIntoParent();
-        mvec.push_back(Create3OperandInstr(XNOR,
-                                           subtreeRoot->leftChild()->getValue(),
-                                           notArg, subtreeRoot->getValue()));
+        Value *LHS = subtreeRoot->leftChild()->getValue();
+        Value *Dest = subtreeRoot->getValue();
+        mvec.push_back(BuildMI(XNOR, 3).addReg(LHS).addReg(notArg)
+                                       .addReg(Dest, MOTy::Def));
         break;
       }
 
@@ -2010,8 +2012,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         if (isa<Function>(callee))      // direct function call
           M = Create1OperandInstr_Addr(CALL, callee);
         else                            // indirect function call
-          M = Create3OperandInstr_SImmed(JMPLCALL, callee,
-                                         (int64_t) 0, retAddrReg);
+          M = BuildMI(JMPLCALL,
+                      3).addReg(callee).addSImm((int64_t)0).addReg(retAddrReg);
         mvec.push_back(M);
 
         const FunctionType* funcType =
@@ -2172,7 +2174,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               for (unsigned i=0, N=mvec.size(); i < N; ++i)
                 mvec[i]->substituteValue(dest, tmpI);
 
-              M = Create3OperandInstr_UImmed(SRL, tmpI, 8*(4-destSize), dest);
+              M = BuildMI(SRL, 3).addReg(tmpI).addZImm(8*(4-destSize))
+                                 .addReg(dest, MOTy::Def);
               mvec.push_back(M);
             }
           else if (destSize < target.getTargetData().getIntegerRegize())
