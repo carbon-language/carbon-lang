@@ -611,9 +611,9 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::writeport:
     Assert1(FT->getNumParams() == 2,
             "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getParamType(0)->isUnsigned(),
+    Assert1(FT->getParamType(0)->isIntegral(),
             "First argument not unsigned int!", IF);
-    Assert1(FT->getParamType(1)->isIntegral(),
+    Assert1(FT->getParamType(1)->isUnsigned(),
             "First argument not unsigned int!", IF);
     NumArgs = 2;
     break;
