@@ -15,6 +15,7 @@
 class DSGraph {
   Function *Func;          // Func - The LLVM function this graph corresponds to
   DSGraph *GlobalsGraph;   // Pointer to the common graph of global objects
+  bool PrintAuxCalls;      // Should this graph print the Aux calls vector?
 
   DSNodeHandle RetNode;    // The node that gets returned...
   std::vector<DSNode*> Nodes;
@@ -57,6 +58,12 @@ public:
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
   void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }
 
+  // setPrintAuxCalls - If you call this method, the auxillary call vector will
+  // be printed instead of the standard call vector to the dot file.
+  //
+  void setPrintAuxCalls() { PrintAuxCalls = true; }
+  bool shouldPrintAuxCalls() const { return PrintAuxCalls; }
+
   /// getNodes - Get a vector of all the nodes in the graph
   /// 
   const std::vector<DSNode*> &getNodes() const { return Nodes; }
@@ -83,6 +90,9 @@ public:
   /// have been run.
   ///
   std::vector<DSCallSite> &getAuxFunctionCalls() {
+    return AuxFunctionCalls;
+  }
+  const std::vector<DSCallSite> &getAuxFunctionCalls() const {
     return AuxFunctionCalls;
   }
 
@@ -167,6 +177,7 @@ public:
 private:
   bool isNodeDead(DSNode *N);
 
+public:
   // removeTriviallyDeadNodes - After the graph has been constructed, this
   // method removes all unreachable nodes that are created because they got
   // merged with other nodes in the graph.  This is used as the first step of
