@@ -8,12 +8,11 @@
 #ifndef LLVM_CODEGEN_INSTR_SELECTION_SUPPORT_H
 #define LLVM_CODEGEN_INSTR_SELECTION_SUPPORT_H
 
-#include "llvm/Instruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/DataTypes.h"
 class InstructionNode;
 class TargetMachine;
-
+class Instruction;
 
 //---------------------------------------------------------------------------
 // Function GetConstantValueAsUnsignedInt
@@ -80,7 +79,7 @@ Value*          GetMemInstArgs  (InstructionNode* memInstrNode,
 //		     in the machine instruction the 3 operands (arg1, arg2
 //		     and result) should go.
 // 
-// RETURN VALUE: unsigned int flags, where
+// RETURN VALUE: unsigned flags, where
 //	flags & 0x01	=> operand 1 is constant and needs a register
 //	flags & 0x02	=> operand 2 is constant and needs a register
 //------------------------------------------------------------------------ 
@@ -115,7 +114,7 @@ Create1OperandInstr(MachineOpCode opCode, Value* argVal1)
 }
 
 inline MachineInstr*
-Create1OperandInstr_UImmed(MachineOpCode opCode, unsigned int unextendedImmed)
+Create1OperandInstr_UImmed(MachineOpCode opCode, unsigned unextendedImmed)
 {
   MachineInstr* M = new MachineInstr(opCode);
   M->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed,
@@ -163,7 +162,7 @@ Create2OperandInstr(MachineOpCode opCode,
 
 inline MachineInstr*
 Create2OperandInstr_UImmed(MachineOpCode opCode,
-                           unsigned int unextendedImmed, Value* argVal2)
+                           unsigned unextendedImmed, Value* argVal2)
 {
   MachineInstr* M = new MachineInstr(opCode);
   M->SetMachineOperandConst(0, MachineOperand::MO_UnextendedImmed,
@@ -195,7 +194,7 @@ Create2OperandInstr_Addr(MachineOpCode opCode,
 
 inline MachineInstr*
 Create2OperandInstr_Reg(MachineOpCode opCode,
-                        Value* argVal1, unsigned int regNum)
+                        Value* argVal1, unsigned regNum)
 {
   MachineInstr* M = new MachineInstr(opCode);
   M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
@@ -205,7 +204,7 @@ Create2OperandInstr_Reg(MachineOpCode opCode,
 
 inline MachineInstr*
 Create2OperandInstr_Reg(MachineOpCode opCode,
-                        unsigned int regNum1, unsigned int regNum2)
+                        unsigned regNum1, unsigned regNum2)
                  
 {
   MachineInstr* M = new MachineInstr(opCode);
@@ -215,66 +214,8 @@ Create2OperandInstr_Reg(MachineOpCode opCode,
 }
 
 inline MachineInstr*
-Create3OperandInstr(MachineOpCode opCode,
-                    Value* argVal1, MachineOperand::MachineOperandType type1,
-                    Value* argVal2, MachineOperand::MachineOperandType type2,
-                    Value* argVal3, MachineOperand::MachineOperandType type3)
-{
-  MachineInstr* M = new MachineInstr(opCode);
-  M->SetMachineOperandVal(0, type1, argVal1);
-  M->SetMachineOperandVal(1, type2, argVal2);
-  M->SetMachineOperandVal(2, type3, argVal3);
-  return M;
-}
-
-inline MachineInstr*
-Create3OperandInstr(MachineOpCode opCode, Value* argVal1,
-                    Value* argVal2, Value* argVal3)
-{
-  return Create3OperandInstr(opCode,
-                             argVal1, MachineOperand::MO_VirtualRegister, 
-                             argVal2, MachineOperand::MO_VirtualRegister, 
-                             argVal3, MachineOperand::MO_VirtualRegister); 
-}
-
-inline MachineInstr*
-Create3OperandInstr_UImmed(MachineOpCode opCode, Value* argVal1,
-                           unsigned int unextendedImmed, Value* argVal3)
-{
-  MachineInstr* M = new MachineInstr(opCode);
-  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
-  M->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed,
-                                 unextendedImmed);
-  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
-  return M;
-}
-
-inline MachineInstr*
-Create3OperandInstr_SImmed(MachineOpCode opCode, Value* argVal1,
-                           int signExtendedImmed, Value* argVal3)
-{
-  MachineInstr* M = new MachineInstr(opCode);
-  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
-  M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
-                                 signExtendedImmed);
-  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
-  return M;
-}
-
-inline MachineInstr*
-Create3OperandInstr_Addr(MachineOpCode opCode, Value* argVal1,
-                         Value* label, Value* argVal3)
-{
-  MachineInstr* M = new MachineInstr(opCode);
-  M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
-  M->SetMachineOperandVal(1, MachineOperand::MO_PCRelativeDisp,  label);
-  M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, argVal3);
-  return M;
-}
-
-inline MachineInstr*
 Create3OperandInstr_Reg(MachineOpCode opCode, Value* argVal1,
-                        unsigned int regNum, Value* argVal3)
+                        unsigned regNum, Value* argVal3)
 {
   MachineInstr* M = new MachineInstr(opCode);
   M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, argVal1);
@@ -284,8 +225,8 @@ Create3OperandInstr_Reg(MachineOpCode opCode, Value* argVal1,
 }
 
 inline MachineInstr*
-Create3OperandInstr_Reg(MachineOpCode opCode, unsigned int regNum1,
-                        unsigned int regNum2, Value* argVal3)
+Create3OperandInstr_Reg(MachineOpCode opCode, unsigned regNum1,
+                        unsigned regNum2, Value* argVal3)
                  
 {
   MachineInstr* M = new MachineInstr(opCode);
@@ -296,8 +237,8 @@ Create3OperandInstr_Reg(MachineOpCode opCode, unsigned int regNum1,
 }
 
 inline MachineInstr*
-Create3OperandInstr_Reg(MachineOpCode opCode, unsigned int regNum1,
-                        unsigned int regNum2, unsigned int regNum3)
+Create3OperandInstr_Reg(MachineOpCode opCode, unsigned regNum1,
+                        unsigned regNum2, unsigned regNum3)
                  
 {
   MachineInstr* M = new MachineInstr(opCode);
@@ -320,7 +261,7 @@ MachineOperand::MachineOperandType ChooseRegOrImmed(
                                          MachineOpCode opCode,
                                          const TargetMachine& targetMachine,
                                          bool canUseImmed,
-                                         unsigned int& getMachineRegNum,
+                                         unsigned& getMachineRegNum,
                                          int64_t& getImmedValue);
 
 MachineOperand::MachineOperandType ChooseRegOrImmed(int64_t intValue,
@@ -328,7 +269,7 @@ MachineOperand::MachineOperandType ChooseRegOrImmed(int64_t intValue,
                                          MachineOpCode opCode,
                                          const TargetMachine& target,
                                          bool canUseImmed,
-                                         unsigned int& getMachineRegNum,
+                                         unsigned& getMachineRegNum,
                                          int64_t& getImmedValue);
 
 
