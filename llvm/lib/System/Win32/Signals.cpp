@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include <llvm/System/Signals.h>
 #include <stdio.h>
 #include <vector>
 
@@ -81,7 +80,7 @@ void sys::RemoveFileOnSignal(const sys::Path &Filename) {
   if (FilesToRemove == NULL)
     FilesToRemove = new std::vector<sys::Path>;
 
-  FilesToRemove->push_back(sys::Path(Filename.get()));
+  FilesToRemove->push_back(Filename);
 
   LeaveCriticalSection(&CriticalSection);
 }
