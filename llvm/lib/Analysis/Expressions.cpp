@@ -165,9 +165,10 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   switch (Expr->getValueType()) {
   case Value::InstructionVal: break;    // Instruction... hmmm... investigate.
   case Value::TypeVal:   case Value::BasicBlockVal:
-  case Value::MethodVal: case Value::ModuleVal:
+  case Value::MethodVal: case Value::ModuleVal: default:
     assert(0 && "Unexpected expression type to classify!");
-  case Value::MethodArgumentVal:        // Method arg: nothing known, return var
+  case Value::GlobalVal:                // Global Variable & Method argument:
+  case Value::MethodArgumentVal:        // nothing known, return variable itself
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
     ConstPoolVal *CPV = Expr->castConstantAsserting();
