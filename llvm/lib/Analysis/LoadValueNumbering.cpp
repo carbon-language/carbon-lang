@@ -17,6 +17,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Pass.h"
+#include "llvm/Type.h"
 #include "llvm/iMemory.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
@@ -83,6 +84,10 @@ void LoadVN::getAnalysisUsage(AnalysisUsage &AU) const {
 //
 void LoadVN::getEqualNumberNodes(Value *V,
                                  std::vector<Value*> &RetVals) const {
+  // If the alias analysis has any must alias information to share with us, we
+  // can definately use it.
+  if (isa<PointerType>(V->getType()))
+    getAnalysis<AliasAnalysis>().getMustAliases(V, RetVals);
 
   if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
     // If we have a load instruction, find all of the load and store
