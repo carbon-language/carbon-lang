@@ -193,58 +193,56 @@ software you will need.</p>
 <tr>
   <th>OS</th>
   <th>Arch</th>
-  <th>Source code</th>
-  <th>Object code</th>
-  <th>GCC front end</th>
-  <th>Total space</th>
+  <th>Compilers</th>
 </tr>
 <tr>
   <td>Linux</td>
   <td>x86<sup>1</sup></td>
-  <td>57 MB</td>
-  <td>2.5 GB</td>
-  <td>30 MB</td>
-  <td>2.6 GB</td>
+  <td>GCC</td>
 </tr>
 <tr>
   <td>Solaris</td>
   <td>V9 (Ultrasparc)</td>
-  <td>57 MB</td>
-  <td>2.5 GB</td>
-  <td>46 MB</td>
-  <td>2.6 GB</td>
+  <td>GCC</td>
 </tr>
 <tr>
   <td>FreeBSD</td>
   <td>x86<sup>1</sup></td>
-  <td>57 MB</td>
-  <td>850 MB</td>
-  <td>40 MB</td>
-  <td>1 GB</td>
+  <td>GCC</td>
 </tr>
 <tr>
   <td>MacOS X<sup>2</sup></td>
   <td>PowerPC</td>
-  <td>57 MB</td>
-  <td>1.5 GB</td>
-  <td>36 MB</td>
-  <td>1.6 GB</td>
+  <td>GCC</td>
 </tr>
 <tr>
-  <td>AIX<sup>3</sup></td>
-  <td>PowerPC</td>
-  <td>92 MB</td>
-  <td>2.8 GB</td>
-  <td>123 MB</td>
-  <td>3 GB</td>
+  <td>Cygwin/Win32</td>
+  <td>x86<sup>1</sup></td>
+  <td>GCC</td>
+</tr>
+</table>
+
+<p>LLVM has partial support for the following platforms:</p>
+
+<table>
+<tr>
+  <th>OS</th>
+  <th>Arch</th>
+  <th>Compilers</th>
 </tr>
 <tr>
-  <td>Linux<sup>3</sup></td>
+  <td>Windows</td>
+  <td>x86<sup>1</sup></td>
+  <td>Visual Studio .NET<sup>4,5</sup>, MinGW</td>
+<tr>
+  <td>AIX<sup>3,4</sup></td>
   <td>PowerPC</td>
-  <td>30 MB</td>
-  <td>1.1 GB</td>
-  <td>--</td>
-  <td>1 GB</td>
+  <td>GCC</td>
+</tr>
+<tr>
+  <td>Linux<sup>3,5</sup></td>
+  <td>PowerPC</td>
+  <td>GCC</td>
 </tr>
 </table>
 
@@ -253,7 +251,16 @@ Notes:<br>
 <sup>1</sup> Code generation supported for Pentium processors and up<br>
 <sup>2</sup> Code generation supported for 32-bit ABI only<br>
 <sup>3</sup> No native code generation<br>
+<sup>4</sup> Build is not complete: one or more tools don't link<br>
+<sup>5</sup> The GCC-based C/C++ frontend does not build<br>
 </p>
+
+<p>Note that you will need about 1-3 GB of space for a full LLVM build in Debug
+mode, depending on the system (because of all the debug info), and the libraries
+appear in more than one of the tools that get linked, so there is some
+duplication.  If you do not need many of the tools and you are space-conscious,
+you can disable them individually in <tt>llvm/tools/Makefile</tt>.  The Release
+build requires considerably less space.</p>
 
 <p>The LLVM suite <i>may</i> compile on other platforms, but it is not
 guaranteed to do so.  If compilation is successful, the LLVM utilities should be
