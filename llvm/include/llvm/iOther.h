@@ -121,4 +121,40 @@ public:
   }
 };
 
+
+//===----------------------------------------------------------------------===//
+//                               VarArgInst Class
+//===----------------------------------------------------------------------===//
+
+/// VarArgInst - This class represents the va_arg llvm instruction, which reads
+/// an argument of the destination type from the va_list operand pointed to by
+/// the only operand.
+///
+class VarArgInst : public Instruction {
+  VarArgInst(const VarArgInst &VAI) : Instruction(VAI.getType(), VarArg) {
+    Operands.reserve(1);
+    Operands.push_back(Use(VAI.Operands[0], this));
+  }
+public:
+  VarArgInst(Value *S, const Type *Ty, const std::string &Name = "",
+             Instruction *InsertBefore = 0)
+    : Instruction(Ty, VarArg, Name, InsertBefore) {
+    Operands.reserve(1);
+    Operands.push_back(Use(S, this));
+  }
+
+  virtual Instruction *clone() const { return new VarArgInst(*this); }
+
+  bool mayWriteToMemory() const { return true; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const VarArgInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == VarArg;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
 #endif
