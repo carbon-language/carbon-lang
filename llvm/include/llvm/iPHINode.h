@@ -33,13 +33,12 @@ public:
   unsigned getNumIncomingValues() const { return Operands.size()/2; }
 
   /// getIncomingValue - Return incoming value #x
-  const Value *getIncomingValue(unsigned i) const {
-    return Operands[i*2];
-  }
-  Value *getIncomingValue(unsigned i) {
+  Value *getIncomingValue(unsigned i) const {
+    assert(i*2 < Operands.size() && "Invalid value number!");
     return Operands[i*2];
   }
   void setIncomingValue(unsigned i, Value *V) {
+    assert(i*2 < Operands.size() && "Invalid value number!");
     Operands[i*2] = V;
   }
   inline unsigned getOperandNumForIncomingValue(unsigned i) {
@@ -47,16 +46,15 @@ public:
   }
 
   /// getIncomingBlock - Return incoming basic block #x
-  const BasicBlock *getIncomingBlock(unsigned i) const { 
-    return (const BasicBlock*)Operands[i*2+1].get();
-  }
-  inline BasicBlock *getIncomingBlock(unsigned i) { 
+  BasicBlock *getIncomingBlock(unsigned i) const { 
+    assert(i*2+1 < Operands.size() && "Invalid value number!");
     return (BasicBlock*)Operands[i*2+1].get();
   }
-  inline void setIncomingBlock(unsigned i, BasicBlock *BB) {
+  void setIncomingBlock(unsigned i, BasicBlock *BB) {
+    assert(i*2+1 < Operands.size() && "Invalid value number!");
     Operands[i*2+1] = (Value*)BB;
   }
-  inline unsigned getOperandNumForIncomingBlock(unsigned i) {
+  unsigned getOperandNumForIncomingBlock(unsigned i) {
     return i*2+1;
   }
 
@@ -91,6 +89,10 @@ public:
     for (unsigned i = 0; i < Operands.size()/2; ++i) 
       if (getIncomingBlock(i) == BB) return i;
     return -1;
+  }
+
+  Value *getIncomingValueForBlock(const BasicBlock *BB) const {
+    return getIncomingValue(getBasicBlockIndex(BB));
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
