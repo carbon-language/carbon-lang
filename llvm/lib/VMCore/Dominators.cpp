@@ -186,6 +186,23 @@ void DominatorTreeBase::reset() {
   Nodes.clear();
 }
 
+void DominatorTreeBase::Node2::setIDom(Node2 *NewIDom) {
+  assert(IDom && "No immediate dominator?");
+  if (IDom != NewIDom) {
+    std::vector<Node*>::iterator I =
+      std::find(IDom->Children.begin(), IDom->Children.end(), this);
+    assert(I != IDom->Children.end() &&
+           "Not in immediate dominator children set!");
+    // I am no longer your child...
+    IDom->Children.erase(I);
+
+    // Switch to new dominator
+    IDom = NewIDom;
+    IDom->Children.push_back(this);
+  }
+}
+
+
 
 void DominatorTree::calculate(const DominatorSet &DS) {
   Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
