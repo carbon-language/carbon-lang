@@ -403,8 +403,8 @@ public:
 
   // Default implementation, requires user to populate it with values somehow.
   template<class Opt>   // parse - Return true on error.
-  bool parse(Opt &O, const char *ArgName, const string &Arg) {
-    string ArgVal;
+  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
+    std::string ArgVal;
     if (hasArgStr)
       ArgVal = Arg;
     else
@@ -441,11 +441,11 @@ public:
 //
 template<>
 class parser<bool> {
-  static bool parseImpl(Option &O, const string &Arg, bool &Val);
+  static bool parseImpl(Option &O, const std::string &Arg, bool &Val);
 public:
   
   template<class Opt>     // parse - Return true on error.
-  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
     bool Val;
     bool Error = parseImpl(O, Arg, Val);
     if (!Error) O.addValue(Val);
@@ -473,12 +473,12 @@ public:
 //
 template<>
 class parser<int> {
-  static bool parseImpl(Option &O, const string &Arg, int &Val);
+  static bool parseImpl(Option &O, const std::string &Arg, int &Val);
 public:
   
   // parse - Return true on error.
   template<class Opt>
-  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
     int Val;
     bool Error = parseImpl(O, Arg, Val);
     if (!Error) O.addValue(Val);
@@ -506,12 +506,12 @@ public:
 //
 template<>
 class parser<double> {
-  static bool parseImpl(Option &O, const string &Arg, double &Val);
+  static bool parseImpl(Option &O, const std::string &Arg, double &Val);
 public:
   
   // parse - Return true on error.
   template<class Opt>
-  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
     double Val;
     bool Error = parseImpl(O, Arg, Val);
     if (!Error) O.addValue(Val);
@@ -539,13 +539,13 @@ template<> struct parser<float> : public parser<double> {};
 
 
 //--------------------------------------------------
-// parser<string>
+// parser<std::string>
 //
 template<>
-struct parser<string> {
+struct parser<std::string> {
   // parse - Return true on error.
   template<class Opt>
-  bool parse(Opt &O, const char *ArgName, const string &Arg) {
+  bool parse(Opt &O, const char *ArgName, const std::string &Arg) {
     O.addValue(Arg);
     return false;
   }

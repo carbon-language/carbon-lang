@@ -9,14 +9,16 @@
 #define LLVM_SUPPORT_DEPTH_FIRST_ITERATOR_H
 
 #include "Support/GraphTraits.h"
-#include <iterator>
+#include <Support/iterator>
 #include <stack>
 #include <set>
 
 // Generic Depth First Iterator
 template<class GraphT, class GT = GraphTraits<GraphT> >
-class df_iterator : public std::forward_iterator<typename GT::NodeType,
-                                                 ptrdiff_t> {
+class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
+  typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
+  typedef typename super::pointer pointer;
+
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
 
