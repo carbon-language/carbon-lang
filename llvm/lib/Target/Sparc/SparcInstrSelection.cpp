@@ -16,6 +16,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
@@ -159,7 +161,7 @@ GetTmpForCC(Value* boolVal, const Method* method, const Type* ccType)
   // directly written to map using the ref returned by operator[].
   TmpInstruction*& tmpI = boolToTmpCache[boolVal];
   if (tmpI == NULL)
-    tmpI = new TmpInstruction(TMP_INSTRUCTION_OPCODE, ccType, boolVal, NULL);
+    tmpI = new TmpInstruction(ccType, boolVal);
   
   return tmpI;
 }
@@ -908,7 +910,7 @@ ForwardOperand(InstructionNode* treeNode,
   InstructionNode* parentInstrNode = (InstructionNode*) parent;
   
   Instruction* userInstr = parentInstrNode->getInstruction();
-  MachineCodeForVMInstr& mvec = userInstr->getMachineInstrVec();
+  MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(userInstr);
   for (unsigned i=0, N=mvec.size(); i < N; i++)
     {
       MachineInstr* minstr = mvec[i];
@@ -973,7 +975,7 @@ CreateCopyInstructionsByType(const TargetMachine& target,
       vector<TmpInstruction*> tempVec;
       target.getInstrInfo().CreateCodeToLoadConst(src,dest,minstrVec,tempVec);
       for (unsigned i=0; i < tempVec.size(); i++)
-        dest->getMachineInstrVec().addTempValue(tempVec[i]);
+        MachineCodeForInstruction::get(dest).addTemp(tempVec[i]);
     }
   else
     { // Create the appropriate add instruction.
@@ -1148,9 +1150,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           cast<ReturnInst>(subtreeRoot->getInstruction());
         assert(returnInstr->getOpcode() == Instruction::Ret);
         
-        Instruction* returnReg = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
-                                                    returnInstr, NULL);
-        returnInstr->getMachineInstrVec().addTempValue(returnReg);
+        Instruction* returnReg = new TmpInstruction(returnInstr);
+        MachineCodeForInstruction::get(returnInstr).addTemp(returnReg);
         
         mvec[0] = new MachineInstr(JMPLRET);
         mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
@@ -1391,9 +1392,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 const Type* destTypeToUse =
                   (dest->getType() == Type::LongTy)? Type::DoubleTy
                                                    : Type::FloatTy;
-                destForCast = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
-                                                 destTypeToUse, leftVal, NULL);
-                dest->getMachineInstrVec().addTempValue(destForCast);
+                destForCast = new TmpInstruction(destTypeToUse, leftVal);
+                MachineCodeForInstruction &MCFI = 
+                  MachineCodeForInstruction::get(dest);
+                MCFI.addTemp(destForCast);
                 
                 vector<TmpInstruction*> tempVec;
                 target.getInstrInfo().CreateCodeToCopyFloatToInt(
@@ -1402,7 +1404,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                     minstrVec, tempVec, target);
                 
                 for (unsigned i=0; i < tempVec.size(); ++i)
-                  dest->getMachineInstrVec().addTempValue(tempVec[i]);
+                  MCFI.addTemp(tempVec[i]);
               }
             else
               destForCast = leftVal;
@@ -1434,7 +1436,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // so do the check here instead of only for ToFloatTy(reg).
         // 
         if (subtreeRoot->parent() != NULL &&
-            ((InstructionNode*) subtreeRoot->parent())->getInstruction()->getMachineInstrVec()[0]->getOpCode() == FSMULD)
+            MachineCodeForInstruction::get(((InstructionNode*)subtreeRoot->parent())->getInstruction())[0]->getOpCode() == FSMULD)
           {
             numInstr = 0;
             forwardOperandNum = 0;
@@ -1468,9 +1470,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                       (leftVal->getType() == Type::LongTy)? Type::DoubleTy
                                                           : Type::FloatTy;
                     
-                    srcForCast = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
-                                                    srcTypeToUse, dest, NULL);
-                    dest->getMachineInstrVec().addTempValue(srcForCast);
+                    srcForCast = new TmpInstruction(srcTypeToUse, dest);
+                    MachineCodeForInstruction &DestMCFI = 
+                      MachineCodeForInstruction::get(dest);
+                    DestMCFI.addTemp(srcForCast);
                     
                     vector<MachineInstr*> minstrVec;
                     vector<TmpInstruction*> tempVec;
@@ -1483,7 +1486,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                       mvec[n++] = minstrVec[i];
 
                     for (unsigned i=0; i < tempVec.size(); ++i)
-                       dest->getMachineInstrVec().addTempValue(tempVec[i]);
+                       DestMCFI.addTemp(tempVec[i]);
                   }
                 else
                   srcForCast = leftVal;
@@ -1574,14 +1577,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         Instruction* remInstr = subtreeRoot->getInstruction();
         
-        TmpInstruction* quot = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+        TmpInstruction* quot = new TmpInstruction(
                                         subtreeRoot->leftChild()->getValue(),
                                         subtreeRoot->rightChild()->getValue());
-        TmpInstruction* prod = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+        TmpInstruction* prod = new TmpInstruction(
                                         quot,
                                         subtreeRoot->rightChild()->getValue());
-        remInstr->getMachineInstrVec().addTempValue(quot); 
-        remInstr->getMachineInstrVec().addTempValue(prod); 
+        MachineCodeForInstruction::get(remInstr).addTemp(quot).addTemp(prod); 
         
         mvec[0] = new MachineInstr(ChooseDivInstruction(target, subtreeRoot));
         Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
@@ -1663,8 +1665,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           {
             InstructionNode* parent = (InstructionNode*) subtreeRoot->parent();
             assert(parent->getNodeType() == InstrTreeNode::NTInstructionNode);
-            const vector<MachineInstr*>&
-              minstrVec = parent->getInstruction()->getMachineInstrVec();
+            const MachineCodeForInstruction &minstrVec =
+              MachineCodeForInstruction::get(parent->getInstruction());
             MachineOpCode parentOpCode;
             if (parent->getInstruction()->getOpcode() == Instruction::Br &&
                 (parentOpCode = minstrVec[0]->getOpCode()) >= BRZ &&
@@ -1722,7 +1724,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         TmpInstruction* tmpForCC = GetTmpForCC(setCCInstr,
                                      setCCInstr->getParent()->getParent(),
                                      isFPCompare? Type::FloatTy : Type::IntTy);
-        setCCInstr->getMachineInstrVec().addTempValue(tmpForCC);
+        MachineCodeForInstruction::get(setCCInstr).addTemp(tmpForCC);
         
         if (! isFPCompare)
           {
@@ -1884,10 +1886,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                                      ignore));
         
         // Create a temporary value to hold `tmp'
-        Instruction* tmpInstr = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
+        Instruction* tmpInstr = new TmpInstruction(
                                           subtreeRoot->leftChild()->getValue(),
                                           NULL /*could insert tsize here*/);
-        subtreeRoot->getInstruction()->getMachineInstrVec().addTempValue(tmpInstr);
+        MachineCodeForInstruction::get(subtreeRoot->getInstruction()).addTemp(tmpInstr);
         
         // Instruction 1: mul numElements, typeSize -> tmp
         mvec[0] = new MachineInstr(MULX);
@@ -1928,8 +1930,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
         Value *callee = callInstr->getCalledValue();
         
-        Instruction* retAddrReg = new TmpInstruction(TMP_INSTRUCTION_OPCODE,
-                                                     callInstr, NULL);
+        Instruction* retAddrReg = new TmpInstruction(callInstr);
         
         // Note temporary values in the machineInstrVec for the VM instr.
         //
@@ -1937,7 +1938,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         //          The result value must go in slot N.  This is assumed
         //          in register allocation.
         // 
-        callInstr->getMachineInstrVec().addTempValue(retAddrReg);
+        MachineCodeForInstruction::get(callInstr).addTemp(retAddrReg);
         
         
         // Generate the machine instruction and its operands.
