@@ -87,7 +87,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
     Function *CMF = M->getFunction(Funcs[i]->getName(), 
                                    Funcs[i]->getFunctionType());
     assert(CMF && "Function not in module?!");
-    Functions.insert(CMF);    
+    Functions.insert(CMF);
   }
 
   std::cout << "Checking for crash with only these functions:";
@@ -98,7 +98,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Loop over and delete any functions which we aren't supposed to be playing
   // with...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (I->isExternal() && !Functions.count(I))
+    if (!I->isExternal() && !Functions.count(I))
       DeleteFunctionBody(I);
 
   // Try running the hacked up program...
@@ -128,11 +128,6 @@ bool BugDriver::debugCrash() {
   // Reduce the list of passes which causes the optimizer to crash...
   unsigned OldSize = PassesToRun.size();
   DebugCrashes(*this).reduceList(PassesToRun);
-
-  if (PassesToRun.size() == OldSize) { // Make sure something crashed.  :)
-    std::cerr << "ERROR: No passes crashed!\n";
-    return true;
-  }
 
   std::cout << "\n*** Found crashing pass"
             << (PassesToRun.size() == 1 ? ": " : "es: ")
@@ -164,7 +159,6 @@ bool BugDriver::debugCrash() {
 
   // FIXME: This should use the list reducer to converge faster by deleting
   // larger chunks of instructions at a time!
-  bool Reduced = false;
   unsigned Simplification = 4;
   do {
     --Simplification;
@@ -200,7 +194,7 @@ bool BugDriver::debugCrash() {
               // Yup, it does, we delete the old module, and continue trying to
               // reduce the testcase...
               delete M;
-              Reduced = AnyReduction = true;
+              AnyReduction = true;
               goto TryAgain;  // I wish I had a multi-level break here!
             }
             
@@ -222,17 +216,15 @@ bool BugDriver::debugCrash() {
     if (runPasses(PassesToRun)) {
       // Yup, it does, keep the reduced version...
       delete M;
-      Reduced = AnyReduction = true;
+      AnyReduction = true;
     } else {
       delete Program;   // Otherwise, restore the original module...
       Program = M;
     }
   }
 
-  if (Reduced) {
+  if (AnyReduction)
     EmitProgressBytecode("reduced-simplified");
-    Reduced = false;
-  }
 
   return false;
 }
