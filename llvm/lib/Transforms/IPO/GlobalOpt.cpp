@@ -353,6 +353,104 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   return NewGlobals[0];
 }
 
+/// AllUsesOfValueWillTrapIfNull - Return true if all users of the specified
+/// value will trap if the value is dynamically null.
+static bool AllUsesOfValueWillTrapIfNull(Value *V) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
+    if (isa<LoadInst>(*UI)) {
+      // Will trap.
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+      if (SI->getOperand(0) == V) {
+        //std::cerr << "NONTRAPPING USE: " << **UI;
+        return false;  // Storing the value.
+      }
+    } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+      if (CI->getOperand(0) != V) {
+        //std::cerr << "NONTRAPPING USE: " << **UI;
+        return false;  // Not calling the ptr
+      }
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
+      if (II->getOperand(0) != V) {
+        //std::cerr << "NONTRAPPING USE: " << **UI;
+        return false;  // Not calling the ptr
+      }
+    } else if (CastInst *CI = dyn_cast<CastInst>(*UI)) {
+      if (!AllUsesOfValueWillTrapIfNull(CI)) return false;
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
+      if (!AllUsesOfValueWillTrapIfNull(GEPI)) return false;
+    } else {
+      //std::cerr << "NONTRAPPING USE: " << **UI;
+      return false;
+    }
+  return true;
+}
+
+/// AllUsesOfLoadedValueWillTrapIfNull - Return true if all uses of any loads
+/// from GV will trap if the loaded value is null.
+static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI!=E; ++UI)
+    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+      if (!AllUsesOfValueWillTrapIfNull(LI))
+        return false;
+    } else if (isa<StoreInst>(*UI)) {
+      // Ignore stores to the global.
+    } else {
+      // We don't know or understand this user, bail out.
+      //std::cerr << "UNKNOWN USER OF GLOBAL!: " << **UI;
+      return false;
+    }
+
+  return true;
+}
+
+// OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
+// that only one value (besides its initializer) is ever stored to the global.
+static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal) {
+  if (CastInst *CI = dyn_cast<CastInst>(StoredOnceVal))
+    StoredOnceVal = CI->getOperand(0);
+  else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
+    bool IsJustACast = true;
+    for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(GEPI->getOperand(i)) ||
+          !cast<Constant>(GEPI->getOperand(i))->isNullValue()) {
+        IsJustACast = false;
+        break;
+      }
+    if (IsJustACast)
+      StoredOnceVal = GEPI->getOperand(0);
+  }
+
+  // If we are dealing with a pointer global that is initialized to null, only
+  // has one (non-null) value stored into, and if we know that all users of the
+  // loaded value trap if null, then the load users must never get the
+  // initializer.  Instead, replace all of the loads with the stored value.
+  if (isa<PointerType>(GV->getInitializer()->getType()) &&
+      GV->getInitializer()->isNullValue()) {
+    if (isa<Constant>(StoredOnceVal) &&
+        AllUsesOfLoadedValueWillTrapIfNull(GV)) {
+      DEBUG(std::cerr << "REPLACING STORED GLOBAL POINTER: " << *GV);
+
+      //std::cerr << " Stored Value: " << *StoredOnceVal << "\n";
+
+      // Replace all uses of loads with uses of uses of the stored value.
+      while (!GV->use_empty())
+        if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
+          LI->replaceAllUsesWith(StoredOnceVal);
+          LI->getParent()->getInstList().erase(LI); // Nuke the load.
+        } else if (StoreInst *SI = dyn_cast<StoreInst>(GV->use_back())) {
+          SI->getParent()->getInstList().erase(SI); // Nuke the store
+        } else {
+          assert(0 && "Unknown user of stored once global!");
+        }
+
+      // Nuke the now-dead global.
+      GV->getParent()->getGlobalList().erase(GV);
+      return true;
+    }
+    //if (isa<MallocInst>(StoredOnceValue))
+  }
+  return false;
+}
 
 /// ProcessInternalGlobal - Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
@@ -415,6 +513,11 @@ static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
         GVI = FirstNewGV;  // Don't skip the newly produced globals!
         return true;
       }
+    } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
+      // Try to optimize globals based on the knowledge that only one value
+      // (besides its initializer) is ever stored to the global.
+      if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue))
+        return true;
     }
   }
   return false;
