@@ -16,7 +16,13 @@
 
 #include "CodeGenTarget.h"
 #include "Record.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<unsigned>
+AsmWriterNum("asmwriternum", cl::init(0),
+             cl::desc("Make -gen-asm-writer emit assembly writer #N"));
 
 /// getValueType - Return the MCV::ValueType that the specified TableGen record
 /// corresponds to.
@@ -100,7 +106,12 @@ Record *CodeGenTarget::getInstructionSet() const {
 /// getAsmWriter - Return the AssemblyWriter definition for this target.
 ///
 Record *CodeGenTarget::getAsmWriter() const {
-  return TargetRec->getValueAsDef("AssemblyWriter");
+  ListInit *LI = TargetRec->getValueAsListInit("AssemblyWriters");
+  if (AsmWriterNum >= LI->getSize())
+    throw "Target does not have an AsmWriter #" + utostr(AsmWriterNum) + "!";
+  DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(AsmWriterNum));
+  if (!DI) throw std::string("AssemblyWriter list should be a list of defs!");
+  return DI->getDef();
 }
 
 void CodeGenTarget::ReadRegisters() const {
