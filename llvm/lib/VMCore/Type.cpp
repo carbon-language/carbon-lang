@@ -503,6 +503,7 @@ public:
     return I;
   }
 
+
   // containsEquivalent - Return true if the typemap contains a type that is
   // structurally equivalent to the specified type.
   //
@@ -517,6 +518,18 @@ public:
 	return New;
       }
     return 0;
+  }
+
+  void finishRefinement(TypeClass *Ty) {
+    if (TypeClass *NewTy = containsEquivalent(Ty)) {
+      // Refined to a different type altogether?
+      Ty->refineAbstractTypeToInternal(NewTy, false);
+    } else {
+      // If the type is currently thought to be abstract, rescan all of our
+      // subtypes to see if the type has just become concrete!
+      if (Ty->isAbstract()) Ty->setAbstract(Ty->isTypeAbstract());
+      Ty->typeIsRefined();                   // Same type, different contents...
+    }
   }
 
   // refineAbstractType - This is called when one of the contained abstract
@@ -1181,14 +1194,7 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
       ParamTys[i] = NewType;
     }
 
-  if (const FunctionType *MT = FunctionTypes.containsEquivalent(this)) {
-    refineAbstractTypeToInternal(MT, false);    // Different type altogether...
-  } else {
-    // If the type is currently thought to be abstract, rescan all of our
-    // subtypes to see if the type has just become concrete!
-    if (isAbstract()) setAbstract(isTypeAbstract());
-    typeIsRefined();                     // Same type, different contents...
-  }
+  FunctionTypes.finishRefinement(this);
 }
 
 
@@ -1215,14 +1221,7 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  if (const ArrayType *AT = ArrayTypes.containsEquivalent(this)) {
-    refineAbstractTypeToInternal(AT, false);    // Different type altogether...
-  } else {
-    // If the type is currently thought to be abstract, rescan all of our
-    // subtypes to see if the type has just become concrete!
-    if (isAbstract()) setAbstract(isTypeAbstract());
-    typeIsRefined();                   // Same type, different contents...
-  }
+  ArrayTypes.finishRefinement(this);
 }
 
 
@@ -1253,14 +1252,7 @@ void StructType::refineAbstractType(const DerivedType *OldType,
       ETypes[i] = NewType;
     }
 
-  if (const StructType *ST = StructTypes.containsEquivalent(this)) {
-    refineAbstractTypeToInternal(ST, false);    // Different type altogether...
-  } else {
-    // If the type is currently thought to be abstract, rescan all of our
-    // subtypes to see if the type has just become concrete!
-    if (isAbstract()) setAbstract(isTypeAbstract());
-    typeIsRefined();                   // Same type, different contents...
-  }
+  StructTypes.finishRefinement(this);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1286,13 +1278,6 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
-  if (const PointerType *PT = PointerTypes.containsEquivalent(this)) {
-    refineAbstractTypeToInternal(PT, false);     // Different type altogether...
-  } else {
-    // If the type is currently thought to be abstract, rescan all of our
-    // subtypes to see if the type has just become concrete!
-    if (isAbstract()) setAbstract(isTypeAbstract());
-    typeIsRefined();                   // Same type, different contents...
-  }
+  PointerTypes.finishRefinement(this);
 }
 
