@@ -51,6 +51,247 @@
 using namespace llvm;
 
 namespace {
+  /// SCEVExpander - This class uses information about analyze scalars to
+  /// rewrite expressions in canonical form.
+  ///
+  /// Clients should create an instance of this class when rewriting is needed,
+  /// and destroying it when finished to allow the release of the associated
+  /// memory.
+  struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
+    ScalarEvolution &SE;
+    LoopInfo &LI;
+    std::map<SCEVHandle, Value*> InsertedExpressions;
+    std::set<Instruction*> InsertedInstructions;
+
+    Instruction *InsertPt;
+
+    friend class SCEVVisitor<SCEVExpander, Value*>;
+  public:
+    SCEVExpander(ScalarEvolution &se, LoopInfo &li) : SE(se), LI(li) {}
+
+    /// isInsertedInstruction - Return true if the specified instruction was
+    /// inserted by the code rewriter.  If so, the client should not modify the
+    /// instruction.
+    bool isInsertedInstruction(Instruction *I) const {
+      return InsertedInstructions.count(I);
+    }
+    
+    /// getOrInsertCanonicalInductionVariable - This method returns the
+    /// canonical induction variable of the specified type for the specified
+    /// loop (inserting one if there is none).  A canonical induction variable
+    /// starts at zero and steps by one on each iteration.
+    Value *getOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty){
+      assert((Ty->isInteger() || Ty->isFloatingPoint()) &&
+             "Can only insert integer or floating point induction variables!");
+      SCEVHandle H = SCEVAddRecExpr::get(SCEVUnknown::getIntegerSCEV(0, Ty),
+                                         SCEVUnknown::getIntegerSCEV(1, Ty), L);
+      return expand(H);
+    }
+
+    /// addInsertedValue - Remember the specified instruction as being the
+    /// canonical form for the specified SCEV.
+    void addInsertedValue(Instruction *I, SCEV *S) {
+      InsertedExpressions[S] = (Value*)I;
+      InsertedInstructions.insert(I);
+    }
+
+    /// expandCodeFor - Insert code to directly compute the specified SCEV
+    /// expression into the program.  The inserted code is inserted into the
+    /// specified block.
+    ///
+    /// If a particular value sign is required, a type may be specified for the
+    /// result.
+    Value *expandCodeFor(SCEVHandle SH, Instruction *IP, const Type *Ty = 0) {
+      // Expand the code for this SCEV.
+      this->InsertPt = IP;
+      return expandInTy(SH, Ty);
+    }
+
+  protected:
+    Value *expand(SCEV *S) {
+      // Check to see if we already expanded this.
+      std::map<SCEVHandle, Value*>::iterator I = InsertedExpressions.find(S);
+      if (I != InsertedExpressions.end())
+        return I->second;
+
+      Value *V = visit(S);
+      InsertedExpressions[S] = V;
+      return V;
+    }
+
+    Value *expandInTy(SCEV *S, const Type *Ty) {
+      Value *V = expand(S);
+      if (Ty && V->getType() != Ty) {
+        // FIXME: keep track of the cast instruction.
+        if (Constant *C = dyn_cast<Constant>(V))
+          return ConstantExpr::getCast(C, Ty);
+        else if (Instruction *I = dyn_cast<Instruction>(V)) {
+          // Check to see if there is already a cast.  If there is, use it.
+          for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
+               UI != E; ++UI) {
+            if ((*UI)->getType() == Ty)
+              if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
+                BasicBlock::iterator It = I; ++It;
+                while (isa<PHINode>(It)) ++It;
+                if (It != BasicBlock::iterator(CI)) {
+                  // Splice the cast immediately after the operand in question.
+                  I->getParent()->getInstList().splice(It,
+                                                       CI->getParent()->getInstList(),
+                                                       CI);
+                }
+                return CI;
+              }
+          }
+          BasicBlock::iterator IP = I; ++IP;
+          if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+            IP = II->getNormalDest()->begin();
+          while (isa<PHINode>(IP)) ++IP;
+          return new CastInst(V, Ty, V->getName(), IP);
+        } else {
+          // FIXME: check to see if there is already a cast!
+          return new CastInst(V, Ty, V->getName(), InsertPt);
+        }
+      }
+      return V;
+    }
+
+    Value *visitConstant(SCEVConstant *S) {
+      return S->getValue();
+    }
+
+    Value *visitTruncateExpr(SCEVTruncateExpr *S) {
+      Value *V = expand(S->getOperand());
+      return new CastInst(V, S->getType(), "tmp.", InsertPt);
+    }
+
+    Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
+      Value *V = expandInTy(S->getOperand(),V->getType()->getUnsignedVersion());
+      return new CastInst(V, S->getType(), "tmp.", InsertPt);
+    }
+
+    Value *visitAddExpr(SCEVAddExpr *S) {
+      const Type *Ty = S->getType();
+      Value *V = expandInTy(S->getOperand(S->getNumOperands()-1), Ty);
+
+      // Emit a bunch of add instructions
+      for (int i = S->getNumOperands()-2; i >= 0; --i)
+        V = BinaryOperator::create(Instruction::Add, V,
+                                   expandInTy(S->getOperand(i), Ty),
+                                   "tmp.", InsertPt);
+      return V;
+    }
+
+    Value *visitMulExpr(SCEVMulExpr *S);
+
+    Value *visitUDivExpr(SCEVUDivExpr *S) {
+      const Type *Ty = S->getType();
+      Value *LHS = expandInTy(S->getLHS(), Ty);
+      Value *RHS = expandInTy(S->getRHS(), Ty);
+      return BinaryOperator::create(Instruction::Div, LHS, RHS, "tmp.",
+                                    InsertPt);
+    }
+
+    Value *visitAddRecExpr(SCEVAddRecExpr *S);
+
+    Value *visitUnknown(SCEVUnknown *S) {
+      return S->getValue();
+    }
+  };
+}
+
+Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
+  const Type *Ty = S->getType();
+  int FirstOp = 0;  // Set if we should emit a subtract.
+  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getOperand(0)))
+    if (SC->getValue()->isAllOnesValue())
+      FirstOp = 1;
+    
+  int i = S->getNumOperands()-2;
+  Value *V = expandInTy(S->getOperand(i+1), Ty);
+    
+  // Emit a bunch of multiply instructions
+  for (; i >= FirstOp; --i)
+    V = BinaryOperator::create(Instruction::Mul, V,
+                               expandInTy(S->getOperand(i), Ty),
+                               "tmp.", InsertPt);
+  // -1 * ...  --->  0 - ...
+  if (FirstOp == 1)
+    V = BinaryOperator::create(Instruction::Sub, Constant::getNullValue(Ty),
+                               V, "tmp.", InsertPt);
+  return V;
+}
+
+Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
+  const Type *Ty = S->getType();
+  const Loop *L = S->getLoop();
+  // We cannot yet do fp recurrences, e.g. the xform of {X,+,F} --> X+{0,+,F}
+  assert(Ty->isIntegral() && "Cannot expand fp recurrences yet!");
+
+  // {X,+,F} --> X + {0,+,F}
+  if (!isa<SCEVConstant>(S->getStart()) ||
+      !cast<SCEVConstant>(S->getStart())->getValue()->isNullValue()) {
+    Value *Start = expandInTy(S->getStart(), Ty);
+    std::vector<SCEVHandle> NewOps(S->op_begin(), S->op_end());
+    NewOps[0] = SCEVUnknown::getIntegerSCEV(0, Ty);
+    Value *Rest = expandInTy(SCEVAddRecExpr::get(NewOps, L), Ty);
+
+    // FIXME: look for an existing add to use.
+    return BinaryOperator::create(Instruction::Add, Rest, Start, "tmp.",
+                                  InsertPt);
+  }
+
+  // {0,+,1} --> Insert a canonical induction variable into the loop!
+  if (S->getNumOperands() == 2 &&
+      S->getOperand(1) == SCEVUnknown::getIntegerSCEV(1, Ty)) {
+    // Create and insert the PHI node for the induction variable in the
+    // specified loop.
+    BasicBlock *Header = L->getHeader();
+    PHINode *PN = new PHINode(Ty, "indvar", Header->begin());
+    PN->addIncoming(Constant::getNullValue(Ty), L->getLoopPreheader());
+
+    pred_iterator HPI = pred_begin(Header);
+    assert(HPI != pred_end(Header) && "Loop with zero preds???");
+    if (!L->contains(*HPI)) ++HPI;
+    assert(HPI != pred_end(Header) && L->contains(*HPI) &&
+           "No backedge in loop?");
+
+    // Insert a unit add instruction right before the terminator corresponding
+    // to the back-edge.
+    Constant *One = Ty->isFloatingPoint() ? (Constant*)ConstantFP::get(Ty, 1.0)
+                                          : ConstantInt::get(Ty, 1);
+    Instruction *Add = BinaryOperator::create(Instruction::Add, PN, One,
+                                              "indvar.next",
+                                              (*HPI)->getTerminator());
+
+    pred_iterator PI = pred_begin(Header);
+    if (*PI == L->getLoopPreheader())
+      ++PI;
+    PN->addIncoming(Add, *PI);
+    return PN;
+  }
+
+  // Get the canonical induction variable I for this loop.
+  Value *I = getOrInsertCanonicalInductionVariable(L, Ty);
+
+  if (S->getNumOperands() == 2) {   // {0,+,F} --> i*F
+    Value *F = expandInTy(S->getOperand(1), Ty);
+    return BinaryOperator::create(Instruction::Mul, I, F, "tmp.", InsertPt);
+  }
+
+  // If this is a chain of recurrences, turn it into a closed form, using the
+  // folders, then expandCodeFor the closed form.  This allows the folders to
+  // simplify the expression without having to build a bunch of special code
+  // into this folder.
+  SCEVHandle IH = SCEVUnknown::get(I);   // Get I as a "symbolic" SCEV.
+
+  SCEVHandle V = S->evaluateAtIteration(IH);
+  //std::cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
+
+  return expandInTy(V, Ty);
+}
+
+
+namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
   Statistic<> NumPointer ("indvars", "Number of pointer indvars promoted");
   Statistic<> NumInserted("indvars", "Number of canonical indvars added");
@@ -85,7 +326,7 @@ namespace {
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     std::set<Instruction*> &DeadInsts);
     void LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                   ScalarEvolutionRewriter &RW);
+                                   SCEVExpander &RW);
     void RewriteLoopExitValues(Loop *L);
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
@@ -96,7 +337,6 @@ namespace {
 Pass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();
 }
-
 
 /// DeleteTriviallyDeadInstructions - If any of the instructions is the
 /// specified set are trivially dead, delete them and see if this makes any of
@@ -182,7 +422,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
 /// SCEV analysis can determine a loop-invariant trip count of the loop, which
 /// is actually a much broader range than just linear tests.
 void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                               ScalarEvolutionRewriter &RW) {
+                                               SCEVExpander &RW) {
   // Find the exit block for the loop.  We can currently only handle loops with
   // a single exit.
   std::vector<BasicBlock*> ExitBlocks;
@@ -237,7 +477,7 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = RW.ExpandCodeFor(TripCount, Preheader->getTerminator(),
+  Value *ExitCnt = RW.expandCodeFor(TripCount, Preheader->getTerminator(),
                                     IndVar->getType());
 
   // Insert a new setne or seteq instruction before the branch.
@@ -266,7 +506,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
 
   // Scan all of the instructions in the loop, looking at those that have
   // extra-loop users and which are recurrences.
-  ScalarEvolutionRewriter Rewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE, *LI);
 
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
@@ -307,7 +547,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
               if (!isa<SCEVCouldNotCompute>(ExitValue)) {
                 Changed = true;
                 ++NumReplaced;
-                Value *NewVal = Rewriter.ExpandCodeFor(ExitValue, InsertPt,
+                Value *NewVal = Rewriter.expandCodeFor(ExitValue, InsertPt,
                                                        I->getType());
 
                 // Rewrite any users of the computed value outside of the loop
@@ -379,8 +619,8 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     // Actually, if we know how many times the loop iterates, lets insert a
     // canonical induction variable to help subsequent passes.
     if (!isa<SCEVCouldNotCompute>(IterationCount)) {
-      ScalarEvolutionRewriter Rewriter(*SE, *LI);
-      Rewriter.GetOrInsertCanonicalInductionVariable(L,
+      SCEVExpander Rewriter(*SE, *LI);
+      Rewriter.getOrInsertCanonicalInductionVariable(L,
                                                      IterationCount->getType());
       LinearFunctionTestReplace(L, IterationCount, Rewriter);
     }
@@ -399,12 +639,12 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   }
 
   // Create a rewriter object which we'll use to transform the code with.
-  ScalarEvolutionRewriter Rewriter(*SE, *LI);
+  SCEVExpander Rewriter(*SE, *LI);
 
   // Now that we know the largest of of the induction variables in this loop,
   // insert a canonical induction variable of the largest size.
   LargestType = LargestType->getUnsignedVersion();
-  Value *IndVar = Rewriter.GetOrInsertCanonicalInductionVariable(L,LargestType);
+  Value *IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
   ++NumInserted;
   Changed = true;
 
@@ -440,7 +680,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   std::map<unsigned, Value*> InsertedSizes;
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
-    Value *NewVal = Rewriter.ExpandCodeFor(IndVars.back().second, InsertPt,
+    Value *NewVal = Rewriter.expandCodeFor(IndVars.back().second, InsertPt,
                                            PN->getType());
     std::string Name = PN->getName();
     PN->setName("");
@@ -465,7 +705,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
             !I->use_empty() &&
             !Rewriter.isInsertedInstruction(I)) {
           SCEVHandle SH = SE->getSCEV(I);
-          Value *V = Rewriter.ExpandCodeFor(SH, I, I->getType());
+          Value *V = Rewriter.expandCodeFor(SH, I, I->getType());
           if (V != I) {
             if (isa<Instruction>(V)) {
               std::string Name = I->getName();
