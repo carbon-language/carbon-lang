@@ -90,13 +90,13 @@ OPTIONS
 	architectures are:
 
 	<dl compact>
-		<di> x86
+		<dt> x86 </dt>
 		<dd>IA-32 (Pentium and above)</dd>
 
-		<di> sparc
+		<dt> sparc </dt>
 		<dd>SPARC V9</dd>
 
-		<di> c
+		<dt> c </dt>
 		<dd>Emit C code</dd>
 	</dl>
 	<p>
@@ -144,16 +144,17 @@ OPTIONS
 	<br>
         Specify the register allocator to use. The default is <i>simple</i>.
         Valid register allocators are:
+        <p>
 	<dl compact>
-		<di> simple
+		<dt> simple </dt>
 		<dd>Very simple register allocator</dd>
 
-		<di> local
+		<dt> local </dt>
 		<dd>Local register allocator</dd>
 
-		<di> linearscan
+		<dt> linearscan </dt>
 		<dd>Linear scan global register allocator (experimental)</dd>
-        <p>
+        </dl>
 
 	<li>-spiller=&lt;sp&gt;
 	<br>
@@ -161,11 +162,11 @@ OPTIONS
         Currently this option is used by the linear scan register
         allocator. The default is <i>local</i>.
         Valid spillers are:
+        <p>
 	<dl compact>
-		<di> local
+		<dt> local </dt>
 		<dd>Local spiller</dd>
 	</dl>
-	<p>
 
 </ul>
 
