@@ -8,6 +8,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
+#include "llvm/Argument.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/ConstantHandling.h"
@@ -54,16 +55,20 @@ void BasicAliasAnalysis::initializePass() {
 
 
 
-// hasUniqueAddress - Return true if the 
+// hasUniqueAddress - Return true if the specified value points to something
+// with a unique, discernable, address.
 static inline bool hasUniqueAddress(const Value *V) {
-  return isa<GlobalValue>(V) || isa<MallocInst>(V) || isa<AllocaInst>(V);
+  return isa<GlobalValue>(V) || isa<AllocationInst>(V);
 }
 
+// getUnderlyingObject - This traverses the use chain to figure out what object
+// the specified value points to.  If the value points to, or is derived from, a
+// unique object or an argument, return it.
 static const Value *getUnderlyingObject(const Value *V) {
   if (!isa<PointerType>(V->getType())) return 0;
 
   // If we are at some type of object... return it.
-  if (hasUniqueAddress(V)) return V;
+  if (hasUniqueAddress(V) || isa<Argument>(V)) return V;
   
   // Traverse through different addressing mechanisms...
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
@@ -112,16 +117,26 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
   // Pointing at a discernible object?
   if (O1 && O2) {
-    // If they are two different objects, we know that we have no alias...
-    if (O1 != O2) return NoAlias;
+    if (isa<Argument>(O1)) {
+      // Incoming argument cannot alias locally allocated object!
+      if (isa<AllocationInst>(O2)) return NoAlias;
+      // Otherwise, nothing is known...
+    } else if (isa<Argument>(O2)) {
+      // Incoming argument cannot alias locally allocated object!
+      if (isa<AllocationInst>(O1)) return NoAlias;
+      // Otherwise, nothing is known...
+    } else {
+      // If they are two different objects, we know that we have no alias...
+      if (O1 != O2) return NoAlias;
+    }
 
     // If they are the same object, they we can look at the indexes.  If they
     // index off of the object is the same for both pointers, they must alias.
     // If they are provably different, they must not alias.  Otherwise, we can't
     // tell anything.
-  } else if (O1 && isa<ConstantPointerNull>(V2)) {
+  } else if (O1 && !isa<Argument>(O1) && isa<ConstantPointerNull>(V2)) {
     return NoAlias;                    // Unique values don't alias null
-  } else if (O2 && isa<ConstantPointerNull>(V1)) {
+  } else if (O2 && !isa<Argument>(O2) && isa<ConstantPointerNull>(V1)) {
     return NoAlias;                    // Unique values don't alias null
   }
 
