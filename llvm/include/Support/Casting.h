@@ -62,7 +62,7 @@ struct isa_impl_wrap<To, const FromTy, const FromTy> {
 };
 
 // isa_impl_cl - Use class partial specialization to transform types to a single
-// cannonical form for isa_impl.
+// canonical form for isa_impl.
 //
 template<typename FromCl>
 struct isa_impl_cl {
