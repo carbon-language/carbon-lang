@@ -71,7 +71,8 @@ namespace {
     unsigned emitIntegerCast (MachineBasicBlock *BB,
                               MachineBasicBlock::iterator IP,
                               const Type *oldTy, unsigned SrcReg,
-                              const Type *newTy, unsigned DestReg);
+                              const Type *newTy, unsigned DestReg,
+                              bool castToLong = false);
     void emitFPToIntegerCast (MachineBasicBlock *BB,
                               MachineBasicBlock::iterator IP, const Type *oldTy,
                               unsigned SrcReg, const Type *newTy,
@@ -606,15 +607,15 @@ void V8ISel::visitCastInst(CastInst &I) {
 unsigned V8ISel::emitIntegerCast (MachineBasicBlock *BB,
                               MachineBasicBlock::iterator IP, const Type *oldTy,
                               unsigned SrcReg, const Type *newTy,
-                              unsigned DestReg) {
-  if (oldTy == newTy) {
+                              unsigned DestReg, bool castToLong) {
+  unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
+  if (oldTy == newTy || (!castToLong && shiftWidth == 0)) {
     // No-op cast - just emit a copy; assume the reg. allocator will zap it.
     BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg(SrcReg);
     return SrcReg;
   }
   // Emit left-shift, then right-shift to sign- or zero-extend.
   unsigned TmpReg = makeAnotherReg (newTy);
-  unsigned shiftWidth = 32 - (8 * TM.getTargetData ().getTypeSize (newTy));
   BuildMI (*BB, IP, V8::SLLri, 2, TmpReg).addZImm (shiftWidth).addReg(SrcReg);
   if (newTy->isSigned ()) { // sign-extend with SRA
     BuildMI(*BB, IP, V8::SRAri, 2, DestReg).addZImm (shiftWidth).addReg(TmpReg);
@@ -739,7 +740,7 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         const Type *OldHalfTy = oldTy->isSigned() ? Type::IntTy : Type::UIntTy;
         const Type *NewHalfTy = newTy->isSigned() ? Type::IntTy : Type::UIntTy;
         unsigned TempReg = emitIntegerCast (BB, IP, OldHalfTy, SrcReg,
-                                            NewHalfTy, DestReg+1);
+                                            NewHalfTy, DestReg+1, true);
         if (newTy->isSigned ()) {
           BuildMI (*BB, IP, V8::SRAri, 2, DestReg).addReg (TempReg) 
             .addZImm (31);

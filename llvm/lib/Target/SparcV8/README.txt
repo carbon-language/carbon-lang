@@ -55,13 +55,6 @@ To-do
 * support casting 64-bit integers to FP types (fhourstones needs this)
 * support FP rem (call fmod)
 
-* Eliminate srl/sll by zero bits like this:
-        sll %l0, 0, %l0
-        srl %l0, 0, %o0
-
-  We think these are only used by V9 to clear off the top 32 bits of a reg,
-  so they are not needed.
-
 * Keep the address of the constant pool in a register instead of forming its
   address all of the time.
 
