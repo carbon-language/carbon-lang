@@ -86,7 +86,7 @@ static HANDLE RedirectIO(const Path *path, int fd) {
   sa.bInheritHandle = TRUE;
 
   h = CreateFile(fname, fd ? GENERIC_WRITE : GENERIC_READ, FILE_SHARE_READ,
-                 &sa, fd ? OPEN_EXISTING : CREATE_ALWAYS,
+                 &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
                  FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
     ThrowError(std::string(fname) + ": Can't open file for " +
