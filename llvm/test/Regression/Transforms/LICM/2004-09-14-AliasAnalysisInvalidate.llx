@@ -1,0 +1,22 @@
+; RUN: llvm-as < %s | opt -globalsmodref-aa -licm -disable-output
+
+%PL_regcomp_parse = internal global sbyte* null
+
+implementation
+
+void %test() {
+        br label %Outer
+Outer:
+        br label %Inner
+Inner:
+	%tmp.114.i.i.i = load sbyte** %PL_regcomp_parse
+	%tmp.115.i.i.i = load sbyte* %tmp.114.i.i.i
+
+	store sbyte* null, sbyte** %PL_regcomp_parse
+
+        br bool false, label %Inner, label %Next
+Next:
+        br bool false, label %Outer, label %Exit
+Exit:
+        ret void
+}
