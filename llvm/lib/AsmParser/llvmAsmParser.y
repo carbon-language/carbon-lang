@@ -626,6 +626,13 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   UR_OUT("Type '" << Ty->getDescription() << 
          "' newly formed.  Resolving upreferences.\n" <<
          UpRefs.size() << " upreferences active!\n");
+
+  // If we find any resolvable upreferences (i.e., those whose NestingLevel goes
+  // to zero), we resolve them all together before we resolve them to Ty.  At
+  // the end of the loop, if there is anything to resolve to Ty, it will be in
+  // this variable.
+  OpaqueType *TypeToResolve = 0;
+
   for (unsigned i = 0; i != UpRefs.size(); ++i) {
     UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", " 
 	   << UpRefs[i].second->getDescription() << ") = " 
@@ -636,16 +643,27 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
       UpRefs[i].LastContainedTy = Ty;
       UR_OUT("  Uplevel Ref Level = " << Level << "\n");
       if (Level == 0) {                     // Upreference should be resolved! 
-	UR_OUT("  * Resolving upreference for "
-               << UpRefs[i].second->getDescription() << "\n";
-	       std::string OldName = UpRefs[i].UpRefTy->getDescription());
-	UpRefs[i].UpRefTy->refineAbstractTypeTo(Ty);
-	UR_OUT("  * Type '" << OldName << "' refined upreference to: "
-	       << (const void*)Ty << ", " << Ty->getDescription() << "\n");
+        if (!TypeToResolve) {
+          TypeToResolve = UpRefs[i].UpRefTy;
+        } else {
+          UR_OUT("  * Resolving upreference for "
+                 << UpRefs[i].second->getDescription() << "\n";
+                 std::string OldName = UpRefs[i].UpRefTy->getDescription());
+          UpRefs[i].UpRefTy->refineAbstractTypeTo(TypeToResolve);
+          UR_OUT("  * Type '" << OldName << "' refined upreference to: "
+                 << (const void*)Ty << ", " << Ty->getDescription() << "\n");
+        }
 	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
         --i;                                // Do not skip the next element...
       }
     }
+  }
+
+  if (TypeToResolve) {
+    UR_OUT("  * Resolving upreference for "
+           << UpRefs[i].second->getDescription() << "\n";
+           std::string OldName = UpRefs[i].UpRefTy->getDescription());
+    TypeToResolve->refineAbstractTypeTo(Ty);
   }
 
   return Ty;
