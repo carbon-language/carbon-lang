@@ -33,7 +33,7 @@ int SparcV8RegisterInfo::storeRegToStackSlot(
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only store 32-bit values to stack slots");
   MachineInstr *I =
-    BuildMI (V8::STrm, 2).addFrameIndex (FrameIdx).addReg (SrcReg);
+    BuildMI (V8::STrm, 3).addFrameIndex (FrameIdx).addSImm (0).addReg (SrcReg);
   MBB.insert(MBBI, I);
   return 1;
 }
@@ -47,7 +47,7 @@ int SparcV8RegisterInfo::loadRegFromStackSlot(
   assert (RC == SparcV8::IntRegsRegisterClass
           && "Can only load 32-bit registers from stack slots");
   MachineInstr *I =
-    BuildMI (V8::LDmr, 2).addReg (DestReg).addFrameIndex (FrameIdx);
+    BuildMI (V8::LDmr, 2).addReg (DestReg).addFrameIndex (FrameIdx).addSImm (0);
   MBB.insert(MBBI, I);
   return 1;
 }
@@ -84,11 +84,14 @@ SparcV8RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
-  std::cerr
-    << "Sorry, I don't know how to eliminate frame indices yet\n"
-    << "Frame index was " << FrameIndex << ", in\n"
-    << __FUNCTION__ << "() at " << __FILE__ << ":" << __LINE__ << "\n";
-  abort();
+  // Replace frame index with a frame pointer reference
+  MI.SetMachineOperandReg (i, V8::FP);
+
+  // Addressable stack objects are accessed using neg. offsets from %fp
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
+               MI.getOperand(i+1).getImmedValue();
+  // note: Offset < 0
+  MI.SetMachineOperandConst (i+1, MachineOperand::MO_SignExtendedImmed, Offset);
 }
 
 void SparcV8RegisterInfo::
@@ -99,7 +102,7 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Get the number of bytes to allocate from the FrameInfo
-  int NumBytes = (int) MFI->getStackSize();
+  int NumBytes = (int) MFI->getStackSize() + 4;
 
   // Emit the correct save instruction based on the number of bytes in the frame.
   // Minimum stack frame size according to V8 ABI is:
