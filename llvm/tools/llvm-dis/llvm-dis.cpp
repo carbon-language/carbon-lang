@@ -57,7 +57,8 @@ int main(int argc, char **argv) {
   std::string ErrorMessage;
 
   if (WriteMode == c) {
-    std::cerr << "ERROR: llvm-dis no longer contains the C backend.  Use 'llc -march=c' instead!\n";
+    std::cerr << "ERROR: llvm-dis no longer contains the C backend. "
+              << "Use 'llc -march=c' instead!\n";
     exit(1);
   }
 
