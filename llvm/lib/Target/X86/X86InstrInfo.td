@@ -108,6 +108,12 @@ class Imp<list<Register> uses, list<Register> defs> {
   list<Register> Defs = defs;
 }
 
+// II - InstructionInfo - this will eventually replace the I class.
+class II<dag ops, string AsmStr> {
+  dag OperandList = ops;
+  string AsmString = AsmStr;
+}
+
 
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
@@ -148,15 +154,14 @@ class Im32i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem32, Imm8>;
 
 // Helper for shift instructions
 class UsesCL { list<Register> Uses = [CL]; bit printImplicitUsesAfter = 1; }
-class PrintImpDefsAfter {bit printImplicitDefsAfter = 1;}
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
 //
 
-def PHI : I<"PHI", 0, Pseudo>;          // PHI node...
-
-def NOOP : I<"nop", 0x90, RawFrm>;    // nop
+def PHI : I<"PHI", 0, Pseudo>;        // PHI node...
+def NOOP : I<"nop", 0x90, RawFrm>,    // nop
+           II<(ops), "nop">;
 
 def ADJCALLSTACKDOWN : I<"ADJCALLSTACKDOWN", 0, Pseudo>;
 def ADJCALLSTACKUP   : I<"ADJCALLSTACKUP",   0, Pseudo>;
@@ -172,7 +177,8 @@ let isTerminator = 1 in
 
 // Return instruction...
 let isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def RET : I<"ret", 0xC3, RawFrm>;
+  def RET : I<"ret", 0xC3, RawFrm>,
+            II<(ops), "ret">;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1 in
@@ -209,7 +215,8 @@ let isCall = 1 in
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
-def LEAVE    : I<"leave", 0xC9, RawFrm>, Imp<[EBP,ESP],[EBP,ESP]>;
+def LEAVE    : I<"leave", 0xC9, RawFrm>, Imp<[EBP,ESP],[EBP,ESP]>,
+               II<(ops), "leave">;
 def POP32r   : I<"pop",   0x58, AddRegFrm>, Imp<[ESP],[ESP]>;
 
 let isTwoAddress = 1 in                                    // R32 = bswap R32
@@ -230,27 +237,34 @@ def LEA32r   : Im32<"lea", 0x8D, MRMSrcMem>;                  // R32 = lea [mem]
 
 
 def REP_MOVSB : I<"rep movsb", 0xA4, RawFrm>, REP,
-                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
+                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>,
+                II<(ops), "rep movsb">;
 def REP_MOVSW : I<"rep movsw", 0xA5, RawFrm>, REP, OpSize,
-                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
+                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>,
+                II<(ops), "rep movsw">;
 def REP_MOVSD : I<"rep movsd", 0xA5, RawFrm>, REP,
-                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>;
+                Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>,
+                II<(ops), "rep movsd">;
 
 def REP_STOSB : I<"rep stosb", 0xAA, RawFrm>, REP,
-                Imp<[AL,ECX,EDI], [ECX,EDI]>;
+                Imp<[AL,ECX,EDI], [ECX,EDI]>,
+                II<(ops), "rep stosb">;
 def REP_STOSW : I<"rep stosw", 0xAB, RawFrm>, REP, OpSize,
-                Imp<[AX,ECX,EDI], [ECX,EDI]>;
+                Imp<[AX,ECX,EDI], [ECX,EDI]>,
+                II<(ops), "rep stosw">;
 def REP_STOSD : I<"rep stosd", 0xAB, RawFrm>, REP,
-                Imp<[EAX,ECX,EDI], [ECX,EDI]>;
+                Imp<[EAX,ECX,EDI], [ECX,EDI]>,
+                II<(ops), "rep stosd">;
 
 //===----------------------------------------------------------------------===//
 //  Input/Output Instructions...
 //
-let printImplicitUsesAfter = 1, printImplicitDefsAfter = 1 in {
-  def IN8rr  : I<"in", 0xEC, RawFrm>, Imp<[DX], [AL]>;         // AL  = in I/O address DX
-  def IN16rr : I<"in", 0xED, RawFrm>, Imp<[DX], [AX]>, OpSize; // AX  = in I/O address DX
-  def IN32rr : I<"in", 0xED, RawFrm>, Imp<[DX],[EAX]>;         // EAX = in I/O address DX
-}
+def IN8rr  : I<"in", 0xEC, RawFrm>, Imp<[DX], [AL]>,         // AL  = in I/O address DX
+             II<(ops), "in AL, DX">;
+ def IN16rr : I<"in", 0xED, RawFrm>, Imp<[DX], [AX]>, OpSize, // AX  = in I/O address DX
+             II<(ops), "in AX, DX">;
+def IN32rr : I<"in", 0xED, RawFrm>, Imp<[DX],[EAX]>,         // EAX = in I/O address DX
+             II<(ops), "in EAX, DX">;
 
 let printImplicitDefsBefore = 1 in {
   def IN8ri  : Ii16<"in", 0xE4, RawFrm>, Imp<[], [AL]>;           // AL  = in [I/O address]
@@ -259,9 +273,12 @@ let printImplicitDefsBefore = 1 in {
 }
 
 let printImplicitUsesAfter = 1 in {
-  def OUT8rr  : I<"out", 0xEE, RawFrm>, Imp<[DX,  AL], []>;
-  def OUT16rr : I<"out", 0xEF, RawFrm>, Imp<[DX,  AX], []>, OpSize;
-  def OUT32rr : I<"out", 0xEF, RawFrm>, Imp<[DX, EAX], []>;
+  def OUT8rr  : I<"out", 0xEE, RawFrm>, Imp<[DX,  AL], []>,
+                II<(ops), "out DX, AL">;
+  def OUT16rr : I<"out", 0xEF, RawFrm>, Imp<[DX,  AX], []>, OpSize,
+                II<(ops), "out DX, AX">;
+  def OUT32rr : I<"out", 0xEF, RawFrm>, Imp<[DX, EAX], []>,
+                II<(ops), "out DX, EAX">;
   def OUT8ir  : Ii16<"out", 0xE6, RawFrm>, Imp<[AL],  []>;
   def OUT16ir : Ii16<"out", 0xE7, RawFrm>, Imp<[AX],  []>, OpSize;
   def OUT32ir : Ii16<"out", 0xE7, RawFrm>, Imp<[EAX], []>;
@@ -317,9 +334,12 @@ def IDIV16m: Im16<"idiv",0xF7, MRM7m>, Imp<[AX,DX],[AX,DX]>, OpSize; // DX:AX/[m
 def IDIV32m: Im32<"idiv",0xF7, MRM7m>, Imp<[EAX,EDX],[EAX,EDX]>;     // EDX:EAX/[mem32] = EAX,EDX
 
 // Sign-extenders for division
-def CBW    : I<"cbw", 0x98, RawFrm >, Imp<[AL],[AH]>;                // AX = signext(AL)
-def CWD    : I<"cwd", 0x99, RawFrm >, Imp<[AX],[DX]>;                // DX:AX = signext(AX)
-def CDQ    : I<"cdq", 0x99, RawFrm >, Imp<[EAX],[EDX]>;              // EDX:EAX = signext(EAX)
+def CBW    : I<"cbw", 0x98, RawFrm >, Imp<[AL],[AH]>,                // AX = signext(AL)
+             II<(ops), "cbw">;
+def CWD    : I<"cwd", 0x99, RawFrm >, Imp<[AX],[DX]>,                // DX:AX = signext(AX)
+             II<(ops), "cwd">;
+def CDQ    : I<"cdq", 0x99, RawFrm >, Imp<[EAX],[EDX]>,              // EDX:EAX = signext(EAX)
+             II<(ops), "cdq">;
 
 //===----------------------------------------------------------------------===//
 //  Two address Instructions...
@@ -417,7 +437,8 @@ def DEC16m : Im16<"dec", 0xFF, MRM1m>, OpSize; // --[mem16]
 def DEC32m : Im32<"dec", 0xFF, MRM1m>;         // --[mem32]
 
 // Logical operators...
-def AND8rr   : I     <"and", 0x20, MRMDestReg>;
+def AND8rr   : I     <"and", 0x20, MRMDestReg>,
+              II<(ops R8:$dst, R8:$src1, R8:$src2), "and $dst, $src2">;
 def AND16rr  : I     <"and", 0x21, MRMDestReg>, OpSize;
 def AND32rr  : I     <"and", 0x21, MRMDestReg>;
 def AND8mr   : Im8   <"and", 0x20, MRMDestMem>;            // [mem8]  &= R8
@@ -487,9 +508,12 @@ def XOR32mi8 : Im32i8<"xor", 0x83, MRM6m     >;            // [mem32] ^= imm8
 
 // Shift instructions
 // FIXME: provide shorter instructions when imm8 == 1
-def SHL8rCL  : I     <"shl", 0xD2, MRM4r     >        , UsesCL; // R8  <<= cl
-def SHL16rCL : I     <"shl", 0xD3, MRM4r     >, OpSize, UsesCL; // R16 <<= cl
-def SHL32rCL : I     <"shl", 0xD3, MRM4r     >        , UsesCL; // R32 <<= cl
+def SHL8rCL  : I     <"shl", 0xD2, MRM4r     >        , UsesCL, // R8  <<= cl
+              II<(ops R8:$dst, R8:$src), "shl $dst, CL">;
+def SHL16rCL : I     <"shl", 0xD3, MRM4r     >, OpSize, UsesCL, // R16 <<= cl
+              II<(ops R16:$dst, R16:$src), "shl $dst, CL">;
+def SHL32rCL : I     <"shl", 0xD3, MRM4r     >        , UsesCL, // R32 <<= cl
+              II<(ops R32:$dst, R32:$src), "shl $dst, CL">;
 def SHL8mCL  : Im8   <"shl", 0xD2, MRM4m     >        , UsesCL; // [mem8]  <<= cl
 def SHL16mCL : Im16  <"shl", 0xD3, MRM4m     >, OpSize, UsesCL; // [mem16] <<= cl
 def SHL32mCL : Im32  <"shl", 0xD3, MRM4m     >        , UsesCL; // [mem32] <<= cl
@@ -501,9 +525,12 @@ def SHL8mi   : Im8i8 <"shl", 0xC0, MRM4m     >;                 // [mem8]  <<= i
 def SHL16mi  : Im16i8<"shl", 0xC1, MRM4m     >, OpSize;         // [mem16] <<= imm8
 def SHL32mi  : Im32i8<"shl", 0xC1, MRM4m     >;                 // [mem32] <<= imm8
 
-def SHR8rCL  : I     <"shr", 0xD2, MRM5r     >        , UsesCL; // R8  >>= cl
-def SHR16rCL : I     <"shr", 0xD3, MRM5r     >, OpSize, UsesCL; // R16 >>= cl
-def SHR32rCL : I     <"shr", 0xD3, MRM5r     >        , UsesCL; // R32 >>= cl
+def SHR8rCL  : I     <"shr", 0xD2, MRM5r     >        , UsesCL, // R8  >>= cl
+              II<(ops R8:$dst, R8:$src), "shr $dst, CL">;
+def SHR16rCL : I     <"shr", 0xD3, MRM5r     >, OpSize, UsesCL, // R16 >>= cl
+              II<(ops R16:$dst, R16:$src), "shr $dst, CL">;
+def SHR32rCL : I     <"shr", 0xD3, MRM5r     >        , UsesCL, // R32 >>= cl
+              II<(ops R32:$dst, R32:$src), "shr $dst, CL">;
 def SHR8mCL  : Im8   <"shr", 0xD2, MRM5m     >        , UsesCL; // [mem8]  >>= cl
 def SHR16mCL : Im16  <"shr", 0xD3, MRM5m     >, OpSize, UsesCL; // [mem16] >>= cl
 def SHR32mCL : Im32  <"shr", 0xD3, MRM5m     >        , UsesCL; // [mem32] >>= cl
@@ -640,8 +667,10 @@ def TEST32mi : Im32i32<"test", 0xF7, MRM0m     >;          // flags = [mem32] & 
 
 
 // Condition code ops, incl. set if equal/not equal/...
-def SAHF     : I  <"sahf" , 0x9E, RawFrm>, Imp<[AH],[]>;  // flags = AH
-def LAHF     : I  <"lahf" , 0x9F, RawFrm>, Imp<[],[AH]>;  // AH = flags
+def SAHF     : I  <"sahf" , 0x9E, RawFrm>, Imp<[AH],[]>,  // flags = AH
+                II<(ops), "sahf">;
+def LAHF     : I  <"lahf" , 0x9F, RawFrm>, Imp<[],[AH]>,  // AH = flags
+                II<(ops), "lahf">;
 
 def SETBr    : I  <"setb" , 0x92, MRM0r>, TB;            // R8 = <  unsign
 def SETBm    : Im8<"setb" , 0x92, MRM0m>, TB;            // [mem8] = <  unsign
@@ -810,13 +839,17 @@ def FISTP64m : FPI64m <"fistpll", 0xDF, MRM7m , OneArgFP>;          // store sig
 def FXCH     : FPI    <"fxch",    0xC8, AddRegFrm, NotFP>, D9;      // fxch ST(i), ST(0)
 
 // Floating point constant loads...
-def FLD0 : FPI<"fldz", 0xEE, RawFrm, ZeroArgFP>, D9;
-def FLD1 : FPI<"fld1", 0xE8, RawFrm, ZeroArgFP>, D9;
+def FLD0 : FPI<"fldz", 0xEE, RawFrm, ZeroArgFP>, D9,
+               II<(ops), "fldz">;
+def FLD1 : FPI<"fld1", 0xE8, RawFrm, ZeroArgFP>, D9,
+               II<(ops), "fld1">;
 
 
 // Unary operations...
-def FCHS : FPI<"fchs", 0xE0, RawFrm, OneArgFPRW>, D9;           // f1 = fchs f2
-def FTST : FPI<"ftst", 0xE4, RawFrm, OneArgFP>, D9;             // ftst ST(0)
+def FCHS : FPI<"fchs", 0xE0, RawFrm, OneArgFPRW>, D9,           // f1 = fchs f2
+               II<(ops), "fchs">;
+def FTST : FPI<"ftst", 0xE4, RawFrm, OneArgFP>, D9,             // ftst ST(0)
+               II<(ops), "ftst">;
 
 // Binary arithmetic operations...
 class FPST0rInst<string n, bits<8> o> : I<n, o, AddRegFrm>, D8 {
@@ -858,7 +891,9 @@ def FDIVRPrST0 : FPrST0PInst<"fdivrp",  0xF0>;   // ST(i) = ST(0) / ST(i), pop
 // Floating point compares
 def FUCOMr    : FPI<"fucom", 0xE0, AddRegFrm, CompareFP>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i)
 def FUCOMPr   : I<"fucomp" , 0xE8, AddRegFrm>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i), pop
-def FUCOMPPr  : I<"fucompp", 0xE9, RawFrm   >, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
+def FUCOMPPr  : I<"fucompp", 0xE9, RawFrm   >, DA, Imp<[ST0],[]>,  // compare ST(0) with ST(1), pop, pop
+                II<(ops), "fucompp">;
+
 
 let printImplicitUsesBefore = 1 in {
   def FUCOMIr  : FPI<"fucomi", 0xE8, AddRegFrm, CompareFP>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
@@ -866,6 +901,8 @@ let printImplicitUsesBefore = 1 in {
 }
 
 // Floating point flag ops
-def FNSTSW8r  : I   <"fnstsw" , 0xE0, RawFrm>, DF, Imp<[],[AX]>;   // AX = fp flags
+def FNSTSW8r  : I   <"fnstsw" , 0xE0, RawFrm>, DF, Imp<[],[AX]>,   // AX = fp flags
+                II<(ops), "fnstsw">;
+
 def FNSTCW16m : Im16<"fnstcw" , 0xD9, MRM7m >;                     // [mem16] = X87 control world
 def FLDCW16m  : Im16<"fldcw"  , 0xD9, MRM5m >;                     // X87 control world = [mem16]
