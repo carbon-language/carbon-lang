@@ -156,38 +156,30 @@ inline void BytecodeReader::read_data(void *Ptr, void *End) {
 
 /// Read a float value in little-endian order
 inline void BytecodeReader::read_float(float& FloatVal) {
-  if (hasPlatformSpecificFloatingPoint) {
-    read_data(&FloatVal, &FloatVal+1);
-  } else {
-    /// FIXME: This isn't optimal, it has size problems on some platforms
-    /// where FP is not IEEE.
-    union {
-      float f;
-      uint32_t i;
-    } FloatUnion;
-    FloatUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24);
-    At+=sizeof(uint32_t);
-    FloatVal = FloatUnion.f;
-  }
+  /// FIXME: This isn't optimal, it has size problems on some platforms
+  /// where FP is not IEEE.
+  union {
+    float f;
+    uint32_t i;
+  } FloatUnion;
+  FloatUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24);
+  At+=sizeof(uint32_t);
+  FloatVal = FloatUnion.f;
 }
 
 /// Read a double value in little-endian order
 inline void BytecodeReader::read_double(double& DoubleVal) {
-  if (hasPlatformSpecificFloatingPoint) {
-    read_data(&DoubleVal, &DoubleVal+1);
-  } else {
-    /// FIXME: This isn't optimal, it has size problems on some platforms
-    /// where FP is not IEEE.
-    union {
-      double d;
-      uint64_t i;
-    } DoubleUnion;
-    DoubleUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24) |
-                    (uint64_t(At[4]) << 32) | (uint64_t(At[5]) << 40) | 
-                    (uint64_t(At[6]) << 48) | (uint64_t(At[7]) << 56);
-    At+=sizeof(uint64_t);
-    DoubleVal = DoubleUnion.d;
-  }
+  /// FIXME: This isn't optimal, it has size problems on some platforms
+  /// where FP is not IEEE.
+  union {
+    double d;
+    uint64_t i;
+  } DoubleUnion;
+  DoubleUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24) |
+                  (uint64_t(At[4]) << 32) | (uint64_t(At[5]) << 40) | 
+                  (uint64_t(At[6]) << 48) | (uint64_t(At[7]) << 56);
+  At+=sizeof(uint64_t);
+  DoubleVal = DoubleUnion.d;
 }
 
 /// Read a block header and obtain its type and size
@@ -1853,7 +1845,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     std::string dep_lib;
     while( num_dep_libs-- ) {
       dep_lib = read_str();
-      TheModule->linsert(dep_lib);
+      TheModule->addLibrary(dep_lib);
     }
 
     // Read target triple and place into the module
@@ -1894,7 +1886,6 @@ void BytecodeReader::ParseVersionInfo() {
   hasRestrictedGEPTypes = false;
   hasTypeDerivedFromValue = false;
   hasLongBlockHeaders = false;
-  hasPlatformSpecificFloatingPoint = false;
   has32BitTypes = false;
   hasNoDependentLibraries = false;
 
@@ -1933,11 +1924,6 @@ void BytecodeReader::ParseVersionInfo() {
     /// compressed into a single 32-bit unsigned integer. 27 bits for length, 5
     /// bits for block type.
     hasLongBlockHeaders = true;
-
-    /// LLVM 1.2 and earlier wrote floating point values in a platform specific
-    /// bit ordering. This was fixed in LLVM 1.3, but we still need to be backwards
-    /// compatible.
-    hasPlatformSpecificFloatingPoint = true;
 
     /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
     /// this has been reduced to vbr_uint24. It shouldn't make much difference 
