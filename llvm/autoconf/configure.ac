@@ -60,6 +60,7 @@ AC_CONFIG_MAKEFILE(test/Makefile.tests)
 AC_CONFIG_MAKEFILE(test/QMTest/llvm.py)
 AC_CONFIG_MAKEFILE(test/QMTest/llvmdb.py)
 AC_CONFIG_MAKEFILE(tools/Makefile)
+AC_CONFIG_MAKEFILE(tools/Makefile.JIT)
 AC_CONFIG_MAKEFILE(utils/Makefile)
 AC_CONFIG_MAKEFILE(projects/Makefile)
 
