@@ -94,7 +94,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
              mi != miEnd; ++mi) {
             inserted = mi2iMap_.insert(std::make_pair(*mi, miIndex)).second;
             assert(inserted && "multiple MachineInstr -> index mappings");
-            ++miIndex;
+            miIndex += 2;
         }
     }
 
@@ -150,8 +150,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 {
     DEBUG(std::cerr << "\t\tregister: ";printRegName(reg); std::cerr << '\n');
 
-    unsigned instrIndex = getInstructionIndex(*mi);
-
     LiveVariables::VarInfo& vi = lv_->getVarInfo(reg);
 
     Interval* interval = 0;
@@ -180,6 +178,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         interval = &*r2iit->second;
     }
 
+    // we consider defs to happen at the second time slot of the
+    // instruction
+    unsigned instrIndex = getInstructionIndex(*mi) + 1;
+
     bool killedInDefiningBasicBlock = false;
     for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
         MachineBasicBlock* killerBlock = vi.Kills[i].first;
@@ -187,7 +189,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         unsigned start = (mbb == killerBlock ?
                           instrIndex :
                           getInstructionIndex(killerBlock->front()));
-        unsigned end = getInstructionIndex(killerInstr) + 1;
+        unsigned end = (killerInstr == *mi ?
+                        instrIndex + 1 : // dead
+                        getInstructionIndex(killerInstr) + 1); // killed
         // we do not want to add invalid ranges. these can happen when
         // a variable has its latest use and is redefined later on in
         // the same basic block (common with variables introduced by
@@ -213,14 +217,17 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     DEBUG(std::cerr << "\t\tregister: "; printRegName(reg));
 
     MachineBasicBlock::iterator e = mbb->end();
-    unsigned start = getInstructionIndex(*mi);
-    unsigned end = start + 1;
+    // we consider defs to happen at the second time slot of the
+    // instruction
+    unsigned start, end;
+    start = end = getInstructionIndex(*mi) + 1;
 
     // a variable can be dead by the instruction defining it
     for (KillIter ki = lv_->dead_begin(*mi), ke = lv_->dead_end(*mi);
          ki != ke; ++ki) {
         if (reg == ki->second) {
             DEBUG(std::cerr << " dead\n");
+            ++end;
             goto exit;
         }
     }
@@ -228,7 +235,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock* mbb,
     // a variable can only be killed by subsequent instructions
     do {
         ++mi;
-        ++end;
+        end += 2;
         for (KillIter ki = lv_->killed_begin(*mi), ke = lv_->killed_end(*mi);
              ki != ke; ++ki) {
             if (reg == ki->second) {
@@ -437,15 +444,17 @@ LiveIntervals::Interval::Interval(unsigned r)
 
 }
 
-// This example is provided becaues liveAt() is non-obvious:
+// An example for liveAt():
 //
-// this = [1,2), liveAt(1) will return false. The idea is that the
-// variable is defined in 1 and not live after definition. So it was
-// dead to begin with (defined but never used).
+// this = [1,2), liveAt(0) will return false. The instruction defining
+// this spans slots [0,1]. Since it is a definition we say that it is
+// live in the second slot onwards. By ending the lifetime of this
+// interval at 2 it means that it is not used at all. liveAt(1)
+// returns true which means that this clobbers a register at
+// instruction at 0.
 //
-// this = [1,3), liveAt(2) will return false. The variable is used at
-// 2 but 2 is the last use so the variable's allocated register is
-// available for reuse.
+// this = [1,4), liveAt(0) will return false and liveAt(2) will return
+// true.  The variable is defined at instruction 0 and last used at 2.
 bool LiveIntervals::Interval::liveAt(unsigned index) const
 {
     Range dummy(index, index+1);
@@ -456,20 +465,20 @@ bool LiveIntervals::Interval::liveAt(unsigned index) const
         return false;
 
     --r;
-    return index >= r->first && index < (r->second - 1);
+    return index >= r->first && index < r->second;
 }
 
-// This example is provided because overlaps() is non-obvious:
+// An example for overlaps():
 //
 // 0: A = ...
-// 1: B = ...
-// 2: C = A + B ;; last use of A
+// 2: B = ...
+// 4: C = A + B ;; last use of A
 //
 // The live intervals should look like:
 //
-// A = [0, 3)
-// B = [1, x)
-// C = [2, y)
+// A = [1, 5)
+// B = [3, x)
+// C = [5, y)
 //
 // A->overlaps(C) should return false since we want to be able to join
 // A and C.
@@ -499,7 +508,7 @@ bool LiveIntervals::Interval::overlaps(const Interval& other) const
             }
             assert(i->first < j->first);
 
-            if ((i->second - 1) > j->first) {
+            if (i->second > j->first) {
                 return true;
             }
             else {
