@@ -1,7 +1,6 @@
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = mapping \
-           sparc \
+USEDLIBS = sparc \
            x86 \
 	   selection \
            regalloc \
