@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcV9TmpInstr.h"
+#include "llvm/Type.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 

@@ -21,6 +21,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;

@@ -16,6 +16,7 @@
 #include "RegAllocCommon.h"
 #include "RegClass.h"
 #include "llvm/Function.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"

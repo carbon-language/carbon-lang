@@ -15,6 +15,7 @@
 #include "Alpha.h"
 #include "AlphaInstrInfo.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/ValueTypes.h"

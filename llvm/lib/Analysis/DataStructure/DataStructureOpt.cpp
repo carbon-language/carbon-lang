@@ -17,6 +17,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
+#include "llvm/Type.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 

@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Type.h"
 #include <map>
 using namespace llvm;
 

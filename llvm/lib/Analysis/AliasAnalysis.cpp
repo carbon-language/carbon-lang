@@ -27,6 +27,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
+#include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
 #include <iostream>
 using namespace llvm;

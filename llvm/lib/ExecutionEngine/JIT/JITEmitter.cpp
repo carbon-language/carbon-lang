@@ -16,6 +16,7 @@
 #include "JIT.h"
 #include "llvm/Constant.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"

@@ -15,6 +15,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
