@@ -260,14 +260,14 @@ public:
   /// setup/destroy pseudo instructions. The return value is the number of
   /// instructions added to (negative if removed from) the basic block.
   ///
-  virtual int eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                            MachineBasicBlock &MBB,
-                                            MachineBasicBlock::iterator MI) const {
+  virtual void 
+  eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI) const {
     assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
 	   "eliminateCallFramePseudoInstr must be implemented if using"
 	   " call frame setup/destroy pseudo instructions!");
     assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
-    return -1;
   }
 
   /// processFunctionBeforeFrameFinalized - This method is called immediately
@@ -277,8 +277,7 @@ public:
   /// is the number of instructions added to (negative if removed from) the
   /// basic block
   ///
-  virtual int processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
-    return 0;
+  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
   }
 
   /// eliminateFrameIndex - This method must be overriden to eliminate abstract
@@ -289,16 +288,16 @@ public:
   /// finished product. The return value is the number of instructions
   /// added to (negative if removed from) the basic block.
   ///
-  virtual int eliminateFrameIndex(MachineFunction &MF,
-                                  MachineBasicBlock::iterator MI) const = 0;
+  virtual void eliminateFrameIndex(MachineFunction &MF,
+                                   MachineBasicBlock::iterator MI) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions
   /// added to (negative if removed from) the basic block (entry for prologue).
   ///
-  virtual int emitPrologue(MachineFunction &MF) const = 0;
-  virtual int emitEpilogue(MachineFunction &MF,
-                           MachineBasicBlock &MBB) const = 0;
+  virtual void emitPrologue(MachineFunction &MF) const = 0;
+  virtual void emitEpilogue(MachineFunction &MF,
+                            MachineBasicBlock &MBB) const = 0;
 };
 
 } // End llvm namespace
