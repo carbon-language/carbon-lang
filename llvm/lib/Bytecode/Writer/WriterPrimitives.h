@@ -123,17 +123,8 @@ static inline void output(const std::string &s, std::deque<unsigned char> &Out,
 }
 
 static inline void output_data(const void *Ptr, const void *End,
-                               std::deque<unsigned char> &Out,
-                               bool Align = false) {
-#ifdef ENDIAN_LITTLE
+                               std::deque<unsigned char> &Out) {
   Out.insert(Out.end(), (const unsigned char*)Ptr, (const unsigned char*)End);
-#else
-  const unsigned char *E = (const unsigned char *)End;
-  while (Ptr != E)
-    Out.push_back(*--E);
-#endif
-
-  if (Align) align32(Out);
 }
 
 } // End llvm namespace
