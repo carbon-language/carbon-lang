@@ -1,7 +1,4 @@
-; RUN: llvm-as < %s | lli -force-interpreter=false - test
-
-target endian = little
-target pointersize = 32
+; RUN: llvm-as < %s | lli - test
 
 implementation  
 

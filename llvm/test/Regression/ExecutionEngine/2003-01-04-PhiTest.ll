@@ -1,5 +1,3 @@
-; RUN: llvm-as < %s | lli -force-interpreter=false
-
 int %main() {
 	br label %Loop
 Loop:
