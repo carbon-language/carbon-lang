@@ -13,8 +13,10 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
 
-static RegisterAnalysis<TDDataStructures>
-Y("tddatastructure", "Top-down Data Structure Analysis Closure");
+namespace {
+  RegisterAnalysis<TDDataStructures>   // Register the pass
+  Y("tddatastructure", "Top-down Data Structure Analysis Closure");
+}
 
 // run - Calculate the top down data structure graphs for each function in the
 // program.
@@ -39,7 +41,10 @@ bool TDDataStructures::run(Module &M) {
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...
 //
-void TDDataStructures::releaseMemory() {
+// FIXME: This should be releaseMemory and will work fine, except that LoadVN
+// has no way to extend the lifetime of the pass, which screws up ds-aa.
+//
+void TDDataStructures::releaseMyMemory() {
   for (hash_map<const Function*, DSGraph*>::iterator I = DSInfo.begin(),
          E = DSInfo.end(); I != E; ++I)
     delete I->second;
@@ -206,3 +211,4 @@ void TDDataStructures::calculateGraph(Function &F) {
       calculateGraph(*I->first);
     }
 }
+

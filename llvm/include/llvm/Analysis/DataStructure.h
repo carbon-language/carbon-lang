@@ -136,7 +136,7 @@ class TDDataStructures : public Pass {
   hash_set<const Function*> GraphDone;
   DSGraph *GlobalsGraph;
 public:
-  ~TDDataStructures() { releaseMemory(); }
+  ~TDDataStructures() { releaseMyMemory(); }
 
   virtual bool run(Module &M);
 
@@ -157,13 +157,14 @@ public:
   void print(std::ostream &O, const Module *M) const;
 
   // If the pass pipeline is done with this pass, we can release our memory...
-  virtual void releaseMemory();
+  virtual void releaseMyMemory();
 
   // getAnalysisUsage - This obviously provides a data structure graph.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AU.addRequired<BUDataStructures>();
   }
+
 private:
   void calculateGraph(Function &F);
   DSGraph &getOrCreateDSGraph(Function &F);
