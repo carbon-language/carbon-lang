@@ -51,6 +51,7 @@
 #define LLVM_SUPPORT_INSTVISITOR_H
 
 #include "llvm/Function.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 
 namespace llvm {
@@ -66,7 +67,8 @@ class TerminatorInst; class BinaryOperator;
 class AllocationInst;
 
 #define DELEGATE(CLASS_TO_VISIT) \
-  return ((SubClass*)this)->visit##CLASS_TO_VISIT((CLASS_TO_VISIT&)I)
+  return static_cast<SubClass*>(this)-> \
+               visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT&>(I))
 
 
 template<typename SubClass, typename RetTy=void>
@@ -81,21 +83,21 @@ public:
   template<class Iterator>
   void visit(Iterator Start, Iterator End) {
     while (Start != End)
-      ((SubClass*)this)->visit(*Start++);
+      static_cast<SubClass*>(this)->visit(*Start++);
   }
 
   // Define visitors for functions and basic blocks...
   //
   void visit(Module &M) {
-    ((SubClass*)this)->visitModule(M);
+    static_cast<SubClass*>(this)->visitModule(M);
     visit(M.begin(), M.end());
   }
   void visit(Function &F) {
-    ((SubClass*)this)->visitFunction(F);
+    static_cast<SubClass*>(this)->visitFunction(F);
     visit(F.begin(), F.end());
   }
   void visit(BasicBlock &BB) {
-    ((SubClass*)this)->visitBasicBlock(BB);
+    static_cast<SubClass*>(this)->visitBasicBlock(BB);
     visit(BB.begin(), BB.end());
   }
 
@@ -113,7 +115,9 @@ public:
              abort();
       // Build the switch statement using the Instruction.def file...
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-    case Instruction::OPCODE:return ((SubClass*)this)->visit##OPCODE((CLASS&)I);
+    case Instruction::OPCODE: return \
+           static_cast<SubClass*>(this)-> \
+                      visit##OPCODE(static_cast<CLASS&>(I));
 #include "llvm/Instruction.def"
     }
   }
