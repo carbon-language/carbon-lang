@@ -27,13 +27,34 @@ public:
 class SetCondInst : public BinaryOperator {
   BinaryOps OpType;
 public:
-  SetCondInst(BinaryOps opType, Value *S1, Value *S2, 
+  SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
 	      const std::string &Name = "");
 
-  // getInverseCondition - Return the inverse of the current condition opcode.
-  // For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
-  //
-  BinaryOps getInverseCondition() const;
+  /// getInverseCondition - Return the inverse of the current condition opcode.
+  /// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
+  ///
+  BinaryOps getInverseCondition() const {
+    return getInverseCondition(getOpcode());
+  }
+
+  /// getInverseCondition - Static version that you can use without an
+  /// instruction available.
+  ///
+  static BinaryOps getInverseCondition(BinaryOps Opcode);
+
+  /// getSwappedCondition - Return the condition opcode that would be the result
+  /// of exchanging the two operands of the setcc instruction without changing
+  /// the result produced.  Thus, seteq->seteq, setle->setge, setlt->setgt, etc.
+  ///
+  BinaryOps getSwappedCondition() const {
+    return getSwappedCondition(getOpcode());
+  }
+
+  /// getSwappedCondition - Static version that you can use without an
+  /// instruction available.
+  ///
+  static BinaryOps getSwappedCondition(BinaryOps Opcode);
+
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SetCondInst *) { return true; }
