@@ -505,10 +505,10 @@ static GenericValue size_t_to_GV (size_t n) {
 static size_t GV_to_size_t (GenericValue GV) { 
   size_t count;
   if (sizeof (size_t) == sizeof (uint64_t)) {
-    count = GV.ULongVal;
+    count = (size_t)GV.ULongVal;
   } else {
     assert (sizeof (size_t) == sizeof (unsigned int));
-    count = GV.UIntVal;
+    count = (size_t)GV.UIntVal;
   }
   return count;
 }
