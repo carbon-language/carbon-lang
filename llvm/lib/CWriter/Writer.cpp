@@ -1087,13 +1087,20 @@ void CWriter::visitInvokeInst(InvokeInst &II) {
 
 
 void CWriter::visitUnwindInst(UnwindInst &I) {
+  // Determine the return size of write() based on the data model.
+#ifdef _LP64
+      const char * writedecl = "    extern signed long long write();\n";
+#else
+      const char * writedecl = "    extern write();\n";
+#endif
+
   // The unwind instructions causes a control flow transfer out of the current
   // function, unwinding the stack until a caller who used the invoke
   // instruction is found.  In this context, we code generated the invoke
   // instruction to add an entry to the top of the jmpbuf_list.  Thus, here we
   // just have to longjmp to the specified handler.
   Out << "  if (__llvm_jmpbuf_list == 0) {  /* unwind */\n"
-      << "    extern write();\n"
+      << writedecl
       << "    ((void (*)(int, void*, unsigned))write)(2,\n"
       << "           \"throw found with no handler!\\n\", 31); abort();\n"
       << "  }\n"
