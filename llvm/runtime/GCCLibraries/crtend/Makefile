@@ -15,17 +15,17 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL=../../..
-DONT_BUILD_RELINKED=1
-BYTECODE_LIBRARY=1
-LIBRARYNAME=crtend
+LEVEL = ../../..
+DONT_BUILD_RELINKED = 1
+BYTECODE_LIBRARY = 1
+LIBRARYNAME = crtend
 
 # Note: We're fooling Makefile.rules here. The sources listed don't exist but
 # it doesn't matter. Makefile.rules just uses $(SOURCES) to generate the set of
 # object files to put in the library. Since we've specified BYTECODE_LIBRARY
 # above, it changes the .c suffix to .bc suffix. Below are rules to build 
 # each of those bytecode objects from the sources we do have in this directory.
-SOURCES=comp_main.c comp_genericeh.c comp_sjljeh.c
+SOURCES = comp_main.c comp_genericeh.c comp_sjljeh.c
 
 EXTRA_DIST   := comp_main.lst comp_genericeh.lst comp_sjljeh.lst
 

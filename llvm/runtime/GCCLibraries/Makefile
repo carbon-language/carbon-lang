@@ -7,13 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL := ../..
 PARALLEL_DIRS := crtend libc libcurses libg libgcc libgdbm libm libmalloc \
                  libtermcap libucb libutempter libutil
 include $(LEVEL)/Makefile.common
-
-# Install target for libraries: copy bytecode files to $LLVMGCCDIR/bytecode-libs
-#
-install::
-
-clean::

@@ -8,9 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-BYTECODE_LIBRARY=1
-SHARED_LIBRARY=1
-LIBRARYNAME=profile_rt
+BYTECODE_LIBRARY = 1
+SHARED_LIBRARY = 1
+LIBRARYNAME = profile_rt
 EXTRA_DIST = exported_symbols.lst
 EXPORTED_SYMBOL_FILE = $(BUILD_SRC_DIR)/exported_symbols.lst
 

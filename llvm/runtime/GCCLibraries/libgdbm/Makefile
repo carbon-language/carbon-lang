@@ -7,10 +7,10 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL=../../..
-BYTECODE_LIBRARY=1
-DONT_BUILD_RELINKED=1
-LIBRARYNAME=gdbm
+LEVEL = ../../..
+BYTECODE_LIBRARY = 1
+DONT_BUILD_RELINKED = 1
+LIBRARYNAME = gdbm
 
 include $(LEVEL)/Makefile.common
 

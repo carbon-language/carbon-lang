@@ -8,8 +8,8 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-BYTECODE_LIBRARY=1
-LIBRARYNAME=trace
+BYTECODE_LIBRARY = 1
+LIBRARYNAME = trace
 
 include $(LEVEL)/Makefile.common
 
