@@ -42,27 +42,30 @@ MachineInstr::MachineInstr(MachineOpCode _opCode,
 void
 MachineInstr::SetMachineOperand(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
-				Value* _val)
+				Value* _val, bool isdef=false)
 {
   assert(i < operands.size());
   operands[i].Initialize(operandType, _val);
+  operands[i].isDef = isdef;
 }
 
 void
 MachineInstr::SetMachineOperand(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
-				int64_t intValue)
+				int64_t intValue, bool isdef=false)
 {
   assert(i < operands.size());
   operands[i].InitializeConst(operandType, intValue);
+  operands[i].isDef = isdef;
 }
 
 void
 MachineInstr::SetMachineOperand(unsigned int i,
-				unsigned int regNum)
+				unsigned int regNum, bool isdef=false)
 {
   assert(i < operands.size());
   operands[i].InitializeReg(regNum);
+  operands[i].isDef = isdef;
 }
 
 void
