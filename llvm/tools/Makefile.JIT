@@ -64,3 +64,5 @@ endif
 USEDLIBS += LLVMInterpreter $(JITLIBS) $(ARCHLIBS) LLVMScalarOpts \
             LLVMAnalysis.a LLVMTransformUtils.a LLVMBCReader LLVMCore \
 	    LLVMSupport.a LLVMTarget.a LLVMbzip2 LLVMSystem.a
+
+LDFLAGS += -dlopen self
