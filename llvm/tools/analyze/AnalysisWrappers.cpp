@@ -19,28 +19,9 @@
 
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/InstForest.h"
 #include "llvm/Support/CallSite.h"
 #include <iostream>
-
 using namespace llvm;
-
-namespace {
-  struct InstForestHelper : public FunctionPass {
-    Function *F;
-    virtual bool runOnFunction(Function &Func) { F = &Func; return false; }
-
-    void print(std::ostream &OS) const {
-      std::cout << InstForest<char>(F);
-    }
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-    }
-  };
-
-  RegisterAnalysis<InstForestHelper> P1("instforest", "InstForest Printer");
-}
 
 namespace {
   /// ExternalFunctionsPassedConstants - This pass prints out call sites to
