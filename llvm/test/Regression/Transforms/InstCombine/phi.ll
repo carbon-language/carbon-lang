@@ -26,3 +26,23 @@ BB2:
         ret int %B
 }
 
+int %test3(int %A, bool %b) {
+BB0: br label %Loop
+
+Loop:
+	%B = phi int [%A, %BB0], [%B, %Loop]    ; PHI has same value always.
+	br bool %b, label %Loop, label %Exit
+Exit:
+	ret int %B
+}
+
+int %test3(bool %b) {
+BB0:  ret int 7                                 ; Loop is unreachable
+
+Loop:
+        %B = phi int [%B, %L2], [%B, %Loop]     ; PHI has same value always.
+        br bool %b, label %L2, label %Loop
+L2:
+	br label %Loop
+}
+
