@@ -149,9 +149,7 @@ all the back-ends: CBE, llc, and lli.<p>
 <ol>
 <li>Improve the efficiency of the bytecode loader/writer, allow streaming lazy
     loading of functions from the bytecode (for use by the JIT, for example)<br>
-<li>Rework the PassManager
-<li>Do not encode zero intializers for large arrays into the bytecode
-
+<li>Rework the PassManager to be more flexible
 <li>Some transformations and analyses only work on reducible flow graphs.  It
 would be nice to have a transformation which could be "required" by these passes
 which makes irreducible graphs reducible.  This can easily be accomplished
@@ -262,6 +260,8 @@ Ideas for profile guided transformations:<p>
 <li>Implement a global register allocator
 <li>Implement a better instruction selector
 <li>Implement a static compiler in addition to the JIT (easy project)
+<li>Implement support for the "switch" instruction without requiring the 
+    lower-switches pass.
 </ol>
 
 <!-- ======================================================================= -->
