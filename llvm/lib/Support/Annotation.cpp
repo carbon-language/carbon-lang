@@ -20,7 +20,22 @@ static IDMapType &getIDMap() { static IDMapType TheMap; return TheMap; }
 // On demand annotation creation support...
 typedef Annotation *(*AnnFactory)(AnnotationID, const Annotable *, void *);
 typedef map<unsigned, pair<AnnFactory,void*> > FactMapType;
-static FactMapType &getFactMap() { static FactMapType FactMap; return FactMap; }
+
+static FactMapType *TheFactMap = 0;
+static FactMapType &getFactMap() {
+  if (TheFactMap == 0)
+    TheFactMap = new FactMapType();
+  return *TheFactMap;
+}
+
+static void eraseFromFactMap(unsigned ID) {
+  assert(TheFactMap && "No entries found!");
+  TheFactMap->erase(ID);
+  if (TheFactMap->empty()) {   // Delete when empty
+    delete TheFactMap;
+    TheFactMap = 0;
+  }
+}
 
 
 AnnotationID AnnotationManager::getID(const string &Name) {  // Name -> ID
@@ -64,7 +79,7 @@ void AnnotationManager::registerAnnotationFactory(AnnotationID ID,
   if (F)
     getFactMap()[ID.ID] = make_pair(F, ExtraData);
   else
-    getFactMap().erase(ID.ID);
+    eraseFromFactMap(ID.ID);
 }
 
 // createAnnotation - Create an annotation of the specified ID for the
