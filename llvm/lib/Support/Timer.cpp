@@ -89,7 +89,7 @@ struct TimeRecord {
 static TimeRecord getTimeRecord(bool Start) {
   struct rusage RU;
   struct timeval T;
-  long MemUsed;
+  long MemUsed = 0;
   if (Start) {
     MemUsed = getMemUsage();
     if (getrusage(RUSAGE_SELF, &RU))
