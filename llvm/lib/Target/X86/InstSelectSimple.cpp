@@ -1907,24 +1907,40 @@ void ISel::visitLoadInst(LoadInst &I) {
 /// instruction.
 ///
 void ISel::visitStoreInst(StoreInst &I) {
-  unsigned ValReg      = getReg(I.getOperand(0));
   unsigned AddressReg  = getReg(I.getOperand(1));
- 
   const Type *ValTy = I.getOperand(0)->getType();
   unsigned Class = getClassB(ValTy);
 
-  if (Class == cLong) {
-    addDirectMem(BuildMI(BB, X86::MOVmr32, 1+4), AddressReg).addReg(ValReg);
-    addRegOffset(BuildMI(BB, X86::MOVmr32, 1+4), AddressReg,4).addReg(ValReg+1);
-    return;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(0))) {
+    uint64_t Val = CI->getRawValue();
+    if (Class == cLong) {
+      addDirectMem(BuildMI(BB, X86::MOVmi32, 5), AddressReg).addZImm(Val & ~0U);
+      addRegOffset(BuildMI(BB, X86::MOVmi32, 5), AddressReg,4).addZImm(Val>>32);
+    } else {
+      static const unsigned Opcodes[] = {
+        X86::MOVmi8, X86::MOVmi16, X86::MOVmi32
+      };
+      unsigned Opcode = Opcodes[Class];
+      addDirectMem(BuildMI(BB, Opcode, 5), AddressReg).addZImm(Val);
+    }
+  } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
+    addDirectMem(BuildMI(BB, X86::MOVmi8, 5),
+                 AddressReg).addZImm(CB->getValue());
+  } else {    
+    if (Class == cLong) {
+      unsigned ValReg = getReg(I.getOperand(0));
+      addDirectMem(BuildMI(BB, X86::MOVmr32, 5), AddressReg).addReg(ValReg);
+      addRegOffset(BuildMI(BB, X86::MOVmr32, 5), AddressReg,4).addReg(ValReg+1);
+    } else {
+      unsigned ValReg = getReg(I.getOperand(0));
+      static const unsigned Opcodes[] = {
+        X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTr32
+      };
+      unsigned Opcode = Opcodes[Class];
+      if (ValTy == Type::DoubleTy) Opcode = X86::FSTr64;
+      addDirectMem(BuildMI(BB, Opcode, 1+4), AddressReg).addReg(ValReg);
+    }
   }
-
-  static const unsigned Opcodes[] = {
-    X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTr32
-  };
-  unsigned Opcode = Opcodes[Class];
-  if (ValTy == Type::DoubleTy) Opcode = X86::FSTr64;
-  addDirectMem(BuildMI(BB, Opcode, 1+4), AddressReg).addReg(ValReg);
 }
 
 
