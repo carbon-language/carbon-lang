@@ -46,7 +46,7 @@ inline unsigned numVbrBytes(unsigned num) {
   // search. We split it in half by comparing against 2^14 first. This allows
   // most reasonable values to be done in 2 comparisons instead of 1 for 
   // small ones and four for large ones. We expect this to access file offsets
-  // in the 2^10 to 2^24 range and symbol lengths in the 2^0 to 2^8 rnage, 
+  // in the 2^10 to 2^24 range and symbol lengths in the 2^0 to 2^8 range, 
   // so this approach is reasonable.
   if (num < 1<<14)
     if (num < 1<<7)
