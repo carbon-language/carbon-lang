@@ -23,6 +23,7 @@
 namespace llvm {
 
 class IntrinsicLowering;
+class Module;
 
 class SparcV8TargetMachine : public TargetMachine {
   SparcV8InstrInfo InstrInfo;
@@ -39,6 +40,9 @@ public:
   virtual TargetJITInfo *getJITInfo() {
     return &JITInfo;
   }
+
+  static unsigned getModuleMatchQuality(const Module &M);
+  static unsigned getJITMatchQuality();
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle

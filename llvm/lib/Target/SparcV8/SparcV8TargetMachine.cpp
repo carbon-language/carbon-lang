@@ -35,6 +35,25 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), JITInfo(*this) {
 }
 
+unsigned SparcV8TargetMachine::getJITMatchQuality() {
+  return 0; // No JIT yet.
+}
+
+unsigned SparcV8TargetMachine::getModuleMatchQuality(const Module &M) {
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer32)
+#ifdef __sparc__
+    return 20;   // BE/32 ==> Prefer sparcv8 on sparc
+#else
+    return 5;    // BE/32 ==> Prefer ppc elsewhere
+#endif
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
+}
+
 /// addPassesToEmitAssembly - Add passes to the specified pass manager
 /// to implement a static compiler for this target.
 ///
