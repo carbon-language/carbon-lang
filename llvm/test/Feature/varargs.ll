@@ -2,20 +2,18 @@
 ; the va_arg instruction.
 
 implementation
-declare void %llvm.va_start(sbyte**, ...)
-declare void %llvm.va_copy(sbyte**, sbyte*)
-declare void %llvm.va_end(sbyte**)
+declare sbyte* %llvm.va_start()
+declare sbyte* %llvm.va_copy(sbyte*)
+declare void %llvm.va_end(sbyte*)
 
 int %test(int %X, ...) {
-	%ap = alloca sbyte*
-	%aq = alloca sbyte*
-	call void (sbyte**, ...)* %llvm.va_start(sbyte** %ap, int %X)
-	%apv = load sbyte** %ap
-	call void %llvm.va_copy(sbyte** %aq, sbyte* %apv)
-	call void %llvm.va_end(sbyte** %aq)
+	%ap = call sbyte* %llvm.va_start()
+	%aq = call sbyte* %llvm.va_copy(sbyte* %ap)
+	call void %llvm.va_end(sbyte* %aq)
 	
-	%tmp = va_arg sbyte** %ap, int 
+	%tmp = vaarg sbyte* %ap, int 
+	%ap2 = vanext sbyte* %ap, int
 
-	call void %llvm.va_end(sbyte** %ap)
+	call void %llvm.va_end(sbyte* %ap2)
 	ret int %tmp
 }
