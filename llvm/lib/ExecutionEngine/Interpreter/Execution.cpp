@@ -421,7 +421,7 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<=, Double);
     IMPLEMENT_POINTERSETCC(<=);
   default:
-    std::cout << "Unhandled type for SetLE instruction: " << Ty << "\n";
+    std::cout << "Unhandled type for SetLE instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -941,7 +941,7 @@ void Interpreter::visitShr(ShiftInst &I) {
       IMPLEMENT_CAST(DESTTY, DESTCTY, Double)
 
 #define IMPLEMENT_CAST_CASE_END()    \
-    default: std::cout << "Unhandled cast: " << SrcTy << " to " << Ty << "\n"; \
+    default: std::cout << "Unhandled cast: " << *SrcTy << " to " << *Ty << "\n"; \
       abort();                                  \
     }                                           \
     break
