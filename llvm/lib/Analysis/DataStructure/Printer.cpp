@@ -7,6 +7,7 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
+#include "Support/CommandLine.h"
 #include <fstream>
 #include <sstream>
 using std::string;
@@ -166,6 +167,8 @@ static void printGraph(const DSGraph &Graph, std::ostream &O,
   }
 }
 
+static cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
+
 template <typename Collection>
 static void printCollection(const Collection &C, std::ostream &O,
                             const Module *M, const string &Prefix) {
@@ -175,7 +178,7 @@ static void printCollection(const Collection &C, std::ostream &O,
   }
 
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isExternal())
+    if (!I->isExternal() && (I->getName() == "main" || !OnlyPrintMain))
       printGraph(C.getDSGraph((Function&)*I), O, I->getName(), Prefix);
 }
 
