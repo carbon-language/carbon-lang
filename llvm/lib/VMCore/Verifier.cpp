@@ -70,6 +70,12 @@ namespace {  // Anonymous namespace for class
     DominatorSet *DS;     // Dominator set, caution can be null!
     std::stringstream msgs;  // A stringstream to collect messages
 
+    /// InstInThisBlock - when verifying a basic block, keep track of all of the
+    /// instructions we have seen so far.  This allows us to do efficient
+    /// dominance checks for the case when an instruction has an operand that is
+    /// an instruction in the same block.
+    std::set<Instruction*> InstsInThisBlock;
+
     Verifier() 
         : Broken(false), RealPass(true), action(AbortProcessAction),
           DS(0), msgs( std::ios_base::app | std::ios_base::out ) {}
@@ -101,6 +107,7 @@ namespace {  // Anonymous namespace for class
       // Get dominator information if we are being run by PassManager
       if (RealPass) DS = &getAnalysis<DominatorSet>();
       visit(F);
+      InstsInThisBlock.clear();
 
       // If this is a real pass, in a pass manager, we must abort before
       // returning back to the pass manager, or else the pass manager may try to
@@ -312,6 +319,8 @@ void Verifier::visitFunction(Function &F) {
 // verifyBasicBlock - Verify that a basic block is well formed...
 //
 void Verifier::visitBasicBlock(BasicBlock &BB) {
+  InstsInThisBlock.clear();
+
   // Check constraints that this basic block imposes on all of the PHI nodes in
   // it.
   if (isa<PHINode>(BB.front())) {
@@ -592,7 +601,7 @@ void Verifier::visitInstruction(Instruction &I) {
         else if (OpBlock == BB) {
           // If they are in the same basic block, make sure that the definition
           // comes before the use.
-          Assert2(DS->dominates(Op, &I) ||
+          Assert2(InstsInThisBlock.count(Op) ||
                   !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
                   "Instruction does not dominate all uses!", Op, &I);
         }
@@ -611,6 +620,7 @@ void Verifier::visitInstruction(Instruction &I) {
       }
     }
   }
+  InstsInThisBlock.insert(&I);
 }
 
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
