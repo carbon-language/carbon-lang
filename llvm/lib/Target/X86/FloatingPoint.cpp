@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Debug.h"
@@ -599,6 +600,57 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   }
 
   I = MBB->erase(I)-1;  // Remove the pseudo instruction
+}
+
+namespace {
+
+  struct FPK : public MachineFunctionPass {
+    virtual const char *getPassName() const { return "X86 FP Killer"; }
+    virtual bool runOnMachineFunction(MachineFunction &MF);
+      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+          AU.setPreservesAll();
+          AU.addRequired<LiveVariables>();
+          AU.addRequiredID(PHIEliminationID);
+          MachineFunctionPass::getAnalysisUsage(AU);
+      }
+  };
+}
+
+FunctionPass * createX86FloatingPointKillerPass() { return new FPK(); }
+
+bool FPK::runOnMachineFunction(MachineFunction &MF)
+{
+  const TargetInstrInfo& tii = MF.getTarget().getInstrInfo();;
+
+  for (MachineFunction::iterator
+           mbbi = MF.begin(), mbbe = MF.end(); mbbi != mbbe; ++mbbi) {
+    MachineBasicBlock& mbb = *mbbi;
+    MachineBasicBlock::reverse_iterator mii = mbb.rbegin();
+    // rewind to the last non terminating instruction
+    while (mii != mbb.rend() && tii.isTerminatorInstr((*mii)->getOpcode())) {
+      ++mii;
+    }
+    // add implicit def for all virtual floating point registers so that
+    // they are spilled at the end of each basic block, since our
+    // register stackifier doesn't handle them otherwise.
+    MachineInstr* instr = BuildMI(X86::IMPLICIT_DEF, 7)
+        .addReg(X86::FP6, MOTy::Def)
+        .addReg(X86::FP5, MOTy::Def)
+        .addReg(X86::FP4, MOTy::Def)
+        .addReg(X86::FP3, MOTy::Def)
+        .addReg(X86::FP2, MOTy::Def)
+        .addReg(X86::FP1, MOTy::Def)
+        .addReg(X86::FP0, MOTy::Def);
+        
+    mbb.insert(mii.base(), instr);
+    LiveVariables& lv = getAnalysis<LiveVariables>();
+    for (unsigned i = 0; i < instr->getNumOperands(); ++i) {
+        lv.HandlePhysRegDef(instr->getOperand(i).getAllocatedRegNum(), instr);
+        // force live variables to compute that these registers are dead
+        lv.HandlePhysRegDef(instr->getOperand(i).getAllocatedRegNum(), 0);
+    }
+  }
+  return true;
 }
 
 } // End llvm namespace
