@@ -292,6 +292,8 @@ def CMPLW  : XForm_16_ext<31, 32, 0, 0,
 def CMPLD  : XForm_16_ext<31, 32, 1, 0,
                           (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
                           "cmpld $crD, $rA, $rB">;
+def FCMPO  : XForm_17<63, 32, 0, 0, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
+                      "fcmpo $crD, $fA, $fB">;
 def FCMPU  : XForm_17<63, 0, 0, 0, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
                       "fcmpu $crD, $fA, $fB">;
 let isLoad = 1 in {

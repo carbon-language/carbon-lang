@@ -587,7 +587,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     case ISD::SUB:  Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS; break;
     case ISD::SDIV: Opc = DestType == MVT::f64 ? PPC::FDIV : PPC::FDIVS; break;
     };
-
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
@@ -865,8 +864,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i8:   Tmp2 = 24; break;
     case MVT::i1:   Tmp2 = 31; break;
     }
-    BuildMI(BB, PPC::RLWINM, 5, Result).addReg(Tmp1).addImm(0).addImm(0)
-      .addImm(Tmp2).addImm(31);
+    BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(0).addImm(Tmp2)
+      .addImm(31);
     return Result;
     
   case ISD::CopyFromReg:
@@ -880,7 +879,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Tmp2 = CN->getValue() & 0x1F;
-      BuildMI(BB, PPC::RLWINM, 5, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
+      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
         .addImm(31-Tmp2);
     } else {
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -892,7 +891,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Tmp2 = CN->getValue() & 0x1F;
-      BuildMI(BB, PPC::RLWINM, 5, Result).addReg(Tmp1).addImm(32-Tmp2)
+      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(32-Tmp2)
         .addImm(Tmp2).addImm(31);
     } else {
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -1028,7 +1027,75 @@ unsigned ISel::SelectExpr(SDOperand N) {
     abort();
  
   case ISD::SETCC:
-    abort();
+    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
+      bool U = false;
+      bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
+      
+      switch (SetCC->getCondition()) {
+      default: Node->dump(); assert(0 && "Unknown comparison!");
+      case ISD::SETEQ:  Opc = PPC::BEQ; break;
+      case ISD::SETNE:  Opc = PPC::BNE; break;
+      case ISD::SETULT: U = true;
+      case ISD::SETLT:  Opc = PPC::BLT; break;
+      case ISD::SETULE: U = true;
+      case ISD::SETLE:  Opc = PPC::BLE; break;
+      case ISD::SETUGT: U = true;
+      case ISD::SETGT:  Opc = PPC::BGT; break;
+      case ISD::SETUGE: U = true;
+      case ISD::SETGE:  Opc = PPC::BGE; break;
+      }
+      
+      // FIXME: Is there a situation in which we would ever need to emit fcmpo?
+      static const unsigned CompareOpcodes[] = 
+        { PPC::FCMPU, PPC::FCMPU, PPC::CMPW, PPC::CMPLW };
+      unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
+      
+      // Create an iterator with which to insert the MBB for copying the false 
+      // value and the MBB to hold the PHI instruction for this SetCC.
+      MachineBasicBlock *thisMBB = BB;
+      const BasicBlock *LLVM_BB = BB->getBasicBlock();
+      ilist<MachineBasicBlock>::iterator It = BB;
+      ++It;
+  
+      //  thisMBB:
+      //  ...
+      //   cmpTY cr0, r1, r2
+      //   %TrueValue = li 1
+      //   bCC sinkMBB
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
+      unsigned TrueValue = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
+      MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+      MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+      BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+      MachineFunction *F = BB->getParent();
+      F->getBasicBlockList().insert(It, copy0MBB);
+      F->getBasicBlockList().insert(It, sinkMBB);
+      // Update machine-CFG edges
+      BB->addSuccessor(copy0MBB);
+      BB->addSuccessor(sinkMBB);
+
+      //  copy0MBB:
+      //   %FalseValue = li 0
+      //   fallthrough
+      BB = copy0MBB;
+      unsigned FalseValue = MakeReg(MVT::i32);
+      BuildMI(BB, PPC::LI, 1, FalseValue).addSImm(0);
+      // Update machine-CFG edges
+      BB->addSuccessor(sinkMBB);
+
+      //  sinkMBB:
+      //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+      //  ...
+      BB = sinkMBB;
+      BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
+        .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
+      return Result;
+    }
+    assert(0 && "Is this legal?");
+    return 0;
     
   case ISD::SELECT:
     abort();
