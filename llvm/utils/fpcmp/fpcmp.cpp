@@ -104,6 +104,23 @@ static void CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End) {
   F1P = F1NumEnd;  F2P = F2NumEnd;
 }
 
+// PadFileIfNeeded - If the files are not identical, we will have to be doing
+// numeric comparisons in here.  There are bad cases involved where we (i.e.,
+// strtod) might run off the beginning or end of the file if it starts or ends
+// with a number.  Because of this, if needed, we pad the file so that it starts
+// and ends with a null character.
+static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
+  if (isNumberChar(FileStart[0]) || isNumberChar(FileEnd[-1])) {
+    unsigned FileLen = FileEnd-FileStart;
+    char *NewFile = new char[FileLen+2];
+    NewFile[0] = 0;              // Add null padding
+    NewFile[FileLen+1] = 0;      // Add null padding
+    memcpy(NewFile+1, FileStart, FileLen);
+    FP = NewFile+(FP-FileStart)+1;
+    FileStart = NewFile+1;
+    FileEnd = FileStart+FileLen;
+  }
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
@@ -119,9 +136,20 @@ int main(int argc, char **argv) {
   char *File2End = File2Start+File2Len;
   char *F1P = File1Start;
   char *F2P = File2Start;
+
+  // Scan for the end of file or first difference.
+  while (F1P < File1End && F2P < File2End && *F1P == *F2P)
+    ++F1P, ++F2P;
+
+  // Common case: identifical files.
+  if (F1P == File1End && F2P == File2End) return 0;
+
+  // If the files need padding, do so now.
+  PadFileIfNeeded(File1Start, File1End, F1P);
+  PadFileIfNeeded(File2Start, File2End, F2P);
   
   while (1) {
-    // Scan for the end of file or first difference.
+    // Scan for the end of file or next difference.
     while (F1P < File1End && F2P < File2End && *F1P == *F2P)
       ++F1P, ++F2P;
 
@@ -140,9 +168,13 @@ int main(int argc, char **argv) {
 
   // Okay, we reached the end of file.  If both files are at the end, we
   // succeeded.
-  if (F1P >= File1End && F2P >= File2End) return 0;
+  bool F1AtEnd = F1P >= File1End;
+  bool F2AtEnd = F2P >= File2End;
+  if (F1AtEnd & F2AtEnd) return 0;
 
-  // Otherwise, we might have run off the end due to a number, backup and retry.
+  // Otherwise, we might have run off the end due to a number: backup and retry.
+  if (F1AtEnd && isNumberChar(F1P[-1])) --F1P;
+  if (F2AtEnd && isNumberChar(F2P[-1])) --F2P;
   F1P = BackupNumber(F1P, File1Start);
   F2P = BackupNumber(F2P, File2Start);
 
