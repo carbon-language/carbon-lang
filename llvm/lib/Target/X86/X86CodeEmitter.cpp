@@ -57,7 +57,7 @@ void *X86TargetMachine::getJITStubForFunction(Function *F,
                                               MachineCodeEmitter &MCE) {
   if (TheJITResolver == 0)
     TheJITResolver = new JITResolver(MCE);
-  return (void*)TheJITResolver->getLazyResolver(F);
+  return (void*)((unsigned long)TheJITResolver->getLazyResolver(F));
 }
 
 /// addFunctionReference - This method is called when we need to emit the
