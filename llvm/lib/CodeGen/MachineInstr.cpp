@@ -3,6 +3,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Value.h"
 #include "llvm/Target/MachineInstrInfo.h"  // FIXME: shouldn't need this!
 using std::cerr;
@@ -33,6 +34,11 @@ MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands)
 {
 }
 
+/// MachineInstr ctor - This constructor only does a _reserve_ of the operands,
+/// not a resize for them.  It is expected that if you use this that you call
+/// add* methods below to fill up the operands, instead of the Set methods.
+/// Eventually, the "resizing" ctors will be phased out.
+///
 MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
                            bool XX, bool YY)
   : opCode(Opcode),
@@ -40,6 +46,20 @@ MachineInstr::MachineInstr(MachineOpCode Opcode, unsigned numOperands,
 {
   operands.reserve(numOperands);
 }
+
+/// MachineInstr ctor - Work exactly the same as the ctor above, except that the
+/// MachineInstr is created and added to the end of the specified basic block.
+///
+MachineInstr::MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode,
+                           unsigned numOperands)
+  : opCode(Opcode),
+    numImplicitRefs(0)
+{
+  assert(MBB && "Cannot use inserting ctor with null basic block!");
+  operands.reserve(numOperands);
+  MBB->push_back(this);  // Add instruction to end of basic block!
+}
+
 
 // OperandComplete - Return true if it's illegal to add a new operand
 bool MachineInstr::OperandsComplete() const
