@@ -472,10 +472,8 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
       result.insert(mp);
 
       // Remove the symbol now that its been resolved, being careful to 
-      // not invalidate our iterator.
-      std::set<std::string>::iterator save = I;
-      ++I;
-      symbols.erase(save);
+      // post-increment the iterator.
+      symbols.erase(I++);
     } else {
       ++I;
     }
