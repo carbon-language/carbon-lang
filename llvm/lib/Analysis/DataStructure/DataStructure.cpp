@@ -845,7 +845,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
   // been cloned.
   const DSNode *SN = SrcNH.getNode();
   DSNodeHandle &SCNH = NodeMap[SN];  // SourceClonedNodeHandle
-  if (SCNH.getNode()) {   // Node already cloned?
+  if (!SCNH.isNull()) {   // Node already cloned?
     NH.mergeWith(DSNodeHandle(SCNH.getNode(),
                               SCNH.getOffset()+SrcNH.getOffset()));
 
@@ -971,10 +971,15 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
       if (CN->getSize() != 1)
         MergeOffset = ((i << DS::PointerShift)+SCNH.getOffset()) %CN->getSize();
       
-      // Perform the recursive merging.  Make sure to create a temporary NH,
-      // because the Link can disappear in the process of recursive merging.
-      DSNodeHandle Tmp = CN->getLink(MergeOffset);
-      merge(Tmp, SrcEdge);
+      DSNodeHandle &Link = CN->getLink(MergeOffset);
+      if (!Link.isNull()) {
+        // Perform the recursive merging.  Make sure to create a temporary NH,
+        // because the Link can disappear in the process of recursive merging.
+        DSNodeHandle Tmp = Link;
+        merge(Tmp, SrcEdge);
+      } else {
+        merge(Link, SrcEdge);
+      }
     }
   }
 }
@@ -1214,7 +1219,7 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     }
     
     // Map the return node pointer over.
-    if (CS.getRetVal().getNode())
+    if (!CS.getRetVal().isNull())
       RC.merge(CS.getRetVal(), Graph.getReturnNodeFor(F));
     
     // If requested, copy the calls or aux-calls lists.
