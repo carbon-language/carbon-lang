@@ -213,7 +213,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     return 0;  // Null doesn't point to anything, don't add to ScalarMap!
 
   DSNodeHandle &NH = ScalarMap[V];
-  if (NH.getNode())
+  if (!NH.isNull())
     return NH;     // Already have a node?  Just return it...
 
   // Otherwise we need to create a new node to point to.
@@ -237,7 +237,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
         // This returns a conservative unknown node for any unhandled ConstExpr
         return NH = createNode()->setUnknownNodeMarker();
       }
-      if (NH.getNode() == 0) {  // (getelementptr null, X) returns null
+      if (NH.isNull()) {  // (getelementptr null, X) returns null
         ScalarMap.erase(V);
         return 0;
       }
@@ -272,7 +272,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
 DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
   DSNodeHandle &Node = const_cast<DSNodeHandle&>(node);
   DSNodeHandle &Link = Node.getLink(LinkNo);
-  if (!Link.getNode()) {
+  if (Link.isNull()) {
     // If the link hasn't been created yet, make and return a new shadow node
     Link = createNode();
   }
@@ -318,7 +318,7 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
 
 void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
-  if (Value.getNode() == 0) return;
+  if (Value.isNull()) return;
 
   // As a special case, if all of the index operands of GEP are constant zeros,
   // handle this just like we handle casts (ie, don't do much).
@@ -472,8 +472,9 @@ void GraphBuilder::visitVAArgInst(VAArgInst &I) {
   // Make that the node is read from.
   Ptr.getNode()->setReadMarker();
 
-  // Ensure a typerecord exists...
-  Ptr.getNode()->mergeTypeInfo(I.getType(), Ptr.getOffset(), false);
+  // Ensure a type record exists.
+  DSNode *PtrN = Ptr.getNode();
+  PtrN->mergeTypeInfo(I.getType(), Ptr.getOffset(), false);
 
   if (isPointerType(I.getType()))
     setDestTo(I, getLink(Ptr));
@@ -979,8 +980,8 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
     if (isPointerType((*I)->getType()))
       CurNode.mergeWith(getValueDest(**I));
 
-  if (CurNode.getNode())
-    CurNode.getNode()->setUnknownNodeMarker();
+  if (DSNode *N = CurNode.getNode())
+    N->setUnknownNodeMarker();
 }
 
 
@@ -993,7 +994,8 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
 // pointed to by NH.
 void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
   // Ensure a type-record exists...
-  NH.getNode()->mergeTypeInfo(C->getType(), NH.getOffset());
+  DSNode *NHN = NH.getNode();
+  NHN->mergeTypeInfo(C->getType(), NH.getOffset());
 
   if (C->getType()->isFirstClassType()) {
     if (isPointerType(C->getType()))
@@ -1011,7 +1013,8 @@ void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
   } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
     const StructLayout *SL = TD.getStructLayout(CS->getType());
     for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
-      DSNodeHandle NewNH(NH.getNode(), NH.getOffset()+SL->MemberOffsets[i]);
+      DSNode *NHN = NH.getNode();
+      DSNodeHandle NewNH(NHN, NH.getOffset()+SL->MemberOffsets[i]);
       MergeConstantInitIntoNode(NewNH, cast<Constant>(CS->getOperand(i)));
     }
   } else if (isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) {
