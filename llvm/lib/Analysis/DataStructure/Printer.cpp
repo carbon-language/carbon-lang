@@ -6,9 +6,11 @@
 
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DSGraphTraits.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
+#include "Support/GraphWriter.h"
 #include <fstream>
 #include <sstream>
 using std::string;
@@ -165,6 +167,36 @@ void DSGraph::print(std::ostream &O) const {
   O << "}\n";
 }
 
+template<>
+struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
+  static std::string getGraphName(DSGraph *G) {
+    if (G->hasFunction())
+      return "Function " + G->getFunction().getName();
+    else
+      return "Non-function graph";
+  }
+
+  static const char *getGraphProperties(DSGraph *G) {
+    return "\tnode [shape=Mrecord];\n"
+           "\tedge [arrowtail=\"dot\"];\n"
+           "\tsize=\"10,7.5\";\n"
+           "\trotate=\"90\";\n";
+  }
+
+  static std::string getNodeLabel(DSNode *Node, DSGraph *Graph) {
+    return getCaption(Node, Graph);
+  }
+
+  static std::string getNodeAttributes(DSNode *N) {
+    return "";//fontname=Courier";
+  }
+  
+  //static int getEdgeSourceLabel(DSNode *Node, node_iterator I) {
+  //    return MergeMap[i];
+  //  }
+};
+
+
 
 void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
   string Filename = GraphName + ".dot";
@@ -172,6 +204,7 @@ void DSGraph::writeGraphToFile(std::ostream &O, const string &GraphName) {
   std::ofstream F(Filename.c_str());
   
   if (F.good()) {
+    WriteGraph(F, this);
     print(F);
     O << " [" << getGraphSize() << "+" << getFunctionCalls().size() << "]\n";
   } else {
