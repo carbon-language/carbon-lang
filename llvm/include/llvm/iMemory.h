@@ -33,6 +33,11 @@ public:
 
       Operands.reserve(1);
       Operands.push_back(Use(ArraySize, this));
+    } else {
+      // Make sure that the pointer is not to an unsized array!
+      assert(!getType()->getValueType()->isArrayType() ||
+	     ((const ArrayType*)getType()->getValueType())->isSized() && 
+	     "Trying to allocate unsized array without size!");
     }
   }
 
