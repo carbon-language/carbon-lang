@@ -24,11 +24,16 @@ endif
 .PRECIOUS: Output/%.llvm.bc
 .PRECIOUS: Output/%.llvm
 
+ifdef ENABLE_OPTIMIZED
+TOOLS    = $(BUILD_ROOT_TOP)/tools/Release
+else
+TOOLS    = $(BUILD_ROOT_TOP)/tools/Debug
+endif
+
 # LLVM Tool Definitions...
 #
 LCC      = $(LLVMGCCDIR)/bin/llvm-gcc
 LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/llvm/3.1/cc1
-TOOLS    = $(BUILD_ROOT_TOP)/tools/Debug
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
@@ -62,7 +67,7 @@ ifeq ($(TRACE), yes)
     LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
 else
     ifeq ($(TRACEM), yes)
-        LLCFLAGS += -trace function
+	LLCFLAGS += -trace function
 	LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
     endif
 endif
