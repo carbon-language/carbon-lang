@@ -16,8 +16,7 @@
 
 using std::vector;
 
-// TODO: FIXME
-namespace DataStructureAnalysis {
+namespace DataStructureAnalysis {   // TODO: FIXME
   // isPointerType - Return true if this first class type is big enough to hold
   // a pointer.
   //
@@ -538,14 +537,15 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
 
 // cloneInto - Clone the specified DSGraph into the current graph, returning the
 // Return node of the graph.  The translated ValueMap for the old function is
-// filled into the OldValMap member.  If StripLocals is set to true, Scalar and
-// Alloca markers are removed from the graph, as the graph is being cloned into
-// a calling function's graph.
+// filled into the OldValMap member.  If StripAllocas is set to true, Alloca
+// markers are removed from the graph, as the graph is being cloned into a
+// calling function's graph.
 //
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
                                 std::map<Value*, DSNodeHandle> &OldValMap,
                                 std::map<const DSNode*, DSNode*> &OldNodeMap,
-                                bool StripScalars, bool StripAllocas) {
+                                bool StripScalars,  // FIXME: Kill StripScalars
+                                bool StripAllocas) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
 
   unsigned FN = Nodes.size();           // First new node...
@@ -564,8 +564,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     Nodes[i]->remapLinks(OldNodeMap);
 
   // Remove local markers as specified
-  unsigned char StripBits = (StripScalars ? DSNode::ScalarNode : 0) |
-                            (StripAllocas ? DSNode::AllocaNode : 0);
+  unsigned char StripBits = StripAllocas ? DSNode::AllocaNode : 0;
   if (StripBits)
     for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
       Nodes[i]->NodeType &= ~StripBits;
@@ -574,7 +573,8 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ValueMap.begin(),
          E = G.ValueMap.end(); I != E; ++I) {
     DSNodeHandle &H = OldValMap[I->first];
-    H = DSNodeHandle(OldNodeMap[I->second.getNode()], I->second.getOffset());
+    H.setNode(OldNodeMap[I->second.getNode()]);
+    H.setOffset(I->second.getOffset());
 
     if (isa<GlobalValue>(I->first)) {  // Is this a global?
       std::map<Value*, DSNodeHandle>::iterator GVI = ValueMap.find(I->first);
@@ -655,11 +655,8 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
   // Mark any incoming arguments as incomplete...
   if (markFormalArgs && Func)
     for (Function::aiterator I = Func->abegin(), E = Func->aend(); I != E; ++I)
-      if (isPointerType(I->getType()) && ValueMap.find(I) != ValueMap.end()) {
-        DSNodeHandle &INH = ValueMap[I];
-        if (INH.getNode() && INH.hasLink(0))
-          markIncompleteNode(ValueMap[I].getLink(0)->getNode());
-      }
+      if (isPointerType(I->getType()) && ValueMap.find(I) != ValueMap.end())
+        markIncompleteNode(ValueMap[I].getNode());
 
   // Mark stuff passed into functions calls as being incomplete...
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i) {
@@ -667,17 +664,16 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
     // Then the return value is certainly incomplete!
     markIncompleteNode(Call.getRetVal().getNode());
 
-    // The call does not make the function argument incomplete...
- 
-    // All arguments to the function call are incomplete though!
+    // All objects pointed to by function arguments are incomplete though!
     for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i)
       markIncompleteNode(Call.getPtrArg(i).getNode());
   }
 
-  // Mark all of the nodes pointed to by global or cast nodes as incomplete...
+  // Mark all of the nodes pointed to by global nodes as incomplete...
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
     if (Nodes[i]->NodeType & DSNode::GlobalNode) {
       DSNode *N = Nodes[i];
+      // FIXME: Make more efficient by looking over Links directly
       for (unsigned i = 0, e = N->getSize(); i != e; ++i)
         if (DSNodeHandle *DSNH = N->getLink(i))
           markIncompleteNode(DSNH->getNode());
@@ -706,9 +702,7 @@ bool DSGraph::isNodeDead(DSNode *N) {
     return true;
 
   // Is it a function node or some other trivially unused global?
-  if (N->NodeType != 0 &&
-      (N->NodeType & ~DSNode::GlobalNode) == 0 && 
-      N->getSize() == 0 &&
+  if ((N->NodeType & ~DSNode::GlobalNode) == 0 && N->getSize() == 0 &&
       N->getReferrers().size() == N->getGlobals().size()) {
 
     // Remove the globals from the ValueMap, so that the referrer count will go
@@ -758,6 +752,7 @@ static void markAlive(DSNode *N, std::set<DSNode*> &Alive) {
   if (N == 0) return;
 
   Alive.insert(N);
+  // FIXME: Make more efficient by looking over Links directly
   for (unsigned i = 0, e = N->getSize(); i != e; ++i)
     if (DSNodeHandle *DSNH = N->getLink(i))
       if (!Alive.count(DSNH->getNode()))
@@ -887,7 +882,7 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
   markGlobalsIteration(GlobalNodes, Calls, Alive, FilterCalls);
 
   // Free up references to dead globals from the ValueMap
-  std::set<DSNode*>::iterator I=GlobalNodes.begin(), E=GlobalNodes.end();
+  std::set<DSNode*>::iterator I = GlobalNodes.begin(), E = GlobalNodes.end();
   for( ; I != E; ++I)
     if (Alive.count(*I) == 0)
       removeRefsToGlobal(*I, G.getValueMap());
@@ -931,19 +926,20 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
       markAlive(FunctionCalls[i].getCallee().getNode(), Alive);
     }
 
-#if 0
-  for (unsigned i = 0, e = OrigFunctionCalls.size(); i != e; ++i)
-    for (unsigned j = 0, e = OrigFunctionCalls[i].size(); j != e; ++j)
-      markAlive(OrigFunctionCalls[i][j].getNode(), Alive);
-#endif
+  // Mark all nodes reachable by scalar nodes as alive...
+  for (std::map<Value*, DSNodeHandle>::iterator I = ValueMap.begin(),
+         E = ValueMap.end(); I != E; ++I)
+    markAlive(I->second.getNode(), Alive);
 
-  // Mark all nodes reachable by scalar nodes (and global nodes, if
-  // keeping them was specified) as alive...
-  unsigned char keepBits = DSNode::ScalarNode |
-                           (KeepAllGlobals ? DSNode::GlobalNode : 0);
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    if (Nodes[i]->NodeType & keepBits)
-      markAlive(Nodes[i], Alive);
+#if 0
+  // Marge all nodes reachable by global nodes, as alive.  Isn't this covered by
+  // the ValueMap?
+  //
+  if (KeepAllGlobals)
+    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
+      if (Nodes[i]->NodeType & DSNode::GlobalNode)
+        markAlive(Nodes[i], Alive);
+#endif
 
   // The return value is alive as well...
   markAlive(RetNode.getNode(), Alive);
@@ -952,7 +948,7 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
   // This also marks all nodes reachable from such nodes as alive.
   // Of course, if KeepAllGlobals is specified, they would be live already.
   if (!KeepAllGlobals)
-    markGlobalsAlive(*this, Alive, ! KeepCalls);
+    markGlobalsAlive(*this, Alive, !KeepCalls);
 
   // Loop over all unreachable nodes, dropping their references...
   vector<DSNode*> DeadNodes;

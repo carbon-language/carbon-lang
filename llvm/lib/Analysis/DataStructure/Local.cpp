@@ -61,7 +61,6 @@ namespace {
     vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
     map<Value*, DSNodeHandle> &ValueMap;
-    map<GlobalValue*, DSNodeHandle> GlobalScalarValueMap;
     vector<DSCallSite> &FunctionCalls;
 
   public:
@@ -107,23 +106,21 @@ namespace {
     /// createNode - Create a new DSNode, ensuring that it is properly added to
     /// the graph.
     ///
-    DSNode *createNode(DSNode::NodeTy NodeType, const Type *Ty);
+    DSNode *createNode(DSNode::NodeTy NodeType, const Type *Ty = 0) {
+      DSNode *N = new DSNode(NodeType, Ty);   // Create the node
+      Nodes.push_back(N);                     // Add node to nodes list
+      return N;
+    }
 
-    /// getValueNode - Return a DSNode that corresponds the the specified LLVM
-    /// value.  This either returns the already existing node, or creates a new
-    /// one and adds it to the graph, if none exists.
+    /// setDestTo - Set the ValueMap entry for the specified value to point to
+    /// the specified destination.  If the Value already points to a node, make
+    /// sure to merge the two destinations together.
     ///
-    DSNodeHandle &getValueNode(Value &V);
+    void setDestTo(Value &V, const DSNodeHandle &NH);
 
-    /// getValueDest - Return the DSNode that the actual value points to.  This
-    /// is the same thing as: getLink(getValueNode(V))
+    /// getValueDest - Return the DSNode that the actual value points to. 
     ///
-    DSNodeHandle &getValueDest(Value &V);
-
-    /// getGlobalNode - Just like getValueNode, except the global node itself is
-    /// returned, not a scalar node pointing to a global.
-    ///
-    DSNodeHandle &getGlobalNode(GlobalValue &V);
+    DSNodeHandle getValueDest(Value &V);
 
     /// getLink - This method is used to return the specified link in the
     /// specified node if one exists.  If a link does not already exist (it's
@@ -148,78 +145,34 @@ DSGraph::DSGraph(Function &F) : Func(&F) {
 //
 
 
-// createNode - Create a new DSNode, ensuring that it is properly added to the
-// graph.
-//
-DSNode *GraphBuilder::createNode(DSNode::NodeTy NodeType, const Type *Ty) {
-  DSNode *N = new DSNode(NodeType, Ty);
-  Nodes.push_back(N);
-  return N;
-}
-
-
-// getGlobalNode - Just like getValueNode, except the global node itself is
-// returned, not a scalar node pointing to a global.
-//
-DSNodeHandle &GraphBuilder::getGlobalNode(GlobalValue &V) {
-  DSNodeHandle &NH = ValueMap[&V];
-  if (NH.getNode()) return NH;       // Already have a node?  Just return it...
-
-  // Create a new global node for this global variable...
-  DSNode *G = createNode(DSNode::GlobalNode, V.getType()->getElementType());
-  G->addGlobal(&V);
-
-  // If this node has outgoing edges, make sure to recycle the same node for
-  // each use.  For functions and other global variables, this is unneccesary,
-  // so avoid excessive merging by cloning these nodes on demand.
-  //
-  NH.setNode(G);
-  return NH;
-}
-
-
-// getValueNode - Return a DSNode that corresponds the the specified LLVM value.
-// This either returns the already existing node, or creates a new one and adds
-// it to the graph, if none exists.
-//
-DSNodeHandle &GraphBuilder::getValueNode(Value &V) {
-  assert(isPointerType(V.getType()) && "Should only use pointer scalars!");
-
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(&V)) {
-    // The GlobalScalarValueMap keeps track of the scalar nodes that point to
-    // global values...  The ValueMap contains pointers to the global memory
-    // object itself, not the scalar constant that points to the memory.
-    //
-    DSNodeHandle &NH = GlobalScalarValueMap[GV];
-    if (NH.getNode()) return NH;
-
-    // If this is a global value, create the global pointed to.
-    DSNode *N = createNode(DSNode::ScalarNode, V.getType());
-    NH.setOffset(0);
-    NH.setNode(N);
-
-    N->addEdgeTo(0, getGlobalNode(*GV));
-    return NH;
-    
-  } else {
-    DSNodeHandle &NH = ValueMap[&V];
-    if (NH.getNode())
-      return NH;     // Already have a node?  Just return it...
-  
-    // Otherwise we need to create a new scalar node...
-    DSNode *N = createNode(DSNode::ScalarNode, V.getType());
-
-    NH.setOffset(0);
-    NH.setNode(N);
-    return NH;
-  }
-}
-
-/// getValueDest - Return the DSNode that the actual value points to.  This is
-/// the same thing as: getLink(getValueNode(V), 0)
+/// getValueDest - Return the DSNode that the actual value points to.
 ///
-DSNodeHandle &GraphBuilder::getValueDest(Value &V) {
-  return getLink(getValueNode(V));
+DSNodeHandle GraphBuilder::getValueDest(Value &V) {
+  if (Constant *C = dyn_cast<Constant>(&V)) {
+    // FIXME: Return null NH for constants like 10 or null
+    // FIXME: Handle constant exprs here.
+
+    return 0;   // Constant doesn't point to anything.
+  }
+
+  DSNodeHandle &NH = ValueMap[&V];
+  if (NH.getNode())
+    return NH;     // Already have a node?  Just return it...
+
+  // Otherwise we need to create a new node to point to...
+  DSNode *N;
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(&V)) {
+    // Create a new global node for this global variable...
+    N = createNode(DSNode::GlobalNode, GV->getType()->getElementType());
+    N->addGlobal(GV);
+  } else {
+    // Otherwise just create a shadow node
+    N = createNode(DSNode::ShadowNode);
+  }
+
+  NH.setNode(N);      // Remember that we are pointing to it...
+  NH.setOffset(0);
+  return NH;
 }
 
 
@@ -235,9 +188,22 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
   if (Link) return *Link;
 
   // If the link hasn't been created yet, make and return a new shadow node
-  DSNode *N = createNode(DSNode::ShadowNode, 0);
+  DSNode *N = createNode(DSNode::ShadowNode);
   Node.setLink(LinkNo, N);
   return *Node.getLink(LinkNo);
+}
+
+
+/// setDestTo - Set the ValueMap entry for the specified value to point to the
+/// specified destination.  If the Value already points to a node, make sure to
+/// merge the two destinations together.
+///
+void GraphBuilder::setDestTo(Value &V, const DSNodeHandle &NH) {
+  DSNodeHandle &AINH = ValueMap[&V];
+  if (AINH.getNode() == 0)   // Not pointing to anything yet?
+    AINH = NH;               // Just point directly to NH
+  else
+    AINH.mergeWith(NH);
 }
 
 
@@ -249,10 +215,7 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
 /// object, pointing the scalar to it.
 ///
 void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
-  DSNode *New = createNode(NodeType, 0);
-
-  // Make the scalar point to the new node...
-  getValueNode(AI).addEdgeTo(New);
+  setDestTo(AI, createNode(NodeType));
 }
 
 // PHINode - Make the scalar for the PHI node point to all of the things the
@@ -261,14 +224,14 @@ void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
 void GraphBuilder::visitPHINode(PHINode &PN) {
   if (!isPointerType(PN.getType())) return; // Only pointer PHIs
 
-  DSNodeHandle &ScalarDest = getValueDest(PN);
+  DSNodeHandle &PNDest = ValueMap[&PN];
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-    if (!isa<ConstantPointerNull>(PN.getIncomingValue(i)))
-      ScalarDest.mergeWith(getValueDest(*PN.getIncomingValue(i)));
+    PNDest.mergeWith(getValueDest(*PN.getIncomingValue(i)));
 }
 
 void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
+  if (Value.getNode() == 0) return;
 
   unsigned Offset = 0;
   const PointerType *PTy = cast<PointerType>(GEP.getOperand(0)->getType());
@@ -278,7 +241,7 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   // If the node had to be folded... exit quickly
   if (TopTypeRec.Ty == Type::VoidTy) {
-    getValueNode(GEP).addEdgeTo(Value);  // GEP result points to folded node
+    setDestTo(GEP, Value);  // GEP result points to folded node
     return;
   }
 
@@ -297,7 +260,7 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (Value.getOffset()) {
         // Value is now the pointer we want to GEP to be...
         Value.getNode()->foldNodeCompletely();
-        getValueNode(GEP).addEdgeTo(Value);  // GEP result points to folded node
+        setDestTo(GEP, Value);  // GEP result points to folded node
         return;
       } else {
         // This is a pointer to the first byte of the node.  Make sure that we
@@ -346,56 +309,51 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Value.setOffset(Value.getOffset()+Offset);
 
   // Value is now the pointer we want to GEP to be...
-  getValueNode(GEP).addEdgeTo(Value);
+  setDestTo(GEP, Value);
 }
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
-  DSNodeHandle &Ptr = getValueDest(*LI.getOperand(0));
+  DSNodeHandle Ptr = getValueDest(*LI.getOperand(0));
+  if (Ptr.getNode() == 0) return;
+
+  // Make that the node is read from...
   Ptr.getNode()->NodeType |= DSNode::Read;
 
   // Ensure a typerecord exists...
   Ptr.getNode()->getTypeRec(LI.getType(), Ptr.getOffset());
-  
+
   if (isPointerType(LI.getType()))
-    getValueNode(LI).addEdgeTo(getLink(Ptr));
+    setDestTo(LI, getLink(Ptr));
 }
 
 void GraphBuilder::visitStoreInst(StoreInst &SI) {
-  DSNodeHandle &Dest = getValueDest(*SI.getOperand(1));
-  Dest.getNode()->NodeType |= DSNode::Modified;
   const Type *StoredTy = SI.getOperand(0)->getType();
+  DSNodeHandle Dest = getValueDest(*SI.getOperand(1));
+  if (Dest.getNode() == 0) return;
+
+  // Make that the node is written to...
+  Dest.getNode()->NodeType |= DSNode::Modified;
 
   // Ensure a typerecord exists...
   Dest.getNode()->getTypeRec(StoredTy, Dest.getOffset());
 
   // Avoid adding edges from null, or processing non-"pointer" stores
-  if (isPointerType(StoredTy) &&
-      !isa<ConstantPointerNull>(SI.getOperand(0))) {
+  if (isPointerType(StoredTy))
     Dest.addEdgeTo(getValueDest(*SI.getOperand(0)));
-  }
 }
 
 void GraphBuilder::visitReturnInst(ReturnInst &RI) {
-  if (RI.getNumOperands() && isPointerType(RI.getOperand(0)->getType()) &&
-      !isa<ConstantPointerNull>(RI.getOperand(0))) {
-    DSNodeHandle &Value = getValueDest(*RI.getOperand(0));
-    Value.mergeWith(RetNode);
-    RetNode = Value;
-  }
+  if (RI.getNumOperands() && isPointerType(RI.getOperand(0)->getType()))
+    RetNode.mergeWith(getValueDest(*RI.getOperand(0)));
 }
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
   // Set up the return value...
   DSNodeHandle RetVal;
   if (isPointerType(CI.getType()))
-    RetVal = getLink(getValueNode(CI));
+    RetVal = getValueDest(CI);
 
-  DSNodeHandle Callee;
-  // Special case for a direct call, avoid creating spurious scalar node...
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(CI.getOperand(0)))
-    Callee = getGlobalNode(*GV);
-  else
-    Callee = getLink(getValueNode(*CI.getOperand(0)));
+  DSNodeHandle Callee = getValueDest(*CI.getOperand(0));
 
   std::vector<DSNodeHandle> Args;
   Args.reserve(CI.getNumOperands()-1);
@@ -403,7 +361,7 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
   // Calculate the arguments vector...
   for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
     if (isPointerType(CI.getOperand(i)->getType()))
-      Args.push_back(getLink(getValueNode(*CI.getOperand(i))));
+      Args.push_back(getValueDest(*CI.getOperand(i)));
 
   // Add a new function call entry...
   FunctionCalls.push_back(DSCallSite(CI, RetVal, Callee, Args));
@@ -411,8 +369,12 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
 
 /// Handle casts...
 void GraphBuilder::visitCastInst(CastInst &CI) {
-  if (isPointerType(CI.getType()) && isPointerType(CI.getOperand(0)->getType()))
-    getValueNode(CI).addEdgeTo(getLink(getValueNode(*CI.getOperand(0))));
+  if (isPointerType(CI.getType())) {
+    if (isPointerType(CI.getOperand(0)->getType()))
+      setDestTo(CI, getValueDest(*CI.getOperand(0)));
+    else
+      ; // FIXME: "Other" node
+  }
 }
 
 

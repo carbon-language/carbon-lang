@@ -16,8 +16,7 @@ using std::map;
 static RegisterAnalysis<BUDataStructures>
 X("budatastructure", "Bottom-up Data Structure Analysis Closure");
 
-// TODO: FIXME
-namespace DataStructureAnalysis {
+namespace DataStructureAnalysis { // TODO: FIXME: Eliminate
   // isPointerType - Return true if this first class type is big enough to hold
   // a pointer.
   //
@@ -60,14 +59,12 @@ static void ResolveArguments(DSCallSite &Call, Function &F,
                              map<Value*, DSNodeHandle> &ValueMap) {
   // Resolve all of the function arguments...
   Function::aiterator AI = F.abegin();
-  for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i) {
+  for (unsigned i = 0, e = Call.getNumPtrArgs(); i != e; ++i, ++AI) {
     // Advance the argument iterator to the first pointer argument...
     while (!isPointerType(AI->getType())) ++AI;
     
     // Add the link from the argument scalar to the provided value
-    DSNodeHandle &NN = ValueMap[AI];
-    NN.addEdgeTo(Call.getPtrArg(i));
-    ++AI;
+    ValueMap[AI].mergeWith(Call.getPtrArg(i));
   }
 }
 
@@ -118,8 +115,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             DEBUG(std::cerr << "\t[BU] Self Inlining: " << F.getName() << "\n");
 
             // Handle the return value if present...
-            if (Call.getRetVal().getNode())
-              Graph->getRetNode().mergeWith(Call.getRetVal());
+            Graph->getRetNode().mergeWith(Call.getRetVal());
 
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, F, Graph->getValueMap());
@@ -143,11 +139,12 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // Record that the original DSCallSite was a call site of FI.
             // This may or may not have been known when the DSCallSite was
             // originally created.
+#if 1  /// FIXME: Reenable
             std::vector<DSCallSite> &CallSitesForFunc = CallSites[&FI];
             CallSitesForFunc.push_back(Call);
             CallSitesForFunc.back().setResolvingCaller(&F);
             CallSitesForFunc.back().setCallee(0);
-
+#endif
             // Clone the callee's graph into the current graph, keeping
             // track of where scalars in the old graph _used_ to point,
             // and of the new nodes matching nodes of the old graph.
@@ -163,8 +160,8 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, FI, OldValMap);
 
-            if (Call.getRetVal().getNode())// Handle the return value if present
-              RetVal.mergeWith(Call.getRetVal());
+            // Handle the return value if present...
+            RetVal.mergeWith(Call.getRetVal());
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);
@@ -172,9 +169,10 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           } else if (FI.getName() == "printf" || FI.getName() == "sscanf" ||
                      FI.getName() == "fprintf" || FI.getName() == "open" ||
                      FI.getName() == "sprintf") {
-            // FIXME: These special cases should go away when we can define
-            // functions that take a variable number of arguments.
+            // FIXME: These special cases (eg printf) should go away when we can
+            // define functions that take a variable number of arguments.
 
+            // FIXME: at the very least, this should update mod/ref info
             // Erase the entry in the globals vector
             Callees.erase(Callees.begin()+c--);
           }

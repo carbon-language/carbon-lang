@@ -36,7 +36,6 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
     OS << "\n";
   }
 
-  if (N->NodeType & DSNode::ScalarNode) OS << "S";
   if (N->NodeType & DSNode::AllocaNode) OS << "A";
   if (N->NodeType & DSNode::NewNode   ) OS << "N";
   if (N->NodeType & DSNode::GlobalNode) OS << "G";
@@ -49,15 +48,6 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
     OS << "\n";
   }
 
-  if ((N->NodeType & DSNode::ScalarNode) && G) {
-    const std::map<Value*, DSNodeHandle> &VM = G->getValueMap();
-    for (std::map<Value*, DSNodeHandle>::const_iterator I = VM.begin(),
-           E = VM.end(); I != E; ++I)
-      if (I->second.getNode() == N) {
-        WriteAsOperand(OS, I->first, false, true, M);
-        OS << "\n";
-      }
-  }
   return OS.str();
 }
 
@@ -94,6 +84,23 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   ///
   static void addCustomGraphFeatures(const DSGraph *G,
                                      GraphWriter<const DSGraph*> &GW) {
+    // Add scalar nodes to the graph...
+    const std::map<Value*, DSNodeHandle> &VM = G->getValueMap();
+    for (std::map<Value*, DSNodeHandle>::const_iterator I = VM.begin();
+         I != VM.end(); ++I)
+      if (!isa<GlobalValue>(I->first)) {
+        std::stringstream OS;
+        WriteAsOperand(OS, I->first, false, true, G->getFunction().getParent());
+        GW.emitSimpleNode(I->first, "plaintext=circle", OS.str());
+        
+        // Add edge from return node to real destination
+        int EdgeDest = I->second.getOffset();
+        if (EdgeDest == 0) EdgeDest = -1;
+        GW.emitEdge(I->first, -1, I->second.getNode(),
+                    EdgeDest, "arrowtail=tee,color=gray63");
+      }
+
+
     // Output the returned value pointer...
     if (G->getRetNode().getNode() != 0) {
       // Output the return node...
