@@ -325,11 +325,17 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
 
 	// Now the arg is coming on stack. Since the LR recieved a register,
 	// we just have to load the arg on stack into that register
-	int ArgStakOffFromFP = 
-	  UltraSparcFrameInfo::FirstIncomingArgOffsetFromFP + 
-	  argNo * SizeOfOperandOnStack;
-
-	AdMI = cpMem2RegMI(getFramePointer(), ArgStakOffFromFP, 
+        const MachineFrameInfo& frameInfo = target.getFrameInfo();
+        assert(frameInfo.argsOnStackHaveFixedSize()); 
+        
+        bool growUp;
+	int firstArg =
+          frameInfo.getFirstIncomingArgOffset(MachineCodeForMethod::get(Meth), growUp);
+	int offsetFromFP =
+          growUp? firstArg + argNo * frameInfo.getSizeOfEachArgOnStack()
+                : firstArg - argNo * frameInfo.getSizeOfEachArgOnStack();
+        
+	AdMI = cpMem2RegMI(getFramePointer(), offsetFromFP, 
 			   UniLRReg, RegType );
       }
 
@@ -363,11 +369,16 @@ void UltraSparcRegInfo::colorMethodArgs(const Method *const Meth,
 	// since this method is called before any other method that makes
 	// uses of the stack pos of the LR (e.g., updateMachineInstr)
 
-	int ArgStakOffFromFP = 
-	  UltraSparcFrameInfo::FirstIncomingArgOffsetFromFP + 
-	  argNo * SizeOfOperandOnStack;
-
-	LR->modifySpillOffFromFP( ArgStakOffFromFP );
+        const MachineFrameInfo& frameInfo = target.getFrameInfo();
+        assert(frameInfo.argsOnStackHaveFixedSize()); 
+        
+        bool growUp;
+	int firstArg = frameInfo.getFirstIncomingArgOffset(MachineCodeForMethod::get(Meth), growUp);
+	int offsetFromFP =
+          growUp? firstArg + argNo * frameInfo.getSizeOfEachArgOnStack()
+                : firstArg - argNo * frameInfo.getSizeOfEachArgOnStack();
+        
+	LR->modifySpillOffFromFP( offsetFromFP );
       }
 
     }
@@ -495,6 +506,11 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
 
+  // Reset the optional args area in the stack frame
+  // since that is reused for each call
+  // 
+  PRA.mcInfo.resetOptionalArgs(target);
+  
   // First color the return value of the call.
   // If there is a LR for the return value, it means this
   // method returns a value
@@ -645,12 +661,9 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	// we just have to move that register to the stack position where
 	// the argument must be passed
 
-	int ArgStakOffFromSP = 
-	  UltraSparcFrameInfo::FirstOutgoingArgOffsetFromSP + 
-	  argNo * SizeOfOperandOnStack;
+	int argOffset = PRA.mcInfo.allocateOptionalArg(target, LR->getType()); 
 
-	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), ArgStakOffFromSP, 
-			   RegType );
+	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, RegType );
       }
 
       CallAI->InstrnsBefore.push_back( AdMI );  // Now add the instruction
@@ -665,12 +678,12 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	// a load instruction to load the LR to outgoing register
 
 
-	AdMI = cpMem2RegMI(getStackPointer(), LR->getSpillOffFromFP(),
+	AdMI = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(),
 			   UniArgReg, RegType );
-
+        
 	CallAI->InstrnsBefore.push_back( AdMI );  // Now add the instruction
       }
-
+      
       else {
 	// Now, we have to pass the arg on stack. Since LR  also did NOT
 	// receive a register we have to move an argument in memory to 
@@ -683,13 +696,14 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	// above method since we cannot find LVSetBefore without the BB 
 	
 	int TReg = PRA.getRegNotUsedByThisInst( LR->getRegClass(), CallMI );
-	int TmpOff = PRA.getStackOffsets().getNewTmpPosOffFromFP();
-	int ArgStakOffFromSP = 
-	  UltraSparcFrameInfo::FirstOutgoingArgOffsetFromSP + 
-	  argNo * SizeOfOperandOnStack;
-
+	int TmpOff = PRA.mcInfo.pushTempValue(target,
+                              target.findOptimalStorageSize(LR->getType()));
+                  // getStackOffsets().getNewTmpPosOffFromFP();
+        
+	int argOffset = PRA.mcInfo.allocateOptionalArg(target, LR->getType()); 
+        
 	MachineInstr *Ad1, *Ad2, *Ad3, *Ad4;
-
+        
 	// Sequence:
 	// (1) Save TReg on stack    
 	// (2) Load LR value into TReg from stack pos of LR
@@ -699,9 +713,9 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	Ad1 = cpReg2MemMI(TReg, getFramePointer(), TmpOff, RegType );
 	Ad2 = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), 
 			  TReg, RegType ); 
-	Ad3 = cpReg2MemMI(TReg, getStackPointer(), ArgStakOffFromSP, RegType );
+	Ad3 = cpReg2MemMI(TReg, getStackPointer(), argOffset, RegType );
 	Ad4 = cpMem2RegMI(getFramePointer(), TmpOff, TReg, RegType ); 
-
+        
 	CallAI->InstrnsBefore.push_back( Ad1 );  
 	CallAI->InstrnsBefore.push_back( Ad2 );  
 	CallAI->InstrnsBefore.push_back( Ad3 );  
@@ -712,6 +726,11 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
   }  // for each parameter in call instruction
 
+  // Reset optional args area again to be safe
+  // 
+  PRA.mcInfo.resetOptionalArgs(target);
+  
+  
 }
 
 //---------------------------------------------------------------------------
@@ -1015,8 +1034,8 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 					       PhyRegAlloc &PRA) const {
   // assert( (getInstrInfo()).isCall( MInst->getOpCode() ) );
 
- 
-  PRA.StackOffsets.resetTmpPos();
+  // Clear the temp area of the stack
+  PRA.mcInfo.popAllTempValues(target);
 
   hash_set<unsigned> PushedRegSet;
 
@@ -1078,9 +1097,9 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
 
-	    int StackOff =  PRA.StackOffsets. getNewTmpPosOffFromFP();
-
-
+	    int StackOff =  PRA.mcInfo.pushTempValue(target,
+                              target.findOptimalStorageSize(LR->getType()));
+            
 	    MachineInstr *AdIBefCC, *AdIAftCC, *AdICpCC;
 	    MachineInstr *AdIBef, *AdIAft;
 
@@ -1176,6 +1195,9 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
     
   } // for each value in the LV set after instruction
   
+  // Clear the temp area of the stack
+  PRA.mcInfo.popAllTempValues(target);
+
 }
 
 //---------------------------------------------------------------------------
