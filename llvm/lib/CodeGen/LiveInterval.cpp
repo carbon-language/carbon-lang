@@ -83,14 +83,10 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
   }
 
   while (i != ie && j != je) {
-    if (i->start == j->start)
-      return true;
-
     if (i->start > j->start) {
       std::swap(i, j);
       std::swap(ie, je);
     }
-    assert(i->start < j->start);
 
     if (i->end > j->start)
       return true;
