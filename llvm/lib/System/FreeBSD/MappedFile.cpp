@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sys/stat.h>
+
 // Include the generic unix implementation
 #include "../Unix/MappedFile.cpp"
 
