@@ -2,6 +2,7 @@
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
   <title>LLVM 1.4 Release Notes</title>
 </head>
@@ -88,15 +89,22 @@ benchmarks, and <b>many</b> other C and C++ programs.</p>
 <ol>
   <li>The test/Programs hierarchy <a href="http://llvm.cs.uiuc.edu/PR257">has
       been moved out of the main LLVM tree</a> into a separate CVS repo and
-      tarball.</li>
+      tarball. This shrinks the distribution size of LLVM itself dramatically.
+  </li>
   <li>LLVM now optimizes global variables significantly more than it did
       before.</li>
   <li>LLVM now includes the new '<tt>undef</tt>' value and <a
       href="LangRef.html#i_unreachable"><tt>unreachable</tt></a> instruction,
       which give the optimizer more information about the behavior of the
       program.</li>
-  <li>The LLVM makefiles have been improved to build LLVM much faster and 
-      includes new targets (like make dist-check).</li>
+  <li>The LLVM makefiles have been improved to build LLVM much faster (2x) and 
+      includes new targets (like dist-check, uninstall). One important change is
+      associated with <a href="http://llvm.cs.uiuc.edu/PR456>PR456">PR456</a>.
+      The libraries and tools will now be built into 
+      <tt>$builddir/Debug/{bin,lib}</tt> instead of
+      <tt>$builddir/tools/Debug</tt> and <tt>$builddir/lib/Debug</tt>. Similarly
+      for <tt>Release</tt> and <tt>Profile</tt> builds.
+  </li>
   <li>The LLVM source code is much more compatible with Microsoft Visual C++,
       including the JIT and runtime-code generation, though the entire system 
       may not work with it.</li>
@@ -113,8 +121,15 @@ In this release, the following missing features were implemented:
 <div class="doc_text">
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR419">JIT interface should support
+  <li><a href="http://llvm.cs.uiuc.edu/PR419">JIT interface should support
     arbitrary calls</a></li>
+  <li>The <tt>llvm-ar</tt> tool was previously incomplete and didn't properly
+  support other ar(1) implementations. This has been corrected. <tt>llvm-ar</tt>
+  now fully supports all archive editing functions, table of contents listing,
+  extraction, and printing. It can also read BSD4.4/MacOSX and SVR4 style 
+  archives. See <a 
+  href="http://llvm.cs.uiuc.edu/docs/CommandGuide/html/llvm-ar.html">llvm-ar</a>
+  for details.</li>
 </ol>
 
 </div>
@@ -274,7 +289,6 @@ details.</li>
     -ipmodref, -cee, -branch-combine, -instloops, -paths</tt></li>
 <li>The <tt>-pre</tt> pass is incomplete (there are cases it doesn't handle that
     it should) and not thoroughly tested.</li>
-<li>The <tt>llvm-ar</tt> tool is incomplete and probably buggy.</li>
 <li>The <tt>llvm-db</tt> tool is in a very early stage of development.</li>
 </ul>
 
