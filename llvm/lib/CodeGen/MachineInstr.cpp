@@ -11,41 +11,42 @@ using std::cerr;
 // Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode,
 			   OpCodeMask    _opCodeMask)
-  : opCode(_opCode),
-    opCodeMask(_opCodeMask),
-    operands(TargetInstrDescriptors[_opCode].numOperands)
-{
+  : opCode(_opCode), opCodeMask(_opCodeMask),
+    operands(TargetInstrDescriptors[_opCode].numOperands, MachineOperand()) {
   assert(TargetInstrDescriptors[_opCode].numOperands >= 0);
 }
 
 // Constructor for instructions with variable #operands
-MachineInstr::MachineInstr(MachineOpCode _opCode,
-			   unsigned	 numOperands,
-			   OpCodeMask    _opCodeMask)
-  : opCode(_opCode),
-    opCodeMask(_opCodeMask),
-    operands(numOperands)
-{
+MachineInstr::MachineInstr(MachineOpCode OpCode, unsigned  numOperands,
+			   OpCodeMask    OpCodeMask)
+  : opCode(OpCode), opCodeMask(OpCodeMask),
+    operands(numOperands, MachineOperand()) {
 }
+
+// OperandComplete - Return true if it's illegal to add a new operand
+bool MachineInstr::OperandsComplete() const {
+  int NumOperands = TargetInstrDescriptors[opCode].numOperands;
+  if (NumOperands >= 0 && operands.size() >= (unsigned)NumOperands)
+    return true;  // Broken!
+  return false;
+}
+
 
 // 
 // Support for replacing opcode and operands of a MachineInstr in place.
 // This only resets the size of the operand vector and initializes it.
 // The new operands must be set explicitly later.
 // 
-void
-MachineInstr::replace(MachineOpCode _opCode,
-                      unsigned	    numOperands,
-                      OpCodeMask    _opCodeMask)
-{
-  opCode = _opCode;
-  opCodeMask = _opCodeMask;
+void MachineInstr::replace(MachineOpCode Opcode, unsigned numOperands,
+                           OpCodeMask Mask) {
+  opCode = Opcode;
+  opCodeMask = Mask;
   operands.clear();
-  operands.resize(numOperands);
+  operands.resize(numOperands, MachineOperand());
 }
 
 void
-MachineInstr::SetMachineOperandVal(unsigned int i,
+MachineInstr::SetMachineOperandVal(unsigned i,
                                    MachineOperand::MachineOperandType opType,
                                    Value* V,
                                    bool isdef,

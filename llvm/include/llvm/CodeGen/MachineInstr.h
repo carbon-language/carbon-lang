@@ -88,9 +88,20 @@ private:
   char flags;                   // see bit field definitions above
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
+private:
+  MachineOperand()
+    : immedVal(0), opType(MO_VirtualRegister), flags(0), regNum(-1) {}
+  MachineOperand(int64_t ImmVal, MachineOperandType OpTy)
+    : immedVal(ImmVal), opType(OpTy), flags(0), regNum(-1) {}
+  MachineOperand(int Reg, MachineOperandType OpTy, bool isDef = false)
+    : immedVal(0), opType(OpTy), flags(isDef ? DEFFLAG : 0), regNum(Reg) {}
+  MachineOperand(Value *V, MachineOperandType OpTy,
+                 bool isDef = false, bool isDNU = false)
+    : value(V), opType(OpTy), regNum(-1) {
+    flags = (isDef ? DEFFLAG : 0) | (isDNU ? DEFUSEFLAG : 0);
+  }
+
 public:
-  MachineOperand() : immedVal(0), opType(MO_VirtualRegister),
-                     flags(0), regNum(-1) {}
   MachineOperand(const MachineOperand &M)
     : immedVal(M.immedVal), opType(M.opType), flags(M.flags), regNum(M.regNum) {
   }
@@ -210,21 +221,26 @@ class MachineInstr : public Annotable,         // MachineInstrs are annotable
   // regsUsed - all machine registers used for this instruction, including regs
   // used to save values across the instruction.  This is a bitset of registers.
   std::vector<bool> regsUsed;
+
+  // OperandComplete - Return true if it's illegal to add a new operand
+  bool OperandsComplete() const;
 public:
-  /*ctor*/		MachineInstr	(MachineOpCode _opCode,
-					 OpCodeMask    _opCodeMask = 0);
-  /*ctor*/		MachineInstr	(MachineOpCode _opCode,
-					 unsigned	numOperands,
-					 OpCodeMask    _opCodeMask = 0);
-  inline           	~MachineInstr	() {}
+  MachineInstr(MachineOpCode Opcode, OpCodeMask OpcodeMask = 0);
+  MachineInstr(MachineOpCode Opcode, unsigned numOperands, OpCodeMask Mask = 0);
+
+  /// MachineInstr ctor - This constructor only does a _reserve_ of the
+  /// operands, not a resize for them.  It is expected that if you use this that
+  /// you call add* methods below to fill up the operands, instead of the Set
+  /// methods.
+  ///
+  MachineInstr(MachineOpCode Opcode, unsigned numOperands, bool XX, bool YY);
 
   // 
   // Support to rewrite a machine instruction in place: for now, simply
   // replace() and then set new operands with Set.*Operand methods below.
   // 
-  void                  replace         (MachineOpCode _opCode,
-					 unsigned	numOperands,
-					 OpCodeMask    _opCodeMask = 0x0);
+  void replace(MachineOpCode Opcode, unsigned numOperands,
+               OpCodeMask Mask = 0x0);
   
   //
   // The opcode.
@@ -326,6 +342,67 @@ public:
                               MachineOperand::MachineOperandType operandType,
                               int64_t intValue);
   void SetMachineOperandReg(unsigned i, int regNum, bool isDef=false);
+
+  //===--------------------------------------------------------------------===//
+  // Accessors to add operands when building up machine instructions
+  //
+
+  /// addRegOperand - Add a MO_VirtualRegister operand to the end of the
+  /// operands list...
+  ///
+  void addRegOperand(Value *V, bool isDef=false, bool isDefAndUse=false) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(V, MachineOperand::MO_VirtualRegister,
+                                      isDef, isDefAndUse));
+  }
+
+  /// addRegOperand - Add a symbolic virtual register reference...
+  ///
+  void addRegOperand(int reg) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(reg, MachineOperand::MO_VirtualRegister));
+  }
+
+  /// addPCDispOperand - Add a PC relative displacement operand to the MI
+  ///
+  void addPCDispOperand(Value *V) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(V, MachineOperand::MO_PCRelativeDisp));
+  }
+
+  /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
+  ///
+  void addMachineRegOperand(int reg, bool isDef=false) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(reg, MachineOperand::MO_MachineRegister,
+                                      isDef));
+    insertUsedReg(reg);
+  }
+
+  /// addZeroExtImmOperand - Add a zero extended constant argument to the
+  /// machine instruction.
+  ///
+  void addZeroExtImmOperand(int64_t intValue) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(intValue,
+                                      MachineOperand::MO_UnextendedImmed));
+  }
+
+  /// addSignExtImmOperand - Add a zero extended constant argument to the
+  /// machine instruction.
+  ///
+  void addSignExtImmOperand(int64_t intValue) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(intValue,
+                                      MachineOperand::MO_SignExtendedImmed));
+  }
+
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
                            bool defsOnly = true);
