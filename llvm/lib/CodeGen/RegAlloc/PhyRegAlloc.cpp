@@ -565,40 +565,100 @@ void PhyRegAlloc::updateMachineCode()
       // If there are instructions to be added *after* this machine
       // instruction, add them now
       
-      if( AddedInstrMap[ MInst ] ) {
+      if( AddedInstrMap[ MInst ] && 
+	  ! (AddedInstrMap[ MInst ]->InstrnsAfter).empty() ) {
 
-	deque<MachineInstr *> &IAft = (AddedInstrMap[MInst])->InstrnsAfter;
+	// if there are delay slots for this instruction, the instructions
+	// added after it must really go after the delayed instruction(s)
+	// So, we move the InstrAfter of the current instruction to the 
+	// corresponding delayed instruction
+	
+	unsigned delay;
+	if((delay=TM.getInstrInfo().getNumDelaySlots(MInst->getOpCode())) >0){ 
+	  move2DelayedInstr(MInst,  *(MInstIterator+delay) );
 
-	if( ! IAft.empty() ) {
-
-	  deque<MachineInstr *>::iterator AdIt; 
-
-	  ++MInstIterator;   // advance to the next instruction
-
-	  for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
-
-	    if(DEBUG_RA) 
-	      cerr << " *#* APPENDed instr opcode: "  << *AdIt << endl;
-
-	    MInstIterator = MIVec.insert( MInstIterator, *AdIt );
-	    ++MInstIterator;
-	  }
-
-	  // MInsterator already points to the next instr. Since the
-	  // for loop also increments it, decrement it to point to the
-	  // instruction added last
-	  --MInstIterator;  
-
+	  if(DEBUG_RA)  cout<< "\nMoved an added instr after the delay slot";
 	}
+       
+	else {
+	
 
+	  // Here we can add the "instructions after" to the current
+	  // instruction since there are no delay slots for this instruction
+
+	  deque<MachineInstr *> &IAft = (AddedInstrMap[MInst])->InstrnsAfter;
+	  
+	  if( ! IAft.empty() ) {     
+	    
+	    deque<MachineInstr *>::iterator AdIt; 
+	    
+	    ++MInstIterator;   // advance to the next instruction
+	    
+	    for( AdIt = IAft.begin(); AdIt != IAft.end() ; ++AdIt ) {
+	      
+	      if(DEBUG_RA) 
+		cerr << " *#* APPENDed instr opcode: "  << *AdIt << endl;
+	      
+	      MInstIterator = MIVec.insert( MInstIterator, *AdIt );
+	      ++MInstIterator;
+	    }
+
+	    // MInsterator already points to the next instr. Since the
+	    // for loop also increments it, decrement it to point to the
+	    // instruction added last
+	    --MInstIterator;  
+	    
+	  }
+	  
+	}  // if not delay
+	
       }
-
+      
     } // for each machine instruction
   }
 }
 
 
+//----------------------------------------------------------------------------
+//
+// If there are delay slots for an instruction, the instructions
+// added after it must really go after the delayed instruction(s).
+// So, we move the InstrAfter of that instruction to the 
+// corresponding delayed instruction using the following method.
 
+//----------------------------------------------------------------------------
+void PhyRegAlloc:: move2DelayedInstr(const MachineInstr *OrigMI,
+				     const MachineInstr *DelayedMI) {
+
+
+  // "added after" instructions of the original instr
+  deque<MachineInstr *> &OrigAft = (AddedInstrMap[OrigMI])->InstrnsAfter;
+
+  // "added instructions" of the delayed instr
+  AddedInstrns *DelayAdI = AddedInstrMap[DelayedMI];
+
+  if(! DelayAdI )  {                // create a new "added after" if necessary
+    DelayAdI = new AddedInstrns();
+    AddedInstrMap[DelayedMI] =  DelayAdI;
+  }
+
+  // "added after" instructions of the delayed instr
+  deque<MachineInstr *> &DelayedAft = DelayAdI->InstrnsAfter;
+
+  // go thru all the "added after instructions" of the original instruction
+  // and append them to the "addded after instructions" of the delayed
+  // instructions
+
+  deque<MachineInstr *>::iterator OrigAdIt; 
+	    
+  for( OrigAdIt = OrigAft.begin(); OrigAdIt != OrigAft.end() ; ++OrigAdIt ) { 
+    DelayedAft.push_back( *OrigAdIt );
+  }    
+
+  // empty the "added after instructions" of the original instruction
+  OrigAft.clear();
+    
+}
 
 //----------------------------------------------------------------------------
 // This method prints the code with registers after register allocation is
