@@ -32,13 +32,13 @@ class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
 public:
   ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
 
-  virtual TestResult doTest(const std::vector<const PassInfo*> &Prefix,
-                            const std::vector<const PassInfo*> &Kept);
+  virtual TestResult doTest(std::vector<const PassInfo*> &Prefix,
+                            std::vector<const PassInfo*> &Kept);
 };
 
 ReduceMiscompilingPasses::TestResult
-ReduceMiscompilingPasses::doTest(const std::vector<const PassInfo*> &Prefix,
-                                 const std::vector<const PassInfo*> &Kept) {
+ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
+                                 std::vector<const PassInfo*> &Kept) {
   // First, run the program with just the Kept passes.  If it is still broken
   // with JUST the kept passes, discard the prefix passes.
   std::cout << "Checking to see if '" << getPassesString(Kept)
@@ -135,8 +135,8 @@ class ReduceMiscompilingFunctions : public ListReducer<Function*> {
 public:
   ReduceMiscompilingFunctions(BugDriver &bd) : BD(bd) {}
 
-  virtual TestResult doTest(const std::vector<Function*> &Prefix,
-                            const std::vector<Function*> &Kept) {
+  virtual TestResult doTest(std::vector<Function*> &Prefix,
+                            std::vector<Function*> &Kept) {
     if (TestFuncs(Kept, false))
       return KeepSuffix;
     if (!Prefix.empty() && TestFuncs(Prefix, false))
@@ -146,21 +146,6 @@ public:
   
   bool TestFuncs(const std::vector<Function*> &Prefix, bool EmitBytecode);
 };
-
-// DeleteFunctionBody - "Remove" the function by deleting all of it's basic
-// blocks, making it external.
-//
-static void DeleteFunctionBody(Function *F) {
-  // First, break circular use/def chain references...
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    I->dropAllReferences();
-
-  // Next, delete all of the basic blocks.
-  F->getBasicBlockList().clear();
-
-  assert(F->isExternal() && "This didn't make the function external!");
-}
-
 
 bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
                                             bool EmitBytecode) {
