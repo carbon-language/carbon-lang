@@ -64,10 +64,10 @@ namespace {
     
     AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant);
 
-    /// MatchesAllButOneString - If this instruction is exactly identical to the
-    /// specified instruction except for one differing literal string, return
-    /// the operand number of the literal string.  Otherwise return ~0.
-    unsigned MatchesAllButOneString(const AsmWriterInst &Other) const;
+    /// MatchesAllButOneOp - If this instruction is exactly identical to the
+    /// specified instruction except for one differing operand, return the
+    /// differing operand number.  Otherwise return ~0.
+    unsigned MatchesAllButOneOp(const AsmWriterInst &Other) const;
 
   private:
     void AddLiteralString(const std::string &Str) {
@@ -183,21 +183,18 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   AddLiteralString("\\n");
 }
 
-/// MatchesAllButOneString - If this instruction is exactly identical to the
-/// specified instruction except for one differing literal string, return
-/// the operand number of the literal string.  Otherwise return ~0.
-unsigned AsmWriterInst::MatchesAllButOneString(const AsmWriterInst &Other)const{
-  if (Operands.size() != Other.Operands.size()) return ~0;
+/// MatchesAllButOneOp - If this instruction is exactly identical to the
+/// specified instruction except for one differing operand, return the differing
+/// operand number.  If more than one operand mismatches, return ~1, otherwise
+/// if the instructions are identical return ~0.
+unsigned AsmWriterInst::MatchesAllButOneOp(const AsmWriterInst &Other)const{
+  if (Operands.size() != Other.Operands.size()) return ~1;
 
   unsigned MismatchOperand = ~0U;
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-    if (Operands[i].OperandType != Other.Operands[i].OperandType)
-      return ~0U;
-
     if (Operands[i] != Other.Operands[i])
-      if (Operands[i].OperandType == AsmWriterOperand::isMachineInstrOperand ||
-          MismatchOperand != ~0U)
-        return ~0U;
+      if (MismatchOperand != ~0U)  // Already have one mismatch?
+        return ~1U;
       else 
         MismatchOperand = i;
   }
@@ -215,14 +212,14 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
   std::vector<AsmWriterInst> SimilarInsts;
   unsigned DifferingOperand = ~0;
   for (unsigned i = Insts.size(); i != 0; --i) {
-    unsigned DiffOp = Insts[i-1].MatchesAllButOneString(FirstInst);
-    if (DiffOp != ~0U) {
+    unsigned DiffOp = Insts[i-1].MatchesAllButOneOp(FirstInst);
+    if (DiffOp != ~1U) {
       if (DifferingOperand == ~0U)  // First match!
         DifferingOperand = DiffOp;
 
       // If this differs in the same operand as the rest of the instructions in
       // this class, move it to the SimilarInsts list.
-      if (DifferingOperand == DiffOp) {
+      if (DifferingOperand == DiffOp || DiffOp == ~0U) {
         SimilarInsts.push_back(Insts[i-1]);
         Insts.erase(Insts.begin()+i-1);
       }
@@ -278,8 +275,6 @@ void AsmWriterEmitter::run(std::ostream &O) {
   "/// it returns false.\n"
     "bool " << Target.getName() << ClassName
             << "::printInstruction(const MachineInstr *MI) {\n";
-  O << "  switch (MI->getOpcode()) {\n"
-       "  default: return false;\n";
 
   std::string Namespace = Target.inst_begin()->second.Namespace;
 
@@ -290,9 +285,56 @@ void AsmWriterEmitter::run(std::ostream &O) {
     if (!I->second.AsmString.empty())
       Instructions.push_back(AsmWriterInst(I->second, Variant));
 
+  // If all of the instructions start with a constant string (a very very common
+  // occurance), emit all of the constant strings as a big table lookup instead
+  // of requiring a switch for them.  
+  bool AllStartWithString = true;
+
+  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
+    if (Instructions[i].Operands.empty() ||
+        Instructions[i].Operands[0].OperandType !=
+                          AsmWriterOperand::isLiteralTextOperand) {
+      AllStartWithString = false;
+      break;
+    }
+  
+  if (AllStartWithString) {
+    // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
+    // all machine instructions are necessarily being printed, so there may be
+    // target instructions not in this map.
+    std::map<const CodeGenInstruction*, AsmWriterInst*> CGIAWIMap;
+    for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
+      CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
+
+    // Emit a table of constant strings.
+    std::vector<const CodeGenInstruction*> NumberedInstructions;
+    Target.getInstructionsByEnumValue(NumberedInstructions);
+
+    O << "  static const char * const OpStrs[] = {\n";
+    for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+      AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
+      if (AWI == 0) {
+        // Something not handled by the asmwriter printer.
+        O << "    0,\t// ";
+      } else {
+        O << "    \"" << AWI->Operands[0].Str << "\",\t// ";
+        // Nuke the string from the operand list.  It is now handled!
+        AWI->Operands.erase(AWI->Operands.begin());
+      }
+      O << NumberedInstructions[i]->TheDef->getName() << "\n";
+    }
+    O << "  };\n\n"
+      << "  // Emit the opcode for the instruction.\n"
+      << "  if (const char *AsmStr = OpStrs[MI->getOpcode()])\n"
+      << "    O << AsmStr;\n\n";
+  }
+
   // Because this is a vector we want to emit from the end.  Reverse all of the
   // elements in the vector.
   std::reverse(Instructions.begin(), Instructions.end());
+
+  O << "  switch (MI->getOpcode()) {\n"
+       "  default: return false;\n";
   
   while (!Instructions.empty())
     EmitInstructions(Instructions, O);
