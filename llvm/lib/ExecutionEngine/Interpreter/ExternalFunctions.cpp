@@ -291,6 +291,8 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
           sprintf(Buffer, Fmt, Args[ArgNo++].IntVal); break;
         case 'e': case 'E': case 'g': case 'G': case 'f':
           sprintf(Buffer, Fmt, Args[ArgNo++].DoubleVal); break;
+        case 'p':
+          sprintf(Buffer, Fmt, (void*)Args[ArgNo++].PointerVal); break;
         case 's': cout << (char*)Args[ArgNo++].PointerVal; break;     // %s
         default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
           ArgNo++; break;
