@@ -62,7 +62,7 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
   analysis::ExprType Expr = analysis::ClassifyExpression(MI->getArraySize());
 
   // Get information about the base datatype being allocated, before & after
-  unsigned ReqTypeSize = TD.getTypeSize(Ty);
+  int ReqTypeSize = TD.getTypeSize(Ty);
   unsigned OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
 
   // Must have a scale or offset to analyze it...
@@ -71,15 +71,11 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
   // Get the offset and scale of the allocation...
   int OffsetVal = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
   int ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) : (Expr.Var ? 1 : 0);
-  if (ScaleVal < 0 || OffsetVal < 0) {
-    cerr << "malloc of a negative number???\n";
-    return false;
-  }
 
   // The old type might not be of unit size, take old size into consideration
   // here...
-  unsigned Offset = (unsigned)OffsetVal * OldTypeSize;
-  unsigned Scale  = (unsigned)ScaleVal  * OldTypeSize;
+  int Offset = OffsetVal * OldTypeSize;
+  int Scale  = ScaleVal  * OldTypeSize;
   
   // In order to be successful, both the scale and the offset must be a multiple
   // of the requested data type's size.
