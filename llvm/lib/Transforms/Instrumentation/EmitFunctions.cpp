@@ -7,7 +7,13 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This inserts a global constant table with function pointers all along.
+// This inserts into the input module three new global constants containing
+// mapping information pertinent to the Reoptimizer's runtime library:
+// 1) a structure containing a pointer to each function;
+// 2) an array containing a boolean which is true iff the corresponding
+//    function in 1) contains a back-edge branch suitable for the Reoptimizer's
+//    first-level instrumentation;
+// 3) an integer containing the number of entries in 1) and 2).
 //
 // NOTE: This pass is used by the reoptimizer only.
 //
