@@ -223,7 +223,6 @@ dnl **************************************************************************
 dnl * Enable various compile-time options
 dnl **************************************************************************
 AC_ARG_ENABLE(purify,AC_HELP_STRING([--enable-purify],[Compile with purify (default is NO)]), AC_SUBST(ENABLE_PURIFY,[[ENABLE_PURIFY=1]]), AC_SUBST(ENABLE_PURIFY,[[]]))
-AC_ARG_ENABLE(profiling,AC_HELP_STRING([--enable-profiling],[Compile with profiling information (default is NO)]), AC_SUBST(ENABLE_PROFILING,[[ENABLE_PROFILING=1]]), AC_SUBST(ENABLE_PROFILING,[[]]))
 AC_ARG_ENABLE(optimized,AC_HELP_STRING([--enable-optimized],[Compile with optimizations enabled (default is NO)]), AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]]), AC_SUBST(ENABLE_OPTIMIZED,[[]]))
 AC_ARG_ENABLE(spec,AC_HELP_STRING([--enable-spec],[Compile SPEC benchmarks (default is NO)]), AC_SUBST(USE_SPEC,[[USE_SPEC=1]]), AC_SUBST(USE_SPEC,[[]]))
 AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]), AC_SUBST(UPB,[[USE_PRECOMPILED_BYTECODE=1]]), AC_SUBST(UPB,[[]]))
