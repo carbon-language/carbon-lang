@@ -46,12 +46,6 @@ void AsmPrinter::emitZeros(unsigned NumZeros) const {
     if (ZeroDirective)
       O << ZeroDirective << NumZeros << "\n";
     else {
-      if (NumZeros >= 8 && Data64bitsDirective) {
-        for (; NumZeros >= 8; NumZeros -= 8)
-          O << Data64bitsDirective << "0\n";
-      }
-      for (; NumZeros >= 4; NumZeros -= 4)
-        O << Data32bitsDirective << "0\n";
       for (; NumZeros; --NumZeros)
         O << Data8bitsDirective << "0\n";
     }
