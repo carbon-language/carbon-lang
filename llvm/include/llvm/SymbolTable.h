@@ -9,7 +9,7 @@
 // searched.
 //
 // This chaining behavior does NOT affect iterators though: only the lookup 
-// method
+// method.
 //
 //===----------------------------------------------------------------------===//
 
