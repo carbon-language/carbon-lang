@@ -345,7 +345,7 @@ namespace {
 
     bool isFoldableLoad(SDOperand Op, SDOperand OtherOp);
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
-
+    bool TryToFoldLoadOpStore(SDNode *Node);
 
     void EmitCMP(SDOperand LHS, SDOperand RHS, bool isOnlyUse);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
@@ -2236,6 +2236,144 @@ unsigned ISel::SelectExpr(SDOperand N) {
   return 0;
 }
 
+/// TryToFoldLoadOpStore - Given a store node, try to fold together a
+/// load/op/store instruction.  If successful return true.
+bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
+  assert(Node->getOpcode() == ISD::STORE && "Can only do this for stores!");
+  SDOperand Chain  = Node->getOperand(0);
+  SDOperand StVal  = Node->getOperand(1);
+
+  // The chain has to be a load, the stored value must be an integer binary
+  // operation with one use.
+  if (Chain.getOpcode() != ISD::LOAD || !StVal.Val->hasOneUse() ||
+      StVal.Val->getNumOperands() != 2 ||
+      MVT::isFloatingPoint(StVal.getValueType()))
+    return false;
+
+  SDOperand TheLoad = Chain.getValue(0);
+
+  // Check to see if we are loading the same pointer that we're storing to.
+  if (TheLoad.getOperand(1) != Node->getOperand(2))
+    return false;
+
+  // Make sure that one of the operands of the binop is the load, and that the
+  // load folds into the binop.
+  if (((StVal.getOperand(0) != TheLoad ||
+        !isFoldableLoad(TheLoad, StVal.getOperand(1))) &&
+       (StVal.getOperand(1) != TheLoad ||
+        !isFoldableLoad(TheLoad, StVal.getOperand(0)))))
+    return false;
+
+  // Finally, check to see if this is one of the ops we can handle!
+  static const unsigned ADDTAB[] = {
+    X86::ADD8mi, X86::ADD16mi, X86::ADD32mi,
+    X86::ADD8mr, X86::ADD16mr, X86::ADD32mr,
+  };
+  static const unsigned SUBTAB[] = {
+    X86::SUB8mi, X86::SUB16mi, X86::SUB32mi,
+    X86::SUB8mr, X86::SUB16mr, X86::SUB32mr,
+  };
+  static const unsigned ANDTAB[] = {
+    X86::AND8mi, X86::AND16mi, X86::AND32mi,
+    X86::AND8mr, X86::AND16mr, X86::AND32mr,
+  };
+  static const unsigned ORTAB[] = {
+    X86::OR8mi, X86::OR16mi, X86::OR32mi,
+    X86::OR8mr, X86::OR16mr, X86::OR32mr,
+  };
+  static const unsigned XORTAB[] = {
+    X86::XOR8mi, X86::XOR16mi, X86::XOR32mi,
+    X86::XOR8mr, X86::XOR16mr, X86::XOR32mr,
+  };
+  static const unsigned SHLTAB[] = {
+    X86::SHL8mi, X86::SHL16mi, X86::SHL32mi,
+    /*Have to put the reg in CL*/0, 0, 0,
+  };
+  static const unsigned SARTAB[] = {
+    X86::SAR8mi, X86::SAR16mi, X86::SAR32mi,
+    /*Have to put the reg in CL*/0, 0, 0,
+  };
+  static const unsigned SHRTAB[] = {
+    X86::SHR8mi, X86::SHR16mi, X86::SHR32mi,
+    /*Have to put the reg in CL*/0, 0, 0,
+  };
+  
+  const unsigned *TabPtr = 0;
+  switch (StVal.getOpcode()) {
+  default:
+    std::cerr << "CANNOT [mem] op= val: ";
+    StVal.Val->dump(); std::cerr << "\n";
+  case ISD::MUL:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM: return false;
+    
+  case ISD::ADD: TabPtr = ADDTAB; break;
+  case ISD::SUB: TabPtr = SUBTAB; break;
+  case ISD::AND: TabPtr = ANDTAB; break;
+  case ISD:: OR: TabPtr =  ORTAB; break;
+  case ISD::XOR: TabPtr = XORTAB; break;
+  case ISD::SHL: TabPtr = SHLTAB; break;
+  case ISD::SRA: TabPtr = SARTAB; break;
+  case ISD::SRL: TabPtr = SHRTAB; break;
+  }
+  
+  // Handle: [mem] op= CST
+  SDOperand Op0 = StVal.getOperand(0);
+  SDOperand Op1 = StVal.getOperand(1);
+  unsigned Opc;
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
+    switch (Op0.getValueType()) { // Use Op0's type because of shifts.
+    default: break;
+    case MVT::i1:
+    case MVT::i8:  Opc = TabPtr[0]; break;
+    case MVT::i16: Opc = TabPtr[1]; break;
+    case MVT::i32: Opc = TabPtr[2]; break;
+    }
+    
+    if (Opc) {
+      X86AddressMode AM;
+      if (getRegPressure(TheLoad.getOperand(0)) >
+          getRegPressure(TheLoad.getOperand(1))) {
+        Select(TheLoad.getOperand(0));
+        SelectAddress(TheLoad.getOperand(1), AM);
+      } else {
+        SelectAddress(TheLoad.getOperand(1), AM);
+        Select(TheLoad.getOperand(0));
+      }            
+      
+      addFullAddress(BuildMI(BB, Opc, 4+1),AM).addImm(CN->getValue());
+      return true;
+    }
+  }
+  
+  // If we have [mem] = V op [mem], try to turn it into:
+  // [mem] = [mem] op V.
+  if (Op1 == TheLoad && StVal.getOpcode() != ISD::SUB &&
+      StVal.getOpcode() != ISD::SHL && StVal.getOpcode() != ISD::SRA &&
+      StVal.getOpcode() != ISD::SRL)
+    std::swap(Op0, Op1);
+  
+  if (Op0 != TheLoad) return false;
+
+  switch (Op0.getValueType()) {
+  default: return false;
+  case MVT::i1:
+  case MVT::i8:  Opc = TabPtr[3]; break;
+  case MVT::i16: Opc = TabPtr[4]; break;
+  case MVT::i32: Opc = TabPtr[5]; break;
+  }
+    
+  Select(TheLoad.getOperand(0));
+  X86AddressMode AM;
+  SelectAddress(TheLoad.getOperand(1), AM);
+  unsigned Reg = SelectExpr(Op1);
+  addFullAddress(BuildMI(BB, Opc, 4+1),AM).addReg(Reg);
+  return true;
+}
+
+
 void ISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
 
@@ -2488,130 +2626,8 @@ void ISel::Select(SDOperand N) {
     }
 
     // Check to see if this is a load/op/store combination.
-    if (N.getOperand(1).Val->hasOneUse() &&
-        N.getOperand(0).getOpcode() == ISD::LOAD &&
-        N.getOperand(1).Val->getNumOperands() == 2 &&
-        !MVT::isFloatingPoint(N.getOperand(0).getValue(0).getValueType())) {
-      SDOperand TheLoad = N.getOperand(0).getValue(0);
-
-      // See if the stored value is a simple binary operator that uses the load
-      // as one of its operands.
-      SDOperand Op = N.getOperand(1);
-
-      // Check to see if we are loading the same pointer that we're storing to.
-      if (TheLoad.getOperand(1) == N.getOperand(2) &&
-          ((Op.getOperand(0) == TheLoad && 
-            isFoldableLoad(TheLoad, Op.getOperand(1))) ||
-           (Op.getOperand(1) == TheLoad && 
-            isFoldableLoad(TheLoad, Op.getOperand(0))))) {
-        // Finally, check to see if this is one of the ops we can handle!
-        static const unsigned ADDTAB[] = {
-          X86::ADD8mi, X86::ADD16mi, X86::ADD32mi,
-          X86::ADD8mr, X86::ADD16mr, X86::ADD32mr,
-        };
-        static const unsigned SUBTAB[] = {
-          X86::SUB8mi, X86::SUB16mi, X86::SUB32mi,
-          X86::SUB8mr, X86::SUB16mr, X86::SUB32mr,
-        };
-        static const unsigned ANDTAB[] = {
-          X86::AND8mi, X86::AND16mi, X86::AND32mi,
-          X86::AND8mr, X86::AND16mr, X86::AND32mr,
-        };
-        static const unsigned ORTAB[] = {
-          X86::OR8mi, X86::OR16mi, X86::OR32mi,
-          X86::OR8mr, X86::OR16mr, X86::OR32mr,
-        };
-        static const unsigned XORTAB[] = {
-          X86::XOR8mi, X86::XOR16mi, X86::XOR32mi,
-          X86::XOR8mr, X86::XOR16mr, X86::XOR32mr,
-        };
-        static const unsigned SHLTAB[] = {
-          X86::SHL8mi, X86::SHL16mi, X86::SHL32mi,
-          /*Have to put the reg in CL*/0, 0, 0,
-        };
-        static const unsigned SARTAB[] = {
-          X86::SAR8mi, X86::SAR16mi, X86::SAR32mi,
-          /*Have to put the reg in CL*/0, 0, 0,
-        };
-        static const unsigned SHRTAB[] = {
-          X86::SHR8mi, X86::SHR16mi, X86::SHR32mi,
-          /*Have to put the reg in CL*/0, 0, 0,
-        };
-
-        const unsigned *TabPtr = 0;
-        switch (Op.getOpcode()) {
-        default: std::cerr << "CANNOT [mem] op= val: "; Op.Val->dump(); std::cerr << "\n"; break;
-        case ISD::MUL:
-        case ISD::SDIV:
-        case ISD::UDIV:
-        case ISD::SREM:
-        case ISD::UREM: break;
-
-        case ISD::ADD: TabPtr = ADDTAB; break;
-        case ISD::SUB: TabPtr = SUBTAB; break;
-        case ISD::AND: TabPtr = ANDTAB; break;
-        case ISD:: OR: TabPtr =  ORTAB; break;
-        case ISD::XOR: TabPtr = XORTAB; break;
-        case ISD::SHL: TabPtr = SHLTAB; break;
-        case ISD::SRA: TabPtr = SARTAB; break;
-        case ISD::SRL: TabPtr = SHRTAB; break;
-        }
-          
-        if (TabPtr) {
-          // Handle: [mem] op= CST
-          SDOperand Op0 = Op.getOperand(0);
-          SDOperand Op1 = Op.getOperand(1);
-          if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
-            switch (Op0.getValueType()) { // Use Op0's type because of shifts.
-            default: break;
-            case MVT::i1:
-            case MVT::i8:  Opc = TabPtr[0]; break;
-            case MVT::i16: Opc = TabPtr[1]; break;
-            case MVT::i32: Opc = TabPtr[2]; break;
-            }
-
-            if (Opc) {
-              if (getRegPressure(TheLoad.getOperand(0)) >
-                  getRegPressure(TheLoad.getOperand(1))) {
-                Select(TheLoad.getOperand(0));
-                SelectAddress(TheLoad.getOperand(1), AM);
-              } else {
-                SelectAddress(TheLoad.getOperand(1), AM);
-                Select(TheLoad.getOperand(0));
-              }            
-
-              addFullAddress(BuildMI(BB, Opc, 4+1),AM).addImm(CN->getValue());
-              return;
-            }
-          }
-            
-          // If we have [mem] = V op [mem], try to turn it into:
-          // [mem] = [mem] op V.
-          if (Op1 == TheLoad && Op.getOpcode() != ISD::SUB &&
-              Op.getOpcode() != ISD::SHL && Op.getOpcode() != ISD::SRA &&
-              Op.getOpcode() != ISD::SRL)
-            std::swap(Op0, Op1);
-
-          if (Op0 == TheLoad) {
-            switch (Op0.getValueType()) {
-            default: break;
-            case MVT::i1:
-            case MVT::i8:  Opc = TabPtr[3]; break;
-            case MVT::i16: Opc = TabPtr[4]; break;
-            case MVT::i32: Opc = TabPtr[5]; break;
-            }
-              
-            if (Opc) {
-              Select(TheLoad.getOperand(0));
-              SelectAddress(TheLoad.getOperand(1), AM);
-              unsigned Reg = SelectExpr(Op1);
-              addFullAddress(BuildMI(BB, Opc, 4+1),AM).addReg(Reg);
-              return;
-            }
-          }
-        }
-      }
-    }
+    if (TryToFoldLoadOpStore(Node))
+      return;
 
     switch (N.getOperand(1).getValueType()) {
     default: assert(0 && "Cannot store this type!");
