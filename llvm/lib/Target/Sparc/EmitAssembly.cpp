@@ -613,7 +613,7 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
   
   if (CV->getType()->isPrimitiveType())
     {
-      if (CV->getType() == Type::FloatTy || CV->getType() == Type::DoubleTy)
+      if (CV->getType()->isFloatingPoint())
         toAsm << "0r";                  // FP constants must have this prefix
       toAsm << CV->getStrValue() << "\n";
     }
