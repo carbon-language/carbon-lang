@@ -201,6 +201,14 @@ class TDDataStructures : public ModulePass {
 
   std::map<DSGraph*, std::vector<CallerCallEdge> > CallerEdges;
 
+
+  // IndCallMap - We memoize the results of indirect call inlining operations
+  // that have multiple targets here to avoid N*M inlining.  The key to the map
+  // is a sorted set of callee functions, the value is the DSGraph that holds
+  // all of the caller graphs merged together, and the DSCallSite to merge with
+  // the arguments for each function.
+  std::map<std::vector<Function*>, DSGraph*> IndCallMap;
+
 public:
   ~TDDataStructures() { releaseMyMemory(); }
 
