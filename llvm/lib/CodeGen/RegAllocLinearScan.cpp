@@ -83,11 +83,6 @@ namespace {
         /// runOnMachineFunction - register allocate the whole function
         bool runOnMachineFunction(MachineFunction&);
 
-        /// verifyIntervals - verify that we have no inconsistencies
-        /// in the register assignments we have in active and inactive
-        /// lists
-        bool verifyIntervals();
-
         /// processActiveIntervals - expire old intervals and move
         /// non-overlapping ones to the incative list
         void processActiveIntervals(Intervals::const_iterator cur);
