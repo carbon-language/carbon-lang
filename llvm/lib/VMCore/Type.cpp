@@ -87,8 +87,8 @@ const Type *Type::getPrimitiveType(PrimitiveID IDNumber) {
 //
 bool Type::isLosslesslyConvertableTo(const Type *Ty) const {
   if (this == Ty) return true;
-  if ((!isPrimitiveType()   && !isPointerType()) ||
-      (!Ty->isPointerType() && !Ty->isPrimitiveType())) return false;
+  if ((!isPrimitiveType()    && !isa<PointerType>(this)) ||
+      (!isa<PointerType>(Ty) && !Ty->isPrimitiveType())) return false;
 
   if (getPrimitiveID() == Ty->getPrimitiveID())
     return true;  // Handles identity cast, and cast of differing pointer types
@@ -107,6 +107,18 @@ bool Type::isLosslesslyConvertableTo(const Type *Ty) const {
     return Ty == Type::ULongTy || Ty == Type::LongTy || isa<PointerType>(Ty);
   default:
     return false;  // Other types have no identity values
+  }
+}
+
+// getPrimitiveSize - Return the basic size of this type if it is a primative
+// type.  These are fixed by LLVM and are not target dependant.  This will
+// return zero if the type does not have a size or is not a primitive type.
+//
+unsigned Type::getPrimitiveSize() const {
+  switch (getPrimitiveID()) {
+#define HANDLE_PRIM_TYPE(TY,SIZE)  case TY##TyID: return SIZE;
+#include "llvm/Type.def"
+  default: return 0;
   }
 }
 
