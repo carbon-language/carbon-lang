@@ -676,10 +676,8 @@ SparcV9InstrInfo::CreateCopyInstructionsByType(const TargetMachine& target,
   const Type* resultType = dest->getType();
   
   MachineOpCode opCode = ChooseAddInstructionByType(resultType);
-  if (opCode == V9::INVALID_OPCODE) {
-    assert(0 && "Unsupported result type in CreateCopyInstructionsByType()");
-    return;
-  }
+  assert (opCode != V9::INVALID_OPCODE
+          && "Unsupported result type in CreateCopyInstructionsByType()");
   
   // if `src' is a constant that doesn't fit in the immed field or if it is
   // a global variable (i.e., a constant address), generate a load
