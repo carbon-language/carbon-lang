@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-as < %s | llc -march=x86 | grep ESP | grep '\['
 
 declare sbyte* %llvm.returnaddress(uint)
 declare sbyte* %llvm.frameaddress(uint)
