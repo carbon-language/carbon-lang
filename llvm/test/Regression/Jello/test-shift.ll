@@ -23,9 +23,15 @@ int %main() {
     %t2 = shr uint 1, ubyte 5
 
     ;%t1 = shr long 1, ubyte %shamt
-    %t2 = shr long 1, ubyte 4
+    %t1 = shr long 1, ubyte 4
+    %t2 = shr long 1, ubyte %shamt
+    %t3 = shl long 1, ubyte 4
+    %t4 = shl long 1, ubyte %shamt
 
     ;%t1 = shr ulong 1, ubyte %shamt
-    %t2 = shr ulong 1, ubyte 5
+    %t1 = shr ulong 1, ubyte 5
+    %t2 = shr ulong 1, ubyte %shamt
+    %t3 = shl ulong 1, ubyte 5
+    %t4 = shl ulong 1, ubyte %shamt
     ret int 0
 }
