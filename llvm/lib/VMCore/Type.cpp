@@ -585,7 +585,10 @@ public:
     return I;
   }
 
-
+  /// finishRefinement - This method is called after we have updated an existing
+  /// type with its new components.  We must now either merge the type away with
+  /// some other type or reinstall it in the map with it's new configuration.
+  /// The specified iterator tells us what the type USED to look like.
   void finishRefinement(iterator TyIt) {
     TypeClass *Ty = TyIt->second;
 
@@ -594,7 +597,7 @@ public:
     Map.erase(TyIt);
 
     // Determine whether there is a cycle through the type graph which passes
-    // back through this type.  Other cycles are ok, 
+    // back through this type.  Other cycles are ok though.
     bool HasTypeCycle = false;
     {
       std::set<const Type*> VisitedTypes;
