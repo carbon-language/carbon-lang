@@ -5,6 +5,6 @@ all:: opt
 clean ::
 	rm -f opt
 
-opt : $(ObjectsG)
+opt : $(ObjectsG) ../../lib/Optimizations/Debug/libopt.a
 	$(LinkG) -o $@ $(ObjectsG) -lopt -lbcreader -lbcwriter \
                                -lasmwriter -lanalysis -lvmcore 

@@ -42,6 +42,7 @@ struct {
   { "-sccp"      , "Sparse Conditional Constant Prop", DoSCCP },
   { "-cpm"       , "Constant Pool Merging", DoConstantPoolMerging },
   { "-adce"      , "Agressive DCE",         DoADCE },
+  { "-raise"     , "Raise to Higher Level", DoRaiseRepresentation },
 };
 
 int main(int argc, char **argv) {
