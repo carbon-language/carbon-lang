@@ -22,6 +22,7 @@
 #include <iostream>
 #include <values.h>
 using std::cerr;
+using std::vector;
 
 UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
   : MachineRegInfo(tgt), UltraSparcInfo(&tgt), NumOfIntArgRegs(6), 

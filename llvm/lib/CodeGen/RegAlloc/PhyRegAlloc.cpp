@@ -28,6 +28,7 @@
 #include <iostream>
 #include <math.h>
 using std::cerr;
+using std::vector;
 
 RegAllocDebugLevel_t DEBUG_RA;
 static cl::Enum<RegAllocDebugLevel_t> DEBUG_RA_c(DEBUG_RA, "dregalloc",

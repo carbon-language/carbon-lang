@@ -52,7 +52,7 @@ namespace {
 
 void InsertPrologEpilogCode::InsertPrologCode(Function &F)
 {
-  vector<MachineInstr*> mvec;
+  std::vector<MachineInstr*> mvec;
   MachineInstr* M;
   const MachineFrameInfo& frameInfo = Target.getFrameInfo();
   

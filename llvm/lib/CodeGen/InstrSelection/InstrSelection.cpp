@@ -27,6 +27,7 @@
 #include "Support/CommandLine.h"
 #include <iostream>
 using std::cerr;
+using std::vector;
 
 //******************** Internal Data Declarations ************************/
 
@@ -152,7 +153,7 @@ SelectInstructionsForMethod(Function *F, TargetMachine &target)
 //-------------------------------------------------------------------------
 
 void
-InsertPhiElimInstructions(BasicBlock *BB, const vector<MachineInstr*>& CpVec)
+InsertPhiElimInstructions(BasicBlock *BB, const std::vector<MachineInstr*>& CpVec)
 { 
   Instruction *TermInst = (Instruction*)BB->getTerminator();
   MachineCodeForInstruction &MC4Term =MachineCodeForInstruction::get(TermInst);
@@ -294,7 +295,7 @@ SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt,
   // 
   if (treeRoot->opLabel != VRegListOp)
     {
-      vector<MachineInstr*> minstrVec;
+      std::vector<MachineInstr*> minstrVec;
       
       InstructionNode* instrNode = (InstructionNode*)treeRoot;
       assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);

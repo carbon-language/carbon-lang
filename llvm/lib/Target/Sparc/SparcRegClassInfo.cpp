@@ -4,6 +4,7 @@
 #include "llvm/Type.h"
 #include <iostream>
 using std::cerr;
+using std::vector;
 
 //-----------------------------------------------------------------------------
 // Int Register Class - method for coloring a node in the interference graph.

@@ -22,7 +22,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-
+using std::vector;
 
 //************************ Internal Functions ******************************/
 

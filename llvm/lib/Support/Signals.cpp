@@ -11,8 +11,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <signal.h>
+using std::string;
 
-static vector<string> FilesToRemove;
+static std::vector<string> FilesToRemove;
 
 // IntSigs - Signals that may interrupt the program at any time.
 static const int IntSigs[] = {
@@ -36,7 +37,7 @@ static void SignalHandler(int Sig) {
     FilesToRemove.pop_back();
   }
 
-  if (find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd)
+  if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd)
     exit(1);   // If this is an interrupt signal, exit the program
 
   // Otherwise if it is a fault (like SEGV) reissue the signal to die...
@@ -48,6 +49,6 @@ static void RegisterHandler(int Signal) { signal(Signal, SignalHandler); }
 void RemoveFileOnSignal(const string &Filename) {
   FilesToRemove.push_back(Filename);
 
-  for_each(IntSigs, IntSigsEnd, RegisterHandler);
-  for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
+  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }

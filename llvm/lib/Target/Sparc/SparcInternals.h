@@ -455,16 +455,16 @@ public:
   // for an architecture.
   //
   void cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
-                   int RegType, vector<MachineInstr*>& mvec) const;
+                   int RegType, std::vector<MachineInstr*>& mvec) const;
   
   void cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
-                   int Offset, int RegType, vector<MachineInstr*>& mvec) const;
+                   int Offset, int RegType, std::vector<MachineInstr*>& mvec) const;
 
   void cpMem2RegMI(unsigned SrcPtrReg, int Offset, unsigned DestReg,
-                   int RegType, vector<MachineInstr*>& mvec) const;
+                   int RegType, std::vector<MachineInstr*>& mvec) const;
 
   void cpValue2Value(Value *Src, Value *Dest,
-                     vector<MachineInstr*>& mvec) const;
+                     std::vector<MachineInstr*>& mvec) const;
 
   // To see whether a register is a volatile (i.e., whehter it must be
   // preserved acorss calls)
