@@ -155,6 +155,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
     int Val = getConstantValue(Expr.Scale);
     if (Val < 0) return false;  // Don't mess with negative scales
     Scale = (unsigned)Val;
+    if (Scale == 1) Scale = 0;  // No interesting scale if *1
   }
   
   // Loop over the Scale and Offset values, filling in the Indices vector for

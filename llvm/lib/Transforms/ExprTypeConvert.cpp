@@ -307,8 +307,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
       //
       std::vector<Value*> Indices;
       const Type *ElTy = ConvertableToGEP(PTy, I->getOperand(1), Indices);
-      if (ElTy) {
-        assert(ElTy == PVTy && "Internal error, setup wrong!");
+      if (ElTy == PVTy) {
         if (!ExpressionConvertableToType(I->getOperand(0),
                                          PointerType::get(ElTy), CTMap))
           return false;  // Can't continue, ExConToTy might have polluted set!
