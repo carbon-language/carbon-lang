@@ -100,6 +100,11 @@ public:
     : Term(T), idx(Term->getNumSuccessors()) {
     assert(T && "getTerminator returned null!");
   }
+
+  inline const _Self &operator=(const _Self &I) {
+    assert(Term == I.Term &&"Cannot assign iterators to two different blocks!");
+    idx = I.idx;
+  }
     
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
