@@ -294,9 +294,9 @@ affect the JIT.<p>
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="sparc-be"><hr size=0>Known problems with the Sparc back-end</h4><ul>
 
-<li>The Sparc code generator does not currently support the <tt>invoke</tt> or
-<tt>unwind</tt> instructions, so code produced by the C++ front-end and C code
-that calls the <tt>setjmp</tt> or <tt>longjmp</tt> functions will not compile.
+<li>The Sparc code generator does not currently support the <tt>unwind</tt>
+instruction, so code that throws a C++ exception or calls the C <tt>longjmp</tt>
+function will abort.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -345,6 +345,6 @@ via the mailing lists.<p>
 <address>By: <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Thu Oct  2 11:37:25 CDT 2003
+Last modified: Sun Oct  5 14:01:10 CDT 2003
 <!-- hhmts end -->
 </body></html>
