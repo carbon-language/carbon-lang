@@ -780,6 +780,8 @@ void V8ISel::visitCallInst(CallInst &I) {
       default: extraStack += 4; break;
     }
   }
+  // Round up extra stack size to the nearest doubleword.
+  if (extraStack) { extraStack = (extraStack + 7) & ~7; }
 
   // Deal with args
   static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,

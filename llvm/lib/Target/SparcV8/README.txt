@@ -13,7 +13,7 @@ SingleSource/Benchmarks (excluding Shootout-C++):
 fldry heapsort objinst Queens chomp misr pi whetstone bigfib
 
 SingleSource/UnitTests:
-C++Catch SimpleC++Test 2002-05-02-ArgumentTest 2002-05-03-NotTest
+C++Catch SimpleC++Test 2002-05-02-ArgumentTest
 2003-05-07-VarArgs 2003-07-09-SignedArgs 2003-08-11-VaListArg
 
 To-do
