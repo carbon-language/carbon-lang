@@ -452,7 +452,7 @@ ifdef SHARED_LIBRARY
 all-local:: $(LibName.LA)
 
 $(LibName.LA): $(BUILT_SOURCES) $(ObjectsLO) $(LibDir)/.dir
-	$(Echo) Linking $(Configuration) Shared Library $(notdir $@)
+	$(Echo) Linking $(Configuration) Shared Library $(LIBRARYNAME).so
 	$(Verb) $(Link) -o $@ $(ObjectsLO)
 	$(Verb) $(LTInstall) $@ $(LibDir)
 
