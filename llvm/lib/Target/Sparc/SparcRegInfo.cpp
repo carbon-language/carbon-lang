@@ -1111,7 +1111,18 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
   // assert( (getInstrInfo()).isCall( MInst->getOpCode() ) );
 
   // Clear the temp area of the stack
-  PRA.mcInfo.popAllTempValues(target);
+  //PRA.mcInfo.popAllTempValues(target);
+  // TODO*** Don't do this since we can have a situation lik
+  /*
+
+        stx     %o1     %i6     1999   <--- inserted by this code
+        stx     %o5     %i6     2007
+
+	*****
+        stx     %o1     %i6     2007 ????  <-- inserted by statck2stack call arg
+
+  */
+
 
   hash_set<unsigned> PushedRegSet;
 
@@ -1279,7 +1290,9 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
   } // for each value in the LV set after instruction
   
   // Clear the temp area of the stack
-  PRA.mcInfo.popAllTempValues(target);
+  // PRA.mcInfo.popAllTempValues(target);
+  // TODO *** see above call - optimize later
+
 
 }
 
