@@ -1,7 +1,7 @@
 
 declare void %exit(int)
 
-void %main() {
-	call void %exit(int 1)
-	ret void
+int %main() {
+	call void %exit(int 0)
+	ret int 1
 }
