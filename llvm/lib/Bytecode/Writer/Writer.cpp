@@ -307,22 +307,34 @@ void BytecodeWriter::outputCompactionTable() {
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   // Do not output the Bytecode block for an empty symbol table, it just wastes
   // space!
-  if (MST.begin() == MST.end()) return;
+  if (MST.plane_begin() == MST.plane_end()) return;
 
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out,
                             true/* ElideIfEmpty*/);
 
-  for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); ++TI) {
-    SymbolTable::type_const_iterator I = MST.type_begin(TI->first);
-    SymbolTable::type_const_iterator End = MST.type_end(TI->first);
+  //Symtab block header: [num entries][type id number]
+  output_vbr(MST.num_types(), Out);
+  output_vbr((unsigned)Table.getSlot(Type::TypeTy), Out);
+  for (SymbolTable::type_const_iterator TI = MST.type_begin(),
+       TE = MST.type_end(); TI != TE; ++TI ) {
+    //Symtab entry:[def slot #][name]
+    output_vbr((unsigned)Table.getSlot(TI->second), Out);
+    output(TI->first, Out, /*align=*/false); 
+  }
+
+  // Now do each of the type planes in order.
+  for (SymbolTable::plane_const_iterator PI = MST.plane_begin(), 
+       PE = MST.plane_end(); PI != PE;  ++PI) {
+    SymbolTable::value_const_iterator I = MST.value_begin(PI->first);
+    SymbolTable::value_const_iterator End = MST.value_end(PI->first);
     int Slot;
     
     if (I == End) continue;  // Don't mess with an absent type...
 
     // Symtab block header: [num entries][type id number]
-    output_vbr(MST.type_size(TI->first), Out);
+    output_vbr(MST.type_size(PI->first), Out);
 
-    Slot = Table.getSlot(TI->first);
+    Slot = Table.getSlot(PI->first);
     assert(Slot != -1 && "Type in symtab, but not in table!");
     output_vbr((unsigned)Slot, Out);
 
