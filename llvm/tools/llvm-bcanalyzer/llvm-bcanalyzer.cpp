@@ -49,52 +49,58 @@ static cl::opt<bool> Dump      ("dump", cl::desc("Dump low level bytecode trace"
 static cl::opt<bool> Verify    ("verify", cl::desc("Progressively verify module"));
 
 int 
-main(int argc, char **argv) 
-{
-  cl::ParseCommandLineOptions(argc, argv, 
-    " llvm-bcanalyzer Analysis of ByteCode Dumper\n");
+main(int argc, char **argv) {
+  try {
+    cl::ParseCommandLineOptions(argc, argv, 
+      " llvm-bcanalyzer Analysis of ByteCode Dumper\n");
 
-  sys::PrintStackTraceOnErrorSignal();
+    sys::PrintStackTraceOnErrorSignal();
 
-  std::ostream* Out = &std::cout;  // Default to printing to stdout...
-  std::istream* In  = &std::cin;   // Default to reading stdin
-  std::string ErrorMessage;
-  BytecodeAnalysis bca;
+    std::ostream* Out = &std::cout;  // Default to printing to stdout...
+    std::istream* In  = &std::cin;   // Default to reading stdin
+    std::string ErrorMessage;
+    BytecodeAnalysis bca;
 
-  /// Determine what to generate
-  bca.detailedResults = !NoDetails;
-  bca.progressiveVerify = Verify;
+    /// Determine what to generate
+    bca.detailedResults = !NoDetails;
+    bca.progressiveVerify = Verify;
 
-  /// Analyze the bytecode file
-  Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage, (Dump?Out:0));
+    /// Analyze the bytecode file
+    Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage, (Dump?Out:0));
 
-  // All that bcanalyzer does is write the gathered statistics to the output
-  PrintBytecodeAnalysis(bca,*Out);
+    // All that bcanalyzer does is write the gathered statistics to the output
+    PrintBytecodeAnalysis(bca,*Out);
 
-  if ( M && Verify ) {
-    std::string verificationMsg;
-    try {
-      verifyModule( *M, ThrowExceptionAction );
-    } catch (std::string& errmsg ) {
-      verificationMsg = errmsg;
+    if ( M && Verify ) {
+      std::string verificationMsg;
+      try {
+        verifyModule( *M, ThrowExceptionAction );
+      } catch (std::string& errmsg ) {
+        verificationMsg = errmsg;
+      }
+      if ( verificationMsg.length() > 0 ) 
+        std::cerr << "Final Verification Message: " << verificationMsg << "\n";
     }
-    if ( verificationMsg.length() > 0 ) 
-      std::cerr << "Final Verification Message: " << verificationMsg << "\n";
-  }
 
 
-  // If there was an error, print it and stop.
-  if ( ErrorMessage.size() ) {
-    std::cerr << argv[0] << ": " << ErrorMessage << "\n";
-    return 1;
-  }
-  
+    // If there was an error, print it and stop.
+    if ( ErrorMessage.size() ) {
+      std::cerr << argv[0] << ": " << ErrorMessage << "\n";
+      return 1;
+    }
+    
 
-  if (Out != &std::cout) {
-    ((std::ofstream*)Out)->close();
-    delete Out;
+    if (Out != &std::cout) {
+      ((std::ofstream*)Out)->close();
+      delete Out;
+    }
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-  return 0;
+  return 1;
 }
 
 // vim: sw=2

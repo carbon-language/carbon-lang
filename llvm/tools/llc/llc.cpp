@@ -63,110 +63,117 @@ GetFileNameRoot(const std::string &InputFilename) {
 // main - Entry point for the llc compiler.
 //
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-  sys::PrintStackTraceOnErrorSignal();
+  try {
+    cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
+    sys::PrintStackTraceOnErrorSignal();
 
-  // Load the module to be compiled...
-  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
-  if (M.get() == 0) {
-    std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
-    return 1;
-  }
-  Module &mod = *M.get();
-
-  // Allocate target machine.  First, check whether the user has
-  // explicitly specified an architecture to compile for.
-  TargetMachine* (*TargetMachineAllocator)(const Module&,
-                                           IntrinsicLowering *) = 0;
-  if (MArch == 0) {
-    std::string Err;
-    MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
-    if (MArch == 0) {
-      std::cerr << argv[0] << ": error auto-selecting target for module '"
-                << Err << "'.  Please use the -march option to explicitly "
-                << "pick a target.\n";
+    // Load the module to be compiled...
+    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+    if (M.get() == 0) {
+      std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;
     }
-  }
+    Module &mod = *M.get();
 
-  std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, 0));
-  assert(target.get() && "Could not allocate target machine!");
-  TargetMachine &Target = *target.get();
-  const TargetData &TD = Target.getTargetData();
-
-  // Build up all of the passes that we want to do to the module...
-  PassManager Passes;
-  Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getPointerSize(),
-                            TD.getPointerAlignment(), TD.getDoubleAlignment()));
-
-  // Figure out where we are going to send the output...
-  std::ostream *Out = 0;
-  if (OutputFilename != "") {
-    if (OutputFilename != "-") {
-      // Specified an output filename?
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists!\n"
-                  << "Use -f command line argument to force output\n";
+    // Allocate target machine.  First, check whether the user has
+    // explicitly specified an architecture to compile for.
+    TargetMachine* (*TargetMachineAllocator)(const Module&,
+                                             IntrinsicLowering *) = 0;
+    if (MArch == 0) {
+      std::string Err;
+      MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
+      if (MArch == 0) {
+        std::cerr << argv[0] << ": error auto-selecting target for module '"
+                  << Err << "'.  Please use the -march option to explicitly "
+                  << "pick a target.\n";
         return 1;
       }
-      Out = new std::ofstream(OutputFilename.c_str());
-
-      // Make sure that the Out file gets unlinked from the disk if we get a
-      // SIGINT
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-    } else {
-      Out = &std::cout;
     }
-  } else {
-    if (InputFilename == "-") {
-      OutputFilename = "-";
-      Out = &std::cout;
+
+    std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, 0));
+    assert(target.get() && "Could not allocate target machine!");
+    TargetMachine &Target = *target.get();
+    const TargetData &TD = Target.getTargetData();
+
+    // Build up all of the passes that we want to do to the module...
+    PassManager Passes;
+    Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getPointerSize(),
+                              TD.getPointerAlignment(), TD.getDoubleAlignment()));
+
+    // Figure out where we are going to send the output...
+    std::ostream *Out = 0;
+    if (OutputFilename != "") {
+      if (OutputFilename != "-") {
+        // Specified an output filename?
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          std::cerr << argv[0] << ": error opening '" << OutputFilename
+                    << "': file exists!\n"
+                    << "Use -f command line argument to force output\n";
+          return 1;
+        }
+        Out = new std::ofstream(OutputFilename.c_str());
+
+        // Make sure that the Out file gets unlinked from the disk if we get a
+        // SIGINT
+        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+      } else {
+        Out = &std::cout;
+      }
     } else {
-      OutputFilename = GetFileNameRoot(InputFilename); 
+      if (InputFilename == "-") {
+        OutputFilename = "-";
+        Out = &std::cout;
+      } else {
+        OutputFilename = GetFileNameRoot(InputFilename); 
 
-      if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
-        OutputFilename += ".s";
-      else
-        OutputFilename += ".cbe.c";
-      
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists!\n"
-                  << "Use -f command line argument to force output\n";
-        return 1;
+        if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
+          OutputFilename += ".s";
+        else
+          OutputFilename += ".cbe.c";
+        
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          std::cerr << argv[0] << ": error opening '" << OutputFilename
+                    << "': file exists!\n"
+                    << "Use -f command line argument to force output\n";
+          return 1;
+        }
+        
+        Out = new std::ofstream(OutputFilename.c_str());
+        if (!Out->good()) {
+          std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+          delete Out;
+          return 1;
+        }
+        
+        // Make sure that the Out file gets unlinked from the disk if we get a
+        // SIGINT
+        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
       }
-      
-      Out = new std::ofstream(OutputFilename.c_str());
-      if (!Out->good()) {
-        std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
-        delete Out;
-        return 1;
-      }
-      
-      // Make sure that the Out file gets unlinked from the disk if we get a
-      // SIGINT
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
     }
-  }
 
-  // Ask the target to add backend passes as necessary
-  if (Target.addPassesToEmitAssembly(Passes, *Out)) {
-    std::cerr << argv[0] << ": target '" << Target.getName()
-              << "' does not support static compilation!\n";
+    // Ask the target to add backend passes as necessary
+    if (Target.addPassesToEmitAssembly(Passes, *Out)) {
+      std::cerr << argv[0] << ": target '" << Target.getName()
+                << "' does not support static compilation!\n";
+      if (Out != &std::cout) delete Out;
+      // And the Out file is empty and useless, so remove it now.
+      std::remove(OutputFilename.c_str());
+      return 1;
+    } else {
+      // Run our queue of passes all at once now, efficiently.
+      Passes.run(*M.get());
+    }
+
+    // Delete the ostream if it's not a stdout stream
     if (Out != &std::cout) delete Out;
-    // And the Out file is empty and useless, so remove it now.
-    std::remove(OutputFilename.c_str());
-    return 1;
-  } else {
-    // Run our queue of passes all at once now, efficiently.
-    Passes.run(*M.get());
+
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  // Delete the ostream if it's not a stdout stream
-  if (Out != &std::cout) delete Out;
-
-  return 0;
+  return 1;
 }

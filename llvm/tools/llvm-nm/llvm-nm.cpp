@@ -152,20 +152,27 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
 }
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
-  sys::PrintStackTraceOnErrorSignal();
+  try {
+    cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
+    sys::PrintStackTraceOnErrorSignal();
 
-  ToolName = argv[0];
-  if (BSDFormat) OutputFormat = bsd;
-  if (POSIXFormat) OutputFormat = posix;
+    ToolName = argv[0];
+    if (BSDFormat) OutputFormat = bsd;
+    if (POSIXFormat) OutputFormat = posix;
 
-  switch (InputFilenames.size()) {
-  case 0: InputFilenames.push_back("-");
-  case 1: break;
-  default: MultipleFiles = true;
+    switch (InputFilenames.size()) {
+    case 0: InputFilenames.push_back("-");
+    case 1: break;
+    default: MultipleFiles = true;
+    }
+
+    std::for_each (InputFilenames.begin (), InputFilenames.end (),
+                   DumpSymbolNamesFromFile);
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  std::for_each (InputFilenames.begin (), InputFilenames.end (),
-                 DumpSymbolNamesFromFile);
-  return 0;
+  return 1;
 }

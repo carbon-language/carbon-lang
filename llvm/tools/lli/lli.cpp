@@ -47,62 +47,69 @@ namespace {
 // main Driver function
 //
 int main(int argc, char **argv, char * const *envp) {
-  cl::ParseCommandLineOptions(argc, argv,
-                              " llvm interpreter & dynamic compiler\n");
-  sys::PrintStackTraceOnErrorSignal();
-
-  // Load the bytecode...
-  std::string ErrorMsg;
-  ModuleProvider *MP = 0;
   try {
-    MP = getBytecodeModuleProvider(InputFile);
-  } catch (std::string &err) {
-    std::cerr << "Error loading program '" << InputFile << "': " << err << "\n";
-    exit(1);
+    cl::ParseCommandLineOptions(argc, argv,
+                                " llvm interpreter & dynamic compiler\n");
+    sys::PrintStackTraceOnErrorSignal();
+
+    // Load the bytecode...
+    std::string ErrorMsg;
+    ModuleProvider *MP = 0;
+    try {
+      MP = getBytecodeModuleProvider(InputFile);
+    } catch (std::string &err) {
+      std::cerr << "Error loading program '" << InputFile << "': " << err << "\n";
+      exit(1);
+    }
+
+    ExecutionEngine *EE = ExecutionEngine::create(MP, ForceInterpreter);
+    assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
+
+    // If the user specifically requested an argv[0] to pass into the program, do
+    // it now.
+    if (!FakeArgv0.empty()) {
+      InputFile = FakeArgv0;
+    } else {
+      // Otherwise, if there is a .bc suffix on the executable strip it off, it
+      // might confuse the program.
+      if (InputFile.rfind(".bc") == InputFile.length() - 3)
+        InputFile.erase(InputFile.length() - 3);
+    }
+
+    // Add the module's name to the start of the vector of arguments to main().
+    InputArgv.insert(InputArgv.begin(), InputFile);
+
+    // Call the main function from M as if its signature were:
+    //   int main (int argc, char **argv, const char **envp)
+    // using the contents of Args to determine argc & argv, and the contents of
+    // EnvVars to determine envp.
+    //
+    Function *Fn = MP->getModule()->getMainFunction();
+    if (!Fn) {
+      std::cerr << "'main' function not found in module.\n";
+      return -1;
+    }
+
+    // Run main...
+    int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
+
+    // If the program didn't explicitly call exit, call exit now, for the program.
+    // This ensures that any atexit handlers get called correctly.
+    Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
+                                                          Type::IntTy, 0);
+
+    std::vector<GenericValue> Args;
+    GenericValue ResultGV;
+    ResultGV.IntVal = Result;
+    Args.push_back(ResultGV);
+    EE->runFunction(Exit, Args);
+
+    std::cerr << "ERROR: exit(" << Result << ") returned!\n";
+    abort();
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  ExecutionEngine *EE = ExecutionEngine::create(MP, ForceInterpreter);
-  assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
-
-  // If the user specifically requested an argv[0] to pass into the program, do
-  // it now.
-  if (!FakeArgv0.empty()) {
-    InputFile = FakeArgv0;
-  } else {
-    // Otherwise, if there is a .bc suffix on the executable strip it off, it
-    // might confuse the program.
-    if (InputFile.rfind(".bc") == InputFile.length() - 3)
-      InputFile.erase(InputFile.length() - 3);
-  }
-
-  // Add the module's name to the start of the vector of arguments to main().
-  InputArgv.insert(InputArgv.begin(), InputFile);
-
-  // Call the main function from M as if its signature were:
-  //   int main (int argc, char **argv, const char **envp)
-  // using the contents of Args to determine argc & argv, and the contents of
-  // EnvVars to determine envp.
-  //
-  Function *Fn = MP->getModule()->getMainFunction();
-  if (!Fn) {
-    std::cerr << "'main' function not found in module.\n";
-    return -1;
-  }
-
-  // Run main...
-  int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
-
-  // If the program didn't explicitly call exit, call exit now, for the program.
-  // This ensures that any atexit handlers get called correctly.
-  Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
-                                                        Type::IntTy, 0);
-
-  std::vector<GenericValue> Args;
-  GenericValue ResultGV;
-  ResultGV.IntVal = Result;
-  Args.push_back(ResultGV);
-  EE->runFunction(Exit, Args);
-
-  std::cerr << "ERROR: exit(" << Result << ") returned!\n";
   abort();
 }

@@ -51,10 +51,11 @@ int main(int argc, char **argv) {
     return D.run();
   } catch (ToolExecutionError &TEE) {
     std::cerr << "Tool execution error: " << TEE.what() << '\n';
-    return 1;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
     std::cerr << "Whoops, an exception leaked out of bugpoint.  "
               << "This is a bug in bugpoint!\n";
-    return 1;
   }
+  return 1;
 }

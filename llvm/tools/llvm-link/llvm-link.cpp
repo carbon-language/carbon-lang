@@ -75,70 +75,77 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 }
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
-  sys::PrintStackTraceOnErrorSignal();
-  assert(InputFilenames.size() > 0 && "OneOrMore is not working");
+  try {
+    cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
+    sys::PrintStackTraceOnErrorSignal();
+    assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 
-  unsigned BaseArg = 0;
-  std::string ErrorMessage;
+    unsigned BaseArg = 0;
+    std::string ErrorMessage;
 
-  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
-  if (Composite.get() == 0) {
-    std::cerr << argv[0] << ": error loading file '"
-              << InputFilenames[BaseArg] << "'\n";
-    return 1;
-  }
-
-  for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
-    std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
-    if (M.get() == 0) {
+    std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
+    if (Composite.get() == 0) {
       std::cerr << argv[0] << ": error loading file '"
-                << InputFilenames[i] << "'\n";
+                << InputFilenames[BaseArg] << "'\n";
       return 1;
     }
 
-    if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
+    for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
+      std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
+      if (M.get() == 0) {
+        std::cerr << argv[0] << ": error loading file '"
+                  << InputFilenames[i] << "'\n";
+        return 1;
+      }
 
-    if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      std::cerr << argv[0] << ": link error in '" << InputFilenames[i]
-                << "': " << ErrorMessage << "\n";
+      if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
+
+      if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
+        std::cerr << argv[0] << ": link error in '" << InputFilenames[i]
+                  << "': " << ErrorMessage << "\n";
+        return 1;
+      }
+    }
+
+    // TODO: Iterate over the -l list and link in any modules containing
+    // global symbols that have not been resolved so far.
+
+    if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
+
+    std::ostream *Out = &std::cout;  // Default to printing to stdout...
+    if (OutputFilename != "-") {
+      if (!Force && std::ifstream(OutputFilename.c_str())) {
+        // If force is not specified, make sure not to overwrite a file!
+        std::cerr << argv[0] << ": error opening '" << OutputFilename
+                  << "': file exists!\n"
+                  << "Use -f command line argument to force output\n";
+        return 1;
+      }
+      Out = new std::ofstream(OutputFilename.c_str());
+      if (!Out->good()) {
+        std::cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
+        return 1;
+      }
+
+      // Make sure that the Out file gets unlinked from the disk if we get a
+      // SIGINT
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+    }
+
+    if (verifyModule(*Composite.get())) {
+      std::cerr << argv[0] << ": linked module is broken!\n";
       return 1;
     }
+
+    if (Verbose) std::cerr << "Writing bytecode...\n";
+    WriteBytecodeToFile(Composite.get(), *Out, !NoCompress);
+
+    if (Out != &std::cout) delete Out;
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  // TODO: Iterate over the -l list and link in any modules containing
-  // global symbols that have not been resolved so far.
-
-  if (DumpAsm) std::cerr << "Here's the assembly:\n" << Composite.get();
-
-  std::ostream *Out = &std::cout;  // Default to printing to stdout...
-  if (OutputFilename != "-") {
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      std::cerr << argv[0] << ": error opening '" << OutputFilename
-                << "': file exists!\n"
-                << "Use -f command line argument to force output\n";
-      return 1;
-    }
-    Out = new std::ofstream(OutputFilename.c_str());
-    if (!Out->good()) {
-      std::cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
-      return 1;
-    }
-
-    // Make sure that the Out file gets unlinked from the disk if we get a
-    // SIGINT
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-  }
-
-  if (verifyModule(*Composite.get())) {
-    std::cerr << argv[0] << ": linked module is broken!\n";
-    return 1;
-  }
-
-  if (Verbose) std::cerr << "Writing bytecode...\n";
-  WriteBytecodeToFile(Composite.get(), *Out, !NoCompress);
-
-  if (Out != &std::cout) delete Out;
-  return 0;
+  return 1;
 }

@@ -368,4 +368,5 @@ int main(int argc, char **argv) {
   } catch (...) {
     std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
+  return 1;
 }

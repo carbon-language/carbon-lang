@@ -41,81 +41,88 @@ static cl::opt<bool>
 CWriteMode("c", cl::desc("Obsolete option, do not use"), cl::ReallyHidden);
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
-  sys::PrintStackTraceOnErrorSignal();
+  try {
+    cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
+    sys::PrintStackTraceOnErrorSignal();
 
-  std::ostream *Out = &std::cout;  // Default to printing to stdout...
-  std::string ErrorMessage;
+    std::ostream *Out = &std::cout;  // Default to printing to stdout...
+    std::string ErrorMessage;
 
-  if (CWriteMode) {
-    std::cerr << "ERROR: llvm-dis no longer contains the C backend. "
-              << "Use 'llc -march=c' instead!\n";
-    exit(1);
-  }
-
-  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
-  if (M.get() == 0) {
-    std::cerr << argv[0] << ": ";
-    if (ErrorMessage.size())
-      std::cerr << ErrorMessage << "\n";
-    else
-      std::cerr << "bytecode didn't read correctly.\n";
-    return 1;
-  }
-  
-  if (OutputFilename != "") {   // Specified an output filename?
-    if (OutputFilename != "-") { // Not stdout?
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists! Sending to standard output.\n";
-      } else {
-        Out = new std::ofstream(OutputFilename.c_str());
-      }
+    if (CWriteMode) {
+      std::cerr << "ERROR: llvm-dis no longer contains the C backend. "
+                << "Use 'llc -march=c' instead!\n";
+      exit(1);
     }
-  } else {
-    if (InputFilename == "-") {
-      OutputFilename = "-";
+
+    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
+    if (M.get() == 0) {
+      std::cerr << argv[0] << ": ";
+      if (ErrorMessage.size())
+        std::cerr << ErrorMessage << "\n";
+      else
+        std::cerr << "bytecode didn't read correctly.\n";
+      return 1;
+    }
+    
+    if (OutputFilename != "") {   // Specified an output filename?
+      if (OutputFilename != "-") { // Not stdout?
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          std::cerr << argv[0] << ": error opening '" << OutputFilename
+                    << "': file exists! Sending to standard output.\n";
+        } else {
+          Out = new std::ofstream(OutputFilename.c_str());
+        }
+      }
     } else {
-      std::string IFN = InputFilename;
-      int Len = IFN.length();
-      if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
-	// Source ends in .bc
-	OutputFilename = std::string(IFN.begin(), IFN.end()-3)+".ll";
+      if (InputFilename == "-") {
+        OutputFilename = "-";
       } else {
-	OutputFilename = IFN+".ll";
-      }
+        std::string IFN = InputFilename;
+        int Len = IFN.length();
+        if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
+          // Source ends in .bc
+          OutputFilename = std::string(IFN.begin(), IFN.end()-3)+".ll";
+        } else {
+          OutputFilename = IFN+".ll";
+        }
 
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists! Sending to standard output.\n";
-      } else {
-        Out = new std::ofstream(OutputFilename.c_str());
+        if (!Force && std::ifstream(OutputFilename.c_str())) {
+          // If force is not specified, make sure not to overwrite a file!
+          std::cerr << argv[0] << ": error opening '" << OutputFilename
+                    << "': file exists! Sending to standard output.\n";
+        } else {
+          Out = new std::ofstream(OutputFilename.c_str());
 
-        // Make sure that the Out file gets unlinked from the disk if we get a
-        // SIGINT
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+          // Make sure that the Out file gets unlinked from the disk if we get a
+          // SIGINT
+          sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+        }
       }
     }
-  }
 
-  if (!Out->good()) {
-    std::cerr << argv[0] << ": error opening " << OutputFilename
-              << ": sending to stdout instead!\n";
-    Out = &std::cout;
-  }
+    if (!Out->good()) {
+      std::cerr << argv[0] << ": error opening " << OutputFilename
+                << ": sending to stdout instead!\n";
+      Out = &std::cout;
+    }
 
-  // All that dis does is write the assembly or C out to a file...
-  //
-  PassManager Passes;
-  Passes.add(new PrintModulePass(Out));
-  Passes.run(*M.get());
+    // All that dis does is write the assembly or C out to a file...
+    //
+    PassManager Passes;
+    Passes.add(new PrintModulePass(Out));
+    Passes.run(*M.get());
 
-  if (Out != &std::cout) {
-    ((std::ofstream*)Out)->close();
-    delete Out;
+    if (Out != &std::cout) {
+      ((std::ofstream*)Out)->close();
+      delete Out;
+    }
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-  return 0;
+  return 1;
 }
 

@@ -116,58 +116,66 @@ namespace {
 }
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
-  sys::PrintStackTraceOnErrorSignal();
-
-  Module *CurMod = 0;
   try {
+    cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
+    sys::PrintStackTraceOnErrorSignal();
+
+    Module *CurMod = 0;
+    try {
 #if 0
-    TimeRegion RegionTimer(BytecodeLoadTimer);
+      TimeRegion RegionTimer(BytecodeLoadTimer);
 #endif
-    CurMod = ParseBytecodeFile(InputFilename);
-    if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
-      std::cerr << argv[0] << ": input file didn't read correctly.\n";
+      CurMod = ParseBytecodeFile(InputFilename);
+      if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
+        std::cerr << argv[0] << ": input file didn't read correctly.\n";
+        return 1;
+      }
+    } catch (const ParseException &E) {
+      std::cerr << argv[0] << ": " << E.getMessage() << "\n";
       return 1;
     }
-  } catch (const ParseException &E) {
-    std::cerr << argv[0] << ": " << E.getMessage() << "\n";
-    return 1;
+
+    // Create a PassManager to hold and optimize the collection of passes we are
+    // about to build...
+    //
+    PassManager Passes;
+
+    // Add an appropriate TargetData instance for this module...
+    Passes.add(new TargetData("analyze", CurMod));
+
+    // Make sure the input LLVM is well formed.
+    if (!NoVerify)
+      Passes.add(createVerifierPass());
+
+    // Create a new optimization pass for each one specified on the command line
+    for (unsigned i = 0; i < AnalysesList.size(); ++i) {
+      const PassInfo *Analysis = AnalysesList[i];
+      
+      if (Analysis->getNormalCtor()) {
+        Pass *P = Analysis->getNormalCtor()();
+        Passes.add(P);
+
+        if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
+          Passes.add(new BasicBlockPassPrinter(Analysis));
+        else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
+          Passes.add(new FunctionPassPrinter(Analysis));
+        else
+          Passes.add(new ModulePassPrinter(Analysis));
+
+      } else
+        std::cerr << argv[0] << ": cannot create pass: "
+                  << Analysis->getPassName() << "\n";
+    }
+
+    Passes.run(*CurMod);
+
+    delete CurMod;
+    return 0;
+
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  // Create a PassManager to hold and optimize the collection of passes we are
-  // about to build...
-  //
-  PassManager Passes;
-
-  // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData("analyze", CurMod));
-
-  // Make sure the input LLVM is well formed.
-  if (!NoVerify)
-    Passes.add(createVerifierPass());
-
-  // Create a new optimization pass for each one specified on the command line
-  for (unsigned i = 0; i < AnalysesList.size(); ++i) {
-    const PassInfo *Analysis = AnalysesList[i];
-    
-    if (Analysis->getNormalCtor()) {
-      Pass *P = Analysis->getNormalCtor()();
-      Passes.add(P);
-
-      if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
-        Passes.add(new BasicBlockPassPrinter(Analysis));
-      else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
-        Passes.add(new FunctionPassPrinter(Analysis));
-      else
-        Passes.add(new ModulePassPrinter(Analysis));
-
-    } else
-      std::cerr << argv[0] << ": cannot create pass: "
-                << Analysis->getPassName() << "\n";
-  }
-
-  Passes.run(*CurMod);
-
-  delete CurMod;
-  return 0;
+  return 1;
 }

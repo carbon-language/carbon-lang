@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
   sys::PrintStackTraceOnErrorSignal();
 
+  int exitCode = 0;
   std::ostream *Out = 0;
   try {
     // Parse the file now...
@@ -126,10 +127,16 @@ int main(int argc, char **argv) {
     WriteBytecodeToFile(M.get(), *Out, !NoCompress);
   } catch (const ParseException &E) {
     std::cerr << argv[0] << ": " << E.getMessage() << "\n";
-    return 1;
+    exitCode = 1;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+    exitCode = 1;
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    exitCode = 1;
   }
 
   if (Out != &std::cout) delete Out;
-  return 0;
+  return exitCode;
 }
 

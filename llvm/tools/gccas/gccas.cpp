@@ -128,77 +128,85 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
-  sys::PrintStackTraceOnErrorSignal();
-
-  std::auto_ptr<Module> M;
   try {
-    // Parse the file now...
-    M.reset(ParseAssemblyFile(InputFilename));
-  } catch (const ParseException &E) {
-    std::cerr << argv[0] << ": " << E.getMessage() << "\n";
-    return 1;
-  }
+    cl::ParseCommandLineOptions(argc, argv, 
+                                " llvm .s -> .o assembler for GCC\n");
+    sys::PrintStackTraceOnErrorSignal();
 
-  if (M.get() == 0) {
-    std::cerr << argv[0] << ": assembly didn't read correctly.\n";
-    return 1;
-  }
-
-  std::ostream *Out = 0;
-  if (OutputFilename == "") {   // Didn't specify an output filename?
-    if (InputFilename == "-") {
-      OutputFilename = "-";
-    } else {
-      std::string IFN = InputFilename;
-      int Len = IFN.length();
-      if (IFN[Len-2] == '.' && IFN[Len-1] == 's') {   // Source ends in .s?
-        OutputFilename = std::string(IFN.begin(), IFN.end()-2);
-      } else {
-        OutputFilename = IFN;   // Append a .o to it
-      }
-      OutputFilename += ".o";
+    std::auto_ptr<Module> M;
+    try {
+      // Parse the file now...
+      M.reset(ParseAssemblyFile(InputFilename));
+    } catch (const ParseException &E) {
+      std::cerr << argv[0] << ": " << E.getMessage() << "\n";
+      return 1;
     }
+
+    if (M.get() == 0) {
+      std::cerr << argv[0] << ": assembly didn't read correctly.\n";
+      return 1;
+    }
+
+    std::ostream *Out = 0;
+    if (OutputFilename == "") {   // Didn't specify an output filename?
+      if (InputFilename == "-") {
+        OutputFilename = "-";
+      } else {
+        std::string IFN = InputFilename;
+        int Len = IFN.length();
+        if (IFN[Len-2] == '.' && IFN[Len-1] == 's') {   // Source ends in .s?
+          OutputFilename = std::string(IFN.begin(), IFN.end()-2);
+        } else {
+          OutputFilename = IFN;   // Append a .o to it
+        }
+        OutputFilename += ".o";
+      }
+    }
+
+    if (OutputFilename == "-")
+      Out = &std::cout;
+    else {
+      Out = new std::ofstream(OutputFilename.c_str(), std::ios::out);
+
+      // Make sure that the Out file gets unlinked from the disk if we get a
+      // signal
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+    }
+
+    
+    if (!Out->good()) {
+      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      return 1;
+    }
+
+    // In addition to just parsing the input from GCC, we also want to spiff it up
+    // a little bit.  Do this now.
+    //
+    PassManager Passes;
+
+    // Add an appropriate TargetData instance for this module...
+    Passes.add(new TargetData("gccas", M.get()));
+
+    // Add all of the transformation passes to the pass manager to do the cleanup
+    // and optimization of the GCC output.
+    //
+    AddConfiguredTransformationPasses(Passes);
+
+    // Make sure everything is still good.
+    Passes.add(createVerifierPass());
+
+    // Write bytecode to file...
+    Passes.add(new WriteBytecodePass(Out,false,!NoCompress));
+
+    // Run our queue of passes all at once now, efficiently.
+    Passes.run(*M.get());
+
+    if (Out != &std::cout) delete Out;
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  if (OutputFilename == "-")
-    Out = &std::cout;
-  else {
-    Out = new std::ofstream(OutputFilename.c_str(), std::ios::out);
-
-    // Make sure that the Out file gets unlinked from the disk if we get a
-    // signal
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-  }
-
-  
-  if (!Out->good()) {
-    std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
-    return 1;
-  }
-
-  // In addition to just parsing the input from GCC, we also want to spiff it up
-  // a little bit.  Do this now.
-  //
-  PassManager Passes;
-
-  // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData("gccas", M.get()));
-
-  // Add all of the transformation passes to the pass manager to do the cleanup
-  // and optimization of the GCC output.
-  //
-  AddConfiguredTransformationPasses(Passes);
-
-  // Make sure everything is still good.
-  Passes.add(createVerifierPass());
-
-  // Write bytecode to file...
-  Passes.add(new WriteBytecodePass(Out,false,!NoCompress));
-
-  // Run our queue of passes all at once now, efficiently.
-  Passes.run(*M.get());
-
-  if (Out != &std::cout) delete Out;
-  return 0;
+  return 1;
 }

@@ -389,126 +389,133 @@ extern void Optimize(Module*);
 }
 
 int main(int argc, char **argv, char **envp) {
-  // Initial global variable above for convenience printing of program name.
-  progname = sys::Path(argv[0]).getBasename();
-  Linker TheLinker(progname, Verbose);
-  
-  // Set up the library paths for the Linker
-  TheLinker.addPaths(LibPaths);
-  TheLinker.addSystemPaths();
+  try {
+    // Initial global variable above for convenience printing of program name.
+    progname = sys::Path(argv[0]).getBasename();
+    Linker TheLinker(progname, Verbose);
+    
+    // Set up the library paths for the Linker
+    TheLinker.addPaths(LibPaths);
+    TheLinker.addSystemPaths();
 
-  // Parse the command line options
-  cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
-  sys::PrintStackTraceOnErrorSignal();
+    // Parse the command line options
+    cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
+    sys::PrintStackTraceOnErrorSignal();
 
-  // Remove any consecutive duplicates of the same library...
-  Libraries.erase(std::unique(Libraries.begin(), Libraries.end()),
-                  Libraries.end());
+    // Remove any consecutive duplicates of the same library...
+    Libraries.erase(std::unique(Libraries.begin(), Libraries.end()),
+                    Libraries.end());
 
-  if (LinkAsLibrary) {
-    std::vector<sys::Path> Files;
-    for (unsigned i = 0; i < InputFilenames.size(); ++i )
-      Files.push_back(sys::Path(InputFilenames[i]));
-    if (TheLinker.LinkInFiles(Files))
-      return 1; // Error already printed
+    if (LinkAsLibrary) {
+      std::vector<sys::Path> Files;
+      for (unsigned i = 0; i < InputFilenames.size(); ++i )
+        Files.push_back(sys::Path(InputFilenames[i]));
+      if (TheLinker.LinkInFiles(Files))
+        return 1; // Error already printed
 
-    // The libraries aren't linked in but are noted as "dependent" in the
-    // module.
-    for (cl::list<std::string>::const_iterator I = Libraries.begin(), 
-         E = Libraries.end(); I != E ; ++I) {
-      TheLinker.getModule()->addLibrary(*I);
-    }
-  } else {
-    // Build a list of the items from our command line
-    Linker::ItemList Items;
-    BuildLinkItems(Items, InputFilenames, Libraries);
-
-    // Link all the items together
-    if (TheLinker.LinkInItems(Items) )
-      return 1;
-  }
-
-  std::auto_ptr<Module> Composite(TheLinker.releaseModule());
-
-  // Optimize the module
-  Optimize(Composite.get());
-
-  // Generate the bytecode for the optimized module.
-  std::string RealBytecodeOutput = OutputFilename;
-  if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
-  GenerateBytecode(Composite.get(), RealBytecodeOutput);
-
-  // If we are not linking a library, generate either a native executable
-  // or a JIT shell script, depending upon what the user wants.
-  if (!LinkAsLibrary) {
-    // If the user wants to generate a native executable, compile it from the
-    // bytecode file.
-    //
-    // Otherwise, create a script that will run the bytecode through the JIT.
-    if (Native) {
-      // Name of the Assembly Language output file
-      sys::Path AssemblyFile ( OutputFilename);
-      AssemblyFile.appendSuffix("s");
-
-      // Mark the output files for removal if we get an interrupt.
-      sys::RemoveFileOnSignal(AssemblyFile);
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
-      // Determine the locations of the llc and gcc programs.
-      sys::Path llc = FindExecutable("llc", argv[0]);
-      if (llc.isEmpty())
-        return PrintAndReturn("Failed to find llc");
-
-      sys::Path gcc = FindExecutable("gcc", argv[0]);
-      if (gcc.isEmpty())
-        return PrintAndReturn("Failed to find gcc");
-
-      // Generate an assembly language file for the bytecode.
-      if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
-      if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, AssemblyFile.toString(), Libraries, 
-                     gcc, envp);
-
-      // Remove the assembly language file.
-      AssemblyFile.destroyFile();
-    } else if (NativeCBE) {
-      sys::Path CFile (OutputFilename);
-      CFile.appendSuffix("cbe.c");
-
-      // Mark the output files for removal if we get an interrupt.
-      sys::RemoveFileOnSignal(CFile);
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-
-      // Determine the locations of the llc and gcc programs.
-      sys::Path llc = FindExecutable("llc", argv[0]);
-      if (llc.isEmpty())
-        return PrintAndReturn("Failed to find llc");
-
-      sys::Path gcc = FindExecutable("gcc", argv[0]);
-      if (gcc.isEmpty())
-        return PrintAndReturn("Failed to find gcc");
-
-      // Generate an assembly language file for the bytecode.
-      if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
-      if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp);
-
-      // Remove the assembly language file.
-      CFile.destroyFile();
-
+      // The libraries aren't linked in but are noted as "dependent" in the
+      // module.
+      for (cl::list<std::string>::const_iterator I = Libraries.begin(), 
+           E = Libraries.end(); I != E ; ++I) {
+        TheLinker.getModule()->addLibrary(*I);
+      }
     } else {
-      EmitShellScript(argv);
+      // Build a list of the items from our command line
+      Linker::ItemList Items;
+      BuildLinkItems(Items, InputFilenames, Libraries);
+
+      // Link all the items together
+      if (TheLinker.LinkInItems(Items) )
+        return 1;
     }
-  
-    // Make the script executable...
-    sys::Path(OutputFilename).makeExecutable();
 
-    // Make the bytecode file readable and directly executable in LLEE as well
-    sys::Path(RealBytecodeOutput).makeExecutable();
-    sys::Path(RealBytecodeOutput).makeReadable();
+    std::auto_ptr<Module> Composite(TheLinker.releaseModule());
+
+    // Optimize the module
+    Optimize(Composite.get());
+
+    // Generate the bytecode for the optimized module.
+    std::string RealBytecodeOutput = OutputFilename;
+    if (!LinkAsLibrary) RealBytecodeOutput += ".bc";
+    GenerateBytecode(Composite.get(), RealBytecodeOutput);
+
+    // If we are not linking a library, generate either a native executable
+    // or a JIT shell script, depending upon what the user wants.
+    if (!LinkAsLibrary) {
+      // If the user wants to generate a native executable, compile it from the
+      // bytecode file.
+      //
+      // Otherwise, create a script that will run the bytecode through the JIT.
+      if (Native) {
+        // Name of the Assembly Language output file
+        sys::Path AssemblyFile ( OutputFilename);
+        AssemblyFile.appendSuffix("s");
+
+        // Mark the output files for removal if we get an interrupt.
+        sys::RemoveFileOnSignal(AssemblyFile);
+        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+        // Determine the locations of the llc and gcc programs.
+        sys::Path llc = FindExecutable("llc", argv[0]);
+        if (llc.isEmpty())
+          return PrintAndReturn("Failed to find llc");
+
+        sys::Path gcc = FindExecutable("gcc", argv[0]);
+        if (gcc.isEmpty())
+          return PrintAndReturn("Failed to find gcc");
+
+        // Generate an assembly language file for the bytecode.
+        if (Verbose) std::cout << "Generating Assembly Code\n";
+        GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
+        if (Verbose) std::cout << "Generating Native Code\n";
+        GenerateNative(OutputFilename, AssemblyFile.toString(), Libraries, 
+                       gcc, envp);
+
+        // Remove the assembly language file.
+        AssemblyFile.destroyFile();
+      } else if (NativeCBE) {
+        sys::Path CFile (OutputFilename);
+        CFile.appendSuffix("cbe.c");
+
+        // Mark the output files for removal if we get an interrupt.
+        sys::RemoveFileOnSignal(CFile);
+        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+        // Determine the locations of the llc and gcc programs.
+        sys::Path llc = FindExecutable("llc", argv[0]);
+        if (llc.isEmpty())
+          return PrintAndReturn("Failed to find llc");
+
+        sys::Path gcc = FindExecutable("gcc", argv[0]);
+        if (gcc.isEmpty())
+          return PrintAndReturn("Failed to find gcc");
+
+        // Generate an assembly language file for the bytecode.
+        if (Verbose) std::cout << "Generating Assembly Code\n";
+        GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
+        if (Verbose) std::cout << "Generating Native Code\n";
+        GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp);
+
+        // Remove the assembly language file.
+        CFile.destroyFile();
+
+      } else {
+        EmitShellScript(argv);
+      }
+    
+      // Make the script executable...
+      sys::Path(OutputFilename).makeExecutable();
+
+      // Make the bytecode file readable and directly executable in LLEE as well
+      sys::Path(RealBytecodeOutput).makeExecutable();
+      sys::Path(RealBytecodeOutput).makeReadable();
+    }
+
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  return 0;
+  return 1;
 }

@@ -107,124 +107,131 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm profile dump decoder\n");
-  sys::PrintStackTraceOnErrorSignal();
+  try {
+    cl::ParseCommandLineOptions(argc, argv, " llvm profile dump decoder\n");
+    sys::PrintStackTraceOnErrorSignal();
 
-  // Read in the bytecode file...
-  std::string ErrorMessage;
-  Module *M = ParseBytecodeFile(BytecodeFile, &ErrorMessage);
-  if (M == 0) {
-    std::cerr << argv[0] << ": " << BytecodeFile << ": " << ErrorMessage
-              << "\n";
-    return 1;
-  }
-
-  // Read the profiling information
-  ProfileInfoLoader PI(argv[0], ProfileDataFile, *M);
-
-  std::map<const Function  *, unsigned> FuncFreqs;
-  std::map<const BasicBlock*, unsigned> BlockFreqs;
-  std::map<ProfileInfoLoader::Edge, unsigned> EdgeFreqs;
-
-  // Output a report.  Eventually, there will be multiple reports selectable on
-  // the command line, for now, just keep things simple.
-
-  // Emit the most frequent function table...
-  std::vector<std::pair<Function*, unsigned> > FunctionCounts;
-  PI.getFunctionCounts(FunctionCounts);
-  FuncFreqs.insert(FunctionCounts.begin(), FunctionCounts.end());
-
-  // Sort by the frequency, backwards.
-  std::sort(FunctionCounts.begin(), FunctionCounts.end(),
-            PairSecondSortReverse<Function*>());
-
-  unsigned long long TotalExecutions = 0;
-  for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
-    TotalExecutions += FunctionCounts[i].second;
-  
-  std::cout << "===" << std::string(73, '-') << "===\n"
-            << "LLVM profiling output for execution";
-  if (PI.getNumExecutions() != 1) std::cout << "s";
-  std::cout << ":\n";
-  
-  for (unsigned i = 0, e = PI.getNumExecutions(); i != e; ++i) {
-    std::cout << "  ";
-    if (e != 1) std::cout << i+1 << ". ";
-    std::cout << PI.getExecution(i) << "\n";
-  }
-  
-  std::cout << "\n===" << std::string(73, '-') << "===\n";
-  std::cout << "Function execution frequencies:\n\n";
-
-  // Print out the function frequencies...
-  printf(" ##   Frequency\n");
-  for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
-    if (FunctionCounts[i].second == 0) {
-      printf("\n  NOTE: %d function%s never executed!\n",
-             e-i, e-i-1 ? "s were" : " was");
-      break;
+    // Read in the bytecode file...
+    std::string ErrorMessage;
+    Module *M = ParseBytecodeFile(BytecodeFile, &ErrorMessage);
+    if (M == 0) {
+      std::cerr << argv[0] << ": " << BytecodeFile << ": " << ErrorMessage
+                << "\n";
+      return 1;
     }
 
-    printf("%3d. %5u/%llu %s\n", i+1, FunctionCounts[i].second, TotalExecutions,
-           FunctionCounts[i].first->getName().c_str());
-  }
+    // Read the profiling information
+    ProfileInfoLoader PI(argv[0], ProfileDataFile, *M);
 
-  std::set<Function*> FunctionsToPrint;
+    std::map<const Function  *, unsigned> FuncFreqs;
+    std::map<const BasicBlock*, unsigned> BlockFreqs;
+    std::map<ProfileInfoLoader::Edge, unsigned> EdgeFreqs;
 
-  // If we have block count information, print out the LLVM module with
-  // frequency annotations.
-  if (PI.hasAccurateBlockCounts()) {
-    std::vector<std::pair<BasicBlock*, unsigned> > Counts;
-    PI.getBlockCounts(Counts);
+    // Output a report.  Eventually, there will be multiple reports selectable on
+    // the command line, for now, just keep things simple.
 
-    TotalExecutions = 0;
-    for (unsigned i = 0, e = Counts.size(); i != e; ++i)
-      TotalExecutions += Counts[i].second;
+    // Emit the most frequent function table...
+    std::vector<std::pair<Function*, unsigned> > FunctionCounts;
+    PI.getFunctionCounts(FunctionCounts);
+    FuncFreqs.insert(FunctionCounts.begin(), FunctionCounts.end());
 
     // Sort by the frequency, backwards.
-    std::sort(Counts.begin(), Counts.end(),
-              PairSecondSortReverse<BasicBlock*>());
+    std::sort(FunctionCounts.begin(), FunctionCounts.end(),
+              PairSecondSortReverse<Function*>());
+
+    unsigned long long TotalExecutions = 0;
+    for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
+      TotalExecutions += FunctionCounts[i].second;
+    
+    std::cout << "===" << std::string(73, '-') << "===\n"
+              << "LLVM profiling output for execution";
+    if (PI.getNumExecutions() != 1) std::cout << "s";
+    std::cout << ":\n";
+    
+    for (unsigned i = 0, e = PI.getNumExecutions(); i != e; ++i) {
+      std::cout << "  ";
+      if (e != 1) std::cout << i+1 << ". ";
+      std::cout << PI.getExecution(i) << "\n";
+    }
     
     std::cout << "\n===" << std::string(73, '-') << "===\n";
-    std::cout << "Top 20 most frequently executed basic blocks:\n\n";
+    std::cout << "Function execution frequencies:\n\n";
 
     // Print out the function frequencies...
-    printf(" ##      %%%% \tFrequency\n");
-    unsigned BlocksToPrint = Counts.size();
-    if (BlocksToPrint > 20) BlocksToPrint = 20;
-    for (unsigned i = 0; i != BlocksToPrint; ++i) {
-      if (Counts[i].second == 0) break;
-      Function *F = Counts[i].first->getParent();
-      printf("%3d. %5.2f%% %5u/%llu\t%s() - %s\n", i+1,
-             Counts[i].second/(double)TotalExecutions*100,
-             Counts[i].second, TotalExecutions,
-             F->getName().c_str(), Counts[i].first->getName().c_str());
-      FunctionsToPrint.insert(F);
+    printf(" ##   Frequency\n");
+    for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
+      if (FunctionCounts[i].second == 0) {
+        printf("\n  NOTE: %d function%s never executed!\n",
+               e-i, e-i-1 ? "s were" : " was");
+        break;
+      }
+
+      printf("%3d. %5u/%llu %s\n", i+1, FunctionCounts[i].second, TotalExecutions,
+             FunctionCounts[i].first->getName().c_str());
     }
 
-    BlockFreqs.insert(Counts.begin(), Counts.end());
-  }
-  
-  if (PI.hasAccurateEdgeCounts()) {
-    std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > Counts;
-    PI.getEdgeCounts(Counts);
-    EdgeFreqs.insert(Counts.begin(), Counts.end());
-  }
+    std::set<Function*> FunctionsToPrint;
 
-  if (PrintAnnotatedLLVM || PrintAllCode) {
-    std::cout << "\n===" << std::string(73, '-') << "===\n";
-    std::cout << "Annotated LLVM code for the module:\n\n";
+    // If we have block count information, print out the LLVM module with
+    // frequency annotations.
+    if (PI.hasAccurateBlockCounts()) {
+      std::vector<std::pair<BasicBlock*, unsigned> > Counts;
+      PI.getBlockCounts(Counts);
+
+      TotalExecutions = 0;
+      for (unsigned i = 0, e = Counts.size(); i != e; ++i)
+        TotalExecutions += Counts[i].second;
+
+      // Sort by the frequency, backwards.
+      std::sort(Counts.begin(), Counts.end(),
+                PairSecondSortReverse<BasicBlock*>());
+      
+      std::cout << "\n===" << std::string(73, '-') << "===\n";
+      std::cout << "Top 20 most frequently executed basic blocks:\n\n";
+
+      // Print out the function frequencies...
+      printf(" ##      %%%% \tFrequency\n");
+      unsigned BlocksToPrint = Counts.size();
+      if (BlocksToPrint > 20) BlocksToPrint = 20;
+      for (unsigned i = 0; i != BlocksToPrint; ++i) {
+        if (Counts[i].second == 0) break;
+        Function *F = Counts[i].first->getParent();
+        printf("%3d. %5.2f%% %5u/%llu\t%s() - %s\n", i+1,
+               Counts[i].second/(double)TotalExecutions*100,
+               Counts[i].second, TotalExecutions,
+               F->getName().c_str(), Counts[i].first->getName().c_str());
+        FunctionsToPrint.insert(F);
+      }
+
+      BlockFreqs.insert(Counts.begin(), Counts.end());
+    }
     
-    ProfileAnnotator PA(FuncFreqs, BlockFreqs, EdgeFreqs);
+    if (PI.hasAccurateEdgeCounts()) {
+      std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > Counts;
+      PI.getEdgeCounts(Counts);
+      EdgeFreqs.insert(Counts.begin(), Counts.end());
+    }
 
-    if (FunctionsToPrint.empty() || PrintAllCode)
-      M->print(std::cout, &PA);
-    else
-      // Print just a subset of the functions...
-      for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
-             E = FunctionsToPrint.end(); I != E; ++I)
-        (*I)->print(std::cout, &PA);
+    if (PrintAnnotatedLLVM || PrintAllCode) {
+      std::cout << "\n===" << std::string(73, '-') << "===\n";
+      std::cout << "Annotated LLVM code for the module:\n\n";
+      
+      ProfileAnnotator PA(FuncFreqs, BlockFreqs, EdgeFreqs);
+
+      if (FunctionsToPrint.empty() || PrintAllCode)
+        M->print(std::cout, &PA);
+      else
+        // Print just a subset of the functions...
+        for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
+               E = FunctionsToPrint.end(); I != E; ++I)
+          (*I)->print(std::cout, &PA);
+    }
+
+    return 0;
+  } catch (const std::string& msg) {
+    std::cerr << argv[0] << ": " << msg << "\n";
+  } catch (...) {
+    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-
-  return 0;
+  return 1;
 }
