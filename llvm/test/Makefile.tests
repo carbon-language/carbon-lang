@@ -30,11 +30,7 @@ endif
 .PRECIOUS: Output/%.llvm.bc
 .PRECIOUS: Output/%.llvm
 
-ifdef ENABLE_OPTIMIZED
-TOOLS    = $(BUILD_OBJ_ROOT)/tools/Release
-else
-TOOLS    = $(BUILD_OBJ_ROOT)/tools/Debug
-endif
+TOOLS    = $(LLVMTOOLCURRENT)
 
 # LLVM Tool Definitions...
 #
@@ -57,7 +53,7 @@ LCCFLAGS  += -O2 -Wall
 LCXXFLAGS += -O2 -Wall
 LLCFLAGS =
 FAILURE  = $(LEVEL)/test/Failure.sh
-TESTRUNR = $(LEVEL)/test/TestRunner.sh
+TESTRUNR = PATH=$(LLVMTOOLCURRENT) $(LEVEL)/test/TestRunner.sh
 
 # Native Tool Definitions
 NATGCC  = $(CC)
