@@ -1,4 +1,4 @@
-//===- DataStructureGraph.h - Provide graph classes --------------*- C++ -*--=//
+//===- DSGraphTraits.h - Provide generic graph interface --------*- C++ -*-===//
 //
 // This file provides GraphTraits specializations for the DataStructure graph
 // nodes, allowing datastructure graphs to be processed by generic graph
@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DATASTRUCTURE_GRAPH_H
-#define LLVM_ANALYSIS_DATASTRUCTURE_GRAPH_H
+#ifndef LLVM_ANALYSIS_DSGRAPHTRAITS_H
+#define LLVM_ANALYSIS_DSGRAPHTRAITS_H
 
-#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DSGraph.h"
 #include "Support/GraphTraits.h"
 #include "Support/iterator"
 
