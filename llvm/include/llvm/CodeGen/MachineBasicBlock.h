@@ -161,8 +161,10 @@ public:
   void dump() const;
   void print(std::ostream &OS) const;
 
-  // MachineBasicBlocks are uniquely numbered at the function level
-  // (unless they're not in a MachineFunction yet)
+  /// getNumber - MachineBasicBlocks are uniquely numbered at the function
+  /// level, unless they're not in a MachineFunction yet, in which case this
+  /// will return -1.
+  ///
   int getNumber() const { return Number; }
 
 private:   // Methods used to maintain doubly linked list of blocks...
