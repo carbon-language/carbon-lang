@@ -33,6 +33,7 @@ namespace {
                            "into scalars");
   Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
   Statistic<> NumFnDeleted("globalopt", "Number of functions deleted");
+  Statistic<> NumGlobUses ("globalopt", "Number of global uses devirtualized");
 
   struct GlobalOpt : public ModulePass {
     bool runOnModule(Module &M);
@@ -424,12 +425,124 @@ static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
   return true;
 }
 
+static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
+  bool Changed = false;
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ) {
+    Instruction *I = cast<Instruction>(*UI++);
+    if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      LI->setOperand(0, NewV);
+      Changed = true;
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+      if (SI->getOperand(1) == V) {
+        SI->setOperand(1, NewV);
+        Changed = true;
+      }
+    } else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
+      if (I->getOperand(0) == V) {
+        // Calling through the pointer!  Turn into a direct call, but be careful
+        // that the pointer is not also being passed as an argument.
+        I->setOperand(0, NewV);
+        Changed = true;
+        bool PassedAsArg = false;
+        for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i)
+          if (I->getOperand(i) == V) {
+            PassedAsArg = true;
+            I->setOperand(i, NewV);
+          }
+
+        if (PassedAsArg) {
+          // Being passed as an argument also.  Be careful to not invalidate UI!
+          UI = V->use_begin();
+        }
+      }
+    } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+      Changed |= OptimizeAwayTrappingUsesOfValue(CI,
+                                    ConstantExpr::getCast(NewV, CI->getType()));
+      if (CI->use_empty()) {
+        Changed = true;
+        CI->getParent()->getInstList().erase(CI);
+      }
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+      // Should handle GEP here.
+      std::vector<Constant*> Indices;
+      Indices.reserve(GEPI->getNumOperands()-1);
+      for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
+        if (Constant *C = dyn_cast<Constant>(GEPI->getOperand(i)))
+          Indices.push_back(C);
+        else
+          break;
+      if (Indices.size() == GEPI->getNumOperands()-1)
+        Changed |= OptimizeAwayTrappingUsesOfValue(GEPI,
+                                ConstantExpr::getGetElementPtr(NewV, Indices));
+      if (GEPI->use_empty()) {
+        Changed = true;
+        GEPI->getParent()->getInstList().erase(GEPI);
+      }
+    }
+  }
+
+  return Changed;
+}
+
+
+/// OptimizeAwayTrappingUsesOfLoads - The specified global has only one non-null
+/// value stored into it.  If there are uses of the loaded value that would trap
+/// if the loaded value is dynamically null, then we know that they cannot be
+/// reachable with a null optimize away the load.
+static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
+  std::vector<LoadInst*> Loads;
+  bool Changed = false;
+
+  // Replace all uses of loads with uses of uses of the stored value.
+  for (Value::use_iterator GUI = GV->use_begin(), E = GV->use_end();
+       GUI != E; ++GUI)
+    if (LoadInst *LI = dyn_cast<LoadInst>(*GUI)) {
+      Loads.push_back(LI);
+      Changed |= OptimizeAwayTrappingUsesOfValue(LI, LV);
+    } else {
+      assert(isa<StoreInst>(*GUI) && "Only expect load and stores!");
+    }
+
+  if (Changed) {
+    DEBUG(std::cerr << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV);
+    ++NumGlobUses;
+  }
+
+  // Delete all of the loads we can, keeping track of whether we nuked them all!
+  bool AllLoadsGone = true;
+  while (!Loads.empty()) {
+    LoadInst *L = Loads.back();
+    if (L->use_empty()) {
+      L->getParent()->getInstList().erase(L);
+      Changed = true;
+    } else {
+      AllLoadsGone = false;
+    }
+    Loads.pop_back();
+  }
+
+  // If we nuked all of the loads, then none of the stores are needed either,
+  // nor is the global.
+  if (AllLoadsGone) {
+    DEBUG(std::cerr << "  *** GLOBAL NOW DEAD!\n");
+    CleanupConstantGlobalUsers(GV, 0);
+    if (GV->use_empty()) {
+      GV->getParent()->getGlobalList().erase(GV);
+      ++NumDeleted;
+    }
+    Changed = true;
+  }
+  return Changed;
+}
+
+
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal) {
   if (CastInst *CI = dyn_cast<CastInst>(StoredOnceVal))
     StoredOnceVal = CI->getOperand(0);
   else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){
+    // "getelementptr Ptr, 0, 0, 0" is really just a cast.
     bool IsJustACast = true;
     for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
       if (!isa<Constant>(GEPI->getOperand(i)) ||
@@ -441,36 +554,20 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal) {
       StoredOnceVal = GEPI->getOperand(0);
   }
 
-  // If we are dealing with a pointer global that is initialized to null, only
-  // has one (non-null) value stored into, and if we know that all users of the
-  // loaded value trap if null, then the load users must never get the
-  // initializer.  Instead, replace all of the loads with the stored value.
+  // If we are dealing with a pointer global that is initialized to null and
+  // only has one (non-null) value stored into it, then we can optimize any
+  // users of the loaded value (often calls and loads) that would trap if the
+  // value was null.
   if (isa<PointerType>(GV->getInitializer()->getType()) &&
       GV->getInitializer()->isNullValue()) {
-    if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal))
-      if (AllUsesOfLoadedValueWillTrapIfNull(GV)) {
-        DEBUG(std::cerr << "REPLACING STORED GLOBAL POINTER: " << *GV);
-
-        if (GV->getInitializer()->getType() != SOVC->getType())
-          SOVC = ConstantExpr::getCast(SOVC, GV->getInitializer()->getType());
-
-        //std::cerr << " Stored Value: " << *SOVC << "\n";
-
-        // Replace all uses of loads with uses of uses of the stored value.
-        while (!GV->use_empty())
-          if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
-            LI->replaceAllUsesWith(SOVC);
-            LI->getParent()->getInstList().erase(LI); // Nuke the load.
-          } else if (StoreInst *SI = dyn_cast<StoreInst>(GV->use_back())) {
-            SI->getParent()->getInstList().erase(SI); // Nuke the store
-          } else {
-            assert(0 && "Unknown user of stored once global!");
-          }
-
-        // Nuke the now-dead global.
-        GV->getParent()->getGlobalList().erase(GV);
+    if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal)) {
+      if (GV->getInitializer()->getType() != SOVC->getType())
+        SOVC = ConstantExpr::getCast(SOVC, GV->getInitializer()->getType());
+      
+      // Optimize away any trapping uses of the loaded value.
+      if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
         return true;
-      }
+    }
     //if (isa<MallocInst>(StoredOnceValue))
   }
   return false;
