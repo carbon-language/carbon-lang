@@ -95,8 +95,9 @@ void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC);
 // 
 class ValueHandle : public Instruction {
   ValueHandle(const ValueHandle &); // DO NOT IMPLEMENT
+  ValueMapCache &Cache;
 public:
-  ValueHandle(Value *V);
+  ValueHandle(ValueMapCache &VMC, Value *V);
   ~ValueHandle();
 
   virtual Instruction *clone() const { abort(); return 0; }
