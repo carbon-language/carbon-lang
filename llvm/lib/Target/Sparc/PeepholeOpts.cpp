@@ -10,7 +10,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetOptInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 
@@ -42,11 +41,55 @@ DeleteInstruction(MachineBasicBlock& mvec,
 
 //******************* Individual Peephole Optimizations ********************/
 
+//----------------------------------------------------------------------------
+// Function: IsUselessCopy
+// Decide whether a machine instruction is a redundant copy:
+// -- ADD    with g0 and result and operand are identical, or
+// -- OR     with g0 and result and operand are identical, or
+// -- FMOVS or FMOVD and result and operand are identical.
+// Other cases are possible but very rare that they would be useless copies,
+// so it's not worth analyzing them.
+//----------------------------------------------------------------------------
+
+static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
+  if (MI->getOpCode() == V9::FMOVS || MI->getOpCode() == V9::FMOVD) {
+    return (/* both operands are allocated to the same register */
+            MI->getOperand(0).getAllocatedRegNum() == 
+            MI->getOperand(1).getAllocatedRegNum());
+  } else if (MI->getOpCode() == V9::ADDr || MI->getOpCode() == V9::ORr) {
+    unsigned srcWithDestReg;
+    
+    for (srcWithDestReg = 0; srcWithDestReg < 2; ++srcWithDestReg)
+      if (MI->getOperand(srcWithDestReg).hasAllocatedReg() &&
+          MI->getOperand(srcWithDestReg).getAllocatedRegNum()
+          == MI->getOperand(2).getAllocatedRegNum())
+        break;
+    
+    if (srcWithDestReg == 2)
+      return false;
+    else {
+      /* else source and dest are allocated to the same register */
+      unsigned otherOp = 1 - srcWithDestReg;
+      return (/* either operand otherOp is register %g0 */
+              (MI->getOperand(otherOp).hasAllocatedReg() &&
+               MI->getOperand(otherOp).getAllocatedRegNum() ==
+               target.getRegInfo().getZeroRegNum()) ||
+              
+              /* or operand otherOp == 0 */
+              (MI->getOperand(otherOp).getType()
+               == MachineOperand::MO_SignExtendedImmed &&
+               MI->getOperand(otherOp).getImmedValue() == 0));
+    }
+  }
+  else
+    return false;
+}
+
 inline bool
 RemoveUselessCopies(MachineBasicBlock& mvec,
                     MachineBasicBlock::iterator& BBI,
                     const TargetMachine& target) {
-  if (target.getOptInfo().IsUselessCopy(*BBI)) {
+  if (IsUselessCopy(target, *BBI)) {
     DeleteInstruction(mvec, BBI, target);
     return true;
   }
