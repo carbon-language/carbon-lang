@@ -94,7 +94,6 @@ Type* SymbolTable::lookupType( const std::string& Name ) const {
 // Remove a value
 void SymbolTable::remove(Value *N) {
   assert(N->hasName() && "Value doesn't have name!");
-  if (InternallyInconsistent) return;
 
   plane_iterator PI = pmap.find(N->getType());
   assert(PI != pmap.end() &&
@@ -115,15 +114,11 @@ void SymbolTable::changeName(Value *V, const std::string &name) {
   assert(PI != pmap.end() && "Value doesn't have an entry in this table?");
   ValueMap &VM = PI->second;
 
-  value_iterator VI;
+  value_iterator VI = VM.find(V->getName());
+  assert(VI != VM.end() && "Value does have an entry in this table?");
 
-  if (!InternallyInconsistent) {
-    VI = VM.find(V->getName());
-    assert(VI != VM.end() && "Value does have an entry in this table?");
-
-    // Remove the old entry.
-    VM.erase(VI);
-  }
+  // Remove the old entry.
+  VM.erase(VI);
 
   // See if we can insert the new name.
   VI = VM.lower_bound(name);
@@ -141,7 +136,6 @@ void SymbolTable::changeName(Value *V, const std::string &name) {
 
 // removeEntry - Remove a value from the symbol table...
 Value *SymbolTable::removeEntry(plane_iterator Plane, value_iterator Entry) {
-  if (InternallyInconsistent) return 0;
   assert(Plane != pmap.end() &&
          Entry != Plane->second.end() && "Invalid entry to remove!");
 
@@ -189,7 +183,6 @@ void SymbolTable::remove(const Type* Ty ) {
 
 // removeEntry - Remove a type from the symbol table...
 Type* SymbolTable::removeEntry(type_iterator Entry) {
-  if (InternallyInconsistent) return 0;
   assert( Entry != tmap.end() && "Invalid entry to remove!");
 
   const Type* Result = Entry->second;
@@ -249,11 +242,8 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
     VM = &PI->second;
     VI = VM->lower_bound(Name);
     if (VI != VM->end() && VI->first == Name) {
-      std::string UniqueName = getUniqueName(VTy, Name);
-      assert(InternallyInconsistent == false &&
-             "Infinite loop inserting value!");
-      V->Name = UniqueName;
-      VM->insert(VI, make_pair(UniqueName, V));
+      V->Name = getUniqueName(VTy, Name);
+      VM->insert(make_pair(V->Name, V));
       return;
     }
   }
@@ -371,17 +361,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           // one use the old one...
           NewGV->uncheckedReplaceAllUsesWith(ExistGV);
           
-          // Now we just convert it to an unnamed method... which won't get
-          // added to our symbol table.  The problem is that if we call
-          // setName on the method that it will try to remove itself from
-          // the symbol table and die... because it's not in the symtab
-          // right now.  To fix this, we have an internally consistent flag
-          // that turns remove into a noop.  Thus the name will get null'd
-          // out, but the symbol table won't get upset.
-          //
-          assert(InternallyInconsistent == false &&
-                 "Symbol table already inconsistent!");
-
           // Update NewGV's name, we're about the remove it from the symbol
           // table.
           NewGV->Name = "";
