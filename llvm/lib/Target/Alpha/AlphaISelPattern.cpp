@@ -335,6 +335,8 @@ public:
   void SelectBranchCC(SDOperand N);
   void MoveFP2Int(unsigned src, unsigned dst, bool isDouble);
   void MoveInt2FP(unsigned src, unsigned dst, bool isDouble);
+  //returns whether the sense of the comparison was inverted
+  bool SelectFPSetCC(SDOperand N, unsigned dst);
 };
 }
 
@@ -416,6 +418,64 @@ void ISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
     Opc = isDouble ? Alpha::LDT : Alpha::LDS;
     BuildMI(BB, Opc, 2, dst).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   }
+}
+
+bool ISel::SelectFPSetCC(SDOperand N, unsigned dst)
+{
+  SDNode *Node = N.Val;
+  unsigned Opc, Tmp1, Tmp2, Tmp3;
+  SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node);
+
+  //assert(SetCC->getOperand(0).getValueType() != MVT::f32 && "SetCC f32 should have been promoted");
+  bool rev = false;
+  bool inv = false;
+  
+  switch (SetCC->getCondition()) {
+  default: Node->dump(); assert(0 && "Unknown FP comparison!");
+  case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
+  case ISD::SETLT: Opc = Alpha::CMPTLT; break;
+  case ISD::SETLE: Opc = Alpha::CMPTLE; break;
+  case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
+  case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
+  case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
+  }
+  
+  //FIXME: check for constant 0.0
+  ConstantFPSDNode *CN;
+  if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+      && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+    Tmp1 = Alpha::F31;
+  else
+    Tmp1 = SelectExpr(N.getOperand(0));
+  
+  if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+      && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+    Tmp2 = Alpha::F31;
+  else
+            Tmp2 = SelectExpr(N.getOperand(1));
+  
+  //Can only compare doubles, and dag won't promote for me
+  if (SetCC->getOperand(0).getValueType() == MVT::f32)
+    {
+      //assert(0 && "Setcc On float?\n");
+      std::cerr << "Setcc on float!\n";
+      Tmp3 = MakeReg(MVT::f64);
+      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
+      Tmp1 = Tmp3;
+    }
+  if (SetCC->getOperand(1).getValueType() == MVT::f32)
+    {
+      //assert (0 && "Setcc On float?\n");
+      std::cerr << "Setcc on float!\n";
+      Tmp3 = MakeReg(MVT::f64);
+      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
+      Tmp2 = Tmp3;
+    }
+  
+  if (rev) std::swap(Tmp1, Tmp2);
+  //do the comparison
+  BuildMI(BB, Opc, 2, dst).addReg(Tmp1).addReg(Tmp2);
+  return inv;
 }
 
 //Check to see if the load is a constant offset from a base register
@@ -1318,62 +1378,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
             }
           }
         } else {
-          //assert(SetCC->getOperand(0).getValueType() != MVT::f32 && "SetCC f32 should have been promoted");
-          bool rev = false;
-          bool inv = false;
-          
-          switch (SetCC->getCondition()) {
-          default: Node->dump(); assert(0 && "Unknown FP comparison!");
-          case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
-          case ISD::SETLT: Opc = Alpha::CMPTLT; break;
-          case ISD::SETLE: Opc = Alpha::CMPTLE; break;
-          case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
-          case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
-          case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
-          }
-          
-          //FIXME: check for constant 0.0
-          ConstantFPSDNode *CN;
-          if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
-              && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-            Tmp1 = Alpha::F31;
-          else
-            Tmp1 = SelectExpr(N.getOperand(0));
-          
-          if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
-          && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-            Tmp2 = Alpha::F31;
-          else
-            Tmp2 = SelectExpr(N.getOperand(1));
-
-          //Can only compare doubles, and dag won't promote for me
-          if (SetCC->getOperand(0).getValueType() == MVT::f32)
-          {
-            //assert(0 && "Setcc On float?\n");
-            std::cerr << "Setcc on float!\n";
-            Tmp3 = MakeReg(MVT::f64);
-            BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
-            Tmp1 = Tmp3;
-          }
-          if (SetCC->getOperand(1).getValueType() == MVT::f32)
-          {
-            //assert (0 && "Setcc On float?\n");
-            std::cerr << "Setcc on float!\n";
-            Tmp3 = MakeReg(MVT::f64);
-            BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
-            Tmp2 = Tmp3;
-          }
-
-          if (rev) std::swap(Tmp1, Tmp2);
-          Tmp3 = MakeReg(MVT::f64);
           //do the comparison
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-          
+          Tmp1 = MakeReg(MVT::f64);
+          bool inv = SelectFPSetCC(N, Tmp1);
+
           //now arrange for Result (int) to have a 1 or 0
-          unsigned Tmp4 = MakeReg(MVT::i64);
-          BuildMI(BB, Alpha::ADDQi, 2, Tmp4).addReg(Alpha::R31).addImm(1);
+          Tmp2 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::ADDQi, 2, Tmp2).addReg(Alpha::R31).addImm(1);
           Opc = inv?Alpha::CMOVNEi_FP:Alpha::CMOVEQi_FP;
-          BuildMI(BB, Opc, 3, Result).addReg(Tmp4).addImm(0).addReg(Tmp3);
+          BuildMI(BB, Opc, 3, Result).addReg(Tmp2).addImm(0).addReg(Tmp1);
         }
       }
       return Result;
@@ -1554,16 +1567,88 @@ unsigned ISel::SelectExpr(SDOperand N) {
       return Result;
     }
 
-    //     //  case ISD::FP_TO_UINT: 
- 
   case ISD::SELECT:
     {
       //FIXME: look at parent to decide if intCC can be folded, or if setCC(FP) and can save stack use
-      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+      //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
       Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
       // Get the condition into the zero flag.
+      //BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+      SDOperand CC = N.getOperand(0);
+      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
+
+      if (CC.getOpcode() == ISD::SETCC && 
+          !MVT::isInteger(SetCC->getOperand(0).getValueType()))
+      { //FP Setcc -> Int Select
+	Tmp1 = MakeReg(MVT::f64);
+	bool inv = SelectFPSetCC(CC, Tmp1);
+	BuildMI(BB, inv?Alpha::CMOVNE_FP:Alpha::CMOVEQ_FP, 2, Result)
+	  .addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+	return Result;
+      }
+      if (CC.getOpcode() == ISD::SETCC) {
+	//Int SetCC -> Select
+	//Dropping the CC is only useful if we are comparing to 0
+	if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+	   cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0)
+	  {
+	    bool useI = (SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+			 cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() <= 255);
+	    
+	    switch (SetCC->getCondition()) {
+	    default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
+	    case ISD::SETEQ:  Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break;
+	    case ISD::SETLT:  Opc = useI?Alpha::CMOVGTi:Alpha::CMOVGT; break;
+	    case ISD::SETLE:  Opc = useI?Alpha::CMOVGEi:Alpha::CMOVGE; break;
+	    case ISD::SETGT:  Opc = useI?Alpha::CMOVLTi:Alpha::CMOVLT; break;
+	    case ISD::SETGE:  Opc = useI?Alpha::CMOVLEi:Alpha::CMOVLE; break;
+	    case ISD::SETULT: Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
+	    case ISD::SETUGT: assert(0 && "0 > (unsigned) x is never true"); break;
+	    case ISD::SETULE: assert(0 && "0 <= (unsigned) x is always true"); break;
+	    case ISD::SETUGE: Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break; //Technically you could have this CC
+	    case ISD::SETNE:  Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
+	    }
+	    if (useI)
+	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
+		.addImm(cast<ConstantSDNode>(SetCC->getOperand(1))->getValue());
+	    else
+	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
+		.addReg(SelectExpr(SetCC->getOperand(1)));
+	    return Result;
+	  }
+	if(SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+	   cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0)
+	  {
+	    bool useI = (SetCC->getOperand(0).getOpcode() == ISD::Constant &&
+			 cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() <= 255);
+
+	    switch (SetCC->getCondition()) {
+	    default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
+	    case ISD::SETEQ:  Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break;
+	    case ISD::SETLT:  Opc = useI?Alpha::CMOVLTi:Alpha::CMOVLT; break;
+	    case ISD::SETLE:  Opc = useI?Alpha::CMOVLEi:Alpha::CMOVLE; break;
+	    case ISD::SETGT:  Opc = useI?Alpha::CMOVGTi:Alpha::CMOVGT; break;
+	    case ISD::SETGE:  Opc = useI?Alpha::CMOVGEi:Alpha::CMOVGE; break;
+	    case ISD::SETULT: assert(0 && "x (unsigned) < 0 is never true"); break;
+	    case ISD::SETUGT: Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
+	    case ISD::SETULE: Opc = useI?Alpha::CMOVEQi:Alpha::CMOVEQ; break; //Technically you could have this CC
+	    case ISD::SETUGE: assert(0 && "x (unsgined >= 0 is always true"); break;
+	    case ISD::SETNE:  Opc = useI?Alpha::CMOVNEi:Alpha::CMOVNE; break;
+	    }
+	    if (useI)
+	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
+		.addImm(cast<ConstantSDNode>(SetCC->getOperand(0))->getValue());
+	    else
+	      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3)
+		.addReg(SelectExpr(SetCC->getOperand(0)));
+	    return Result;
+	  }
+	//Otherwise, fall though
+      }
+      Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+      
       return Result;
     }
 

@@ -55,6 +55,7 @@ let isCall = 1,
 let isReturn = 1, isTerminator = 1 in
   def RETURN : PseudoInstAlpha<(ops ), "ret $$31,($$26),1">; //Return from subroutine
 
+//These are evil as they get expanded into multiple instructions to take care of reallocation
 let Uses = [R29], Defs = [R28] in {
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
   def LDQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
@@ -80,6 +81,7 @@ let Uses = [R29], Defs = [R28] in {
 
 
 //RESULTS of these go to R27
+//These are also evil as the assembler expands them into calls
 let Uses = [R29], 
     Defs = [R28, R23, R24, R25, R27] in
 {
