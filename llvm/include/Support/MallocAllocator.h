@@ -36,6 +36,10 @@ struct MallocAllocator {
     typedef MallocAllocator<U> other;
   };
 
+  template<typename R>
+  MallocAllocator(const MallocAllocator<R> &) {}
+  MallocAllocator() {}
+
   pointer address(reference x) const { return &x; }
   const_pointer address(const_reference x) const { return &x; }
   size_type max_size() const { return ~0 / sizeof(T); }
