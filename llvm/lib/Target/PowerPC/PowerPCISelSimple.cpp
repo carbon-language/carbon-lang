@@ -79,7 +79,7 @@ namespace {
     std::map<Value*, unsigned> RegMap;  // Mapping between Val's and SSA Regs
 
     // External functions used in the Module
-    std::map<std::string, Function*> Func;
+    Function *fmodFn, *__moddi3Fn, *__divdi3Fn, *__umoddi3Fn, *__udivdi3Fn;
 
     // MBBMap - Mapping between LLVM BB -> Machine BB
     std::map<const BasicBlock*, MachineBasicBlock*> MBBMap;
@@ -96,15 +96,15 @@ namespace {
       Type *l = Type::LongTy;
       Type *ul = Type::ULongTy;
       // double fmod(double, double);
-      Func["fmod"] = M.getOrInsertFunction("fmod", d, d, d, 0);
+      fmodFn = M.getOrInsertFunction("fmod", d, d, d, 0);
       // long __moddi3(long, long);
-      Func["__moddi3"] = M.getOrInsertFunction("__moddi3", l, l, l, 0);
+      __moddi3Fn = M.getOrInsertFunction("__moddi3", l, l, l, 0);
       // long __divdi3(long, long);
-      Func["__divdi3"] = M.getOrInsertFunction("__divdi3", l, l, l, 0);
+      __divdi3Fn = M.getOrInsertFunction("__divdi3", l, l, l, 0);
       // unsigned long __umoddi3(unsigned long, unsigned long);
-      Func["__umoddi3"] = M.getOrInsertFunction("__umoddi3", ul, ul, ul, 0);
+      __umoddi3Fn = M.getOrInsertFunction("__umoddi3", ul, ul, ul, 0);
       // unsigned long __udivdi3(unsigned long, unsigned long);
-      Func["__udivdi3"] = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
+      __udivdi3Fn = M.getOrInsertFunction("__udivdi3", ul, ul, ul, 0);
       return false;
     }
 
@@ -1322,21 +1322,35 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
             FPR_idx++;
             // For vararg functions, must pass doubles via int regs as well
             if (isVarArg) {
-              union DU {
-                double FVal;
-                struct {
-                  uint32_t hi32;
-                  uint32_t lo32;
-                } UVal;
-              } U;
-              U.FVal = cast<ConstantFP>(Args[i].Val)->getValue();
-              if (GPR_remaining > 0) {
-                Constant *hi32 = minUConstantForValue(U.UVal.hi32);
-                copyConstantToRegister(BB, BB->end(), hi32, GPR[GPR_idx]);
-              }
-              if (GPR_remaining > 1) {
-                Constant *lo32 = minUConstantForValue(U.UVal.lo32);
-                copyConstantToRegister(BB, BB->end(), lo32, GPR[GPR_idx+1]);
+              Value *Val = Args[i].Val;
+              if (ConstantFP *CFP = dyn_cast<ConstantFP>(Val)) {
+                union DU {
+                  double FVal;
+                  struct {
+                    uint32_t hi32;
+                    uint32_t lo32;
+                  } UVal;
+                } U;
+                U.FVal = CFP->getValue();
+                if (GPR_remaining > 0) {
+                  Constant *hi32 = minUConstantForValue(U.UVal.hi32);
+                  copyConstantToRegister(BB, BB->end(), hi32, GPR[GPR_idx]);
+                }
+                if (GPR_remaining > 1) {
+                  Constant *lo32 = minUConstantForValue(U.UVal.lo32);
+                  copyConstantToRegister(BB, BB->end(), lo32, GPR[GPR_idx+1]);
+                }
+              } else {
+                // Since this is not a constant, we must load it into int regs
+                // via memory
+                BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset)
+                  .addReg(PPC32::R1);
+                if (GPR_remaining > 0)
+                  BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx]).addImm(ArgOffset)
+                    .addReg(PPC32::R1);
+                if (GPR_remaining > 1)
+                  BuildMI(BB, PPC32::LWZ, 2, GPR[GPR_idx+1])
+                    .addImm(ArgOffset+4).addReg(PPC32::R1);
               }
             }
           } else {
@@ -1994,7 +2008,7 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
       unsigned Op0Reg = getReg(Op0, BB, IP);
       unsigned Op1Reg = getReg(Op1, BB, IP);
       MachineInstr *TheCall =
-        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(Func["fmod"], true);
+        BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(fmodFn, true);
       std::vector<ValueRecord> Args;
       Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
       Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
@@ -2002,14 +2016,13 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
     }
     return;
   case cLong: {
-     // FIXME: Make sure the module has external function
-     static const char *Fn[] =
-      { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
+     static Function* const Funcs[] =
+      { __moddi3Fn, __divdi3Fn, __umoddi3Fn, __udivdi3Fn };
     unsigned Op0Reg = getReg(Op0, BB, IP);
     unsigned Op1Reg = getReg(Op1, BB, IP);
     unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
     MachineInstr *TheCall =
-      BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(Func[Fn[NameIdx]], true);
+      BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(Funcs[NameIdx], true);
 
     std::vector<ValueRecord> Args;
     Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
