@@ -460,7 +460,7 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
   switch (MI->getOpcode()) {
 
     // Register to memory stores.  Format: <base,scale,indexreg,immdisp>, srcreg
-  case X86::MOVrm32: case X86::MOVrm16: case X86::MOVrm8:
+  case X86::MOVmr32: case X86::MOVmr16: case X86::MOVmr8:
   case X86::MOVmi32: case X86::MOVmi16: case X86::MOVmi8:
     // Check to see if we can fold the source instruction into this one...
     if (MachineInstr *SrcInst = getDefiningInst(MI->getOperand(4))) {
@@ -478,9 +478,9 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
       return true;
     break;
 
-  case X86::MOVmr32:
-  case X86::MOVmr16:
-  case X86::MOVmr8:
+  case X86::MOVrm32:
+  case X86::MOVrm16:
+  case X86::MOVrm8:
     // If we can optimize the addressing expression, do so now.
     if (OptimizeAddress(MI, 1))
       return true;

@@ -51,7 +51,7 @@ int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
-    { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FSTPr80 };
+    { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTPr80 };
   MachineInstr *I = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
 				       FrameIdx).addReg(SrcReg);
   MBB.insert(MI, I);
@@ -63,7 +63,7 @@ int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const{
   static const unsigned Opcode[] =
-    { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FLDr80 };
+    { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDr80 };
   unsigned OC = Opcode[getIdx(RC)];
   MBB.insert(MI, addFrameReference(BuildMI(OC, 4, DestReg), FrameIdx));
   return 1;
@@ -112,9 +112,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
   MachineInstr* NI = 0;
   if (i == 0) {
     switch(MI->getOpcode()) {
-    case X86::MOVrr8:  NI = MakeMRInst(X86::MOVrm8 , FrameIndex, MI); break;
-    case X86::MOVrr16: NI = MakeMRInst(X86::MOVrm16, FrameIndex, MI); break;
-    case X86::MOVrr32: NI = MakeMRInst(X86::MOVrm32, FrameIndex, MI); break;
+    case X86::MOVrr8:  NI = MakeMRInst(X86::MOVmr8 , FrameIndex, MI); break;
+    case X86::MOVrr16: NI = MakeMRInst(X86::MOVmr16, FrameIndex, MI); break;
+    case X86::MOVrr32: NI = MakeMRInst(X86::MOVmr32, FrameIndex, MI); break;
     case X86::ADDrr8:  NI = MakeMRInst(X86::ADDmr8 , FrameIndex, MI); break;
     case X86::ADDrr16: NI = MakeMRInst(X86::ADDmr16, FrameIndex, MI); break;
     case X86::ADDrr32: NI = MakeMRInst(X86::ADDmr32, FrameIndex, MI); break;
@@ -131,9 +131,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     }
   } else if (i == 1) {
     switch(MI->getOpcode()) {
-    case X86::MOVrr8:  NI = MakeRMInst(X86::MOVmr8 , FrameIndex, MI); break;
-    case X86::MOVrr16: NI = MakeRMInst(X86::MOVmr16, FrameIndex, MI); break;
-    case X86::MOVrr32: NI = MakeRMInst(X86::MOVmr32, FrameIndex, MI); break;
+    case X86::MOVrr8:  NI = MakeRMInst(X86::MOVrm8 , FrameIndex, MI); break;
+    case X86::MOVrr16: NI = MakeRMInst(X86::MOVrm16, FrameIndex, MI); break;
+    case X86::MOVrr32: NI = MakeRMInst(X86::MOVrm32, FrameIndex, MI); break;
     case X86::ADDrr8:  NI = MakeRMInst(X86::ADDrm8 , FrameIndex, MI); break;
     case X86::ADDrr16: NI = MakeRMInst(X86::ADDrm16, FrameIndex, MI); break;
     case X86::ADDrr32: NI = MakeRMInst(X86::ADDrm32, FrameIndex, MI); break;
@@ -254,7 +254,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
 
     // Save EBP into the appropriate stack slot...
-    MI = addRegOffset(BuildMI(X86::MOVrm32, 5),    // mov [ESP-<offset>], EBP
+    MI = addRegOffset(BuildMI(X86::MOVmr32, 5),    // mov [ESP-<offset>], EBP
 		      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
     MBB.insert(MBBI, MI);
 

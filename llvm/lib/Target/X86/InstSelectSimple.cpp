@@ -490,20 +490,20 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     switch (getClassB(I->getType())) {
     case cByte:
       FI = MFI->CreateFixedObject(1, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVmr8, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOVrm8, 4, Reg), FI);
       break;
     case cShort:
       FI = MFI->CreateFixedObject(2, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVmr16, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOVrm16, 4, Reg), FI);
       break;
     case cInt:
       FI = MFI->CreateFixedObject(4, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVmr32, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOVrm32, 4, Reg), FI);
       break;
     case cLong:
       FI = MFI->CreateFixedObject(8, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVmr32, 4, Reg), FI);
-      addFrameReference(BuildMI(BB, X86::MOVmr32, 4, Reg+1), FI, 4);
+      addFrameReference(BuildMI(BB, X86::MOVrm32, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOVrm32, 4, Reg+1), FI, 4);
       ArgOffset += 4;   // longs require 4 additional bytes
       break;
     case cFP:
@@ -1052,18 +1052,18 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         // Promote arg to 32 bits wide into a temporary register...
         unsigned R = makeAnotherReg(Type::UIntTy);
         promote32(R, Args[i]);
-        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
                      X86::ESP, ArgOffset).addReg(R);
         break;
       }
       case cInt:
-        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
                      X86::ESP, ArgOffset).addReg(ArgReg);
         break;
       case cLong:
-        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
                      X86::ESP, ArgOffset).addReg(ArgReg);
-        addRegOffset(BuildMI(BB, X86::MOVrm32, 5),
+        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
                      X86::ESP, ArgOffset+4).addReg(ArgReg+1);
         ArgOffset += 4;        // 8 byte entry, not 4.
         break;
@@ -1203,7 +1203,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     if (cast<Constant>(CI.getOperand(1))->isNullValue()) {
       if (ID == Intrinsic::returnaddress) {
         // Just load the return address
-        addFrameReference(BuildMI(BB, X86::MOVmr32, 4, TmpReg1),
+        addFrameReference(BuildMI(BB, X86::MOVrm32, 4, TmpReg1),
                           ReturnAddressIndex);
       } else {
         addFrameReference(BuildMI(BB, X86::LEAr32, 4, TmpReg1),
@@ -1835,13 +1835,13 @@ void ISel::visitLoadInst(LoadInst &I) {
   unsigned Class = getClassB(I.getType());
 
   if (Class == cLong) {
-    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), SrcAddrReg);
-    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), SrcAddrReg, 4);
+    addDirectMem(BuildMI(BB, X86::MOVrm32, 4, DestReg), SrcAddrReg);
+    addRegOffset(BuildMI(BB, X86::MOVrm32, 4, DestReg+1), SrcAddrReg, 4);
     return;
   }
 
   static const unsigned Opcodes[] = {
-    X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FLDr32
+    X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDr32
   };
   unsigned Opcode = Opcodes[Class];
   if (I.getType() == Type::DoubleTy) Opcode = X86::FLDr64;
@@ -1859,13 +1859,13 @@ void ISel::visitStoreInst(StoreInst &I) {
   unsigned Class = getClassB(ValTy);
 
   if (Class == cLong) {
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg).addReg(ValReg);
-    addRegOffset(BuildMI(BB, X86::MOVrm32, 1+4), AddressReg,4).addReg(ValReg+1);
+    addDirectMem(BuildMI(BB, X86::MOVmr32, 1+4), AddressReg).addReg(ValReg);
+    addRegOffset(BuildMI(BB, X86::MOVmr32, 1+4), AddressReg,4).addReg(ValReg+1);
     return;
   }
 
   static const unsigned Opcodes[] = {
-    X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FSTr32
+    X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTr32
   };
   unsigned Opcode = Opcodes[Class];
   if (ValTy == Type::DoubleTy) Opcode = X86::FSTr64;
@@ -2066,11 +2066,11 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
-      addFrameReference(BMI(BB, IP, X86::MOVrm32, 5), FrameIdx).addReg(SrcReg);
-      addFrameReference(BMI(BB, IP, X86::MOVrm32, 5),
+      addFrameReference(BMI(BB, IP, X86::MOVmr32, 5), FrameIdx).addReg(SrcReg);
+      addFrameReference(BMI(BB, IP, X86::MOVmr32, 5),
                         FrameIdx, 4).addReg(SrcReg+1);
     } else {
-      static const unsigned Op1[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
+      static const unsigned Op1[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
       addFrameReference(BMI(BB, IP, Op1[SrcClass], 5), FrameIdx).addReg(SrcReg);
     }
 
@@ -2090,7 +2090,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 
     // Load the old value of the high byte of the control word...
     unsigned HighPartOfCW = makeAnotherReg(Type::UByteTy);
-    addFrameReference(BMI(BB, IP, X86::MOVmr8, 4, HighPartOfCW), CWFrameIdx, 1);
+    addFrameReference(BMI(BB, IP, X86::MOVrm8, 4, HighPartOfCW), CWFrameIdx, 1);
 
     // Set the high part to be round to zero...
     addFrameReference(BMI(BB, IP, X86::MOVmi8, 5), CWFrameIdx, 1).addZImm(12);
@@ -2099,7 +2099,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     addFrameReference(BMI(BB, IP, X86::FLDCWm16, 4), CWFrameIdx);
     
     // Restore the memory image of control word to original value
-    addFrameReference(BMI(BB, IP, X86::MOVrm8, 5),
+    addFrameReference(BMI(BB, IP, X86::MOVmr8, 5),
                       CWFrameIdx, 1).addReg(HighPartOfCW);
 
     // We don't have the facilities for directly storing byte sized data to
@@ -2128,10 +2128,10 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     addFrameReference(BMI(BB, IP, Op1[StoreClass], 5), FrameIdx).addReg(SrcReg);
 
     if (DestClass == cLong) {
-      addFrameReference(BMI(BB, IP, X86::MOVmr32, 4, DestReg), FrameIdx);
-      addFrameReference(BMI(BB, IP, X86::MOVmr32, 4, DestReg+1), FrameIdx, 4);
+      addFrameReference(BMI(BB, IP, X86::MOVrm32, 4, DestReg), FrameIdx);
+      addFrameReference(BMI(BB, IP, X86::MOVrm32, 4, DestReg+1), FrameIdx, 4);
     } else {
-      static const unsigned Op2[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
+      static const unsigned Op2[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
       addFrameReference(BMI(BB, IP, Op2[DestClass], 4, DestReg), FrameIdx);
     }
 
@@ -2185,12 +2185,12 @@ void ISel::visitVAArgInst(VAArgInst &I) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
-    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
+    addDirectMem(BuildMI(BB, X86::MOVrm32, 4, DestReg), VAList);
     break;
   case Type::ULongTyID:
   case Type::LongTyID:
-    addDirectMem(BuildMI(BB, X86::MOVmr32, 4, DestReg), VAList);
-    addRegOffset(BuildMI(BB, X86::MOVmr32, 4, DestReg+1), VAList, 4);
+    addDirectMem(BuildMI(BB, X86::MOVrm32, 4, DestReg), VAList);
+    addRegOffset(BuildMI(BB, X86::MOVrm32, 4, DestReg+1), VAList, 4);
     break;
   case Type::DoubleTyID:
     addDirectMem(BuildMI(BB, X86::FLDr64, 4, DestReg), VAList);
