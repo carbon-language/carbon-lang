@@ -11,16 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only AIX specific code 
-//===          and must not be generic UNIX code (see ../Unix/Path.cpp)
-//===----------------------------------------------------------------------===//
-
 // Include the generic unix implementation
 #include "../Unix/Path.cpp"
 
 namespace llvm {
 using namespace sys;
+
+//===----------------------------------------------------------------------===//
+//=== WARNING: Implementation here must contain only AIX specific code 
+//===          and must not be generic UNIX code (see ../Unix/Path.cpp)
+//===----------------------------------------------------------------------===//
 
 bool 
 Path::is_valid() const {
