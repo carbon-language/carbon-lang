@@ -152,6 +152,80 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
          O->getNumOccurrencesFlag() == cl::OneOrMore;
 }
 
+/// ParseStringVector - Break INPUT up wherever one or more characters
+/// from DELIMS are found, and store the resulting tokens in OUTPUT.
+///
+static void ParseStringVector (std::vector<std::string> &output,
+			       std::string &input, const char *delims) {
+  std::string work (input);
+  int pos = work.find_first_not_of (delims);
+  if (pos == -1) return;
+  work = work.substr (pos);
+  pos = work.find_first_of (delims);
+  while (!work.empty() && pos != -1) {
+    if (pos == -1) break;
+    output.push_back (work.substr (0,pos));
+    int nextpos = work.find_first_not_of (delims, pos + 1);
+    if (nextpos != -1) {
+      work = work.substr (work.find_first_not_of (delims, pos + 1));
+      pos = work.find_first_of (delims);
+    } else {
+      work = "";
+      pos = -1;
+    }
+  }
+  if (!work.empty ()) {
+    output.push_back (work);
+  }
+}
+
+/// ParseCStringVector - Same effect as ParseStringVector, but the
+/// resulting output vector contains dynamically-allocated pointers to
+/// char, instead of standard C++ strings.
+///
+static void ParseCStringVector (std::vector<char *> &output,
+				std::string &input, const char *delims) {
+  std::vector<std::string> work;
+  ParseStringVector (work, input, delims);
+  for (std::vector<std::string>::iterator i = work.begin(), e = work.end();
+       i != e; ++i) {
+    output.push_back (strdup (i->c_str ()));
+  }
+}
+
+/// ParseEnvironmentOptions - An alternative entry point to the
+/// CommandLine library, which allows you to read the program's name
+/// from the caller (as PROGNAME) and its command-line arguments from
+/// an environment variable (whose name is given in ENVVAR).
+///
+void cl::ParseEnvironmentOptions (char *progName, char *envvar,
+				  const char *Overview) {
+  // Get program's "name", which we wouldn't know without the caller
+  // telling us.
+  assert (progName && "Program name not specified");
+  static std::vector<char *> newargv; // Maybe making it "static" is a hack.
+  int newargc;
+  newargv.push_back (progName);
+
+  // Get the environment variable they want us to parse options out of.
+  assert (envvar && "Environment variable name missing");  
+  char *envvalue = getenv (envvar);
+  if (envvalue == NULL) {
+    // Env var not set --> act like there are no more command line
+    // arguments.
+    newargc = newargv.size ();
+    ParseCommandLineOptions (newargc, &newargv[0], Overview);
+    return;
+  }
+  std::string envvaluestr (envvalue);
+
+  // Parse the value of the environment variable into a "command line"
+  // and hand it off to ParseCommandLineOptions().
+  ParseCStringVector (newargv, envvaluestr, " \v\f\t\r\n");
+  newargc = newargv.size ();
+  ParseCommandLineOptions (newargc, &newargv[0], Overview);
+}
+
 void cl::ParseCommandLineOptions(int &argc, char **argv,
                                  const char *Overview) {
   assert((!getOpts().empty() || !getPositionalOpts().empty()) &&
