@@ -96,6 +96,9 @@ namespace {
     /// the entire function.
     ///
     bool runOnFunction(Function &Fn) {
+      // Lazily create a stack slot for the return address if needed.
+      ReturnAddressIndex = -1;
+
       // First pass over the function, lower any unknown intrinsic functions
       // with the IntrinsicLowering class.
       LowerUnknownIntrinsicFunctionCalls(Fn);
@@ -107,10 +110,6 @@ namespace {
         F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
 
       BB = &F->front();
-
-      // Set up a frame object for the return address.  This is used by the
-      // llvm.returnaddress & llvm.frameaddress intrinisics.
-      ReturnAddressIndex = F->getFrameInfo()->CreateFixedObject(4, -4);
 
       // Copy incoming arguments off of the stack...
       LoadArgumentsToVirtualRegs(Fn);
@@ -1765,6 +1764,11 @@ void X86ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::frameaddress:
     TmpReg1 = getReg(CI);
     if (cast<Constant>(CI.getOperand(1))->isNullValue()) {
+      if (ReturnAddressIndex == -1) {
+        // Set up a frame object for the return address.
+        ReturnAddressIndex = F->getFrameInfo()->CreateFixedObject(4, -4);
+      }
+
       if (ID == Intrinsic::returnaddress) {
         // Just load the return address
         addFrameReference(BuildMI(BB, X86::MOV32rm, 4, TmpReg1),
