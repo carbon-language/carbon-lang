@@ -4,10 +4,10 @@
 // This file is important because different host OS's define different macros,
 // which makes portability tough.  This file exports the following definitions:
 //
-//   ENDIAN_LITTLE : is #define'd if the host is little endian
-//   int64_t       : is a typedef for the signed 64 bit system type
-//   uint64_t      : is a typedef for the unsigned 64 bit system type
-//   INT64_MAX     : is a #define specifying the max value for int64_t's
+//   LITTLE_ENDIAN: is #define'd if the host is little endian
+//   int64_t      : is a typedef for the signed 64 bit system type
+//   uint64_t     : is a typedef for the unsigned 64 bit system type
+//   INT64_MAX    : is a #define specifying the max value for int64_t's
 //
 // No library is required when using these functinons.
 //
@@ -29,9 +29,24 @@
 #  else
 #    undef LITTLE_ENDIAN
 #  endif
-#else
-#  if (BSD >= 199103)
-#    include <machine/endian.h>
+#endif
+
+#ifdef __FreeBSD__
+#  include <machine/endian.h>
+#  if _BYTE_ORDER == _LITTLE_ENDIAN
+#    ifndef LITTLE_ENDIAN
+#      define LITTLE_ENDIAN 1
+#    endif
+#    ifdef BIG_ENDIAN
+#      undef BIG_ENDIAN
+#    endif
+#  else
+#    ifndef BIG_ENDIAN
+#      define BIG_ENDIAN 1
+#    endif
+#    ifdef LITTLE_ENDIAN
+#      undef LITTLE_ENDIAN
+#    endif
 #  endif
 #endif
 
@@ -44,26 +59,11 @@
 #  endif
 #endif
 
-//
-// Convert the information from the header files into our own local
-// endian macros.  We do this because various strange systems define both
-// BIG_ENDIAN and LITTLE_ENDIAN, and we don't want to conflict with them.
-//
-// Don't worry; once we introduce autoconf, this will look a lot nicer.
-// 
-#ifdef LITTLE_ENDIAN
-#define ENDIAN_LITTLE
+#if (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN))
+#error "Cannot define both LITTLE_ENDIAN and BIG_ENDIAN!"
 #endif
 
-#ifdef BIG_ENDIAN
-#define ENDIAN_BIG
-#endif
-
-#if (defined(ENDIAN_LITTLE) && defined(ENDIAN_BIG))
-#error "Cannot define both ENDIAN_LITTLE and ENDIAN_BIG!"
-#endif
-
-#if (!defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG)) || !defined(INT64_MAX)
+#if (!defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)) || !defined(INT64_MAX)
 #error "include/Support/DataTypes.h could not determine endianness!"
 #endif
 
