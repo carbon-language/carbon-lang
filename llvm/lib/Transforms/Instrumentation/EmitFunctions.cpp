@@ -4,7 +4,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Instrumentation/EmitFunctions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
@@ -18,12 +17,6 @@ namespace {
   };
   
   RegisterOpt<EmitFunctionTable> X("emitfuncs", "Emit a Function Table");
-}
-
-// Create a new pass to add function table
-//
-Pass *createEmitFunctionTablePass() {
-  return new EmitFunctionTable();
 }
 
 // Per Module pass for inserting function table
