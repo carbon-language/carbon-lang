@@ -1752,7 +1752,7 @@ void ISel::visitAllocaInst(AllocaInst &I) {
   // the stack pointer.
   BuildMI(BB, X86::MOVrr32, 1, getReg(I)).addReg(X86::ESP);
 
-  // Inform the Frame Information that we have just allocated a variable sized
+  // Inform the Frame Information that we have just allocated a variable-sized
   // object.
   F->getFrameInfo()->CreateVariableSizedObject();
 }
