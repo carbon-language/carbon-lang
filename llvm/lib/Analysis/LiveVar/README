@@ -96,19 +96,21 @@ Live variable analysis is done using machine instructions. The constructor
 to the class takes a pointer to a method, and machine instructions must be
 already available for this method before calling the constructor.
 
+The preconditions are:
+
+1. Instruction selection is complete (i.e., machine instructions are 
+   generated) for the method before the live variable analysis
+
 
 
 5. Assumptions
 ==============
-1. Instruction selection is complete (i.e., machine instructions are 
-   generated) for the method before the live variable analysis
-
-2. There may be dummy phi machine instructions in the machine code. The code
+1. There may be dummy phi machine instructions in the machine code. The code
    works with and without dummy phi instructions (i.e., this code can be
    called before or after phi elimination). Currently, it is called without
    phi instructions.
 
-3. Only the basic blocks that can be reached by the post-order iterator will
+2. Only the basic blocks that can be reached by the post-order iterator will
    be analyzed (i.e., basic blocks for dead code will not be analyzed). The 
    live variable sets returned for such basic blocks is not defined.
 
@@ -180,6 +182,24 @@ The above algorithm is implemented in:
         call MethodLiveVarInfo::calcLiveVarSetsForBB to calculate live variable
 	sets for ALL machine instructions in a BasicBlock and to enter all 
 	those calculated LiveVarSets in caches ( MInst2LVSetBI/MInst2LVSetAI)
+
+
+8. Future work
+==============
+If it is necessary to do live variable analysis using LLVM instructions rather
+than using machine instructions, it is easy to modify the existing code to
+do so. Current implementation use isDef() to find any MachineOperand is a
+definition or a use. We just need to change all the places that check whether
+a particular Value is a definition/use with MachineInstr. Instead, we
+would check whether an LLVM value is a def/use using LLVM instructions. All
+the underlying data structures will remain the same. However, iterators that
+go over machine instructions must be changed to the corresponding iterators
+that go over the LLVM instructions. The logic to support Phi's in LLVM
+instructions is already there. In fact, live variable analysis was first
+done using LLVM instructions and later changed to use machine instructions.
+Hence, it is quite straightforward to revert it to LLVM instructions if
+necessary.
+
 
 
 
