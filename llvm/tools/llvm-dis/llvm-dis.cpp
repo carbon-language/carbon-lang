@@ -13,7 +13,6 @@
 //                            to the x.ll file.
 //  Options:
 //      --help   - Output information about command line switches
-//       -c      - Print C code instead of LLVM assembly
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,12 +24,6 @@
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <memory>
-
-// OutputMode - The different orderings to print basic blocks in...
-enum OutputMode {
-  LLVM = 0,           // Generate LLVM assembly (the default)
-  c,                  // Generate C code
-};
 
 using namespace llvm;
 
@@ -44,12 +37,8 @@ OutputFilename("o", cl::desc("Override output filename"),
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
-static cl::opt<enum OutputMode>
-WriteMode(cl::desc("Specify the output format:"),
-          cl::values(clEnumValN(LLVM, "llvm", "Output LLVM assembly"),
-                     clEnumVal(c, "Output C code for program"),
-                    0),
-          cl::ReallyHidden);
+static cl::opt<bool>
+CWriteMode("c", cl::desc("Obsolete option, do not use"), cl::ReallyHidden);
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
@@ -58,7 +47,7 @@ int main(int argc, char **argv) {
   std::ostream *Out = &std::cout;  // Default to printing to stdout...
   std::string ErrorMessage;
 
-  if (WriteMode == c) {
+  if (CWriteMode) {
     std::cerr << "ERROR: llvm-dis no longer contains the C backend. "
               << "Use 'llc -march=c' instead!\n";
     exit(1);
