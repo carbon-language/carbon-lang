@@ -91,7 +91,8 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   if (Dest == BI->getParent()) return false;        // Do not loop infinitely!
 
   // Do not inline a block if we will just get another branch to the same block!
-  if (BranchInst *DBI = dyn_cast<BranchInst>(Dest->getTerminator()))
+  TerminatorInst *DTI = Dest->getTerminator();
+  if (BranchInst *DBI = dyn_cast<BranchInst>(DTI))
     if (DBI->isUnconditional() && DBI->getSuccessor(0) == Dest)
       return false;                                 // Do not loop infinitely!
 
@@ -110,6 +111,15 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
 
   for (unsigned Size = 0; I != Dest->end(); ++Size, ++I)
     if (Size == 6) return false;  // The block is too large...
+
+  // Do not tail duplicate a block that has thousands of successors into a block
+  // with a single successor if the block has many other predecessors.  This can
+  // cause an N^2 explosion in CFG edges (and PHI node entries), as seen in
+  // cases that have a large number of indirect gotos.
+  if (DTI->getNumSuccessors() > 8)
+    if (std::distance(PI, PE) * DTI->getNumSuccessors() > 128)
+      return false;
+
   return true;  
 }
 

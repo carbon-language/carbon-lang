@@ -331,8 +331,15 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
 // isValueEqualityComparison - Return true if the specified terminator checks to
 // see if a value is equal to constant integer value.
 static Value *isValueEqualityComparison(TerminatorInst *TI) {
-  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI))
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    // Do not permit merging of large switch instructions into their
+    // predecessors unless there is only one predecessor.
+    if (SI->getNumSuccessors() * std::distance(pred_begin(SI->getParent()),
+                                               pred_end(SI->getParent())) > 128)
+      return 0;
+
     return SI->getCondition();
+  }
   if (BranchInst *BI = dyn_cast<BranchInst>(TI))
     if (BI->isConditional() && BI->getCondition()->hasOneUse())
       if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
