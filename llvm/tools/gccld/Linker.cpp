@@ -56,8 +56,8 @@ std::string llvm::FindLib(const std::string &Filename,
     if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".bc"))
       return Directory + LibName + ".bc";
 
-    if (FileOpenable(Directory + LibName + ".so"))
-      return Directory + LibName + ".so";
+    if (FileOpenable(Directory + LibName + SHLIBEXT))
+      return Directory + LibName + SHLIBEXT;
 
     if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".a"))
       return Directory + LibName + ".a";

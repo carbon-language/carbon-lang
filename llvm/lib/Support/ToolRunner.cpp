@@ -337,7 +337,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           std::string &OutputFile) {
-  OutputFile = getUniqueFilename(InputFile+".so");
+  OutputFile = getUniqueFilename(InputFile+SHLIBEXT);
   // Compile the C/asm file into a shared object
   const char* GCCArgs[] = {
     GCCPath.c_str(),

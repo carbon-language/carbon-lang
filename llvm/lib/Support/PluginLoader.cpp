@@ -37,5 +37,5 @@ namespace {
 
 // This causes operator= above to be invoked for every -load option.
 static cl::opt<PluginLoader, false, cl::parser<std::string> >
-LoadOpt("load", cl::ZeroOrMore, cl::value_desc("plugin.so"),
+LoadOpt("load", cl::ZeroOrMore, cl::value_desc("plugin" SHLIBEXT),
         cl::desc("Load the specified plugin"));

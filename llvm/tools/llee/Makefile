@@ -16,7 +16,7 @@ all:: llee
 llee: $(DESTTOOLCURRENT)/llee
 
 $(DESTTOOLCURRENT)/llee: Makefile
-	echo exec env LD_PRELOAD=$(DESTLIBCURRENT)/execve.so $$\* > $@
+	echo exec env LD_PRELOAD=$(DESTLIBCURRENT)/execve$(SHLIBEXT) $$\* > $@
 	chmod u+x $@
 
 clean::
