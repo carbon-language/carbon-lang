@@ -10,7 +10,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef sun
 #include <stdint.h>
+#endif
 
 /*===---------------------------------------------------------------------=====
  * HASH FUNCTIONS
