@@ -1896,7 +1896,7 @@ body of a variable argument function.<p>
 
 The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt> which has
 been initialized previously with <tt><a
-href="#i_va_begin">llvm.va_begin</a></tt> or <tt><a
+href="#i_va_start">llvm.va_start</a></tt> or <tt><a
 href="#i_va_copy">llvm.va_copy</a></tt>.<p>
 
 <h5>Arguments:</h5>
@@ -1935,7 +1935,7 @@ The argument is the <tt>va_list</tt> to copy.
 The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
 available in C.  In a target-dependent way, it copies the source
 <tt>va_list</tt> element into the returned list.  This intrinsic is necessary
-because the <tt><a href="i_va_begin">llvm.va_begin</a></tt> intrinsic may be
+because the <tt><a href="i_va_start">llvm.va_start</a></tt> intrinsic may be
 arbitrarily complex and require memory allocation, for example.<p>
 
 
@@ -1949,7 +1949,7 @@ arbitrarily complex and require memory allocation, for example.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Fri Oct 17 18:28:10 CDT 2003
+Last modified: Tue Oct 21 10:43:36 CDT 2003
 <!-- hhmts end -->
 </font>
 </body></html>
