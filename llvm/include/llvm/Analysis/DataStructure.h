@@ -133,6 +133,7 @@ private:
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
+  hash_set<Function*> ArgsRemainIncomplete;
   DSGraph *GlobalsGraph;
 public:
   ~TDDataStructures() { releaseMyMemory(); }
