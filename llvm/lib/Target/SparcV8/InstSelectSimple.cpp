@@ -239,12 +239,12 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       unsigned HM = topHalf & 0x03ff;
       unsigned LM = bottomHalf >> 10;
       unsigned LO = bottomHalf & 0x03ff;
-      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm(HH);
+      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addZImm(HH);
       BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-        .addImm (HM);
-      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg2).addImm(LM);
+        .addSImm (HM);
+      BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg2).addZImm(LM);
       BuildMI (*MBB, IP, V8::ORri, 2, R+1).addReg (TmpReg2)
-        .addImm (LO);
+        .addSImm (LO);
       return;
     }
 
@@ -258,21 +258,21 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     }
     switch (Class) {
       case cByte:
-        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm((uint8_t)Val);
+        BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm((uint8_t)Val);
         return;
       case cShort: {
         unsigned TmpReg = makeAnotherReg (C->getType ());
         BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg)
-          .addImm (((uint16_t) Val) >> 10);
+          .addSImm (((uint16_t) Val) >> 10);
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-          .addImm (((uint16_t) Val) & 0x03ff);
+          .addSImm (((uint16_t) Val) & 0x03ff);
         return;
       }
       case cInt: {
         unsigned TmpReg = makeAnotherReg (C->getType ());
-        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addImm(((uint32_t)Val) >> 10);
+        BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addZImm(((uint32_t)Val) >> 10);
         BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-          .addImm (((uint32_t) Val) & 0x03ff);
+          .addSImm (((uint32_t) Val) & 0x03ff);
         return;
       }
       default:
@@ -291,7 +291,7 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     BuildMI (*MBB, IP, LoadOpcode, 2, R).addConstantPoolIndex (CPI).addSImm (0);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
-    BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addImm (0);
+    BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm (0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
     // Copy it with a SETHI/OR pair; the JIT + asmwriter should recognize
     // that SETHI %reg,global == SETHI %reg,%hi(global) and 
@@ -711,7 +711,7 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
 		               User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData ();
   const Type *Ty = Src->getType ();
-  unsigned basePtrReg = getReg (Src);
+  unsigned basePtrReg = getReg (Src, MBB, IP);
 
   // GEPs have zero or more indices; we must perform a struct access
   // or array access for each one.
@@ -745,8 +745,8 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
       unsigned idxReg = getReg (idx, MBB, IP);
       unsigned OffsetReg = makeAnotherReg (Type::IntTy);
       unsigned elementSizeReg = makeAnotherReg (Type::UIntTy);
-      BuildMI (*MBB, IP, V8::ORri, 2,
-               elementSizeReg).addZImm (elementSize).addReg (V8::G0);
+      copyConstantToRegister (MBB, IP,
+        ConstantUInt::get(Type::UIntTy, elementSize), elementSizeReg);
       // Emit a SMUL to multiply the register holding the index by
       // elementSize, putting the result in OffsetReg.
       BuildMI (*MBB, IP, V8::SMULrr, 2,
@@ -822,11 +822,11 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     return;
   }
 
+  static const unsigned Opcodes[] = {
+    V8::ADDrr, V8::SUBrr, V8::SMULrr, V8::ANDrr, V8::ORrr, V8::XORrr,
+    V8::SLLrr, V8::SRLrr, V8::SRArr
+  };
   if (OpCase != ~0U) {
-    static const unsigned Opcodes[] = {
-      V8::ADDrr, V8::SUBrr, V8::SMULrr, V8::ANDrr, V8::ORrr, V8::XORrr,
-      V8::SLLrr, V8::SRLrr, V8::SRArr
-    };
     BuildMI (BB, Opcodes[OpCase], 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
   }
 
@@ -854,9 +854,17 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     case cInt:
       // Nothing todo here.
       break;
+    case cLong:
+      // Only support and, or, xor.
+      if (OpCase < 3 || OpCase > 5) {
+        visitInstruction (I);
+        return;
+      }
+      // Do the other half of the value:
+      BuildMI (BB, Opcodes[OpCase], 2, ResultReg+1).addReg (Op0Reg+1).addReg (Op1Reg+1);
+      break;
     default:
       visitInstruction (I);
-      return;
   }
 }
 
