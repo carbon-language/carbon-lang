@@ -30,19 +30,14 @@ TODO:
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 
-Currently failing tests:
+Currently failing tests that should pass:
 * SingleSource
   `- Regression
   |  `- casts (ulong to fp failure)
   `- Benchmarks
   |  `- Shootout-C++ : most programs fail, miscompilations
-  `- UnitTests
-  |  `- C++Catch
-  |  `- SimpleC++Test
-  |  `- ConditionalExpr (also C++)
 * MultiSource
   |- Applications
-  |  `- burg: miscompilation
   |  `- hbd: miscompilation
   |  `- d (make_dparser): miscompilation
   `- Benchmarks
