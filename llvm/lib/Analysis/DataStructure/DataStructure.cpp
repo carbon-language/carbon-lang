@@ -1988,8 +1988,10 @@ void DSGraph::AssertGraphOK() const {
 }
 
 /// computeNodeMapping - Given roots in two different DSGraphs, traverse the
-/// nodes reachable from the two graphs, computing the mapping of nodes from
-/// the first to the second graph.
+/// nodes reachable from the two graphs, computing the mapping of nodes from the
+/// first to the second graph.  This mapping may be many-to-one (i.e. the first
+/// graph may have multiple nodes representing one node in the second graph),
+/// but it will not work if there is a one-to-many or many-to-many mapping.
 ///
 void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
                                  const DSNodeHandle &NH2, NodeMapTy &NodeMap,
