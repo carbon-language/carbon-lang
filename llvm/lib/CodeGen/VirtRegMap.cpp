@@ -157,31 +157,34 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF,
       MachineInstr &MI = *MII;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);
-        if (MO.isRegister() && MO.getReg() &&
-            MRegisterInfo::isVirtualRegister(MO.getReg())) {
-          unsigned VirtReg = MO.getReg();
-          unsigned PhysReg = VRM.getPhys(VirtReg);
-          if (VRM.hasStackSlot(VirtReg)) {
-            int StackSlot = VRM.getStackSlot(VirtReg);
-
-            if (MO.isUse() &&
-                std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
-                           == LoadedRegs.end()) {
-              MRI.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
-              LoadedRegs.push_back(VirtReg);
-              ++NumLoads;
-              DEBUG(std::cerr << '\t' << *prior(MII));
+        if (MO.isRegister() && MO.getReg())
+          if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
+            unsigned VirtReg = MO.getReg();
+            unsigned PhysReg = VRM.getPhys(VirtReg);
+            if (VRM.hasStackSlot(VirtReg)) {
+              int StackSlot = VRM.getStackSlot(VirtReg);
+              
+              if (MO.isUse() &&
+                  std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
+                  == LoadedRegs.end()) {
+                MRI.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
+                LoadedRegs.push_back(VirtReg);
+                ++NumLoads;
+                DEBUG(std::cerr << '\t' << *prior(MII));
+              }
+              
+              if (MO.isDef()) {
+                MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
+                ++NumStores;
+              }
             }
-
-            if (MO.isDef()) {
-              MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
-              ++NumStores;
-            }
+            PhysRegsUsed[PhysReg] = true;
+            MI.SetMachineOperandReg(i, PhysReg);
+          } else {
+            PhysRegsUsed[MO.getReg()] = true;
           }
-          PhysRegsUsed[PhysReg] = true;
-          MI.SetMachineOperandReg(i, PhysReg);
-        }
       }
+
       DEBUG(std::cerr << '\t' << MI);
       LoadedRegs.clear();
     }
@@ -312,7 +315,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
       if (MO.isRegister() && MO.getReg() &&
-          MRegisterInfo::isVirtualRegister(MO.getReg())) {
+          MRegisterInfo::isPhysicalRegister(MO.getReg()))
+        PhysRegsUsed[MO.getReg()] = true;
+      else if (MO.isRegister() && MO.getReg() &&
+               MRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned VirtReg = MO.getReg();
 
         if (!VRM.hasStackSlot(VirtReg)) {
