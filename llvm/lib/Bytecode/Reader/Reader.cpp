@@ -647,12 +647,10 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   // Default values for the current bytecode version
   hasInconsistentModuleGlobalInfo = false;
   hasExplicitPrimitiveZeros = false;
+  hasRestrictedGEPTypes = false;
 
   switch (RevisionNum) {
   case 0:               //  LLVM 1.0, 1.1 release version
-    // Compared to rev #2, we added support for weak linkage, a more dense
-    // encoding, and better varargs support.
-
     // Base LLVM 1.0 bytecode format.
     hasInconsistentModuleGlobalInfo = true;
     hasExplicitPrimitiveZeros = true;
@@ -663,6 +661,13 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     // Also, it fixed the problem where the size of the ModuleGlobalInfo block
     // included the size for the alignment at the end, where the rest of the
     // blocks did not.
+
+    // LLVM 1.2 and before required that GEP indices be ubyte constants for
+    // structures and longs for sequential types.
+    hasRestrictedGEPTypes = true;
+
+    // FALL THROUGH
+  case 2:               // LLVM 1.3 release version
     break;
 
   default:

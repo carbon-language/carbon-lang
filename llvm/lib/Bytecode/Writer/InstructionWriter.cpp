@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 using namespace llvm;
@@ -38,20 +39,48 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
   output_vbr(NumArgs + (isa<CastInst>(I) || isa<VANextInst>(I) ||
                         isa<VAArgInst>(I)), Out);
 
-  for (unsigned i = 0; i < NumArgs; ++i) {
-    int Slot = Table.getSlot(I->getOperand(i));
-    assert(Slot >= 0 && "No slot number for value!?!?");      
-    output_vbr((unsigned)Slot, Out);
-  }
+  if (!isa<GetElementPtrInst>(&I)) {
+    for (unsigned i = 0; i < NumArgs; ++i) {
+      int Slot = Table.getSlot(I->getOperand(i));
+      assert(Slot >= 0 && "No slot number for value!?!?");      
+      output_vbr((unsigned)Slot, Out);
+    }
 
-  if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
-    int Slot = Table.getSlot(I->getType());
-    assert(Slot != -1 && "Cast return type unknown?");
-    output_vbr((unsigned)Slot, Out);
-  } else if (const VANextInst *VAI = dyn_cast<VANextInst>(I)) {
-    int Slot = Table.getSlot(VAI->getArgType());
-    assert(Slot != -1 && "VarArg argument type unknown?");
-    output_vbr((unsigned)Slot, Out);
+    if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
+      int Slot = Table.getSlot(I->getType());
+      assert(Slot != -1 && "Cast return type unknown?");
+      output_vbr((unsigned)Slot, Out);
+    } else if (const VANextInst *VAI = dyn_cast<VANextInst>(I)) {
+      int Slot = Table.getSlot(VAI->getArgType());
+      assert(Slot != -1 && "VarArg argument type unknown?");
+      output_vbr((unsigned)Slot, Out);
+    }
+
+  } else {
+    int Slot = Table.getSlot(I->getOperand(0));
+    assert(Slot >= 0 && "No slot number for value!?!?");      
+    output_vbr(unsigned(Slot), Out);
+
+    // We need to encode the type of sequential type indices into their slot #
+    unsigned Idx = 1;
+    for (gep_type_iterator TI = gep_type_begin(I), E = gep_type_end(I);
+         Idx != NumArgs; ++TI, ++Idx) {
+      Slot = Table.getSlot(I->getOperand(Idx));
+      assert(Slot >= 0 && "No slot number for value!?!?");      
+    
+      if (isa<SequentialType>(*TI)) {
+        unsigned IdxId;
+        switch (I->getOperand(Idx)->getType()->getPrimitiveID()) {
+        default: assert(0 && "Unknown index type!");
+        case Type::UIntTyID:  IdxId = 0; break;
+        case Type::IntTyID:   IdxId = 1; break;
+        case Type::ULongTyID: IdxId = 2; break;
+        case Type::LongTyID:  IdxId = 3; break;
+        }
+        Slot = (Slot << 2) | IdxId;
+      }
+      output_vbr(unsigned(Slot), Out);
+    }
   }
 
   align32(Out);    // We must maintain correct alignment!
@@ -119,8 +148,9 @@ static void outputInstrVarArgsCall(const Instruction *I, unsigned Opcode,
 // operand index is >= 2^12.
 //
 static void outputInstructionFormat1(const Instruction *I, unsigned Opcode,
-				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, std::deque<uchar> &Out) {
+				     const SlotCalculator &Table,
+                                     unsigned *Slots, unsigned Type, 
+                                     std::deque<uchar> &Out) {
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 1.
@@ -138,8 +168,9 @@ static void outputInstructionFormat1(const Instruction *I, unsigned Opcode,
 // operand index is >= 2^8.
 //
 static void outputInstructionFormat2(const Instruction *I, unsigned Opcode,
-				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, std::deque<uchar> &Out) {
+				     const SlotCalculator &Table,
+                                     unsigned *Slots, unsigned Type, 
+                                     std::deque<uchar> &Out) {
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 2.
@@ -160,8 +191,9 @@ static void outputInstructionFormat2(const Instruction *I, unsigned Opcode,
 // operand index is >= 2^6.
 //
 static void outputInstructionFormat3(const Instruction *I, unsigned Opcode,
-				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, std::deque<uchar> &Out) {
+				     const SlotCalculator &Table,
+                                     unsigned *Slots, unsigned Type,
+                                     std::deque<uchar> &Out) {
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 3.
@@ -181,23 +213,13 @@ static void outputInstructionFormat3(const Instruction *I, unsigned Opcode,
 void BytecodeWriter::outputInstruction(const Instruction &I) {
   assert(I.getOpcode() < 62 && "Opcode too big???");
   unsigned Opcode = I.getOpcode();
+  unsigned NumOperands = I.getNumOperands();
 
   // Encode 'volatile load' as 62 and 'volatile store' as 63.
   if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile())
     Opcode = 62;
   if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile())
     Opcode = 63;
-
-  unsigned NumOperands = I.getNumOperands();
-  int MaxOpSlot = 0;
-  int Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
-
-  for (unsigned i = 0; i != NumOperands; ++i) {
-    int slot = Table.getSlot(I.getOperand(i));
-    assert(slot != -1 && "Broken bytecode!");
-    if (slot > MaxOpSlot) MaxOpSlot = slot;
-    if (i < 3) Slots[i] = slot;
-  }
 
   // Figure out which type to encode with the instruction.  Typically we want
   // the type of the first parameter, as opposed to the type of the instruction
@@ -226,71 +248,101 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
   assert(Slot != -1 && "Type not available!!?!");
   Type = (unsigned)Slot;
 
-  // Make sure that we take the type number into consideration.  We don't want
-  // to overflow the field size for the instruction format we select.
-  //
-  if (Slot > MaxOpSlot) MaxOpSlot = Slot;
-
-  // Handle the special case for cast...
-  if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
-    // Cast has to encode the destination type as the second argument in the
-    // packet, or else we won't know what type to cast to!
-    Slots[1] = Table.getSlot(I.getType());
-    assert(Slots[1] != -1 && "Cast return type unknown?");
-    if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
-    NumOperands++;
-  } else if (const VANextInst *VANI = dyn_cast<VANextInst>(&I)) {
-    Slots[1] = Table.getSlot(VANI->getArgType());
-    assert(Slots[1] != -1 && "va_next return type unknown?");
-    if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
-    NumOperands++;
-  } else if (const CallInst *CI = dyn_cast<CallInst>(&I)){// Handle VarArg calls
-    const PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
+  // Varargs calls and invokes are encoded entirely different from any other
+  // instructions.
+  if (const CallInst *CI = dyn_cast<CallInst>(&I)){
+    const PointerType *Ty =cast<PointerType>(CI->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
       outputInstrVarArgsCall(CI, Opcode, Table, Type, Out);
       return;
     }
-  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {// ...  & Invokes
-    const PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
+  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
+    const PointerType *Ty =cast<PointerType>(II->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
       outputInstrVarArgsCall(II, Opcode, Table, Type, Out);
       return;
     }
   }
 
-  // Decide which instruction encoding to use.  This is determined primarily by
-  // the number of operands, and secondarily by whether or not the max operand
-  // will fit into the instruction encoding.  More operands == fewer bits per
-  // operand.
-  //
-  switch (NumOperands) {
-  case 0:
-  case 1:
-    if (MaxOpSlot < (1 << 12)-1) { // -1 because we use 4095 to indicate 0 ops
-      outputInstructionFormat1(&I, Opcode, Table, Slots, Type, Out);
-      return;
+  if (NumOperands <= 3) {
+    // Make sure that we take the type number into consideration.  We don't want
+    // to overflow the field size for the instruction format we select.
+    //
+    unsigned MaxOpSlot = Type;
+    unsigned Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
+    
+    for (unsigned i = 0; i != NumOperands; ++i) {
+      int slot = Table.getSlot(I.getOperand(i));
+      assert(slot != -1 && "Broken bytecode!");
+      if (unsigned(slot) > MaxOpSlot) MaxOpSlot = unsigned(slot);
+      Slots[i] = unsigned(slot);
     }
-    break;
 
-  case 2:
-    if (MaxOpSlot < (1 << 8)) {
-      outputInstructionFormat2(&I, Opcode, Table, Slots, Type, Out);
-      return;
+    // Handle the special cases for various instructions...
+    if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
+      // Cast has to encode the destination type as the second argument in the
+      // packet, or else we won't know what type to cast to!
+      Slots[1] = Table.getSlot(I.getType());
+      assert(Slots[1] != ~0U && "Cast return type unknown?");
+      if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
+      NumOperands++;
+    } else if (const VANextInst *VANI = dyn_cast<VANextInst>(&I)) {
+      Slots[1] = Table.getSlot(VANI->getArgType());
+      assert(Slots[1] != ~0U && "va_next return type unknown?");
+      if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
+      NumOperands++;
+    } else if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {
+      // We need to encode the type of sequential type indices into their slot #
+      unsigned Idx = 1;
+      for (gep_type_iterator I = gep_type_begin(GEP), E = gep_type_end(GEP);
+           I != E; ++I, ++Idx)
+        if (isa<SequentialType>(*I)) {
+          unsigned IdxId;
+          switch (GEP->getOperand(Idx)->getType()->getPrimitiveID()) {
+          default: assert(0 && "Unknown index type!");
+          case Type::UIntTyID:  IdxId = 0; break;
+          case Type::IntTyID:   IdxId = 1; break;
+          case Type::ULongTyID: IdxId = 2; break;
+          case Type::LongTyID:  IdxId = 3; break;
+          }
+          Slots[Idx] = (Slots[Idx] << 2) | IdxId;
+          if (Slots[Idx] > MaxOpSlot) MaxOpSlot = Slots[Idx];
+        }
     }
-    break;
 
-  case 3:
-    if (MaxOpSlot < (1 << 6)) {
-      outputInstructionFormat3(&I, Opcode, Table, Slots, Type, Out);
-      return;
+    // Decide which instruction encoding to use.  This is determined primarily
+    // by the number of operands, and secondarily by whether or not the max
+    // operand will fit into the instruction encoding.  More operands == fewer
+    // bits per operand.
+    //
+    switch (NumOperands) {
+    case 0:
+    case 1:
+      if (MaxOpSlot < (1 << 12)-1) { // -1 because we use 4095 to indicate 0 ops
+        outputInstructionFormat1(&I, Opcode, Table, Slots, Type, Out);
+        return;
+      }
+      break;
+
+    case 2:
+      if (MaxOpSlot < (1 << 8)) {
+        outputInstructionFormat2(&I, Opcode, Table, Slots, Type, Out);
+        return;
+      }
+      break;
+
+    case 3:
+      if (MaxOpSlot < (1 << 6)) {
+        outputInstructionFormat3(&I, Opcode, Table, Slots, Type, Out);
+        return;
+      }
+      break;
+    default:
+      break;
     }
-    break;
-  default:
-    break;
   }
 
   // If we weren't handled before here, we either have a large number of
   // operands or a large operand index that we are referring to.
   outputInstructionFormat0(&I, Opcode, Table, Type, Out);
 }
-

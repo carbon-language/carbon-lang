@@ -54,9 +54,9 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   bool hasNoEndianness  = M->getEndianness() == Module::AnyEndianness;
   bool hasNoPointerSize = M->getPointerSize() == Module::AnyPointerSize;
 
-  // Output the version identifier... we are currently on bytecode version #1,
-  // which corresponds to LLVM v1.2.
-  unsigned Version = (1 << 4) | isBigEndian | (hasLongPointers << 1) |
+  // Output the version identifier... we are currently on bytecode version #2,
+  // which corresponds to LLVM v1.3.
+  unsigned Version = (2 << 4) | isBigEndian | (hasLongPointers << 1) |
                      (hasNoEndianness << 2) | (hasNoPointerSize << 3);
   output_vbr(Version, Out);
   align32(Out);

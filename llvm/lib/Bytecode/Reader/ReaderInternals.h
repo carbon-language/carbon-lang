@@ -108,6 +108,13 @@ private:
   // int/sbyte/etc.
   bool hasExplicitPrimitiveZeros;
 
+  // Flags to control features specific the LLVM 1.2 and before (revision #1)
+
+  // LLVM 1.2 and earlier required that getelementptr structure indices were
+  // ubyte constants and that sequential type indices were longs.
+  bool hasRestrictedGEPTypes;
+
+
   typedef std::vector<ValueList*> ValueTable;
   ValueTable Values;
   ValueTable ModuleValues;

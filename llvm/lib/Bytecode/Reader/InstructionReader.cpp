@@ -308,10 +308,35 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
       const CompositeType *TopTy = dyn_cast_or_null<CompositeType>(NextTy);
       if (!TopTy) throw std::string("Invalid getelementptr instruction!"); 
-      // FIXME: when PR82 is resolved.
-      unsigned IdxTy = isa<StructType>(TopTy) ? Type::UByteTyID :Type::LongTyID;
-        
-      Idx.push_back(getValue(IdxTy, Args[i]));
+
+      unsigned ValIdx = Args[i];
+      unsigned IdxTy;
+      if (!hasRestrictedGEPTypes) {
+        // Struct indices are always uints, sequential type indices can be any
+        // of the 32 or 64-bit integer types.  The actual choice of type is
+        // encoded in the low two bits of the slot number.
+        if (isa<StructType>(TopTy))
+          IdxTy = Type::UIntTyID;
+        else {
+          switch (ValIdx & 3) {
+          case 0: IdxTy = Type::UIntTyID; break;
+          case 1: IdxTy = Type::IntTyID; break;
+          case 2: IdxTy = Type::ULongTyID; break;
+          case 3: IdxTy = Type::LongTyID; break;
+          }
+          ValIdx >>= 2;
+        }
+      } else {
+        IdxTy = isa<StructType>(TopTy) ? Type::UByteTyID : Type::LongTyID;
+      }
+
+      Idx.push_back(getValue(IdxTy, ValIdx));
+
+      // Convert ubyte struct indices into uint struct indices.
+      if (isa<StructType>(TopTy) && hasRestrictedGEPTypes)
+        if (ConstantUInt *C = dyn_cast<ConstantUInt>(Idx.back()))
+          Idx[Idx.size()-1] = ConstantExpr::getCast(C, Type::UIntTy);
+
       NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
     }
 

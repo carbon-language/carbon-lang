@@ -15,6 +15,7 @@
 #include "ReaderInternals.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -164,6 +165,20 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
       return ConstantExpr::getCast(ArgVec[0], getType(TypeID));
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
+
+      if (hasRestrictedGEPTypes) {
+        const Type *BaseTy = ArgVec[0]->getType();
+        generic_gep_type_iterator<std::vector<Constant*>::iterator>
+          GTI = gep_type_begin(BaseTy, IdxList.begin(), IdxList.end()),
+          E = gep_type_end(BaseTy, IdxList.begin(), IdxList.end());
+        for (unsigned i = 0; GTI != E; ++GTI, ++i)
+          if (isa<StructType>(*GTI)) {
+            if (IdxList[i]->getType() != Type::UByteTy)
+              throw std::string("Invalid index for getelementptr!");
+            IdxList[i] = ConstantExpr::getCast(IdxList[i], Type::UIntTy);
+          }
+      }
+
       return ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
     } else if (Opcode == Instruction::Select) {
       assert(ArgVec.size() == 3);
