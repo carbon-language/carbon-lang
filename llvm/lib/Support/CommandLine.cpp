@@ -69,7 +69,12 @@ static void AddArgument(const char *ArgName, Option *Opt) {
 // 
 static void RemoveArgument(const char *ArgName, Option *Opt) {
   if (CommandLineOptions == 0) return;
-  assert(getOption(ArgName) == Opt && "Arg not in map!");
+#ifndef NDEBUG
+  // This disgusting HACK is brought to you courtesy of GCC 3.3.2, which ICE's
+  // If we pass ArgName directly into getOption here.
+  std::string Tmp = ArgName;
+  assert(getOption(Tmp) == Opt && "Arg not in map!");
+#endif
   CommandLineOptions->erase(ArgName);
   if (CommandLineOptions->empty()) {
     delete CommandLineOptions;
