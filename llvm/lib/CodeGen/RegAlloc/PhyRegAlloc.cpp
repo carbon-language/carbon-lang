@@ -10,6 +10,7 @@
 //	9/10/01	 -  Ruchira Sasanka - created.
 //**************************************************************************/
 
+#include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
@@ -23,13 +24,27 @@ using std::cerr;
 // ***TODO: There are several places we add instructions. Validate the order
 //          of adding these instructions.
 
-
-
 cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::NoFlags,
   "enable register allocation debugging information",
   clEnumValN(RA_DEBUG_None   , "n", "disable debug output"),
   clEnumValN(RA_DEBUG_Normal , "y", "enable debug output"),
   clEnumValN(RA_DEBUG_Verbose, "v", "enable extra debug output"), 0);
+
+
+bool RegisterAllocation::runOnMethod(Method *M) {
+  if (DEBUG_RA)
+    cerr << "\n******************** Method "<< M->getName()
+         << " ********************\n";
+    
+  MethodLiveVarInfo LVI(M );   // Analyze live varaibles
+  LVI.analyze();
+    
+  PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
+  PRA.allocateRegisters();
+
+  if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
+  return false;
+}
 
 
 //----------------------------------------------------------------------------

@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-#include "llvm/CodeGen/PhyRegAlloc.h"
+#include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/Method.h"
 #include "llvm/PassManager.h"
 #include <iostream>
@@ -40,32 +40,6 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
 TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 
 
-//----------------------------------------------------------------------------
-// Entry point for register allocation for a module
-//----------------------------------------------------------------------------
-
-class RegisterAllocation : public MethodPass {
-  TargetMachine &Target;
-public:
-  inline RegisterAllocation(TargetMachine &T) : Target(T) {}
-  bool runOnMethod(Method *M) {
-    if (DEBUG_RA)
-      cerr << "\n******************** Method "<< M->getName()
-           << " ********************\n";
-    
-    MethodLiveVarInfo LVI(M );   // Analyze live varaibles
-    LVI.analyze();
-    
-    PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
-    PRA.allocateRegisters();
-
-    if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
-    return false;
-  }
-};
-
-static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
-
 //---------------------------------------------------------------------------
 // class InsertPrologEpilogCode
 //
@@ -77,6 +51,7 @@ static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
 // with the leaf method optimization.
 //
 //---------------------------------------------------------------------------
+static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
 
 class InsertPrologEpilogCode : public MethodPass {
   TargetMachine &Target;
