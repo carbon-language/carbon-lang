@@ -66,7 +66,8 @@ def ZeroArgFP  : FPFormat<1>;
 def OneArgFP   : FPFormat<2>;
 def OneArgFPRW : FPFormat<3>;
 def TwoArgFP   : FPFormat<4>;
-def SpecialFP  : FPFormat<5>;
+def CondMovFP  : FPFormat<5>;
+def SpecialFP  : FPFormat<6>;
 
 
 class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instruction {
@@ -83,7 +84,8 @@ class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instr
 
   // Attributes specific to X86 instructions...
   bit hasOpSizePrefix = 0; // Does this inst have a 0x66 prefix?
-  bit printImplicitUses = 0; // Should we print implicit uses of this inst?
+  bit printImplicitUsesBefore = 0; // Should we print implicit uses before this inst?
+  bit printImplicitUsesAfter = 0; // Should we print implicit uses after this inst?
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
   FPFormat FPForm;          // What flavor of FP instruction is this?
@@ -138,7 +140,7 @@ class Im16i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem16, Imm8>;
 class Im32i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem32, Imm8>;
 
 // Helper for shift instructions
-class UsesCL { list<Register> Uses = [CL]; bit printImplicitUses = 1; }
+class UsesCL { list<Register> Uses = [CL]; bit printImplicitUsesAfter = 1; }
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
@@ -694,6 +696,17 @@ def FpUCOM : FPI<"FUCOM", 0, Pseudo, TwoArgFP>;  // FPSW = fucom f1, f2
 def FpGETRESULT : FPI<"FGETRESULT",0, Pseudo, SpecialFP>;  // FPR = ST(0)
 def FpSETRESULT : FPI<"FSETRESULT",0, Pseudo, SpecialFP>;  // ST(0) = FPR
 
+
+// Floating point cmovs...
+let isTwoAddress = 1, Uses = [ST0], Defs = [ST0], printImplicitUsesBefore = 1 in {
+  def FCMOVB  : FPI   <"fcmovb" , 0xC0, AddRegFrm, CondMovFP>, DA;     // fcmovb  ST(i) -> ST(0)
+  def FCMOVBE : FPI   <"fcmovbe", 0xD0, AddRegFrm, CondMovFP>, DA;     // fcmovbe ST(i) -> ST(0)
+  def FCMOVE  : FPI   <"fcmove" , 0xC8, AddRegFrm, CondMovFP>, DA;     // fcmove  ST(i) -> ST(0)
+  def FCMOVAE : FPI   <"fcmovae", 0xC0, AddRegFrm, CondMovFP>, DB;     // fcmovae ST(i) -> ST(0)
+  def FCMOVA  : FPI   <"fcmova" , 0xD0, AddRegFrm, CondMovFP>, DB;     // fcmova  ST(i) -> ST(0)
+  def FCMOVNE : FPI   <"fcmovne", 0xC8, AddRegFrm, CondMovFP>, DB;     // fcmovne ST(i) -> ST(0)
+}
+
 // Floating point loads & stores...
 def FLDrr   : FPI    <"fld"   , 0xC0, AddRegFrm, NotFP>, D9;        // push(ST(i))
 def FLD32m  : FPI32m <"fld"   , 0xD9, MRM0m    , ZeroArgFP>;        // load float
@@ -735,7 +748,7 @@ class FPST0rInst<string n, bits<8> o> : I<n, o, AddRegFrm>, D8 {
   list<Register> Defs = [ST0];
 }
 class FPrST0Inst<string n, bits<8> o> : I<n, o, AddRegFrm>, DC {
-  bit printImplicitUses = 1;
+  bit printImplicitUsesAfter = 1;
   list<Register> Uses = [ST0];
 }
 class FPrST0PInst<string n, bits<8> o> : I<n, o, AddRegFrm>, DE {

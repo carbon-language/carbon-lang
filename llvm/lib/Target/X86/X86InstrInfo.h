@@ -155,13 +155,21 @@ namespace X86II {
     // argument.  For example: fadd, fsub, fmul, etc...
     TwoArgFP   = 4 << FPTypeShift,
 
+    // CondMovFP - "2 operand" floating point conditional move instructions.
+    CondMovFP  = 5 << FPTypeShift,
+
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
-    SpecialFP  = 5 << FPTypeShift,
+    SpecialFP  = 6 << FPTypeShift,
 
-    // PrintImplUses - Print out implicit uses in the assembly output.
-    PrintImplUses = 1 << 18,
+    // PrintImplUsesAfter - Print out implicit uses in the assembly output after
+    // the normal operands.
+    PrintImplUsesAfter = 1 << 18,
 
-    OpcodeShift   = 19,
+    // PrintImplUsesBefore - Print out implicit uses in the assembly output before
+    // the normal operands.
+    PrintImplUsesBefore = 1 << 19,
+
+    OpcodeShift   = 20,
     OpcodeMask    = 0xFF << OpcodeShift,
     // Bits 25 -> 31 are unused
   };
