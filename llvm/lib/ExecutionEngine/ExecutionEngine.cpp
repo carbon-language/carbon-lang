@@ -170,6 +170,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 /// 
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
+  if (isa<UndefValue>(C)) return Result;
 
   if (ConstantExpr *CE = const_cast<ConstantExpr*>(dyn_cast<ConstantExpr>(C))) {
     switch (CE->getOpcode()) {
