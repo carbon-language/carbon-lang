@@ -625,6 +625,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
         Ops[0] = SCEVConstant::get(CI);
         Ops.erase(Ops.begin()+1);  // Erase the folded element
         if (Ops.size() == 1) return Ops[0];
+        LHSC = cast<SCEVConstant>(Ops[0]);
       } else {
         // If we couldn't fold the expression, move to the next constant.  Note
         // that this is impossible to happen in practice because we always
@@ -861,6 +862,7 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
         Ops[0] = SCEVConstant::get(CI);
         Ops.erase(Ops.begin()+1);  // Erase the folded element
         if (Ops.size() == 1) return Ops[0];
+        LHSC = cast<SCEVConstant>(Ops[0]);
       } else {
         // If we couldn't fold the expression, move to the next constant.  Note
         // that this is impossible to happen in practice because we always
