@@ -370,8 +370,9 @@ void SCCP::UpdateInstruction(Instruction *I) {
   case Instruction::Alloca:
   case Instruction::Load:
   case Instruction::Store:
-    // TODO: getfield/putfield?
+    // TODO: getfield
   case Instruction::Call:
+  case Instruction::Invoke:
     markOverdefined(I);          // Memory and call's are all overdefined
     return;
 
