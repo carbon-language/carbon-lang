@@ -1,3 +1,4 @@
 LEVEL  = ..
-DIRS   = Feature Regression Programs
+DIRS   = Feature Libraries Regression Programs
 include ../Makefile.common
+
