@@ -35,7 +35,14 @@ Arch("march", cl::desc("Architecture to generate assembly for:"), cl::Prefix,
      cl::values(clEnumVal(x86, "  IA-32 (Pentium and above)"),
                 clEnumValN(Sparc, "sparc", "  SPARC V9"),
 		0),
-     cl::init(noarch));
+#if defined(i386) || defined(__i386__) || defined(__x86__)
+     cl::init(x86)
+#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+     cl::init(Sparc)
+#else
+     cl::init(noarch)
+#endif
+     );
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
 static inline std::string
