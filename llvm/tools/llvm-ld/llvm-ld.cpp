@@ -26,6 +26,8 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/Linker.h"
@@ -81,6 +83,9 @@ namespace {
   cl::alias
   Relink("r", cl::desc("Alias for -link-as-library"),
          cl::aliasopt(LinkAsLibrary));
+
+  cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
+  MachineArch("march", cl::desc("Architecture to generate assembly for:"));
 
   cl::opt<bool>    
   Native("native",
@@ -184,7 +189,7 @@ int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
   sys::PrintStackTraceOnErrorSignal();
 
-  std::string ModuleID("gccld-output");
+  std::string ModuleID("llvm-ld-output");
   std::auto_ptr<Module> Composite(new Module(ModuleID));
 
   // We always look first in the current directory when searching for libraries.
@@ -203,11 +208,10 @@ int main(int argc, char **argv, char **envp) {
   if (LinkFiles(argv[0], Composite.get(), InputFilenames, Verbose))
     return 1; // Error already printed
 
+  // Link in all of the libraries next...
   if (!LinkAsLibrary)
     LinkLibraries(argv[0], Composite.get(), Libraries, LibPaths,
                   Verbose, Native);
-
-  // Link in all of the libraries next...
 
   // Create the output file.
   std::string RealBytecodeOutput = OutputFilename;
@@ -218,7 +222,7 @@ int main(int argc, char **argv, char **envp) {
                                    "' for writing!");
 
   // Ensure that the bytecode file gets removed from the disk if we get a
-  // SIGINT signal.
+  // terminating signal.
   sys::RemoveFileOnSignal(RealBytecodeOutput);
 
   // Generate the bytecode file.
