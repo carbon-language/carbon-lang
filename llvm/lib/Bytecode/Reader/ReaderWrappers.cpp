@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Config/unistd.h"
 #include "llvm/System/MappedFile.h"
 #include <cerrno>
 using namespace llvm;
