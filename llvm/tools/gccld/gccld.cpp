@@ -69,7 +69,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 
   if (FoundAFile)
     cerr << "Bytecode file '" << FN << "' corrupt!  "
-         << "Use 'link -v ...' for more info.\n";
+         << "Use 'gccld -v ...' for more info.\n";
   else
     cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
