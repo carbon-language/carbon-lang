@@ -504,7 +504,7 @@ void AssemblyWriter::printModule(const Module *M) {
   for_each(M->gbegin(), M->gend(), 
 	   bind_obj(this, &AssemblyWriter::printGlobal));
 
-  Out << "\n; Functions:\n";
+  Out << "\nimplementation   ; Functions:\n";
   
   // Output all of the functions...
   for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::printFunction));
@@ -598,20 +598,18 @@ void AssemblyWriter::printFunction(const Function *M) {
     if (MT->getParamTypes().size()) Out << ", ";
     Out << "...";  // Output varargs portion of signature!
   }
-  Out << ")\n";
+  Out << ")";
 
-  if (!M->isExternal()) {
-    // Loop over the symbol table, emitting all named constants...
-    if (M->hasSymbolTable())
-      printSymbolTable(*M->getSymbolTable());
-
-    Out << "begin";
+  if (M->isExternal()) {
+    Out << "\n";
+  } else {
+    Out << " {";
   
     // Output all of its basic blocks... for the function
     for_each(M->begin(), M->end(),
 	     bind_obj(this, &AssemblyWriter::printBasicBlock));
 
-    Out << "end\n";
+    Out << "}\n";
   }
 
   Table.purgeFunction();
