@@ -167,19 +167,20 @@ MVT::ValueType Pattern::getIntrinsicType(Record *R) const {
     return MVT::Other;
   }
 
-  throw "Error: Unknown value used: " + R->getName();
+  error("Unknown value used: " + R->getName());
+  return MVT::Other;
 }
 
-TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
-  Record *Operator = DI->getNodeType();
+TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
+  Record *Operator = Dag->getNodeType();
 
   if (Operator->isSubClassOf("ValueType")) {
     // If the operator is a ValueType, then this must be "type cast" of a leaf
     // node.
-    if (DI->getNumArgs() != 1)
+    if (Dag->getNumArgs() != 1)
       error("Type cast only valid for a leaf node!");
     
-    Init *Arg = DI->getArg(0);
+    Init *Arg = Dag->getArg(0);
     TreePatternNode *New;
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
       New = new TreePatternNode(DI);
@@ -200,14 +201,22 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
 
   std::vector<TreePatternNode*> Children;
   
-  for (unsigned i = 0, e = DI->getNumArgs(); i != e; ++i) {
-    Init *Arg = DI->getArg(i);
+  for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i) {
+    Init *Arg = Dag->getArg(i);
     if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
       Children.push_back(ParseTreePattern(DI));
-    } else if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
-      Children.push_back(new TreePatternNode(DI));
-      // If it's a regclass or something else known, set the type.
-      Children.back()->setType(getIntrinsicType(DI->getDef()));
+    } else if (DefInit *DefI = dynamic_cast<DefInit*>(Arg)) {
+      Record *R = DefI->getDef();
+      // Direct reference to a leaf DagNode?  Turn it into a DagNode if its own.
+      if (R->isSubClassOf("DagNode")) {
+        Dag->setArg(i, new DagInit(R,
+                                std::vector<std::pair<Init*, std::string> >()));
+        --i;  // Revisit this node...
+      } else {
+        Children.push_back(new TreePatternNode(DefI));
+        // If it's a regclass or something else known, set the type.
+        Children.back()->setType(getIntrinsicType(R));
+      }
     } else {
       Arg->dump();
       error("Unknown leaf value for tree pattern!");
@@ -524,8 +533,15 @@ void InstrSelectorEmitter::CalculateComputableValues() {
   // Loop over all of the patterns, adding them to the ComputableValues map
   for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
          E = Patterns.end(); I != E; ++I)
-    if (I->second->isResolved())
-      ComputableValues.addPattern(I->second);
+    if (I->second->isResolved()) {
+      // We don't want to add patterns like R32 = R32.  This is a hack working
+      // around a special case of a general problem, but for now we explicitly
+      // forbid these patterns.  They can never match anyway.
+      Pattern *P = I->second;
+      if (!P->getResult() || !P->getTree()->isLeaf() ||
+          P->getResult() != P->getTree()->getValueRecord())
+        ComputableValues.addPattern(P);
+    }
 }
 
 #if 0

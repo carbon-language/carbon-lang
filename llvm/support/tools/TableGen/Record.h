@@ -619,6 +619,11 @@ public:
     return ArgNames[Num];
   }
 
+  void setArg(unsigned Num, Init *I) {
+    assert(Num < Args.size() && "Arg number out of range!");
+    Args[Num] = I;
+  }
+
   virtual void print(std::ostream &OS) const;
 };
 
