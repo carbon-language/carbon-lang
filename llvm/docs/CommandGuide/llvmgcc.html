@@ -6,37 +6,36 @@ LLVM: llvmgcc tool
 <body>
 
 <center>
-<h1>LLVM: llvmgcc tool</h1>
+<h1>LLVM: <tt>llvmgcc</tt> tool</h1>
 </center>
 <HR>
 
-<h3>
-NAME
-</h3>
-
-llvmgcc
+<h3>NAME</h3>
+<tt>llvmgcc</tt>
 
 <h3>
 SYNOPSIS
 </h3>
 
-llvmgcc [options] filename
+<tt>llvmgcc [options] filename</tt>
 <h3>
 DESCRIPTION
 </h3>
 
-The llvmgcc command is the LLVM C front end.  It is a modified version of GCC
-that takes C programs and compiles them into LLVM bytecode or assembly
-language, depending upon the options.
+The <tt>llvmgcc</tt> command is the LLVM C front end.  It is a modified version
+of the <a href="http://gcc.gnu.org">GNU Compiler Collection</a> (GCC) that takes
+C programs and compiles them into LLVM bytecode or assembly language, depending
+upon the options.
 <p>
 
-The llvmgcc program uses the LLVM assembler gccas and the LLVM linker gccld to
-do the work of creating complete programs.
+The <tt>llvmgcc</tt> program uses the <a href="gccas.html"><tt>gccas</tt></a>
+and <a href="gccld.html"><tt>gccld</tt></a> programs to do the work of creating
+complete programs.
 <p>
 
-Being derived from the GNU Compiler Collection, llvmgcc has many of gcc's
-features and accepts most of gcc's options.  It handles a number of gcc's
-extensions to the C programming language.
+Being derived from GCC, llvmgcc has many of GCC's features and accepts most of
+GCC's options.  It handles a number of GCC's extensions to the C programming
+language.
 <p>
 
 Below you will find several commonly used options:
@@ -61,8 +60,7 @@ OPTIONS
 
 	<li> -o <i>filename</i>
 	<br>
-	Specify the output file to be <i>filename</i>.  If <i>filename</i> is -,
-	then llvmgcc sends its output to standard output.
+	Specify the output file to be <i>filename</i>.
 	<p>
 
 	<li> -I <i>directory</i>
@@ -79,13 +77,14 @@ OPTIONS
 
 	<li> -l<i>name</i>
 	<br>
-	Link in the library lib<i>name</i>.[bc | a | so].  This library should be
-	a bytecode library.
+	Link in the library lib<i>name</i>.[bc | a | so].  This library should
+	be a bytecode library.
 	<p>
 
 	<li>-Wl,<i>option</i>
 	<br>
-	Pass <i>option</i> to the linker (usually gccld).
+	Pass <i>option</i> to the linker program, <a
+	href="gccld.html"><tt>gccld</tt></a>.
 	<p>
 </ul>
 
@@ -93,15 +92,15 @@ OPTIONS
 EXIT STATUS
 </h3>
 
-If llvmgcc succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>llvmgcc</tt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
 
 <h3>
 SEE ALSO
 </h3>
-<A HREF="llvmgxx.html">llvmg++</A>,
-<A HREF="gccas.html">gccas</A>,
-<A HREF="gccld.html">gccld</A>
+<A HREF="llvmgxx.html"><tt>llvmg++</tt></A>,
+<A HREF="gccas.html"><tt>gccas</tt></A>,
+<A HREF="gccld.html"><tt>gccld</tt></A>
 
 <HR>
 <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
