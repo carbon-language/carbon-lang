@@ -100,6 +100,10 @@ public:
         CallGraphNode *getRoot()       { return Root; }
   const CallGraphNode *getRoot() const { return Root; }
 
+  /// getModule - Return the module the call graph corresponds to.
+  ///
+  Module &getModule() const { return *Mod; }
+
   inline       iterator begin()       { return FunctionMap.begin(); }
   inline       iterator end()         { return FunctionMap.end();   }
   inline const_iterator begin() const { return FunctionMap.begin(); }
