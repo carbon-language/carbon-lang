@@ -94,8 +94,7 @@ namespace {  // Anonymous namespace for class
     bool doFinalization(Module &M) {
       // Scan through, checking all of the external function's linkage now...
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (I->isExternal() && I->hasInternalLinkage())
-          CheckFailed("Function Declaration has Internal Linkage!", I);
+        visitGlobalValue(*I);
 
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
         if (I->isExternal() && I->hasInternalLinkage())
@@ -122,8 +121,10 @@ namespace {  // Anonymous namespace for class
       }
     }
 
+
     // Verification methods...
     void verifySymbolTable(SymbolTable &ST);
+    void visitGlobalValue(GlobalValue &GV);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
     void visitPHINode(PHINode &PN);
@@ -170,6 +171,19 @@ namespace {  // Anonymous namespace for class
 #define Assert4(C, M, V1, V2, V3, V4) \
   do { if (!(C)) { CheckFailed(M, V1, V2, V3, V4); return; } } while (0)
 
+
+void Verifier::visitGlobalValue(GlobalValue &GV) {
+  Assert1(!GV.isExternal() || GV.hasExternalLinkage(),
+          "Global value has Internal Linkage!", &GV);
+  Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
+          "Only global variables can have appending linkage!", &GV);
+
+  if (GV.hasAppendingLinkage()) {
+    GlobalVariable &GVar = cast<GlobalVariable>(GV);
+    Assert1(isa<ArrayType>(GVar.getType()->getElementType()),
+            "Only global arrays can have appending linkage!", &GV);
+  }
+}
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
 //
