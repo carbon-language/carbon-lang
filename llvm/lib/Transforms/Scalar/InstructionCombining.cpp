@@ -3386,12 +3386,12 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       // We know that the instruction dominates the PHI if there are no undef
       // values coming in.
-      for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-        if (isa<UndefValue>(PN.getIncomingValue(i))) {
-          std::cerr << "HAD TO DISABLE PHI ELIM IN IC!\n";
-          V = 0;
-          break;
-        }
+      if (I->getParent() != &I->getParent()->getParent()->front())
+        for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+          if (isa<UndefValue>(PN.getIncomingValue(i))) {
+            V = 0;
+            break;
+          }
     }
 
     if (V)
