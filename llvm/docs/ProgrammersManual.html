@@ -900,7 +900,7 @@ instruction.  The following example illustrates the replacement of one
 AllocaInst* instToReplace = ...;
 BasicBlock::iterator ii(instToReplace);
 ReplaceInstWithInst(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
-                    new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt");
+                    new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt"));
 </pre>
 
 </ul>
