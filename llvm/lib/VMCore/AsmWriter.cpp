@@ -481,7 +481,7 @@ void AssemblyWriter::printInfoComment(const Value *V) {
       if (Slot >= 0) Out << ":" << Slot;
       else Out << ":<badref>";
     }
-    Out << "\t[#uses=" << V->use_size() << "]";  // Output # uses
+    Out << " [#uses=" << V->use_size() << "]";  // Output # uses
   }
 }
 
