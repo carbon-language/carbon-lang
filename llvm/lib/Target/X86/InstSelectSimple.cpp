@@ -1339,11 +1339,19 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         }
         break;
       case cLong:
-        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
-        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
-                     X86::ESP, ArgOffset).addReg(ArgReg);
-        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
-                     X86::ESP, ArgOffset+4).addReg(ArgReg+1);
+        if (Args[i].Val && isa<ConstantInt>(Args[i].Val)) {
+          uint64_t Val = cast<ConstantInt>(Args[i].Val)->getRawValue();
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                       X86::ESP, ArgOffset).addImm(Val & ~0U);
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
+                       X86::ESP, ArgOffset+4).addImm(Val >> 32ULL);
+        } else {
+          ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
+          addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
+                       X86::ESP, ArgOffset).addReg(ArgReg);
+          addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
+                       X86::ESP, ArgOffset+4).addReg(ArgReg+1);
+        }
         ArgOffset += 4;        // 8 byte entry, not 4.
         break;
         
