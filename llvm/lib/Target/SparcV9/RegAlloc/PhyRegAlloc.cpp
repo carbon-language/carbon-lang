@@ -51,12 +51,6 @@ namespace llvm {
 
 RegAllocDebugLevel_t DEBUG_RA;
 
-/// The reoptimizer wants to be able to grovel through the register
-/// allocator's state after it has done its job. This is a hack.
-///
-PhyRegAlloc::SavedStateMapTy ExportedFnAllocState;
-const bool SaveStateToModule = true;
-
 static cl::opt<RegAllocDebugLevel_t, true>
 DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
         cl::desc("enable register allocation debugging information"),
@@ -69,8 +63,16 @@ DRA_opt("dregalloc", cl::Hidden, cl::location(DEBUG_RA),
   clEnumValN(RA_DEBUG_Verbose,     "v", "extra debug output"),
                    0));
 
-static cl::opt<bool>
-SaveRegAllocState("save-ra-state", cl::Hidden,
+/// The reoptimizer wants to be able to grovel through the register
+/// allocator's state after it has done its job. This is a hack.
+///
+PhyRegAlloc::SavedStateMapTy ExportedFnAllocState;
+bool SaveRegAllocState = false;
+bool SaveStateToModule = true;
+static cl::opt<bool, true>
+SaveRegAllocStateOpt("save-ra-state", cl::Hidden,
+                  cl::location (SaveRegAllocState),
+                  cl::init(false),
                   cl::desc("write reg. allocator state into module"));
 
 FunctionPass *getRegisterAllocator(TargetMachine &T) {
