@@ -212,6 +212,7 @@ private:
   void visitTerminatorInst(TerminatorInst &TI);
 
   void visitCastInst(CastInst &I);
+  void visitSelectInst(SelectInst &I);
   void visitBinaryOperator(Instruction &I);
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
@@ -563,6 +564,28 @@ void SCCP::visitCastInst(CastInst &I) {
     markOverdefined(&I);
   else if (VState.isConstant())        // Propagate constant value
     markConstant(&I, ConstantExpr::getCast(VState.getConstant(), I.getType()));
+}
+
+void SCCP::visitSelectInst(SelectInst &I) {
+  InstVal &CondValue = getValueState(I.getCondition());
+  if (CondValue.isOverdefined())
+    markOverdefined(&I);
+  else if (CondValue.isConstant()) {
+    if (CondValue.getConstant() == ConstantBool::True) {
+      InstVal &Val = getValueState(I.getTrueValue());
+      if (Val.isOverdefined())
+        markOverdefined(&I);
+      else if (Val.isConstant())
+        markConstant(&I, Val.getConstant());
+    } else if (CondValue.getConstant() == ConstantBool::False) {
+      InstVal &Val = getValueState(I.getFalseValue());
+      if (Val.isOverdefined())
+        markOverdefined(&I);
+      else if (Val.isConstant())
+        markConstant(&I, Val.getConstant());
+    } else
+      markOverdefined(&I);
+  }
 }
 
 // Handle BinaryOperators and Shift Instructions...
