@@ -133,8 +133,23 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   if (DeleteOutput)
     removeFile(OutputFilename);
 
-  if (!Quiet) std::cout << (Status ? "Crashed!\n" : "Success!\n");
+  bool ExitedOK = WIFEXITED(Status) && WEXITSTATUS(Status) == 0;
+  
+  if (!Quiet) {
+    if (ExitedOK)
+      std::cout << "Success!\n";
+    else if (WIFEXITED(Status))
+      std::cout << "Exited with error code '" << WEXITSTATUS(Status) << "'\n";
+    else if (WIFSIGNALED(Status))
+      std::cout << "Crashed with signal #" << WTERMSIG(Status) << "\n";
+#ifdef WCOREDUMP
+    else if (WCOREDUMP(Status))
+      std::cout << "Dumped core\n";
+#endif
+    else
+      std::cout << "Failed for unknown reason!\n";
+  }
 
   // Was the child successful?
-  return Status != 0;
+  return !ExitedOK;
 }
