@@ -315,6 +315,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp3 != Node->getOperand(2))
       Result = DAG.getNode(ISD::DYNAMIC_STACKALLOC, Node->getValueType(0),
                            Tmp1, Tmp2, Tmp3);
+    else
+      Result = Op.getValue(0);
 
     // Since this op produces two values, make sure to remember that we
     // legalized both of them.
