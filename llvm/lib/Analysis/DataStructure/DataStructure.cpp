@@ -790,7 +790,7 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
                              I->second.getOffset()+MappedNode.getOffset()));
 
     // If this is a global, add the global to this fn or merge if already exists
-    if (isa<GlobalValue>(I->first) && &OldNodeMap != &ScalarMap)
+    if (isa<GlobalValue>(I->first))
       ScalarMap[I->first].mergeWith(H);
   }
 
