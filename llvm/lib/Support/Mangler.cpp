@@ -42,8 +42,9 @@ std::string Mangler::getValueName(const Value *V) {
     //   2) V's name would collide if it is not mangled.
     //
     const GlobalValue* gv = dyn_cast<GlobalValue>(V);
-    if(gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
+    if (gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
       name = makeNameProper(gv->getName());
+      if (AddUnderscorePrefix) name = "_" + name;
     } else {
       // Non-global, or global with internal linkage / colliding name
       // -> mangle.
@@ -54,12 +55,13 @@ std::string Mangler::getValueName(const Value *V) {
     name = "ltmp_" + utostr(Count++) + "_"
       + utostr(V->getType()->getUniqueID());
   }
+  
   Memo[V] = name;
   return name;
 }
 
-Mangler::Mangler(Module &M_) : M(M_)
-{
+Mangler::Mangler(Module &m, bool addUnderscorePrefix)
+  : M(m), AddUnderscorePrefix(addUnderscorePrefix) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::set<std::string> FoundNames;

@@ -14,13 +14,28 @@ class Module;
 #include <string>
 
 class Mangler {
+  /// This keeps track of which global values have had their names
+  /// mangled in the current module.
+  ///
+  std::set<const Value *> MangledGlobals;
+
+  Module &M;
+  bool AddUnderscorePrefix;
+
+  typedef std::map<const Value *, std::string> ValueMap;
+  ValueMap Memo;
+
+  unsigned Count;
 public:
+
+  // Mangler ctor - if AddUnderscorePrefix is true, then all public global
+  // symbols will be prefixed with an underscore.
+  Mangler(Module &M, bool AddUnderscorePrefix = false);
+
   /// getValueName - Returns the mangled name of V, an LLVM Value,
   /// in the current module.
   ///
   std::string getValueName(const Value *V);
-
-  Mangler(Module &M_);
 
   /// makeNameProper - We don't want identifier names with ., space, or
   /// - in them, so we mangle these characters into the strings "d_",
@@ -30,19 +45,6 @@ public:
   /// from getValueName.
   /// 
   static std::string makeNameProper(const std::string &x);
-
-private:
-  /// This keeps track of which global values have had their names
-  /// mangled in the current module.
-  ///
-  std::set<const Value *> MangledGlobals;
-
-  Module &M;
-
-  typedef std::map<const Value *, std::string> ValueMap;
-  ValueMap Memo;
-
-  unsigned int Count;
 };
 
 #endif // LLVM_SUPPORT_MANGLER_H
