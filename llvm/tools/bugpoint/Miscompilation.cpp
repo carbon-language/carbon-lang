@@ -354,11 +354,15 @@ namespace {
 bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
-  std::cout << "Checking to see if the program is misoptimized when all but "
-            << "these " << BBs.size() << " blocks are extracted: ";
-  for (unsigned i = 0, e = BBs.size() < 10 ? BBs.size() : 10; i != e; ++i)
-    std::cout << BBs[i]->getName() << " ";
-  if (BBs.size() > 10) std::cout << "...";
+  std::cout << "Checking to see if the program is misoptimized when all ";
+  if (!BBs.empty()) {
+    std::cout << "but these " << BBs.size() << " blocks are extracted: ";
+    for (unsigned i = 0, e = BBs.size() < 10 ? BBs.size() : 10; i != e; ++i)
+      std::cout << BBs[i]->getName() << " ";
+    if (BBs.size() > 10) std::cout << "...";
+  } else {
+    std::cout << "blocks are extracted.";
+  }
   std::cout << "\n";
 
   // Split the module into the two halves of the program we want.
@@ -399,9 +403,16 @@ static bool ExtractBlocks(BugDriver &BD,
   // obscuring the bug.  The Blocks list will end up containing blocks that must
   // be retained from the original program.
   unsigned OldSize = Blocks.size();
-  ReduceMiscompiledBlocks(BD, TestFn, MiscompiledFunctions).reduceList(Blocks);
-  if (Blocks.size() == OldSize)
-    return false;
+
+  // Check to see if all blocks are extractible first.
+  if (ReduceMiscompiledBlocks(BD, TestFn,
+                  MiscompiledFunctions).TestFuncs(std::vector<BasicBlock*>())) {
+    Blocks.clear();
+  } else {
+    ReduceMiscompiledBlocks(BD, TestFn,MiscompiledFunctions).reduceList(Blocks);
+    if (Blocks.size() == OldSize)
+      return false;
+  }
 
   Module *ProgClone = CloneModule(BD.getProgram());
   Module *ToExtract = SplitFunctionsOutOfModule(ProgClone,
