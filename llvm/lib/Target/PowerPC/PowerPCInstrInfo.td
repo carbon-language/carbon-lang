@@ -1,3 +1,4 @@
+
 //===- PowerPCInstrInfo.td - The PowerPC Instruction Set -----*- tablegen -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
@@ -85,7 +86,7 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
   def CALLpcrel : IForm<18, 0, 1, 0, 0, (ops target:$func), "bl $func">;
-  def CALLindirect : XLForm_2_ext<19, 528, 20, 31, 1, 0, 0, (ops), "bctrl">;
+  def CALLindirect : XLForm_2_ext<19, 528, 20, 0, 1, 0, 0, (ops), "bctrl">;
 }
 
 // D-Form instructions.  Most instructions that perform an operation on a
@@ -130,12 +131,8 @@ def STMW : DForm_3<47, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)">;
 def STB  : DForm_3<38, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stb $rS, $disp($rA)">;
-def STBU : DForm_3<39, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
-                   "stbu $rS, $disp($rA)">;
 def STH  : DForm_3<44, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "sth $rS, $disp($rA)">;
-def STHU : DForm_3<45, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
-                   "sthu $rS, $disp($rA)">;
 def STW  : DForm_3<36, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stw $rS, $disp($rA)">;
 def STWU : DForm_3<37, 0, 0, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
