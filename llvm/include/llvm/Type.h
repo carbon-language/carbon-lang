@@ -121,19 +121,28 @@ public:
   /// getDescription - Return the string representation of the type...
   inline const std::string &getDescription() const { return Desc; }
 
-  /// isSigned - Return whether a numeric type is signed.
+  /// isSigned - Return whether an integral numeric type is signed.  This is
+  /// true for SByteTy, ShortTy, IntTy, LongTy.  Note that this is not true for
+  /// Float and Double.
+  //
   virtual bool isSigned() const { return 0; }
   
-  /// isUnsigned - Return whether a numeric type is unsigned.  This is not 
-  /// quite the complement of isSigned... nonnumeric types return false as they
-  /// do with isSigned.
+  /// isUnsigned - Return whether a numeric type is unsigned.  This is not quite
+  /// the complement of isSigned... nonnumeric types return false as they do
+  /// with isSigned.  This returns true for UByteTy, UShortTy, UIntTy, and
+  /// ULongTy
   /// 
   virtual bool isUnsigned() const { return 0; }
 
-  /// isIntegral - Equilivent to isSigned() || isUnsigned, but with only a
+  /// isInteger - Equilivent to isSigned() || isUnsigned(), but with only a
   /// single virtual function invocation.
   ///
-  virtual bool isIntegral() const { return 0; }
+  virtual bool isInteger() const { return 0; }
+
+  /// isIntegral - Returns true if this is an integral type, which is either
+  /// BoolTy or one of the Integer types.
+  ///
+  bool isIntegral() const { return isInteger() || this == BoolTy; }
 
   /// isFloatingPoint - Return true if this is one of the two floating point
   /// types

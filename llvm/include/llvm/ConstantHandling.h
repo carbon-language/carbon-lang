@@ -169,12 +169,12 @@ inline Constant *operator^(const Constant &V1, const Constant &V2) {
 
 // Shift Instructions...
 inline Constant *operator<<(const Constant &V1, const Constant &V2) {
-  assert(V1.getType()->isIntegral() && V2.getType() == Type::UByteTy);
+  assert(V1.getType()->isInteger() && V2.getType() == Type::UByteTy);
   return ConstRules::get(V1)->shl(&V1, &V2);
 }
 
 inline Constant *operator>>(const Constant &V1, const Constant &V2) {
-  assert(V1.getType()->isIntegral() && V2.getType() == Type::UByteTy);
+  assert(V1.getType()->isInteger() && V2.getType() == Type::UByteTy);
   return ConstRules::get(V1)->shr(&V1, &V2);
 }
 

@@ -30,7 +30,7 @@ ExprType::ExprType(const ConstantInt *scale, Value *var,
 		   const ConstantInt *offset) {
   Scale = var ? scale : 0; Var = var; Offset = offset;
   ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
-  if (Scale && Scale->equalsInt(0)) {  // Simplify 0*Var + const
+  if (Scale && Scale->isNullValue()) {  // Simplify 0*Var + const
     Scale = 0; Var = 0;
     ExprTy = Constant;
   }
@@ -245,9 +245,9 @@ ExprType ClassifyExpression(Value *Expr) {
     return Expr;
   case Value::ConstantVal:              // Constant value, just return constant
     Constant *CPV = cast<Constant>(Expr);
-    if (CPV->getType()->isIntegral()) { // It's an integral constant!
+    if (CPV->getType()->isInteger()) { // It's an integral constant!
       ConstantInt *CPI = cast<ConstantInt>(Expr);
-      return ExprType(CPI->equalsInt(0) ? 0 : CPI);
+      return ExprType(CPI->isNullValue() ? 0 : CPI);
     }
     return Expr;
   }
