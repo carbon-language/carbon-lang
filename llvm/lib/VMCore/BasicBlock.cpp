@@ -61,25 +61,8 @@ iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {
 template class SymbolTableListTraits<Instruction, BasicBlock, Function>;
 
 
-// BasicBlock ctor - If the function parameter is specified, the basic block is
-// automatically inserted at the end of the function.
-//
-BasicBlock::BasicBlock(const std::string &name, Function *Parent)
-  : Value(Type::LabelTy, Value::BasicBlockVal, name) {
-  // Initialize the instlist...
-  InstList.setItemParent(this);
-
-  // Make sure that we get added to a function
-  LeakDetector::addGarbageObject(this);
-
-  if (Parent)
-    Parent->getBasicBlockList().push_back(this);
-}
-
-/// BasicBlock ctor - If the InsertBefore parameter is specified, the basic
-/// block is automatically inserted right before the specified block.
-///
-BasicBlock::BasicBlock(const std::string &Name, BasicBlock *InsertBefore)
+BasicBlock::BasicBlock(const std::string &Name, Function *Parent,
+                       BasicBlock *InsertBefore)
   : Value(Type::LabelTy, Value::BasicBlockVal, Name) {
   // Initialize the instlist...
   InstList.setItemParent(this);
@@ -88,10 +71,11 @@ BasicBlock::BasicBlock(const std::string &Name, BasicBlock *InsertBefore)
   LeakDetector::addGarbageObject(this);
 
   if (InsertBefore) {
-    assert(InsertBefore->getParent() &&
-           "Cannot insert block before another block that is not embedded into"
-           " a function yet!");
-    InsertBefore->getParent()->getBasicBlockList().insert(InsertBefore, this);
+    assert(Parent &&
+           "Cannot insert block before another block with no function!");
+    Parent->getBasicBlockList().insert(InsertBefore, this);
+  } else if (Parent) {
+    Parent->getBasicBlockList().push_back(this);
   }
 }
 
@@ -231,7 +215,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(I != InstList.end() && 
 	 "Trying to get me to create degenerate basic block!");
 
-  BasicBlock *New = new BasicBlock(BBName, getNext());
+  BasicBlock *New = new BasicBlock(BBName, getParent(), getNext());
 
   // Move all of the specified instructions from the original basic block into
   // the new basic block.
