@@ -465,8 +465,12 @@ void GraphBuilder::visitInvokeInst(InvokeInst &II) {
 }
 
 void GraphBuilder::visitCallSite(CallSite CS) {
+  Value *Callee = CS.getCalledValue();
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Callee))
+    Callee = CPR->getValue();
+
   // Special case handling of certain libc allocation functions here.
-  if (Function *F = CS.getCalledFunction())
+  if (Function *F = dyn_cast<Function>(Callee))
     if (F->isExternal())
       switch (F->getIntrinsicID()) {
       case Intrinsic::memmove:
@@ -809,12 +813,11 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   if (isPointerType(I->getType()))
     RetVal = getValueDest(*I);
 
-  DSNode *Callee = 0;
-  if (DisableDirectCallOpt || !isa<Function>(CS.getCalledValue())) {
-    Callee = getValueDest(*CS.getCalledValue()).getNode();
-    if (Callee == 0) {
-      std::cerr << "WARNING: Program is calling through a null pointer?\n"
-                << *I;
+  DSNode *CalleeNode = 0;
+  if (DisableDirectCallOpt || !isa<Function>(Callee)) {
+    CalleeNode = getValueDest(*Callee).getNode();
+    if (CalleeNode == 0) {
+      std::cerr << "WARNING: Program is calling through a null pointer?\n"<< *I;
       return;  // Calling a null pointer?
     }
   }
@@ -828,10 +831,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       Args.push_back(getValueDest(**I));
 
   // Add a new function call entry...
-  if (Callee)
-    FunctionCalls->push_back(DSCallSite(CS, RetVal, Callee, Args));
+  if (CalleeNode)
+    FunctionCalls->push_back(DSCallSite(CS, RetVal, CalleeNode, Args));
   else
-    FunctionCalls->push_back(DSCallSite(CS, RetVal, CS.getCalledFunction(),
+    FunctionCalls->push_back(DSCallSite(CS, RetVal, cast<Function>(Callee),
                                         Args));
 }
 
