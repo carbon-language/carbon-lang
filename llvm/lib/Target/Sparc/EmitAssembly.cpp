@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/Constants.h"
@@ -52,6 +53,150 @@ public:
 
 AnnotationID GlobalIdTable::AnnotId =
   AnnotationManager::getID("ASM PRINTER GLOBAL TABLE ANNOT");
+
+// Can we treat the specified array as a string?  Only if it is an array of
+// ubytes or non-negative sbytes.
+//
+static bool isStringCompatible(const ConstantArray *CVA) {
+  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
+  if (ETy == Type::UByteTy) return true;
+  if (ETy != Type::SByteTy) return false;
+
+  for (unsigned i = 0; i < CVA->getNumOperands(); ++i)
+    if (cast<ConstantSInt>(CVA->getOperand(i))->getValue() < 0)
+      return false;
+
+  return true;
+}
+
+// toOctal - Convert the low order bits of X into an octal letter
+static inline char toOctal(int X) {
+  return (X&7)+'0';
+}
+
+// getAsCString - Return the specified array as a C compatible string, only if
+// the predicate isStringCompatible is true.
+//
+static std::string getAsCString(const ConstantArray *CVA) {
+  assert(isStringCompatible(CVA) && "Array is not string compatible!");
+
+  std::string Result;
+  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
+  Result = "\"";
+  for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
+    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
+
+    if (C == '"') {
+      Result += "\\\"";
+    } else if (C == '\\') {
+      Result += "\\\\";
+    } else if (isprint(C)) {
+      Result += C;
+    } else {
+      Result += '\\';                   // print all other chars as octal value
+      Result += toOctal(C >> 6);
+      Result += toOctal(C >> 3);
+      Result += toOctal(C >> 0);
+    }
+  }
+  Result += "\"";
+
+  return Result;
+}
+
+inline bool
+ArrayTypeIsString(const ArrayType* arrayType)
+{
+  return (arrayType->getElementType() == Type::UByteTy ||
+          arrayType->getElementType() == Type::SByteTy);
+}
+
+
+inline const std::string
+TypeToDataDirective(const Type* type)
+{
+  switch(type->getPrimitiveID())
+    {
+    case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
+      return ".byte";
+    case Type::UShortTyID: case Type::ShortTyID:
+      return ".half";
+    case Type::UIntTyID: case Type::IntTyID:
+      return ".word";
+    case Type::ULongTyID: case Type::LongTyID: case Type::PointerTyID:
+      return ".xword";
+    case Type::FloatTyID:
+      return ".word";
+    case Type::DoubleTyID:
+      return ".xword";
+    case Type::ArrayTyID:
+      if (ArrayTypeIsString((ArrayType*) type))
+        return ".ascii";
+      else
+        return "<InvaliDataTypeForPrinting>";
+    default:
+      return "<InvaliDataTypeForPrinting>";
+    }
+}
+
+// Get the size of the type
+// 
+inline unsigned int
+TypeToSize(const Type* type, const TargetMachine& target)
+{
+  return target.findOptimalStorageSize(type);
+}
+
+// Get the size of the constant for the given target.
+// If this is an unsized array, return 0.
+// 
+inline unsigned int
+ConstantToSize(const Constant* CV, const TargetMachine& target)
+{
+  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
+    {
+      const ArrayType *aty = cast<ArrayType>(CVA->getType());
+      if (ArrayTypeIsString(aty))
+        return 1 + CVA->getNumOperands();
+    }
+  
+  return TypeToSize(CV->getType(), target);
+}
+
+// Align data larger than one L1 cache line on L1 cache line boundaries.
+// Align all smaller data on the next higher 2^x boundary (4, 8, ...).
+// 
+inline unsigned int
+SizeToAlignment(unsigned int size, const TargetMachine& target)
+{
+  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
+  if (size > (unsigned) cacheLineSize / 2)
+    return cacheLineSize;
+  else
+    for (unsigned sz=1; /*no condition*/; sz *= 2)
+      if (sz >= size)
+        return sz;
+}
+
+// Get the size of the type and then use SizeToAlignment.
+// 
+inline unsigned int
+TypeToAlignment(const Type* type, const TargetMachine& target)
+{
+  return SizeToAlignment(TypeToSize(type, target), target);
+}
+
+// Get the size of the constant and then use SizeToAlignment.
+// Handles strings as a special case;
+inline unsigned int
+ConstantToAlignment(const Constant* CV, const TargetMachine& target)
+{
+  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
+    if (ArrayTypeIsString(cast<ArrayType>(CVA->getType())))
+      return SizeToAlignment(1 + CVA->getNumOperands(), target);
+  
+  return TypeToAlignment(CV->getType(), target);
+}
   
 //===---------------------------------------------------------------------===//
 //   Code Shared By the two printer passes, as a mixin
@@ -83,6 +228,158 @@ public:
       M.addAnnotation(idTable);
     }
   }
+
+  void
+  PrintZeroBytesToPad(int numBytes)
+  {
+    for ( ; numBytes >= 8; numBytes -= 8)
+      printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
+
+    if (numBytes >= 4)
+    {
+      printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
+      numBytes -= 4;
+    }
+
+    while (numBytes--)
+      printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
+  }
+
+  // Print a single constant value.
+  void printSingleConstantValue(const Constant* CV)
+  {
+    assert(CV->getType() != Type::VoidTy &&
+           CV->getType() != Type::TypeTy &&
+           CV->getType() != Type::LabelTy &&
+           "Unexpected type for Constant");
+  
+    assert((!isa<ConstantArray>(CV) && ! isa<ConstantStruct>(CV))
+           && "Aggregate types should be handled outside this function");
+  
+    toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t";
+  
+    if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
+    { // This is a constant address for a global variable or method.
+      // Use the name of the variable or method as the address value.
+      assert(isa<GlobalValue>(CPR->getValue()) && "Unexpected non-global");
+      toAsm << getID(CPR->getValue()) << "\n";
+    }
+    else if (isa<ConstantPointerNull>(CV))
+    { // Null pointer value
+      toAsm << "0\n";
+    }
+    else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    { // Constant expression built from operators, constants, and symbolic addrs
+      toAsm << ConstantExprToString(CE, Target) << "\n";
+    }
+    else if (CV->getType()->isPrimitiveType())     // Check primitive types last
+    {
+      if (CV->getType()->isFloatingPoint()) {
+        // FP Constants are printed as integer constants to avoid losing
+        // precision...
+        double Val = cast<ConstantFP>(CV)->getValue();
+        if (CV->getType() == Type::FloatTy) {
+          float FVal = (float)Val;
+          char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
+          toAsm << *(unsigned int*)ProxyPtr;            
+        } else if (CV->getType() == Type::DoubleTy) {
+          char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
+          toAsm << *(uint64_t*)ProxyPtr;            
+        } else {
+          assert(0 && "Unknown floating point type!");
+        }
+        
+        toAsm << "\t! " << CV->getType()->getDescription()
+              << " value: " << Val << "\n";
+      } else {
+        WriteAsOperand(toAsm, CV, false, false) << "\n";
+      }
+    }
+    else
+    {
+      assert(0 && "Unknown elementary type for constant");
+    }
+  }
+
+  // Print a constant value or values (it may be an aggregate).
+  // Uses printSingleConstantValue() to print each individual value.
+  void
+  printConstantValueOnly(const Constant* CV,
+                         int numPadBytesAfter = 0)
+  {
+    const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+
+    if (CVA && isStringCompatible(CVA))
+    { // print the string alone and return
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
+    }
+    else if (CVA)
+    { // Not a string.  Print the values in successive locations
+      const std::vector<Use> &constValues = CVA->getValues();
+      for (unsigned i=0; i < constValues.size(); i++)
+        printConstantValueOnly(cast<Constant>(constValues[i].get()));
+    }
+    else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
+    { // Print the fields in successive locations. Pad to align if needed!
+      const StructLayout *cvsLayout =
+        Target.getTargetData().getStructLayout(CVS->getType());
+      const std::vector<Use>& constValues = CVS->getValues();
+      unsigned sizeSoFar = 0;
+      for (unsigned i=0, N = constValues.size(); i < N; i++)
+      {
+        const Constant* field = cast<Constant>(constValues[i].get());
+
+        // Check if padding is needed and insert one or more 0s.
+        unsigned fieldSize =
+          Target.getTargetData().getTypeSize(field->getType());
+        int padSize = ((i == N-1? cvsLayout->StructSize
+                        : cvsLayout->MemberOffsets[i+1])
+                       - cvsLayout->MemberOffsets[i]) - fieldSize;
+        sizeSoFar += (fieldSize + padSize);
+
+        // Now print the actual field value
+        printConstantValueOnly(field, padSize);
+      }
+      assert(sizeSoFar == cvsLayout->StructSize &&
+             "Layout of constant struct may be incorrect!");
+    }
+    else
+      printSingleConstantValue(CV);
+
+    if (numPadBytesAfter)
+      PrintZeroBytesToPad(numPadBytesAfter);
+  }
+
+  // Print a constant (which may be an aggregate) prefixed by all the
+  // appropriate directives.  Uses printConstantValueOnly() to print the
+  // value or values.
+  void printConstant(const Constant* CV, std::string valID = "")
+  {
+    if (valID.length() == 0)
+      valID = getID(CV);
+  
+    toAsm << "\t.align\t" << ConstantToAlignment(CV, Target) << "\n";
+  
+    // Print .size and .type only if it is not a string.
+    const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+    if (CVA && isStringCompatible(CVA))
+    { // print it as a string and return
+      toAsm << valID << ":\n";
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
+      return;
+    }
+  
+    toAsm << "\t.type" << "\t" << valID << ",#object\n";
+
+    unsigned int constSize = ConstantToSize(CV, Target);
+    if (constSize)
+      toAsm << "\t.size" << "\t" << valID << "," << constSize << "\n";
+  
+    toAsm << valID << ":\n";
+  
+    printConstantValueOnly(CV);
+  }
+
   void startFunction(Function &F) {
     // Make sure the slot table has information about this function...
     idTable->Table.incorporateFunction(&F);
@@ -321,6 +618,8 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
   inline SparcFunctionAsmPrinter(std::ostream &os, const TargetMachine &t)
     : AsmPrinter(os, t) {}
 
+  const Function *currFunction;
+
   const char *getPassName() const {
     return "Output Sparc Assembly for Functions";
   }
@@ -331,6 +630,7 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
   }
 
   virtual bool runOnFunction(Function &F) {
+    currFunction = &F;
     startFunction(F);
     emitFunction(F);
     endFunction(F);
@@ -458,6 +758,13 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop,
         break;
       }
     
+    case MachineOperand::MO_ConstantPoolIndex:
+      {
+        toAsm << ".CPI_" << currFunction->getName() 
+              << "_" << mop.getConstantPoolIndex();
+        break;
+      }
+
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value *Val = mop.getVRegValue();
@@ -537,6 +844,17 @@ SparcFunctionAsmPrinter::emitFunction(const Function &F)
 {
   std::string methName = getID(&F);
   toAsm << "!****** Outputing Function: " << methName << " ******\n";
+
+  // Emit constant pool for this function
+  const MachineConstantPool *MCP = MachineFunction::get(&F).getConstantPool();
+  const std::vector<Constant*> &CP = MCP->getConstants();
+
+  enterSection(AsmPrinter::ReadOnlyData);
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    std::string cpiName = ".CPI_" + F.getName() + "_" + utostr(i);
+    printConstant(CP[i], cpiName);
+  }
+
   enterSection(AsmPrinter::Text);
   toAsm << "\t.align\t4\n\t.global\t" << methName << "\n";
   //toAsm << "\t.type\t" << methName << ",#function\n";
@@ -582,7 +900,7 @@ public:
 
   virtual bool run(Module &M) {
     startModule(M);
-    emitGlobalsAndConstants(M);
+    emitGlobals(M);
     endModule();
     return false;
   }
@@ -592,327 +910,9 @@ public:
   }
 
 private:
-  void emitGlobalsAndConstants  (const Module &M);
-
-  void printGlobalVariable      (const GlobalVariable *GV);
-  void PrintZeroBytesToPad      (int numBytes);
-  void printSingleConstantValue (const Constant* CV);
-  void printConstantValueOnly   (const Constant* CV, int numPadBytesAfter = 0);
-  void printConstant            (const Constant* CV, std::string valID = "");
-
-  static void FoldConstants     (const Module &M,
-                                 hash_set<const Constant*> &moduleConstants);
+  void emitGlobals(const Module &M);
+  void printGlobalVariable(const GlobalVariable *GV);
 };
-
-
-// Can we treat the specified array as a string?  Only if it is an array of
-// ubytes or non-negative sbytes.
-//
-static bool isStringCompatible(const ConstantArray *CVA) {
-  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
-  if (ETy == Type::UByteTy) return true;
-  if (ETy != Type::SByteTy) return false;
-
-  for (unsigned i = 0; i < CVA->getNumOperands(); ++i)
-    if (cast<ConstantSInt>(CVA->getOperand(i))->getValue() < 0)
-      return false;
-
-  return true;
-}
-
-// toOctal - Convert the low order bits of X into an octal letter
-static inline char toOctal(int X) {
-  return (X&7)+'0';
-}
-
-// getAsCString - Return the specified array as a C compatible string, only if
-// the predicate isStringCompatible is true.
-//
-static std::string getAsCString(const ConstantArray *CVA) {
-  assert(isStringCompatible(CVA) && "Array is not string compatible!");
-
-  std::string Result;
-  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
-  Result = "\"";
-  for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
-    unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
-
-    if (C == '"') {
-      Result += "\\\"";
-    } else if (C == '\\') {
-      Result += "\\\\";
-    } else if (isprint(C)) {
-      Result += C;
-    } else {
-      Result += '\\';                   // print all other chars as octal value
-      Result += toOctal(C >> 6);
-      Result += toOctal(C >> 3);
-      Result += toOctal(C >> 0);
-    }
-  }
-  Result += "\"";
-
-  return Result;
-}
-
-inline bool
-ArrayTypeIsString(const ArrayType* arrayType)
-{
-  return (arrayType->getElementType() == Type::UByteTy ||
-          arrayType->getElementType() == Type::SByteTy);
-}
-
-
-inline const std::string
-TypeToDataDirective(const Type* type)
-{
-  switch(type->getPrimitiveID())
-    {
-    case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
-      return ".byte";
-    case Type::UShortTyID: case Type::ShortTyID:
-      return ".half";
-    case Type::UIntTyID: case Type::IntTyID:
-      return ".word";
-    case Type::ULongTyID: case Type::LongTyID: case Type::PointerTyID:
-      return ".xword";
-    case Type::FloatTyID:
-      return ".word";
-    case Type::DoubleTyID:
-      return ".xword";
-    case Type::ArrayTyID:
-      if (ArrayTypeIsString((ArrayType*) type))
-        return ".ascii";
-      else
-        return "<InvaliDataTypeForPrinting>";
-    default:
-      return "<InvaliDataTypeForPrinting>";
-    }
-}
-
-// Get the size of the type
-// 
-inline unsigned int
-TypeToSize(const Type* type, const TargetMachine& target)
-{
-  return target.findOptimalStorageSize(type);
-}
-
-// Get the size of the constant for the given target.
-// If this is an unsized array, return 0.
-// 
-inline unsigned int
-ConstantToSize(const Constant* CV, const TargetMachine& target)
-{
-  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
-    {
-      const ArrayType *aty = cast<ArrayType>(CVA->getType());
-      if (ArrayTypeIsString(aty))
-        return 1 + CVA->getNumOperands();
-    }
-  
-  return TypeToSize(CV->getType(), target);
-}
-
-// Align data larger than one L1 cache line on L1 cache line boundaries.
-// Align all smaller data on the next higher 2^x boundary (4, 8, ...).
-// 
-inline unsigned int
-SizeToAlignment(unsigned int size, const TargetMachine& target)
-{
-  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
-  if (size > (unsigned) cacheLineSize / 2)
-    return cacheLineSize;
-  else
-    for (unsigned sz=1; /*no condition*/; sz *= 2)
-      if (sz >= size)
-        return sz;
-}
-
-// Get the size of the type and then use SizeToAlignment.
-// 
-inline unsigned int
-TypeToAlignment(const Type* type, const TargetMachine& target)
-{
-  return SizeToAlignment(TypeToSize(type, target), target);
-}
-
-// Get the size of the constant and then use SizeToAlignment.
-// Handles strings as a special case;
-inline unsigned int
-ConstantToAlignment(const Constant* CV, const TargetMachine& target)
-{
-  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
-    if (ArrayTypeIsString(cast<ArrayType>(CVA->getType())))
-      return SizeToAlignment(1 + CVA->getNumOperands(), target);
-  
-  return TypeToAlignment(CV->getType(), target);
-}
-
-
-// Print a single constant value.
-void
-SparcModuleAsmPrinter::printSingleConstantValue(const Constant* CV)
-{
-  assert(CV->getType() != Type::VoidTy &&
-         CV->getType() != Type::TypeTy &&
-         CV->getType() != Type::LabelTy &&
-         "Unexpected type for Constant");
-  
-  assert((!isa<ConstantArray>(CV) && ! isa<ConstantStruct>(CV))
-         && "Aggregate types should be handled outside this function");
-  
-  toAsm << "\t" << TypeToDataDirective(CV->getType()) << "\t";
-  
-  if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
-    { // This is a constant address for a global variable or method.
-      // Use the name of the variable or method as the address value.
-      assert(isa<GlobalValue>(CPR->getValue()) && "Unexpected non-global");
-      toAsm << getID(CPR->getValue()) << "\n";
-    }
-  else if (isa<ConstantPointerNull>(CV))
-    { // Null pointer value
-      toAsm << "0\n";
-    }
-  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    { // Constant expression built from operators, constants, and symbolic addrs
-      toAsm << ConstantExprToString(CE, Target) << "\n";
-    }
-  else if (CV->getType()->isPrimitiveType())     // Check primitive types last
-    {
-      if (CV->getType()->isFloatingPoint()) {
-        // FP Constants are printed as integer constants to avoid losing
-        // precision...
-        double Val = cast<ConstantFP>(CV)->getValue();
-        if (CV->getType() == Type::FloatTy) {
-          float FVal = (float)Val;
-          char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
-          toAsm << *(unsigned int*)ProxyPtr;            
-        } else if (CV->getType() == Type::DoubleTy) {
-          char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
-          toAsm << *(uint64_t*)ProxyPtr;            
-        } else {
-          assert(0 && "Unknown floating point type!");
-        }
-        
-        toAsm << "\t! " << CV->getType()->getDescription()
-              << " value: " << Val << "\n";
-      } else {
-        WriteAsOperand(toAsm, CV, false, false) << "\n";
-      }
-    }
-  else
-    {
-      assert(0 && "Unknown elementary type for constant");
-    }
-}
-
-void
-SparcModuleAsmPrinter::PrintZeroBytesToPad(int numBytes)
-{
-  for ( ; numBytes >= 8; numBytes -= 8)
-    printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
-
-  if (numBytes >= 4)
-    {
-      printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
-      numBytes -= 4;
-    }
-
-  while (numBytes--)
-    printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
-}
-
-// Print a constant value or values (it may be an aggregate).
-// Uses printSingleConstantValue() to print each individual value.
-void
-SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
-                                              int numPadBytesAfter /* = 0*/)
-{
-  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-
-  if (CVA && isStringCompatible(CVA))
-    { // print the string alone and return
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
-    }
-  else if (CVA)
-    { // Not a string.  Print the values in successive locations
-      const std::vector<Use> &constValues = CVA->getValues();
-      for (unsigned i=0; i < constValues.size(); i++)
-        printConstantValueOnly(cast<Constant>(constValues[i].get()));
-    }
-  else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
-    { // Print the fields in successive locations. Pad to align if needed!
-      const StructLayout *cvsLayout =
-        Target.getTargetData().getStructLayout(CVS->getType());
-      const std::vector<Use>& constValues = CVS->getValues();
-      unsigned sizeSoFar = 0;
-      for (unsigned i=0, N = constValues.size(); i < N; i++)
-        {
-          const Constant* field = cast<Constant>(constValues[i].get());
-
-          // Check if padding is needed and insert one or more 0s.
-          unsigned fieldSize =
-	    Target.getTargetData().getTypeSize(field->getType());
-          int padSize = ((i == N-1? cvsLayout->StructSize
-                                  : cvsLayout->MemberOffsets[i+1])
-                         - cvsLayout->MemberOffsets[i]) - fieldSize;
-          sizeSoFar += (fieldSize + padSize);
-
-          // Now print the actual field value
-          printConstantValueOnly(field, padSize);
-        }
-      assert(sizeSoFar == cvsLayout->StructSize &&
-             "Layout of constant struct may be incorrect!");
-    }
-  else
-    printSingleConstantValue(CV);
-
-  if (numPadBytesAfter)
-    PrintZeroBytesToPad(numPadBytesAfter);
-}
-
-// Print a constant (which may be an aggregate) prefixed by all the
-// appropriate directives.  Uses printConstantValueOnly() to print the
-// value or values.
-void
-SparcModuleAsmPrinter::printConstant(const Constant* CV, std::string valID)
-{
-  if (valID.length() == 0)
-    valID = getID(CV);
-  
-  toAsm << "\t.align\t" << ConstantToAlignment(CV, Target) << "\n";
-  
-  // Print .size and .type only if it is not a string.
-  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-  if (CVA && isStringCompatible(CVA))
-    { // print it as a string and return
-      toAsm << valID << ":\n";
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
-      return;
-    }
-  
-  toAsm << "\t.type" << "\t" << valID << ",#object\n";
-
-  unsigned int constSize = ConstantToSize(CV, Target);
-  if (constSize)
-    toAsm << "\t.size" << "\t" << valID << "," << constSize << "\n";
-  
-  toAsm << valID << ":\n";
-  
-  printConstantValueOnly(CV);
-}
-
-
-void SparcModuleAsmPrinter::FoldConstants(const Module &M,
-                                          hash_set<const Constant*> &MC) {
-  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal()) {
-      const hash_set<const Constant*> &pool =
-        MachineFunction::get(I).getInfo()->getConstantPoolValues();
-      MC.insert(pool.begin(), pool.end());
-    }
-}
 
 void SparcModuleAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
 {
@@ -931,23 +931,7 @@ void SparcModuleAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
   }
 }
 
-
-void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
-  // First, get the constants there were marked by the code generator for
-  // inclusion in the assembly code data area and fold them all into a
-  // single constant pool since there may be lots of duplicates.  Also,
-  // lets force these constants into the slot table so that we can get
-  // unique names for unnamed constants also.
-  // 
-  hash_set<const Constant*> moduleConstants;
-  FoldConstants(M, moduleConstants);
-    
-  // Output constants spilled to memory
-  enterSection(AsmPrinter::ReadOnlyData);
-  for (hash_set<const Constant*>::const_iterator I = moduleConstants.begin(),
-         E = moduleConstants.end();  I != E; ++I)
-    printConstant(*I);
-
+void SparcModuleAsmPrinter::emitGlobals(const Module &M) {
   // Output global variables...
   for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
     if (! GI->isExternal()) {
