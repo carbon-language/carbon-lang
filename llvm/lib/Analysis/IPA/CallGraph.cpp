@@ -316,3 +316,4 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
   return F;
 }
 
+void CallGraph::stub() {}

@@ -151,6 +151,8 @@ public:
   ///
   void print(std::ostream &o, const Module *M) const;
 
+  // stub - dummy function, just ignore it
+  static void stub();
 private:
   //===---------------------------------------------------------------------
   // Implementation of CallGraph construction
@@ -281,5 +283,9 @@ template<> struct GraphTraits<const CallGraph*> :
   static nodes_iterator nodes_begin(const CallGraph *CG) { return CG->begin(); }
   static nodes_iterator nodes_end  (const CallGraph *CG) { return CG->end(); }
 };
+
+// Make sure that any clients of this file link in PostDominators.cpp
+static IncludeFile
+CALLGRAPH_INCLUDE_FILE((void*)&CallGraph::stub);
 
 #endif
