@@ -623,7 +623,7 @@ install-archive-library: $(LIBNAME_ACUR)
 #	.o files explicitly.
 #
 #	Note that we're making an assumption here: If we build a .lo file,
-#	it's corresponding .o file will be placed in the same directory.
+#	its corresponding .o file will be placed in the same directory.
 #
 #	I think that is safe.
 #
