@@ -12,10 +12,15 @@ int %test1(int %A) {
 
 uint %test2(uint %A) {
 	%B = div uint %A, 8   ; => Shift
-	ret int %B
+	ret uint %B
 }
 
 int %test3(int %A) {
 	%B = div int 0, %A    ; => 0, don't need to keep traps
+	ret int %B
+}
+
+int %test4(int %A) {
+	%B = div int %A, -1    ; 0-A
 	ret int %B
 }
