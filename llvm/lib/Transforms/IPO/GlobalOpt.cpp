@@ -22,13 +22,16 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
 
 namespace {
-  Statistic<> NumMarked ("globalopt", "Number of globals marked constant");
-  Statistic<> NumDeleted("globalopt", "Number of globals deleted");
+  Statistic<> NumMarked   ("globalopt", "Number of globals marked constant");
+  Statistic<> NumSRA      ("globalopt", "Number of aggregate globals broken "
+                           "into scalars");
+  Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
   Statistic<> NumFnDeleted("globalopt", "Number of functions deleted");
 
   struct GlobalOpt : public ModulePass {
@@ -95,6 +98,21 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
       if (CE->getOpcode() != Instruction::GetElementPtr)
         GS.isNotSuitableForSRA = true;
+      else if (!GS.isNotSuitableForSRA) {
+        // Check to see if this ConstantExpr GEP is SRA'able.  In particular, we
+        // don't like < 3 operand CE's, and we don't like non-constant integer
+        // indices.
+        if (CE->getNumOperands() < 3 || !CE->getOperand(1)->isNullValue())
+          GS.isNotSuitableForSRA = true;
+        else {
+          for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+            if (!isa<ConstantInt>(CE->getOperand(i))) {
+              GS.isNotSuitableForSRA = true;
+              break;
+            }
+        }
+      }
+
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
       if (isa<LoadInst>(I)) {
         GS.isLoaded = true;
@@ -124,12 +142,10 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           }
       } else if (I->getOpcode() == Instruction::GetElementPtr) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-        if (!GS.isNotSuitableForSRA)// Check to see if we have any variable idxs
-          for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i)
-            if (!isa<Constant>(I->getOperand(i))) {
-              GS.isNotSuitableForSRA = true;
-              break;
-            }
+        // Theoretically we could SRA globals with GEP insts if all indexes are
+        // constants.  In practice, these GEPs would already be constant exprs
+        // if that was the case though.
+        GS.isNotSuitableForSRA = true;
       } else if (I->getOpcode() == Instruction::Select) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.isNotSuitableForSRA = true;
@@ -152,7 +168,29 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
   return false;
 }
 
+static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
+  ConstantInt *CI = dyn_cast<ConstantInt>(Idx);
+  if (!CI) return 0;
+  uint64_t IdxV = CI->getRawValue();
 
+  if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Agg)) {
+    if (IdxV < CS->getNumOperands()) return CS->getOperand(IdxV);
+  } else if (ConstantArray *CA = dyn_cast<ConstantArray>(Agg)) {
+    if (IdxV < CA->getNumOperands()) return CA->getOperand(IdxV);
+  } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Agg)) {
+    if (IdxV < CP->getNumOperands()) return CP->getOperand(IdxV);
+  } else if (ConstantAggregateZero *CAZ = 
+             dyn_cast<ConstantAggregateZero>(Agg)) {
+    if (const StructType *STy = dyn_cast<StructType>(Agg->getType())) {
+      if (IdxV < STy->getNumElements())
+        return Constant::getNullValue(STy->getElementType(IdxV));
+    } else if (const SequentialType *STy =
+               dyn_cast<SequentialType>(Agg->getType())) {
+      return Constant::getNullValue(STy->getElementType());
+    }
+  }
+  return 0;
+}
 
 static Constant *TraverseGEPInitializer(User *GEP, Constant *Init) {
   if (GEP->getNumOperands() == 1 ||
@@ -163,30 +201,8 @@ static Constant *TraverseGEPInitializer(User *GEP, Constant *Init) {
   for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i) {
     ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(i));
     if (!Idx) return 0;
-    uint64_t IdxV = Idx->getRawValue();
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
-      if (IdxV >= CS->getNumOperands()) return 0;
-      Init = CS->getOperand(IdxV);
-    } else if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
-      if (IdxV >= CA->getNumOperands()) return 0;
-      Init = CA->getOperand(IdxV);
-    } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Init)) {
-      if (IdxV >= CP->getNumOperands()) return 0;
-      Init = CP->getOperand(IdxV);
-    } else if (ConstantAggregateZero *CAZ = 
-               dyn_cast<ConstantAggregateZero>(Init)) {
-      if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
-        if (IdxV >= STy->getNumElements()) return 0;
-        Init = Constant::getNullValue(STy->getElementType(IdxV));
-      } else if (const SequentialType *STy =
-                 dyn_cast<SequentialType>(Init->getType())) {
-        Init = Constant::getNullValue(STy->getElementType());
-      } else {
-        return 0;
-      }
-    } else {
-      return 0;
-    }
+    Init = getAggregateConstantElement(Init, Idx);
+    if (Init == 0) return 0;
   }
   return Init;
 }
@@ -218,6 +234,90 @@ static void CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         GEP->getParent()->getInstList().erase(GEP);
     }
   }
+}
+
+/// SRAGlobal - Perform scalar replacement of aggregates on the specified global
+/// variable.  This opens the door for other optimizations by exposing the
+/// behavior of the program in a more fine-grained way.  We have determined that
+/// this transformation is safe already.  We return the first global variable we
+/// insert so that the caller can reprocess it.
+static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
+  assert(GV->hasInternalLinkage() && !GV->isConstant());
+  Constant *Init = GV->getInitializer();
+  const Type *Ty = Init->getType();
+  
+  std::vector<GlobalVariable*> NewGlobals;
+  Module::GlobalListType &Globals = GV->getParent()->getGlobalList();
+
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    NewGlobals.reserve(STy->getNumElements());
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      Constant *In = getAggregateConstantElement(Init,
+                                            ConstantUInt::get(Type::UIntTy, i));
+      assert(In && "Couldn't get element of initializer?");
+      GlobalVariable *NGV = new GlobalVariable(STy->getElementType(i), false,
+                                               GlobalVariable::InternalLinkage,
+                                               In, GV->getName()+"."+utostr(i));
+      Globals.insert(GV, NGV);
+      NewGlobals.push_back(NGV);
+    }
+  } else if (const SequentialType *STy = dyn_cast<SequentialType>(Ty)) {
+    unsigned NumElements = 0;
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(STy))
+      NumElements = ATy->getNumElements();
+    else if (const PackedType *PTy = dyn_cast<PackedType>(STy))
+      NumElements = PTy->getNumElements();
+    else
+      assert(0 && "Unknown aggregate sequential type!");
+
+    if (NumElements > 16) return 0; // It's not worth it.
+    NewGlobals.reserve(NumElements);
+    for (unsigned i = 0, e = NumElements; i != e; ++i) {
+      Constant *In = getAggregateConstantElement(Init,
+                                            ConstantUInt::get(Type::UIntTy, i));
+      assert(In && "Couldn't get element of initializer?");
+
+      GlobalVariable *NGV = new GlobalVariable(STy->getElementType(), false,
+                                               GlobalVariable::InternalLinkage,
+                                               In, GV->getName()+"."+utostr(i));
+      Globals.insert(GV, NGV);
+      NewGlobals.push_back(NGV);
+    }
+  }
+
+  if (NewGlobals.empty())
+    return 0;
+
+  Constant *NullInt = Constant::getNullValue(Type::IntTy);
+
+  // Loop over all of the uses of the global, replacing the constantexpr geps,
+  // with smaller constantexpr geps or direct references.
+  while (!GV->use_empty()) {
+    ConstantExpr *CE = cast<ConstantExpr>(GV->use_back());
+    assert(CE->getOpcode() == Instruction::GetElementPtr &&
+           "NonGEP CE's are not SRAable!");
+    // Ignore the 1th operand, which has to be zero or else the program is quite
+    // broken (undefined).  Get the 2nd operand, which is the structure or array
+    // index.
+    unsigned Val = cast<ConstantInt>(CE->getOperand(2))->getRawValue();
+    if (Val >= NewGlobals.size()) Val = 0; // Out of bound array access.
+
+    Constant *NewPtr = NewGlobals[Val];
+
+    // Form a shorter GEP if needed.
+    if (CE->getNumOperands() > 3) {
+      std::vector<Constant*> Idxs;
+      Idxs.push_back(NullInt);
+      for (unsigned i = 3, e = CE->getNumOperands(); i != e; ++i)
+        Idxs.push_back(CE->getOperand(i));
+      NewPtr = ConstantExpr::getGetElementPtr(NewPtr, Idxs);
+    }
+    CE->replaceAllUsesWith(NewPtr);
+    CE->destroyConstant();
+  }
+
+  ++NumSRA;
+  return NewGlobals[0];
 }
 
 bool GlobalOpt::runOnModule(Module &M) {
@@ -277,6 +377,11 @@ bool GlobalOpt::runOnModule(Module &M) {
           
           ++NumMarked;
           Changed = true;
+        } else if (!GS.isNotSuitableForSRA &&
+                   !GV->getInitializer()->getType()->isFirstClassType()) {
+          DEBUG(std::cerr << "PERFORMING GLOBAL SRA ON: " << *GV);
+          if (GlobalVariable *FirstNewGV = SRAGlobal(GV))
+            GVI = FirstNewGV;  // Don't skip the newly produced globals!
         }
       }
     }
