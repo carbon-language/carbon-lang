@@ -41,6 +41,8 @@ public:
     return CalleeSavedRegisters;
   }
 
+  MVT::ValueType getPointerType() const { return PointerType; }
+
   // getInstructionSet - Return the InstructionSet object...
   Record *getInstructionSet() const;
 
