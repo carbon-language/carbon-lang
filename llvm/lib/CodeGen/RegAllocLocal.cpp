@@ -475,7 +475,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       for (unsigned i = 0; ImplicitUses[i]; ++i)
         MarkPhysRegRecentlyUsed(ImplicitUses[i]);
 
-    // Get the used operands into registers.  This has the potiential to spill
+    // Get the used operands into registers.  This has the potential to spill
     // incoming values if we are out of registers.  Note that we completely
     // ignore physical register uses here.  We assume that if an explicit
     // physical register is referenced by the instruction, that it is guaranteed
