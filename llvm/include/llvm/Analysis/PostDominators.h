@@ -88,7 +88,8 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
     Frontiers.clear();
     PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
     Roots = DT.getRoots();
-    calculate(DT, DT.getRootNode());
+    if (const DominatorTree::Node *Root = DT.getRootNode())
+      calculate(DT, Root);
     return false;
   }
 
