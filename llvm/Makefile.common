@@ -180,7 +180,7 @@ ObjectsG = $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 ifdef DIRS  # Only do this if we're using DIRS!
 
 all install clean::
-	@for dir in ${DIRS}; do \
+	$(VERB) for dir in ${DIRS}; do \
 		(cd $$dir; $(MAKE) $@) || exit 1; \
 	done
 endif
