@@ -1373,6 +1373,7 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     std::cerr << "Sorry, unknown intrinsic function call:\n" << CI; abort ();
 
   case Intrinsic::vastart: {
+    // Add the VarArgsOffset to the frame pointer, and copy it to the result.
     unsigned DestReg = getReg (CI);
     BuildMI (BB, V8::ADDri, 2, DestReg).addReg (V8::FP).addSImm (VarArgsOffset);
     return;
@@ -1382,13 +1383,21 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // va_end is a no-op on SparcV8.
     return;
 
-  case Intrinsic::vacopy:
-    std::cerr << "Sorry, va_copy intrinsic still unsupported:\n" << CI; abort ();
+  case Intrinsic::vacopy: {
+    // Copy the va_list ptr (arg1) to the result.
+    unsigned DestReg = getReg (CI), SrcReg = getReg (CI.getOperand (1));
+    BuildMI (BB, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
+    return;
+  }
   }
 }
 
 void V8ISel::visitVANextInst (VANextInst &I) {
-  std::cerr << "Sorry, vanext instruction still unsupported:\n" << I; abort ();
+  // Add the type size to the vararg pointer (arg0).
+  unsigned DestReg = getReg (I);
+  unsigned SrcReg = getReg (I.getOperand (0));
+  unsigned TySize = TM.getTargetData ().getTypeSize (I.getArgType ());
+  BuildMI (BB, V8::ADDri, 2, DestReg).addReg (SrcReg).addSImm (TySize);
 }
 
 void V8ISel::visitVAArgInst (VAArgInst &I) {
