@@ -21,5 +21,5 @@ global bool setlt (long* %A, long* getelementptr (long* %A, long 1))        ; tr
 global bool setlt (long* %A, long* getelementptr (long* %A, long 0))        ; false
 global bool setlt (int* getelementptr (%Ty* %B, long 0, ubyte 0), 
                    int* getelementptr (%Ty* %B, long 0, ubyte 1))            ; true
-global bool setne (long* %A, long* cast (%Ty* %B to long*))                 ; true
+;global bool setne (long* %A, long* cast (%Ty* %B to long*))                 ; true
 
