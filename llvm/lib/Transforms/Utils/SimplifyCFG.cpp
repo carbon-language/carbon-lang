@@ -608,31 +608,29 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // to the successor.
   succ_iterator SI(succ_begin(BB));
   if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
-
     BasicBlock::iterator BBI = BB->begin();  // Skip over phi nodes...
     while (isa<PHINode>(*BBI)) ++BBI;
 
-    if (BBI->isTerminator()) {   // Terminator is the only non-phi instruction!
-      BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor
-     
-      if (Succ != BB) {   // Arg, don't hurt infinite loops!
-        // If our successor has PHI nodes, then we need to update them to
-        // include entries for BB's predecessors, not for BB itself.
-        // Be careful though, if this transformation fails (returns true) then
-        // we cannot do this transformation!
-        //
-	if (!PropagatePredecessorsForPHIs(BB, Succ)) {
-          DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
-          std::string OldName = BB->getName();
-
+    BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor.
+    if (BBI->isTerminator() &&  // Terminator is the only non-phi instruction!
+        Succ != BB) {           // Don't hurt infinite loops!
+      // If our successor has PHI nodes, then we need to update them to include
+      // entries for BB's predecessors, not for BB itself.  Be careful though,
+      // if this transformation fails (returns true) then we cannot do this
+      // transformation!
+      //
+      if (!PropagatePredecessorsForPHIs(BB, Succ)) {
+        DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
+        
+        if (isa<PHINode>(&BB->front())) {
           std::vector<BasicBlock*>
             OldSuccPreds(pred_begin(Succ), pred_end(Succ));
-
+        
           // Move all PHI nodes in BB to Succ if they are alive, otherwise
           // delete them.
           while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
             if (PN->use_empty())
-              BB->getInstList().erase(BB->begin());  // Nuke instruction...
+              BB->getInstList().erase(BB->begin());  // Nuke instruction.
             else {
               // The instruction is alive, so this means that Succ must have
               // *ONLY* had BB as a predecessor, and the PHI node is still valid
@@ -640,7 +638,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // strictly dominated Succ.
               BB->getInstList().remove(BB->begin());
               Succ->getInstList().push_front(PN);
-
+              
               // We need to add new entries for the PHI node to account for
               // predecessors of Succ that the PHI node does not take into
               // account.  At this point, since we know that BB dominated succ,
@@ -651,17 +649,16 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                 if (OldSuccPreds[i] != BB)
                   PN->addIncoming(PN, OldSuccPreds[i]);
             }
+        }
+        
+        // Everything that jumped to BB now goes to Succ.
+        std::string OldName = BB->getName();
+        BB->replaceAllUsesWith(Succ);
+        BB->eraseFromParent();              // Delete the old basic block.
 
-          // Everything that jumped to BB now goes to Succ...
-          BB->replaceAllUsesWith(Succ);
-
-          // Delete the old basic block...
-          M->getBasicBlockList().erase(BB);
-	
-          if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
-            Succ->setName(OldName);
-          return true;
-	}
+        if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
+          Succ->setName(OldName);
+        return true;
       }
     }
   }
