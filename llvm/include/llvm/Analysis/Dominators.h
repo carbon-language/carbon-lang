@@ -82,6 +82,9 @@ public:
     return getDominators(B).count(A) != 0;
   }
 
+  // print - Convert to human readable form
+  virtual void print(std::ostream &OS) const;
+
   // dominates - Return true if A dominates B.  This performs the special checks
   // neccesary if A and B are in the same basic block.
   //
@@ -157,6 +160,9 @@ public:
     std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
   }
+
+  // print - Convert to human readable form
+  virtual void print(std::ostream &OS) const;
 };
 
 //===-------------------------------------
@@ -259,6 +265,9 @@ public:
     NodeMapType::const_iterator i = Nodes.find(BB);
     return (i != Nodes.end()) ? i->second : 0;
   }
+
+  // print - Convert to human readable form
+  virtual void print(std::ostream &OS) const;
 };
 
 
@@ -336,6 +345,9 @@ public:
   inline const_iterator begin() const { return Frontiers.begin(); }
   inline const_iterator end()   const { return Frontiers.end(); }
   inline const_iterator find(BasicBlock* B) const { return Frontiers.find(B); }
+
+  // print - Convert to human readable form
+  virtual void print(std::ostream &OS) const;
 };
 
 

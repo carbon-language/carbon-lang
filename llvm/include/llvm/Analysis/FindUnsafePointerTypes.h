@@ -39,10 +39,9 @@ public:
   //
   virtual bool run(Module &M);
 
-  // printResults - Loop over the results of the analysis, printing out unsafe
-  // types.
+  // print - Loop over the results of the analysis, printing out unsafe types.
   //
-  void printResults(const Module *Mod, std::ostream &o) const;
+  void print(std::ostream &o, const Module *Mod) const;
 
   // getAnalysisUsage - Of course, we provide ourself...
   //

@@ -15,7 +15,7 @@ using std::map;
 
 static RegisterAnalysis<BUDataStructures>
 X("budatastructure", "Bottom-Up Data Structure Analysis Closure");
-AnalysisID BUDataStructures::ID(AnalysisID::create<BUDataStructures>());
+AnalysisID BUDataStructures::ID = X;
 
 // releaseMemory - If the pass pipeline is done with this pass, we can release
 // our memory... here...

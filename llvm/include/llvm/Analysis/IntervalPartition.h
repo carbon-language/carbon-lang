@@ -51,6 +51,9 @@ public:
   // Destructor - Free memory
   ~IntervalPartition() { destroy(); }
 
+  // print - Show contents in human readable format...
+  virtual void print(std::ostream &O) const;
+
   // getRootInterval() - Return the root interval that contains the starting
   // block of the function.
   inline Interval *getRootInterval() { return RootInterval; }

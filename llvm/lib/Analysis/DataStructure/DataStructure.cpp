@@ -15,10 +15,6 @@
 
 using std::vector;
 
-static RegisterAnalysis<LocalDataStructures>
-X("datastructure", "Local Data Structure Analysis");
-AnalysisID LocalDataStructures::ID(AnalysisID::create<LocalDataStructures>());
-
 //===----------------------------------------------------------------------===//
 // DSNode Implementation
 //===----------------------------------------------------------------------===//

@@ -342,7 +342,7 @@ public:
   }
 
   // print - Print out the analysis results...
-  void print(std::ostream &O, Module *M) const;
+  void print(std::ostream &O, const Module *M) const;
 
   // If the pass pipeline is done with this pass, we can release our memory...
   virtual void releaseMemory();
@@ -377,7 +377,7 @@ public:
   }
   
   // print - Print out the analysis results...
-  void print(std::ostream &O, Module *M) const;
+  void print(std::ostream &O, const Module *M) const;
 
   // If the pass pipeline is done with this pass, we can release our memory...
   virtual void releaseMemory();
@@ -419,7 +419,7 @@ public:
   }
 
   // print - Print out the analysis results...
-  void print(std::ostream &O, Module *M) const;
+  void print(std::ostream &O, const Module *M) const;
 
   // If the pass pipeline is done with this pass, we can release our memory...
   virtual void releaseMemory();

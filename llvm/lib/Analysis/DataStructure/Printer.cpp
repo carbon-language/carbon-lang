@@ -147,16 +147,21 @@ void DSGraph::print(std::ostream &O) const {
 }
 
 template <typename Collection>
-static void printCollection(const Collection &C, std::ostream &O, Module *M,
-                            const string &Prefix) {
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+static void printCollection(const Collection &C, std::ostream &O,
+                            const Module *M, const string &Prefix) {
+  if (M == 0) {
+    O << "Null Module pointer, cannot continue!\n";
+    return;
+  }
+
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       string Filename = Prefix + "." + I->getName() + ".dot";
       O << "Writing '" << Filename << "'...";
       std::ofstream F(Filename.c_str());
       
       if (F.good()) {
-        DSGraph &Graph = C.getDSGraph(*I);
+        DSGraph &Graph = C.getDSGraph((Function&)*I);
         Graph.print(F);
         O << " [" << Graph.getGraphSize() << "+"
           << Graph.getFunctionCalls().size() << "]\n";
@@ -168,10 +173,10 @@ static void printCollection(const Collection &C, std::ostream &O, Module *M,
 
 
 // print - Print out the analysis results...
-void LocalDataStructures::print(std::ostream &O, Module *M) const {
+void LocalDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "ds");
 }
 
-void BUDataStructures::print(std::ostream &O, Module *M) const {
+void BUDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "bu");
 }

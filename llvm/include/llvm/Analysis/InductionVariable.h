@@ -19,6 +19,7 @@
 #ifndef LLVM_ANALYSIS_INDUCTIONVARIABLE_H
 #define LLVM_ANALYSIS_INDUCTIONVARIABLE_H
 
+#include <iosfwd>
 class Value;
 class PHINode;
 class Instruction;
@@ -45,6 +46,8 @@ public:
   // Classify Induction
   static enum iType Classify(const Value *Start, const Value *Step,
 			     const Loop *L = 0);
+
+  void print(std::ostream &OS) const;
 };
 
 #endif

@@ -14,6 +14,7 @@
 #define LLVM_INTERVAL_H
 
 #include <vector>
+#include <iosfwd>
 
 class BasicBlock;
 
@@ -85,6 +86,9 @@ public:
 
   // isLoop - Find out if there is a back edge in this interval...
   bool isLoop() const;
+
+  // print - Show contents in human readable format...
+  void print(std::ostream &O) const;
 };
 
 // succ_begin/succ_end - define methods so that Intervals may be used

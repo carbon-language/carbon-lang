@@ -40,6 +40,7 @@ public:
   inline const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
   inline const std::vector<BasicBlock*> &getBlocks() const { return Blocks; }
 
+  void print(std::ostream &O) const;
 private:
   friend class LoopInfo;
   inline Loop(BasicBlock *BB) { Blocks.push_back(BB); LoopDepth = 0; }
@@ -105,6 +106,7 @@ public:
   virtual bool runOnFunction(Function &F);
 
   virtual void releaseMemory();
+  void print(std::ostream &O) const;
 
   // getAnalysisUsage - Provide loop info, require dominator set
   //
