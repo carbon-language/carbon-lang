@@ -14,15 +14,15 @@
 
 #include "Interpreter.h"
 #include "ExecutionAnnotations.h"
-#include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Target/TargetData.h"
-#include <map>
+#include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
 #include "Config/link.h"
 #include <cmath>
-#include "Support/DynamicLinker.h"
+#include <map>
 using std::vector;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
