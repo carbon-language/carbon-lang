@@ -40,7 +40,7 @@
 
 
 I(NOP, "nop",		0,  -1,  0, false, 0,  1,  SPARC_NONE,  M_NOP_FLAG)
-  
+
 // Synthetic SPARC assembly opcodes for setting a register to a constant.
 // Max immediate constant should be ignored for both these instructions.
 // Use a latency > 1 since this may generate as many as 3 instructions.
@@ -70,7 +70,7 @@ I(SUBCcc, "subccc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_ARITH_F
 I(MULX , "mulx",	3,  2, B12, true , 0, 3, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
 I(SDIVX, "sdivx",	3,  2, B12, true , 0, 6, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
 I(UDIVX, "udivx",	3,  2, B12, true , 0, 6, SPARC_IEUN,  M_INT_FLAG | M_ARITH_FLAG)
-  
+
   // Floating point add, subtract, compare.
   // Note that destination of FCMP* instructions is operand 0, not operand 2.
 I(FADDS, "fadds",	3,  2,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
@@ -96,7 +96,7 @@ I(FDIVQ , "fdivq",	3,  2,   0, false, 0, 0,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_
 I(FSQRTS, "fsqrts",	3,  2,   0, false, 0, 12, SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FSQRTD, "fsqrtd",	3,  2,   0, false, 0, 22, SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FSQRTQ, "fsqrtq",	3,  2,   0, false, 0, 0,  SPARC_FPM,  M_FLOAT_FLAG | M_ARITH_FLAG)
-  
+
 // Logical operations
 I(AND   , "and",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(ANDcc , "andcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
@@ -110,7 +110,7 @@ I(XOR   , "xor",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FL
 I(XORcc , "xorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(XNOR  , "xnor",	3,  2, B12, true , 0, 1, SPARC_IEUN,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(XNORcc, "xnorcc",	4,  2, B12, true , 0, 1, SPARC_IEU1,  M_INT_FLAG | M_LOGICAL_FLAG)
-  
+
 // Shift operations
 I(SLL , "sll",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SRL , "srl",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
@@ -118,7 +118,7 @@ I(SRA , "sra",  	3,  2,  B5, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG
 I(SLLX, "sllx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SRLX, "srlx", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_LOGICAL_FLAG)
 I(SRAX, "srax", 	3,  2,  B6, true , 0, 1, SPARC_IEU0,  M_INT_FLAG | M_ARITH_FLAG)
-  
+
 // Floating point move, negate, and abs instructions
 I(FMOVS, "fmovs",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
 I(FMOVD, "fmovd",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
@@ -129,7 +129,7 @@ I(FNEGD, "fnegd",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
 I(FABSS, "fabss",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
 I(FABSD, "fabsd",	2,  1,   0, false, 0, 1,  SPARC_FPA,  M_FLOAT_FLAG)
 //I(FABSQ, "fabsq",	2,  1,   0, false, 0, ?,  SPARC_FPA,  M_FLOAT_FLAG)
-  
+
 // Convert from floating point to floating point formats
 I(FSTOD, "fstod",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FSTOQ, "fstoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
@@ -137,7 +137,7 @@ I(FDTOS, "fdtos",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_F
 I(FDTOQ, "fdtoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FQTOS, "fqtos",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
 I(FQTOD, "fqtod",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_ARITH_FLAG)
-  
+
 // Convert from floating point to integer formats.
 // Note that this accesses both integer and floating point registers.
 I(FSTOX, "fstox",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
@@ -146,7 +146,7 @@ I(FQTOX, "fqtox",	2,  1,   0, false, 0, 2,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLA
 I(FSTOI, "fstoi",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
 I(FDTOI, "fdtoi",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
 I(FQTOI, "fqtoi",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
-  
+
 // Convert from integer to floating point formats
 // Note that this accesses both integer and floating point registers.
 I(FXTOS, "fxtos",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
@@ -155,17 +155,17 @@ I(FXTOQ, "fxtoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLA
 I(FITOS, "fitos",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
 I(FITOD, "fitod",	2,  1,   0, false, 0, 3,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
 I(FITOQ, "fitoq",	2,  1,   0, false, 0, 0,  SPARC_FPA,  M_FLOAT_FLAG | M_INT_FLAG | M_ARITH_FLAG)
-  
+
 // Branch on integer comparison with zero.
 // Annul bit specifies if intruction in delay slot is annulled(1) or not(0).
 // PredictTaken bit hints if branch should be predicted taken(1) or not(0).
-// Latency includes the delay slot.
-I(BRZ  , "brz", 	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
-I(BRLEZ, "brlez",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
-I(BRLZ , "brlz",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
-I(BRNZ , "brnz",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
-I(BRGZ , "brgz",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
-I(BRGEZ, "brgez",	2, -1, B15, true , 1, 2,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+// Latency excludes the delay slot since it can be issued in same cycle.
+I(BRZ  , "brz", 	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRLEZ, "brlez",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRLZ , "brlz",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRNZ , "brnz",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRGZ , "brgz",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
+I(BRGEZ, "brgez",	2, -1, B15, true , 1, 1,  SPARC_CTI,  M_INT_FLAG | M_BRANCH_FLAG)
 
 // Branch on integer condition code.
 // The first argument specifies the ICC register: %icc or %xcc
@@ -387,39 +387,41 @@ I(FMOVQFUGE, "fmovquge",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_F
 I(FMOVQFLE , "fmovqle",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
 I(FMOVQFULE, "fmovqule",3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
 I(FMOVQFO  , "fmovqo",	3,  2,   0, false, 0, 2,  SPARC_SINGLE,  M_CC_FLAG | M_FLOAT_FLAG)
-  
+
 // Load integer instructions
-// Latency includes 1 cycle for address generation (Sparc IIi)
+// Latency includes 1 cycle for address generation (Sparc IIi),
+// plus 3 cycles assumed for average miss penalty (bias towards L1 hits).
 // Signed loads of less than 64 bits need an extra cycle for sign-extension.
 //
 // Not reflected here: After a 3-cycle loads, all subsequent consecutive
 // loads also require 3 cycles to avoid contention for the load return
 // stage.  Latency returns to 2 cycles after the first cycle with no load.
-I(LDSB, "ldsb",		3,  2, B12, true , 0, 3,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-I(LDSH, "ldsh",		3,  2, B12, true , 0, 3,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-I(LDSW, "ldsw",		3,  2, B12, true , 0, 3,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-I(LDUB, "ldub",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-I(LDUH, "lduh",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-I(LDUW, "lduw",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-I(LDX , "ldx",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
-  
+I(LDSB, "ldsb",		3,  2, B12, true , 0, 6,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDSH, "ldsh",		3,  2, B12, true , 0, 6,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDSW, "ldsw",		3,  2, B12, true , 0, 6,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDUB, "ldub",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDUH, "lduh",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDUW, "lduw",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+I(LDX , "ldx",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_INT_FLAG | M_LOAD_FLAG)
+
 // Load floating-point instructions
 // Latency includes 1 cycle for address generation (Sparc IIi)
-I(LD , "ld",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
-I(LDD, "ldd",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
-I(LDQ, "ldq",		3,  2, B12, true , 0, 2,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
-  
-// Store integer instructions
-// Latency includes 1 cycle for address generation (Sparc IIi)
-I(STB, "stb",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
-I(STH, "sth",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
-I(STW, "stw",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
-I(STX, "stx",		3, -1, B12, true , 0, 3,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
-  
+I(LD , "ld",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDD, "ldd",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+I(LDQ, "ldq",		3,  2, B12, true , 0, 5,  SPARC_LD,  M_FLOAT_FLAG | M_LOAD_FLAG)
+
+// Store integer instructions.
+// Requires 1 cycle for address generation (Sparc IIi).
+// Default latency is 0 because value is not explicitly used.
+I(STB, "stb",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+I(STH, "sth",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+I(STW, "stw",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+I(STX, "stx",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_INT_FLAG | M_STORE_FLAG)
+
 // Store floating-point instructions (Sparc IIi)
-I(ST , "st",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
-I(STD, "std",		3, -1, B12, true , 0, 2,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
-  
+I(ST , "st",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+I(STD, "std",		3, -1, B12, true , 0, 0,  SPARC_ST,  M_FLOAT_FLAG | M_STORE_FLAG)
+
 // Call, Return and "Jump and link".
 // Latency includes the delay slot.
 I(CALL  , "call",	1, -1, B29, true , 1, 2,  SPARC_CTI,  M_BRANCH_FLAG | M_CALL_FLAG)
