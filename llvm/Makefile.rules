@@ -38,6 +38,9 @@ install ::
 BURG = /home/vadve/vadve/Research/DynOpt/Burg/burg
 BURG_OPTS = -I
 
+
+PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="/home/vadve/lattner/purifycache" -chain-length="10" -messages=all
+
 #---------------------------------------------------------
 # Compilation options...
 #---------------------------------------------------------
@@ -58,6 +61,9 @@ CompileG = $(Compile) -g  -D_DEBUG
 CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnonnull-objects -freg-struct-return -fshort-enums
 
 # Link final executable
+
+# To enable purify, do it here:
+###Link     = $(PURIFY) $(CXX) $(Prof) -static
 Link     = $(CXX) $(Prof) 
 LinkG    = $(Link) -g  -L $(LEVEL)/lib/Debug
 LinkO    = $(Link) -O3 -L $(LEVEL)/lib/Release
