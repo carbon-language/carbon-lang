@@ -41,7 +41,7 @@ MachineInstr::MachineInstr(MachineOpCode _opCode,
 }
 
 void
-MachineInstr::SetMachineOperand(unsigned int i,
+MachineInstr::SetMachineOperandVal(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
 				Value* _val, bool isdef=false)
 {
@@ -52,22 +52,25 @@ MachineInstr::SetMachineOperand(unsigned int i,
 }
 
 void
-MachineInstr::SetMachineOperand(unsigned int i,
+MachineInstr::SetMachineOperandConst(unsigned int i,
 				MachineOperand::MachineOperandType operandType,
-				int64_t intValue, bool isdef=false)
+                                     int64_t intValue)
 {
   assert(i < operands.size());
+  assert(TargetInstrDescriptors[opCode].resultPos != (int) i &&
+         "immed. constant cannot be defined");
   operands[i].InitializeConst(operandType, intValue);
-  operands[i].isDef = isdef ||
-    TargetInstrDescriptors[opCode].resultPos == (int) i;
+  operands[i].isDef = false;
 }
 
 void
-MachineInstr::SetMachineOperand(unsigned int i,
-				int regNum, bool isdef=false)
+MachineInstr::SetMachineOperandReg(unsigned int i,
+                                   int regNum,
+                                   bool isdef=false,
+                                   bool isCCReg=false)
 {
   assert(i < operands.size());
-  operands[i].InitializeReg(regNum);
+  operands[i].InitializeReg(regNum, isCCReg);
   operands[i].isDef = isdef ||
     TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
