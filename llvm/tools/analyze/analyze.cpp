@@ -31,6 +31,8 @@ struct ModulePassPrinter : public Pass {
     // Get and print pass...
     return false;
   }
+  
+  virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequiredID(PassToPrint);
@@ -51,6 +53,8 @@ struct FunctionPassPrinter : public FunctionPass {
     return false;
   }
 
+  virtual const char *getPassName() const { return "FunctionPass Printer"; }
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequiredID(PassToPrint);
     AU.setPreservesAll();
@@ -69,6 +73,8 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
     // Get and print pass...
     return false;
   }
+
+  virtual const char *getPassName() const { return "BasicBlockPass Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequiredID(PassToPrint);
