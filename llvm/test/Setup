@@ -1,4 +1,4 @@
 setenv LD_LIBRARY_PATH ../lib/Assembly/Parser/Debug:../lib/Assembly/Writer/Debug:../lib/Analysis/Debug:../lib/VMCore/Debug:../lib/Bytecode/Writer/Debug:../lib/Bytecode/Reader/Debug:../lib/Optimizations/Debug
 
-setenv PATH ../tools/dis:../tools/opt:../tools/strip:${PATH}
+setenv PATH ../tools/dis:../tools/opt:../tools/strip:../tools/analyze:${PATH}
 alias as ../tools/as/as
