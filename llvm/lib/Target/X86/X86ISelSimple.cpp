@@ -2747,7 +2747,6 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
       int V = CI->getValue();
 
       if (V == 2 || V == -2) {       // X % 2, X % -2
-        std::cerr << "SREM 2\n";
         static const unsigned SExtOpcode[] = { X86::CBW, X86::CWD, X86::CDQ };
         static const unsigned BaseReg[]    = { X86::AL , X86::AX , X86::EAX };
         static const unsigned SExtReg[]    = { X86::AH , X86::DX , X86::EDX };

@@ -992,8 +992,8 @@ def SBB32rm  : I<0x1B, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
 def SBB32ri  : Ii32<0x81, MRM3r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "sbb{l} {$src2, $dst|$dst, $src2}">;
 
-def SBB16ri8 : Ii16<0x83, MRM3r, (ops R16:$dst, R16:$src1, i8imm:$src2),
-                    "sbb{w} {$src2, $dst|$dst, $src2}">, OpSize;
+def SBB16ri8 : Ii8<0x83, MRM3r, (ops R16:$dst, R16:$src1, i8imm:$src2),
+                   "sbb{w} {$src2, $dst|$dst, $src2}">, OpSize;
 def SBB32ri8 : Ii8<0x83, MRM3r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "sbb{l} {$src2, $dst|$dst, $src2}">;
 
