@@ -560,12 +560,26 @@ void X86ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       BuildMI(*MBB, IP, X86::FLD0, 0, R);
     else if (CFP->isExactlyValue(+1.0))
       BuildMI(*MBB, IP, X86::FLD1, 0, R);
-    else {
-      // Otherwise we need to spill the constant to memory...
+    else {  // FIXME: PI, other native values
+      // FIXME: Could handle -1.0 with FLD1/FCHS
+      // FIXME: 2*PI -> LDPI + FADD
+
+      // Otherwise we need to spill the constant to memory.
       MachineConstantPool *CP = F->getConstantPool();
-      unsigned CPI = CP->getConstantPoolIndex(CFP);
+
       const Type *Ty = CFP->getType();
 
+      // If a FP immediate is precise when represented as a float, we put it
+      // into the constant pool as a float, even if it's is statically typed as
+      // a double.
+      if (Ty == Type::DoubleTy)
+        if (CFP->isExactlyValue((float)CFP->getValue())) {
+          Ty = Type::FloatTy;
+          CFP = cast<ConstantFP>(ConstantExpr::getCast(CFP, Ty));
+        }
+
+      unsigned CPI = CP->getConstantPoolIndex(CFP);
+      
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
       unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLD32m : X86::FLD64m;
       addConstantPoolReference(BuildMI(*MBB, IP, LoadOpcode, 4, R), CPI);
@@ -848,7 +862,7 @@ void X86ISel::InsertFPRegKills() {
   UsesFPReg:
     // Okay, this block uses an FP register.  If the block has successors (ie,
     // it's not an unwind/return), insert the FP_REG_KILL instruction.
-    if (BB->succ_size () && RequiresFPRegKill(BB)) {
+    if (BB->succ_size() && RequiresFPRegKill(BB)) {
       BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
       ++NumFPKill;
     }
@@ -2880,6 +2894,7 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
   static const unsigned ClrOpcode[]={ X86::MOV8ri, X86::MOV16ri, X86::MOV32ri };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
+  static const unsigned SExOpcode[]={ X86::CBW   , X86::CWD    , X86::CDQ     };
 
   static const unsigned DivOpcode[][4] = {
     { X86::DIV8r , X86::DIV16r , X86::DIV32r , 0 },  // Unsigned division
@@ -2895,10 +2910,8 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
   BuildMI(*BB, IP, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
 
   if (Ty->isSigned()) {
-    // Emit a sign extension instruction...
-    unsigned ShiftResult = makeAnotherReg(Op0->getType());
-    BuildMI(*BB, IP, SAROpcode[Class], 2,ShiftResult).addReg(Op0Reg).addImm(31);
-    BuildMI(*BB, IP, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
+    // Emit a sign extension instruction.
+    BuildMI(*BB, IP, SExOpcode[Class], 0);
 
     // Emit the appropriate divide or remainder instruction...
     BuildMI(*BB, IP, DivOpcode[1][Class], 1).addReg(Op1Reg);
@@ -3407,7 +3420,8 @@ void X86ISel::emitCastOperation(MachineBasicBlock *BB,
         // reading it back.
         unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FrameIdx = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-        addFrameReference(BuildMI(*BB, IP, X86::FST32m, 5), FrameIdx).addReg(SrcReg);
+        addFrameReference(BuildMI(*BB, IP, X86::FST32m, 5),
+			  FrameIdx).addReg(SrcReg);
         addFrameReference(BuildMI(*BB, IP, X86::FLD32m, 5, DestReg), FrameIdx);
       }
     } else if (SrcClass == cLong) {
