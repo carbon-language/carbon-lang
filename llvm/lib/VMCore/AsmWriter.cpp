@@ -231,9 +231,9 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
     map<const Type *, string> TypeNames;
     fillTypeNameTable(M, TypeNames);
     
-    return printTypeInt(Out, V->getType(), TypeNames);
+    return printTypeInt(Out, Ty, TypeNames);
   } else {
-    return Out << V->getType()->getDescription();
+    return Out << Ty->getDescription();
   }
 }
 
@@ -244,9 +244,8 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
 //
 ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
 			bool PrintName, SlotCalculator *Table) {
-  if (PrintType) {
-    WriteTypeSymbolic(Ty, getModuleFromVal(V));
-  }
+  if (PrintType)
+    WriteTypeSymbolic(Out, V->getType(), getModuleFromVal(V));
 
   WriteAsOperandInternal(Out, V, PrintName, Table);
   return Out;
