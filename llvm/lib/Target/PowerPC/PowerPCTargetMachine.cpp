@@ -43,11 +43,9 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 }
 
 /// addPassesToJITCompile - Add passes to the specified pass manager to
-/// implement a fast dynamic compiler for this target.  Return true if this is
-/// not supported for this target.
+/// implement a fast dynamic compiler for this target.
 ///
-bool PowerPCTargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
-  return true;
+void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 }
 
 } // end namespace llvm
