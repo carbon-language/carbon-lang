@@ -85,23 +85,14 @@ clean::
 	$(RM) -rf Output/
 
 # Compile from X.c to Output/X.ll
-Output/%.ll: $(SourceDir)/%.c $(LCC1) Output/.dir $(INCLUDES)
-	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
-
 Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
 
 # Compile from X.cpp to Output/X.ll
-Output/%.ll: $(SourceDir)/%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
-	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
-
 Output/%.ll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
 	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # Compile from X.cc to Output/X.ll
-Output/%.ll: $(SourceDir)/%.cc $(LCC1XX) Output/.dir $(INCLUDES)
-	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
-
 Output/%.ll: %.cc $(LCC1XX) Output/.dir $(INCLUDES)
 	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
@@ -114,25 +105,15 @@ Output/%.bc: Output/%.ll $(LGCCAS)
 # LLVM Assemble from X.ll to Output/X.bc.  Because we are coming directly from
 # LLVM source, use the non-transforming assembler.
 #
-Output/%.bc: $(SourceDir)/%.ll $(LAS) Output/.dir
+Output/%.bc: %.ll $(LAS) Output/.dir
 	$(LAS) -f $< -o $@
 
 #
 # Testing versions of provided utilities...
 #
-Output/%.tll: $(SourceDir)/%.c $(LCC1) Output/.dir $(INCLUDES)
-	@echo "======== Compiling $<"
-	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@ || \
-	    ( rm -f $@; $(FAILURE) $@ )
-
 Output/%.tll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	@echo "======== Compiling $<"
 	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@ || \
-	    ( rm -f $@; $(FAILURE) $@ )
-
-Output/%.tll: $(SourceDir)/%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
-	@echo "======== Compiling $<"
-	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.tll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
