@@ -33,9 +33,7 @@ Currently failing tests:
   `- Benchmarks
   |  `- Shootout-C++ : most programs fail, miscompilations
   `- UnitTests
-  |  `- 2003-05-26-Shorts
-  |  `- 2003-07-09-LoadShorts
-  |  `- 2004-06-20-StaticBitfieldInt
+  |  `- 2003-05-22-VarSizeArray
   `- C++Catch
   `- SimpleC++Test
   `- ConditionalExpr
