@@ -190,6 +190,10 @@ public:
     return regNum;
   }
 
+  inline unsigned getReg() const {
+    assert(hasAllocatedReg() && "Cannot call MachineOperand::getReg()!");
+    return regNum;
+  }    
   
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
