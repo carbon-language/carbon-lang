@@ -391,10 +391,6 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
   OutputBinary.makeUnique();
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
-  GCCArgs.push_back("-L/home/vadve/shared/localtools/x86/lib");
-  GCCArgs.push_back("-lf2c");                // Hard-code the math library...
-  GCCArgs.push_back("-lpng");                // Hard-code the math library...
-  GCCArgs.push_back("-lz");                // Hard-code the math library...
   GCCArgs.push_back("-lm");                // Hard-code the math library...
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
 #if defined (HAVE_LINK_R)
@@ -410,8 +406,6 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   }
 
   std::vector<const char*> ProgramArgs;
-  //ProgramArgs.push_back("valgrind");
-  //ProgramArgs.push_back("--tool=memcheck");
 
   ProgramArgs.push_back(OutputBinary.c_str());
   // Add optional parameters to the running program from Argv
