@@ -128,14 +128,12 @@
 			<File
 				RelativePath="..\..\lib\Support\FileUtilities.cpp">
 				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
@@ -179,8 +177,7 @@
 			<File
 				RelativePath="..\..\lib\Support\ToolRunner.cpp">
 				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"/>
 				</FileConfiguration>
