@@ -86,6 +86,26 @@ bool Module::addTypeName(const std::string &Name, const Type *Ty) {
   return false;
 }
 
+// getTypeName - If there is at least one entry in the symbol table for the
+// specified type, return it.
+//
+std::string Module::getTypeName(const Type *Ty) {
+  const SymbolTable *ST = getSymbolTable();
+  if (ST == 0) return "";  // No symbol table, must not have an entry...
+  if (ST->find(Type::TypeTy) == ST->end())
+    return ""; // No names for types...
+
+  SymbolTable::type_const_iterator TI = ST->type_begin(Type::TypeTy);
+  SymbolTable::type_const_iterator TE = ST->type_end(Type::TypeTy);
+
+  while (TI != TE && TI->second != (const Value*)Ty)
+    ++TI;
+
+  if (TI != TE)  // Must have found an entry!
+    return TI->first;
+  return "";     // Must not have found anything...
+}
+
 
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to

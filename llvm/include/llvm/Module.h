@@ -69,6 +69,11 @@ public:
   //
   bool addTypeName(const std::string &Name, const Type *Ty);
 
+  // getTypeName - If there is at least one entry in the symbol table for the
+  // specified type, return it.
+  //
+  std::string getTypeName(const Type *Ty);
+
   // Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
   inline       GlobalListType &getGlobalList()        { return GlobalList; }
