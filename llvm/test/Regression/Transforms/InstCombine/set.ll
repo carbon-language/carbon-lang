@@ -51,3 +51,30 @@ bool "test8"(uint %A) {
 	%B = setlt uint %A, 0  ; false
 	ret bool %B
 }
+
+;; test operations on boolean values these should all be eliminated$a
+bool %test9(bool %A) {
+	%B = setlt bool %A, false ; false
+	ret bool %B
+}
+bool %test10(bool %A) {
+	%B = setgt bool %A, true  ; false
+	ret bool %B
+}
+bool %test11(bool %A) {
+	%B = setle bool %A, true ; true
+	ret bool %B
+}
+bool %test12(bool %A) {
+	%B = setge bool %A, false  ; true
+	ret bool %B
+}
+bool %test13(bool %A, bool %B) {
+	%C = setge bool %A, %B       ; A | ~B
+	ret bool %C
+}
+bool %test14(bool %A, bool %B) {
+	%C = seteq bool %A, %B  ; ~(A ^ B)
+	ret bool %C
+}
+
