@@ -108,9 +108,13 @@ public:
   typedef SuccIterator<_Term, _BB> _Self;
   // TODO: This can be random access iterator, need operator+ and stuff tho
   
-  inline SuccIterator(_Term T) : Term(T), idx(0) {}         // begin iterator
-  inline SuccIterator(_Term T, bool) 
-    : Term(T), idx(Term->getNumSuccessors()) {}             // end iterator
+  inline SuccIterator(_Term T) : Term(T), idx(0) {         // begin iterator
+    assert(T && "getTerminator returned null!");
+  }
+  inline SuccIterator(_Term T, bool)                       // end iterator
+    : Term(T), idx(Term->getNumSuccessors()) {
+    assert(T && "getTerminator returned null!");
+  }
   
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
@@ -286,6 +290,14 @@ public:
 
   inline _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp; 
+  }
+
+  // nodeVisited - return true if this iterator has already visited the
+  // specified node.  This is public, and will probably be used to iterate over
+  // nodes that a depth first iteration did not find: ie unreachable nodes.
+  //
+  inline bool nodeVisited(NodeType *Node) const { 
+    return Visited.count(Node) != 0;
   }
 };
 
