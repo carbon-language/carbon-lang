@@ -34,9 +34,7 @@ class SymbolTable;
 /// Value - The base class of all values computed by a program that may be used
 /// as operands to other values.
 ///
-class Value : public Annotable,         // Values are annotable
-	      public AbstractTypeUser { // Values use potentially abstract types
-public:
+struct Value : public Annotable {         // Values are annotable
   enum ValueTy {
     TypeVal,                // This is an instance of Type
     ConstantVal,            // This is an instance of Constant
@@ -50,7 +48,7 @@ public:
 private:
   std::vector<User *> Uses;
   std::string Name;
-  PATypeHandle Ty;
+  PATypeHolder Ty;
   ValueTy VTy;
 
   void operator=(const Value &);     // Do not implement
@@ -61,7 +59,7 @@ public:
   
   /// dump - Support for debugging, callable in GDB: V->dump()
   //
-  void dump() const;
+  virtual void dump() const;
 
   /// print - Implement operator<< on Value...
   ///
@@ -93,12 +91,6 @@ public:
   // Only use when in type resolution situations!
   void uncheckedReplaceAllUsesWith(Value *V);
 
-  /// refineAbstractType - This function is implemented because we use
-  /// potentially abstract types, and these types may be resolved to more
-  /// concrete types after we are constructed.
-  ///
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  
   //----------------------------------------------------------------------
   // Methods for handling the vector of uses of this Value.
   //

@@ -19,7 +19,7 @@ class ArrayValType;
 class StructValType;
 class PointerValType;
 
-class DerivedType : public Type {
+class DerivedType : public Type, public AbstractTypeUser {
   char isRefining;                                   // Used for recursive types
 
   // AbstractTypeUsers - Implement a list of the users that need to be notified
@@ -79,6 +79,8 @@ public:
   void refineAbstractTypeTo(const Type *NewType) {
     refineAbstractTypeToInternal(NewType, true);
   }
+
+  void dump() const { Value::dump(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const DerivedType *T) { return true; }
@@ -148,7 +150,6 @@ public:
   static FunctionType *get(const Type *Result,
                            const std::vector<const Type*> &Params,
                            bool isVarArg);
-
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FunctionType *T) { return true; }
@@ -409,6 +410,16 @@ public:
   static OpaqueType *get() {
     return new OpaqueType();           // All opaque types are distinct
   }
+
+  // refineAbstractType - Called when a contained type is found to be more
+  // concrete - this could potentially change us from an abstract type to a
+  // concrete type.
+  //
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+    // This class never uses other types!
+    abort();
+  }
+
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const OpaqueType *T) { return true; }
