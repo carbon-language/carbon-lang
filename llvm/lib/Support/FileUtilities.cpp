@@ -194,3 +194,26 @@ bool llvm::MakeFileExecutable(const std::string &Filename) {
 bool llvm::MakeFileReadable(const std::string &Filename) {
   return AddPermissionsBits(Filename, 0444);
 }
+
+//===----------------------------------------------------------------------===//
+// FDHandle class implementation
+//
+
+FDHandle::~FDHandle() {
+  if (FD != -1) close(FD);
+}
+
+FDHandle &FDHandle::operator=(int fd) {
+  if (FD != -1) close(FD);
+  FD = fd;
+  return *this;
+}
+
+
+/// take - Take ownership of the file descriptor away from the FDHandle
+/// object, so that the file is not closed when the FDHandle is destroyed.
+int FDHandle::take() {
+  int Ret = FD;
+  FD = -1;
+  return Ret;
+}

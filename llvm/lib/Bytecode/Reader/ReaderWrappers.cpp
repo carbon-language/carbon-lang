@@ -16,12 +16,13 @@
 #include "ReaderInternals.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "Support/FileUtilities.h"
 #include "Support/StringExtras.h"
 #include "Config/fcntl.h"
-#include <sys/stat.h>
-#include <cerrno>
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
+#include <sys/stat.h>
+#include <cerrno>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -29,19 +30,6 @@ using namespace llvm;
 //
 
 namespace {
-  /// FDHandle - Simple handle class to make sure a file descriptor gets closed
-  /// when the object is destroyed.
-  ///
-  class FDHandle {
-    int FD;
-  public:
-    FDHandle(int fd) : FD(fd) {}
-    operator int() const { return FD; }
-    ~FDHandle() {
-      if (FD != -1) close(FD);
-    }
-  };
-
   /// BytecodeFileReader - parses a bytecode file from a file
   ///
   class BytecodeFileReader : public BytecodeParser {
@@ -63,7 +51,7 @@ static std::string ErrnoMessage (int savedErrNum, std::string descr) {
 }
 
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
-  FDHandle FD = open(Filename.c_str(), O_RDONLY);
+  FDHandle FD(open(Filename.c_str(), O_RDONLY));
   if (FD == -1)
     throw ErrnoMessage(errno, "open '" + Filename + "'");
 

@@ -102,6 +102,27 @@ bool MakeFileExecutable (const std::string & Filename);
 ///
 bool MakeFileReadable (const std::string & Filename);
 
+
+/// FDHandle - Simple handle class to make sure a file descriptor gets closed
+/// when the object is destroyed.
+///
+class FDHandle {
+  int FD;
+  FDHandle(const FDHandle &);      // DO NOT IMPLEMENT
+  void operator=(const FDHandle&); // DO NOT IMPLEMENT
+public:
+  FDHandle() : FD(-1) {}
+  FDHandle(int fd) : FD(fd) {}
+  ~FDHandle();
+
+  operator int() const { return FD; }
+
+  FDHandle &operator=(int fd);
+
+  /// take - Take ownership of the file descriptor away from the FDHandle
+  /// object, so that the file is not closed when the FDHandle is destroyed.
+  int take();
+};
 } // End llvm namespace
 
 #endif
