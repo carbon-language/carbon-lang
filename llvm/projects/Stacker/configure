@@ -1277,6 +1277,9 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
           ac_config_commands="$ac_config_commands lib/runtime/Makefile"
 
 
+          ac_config_commands="$ac_config_commands test/Makefile"
+
+
           ac_config_commands="$ac_config_commands tools/Makefile"
 
 
@@ -1870,6 +1873,7 @@ ${srcdir}/autoconf/mkinstalldirs `dirname Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname lib/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname lib/compiler/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname lib/runtime/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/stkrc/Makefile`
 
@@ -1887,6 +1891,7 @@ do
   "lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Makefile" ;;
   "lib/compiler/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/compiler/Makefile" ;;
   "lib/runtime/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/runtime/Makefile" ;;
+  "test/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile" ;;
   "tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/Makefile" ;;
   "tools/stkrc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/stkrc/Makefile" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -2328,6 +2333,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
     lib/compiler/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/compiler/Makefile lib/compiler/Makefile ;;
     lib/runtime/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/runtime/Makefile lib/runtime/Makefile ;;
+    test/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
     tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
     tools/stkrc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/stkrc/Makefile tools/stkrc/Makefile ;;
   esac

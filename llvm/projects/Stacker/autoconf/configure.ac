@@ -15,6 +15,7 @@ AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(lib/Makefile)
 AC_CONFIG_MAKEFILE(lib/compiler/Makefile)
 AC_CONFIG_MAKEFILE(lib/runtime/Makefile)
+AC_CONFIG_MAKEFILE(test/Makefile)
 AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(tools/stkrc/Makefile)
 
