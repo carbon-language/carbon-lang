@@ -21,6 +21,7 @@
 #include <iosfwd>
 #include <vector>
 #include <utility>
+#include <cassert>
 
 class Instruction;
 class Function;

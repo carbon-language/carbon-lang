@@ -26,6 +26,7 @@
 #include <map>
 #include <iosfwd>
 #include <typeinfo>
+#include <cassert>
 class Value;
 class BasicBlock;
 class Function;

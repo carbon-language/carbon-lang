@@ -9,6 +9,7 @@
 
 #include "Support/DataTypes.h"
 #include <vector>
+#include <cassert>
 
 class MachineInstr;
 class TargetMachine;

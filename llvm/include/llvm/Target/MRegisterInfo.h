@@ -10,6 +10,7 @@
 #define LLVM_TARGET_MREGISTERINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include <cassert>
 
 class Type;
 class MachineFunction;
