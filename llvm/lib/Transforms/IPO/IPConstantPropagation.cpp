@@ -21,8 +21,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/CallSite.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumArgumentsProped("ipconstprop",
@@ -38,7 +37,7 @@ namespace {
   RegisterOpt<IPCP> X("ipconstprop", "Interprocedural constant propagation");
 }
 
-Pass *createIPConstantPropagationPass() { return new IPCP(); }
+Pass *llvm::createIPConstantPropagationPass() { return new IPCP(); }
 
 bool IPCP::run(Module &M) {
   bool Changed = false;
@@ -117,6 +116,7 @@ bool IPCP::processFunction(Function &F) {
       Value *V = ArgumentConstants[i].first;
       if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
         V = CPR->getValue();
+
       AI->replaceAllUsesWith(V);
       ++NumArgumentsProped;
       MadeChange = true;
@@ -124,4 +124,3 @@ bool IPCP::processFunction(Function &F) {
   return MadeChange;
 }
 
-} // End llvm namespace

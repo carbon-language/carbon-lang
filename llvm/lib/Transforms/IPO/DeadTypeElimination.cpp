@@ -18,8 +18,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   struct DTE : public Pass {
@@ -42,7 +41,7 @@ namespace {
   NumKilled("deadtypeelim", "Number of unused typenames removed from symtab");
 }
 
-Pass *createDeadTypeEliminationPass() {
+Pass *llvm::createDeadTypeEliminationPass() {
   return new DTE();
 }
 
@@ -96,5 +95,3 @@ bool DTE::run(Module &M) {
 
   return Changed;
 }
-
-} // End llvm namespace

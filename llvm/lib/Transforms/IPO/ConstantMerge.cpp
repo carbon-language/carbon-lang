@@ -21,8 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumMerged("constmerge", "Number of global constants merged");
@@ -37,7 +36,7 @@ namespace {
   RegisterOpt<ConstantMerge> X("constmerge","Merge Duplicate Global Constants");
 }
 
-Pass *createConstantMergePass() { return new ConstantMerge(); }
+Pass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 
 bool ConstantMerge::run(Module &M) {
   std::map<Constant*, GlobalVariable*> CMap;
@@ -80,4 +79,3 @@ bool ConstantMerge::run(Module &M) {
   return MadeChanges;
 }
 
-} // End llvm namespace

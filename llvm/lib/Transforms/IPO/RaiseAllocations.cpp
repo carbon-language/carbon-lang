@@ -21,8 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
 #include "Support/Statistic.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumRaised("raiseallocs", "Number of allocations raised");
@@ -52,7 +51,7 @@ namespace {
 
 
 // createRaiseAllocationsPass - The interface to this file...
-Pass *createRaiseAllocationsPass() {
+Pass *llvm::createRaiseAllocationsPass() {
   return new RaiseAllocations();
 }
 
@@ -197,4 +196,3 @@ bool RaiseAllocations::run(Module &M) {
   return Changed;
 }
 
-} // End llvm namespace

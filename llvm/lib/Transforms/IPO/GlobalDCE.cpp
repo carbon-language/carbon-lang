@@ -21,8 +21,7 @@
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumFunctions("globaldce","Number of functions removed");
@@ -49,7 +48,7 @@ namespace {
   RegisterOpt<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
 
-Pass *createGlobalDCEPass() { return new GlobalDCE(); }
+Pass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
 
 bool GlobalDCE::run(Module &M) {
   bool Changed = false;
@@ -198,4 +197,3 @@ bool GlobalDCE::SafeToDestroyConstant(Constant *C) {
   return true;
 }
 
-} // End llvm namespace

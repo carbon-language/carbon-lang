@@ -33,6 +33,7 @@
 // pass invokable via the "opt" command at will.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -46,8 +47,7 @@
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 #include "Support/VectorExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> LongJmpsTransformed("lowersetjmp",
@@ -533,9 +533,8 @@ void LowerSetJmp::visitUnwindInst(UnwindInst& UI)
                "", &UI);
 }
 
-Pass* createLowerSetJmpPass()
+Pass* llvm::createLowerSetJmpPass()
 {
   return new LowerSetJmp();
 }
 
-} // End llvm namespace

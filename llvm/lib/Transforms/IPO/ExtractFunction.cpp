@@ -6,11 +6,11 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
+
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   class FunctionExtractorPass : public Pass {
@@ -89,8 +89,6 @@ namespace {
   RegisterPass<FunctionExtractorPass> X("extract", "Function Extractor");
 }
 
-Pass *createFunctionExtractionPass(Function *F) {
+Pass *llvm::createFunctionExtractionPass(Function *F) {
   return new FunctionExtractorPass(F);
 }
-
-} // End llvm namespace

@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/IPO.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -22,8 +23,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "Support/Statistic.h"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumRemoved("prune-eh", "Number of invokes removed");
@@ -39,7 +39,7 @@ namespace {
   RegisterOpt<PruneEH> X("prune-eh", "Remove unused exception handling info");
 }
 
-Pass *createPruneEHPass() { return new PruneEH(); }
+Pass *llvm::createPruneEHPass() { return new PruneEH(); }
 
 
 bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
@@ -107,4 +107,3 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   return MadeChange; 
 }
 
-} // End llvm namespace

@@ -52,8 +52,7 @@
 #include "Support/hash_map"
 #include <functional>
 #include <algorithm>
-
-namespace llvm {
+using namespace llvm;
 
 //---------------------------------------------------------------------------- 
 // Global constants used in marking Cilk functions and function calls.
@@ -538,4 +537,3 @@ bool Parallelize::run(Module& M)
   return true;
 }
 
-} // End llvm namespace

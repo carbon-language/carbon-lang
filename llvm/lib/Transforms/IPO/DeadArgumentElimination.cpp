@@ -29,8 +29,7 @@
 #include "Support/Statistic.h"
 #include "Support/iterator"
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumArgumentsEliminated("deadargelim",
@@ -108,8 +107,8 @@ namespace {
 /// createDeadArgEliminationPass - This pass removes arguments from functions
 /// which are not used by the body of the function.
 ///
-Pass *createDeadArgEliminationPass() { return new DAE(); }
-Pass *createDeadArgHackingPass() { return new DAH(); }
+Pass *llvm::createDeadArgEliminationPass() { return new DAE(); }
+Pass *llvm::createDeadArgHackingPass() { return new DAH(); }
 
 static inline bool CallPassesValueThoughVararg(Instruction *Call,
                                                const Value *Arg) {
@@ -578,6 +577,3 @@ bool DAE::run(Module &M) {
     RemoveDeadArgumentsFromFunction(*DeadRetVal.begin());
   return true;
 }
-
-} // End llvm namespace
-

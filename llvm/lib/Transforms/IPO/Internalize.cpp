@@ -21,8 +21,7 @@
 #include "Support/Statistic.h"
 #include <fstream>
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumFunctions("internalize", "Number of functions internalized");
@@ -118,8 +117,6 @@ namespace {
   RegisterOpt<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 
-Pass *createInternalizePass() {
+Pass *llvm::createInternalizePass() {
   return new InternalizePass();
 }
-
-} // End llvm namespace
