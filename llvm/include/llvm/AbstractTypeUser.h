@@ -143,6 +143,8 @@ public:
     addRef();
   }
 
+  ~PATypeHolder() { dropRef(); }
+
   operator const Type *() const { return get(); }
   const Type *get() const;
 
