@@ -21,6 +21,7 @@ bool UltraSparc::addPassesToEmitMachineCode(PassManager &PM,
   MachineCodeEmitter *M = 
     MachineCodeEmitter::createFilePrinterMachineCodeEmitter(MCE);
   PM.add(new SparcV9CodeEmitter(this, *M));
+  PM.add(createMachineCodeDestructionPass()); // Free stuff no longer needed
   return false;
 }
 
@@ -31,12 +32,6 @@ void SparcV9CodeEmitter::emitConstant(unsigned Val, unsigned Size) {
     byteVal = Val >> 8*i;
     MCE->emitByte(byteVal & 255);
   }
-#if 0
-  MCE->emitByte((Val >> 16) & 255); // byte 2
-  MCE->emitByte((Val >> 24) & 255); // byte 3
-  MCE->emitByte((Val >> 8) & 255);  // byte 1
-  MCE->emitByte(Val & 255);         // byte 0
-#endif
 }
 
 unsigned getRealRegNum(unsigned fakeReg, unsigned regClass) {
