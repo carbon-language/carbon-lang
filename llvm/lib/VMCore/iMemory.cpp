@@ -75,21 +75,9 @@ const Type* MemAccessInst::getIndexedType(const Type *Ptr,
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
-LoadInst::LoadInst(Value *Ptr, const std::vector<Value*> &Idx,
-		   const std::string &Name)
-  : MemAccessInst(checkType(getIndexedType(Ptr->getType(), Idx)), Load, Name) {
-  assert(getIndexedType(Ptr->getType(), Idx) && "Load operands invalid!");
-  Operands.reserve(1+Idx.size());
-  Operands.push_back(Use(Ptr, this));
-  
-  for (unsigned i = 0, E = Idx.size(); i != E; ++i)
-    Operands.push_back(Use(Idx[i], this));
-  
-}
-
 LoadInst::LoadInst(Value *Ptr, const std::string &Name)
-  : MemAccessInst(cast<PointerType>(Ptr->getType())->getElementType(),
-                  Load, Name) {
+  : Instruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                Load, Name) {
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
 }
@@ -99,20 +87,8 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name)
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx)
-  : MemAccessInst(Type::VoidTy, Store, "") {
-  assert(getIndexedType(Ptr->getType(), Idx) && "Store operands invalid!");
-  
-  Operands.reserve(2+Idx.size());
-  Operands.push_back(Use(Val, this));
-  Operands.push_back(Use(Ptr, this));
-
-  for (unsigned i = 0, E = Idx.size(); i != E; ++i)
-    Operands.push_back(Use(Idx[i], this));
-}
-
 StoreInst::StoreInst(Value *Val, Value *Ptr)
-  : MemAccessInst(Type::VoidTy, Store, "") {
+  : Instruction(Type::VoidTy, Store, "") {
   
   Operands.reserve(2);
   Operands.push_back(Use(Val, this));

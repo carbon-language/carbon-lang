@@ -131,8 +131,7 @@ struct FreeInst : public Instruction {
 //                              MemAccessInst Class
 //===----------------------------------------------------------------------===//
 //
-// MemAccessInst - Common base class of LoadInst, StoreInst, and
-// GetElementPtrInst...
+// MemAccessInst - Common base class of GetElementPtrInst...
 //
 class MemAccessInst : public Instruction {
 protected:
@@ -184,8 +183,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MemAccessInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Load || I->getOpcode() == Store ||
-           I->getOpcode() == GetElementPtr;
+    return I->getOpcode() == GetElementPtr;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -197,19 +195,18 @@ public:
 //                                LoadInst Class
 //===----------------------------------------------------------------------===//
 
-class LoadInst : public MemAccessInst {
-  LoadInst(const LoadInst &LI) : MemAccessInst(LI.getType(), Load) {
-    Operands.reserve(LI.Operands.size());
-    for (unsigned i = 0, E = LI.Operands.size(); i != E; ++i)
-      Operands.push_back(Use(LI.Operands[i], this));
+class LoadInst : public Instruction {
+  LoadInst(const LoadInst &LI) : Instruction(LI.getType(), Load) {
+    Operands.reserve(1);
+    Operands.push_back(Use(LI.Operands[0], this));
   }
 public:
-  LoadInst(Value *Ptr, const std::vector<Value*> &Ix, const std::string & = "");
   LoadInst(Value *Ptr, const std::string &Name = "");
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
 
-  virtual unsigned getFirstIndexOperandNumber() const { return 1; }
+  Value *getPointerOperand() { return getOperand(0); }
+  const Value *getPointerOperand() const { return getOperand(0); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
@@ -226,19 +223,20 @@ public:
 //                                StoreInst Class
 //===----------------------------------------------------------------------===//
 
-class StoreInst : public MemAccessInst {
-  StoreInst(const StoreInst &SI) : MemAccessInst(SI.getType(), Store) {
-    Operands.reserve(SI.Operands.size());
-    for (unsigned i = 0, E = SI.Operands.size(); i != E; ++i)
-      Operands.push_back(Use(SI.Operands[i], this));
+class StoreInst : public Instruction {
+  StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store) {
+    Operands.reserve(2);
+    Operands.push_back(Use(SI.Operands[0], this));
+    Operands.push_back(Use(SI.Operands[1], this));
   }
 public:
-  StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx);
   StoreInst(Value *Val, Value *Ptr);
   virtual Instruction *clone() const { return new StoreInst(*this); }
 
   virtual bool hasSideEffects() const { return true; }
-  virtual unsigned getFirstIndexOperandNumber() const { return 2; }
+
+  Value *getPointerOperand() { return getOperand(1); }
+  const Value *getPointerOperand() const { return getOperand(1); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StoreInst *) { return true; }
