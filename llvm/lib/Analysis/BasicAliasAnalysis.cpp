@@ -22,11 +22,10 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
-
-namespace llvm {
+using namespace llvm;
 
 // Make sure that anything that uses AliasAnalysis pulls in this file...
-void BasicAAStub() {}
+namespace llvm { void BasicAAStub() {} }
 
 namespace {
   struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
@@ -363,4 +362,3 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   return MayAlias;
 }
 
-} // End llvm namespace
