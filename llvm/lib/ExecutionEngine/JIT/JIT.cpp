@@ -284,7 +284,8 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // If the global hasn't been emitted to memory yet, allocate space.  We will
     // actually initialize the global after current function has finished
     // compilation.
-    Ptr =new char[getTargetData().getTypeSize(GV->getType()->getElementType())];
+    uint64_t S = getTargetData().getTypeSize(GV->getType()->getElementType());
+    Ptr = new char[(size_t)S];
     PendingGlobals.push_back(GV);
   }
   addGlobalMapping(GV, Ptr);

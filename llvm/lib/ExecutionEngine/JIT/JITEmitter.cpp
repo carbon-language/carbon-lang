@@ -360,7 +360,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   unsigned TotalSize = 0;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     const Type *Ty = Constants[i]->getType();
-    unsigned Size      = TheJIT->getTargetData().getTypeSize(Ty);
+    unsigned Size      = (unsigned)TheJIT->getTargetData().getTypeSize(Ty);
     unsigned Alignment = TheJIT->getTargetData().getTypeAlignment(Ty);
     // Make sure to take into account the alignment requirements of the type.
     TotalSize = (TotalSize + Alignment-1) & ~(Alignment-1);

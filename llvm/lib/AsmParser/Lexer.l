@@ -107,7 +107,7 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull) {
   for (char *BIn = Buffer; *BIn; ) {
     if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
       char Tmp = BIn[3]; BIn[3] = 0;     // Terminate string
-      *BOut = strtol(BIn+1, 0, 16);  // Convert to number
+      *BOut = (char)strtol(BIn+1, 0, 16);  // Convert to number
       if (!AllowNull && !*BOut)
         ThrowException("String literal cannot accept \\00 escape!");
       
@@ -302,13 +302,19 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
                    return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
                  }
 
-{EPInteger}     { llvmAsmlval.UIntVal = atoull(yytext+1); return UINTVAL; }
+{EPInteger}     {
+                  uint64_t Val = atoull(yytext+1);
+                  if ((unsigned)Val != Val)
+                    ThrowException("Invalid value number (too large)!");
+                  llvmAsmlval.UIntVal = unsigned(Val);
+                  return UINTVAL;
+                }
 {ENInteger}     {
                   uint64_t Val = atoull(yytext+2);
 		  // +1:  we have bigger negative range
 		  if (Val > (uint64_t)INT32_MAX+1)
 		    ThrowException("Constant too large for signed 32 bits!");
-                  llvmAsmlval.SIntVal = -Val;
+                  llvmAsmlval.SIntVal = (int)-Val;
 		  return SINTVAL;
                 }
 
