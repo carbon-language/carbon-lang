@@ -267,18 +267,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
 
         // Get the MachineBasicBlock equivalent of the BasicBlock that is the
         // source path the phi
-        BasicBlock *opBB =
-          cast<BasicBlock>(MI->getOperand(i).getVRegValue());
-        MachineBasicBlock *opBlock = NULL;
-        for (MachineFunction::iterator opFi = Fn.begin(), opFe = Fn.end();
-             opFi != opFe; ++opFi)
-        {
-          if (opFi->getBasicBlock() == opBB) {
-            opBlock = opFi; break;
-          }
-        }
-        assert(opBlock && "MachineBasicBlock object not found for specified block!");
-
+        MachineBasicBlock *opBlock = MI->getOperand(i).getMachineBasicBlock();
         MachineBasicBlock::iterator opI = opBlock->end();
         MachineInstr *opMI = *(--opI);
         const MachineInstrInfo &MII = TM.getInstrInfo();
