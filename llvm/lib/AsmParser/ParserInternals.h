@@ -187,7 +187,6 @@ struct MethPlaceHolderHelper : public Method {
 typedef PlaceholderValue<TypePlaceHolderHelper>  TypePlaceHolder;
 typedef PlaceholderValue<InstPlaceHolderHelper>  ValuePlaceHolder;
 typedef PlaceholderValue<BBPlaceHolderHelper>    BBPlaceHolder;
-typedef PlaceholderValue<MethPlaceHolderHelper>  MethPlaceHolder;
 
 static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
   const Type *Ty = Val->getType();
@@ -198,7 +197,6 @@ static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
   switch (Ty->getPrimitiveID()) {
   case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getDef();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
-  case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getDef();
   default:               return ((ValuePlaceHolder*)Val)->getDef();
   }
 }
@@ -212,7 +210,6 @@ static inline int getLineNumFromPlaceHolder(const Value *Val) {
   switch (Ty->getPrimitiveID()) {
   case Type::TypeTyID:   return ((TypePlaceHolder*)Val)->getLineNum();
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
-  case Type::MethodTyID: return ((MethPlaceHolder*)Val)->getLineNum();
   default:               return ((ValuePlaceHolder*)Val)->getLineNum();
   }
 }

@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <stdio.h>            // This embarasment is due to our flex lexer...
 
-int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit 
+int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
 
@@ -49,7 +49,8 @@ string CurFilename;
 // when the method is completed.
 //
 typedef vector<Value *> ValueList;           // Numbered defs
-static void ResolveDefinitions(vector<ValueList> &LateResolvers);
+static void ResolveDefinitions(vector<ValueList> &LateResolvers,
+                               vector<ValueList> *FutureLateResolvers = 0);
 static void ResolveTypes      (vector<PATypeHolder<Type> > &LateResolveTypes);
 
 static struct PerModuleInfo {
@@ -147,7 +148,7 @@ static struct PerMethodInfo {
   void MethodDone() {
     // If we could not resolve some blocks at parsing time (forward branches)
     // resolve the branches now...
-    ResolveDefinitions(LateResolveValues);
+    ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
     Values.clear();         // Clear out method local definitions
     Types.clear();
@@ -254,6 +255,9 @@ static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
 // it.  Otherwise return null.
 //
 static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
+  if (isa<MethodType>(Ty))
+    ThrowException("Methods are not values and must be referenced as pointers");
+
   switch (D.Type) {
   case ValID::NumberVal: {                 // Is it a numbered definition?
     unsigned type = Ty->getUniqueID();
@@ -351,25 +355,16 @@ static Value *getVal(const Type *Ty, const ValID &D) {
   // forward, so just create an entry to be resolved later and get to it...
   //
   Value *d = 0;
-  vector<ValueList> *LateResolver = inMethodScope() ? 
-    &CurMeth.LateResolveValues : &CurModule.LateResolveValues;
-
-  if (isa<MethodType>(Ty))
-    ThrowException("Methods are not values and must be referenced as pointers");
-
-  if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
-    if (const MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType()))
-      Ty = MTy;       // Convert pointer to method to method type
-
   switch (Ty->getPrimitiveID()) {
   case Type::LabelTyID:  d = new   BBPlaceHolder(Ty, D); break;
-  case Type::MethodTyID: d = new MethPlaceHolder(Ty, D); 
-                         LateResolver = &CurModule.LateResolveValues; break;
   default:               d = new ValuePlaceHolder(Ty, D); break;
   }
 
   assert(d != 0 && "How did we not make something?");
-  InsertValue(d, *LateResolver);
+  if (inMethodScope())
+    InsertValue(d, CurMeth.LateResolveValues);
+  else 
+    InsertValue(d, CurModule.LateResolveValues);
   return d;
 }
 
@@ -390,16 +385,26 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 // time (forward branches, phi functions for loops, etc...) resolve the 
 // defs now...
 //
-static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
+static void ResolveDefinitions(vector<ValueList> &LateResolvers,
+                               vector<ValueList> *FutureLateResolvers = 0) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
   for (unsigned ty = 0; ty < LateResolvers.size(); ty++) {
     while (!LateResolvers[ty].empty()) {
       Value *V = LateResolvers[ty].back();
+      assert(!isa<Type>(V) && "Types should be in LateResolveTypes!");
+
       LateResolvers[ty].pop_back();
       ValID &DID = getValIDFromPlaceHolder(V);
 
       Value *TheRealValue = getValNonImprovising(Type::getUniqueIDType(ty),DID);
-      if (TheRealValue == 0) {
+      if (TheRealValue) {
+        V->replaceAllUsesWith(TheRealValue);
+        delete V;
+      } else if (FutureLateResolvers) {
+        // Methods have their unresolved items forwarded to the module late
+        // resolver table
+        InsertValue(V, *FutureLateResolvers);
+      } else {
 	if (DID.Type == 1)
 	  ThrowException("Reference to an invalid definition: '" +DID.getName()+
 			 "' of type '" + V->getType()->getDescription() + "'",
@@ -410,11 +415,6 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
 			 V->getType()->getDescription() + "'",
 			 getLineNumFromPlaceHolder(V));
       }
-
-      assert(!isa<Type>(V) && "Types should be in LateResolveTypes!");
-
-      V->replaceAllUsesWith(TheRealValue);
-      delete V;
     }
   }
 
@@ -487,6 +487,7 @@ static void ResolveSomeTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
 //
 static bool setValueName(Value *V, char *NameStr) {
   if (NameStr == 0) return false;
+  
   string Name(NameStr);           // Copy string
   free(NameStr);                  // Free old string
 
@@ -1365,7 +1366,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
-      $$ = new InvokeInst(cast<Method>(V), Normal, Except, vector<Value*>());
+      $$ = new InvokeInst(V, Normal, Except, vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through MethodType's arguments and ensure they are specified
       // correctly!
@@ -1382,7 +1383,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
 
-      $$ = new InvokeInst(cast<Method>(V), Normal, Except,
+      $$ = new InvokeInst(V, Normal, Except,
 			  vector<Value*>($5->begin(), $5->end()));
     }
     delete $5;
@@ -1496,7 +1497,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
-      $$ = new CallInst(cast<Method>(V), vector<Value*>());
+      $$ = new CallInst(V, vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through MethodType's arguments and ensure they are specified
       // correctly!
