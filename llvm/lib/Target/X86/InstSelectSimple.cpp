@@ -55,6 +55,7 @@ namespace {
     // fixed X86 code for each instruction.
     //
     void visitReturnInst(ReturnInst &RI);
+    void visitBranchInst(BranchInst &BI);
     void visitAdd(BinaryOperator &B);
     void visitShiftInst(ShiftInst &I);
 
@@ -161,6 +162,14 @@ void ISel::visitReturnInst(ReturnInst &I) {
   // block
   BuildMI(BB, X86::RET, 0);
 }
+
+void ISel::visitBranchInst(BranchInst &BI) {
+  if (BI.isConditional())   // Only handles unconditional branches so far...
+    visitInstruction(BI);
+
+  BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+}
+
 
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
 /// for constant immediate shift values, and for constant immediate

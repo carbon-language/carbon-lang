@@ -33,8 +33,9 @@ I(PHI         , "phi",                0, 0)
 // The second instruction must always be the noop instruction: (FIXME, not yet)
 I(NOOP        , "nop",                0, X86II::Void) // nop          90
 
-// Miscellaneous instructions
+// Flow control instructions
 I(RET         , "ret",       M_RET_FLAG, X86II::Void) // ret          CB
+I(JMP         , "jmp",    M_BRANCH_FLAG, X86II::Void) // jmp foo      EB|E9 cb|w
 
 // Move instructions
 I(MOVrr8      , "movb",               0, 0)           // R8  = R8     88/r
