@@ -81,6 +81,7 @@ public:
   void setRegClass(RegClass *RC) { MyRegClass = RC; }
 
   RegClass *getRegClass() const { assert(MyRegClass); return MyRegClass; }
+  unsigned getRegClassID() const;
 
   bool hasColor() const { return Color != -1; }
   
