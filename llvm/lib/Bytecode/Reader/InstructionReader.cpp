@@ -22,30 +22,53 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
   unsigned Op, Typ;
   if (read(Buf, EndBuf, Op)) return failure(true);
 
-  Result.NumOperands =  Op >> 30;
-  Result.Opcode      = (Op >> 24) & 63;
+  // bits   Instruction format:        Common to all formats
+  // --------------------------
+  // 01-00: Opcode type, fixed to 1.
+  // 07-02: Opcode
+  Result.NumOperands = (Op >> 0) & 03;
+  Result.Opcode      = (Op >> 2) & 63;
 
   switch (Result.NumOperands) {
   case 1:
-    Result.Ty   = getType((Op >> 12) & 4095);
-    Result.Arg1 = Op & 4095;
+    // bits   Instruction format:
+    // --------------------------
+    // 19-08: Resulting type plane
+    // 31-20: Operand #1 (if set to (2^12-1), then zero operands)
+    //
+    Result.Ty   = getType((Op >> 8) & 4095);
+    Result.Arg1 = (Op >> 20) & 4095;
     if (Result.Arg1 == 4095)    // Handle special encoding for 0 operands...
       Result.NumOperands = 0;
     break;
   case 2:
-    Result.Ty   = getType((Op >> 16) & 255);
-    Result.Arg1 = (Op >> 8 ) & 255;
-    Result.Arg2 = (Op >> 0 ) & 255;
+    // bits   Instruction format:
+    // --------------------------
+    // 15-08: Resulting type plane
+    // 23-16: Operand #1
+    // 31-24: Operand #2  
+    //
+    Result.Ty   = getType((Op >> 8) & 255);
+    Result.Arg1 = (Op >> 16) & 255;
+    Result.Arg2 = (Op >> 24) & 255;
     break;
   case 3:
-    Result.Ty   = getType((Op >> 18) & 63);
-    Result.Arg1 = (Op >> 12) & 63;
-    Result.Arg2 = (Op >> 6 ) & 63;
-    Result.Arg3 = (Op >> 0 ) & 63;
+    // bits   Instruction format:
+    // --------------------------
+    // 13-08: Resulting type plane
+    // 19-14: Operand #1
+    // 25-20: Operand #2
+    // 31-26: Operand #3
+    //
+    Result.Ty   = getType((Op >> 8) & 63);
+    Result.Arg1 = (Op >> 14) & 63;
+    Result.Arg2 = (Op >> 20) & 63;
+    Result.Arg3 = (Op >> 26) & 63;
     break;
   case 0:
     Buf -= 4;  // Hrm, try this again...
     if (read_vbr(Buf, EndBuf, Result.Opcode)) return failure(true);
+    Result.Opcode >>= 2;
     if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
     Result.Ty = getType(Typ);
     if (Result.Ty == 0) return failure(true);
@@ -93,7 +116,8 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
 bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 				      Instruction *&Res) {
   RawInst Raw;
-  if (ParseRawInst(Buf, EndBuf, Raw)) return failure(true);
+  if (ParseRawInst(Buf, EndBuf, Raw))
+    return failure(true);
 
   if (Raw.Opcode >= Instruction::FirstUnaryOp && 
       Raw.Opcode <  Instruction::NumUnaryOps  && Raw.NumOperands == 1) {

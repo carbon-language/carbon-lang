@@ -30,7 +30,7 @@ static void outputInstructionFormat0(const Instruction *I,
 				     const SlotCalculator &Table,
 				     unsigned Type, deque<uchar> &Out) {
   // Opcode must have top two bits clear...
-  output_vbr(I->getOpcode(), Out);               // Instruction Opcode ID
+  output_vbr(I->getOpcode() << 2, Out);          // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
 
   unsigned NumArgs = I->getNumOperands();
@@ -66,7 +66,7 @@ static void outputInstrVarArgsCall(const Instruction *I,
 				   deque<uchar> &Out) {
   assert(isa<CallInst>(I) || isa<InvokeInst>(I));
   // Opcode must have top two bits clear...
-  output_vbr(I->getOpcode(), Out);               // Instruction Opcode ID
+  output_vbr(I->getOpcode() << 2, Out);          // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type (varargs type)
 
   unsigned NumArgs = I->getNumOperands();
@@ -107,18 +107,18 @@ static void outputInstrVarArgsCall(const Instruction *I,
 static void outputInstructionFormat1(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, deque<uchar> &Out) {
-  unsigned IType = I->getOpcode();      // Instruction Opcode ID
+  unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
   
   // bits   Instruction format:
   // --------------------------
-  // 31-30: Opcode type, fixed to 1.
-  // 29-24: Opcode
-  // 23-12: Resulting type plane
-  // 11- 0: Operand #1 (if set to (2^12-1), then zero operands)
+  // 01-00: Opcode type, fixed to 1.
+  // 07-02: Opcode
+  // 19-08: Resulting type plane
+  // 31-20: Operand #1 (if set to (2^12-1), then zero operands)
   //
-  unsigned Opcode = (1 << 30) | (IType << 24) | (Type << 12) | Slots[0];
+  unsigned Bits = 1 | (Opcode << 2) | (Type << 8) | (Slots[0] << 20);
   //  cerr << "1 " << IType << " " << Type << " " << Slots[0] << endl;
-  output(Opcode, Out);
+  output(Bits, Out);
 }
 
 
@@ -128,21 +128,21 @@ static void outputInstructionFormat1(const Instruction *I,
 static void outputInstructionFormat2(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, deque<uchar> &Out) {
-  unsigned IType = I->getOpcode();      // Instruction Opcode ID
+  unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
   // --------------------------
-  // 31-30: Opcode type, fixed to 2.
-  // 29-24: Opcode
-  // 23-16: Resulting type plane
-  // 15- 8: Operand #1
-  //  7- 0: Operand #2  
+  // 01-00: Opcode type, fixed to 2.
+  // 07-02: Opcode
+  // 15-08: Resulting type plane
+  // 23-16: Operand #1
+  // 31-24: Operand #2  
   //
-  unsigned Opcode = (2 << 30) | (IType << 24) | (Type << 16) |
-                    (Slots[0] << 8) | (Slots[1] << 0);
+  unsigned Bits = 2 | (Opcode << 2) | (Type << 8) |
+                    (Slots[0] << 16) | (Slots[1] << 24);
   //  cerr << "2 " << IType << " " << Type << " " << Slots[0] << " " 
   //       << Slots[1] << endl;
-  output(Opcode, Out);
+  output(Bits, Out);
 }
 
 
@@ -152,22 +152,22 @@ static void outputInstructionFormat2(const Instruction *I,
 static void outputInstructionFormat3(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, deque<uchar> &Out) {
-  unsigned IType = I->getOpcode();      // Instruction Opcode ID
+  unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
   // --------------------------
-  // 31-30: Opcode type, fixed to 3
-  // 29-24: Opcode
-  // 23-18: Resulting type plane
-  // 17-12: Operand #1
-  // 11- 6: Operand #2
-  //  5- 0: Operand #3
+  // 01-00: Opcode type, fixed to 3.
+  // 07-02: Opcode
+  // 13-08: Resulting type plane
+  // 19-14: Operand #1
+  // 25-20: Operand #2
+  // 31-26: Operand #3
   //
-  unsigned Opcode = (3 << 30) | (IType << 24) | (Type << 18) |
-                    (Slots[0] << 12) | (Slots[1] << 6) | (Slots[2] << 0);
+  unsigned Bits = 3 | (Opcode << 2) | (Type << 8) |
+          (Slots[0] << 14) | (Slots[1] << 20) | (Slots[2] << 26);
   //cerr << "3 " << IType << " " << Type << " " << Slots[0] << " " 
   //     << Slots[1] << " " << Slots[2] << endl;
-  output(Opcode, Out);
+  output(Bits, Out);
 }
 
 void BytecodeWriter::processInstruction(const Instruction *I) {
