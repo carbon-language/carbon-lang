@@ -73,8 +73,6 @@ static inline void deleter(T *Ptr) {
 // mapped_iterator - This is a simple iterator adapter that causes a function to
 // be dereferenced whenever operator* is invoked on the iterator.
 //
-// It turns out that this is disturbingly similar to boost::transform_iterator
-//
 template <class RootIt, class UnaryFunc>
 class mapped_iterator {
   RootIt current;
