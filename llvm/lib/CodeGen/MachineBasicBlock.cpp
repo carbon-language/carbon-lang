@@ -24,10 +24,10 @@ using namespace llvm;
 MachineBasicBlock::~MachineBasicBlock() {
   LeakDetector::removeGarbageObject(this);
 }
-  
 
 
-// MBBs start out as #-1. When a MBB is added to a MachineFunction, it 
+
+// MBBs start out as #-1. When a MBB is added to a MachineFunction, it
 // gets the next available unique MBB number. If it is removed from a
 // MachineFunction, it goes back to being #-1.
 void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
@@ -47,33 +47,33 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
 
 
 MachineInstr* ilist_traits<MachineInstr>::createNode() {
-    MachineInstr* dummy = new MachineInstr(0, 0);
-    LeakDetector::removeGarbageObject(dummy);
-    return dummy;
+  MachineInstr* dummy = new MachineInstr(0, 0);
+  LeakDetector::removeGarbageObject(dummy);
+  return dummy;
 }
 
 void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N)
 {
-    assert(N->parent == 0 && "machine instruction already in a basic block");
-    N->parent = parent;
-    LeakDetector::removeGarbageObject(N);
+  assert(N->parent == 0 && "machine instruction already in a basic block");
+  N->parent = parent;
+  LeakDetector::removeGarbageObject(N);
 }
 
 void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N)
 {
-    assert(N->parent != 0 && "machine instruction not in a basic block");
-    N->parent = 0;
-    LeakDetector::addGarbageObject(N);
+  assert(N->parent != 0 && "machine instruction not in a basic block");
+  N->parent = 0;
+  LeakDetector::addGarbageObject(N);
 }
 
 void ilist_traits<MachineInstr>::transferNodesFromList(
-    iplist<MachineInstr, ilist_traits<MachineInstr> >& toList,
-    ilist_iterator<MachineInstr> first,
-    ilist_iterator<MachineInstr> last)
+  iplist<MachineInstr, ilist_traits<MachineInstr> >& toList,
+  ilist_iterator<MachineInstr> first,
+  ilist_iterator<MachineInstr> last)
 {
-    if (parent != toList.parent)
-        for (; first != last; ++first)
-            first->parent = toList.parent;
+  if (parent != toList.parent)
+    for (; first != last; ++first)
+      first->parent = toList.parent;
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator()
@@ -87,7 +87,7 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator()
 
 void MachineBasicBlock::dump() const
 {
-    print(std::cerr);
+  print(std::cerr);
 }
 
 void MachineBasicBlock::print(std::ostream &OS) const
@@ -96,12 +96,13 @@ void MachineBasicBlock::print(std::ostream &OS) const
     OS << "Can't print out MachineBasicBlock because parent MachineFunction is null\n";
     return;
   }
-    const BasicBlock *LBB = getBasicBlock();
-    if(LBB)
-      OS << "\n" << LBB->getName() << " (" << (const void*)this
-         << ", LLVM BB @" << (const void*) LBB << "):\n";
-    for (const_iterator I = begin(); I != end(); ++I) {
-        OS << "\t";
-        I->print(OS, &getParent()->getTarget());
-    }
+
+  const BasicBlock *LBB = getBasicBlock();
+  if (LBB)
+    OS << "\n" << LBB->getName() << " (" << (const void*)this
+       << ", LLVM BB @" << (const void*) LBB << "):\n";
+  for (const_iterator I = begin(); I != end(); ++I) {
+    OS << "\t";
+    I->print(OS, &getParent()->getTarget());
+  }
 }
