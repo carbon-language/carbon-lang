@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>LLVM 1.0 Release Notes</title></head>
+<body bgcolor=white>
+
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>LLVM 1.0 Release Notes</b></font></td>
+</tr></table>
+ 
+<ol>
+  <li><a href="#intro">Instroduction</a>
+  <li><a href="#whatsnew">What's New?</a>
+  <li><a href="#install-instructions">Installation Instructions</a>
+  <li><a href="#knownproblems">Known Problems</a>
+  <ul>
+    <li><a href="#portability">Portability Problems</a>
+    <li><a href="#core">Known problems with the LLVM Core</a>
+    <li><a href="#c-fe">Known problems with the C Front-end</a>
+    <li><a href="#c++-fe">Known problems with the C++ Front-end</a>
+    <li><a href="#x86-be">Known problems with the X86 Back-end</a>
+    <li><a href="#sparc-be">Known problems with the Sparc Back-end</a>
+    <li><a href="#c-be">Known problems with the C back-end</a>
+  </ul>
+  <li><a href="#additionalinfo">Additional Information</a>
+  </ul>
+
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></b><p>
+</ol>
+
+
+<!-- *********************************************************************** -->
+<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="intro">Introduction
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+This document contains the release notes for the LLVM compiler infrastructure,
+release 1.0.  The most up-to-date version of this document can be found on the
+<a href="http://llvm.cs.uiuc.edu/releases/1.0/ReleaseNotes.html">LLVM web
+site</a>.  Since this document may be updated after the release, it is best to
+read the copy hosted there.
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="whatsnew">What's New?
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+This is the first public release of the LLVM compiler infrastructure.  As such,
+it is all new!  In particular, we are providing a stable C compiler, beta C++
+compiler, a C back-end, stable X86 and Sparc V9 static and JIT code generators,
+as well as a large suite of scalar and interprocedural optimizations.<p>
+
+TODO: Works on: SPEC CPU 2000<p>
+TODO: Works on: Olden/Ptrdist benchmarks
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="install-instructions">Installation Instructions
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+FIXME
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="knownproblems">Known Problems
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+This section contains all known problems with the LLVM system, listed by
+component.  As new problems are discovered, they will be added to these
+sections, so it is important to check the <a
+href="http://llvm.cs.uiuc.edu/releases/1.0/ReleaseNotes.html">web version</a> of
+this document for up-to-date information.
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="portability"><hr size=0>Portability Problems</h4><ul>
+
+LLVM has only been extensively tested on ia32-linux and sparc-solaris machines.
+The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
+work on more platforms than that.  However, it is extremely likely that we
+missed something.  We welcome portability patches and error messages.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="core"><hr size=0>Known problems with the LLVM Core</h4><ul>
+
+<li>In the JIT, <tt>dlsym</tt> on a symbol compiled by the JIT will not work.<p>
+
+<li>The JIT does not use mutexes to protect its internal data structures.  As
+    such, execution of a threaded program could cause these data structures to
+    be corrupted.<p>
+
+<li>It is not possible to <tt>dlopen</tt> an LLVM bytecode file in the JIT.<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="c-fe"><hr size=0>Known problems with the C front-end</h4><ul>
+
+<li>Inline assembly is not yet supported.<p>
+
+<li>"long double" is transformed by the front-end into "double".  There is no
+     support for floating point data types of any size other than 32 and 64 bits.
+     <p>
+<li>C99 Variable sized arrays do not release stack memory when they go out of 
+    scope.  Thus, the following program may run out of stack space:
+<pre>
+    for (i = 0; i != 1000000; ++i) {
+      int X[n];
+      foo(X);
+    }
+</pre><p>
+
+<li>The following unix system functionality has not been tested and may not work:
+<ol>
+   <li><tt>sigsetjmp</tt>, <tt>siglongjmp</tt> - These are not turned into the
+       appropriate <tt>invoke</tt>/<tt>unwind</tt> instructions.
+   <li><tt>getcontext</tt>, <tt>setcontext</tt>, <tt>makecontext</tt>
+       - These functions have not been tested.
+</ol><p>
+
+<li>Although many GCC extensions are supported, some are not.  In particular,
+    the following extensions are known to <b>not be</b> supported:
+  <ol>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Local-Labels.html#Local%20Labels">Local Labels</a>: Labels local to a block. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">Labels as Values</a>:  Getting pointers to labels, and computed gotos. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>:  As in Algol and Pascal, lexical scoping of functions. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#Constructing%20Calls">Constructing Calls</a>: 	Dispatching a call to another function. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#Extended%20Asm">Extended Asm</a>: Assembler instructions with C expressions as operands. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Constraints.html#Constraints">Constraints</a>:  Constraints for asm operands
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Asm-Labels.html#Asm%20Labels">Asm Labels</a>:   Specifying the assembler name to use for a C symbol. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Explicit-Reg-Vars.html#Explicit%20Reg%20Vars">Explicit Reg Vars</a>: Defining variables residing in specified registers. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Return-Address.html#Return%20Address">Return Address</a>: Getting the return or frame address of a function. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html#Vector%20Extensions">Vector Extensions</a>: Using vector instructions through built-in functions. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Target-Builtins.html#Target%20Builtins">Target Builtins</a>:   Built-in functions specific to particular targets. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Thread-Local.html#Thread-Local">Thread-Local</a>: Per-thread variables. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Pragmas.html#Pragmas">Pragmas</a>: Pragmas accepted by GCC. 
+  </ol><p>
+
+  The following GCC extensions are <b>partially</b> supported.  An ignored
+  attribute means that the LLVM compiler ignores the presence of the attribute,
+  but the code should still work.  An unsupported attribute is one which is
+  ignored by the LLVM compiler, which will cause a different interpretation of
+  the program.<p>
+
+  <ol>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Length.html#Variable%20Length">Variable Length</a>:
+      Arrays whose length is computed at run time.<br>
+      Supported, but allocated stack space is not freed until the function returns (noted above).
+
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#Function%20Attributes">Function Attributes</a>:
+      Declaring that functions have no side effects, or that they can never return.<br>
+      <b>Supported:</b> <tt>format</tt>, <tt>format_arg</tt>, <tt>non_null</tt>, <tt>constructor</tt>, <tt>destructor</tt>, <tt>unused</tt>, <tt>deprecated</tt>,
+                 <tt>warn_unused_result</tt>, <tt>weak</tt><br>
+      <b>Ignored:</b> <tt>noreturn</tt>, <tt>noinline</tt>, <tt>always_inline</tt>, <tt>pure</tt>, <tt>const</tt>, <tt>nothrow</tt>,  <tt>malloc</tt>
+               <tt>no_instrument_function</tt>, <tt>cdecl</tt><br>
+      <b>Unsupported:</b> <tt>used</tt>, <tt>section</tt>, <tt>alias</tt>, <tt>visibility</tt>, <tt>regparm</tt>, <tt>stdcall</tt>,
+               <tt>fastcall</tt>, all other target specific attributes
+   
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html#Variable%20Attributes">Variable Attributes</a>:
+      Specifying attributes of variables.<br>
+      <b>Supported:</b> <tt>cleanup</tt>, <tt>common</tt>, <tt>nocommon</tt>,
+                        <tt>deprecated</tt>, <tt>transparent_union</tt>,
+                        <tt>unused</tt>, <tt>weak</tt><br>
+      <b>Unsupported:</b> <tt>aligned</tt>, <tt>mode</tt>, <tt>packed</tt>,
+                        <tt>section</tt>, <tt>shared</tt>, <tt>tls_model</tt>,
+                        <tt>vector_size</tt>, <tt>dllimport</tt>, 
+                        <tt>dllexport</tt>, all target specific attributes.<br>
+
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html#Type%20Attributes">Type Attributes</a>: 	Specifying attributes of types. 
+      <b>Supported:</b> <tt>transparent_union</tt>, <tt>unused</tt>,
+                        <tt>deprecated</tt>, <tt>may_alias</tt>
+      <b>Unsupported:</b> <tt>aligned</tt>, <tt>packed</tt>
+                        all target specific attributes.<br>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#Other%20Builtins">Other Builtins</a>:
+      Other built-in functions.<br>
+      We support all builtins which have a C language equivalent (e.g., 
+         <tt>__builtin_cos</tt>),  <tt>__builtin_alloca</tt>, 
+         <tt>__builtin_types_compatible_p</tt>, <tt>__builtin_choose_expr</tt>,
+         <tt>__builtin_constant_p</tt>, and <tt>__builtin_expect</tt> (ignored).
+  </ol><p>
+
+
+  The following extensions <b>are</b> known to be supported:
+  <ol>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement%20Exprs">Statement Exprs</a>:   Putting statements and declarations inside expressions. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof">Typeof</a>: <code>typeof</code>: referring to the type of an expression. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Lvalues.html#Lvalues">Lvalues</a>:   Using <code>?:</code>, <code>,</code> and casts in lvalues. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Conditionals.html#Conditionals">Conditionals</a>: Omitting the middle operand of a <code>?:</code> expression. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Long-Long.html#Long%20Long">Long Long</a>: Double-word integers.
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Complex.html#Complex">Complex</a>:   Data types for complex numbers. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Hex-Floats.html#Hex%20Floats">Hex Floats</a>:Hexadecimal floating-point constants. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Zero-Length.html#Zero%20Length">Zero Length</a>:  Zero-length arrays. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Empty-Structures.html#Empty%20Structures">Empty Structures</a>:  Structures with no members. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html#Variadic%20Macros">Variadic Macros</a>: 	Macros with a variable number of arguments. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Escaped-Newlines.html#Escaped%20Newlines">Escaped Newlines</a>:  Slightly looser rules for escaped newlines. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Subscripting.html#Subscripting">Subscripting</a>: Any array can be subscripted, even if not an lvalue. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html#Pointer%20Arith">Pointer Arith</a>:Arithmetic on <code>void</code>-pointers and function pointers. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Initializers.html#Initializers">Initializers</a>: Non-constant initializers. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Compound-Literals.html#Compound%20Literals">Compound Literals</a>: Compound literals give structures, unions or arrays as values. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Designated-Inits.html#Designated%20Inits">Designated Inits</a>: Labeling elements of initializers. 
+
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html#Cast%20to%20Union">Cast to Union</a>:Casting to union type from any member of the union. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Case-Ranges.html#Case%20Ranges">Case Ranges</a>: `case 1 ... 9' and such. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Mixed-Declarations.html#Mixed%20Declarations">Mixed Declarations</a>: 	Mixing declarations and code. 
+
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Prototypes.html#Function%20Prototypes">Function Prototypes</a>:  Prototype declarations and old-style definitions. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/C---Comments.html#C++%20Comments">C++ Comments</a>: C++ comments are recognized. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html#Dollar%20Signs">Dollar Signs</a>: Dollar sign is allowed in identifiers. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Character-Escapes.html#Character%20Escapes">Character Escapes</a>: <code>\e</code> stands for the character &lt;ESC&gt;. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Alignment.html#Alignment">Alignment</a>: Inquiring about the alignment of a type or variable. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Inline.html#Inline">Inline</a>: Defining inline functions (as fast as macros). 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Alternate-Keywords.html#Alternate%20Keywords">Alternate Keywords</a>:<code>__const__</code>, <code>__asm__</code>, etc., for header files. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Incomplete-Enums.html#Incomplete%20Enums">Incomplete Enums</a>:  <code>enum foo;</code>, with details to follow. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Names.html#Function%20Names">Function Names</a>: Printable strings which are the name of the current function. 
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Unnamed-Fields.html#Unnamed%20Fields">Unnamed Fields</a>: Unnamed struct/union fields within structs/unions.
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html#Attribute%20Syntax">Attribute Syntax</a>:  Formal syntax for attributes. 
+  </ol><p>
+
+  If you run into GCC extensions which have not been included in any of these
+  lists, please let us know (also including whether or not they work).
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="c++-fe"><hr size=0>Known problems with the C++ front-end</h4><ul>
+
+For this release, the C++ front-end is considered to be of <b>beta</b> quality.
+It works for a large number of simple programs, but has not been extensively
+tested.  We welcome bug reports though!<p>
+
+<li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
+    front-end</a><p>
+
+<li>The C++ front-end is based on a pre-release of the GCC 3.4 C++ parser.  This
+parser is significantly more standards compliant (and picky) than prior GCC
+versions.  For more information, see the C++ section of the <a
+href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
+
+<li>Destructors for local objects are not always run when a <tt>longjmp</tt> is
+    performed.  In particular, destructors for objects in the <tt>longjmp</tt>ing
+    function and in the <tt>setjmp</tt> receiver function may not be run.
+    Objects in intervening stack frames will be destroyed however (which is
+    better than most compilers).<p> 
+
+<li>The calling conventions and name mangling used by the LLVM C++ front-end do
+    follow the <a href="http://www.codesourcery.com/cxx-abi">Itanium C++
+    ABI</a>, and thus we should be binary compatible with native C++ code
+    compiled with a recent GCC compiler.  However, the exception handling
+    mechanisms are very different, so they will not interact correctly.
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="x86-be"><hr size=0>Known problems with the X86 back-end</h4><ul>
+
+<li>The X86 code generator does not currently support the <tt>unwind</tt>
+instruction, so code that throws a C++ exception or calls the C <tt>longjmp</tt>
+function will abort.<p>
+
+<li>Some executables produced by LLC seem to intermittently crash (extremely
+infrequently).  The cause of the problem has not been diagnosed, and does not
+affect the JIT.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="sparc-be"><hr size=0>Known problems with the Sparc back-end</h4><ul>
+
+<li>The Sparc code generator does not currently support the <tt>invoke</tt> or
+<tt>unwind</tt> instructions, so code produced by the C++ front-end and C code
+that calls the <tt>setjmp</tt> or <tt>longjmp</tt> functions will not compile.
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="c-be"><hr size=0>Known problems with the C back-end</h4><ul>
+
+<li>The C back-end produces code that violates the ANSI C Type-Based Alias
+Analysis rules.  As such, special options may be necessary to compile the code
+(for example, GCC requires the <tt>-fno-strict-aliasing</tt> option).  This
+problem probably cannot be fixed.<p>
+
+<li>Initializers for global variables that include floating point numbers may
+not be initialized with exactly the right floating point number, if the number
+is not accurately representable in decimal.  This prevents the Olden "power"
+benchmark from producing exactly the right results with the C backend.<p>
+
+<li>The code produces by the C back-end has only been tested with the Sun CC and
+GCC compilers.  It is possible that it will have to be adjusted to support other
+C compilers.<p>
+
+
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="additionalinfo">Additional Information
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+A wide variety of additional information is available on the LLVM web page,
+including mailing lists publications describing algorithms and components
+implemented in LLVM.  The web page also contains versions of the API
+documentation which is up-to-date with the CVS version of the source code.  You
+can access versions of these documents specific to this release by going into
+the "<tt>llvm/www/doc/</tt>" directory in the LLVM tree.<p>
+
+If you have any questions or comments about LLVM, please feel free to contact us
+via the mailing lists.<p>
+
+
+<!-- *********************************************************************** -->
+</ul>
+<!-- *********************************************************************** -->
+
+<hr><font size-1>
+
+<address>By: <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+<!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
+<!-- hhmts start -->
+Last modified: Wed Oct  1 23:56:16 CDT 2003
+<!-- hhmts end -->
+</body></html>
