@@ -121,7 +121,7 @@ set op2 = 0b101 in {
 #endif
 
 // Section A.6: Branch on Integer condition codes (Bicc) - p146
-#if 0 // instead of using deprecated version, use the predicted version below
+#if 0 /* instead of using deprecated version, use the predicted version below */
 set isDeprecated = 1 in {
   set op2 = 0b010 in {
     def BA     : F2_2<0b1000, "ba">;              // Branch always
