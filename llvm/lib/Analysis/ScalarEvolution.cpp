@@ -1465,14 +1465,19 @@ Value *SCEVAddRecExpr::expandCodeFor(ScalarEvolutionRewriter &SER,
     PHINode *PN = new PHINode(Ty, "indvar", Header->begin());
     PN->addIncoming(Constant::getNullValue(Ty), L->getLoopPreheader());
 
-    // Insert a unit add instruction after the PHI nodes in the header block.
-    BasicBlock::iterator I = PN;
-    while (isa<PHINode>(I)) ++I;
+    pred_iterator HPI = pred_begin(Header);
+    assert(HPI != pred_end(Header) && "Loop with zero preds???");
+    if (!getLoop()->contains(*HPI)) ++HPI;
+    assert(HPI != pred_end(Header) && getLoop()->contains(*HPI) &&
+           "No backedge in loop?");
 
-    Constant *One = Ty->isFloatingPoint() ?(Constant*)ConstantFP::get(Ty, 1.0)
-      :(Constant*)ConstantInt::get(Ty, 1);
+    // Insert a unit add instruction right before the terminator corresponding
+    // to the back-edge.
+    Constant *One = Ty->isFloatingPoint() ? (Constant*)ConstantFP::get(Ty, 1.0)
+      : (Constant*)ConstantInt::get(Ty, 1);
     Instruction *Add = BinaryOperator::create(Instruction::Add, PN, One,
-                                              "indvar.next", I);
+                                              "indvar.next",
+                                              (*HPI)->getTerminator());
 
     pred_iterator PI = pred_begin(Header);
     if (*PI == L->getLoopPreheader())
