@@ -173,7 +173,12 @@ InstructionSelection::InsertCodeForPhis(Function &F)
          PHINode *PN = dyn_cast<PHINode>(&*IIt); ++IIt) {
       // FIXME: This is probably wrong...
       Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
-        
+
+      // The leak detector shouldn't track these nodes.  They are not garbage,
+      // even though their parent field is never filled in.
+      //
+      LeakDetector::removeGarbageObject(PhiCpRes);
+
       // for each incoming value of the phi, insert phi elimination
       //
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
