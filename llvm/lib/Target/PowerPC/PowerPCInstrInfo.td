@@ -1,4 +1,4 @@
-//===- PowerPCInstrInfo.td - Describe the PowerPC Instruction Set -*- C++ -*-=//
+//===- PowerPCInstrInfo.td - The PowerPC Instruction Set -----*- tablegen -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
 //

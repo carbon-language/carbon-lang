@@ -16,31 +16,31 @@ $(SourceDepend): PowerPCGenRegisterInfo.h.inc PowerPCGenRegisterNames.inc \
                  PowerPCGenInstrInfo.inc
 
 PowerPCGenRegisterNames.inc:: $(SourceDir)/PowerPC.td \
-                           $(SourceDir)/PowerPCReg.td \
+                           $(SourceDir)/PowerPCRegisterInfo.td \
                            $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td register names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-enums -o $@
 
 PowerPCGenRegisterInfo.h.inc:: $(SourceDir)/PowerPC.td \
-                           $(SourceDir)/PowerPCReg.td \
+                           $(SourceDir)/PowerPCRegisterInfo.td \
                            $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td register information header with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc-header -o $@
 
 PowerPCGenRegisterInfo.inc:: $(SourceDir)/PowerPC.td \
-                         $(SourceDir)/PowerPCReg.td \
+                         $(SourceDir)/PowerPCRegisterInfo.td \
                          $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td register information implementation with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc -o $@
 
 PowerPCGenInstrNames.inc:: $(SourceDir)/PowerPC.td \
-                       $(SourceDir)/PowerPCInstrs.td \
+                       $(SourceDir)/PowerPCInstrInfo.td \
                        $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td instruction names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-enums -o $@
 
 PowerPCGenInstrInfo.inc:: $(SourceDir)/PowerPC.td \
-                      $(SourceDir)/PowerPCInstrs.td \
+                      $(SourceDir)/PowerPCInstrInfo.td \
                       $(SourceDir)/../Target.td $(TBLGEN)
 	@echo "Building PowerPC.td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@

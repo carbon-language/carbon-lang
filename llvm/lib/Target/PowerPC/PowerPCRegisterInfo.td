@@ -1,4 +1,4 @@
-//===- PowerPCReg.td - Describe the PowerPC Register File -------*- C++ -*-===//
+//===- PowerPCRegisterInfo.td - The PowerPC Register File --*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

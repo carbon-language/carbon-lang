@@ -18,8 +18,8 @@ include "../Target.td"
 // Register File Description
 //===----------------------------------------------------------------------===//
 
-include "PowerPCReg.td"
-include "PowerPCInstrs.td"
+include "PowerPCRegisterInfo.td"
+include "PowerPCInstrInfo.td"
 
 def PowerPCInstrInfo : InstrInfo {
   let PHIInst  = PHI;
