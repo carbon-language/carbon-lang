@@ -704,7 +704,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           (Op1I->getOperand(0) == Op0 || Op1I->getOperand(1) == Op0)) {
         Value *OtherOp = Op1I->getOperand(Op1I->getOperand(0) == Op0);
 
-        Instruction *NewNot = BinaryOperator::createNot(OtherOp, "B.not", &I);
+        Value *NewNot =
+          InsertNewInstBefore(BinaryOperator::createNot(OtherOp, "B.not"), I);
         return BinaryOperator::create(Instruction::And, Op0, NewNot);
       }
 
@@ -1249,10 +1250,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // (~A | ~B) == (~(A & B)) - Demorgan's Law
   if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-    Instruction *And = BinaryOperator::create(Instruction::And, Op0NotVal,
-                                              Op1NotVal,I.getName()+".demorgan",
-                                              &I);
-    WorkList.push_back(And);
+    Value *And = InsertNewInstBefore(
+                BinaryOperator::create(Instruction::And, Op0NotVal,
+                                       Op1NotVal,I.getName()+".demorgan"), I);
     return BinaryOperator::createNot(And);
   }
 
@@ -1374,8 +1374,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
         cast<BinaryOperator>(Op0I)->swapOperands();
       if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
-        Value *NotB = BinaryOperator::createNot(Op1, Op1->getName()+".not", &I);
-        WorkList.push_back(cast<Instruction>(NotB));
+        Value *NotB = InsertNewInstBefore(BinaryOperator::createNot(Op1,
+                                                     Op1->getName()+".not"), I);
         return BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
                                       NotB);
       }
@@ -1508,7 +1508,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                   return &I;
                 }
               }
-
         } else if (SelectInst *SI = dyn_cast<SelectInst>(LHSI)) {
           // If either operand of the select is a constant, we can fold the
           // comparison into the select arms, which will cause one to be
@@ -3051,9 +3050,12 @@ bool InstCombiner::runOnFunction(Function &F) {
         DEBUG(std::cerr << "IC: Old = " << *I
                         << "    New = " << *Result);
 
-        // Instructions can end up on the worklist more than once.  Make sure
-        // we do not process an instruction that has been deleted.
-        removeFromWorkList(I);
+        // Everything uses the new instruction now.
+        I->replaceAllUsesWith(Result);
+
+        // Push the new instruction and any users onto the worklist.
+        WorkList.push_back(Result);
+        AddUsersToWorkList(*Result);
 
         // Move the name to the new instruction first...
         std::string OldName = I->getName(); I->setName("");
@@ -3069,8 +3071,9 @@ bool InstCombiner::runOnFunction(Function &F) {
           if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
             WorkList.push_back(OpI);
 
-        // Everything uses the new instruction now...
-        I->replaceAllUsesWith(Result);
+        // Instructions can end up on the worklist more than once.  Make sure
+        // we do not process an instruction that has been deleted.
+        removeFromWorkList(I);
 
         // Erase the old instruction.
         InstParent->getInstList().erase(I);
@@ -3090,13 +3093,10 @@ bool InstCombiner::runOnFunction(Function &F) {
           // occurrances of this instruction.
           removeFromWorkList(I);
           I->getParent()->getInstList().erase(I);
-          Result = 0;
+        } else {
+          WorkList.push_back(Result);
+          AddUsersToWorkList(*Result);
         }
-      }
-
-      if (Result) {
-        WorkList.push_back(Result);
-        AddUsersToWorkList(*Result);
       }
       Changed = true;
     }
