@@ -10,6 +10,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/ValueHolderImpl.h"
 #include "llvm/Support/STLExtras.h"
+#include "llvm/Type.h"
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a DefHolderImpl.h file seperate from DefHolder.h!  :(
@@ -17,7 +18,7 @@
 template class ValueHolder<Method, Module, Module>;
 
 Module::Module()
-  : Value(0/*TODO: REAL TYPE*/, Value::ModuleVal, ""), SymTabValue(this),
+  : Value(Type::VoidTy, Value::ModuleVal, ""), SymTabValue(this),
     MethodList(this, this) {
 }
 
