@@ -112,7 +112,7 @@ namespace {
     void visitStoreInst(StoreInst &SI);
     void visitCallInst(CallInst &CI);
     void visitInvokeInst(InvokeInst &II);
-    void visitSetCondInst(SetCondInst &SCI) {}  // SetEQ & friends are ignored
+    void visitSetCondInst(SetCondInst &SCI);
     void visitFreeInst(FreeInst &FI);
     void visitCastInst(CastInst &CI);
     void visitInstruction(Instruction &I);
@@ -324,6 +324,13 @@ void GraphBuilder::visitSelectInst(SelectInst &SI) {
   Dest.mergeWith(getValueDest(*SI.getOperand(1)));
   Dest.mergeWith(getValueDest(*SI.getOperand(2)));
 }
+
+void GraphBuilder::visitSetCondInst(SetCondInst &SCI) {
+  if (!isPointerType(SCI.getOperand(0)->getType()) ||
+      isa<ConstantPointerNull>(SCI.getOperand(1))) return; // Only pointers
+  ScalarMap[SCI.getOperand(0)].mergeWith(getValueDest(*SCI.getOperand(1)));
+}
+
 
 void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
