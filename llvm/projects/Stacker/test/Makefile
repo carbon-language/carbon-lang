@@ -34,28 +34,38 @@ TESTS = $(LOGIC_TESTS) $(ARITHMETIC_TESTS) $(BITWISE_TESTS) $(STACK_TESTS) \
 all :: test_each
 
 test_each: $(TESTS)
-	$(BUILD_SRC_DIR)/runtests $(BUILD_OBJ_DIR) $(TESTS) 
+	@$(ECHO) "Running Tests..."
+	$(VERB)$(BUILD_SRC_DIR)/runtests $(BUILD_OBJ_DIR) $(TESTS) 
 
 % : %.s testing.s
-	gcc -ggdb -L$(BUILD_OBJ_ROOT)/lib/Debug testing.s -lstkr_runtime -o $* $*.s
+	@$(ECHO) "Compiling and Linking $< to $*"
+	$(VERB)gcc -ggdb -L$(BUILD_OBJ_ROOT)/lib/Debug testing.s -lstkr_runtime -o $* $*.s
 
 %.s : %.bc
-	llc -f -o $*.s $<
+	@$(ECHO) "Compiling $< to $*.s"
+	$(VERB)llc -f -o $*.s $<
 
 ifdef OPTIMIZE
 %.bc : %.st $(BUILD_OBJ_ROOT)/tools/Debug/stkrc
-	stkrc -e -o - $< | opt -stats -q -f -o $*.bc -adce -branch-combine -cee -constmerge -constprop -dce -die -gcse -globaldce -instcombine -pre
+	@$(ECHO) "Compiling and Optimizing $< to $*.bc"
+	$(VERB)stkrc -e -o - $< | opt -stats -q -f -o $*.bc -adce -branch-combine -cee -constmerge -constprop -dce -die -gcse -globaldce -instcombine -pre
 else
 %.bc : %.st $(BUILD_OBJ_ROOT)/tools/Debug/stkrc
-	stkrc -e -f -o $*.bc $< 
+	@$(ECHO) "Compiling $< to $*.bc"
+	$(VERB)stkrc -e -f -o $*.bc $< 
 endif
 
 %.ll : %.bc
-	llvm-dis -o $*.ll $<
+	@$(ECHO) "Disassembling $< to $*.ll"
+	$(VERB)llvm-dis -o $*.ll $<
+
+TESTS_LL = $(TESTS:%=%.ll)
+TESTS_BC = $(TESTS:%=%.bc)
+TESTS_S  = $(TESTS:%=%.s)
 
 clean :: 
-	rm -f $(TESTS)
+	$(VERB)rm -f gmon.out $(TESTS_LL) $(TESTS_BC) $(TESTS_S) $(TESTS) testing.bc testing.s testing.ll
 
-.SUFFIXES: .st .s .ll
+.SUFFIXES: .st .s .ll .bc
 .PRECIOUS: %.s %.ll %.bc %.st
-.PHONY: test_each test_asm
+.PHONY: test_each

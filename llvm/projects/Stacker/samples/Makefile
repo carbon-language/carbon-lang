@@ -14,34 +14,46 @@ LEVEL = ../../..
 #
 DIRS = 
 
-TESTS = fibonacci hello prime
+SAMPLES = fibonacci hello prime
 
-all :: $(TESTS)
+all :: $(SAMPLES)
 
 ifdef OPTIMIZE
 %.bc : %.st 
-	stkrc -e -o - $< | opt -stats -q -f -o $*.bc \
+	@$(ECHO) "Compiling and Optimizing $< to $*.bc"
+	$(VERB)stkrc -e -o - $< | opt -stats -q -f -o $*.bc \
 	    -aa-eval -adce -branch-combine -cee -constmerge -constprop -dce -die -ds-aa \
 	    -ds-opt -gcse -globaldce -indvars -inline -instcombine \
 	    -ipconstprop -licm -loopsimplify -mem2reg -pre -sccp -simplifycfg \
 	    -tailcallelim -verify
 else
 %.bc : %.st
-	stkrc -e -f -o $*.bc $< 
+	@$(ECHO) "Compiling $< to $*.bc"
+	$(VERB)stkrc -e -f -o $*.bc $< 
 endif
 
 %.s : %.bc
-	llc -f -o $*.s $<
+	@$(ECHO) "Compiling $< to $*.s"
+	$(VERB)llc -f -o $*.s $<
 
 % : %.s
-	gcc -g -L$(BUILD_OBJ_ROOT)/lib/Debug -lstkr_runtime -o $* $*.s
+	@$(ECHO) "Compiling and Linking $< to $*"
+	$(VERB)gcc -g -L$(BUILD_OBJ_ROOT)/lib/Debug -lstkr_runtime -o $* $*.s
 
 %.ll : %.bc
-	llvm-dis -f -o $*.ll $<
+	@$(ECHO) "Disassembling $< to $*.ll"
+	$(VERB)llvm-dis -f -o $*.ll $<
 
 %.bc :  $(BUILD_OBJ_ROOT)/tools/Debug/stkrc
 
 .PRECIOUS: %.bc %.s %.ll %.st
+
+SAMPLES_LL = $(SAMPLES:%=%.ll)
+SAMPLES_BC = $(SAMPLES:%=%.bc)
+SAMPLES_S  = $(SAMPLES:%=%.s)
+
+clean ::
+	$(VERB)rm -f gmon.out $(SAMPLES_LL) $(SAMPLES_BC) $(SAMPLES_S) $(SAMPLES)
 #
 # Include the Master Makefile that knows how to build all.
 #

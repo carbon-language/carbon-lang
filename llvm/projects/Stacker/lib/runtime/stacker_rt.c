@@ -17,10 +17,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ctype.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 extern long _index_;
 extern int _stack_[1024];
+extern void _MAIN_();
 
 void
 _stacker_dump_stack_()
@@ -31,4 +34,39 @@ _stacker_dump_stack_()
     {
 	printf("#%03d: %d\n", i, _stack_[i] );
     }
+}
+
+int
+main ( int argc, char** argv )
+{
+    // Avoid modifying argc
+    int a = argc;
+
+    // Make sure we're starting with the right index
+    _index_ = 0;
+
+    // Copy the arguments to the stack in reverse order
+    // so that they get popped in the order presented
+    while ( a > 0 )
+    {
+	if ( isdigit( argv[--a][0] ) )
+	{
+	    _stack_[_index_++] = atoi( argv[a] );
+	}
+	else
+	{
+	    _stack_[_index_++] = (int) argv[a];
+	}
+    }
+
+    // Put the argument count on the stack
+    _stack_[_index_] = argc;
+
+    // Invoke the user's main program
+    _MAIN_();
+
+    // Return last item on the stack
+    if ( _index_ >= 0 )
+	return _stack_[_index_];
+    return -1;
 }

@@ -139,7 +139,7 @@
 ################################################################################
 : consider_prime 
     DUP 			( save the prime number to consider )
-    10000 < IF 		( check to see if we are done yet )
+    1000000 < IF 		( check to see if we are done yet )
         done 			( we are done, call "done" )
     ENDIF 
     ++ 				( increment to next prime number )
@@ -157,6 +157,8 @@
 # STACK>: empty
 ################################################################################
 : find_primes 
+    "Prime Numbers: " >s CR	( say hello )
+    DROP			( get rid of that pesky string )
     1 				( stoke the fires )
     print			( print the first one, we know its prime )
     WHILE  			( loop while the prime to consider is non zero )
@@ -165,12 +167,69 @@
 ; 
 
 ################################################################################
-# The MAIN program just prints a banner and calls find_primes.
-# STACK<: empty
-# STACK>: empty
+#
+################################################################################
+: say_yes
+    >d				( Print the prime number )
+    " is prime."		( push string to output )
+    >s				( output it )
+    CR				( print carriage return )
+    DROP			( pop string )
+;
+
+: say_no
+    >d				( Print the prime number )
+    " is NOT prime."		( push string to put out )
+    >s				( put out the string )
+    CR				( print carriage return )
+    DROP			( pop string )
+;
+
+################################################################################
+# This definition processes a single command line argument and determines if it
+# is a prime number or not.
+# STACK<:
+#    n - number of arguments
+#    arg1 - the prime numbers to examine
+# STACK>:
+#    n-1 - one less than number of arguments
+#    arg2 - we processed one argument
+################################################################################
+: do_one_argument
+    --				( decrement loop counter )
+    SWAP			( get the argument value  )
+    is_prime IF			( determine if its prime )
+        say_yes			( uhuh )
+    ELSE
+        say_no			( nope )
+    ENDIF
+    DROP			( done with that argument )
+;
+
+################################################################################
+# The MAIN program just prints a banner and processes its arguments.
+# STACK<:
+#    n - number of arguments
+#    ... - the arguments
+################################################################################
+: process_arguments
+    WHILE			( while there are more arguments )
+       do_one_argument		( process one argument )
+    END
+;
+    
+################################################################################
+# The MAIN program just prints a banner and processes its arguments.
+# STACK<: arguments
 ################################################################################
 : MAIN 
-    "Prime Numbers: " >s CR	( say hello )
-    DROP			( get rid of that pesky string )
-    find_primes  		( see how many we can find )
+    NIP				( get rid of the program name )
+    --				( reduce number of arguments )
+    DUP				( save the arg counter )
+    1 <= IF			( See if we got an argument )
+        process_arguments	( tell user if they are prime )
+    ELSE
+        find_primes		( see how many we can find )
+    ENDIF
+    0				( push return code )
 ;

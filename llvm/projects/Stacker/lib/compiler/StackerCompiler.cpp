@@ -131,8 +131,8 @@ StackerCompiler::compile(
 	TheStack = new GlobalVariable( 
 	    /*type=*/ stack_type, 
 	    /*isConstant=*/ false, 
-	    /*Linkage=*/ GlobalValue::AppendingLinkage, 
-	    /*initializer=*/Constant::getNullValue(stack_type), 
+	    /*Linkage=*/ GlobalValue::LinkOnceLinkage, 
+	    /*initializer=*/ Constant::getNullValue(stack_type),
 	    /*name=*/ "_stack_",
 	    /*parent=*/ TheModule 
 	);
@@ -144,7 +144,7 @@ StackerCompiler::compile(
 	    /*type=*/Type::LongTy, 
 	    /*isConstant=*/false,
 	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/Constant::getNullValue(Type::LongTy), 
+	    /*initializer=*/ Constant::getNullValue(Type::LongTy),
 	    /*name=*/"_index_",
 	    /*parent=*/TheModule
 	);
@@ -559,28 +559,19 @@ Function*
 StackerCompiler::handle_main_definition( Function* func )
 {
     // Set the name of the function defined as the Stacker main
+    // This will get called by the "main" that is defined in 
+    // the runtime library.
     func->setName( "_MAIN_");
-
-    // Create the actual main for the runtime system.
-    //std::vector<const Type*> params; // No parameters
-    //FunctionType* main_type = FunctionType::get( Type::IntTy, params, false );
-    Function* SystemMain = new Function(
-	DefinitionType, 
-	GlobalValue::ExternalLinkage,
-	"main", TheModule);
-
-    // Create a basic block that just calls the STACKERMAIN function. Note
-    // that the basic block is automatically inserted into the end of SystemMain
-    BasicBlock* bb = new BasicBlock( (echo?"main":"a"), SystemMain ) ;
-    bb->getInstList().push_back( new CallInst( func, no_arguments) );
-    bb->getInstList().push_back( new ReturnInst() ); 
 
     // Turn "_stack_" into an initialized variable since this is the main
     // module. This causes it to not be "external" but defined in this module.
     TheStack->setInitializer( Constant::getNullValue(stack_type) );
+    TheStack->setLinkage( GlobalValue::LinkOnceLinkage );
 
     // Turn "_index_" into an intialized variable for the same reason.
     TheIndex->setInitializer( Constant::getNullValue(Type::LongTy) );
+    TheIndex->setLinkage( GlobalValue::LinkOnceLinkage );
+
     return func;
 }
 

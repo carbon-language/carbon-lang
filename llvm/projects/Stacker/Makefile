@@ -12,9 +12,9 @@ LEVEL = ../..
 #
 # Directories that needs to be built.
 #
-# Disable the 'test' subdirectory until it works correctly
-#   test
-DIRS = lib tools samples
+# Disable the 'test' and 'samples' subdirectories until they work correctly
+#DIRS = lib tools test samples
+DIRS = lib tools
 
 #
 # Include the Master Makefile that knows how to build all.
