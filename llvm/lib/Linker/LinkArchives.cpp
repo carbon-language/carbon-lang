@@ -196,7 +196,6 @@ bool llvm::LinkInArchive(Module *M,
          I != E; ++I) {
       // Get the module we must link in.
       Module* aModule = (*I)->releaseModule();
-      std::cout << "Linked: " << aModule->getModuleIdentifier() << "\n";
 
       // Link it in
       if (LinkModules(M, aModule, ErrorMessage)) {
