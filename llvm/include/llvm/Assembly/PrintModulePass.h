@@ -28,7 +28,7 @@ public:
   }
   
   bool run(Module &M) {
-    (*Out) << M;
+    (*Out) << M << std::flush;
     return false;
   }
 
