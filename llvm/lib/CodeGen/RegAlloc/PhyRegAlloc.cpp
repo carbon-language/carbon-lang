@@ -211,20 +211,6 @@ void PhyRegAlloc::addInterference(const Value *Def,
 void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst, 
 				       const ValueSet *LVSetAft) {
 
-  // Now find the LR of the return value of the call
-  // We do this because, we look at the LV set *after* the instruction
-  // to determine, which LRs must be saved across calls. The return value
-  // of the call is live in this set - but it does not interfere with call
-  // (i.e., we can allocate a volatile register to the return value)
-  //
-  LiveRange *RetValLR = NULL;
-  const Value *RetVal = MRI.getCallInstRetVal( MInst );
-
-  if( RetVal ) {
-    RetValLR = LRI.getLiveRangeForValue( RetVal );
-    assert( RetValLR && "No LR for RetValue of call");
-  }
-
   if( DEBUG_RA)
     cerr << "\n For call inst: " << *MInst;
 
@@ -243,11 +229,10 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
       printSet(*LR);
     }
    
-
     // LR can be null if it is a const since a const 
     // doesn't have a dominating def - see Assumptions above
     //
-    if( LR && (LR != RetValLR) )   {  
+    if( LR )   {  
       LR->setCallInterference();
       if( DEBUG_RA) {
 	cerr << "\n  ++Added call interf for LR: " ;
@@ -255,6 +240,26 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
       }
     }
 
+  }
+
+  // Now find the LR of the return value of the call
+  // We do this because, we look at the LV set *after* the instruction
+  // to determine, which LRs must be saved across calls. The return value
+  // of the call is live in this set - but it does not interfere with call
+  // (i.e., we can allocate a volatile register to the return value)
+  //
+  if( const Value *RetVal = MRI.getCallInstRetVal( MInst )) {
+    LiveRange *RetValLR = LRI.getLiveRangeForValue( RetVal );
+    assert( RetValLR && "No LR for RetValue of call");
+    RetValLR->clearCallInterference();
+  }
+
+  // If the CALL is an indirect call, find the LR of the function pointer.
+  // That has a call interference because it conflicts with outgoing args.
+  if( const Value *AddrVal = MRI.getCallInstIndirectAddrVal( MInst )) {
+    LiveRange *AddrValLR = LRI.getLiveRangeForValue( AddrVal );
+    assert( AddrValLR && "No LR for indirect addr val of call");
+    AddrValLR->setCallInterference();
   }
 
 }
