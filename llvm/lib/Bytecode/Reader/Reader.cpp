@@ -509,21 +509,15 @@ void BytecodeParser::ParseCompactionTable(const unsigned char *&Buf,
                                           const unsigned char *End) {
 
   while (Buf != End) {
-    unsigned NumEntries;
+    unsigned NumEntries = read_vbr_uint(Buf, End);
     unsigned Ty;
 
-    NumEntries = read_vbr_uint(Buf, End);
-    switch (NumEntries & 3) {
-    case 0:
-    case 1:
-    case 2:
-      Ty = NumEntries >> 2;
-      NumEntries &= 3;
-      break;
-    case 3:
+    if ((NumEntries & 3) == 3) {
       NumEntries >>= 2;
       Ty = read_vbr_uint(Buf, End);
-      break;
+    } else {
+      Ty = NumEntries >> 2;
+      NumEntries &= 3;
     }
 
     if (Ty >= CompactionTable.size())
