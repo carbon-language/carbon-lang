@@ -61,9 +61,9 @@ class PhyRegAlloc {
   const TargetRegInfo &MRI;             // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
-  // Map to indicate whether operands of each MachineInstr have been updated
-  // according to their assigned colors.  This is primarily for debugging and
-  // could be removed in the long run.
+  // Map to indicate whether operands of each MachineInstr have been
+  // updated according to their assigned colors.  This is only used in
+  // assertion checking (debug builds).
   std::map<const MachineInstr *, bool> OperandsColoredMap;
   
   // AddedInstrMap - Used to store instrns added in this phase
