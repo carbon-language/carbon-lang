@@ -1293,7 +1293,6 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     }
 
     // Turn the byte code into # iterations
-    unsigned ByteReg;
     unsigned CountReg;
     unsigned Opcode;
     switch (Align & 3) {
@@ -1302,6 +1301,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
       } else {
         CountReg = makeAnotherReg(Type::IntTy);
+        unsigned ByteReg = getReg(CI.getOperand(3));
         BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(1);
       }
       Opcode = X86::REP_MOVSW;
@@ -1311,12 +1311,12 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         CountReg = getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
       } else {
         CountReg = makeAnotherReg(Type::IntTy);
+        unsigned ByteReg = getReg(CI.getOperand(3));
         BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(2);
       }
       Opcode = X86::REP_MOVSD;
       break;
-    case 1:   // BYTE aligned
-    case 3:   // BYTE aligned
+    default:  // BYTE aligned
       CountReg = getReg(CI.getOperand(3));
       Opcode = X86::REP_MOVSB;
       break;
@@ -1341,7 +1341,6 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     }
 
     // Turn the byte code into # iterations
-    unsigned ByteReg;
     unsigned CountReg;
     unsigned Opcode;
     if (ConstantInt *ValC = dyn_cast<ConstantInt>(CI.getOperand(2))) {
@@ -1354,6 +1353,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
           CountReg =getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/2));
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
+          unsigned ByteReg = getReg(CI.getOperand(3));
           BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(1);
         }
         BuildMI(BB, X86::MOVri16, 1, X86::AX).addZImm((Val << 8) | Val);
@@ -1364,14 +1364,14 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
           CountReg =getReg(ConstantUInt::get(Type::UIntTy, I->getRawValue()/4));
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
+          unsigned ByteReg = getReg(CI.getOperand(3));
           BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addZImm(2);
         }
         Val = (Val << 8) | Val;
         BuildMI(BB, X86::MOVri32, 1, X86::EAX).addZImm((Val << 16) | Val);
         Opcode = X86::REP_STOSD;
         break;
-      case 1:   // BYTE aligned
-      case 3:   // BYTE aligned
+      default:  // BYTE aligned
         CountReg = getReg(CI.getOperand(3));
         BuildMI(BB, X86::MOVri8, 1, X86::AL).addZImm(Val);
         Opcode = X86::REP_STOSB;
