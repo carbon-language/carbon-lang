@@ -32,9 +32,11 @@ struct GraphTraits {
 
 
   // If anyone tries to use this class without having an appropriate
-  // specialization make an error.  If you get this error, it's because you
+  // specialization, make an error.  If you get this error, it's because you
   // need to include the appropriate specialization of GraphTraits<> for your
-  // graph, or you need to define it for a new graph type.
+  // graph, or you need to define it for a new graph type. Either that or 
+  // your argument to XXX_begin(...) is unknown or needs to have the proper .h
+  // file #include'd.
   //
   typedef typename GraphType::UnknownGraphTypeError NodeType;
 };
@@ -46,7 +48,11 @@ struct GraphTraits {
 // the graph exactly what that is.  Here's an example of usage with the
 // df_iterator:
 //
-// df_iterator<Inverse<Method> > I = idf_begin(M), E = idf_end(M);
+// idf_iterator<Method*> I = idf_begin(M), E = idf_end(M);
+// for (; I != E; ++I) { ... }
+//
+// Which is equivalent to:
+// df_iterator<Inverse<Method*> > I = idf_begin(M), E = idf_end(M);
 // for (; I != E; ++I) { ... }
 //
 template <class GraphType>
