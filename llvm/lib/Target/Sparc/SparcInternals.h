@@ -284,11 +284,16 @@ class UltraSparcRegInfo : public MachineRegInfo {
                          PhyRegAlloc &PRA) const;
 
 
-  // To find whether a particular call is to a var arg method
-  //
-  bool isVarArgCall(const MachineInstr *CallMI) const;
+  // Compute which register can be used for an argument, if any
+  // 
+  int regNumForIntArg(bool inCallee, bool isVarArgsCall,
+                      unsigned argNo, unsigned intArgNo, unsigned fpArgNo,
+                      unsigned& regClassId) const;
 
-
+  int regNumForFPArg(unsigned RegType, bool inCallee, bool isVarArgsCall,
+                     unsigned argNo, unsigned intArgNo, unsigned fpArgNo,
+                     unsigned& regClassId) const;
+  
 public:
   UltraSparcRegInfo(const UltraSparc &tgt);
 
@@ -429,7 +434,7 @@ public:
   //
   MachineInstr * cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
 			     int RegType) const;
-
+  
   MachineInstr * cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
 			     int Offset, int RegType) const;
 
@@ -506,32 +511,32 @@ public:
   // MachineCodeInfoForMethod object for the given method.
   // 
   int getFirstIncomingArgOffset  (MachineCodeForMethod& mcInfo,
-                                  bool& pos) const
+                                  bool& growUp) const
   {
-    pos = true;                         // arguments area grows upwards
+    growUp = true;                         // arguments area grows upwards
     return FirstIncomingArgOffsetFromFP;
   }
   int getFirstOutgoingArgOffset  (MachineCodeForMethod& mcInfo,
-                                  bool& pos) const
+                                  bool& growUp) const
   {
-    pos = true;                         // arguments area grows upwards
+    growUp = true;                         // arguments area grows upwards
     return FirstOutgoingArgOffsetFromSP;
   }
   int getFirstOptionalOutgoingArgOffset(MachineCodeForMethod& mcInfo,
-                                        bool& pos)const
+                                        bool& growUp)const
   {
-    pos = true;                         // arguments area grows upwards
+    growUp = true;                         // arguments area grows upwards
     return FirstOptionalOutgoingArgOffsetFromSP;
   }
   
   int getFirstAutomaticVarOffset (MachineCodeForMethod& mcInfo,
-                                  bool& pos) const;
+                                  bool& growUp) const;
   int getRegSpillAreaOffset      (MachineCodeForMethod& mcInfo,
-                                  bool& pos) const;
+                                  bool& growUp) const;
   int getTmpAreaOffset           (MachineCodeForMethod& mcInfo,
-                                  bool& pos) const;
+                                  bool& growUp) const;
   int getDynamicAreaOffset       (MachineCodeForMethod& mcInfo,
-                                  bool& pos) const;
+                                  bool& growUp) const;
 
   //
   // These methods specify the base register used for each stack area
