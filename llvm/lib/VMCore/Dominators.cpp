@@ -298,6 +298,8 @@ bool DominatorSet::runOnFunction(Function &F) {
   return false;
 }
 
+void DominatorSet::stub() {}
+
 namespace llvm {
 static std::ostream &operator<<(std::ostream &o,
                                 const std::set<BasicBlock*> &BBs) {
