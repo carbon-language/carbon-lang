@@ -41,7 +41,7 @@ VPATH=$(PROJ_SRC_DIR)
 # Reset the list of suffixes we know how to build
 #--------------------------------------------------------------------
 .SUFFIXES:
-.SUFFIXES: .c .cpp .h .hpp .y .l .lo .o .a .bc .td .ps .dot 
+.SUFFIXES: .c .cpp .cc .h .hpp .y .l .lo .o .a .bc .td .ps .dot 
 .SUFFIXES: $(SHLIBEXT) $(SUFFIXES)
 
 #--------------------------------------------------------------------
@@ -910,6 +910,12 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
 
+$(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build (PIC)"
+	$(Verb) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ; \
+	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
+	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
+
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
 	$(Verb) if $(LTCompile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
@@ -927,6 +933,12 @@ $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
 
+$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build"
+	$(Verb) if $(Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.CXXd $< -o $@ ; \
+	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
+	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
+
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build"
 	$(Verb) if $(Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.Cd $< -o $@ ; \
@@ -936,10 +948,16 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 endif
 
 #---------------------------------------------------------
-# Create .bc files in the ObjDir directory from .cpp and .c files...
+# Create .bc files in the ObjDir directory from .cpp .cc and .c files...
 #---------------------------------------------------------
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
+	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
+	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
+	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
+
+$(ObjDir)/%.bc: %.cc $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
@@ -959,6 +977,10 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(LTCompile.CXX) $< -o $@ 
 
+$(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build (PIC)"
+	$(LTCompile.CXX) $< -o $@ 
+
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
 	$(LTCompile.C) $< -o $@ 
@@ -969,6 +991,10 @@ $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Compile.CXX) $< -o $@ 
 
+$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build"
+	$(Compile.CXX) $< -o $@ 
+
 $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build"
 	$(Compile.C) $< -o $@ 
@@ -976,6 +1002,10 @@ endif
 
 $(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
+	$(BCCompile.CXX) $< -o $@ 
+
+$(ObjDir)/%.bc: %.cc $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ 
 
 $(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
@@ -1142,6 +1172,7 @@ endif
 # which they can be "generated."  This allows make to ignore them and
 # reproduce the dependency lists.
 %.h:: ;
+%.hpp:: ;
 
 # Define clean-local to clean the current directory. Note that this uses a
 # very conservative approach ensuring that empty variables do not cause 
