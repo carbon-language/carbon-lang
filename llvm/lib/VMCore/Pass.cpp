@@ -6,175 +6,168 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
+#include "llvm/PassManager.h"
+#include "llvm/Module.h"
+#include "llvm/Method.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+
+// Source of unique analysis ID #'s.
+unsigned AnalysisID::NextID = 0;
+
+void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
+  assert(P->Resolver == 0 && "Pass already in a PassManager!");
+  P->Resolver = AR;
+}
+
 
 // Pass debugging information.  Often it is useful to find out what pass is
 // running when a crash occurs in a utility.  When this library is compiled with
 // debugging on, a command line option (--debug-pass) is enabled that causes the
 // pass name to be printed before it executes.
 //
-#ifdef NDEBUG
-// If not debugging, remove the option
-inline static void PrintPassInformation(const char *, Pass *, Value *) { }
-#else
-
+#ifndef NDEBUG
 #include "Support/CommandLine.h"
 #include <typeinfo>
 #include <iostream>
 
-// The option is hidden from --help by default
-static cl::Flag PassDebugEnabled("debug-pass",
-  "Print pass names as they are executed by the PassManager", cl::Hidden);
+// Different debug levels that can be enabled...
+enum PassDebugLevel {
+  None, PassStructure, PassExecutions, PassDetails
+};
 
-static void PrintPassInformation(const char *Action, Pass *P, Value *V) {
-  if (PassDebugEnabled)
-    std::cerr << Action << " Pass '" << typeid(*P).name() << "' on "
-              << typeid(*V).name() << " '" << V->getName() << "'...\n";
+static cl::Enum<enum PassDebugLevel> PassDebugging("debug-pass", cl::Hidden,
+  "Print PassManager debugging information",
+  clEnumVal(None          , "disable debug output"),
+  clEnumVal(PassStructure , "print pass structure before run()"),
+  clEnumVal(PassExecutions, "print pass name before it is executed"),
+  clEnumVal(PassDetails   , "print pass details when it is executed"), 0); 
+
+void PMDebug::PrintPassStructure(Pass *P) {
+  if (PassDebugging >= PassStructure)
+    P->dumpPassStructure();
+}
+
+void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
+                                   Pass *P, Value *V) {
+  if (PassDebugging >= PassExecutions) {
+    std::cerr << std::string(Depth*2, ' ') << Action << " '" 
+              << typeid(*P).name();
+    if (V) {
+      std::cerr << "' on ";
+      switch (V->getValueType()) {
+      case Value::ModuleVal:
+        std::cerr << "Module\n"; return;
+      case Value::MethodVal:
+        std::cerr << "Method '" << V->getName(); break;
+      case Value::BasicBlockVal:
+        std::cerr << "BasicBlock '" << V->getName(); break;
+      default:
+        std::cerr << typeid(*V).name() << " '" << V->getName(); break;
+      }
+    }
+    std::cerr << "'...\n";
+  }
+}
+
+void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
+                                   const Pass::AnalysisSet &Set) {
+  if (PassDebugging >= PassDetails && !Set.empty()) {
+    std::cerr << std::string(Depth*2+2, ' ') << Msg << " Analyses:";
+    for (unsigned i = 0; i < Set.size(); ++i) {
+      Pass *P = Set[i].createPass();   // Good thing this is just debug code...
+      std::cerr << "  " << typeid(*P).name();
+      delete P;
+    }
+    std::cerr << "\n";
+  }
+}
+
+// dumpPassStructure - Implement the -debug-passes=PassStructure option
+void Pass::dumpPassStructure(unsigned Offset = 0) {
+  std::cerr << std::string(Offset*2, ' ') << typeid(*this).name() << "\n";
 }
 #endif
 
 
-
-PassManager::~PassManager() {
-  for_each(Passes.begin(), Passes.end(), deleter<Pass>);
-}
-
-class BasicBlockPassBatcher : public MethodPass {
-  typedef std::vector<BasicBlockPass*> SubPassesType;
-  SubPassesType SubPasses;
-public:
-  ~BasicBlockPassBatcher() {
-    for_each(SubPasses.begin(), SubPasses.end(), deleter<BasicBlockPass>);
-  }
-
-  void add(BasicBlockPass *P) { SubPasses.push_back(P); }
-
-  virtual bool doInitialization(Module *M) {
-    bool Changed = false;
-    for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I) {
-      PrintPassInformation("Initializing", *I, M);
-      Changed |= (*I)->doInitialization(M);
-    }
-    return Changed;
-  }
-
-  virtual bool runOnMethod(Method *M) {
-    bool Changed = false;
-
-    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
-      for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-           I != E; ++I) {
-        PrintPassInformation("Executing", *I, *MI);
-        Changed |= (*I)->runOnBasicBlock(*MI);
-      }
-    return Changed;
-  }
-
-  virtual bool doFinalization(Module *M) {
-    bool Changed = false;
-    for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I) {
-      PrintPassInformation("Finalizing", *I, M);
-      Changed |= (*I)->doFinalization(M);
-    }
-    return Changed;
-  }
-};
-
-class MethodPassBatcher : public Pass {
-  typedef std::vector<MethodPass*> SubPassesType;
-  SubPassesType SubPasses;
-  BasicBlockPassBatcher *BBPBatcher;
-public:
-  inline MethodPassBatcher() : BBPBatcher(0) {}
-
-  inline ~MethodPassBatcher() {
-    for_each(SubPasses.begin(), SubPasses.end(), deleter<MethodPass>);
-  }
-
-  void add(BasicBlockPass *BBP) {
-    if (BBPBatcher == 0) {
-      BBPBatcher = new BasicBlockPassBatcher();
-      SubPasses.push_back(BBPBatcher);
-    }
-    BBPBatcher->add(BBP);
-  }
-
-  void add(MethodPass *P) {
-    if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P)) {
-      add(BBP);
-    } else {
-      BBPBatcher = 0;  // Ensure that passes don't get accidentally reordered
-      SubPasses.push_back(P);
-    }
-  }
-
-  virtual bool run(Module *M) {
-    bool Changed = false;
-    for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I) {
-      PrintPassInformation("Initializing", *I, M);
-      Changed |= (*I)->doInitialization(M);
-    }
-
-    for (Module::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
-      for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-           I != E; ++I) {
-        PrintPassInformation("Executing", *I, M);
-        Changed |= (*I)->runOnMethod(*MI);
-      }
-
-    for (SubPassesType::iterator I = SubPasses.begin(), E = SubPasses.end();
-         I != E; ++I) {
-      PrintPassInformation("Finalizing", *I, M);
-      Changed |= (*I)->doFinalization(M);
-    }
-    return Changed;
-  }
-};
-
-// add(BasicBlockPass*) - If we know it's a BasicBlockPass, we don't have to do
-// any checking...
+//===----------------------------------------------------------------------===//
+// Pass Implementation
 //
-void PassManager::add(BasicBlockPass *BBP) {
-  if (Batcher == 0)         // If we don't have a batcher yet, make one now.
-    add((MethodPass*)BBP);
-  else
-    Batcher->add(BBP);
+
+void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisSet &Destroyed,
+                            AnalysisSet &Provided) {
+  PM->addPass(this, Destroyed, Provided);
 }
 
-
-// add(MethodPass*) - MethodPass's must be batched together... make sure this
-// happens now.
+//===----------------------------------------------------------------------===//
+// MethodPass Implementation
 //
-void PassManager::add(MethodPass *MP) {
-  if (Batcher == 0) { // If we don't have a batcher yet, make one now.
-    Batcher = new MethodPassBatcher();
-    Passes.push_back(Batcher);
-  }
-  Batcher->add(MP);   // The Batcher will queue them passes up
+
+// run - On a module, we run this pass by initializing, ronOnMethod'ing once
+// for every method in the module, then by finalizing.
+//
+bool MethodPass::run(Module *M) {
+  bool Changed = doInitialization(M);
+  
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (!(*I)->isExternal())      // Passes are not run on external methods!
+    Changed |= runOnMethod(*I);
+  
+  return Changed | doFinalization(M);
 }
 
-// add - Add a pass to the PassManager, batching it up as appropriate...
-void PassManager::add(Pass *P) {
-  if (MethodPass *MP = dynamic_cast<MethodPass*>(P)) {
-    add(MP);  // Use the methodpass specific code to do the addition
-  } else {
-    Batcher = 0;  // Ensure that passes don't get accidentally reordered
-    Passes.push_back(P);
-  }
+// run - On a method, we simply initialize, run the method, then finalize.
+//
+bool MethodPass::run(Method *M) {
+  if (M->isExternal()) return false;  // Passes are not run on external methods!
+
+  return doInitialization(M->getParent()) | runOnMethod(M)
+       | doFinalization(M->getParent());
 }
 
-
-bool PassManager::run(Module *M) {
-  bool MadeChanges = false;
-  // Run all of the pass initializers
-  for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
-    PrintPassInformation("Executing", Passes[i], M);
-    MadeChanges |= Passes[i]->run(M);
-  }
-  return MadeChanges;
+void MethodPass::addToPassManager(PassManagerT<Module> *PM,
+                                  AnalysisSet &Destroyed,
+                                  AnalysisSet &Provided) {
+  PM->addPass(this, Destroyed, Provided);
 }
+
+void MethodPass::addToPassManager(PassManagerT<Method> *PM,
+                                  AnalysisSet &Destroyed,
+                                  AnalysisSet &Provided) {
+  PM->addPass(this, Destroyed, Provided);
+}
+
+//===----------------------------------------------------------------------===//
+// BasicBlockPass Implementation
+//
+
+// To run this pass on a method, we simply call runOnBasicBlock once for each
+// method.
+//
+bool BasicBlockPass::runOnMethod(Method *M) {
+  bool Changed = false;
+  for (Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    Changed |= runOnBasicBlock(*I);
+  return Changed;
+}
+
+// To run directly on the basic block, we initialize, runOnBasicBlock, then
+// finalize.
+//
+bool BasicBlockPass::run(BasicBlock *BB) {
+  Module *M = BB->getParent()->getParent();
+  return doInitialization(M) | runOnBasicBlock(BB) | doFinalization(M);
+}
+
+void BasicBlockPass::addToPassManager(PassManagerT<Method> *PM,
+                                      AnalysisSet &Destroyed,
+                                      AnalysisSet &Provided) {
+  PM->addPass(this, Destroyed, Provided);
+}
+
+void BasicBlockPass::addToPassManager(PassManagerT<BasicBlock> *PM,
+                                      AnalysisSet &Destroyed,
+                                      AnalysisSet &Provided) {
+  PM->addPass(this, Destroyed, Provided);
+}
+
