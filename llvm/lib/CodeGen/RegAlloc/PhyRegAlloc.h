@@ -29,6 +29,7 @@ class FunctionLiveVarInfo;
 class MachineInstr;
 class LoopInfo;
 class RegClass;
+class Constant;
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
@@ -77,6 +78,8 @@ class PhyRegAlloc : public FunctionPass {
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   const LoopInfo *LoopDepthCalc;        // to calculate loop depths 
 
+  std::map<const Function *, Constant *> FnAllocState;
+
   PhyRegAlloc(const PhyRegAlloc&);     // DO NOT IMPLEMENT
   void operator=(const PhyRegAlloc&);  // DO NOT IMPLEMENT
 public:
@@ -88,6 +91,8 @@ public:
   /// runOnFunction - Main method called for allocating registers.
   ///
   virtual bool runOnFunction (Function &F);
+
+  virtual bool doFinalization (Module &M);
 
   virtual void getAnalysisUsage (AnalysisUsage &AU) const;
 
@@ -108,6 +113,7 @@ private:
   void addInterferencesForArgs();
   void createIGNodeListsAndIGs();
   void buildInterferenceGraphs();
+  void saveState();
 
   void setCallInterferences(const MachineInstr *MI, 
 			    const ValueSet *LVSetAft);

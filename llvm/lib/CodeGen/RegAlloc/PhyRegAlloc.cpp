@@ -20,6 +20,10 @@
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/iOther.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Constants.h"
+#include "llvm/Support/InstIterator.h"
+#include "llvm/Module.h"
 #include "Support/STLExtras.h"
 #include "Support/SetOperations.h"
 #include "Support/CommandLine.h"
@@ -1137,9 +1141,9 @@ void PhyRegAlloc::markUnusableSugColors()
     if (HMI->first) { 
       LiveRange *L = HMI->second;      // get the LiveRange
       if (L && L->hasSuggestedColor ())
-	L->setSuggestedColorUsable
-	  (!(MRI.isRegVolatile (L->getRegClassID (), L->getSuggestedColor ())
-	     && L->isCallInterference ()));
+        L->setSuggestedColorUsable
+          (!(MRI.isRegVolatile (L->getRegClassID (), L->getSuggestedColor ())
+             && L->isCallInterference ()));
     }
   } // for all LR's in hash map
 }
@@ -1170,6 +1174,145 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
       }
     }
   } // for all LR's in hash map
+}
+
+
+namespace {
+  /// AllocInfo - Structure representing one instruction's
+  /// operand's-worth of register allocation state. We create tables
+  /// made out of these data structures to generate mapping information
+  /// for this register allocator. (FIXME: This might move to a header
+  /// file at some point.)
+  ///
+  struct AllocInfo {
+    unsigned Instruction;
+    unsigned Operand;
+    unsigned AllocState;
+    int Placement;
+    AllocInfo (unsigned Instruction_, unsigned Operand_,
+               unsigned AllocState_, int Placement_) :
+      Instruction (Instruction_), Operand (Operand_),
+      AllocState (AllocState_), Placement (Placement_) { }
+    /// getConstantType - Return a StructType representing an AllocInfo
+    /// object.
+    ///
+    static StructType *getConstantType () {
+      std::vector<const Type *> TV;
+      TV.push_back (Type::UIntTy);
+      TV.push_back (Type::UIntTy);
+      TV.push_back (Type::UIntTy);
+      TV.push_back (Type::IntTy);
+      return StructType::get (TV);
+    }
+    /// toConstant - Convert this AllocInfo into an LLVM Constant of type
+    /// getConstantType(), and return the Constant.
+    ///
+    Constant *toConstant () const {
+      StructType *ST = getConstantType ();
+      std::vector<Constant *> CV;
+      CV.push_back (ConstantUInt::get (Type::UIntTy, Instruction));
+      CV.push_back (ConstantUInt::get (Type::UIntTy, Operand));
+      CV.push_back (ConstantUInt::get (Type::UIntTy, AllocState));
+      CV.push_back (ConstantSInt::get (Type::IntTy, Placement));
+      return ConstantStruct::get (ST, CV);
+    }
+  };
+}
+
+void PhyRegAlloc::saveState ()
+{
+  std::vector<Constant *> state;
+  unsigned Insn = 0;
+  LiveRangeMapType::const_iterator HMIEnd = LRI->getLiveRangeMap ()->end ();   
+  for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II != IE; ++II)
+    for (unsigned i = 0; i < (*II)->getNumOperands (); ++i) {
+      const Value *V = (*II)->getOperand (i);
+      // Don't worry about it unless it's something whose reg. we'll need.
+      if (!isa<Argument> (V) && !isa<Instruction> (V))
+        continue;
+      LiveRangeMapType::const_iterator HMI = LRI->getLiveRangeMap ()->find (V);
+      static const unsigned NotAllocated = 0, Allocated = 1, Spilled = 2;
+      unsigned AllocState = NotAllocated;
+      int Placement = -1;
+      if ((HMI != HMIEnd) && HMI->second) {
+        LiveRange *L = HMI->second;
+        assert ((L->hasColor () || L->isMarkedForSpill ())
+                && "Live range exists but not colored or spilled");
+        if (L->hasColor()) {
+          AllocState = Allocated;
+          Placement = MRI.getUnifiedRegNum (L->getRegClassID (),
+                                            L->getColor ());
+        } else if (L->isMarkedForSpill ()) {
+          AllocState = Spilled;
+          assert (L->hasSpillOffset ()
+                  && "Live range marked for spill but has no spill offset");
+          Placement = L->getSpillOffFromFP ();
+        }
+      }
+      state.push_back (AllocInfo (Insn, i, AllocState,
+                                  Placement).toConstant ());
+    }
+  // Convert state into an LLVM ConstantArray, and put it in a
+  // ConstantStruct (named S) along with its size.
+  unsigned Size = state.size ();
+  ArrayType *AT = ArrayType::get (AllocInfo::getConstantType (), Size);
+  std::vector<const Type *> TV;
+  TV.push_back (Type::UIntTy);
+  TV.push_back (AT);
+  StructType *ST = StructType::get (TV);
+  std::vector<Constant *> CV;
+  CV.push_back (ConstantUInt::get (Type::UIntTy, Size));
+  CV.push_back (ConstantArray::get (AT, state));
+  Constant *S = ConstantStruct::get (ST, CV);
+  // Save S in the map containing register allocator state for this module.
+  FnAllocState[Fn] = S;
+}
+
+
+bool PhyRegAlloc::doFinalization (Module &M) { 
+  if (!SaveRegAllocState)
+    return false; // Nothing to do here, unless we're saving state.
+
+  // Convert FnAllocState to a single Constant array and add it
+  // to the Module.
+  ArrayType *AT = ArrayType::get (AllocInfo::getConstantType (), 0);
+  std::vector<const Type *> TV;
+  TV.push_back (Type::UIntTy);
+  TV.push_back (AT);
+  PointerType *PT = PointerType::get (StructType::get (TV));
+
+  std::vector<Constant *> allstate;
+  for (Module::iterator I = M.begin (), E = M.end (); I != E; ++I) {
+    Function *F = I;
+    if (FnAllocState.find (F) == FnAllocState.end ()) {
+      allstate.push_back (ConstantPointerNull::get (PT));
+    } else {
+      GlobalVariable *GV =
+        new GlobalVariable (FnAllocState[F]->getType (), true,
+                            GlobalValue::InternalLinkage, FnAllocState[F],
+                            F->getName () + ".regAllocState", &M);
+      // Have: { uint, [Size x { uint, uint, uint, int }] } *
+      // Cast it to: { uint, [0 x { uint, uint, uint, int }] } *
+      Constant *CE = ConstantExpr::getCast (ConstantPointerRef::get (GV), PT);
+      allstate.push_back (CE);
+    }
+  }
+
+  unsigned Size = allstate.size ();
+  // Final structure type is:
+  // { uint, [Size x { uint, [0 x { uint, uint, uint, int }] } *] }
+  std::vector<const Type *> TV2;
+  TV2.push_back (Type::UIntTy);
+  ArrayType *AT2 = ArrayType::get (PT, Size);
+  TV2.push_back (AT2);
+  StructType *ST2 = StructType::get (TV2);
+  std::vector<Constant *> CV2;
+  CV2.push_back (ConstantUInt::get (Type::UIntTy, Size));
+  CV2.push_back (ConstantArray::get (AT2, allstate));
+  new GlobalVariable (ST2, true, GlobalValue::InternalLinkage,
+                      ConstantStruct::get (ST2, CV2), "_llvm_regAllocState",
+                      &M);
+  return false; // No error.
 }
 
 
@@ -1243,6 +1386,10 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   // color incoming args - if the correct color was not received
   // insert code to copy to the correct register
   colorIncomingArgs();
+
+  // Save register allocation state for this function in a Constant.
+  if (SaveRegAllocState)
+    saveState();
 
   // Now update the machine code with register names and add any 
   // additional code inserted by the register allocator to the instruction
