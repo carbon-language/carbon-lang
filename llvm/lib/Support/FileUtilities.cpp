@@ -119,7 +119,7 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
   try {
-    // Check for zero length files becasue some systems croak when you try to
+    // Check for zero length files because some systems croak when you try to
     // mmap an empty file.
     size_t A_size = FileA.getSize();
     size_t B_size = FileB.getSize();
