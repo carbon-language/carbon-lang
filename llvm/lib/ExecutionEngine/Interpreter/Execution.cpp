@@ -641,15 +641,17 @@ void Interpreter::visitCallInst(CallInst &I) {
   ExecutionContext &SF = ECStack.back();
   SF.Caller = CallSite(&I);
   std::vector<GenericValue> ArgVals;
-  ArgVals.reserve(I.getNumOperands()-1);
-  for (unsigned i = 1; i < I.getNumOperands(); ++i) {
-    ArgVals.push_back(getOperandValue(I.getOperand(i), SF));
+  const unsigned NumArgs = SF.Caller.arg_size();
+  ArgVals.reserve(NumArgs);
+  for (CallSite::arg_iterator i = SF.Caller.arg_begin(),
+         e = SF.Caller.arg_end(); i != e; ++i) {
+    Value *V = *i;
+    ArgVals.push_back(getOperandValue(V, SF));
     // Promote all integral types whose size is < sizeof(int) into ints.  We do
     // this by zero or sign extending the value as appropriate according to the
     // source type.
-    if (I.getOperand(i)->getType()->isIntegral() &&
-	I.getOperand(i)->getType()->getPrimitiveSize() < 4) {
-      const Type *Ty = I.getOperand(i)->getType();
+    const Type *Ty = V->getType();
+    if (Ty->isIntegral() && Ty->getPrimitiveSize() < 4) {
       if (Ty == Type::ShortTy)
 	ArgVals.back().IntVal = ArgVals.back().ShortVal;
       else if (Ty == Type::UShortTy)
@@ -667,7 +669,7 @@ void Interpreter::visitCallInst(CallInst &I) {
 
   // To handle indirect calls, we must get the pointer value from the argument 
   // and treat it as a function pointer.
-  GenericValue SRC = getOperandValue(I.getCalledValue(), SF);  
+  GenericValue SRC = getOperandValue(SF.Caller.getCalledValue(), SF);  
   callFunction((Function*)GVTOP(SRC), ArgVals);
 }
 
