@@ -161,6 +161,12 @@ static TypeClass getClass (const Type *T) {
       return cByte;
   }
 }
+static TypeClass getClassB(const Type *T) {
+  if (T == Type::BoolTy) return cByte;
+  return getClass(T);
+}
+
+
 
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
@@ -280,9 +286,8 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
         visitInstruction (I);
         return;
     }
-  } else if (I.getNumOperands () != 1) {
-    visitInstruction (I);
   }
+
   // Just emit a 'retl' instruction to return.
   BuildMI(BB, V8::RETL, 0);
   return;
@@ -293,7 +298,9 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
   unsigned Op0Reg = getReg (I.getOperand (0));
   unsigned Op1Reg = getReg (I.getOperand (1));
 
-  unsigned ResultReg = makeAnotherReg (I.getType ());
+  unsigned ResultReg = DestReg;
+  if (getClassB(I.getType()) != cInt)
+    ResultReg = makeAnotherReg (I.getType ());
   unsigned OpCase = ~0;
 
   // FIXME: support long, ulong, fp.
@@ -368,7 +375,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
       }
       break;
     case cInt:
-      BuildMI (BB, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (ResultReg);
+      // Nothing todo here.
       break;
     default:
       visitInstruction (I);
