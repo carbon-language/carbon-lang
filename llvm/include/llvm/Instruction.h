@@ -16,7 +16,6 @@
 #define LLVM_INSTRUCTION_H
 
 #include "llvm/User.h"
-#include "Support/Annotation.h"
 
 namespace llvm {
 
@@ -27,7 +26,7 @@ template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
          typename SubClass> class SymbolTableListTraits;
 
-class Instruction : public User, public Annotable {
+class Instruction : public User {
   BasicBlock *Parent;
   Instruction *Prev, *Next; // Next and Prev links for our intrusive linked list
 
