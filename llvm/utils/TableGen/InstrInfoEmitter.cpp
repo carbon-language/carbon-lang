@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstrInfoEmitter.h"
-#include "CodeGenWrappers.h"
+#include "CodeGenTarget.h"
 #include "Record.h"
 using namespace llvm;
 

@@ -1,4 +1,4 @@
-//===- CodeGenWrappers.cpp - Code Generation Class Wrappers -----*- C++ -*-===//
+//===- CodeGenTarget.cpp - CodeGen Target Class Wrapper ---------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// These classes wrap target description classes used by the various code
+// This class wrap target description classes used by the various code
 // generation TableGen backends.  This makes it easier to access the data and
 // provides a single place that needs to check it for validity.  All of these
 // classes throw exceptions on error conditions.
 //
 //===----------------------------------------------------------------------===//
 
-#include "CodeGenWrappers.h"
+#include "CodeGenTarget.h"
 #include "Record.h"
 using namespace llvm;
 

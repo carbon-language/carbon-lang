@@ -16,7 +16,7 @@
 #define INSTRSELECTOR_EMITTER_H
 
 #include "TableGenBackend.h"
-#include "CodeGenWrappers.h"
+#include "CodeGenTarget.h"
 #include <vector>
 #include <map>
 #include <cassert>

@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstrSelectorEmitter.h"
-#include "CodeGenWrappers.h"
 #include "Record.h"
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"

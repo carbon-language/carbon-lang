@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RegisterInfoEmitter.h"
-#include "CodeGenWrappers.h"
+#include "CodeGenTarget.h"
 #include "Record.h"
 #include "Support/StringExtras.h"
 #include <set>
