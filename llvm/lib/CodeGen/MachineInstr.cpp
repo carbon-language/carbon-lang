@@ -49,9 +49,10 @@ MachineInstr::SetMachineOperandVal(unsigned int i,
 {
   assert(i < operands.size());
   operands[i].Initialize(opType, _val);
-  operands[i].isDef = isdef ||
-    TargetInstrDescriptors[opCode].resultPos == (int) i;
-  operands[i].isDefAndUse = isDefAndUse;
+  if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
+    operands[i].markDef();
+  if (isDefAndUse)
+    operands[i].markDefAndUse();
 }
 
 void
@@ -63,8 +64,6 @@ MachineInstr::SetMachineOperandConst(unsigned int i,
   assert(TargetInstrDescriptors[opCode].resultPos != (int) i &&
          "immed. constant cannot be defined");
   operands[i].InitializeConst(operandType, intValue);
-  operands[i].isDef = false;
-  operands[i].isDefAndUse = false;
 }
 
 void
@@ -76,9 +75,10 @@ MachineInstr::SetMachineOperandReg(unsigned int i,
 {
   assert(i < operands.size());
   operands[i].InitializeReg(regNum, isCCReg);
-  operands[i].isDef = isdef ||
-    TargetInstrDescriptors[opCode].resultPos == (int) i;
-  operands[i].isDefAndUse = isDefAndUse;
+  if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
+    operands[i].markDef();
+  if (isDefAndUse)
+    operands[i].markDefAndUse();
   regsUsed.insert(regNum);
 }
 
@@ -101,10 +101,9 @@ static inline std::ostream &OutputValue(std::ostream &os,
 {
   os << "(val ";
   if (val && val->hasName())
-    return os << val->getName();
+    return os << val->getName() << ")";
   else
-    return os << (void*) val;              // print address only
-  os << ")";
+    return os << (void*) val << ")";              // print address only
 }
 
 std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
@@ -134,38 +133,37 @@ std::ostream &operator<<(std::ostream& os, const MachineInstr& minstr)
   return os << "\n";
 }
 
-static inline std::ostream &OutputOperand(std::ostream &os,
-                                          const MachineOperand &mop)
-{
-  Value* val;
-  switch (mop.getOperandType())
-    {
-    case MachineOperand::MO_CCRegister:
-    case MachineOperand::MO_VirtualRegister:
-      return OutputValue(os, mop.getVRegValue());
-    case MachineOperand::MO_MachineRegister:
-      return os << "(" << mop.getMachineRegNum() << ")";
-    default:
-      assert(0 && "Unknown operand type");
-      return os;
-    }
-}
-
 std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
 {
+  if (mop.opHiBits32())
+    os << "%lm(";
+  else if (mop.opLoBits32())
+    os << "%lo(";
+  else if (mop.opHiBits64())
+    os << "%hh(";
+  else if (mop.opLoBits64())
+    os << "%hm(";
+  
   switch(mop.opType)
     {
     case MachineOperand::MO_VirtualRegister:
-    case MachineOperand::MO_MachineRegister:
       os << "%reg";
-      return OutputOperand(os, mop);
+      OutputValue(os, mop.getVRegValue());
+      break;
     case MachineOperand::MO_CCRegister:
       os << "%ccreg";
-      return OutputOperand(os, mop);
+      OutputValue(os, mop.getVRegValue());
+      break;
+    case MachineOperand::MO_MachineRegister:
+      os << "%reg";
+      os << "(" << mop.getMachineRegNum() << ")";
+      break;
     case MachineOperand::MO_SignExtendedImmed:
-      return os << (long)mop.immedVal;
+      os << (long)mop.immedVal;
+      break;
     case MachineOperand::MO_UnextendedImmed:
-      return os << (long)mop.immedVal;
+      os << (long)mop.immedVal;
+      break;
     case MachineOperand::MO_PCRelativeDisp:
       {
         const Value* opVal = mop.getVRegValue();
@@ -175,12 +173,18 @@ std::ostream &operator<<(std::ostream &os, const MachineOperand &mop)
           os << opVal->getName();
         else
           os << (const void*) opVal;
-        return os << ")";
+        os << ")";
+        break;
       }
     default:
       assert(0 && "Unrecognized operand type");
       break;
     }
+  
+  if (mop.flags &
+      (MachineOperand::HIFLAG32 | MachineOperand::LOFLAG32 | 
+       MachineOperand::HIFLAG64 | MachineOperand::LOFLAG64))
+    os << ")";
   
   return os;
 }
