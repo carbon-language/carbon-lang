@@ -35,7 +35,7 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
 				   Module *M) const {
   std::ofstream Out(Filename.c_str());
   if (!Out.good()) return true;
-  WriteBytecodeToFile(M ? M : Program, Out);
+  WriteBytecodeToFile(M ? M : Program, Out, /*compression=*/true);
   return false;
 }
 
