@@ -22,7 +22,6 @@
 #ifndef LLVM_BASICBLOCK_H
 #define LLVM_BASICBLOCK_H
 
-#include "llvm/Value.h"
 #include "llvm/ValueHolder.h"
 #include "llvm/InstrTypes.h"
 #include "Support/GraphTraits.h"
@@ -181,11 +180,13 @@ public:
     inline bool operator!=(const _Self& x) const { return !operator==(x); }
     
     inline pointer operator*() const { 
+      assert(It != BB->use_end() && "pred_iterator out of range!");
       return cast<Instruction>(*It)->getParent(); 
     }
     inline pointer *operator->() const { return &(operator*()); }
     
     inline _Self& operator++() {   // Preincrement
+      assert(It != BB->use_end() && "pred_iterator out of range!");
       ++It; advancePastConstants();
       return *this; 
     }
