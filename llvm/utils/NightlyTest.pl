@@ -1,4 +1,4 @@
-#!/usr/dcs/software/supported/bin/perl -w
+#!/usr/bin/perl -w
 #
 # Program:  NightlyTest.pl
 #
