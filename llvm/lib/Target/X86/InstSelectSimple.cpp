@@ -3051,7 +3051,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       { X86::MOVZX16rr8, X86::MOVZX32rr8, X86::MOVZX32rr16, X86::MOV32rr }  // u
     };
     
-    bool isUnsigned = SrcTy->isUnsigned();
+    bool isUnsigned = SrcTy->isUnsigned() || SrcTy == Type::BoolTy;
     BuildMI(*BB, IP, Opc[isUnsigned][SrcClass + DestClass - 1], 1,
         DestReg).addReg(SrcReg);
 
