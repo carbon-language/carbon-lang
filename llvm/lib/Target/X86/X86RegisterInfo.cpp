@@ -21,16 +21,14 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
 using namespace llvm;
 
 namespace {
-  cl::opt<bool>
-  NoFPElim("disable-fp-elim",
-	   cl::desc("Disable frame pointer elimination optimization"));
   cl::opt<bool>
   NoFusing("disable-spill-fusing",
            cl::desc("Disable fusing of spill code into instructions"));
