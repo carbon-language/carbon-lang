@@ -851,9 +851,10 @@ def FUCOMr    : I<"fucom"  , 0xE0, AddRegFrm>, DD, Imp<[ST0],[]>;  // FPSW = com
 def FUCOMPr   : I<"fucomp" , 0xE8, AddRegFrm>, DD, Imp<[ST0],[]>;  // FPSW = compare ST(0) with ST(i), pop
 def FUCOMPPr  : I<"fucompp", 0xE9, RawFrm   >, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
 
-def FUCOMIr    : FPI<"fucomi"  , 0xE0, AddRegFrm, TwoArgFP>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
-def FUCOMIPr   : I<"fucomip" , 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i), pop
-
+let printImplicitUsesAfter = 1 in {
+  def FUCOMIr  : FPI<"fucomi", 0xE8, AddRegFrm, TwoArgFP>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
+  def FUCOMIPr : I<"fucomip" , 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>;            // CC = compare ST(0) with ST(i), pop
+}
 
 // Floating point flag ops
 def FNSTSW8r  : I   <"fnstsw" , 0xE0, RawFrm>, DF, Imp<[],[AX]>;   // AX = fp flags
