@@ -1,0 +1,25 @@
+; This test checks to make sure that constant exprs fold in some simple situations
+
+; RUN: llvm-as < %s | llvm-dis | not grep '('
+
+%A = global long 0
+
+global long* cast (long add (long cast (long* %A to long), long 0) to long*) ; X + 0 == X
+global long* cast (long sub (long cast (long* %A to long), long 0) to long*) ; X - 0 == X
+global long* cast (long mul (long cast (long* %A to long), long 0) to long*) ; X * 0 == 0
+global long* cast (long div (long cast (long* %A to long), long 1) to long*) ; X / 1 == X
+global long* cast (long rem (long cast (long* %A to long), long 1) to long*) ; X % 1 == 0
+global long* cast (long and (long cast (long* %A to long), long 0) to long*) ; X & 0 == 0
+global long* cast (long and (long cast (long* %A to long), long -1) to long*) ; X & -1 == X
+global long or (long cast (long* %A to long), long -1)  ; X | -1 == -1
+global long* cast (long xor (long cast (long* %A to long), long 0) to long*) ; X ^ 0 == X
+
+%Ty = type { int, int }
+%B = external global %Ty 
+
+global bool setlt (long* %A, long* getelementptr (long* %A, long 1))        ; true
+global bool setlt (long* %A, long* getelementptr (long* %A, long 0))        ; false
+global bool setlt (int* getelementptr (%Ty* %B, long 0, ubyte 0), 
+                   int* getelementptr (%Ty* %B, long 0, ubyte 1))            ; true
+global bool setne (long* %A, long* cast (%Ty* %B to long*))                 ; true
+
