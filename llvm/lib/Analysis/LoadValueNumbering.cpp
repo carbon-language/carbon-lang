@@ -30,8 +30,7 @@
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <set>
-
-namespace llvm {
+using namespace llvm;
 
 namespace {
   // FIXME: This should not be a FunctionPass.
@@ -72,7 +71,7 @@ namespace {
   RegisterAnalysisGroup<ValueNumbering, LoadVN> Y;
 }
 
-Pass *createLoadValueNumberingPass() { return new LoadVN(); }
+Pass *llvm::createLoadValueNumberingPass() { return new LoadVN(); }
 
 
 /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering and
@@ -388,5 +387,3 @@ bool LoadVN::haveEqualValueNumber(LoadInst *Load, StoreInst *Store,
     return true;
   }
 }
-
-} // End llvm namespace
