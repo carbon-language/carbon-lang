@@ -297,7 +297,7 @@ public:
       double V;
       uint64_t I;
     } T2;
-    T2.V = Val;
+    T2.V = V;
     return T1.I == T2.I;
   }
 
