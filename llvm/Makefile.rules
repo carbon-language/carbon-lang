@@ -40,6 +40,7 @@
 #
 #===-----------------------------------------------------------------------====
 
+#
 # Configuration file to set paths specific to local installation of LLVM
 # 
 include $(LEVEL)/Makefile.config
@@ -340,6 +341,16 @@ test    :: $(addsuffix /.maketest   , $(PARALLEL_DIRS))
 	$(VERB) cd $(@D); $(MAKE) $(subst $(@D)/.make,,$@)
 endif
 
+ifdef OPTIONAL_DIRS
+all install clean test ::
+	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
+		if [ -d $$dir ]; \
+		then\
+			(cd $$dir; $(MAKE) $@) || exit 1; \
+		fi \
+	done
+endif
+
 #---------------------------------------------------------
 # Handle the LIBRARYNAME option - used when building libs...
 #---------------------------------------------------------
@@ -489,6 +500,7 @@ $(USED_LIB_PATHS_G) $(USED_LIB_PATHS_O) $(USED_LIB_PATHS_P): \
         $(addsuffix /.makeall, $(PARALLEL_DIRS))
 
 all::   $(TOOLEXENAMES)
+
 clean::
 	$(VERB) rm -f $(TOOLEXENAMES)
 
