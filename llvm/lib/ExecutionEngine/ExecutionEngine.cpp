@@ -26,10 +26,11 @@
 #include "Support/Statistic.h"
 #include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
+using namespace llvm;
 
-namespace llvm {
-
-Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
+namespace {
+  Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
+}
 
 ExecutionEngine::ExecutionEngine(ModuleProvider *P) : 
   CurMod(*P->getModule()), MP(P) {
@@ -391,5 +392,3 @@ void ExecutionEngine::emitGlobals() {
     if (!I->isExternal())
       InitializeMemory(I->getInitializer(), GlobalAddress[I]);
 }
-
-} // End llvm namespace
