@@ -89,6 +89,9 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
   // Copy the local version into DSInfo...
   Graph = new DSGraph(getAnalysis<LocalDataStructures>().getDSGraph(F));
 
+  // Save a copy of the original call nodes for the top-down pass
+  Graph->saveOrigFunctionCalls();
+  
   // Start resolving calls...
   std::vector<std::vector<DSNodeHandle> > &FCs = Graph->getFunctionCalls();
 
@@ -129,7 +132,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
           } else if (!FI.isExternal()) {
             DEBUG(std::cerr << "In " << F.getName() << " inlining: "
                   << FI.getName() << "\n");
-
+            
             // Get the data structure graph for the called function, closing it
             // if possible (which is only impossible in the case of mutual
             // recursion...
@@ -139,15 +142,19 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             DEBUG(cerr << "Got graph for " << FI.getName() << " in: "
                   << F.getName() << "\n");
 
+            // Remember the callers for each callee for use in the top-down
+            // pass so we don't have to compute this again
+            GI.addCaller(F);
 
-            
-            // Clone the called function's graph into the current graph, keeping
-            // track of where scalars in the old graph _used_ to point...
-            map<Value*, DSNodeHandle> OldValMap;
+            // Clone the callee's graph into the current graph, keeping
+            // track of where scalars in the old graph _used_ to point
+            // and of the new nodes matching nodes of the old graph ...
+            std::map<Value*, DSNodeHandle> OldValMap;
+            std::map<const DSNode*, DSNode*> OldNodeMap; // unused
 
             // The clone call may invalidate any of the vectors in the data
             // structure graph.
-            DSNode *RetVal = Graph->cloneInto(GI, OldValMap);
+            DSNode *RetVal = Graph->cloneInto(GI, OldValMap, OldNodeMap);
 
             ResolveArguments(Call, FI, OldValMap);
 
