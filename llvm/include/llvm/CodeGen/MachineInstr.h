@@ -293,8 +293,7 @@ private:
 
   inline void	skipToNextVal() {
     while (i < minstr->getNumOperands()
-	   && minstr->getOperand(i).getOperandType() != MachineOperand::MO_VirtualRegister
-	   && minstr->getOperand(i).getOperandType() != MachineOperand::MO_CCRegister)
+	   && minstr->getOperand(i).getVRegValue() == NULL)
       ++i;
   }
   
