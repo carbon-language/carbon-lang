@@ -27,7 +27,6 @@ static bool isIdentChar(char C) {
 
 void AsmWriterEmitter::run(std::ostream &O) {
   EmitSourceFileHeader("Assembly Writer Source Fragment", O);
-  O << "namespace llvm {\n\n";
 
   CodeGenTarget Target;
   Record *AsmWriter = Target.getAsmWriter();
@@ -140,5 +139,4 @@ void AsmWriterEmitter::run(std::ostream &O) {
   O << "  }\n"
        "  return true;\n"
        "}\n";
-  O << "} // End llvm namespace \n";
 }
