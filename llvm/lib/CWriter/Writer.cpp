@@ -152,7 +152,7 @@ namespace {
 
 // A pointer type should not use parens around *'s alone, e.g., (**)
 inline bool ptrTypeNameNeedsParens(const std::string &NameSoFar) {
-  return (NameSoFar.find_last_not_of('*') != std::string::npos);
+  return NameSoFar.find_last_not_of('*') != std::string::npos;
 }
 
 // Pass the Type* and the variable name and this prints out the variable
@@ -327,25 +327,23 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
   }
 }
 
-/// FPCSafeToPrint - Returns true if we may assume that CFP may be
-/// written out textually as a double (rather than as a reference to a
-/// stack-allocated variable). We decide this by converting CFP to a
-/// string and back into a double, and then checking whether the
-/// conversion results in a bit-equal double to the original value of
-/// CFP. This depends on us and the target C compiler agreeing on the
-/// conversion process (which is pretty likely since we only deal in
-/// IEEE FP.) This is adapted from similar code in
-/// lib/VMCore/AsmWriter.cpp:WriteConstantInt().
-static bool FPCSafeToPrint (const ConstantFP *CFP) {
+// isFPCSafeToPrint - Returns true if we may assume that CFP may be written out
+// textually as a double (rather than as a reference to a stack-allocated
+// variable). We decide this by converting CFP to a string and back into a
+// double, and then checking whether the conversion results in a bit-equal
+// double to the original value of CFP. This depends on us and the target C
+// compiler agreeing on the conversion process (which is pretty likely since we
+// only deal in IEEE FP).
+//
+static bool isFPCSafeToPrint(const ConstantFP *CFP) {
   std::string StrVal = ftostr(CFP->getValue());
-  // Check to make sure that the stringized number is not some string like
-  // "Inf" or NaN, that atof will accept, but the lexer will not.  Check that
-  // the string matches the "[-+]?[0-9]" regex.
+  // Check to make sure that the stringized number is not some string like "Inf"
+  // or NaN.  Check that the string matches the "[-+]?[0-9]" regex.
   if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
       ((StrVal[0] == '-' || StrVal[0] == '+') &&
        (StrVal[1] >= '0' && StrVal[1] <= '9')))
     // Reparse stringized version!
-    return (atof(StrVal.c_str()) == CFP->getValue());
+    return atof(StrVal.c_str()) == CFP->getValue();
   return false;
 }
 
@@ -439,11 +437,8 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FloatConstant" << I->second << ")";
     } else {
-      if (FPCSafeToPrint (FPC)) {
-        Out << ftostr (FPC->getValue ());
-      } else {
-        Out << FPC->getValue(); // Who knows? Give it our best shot...
-      }
+      // Print out the constant as a floating point number.
+      Out << ftostr(FPC->getValue());
     }
     break;
   }
@@ -860,7 +855,7 @@ void CWriter::printFunction(Function *F) {
   unsigned FPCounter = 0;
   for (constant_iterator I = constant_begin(F), E = constant_end(F); I != E;++I)
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
-      if ((!FPCSafeToPrint(FPC)) // Do not put in FPConstantMap if safe.
+      if ((!isFPCSafeToPrint(FPC)) // Do not put in FPConstantMap if safe.
 	  && (FPConstantMap.find(FPC) == FPConstantMap.end())) {
         double Val = FPC->getValue();
         
