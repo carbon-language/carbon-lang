@@ -16,6 +16,8 @@
 #ifndef LLVM_CODEGEN_VALUETYPES_H
 #define LLVM_CODEGEN_VALUETYPES_H
 
+#include <cassert>
+
 namespace llvm {
 
 /// MVT namespace - This namespace defines the ValueType enum, which contains
