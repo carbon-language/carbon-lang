@@ -31,15 +31,3 @@ void cfg::LoopDepthCalculator::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
   Requires.push_back(LoopInfo::ID);
 }
 
-#if 1  /// FIXME, REMOVE EVENTUALLY
-#include "llvm/PassManager.h"
-
-cfg::LoopDepthCalculator::LoopDepthCalculator(Method *M) {
-  PassManagerT<Method> PassMgr;
-  LoopInfo *LI = new LoopInfo(LoopInfo::ID);
-  PassMgr.add(LI);
-  PassMgr.run(M);
-  calculate(M, *LI);
-}
-#endif
-
