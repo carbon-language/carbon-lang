@@ -412,8 +412,8 @@ MachineCodeForVMInstr::~MachineCodeForVMInstr()
 
 class MachineCodeForBasicBlock: public vector<MachineInstr*> {
 public:
-  typedef vector<MachineInstr*>::iterator iterator;
-  typedef vector<MachineInstr*>::const_iterator const_iterator;
+  typedef vector<const MachineInstr*>::iterator iterator;
+  typedef vector<const MachineInstr*>::const_iterator const_iterator;
 };
 
 
