@@ -41,7 +41,9 @@ namespace {
   };
 }
 
+#ifndef _POSIX_MAPPED_FILES
 #define _POSIX_MAPPED_FILES
+#endif
 #include <unistd.h>
 #include <sys/mman.h>
 
