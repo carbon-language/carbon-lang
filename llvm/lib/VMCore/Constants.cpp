@@ -313,7 +313,10 @@ ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
 /// specify the full Instruction::OPCODE identifier.
 ///
 Constant *ConstantExpr::getNeg(Constant *C) {
-  return get(Instruction::Sub, getNullValue(C->getType()), C);
+  if (!C->getType()->isFloatingPoint())
+    return get(Instruction::Sub, getNullValue(C->getType()), C);
+  else
+    return get(Instruction::Sub, ConstantFP::get(C->getType(), -0.0), C);
 }
 Constant *ConstantExpr::getNot(Constant *C) {
   assert(isa<ConstantIntegral>(C) && "Cannot NOT a nonintegral type!");
