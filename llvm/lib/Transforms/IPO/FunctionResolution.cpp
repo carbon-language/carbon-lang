@@ -80,12 +80,14 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       // functions and that the Old function has no varargs fns specified.  In
       // otherwords it's just <retty> (...)
       //
-      Value *Replacement = Concrete;
-      if (Concrete->getType() != Old->getType())
-        Replacement = ConstantExpr::getCast(ConstantPointerRef::get(Concrete),
-                                            Old->getType());
-      NumResolved += Old->use_size();
-      Old->replaceAllUsesWith(Replacement);
+      if (!Old->use_empty()) {  // Avoid making the CPR unless we really need it
+        Value *Replacement = Concrete;
+        if (Concrete->getType() != Old->getType())
+          Replacement = ConstantExpr::getCast(ConstantPointerRef::get(Concrete),
+                                              Old->getType());
+        NumResolved += Old->use_size();
+        Old->replaceAllUsesWith(Replacement);
+      }
 
       // Since there are no uses of Old anymore, remove it from the module.
       M.getFunctionList().erase(Old);
