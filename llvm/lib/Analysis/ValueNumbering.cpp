@@ -18,8 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
-
-namespace llvm {
+using namespace llvm;
 
 // Register the ValueNumbering interface, providing a nice name to refer to.
 static RegisterAnalysisGroup<ValueNumbering> X("Value Numbering");
@@ -177,6 +176,14 @@ static bool IdenticalComplexInst(const Instruction *I1, const Instruction *I2) {
 
 void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
   Value *Op = I.getOperand(0);
+
+  // Try to pick a local operand if possible instead of a constant or a global
+  // that might have a lot of uses.
+  for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i)
+    if (isa<Instruction>(I.getOperand(i)) || isa<Argument>(I.getOperand(i))) {
+      Op = I.getOperand(i);
+      break;
+    }
   
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
@@ -188,6 +195,4 @@ void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
       }
 }
 
-void BasicValueNumberingStub() { }
-
-} // End llvm namespace
+void llvm::BasicValueNumberingStub() { }
