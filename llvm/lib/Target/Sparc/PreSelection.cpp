@@ -16,17 +16,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/InstVisitor.h"
-#include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/InstVisitor.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/Scalar.h"
 #include <algorithm>
 
 namespace {
@@ -53,7 +53,7 @@ namespace {
     PreSelection(const TargetMachine &T)
       : instrInfo(T.getInstrInfo()), TheModule(0) {}
 
-    // runOnBasicBlock - apply this pass to each BB
+    // run - apply this pass to the entire Module
     bool run(Module &M) {
       TheModule = &M;
 
@@ -100,8 +100,7 @@ namespace {
 
 
 // getGlobalAddr(): Put address of a global into a v. register.
-static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore)
-{
+static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore) {
   if (isa<ConstantPointerRef>(ptr))
     ptr = cast<ConstantPointerRef>(ptr)->getValue();
 
@@ -114,8 +113,7 @@ static GetElementPtrInst* getGlobalAddr(Value* ptr, Instruction& insertBefore)
 
 
 // Wrapper on Constant::classof to use in find_if :-(
-inline static bool nonConstant(const Use& U)
-{
+inline static bool nonConstant(const Use& U) {
   return ! isa<Constant>(U);
 }
 
@@ -180,24 +178,22 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
   if (CV == NULL)
     return;
 
-  if (ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    { // load-time constant: factor it out so we optimize as best we can
-      Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
-      I.setOperand(opNum, computeConst); // replace expr operand with result
-    }
-  else if (instrInfo.ConstantTypeMustBeLoaded(CV))
-    { // load address of constant into a register, then load the constant
-      GetElementPtrInst* gep = getGlobalAddr(getGlobalForConstant(CV),
-                                             insertBefore);
-      LoadInst* ldI = new LoadInst(gep, "loadConst", &insertBefore);
-      I.setOperand(opNum, ldI);        // replace operand with copy in v.reg.
-    }
-  else if (instrInfo.ConstantMayNotFitInImmedField(CV, &I))
-    { // put the constant into a virtual register using a cast
-      CastInst* castI = new CastInst(CV, CV->getType(), "copyConst",
-                                     &insertBefore);
-      I.setOperand(opNum, castI);      // replace operand with copy in v.reg.
-    }
+  if (ConstantExpr* CE = dyn_cast<ConstantExpr>(CV)) {
+    // load-time constant: factor it out so we optimize as best we can
+    Instruction* computeConst = DecomposeConstantExpr(CE, insertBefore);
+    I.setOperand(opNum, computeConst); // replace expr operand with result
+  } else if (instrInfo.ConstantTypeMustBeLoaded(CV)) {
+    // load address of constant into a register, then load the constant
+    GetElementPtrInst* gep = getGlobalAddr(getGlobalForConstant(CV),
+                                           insertBefore);
+    LoadInst* ldI = new LoadInst(gep, "loadConst", &insertBefore);
+    I.setOperand(opNum, ldI);        // replace operand with copy in v.reg.
+  } else if (instrInfo.ConstantMayNotFitInImmedField(CV, &I)) {
+    // put the constant into a virtual register using a cast
+    CastInst* castI = new CastInst(CV, CV->getType(), "copyConst",
+                                   &insertBefore);
+    I.setOperand(opNum, castI);      // replace operand with copy in v.reg.
+  }
 }
 
 // visitOperands() transforms individual operands of all instructions:
@@ -232,17 +228,13 @@ void PreSelection::visitPHINode(PHINode &PN) {
 
 // Common work for *all* instructions.  This needs to be called explicitly
 // by other visit<InstructionType> functions.
-inline void
-PreSelection::visitInstruction(Instruction &I)
-{ 
+inline void PreSelection::visitInstruction(Instruction &I) { 
   visitOperands(I);              // Perform operand transformations
 }
 
 
 // GetElementPtr instructions: check if pointer is a global
-void
-PreSelection::visitGetElementPtrInst(GetElementPtrInst &I)
-{ 
+void PreSelection::visitGetElementPtrInst(GetElementPtrInst &I) { 
   Instruction* curI = &I;
 
   // Decompose multidimensional array references
@@ -261,10 +253,7 @@ PreSelection::visitGetElementPtrInst(GetElementPtrInst &I)
   visitInstruction(*curI);
 }
 
-
-void
-PreSelection::visitCallInst(CallInst &I)
-{
+void PreSelection::visitCallInst(CallInst &I) {
   // Tell visitOperands to ignore the function name if this is a direct call.
   visitOperands(I, (/*firstOp=*/ I.getCalledFunction()? 1 : 0));
 }
@@ -277,4 +266,3 @@ PreSelection::visitCallInst(CallInst &I)
 Pass* createPreSelectionPass(TargetMachine &T) {
   return new PreSelection(T);
 }
-
