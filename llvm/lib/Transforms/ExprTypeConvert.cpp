@@ -721,6 +721,18 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       const Type *ElTy = PT->getElementType();
       assert(V == I->getOperand(1));
 
+      if (isa<StructType>(ElTy)) {
+        // We can change the destination pointer if we can store our first
+        // argument into the first element of the structure...
+        //
+        unsigned Offset = 0;
+        std::vector<Value*> Indices;
+        ElTy = getStructOffsetType(ElTy, Offset, Indices, false);
+        assert(Offset == 0 && "Offset changed!");
+        if (ElTy == 0)    // Element at offset zero in struct doesn't exist!
+          return false;   // Can only happen for {}*
+      }
+
       // Must move the same amount of data...
       if (TD.getTypeSize(ElTy) != TD.getTypeSize(I->getOperand(0)->getType()))
         return false;
@@ -959,13 +971,14 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     } else {                           // Replace the source pointer
       const Type *ValTy = cast<PointerType>(NewTy)->getElementType();
       std::vector<Value*> Indices;
-#if 0
-      Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
-      while (ArrayType *AT = dyn_cast<ArrayType>(ValTy)) {
+
+      if (isa<StructType>(ValTy)) {
+        unsigned Offset = 0;
         Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
-        ValTy = AT->getElementType();
+        ValTy = getStructOffsetType(ValTy, Offset, Indices, false);
+        assert(Offset == 0 && ValTy);
       }
-#endif
+
       Res = new StoreInst(Constant::getNullConstant(ValTy), NewVal, Indices);
       VMC.ExprMap[I] = Res;
       Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), ValTy, VMC));
