@@ -919,7 +919,12 @@ example.<p>
 <li><a name="cl::init">The <b><tt>cl::init</tt></b> attribute specifies an
 inital value for a <a href="#cl::opt">scalar</a> option.  If this attribute is
 not specified then the command line option value defaults to the value created
-by the default constructor for the type.<p>
+by the default constructor for the type. <b>Warning</b>: If you specify both
+<b><tt>cl::init</tt></b> and <b><tt>cl::location</tt></b> for an option,
+you must specify <b><tt>cl::location</tt></b> first, so that when the
+command-line parser sees <b><tt>cl::init</tt></b>, it knows where to put the
+initial value. (You will get an error at runtime if you don't put them in
+the right order.)<p>
 
 <li><a name="cl::location">The <b><tt>cl::location</tt></b> attribute where to
 store the value for a parsed command line option if using external storage.  See
