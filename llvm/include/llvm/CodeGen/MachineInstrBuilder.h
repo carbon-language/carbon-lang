@@ -124,13 +124,13 @@ public:
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
-					      bool isPCRelative = false) const {
+                                              bool isPCRelative = false) const {
     MI->addGlobalAddressOperand(GV, isPCRelative);
     return *this;
   }
 
   const MachineInstrBuilder &addExternalSymbol(const std::string &Name,
-					       bool isPCRelative = false) const{
+                                               bool isPCRelative = false) const{
     MI->addExternalSymbolOperand(Name, isPCRelative);
     return *this;
   }
