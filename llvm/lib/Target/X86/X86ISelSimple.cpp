@@ -115,6 +115,10 @@ namespace {
       // Copy incoming arguments off of the stack...
       LoadArgumentsToVirtualRegs(Fn);
 
+      // If this is main, emit special code.
+      if (Fn.hasExternalLinkage() && Fn.getName() == "main")
+        EmitSpecialCodeForMain();
+
       // Instruction select everything except PHI nodes
       visit(Fn);
 
@@ -135,6 +139,10 @@ namespace {
     virtual const char *getPassName() const {
       return "X86 Simple Instruction Selection";
     }
+
+    /// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
+    /// the main function.
+    void EmitSpecialCodeForMain();
 
     /// visitBasicBlock - This method is called when we are visiting a new basic
     /// block.  This simply creates a new MachineBasicBlock to emit code into
@@ -650,6 +658,20 @@ void X86ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
 }
 
+/// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
+/// the main function.
+void X86ISel::EmitSpecialCodeForMain() {
+  // Switch the FPU to 64-bit precision mode for better compatibility and speed.
+  int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
+  addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+  
+  // Set the high part to be 64-bit precision.
+  addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
+                    CWFrameIdx, 1).addImm(2);
+
+  // Reload the modified control word now.
+  addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+}
 
 /// SelectPHINodes - Insert machine code to generate phis.  This is tricky
 /// because we have to generate our sources into the source basic blocks, not
