@@ -14,13 +14,25 @@
 
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include <iostream>
+using namespace llvm;
 
-namespace llvm {
-
-resourceId_t CPUResource::nextId = 0;
-
+resourceId_t llvm::CPUResource::nextId = 0;
+static std::vector<CPUResource*> *CPUResourceMap = 0;
+  
 CPUResource::CPUResource(const std::string& resourceName, int maxUsers)
-  : rname(resourceName), rid(nextId++), maxNumUsers(maxUsers) {}
+    : rname(resourceName), rid(nextId++), maxNumUsers(maxUsers) {
+  if(!CPUResourceMap)
+    CPUResourceMap = new std::vector<CPUResource*>;
+
+  //Put Resource in the map
+  CPUResourceMap->push_back(this);
+}
+
+///Get CPUResource if you only have the resource ID
+CPUResource* CPUResource::getCPUResource(resourceId_t id) {
+  return (*CPUResourceMap)[id];
+}
 
 // Check if fromRVec and toRVec have *any* common entries.
 // Assume the vectors are sorted in increasing order.
@@ -254,5 +266,3 @@ void InstrRUsage::addUsageDelta(const InstrRUsageDelta &delta) {
       assert(r >= 0 && "Resource to remove was unused in cycle c!");
     }
 }
-
-} // End llvm namespace
