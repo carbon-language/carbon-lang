@@ -139,7 +139,7 @@ VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
 
 /* Label identifiers end with a colon */
 Label       [-a-zA-Z$._0-9]+:
-QuoteLabel \"[^\"]*\":
+QuoteLabel \"[^\"]+\":
 
 /* Quoted names can contain any character except " and \ */
 StringConstant \"[^\"]*\"
