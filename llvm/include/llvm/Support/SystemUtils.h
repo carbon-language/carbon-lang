@@ -15,14 +15,9 @@
 #ifndef LLVM_SUPPORT_SYSTEMUTILS_H
 #define LLVM_SUPPORT_SYSTEMUTILS_H
 
-#include <string>
+#include "llvm/System/Path.h"
 
 namespace llvm {
-
-/// isExecutableFile - This function returns true if the filename specified
-/// exists and is executable.
-///
-bool isExecutableFile(const std::string &ExeFileName);
 
 /// isStandardOutAConsole - Return true if we can tell that the standard output
 /// stream goes to a terminal window or console.
@@ -33,7 +28,7 @@ bool isStandardOutAConsole();
 /// the same directory, but that directory is neither the current directory, nor
 /// in the PATH.  If the executable cannot be found, return an empty string.
 /// 
-std::string FindExecutable(const std::string &ExeName,
+sys::Path FindExecutable(const std::string &ExeName,
                            const std::string &ProgramPath);
 
 /// RunProgramWithTimeout - This function executes the specified program, with
