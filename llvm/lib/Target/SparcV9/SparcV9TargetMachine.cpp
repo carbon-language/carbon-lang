@@ -179,6 +179,9 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(*this));
 
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "Final code:\n"));
+
   if (EmitMappingInfo) {
     PM.add(createInternalGlobalMapperPass());
     PM.add(getMappingInfoAsmPrinterPass(Out));
@@ -234,6 +237,11 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   //PM.add(createLICMPass());
   //PM.add(createGCSEPass());
 
+  // If the user's trying to read the generated code, they'll need to see the
+  // transformed input.
+  if (PrintMachineCode)
+    PM.add(new PrintFunctionPass());
+
   // Construct and initialize the MachineFunction object for this fn.
   PM.add(createMachineCodeConstructionPass(TM));
 
@@ -251,6 +259,9 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   if (!DisablePeephole)
     PM.add(createPeepholeOptsPass(TM));
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "Final code:\n"));
 }
 
 /// allocateSparcV9TargetMachine - Allocate and return a subclass of TargetMachine
