@@ -45,9 +45,13 @@ namespace llvm {
     // Properties to be set by the derived class ctor, used to configure the
     // asmwriter.
 
+    /// CommentChar - This indicates the comment character used by the
+    /// assembler.
+    const char *CommentChar;
+
     /// GlobalPrefix - If this is set to a non-empty string, it is prepended
     /// onto all global symbols.  This is often used for "_" or ".".
-    const char *GlobalPrefix;
+    const char *GlobalPrefix;    // Defaults to ""
 
     /// ZeroDirective - this should be set to the directive used to get some
     /// number of zero bytes emitted to the current section.  Common cases are
@@ -69,6 +73,7 @@ namespace llvm {
 
     AsmPrinter(std::ostream &o, TargetMachine &tm)
       : O(o), TM(tm),
+        CommentChar("#"),
         GlobalPrefix(""),
         ZeroDirective("\t.zero\t"),
         AsciiDirective("\t.ascii\t"),
