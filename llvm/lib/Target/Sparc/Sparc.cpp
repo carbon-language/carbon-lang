@@ -1,3 +1,4 @@
+// $Id$
 //***************************************************************************
 // File:
 //	Sparc.cpp
@@ -18,10 +19,46 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 
 
+//***************************** Internal Functions *************************/
+
+//----------------------------------------------------------------------------
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the Sparc backend. (the llvm/CodeGen/Sparc.h interface)
+//----------------------------------------------------------------------------
 //
 TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
+
+
+//----------------------------------------------------------------------------
+// Entry point for register allocation for a module
+//----------------------------------------------------------------------------
+
+bool
+AllocateRegisters(Method *M, TargetMachine &TM)
+{
+ 
+  if ( (M)->isExternal() )     // don't process prototypes
+    return false;
+    
+  if( DEBUG_RA ) {
+    cout << endl << "******************** Method "<< (M)->getName();
+    cout <<        " ********************" <<endl;
+  }
+    
+  MethodLiveVarInfo LVI(M );   // Analyze live varaibles
+  LVI.analyze();
+  
+    
+  PhyRegAlloc PRA(M, TM , &LVI); // allocate registers
+  PRA.allocateRegisters();
+    
+
+  if( DEBUG_RA )  cout << endl << "Register allocation complete!" << endl;
+
+  return false;
+}
+
+//***************************** External Classes **************************/
 
 
 //---------------------------------------------------------------------------
@@ -396,64 +433,42 @@ void UltraSparcRegInfo::setCallArgColor(LiveRange *const LR,
 // 
 //---------------------------------------------------------------------------
 
-UltraSparc::UltraSparc() : TargetMachine("UltraSparc-Native"),
-			   InstSchedulingInfo(&InstInfo),
-			   RegInfo( this )  {
+UltraSparc::UltraSparc()
+  : TargetMachine("UltraSparc-Native"),
+    instrInfo(),
+    schedInfo(&instrInfo),
+    regInfo( this )
+{
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
   maxAtomicMemOpWordSize = 8;
-  zeroRegNum = RegInfo.getZeroReg();	   // %g0 always gives 0 on Sparc
 }
 
 
-
-//----------------------------------------------------------------------------
-// Entry point for register allocation for a module
-//----------------------------------------------------------------------------
-
-void AllocateRegisters(Method *M, TargetMachine &TM)
+bool
+UltraSparc::compileMethod(Method *M)
 {
- 
-  if ( (M)->isExternal() )     // don't process prototypes
-    return;
-    
-  if( DEBUG_RA ) {
-    cout << endl << "******************** Method "<< (M)->getName();
-    cout <<        " ********************" <<endl;
-  }
-    
-  MethodLiveVarInfo LVI(M );   // Analyze live varaibles
-  LVI.analyze();
+  if (SelectInstructionsForMethod(M, *this))
+    {
+      cerr << "Instruction selection failed for method " << M->getName()
+	   << "\n\n";
+      return true;
+    }
   
-    
-  PhyRegAlloc PRA(M, TM , &LVI); // allocate registers
-  PRA.allocateRegisters();
-    
-
-  if( DEBUG_RA )  cout << endl << "Register allocation complete!" << endl;
-
-}
-
-
-
-
-
-bool UltraSparc::compileMethod(Method *M) {
-  if (SelectInstructionsForMethod(M, *this)) {
-    cerr << "Instruction selection failed for method " << M->getName()
-       << "\n\n";
-    return true;
-  }
+  if (ScheduleInstructionsWithSSA(M, *this))
+    {
+      cerr << "Instruction scheduling before allocation failed for method "
+	   << M->getName() << "\n\n";
+      return true;
+    }
   
-  if (ScheduleInstructionsWithSSA(M, *this, InstSchedulingInfo)) {
-    cerr << "Instruction scheduling before allocation failed for method "
-       << M->getName() << "\n\n";
-    return true;
-  }
-
-  AllocateRegisters(M, *this);    // allocate registers
-
-
+  // if (AllocateRegisters(M, *this))    // allocate registers
+  //   {
+  //     cerr << "Register allocation failed for method "
+	//    << M->getName() << "\n\n";
+      // return true;
+    // }
+  
   return false;
 }
 
