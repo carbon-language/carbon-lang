@@ -69,9 +69,9 @@ namespace llvm {
     /* 5  */ o5, o7, l0, l1, l2,
     /* 10 */ l3, l4, l5, l6, l7,
     /* 15 */ i0, i1, i2, i3, i4,
-    /* 20 */ i5, i6, i7, g0, g1,  // i6 is frame ptr, i7 is ret addr, g0 is zero 
+    /* 20 */ i5, i6, i7, g0, g1, // i6 is frame ptr, i7 is ret addr, g0 is zero 
     /* 25 */ g2, g3, g4, g5, g6,
-    /* 30 */ g7, o6,              // o6 is stack ptr
+    /* 30 */ g7, o6,             // o6 is stack ptr
 
     // SparcV9FloatRegClass(FloatRegClassID)
     // - regs 32 .. 63 are FPSingleRegType, 64 .. 95 are FPDoubleRegType
