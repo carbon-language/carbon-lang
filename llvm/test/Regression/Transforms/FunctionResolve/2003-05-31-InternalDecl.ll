@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -funcresolve | llvm-dis | not grep declare
+; RUN: llvm-as < %s | opt -funcresolve | llvm-dis | grep declare
 
 declare void %test(...)
 
