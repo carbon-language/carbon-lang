@@ -1,4 +1,4 @@
-//===- Support/Signals.h - Signal Handling support ---------------*- C++ -*--=//
+//===- Support/Signals.h - Signal Handling support -------------*- C++ -*-===//
 //
 // This file defines some helpful functions for dealing with the possibility of
 // unix signals occuring while your program is running.
@@ -16,3 +16,4 @@
 void RemoveFileOnSignal(const std::string &Filename);
 
 #endif
+
