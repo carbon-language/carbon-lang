@@ -119,10 +119,10 @@ public:
   /// The Predecessors list of succ is automatically updated.
   ///
   void addSuccessor (MachineBasicBlock *succ) {
-    Successors.push_back (succ);
     assert (std::find (Successors.begin (), Successors.end (), succ)
             == Successors.end ()
             && "Trying to addSuccessor a MBB which is already my successor");
+    Successors.push_back (succ);
     succ->addPredecessor (this);
   }
 
@@ -138,15 +138,16 @@ public:
     Successors.erase (goner);
   }
 
+private:
   /// addPredecessor - Remove pred as a predecessor of this MachineBasicBlock.
   /// Don't do this unless you know what you're doing, because it doesn't
   /// update pred's successors list. Use pred->addSuccessor instead.
   ///
   void addPredecessor (MachineBasicBlock *pred) {
-    Predecessors.push_back (pred);
     assert(std::find (Predecessors.begin (), Predecessors.end (), pred)
            == Predecessors.end ()
            && "Trying to addPredecessor a MBB which is already my predecessor");
+    Predecessors.push_back (pred);
   }
 
   /// removePredecessor - Remove pred as a predecessor of this
@@ -162,6 +163,7 @@ public:
     Predecessors.erase (goner);
   }
 
+public:
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()
