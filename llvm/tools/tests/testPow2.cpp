@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "/home/vadve/vadve/Research/DynOpt/LLVM/llvm/include/llvm/Support/MathExtras.h"
+#include "llvm/Support/MathExtras.h"
 
 inline void
 testPow(int C, bool isPow)
