@@ -76,8 +76,8 @@ void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LoopInfo::print(std::ostream &OS) const {
-  std::copy(getTopLevelLoops().begin(), getTopLevelLoops().end(),
-            std::ostream_iterator<const Loop*>(OS, "\n"));
+  for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
+    TopLevelLoops[i]->print(OS);
 }
 
 Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
