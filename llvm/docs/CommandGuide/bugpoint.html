@@ -116,8 +116,17 @@ working properly.<p>
         run.<p>
 
 	<li><tt>-args &lt;arguments&gt;</tt><br>
+
 	All arguments specified after <tt>-args</tt> are passed into the
-	executed program when the program must be executed.<p>
+	executed program when the program must be executed.  Note that if the
+	program takes an argument which starts with a '-', you should use:
+        <p>
+        <tt>bugpoint .... -args -- (the arguments here)</tt>
+        <p>
+        The "<tt>--</tt>" right after the <tt>-args</tt> option tells
+        <tt>bugpoint</tt> to consider any options starting with <tt>-</tt> to be
+        part of the <tt>-args</tt> option, not as options to <tt>bugpoint</tt>
+        itself.<p>
 
 	<li><tt>-disable-(adce,dce,final-cleanup,simplifycfg)</tt><br>
 	<tt>bugpoint</tt> uses several passes internally for cleanup routines to
