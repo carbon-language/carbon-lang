@@ -341,15 +341,16 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   // Find the first branch instr in the sequence of machine instrs for term
   // 
   unsigned first = 0;
-  while (!mii.isBranch(termMvec[first]->getOpCode()))
+  while (! mii.isBranch(termMvec[first]->getOpCode()) &&
+         ! mii.isReturn(termMvec[first]->getOpCode()))
     ++first;
   assert(first < termMvec.size() &&
-	 "No branch instructions for BR?  Ok, but weird!  Delete assertion.");
+	 "No branch instructions for terminator?  Ok, but weird!");
   if (first == termMvec.size())
     return;
-  
+
   SchedGraphNode* firstBrNode = getGraphNodeForInstr(termMvec[first]);
-  
+
   // Add CD edges from each instruction in the sequence to the
   // *last preceding* branch instr. in the sequence 
   // Use a latency of 0 because we only need to prevent out-of-order issue.
@@ -357,13 +358,14 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   for (unsigned i = termMvec.size(); i > first+1; --i)
     {
       SchedGraphNode* toNode = getGraphNodeForInstr(termMvec[i-1]);
-      assert(toNode && "No node for instr generated for branch?");
+      assert(toNode && "No node for instr generated for branch/ret?");
       
       for (unsigned j = i-1; j != 0; --j) 
-	if (mii.isBranch(termMvec[j-1]->getOpCode()))
+	if (mii.isBranch(termMvec[j-1]->getOpCode()) ||
+            mii.isReturn(termMvec[j-1]->getOpCode()))
 	  {
 	    SchedGraphNode* brNode = getGraphNodeForInstr(termMvec[j-1]);
-	    assert(brNode && "No node for instr generated for branch?");
+	    assert(brNode && "No node for instr generated for branch/ret?");
 	    (void) new SchedGraphEdge(brNode, toNode, SchedGraphEdge::CtrlDep,
 				      SchedGraphEdge::NonDataDep, 0);
 	    break;			// only one incoming edge is enough
@@ -388,7 +390,7 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   const MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(bb);
   for (unsigned i=0, N=mvec.size(); i < N; i++) 
     {
-      if (mvec[i] == termMvec[first]) // reached the first branch
+      if (mvec[i] == termMvec[first])   // reached the first branch
         break;
       
       SchedGraphNode* fromNode = this->getGraphNodeForInstr(mvec[i]);
