@@ -698,9 +698,10 @@ if ($BuildError eq "") {
     # Clean out previous results...
     system "$NICE gmake $MAKEOPTS clean > /dev/null 2>&1";
 
-    # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE enabled!
+    # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE and
+    # GET_STABLE_NUMBERS enabled!
     system "gmake -k $MAKEOPTS $PROGTESTOPTS report.nightly.raw.out TEST=nightly " .
-           " LARGE_PROBLEM_SIZE=1 > /dev/null 2>&1";
+           " LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 > /dev/null 2>&1";
     system "cp report.nightly.raw.out $OldenTestsLog";
   } else {
     system "gunzip ${OldenTestsLog}.gz";
@@ -715,10 +716,10 @@ if ($BuildError eq "") {
   # totals file.
   my $WallTimeRE = "[A-Za-z0-9.: ]+\\(([0-9.]+) wall clock";
   foreach $Rec (@Records) {
-    my $rNATTime = GetRegex 'TEST-RESULT-nat-time: real\s*([.0-9m]+)', $Rec;
-    my $rCBETime = GetRegex 'TEST-RESULT-cbe-time: real\s*([.0-9m]+)', $Rec;
-    my $rLLCTime = GetRegex 'TEST-RESULT-llc-time: real\s*([.0-9m]+)', $Rec;
-    my $rJITTime = GetRegex 'TEST-RESULT-jit-time: real\s*([.0-9m]+)', $Rec;
+    my $rNATTime = GetRegex 'TEST-RESULT-nat-time: program\s*([.0-9m]+)', $Rec;
+    my $rCBETime = GetRegex 'TEST-RESULT-cbe-time: program\s*([.0-9m]+)', $Rec;
+    my $rLLCTime = GetRegex 'TEST-RESULT-llc-time: program\s*([.0-9m]+)', $Rec;
+    my $rJITTime = GetRegex 'TEST-RESULT-jit-time: program\s*([.0-9m]+)', $Rec;
     my $rOptTime = GetRegex "TEST-RESULT-compile: $WallTimeRE", $Rec;
     my $rBytecodeSize = GetRegex 'TEST-RESULT-compile: *([0-9]+)', $Rec;
     my $rMachCodeSize = GetRegex 'TEST-RESULT-jit-machcode: *([0-9]+).*bytes of machine code', $Rec;
