@@ -10,79 +10,193 @@
 #ifndef LLVM_ANALYSIS_ALIASSETTRACKER_H
 #define LLVM_ANALYSIS_ALIASSETTRACKER_H
 
-#include <vector>
+#include "llvm/Support/CallSite.h"
+#include "Support/iterator"
+#include "Support/hash_map"
+#include "Support/ilist"
 class AliasAnalysis;
 class LoadInst;
 class StoreInst;
-class CallInst;
-class InvokeInst;
-class Value;
 class AliasSetTracker;
+class AliasSet;
 
 class AliasSet {
   friend class AliasSetTracker;
-  std::vector<LoadInst*> Loads;
-  std::vector<StoreInst*> Stores;
-  std::vector<CallInst*> Calls;
-  std::vector<InvokeInst*> Invokes;
-public:
+
+  struct PointerRec;
+  typedef std::pair<Value* const, PointerRec> HashNodePair;
+
+  class PointerRec {
+    HashNodePair *NextInList;
+    AliasSet *AS;
+  public:
+    PointerRec() : NextInList(0), AS(0) {}
+
+    HashNodePair *getNext() const { return NextInList; }
+    bool hasAliasSet() const { return AS != 0; }
+
+    AliasSet *getAliasSet(AliasSetTracker &AST) { 
+      assert(AS && "No AliasSet yet!");
+      if (AS->Forward) {
+        AliasSet *OldAS = AS;
+        AS = OldAS->getForwardedTarget(AST);
+        if (--OldAS->RefCount == 0)
+          OldAS->removeFromTracker(AST);
+        AS->RefCount++;
+      }
+      return AS;
+    }
+
+    void setAliasSet(AliasSet *as) {
+      assert(AS == 0 && "Already have an alias set!");
+      AS = as;
+    }
+    void setTail(HashNodePair *T) {
+      assert(NextInList == 0 && "Already have tail!");
+      NextInList = T;
+    }
+  };
+
+  HashNodePair *PtrListHead, *PtrListTail; // Singly linked list of nodes
+  AliasSet *Forward;             // Forwarding pointer
+  AliasSet *Next, *Prev;         // Doubly linked list of AliasSets
+
+  std::vector<CallSite> CallSites; // All calls & invokes in this node
+
+  // RefCount - Number of nodes pointing to this AliasSet plus the number of
+  // AliasSets forwarding to it.
+  unsigned RefCount : 29;
+
   /// AccessType - Keep track of whether this alias set merely refers to the
   /// locations of memory, whether it modifies the memory, or whether it does
-  /// both.  The lattice goes from "None" (alias set not present) to either Refs
-  /// or Mods, then to ModRef as neccesary.
+  /// both.  The lattice goes from "NoModRef" to either Refs or Mods, then to
+  /// ModRef as neccesary.
   ///
   enum AccessType {
-    Refs, Mods, ModRef
+    NoModRef = 0, Refs = 1,         // Ref = bit 1
+    Mods     = 2, ModRef = 3        // Mod = bit 2
   };
+  unsigned AccessTy : 2;
 
   /// AliasType - Keep track the relationships between the pointers in the set.
   /// Lattice goes from MustAlias to MayAlias.
   ///
   enum AliasType {
-    MustAlias, MayAlias
+    MustAlias = 0, MayAlias = 1
   };
-private:
-  enum AccessType AccessTy;
-  enum AliasType  AliasTy;
+  unsigned AliasTy : 1;
+
+  /// Define an iterator for alias sets... this is just a forward iterator.
+  class iterator : public forward_iterator<Value*, ptrdiff_t> {
+    HashNodePair *CurNode;
+  public:
+    iterator(HashNodePair *CN = 0) : CurNode(CN) {}
+    
+    bool operator==(const iterator& x) const {
+      return CurNode == x.CurNode;
+    }
+    bool operator!=(const iterator& x) const { return !operator==(x); }
+
+    const iterator &operator=(const iterator &I) {
+      CurNode = I.CurNode;
+      return *this;
+    }
+  
+    value_type operator*() const {
+      assert(CurNode && "Dereferencing AliasSet.end()!");
+      return CurNode->first;
+    }
+    value_type operator->() const { return operator*(); }
+  
+    iterator& operator++() {                // Preincrement
+      assert(CurNode && "Advancing past AliasSet.end()!");
+      CurNode = CurNode->second.getNext();
+      return *this;
+    }
+    iterator operator++(int) { // Postincrement
+      iterator tmp = *this; ++*this; return tmp; 
+    }
+  };
+
+  friend class ilist_traits<AliasSet>;
+  AliasSet *getPrev() const { return Prev; }
+  AliasSet *getNext() const { return Next; }
+  void setPrev(AliasSet *P) { Prev = P; }
+  void setNext(AliasSet *N) { Next = N; }
+
 public:
   /// Accessors...
-  enum AccessType getAccessType() const { return AccessTy; }
-  enum AliasType  getAliasType()  const { return AliasTy; }
-
-  // TODO: in the future, add a fixed size (4? 2?) cache of pointers that we
-  // know are in the alias set, to cut down time answering "pointeraliasesset"
-  // queries.
-
-  /// pointerAliasesSet - Return true if the specified pointer "may" (or must)
-  /// alias one of the members in the set.
-  ///
-  bool pointerAliasesSet(const Value *Ptr, AliasAnalysis &AA) const;
+  bool isRef() const { return AccessTy & Refs; }
+  bool isMod() const { return AccessTy & Mods; }
+  bool isMustAlias() const { return AliasTy == MustAlias; }
+  bool isMayAlias()  const { return AliasTy == MayAlias; }
 
   /// mergeSetIn - Merge the specified alias set into this alias set...
   ///
-  void mergeSetIn(const AliasSet &AS);
+  void mergeSetIn(AliasSet &AS);
 
-  const std::vector<LoadInst*>   &getLoads()   const { return Loads; }
-  const std::vector<StoreInst*>  &getStores()  const { return Stores; }
-  const std::vector<CallInst*>   &getCalls()   const { return Calls; }
-  const std::vector<InvokeInst*> &getInvokes() const { return Invokes; }
+  // Alias Set iteration - Allow access to all of the pointer which are part of
+  // this alias set...
+  iterator begin() const { return iterator(PtrListHead); }
+  iterator end()   const { return iterator(); }
+
+  void print(std::ostream &OS) const;
+  void dump() const;
 
 private:
-  AliasSet() : AliasTy(MustAlias) {} // Can only be created by AliasSetTracker
-  void updateAccessType();
-  Value *getSomePointer() const;
+  // Can only be created by AliasSetTracker
+  AliasSet() : PtrListHead(0), PtrListTail(0), Forward(0), RefCount(0),
+               AccessTy(NoModRef), AliasTy(MustAlias) {
+  }
+  Value *getSomePointer() const {
+    return PtrListHead ? PtrListHead->first : 0;
+  }
+
+  /// getForwardedTarget - Return the real alias set this represents.  If this
+  /// has been merged with another set and is forwarding, return the ultimate
+  /// destination set.  This also implements the union-find collapsing as well.
+  AliasSet *getForwardedTarget(AliasSetTracker &AST) {
+    if (!Forward) return this;
+
+    AliasSet *Dest = Forward->getForwardedTarget(AST);
+    if (Dest != Forward) {
+      Dest->RefCount++;
+      if (--Forward->RefCount == 0)
+        Forward->removeFromTracker(AST);
+      Forward = Dest;
+    }
+    return Dest;
+  }
+
+  void removeFromTracker(AliasSetTracker &AST);
+
+  void addPointer(AliasSetTracker &AST, HashNodePair &Entry);
+  void addCallSite(CallSite CS);
+
+  /// aliasesPointer - Return true if the specified pointer "may" (or must)
+  /// alias one of the members in the set.
+  ///
+  bool aliasesPointer(const Value *Ptr, AliasAnalysis &AA) const;
+  bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
+
+inline std::ostream& operator<<(std::ostream &OS, const AliasSet &AS) {
+  AS.print(OS);
+  return OS;
+}
 
 
 class AliasSetTracker {
   AliasAnalysis &AA;
-  std::vector<AliasSet> AliasSets;
+  ilist<AliasSet> AliasSets;
+
+  // Map from pointers to their node
+  hash_map<Value*, AliasSet::PointerRec> PointerMap;
 public:
   /// AliasSetTracker ctor - Create an empty collection of AliasSets, and use
   /// the specified alias analysis object to disambiguate load and store
   /// addresses.
   AliasSetTracker(AliasAnalysis &aa) : AA(aa) {}
-
 
   /// add methods - These methods are used to add different types of
   /// instructions to the alias sets.  Adding a new instruction can result in
@@ -95,15 +209,57 @@ public:
   ///
   void add(LoadInst *LI);
   void add(StoreInst *SI);
-  void add(CallInst *CI);
-  void add(InvokeInst *II);
+  void add(CallSite CS);       // Call/Invoke instructions
+  void add(CallInst *CI) { add(CallSite(CI)); }
+  void add(InvokeInst *II) { add(CallSite(II)); }
+  void add(Instruction *I);  // Dispatch to one of the other add methods...
 
   /// getAliasSets - Return the alias sets that are active.
-  const std::vector<AliasSet> &getAliasSets() const { return AliasSets; }
+  const ilist<AliasSet> &getAliasSets() const { return AliasSets; }
+
+  /// getAliasSetForPointer - Return the alias set that the specified pointer
+  /// lives in...
+  AliasSet &getAliasSetForPointer(Value *P);
+
+  /// getAliasAnalysis - Return the underlying alias analysis object used by
+  /// this tracker.
+  AliasAnalysis &getAliasAnalysis() const { return AA; }
+
+  typedef ilist<AliasSet>::iterator iterator;
+  typedef ilist<AliasSet>::const_iterator const_iterator;
+
+  const_iterator begin() const { return AliasSets.begin(); }
+  const_iterator end()   const { return AliasSets.end(); }
+
+  iterator begin() { return AliasSets.begin(); }
+  iterator end()   { return AliasSets.end(); }
+
+  void print(std::ostream &OS) const;
+  void dump() const;
 
 private:
+  friend class AliasSet;
+  void removeAliasSet(AliasSet *AS);
+
+  AliasSet::HashNodePair &getEntryFor(Value *V) {
+    // Standard operator[], except that it returns the whole pair, not just
+    // ->second.
+    return *PointerMap.insert(AliasSet::HashNodePair(V,
+                                            AliasSet::PointerRec())).first;
+  }
+
+  void addPointer(Value *P, AliasSet::AccessType E) {
+    AliasSet &AS = getAliasSetForPointer(P);
+    AS.AccessTy |= E;
+  }
   AliasSet *findAliasSetForPointer(const Value *Ptr);
-  void mergeAllSets();
+
+  AliasSet *findAliasSetForCallSite(CallSite CS);
 };
+
+inline std::ostream& operator<<(std::ostream &OS, const AliasSetTracker &AST) {
+  AST.print(OS);
+  return OS;
+}
 
 #endif
