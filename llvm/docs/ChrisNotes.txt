@@ -1,9 +1,10 @@
+* Fix DCE to work better, so that SCCP can show it's true value.
+* Implement ADCE
 * Fix the const pool printer to print out constants in some sort of "sorted"
   order.  Then enable TestOptimizer.sh to diff -sccp output.  Currently it 
   doesn't work because the diff fails because of ordering of the constant 
   pool. :(
 * Enable DoConstantPoolMerging to do trivial DCE of constant values.
-* Fix DCE to work better, so that SCCP can show it's true value.
 * Should provide "castTerminator, castPHI, etc" functions in Instruction, and
   similar functions in other classes, that effectively do dynamic casts.  This
   would allow code like this:
