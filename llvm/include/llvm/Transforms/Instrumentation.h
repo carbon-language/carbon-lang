@@ -20,7 +20,7 @@ class ModulePass;
 class FunctionPass;
 
 // Reoptimizer support pass: add instrumentation calls to back-edges of loops
-ModulePass *createLoopInstrumentationPass ();
+FunctionPass *createLoopInstrumentationPass ();
 
 // Reoptimizer support pass: combine multiple back-edges w/ same target into one
 FunctionPass *createCombineBranchesPass();
