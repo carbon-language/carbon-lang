@@ -132,20 +132,12 @@ static inline bool read(const unsigned char *&Buf, const unsigned char *EndBuf,
 
 static inline bool input_data(const unsigned char *&Buf,
                               const unsigned char *EndBuf, 
-                              void *Ptr, void *End, bool Align = false) {
+                              void *Ptr, void *End) {
   unsigned char *Start = (unsigned char *)Ptr;
   unsigned Amount = (unsigned char *)End - Start;
   if (Buf+Amount > EndBuf) return true;
-#ifdef ENDIAN_LITTLE
   std::copy(Buf, Buf+Amount, Start);
   Buf += Amount;
-#else
-  unsigned char *E = (unsigned char *)End;
-  while (Ptr != E)
-    *--E = *Buf++;
-#endif
-
-  if (Align) return align32(Buf, EndBuf);
   return false;
 }
 
