@@ -177,10 +177,10 @@ LibTool.Flags := --tag=CXX
 #--------------------------------------------------------------------
 ObjDir      := $(BUILD_OBJ_DIR)/$(BuildMode)
 LibDir      := $(BUILD_OBJ_ROOT)/$(BuildMode)/lib
-ToolDir     := $(BUILD_OBJ_ROOT)/$(BuildMode)/tools
+ToolDir     := $(BUILD_OBJ_ROOT)/$(BuildMode)/bin
 ExmplDir    := $(BUILD_OBJ_ROOT)/$(BuildMode)/examples
 LLVMLibDir  := $(LLVM_OBJ_ROOT)/$(BuildMode)/lib
-LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/tools
+LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
 LExmplDir   := $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
 
 #--------------------------------------------------------------------
