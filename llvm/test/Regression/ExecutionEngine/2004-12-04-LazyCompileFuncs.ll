@@ -1,5 +1,5 @@
 ; RUN: llvm-as -f %s -o %t.bc
-; RUN: lli -debug-only=jit %t.bc 2>&1 | not grep 'Finished CodeGen of .* G'
+; RUN: lli -debug-only=jit %t.bc 2>&1 | not grep 'Finished CodeGen of .*Function: F'
 
 %.str_1 = internal constant [7 x sbyte] c"IN F!\0A\00"		; <[7 x sbyte]*> [#uses=1]
 %.str_2 = internal constant [7 x sbyte] c"IN G!\0A\00"		; <[7 x sbyte]*> [#uses=1]
