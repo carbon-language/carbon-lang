@@ -28,8 +28,6 @@ cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
 cl::Flag   Verbose       ("v", "Print information about actions taken");
 cl::Flag   DumpAsm       ("d", "Print assembly as linked", cl::Hidden, false);
 cl::StringList LibPaths  ("L", "Specify a library search path", cl::ZeroOrMore);
-cl::StringList Libraries ("l", "Specify libraries to link to", cl::ZeroOrMore);
-
 
 // FileExists - Return true if the specified string is an openable file...
 static inline bool FileExists(const std::string &FN) {
@@ -89,9 +87,6 @@ int main(int argc, char **argv) {
     BaseArg = 2;
     OutputFilename = InputFilenames[1];
   }
-
-  if (!Libraries.empty())
-    cerr << "LLVM Linker Warning:  Linking to libraries is unimplemented!\n";
 
   std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
   if (Composite.get() == 0) return 1;
