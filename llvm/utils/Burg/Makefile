@@ -12,7 +12,7 @@ BUILT_SOURCES = gram.tab.c
 
 include $(LEVEL)/Makefile.common
 
-gram.tab.c gram.tab.h:: gram.yc
+gram.tab.c gram.tab.h: gram.yc
 	$(VERB) $(BISON) -o gram.tab.c -d $<
 
 $(SourceDir)/lex.c: gram.tab.h
