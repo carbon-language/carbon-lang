@@ -58,25 +58,29 @@ namespace {
       addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
       addRegisterClass(MVT::f32, Alpha::FPRCRegisterClass);
       
-      setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
-      setOperationAction(ISD::EXTLOAD          , MVT::f32  , Promote);
+      setOperationAction(ISD::EXTLOAD  , MVT::i1   , Promote);
+      setOperationAction(ISD::EXTLOAD  , MVT::f32  , Promote);
 
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i32  , Expand);
+      setOperationAction(ISD::ZEXTLOAD , MVT::i1   , Expand);
+      setOperationAction(ISD::ZEXTLOAD , MVT::i32  , Expand);
 
-      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
-      setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
-      setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
+      setOperationAction(ISD::SEXTLOAD , MVT::i1   , Expand);
+      setOperationAction(ISD::SEXTLOAD , MVT::i8   , Expand);
+      setOperationAction(ISD::SEXTLOAD , MVT::i16  , Expand);
 
-      setOperationAction(ISD::SREM             , MVT::f32  , Expand);
-      setOperationAction(ISD::SREM             , MVT::f64  , Expand);
+      setOperationAction(ISD::SREM     , MVT::f32  , Expand);
+      setOperationAction(ISD::SREM     , MVT::f64  , Expand);
 
-      setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
-      setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
-      setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
+      //If this didn't legalize into a div....
+      //      setOperationAction(ISD::SREM     , MVT::i64, Expand);
+      //      setOperationAction(ISD::UREM     , MVT::i64, Expand);
+
+      setOperationAction(ISD::MEMMOVE  , MVT::Other, Expand);
+      setOperationAction(ISD::MEMSET   , MVT::Other, Expand);
+      setOperationAction(ISD::MEMCPY   , MVT::Other, Expand);
 
       //Doesn't work yet
-      setOperationAction(ISD::SETCC            , MVT::f32,   Promote);
+      setOperationAction(ISD::SETCC    , MVT::f32,   Promote);
 
       computeRegisterProperties();
       
@@ -335,7 +339,10 @@ class ISel : public SelectionDAGISel {
   /// Alpha-specific SelectionDAG.
   AlphaTargetLowering AlphaLowering;
   
-  
+  SelectionDAG *ISelDAG;  // Hack to support us having a dag->dag transform
+                          // for sdiv and udiv until it is put into the future
+                          // dag combiner.
+
   /// ExprMap - As shared expressions are codegen'd, we keep track of which
   /// vreg the value is produced in, so we only emit one copy of each compiled
   /// tree.
@@ -354,6 +361,7 @@ public:
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
     DEBUG(BB->dump());
     // Codegen the basic block.
+    ISelDAG = &DAG;
     Select(DAG.getRoot());
     
     // Clear state used for selection.
@@ -371,8 +379,161 @@ public:
   void MoveInt2FP(unsigned src, unsigned dst, bool isDouble);
   //returns whether the sense of the comparison was inverted
   bool SelectFPSetCC(SDOperand N, unsigned dst);
+
+  // dag -> dag expanders for integer divide by constant
+  SDOperand BuildSDIVSequence(SDOperand N);
+  SDOperand BuildUDIVSequence(SDOperand N);
+
 };
 }
+
+//Shamelessly adapted from PPC32
+// Structure used to return the necessary information to codegen an SDIV as 
+// a multiply.
+struct ms {
+  int64_t m; // magic number
+  int64_t s; // shift amount
+};
+
+struct mu {
+  uint64_t m; // magic number
+  int64_t a;          // add indicator
+  int64_t s;          // shift amount
+};
+
+/// magic - calculate the magic numbers required to codegen an integer sdiv as
+/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1, 
+/// or -1.
+static struct ms magic(int64_t d) {
+  int64_t p;
+  uint64_t ad, anc, delta, q1, r1, q2, r2, t;
+  const uint64_t two63 = 9223372036854775808ULL; // 2^63
+  struct ms mag;
+  
+  ad = abs(d);
+  t = two63 + ((uint64_t)d >> 63);
+  anc = t - 1 - t%ad;   // absolute value of nc
+  p = 31;               // initialize p
+  q1 = two63/anc;       // initialize q1 = 2p/abs(nc)
+  r1 = two63 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
+  q2 = two63/ad;        // initialize q2 = 2p/abs(d)
+  r2 = two63 - q2*ad;   // initialize r2 = rem(2p,abs(d))
+  do {
+    p = p + 1;
+    q1 = 2*q1;        // update q1 = 2p/abs(nc)
+    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
+    if (r1 >= anc) {  // must be unsigned comparison
+      q1 = q1 + 1;
+      r1 = r1 - anc;
+    }
+    q2 = 2*q2;        // update q2 = 2p/abs(d)
+    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
+    if (r2 >= ad) {   // must be unsigned comparison
+      q2 = q2 + 1;
+      r2 = r2 - ad;
+    }
+    delta = ad - r2;
+  } while (q1 < delta || (q1 == delta && r1 == 0));
+
+  mag.m = q2 + 1;
+  if (d < 0) mag.m = -mag.m; // resulting magic number
+  mag.s = p - 64;            // resulting shift
+  return mag;
+}
+
+/// magicu - calculate the magic numbers required to codegen an integer udiv as
+/// a sequence of multiply, add and shifts.  Requires that the divisor not be 0.
+static struct mu magicu(uint64_t d)
+{
+  int64_t p;
+  uint64_t nc, delta, q1, r1, q2, r2;
+  struct mu magu;
+  magu.a = 0;               // initialize "add" indicator
+  nc = - 1 - (-d)%d;
+  p = 31;                   // initialize p
+  q1 = 0x8000000000000000/nc;       // initialize q1 = 2p/nc
+  r1 = 0x8000000000000000 - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFFFFFFFFFF/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFFFFFFFFFF - q2*d;   // initialize r2 = rem((2p-1),d)
+  do {
+    p = p + 1;
+    if (r1 >= nc - r1 ) {
+      q1 = 2*q1 + 1;  // update q1
+      r1 = 2*r1 - nc; // update r1
+    }
+    else {
+      q1 = 2*q1; // update q1
+      r1 = 2*r1; // update r1
+    }
+    if (r2 + 1 >= d - r2) {
+      if (q2 >= 0x7FFFFFFFFFFFFFFF) magu.a = 1;
+      q2 = 2*q2 + 1;     // update q2
+      r2 = 2*r2 + 1 - d; // update r2
+    }
+    else {
+      if (q2 >= 0x8000000000000000) magu.a = 1;
+      q2 = 2*q2;     // update q2
+      r2 = 2*r2 + 1; // update r2
+    }
+    delta = d - 1 - r2;
+  } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
+  magu.m = q2 + 1; // resulting magic number
+  magu.s = p - 32;  // resulting shift
+  return magu;
+}
+
+/// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand ISel::BuildSDIVSequence(SDOperand N) {
+  int d = (int)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
+  ms magics = magic(d);
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = ISelDAG->getNode(ISD::MULHS, MVT::i64, N.getOperand(0), 
+                                 ISelDAG->getConstant(magics.m, MVT::i64));
+  // If d > 0 and m < 0, add the numerator
+  if (d > 0 && magics.m < 0)
+    Q = ISelDAG->getNode(ISD::ADD, MVT::i64, Q, N.getOperand(0));
+  // If d < 0 and m > 0, subtract the numerator.
+  if (d < 0 && magics.m > 0)
+    Q = ISelDAG->getNode(ISD::SUB, MVT::i64, Q, N.getOperand(0));
+  // Shift right algebraic if shift value is nonzero
+  if (magics.s > 0)
+    Q = ISelDAG->getNode(ISD::SRA, MVT::i64, Q, 
+                         ISelDAG->getConstant(magics.s, MVT::i64));
+  // Extract the sign bit and add it to the quotient
+  SDOperand T = 
+    ISelDAG->getNode(ISD::SRL, MVT::i64, Q, ISelDAG->getConstant(63, MVT::i64));
+  return ISelDAG->getNode(ISD::ADD, MVT::i64, Q, T);
+}
+
+/// BuildUDIVSequence - Given an ISD::UDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand ISel::BuildUDIVSequence(SDOperand N) {
+  unsigned d = 
+    (unsigned)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
+  mu magics = magicu(d);
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = ISelDAG->getNode(ISD::MULHU, MVT::i64, N.getOperand(0), 
+                                 ISelDAG->getConstant(magics.m, MVT::i64));
+  if (magics.a == 0) {
+    Q = ISelDAG->getNode(ISD::SRL, MVT::i64, Q, 
+                         ISelDAG->getConstant(magics.s, MVT::i64));
+  } else {
+    SDOperand NPQ = ISelDAG->getNode(ISD::SUB, MVT::i64, N.getOperand(0), Q);
+    NPQ = ISelDAG->getNode(ISD::SRL, MVT::i64, NPQ, 
+                           ISelDAG->getConstant(1, MVT::i64));
+    NPQ = ISelDAG->getNode(ISD::ADD, MVT::i64, NPQ, Q);
+    Q = ISelDAG->getNode(ISD::SRL, MVT::i64, NPQ, 
+                           ISelDAG->getConstant(magics.s-1, MVT::i64));
+  }
+  return Q;
+}
+
+
 
 //These describe LDAx
 static const int IMM_LOW  = -32768;
@@ -959,7 +1120,26 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
  
-
+  case ISD::MULHU:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, Alpha::UMULH, 2, Result).addReg(Tmp1).addReg(Tmp2);
+  case ISD::MULHS:
+    {
+      //MULHU - Ra<63>*Rb - Rb<63>*Ra
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp3 = MakeReg(MVT::i64);
+      BuildMI(BB, Alpha::UMULH, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+      unsigned V1 = MakeReg(MVT::i64);
+      unsigned V2 = MakeReg(MVT::i64);
+      BuildMI(BB, Alpha::CMOVGE, 3, V1).addReg(Tmp2).addReg(Alpha::R31).addReg(Tmp1);
+      BuildMI(BB, Alpha::CMOVGE, 3, V2).addReg(Tmp1).addReg(Alpha::R31).addReg(Tmp2);
+      unsigned IRes = MakeReg(MVT::i64);
+      BuildMI(BB, Alpha::SUBQ, 2, IRes).addReg(Tmp3).addReg(V1);
+      BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(IRes).addReg(V2);
+      return Result;
+    }
   case ISD::UNDEF: {
     BuildMI(BB, Alpha::IDEF, 0, Result);
     return Result;
@@ -1517,8 +1697,43 @@ unsigned ISel::SelectExpr(SDOperand N) {
     {
       bool isAdd = opcode == ISD::ADD;
 
-      //FIXME: first check for Scaled Adds and Subs!
-      if(N.getOperand(1).getOpcode() == ISD::Constant &&
+      //first check for Scaled Adds and Subs!
+      //Valid for add and sub
+      if(N.getOperand(0).getOpcode() == ISD::SHL &&
+         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+         cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() == 2)
+      {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, isAdd?Alpha::S4ADDQ:Alpha::S4SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      }
+      else if(N.getOperand(0).getOpcode() == ISD::SHL &&
+         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+         cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() == 3)
+      {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, isAdd?Alpha::S4ADDQ:Alpha::S8SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      }
+      //Position prevents subs
+      else if(N.getOperand(1).getOpcode() == ISD::SHL && isAdd &
+         N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
+         cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 2)
+      {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
+        BuildMI(BB, Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      }
+      else if(N.getOperand(0).getOpcode() == ISD::SHL && isAdd &&
+         N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
+         cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 3)
+      {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
+        BuildMI(BB, Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      }
+      //small addi
+      else if(N.getOperand(1).getOpcode() == ISD::Constant &&
          cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
       { //Normal imm add/sub
         Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
@@ -1526,6 +1741,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
       }
+      //larger addi
       else if(N.getOperand(1).getOpcode() == ISD::Constant &&
               (cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 32767 ||
                (long)cast<ConstantSDNode>(N.getOperand(1))->getValue() >= -32767))
@@ -1535,7 +1751,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         if (!isAdd)
           Tmp2 = -Tmp2;
         BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
-      } else {
+      }
+      //give up and do the operation
+      else {
         //Normal add/sub
         Opc = isAdd ? Alpha::ADDQ : Alpha::SUBQ;
         Tmp1 = SelectExpr(N.getOperand(0));
@@ -1546,9 +1764,22 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
   case ISD::SDIV:
+  case ISD::UDIV:
+    if (N.getOperand(1).getOpcode() == ISD::Constant &&
+        ((int64_t)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() >= 2 ||
+         (int64_t)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() <= -2))
+    {
+      // If this is a divide by constant, we can emit code using some magic
+      // constants to implement it as a multiply instead.
+      ExprMap.erase(N);
+      if (opcode == ISD::SDIV) 
+        return SelectExpr(BuildSDIVSequence(N));
+      else
+        return SelectExpr(BuildUDIVSequence(N));
+    }
+    //else fall though
   case ISD::UREM:
   case ISD::SREM:
-  case ISD::UDIV:
     //FIXME: alpha really doesn't support any of these operations, 
     // the ops are expanded into special library calls with
     // special calling conventions
