@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;
@@ -234,6 +235,12 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 /// the specified function.
 bool llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
+
+  switch (F->getIntrinsicID()) {
+  case Intrinsic::isnan: return true;
+  default: break;
+  }
+
   return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt" ||
          Name == "log" || Name == "log10" || Name == "exp" || Name == "pow" ||
          Name == "acos" || Name == "asin" || Name == "atan" || Name == "fmod";
@@ -258,7 +265,9 @@ Constant *llvm::ConstantFoldCall(Function *F,
   if (Operands.size() == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
       double V = Op->getValue();
-      if (Name == "sin")
+      if (Name == "llvm.isnan")
+        return ConstantBool::get(isnan(V));
+      else if (Name == "sin")
         return ConstantFP::get(Ty, sin(V));
       else if (Name == "cos")
         return ConstantFP::get(Ty, cos(V));
