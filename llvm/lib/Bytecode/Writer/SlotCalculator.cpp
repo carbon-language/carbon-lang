@@ -773,9 +773,8 @@ int SlotCalculator::insertType(const Type *Ty, bool dontIgnore) {
       // If we haven't seen this sub type before, add it to our type table!
       if (getSlot(SubTy) == -1) {
         SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
-        int Slot = doInsertType(SubTy);
-        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
-                 " slot=" << Slot << "\n");
+        doInsertType(SubTy);
+        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription());
       }
     }
   }
