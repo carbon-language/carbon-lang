@@ -139,13 +139,7 @@ private:
 
 public:
 
-  // this replaces a value with a register after register allcoation
-  void setRegForValue(int Reg) {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
-    opType =  MO_MachineRegister;
-    regNum = Reg;
-  }
-
+ 
 };
 
 
@@ -235,7 +229,7 @@ private:
   
 public:
   typedef ValOpIterator<const MachineInstr, const Value> val_op_const_iterator;
-  typedef ValOpIterator<      MachineInstr,       Value> val_op_iterator;
+  typedef ValOpIterator<const MachineInstr,       Value> val_op_iterator;
   
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
@@ -412,7 +406,7 @@ MachineCodeForVMInstr::~MachineCodeForVMInstr()
 
 class MachineCodeForBasicBlock: public vector<MachineInstr*> {
 public:
-  typedef vector<const MachineInstr*>::iterator iterator;
+  typedef vector<MachineInstr*>::iterator iterator;
   typedef vector<const MachineInstr*>::const_iterator const_iterator;
 };
 
