@@ -500,6 +500,7 @@ public:
     iterator I = Map.find(ValType::get(Ty));
     if (I == Map.end()) print("ERROR!");
     assert(I != Map.end() && "Didn't find type entry!");
+    assert(T->second == Ty && "Type entry wrong?");
     return I;
   }
 
@@ -508,6 +509,7 @@ public:
     //const TypeClass *Ty = (const TypeClass*)TyIt->second.get();
     for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
       if (I->second.get() != Ty && TypesEqual(Ty, I->second.get())) {
+        assert(Ty->isAbstract() && "Replacing a non-abstract type?");
         TypeClass *NewTy = (TypeClass*)I->second.get();
 #if 0
         //Map.erase(TyIt);                // The old entry is now dead!
@@ -519,8 +521,14 @@ public:
 
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
-    if (Ty->isAbstract()) Ty->setAbstract(Ty->isTypeAbstract());
-    Ty->typeIsRefined();                   // Same type, different contents...
+    if (Ty->isAbstract())
+      Ty->setAbstract(Ty->isTypeAbstract());
+
+    // This method may be called with either an abstract or a concrete type.
+    // Concrete types might get refined if a subelement type got refined which
+    // was previously marked as abstract, but was realized to be concrete.  This
+    // can happen for recursive types.
+    Ty->typeIsRefined();                     // Same type, different contents...
   }
 
   // refineAbstractType - This is called when one of the contained abstract
@@ -703,9 +711,9 @@ void FunctionType::dropAllTypeUses(bool inMap) {
 #if 0
   if (inMap) FunctionTypes.remove(FunctionTypes.getEntryForType(this));
   // Drop all uses of other types, which might be recursive.
-  ResultType = Type::VoidTy;
-  ParamTys.clear();
 #endif
+  ResultType = OpaqueType::get();
+  ParamTys.clear();
 }
 
 
@@ -773,8 +781,8 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 void ArrayType::dropAllTypeUses(bool inMap) {
 #if 0
   if (inMap) ArrayTypes.remove(ArrayTypes.getEntryForType(this));
-  ElementType = Type::IntTy;
 #endif
+  ElementType = OpaqueType::get();
 }
 
 
@@ -856,8 +864,9 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
 void StructType::dropAllTypeUses(bool inMap) {
 #if 0
   if (inMap) StructTypes.remove(StructTypes.getEntryForType(this));
-  ETypes.clear();
 #endif
+  ETypes.clear();
+  ETypes.push_back(PATypeHandle(OpaqueType::get(), this));
 }
 
 
@@ -925,8 +934,8 @@ PointerType *PointerType::get(const Type *ValueType) {
 void PointerType::dropAllTypeUses(bool inMap) {
 #if 0
   if (inMap) PointerTypes.remove(PointerTypes.getEntryForType(this));
-  ElementType = Type::IntTy;
 #endif
+  ElementType = OpaqueType::get();
 }
 
 void debug_type_tables() {
@@ -1158,6 +1167,8 @@ void DerivedType::typeIsRefined() {
 //
 void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
+  assert((isAbstract() || !OldType->isAbstract()) &&
+         "Refining a non-abstract type!");
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "FunctionTy::refineAbstractTy(" << (void*)OldType << "[" 
             << *OldType << "], " << (void*)NewType << " [" 
@@ -1168,7 +1179,6 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
 #if 0
   TypeMap<FunctionValType, FunctionType>::iterator TMI =
     FunctionTypes.getEntryForType(this);
-  assert(TMI->second == this);
 #endif
 
   // Find the type element we are refining...
@@ -1192,6 +1202,8 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
 //
 void ArrayType::refineAbstractType(const DerivedType *OldType,
 				   const Type *NewType) {
+  assert((isAbstract() || !OldType->isAbstract()) &&
+         "Refining a non-abstract type!");
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "ArrayTy::refineAbstractTy(" << (void*)OldType << "[" 
             << *OldType << "], " << (void*)NewType << " [" 
@@ -1202,7 +1214,6 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
   // Look up our current type map entry..
   TypeMap<ArrayValType, ArrayType>::iterator TMI =
     ArrayTypes.getEntryForType(this);
-  assert(TMI->second == this);
 #endif
 
   assert(getElementType() == OldType);
@@ -1219,6 +1230,8 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
 //
 void StructType::refineAbstractType(const DerivedType *OldType,
 				    const Type *NewType) {
+  assert((isAbstract() || !OldType->isAbstract()) &&
+         "Refining a non-abstract type!");
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "StructTy::refineAbstractTy(" << (void*)OldType << "[" 
             << *OldType << "], " << (void*)NewType << " [" 
@@ -1229,7 +1242,6 @@ void StructType::refineAbstractType(const DerivedType *OldType,
   // Look up our current type map entry..
   TypeMap<StructValType, StructType>::iterator TMI =
     StructTypes.getEntryForType(this);
-  assert(TMI->second == this);
 #endif
 
   for (int i = ETypes.size()-1; i >= 0; --i)
@@ -1249,6 +1261,8 @@ void StructType::refineAbstractType(const DerivedType *OldType,
 //
 void PointerType::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
+  assert((isAbstract() || !OldType->isAbstract()) &&
+         "Refining a non-abstract type!");
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "PointerTy::refineAbstractTy(" << (void*)OldType << "[" 
             << *OldType << "], " << (void*)NewType << " [" 
@@ -1259,7 +1273,6 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
   // Look up our current type map entry..
   TypeMap<PointerValType, PointerType>::iterator TMI =
     PointerTypes.getEntryForType(this);
-  assert(TMI->second == this);
 #endif
 
   assert(ElementType == OldType);
