@@ -15,18 +15,18 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOperators.h"
+#include "llvm/iPHINode.h"
 #include "llvm/ConstantHandling.h"
-
-namespace llvm {
+using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
 //
 
-// ConstantFoldInstruction - If an instruction references constants, try to fold
-// them together...
-//
-bool doConstantPropagation(BasicBlock::iterator &II) {
+/// doConstantPropagation - If an instruction references constants, try to fold
+/// them together...
+///
+bool llvm::doConstantPropagation(BasicBlock::iterator &II) {
   if (Constant *C = ConstantFoldInstruction(II)) {
     // Replaces all of the uses of a variable with uses of the constant.
     II->replaceAllUsesWith(C);
@@ -43,7 +43,7 @@ bool doConstantPropagation(BasicBlock::iterator &II) {
 // constant value, convert it into an unconditional branch to the constant
 // destination.
 //
-bool ConstantFoldTerminator(BasicBlock *BB) {
+bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
   TerminatorInst *T = BB->getTerminator();
       
   // Branch - See if we are conditional jumping on constant
@@ -165,7 +165,7 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
 //  Local dead code elimination...
 //
 
-bool isInstructionTriviallyDead(Instruction *I) {
+bool llvm::isInstructionTriviallyDead(Instruction *I) {
   return I->use_empty() && !I->mayWriteToMemory() && !isa<TerminatorInst>(I);
 }
 
@@ -174,7 +174,7 @@ bool isInstructionTriviallyDead(Instruction *I) {
 // to point to the instruction that immediately succeeded the original
 // instruction.
 //
-bool dceInstruction(BasicBlock::iterator &BBI) {
+bool llvm::dceInstruction(BasicBlock::iterator &BBI) {
   // Look for un"used" definitions...
   if (isInstructionTriviallyDead(BBI)) {
     BBI = BBI->getParent()->getInstList().erase(BBI);   // Bye bye
@@ -183,4 +183,35 @@ bool dceInstruction(BasicBlock::iterator &BBI) {
   return false;
 }
 
-} // End llvm namespace
+//===----------------------------------------------------------------------===//
+//  PHI Instruction Simplification
+//
+
+/// hasConstantValue - If the specified PHI node always merges together the same
+/// value, return the value, otherwise return null.
+///
+Value *llvm::hasConstantValue(PHINode *PN) {
+  // If the PHI node only has one incoming value, eliminate the PHI node...
+  if (PN->getNumIncomingValues() == 1)
+    return PN->getIncomingValue(0);
+
+  // Otherwise if all of the incoming values are the same for the PHI, replace
+  // the PHI node with the incoming value.
+  //
+  Value *InVal = 0;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) != PN)  // Not the PHI node itself...
+      if (InVal && PN->getIncomingValue(i) != InVal)
+        return 0;  // Not the same, bail out.
+      else
+        InVal = PN->getIncomingValue(i);
+
+  // The only case that could cause InVal to be null is if we have a PHI node
+  // that only has entries for itself.  In this case, there is no entry into the
+  // loop, so kill the PHI.
+  //
+  if (InVal == 0) InVal = Constant::getNullValue(PN->getType());
+
+  // All of the incoming values are the same, return the value now.
+  return InVal;
+}

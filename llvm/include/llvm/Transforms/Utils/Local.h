@@ -20,6 +20,7 @@
 namespace llvm {
 
 class Pass;
+class PHINode;
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
@@ -54,6 +55,15 @@ bool isInstructionTriviallyDead(Instruction *I);
 /// instruction.
 ///
 bool dceInstruction(BasicBlock::iterator &BBI);
+
+//===----------------------------------------------------------------------===//
+//  PHI Instruction Simplification
+//
+
+/// hasConstantValue - If the specified PHI node always merges together the same
+/// value, return the value, otherwise return null.
+///
+Value *hasConstantValue(PHINode *PN);
 
 
 //===----------------------------------------------------------------------===//
