@@ -25,6 +25,7 @@ class ValueType<int size, int value> {
   int Value = value;
 }
 
+def OtherVT: ValueType<0  ,  0>;   // "Other" value
 def i1     : ValueType<1  ,  1>;   // One bit boolean value
 def i8     : ValueType<8  ,  2>;   // 8-bit integer value
 def i16    : ValueType<16 ,  3>;   // 16-bit integer value
