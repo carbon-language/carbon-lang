@@ -378,24 +378,26 @@ public:
   virtual void releaseMemory() { Frontiers.clear(); }
 
   // Accessor interface:
+  typedef DomSetMapType::iterator iterator;
   typedef DomSetMapType::const_iterator const_iterator;
+  iterator       begin()       { return Frontiers.begin(); }
   const_iterator begin() const { return Frontiers.begin(); }
+  iterator       end()         { return Frontiers.end(); }
   const_iterator end()   const { return Frontiers.end(); }
-  const_iterator find(BasicBlock* B) const { return Frontiers.find(B); }
+  iterator       find(BasicBlock *B)       { return Frontiers.find(B); }
+  const_iterator find(BasicBlock *B) const { return Frontiers.find(B); }
 
   void addBasicBlock(BasicBlock *BB, const DomSetType &frontier) {
     assert(find(BB) == end() && "Block already in DominanceFrontier!");
     Frontiers.insert(std::make_pair(BB, frontier));
   }
 
-  void addToFrontier(BasicBlock *BB, BasicBlock *Node) {
-    DomSetMapType::iterator I = Frontiers.find(BB);
+  void addToFrontier(iterator I, BasicBlock *Node) {
     assert(I != end() && "BB is not in DominanceFrontier!");
     I->second.insert(Node);
   }
 
-  void removeFromFrontier(BasicBlock *BB, BasicBlock *Node) {
-    DomSetMapType::iterator I = Frontiers.find(BB);
+  void removeFromFrontier(iterator I, BasicBlock *Node) {
     assert(I != end() && "BB is not in DominanceFrontier!");
     assert(I->second.count(Node) && "Node is not in DominanceFrontier of BB");
     I->second.erase(Node);
