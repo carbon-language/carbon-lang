@@ -393,9 +393,6 @@ then
 	llvmgccwarn=yes
 fi
 
-dnl Location of PAPI
-AC_ARG_WITH(papi,AC_HELP_STRING([--with-papi],[Location of PAPI]),AC_SUBST(PAPIDIR,[$withval]),AC_SUBST(PAPIDIR,[/home/vadve/shared/Sparc/papi-2.3.4.1]))
-
 dnl Get libtool's idea of what the shared library suffix is.
 dnl (This is a hack; it relies on undocumented behavior.)
 AC_MSG_CHECKING([for shared library suffix])
