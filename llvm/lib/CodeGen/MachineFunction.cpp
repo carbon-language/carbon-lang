@@ -106,7 +106,7 @@ void ilist_traits<MachineBasicBlock>::transferNodesFromList(
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
-  : Annotation(MF_AID), Fn(F), Target(TM), NextMBBNumber(0) {
+  : Annotation(MF_AID), Fn(F), Target(TM) {
   SSARegMapping = new SSARegMap();
   MFInfo = new MachineFunctionInfo(*this);
   FrameInfo = new MachineFrameInfo();
