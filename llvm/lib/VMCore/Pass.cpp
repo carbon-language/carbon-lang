@@ -217,7 +217,11 @@ void Pass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
 
 // getPassName - Use C++ RTTI to get a SOMEWHAT intelligable name for the pass.
 //
-const char *Pass::getPassName() const { return typeid(*this).name(); }
+const char *Pass::getPassName() const {
+  if (const PassInfo *PI = getPassInfo())
+    return PI->getPassName();
+  return typeid(*this).name();
+}
 
 // print - Print out the internal state of the pass.  This is called by Analyse
 // to print out the contents of an analysis.  Otherwise it is not neccesary to
@@ -310,11 +314,10 @@ static std::vector<PassRegistrationListener*> *Listeners = 0;
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
 const PassInfo *Pass::getPassInfo() const {
-  assert(PassInfoMap && "PassInfoMap not constructed yet??");
-  std::map<TypeInfo, PassInfo*>::iterator I =
-    PassInfoMap->find(typeid(*this));
-  assert(I != PassInfoMap->end() && "Pass has not been registered!");
-  return I->second;
+  if (PassInfoCache) return PassInfoCache;
+  if (PassInfoMap == 0) return 0;
+  std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->find(typeid(*this));
+  return (I != PassInfoMap->end()) ? I->second : 0;
 }
 
 void RegisterPassBase::registerPass(PassInfo *PI) {
