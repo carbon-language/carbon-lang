@@ -253,7 +253,9 @@ template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef mapped_iterator<CallGraph::iterator, DerefFun> nodes_iterator;
   static nodes_iterator nodes_begin(CallGraph *CG) {
-    return map_iterator(CG->begin(), DerefFun(CGdereference));
+    CallGraph::iterator I = CG->begin();
+    ++I;
+    return map_iterator(I, DerefFun(CGdereference));
   }
   static nodes_iterator nodes_end  (CallGraph *CG) {
     return map_iterator(CG->end(), DerefFun(CGdereference));
