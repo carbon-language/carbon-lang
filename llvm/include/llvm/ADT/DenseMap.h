@@ -20,6 +20,7 @@
 #ifndef LLVM_ADT_DENSEMAP_H
 #define LLVM_ADT_DENSEMAP_H
 
+#include <functional>
 #include <vector>
 
 namespace llvm {
