@@ -22,6 +22,7 @@ MVT::ValueType getValueType(Record *Rec);
 
 std::ostream &operator<<(std::ostream &OS, MVT::ValueType T);
 std::string getName(MVT::ValueType T);
+std::string getEnumName(MVT::ValueType T);
 
 
 /// CodeGenTarget - This class corresponds to the Target class in the .td files.

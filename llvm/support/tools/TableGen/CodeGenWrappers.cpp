@@ -34,6 +34,24 @@ std::string getName(MVT::ValueType T) {
   }
 }
 
+std::string getEnumName(MVT::ValueType T) {
+  switch (T) {
+  case MVT::Other: return "Other";
+  case MVT::i1:    return "i1";
+  case MVT::i8:    return "i8";
+  case MVT::i16:   return "i16";
+  case MVT::i32:   return "i32";
+  case MVT::i64:   return "i64";
+  case MVT::i128:  return "i128";
+  case MVT::f32:   return "f32";
+  case MVT::f64:   return "f64";
+  case MVT::f80:   return "f80";
+  case MVT::f128:  return "f128";
+  case MVT::isVoid:return "isVoid";
+  default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
+  }
+}
+
 
 std::ostream &operator<<(std::ostream &OS, MVT::ValueType T) {
   return OS << getName(T);
