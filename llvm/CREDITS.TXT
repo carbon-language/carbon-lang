@@ -37,7 +37,8 @@ D: Autoconf support, QMTest database, documentation improvements
 N: Brian Gaeke
 E: gaeke@uiuc.edu
 W: http://www.students.uiuc.edu/~gaeke/
-D: Portions of X86 static and JIT compilers, reoptimizer framework cleanups
+D: Portions of X86 static and JIT compilers. 
+D: Dynamic trace optimizer
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 
 N: Chris Lattner
