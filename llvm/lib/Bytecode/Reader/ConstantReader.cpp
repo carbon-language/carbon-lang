@@ -110,12 +110,8 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
 	   "Can't refine a type I don't know about!");
   }
 
-  if (OldType == NewType) {
-    assert(!OldType->isAbstract());
-    I->removeUserFromConcrete();
-  } else {
-    *I = NewType;  // Update to point to new, more refined type.
-  }
+  I->removeUserFromConcrete();
+  *I = NewType;  // Update to point to new, more refined type.
 }
 
 
