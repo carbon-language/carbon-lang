@@ -6,17 +6,27 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
+//
+// This pass extracts
+//
+//===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Pass.h"
 #include "llvm/Module.h"
+#include "llvm/Pass.h"
+#include "llvm/Transforms/IPO.h"
 using namespace llvm;
 
 namespace {
   class FunctionExtractorPass : public Pass {
     Function *Named;
+    bool isolateFunc;
   public:
-    FunctionExtractorPass(Function *F = 0) : Named(F) {}
+    /// FunctionExtractorPass - ctor for the pass. If isolateFn is true, then
+    /// the named function is the only thing left in the Module (default
+    /// behavior), otherwise the function is the thing deleted.
+    ///
+    FunctionExtractorPass(Function *F = 0, bool isolateFn = true) 
+      : Named(F), isolateFunc(isolateFn) {}
 
     bool run(Module &M) {
       if (Named == 0) {
@@ -24,6 +34,20 @@ namespace {
         if (Named == 0) return false;  // No function to extract
       }
 
+      if (isolateFunc)
+        return isolateFunction(M);
+      else 
+        return deleteFunction();
+    }
+
+    bool deleteFunction() {
+      Named->setLinkage(GlobalValue::ExternalLinkage);
+      Named->deleteBody();
+      assert(Named->isExternal() && "This didn't make the function external!");
+      return true;
+    }
+
+    bool isolateFunction(Module &M) {
       // Make sure our result is globally accessible...
       Named->setLinkage(GlobalValue::ExternalLinkage);
 
@@ -37,7 +61,6 @@ namespace {
       // All of the functions may be used by global variables or the named
       // function.  Loop through them and create a new, external functions that
       // can be "used", instead of ones with bodies.
-      //
       std::vector<Function*> NewFunctions;
       
       Function *Last = &M.back();  // Figure out where the last real fn is...
@@ -89,6 +112,6 @@ namespace {
   RegisterPass<FunctionExtractorPass> X("extract", "Function Extractor");
 }
 
-Pass *llvm::createFunctionExtractionPass(Function *F) {
-  return new FunctionExtractorPass(F);
+Pass *llvm::createFunctionExtractionPass(Function *F, bool isolateFn) {
+  return new FunctionExtractorPass(F, isolateFn);
 }
