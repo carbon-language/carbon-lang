@@ -71,7 +71,7 @@ namespace {
     std::string valToExprString(const Value* V);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0);
+    void printConstantValueOnly(const Constant* CV);
     void printSingleConstantValue(const Constant* CV);
   };
 } // end of anonymous namespace
@@ -318,50 +318,45 @@ static std::string getAsCString(const ConstantArray *CVA) {
 
 // Print a constant value or values (it may be an aggregate).
 // Uses printSingleConstantValue() to print each individual value.
-void
-Printer::printConstantValueOnly(const Constant* CV,
-				int numPadBytesAfter /* = 0 */)
-{
-  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+void Printer::printConstantValueOnly(const Constant *CV) {  
   const TargetData &TD = TM.getTargetData();
 
-  if (CVA && isStringCompatible(CVA))
-    { // print the string alone and return
+  if (CV->isNullValue()) {
+    O << "\t.zero\t " << TD.getTypeSize(CV->getType()) << "\n";      
+  } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+    if (isStringCompatible(CVA)) {
+      // print the string alone and return
       O << "\t.string\t" << getAsCString(CVA) << "\n";
-    }
-  else if (CVA)
-    { // Not a string.  Print the values in successive locations
+    } else { // Not a string.  Print the values in successive locations
       const std::vector<Use> &constValues = CVA->getValues();
       for (unsigned i=0; i < constValues.size(); i++)
         printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
-  else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
-    { // Print the fields in successive locations. Pad to align if needed!
-      const StructLayout *cvsLayout =
-        TD.getStructLayout(CVS->getType());
-      const std::vector<Use>& constValues = CVS->getValues();
-      unsigned sizeSoFar = 0;
-      for (unsigned i=0, N = constValues.size(); i < N; i++)
-        {
-          const Constant* field = cast<Constant>(constValues[i].get());
+  } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
+    // Print the fields in successive locations. Pad to align if needed!
+    const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
+    const std::vector<Use>& constValues = CVS->getValues();
+    unsigned sizeSoFar = 0;
+    for (unsigned i=0, N = constValues.size(); i < N; i++) {
+      const Constant* field = cast<Constant>(constValues[i].get());
 
-          // Check if padding is needed and insert one or more 0s.
-          unsigned fieldSize = TD.getTypeSize(field->getType());
-          int padSize = ((i == N-1? cvsLayout->StructSize
-			  : cvsLayout->MemberOffsets[i+1])
-                         - cvsLayout->MemberOffsets[i]) - fieldSize;
-          sizeSoFar += (fieldSize + padSize);
+      // Check if padding is needed and insert one or more 0s.
+      unsigned fieldSize = TD.getTypeSize(field->getType());
+      unsigned padSize = ((i == N-1? cvsLayout->StructSize
+                           : cvsLayout->MemberOffsets[i+1])
+                          - cvsLayout->MemberOffsets[i]) - fieldSize;
+      sizeSoFar += fieldSize + padSize;
 
-          // Now print the actual field value
-          printConstantValueOnly(field, padSize);
-        }
-      assert(sizeSoFar == cvsLayout->StructSize &&
-             "Layout of constant struct may be incorrect!");
+      // Now print the actual field value
+      printConstantValueOnly(field);
+
+      // Insert the field padding unless it's zero bytes...
+      O << "\t.zero\t " << padSize << "\n";      
     }
-  else
+    assert(sizeSoFar == cvsLayout->StructSize &&
+           "Layout of constant struct may be incorrect!");
+  } else
     printSingleConstantValue(CV);
-
-  if (numPadBytesAfter) O << "\t.zero\t " << numPadBytesAfter << "\n";
 }
 
 /// printConstantPool - Print to the current output stream assembly
@@ -472,14 +467,13 @@ void Printer::printOp(const MachineOperand &MO,
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
     return;
-  case MachineOperand::MO_PCRelativeDisp:
-    {
-      ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
-      assert (i != NumberForBB.end()
-	      && "Could not find a BB I previously put in the NumberForBB map!");
-      O << ".LBB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
-    }
+  case MachineOperand::MO_PCRelativeDisp: {
+    ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
+    assert (i != NumberForBB.end()
+            && "Could not find a BB in the NumberForBB map!");
+    O << ".LBB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
     return;
+  }
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword)
       O << "OFFSET ";
@@ -923,33 +917,69 @@ bool Printer::doInitialization(Module &M) {
   return false; // success
 }
 
-static const Function *isConstantFunctionPointerRef(const Constant *C) {
-  if (const ConstantPointerRef *R = dyn_cast<ConstantPointerRef>(C))
-    if (const Function *F = dyn_cast<Function>(R->getValue()))
-      return F;
-  return 0;
+// SwitchSection - Switch to the specified section of the executable if we are
+// not already in it!
+//
+static void SwitchSection(std::ostream &OS, std::string &CurSection,
+                          const char *NewSection) {
+  if (CurSection != NewSection) {
+    CurSection = NewSection;
+    if (!CurSection.empty())
+      OS << "\t" << NewSection << "\n";
+  }
 }
 
-bool Printer::doFinalization(Module &M)
-{
+bool Printer::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
+  std::string CurSection;
+
   // Print out module-level global variables here.
-  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
-    std::string name(Mang->getValueName(I));
-    if (I->hasInitializer()) {
+  for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    if (I->hasInitializer()) {   // External global require no code
+      O << "\n\n";
+      std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
-      if (C->isNullValue()) {
-        O << "\n\n\t.comm " << name << "," << TD.getTypeSize(C->getType())
+      unsigned Size = TD.getTypeSize(C->getType());
+      unsigned Align = TD.getTypeAlignment(C->getType());
+
+      if (C->isNullValue() && 
+          (I->hasLinkOnceLinkage() || I->hasInternalLinkage())) {
+        SwitchSection(O, CurSection, ".data");
+        if (I->hasInternalLinkage())
+          O << "\t.local " << name << "\n";
+        
+        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
           << "," << (unsigned)TD.getTypeAlignment(C->getType());
         O << "\t\t# ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
       } else {
-        O << "\n\n\t.data\n";
-        O << "\t.globl " << name << "\n";
+        switch (I->getLinkage()) {
+        case GlobalValue::LinkOnceLinkage:
+          // Nonnull linkonce -> weak
+          O << "\t.weak " << name << "\n";
+          SwitchSection(O, CurSection, "");
+          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+          break;
+        
+        case GlobalValue::AppendingLinkage:
+          // FIXME: appending linkage variables should go into a section of
+          // their name or something.  For now, just emit them as external.
+        case GlobalValue::ExternalLinkage:
+          // If external or appending, declare as a global symbol
+          O << "\t.globl " << name << "\n";
+          // FALL THROUGH
+        case GlobalValue::InternalLinkage:
+          if (C->isNullValue())
+            SwitchSection(O, CurSection, ".bss");
+          else
+            SwitchSection(O, CurSection, ".data");
+          break;
+        }
+
+        O << "\t.align " << Align << "\n";
         O << "\t.type " << name << ",@object\n";
-        O << "\t.size " << name << "," << TD.getTypeSize(C->getType()) << "\n";
-        O << "\t.align " << (unsigned)TD.getTypeAlignment(C->getType()) << "\n";
+        O << "\t.size " << name << "," << Size << "\n";
         O << name << ":\t\t\t\t# ";
         WriteAsOperand(O, I, true, true, &M);
         O << " = ";
@@ -957,13 +987,8 @@ bool Printer::doFinalization(Module &M)
         O << "\n";
         printConstantValueOnly(C);
       }
-    } else {
-      O << "\t.globl " << name << "\n";
-      O << "\t.comm " << name << ", "
-        << (unsigned)TD.getTypeSize(I->getType()) << ", "
-        << (unsigned)TD.getTypeAlignment(I->getType()) << "\n";
     }
-  }
+
   delete Mang;
   return false; // success
 }
