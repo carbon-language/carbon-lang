@@ -164,8 +164,7 @@ Next Phase:
 After this project:
 -------------------
 1. Implement lots of nifty runtime optimizations
-2. Implement a static compiler backend for x86 (might come almost for free...)
-3. Implement new targets: IA64? X86-64? M68k? MMIX?  Who knows...
+2. Implement new targets: IA64? X86-64? M68k? MMIX?  Who knows...
 
 Infrastructure Improvements:
 ----------------------------
@@ -174,10 +173,7 @@ Infrastructure Improvements:
    bytecode without having to read the whole program.  Bytecode reader should be
    extended to allow on-demand loading of functions.
 
-2. PassManager needs to be able to run just a single function through a pipeline
-   of FunctionPass's.
-
-3. X86/Printer.cpp and Sparc/EmitAssembly.cpp both have copies of what is
+2. X86/Printer.cpp and Sparc/EmitAssembly.cpp both have copies of what is
    roughly the same code, used to output constants in a form the assembler
    can understand. These functions should be shared at some point. They
    should be rewritten to pass around iostreams instead of strings. The
