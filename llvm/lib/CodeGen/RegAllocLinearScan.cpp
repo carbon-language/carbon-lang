@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "regalloc"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -27,6 +26,7 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
+#include "LiveIntervals.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -562,6 +562,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     // otherwise we spill all intervals aliasing the register with
     // minimum weight, rollback to the interval with the earliest
     // start point and let the linear scan algorithm run again
+    assert(MRegisterInfo::isPhysicalRegister(minReg) &&
+           "did not choose a register to spill?");
     std::vector<bool> toSpill(mri_->getNumRegs(), false);
     toSpill[minReg] = true;
     for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
