@@ -165,6 +165,9 @@ public:
   }
 
 private:
+  void markReachableFunctionsExternallyAccessible(DSNode *N,
+                                                  hash_set<DSNode*> &Visited);
+
   void inlineGraphIntoCallees(DSGraph &G);
   DSGraph &getOrCreateDSGraph(Function &F);
   void ComputePostOrder(Function &F, hash_set<DSGraph*> &Visited,
