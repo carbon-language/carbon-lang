@@ -139,6 +139,58 @@ bool Module::addTypeName(const std::string &Name, const Type *Ty) {
   return false;
 }
 
+/// getMainFunction - This function looks up main efficiently.  This is such a
+/// common case, that it is a method in Module.  If main cannot be found, a
+/// null pointer is returned.
+///
+Function *Module::getMainFunction() {
+  std::vector<const Type*> Params;
+
+  // int main(void)...
+  if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
+                                                          Params, false)))
+    return F;
+
+  // void main(void)...
+  if (Function *F = getFunction("main", FunctionType::get(Type::VoidTy,
+                                                          Params, false)))
+    return F;
+
+  Params.push_back(Type::IntTy);
+
+  // int main(int argc)...
+  if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
+                                                          Params, false)))
+    return F;
+
+  // void main(int argc)...
+  if (Function *F = getFunction("main", FunctionType::get(Type::VoidTy,
+                                                          Params, false)))
+    return F;
+
+  for (unsigned i = 0; i != 2; ++i) {  // Check argv and envp
+    Params.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+
+    // int main(int argc, char **argv)...
+    if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
+                                                            Params, false)))
+      return F;
+    
+    // void main(int argc, char **argv)...
+    if (Function *F = getFunction("main", FunctionType::get(Type::VoidTy,
+                                                            Params, false)))
+      return F;
+  }
+
+  // Loop over all of the methods, trying to find main the hard way...
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (I->getName() == "main")
+      return I;
+  return 0; // Main not found...
+}
+
+
+
 // getTypeName - If there is at least one entry in the symbol table for the
 // specified type, return it.
 //

@@ -80,6 +80,12 @@ public:
   ///
   Function *getFunction(const std::string &Name, const FunctionType *Ty);
 
+  /// getMainFunction - This function looks up main efficiently.  This is such a
+  /// common case, that it is a method in Module.  If main cannot be found, a
+  /// null pointer is returned.
+  ///
+  Function *getMainFunction();
+
   /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
   /// there is already an entry for this name, true is returned and the symbol
   /// table is not modified.
