@@ -14,6 +14,7 @@
 class MachineInstr;
 class TargetMachine;
 class Value;
+class Type;
 class Instruction;
 class Constant;
 class Function;
@@ -299,6 +300,21 @@ public:
   // Create* methods below should be moved to a machine code generation class
   // 
   virtual MachineOpCode getNOPOpCode() const { abort(); }
+
+  // Get the value of an integral constant in the form that must
+  // be put into the machine register.  The specified constant is interpreted
+  // as (i.e., converted if necessary to) the specified destination type.  The
+  // result is always returned as an uint64_t, since the representation of
+  // int64_t and uint64_t are identical.  The argument can be any known const.
+  // 
+  // isValidConstant is set to true if a valid constant was found.
+  // 
+  virtual uint64_t ConvertConstantToIntType(const TargetMachine &target,
+                                            const Value *V,
+                                            const Type *destType,
+                                            bool  &isValidConstant) const {
+    abort();
+  }
 
   // Create an instruction sequence to put the constant `val' into
   // the virtual register `dest'.  `val' may be a Constant or a
