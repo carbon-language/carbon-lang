@@ -124,7 +124,7 @@ public:
   CBE(const std::string &llcPath, GCC *Gcc,
       const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
     ToolArgs.clear ();
-    if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+    if (Args) { ToolArgs = *Args; }
   }
   ~CBE() { delete gcc; }
 
@@ -160,7 +160,7 @@ public:
   LLC(const std::string &llcPath, GCC *Gcc,
     const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
     ToolArgs.clear ();
-    if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+    if (Args) { ToolArgs = *Args; }
   }
   ~LLC() { delete gcc; }
 

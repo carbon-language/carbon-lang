@@ -59,7 +59,7 @@ namespace {
     LLI(const std::string &Path, const std::vector<std::string> *Args)
       : LLIPath(Path) {
       ToolArgs.clear ();
-      if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+      if (Args) { ToolArgs = *Args; }
     }
     
     virtual int ExecuteProgram(const std::string &Bytecode,
@@ -199,7 +199,7 @@ namespace {
     JIT(const std::string &Path, const std::vector<std::string> *Args)
       : LLIPath(Path) {
       ToolArgs.clear ();
-      if (Args) { ToolArgs.assign (Args->begin (), Args->end ()); }
+      if (Args) { ToolArgs = *Args; }
     }
     
     virtual int ExecuteProgram(const std::string &Bytecode,
