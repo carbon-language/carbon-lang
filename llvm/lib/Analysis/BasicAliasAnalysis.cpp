@@ -456,7 +456,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   if (BasePtr1Ty != BasePtr2Ty)
     return MayAlias;
 
-  const Type *GEPPointerTy = BasePtr1Ty;
+  const PointerType *GEPPointerTy = cast<PointerType>(BasePtr1Ty);
 
   // Find the (possibly empty) initial sequence of equal values... which are not
   // necessarily constants.
@@ -657,14 +657,16 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     }
   }
   
-  int64_t Offset1 = getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops);
-  int64_t Offset2 = getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops);
-  assert(Offset1 < Offset2 &&"There is at least one different constant here!");
+  if (GEPPointerTy->getElementType()->isSized()) {
+    int64_t Offset1 = getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops);
+    int64_t Offset2 = getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops);
+    assert(Offset1<Offset2 && "There is at least one different constant here!");
 
-  if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
-    //std::cerr << "Determined that these two GEP's don't alias [" 
-    //          << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
-    return NoAlias;
+    if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
+      //std::cerr << "Determined that these two GEP's don't alias [" 
+      //          << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
+      return NoAlias;
+    }
   }
   return MayAlias;
 }
