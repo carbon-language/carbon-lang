@@ -28,6 +28,7 @@
 #include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
 #include "Support/Statistic.h"
+#include "Support/DepthFirstIterator.h"
 
 namespace {
   Statistic<> NumInserted("preheaders", "Number of pre-header nodes inserted");
@@ -303,7 +304,10 @@ void Preheaders::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   // loop of L.
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
-  L->changeExitBlock(Exit, NewBB);   // Update exit block information
+
+  // Replace any instances of Exit with NewBB in this and any nested loops...
+  for (df_iterator<Loop*> I = df_begin(L), E = df_end(L); I != E; ++I)
+    I->changeExitBlock(Exit, NewBB);   // Update exit block information
 
   // Update dominator information...  The blocks that dominate NewBB are the
   // intersection of the dominators of predecessors, plus the block itself.
