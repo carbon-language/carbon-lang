@@ -111,7 +111,8 @@ static void fillTypeNameTable(const Module *M,
       //
       const Type *Ty = cast<Type>(I->second);
       if (!isa<PointerType>(Ty) ||
-          !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
+          !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
+          isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
         TypeNames.insert(std::make_pair(Ty, getLLVMName(I->first)));
     }
   }
@@ -122,11 +123,15 @@ static void fillTypeNameTable(const Module *M,
 static std::string calcTypeName(const Type *Ty, 
                                 std::vector<const Type *> &TypeStack,
                                 std::map<const Type *, std::string> &TypeNames){
-  if (Ty->isPrimitiveType()) return Ty->getDescription();  // Base case
+  if (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))
+    return Ty->getDescription();  // Base case
 
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) return I->second;
+
+  if (isa<OpaqueType>(Ty))
+    return "opaque";
 
   // Check to see if the Type is already on the stack...
   unsigned Slot = 0, CurSize = TypeStack.size();
@@ -209,9 +214,6 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) return Out << I->second;
-
-  if (isa<OpaqueType>(Ty))
-    return Out << "opaque";
 
   // Otherwise we have a type that has not been named but is a derived type.
   // Carefully recurse the type hierarchy to print out any contained symbolic
