@@ -124,6 +124,10 @@ public:
   /// keep track of the correspondence between the nodes in the old and new
   /// graphs.
   typedef hash_map<const DSNode*, DSNodeHandle> NodeMapTy;
+
+  // InvNodeMapTy - This data type is used to represent the inverse of a node
+  // map.
+  typedef hash_multimap<DSNodeHandle, const DSNode*> InvNodeMapTy;
 private:
   DSGraph *GlobalsGraph;   // Pointer to the common graph of global objects
   bool PrintAuxCalls;      // Should this graph print the Aux calls vector?
@@ -383,16 +387,13 @@ public:
                                  const DSNodeHandle &NH2, NodeMapTy &NodeMap,
                                  bool StrictChecking = true);
 
-  /// computeGGToGMapping - Compute the mapping of nodes in the global
-  /// graph to nodes in this graph.
-  void computeGGToGMapping(NodeMapTy &NodeMap);
-
   /// computeGToGGMapping - Compute the mapping of nodes in the graph to nodes
-  /// in the globals graph.  Note that any uses of this method are probably
-  /// bugs, unless it is known that the globals graph has been merged into this
-  /// graph!
+  /// in the globals graph.
   void computeGToGGMapping(NodeMapTy &NodeMap);
 
+  /// computeGGToGMapping - Compute the mapping of nodes in the global
+  /// graph to nodes in this graph.
+  void computeGGToGMapping(InvNodeMapTy &InvNodeMap);
 
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
   /// translated ScalarMap for the old function is filled into the OldValMap
