@@ -35,6 +35,8 @@ class ReturnInst : public TerminatorInst {
 
   void init(Value *RetVal) {
     if (RetVal) {
+      assert(!isa<BasicBlock>(RetVal) && 
+             "Cannot return basic block.  Probably using the incorrect ctor");
       Operands.reserve(1);
       Operands.push_back(Use(RetVal, this));
     }
