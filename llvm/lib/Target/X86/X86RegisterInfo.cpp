@@ -59,7 +59,7 @@ int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
-    { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTPr80 };
+    { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTPm80 };
   MachineInstr *I = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
 				       FrameIdx).addReg(SrcReg);
   MBB.insert(MI, I);
@@ -71,7 +71,7 @@ int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const{
   static const unsigned Opcode[] =
-    { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDr80 };
+    { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDm80 };
   unsigned OC = Opcode[getIdx(RC)];
   MBB.insert(MI, addFrameReference(BuildMI(OC, 4, DestReg), FrameIdx));
   return 1;

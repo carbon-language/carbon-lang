@@ -480,7 +480,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       const Type *Ty = CFP->getType();
 
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-      unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLDr32 : X86::FLDr64;
+      unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLDm32 : X86::FLDm64;
       addConstantPoolReference(BMI(MBB, IP, LoadOpcode, 4, R), CPI);
     }
 
@@ -536,10 +536,10 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     case cFP:
       unsigned Opcode;
       if (I->getType() == Type::FloatTy) {
-        Opcode = X86::FLDr32;
+        Opcode = X86::FLDm32;
         FI = MFI->CreateFixedObject(4, ArgOffset);
       } else {
-        Opcode = X86::FLDr64;
+        Opcode = X86::FLDm64;
         FI = MFI->CreateFixedObject(8, ArgOffset);
         ArgOffset += 4;   // doubles require 4 additional bytes
       }
@@ -1140,11 +1140,11 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         
       case cFP:
         if (Args[i].Ty == Type::FloatTy) {
-          addRegOffset(BuildMI(BB, X86::FSTr32, 5),
+          addRegOffset(BuildMI(BB, X86::FSTm32, 5),
                        X86::ESP, ArgOffset).addReg(ArgReg);
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-          addRegOffset(BuildMI(BB, X86::FSTr64, 5),
+          addRegOffset(BuildMI(BB, X86::FSTm64, 5),
                        X86::ESP, ArgOffset).addReg(ArgReg);
           ArgOffset += 4;       // 8 byte entry, not 4.
         }
@@ -1929,10 +1929,10 @@ void ISel::visitLoadInst(LoadInst &I) {
   }
 
   static const unsigned Opcodes[] = {
-    X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDr32
+    X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDm32
   };
   unsigned Opcode = Opcodes[Class];
-  if (I.getType() == Type::DoubleTy) Opcode = X86::FLDr64;
+  if (I.getType() == Type::DoubleTy) Opcode = X86::FLDm64;
   addFullAddress(BuildMI(BB, Opcode, 4, DestReg),
                  BaseReg, Scale, IndexReg, Disp);
 }
@@ -1991,10 +1991,10 @@ void ISel::visitStoreInst(StoreInst &I) {
     } else {
       unsigned ValReg = getReg(I.getOperand(0));
       static const unsigned Opcodes[] = {
-        X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTr32
+        X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTm32
       };
       unsigned Opcode = Opcodes[Class];
-      if (ValTy == Type::DoubleTy) Opcode = X86::FSTr64;
+      if (ValTy == Type::DoubleTy) Opcode = X86::FSTm64;
       addFullAddress(BuildMI(BB, Opcode, 1+4),
                      BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
     }
@@ -2089,8 +2089,8 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
         // reading it back.
         unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FrameIdx = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-        addFrameReference(BMI(BB, IP, X86::FSTr32, 5), FrameIdx).addReg(SrcReg);
-        addFrameReference(BMI(BB, IP, X86::FLDr32, 5, DestReg), FrameIdx);
+        addFrameReference(BMI(BB, IP, X86::FSTm32, 5), FrameIdx).addReg(SrcReg);
+        addFrameReference(BMI(BB, IP, X86::FLDm32, 5, DestReg), FrameIdx);
       }
     } else if (SrcClass == cLong) {
       BMI(BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
@@ -2209,7 +2209,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     }
 
     static const unsigned Op2[] =
-      { 0/*byte*/, X86::FILDr16, X86::FILDr32, 0/*FP*/, X86::FILDr64 };
+      { 0/*byte*/, X86::FILDm16, X86::FILDm32, 0/*FP*/, X86::FILDm64 };
     addFrameReference(BMI(BB, IP, Op2[SrcClass], 5, DestReg), FrameIdx);
 
     // We need special handling for unsigned 64-bit integer sources.  If the
@@ -2237,7 +2237,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       // Load the constant for an add.  FIXME: this could make an 'fadd' that
       // reads directly from memory, but we don't support these yet.
       unsigned ConstReg = makeAnotherReg(Type::DoubleTy);
-      addDirectMem(BMI(BB, IP, X86::FLDr32, 4, ConstReg), Addr);
+      addDirectMem(BMI(BB, IP, X86::FLDm32, 4, ConstReg), Addr);
 
       BMI(BB, IP, X86::FpADD, 2, RealDestReg).addReg(ConstReg).addReg(DestReg);
     }
@@ -2289,7 +2289,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       F->getFrameInfo()->CreateStackObject(StoreTy, TM.getTargetData());
 
     static const unsigned Op1[] =
-      { 0, X86::FISTr16, X86::FISTr32, 0, X86::FISTPr64 };
+      { 0, X86::FISTm16, X86::FISTm32, 0, X86::FISTPm64 };
     addFrameReference(BMI(BB, IP, Op1[StoreClass], 5), FrameIdx).addReg(SrcReg);
 
     if (DestClass == cLong) {
@@ -2358,7 +2358,7 @@ void ISel::visitVAArgInst(VAArgInst &I) {
     addRegOffset(BuildMI(BB, X86::MOVrm32, 4, DestReg+1), VAList, 4);
     break;
   case Type::DoubleTyID:
-    addDirectMem(BuildMI(BB, X86::FLDr64, 4, DestReg), VAList);
+    addDirectMem(BuildMI(BB, X86::FLDm64, 4, DestReg), VAList);
     break;
   }
 }

@@ -639,26 +639,26 @@ def FpSETRESULT : FPI<"FSETRESULT",0, Pseudo, SpecialFP>;  // ST(0) = FPR
 
 // Floating point loads & stores...
 def FLDrr   : FPI    <"fld"   , 0xC0, AddRegFrm, NotFP>, D9;        // push(ST(i))
-def FLDr32  : FPIm32 <"fld"   , 0xD9, MRM0m    , ZeroArgFP>;        // load float
-def FLDr64  : FPIm64 <"fld"   , 0xDD, MRM0m    , ZeroArgFP>;        // load double
-def FLDr80  : FPIm80 <"fld"   , 0xDB, MRM5m    , ZeroArgFP>;        // load extended
-def FILDr16 : FPIm16 <"fild"  , 0xDF, MRM0m    , ZeroArgFP>;        // load signed short
-def FILDr32 : FPIm32 <"fild"  , 0xDB, MRM0m    , ZeroArgFP>;        // load signed int
-def FILDr64 : FPIm64 <"fild"  , 0xDF, MRM5m    , ZeroArgFP>;        // load signed long
+def FLDm32  : FPIm32 <"fld"   , 0xD9, MRM0m    , ZeroArgFP>;        // load float
+def FLDm64  : FPIm64 <"fld"   , 0xDD, MRM0m    , ZeroArgFP>;        // load double
+def FLDm80  : FPIm80 <"fld"   , 0xDB, MRM5m    , ZeroArgFP>;        // load extended
+def FILDm16 : FPIm16 <"fild"  , 0xDF, MRM0m    , ZeroArgFP>;        // load signed short
+def FILDm32 : FPIm32 <"fild"  , 0xDB, MRM0m    , ZeroArgFP>;        // load signed int
+def FILDm64 : FPIm64 <"fild"  , 0xDF, MRM5m    , ZeroArgFP>;        // load signed long
 
 def FSTrr    : FPI    <"fst" , 0xD0, AddRegFrm, NotFP   >, DD;      // ST(i) = ST(0)
 def FSTPrr   : FPI    <"fstp", 0xD8, AddRegFrm, NotFP   >, DD;      // ST(i) = ST(0), pop
-def FSTr32   : FPIm32 <"fst" , 0xD9, MRM2m    , OneArgFP>;          // store float
-def FSTr64   : FPIm64 <"fst" , 0xDD, MRM2m    , OneArgFP>;          // store double
-def FSTPr32  : FPIm32 <"fstp", 0xD9, MRM3m    , OneArgFP>;          // store float, pop
-def FSTPr64  : FPIm64 <"fstp", 0xDD, MRM3m    , OneArgFP>;          // store double, pop
-def FSTPr80  : FPIm80 <"fstp", 0xDB, MRM7m    , OneArgFP>;          // store extended, pop
+def FSTm32   : FPIm32 <"fst" , 0xD9, MRM2m    , OneArgFP>;          // store float
+def FSTm64   : FPIm64 <"fst" , 0xDD, MRM2m    , OneArgFP>;          // store double
+def FSTPm32  : FPIm32 <"fstp", 0xD9, MRM3m    , OneArgFP>;          // store float, pop
+def FSTPm64  : FPIm64 <"fstp", 0xDD, MRM3m    , OneArgFP>;          // store double, pop
+def FSTPm80  : FPIm80 <"fstp", 0xDB, MRM7m    , OneArgFP>;          // store extended, pop
 
-def FISTr16  : FPIm16 <"fist",    0xDF, MRM2m , OneArgFP>;          // store signed short
-def FISTr32  : FPIm32 <"fist",    0xDB, MRM2m , OneArgFP>;          // store signed int
-def FISTPr16 : FPIm16 <"fistp",   0xDF, MRM3m , NotFP   >;          // store signed short, pop
-def FISTPr32 : FPIm32 <"fistp",   0xDB, MRM3m , NotFP   >;          // store signed int, pop
-def FISTPr64 : FPIm64 <"fistpll", 0xDF, MRM7m , OneArgFP>;          // store signed long, pop
+def FISTm16  : FPIm16 <"fist",    0xDF, MRM2m , OneArgFP>;          // store signed short
+def FISTm32  : FPIm32 <"fist",    0xDB, MRM2m , OneArgFP>;          // store signed int
+def FISTPm16 : FPIm16 <"fistp",   0xDF, MRM3m , NotFP   >;          // store signed short, pop
+def FISTPm32 : FPIm32 <"fistp",   0xDB, MRM3m , NotFP   >;          // store signed int, pop
+def FISTPm64 : FPIm64 <"fistpll", 0xDF, MRM7m , OneArgFP>;          // store signed long, pop
 
 def FXCH     : FPI    <"fxch",    0xC8, AddRegFrm, NotFP>, D9;      // fxch ST(i), ST(0)
 
