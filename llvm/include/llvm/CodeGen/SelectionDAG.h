@@ -73,6 +73,15 @@ public:
   MachineFunction &getMachineFunction() const { return MF; }
   const TargetMachine &getTarget() { return TM; }
 
+  /// viewGraph - Pop up a ghostview window with the DAG rendered using 'dot'.
+  ///
+  void viewGraph();
+
+
+  typedef std::vector<SDNode*>::const_iterator allnodes_iterator;
+  allnodes_iterator allnodes_begin() const { return AllNodes.begin(); }
+  allnodes_iterator allnodes_end() const { return AllNodes.end(); }
+  
   /// getRoot - Return the root tag of the SelectionDAG.
   ///
   const SDOperand &getRoot() const { return Root; }
@@ -159,6 +168,16 @@ public:
 
 private:
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
+};
+
+template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {
+  typedef SelectionDAG::allnodes_iterator nodes_iterator;
+  static nodes_iterator nodes_begin(SelectionDAG *G) {
+    return G->allnodes_begin();
+  }
+  static nodes_iterator nodes_end(SelectionDAG *G) {
+    return G->allnodes_end();
+  }
 };
 
 }

@@ -20,6 +20,9 @@
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/iterator"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
@@ -637,6 +640,61 @@ public:
     return N->getOpcode() == ISD::SETCC;
   }
 };
+
+
+class SDNodeIterator : public forward_iterator<SDNode, ptrdiff_t> {
+  SDNode *Node;
+  unsigned Operand;
+  
+  SDNodeIterator(SDNode *N, unsigned Op) : Node(N), Operand(Op) {}
+public:
+  bool operator==(const SDNodeIterator& x) const {
+    return Operand == x.Operand;
+  }
+  bool operator!=(const SDNodeIterator& x) const { return !operator==(x); }
+
+  const SDNodeIterator &operator=(const SDNodeIterator &I) {
+    assert(I.Node == Node && "Cannot assign iterators to two different nodes!");
+    Operand = I.Operand;
+    return *this;
+  }
+  
+  pointer operator*() const {
+    return Node->getOperand(Operand).Val;
+  }
+  pointer operator->() const { return operator*(); }
+  
+  SDNodeIterator& operator++() {                // Preincrement
+    ++Operand;
+    return *this;
+  }
+  SDNodeIterator operator++(int) { // Postincrement
+    SDNodeIterator tmp = *this; ++*this; return tmp; 
+  }
+
+  static SDNodeIterator begin(SDNode *N) { return SDNodeIterator(N, 0); }
+  static SDNodeIterator end  (SDNode *N) {
+    return SDNodeIterator(N, N->getNumOperands());
+  }
+
+  unsigned getOperand() const { return Operand; }
+  const SDNode *getNode() const { return Node; }
+};
+
+template <> struct GraphTraits<SDNode*> {
+  typedef SDNode NodeType;
+  typedef SDNodeIterator ChildIteratorType;
+  static inline NodeType *getEntryNode(SDNode *N) { return N; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return SDNodeIterator::begin(N);
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return SDNodeIterator::end(N);
+  }
+};
+
+
+
 
 } // end llvm namespace
 
