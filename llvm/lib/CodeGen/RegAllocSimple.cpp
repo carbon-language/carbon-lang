@@ -92,21 +92,6 @@ namespace {
       regs = Desc.ImplicitDefs;
       while (*regs)
         RegsUsed[*regs++] = 1;
-      
-      
-      /*
-      for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
-        const MachineOperand &op = MI->getOperand(i);
-        if (op.isMachineRegister())
-          RegsUsed[op.getAllocatedRegNum()] = 1;
-      }
-
-      for (int i = MI->getNumImplicitRefs() - 1; i >= 0; --i) {
-        const MachineOperand &op = MI->getImplicitOp(i);
-        if (op.isMachineRegister())
-          RegsUsed[op.getAllocatedRegNum()] = 1;
-      }
-      */
     }
 
     void cleanupAfterFunction() {
@@ -297,6 +282,16 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
         MachineBasicBlock::iterator opI = opBlock->end();
         MachineInstr *opMI = *(--opI);
         const MachineInstrInfo &MII = TM.getInstrInfo();
+        // must backtrack over ALL the branches in the previous block, until no more
+        while ((MII.isBranch(opMI->getOpcode()) || MII.isReturn(opMI->getOpcode()))
+               && opI != opBlock->begin())
+        {
+          opMI = *(--opI);
+        }
+        // move back to the first branch instruction so new instructions
+        // are inserted right in front of it and not in front of a non-branch
+        ++opI; 
+
 
         // insert the move just before the return/branch
         if (MII.isReturn(opMI->getOpcode()) || MII.isBranch(opMI->getOpcode()))
