@@ -361,10 +361,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
       const Type *Ty = CI->getType();
-      uint64_t Val = Ty->isSigned() ?
-                          (uint64_t)cast<ConstantSInt>(CI)->getValue() : 
-                                    cast<ConstantUInt>(CI)->getValue();
+      int64_t Val = Ty->isSigned() ?        cast<ConstantSInt>(CI)->getValue() :
+                                   (int64_t)cast<ConstantUInt>(CI)->getValue();
       switch (Val) {
+      case -1:                               // X * -1 -> -X
+        return BinaryOperator::createNeg(Op0, I.getName());
       case 0:
         return ReplaceInstUsesWith(I, Op1);  // Eliminate 'mul double %X, 0'
       case 1:
