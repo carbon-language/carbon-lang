@@ -878,10 +878,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   ConstantsOut.clear();
 
   // Turn all of the unordered chains into one factored node.
-  switch (UnorderedChains.size()) {
-  case 0: break;
-  case 1: DAG.setRoot(UnorderedChains[0]); break;
-  default:
+  if (!UnorderedChains.empty()) {
+    UnorderedChains.push_back(DAG.getRoot());
     DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, UnorderedChains));
   }
 
