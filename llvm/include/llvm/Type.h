@@ -28,6 +28,7 @@
 
 #include "llvm/Value.h"
 #include "Support/GraphTraits.h"
+#include "Support/iterator"
 
 class DerivedType;
 class FunctionType;
@@ -228,12 +229,7 @@ public:
 #include "llvm/Type.def"
 
 private:
-  class TypeIterator
-#if __GNUC__ == 3
-    : public std::iterator<std::bidirectional_iterator_tag, const Type> {
-#else
-    : public std::bidirectional_iterator<const Type, ptrdiff_t> {
-#endif
+  class TypeIterator : public bidirectional_iterator<const Type, ptrdiff_t> {
     const Type * const Ty;
     unsigned Idx;
 
