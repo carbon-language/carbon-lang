@@ -608,58 +608,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   
   case ISD::EXTLOAD:
-    {
-      // Make sure we generate both values.
-      if (Result != notIn)
-        ExprMap[N.getValue(1)] = notIn;   // Generate the token
-      else
-        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-      
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Address = N.getOperand(1);
-      Select(Chain);
-      
-      switch(Node->getValueType(0)) {
-      default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
-      case MVT::i64:
-        switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
-        default:
-          Node->dump();
-          assert(0 && "Bad extend load!");
-        case MVT::i64: Opc = Alpha::LDQ; break;
-        case MVT::i32: Opc = Alpha::LDL; break;
-        case MVT::i16: Opc = Alpha::LDWU; break;
-        case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
-        case MVT::i8: Opc = Alpha::LDBU; break;
-        }
-      }
-      
-      if (Address.getOpcode() == ISD::GlobalAddress)
-        {
-          AlphaLowering.restoreGP(BB);
-          Opc = GetSymVersion(Opc);
-          BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-        }
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) 
-        {
-          AlphaLowering.restoreGP(BB);
-          Opc = GetSymVersion(Opc);
-          BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
-        }
-      else if(Address.getOpcode() == ISD::FrameIndex)
-        {
-          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
-        }
-      else
-        {
-          long offset;
-          SelectAddr(Address, Tmp1, offset);
-          BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
-        }
-      return Result;
-    }
-      
+  case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD:
     {
       // Make sure we generate both values.
@@ -677,7 +626,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i64:
         switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
         default: Node->dump(); assert(0 && "Bad sign extend!");
-        case MVT::i32: Opc = Alpha::LDL; break;
+        case MVT::i32: Opc = Alpha::LDL; assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
+        case MVT::i16: Opc = Alpha::LDWU; assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
+        case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
+        case MVT::i8: Opc = Alpha::LDBU; assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         }
       }
 
@@ -691,53 +643,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
          BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex)
-        {
-          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-          BuildMI(BB, Opc, 2, Result).addFrameIndex(Tmp1).addReg(Alpha::F31);
-        }
-      else
-        {
-          long offset;
-          SelectAddr(Address, Tmp1, offset);
-          BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
-        }
-      return Result;
-    }
-
-  case ISD::ZEXTLOAD:
-    {
-      // Make sure we generate both values.
-      if (Result != notIn)
-        ExprMap[N.getValue(1)] = notIn;   // Generate the token
-      else
-        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-      
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Address = N.getOperand(1);
-      Select(Chain);
-      
-      switch(Node->getValueType(0)) {
-      default: Node->dump(); assert(0 && "Unknown type to zero extend to.");
-      case MVT::i64:
-        switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
-        default: Node->dump(); assert(0 && "Bad sign extend!");
-        case MVT::i16: Opc = Alpha::LDWU; break;
-        case MVT::i8: Opc = Alpha::LDBU; break;
-        }
-      }
-
-      if (Address.getOpcode() == ISD::GlobalAddress)
-        {
-          AlphaLowering.restoreGP(BB);
-          Opc = GetSymVersion(Opc);
-          BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-        }
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-        AlphaLowering.restoreGP(BB);
-        Opc = GetSymVersion(Opc);
-        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
       }
       else if(Address.getOpcode() == ISD::FrameIndex)
         {
@@ -1383,6 +1288,7 @@ void ISel::Select(SDOperand N) {
      BuildMI(BB, Alpha::RETURN, 0); // Just emit a 'ret' instruction
      return;
 
+  case ISD::TRUNCSTORE: 
   case ISD::STORE: 
     {
       SDOperand Chain   = N.getOperand(0);
@@ -1391,12 +1297,15 @@ void ISel::Select(SDOperand N) {
       Select(Chain);
 
       Tmp1 = SelectExpr(Value); //value
-      MVT::ValueType DestType = Value.getValueType();
-      switch(DestType) {
+      switch(Value.getValueType()) {
       default: assert(0 && "unknown Type in store");
       case MVT::i64: Opc = Alpha::STQ; break;
       case MVT::f64: Opc = Alpha::STT; break;
       case MVT::f32: Opc = Alpha::STS; break;
+      case MVT::i1: //FIXME: DAG does not promote this load
+      case MVT::i8: Opc = Alpha::STB; break;
+      case MVT::i16: Opc = Alpha::STW; break;
+      case MVT::i32: Opc = Alpha::STL; break;
       }
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
@@ -1406,8 +1315,8 @@ void ISel::Select(SDOperand N) {
         }
       else if(Address.getOpcode() == ISD::FrameIndex)
         {
-          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-          BuildMI(BB, Opc, 3).addReg(Tmp1).addFrameIndex(Tmp1).addReg(Alpha::F31);
+          Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addFrameIndex(Tmp2).addReg(Alpha::F31);
         }
       else
         {
@@ -1428,45 +1337,6 @@ void ISel::Select(SDOperand N) {
     ExprMap.erase(N);
     SelectExpr(N);
     return;
-
-
-  case ISD::TRUNCSTORE: 
-    {
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Value = N.getOperand(1);
-      SDOperand Address = N.getOperand(2);
-      Select(Chain);
-
-      MVT::ValueType DestType = cast<MVTSDNode>(Node)->getExtraValueType();
-      switch(DestType) {
-      default: assert(0 && "unknown Type in store");
-      case MVT::i1: //FIXME: DAG does not promote this load
-      case MVT::i8: Opc = Alpha::STB; break;
-      case MVT::i16: Opc = Alpha::STW; break;
-      case MVT::i32: Opc = Alpha::STL; break;
-      }
-      
-      Tmp1 = SelectExpr(Value); //value
-
-      if (Address.getOpcode() == ISD::GlobalAddress)
-        {
-          AlphaLowering.restoreGP(BB);
-          Opc = GetSymVersion(Opc);
-          BuildMI(BB, Opc, 2).addReg(Tmp1).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-        }
-      else if(Address.getOpcode() == ISD::FrameIndex)
-        {
-          Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
-          BuildMI(BB, Opc, 3).addReg(Tmp1).addFrameIndex(Tmp1).addReg(Alpha::F31);
-        }
-      else
-        {
-          long offset;
-          SelectAddr(Address, Tmp2, offset);
-          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
-        }
-      return;
-    }
 
   case ISD::ADJCALLSTACKDOWN:
   case ISD::ADJCALLSTACKUP:
