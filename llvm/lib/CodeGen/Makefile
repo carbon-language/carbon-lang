@@ -10,5 +10,6 @@
 LEVEL = ../..
 PARALLEL_DIRS = InstrSched SelectionDAG
 LIBRARYNAME = codegen
+BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
