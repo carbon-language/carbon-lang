@@ -5,9 +5,6 @@ void bar() {
     ~local() { foo(); }
   } local_obj;
 
-  try {
-    foo();
-  } catch(...) {
-  }
+  foo();
 }
 
