@@ -2,17 +2,17 @@
 
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
-#include "llvm/ConstantVals.h"
+#include "llvm/Value.h"
 #include <iostream>
 
 std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value 
   const Value *v = V.V;
   if (v->hasName())
-    return O << v << "(" << v->getName() << ") ";
-  else if (Constant *C = dyn_cast<Constant>(v))
-    return O << v << "(" << C << ") ";
+    return O << (void*)v << "(" << v->getName() << ") ";
+  else if (isa<Constant>(v))
+    return O << (void*)v << "(" << v << ") ";
   else
-    return O << v  << " ";
+    return O << (void*)v << " ";
 }
 
 void printSet(const ValueSet &S) {
