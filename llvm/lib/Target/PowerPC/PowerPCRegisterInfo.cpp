@@ -79,8 +79,9 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC::LR) {
-    BuildMI(MBB, MI, PPC::MFLR, 0, PPC::R0);
-    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R0),FrameIdx);
+    BuildMI(MBB, MI, PPC::MFLR, 0, PPC::R11);
+    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
   } else {
     BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(SrcReg),FrameIdx);
@@ -97,8 +98,9 @@ PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   const TargetRegisterClass *RC = getRegClass(DestReg);
   unsigned OC = Opcode[getIdx(RC)];
   if (DestReg == PPC::LR) {
-    addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R0), FrameIdx);
-    BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R0);
+    BuildMI(MBB, MI, PPC::IMPLCICIT_DEF, 0, PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
+    BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else {
     BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
     addFrameReference(BuildMI(MBB, MI, OC, 2, DestReg), FrameIdx);
@@ -131,11 +133,7 @@ void PowerPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 //
 static bool hasFP(MachineFunction &MF) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->hasVarSizedObjects() || MFI->getStackSize() > 32700;
-}
-
-static bool setFPFirst(MachineFunction &MF) {
-  return MF.getFrameInfo()->getStackSize() > 32700;
+  return MFI->hasVarSizedObjects();
 }
 
 void PowerPCRegisterInfo::
@@ -196,8 +194,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   // If we're not using a Frame Pointer that has been set to the value of the
   // SP before having the stack size subtracted from it, then add the stack size
   // to Offset to get the correct offset.
-  if (!setFPFirst(MF))
-    Offset += MF.getFrameInfo()->getStackSize();
+  Offset += MF.getFrameInfo()->getStackSize();
   
   if (Offset > 32767 || Offset < -32768) {
     // Insert a set of r0 with the full offset value before the ld, st, or add
@@ -243,37 +240,35 @@ void PowerPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  unsigned Size = getRegClass(PPC::R1)->getSize();
+  unsigned R1Size = getRegClass(PPC::R1)->getSize();
+  unsigned R31Size = getRegClass(PPC::R31)->getSize();
+  unsigned Size = (hasFP(MF)) ? R1Size + R31Size : R1Size;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
 
-  if (setFPFirst(MF)) {
-    MI = BuildMI(PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
-    MBB.insert(MBBI, MI);
-  }
-
   // adjust stack pointer: r1 -= numbytes
   if (NumBytes <= 32768) {
-    unsigned StoreOpcode = is64bit ? PPC::STDU : PPC::STWU;
-    MI = BuildMI(StoreOpcode, 3).addReg(PPC::R1).addSImm(-NumBytes)
-      .addReg(PPC::R1);
+    unsigned StoreOp = is64bit ? PPC::STDU : PPC::STWU;
+    MI = BuildMI(StoreOp, 3).addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   } else {
     int NegNumbytes = -NumBytes;
-    unsigned StoreOpcode = is64bit ? PPC::STDUX : PPC::STWUX;
+    unsigned StoreOp = is64bit ? PPC::STDUX : PPC::STWUX;
     MI = BuildMI(PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
     MBB.insert(MBBI, MI);
     MI = BuildMI(PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
       .addImm(NegNumbytes & 0xFFFF);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(StoreOpcode, 3).addReg(PPC::R1).addReg(PPC::R1)
-      .addReg(PPC::R0);
+    MI = BuildMI(StoreOp, 3).addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
     MBB.insert(MBBI, MI);
   }
   
-  if (hasFP(MF) && !setFPFirst(MF)) {
+  if (hasFP(MF)) {
+    unsigned StoreOp = is64bit ? PPC::STD : PPC::STW;
+    MI = BuildMI(StoreOp, 3).addReg(PPC::R31).addSImm(R1Size).addReg(PPC::R1);
+    MBB.insert(MBBI, MI);
     MI = BuildMI(PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   }
@@ -290,13 +285,16 @@ void PowerPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
-  // If we have any variable size objects, restore the stack frame with the 
-  // frame pointer rather than the stack pointer.
-  unsigned FrameReg = hasFP(MF) ? PPC::R31 : PPC::R1;
-
   if (NumBytes != 0) {
     unsigned Opcode = is64bit ? PPC::LD : PPC::LWZ;
-    MI = BuildMI(Opcode, 2, PPC::R1).addSImm(0).addReg(FrameReg);
+    unsigned Offset = is64bit ? 8 : 4;
+    if (hasFP(MF)) {
+      MI = BuildMI(PPC::OR, 2, PPC::R1).addReg(PPC::R31).addReg(PPC::R31);
+      MBB.insert(MBBI, MI);
+      MI = BuildMI(Opcode, 2, PPC::R31).addSImm(Offset).addReg(PPC::R31);
+      MBB.insert(MBBI, MI);
+    }
+    MI = BuildMI(Opcode, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   }
 }
