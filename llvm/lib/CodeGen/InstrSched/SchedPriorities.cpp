@@ -18,24 +18,9 @@
  *	7/30/01	 -  Vikram Adve  -  Created
  ***************************************************************************/
 
-//************************** System Include Files **************************/
-
-#include <hash_map>
-#include <vector>
-#include <algorithm>
-#include <sys/types.h>
-
-//*************************** User Include Files ***************************/
-
-#include "llvm/Method.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/SchedPriorities.h"
 
-//************************* Forward Declarations ***************************/
 
-
-/*ctor*/
 SchedPriorities::SchedPriorities(const Method* method,
 				 const SchedGraph* _graph)
   : curTime(0),
@@ -219,7 +204,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
       // it becomes empty.
       nextChoice = candsAsHeap.getNode(mcands[nextIdx]);
       if (getEarliestForNodeRef(nextChoice) > curTime
-	  || ! instrIsFeasible(S, nextChoice->getOpCode()))
+	  || ! instrIsFeasible(S, nextChoice->getMachineInstr()->getOpCode()))
 	{
 	  mcands.erase(mcands.begin() + nextIdx);
 	  nextIdx = -1;
@@ -255,8 +240,7 @@ SchedPriorities::findSetWithMaxDelay(vector<candIndex>& mcands,
       
       if (SchedDebugLevel >= Sched_PrintSchedTrace)
 	{
-	  printIndent(2);
-	  cout << "Cycle " << this->getTime() << ": "
+	  cout << "    Cycle " << this->getTime() << ": "
 	       << "Next highest delay = " << maxDelay << " : "
 	       << mcands.size() << " Nodes with this delay: ";
 	  for (unsigned i=0; i < mcands.size(); i++)
