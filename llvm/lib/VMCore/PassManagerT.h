@@ -97,12 +97,14 @@ public:
   }
 
   void passStarted(Pass *P) {
+    if (dynamic_cast<AnalysisResolver*>(P)) return;
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     if (I == TimingData.end())
       I = TimingData.insert(std::make_pair(P, Timer(P->getPassName()))).first;
     I->second.startTimer();
   }
   void passEnded(Pass *P) {
+    if (dynamic_cast<AnalysisResolver*>(P)) return;
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     assert (I != TimingData.end() && "passStarted/passEnded not nested right!");
     I->second.stopTimer();
