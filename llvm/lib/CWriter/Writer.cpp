@@ -528,7 +528,9 @@ static void generateAllocaDecl(std::ostream& Out) {
       << "extern void *__builtin_alloca(unsigned long);\n"
       << "#define alloca(x) __builtin_alloca(x)\n"
       << "#else\n"
+      << "#ifndef __FreeBSD__\n"
       << "#include <alloca.h>\n"
+      << "#endif\n"
       << "#endif\n\n";
 }
 
