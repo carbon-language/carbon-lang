@@ -42,13 +42,15 @@ namespace llvm {
 
             Interval(unsigned r);
 
+            bool empty() const { return ranges.empty(); }
+
             unsigned start() const {
-                assert(!ranges.empty() && "empty interval for register");
+                assert(!empty() && "empty interval for register");
                 return ranges.front().first;
             }
 
             unsigned end() const {
-                assert(!ranges.empty() && "empty interval for register");
+                assert(!empty() && "empty interval for register");
                 return ranges.back().second;
             }
 
