@@ -20,6 +20,7 @@
 #include <set>
 #include <vector>
 #include <cassert>
+#include <algorithm>
 
 namespace llvm {
 
@@ -107,6 +108,16 @@ public:
       if (set_.insert(*Start).second)
         vector_.push_back(*Start);
   }
+
+  /// @brief Remove an item from the set vector.
+  void remove(const value_type& X) {
+    if (0 < set_.erase(X)) {
+      iterator I = find(vector_.begin(),vector_.end(),X);
+      if (I != vector_.end())
+        vector_.erase(I);
+    }
+  }
+
 
   /// @returns 0 if the element is not in the SetVector, 1 if it is.
   /// @brief Count the number of elements of a given key in the SetVector.
