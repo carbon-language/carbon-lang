@@ -478,8 +478,8 @@ bool Type::PromoteAbstractToConcrete(void *Ptr) {
       return true;              // This type is abstract if subtype is abstract!
     }
   
-  // Nothing looks abstract here.
-  setAbstract(false);
+  // Nothing looks abstract here.  Restore the abstract flag.
+  setAbstract(true);
   return false;
 }
 
@@ -732,7 +732,8 @@ public:
     // subtypes to see if the type has just become concrete!
     if (Ty->isAbstract()) {
       std::set<Type*> KnownAbstractTypes;
-      Ty->PromoteAbstractToConcrete(&KnownAbstractTypes);
+      if (!Ty->PromoteAbstractToConcrete(&KnownAbstractTypes))
+        Ty->setAbstract(false);
 
       // If the type just became concrete, notify all users!
       if (!Ty->isAbstract())
