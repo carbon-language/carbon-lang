@@ -750,21 +750,17 @@ public:
   int		zeroRegNum;	// register that gives 0 if any (-1 if none)
   
 public:
-  /*ctor*/ TargetMachine(const string &targetname,
-			 unsigned char PtrSize = 8, unsigned char PtrAl = 8,
-			 unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
-			 unsigned char LongAl = 8, unsigned char IntAl = 4,
-			 unsigned char ShortAl = 2, unsigned char ByteAl = 1)
-                         : TargetName(targetname), 
-                           DataLayout(targetname, PtrSize, PtrAl,
-				      DoubleAl, FloatAl, LongAl, IntAl, 
-				      ShortAl, ByteAl) { }
+  TargetMachine(const string &targetname,
+		unsigned char PtrSize = 8, unsigned char PtrAl = 8,
+		unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
+		unsigned char LongAl = 8, unsigned char IntAl = 4,
+		unsigned char ShortAl = 2, unsigned char ByteAl = 1)
+    : TargetName(targetname), DataLayout(targetname, PtrSize, PtrAl,
+					 DoubleAl, FloatAl, LongAl, IntAl, 
+					 ShortAl, ByteAl) { }
+  virtual ~TargetMachine() {}
   
-  /*dtor*/ virtual ~TargetMachine() {}
-  
-  const MachineInstrInfo& getInstrInfo	() const { return *machineInstrInfo; }
-  
-  const MachineSchedInfo& getSchedInfo() const { return *machineSchedInfo; }
+  virtual const MachineInstrInfo& getInstrInfo() const = 0;
   
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
@@ -774,8 +770,6 @@ public:
     return (regNum1 == regNum2);
   }
   
-  const MachineRegInfo& getRegInfo() const { return *machineRegInfo; }
-
   // compileMethod - This does everything neccesary to compile a method into the
   // built in representation.  This allows the target to have complete control
   // over how it does compilation.  This does not emit assembly or output
@@ -788,14 +782,6 @@ public:
   // used.
   //
   virtual void emitAssembly(Method *M, ostream &OutStr) {  /* todo */ }
-
-protected:
-  // Description of machine instructions
-  // Protect so that subclass can control alloc/dealloc
-  MachineInstrInfo* machineInstrInfo;
-  MachineSchedInfo* machineSchedInfo;
-  const MachineRegInfo* machineRegInfo;
-
 };
 
 #endif
