@@ -18,8 +18,10 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/iOperators.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iMemory.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
@@ -31,6 +33,7 @@ static Statistic<> NumHoistedNPH("licm\t\t- Number of insts hoisted to multiple"
                                  " loop preds (bad, no loop pre-header)");
 static Statistic<> NumHoistedPH("licm\t\t- Number of insts hoisted to a loop "
                                 "pre-header");
+static Statistic<> NumHoistedLoads("licm\t\t- Number of load insts hoisted");
 
 namespace {
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
@@ -40,6 +43,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.preservesCFG();
       AU.addRequired<LoopInfo>();
+      AU.addRequired<AliasAnalysis>();
     }
 
   private:
@@ -48,8 +52,9 @@ namespace {
     //
     std::vector<BasicBlock*> LoopPreds, LoopBackEdges;
 
-    Loop *CurLoop;  // The current loop we are working on...
-    bool Changed;   // Set to true when we change anything.
+    Loop *CurLoop;     // The current loop we are working on...
+    bool Changed;      // Set to true when we change anything.
+    AliasAnalysis *AA; // Currently AliasAnalysis information
 
     // visitLoop - Hoist expressions out of the specified loop...    
     void visitLoop(Loop *L);
@@ -69,6 +74,11 @@ namespace {
     // that is safe to hoist, this instruction is called to do the dirty work.
     //
     void hoist(Instruction &I);
+
+    // pointerInvalidatedByLoop - Return true if the body of this loop may store
+    // into the memory location pointed to by V.
+    // 
+    bool pointerInvalidatedByLoop(Value *V);
 
     // isLoopInvariant - Return true if the specified value is loop invariant
     inline bool isLoopInvariant(Value *V) {
@@ -94,6 +104,13 @@ namespace {
     }
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator((Instruction&)I); }
 
+    void visitLoadInst(LoadInst &LI) {
+      assert(!LI.hasIndices());
+      if (isLoopInvariant(LI.getOperand(0)) &&
+          !pointerInvalidatedByLoop(LI.getOperand(0)))
+        hoist(LI);
+    }
+
     void visitGetElementPtrInst(GetElementPtrInst &GEPI) {
       Instruction &I = (Instruction&)GEPI;
       for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
@@ -111,6 +128,9 @@ bool LICM::runOnFunction(Function &) {
   // get our loop information...
   const std::vector<Loop*> &TopLevelLoops =
     getAnalysis<LoopInfo>().getTopLevelLoops();
+
+  // Get our alias analysis information...
+  AA = &getAnalysis<AliasAnalysis>();
 
   // Traverse loops in postorder, hoisting expressions out of the deepest loops
   // first.
@@ -198,6 +218,9 @@ void LICM::hoist(Instruction &Inst) {
   string InstName = Inst.getName();
   Inst.setName("");
 
+  if (isa<LoadInst>(Inst))
+    ++NumHoistedLoads;
+
   // The common case is that we have a pre-header.  Generate special case code
   // that is faster if that is the case.
   //
@@ -256,3 +279,13 @@ void LICM::hoist(Instruction &Inst) {
   Changed = true;
 }
 
+// pointerInvalidatedByLoop - Return true if the body of this loop may store
+// into the memory location pointed to by V.
+// 
+bool LICM::pointerInvalidatedByLoop(Value *V) {
+  // Check to see if any of the basic blocks in CurLoop invalidate V.
+  for (unsigned i = 0, e = CurLoop->getBlocks().size(); i != e; ++i)
+    if (AA->canBasicBlockModify(*CurLoop->getBlocks()[i], V))
+      return true;
+  return false;
+}
