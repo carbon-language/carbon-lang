@@ -1,6 +1,6 @@
 ; The %A getelementptr instruction should be eliminated here
 
-; RUN: if as < %s | opt -instcombine -dce | dis | grep getelementptr | grep -v '%C'
+; RUN: if as < %s | opt -instcombine -dce | dis | grep getelementptr | grep '%A'
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
@@ -17,5 +17,11 @@ begin
 
 	%C = getelementptr int* %A
 	ret int* %C
+end
+
+int *"foo2"(int * %I)
+begin
+	%A = getelementptr int* %I, uint 0  ; Noop
+	ret int * %A
 end
 
