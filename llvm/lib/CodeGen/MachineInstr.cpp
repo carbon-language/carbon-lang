@@ -191,8 +191,9 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
       {
         CallInst* callInst = cast<CallInst>(*I);
         unsigned int numOperands = callInst->getNumOperands() - 1;
-        unsigned int numExtra = numOperands
-                                - frameInfo.getNumFixedOutgoingArgs();
+        int numExtra = (int) numOperands - frameInfo.getNumFixedOutgoingArgs();
+        if (numExtra <= 0)
+          continue;
         
         unsigned int sizeForThisCall;
         if (frameInfo.argsOnStackHaveFixedSize())
@@ -243,11 +244,12 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
       bool growUp;
       int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
                                                                        growUp);
+      unsigned int size = target.findOptimalStorageSize(val->getType());
+      
       offset = growUp? firstOffset + getAutomaticVarsSize()
-                     : firstOffset - getAutomaticVarsSize();
+                     : firstOffset - getAutomaticVarsSize() - size;
       offsets[val] = offset;
       
-      unsigned int size = target.findOptimalStorageSize(val->getType());
       incrementAutomaticVarsSize(size);
     }
   return offset;
@@ -259,10 +261,11 @@ MachineCodeForMethod::allocateSpilledValue(const TargetMachine& target,
 {
   bool growUp;
   int firstOffset = target.getFrameInfo().getRegSpillAreaOffset(*this, growUp);
-  int offset = growUp? firstOffset + getRegSpillsSize()
-                     : firstOffset - getRegSpillsSize();
-  
   unsigned int size = target.findOptimalStorageSize(type);
+  
+  int offset = growUp? firstOffset + getRegSpillsSize()
+                     : firstOffset - getRegSpillsSize() - size;
+  
   incrementRegSpillsSize(size);
   
   return offset;
@@ -275,18 +278,18 @@ MachineCodeForMethod::allocateOptionalArg(const TargetMachine& target,
   const MachineFrameInfo& frameInfo = target.getFrameInfo();
   bool growUp;
   int firstOffset = frameInfo.getFirstOptionalOutgoingArgOffset(*this, growUp);
-  int offset = growUp? firstOffset + getCurrentOptionalArgsSize()
-                     : firstOffset - getCurrentOptionalArgsSize();
-  
+
   int size = MAXINT;
   if (frameInfo.argsOnStackHaveFixedSize())
     size = frameInfo.getSizeOfEachArgOnStack(); 
   else
     {
-      assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual argument sizes for computing optional arg offsets");
       size = target.findOptimalStorageSize(type);
+      assert(0 && "UNTESTED CODE: Size per stack argument is not fixed on this architecture: use actual argument sizes for computing optional arg offsets");
     }
   
+  int offset = growUp? firstOffset + getCurrentOptionalArgsSize()
+                     : firstOffset - getCurrentOptionalArgsSize() - size;
   incrementCurrentOptionalArgsSize(size);
   
   return offset;
@@ -305,7 +308,7 @@ MachineCodeForMethod::pushTempValue(const TargetMachine& target,
   bool growUp;
   int firstTmpOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
   int offset = growUp? firstTmpOffset + currentTmpValuesSize
-                     : firstTmpOffset - currentTmpValuesSize;
+                     : firstTmpOffset - currentTmpValuesSize - size;
   currentTmpValuesSize += size;
   return offset;
 }
