@@ -38,8 +38,6 @@
 #include "llvm/Type.h"
 class PointerType;
 
-namespace opt {
-
 //===----------------------------------------------------------------------===//
 //  Implement == and != directly...
 //===----------------------------------------------------------------------===//
@@ -210,5 +208,4 @@ inline Constant *ConstantFoldBinaryInstruction(unsigned Opcode,
   return 0;
 }
 
-} // end namespace opt
 #endif

@@ -6,8 +6,6 @@
 
 #include "llvm/Optimizations/ConstantHandling.h"
 
-namespace opt {
-
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
 						      &ConstRules::find));
 
@@ -341,6 +339,3 @@ Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
     return new EmptyRules();
   }
 }
-
-
-} // End namespace opt
