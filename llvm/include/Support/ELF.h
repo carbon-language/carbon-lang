@@ -10,9 +10,11 @@
 // This header contains common, non-processor-specific data structures and
 // constants for the ELF file format.
 // 
-// The details of this file are largely based on the Tool Interface Standard
-// (TIS) Executable and Linking Format (ELF) Specification Version 1.2,
-// May 1995.
+// The details of the ELF32 bits in this file are largely based on
+// the Tool Interface Standard (TIS) Executable and Linking Format
+// (ELF) Specification Version 1.2, May 1995. The ELF64 stuff is not
+// standardized, as far as I can tell. It was largely based on information
+// I found in OpenBSD header files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -67,7 +69,7 @@ struct Elf32_Ehdr {
 
 // 64-bit ELF header. Fields are the same as for ELF32, but with different
 // types (see above).
-typedef struct {
+struct Elf64_Ehdr {
   unsigned char e_ident[16];
   Elf64_Quarter e_type;
   Elf64_Quarter e_machine;
@@ -82,7 +84,7 @@ typedef struct {
   Elf64_Quarter e_shentsize;
   Elf64_Quarter e_shnum;
   Elf64_Quarter e_shstrndx;
-} Elf64_Ehdr;
+};
 
 // File types
 enum {
@@ -139,7 +141,7 @@ struct Elf32_Shdr {
 };
 
 // Section header for ELF64 - same fields as ELF32, different types.
-typedef struct {
+struct Elf64_Shdr {
   Elf64_Half  sh_name;
   Elf64_Half  sh_type;
   Elf64_Xword sh_flags;
@@ -150,7 +152,7 @@ typedef struct {
   Elf64_Half  sh_info;
   Elf64_Xword sh_addralign;
   Elf64_Xword sh_entsize;
-} Elf64_Shdr;
+};
 
 // Special section indices.
 enum {
