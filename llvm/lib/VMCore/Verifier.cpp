@@ -474,7 +474,8 @@ void Verifier::visitInstruction(Instruction &I) {
   if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
     for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
          UI != UE; ++UI)
-      Assert1(*UI != (User*)&I,
+      Assert1(*UI != (User*)&I ||
+              !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
               "Only PHI nodes may reference their own value!", &I);
   }
 
