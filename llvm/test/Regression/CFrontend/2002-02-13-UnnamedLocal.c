@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* Testcase for a problem where GCC allocated xqic to a register,
  * and did not have a VAR_DECL that explained the stack slot to LLVM.
  * Now the LLVM code synthesizes a stack slot if one is presented that

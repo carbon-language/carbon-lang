@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 // This caused generation of the following type name:
 //   %Array = uninitialized global [10 x %complex int]
 //

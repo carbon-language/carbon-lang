@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* GCC Used to generate code that contained a branch to the entry node of 
  * the do_merge function.  This is illegal LLVM code.  To fix this, GCC now
  * inserts an entry node regardless of whether or not it has to insert allocas.

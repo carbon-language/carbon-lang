@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* Testcase for when struct tag conflicts with typedef name... grr */
 
 typedef struct foo {

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 // Test that these initializers are handled efficiently
 
 int test(int x) {

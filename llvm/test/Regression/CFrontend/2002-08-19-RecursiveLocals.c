@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* This testcase doesn't actually test a bug, it's just the result of me 
  * figuring out the syntax for forward declaring a static variable. */
 struct list {

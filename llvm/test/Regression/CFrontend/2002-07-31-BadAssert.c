@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 typedef struct
 {
         unsigned char type;        /* Indicates, NORMAL, SUBNORMAL, etc. */

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* test that locals are renamed with . notation */
 
 void abc(void *);

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 typedef struct min_info {
   long offset;
   unsigned file_attr;

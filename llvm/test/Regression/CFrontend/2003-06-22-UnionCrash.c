@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 struct Blend_Map_Entry {
   union {
    float Colour[5];

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* GCC was not escaping quotes in string constants correctly, so this would 
  * get emitted:
  *  %.LC1 = internal global [32 x sbyte] c"*** Word "%s" on line %d is not\00"

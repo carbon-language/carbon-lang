@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 struct _GIOChannel {
   int write_buf;
   char partial_write_buf[6];

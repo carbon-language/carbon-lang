@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 extern void start() __asm__("start");
 extern void _start() __asm__("_start");
 extern void __start() __asm__("__start");

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* GCC was generating PHI nodes with an arity < #pred of the basic block the
  * PHI node lived in.  This was breaking LLVM because the number of entries
  * in a PHI node must equal the number of predecessors for a basic block.

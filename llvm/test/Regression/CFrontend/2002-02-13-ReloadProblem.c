@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* This triggered a problem in reload, fixed by disabling most of the 
  * steps of compilation in GCC.  Before this change, the code went through
  * the entire backend of GCC, even though it was unnecessary for LLVM output

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 
 #define A(X) int X;
 #define B(X) A(X##0) A(X##1) A(X##2) A(X##3) A(X##4) A(X##5) A(X##6) A(X##7) \

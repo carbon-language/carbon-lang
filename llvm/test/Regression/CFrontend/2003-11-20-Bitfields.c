@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 struct face_cachel {
   unsigned int reverse :1;
   unsigned char font_specified[1];

@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 /* These are random tests that I used when working on the GCC frontend 
    originally. */
 

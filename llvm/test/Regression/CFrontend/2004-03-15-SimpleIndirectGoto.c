@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 int code[]={0,0,0,0,1};
 void foo(int x) {
   volatile int b;

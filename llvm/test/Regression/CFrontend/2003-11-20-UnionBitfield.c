@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 struct printf_spec {
   unsigned int minus_flag:1;
   char converter;

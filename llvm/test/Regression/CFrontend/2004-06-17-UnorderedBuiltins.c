@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 
 _Bool A, B, C, D, E, F, G, H;
 void TestF(float X, float Y) {

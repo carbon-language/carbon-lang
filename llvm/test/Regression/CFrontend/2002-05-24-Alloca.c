@@ -1,3 +1,5 @@
+// RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
