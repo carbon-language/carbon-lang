@@ -322,7 +322,7 @@ ConstantRange ConstantRange::truncate(const Type *Ty) const {
 /// print - Print out the bounds to a stream...
 ///
 void ConstantRange::print(std::ostream &OS) const {
-  OS << "[" << Lower << "," << Upper << " )";
+  OS << "[" << *Lower << "," << *Upper << " )";
 }
 
 /// dump - Allow printing from a debugger easily...

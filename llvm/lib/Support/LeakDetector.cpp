@@ -18,6 +18,16 @@
 using namespace llvm;
 
 namespace {
+  template <class T>
+  struct PrinterTrait {
+    static void print(const T* P) { std::cerr << P; }
+  };
+
+  template<>
+  struct PrinterTrait<Value> {
+    static void print(const Value* P) { std::cerr << *P; }
+  };
+
   template <typename T>
   struct LeakDetectorImpl {
     LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
@@ -39,7 +49,7 @@ namespace {
       if (o == Cache)
         Cache = 0; // Cache hit
       else
-          Ts.erase(o);
+        Ts.erase(o);
     }
 
     bool hasGarbage(const std::string& Message) {
@@ -49,9 +59,13 @@ namespace {
 
       if (!Ts.empty()) {
         std::cerr
-            << "Leaked " << Name << " objects found: " << Message << ":\n\t";
-        std::copy(Ts.begin(), Ts.end(),
-                  std::ostream_iterator<const T*>(std::cerr, " "));
+            << "Leaked " << Name << " objects found: " << Message << ":\n";
+        for (typename std::set<const T*>::iterator I = Ts.begin(),
+               E = Ts.end(); I != E; ++I) {
+          std::cerr << "\t";
+          PrinterTrait<T>::print(*I);
+          std::cerr << "\n";
+        }
         std::cerr << '\n';
 
         // Clear out results so we don't get duplicate warnings on
