@@ -1,3 +1,14 @@
+//===-- Support/hash_set - "Portable" wrapper around hash_set ---*- C++ -*-===//
+//
+// This file provides a wrapper around the mysterious <hash_set> header file
+// that seems to move around between GCC releases into and out of namespaces at
+// will.  #including this header will cause hash_set to be available in the
+// global namespace.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef SUPPORT_HASHSET_H
+#define SUPPORT_HASHSET_H
 #if __GNUC__==3
 #include <ext/hash_set>
 using __gnu_cxx::hash_set;
