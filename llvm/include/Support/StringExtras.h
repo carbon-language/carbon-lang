@@ -15,8 +15,8 @@
 #define SUPPORT_STRINGEXTRAS_H
 
 #include "Support/DataTypes.h"
+#include <cctype>
 #include <string>
-#include <ctype.h>
 #include <stdio.h>
 
 namespace llvm {
