@@ -167,9 +167,12 @@ static void printCollection(const Collection &C, std::ostream &O,
     return;
   }
 
+  unsigned TotalNumNodes = 0, TotalCallNodes = 0;
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       DSGraph &Gr = C.getDSGraph((Function&)*I);
+      TotalNumNodes += Gr.getGraphSize();
+      TotalCallNodes += Gr.getFunctionCalls().size();
       if (I->getName() == "main" || !OnlyPrintMain)
         Gr.writeGraphToFile(O, Prefix+I->getName());
       else {
@@ -177,6 +180,9 @@ static void printCollection(const Collection &C, std::ostream &O,
           << Gr.getGraphSize() << "+" << Gr.getFunctionCalls().size() << "]\n";
       }
     }
+
+  O << "\nGraphs contain [" << TotalNumNodes << "+" << TotalCallNodes 
+    << "] nodes total\n";
 }
 
 
