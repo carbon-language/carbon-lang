@@ -38,6 +38,9 @@ namespace {
     Statistic<double> efficiency
     ("regalloc", "Ratio of intervals processed over total intervals");
 
+    static unsigned numIterations = 0;
+    static unsigned numIntervals = 0;
+
     class RA : public MachineFunctionPass {
     private:
         MachineFunction* mf_;
@@ -183,7 +186,7 @@ void RA::linearScan()
         // pick the interval with the earliest start point
         IntervalPtrs::value_type cur = unhandled_.front();
         unhandled_.pop_front();
-        ++efficiency;
+        ++numIterations;
         DEBUG(std::cerr << "\n*** CURRENT ***: " << *cur << '\n');
 
         processActiveIntervals(cur);
@@ -206,7 +209,8 @@ void RA::linearScan()
         DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
         // DEBUG(verifyAssignment());
     }
-    efficiency /= li_->getIntervals().size();
+    numIntervals += li_->getIntervals().size();
+    efficiency = double(numIterations) / double(numIntervals);
 
     // expire any remaining active intervals
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
