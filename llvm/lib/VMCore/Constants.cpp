@@ -34,7 +34,7 @@ void Constant::setName(const std::string &Name, SymbolTable *ST) {
 }
 
 // Static constructor to create a '0' constant of arbitrary type...
-Constant *Constant::getNullConstant(const Type *Ty) {
+Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
   case Type::BoolTyID:   return ConstantBool::get(false);
   case Type::SByteTyID:
@@ -223,38 +223,6 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
     return true;          // This is the largest type...
   }
 };
-
-//===----------------------------------------------------------------------===//
-//                      Hash Function Implementations
-#if 0
-unsigned ConstantSInt::hash(const Type *Ty, int64_t V) {
-  return unsigned(Ty->getPrimitiveID() ^ V);
-}
-
-unsigned ConstantUInt::hash(const Type *Ty, uint64_t V) {
-  return unsigned(Ty->getPrimitiveID() ^ V);
-}
-
-unsigned ConstantFP::hash(const Type *Ty, double V) {
-  return Ty->getPrimitiveID() ^ unsigned(V);
-}
-
-unsigned ConstantArray::hash(const ArrayType *Ty,
-                             const std::vector<Constant*> &V) {
-  unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
-  for (unsigned i = 0; i < V.size(); ++i)
-    Result ^= V[i]->getHash() << (i & 7);
-  return Result;
-}
-
-unsigned ConstantStruct::hash(const StructType *Ty,
-                              const std::vector<Constant*> &V) {
-  unsigned Result = (Ty->getUniqueID() << 5) ^ (Ty->getUniqueID() * 7);
-  for (unsigned i = 0; i < V.size(); ++i)
-    Result ^= V[i]->getHash() << (i & 7);
-  return Result;
-}
-#endif
 
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
