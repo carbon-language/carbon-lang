@@ -1,5 +1,12 @@
+;; RUN: echo create > %t.commands
+;; RUN: echo s >> %t.commands
+;; RUN: echo s >> %t.commands
+;; RUN: echo finish >> %t.commands
+;; RUN: echo bt >> %t.commands
+;; RUN: echo q >> %t.commands
+;; RUN: echo y >> %t.commands
 ;; RUN: llvm-as -f %s -o %t.bc
-;; RUN: echo -e "create\ns\ns\nfinish\nbt\nq\ny" | llvm-db %t.bc | grep 'in main at funccall.c:11:2'
+;; RUN: llvm-db %t.bc < %t.commands | grep 'in main at funccall.c:11:2'
 
 
 ;; Debugger type declarations
