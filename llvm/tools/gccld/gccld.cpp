@@ -98,6 +98,7 @@ namespace {
                cl::aliasopt(Strip));
   cl::alias A1("S", cl::desc("Alias for --strip-debug"),
                cl::aliasopt(StripDebug));
+
 }
 
 /// PrintAndReturn - Prints a message to standard error and returns true.
@@ -140,10 +141,7 @@ static void EmitShellScript(char **argv) {
   // Allow user to setenv LLVMINTERP if lli is not in their PATH.
   Out2 << "lli=${LLVMINTERP-lli}\n";
   Out2 << "exec $lli \\\n";
-  // gcc accepts -l<lib> and implicitly searches /lib and /usr/lib.
-  LibPaths.push_back("/lib");
-  LibPaths.push_back("/usr/lib");
-  LibPaths.push_back("/usr/X11R6/lib");
+
   // We don't need to link in libc! In fact, /usr/lib/libc.so may not be a
   // shared object at all! See RH 8: plain text.
   std::vector<std::string>::iterator libc = 
@@ -153,52 +151,93 @@ static void EmitShellScript(char **argv) {
   // on the command line, so that we don't have to do this manually!
   for (std::vector<std::string>::iterator i = Libraries.begin(), 
          e = Libraries.end(); i != e; ++i) {
-    std::string FullLibraryPath = FindLib(*i, LibPaths, true);
-    if (!FullLibraryPath.empty() && IsSharedObject(FullLibraryPath))
-      Out2 << "    -load=" << FullLibraryPath << " \\\n";
+    sys::Path FullLibraryPath = sys::Path::FindLibrary(*i);
+    if (!FullLibraryPath.isEmpty() && FullLibraryPath.isDynamicLibrary())
+      Out2 << "    -load=" << FullLibraryPath.toString() << " \\\n";
   }
   Out2 << "    $0.bc ${1+\"$@\"}\n";
   Out2.close();
 }
 
+// BuildLinkItems -- This function generates a LinkItemList for the LinkItems
+// linker function by combining the Files and Libraries in the order they were
+// declared on the command line.
+static void BuildLinkItems(
+  Linker::ItemList& Items,
+  const cl::list<std::string>& Files,
+  const cl::list<std::string>& Libraries) {
+
+  // Build the list of linkage items for LinkItems. 
+
+  cl::list<std::string>::const_iterator fileIt = Files.begin();
+  cl::list<std::string>::const_iterator libIt  = Libraries.begin();
+
+  int libPos = -1, filePos = -1;
+  while ( 1 ) {
+    if (libIt != Libraries.end())
+      libPos = Libraries.getPosition(libIt - Libraries.begin());
+    else
+      libPos = -1;
+    if (fileIt != Files.end())
+      filePos = Files.getPosition(fileIt - Files.begin());
+    else
+      filePos = -1;
+
+    if (filePos != -1 && (libPos == -1 || filePos < libPos)) {
+      // Add a source file
+      Items.push_back(std::make_pair(*fileIt++, false));
+    } else if (libPos != -1 && (filePos == -1 || libPos < filePos)) {
+      // Add a library
+      Items.push_back(std::make_pair(*libIt++, true));
+    } else {
+        break; // we're done with the list
+    }
+  }
+}
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
   sys::PrintStackTraceOnErrorSignal();
 
   int exitCode = 0;
 
+  std::string ProgName = sys::Path(argv[0]).getBasename();
+  Linker TheLinker(ProgName, Verbose);
+
   try {
     // Remove any consecutive duplicates of the same library...
     Libraries.erase(std::unique(Libraries.begin(), Libraries.end()),
                     Libraries.end());
 
-    // Set up the Composite module.
-    std::auto_ptr<Module> Composite(0);
+    TheLinker.addPaths(LibPaths);
+    TheLinker.addSystemPaths();
 
     if (LinkAsLibrary) {
-      // Link in only the files.
-      Composite.reset( new Module(argv[0]) );
-      if (LinkFiles(argv[0], Composite.get(), InputFilenames, Verbose))
-        return 1; // Error already printed
+      std::vector<sys::Path> Files;
+      for (unsigned i = 0; i < InputFilenames.size(); ++i )
+        Files.push_back(sys::Path(InputFilenames[i]));
+
+      if (TheLinker.LinkInFiles(Files))
+        return 1; // Error already printed by linker
+
       // The libraries aren't linked in but are noted as "dependent" in the
       // module.
       for (cl::list<std::string>::const_iterator I = Libraries.begin(), 
            E = Libraries.end(); I != E ; ++I) {
-        Composite.get()->addLibrary(*I);
+        TheLinker.getModule()->addLibrary(*I);
       }
 
     } else {
       // Build a list of the items from our command line
-      LinkItemList Items;
+      Linker::ItemList Items;
       BuildLinkItems(Items, InputFilenames, Libraries);
 
       // Link all the items together
-      Composite.reset( LinkItems(argv[0], Items, LibPaths, Verbose, Native) );
-
-      // Check for an error during linker
-      if (!Composite.get())
+      if (TheLinker.LinkInItems(Items))
         return 1; // Error already printed
     }
+
+    // We're done with the Linker, so tell it to release its module
+    std::auto_ptr<Module> Composite(TheLinker.releaseModule());
 
     // Create the output file.
     std::string RealBytecodeOutput = OutputFilename;
@@ -305,7 +344,7 @@ int main(int argc, char **argv, char **envp) {
     exitCode = 2;
   } catch (...) {
     // This really shouldn't happen, but just in case ....
-    std::cerr << argv[0] << ": An nexpected unknown exception occurred.\n";
+    std::cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
     exitCode = 3;
   }
 
