@@ -336,7 +336,7 @@ optimization.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="filetypes"></a>Configuration Files</div>
 <div class="doc_text">
-  <h3>Types of Files</h3>
+  <h3>File Types</h3>
   <p>There are two types of configuration files: the master configuration file
   and the language specific configuration file.  The master configuration file 
   contains the general configuration of <tt>llvmc</tt> itself and is supplied
@@ -405,100 +405,38 @@ optimization.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="master_items"></a>
-  Master Configuration Items
-</div>
+<div class="doc_subsection"><a name="master_items">Configuration Items</a></div>
 <div class="doc_text">
-  <pre>
-
-=head3 Section: [lang=I<LANGUAGE>]
-
-This section provides the master configuration data for a given language. The
-language specific data will be found in a file named I<LANGUAGE>.
-
-=over
-
-=item C<suffix=>I<suffix>
-
-This adds the I<suffix> specified to the list of recognized suffixes for
-the I<LANGUAGE> identified in the section. As many suffixes as are commonly used
-for source files for the I<LANGUAGE> should be specified. 
-
-=back
-
-=begin html
-
-<p>For example, the following might appear for C++:
-<pre><tt>
-[lang=C++]
-suffix=.cpp
-suffix=.cxx
-suffix=.C
-</tt></pre></p>
-
-=end html
-</pre>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="lang_items"></a>
-  Language Specific Configuration Items
-</div>
-<div class="doc_text">
-  <pre>
-=head3 Section: [general]
-
-=over
-
-=item C<hasPreProcessor=yes|no>
-
-This item specifies whether the language has a pre-processing phase or not. This
-controls whether the B<-E> option works for the language or not.
-
-=item C<output=bc|ll>
-
-This item specifies the kind of output the language's compiler generates. The
-choices are either bytecode (C<bc>) or LLVM assembly (C<ll>).
-
-=back
-
-=head3 Section: [-O0]
-
-=over
-
-=item C<preprocess=>I<commandline>
-
-This item specifies the I<commandline> to use for pre-processing the input.
-
-=over
-
-Valid substitutions for this item are:
-
-=item %in%
-
-The input source file.
-
-=item %out%
-
-The output file.
-
-=item %options%
-
-Any pre-processing specific options (e.g. B<-I>).
-
-=back
-
-=item C<translate=>I<commandline>
-
-This item specifies the I<commandline> to use for translating the source
-language input into the output format given by the C<output> item.
-
-=item C<optimize=>I<commandline>
-
-This item specifies the I<commandline> for optimizing the translator's output.
-
-=back
-</pre>
+  <p>The following description of configuration items is syntax-less and simply
+  uses a naming hierarchy to describe the configuration items. Whatever
+  syntax is chosen will need to map the hierarchy to the given syntax.</p>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Value Type</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><b>Capabilities.hasPreProcessor</b></td>
+      <td>boolean</td>
+      <td class="td_left">This item specifies whether the language has a 
+        pre-processing phase or not. This controls whether the B<-E> option works 
+        for the language or not.</td>
+    </tr>
+    <tr>
+      <td><b>Capabilities.outputFormat</b></td>
+      <td>"bc" or "ll"</td>
+      <td class="td_left">This item specifies the kind of output the language's 
+        compiler generates. The choices are either bytecode (<tt>bc</tt>) or LLVM 
+        assembly (<tt>ll</tt>).</td>
+    </tr>
+    <tr>
+      <td><b>Capabilities.understandsOptimization</b></td>
+      <td>boolean</td>
+      <td>Indicates whether the compiler for this language understands the
+        <tt>-O</tt> options or not</td>
+    </tr>
+  </table>
 </div>
 
 <!-- *********************************************************************** -->
