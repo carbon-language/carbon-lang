@@ -17,12 +17,19 @@ fi
 dnl Configure all of the projects present in our source tree.
 for i in `ls ${srcdir}/projects`
 do
-  if test ${i} != "CVS"
-  then
-    if test -f ${srcdir}/projects/${i}/configure
-    then
-      AC_CONFIG_SUBDIRS(projects/${i})
-    fi
+  if test -d ${srcdir}/projects/${i} ; then
+    case ${i} in
+      "CVS") ;;
+      "sample")       AC_CONFIG_SUBDIRS([projects/sample])    ;;
+      "Stacker")      AC_CONFIG_SUBDIRS([projects/Stacker])   ;;
+      "llvm-test")    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
+      "llvm-reopt")   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
+      "llvm-gcc")     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
+      "llvm-java")    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
+      "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
+      "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
+      *)              AC_CONFIG_SUBDIRS(${i}) ;;
+    esac
   fi
 done
 
@@ -177,7 +184,7 @@ then
 fi
 
 dnl Check for GNU Make.  We use its extensions too, so don't build without it
-CHECK_GNU_MAKE
+AC_CHECK_GNU_MAKE
 if test -z "$_cv_gnu_make_command"
 then
 	AC_MSG_ERROR([GNU Make required but not found])
@@ -328,69 +335,6 @@ else
 	AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
 fi
 
-AC_DEFUN(EXTERNAL_BENCHMARK,
-[m4_define([allcapsname],translit($1,a-z,A-Z))
- AC_ARG_ENABLE($1,
- AC_HELP_STRING([--enable-$1=ARG], 
-                [Use $1 as a benchmark (srcs in DIR)]),
- checkresult=$enableval,
- checkresult=auto)
-AC_MSG_CHECKING([for $1 benchmark sources])
-case "$checkresult" in
-auto|yes)
-    defaultdir=$2
-	if test -d "$defaultdir"
-	then
-		AC_SUBST(allcapsname()[_ROOT],[$defaultdir])
-		AC_SUBST([USE_]allcapsname(),[USE_]allcapsname()=1)
-        checkresult="yes, found in $defaultdir"
-    else
-        checkresult=no
-    fi
-    ;;
-no)
-    AC_SUBST(allcapsname()[_ROOT],[])
-    AC_SUBST([USE_]allcapsname(),[])
-    checkresult=no
-    ;;
-*)  if test -d "$checkresult"
-    then
-        AC_SUBST(allcapsname()[_ROOT],"$checkresult")
-        AC_SUBST([USE_]allcapsname(),[USE_]allcapsname()=1)
-        checkresult="yes, in $checkresult"
-    else
-        AC_SUBST(allcapsname()[_ROOT],[])
-        AC_SUBST([USE_]allcapsname(),[])
-        checkresult="no, not found in $checkresult"
-    fi
-    ;;
-esac
-AC_MSG_RESULT($checkresult)
-m4_undefine([allcapsname])
-])
-
-EXTERNAL_BENCHMARK(spec95,/home/vadve/shared/benchmarks/spec95/benchspec)
-EXTERNAL_BENCHMARK(spec2000,/home/vadve/shared/benchmarks/speccpu2000/benchspec)
-EXTERNAL_BENCHMARK(povray,/home/vadve/shared/benchmarks/povray31)
-
-dnl Precompiled Bytecode Option
-AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]),,enableval=no)
-if test ${enableval} = "no"
-then
-	AC_SUBST(UPB,[[]])
-else
-	AC_SUBST(UPB,[[USE_PRECOMPILED_BYTECODE=1]])
-fi
-
-dnl LLC Diff Option
-AC_ARG_ENABLE(llc_diffs,AC_HELP_STRING([--enable-llc_diffs],[Enable LLC Diffs when testing (default is YES)]),,enableval=yes)
-if test ${enableval} = "no"
-then
-	AC_SUBST(DISABLE_LLC_DIFFS,[DISABLE_LLC_DIFFS:=1])
-else
-	AC_SUBST(DISABLE_LLC_DIFFS,[[]])
-fi
-
 dnl JIT Option
 AC_ARG_ENABLE(jit,AC_HELP_STRING([--enable-jit],[Enable Just In Time Compiling (default is YES)]),,enableval=default)
 if test ${enableval} = "no"
@@ -448,9 +392,6 @@ if test "$LLVM_GCC_SANE" = "no"
 then
 	llvmgccwarn=yes
 fi
-
-dnl Location of the bytecode repository
-AC_ARG_WITH(bcrepos,AC_HELP_STRING([--with-bcrepos],[Location of Bytecode Repository]),AC_SUBST(BCR,[$withval]),AC_SUBST(BCR,[/home/vadve/lattner/LLVMPrograms]))
 
 dnl Location of PAPI
 AC_ARG_WITH(papi,AC_HELP_STRING([--with-papi],[Location of PAPI]),AC_SUBST(PAPIDIR,[$withval]),AC_SUBST(PAPIDIR,[/home/vadve/shared/Sparc/papi-2.3.4.1]))
