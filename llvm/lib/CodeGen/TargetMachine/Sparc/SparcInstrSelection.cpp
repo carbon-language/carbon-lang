@@ -989,7 +989,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
       if (isConstantOffset)
 	{
 	  // create a virtual register for the constant
-	  valueForRegOffset = new ConstPoolSInt(Type::IntTy, offset);
+	  valueForRegOffset = ConstPoolSInt::get(Type::IntTy, offset);
 	}
     }
   else
@@ -1174,19 +1174,8 @@ MakeLoadConstInstr(Instruction* vmInstr,
 	  TmpInstruction* tmpReg2 = NULL;
 	  if (dval != 0.0)
 	    { // First, create an integer constant of the same value as dval
-	      ConstPoolSInt* ival = new ConstPoolSInt(Type::IntTy,
-						      (int64_t) dval);
-	      ConstantPool& cpool =
-		vmInstr->getParent()->getParent()->getConstantPool();
-	      ConstPoolVal* prev = cpool.find(ival);
-	      if (prev == NULL)
-		cpool.insert(ival);
-	      else
-		{
-		  delete ival;
-		  ival = (ConstPoolSInt*) prev;
-		}
-	      
+	      ConstPoolSInt* ival = ConstPoolSInt::get(Type::IntTy,
+						       (int64_t) dval);
 	      // Create another TmpInstruction for the hidden integer register
 	      TmpInstruction* tmpReg2 =
 		new TmpInstruction(Instruction::UserOp1, ival, NULL);
@@ -1788,10 +1777,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     //else go on to create the instructions needed...
     
     // Create a temporary Value to hold the constant type-size
-    ConstPoolSInt* valueForTSize = new ConstPoolSInt(Type::IntTy, tsize);
-    ConstantPool &cpool = instr->getParent()->getParent()->getConstantPool();
-    if (cpool.find(valueForTSize) == 0)
-      cpool.insert(valueForTSize);
+    ConstPoolSInt* valueForTSize = ConstPoolSInt::get(Type::IntTy, tsize);
     
     // Instruction 1: sub %sp, tsize -> %sp
     // tsize is always constant, but it may have to be put into a
@@ -1832,10 +1818,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     //else go on to create the instructions needed...
 
     // Create a temporary Value to hold the constant type-size
-    ConstPoolSInt* valueForTSize = new ConstPoolSInt(Type::IntTy, tsize);
-    ConstantPool &cpool = instr->getParent()->getParent()->getConstantPool();
-    if (cpool.find(valueForTSize) == 0)
-      cpool.insert(valueForTSize);
+    ConstPoolSInt* valueForTSize = ConstPoolSInt::get(Type::IntTy, tsize);
     
     // Create a temporary value to hold `tmp'
     Instruction* tmpInstr = new TmpInstruction(Instruction::UserOp1,
