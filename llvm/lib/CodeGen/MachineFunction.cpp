@@ -104,8 +104,7 @@ MachineFunction::~MachineFunction() {
 void MachineFunction::dump() const { print(std::cerr); }
 
 void MachineFunction::print(std::ostream &OS) const {
-  OS << "\n" << *(Value*)Fn->getFunctionType() << " \"" << Fn->getName()
-     << "\"\n";
+  OS << "# Machine code for " << Fn->getName () << "():\n";
 
   // Print Frame Information
   getFrameInfo()->print(*this, OS);
@@ -115,7 +114,8 @@ void MachineFunction::print(std::ostream &OS) const {
   
   for (const_iterator BB = begin(); BB != end(); ++BB)
     BB->print(OS);
-  OS << "\nEnd function \"" << Fn->getName() << "\"\n\n";
+
+  OS << "\n# End machine code for " << Fn->getName () << "().\n\n";
 }
 
 // The next two methods are used to construct and to retrieve
