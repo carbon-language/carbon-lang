@@ -308,6 +308,10 @@ profiling code to work with the generic profiling interfaces.</li>
 <ol>
 <li>Write a new frontend for some language (Java? OCaml? Forth?)</li>
 <li>Write a new backend for a target (IA64? MIPS? MMIX?)</li>
+<li>Random test vector generator: Use a C grammar to generate random C code;
+run it through llvm-gcc, then run a random set of passes on it using opt.
+Try to crash opt. When opt crashes, use bugpoint to reduce the test case and
+mail the result to yourself.  Repeat ad infinitum.</li>
 </ol>
 
 </div>
