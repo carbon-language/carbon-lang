@@ -290,9 +290,11 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
       for (unsigned i = 0; i < DS; ++i, ++fwdMII) {
         assert(fwdMII != MIVec.end() && "Missing instruction in delay slot?");
         MachineInstr* DelaySlotMI = *fwdMII;
-        set_union(*MInst2LVSetBI[DelaySlotMI], *NewSet);
-        if (i+1 == DS)
-          set_union(*MInst2LVSetAI[DelaySlotMI], *NewSet);
+        if (! TM.getInstrInfo().isNop(DelaySlotMI->getOpCode())) {
+          set_union(*MInst2LVSetBI[DelaySlotMI], *NewSet);
+          if (i+1 == DS)
+            set_union(*MInst2LVSetAI[DelaySlotMI], *NewSet);
+        }
       }
     }
 
