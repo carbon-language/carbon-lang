@@ -107,8 +107,10 @@ PURIFY := $(PURIFY) -cache-dir="$(BUILD_ROOT_TOP)/../purifycache" -chain-length=
 # Shorthand for commonly accessed directories
 LIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
 LIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
+LIBPROFILE  := $(BUILD_ROOT_TOP)/lib/Profile
 TOOLDEBUG   := $(BUILD_ROOT_TOP)/tools/Debug
 TOOLRELEASE := $(BUILD_ROOT_TOP)/tools/Release
+TOOLPROFILE := $(BUILD_ROOT_TOP)/tools/Profile
 
 # Verbosity levels
 ifdef VERBOSE
@@ -129,10 +131,12 @@ RunBurg := $(BURG) $(BURG_OPTS)
 
 
 # Enable this for profiling support with 'gprof'
+# This automatically enables optimized builds.
 ifdef ENABLE_PROFILING
-PROFILE = -pg
+  PROFILE = -pg
+  ENABLE_OPTIMIZED = 1
 else
-PROFILE =
+  PROFILE =
 endif
 
 # By default, strip symbol information from executable
@@ -146,29 +150,32 @@ endif
 CPPFLAGS += -D_GNU_SOURCE
 
 # -Wno-unused-parameter
-CompileCommonOpts := $(PROFILE) -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
+CompileCommonOpts := -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 
 # Compile a file, don't link...
 Compile  := $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileG := $(Compile) -g  -D_DEBUG
-CompileO := $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnonnull-objects -freg-struct-return -fshort-enums
+CompileO := $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fshort-enums ## DISABLE -freg-struct-return because of gcc3.2 bug
+CompileP := $(CompileO) $(PROFILE)
 
 # Link final executable
 
 ifdef ENABLE_PURIFY # To enable purify, build with 'gmake ENABLE_PURIFY=1'
-Link     := $(PURIFY) $(CXX) $(PROFILE) -static
+Link     := $(PURIFY) $(CXX) -static
 else
-Link     := $(CXX) $(PROFILE)
+Link     := $(CXX)
 endif
 LinkG    := $(Link) -g  -L $(LIBDEBUG) $(STRIP)
 LinkO    := $(Link) -O3 -L $(LIBRELEASE)
+LinkP    := $(LinkO) $(PROFILE)
 
 # Create one .o file from a bunch of .o files...
 Relink = ld -r
 
 # MakeSO - Create a .so file from a .o files...
-MakeSO   := $(CXX) $(MakeSharedObjectOption) $(PROFILE)
+MakeSO   := $(CXX) $(MakeSharedObjectOption)
 MakeSOO  := $(MakeSO) -O3
+MakeSOP  := $(MakeSOO) $(PROFILE)
 
 # Create dependancy file from CPP file, send to stdout.
 Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
@@ -185,7 +192,8 @@ AR       = ar cq
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 
 Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
-ObjectsO := $(addprefix $(BUILD_ROOT)/Release/,$(Objs)))
+ObjectsO := $(addprefix $(BUILD_ROOT)/Release/,$(Objs))
+ObjectsP := $(addprefix $(BUILD_ROOT)/Profile/,$(Objs))
 ObjectsG := $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 
 
@@ -234,10 +242,13 @@ ifdef LIBRARYNAME
 LIBRARYNAME := $(strip $(LIBRARYNAME))
 
 LIBNAME_O    := $(LIBRELEASE)/lib$(LIBRARYNAME).so
+LIBNAME_P    := $(LIBPROFILE)/lib$(LIBRARYNAME).so
 LIBNAME_G    := $(LIBDEBUG)/lib$(LIBRARYNAME).so
 LIBNAME_AO   := $(LIBRELEASE)/lib$(LIBRARYNAME).a
+LIBNAME_AP   := $(LIBPROFILE)/lib$(LIBRARYNAME).a
 LIBNAME_AG   := $(LIBDEBUG)/lib$(LIBRARYNAME).a
 LIBNAME_OBJO := $(LIBRELEASE)/$(LIBRARYNAME).o
+LIBNAME_OBJP := $(LIBPROFILE)/$(LIBRARYNAME).o
 LIBNAME_OBJG := $(LIBDEBUG)/$(LIBRARYNAME).o
 
 
@@ -253,22 +264,37 @@ endif
 
 # If optimized builds are enabled...
 ifdef ENABLE_OPTIMIZED
-BUILD_LIBNAME_O  := $(LIBNAME_O)
-ifndef DONT_BUILD_RELINKED
-BUILD_LIBNAME_OBJO := $(LIBNAME_OBJO)
-endif
-ifdef BUILD_ARCHIVE
-BUILD_LIBNAME_AO := $(LIBNAME_AO)
-endif
+  ifdef ENABLE_PROFILING
+    BUILD_LIBNAME_O  := $(LIBNAME_P)
+    ifndef DONT_BUILD_RELINKED
+      BUILD_LIBNAME_OBJO := $(LIBNAME_OBJP)
+    endif
+    ifdef BUILD_ARCHIVE
+      BUILD_LIBNAME_AO := $(LIBNAME_AP)
+    endif
+  else
+    BUILD_LIBNAME_O  := $(LIBNAME_O)
+    ifndef DONT_BUILD_RELINKED
+      BUILD_LIBNAME_OBJO := $(LIBNAME_OBJO)
+    endif
+    ifdef BUILD_ARCHIVE
+      BUILD_LIBNAME_AO := $(LIBNAME_AO)
+    endif
+  endif
 endif
 
 all:: $(BUILD_LIBNAME_AG) $(BUILD_LIBNAME_OBJG)      # Debug
 all:: $(BUILD_LIBNAME_AO) $(BUILD_LIBNAME_OBJO)      # Release
-dynamic:: $(BUILD_LIBNAME_G) $(BUILD_LIBNAME_O)      # .so files
+all:: $(BUILD_LIBNAME_AP) $(BUILD_LIBNAME_OBJP)      # Profile
+dynamic:: $(BUILD_LIBNAME_G) $(BUILD_LIBNAME_O) $(BUILD_LIBNAME_P) # .so files
 
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	$(VERB) $(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
+
+$(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
+	@echo ======= Linking $(LIBRARYNAME) profile library =======
+	$(VERB) $(MakeSOP) -o $@ $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
 
 $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
@@ -279,6 +305,11 @@ $(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@rm -f $@
 	$(VERB) $(AR) $@ $(ObjectsO) $(LibSubDirs)
 
+$(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
+	@echo ======= Linking $(LIBRARYNAME) profile library =======
+	@rm -f $@
+	$(VERB) $(AR) $@ $(ObjectsP) $(LibSubDirs)
+
 $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	@rm -f $@
@@ -287,6 +318,10 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 $(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo "Linking $@"
 	$(VERB) $(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
+
+$(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(LIBPROFILE)/.dir
+	@echo "Linking $@"
+	$(VERB) $(Relink) -o $@ $(ObjectsP) $(LibSubDirs)
 
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	$(VERB) $(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
@@ -317,15 +352,23 @@ ifdef TOOLNAME
 # TOOLEXENAME* - These compute the output filenames to generate...
 TOOLEXENAME_G := $(BUILD_ROOT_TOP)/tools/Debug/$(TOOLNAME)
 TOOLEXENAME_O := $(BUILD_ROOT_TOP)/tools/Release/$(TOOLNAME)
-TOOLEXENAMES  := $(TOOLEXENAME_G)
-ifdef ENABLE_OPTIMIZED
-TOOLEXENAMES += $(TOOLEXENAME_O)
+TOOLEXENAME_P := $(BUILD_ROOT_TOP)/tools/Profile/$(TOOLNAME)
+
+ifndef ENABLE_OPTIMIZED
+  TOOLEXENAMES  := $(TOOLEXENAME_G)
+else
+  ifdef ENABLE_PROFILING
+    TOOLEXENAMES := $(TOOLEXENAME_O)
+  else
+    TOOLEXENAMES := $(TOOLEXENAME_P)
+  endif
 endif
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
 USED_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
 USED_LIBS_OPTIONS_G := $(patsubst %.o, $(LIBDEBUG)/%.o,  $(USED_LIBS_OPTIONS))
 USED_LIBS_OPTIONS_O := $(patsubst %.o, $(LIBRELEASE)/%.o,$(USED_LIBS_OPTIONS))
+USED_LIBS_OPTIONS_P := $(patsubst %.o, $(LIBPROFILE)/%.o,$(USED_LIBS_OPTIONS))
 
 
 # USED_LIB_PATHS - Compute the path of the libraries used so that tools are
@@ -335,6 +378,7 @@ USED_LIBS_OPTIONS_O := $(patsubst %.o, $(LIBRELEASE)/%.o,$(USED_LIBS_OPTIONS))
 STATICUSEDLIBS   := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 USED_LIB_PATHS_G := $(addprefix $(LIBDEBUG)/, $(STATICUSEDLIBS))
 USED_LIB_PATHS_O := $(addprefix $(LIBRELEASE)/, $(STATICUSEDLIBS))
+USED_LIB_PATHS_P := $(addprefix $(LIBPROFILE)/, $(STATICUSEDLIBS))
 
 all::   $(TOOLEXENAMES)
 clean::
@@ -348,6 +392,10 @@ $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(BUILD_ROOT_TOP)/tools/Releas
 	@echo ======= Linking $(TOOLNAME) release executable =======
 	$(VERB) $(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_O) $(TOOLLINKOPTS)
 
+$(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(BUILD_ROOT_TOP)/tools/Profile/.dir
+	@echo ======= Linking $(TOOLNAME) profile executable =======
+	$(VERB) $(LinkP) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS_P) $(TOOLLINKOPTS)
+
 endif
 
 
@@ -358,11 +406,11 @@ endif
 
 # Create dependencies for the *.cpp files...
 $(BUILD_ROOT)/Depend/%.d: %.cpp $(BUILD_ROOT)/Depend/.dir
-	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
+	$(VERB) $(Depend) $< | sed 's|$*\.o *|$(BUILD_ROOT)/Release/& $(BUILD_ROOT)/Profile/& $(BUILD_ROOT)/Debug/& $(BUILD_ROOT)/Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
 $(BUILD_ROOT)/Depend/%.d: %.c $(BUILD_ROOT)/Depend/.dir
-	$(VERB) $(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
+	$(VERB) $(Depend) $< | sed 's|$*\.o *|Release/& Profile/& Debug/& Depend/$(@F)|g' > $@
 
 # Create .o files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
@@ -371,6 +419,10 @@ $(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
 
 #Release/%.o: %.c Release/.dir Depend/.dir
 #	$(CompileOC) $< -o $@
+
+$(BUILD_ROOT)/Profile/%.o: %.cpp $(BUILD_ROOT)/Profile/.dir
+	@echo "Compiling $<"
+	$(VERB) $(CompileP) $< -o $@
 
 $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 	@echo "Compiling $<"
@@ -398,7 +450,7 @@ $(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 
 # Clean nukes the tree
 clean::
-	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Depend
+	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Profile $(BUILD_ROOT)/Depend
 	$(VERB) rm -f core *.o *.d *.so *~ *.flc
 
 # If dependancies were generated for the file that included this file,
