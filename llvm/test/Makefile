@@ -4,7 +4,7 @@ LLCOPTS := -dsched y
 
 TESTS := $(wildcard *.ll)
 
-LLCTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch | grep -v sumarray | grep -v opttest | grep -v xx.ll )
+LLCTESTS := $(shell /bin/ls *.ll | grep -v testmemory | grep -v testswitch | grep -v sumarray | grep -v opttest | grep -v xx.ll | grep -v select.ll )
 
 
 test all : testasmdis testopt testcodegen
@@ -43,5 +43,5 @@ clean :
 	$(AS) < $<  | $(LLC) > $@
 
 %.o: %.s %.ll
-	as -xarch=v9 $<
+	/usr/ccs/bin/as -xarch=v9 $<
 
