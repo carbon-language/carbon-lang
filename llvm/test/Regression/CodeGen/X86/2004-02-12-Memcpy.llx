@@ -1,0 +1,24 @@
+; RUN: llvm-as < %s | llc -march=x86 | grep movs
+declare sbyte* %llvm.memcpy(sbyte* %A, sbyte* %B, uint %amt, uint %align)
+
+%A = global [1000 x int] zeroinitializer
+%B = global [1000 x int] zeroinitializer
+
+
+void %main() {
+  ; dword copy
+  call sbyte* %llvm.memcpy(sbyte* cast (int* getelementptr ([1000 x int]* %A, long 0, long 0) to sbyte*),
+                           sbyte* cast (int* getelementptr ([1000 x int]* %B, long 0, long 0) to sbyte*),
+                           uint 4000, uint 4)
+
+  ; word copy
+  call sbyte* %llvm.memcpy(sbyte* cast (int* getelementptr ([1000 x int]* %A, long 0, long 0) to sbyte*),
+                           sbyte* cast (int* getelementptr ([1000 x int]* %B, long 0, long 0) to sbyte*),
+                           uint 4000, uint 2)
+
+  ; byte copy
+  call sbyte* %llvm.memcpy(sbyte* cast (int* getelementptr ([1000 x int]* %A, long 0, long 0) to sbyte*),
+                           sbyte* cast (int* getelementptr ([1000 x int]* %B, long 0, long 0) to sbyte*),
+                           uint 4000, uint 1)
+  ret void
+}
