@@ -53,7 +53,9 @@ def ADJCALLSTACKDOWN : Pseudo<(ops), "; ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP : Pseudo<(ops), "; ADJCALLSTACKUP">;
 }
 def IMPLICIT_DEF : Pseudo<(ops), "; IMPLICIT_DEF">;
-def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
+
+let Defs = [LR] in
+  def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 
 let isBranch = 1, isTerminator = 1 in {
   def COND_BRANCH : Pseudo<(ops), "; COND_BRANCH">;
