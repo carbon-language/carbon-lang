@@ -53,6 +53,11 @@ namespace {
   AdditionalSOs("additional-so",
                 cl::desc("Additional shared objects to load "
                          "into executing programs"));
+
+  cl::opt<unsigned>
+  TimeoutValue("timeout", cl::init(300), cl::value_desc("seconds"),
+               cl::desc("Number of seconds program is allowed to run before it "
+                        "is killed (default is 300s), 0 disables timeout"));
 }
 
 namespace llvm {
@@ -201,7 +206,20 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 
   // Actually execute the program!
   int RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
-                                  OutputFile, SharedObjs);
+                                  OutputFile, SharedObjs, TimeoutValue);
+
+  if (RetVal == -1) {
+    std::cerr << "<timeout>";
+    static bool FirstTimeout = true;
+    if (FirstTimeout) {
+      std::cout << "\n"
+ "*** Program execution timed out!  This mechanism is designed to handle\n"
+ "    programs stuck in infinite loops gracefully.  The -timeout option\n"
+ "    can be used to change the timeout threshold or disable it completely\n"
+ "    (with -timeout=0).  This message is only displayed once.\n";
+      FirstTimeout = false;
+    }
+  }
 
   if (ProgramExitedNonzero != 0)
     *ProgramExitedNonzero = (RetVal != 0);

@@ -156,7 +156,7 @@ bool BugDriver::run() {
   //
   bool CreatedOutput = false;
   if (ReferenceOutputFile.empty()) {
-    std::cout << "Generating reference output from raw program...";
+    std::cout << "Generating reference output from raw program: ";
     try {
       ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
       CreatedOutput = true;
