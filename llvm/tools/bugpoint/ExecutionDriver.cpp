@@ -61,11 +61,11 @@ namespace llvm {
   // program being debugged.
   cl::list<std::string>
   InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
-            cl::ZeroOrMore);
+            cl::ZeroOrMore, cl::PositionalEatsArgs);
 
   cl::list<std::string>
   ToolArgv("tool-args", cl::Positional, cl::desc("<tool arguments>..."),
-           cl::ZeroOrMore);
+           cl::ZeroOrMore, cl::PositionalEatsArgs);
 }
 
 //===----------------------------------------------------------------------===//
