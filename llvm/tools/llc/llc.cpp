@@ -21,8 +21,6 @@
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
-using std::string;
-using std::cerr;
 
 //------------------------------------------------------------------------------
 // Option declarations for LLC.
@@ -43,10 +41,10 @@ OptimizationList(cl::desc("Optimizations available:"));
 // within the corresponding llc passes, and target-specific options
 // and back-end code generation options are specified with the target machine.
 // 
-static cl::opt<string>
+static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
-static cl::opt<string>
+static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
@@ -55,7 +53,7 @@ static cl::opt<bool>
 DumpAsm("d", cl::desc("Print bytecode before native code generation"),
         cl::Hidden);
 
-static cl::opt<string>
+static cl::opt<std::string>
 TraceLibPath("tracelibpath", cl::desc("Path to libinstr for trace code"),
              cl::value_desc("directory"), cl::Hidden);
 
@@ -66,14 +64,14 @@ static bool TraceBasicBlocks = false;
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
-static inline string
-GetFileNameRoot(const string &InputFilename)
+static inline std::string
+GetFileNameRoot(const std::string &InputFilename)
 {
-  string IFN = InputFilename;
-  string outputFilename;
+  std::string IFN = InputFilename;
+  std::string outputFilename;
   int Len = IFN.length();
   if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
-    outputFilename = string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
+    outputFilename = std::string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
   } else {
     outputFilename = IFN;
   }
@@ -116,7 +114,7 @@ insertTraceCodeFor(Module &M)
 
   // If we still didn't get it, cancel trying to link it in...
   if (TraceModule == 0)
-    cerr << "Warning, could not load trace routines to link into program!\n";
+    std::cerr <<"WARNING: couldn't load trace routines to link into program!\n";
   else
     {
       // Link in the trace routines... if this fails, don't panic, because the
@@ -124,23 +122,23 @@ insertTraceCodeFor(Module &M)
       //
       std::auto_ptr<Module> TraceRoutines(TraceModule);
       if (LinkModules(&M, TraceRoutines.get(), &ErrorMessage))
-        cerr << "Warning: Error linking in trace routines: "
-             << ErrorMessage << "\n";
+        std::cerr << "WARNING: Error linking in trace routines: "
+                  << ErrorMessage << "\n";
     }
 
   // Write out the module with tracing code just before code generation
   assert (InputFilename != "-"
           && "Cannot write out traced bytecode when reading input from stdin");
-  string TraceFilename = GetFileNameRoot(InputFilename) + ".trace.bc";
+  std::string TraceFilename = GetFileNameRoot(InputFilename) + ".trace.bc";
 
   std::ofstream Out(TraceFilename.c_str());
   if (!Out.good())
-    cerr << "Error opening '" << TraceFilename
-         << "'!: Skipping output of trace code as bytecode\n";
+    std::cerr << "Error opening '" << TraceFilename
+              << "'!: Skipping output of trace code as bytecode\n";
   else
     {
-      cerr << "Emitting trace code to '" << TraceFilename
-           << "' for comparison...\n";
+      std::cerr << "Emitting trace code to '" << TraceFilename
+                << "' for comparison...\n";
       WriteBytecodeToFile(&M, Out);
     }
 
@@ -179,7 +177,7 @@ main(int argc, char **argv)
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0)
     {
-      cerr << argv[0] << ": bytecode didn't read correctly.\n";
+      std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;
     }
 
@@ -208,8 +206,8 @@ main(int argc, char **argv)
           else if (Opt->getTargetCtor())
             Passes.add(Opt->getTargetCtor()(Target));
           else
-            cerr << argv[0] << ": cannot create pass: "
-                 << Opt->getPassName() << "\n";
+            std::cerr << argv[0] << ": cannot create pass: "
+                      << Opt->getPassName() << "\n";
         }
     }
 
@@ -227,7 +225,7 @@ main(int argc, char **argv)
 
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
-    Passes.add(new PrintFunctionPass("Code after xformations: \n", &cerr));
+    Passes.add(new PrintFunctionPass("Code after xformations: \n", &std::cerr));
 
   // Strip all of the symbols from the bytecode so that it will be smaller...
   Passes.add(createSymbolStrippingPass());
@@ -238,9 +236,9 @@ main(int argc, char **argv)
     {   // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        cerr << argv[0] << ": error opening '" << OutputFilename
-             << "': file exists!\n"
-             << "Use -f command line argument to force output\n";
+        std::cerr << argv[0] << ": error opening '" << OutputFilename
+                  << "': file exists!\n"
+                  << "Use -f command line argument to force output\n";
         return 1;
       }
       Out = new std::ofstream(OutputFilename.c_str());
@@ -258,22 +256,23 @@ main(int argc, char **argv)
         }
       else
         {
-          string OutputFilename = GetFileNameRoot(InputFilename); 
+          std::string OutputFilename = GetFileNameRoot(InputFilename); 
           OutputFilename += ".s";
 
           if (!Force && std::ifstream(OutputFilename.c_str()))
             {
               // If force is not specified, make sure not to overwrite a file!
-              cerr << argv[0] << ": error opening '" << OutputFilename
-                   << "': file exists!\n"
-                   << "Use -f command line argument to force output\n";
+              std::cerr << argv[0] << ": error opening '" << OutputFilename
+                        << "': file exists!\n"
+                        << "Use -f command line argument to force output\n";
               return 1;
             }
 
           Out = new std::ofstream(OutputFilename.c_str());
           if (!Out->good())
             {
-              cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+              std::cerr << argv[0] << ": error opening " << OutputFilename
+                        << "!\n";
               delete Out;
               return 1;
             }
@@ -286,8 +285,8 @@ main(int argc, char **argv)
 
   // Ask the target to add backend passes as neccesary
   if (Target.addPassesToEmitAssembly(Passes, *Out)) {
-    cerr << argv[0] << ": target '" << Target.getName()
-         << " does not support static compilation!\n";
+    std::cerr << argv[0] << ": target '" << Target.getName()
+              << " does not support static compilation!\n";
   } else {
     // Run our queue of passes all at once now, efficiently.
     Passes.run(*M.get());
