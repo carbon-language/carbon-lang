@@ -6,6 +6,7 @@
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/StringExtras.h"
+#include "llvm/CodeGen/TargetMachine.h"
 
 //===----------------------------------------------------------------------===//
 //                         Type Class Implementation
@@ -136,6 +137,49 @@ const Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
 
 #if TEST_MERGE_TYPES
 #include "llvm/Assembly/Writer.h"
+#endif
+
+#undef RESURRECT_OLD_LAYOUT_CODE
+#ifdef RESURRECT_OLD_LAYOUT_CODE
+
+unsigned int
+StructType::getStorageSize(const TargetMachine& tmi) const
+{
+  if (layoutCache->targetInfo && layoutCache->targetInfo != &tmi)
+    {// target machine has changed (hey it could happen). discard cached info.
+      ResetCachedInfo();
+      layoutCache->targetInfo = &tmi;
+    }
+  
+  if (layoutCache->storageSize < 0) {
+    layoutCache->storageSize = tmi.findOptimalStorageSize(this);
+    assert(layoutCache->storageSize >= 0);
+  }
+  
+  return layoutCache->storageSize;
+}
+
+unsigned int
+StructType::getElementOffset(int i, const TargetMachine& tmi) const
+{
+  // target machine has changed (hey it could happen). discard cached info.
+  if (layoutCache->targetInfo && layoutCache->targetInfo != &tmi)
+    ResetCachedInfo();
+  
+  if (layoutCache->memberOffsets[i] < 0) {
+    layoutCache->targetInfo = &tmi;  // remember which target was used
+    
+    unsigned int *offsetVec = tmi.findOptimalMemberOffsets(this);
+    for (unsigned i=0, N=layoutCache->memberOffsets.size(); i < N; ++i) {
+      layoutCache->memberOffsets[i] = offsetVec[i];
+      assert(layoutCache->memberOffsets[i] >= 0);
+    }
+    delete[] offsetVec; 
+  }
+  
+  return layoutCache->memberOffsets[i];
+}
+
 #endif
 
 //===----------------------------------------------------------------------===//
