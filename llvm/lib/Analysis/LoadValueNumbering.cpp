@@ -285,7 +285,6 @@ void LoadVN::getEqualNumberNodes(Value *V,
     return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
   
   Value *PointerSource = LI->getOperand(0);
-  
   BasicBlock *LoadBB = LI->getParent();
   Function *F = LoadBB->getParent();
   
@@ -333,7 +332,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
     // If this instruction is a candidate load before LI, we know there are no
     // invalidating instructions between it and LI, so they have the same value
     // number.
-    if (isa<LoadInst>(I) && Instrs.count(I)) {
+    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == PointerSource) {
       RetVals.push_back(I);
       Instrs.erase(I);
     } else if (AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
@@ -350,7 +349,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
       // If the invalidating instruction is a store, and its in our candidate
       // set, then we can do store-load forwarding: the load has the same value
       // # as the stored value.
-      if (isa<StoreInst>(I) && Instrs.count(I)) {
+      if (isa<StoreInst>(I) && I->getOperand(1) == PointerSource) {
         Instrs.erase(I);
         RetVals.push_back(I->getOperand(0));
       }
@@ -368,7 +367,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   for (BasicBlock::iterator I = LI->getNext(); I != LoadBB->end(); ++I) {
     // If this instruction is a load, then this instruction returns the same
     // value as LI.
-    if (isa<LoadInst>(I) && Instrs.count(I)) {
+    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == PointerSource) {
       RetVals.push_back(I);
       Instrs.erase(I);
     }
