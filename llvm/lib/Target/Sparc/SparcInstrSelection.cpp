@@ -1,3 +1,4 @@
+// $Id$
 //***************************************************************************
 // File:
 //	SparcInstrSelection.cpp
@@ -95,7 +96,7 @@ static MachineInstr*	MakeLoadConstInstr(Instruction* vmInstr,
 					   MachineInstr*& getMinstr2);
 
 static void		ForwardOperand	(InstructionNode* treeNode,
-					 InstructionNode* parent,
+					 InstrTreeNode*   parent,
 					 int operandNum);
 
 
@@ -104,14 +105,16 @@ static void		ForwardOperand	(InstructionNode* treeNode,
 // Convenience function to get the value of an integer constant, for an
 // appropriate integer or non-integer type that can be held in an integer.
 // The type of the argument must be the following:
-//   GetConstantValueAsSignedInt: any of the above, but the value
-//				  must fit into a int64_t.
+//	Signed or unsigned integer
+//	Boolean
+//	Pointer
 // 
 // isValidConstant is set to true if a valid constant was found.
 // 
-
-static int64_t GetConstantValueAsSignedInt(const Value *V,
-					   bool &isValidConstant) {
+static int64_t
+GetConstantValueAsSignedInt(const Value *V,
+			    bool &isValidConstant)
+{
   if (!V->isConstant()) { isValidConstant = false; return 0; }
   isValidConstant = true;
   
@@ -161,10 +164,20 @@ ThisIsAChainRule(int eruleno)
     case 130:
     case 131:
     case 132:
+    case 133:
     case 153:
-    case 155: return true; break;
+    case 155:
+    case 221:
+    case 222:
+    case 232:
+    case 241:
+    case 242:
+    case 243:
+    case 244:
+      return true; break;
       
-    default: return false; break;
+    default:
+      return false; break;
     }
 }
 
@@ -305,7 +318,7 @@ ChooseMovFpccInstruction(const InstructionNode* instrNode)
 // Set mustClearReg=false if v3 need not be cleared before conditional move.
 // Set valueToMove=0 if we want to conditionally move 0 instead of 1
 //                      (i.e., we want to test inverse of a condition)
-//
+// (The latter two cases do not seem to arise because SetNE needs nothing.)
 // 
 static MachineOpCode
 ChooseMovpccAfterSub(const InstructionNode* instrNode,
@@ -318,18 +331,13 @@ ChooseMovpccAfterSub(const InstructionNode* instrNode,
   
   switch(instrNode->getInstruction()->getOpcode())
     {
-    case Instruction::SetEQ: opCode = MOVNE; mustClearReg = false;
-					     valueToMove = 0; break;
+    case Instruction::SetEQ: opCode = MOVE;  break;
     case Instruction::SetLE: opCode = MOVLE; break;
     case Instruction::SetGE: opCode = MOVGE; break;
     case Instruction::SetLT: opCode = MOVL;  break;
     case Instruction::SetGT: opCode = MOVG;  break;
-      
-    case Instruction::SetNE: assert(0 && "No move required!");
-      
-    default:
-      assert(0 && "Unrecognized VM instruction!");
-      break; 
+    case Instruction::SetNE: assert(0 && "No move required!"); break;
+    default:		     assert(0 && "Unrecognized VM instr!"); break; 
     }
   
   return opCode;
@@ -627,7 +635,7 @@ CreateMulConstInstruction(const InstructionNode* instrNode,
   // 
   const Type* resultType = instrNode->getInstruction()->getType();
   
-  if (resultType->isIntegral())
+  if (resultType->isIntegral() || resultType->isPointerType())
     {
       unsigned pow;
       bool isValidConst;
@@ -1247,12 +1255,23 @@ MakeLoadConstInstr(Instruction* vmInstr,
 // 
 static void
 ForwardOperand(InstructionNode* treeNode,
-	       InstructionNode* parent,
+	       InstrTreeNode*   parent,
 	       int operandNum)
 {
+  assert(treeNode && parent && "Invalid invocation of ForwardOperand");
+  
   Instruction* unusedOp = treeNode->getInstruction();
   Value* fwdOp = unusedOp->getOperand(operandNum);
-  Instruction* userInstr = parent->getInstruction();
+
+  // The parent itself may be a list node, so find the real parent instruction
+  while (parent->getNodeType() != InstrTreeNode::NTInstructionNode)
+    {
+      parent = parent->parent();
+      assert(parent && "ERROR: Non-instruction node has no parent in tree.");
+    }
+  InstructionNode* parentInstrNode = (InstructionNode*) parent;
+  
+  Instruction* userInstr = parentInstrNode->getInstruction();
   MachineCodeForVMInstr& mvec = userInstr->getMachineInstrVec();
   for (unsigned i=0, N=mvec.size(); i < N; i++)
     {
@@ -1316,7 +1335,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   const Type* opType;
   int nextRule;
   int forwardOperandNum = -1;
-  BranchPattern brPattern;
   int64_t s0 = 0;			// variables holding zero to avoid
   uint64_t u0 = 0;			// overloading ambiguities below
   
@@ -1359,8 +1377,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     mvec[numInstr++] = new MachineInstr(NOP);
     break;
     
-  case 6:	// stmt:   BrCond(boolconst)
-    // boolconst => boolean was computed with `%b = setCC type reg1 constant'
+  case 206:	// stmt:   BrCond(setCCconst)
+    // setCCconst => boolean was computed with `%b = setCC type reg1 constant'
     // If the constant is ZERO, we can use the branch-on-integer-register
     // instructions and avoid the SUBcc instruction entirely.
     // Otherwise this is just the same as case 5, so just fall through.
@@ -1370,11 +1388,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     ConstPoolVal* constVal = (ConstPoolVal*) constNode->getValue();
     bool isValidConst;
     
-    if (constVal->getType()->isIntegral()
+    if ((constVal->getType()->isIntegral()
+	 || constVal->getType()->isPointerType())
 	&& GetConstantValueAsSignedInt(constVal, isValidConst) == 0
 	&& isValidConst)
       {
-	// That constant ia a zero after all...
+	// That constant is a zero after all...
 	// Use the left child of the setCC instruction as the first argument!
 	mvec[0] = new MachineInstr(ChooseBprInstruction(subtreeRoot));
 	mvec[0]->SetMachineOperand(0, MachineOperand::MO_VirtualRegister,
@@ -1399,8 +1418,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     // ELSE FALL THROUGH
     }
     
-  case 7:	// stmt:   BrCond(bool)
-    // bool => boolean was computed with `%b = setcc type reg1 reg2'
+  case 6:	// stmt:   BrCond(bool)
+    // bool => boolean was computed with some boolean operator (setCC,Not,...)
     // Need to check whether the type was a FP, signed int or unsigned int,
     // and check the branching condition in order to choose the branch to use.
     // 
@@ -1427,8 +1446,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     break;
     }
     
-  case 8:	// stmt:   BrCond(boolreg)
-    // bool => boolean is stored in an existing register.
+  case   8:	// stmt:   BrCond(boolreg)
+  case 208:	// stmt:   BrCond(boolconst)
+    // boolreg   => boolean is stored in an existing register.
+    // boolconst => boolean is a constant; can be loaded into a register.
     // Just use the branch-on-integer-register instruction!
     // 
     mvec[0] = new MachineInstr(BRNZ);
@@ -1439,7 +1460,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     
     // delay slot
     mvec[numInstr++] = new MachineInstr(NOP); // delay slot
-
+    
     // false branch
     mvec[numInstr++] = new MachineInstr(BA);
     mvec[numInstr-1]->SetMachineOperand(0, MachineOperand::MO_CCRegister,
@@ -1469,6 +1490,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 				 subtreeRoot->getValue());
     break;
     
+  case 322:	// reg:   ToBoolTy(bool):
   case 22:	// reg:   ToBoolTy(reg):
     opType = subtreeRoot->leftChild()->getValue()->getType();
     assert(opType->isIntegral() || opType == Type::BoolTy);
@@ -1693,8 +1715,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||
 	subtreeRoot->leftChild()->getValue()->getType()->isPointerType())
       {
-	// integer condition: destination should be %g0 or integer register
-	// if result must be saved but condition is not SetEQ then we need
+	// Integer condition: destination should be %g0 or integer register.
+	// If result must be saved but condition is not SetEQ then we need
 	// a separate instruction to compute the bool result, so discard
 	// result of SUBcc instruction anyway.
 	// 
@@ -1914,14 +1936,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     
   case 62:	// reg:   Shl(reg, reg)
     opType = subtreeRoot->leftChild()->getValue()->getType();
-    assert(opType->isIntegral() || opType == Type::BoolTy); 
+    assert(opType->isIntegral()
+	   || opType == Type::BoolTy
+	   || opType->isPointerType() && "Shl unsupported for other types"); 
     mvec[0] = new MachineInstr((opType == Type::LongTy)? SLLX : SLL);
     Set3OperandsFromInstr(mvec[0], subtreeRoot, target);
     break;
     
   case 63:	// reg:   Shr(reg, reg)
     opType = subtreeRoot->leftChild()->getValue()->getType();
-    assert(opType->isIntegral() || opType == Type::BoolTy); 
+    assert(opType->isIntegral()
+	   || opType == Type::BoolTy
+	   || opType->isPointerType() && "Shr unsupported for other types"); 
     mvec[0] = new MachineInstr((opType->isSigned()
 				? ((opType == Type::LongTy)? SRAX : SRA)
 				: ((opType == Type::LongTy)? SRLX : SRL)));
@@ -1959,8 +1985,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   case 130:
   case 131:
   case 132:
+  case 133:
   case 153:
   case 155:
+  case 221:
+  case 222:
+  case 232:
+  case 241:
+  case 242:
+  case 243:
+  case 244:
     // 
     // These are all chain rules, which have a single nonterminal on the RHS.
     // Get the rule that matches the RHS non-terminal and use that instead.
@@ -1985,8 +2019,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       // If not, insert a copy instruction which should get coalesced away
       // by register allocation.
       if (subtreeRoot->parent() != NULL)
-	ForwardOperand(subtreeRoot, (InstructionNode*) subtreeRoot->parent(),
-		       forwardOperandNum);
+	ForwardOperand(subtreeRoot, subtreeRoot->parent(), forwardOperandNum);
       else
 	{
 	  int n = numInstr++;
