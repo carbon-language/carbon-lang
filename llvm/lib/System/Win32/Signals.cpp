@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <vector>
 
-#ifdef __MINGW
+#ifdef __MING
 #include <imagehlp.h>
 #else
 #include <dbghelp.h>
