@@ -35,9 +35,9 @@ public:
   // an initializer is specified.
   //
   inline bool hasInitializer() const { return !Operands.empty(); }
-  inline const ConstPoolVal *getInitializer() const {
+  inline ConstPoolVal *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return (const ConstPoolVal*)Operands[0].get();
+    return (ConstPoolVal*)Operands[0].get();
   }
   inline ConstPoolVal *getInitializer() {
     assert(hasInitializer() && "GV doesn't have initializer!");
