@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
+#include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/Instruction.h"
@@ -192,6 +193,24 @@ operator<<(ostream &os, const MachineOperand &mop)
   return os;
 }
 
+// Align data larger than one L1 cache line on L1 cache line boundaries.
+// Align all smaller data on the next higher 2^x boundary (4, 8, ...).
+//
+// THIS FUNCTION HAS BEEN COPIED FROM EMITASSEMBLY.CPP AND
+// SHOULD BE USED DIRECTLY THERE
+// 
+inline unsigned int
+SizeToAlignment(unsigned int size, const TargetMachine& target)
+{
+  unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
+  if (size > (unsigned) cacheLineSize / 2)
+    return cacheLineSize;
+  else
+    for (unsigned sz=1; /*no condition*/; sz *= 2)
+      if (sz >= size)
+        return sz;
+}
+
 static unsigned int
 ComputeMaxOptionalArgsSize(const TargetMachine& target, const Method* method)
 {
@@ -248,7 +267,8 @@ MachineCodeForMethod::MachineCodeForMethod(const Method* _M,
 
 int
 MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
-                                       const Value* val)
+                                       const Value* val,
+                                       unsigned int size)
 {
   // Check if we've allocated a stack slot for this value already
   // 
@@ -258,9 +278,15 @@ MachineCodeForMethod::allocateLocalVar(const TargetMachine& target,
       bool growUp;
       int firstOffset =target.getFrameInfo().getFirstAutomaticVarOffset(*this,
                                                                        growUp);
-      unsigned int  size  = target.findOptimalStorageSize(val->getType());
-      unsigned char align = target.DataLayout.getTypeAlignment(val->getType());
+      unsigned char align;
+      if (size == 0)
+        {
+          size  = target.findOptimalStorageSize(val->getType());
+          // align = target.DataLayout.getTypeAlignment(val->getType());
+        }
       
+      align = SizeToAlignment(size, target);
+          
       offset = getAutomaticVarsSize();
       if (! growUp)
         offset += size; 
