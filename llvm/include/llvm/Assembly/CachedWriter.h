@@ -7,15 +7,15 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file defines a 'CacheWriter' class that is used to accelerate printing
+// This file defines a 'CachedWriter' class that is used to accelerate printing
 // chunks of LLVM.  This is used when a module is not being changed, but random
 // parts of it need to be printed.  This can greatly speed up printing of LLVM
 // output.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ASSEMBLY_CACHED_WRITER_H
-#define LLVM_ASSEMBLY_CACHED_WRITER_H
+#ifndef LLVM_ASSEMBLY_CACHEDWRITER_H
+#define LLVM_ASSEMBLY_CACHEDWRITER_H
 
 #include "llvm/Value.h"
 #include <iostream>
