@@ -9,6 +9,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/IPO.h"
