@@ -40,7 +40,7 @@ namespace {
 
             std::vector<llvm::BasicBlock*> bbv;
 
-            // The commented out calls below refer to non-existant creation
+            // The commented out calls below refer to non-existent creation
             // functions.  They will be uncommented as the functions are added.
 
             (void) llvm::createAggressiveDCEPass();
