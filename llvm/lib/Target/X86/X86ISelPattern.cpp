@@ -208,7 +208,7 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
   RetVals.push_back(MVT::Other);
 
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee), 0);
-  Chain = TheCall.getValue(RetVals.size()-1);
+  Chain = TheCall.getValue(RetVals.size());
   Chain = DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
   return std::make_pair(TheCall, Chain);
