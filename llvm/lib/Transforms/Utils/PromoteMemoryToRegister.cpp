@@ -22,6 +22,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/Pass.h"
 #include "llvm/Method.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Assembly/Writer.h"  // For debugging
 using cfg::DominanceFrontier;
 
