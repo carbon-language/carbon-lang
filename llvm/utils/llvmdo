@@ -43,7 +43,6 @@ if test ! -x "$PROGRAM" ; then
   exit 1
 fi
 shift;
-ARGS="$*"
 TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
