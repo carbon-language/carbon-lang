@@ -65,7 +65,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   addPass(PM, createRaisePointerReferencesPass());// Eliminate casts
   addPass(PM, createPromoteMemoryToRegister());   // Promote alloca's to regs
-  /* addPass(PM, createReassociatePass());*/           // Reassociate expressions
+  addPass(PM, createReassociatePass());           // Reassociate expressions
   addPass(PM, createInstructionCombiningPass());  // Combine silly seq's
   addPass(PM, createDeadInstEliminationPass());   // Kill InstCombine remnants
   addPass(PM, createLICMPass());                  // Hoist loop invariants
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     // Parse the file now...
     M.reset(ParseAssemblyFile(InputFilename));
   } catch (const ParseException &E) {
-    cerr << E.getMessage() << std::endl;
+    cerr << E.getMessage() << "\n";
     return 1;
   }
 
