@@ -451,7 +451,7 @@ void CWriter::writeOperandInternal(Value *Operand) {
       return;
     }
   
-  if (Operand->hasName()) {   
+  if (Operand->hasName()) {  
     Out << getValueName(Operand);
   } else if (Constant *CPV = dyn_cast<Constant>(Operand)) {
     printConstant(CPV); 
@@ -575,6 +575,19 @@ void CWriter::printModule(Module *M) {
     Out << "extern void * malloc(size_t);\n\n";
   }
 
+  // Output the global variable declerations
+  if (!M->gempty()) {
+    Out << "\n\n/* Global Variable Declerations */\n";
+    for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+      if (!I->isExternal()) {
+        Out << "extern ";
+        printType(I->getType()->getElementType(), getValueName(I));
+      
+        Out << ";\n";
+      }
+  }
+
+  
   // Output the global variable definitions and contents...
   if (!M->gempty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
