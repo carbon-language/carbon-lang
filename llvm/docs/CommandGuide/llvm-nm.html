@@ -18,7 +18,9 @@ LLVM: llvm-nm tool
 
 <p>The <tt>llvm-nm</tt> utility lists the names of symbols from the
 LLVM bytecode files named on the command line, along with some
-ancillary information about each symbol.</p>
+ancillary information about each symbol. If no filename is specified,
+or - is used as a filename, <tt>llvm-nm</tt> reads its input from standard
+input.</p>
 
 <p><tt>llvm-nm</tt>'s default output format is the traditional BSD
 <tt>nm(1)</tt> output format. Each such output record consists of an
