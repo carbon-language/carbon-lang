@@ -39,17 +39,17 @@ enum Opts {
 
 struct {
   enum Opts OptID;
-  bool (*OptPtr)(Module *C);
+  Pass *ThePass;
 } OptTable[] = {
-  { dce      , DoDeadCodeElimination },
-  { constprop, DoConstantPropogation }, 
-  { inlining , DoMethodInlining      },
-  { strip    , DoSymbolStripping     },
-  { mstrip   , DoFullSymbolStripping },
-  { indvars  , DoInductionVariableCannonicalize },
-  { sccp     , DoSCCP                },
-  { adce     , DoADCE                },
-  { raise    , DoRaiseRepresentation },
+  { dce      , new opt::DeadCodeElimination() },
+  { constprop, new opt::ConstantPropogation() }, 
+  { inlining , new opt::MethodInlining() },
+  { strip    , new opt::SymbolStripping() },
+  { mstrip   , new opt::FullSymbolStripping() },
+  { indvars  , new opt::InductionVariableCannonicalize() },
+  { sccp     , new opt::SCCPPass() },
+  { adce     , new opt::AgressiveDCE() },
+  { raise    , new opt::RaiseRepresentation() },
 };
 
 cl::String InputFilename ("", "Load <arg> file to optimize", cl::NoFlags, "-");
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
     unsigned j;
     for (j = 0; j < sizeof(OptTable)/sizeof(OptTable[0]); ++j) {
       if (Opt == OptTable[j].OptID) {
-        if (OptTable[j].OptPtr(C) && !Quiet)
+        if (OptTable[j].ThePass->run(C) && !Quiet)
           cerr << OptimizationList.getArgName(Opt)
 	       << " pass made modifications!\n";
         break;
