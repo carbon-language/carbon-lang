@@ -211,6 +211,34 @@ void AliasSetTracker::add(Instruction *I) {
     add(II);
 }
 
+void AliasSetTracker::add(BasicBlock &BB) {
+  for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
+    add(I);
+}
+
+void AliasSetTracker::add(const AliasSetTracker &AST) {
+  assert(&AA == &AST.AA &&
+         "Merging AliasSetTracker objects with different Alias Analyses!");
+
+  // Loop over all of the alias sets in AST, adding the pointers contained
+  // therein into the current alias sets.  This can cause alias sets to be
+  // merged together in the current AST.
+  for (const_iterator I = AST.begin(), E = AST.end(); I != E; ++I)
+    if (!I->Forward) {   // Ignore forwarding alias sets
+      AliasSet &AS = const_cast<AliasSet&>(*I);
+
+      // If there are any call sites in the alias set, add them to this AST.
+      for (unsigned i = 0, e = AS.CallSites.size(); i != e; ++i)
+        add(AS.CallSites[i]);
+
+      // Loop over all of the pointers in this alias set...
+      AliasSet::iterator I = AS.begin(), E = AS.end();
+      for (; I != E; ++I)
+        addPointer(I->first, I->second.getSize(),
+                   (AliasSet::AccessType)AS.AccessTy);
+    }
+}
+
 //===----------------------------------------------------------------------===//
 //               AliasSet/AliasSetTracker Printing Support
 //===----------------------------------------------------------------------===//
