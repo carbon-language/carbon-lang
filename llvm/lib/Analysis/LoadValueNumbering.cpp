@@ -56,6 +56,24 @@ namespace {
     virtual void getEqualNumberNodes(Value *V1,
                                      std::vector<Value*> &RetVals) const;
 
+    /// deleteValue - This method should be called whenever an LLVM Value is
+    /// deleted from the program, for example when an instruction is found to be
+    /// redundant and is eliminated.
+    ///
+    virtual void deleteValue(Value *V) {
+      getAnalysis<AliasAnalysis>().deleteValue(V);
+    }
+    
+    /// copyValue - This method should be used whenever a preexisting value in
+    /// the program is copied or cloned, introducing a new value.  Note that
+    /// analysis implementations should tolerate clients that use this method to
+    /// introduce the same value multiple times: if the analysis already knows
+    /// about a value, it should ignore the request.
+    ///
+    virtual void copyValue(Value *From, Value *To) {
+      getAnalysis<AliasAnalysis>().copyValue(From, To);
+    }
+
     /// getCallEqualNumberNodes - Given a call instruction, find other calls
     /// that have the same value number.
     void getCallEqualNumberNodes(CallInst *CI,
@@ -103,7 +121,7 @@ static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
       TransparentBlocks.insert(TBI, std::make_pair(CurBlock, false));
       return false;
     }
-      TransparentBlocks.insert(TBI, std::make_pair(CurBlock, true));
+    TransparentBlocks.insert(TBI, std::make_pair(CurBlock, true));
   } else if (!TBI->second)
     // This block is known non-transparent, so that path can't be either.
     return false;
@@ -505,8 +523,12 @@ void LoadVN::getEqualNumberNodes(Value *V,
 
         BasicBlock::iterator BBI = I->first->end();
         while (1) {
+          assert(BBI != I->first->begin() &&
+                 "There is a store in this block of the pointer, but the store"
+                 " doesn't mod the address being stored to??  Must be a bug in"
+                 " the alias analysis implementation!");
           --BBI;
-          if (AA.getModRefInfo(BBI, LoadPtr, LoadSize)& AliasAnalysis::Mod){
+          if (AA.getModRefInfo(BBI, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
             // If the invalidating instruction is one of the candidates,
             // then it provides the value the load loads.
             if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
