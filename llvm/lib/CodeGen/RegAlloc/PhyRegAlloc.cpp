@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Analysis/LoopDepth.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Method.h"
@@ -50,11 +51,18 @@ namespace {
       MethodLiveVarInfo LVI(M);   // Analyze live varaibles
       LVI.analyze();
       
-      PhyRegAlloc PRA(M, Target, &LVI); // allocate registers
+      PhyRegAlloc PRA(M, Target, &LVI,
+                      &getAnalysis<cfg::LoopDepthCalculator>());
       PRA.allocateRegisters();
       
       if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
       return false;
+    }
+
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      Requires.push_back(cfg::LoopDepthCalculator::ID);
     }
   };
 }
@@ -68,13 +76,14 @@ MethodPass *getRegisterAllocator(TargetMachine &T) {
 //----------------------------------------------------------------------------
 PhyRegAlloc::PhyRegAlloc(Method *M, 
 			 const TargetMachine& tm, 
-			 MethodLiveVarInfo *const Lvi) 
+			 MethodLiveVarInfo *Lvi,
+                         cfg::LoopDepthCalculator *LDC) 
                        :  TM(tm), Meth(M),
                           mcInfo(MachineCodeForMethod::get(M)),
                           LVI(Lvi), LRI(M, tm, RegClassList), 
 			  MRI( tm.getRegInfo() ),
                           NumOfRegClasses(MRI.getNumOfRegClasses()),
-			  LoopDepthCalc(M) {
+			  LoopDepthCalc(LDC) {
 
   // create each RegisterClass and put in RegClassList
   //
@@ -272,7 +281,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
     // find the 10^(loop_depth) of this BB 
     //
-    BBLoopDepthCost = (unsigned) pow( 10.0, LoopDepthCalc.getLoopDepth(*BBI));
+    BBLoopDepthCost = (unsigned) pow( 10.0, LoopDepthCalc->getLoopDepth(*BBI));
 
     // get the iterator for machine instructions
     //
