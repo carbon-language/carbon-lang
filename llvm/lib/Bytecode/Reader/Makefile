@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-LIBRARYNAME = bcreader
+LIBRARYNAME = LLVMBCReader
 
 include $(LEVEL)/Makefile.common
 
