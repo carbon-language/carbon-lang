@@ -235,7 +235,7 @@ std::ostream *GetLibSupportInfoOutputFile() {
     return &std::cout;
 
   std::ostream *Result = new std::ofstream(LibSupportInfoOutputFilename.c_str(),
-                                           std::ios_base::app);
+                                           std::ios::app);
   if (!Result->good()) {
     std::cerr << "Error opening info-output-file '"
               << LibSupportInfoOutputFilename << " for appending!\n";
