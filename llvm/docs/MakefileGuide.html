@@ -14,11 +14,21 @@
   <li><a href="#general">General Concepts</a>
     <ol>
       <li><a href="#projects">Projects</a></li>
-      <li><a href="#Makefile">Makefile</a></li>
-      <li><a href="#Makefile.common">Makefile.common</a></li>
-      <li><a href="#Makefile.config">Makefile.config</a></li>
-      <li><a href="#Makefile.rules">Makefile.rules</a></li>
+      <li><a href="#varvals">Variable Values</a></li>
+      <li><a href="#including">Including Makefiles</a></li>
+      <ol>
+        <li><a href="#Makefile">Makefile</a></li>
+        <li><a href="#Makefile.common">Makefile.common</a></li>
+        <li><a href="#Makefile.config">Makefile.config</a></li>
+        <li><a href="#Makefile.rules">Makefile.rules</a></li>
+      </ol>
       <li><a href="#Comments">Comments</a></li>
+    </ol>
+  </li>
+  <li><a href="#tutorial">Tutorial</a>
+    <ol>
+      <li><a href="#libraries">Libraries</a></li>
+      <li><a href="#tools">Tools</a></li>
     </ol>
   </li>
   <li><a href="#targets">Targets Supported</a>
@@ -60,15 +70,14 @@
   <p>This document provides <em>usage</em> information about the LLVM makefile 
   system. While loosely patterned after the BSD makefile system, LLVM has taken 
   a departure from BSD in order to implement additional features needed by LLVM.
-  </p>
-  <p>Although makefile systems such as automake were attempted at one point, it
-  has become clear that the differences between the LLVM way of doing things and
-  the Makefile norm are too great to use a more limited tool. Consequently, LLVM requires 
-  simply GNU Make 3.79, a widely portably makefile processor. LLVM unabashedly 
-  makes heavy use of the features of GNU Make so the dependency on GNU Make is 
-  firm. If you're not familiar with <tt>make</tt>, it is recommended that you 
-  read the <a href="http://www.gnu.org/software/make/manual/make.html">
-    GNU Makefile Manual</a>.</p>
+  Although makefile systems such as automake were attempted at one point, it
+  has become clear that the features needed by LLVM and the Makefile norm are 
+  too great to use a more limited tool. Consequently, LLVM requires simply GNU 
+  Make 3.79, a widely portable makefile processor. LLVM unabashedly makes heavy 
+  use of the features of GNU Make so the dependency on GNU Make is firm. If 
+  you're not familiar with <tt>make</tt>, it is recommended that you read the 
+  <a href="http://www.gnu.org/software/make/manual/make.html">GNU Makefile Manual
+  </a>.</p>
   <p>While this document is rightly part of the 
   <a href="ProgrammersManual.html">LLVM Programmer's Manual</a>, it is treated
   separately here because of the volume of content and because it is often an
@@ -80,9 +89,11 @@
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-  <p>The LLVM makefile system is the component of LLVM that is responsible for
-  building the software, testing it,  generating distributions, rpms and other
-  packages, installing and uninstalling, etc.</p>
+  <p>The LLVM Makefile System is the component of LLVM that is responsible for
+  building the software, testing it,  generating distributions, checking those
+  distributions, installing and uninstalling, etc. It consists of a several
+  files throughout the source tree. These files and other general concepts are
+  described in this section.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -94,11 +105,30 @@
   that has both a <tt>configure</tt> script and a <tt>Makefile</tt> is assumed
   to be a project that uses the LLVM Makefile system. This allows your project
   to get up and running quickly by utilizing the built-in features that are used
-  to compile LLVM.</p>
+  to compile LLVM. LLVM compiles itself using the same features of the makefile
+  system as used for projects.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="Makefile">Makefile</a></div>
+<div class="doc_subsection"><a name="varvalues">Variable Values</a></div>
+<div class="doc_text">
+  <p>To use the makefile system, you simply create a file named 
+  <tt>Makefile</tt> in your directory and declare values for certain variables. 
+  The variables and values that you select determine what the makefile system
+  will do. These variables enable rules and processing in the makefile system
+  that automatically Do The Right Thing&trade;. 
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="including">Including Makefiles</a></div>
+<div class="doc_text">
+  <p>Setting variables alone is not enough. You must include into your Makefile
+  additional files that provide the rules of the LLVM Makefile system. The 
+  various files involved are described in the sections that follow.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="Makefile">Makefile</a></div>
 <div class="doc_text">
   <p>Each directory to participate in the build needs to have a file named
   <tt>Makefile</tt>. This is the file first read by <tt>make</tt>. It has three
@@ -108,13 +138,14 @@
     first.</li>
     <li><a href="Makefile.common">include <tt>$(LEVEL)/Makefile.common</tt></a>
     - include the LLVM Makefile system.
-    <li><a href="overvars">Overridable Variables</a> - Override variables set by
+    <li><a href="overvars">Override Variables</a> - Override variables set by
     the LLVM Makefile system.
   </ol>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="Makefile.common">Makefile.common</a></div>
+<div class="doc_subsubsection"><a name="Makefile.common">Makefile.common</a>
+</div>
 <div class="doc_text">
   <p>Every project must have a <tt>Makefile.common</tt> file at its top source 
   directory. This file serves three purposes:</p>
@@ -125,14 +156,15 @@
     <li>It specifies any other (static) values that are needed throughout the
     project. Only values that are used in all or a large proportion of the
     project's directories should be placed here.</li>
-    <li>It include's the standard rules for the LLVM Makefile system,
+    <li>It includes the standard rules for the LLVM Makefile system,
     <a href="Makefile.rules"><tt>$(LLVM_SRC_ROOT)/Makefile.rules</tt></a>. 
     This file is the "guts" of the LLVM Makefile system.</li>
   </ol>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="Makefile.config">Makefile.config</a></div>
+<div class="doc_subsubsection"><a name="Makefile.config">Makefile.config</a>
+</div>
 <div class="doc_text">
   <p>Every project must have a <tt>Makefile.config</tt> at the top of its
   <em>build</em> directory. This file is <b>generated</b> by the
@@ -145,7 +177,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="Makefile.rules">Makefile.rules</a></div>
+<div class="doc_subsubsection"><a name="Makefile.rules">Makefile.rules</a></div>
 <div class="doc_text">
   <p>This file, located at <tt>$(LLVM_SRC_ROOT)/Makefile.rules</tt> is the heart
   of the LLVM Makefile System. It provides all the logic, dependencies, and
@@ -162,6 +194,75 @@
   makefile system. Makefile comments are invoked with the pound (#) character.
   The # character and any text following it, to the end of the line, are ignored
   by <tt>make</tt>.</p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="tutorial">Tutorial</a></div>
+<!-- *********************************************************************** -->
+<div class="doc_text">
+  <p>This section provides some examples of the different kinds of modules you
+  can build with the LLVM makefile system. In general, each directory you 
+  provide will build a single object although that object may be composed of
+  additionally compiled components.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="libraries">Libraries</a></div>
+<div class="doc_text">
+  <p>Only a few variable definitions are needed to build a regular library.
+  Normally, the makefile system will build all the software into a single
+  <tt>libname.o</tt> (pre-linked) object. This means the library is not
+  searchable and that the distinction between compilation units has been
+  dissolved. Optionally, you can ask for a shared library (.so), archive library
+  (.a) or to not have the default (relinked) library built. For example:</p>
+  <pre><tt>
+      LIBRARYNAME = mylib
+      SHARED_LIBRARY = 1
+      ARCHIVE_LIBRARY = 1
+      DONT_BUILT_RELINKED = 1
+  </tt></pre>
+  <p>says to build a library named "mylib" with both a shared library 
+  (<tt>mylib.so</tt>) and an archive library (<tt>mylib.a</tt>) version but
+  not to build the relinked object (<tt>mylib.o</tt>). The contents of all the
+  libraries produced will be the same, they are just constructed differently.
+  Note that you normally do not need to specify the sources involved. The LLVM
+  Makefile system will infer the source files from the contents of the source
+  directory.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="tools">Tools</a></div>
+<div class="doc_text">
+  <p>For building executable programs (tools), you must provide the name of the
+  tool and the names of the libraries you wish to link with the tool. For
+  example:</p>
+  <pre><tt>
+      TOOLNAME = mytool
+      USEDLIBS = mylib
+      LLVMLIBS = LLVMSupport.a LLVMSystem.a
+  </tt></pre>
+  <p>says that we are to build a tool name <tt>mytool</tt> and that it requires
+  three libraries: <tt>mylib</tt>, <tt>LLVMSupport.a</tt> and
+  <tt>LLVMSystem.a</tt>.</p>
+  <p>Note that two different variables are use to indicate which libraries are
+  linked: <tt>USEDLIBS</tt> and <tt>LLVMLIBS</tt>. This distinction is necessary
+  to support projects. <tt>LLVMLIBS</tt> refers to the LLVM libraries found in 
+  the LLVM object directory. <tt>USEDLIBS</tt> refers to the libraries built by 
+  your project. In the case of building LLVM tools, <tt>USEDLIBS</tt> and 
+  <tt>LLVMLIBS</tt> can be used interchangeably since the "project" is LLVM 
+  itself and <tt>USEDLIBS</tt> refers to the same place as <tt>LLVMLIBS</tt>.
+  </p>
+  <p>Also note that there are two different ways of specifying a library: with a
+  <tt>.a</tt> suffix and without. Without the suffix, the entry refers to the
+  re-linked (.o) file which will include <em>all</em> symbols of the library.
+  This is useful, for example, to include all passes from a library of passes.
+  If the <tt>.a</tt> suffix is used then the library is linked as a searchable
+  library (with the <tt>-l</tt> option). In this case, only the symbols that are
+  unresolved <em>at that point</em> will be resolved from the library, if they
+  exist. Other (unreferenced) symbols will not be included when the <tt>.a</tt>
+  syntax is used. Note that in order to use the <tt>.a</tt> suffix, the library
+  in question must have been built with the <tt>ARCHIVE_LIBRARY</tt> option set.
+  </p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -378,7 +479,7 @@
     <dd>If set to any value, causes a relinked library (.o) not to be built. By
     default, libraries are built as re-linked since most LLVM libraries are
     needed in their entirety and re-linked libraries will be linked more quickly
-    than equival archive libraries.</dd>
+    than equivalent archive libraries.</dd>
     <dt><a name="ENABLE_OPTIMIZED"><tt>ENABLE_OPTIMIZED</tt></a></dt>
     <dd>If set to any value, causes the build to generate optimized objects,
     libraries and executables. This alters the flags specified to the compilers
@@ -456,9 +557,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="overvars">Overridable Variables</a></div>
+<div class="doc_subsection"><a name="overvars">Override Variables</a></div>
 <div class="doc_text">
-  <p>Overridable variables can be used to override the default
+  <p>Override variables can be used to override the default
   values provided by the LLVM makefile system. These variables can be set in 
   several ways:</p>
   <ul>
