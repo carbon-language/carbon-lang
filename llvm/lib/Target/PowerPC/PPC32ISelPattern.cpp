@@ -229,6 +229,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
       break;
     case MVT::i32:
+    case MVT::i64:
     case MVT::f32:
     case MVT::f64:
       break;
@@ -259,7 +260,23 @@ PPC32TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
 std::pair<SDOperand,SDOperand> PPC32TargetLowering::
 LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
                const Type *ArgTy, SelectionDAG &DAG) {
-  abort();
+  MVT::ValueType ArgVT = getValueType(ArgTy);
+  SDOperand Result;
+  if (!isVANext) {
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
+  } else {
+    unsigned Amt;
+    if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
+      Amt = 4;
+    else {
+      assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
+             "Other types should have been promoted for varargs!");
+      Amt = 8;
+    }
+    Result = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
+                         DAG.getConstant(Amt, VAList.getValueType()));
+  }
+  return std::make_pair(Result, Chain);
 }
                
 
@@ -284,10 +301,21 @@ class ISel : public SelectionDAGISel {
   /// vreg the value is produced in, so we only emit one copy of each compiled
   /// tree.
   std::map<SDOperand, unsigned> ExprMap;
+
+  unsigned GlobalBaseReg;
+  bool GlobalBaseInitialized;
   
 public:
   ISel(TargetMachine &TM) : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM) 
   {}
+  
+  /// runOnFunction - Override this function in order to reset our per-function
+  /// variables.
+  virtual bool runOnFunction(Function &Fn) {
+    // Make sure we re-emit a set of the global base reg if necessary
+    GlobalBaseInitialized = false;
+    return SelectionDAGISel::runOnFunction(Fn);
+  } 
   
   /// InstructionSelectBasicBlock - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
@@ -300,6 +328,7 @@ public:
     ExprMap.clear();
   }
   
+  unsigned ISel::getGlobalBaseReg();
   unsigned SelectExpr(SDOperand N);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
@@ -338,6 +367,22 @@ static unsigned canUseAsImmediateForOpcode(SDOperand N, unsigned Opcode,
   }
   return 0;
 }
+}
+
+/// getGlobalBaseReg - Output the instructions required to put the
+/// base address to use for accessing globals into a register.
+///
+unsigned ISel::getGlobalBaseReg() {
+  if (!GlobalBaseInitialized) {
+    // Insert the set of GlobalBaseReg into the first MBB of the function
+    MachineBasicBlock &FirstMBB = BB->getParent()->front();
+    MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+    GlobalBaseReg = MakeReg(MVT::i32);
+    BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
+    BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg).addReg(PPC::LR);
+    GlobalBaseInitialized = true;
+  }
+  return GlobalBaseReg;
 }
 
 //Check to see if the load is a constant offset from a base register
@@ -510,9 +555,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     unsigned Tmp1 = MakeReg(MVT::i32);
-    // FIXME: R1 is incorrect, we need the getGlobalBaseReg() functionality
-    // from the simple isel
-    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(PPC::R1).addGlobalAddress(GV);
+    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+      .addGlobalAddress(GV);
     if (GV->hasWeakLinkage() || GV->isExternal()) {
       BuildMI(BB, PPC::LWZ, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
     } else {
@@ -631,9 +675,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R3);
+      BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R3).addReg(PPC::R3);
       if (Node->getValueType(1) == MVT::i32)
-        BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R4);
+        BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R4).addReg(PPC::R4);
       break;
     case MVT::f32:
     case MVT::f64:
