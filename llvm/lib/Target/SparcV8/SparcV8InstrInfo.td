@@ -193,19 +193,25 @@ def FBLE : FPBranchV8<0b1101, "fble">;
 def FBULE: FPBranchV8<0b1110, "fbule">;
 def FBO  : FPBranchV8<0b1111, "fbo">;
 
+
+
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
-let Uses = [O0, O1, O2, O3, O4, O5], Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2,
-G3, G4, G5, G6, G7],
-    hasDelaySlot = 1, isCall = 1 in { 
+let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in { 
   // pc-relative call:
+  let Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
+    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in
   def CALL : InstV8 {
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;
     let Name = "call";
   }
-  // indirect call:
+
+  // indirect call (O7 is an EXPLICIT def in indirect calls, so it cannot also
+  // be an implicit def):
+  let Defs = [O0, O1, O2, O3, O4, O5, G1, G2, G3, G4, G5, G6, G7,
+    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in
   def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 }
 
