@@ -52,9 +52,10 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg)
     assert(MRegisterInfo::isVirtualRegister(virtReg));
     assert(v2ssMap_[virtReg] == NO_STACK_SLOT &&
            "attempt to assign stack slot to already spilled register");
-    const TargetRegisterClass* rc =
+    const TargetRegisterClass* RC =
         mf_->getSSARegMap()->getRegClass(virtReg);
-    int frameIndex = mf_->getFrameInfo()->CreateStackObject(rc);
+    int frameIndex = mf_->getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                            RC->getAlignment());
     v2ssMap_[virtReg] = frameIndex;
     ++numSpills;
     return frameIndex;

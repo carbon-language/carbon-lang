@@ -261,10 +261,6 @@ int MachineFrameInfo::CreateStackObject(const Type *Ty, const TargetData &TD) {
   return CreateStackObject(TD.getTypeSize(Ty), TD.getTypeAlignment(Ty));
 }
 
-int MachineFrameInfo::CreateStackObject(const TargetRegisterClass *RC) {
-  return CreateStackObject(RC->getSize(), RC->getAlignment());
-}
-
 
 void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
   int ValOffset = MF.getTarget().getFrameInfo()->getOffsetOfLocalArea();

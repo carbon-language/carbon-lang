@@ -99,7 +99,8 @@ int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
     return I->second;          // Already has space allocated?
 
   // Allocate a new stack object for this spill location...
-  int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC);
+  int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                       RC->getAlignment());
   
   // Assign the slot...
   StackSlotForVirtReg.insert(I, std::make_pair(VirtReg, FrameIdx));
