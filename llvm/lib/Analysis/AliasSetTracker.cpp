@@ -215,6 +215,13 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
   }
 }
 
+bool AliasSetTracker::add(Value *Ptr, unsigned Size) {
+  bool NewPtr;
+  addPointer(Ptr, Size, AliasSet::NoModRef, NewPtr);
+  return NewPtr;
+}
+
+
 bool AliasSetTracker::add(LoadInst *LI) {
   bool NewPtr;
   AliasSet &AS = addPointer(LI->getOperand(0),
@@ -319,6 +326,12 @@ void AliasSetTracker::remove(AliasSet &AS) {
   } while (!SetDead);
 }
 
+bool AliasSetTracker::remove(Value *Ptr, unsigned Size) {
+  AliasSet *AS = findAliasSetForPointer(Ptr, Size);
+  if (!AS) return false;
+  remove(*AS);
+  return true;
+}
 
 bool AliasSetTracker::remove(LoadInst *LI) {
   unsigned Size = AA.getTargetData().getTypeSize(LI->getType());
