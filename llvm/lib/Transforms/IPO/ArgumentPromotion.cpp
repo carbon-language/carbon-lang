@@ -328,6 +328,11 @@ void ArgPromotion::DoPromotion(Function *F, std::vector<Argument*> &Args2Prom) {
         LI->replaceAllUsesWith(I2);
         LI->getParent()->getInstList().erase(LI);
       }
+
+      // If we inserted a new pointer type, it's possible that IT could be
+      // promoted too.
+      if (isa<PointerType>(I2->getType()))
+        WorkList.insert(NF);
       ++I2;
     }
 
