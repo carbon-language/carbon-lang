@@ -192,6 +192,8 @@ public:
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
 
   /// isFirstClassType - Return true if the value is holdable in a register.
+  /// Note that we consider opaque types to be first class, as they may be
+  /// resolved to a first class type later.
   inline bool isFirstClassType() const {
     return (ID != VoidTyID && ID <= LastPrimitiveTyID) || 
             ID == PointerTyID || ID == PackedTyID || ID == OpaqueTyID;
