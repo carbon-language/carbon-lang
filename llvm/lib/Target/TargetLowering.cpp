@@ -94,8 +94,15 @@ void TargetLowering::computeRegisterProperties() {
       // larger type.
       SetValueTypeAction((MVT::ValueType)IntReg, 1, *this, TransformToType,
                          ValueTypeActions);
+    else
+      TransformToType[(MVT::ValueType)IntReg] = (MVT::ValueType)IntReg;
   
   // If the target does not have native support for F32, promote it to F64.
   if (!hasNativeSupportFor(MVT::f32))
     SetValueTypeAction(MVT::f32, 1, *this, TransformToType, ValueTypeActions);
+  else
+    TransformToType[MVT::f32] = MVT::f32;
+
+  assert(hasNativeSupportFor(MVT::f64) && "Target does not support FP?");
+  TransformToType[MVT::f64] = MVT::f64;
 }
