@@ -72,12 +72,14 @@ inline void BytecodeReader::checkPastBlockEnd(const char * block_name) {
 
 /// Align the buffer position to a 32 bit boundary
 inline void BytecodeReader::align32() {
-  BufPtr Save = At;
-  At = (const unsigned char *)((unsigned long)(At+3) & (~3UL));
-  if (At > Save) 
-    if (Handler) Handler->handleAlignment(At - Save);
-  if (At > BlockEnd) 
-    error("Ran out of data while aligning!");
+  if (hasAlignment) {
+    BufPtr Save = At;
+    At = (const unsigned char *)((unsigned long)(At+3) & (~3UL));
+    if (At > Save) 
+      if (Handler) Handler->handleAlignment(At - Save);
+    if (At > BlockEnd) 
+      error("Ran out of data while aligning!");
+  }
 }
 
 /// Read a whole unsigned integer
@@ -1886,6 +1888,7 @@ void BytecodeReader::ParseVersionInfo() {
   hasLongBlockHeaders = false;
   has32BitTypes = false;
   hasNoDependentLibraries = false;
+  hasAlignment = false;
 
   switch (RevisionNum) {
   case 0:               //  LLVM 1.0, 1.1 release version
@@ -1937,6 +1940,14 @@ void BytecodeReader::ParseVersionInfo() {
 
     // FALL THROUGH
   case 3:               // LLVM 1.3 release version
+    /// LLVM 1.3 and earlier caused alignment bytes to be written on some block
+    /// boundaries and at the end of some strings. In extreme cases (e.g. lots 
+    /// of GEP references to a constant array), this can increase the file size
+    /// by 30% or more. In version 1.4 alignment is done away with completely.
+    hasAlignment = true;
+
+    // FALL THROUGH
+  case 4:
     break;
 
   default:

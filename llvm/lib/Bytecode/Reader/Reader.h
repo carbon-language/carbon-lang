@@ -293,8 +293,11 @@ private:
   /// features, for use in future versions of LLVM.
   bool hasNoDependentLibraries;
 
-  /// LLVM 1.2 and earlier encoded the file version as part of the module block
-  /// but this information may be needed to
+  /// LLVM 1.3 and earlier caused blocks and other fields to start on 32-bit
+  /// aligned boundaries. This can lead to as much as 30% bytecode size overhead
+  /// in various corner cases (lots of long instructions). In LLVM 1.4,
+  /// alignment of bytecode fields was done away with completely.
+  bool hasAlignment;
 
   /// CompactionTypes - If a compaction table is active in the current function,
   /// this is the mapping that it contains.  We keep track of what resolved type

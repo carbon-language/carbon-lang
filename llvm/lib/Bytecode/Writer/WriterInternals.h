@@ -92,11 +92,7 @@ private:
   /// @brief Signed 32-bit variable bit rate output primitive.
   inline void output_vbr(int i);
 
-  /// Emit the minimal number of bytes that will bring us to 32 bit alignment.
-  /// @brief 32-bit alignment output primitive
-  inline void align32();
-
-  inline void output(const std::string &s, bool Aligned = true);
+  inline void output(const std::string &s );
 
   inline void output_data(const void *Ptr, const void *End);
 

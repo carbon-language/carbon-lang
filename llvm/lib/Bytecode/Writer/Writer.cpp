@@ -31,6 +31,12 @@
 #include <algorithm>
 using namespace llvm;
 
+/// This value needs to be incremented every time the bytecode format changes
+/// so that the reader can distinguish which format of the bytecode file has
+/// been written.
+/// @brief The bytecode version number
+const unsigned BCVersionNum = 4;
+
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
 static Statistic<> 
@@ -65,8 +71,7 @@ inline void BytecodeWriter::output(int i) {
 /// possible.  This is useful because many of our "infinite" values are really
 /// very small most of the time; but can be large a few times.
 /// Data format used:  If you read a byte with the high bit set, use the low 
-/// seven bits as data and then read another byte. Note that using this may 
-/// cause the output buffer to become unaligned.
+/// seven bits as data and then read another byte. 
 inline void BytecodeWriter::output_vbr(uint64_t i) {
   while (1) {
     if (i < 0x80) { // done?
@@ -119,21 +124,10 @@ inline void BytecodeWriter::output_vbr(int i) {
     output_vbr((unsigned)i << 1);          // Low order bit is clear.
 }
 
-// align32 - emit the minimal number of bytes that will bring us to 32 bit 
-// alignment...
-//
-inline void BytecodeWriter::align32() {
-  int NumPads = (4-(Out.size() & 3)) & 3; // Bytes to get padding to 32 bits
-  while (NumPads--) Out.push_back((unsigned char)0xAB);
-}
-
-inline void BytecodeWriter::output(const std::string &s, bool Aligned ) {
+inline void BytecodeWriter::output(const std::string &s) {
   unsigned Len = s.length();
   output_vbr(Len );             // Strings may have an arbitrary length...
   Out.insert(Out.end(), s.begin(), s.end());
-
-  if (Aligned)
-    align32();                   // Make sure we are now aligned...
 }
 
 inline void BytecodeWriter::output_data(const void *Ptr, const void *End) {
@@ -200,7 +194,6 @@ inline BytecodeBlock::~BytecodeBlock() {           // Do backpatch when block go
     Writer.output(unsigned(Writer.size()-Loc), int(Loc-4));
   else
     Writer.output(unsigned(Writer.size()-Loc) << 5 | (Id & 0x1F), int(Loc-4));
-  Writer.align32();  // Blocks must ALWAYS be aligned
 }
 
 //===----------------------------------------------------------------------===//
@@ -470,8 +463,6 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I, unsigned Opc
       output_vbr(unsigned(Slot));
     }
   }
-
-  align32();    // We must maintain correct alignment!
 }
 
 
@@ -529,7 +520,6 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
     assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot);
   }
-  align32();    // We must maintain correct alignment!
 }
 
 
@@ -757,10 +747,11 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
 
   // Output the version identifier... we are currently on bytecode version #2,
   // which corresponds to LLVM v1.3.
-  unsigned Version = (3 << 4) | (unsigned)isBigEndian | (hasLongPointers << 1) |
-                     (hasNoEndianness << 2) | (hasNoPointerSize << 3);
+  unsigned Version = (BCVersionNum << 4) | 
+                     (unsigned)isBigEndian | (hasLongPointers << 1) |
+                     (hasNoEndianness << 2) | 
+                     (hasNoPointerSize << 3);
   output_vbr(Version);
-  align32();
 
   // The Global type plane comes first
   {
@@ -926,11 +917,11 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   Module::lib_iterator LE = M->lib_end();
   output_vbr( unsigned(LE - LI) ); // Put out the number of dependent libraries
   for ( ; LI != LE; ++LI ) {
-    output(*LI, /*aligned=*/false);
+    output(*LI);
   }
 
   // Output the target triple from the module
-  output(M->getTargetTriple(), /*aligned=*/ true);
+  output(M->getTargetTriple());
 }
 
 void BytecodeWriter::outputInstructions(const Function *F) {
@@ -1049,7 +1040,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
        TE = MST.type_end(); TI != TE; ++TI ) {
     // Symtab entry:[def slot #][name]
     output_typeid((unsigned)Table.getSlot(TI->second));
-    output(TI->first, /*align=*/false); 
+    output(TI->first); 
   }
 
   // Now do each of the type planes in order.
@@ -1075,7 +1066,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
       Slot = Table.getSlot(I->second);
       assert(Slot != -1 && "Value in symtab but has no slot number!!");
       output_vbr((unsigned)Slot);
-      output(I->first, false); // Don't force alignment...
+      output(I->first);
     }
   }
 }
