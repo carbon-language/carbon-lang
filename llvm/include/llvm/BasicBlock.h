@@ -21,17 +21,16 @@
 #define LLVM_BASICBLOCK_H
 
 #include "llvm/ValueHolder.h"
-#include "llvm/InstrTypes.h"
-#include <iterator>
+#include "llvm/Value.h"
 
 class Instruction;
 class Method;
 class TerminatorInst;
 class MachineCodeForBasicBlock;
+template <class _Term, class _BB> class SuccIterator;  // Successor Iterator
+template <class _Ptr, class _USE_iterator> class PredIterator;
 
 class BasicBlock : public Value {       // Basic blocks are data objects also
-  template <class _Ptr, class _USE_iterator> class PredIterator;
-  template <class _Term, class _BB> class SuccIterator;
 public:
   typedef ValueHolder<Instruction, BasicBlock, Method> InstListType;
 private :
@@ -47,14 +46,6 @@ public:
   typedef InstListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
-
-  // Predecessor and successor iterators...
-  typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
-  typedef PredIterator<const BasicBlock, 
-                       Value::use_const_iterator> pred_const_iterator;
-  typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
-  typedef SuccIterator<const TerminatorInst*, 
-                       const BasicBlock> succ_const_iterator;
 
   // Ctor, dtor
   BasicBlock(const std::string &Name = "", Method *Parent = 0);
@@ -78,6 +69,16 @@ public:
   inline MachineCodeForBasicBlock& getMachineInstrVec() const {
     return *machineInstrVec; 
   }
+
+  // Provide a scoped predecessor and successor iterator
+  typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
+  typedef PredIterator<const BasicBlock, 
+                       Value::use_const_iterator> pred_const_iterator;
+
+  typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
+  typedef SuccIterator<const TerminatorInst*,
+                       const BasicBlock> succ_const_iterator;
+  
   
   //===--------------------------------------------------------------------===//
   // Instruction iterator methods
@@ -149,105 +150,6 @@ public:
   // the basic block).
   //
   BasicBlock *splitBasicBlock(iterator I);
-
-
-  //===--------------------------------------------------------------------===//
-  // Predecessor and Successor Iterators
-  //
-  template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
-  class PredIterator : public std::bidirectional_iterator<_Ptr, ptrdiff_t> {
-    _Ptr *BB;
-    _USE_iterator It;
-  public:
-    typedef PredIterator<_Ptr,_USE_iterator> _Self;
-  
-    inline void advancePastConstants() {
-      // TODO: This is bad
-      // Loop to ignore constant pool references
-      while (It != BB->use_end() && !isa<TerminatorInst>(*It))
-        ++It;
-    }
-  
-    inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
-      advancePastConstants();
-    }
-    inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
-    
-    inline bool operator==(const _Self& x) const { return It == x.It; }
-    inline bool operator!=(const _Self& x) const { return !operator==(x); }
-    
-    inline pointer operator*() const { 
-      assert(It != BB->use_end() && "pred_iterator out of range!");
-      return cast<Instruction>(*It)->getParent(); 
-    }
-    inline pointer *operator->() const { return &(operator*()); }
-    
-    inline _Self& operator++() {   // Preincrement
-      assert(It != BB->use_end() && "pred_iterator out of range!");
-      ++It; advancePastConstants();
-      return *this; 
-    }
-    
-    inline _Self operator++(int) { // Postincrement
-      _Self tmp = *this; ++*this; return tmp; 
-    }
-    
-    inline _Self& operator--() { --It; return *this; }  // Predecrement
-    inline _Self operator--(int) { // Postdecrement
-      _Self tmp = *this; --*this; return tmp;
-    }
-  };
-  
-  inline pred_iterator pred_begin() { return pred_iterator(this); }
-  inline pred_const_iterator pred_begin() const {
-    return pred_const_iterator(this);
-  }
-  inline pred_iterator pred_end() { return pred_iterator(this, true); }
-  inline pred_const_iterator pred_end() const {
-    return pred_const_iterator(this, true);
-  }
-
-  template <class _Term, class _BB>           // Successor Iterator
-  class SuccIterator : public std::bidirectional_iterator<_BB, ptrdiff_t> {
-    const _Term Term;
-    unsigned idx;
-  public:
-    typedef SuccIterator<_Term, _BB> _Self;
-    // TODO: This can be random access iterator, need operator+ and stuff tho
-    
-    inline SuccIterator(_Term T) : Term(T), idx(0) {         // begin iterator
-      assert(T && "getTerminator returned null!");
-    }
-    inline SuccIterator(_Term T, bool)                       // end iterator
-      : Term(T), idx(Term->getNumSuccessors()) {
-      assert(T && "getTerminator returned null!");
-    }
-    
-    inline bool operator==(const _Self& x) const { return idx == x.idx; }
-    inline bool operator!=(const _Self& x) const { return !operator==(x); }
-    
-    inline pointer operator*() const { return Term->getSuccessor(idx); }
-    inline pointer operator->() const { return operator*(); }
-    
-    inline _Self& operator++() { ++idx; return *this; } // Preincrement
-    inline _Self operator++(int) { // Postincrement
-      _Self tmp = *this; ++*this; return tmp; 
-    }
-    
-    inline _Self& operator--() { --idx; return *this; }  // Predecrement
-    inline _Self operator--(int) { // Postdecrement
-      _Self tmp = *this; --*this; return tmp;
-    }
-  };
-  
-  inline succ_iterator succ_begin() { return succ_iterator(getTerminator()); }
-  inline succ_const_iterator succ_begin() const {
-    return succ_const_iterator(getTerminator());
-  }
-  inline succ_iterator succ_end() {return succ_iterator(getTerminator(), true);}
-  inline succ_const_iterator succ_end() const {
-    return succ_const_iterator(getTerminator(), true);
-  }
 };
 
 #endif
