@@ -15,9 +15,9 @@
 //
 // This pass uses alias analysis for two purposes:
 //
-//  1. Moving loop invariant loads out of loops.  If we can determine that a
-//     load inside of a loop never aliases anything stored to, we can hoist it
-//     or sink it like any other instruction.
+//  1. Moving loop invariant loads and calls out of loops.  If we can determine
+//     that a load or call inside of a loop never aliases anything stored to,
+//     we can hoist it or sink it like any other instruction.
 //  2. Scalar Promotion of Memory - If there is a store instruction inside of
 //     the loop, we try to move the store to happen AFTER the loop instead of
 //     inside of the loop.  This can only happen if a few conditions are true:
@@ -32,20 +32,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/PromoteMemToReg.h"
-#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Instructions.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -136,7 +135,7 @@ namespace {
       DominatorTree::Node *IDom            = DT->getNode(ExitBlock);
     
       // Because the exit block is not in the loop, we know we have to get _at
-      // least_ it's immediate dominator.
+      // least_ its immediate dominator.
       do {
         // Get next Immediate Dominator.
         IDom = IDom->getIDom();
@@ -442,7 +441,7 @@ void LICM::sink(Instruction &I) {
   if (ExitBlocks.size() == 1) {
     if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[0], I.getParent())) {
       // Instruction is not used, just delete it.
-      CurAST->remove(&I);
+      CurAST->deleteValue(&I);
       I.getParent()->getInstList().erase(&I);
     } else {
       // Move the instruction to the start of the exit block, after any PHI
@@ -455,7 +454,7 @@ void LICM::sink(Instruction &I) {
     }
   } else if (ExitBlocks.size() == 0) {
     // The instruction is actually dead if there ARE NO exit blocks.
-    CurAST->remove(&I);
+    CurAST->deleteValue(&I);
     I.getParent()->getInstList().erase(&I);
   } else {
     // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
@@ -535,7 +534,7 @@ void LICM::sink(Instruction &I) {
 
     // If the instruction doesn't dominate any exit blocks, it must be dead.
     if (InsertedBlocks.empty()) {
-      CurAST->remove(&I);
+      CurAST->deleteValue(&I);
       I.getParent()->getInstList().erase(&I);
     }
       
@@ -550,9 +549,8 @@ void LICM::sink(Instruction &I) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &I) {
-  DEBUG(std::cerr << "LICM hoisting to";
-        WriteAsOperand(std::cerr, Preheader, false);
-        std::cerr << ": " << I);
+  DEBUG(std::cerr << "LICM hoisting to" << Preheader->getName() 
+                  << ": " << I);
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
