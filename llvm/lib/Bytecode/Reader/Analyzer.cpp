@@ -241,10 +241,10 @@ public:
   virtual void handleCompactionTableBegin() { 
     if (os)
       *os << "      BLOCK: CompactionTable {\n";
+    bca.numCmpctnTables++;
   }
 
   virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries) {
-    bca.numCmpctnTables++;
     if (os)
       *os << "        Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
   }
