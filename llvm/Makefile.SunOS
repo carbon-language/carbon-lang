@@ -17,6 +17,13 @@ MakeSharedObjectOption := -G
 # of mallinfo.
 PLATFORMLINKOPTS := -lmalloc
 
+# PLATFORMSTRIPOPTS - Command to pass to the link phase to cause symbols to be 
+# stripped from the resultant binary.
+#
+# FIXME: I don't know what this is for sun, so leave it alone
+#
+PLATFORMSTRIPOPTS :=
+
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.
 #

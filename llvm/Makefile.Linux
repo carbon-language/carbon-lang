@@ -18,6 +18,10 @@ MakeSharedObjectOption := -shared
 #
 PLATFORMLINKOPTS := -Wl,--export-dynamic
 
+# PLATFORMSTRIPOPTS - Command to pass to the link phase to cause symbols to be 
+# stripped from the resultant binary.
+PLATFORMSTRIPOPTS := -Wl,-x
+
 # Path to location for LLVM front-end for this architecture.  This setting may
 # be overriden by the Makefile.config option, and should not override it if set.
 #
