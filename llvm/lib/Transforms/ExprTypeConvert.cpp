@@ -713,6 +713,42 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     if (SI->hasIndices()) return false;
 
     if (V == I->getOperand(0)) {
+      ValueTypeCache::iterator CTMI = CTMap.find(I->getOperand(1));
+      if (CTMI != CTMap.end()) {   // Operand #1 is in the table already?
+        // If so, check to see if it's Ty*, or, more importantly, if it is a
+        // pointer to a structure where the first element is a Ty... this code
+        // is neccesary because we might be trying to change the source and
+        // destination type of the store (they might be related) and the dest
+        // pointer type might be a pointer to structure.  Below we allow pointer
+        // to structures where the 0th element is compatible with the value,
+        // now we have to support the symmetrical part of this.
+        //
+        const Type *ElTy = cast<PointerType>(CTMI->second)->getElementType();
+
+        // Already a pointer to what we want?  Trivially accept...
+        if (ElTy == Ty) return true;
+
+        // Tricky case now, if the destination is a pointer to structure,
+        // obviously the source is not allowed to be a structure (cannot copy
+        // a whole structure at a time), so the level raiser must be trying to
+        // store into the first field.  Check for this and allow it now:
+        //
+        if (StructType *SElTy = dyn_cast<StructType>(ElTy)) {
+          unsigned Offset = 0;
+          std::vector<Value*> Indices;
+          ElTy = getStructOffsetType(ElTy, Offset, Indices, false);
+          assert(Offset == 0 && "Offset changed!");
+          if (ElTy == 0)    // Element at offset zero in struct doesn't exist!
+            return false;   // Can only happen for {}*
+          
+          if (ElTy == Ty)   // Looks like the 0th element of structure is
+            return true;    // compatible!  Accept now!
+
+          // Otherwise we know that we can't work, so just stop trying now.
+          return false;
+        }
+      }
+
       // Can convert the store if we can convert the pointer operand to match
       // the new  value type...
       return ExpressionConvertableToType(I->getOperand(1), PointerType::get(Ty),
