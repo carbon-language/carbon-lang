@@ -75,7 +75,7 @@ esac
 case $dirmode in
   '')
     if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
-      echo "mkdir -p -- $*"
+      # echo "mkdir -p -- $*"
       exec mkdir -p -- "$@"
     else
       # On NextStep and OpenStep, the `mkdir' command does not
