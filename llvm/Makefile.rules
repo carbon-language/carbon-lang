@@ -402,7 +402,7 @@ all install clean test bytecode stripped-bytecode install-bytecode::
 			$(MKDIR) $$dir; \
 			cp $(SourceDir)/$$dir/Makefile $$dir/Makefile; \
 		fi; \
-		($(MAKE) -C $$dir $@) || exit 1; \
+		($(MAKE) -C $$dir $@ $(MFLAGS)) || exit 1; \
 	done
 endif
 
