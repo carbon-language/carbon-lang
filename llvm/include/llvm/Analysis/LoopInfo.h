@@ -53,6 +53,10 @@ public:
   /// Loop ctor - This creates an empty loop.
   Loop() : ParentLoop(0), LoopDepth(0) {
   }
+  ~Loop() {
+    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
+      delete SubLoops[i];
+  }
 
   unsigned getLoopDepth() const { return LoopDepth; }
   BasicBlock *getHeader() const { return Blocks.front(); }
@@ -192,11 +196,6 @@ private:
   Loop(BasicBlock *BB) : ParentLoop(0) {
     Blocks.push_back(BB); LoopDepth = 0;
   }
-  ~Loop() {
-    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-      delete SubLoops[i];
-  }
-  
   void setLoopDepth(unsigned Level) {
     LoopDepth = Level;
     for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
@@ -261,6 +260,11 @@ public:
   /// getAnalysisUsage - Requires dominator sets
   ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  /// removeLoop - This removes the specified top-level loop from this loop info
+  /// object.  The loop is not deleted, as it will presumably be inserted into
+  /// another loop.
+  Loop *removeLoop(iterator I);
 
   /// changeLoopFor - Change the top-level loop that contains BB to the
   /// specified loop.  This should be used by transformations that restructure
