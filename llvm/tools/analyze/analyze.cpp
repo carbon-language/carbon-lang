@@ -240,7 +240,7 @@ struct {
   // IP Analyses...
   { printmodule       , NewPrintModule                    },
   { printusedtypes    , New<Pass, FindUsedTypes>          },
-  { callgraph         , New<Pass, cfg::CallGraph>         },
+  { callgraph         , New<Pass, CallGraph>              },
   { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
 
   // Dominator analyses
