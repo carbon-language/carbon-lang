@@ -153,7 +153,7 @@ bool LowerInvoke::doInitialization(Module &M) {
 
   // Unfortunately, 'write' can end up being prototyped in several different
   // ways.  If the user defines a three (or more) operand function named 'write'
-  // we will used their prototype.  We _do not_ want to insert another instance
+  // we will use their prototype.  We _do not_ want to insert another instance
   // of a write prototype, because we don't know that the funcresolve pass will
   // run after us.  If there is a definition of a write function, but it's not
   // suitable for our uses, we just don't emit write calls.  If there is no
