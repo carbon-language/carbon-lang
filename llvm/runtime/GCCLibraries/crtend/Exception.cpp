@@ -6,7 +6,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Exception.h"
-#include <cassert>
 
 // Thread local state for exception handling.  FIXME: This should really be made
 // thread-local!
@@ -26,7 +25,6 @@ bool __llvm_eh_has_uncaught_exception() throw() {
 // returns a pointer to the exception area data.
 //
 void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) throw() {
-  assert(UncaughtExceptionStack && "No uncaught exception!");
   if (UncaughtExceptionStack->ExceptionType == HandlerType)
     return UncaughtExceptionStack+1;
   return 0;
@@ -44,7 +42,6 @@ void __llvm_eh_add_uncaught_exception(llvm_exception *E) throw() {
 // __llvm_eh_get_uncaught_exception - Returns the current uncaught exception.
 // There must be an uncaught exception for this to work!
 llvm_exception *__llvm_eh_get_uncaught_exception() throw() {
-  assert(UncaughtExceptionStack && "There are no uncaught exceptions!?!?");
   return UncaughtExceptionStack;
 }
 
