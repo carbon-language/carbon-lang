@@ -48,8 +48,9 @@ static Option *getOption(const std::string &Str) {
 }
 
 static std::vector<Option*> &getPositionalOpts() {
-  static std::vector<Option*> Positional;
-  return Positional;
+  static std::vector<Option*> *Positional = 0;
+  if (!Positional) Positional = new std::vector<Option*>();
+  return *Positional;
 }
 
 static void AddArgument(const char *ArgName, Option *Opt) {
