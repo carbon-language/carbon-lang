@@ -12,6 +12,10 @@
 // assembly language. This printer is the output mechanism used
 // by `llc' and `lli -print-machineinstrs' on X86.
 //
+// Documentation at
+// http://developer.apple.com/documentation/DeveloperTools/
+//   Reference/Assembler/ASMIntroduction/chapter_1_section_1.html
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asmprinter"
@@ -53,13 +57,19 @@ namespace {
     std::set<std::string> Stubs;
     std::set<std::string> Strings;
 
-    Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
+    Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm), labelNumber(0)
+      { }
 
     /// Cache of mangled name for current function. This is
     /// recalculated at the beginning of each call to
     /// runOnMachineFunction().
     ///
     std::string CurrentFnName;
+
+    /// Unique incrementer for label values for referencing
+    /// Global values.
+    ///
+    unsigned int labelNumber;
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -76,7 +86,7 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createPPCCodePrinterPass - Returns a pass that prints the X86
+/// createPPCCodePrinterPass - Returns a pass that prints the PPC
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
@@ -221,7 +231,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (isStringCompatible(CVA)) {
-      O << ".ascii";
+      O << "\t.ascii ";
       printAsCString(O, CVA);
       O << "\n";
     } else { // Not a string.  Print the values in successive locations
@@ -267,7 +277,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
         unsigned UVal;
       } U;
       U.FVal = Val;
-      O << ".long\t" << U.UVal << "\t# float " << Val << "\n";
+      O << ".long\t" << U.UVal << "\t; float " << Val << "\n";
       return;
     }
     case Type::DoubleTyID: {
@@ -281,9 +291,9 @@ void Printer::emitGlobalConstant(const Constant *CV) {
       } U;
       U.FVal = Val;
       
-      O << ".long\t" << U.T.MSWord << "\t# double most significant word " 
+      O << ".long\t" << U.T.MSWord << "\t; double most significant word " 
         << Val << "\n";
-      O << ".long\t" << U.T.LSWord << "\t# double least significant word" 
+      O << ".long\t" << U.T.LSWord << "\t; double least significant word" 
         << Val << "\n";
       return;
     }
@@ -299,9 +309,9 @@ void Printer::emitGlobalConstant(const Constant *CV) {
       } U;
       U.UVal = CI->getRawValue();
         
-      O << ".long\t" << U.T.MSWord << "\t# Double-word most significant word " 
+      O << ".long\t" << U.T.MSWord << "\t; Double-word most significant word " 
         << U.UVal << "\n";
-      O << ".long\t" << U.T.LSWord << "\t# Double-word least significant word" 
+      O << ".long\t" << U.T.LSWord << "\t; Double-word least significant word" 
         << U.UVal << "\n";
       return;
     }
@@ -349,7 +359,7 @@ void Printer::printConstantPool(MachineConstantPool *MCP) {
     O << "\t.const\n";
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t#"
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t;"
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -380,7 +390,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t# "
+    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t; "
       << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
       II != E; ++II) {
@@ -417,7 +427,7 @@ void Printer::printOp(const MachineOperand &MO,
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber() << "\t# "
+      << "_" << MBBOp->getNumber() << "\t; "
       << MBBOp->getBasicBlock()->getName();
     return;
   }
@@ -507,10 +517,14 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   //assert ( ValidOpcodes(MI, ArgType) && "Instruction has invalid inputs");
   ++EmittedInsts;
 
+  // FIXME: should probably be converted to cout.width and cout.fill
   if (Opcode == PPC32::MovePCtoLR) {
-    O << "mflr r0\n";
-    O << "\tbc 20,31,L" << CurrentFnName << "$pb\n";
-    O << "L" << CurrentFnName << "$pb:\n";
+    O << "bcl 20,31,\"L0000" << labelNumber << "$pb\"\n";
+    O << "\"L0000" << labelNumber << "$pb\":\n";
+    O << "\tmflr ";
+    printOp(MI->getOperand(0));
+    labelNumber++;
+    O << "\n";
     return;
   }
 
@@ -520,34 +534,42 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   if (Opcode == PPC32::LOADLoAddr) {
     printOp(MI->getOperand(0));
-    O << ", ";
-    printOp(MI->getOperand(1));
     O << ", lo16(";
     printOp(MI->getOperand(2));
-    O << "-L" << CurrentFnName << "$pb)\n";
+    O << "-\"L0000" << labelNumber << "$pb\")";
+    labelNumber++;
+    O << "(";
+    if (MI->getOperand(1).getReg() == PPC32::R0)
+      O << "0";
+    else
+      printOp(MI->getOperand(1));
+    O << ")\n";
   } else if (Opcode == PPC32::LOADHiAddr) {
     printOp(MI->getOperand(0));
     O << ", ";
-    printOp(MI->getOperand(1));
+    if (MI->getOperand(1).getReg() == PPC32::R0)
+      O << "0";
+    else
+      printOp(MI->getOperand(1));
     O << ", ha16(" ;
     printOp(MI->getOperand(2));
-     O << "-L" << CurrentFnName << "$pb)\n";
+     O << "-\"L0000" << labelNumber << "$pb\")\n";
   } else if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
     O << "(";
-    if (ArgType[2] == PPC32II::Gpr0 && MI->getOperand(2).getReg() == PPC32::R0)
+    if (MI->getOperand(2).getReg() == PPC32::R0)
       O << "0";
     else
       printOp(MI->getOperand(2));
     O << ")\n";
   } else {
     for (i = 0; i < ArgCount; ++i) {
-      if (ArgType[i] == PPC32II::Gpr0 && 
-          MI->getOperand(i).getReg() == PPC32::R0)
+      if (i == 1 && ArgCount == 3 && ArgType[2] == PPC32II::Simm16 &&
+          MI->getOperand(1).getReg() == PPC32::R0) {
         O << "0";
-      else {
+      } else {
         //std::cout << "DEBUG " << (*(TM.getRegisterInfo())).get(MI->getOperand(i).getReg()).Name << "\n";
         printOp(MI->getOperand(i));
       }
@@ -594,11 +616,11 @@ bool Printer::doFinalization(Module &M) {
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
-          O << "\t.local " << name << "\n";
-        
-        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (unsigned)TD.getTypeAlignment(C->getType());
-        O << "\t\t# ";
+          O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
+            << "," << (unsigned)TD.getTypeAlignment(C->getType());
+        else 
+          O << "\t.comm " << name << "," << TD.getTypeSize(C->getType());
+        O << "\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
       } else {
@@ -627,7 +649,7 @@ bool Printer::doFinalization(Module &M) {
         }
 
         O << "\t.align " << Align << "\n";
-        O << name << ":\t\t\t\t# ";
+        O << name << ":\t\t\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
         O << " = ";
         WriteAsOperand(O, C, false, false, &M);
@@ -638,9 +660,7 @@ bool Printer::doFinalization(Module &M) {
         
   for(std::set<std::string>::iterator i = Stubs.begin(); i != Stubs.end(); ++i)
   {
-    O << ".data\n";     
-    O<<".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
-    O << "\t.align 2\n";
+    O << "\t.picsymbol_stub\n";
     O << "L" << *i << "$stub:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\tmflr r0\n";
@@ -649,8 +669,9 @@ bool Printer::doFinalization(Module &M) {
     O << "\tmflr r11\n";
     O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
     O << "\tmtlr r0\n";
-    O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+    O << "\tlwz r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
     O << "\tmtctr r12\n";
+    O << "\taddi r11,r11,lo16(L" << *i << "$lazy_ptr - L0$" << *i << ")\n";
     O << "\tbctr\n";
     O << ".data\n";
     O << ".lazy_symbol_pointer\n";
