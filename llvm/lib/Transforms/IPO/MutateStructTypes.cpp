@@ -105,29 +105,30 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
 // AdjustIndices - Convert the indexes specifed by Idx to the new changed form
 // using the specified OldTy as the base type being indexed into.
 //
-void MutateStructTypes::AdjustIndices(const StructType *OldTy,
-                                      vector<ConstPoolVal*> &Idx,
+void MutateStructTypes::AdjustIndices(const CompositeType *OldTy,
+                                      vector<Value*> &Idx,
                                       unsigned i = 0) {
   assert(i < Idx.size() && "i out of range!");
-  const StructType *NewST = cast<StructType>(ConvertType(OldTy));
-  if (NewST == OldTy) return;  // No adjustment unless type changes
+  const CompositeType *NewCT = cast<CompositeType>(ConvertType(OldTy));
+  if (NewCT == OldTy) return;  // No adjustment unless type changes
 
-  // Figure out what the current index is...
-  unsigned ElNum = cast<ConstPoolUInt>(Idx[i])->getValue();
-  assert(ElNum < OldTy->getElementTypes().size());
+  if (const StructType *OldST = dyn_cast<StructType>(OldTy)) {
+    // Figure out what the current index is...
+    unsigned ElNum = cast<ConstPoolUInt>(Idx[i])->getValue();
+    assert(ElNum < OldST->getElementTypes().size());
 
-  map<const StructType*, TransformType>::iterator I = Transforms.find(OldTy);
-  if (I != Transforms.end()) {
-    assert(ElNum < I->second.second.size());
-    // Apply the XForm specified by Transforms map...
-    unsigned NewElNum = I->second.second[ElNum];
-    Idx[i] = ConstPoolUInt::get(Type::UByteTy, NewElNum);
+    map<const StructType*, TransformType>::iterator I = Transforms.find(OldST);
+    if (I != Transforms.end()) {
+      assert(ElNum < I->second.second.size());
+      // Apply the XForm specified by Transforms map...
+      unsigned NewElNum = I->second.second[ElNum];
+      Idx[i] = ConstPoolUInt::get(Type::UByteTy, NewElNum);
+    }
   }
 
   // Recursively process subtypes...
   if (i+1 < Idx.size())
-    AdjustIndices(cast<StructType>(OldTy->getElementTypes()[ElNum].get()),
-                  Idx, i+1);
+    AdjustIndices(cast<CompositeType>(OldTy->getTypeAtIndex(Idx[i])), Idx, i+1);
 }
 
 
@@ -290,7 +291,6 @@ bool MutateStructTypes::doPassFinalization(Module *M) {
   // The first half of the methods in the module have to go.
   unsigned NumMethods = M->size();
   unsigned NumGVars   = M->gsize();
-  assert((NumMethods & 1) == 0 && "Number of methods is odd!");
 
   // Prepare for deletion of globals by dropping their interdependencies...
   for(Module::iterator I = M->begin(); I != M->end(); ++I) {
@@ -426,12 +426,12 @@ bool MutateStructTypes::doPerMethodWork(Method *m) {
       case Instruction::Store:
       case Instruction::GetElementPtr: {
         const MemAccessInst *MAI = cast<MemAccessInst>(I);
-        vector<ConstPoolVal*> Indices = MAI->getIndices();
+        vector<Value*> Indices(MAI->idx_begin(), MAI->idx_end());
         const Value *Ptr = MAI->getPointerOperand();
         Value *NewPtr = ConvertValue(Ptr);
         if (!Indices.empty()) {
           const Type *PTy = cast<PointerType>(Ptr->getType())->getValueType();
-          AdjustIndices(cast<StructType>(PTy), Indices);
+          AdjustIndices(cast<CompositeType>(PTy), Indices);
         }
 
         if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
