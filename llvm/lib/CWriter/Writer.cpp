@@ -916,7 +916,7 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
   }
 
   for (; I != E; ++I)
-    if ((*I)->getType() == Type::UIntTy) {
+    if ((*I)->getType() == Type::LongTy) {
       Out << "[((int) (";                 // sign-extend from 32 (to 64) bits
       writeOperand(*I);
       Out << " * sizeof(";
@@ -925,7 +925,7 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
       printType(cast<PointerType>(Ptr->getType())->getElementType());
       Out << ")]";
     } else {
-      Out << ".field" << cast<ConstantUInt>(*I)->getValue();
+      Out << ".field" << cast<ConstantSInt>(*I)->getValue();
     }
 }
 

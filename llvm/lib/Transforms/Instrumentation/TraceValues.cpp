@@ -226,7 +226,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
   // Turn the format string into an sbyte *
   Instruction *GEP = 
     new GetElementPtrInst(fmtVal,
-                          vector<Value*>(2,ConstantUInt::get(Type::UIntTy, 0)),
+                          vector<Value*>(2,ConstantSInt::get(Type::LongTy, 0)),
                           "trstr", InsertBefore);
   
   // Insert a call to the hash function if this is a pointer value

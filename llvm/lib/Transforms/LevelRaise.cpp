@@ -323,7 +323,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
           // Build the index vector, full of all zeros
           std::vector<Value*> Indices;
-          Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+          Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
           while (CurCTy && !isa<PointerType>(CurCTy)) {
             if (const StructType *CurSTy = dyn_cast<StructType>(CurCTy)) {
               // Check for a zero element struct type... if we have one, bail.
@@ -338,7 +338,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             }
 
             // Insert a zero to index through this type...
-            Indices.push_back(ConstantUInt::get(CurCTy->getIndexType(), 0));
+            Indices.push_back(Constant::getNullValue(CurCTy->getIndexType()));
 
             // Did we find what we're looking for?
             if (ElTy->isLosslesslyConvertableTo(DestPointedTy)) break;

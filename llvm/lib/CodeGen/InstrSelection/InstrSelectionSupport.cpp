@@ -113,12 +113,12 @@ static Value*
 FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec)
 {
   InstructionNode* gepNode = dyn_cast<InstructionNode>(ptrNode);
-  if (gepNode == NULL)
-    return NULL;                // ptr value is not computed in this tree
-
   GetElementPtrInst* gepInst =
-    dyn_cast<GetElementPtrInst>(gepNode->getInstruction());
-  if (gepInst == NULL)          // ptr value does not come from GEP instruction
+    dyn_cast_or_null<GetElementPtrInst>(gepNode->getInstruction());
+
+  // ptr value is not computed in this tree or ptr value does not come from GEP
+  // instruction
+  if (gepInst == NULL)
     return NULL;
 
   // Return NULL if we don't fold any instructions in.
@@ -149,8 +149,8 @@ FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec)
           ptrVal = gepInst->getPointerOperand();
 
           // Check for a leading [0] index, if any.  It will be discarded later.
-          ConstantUInt* CV = dyn_cast<ConstantUInt>((Value*) *firstIdx);
-          hasLeadingZero = bool(CV && CV->getValue() == 0);
+          hasLeadingZero = (*firstIdx ==
+                              Constant::getNullValue((*firstIdx)->getType()));
 
           // Insert its index vector at the start, skipping any leading [0]
           chainIdxVec.insert(chainIdxVec.begin(),
@@ -168,7 +168,7 @@ FoldGetElemChain(InstrTreeNode* ptrNode, vector<Value*>& chainIdxVec)
   // If the first getElementPtr instruction had a leading [0], add it back.
   // Note that this instruction is the *last* one successfully folded above.
   if (ptrVal && hasLeadingZero) 
-    chainIdxVec.insert(chainIdxVec.begin(), ConstantUInt::get(Type::UIntTy,0));
+    chainIdxVec.insert(chainIdxVec.begin(), ConstantSInt::get(Type::LongTy,0));
 
   return ptrVal;
 }

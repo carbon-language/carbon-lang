@@ -55,9 +55,9 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
   
   //M->getGlobalList().push_back(gbl);
 
-  vector<Value *> elargs;
-  elargs.push_back(ConstantUInt::get(Type::UIntTy, 0));
-  elargs.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  //vector<Value *> elargs;
+  //elargs.push_back(ConstantSInt::get(Type::LongTy, 0));
+  //elargs.push_back(ConstantSInt::get(Type::LongTy, 0));
 
   // commented out bb name frm which its called
   //Instruction *getElmntInst=new GetElementPtrInst(gbl,elargs,"elmntInst");
@@ -119,7 +119,7 @@ void getEdgeCode::getCode(Instruction *rInst,
     assert(inc>=0 && inc<=numPaths && "inc out of bound!");
    
     Instruction *Idx = new GetElementPtrInst(countInst, 
-                 vector<Value*>(1,ConstantUInt::get(Type::UIntTy, inc)),
+                 vector<Value*>(1,ConstantSInt::get(Type::LongTy, inc)),
                                              "", InsertPos);
 
     Instruction *ldInst=new LoadInst(Idx, "ti1", InsertPos);
@@ -154,7 +154,7 @@ void getEdgeCode::getCode(Instruction *rInst,
     //now load count[addIndex]
     
     Instruction *castInst=new CastInst(addIndex, 
-				       Type::UIntTy,"ctin", InsertPos);
+				       Type::LongTy,"ctin", InsertPos);
     Instruction *Idx = new GetElementPtrInst(countInst, 
                                              vector<Value*>(1,castInst), "",
                                              InsertPos);
@@ -184,7 +184,7 @@ void getEdgeCode::getCode(Instruction *rInst,
     Instruction *ldIndex=new LoadInst(rInst, "ti1", InsertPos);
     
     //now load count[addIndex]
-    Instruction *castInst2=new CastInst(ldIndex, Type::UIntTy,"ctin",InsertPos);
+    Instruction *castInst2=new CastInst(ldIndex, Type::LongTy,"ctin",InsertPos);
     Instruction *Idx = new GetElementPtrInst(countInst, 
                                              vector<Value*>(1,castInst2), "",
                                              InsertPos);
@@ -236,10 +236,6 @@ void insertInTopBB(BasicBlock *front,
 
   Value *Int0 = ConstantInt::get(Type::IntTy, 0);
   
-  //store uint 0, uint *%R, uint 0
-  vector<Value *> idx;
-  idx.push_back(ConstantUInt::get(Type::UIntTy, 0));
-
   //now push all instructions in front of the BB
   BasicBlock::iterator here=front->begin();
   front->getInstList().insert(here, rVar);
@@ -249,13 +245,13 @@ void insertInTopBB(BasicBlock *front,
 
   for (int i=0;i<k; i++){
     Value *GEP2 = new GetElementPtrInst(countVar,
-                          vector<Value *>(1,ConstantUInt::get(Type::UIntTy, i)),
+                          vector<Value *>(1,ConstantSInt::get(Type::LongTy, i)),
                                         "", here);
     new StoreInst(Int0, GEP2, here);
   }
 
-  Instruction *GEP = new GetElementPtrInst(rVar, idx, "", here);
-  new StoreInst(Int0, GEP, here);
+  //store uint 0, uint *%R
+  new StoreInst(Int0, rVar, here);
 }
 
 

@@ -233,8 +233,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *ElTy = 0;
 
-    while (!Indices.empty() && isa<ConstantUInt>(Indices.back()) &&
-           cast<ConstantUInt>(Indices.back())->getValue() == 0) {
+    while (!Indices.empty() &&
+           Indices.back() == Constant::getNullValue(Indices.back()->getType())){
       Indices.pop_back();
       ElTy = GetElementPtrInst::getIndexedType(BaseType, Indices, true);
       if (ElTy == PVTy)
@@ -245,11 +245,11 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     if (ElTy) break;   // Found a number of zeros we can strip off!
 
     // Otherwise, we can convert a GEP from one form to the other iff the
-    // current gep is of the form 'getelementptr sbyte*, unsigned N
+    // current gep is of the form 'getelementptr sbyte*, long N
     // and we could convert this to an appropriate GEP for the new type.
     //
     if (GEP->getNumOperands() == 2 &&
-        GEP->getOperand(1)->getType() == Type::UIntTy &&
+        GEP->getOperand(1)->getType() == Type::LongTy &&
         GEP->getType() == PointerType::get(Type::SByteTy)) {
 
       // Do not Check to see if our incoming pointer can be converted
@@ -272,12 +272,12 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     }
 
     // Otherwise, it could be that we have something like this:
-    //     getelementptr [[sbyte] *] * %reg115, uint %reg138    ; [sbyte]**
+    //     getelementptr [[sbyte] *] * %reg115, long %reg138    ; [sbyte]**
     // and want to convert it into something like this:
-    //     getelemenptr [[int] *] * %reg115, uint %reg138      ; [int]**
+    //     getelemenptr [[int] *] * %reg115, long %reg138      ; [int]**
     //
     if (GEP->getNumOperands() == 2 && 
-        GEP->getOperand(1)->getType() == Type::UIntTy &&
+        GEP->getOperand(1)->getType() == Type::LongTy &&
         TD.getTypeSize(PTy->getElementType()) == 
         TD.getTypeSize(GEP->getType()->getElementType())) {
       const PointerType *NewSrcTy = PointerType::get(PVTy);
@@ -425,21 +425,20 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getElementType();
     Res = 0;
-    while (!Indices.empty() && isa<ConstantUInt>(Indices.back()) &&
-           cast<ConstantUInt>(Indices.back())->getValue() == 0) {
+    while (!Indices.empty() &&
+           Indices.back() == Constant::getNullValue(Indices.back()->getType())){
       Indices.pop_back();
       if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
-        if (Indices.size() == 0) {
-          Res = new CastInst(GEP->getPointerOperand(), BaseType); // NOOP
-        } else {
+        if (Indices.size() == 0)
+          Res = new CastInst(GEP->getPointerOperand(), BaseType); // NOOP CAST
+        else
           Res = new GetElementPtrInst(GEP->getPointerOperand(), Indices, Name);
-        }
         break;
       }
     }
 
     if (Res == 0 && GEP->getNumOperands() == 2 &&
-        GEP->getOperand(1)->getType() == Type::UIntTy &&
+        GEP->getOperand(1)->getType() == Type::LongTy &&
         GEP->getType() == PointerType::get(Type::SByteTy)) {
       
       // Otherwise, we can convert a GEP from one form to the other iff the
@@ -749,7 +748,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       //
       if (DataSize != 1) {
         TempScale = BinaryOperator::create(Instruction::Mul, Index,
-                                           ConstantUInt::get(Type::UIntTy,
+                                           ConstantSInt::get(Type::LongTy,
                                                              DataSize));
         Index = TempScale;
       }
@@ -952,7 +951,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
       std::vector<Value*> Indices;
-      Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
 
       unsigned Offset = 0;   // No offset, get first leaf.
       LoadedTy = getStructOffsetType(CT, Offset, Indices, false);
@@ -988,7 +987,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           const StructType *SElTy = cast<StructType>(ElTy);
           
           std::vector<Value*> Indices;
-          Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+          Indices.push_back(Constant::getNullValue(Type::LongTy));
 
           unsigned Offset = 0;
           const Type *Ty = getStructOffsetType(ElTy, Offset, Indices, false);
@@ -1017,7 +1016,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
       if (isa<StructType>(ValTy)) {
         std::vector<Value*> Indices;
-        Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+        Indices.push_back(Constant::getNullValue(Type::LongTy));
 
         unsigned Offset = 0;
         ValTy = getStructOffsetType(ValTy, Offset, Indices, false);
@@ -1049,7 +1048,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     if (DataSize != 1) {
       // Insert a multiply of the old element type is not a unit size...
       Index = BinaryOperator::create(Instruction::Mul, Index,
-                                     ConstantUInt::get(Type::UIntTy, DataSize),
+                                     ConstantSInt::get(Type::LongTy, DataSize),
                                      "scale", It);
     }
 

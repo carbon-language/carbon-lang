@@ -66,7 +66,7 @@ const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
 
     NextType = ATy->getElementType();
     unsigned ChildSize = TD.getTypeSize(NextType);
-    Indices.push_back(ConstantUInt::get(Type::UIntTy, Offset/ChildSize));
+    Indices.push_back(ConstantSInt::get(Type::LongTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
   } else {
     Offset = 0;   // Return the offset that we were able to acheive
@@ -141,13 +141,13 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
         if (BI) {              // Generate code?
           BasicBlock *BB = (*BI)->getParent();
-          if (Expr.Var->getType() != Type::UIntTy)
-            Expr.Var = new CastInst(Expr.Var, Type::UIntTy,
+          if (Expr.Var->getType() != Type::LongTy)
+            Expr.Var = new CastInst(Expr.Var, Type::LongTy,
                                     Expr.Var->getName()+"-idxcast", *BI);
 
           if (ScaleAmt && ScaleAmt != 1) {
             // If we have to scale up our index, do so now
-            Value *ScaleAmtVal = ConstantUInt::get(Type::UIntTy,
+            Value *ScaleAmtVal = ConstantSInt::get(Type::LongTy,
                                                    (unsigned)ScaleAmt);
             Expr.Var = BinaryOperator::create(Instruction::Mul, Expr.Var,
                                               ScaleAmtVal,
@@ -155,7 +155,7 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
           }
 
           if (Index) {  // Add an offset to the index
-            Value *IndexAmt = ConstantUInt::get(Type::UIntTy, (unsigned)Index);
+            Value *IndexAmt = ConstantSInt::get(Type::LongTy, (unsigned)Index);
             Expr.Var = BinaryOperator::create(Instruction::Add, Expr.Var,
                                               IndexAmt,
                                               Expr.Var->getName()+"-offset",
@@ -168,14 +168,14 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
       } else if (Offset >= (int)ElSize || -Offset >= (int)ElSize) {
         // Calculate the index that we are entering into the array cell with
         unsigned Index = Offset/ElSize;
-        Indices.push_back(ConstantUInt::get(Type::UIntTy, Index));
+        Indices.push_back(ConstantSInt::get(Type::LongTy, Index));
         Offset -= (int)(Index*ElSize);            // Consume part of the offset
 
       } else if (isa<ArrayType>(CompTy) || Indices.empty()) {
         // Must be indexing a small amount into the first cell of the array
         // Just index into element zero of the array here.
         //
-        Indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+        Indices.push_back(ConstantSInt::get(Type::LongTy, 0));
       } else {
         return 0;  // Hrm. wierd, can't handle this case.  Bail
       }
