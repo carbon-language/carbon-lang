@@ -42,6 +42,7 @@ static void SignalHandler(int Sig) {
     exit(1);   // If this is an interrupt signal, exit the program
 
   // Otherwise if it is a fault (like SEGV) reissue the signal to die...
+  signal(Sig, SIG_DFL);
 }
 
 static void RegisterHandler(int Signal) { signal(Signal, SignalHandler); }
