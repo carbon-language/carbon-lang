@@ -19,10 +19,10 @@
 #ifndef LLVM_LIB_BYTECODE_WRITER_WRITERINTERNALS_H
 #define LLVM_LIB_BYTECODE_WRITER_WRITERINTERNALS_H
 
-#include "llvm/Bytecode/Writer.h"
 #include "WriterPrimitives.h"
+#include "SlotCalculator.h"
+#include "llvm/Bytecode/Writer.h"
 #include "llvm/Bytecode/Format.h"
-#include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Instruction.h"
 
 namespace llvm {
@@ -38,6 +38,7 @@ private:
   void outputConstantStrings();
   void outputFunction(const Function *F);
   void outputCompactionTable();
+  void outputCompactionTypes(unsigned StartNo);
   void outputCompactionTablePlane(unsigned PlaneNo,
                                   const std::vector<const Value*> &TypePlane,
                                   unsigned StartNo);
@@ -46,6 +47,7 @@ private:
 
   void outputModuleInfoBlock(const Module *C);
   void outputSymbolTable(const SymbolTable &ST);
+  void outputTypes(unsigned StartNo);
   void outputConstantsInPlane(const std::vector<const Value*> &Plane,
                               unsigned StartNo);
   void outputConstant(const Constant *CPV);
