@@ -433,6 +433,9 @@ int main(int argc, char **argv) {
   Out.close();
 
   if (!LinkAsLibrary) {
+    // Permissions masking value of the user
+    mode_t mask;
+
     // Output the script to start the program...
     std::ofstream Out2(OutputFilename.c_str());
     if (!Out2.good())
@@ -441,11 +444,22 @@ int main(int argc, char **argv) {
     Out2 << "#!/bin/sh\nlli -q -abort-on-exception $0.bc $*\n";
     Out2.close();
   
+    //
+    // Grab the umask value from the operating system.  We want to use it when
+    // changing the file's permissions.
+    //
+    // Note:
+    //  Umask() is one of those annoying system calls.  You have to call it
+    //  to get the current value and then set it back.
+    //
+    mask = umask (0);
+    umask (mask);
+
     // Make the script executable...
-    chmod(OutputFilename.c_str(), 0755);
+    chmod(OutputFilename.c_str(), (0755 & ~mask));
 
     // Make the bytecode file directly executable in LLEE as well
-    chmod(RealBytecodeOutput.c_str(), 0755);
+    chmod(RealBytecodeOutput.c_str(), (0755 & ~mask));
   }
 
   return 0;
