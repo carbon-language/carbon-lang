@@ -37,68 +37,47 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name) {
 }
 
 
-// isConstantZero - Helper function for several functions below
-inline bool isConstantZero(const Value* V) {
-  return isa<Constant>(V) && dyn_cast<Constant>(V)->isNullValue();
-}
-
 // isConstantAllOnes - Helper function for several functions below
-inline bool isConstantAllOnes(const Value* V) {
-  return (isa<ConstantIntegral>(V) &&
-          dyn_cast<ConstantIntegral>(V)->isAllOnesValue());
+static inline bool isConstantAllOnes(const Value *V) {
+  return isa<ConstantIntegral>(V) &&cast<ConstantIntegral>(V)->isAllOnesValue();
 }
 
 bool BinaryOperator::isNeg(const Value *V) {
-  if (const BinaryOperator* Bop = dyn_cast<BinaryOperator>(V))
-    return (Bop->getOpcode() == Instruction::Sub &&
-            isConstantZero(Bop->getOperand(0)));
+  if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
+    return Bop->getOpcode() == Instruction::Sub &&
+      isa<Constant>(Bop->getOperand(0)) && cast<Constant>(V)->isNullValue();
   return false;
 }
 
 bool BinaryOperator::isNot(const Value *V) {
-  if (const BinaryOperator* Bop = dyn_cast<BinaryOperator>(V))
+  if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     return (Bop->getOpcode() == Instruction::Xor &&
             (isConstantAllOnes(Bop->getOperand(1)) ||
              isConstantAllOnes(Bop->getOperand(0))));
   return false;
 }
 
-// getNegArg -- Helper function for getNegArgument operations.
-// Note: This function requires that Bop is a Neg operation.
-// 
-inline Value* getNegArg(BinaryOperator* Bop) {
-  assert(BinaryOperator::isNeg(Bop));
+Value *BinaryOperator::getNegArgument(BinaryOperator *Bop) {
+  assert(isNeg(Bop) && "getNegArgument from non-'neg' instruction!");
   return Bop->getOperand(1);
 }
 
-// getNotArg -- Helper function for getNotArgument operations.
-// Note: This function requires that Bop is a Not operation.
-// 
-inline Value* getNotArg(BinaryOperator* Bop) {
-  assert(Bop->getOpcode() == Instruction::Xor);
-  Value* notArg   = Bop->getOperand(0);
-  Value* constArg = Bop->getOperand(1);
-  if (! isConstantAllOnes(constArg)) {
-    assert(isConstantAllOnes(notArg));
-    notArg = constArg;
-  }
-  return notArg;
+const Value *BinaryOperator::getNegArgument(const BinaryOperator *Bop) {
+  return getNegArgument((BinaryOperator*)Bop);
 }
 
-const Value* BinaryOperator::getNegArgument(const BinaryOperator* Bop) {
-  return getNegArg((BinaryOperator*) Bop);
+Value *BinaryOperator::getNotArgument(BinaryOperator *Bop) {
+  assert(isNot(Bop) && "getNotArgument on non-'not' instruction!");
+  Value *Op0 = Bop->getOperand(0);
+  Value *Op1 = Bop->getOperand(1);
+  if (isConstantAllOnes(Op0)) return Op1;
+
+  assert(isConstantAllOnes(Op1));
+  return Op0;
 }
 
-Value* BinaryOperator::getNegArgument(BinaryOperator* Bop) {
-  return getNegArg(Bop);
-}
-
-const Value* BinaryOperator::getNotArgument(const BinaryOperator* Bop) {
-  return getNotArg((BinaryOperator*) Bop);
-}
-
-Value* BinaryOperator::getNotArgument(BinaryOperator* Bop) {
-  return getNotArg(Bop);
+const Value *BinaryOperator::getNotArgument(const BinaryOperator *Bop) {
+  return getNotArgument((BinaryOperator*)Bop);
 }
 
 
