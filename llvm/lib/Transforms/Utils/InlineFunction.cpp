@@ -211,9 +211,6 @@ bool InlineFunction(CallSite CS) {
                 }
 
                 break;  // Done with this basic block!
-              } else if (ID == LLVMIntrinsic::exc_setcurrent ||
-                         ID == LLVMIntrinsic::exc_getcurrent) {
-                ShouldInvokify = false; // Not correct to invokify exc.throw!
               }
           
           // If we should convert this function into an invoke instruction, do
