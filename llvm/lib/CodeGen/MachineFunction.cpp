@@ -115,6 +115,7 @@ MachineFunction::MachineFunction(const Function *F,
 }
 
 MachineFunction::~MachineFunction() { 
+  BasicBlocks.clear();
   delete SSARegMapping;
   delete MFInfo;
   delete FrameInfo;
