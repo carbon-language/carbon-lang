@@ -35,6 +35,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineOpCode Opcode,
                                       unsigned NumOperands,
                                       unsigned DestReg) {
+  assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
   I = ++MBB->insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, MOTy::Def);
@@ -46,6 +47,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator &I,
                                       MachineOpCode Opcode,
                                       unsigned NumOperands) {
+  assert(I > MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
   I = ++MBB->insert(I, MI);
   return MachineInstrBuilder(MI);
