@@ -179,7 +179,7 @@ bool opt::ConstantPropogation::doConstantPropogation(BasicBlock *BB,
   } else if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
     // If it's a PHI node and only has one operand
     // Then replace it directly with that operand.
-    assert(PN->getOperand(0) && "PHI Node must have at least one operand!");
+    assert(PN->getNumOperands() && "PHI Node must have at least one operand!");
     if (PN->getNumOperands() == 1) {    // If the PHI Node has exactly 1 operand
       Value *V = PN->getOperand(0);
       PN->replaceAllUsesWith(V);                 // Replace all uses of this PHI
