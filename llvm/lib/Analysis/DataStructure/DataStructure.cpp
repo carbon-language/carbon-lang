@@ -826,8 +826,8 @@ void DSGraph::cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
 /// merges the nodes specified in the call site with the formal arguments in the
 /// graph.
 ///
-void DSGraph::mergeInGraph(DSCallSite &CS, Function &F, const DSGraph &Graph,
-                           unsigned CloneFlags) {
+void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
+                           const DSGraph &Graph, unsigned CloneFlags) {
   ScalarMapTy OldValMap, *ScalarMap;
   DSNodeHandle RetVal;
 
