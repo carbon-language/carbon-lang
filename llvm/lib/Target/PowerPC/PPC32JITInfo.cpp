@@ -45,7 +45,7 @@ PPC32JITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
   return CompilationCallback;
 }
 
-static void EmitBranchToAt(void *At, void *To) {
+static void EmitBranchToAt(void *At, void *To, bool isCall) {
   intptr_t Addr = (intptr_t)To;
 
   // FIXME: should special case the short branch case.
@@ -54,7 +54,7 @@ static void EmitBranchToAt(void *At, void *To) {
   AtI[0] = BUILD_LIS(12, Addr >> 16);   // lis r12, hi16(address)
   AtI[1] = BUILD_ORI(12, 12, Addr);     // ori r12, r12, low16(address)
   AtI[2] = BUILD_MTCTR(12);             // mtctr r12
-  AtI[3] = BUILD_BCTR(0);               // bctr
+  AtI[3] = BUILD_BCTR(isCall);          // bctr/bctrl
 }
 
 void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
@@ -67,11 +67,20 @@ void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWord(0);
     MCE.emitWord(0);
     MCE.emitWord(0);
-    EmitBranchToAt(Addr, Fn);
+    EmitBranchToAt(Addr, Fn, false);
     return MCE.finishFunctionStub(0);
   }
 
-  MCE.startFunctionStub(4*4);
+  MCE.startFunctionStub(4*7);
+  MCE.emitWord(0x9421ffe0);     // stwu    r1,-32(r1)
+  MCE.emitWord(0x7d6802a6);     // mflr r11
+  MCE.emitWord(0x91610028);     // stw r11, 40(r1)
+  void *Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
+  MCE.emitWord(0);
+  MCE.emitWord(0);
+  MCE.emitWord(0);
+  MCE.emitWord(0);
+  EmitBranchToAt(Addr, Fn, true/*is call*/);
   return MCE.finishFunctionStub(0);
 }
 
@@ -113,5 +122,5 @@ void PPC32JITInfo::relocate(void *Function, MachineRelocation *MR,
 }
 
 void PPC32JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  EmitBranchToAt(Old, New);
+  EmitBranchToAt(Old, New, false);
 }
