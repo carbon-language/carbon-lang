@@ -91,12 +91,14 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
               // Anything that used the value produced by the invoke instruction
               // now uses the value produced by the call instruction.
               II->replaceAllUsesWith(Call);
+              II->getExceptionalDest()->removePredecessor(II->getParent());
           
               // Insert a branch to the normal destination right before the
               // invoke.
               new BranchInst(II->getNormalDest(), II);
               
               // Finally, delete the invoke instruction!
+              
               I->getInstList().pop_back();
               
               ++NumRemoved;
