@@ -85,6 +85,8 @@ class PhyRegAlloc
 
   void colorIncomingArgs();
   void updateMachineCode();
+  void printLabel(const Value *const Val);
+  void printMachineCode();
   
  public:
   PhyRegAlloc(const Method *const M, const TargetMachine& TM, 
