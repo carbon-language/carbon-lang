@@ -18,4 +18,8 @@ int "test2"(int %A) {
 	ret int %B
 }
 
-
+int "test3"(int %A) {
+	%B = sub int 0, %A       ; B = -A
+	%C = sub int 0, %B       ; C = -B = A
+	ret int %C
+}
