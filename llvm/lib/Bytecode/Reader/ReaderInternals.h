@@ -169,8 +169,9 @@ private:
 
   void ParseConstantPool(const unsigned char *&Buf, const unsigned char *EndBuf,
                          ValueTable &Tab, TypeValuesListTy &TypeTab);
-  void parseConstantValue(const unsigned char *&Buf, const unsigned char *End,
-                          const Type *Ty, Constant *&V);
+  Constant *parseConstantValue(const unsigned char *&Buf,
+                               const unsigned char *End,
+                               const Type *Ty);
   void parseTypeConstants(const unsigned char *&Buf,
                           const unsigned char *EndBuf,
                           TypeValuesListTy &Tab, unsigned NumEntries);
@@ -185,7 +186,7 @@ private:
   void setValueTo(ValueTable &D, unsigned Slot, Value *V);
   void postResolveValues(ValueTable &ValTab);
 
-  void getTypeSlot(const Type *Ty, unsigned &Slot);
+  unsigned getTypeSlot(const Type *Ty);
 
   // resolve all references to the placeholder (if any) for the given value
   void ResolveReferencesToValue(Value *Val, unsigned Slot);

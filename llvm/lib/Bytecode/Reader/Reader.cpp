@@ -31,25 +31,21 @@ static inline void ALIGN32(const unsigned char *&begin,
     throw std::string("Alignment error in buffer: read past end of block.");
 }
 
-void
-BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
-  if (Ty->isPrimitiveType()) {
-    Slot = Ty->getPrimitiveID();
-  } else {
-    // Check the function level types first...
-    TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(),
-                                        FunctionTypeValues.end(), Ty);
-    if (I != FunctionTypeValues.end()) {
-      Slot = FirstDerivedTyID + ModuleTypeValues.size() +
-        (&*I - &FunctionTypeValues[0]);
-    } else {
-      I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
-      if (I == ModuleTypeValues.end())
-        throw std::string("Didn't find type in ModuleTypeValues.");
-      Slot = FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
-    }
-  }
-  //cerr << "getTypeSlot '" << Ty->getName() << "' = " << Slot << "\n";
+unsigned BytecodeParser::getTypeSlot(const Type *Ty) {
+  if (Ty->isPrimitiveType())
+    return Ty->getPrimitiveID();
+
+  // Check the function level types first...
+  TypeValuesListTy::iterator I = find(FunctionTypeValues.begin(),
+                                      FunctionTypeValues.end(), Ty);
+  if (I != FunctionTypeValues.end())
+    return FirstDerivedTyID + ModuleTypeValues.size() +
+             (&*I - &FunctionTypeValues[0]);
+
+  I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
+  if (I == ModuleTypeValues.end())
+    throw std::string("Didn't find type in ModuleTypeValues.");
+  return FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
 }
 
 const Type *BytecodeParser::getType(unsigned ID) {
@@ -68,8 +64,7 @@ int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
           Val->getType()->isPrimitiveType() ||
           !cast<Constant>(Val)->isNullValue()) &&
          "Cannot read null values from bytecode!");
-  unsigned type;
-  getTypeSlot(Val->getType(), type);
+  unsigned type = getTypeSlot(Val->getType());
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
   if (ValueTab.size() <= type) {
@@ -93,19 +88,16 @@ int BytecodeParser::insertValue(Value *Val, ValueTable &ValueTab) {
 void BytecodeParser::setValueTo(ValueTable &ValueTab, unsigned Slot,
                                 Value *Val) {
   assert(&ValueTab == &ModuleValues && "Can only setValueTo on Module values!");
-  unsigned type;
-  getTypeSlot(Val->getType(), type);
-
   assert((!HasImplicitZeroInitializer || Slot != 0) &&
          "Cannot change zero init");
+  unsigned type = getTypeSlot(Val->getType());
   assert(type < ValueTab.size() && Slot <= ValueTab[type]->size());
   ValueTab[type]->setOperand(Slot-HasImplicitZeroInitializer, Val);
 }
 
 Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   unsigned Num = oNum;
-  unsigned type;   // The type plane it lives in...
-  getTypeSlot(Ty, type);
+  unsigned type = getTypeSlot(Ty);    // The type plane it lives in...
 
   if (type == Type::TypeTyID) {   // The 'type' plane has implicit values
     assert(Create == false);

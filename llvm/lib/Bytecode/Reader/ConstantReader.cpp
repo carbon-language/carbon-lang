@@ -147,9 +147,9 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
 }
 
 
-void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
-                                        const unsigned char *EndBuf,
-                                        const Type *Ty, Constant *&V) {
+Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
+                                             const unsigned char *EndBuf,
+                                             const Type *Ty) {
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
@@ -183,14 +183,13 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
       assert(Opcode == Instruction::Cast);
-      V = ConstantExpr::getCast(ArgVec[0], Ty);
+      return ConstantExpr::getCast(ArgVec[0], Ty);
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
-      V = ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
+      return ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
     } else {                            // All other 2-operand expressions
-      V = ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
+      return ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
     }
-    return;
   }
   
   // Ok, not an ConstantExpr.  We now know how to read the given type...
@@ -199,8 +198,7 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     unsigned Val;
     if (read_vbr(Buf, EndBuf, Val)) throw Error_readvbr;
     if (Val != 0 && Val != 1) throw std::string("Invalid boolean value read.");
-    V = ConstantBool::get(Val == 1);
-    break;
+    return ConstantBool::get(Val == 1);
   }
 
   case Type::UByteTyID:   // Unsigned integer types...
@@ -210,15 +208,13 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     if (read_vbr(Buf, EndBuf, Val)) throw Error_readvbr;
     if (!ConstantUInt::isValueValidForType(Ty, Val)) 
       throw std::string("Invalid unsigned byte/short/int read.");
-    V = ConstantUInt::get(Ty, Val);
-    break;
+    return ConstantUInt::get(Ty, Val);
   }
 
   case Type::ULongTyID: {
     uint64_t Val;
     if (read_vbr(Buf, EndBuf, Val)) throw Error_readvbr;
-    V = ConstantUInt::get(Ty, Val);
-    break;
+    return ConstantUInt::get(Ty, Val);
   }
 
   case Type::SByteTyID:   // Signed integer types...
@@ -229,27 +225,23 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     if (read_vbr(Buf, EndBuf, Val)) throw Error_readvbr;
     if (!ConstantSInt::isValueValidForType(Ty, Val)) 
       throw std::string("Invalid signed byte/short/int/long read.");
-    V = ConstantSInt::get(Ty, Val);
-    break;
+    return ConstantSInt::get(Ty, Val);
   }
 
   case Type::FloatTyID: {
     float F;
     if (input_data(Buf, EndBuf, &F, &F+1)) throw Error_inputdata;
-    V = ConstantFP::get(Ty, F);
-    break;
+    return ConstantFP::get(Ty, F);
   }
 
   case Type::DoubleTyID: {
     double Val;
     if (input_data(Buf, EndBuf, &Val, &Val+1)) throw Error_inputdata;
-    V = ConstantFP::get(Ty, Val);
-    break;
+    return ConstantFP::get(Ty, Val);
   }
 
   case Type::TypeTyID:
-    assert(0 && "Type constants should be handled separately!!!");
-    abort();
+    throw std::string("Type constants shouldn't live in constant table!");
 
   case Type::ArrayTyID: {
     const ArrayType *AT = cast<ArrayType>(Ty);
@@ -263,8 +255,7 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
       if (!C) throw std::string("Unable to get const value of array slot.");
       Elements.push_back(C);
     }
-    V = ConstantArray::get(AT, Elements);
-    break;
+    return ConstantArray::get(AT, Elements);
   }
 
   case Type::StructTyID: {
@@ -280,8 +271,7 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
       Elements.push_back(C);
     }
 
-    V = ConstantStruct::get(ST, Elements);
-    break;
+    return ConstantStruct::get(ST, Elements);
   }    
 
   case Type::PointerTyID: {
@@ -294,8 +284,7 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
 
     switch (SubClass) {
     case 0:    // ConstantPointerNull value...
-      V = ConstantPointerNull::get(PT);
-      break;
+      return ConstantPointerNull::get(PT);
 
     case 1: {  // ConstantPointerRef value...
       unsigned Slot;
@@ -336,23 +325,18 @@ void BytecodeParser::parseConstantValue(const unsigned char *&Buf,
         }
       }
 
-      V = ConstantPointerRef::get(GV);
-      break;
+      return ConstantPointerRef::get(GV);
     }
     
     default:
       BCR_TRACE(5, "UNKNOWN Pointer Constant Type!\n");
       throw std::string("Unknown pointer constant type.");
     }
-    break;
   }
 
   default:
-    std::cerr << __FILE__ << ":" << __LINE__ 
-              << ": Don't know how to deserialize constant value of type '"
-              << Ty->getName() << "'\n";
     throw std::string("Don't know how to deserialize constant value of type '"+
-                      Ty->getName());
+                      Ty->getDescription());
   }
 }
 
@@ -379,11 +363,10 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
       parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries);
     } else {
       for (unsigned i = 0; i < NumEntries; ++i) {
-        Constant *C;
-        int Slot;
-        parseConstantValue(Buf, EndBuf, Ty, C);
+        Constant *C = parseConstantValue(Buf, EndBuf, Ty);
         assert(C && "parseConstantValue returned NULL!");
         BCR_TRACE(4, "Read Constant: '" << *C << "'\n");
+        int Slot;
         if ((Slot = insertValue(C, Tab)) == -1)
           throw std::string("Could not insert value into ValueTable.");
 
