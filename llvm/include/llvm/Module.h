@@ -90,6 +90,12 @@ public:
   /// it.
   Function *getOrInsertFunction(const std::string &Name, const FunctionType *T);
 
+  /// getOrInsertFunction - Look up the specified function in the module symbol
+  /// table.  If it does not exist, add a prototype for the function and return
+  /// it.  This version of the method takes a null terminated list of function
+  /// arguments, which makes it easier for clients to use.
+  Function *getOrInsertFunction(const std::string &Name, const Type *RetTy,...);
+
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
   ///
