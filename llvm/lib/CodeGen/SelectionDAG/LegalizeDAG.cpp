@@ -887,8 +887,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp2 = DAG.getConstantFP(-0.0, Node->getValueType(0));
         Result = LegalizeOp(DAG.getNode(ISD::SUB, Node->getValueType(0),
                                         Tmp2, Tmp1));
+      } else if (Node->getOpcode() == ISD::FABS) {
+        // Expand Y = FABS(X) -> Y = (X >u 0.0) ? X : fneg(X).
+        MVT::ValueType VT = Node->getValueType(0);
+        Tmp2 = DAG.getConstantFP(0.0, VT);
+        Tmp2 = DAG.getSetCC(ISD::SETUGT, TLI.getSetCCResultTy(), Tmp1, Tmp2);
+        Tmp3 = DAG.getNode(ISD::FNEG, VT, Tmp1);
+        Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
+        Result = LegalizeOp(Result);
       } else {
-        assert(0 && "Expand fneg not impl yet!");
+        assert(0 && "Unreachable!");
       }
       break;
     }
