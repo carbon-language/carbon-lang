@@ -147,7 +147,7 @@ static void HandleInclude(const char *Buffer) {
 /// files. Switch back to an includer if an includee has run out of input.
 ///
 extern "C"
-int yywrap() {
+int yywrap(void) {
   if (IncludeStack.back().File != stdin)
     fclose(IncludeStack.back().File);
   IncludeStack.pop_back();
