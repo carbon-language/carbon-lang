@@ -74,7 +74,10 @@ public:
   /// Return the slot number of the specified value in it's type
   /// plane.  Its an error to ask for something not in the SlotMachine.
   /// Its an error to ask for a Type*
-  unsigned getSlot(const Value *V) ;
+  unsigned getSlot(const Value *V, bool ignoreMissing = false ) ;
+
+  /// Determine if a Value has a slot or not
+  bool hasSlot(const Value* V);
 
 /// @}
 /// @name Mutators
@@ -883,13 +886,17 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     printType(V.getType()) << '>';
 
     if (!V.hasName()) {
-      *Out << ':' << Machine.getSlot(&V); // Print out the def slot taken.
+      unsigned SlotNum = Machine.getSlot(&V,true);
+      if ( unsigned(-1) == SlotNum )
+	*Out << ":??";
+      else
+	*Out << ':' << SlotNum; // Print out the def slot taken.
     }
     *Out << " [#uses=" << V.use_size() << ']';  // Output # uses
   }
 }
 
-/// printInstruction - This member is called for each Instruction in a method.
+/// printInstruction - This member is called for each Instruction in a function..
 ///
 void AssemblyWriter::printInstruction(const Instruction &I) {
   if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, *Out);
@@ -1266,7 +1273,7 @@ void SlotMachine::purgeFunction() {
 /// Get the slot number for a value. This function will assert if you
 /// ask for a Value that hasn't previously been inserted with createSlot.
 /// Types are forbidden because Type does not inherit from Value (any more).
-unsigned SlotMachine::getSlot(const Value *V) {
+unsigned SlotMachine::getSlot(const Value *V, bool ignoreMissing ) {
   assert( V && "Can't get slot for null Value" );
   assert( !isa<Type>(V) && "Can't get slot for a type" );
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) && 
@@ -1297,6 +1304,7 @@ unsigned SlotMachine::getSlot(const Value *V) {
         // Look up the value in the module map
         ValueMap::const_iterator MVI = MI->second.map.find(V);
         // If we didn't find it, it wasn't inserted
+	if ( ignoreMissing && MVI == MI->second.map.end()) return unsigned(-1);
         assert( MVI != MI->second.map.end() && "Value not found");
         // We found it only at the module level
         return MVI->second; 
@@ -1308,32 +1316,23 @@ unsigned SlotMachine::getSlot(const Value *V) {
         // to the type plane.
         return MI->second.next_slot + FVI->second;
       }
-
-    // else there is not a corresponding type plane in the function map
-    } else  {
-      assert( MI != mMap.end() && "No such type plane!" );
-      // Look up the value in the module's map
-      ValueMap::const_iterator MVI = MI->second.map.find(V);
-      // If we didn't find it, it wasn't inserted.
-      assert( MVI != MI->second.map.end() && "Value not found");
-      // We found it only in the module level and function level
-      // didn't even have a type plane.
-      return MVI->second; 
     }
   }
 
-  // N.B. Can only get here if !TheFunction
+  // N.B. Can get here only if either !TheFunction or the function doesn't
+  // have a corresponding type plane for the Value
 
   // Make sure the type plane exists
+  if ( ignoreMissing && MI == mMap.end()) return unsigned(-1);
   assert( MI != mMap.end() && "No such type plane!" );
   // Lookup the value in the module's map
   ValueMap::const_iterator MVI = MI->second.map.find(V);
   // Make sure we found it.
+  if ( ignoreMissing && MVI == MI->second.map.end()) return unsigned(-1);
   assert( MVI != MI->second.map.end() && "Value not found" );
   // Return it.
   return MVI->second;
 }
-
 
 // Create a new slot, or return the existing slot if it is already
 // inserted. Note that the logic here parallels getSlot but instead
