@@ -161,6 +161,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   int                   IntVal;
   RecTy                *Ty;
   Init                 *Initializer;
+  std::vector<Init*>   *DagValueList;
   std::vector<Init*>   *FieldList;
   std::vector<unsigned>*BitList;
   Record               *Rec;
@@ -179,6 +180,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 %type <SubClassList> ClassList ClassListNE
 %type <IntVal>       OptPrefix
 %type <Initializer>  Value OptValue
+%type <DagValueList> DagArgList DagArgListNE
 %type <FieldList>    ValueList ValueListNE
 %type <BitList>      BitList OptBitList RBitList
 %type <StrVal>       Declaration OptID
@@ -270,7 +272,29 @@ Value : INTVAL {
     }
     $$ = new FieldInit($1, *$3);
     delete $3;
+  } | '(' ID DagArgList ')' {
+    Record *D = Records.getDef(*$2);
+    if (D == 0) {
+      err() << "Invalid def '" << *$2 << "'!\n";
+      abort();
+    }
+    $$ = new DagInit(D, *$3);
+    delete $2; delete $3;
   };
+
+DagArgListNE : Value {
+    $$ = new std::vector<Init*>();
+    $$->push_back($1);
+  }
+  | DagArgListNE ',' Value {
+    $1->push_back($3);
+  };
+
+DagArgList : /*empty*/ {
+    $$ = new std::vector<Init*>();
+  }
+  | DagArgListNE { $$ = $1; };
+
 
 RBitList : INTVAL {
     $$ = new std::vector<unsigned>();
