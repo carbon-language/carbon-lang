@@ -98,14 +98,6 @@ with another <tt>Value</tt></a> </li>
             </ul></li>
           <li><a href="#Module">The <tt>Module</tt> class</a></li>
           <li><a href="#Constant">The <tt>Constant</tt> class</a>
-            <ul>
-                  <li> <br>
-                  </li>
-                  <li> <br>
-                  </li>
-                </ul>
-              </li>
-            </ul>
           </li>
           <li><a href="#Type">The <tt>Type</tt> class</a> </li>
           <li><a href="#Argument">The <tt>Argument</tt> class</a> </li>
@@ -117,15 +109,15 @@ with another <tt>Value</tt></a> </li>
           <li>Creating, inserting, moving and deleting from LLVM lists </li>
         </ul>
       </li>
-      <li>Important iterator invalidation semantics to be aware of </li>
+      <li>Important iterator invalidation semantics to be aware of.</li>
     </ul>
   </li>
 </ol>
 
-<div class="doc_text">    
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>, 
-  <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>, and <a
-  href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a></b></p>
+<div class="doc_author">    
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>, 
+                <a href="mailto:dhurjati@cs.uiuc.edu">Dinakar Dhurjati</a>, and
+                <a href="mailto:jstanley@cs.uiuc.edu">Joel Stanley</a></p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -283,13 +275,14 @@ file (note that you very rarely have to include this file directly).</p>
   that something is of the right type.  An example of the <tt>isa&lt;&gt;</tt>
   and <tt>cast&lt;&gt;</tt> template is:
 
-  <pre>static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const
-  Loop *L) {<br> if (isa&lt;<a href="#Constant">Constant</a>&gt;(V) || isa&lt;<a
-  href="#Argument">Argument</a>&gt;(V) || isa&lt;<a
-  href="#GlobalValue">GlobalValue</a>&gt;(V))<br> return true;<br><br> <i>//
-  Otherwise, it must be an instruction...</i><br> return
-  !L-&gt;contains(cast&lt;<a
-  href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());<br></pre>
+  <pre>
+  static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) {
+    if (isa&lt;<a href="#Constant">Constant</a>&gt;(V) || isa&lt;<a href="#Argument">Argument</a>&gt;(V) || isa&lt;<a href="#GlobalValue">GlobalValue</a>&gt;(V))
+      return true;
+
+  <i>// Otherwise, it must be an instruction...</i>
+  return !L-&gt;contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());
+  </pre>
 
   <p>Note that you should <b>not</b> use an <tt>isa&lt;&gt;</tt> test followed
   by a <tt>cast&lt;&gt;</tt>, for that use the <tt>dyn_cast&lt;&gt;</tt>
@@ -307,8 +300,11 @@ file (note that you very rarely have to include this file directly).</p>
   same circumstances.  Typically, the <tt>dyn_cast&lt;&gt;</tt> operator is used
   in an <tt>if</tt> statement or some other flow control statement like this:
 
-   <pre> if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a
-   href="#AllocationInst">AllocationInst</a>&gt;(Val)) {<br> ...<br> }<br></pre>
+   <pre>
+     if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a href="#AllocationInst">AllocationInst</a>&gt;(Val)) {
+       ...
+     }
+   </pre>
    
    <p> This form of the <tt>if</tt> statement effectively combines together a
    call to <tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt> into one
@@ -316,10 +312,12 @@ file (note that you very rarely have to include this file directly).</p>
 
    <p> Another common example is:</p>
 
-   <pre> <i>// Loop over all of the phi nodes in a basic block</i><br>
-   BasicBlock::iterator BBI = BB-&gt;begin();<br> for (; <a
-   href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a
-   href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)<br> cerr &lt;&lt; *PN;<br></pre>
+   <pre>
+     <i>// Loop over all of the phi nodes in a basic block</i>
+     BasicBlock::iterator BBI = BB-&gt;begin();
+     for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)
+       std::cerr &lt;&lt; *PN;
+   </pre>
 
    <p>Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s
    <tt>dynamic_cast</tt> or Java's <tt>instanceof</tt> operator, can be abused.
@@ -525,7 +523,7 @@ structures are traversed in very similar ways.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="subsubsection">
+<div class="doc_subsubsection">
   <a name="iterate_function">Iterating over the </a><a
   href="#BasicBlock"><tt>BasicBlock</tt></a>s in a <a
   href="#Function"><tt>Function</tt></a>
@@ -551,7 +549,7 @@ exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="subsubsection">
+<div class="doc_subsubsection">
   <a name="iterate_basicblock">Iterating over the </a><a
   href="#Instruction"><tt>Instruction</tt></a>s in a <a
   href="#BasicBlock"><tt>BasicBlock</tt></a>
@@ -580,7 +578,7 @@ now, you must cast to <tt>void*</tt>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="subsubsection">
+<div class="doc_subsubsection">
   <a name="iterate_institer">Iterating over the </a><a
   href="#Instruction"><tt>Instruction</tt></a>s in a <a
   href="#Function"><tt>Function</tt></a>
@@ -593,11 +591,9 @@ now, you must cast to <tt>void*</tt>.</p>
 <tt>InstIterator</tt> should be used instead. You'll need to include <a
 href="/doxygen/InstIterator_8h-source.html"><tt>llvm/Support/InstIterator.h</tt></a>,
 and then instantiate <tt>InstIterator</tt>s explicitly in your code.  Here's a
-small example that shows how to dump all instructions in a function to stderr
-(<b>Note:</b> Dereferencing an <tt>InstIterator</tt> yields an
-<tt>Instruction*</tt>, <i>not</i> an <tt>Instruction&amp;</tt>!):</p>
+small example that shows how to dump all instructions in a function to the standard error stream:<p>
 
-  <pre>#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"<br>...<br>// Suppose F is a ptr to a function<br>for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)<br>  cerr &lt;&lt; **i &lt;&lt; "\n";<br></pre>
+  <pre>#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"<br>...<br>// Suppose F is a ptr to a function<br>for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)<br>  cerr &lt;&lt; *i &lt;&lt; "\n";<br></pre>
 Easy, isn't it?  You can also use <tt>InstIterator</tt>s to fill a
 worklist with its initial contents.  For example, if you wanted to
 initialize a worklist to contain all instructions in a <tt>Function</tt>
@@ -619,7 +615,7 @@ F, all you would need to do is something like:
 
 <p>Sometimes, it'll be useful to grab a reference (or pointer) to a class
 instance when all you've got at hand is an iterator.  Well, extracting
-a reference or a pointer from an iterator is very straightforward.
+a reference or a pointer from an iterator is very straight-forward.
 Assuming that <tt>i</tt> is a <tt>BasicBlock::iterator</tt> and <tt>j</tt>
 is a <tt>BasicBlock::const_iterator</tt>:</p>
 
@@ -639,16 +635,13 @@ the last line of the last example,</p>
 
   <pre>Instruction* pinst = i;</pre>
 
-<p>It's also possible to turn a class pointer into the corresponding iterator.
-Usually, this conversion is quite inexpensive.  The following code snippet
-illustrates use of the conversion constructors provided by LLVM iterators.  By
-using these, you can explicitly grab the iterator of something without actually
-obtaining it via iteration over some structure:</p>
+<p>It's also possible to turn a class pointer into the corresponding iterator,
+and this is a constant time operation (very efficient).  The following code
+snippet illustrates use of the conversion constructors provided by LLVM
+iterators.  By using these, you can explicitly grab the iterator of something
+without actually obtaining it via iteration over some structure:</p>
 
   <pre>void printNextInstruction(Instruction* inst) {<br>    BasicBlock::iterator it(inst);<br>    ++it; // after this line, it refers to the instruction after *inst.<br>    if (it != inst-&gt;getParent()-&gt;end()) cerr &lt;&lt; *it &lt;&lt; "\n";<br>}<br></pre>
-
-<p>Of course, this example is strictly pedagogical, because it'd be much
-better to explicitly grab the next instruction directly from inst.</p>
 
 </div>
 
@@ -664,7 +657,7 @@ better to explicitly grab the next instruction directly from inst.</p>
 locations in the entire module (that is, across every <tt>Function</tt>) where a
 certain function (i.e., some <tt>Function</tt>*) is already in scope.  As you'll
 learn later, you may want to use an <tt>InstVisitor</tt> to accomplish this in a
-much more straightforward manner, but this example will allow us to explore how
+much more straight-forward manner, but this example will allow us to explore how
 you'd do it if you didn't have <tt>InstVisitor</tt> around. In pseudocode, this
 is what we want to do:</p>
 
@@ -694,17 +687,16 @@ this, and in other situations, you may find that you want to treat
 most-specific common base class is <tt>Instruction</tt>, which includes lots of
 less closely-related things. For these cases, LLVM provides a handy wrapper
 class called <a
-href="http://llvm.cs.uiuc.edu/doxygen/classCallSite.html"><tt>CallSite
-</tt></a>.  It is essentially a wrapper around an <tt>Instruction</tt> pointer,
-with some methods that provide functionality common to <tt>CallInst</tt>s and
+href="http://llvm.cs.uiuc.edu/doxygen/classCallSite.html"><tt>CallSite</tt></a>.
+It is essentially a wrapper around an <tt>Instruction</tt> pointer, with some
+methods that provide functionality common to <tt>CallInst</tt>s and
 <tt>InvokeInst</tt>s.</p>
 
-<p>This class is supposed to have "value semantics". So it should be passed by
-value, not by reference; it should not be dynamically allocated or deallocated
-using <tt>operator new</tt> or <tt>operator delete</tt>. It is efficiently
-copyable, assignable and constructable, with costs equivalents to that of a bare
-pointer. (You will notice, if you look at its definition, that it has only a
-single data member.)</p>
+<p>This class has "value semantics": it should be passed by value, not by
+reference and it should not be dynamically allocated or deallocated using
+<tt>operator new</tt> or <tt>operator delete</tt>. It is efficiently copyable,
+assignable and constructable, with costs equivalents to that of a bare pointer.
+If you look at its definition, it has only a single pointer member.</p>
 
 </div>
 
@@ -767,7 +759,7 @@ and gives example code.</p>
 
 <p><i>Instantiating Instructions</i></p>
 
-<p>Creation of <tt>Instruction</tt>s is straightforward: simply call the
+<p>Creation of <tt>Instruction</tt>s is straight-forward: simply call the
 constructor for the kind of instruction to instantiate and provide the necessary
 parameters. For example, an <tt>AllocaInst</tt> only <i>requires</i> a
 (const-ptr-to) <tt>Type</tt>. Thus:</p> 
@@ -851,7 +843,7 @@ instructions and adding them to <tt>BasicBlock</tt>s.</p></li>
 <div class="doc_text">
 
 <p>Deleting an instruction from an existing sequence of instructions that form a
-<a href="#BasicBlock"><tt>BasicBlock</tt></a> is very straightforward. First,
+<a href="#BasicBlock"><tt>BasicBlock</tt></a> is very straight-forward. First,
 you must have a pointer to the instruction that you wish to delete.  Second, you
 need to obtain the pointer to that instruction's basic block. You use the
 pointer to the basic block to get its list of instructions and then use the
@@ -1726,9 +1718,6 @@ types.</p>
 
 <ul>
 
-  <li><tt>PrimitiveID getPrimitiveID() const</tt>: Returns the base type of the
-  type.</li>
-
   <li><tt>bool isSigned() const</tt>: Returns whether an integral numeric type
   is signed. This is true for SByteTy, ShortTy, IntTy, LongTy. Note that this is
   not true for Float and Double. </li>
@@ -1747,29 +1736,11 @@ types.</p>
   <li><tt>bool isFloatingPoint()</tt>: Return true if this is one of the two
   floating point types.</li>
 
-  <li><tt>bool isRecursive() const</tt>: Returns rue if the type graph contains
-  a cycle.</li>
-
   <li><tt>isLosslesslyConvertableTo (const Type *Ty) const</tt>: Return true if
   this type can be converted to 'Ty' without any reinterpretation of bits. For
-  example, uint to int.</li>
+  example, uint to int or one pointer type to another.</li>
 
-  <li><tt>bool isPrimitiveType() const</tt>: Returns true if it is a primitive
-  type.</li>
-
-  <li><tt>bool isDerivedType() const</tt>: Returns true if it is a derived
-  type.</li>
-
-  <li><tt>const Type * getContainedType (unsigned i) const</tt>: This method is
-  used to implement the type iterator. For derived types, this returns the types
-  'contained' in the derived type, returning 0 when 'i' becomes invalid. This
-  allows the user to iterate over the types in a struct, for example, really
-  easily.</li>
-
-  <li><tt>unsigned getNumContainedTypes() const</tt>: Return the number of types
-  in the derived type.
-
-    <hr>
+<br>
     <p>Derived Types</p>
 
     <ul>
