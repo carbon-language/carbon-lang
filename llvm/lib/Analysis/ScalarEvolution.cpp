@@ -1163,7 +1163,7 @@ void ScalarEvolutionsImpl::UpdatePHIUserScalarEntries(Instruction *I,
                                         std::set<Instruction*> &UpdatedInsts) {
   std::map<Value*, SCEVHandle>::iterator SI = Scalars.find(I);
   if (SI == Scalars.end()) return;   // This scalar wasn't previous processed.
-  if (UpdatedInsts.insert(I).second) {
+  if (UpdatedInsts.insert(I).second && !isa<PHINode>(PN)) {
     Scalars.erase(SI);                 // Remove the old entry
     getSCEV(I);                        // Calculate the new entry
     
