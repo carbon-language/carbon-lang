@@ -400,7 +400,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     if (Handler == 0) {
-      std::cerr << "Unknown command line argument '" << argv[i] << "'.  Try: "
+      std::cerr << "Unknown command line argument '" << argv[i] << "'.  Try: '"
                 << argv[0] << " --help'\n";
       ErrorParsing = true;
       continue;
