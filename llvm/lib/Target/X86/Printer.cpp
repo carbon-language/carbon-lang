@@ -666,8 +666,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // ModR/M input.  The first two operands should be the same, post register
     // allocation.  This is for things like: add r32, r/m32
     //
-    // 3 Operands: in this form, we can have 'INST R, R, imm', which is used for
-    // instructions like the IMULri instructions.
+    // 3 Operands: in this form, we can have 'INST R1, R2, imm', which is used
+    // for instructions like the IMULri instructions.
     //
     // 2 Operands: this is for things like mov that do not read a second input
     //
@@ -678,7 +678,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
              (MI->getOperand(2).isRegister() ||
               MI->getOperand(2).isImmediate())))
            && "Bad format for MRMSrcReg!");
-    if (MI->getNumOperands() == 3 &&
+    if (MI->getNumOperands() == 3 && !MI->getOperand(2).isImmediate() &&
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 

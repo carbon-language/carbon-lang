@@ -270,10 +270,12 @@ def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;                // R32 -= R32+Carr
 
 def IMULrr16 : I2A16<"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (times R16, R16))>;
 def IMULrr32 : I2A32<"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
-def IMULri16 : I2A16<"imul", 0x69, MRMSrcReg>,     OpSize;
-def IMULri32 : I2A32<"imul", 0x69, MRMSrcReg>;
-def IMULri16b : I2A8<"imul", 0x6B, MRMSrcReg>,     OpSize;
-def IMULri32b : I2A8<"imul", 0x6B, MRMSrcReg>;
+
+// These are suprisingly enough not two addres instructions!
+def IMULri16 : X86Inst<"imul", 0x69, MRMSrcReg, Arg16>,     OpSize;
+def IMULri32 : X86Inst<"imul", 0x69, MRMSrcReg, Arg32>;
+def IMULri16b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8>,     OpSize;
+def IMULri32b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8>;
 
 
 // Logical operators...
