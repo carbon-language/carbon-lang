@@ -116,8 +116,8 @@ static inline const Type *checkType(const Type *Ty) {
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 				     const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                            Idx, true))),
-		  GetElementPtr, Name, InBe) {
+                                                          Idx, true))),
+                GetElementPtr, Name, InBe) {
   Operands.reserve(1+Idx.size());
   Operands.push_back(Use(Ptr, this));
 
