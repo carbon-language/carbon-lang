@@ -10,15 +10,15 @@ B<llvm-link> [I<options>] I<filename ...>
 
 =head1 DESCRIPTION
 
-The B<llvm-link> command takes several LLVM bytecode files and links them
-together into a single LLVM bytecode file.  It writes the output file to
-standard output, unless the B<-o> option is used to specify a filename.
+B<llvm-link> takes several LLVM bytecode files and links them together into a
+single LLVM bytecode file.  It writes the output file to standard output, unless
+the B<-o> option is used to specify a filename.
 
-The B<llvm-link> command attempts to load the input files from the current
-directory.  If that fails, it looks for each file in each of the directories
-specified by the B<-L> options on the command line.  The library search paths
-are global; each one is searched for every input file if necessary.  The
-directories are searched in the order they were specified on the command line.
+B<llvm-link> attempts to load the input files from the current directory.  If
+that fails, it looks for each file in each of the directories specified by the
+B<-L> options on the command line.  The library search paths are global; each
+one is searched for every input file if necessary.  The directories are searched
+in the order they were specified on the command line.
 
 =head1 OPTIONS
 
@@ -72,4 +72,3 @@ L<gccld|gccld>
 Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
 
 =cut
-
