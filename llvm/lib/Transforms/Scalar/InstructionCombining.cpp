@@ -1821,10 +1821,26 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   const FunctionType *FT = Callee->getFunctionType();
   const Type *OldRetTy = Caller->getType();
 
-  if (Callee->isExternal() &&
-      !OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()) &&
-      !Caller->use_empty())
-    return false;   // Cannot transform this return value...
+  // Check to see if we are changing the return type...
+  if (OldRetTy != FT->getReturnType()) {
+    if (Callee->isExternal() &&
+        !OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()) &&
+        !Caller->use_empty())
+      return false;   // Cannot transform this return value...
+
+    // If the callsite is an invoke instruction, and the return value is used by
+    // a PHI node in a successor, we cannot change the return type of the call
+    // because there is no place to put the cast instruction (without breaking
+    // the critical edge).  Bail out in this case.
+    if (!Caller->use_empty())
+      if (InvokeInst *II = dyn_cast<InvokeInst>(Caller))
+        for (Value::use_iterator UI = II->use_begin(), E = II->use_end();
+             UI != E; ++UI)
+          if (PHINode *PN = dyn_cast<PHINode>(*UI))
+            if (PN->getParent() == II->getNormalDest() ||
+                PN->getParent() == II->getExceptionalDest())
+              return false;
+  }
 
   unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
   unsigned NumCommonArgs = std::min(FT->getNumParams(), NumActualArgs);
