@@ -49,7 +49,6 @@ namespace {
 
     ~GasBugWorkaroundEmitter() {
       O.flags(OldFlags);
-      O << "\t# ";
     }
 
     virtual void emitByte(unsigned char B) {
@@ -586,6 +585,36 @@ bool X86AsmPrinter::printImplUsesAfter(const TargetInstrDescriptor &Desc,
 ///
 void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
+
+  // gas bugs:
+  //
+  // The 80-bit FP store-pop instruction "fstp XWORD PTR [...]"  is misassembled
+  // by gas in intel_syntax mode as its 32-bit equivalent "fstp DWORD PTR
+  // [...]". Workaround: Output the raw opcode bytes instead of the instruction.
+  //
+  // The 80-bit FP load instruction "fld XWORD PTR [...]" is misassembled by gas
+  // in intel_syntax mode as its 32-bit equivalent "fld DWORD PTR
+  // [...]". Workaround: Output the raw opcode bytes instead of the instruction.
+  //
+  // gas intel_syntax mode treats "fild QWORD PTR [...]" as an invalid opcode,
+  // saying "64 bit operations are only supported in 64 bit modes." libopcodes
+  // disassembles it as "fild DWORD PTR [...]", which is wrong. Workaround:
+  // Output the raw opcode bytes instead of the instruction.
+  //
+  // gas intel_syntax mode treats "fistp QWORD PTR [...]" as an invalid opcode,
+  // saying "64 bit operations are only supported in 64 bit modes." libopcodes
+  // disassembles it as "fistpll DWORD PTR [...]", which is wrong. Workaround:
+  // Output the raw opcode bytes instead of the instruction.
+  switch (MI->getOpcode()) {
+  case X86::FSTP80m:
+  case X86::FLD80m:
+  case X86::FILD64m:
+  case X86::FISTP64m:
+    GasBugWorkaroundEmitter gwe(O);
+    X86::emitInstruction(gwe, (X86InstrInfo&)*TM.getInstrInfo(), *MI);
+    O << "\t# ";
+  }
+
   if (printInstruction(MI))
     return;   // Printer was automatically generated
 
@@ -852,37 +881,6 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
            "Bad MRMSxM format!");
 
     const MachineOperand &Op3 = MI->getOperand(3);
-
-    // gas bugs:
-    //
-    // The 80-bit FP store-pop instruction "fstp XWORD PTR [...]"
-    // is misassembled by gas in intel_syntax mode as its 32-bit
-    // equivalent "fstp DWORD PTR [...]". Workaround: Output the raw
-    // opcode bytes instead of the instruction.
-    //
-    // The 80-bit FP load instruction "fld XWORD PTR [...]" is
-    // misassembled by gas in intel_syntax mode as its 32-bit
-    // equivalent "fld DWORD PTR [...]". Workaround: Output the raw
-    // opcode bytes instead of the instruction.
-    //
-    // gas intel_syntax mode treats "fild QWORD PTR [...]" as an
-    // invalid opcode, saying "64 bit operations are only supported in
-    // 64 bit modes." libopcodes disassembles it as "fild DWORD PTR
-    // [...]", which is wrong. Workaround: Output the raw opcode bytes
-    // instead of the instruction.
-    //
-    // gas intel_syntax mode treats "fistp QWORD PTR [...]" as an
-    // invalid opcode, saying "64 bit operations are only supported in
-    // 64 bit modes." libopcodes disassembles it as "fistpll DWORD PTR
-    // [...]", which is wrong. Workaround: Output the raw opcode bytes
-    // instead of the instruction.
-    if (MI->getOpcode() == X86::FSTP80m ||
-        MI->getOpcode() == X86::FLD80m ||
-        MI->getOpcode() == X86::FILD64m ||
-        MI->getOpcode() == X86::FISTP64m) {
-      GasBugWorkaroundEmitter gwe(O);
-      X86::emitInstruction(gwe, (X86InstrInfo&)*TM.getInstrInfo(), *MI);
-    }
 
     O << TII.getName(MI->getOpcode()) << " ";
     O << sizePtr(Desc) << " ";
