@@ -76,6 +76,10 @@ class Imp<list<Register> uses, list<Register> defs> {
   list<Register> Defs = defs;
 }
 
+class Pattern<dag P> {
+  dag Pattern = P;
+}
+
 
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
@@ -212,12 +216,12 @@ let isTwoAddress = 1 in {  // Define some helper classes to make defs shorter.
 }
 
 // Arithmetic...
-def ADDrr8   : I2A8 <"add", 0x00, MRMDestReg>;                // R8 += R8     (set r8  (plus r8 r8))
-def ADDrr16  : I2A16<"add", 0x01, MRMDestReg>, OpSize;        // R16 += R16   (set r16 (plus r16 r16))
-def ADDrr32  : I2A32<"add", 0x01, MRMDestReg>;                // R32 += R32   (set r32 (plus r32 r32))
-def ADDri8   : I2A8 <"add", 0x80, MRMS0r    >;                // R8 += imm8   (set r8  (plus r8 imm8))
-def ADDri16  : I2A16<"add", 0x81, MRMS0r    >, OpSize;        // R16 += imm16 (set r16 (plus r16 imm16))
-def ADDri32  : I2A32<"add", 0x81, MRMS0r    >;                // R32 += imm32 (set r32 (plus r32 imm32))
+def ADDrr8   : I2A8 <"add", 0x00, MRMDestReg>,         Pattern<(set R8 , (plus R8 , R8))>;
+def ADDrr16  : I2A16<"add", 0x01, MRMDestReg>, OpSize, Pattern<(set R16, (plus R16, R16))>;
+def ADDrr32  : I2A32<"add", 0x01, MRMDestReg>,         Pattern<(set R32, (plus R32, R32))>;
+def ADDri8   : I2A8 <"add", 0x80, MRMS0r    >,         Pattern<(set R8 , (plus R8 , imm8))>;
+def ADDri16  : I2A16<"add", 0x81, MRMS0r    >, OpSize, Pattern<(set R16, (plus R16, imm16))>;
+def ADDri32  : I2A32<"add", 0x81, MRMS0r    >,         Pattern<(set R32, (plus R32, imm32))>;
 
 def ADCrr32  : I2A32<"adc", 0x11, MRMDestReg>;                // R32 += imm32+Carry
 
