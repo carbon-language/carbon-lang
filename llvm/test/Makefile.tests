@@ -57,19 +57,6 @@ TESTRUNR = @echo Running test: $<; \
              PATH=$(LLVMTOOLCURRENT):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
                   $(LLVM_SRC_ROOT)/test/TestRunner.sh
 
-## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
-## mark that tracing on, and set the TRACELIBS variable.
-TRACEFLAGS = 
-ifeq ($(TRACE), yes)
-    TRACEFLAGS = -trace
-    TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
-endif
-
-ifeq ($(TRACEM), yes)
-    TRACEFLAGS = -tracem
-    TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
-endif
-
 LLCLIBS := $(LLCLIBS) -lm
 
 clean::
