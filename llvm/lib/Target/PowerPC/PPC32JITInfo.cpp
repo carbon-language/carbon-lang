@@ -16,7 +16,7 @@
 #include "PPC32Relocations.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
-#include <map>
+#include <set>
 using namespace llvm;
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
@@ -210,10 +210,8 @@ void PPC32JITInfo::relocate(void *Function, MachineRelocation *MR,
       // the pointer is relocated into instructions instead of the pointer
       // itself.  Because we have to keep the mapping anyway, we just return
       // pointers to the values in the map as our new location.
-      static std::map<void*,void*> Pointers;
-      void *&Ptr = Pointers[(void*)ResultPtr];
-      Ptr = (void*)ResultPtr;
-      ResultPtr = (intptr_t)&Ptr;
+      static std::set<void*> Pointers;
+      ResultPtr = (intptr_t)&*Pointers.insert((void*)ResultPtr).first;
     }
       // FALL THROUGH
     case PPC::reloc_absolute_high:     // high bits of ref -> low 16 of instr
