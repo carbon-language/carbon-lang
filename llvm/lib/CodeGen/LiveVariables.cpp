@@ -291,6 +291,14 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
                                i + MRegisterInfo::FirstVirtualRegister));
     }
 
+  // Check to make sure there are no unreachable blocks in the MC CFG for the
+  // function.  If so, it is due to a bug in the instruction selector or some
+  // other part of the code generator if this happens.
+#ifndef NDEBUG
+  for(MachineFunction::iterator i = MF.begin(), e = MF.end(); i != e; ++i) 
+    assert(Visited.count(&*i) != 0 && "unreachable basic block found");
+#endif
+
   return false;
 }
 
