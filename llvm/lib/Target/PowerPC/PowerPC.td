@@ -27,6 +27,8 @@ def PowerPCInstrInfo : InstrInfo {
   let TSFlagsFields = ["ArgCount", "Arg0Type", "Arg1Type", "Arg2Type", 
                        "Arg3Type", "Arg4Type", "VMX", "PPC64"];
   let TSFlagsShifts = [ 0, 3, 8, 13, 18, 23, 28, 29 ];
+
+  let isLittleEndianEncoding = 1;
 }
 
 def PowerPC : Target {
