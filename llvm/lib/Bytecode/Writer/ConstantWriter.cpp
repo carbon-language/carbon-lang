@@ -28,6 +28,9 @@ void BytecodeWriter::outputType(const Type *T) {
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
 
+    // Output the number of arguments to method (+1 if varargs):
+    output_vbr(MT->getParamTypes().size()+MT->isVarArg(), Out);
+
     // Output all of the arguments...
     MethodType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
     for (; I != MT->getParamTypes().end(); ++I) {
@@ -36,8 +39,9 @@ void BytecodeWriter::outputType(const Type *T) {
       output_vbr((unsigned)Slot, Out);
     }
 
-    // Terminate list with VoidTy
-    output_vbr((unsigned)Type::VoidTy->getPrimitiveID(), Out);
+    // Terminate list with VoidTy if we are a varargs function...
+    if (MT->isVarArg())
+      output_vbr((unsigned)Type::VoidTy->getPrimitiveID(), Out);
     break;
   }
 

@@ -196,30 +196,48 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     Method *M = (Method*)getValue(Raw.Ty, Raw.Arg1);
     if (M == 0) return true;
 
-    const MethodType::ParamTypes &PL = M->getMethodType()->getParamTypes();
-    MethodType::ParamTypes::const_iterator It = PL.begin();
-
     vector<Value *> Params;
-    switch (Raw.NumOperands) {
-    case 0: cerr << "Invalid call instruction encountered!\n";
-	    return true;
-    case 1: break;
-    case 2: Params.push_back(getValue(*It++, Raw.Arg2)); break;
-    case 3: Params.push_back(getValue(*It++, Raw.Arg2)); 
-            if (It == PL.end()) return true;
-            Params.push_back(getValue(*It++, Raw.Arg3)); break;
-    default:
-      Params.push_back(getValue(*It++, Raw.Arg2));
-      {
-        vector<unsigned> &args = *Raw.VarArgs;
-        for (unsigned i = 0; i < args.size(); i++) {
-	  if (It == PL.end()) return true;
-          Params.push_back(getValue(*It++, args[i]));
+    const MethodType::ParamTypes &PL = M->getMethodType()->getParamTypes();
+
+    if (!M->getType()->isMethodType()->isVarArg()) {
+      MethodType::ParamTypes::const_iterator It = PL.begin();
+
+      switch (Raw.NumOperands) {
+      case 0: cerr << "Invalid call instruction encountered!\n";
+	return true;
+      case 1: break;
+      case 2: Params.push_back(getValue(*It++, Raw.Arg2)); break;
+      case 3: Params.push_back(getValue(*It++, Raw.Arg2)); 
+	if (It == PL.end()) return true;
+	Params.push_back(getValue(*It++, Raw.Arg3)); break;
+      default:
+	Params.push_back(getValue(*It++, Raw.Arg2));
+	{
+	  vector<unsigned> &args = *Raw.VarArgs;
+	  for (unsigned i = 0; i < args.size(); i++) {
+	    if (It == PL.end()) return true;
+	    // TODO: Check getValue for null!
+	    Params.push_back(getValue(*It++, args[i]));
+	  }
 	}
+	delete Raw.VarArgs;
+      }
+      if (It != PL.end()) return true;
+    } else {
+      // The first parameter does not have a type specifier... because there
+      // must be at least one concrete argument to a vararg type...
+      Params.push_back(getValue(PL.front(), Raw.Arg2));
+
+      vector<unsigned> &args = *Raw.VarArgs;
+      if ((args.size() & 1) != 0) return true;  // Must be pairs of type/value
+      for (unsigned i = 0; i < args.size(); i+=2) {
+	Value *Ty = getValue(Type::TypeTy, args[i]);
+	if (!Ty) return true;
+	// TODO: Check getValue for null!
+	Params.push_back(getValue(Ty->castTypeAsserting(), args[i+1]));
       }
       delete Raw.VarArgs;
     }
-    if (It != PL.end()) return true;
 
     Res = new CallInst(M, Params);
     return false;

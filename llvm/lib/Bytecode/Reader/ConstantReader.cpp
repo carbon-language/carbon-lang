@@ -33,15 +33,15 @@ bool BytecodeParser::parseTypeConstant(const uchar *&Buf, const uchar *EndBuf,
     const Type *RetType = getType(Typ);
     if (RetType == 0) return true;
 
-    MethodType::ParamTypes Params;
+    unsigned NumParams;
+    if (read_vbr(Buf, EndBuf, NumParams)) return true;
 
-    if (read_vbr(Buf, EndBuf, Typ)) return true;
-    while (Typ) {
+    MethodType::ParamTypes Params;
+    while (NumParams--) {
+      if (read_vbr(Buf, EndBuf, Typ)) return true;
       const Type *Ty = getType(Typ);
       if (Ty == 0) return true;
       Params.push_back(Ty);
-      
-      if (read_vbr(Buf, EndBuf, Typ)) return true;
     }
 
     Val = MethodType::getMethodType(RetType, Params);

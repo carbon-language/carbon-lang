@@ -8,7 +8,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Method.h"
 
-CallInst::CallInst(Method *M, vector<Value*> &params, 
+CallInst::CallInst(Method *M, const vector<Value*> &params, 
                    const string &Name) 
   : Instruction(M->getReturnType(), Instruction::Call, Name) {
 
@@ -17,14 +17,14 @@ CallInst::CallInst(Method *M, vector<Value*> &params,
 
   const MethodType* MT = M->getMethodType();
   const MethodType::ParamTypes &PL = MT->getParamTypes();
-  assert(params.size() == PL.size() && "Calling a function with bad signature");
+  assert((params.size() == PL.size()) || 
+	 (MT->isVarArg() && params.size() > PL.size()) &&
+	 "Calling a function with bad signature");
 #ifndef NDEBUG
   MethodType::ParamTypes::const_iterator It = PL.begin();
 #endif
-  for (unsigned i = 0; i < params.size(); i++) {
-    assert(*It++ == params[i]->getType() && "Call Operands not correct type!");
+  for (unsigned i = 0; i < params.size(); i++)
     Operands.push_back(Use(params[i], this));
-  }
 }
 
 CallInst::CallInst(const CallInst &CI) 

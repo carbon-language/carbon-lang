@@ -35,8 +35,53 @@ static void outputInstructionFormat0(const Instruction *I,
   output_vbr(NumArgs, Out);
 
   for (unsigned i = 0; i < NumArgs; ++i) {
-    const Value *N = I->getOperand(i);
-    int Slot = Table.getValSlot(N);
+    int Slot = Table.getValSlot(I->getOperand(i));
+    assert(Slot >= 0 && "No slot number for value!?!?");      
+    output_vbr((unsigned)Slot, Out);
+  }
+  align32(Out);    // We must maintain correct alignment!
+}
+
+
+// outputInstrVarArgsCall - Output the obsurdly annoying varargs method calls.
+// This are more annoying than most because the signature of the call does not
+// tell us anything about the types of the arguments in the varargs portion.
+// Because of this, we encode (as type 0) all of the argument types explicitly
+// before the argument value.  This really sucks, but you shouldn't be using
+// varargs functions in your code! *death to printf*!
+//
+// Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]
+//
+static void outputInstrVarArgsCall(const Instruction *I,
+				   const SlotCalculator &Table, unsigned Type,
+				   vector<uchar> &Out) {
+  assert(I->getOpcode() == Instruction::Call /*|| 
+	 I->getOpcode() == Instruction::ICall */);
+  // Opcode must have top two bits clear...
+  output_vbr(I->getOpcode(), Out);               // Instruction Opcode ID
+  output_vbr(Type, Out);                         // Result type (varargs type)
+
+  unsigned NumArgs = I->getNumOperands();
+  output_vbr((NumArgs-2)*2+2, Out); // Don't duplicate method & Arg1 types
+
+  // Output the method type without an extra type argument.
+  int Slot = Table.getValSlot(I->getOperand(0));
+  assert(Slot >= 0 && "No slot number for value!?!?");      
+  output_vbr((unsigned)Slot, Out);
+
+  // VarArgs methods must have at least one specified operand
+  Slot = Table.getValSlot(I->getOperand(1));
+  assert(Slot >= 0 && "No slot number for value!?!?");      
+  output_vbr((unsigned)Slot, Out);
+
+  for (unsigned i = 2; i < NumArgs; ++i) {
+    // Output Arg Type ID
+    Slot = Table.getValSlot(I->getOperand(i)->getType());
+    assert(Slot >= 0 && "No slot number for value!?!?");      
+    output_vbr((unsigned)Slot, Out);
+
+    // Output arg ID itself
+    Slot = Table.getValSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot, Out);
   }
@@ -161,6 +206,10 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
     assert(Slots[1] != -1 && "Cast return type unknown?");
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
+  } else if (I->getOpcode() == Instruction::Call &&  // Handle VarArg calls
+	     I->getOperand(0)->getType()->isMethodType()->isVarArg()) {
+    outputInstrVarArgsCall(I, Table, Type, Out);
+    return false;
   }
 
   // Decide which instruction encoding to use.  This is determined primarily by

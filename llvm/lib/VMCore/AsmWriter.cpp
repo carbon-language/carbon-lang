@@ -107,7 +107,12 @@ bool AssemblyWriter::visitMethod(const Method *M) {
 
 bool AssemblyWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
   // Done printing arguments...
-  if (isMethod) Out << ")\n";
+  if (isMethod) {
+    if (CP.getParentV()->castMethodAsserting()->getType()->
+	isMethodType()->isVarArg())
+      Out << ", ...";  // Output varargs portion of signature!
+    Out << ")\n";
+  }
 
   ModuleAnalyzer::processConstPool(CP, isMethod);
   

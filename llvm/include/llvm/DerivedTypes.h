@@ -24,6 +24,7 @@ public:
 private:
   const Type *ResultType;
   ParamTypes ParamTys;
+  bool isVarArgs;
 
   MethodType(const MethodType &);                   // Do not implement
   const MethodType &operator=(const MethodType &);  // Do not implement
@@ -34,9 +35,10 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   MethodType(const Type *Result, const vector<const Type*> &Params, 
-             const string &Name);
+             bool IsVarArgs, const string &Name);
 public:
 
+  inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ResultType; }
   inline const ParamTypes &getParamTypes() const { return ParamTys; }
 

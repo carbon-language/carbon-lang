@@ -143,8 +143,10 @@ const Type *Type::VoidTy   = new            Type("void"  , VoidTyID),
 //===----------------------------------------------------------------------===//
 
 MethodType::MethodType(const Type *Result, const vector<const Type*> &Params, 
-                       const string &Name) 
-  : Type(Name, MethodTyID), ResultType(Result), ParamTys(Params) {
+                       bool IsVarArgs, const string &Name) 
+  : Type(Name, MethodTyID), ResultType(Result), 
+    ParamTys(Params.begin(), Params.end()-IsVarArgs), 
+    isVarArgs(IsVarArgs) {
 }
 
 ArrayType::ArrayType(const Type *ElType, int NumEl, const string &Name) 
@@ -171,20 +173,23 @@ PointerType::PointerType(const Type *E)
 const MethodType *MethodType::getMethodType(const Type *ReturnType, 
                                             const vector<const Type*> &Params) {
   static vector<const MethodType*> ExistingMethodTypesCache;
+
+  bool IsVarArg = Params.size() && (Params[Params.size()-1] == Type::VoidTy);
+
   for (unsigned i = 0; i < ExistingMethodTypesCache.size(); ++i) {
     const MethodType *T = ExistingMethodTypesCache[i];
-    if (T->getReturnType() == ReturnType) {
+    if (T->getReturnType() == ReturnType && T->isVarArg() == IsVarArg) {
       const ParamTypes &EParams = T->getParamTypes();
-      ParamTypes::const_iterator I = Params.begin(); 
+      ParamTypes::const_iterator I = Params.begin(), EI = Params.end()-IsVarArg;
       ParamTypes::const_iterator J = EParams.begin(); 
-      for (; I != Params.end() && J != EParams.end(); ++I, ++J)
+      for (; I != EI && J != EParams.end(); ++I, ++J)
         if (*I != *J) break;  // These types aren't equal!
 
-      if (I == Params.end() && J == EParams.end()) {
+      if (I == EI && J == EParams.end()) {
 #if TEST_MERGE_TYPES == 2
         ostream_iterator<const Type*> out(cerr, ", ");
         cerr << "Type: \"";
-        copy(Params.begin(), Params.end(), out);
+        copy(Params.begin(), EI, out);
         cerr << "\"\nEquals: \"";
         copy(EParams.begin(), EParams.end(), out);
         cerr << "\"" << endl;
@@ -196,25 +201,26 @@ const MethodType *MethodType::getMethodType(const Type *ReturnType,
 #if TEST_MERGE_TYPES == 2
   ostream_iterator<const Type*> out(cerr, ", ");
   cerr << "Input Types: ";
-  copy(Params.begin(), Params.end(), out);
+  copy(Params.begin(), Params.end()-IsVarArg, out);
   cerr << endl;
 #endif
 
   // Calculate the string name for the new type...
   string Name = ReturnType->getName() + " (";
   for (ParamTypes::const_iterator I = Params.begin();  
-       I != Params.end(); ++I) {
+       I != (Params.end()-IsVarArg); ++I) {
     if (I != Params.begin())
       Name += ", ";
     Name += (*I)->getName();
   }
+  if (IsVarArg) Name += ", ...";
   Name += ")";
 
 #if TEST_MERGE_TYPES
   cerr << "Derived new type: " << Name << endl;
 #endif
 
-  MethodType *Result = new MethodType(ReturnType, Params, Name);
+  MethodType *Result = new MethodType(ReturnType, Params, IsVarArg, Name);
   ExistingMethodTypesCache.push_back(Result);
   return Result;
 }

@@ -111,7 +111,7 @@ public:
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
 public:
-  CallInst(Method *M, vector<Value*> &params, const string &Name = "");
+  CallInst(Method *M, const vector<Value*> &params, const string &Name = "");
 
   virtual const char *getOpcodeName() const { return "call"; }
 
