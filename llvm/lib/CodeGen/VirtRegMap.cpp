@@ -39,12 +39,12 @@ namespace {
 
   cl::opt<SpillerName>
   SpillerOpt("spiller",
-             cl::desc("Spiller to use: (default: local)"),
+             cl::desc("Spiller to use: (default: simple)"),
              cl::Prefix,
              cl::values(clEnumVal(simple, "  simple spiller"),
                         clEnumVal(local,  "  local spiller"),
                         clEnumValEnd),
-             cl::init(local));
+             cl::init(simple));
 }
 
 //===----------------------------------------------------------------------===//
