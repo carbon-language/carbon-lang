@@ -1132,7 +1132,9 @@ are code generators for parts of LLVM infrastructure.</p>
       <tt>hello.bc</tt>. The <tt>hello.bc</tt> is the LLVM bytecode that
       corresponds the the compiled program and the library facilities that it
       required.  <tt>hello</tt> is a simple shell script that runs the bytecode
-      file with <tt>lli</tt>, making the result directly executable.</p></li>
+      file with <tt>lli</tt>, making the result directly executable.  Note that
+      all LLVM optimizations are enabled by default, so there is no need for a 
+      "-O3" switch.</p></li>
 
   <li><p>Run the program. To make sure the program ran, execute one of the
       following commands:</p>
