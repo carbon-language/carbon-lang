@@ -221,10 +221,16 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
+      // Promote the integer to 32 bits.  If the input type is signed use a
+      // sign extend, otherwise use a zero extend.
+      if (Args[i].second->isSigned())
+        Args[i].first = DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
+      else
+        Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
+      break;
     case MVT::i32:
-    case MVT::i64:
-    case MVT::f64:
     case MVT::f32:
+    case MVT::f64:
       break;
     }
     args_to_use.push_back(Args[i].first);
@@ -438,14 +444,33 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
 
-  if (DestType == MVT::f64 || DestType == MVT::f32)
-    return SelectExprFP(N, Result);
-
-  if (N.getOpcode() != ISD::CALL)
+  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::ADD_PARTS &&
+      N.getOpcode() != ISD::SUB_PARTS)
     Reg = Result = (N.getValueType() != MVT::Other) ?
       MakeReg(N.getValueType()) : 1;
-  else
-    abort(); // FIXME: Implement Call
+  else {
+    // If this is a call instruction, make sure to prepare ALL of the result
+    // values as well as the chain.
+    if (N.getOpcode() == ISD::CALL) {
+      if (Node->getNumValues() == 1)
+        Reg = Result = 1;  // Void call, just a chain.
+      else {
+        Result = MakeReg(Node->getValueType(0));
+        ExprMap[N.getValue(0)] = Result;
+        for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
+          ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+        ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
+      }
+    } else {
+      Result = MakeReg(Node->getValueType(0));
+      ExprMap[N.getValue(0)] = Result;
+      for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
+        ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+    }
+  }
+
+  if (DestType == MVT::f64 || DestType == MVT::f32)
+    return SelectExprFP(N, Result);
 
   switch (opcode) {
   default:
@@ -482,10 +507,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::FrameIndex:
     abort();
   
+  case ISD::GlobalAddress: {
+    GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
+    unsigned Tmp1 = MakeReg(MVT::i32);
+    // FIXME: R1 is incorrect, we need the getGlobalBaseReg() functionality
+    // from the simple isel
+    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(PPC::R1).addGlobalAddress(GV);
+    if (GV->hasWeakLinkage() || GV->isExternal()) {
+      BuildMI(BB, PPC::LWZ, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
+    } else {
+      BuildMI(BB, PPC::LA, 2, Result).addReg(Tmp1).addGlobalAddress(GV);
+    }
+    return Result;
+  }
+
   case ISD::LOAD:
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
-  {
+  case ISD::SEXTLOAD: {
     // Make sure we generate both values.
     if (Result != 1)
       ExprMap[N.getValue(1)] = 1;   // Generate the token
@@ -498,22 +537,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     switch (Node->getValueType(0)) {
     default: assert(0 && "Cannot load this type!");
-    case MVT::i1:
-    case MVT::i8:  Opc = PPC::LBZ; break;
-    case MVT::i16: Opc = PPC::LHZ; break;
-    case MVT::i32: Opc = PPC::LWZ; break;
+    case MVT::i1:  Opc = PPC::LBZ; Tmp3 = 0; break;
+    case MVT::i8:  Opc = PPC::LBZ; Tmp3 = 1; break;
+    case MVT::i16: Opc = PPC::LHZ; Tmp3 = 0; break;
+    case MVT::i32: Opc = PPC::LWZ; Tmp3 = 0; break;
     }
     
-    if (Address.getOpcode() == ISD::GlobalAddress) {  // FIXME
-      BuildMI(BB, Opc, 2, Result)
-        .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal())
-        .addReg(PPC::R1);
-    }
-    else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-      BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CP->getIndex())
-        .addReg(PPC::R1);
-    }
-    else if(Address.getOpcode() == ISD::FrameIndex) {
+    if(Address.getOpcode() == ISD::FrameIndex) {
       BuildMI(BB, Opc, 2, Result)
       .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
       .addReg(PPC::R1);
@@ -525,10 +555,93 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
     
-  case ISD::SEXTLOAD:
-  case ISD::GlobalAddress:
-  case ISD::CALL:
-    abort();
+  case ISD::CALL: {
+    // Lower the chain for this call.
+    Select(N.getOperand(0));
+    ExprMap[N.getValue(Node->getNumValues()-1)] = 1;
+      
+    // get the virtual reg for each argument
+    std::vector<unsigned> VRegs;
+    for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
+      VRegs.push_back(SelectExpr(N.getOperand(i)));
+    
+    // The ABI specifies that the first 32 bytes of args may be passed in GPRs,
+    // and that 13 FPRs may also be used for passing any floating point args.
+    int GPR_remaining = 8, FPR_remaining = 13;
+    unsigned GPR_idx = 0, FPR_idx = 0;
+    static const unsigned GPR[] = { 
+      PPC::R3, PPC::R4, PPC::R5, PPC::R6,
+      PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+    };
+    static const unsigned FPR[] = {
+      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, 
+      PPC::F7, PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, 
+      PPC::F13
+    };
+
+    // move the vregs into the appropriate architected register or stack slot
+    for(int i = 0, e = VRegs.size(); i < e; ++i) {
+        unsigned OperandType = N.getOperand(i+2).getValueType();
+        switch(OperandType) {
+        default: 
+          Node->dump(); 
+          N.getOperand(i).Val->dump();
+          std::cerr << "Type for " << i << " is: " << 
+            N.getOperand(i+2).getValueType() << "\n";
+          assert(0 && "Unknown value type for call");
+        case MVT::i1:
+        case MVT::i8:
+        case MVT::i16:
+        case MVT::i32:
+          if (GPR_remaining > 0)
+            BuildMI(BB, PPC::OR, 2, GPR[GPR_idx]).addReg(VRegs[i])
+              .addReg(VRegs[i]);
+          break;
+        case MVT::f32:
+        case MVT::f64:
+          if (FPR_remaining > 0) {
+            BuildMI(BB, PPC::FMR, 1, FPR[FPR_idx]).addReg(VRegs[i]);
+            --FPR_remaining;
+          }
+          break;
+        }
+        // All arguments consume GPRs available for argument passing
+        if (GPR_remaining > 0) --GPR_remaining;
+        if (MVT::f64 == OperandType && GPR_remaining > 0) --GPR_remaining;
+    }
+
+    // Emit the correct call instruction based on the type of symbol called.
+    if (GlobalAddressSDNode *GASD = 
+        dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
+      BuildMI(BB, PPC::CALLpcrel, 1).addGlobalAddress(GASD->getGlobal(), true);
+    } else if (ExternalSymbolSDNode *ESSDN = 
+               dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) {
+      BuildMI(BB, PPC::CALLpcrel, 1).addExternalSymbol(ESSDN->getSymbol(), true);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, PPC::MTCTR, 1).addReg(PPC::R12);
+      BuildMI(BB, PPC::CALLindirect, 3).addImm(20).addImm(0).addReg(PPC::R12);
+    }
+
+    switch (Node->getValueType(0)) {
+    default: assert(0 && "Unknown value type for call result!");
+    case MVT::Other: return 1;
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+      BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R3);
+      if (Node->getValueType(1) == MVT::i32)
+        BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R4);
+      break;
+    case MVT::f32:
+    case MVT::f64:
+      BuildMI(BB, PPC::FMR, 1, Result).addReg(PPC::F1);
+      break;
+    }
+    return Result+N.ResNo;
+  }
 
   case ISD::SIGN_EXTEND:
   case ISD::SIGN_EXTEND_INREG:
@@ -550,9 +663,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, PPC::RLWINM, 5, Result).addReg(Tmp1).addImm(0).addImm(0)
       .addImm(Tmp2).addImm(31);
     return Result;
-    
-  case ISD::SETCC:
-    abort();
     
   case ISD::CopyFromReg:
     if (Result == 1)
@@ -613,14 +723,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         break;
     }
     return Result;
-    
-  case ISD::SUB:
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
-    return Result;
- 
+
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
@@ -655,8 +758,23 @@ unsigned ISel::SelectExpr(SDOperand N) {
         break;
     }
     return Result;
+
+  case ISD::SUB:
+    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
+    return Result;
     
   case ISD::MUL:
+    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::MULLW, 2, Result).addReg(Tmp2).addReg(Tmp1);
+    return Result;
+
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS:
   case ISD::UREM:
   case ISD::SREM:
   case ISD::SDIV:
@@ -667,6 +785,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::FP_TO_SINT:
     abort();
  
+  case ISD::SETCC:
+    abort();
+    
   case ISD::SELECT:
     abort();
 
@@ -776,6 +897,9 @@ void ISel::Select(SDOperand N) {
           BuildMI(BB, PPC::OR, 2, PPC::R3).addReg(Tmp1).addReg(Tmp1);
           break;
       }
+    case 1:
+      Select(N.getOperand(0));
+      break;
     }
     BuildMI(BB, PPC::BLR, 0); // Just emit a 'ret' instruction
     return;
