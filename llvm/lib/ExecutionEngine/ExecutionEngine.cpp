@@ -22,7 +22,7 @@ Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 // value.  This may involve code generation if it's a function.
 //
 void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
-  if (const Function *F = dyn_cast<Function>(GV))
+  if (Function *F = const_cast<Function*>(dyn_cast<Function>(GV)))
     return getPointerToFunction(F);
 
   assert(GlobalAddress[GV] && "Global hasn't had an address allocated yet?");
