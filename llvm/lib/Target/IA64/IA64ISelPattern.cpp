@@ -118,6 +118,12 @@ namespace {
       BuildMI(BB, IA64::MOV, 1, IA64::rp).addReg(RP);
     }
 
+    void restoreSP_RP(MachineBasicBlock* BB)
+    {
+      BuildMI(BB, IA64::MOV, 1, IA64::r12).addReg(SP);
+      BuildMI(BB, IA64::MOV, 1, IA64::rp).addReg(RP);
+    }
+
     void restoreRP(MachineBasicBlock* BB)
     {
       BuildMI(BB, IA64::MOV, 1, IA64::rp).addReg(RP);
@@ -159,9 +165,11 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   unsigned argPreg[8];
   unsigned argOpc[8];
 
-  unsigned used_FPArgs=0; // how many FP args have been used so far?
-  
+  unsigned used_FPArgs = 0; // how many FP args have been used so far?
+ 
+  unsigned ArgOffset = 0;
   int count = 0;
+  
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     {
       SDOperand newroot, argt;
@@ -206,8 +214,9 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 	}
       } else { // more than 8 args go into the frame
 	// Create the frame index object for this incoming parameter...
-	int FI = MFI->CreateFixedObject(8, 16 + 8 * (count - 8));
-        
+	ArgOffset = 16 + 8 * (count - 8);
+	int FI = MFI->CreateFixedObject(8, ArgOffset);
+	  
 	// Create the SelectionDAG nodes corresponding to a load 
 	//from this parameter
 	SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
@@ -218,9 +227,10 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       DAG.setRoot(newroot.getValue(1));
       ArgValues.push_back(argt);
     }    
-	
-// Create a vreg to hold the output of (what will become)
-// the "alloc" instruction
+
+       
+  // Create a vreg to hold the output of (what will become)
+  // the "alloc" instruction
   VirtGPR = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
   BuildMI(&BB, IA64::PSEUDO_ALLOC, 0, VirtGPR);
   // we create a PSEUDO_ALLOC (pseudo)instruction for now
@@ -239,10 +249,29 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   BuildMI(&BB, IA64::MOV, 1, RP).addReg(IA64::rp);
   // ..hmm.
 
-  for (int i = 0; i < count && i < 8; ++i) {
-    BuildMI(&BB, argOpc[i], 1, argVreg[i]).addReg(argPreg[i]);
+  unsigned tempOffset=0;
+ 
+  // if this is a varargs function, we simply lower llvm.va_start by
+  // pointing to the first entry
+  if(F.isVarArg()) {
+    tempOffset=0;
+    VarArgsFrameIndex = MFI->CreateFixedObject(8, tempOffset);
   }
  
+  // here we actually do the moving of args, and store them to the stack
+  // too if this is a varargs function:
+  for (int i = 0; i < count && i < 8; ++i) {
+    BuildMI(&BB, argOpc[i], 1, argVreg[i]).addReg(argPreg[i]);
+    if(F.isVarArg()) {
+      // if this is a varargs function, we copy the input registers to the stack
+      int FI = MFI->CreateFixedObject(8, tempOffset);
+      tempOffset+=8;   //XXX: is it safe to use r22 like this?
+      BuildMI(&BB, IA64::MOV, 1, IA64::r22).addFrameIndex(FI);
+      // FIXME: we should use st8.spill here, one day
+      BuildMI(&BB, IA64::ST8, 1, IA64::r22).addReg(argPreg[i]);
+    }
+  }
+
   return ArgValues;
 }
   
@@ -253,19 +282,26 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
 
   MachineFunction &MF = DAG.getMachineFunction();
 
-// fow now, we are overly-conservative and pretend that all 8
-// outgoing registers (out0-out7) are always used. FIXME
-
-// update comment line 137 of MachineFunction.h
-  MF.getInfo<IA64FunctionInfo>()->outRegsUsed=8;
-  
   unsigned NumBytes = 16;
-  if (Args.size() > 8)
+  unsigned outRegsUsed = 0;
+
+  if (Args.size() > 8) {
     NumBytes += (Args.size() - 8) * 8;
+    outRegsUsed = 8;
+  } else {
+    outRegsUsed = Args.size();
+  }
+ 
+  // FIXME? this WILL fail if we ever try to pass around an arg that
+  // consumes more than a single output slot (a 'real' double, int128
+  // some sort of aggregate etc.), as we'll underestimate how many 'outX'
+  // registers we use. Hopefully, the assembler will notice.
+  MF.getInfo<IA64FunctionInfo>()->outRegsUsed=
+    std::max(outRegsUsed, MF.getInfo<IA64FunctionInfo>()->outRegsUsed);
   
   Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
                         DAG.getConstant(NumBytes, getPointerTy()));
-  
+ 
   std::vector<SDOperand> args_to_use;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
     {
@@ -317,11 +353,25 @@ IA64TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
 std::pair<SDOperand,SDOperand> IA64TargetLowering::
 LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
                const Type *ArgTy, SelectionDAG &DAG) {
- 
-  assert(0 && "LowerVAArgNext not done yet!\n");
-  abort();
+
+  MVT::ValueType ArgVT = getValueType(ArgTy);
+  SDOperand Result;
+  if (!isVANext) {
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
+  } else {
+    unsigned Amt;
+    if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
+      Amt = 8;
+    else {
+      assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
+             "Other types should have been promoted for varargs!");
+      Amt = 8;
+    }
+    Result = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
+                         DAG.getConstant(Amt, VAList.getValueType()));
+  }
+  return std::make_pair(Result, Chain);
 }
-               
 
 std::pair<SDOperand, SDOperand> IA64TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
@@ -469,7 +519,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
                 << " the stack alignment yet!";
       abort();
     }
-  
+ 
+/*    
     Select(N.getOperand(0));
     if (ConstantSDNode* CN = dyn_cast<ConstantSDNode>(N.getOperand(1)))
     {
@@ -487,7 +538,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
       // Subtract size from stack pointer, thereby allocating some space.
       BuildMI(BB, IA64::SUB, 2, IA64::r12).addReg(IA64::r12).addReg(Tmp1);
     }
-
+*/
+    Select(N.getOperand(0));
+    Tmp1 = SelectExpr(N.getOperand(1));
+    // Subtract size from stack pointer, thereby allocating some space.
+    BuildMI(BB, IA64::SUB, 2, IA64::r12).addReg(IA64::r12).addReg(Tmp1);
     // Put a pointer to the space into the result register, by copying the
     // stack pointer.
     BuildMI(BB, IA64::MOV, 1, Result).addReg(IA64::r12);
@@ -569,16 +624,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     unsigned Tmp1 = MakeReg(MVT::i64);
+
     BuildMI(BB, IA64::ADD, 2, Tmp1).addGlobalAddress(GV).addReg(IA64::r1);
-                                                        //r1==GP
     BuildMI(BB, IA64::LD8, 1, Result).addReg(Tmp1);
+
     return Result;
   }
   
   case ISD::ExternalSymbol: {
     const char *Sym = cast<ExternalSymbolSDNode>(N)->getSymbol();
-    assert(0 && "ISD::ExternalSymbol not done yet\n");
-    //XXX BuildMI(BB, IA64::MOV, 1, Result).addExternalSymbol(Sym);
+// assert(0 && "sorry, but what did you want an ExternalSymbol for again?");
+    BuildMI(BB, IA64::MOV, 1, Result).addExternalSymbol(Sym); // XXX
     return Result;
   }
 
@@ -944,7 +1000,8 @@ pC = pA OR pB
       case ISD::UREM:  isModulus=true;  isSigned=false; break;
     }
 
-    unsigned TmpPR=MakeReg(MVT::i1);  // we need a scratch predicate register,
+    unsigned TmpPR=MakeReg(MVT::i1);  // we need two scratch 
+    unsigned TmpPR2=MakeReg(MVT::i1); // predicate registers,
     unsigned TmpF1=MakeReg(MVT::f64); // and one metric truckload of FP regs.
     unsigned TmpF2=MakeReg(MVT::f64); // lucky we have IA64?
     unsigned TmpF3=MakeReg(MVT::f64); // well, the real FIXME is to have
@@ -960,7 +1017,7 @@ pC = pA OR pB
     unsigned TmpF13=MakeReg(MVT::f64);
     unsigned TmpF14=MakeReg(MVT::f64);
     unsigned TmpF15=MakeReg(MVT::f64);
-  
+ 
     // OK, emit some code:
 
     if(!isFP) {
@@ -988,6 +1045,14 @@ pC = pA OR pB
     // FIXME: or at least, it should!!
     BuildMI(BB, IA64::FRCPAS1FLOAT, 2, TmpF5).addReg(TmpF3).addReg(TmpF4);
     BuildMI(BB, IA64::FRCPAS1PREDICATE, 2, TmpPR).addReg(TmpF3).addReg(TmpF4);
+
+    if(!isModulus) { // if this is a divide, we worry about div-by-zero
+      unsigned bogusPR=MakeReg(MVT::i1); // won't appear, due to twoAddress
+                                       // TPCMPNE below
+      BuildMI(BB, IA64::CMPEQ, 2, bogusPR).addReg(IA64::r0).addReg(IA64::r0);
+      BuildMI(BB, IA64::TPCMPNE, 3, TmpPR2).addReg(bogusPR)
+	.addReg(IA64::r0).addReg(IA64::r0).addReg(TmpPR);
+    }
 
     // now we apply newton's method, thrice! (FIXME: this is ~72 bits of
     // precision, don't need this much for f32/i32)
@@ -1023,8 +1088,16 @@ pC = pA OR pB
     }
 
     if(!isModulus) {
-      if(isFP)
-	BuildMI(BB, IA64::FMOV, 1, Result).addReg(TmpF15);
+      if(isFP) { // extra worrying about div-by-zero
+      unsigned bogoResult=MakeReg(MVT::f64);
+
+      // we do a 'conditional fmov' (of the correct result, depending
+      // on how the frcpa predicate turned out)
+      BuildMI(BB, IA64::PFMOV, 2, bogoResult)
+	.addReg(TmpF12).addReg(TmpPR2); 
+      BuildMI(BB, IA64::CFMOV, 2, Result)
+	.addReg(bogoResult).addReg(TmpF15).addReg(TmpPR);
+      }
       else
 	BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TmpF15);
     } else { // this is a modulus
@@ -1329,6 +1402,7 @@ pC = pA OR pB
 	  case MVT::f64:
 	    BuildMI(BB, IA64::FMOV, 1, FPArgs[used_FPArgs++])
 	      .addReg(argvregs[i]);
+	    // FIXME: we don't need to do this _all_ the time:
 	    BuildMI(BB, IA64::GETFD, 1, intArgs[i]).addReg(argvregs[i]);
 	    break;
 	  }
@@ -1363,6 +1437,9 @@ pC = pA OR pB
           break;
         }
       }
+
+      /*  XXX we want to re-enable direct branches! crippling them now
+       *  to stress-test indirect branches.: 
     //build the right kind of call
     if (GlobalAddressSDNode *GASD =
                dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
@@ -1370,23 +1447,43 @@ pC = pA OR pB
 	BuildMI(BB, IA64::BRCALL, 1).addGlobalAddress(GASD->getGlobal(),true);
 	IA64Lowering.restoreGP_SP_RP(BB);
       }
-
-    else if (ExternalSymbolSDNode *ESSDN =
+             ^^^^^^^^^^^^^ we want this code one day XXX */ 
+    if (ExternalSymbolSDNode *ESSDN =
 	     dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
-      {
-	BuildMI(BB, IA64::BRCALL, 0)
+      { // FIXME : currently need this case for correctness, to avoid
+	// "non-pic code with imm relocation against dynamic symbol" errors
+	BuildMI(BB, IA64::BRCALL, 1)
 	  .addExternalSymbol(ESSDN->getSymbol(), true);
 	IA64Lowering.restoreGP_SP_RP(BB);
       }
     else {
-      // no need to restore GP as we are doing an indirect call
       Tmp1 = SelectExpr(N.getOperand(1));
-      // b6 is a scratch branch register, we load the target:
-      BuildMI(BB, IA64::MOV, 1, IA64::B6).addReg(Tmp1);
+
+      unsigned targetEntryPoint=MakeReg(MVT::i64);
+      unsigned targetGPAddr=MakeReg(MVT::i64);
+      unsigned currentGP=MakeReg(MVT::i64);
+      
+      // b6 is a scratch branch register, we load the target entry point
+      // from the base of the function descriptor
+      BuildMI(BB, IA64::LD8, 1, targetEntryPoint).addReg(Tmp1);
+      BuildMI(BB, IA64::MOV, 1, IA64::B6).addReg(targetEntryPoint);
+
+      // save the current GP:
+      BuildMI(BB, IA64::MOV, 1, currentGP).addReg(IA64::r1);
+     
+      /* TODO: we need to make sure doing this never, ever loads a
+       * bogus value into r1 (GP). */
+      // load the target GP (which is at mem[functiondescriptor+8])
+      BuildMI(BB, IA64::ADDIMM22, 2, targetGPAddr)
+	.addReg(Tmp1).addImm(8); // FIXME: addimm22? why not postincrement ld
+      BuildMI(BB, IA64::LD8, 1, IA64::r1).addReg(targetGPAddr);
+
       // and then jump: (well, call)
       BuildMI(BB, IA64::BRCALL, 1).addReg(IA64::B6);
-      IA64Lowering.restoreGP_SP_RP(BB);
-  }
+      // and finally restore the old GP
+      BuildMI(BB, IA64::MOV, 1, IA64::r1).addReg(currentGP);
+      IA64Lowering.restoreSP_RP(BB);
+    }
 
     switch (Node->getValueType(0)) {
     default: assert(0 && "Unknown value type for call result!");

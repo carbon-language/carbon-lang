@@ -77,7 +77,9 @@ INFO:
 
 KNOWN DEFECTS AT THE CURRENT TIME:
 
-  - no varargs
+  - C++ vtables contain naked function pointers, not function descriptors,
+  which is bad. see http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=406
+  - varargs are broken
   - alloca doesn't work (indeed, stack frame layout is bogus)
   - no support for big-endian environments
   - (not really the backend, but...) the CFE has some issues on IA64.
