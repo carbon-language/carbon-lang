@@ -588,6 +588,10 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 				       const BasicBlock *BB,
 				       const unsigned OpNum) {
 
+  assert(! TM.getInstrInfo().isCall(MInst->getOpCode()) &&
+	 (! TM.getInstrInfo().isReturn(MInst->getOpCode())) &&
+	 "Arg of a call/ret must be handled elsewhere");
+
   MachineOperand& Op = MInst->getOperand(OpNum);
   bool isDef =  MInst->operandIsDefined(OpNum);
   unsigned RegType = MRI.getRegType( LR );
@@ -600,12 +604,9 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     mcInfo.pushTempValue(TM, 8 /* TM.findOptimalStorageSize(LR->getType()) */);
   
   MachineInstr *MIBef=NULL,  *AdIMid=NULL, *MIAft=NULL;
-  int TmpReg;
-
-  TmpReg = getUsableRegAtMI(RC, RegType, MInst,LVSetBef, MIBef, MIAft);
-  TmpReg = MRI.getUnifiedRegNum( RC->getID(), TmpReg );
-
-
+  
+  int TmpRegU = getUsableUniRegAtMI(RC, RegType, MInst,LVSetBef, MIBef, MIAft);
+  
   // get the added instructions for this instruciton
   AddedInstrns *AI = AddedInstrMap[ MInst ];
   if ( !AI ) { 
@@ -613,15 +614,14 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AddedInstrMap[ MInst ] = AI;
   }
 
-  
-  
+    
   if( !isDef ) {
 
     // for a USE, we have to load the value of LR from stack to a TmpReg
     // and use the TmpReg as one operand of instruction
 
     // actual loading instruction
-    AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpReg, RegType);
+    AdIMid = MRI.cpMem2RegMI(MRI.getFramePointer(), SpillOff, TmpRegU,RegType);
 
     if( MIBef )
       (AI->InstrnsBefore).push_back(MIBef);
@@ -639,7 +639,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     // on the stack position allocated for this LR
 
     // actual storing instruction
-    AdIMid = MRI.cpReg2MemMI(TmpReg, MRI.getFramePointer(), SpillOff, RegType);
+    AdIMid = MRI.cpReg2MemMI(TmpRegU, MRI.getFramePointer(), SpillOff,RegType);
 
     if( MIBef )
       (AI->InstrnsBefore).push_back(MIBef);
@@ -658,7 +658,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   cerr <<  *AdIMid;
   if( MIAft ) cerr <<  *MIAft;
 
-  Op.setRegForValue( TmpReg );    // set the opearnd
+  Op.setRegForValue( TmpRegU );    // set the opearnd
 
 
 }
@@ -677,17 +677,17 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 // Returned register number is the UNIFIED register number
 //----------------------------------------------------------------------------
 
-int PhyRegAlloc::getUsableRegAtMI(RegClass *RC, 
+int PhyRegAlloc::getUsableUniRegAtMI(RegClass *RC, 
 				  const int RegType,
 				  const MachineInstr *MInst, 
 				  const LiveVarSet *LVSetBef,
 				  MachineInstr *MIBef,
 				  MachineInstr *MIAft) {
 
-  int Reg =  getUnusedRegAtMI(RC, MInst, LVSetBef);
-  Reg = MRI.getUnifiedRegNum(RC->getID(), Reg);
+  int RegU =  getUnusedUniRegAtMI(RC, MInst, LVSetBef);
 
-  if( Reg != -1) {
+
+  if( RegU != -1) {
     // we found an unused register, so we can simply use it
     MIBef = MIAft = NULL;
   }
@@ -698,12 +698,12 @@ int PhyRegAlloc::getUsableRegAtMI(RegClass *RC,
     /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
     int TmpOff = mcInfo.pushTempValue(TM, /*size*/ 8);
     
-    Reg = getRegNotUsedByThisInst(RC, MInst);
-    MIBef = MRI.cpReg2MemMI(Reg, MRI.getFramePointer(), TmpOff, RegType );
-    MIAft = MRI.cpMem2RegMI(MRI.getFramePointer(), TmpOff, Reg, RegType );
+    RegU = getUniRegNotUsedByThisInst(RC, MInst);
+    MIBef = MRI.cpReg2MemMI(RegU, MRI.getFramePointer(), TmpOff, RegType );
+    MIAft = MRI.cpMem2RegMI(MRI.getFramePointer(), TmpOff, RegU, RegType );
   }
 
-  return Reg;
+  return RegU;
 }
 
 //----------------------------------------------------------------------------
@@ -716,7 +716,7 @@ int PhyRegAlloc::getUsableRegAtMI(RegClass *RC,
 // Return register number is relative to the register class. NOT
 // unified number
 //----------------------------------------------------------------------------
-int PhyRegAlloc::getUnusedRegAtMI(RegClass *RC, 
+int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC, 
 				  const MachineInstr *MInst, 
 				  const LiveVarSet *LVSetBef) {
 
@@ -724,7 +724,7 @@ int PhyRegAlloc::getUnusedRegAtMI(RegClass *RC,
   
   bool *IsColorUsedArr = RC->getIsColorUsedArr();
   
-  for(unsigned i=0; i <  NumAvailRegs; i++)
+  for(unsigned i=0; i <  NumAvailRegs; i++)     // Reset array
       IsColorUsedArr[i] = false;
       
   LiveVarSet::const_iterator LIt = LVSetBef->begin();
@@ -746,19 +746,49 @@ int PhyRegAlloc::getUnusedRegAtMI(RegClass *RC,
   // and it received some register temporarily. If that's the case,
   // it is recorded in machine operand. We must skip such registers.
 
-  setRegsUsedByThisInst(RC, MInst);
+  setRelRegsUsedByThisInst(RC, MInst);
 
   unsigned c;                         // find first unused color
   for( c=0; c < NumAvailRegs; c++)  
      if( ! IsColorUsedArr[ c ] ) break;
    
   if(c < NumAvailRegs) 
-    return c;
+    return  MRI.getUnifiedRegNum(RC->getID(), c);
   else 
     return -1;
 
 
 }
+
+
+//----------------------------------------------------------------------------
+// Get any other register in a register class, other than what is used
+// by operands of a machine instruction. Returns the unified reg number.
+//----------------------------------------------------------------------------
+int PhyRegAlloc::getUniRegNotUsedByThisInst(RegClass *RC, 
+					 const MachineInstr *MInst) {
+
+  bool *IsColorUsedArr = RC->getIsColorUsedArr();
+  unsigned NumAvailRegs =  RC->getNumOfAvailRegs();
+
+
+  for(unsigned i=0; i < NumAvailRegs ; i++)   // Reset array
+    IsColorUsedArr[i] = false;
+
+  setRelRegsUsedByThisInst(RC, MInst);
+
+  unsigned c;                         // find first unused color
+  for( c=0; c <  RC->getNumOfAvailRegs(); c++)  
+     if( ! IsColorUsedArr[ c ] ) break;
+   
+  if(c < NumAvailRegs) 
+    return  MRI.getUnifiedRegNum(RC->getID(), c);
+  else 
+    assert( 0 && "FATAL: No free register could be found in reg class!!");
+
+}
+
+
 
 
 
@@ -767,7 +797,7 @@ int PhyRegAlloc::getUnusedRegAtMI(RegClass *RC,
 // It sets the bits corresponding to the registers used by this machine
 // instructions. Both explicit and implicit operands are set.
 //----------------------------------------------------------------------------
-void PhyRegAlloc::setRegsUsedByThisInst(RegClass *RC, 
+void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, 
 				       const MachineInstr *MInst ) {
 
  bool *IsColorUsedArr = RC->getIsColorUsedArr();
@@ -781,8 +811,8 @@ void PhyRegAlloc::setRegsUsedByThisInst(RegClass *RC,
 
       const Value *const Val =  Op.getVRegValue();
 
-      if( !Val ) 
-	if( MRI.getRegClassIDOfValue( Val )== RC->getID() ) {   
+      if( Val ) 
+	if( MRI.getRegClassIDOfValue(Val) == RC->getID() ) {   
 	  int Reg;
 	  if( (Reg=Op.getAllocatedRegNum()) != -1) {
 	    IsColorUsedArr[ Reg ] = true;
@@ -822,32 +852,6 @@ void PhyRegAlloc::setRegsUsedByThisInst(RegClass *RC,
 
 
 
-//----------------------------------------------------------------------------
-// Get any other register in a register class, other than what is used
-// by operands of a machine instruction.
-//----------------------------------------------------------------------------
-int PhyRegAlloc::getRegNotUsedByThisInst(RegClass *RC, 
-					 const MachineInstr *MInst) {
-
-  bool *IsColorUsedArr = RC->getIsColorUsedArr();
-  unsigned NumAvailRegs =  RC->getNumOfAvailRegs();
-
-
-  for(unsigned i=0; i < NumAvailRegs ; i++)
-    IsColorUsedArr[i] = false;
-
-  setRegsUsedByThisInst(RC, MInst);
-
-  unsigned c;                         // find first unused color
-  for( c=0; c <  RC->getNumOfAvailRegs(); c++)  
-     if( ! IsColorUsedArr[ c ] ) break;
-   
-  if(c < NumAvailRegs) 
-    return c;
-  else 
-    assert( 0 && "FATAL: No free register could be found in reg class!!");
-
-}
 
 
 
@@ -950,6 +954,18 @@ void PhyRegAlloc::printMachineCode()
 	    const int RegNum = Op.getAllocatedRegNum();
 
 	    cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
+	    if (Val->hasName() )
+	      cout << "(" << Val->getName() << ")";
+	    else 
+	      cout << "(" << Val << ")";
+
+	    if( Op.opIsDef() )
+	      cout << "*";
+
+	    const LiveRange *LROfVal = LRI.getLiveRangeForValue(Val);
+	    if( LROfVal )
+	      if( LROfVal->hasSpillOffset() )
+		cout << "$";
 	  }
 
 	} 
@@ -1195,8 +1211,13 @@ void PhyRegAlloc::allocateRegisters()
     printMachineCode();                   // only for DEBUGGING
   }
 
-  //char ch;
-  //cin >> ch;
+  /*  
+  printMachineCode();                   // only for DEBUGGING
+
+  cout << "\nAllocted for method " <<  Meth->getName();
+  char ch;
+  cin >> ch;
+  */
 
 }
 
