@@ -6,19 +6,27 @@ This directory houses a 32-bit SPARC V8 backend employing a expander-based
 instruction selector.  It is not yet functionally complete.  Watch
 this space for more news coming soon!
 
-Current shootout results as of 28-Sept-2004
--------------------------------------------
+Current expected test failures
+------------------------------
 
-Working: ackermann fib2 hash hello lists matrix methcall nestedloop
-         sieve strcat random ary3 
-Broken: heapsort (and objinst??)
+SingleSource/Benchmarks: 
+fldry heapsort objinst Oscar Queens chomp misr pi whetstone
+
+SingleSource/UnitTests:
+C++Catch SimpleC++Test 2002-05-02-ArgumentTest 2002-05-02-ManyArguments
+2002-05-03-NotTest 2002-05-19-DivTest 2002-10-12-StructureArgs
+2002-10-12-StructureArgsSimple 2003-05-07-VarArgs 2003-05-26-Shorts
+2003-05-31-CastToBool 2003-05-31-LongShifts 2003-07-09-LoadShorts
+2003-07-09-SignedArgs 2003-08-05-CastFPToUint 2003-08-11-VaListArg
+StructModifyTest
 
 To-do
 -----
 
-* support ADJCALLSTACK{UP,DOWN} pseudoinstrs around calls
 * support calling functions with more than 6 args
 * support 64-bit integer (long, ulong) arguments to functions
+  - use libc procedures instead of open-coding for:
+    __div64 __mul64 __rem64 __udiv64 __umul64 __urem64
 * support setcc on longs
 * support basic binary operations on longs
 * support casting <=32-bit integers, bools to long
