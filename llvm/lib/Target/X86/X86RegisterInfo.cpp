@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetOptions.h"
 #include "Support/CommandLine.h"
 #include "Support/STLExtras.h"
 #include <iostream>

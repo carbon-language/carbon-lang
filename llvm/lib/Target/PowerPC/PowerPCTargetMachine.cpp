@@ -14,7 +14,7 @@
 #include "PowerPC.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
@@ -23,14 +23,6 @@ using namespace llvm;
 namespace {
   // Register the target.
   RegisterTarget<PowerPCTargetMachine> X("powerpc", "  PowerPC (experimental)");
-}
-
-// allocatePowerPCTargetMachine - Allocate and return a subclass of 
-// TargetMachine that implements the PowerPC backend.
-//
-TargetMachine *llvm::allocatePowerPCTargetMachine(const Module &M,
-                                                  IntrinsicLowering *IL) {
-  return new PowerPCTargetMachine(M, IL);
 }
 
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model

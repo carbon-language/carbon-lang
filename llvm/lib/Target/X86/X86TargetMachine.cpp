@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
@@ -39,14 +39,6 @@ namespace {
 
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
-}
-
-// allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
-// that implements the X86 backend.
-//
-TargetMachine *llvm::allocateX86TargetMachine(const Module &M,
-                                              IntrinsicLowering *IL) {
-  return new X86TargetMachine(M, IL);
 }
 
 unsigned X86TargetMachine::getJITMatchQuality() {

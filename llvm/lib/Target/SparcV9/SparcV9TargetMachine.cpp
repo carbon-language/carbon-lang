@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "MappingInfo.h" 
@@ -287,11 +287,3 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Final code:\n"));
 }
 
-/// allocateSparcV9TargetMachine - Allocate and return a subclass of
-/// TargetMachine that implements the SparcV9 backend. (the
-/// llvm/CodeGen/SparcV9.h interface)
-///
-TargetMachine *llvm::allocateSparcV9TargetMachine(const Module &M,
-                                                IntrinsicLowering *IL) {
-  return new SparcV9TargetMachine(M, IL);
-}

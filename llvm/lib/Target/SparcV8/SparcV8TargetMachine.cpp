@@ -16,7 +16,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetMachineImpls.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include <iostream>
@@ -25,14 +25,6 @@ using namespace llvm;
 namespace {
   // Register the target.
   RegisterTarget<SparcV8TargetMachine> X("sparcv8","  SPARC V8 (experimental)");
-}
-
-// allocateSparcV8TargetMachine - Allocate and return a subclass of 
-// TargetMachine that implements the SparcV8 backend.
-//
-TargetMachine *llvm::allocateSparcV8TargetMachine(const Module &M,
-                                                  IntrinsicLowering *IL) {
-  return new SparcV8TargetMachine(M, IL);
 }
 
 /// SparcV8TargetMachine ctor - Create an ILP32 architecture model
