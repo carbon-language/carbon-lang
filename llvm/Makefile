@@ -15,17 +15,21 @@ DIRS += runtime
 OPTIONAL_DIRS = examples projects
 endif
 
-EXTRA_DIST := llvm.spec include configure \
-	      autoconf/AutoRegen.sh autoconf/LICENSE.TXT autoconf/README.TXT \
-	      autoconf/aclocal.m4 autoconf/config.guess autoconf/config.sub \
-	      autoconf/configure.ac autoconf/depcomp autoconf/install-sh \
-	      autoconf/ltmain.sh autoconf/missing autoconf/mkinstalldirs \
-	      autoconf/m4
+EXTRA_DIST := test llvm.spec include
+
 include $(LEVEL)/Makefile.common
 
 dist-hook::
 	@$(ECHO) Eliminating CVS directories from distribution
 	$(VERB) rm -rf `find $(TopDistDir) -type d -name CVS -print`
+	@$(ECHO) Eliminating files constructed by configure
+	$(VERB) rm -f \
+	  $(TopDistDir)/include/llvm/ADT/hash_map  \
+	  $(TopDistDir)/include/llvm/ADT/hash_set  \
+	  $(TopDistDir)/include/llvm/ADT/iterator  \
+	  $(TopDistDir)/include/llvm/Config/config.h  \
+	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
+	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
 test :: all
 	cd test; $(MAKE)
