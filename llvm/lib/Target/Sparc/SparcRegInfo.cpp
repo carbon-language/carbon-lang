@@ -1174,7 +1174,7 @@ UltraSparcRegInfo::insertCallerSavingCode
  const BasicBlock *BB,
  PhyRegAlloc &PRA) const
 {
-  assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
+  assert(target.getInstrInfo().isCall(CallMI->getOpCode()));
   
   // has set to record which registers were saved/restored
   //
@@ -1182,14 +1182,14 @@ UltraSparcRegInfo::insertCallerSavingCode
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
   
-  //if the call is to a instrumentation function, do not
-  //insert save and restore instructions
-  //the instrumentation function takes care of
-  //save restore for volatile regs
-  bool isLLVMFirstTrigger = false;
-  const Function *calledFunction = argDesc->getCallInst()->getCalledFunction();
-  if(calledFunction && calledFunction->getName() == "llvm_first_trigger")
-    isLLVMFirstTrigger = true;
+  // if the call is to a instrumentation function, do not insert save and
+  // restore instructions the instrumentation function takes care of save
+  // restore for volatile regs.
+  //
+  // FIXME: this should be made general, not specific to the reoptimizer!
+  //
+  const Function *Callee = argDesc->getCallInst()->getCalledFunction();
+  bool isLLVMFirstTrigger = Callee && Callee->getName() == "llvm_first_trigger";
 
   // Now check if the call has a return value (using argDesc) and if so,
   // find the LR of the TmpInstruction representing the return value register.
