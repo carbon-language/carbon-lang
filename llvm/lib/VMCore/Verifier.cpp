@@ -69,6 +69,11 @@ namespace {  // Anonymous namespace for class
     }
 
     bool doFinalization(Module *M) {
+      // Scan through, checking all of the external function's linkage now...
+      for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+        if ((*I)->isExternal() && (*I)->hasInternalLinkage())
+          CheckFailed("", "Function Declaration has Internal Linkage!", (*I));
+
       if (Broken) {
         cerr << "Broken module found, compilation aborted!\n";
         abort();
@@ -135,11 +140,8 @@ void Verifier::verifySymbolTable(SymbolTable *ST) {
 //
 void Verifier::visitFunction(Function *F) {
   if (F->isExternal()) return;
-  verifySymbolTable(F->getSymbolTable());
 
-  // Check linkage of function...
-  Assert1(!F->isExternal() || F->hasExternalLinkage(),
-          "Function cannot be an 'internal' 'declare'ation!", F);
+  verifySymbolTable(F->getSymbolTable());
 
   // Check function arguments...
   const FunctionType *FT = F->getFunctionType();
