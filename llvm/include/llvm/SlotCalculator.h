@@ -29,32 +29,37 @@ class Value;
 class Module;
 class Function;
 class SymbolTable;
+class ConstantArray;
 
 class SlotCalculator {
   const Module *TheModule;
 
-  // BuildBytecodeInfo - If true, this is the creating information for the
-  // bytecode writer, if false, we are building information for the assembly
-  // emitter.  The assembly emitter doesn't need named objects numbered, among
-  // other differences.
+  /// BuildBytecodeInfo - If true, this is the creating information for the
+  /// bytecode writer, if false, we are building information for the assembly
+  /// emitter.  The assembly emitter doesn't need named objects numbered, among
+  /// other differences.
   bool BuildBytecodeInfo;
 
   typedef std::vector<const Value*> TypePlane;
   std::vector<TypePlane> Table;
-  std::map<const Value *, unsigned> NodeMap;
+  std::map<const Value*, unsigned> NodeMap;
 
-  // ModuleLevel - Used to keep track of which values belong to the module,
-  // and which values belong to the currently incorporated function.
-  //
+  /// ConstantStrings - If we are indexing for a bytecode file, this keeps track
+  /// of all of the constants strings that need to be emitted.
+  std::vector<const ConstantArray*> ConstantStrings;
+
+  /// ModuleLevel - Used to keep track of which values belong to the module,
+  /// and which values belong to the currently incorporated function.
+  ///
   std::vector<unsigned> ModuleLevel;
 
 public:
   SlotCalculator(const Module *M, bool BuildBytecodeInfo);
   // Start out in incorp state
-  SlotCalculator(const Function *M, bool BuildBytecodeInfo);
-  inline ~SlotCalculator() {}
+  SlotCalculator(const Function *F, bool BuildBytecodeInfo);
   
-  // getSlot returns < 0 on error!
+  /// getSlot returns < 0 on error!
+  ///
   int getSlot(const Value *D) const;
 
   inline unsigned getNumPlanes() const { return Table.size(); }
@@ -66,11 +71,19 @@ public:
     return Table[Plane]; 
   }
 
-  // If you'd like to deal with a function, use these two methods to get its
-  // data into the SlotCalculator!
-  //
+  /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
+  /// use these two methods to get its data into the SlotCalculator!
+  ///
   void incorporateFunction(const Function *F);
   void purgeFunction();
+
+  /// string_iterator/string_begin/end - Access the list of module-level
+  /// constant strings that have been incorporated.  This is only applicable to
+  /// bytecode files.
+  typedef std::vector<const ConstantArray*>::const_iterator string_iterator;
+  string_iterator string_begin() const { return ConstantStrings.begin(); }
+  string_iterator string_end() const   { return ConstantStrings.end(); }
+
 
 protected:
   // getOrCreateSlot - Values can be crammed into here at will... if
