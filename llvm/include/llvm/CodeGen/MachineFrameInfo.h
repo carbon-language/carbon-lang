@@ -197,10 +197,9 @@ public:
   }
 
   /// CreateStackObject - Create a stack object for a value of the specified
-  /// LLVM type or register class.
+  /// LLVM type.
   ///
   int CreateStackObject(const Type *Ty, const TargetData &TD);
-  int CreateStackObject(const TargetRegisterClass *RC);
 
   /// CreateVariableSizedObject - Notify the MachineFrameInfo object that a
   /// variable sized object has been created.  This must be created whenever a
