@@ -9,12 +9,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
@@ -42,7 +43,8 @@ bool InlineFunction(CallInst *CI) {
   // immediately before the call.  The original basic block now ends with an
   // unconditional branch to NewBB, and NewBB starts with the call instruction.
   //
-  BasicBlock *NewBB = OrigBB->splitBasicBlock(CI);
+  BasicBlock *NewBB = OrigBB->splitBasicBlock(CI,
+                                              CalledFunc->getName()+".entry");
   NewBB->setName(OrigBB->getName()+".split");
 
   // Remove (unlink) the CallInst from the start of the new basic block.  
@@ -160,5 +162,16 @@ bool InlineFunction(CallInst *CI) {
   Caller->getBasicBlockList().splice(NewBB, Caller->getBasicBlockList(), 
                                      LastBlock, Caller->end());
 
+  // We should always be able to fold the entry block of the function into the
+  // single predecessor of the block...
+  assert(cast<BranchInst>(Br)->isUnconditional() && "splitBasicBlock broken!");
+  BasicBlock *CalleeEntry = cast<BranchInst>(Br)->getSuccessor(0);
+  SimplifyCFG(CalleeEntry);
+  
+  // Okay, continue the CFG cleanup.  It's often the case that there is only a
+  // single return instruction in the callee function.  If this is the case,
+  // then we have an unconditional branch from the return block to the 'NewBB'.
+  // Check for this case, and eliminate the branch is possible.
+  SimplifyCFG(NewBB);
   return true;
 }
