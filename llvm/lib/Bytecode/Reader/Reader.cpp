@@ -559,7 +559,7 @@ Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
 }
 
 
-Module *ParseBytecodeBuffer(const uchar *Buffer, unsigned Length) {
+Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length) {
   BytecodeParser Parser;
   return Parser.ParseBytecode(Buffer, Buffer+Length);
 }
