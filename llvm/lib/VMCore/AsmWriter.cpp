@@ -607,17 +607,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Loop over the arguments, printing them...
   const FunctionType *FT = F->getFunctionType();
 
-  if (!F->isExternal()) {
-    for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
-      printArgument(I);
-  } else {
-    // Loop over the arguments, printing them...
-    for (FunctionType::ParamTypes::const_iterator I = FT->getParamTypes().begin(),
-	   E = FT->getParamTypes().end(); I != E; ++I) {
-      if (I != FT->getParamTypes().begin()) Out << ", ";
-      printType(*I);
-    }
-  }
+  for(Function::const_aiterator I = F->abegin(), E = F->aend(); I != E; ++I)
+    printArgument(I);
 
   // Finish printing arguments...
   if (FT->isVarArg()) {

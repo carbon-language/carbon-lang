@@ -193,32 +193,30 @@ void Verifier::verifySymbolTable(SymbolTable *ST) {
 // visitFunction - Verify that a function is ok.
 //
 void Verifier::visitFunction(Function &F) {
-  if (F.isExternal()) return;
-
-  verifySymbolTable(F.getSymbolTable());
-
   // Check function arguments...
   const FunctionType *FT = F.getFunctionType();
   unsigned NumArgs = F.getArgumentList().size();
 
   Assert2(!FT->isVarArg(), "Cannot define varargs functions in LLVM!", &F, FT);
-  Assert2(FT->getParamTypes().size() == NumArgs,
+  Assert2(FT->getNumParams() == NumArgs,
           "# formal arguments must match # of arguments for function type!",
           &F, FT);
 
   // Check that the argument values match the function type for this function...
-  if (FT->getParamTypes().size() == NumArgs) {
-    unsigned i = 0;
-    for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++i)
-      Assert2(I->getType() == FT->getParamType(i),
-              "Argument value does not match function argument type!",
-              I, FT->getParamType(i));
-  }
+  unsigned i = 0;
+  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++i)
+    Assert2(I->getType() == FT->getParamType(i),
+            "Argument value does not match function argument type!",
+            I, FT->getParamType(i));
 
-  // Check the entry node
-  BasicBlock *Entry = &F.getEntryNode();
-  Assert1(pred_begin(Entry) == pred_end(Entry),
-          "Entry block to function must not have predecessors!", Entry);
+  if (!F.isExternal()) {
+    verifySymbolTable(F.getSymbolTable());
+
+    // Check the entry node
+    BasicBlock *Entry = &F.getEntryNode();
+    Assert1(pred_begin(Entry) == pred_end(Entry),
+            "Entry block to function must not have predecessors!", Entry);
+  }
 }
 
 

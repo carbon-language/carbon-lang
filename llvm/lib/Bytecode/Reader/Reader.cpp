@@ -270,14 +270,13 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   BCR_TRACE(2, "METHOD TYPE: " << MTy << "\n");
 
   const FunctionType::ParamTypes &Params = MTy->getParamTypes();
+  Function::aiterator AI = M->abegin();
   for (FunctionType::ParamTypes::const_iterator It = Params.begin();
-       It != Params.end(); ++It) {
-    Argument *FA = new Argument(*It);
-    if (insertValue(FA, Values) == -1) {
+       It != Params.end(); ++It, ++AI) {
+    if (insertValue(AI, Values) == -1) {
       Error = "Error reading method arguments!\n";
       delete M; return true; 
     }
-    M->getArgumentList().push_back(FA);
   }
 
   while (Buf < EndBuf) {
@@ -357,10 +356,6 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   // We don't need the placeholder anymore!
   delete FunctionPHolder;
-
-  // If the method is empty, we don't need the method argument entries...
-  if (M->isExternal())
-    M->getArgumentList().clear();
 
   ResolveReferencesToValue(M, MethSlot);
 

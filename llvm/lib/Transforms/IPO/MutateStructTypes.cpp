@@ -317,10 +317,10 @@ void MutateStructTypes::transformFunction(Function *m) {
   Function *NewMeth = cast<Function>(GMI->second);
 
   // Okay, first order of business, create the arguments...
-  for (Function::aiterator I = m->abegin(), E = m->aend(); I != E; ++I) {
-    Argument *NFA = new Argument(ConvertType(I->getType()), I->getName());
-    NewMeth->getArgumentList().push_back(NFA);
-    LocalValueMap[I] = NFA; // Keep track of value mapping
+  for (Function::aiterator I = m->abegin(), E = m->aend(),
+         DI = NewMeth->abegin(); I != E; ++I, ++DI) {
+    DI->setName(I->getName());
+    LocalValueMap[I] = DI; // Keep track of value mapping
   }
 
 

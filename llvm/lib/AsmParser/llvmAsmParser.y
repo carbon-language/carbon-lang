@@ -602,7 +602,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %union {
   Module                           *ModuleVal;
   Function                         *FunctionVal;
-  std::pair<Argument*, char*>      *ArgVal;
+  std::pair<PATypeHolder*, char*>  *ArgVal;
   BasicBlock                       *BasicBlockVal;
   TerminatorInst                   *TermInstVal;
   Instruction                      *InstVal;
@@ -612,7 +612,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   PATypeHolder                     *TypeVal;
   Value                            *ValueVal;
 
-  std::list<std::pair<Argument*,char*> > *ArgList;
+  std::vector<std::pair<PATypeHolder*,char*> > *ArgList;
   std::vector<Value*>              *ValueList;
   std::list<PATypeHolder>          *TypeList;
   std::list<std::pair<Value*,
@@ -1174,27 +1174,32 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
 OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; };
 
 ArgVal : Types OptVAR_ID {
-  $$ = new pair<Argument*, char*>(new Argument(*$1), $2);
-  delete $1;  // Delete the type handle..
+  if (*$1 == Type::VoidTy)
+    ThrowException("void typed arguments are invalid!");
+  $$ = new pair<PATypeHolder*, char*>($1, $2);
 };
 
-ArgListH : ArgVal ',' ArgListH {
-    $$ = $3;
-    $3->push_front(*$1);
-    delete $1;
+ArgListH : ArgListH ',' ArgVal {
+    $$ = $1;
+    $1->push_back(*$3);
+    delete $3;
   }
   | ArgVal {
-    $$ = new list<pair<Argument*,char*> >();
-    $$->push_front(*$1);
+    $$ = new vector<pair<PATypeHolder*,char*> >();
+    $$->push_back(*$1);
     delete $1;
-  }
-  | DOTDOTDOT {
-    $$ = new list<pair<Argument*, char*> >();
-    $$->push_front(pair<Argument*,char*>(new Argument(Type::VoidTy), 0));
   };
 
 ArgList : ArgListH {
     $$ = $1;
+  }
+  | ArgListH ',' DOTDOTDOT {
+    $$ = $1;
+    $$->push_back(pair<PATypeHolder*, char*>(new PATypeHolder(Type::VoidTy),0));
+  }
+  | DOTDOTDOT {
+    $$ = new vector<pair<PATypeHolder*,char*> >();
+    $$->push_back(pair<PATypeHolder*, char*>(new PATypeHolder(Type::VoidTy),0));
   }
   | /* empty */ {
     $$ = 0;
@@ -1208,9 +1213,9 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
   
   vector<const Type*> ParamTypeList;
   if ($5)
-    for (list<pair<Argument*,char*> >::iterator I = $5->begin();
+    for (vector<pair<PATypeHolder*,char*> >::iterator I = $5->begin();
          I != $5->end(); ++I)
-      ParamTypeList.push_back(I->first->getType());
+      ParamTypeList.push_back(I->first->get());
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
@@ -1253,25 +1258,25 @@ FunctionHeaderH : OptInternal TypesV FuncName '(' ArgList ')' {
   CurMeth.FunctionStart(M);
 
   // Add all of the arguments we parsed to the function...
-  if ($5 && !CurMeth.isDeclare) {        // Is null if empty...
-    for (list<pair<Argument*, char*> >::iterator I = $5->begin();
-         I != $5->end(); ++I) {
-      if (setValueName(I->first, I->second)) {  // Insert into symtab...
+  if ($5) {                     // Is null if empty...
+    if (isVarArg) {  // Nuke the last entry
+      assert($5->back().first->get() == Type::VoidTy && $5->back().second == 0&&
+             "Not a varargs marker!");
+      delete $5->back().first;
+      $5->pop_back();  // Delete the last entry
+    }
+    Function::aiterator ArgIt = M->abegin();
+    for (vector<pair<PATypeHolder*, char*> >::iterator I = $5->begin();
+         I != $5->end(); ++I, ++ArgIt) {
+      delete I->first;                          // Delete the typeholder...
+
+      if (setValueName(ArgIt, I->second))       // Insert arg into symtab...
         assert(0 && "No arg redef allowed!");
-      }
       
-      InsertValue(I->first);
-      M->getArgumentList().push_back(I->first);
+      InsertValue(ArgIt);
     }
+
     delete $5;                     // We're now done with the argument list
-  } else if ($5) {
-    // If we are a declaration, we should free the memory for the argument list!
-    for (list<pair<Argument*, char*> >::iterator I = $5->begin(), E = $5->end();
-         I != E; ++I) {
-      if (I->second) free(I->second);   // Free the memory for the name...
-      delete I->first;                  // Free the unused function argument
-    }
-    delete $5;                          // Free the memory for the list itself
   }
 };
 

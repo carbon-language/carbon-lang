@@ -61,7 +61,7 @@ void Argument::setName(const std::string &name, SymbolTable *ST) {
 	 "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
   Value::setName(name);
-  if (P && hasName()) P->getSymbolTable()->insert(this);
+  if (P && hasName()) P->getSymbolTableSure()->insert(this);
 }
 
 void Argument::setParent(Function *parent) {
@@ -85,6 +85,13 @@ Function::Function(const FunctionType *Ty, bool isInternal,
   ArgumentList.setItemParent(this);
   ArgumentList.setParent(this);
   ParentSymTab = SymTab = 0;
+
+  // Create the arguments vector, all arguments start out unnamed.
+  for (unsigned i = 0, e = Ty->getNumParams(); i != e; ++i) {
+    assert(Ty->getParamType(i) != Type::VoidTy &&
+           "Cannot have void typed arguments!");
+    ArgumentList.push_back(new Argument(Ty->getParamType(i)));
+  }
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);

@@ -323,14 +323,13 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
   map<const Value*, Value*> LocalMap;   // Map for function local values
 
   // Go through and convert function arguments over...
+  Function::aiterator DI = Dest->abegin();
   for (Function::const_aiterator I = Src->abegin(), E = Src->aend();
-       I != E; ++I) {
-    // Create the new function argument and add to the dest function...
-    Argument *DFA = new Argument(I->getType(), I->getName());
-    Dest->getArgumentList().push_back(DFA);
+       I != E; ++I, ++DI) {
+    DI->setName(I->getName());  // Copy the name information over...
 
     // Add a mapping to our local map
-    LocalMap.insert(std::make_pair(I, DFA));
+    LocalMap.insert(std::make_pair(I, DI));
   }
 
   // Loop over all of the basic blocks, copying the instructions over...
