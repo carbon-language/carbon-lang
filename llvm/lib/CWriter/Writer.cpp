@@ -36,6 +36,8 @@ namespace {
     const Module *TheModule;
     map<const Type *, string> TypeNames;
     std::set<const Value*> MangledGlobals;
+    std::set<const StructType *> StructPrinted;
+
   public:
     CWriter(ostream &o) : Out(o) {}
 
@@ -72,6 +74,7 @@ namespace {
 
   private :
     bool nameAllUsedStructureTypes(Module &M);
+    void parseStruct(const Type *Ty);
     void printModule(Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printGlobal(const GlobalVariable *GV);
@@ -568,33 +571,65 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
     SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
     SymbolTable::type_const_iterator End = ST.type_end(TI->first);
     
-    for (; I != End; ++I)
-      if (const Type *Ty = dyn_cast<StructType>(I->second)) {
-        string Name = "struct l_" + makeNameProper(I->first);
-        Out << Name << ";\n";
-        TypeNames.insert(std::make_pair(Ty, Name));
+    for (; I != End; ++I){
+      const Value *V = I->second;
+      if (const Type *Ty = dyn_cast<Type>(V)) {
+        if (const Type *STy = dyn_cast<StructType>(V)) {
+	        string Name = "struct l_" + makeNameProper(I->first);
+	        Out << Name << ";\n";
+	        TypeNames.insert(std::make_pair(STy, Name));
+	      }
+	      else {
+	        string Name = "l_" + makeNameProper(I->first);
+	        Out << "typedef ";
+	        printType(Ty, Name, true);
+	        Out << ";\n";
+	      }
       }
+    }
   }
 
   Out << "\n";
 
+  // Loop over all structures then push them into the stack so they are
+  // printed in the correct order.
   for (SymbolTable::const_iterator TI = ST.begin(); TI != ST.end(); ++TI) {
     SymbolTable::type_const_iterator I = ST.type_begin(TI->first);
     SymbolTable::type_const_iterator End = ST.type_end(TI->first);
     
     for (; I != End; ++I) {
-      const Value *V = I->second;
-      if (const Type *Ty = dyn_cast<Type>(V)) {
-	string Name = "l_" + makeNameProper(I->first);
-        if (isa<StructType>(Ty))
-          Name = "struct " + makeNameProper(Name);
-        else
-          Out << "typedef ";
-
-	printType(Ty, Name, true);
-        Out << ";\n";
-      }
+      if (const StructType *STy = dyn_cast<StructType>(I->second))
+	      parseStruct(STy);
     }
+  }
+}
+
+// Push the struct onto the stack and recursively push all structs
+// this one depends on.
+void CWriter::parseStruct(const Type *Ty) {
+  if (const StructType *STy = dyn_cast<StructType>(Ty)){
+    //Check to see if we have already printed this struct
+    if (StructPrinted.find(STy) == StructPrinted.end()){   
+    	for (StructType::ElementTypes::const_iterator
+            I = STy->getElementTypes().begin(),
+            E = STy->getElementTypes().end(); I != E; ++I) {
+        const Type *Ty1 = dyn_cast<Type>(I->get());
+		  	if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
+    	    parseStruct(Ty1);
+    	}
+    
+      //Print struct
+      StructPrinted.insert(STy);
+      string Name = TypeNames[STy];  
+      printType(STy, Name, true);
+      Out << ";\n";
+    }
+  }
+  // If it is an array check it's type and continue
+  else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)){
+    const Type *Ty1 = ATy->getElementType();
+    if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
+      parseStruct(Ty1);
   }
 }
 
