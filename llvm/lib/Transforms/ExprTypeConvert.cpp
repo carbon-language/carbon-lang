@@ -403,12 +403,11 @@ void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC) {
       // loops.  Note that we cannot use DCE because DCE won't remove a store
       // instruction, for example.
       //
-      BasicBlock::iterator It = find(BB->begin(), BB->end(), I);
-      assert(It != BB->end() && "Instruction no longer in basic block??");
 #ifdef DEBUG_EXPR_CONVERT
       cerr << "DELETING: " << (void*)I << " " << I;
 #endif
-      delete BB->getInstList().remove(It);
+      BB->getInstList().remove(I);
+      delete I;
     }
 }
 
@@ -550,12 +549,11 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // loops.  Note that we cannot use DCE because DCE won't remove a store
       // instruction, for example.
       //
-      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
-      assert(It != BIL.end() && "Instruction no longer in basic block??");
 #ifdef DEBUG_EXPR_CONVERT
       cerr << "DELETING: " << (void*)I << " " << I;
 #endif
-      delete BIL.remove(It);
+      BIL.remove(I);
+      delete I;
     } else {
       for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
            UI != UE; ++UI)
@@ -575,15 +573,13 @@ ValueHandle::~ValueHandle() {
     // instruction, for example.
     //
     Instruction *I = cast<Instruction>(V);
-    BasicBlock *BB = I->getParent();
-    assert(BB && "Inst not in basic block!");
+    assert(I->getParent() && "Inst not in basic block!");
 
-    BasicBlock::iterator It = find(BB->begin(), BB->end(), I);
-    assert(It != BB->end() && "Instruction no longer in basic block??");
 #ifdef DEBUG_EXPR_CONVERT
     cerr << "VH DELETING: " << (void*)I << " " << I;
 #endif
-    delete BB->getInstList().remove(It);
+    I->getParent()->getInstList().remove(I);
+    delete I;
   } else {
 #ifdef DEBUG_EXPR_CONVERT
     cerr << "VH RELEASING: " << Operands[0];

@@ -105,29 +105,38 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
   for (map<string, vector<Method*> >::iterator I = Methods.begin(), 
          E = Methods.end(); I != E; ++I) {
     vector<Method*> &Methods = I->second;
-    if (Methods.size() > 1) {         // Found a multiply defined method.
-      Method *Implementation = 0;     // Find the implementation
-      Method *Concrete = 0;
-      for (unsigned i = 0; i < Methods.size(); ++i) {
-        // TODO: Ignore methods that are never USED!  DCE them.
-        // Remove their name. this should fix a majority of problems here.
-
-        if (!Methods[i]->isExternal()) {  // Found an implementation
-          assert(Implementation == 0 && "Multiple definitions of the same"
-                 " method. Case not handled yet!");
-          Implementation = Methods[i];
-        }
-
-        if (!Methods[i]->getMethodType()->isVarArg() ||
-            Methods[i]->getMethodType()->getParamTypes().size()) {
-          if (Concrete) {  // Found two different methods types.  Can't choose
-            Concrete = 0;
-            break;
-          }
-          Concrete = Methods[i];
+    Method *Implementation = 0;     // Find the implementation
+    Method *Concrete = 0;
+    for (unsigned i = 0; i < Methods.size(); ) {
+      if (!Methods[i]->isExternal()) {  // Found an implementation
+        assert(Implementation == 0 && "Multiple definitions of the same"
+               " method. Case not handled yet!");
+        Implementation = Methods[i];
+      } else {
+        // Ignore methods that are never used so they don't cause spurious
+        // warnings... here we will actually DCE the function so that it isn't
+        // used later.
+        //
+        if (Methods[i]->use_size() == 0) {
+          M->getMethodList().remove(Methods[i]);
+          delete Methods[i];
+          Methods.erase(Methods.begin()+i);
+          Changed = true;
         }
       }
+      
+      if (Methods[i] && (!Methods[i]->getMethodType()->isVarArg() ||
+                         Methods[i]->getMethodType()->getParamTypes().size())) {
+        if (Concrete) {  // Found two different methods types.  Can't choose
+          Concrete = 0;
+          break;
+        }
+        Concrete = Methods[i];
+      }
+      ++i;
+    }
 
+    if (Methods.size() > 1) {         // Found a multiply defined method.
       // We should find exactly one non-vararg method definition, which is
       // probably the implementation.  Change all of the method definitions
       // and uses to use it instead.
