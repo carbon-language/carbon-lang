@@ -327,22 +327,6 @@ void SparcV9CodeEmitter::emitWord(unsigned Val) {
   }
 }
 
-bool SparcV9CodeEmitter::isFPInstr(MachineInstr &MI) {
-  for (unsigned i = 0, e = MI.getNumOperands(); i < e; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
-    if (MO.isPhysicalRegister()) {
-      unsigned fakeReg = MO.getReg(), realReg, regClass, regType;
-      regType = TM.getRegInfo().getRegType(fakeReg);
-      // At least map fakeReg into its class
-      // fakeReg = TM.getRegInfo().getClassRegNum(fakeReg, regClass);
-      if (regType == UltraSparcRegInfo::FPSingleRegType ||
-          regType == UltraSparcRegInfo::FPDoubleRegType)
-        return true;
-    }
-  }
-  return false;
-}
-
 unsigned 
 SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
                                          MachineInstr &MI) {
@@ -386,21 +370,13 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
     return fakeReg;
   }
   case UltraSparcRegInfo::IntCCRegClassID: {
-    /*                                           xcc, icc, ccr */
-    static const unsigned FPInstrIntCCReg[]  = {  6,   4,   2 };
-    static const unsigned IntInstrIntCCReg[] = {  2,   0,   2 };
+    /*                                   xcc, icc, ccr */
+    static const unsigned IntCCReg[] = {  6,   4,   2 };
     
-    if (isFPInstr(MI)) {
-      assert(fakeReg < sizeof(FPInstrIntCCReg)/sizeof(FPInstrIntCCReg[0])
-             && "FP CC register out of bounds for FPInstr IntCCReg map");      
-      DEBUG(std::cerr << "FP instr, IntCC reg: " << FPInstrIntCCReg[fakeReg] << "\n");
-      return FPInstrIntCCReg[fakeReg];
-    } else {
-      assert(fakeReg < sizeof(IntInstrIntCCReg)/sizeof(IntInstrIntCCReg[0])
-             && "Int CC register out of bounds for IntInstr IntCCReg map");
-      DEBUG(std::cerr << "FP instr, IntCC reg: " << IntInstrIntCCReg[fakeReg] << "\n");
-      return IntInstrIntCCReg[fakeReg];
-    }
+    assert(fakeReg < sizeof(IntCCReg)/sizeof(IntCCReg[0])
+             && "CC register out of bounds for IntCCReg map");      
+    DEBUG(std::cerr << "IntCC reg: " << IntCCReg[fakeReg] << "\n");
+    return IntCCReg[fakeReg];
   }
   case UltraSparcRegInfo::FloatCCRegClassID: {
     /* These are laid out %fcc0 - %fcc3 => 0 - 3, so are correct */
@@ -580,7 +556,8 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
     unsigned fakeReg = MO.getAllocatedRegNum();
     unsigned realRegByClass = getRealRegNum(fakeReg, MI);
     DEBUG(std::cerr << MO << ": Reg[" << std::dec << fakeReg << "] => "
-                    << realRegByClass << "\n");
+                    << realRegByClass << " (LLC: " 
+                    << TM.getRegInfo().getUnifiedRegName(fakeReg) << ")\n");
     rv = realRegByClass;
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();

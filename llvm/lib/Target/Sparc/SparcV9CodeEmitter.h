@@ -47,7 +47,6 @@ private:
   void emitBasicBlock(MachineBasicBlock &MBB);
   void* getGlobalAddress(GlobalValue *V, MachineInstr &MI,
                          bool isPCRelative);
-  bool isFPInstr(MachineInstr &MI);
   unsigned getRealRegNum(unsigned fakeReg, MachineInstr &MI);
   inline void emitFarCall(uint64_t Addr);
 
