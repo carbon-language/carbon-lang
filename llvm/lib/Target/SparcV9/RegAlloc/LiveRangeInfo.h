@@ -63,7 +63,6 @@ class LiveRangeInfo {
 
   std::vector<MachineInstr*> CallRetInstrList;  // a list of all call/ret instrs
 
-
   //------------ Private methods (see LiveRangeInfo.cpp for description)-------
 
   LiveRange* createNewLiveRange         (const Value* Def,
@@ -75,13 +74,7 @@ class LiveRangeInfo {
   void unionAndUpdateLRs                (LiveRange *L1,
                                          LiveRange *L2);
 
-  void addInterference                  (const Instruction *Inst,
-                                         const ValueSet *LVSet);
-  
   void suggestRegs4CallRets             ();
-
-  const Function *getMethod             () const { return Meth; }
-
 public:
   
   LiveRangeInfo(const Function *F, 
