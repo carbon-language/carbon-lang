@@ -1939,20 +1939,20 @@ however, are stored in a single dimension and accessed only by name.</p>
 the beginning or end of the sequence for both const and non-const. It is
 important to keep track of the different kinds of iterators. There are
 three idioms worth pointing out:</p>
-<table class="doc_table">
+<table>
   <tr><th>Units</th><th>Iterator</th><th>Idiom</th></tr>
   <tr>
-    <td>Planes Of name/Value maps</td><td>PI</td>
-    <td><tt><pre>
+    <td align="left">Planes Of name/Value maps</td><td>PI</td>
+    <td align="left"><tt><pre>
 for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
-PE = ST.plane_end(); PI != PE; ++PI ) {
+     PE = ST.plane_end(); PI != PE; ++PI ) {
   PI-&gt;first // This is the Type* of the plane
   PI-&gt;second // This is the SymbolTable::ValueMap of name/Value pairs
     </pre></tt></td>
   </tr>
   <tr>
-    <td>All name/Type Pairs</td><td>TI</td>
-    <td><tt><pre>
+    <td align="left">All name/Type Pairs</td><td>TI</td>
+    <td align="left"><tt><pre>
 for (SymbolTable::type_const_iterator TI = ST.type_begin(),
      TE = ST.type_end(); TI != TE; ++TI )
   TI-&gt;first  // This is the name of the type
@@ -1960,8 +1960,8 @@ for (SymbolTable::type_const_iterator TI = ST.type_begin(),
     </pre></tt></td>
   </tr>
   <tr>
-    <td>name/Value pairs in a plane</td><td>VI</td>
-    <td><tt><pre>
+    <td align="left">name/Value pairs in a plane</td><td>VI</td>
+    <td align="left"><tt><pre>
 for (SymbolTable::value_const_iterator VI = ST.value_begin(SomeType),
      VE = ST.value_end(SomeType); VI != VE; ++VI )
   VI-&gt;first  // This is the name of the Value

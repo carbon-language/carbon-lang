@@ -299,78 +299,39 @@ href="#rw_stroustrup">1</a></sup>.<p> --> </div>
 <p>The primitive types are the fundamental building blocks of the LLVM
 system. The current set of primitive types are as follows:</p>
 
-<table border="0" style="align: center">
-  <tbody>
-    <tr>
-      <td>
-      <table border="1" cellspacing="0" cellpadding="4" style="align: center">
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <table>
         <tbody>
-          <tr>
-            <td><tt>void</tt></td>
-            <td>No value</td>
-          </tr>
-          <tr>
-            <td><tt>ubyte</tt></td>
-            <td>Unsigned 8 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>ushort</tt></td>
-            <td>Unsigned 16 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>uint</tt></td>
-            <td>Unsigned 32 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>ulong</tt></td>
-            <td>Unsigned 64 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>float</tt></td>
-            <td>32 bit floating point value</td>
-          </tr>
-          <tr>
-            <td><tt>label</tt></td>
-            <td>Branch destination</td>
-          </tr>
+        <tr><th>Type</th><th>Description</th></tr>
+        <tr><td><tt>void</tt></td><td>No value</td></tr>
+        <tr><td><tt>ubyte</tt></td><td>Unsigned 8 bit value</td></tr>
+        <tr><td><tt>ushort</tt></td><td>Unsigned 16 bit value</td></tr>
+        <tr><td><tt>uint</tt></td><td>Unsigned 32 bit value</td></tr>
+        <tr><td><tt>ulong</tt></td><td>Unsigned 64 bit value</td></tr>
+        <tr><td><tt>float</tt></td><td>32 bit floating point value</td></tr>
+        <tr><td><tt>label</tt></td><td>Branch destination</td></tr>
         </tbody>
       </table>
-      </td>
-      <td valign="top">
-      <table border="1" cellspacing="0" cellpadding="4">
+    </td>
+    <td class="right">
+      <table>
         <tbody>
-          <tr>
-            <td><tt>bool</tt></td>
-            <td>True or False value</td>
-          </tr>
-          <tr>
-            <td><tt>sbyte</tt></td>
-            <td>Signed 8 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>short</tt></td>
-            <td>Signed 16 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>int</tt></td>
-            <td>Signed 32 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>long</tt></td>
-            <td>Signed 64 bit value</td>
-          </tr>
-          <tr>
-            <td><tt>double</tt></td>
-            <td>64 bit floating point value</td>
-          </tr>
+          <tr><th>Type</th><th>Description</th></tr>
+          <tr><td><tt>bool</tt></td><td>True or False value</td></tr>
+          <tr><td><tt>sbyte</tt></td><td>Signed 8 bit value</td></tr>
+          <tr><td><tt>short</tt></td><td>Signed 16 bit value</td></tr>
+          <tr><td><tt>int</tt></td><td>Signed 32 bit value</td></tr>
+          <tr><td><tt>long</tt></td><td>Signed 64 bit value</td></tr>
+          <tr><td><tt>double</tt></td><td>64 bit floating point value</td></tr>
         </tbody>
       </table>
-      </td>
-    </tr>
-  </tbody>
+    </td>
+  </tr>
 </table>
-
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_classifications">Type
 Classifications</a> </div>
@@ -380,6 +341,7 @@ classifications:</p>
 
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
+    <tr><th>Classification</th><th>Types</th></tr>
     <tr>
       <td><a name="t_signed">signed</a></td>
       <td><tt>sbyte, short, int, long, float, double</tt></td>
@@ -436,30 +398,37 @@ elements) and an underlying data type.</p>
 <p>The number of elements is a constant integer value, elementtype may
 be any type with a size.</p>
 <h5>Examples:</h5>
-<p> <tt>[40 x int ]</tt>: Array of 40 integer values.<br>
-<tt>[41 x int ]</tt>: Array of 41 integer values.<br>
-<tt>[40 x uint]</tt>: Array of 40 unsigned integer values.</p>
-<p> </p>
-<p>Here are some examples of multidimensional arrays:</p>
-
-<table border="0" cellpadding="0" cellspacing="0">
-  <tbody>
-    <tr>
-      <td><tt>[3 x [4 x int]]</tt></td>
-      <td>: 3x4 array integer values.</td>
-    </tr>
-    <tr>
-      <td><tt>[12 x [10 x float]]</tt></td>
-      <td>: 12x10 array of single precision floating point values.</td>
-    </tr>
-    <tr>
-      <td><tt>[2 x [3 x [4 x uint]]]</tt></td>
-      <td>: 2x3x4 array of unsigned integer values.</td>
-    </tr>
-  </tbody>
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>[40 x int ]</tt><br/>
+      <tt>[41 x int ]</tt><br/>
+      <tt>[40 x uint]</tt><br/>
+    </td>
+    <td class="left">
+      Array of 40 integer values.<br/>
+      Array of 41 integer values.<br/>
+      Array of 40 unsigned integer values.<br/>
+    </td>
+  </tr>
 </table>
-
+<p>Here are some examples of multidimensional arrays:</p>
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>[3 x [4 x int]]</tt><br/>
+      <tt>[12 x [10 x float]]</tt><br/>
+      <tt>[2 x [3 x [4 x uint]]]</tt><br/>
+    </td>
+    <td class="left">
+      3x4 array integer values.<br/>
+      12x10 array of single precision floating point values.<br/>
+      2x3x4 array of unsigned integer values.<br/>
+    </td>
+  </tr>
+</table>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_function">Function Type</a> </div>
 <div class="doc_text">
@@ -480,27 +449,23 @@ which indicates that the function takes a variable number of arguments.
 Variable argument functions can access their arguments with the <a
  href="#int_varargs">variable argument handling intrinsic</a> functions.</p>
 <h5>Examples:</h5>
-
-<table border="0" cellpadding="0" cellspacing="0">
-  <tbody>
-    <tr>
-      <td><tt>int (int)</tt></td>
-      <td>: function taking an <tt>int</tt>, returning an <tt>int</tt></td>
-    </tr>
-    <tr>
-      <td><tt>float (int, int *) *</tt></td>
-      <td>: <a href="#t_pointer">Pointer</a> to a function that takes an
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>int (int)</tt> <br/>
+      <tt>float (int, int *) *</tt><br/>
+      <tt>int (sbyte *, ...)</tt><br/>
+    </td>
+    <td class="left">
+      function taking an <tt>int</tt>, returning an <tt>int</tt><br/>
+      <a href="#t_pointer">Pointer</a> to a function that takes an
       <tt>int</tt> and a <a href="#t_pointer">pointer</a> to <tt>int</tt>,
-      returning <tt>float</tt>.</td>
-    </tr>
-    <tr>
-      <td><tt>int (sbyte *, ...)</tt></td>
-      <td>: A vararg function that takes at least one <a
-      href="#t_pointer">pointer</a> to <tt>sbyte</tt> (signed char in C), which
-      returns an integer.  This is the signature for <tt>printf</tt> in
-      LLVM.</td>
-    </tr>
-  </tbody>
+      returning <tt>float</tt>.<br/>
+      A vararg function that takes at least one <a href="#t_pointer">pointer</a> 
+      to <tt>sbyte</tt> (signed char in C), which returns an integer.  This is 
+      the signature for <tt>printf</tt> in LLVM.<br/>
+    </td>
+  </tr>
 </table>
 
 </div>
@@ -519,24 +484,22 @@ instruction.</p>
 <h5>Syntax:</h5>
 <pre>  { &lt;type list&gt; }<br></pre>
 <h5>Examples:</h5>
-
-<table border="0" cellpadding="0" cellspacing="0">
-  <tbody>
-    <tr>
-      <td><tt>{ int, int, int }</tt></td>
-      <td>: a triple of three <tt>int</tt> values</td>
-    </tr>
-    <tr>
-      <td><tt>{ float, int (int) * }</tt></td>
-      <td>: A pair, where the first element is a <tt>float</tt> and the second
-      element is a <a href="#t_pointer">pointer</a> to a <a
-      href="#t_function">function</a> that takes an <tt>int</tt>, returning an
-      <tt>int</tt>.</td>
-    </tr>
-  </tbody>
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>{ int, int, int }</tt><br/>
+      <tt>{ float, int (int) * }</tt><br/>
+    </td>
+    <td class="left">
+      a triple of three <tt>int</tt> values<br/>
+      A pair, where the first element is a <tt>float</tt> and the second element 
+      is a <a href="#t_pointer">pointer</a> to a <a href="#t_function">function</a> 
+      that takes an <tt>int</tt>, returning an <tt>int</tt>.<br/>
+    </td>
+  </tr>
 </table>
-
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_pointer">Pointer Type</a> </div>
 <div class="doc_text">
@@ -546,23 +509,23 @@ reference to another object, which must live in memory.</p>
 <h5>Syntax:</h5>
 <pre>  &lt;type&gt; *<br></pre>
 <h5>Examples:</h5>
-
-<table border="0" cellpadding="0" cellspacing="0">
-  <tbody>
-    <tr>
-      <td><tt>[4x int]*</tt></td>
-      <td>: <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a> of
-      four <tt>int</tt> values</td>
-    </tr>
-    <tr>
-      <td><tt>int (int *) *</tt></td>
-      <td>: A <a href="#t_pointer">pointer</a> to a <a
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>[4x int]*</tt><br/>
+      <tt>int (int *) *</tt><br/>
+    </td>
+    <td class="left">
+      A <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a> of
+      four <tt>int</tt> values<br/>
+      A <a href="#t_pointer">pointer</a> to a <a
       href="#t_function">function</a> that takes an <tt>int</tt>, returning an
-      <tt>int</tt>.</td>
-    </tr>
-  </tbody>
+      <tt>int</tt>.<br/>
+    </td>
+  </tr>
 </table>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_packed">Packed Type</a> </div>
 <div class="doc_text">
@@ -578,10 +541,20 @@ considered <a href="#t_firstclass">first class</a>.</p>
 <p>The number of elements is a constant integer value, elementtype may
 be any integral or floating point type.</p>
 <h5>Examples:</h5>
-<p> <tt>&lt;4 x int&gt;</tt>: Packed vector of 4 integer values.<br>
-<tt>&lt;8 x float&gt;</tt>: Packed vector of 8 floating-point values.<br>
-<tt>&lt;2 x uint&gt;</tt>: Packed vector of 2 unsigned integer values.</p>
-<p> </p>
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>&lt;4 x int&gt;</tt><br/>
+      <tt>&lt;8 x float&gt;</tt><br/>
+      <tt>&lt;2 x uint&gt;</tt><br/>
+    </td>
+    <td class="left">
+      Packed vector of 4 integer values.<br/>
+      Packed vector of 8 floating-point values.<br/>
+      Packed vector of 2 unsigned integer values.<br/>
+    </td>
+  </tr>
+</table>
 </div>
 
 <!-- *********************************************************************** -->
