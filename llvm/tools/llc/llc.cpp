@@ -121,9 +121,6 @@ int main(int argc, char **argv) {
   // Build up all of the passes that we want to do to the module...
   vector<Pass*> Passes;
 
-  // Replace malloc and free instructions with library calls
-  Passes.push_back(new LowerAllocations(Target.DataLayout));
-
   // Hoist constants out of PHI nodes into predecessor BB's
   Passes.push_back(new HoistPHIConstants());
 
@@ -148,9 +145,15 @@ int main(int argc, char **argv) {
       } else {
         Passes.push_back(new PrintModulePass("", os,
                                              /*deleteStream*/ true,
-                                             /*printAsBytecode*/ ! DebugTrace));
+                                             /*printPerMethod*/ false,
+                                             /*printAsBytecode*/ !DebugTrace));
       }
     }
+  
+  // Replace malloc and free instructions with library calls.
+  // Do this after tracing until lli implements these lib calls.
+  // For now, it will emulate malloc and free internally.
+  Passes.push_back(new LowerAllocations(Target.DataLayout));
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
