@@ -50,9 +50,7 @@ namespace {
 
 bool SparcV9TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                     MachineCodeEmitter &MCE) {
-  MachineCodeEmitter *M = &MCE;
-  DEBUG(M = MachineCodeEmitter::createFilePrinterEmitter(MCE));
-  PM.add(new SparcV9CodeEmitter(*this, *M));
+  PM.add(new SparcV9CodeEmitter(*this, MCE));
   PM.add(createSparcV9MachineCodeDestructionPass()); //Free stuff no longer needed
   return false;
 }
