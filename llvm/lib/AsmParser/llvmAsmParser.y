@@ -347,6 +347,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
   list<MethodArgument*>   *MethodArgList;
   list<Value*>            *ValueList;
   list<const Type*>       *TypeList;
+  list<pair<Value*, BasicBlock*> > *PHIList;   // Represent the RHS of PHI node
   list<pair<ConstPoolVal*, BasicBlock*> > *JumpTable;
   vector<ConstPoolVal*>   *ConstVector;
 
@@ -373,6 +374,7 @@ Module *RunVMAsmParser(const ToolCommandLine &Opts, FILE *F) {
 %type <ConstVector>   ConstVector
 %type <MethodArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
+%type <PHIList>       PHIList
 %type <ValueList>     ValueRefList ValueRefListE
 %type <TypeList>      TypeList
 %type <JumpTable>     JumpTable
@@ -839,7 +841,19 @@ Inst : OptAssign InstVal {
   $$ = $2;
 }
 
-ValueRefList : Types ValueRef {    // Used for PHI nodes and call statements...
+PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
+    $$ = new list<pair<Value*, BasicBlock*> >();
+    $$->push_back(make_pair(getVal($1, $3), 
+			    (BasicBlock*)getVal(Type::LabelTy, $5)));
+  }
+  | PHIList ',' '[' ValueRef ',' ValueRef ']' {
+    $$ = $1;
+    $1->push_back(make_pair(getVal($1->front().first->getType(), $4),
+			    (BasicBlock*)getVal(Type::LabelTy, $6)));
+  }
+
+
+ValueRefList : Types ValueRef {    // Used for call statements...
     $$ = new list<Value*>();
     $$->push_back(getVal($1, $2));
   }
@@ -861,11 +875,13 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     if ($$ == 0)
       ThrowException("unary operator returned null!");
   } 
-  | PHI ValueRefList {
-    $$ = new PHINode($2->front()->getType());
+  | PHI PHIList {
+    const Type *Ty = $2->front().first->getType();
+    $$ = new PHINode(Ty);
     while ($2->begin() != $2->end()) {
-      // TODO: Ensure all types are the same... 
-      ((PHINode*)$$)->addIncoming($2->front());
+      if ($2->front().first->getType() != Ty) 
+	ThrowException("All elements of a PHI node must be of the same type!");
+      ((PHINode*)$$)->addIncoming($2->front().first, $2->front().second);
       $2->pop_front();
     }
     delete $2;  // Free the list...

@@ -11,6 +11,7 @@ typedef union {
   list<MethodArgument*>   *MethodArgList;
   list<Value*>            *ValueList;
   list<const Type*>       *TypeList;
+  list<pair<Value*, BasicBlock*> > *PHIList;   // Represent the RHS of PHI node
   list<pair<ConstPoolVal*, BasicBlock*> > *JumpTable;
   vector<ConstPoolVal*>   *ConstVector;
 
