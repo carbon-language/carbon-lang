@@ -22,13 +22,13 @@ static TimerGroup *getDefaultTimerGroup() {
 }
 
 Timer::Timer(const std::string &N)
-  : Elapsed(0), UserTime(0), SystemTime(0), MaxRSS(0), Name(N),
+  : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), Name(N),
     Started(false), TG(getDefaultTimerGroup()) {
   TG->addTimer();
 }
 
 Timer::Timer(const std::string &N, TimerGroup &tg)
-  : Elapsed(0), UserTime(0), SystemTime(0), MaxRSS(0), Name(N),
+  : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), Name(N),
     Started(false), TG(&tg) {
   TG->addTimer();
 }
@@ -60,7 +60,7 @@ Timer::~Timer() {
 
 struct TimeRecord {
   double Elapsed, UserTime, SystemTime;
-  unsigned long MaxRSS;
+  long MemUsed;
 };
 
 static TimeRecord getTimeRecord() {
@@ -78,9 +78,9 @@ static TimeRecord getTimeRecord() {
 
 #ifndef __sparc__
   struct mallinfo MI = mallinfo();
-  Result.MaxRSS     = MI.uordblks;
+  Result.MemUsed     = MI.uordblks;
 #else
-  Result.MaxRSS     = 0;
+  Result.MemUsed     = 0;
 #endif
 
   return Result;
@@ -92,7 +92,7 @@ void Timer::startTimer() {
   Elapsed    -= TR.Elapsed;
   UserTime   -= TR.UserTime;
   SystemTime -= TR.SystemTime;
-  MaxRSS     -= TR.MaxRSS;
+  MemUsed    -= TR.MemUsed;
 }
 
 void Timer::stopTimer() {
@@ -100,16 +100,14 @@ void Timer::stopTimer() {
   Elapsed    += TR.Elapsed;
   UserTime   += TR.UserTime;
   SystemTime += TR.SystemTime;
-  MaxRSS     += TR.MaxRSS;
-  if ((signed long)MaxRSS < 0)
-    MaxRSS = 0;
+  MemUsed    += TR.MemUsed;
 }
 
 void Timer::sum(const Timer &T) {
   Elapsed    += T.Elapsed;
   UserTime   += T.UserTime;
   SystemTime += T.SystemTime;
-  MaxRSS     += T.MaxRSS;
+  MemUsed    += T.MemUsed;
 }
 
 //===----------------------------------------------------------------------===//
@@ -134,8 +132,8 @@ void Timer::print(const Timer &Total) {
   
   fprintf(stderr, "  ");
 
-  if (Total.MaxRSS)
-    fprintf(stderr, " %8ld  ", MaxRSS);
+  if (Total.MemUsed)
+    fprintf(stderr, " %8ld  ", MemUsed);
   std::cerr << Name << "\n";
 
   Started = false;  // Once printed, don't print again
@@ -175,8 +173,7 @@ void TimerGroup::removeTimer() {
       if (Total.getProcessTime())
         std::cerr << "   --User+System--";
       std::cerr << "   ---Wall Time---";
-      
-      if (Total.getMaxRSS())
+      if (Total.getMemUsed())
         std::cerr << "  ---Mem---";
       std::cerr << "  --- Name ---\n";
       
