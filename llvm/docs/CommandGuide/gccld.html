@@ -20,19 +20,61 @@ gccld
 SYNOPSIS
 </h3>
 
-gccld [options] &lt; filename&gt;
+gccld [options] &lt; filename&gt; [ filename ...]
 <h3>
 DESCRIPTION
 </h3>
 
-The gccld utility takes a set of LLVM bytecode files GCC and links them
-together into a single LLVM bytecode file.  It will link in any LLVM bytecode
-libraries that are necessary to make a single LLVM "bytecode executable."
+The gccld utility takes a set of LLVM bytecode files and links them together
+into a single LLVM bytecode file.  The output bytecode file can be another
+bytecode library or an executable bytecode program.  Using additional options,
+gccld is able to produce native code executables.
 <p>
 The gccld utility is primarily used by the GCC front end, and as such, attempts
 to mimic the interface provided by the default system linker so that it can act
 as a "drop-in" replacement.
 
+<h4>
+Search Order
+</h4>
+When looking for objects specified on the command line, gccld will search for
+the object first in the current directory and then in the directory specified
+by LLVM_LIB_SEARCH_PATH.  If it cannot find the object, it fails.
+<p>
+When looking for a library specified with the -l option, gccld first attempts
+to load a file with that name from the current directory.  If that fails, it
+looks for lib&lt;library&gt;.bc, lib&lt;library&gt;.a, or
+lib&lt;library&gt;.so, in that order, in each directory added to the library
+search path with the -L option.  These directories are searched in order they
+were specified.  If the library cannot be located, then gccld looks in the
+directory specified by the LLVM_LIB_SEARCH_PATH environment variable.  If it
+does not find lib&lt;library&gt;.[bc | a | so] there, it fails.
+
+The -L option is global.  It does not matter where it is specified in the list
+of command line arguments; the directory is simply added to the search path and
+is applied to all libraries, preceding or succeeding, in the command line.
+
+<h4>
+Link order
+</h4>
+All object files are linked first in the order they were specified on the
+command line.  All library files are linked next.  Some libraries may not be
+linked into the object program; see below.
+
+<h4>
+Library Linkage
+</h4>
+Object files and static bytecode objects are always linked into the output
+file.  Library archives (.a files) load only the objects within the archive
+that define symbols needed by the output file.  Hence, libraries should be
+listed after the object files and libraries which need them; otherwise, the
+library may not be linked in, and the dependent library will not have its
+undefined symbols defined.
+
+<h4>
+Native code generation
+</h4>
+The gccld program has limited support for native code generation.
 <h3>
 OPTIONS
 </h3>
@@ -45,7 +87,7 @@ OPTIONS
 
 	<li> -o &lt;filename&gt;
 	<br>
-	Specify the output filename which will hold the assembled bytecode.
+	Specify the output filename which will hold the linked bytecode.
 	<p>
 
 	<li> -stats
@@ -85,14 +127,22 @@ OPTIONS
 	Preserve the symbol names in list.
 	<p>
 
-	<li> -l=&lt;library prefix&gt;
+	<li> -l=&lt;library&gt;
 	<br>
-	Specify libraries to link to
+	Specify libraries to include when linking the output file.  When linking,
+	gccld will first attempt to load a file with the pathname library.  If that
+	fails, it will then attempt to load lib&lt;library&gt;.bc,
+	lib&lt;library&gt;.a, and lib&lt;library&gt;.so, in that order.
 	<p>
 
 	<li> -link-as-library
 	<br>
 	Link the .bc files together as a library, not an executable.
+	<p>
+
+	<li> -native
+	<br>
+	Generate a native, machine code executable.
 	<p>
 
 	<li> -s
@@ -115,7 +165,13 @@ will exit with a non-zero value.
 <h3>
 SEE ALSO
 </h3>
-llvm-dis
+gccas
+
+<h3>
+BUGS
+</h3>
+The -L option cannot be used for find native code libraries when using the
+-native option.
 
 <HR>
 <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
