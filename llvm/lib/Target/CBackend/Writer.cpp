@@ -227,20 +227,19 @@ bool CBackendNameAllUsedStructs::runOnModule(Module &M) {
   std::set<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
   
   // Loop over the module symbol table, removing types from UT that are
-  // already named, and removing names for structure types that are not used.
+  // already named, and removing names for types that are not used.
   //
   SymbolTable &MST = M.getSymbolTable();
   for (SymbolTable::type_iterator TI = MST.type_begin(), TE = MST.type_end();
        TI != TE; ) {
     SymbolTable::type_iterator I = TI++;
-    if (const StructType *STy = dyn_cast<StructType>(I->second)) {
-      // If this is not used, remove it from the symbol table.
-      std::set<const Type *>::iterator UTI = UT.find(STy);
-      if (UTI == UT.end())
-        MST.remove(I);
-      else
-        UT.erase(UTI);
-    }
+
+    // If this is not used, remove it from the symbol table.
+    std::set<const Type *>::iterator UTI = UT.find(I->second);
+    if (UTI == UT.end())
+      MST.remove(I);
+    else
+      UT.erase(UTI);    // Only keep one name for this type.
   }
 
   // UT now contains types that are not named.  Loop over it, naming
