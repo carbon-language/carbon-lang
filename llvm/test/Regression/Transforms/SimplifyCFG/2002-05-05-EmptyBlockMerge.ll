@@ -2,6 +2,9 @@
 ;
 ; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep 'br label'
 ;
+declare void %foo()
+implementation
+
 void "cprop_test12"(int* %data) {
 bb0:
         %reg108 = load int* %data
@@ -9,6 +12,7 @@ bb0:
         br bool %cond218, label %bb3, label %bb2
 
 bb2:
+	call void %foo()
         br label %bb3
 
 bb3:
