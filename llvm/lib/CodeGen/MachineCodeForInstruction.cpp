@@ -18,6 +18,7 @@
 
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Instruction.h"
 
 static AnnotationID MCFI_AID(
@@ -35,18 +36,37 @@ static struct Initializer {
   }
 } RegisterAID;
 
-MachineCodeForInstruction &MachineCodeForInstruction::get(const Instruction *I){
+
+MachineCodeForInstruction&
+MachineCodeForInstruction::get(const Instruction *I){
   return *(MachineCodeForInstruction*)I->getOrCreateAnnotation(MCFI_AID);
 }
 
-void MachineCodeForInstruction::destroy(const Instruction *I) {
+
+void
+MachineCodeForInstruction::destroy(const Instruction *I) {
   I->deleteAnnotation(MCFI_AID);
 }
 
 
-MachineCodeForInstruction::MachineCodeForInstruction() : Annotation(MCFI_AID) {}
+void
+MachineCodeForInstruction::dropAllReferences()
+{
+  for (unsigned i=0, N=tempVec.size(); i < N; i++)
+    cast<TmpInstruction>(tempVec[i])->dropAllReferences();
+}
 
-MachineCodeForInstruction::~MachineCodeForInstruction() {
+
+MachineCodeForInstruction::MachineCodeForInstruction()
+  : Annotation(MCFI_AID)
+{}
+
+
+MachineCodeForInstruction::~MachineCodeForInstruction()
+{
+  // Let go of all uses in temp. instructions
+  dropAllReferences();
+  
   // Free the Value objects created to hold intermediate values
   for (unsigned i=0, N=tempVec.size(); i < N; i++)
     delete tempVec[i];
