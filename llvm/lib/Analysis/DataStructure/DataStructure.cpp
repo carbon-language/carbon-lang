@@ -679,12 +679,19 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
 // Offset indicates what offset the specified node is to be merged into the
 // current node.
 //
-// The specified node may be a null pointer (in which case, nothing happens).
+// The specified node may be a null pointer (in which case, we update it to
+// point to this node).
 //
 void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   DSNode *N = NH.getNode();
-  if (N == 0 || (N == this && NH.getOffset() == Offset))
+  if (N == this && NH.getOffset() == Offset)
     return;  // Noop
+
+  // If the RHS is a null node, make it point to this node!
+  if (N == 0) {
+    NH.mergeWith(DSNodeHandle(this, Offset));
+    return;
+  }
 
   assert(!N->isDeadNode() && !isDeadNode());
   assert(!hasNoReferrers() && "Should not try to fold a useless node!");
