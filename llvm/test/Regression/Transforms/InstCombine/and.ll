@@ -178,3 +178,10 @@ bool %test26(int %A) {
         ret bool %D
 }
 
+ubyte %test27(ubyte %A) {
+	%B = and ubyte %A, 4
+	%C = sub ubyte %B, 16
+	%D = and ubyte %C, 240   ;; 0xF0
+	%E = add ubyte %D, 16
+	ret ubyte %E
+}
