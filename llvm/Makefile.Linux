@@ -21,3 +21,7 @@ ExportSymbols := -Wl,--export-dynamic
 ifndef LLVMGCCDIR
 LLVMGCCDIR := /home/vadve/lattner/cvs/gcc_install_x86
 endif
+
+# For now we disable all LLC tests, because LLC does not generate x86 code
+#
+DISABLE_LLC := 1
