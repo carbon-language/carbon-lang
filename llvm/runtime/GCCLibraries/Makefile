@@ -2,6 +2,7 @@
 
 LEVEL = ../..
 PARALLEL_DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
+PARALLEL_DIRS := $(filter-out libexception/, $(PARALLEL_DIRS))
 
 include $(LEVEL)/Makefile.common
 
