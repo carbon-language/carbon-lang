@@ -38,13 +38,13 @@ const TargetInstrDescriptor SparcMachineInstrDesc[] = {
 // Command line options to control choice of code generation passes.
 //---------------------------------------------------------------------------
 
-static cl::opt<bool> DisablePreOpt("nopreopt",
+static cl::opt<bool> DisablePreOpt("disable-preopt",
               cl::desc("Disable optimizations prior to instruction selection"));
 
-static cl::opt<bool> DisableSched("nosched",
+static cl::opt<bool> DisableSched("disable-sched",
                                   cl::desc("Disable local scheduling pass"));
 
-static cl::opt<bool> DisablePeephole("nopeephole",
+static cl::opt<bool> DisablePeephole("disable-peephole",
                                 cl::desc("Disable peephole optimization pass"));
 
 static cl::opt<bool>
