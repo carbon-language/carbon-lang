@@ -21,9 +21,7 @@ typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 static std::vector<std::pair<std::pair<std::string, std::vector<unsigned>*>,
                              Init*> > SetStack;
 
-static std::ostream &err() {
-  return std::cerr << "Parsing Line #" << Filelineno << ": ";
-}
+extern std::ostream &err();
 
 static void addValue(const RecordVal &RV) {
   if (CurRec->getValue(RV.getName())) {
