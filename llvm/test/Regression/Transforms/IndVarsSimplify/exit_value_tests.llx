@@ -1,0 +1,89 @@
+; Test that we can evaluate the exit values of various expression types.  Since
+; these loops all have predictable exit values we can replace the use outside
+; of the loop with a closed-form computation, making the loop dead.
+;
+; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
+
+int %polynomial_constant() {
+        br label %Loop
+Loop:
+        %A1 = phi int [0, %0], [%A2, %Loop]
+        %B1 = phi int [0, %0], [%B2, %Loop]
+        %A2 = add int %A1, 1
+        %B2 = add int %B1, %A1
+
+        %C = seteq int %A1, 1000
+        br bool %C, label %Out, label %Loop
+Out:
+        ret int %B2
+}
+
+int %NSquare(int %N) {
+	br label %Loop
+Loop:
+	%X = phi int [0, %0], [%X2, %Loop]
+	%X2 = add int %X, 1
+	%c = seteq int %X, %N
+	br bool %c, label %Out, label %Loop
+Out:
+	%Y = mul int %X, %X
+	ret int %Y
+}
+
+int %NSquareOver2(int %N) {
+	br label %Loop
+Loop:
+	%X = phi int [0, %0], [%X2, %Loop]
+	%Y = phi int [15, %0], [%Y2, %Loop]   ;; include offset of 15 for yuks
+
+	%Y2 = add int %Y, %X
+
+	%X2 = add int %X, 1
+	%c = seteq int %X, %N
+	br bool %c, label %Out, label %Loop
+Out:
+	ret int %Y2
+}
+
+int %strength_reduced() {
+        br label %Loop
+Loop:
+        %A1 = phi int [0, %0], [%A2, %Loop]
+        %B1 = phi int [0, %0], [%B2, %Loop]
+        %A2 = add int %A1, 1
+        %B2 = add int %B1, %A1
+
+        %C = seteq int %A1, 1000
+        br bool %C, label %Out, label %Loop
+Out:
+        ret int %B2
+}
+
+int %chrec_equals() {
+entry:
+        br label %no_exit
+no_exit:
+        %i0 = phi int [ 0, %entry ], [ %i1, %no_exit ]
+        %ISq = mul int %i0, %i0
+        %i1 = add int %i0, 1
+        %tmp.1 = setne int %ISq, 10000    ; while (I*I != 1000)
+        br bool %tmp.1, label %no_exit, label %loopexit
+loopexit:
+        ret int %i1
+}
+
+;; We should recognize B1 as being a recurrence, allowing us to compute the
+;; trip count and eliminate the loop.
+short %cast_chrec_test() {
+        br label %Loop
+Loop:
+        %A1 = phi int [0, %0], [%A2, %Loop]
+        %B1 = cast int %A1 to short
+        %A2 = add int %A1, 1
+
+        %C = seteq short %B1, 1000
+        br bool %C, label %Out, label %Loop
+Out:
+        ret short %B1
+}
+
