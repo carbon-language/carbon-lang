@@ -806,7 +806,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // predecessor and use logical operations to pick the right destination.
       BasicBlock *TrueDest  = BI->getSuccessor(0);
       BasicBlock *FalseDest = BI->getSuccessor(1);
-      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
+      if (BinaryOperator *Cond = dyn_cast<BinaryOperator>(BI->getCondition()))
         if (Cond->getParent() == BB && &BB->front() == Cond &&
             Cond->getNext() == BI && Cond->hasOneUse() &&
             TrueDest != BB && FalseDest != BB)
