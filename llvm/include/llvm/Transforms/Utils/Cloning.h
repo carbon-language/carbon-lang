@@ -96,6 +96,6 @@ bool InlineFunction(CallInst *C);
 /// nodes, copies the basic blocks, remaps variables, and returns a new vector
 /// of basic blocks (the cloned trace).
 ///
-std::vector<BasicBlock *> cloneTrace(std::vector<BasicBlock*> &origTrace);
+std::vector<BasicBlock *> CloneTrace(std::vector<BasicBlock*> &origTrace);
 
 #endif
