@@ -129,9 +129,7 @@ char ** CopyEnv(char ** const envp) {
   // Count the number of entries in the old list;
   unsigned entries;   // The number of entries in the old environment list
   for (entries = 0; envp[entries] != NULL; entries++)
-  {
-    ;
-  }
+    /*empty*/;
 
   // Add one more entry for the NULL pointer that ends the list.
   ++entries;
@@ -141,8 +139,8 @@ char ** CopyEnv(char ** const envp) {
     return NULL;
 
   // Allocate a new environment list.
-  char **newenv;
-  if ((newenv = new (char *) [entries]) == NULL)
+  char **newenv = new char* [entries];
+  if ((newenv = new char* [entries]) == NULL)
     return NULL;
 
   // Make a copy of the list.  Don't forget the NULL that ends the list.
