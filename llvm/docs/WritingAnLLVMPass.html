@@ -1381,8 +1381,8 @@ approach is that none of the <tt>PassManager</tt> features can be used for
 timing and debugging the actual <b>loading</b> of the module from disk or
 standard input.</p>
 
-<p>To solve this problem, eventually the <tt>PassManger</tt> class will accept a
-<tt>ModuleSource</tt> object instead of a Module itself.  When complete, this
+<p>To solve this problem, eventually the <tt>PassManager</tt> class will accept
+a <tt>ModuleSource</tt> object instead of a Module itself.  When complete, this
 will also allow for streaming of functions out of the bytecode representation,
 allowing us to avoid holding the entire program in memory at once if we only are
 dealing with <a href="#FunctionPass">FunctionPass</a>es.</p>
@@ -1396,7 +1396,7 @@ capable of this, the loader just needs to be reworked a bit.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="subsubsection">
-<a name="PassFunctionPass"><tt>Pass</tt>'s requiring <tt>FunctionPass</tt>'s</a>
+<a name="PassFunctionPass"><tt>Pass</tt>es requiring <tt>FunctionPass</tt>es</a>
 </div>
 
 <div class="doc_text">
