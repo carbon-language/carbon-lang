@@ -6,13 +6,15 @@ double %test(double* %DP, double %Arg) {
 	%X = mul double %W, %W
 	%Y = div double %X, %X
 	%Z = rem double %Y, %Y
+	%Z = div double %Z, %W
 	%Q = add double %Z, %Arg
-	store double %Q, double* %DP
+	%R = cast double %Q to double
+	store double %R, double* %DP
 	ret double %Z
 }
 
 int %main() { 
   %X = alloca double
-  call double %test(double* %X, double 1.0)
+  call double %test(double* %X, double 2.0)
   ret int 0 
 }
