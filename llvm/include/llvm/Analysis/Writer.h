@@ -26,30 +26,30 @@ inline std::ostream &operator <<(std::ostream &o,
 }
 
 // Stuff for printing out Dominator data structures...
-class DominatorSet;
-class ImmediateDominators;
-class DominatorTree;
-class DominanceFrontier;
+class DominatorSetBase;
+class ImmediateDominatorsBase;
+class DominatorTreeBase;
+class DominanceFrontierBase;
 
-void WriteToOutput(const DominatorSet &, std::ostream &o);
-inline std::ostream &operator <<(std::ostream &o, const DominatorSet &DS) {
+void WriteToOutput(const DominatorSetBase &, std::ostream &o);
+inline std::ostream &operator <<(std::ostream &o, const DominatorSetBase &DS) {
   WriteToOutput(DS, o); return o;
 }
 
-void WriteToOutput(const ImmediateDominators &, std::ostream &o);
+void WriteToOutput(const ImmediateDominatorsBase &, std::ostream &o);
 inline std::ostream &operator <<(std::ostream &o,
-                                 const ImmediateDominators &ID) {
+                                 const ImmediateDominatorsBase &ID) {
   WriteToOutput(ID, o); return o;
 }
 
-void WriteToOutput(const DominatorTree &, std::ostream &o);
-inline std::ostream &operator <<(std::ostream &o, const DominatorTree &DT) {
+void WriteToOutput(const DominatorTreeBase &, std::ostream &o);
+inline std::ostream &operator <<(std::ostream &o, const DominatorTreeBase &DT) {
   WriteToOutput(DT, o); return o;
 }
 
-void WriteToOutput(const DominanceFrontier &, std::ostream &o);
+void WriteToOutput(const DominanceFrontierBase &, std::ostream &o);
 inline std::ostream &operator <<(std::ostream &o,
-                                 const DominanceFrontier &DF) {
+                                 const DominanceFrontierBase &DF) {
   WriteToOutput(DF, o); return o;
 }
 

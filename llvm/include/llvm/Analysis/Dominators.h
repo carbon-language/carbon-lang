@@ -45,31 +45,17 @@ public:
 // DominatorSet - Maintain a set<BasicBlock*> for every basic block in a
 // function, that represents the blocks that dominate the block.
 //
-class DominatorSet : public DominatorBase {
+class DominatorSetBase : public DominatorBase {
 public:
   typedef std::set<BasicBlock*> DomSetType;    // Dom set for a bb
   // Map of dom sets
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType;
-private:
+protected:
   DomSetMapType Doms;
-
-  void calcForwardDominatorSet(Function &F);
-  void calcPostDominatorSet(Function &F);
 public:
-  // DominatorSet ctor - Build either the dominator set or the post-dominator
-  // set for a function... 
-  //
-  static AnalysisID ID;            // Build dominator set
-  static AnalysisID PostDomID;     // Build postdominator set
+  DominatorSetBase(bool isPostDom) : DominatorBase(isPostDom) {}
 
-  DominatorSet(AnalysisID id) : DominatorBase(id == PostDomID) {}
-
-  virtual const char *getPassName() const {
-    if (isPostDominator()) return "Post-Dominator Set Construction";
-    else return "Dominator Set Construction";
-  }
-
-  virtual bool runOnFunction(Function &F);
+  virtual void releaseMemory() { Doms.clear(); }
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
@@ -100,7 +86,46 @@ public:
   // neccesary if A and B are in the same basic block.
   //
   bool dominates(Instruction *A, Instruction *B) const;
+};
 
+
+//===-------------------------------------
+// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
+// compute a normal dominator set.
+//
+struct DominatorSet : public DominatorSetBase {
+  static AnalysisID ID;            // Build dominator set
+
+  DominatorSet(AnalysisID id) : DominatorSetBase(false) { assert(id == ID); }
+
+  virtual const char *getPassName() const {
+    return "Dominator Set Construction";
+  }
+
+  virtual bool runOnFunction(Function &F);
+
+  // getAnalysisUsage - This simply provides a dominator set
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addProvided(ID);
+  }
+};
+
+
+//===-------------------------------------
+// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
+// compute the post-dominator set.
+//
+struct PostDominatorSet : public DominatorSetBase {
+  static AnalysisID ID;            // Build post-dominator set
+
+  PostDominatorSet(AnalysisID id) : DominatorSetBase(true) { assert(id == ID); }
+
+  virtual const char *getPassName() const {
+    return "Post-Dominator Set Construction";
+  }
+
+  virtual bool runOnFunction(Function &F);
 
   // getAnalysisUsage - This obviously provides a dominator set, but it also
   // uses the UnifyFunctionExitNode pass if building post-dominators
@@ -109,41 +134,22 @@ public:
 };
 
 
+
+
+
 //===----------------------------------------------------------------------===//
 //
 // ImmediateDominators - Calculate the immediate dominator for each node in a
 // function.
 //
-class ImmediateDominators : public DominatorBase {
+class ImmediateDominatorsBase : public DominatorBase {
+protected:
   std::map<BasicBlock*, BasicBlock*> IDoms;
-  void calcIDoms(const DominatorSet &DS);
+  void calcIDoms(const DominatorSetBase &DS);
 public:
+  ImmediateDominatorsBase(bool isPostDom) : DominatorBase(isPostDom) {}
 
-  // ImmediateDominators ctor - Calculate the idom or post-idom mapping,
-  // for a function...
-  //
-  static AnalysisID ID;         // Build immediate dominators
-  static AnalysisID PostDomID;  // Build immediate postdominators
-
-  ImmediateDominators(AnalysisID id) : DominatorBase(id == PostDomID) {}
-
-  virtual const char *getPassName() const {
-    if (isPostDominator()) return "Immediate Post-Dominators Construction";
-    else return "Immediate Dominators Construction";
-  }
-
-  virtual bool runOnFunction(Function &F) {
-    IDoms.clear();     // Reset from the last time we were run...
-    DominatorSet *DS;
-    if (isPostDominator())
-      DS = &getAnalysis<DominatorSet>(DominatorSet::PostDomID);
-    else
-      DS = &getAnalysis<DominatorSet>();
-
-    Root = DS->getRoot();
-    calcIDoms(*DS);                         // Can be used to make rev-idoms
-    return false;
-  }
+  virtual void releaseMemory() { IDoms.clear(); }
 
   // Accessor interface:
   typedef std::map<BasicBlock*, BasicBlock*> IDomMapType;
@@ -159,39 +165,88 @@ public:
     std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
   }
+};
 
-  // getAnalysisUsage - This obviously provides a dominator tree, but it
-  // can only do so with the input of dominator sets
-  //
+//===-------------------------------------
+// ImmediateDominators Class - Concrete subclass of ImmediateDominatorsBase that
+// is used to compute a normal immediate dominator set.
+//
+struct ImmediateDominators : public ImmediateDominatorsBase {
+  static AnalysisID ID;         // Build immediate dominators
+
+  ImmediateDominators(AnalysisID id) : ImmediateDominatorsBase(false) {
+    assert(id == ID);
+  }
+
+  virtual const char *getPassName() const {
+    return "Immediate Dominators Construction";
+  }
+
+  virtual bool runOnFunction(Function &F) {
+    IDoms.clear();     // Reset from the last time we were run...
+    DominatorSet &DS = getAnalysis<DominatorSet>();
+    Root = DS.getRoot();
+    calcIDoms(DS);
+    return false;
+  }
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    if (isPostDominator()) {
-      AU.addRequired(DominatorSet::PostDomID);
-      AU.addProvided(PostDomID);
-    } else {
-      AU.addRequired(DominatorSet::ID);
-      AU.addProvided(ID);
-    }
+    AU.addProvided(ID);
+    AU.addRequired(DominatorSet::ID);
   }
 };
+
+
+//===-------------------------------------
+// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
+// that is used to compute the immediate post-dominators.
+//
+struct ImmediatePostDominators : public ImmediateDominatorsBase {
+  static AnalysisID ID;         // Build immediate postdominators
+
+  ImmediatePostDominators(AnalysisID id) : ImmediateDominatorsBase(true) {
+    assert(id == ID);
+  }
+
+  virtual const char *getPassName() const {
+    return "Immediate Post-Dominators Construction";
+  }
+
+  virtual bool runOnFunction(Function &F) {
+    IDoms.clear();     // Reset from the last time we were run...
+    PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
+    Root = DS.getRoot();
+    calcIDoms(DS);
+    return false;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired(PostDominatorSet::ID);
+    AU.addProvided(ID);
+  }
+};
+
 
 
 //===----------------------------------------------------------------------===//
 //
 // DominatorTree - Calculate the immediate dominator tree for a function.
 //
-class DominatorTree : public DominatorBase {
+class DominatorTreeBase : public DominatorBase {
+protected:
   class Node2;
 public:
   typedef Node2 Node;
-private:
+protected:
   std::map<BasicBlock*, Node*> Nodes;
-  void calculate(const DominatorSet &DS);
   void reset();
   typedef std::map<BasicBlock*, Node*> NodeMapType;
 public:
   class Node2 : public std::vector<Node*> {
     friend class DominatorTree;
+    friend class PostDominatorTree;
     BasicBlock *TheNode;
     Node2 *IDom;
   public:
@@ -215,49 +270,81 @@ public:
   };
 
 public:
-  // DominatorTree ctor - Compute a dominator tree, given various amounts of
-  // previous knowledge...
-  static AnalysisID ID;         // Build dominator tree
-  static AnalysisID PostDomID;  // Build postdominator tree
+  DominatorTreeBase(bool isPostDom) : DominatorBase(isPostDom) {}
+  ~DominatorTreeBase() { reset(); }
 
-  DominatorTree(AnalysisID id) : DominatorBase(id == PostDomID) {}
-  ~DominatorTree() { reset(); }
-
-  virtual const char *getPassName() const {
-    if (isPostDominator()) return "Post-Dominator Tree Construction";
-    else return "Dominator Tree Construction";
-  }
-
-  virtual bool runOnFunction(Function &F) {
-    reset();
-    DominatorSet *DS;
-    if (isPostDominator())
-      DS = &getAnalysis<DominatorSet>(DominatorSet::PostDomID);
-    else
-      DS = &getAnalysis<DominatorSet>();
-    Root = DS->getRoot();
-    calculate(*DS);                         // Can be used to make rev-idoms
-    return false;
-  }
+  virtual void releaseMemory() { reset(); }
 
   inline Node *operator[](BasicBlock *BB) const {
     NodeMapType::const_iterator i = Nodes.find(BB);
     return (i != Nodes.end()) ? i->second : 0;
   }
+};
 
-  // getAnalysisUsage - This obviously provides a dominator tree, but it
-  // uses dominator sets
-  //
+
+//===-------------------------------------
+// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
+// compute a normal dominator tree.
+//
+struct DominatorTree : public DominatorTreeBase {
+  static AnalysisID ID;         // Build dominator tree
+
+  DominatorTree(AnalysisID id) : DominatorTreeBase(false) {
+    assert(id == ID);
+  }
+
+  virtual const char *getPassName() const {
+    return "Dominator Tree Construction";
+  }
+
+  virtual bool runOnFunction(Function &F) {
+    reset();     // Reset from the last time we were run...
+    DominatorSet &DS = getAnalysis<DominatorSet>();
+    Root = DS.getRoot();
+    calculate(DS);
+    return false;
+  }
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    if (isPostDominator()) {
-      AU.addRequired(DominatorSet::PostDomID);
-      AU.addProvided(PostDomID);
-    } else {
-      AU.addRequired(DominatorSet::ID);
-      AU.addProvided(ID);
-    }
+    AU.addProvided(ID);
+    AU.addRequired(DominatorSet::ID);
   }
+private:
+  void calculate(const DominatorSet &DS);
+};
+
+
+//===-------------------------------------
+// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
+// compute the a post-dominator tree.
+//
+struct PostDominatorTree : public DominatorTreeBase {
+  static AnalysisID ID;         // Build immediate postdominators
+
+  PostDominatorTree(AnalysisID id) : DominatorTreeBase(true) {
+    assert(id == ID);
+  }
+
+  virtual const char *getPassName() const {
+    return "Post-Dominator Tree Construction";
+  }
+
+  virtual bool runOnFunction(Function &F) {
+    reset();     // Reset from the last time we were run...
+    PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
+    Root = DS.getRoot();
+    calculate(DS);
+    return false;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired(PostDominatorSet::ID);
+    AU.addProvided(ID);
+  }
+private:
+  void calculate(const PostDominatorSet &DS);
 };
 
 
@@ -265,65 +352,91 @@ public:
 //
 // DominanceFrontier - Calculate the dominance frontiers for a function.
 //
-class DominanceFrontier : public DominatorBase {
+class DominanceFrontierBase : public DominatorBase {
 public:
   typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
-private:
+protected:
   DomSetMapType Frontiers;
-  const DomSetType &calcDomFrontier(const DominatorTree &DT,
-				    const DominatorTree::Node *Node);
-  const DomSetType &calcPostDomFrontier(const DominatorTree &DT,
-					const DominatorTree::Node *Node);
 public:
+  DominanceFrontierBase(bool isPostDom) : DominatorBase(isPostDom) {}
 
-  // DominatorFrontier ctor - Compute dominator frontiers for a function
-  //
-  static AnalysisID ID;         // Build dominator frontier
-  static AnalysisID PostDomID;  // Build postdominator frontier
-
-  DominanceFrontier(AnalysisID id) : DominatorBase(id == PostDomID) {}
-
-  virtual const char *getPassName() const {
-    if (isPostDominator()) return "Post-Dominance Frontier Construction";
-    else return "Dominance Frontier Construction";
-  }
-
-  virtual bool runOnFunction(Function &) {
-    Frontiers.clear();
-    DominatorTree *DT;
-    if (isPostDominator())
-      DT = &getAnalysis<DominatorTree>(DominatorTree::PostDomID);
-    else
-      DT = &getAnalysis<DominatorTree>();
-    Root = DT->getRoot();
-
-    if (isPostDominator())
-      calcPostDomFrontier(*DT, (*DT)[Root]);
-    else
-      calcDomFrontier(*DT, (*DT)[Root]);
-    return false;
-  }
+  virtual void releaseMemory() { Frontiers.clear(); }
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
   inline const_iterator begin() const { return Frontiers.begin(); }
   inline const_iterator end()   const { return Frontiers.end(); }
   inline const_iterator find(BasicBlock* B) const { return Frontiers.find(B); }
+};
 
-  // getAnalysisUsage - This obviously provides the dominance frontier, but it
-  // uses dominator sets
-  //
+
+//===-------------------------------------
+// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
+// compute a normal dominator tree.
+//
+struct DominanceFrontier : public DominanceFrontierBase {
+  static AnalysisID ID;         // Build dominance frontier
+
+  DominanceFrontier(AnalysisID id) : DominanceFrontierBase(false) {
+    assert(id == ID);
+  }
+
+  virtual const char *getPassName() const {
+    return "Dominance Frontier Construction";
+  }
+
+  virtual bool runOnFunction(Function &) {
+    Frontiers.clear();
+    DominatorTree &DT = getAnalysis<DominatorTree>();
+    Root = DT.getRoot();
+    calculate(DT, DT[Root]);
+    return false;
+  }
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    if (isPostDominator()) {
-      AU.addRequired(DominatorTree::PostDomID);
-      AU.addProvided(PostDomID);
-    } else {
-      AU.addRequired(DominatorTree::ID);
-      AU.addProvided(ID);
-    }
+    AU.addProvided(ID);
+    AU.addRequired(DominatorTree::ID);
   }
+private:
+  const DomSetType &calculate(const DominatorTree &DT,
+                              const DominatorTree::Node *Node);
+};
+
+
+//===-------------------------------------
+
+// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
+// used to compute the a post-dominance frontier.
+//
+struct PostDominanceFrontier : public DominanceFrontierBase {
+  static AnalysisID ID;         // Build post dominance frontier
+
+  PostDominanceFrontier(AnalysisID id) : DominanceFrontierBase(true) {
+    assert(id == ID);
+  }
+
+  virtual const char *getPassName() const {
+    return "Post-Dominance Frontier Construction";
+  }
+
+  virtual bool runOnFunction(Function &) {
+    Frontiers.clear();
+    PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
+    Root = DT.getRoot();
+    calculate(DT, DT[Root]);
+    return false;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired(PostDominatorTree::ID);
+    AU.addProvided(ID);
+  }
+private:
+  const DomSetType &calculate(const PostDominatorTree &DT,
+                              const DominatorTree::Node *Node);
 };
 
 #endif

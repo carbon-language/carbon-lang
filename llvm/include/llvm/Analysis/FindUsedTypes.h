@@ -20,7 +20,7 @@ public:
   //
   static AnalysisID ID;
 
-  FindUsedTypes(AnalysisID id) {}
+  FindUsedTypes(AnalysisID id) { assert(ID == id); }
   virtual const char *getPassName() const { return "Find Used Types"; }
 
   // getTypes - After the pass has been run, return the set containing all of
