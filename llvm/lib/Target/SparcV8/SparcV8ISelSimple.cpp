@@ -784,12 +784,13 @@ void V8ISel::visitCallInst(CallInst &I) {
   // Deal with args
   static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
     V8::O4, V8::O5 };
+  const unsigned *OAR = &OutgoingArgRegs[0];
   for (unsigned i = 1; i < I.getNumOperands (); ++i) {
     unsigned ArgReg = getReg (I.getOperand (i));
     if (i < 7) {
       if (getClassB (I.getOperand (i)->getType ()) < cLong) {
         // Schlep it over into the incoming arg register
-        BuildMI (BB, V8::ORrr, 2, OutgoingArgRegs[i - 1]).addReg (V8::G0)
+        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0)
           .addReg (ArgReg);
       } else if (getClassB (I.getOperand (i)->getType ()) == cFloat) {
         // Single-fp args are passed in integer registers; go through
@@ -798,7 +799,7 @@ void V8ISel::visitCallInst(CallInst &I) {
         int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
         BuildMI (BB, V8::STFri, 3).addFrameIndex (FI).addSImm (0)
           .addReg (ArgReg);
-        BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i - 1]).addFrameIndex (FI)
+        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI)
           .addSImm (0);
       } else if (getClassB (I.getOperand (i)->getType ()) == cDouble) {
         // Double-fp args are passed in pairs of integer registers; go through
@@ -808,12 +809,17 @@ void V8ISel::visitCallInst(CallInst &I) {
         int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
         BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
           .addReg (ArgReg);
-        BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i - 1]).addFrameIndex (FI)
+        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI)
           .addSImm (0);
-        BuildMI (BB, V8::LD, 2, OutgoingArgRegs[i]).addFrameIndex (FI)
+        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI)
           .addSImm (4);
+      } else if (getClassB (I.getOperand (i)->getType ()) == cLong) {
+        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0)
+          .addReg (ArgReg);
+        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0)
+          .addReg (ArgReg+1);
       } else {
-        assert (0 && "64-bit (double, long, etc.) 'call' opnds not handled");
+        assert (0 && "Unknown class?!");
       }
     } else {
       if (i == 7 && extraStack)
