@@ -326,55 +326,7 @@ namespace {
 
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
-      // While we're doing this, keep track of whether we see any FP code for
-      // FP_REG_KILL insertion.
-      ContainsFPCode = false;
-
-      // Scan the PHI nodes that already are inserted into this basic block.  If
-      // any of them is a PHI of a floating point value, we need to insert an
-      // FP_REG_KILL.
-      SSARegMap *RegMap = BB->getParent()->getSSARegMap();
-      for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
-           I != E; ++I) {
-        assert(I->getOpcode() == X86::PHI &&
-               "Isn't just PHI nodes?");
-        if (RegMap->getRegClass(I->getOperand(0).getReg()) ==
-            X86::RFPRegisterClass) {
-          ContainsFPCode = true;
-          break;
-        }
-      }
-
-      // Compute the RegPressureMap, which is an approximation for the number of
-      // registers required to compute each node.
-      ComputeRegPressure(DAG.getRoot());
-
-      // Codegen the basic block.
-      Select(DAG.getRoot());
-
-      // Insert FP_REG_KILL instructions into basic blocks that need them.  This
-      // only occurs due to the floating point stackifier not being aggressive
-      // enough to handle arbitrary global stackification.
-      //
-      // Currently we insert an FP_REG_KILL instruction into each block that
-      // uses or defines a floating point virtual register.
-      //
-      // When the global register allocators (like linear scan) finally update
-      // live variable analysis, we can keep floating point values in registers
-      // across basic blocks.  This will be a huge win, but we are waiting on
-      // the global allocators before we can do this.
-      //
-      if (ContainsFPCode && BB->succ_size()) {
-        BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
-        ++NumFPKill;
-      }
-
-      // Clear state used for selection.
-      ExprMap.clear();
-      LoweredTokens.clear();
-      RegPressureMap.clear();
-    }
+    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
 
     bool isFoldableLoad(SDOperand Op);
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
@@ -389,6 +341,72 @@ namespace {
     void Select(SDOperand N);
   };
 }
+
+/// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
+/// when it has created a SelectionDAG for us to codegen.
+void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+  // While we're doing this, keep track of whether we see any FP code for
+  // FP_REG_KILL insertion.
+  ContainsFPCode = false;
+
+  // Scan the PHI nodes that already are inserted into this basic block.  If any
+  // of them is a PHI of a floating point value, we need to insert an
+  // FP_REG_KILL.
+  SSARegMap *RegMap = BB->getParent()->getSSARegMap();
+  for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
+       I != E; ++I) {
+    assert(I->getOpcode() == X86::PHI &&
+           "Isn't just PHI nodes?");
+    if (RegMap->getRegClass(I->getOperand(0).getReg()) ==
+        X86::RFPRegisterClass) {
+      ContainsFPCode = true;
+      break;
+    }
+  }
+
+  // Compute the RegPressureMap, which is an approximation for the number of
+  // registers required to compute each node.
+  ComputeRegPressure(DAG.getRoot());
+
+  // Codegen the basic block.
+  Select(DAG.getRoot());
+
+  // Finally, look at all of the successors of this block.  If any contain a PHI
+  // node of FP type, we need to insert an FP_REG_KILL in this block.
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+         E = BB->succ_end(); SI != E && !ContainsFPCode; ++SI)
+    for (MachineBasicBlock::iterator I = (*SI)->begin(), E = (*SI)->end();
+         I != E && I->getOpcode() == X86::PHI; ++I) {
+      if (RegMap->getRegClass(I->getOperand(0).getReg()) ==
+          X86::RFPRegisterClass) {
+        ContainsFPCode = true;
+        break;
+      }
+    }
+  
+  // Insert FP_REG_KILL instructions into basic blocks that need them.  This
+  // only occurs due to the floating point stackifier not being aggressive
+  // enough to handle arbitrary global stackification.
+  //
+  // Currently we insert an FP_REG_KILL instruction into each block that uses or
+  // defines a floating point virtual register.
+  //
+  // When the global register allocators (like linear scan) finally update live
+  // variable analysis, we can keep floating point values in registers across
+  // basic blocks.  This will be a huge win, but we are waiting on the global
+  // allocators before we can do this.
+  //
+  if (ContainsFPCode && BB->succ_size()) {
+    BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
+    ++NumFPKill;
+  }
+  
+  // Clear state used for selection.
+  ExprMap.clear();
+  LoweredTokens.clear();
+  RegPressureMap.clear();
+}
+
 
 // ComputeRegPressure - Compute the RegPressureMap, which is an approximation
 // for the number of registers required to compute each node.  This is basically
@@ -1222,6 +1240,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     switch (SrcTy) {
     case MVT::i64:
+      assert(0 && "Cast ulong to FP not implemented yet!");
       // FIXME: this won't work for cast [u]long to FP
       addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
                         FrameIdx).addReg(Tmp1);
@@ -1357,6 +1376,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       assert(0 && "Unknown integer type!");
     case MVT::i64:
       // FIXME: this isn't gunna work.
+      assert(0 && "Cast FP to long not implemented yet!");
       addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result), FrameIdx);
       addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result+1), FrameIdx, 4);
     case MVT::i32:
