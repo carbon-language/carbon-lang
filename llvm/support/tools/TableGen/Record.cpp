@@ -127,6 +127,15 @@ Init *RecordRecTy::convertValue(DefInit *DI) {
   return DI;
 }
 
+Init *RecordRecTy::convertValue(TypedInit *VI) {
+  // Ensure that VI is compatible with Rec.
+  if (RecordRecTy *RRT = dynamic_cast<RecordRecTy*>(VI->getType()))
+    if (RRT->getRecord()->isSubClassOf(getRecord()) ||
+        RRT->getRecord() == getRecord())
+      return VI;
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 //    Initializer implementations
 //===----------------------------------------------------------------------===//

@@ -136,7 +136,8 @@ public:
   Record *getRecord() const { return Rec; }
 
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
-  Init *convertValue(   DefInit *DI);
+  Init *convertValue(  DefInit *DI);
+  Init *convertValue(TypedInit *VI); 
 
   void print(std::ostream &OS) const;
 };
