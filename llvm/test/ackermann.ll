@@ -6,7 +6,7 @@ implementation
 declare void "__main"()
 
 declare void "printVal"([sbyte] *)
-declare void "printVal"(int)
+declare void "printInt"(int)
 
 declare int "atoi"(sbyte *)
 
@@ -54,9 +54,9 @@ bb8:					;[#uses=2]
 bb9:					;[#uses=3]
 	%reg135 = phi int [ %reg124, %bb8 ], [ %reg119, %bb7 ], [ %reg115, %bb5 ]		; <int>	[#uses=1]
 	call void %printVal([sbyte] *%__intern_LC0)
-	call void %printVal(int %reg132)
+	call void %printInt(int %reg132)
 	call void %printVal([sbyte] *%__intern_LC1)
-	call void %printVal(int %reg135)
+	call void %printInt(int %reg135)
 	call void %printVal([sbyte] *%__intern_LC2)
 	ret int 0
 end

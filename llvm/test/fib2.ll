@@ -8,7 +8,7 @@ declare void "__main"()
 declare int "atoi"(sbyte *)
 
 declare void "printVal"([sbyte] *)
-declare void "printVal"(uint)
+declare void "printUInt"(uint)
 
 int "main"(int %argc, sbyte * * %argv)
 begin
@@ -43,7 +43,7 @@ bb6:					;[#uses=2]
 bb7:					;[#uses=2]
 	%reg128 = phi uint [ %reg127, %bb6 ], [ 1, %bb4 ]		; <uint>	[#uses=1]
 	call void %printVal([sbyte] * %__intern_LC0)
-	call void %printVal(uint %reg128 )
+	call void %printUInt(uint %reg128 )
 	call void %printVal([sbyte] * %__intern_LC1)
 	ret int 0
 end
