@@ -80,13 +80,13 @@ struct ilist_traits<Use> {
 };
 
 
-template<> struct std::simplify_type<Use> {
+template<> struct simplify_type<Use> {
   typedef Value* SimpleType;
   static SimpleType getSimplifiedValue(const Use &Val) {
     return (SimpleType)Val.get();
   }
 };
-template<> struct std::simplify_type<const Use> {
+template<> struct simplify_type<const Use> {
   typedef Value* SimpleType;
   static SimpleType getSimplifiedValue(const Use &Val) {
     return (SimpleType)Val.get();
