@@ -212,9 +212,18 @@ public:
   ///
   unsigned getPrimitiveSize() const;
 
+  /// getUnsignedVersion - If this is an integer type, return the unsigned
+  /// variant of this type.  For example int -> uint.
+  const Type *getUnsignedVersion() const;
+
+  /// getSignedVersion - If this is an integer type, return the signed variant
+  /// of this type.  For example uint -> int.
+  const Type *getSignedVersion() const;
+
   /// getForwaredType - Return the type that this type has been resolved to if
   /// it has been resolved to anything.  This is used to implement the
-  /// union-find algorithm for type resolution.
+  /// union-find algorithm for type resolution, and shouldn't be used by general
+  /// purpose clients.
   const Type *getForwardedType() const {
     if (!ForwardType) return 0;
     return getForwardedTypeInternal();

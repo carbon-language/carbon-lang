@@ -113,6 +113,41 @@ bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   }
 }
 
+/// getUnsignedVersion - If this is an integer type, return the unsigned
+/// variant of this type.  For example int -> uint.
+const Type *Type::getUnsignedVersion() const {
+  switch (getPrimitiveID()) {
+  default:
+    assert(isInteger()&&"Type::getUnsignedVersion is only valid for integers!");
+  case Type::UByteTyID:   
+  case Type::SByteTyID:   return Type::UByteTy;
+  case Type::UShortTyID:  
+  case Type::ShortTyID:   return Type::UShortTy;
+  case Type::UIntTyID:    
+  case Type::IntTyID:     return Type::UIntTy;
+  case Type::ULongTyID:   
+  case Type::LongTyID:    return Type::ULongTy;
+  }
+}
+
+/// getSignedVersion - If this is an integer type, return the signed variant
+/// of this type.  For example uint -> int.
+const Type *Type::getSignedVersion() const {
+  switch (getPrimitiveID()) {
+  default:
+    assert(isInteger() && "Type::getSignedVersion is only valid for integers!");
+  case Type::UByteTyID:   
+  case Type::SByteTyID:   return Type::SByteTy;
+  case Type::UShortTyID:  
+  case Type::ShortTyID:   return Type::ShortTy;
+  case Type::UIntTyID:    
+  case Type::IntTyID:     return Type::IntTy;
+  case Type::ULongTyID:   
+  case Type::LongTyID:    return Type::LongTy;
+  }
+}
+
+
 // getPrimitiveSize - Return the basic size of this type if it is a primitive
 // type.  These are fixed by LLVM and are not target dependent.  This will
 // return zero if the type does not have a size or is not a primitive type.
