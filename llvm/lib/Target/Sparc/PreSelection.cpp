@@ -20,11 +20,8 @@
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Pass.h"
-#include "llvm/Annotation.h"
 #include "Support/CommandLine.h"
-#include "Support/NonCopyable.h"
 #include <algorithm>
-using namespace std;
 
 namespace {
   //===--------------------------------------------------------------------===//
@@ -135,8 +132,8 @@ namespace {
 
     bool doFinalization(Function &F) {
       if (PreSelectDebugLevel >= PreSelect_PrintOutput)
-        cerr << "\n\n*** LLVM code after pre-selection for function "
-             << F.getName() << ":\n\n" << F;
+        std::cerr << "\n\n*** LLVM code after pre-selection for function "
+                  << F.getName() << ":\n\n" << F;
       return false;
     }
 
