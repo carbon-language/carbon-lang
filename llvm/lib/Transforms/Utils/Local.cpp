@@ -34,8 +34,9 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
 // constant value, convert it into an unconditional branch to the constant
 // destination.
 //
-bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
-                            TerminatorInst *T) {
+bool ConstantFoldTerminator(BasicBlock *BB) {
+  TerminatorInst *T = BB->getTerminator();
+      
   // Branch - See if we are conditional jumping on constant
   if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
@@ -60,7 +61,6 @@ bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
       // Set the unconditional destination, and change the insn to be an
       // unconditional branch.
       BI->setUnconditionalDest(Destination);
-      II = BB->end()-1;  // Update instruction iterator!
       return true;
     }
 #if 0

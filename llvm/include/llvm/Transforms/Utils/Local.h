@@ -25,8 +25,7 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &I);
 // destination.  This is a nontrivial operation because the successors of this
 // basic block must have their PHI nodes updated.
 //
-bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &I,
-                            TerminatorInst *T);
+bool ConstantFoldTerminator(BasicBlock *BB);
 
 
 //===----------------------------------------------------------------------===//
