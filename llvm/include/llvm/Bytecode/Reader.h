@@ -25,16 +25,23 @@
 
 namespace llvm {
 
+// Forward declare the handler class
+class BytecodeHandler;
+
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
-ModuleProvider *getBytecodeModuleProvider(const std::string &Filename);
+ModuleProvider *getBytecodeModuleProvider(
+  const std::string &Filename, ///< Name of file to be read
+  BytecodeHandler* H = 0       ///< Optional handler for reader events
+);
 
 /// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
 /// buffer
 ///
 ModuleProvider *getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                                 unsigned BufferSize,
-                                                const std::string &ModuleID="");
+                                                const std::string &ModuleID="",
+						BytecodeHandler* H = 0);
 
 /// ParseBytecodeFile - Parse the given bytecode file
 ///
