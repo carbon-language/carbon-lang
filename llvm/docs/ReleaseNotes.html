@@ -70,12 +70,17 @@ release implements the following new features:<p>
 <li>temp</li>
 </ol><p>
 
+In this release, the following Quality of Implementation issues were fixed:<p>
+
+<ol>
+<li><a href="http://llvm.cs.uiuc.edu/PR29">C++ front-end is not generating linkonce linkage type when it can</a></li>
+</ol><p>
+
 In this release, the following bugs in the previous release were fixed:<p>
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR57">[inliner] Inlining invoke with PHI in unwind target is broken</a></li>
-<li>temp</li>
-<li>temp</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR58">[linker] linkonce globals should link successfully to external globals</a></li>
 </ol><p>
 
 At this time, LLVM is known to work properly with SPEC CPU 2000, the Olden
@@ -364,6 +369,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Sun Oct 26 23:41:10 CST 2003
+Last modified: Mon Oct 27 11:06:01 CST 2003
 <!-- hhmts end -->
 </body></html>
