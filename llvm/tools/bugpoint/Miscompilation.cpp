@@ -403,13 +403,46 @@ static bool ExtractBlocks(BugDriver &BD,
   if (Blocks.size() == OldSize)
     return false;
 
+  Module *ProgClone = CloneModule(BD.getProgram());
+  Module *ToExtract = SplitFunctionsOutOfModule(ProgClone,
+                                                MiscompiledFunctions);
+  Module *Extracted = BD.ExtractMappedBlocksFromModule(Blocks, ToExtract);
+  if (Extracted == 0) {
+    // Wierd, extraction should have worked.
+    std::cerr << "Nondeterministic problem extracting blocks??\n";
+    delete ProgClone;
+    delete ToExtract;
+    return false;
+  }
 
+  // Otherwise, block extraction succeeded.  Link the two program fragments back
+  // together.
+  delete ToExtract;
 
-  // FIXME: This should actually update the module in the bugdriver!
+  std::string ErrorMsg;
+  if (LinkModules(ProgClone, Extracted, &ErrorMsg)) {
+    std::cerr << BD.getToolName() << ": Error linking modules together:"
+              << ErrorMsg << "\n";
+    exit(1);
+  }
 
+  // Set the new program and delete the old one.
+  BD.setNewProgram(ProgClone);
 
+  // Update the list of miscompiled functions.
+  MiscompiledFunctions.clear();
 
-  return false;
+  for (Module::iterator I = Extracted->begin(), E = Extracted->end(); I != E;
+       ++I)
+    if (!I->isExternal()) {
+      Function *NF = ProgClone->getFunction(I->getName(), I->getFunctionType());
+      assert(NF && "Mapped function not found!");
+      MiscompiledFunctions.push_back(NF);
+    }
+
+  delete Extracted;
+
+  return true;
 }
 
 
