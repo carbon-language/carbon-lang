@@ -1538,7 +1538,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           BuildMI(V9::JMPLRETi, 3).addReg(returnAddrTmp).addSImm(8)
           .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def);
       
-        // If ther is a value to return, we need to:
+        // If there is a value to return, we need to:
         // (a) Sign-extend the value if it is smaller than 8 bytes (reg size)
         // (b) Insert a copy to copy the return value to the appropriate reg.
         //     -- For FP values, create a FMOVS or FMOVD instruction
@@ -1580,7 +1580,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             new TmpInstruction(mcfi, retValToUse, NULL, "argReg");
           
           retMI->addImplicitRef(retVReg);
-            
+          
           if (retType->isFloatingPoint())
             M = (BuildMI(retType==Type::FloatTy? V9::FMOVS : V9::FMOVD, 2)
                  .addReg(retValToUse).addReg(retVReg, MOTy::Def));
@@ -2511,7 +2511,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             CallArgInfo& argInfo = argDesc->getArgInfo(argNo);
             Value* argVal = argInfo.getArgVal(); // don't use callInstr arg here
             const Type* argType = argVal->getType();
-            unsigned regType = regInfo.getRegType(argType);
+            unsigned regType = regInfo.getRegTypeForDataType(argType);
             unsigned argSize = target.getTargetData().getTypeSize(argType);
             int regNumForArg = TargetRegInfo::getInvalidRegNum();
             unsigned regClassIDOfArgReg;
@@ -2523,15 +2523,31 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             // K = #integer argument registers.
             bool isFPArg = argVal->getType()->isFloatingPoint();
             if (isVarArgs && isFPArg) {
-              // If it is a function with no prototype, pass value
-              // as an FP value as well as a varargs value
-              if (noPrototype)
-                argInfo.setUseFPArgReg();
-                
-              // If this arg. is in the first $K$ regs, add copy-
+
+              if (noPrototype) {
+                // It is a function with no prototype: pass value
+                // as an FP value as well as a varargs value.  The FP value
+                // may go in a register or on the stack.  The copy instruction
+                // to the outgoing reg/stack is created by the normal argument
+                // handling code since this is the "normal" passing mode.
+                // 
+                regNumForArg = regInfo.regNumForFPArg(regType,
+                                                      false, false, argNo,
+                                                      regClassIDOfArgReg);
+                if (regNumForArg == regInfo.getInvalidRegNum())
+                  argInfo.setUseStackSlot();
+                else
+                  argInfo.setUseFPArgReg();
+              }
+              
+              // If this arg. is in the first $K$ regs, add special copy-
               // float-to-int instructions to pass the value as an int.
-              // To check if it is in teh first $K$, get the register
-              // number for the arg #i.
+              // To check if it is in the first $K$, get the register
+              // number for the arg #i.  These copy instructions are
+              // generated here because they are extra cases and not needed
+              // for the normal argument handling (some code reuse is
+              // possible though -- later).
+              // 
               int copyRegNum = regInfo.regNumForIntArg(false, false, argNo,
                                                        regClassIDOfArgReg);
               if (copyRegNum != regInfo.getInvalidRegNum()) {
@@ -2543,7 +2559,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                                              argVal, NULL,
                                                              "argRegCopy");
                 callMI->addImplicitRef(argVReg);
-                        
+                
                 // Get a temp stack location to use to copy
                 // float-to-int via the stack.
                 // 
@@ -2630,7 +2646,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               M = BuildMI(storeOpCode, 3).addReg(argVal)
                 .addMReg(regInfo.getStackPointer()).addSImm(argOffset);
               mvec.push_back(M);
-            } else {
+            }
+            else if (regNumForArg != regInfo.getInvalidRegNum()) {
+
               // Create a virtual register to represent the arg reg. Mark
               // this vreg as being an implicit operand of the call MI.
               TmpInstruction* argVReg = 
@@ -2656,6 +2674,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
               mvec.push_back(M);
             }
+            else
+              assert(argInfo.getArgCopy() != regInfo.getInvalidRegNum() &&
+                     "Arg. not in stack slot, primary or secondary register?");
           }
 
           // add call instruction and delay slot before copying return value
@@ -2736,7 +2757,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                "Shr unsupported for other types");
         Add3OperandInstr(opType->isSigned()
                          ? (opType == Type::LongTy ? V9::SRAXr6 : V9::SRAr5)
-                         : (opType == Type::LongTy ? V9::SRLXr6 : V9::SRLr5),
+                         : (opType == Type::ULongTy ? V9::SRLXr6 : V9::SRLr5),
                          subtreeRoot, mvec);
         break;
       }
