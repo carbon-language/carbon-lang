@@ -119,6 +119,9 @@ namespace {
 
         int instrAdded_;
 
+        typedef std::vector<float> SpillWeights;
+        SpillWeights spillWeights_;
+
     public:
         RA()
             : prt_(NULL) {
@@ -153,12 +156,13 @@ namespace {
         /// overlapping ones to the active list
         void processInactiveIntervals(IntervalPtrs::value_type cur);
 
-        /// assignStackSlotAtInterval - choose and spill
-        /// interval. Currently we spill the interval with the last
-        /// end point in the active and inactive lists and the current
-        /// interval
-        void assignStackSlotAtInterval(IntervalPtrs::value_type cur,
-                                       const PhysRegTracker& backupPtr);
+        /// updateSpillWeights - updates the spill weights of the
+        /// specifed physical register and its weight
+        void updateSpillWeights(unsigned reg, SpillWeights::value_type weight);
+
+        /// assignRegOrStackSlotAtInterval - assign a register if one
+        /// is available, or spill.
+        void assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur);
 
         ///
         /// register handling helpers
@@ -329,42 +333,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         // a free physical register or spill an interval in order to
         // assign it one (we could spill the current though).
         else {
-            PhysRegTracker backupPrt = prt_;
-
-            // for every interval in inactive we overlap with, mark the
-            // register as not free
-            for (IntervalPtrs::const_iterator i = inactive_.begin(),
-                     e = inactive_.end(); i != e; ++i) {
-                unsigned reg = (*i)->reg;
-                if (MRegisterInfo::isVirtualRegister(reg))
-                    reg = v2pMap_[reg];
-
-                if (cur->overlaps(**i)) {
-                    prt_.addPhysRegUse(reg);
-                }
-            }
-
-            // for every interval in fixed we overlap with,
-            // mark the register as not free
-            for (IntervalPtrs::const_iterator i = fixed_.begin(),
-                     e = fixed_.end(); i != e; ++i) {
-                assert(MRegisterInfo::isPhysicalRegister((*i)->reg) &&
-                       "virtual register interval in fixed set?");
-                if (cur->overlaps(**i))
-                    prt_.addPhysRegUse((*i)->reg);
-            }
-
-            DEBUG(std::cerr << "\tallocating current interval:\n");
-
-            unsigned physReg = getFreePhysReg(cur);
-            if (!physReg) {
-                assignStackSlotAtInterval(cur, backupPrt);
-            }
-            else {
-                prt_ = backupPrt;
-                assignVirt2PhysReg(cur->reg, physReg);
-                active_.push_back(cur);
-            }
+            assignRegOrStackSlotAtInterval(cur);
         }
 
         DEBUG(printIntervals("\tactive", active_.begin(), active_.end()));
@@ -609,65 +578,66 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
     }
 }
 
-namespace {
-    template <typename T>
-    void updateWeight(std::vector<T>& rw, int reg, T w)
-    {
-        if (rw[reg] == std::numeric_limits<T>::max() ||
-            w == std::numeric_limits<T>::max())
-            rw[reg] = std::numeric_limits<T>::max();
-        else
-            rw[reg] += w;
-    }
+void RA::updateSpillWeights(unsigned reg, SpillWeights::value_type weight)
+{
+    spillWeights_[reg] += weight;
+    for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
+        spillWeights_[*as] += weight;
 }
 
-void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur,
-                                   const PhysRegTracker& backupPrt)
+void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
 {
-    DEBUG(std::cerr << "\t\tassigning stack slot at interval "
-          << *cur << ":\n");
+    DEBUG(std::cerr << "\tallocating current interval:\n");
 
-    std::vector<float> regWeight(mri_->getNumRegs(), 0.0);
+    PhysRegTracker backupPrt = prt_;
 
-    // for each interval in active
+    spillWeights_.assign(mri_->getNumRegs(), 0.0);
+
+    // for each interval in active update spill weights
     for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
          i != e; ++i) {
         unsigned reg = (*i)->reg;
-        if (MRegisterInfo::isVirtualRegister(reg)) {
+        if (MRegisterInfo::isVirtualRegister(reg))
             reg = v2pMap_[reg];
-        }
-        updateWeight(regWeight, reg, (*i)->weight);
-        for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
-            updateWeight(regWeight, *as, (*i)->weight);
+        updateSpillWeights(reg, (*i)->weight);
     }
 
-    // for each interval in inactive that overlaps
+    // for every interval in inactive we overlap with, mark the
+    // register as not free and update spill weights
     for (IntervalPtrs::const_iterator i = inactive_.begin(),
              e = inactive_.end(); i != e; ++i) {
-        if (!cur->overlaps(**i))
-            continue;
-
-        unsigned reg = (*i)->reg;
-        if (MRegisterInfo::isVirtualRegister(reg)) {
-            reg = v2pMap_[reg];
+        if (cur->overlaps(**i)) {
+            unsigned reg = (*i)->reg;
+            if (MRegisterInfo::isVirtualRegister(reg))
+                reg = v2pMap_[reg];
+            prt_.addPhysRegUse(reg);
+            updateSpillWeights(reg, (*i)->weight);
         }
-        updateWeight(regWeight, reg, (*i)->weight);
-        for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as)
-            updateWeight(regWeight, *as, (*i)->weight);
     }
 
-    // for each fixed interval that overlaps
-    for (IntervalPtrs::const_iterator i = fixed_.begin(), e = fixed_.end();
-         i != e; ++i) {
-        if (!cur->overlaps(**i))
-            continue;
-
-        assert(MRegisterInfo::isPhysicalRegister((*i)->reg) &&
-               "virtual register interval in fixed set?");
-        updateWeight(regWeight, (*i)->reg, (*i)->weight);
-        for (const unsigned* as = mri_->getAliasSet((*i)->reg); *as; ++as)
-            updateWeight(regWeight, *as, (*i)->weight);
+    // for every interval in fixed we overlap with,
+    // mark the register as not free and update spill weights
+    for (IntervalPtrs::const_iterator i = fixed_.begin(),
+             e = fixed_.end(); i != e; ++i) {
+        if (cur->overlaps(**i)) {
+            unsigned reg = (*i)->reg;
+            prt_.addPhysRegUse(reg);
+            updateSpillWeights(reg, (*i)->weight);
+        }
     }
+
+    unsigned physReg = getFreePhysReg(cur);
+    // if we find a free register, we are done: restore original
+    // register tracker, assign this virtual to the free physical
+    // register and add this interval to the active list.
+    if (physReg) {
+        prt_ = backupPrt;
+        assignVirt2PhysReg(cur->reg, physReg);
+        active_.push_back(cur);
+        return;
+    }
+
+    DEBUG(std::cerr << "\t\tassigning stack slot at interval "<< *cur << ":\n");
 
     float minWeight = std::numeric_limits<float>::max();
     unsigned minReg = 0;
@@ -675,66 +645,69 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur,
     for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
          i != rc->allocation_order_end(*mf_); ++i) {
         unsigned reg = *i;
-        if (!prt_.isPhysRegReserved(reg) && minWeight > regWeight[reg]) {
-            minWeight = regWeight[reg];
+        if (!prt_.isPhysRegReserved(reg) && minWeight > spillWeights_[reg]) {
+            minWeight = spillWeights_[reg];
             minReg = reg;
         }
     }
     DEBUG(std::cerr << "\t\t\tregister with min weight: "
           << mri_->getName(minReg) << " (" << minWeight << ")\n");
 
+    // if the current has the minimum weight, we are done: restore
+    // original register tracker and assign a stack slot to this
+    // virtual register
     if (cur->weight < minWeight) {
         prt_ = backupPrt;
         DEBUG(std::cerr << "\t\t\t\tspilling: " << *cur << '\n');
         assignVirt2StackSlot(cur->reg);
+        return;
     }
-    else {
-        std::vector<bool> toSpill(mri_->getNumRegs(), false);
-        toSpill[minReg] = true;
-        for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
-            toSpill[*as] = true;
 
-        std::vector<unsigned> spilled;
-        for (IntervalPtrs::iterator i = active_.begin();
-             i != active_.end(); ) {
-            unsigned reg = (*i)->reg;
-            if (MRegisterInfo::isVirtualRegister(reg) &&
-                toSpill[v2pMap_[reg]] &&
-                cur->overlaps(**i)) {
-                spilled.push_back(v2pMap_[reg]);
-                DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
-                assignVirt2StackSlot(reg);
-                i = active_.erase(i);
-            }
-            else {
-                ++i;
-            }
+    std::vector<bool> toSpill(mri_->getNumRegs(), false);
+    toSpill[minReg] = true;
+    for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
+        toSpill[*as] = true;
+
+    std::vector<unsigned> spilled;
+    for (IntervalPtrs::iterator i = active_.begin();
+         i != active_.end(); ) {
+        unsigned reg = (*i)->reg;
+        if (MRegisterInfo::isVirtualRegister(reg) &&
+            toSpill[v2pMap_[reg]] &&
+            cur->overlaps(**i)) {
+            spilled.push_back(v2pMap_[reg]);
+            DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
+            assignVirt2StackSlot(reg);
+            i = active_.erase(i);
         }
-        for (IntervalPtrs::iterator i = inactive_.begin();
-             i != inactive_.end(); ) {
-            unsigned reg = (*i)->reg;
-            if (MRegisterInfo::isVirtualRegister(reg) &&
-                toSpill[v2pMap_[reg]] &&
-                cur->overlaps(**i)) {
-                DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
-                assignVirt2StackSlot(reg);
-                i = inactive_.erase(i);
-            }
-            else {
-                ++i;
-            }
+        else {
+            ++i;
         }
-
-        unsigned physReg = getFreePhysReg(cur);
-        assert(physReg && "no free physical register after spill?");
-
-        prt_ = backupPrt;
-        for (unsigned i = 0; i < spilled.size(); ++i)
-            prt_.delPhysRegUse(spilled[i]);
-
-        assignVirt2PhysReg(cur->reg, physReg);
-        active_.push_back(cur);
     }
+    for (IntervalPtrs::iterator i = inactive_.begin();
+         i != inactive_.end(); ) {
+        unsigned reg = (*i)->reg;
+        if (MRegisterInfo::isVirtualRegister(reg) &&
+            toSpill[v2pMap_[reg]] &&
+            cur->overlaps(**i)) {
+            DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
+            assignVirt2StackSlot(reg);
+            i = inactive_.erase(i);
+        }
+        else {
+            ++i;
+        }
+    }
+
+    physReg = getFreePhysReg(cur);
+    assert(physReg && "no free physical register after spill?");
+
+    prt_ = backupPrt;
+    for (unsigned i = 0; i < spilled.size(); ++i)
+        prt_.delPhysRegUse(spilled[i]);
+
+    assignVirt2PhysReg(cur->reg, physReg);
+    active_.push_back(cur);
 }
 
 unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
