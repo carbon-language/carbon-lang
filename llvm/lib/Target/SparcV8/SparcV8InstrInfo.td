@@ -214,6 +214,10 @@ def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
 def FITOS : F3_3<2, 0b110100, 0b011000100, "fitos">;
 def FITOD : F3_3<2, 0b110100, 0b011001000, "fitod">;
 
+// Convert Floating-point to Integer Instructions, p. 142
+def FSTOI : F3_3<2, 0b110100, 0b011010001, "fstoi">;
+def FDTOI : F3_3<2, 0b110100, 0b011010010, "fdtoi">;
+
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, "fstod">;
 def FDTOS : F3_3<2, 0b110100, 0b011000110, "fdtos">;
