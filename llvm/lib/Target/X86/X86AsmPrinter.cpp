@@ -149,9 +149,8 @@ void X86AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.section .rodata\n";
-    O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
-      << "\n";
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t#"
+    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentChar
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -169,7 +168,7 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   O << "\t.text\n";
-  O << "\t.align 16\n";
+  emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
@@ -178,8 +177,8 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t# "
-      << I->getBasicBlock()->getName() << "\n";
+    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+      << CommentChar << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -387,7 +386,7 @@ bool X86AsmPrinter::doFinalization(Module &M) {
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
       unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignment(C->getType());
+      unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
       if (C->isNullValue() && 
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
@@ -397,7 +396,7 @@ bool X86AsmPrinter::doFinalization(Module &M) {
           O << "\t.local " << name << "\n";
         
         O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (unsigned)TD.getTypeAlignment(C->getType());
+          << "," << (1 << Align);
         O << "\t\t# ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
@@ -410,7 +409,6 @@ bool X86AsmPrinter::doFinalization(Module &M) {
           SwitchSection(O, CurSection, "");
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
           break;
-        
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
           // their name or something.  For now, just emit them as external.
@@ -426,7 +424,7 @@ bool X86AsmPrinter::doFinalization(Module &M) {
           break;
         }
 
-        O << "\t.align " << Align << "\n";
+        emitAlignment(Align);
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
         O << name << ":\t\t\t\t# ";
