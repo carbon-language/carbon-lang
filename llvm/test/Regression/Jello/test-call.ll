@@ -1,7 +1,13 @@
 
 declare void %exit(int)
 
+
+void %FP(void(int) * %F) {
+	call void %F(int 0)
+	ret void
+}
+
 int %main() {
-	call void %exit(int 0)
+	call void %FP(void(int)* %exit)
 	ret int 1
 }
