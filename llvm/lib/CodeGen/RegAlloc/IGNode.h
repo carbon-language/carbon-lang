@@ -9,21 +9,20 @@
 
    The removal of nodes from IG is simulated by decrementing the CurDegree.
    If this node is put on stack (that is removed from IG), the CurDegree of all
-   the neighbors are decremented and this node is marked OnSack. Hence
+   the neighbors are decremented and this node is marked OnStack. Hence
    the effective neighbors in the AdjList are the ones that do not have the
    OnStack flag set (therefore, they are in the IG).
 
-   The methods that modify/use the CurDegree Must be called only
+   The methods that modify/use the CurDegree must be called only
    after all modifications to the IG are over (i.e., all neighbors are fixed).
 
    The vector representation is the most efficient one for adj list.
-   Though nodes are removed when coalsing is done, we access it in sequence
+   Though nodes are removed when coalescing is done, we access it in sequence
    for far many times when coloring (colorNode()).
-
 */
 
-#ifndef IG_NODE_H
-#define IG_NODE_H
+#ifndef IGNODE_H
+#define IGNODE_H
 
 #include "LiveRange.h"
 class RegClass;
