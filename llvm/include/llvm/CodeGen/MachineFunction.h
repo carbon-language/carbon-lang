@@ -154,7 +154,8 @@ public:
 
   /// getUsedPhysregs - This returns the UsedPhysRegs array.  This returns null
   /// before register allocation.
-  const bool *getUsedPhysregs() { return UsedPhysRegs; }
+  bool *getUsedPhysregs() { return UsedPhysRegs; }
+  const bool *getUsedPhysregs() const { return UsedPhysRegs; }
 
   /// isPhysRegUsed - Return true if the specified register is used in this
   /// function.  This only works after register allocation.
