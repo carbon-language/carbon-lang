@@ -41,7 +41,7 @@
 // transformations.
 //
 // The CallGraph class also attempts to figure out what the root of the
-// CallGraph is, which is currently does by looking for a function named 'main'.
+// CallGraph is, which it currently does by looking for a function named 'main'.
 // If no function named 'main' is found, the external node is used as the entry
 // node, reflecting the fact that any function without internal linkage could
 // be called into (which is common for libraries).
