@@ -32,7 +32,7 @@ class MachineCodeForInstruction : public Annotation {
   std::vector<MachineInstr*> Contents;  // the machine instr for this VM instr
   CallArgsDescriptor* callArgsDesc;     // only used for CALL instructions
 public:
-  MachineCodeForInstruction() : Annotation(MCFI_AID) {}
+  MachineCodeForInstruction() : Annotation(MCFI_AID), callArgsDesc(NULL) {}
   ~MachineCodeForInstruction();
   
   static MachineCodeForInstruction &get(const Instruction *I) {
