@@ -172,7 +172,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   // Remove the intermediate C file
   removeFile(OutputCFile);
 
-  return SharedObjectFile;
+  return "./" + SharedObjectFile;
 }
 
 
