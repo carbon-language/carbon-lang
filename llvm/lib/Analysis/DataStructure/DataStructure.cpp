@@ -773,7 +773,7 @@ static void removeRefsToGlobal(DSNode* N,
 //
 bool DSGraph::isNodeDead(DSNode *N) {
   // Is it a trivially dead shadow node?
-  return N->getReferrers().empty() && (N->NodeType & ~DSNode::DEAD) == 0
+  return N->getReferrers().empty() && (N->NodeType & ~DSNode::DEAD) == 0;
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
@@ -831,9 +831,16 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
           NumDuplicateCalls > 20) {
         DSCallSite &OCS = Calls[i-1];
         OCS.getRetVal().mergeWith(CS.getRetVal());
-        for (unsigned a = 0, e = CS.getNumPtrArgs(); a != e; ++a)
+
+        for (unsigned a = 0,
+               e = std::min(CS.getNumPtrArgs(), OCS.getNumPtrArgs());
+             a != e; ++a)
           OCS.getPtrArg(a).mergeWith(CS.getPtrArg(a));
         // The node will now be eliminated as a duplicate!
+        if (CS.getNumPtrArgs() < OCS.getNumPtrArgs())
+          CS = OCS;
+        else if (CS.getNumPtrArgs() > OCS.getNumPtrArgs())
+          OCS = CS;
       }
     } else {
       LastCalleeNode = CS.getCallee().getNode();
