@@ -234,15 +234,18 @@ struct FreeMachineCodeForMethod : public MethodPass {
   static void freeMachineCode(Instruction *I) {
     MachineCodeForInstruction::destroy(I);
   }
-
+  
   bool runOnMethod(Method *M) {
     for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
       for (BasicBlock::iterator I = (*MI)->begin(), E = (*MI)->end();
            I != E; ++I)
+        MachineCodeForInstruction::get(*I).dropAllReferences();
+    
+    for (Method::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
+      for (BasicBlock::iterator I = (*MI)->begin(), E = (*MI)->end();
+           I != E; ++I)
         freeMachineCode(*I);
-
-    // Don't destruct MachineCodeForMethod - The global printer needs it
-    //MachineCodeForMethod::destruct(M);
+    
     return false;
   }
 };
@@ -258,7 +261,7 @@ void UltraSparc::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
 
   PM.add(new InstructionSelection(*this));
 
-  //PM.add(createInstructionSchedulingWithSSAPass(*this));
+  PM.add(createInstructionSchedulingWithSSAPass(*this));
 
   PM.add(getRegisterAllocator(*this));
   
