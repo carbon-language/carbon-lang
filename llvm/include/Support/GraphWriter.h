@@ -18,7 +18,7 @@
 
 #include "Support/DOTGraphTraits.h"
 #include "Support/GraphTraits.h"
-#include <ostream>
+#include <iostream>
 
 namespace DOT {  // Private functions...
   inline std::string EscapeString(const std::string &Label) {
