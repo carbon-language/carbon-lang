@@ -363,6 +363,10 @@ namespace {
       RegPressureMap.clear();
     }
 
+    bool isFoldableLoad(SDOperand Op);
+    void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
+
+
     void EmitCMP(SDOperand LHS, SDOperand RHS);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
     void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
@@ -879,45 +883,69 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
   BuildMI(BB, Opc, 2).addReg(Tmp1).addReg(Tmp2);
 }
 
+/// isFoldableLoad - Return true if this is a load instruction that can safely
+/// be folded into an operation that uses it.
+bool ISel::isFoldableLoad(SDOperand Op) {
+  if (Op.getOpcode() != ISD::LOAD ||
+      // FIXME: currently can't fold constant pool indexes.
+      isa<ConstantPoolSDNode>(Op.getOperand(1)))
+    return false;
+
+  // If this load has already been emitted, we clearly can't fold it.
+  if (ExprMap.count(Op)) return false;
+
+  return Op.Val->use_size() == 2;
+}
+
+/// EmitFoldedLoad - Ensure that the arguments of the load are code generated,
+/// and compute the address being loaded into AM.
+void ISel::EmitFoldedLoad(SDOperand Op, X86AddressMode &AM) {
+  SDOperand Chain   = Op.getOperand(0);
+  SDOperand Address = Op.getOperand(1);
+  if (getRegPressure(Chain) > getRegPressure(Address)) {
+    Select(Chain);
+    SelectAddress(Address, AM);
+  } else {
+    SelectAddress(Address, AM);
+    Select(Chain);
+  }
+
+  // The chain for this load is now lowered.
+  LoweredTokens.insert(SDOperand(Op.Val, 1));
+  ExprMap[SDOperand(Op.Val, 1)] = 1;
+}
+
 unsigned ISel::SelectExpr(SDOperand N) {
   unsigned Result;
   unsigned Tmp1, Tmp2, Tmp3;
   unsigned Opc = 0;
-
   SDNode *Node = N.Val;
+  SDOperand Op0, Op1;
 
   if (Node->getOpcode() == ISD::CopyFromReg)
     // Just use the specified register as our input.
     return dyn_cast<CopyRegSDNode>(Node)->getReg();
-
-  // If there are multiple uses of this expression, memorize the
-  // register it is code generated in, instead of emitting it multiple
-  // times.
-  // FIXME: Disabled for our current selection model.
-  if (1 || !Node->hasOneUse()) {
-    unsigned &Reg = ExprMap[N];
-    if (Reg) return Reg;
-
-    if (N.getOpcode() != ISD::CALL)
-      Reg = Result = (N.getValueType() != MVT::Other) ?
-                         MakeReg(N.getValueType()) : 1;
+  
+  unsigned &Reg = ExprMap[N];
+  if (Reg) return Reg;
+  
+  if (N.getOpcode() != ISD::CALL)
+    Reg = Result = (N.getValueType() != MVT::Other) ?
+      MakeReg(N.getValueType()) : 1;
+  else {
+    // If this is a call instruction, make sure to prepare ALL of the result
+    // values as well as the chain.
+    if (Node->getNumValues() == 1)
+      Reg = Result = 1;  // Void call, just a chain.
     else {
-      // If this is a call instruction, make sure to prepare ALL of the result
-      // values as well as the chain.
-      if (Node->getNumValues() == 1)
-        Reg = Result = 1;  // Void call, just a chain.
-      else {
-        Result = MakeReg(Node->getValueType(0));
-        ExprMap[N.getValue(0)] = Result;
-        for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
-          ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
-        ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
-      }
+      Result = MakeReg(Node->getValueType(0));
+      ExprMap[N.getValue(0)] = Result;
+      for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
+        ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
+      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
     }
-  } else {
-    Result = MakeReg(N.getValueType());
   }
-
+  
   switch (N.getOpcode()) {
   default:
     Node->dump();
@@ -1247,11 +1275,38 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
   case ISD::ADD:
+    Op0 = N.getOperand(0);
+    Op1 = N.getOperand(1);
+
+    if (isFoldableLoad(Op0))
+      std::swap(Op0, Op1);
+
+    if (isFoldableLoad(Op1)) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot add this type!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::ADD8rm;  break;
+      case MVT::i16: Opc = X86::ADD16rm; break;
+      case MVT::i32: Opc = X86::ADD32rm; break;
+      case MVT::f32: Opc = X86::FADD32m; break;
+      case MVT::f64: Opc = X86::FADD64m; break;
+      }
+      X86AddressMode AM;
+      if (getRegPressure(Op0) > getRegPressure(Op1)) {
+        Tmp1 = SelectExpr(Op0);
+        EmitFoldedLoad(Op1, AM);
+      } else {
+        EmitFoldedLoad(Op1, AM);
+        Tmp1 = SelectExpr(Op0);
+      }
+      addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
+      return Result;
+    }
+
     // See if we can codegen this as an LEA to fold operations together.
     if (N.getValueType() == MVT::i32) {
       X86AddressMode AM;
-      if (!SelectAddress(N.getOperand(0), AM) &&
-          !SelectAddress(N.getOperand(1), AM)) {
+      if (!SelectAddress(Op0, AM) && !SelectAddress(Op1, AM)) {
 	// If this is not just an add, emit the LEA.  For a simple add (like
 	// reg+reg or reg+imm), we just emit an add.  It might be a good idea to
 	// leave this as LEA, then peephole it to 'ADD' after two address elim
@@ -1264,7 +1319,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
     }
 
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
       Opc = 0;
       if (CN->getValue() == 1) {   // add X, 1 -> inc X
         switch (N.getValueType()) {
@@ -1283,7 +1338,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
 
       if (Opc) {
-        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp1 = SelectExpr(Op0);
         BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
         return Result;
       }
@@ -1295,7 +1350,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32: Opc = X86::ADD32ri; break;
       }
       if (Opc) {
-        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp1 = SelectExpr(Op0);
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
         return Result;
       }
@@ -1310,18 +1365,51 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::f64: Opc = X86::FpADD; break;
     }
 
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
+    if (getRegPressure(Op0) > getRegPressure(Op1)) {
+      Tmp1 = SelectExpr(Op0);
+      Tmp2 = SelectExpr(Op1);
     } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(Op1);
+      Tmp1 = SelectExpr(Op0);
     }
 
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   case ISD::SUB:
-    if (MVT::isInteger(N.getValueType()))
+  case ISD::MUL:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+    static const unsigned SUBTab[] = {
+      X86::SUB8ri, X86::SUB16ri, X86::SUB32ri, 0, 0,
+      X86::SUB8rm, X86::SUB16rm, X86::SUB32rm, X86::FSUB32m, X86::FSUB64m,
+      X86::SUB8rr, X86::SUB16rr, X86::SUB32rr, X86::FpSUB  , X86::FpSUB,
+    };
+    static const unsigned MULTab[] = {
+      0, X86::IMUL16rri, X86::IMUL32rri, 0, 0,
+      0, X86::IMUL16rm , X86::IMUL32rm, X86::FMUL32m, X86::FMUL64m,
+      0, X86::IMUL16rr , X86::IMUL32rr, X86::FpMUL  , X86::FpMUL,
+    };
+    static const unsigned ANDTab[] = {
+      X86::AND8ri, X86::AND16ri, X86::AND32ri, 0, 0,
+      X86::AND8rm, X86::AND16rm, X86::AND32rm, 0, 0,
+      X86::AND8rr, X86::AND16rr, X86::AND32rr, 0, 0, 
+    };
+    static const unsigned ORTab[] = {
+      X86::OR8ri, X86::OR16ri, X86::OR32ri, 0, 0,
+      X86::OR8rm, X86::OR16rm, X86::OR32rm, 0, 0,
+      X86::OR8rr, X86::OR16rr, X86::OR32rr, 0, 0,
+    };
+    static const unsigned XORTab[] = {
+      X86::XOR8ri, X86::XOR16ri, X86::XOR32ri, 0, 0,
+      X86::XOR8rm, X86::XOR16rm, X86::XOR32rm, 0, 0,
+      X86::XOR8rr, X86::XOR16rr, X86::XOR32rr, 0, 0,
+    };
+
+    Op0 = Node->getOperand(0);
+    Op1 = Node->getOperand(1);
+
+    if (Node->getOpcode() == ISD::SUB && MVT::isInteger(N.getValueType()))
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(0)))
         if (CN->isNullValue()) {   // 0 - N -> neg N
           switch (N.getValueType()) {
@@ -1336,106 +1424,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
           return Result;
         }
 
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      switch (N.getValueType()) {
-      default: assert(0 && "Cannot sub this type!");
-      case MVT::i1:
-      case MVT::i8:  Opc = X86::SUB8ri;  break;
-      case MVT::i16: Opc = X86::SUB16ri; break;
-      case MVT::i32: Opc = X86::SUB32ri; break;
-      }
-      Tmp1 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
-      return Result;
-    }
-
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp1 = SelectExpr(N.getOperand(0));
-    }
-
-    switch (N.getValueType()) {
-    default: assert(0 && "Cannot add this type!");
-    case MVT::i1:
-    case MVT::i8:  Opc = X86::SUB8rr; break;
-    case MVT::i16: Opc = X86::SUB16rr; break;
-    case MVT::i32: Opc = X86::SUB32rr; break;
-    case MVT::f32:
-    case MVT::f64: Opc = X86::FpSUB; break;
-    }
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
-  case ISD::AND:
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      switch (N.getValueType()) {
-      default: assert(0 && "Cannot add this type!");
-      case MVT::i1:
-      case MVT::i8:  Opc = X86::AND8ri;  break;
-      case MVT::i16: Opc = X86::AND16ri; break;
-      case MVT::i32: Opc = X86::AND32ri; break;
-      }
-      Tmp1 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
-      return Result;
-    }
-
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp1 = SelectExpr(N.getOperand(0));
-    }
-
-    switch (N.getValueType()) {
-    default: assert(0 && "Cannot add this type!");
-    case MVT::i1:
-    case MVT::i8:  Opc = X86::AND8rr; break;
-    case MVT::i16: Opc = X86::AND16rr; break;
-    case MVT::i32: Opc = X86::AND32rr; break;
-    }
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-  case ISD::OR:
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      switch (N.getValueType()) {
-      default: assert(0 && "Cannot add this type!");
-      case MVT::i1:
-      case MVT::i8:  Opc = X86::OR8ri;  break;
-      case MVT::i16: Opc = X86::OR16ri; break;
-      case MVT::i32: Opc = X86::OR32ri; break;
-      }
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
-      return Result;
-    }
-
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp1 = SelectExpr(N.getOperand(0));
-    }
-
-    switch (N.getValueType()) {
-    default: assert(0 && "Cannot add this type!");
-    case MVT::i1:
-    case MVT::i8:  Opc = X86::OR8rr; break;
-    case MVT::i16: Opc = X86::OR16rr; break;
-    case MVT::i32: Opc = X86::OR32rr; break;
-    }
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-  case ISD::XOR:
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-
-      if (CN->isAllOnesValue()) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
+      if (CN->isAllOnesValue() && Node->getOpcode() == ISD::XOR) {
         switch (N.getValueType()) {
         default: assert(0 && "Cannot add this type!");
         case MVT::i1:
@@ -1443,6 +1433,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         case MVT::i16: Opc = X86::NOT16r; break;
         case MVT::i32: Opc = X86::NOT32r; break;
         }
+        Tmp1 = SelectExpr(Op0);
         BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
         return Result;
       }
@@ -1450,69 +1441,124 @@ unsigned ISel::SelectExpr(SDOperand N) {
       switch (N.getValueType()) {
       default: assert(0 && "Cannot xor this type!");
       case MVT::i1:
-      case MVT::i8:  Opc = X86::XOR8ri;  break;
-      case MVT::i16: Opc = X86::XOR16ri; break;
-      case MVT::i32: Opc = X86::XOR32ri; break;
+      case MVT::i8:  Opc = 0; break;
+      case MVT::i16: Opc = 1; break;
+      case MVT::i32: Opc = 2; break;
       }
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
-      return Result;
-    }
-
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp1 = SelectExpr(N.getOperand(0));
-    }
-
-    switch (N.getValueType()) {
-    default: assert(0 && "Cannot add this type!");
-    case MVT::i1:
-    case MVT::i8:  Opc = X86::XOR8rr; break;
-    case MVT::i16: Opc = X86::XOR16rr; break;
-    case MVT::i32: Opc = X86::XOR32rr; break;
-    }
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
-  case ISD::MUL:
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Opc = 0;
-      switch (N.getValueType()) {
-      default: assert(0 && "Cannot multiply this type!");
-      case MVT::i8:  break;
-      case MVT::i16: Opc = X86::IMUL16rri; break;
-      case MVT::i32: Opc = X86::IMUL32rri; break;
+      switch (Node->getOpcode()) {
+      default: assert(0 && "Unreachable!");
+      case ISD::SUB: Opc = SUBTab[Opc]; break;
+      case ISD::MUL: Opc = MULTab[Opc]; break;
+      case ISD::AND: Opc = ANDTab[Opc]; break;
+      case ISD::OR:  Opc =  ORTab[Opc]; break;
+      case ISD::XOR: Opc = XORTab[Opc]; break;
       }
-      if (Opc) {
-        Tmp1 = SelectExpr(N.getOperand(0));
+      if (Opc) {  // Can't fold MUL:i8 R, imm
+        Tmp1 = SelectExpr(Op0);
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CN->getValue());
         return Result;
       }
     }
 
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp1 = SelectExpr(N.getOperand(0));
+    if (isFoldableLoad(Op0))
+      if (Node->getOpcode() != ISD::SUB) {
+        std::swap(Op0, Op1);
+      } else {
+        // Emit 'reverse' subract, with a memory operand.
+        switch (N.getValueType()) {
+        default: Opc = 0; break;
+        case MVT::f32: Opc = X86::FSUBR32m; break;
+        case MVT::f64: Opc = X86::FSUBR64m; break;
+        }
+        if (Opc) {
+          X86AddressMode AM;
+          if (getRegPressure(Op0) > getRegPressure(Op1)) {
+            EmitFoldedLoad(Op0, AM);
+            Tmp1 = SelectExpr(Op1);
+          } else {
+            Tmp1 = SelectExpr(Op1);
+            EmitFoldedLoad(Op0, AM);
+          }
+          addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
+          return Result;
+        }
+      }
+
+    if (isFoldableLoad(Op1)) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Cannot operate on this type!");
+      case MVT::i1:
+      case MVT::i8:  Opc = 5; break;
+      case MVT::i16: Opc = 6; break;
+      case MVT::i32: Opc = 7; break;
+      case MVT::f32: Opc = 8; break;
+      case MVT::f64: Opc = 9; break;
+      }
+      switch (Node->getOpcode()) {
+      default: assert(0 && "Unreachable!");
+      case ISD::SUB: Opc = SUBTab[Opc]; break;
+      case ISD::MUL: Opc = MULTab[Opc]; break;
+      case ISD::AND: Opc = ANDTab[Opc]; break;
+      case ISD::OR:  Opc =  ORTab[Opc]; break;
+      case ISD::XOR: Opc = XORTab[Opc]; break;
+      }
+
+      X86AddressMode AM;
+      if (getRegPressure(Op0) > getRegPressure(Op1)) {
+        Tmp1 = SelectExpr(Op0);
+        EmitFoldedLoad(Op1, AM);
+      } else {
+        EmitFoldedLoad(Op1, AM);
+        Tmp1 = SelectExpr(Op0);
+      }
+      if (Opc) {
+        addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
+      } else {
+        assert(Node->getOpcode() == ISD::MUL &&
+               N.getValueType() == MVT::i8 && "Unexpected situation!");
+        // Must use the MUL instruction, which forces use of AL.
+        BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(Tmp1);
+        addFullAddress(BuildMI(BB, X86::MUL8m, 1), AM);
+        BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+      }
+      return Result;
     }
+
+    if (getRegPressure(Op0) > getRegPressure(Op1)) {
+      Tmp1 = SelectExpr(Op0);
+      Tmp2 = SelectExpr(Op1);
+    } else {
+      Tmp2 = SelectExpr(Op1);
+      Tmp1 = SelectExpr(Op0);
+    }
+
     switch (N.getValueType()) {
     default: assert(0 && "Cannot add this type!");
-    case MVT::i8:
+    case MVT::i1:
+    case MVT::i8:  Opc = 10; break;
+    case MVT::i16: Opc = 11; break;
+    case MVT::i32: Opc = 12; break;
+    case MVT::f32: Opc = 13; break;
+    case MVT::f64: Opc = 14; break;
+    }
+    switch (Node->getOpcode()) {
+    default: assert(0 && "Unreachable!");
+    case ISD::SUB: Opc = SUBTab[Opc]; break;
+    case ISD::MUL: Opc = MULTab[Opc]; break;
+    case ISD::AND: Opc = ANDTab[Opc]; break;
+    case ISD::OR:  Opc =  ORTab[Opc]; break;
+    case ISD::XOR: Opc = XORTab[Opc]; break;
+    }
+    if (Opc) {
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    } else {
+      assert(Node->getOpcode() == ISD::MUL &&
+             N.getValueType() == MVT::i8 && "Unexpected situation!");
       // Must use the MUL instruction, which forces use of AL.
       BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(Tmp1);
       BuildMI(BB, X86::MUL8r, 1).addReg(Tmp2);
       BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
-      return Result;
-    case MVT::i16: Opc = X86::IMUL16rr; break;
-    case MVT::i32: Opc = X86::IMUL32rr; break;
-    case MVT::f32: 
-    case MVT::f64: Opc = X86::FpMUL; break;
     }
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
   case ISD::SELECT:
@@ -1669,6 +1715,18 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SHL:
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      if (CN->getValue() == 1) {   // X = SHL Y, 1  -> X = ADD Y, Y
+        switch (N.getValueType()) {
+        default: assert(0 && "Cannot shift this type!");
+        case MVT::i8:  Opc = X86::ADD8rr; break;
+        case MVT::i16: Opc = X86::ADD16rr; break;
+        case MVT::i32: Opc = X86::ADD32rr; break;
+        }
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp1);
+        return Result;
+      }
+      
       switch (N.getValueType()) {
       default: assert(0 && "Cannot shift this type!");
       case MVT::i8:  Opc = X86::SHL8ri; break;
@@ -1764,9 +1822,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
               MVT::isFloatingPoint(N.getOperand(1).getValueType()));
     return Result;
   case ISD::LOAD: {
-    // The chain for this load is now lowered.
-    LoweredTokens.insert(SDOperand(Node, 1));
-
     // Make sure we generate both values.
     if (Result != 1)
       ExprMap[N.getValue(1)] = 1;   // Generate the token
@@ -1788,13 +1843,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CP->getIndex());
     } else {
       X86AddressMode AM;
-      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-        Select(N.getOperand(0));
-        SelectAddress(N.getOperand(1), AM);
-      } else {
-        SelectAddress(N.getOperand(1), AM);
-        Select(N.getOperand(0));
-      }
+      EmitFoldedLoad(N, AM);
       addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
     }
     return Result;
