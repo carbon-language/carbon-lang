@@ -421,8 +421,7 @@ namespace {
     /// base address to use for accessing globals into a register.  Returns the
     /// register containing the base address.
     ///
-    unsigned getGlobalBaseReg(MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator IP);
+    unsigned getGlobalBaseReg();
 
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
@@ -590,8 +589,7 @@ unsigned PPC32ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
-unsigned PPC32ISel::getGlobalBaseReg(MachineBasicBlock *MBB,
-                                     MachineBasicBlock::iterator IP) {
+unsigned PPC32ISel::getGlobalBaseReg() {
   if (!GlobalBaseInitialized) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = F->front();
@@ -690,7 +688,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     unsigned Opcode = (Ty == Type::FloatTy) ? PPC::LFS : PPC::LFD;
     // Move value at base + distance into return reg
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, Reg1)
-      .addReg(getGlobalBaseReg(MBB, IP)).addConstantPoolIndex(CPI);
+      .addReg(getGlobalBaseReg()).addConstantPoolIndex(CPI);
     BuildMI(*MBB, IP, Opcode, 2, R).addConstantPoolIndex(CPI).addReg(Reg1);
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
@@ -703,7 +701,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     
     // Move value at base + distance into return reg
     BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, TmpReg)
-      .addReg(getGlobalBaseReg(MBB, IP)).addGlobalAddress(GV);
+      .addReg(getGlobalBaseReg()).addGlobalAddress(GV);
 
     if (GV->hasWeakLinkage() || GV->isExternal()) {
       BuildMI(*MBB, IP, PPC::LWZ, 2, R).addGlobalAddress(GV).addReg(TmpReg);

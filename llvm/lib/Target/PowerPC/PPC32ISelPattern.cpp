@@ -2,7 +2,7 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
+// This file was developed by Nate Begeman and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
@@ -396,6 +396,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return dyn_cast<RegSDNode>(Node)->getReg();
     
   case ISD::LOAD:
+  case ISD::EXTLOAD:
     abort();
     
   case ISD::ConstantFP:
@@ -416,9 +417,6 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
-
-  case ISD::EXTLOAD:
-    abort();
 
   case ISD::UINT_TO_FP:
   case ISD::SINT_TO_FP:
@@ -455,7 +453,28 @@ unsigned ISel::SelectExpr(SDOperand N) {
     assert(0 && "Node not handled!\n");
  
   case ISD::DYNAMIC_STACKALLOC:
-    abort();
+    // Generate both result values.  FIXME: Need a better commment here?
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    // FIXME: We are currently ignoring the requested alignment for handling
+    // greater than the stack alignment.  This will need to be revisited at some
+    // point.  Align = N.getOperand(2);
+    if (!isa<ConstantSDNode>(N.getOperand(2)) ||
+        cast<ConstantSDNode>(N.getOperand(2))->getValue() != 0) {
+      std::cerr << "Cannot allocate stack object with greater alignment than"
+                << " the stack alignment yet!";
+      abort();
+    }
+    Select(N.getOperand(0));
+    Tmp1 = SelectExpr(N.getOperand(1));
+    // Subtract size from stack pointer, thereby allocating some space.
+    BuildMI(BB, PPC::SUBF, 2, PPC::R1).addReg(Tmp1).addReg(PPC::R1);
+    // Put a pointer to the space into the result register by copying the SP
+    BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R1).addReg(PPC::R1);
+    return Result;
 
   case ISD::ConstantPool:
     abort();
@@ -463,10 +482,50 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::FrameIndex:
     abort();
   
+  case ISD::LOAD:
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
+  {
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    SDOperand Chain   = N.getOperand(0);
+    SDOperand Address = N.getOperand(1);
+    Select(Chain);
+
+    switch (Node->getValueType(0)) {
+    default: assert(0 && "Cannot load this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = PPC::LBZ; break;
+    case MVT::i16: Opc = PPC::LHZ; break;
+    case MVT::i32: Opc = PPC::LWZ; break;
+    }
+    
+    if (Address.getOpcode() == ISD::GlobalAddress) {  // FIXME
+      BuildMI(BB, Opc, 2, Result)
+        .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal())
+        .addReg(PPC::R1);
+    }
+    else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+      BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CP->getIndex())
+        .addReg(PPC::R1);
+    }
+    else if(Address.getOpcode() == ISD::FrameIndex) {
+      BuildMI(BB, Opc, 2, Result)
+      .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
+      .addReg(PPC::R1);
+    } else {
+      int offset;
+      SelectAddr(Address, Tmp1, offset);
+      BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+    }
+    return Result;
+  }
+    
   case ISD::SEXTLOAD:
-  case ISD::LOAD:
   case ISD::GlobalAddress:
   case ISD::CALL:
     abort();
@@ -503,11 +562,40 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::SHL:
-  case ISD::SRL:
-  case ISD::SRA:
-  case ISD::MUL:
-    abort();
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp2 = CN->getValue() & 0x1F;
+      BuildMI(BB, PPC::RLWINM, 5, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
+        .addImm(31-Tmp2);
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::SLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
+    return Result;
     
+  case ISD::SRL:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp2 = CN->getValue() & 0x1F;
+      BuildMI(BB, PPC::RLWINM, 5, Result).addReg(Tmp1).addImm(32-Tmp2)
+        .addImm(Tmp2).addImm(31);
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::SRW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
+    return Result;
+    
+  case ISD::SRA:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      Tmp2 = CN->getValue() & 0x1F;
+      BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::SRAW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
+    return Result;
+  
   case ISD::ADD:
     assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
@@ -527,7 +615,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
     
   case ISD::SUB:
-    abort();
+    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
+    return Result;
  
   case ISD::AND:
   case ISD::OR:
@@ -539,31 +631,32 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case 0: // No immediate
         Tmp2 = SelectExpr(N.getOperand(1));
         switch (opcode) {
-        case ISD::AND: Tmp3 = PPC::AND; break;
-        case ISD::OR:  Tmp3 = PPC::OR;  break;
-        case ISD::XOR: Tmp3 = PPC::XOR; break;
+        case ISD::AND: Opc = PPC::AND; break;
+        case ISD::OR:  Opc = PPC::OR;  break;
+        case ISD::XOR: Opc = PPC::XOR; break;
         }
-        BuildMI(BB, Tmp3, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
       case 1: // Low immediate
         switch (opcode) {
-        case ISD::AND: Tmp3 = PPC::ANDIo; break;
-        case ISD::OR:  Tmp3 = PPC::ORI;   break;
-        case ISD::XOR: Tmp3 = PPC::XORI;  break;
+        case ISD::AND: Opc = PPC::ANDIo; break;
+        case ISD::OR:  Opc = PPC::ORI;   break;
+        case ISD::XOR: Opc = PPC::XORI;  break;
         }
-        BuildMI(BB, Tmp3, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
       case 2: // Shifted immediate
         switch (opcode) {
-        case ISD::AND: Tmp3 = PPC::ANDISo;  break;
-        case ISD::OR:  Tmp3 = PPC::ORIS;    break;
-        case ISD::XOR: Tmp3 = PPC::XORIS;   break;
+        case ISD::AND: Opc = PPC::ANDISo;  break;
+        case ISD::OR:  Opc = PPC::ORIS;    break;
+        case ISD::XOR: Opc = PPC::XORIS;   break;
         }
-        BuildMI(BB, Tmp3, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
     }
     return Result;
     
+  case ISD::MUL:
   case ISD::UREM:
   case ISD::SREM:
   case ISD::SDIV:
@@ -590,9 +683,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         if (v < 32768 && v >= -32768) {
           BuildMI(BB, PPC::LI, 1, Result).addSImm(v);
         } else {
-          unsigned Temp = MakeReg(MVT::i32);
-          BuildMI(BB, PPC::LIS, 1, Temp).addSImm(v >> 16);
-          BuildMI(BB, PPC::ORI, 2, Result).addReg(Temp).addImm(v & 0xFFFF);
+          Tmp1 = MakeReg(MVT::i32);
+          BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(v >> 16);
+          BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(v & 0xFFFF);
         }
       }
     }
@@ -631,7 +724,6 @@ void ISel::Select(SDOperand N) {
   case ISD::BR: {
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N.getOperand(1))->getBasicBlock();
-
     Select(N.getOperand(0));
     BuildMI(BB, PPC::B, 1).addMBB(Dest);
     return;
@@ -687,7 +779,6 @@ void ISel::Select(SDOperand N) {
     }
     BuildMI(BB, PPC::BLR, 0); // Just emit a 'ret' instruction
     return;
-
   case ISD::TRUNCSTORE: 
   case ISD::STORE: 
     {

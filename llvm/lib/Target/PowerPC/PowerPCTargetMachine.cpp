@@ -37,8 +37,8 @@ namespace llvm {
   cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", 
                              cl::desc("Enable LSR for PPC (beta option!)"), 
                              cl::Hidden);
-  cl::opt<bool> EnablePatternISel("pattern-isel", cl::Hidden,
-                                cl::desc("Enable the pattern isel XXX FIXME"));
+  cl::opt<bool> EnablePatternISel("enable-ppc-pattern-isel", cl::Hidden,
+                                cl::desc("Enable the pattern isel"));
 }
 
 namespace {
