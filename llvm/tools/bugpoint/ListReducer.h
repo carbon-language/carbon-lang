@@ -28,6 +28,8 @@ struct ListReducer {
     KeepPrefix,        // The prefix alone satisfies the predicate
   };
 
+  virtual ~ListReducer() {}
+
   // doTest - This virtual function should be overriden by subclasses to
   // implement the test desired.  The testcase is only required to test to see
   // if the Kept list still satisfies the property, but if it is going to check
