@@ -50,7 +50,7 @@ std::ostream &err() {
     return std::cerr << "At end of input: ";
 
   for (unsigned i = 0, e = IncludeStack.size()-1; i != e; ++i)
-    std::cerr << "IncFrom " << IncludeStack[i].Filename << ":"
+    std::cerr << "Included from " << IncludeStack[i].Filename << ":"
               << IncludeStack[i].LineNo << ":\n";
   return std::cerr << "Parsing " << IncludeStack.back().Filename << ":"
                    << Filelineno << ": ";
