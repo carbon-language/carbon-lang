@@ -10,25 +10,55 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "Support/Statistic.h"
+#include "Support/CommandLine.h"
+#include <fstream>
+#include <set>
 
 namespace {
   Statistic<> NumFunctions("internalize", "Number of functions internalized");
   Statistic<> NumGlobals  ("internalize", "Number of global vars internalized");
 
+  // APIFile - A file which contains a list of symbols that should not be marked
+  // external.
+  cl::opt<std::string>
+  APIFile("internalize-public-api-file", cl::value_desc("filename"),
+          cl::desc("A file containing list of globals to not internalize"));
+  
   class InternalizePass : public Pass {
-    virtual bool run(Module &M) {
-      Function *MainFunc = M.getMainFunction();
+    std::set<std::string> ExternalNames;
+  public:
+    InternalizePass() {
+      if (!APIFile.empty())
+        LoadFile(APIFile.c_str());
+      else
+        ExternalNames.insert("main");
+    }
 
-      if (MainFunc == 0 || MainFunc->isExternal())
-        return false;  // No main found, must be a library...
-      
+    void LoadFile(const char *Filename) {
+      // Load the APIFile...
+      std::ifstream In(Filename);
+      if (!In.good()) {
+        std::cerr << "WARNING: Internalize couldn't load file '" << Filename
+                  << "'!: Not internalizing.\n";
+        return;   // Do not internalize anything...
+      }
+      while (In) {
+        std::string Symbol;
+        In >> Symbol;
+        if (!Symbol.empty())
+          ExternalNames.insert(Symbol);
+      }
+    }
+
+    virtual bool run(Module &M) {
+      if (ExternalNames.empty()) return false;  // Error loading file...
       bool Changed = false;
       
       // Found a main function, mark all functions not named main as internal.
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (&*I != MainFunc &&          // Leave the main function external
-            !I->isExternal() &&         // Function must be defined here
-            !I->hasInternalLinkage()) { // Can't already have internal linkage
+        if (!I->isExternal() &&         // Function must be defined here
+            !I->hasInternalLinkage() &&  // Can't already have internal linkage
+            !ExternalNames.count(I->getName())) {// Not marked to keep external?
           I->setLinkage(GlobalValue::InternalLinkage);
           Changed = true;
           ++NumFunctions;
@@ -37,7 +67,8 @@ namespace {
 
       // Mark all global variables with initializers as internal as well...
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-        if (!I->isExternal() && I->hasExternalLinkage()) {
+        if (!I->isExternal() && !I->hasInternalLinkage() &&
+            !ExternalNames.count(I->getName())) {
           I->setLinkage(GlobalValue::InternalLinkage);
           Changed = true;
           ++NumGlobals;
@@ -48,7 +79,7 @@ namespace {
     }
   };
 
-  RegisterOpt<InternalizePass> X("internalize", "Internalize Functions");
+  RegisterOpt<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 
 Pass *createInternalizePass() {
