@@ -179,8 +179,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
   }
 
   GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Indices,
-                                                 AddOp2->getName());
-  BI = ++BB->getInstList().insert(BI, GEP);
+                                                 AddOp2->getName(), BI);
 
   Instruction *NCI = new CastInst(GEP, AddOp1->getType());
   ReplaceInstWithInst(BB->getInstList(), BI, NCI);
@@ -354,11 +353,11 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           if (ElTy) {
             PRINT_PEEPHOLE1("cast-for-first:in", CI);
 
+            std::string Name = CI->getName(); CI->setName("");
+
             // Insert the new T cast instruction... stealing old T's name
             GetElementPtrInst *GEP = new GetElementPtrInst(Src, Indices,
-                                                           CI->getName());
-            CI->setName("");
-            BI = ++BB->getInstList().insert(BI, GEP);
+                                                           Name, BI);
 
             // Make the old cast instruction reference the new GEP instead of
             // the old src value.
@@ -397,10 +396,9 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             PRINT_PEEPHOLE3("st-src-cast:in ", Pointer, Val, SI);
 
             // Insert the new T cast instruction... stealing old T's name
+            std::string Name(CI->getName()); CI->setName("");
             CastInst *NCI = new CastInst(Val, CSPT->getElementType(),
-                                         CI->getName());
-            CI->setName("");
-            BI = ++BB->getInstList().insert(BI, NCI);
+                                         Name, BI);
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI,
@@ -436,11 +434,10 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             PRINT_PEEPHOLE2("load-src-cast:in ", Pointer, LI);
 
             // Create the new load instruction... loading the pre-casted value
-            LoadInst *NewLI = new LoadInst(CastSrc, LI->getName());
+            LoadInst *NewLI = new LoadInst(CastSrc, LI->getName(), BI);
             
             // Insert the new T cast instruction... stealing old T's name
             CastInst *NCI = new CastInst(NewLI, LI->getType(), CI->getName());
-            BI = ++BB->getInstList().insert(BI, NewLI);
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI, NCI);

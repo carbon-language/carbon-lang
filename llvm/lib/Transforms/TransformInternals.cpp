@@ -141,35 +141,25 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
         if (BI) {              // Generate code?
           BasicBlock *BB = (*BI)->getParent();
-          if (Expr.Var->getType() != Type::UIntTy) {
-            CastInst *IdxCast = new CastInst(Expr.Var, Type::UIntTy);
-            if (Expr.Var->hasName())
-              IdxCast->setName(Expr.Var->getName()+"-idxcast");
-            *BI = ++BB->getInstList().insert(*BI, IdxCast);
-            Expr.Var = IdxCast;
-          }
+          if (Expr.Var->getType() != Type::UIntTy)
+            Expr.Var = new CastInst(Expr.Var, Type::UIntTy,
+                                    Expr.Var->getName()+"-idxcast", *BI);
 
           if (ScaleAmt && ScaleAmt != 1) {
             // If we have to scale up our index, do so now
             Value *ScaleAmtVal = ConstantUInt::get(Type::UIntTy,
                                                    (unsigned)ScaleAmt);
-            Instruction *Scaler = BinaryOperator::create(Instruction::Mul,
-                                                         Expr.Var, ScaleAmtVal);
-            if (Expr.Var->hasName())
-              Scaler->setName(Expr.Var->getName()+"-scale");
-
-            *BI = ++BB->getInstList().insert(*BI, Scaler);
-            Expr.Var = Scaler;
+            Expr.Var = BinaryOperator::create(Instruction::Mul, Expr.Var,
+                                              ScaleAmtVal,
+                                              Expr.Var->getName()+"-scale",*BI);
           }
 
           if (Index) {  // Add an offset to the index
             Value *IndexAmt = ConstantUInt::get(Type::UIntTy, (unsigned)Index);
-            Instruction *Offseter = BinaryOperator::create(Instruction::Add,
-                                                           Expr.Var, IndexAmt);
-            if (Expr.Var->hasName())
-              Offseter->setName(Expr.Var->getName()+"-offset");
-            *BI = ++BB->getInstList().insert(*BI, Offseter);
-            Expr.Var = Offseter;
+            Expr.Var = BinaryOperator::create(Instruction::Add, Expr.Var,
+                                              IndexAmt,
+                                              Expr.Var->getName()+"-offset",
+                                              *BI);
           }
         }
 

@@ -180,12 +180,9 @@ static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
       // adding it now, we are assured that the neg instructions we just
       // inserted dominate the instruction we are about to insert after them.
       //
-      BasicBlock::iterator NBI = cast<Instruction>(RHS);
-
-      Instruction *Add =
-        BinaryOperator::create(Instruction::Add, LHS, RHS, I->getName()+".neg");
-      BB->getInstList().insert(++NBI, Add);  // Add to the basic block...
-      return Add;
+      return BinaryOperator::create(Instruction::Add, LHS, RHS,
+                                    I->getName()+".neg",
+                                    cast<Instruction>(RHS)->getNext());
     }
 
   // Insert a 'neg' instruction that subtracts the value from zero to get the
@@ -194,8 +191,8 @@ static Value *NegateValue(Value *V, BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *Neg =
     BinaryOperator::create(Instruction::Sub,
                            Constant::getNullValue(V->getType()), V,
-                           V->getName()+".neg");
-  BI = BB->getInstList().insert(BI, Neg);  // Add to the basic block...
+                           V->getName()+".neg", BI);
+  --BI;
   return Neg;
 }
 
@@ -220,8 +217,9 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
           // Insert a new temporary instruction... (A+B)+C
           BinaryOperator *Tmp = BinaryOperator::create(I->getOpcode(), LHSI,
                                                        RHSI->getOperand(0),
-                                                       RHSI->getName()+".ra");
-          BI = BB->getInstList().insert(BI, Tmp);  // Add to the basic block...
+                                                       RHSI->getName()+".ra",
+                                                       BI);
+          BI = Tmp;
           I->setOperand(0, Tmp);
           I->setOperand(1, RHSI->getOperand(1));
 

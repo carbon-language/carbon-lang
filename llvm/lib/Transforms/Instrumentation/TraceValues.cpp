@@ -208,7 +208,7 @@ static string getPrintfCodeFor(const Value *V) {
 }
 
 
-static void InsertPrintInst(Value *V,BasicBlock *BB, BasicBlock::iterator &BBI,
+static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
                             string Message,
                             Function *Printf, Function* HashPtrToSeqNum) {
   // Escape Message by replacing all % characters with %% chars.
@@ -227,88 +227,59 @@ static void InsertPrintInst(Value *V,BasicBlock *BB, BasicBlock::iterator &BBI,
   Instruction *GEP = 
     new GetElementPtrInst(fmtVal,
                           vector<Value*>(2,ConstantUInt::get(Type::UIntTy, 0)),
-                          "trstr");
-  BBI = ++BB->getInstList().insert(BBI, GEP);
+                          "trstr", InsertBefore);
   
   // Insert a call to the hash function if this is a pointer value
   if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
     const Type *SBP = PointerType::get(Type::SByteTy);
-    if (V->getType() != SBP) {   // Cast pointer to be sbyte*
-      Instruction *I = new CastInst(V, SBP, "Hash_cast");
-      BBI = ++BB->getInstList().insert(BBI, I);
-      V = I;
-    }
+    if (V->getType() != SBP)     // Cast pointer to be sbyte*
+      V = new CastInst(V, SBP, "Hash_cast", InsertBefore);
 
     vector<Value*> HashArgs(1, V);
-    V = new CallInst(HashPtrToSeqNum, HashArgs, "ptrSeqNum");
-    BBI = ++BB->getInstList().insert(BBI, cast<Instruction>(V));
+    V = new CallInst(HashPtrToSeqNum, HashArgs, "ptrSeqNum", InsertBefore);
   }
   
   // Insert the first print instruction to print the string flag:
   vector<Value*> PrintArgs;
   PrintArgs.push_back(GEP);
   if (V) PrintArgs.push_back(V);
-  Instruction *I = new CallInst(Printf, PrintArgs, "trace");
-  BBI = ++BB->getInstList().insert(BBI, I);
+  new CallInst(Printf, PrintArgs, "trace", InsertBefore);
 }
                             
 
 static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
-                                   BasicBlock::iterator &BBI,
+                                   Instruction *InsertBefore,
                                    const string &Message, Function *Printf,
                                    Function* HashPtrToSeqNum) {
   std::ostringstream OutStr;
   if (V) WriteAsOperand(OutStr, V);
-  InsertPrintInst(V, BB, BBI, Message+OutStr.str()+" = ",
+  InsertPrintInst(V, BB, InsertBefore, Message+OutStr.str()+" = ",
                   Printf, HashPtrToSeqNum);
 }
 
 static void 
 InsertReleaseInst(Value *V, BasicBlock *BB,
-                  BasicBlock::iterator &BBI,
+                  Instruction *InsertBefore,
                   Function* ReleasePtrFunc) {
   
   const Type *SBP = PointerType::get(Type::SByteTy);
-  if (V->getType() != SBP) {   // Cast pointer to be sbyte*
-    Instruction *I = new CastInst(V, SBP, "RPSN_cast");
-    BBI = ++BB->getInstList().insert(BBI, I);
-    V = I;
-  }
+  if (V->getType() != SBP)    // Cast pointer to be sbyte*
+    V = new CastInst(V, SBP, "RPSN_cast", InsertBefore);
+
   vector<Value*> releaseArgs(1, V);
-  Instruction *I = new CallInst(ReleasePtrFunc, releaseArgs);
-  BBI = ++BB->getInstList().insert(BBI, I);
+  new CallInst(ReleasePtrFunc, releaseArgs, "", InsertBefore);
 }
 
 static void 
 InsertRecordInst(Value *V, BasicBlock *BB,
-                 BasicBlock::iterator &BBI,
+                 Instruction *InsertBefore,
                  Function* RecordPtrFunc) {
     const Type *SBP = PointerType::get(Type::SByteTy);
-  if (V->getType() != SBP) {   // Cast pointer to be sbyte*
-    Instruction *I = new CastInst(V, SBP, "RP_cast");
-    BBI = ++BB->getInstList().insert(BBI, I);
-    V = I;
-  }
+  if (V->getType() != SBP)     // Cast pointer to be sbyte*
+    V = new CastInst(V, SBP, "RP_cast", InsertBefore);
+
   vector<Value*> releaseArgs(1, V);
-  Instruction *I = new CallInst(RecordPtrFunc, releaseArgs);
-  BBI = ++BB->getInstList().insert(BBI, I);
-}
-
-static void
-InsertPushOnEntryFunc(Function *M,
-                      Function* PushOnEntryFunc) {
-  // Get an iterator to point to the insertion location
-  BasicBlock &BB = M->getEntryNode();
-  BB.getInstList().insert(BB.begin(), new CallInst(PushOnEntryFunc,
-                                                   vector<Value*>()));
-}
-
-static void 
-InsertReleaseRecordedInst(BasicBlock *BB,
-                          Function* ReleaseOnReturnFunc) {
-  BasicBlock::iterator BBI = --BB->end();
-  BBI = ++BB->getInstList().insert(BBI, new CallInst(ReleaseOnReturnFunc,
-                                                     vector<Value*>()));
+  new CallInst(RecordPtrFunc, releaseArgs, "", InsertBefore);
 }
 
 // Look for alloca and free instructions. These are the ptrs to release.
@@ -319,16 +290,11 @@ static void
 ReleasePtrSeqNumbers(BasicBlock *BB,
                      ExternalFuncs& externalFuncs) {
   
-  for (BasicBlock::iterator II=BB->begin(); II != BB->end(); ++II) {
+  for (BasicBlock::iterator II=BB->begin(), IE = BB->end(); II != IE; ++II)
     if (FreeInst *FI = dyn_cast<FreeInst>(&*II))
-      InsertReleaseInst(FI->getOperand(0), BB,II,externalFuncs.ReleasePtrFunc);
+      InsertReleaseInst(FI->getOperand(0), BB, FI,externalFuncs.ReleasePtrFunc);
     else if (AllocaInst *AI = dyn_cast<AllocaInst>(&*II))
-      {
-        BasicBlock::iterator nextI = ++II;
-        InsertRecordInst(AI, BB, nextI, externalFuncs.RecordPtrFunc);     
-        II = --nextI;
-      }
-  }
+      InsertRecordInst(AI, BB, AI->getNext(), externalFuncs.RecordPtrFunc);
 }  
 
 
@@ -347,8 +313,7 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   // Get an iterator to point to the insertion location, which is
   // just before the terminator instruction.
   // 
-  BasicBlock::iterator InsertPos = --BB->end();
-  assert(InsertPos->isTerminator());
+  TerminatorInst *InsertPos = BB->getTerminator();
   
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB, false);
@@ -359,21 +324,17 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   // The print instructions must go before InsertPos, so we use the
   // instruction *preceding* InsertPos to check when to terminate the loop.
   // 
-  if (InsertPos != BB->begin()) { // there's at least one instr before InsertPos
-    BasicBlock::iterator II = BB->begin(), IEincl = InsertPos;
-    --IEincl;
-    do {                          // do from II up to IEincl, inclusive
-      if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
-        assert(valuesStoredInFunction &&
-               "Should not be printing a store instruction at function exit");
-        LoadInst *LI = new LoadInst(SI->getPointerOperand(), "reload." +
-                                    SI->getPointerOperand()->getName());
-        InsertPos = ++BB->getInstList().insert(InsertPos, LI);
-        valuesStoredInFunction->push_back(LI);
-      }
-      if (ShouldTraceValue(II))
-        InsertVerbosePrintInst(II, BB, InsertPos, "  ", Printf,HashPtrToSeqNum);
-    } while (II++ != IEincl);
+  for (BasicBlock::iterator II = BB->begin(); &*II != InsertPos; ++II) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
+      assert(valuesStoredInFunction &&
+             "Should not be printing a store instruction at function exit");
+      LoadInst *LI = new LoadInst(SI->getPointerOperand(), "reload." +
+                                  SI->getPointerOperand()->getName(),
+                                  InsertPos);
+      valuesStoredInFunction->push_back(LI);
+    }
+    if (ShouldTraceValue(II))
+      InsertVerbosePrintInst(II, BB, InsertPos, "  ", Printf, HashPtrToSeqNum);
   }
 }
 
@@ -381,17 +342,17 @@ static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
                                                  Function* HashPtrToSeqNum){
   // Get an iterator to point to the insertion location
   BasicBlock &BB = F.getEntryNode();
-  BasicBlock::iterator BBI = BB.begin();
+  Instruction *InsertPos = BB.begin();
 
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, &F, true);
-  InsertPrintInst(0, &BB, BBI, "ENTERING FUNCTION: " + OutStr.str(),
+  InsertPrintInst(0, &BB, InsertPos, "ENTERING FUNCTION: " + OutStr.str(),
                   Printf, HashPtrToSeqNum);
 
   // Now print all the incoming arguments
   unsigned ArgNo = 0;
   for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++ArgNo){
-    InsertVerbosePrintInst(I, &BB, BBI,
+    InsertVerbosePrintInst(I, &BB, InsertPos,
                            "  Arg #" + utostr(ArgNo) + ": ", Printf,
                            HashPtrToSeqNum);
   }
@@ -402,17 +363,16 @@ static inline void InsertCodeToShowFunctionExit(BasicBlock *BB,
                                                 Function *Printf,
                                                 Function* HashPtrToSeqNum) {
   // Get an iterator to point to the insertion location
-  BasicBlock::iterator BBI = --BB->end();
-  ReturnInst &Ret = cast<ReturnInst>(BB->back());
+  ReturnInst *Ret = cast<ReturnInst>(BB->getTerminator());
   
   std::ostringstream OutStr;
   WriteAsOperand(OutStr, BB->getParent(), true);
-  InsertPrintInst(0, BB, BBI, "LEAVING  FUNCTION: " + OutStr.str(),
+  InsertPrintInst(0, BB, Ret, "LEAVING  FUNCTION: " + OutStr.str(),
                   Printf, HashPtrToSeqNum);
   
   // print the return value, if any
   if (BB->getParent()->getReturnType() != Type::VoidTy)
-    InsertPrintInst(Ret.getReturnValue(), BB, BBI, "  Returning: ",
+    InsertPrintInst(Ret->getReturnValue(), BB, Ret, "  Returning: ",
                     Printf, HashPtrToSeqNum);
 }
 
@@ -430,8 +390,9 @@ bool InsertTraceCode::runOnFunction(Function &F) {
   
   // Push a pointer set for recording alloca'd pointers at entry.
   if (!DisablePtrHashing)
-    InsertPushOnEntryFunc(&F, externalFuncs.PushOnEntryFunc);
-  
+    new CallInst(externalFuncs.PushOnEntryFunc, vector<Value*>(), "",
+                 F.getEntryNode().begin());
+
   for (Function::iterator BB = F.begin(); BB != F.end(); ++BB) {
     if (isa<ReturnInst>(BB->getTerminator()))
       exitBlocks.push_back(BB); // record this as an exit block
@@ -451,8 +412,8 @@ bool InsertTraceCode::runOnFunction(Function &F) {
       
       // Release all recorded pointers before RETURN.  Do this LAST!
       if (!DisablePtrHashing)
-        InsertReleaseRecordedInst(exitBlocks[i],
-                                  externalFuncs.ReleaseOnReturnFunc);
+        new CallInst(externalFuncs.ReleaseOnReturnFunc, vector<Value*>(), "",
+                     exitBlocks[i]->getTerminator());
     }
   
   return true;

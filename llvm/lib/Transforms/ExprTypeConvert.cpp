@@ -101,21 +101,14 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   // If we have a scale, apply it first...
   if (Expr.Var) {
     // Expr.Var is not neccesarily unsigned right now, insert a cast now.
-    if (Expr.Var->getType() != Type::UIntTy) {
-      Instruction *CI = new CastInst(Expr.Var, Type::UIntTy);
-      if (Expr.Var->hasName()) CI->setName(Expr.Var->getName()+"-uint");
-      It = ++BB->getInstList().insert(It, CI);
-      Expr.Var = CI;
-    }
+    if (Expr.Var->getType() != Type::UIntTy)
+      Expr.Var = new CastInst(Expr.Var, Type::UIntTy,
+                              Expr.Var->getName()+"-uint", It);
 
-    if (Scale != 1) {
-      Instruction *ScI =
-        BinaryOperator::create(Instruction::Mul, Expr.Var,
-                               ConstantUInt::get(Type::UIntTy, Scale));
-      if (Expr.Var->hasName()) ScI->setName(Expr.Var->getName()+"-scl");
-      It = ++BB->getInstList().insert(It, ScI);
-      Expr.Var = ScI;
-    }
+    if (Scale != 1)
+      Expr.Var = BinaryOperator::create(Instruction::Mul, Expr.Var,
+                                        ConstantUInt::get(Type::UIntTy, Scale),
+                                        Expr.Var->getName()+"-scl", It);
 
   } else {
     // If we are not scaling anything, just make the offset be the "var"...
@@ -126,13 +119,9 @@ static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
   // If we have an offset now, add it in...
   if (Offset != 0) {
     assert(Expr.Var && "Var must be nonnull by now!");
-
-    Instruction *AddI =
-      BinaryOperator::create(Instruction::Add, Expr.Var,
-                             ConstantUInt::get(Type::UIntTy, Offset));
-    if (Expr.Var->hasName()) AddI->setName(Expr.Var->getName()+"-off");
-    It = ++BB->getInstList().insert(It, AddI);
-    Expr.Var = AddI;
+    Expr.Var = BinaryOperator::create(Instruction::Add, Expr.Var,
+                                      ConstantUInt::get(Type::UIntTy, Offset),
+                                      Expr.Var->getName()+"-off", It);
   }
 
   Instruction *NewI = new MallocInst(AllocTy, Expr.Var, Name);
@@ -971,9 +960,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       assert(LoadedTy->isFirstClassType());
 
       if (Indices.size() != 1) {     // Do not generate load X, 0
-        Src = new GetElementPtrInst(Src, Indices, Name+".idx");
         // Insert the GEP instruction before this load.
-        BIL.insert(I, cast<Instruction>(Src));
+        Src = new GetElementPtrInst(Src, Indices, Name+".idx", I);
       }
     }
     
@@ -1008,10 +996,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           assert(Offset == 0 && "Offset changed!");
           assert(NewTy == Ty && "Did not convert to correct type!");
 
+          // Insert the GEP instruction before this store.
           SrcPtr = new GetElementPtrInst(SrcPtr, Indices,
-                                         SrcPtr->getName()+".idx");
-          // Insert the GEP instruction before this load.
-          BIL.insert(I, cast<Instruction>(SrcPtr));
+                                         SrcPtr->getName()+".idx", I);
         }
         Res = new StoreInst(NewVal, SrcPtr);
 
@@ -1038,10 +1025,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
         assert(Offset == 0 && ValTy);
 
+        // Insert the GEP instruction before this store.
         SrcPtr = new GetElementPtrInst(SrcPtr, Indices,
-                                       SrcPtr->getName()+".idx");
-        // Insert the GEP instruction before this load.
-        BIL.insert(I, cast<Instruction>(SrcPtr));
+                                       SrcPtr->getName()+".idx", I);
       }
 
       Res = new StoreInst(Constant::getNullValue(ValTy), SrcPtr);
@@ -1064,8 +1050,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     if (DataSize != 1) {
       // Insert a multiply of the old element type is not a unit size...
       Index = BinaryOperator::create(Instruction::Mul, Index,
-                                     ConstantUInt::get(Type::UIntTy, DataSize));
-      It = ++BIL.insert(It, cast<Instruction>(Index));
+                                     ConstantUInt::get(Type::UIntTy, DataSize),
+                                     "scale", It);
     }
 
     // Perform the conversion now...
@@ -1146,8 +1132,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           // Create a cast to convert it to the right type, we know that this
           // is a lossless cast...
           //
-          Params[i] = new CastInst(Params[i], PTs[i], "call.resolve.cast");
-          It = ++BIL.insert(It, cast<Instruction>(Params[i]));
+          Params[i] = new CastInst(Params[i], PTs[i], "call.resolve.cast", It);
         }
       Meth = NewVal;  // Update call destination to new value
 

@@ -25,11 +25,8 @@ namespace {
 // name...
 //
 static Instruction *InsertCast(Value *Val, const Type *Ty,
-                               BasicBlock::iterator It) {
-  Instruction *Cast = new CastInst(Val, Ty);
-  if (Val->hasName()) Cast->setName(Val->getName()+"-casted");
-  It->getParent()->getInstList().insert(It, Cast);
-  return Cast;
+                               Instruction *InsertBefore) {
+  return new CastInst(Val, Ty, Val->getName()+"-casted", InsertBefore);
 }
 
 static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
@@ -75,19 +72,14 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // Okay, we want to convert other induction variables to use a cannonical
   // indvar.  If we don't have one, add one now...
   if (!Cannonical) {
-    // Create the PHI node for the new induction variable
-    PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar");
-
-    // Insert the phi node at the end of the other phi nodes...
-    AfterPHIIt = ++Header->getInstList().insert(AfterPHIIt, PN);
+    // Create the PHI node for the new induction variable, and insert the phi
+    // node at the end of the other phi nodes...
+    PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar", AfterPHIIt);
 
     // Create the increment instruction to add one to the counter...
     Instruction *Add = BinaryOperator::create(Instruction::Add, PN,
                                               ConstantUInt::get(Type::UIntTy,1),
-                                              "add1-indvar");
-
-    // Insert the add instruction after all of the PHI nodes...
-    Header->getInstList().insert(AfterPHIIt, Add);
+                                              "add1-indvar", AfterPHIIt);
 
     // Figure out which block is incoming and which is the backedge for the loop
     BasicBlock *Incoming, *BackEdgeBlock;
@@ -147,9 +139,7 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
           IV->Step = InsertCast(IV->Step, IVTy, AfterPHIIt);
 
         Val = BinaryOperator::create(Instruction::Mul, Val, IV->Step,
-                                     IV->Phi->getName()+"-scale");
-        // Insert the phi node at the end of the other phi nodes...
-        Header->getInstList().insert(AfterPHIIt, Val);
+                                     IV->Phi->getName()+"-scale", AfterPHIIt);
       }
 
       // If the start != 0
@@ -160,11 +150,9 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
         if (IV->Start->getType() != IVTy)
           IV->Start = InsertCast(IV->Start, IVTy, AfterPHIIt);
 
+        // Insert the instruction after the phi nodes...
         Val = BinaryOperator::create(Instruction::Add, Val, IV->Start,
-                                     IV->Phi->getName()+"-offset");
-
-        // Insert the phi node at the end of the other phi nodes...
-        Header->getInstList().insert(AfterPHIIt, Val);
+                                     IV->Phi->getName()+"-offset", AfterPHIIt);
       }
 
       // If the PHI node has a different type than val is, insert a cast now...

@@ -18,14 +18,13 @@
 #include "llvm/Pass.h"
 #include "Support/StatisticReporter.h"
 
-static Statistic<> NumAdded("lowerrefs\t\t- New instructions added");
-
 namespace {
-  struct DecomposePass : public BasicBlockPass {
-    virtual bool runOnBasicBlock(BasicBlock &BB);
+  Statistic<> NumAdded("lowerrefs\t\t- # of getelementptr instructions added");
 
-  private:
-    static bool decomposeArrayRef(BasicBlock::iterator &BBI);
+  class DecomposePass : public BasicBlockPass {
+    static bool decomposeArrayRef(GetElementPtrInst &GEP);
+  public:
+    virtual bool runOnBasicBlock(BasicBlock &BB);
   };
 
   RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
@@ -47,21 +46,13 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
 {
   bool Changed = false;
   for (BasicBlock::iterator II = BB.begin(); II != BB.end(); ) {
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&*II))
-      if (GEP->getNumIndices() >= 2) {
-        Changed |= decomposeArrayRef(II); // always modifies II
-        continue;
-      }
+    Instruction *I = II;
     ++II;
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I))
+      if (GEP->getNumIndices() >= 2)
+        Changed |= decomposeArrayRef(*GEP); // always modifies II
   }
   return Changed;
-}
-
-// Check for a constant (uint) 0.
-inline bool
-IsZero(Value* idx)
-{
-  return (isa<ConstantInt>(idx) && cast<ConstantInt>(idx)->isNullValue());
 }
 
 // For any GetElementPtrInst with 2 or more array and structure indices:
@@ -86,17 +77,11 @@ IsZero(Value* idx)
 // Return value: true if the instruction was replaced; false otherwise.
 // 
 bool
-DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
+DecomposePass::decomposeArrayRef(GetElementPtrInst &GEP)
 {
-  GetElementPtrInst &GEP = cast<GetElementPtrInst>(*BBI);
   BasicBlock *BB = GEP.getParent();
   Value *LastPtr = GEP.getPointerOperand();
-
-  // Remove the instruction from the stream
-  BB->getInstList().remove(BBI);
-
-  // The vector of new instructions to be created
-  std::vector<Instruction*> NewInsts;
+  Instruction *InsertPoint = GEP.getNext(); // Insert before the next insn
 
   // Process each index except the last one.
   User::const_op_iterator OI = GEP.idx_begin(), OE = GEP.idx_end();
@@ -105,16 +90,17 @@ DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
     
     // If this is the first index and is 0, skip it and move on!
     if (OI == GEP.idx_begin()) {
-      if (IsZero(*OI)) continue;
-    } else
+      if (*OI == ConstantInt::getNullValue((*OI)->getType()))
+        continue;
+    } else {
       // Not the first index: include initial [0] to deref the last ptr
       Indices.push_back(Constant::getNullValue(Type::UIntTy));
+    }
 
     Indices.push_back(*OI);
 
     // New Instruction: nextPtr1 = GetElementPtr LastPtr, Indices
-    LastPtr = new GetElementPtrInst(LastPtr, Indices, "ptr1");
-    NewInsts.push_back(cast<Instruction>(LastPtr));
+    LastPtr = new GetElementPtrInst(LastPtr, Indices, "ptr1", InsertPoint);
     ++NumAdded;
   }
 
@@ -127,20 +113,13 @@ DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI)
   Indices.push_back(Constant::getNullValue(Type::UIntTy));
   Indices.push_back(*OI);
 
-  Instruction *NewI = new GetElementPtrInst(LastPtr, Indices, GEP.getName());
-  NewInsts.push_back(NewI);
+  Value *NewVal = new GetElementPtrInst(LastPtr, Indices, GEP.getName(),
+                                        InsertPoint);
 
   // Replace all uses of the old instruction with the new
-  GEP.replaceAllUsesWith(NewI);
+  GEP.replaceAllUsesWith(NewVal);
 
-  // Now delete the old instruction...
-  delete &GEP;
-
-  // Insert all of the new instructions...
-  BB->getInstList().insert(BBI, NewInsts.begin(), NewInsts.end());
-
-  // Advance the iterator to the instruction following the one just inserted...
-  BBI = NewInsts.back();
-  ++BBI;
+  // Now remove and delete the old instruction...
+  BB->getInstList().erase(&GEP);
   return true;
 }
