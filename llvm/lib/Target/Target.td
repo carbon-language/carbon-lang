@@ -6,9 +6,24 @@
 //  Target-Independent interface
 //===----------------------------------------------------------------------===//
 
+
+// Value types - These values correspond to the register types defined in the
+// MRegsterInfo.h file.
+class ValueType {}
+def i1   : ValueType;    // One bit boolean value
+def i8   : ValueType;    // 8-bit integer value
+def i16  : ValueType;    // 16-bit integer value
+def i32  : ValueType;    // 32-bit integer value
+def i64  : ValueType;    // 64-bit integer value
+def i128 : ValueType;    // 128-bit integer value
+def f32  : ValueType;    // 32-bit floating point value
+def f64  : ValueType;    // 64-bit floating point value
+def f80  : ValueType;    // 80-bit floating point value
+def f128 : ValueType;    // 128-bit floating point value
+
 class Register {
   string Namespace = "";
-  int Size;
+  ValueType RegType;
 }
 
 class Instruction {
