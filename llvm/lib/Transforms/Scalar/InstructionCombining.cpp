@@ -3588,6 +3588,59 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     }
   }
   
+  // Turn select C, (X+Y), (X-Y) --> (X+(select C, Y, (-Y))).  This is legal for
+  // FP as well.
+  if (Instruction *TI = dyn_cast<Instruction>(TrueVal))
+    if (Instruction *FI = dyn_cast<Instruction>(FalseVal))
+      if (TI->hasOneUse() && FI->hasOneUse()) {
+        bool isInverse = false;
+        Instruction *AddOp = 0, *SubOp = 0;
+
+        if (TI->getOpcode() == Instruction::Sub &&
+            FI->getOpcode() == Instruction::Add) {
+          AddOp = FI; SubOp = TI;
+        } else if (FI->getOpcode() == Instruction::Sub &&
+                   TI->getOpcode() == Instruction::Add) {
+          AddOp = TI; SubOp = FI;
+        }
+
+        if (AddOp) {
+          Value *OtherAddOp = 0;
+          if (SubOp->getOperand(0) == AddOp->getOperand(0)) {
+            OtherAddOp = AddOp->getOperand(1);
+          } else if (SubOp->getOperand(0) == AddOp->getOperand(1)) {
+            OtherAddOp = AddOp->getOperand(0);
+          }
+
+          if (OtherAddOp) {
+            // So at this point we know we have:
+            //        select C, (add X, Y), (sub X, ?)
+            // We can do the transform profitably if either 'Y' = '?' or '?' is
+            // a constant.
+            if (SubOp->getOperand(1) == AddOp ||
+                isa<Constant>(SubOp->getOperand(1))) {
+              Value *NegVal;
+              if (Constant *C = dyn_cast<Constant>(SubOp->getOperand(1))) {
+                NegVal = ConstantExpr::getNeg(C);
+              } else {
+                NegVal = InsertNewInstBefore(
+                           BinaryOperator::createNeg(SubOp->getOperand(1)), SI);
+              }
+
+              Value *NewTrueOp = AddOp->getOperand(1);
+              Value *NewFalseOp = NegVal;
+              if (AddOp != TI)
+                std::swap(NewTrueOp, NewFalseOp);
+              Instruction *NewSel =
+                new SelectInst(CondVal, NewTrueOp,NewFalseOp,SI.getName()+".p");
+                               
+              NewSel = InsertNewInstBefore(NewSel, SI);
+              return BinaryOperator::createAdd(AddOp->getOperand(0), NewSel);
+            }
+          }
+        }
+      }
+  
   // See if we can fold the select into one of our operands.
   if (SI.getType()->isInteger()) {
     // See the comment above GetSelectFoldableOperands for a description of the
