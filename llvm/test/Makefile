@@ -1,4 +1,5 @@
 LEVEL  = ..
+DIRS   = Programs
 
 TESTS := $(wildcard *.ll)
 
