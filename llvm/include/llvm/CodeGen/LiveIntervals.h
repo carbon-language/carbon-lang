@@ -44,6 +44,8 @@ namespace llvm {
 
             bool empty() const { return ranges.empty(); }
 
+            bool spilled() const;
+
             unsigned start() const {
                 assert(!empty() && "empty interval for register");
                 return ranges.front().first;
@@ -112,6 +114,33 @@ namespace llvm {
         Intervals intervals_;
 
     public:
+        struct InstrSlots
+        {
+            enum {
+                LOAD  = 0,
+                USE   = 1,
+                DEF   = 2,
+                STORE = 3,
+                NUM   = 4,
+            };
+        };
+
+        static unsigned getBaseIndex(unsigned index) {
+            return index - (index % 4);
+        }
+        static unsigned getLoadIndex(unsigned index) {
+            return getBaseIndex(index) + InstrSlots::LOAD;
+        }
+        static unsigned getUseIndex(unsigned index) {
+            return getBaseIndex(index) + InstrSlots::USE;
+        }
+        static unsigned getDefIndex(unsigned index) {
+            return getBaseIndex(index) + InstrSlots::DEF;
+        }
+        static unsigned getStoreIndex(unsigned index) {
+            return getBaseIndex(index) + InstrSlots::STORE;
+        }
+
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
         virtual void releaseMemory();
 
@@ -123,13 +152,16 @@ namespace llvm {
             return *r2iMap_.find(reg)->second;
         }
 
+        /// getInstructionIndex - returns the base index of instr
         unsigned getInstructionIndex(MachineInstr* instr) const;
 
+        /// getInstructionFromIndex - given an index in any slot of an
+        /// instruction return a pointer the instruction
         MachineInstr* getInstructionFromIndex(unsigned index) const;
 
         Intervals& getIntervals() { return intervals_; }
 
-        void updateSpilledInterval(Interval& i);
+        void updateSpilledInterval(Interval& i, int slot);
 
     private:
         /// computeIntervals - compute live intervals
