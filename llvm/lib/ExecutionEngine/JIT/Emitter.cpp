@@ -19,7 +19,6 @@
 #include "Support/Statistic.h"
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
-#include <stdio.h>
 
 namespace {
   Statistic<> NumBytes("jello", "Number of bytes of machine code compiled");

@@ -22,7 +22,6 @@
 #include "Config/dlfcn.h"
 #include "Config/link.h"
 #include <cmath>
-#include "Config/stdio.h"
 #include "Support/DynamicLinker.h"
 using std::vector;
 
