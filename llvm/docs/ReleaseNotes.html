@@ -71,15 +71,14 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <p>This is the fourth public release of the LLVM compiler infrastructure.  This
 release primarily improves the <a href="#codequality">performance of the
-code</a> produced by all aspects of the LLVM compiler and adds many <a
-href="#newfeatures">new features</a>, and <a href="#bugfix">fixes a few
-bugs</a> as well.</p>
+code</a> produced by all aspects of the LLVM compiler, adds many <a
+href="#newfeatures">new features</a>, <a href="#bugfix">fixes a few
+bugs</a>, and speeds up the compiler.</p>
 
 <p> At this time, LLVM is known to correctly compile and run all C &amp; C++
-SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist benchmarks.  It
-has also been used to compile <b>many</b> other programs.  LLVM now also works
-with a broad variety of C++ programs, though it has still received less testing
-than the C front-end.</p>
+SPEC CPU95 &amp; 2000 benchmarks, the Olden benchmarks, and the Ptrdist 
+benchmarks, and <b>many</b> other programs.  LLVM now also works
+with a broad variety of C++ programs.</p>
 
 </div>
 
@@ -97,8 +96,8 @@ generators, and the interpreter.</li>
 <li>Bugpoint can now narrow down code-generation bugs to a loop nest, where
 before it could only narrow them down to a function being miscompiled.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR40">Bugpoint can now debug arbitrary
-modes of llc</a> and lli, by passing them command line flags (e.g., 
-<tt>-regalloc=linearscan</tt>, <tt>-enable-correct-eh-support</tt>, etc.) </li>
+modes of llc</a> and lli, by passing them command line flags (e.g.
+<tt>-regalloc=linearscan</tt>).</li>
 <li>The Control Flow Graph in the native code generators is no longer
 constrained to be the same as the CFG for the LLVM input code.</li>
 <li>The LLVM induction variable analysis routines have been rewritten.</li>
@@ -108,8 +107,9 @@ replacement and exit value replacement optimizations.</li>
 <li>LLVM now has first-class support for <a
 href="GarbageCollection.html">Accurate Garbage Collection</a>, enabling the use
 of aggressive copying and generational collectors.</li>
-<li>LLVM now includes an implementation of Andersen's interprocedural alias 
-analysis algorithm.</li>
+<li>LLVM now includes a simple implementation of <a 
+href="AliasAnalysis.html#anders-aa">Andersen's interprocedural alias 
+analysis</a> algorithm.</li>
 <li>Bugpoint can <a href="http://llvm.cs.uiuc.edu/PR327">extract individual
 basic blocks</a> to track down reduce miscompilation testcases.</li>
 <li>LLVM and the C front-end now work under Win32 using the
@@ -117,29 +117,35 @@ basic blocks</a> to track down reduce miscompilation testcases.</li>
 This includes the JIT compiler.</li>
 <li>The LLVM code generator is now being <a
 href="CodeGenerator.html">documented</a>.</li>
-<li>There is a new tool, llvm-bcanalyzer.  This tool can compute basic
-statistics and bytecode density statistics on a module or function basis and
-also dump out bytecode in a textual format that is lower level than assembly
-(values are not resolved from slot numbers).  It should only be of interest to
-(a) those who are working to improve the bytecode format and (b) those who
-really want to understand or document the details of the bytecode format.</li>
-<li>The <a href="BytecodeFormat.html">LLVM Bytecode file format</a> is now 
+<li>LLVM includes a new tool, <a 
+href="CommandGuide/html/llvm-bcanalyzer.html">llvm-bcanalyzer</a>,  This tool 
+can compute various statistics and dump information about LLVM bytecode
+encoding.</li>
+<li>The <a href="BytecodeFormat.html">LLVM bytecode file format</a> is now 
 documented.</li>
 <li>LLVM now provides an <a
 href="LangRef.html#i_isunordered">llvm.isunordered</a> intrinsic for efficient
 implementation of unordered floating point comparisons.</li>
 <li>The llvmgcc front-end now supports the GCC builtins for ISO C99 floating
 point comparison macros (e.g., <tt>__builtin_islessequal</tt>).</li>
-<li>Now that there are more source files than can fit on a 32Kbyte command
-line (Linux's limit), there's a new utility for searching the sources. The
-llvmgrep tool in the utils directory combines an egrep and a find without
-passing filenames through the command line. This improves performance 
-slightly. Simply run llvmgrep like you might egrep but leave off the file
-names.</li>
-<li>We now generate HTML documentation and man pages for the tools from a single
-source (perl-style POD files).</li>
+<li>We now generate <a href="CommandGuide/">HTML documentation and man pages</a>
+for the tools from a single source (perl-style POD files).</li>
 <li>The LLVM code generator can now dynamically load targets from shared 
 objects.</li>
+<li>LLVM now includes a "skeleton" target, which makes it easier to get 
+started porting LLVM to new architectures.</li>
+<li>The linear scan register allocator is now enabled by default in the 
+target-independent code generator.</li>
+<li>LLVM now includes a dead store elimination pass.</li>
+<li>Bugpoint can now debug miscompilations that lead to the program going 
+into an infinite loop.</li>
+<li>LLVM now provides interfaces to support ML-style pattern matching on the 
+LLVM IR.</li>
+<li>LLVM now includes a <a 
+href="AliasAnalysis.html#globalsmodref">context-sensitive mod/ref analysis</a> 
+for global variables, which is now enabled by default in gccld.</li>
+<li>LLVM can now autogenerate assembly printers for code generators from the 
+tablegen description of the target (before they were hand coded).</li>
 </ol>
 
 </div>
@@ -161,6 +167,10 @@ non-instruction entities, such as global constant initializer</a></li>
 with 64-bit pointers.</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR290">Bugpoint doesn't support
 uses of external fns by immediate constant exprs</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR407">Can't add function passes that 
+depend on immutable passes to the FunctionPassManager</a>.</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR308">Archive file reader doesn't
+understand abbreviated names in headers</a></li>
 </ol>
 
 </div>
@@ -189,6 +199,10 @@ Bytecode Reader</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR402">Bytecode Enhancements
   Needed</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR404">[loopsimplify] Loop simplify is really slow on 252.eon</a></li>
+<li><a href="Http://llvm.cs.uiuc.edu/PR122">[code-cleanup] SymbolTable 
+    class cleanup, Type should not derive from Value, eliminate 
+    ConstantPointerRef class</a>.</li>
+<li>The memory footprint of the LLVM IR has been reduced substantially.</li>
 </ol>
 
 </div>
@@ -231,7 +245,7 @@ hits the inlining threshold.</li>
 <li>The -inline pass no longer misses obvious inlining opportunities just
 because the callee eventually calls into an external function.</li>
 
-<li>The -simplifycfg pass can now "if convert" simple statements into the new
+<li>The -simplifycfg pass can now "if convert" simple statements into the 
 <tt>select</tt> instruction.</li>
 
 <li>The -loopsimplify pass can now break <a
@@ -245,6 +259,9 @@ memory.</li>
 <li>The link-time optimizer now runs the -prune-eh pass (to remove unused
 exception handlers).</li>
 
+<li>The link-time optimizer now runs dead store elimination and uses a simple
+interprocedural alias analysis.</li>
+
 <li>The -simplifycfg pass can now eliminate simple correlated branches (such as
 "<tt>if (A &lt; B &amp;&amp; A &lt; B)</tt>", and can turn short-circuiting
 operators into the strict versions when useful (such as "<tt>if (A &lt; B || A
@@ -254,16 +271,14 @@ operators into the strict versions when useful (such as "<tt>if (A &lt; B || A
 propagation of function calls.  It currently supports a few math library
 functions like sqrt/sin/cos/etc.</li>
 
-<li>The C backend now emits <a href="http://llvm.cs.uiuc.edu/PR334">Syntactic
+<li>The C backend now emits <a href="http://llvm.cs.uiuc.edu/PR334">syntactic
 loops</a> in the code to help C compilers whose optimizers do not recognize 
 loops formed from gotos (like GCC).</li>
 
-<li>Fixed: <a href="http://llvm.cs.uiuc.edu/PR368">[sparcv9] null
-often spilled to constant pool</a>.</li>
+<li>The SparcV9 backend no longers <a 
+href="http://llvm.cs.uiuc.edu/PR368">spills the null constant to the constant 
+pool</a>.</li>
 </ol>
-<li>Fixed: <a href="Http://llvm.cs.uiuc.edu/PR122">[code-cleanup] SymbolTable 
-    class cleanup, Type should not derive from Value, eliminate 
-    ConstantPointerRef class</a>. All three changes have been made.
 </div>
 
 <!--=========================================================================-->
@@ -274,7 +289,7 @@ were fixed:</a>
 
 <div class="doc_text">
 
-<p>Bugs in the LLVM Core:</p>
+<p>Bugs fixed in the LLVM Core:</p>
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR306">[loopsimplify] Loop simplify
@@ -283,8 +298,6 @@ incorrectly updates dominator information</a></li>
 breaks SSA form</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short
 to floating point cast</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR315">[jit] abort, don't warn, when 
-missing external functions encountered</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR330">[vmcore] Linker causes erroneous
 asssertion</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable
@@ -293,13 +306,8 @@ code that unwinds</a></li>
 of the same name, both having constant pools</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR337">[livevar] Live variables missed
 physical register use of aliased definition</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR340">Verifier misses malformed switch 
-instruction</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR365">[asmwriter] Asm writer aborts if 
-an instruction is not embedded into a function</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR369">[X86] stackifier crash on floating 
 point setcc X, X</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR407">Can't add LICM to FunctionPassManager</a></li>
 </ol>
 
 <p>Bugs in the C/C++ front-end:</p>
@@ -351,22 +359,6 @@ LLVM and the C frontend out of a top-level directory without spaces (e.g.,
 <tt>/cygdrive/c/llvm</tt>).  Also, make sure to install <b>all</b> of the 
 cygwin packages.  By default, many important tools are not installed that 
 are needed by the LLVM build process or test suite (e.g., /bin/time).</p>
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-In this release, the following portability problems were fixed:
-</div>
-
-<div class="doc_text">
-
-<ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR304">warnings compiling Stacker compiler
-on Mac OS X</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR308">Archive file reader doesn't
-understand abbreviated names in headers</a></li>
-</ol>
 
 </div>
 
@@ -635,13 +627,14 @@ Please report any bugs or problems.</p>
 <ul>
 <li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
     front-end</a>.</li>
-</ul>
 
-<p><b>IA64 note</b>: The C++ front-end does not use <a 
-href="http://llvm.cs.uiuc.edu/PR406">IA64 ABI compliant layout of vtables</a>.
+<li><b>IA-64 specific</b>: The C++ front-end does not use <a 
+href="http://llvm.cs.uiuc.edu/PR406">IA64 ABI compliant layout of v-tables</a>.
 In particular, it just stores function pointers instead of function
 descriptors in the vtable.  This bug prevents mixing C++ code compiled with
 LLVM with C++ objects compiled by other C++ compilers.</p>
+
+</ul>
 
 </div>
 
@@ -688,13 +681,7 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
 <div class="doc_text">
 
 <ul>
-  <li>Optimized (Release) versions of LLVM built with GCC 3.3.2 or 3.3.3 will 
-  produce an llc tool that always enters an infinite loop due to what 
-  appears to be an optimization bug (-O2 and -O3) in those versions of GCC. 
-  This problem does not happen in GCC 3.3.1 nor GCC 3.4.0 nor does it happen if
-  you build a Debug version of LLVM. You are cautioned not to use GCC 3.3.2 or 
-  GCC 3.3.3 to build Optimized versions of LLVM. It is unclear whether this problem 
-  affects other backends but it is unlikely.</li>
+  <li>none yet</li>
 </ul>
 
 </div>
