@@ -426,9 +426,7 @@ void CWriter::printConstant(Constant *CPV) {
 
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(CPV)) {
-      Out << "((";
-      printType(CPV->getType(), "");
-      Out << ")NULL)";
+      Out << "(NULL)";
       break;
     } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CPV)) {
       writeOperand(CPR->getValue());
