@@ -12,6 +12,7 @@
 
 #include "PowerPC.h"
 #include "PowerPCTargetMachine.h"
+#include "PowerPCFrameInfo.h"
 #include "PPC32TargetMachine.h"
 #include "PPC64TargetMachine.h"
 #include "PPC32JITInfo.h"
@@ -48,7 +49,7 @@ namespace {
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            IntrinsicLowering *IL,
                                            const TargetData &TD,
-                                           const TargetFrameInfo &TFI,
+                                           const PowerPCFrameInfo &TFI,
                                            const PowerPCJITInfo &TJI,
                                            bool is64b) 
   : TargetMachine(name, IL, TD), InstrInfo(is64b), FrameInfo(TFI), JITInfo(TJI) 
@@ -96,17 +97,15 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
-  // PowerPC-specific prolog/epilog code inserter to put the fills/spills in the
-  // right spots.
-  PM.add(createPowerPCPEI());
+  PM.add(createPrologEpilogCodeInserter());
   
-  // Must run branch selection immediately preceding the printer
+  // Must run branch selection immediately preceding the asm printer
   PM.add(createPPCBranchSelectionPass());
   
   if (AIX)
     PM.add(createPPC64AsmPrinter(Out, *this));
   else
-    PM.add(createPPC32AsmPrinter(Out, *this));
+    PM.add(createPPCAsmPrinter(Out, *this));
     
   PM.add(createMachineCodeDeleter());
   return false;
@@ -148,16 +147,14 @@ PPC32TargetMachine::PPC32TargetMachine(const Module &M,
                                                IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC32, IL, 
                          TargetData(PPC32,false,4,4,4,4,4,4,2,1,4),
-                         TargetFrameInfo(TargetFrameInfo::StackGrowsDown,16,0),
-                         PPC32JITInfo(*this), false) {}
+                         PowerPCFrameInfo(*this), PPC32JITInfo(*this), false) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC64, IL,
                          TargetData(PPC64,false,8,4,4,4,4,4,2,1,4),
-                         TargetFrameInfo(TargetFrameInfo::StackGrowsDown,16,0),
-                         PPC64JITInfo(*this), true) {}
+                         PowerPCFrameInfo(*this), PPC64JITInfo(*this), true) {}
 
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (M.getEndianness()  == Module::BigEndian &&

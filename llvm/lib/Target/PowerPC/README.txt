@@ -1,6 +1,10 @@
 TODO:
 * implement cast fp to bool
-* implement signed right shift by reg
+* implement algebraic shift right long by reg
+* implement scheduling info
+* implement powerpc-64 for darwin
+* implement powerpc-64 for aix
+* fix rlwimi generation to be use-and-def
 * fix ulong to double:
   floatdidf assumes signed longs.  so if the high but of a ulong
   just happens to be set, you get the wrong sign.  The fix for this
@@ -17,7 +21,6 @@ TODO:
   shift right ulong a, 1 (we could use emitShift)
   call floatdidf
   fadd f1, f1, f1 (fp left shift by 1)
-* PowerPCPEI.cpp needs to be replaced by shiny new target hook
 * setCondInst needs to know branchless versions of seteq/setne/etc
 * cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
 * should hint to the branch select pass that it doesn't need to print the
@@ -25,13 +28,6 @@ TODO:
 	b .LBBl42__2E_expand_function_8_674	; loopentry.24
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
-
-Current hacks:
-* lazy insert of GlobalBaseReg definition at front of first MBB
-  A prime candidate for sabre's future "slightly above ISel" passes.
-* cast code is huge, unwieldy.  Should probably be broken up into
-  smaller pieces.
-* visitLoadInst is getting awfully cluttered as well.
 
 Currently failing tests:
 * SingleSource
@@ -46,8 +42,7 @@ Currently failing tests:
 * MultiSource
   |- Applications
   |  `- burg: miscompilation
-  |  `- siod: llc bus error
   |  `- hbd: miscompilation
   |  `- d (make_dparser): miscompilation
   `- Benchmarks
-     `- MallocBench/make: miscompilation
+     `- MallocBench/gs: miscompilation

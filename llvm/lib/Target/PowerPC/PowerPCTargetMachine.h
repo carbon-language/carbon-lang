@@ -14,11 +14,12 @@
 #ifndef POWERPC_TARGETMACHINE_H
 #define POWERPC_TARGETMACHINE_H
 
+#include "PowerPCFrameInfo.h"
+#include "PowerPCInstrInfo.h"
+#include "PowerPCJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
-#include "PowerPCInstrInfo.h"
-#include "PowerPCJITInfo.h"
 #include <set>
 
 namespace llvm {
@@ -28,12 +29,12 @@ class IntrinsicLowering;
 
 class PowerPCTargetMachine : public TargetMachine {
   PowerPCInstrInfo InstrInfo;
-  TargetFrameInfo FrameInfo;
+  PowerPCFrameInfo FrameInfo;
   PowerPCJITInfo JITInfo;
 
 protected:
   PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
-                       const TargetData &TD, const TargetFrameInfo &TFI,
+                       const TargetData &TD, const PowerPCFrameInfo &TFI,
                        const PowerPCJITInfo &TJI, bool is64b);
 public:
   virtual const PowerPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
