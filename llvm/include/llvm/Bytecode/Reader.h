@@ -79,7 +79,7 @@ bool GetBytecodeSymbols(const sys::Path& fileName,
 /// already in memory.
 /// @returns the ModuleProvider on success, 0 if the bytecode can't be parsed
 /// @brief Get a bytecode file's externally visibile defined global symbols.
-ModuleProvider* llvm::GetBytecodeSymbols(
+ModuleProvider* GetBytecodeSymbols(
   const unsigned char*Buffer,        ///< The buffer to be parsed
   unsigned Length,                   ///< The length of \p Buffer
   const std::string& ModuleID,       ///< An identifier for the module
