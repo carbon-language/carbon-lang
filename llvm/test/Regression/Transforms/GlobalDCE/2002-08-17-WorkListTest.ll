@@ -12,3 +12,6 @@
 %s1 = internal global [1 x sbyte*] [sbyte* cast ([4 x sbyte]* %t0 to sbyte*)]
 %s2 = internal global [1 x sbyte*] [sbyte* getelementptr ([4 x sbyte]* %t1, uint 0, uint 0 )]
 
+%b = internal global int* %a
+%a = internal global int 7
+
