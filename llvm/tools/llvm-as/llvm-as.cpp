@@ -12,6 +12,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Writer.h"
+#include "llvm/Analysis/Verifier.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>
@@ -43,6 +44,12 @@ int main(int argc, char **argv) {
       cerr << argv[0] << ": assembly didn't read correctly.\n";
       return 1;
     }
+
+    if (verifyModule(*M.get())) {
+      cerr << argv[0] << ": assembly parsed, but does not verify as correct!\n";
+      return 1;
+    }
+
   
     if (DumpAsm) cerr << "Here's the assembly:\n" << M.get();
 
