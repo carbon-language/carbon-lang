@@ -17,8 +17,9 @@
 #ifndef SUPPORT_THREADSUPPORT_H
 #define SUPPORT_THREADSUPPORT_H
 
-// FIXME: We need autoconf support to detect pthreads!
-#if 0
+// FIXME: Eventually don't #include config.h here
+#include "Config/config.h"
+#if defined(HAVE_PTHREAD_MUTEX_LOCK) && HAVE_PTHREAD_MUTEX_LOCK
 #include "Support/ThreadSupport-PThreads.h"
 #else
 #include "Support/ThreadSupport-NoSupport.h"
@@ -30,8 +31,8 @@ namespace llvm {
   ///
   class MutexLocker {
     Mutex &M;
-    MutexLocker(const LockHolder &);    // DO NOT IMPLEMENT
-    void operator=(const MutexLocker&); // DO NOT IMPLEMENT
+    MutexLocker(const MutexLocker &);    // DO NOT IMPLEMENT
+    void operator=(const MutexLocker &); // DO NOT IMPLEMENT
   public:
     MutexLocker(Mutex &m) : M(m) { M.acquire(); }
     ~MutexLocker() { M.release(); }
