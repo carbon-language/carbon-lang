@@ -254,6 +254,10 @@ struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
 //
 struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 
+  static ConstantBool *LessThan(const ConstantBool *V1, const ConstantBool *V2){
+    return ConstantBool::get(V1->getValue() < V2->getValue());
+  }
+
   static Constant *And(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() & V2->getValue());
   }
