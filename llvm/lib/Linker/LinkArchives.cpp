@@ -15,75 +15,23 @@
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/PassManager.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Archive.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Config/config.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/FileUtilities.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/System/Signals.h"
-#include "llvm/Support/SystemUtils.h"
-#include <algorithm>
-#include <fstream>
-#include <memory>
+//#include "llvm/Support/SystemUtils.h"
+//#include <algorithm>
+//#include <memory>
 #include <set>
+#include <iostream>
+
 using namespace llvm;
-
-/// FindLib - Try to convert Filename into the name of a file that we can open,
-/// if it does not already name a file we can open, by first trying to open
-/// Filename, then libFilename.[suffix] for each of a set of several common
-/// library suffixes, in each of the directories in Paths and the directory
-/// named by the value of the environment variable LLVM_LIB_SEARCH_PATH. Returns
-/// an empty string if no matching file can be found.
-///
-std::string llvm::FindLib(const std::string &Filename,
-                          const std::vector<std::string> &Paths,
-                          bool SharedObjectOnly) {
-  // Determine if the pathname can be found as it stands.
-  if (FileOpenable(Filename))
-    return Filename;
-
-  // If that doesn't work, convert the name into a library name.
-  std::string LibName = "lib" + Filename;
-
-  // Iterate over the directories in Paths to see if we can find the library
-  // there.
-  for (unsigned Index = 0; Index != Paths.size(); ++Index) {
-    std::string Directory = Paths[Index] + "/";
-
-    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".bca"))
-      return Directory + LibName + ".bca";
-
-    if (FileOpenable(Directory + LibName + LTDL_SHLIB_EXT))
-      return Directory + LibName + LTDL_SHLIB_EXT;
-
-    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".a"))
-      return Directory + LibName + ".a";
-  }
-
-  // One last hope: Check LLVM_LIB_SEARCH_PATH.
-  char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH");
-  if (SearchPath == NULL)
-    return std::string();
-
-  LibName = std::string(SearchPath) + "/" + LibName;
-  if (FileOpenable(LibName))
-    return LibName;
-
-  return std::string();
-}
 
 /// GetAllDefinedSymbols - Modifies its parameter DefinedSymbols to contain the
 /// name of each externally-visible symbol defined in M.
 ///
-void llvm::GetAllDefinedSymbols(Module *M,
-                                std::set<std::string> &DefinedSymbols) {
+static void 
+GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
       DefinedSymbols.insert(I->getName());
@@ -104,9 +52,8 @@ void llvm::GetAllDefinedSymbols(Module *M,
 ///  UndefinedSymbols - A set of C++ strings containing the name of all
 ///                     undefined symbols.
 ///
-void
-llvm::GetAllUndefinedSymbols(Module *M,
-                             std::set<std::string> &UndefinedSymbols) {
+static void
+GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   std::set<std::string> DefinedSymbols;
   UndefinedSymbols.clear();
   
@@ -134,58 +81,46 @@ llvm::GetAllUndefinedSymbols(Module *M,
       ++I; // Keep this symbol in the undefined symbols list
 }
 
-
-/// LoadObject - Read in and parse the bytecode file named by FN and return the
-/// module it contains (wrapped in an auto_ptr), or 0 and set ErrorMessage if an
-/// error occurs.
-///
-static std::auto_ptr<Module> LoadObject(const std::string &FN,
-                                       std::string &ErrorMessage) {
-  std::string ParserErrorMessage;
-  Module *Result = ParseBytecodeFile(FN, &ParserErrorMessage);
-  if (Result) return std::auto_ptr<Module>(Result);
-  ErrorMessage = "Bytecode file '" + FN + "' could not be loaded";
-  if (ParserErrorMessage.size()) ErrorMessage += ": " + ParserErrorMessage;
-  return std::auto_ptr<Module>();
-}
-
 /// LinkInArchive - opens an archive library and link in all objects which
 /// provide symbols that are currently undefined.
 ///
 /// Inputs:
-///  M        - The module in which to link the archives.
 ///  Filename - The pathname of the archive.
-///  Verbose  - Flags whether verbose messages should be printed.
-///
-/// Outputs:
-///  ErrorMessage - A C++ string detailing what error occurred, if any.
 ///
 /// Return Value:
 ///  TRUE  - An error occurred.
 ///  FALSE - No errors.
-///
-bool llvm::LinkInArchive(Module *M,
-                         const std::string &Filename,
-                         std::string* ErrorMessage,
-                         bool Verbose)
-{
+bool 
+Linker::LinkInArchive(const sys::Path &Filename) {
+
+  // Make sure this is an archive file we're dealing with
+  if (!Filename.isArchive())
+    return error("File '" + Filename.toString() + "' is not an archive.");
+
+  // Open the archive file
+  verbose("Linking archive file '" + Filename.toString() + "'");
+
   // Find all of the symbols currently undefined in the bytecode program.
   // If all the symbols are defined, the program is complete, and there is
   // no reason to link in any archive files.
   std::set<std::string> UndefinedSymbols;
-  GetAllUndefinedSymbols(M, UndefinedSymbols);
+  GetAllUndefinedSymbols(Composite, UndefinedSymbols);
   
   if (UndefinedSymbols.empty()) {
-    if (Verbose) std::cerr << "  No symbols undefined, don't link library!\n";
+    verbose("No symbols undefined, skipping library '" + 
+            Filename.toString() + "'");
     return false;  // No need to link anything in!
   }
 
-  // Open the archive file
-  if (Verbose) std::cerr << "  Loading archive file '" << Filename << "'\n";
+  std::string ErrMsg;
   std::auto_ptr<Archive> AutoArch (
-    Archive::OpenAndLoadSymbols(sys::Path(Filename)));
+    Archive::OpenAndLoadSymbols(Filename,&ErrMsg));
 
   Archive* arch = AutoArch.get();
+
+  if (!arch)
+    return error("Cannot read archive '" + Filename.toString() + 
+                 "': " + ErrMsg);
 
   // Save a set of symbols that are not defined by the archive. Since we're
   // entering a loop, there's no point searching for these multiple times. This
@@ -219,13 +154,14 @@ bool llvm::LinkInArchive(Module *M,
       Module* aModule = AutoModule.get();
 
       // Link it in
-      if (LinkModules(M, aModule, ErrorMessage))
-        return true;   // Couldn't link in the module
+      if (this->LinkInModule(aModule))
+        return error("Cannot link in module '" + 
+                     aModule->getModuleIdentifier() + "': " + Error);
     }
 
     // Get the undefined symbols from the aggregate module. This recomputes the
     // symbols we still need after the new modules have been linked in.
-    GetAllUndefinedSymbols(M, UndefinedSymbols);
+    GetAllUndefinedSymbols(Composite, UndefinedSymbols);
 
     // At this point we have two sets of undefined symbols: UndefinedSymbols
     // which holds the undefined symbols from all the modules, and 
@@ -242,192 +178,4 @@ bool llvm::LinkInArchive(Module *M,
   }
   
   return false;
-}
-
-/// LinkInFile - opens a bytecode file and links in all objects which
-/// provide symbols that are currently undefined.
-///
-/// Inputs:
-///  HeadModule - The module in which to link the bytecode file.
-///  Filename   - The pathname of the bytecode file.
-///  Verbose    - Flags whether verbose messages should be printed.
-///
-/// Outputs:
-///  ErrorMessage - A C++ string detailing what error occurred, if any.
-///
-/// Return Value:
-///  TRUE  - An error occurred.
-///  FALSE - No errors.
-///
-static bool LinkInFile(Module *HeadModule,
-                       const std::string &Filename,
-                       std::string &ErrorMessage,
-                       bool Verbose)
-{
-  std::auto_ptr<Module> M(LoadObject(Filename, ErrorMessage));
-  if (M.get() == 0) return true;
-  bool Result = LinkModules(HeadModule, M.get(), &ErrorMessage);
-  if (Verbose) std::cerr << "Linked in bytecode file '" << Filename << "'\n";
-  return Result;
-}
-
-/// LinkFiles - takes a module and a list of files and links them all together.
-/// It locates the file either in the current directory, as its absolute
-/// or relative pathname, or as a file somewhere in LLVM_LIB_SEARCH_PATH.
-///
-/// Inputs:
-///  progname   - The name of the program (infamous argv[0]).
-///  HeadModule - The module under which all files will be linked.
-///  Files      - A vector of C++ strings indicating the LLVM bytecode filenames
-///               to be linked.  The names can refer to a mixture of pure LLVM
-///               bytecode files and archive (ar) formatted files.
-///  Verbose    - Flags whether verbose output should be printed while linking.
-///
-/// Outputs:
-///  HeadModule - The module will have the specified LLVM bytecode files linked
-///               in.
-///
-/// Return value:
-///  FALSE - No errors.
-///  TRUE  - Some error occurred.
-///
-bool llvm::LinkFiles(const char *progname, Module *HeadModule,
-                     const std::vector<std::string> &Files, bool Verbose) {
-  // String in which to receive error messages.
-  std::string ErrorMessage;
-
-  // Full pathname of the file
-  std::string Pathname;
-
-  // Get the library search path from the environment
-  char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH");
-
-  for (unsigned i = 0; i < Files.size(); ++i) {
-    // Determine where this file lives.
-    if (FileOpenable(Files[i])) {
-      Pathname = Files[i];
-    } else {
-      if (SearchPath == NULL) {
-        std::cerr << progname << ": Cannot find linker input file '"
-                  << Files[i] << "'\n";
-        std::cerr << progname
-                  << ": Warning: Your LLVM_LIB_SEARCH_PATH is unset.\n";
-        return true;
-      }
-
-      Pathname = std::string(SearchPath)+"/"+Files[i];
-      if (!FileOpenable(Pathname)) {
-        std::cerr << progname << ": Cannot find linker input file '"
-                  << Files[i] << "'\n";
-        return true;
-      }
-    }
-
-    // A user may specify an ar archive without -l, perhaps because it
-    // is not installed as a library. Detect that and link the library.
-    if (IsArchive(Pathname)) {
-      if (Verbose)
-        std::cerr << "Trying to link archive '" << Pathname << "'\n";
-
-      if (LinkInArchive(HeadModule, Pathname, &ErrorMessage, Verbose)) {
-        std::cerr << progname << ": Error linking in archive '" << Pathname 
-                  << "': " << ErrorMessage << "\n";
-        return true;
-      }
-    } else if (IsBytecode(Pathname)) {
-      if (Verbose)
-        std::cerr << "Trying to link bytecode file '" << Pathname << "'\n";
-
-      if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
-        std::cerr << progname << ": Error linking in bytecode file '"
-                  << Pathname << "': " << ErrorMessage << "\n";
-        return true;
-      }
-    } else {
-      std::cerr << progname << ": Warning: invalid file `" << Pathname 
-                << "' ignored.\n";
-    }
-  }
-
-  return false;
-}
-
-/// LinkOneLibrary - links one library of any kind into the HeadModule
-static inline void LinkOneLibrary(const char*progname, Module* HeadModule, 
-                                  const std::string& Lib, 
-                                  const std::vector<std::string>& LibPaths,
-                                  bool Verbose, bool Native) {
-
-  // String in which to receive error messages.
-  std::string ErrorMessage;
-
-  // Determine where this library lives.
-  std::string Pathname = FindLib(Lib, LibPaths);
-  if (Pathname.empty()) {
-    // If the pathname does not exist, then simply return if we're doing a 
-    // native link and give a warning if we're doing a bytecode link.
-    if (!Native) {
-      std::cerr << progname << ": WARNING: Cannot find library -l"
-                << Lib << "\n";
-      return;
-    }
-  }
-
-  // A user may specify an ar archive without -l, perhaps because it
-  // is not installed as a library. Detect that and link the library.
-  if (IsArchive(Pathname)) {
-    if (Verbose)
-      std::cerr << "Trying to link archive '" << Pathname << "' (-l"
-                << Lib << ")\n";
-
-    if (LinkInArchive(HeadModule, Pathname, &ErrorMessage, Verbose)) {
-      std::cerr << progname << ": " << ErrorMessage
-                << ": Error linking in archive '" << Pathname << "' (-l"
-                << Lib << ")\n";
-      exit(1);
-    }
-  } else {
-      std::cerr << progname << ": WARNING: Supposed library -l"
-                << Lib << " isn't a library.\n";
-  }
-}
-
-/// LinkLibraries - takes the specified library files and links them into the
-/// main bytecode object file.
-///
-/// Inputs:
-///  progname   - The name of the program (infamous argv[0]).
-///  HeadModule - The module into which all necessary libraries will be linked.
-///  Libraries  - The list of libraries to link into the module.
-///  LibPaths   - The list of library paths in which to find libraries.
-///  Verbose    - Flags whether verbose messages should be printed.
-///  Native     - Flags whether native code is being generated.
-///
-/// Outputs:
-///  HeadModule - The module will have all necessary libraries linked in.
-///
-/// Return value:
-///  FALSE - No error.
-///  TRUE  - Error.
-///
-void llvm::LinkLibraries(const char *progname, Module *HeadModule,
-                         const std::vector<std::string> &Libraries,
-                         const std::vector<std::string> &LibPaths,
-                         bool Verbose, bool Native) {
-
-  // Process the set of libraries we've been provided
-  for (unsigned i = 0; i < Libraries.size(); ++i) {
-    LinkOneLibrary(progname,HeadModule,Libraries[i],LibPaths,Verbose,Native);
-  }
-
-  // At this point we have processed all the libraries provided to us. Since
-  // we have an aggregated module at this point, the dependent libraries in
-  // that module should also be aggregated with duplicates eliminated. This is
-  // now the time to process the dependent libraries to resolve any remaining
-  // symbols.
-  const Module::LibraryListType& DepLibs = HeadModule->getLibraries();
-  for (Module::LibraryListType::const_iterator I = DepLibs.begin(), 
-      E = DepLibs.end(); I != E; ++I) {
-    LinkOneLibrary(progname,HeadModule,*I,LibPaths,Verbose,Native);
-  }
 }
