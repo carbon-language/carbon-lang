@@ -35,8 +35,8 @@
 namespace llvm {
 
 class TerminatorInst;
-template <class _Term, class _BB> class SuccIterator;  // Successor Iterator
-template <class _Ptr, class _USE_iterator> class PredIterator;
+template <class Term, class BB> class SuccIterator;  // Successor Iterator
+template <class Ptr, class USE_iterator> class PredIterator;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock, Function> {
