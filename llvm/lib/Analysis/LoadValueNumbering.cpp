@@ -90,6 +90,10 @@ void LoadVN::getEqualNumberNodes(Value *V,
     getAnalysis<AliasAnalysis>().getMustAliases(V, RetVals);
 
   if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
+    // Volatile loads cannot be replaced with the value of other loads.
+    if (LI->isVolatile())
+      return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
+
     // If we have a load instruction, find all of the load and store
     // instructions that use the same source operand.  We implement this
     // recursively, because there could be a load of a load of a load that are
@@ -119,10 +123,10 @@ void LoadVN::getEqualNumberNodes(Value *V,
            UI != UE; ++UI)
         if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
           if (Cand->getParent()->getParent() == F &&   // In the same function?
-              Cand != LI)                              // Not LI itself?
+              Cand != LI && !Cand->isVolatile())       // Not LI itself?
             CandidateLoads.push_back(Cand);     // Got one...
         } else if (StoreInst *Cand = dyn_cast<StoreInst>(*UI)) {
-          if (Cand->getParent()->getParent() == F &&
+          if (Cand->getParent()->getParent() == F && !Cand->isVolatile() &&
               Cand->getOperand(1) == Source)  // It's a store THROUGH the ptr...
             CandidateStores.push_back(Cand);
         }
