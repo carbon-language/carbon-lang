@@ -198,6 +198,7 @@ MachineOperand::Initialize(MachineOperandType operandType,
 {
   opType = operandType;
   value = _val;
+  regNum = -1;
 }
 
 inline void
@@ -207,6 +208,7 @@ MachineOperand::InitializeConst(MachineOperandType operandType,
   opType = operandType;
   value = NULL;
   immedVal = intValue;
+  regNum = -1;
 }
 
 inline void
