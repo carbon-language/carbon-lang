@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/Statistic.h"
@@ -102,6 +103,11 @@ namespace {
     /// machine instruction was sufficiently described to print it, otherwise it
     /// returns false.
     bool printInstruction(const MachineInstr *MI);
+
+    // This method is used by the tablegen'erated instruction printer.
+    void printOperand(const MachineOperand &MO, MVT::ValueType VT) {
+      printOp(MO);
+    }
 
     void printImplUsesBefore(const TargetInstrDescriptor &Desc);
     bool printImplDefsBefore(const TargetInstrDescriptor &Desc);
