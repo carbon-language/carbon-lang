@@ -183,6 +183,21 @@ public:
 
   virtual void print(std::ostream &OS) const;
 
+  /// viewCFG - This function is meant for use from the debugger.  You can just
+  /// say 'call F->viewCFG()' and a ghostview window should pop up from the
+  /// program, displaying the CFG of the current function with the code for each
+  /// basic block inside.  This depends on there being a 'dot' and 'gv' program
+  /// in your path.
+  ///
+  void viewCFG() const;
+  
+  /// viewCFGOnly - This function is meant for use from the debugger.  It works
+  /// just like viewCFG, but it does not include the contents of basic blocks
+  /// into the nodes, just the label.  If you are only interested in the CFG t
+  /// his can make the graph smaller.
+  ///
+  void viewCFGOnly() const;
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Function *) { return true; }
   static inline bool classof(const Value *V) {
