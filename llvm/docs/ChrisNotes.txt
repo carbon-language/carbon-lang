@@ -1,13 +1,6 @@
 * Rewrite the llvm parser/lexer in http://www.antlr.org when time permits.
   They actually do C++.  Imagine that.
-* Fix DCE to elminate br <c>, %L1, %L1 so that it can optimize the main of
-  fib.ll better.  Currently I have to do this to get best results:
-     as < fib.ll | opt -inline -sccp -dce -sccp -dce |dis
-* fix the constprop   br <x> <dst1> <dst1> case.  Must handle PHI nodes correctly
-* Think about whether edge split SSA form would be useful to do.
-* The dropAllReferences code can be a noop when NDEBUG!!!
 * pred/succ iterators on basic blocks don't handle switch statements correctly
-* Provide a pass that eliminates critical edges from the CFG
 * Need a way to attach bytecode block info at various levels of asm code.
 * Recognize and save comments in assembly and bytecode format
 * Encode line number table in bytecode (like #line), optional table
