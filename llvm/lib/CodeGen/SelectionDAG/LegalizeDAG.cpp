@@ -247,7 +247,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ImplicitDef:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getImplicitDef(cast<RegSDNode>(Node)->getReg());
+      Result = DAG.getImplicitDef(Tmp1, cast<RegSDNode>(Node)->getReg());
     break;
   case ISD::Constant:
     // We know we don't need to expand constants here, constants only have one
@@ -525,18 +525,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(ISD::STORE, MVT::Other, Result, Hi, Tmp2);
     }
     break;
-  case ISD::SELECT: {
+  case ISD::SELECT:
     // FIXME: BOOLS MAY REQUIRE PROMOTION!
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Cond
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
-    SDOperand Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
-
-    if (Tmp1 != Node->getOperand(0) ||
-        Tmp2 != Node->getOperand(1) ||
+    Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
+    
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
         Tmp3 != Node->getOperand(2))
       Result = DAG.getNode(ISD::SELECT, Node->getValueType(0), Tmp1, Tmp2,Tmp3);
     break;
-  }
   case ISD::SETCC:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:

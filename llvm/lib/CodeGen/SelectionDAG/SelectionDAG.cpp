@@ -833,6 +833,68 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   }
 }
 
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
+                                SDOperand N2, MVT::ValueType EVT) {
+  switch (Opcode) {
+  default:  assert(0 && "Bad opcode for this accessor!");
+  case ISD::EXTLOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD:
+    // If they are asking for an extending loat from/to the same thing, return a
+    // normal load.
+    if (VT == EVT)
+      return getNode(ISD::LOAD, VT, N1, N2);
+    assert(EVT < VT && "Should only be an extending load, not truncating!");
+    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VT)) && 
+           "Cannot sign/zero extend a FP load!");
+    assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
+           "Cannot convert from FP to Int or Int -> FP!");
+    break;
+  }
+
+  EVTStruct NN;
+  NN.Opcode = Opcode;
+  NN.VT = VT;
+  NN.EVT = EVT;
+  NN.Ops.push_back(N1);
+  NN.Ops.push_back(N2);
+
+  SDNode *&N = MVTSDNodes[NN];
+  if (N) return SDOperand(N, 0);
+  N = new MVTSDNode(Opcode, VT, N1, N2, EVT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
+                                SDOperand N2, SDOperand N3, MVT::ValueType EVT) {
+  switch (Opcode) {
+  default:  assert(0 && "Bad opcode for this accessor!");
+  case ISD::TRUNCSTORE:
+    if (N1.getValueType() == EVT)       // Normal store?
+      return getNode(ISD::STORE, VT, N1, N2, N3);
+    assert(N1.getValueType() > EVT && "Not a truncation?");
+    assert(MVT::isInteger(N1.getValueType()) == MVT::isInteger(EVT) &&
+           "Can't do FP-INT conversion!");
+    break;
+  }
+
+  EVTStruct NN;
+  NN.Opcode = Opcode;
+  NN.VT = VT;
+  NN.EVT = EVT;
+  NN.Ops.push_back(N1);
+  NN.Ops.push_back(N2);
+  NN.Ops.push_back(N3);
+
+  SDNode *&N = MVTSDNodes[NN];
+  if (N) return SDOperand(N, 0);
+  N = new MVTSDNode(Opcode, VT, N1, N2, N3, EVT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this
 /// operation.
@@ -923,6 +985,11 @@ const char *SDNode::getOperationName() const {
     // Other operators
   case ISD::LOAD:    return "load";
   case ISD::STORE:   return "store";
+  case ISD::EXTLOAD:    return "extload";
+  case ISD::SEXTLOAD:   return "sextload";
+  case ISD::ZEXTLOAD:   return "zextload";
+  case ISD::TRUNCSTORE: return "truncstore";
+
   case ISD::DYNAMIC_STACKALLOC: return "dynamic_stackalloc";
   case ISD::EXTRACT_ELEMENT: return "extract_element";
   case ISD::BUILD_PAIR: return "build_pair";
