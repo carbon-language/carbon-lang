@@ -760,9 +760,17 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
     return Result;
     
-  case ISD::ConstantFP:
-    assert(0 && "ISD::ConstantFP Unimplemented");
-    abort();
+  case ISD::ConstantFP: {
+    Tmp1 = MakeReg(MVT::i32);
+    ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
+    MachineConstantPool *CP = BB->getParent()->getConstantPool();
+    ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, CN->getValue());
+    unsigned CPI = CP->getConstantPoolIndex(CFP);
+    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+      .addConstantPoolIndex(CPI);
+    BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
+    return Result;
+  }
     
   case ISD::MUL:
   case ISD::ADD:
