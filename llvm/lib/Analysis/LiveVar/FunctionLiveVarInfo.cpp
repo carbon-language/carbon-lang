@@ -14,10 +14,94 @@
 #include "llvm/BasicBlock.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
-using std::cout;
-using std::endl;
+using std::cerr;
 
 AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
+
+
+//-----------------------------------------------------------------------------
+// Performs live var analysis for a method
+//-----------------------------------------------------------------------------
+
+bool MethodLiveVarInfo::runOnMethod(Method *M) {
+  if (DEBUG_LV) cerr << "Analysing live variables ...\n";
+
+  // create and initialize all the BBLiveVars of the CFG
+  constructBBs(M);
+
+  while (doSingleBackwardPass(M))
+    ; // Iterate until we are done.
+  
+  if (DEBUG_LV) cerr << "Live Variable Analysis complete!\n";
+  return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// constructs BBLiveVars and init Def and In sets
+//-----------------------------------------------------------------------------
+
+void MethodLiveVarInfo::constructBBs(const Method *M) {
+  unsigned int POId = 0;                // Reverse Depth-first Order ID
+  
+  for(po_iterator<const Method*> BBI = po_begin(M), BBE = po_end(M);
+      BBI != BBE; ++BBI, ++POId) { 
+    const BasicBlock *BB = *BBI;        // get the current BB 
+
+    if (DEBUG_LV) { cerr << " For BB "; printValue(BB); cerr << ":\n"; }
+
+    // create a new BBLiveVar
+    BBLiveVar *LVBB = new BBLiveVar(BB, POId);  
+    BB2BBLVMap[BB] = LVBB;              // insert the pair to Map
+    
+    LVBB->calcDefUseSets();             // calculates the def and in set
+
+    if (DEBUG_LV) 
+      LVBB->printAllSets();
+  }
+
+  // Since the PO iterator does not discover unreachable blocks,
+  // go over the random iterator and init those blocks as well.
+  // However, LV info is not correct for those blocks (they are not
+  // analyzed)
+  //
+  for (Method::const_iterator BBRI = M->begin(), BBRE = M->end();
+       BBRI != BBRE; ++BBRI, ++POId)
+    if (!BB2BBLVMap[*BBRI])   // Not yet processed?
+      BB2BBLVMap[*BBRI] = new BBLiveVar(*BBRI, POId);
+}
+
+
+//-----------------------------------------------------------------------------
+// do one backward pass over the CFG (for iterative analysis)
+//-----------------------------------------------------------------------------
+bool MethodLiveVarInfo::doSingleBackwardPass(const Method *M) {
+  bool ResultFlow, NeedAnotherIteration = false;
+
+  if (DEBUG_LV) 
+    cerr << "\n After Backward Pass ...\n";
+
+  po_iterator<const Method*> BBI = po_begin(M);
+
+  for( ; BBI != po_end(M) ; ++BBI) { 
+    BBLiveVar *LVBB = BB2BBLVMap[*BBI];
+    assert(LVBB);
+
+    if (DEBUG_LV) cerr << " For BB " << (*BBI)->getName() << ":\n";
+
+    if(LVBB->isOutSetChanged()) 
+      LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
+
+    if (LVBB->isInSetChanged())        // to calc Outsets of preds
+      NeedAnotherIteration |= LVBB->applyFlowFunc(BB2BBLVMap); 
+
+    if(DEBUG_LV) LVBB->printInOutSets();
+  }
+
+  // true if we need to reiterate over the CFG
+  return NeedAnotherIteration;         
+}
+
 
 void MethodLiveVarInfo::releaseMemory() {
   // First delete all BBLiveVar objects created in constructBBs(). A new object
@@ -50,117 +134,6 @@ void MethodLiveVarInfo::releaseMemory() {
 }
 
 
-//-----------------------------------------------------------------------------
-// constructs BBLiveVars and init Def and In sets
-//-----------------------------------------------------------------------------
-
-void MethodLiveVarInfo::constructBBs()   
-{
-  unsigned int POId = 0;                // Reverse Depth-first Order ID
-
-  po_iterator<const Method*> BBI = po_begin(Meth);
-
-  for(  ; BBI != po_end(Meth) ; ++BBI, ++POId) 
-  { 
-
-    const BasicBlock *BB = *BBI;        // get the current BB 
-
-    if(DEBUG_LV) { cout << " For BB "; printValue(BB); cout << ":" << endl; }
-
-                                        // create a new BBLiveVar
-    BBLiveVar * LVBB = new BBLiveVar( BB, POId );  
-    
-    BB2BBLVMap[ BB ] = LVBB;            // insert the pair to Map
-    
-    LVBB->calcDefUseSets();             // calculates the def and in set
-
-    if(DEBUG_LV) 
-      LVBB->printAllSets();
-  }
-
-  // Since the PO iterator does not discover unreachable blocks,
-  // go over the random iterator and init those blocks as well.
-  // However, LV info is not correct for those blocks (they are not
-  // analyzed)
-
-  Method::const_iterator BBRI = Meth->begin();  // random iterator for BBs   
-
-  for( ; BBRI != Meth->end(); ++BBRI, ++POId) {     
-
-    if(   ! BB2BBLVMap[ *BBRI ] )
-      BB2BBLVMap[ *BBRI ] = new BBLiveVar( *BBRI, POId );
-
-  }
-
-
-}
-
-
-//-----------------------------------------------------------------------------
-// do one backward pass over the CFG (for iterative analysis)
-//-----------------------------------------------------------------------------
-bool MethodLiveVarInfo::doSingleBackwardPass()  
-{
-  bool ResultFlow, NeedAnotherIteration = false;
-
-  if(DEBUG_LV) 
-    cout << endl <<  " After Backward Pass ..." << endl;
-
-  po_iterator<const Method*> BBI = po_begin(Meth);
-
-  for( ; BBI != po_end(Meth) ; ++BBI) 
-  { 
-
-    BBLiveVar* LVBB = BB2BBLVMap[*BBI];
-    assert( LVBB );
-
-    if(DEBUG_LV) cout << " For BB " << (*BBI)->getName() << ":"  << endl;
-    // cout << " (POId=" << LVBB->getPOId() << ")" << endl ;
-
-    ResultFlow = false;
-
-    if( LVBB->isOutSetChanged() ) 
-      LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
-
-    if( LVBB->isInSetChanged() )        // to calc Outsets of preds
-      ResultFlow = LVBB->applyFlowFunc(BB2BBLVMap); 
-
-    if(DEBUG_LV) LVBB->printInOutSets();
-
-
-    if( ResultFlow ) NeedAnotherIteration = true;
-
-  }
-
-  // true if we need to reiterate over the CFG
-  return NeedAnotherIteration;         
-}
-
-
-
-
-//-----------------------------------------------------------------------------
-// performs live var anal for a method
-//-----------------------------------------------------------------------------
-
-bool MethodLiveVarInfo::runOnMethod(Method *M) {
-  Meth = M;
-
-  if( DEBUG_LV) cout << "Analysing live variables ...\n";
-
-  // create and initialize all the BBLiveVars of the CFG
-  constructBBs();        
-
-  bool NeedAnotherIteration = false;
-  do {                                // do one  pass over  CFG
-    NeedAnotherIteration = doSingleBackwardPass( );   
-  } while (NeedAnotherIteration );    // repeat until we need more iterations
-
-  
-  if( DEBUG_LV) cout << "Live Variable Analysis complete!\n";
-  return false;
-}
-
 
 
 //-----------------------------------------------------------------------------
@@ -178,23 +151,17 @@ bool MethodLiveVarInfo::runOnMethod(Method *M) {
 //-----------------------------------------------------------------------------
 // Gives live variable information before a machine instruction
 //-----------------------------------------------------------------------------
-const LiveVarSet * 
-MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *const MInst,
-					    const BasicBlock *const CurBB) 
-{
+const LiveVarSet *
+MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
+					    const BasicBlock *CurBB) {
   const LiveVarSet *LVSet = MInst2LVSetBI[MInst];
 
-  if( LVSet  ) return LVSet;              // if found, just return the set
-  else { 
-    calcLiveVarSetsForBB( CurBB );        // else, calc for all instrs in BB
-
-    /*if(  ! MInst2LVSetBI[ MInst ] ) {
-      cerr << "\nFor BB "; printValue( CurBB);
-      cerr << "\nRequested LVSet for inst: " << *MInst;
-      }*/
-
-    assert( MInst2LVSetBI[ MInst ] );
-    return  MInst2LVSetBI[ MInst ];
+  if (LVSet) {
+    return LVSet;              // if found, just return the set
+  } else { 
+    calcLiveVarSetsForBB(CurBB);        // else, calc for all instrs in BB
+    assert(MInst2LVSetBI[MInst]);
+    return MInst2LVSetBI[MInst];
   }
 }
 
@@ -203,16 +170,16 @@ MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *const MInst,
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
 const LiveVarSet * 
-MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *const MInst,
-					    const BasicBlock *const CurBB) 
-{
+MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MInst,
+                                           const BasicBlock *CurBB) {
   const LiveVarSet *LVSet = MInst2LVSetAI[MInst];
 
-  if( LVSet  ) return LVSet;              // if found, just return the set
-  else { 
-    calcLiveVarSetsForBB( CurBB );        // else, calc for all instrs in BB
-    assert( MInst2LVSetAI[ MInst ] );
-    return  MInst2LVSetAI[ MInst ];
+  if(LVSet) {
+    return LVSet;                       // if found, just return the set
+  } else { 
+    calcLiveVarSetsForBB(CurBB);        // else, calc for all instrs in BB
+    assert(MInst2LVSetAI[MInst]);
+    return MInst2LVSetAI[MInst];
   }
 }
 

@@ -72,9 +72,6 @@ static const int DEBUG_LV = 0;
 
 class MethodLiveVarInfo : public MethodPass {
 
-  // Live var anal is done on this method - set by constructor
-  const Method *Meth;   
-
   // A map betwn the BasicBlock and BBLiveVar
   BBToBBLiveVarMapType BB2BBLVMap;  
 
@@ -88,10 +85,10 @@ class MethodLiveVarInfo : public MethodPass {
   // --------- private methods -----------------------------------------
 
   // constructs BBLiveVars and init Def and In sets
-  void constructBBs();      
+  void constructBBs(const Method *M);      
     
   // do one backward pass over the CFG
-  bool  doSingleBackwardPass(); 
+  bool  doSingleBackwardPass(const Method *M); 
 
   // calculates live var sets for instructions in a BB
   void calcLiveVarSetsForBB(const BasicBlock *BB);
@@ -100,7 +97,7 @@ class MethodLiveVarInfo : public MethodPass {
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  MethodLiveVarInfo(AnalysisID id = ID) : Meth(0) { assert(id == ID); }
+  MethodLiveVarInfo(AnalysisID id = ID) { assert(id == ID); }
   ~MethodLiveVarInfo() { releaseMemory(); }
 
   // --------- Implement the MethodPass interface ----------------------
