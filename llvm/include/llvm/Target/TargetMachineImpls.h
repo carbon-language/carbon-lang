@@ -17,21 +17,25 @@
 
 namespace llvm {
 
-class TargetMachine;
-class Module;
-
-// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
-// that implements the Sparc backend.
-//
-TargetMachine *allocateSparcTargetMachine(const Module &M);
-
-// allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
-// that implements the X86 backend.  The X86 target machine can run in
-// "emulation" mode, where it is capable of emulating machines of larger pointer
-// size and different endianness if desired.
-//
-TargetMachine *allocateX86TargetMachine(const Module &M);
-
+  class TargetMachine;
+  class Module;
+  class IntrinsicLowering;
+  
+  // allocateSparcTargetMachine - Allocate and return a subclass of
+  // TargetMachine that implements the Sparc backend.  This takes ownership of
+  // the IntrinsicLowering pointer, deleting it when the target machine is
+  // destroyed.
+  //
+  TargetMachine *allocateSparcTargetMachine(const Module &M,
+                                            IntrinsicLowering *IL = 0);
+  
+  // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
+  // that implements the X86 backend.  This takes ownership of the
+  // IntrinsicLowering pointer, deleting it when the target machine is
+  // destroyed.
+  //
+  TargetMachine *allocateX86TargetMachine(const Module &M,
+                                          IntrinsicLowering *IL = 0);
 } // End llvm namespace
 
 #endif
