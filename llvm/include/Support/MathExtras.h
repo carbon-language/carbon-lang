@@ -43,6 +43,10 @@ inline bool isPowerOf2(int64_t C, unsigned &getPow) {
 int IsNAN (float f);
 int IsNAN (double d);
 
+// Platform-independent wrappers for the C99 isinf() function.
+int IsInf (float f);
+int IsInf (double d);
+
 } // End llvm namespace
 
 #endif
