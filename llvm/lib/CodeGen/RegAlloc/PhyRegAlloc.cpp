@@ -8,7 +8,7 @@
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
-#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
@@ -578,8 +578,7 @@ void PhyRegAlloc::updateMachineCode() {
               // needs spill code inserted before or after it.
               // Move it before the preceding branch.
               InsertBefore(MInst, MBB, --MII);
-              MachineInstr* nopI =
-                new MachineInstr(TM.getInstrInfo().getNOPOpCode());
+              MachineInstr* nopI = BuildMI(TM.getInstrInfo().getNOPOpCode(),1);
               SubstituteInPlace(nopI, MBB, MII+1); // replace orig with NOP
               --MII;                  // point to MInst in new location
               bumpIteratorBy = 2;     // later skip the branch and the NOP!
