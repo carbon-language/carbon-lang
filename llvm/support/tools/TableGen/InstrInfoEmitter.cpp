@@ -6,6 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstrInfoEmitter.h"
+#include "CodeGenWrappers.h"
 #include "Record.h"
 
 // runEnums - Print out enum values for all of the instructions.
@@ -23,9 +24,10 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
     OS << "namespace " << Namespace << " {\n";
   OS << "  enum {\n";
 
+  CodeGenTarget Target;
+
   // We must emit the PHI opcode first...
-  Record *Target = getTarget(Records);
-  Record *InstrInfo = Target->getValueAsDef("InstructionSet");
+  Record *InstrInfo = Target.getInstructionSet();
   Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
   OS << "    " << PHI->getName() << ", \t// 0 (fixed for all targets)\n";
@@ -55,9 +57,9 @@ void InstrInfoEmitter::printDefList(ListInit *LI, const std::string &Name,
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("Target Instruction Descriptors", OS);
-  Record *Target = getTarget(Records);
-  const std::string &TargetName = Target->getName();
-  Record *InstrInfo = Target->getValueAsDef("InstructionSet");
+  CodeGenTarget Target;
+  const std::string &TargetName = Target.getName();
+  Record *InstrInfo = Target.getInstructionSet();
   Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
   std::vector<Record*> Instructions =

@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RegisterInfoEmitter.h"
+#include "CodeGenWrappers.h"
 #include "Record.h"
 #include "Support/StringExtras.h"
 #include <set>
@@ -36,7 +37,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
 
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   EmitSourceFileHeader("Register Information Header Fragment", OS);
-  const std::string &TargetName = getTarget(Records)->getName();
+  const std::string &TargetName = CodeGenTarget().getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
   OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
@@ -193,20 +194,20 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
 
-  Record *Target = getTarget(Records);
+  CodeGenTarget Target;
 
-  OS << "namespace " << Target->getName() << " { // Register classes\n";
+  OS << "namespace " << Target.getName() << " { // Register classes\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
     const std::string &Name = RegisterClasses[i]->getName();
     if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
       OS << "  TargetRegisterClass *" << Name << "RegisterClass = &"
          << Name << "Instance;\n";
   }
-  OS << "} // end of namespace " << Target->getName() << "\n\n";
+  OS << "} // end of namespace " << Target.getName() << "\n\n";
 
 
 
-  std::string ClassName = Target->getName() + "GenRegisterInfo";
+  std::string ClassName = Target.getName() + "GenRegisterInfo";
   
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
@@ -219,11 +220,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "const unsigned* " << ClassName << "::getCalleeSaveRegs() const {\n"
      << "  static const unsigned CalleeSaveRegs[] = {\n    ";
 
-  ListInit *LI = Target->getValueAsListInit("CalleeSavedRegisters");
-  for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    if (DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(i)))
-      OS << getQualifiedName(DI->getDef()) << ", ";  
-    else
-      throw "Expected register definition in CalleeSavedRegisters list!";
+  const std::vector<Record*> &CSR = Target.getCalleeSavedRegisters();
+  for (unsigned i = 0, e = CSR.size(); i != e; ++i)
+    OS << getQualifiedName(CSR[i]) << ", ";  
   OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
 }
