@@ -1608,20 +1608,17 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
     MachineConstantPool *CP = F->getConstantPool();
     unsigned CPI = CP->getConstantPoolIndex(Op1C);
     const Type *Ty = Op1->getType();
+    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
 
     static const unsigned OpcodeTab[][4] = {
       { PPC32::FADDS, PPC32::FSUBS, PPC32::FMULS, PPC32::FDIVS },  // Float
       { PPC32::FADD,  PPC32::FSUB,  PPC32::FMUL,  PPC32::FDIV },   // Double
     };
 
-    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-    unsigned TempReg = makeAnotherReg(Ty);
-    unsigned LoadOpcode = (Ty == Type::FloatTy) ? PPC32::LFS : PPC32::LFD;
-    addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
-
+    unsigned Op1Reg = getReg(Op1C);
     unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
     unsigned Op0r = getReg(Op0, BB, IP);
-    BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(TempReg);
+    BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(Op1Reg);
     return;
   }
   
