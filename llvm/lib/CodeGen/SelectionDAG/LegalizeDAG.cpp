@@ -601,7 +601,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       const Type *IntPtrTy = TLI.getTargetData().getIntPtrType();
       std::vector<std::pair<SDOperand, const Type*> > Args;
 
-      const char *FnName;
+      const char *FnName = 0;
       if (Node->getOpcode() == ISD::MEMSET) {
         Args.push_back(std::make_pair(Tmp2, IntPtrTy));
         // Extend the ubyte argument to be an int value for the call.
@@ -617,7 +617,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Args.push_back(std::make_pair(Tmp4, IntPtrTy));
         FnName = Node->getOpcode() == ISD::MEMMOVE ? "memmove" : "memcpy";
       } else {
-        FnName = 0;
         assert(0 && "Unknown op!");
       }
       std::pair<SDOperand,SDOperand> CallResult =
