@@ -1126,7 +1126,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       Result = PromoteOp(Node->getOperand(0));
       break;
     case Expand:
-      assert(0 && "Cannot handle expand yet");
+      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
+      // Truncate the low part of the expanded value to the result type
+      Result = DAG.getNode(ISD::TRUNCATE, VT, Tmp1); 
     }
     break;
   case ISD::SIGN_EXTEND:
