@@ -32,7 +32,7 @@ private:
 // CreateMethodInfo - Factory function to allow MethodInfo annotations to be
 // created on demand.
 //
-inline static Annotation *CreateMethodInfo(AnnotationID AID, Annotable *O,
+inline static Annotation *CreateMethodInfo(AnnotationID AID, const Annotable *O,
 					   void *) {
   assert(AID == MethodInfoAID);
   return new MethodInfo((Method*)O);  // Simply invoke the ctor
