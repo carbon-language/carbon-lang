@@ -1,4 +1,12 @@
 //===- gccld.cpp - LLVM 'ld' compatible linker ----------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This utility is intended to be compatible with GCC, and follows standard
 // system 'ld' conventions.  As such, the default output file is ./a.out.

@@ -1,4 +1,12 @@
 //===-- gccas.cpp - The "optimizing assembler" used by the GCC frontend ---===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This utility is designed to be used by the GCC frontend for creating bytecode
 // files from its intermediate LLVM assembly.  The requirements for this utility

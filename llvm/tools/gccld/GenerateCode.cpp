@@ -1,4 +1,12 @@
 //===- GenerateCode.cpp - Functions for generating executable files  ------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This file contains functions for generating executable files once linking
 // has finished.  This includes generating a shell script to run the JIT or

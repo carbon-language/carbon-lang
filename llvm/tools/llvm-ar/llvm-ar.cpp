@@ -1,4 +1,12 @@
 //===-- tools/llvm-ar/llvm-ar.cpp - LLVM archive librarian utility --------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // Builds up standard unix archive files (.a) containing LLVM bytecode.
 //

@@ -1,4 +1,12 @@
 //===- Linker.cpp - Link together LLVM objects and libraries --------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This file contains routines to handle linking together LLVM bytecode files,
 // and to handle annoying things like static libraries.

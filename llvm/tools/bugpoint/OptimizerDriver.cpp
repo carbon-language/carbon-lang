@@ -1,4 +1,12 @@
 //===- OptimizerDriver.cpp - Allow BugPoint to run passes safely ----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This file defines an interface that allows bugpoint to run various passes
 // without the threat of a buggy pass corrupting bugpoint (of course, bugpoint

@@ -1,4 +1,12 @@
 //===----------------------------------------------------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // LLVM Modular Optimizer Utility: opt
 //
 // Optimizations may be specified an arbitrary number of times on the command

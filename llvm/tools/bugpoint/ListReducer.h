@@ -1,4 +1,12 @@
 //===- ListReducer.h - Trim down list while retaining property --*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This class is to be used as a base class for operations that want to zero in
 // on a subset of the input which still causes the bug we are tracking.

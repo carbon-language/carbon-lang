@@ -1,4 +1,12 @@
 //===- ExtractFunction.cpp - Extract a function from Program --------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This file implements a method that extracts a function from program, cleans
 // it up, and returns it as a new module.

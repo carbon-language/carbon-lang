@@ -1,4 +1,12 @@
 //===-- llvm-nm.cpp - Symbol table dumping utility for llvm ---------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This program is a utility that works like traditional Unix "nm",
 // that is, it prints out the names of symbols in a bytecode file,

@@ -1,4 +1,12 @@
 //===- GraphPrinters.cpp - DOT printers for various graph types -----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This file defines several printers for various different types of graphs used
 // by the LLVM infrastructure.  It uses the generic graph interface to convert

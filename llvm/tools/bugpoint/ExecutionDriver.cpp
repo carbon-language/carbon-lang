@@ -1,4 +1,12 @@
 //===- ExecutionDriver.cpp - Allow execution of LLVM program --------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //
 // This file contains code used to execute the program utilizing one of the
 // various ways of running LLVM bytecode.

@@ -1,4 +1,12 @@
 /*===- OSInterface.h - Interface to query OS for functionality ---*- C -*--===*\
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
  *                                                                            *
  * This file defines the prototype interface that we will expect operating    *
  * systems to implement if they wish to support offline cachine.              *
