@@ -322,14 +322,11 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
       
       // Check latter condition here just to simplify the next IF.
       bool includeAddressOperand =
-	((operand->getValueType() == Value::BasicBlockVal
-	  || operand->getValueType() == Value::MethodVal)
-	 && ! instr->isTerminator());
+	((operand->isBasicBlock() || operand->isMethod())
+	 && !instr->isTerminator());
 	 
-      if (   includeAddressOperand
-	  || operand->getValueType() == Value::InstructionVal
-	  || operand->getValueType() == Value::ConstantVal
-	  || operand->getValueType() == Value::MethodArgumentVal)
+      if (includeAddressOperand || operand->isInstruction() ||
+	  operand->isConstant() || operand->isMethodArgument())
 	{// This operand is a data value
 	  
 	  // An instruction that computes the incoming value is added as a
@@ -345,17 +342,16 @@ InstrForest::buildTreeForInstruction(Instruction* instr)
 	  // is used directly, i.e., made a child of the instruction node.
 	  // 
 	  InstrTreeNode* opTreeNode;
-	  if (operand->getValueType() == Value::InstructionVal
-	      && operand->use_size() == 1
-	      && ((Instruction*)operand)->getParent() == instr->getParent())
+	  if (operand->isInstruction() && operand->use_size() == 1 &&
+	      ((Instruction*)operand)->getParent() == instr->getParent())
 	    {
 	      // Recursively create a treeNode for it.
 	      opTreeNode =this->buildTreeForInstruction((Instruction*)operand);
 	    }
-	  else if (operand->getValueType() == Value::ConstantVal)
+	  else if (ConstPoolVal *CPV = operand->castConstant())
 	    {
 	      // Create a leaf node for a constant
-	      opTreeNode = new ConstantNode((ConstPoolVal*) operand);
+	      opTreeNode = new ConstantNode(CPV);
 	    }
 	  else
 	    {
