@@ -1,4 +1,16 @@
 ; test phi node
+
+%Y = global int 6
+
+void %blah(int *%X) {
+	br label %T
+T:
+	phi int* [%X, %0], [%Y, %Dead]
+	ret void
+Dead:
+	br label %T
+}
+
 void %main() {
 	br label %Test
 Test:
