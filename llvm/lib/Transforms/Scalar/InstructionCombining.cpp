@@ -764,6 +764,43 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               return BinaryOperator::create(Instruction::And, Or, RHS);
             }
           }
+        } else if (Op0I->getOpcode() == Instruction::Add &&
+                   Op0I->use_size() == 1) {
+          // Adding a one to a single bit bit-field should be turned into an XOR
+          // of the bit.  First thing to check is to see if this AND is with a
+          // single bit constant.
+          unsigned long long AndRHS = cast<ConstantInt>(RHS)->getRawValue();
+
+          // Clear bits that are not part of the constant.
+          AndRHS &= (1ULL << RHS->getType()->getPrimitiveSize()*8)-1;
+
+          // If there is only one bit set...
+          if ((AndRHS & (AndRHS-1)) == 0) {
+            // Ok, at this point, we know that we are masking the result of the
+            // ADD down to exactly one bit.  If the constant we are adding has
+            // no bits set below this bit, then we can eliminate the ADD.
+            unsigned long long AddRHS = cast<ConstantInt>(Op0CI)->getRawValue();
+            
+            // Check to see if any bits below the one bit set in AndRHS are set.
+            if ((AddRHS & (AndRHS-1)) == 0) {
+              // If not, the only thing that can effect the output of the AND is
+              // the bit specified by AndRHS.  If that bit is set, the effect of
+              // the XOR is to toggle the bit.  If it is clear, then the ADD has
+              // no effect.
+              if ((AddRHS & AndRHS) == 0) { // Bit is not set, noop
+                I.setOperand(0, Op0I->getOperand(0));
+                return &I;
+              } else {
+                std::string Name = Op0I->getName(); Op0I->setName("");
+                // Pull the XOR out of the AND.
+                Instruction *NewAnd =
+                  BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
+                                         RHS, Name);
+                InsertNewInstBefore(NewAnd, I);
+                return BinaryOperator::create(Instruction::Xor, NewAnd, RHS);
+              }
+            }
+          }
         }
     }
   }
