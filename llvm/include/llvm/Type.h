@@ -206,6 +206,7 @@ public:
   ///
   virtual const Type *getContainedType(unsigned i) const {
     assert(0 && "No contained types!");
+    return 0;
   }
 
   /// getNumContainedTypes - Return the number of types in the derived type
