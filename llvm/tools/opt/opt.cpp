@@ -42,7 +42,7 @@ enum Opts {
   print, printm, verify,
 
   // More powerful optimizations
-  indvars, instcombine, sccp, adce, raise, mem2reg,
+  indvars, instcombine, sccp, adce, raise, reassociate, mem2reg,
 
   // Instrumentation
   trace, tracem, paths,
@@ -80,6 +80,7 @@ struct {
   { sccp       , createSCCPPass                   },
   { adce       , createAggressiveDCEPass          },
   { raise      , createRaisePointerReferencesPass },
+  { reassociate, createReassociatePass            },
   { mem2reg    , createPromoteMemoryToRegister    },
   { lowerrefs,   createDecomposeMultiDimRefsPass  },
 
@@ -126,6 +127,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(instcombine, "Combine redundant instructions"),
   clEnumVal(sccp       , "Sparse Conditional Constant Propogation"),
   clEnumVal(adce       , "Aggressive DCE"),
+  clEnumVal(reassociate, "Reassociate expressions"),
   clEnumVal(mem2reg    , "Promote alloca locations to registers"),
 
   clEnumVal(internalize, "Mark all fn's internal except for main"),
