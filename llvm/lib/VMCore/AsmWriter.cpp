@@ -334,10 +334,7 @@ static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
     }
 
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    Out << CE->getOpcodeName();
-
-    bool isGEP = CE->getOpcode() == Instruction::GetElementPtr;
-    Out << " (";
+    Out << CE->getOpcodeName() << " (";
     
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       printTypeInt(Out, (*OI)->getType(), TypeTable);
