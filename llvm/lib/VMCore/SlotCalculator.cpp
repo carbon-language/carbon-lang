@@ -321,17 +321,26 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-int SlotCalculator::getSlot(const Value *D) const {
-  std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(D);
-  if (I == NodeMap.end()) return -1;
- 
-  return (int)I->second;
+int SlotCalculator::getSlot(const Value *V) const {
+  std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
+  if (I != NodeMap.end())
+    return (int)I->second;
+
+  // Do not number ConstantPointerRef's at all.  They are an abomination.
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
+    return getSlot(CPR->getValue());
+
+  return -1;
 }
 
 
 int SlotCalculator::getOrCreateSlot(const Value *V) {
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
+
+  // Do not number ConstantPointerRef's at all.  They are an abomination.
+  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(V))
+    return getOrCreateSlot(CPR->getValue());
 
   if (!isa<GlobalValue>(V))
     if (const Constant *C = dyn_cast<Constant>(V)) {
