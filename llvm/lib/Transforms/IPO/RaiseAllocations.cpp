@@ -13,8 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Module.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
@@ -124,11 +125,18 @@ bool RaiseAllocations::run(Module &M) {
   // First, process all of the malloc calls...
   if (MallocFunc) {
     std::vector<User*> Users(MallocFunc->use_begin(), MallocFunc->use_end());
+    std::vector<Value*> EqPointers;   // Values equal to MallocFunc
     while (!Users.empty()) {
-      if (Instruction *I = dyn_cast<Instruction>(Users.back())) {
+      User *U = Users.back();
+      Users.pop_back();
+
+      if (Instruction *I = dyn_cast<Instruction>(U)) {
         CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() && CS.getCalledFunction() == MallocFunc &&
-            CS.arg_begin() != CS.arg_end()) {
+        if (CS.getInstruction() && CS.arg_begin() != CS.arg_end() &&
+            (CS.getCalledFunction() == MallocFunc ||
+             std::find(EqPointers.begin(), EqPointers.end(),
+                       CS.getCalledValue()) != EqPointers.end())) {
+            
           Value *Source = *CS.arg_begin();
           
           // If no prototype was provided for malloc, we may need to cast the
@@ -150,21 +158,33 @@ bool RaiseAllocations::run(Module &M) {
           Changed = true;
           ++NumRaised;
         }
+      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
+        Users.insert(Users.end(), CPR->use_begin(), CPR->use_end());
+        EqPointers.push_back(CPR);
+      } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
+        if (CE->getOpcode() == Instruction::Cast) {
+          Users.insert(Users.end(), CE->use_begin(), CE->use_end());
+          EqPointers.push_back(CE);
+        }
       }
-
-      Users.pop_back();
     }
   }
 
   // Next, process all free calls...
   if (FreeFunc) {
     std::vector<User*> Users(FreeFunc->use_begin(), FreeFunc->use_end());
+    std::vector<Value*> EqPointers;   // Values equal to FreeFunc
 
     while (!Users.empty()) {
-      if (Instruction *I = dyn_cast<Instruction>(Users.back())) {
+      User *U = Users.back();
+      Users.pop_back();
+
+      if (Instruction *I = dyn_cast<Instruction>(U)) {
         CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() && CS.getCalledFunction() == FreeFunc &&
-            CS.arg_begin() != CS.arg_end()) {
+        if (CS.getInstruction() && CS.arg_begin() != CS.arg_end() &&
+            (CS.getCalledFunction() == FreeFunc ||
+             std::find(EqPointers.begin(), EqPointers.end(),
+                       CS.getCalledValue()) != EqPointers.end())) {
           
           // If no prototype was provided for free, we may need to cast the
           // source pointer.  This should be really uncommon, but it's necessary
@@ -187,12 +207,17 @@ bool RaiseAllocations::run(Module &M) {
           Changed = true;
           ++NumRaised;
         }
+      } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(U)) {
+        Users.insert(Users.end(), CPR->use_begin(), CPR->use_end());
+        EqPointers.push_back(CPR);
+      } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
+        if (CE->getOpcode() == Instruction::Cast) {
+          Users.insert(Users.end(), CE->use_begin(), CE->use_end());
+          EqPointers.push_back(CE);
+        }
       }
-      
-      Users.pop_back();
     }
   }
 
   return Changed;
 }
-
