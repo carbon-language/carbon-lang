@@ -25,6 +25,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Config/config.h"   // for HAVE_LINK_R
 using namespace llvm;
 
 namespace llvm {
@@ -65,6 +66,11 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Check to see if the finished program matches the reference output...
   if (BD.diffProgram(BytecodeResult, "", true /*delete bytecode*/)) {
     std::cout << " nope.\n";
+    if (Suffix.empty()) {
+      std::cerr << BD.getToolName() << ": I'm confused: the test fails when "
+                << "no passes are run, nondeterministic program?\n";
+      exit(1);
+    }
     return KeepSuffix;         // Miscompilation detected!
   }
   std::cout << " yup.\n";      // No miscompilation!
@@ -817,9 +823,13 @@ bool BugDriver::debugCodeGenerator() {
   if (isExecutingJIT()) {
     std::cout << "  lli -load " << SharedObject << " " << TestModuleBC;
   } else {
-    std::cout << "  llc " << TestModuleBC << " -o " << TestModuleBC << ".s\n";
+    std::cout << "  llc -f " << TestModuleBC << " -o " << TestModuleBC<< ".s\n";
     std::cout << "  gcc " << SharedObject << " " << TestModuleBC
-              << ".s -o " << TestModuleBC << ".exe -Wl,-R.\n";
+              << ".s -o " << TestModuleBC << ".exe";
+#if defined (HAVE_LINK_R)
+    std::cout << "-Wl,-R.";
+#endif
+    std::cout << "\n";
     std::cout << "  " << TestModuleBC << ".exe";
   }
   for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
