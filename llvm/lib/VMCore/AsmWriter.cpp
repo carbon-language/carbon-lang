@@ -368,18 +368,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << "null";
 
   } else if (const ConstantPointerRef *PR = dyn_cast<ConstantPointerRef>(CV)) {
-    const GlobalValue *V = PR->getValue();
-    if (V->hasName()) {
-      Out << getLLVMName(V->getName());
-    } else if (Table) {
-      int Slot = Table->getSlot(V);
-      if (Slot >= 0)
-        Out << "%" << Slot;
-      else
-        Out << "<pointer reference badref>";
-    } else {
-      Out << "<pointer reference without context info>";
-    }
+    WriteAsOperandInternal(Out, PR->getValue(), true, TypeTable, Table);
 
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName() << " (";
@@ -969,26 +958,26 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 //===----------------------------------------------------------------------===//
 
 void Module::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotCalculator SlotTable(this, true);
+  SlotCalculator SlotTable(this, false);
   AssemblyWriter W(o, SlotTable, this, AAW);
   W.write(this);
 }
 
 void GlobalVariable::print(std::ostream &o) const {
-  SlotCalculator SlotTable(getParent(), true);
+  SlotCalculator SlotTable(getParent(), false);
   AssemblyWriter W(o, SlotTable, getParent(), 0);
   W.write(this);
 }
 
 void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotCalculator SlotTable(getParent(), true);
+  SlotCalculator SlotTable(getParent(), false);
   AssemblyWriter W(o, SlotTable, getParent(), AAW);
 
   W.write(this);
 }
 
 void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotCalculator SlotTable(getParent(), true);
+  SlotCalculator SlotTable(getParent(), false);
   AssemblyWriter W(o, SlotTable, 
                    getParent() ? getParent()->getParent() : 0, AAW);
   W.write(this);
@@ -996,7 +985,7 @@ void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 
 void Instruction::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   const Function *F = getParent() ? getParent()->getParent() : 0;
-  SlotCalculator SlotTable(F, true);
+  SlotCalculator SlotTable(F, false);
   AssemblyWriter W(o, SlotTable, F ? F->getParent() : 0, AAW);
 
   W.write(this);
