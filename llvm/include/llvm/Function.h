@@ -57,10 +57,14 @@ public:
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
-  typedef ArgumentListType::iterator aiterator;
-  typedef ArgumentListType::const_iterator const_aiterator;
-  typedef std::reverse_iterator<const_aiterator> const_reverse_aiterator;
-  typedef std::reverse_iterator<aiterator>             reverse_aiterator;
+  typedef ArgumentListType::iterator arg_iterator;
+  typedef ArgumentListType::const_iterator const_arg_iterator;
+  typedef std::reverse_iterator<const_arg_iterator> const_reverse_arg_iterator;
+  typedef std::reverse_iterator<arg_iterator> reverse_arg_iterator;
+  typedef arg_iterator aiterator; // legacy, deprecated
+  typedef const_arg_iterator const_aiterator; // legacy, deprecated
+  typedef const_reverse_arg_iterator const_reverse_aiterator; // legacy, deprecated
+  typedef reverse_arg_iterator reverse_aiterator; // legacy, deprecated
 
 private:
   // Important things that make up a function!
@@ -187,22 +191,42 @@ public:
   //===--------------------------------------------------------------------===//
   // Argument iterator forwarding functions
   //
-  aiterator                abegin()       { return ArgumentList.begin(); }
-  const_aiterator          abegin() const { return ArgumentList.begin(); }
-  aiterator                aend  ()       { return ArgumentList.end();   }
-  const_aiterator          aend  () const { return ArgumentList.end();   }
+  arg_iterator                arg_begin()       { return ArgumentList.begin(); }
+  const_arg_iterator          arg_begin() const { return ArgumentList.begin(); }
+  arg_iterator                arg_end  ()       { return ArgumentList.end();   }
+  const_arg_iterator          arg_end  () const { return ArgumentList.end();   }
 
-  reverse_aiterator       arbegin()       { return ArgumentList.rbegin(); }
-  const_reverse_aiterator arbegin() const { return ArgumentList.rbegin(); }
-  reverse_aiterator       arend  ()       { return ArgumentList.rend();   }
-  const_reverse_aiterator arend  () const { return ArgumentList.rend();   }
+  reverse_arg_iterator       arg_rbegin()       { return ArgumentList.rbegin(); }
+  const_reverse_arg_iterator arg_rbegin() const { return ArgumentList.rbegin(); }
+  reverse_arg_iterator       arg_rend  ()       { return ArgumentList.rend();   }
+  const_reverse_arg_iterator arg_rend  () const { return ArgumentList.rend();   }
 
-  size_t                    asize() const { return ArgumentList.size();  }
-  bool                     aempty() const { return ArgumentList.empty(); }
-  const Argument          &afront() const { return ArgumentList.front(); }
-        Argument          &afront()       { return ArgumentList.front(); }
-  const Argument           &aback() const { return ArgumentList.back();  }
-        Argument           &aback()       { return ArgumentList.back();  }
+  size_t                      arg_size () const { return ArgumentList.size();  }
+  bool                        arg_empty() const { return ArgumentList.empty(); }
+  const Argument             &arg_front() const { return ArgumentList.front(); }
+        Argument             &arg_front()       { return ArgumentList.front(); }
+  const Argument             &arg_back () const { return ArgumentList.back();  }
+        Argument             &arg_back ()       { return ArgumentList.back();  }
+
+  //===--------------------------------------------------------------------===//
+  // Argument iterator forwarding functions (legacy, deprecated, will be removed)
+  //
+  arg_iterator                abegin()       { return ArgumentList.begin(); }
+  const_arg_iterator          abegin() const { return ArgumentList.begin(); }
+  arg_iterator                aend  ()       { return ArgumentList.end();   }
+  const_arg_iterator          aend  () const { return ArgumentList.end();   }
+
+  reverse_arg_iterator       arbegin()       { return ArgumentList.rbegin(); }
+  const_reverse_arg_iterator arbegin() const { return ArgumentList.rbegin(); }
+  reverse_arg_iterator       arend  ()       { return ArgumentList.rend();   }
+  const_reverse_arg_iterator arend  () const { return ArgumentList.rend();   }
+
+  size_t                       asize() const { return ArgumentList.size();  }
+  bool                        aempty() const { return ArgumentList.empty(); }
+  const Argument             &afront() const { return ArgumentList.front(); }
+        Argument             &afront()       { return ArgumentList.front(); }
+  const Argument              &aback() const { return ArgumentList.back();  }
+        Argument              &aback()       { return ArgumentList.back();  }
 
   virtual void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
