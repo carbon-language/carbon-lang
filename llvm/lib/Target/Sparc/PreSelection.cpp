@@ -200,17 +200,15 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
       return new CastInst(getArg1, CE->getType(), "constantCast",&insertBefore);
 
     case Instruction::GetElementPtr:
-#     ifndef NDEBUG
-      assert(find_if(++CE->op_begin(), CE->op_end(),nonConstant) == CE->op_end()
+      assert(find_if(CE->op_begin()+1, CE->op_end(),nonConstant) == CE->op_end()
              && "All indices in ConstantExpr getelementptr must be constant!");
-#     endif
       getArg1 = CE->getOperand(0);
       if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
         getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
       else if (GetElementPtrInst* gep = getGlobalAddr(getArg1, insertBefore))
         getArg1 = gep;
       return new GetElementPtrInst(getArg1,
-                          std::vector<Value*>(++CE->op_begin(), CE->op_end()),
+                          std::vector<Value*>(CE->op_begin()+1, CE->op_end()),
                           "constantGEP", &insertBefore);
 
     default:                            // must be a binary operator
