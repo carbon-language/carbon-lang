@@ -27,7 +27,6 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/HashExtras.h"
 #include <hash_map>
-#include <vector>
 #include <strstream.h>
 
 
@@ -42,7 +41,7 @@ const char* const PRINTF = "printf";
 
 #undef USE_PTRREF
 #ifdef USE_PTRREF
-inline ConstPoolPointerReference*
+static inline ConstPoolPointerReference*
 GetStringRef(Module* module, const char* str)
 {
   static hash_map<string, ConstPoolPointerReference*> stringRefCache;
@@ -70,7 +69,7 @@ GetStringRef(Module* module, const char* str)
 }
 #endif USE_PTRREF
 
-inline GlobalVariable*
+static inline GlobalVariable*
 GetStringRef(Module* module, const char* str)
 {
   static hash_map<string, GlobalVariable*> stringRefCache;
@@ -99,7 +98,7 @@ GetStringRef(Module* module, const char* str)
 }
 
 
-inline bool
+static inline bool
 TraceThisOpCode(unsigned opCode)
 {
   // Explicitly test for opCodes *not* to trace so that any new opcodes will
@@ -161,12 +160,12 @@ TraceValuesAtBBExit(const vector<Value*>& valueVec,
     }
 }
 
-void
+static void
 InsertCodeToShowMethodEntry(BasicBlock* entryBB)
 {
 }
 
-void
+static void
 InsertCodeToShowMethodExit(BasicBlock* exitBB)
 {
 }
@@ -346,7 +345,9 @@ InsertCodeToTraceValues(Method* method,
   if (traceMethodExits)
     {
       InsertCodeToShowMethodEntry(method->getEntryNode());
+#ifdef TODO_LATER
       exitBB = method->getExitNode();
+#endif
     }
   
   for (Method::iterator BI = method->begin(); BI != method->end(); ++BI)
