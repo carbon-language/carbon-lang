@@ -5,7 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Pass.h"
-#include "llvm/Module.h"
+#include "llvm/Function.h"
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
 
@@ -19,7 +19,7 @@ namespace {
 
 #include "llvm/Instruction.def"
 
-  class InstCount : public Pass, public InstVisitor<InstCount> {
+  class InstCount : public FunctionPass, public InstVisitor<InstCount> {
     friend class InstVisitor<InstCount>;
 
     void visitFunction  (Function &F) { ++TotalFuncs; }
@@ -35,7 +35,7 @@ namespace {
       abort();
     }
   public:
-    virtual bool run(Module &M);
+    virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -51,7 +51,7 @@ namespace {
 // InstCount::run - This is the main Analysis entry point for a
 // function.
 //
-bool InstCount::run(Module &M) {
-  visit(M);
+bool InstCount::runOnFunction(Function &F) {
+  visit(F);
   return false;
 }
