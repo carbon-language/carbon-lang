@@ -262,37 +262,43 @@ were fixed:</a>
 <p>Bugs in the LLVM Core:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR330">[vmcore] Linker causes erroneous
-asssertion</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR306">[loopsimplify] Loop simplify
 incorrectly updates dominator information</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR310">[tailduplicate] DemoteRegToStack
 breaks SSA form</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short
 to floating point cast</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR315">[jit] abort, don't warn, when 
+missing external functions encountered</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR330">[vmcore] Linker causes erroneous
+asssertion</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable
 code that unwinds</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR333">[sparc] LLC can't emit 2 functions
 of the same name, both having constant pools</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR337">[livevar] Live variables missed
 physical register use of aliased definition</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR340">Verifier misses malformed switch instruction</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR315">[jit] abort, don't warn, when missing external functions encountered</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR369">[X86] stackifier crash on floating point setcc X, X</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR340">Verifier misses malformed switch 
+instruction</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR365">[asmwriter] Asm writer aborts if 
+an instruction is not embedded into a function</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR369">[X86] stackifier crash on floating 
+point setcc X, X</a></li>
 </ol>
 
 <p>Bugs in the C/C++ front-end:</p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR377">[llvmgcc] miscompilation of staticly initialized unsigned bitfields</a></li>
-<li><a href="http://llvm.cs.uiuc.edu/PR326">[llvmgcc] Crash on use of undeclared
-enum type</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR298">[llvmgcc] Variable length array
 indexing miscompiled</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR326">[llvmgcc] Crash on use of undeclared
+enum type</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR355">[llvmgcc] Errors handling function 
 prototypes that take opaque structs by-value</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR374">[llvmgcc] Crash compiling variable 
 length array of structures</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR377">[llvmgcc] miscompilation of staticly 
+initialized unsigned bitfields</a></li>
 </ol>
 </div>
 
