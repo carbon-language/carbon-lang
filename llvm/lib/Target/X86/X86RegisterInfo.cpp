@@ -16,7 +16,7 @@
 // descriptors
 //
 static const MRegisterDesc X86Regs[] = {
-#define R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) { NAME, FLAGS, TSFLAGS },
+#define R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) { NAME, FLAGS, TSFLAGS },
 #include "X86RegisterInfo.def"
 };
 

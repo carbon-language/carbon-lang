@@ -47,7 +47,7 @@ namespace X86 {
   // mapping from register name to register number.
   //
   enum Register {
-#define R(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) ENUM,
+#define R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) ENUM,
 #include "X86RegisterInfo.def"
   };
 

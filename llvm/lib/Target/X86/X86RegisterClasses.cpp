@@ -11,7 +11,7 @@
 
 namespace {
   const unsigned ByteRegClassRegs[] = {
-#define R8(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) X86::ENUM,
+#define R8(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) X86::ENUM,
 #include "X86RegisterInfo.def"
   };
 
@@ -22,7 +22,7 @@ namespace {
 //
 //
   const unsigned ShortRegClassRegs[] = {
-#define R16(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) X86::ENUM,
+#define R16(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) X86::ENUM,
 #include "X86RegisterInfo.def"
   };
 
@@ -34,7 +34,7 @@ namespace {
 //
 
   const unsigned IntRegClassRegs[] = {
-#define R32(ENUM, NAME, FLAGS, TSFLAGS, A1, A2, A3) X86::ENUM,
+#define R32(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) X86::ENUM,
 #include "X86RegisterInfo.def"
   };
 
