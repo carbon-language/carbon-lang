@@ -17,14 +17,13 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-
-namespace llvm {
+using namespace llvm;
 
 // allocateSparcV8TargetMachine - Allocate and return a subclass of 
 // TargetMachine that implements the SparcV8 backend.
 //
-TargetMachine *allocateSparcV8TargetMachine(const Module &M,
-                                            IntrinsicLowering *IL) {
+TargetMachine *llvm::allocateSparcV8TargetMachine(const Module &M,
+                                                  IntrinsicLowering *IL) {
   return new SparcV8TargetMachine(M, IL);
 }
 
@@ -57,5 +56,3 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
 }
-
-} // end namespace llvm
