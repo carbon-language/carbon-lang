@@ -728,10 +728,21 @@ bool CWriter::doInitialization(Module &M) {
         // this, however, occurs when the variable has weak linkage.  In this
         // case, the assembler will complain about the variable being both weak
         // and common, so we disable this optimization.
-        if (!I->getInitializer()->isNullValue() ||
-            I->hasWeakLinkage()) {
+        if (!I->getInitializer()->isNullValue()) {
           Out << " = " ;
           writeOperand(I->getInitializer());
+        } else if (I->hasWeakLinkage()) {
+          // We have to specify an initializer, but it doesn't have to be
+          // complete.  If the value is an aggregate, print out { 0 }, and let
+          // the compiler figure out the rest of the zeros.
+          Out << " = " ;
+          if (isa<StructType>(I->getInitializer()->getType()) ||
+              isa<ArrayType>(I->getInitializer()->getType())) {
+            Out << "{ 0 }";
+          } else {
+            // Just print it out normally.
+            writeOperand(I->getInitializer());
+          }
         }
         Out << ";\n";
       }
