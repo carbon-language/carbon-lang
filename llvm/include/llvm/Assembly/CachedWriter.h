@@ -30,12 +30,20 @@ class AssemblyWriter;  // Internal private class
 class CachedWriter {
   AssemblyWriter *AW;
   SlotCalculator *SC;
+  bool SymbolicTypes;
 public:
-  std::ostream &Out;
+  std::ostream *Out;
+
+  enum TypeWriter {
+    SymTypeOn,
+    SymTypeOff
+  };
+
 public:
-  CachedWriter(std::ostream &O = std::cout) : AW(0), SC(0), Out(O) { }
+  CachedWriter(std::ostream &O = std::cout)
+    : AW(0), SC(0), SymbolicTypes(false), Out(&O) { }
   CachedWriter(const Module *M, std::ostream &O = std::cout)
-    : AW(0), SC(0), Out(O) {
+    : AW(0), SC(0), SymbolicTypes(false), Out(&O) {
     setModule(M);
   }
   ~CachedWriter();
@@ -66,22 +74,26 @@ public:
   inline CachedWriter &operator<<(const Constant *X) {
     return *this << (const Value*)X; 
   }
-  inline CachedWriter &operator<<(const Type *X) {
-    return *this << (const Value*)X;
-  }
-  inline CachedWriter &operator<<(const PointerType *X) {
-    return *this << (const Value*)X; 
-  }
+  CachedWriter &operator<<(const Type *X);
+  inline CachedWriter &operator<<(const PointerType *X);
 
   inline CachedWriter &operator<<(std::ostream &(&Manip)(std::ostream &)) {
-    Out << Manip; return *this;
+    *Out << Manip; return *this;
   }
 
   template<class X>
   inline CachedWriter &operator<<(const X &v) {
-    Out << v;
+    *Out << v;
     return *this;
   }
+
+  inline CachedWriter &operator<<(enum TypeWriter tw) {
+    SymbolicTypes = (tw == SymTypeOn);
+    return *this;
+  }
+
+  inline std::ostream& getStream() { return *Out; }
+  inline void setStream(std::ostream &os) { Out = &os; }
 };
 
 } // End llvm namespace
