@@ -348,30 +348,44 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   case Instruction::Load:
   case Instruction::GetElementPtr: {
-    vector<ConstPoolVal*> Idx;
+    vector<Value*> Idx;
+    if (!isa<PointerType>(Raw.Ty)) return failure(true);
+    const CompositeType *TopTy =
+      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getValueType());
+
     switch (Raw.NumOperands) {
     case 0: cerr << "Invalid load encountered!\n"; return failure(true);
     case 1: break;
-    case 2: V = getValue(Type::UByteTy, Raw.Arg2);
-            if (!isa<ConstPoolVal>(V)) return failure(true);
-            Idx.push_back(cast<ConstPoolVal>(V));
-            break;
-    case 3: V = getValue(Type::UByteTy, Raw.Arg2);
-            if (!isa<ConstPoolVal>(V)) return failure(true);
-            Idx.push_back(cast<ConstPoolVal>(V));
-	    V = getValue(Type::UByteTy, Raw.Arg3);
-            if (!isa<ConstPoolVal>(V)) return failure(true);
-            Idx.push_back(cast<ConstPoolVal>(V));
-            break;
+    case 2:
+      if (!TopTy) return failure(true);
+      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg2));
+      if (!V) return failure(true);
+      break;
+    case 3: {
+      if (!TopTy) return failure(true);
+      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg2));
+      if (!V) return failure(true);
+
+      const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+      const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
+      if (!ElTy) return failure(true);
+
+      Idx.push_back(V = getValue(ElTy->getIndexType(), Raw.Arg3));
+      if (!V) return failure(true);
+      break;
+    }
     default:
-      V = getValue(Type::UByteTy, Raw.Arg2);
-      if (!isa<ConstPoolVal>(V)) return failure(true);
-      Idx.push_back(cast<ConstPoolVal>(V));
+      if (!TopTy) return failure(true);
+      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg2));
+      if (!V) return failure(true);
+
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
-	V = getValue(Type::UByteTy, args[i]);
-	if (!isa<ConstPoolVal>(V)) return failure(true);
-	Idx.push_back(cast<ConstPoolVal>(V));
+        const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+        const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
+        if (!ElTy) return failure(true);
+	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
+	if (!V) return failure(true);
       }
       delete Raw.VarArgs; 
       break;
@@ -388,21 +402,28 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     return false;
   }
   case Instruction::Store: {
-    vector<ConstPoolVal*> Idx;
+    vector<Value*> Idx;
+    if (!isa<PointerType>(Raw.Ty)) return failure(true);
+    const CompositeType *TopTy =
+      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getValueType());
+
     switch (Raw.NumOperands) {
     case 0: 
     case 1: cerr << "Invalid store encountered!\n"; return failure(true);
     case 2: break;
-    case 3: V = getValue(Type::UByteTy, Raw.Arg3);
-            if (!isa<ConstPoolVal>(V)) return failure(true);
-            Idx.push_back(cast<ConstPoolVal>(V));
-            break;
+    case 3:
+      if (!TopTy) return failure(true);
+      Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg3));
+      if (!V) return failure(true);
+      break;
     default:
       vector<unsigned> &args = *Raw.VarArgs;
       for (unsigned i = 0, E = args.size(); i != E; ++i) {
-	V = getValue(Type::UByteTy, args[i]);
-	if (!isa<ConstPoolVal>(V)) return failure(true);
-	Idx.push_back(cast<ConstPoolVal>(V));
+        const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+        const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
+        if (!ElTy) return failure(true);
+	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
+	if (!V) return failure(true);
       }
       delete Raw.VarArgs; 
       break;
