@@ -249,6 +249,14 @@ void UnwindInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
 }
 
 //===----------------------------------------------------------------------===//
+//                      UnreachableInst Implementation
+//===----------------------------------------------------------------------===//
+
+void UnreachableInst::setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+  assert(0 && "UnreachableInst has no successors!");
+}
+
+//===----------------------------------------------------------------------===//
 //                        BranchInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -832,3 +840,4 @@ BranchInst *BranchInst::clone() const { return new BranchInst(*this); }
 SwitchInst *SwitchInst::clone() const { return new SwitchInst(*this); }
 InvokeInst *InvokeInst::clone() const { return new InvokeInst(*this); }
 UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
+UnreachableInst *UnreachableInst::clone() const { return new UnreachableInst();}

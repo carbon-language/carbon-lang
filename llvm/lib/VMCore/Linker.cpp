@@ -310,7 +310,7 @@ static Value *RemapOperand(const Value *In,
         Operands[i] =
           cast<Constant>(RemapOperand(CPS->getOperand(i), LocalMap, GlobalMap));
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
-    } else if (isa<ConstantPointerNull>(CPV)) {
+    } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
     } else if (isa<GlobalValue>(CPV)) {
       Result = cast<Constant>(RemapOperand(CPV, LocalMap, GlobalMap));

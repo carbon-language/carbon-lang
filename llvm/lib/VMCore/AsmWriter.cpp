@@ -518,6 +518,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
   } else if (isa<ConstantPointerNull>(CV)) {
     Out << "null";
 
+  } else if (isa<UndefValue>(CV)) {
+    Out << "undef";
+
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName() << " (";
     

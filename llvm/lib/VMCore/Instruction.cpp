@@ -88,6 +88,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Switch: return "switch";
   case Invoke: return "invoke";
   case Unwind: return "unwind";
+  case Unreachable: return "unreachable";
     
   // Standard binary operators...
   case Add: return "add";
