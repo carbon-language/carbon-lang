@@ -72,7 +72,7 @@ namespace {
 
     std::ostream &printType(std::ostream &Out, const Type *Ty,
                             const std::string &VariableName = "",
-                            bool IgnoreName = false, bool namedContext = true);
+                            bool IgnoreName = false);
 
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
@@ -173,7 +173,7 @@ inline bool ptrTypeNameNeedsParens(const std::string &NameSoFar) {
 //
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  const std::string &NameSoFar,
-                                 bool IgnoreName, bool namedContext) {
+                                 bool IgnoreName) {
   if (Ty->isPrimitiveType())
     switch (Ty->getPrimitiveID()) {
     case Type::VoidTyID:   return Out << "void "               << NameSoFar;
@@ -243,7 +243,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     // Do not need parens around "* NameSoFar" if NameSoFar consists only
     // of zero or more '*' chars *and* this is not an unnamed pointer type
     // such as the result type in a cast statement.  Otherwise, enclose in ( ).
-    if (ptrTypeNameNeedsParens(NameSoFar) || !namedContext || 
+    if (ptrTypeNameNeedsParens(NameSoFar) ||
         PTy->getElementType()->getPrimitiveID() == Type::ArrayTyID)
       ptrName = "(" + ptrName + ")";    // 
 
@@ -1139,7 +1139,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
       || (I.getType() == Type::FloatTy)) {
     needsCast = true;
     Out << "((";
-    printType(Out, I.getType(), "", false, false);
+    printType(Out, I.getType());
     Out << ")(";
   }
       
@@ -1180,7 +1180,7 @@ void CWriter::visitCastInst(CastInst &I) {
     return;
   }
   Out << "(";
-  printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
+  printType(Out, I.getType());
   Out << ")";
   if (isa<PointerType>(I.getType())&&I.getOperand(0)->getType()->isIntegral() ||
       isa<PointerType>(I.getOperand(0)->getType())&&I.getType()->isIntegral()) {
@@ -1371,8 +1371,7 @@ void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
 void CWriter::visitVANextInst(VANextInst &I) {
   Out << Mang->getValueName(I.getOperand(0));
   Out << ";  va_arg(*(va_list*)&" << Mang->getValueName(&I) << ", ";
-  printType(Out, I.getArgType(), "", /*ignoreName*/false,
-            /*namedContext*/false);
+  printType(Out, I.getArgType());
   Out << ")";  
 }
 
@@ -1381,7 +1380,7 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
   Out << "{ va_list Tmp; va_copy(Tmp, *(va_list*)&";
   writeOperand(I.getOperand(0));
   Out << ");\n  " << Mang->getValueName(&I) << " = va_arg(Tmp, ";
-  printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
+  printType(Out, I.getType());
   Out << ");\n  va_end(Tmp); }";
 }
 
