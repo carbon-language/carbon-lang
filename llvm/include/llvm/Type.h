@@ -201,7 +201,7 @@ public:
   /// TargetData subsystem to do this.
   ///
   bool isSized() const {
-    // If it's a primative, it is always sized.
+    // If it's a primitive, it is always sized.
     if (ID >= BoolTyID && ID <= DoubleTyID || ID == PointerTyID)
       return true;
     // If it is not something that can have a size (e.g. a function or label),
