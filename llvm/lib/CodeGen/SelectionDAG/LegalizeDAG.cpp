@@ -706,11 +706,35 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::MEMSET:
   case ISD::MEMCPY:
   case ISD::MEMMOVE: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Tmp3 = LegalizeOp(Node->getOperand(2));
-    SDOperand Tmp4 = LegalizeOp(Node->getOperand(3));
-    SDOperand Tmp5 = LegalizeOp(Node->getOperand(4));
+    Tmp1 = LegalizeOp(Node->getOperand(0));      // Function
+    Tmp2 = LegalizeOp(Node->getOperand(1));      // Pointer
+
+    if (Node->getOpcode() == ISD::MEMSET) {      // memset = ubyte
+      switch (getTypeAction(Node->getOperand(2).getValueType())) {
+      case Expand: assert(0 && "Cannot expand a byte!");
+      case Legal:
+        Tmp3 = LegalizeOp(Node->getOperand(1));
+        break;
+      case Promote:
+        Tmp3 = PromoteOp(Node->getOperand(1));
+        break;
+      }
+    } else {
+      Tmp3 = LegalizeOp(Node->getOperand(2));    // memcpy/move = pointer, 
+    }
+    SDOperand Tmp4, Tmp5;
+    
+    switch (getTypeAction(Node->getOperand(3).getValueType())) {  // uint
+    case Expand: assert(0 && "Cannot expand this yet!");
+    case Legal:
+      Tmp4 = LegalizeOp(Node->getOperand(3));
+      Tmp5 = LegalizeOp(Node->getOperand(4));
+      break;
+    case Promote:
+      Tmp4 = PromoteOp(Node->getOperand(3));
+      Tmp5 = PromoteOp(Node->getOperand(4));
+      break;
+    }
 
     switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action not implemented for this operation!");
