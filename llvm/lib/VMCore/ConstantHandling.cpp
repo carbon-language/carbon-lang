@@ -53,6 +53,9 @@ Constant *ConstantFoldInstruction(Instruction *I) {
   case Instruction::Mul:     return *Op0 * *Op1;
   case Instruction::Div:     return *Op0 / *Op1;
   case Instruction::Rem:     return *Op0 % *Op1;
+  case Instruction::And:     return *Op0 & *Op1;
+  case Instruction::Or:      return *Op0 | *Op1;
+  case Instruction::Xor:     return *Op0 ^ *Op1;
 
   case Instruction::SetEQ:   return *Op0 == *Op1;
   case Instruction::SetNE:   return *Op0 != *Op1;
@@ -86,6 +89,9 @@ Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
   case Instruction::Mul:     return *V1 * *V2;
   case Instruction::Div:     return *V1 / *V2;
   case Instruction::Rem:     return *V1 % *V2;
+  case Instruction::And:     return *V1 & *V2;
+  case Instruction::Or:      return *V1 | *V2;
+  case Instruction::Xor:     return *V1 ^ *V2;
 
   case Instruction::SetEQ:   return *V1 == *V2;
   case Instruction::SetNE:   return *V1 != *V2;
@@ -129,36 +135,35 @@ class TemplateRules : public ConstRules {
   virtual Constant *op_not(const Constant *V) const {
     return SubClassName::Not((const ArgType *)V);
   }
-
   
-  virtual Constant *add(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *add(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Add((const ArgType *)V1, (const ArgType *)V2);  
   }
-
-  virtual Constant *sub(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *sub(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Sub((const ArgType *)V1, (const ArgType *)V2);  
   }
-
-  virtual Constant *mul(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *mul(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);  
   }
-  virtual Constant *div(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *div(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Div((const ArgType *)V1, (const ArgType *)V2);  
   }
-  virtual Constant *rem(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *rem(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);  
   }
-  virtual Constant *shl(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *op_and(const Constant *V1, const Constant *V2) const { 
+    return SubClassName::And((const ArgType *)V1, (const ArgType *)V2);  
+  }
+  virtual Constant *op_or(const Constant *V1, const Constant *V2) const { 
+    return SubClassName::Or((const ArgType *)V1, (const ArgType *)V2);  
+  }
+  virtual Constant *op_xor(const Constant *V1, const Constant *V2) const { 
+    return SubClassName::Xor((const ArgType *)V1, (const ArgType *)V2);  
+  }
+  virtual Constant *shl(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Shl((const ArgType *)V1, (const ArgType *)V2);  
   }
-  virtual Constant *shr(const Constant *V1, 
-                        const Constant *V2) const { 
+  virtual Constant *shr(const Constant *V1, const Constant *V2) const { 
     return SubClassName::Shr((const ArgType *)V1, (const ArgType *)V2);  
   }
 
@@ -210,47 +215,36 @@ class TemplateRules : public ConstRules {
   // Default "noop" implementations
   //===--------------------------------------------------------------------===//
 
-  inline static Constant *Not(const ArgType *V) { return 0; }
+  static Constant *Not(const ArgType *V) { return 0; }
 
-  inline static Constant *Add(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static Constant *Sub(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static Constant *Mul(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static Constant *Div(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static Constant *Rem(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static Constant *Shl(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static Constant *Shr(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  inline static ConstantBool *LessThan(const ArgType *V1, const ArgType *V2) {
+  static Constant *Add(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Sub(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Mul(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Div(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Rem(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *And(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Or (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Xor(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Shl(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Shr(const ArgType *V1, const ArgType *V2) { return 0; }
+  static ConstantBool *LessThan(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
 
   // Casting operators.  ick
-  inline static ConstantBool *CastToBool  (const Constant *V) { return 0; }
-  inline static ConstantSInt *CastToSByte (const Constant *V) { return 0; }
-  inline static ConstantUInt *CastToUByte (const Constant *V) { return 0; }
-  inline static ConstantSInt *CastToShort (const Constant *V) { return 0; }
-  inline static ConstantUInt *CastToUShort(const Constant *V) { return 0; }
-  inline static ConstantSInt *CastToInt   (const Constant *V) { return 0; }
-  inline static ConstantUInt *CastToUInt  (const Constant *V) { return 0; }
-  inline static ConstantSInt *CastToLong  (const Constant *V) { return 0; }
-  inline static ConstantUInt *CastToULong (const Constant *V) { return 0; }
-  inline static ConstantFP   *CastToFloat (const Constant *V) { return 0; }
-  inline static ConstantFP   *CastToDouble(const Constant *V) { return 0; }
-  inline static ConstantPointer *CastToPointer(const Constant *,
-                                               const PointerType *) {return 0;}
+  static ConstantBool *CastToBool  (const Constant *V) { return 0; }
+  static ConstantSInt *CastToSByte (const Constant *V) { return 0; }
+  static ConstantUInt *CastToUByte (const Constant *V) { return 0; }
+  static ConstantSInt *CastToShort (const Constant *V) { return 0; }
+  static ConstantUInt *CastToUShort(const Constant *V) { return 0; }
+  static ConstantSInt *CastToInt   (const Constant *V) { return 0; }
+  static ConstantUInt *CastToUInt  (const Constant *V) { return 0; }
+  static ConstantSInt *CastToLong  (const Constant *V) { return 0; }
+  static ConstantUInt *CastToULong (const Constant *V) { return 0; }
+  static ConstantFP   *CastToFloat (const Constant *V) { return 0; }
+  static ConstantFP   *CastToDouble(const Constant *V) { return 0; }
+  static ConstantPointer *CastToPointer(const Constant *,
+                                        const PointerType *) {return 0;}
 };
 
 
@@ -274,18 +268,20 @@ struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
 //
 struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 
-  inline static Constant *Not(const ConstantBool *V) { 
+  static Constant *Not(const ConstantBool *V) { 
     return ConstantBool::get(!V->getValue());
   }
 
-  inline static Constant *Or(const ConstantBool *V1,
-                             const ConstantBool *V2) {
+  static Constant *And(const ConstantBool *V1, const ConstantBool *V2) {
+    return ConstantBool::get(V1->getValue() & V2->getValue());
+  }
+
+  static Constant *Or(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() | V2->getValue());
   }
 
-  inline static Constant *And(const ConstantBool *V1, 
-                              const ConstantBool *V2) {
-    return ConstantBool::get(V1->getValue() & V2->getValue());
+  static Constant *Xor(const ConstantBool *V1, const ConstantBool *V2) {
+    return ConstantBool::get(V1->getValue() ^ V2->getValue());
   }
 };
 
@@ -297,53 +293,53 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 // PointerRules provides a concrete base class of ConstRules for pointer types
 //
 struct PointerRules : public TemplateRules<ConstantPointer, PointerRules> {
-  inline static ConstantBool *CastToBool  (const Constant *V) {
+  static ConstantBool *CastToBool  (const Constant *V) {
     if (V->isNullValue()) return ConstantBool::False;
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantSInt *CastToSByte (const Constant *V) {
+  static ConstantSInt *CastToSByte (const Constant *V) {
     if (V->isNullValue()) return ConstantSInt::get(Type::SByteTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantUInt *CastToUByte (const Constant *V) {
+  static ConstantUInt *CastToUByte (const Constant *V) {
     if (V->isNullValue()) return ConstantUInt::get(Type::UByteTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantSInt *CastToShort (const Constant *V) {
+  static ConstantSInt *CastToShort (const Constant *V) {
     if (V->isNullValue()) return ConstantSInt::get(Type::ShortTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantUInt *CastToUShort(const Constant *V) {
+  static ConstantUInt *CastToUShort(const Constant *V) {
     if (V->isNullValue()) return ConstantUInt::get(Type::UShortTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantSInt *CastToInt   (const Constant *V) {
+  static ConstantSInt *CastToInt   (const Constant *V) {
     if (V->isNullValue()) return ConstantSInt::get(Type::IntTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantUInt *CastToUInt  (const Constant *V) {
+  static ConstantUInt *CastToUInt  (const Constant *V) {
     if (V->isNullValue()) return ConstantUInt::get(Type::UIntTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantSInt *CastToLong  (const Constant *V) {
+  static ConstantSInt *CastToLong  (const Constant *V) {
     if (V->isNullValue()) return ConstantSInt::get(Type::LongTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantUInt *CastToULong (const Constant *V) {
+  static ConstantUInt *CastToULong (const Constant *V) {
     if (V->isNullValue()) return ConstantUInt::get(Type::ULongTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantFP   *CastToFloat (const Constant *V) {
+  static ConstantFP   *CastToFloat (const Constant *V) {
     if (V->isNullValue()) return ConstantFP::get(Type::FloatTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
-  inline static ConstantFP   *CastToDouble(const Constant *V) {
+  static ConstantFP   *CastToDouble(const Constant *V) {
     if (V->isNullValue()) return ConstantFP::get(Type::DoubleTy, 0);
     return 0;  // Can't const prop other types of pointers
   }
 
-  inline static ConstantPointer *CastToPointer(const ConstantPointer *V,
-                                               const PointerType *PTy) {
+  static ConstantPointer *CastToPointer(const ConstantPointer *V,
+                                        const PointerType *PTy) {
     if (V->getType() == PTy)
       return const_cast<ConstantPointer*>(V);  // Allow cast %PTy %ptr to %PTy
     if (V->isNullValue())
@@ -363,43 +359,35 @@ struct PointerRules : public TemplateRules<ConstantPointer, PointerRules> {
 //
 template<class ConstantClass, class BuiltinType, Type **Ty, class SuperClass>
 struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
-  inline static Constant *Add(const ConstantClass *V1, 
-                              const ConstantClass *V2) {
-    BuiltinType Result = (BuiltinType)V1->getValue() + 
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+  static Constant *Add(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() + (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 
-  inline static Constant *Sub(const ConstantClass *V1, 
-                              const ConstantClass *V2) {
-    BuiltinType Result = (BuiltinType)V1->getValue() -
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+  static Constant *Sub(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() - (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 
-  inline static Constant *Mul(const ConstantClass *V1, 
-                              const ConstantClass *V2) {
-    BuiltinType Result = (BuiltinType)V1->getValue() *
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+  static Constant *Mul(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() * (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 
-  inline static Constant *Div(const ConstantClass *V1,
-                              const ConstantClass *V2) {
+  static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
     if (V2->isNullValue()) return 0;
-    BuiltinType Result = (BuiltinType)V1->getValue() /
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+    BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 
-  inline static ConstantBool *LessThan(const ConstantClass *V1, 
-                                       const ConstantClass *V2) {
-    bool Result = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
-    return ConstantBool::get(Result);
+  static ConstantBool *LessThan(const ConstantClass *V1,
+                                const ConstantClass *V2) {
+    bool R = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
+    return ConstantBool::get(R);
   } 
 
-  inline static ConstantPointer *CastToPointer(const ConstantClass *V,
-                                               const PointerType *PTy) {
+  static ConstantPointer *CastToPointer(const ConstantClass *V,
+                                        const PointerType *PTy) {
     if (V->isNullValue())    // Is it a FP or Integral null value?
       return ConstantPointerNull::get(PTy);
     return 0;  // Can't const prop other types of pointers
@@ -407,7 +395,7 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
 
   // Casting operators.  ick
 #define DEF_CAST(TYPE, CLASS, CTYPE) \
-  inline static CLASS *CastTo##TYPE  (const ConstantClass *V) {    \
+  static CLASS *CastTo##TYPE  (const ConstantClass *V) {    \
     return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
   }
 
@@ -437,30 +425,38 @@ template <class ConstantClass, class BuiltinType, Type **Ty>
 struct DirectIntRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
                        DirectIntRules<ConstantClass, BuiltinType, Ty> > {
-  inline static Constant *Not(const ConstantClass *V) { 
+  static Constant *Not(const ConstantClass *V) { 
     return ConstantClass::get(*Ty, ~(BuiltinType)V->getValue());;
   }
 
-  inline static Constant *Rem(const ConstantClass *V1,
-                              const ConstantClass *V2) {
+  static Constant *Rem(const ConstantClass *V1,
+                       const ConstantClass *V2) {
     if (V2->isNullValue()) return 0;
-    BuiltinType Result = (BuiltinType)V1->getValue() %
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+    BuiltinType R = (BuiltinType)V1->getValue() % (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 
-  inline static Constant *Shl(const ConstantClass *V1,
-                              const ConstantClass *V2) {
-    BuiltinType Result = (BuiltinType)V1->getValue() <<
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+  static Constant *And(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() & (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
+  }
+  static Constant *Or(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() | (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
+  }
+  static Constant *Xor(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() ^ (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 
-  inline static Constant *Shr(const ConstantClass *V1,
-                              const ConstantClass *V2) {
-    BuiltinType Result = (BuiltinType)V1->getValue() >>
-                         (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, Result);
+  static Constant *Shl(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() << (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
+  }
+
+  static Constant *Shr(const ConstantClass *V1, const ConstantClass *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() >> (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
   }
 };
 
@@ -476,8 +472,7 @@ template <class ConstantClass, class BuiltinType, Type **Ty>
 struct DirectFPRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
                        DirectFPRules<ConstantClass, BuiltinType, Ty> > {
-  inline static Constant *Rem(const ConstantClass *V1,
-                              const ConstantClass *V2) {
+  static Constant *Rem(const ConstantClass *V1, const ConstantClass *V2) {
     if (V2->isNullValue()) return 0;
     BuiltinType Result = std::fmod((BuiltinType)V1->getValue(),
                                    (BuiltinType)V2->getValue());
