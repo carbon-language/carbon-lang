@@ -15,7 +15,7 @@ class InternalizePass : public Pass {
   virtual bool run(Module *M) {
     bool FoundMain = false;   // Look for a function named main...
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      if ((*I)->getName() == "main") {
+      if ((*I)->getName() == "main" && !(*I)->isExternal()) {
         FoundMain = true;
         break;
       }
@@ -26,7 +26,8 @@ class InternalizePass : public Pass {
 
     // Found a main function, mark all functions not named main as internal.
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      if ((*I)->getName() != "main")  // Leave the main function external
+      if ((*I)->getName() != "main" &&  // Leave the main function external
+          !(*I)->isExternal())          // Function must be defined here
         (*I)->setInternalLinkage(Changed = true);
 
     return Changed;
