@@ -26,9 +26,10 @@ namespace llvm {
 
 struct FunctionInfo;        // Defined in ExecutionAnnotations.h
 class gep_type_iterator;
+class ConstantExpr;
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by
-// alloca.  When the function returns, this object is poped off the execution
+// alloca.  When the function returns, this object is popped off the execution
 // stack, which causes the dtor to be run, which frees all the alloca'd memory.
 //
 class AllocaHolder {
@@ -174,6 +175,7 @@ private:  // Helper functions
 
   void initializeExecutionEngine();
   void initializeExternalFunctions();
+  GenericValue getConstantExprValue(ConstantExpr *CE, ExecutionContext &SF);
   GenericValue getOperandValue(Value *V, ExecutionContext &SF);
   GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
 				    ExecutionContext &SF);
