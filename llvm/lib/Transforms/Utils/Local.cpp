@@ -20,6 +20,14 @@
 #include <cmath>
 using namespace llvm;
 
+#if defined(__POWERPC__) && defined(__APPLE_CC__)
+// FIXME: Currently it seems that isnan didn't make its way into the Apple
+// C++ headers, although it IS in the C headers (which confuses autoconf
+// in a big way). This is a quick fix to get things compiling, until one of
+// us has time to write a more complicated autoconf test.
+extern "C" int isnan (double d);
+#endif
+
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
 //
