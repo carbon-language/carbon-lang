@@ -21,6 +21,33 @@ using namespace sys;
 //===          independent code. 
 //===----------------------------------------------------------------------===//
 
+LLVMFileType 
+IdentifyFileType(const char*magic, unsigned length) {
+  assert(magic && "Invalid magic number string");
+  assert(length >=4 && "Invalid magic number length");
+  switch (magic[0]) {
+    case 'l':
+      if (magic[1] == 'l' && magic[2] == 'v') {
+        if (magic[3] == 'c')
+          return CompressedBytecodeFileType;
+        else if (magic[3] == 'm')
+          return BytecodeFileType;
+      }
+      break;
+
+    case '!':
+      if (length >= 8) {
+        if (memcmp(magic,"!<arch>\n",8) == 0)
+          return ArchiveFileType;
+      }
+      break;
+
+    default:
+      break;
+  }
+  return UnknownFileType;
+}
+
 }
 
 // Include the truly platform-specific parts of this class.
