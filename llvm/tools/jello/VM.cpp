@@ -59,6 +59,18 @@ const std::string &VM::getFunctionReferencedName(void *RefAddr) {
   return FunctionRefs[RefAddr]->getName();
 }
 
+// getPointerToGlobal - This returns the address of the specified global
+// value.  This may involve code generation if it's a function.
+//
+void *VM::getPointerToGlobal(GlobalValue *GV) {
+  if (Function *F = dyn_cast<Function>(GV))
+    return getPointerToFunction(F);
+
+  assert(GlobalAddress[GV] && "Global hasn't had an address allocated yet?");
+  return GlobalAddress[GV];
+}
+
+
 static void NoopFn() {}
 
 /// getPointerToFunction - This method is used to get the address of the

@@ -61,6 +61,11 @@ public:
 
   void *resolveFunctionReference(void *RefAddr);
 
+  // getPointerToGlobal - This returns the address of the specified global
+  // value.  This may involve code generation if it's a function.
+  //
+  void *getPointerToGlobal(GlobalValue *GV);
+
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();

@@ -23,6 +23,7 @@ namespace {
     virtual void startBasicBlock(MachineBasicBlock &BB) {}
     virtual void emitByte(unsigned char B);
     virtual void emitPCRelativeDisp(Value *V);
+    virtual void emitGlobalAddress(GlobalValue *V);
   };
 }
 
@@ -44,6 +45,7 @@ static void *getMemory() {
 void Emitter::startFunction(MachineFunction &F) {
   CurBlock = (unsigned char *)getMemory();
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
+  TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 #include <iostream>
@@ -53,7 +55,6 @@ void Emitter::finishFunction(MachineFunction &F) {
   std::cerr << "Finished Code Generation of Function: "
             << F.getFunction()->getName() << ": " << CurByte-CurBlock
             << " bytes of text\n";
-  TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 
@@ -72,5 +73,10 @@ void Emitter::emitPCRelativeDisp(Value *V) {
 
   unsigned ZeroAddr = -(unsigned)CurByte-4; // Calculate displacement to null
   *(unsigned*)CurByte = ZeroAddr;   // 4 byte offset
+  CurByte += 4;
+}
+
+void Emitter::emitGlobalAddress(GlobalValue *V) {
+  *(void**)CurByte = TheVM.getPointerToGlobal(V);
   CurByte += 4;
 }
