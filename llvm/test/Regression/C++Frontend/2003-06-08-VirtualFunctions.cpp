@@ -7,17 +7,10 @@ struct foo {
 };
 
 struct bar : public foo {
-  //int x;
   bar();
   int T() {}
 };
 
-//int bar::X() { return 0; }
-
-foo::foo() : y(4) {
-
-}
-
-bar::bar() {
-
-}
+foo::foo() : y(4) { }
+bar::bar() { }
+int main() { return 0; }

@@ -15,3 +15,5 @@ struct bar : public foo {
 bar::bar() {
 
 }
+
+int main() { return 0; }
