@@ -15,9 +15,9 @@
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
-#include "llvm/iMemory.h"
 
 namespace llvm {
 
@@ -104,17 +104,14 @@ void BVNImpl::visitCastInst(CastInst &CI) {
   
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
-    if (Instruction *Other = dyn_cast<Instruction>(*UI))
-      // Check to see if this new cast is not I, but has the same operand...
-      if (Other != &I && Other->getOpcode() == I.getOpcode() &&
-          Other->getOperand(0) == Op &&     // Is the operand the same?
+    if (CastInst *Other = dyn_cast<CastInst>(*UI))
+      // Check that the types are the same, since this code handles casts...
+      if (Other->getType() == I.getType() &&
           // Is it embedded in the same function?  (This could be false if LHS
           // is a constant or global!)
           Other->getParent()->getParent() == F &&
-
-          // Check that the types are the same, since this code handles casts...
-          Other->getType() == I.getType()) {
-        
+          // Check to see if this new cast is not I.
+          Other != &I) {
         // These instructions are identical.  Add to list...
         RetVals.push_back(Other);
       }
