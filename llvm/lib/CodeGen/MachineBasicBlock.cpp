@@ -29,27 +29,23 @@ MachineBasicBlock::~MachineBasicBlock() {
 // MBBs start out as #-1. When a MBB is added to a MachineFunction, it 
 // gets the next available unique MBB number. If it is removed from a
 // MachineFunction, it goes back to being #-1.
-void ilist_traits<MachineBasicBlock>::addNodeToList (MachineBasicBlock* N)
-{
+void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
   assert(N->Parent == 0 && "machine instruction already in a basic block");
   N->Parent = Parent;
-  N->Number = Parent->getNextMBBNumber();
+  N->Number = Parent->addToMBBNumbering(N);
   LeakDetector::removeGarbageObject(N);
-  
-
 }
 
-void ilist_traits<MachineBasicBlock>::removeNodeFromList (MachineBasicBlock* N)
-{
+void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
   assert(N->Parent != 0 && "machine instruction not in a basic block");
-  N->Parent = 0;
+  N->Parent->removeFromMBBNumbering(N->Number);
   N->Number = -1;
+  N->Parent = 0;
   LeakDetector::addGarbageObject(N);
 }
 
 
-MachineInstr* ilist_traits<MachineInstr>::createNode()
-{
+MachineInstr* ilist_traits<MachineInstr>::createNode() {
     MachineInstr* dummy = new MachineInstr(0, 0);
     LeakDetector::removeGarbageObject(dummy);
     return dummy;
