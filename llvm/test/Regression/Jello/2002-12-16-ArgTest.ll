@@ -2,7 +2,7 @@
 
 implementation   ; Functions:
 
-declare void %__main()
+void %__main() { ret void } 
 
 declare int %puts(sbyte*)
 
