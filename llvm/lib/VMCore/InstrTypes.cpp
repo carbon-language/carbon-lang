@@ -27,21 +27,6 @@ TerminatorInst::TerminatorInst(const Type *Ty, Instruction::TermOps iType,
 
 
 //===----------------------------------------------------------------------===//
-//                            FunctionArgument Class
-//===----------------------------------------------------------------------===//
-
-// Specialize setName to take care of symbol table majik
-void FunctionArgument::setName(const std::string &name, SymbolTable *ST) {
-  Function *P;
-  assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
-	 "Invalid symtab argument!");
-  if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable()->insert(this);
-}
-
-
-//===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 
