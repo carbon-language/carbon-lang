@@ -158,7 +158,6 @@ internal        { return INTERNAL; }
 uninitialized   { return UNINIT; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
-string          { return STRING; }
 null            { return NULL_TOK; }
 to              { return TO; }
 except          { return EXCEPT; }

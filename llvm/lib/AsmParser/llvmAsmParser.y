@@ -292,15 +292,11 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   // Check to make sure that "Ty" is an integral type, and that our 
   // value will fit into the specified type...
   case ValID::ConstSIntVal:    // Is it a constant pool reference??
-    if (Ty == Type::BoolTy) {  // Special handling for boolean data
-      return ConstantBool::get(D.ConstPool64 != 0);
-    } else {
-      if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
-	ThrowException("Signed integral constant '" +
-		       itostr(D.ConstPool64) + "' is invalid for type '" + 
-		       Ty->getDescription() + "'!");
-      return ConstantSInt::get(Ty, D.ConstPool64);
-    }
+    if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
+      ThrowException("Signed integral constant '" +
+                     itostr(D.ConstPool64) + "' is invalid for type '" + 
+                     Ty->getDescription() + "'!");
+    return ConstantSInt::get(Ty, D.ConstPool64);
 
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
     if (!ConstantUInt::isValueValidForType(Ty, D.UConstPool64)) {
@@ -324,6 +320,11 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
       ThrowException("Cannot create a a non pointer null!");
     return ConstantPointerNull::get(cast<PointerType>(Ty));
     
+  case ValID::ConstantVal:       // Fully resolved constant?
+    if (D.ConstantValue->getType() != Ty)
+      ThrowException("Constant expression type different from required type!");
+    return D.ConstantValue;
+
   default:
     assert(0 && "Unhandled case!");
     return 0;
@@ -670,7 +671,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT UNINIT
-%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL OPAQUE NOT
+%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL OPAQUE NOT
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -759,7 +760,7 @@ UpRTypes : OPAQUE {
   | PrimType {
     $$ = new PATypeHolder($1);
   };
-UpRTypes : ValueRef {                    // Named types are also simple types...
+UpRTypes : SymbolicValueRef {            // Named types are also simple types...
   $$ = new PATypeHolder(getTypeVal($1));
 };
 
@@ -827,7 +828,10 @@ ArgTypeListI : TypeListI
   };
 
 // ConstVal - The various declarations that go into the constant pool.  This
-// includes all forward declarations of types, constants, and functions.
+// production is used ONLY to represent constants that show up AFTER a 'const',
+// 'constant' or 'global' token at global scope.  Constants that can be inlined
+// into other expressions (such as integers and constexprs) are handled by the
+// ResolvedVal, ValueRef and ConstValueRef productions.
 //
 ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
@@ -968,8 +972,11 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstantPointerRef::get(GV);
     delete $1;            // Free the type handle
   }
-  | ConstExpr {
-    $$ = $1;
+  | Types ConstExpr {
+    if ($1->get() != $2->getType())
+      ThrowException("Mismatched types for constant expression!");
+    $$ = $2;
+    delete $1;
   };
 
 ConstVal : SIntType EINT64VAL {     // integral constants
@@ -993,52 +1000,39 @@ ConstVal : SIntType EINT64VAL {     // integral constants
   };
 
 
-ConstExpr: Types CAST ConstVal TO Types {
+ConstExpr: CAST '(' ConstVal TO Types ')' {
     $$ = ConstantExpr::getCast($3, $5->get());
-    if ($1->get() != $5->get())
-      ThrowException("Mismatching ConstExpr cast type");
-    delete $1;
     delete $5;
   }
-  | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
-    if (!isa<PointerType>($4->getType()))
+  | GETELEMENTPTR '(' ConstVal IndexList ')' {
+    if (!isa<PointerType>($3->getType()))
       ThrowException("GetElementPtr requires a pointer operand!");
 
     const Type *IdxTy =
-      GetElementPtrInst::getIndexedType($4->getType(), *$5, true);
+      GetElementPtrInst::getIndexedType($3->getType(), *$4, true);
     if (!IdxTy)
       ThrowException("Index list invalid for constant getelementptr!");
-    if (PointerType::get(IdxTy) != $1->get())
-      ThrowException("Declared type of constant getelementptr is incorrect!");
 
     vector<Constant*> IdxVec;
-    for (unsigned i = 0, e = $5->size(); i != e; ++i)
-      if (Constant *C = dyn_cast<Constant>((*$5)[i]))
+    for (unsigned i = 0, e = $4->size(); i != e; ++i)
+      if (Constant *C = dyn_cast<Constant>((*$4)[i]))
         IdxVec.push_back(C);
       else
         ThrowException("Indices to constant getelementptr must be constants!");
 
-    delete $5;
+    delete $4;
 
-    $$ = ConstantExpr::getGetElementPtr($4, IdxVec);
-    delete $1;
+    $$ = ConstantExpr::getGetElementPtr($3, IdxVec);
   }
-  | Types BinaryOps ConstVal ',' ConstVal {
+  | BinaryOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
       ThrowException("Binary operator types must match!");
-    if ($1->get() != $3->getType())
-      ThrowException("Return type of binary constant must match arguments!");
-    $$ = ConstantExpr::get($2, $3, $5);
-    delete $1;
+    $$ = ConstantExpr::get($1, $3, $5);
   }
-  | Types ShiftOps ConstVal ',' ConstVal {
-    if ($1->get() != $3->getType())
-      ThrowException("Return type of shift constant must match argument!");
+  | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if ($5->getType() != Type::UByteTy)
       ThrowException("Shift count for shift constant must be unsigned byte!");
-    
-    $$ = ConstantExpr::get($2, $3, $5);
-    delete $1;
+    $$ = ConstantExpr::get($1, $3, $5);
   };
 
 
@@ -1304,15 +1298,17 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     $$ = ValID::create($1);
   }
   | TRUE {
-    $$ = ValID::create((int64_t)1);
+    $$ = ValID::create(ConstantBool::True);
   } 
   | FALSE {
-    $$ = ValID::create((int64_t)0);
+    $$ = ValID::create(ConstantBool::False);
   }
   | NULL_TOK {
     $$ = ValID::createNull();
   }
-  ;
+  | ConstExpr {
+    $$ = ValID::create($1);
+  };
 
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
 // another value.
@@ -1333,9 +1329,6 @@ ValueRef : SymbolicValueRef | ConstValueRef;
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : Types ValueRef {
     $$ = getVal(*$1, $2); delete $1;
-  }
-  | ConstExpr {
-    $$ = $1;
   };
 
 BasicBlockList : BasicBlockList BasicBlock {

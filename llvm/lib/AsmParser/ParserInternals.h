@@ -63,7 +63,8 @@ static inline void ThrowException(const std::string &message,
 //
 struct ValID {
   enum {
-    NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal
+    NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal,
+    ConstantVal,
   } Type;
 
   union {
@@ -72,6 +73,7 @@ struct ValID {
     int64_t  ConstPool64; // Constant pool reference.  This is the value
     uint64_t UConstPool64;// Unsigned constant pool reference.
     double   ConstPoolFP; // Floating point constant pool reference
+    Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
   };
 
   static ValID create(int Num) {
@@ -98,6 +100,10 @@ struct ValID {
     ValID D; D.Type = ConstNullVal; return D;
   }
 
+  static ValID create(Constant *Val) {
+    ValID D; D.Type = ConstantVal; D.ConstantValue = Val; return D;
+  }
+
   inline void destroy() const {
     if (Type == NameVal)
       free(Name);    // Free this strdup'd memory...
@@ -118,6 +124,10 @@ struct ValID {
     case ConstNullVal  : return "null";
     case ConstUIntVal  :
     case ConstSIntVal  : return std::string("%") + itostr(ConstPool64);
+    case ConstantVal:
+      if (ConstantValue == ConstantBool::True) return "true";
+      if (ConstantValue == ConstantBool::False) return "false";
+      return "<constant expression>";
     default:
       assert(0 && "Unknown value!");
       abort();
@@ -134,6 +144,7 @@ struct ValID {
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
     case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;
     case ConstNullVal:  return false;
+    case ConstantVal:   return ConstantValue < V.ConstantValue;
     default:  assert(0 && "Unknown value type!"); return false;
     }
   }
