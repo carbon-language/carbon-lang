@@ -20,7 +20,7 @@
 #include "llvm/DerivedTypes.h"
 
 namespace llvm {
-  class GetElementPtrTypeIterator
+  class gep_type_iterator
     : public forward_iterator<const Type *, ptrdiff_t> {
     typedef forward_iterator<const Type*, ptrdiff_t> super;
 
@@ -28,28 +28,28 @@ namespace llvm {
     const Type *CurTy;
     unsigned Operand;
     
-    GetElementPtrTypeIterator() {}
+    gep_type_iterator() {}
   public:
 
-    static GetElementPtrTypeIterator begin(GetElementPtrInst *gep) {
-      GetElementPtrTypeIterator I;
+    static gep_type_iterator begin(GetElementPtrInst *gep) {
+      gep_type_iterator I;
       I.TheGEP = gep;
       I.CurTy = gep->getOperand(0)->getType();
       I.Operand = 1;
       return I;
     }
-    static GetElementPtrTypeIterator end(GetElementPtrInst *gep) {
-      GetElementPtrTypeIterator I;
+    static gep_type_iterator end(GetElementPtrInst *gep) {
+      gep_type_iterator I;
       I.TheGEP = gep;
       I.CurTy = 0;
       I.Operand = gep->getNumOperands();
       return I;
     }
 
-    bool operator==(const GetElementPtrTypeIterator& x) const { 
+    bool operator==(const gep_type_iterator& x) const { 
       return Operand == x.Operand;
     }
-    bool operator!=(const GetElementPtrTypeIterator& x) const {
+    bool operator!=(const gep_type_iterator& x) const {
       return !operator==(x);
     }
 
@@ -65,7 +65,7 @@ namespace llvm {
 
     Value *getOperand() const { return TheGEP->getOperand(Operand); }
 
-    GetElementPtrTypeIterator& operator++() {   // Preincrement
+    gep_type_iterator& operator++() {   // Preincrement
       if (const CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
         CurTy = CT->getTypeAtIndex(getOperand());
       } else {
@@ -75,17 +75,17 @@ namespace llvm {
       return *this; 
     }
 
-    GetElementPtrTypeIterator operator++(int) { // Postincrement
-      GetElementPtrTypeIterator tmp = *this; ++*this; return tmp; 
+    gep_type_iterator operator++(int) { // Postincrement
+      gep_type_iterator tmp = *this; ++*this; return tmp; 
     }
   };
 
-  inline GetElementPtrTypeIterator gep_type_begin(GetElementPtrInst *GEP) {
-    return GetElementPtrTypeIterator::begin(GEP);
+  inline gep_type_iterator gep_type_begin(GetElementPtrInst *GEP) {
+    return gep_type_iterator::begin(GEP);
   }
 
-  inline GetElementPtrTypeIterator gep_type_end(GetElementPtrInst *GEP) {
-    return GetElementPtrTypeIterator::end(GEP);
+  inline gep_type_iterator gep_type_end(GetElementPtrInst *GEP) {
+    return gep_type_iterator::end(GEP);
   }
 } // end namespace llvm
 
