@@ -19,6 +19,7 @@
       <li><a href="#blocks">Blocks</a></li>
       <li><a href="#lists">Lists</a></li>
       <li><a href="#fields">Fields</a></li>
+      <li><a href="#slots">Slots</a></li>
       <li><a href="#encoding">Encoding Rules</a></li>
       <li><a href="#align">Alignment</a></li>
     </ol>
@@ -118,6 +119,43 @@ fields.</p>
 they must contain. As few bits as possible are written for each field. The
 sections that follow will provide the details on how these fields are 
 written and how the bits are to be interpreted.</p>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="slots">Slots</a> </div>
+<div class="doc_text">
+<p>The bytecode format uses the notion of a "slot" to reference Types and
+Values. Since the bytecode file is a <em>direct</em> representation of LLVM's
+intermediate representation, there is a need to represent pointers in the file.
+Slots are used for this purpose. For example, if one has the following assembly:
+</p>
+<pre><code>
+  %MyType = type { int, sbyte };
+  %MyVar = external global %MyType ;
+</code></pre>
+<p>there are two definitions. The definition of %MyVar uses %MyType and %MyType
+is used by %MyVar. In the C++ IR this linkage between %MyVar and %MyType is
+made explicitly by the use of C++ pointers. In bytecode, however, there's no
+ability to store memory addresses. Instead, we compute and write out slot 
+numbers for every type and Value written to the file.</p>
+<p>A slot number is simply an unsigned 32-bit integer encoded in the variable
+bit rate scheme (see <a href="#encoding">encoding</a> below). This ensures that
+low slot numbers are encoded in one byte. Through various bits of magic LLVM
+attempts to always keep the slot numbers low. The first attempt is to associate
+slot numbers with their "type plane". That is, Values of the same type are 
+written to the bytecode file in a list (sequentially). Their order in that list
+determines their slot number. This means that slot #1 doesn't mean anything
+unless you also specify for which type you want slot #1. Types are handled
+specially and are always written to the file first (in the Global Type Pool) and
+in such a way that both forward and backward references of the types can be
+resolved with a single pass through the type pool. </p>
+<p>Slot numbers are also kept small by rearranging their order. Because of the
+structure of LLVM, certain values are much more likely to be used frequently
+in the body of a function. For this reason, a compaction table is provided in
+the body of a function if its use would make the function body smaller. 
+Suppose you have a function body that uses just the types "int*" and "{double}"
+but uses them thousands of time. Its worthwhile to ensure that the slot number
+for these types are low so they can be encoded in a single byte (via vbr).
+This is exactly what the compaction table does.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="encoding">Encoding Primitives</a> </div>
