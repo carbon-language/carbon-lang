@@ -1,7 +1,7 @@
 // $Id$ -*-c++-*-
 //***************************************************************************
 // File:
-//	InstrSelection.h
+//	InstrSelection.cpp
 // 
 // Purpose:
 //	
@@ -10,37 +10,47 @@
 //**************************************************************************/
 
 
-#include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/Method.h"
-#include "llvm/BasicBlock.h"
+//************************** System Include Files ***************************/
+
+
+//*************************** User Include Files ***************************/
+
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Method.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/CodeGen/InstrSelection.h"
 
-enum DebugLev {
-  NoDebugInfo,
-  PrintInstTrees, 
-  DebugInstTrees, 
-  DebugBurgTrees,
-};
-
-// Enable Debug Options to be specified on the command line
-cl::Enum<enum DebugLev> DebugLevel("dselect", cl::NoFlags, // cl::Hidden
-   "enable instruction selection debugging information",
-   clEnumValN(NoDebugInfo,    "n", "disable debug output"),
-   clEnumValN(PrintInstTrees, "y", "print generated instruction trees"),
-   clEnumValN(DebugInstTrees, "i", "print instr. selection debugging info"),
-   clEnumValN(DebugBurgTrees, "b", "print burg trees"), 0);
 
 //************************* Forward Declarations ***************************/
 
-static bool SelectInstructionsForTree(BasicTreeNode* treeRoot, int goalnt,
+static bool SelectInstructionsForTree(BasicTreeNode* treeRoot,
+				      int goalnt,
 				      TargetMachine &Target);
 
 
-//******************* Externally Visible Functions *************************/
+//************************* Internal Data Types *****************************/
+
+enum SelectDebugLevel_t {
+  Select_NoDebugInfo,
+  Select_PrintMachineCode, 
+  Select_DebugInstTrees, 
+  Select_DebugBurgTrees,
+};
+
+// Enable Debug Options to be specified on the command line
+cl::Enum<enum SelectDebugLevel_t> SelectDebugLevel("dselect", cl::NoFlags, // cl::Hidden
+   "enable instruction selection debugging information",
+   clEnumValN(Select_NoDebugInfo,      "n", "disable debug output"),
+   clEnumValN(Select_PrintMachineCode, "y", "print generated machine code"),
+   clEnumValN(Select_DebugInstTrees,   "i", "print instr. selection debugging info"),
+   clEnumValN(Select_DebugBurgTrees,   "b", "print burg trees"), 0);
+
+
+//************************** External Functions ****************************/
 
 
 //---------------------------------------------------------------------------
@@ -48,17 +58,30 @@ static bool SelectInstructionsForTree(BasicTreeNode* treeRoot, int goalnt,
 // Returns true if instruction selection failed, false otherwise.
 //---------------------------------------------------------------------------
 
-bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
+bool
+SelectInstructionsForMethod(Method* method,
+			    TargetMachine &Target)
+{
   bool failed = false;
   
+  //
+  // Build the instruction trees to be given as inputs to BURG.
+  // 
   InstrForest instrForest;
   instrForest.buildTreesForMethod(method);
-      
-  const hash_set<InstructionNode*> &treeRoots = instrForest.getRootSet();
+  
+  if (SelectDebugLevel >= Select_DebugInstTrees)
+    {
+      cout << "\n\n*** Instruction trees for method "
+	   << (method->hasName()? method->getName() : "")
+	   << endl << endl;
+      instrForest.dump();
+    }
   
   //
   // Invoke BURG instruction selection for each tree
   // 
+  const hash_set<InstructionNode*> &treeRoots = instrForest.getRootSet();
   for (hash_set<InstructionNode*>::const_iterator
 	 treeRootIter = treeRoots.begin();
        treeRootIter != treeRoots.end();
@@ -69,7 +92,7 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
       // Invoke BURM to label each tree node with a state
       (void) burm_label(basicNode);
       
-      if (DebugLevel >= DebugBurgTrees)
+      if (SelectDebugLevel >= Select_DebugBurgTrees)
 	{
 	  printcover(basicNode, 1, 0);
 	  cerr << "\nCover cost == " << treecost(basicNode, 1, 0) << "\n\n";
@@ -84,20 +107,6 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
 	}
     }
   
-  if (!failed)
-    {
-      if (DebugLevel >= DebugInstTrees)
-	{
-	  cout << "\n\n*** Instruction trees for method "
-	       << (method->hasName()? method->getName() : "")
-	       << endl << endl;
-	  instrForest.dump();
-	}
-      
-      if (DebugLevel >= PrintInstTrees)
-	PrintMachineInstructions(method);
-    }
-  
   //
   // Record instructions in the vector for each basic block
   // 
@@ -110,6 +119,12 @@ bool SelectInstructionsForMethod(Method* method, TargetMachine &Target) {
 	  for (unsigned i=0; i < mvec.size(); i++)
 	    bbMvec.push_back(mvec[i]);
 	}
+    }
+  
+  if (SelectDebugLevel >= Select_PrintMachineCode)
+    {
+      cout << endl << "*** Machine instructions after INSTRUCTION SELECTION" << endl;
+      PrintMachineInstructions(method);
     }
   
   return false;
@@ -156,32 +171,6 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
   return ptrVal;
 }
 
-
-void PrintMachineInstructions(Method* method) {
-  cout << "\n" << method->getReturnType()
-       << " \"" << method->getName() << "\"" << endl;
-  
-  for (Method::const_iterator bbIter = method->begin();
-       bbIter != method->end();
-       ++bbIter)
-    {
-      BasicBlock* bb = *bbIter;
-      cout << "\n"
-	   << (bb->hasName()? bb->getName() : "Label")
-	   << " (" << bb << ")" << ":"
-	   << endl;
-      
-      for (BasicBlock::const_iterator instrIter = bb->begin();
-	   instrIter != bb->end();
-	   ++instrIter)
-	{
-	  Instruction *instr = *instrIter;
-	  const MachineCodeForVMInstr& minstrVec = instr->getMachineInstrVec();
-	  for (unsigned i=0, N=minstrVec.size(); i < N; i++)
-	    cout << "\t" << *minstrVec[i] << endl;
-	}
-    } 
-}
 
 //*********************** Private Functions *****************************/
 
