@@ -17,9 +17,13 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
+#include "Support/Statistic.h"
 #include <algorithm>
 
 using namespace llvm;
+
+static Statistic<> NumSlowTypes("type", "numslowtypes");
+static Statistic<> NumTypeEquals("type", "numtypeequals");
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only
@@ -521,6 +525,19 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
   return TypesEqual(Ty, Ty2, EqTypes);
 }
 
+/// TypeHasCycleThroughItself - Return true if the specified type has a cycle
+/// back to itself.
+static bool TypeHasCycleThroughItself(const Type *Ty) {
+  std::set<const Type*> VisitedTypes;
+  for (Type::subtype_iterator I = Ty->subtype_begin(),
+         E = Ty->subtype_end(); I != E; ++I)
+    for (df_ext_iterator<const Type *, std::set<const Type*> > 
+           DFI = df_ext_begin(I->get(), VisitedTypes),
+           E = df_ext_end(I->get(), VisitedTypes); DFI != E; ++DFI)
+      if (*DFI == Ty)
+        return true;    // Found a cycle through ty!
+  return false;
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -529,15 +546,15 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 
 // TypeMap - Make sure that only one instance of a particular type may be
 // created on any given run of the compiler... note that this involves updating
-// our map if an abstract type gets refined somehow...
+// our map if an abstract type gets refined somehow.
 //
 namespace llvm {
 template<class ValType, class TypeClass>
 class TypeMap {
-  typedef std::map<ValType, PATypeHolder> MapTy;
-  MapTy Map;
+  std::map<ValType, PATypeHolder> Map;
+
 public:
-  typedef typename MapTy::iterator iterator;
+  typedef typename std::map<ValType, PATypeHolder>::iterator iterator;
   ~TypeMap() { print("ON EXIT"); }
 
   inline TypeClass *get(const ValType &V) {
@@ -562,41 +579,39 @@ public:
   /// type with its new components.  We must now either merge the type away with
   /// some other type or reinstall it in the map with it's new configuration.
   /// The specified iterator tells us what the type USED to look like.
-  void finishRefinement(iterator TyIt) {
+  void finishRefinement(TypeClass *Ty, const DerivedType *OldType,
+                        const Type *NewType) {
+    assert((Ty->isAbstract() || !OldType->isAbstract()) &&
+           "Refining a non-abstract type!");
+#ifdef DEBUG_MERGE_TYPES
+    std::cerr << "refineAbstractTy(" << (void*)OldType << "[" << *OldType
+              << "], " << (void*)NewType << " [" << *NewType << "])\n";
+#endif
+
     // Make a temporary type holder for the type so that it doesn't disappear on
     // us when we erase the entry from the map.
-    PATypeHolder TyHolder = TyIt->second;
-    TypeClass *Ty = cast<TypeClass>((Type*)TyHolder.get());
+    PATypeHolder TyHolder = Ty;
+
+    // Look up our current type map entry..
+    iterator TyIt = getEntryForType(Ty);
 
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
     Map.erase(TyIt);
 
-    // Determine whether there is a cycle through the type graph which passes
-    // back through this type.  Other cycles are ok though.
-    bool HasTypeCycle = false;
-    {
-      std::set<const Type*> VisitedTypes;
-      for (Type::subtype_iterator I = Ty->subtype_begin(),
-             E = Ty->subtype_end(); I != E; ++I) {
-        for (df_ext_iterator<const Type *, std::set<const Type*> > 
-               DFI = df_ext_begin(I->get(), VisitedTypes),
-               E = df_ext_end(I->get(), VisitedTypes); DFI != E; ++DFI)
-          if (*DFI == Ty) {
-            HasTypeCycle = true;
-            goto FoundCycle;
-          }
+    // Find the type element we are refining...
+    for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+      if (Ty->ContainedTys[i] == OldType) {
+        Ty->ContainedTys[i].removeUserFromConcrete();
+        Ty->ContainedTys[i] = NewType;
       }
-    }
-  FoundCycle:
-
-    ValType Key = ValType::get(Ty);
-
+    
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
-    if (!HasTypeCycle) {
-      iterator I = Map.find(Key);
+    bool TypeHasCycle = TypeHasCycleThroughItself(Ty);
+    if (!TypeHasCycle) {
+      iterator I = Map.find(ValType::get(Ty));
       if (I != Map.end()) {
         // We already have this type in the table.  Get rid of the newly refined
         // type.
@@ -609,11 +624,18 @@ public:
       }
       
     } else {
+      ++NumSlowTypes;
+
+      unsigned TypeHash = ValType::hashTypeStructure(Ty);
+
+
+
       // Now we check to see if there is an existing entry in the table which is
       // structurally identical to the newly refined type.  If so, this type
       // gets refined to the pre-existing type.
       //
-      for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+      for (iterator I = Map.begin(), E = Map.end(); I != E; ++I) {
+        ++NumTypeEquals;
         if (TypesEqual(Ty, I->second)) {
           assert(Ty->isAbstract() && "Replacing a non-abstract type?");
           TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
@@ -622,11 +644,12 @@ public:
           Ty->refineAbstractTypeTo(NewTy);
           return;
         }
+      }
     }
 
     // If there is no existing type of the same structure, we reinsert an
     // updated record into the map.
-    Map.insert(std::make_pair(Key, Ty));
+    Map.insert(std::make_pair(ValType::get(Ty), Ty));
 
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
@@ -654,8 +677,8 @@ public:
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "TypeMap<>::" << Arg << " table contents:\n";
     unsigned i = 0;
-    for (typename MapTy::const_iterator I = Map.begin(), E = Map.end();
-         I != E; ++I)
+    for (typename std::map<ValType, PATypeHolder>::const_iterator I
+           = Map.begin(), E = Map.end(); I != E; ++I)
       std::cerr << " " << (++i) << ". " << (void*)I->second.get() << " " 
                 << *I->second.get() << "\n";
 #endif
@@ -685,6 +708,10 @@ public:
   }
 
   static FunctionValType get(const FunctionType *FT);
+
+  static unsigned hashTypeStructure(const FunctionType *FT) {
+    return 0;
+  }
 
   // Subclass should override this... to update self as usual
   void doRefinement(const DerivedType *OldType, const Type *NewType) {
@@ -746,6 +773,10 @@ public:
     return ArrayValType(AT->getElementType(), AT->getNumElements());
   }
 
+  static unsigned hashTypeStructure(const ArrayType *AT) {
+    return 0;
+  }
+
   // Subclass should override this... to update self as usual
   void doRefinement(const DerivedType *OldType, const Type *NewType) {
     assert(ValTy == OldType);
@@ -798,6 +829,10 @@ public:
     return StructValType(ElTypes);
   }
 
+  static unsigned hashTypeStructure(const StructType *ST) {
+    return 0;
+  }
+
   // Subclass should override this... to update self as usual
   void doRefinement(const DerivedType *OldType, const Type *NewType) {
     for (unsigned i = 0; i < ElTypes.size(); ++i)
@@ -842,6 +877,10 @@ public:
 
   static PointerValType get(const PointerType *PT) {
     return PointerValType(PT->getElementType());
+  }
+
+  static unsigned hashTypeStructure(const PointerType *PT) {
+    return 0;
   }
 
   // Subclass should override this... to update self as usual
@@ -1017,26 +1056,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
 //
 void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
-  assert((isAbstract() || !OldType->isAbstract()) &&
-         "Refining a non-abstract type!");
-#ifdef DEBUG_MERGE_TYPES
-  std::cerr << "FunctionTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << *OldType << "], " << (void*)NewType << " [" 
-            << *NewType << "])\n";
-#endif
-
-  // Look up our current type map entry..
-  TypeMap<FunctionValType, FunctionType>::iterator TMI =
-    FunctionTypes.getEntryForType(this);
-
-  // Find the type element we are refining...
-  for (unsigned i = 0, e = ContainedTys.size(); i != e; ++i)
-    if (ContainedTys[i] == OldType) {
-      ContainedTys[i].removeUserFromConcrete();
-      ContainedTys[i] = NewType;
-    }
-
-  FunctionTypes.finishRefinement(TMI);
+  FunctionTypes.finishRefinement(this, OldType, NewType);
 }
 
 void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
@@ -1050,23 +1070,7 @@ void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void ArrayType::refineAbstractType(const DerivedType *OldType,
 				   const Type *NewType) {
-  assert((isAbstract() || !OldType->isAbstract()) &&
-         "Refining a non-abstract type!");
-#ifdef DEBUG_MERGE_TYPES
-  std::cerr << "ArrayTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << *OldType << "], " << (void*)NewType << " [" 
-            << *NewType << "])\n";
-#endif
-
-  // Look up our current type map entry..
-  TypeMap<ArrayValType, ArrayType>::iterator TMI =
-    ArrayTypes.getEntryForType(this);
-
-  assert(getElementType() == OldType);
-  ContainedTys[0].removeUserFromConcrete();
-  ContainedTys[0] = NewType;
-
-  ArrayTypes.finishRefinement(TMI);
+  ArrayTypes.finishRefinement(this, OldType, NewType);
 }
 
 void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
@@ -1080,27 +1084,7 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void StructType::refineAbstractType(const DerivedType *OldType,
 				    const Type *NewType) {
-  assert((isAbstract() || !OldType->isAbstract()) &&
-         "Refining a non-abstract type!");
-#ifdef DEBUG_MERGE_TYPES
-  std::cerr << "StructTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << *OldType << "], " << (void*)NewType << " [" 
-            << *NewType << "])\n";
-#endif
-
-  // Look up our current type map entry..
-  TypeMap<StructValType, StructType>::iterator TMI =
-    StructTypes.getEntryForType(this);
-
-  for (int i = ContainedTys.size()-1; i >= 0; --i)
-    if (ContainedTys[i] == OldType) {
-      ContainedTys[i].removeUserFromConcrete();
-
-      // Update old type to new type in the array...
-      ContainedTys[i] = NewType;
-    }
-
-  StructTypes.finishRefinement(TMI);
+  StructTypes.finishRefinement(this, OldType, NewType);
 }
 
 void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
@@ -1113,23 +1097,7 @@ void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void PointerType::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
-  assert((isAbstract() || !OldType->isAbstract()) &&
-         "Refining a non-abstract type!");
-#ifdef DEBUG_MERGE_TYPES
-  std::cerr << "PointerTy::refineAbstractTy(" << (void*)OldType << "[" 
-            << *OldType << "], " << (void*)NewType << " [" 
-            << *NewType << "])\n";
-#endif
-
-  // Look up our current type map entry..
-  TypeMap<PointerValType, PointerType>::iterator TMI =
-    PointerTypes.getEntryForType(this);
-
-  assert(ContainedTys[0] == OldType);
-  ContainedTys[0].removeUserFromConcrete();
-  ContainedTys[0] = NewType;
-
-  PointerTypes.finishRefinement(TMI);
+  PointerTypes.finishRefinement(this, OldType, NewType);
 }
 
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
