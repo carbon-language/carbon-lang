@@ -15,7 +15,7 @@
 #include "MSSchedule.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSchedInfo.h"
-#include "../../Target/SparcV9/SparcV9Internals.h"
+#include "../SparcV9Internals.h"
 
 using namespace llvm;
 

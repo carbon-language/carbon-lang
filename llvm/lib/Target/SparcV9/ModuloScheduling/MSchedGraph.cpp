@@ -13,7 +13,7 @@
 #define DEBUG_TYPE "ModuloSched"
 
 #include "MSchedGraph.h"
-#include "../../Target/SparcV9/SparcV9RegisterInfo.h"
+#include "../SparcV9RegisterInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"

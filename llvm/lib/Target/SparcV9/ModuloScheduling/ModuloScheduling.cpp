@@ -30,10 +30,10 @@
 #include <sstream>
 #include <utility>
 #include <vector>
-#include "../../Target/SparcV9/MachineCodeForInstruction.h"
-#include "../../Target/SparcV9/SparcV9TmpInstr.h"
-#include "../../Target/SparcV9/SparcV9Internals.h"
-#include "../../Target/SparcV9/SparcV9RegisterInfo.h"
+#include "../MachineCodeForInstruction.h"
+#include "../SparcV9TmpInstr.h"
+#include "../SparcV9Internals.h"
+#include "../SparcV9RegisterInfo.h"
 using namespace llvm;
 
 /// Create ModuloSchedulingPass
