@@ -40,10 +40,8 @@ namespace {
         const MRegisterInfo* mri_;
         MachineFunction::iterator currentMbb_;
         MachineBasicBlock::iterator currentInstr_;
-        typedef LiveIntervals::Intervals Intervals;
-        const Intervals* li_;
         typedef std::vector<const LiveIntervals::Interval*> IntervalPtrs;
-        IntervalPtrs active_, inactive_;
+        IntervalPtrs unhandled_, fixed_, active_, inactive_;
 
         typedef std::vector<unsigned> Regs;
         Regs tempUseOperands_;
@@ -78,19 +76,23 @@ namespace {
         /// runOnMachineFunction - register allocate the whole function
         bool runOnMachineFunction(MachineFunction&);
 
+        /// initIntervalSets - initializa the four interval sets:
+        /// unhandled, fixed, active and inactive
+        void initIntervalSets(const LiveIntervals::Intervals& li);
+
         /// processActiveIntervals - expire old intervals and move
         /// non-overlapping ones to the incative list
-        void processActiveIntervals(Intervals::const_iterator cur);
+        void processActiveIntervals(IntervalPtrs::value_type cur);
 
         /// processInactiveIntervals - expire old intervals and move
         /// overlapping ones to the active list
-        void processInactiveIntervals(Intervals::const_iterator cur);
+        void processInactiveIntervals(IntervalPtrs::value_type cur);
 
         /// assignStackSlotAtInterval - choose and spill
         /// interval. Currently we spill the interval with the last
         /// end point in the active and inactive lists and the current
         /// interval
-        void assignStackSlotAtInterval(Intervals::const_iterator cur);
+        void assignStackSlotAtInterval(IntervalPtrs::value_type cur);
 
         ///
         /// register handling helpers
@@ -99,7 +101,7 @@ namespace {
         /// getFreePhysReg - return a free physical register for this
         /// virtual register interval if we have one, otherwise return
         /// 0
-        unsigned getFreePhysReg(Intervals::const_iterator cur);
+        unsigned getFreePhysReg(IntervalPtrs::value_type cur);
 
         /// physRegAvailable - returns true if the specifed physical
         /// register is available
@@ -195,9 +197,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     mf_ = &fn;
     tm_ = &fn.getTarget();
     mri_ = tm_->getRegisterInfo();
-    li_ = &getAnalysis<LiveIntervals>().getIntervals();
-    active_.clear();
-    inactive_.clear();
+
+    initIntervalSets(getAnalysis<LiveIntervals>().getIntervals());
 
     v2pMap_.clear();
     v2ssMap_.clear();
@@ -223,61 +224,88 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     reserved_[28] = true; /* FP5 */
     reserved_[29] = true; /* FP6 */
 
-    // liner scan algorithm
-    for (Intervals::const_iterator
-             i = li_->begin(), e = li_->end(); i != e; ++i) {
-        DEBUG(std::cerr << "processing current interval: " << *i << '\n');
+    // linear scan algorithm
 
-        DEBUG(printIntervals("\tactive", active_.begin(), active_.end()));
-        DEBUG(printIntervals("\tinactive", inactive_.begin(), inactive_.end()));
-        processActiveIntervals(i);
-        processInactiveIntervals(i);
+    DEBUG(printIntervals("\tunhandled", unhandled_.begin(), unhandled_.end()));
+    DEBUG(printIntervals("\tfixed", fixed_.begin(), fixed_.end()));
+    DEBUG(printIntervals("\tactive", active_.begin(), active_.end()));
+    DEBUG(printIntervals("\tinactive", inactive_.begin(), inactive_.end()));
+
+    while (!unhandled_.empty() || !fixed_.empty()) {
+        // pick the interval with the earliest start point
+        IntervalPtrs::value_type cur;
+        if (fixed_.empty()) {
+            cur = unhandled_.front();
+            unhandled_.erase(unhandled_.begin());
+        }
+        else if (unhandled_.empty()) {
+            cur = fixed_.front();
+            fixed_.erase(fixed_.begin());
+        }
+        else if (unhandled_.front()->start() < fixed_.front()->start()) {
+            cur = unhandled_.front();
+            unhandled_.erase(unhandled_.begin());
+        }
+        else {
+            cur = fixed_.front();
+            fixed_.erase(fixed_.begin());
+        }
+
+        DEBUG(std::cerr << "processing current interval: " << *cur << '\n');
+
+        processActiveIntervals(cur);
+        processInactiveIntervals(cur);
         
-        backupRegUse();
-
-        // for every interval in inactive we overlap mark the register
-        // as not free
-        for (IntervalPtrs::iterator j = inactive_.begin();
-             j != inactive_.end(); ++j) {
-            unsigned reg = (*j)->reg;
-            if (reg >= MRegisterInfo::FirstVirtualRegister)
-                reg = v2pMap_[reg];
-
-            if (i->overlaps(**j)) {
-                markPhysRegNotFree(reg);
-            }
-        }
-
-        // for every pre-allocated interval in unhandled we overlap
-        // mark the register as not free
-        for (Intervals::const_iterator j = i + 1; j != e; ++j) {
-            if (j->reg < MRegisterInfo::FirstVirtualRegister &&
-                i->overlaps(*j))
-                markPhysRegNotFree(j->reg);
-        }
-
-        DEBUG(std::cerr << "\tallocating current interval:\n");
-        // if this register is preallocated reserve it
-        if (i->reg < MRegisterInfo::FirstVirtualRegister) {
-            restoreRegUse();
-            markPhysRegNotFree(i->reg);
-            active_.push_back(&*i);
+        // if this register is fixed we are done
+        if (cur->reg < MRegisterInfo::FirstVirtualRegister) {
+            markPhysRegNotFree(cur->reg);
+            active_.push_back(cur);
         }
         // otherwise we are allocating a virtual register. try to find
         // a free physical register or spill an interval in order to
         // assign it one (we could spill the current though).
         else {
-            unsigned physReg = getFreePhysReg(i); 
+            backupRegUse();
+
+            // for every interval in inactive we overlap with, mark the
+            // register as not free
+            for (IntervalPtrs::const_iterator i = inactive_.begin(),
+                     e = inactive_.end(); i != e; ++i) {
+                unsigned reg = (*i)->reg;
+                if (reg >= MRegisterInfo::FirstVirtualRegister)
+                    reg = v2pMap_[reg];
+
+                if (cur->overlaps(**i)) {
+                    markPhysRegNotFree(reg);
+                }
+            }
+
+            // for every interval in fixed we overlap with,
+            // mark the register as not free
+            for (IntervalPtrs::const_iterator i = fixed_.begin(),
+                     e = fixed_.end(); i != e; ++i) {
+                assert((*i)->reg < MRegisterInfo::FirstVirtualRegister &&
+                       "virtual register interval in fixed set?");
+                if (cur->overlaps(**i))
+                    markPhysRegNotFree((*i)->reg);
+            }
+
+            DEBUG(std::cerr << "\tallocating current interval:\n");
+
+            unsigned physReg = getFreePhysReg(cur);
             if (!physReg) {
-                assignStackSlotAtInterval(i);
+                assignStackSlotAtInterval(cur);
             }
             else {
                 restoreRegUse();
-                assignVirt2PhysReg(i->reg, physReg);
-                active_.push_back(&*i);
+                assignVirt2PhysReg(cur->reg, physReg);
+                active_.push_back(cur);
             }
         }
-    }
+
+        DEBUG(printIntervals("\tactive", active_.begin(), active_.end()));
+        DEBUG(printIntervals("\tinactive", inactive_.begin(), inactive_.end()));    }
+
     // expire any remaining active intervals
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
         unsigned reg = (*i)->reg;
@@ -287,6 +315,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         }
         markPhysRegFree(reg);
     }
+    active_.clear();
+    inactive_.clear();
 
     DEBUG(std::cerr << "finished register allocation\n");
     DEBUG(printVirt2PhysMap());
@@ -378,7 +408,22 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     return true;
 }
 
-void RA::processActiveIntervals(Intervals::const_iterator cur)
+void RA::initIntervalSets(const LiveIntervals::Intervals& li)
+{
+    assert(unhandled_.empty() && fixed_.empty() &&
+           active_.empty() && inactive_.empty() &&
+           "interval sets should be empty on initialization");
+
+    for (LiveIntervals::Intervals::const_iterator i = li.begin(), e = li.end();
+         i != e; ++i) {
+        if (i->reg < MRegisterInfo::FirstVirtualRegister)
+            fixed_.push_back(&*i);
+        else
+            unhandled_.push_back(&*i);
+    }
+}
+
+void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tprocessing active intervals:\n");
     for (IntervalPtrs::iterator i = active_.begin(); i != active_.end();) {
@@ -414,7 +459,7 @@ void RA::processActiveIntervals(Intervals::const_iterator cur)
     }
 }
 
-void RA::processInactiveIntervals(Intervals::const_iterator cur)
+void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\tprocessing inactive intervals:\n");
     for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end();) {
@@ -459,7 +504,7 @@ namespace {
     }
 }
 
-void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
+void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\t\tassigning stack slot at interval "
           << *cur << ":\n");
@@ -470,7 +515,8 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
         regWeight[i] = 0.0F;
 
     // for each interval in active that overlaps
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+    for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
+         i != e; ++i) {
          if (!cur->overlaps(**i))
              continue;
 
@@ -484,8 +530,8 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
     }
 
     // for each interval in inactive that overlaps
-    for (IntervalPtrs::iterator i = inactive_.begin();
-         i != inactive_.end(); ++i) {
+    for (IntervalPtrs::const_iterator i = inactive_.begin(),
+             e = inactive_.end(); i != e; ++i) {
          if (!cur->overlaps(**i))
              continue;
 
@@ -498,13 +544,14 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
             updateWeight(regWeight, *as, (*i)->weight);
     }
 
-    // for each fixed interval in unhandled that overlaps
-    for (Intervals::const_iterator j = cur + 1; j != li_->end(); ++j) {
-        if (j->reg >= MRegisterInfo::FirstVirtualRegister)
-            continue;
-        updateWeight(regWeight, j->reg, j->weight);
-        for (const unsigned* as = mri_->getAliasSet(j->reg); *as; ++as)
-            updateWeight(regWeight, *as, j->weight);
+    // for each fixed interval that overlaps
+    for (IntervalPtrs::const_iterator i = fixed_.begin(), e = fixed_.end();
+         i != e; ++i) {
+        assert((*i)->reg < MRegisterInfo::FirstVirtualRegister &&
+               "virtual register interval in fixed set?");
+        updateWeight(regWeight, (*i)->reg, (*i)->weight);
+        for (const unsigned* as = mri_->getAliasSet((*i)->reg); *as; ++as)
+            updateWeight(regWeight, *as, (*i)->weight);
     }
 
     float minWeight = std::numeric_limits<float>::max();
@@ -569,7 +616,7 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
             markPhysRegFree(spilled[i]);
 
         assignVirt2PhysReg(cur->reg, physReg);
-        active_.push_back(&*cur);
+        active_.push_back(cur);
     }
 }
 
@@ -581,7 +628,7 @@ bool RA::physRegAvailable(unsigned physReg)
     return !regUse_[physReg];
 }
 
-unsigned RA::getFreePhysReg(Intervals::const_iterator cur)
+unsigned RA::getFreePhysReg(IntervalPtrs::value_type cur)
 {
     DEBUG(std::cerr << "\t\tgetting free physical register: ");
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
