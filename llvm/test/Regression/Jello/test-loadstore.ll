@@ -1,5 +1,5 @@
 
-void %test(sbyte* %P, short* %P, int* %P) {
+void %test(sbyte* %P, short* %P, int* %P, long* %P) {
 	%V = load sbyte* %P
 	store sbyte %V, sbyte* %P
 
@@ -8,6 +8,10 @@ void %test(sbyte* %P, short* %P, int* %P) {
 
 	%V = load int* %P
 	store int %V, int* %P
+
+	%V = load long* %P
+	store long %V, long* %P
+
 	ret void
 }
 
@@ -22,7 +26,8 @@ int %main() {
 	%A = alloca sbyte
 	%B = alloca short
 	%C = alloca int
-	call void %test(sbyte* %A, short* %B, int* %C)
+	%D = alloca long
+	call void %test(sbyte* %A, short* %B, int* %C, long* %D)
 	call uint %varalloca(uint 7)
 
 	ret int 0
