@@ -170,9 +170,6 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
   issueGaps.resize(numOpCodes);
   conflictLists.resize(numOpCodes);
 
-  assert(numOpCodes < (1 << MAX_OPCODE_SIZE) - 1
-         && "numOpCodes invalid for implementation of class OpCodePair!");
-
   // First, compute issue gaps between pairs of classes based on common
   // resources usages for each class, because most instruction pairs will
   // usually behave the same as their class.
