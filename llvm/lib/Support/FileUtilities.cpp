@@ -13,11 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/FileUtilities.h"
+#include "Support/DataTypes.h"
 #include "Config/unistd.h"
 #include "Config/fcntl.h"
-#include "Config/sys/stat.h"
 #include "Config/sys/types.h"
+#include "Config/sys/stat.h"
 #include "Config/sys/mman.h"
+#include "Config/alloca.h"
 #include <cerrno>
 #include <cstdio>
 #include <fstream>
@@ -28,10 +30,10 @@ using namespace llvm;
 /// name a readable file.
 ///
 bool llvm::CheckMagic(const std::string &FN, const std::string &Magic) {
-  char buf[1 + Magic.size ()];
-  std::ifstream f (FN.c_str ());
-  f.read (buf, Magic.size ());
-  buf[Magic.size ()] = '\0';
+  char *buf = (char*)alloca(1 + Magic.size());
+  std::ifstream f(FN.c_str());
+  f.read(buf, Magic.size());
+  buf[Magic.size()] = '\0';
   return Magic == buf;
 }
 
@@ -41,7 +43,7 @@ bool llvm::CheckMagic(const std::string &FN, const std::string &Magic) {
 bool llvm::IsArchive(const std::string &FN) {
   // Inspect the beginning of the file to see if it contains the "ar"
   // library archive format magic string.
-  return CheckMagic (FN, "!<arch>\012");
+  return CheckMagic(FN, "!<arch>\012");
 }
 
 /// IsBytecode - Returns true IFF the file named FN appears to be an LLVM
@@ -179,8 +181,11 @@ std::string llvm::getUniqueFilename(const std::string &FilenameBase) {
   strcpy(FNBuffer+FilenameBase.size(), "-XXXXXX");
 
   // Agree on a temporary file name to use....
+#if defined(HAVE_MKSTEMP) && !defined(_MSC_VER)
   int TempFD;
   if ((TempFD = mkstemp(FNBuffer)) == -1) {
+    // FIXME: this should return an emtpy string or something and allow the
+    // caller to deal with the error!
     std::cerr << "bugpoint: ERROR: Cannot create temporary file in the current "
 	      << " directory!\n";
     exit(1);
@@ -189,22 +194,33 @@ std::string llvm::getUniqueFilename(const std::string &FilenameBase) {
   // We don't need to hold the temp file descriptor... we will trust that no one
   // will overwrite/delete the file while we are working on it...
   close(TempFD);
+#else
+  // If we don't have mkstemp, use the old and obsolete mktemp function.
+  if (mktemp(FNBuffer) == 0) {
+    // FIXME: this should return an emtpy string or something and allow the
+    // caller to deal with the error!
+    std::cerr << "bugpoint: ERROR: Cannot create temporary file in the current "
+              << " directory!\n";
+    exit(1);
+  }
+#endif
+
   std::string Result(FNBuffer);
   delete[] FNBuffer;
   return Result;
 }
 
-static bool AddPermissionsBits (const std::string &Filename, mode_t bits) {
+static bool AddPermissionsBits (const std::string &Filename, int bits) {
   // Get the umask value from the operating system.  We want to use it
   // when changing the file's permissions. Since calling umask() sets
   // the umask and returns its old value, we must call it a second
   // time to reset it to the user's preference.
-  mode_t mask = umask (0777); // The arg. to umask is arbitrary...
-  umask (mask);
+  int mask = umask(0777); // The arg. to umask is arbitrary.
+  umask(mask);            // Restore the umask.
 
   // Get the file's current mode.
   struct stat st;
-  if ((stat (Filename.c_str(), &st)) == -1)
+  if ((stat(Filename.c_str(), &st)) == -1)
     return false;
 
   // Change the file to have whichever permissions bits from 'bits'
@@ -259,8 +275,8 @@ unsigned long long llvm::getFileTimestamp(const std::string &Filename) {
 /// failure, return null.
 void *llvm::ReadFileIntoAddressSpace(const std::string &Filename, 
                                      unsigned &Length) {
-#ifdef HAVE_MMAP_FILE
-  Length = getFileSize(Filename);
+#if defined(HAVE_MMAP_FILE) && !defined(_MSC_VER)
+  Length = (unsigned)getFileSize(Filename);
   if ((int)Length == -1) return 0;
 
   FDHandle FD(open(Filename.c_str(), O_RDONLY));
@@ -287,7 +303,7 @@ void *llvm::ReadFileIntoAddressSpace(const std::string &Filename,
 /// UnmapFileFromAddressSpace - Remove the specified file from the current
 /// address space.
 void llvm::UnmapFileFromAddressSpace(void *Buffer, unsigned Length) {
-#ifdef HAVE_MMAP_FILE
+#if defined(HAVE_MMAP_FILE) && !defined(_MSC_VER)
   if (Length)
     munmap((char*)Buffer, Length);
   else
