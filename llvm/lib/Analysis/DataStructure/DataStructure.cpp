@@ -349,9 +349,8 @@ bool DSGraph::isNodeDead(DSNode *N) {
   return false;
 }
 
-static void
-removeIdenticalCalls(std::vector<std::vector<DSNodeHandle> >& Calls,
-                     const string& where) {
+static void removeIdenticalCalls(std::vector<std::vector<DSNodeHandle> > &Calls,
+                                 const std::string &where) {
   // Remove trivially identical function calls
   unsigned NumFns = Calls.size();
   std::sort(Calls.begin(), Calls.end());
@@ -359,8 +358,8 @@ removeIdenticalCalls(std::vector<std::vector<DSNodeHandle> >& Calls,
               Calls.end());
 
   DEBUG(if (NumFns != Calls.size())
-        std::cerr << "Merged " << (NumFns-Calls.size())
-        << " call nodes in " << where << "\n";);
+          std::cerr << "Merged " << (NumFns-Calls.size())
+                    << " call nodes in " << where << "\n";);
 }
 
 // removeTriviallyDeadNodes - After the graph has been constructed, this method
@@ -727,7 +726,7 @@ void GlobalDSGraph::cloneCalls(DSGraph& Graph) {
   }
 
   // remove trivially identical function calls
-  removeIdenticalCalls(FunctionCalls, string("Globals Graph"));
+  removeIdenticalCalls(FunctionCalls, "Globals Graph");
 }
 
 
@@ -759,3 +758,4 @@ bool LocalDataStructures::run(Module &M) {
 
   return false;
 }
+

@@ -168,7 +168,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   // Find the callers of this function recorded during the BU pass
   std::set<Function*> &PendingCallers = BUGraph.getPendingCallers();
 
-  DEBUG(cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
+  DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
 
   for (std::set<Function*>::iterator I=PendingCallers.begin(),
          E=PendingCallers.end(); I != E; ++I) {
@@ -176,7 +176,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
     assert(! caller.isExternal() && "Externals unexpected in callers list");
     
     DEBUG(std::cerr << "\t [TD] Inlining " << caller.getName()
-          << " into callee: " << F.getName() << "\n");
+                    << " into callee: " << F.getName() << "\n");
     
     // These two maps keep track of where scalars in the old graph _used_
     // to point to, and of new nodes matching nodes of the old graph.
@@ -194,8 +194,8 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
       //
       DSGraph &callerGraph = calculateGraph(caller);  // Graph to inline
       
-      DEBUG(cerr << "\t\t[TD] Got graph for " << caller.getName() << " in: "
-            << F.getName() << "\n");
+      DEBUG(std::cerr << "\t\t[TD] Got graph for " << caller.getName()
+                      << " in: " << F.getName() << "\n");
 
       // Clone the caller's graph into the current graph, keeping
       // track of where scalars in the old graph _used_ to point...
@@ -218,7 +218,8 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
 
-  DEBUG(cerr << "  [TD] Done inlining callers for: " << F.getName() << "\n");
+  DEBUG(std::cerr << "  [TD] Done inlining callers for: "
+                  << F.getName() << "\n");
 
   return *Graph;
 }
