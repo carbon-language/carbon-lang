@@ -109,13 +109,6 @@ public:
     return desc[opCode];
   }
 
-  /// print - Print out the specified machine instruction in the appropriate
-  /// target specific assembly language.  If this method is not overridden, the
-  /// default implementation uses the crummy machine independant printer.
-  ///
-  virtual void print(const MachineInstr *MI, std::ostream &O,
-                     const TargetMachine &TM) const;
-
   const char *getName(MachineOpCode opCode) const {
     return get(opCode).Name;
   }
@@ -135,7 +128,15 @@ public:
   InstrSchedClass getSchedClass(MachineOpCode opCode) const {
     return get(opCode).schedClass;
   }
-  
+
+  const unsigned *getImplicitUses(MachineOpCode opCode) const {
+    return get(opCode).ImplicitUses;
+  }
+
+  const unsigned *getImplicitDefs(MachineOpCode opCode) const {
+    return get(opCode).ImplicitDefs;
+  }
+
   //
   // Query instruction class flags according to the machine-independent
   // flags listed above.

@@ -220,29 +220,29 @@ I(TESTrr32    , "test",  0x85, 0, X86II::MRMDestReg | X86II::Arg32, NoIR, NoIR) 
 
 
 // Shift instructions
-I(SHLrr8      , "shl",  0xD2, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                                   // R8   <<= cl
-I(SHLrr16     , "shl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::OpSize, O_CL, NoIR)                   // R16  <<= cl
-I(SHLrr32     , "shl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                                   // R32  <<= cl
+I(SHLrr8      , "shl",  0xD2, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::PrintImplUses, O_CL, NoIR)            // R8   <<= cl
+I(SHLrr16     , "shl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::OpSize | X86II::PrintImplUses, O_CL, NoIR) // R16  <<= cl
+I(SHLrr32     , "shl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::PrintImplUses, O_CL, NoIR)            // R32  <<= cl
 I(SHLir8      , "shl",  0xC0, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::Arg8, NoIR, NoIR)                     // R8   <<= imm8
 I(SHLir16     , "shl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16  <<= imm8
 I(SHLir32     , "shl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::Arg8, NoIR, NoIR)                     // R32  <<= imm8
-I(SHRrr8      , "shr",  0xD2, M_2_ADDR_FLAG, X86II::MRMS5r, O_CL, NoIR)                                   // R8  >>>= cl
-I(SHRrr16     , "shr",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::OpSize, O_CL, NoIR)                   // R16 >>>= cl
-I(SHRrr32     , "shr",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r, O_CL, NoIR)                                   // R32 >>>= cl
+I(SHRrr8      , "shr",  0xD2, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::PrintImplUses, O_CL, NoIR)            // R8  >>>= cl
+I(SHRrr16     , "shr",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::OpSize | X86II::PrintImplUses, O_CL, NoIR) // R16 >>>= cl
+I(SHRrr32     , "shr",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::PrintImplUses, O_CL, NoIR)            // R32 >>>= cl
 I(SHRir8      , "shr",  0xC0, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8, NoIR, NoIR)                     // R8  >>>= imm8
 I(SHRir16     , "shr",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16 >>>= imm8
 I(SHRir32     , "shr",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8, NoIR, NoIR)                     // R32 >>>= imm8
-I(SARrr8      , "sar",  0xD2, M_2_ADDR_FLAG, X86II::MRMS7r, O_CL, NoIR)                                   // R8   >>= cl
-I(SARrr16     , "sar",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::OpSize, O_CL, NoIR)                   // R16  >>= cl
-I(SARrr32     , "sar",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r, O_CL, NoIR)                                   // R32  >>= cl
+I(SARrr8      , "sar",  0xD2, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::PrintImplUses, O_CL, NoIR)            // R8   >>= cl
+I(SARrr16     , "sar",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::OpSize | X86II::PrintImplUses, O_CL, NoIR) // R16  >>= cl
+I(SARrr32     , "sar",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::PrintImplUses, O_CL, NoIR)            // R32  >>= cl
 I(SARir8      , "sar",  0xC0, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)                     // R8   >>= imm8
 I(SARir16     , "sar",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16  >>= imm8
 I(SARir32     , "sar",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)                     // R32  >>= imm8
 
 I(SHLDir32    , "shld",  0xA4, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::TB | X86II::Arg8, NoIR, NoIR)    // R32 >>= R32,R32 imm8
-I(SHLDrr32    , "shld",  0xA5, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::TB, O_CL, NoIR)                  // R32 >>= R32,R32 cl
+I(SHLDrr32    , "shld",  0xA5, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::TB | X86II::PrintImplUses, O_CL, NoIR) // R32 >>= R32,R32 cl
 I(SHRDir32    , "shrd",  0xAC, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::TB | X86II::Arg8, NoIR, NoIR)    // R32 >>= R32,R32 imm8
-I(SHRDrr32    , "shrd",  0xAD, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::TB, O_CL, NoIR)                  // R32 >>= R32,R32 cl
+I(SHRDrr32    , "shrd",  0xAD, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::TB | X86II::PrintImplUses, O_CL, NoIR) // R32 >>= R32,R32 cl
 
 
 // Condition code ops, incl. set if equal/not equal/...

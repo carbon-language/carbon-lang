@@ -24,16 +24,25 @@
 #include "llvm/Module.h"
 
 namespace {
-  unsigned fnIndex;
-  std::set<const Value*> MangledGlobals;
+  std::set<const Value *> MangledGlobals;
   struct Printer : public MachineFunctionPass {
     std::ostream &O;
+    typedef std::map<const Value *, unsigned> ValueMapTy;
+    ValueMapTy NumberForBB;
     Printer(std::ostream &o) : O(o) {}
     const TargetData *TD;
+    std::string CurrentFnName;
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
     }
 
+    void printMachineInstruction(const MachineInstr *MI, std::ostream &O,
+				 const TargetMachine &TM) const;
+    void printOp(std::ostream &O, const MachineOperand &MO,
+		 const MRegisterInfo &RI, bool elideOffsetKeyword = false) const;
+    void printMemReference(std::ostream &O, const MachineInstr *MI,
+			   unsigned Op,
+			   const MRegisterInfo &RI) const;
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     std::string ConstantExprToString(const ConstantExpr* CE);
@@ -44,8 +53,7 @@ namespace {
     void printConstantValueOnly(const Constant* CV, int numPadBytesAfter = 0);
     void printSingleConstantValue(const Constant* CV);
   };
-  std::map<const Value *, unsigned> NumberForBB;
-}
+} // end of anonymous namespace
 
 /// createX86CodePrinterPass - Print out the specified machine code function to
 /// the specified stream.  This function should work regardless of whether or
@@ -55,8 +63,8 @@ Pass *createX86CodePrinterPass(std::ostream &O) {
   return new Printer(O);
 }
 
-// We dont want identifier names with ., space, -  in them. 
-// So we replace them with _
+// We don't want identifier names with ., space, or - in them, 
+// so we replace them with underscores.
 static std::string makeNameProper(std::string x) {
   std::string tmp;
   for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
@@ -66,37 +74,31 @@ static std::string makeNameProper(std::string x) {
     case '-': tmp += "D_"; break;
     default:  tmp += *sI;
     }
-
   return tmp;
 }
 
-std::string getValueName(const Value *V) {
+static std::string getValueName(const Value *V) {
   if (V->hasName()) { // Print out the label if it exists...
-    
     // Name mangling occurs as follows:
     // - If V is not a global, mangling always occurs.
     // - Otherwise, mangling occurs when any of the following are true:
     //   1) V has internal linkage
     //   2) V's name would collide if it is not mangled.
     //
-    
     if(const GlobalValue* gv = dyn_cast<GlobalValue>(V)) {
       if(!gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
         // No internal linkage, name will not collide -> no mangling.
         return makeNameProper(gv->getName());
       }
     }
-    
     // Non-global, or global with internal linkage / colliding name -> mangle.
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
       makeNameProper(V->getName());      
   }
-
   static int Count = 0;
   Count++;
   return "ltmp_" + itostr(Count) + "_" + utostr(V->getType()->getUniqueID());
 }
-
 
 // valToExprString - Helper function for ConstantExprToString().
 // Appends result to argument string S.
@@ -391,7 +393,8 @@ void Printer::printConstantPool(MachineConstantPool *MCP){
     O << "\t.section .rodata\n";
     O << "\t.align " << (unsigned)TD->getTypeAlignment(CP[i]->getType())
       << "\n";
-    O << ".CPI" << fnIndex << "_" << i << ":\t\t\t\t\t#" << *CP[i] << "\n";
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t#"
+      << *CP[i] << "\n";
     printConstantValueOnly (CP[i]);
   }
 }
@@ -404,16 +407,21 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   const TargetInstrInfo &TII = TM.getInstrInfo();
   TD = &TM.getTargetData();
 
+  // What's my mangled name?
+  CurrentFnName = getValueName(MF.getFunction());
+
   // Print out constants referenced by the function
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   O << "\t.text\n";
   O << "\t.align 16\n";
-  O << "\t.globl\t" << getValueName(MF.getFunction()) << "\n";
-  O << "\t.type\t" << getValueName(MF.getFunction()) << ", @function\n";
-  O << getValueName(MF.getFunction()) << ":\n";
+  O << "\t.globl\t" << CurrentFnName << "\n";
+  O << "\t.type\t" << CurrentFnName << ", @function\n";
+  O << CurrentFnName << ":\n";
 
+  // Number each basic block so that we can consistently refer to them
+  // in PC-relative references.
   NumberForBB.clear();
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
@@ -430,11 +438,10 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 	 II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
-      TII.print(*II, O, TM);
+      printMachineInstruction(*II, O, TM);
     }
   }
 
-  fnIndex++;
   // We didn't modify anything.
   return false;
 }
@@ -453,8 +460,9 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
     MI->getOperand(Op+2).isRegister() &&MI->getOperand(Op+3).isImmediate();
 }
 
-static void printOp(std::ostream &O, const MachineOperand &MO,
-                    const MRegisterInfo &RI, bool elideOffsetKeyword = false) {
+void Printer::printOp(std::ostream &O, const MachineOperand &MO,
+		      const MRegisterInfo &RI,
+		      bool elideOffsetKeyword /* = false */) const {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (Value *V = MO.getVRegValueOrNull()) {
@@ -474,8 +482,12 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
     O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_PCRelativeDisp:
-    O << ".BB" << NumberForBB[MO.getVRegValue()] << " # PC rel: "
-      << MO.getVRegValue()->getName();
+    {
+      ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
+      assert (i != NumberForBB.end()
+	      && "Could not find a BB I previously put in the NumberForBB map!");
+      O << ".BB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
+    }
     return;
   case MachineOperand::MO_GlobalAddress:
     if (!elideOffsetKeyword) O << "OFFSET "; O << getValueName(MO.getGlobal());
@@ -501,8 +513,9 @@ static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
   }
 }
 
-static void printMemReference(std::ostream &O, const MachineInstr *MI,
-                              unsigned Op, const MRegisterInfo &RI) {
+void Printer::printMemReference(std::ostream &O, const MachineInstr *MI,
+				unsigned Op,
+				const MRegisterInfo &RI) const {
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   if (MI->getOperand(Op).isFrameIndex()) {
@@ -512,7 +525,7 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
     O << "]";
     return;
   } else if (MI->getOperand(Op).isConstantPoolIndex()) {
-    O << "[.CPI" << fnIndex << "_"
+    O << "[.CPI" << CurrentFnName << "_"
       << MI->getOperand(Op).getConstantPoolIndex();
     if (MI->getOperand(Op+3).getImmedValue())
       O << " + " << MI->getOperand(Op+3).getImmedValue();
@@ -553,11 +566,14 @@ static void printMemReference(std::ostream &O, const MachineInstr *MI,
   O << "]";
 }
 
-// print - Print out an x86 instruction in intel syntax
-void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
-                         const TargetMachine &TM) const {
+/// printMachineInstruction -- Print out an x86 instruction in intel syntax
+///
+void Printer::printMachineInstruction(const MachineInstr *MI, std::ostream &O,
+				      const TargetMachine &TM) const {
   unsigned Opcode = MI->getOpcode();
-  const TargetInstrDescriptor &Desc = get(Opcode);
+  const TargetInstrInfo &TII = TM.getInstrInfo();
+  const TargetInstrDescriptor &Desc = TII.get(Opcode);
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::Pseudo:
@@ -584,7 +600,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 	O << " = ";
 	++i;
       }
-      O << getName(MI->getOpcode());
+      O << TII.getName(MI->getOpcode());
 
       for (unsigned e = MI->getNumOperands(); i != e; ++i) {
 	O << " ";
@@ -610,7 +626,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 	     MI->getOperand(0).isGlobalAddress() ||
 	     MI->getOperand(0).isExternalSymbol())) &&
            "Illegal raw instruction!");
-    O << getName(MI->getOpcode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
 
     if (MI->getNumOperands() == 1) {
       printOp(O, MI->getOperand(0), RI, true); // Don't print "OFFSET"...
@@ -639,7 +655,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
     unsigned Reg = MI->getOperand(0).getReg();
     
-    O << getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     if (MI->getNumOperands() == 2 &&
 	(!MI->getOperand(1).isRegister() ||
@@ -666,7 +682,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // 4 Operands: This form is for instructions which are 3 operands forms, but
     // have a constant argument as well.
     //
-    bool isTwoAddr = isTwoAddrInstr(Opcode);
+    bool isTwoAddr = TII.isTwoAddrInstr(Opcode);
     assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 2 ||
 	    (isTwoAddr && MI->getOperand(1).isRegister() &&
@@ -675,7 +691,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 	      (MI->getNumOperands() == 4 && MI->getOperand(3).isImmediate()))))
            && "Bad format for MRMDestReg!");
 
-    O << getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
     printOp(O, MI->getOperand(1+isTwoAddr), RI);
@@ -694,7 +710,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
            MI->getOperand(4).isRegister() && "Bad format for MRMDestMem!");
 
-    O << getName(MI->getOpCode()) << " " << sizePtr(Desc) << " ";
+    O << TII.getName(MI->getOpCode()) << " " << sizePtr(Desc) << " ";
     printMemReference(O, MI, 0, RI);
     O << ", ";
     printOp(O, MI->getOperand(4), RI);
@@ -721,7 +737,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    O << getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
     printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
@@ -742,7 +758,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    O << getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", " << sizePtr(Desc) << " ";
     printMemReference(O, MI, MI->getNumOperands()-4, RI);
@@ -773,11 +789,16 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    O << getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     if (MI->getOperand(MI->getNumOperands()-1).isImmediate()) {
       O << ", ";
       printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+    }
+    if (Desc.TSFlags & X86II::PrintImplUses) {
+      for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
+	O << ", " << RI.get(*p).Name;
+      }
     }
     O << "\n";
 
@@ -799,7 +820,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     assert((MI->getNumOperands() != 5 || MI->getOperand(4).isImmediate()) &&
            "Bad MRMSxM format!");
 
-    O << getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpCode()) << " ";
     O << sizePtr(Desc) << " ";
     printMemReference(O, MI, 0, RI);
     if (MI->getNumOperands() == 5) {
@@ -820,9 +841,6 @@ bool Printer::doInitialization(Module &M)
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly,
   // with no % decorations on register names.
   O << "\t.intel_syntax noprefix\n";
-
-  // Start function index at 0
-  fnIndex = 0;
 
   // Ripped from CWriter:
   // Calculate which global values have names that will collide when we throw
@@ -872,3 +890,5 @@ bool Printer::doFinalization(Module &M)
   MangledGlobals.clear();
   return false; // success
 }
+
+

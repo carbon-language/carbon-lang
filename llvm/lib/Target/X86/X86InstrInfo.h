@@ -133,7 +133,10 @@ namespace X86II {
     // FPTypeMask - Mask for all of the FP types...
     FPTypeMask = 7 << 14,
 
-    // Bits 17 -> 31 are unused
+    // PrintImplUses - Print out implicit uses in the assembly output.
+    PrintImplUses = 1 << 17
+
+    // Bits 18 -> 31 are unused
   };
 }
 
@@ -159,11 +162,6 @@ public:
   /// more than one way to `do nothing' but only one canonical way to slack off.
   ///
   bool isNOPinstr(const MachineInstr &MI) const;
-
-  /// print - Print out an x86 instruction in intel syntax
-  ///
-  virtual void print(const MachineInstr *MI, std::ostream &O,
-                     const TargetMachine &TM) const;
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified opcode number.

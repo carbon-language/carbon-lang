@@ -196,8 +196,8 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 	    MachineBasicBlock::iterator Start = I;
 	    // Rewind to first instruction newly inserted.
 	    while (Start != BB.begin() && *(Start-1) != PrevMI) --Start;
-	    std::cerr << "Inserted instructions:\n";
-	    do TII.print(*Start, std::cerr << "\t", MF.getTarget());
+	    std::cerr << "Inserted instructions:\n\t";
+	    (*Start)->print(std::cerr, MF.getTarget());
 	    while (++Start != I+1);
 	  }
 	  dumpStack();

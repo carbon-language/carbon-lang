@@ -28,11 +28,6 @@ TargetInstrInfo::~TargetInstrInfo() {
   TargetInstrDescriptors = NULL;	// reset global variable
 }
 
-void TargetInstrInfo::print(const MachineInstr *MI, std::ostream &O,
-			    const TargetMachine &TM) const {
-  MI->print(O, TM);
-}
-
 bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
 					       int64_t intValue) const {
   // First, check if opCode has an immed field.
