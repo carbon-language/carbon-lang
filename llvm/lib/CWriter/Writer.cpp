@@ -55,23 +55,6 @@ static string calcTypeNameVar(const Type *Ty,
 static std::string getConstStrValue(const Constant* CPV);
 
 
-// We dont want identifier names with ., space, -  in them. 
-// So we replace them with _
-static string makeNameProper(string x) {
-  string tmp;
-  for (string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++) {
-    if (*sI == '.')
-      tmp += '_';
-    else if (*sI == ' ')
-      tmp += '_';
-    else if (*sI == '-')
-      tmp += "__";
-    else
-      tmp += *sI;
-  }
-  return tmp;
-}
-
 static std::string getConstArrayStrValue(const Constant* CPV) {
   std::string Result;
   
@@ -614,11 +597,10 @@ void CInstPrintVisitor::printPhiFromNextBlock(TerminatorInst *tI, int indx) {
 // Implement all "other" instructions, except for PHINode
 void CInstPrintVisitor::visitCastInst(CastInst *I) {
   outputLValue(I);
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   Out << "(";
   CW.printType(I->getType(), Out);
   Out << ")";
-  CW.writeOperand(Operand, Out);
+  CW.writeOperand(I->getOperand(0), Out);
   Out << ";\n";
 }
 
@@ -628,33 +610,21 @@ void CInstPrintVisitor::visitCallInst(CallInst *I) {
   else
     Out << "  ";
 
-  Operand = I->getNumOperands() ? I->getOperand(0) : 0;
-  const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
-  const FunctionType  *MTy = PTy 
-    ? dyn_cast<FunctionType>(PTy->getElementType()):0;
-  const Type      *RetTy = MTy ? MTy->getReturnType() : 0;
+  const PointerType  *PTy   = cast<PointerType>(I->getCalledValue()->getType());
+  const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
+  const Type         *RetTy = FTy->getReturnType();
   
-  // If possible, print out the short form of the call instruction, but we can
-  // only do this if the first argument is a pointer to a nonvararg method,
-  // and if the value returned is not a pointer to a method.
-  //
-  if (RetTy && !MTy->isVarArg() &&
-      (!isa<PointerType>(RetTy)||
-       !isa<FunctionType>(cast<PointerType>(RetTy)))){
-    Out << " ";
-    Out << makeNameProper(Operand->getName());
-  } else {
-    Out << makeNameProper(Operand->getName());      
-  }
-  Out << "(";
-  if (I->getNumOperands() > 1) 
+  Out << CW.getValueName(I->getOperand(0)) << "(";
+
+  if (I->getNumOperands() != 0) {
     CW.writeOperand(I->getOperand(1), Out);
-  for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; ++op) {
-    Out << ",";
-    CW.writeOperand(I->getOperand(op), Out);
+
+    for (unsigned op = 2, Eop = I->getNumOperands(); op != Eop; ++op) {
+      Out << ", ";
+      CW.writeOperand(I->getOperand(op), Out);
+    }
   }
-  
-  Out << " );\n";
+  Out << ");\n";
 } 
  
 // Specific Instruction type classes... note that all of the casts are
@@ -819,10 +789,30 @@ void CInstPrintVisitor::visitBinaryOperator(Instruction *I) {
 
 /* END : CInstPrintVisitor implementation */
 
+// We dont want identifier names with ., space, -  in them. 
+// So we replace them with _
+static string makeNameProper(string x) {
+  string tmp;
+  for (string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
+    switch (*sI) {
+    case '.': tmp += "_d"; break;
+    case ' ': tmp += "_s"; break;
+    case '-': tmp += "_D"; break;
+    case '_': tmp += "__"; break;
+    default:  tmp += *sI;
+    }
+
+  return tmp;
+}
+
 string CWriter::getValueName(const Value *V) {
-  if (V->hasName())              // Print out the label if it exists...
+  if (V->hasName()) {             // Print out the label if it exists...
+    if (isa<GlobalValue>(V))  // Do not mangle globals...
+      return makeNameProper(V->getName());
+
     return "l_" + makeNameProper(V->getName()) + "_" +
-           utostr(V->getType()->getUniqueID());
+      utostr(V->getType()->getUniqueID());
+  }
 
   int Slot = Table.getValSlot(V);
   assert(Slot >= 0 && "Invalid value!");
@@ -952,7 +942,7 @@ void CWriter::printFunctionSignature(const Function *F) {
   
   // Print out the return type and name...
   printType(F->getReturnType(), Out);
-  Out << " " << makeNameProper(F->getName()) << "(";
+  Out << " " << getValueName(F) << "(";
     
   if (!F->isExternal()) {
     for_each(F->getArgumentList().begin(), F->getArgumentList().end(),
@@ -1050,9 +1040,7 @@ void CWriter::writeOperand(const Value *Operand,
     Out << "(&";  // Global values are references as their addresses by llvm
 
   if (PrintName && Operand->hasName()) {   
-    // If Operand has a name.
-    Out << "l_" << makeNameProper(Operand->getName()) << "_" << 
-      Operand->getType()->getUniqueID();
+    Out << getValueName(Operand);
   } else if (const Constant *CPV = dyn_cast<const Constant>(Operand)) {
     if (isa<ConstantPointerNull>(CPV))
       Out << "NULL";
