@@ -19,7 +19,7 @@ class MachineCodeEmitter;
 
 class VM : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
-  PassManager PM;          // Passes to compile a function
+  FunctionPassManager PM;  // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
 public:
@@ -49,7 +49,7 @@ public:
 
   /// getPointerToFunction - This returns the address of the specified function,
   /// compiling it if necessary.
-  void *getPointerToFunction(const Function *F);
+  void *getPointerToFunction(Function *F);
 
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
