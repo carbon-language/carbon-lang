@@ -1,0 +1,99 @@
+
+=pod
+
+=head1 NAME
+
+opt - LLVM optimizer
+
+=head1 SYNOPSIS
+
+opt [options] [filename]
+
+=head1 DESCRIPTION
+
+The B<opt> command is the modular LLVM optimizer.  It takes LLVM
+bytecode as input, runs the specified optimizations on it, and then
+outputs the optimized LLVM bytecode.
+
+The optimizations available via B<opt> depend upon what libraries
+were linked into it as well as any additional libraries that have
+been loaded with the B<-load> option.  Use the B<-help> option to
+determine what optimizations you can use.
+
+If no filename is specified on the command line, B<opt> reads its
+input from standard input.
+
+If an output filename is not specified with the B<-o> option, B<opt>
+writes its output to the standard output.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-f>
+
+Force overwrite.  Normally, B<opt> will refuse to overwrite an
+output file that already exists.  With this option, B<opt> will
+overwrite the output file and replace it with new bytecode.
+
+=item B<-help>
+
+Print a summary of command line options.
+
+=item B<-o> I<filename>
+
+Specify the output filename.
+
+=item B<-profile-info-file> I<filename>
+
+Specify the name of the file loaded by the -profile-loader option.
+
+=item B<-stats>
+
+Print statistics.
+
+=item B<-time-passes>
+
+Record the amount of time needed for each pass and print it to standard
+error.
+
+=item B<-debug>
+
+If this is a debug build, this option will enable debug printouts
+from passes which use the I<DEBUG()> macro.  See the B<LLVM Programmer's
+Manual>, section I<#DEBUG> for more information.
+
+=item B<-load>=I<plugin>
+
+Load the dynamic object I<plugin>.  This object should register new
+optimization passes.  Once loaded, the object will add new command line
+options to enable various optimizations.  To see the new complete list
+of optimizations, use the B<-help> and B<-load> options together:
+
+=over
+
+B<opt -load>=I<plugin> B<-help>
+
+=back
+
+=item B<-p>
+
+Print module after each transformation.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<opt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<analyze>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+
+=cut
+
