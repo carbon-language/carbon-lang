@@ -447,6 +447,7 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
         LinkageID = (VarType >> 2) & 3;
       }
       switch (LinkageID) {
+      default: assert(0 && "Unknown linkage type!");
       case 0: Linkage = GlobalValue::ExternalLinkage;  break;
       case 1: Linkage = GlobalValue::WeakLinkage;      break;
       case 2: Linkage = GlobalValue::AppendingLinkage; break;
