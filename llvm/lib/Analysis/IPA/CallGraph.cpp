@@ -1,4 +1,4 @@
-//===- CallGraph.cpp - Build a Module's call graph --------------------------=//
+//===- CallGraph.cpp - Build a Module's call graph ------------------------===//
 //
 // This file implements call graph construction (from a module), and will
 // eventually implement call graph serialization and deserialization for
@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/Writer.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
@@ -19,9 +18,9 @@
 #include "llvm/Support/InstIterator.h"// FIXME: CallGraph should use method uses
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 
 AnalysisID CallGraph::ID(AnalysisID::create<CallGraph>());
-//AnalysisID CallGraph::ID(AnalysisID::template AnalysisID<CallGraph>());
 
 // getNodeFor - Return the node for the specified method or create one if it
 // does not already exist.
@@ -125,23 +124,4 @@ Method *CallGraph::removeMethodFromModule(CallGraphNode *CGN) {
   Mod->getMethodList().remove(M);
   return M;
 }
-
-
-// 
-// Checks if a method contains any call instructions.
-// Note that this uses the call graph only if one is provided.
-// It does not build the call graph.
-// 
-bool IsLeafMethod(const Method* M, const CallGraph* CG) {
-  if (CG) {
-    const CallGraphNode *cgn = (*CG)[M];
-    return (cgn->begin() == cgn->end());
-  }
-
-  for (const_inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I)
-    if ((*I)->getOpcode() == Instruction::Call)
-      return false;
-  return true;
-}
-
 
