@@ -142,13 +142,6 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
 
 void 
 Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
-#ifdef LTDL_SHLIBPATH_VAR
-  char* env_var = getenv(LTDL_SHLIBPATH_VAR);
-  if (env_var != 0) {
-    getPathList(env_var,Paths);
-  }
-#endif
-  // FIXME: Should this look at LD_LIBRARY_PATH too?
   Paths.push_back(sys::Path("C:\\WINDOWS\\SYSTEM32\\"));
   Paths.push_back(sys::Path("C:\\WINDOWS\\"));
 }
@@ -172,11 +165,13 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
 
 Path
 Path::GetLLVMDefaultConfigDir() {
+  // TODO: this isn't going to fly on Windows
   return Path("/etc/llvm/");
 }
 
 Path
 Path::GetUserHomeDirectory() {
+  // TODO: Typical Windows setup doesn't define HOME.
   const char* home = getenv("HOME");
   if (home) {
     Path result;
@@ -288,7 +283,7 @@ Path::getStatusInfo(StatusInfo& info) const {
   info.fileSize <<= 32;
   info.fileSize += fi.nFileSizeLow;
 
-  info.mode = 0777;    // Not applicable to Windows, so...
+  info.mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;
   info.user = 9999;    // Not applicable to Windows, so...
   info.group = 9999;   // Not applicable to Windows, so...
 
@@ -300,6 +295,22 @@ Path::getStatusInfo(StatusInfo& info) const {
     path += '/';
   else if (!info.isDir && path[path.length() - 1] == '/')
     path.erase(path.length() - 1);
+}
+
+static bool AddPermissionBits(const std::string& Filename, int bits) {
+  DWORD attr = GetFileAttributes(Filename.c_str());
+
+  // If it doesn't exist, we're done.
+  if (attr == INVALID_FILE_ATTRIBUTES)
+    return false;
+
+  // The best we can do to interpret Unix permission bits is to use
+  // the owner writable bit.
+  if ((attr & FILE_ATTRIBUTE_READONLY) && (bits & 0200)) {
+    if (!SetFileAttributes(Filename.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
+	  ThrowError(Filename + ": SetFileAttributes: ");
+  }
+  return true;
 }
 
 void Path::makeReadable() {
@@ -321,6 +332,35 @@ void Path::makeWriteable() {
 
 void Path::makeExecutable() {
   // All files are executable on Windows (ignoring security attributes).
+}
+
+bool
+Path::getDirectoryContents(std::set<Path>& result) const {
+  if (!isDirectory())
+    return false;
+
+  result.clear();
+  WIN32_FIND_DATA fd;
+  HANDLE h = FindFirstFile(path.c_str(), &fd);
+  if (h == INVALID_HANDLE_VALUE) {
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+      return true; // not really an error, now is it?
+	ThrowError(path + ": Can't read directory: ");
+  }
+
+  do {
+	if (fd.cFileName[0] == '.')
+	  continue;
+	Path aPath(path + &fd.cFileName[0]);
+	if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	  aPath.path += "/";
+    result.insert(aPath);
+  } while (FindNextFile(h, &fd));
+
+  CloseHandle(h);
+  if (GetLastError() != ERROR_NO_MORE_FILES)
+	ThrowError(path + ": Can't read directory: ");
+  return true;
 }
 
 bool
@@ -575,13 +615,68 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   return true;
 }
 
+bool
+Path::renameFile(const Path& newName) {
+  if (!isFile()) return false;
+  if (!MoveFile(path.c_str(), newName.c_str()))
+    ThrowError("Can't move '" + path + 
+	           "' to '" + newName.path + "': ");
+  return true;
+}
+
+bool
+Path::setStatusInfo(const StatusInfo& si) const {
+  if (!isFile()) return false;
+
+  HANDLE h = CreateFile(path.c_str(),
+                        FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+						NULL,
+						OPEN_EXISTING,
+						FILE_ATTRIBUTE_NORMAL,
+						NULL);
+  if (h == INVALID_HANDLE_VALUE)
+    return false;
+
+  BY_HANDLE_FILE_INFORMATION bhfi;
+  if (!GetFileInformationByHandle(h, &bhfi)) {
+    CloseHandle(h);
+	ThrowError(path + ": GetFileInformationByHandle: ");
+  }
+
+  FILETIME ft;
+  (uint64_t&)ft = si.modTime.toWin32Time();
+  BOOL ret = SetFileTime(h, NULL, &ft, &ft);
+  CloseHandle(h);
+  if (!ret)
+    ThrowError(path + ": SetFileTime: ");
+
+  // Best we can do with Unix permission bits is to interpret the owner
+  // writable bit.
+  if (si.mode & 0200) {
+    if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
+      if (!SetFileAttributes(path.c_str(),
+		      bhfi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
+        ThrowError(path + ": SetFileAttributes: ");
+    }
+  } else {
+    if (!(bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
+      if (!SetFileAttributes(path.c_str(),
+		      bhfi.dwFileAttributes | FILE_ATTRIBUTE_READONLY))
+        ThrowError(path + ": SetFileAttributes: ");
+    }
+  }
+
+  return true;
+}
+
 void 
 sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   // Can't use CopyFile macro defined in Windows.h because it would mess up the
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
     ThrowError("Can't copy '" + Src.toString() + 
-               "' to '" + Dest.toString() + "'");
+	           "' to '" + Dest.toString() + "': ");
 }
 
 void 
