@@ -1068,7 +1068,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         unsigned Tmp9 = MakeReg(MVT::f64);
         
         BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdxL).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp1).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::STQ, 3).addReg(Tmp2).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
         BuildMI(BB, Alpha::LDT, 2, Tmp4).addFrameIndex(FrameIdxL).addReg(Alpha::F31);
         BuildMI(BB, Alpha::LDT, 2, Tmp5).addFrameIndex(FrameIdxR).addReg(Alpha::F31);
         BuildMI(BB, Alpha::CVTQT, 1, Tmp6).addReg(Tmp4);
@@ -1076,7 +1076,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::DIVT, 2, Tmp8).addReg(Tmp6).addReg(Tmp7);
         BuildMI(BB, Alpha::CVTTQ, 1, Tmp9).addReg(Tmp8);
         BuildMI(BB, Alpha::STT, 3).addReg(Tmp9).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
-        BuildMI(BB, Alpha::LDQ, 3).addReg(Result).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
+        BuildMI(BB, Alpha::LDQ, 2, Result).addFrameIndex(FrameIdxF).addReg(Alpha::F31);
         return Result;
       }
       
