@@ -47,16 +47,18 @@ static void runAtExitHandlers() {
 // not inlined, and hiding their real definitions in a separate archive file
 // that the dynamic linker can't see. For more info, search for
 // 'libc_nonshared.a' on Google, or read http://llvm.cs.uiuc.edu/PR274.
+#if defined(__linux__)
 void *FunctionPointers[] = {
   (void *) stat,
-  (void *) stat64,
   (void *) fstat,
-  (void *) fstat64,
   (void *) lstat,
+  (void *) stat64,
+  (void *) fstat64,
   (void *) lstat64,
   (void *) atexit,
   (void *) mknod
 };
+#endif // __linux__
 
 // NoopFn - Used if we have nothing else to call...
 static void NoopFn() {}
