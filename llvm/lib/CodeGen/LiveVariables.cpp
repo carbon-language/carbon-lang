@@ -126,6 +126,12 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = true;
+
+  for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+       unsigned Alias = *AliasSet; ++AliasSet) {
+    PhysRegInfo[Alias] = MI;
+    PhysRegUsed[Alias] = true;
+  }
 }
 
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
@@ -140,11 +146,10 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
   PhysRegUsed[Reg] = false;
 
   for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
-       *AliasSet; ++AliasSet) {
-    unsigned Alias = *AliasSet;
+       unsigned Alias = *AliasSet; ++AliasSet) {
     if (MachineInstr *LastUse = PhysRegInfo[Alias]) {
       if (PhysRegUsed[Alias])
-	RegistersKilled.insert(std::make_pair(LastUse, Alias));
+        RegistersKilled.insert(std::make_pair(LastUse, Alias));
       else
 	RegistersDead.insert(std::make_pair(LastUse, Alias));
     }
