@@ -1,7 +1,7 @@
 LEVEL = ../..
 
 TOOLNAME = dis
-USEDLIBS = bcreader asmwriter analysis vmcore support
+USEDLIBS = bcreader asmwriter vmcore support
 include $(LEVEL)/Makefile.common
 
 
