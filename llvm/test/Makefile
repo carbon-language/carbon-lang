@@ -1,6 +1,11 @@
 LEVEL  = ..
-DIRS   = Feature Regression Programs
+DIRS   = Programs
 include Makefile.tests
+
+#
+# Make QMTest the default for testing features and regressions
+#
+all:: qmtest
 
 #
 # New QMTest functionality:
@@ -10,13 +15,7 @@ include Makefile.tests
 
 # List of the functioning QM Tests
 QMTESTS=feature \
-        regression.assembler \
-        regression.analysis \
-        regression.bugpoint \
-        regression.cbackend \
-        regression.jello \
-        regression.linker \
-        regression.other
+        regression
 
 # QMTest option specifying the location of the QMTest database.
 QMDB= -D $(LLVM_SRC_ROOT)/test/QMTestDB
@@ -27,12 +26,13 @@ QMDB= -D $(LLVM_SRC_ROOT)/test/QMTestDB
 #
 CONTEXT= -c srcroot=$(LLVM_SRC_ROOT) \
          -c buildroot=$(LLVM_OBJ_ROOT) \
-	 -c buildtype=$(CONFIGURATION) \
+         -c buildtype=$(CONFIGURATION) \
          -c tmpdir=$(LLVM_OBJ_ROOT)/test/tmp \
-	 -c cc=$(CC) \
-	 -c cxx=$(CXX) \
-	 -c "llvmgcc=$(LLVMGCC)" \
-	 -c make=$(MAKE)
+         -c coresize=0 \
+         -c cc=$(CC) \
+         -c cxx=$(CXX) \
+         -c "llvmgcc=$(LLVMGCC)" \
+         -c make=$(MAKE)
 
 #
 # Location of the QMTest program.

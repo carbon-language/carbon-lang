@@ -56,10 +56,10 @@ LBUGPOINT= $(TOOLS)/bugpoint
 LCCFLAGS  += -O2 -Wall
 LCXXFLAGS += -O2 -Wall
 LLCFLAGS =
-FAILURE  = $(LEVEL)/test/Failure.sh
+FAILURE  = $(LLVM_SRC_ROOT)/test/Failure.sh
 TESTRUNR = @echo Running test: $<; \
-             PATH=$(LLVMTOOLCURRENT):$(LEVEL)/test/Scripts:$(PATH) \
-                  $(LEVEL)/test/TestRunner.sh
+             PATH=$(LLVMTOOLCURRENT):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH) \
+                  $(LLVM_SRC_ROOT)/test/TestRunner.sh
 
 # Native Tool Definitions
 NATGCC  = $(CC)
@@ -85,15 +85,24 @@ clean::
 	$(RM) -rf Output/
 
 # Compile from X.c to Output/X.ll
-Output/%.ll: $(SourceDir)%.c $(LCC1) Output/.dir $(INCLUDES)
+Output/%.ll: $(SourceDir)/%.c $(LCC1) Output/.dir $(INCLUDES)
+	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
+
+Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
 
 # Compile from X.cpp to Output/X.ll
-Output/%.ll: $(SourceDir)%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
+Output/%.ll: $(SourceDir)/%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
+	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+
+Output/%.ll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
 	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # Compile from X.cc to Output/X.ll
-Output/%.ll: $(SourceDir)%.cc $(LCC1XX) Output/.dir $(INCLUDES)
+Output/%.ll: $(SourceDir)/%.cc $(LCC1XX) Output/.dir $(INCLUDES)
+	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+
+Output/%.ll: %.cc $(LCC1XX) Output/.dir $(INCLUDES)
 	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
@@ -105,15 +114,25 @@ Output/%.bc: Output/%.ll $(LGCCAS)
 # LLVM Assemble from X.ll to Output/X.bc.  Because we are coming directly from
 # LLVM source, use the non-transforming assembler.
 #
-Output/%.bc: %.ll $(LAS) Output/.dir
+Output/%.bc: $(SourceDir)/%.ll $(LAS) Output/.dir
 	$(LAS) -f $< -o $@
 
 #
 # Testing versions of provided utilities...
 #
+Output/%.tll: $(SourceDir)/%.c $(LCC1) Output/.dir $(INCLUDES)
+	@echo "======== Compiling $<"
+	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@ || \
+	    ( rm -f $@; $(FAILURE) $@ )
+
 Output/%.tll: %.c $(LCC1) Output/.dir $(INCLUDES)
 	@echo "======== Compiling $<"
 	$(LCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@ || \
+	    ( rm -f $@; $(FAILURE) $@ )
+
+Output/%.tll: $(SourceDir)/%.cpp $(LCC1XX) Output/.dir $(INCLUDES)
+	@echo "======== Compiling $<"
+	$(LCXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@ || \
 	    ( rm -f $@; $(FAILURE) $@ )
 
 Output/%.tll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
