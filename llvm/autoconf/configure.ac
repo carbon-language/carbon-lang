@@ -21,11 +21,14 @@ dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])
 
 dnl Quit if the source directory has already been configured.
-if test -f ${srcdir}/include/Config/config.h
+dnl NOTE: This relies upon undocumented autoconf behavior.
+if test ${srcdir} != "."
 then
-	AC_MSG_ERROR([Already configured in ${srcdir}])
+	if test -f ${srcdir}/include/Config/config.h
+	then
+		AC_MSG_ERROR([Already configured in ${srcdir}])
+	fi
 fi
-
 
 dnl Configure a header file
 AC_CONFIG_HEADERS(include/Config/config.h)
