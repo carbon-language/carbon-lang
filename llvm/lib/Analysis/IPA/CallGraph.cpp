@@ -4,6 +4,10 @@
 // eventually implement call graph serialization and deserialization for
 // annotation support.
 //
+// This call graph represents a dynamic method invocation as a null method node.
+// A call graph may only have up to one null method node that represents all of
+// the dynamic method invocations.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CallGraph.h"
@@ -12,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
+#include "llvm/iTerminators.h"
 #include <algorithm>
 
 using namespace cfg;
@@ -36,10 +41,13 @@ CallGraphNode *CallGraph::getNodeFor(Method *M) {
 void CallGraph::addToCallGraph(Method *M) {
   CallGraphNode *Node = getNodeFor(M);
 
-  for (Method::inst_iterator II = M->inst_begin(), IE = M->inst_end();
-       II != IE; ++II) {
-    if (CallInst *CI = dyn_cast<CallInst>(*II))
+  for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
+       I != E; ++I) {
+    // Dynamic calls will cause Null nodes to be created
+    if (CallInst *CI = dyn_cast<CallInst>(*I))
       Node->addCalledMethod(getNodeFor(CI->getCalledMethod()));
+    else if (InvokeInst *II = dyn_cast<InvokeInst>(*I))
+      Node->addCalledMethod(getNodeFor(II->getCalledMethod()));
   }
 }
 
