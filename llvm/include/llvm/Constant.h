@@ -69,7 +69,8 @@ public:
            V->getValueType() == Value::ConstantExprVal ||
            V->getValueType() == Value::ConstantAggregateZeroVal ||
            V->getValueType() == Value::FunctionVal ||
-           V->getValueType() == Value::GlobalVariableVal;
+           V->getValueType() == Value::GlobalVariableVal ||
+           V->getValueType() == Value::UndefValueVal;
   }
 
   /// replaceUsesOfWithOnConstant - This method is a special form of
