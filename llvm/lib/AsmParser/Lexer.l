@@ -155,7 +155,8 @@ global          { return GLOBAL; }
 constant        { return CONSTANT; }
 const           { return CONST; }
 internal        { return INTERNAL; }
-uninitialized   { return UNINIT; }
+uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
+external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
 null            { return NULL_TOK; }

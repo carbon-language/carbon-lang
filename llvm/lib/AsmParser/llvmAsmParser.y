@@ -679,8 +679,8 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign FuncName
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT UNINIT
-%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL OPAQUE NOT
+%token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT
+%token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL OPAQUE NOT EXTERNAL
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -1145,7 +1145,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       }
     }
   }
-  | ConstPool OptAssign OptInternal UNINIT GlobalType Types {
+  | ConstPool OptAssign OptInternal EXTERNAL GlobalType Types {
     const Type *Ty = *$6;
     // Global declarations appear in Constant Pool
     GlobalVariable *GV = new GlobalVariable(Ty, $5, $3);
