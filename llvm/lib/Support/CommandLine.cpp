@@ -16,11 +16,6 @@
 #include <iostream>
 
 using namespace cl;
-using std::map;
-using std::pair;
-using std::vector;
-using std::string;
-using std::cerr;
 
 //===----------------------------------------------------------------------===//
 // Basic, shared command line option processing machinery...
@@ -29,27 +24,28 @@ using std::cerr;
 // Return the global command line option vector.  Making it a function scoped
 // static ensures that it will be initialized correctly before its first use.
 //
-static map<string,Option*> *CommandLineOptions = 0;
-static map<string, Option*> &getOpts() {
-  if (CommandLineOptions == 0) CommandLineOptions = new map<string,Option*>();
+static std::map<std::string, Option*> *CommandLineOptions = 0;
+static std::map<std::string, Option*> &getOpts() {
+  if (CommandLineOptions == 0)
+    CommandLineOptions = new std::map<std::string,Option*>();
   return *CommandLineOptions;
 }
 
-static Option *getOption(const string &Str) {
+static Option *getOption(const std::string &Str) {
   if (CommandLineOptions == 0) return 0;
-  map<string,Option*>::iterator I = CommandLineOptions->find(Str);
+  std::map<std::string,Option*>::iterator I = CommandLineOptions->find(Str);
   return I != CommandLineOptions->end() ? I->second : 0;
 }
 
-static vector<Option*> &getPositionalOpts() {
-  static vector<Option*> Positional;
+static std::vector<Option*> &getPositionalOpts() {
+  static std::vector<Option*> Positional;
   return Positional;
 }
 
 static void AddArgument(const char *ArgName, Option *Opt) {
   if (getOption(ArgName)) {
-    cerr << "CommandLine Error: Argument '" << ArgName
-	 << "' defined more than once!\n";
+    std::cerr << "CommandLine Error: Argument '" << ArgName
+              << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
     getOpts()[ArgName] = Opt;
@@ -89,18 +85,18 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   case ValueDisallowed:
     if (*Value != 0)
       return Handler->error(" does not allow a value! '" + 
-                            string(Value) + "' specified.");
+                            std::string(Value) + "' specified.");
     break;
   case ValueOptional: break;
-  default: cerr << "Bad ValueMask flag! CommandLine usage error:" 
-                << Handler->getValueExpectedFlag() << "\n"; abort();
+  default: std::cerr << "Bad ValueMask flag! CommandLine usage error:" 
+                     << Handler->getValueExpectedFlag() << "\n"; abort();
   }
 
   // Run the handler now!
   return Handler->addOccurance(ArgName, Value);
 }
 
-static bool ProvidePositionalOption(Option *Handler, string &Arg) {
+static bool ProvidePositionalOption(Option *Handler, std::string &Arg) {
   int Dummy;
   return ProvideOption(Handler, "", Arg.c_str(), 0, 0, Dummy);
 }
@@ -165,8 +161,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   ProgramOverview = Overview;
   bool ErrorParsing = false;
 
-  map<string, Option*> &Opts = getOpts();
-  vector<Option*> &PositionalOpts = getPositionalOpts();
+  std::map<std::string, Option*> &Opts = getOpts();
+  std::vector<Option*> &PositionalOpts = getPositionalOpts();
 
   // Check out the positional arguments to collect information about them.
   unsigned NumPositionalRequired = 0;
@@ -209,7 +205,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   // PositionalVals - A vector of "positional" arguments we accumulate into to
   // processes at the end...
   //
-  vector<string> PositionalVals;
+  std::vector<std::string> PositionalVals;
 
   // Loop over all of the arguments... processing them.
   bool DashDashFound = false;  // Have we read '--'?
@@ -258,9 +254,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 	++Value;            // Advance to value...
 
       if (*ArgName != 0) {
-	string RealName(ArgName, ArgNameEnd);
+	std::string RealName(ArgName, ArgNameEnd);
 	// Extract arg name part
-        map<string, Option*>::iterator I = Opts.find(RealName);
+        std::map<std::string, Option*>::iterator I = Opts.find(RealName);
 
 	if (I == Opts.end() && !*Value && RealName.size() > 1) {
           // Check to see if this "option" is really a prefixed or grouped
@@ -276,7 +272,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
           if (PGOpt && PGOpt->getFormattingFlag() == cl::Prefix) {
             ArgNameEnd = ArgName+Length;
             Value = ArgNameEnd;
-            I = Opts.find(string(ArgName, ArgNameEnd));
+            I = Opts.find(std::string(ArgName, ArgNameEnd));
             assert(I->second == PGOpt);
           } else if (PGOpt) {
             // This must be a grouped option... handle all of them now...
@@ -284,7 +280,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
             do {
               // Move current arg name out of RealName into RealArgName...
-              string RealArgName(RealName.begin(), RealName.begin()+Length);
+              std::string RealArgName(RealName.begin(),RealName.begin()+Length);
               RealName.erase(RealName.begin(), RealName.begin()+Length);
 
 	      // Because ValueRequired is an invalid flag for grouped arguments,
@@ -316,8 +312,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     if (Handler == 0) {
-      cerr << "Unknown command line argument '" << argv[i] << "'.  Try: "
-	   << argv[0] << " --help'\n";
+      std::cerr << "Unknown command line argument '" << argv[i] << "'.  Try: "
+                << argv[0] << " --help'\n";
       ErrorParsing = true;
       continue;
     }
@@ -327,9 +323,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    cerr << "Not enough positional command line arguments specified!\n";
-    cerr << "Must specify at least " << NumPositionalRequired
-         << " positional arguments: See: " << argv[0] << " --help\n";
+    std::cerr << "Not enough positional command line arguments specified!\n"
+              << "Must specify at least " << NumPositionalRequired
+              << " positional arguments: See: " << argv[0] << " --help\n";
     ErrorParsing = true;
 
 
@@ -387,7 +383,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   }
 
   // Loop over args and make sure all required args are specified!
-  for (map<string, Option*>::iterator I = Opts.begin(), 
+  for (std::map<std::string, Option*>::iterator I = Opts.begin(), 
 	 E = Opts.end(); I != E; ++I) {
     switch (I->second->getNumOccurancesFlag()) {
     case Required:
@@ -416,17 +412,17 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 // Option Base class implementation
 //
 
-bool Option::error(string Message, const char *ArgName) {
+bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
   if (ArgName[0] == 0)
-    cerr << HelpStr;  // Be nice for positional arguments
+    std::cerr << HelpStr;  // Be nice for positional arguments
   else
-    cerr << "-" << ArgName;
-  cerr << " option" << Message << "\n";
+    std::cerr << "-" << ArgName;
+  std::cerr << " option" << Message << "\n";
   return true;
 }
 
-bool Option::addOccurance(const char *ArgName, const string &Value) {
+bool Option::addOccurance(const char *ArgName, const std::string &Value) {
   NumOccurances++;   // Increment the number of times we have been seen
 
   switch (getNumOccurancesFlag()) {
@@ -468,7 +464,7 @@ void Option::removeArgument(const char *ArgStr) {
   if (ArgStr[0]) {
     RemoveArgument(ArgStr, this);
   } else if (getFormattingFlag() == Positional) {
-    vector<Option*>::iterator I =
+    std::vector<Option*>::iterator I =
       std::find(getPositionalOpts().begin(), getPositionalOpts().end(), this);
     assert(I != getPositionalOpts().end() && "Arg not registered!");
     getPositionalOpts().erase(I);
@@ -500,8 +496,8 @@ unsigned alias::getOptionWidth() const {
 // Print out the option for the alias...
 void alias::printOptionInfo(unsigned GlobalWidth) const {
   unsigned L = std::strlen(ArgStr);
-  cerr << "  -" << ArgStr << string(GlobalWidth-L-6, ' ') << " - "
-       << HelpStr << "\n";
+  std::cerr << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
+            << HelpStr << "\n";
 }
 
 
@@ -527,13 +523,13 @@ unsigned basic_parser_impl::getOptionWidth(const Option &O) const {
 //
 void basic_parser_impl::printOptionInfo(const Option &O,
                                         unsigned GlobalWidth) const {
-  cerr << "  -" << O.ArgStr;
+  std::cerr << "  -" << O.ArgStr;
 
   if (const char *ValName = getValueName())
-    cerr << "=<" << getValueStr(O, ValName) << ">";
+    std::cerr << "=<" << getValueStr(O, ValName) << ">";
 
-  cerr << string(GlobalWidth-getOptionWidth(O), ' ') << " - "
-       << O.HelpStr << "\n";
+  std::cerr << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
+            << O.HelpStr << "\n";
 }
 
 
@@ -542,7 +538,7 @@ void basic_parser_impl::printOptionInfo(const Option &O,
 // parser<bool> implementation
 //
 bool parser<bool>::parse(Option &O, const char *ArgName,
-                         const string &Arg, bool &Value) {
+                         const std::string &Arg, bool &Value) {
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" || 
       Arg == "1") {
     Value = true;
@@ -558,7 +554,7 @@ bool parser<bool>::parse(Option &O, const char *ArgName,
 // parser<int> implementation
 //
 bool parser<int>::parse(Option &O, const char *ArgName,
-                        const string &Arg, int &Value) {
+                        const std::string &Arg, int &Value) {
   const char *ArgStart = Arg.c_str();
   char *End;
   Value = (int)strtol(ArgStart, &End, 0);
@@ -569,7 +565,7 @@ bool parser<int>::parse(Option &O, const char *ArgName,
 
 // parser<double>/parser<float> implementation
 //
-static bool parseDouble(Option &O, const string &Arg, double &Value) {
+static bool parseDouble(Option &O, const std::string &Arg, double &Value) {
   const char *ArgStart = Arg.c_str();
   char *End;
   Value = strtod(ArgStart, &End);
@@ -602,7 +598,7 @@ bool parser<float>::parse(Option &O, const char *AN,
 //
 unsigned generic_parser_base::findOption(const char *Name) {
   unsigned i = 0, e = getNumOptions();
-  string N(Name);
+  std::string N(Name);
 
   while (i != e)
     if (getOption(i) == N)
@@ -635,21 +631,21 @@ void generic_parser_base::printOptionInfo(const Option &O,
                                           unsigned GlobalWidth) const {
   if (O.hasArgStr()) {
     unsigned L = std::strlen(O.ArgStr);
-    cerr << "  -" << O.ArgStr << string(GlobalWidth-L-6, ' ')
-         << " - " << O.HelpStr << "\n";
+    std::cerr << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
+              << " - " << O.HelpStr << "\n";
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned NumSpaces = GlobalWidth-strlen(getOption(i))-8;
-      cerr << "    =" << getOption(i) << string(NumSpaces, ' ') << " - "
-           << getDescription(i) << "\n";
+      std::cerr << "    =" << getOption(i) << std::string(NumSpaces, ' ')
+                << " - " << getDescription(i) << "\n";
     }
   } else {
     if (O.HelpStr[0])
-      cerr << "  " << O.HelpStr << "\n"; 
+      std::cerr << "  " << O.HelpStr << "\n"; 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned L = std::strlen(getOption(i));
-      cerr << "    -" << getOption(i) << string(GlobalWidth-L-8, ' ') << " - "
-           << getDescription(i) << "\n";
+      std::cerr << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
+                << " - " << getDescription(i) << "\n";
     }
   }
 }
@@ -666,10 +662,10 @@ class HelpPrinter {
   const bool ShowHidden;
 
   // isHidden/isReallyHidden - Predicates to be used to filter down arg lists.
-  inline static bool isHidden(pair<string, Option *> &OptPair) {
+  inline static bool isHidden(std::pair<std::string, Option *> &OptPair) {
     return OptPair.second->getOptionHiddenFlag() >= Hidden;
   }
-  inline static bool isReallyHidden(pair<string, Option *> &OptPair) {
+  inline static bool isReallyHidden(std::pair<std::string, Option *> &OptPair) {
     return OptPair.second->getOptionHiddenFlag() == ReallyHidden;
   }
 
@@ -682,7 +678,7 @@ public:
     if (Value == false) return;
 
     // Copy Options into a vector so we can sort them as we like...
-    vector<pair<string, Option*> > Options;
+    std::vector<std::pair<std::string, Option*> > Options;
     copy(getOpts().begin(), getOpts().end(), std::back_inserter(Options));
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
@@ -701,30 +697,30 @@ public:
     }
 
     if (ProgramOverview)
-      cerr << "OVERVIEW:" << ProgramOverview << "\n";
+      std::cerr << "OVERVIEW:" << ProgramOverview << "\n";
 
-    cerr << "USAGE: " << ProgramName << " [options]";
+    std::cerr << "USAGE: " << ProgramName << " [options]";
 
     // Print out the positional options...
-    vector<Option*> &PosOpts = getPositionalOpts();
+    std::vector<Option*> &PosOpts = getPositionalOpts();
     Option *CAOpt = 0;   // The cl::ConsumeAfter option, if it exists...
     if (!PosOpts.empty() && PosOpts[0]->getNumOccurancesFlag() == ConsumeAfter)
       CAOpt = PosOpts[0];
 
     for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i)
-      cerr << " " << PosOpts[i]->HelpStr;
+      std::cerr << " " << PosOpts[i]->HelpStr;
 
     // Print the consume after option info if it exists...
-    if (CAOpt) cerr << " " << CAOpt->HelpStr;
+    if (CAOpt) std::cerr << " " << CAOpt->HelpStr;
 
-    cerr << "\n\n";
+    std::cerr << "\n\n";
 
     // Compute the maximum argument length...
     MaxArgLen = 0;
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       MaxArgLen = std::max(MaxArgLen, Options[i].second->getOptionWidth());
 
-    cerr << "OPTIONS:\n";
+    std::cerr << "OPTIONS:\n";
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       Options[i].second->printOptionInfo(MaxArgLen);
 
