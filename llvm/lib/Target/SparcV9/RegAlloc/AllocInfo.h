@@ -32,10 +32,14 @@ struct AllocInfo {
   AllocStateTy AllocState;
   int Placement;
 
-  AllocInfo (unsigned Instruction_, unsigned Operand_,
-             AllocStateTy AllocState_, int Placement_) :
-    Instruction (Instruction_), Operand (Operand_),
-       AllocState (AllocState_), Placement (Placement_) { }
+  AllocInfo (int Inst_, int Op_, AllocStateTy State_, int Place_) :
+    Instruction(Inst_), Operand(Op_), AllocState(State_), Placement(Place_) { }
+
+  /// AllocInfo constructor -- Default constructor creates an invalid AllocInfo 
+  /// (presumably to be replaced with something meaningful later).
+  ///
+  AllocInfo () :
+    Instruction(-1), Operand(-1), AllocState(NotAllocated), Placement(-1) { }
 
   /// getConstantType - Return a StructType representing an AllocInfo object.
   ///
