@@ -5,8 +5,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
