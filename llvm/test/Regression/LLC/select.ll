@@ -88,24 +88,20 @@ end
 ; 1. can be folded
 ; 2. cannot be folded because result of comparison is used twice
 ;
-void "testbool"(int, int)   ; Def %0, %1
-	const int 0          ; Def 2
-	const int -4         ; Def 3
-begin
-; <label>:0
+void "testbool"(int %A, int %B) {
 	br label %Top
 Top:
-	add int %0, %1    ; Def 4
-	sub int %4, %3    ; Def 5
-	setle int %5, %2  ; Def 0 - bool plane
-	br bool %0, label %retlbl, label %loop
+	%D = add int %A, %B
+	%E = sub int %D, -4
+	%C = setle int %E, 0
+	br bool %C, label %retlbl, label %loop
 
 loop:
-	add int %0, %1    ; Def 6
-	sub int %4, %3    ; Def 7
-	setle int %7, %2  ; Def 1 - bool
-	not bool %1		  ; Def 2 - bool. first use of bool %1
-	br bool %1, label %loop, label %Top   ;  second use of bool %1
+	%F = add int %A, %B
+	%G = sub int %D, -4
+	%D = setle int %G, 0
+	%E = not bool %D
+	br bool %E, label %loop, label %Top
 
 retlbl:
 	ret void
@@ -151,5 +147,5 @@ bb2:		;;<label>
 	%cast117 = cast int %reg118 to long	;; reg118 will be copied 'cos
 	%reg159 = add long 1234567, %cast117	;;  cast117 has 2 uses, here
 	%reg160 = add long 7654321, %cast117	;;  and here.
-	ret void
+	ret int 0
 end
