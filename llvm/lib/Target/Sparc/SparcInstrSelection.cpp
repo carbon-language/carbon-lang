@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
@@ -315,7 +316,7 @@ CreateConvertFPToIntInstr(Type::PrimitiveID destTID,
 //
 // Since fdtoi converts to signed integers, any FP value V between MAXINT+1
 // and MAXUNSIGNED (i.e., 2^31 <= V <= 2^32-1) would be converted incorrectly
-// *only* when converting to an unsigned int.  (Unsigned byte, short or long
+// *only* when converting to an unsigned.  (Unsigned byte, short or long
 // don't have this problem.)
 // For unsigned int, we therefore have to generate the code sequence:
 // 
@@ -324,7 +325,7 @@ CreateConvertFPToIntInstr(Type::PrimitiveID destTID,
 //        result = result + (unsigned) MAXINT;
 //      }
 //      else
-//        result = (unsigned int) V;
+//        result = (unsigned) V;
 // 
 static void
 CreateCodeToConvertFloatToInt(const TargetMachine& target,
@@ -338,7 +339,7 @@ CreateCodeToConvertFloatToInt(const TargetMachine& target,
   // depends on the type of FP register to use: single-prec for a 32-bit
   // int or smaller; double-prec for a 64-bit int.
   // 
-  size_t destSize = target.DataLayout.getTypeSize(destI->getType());
+  size_t destSize = target.getTargetData().getTypeSize(destI->getType());
   const Type* destTypeToUse = (destSize > 4)? Type::DoubleTy : Type::FloatTy;
   TmpInstruction* destForCast = new TmpInstruction(destTypeToUse, opVal);
   mcfi.addTemp(destForCast);
@@ -522,7 +523,7 @@ CreateShiftInstructions(const TargetMachine& target,
                         MachineOpCode shiftOpCode,
                         Value* argVal1,
                         Value* optArgVal2, /* Use optArgVal2 if not NULL */
-                        unsigned int optShiftNum, /* else use optShiftNum */
+                        unsigned optShiftNum, /* else use optShiftNum */
                         Instruction* destVal,
                         vector<MachineInstr*>& mvec,
                         MachineCodeForInstruction& mcfi)
@@ -536,9 +537,9 @@ CreateShiftInstructions(const TargetMachine& target,
   // of dest, so we need to put the result of the SLL into a temporary.
   // 
   Value* shiftDest = destVal;
-  unsigned opSize = target.DataLayout.getTypeSize(argVal1->getType());
+  unsigned opSize = target.getTargetData().getTypeSize(argVal1->getType());
   if ((shiftOpCode == SLL || shiftOpCode == SLLX)
-      && opSize < target.DataLayout.getIntegerRegize())
+      && opSize < target.getTargetData().getIntegerRegize())
     { // put SLL result into a temporary
       shiftDest = new TmpInstruction(argVal1, optArgVal2, "sllTmp");
       mcfi.addTemp(shiftDest);
@@ -563,15 +564,15 @@ CreateShiftInstructions(const TargetMachine& target,
 // create a cheaper instruction.
 // This returns the approximate cost of the instructions generated,
 // which is used to pick the cheapest when both operands are constant.
-static inline unsigned int
+static inline unsigned
 CreateMulConstInstruction(const TargetMachine &target, Function* F,
                           Value* lval, Value* rval, Instruction* destVal,
                           vector<MachineInstr*>& mvec,
                           MachineCodeForInstruction& mcfi)
 {
   /* Use max. multiply cost, viz., cost of MULX */
-  unsigned int cost = target.getInstrInfo().minLatency(MULX);
-  unsigned int firstNewInstr = mvec.size();
+  unsigned cost = target.getInstrInfo().minLatency(MULX);
+  unsigned firstNewInstr = mvec.size();
   
   Value* constOp = rval;
   if (! isa<Constant>(constOp))
@@ -612,7 +613,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
             }
           else if (isPowerOf2(C, pow))
             {
-              unsigned int opSize = target.DataLayout.getTypeSize(resultType);
+              unsigned opSize = target.getTargetData().getTypeSize(resultType);
               MachineOpCode opCode = (opSize <= 32)? SLL : SLLX;
               CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
                                       destVal, mvec, mcfi); 
@@ -644,7 +645,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
   if (firstNewInstr < mvec.size())
     {
       cost = 0;
-      for (unsigned int i=firstNewInstr; i < mvec.size(); ++i)
+      for (unsigned i=firstNewInstr; i < mvec.size(); ++i)
         cost += target.getInstrInfo().minLatency(mvec[i]->getOpCode());
     }
   
@@ -687,7 +688,7 @@ CreateMulInstruction(const TargetMachine &target, Function* F,
                      MachineCodeForInstruction& mcfi,
                      MachineOpCode forceMulOp = INVALID_MACHINE_OPCODE)
 {
-  unsigned int L = mvec.size();
+  unsigned L = mvec.size();
   CreateCheapestMulConstInstruction(target,F, lval, rval, destVal, mvec, mcfi);
   if (mvec.size() == L)
     { // no instructions were added so create MUL reg, reg, reg.
@@ -829,7 +830,7 @@ CreateDivConstInstruction(TargetMachine &target,
 static void
 CreateCodeForVariableSizeAlloca(const TargetMachine& target,
                                 Instruction* result,
-                                unsigned int tsize,
+                                unsigned tsize,
                                 Value* numElementsVal,
                                 vector<MachineInstr*>& getMvec)
 {
@@ -895,7 +896,8 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
   // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
   M = new MachineInstr(ADD);
   M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, dynamicAreaOffset);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
+			  dynamicAreaOffset);
   M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, result);
   getMvec.push_back(M);
 }        
@@ -904,8 +906,8 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
 static void
 CreateCodeForFixedSizeAlloca(const TargetMachine& target,
                              Instruction* result,
-                             unsigned int tsize,
-                             unsigned int numElements,
+                             unsigned tsize,
+                             unsigned numElements,
                              vector<MachineInstr*>& getMvec)
 {
   assert(tsize > 0 && "Illegal (zero) type size for alloca");
@@ -918,20 +920,19 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   // load/stores (check LDX because all load/stores have the same-size immediate
   // field).  If not, put the variable in the dynamically sized area of the
   // frame.
-  unsigned int paddedSizeIgnored;
-  int offsetFromFP = mcInfo.computeOffsetforLocalVar(target, result,
+  unsigned paddedSizeIgnored;
+  int offsetFromFP = mcInfo.getInfo()->computeOffsetforLocalVar(result,
                                                      paddedSizeIgnored,
                                                      tsize * numElements);
-  if (! target.getInstrInfo().constantFitsInImmedField(LDX, offsetFromFP))
-    {
-      CreateCodeForVariableSizeAlloca(target, result, tsize, 
-                                      ConstantSInt::get(Type::IntTy,numElements),
-                                      getMvec);
-      return;
-    }
+  if (! target.getInstrInfo().constantFitsInImmedField(LDX, offsetFromFP)) {
+    CreateCodeForVariableSizeAlloca(target, result, tsize, 
+				    ConstantSInt::get(Type::IntTy,numElements),
+				    getMvec);
+    return;
+  }
   
   // else offset fits in immediate field so go ahead and allocate it.
-  offsetFromFP = mcInfo.allocateLocalVar(target, result, tsize * numElements);
+  offsetFromFP = mcInfo.getInfo()->allocateLocalVar(result, tsize *numElements);
   
   // Create a temporary Value to hold the constant offset.
   // This is needed because it may not fit in the immediate field.
@@ -995,7 +996,7 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
         {
           // Compute the offset value using the index vector. Create a
           // virtual reg. for it since it may not fit in the immed field.
-          uint64_t offset = target.DataLayout.getIndexedOffset(ptrType,idxVec);
+          uint64_t offset = target.getTargetData().getIndexedOffset(ptrType,idxVec);
           valueForRegOffset = ConstantSInt::get(Type::LongTy, offset);
         }
       else
@@ -1025,7 +1026,7 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
                                  : ptrType);
           const Type* eltType = cast<SequentialType>(vecType)->getElementType();
           ConstantUInt* eltSizeVal = ConstantUInt::get(Type::ULongTy,
-                                       target.DataLayout.getTypeSize(eltType));
+                                       target.getTargetData().getTypeSize(eltType));
 
           // CreateMulInstruction() folds constants intelligently enough.
           CreateMulInstruction(target, memInst->getParent()->getParent(),
@@ -1222,9 +1223,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   bool maskUnsignedResult = false;
   int nextRule;
   int forwardOperandNum = -1;
-  unsigned int allocaSize = 0;
+  unsigned allocaSize = 0;
   MachineInstr* M, *M2;
-  unsigned int L;
+  unsigned L;
 
   mvec.clear(); 
   
@@ -1498,8 +1499,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* opType = opVal->getType();
         if (opType->isIntegral() || isa<PointerType>(opType))
           {
-            unsigned opSize = target.DataLayout.getTypeSize(opType);
-            unsigned destSize = target.DataLayout.getTypeSize(destI->getType());
+            unsigned opSize = target.getTargetData().getTypeSize(opType);
+            unsigned destSize = target.getTargetData().getTypeSize(destI->getType());
             if (opSize >= destSize)
               { // Operand is same size as or larger than dest:
                 // zero- or sign-extend, according to the signeddness of
@@ -1592,7 +1593,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                     // double-prec for a 64-bit int.
                     // 
                     uint64_t srcSize =
-                      target.DataLayout.getTypeSize(leftVal->getType());
+                      target.getTargetData().getTypeSize(leftVal->getType());
                     Type* tmpTypeToUse =
                       (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
                     srcForCast = new TmpInstruction(tmpTypeToUse, dest);
@@ -1703,7 +1704,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       
       case 36:	// reg:   Div(reg, reg)
         maskUnsignedResult = true;
-        mvec.push_back(new MachineInstr(ChooseDivInstruction(target, subtreeRoot)));
+        mvec.push_back(new MachineInstr(ChooseDivInstruction(target,
+							     subtreeRoot)));
         Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
@@ -1947,8 +1949,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {         //	    add %fp, offsetFromFP -> result
         AllocationInst* instr =
           cast<AllocationInst>(subtreeRoot->getInstruction());
-        unsigned int tsize =
-          target.DataLayout.getTypeSize(instr->getAllocatedType());
+        unsigned tsize =
+          target.getTargetData().getTypeSize(instr->getAllocatedType());
         assert(tsize != 0);
         CreateCodeForFixedSizeAlloca(target, instr, tsize, 1, mvec);
         break;
@@ -1963,14 +1965,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         const Type* eltType = instr->getAllocatedType();
         
         // If #elements is constant, use simpler code for fixed-size allocas
-        int tsize = (int) target.DataLayout.getTypeSize(eltType);
+        int tsize = (int) target.getTargetData().getTypeSize(eltType);
         Value* numElementsVal = NULL;
         bool isArray = instr->isArrayAllocation();
         
         if (!isArray ||
             isa<Constant>(numElementsVal = instr->getArraySize()))
           { // total size is constant: generate code for fixed-size alloca
-            unsigned int numElements = isArray? 
+            unsigned numElements = isArray? 
               cast<ConstantUInt>(numElementsVal)->getValue() : 1;
             CreateCodeForFixedSizeAlloca(target, instr, tsize,
                                          numElements, mvec);
@@ -2157,7 +2159,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       Instruction* dest = subtreeRoot->getInstruction();
       if (dest->getType()->isUnsigned())
         {
-          unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
+          unsigned destSize=target.getTargetData().getTypeSize(dest->getType());
           if (destSize <= 4)
             { // Mask high bits.  Use a TmpInstruction to represent the
               // intermediate result before masking.  Since those instructions
@@ -2173,7 +2175,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               M = Create3OperandInstr_UImmed(SRL, tmpI, 8*(4-destSize), dest);
               mvec.push_back(M);
             }
-          else if (destSize < target.DataLayout.getIntegerRegize())
+          else if (destSize < target.getTargetData().getIntegerRegize())
             assert(0 && "Unsupported type size: 32 < size < 64 bits");
         }
     }
