@@ -49,6 +49,10 @@ namespace {
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
 
+    /// hasNoModRefInfoForCalls - We have no way to test one call against
+    /// another, unless they are pure or const.
+    virtual bool hasNoModRefInfoForCalls() const { return true; }
+
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
     bool pointsToConstantMemory(const Value *P);
