@@ -294,7 +294,7 @@ struct SparcFunctionAsmPrinter : public FunctionPass, public AsmPrinter {
 
   void emitFunction(const Function &F);
 private :
-  void emitBasicBlock(const BasicBlock *BB);
+  void emitBasicBlock(const MachineBasicBlock &MBB);
   void emitMachineInst(const MachineInstr *MI);
   
   unsigned int printOperands(const MachineInstr *MI, unsigned int opNum);
@@ -462,16 +462,13 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
 }
 
 void
-SparcFunctionAsmPrinter::emitBasicBlock(const BasicBlock *BB)
+SparcFunctionAsmPrinter::emitBasicBlock(const MachineBasicBlock &MBB)
 {
   // Emit a label for the basic block
-  toAsm << getID(BB) << ":\n";
-
-  // Get the vector of machine instructions corresponding to this bb.
-  const MachineBasicBlock &MIs = MachineBasicBlock::get(BB);
+  toAsm << getID(MBB.getBasicBlock()) << ":\n";
 
   // Loop over all of the instructions in the basic block...
-  for (MachineBasicBlock::const_iterator MII = MIs.begin(), MIE = MIs.end();
+  for (MachineBasicBlock::const_iterator MII = MBB.begin(), MIE = MBB.end();
        MII != MIE; ++MII)
     emitMachineInst(*MII);
   toAsm << "\n";  // Seperate BB's with newlines
@@ -489,8 +486,9 @@ SparcFunctionAsmPrinter::emitFunction(const Function &F)
   toAsm << methName << ":\n";
 
   // Output code for all of the basic blocks in the function...
-  for (Function::const_iterator I = F.begin(), E = F.end(); I != E; ++I)
-    emitBasicBlock(I);
+  MachineFunction &MF = MachineFunction::get(&F);
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+    emitBasicBlock(*I);
 
   // Output a .size directive so the debugger knows the extents of the function
   toAsm << ".EndOf_" << methName << ":\n\t.size "

@@ -117,14 +117,17 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
       mvec.push_back(M);
     }
 
-  MachineBasicBlock& bbMvec = MachineBasicBlock::get(&F.getEntryNode());
+  MachineBasicBlock& bbMvec = mcInfo.front();
   bbMvec.insert(bbMvec.begin(), mvec.begin(), mvec.end());
 }
 
 void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
 {
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    Instruction *TermInst = (Instruction*)I->getTerminator();
+  MachineFunction &MF = MachineFunction::get(&F);
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+    MachineBasicBlock &MBB = *I;
+    BasicBlock &BB = *I->getBasicBlock();
+    Instruction *TermInst = (Instruction*)BB.getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
       {
         MachineInstr *Restore = new MachineInstr(RESTORE);
@@ -133,7 +136,6 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
                                         (int64_t)0);
         Restore->SetMachineOperandReg(2, Target.getRegInfo().getZeroRegNum());
         
-        MachineBasicBlock& bbMvec = MachineBasicBlock::get(I);
         MachineCodeForInstruction &termMvec =
           MachineCodeForInstruction::get(TermInst);
         
@@ -142,12 +144,12 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
         unsigned numNOPs = 0;
         while (termMvec.back()->getOpCode() == NOP)
           {
-            assert( termMvec.back() == bbMvec.back());
-            delete bbMvec.pop_back();
+            assert( termMvec.back() == MBB.back());
+            delete MBB.pop_back();
             termMvec.pop_back();
             ++numNOPs;
           }
-        assert(termMvec.back() == bbMvec.back());
+        assert(termMvec.back() == MBB.back());
         
         // Check that we found the right number of NOPs and have the right
         // number of instructions to replace them.
@@ -156,7 +158,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
         assert(ndelays == 1 && "Cannot use epilog code for delay slots?");
         
         // Append the epilog code to the end of the basic block.
-        bbMvec.push_back(Restore);
+        MBB.push_back(Restore);
       }
   }
 }
