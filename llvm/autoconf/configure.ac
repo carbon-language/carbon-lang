@@ -40,6 +40,7 @@ AC_CONFIG_FILES(Makefile.config
 dnl Do special configuration of Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(Makefile.common)
+AC_CONFIG_MAKEFILE(examples/Makefile)
 AC_CONFIG_MAKEFILE(lib/Makefile)
 AC_CONFIG_MAKEFILE(runtime/Makefile)
 AC_CONFIG_MAKEFILE(test/Makefile)
