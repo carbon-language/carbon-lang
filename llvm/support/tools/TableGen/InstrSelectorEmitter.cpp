@@ -19,6 +19,25 @@ NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   throw "Unknown DagNodeValType '" + Name + "'!";
 }
 
+
+//===----------------------------------------------------------------------===//
+// TreePatternNode implementation
+//
+
+// updateNodeType - Set the node type of N to VT if VT contains information.  If
+// N already contains a conflicting type, then throw an exception
+//
+bool TreePatternNode::updateNodeType(MVT::ValueType VT,
+                                     const std::string &RecName) {
+  if (VT == MVT::Other || getType() == VT) return false;
+  if (getType() == MVT::Other) {
+    setType(VT);
+    return true;
+  }
+
+  throw "Type inferfence contradiction found for pattern " + RecName;
+}
+
 std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
   if (N.isLeaf())
     return OS << N.getType() << ":" << *N.getValue();
@@ -35,63 +54,9 @@ std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
 }
 void TreePatternNode::dump() const { std::cerr << *this; }
 
-
-/// ProcessNodeTypes - Process all of the node types in the current
-/// RecordKeeper, turning them into the more accessible NodeTypes data
-/// structure.
-///
-void InstrSelectorEmitter::ProcessNodeTypes() {
-  std::vector<Record*> Nodes = Records.getAllDerivedDefinitions("DagNode");
-  DEBUG(std::cerr << "Getting node types: ");
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-    Record *Node = Nodes[i];
-    
-    // Translate the return type...
-    NodeType::ArgResultTypes RetTy =
-      NodeType::Translate(Node->getValueAsDef("RetType"));
-
-    // Translate the arguments...
-    ListInit *Args = Node->getValueAsListInit("ArgTypes");
-    std::vector<NodeType::ArgResultTypes> ArgTypes;
-
-    for (unsigned a = 0, e = Args->getSize(); a != e; ++a) {
-      if (DefInit *DI = dynamic_cast<DefInit*>(Args->getElement(a)))
-        ArgTypes.push_back(NodeType::Translate(DI->getDef()));
-      else
-        throw "In node " + Node->getName() + ", argument is not a Def!";
-
-      if (a == 0 && ArgTypes.back() == NodeType::Arg0)
-        throw "In node " + Node->getName() + ", arg 0 cannot have type 'arg0'!";
-      if (ArgTypes.back() == NodeType::Void)
-        throw "In node " + Node->getName() + ", args cannot be void type!";
-    }
-    if (RetTy == NodeType::Arg0 && Args->getSize() == 0)
-      throw "In node " + Node->getName() +
-            ", invalid return type for nullary node!";
-
-    // Add the node type mapping now...
-    NodeTypes[Node] = NodeType(RetTy, ArgTypes);
-    DEBUG(std::cerr << Node->getName() << ", ");
-  }
-  DEBUG(std::cerr << "DONE!\n");
-}
-
-static MVT::ValueType getIntrinsicType(Record *R) {
-  // Check to see if this is a register or a register class...
-  const std::vector<Record*> &SuperClasses = R->getSuperClasses();
-  for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-    if (SuperClasses[i]->getName() == "RegisterClass") {
-      return getValueType(R->getValueAsDef("RegType"));
-    } else if (SuperClasses[i]->getName() == "Register") {
-      std::cerr << "WARNING: Explicit registers not handled yet!\n";
-      return MVT::Other;
-    } else if (SuperClasses[i]->getName() == "Nonterminal") {
-      //std::cerr << "Warning nonterminal type not handled yet:" << R->getName()
-      //          << "\n";
-      return MVT::Other;
-    }
-  throw "Error: Unknown value used: " + R->getName();
-}
+//===----------------------------------------------------------------------===//
+// Pattern implementation
+//
 
 // Parse the specified DagInit into a TreePattern which we can use.
 //
@@ -143,6 +108,22 @@ void Pattern::error(const std::string &Msg) {
   throw M + TheRecord->getName() + ": " + Msg;  
 }
 
+static MVT::ValueType getIntrinsicType(Record *R) {
+  // Check to see if this is a register or a register class...
+  const std::vector<Record*> &SuperClasses = R->getSuperClasses();
+  for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
+    if (SuperClasses[i]->getName() == "RegisterClass") {
+      return getValueType(R->getValueAsDef("RegType"));
+    } else if (SuperClasses[i]->getName() == "Register") {
+      std::cerr << "WARNING: Explicit registers not handled yet!\n";
+      return MVT::Other;
+    } else if (SuperClasses[i]->getName() == "Nonterminal") {
+      //std::cerr << "Warning nonterminal type not handled yet:" << R->getName()
+      //          << "\n";
+      return MVT::Other;
+    }
+  throw "Error: Unknown value used: " + R->getName();
+}
 
 TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
   Record *Operator = DI->getNodeType();
@@ -170,20 +151,6 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
   return new TreePatternNode(Operator, Children);
 }
 
-// UpdateNodeType - Set the node type of N to VT if VT contains information.  If
-// N already contains a conflicting type, then throw an exception
-//
-static bool UpdateNodeType(TreePatternNode *N, MVT::ValueType VT,
-                           const std::string &RecName) {
-  if (VT == MVT::Other || N->getType() == VT) return false;
-
-  if (N->getType() == MVT::Other) {
-    N->setType(VT);
-    return true;
-  }
-
-  throw "Type inferfence contradiction found for pattern " + RecName;
-}
 
 // InferTypes - Perform type inference on the tree, returning true if there
 // are any remaining untyped nodes and setting MadeChange if any changes were
@@ -203,21 +170,21 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     error("Incorrect number of children for " + Operator->getName() + " node!");
 
   for (unsigned i = 0, e = Children.size(); i != e; ++i) {
-    AnyUnset |= InferTypes(Children[i], MadeChange);
+    TreePatternNode *Child = Children[i];
+    AnyUnset |= InferTypes(Child, MadeChange);
 
     switch (NT.ArgTypes[i]) {
     case NodeType::Arg0:
-      MadeChange |= UpdateNodeType(Children[i], Children[0]->getType(),
-                                   TheRecord->getName());
+      MadeChange |= Child->updateNodeType(Children[0]->getType(),
+                                          TheRecord->getName());
       break;
     case NodeType::Val:
-      if (Children[i]->getType() == MVT::isVoid)
+      if (Child->getType() == MVT::isVoid)
         error("Inferred a void node in an illegal place!");
       break;
     case NodeType::Ptr:
-      MadeChange |= UpdateNodeType(Children[i],
-                                   ISE.getTarget().getPointerType(),
-                                   TheRecord->getName());
+      MadeChange |= Child->updateNodeType(ISE.getTarget().getPointerType(),
+                                          TheRecord->getName());
       break;
     default: assert(0 && "Invalid argument ArgType!");
     }
@@ -226,16 +193,16 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
   // See if we can infer anything about the return type now...
   switch (NT.ResultType) {
   case NodeType::Void:
-    MadeChange |= UpdateNodeType(N, MVT::isVoid, TheRecord->getName());
+    MadeChange |= N->updateNodeType(MVT::isVoid, TheRecord->getName());
     break;
   case NodeType::Arg0:
-    MadeChange |= UpdateNodeType(N, Children[0]->getType(),
-                                 TheRecord->getName());
+    MadeChange |= N->updateNodeType(Children[0]->getType(),
+                                    TheRecord->getName());
     break;
 
   case NodeType::Ptr:
-    MadeChange |= UpdateNodeType(N, ISE.getTarget().getPointerType(),
-                                 TheRecord->getName());
+    MadeChange |= N->updateNodeType(ISE.getTarget().getPointerType(),
+                                    TheRecord->getName());
     break;
   case NodeType::Val:
     if (N->getType() == MVT::isVoid)
@@ -267,6 +234,50 @@ std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
   return OS;
 }
 
+
+//===----------------------------------------------------------------------===//
+// InstrSelectorEmitter implementation
+//
+
+/// ProcessNodeTypes - Process all of the node types in the current
+/// RecordKeeper, turning them into the more accessible NodeTypes data
+/// structure.
+///
+void InstrSelectorEmitter::ProcessNodeTypes() {
+  std::vector<Record*> Nodes = Records.getAllDerivedDefinitions("DagNode");
+  DEBUG(std::cerr << "Getting node types: ");
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+    Record *Node = Nodes[i];
+    
+    // Translate the return type...
+    NodeType::ArgResultTypes RetTy =
+      NodeType::Translate(Node->getValueAsDef("RetType"));
+
+    // Translate the arguments...
+    ListInit *Args = Node->getValueAsListInit("ArgTypes");
+    std::vector<NodeType::ArgResultTypes> ArgTypes;
+
+    for (unsigned a = 0, e = Args->getSize(); a != e; ++a) {
+      if (DefInit *DI = dynamic_cast<DefInit*>(Args->getElement(a)))
+        ArgTypes.push_back(NodeType::Translate(DI->getDef()));
+      else
+        throw "In node " + Node->getName() + ", argument is not a Def!";
+
+      if (a == 0 && ArgTypes.back() == NodeType::Arg0)
+        throw "In node " + Node->getName() + ", arg 0 cannot have type 'arg0'!";
+      if (ArgTypes.back() == NodeType::Void)
+        throw "In node " + Node->getName() + ", args cannot be void type!";
+    }
+    if (RetTy == NodeType::Arg0 && Args->getSize() == 0)
+      throw "In node " + Node->getName() +
+            ", invalid return type for nullary node!";
+
+    // Add the node type mapping now...
+    NodeTypes[Node] = NodeType(RetTy, ArgTypes);
+    DEBUG(std::cerr << Node->getName() << ", ");
+  }
+  DEBUG(std::cerr << "DONE!\n");
+}
 
 // ProcessNonTerminals - Read in all nonterminals and incorporate them into
 // our pattern database.

@@ -88,6 +88,13 @@ public:
   }
 
   void dump() const;
+
+
+  // UpdateNodeType - Set the node type of N to VT if VT contains information.
+  // If N already contains a conflicting type, then throw an exception.  This
+  // returns true if any information was updated.
+  //
+  bool updateNodeType(MVT::ValueType VT, const std::string &RecName);
 };
 
 std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N);
