@@ -22,6 +22,7 @@
 
 namespace llvm {
 
+class Value;
 template<class ValType, class TypeClass> class TypeMap;
 class FunctionValType;
 class ArrayValType;
