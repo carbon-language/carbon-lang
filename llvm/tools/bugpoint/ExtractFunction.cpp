@@ -144,6 +144,11 @@ void llvm::DeleteFunctionBody(Function *F) {
 /// SplitFunctionsOutOfModule - Given a module and a list of functions in the
 /// module, split the functions OUT of the specified module, and place them in
 /// the new module.
+///
+/// FIXME: this could be made DRAMATICALLY more efficient for large programs if
+/// we just MOVED functions from one module to the other, instead of cloning the
+/// whole module, then proceeding to delete an entire module's worth of stuff.
+///
 Module *llvm::SplitFunctionsOutOfModule(Module *M,
                                         const std::vector<Function*> &F) {
   // Make sure functions & globals are all external so that linkage
