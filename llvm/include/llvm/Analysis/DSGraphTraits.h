@@ -17,42 +17,44 @@
 class DSNodeIterator : public forward_iterator<DSNode, ptrdiff_t> {
   friend class DSNode;
   DSNode * const Node;
-  unsigned Link;
+  unsigned Offset;
   
   typedef DSNodeIterator _Self;
 
-  DSNodeIterator(DSNode *N) : Node(N), Link(0) {}   // begin iterator
+  DSNodeIterator(DSNode *N) : Node(N), Offset(0) {}   // begin iterator
   DSNodeIterator(DSNode *N, bool)       // Create end iterator
-    : Node(N), Link(N->getSize()) {
+    : Node(N), Offset(N->getSize()) {
   }
 public:
+  DSNodeIterator(const DSNodeHandle &NH)
+    : Node(NH.getNode()), Offset(NH.getOffset()) {}
 
   bool operator==(const _Self& x) const {
-    return Link == x.Link;
+    return Offset == x.Offset;
   }
   bool operator!=(const _Self& x) const { return !operator==(x); }
 
   const _Self &operator=(const _Self &I) {
     assert(I.Node == Node && "Cannot assign iterators to two different nodes!");
-    Link = I.Link;
+    Offset = I.Offset;
     return *this;
   }
   
   pointer operator*() const {
-    DSNodeHandle *NH = Node->getLink(Link);
+    DSNodeHandle *NH = Node->getLink(Offset);
     return NH ? NH->getNode() : 0;
   }
   pointer operator->() const { return operator*(); }
   
   _Self& operator++() {                // Preincrement
-    ++Link;
+    ++Offset;
     return *this;
   }
   _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp; 
   }
 
-  unsigned getLink() const { return Link; }
+  unsigned getOffset() const { return Offset; }
   DSNode *getNode() const { return Node; }
 };
 

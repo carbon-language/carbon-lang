@@ -192,7 +192,7 @@ struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
   
   static int getEdgeSourceLabel(DSNode *Node, DSNode::iterator I) {
     assert(Node == I.getNode() && "Iterator not for this node!");
-    return Node->getMergeMapLabel(I.getLink());
+    return Node->getMergeMapLabel(I.getOffset());
   }
 };
 
