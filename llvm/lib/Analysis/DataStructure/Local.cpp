@@ -64,16 +64,14 @@ namespace {
   class GraphBuilder : InstVisitor<GraphBuilder> {
     Function &F;
     DSGraph &G;
-    std::vector<DSNode*> &Nodes;
     DSNodeHandle &RetNode;               // Node that gets returned...
     DSGraph::ScalarMapTy &ScalarMap;
     std::vector<DSCallSite> &FunctionCalls;
 
   public:
-    GraphBuilder(Function &f, DSGraph &g, std::vector<DSNode*> &nodes,
-                 DSNodeHandle &retNode, DSGraph::ScalarMapTy &SM,
-                 std::vector<DSCallSite> &fc)
-      : F(f), G(g), Nodes(nodes), RetNode(retNode), ScalarMap(SM),
+    GraphBuilder(Function &f, DSGraph &g, DSNodeHandle &retNode, 
+                 DSGraph::ScalarMapTy &SM, std::vector<DSCallSite> &fc)
+      : F(f), G(g), RetNode(retNode), ScalarMap(SM),
         FunctionCalls(fc) {
 
       // Create scalar nodes for all pointer arguments...
@@ -146,7 +144,7 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : GlobalsGraph(GG) {
   DEBUG(std::cerr << "  [Loc] Calculating graph for: " << F.getName() << "\n");
 
   // Use the graph builder to construct the local version of the graph
-  GraphBuilder B(F, *this, Nodes, ReturnNodes[&F], ScalarMap, FunctionCalls);
+  GraphBuilder B(F, *this, ReturnNodes[&F], ScalarMap, FunctionCalls);
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
