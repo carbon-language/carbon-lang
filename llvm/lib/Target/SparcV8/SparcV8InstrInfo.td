@@ -66,6 +66,11 @@ def LDUHmr: F3_2<3, 0b000010, "lduh">;
 def LDmr  : F3_2<3, 0b000000, "ld">;
 def LDDmr : F3_2<3, 0b000011, "ldd">;
 
+// Section B.2 - Load Floating-point Instructions, p. 92
+def LDFmr  : F3_2<3, 0b100000, "ld">;
+def LDDFmr : F3_2<3, 0b100011, "ldd">;
+def LDFSRmr: F3_2<3, 0b100001, "ld">;
+
 // Section B.4 - Store Integer Instructions, p. 95
 def STBrm : F3_2<3, 0b000101, "stb">;
 def STHrm : F3_2<3, 0b000110, "sth">;
