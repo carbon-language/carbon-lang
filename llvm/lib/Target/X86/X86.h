@@ -18,6 +18,12 @@ class Pass;
 ///
 Pass *createX86SimpleInstructionSelector(TargetMachine &TM);
 
+/// createX86PatternInstructionSelector - This pass converts an LLVM function
+/// into a machine code representation using pattern matching and a machine
+/// description file.
+///
+Pass *createX86PatternInstructionSelector(TargetMachine &TM);
+
 /// createX86PeepholeOptimizer - Create a pass to perform X86 specific peephole
 /// optimizations.
 ///

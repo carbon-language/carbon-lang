@@ -20,6 +20,8 @@ namespace {
                           cl::desc("Use Simple RA instead of Local RegAlloc"));
   cl::opt<bool> PrintCode("print-machineinstrs",
 			  cl::desc("Print generated machine code"));
+  cl::opt<bool> NoPatternISel("disable-pattern-isel", cl::init(true),
+                        cl::desc("Use the 'simple' X86 instruction selector"));
 }
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
@@ -59,7 +61,10 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
-  PM.add(createX86SimpleInstructionSelector(*this));
+  if (NoPatternISel)
+    PM.add(createX86SimpleInstructionSelector(*this));
+  else
+    PM.add(createX86PatternInstructionSelector(*this));
 
   // TODO: optional optimizations go here
 
