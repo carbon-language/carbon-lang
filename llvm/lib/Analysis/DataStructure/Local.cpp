@@ -130,6 +130,9 @@ namespace {
     DSNode *createNode(const Type *Ty = 0) {
       DSNode *N = new DSNode(Ty, &G);   // Create the node
       if (DisableFieldSensitivity) {
+        // Create node handle referring to the old node so that it is
+        // immediately removed from the graph when the node handle is destroyed.
+        DSNodeHandle OldNNH = N;
         N->foldNodeCompletely();
         if (DSNode *FN = N->getForwardNode())
           N = FN;
