@@ -52,6 +52,10 @@ Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
 static cl::opt<bool>
 Strip("s", cl::desc("Strip symbol info from executable"));
 
+static cl::opt<bool>
+NoInternalize("disable-internalize",
+              cl::desc("Do not mark all symbols as internal"));
+
 
 // FileExists - Return true if the specified string is an openable file...
 static inline bool FileExists(const std::string &FN) {
@@ -153,10 +157,13 @@ int main(int argc, char **argv) {
   //
   Passes.add(createFunctionResolvingPass());
 
-  // Now that composite has been compiled, scan through the module, looking for
-  // a main function.  If main is defined, mark all other functions internal.
-  //
-  Passes.add(createInternalizePass());
+  if (!NoInternalize) {
+    // Now that composite has been compiled, scan through the module, looking
+    // for a main function.  If main is defined, mark all other functions
+    // internal.
+    //
+    Passes.add(createInternalizePass());
+  }
 
   // Now that we have optimized the program, discard unreachable functions...
   //
