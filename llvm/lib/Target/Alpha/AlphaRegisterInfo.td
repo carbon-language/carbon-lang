@@ -1,4 +1,4 @@
-//===- AlphaRegisterInfo.td - The Alpha Register File --*- tablegen -*-===//
+//===- AlphaRegisterInfo.td - The Alpha Register File ------*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

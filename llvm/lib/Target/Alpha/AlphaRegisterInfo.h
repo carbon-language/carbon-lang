@@ -1,4 +1,4 @@
-//===- AlphaRegisterInfo.h - Alpha Register Information Impl -*- C++ -*-==//
+//===- AlphaRegisterInfo.h - Alpha Register Information Impl -----*- C++ -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- AlphaInstrInfo.h - Alpha Instruction Information -----*- C++ -*-===//
+//===- AlphaInstrInfo.h - Alpha Instruction Information ---------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

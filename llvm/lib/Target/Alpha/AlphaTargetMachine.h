@@ -1,4 +1,4 @@
-//===-- AlphaTargetMachine.h - Define TargetMachine for Alpha -*- C++ -*-----=//
+//===-- AlphaTargetMachine.h - Define TargetMachine for Alpha ---*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
