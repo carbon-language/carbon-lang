@@ -474,8 +474,8 @@ def ADDmi16b : Im16i8<"add", 0x83, MRM0m     >, OpSize; // [mem16] += I8
 def ADDmi32b : Im32i8<"add", 0x83, MRM0m     >;         // [mem32] += I8
 
 def ADCrr32  : I     <"adc", 0x11, MRMDestReg>;         // R32 += R32+Carry
-def ADCrm32  : I     <"adc", 0x11, MRMSrcMem >;         // R32 += [mem32]+Carry
-def ADCmr32  : I     <"adc", 0x13, MRMDestMem>;         // [mem32] += R32+Carry
+def ADCrm32  : Im32  <"adc", 0x11, MRMSrcMem >;         // R32 += [mem32]+Carry
+def ADCmr32  : Im32  <"adc", 0x13, MRMDestMem>;         // [mem32] += R32+Carry
 
 
 def SUBrr8   : I     <"sub", 0x28, MRMDestReg>,         Pattern<(set R8 , (minus R8 , R8 ))>;
