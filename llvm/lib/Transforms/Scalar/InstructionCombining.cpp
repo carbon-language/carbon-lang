@@ -898,15 +898,17 @@ static inline bool isEliminableCastOfCast(const CastInst &CI,
 // CastInst simplification
 //
 Instruction *InstCombiner::visitCastInst(CastInst &CI) {
+  Value *Src = CI.getOperand(0);
+
   // If the user is casting a value to the same type, eliminate this cast
   // instruction...
-  if (CI.getType() == CI.getOperand(0)->getType())
-    return ReplaceInstUsesWith(CI, CI.getOperand(0));
+  if (CI.getType() == Src->getType())
+    return ReplaceInstUsesWith(CI, Src);
 
   // If casting the result of another cast instruction, try to eliminate this
   // one!
   //
-  if (CastInst *CSrc = dyn_cast<CastInst>(CI.getOperand(0))) {
+  if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {
     if (isEliminableCastOfCast(CI, CSrc)) {
       // This instruction now refers directly to the cast's src operand.  This
       // has a good chance of making CSrc dead.
@@ -933,7 +935,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // If casting the result of a getelementptr instruction with no offset, turn
   // this into a cast of the original pointer!
   //
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CI.getOperand(0))) {
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
     bool AllZeroOperands = true;
     for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
       if (!isa<Constant>(GEP->getOperand(i)) ||
@@ -944,6 +946,33 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     if (AllZeroOperands) {
       CI.setOperand(0, GEP->getOperand(0));
       return &CI;
+    }
+  }
+
+  // If this is a cast to bool (which is effectively a "!=0" test), then we can
+  // perform a few optimizations...
+  //
+  if (CI.getType() == Type::BoolTy) {
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Src)) {
+      Value *Op0 = BO->getOperand(0), *Op1 = BO->getOperand(1);
+
+      // Replace (cast (sub A, B) to bool) with (setne A, B)
+      if (BO->getOpcode() == Instruction::Sub)
+        return new SetCondInst(Instruction::SetNE, Op0, Op1);
+
+      // Replace (cast (add A, B) to bool) with (setne A, -B) if B is
+      // efficiently invertible, or if the add has just this one use.
+      if (BO->getOpcode() == Instruction::Add)
+        if (Value *NegVal = dyn_castNegVal(Op1))
+          return new SetCondInst(Instruction::SetNE, Op0, NegVal);
+        else if (Value *NegVal = dyn_castNegVal(Op0))
+          return new SetCondInst(Instruction::SetNE, NegVal, Op1);
+        else if (BO->use_size() == 1) {
+          Instruction *Neg = BinaryOperator::createNeg(Op1, BO->getName());
+          BO->setName("");
+          InsertNewInstBefore(Neg, CI);
+          return new SetCondInst(Instruction::SetNE, Op0, Neg);
+        }
     }
   }
 
