@@ -216,6 +216,16 @@ struct CompleteBUDataStructures : public BUDataStructures {
     // globals graph has been implemented in the BU pass)
     AU.addRequired<TDDataStructures>();
   }
+
+  // print - Print out the analysis results...
+  void print(std::ostream &O, const Module *M) const;
+
+private:
+  unsigned calculateSCCGraphs(DSGraph &FG, std::vector<DSGraph*> &Stack,
+                              unsigned &NextID, 
+                              hash_map<DSGraph*, unsigned> &ValMap);
+  DSGraph &getOrCreateGraph(Function &F);
+  void processGraph(DSGraph &G);
 };
 
 
