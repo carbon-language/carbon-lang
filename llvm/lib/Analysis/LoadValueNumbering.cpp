@@ -247,7 +247,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
 
   if (!isa<LoadInst>(V)) {
     if (CallInst *CI = dyn_cast<CallInst>(V))
-      return getCallEqualNumberNodes(CI, RetVals);
+      getCallEqualNumberNodes(CI, RetVals);
 
     // Not a load instruction?  Just chain to the base value numbering
     // implementation to satisfy the request...

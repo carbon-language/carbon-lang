@@ -607,6 +607,17 @@ static const char *DoesntAccessMemoryTable[] = {
   "iswctype", "towctrans", "towlower", "towupper", 
 
   "btowc", "wctob", 
+
+  "isinf", "isnan", "finite",
+
+  // C99 math functions
+  "copysign", "copysignf", "copysignd",
+  "nexttoward", "nexttowardf", "nexttowardd",
+  "nextafter", "nextafterf", "nextafterd",
+
+  // glibc functions:
+  "__fpclassify", "__fpclassifyf", "__fpclassifyl",
+  "__signbit", "__signbitf", "__signbitl",
 };
 
 static const unsigned DAMTableSize =
@@ -636,16 +647,23 @@ bool BasicAliasAnalysis::doesNotAccessMemory(Function *F) {
 
 
 static const char *OnlyReadsMemoryTable[] = {
-  "atoi", "atol", "atof", "atoll", "atoq",
-  "bcmp", "memcmp", "memchr", "wmemcmp", "wmemchr", 
+  "atoi", "atol", "atof", "atoll", "atoq", "a64l",
+  "bcmp", "memcmp", "memchr", "memrchr", "wmemcmp", "wmemchr", 
 
   // Strings
   "strcmp", "strcasecmp", "strcoll", "strncmp", "strncasecmp",
   "strchr", "strcspn", "strlen", "strpbrk", "strrchr", "strspn", "strstr", 
+  "index", "rindex",
 
   // Wide char strings
   "wcschr", "wcscmp", "wcscoll", "wcscspn", "wcslen", "wcsncmp", "wcspbrk",
   "wcsrchr", "wcsspn", "wcsstr", 
+
+  // glibc
+  "alphasort", "alphasort64", "versionsort", "versionsort64",
+
+  // C99
+  "nan", "nanf", "nand",
 };
 
 static const unsigned ORMTableSize =
