@@ -11,12 +11,11 @@
 #define LLVM_VALUE_H
 
 #include "llvm/AbstractTypeUser.h"
+#include "llvm/Use.h"
 #include "Support/Annotation.h"
 #include "Support/Casting.h"
 #include <iostream>
-#include <vector>
 
-class User;
 class Type;
 class Constant;
 class Argument;
@@ -46,7 +45,7 @@ struct Value : public Annotable {         // Values are annotable
   };
 
 private:
-  std::vector<User *> Uses;
+  iplist<Use> Uses;
   std::string Name;
   PATypeHolder Ty;
   ValueTy VTy;
@@ -94,8 +93,8 @@ public:
   //----------------------------------------------------------------------
   // Methods for handling the vector of uses of this Value.
   //
-  typedef std::vector<User*>::iterator       use_iterator;
-  typedef std::vector<User*>::const_iterator use_const_iterator;
+  typedef UseListIteratorWrapper      use_iterator;
+  typedef UseListConstIteratorWrapper use_const_iterator;
 
   unsigned           use_size()  const { return Uses.size();  }
   bool               use_empty() const { return Uses.empty(); }
@@ -103,17 +102,23 @@ public:
   use_const_iterator use_begin() const { return Uses.begin(); }
   use_iterator       use_end()         { return Uses.end();   }
   use_const_iterator use_end()   const { return Uses.end();   }
-  User              *use_back()        { return Uses.back();  }
-  const User        *use_back()  const { return Uses.back();  }
+  User             *use_back()         { return Uses.back().getUser(); }
+  const User       *use_back()  const  { return Uses.back().getUser(); }
 
-  /// hasOneUse - Return true if there is exactly one user of this value.
+  /// hasOneUse - Return true if there is exactly one user of this value.  This
+  /// is specialized because it is a common request and does not require
+  /// traversing the whole use list.
   ///
-  bool hasOneUse() const { return use_size() == 1; }
+  bool hasOneUse() const {
+    iplist<Use>::const_iterator I = Uses.begin(), E = Uses.end();
+    if (I == E) return false;
+    return ++I == E;
+  }
 
-  /// addUse/killUse - These two methods should only be used by the Use class
-  /// below.
-  void addUse(User *I)      { Uses.push_back(I); }
-  void killUse(User *I);
+  /// addUse/killUse - These two methods should only be used by the Use class.
+  ///
+  void addUse(Use &U)  { Uses.push_back(&U); }
+  void killUse(Use &U) { Uses.remove(&U); }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value *V) {
@@ -130,64 +135,33 @@ inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
 }
 
 
-//===----------------------------------------------------------------------===//
-//                                  Use Class
-//===----------------------------------------------------------------------===//
+inline User *UseListIteratorWrapper::operator*() const {
+  return Super::operator*().getUser();
+}
 
-// Use is here to make keeping the "use" list of a Value up-to-date really easy.
-//
-class Use {
-  Value *Val;
-  User *U;
-public:
-  inline Use(Value *v, User *user) {
-    Val = v; U = user;
-    if (Val) Val->addUse(U);
-  }
+inline const User *UseListConstIteratorWrapper::operator*() const {
+  return Super::operator*().getUser();
+}
 
-  inline Use(const Use &user) {
-    Val = 0;
-    U = user.U;
-    operator=(user.Val);
-  }
-  inline ~Use() { if (Val) Val->killUse(U); }
-  inline operator Value*() const { return Val; }
 
-  inline Value *operator=(Value *V) { 
-    if (Val) Val->killUse(U);
-    Val = V;
-    if (V) V->addUse(U);
-    return V;
-  }
+Use::Use(Value *v, User *user) : Val(v), U(user) {
+  if (Val) Val->addUse(*this);
+}
 
-  inline       Value *operator->()       { return Val; }
-  inline const Value *operator->() const { return Val; }
+Use::Use(const Use &u) : Val(u.Val), U(u.U) {
+  if (Val) Val->addUse(*this);
+}
 
-  inline       Value *get()       { return Val; }
-  inline const Value *get() const { return Val; }
+Use::~Use() {
+  if (Val) Val->killUse(*this);
+}
 
-  inline const Use &operator=(const Use &user) {
-    if (Val) Val->killUse(U);
-    Val = user.Val;
-    Val->addUse(U);
-    return *this;
-  }
-};
+void Use::set(Value *V) { 
+  if (Val) Val->killUse(*this);
+  Val = V;
+  if (V) V->addUse(*this);
+}
 
-template<> struct simplify_type<Use> {
-  typedef Value* SimpleType;
-  
-  static SimpleType getSimplifiedValue(const Use &Val) {
-    return (SimpleType)Val.get();
-  }
-};
-template<> struct simplify_type<const Use> {
-  typedef Value* SimpleType;
-  
-  static SimpleType getSimplifiedValue(const Use &Val) {
-    return (SimpleType)Val.get();
-  }
-};
 
 // isa - Provide some specializations of isa so that we don't have to include
 // the subtype header files to test to see if the value is a subclass...
