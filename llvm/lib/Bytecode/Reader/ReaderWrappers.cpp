@@ -58,7 +58,7 @@ BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
 
   try {
     // Parse the bytecode we mmapped in
-    ParseBytecode(Buffer, Length, Filename, H != 0);
+    ParseBytecode(Buffer, Length, Filename);
   } catch (...) {
     UnmapFileFromAddressSpace(Buffer, Length);
     throw;
@@ -114,7 +114,7 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
     MustDelete = false;
   }
   try {
-    ParseBytecode(ParseBegin, Length, ModuleID, H != 0);
+    ParseBytecode(ParseBegin, Length, ModuleID);
   } catch (...) {
     if (MustDelete) delete [] Buffer;
     throw;
@@ -163,7 +163,7 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
     throw std::string("Standard Input empty!");
 
   FileBuf = &FileData[0];
-  ParseBytecode(FileBuf, FileData.size(), "<stdin>", H != 0 );
+  ParseBytecode(FileBuf, FileData.size(), "<stdin>");
 }
 
 //===----------------------------------------------------------------------===//
@@ -292,12 +292,15 @@ Module *llvm::ParseBytecodeFile(const std::string &Filename,
 }
 
 // AnalyzeBytecodeFile - analyze one file
-Module* llvm::AnalyzeBytecodeFile(const std::string &Filename, 
-                               BytecodeAnalysis& bca,
-                               std::string *ErrorStr) 
+Module* llvm::AnalyzeBytecodeFile(
+  const std::string &Filename,  ///< File to analyze
+  BytecodeAnalysis& bca,        ///< Statistical output
+  std::string *ErrorStr,        ///< Error output
+  std::ostream* output          ///< Dump output
+) 
 {
   try {
-    BytecodeHandler* analyzerHandler = createBytecodeAnalyzerHandler(bca);
+    BytecodeHandler* analyzerHandler = createBytecodeAnalyzerHandler(bca,output);
     std::auto_ptr<ModuleProvider> AMP(
       getBytecodeModuleProvider(Filename,analyzerHandler));
     return AMP->releaseModule();
@@ -309,15 +312,16 @@ Module* llvm::AnalyzeBytecodeFile(const std::string &Filename,
 
 // AnalyzeBytecodeBuffer - analyze a buffer
 Module* llvm::AnalyzeBytecodeBuffer(
-       const unsigned char* Buffer, ///< Pointer to start of bytecode buffer
-       unsigned Length,             ///< Size of the bytecode buffer
-       const std::string& ModuleID, ///< Identifier for the module
-       BytecodeAnalysis& bca,       ///< The results of the analysis
-       std::string* ErrorStr        ///< Errors, if any.
-     ) 
+  const unsigned char* Buffer, ///< Pointer to start of bytecode buffer
+  unsigned Length,             ///< Size of the bytecode buffer
+  const std::string& ModuleID, ///< Identifier for the module
+  BytecodeAnalysis& bca,       ///< The results of the analysis
+  std::string* ErrorStr,       ///< Errors, if any.
+  std::ostream* output         ///< Dump output, if any
+) 
 {
   try {
-    BytecodeHandler* hdlr = createBytecodeAnalyzerHandler(bca);
+    BytecodeHandler* hdlr = createBytecodeAnalyzerHandler(bca, output);
     std::auto_ptr<ModuleProvider>
       AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, hdlr));
     return AMP->releaseModule();
