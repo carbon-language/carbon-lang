@@ -102,21 +102,34 @@ unsigned JITResolver::getLazyResolver(Function *F) {
   return Stub;
 }
 
+#ifdef _MSC_VER
+#pragma optimize("y", off)
+#endif
+
 void JITResolver::CompilationCallback() {
+#ifdef _MSC_VER
+  unsigned *StackPtr, RetAddr;
+  __asm mov StackPtr, ebp;
+  __asm mov eax, DWORD PTR [ebp + 4];
+  __asm mov RetAddr, eax;
+#else
   unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
   unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(0);
+#endif
   assert(StackPtr[1] == RetAddr &&
          "Could not find return address on the stack!");
 
   // It's a stub if there is an interrupt marker after the call...
   bool isStub = ((unsigned char*)(intptr_t)RetAddr)[0] == 0xCD;
 
+#ifndef _MSC_VER
   // FIXME FIXME FIXME FIXME: __builtin_frame_address doesn't work if frame
   // pointer elimination has been performed.  Having a variable sized alloca
   // disables frame pointer elimination currently, even if it's dead.  This is a
   // gross hack.
   alloca(10+isStub);
   // FIXME FIXME FIXME FIXME
+#endif
 
   // The call instruction should have pushed the return value onto the stack...
   RetAddr -= 4;  // Backtrack to the reference itself...
@@ -149,6 +162,10 @@ void JITResolver::CompilationCallback() {
   // Change the return address to reexecute the call instruction...
   StackPtr[1] -= 5;
 }
+
+#ifdef _MSC_VER
+#pragma optimize( "", on )
+#endif
 
 /// emitStubForFunction - This method is used by the JIT when it needs to emit
 /// the address of a function for a function whose code has not yet been

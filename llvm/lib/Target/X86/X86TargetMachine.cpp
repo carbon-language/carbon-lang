@@ -54,7 +54,7 @@ namespace {
 }
 
 unsigned X86TargetMachine::getJITMatchQuality() {
-#if defined(i386) || defined(__i386__) || defined(__x86__)
+#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
   return 10;
 #else
   return 0;
