@@ -185,6 +185,74 @@ public:
     assert(0 && "Unexpected type of GlobalValue!");
     return "";
   }
+
+  // ConstantExprToString() - Convert a ConstantExpr to a C expression, and
+  // return this as a string.
+  //
+  std::string ConstantExprToString(const ConstantExpr* CE,
+                                   const TargetMachine& target) {
+    std::string S("");
+
+    switch(CE->getOpcode()) {
+    case Instruction::GetElementPtr:
+      {
+        const Value* ptrVal = CE->getOperand(0);
+        valToExprString(ptrVal, target, S);
+        std::vector<Value*> idxVec = CE->copyOperands();
+        idxVec.erase(idxVec.begin());
+        uint64_t byteOffset = target.DataLayout.getIndexedOffset(ptrVal->getType(),
+                                                                 idxVec);
+        uint64_t eltSize = target.DataLayout.getTypeSize(
+                                                         cast<PointerType>(ptrVal->getType())->getElementType());
+        S += " + " + utostr(byteOffset / eltSize);
+        break;
+      }
+
+    default:
+      assert(0 && "Unsupported operator in ConstantExprToString()");
+      break;
+    }
+
+    return S;
+  }
+
+  // valToExprString - Helper function for ConstantExprToString().
+  // Appends result to argument string S.
+  // 
+  void valToExprString(const Value* V, const TargetMachine& target,
+                       std::string& S) {
+    bool failed = false;
+    if (const Constant* CV = dyn_cast<Constant>(V)) { // symbolic or known
+
+      if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV))
+        S += std::string(CB == ConstantBool::True ? "1" : "0");
+      else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
+        S += itostr(CI->getValue());
+      else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
+        S += utostr(CI->getValue());
+      else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
+        S += ftostr(CFP->getValue());
+      else if (isa<ConstantPointerNull>(CV))
+        S += "0";
+      else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(CV))
+        valToExprString(CPR->getValue(), target, S);
+      else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV))
+        S += ConstantExprToString(CE, target);
+      else
+        failed = true;
+
+    } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(V)) {
+      S += getID(GV);
+    }
+    else
+      failed = true;
+
+    if (failed) {
+      assert(0 && "Cannot convert value to string");
+      S += "<illegal-value>";
+    }
+  }
+
 };
 
 
@@ -546,6 +614,7 @@ ArrayTypeIsString(const ArrayType* arrayType)
           arrayType->getElementType() == Type::SByteTy);
 }
 
+
 inline const string
 TypeToDataDirective(const Type* type)
 {
@@ -670,8 +739,12 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
       toAsm << getID(CPR->getValue()) << "\n";
     }
   else if (isa<ConstantPointerNull>(CV))
-    {
+    { // Null pointer value
       toAsm << "0\n";
+    }
+  else if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
+    { // Constant expression built from operators, constants, and symbolic addrs
+      toAsm << ConstantExprToString(CE, Target) << "\n";
     }
   else
     {
