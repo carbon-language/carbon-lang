@@ -149,3 +149,21 @@ bb2:		;;<label>
 	%reg160 = add long 7654321, %cast117	;;  and here.
 	ret int 0
 end
+
+
+; Test case for unary NOT operation constructed from XOR.
+; 
+void "checkNot"(bool %b, int %i)
+begin
+	%notB = xor bool %b, true
+	%notI = xor int %i, -1
+	%F    = setge int %notI, 100
+	%J    = add int %i, %i
+	%andNotB = and bool %F, %notB		;; should get folded with notB
+	%andNotI = and int %J, %notI		;; should get folded with notI
+
+	%notB2 = xor bool true, %b		;; should become XNOR
+	%notI2 = xor int -1, %i			;; should become XNOR
+
+	ret void
+end
