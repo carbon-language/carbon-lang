@@ -78,6 +78,10 @@ static bool isImmediate(const MachineOperand &MO) {
          MO.getType() == MachineOperand::MO_UnextendedImmed;
 }
 
+static bool isPCRelativeDisp(const MachineOperand &MO) {
+  return MO.getType() == MachineOperand::MO_PCRelativeDisp;
+}
+
 static bool isScale(const MachineOperand &MO) {
   return isImmediate(MO) &&
            (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
@@ -104,6 +108,9 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
   case MachineOperand::MO_SignExtendedImmed:
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
+    return;
+  case MachineOperand::MO_PCRelativeDisp:
+    O << "< " << MO.getVRegValue()->getName() << ">";
     return;
   default:
     O << "<unknown op ty>"; return;    
@@ -305,13 +312,25 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     break;
 
   case X86II::RawFrm:
-    toHex(O, getBaseOpcodeFor(Opcode));
+    // The accepted forms of Raw instructions are:
+    //   1. nop     - No operand required
+    //   2. jmp foo - PC relative displacement operand
+    //
+    assert(MI->getNumOperands() == 0 ||
+           (MI->getNumOperands() == 1 && isPCRelativeDisp(MI->getOperand(0))) &&
+           "Illegal raw instruction!");
+    toHex(O, getBaseOpcodeFor(Opcode)) << " ";
+
+    if (MI->getNumOperands() == 1) {
+      Value *V = MI->getOperand(0).getVRegValue();
+      emitConstant(O, 0, 4);
+    }
+
     O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
 
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      if (i) O << ", ";
-      printOp(O, MI->getOperand(i), RI);
+    if (MI->getNumOperands() == 1) {
+      printOp(O, MI->getOperand(0), RI);
     }
     O << "\n";
     return;
