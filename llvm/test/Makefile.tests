@@ -44,6 +44,7 @@ LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
 LANALYZE = $(TOOLS)/analyze
 LJELLO   = $(TOOLS)/jello
+LBUGPOINT= $(TOOLS)/bugpoint
 
 LCCFLAGS  += -O2 -Wall
 LLCFLAGS =
