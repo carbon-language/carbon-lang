@@ -13,6 +13,7 @@
 #include "llvm/SymTabValue.h"
 #include <vector>
 #include <map>
+class Value;
 
 class SlotCalculator : public ModuleAnalyzer {
   const Module *TheModule;

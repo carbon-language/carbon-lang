@@ -99,7 +99,7 @@ bool ModuleAnalyzer::processConstPool(const ConstantPool &CP, bool isMethod) {
   }
   
   if (!isMethod) {
-    const Module *M = CP.getParent()->castModuleAsserting();
+    const Module *M = CP.getParentV()->castModuleAsserting();
     // Process the method types after the constant pool...
     for (Module::const_iterator I = M->begin(); I != M->end(); ++I) {
       if (handleType(TypeSet, (*I)->getType())) return true;
