@@ -191,7 +191,7 @@ public:
     bca.numOperands += Operands.size();
     if ( currFunc ) {
       currFunc->numInstructions++;
-      if ( Instruction::isPhiNode(Opcode) ) currFunc->numPhis++;
+      if ( Opcode == Instruction::PHI ) currFunc->numPhis++;
     }
     return Instruction::isTerminator(Opcode); 
   }
