@@ -39,6 +39,10 @@ inline bool isPowerOf2(int64_t C, unsigned &getPow) {
   return false;
 }
 
+// Platform-independent wrappers for the C99 isnan() function.
+int IsNAN (float f);
+int IsNAN (double d);
+
 } // End llvm namespace
 
 #endif
