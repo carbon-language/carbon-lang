@@ -42,7 +42,7 @@ template SymbolTableListTraits<BasicBlock, Function, Function>;
 // Argument Implementation
 //===----------------------------------------------------------------------===//
 
-Argument::Argument(const Type *Ty, const std::string &Name = "", Function *Par) 
+Argument::Argument(const Type *Ty, const std::string &Name, Function *Par) 
   : Value(Ty, Value::ArgumentVal, Name) {
   Parent = 0;
 
