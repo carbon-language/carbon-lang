@@ -49,3 +49,4 @@ ubyte %test8(ubyte %A) {    ; AND associates
 	%C = and ubyte %B, 4
 	ret ubyte %C
 }
+

@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: if as < %s | opt -instcombine | dis | grep or\ 
+; RUN: if as < %s | opt -instcombine | dis | grep -v '%OROK = or' | grep or\ 
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
@@ -91,3 +91,11 @@ ubyte %test15(ubyte %A) {
 	%C = xor ubyte %B, 17
 	ret ubyte %C
 }
+
+int %test16(int %A, int %B) {     ; (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
+        %A1 = and int %A, 7
+        %B1 = and int %B, 128
+        %OROK = xor int %A1, %B1
+        ret int %OROK
+}
+
