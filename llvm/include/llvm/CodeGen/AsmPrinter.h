@@ -114,6 +114,10 @@ namespace llvm {
     /// byte alignment.
     void emitAlignment(unsigned NumBits) const;
 
+    /// emitZeros - Emit a block of zeros.
+    ///
+    void emitZeros(unsigned NumZeros) const;
+
     /// emitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
     void emitConstantValueOnly(const Constant *CV);
