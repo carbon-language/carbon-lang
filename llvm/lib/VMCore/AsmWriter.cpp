@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/CachedWriter.h"
-#include "llvm/Analysis/SlotCalculator.h"
+#include "llvm/SlotCalculator.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
@@ -319,7 +319,7 @@ void AssemblyWriter::printModule(const Module *M) {
 
   Out << "implementation\n";
   
-  // Output all of the methods...
+  // Output all of the functions...
   for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::printFunction));
 }
 
@@ -386,14 +386,14 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   Out << "\n";
 }
 
-// printFunction - Print all aspects of a method.
+// printFunction - Print all aspects of a function.
 //
 void AssemblyWriter::printFunction(const Function *M) {
   // Print out the return type and name...
   Out << "\n" << (M->isExternal() ? "declare " : "")
       << (M->hasInternalLinkage() ? "internal " : "");
   printType(M->getReturnType()) << " \"" << M->getName() << "\"(";
-  Table.incorporateMethod(M);
+  Table.incorporateFunction(M);
 
   // Loop over the arguments, printing them...
   const FunctionType *MT = M->getFunctionType();
@@ -425,18 +425,18 @@ void AssemblyWriter::printFunction(const Function *M) {
 
     Out << "begin";
   
-    // Output all of its basic blocks... for the method
+    // Output all of its basic blocks... for the function
     for_each(M->begin(), M->end(),
 	     bind_obj(this, &AssemblyWriter::printBasicBlock));
 
     Out << "end\n";
   }
 
-  Table.purgeMethod();
+  Table.purgeFunction();
 }
 
 // printFunctionArgument - This member is called for every argument that 
-// is passed into the method.  Simply print it out
+// is passed into the function.  Simply print it out
 //
 void AssemblyWriter::printFunctionArgument(const FunctionArgument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
@@ -543,8 +543,8 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
     const Type      *RetTy = MTy ? MTy->getReturnType() : 0;
 
     // If possible, print out the short form of the call instruction, but we can
-    // only do this if the first argument is a pointer to a nonvararg method,
-    // and if the value returned is not a pointer to a method.
+    // only do this if the first argument is a pointer to a nonvararg function,
+    // and if the value returned is not a pointer to a function.
     //
     if (RetTy && !MTy->isVarArg() &&
         (!isa<PointerType>(RetTy)||!isa<FunctionType>(cast<PointerType>(RetTy)))){

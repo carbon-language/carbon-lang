@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInternals.h"
-#include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/GlobalVariable.h"
@@ -22,6 +21,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
+#include "llvm/SlotCalculator.h"
 #include "Support/StringExtras.h"
 #include "Support/HashExtras.h"
 #include <iostream>
@@ -84,11 +84,11 @@ public:
     }
   }
   void startFunction(Function *F) {
-    // Make sure the slot table has information about this method...
-    idTable->Table->incorporateMethod(F);
+    // Make sure the slot table has information about this function...
+    idTable->Table->incorporateFunction(F);
   }
   void endFunction(Function *F) {
-    idTable->Table->purgeMethod();  // Forget all about F
+    idTable->Table->purgeFunction();  // Forget all about F
   }
   void endModule() {
   }

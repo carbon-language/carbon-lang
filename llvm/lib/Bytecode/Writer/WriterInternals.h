@@ -14,8 +14,8 @@
 
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Bytecode/Format.h"
-#include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Bytecode/Primitives.h"
+#include "llvm/SlotCalculator.h"
 #include "llvm/Instruction.h"
 #include <deque>
 

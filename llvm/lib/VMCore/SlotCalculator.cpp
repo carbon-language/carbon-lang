@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/SlotCalculator.h"
+#include "llvm/SlotCalculator.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
@@ -60,7 +60,7 @@ SlotCalculator::SlotCalculator(const Function *M, bool IgnoreNamed) {
   if (TheModule == 0) return;   // Empty table...
 
   processModule();              // Process module level stuff
-  incorporateMethod(M);         // Start out in incorporated state
+  incorporateFunction(M);         // Start out in incorporated state
 }
 
 
@@ -119,7 +119,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
 }
 
 
-void SlotCalculator::incorporateMethod(const Function *M) {
+void SlotCalculator::incorporateFunction(const Function *M) {
   assert(ModuleLevel.size() == 0 && "Module already incorporated!");
 
   SC_DEBUG("begin processFunction!\n");
@@ -182,7 +182,7 @@ void SlotCalculator::incorporateMethod(const Function *M) {
   SC_DEBUG("end processFunction!\n");
 }
 
-void SlotCalculator::purgeMethod() {
+void SlotCalculator::purgeFunction() {
   assert(ModuleLevel.size() != 0 && "Module not incorporated!");
   unsigned NumModuleTypes = ModuleLevel.size();
 

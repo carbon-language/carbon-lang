@@ -2,9 +2,6 @@
 //
 // This library implements the functionality defined in llvm/Bytecode/Writer.h
 //
-// This library uses the Analysis library to figure out offsets for
-// variables in the method tables...
-//
 // Note that this file uses an unusual technique of outputting all the bytecode
 // to a deque of unsigned char's, then copies the deque to an ostream.  The
 // reason for this is that we must do "seeking" in the stream to do back-
@@ -46,13 +43,13 @@ BytecodeWriter::BytecodeWriter(std::deque<unsigned char> &o, const Module *M)
   output_vbr((unsigned)Type::FirstDerivedTyID, Out);
   align32(Out);
 
-  // Output module level constants, including types used by the method protos
+  // Output module level constants, including types used by the function protos
   outputConstants(false);
 
   // The ModuleInfoBlock follows directly after the Module constant pool
   outputModuleInfoBlock(M);
 
-  // Do the whole module now! Process each method at a time...
+  // Do the whole module now! Process each function at a time...
   for_each(M->begin(), M->end(),
 	   bind_obj(this, &BytecodeWriter::processMethod));
 
@@ -75,7 +72,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     else if (pno == Type::TypeTyID)
       ValNo = Type::FirstDerivedTyID; // Start emitting at the derived types...
     
-    // Scan through and ignore method arguments...
+    // Scan through and ignore function arguments...
     for (; ValNo < Plane.size() && isa<FunctionArgument>(Plane[ValNo]); ValNo++)
       /*empty*/;
 
@@ -92,7 +89,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
 
     // Output the Type ID Number...
     int Slot = Table.getValSlot(Plane.front()->getType());
-    assert (Slot != -1 && "Type in constant pool but not in method!!");
+    assert (Slot != -1 && "Type in constant pool but not in function!!");
     output_vbr((unsigned)Slot, Out);
 
     //cerr << "Emitting " << NC << " constants of type '" 
@@ -136,7 +133,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   }
   output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
 
-  // Output the types of the methods in this module...
+  // Output the types of the functions in this module...
   for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
     int Slot = Table.getValSlot((*I)->getType());
     assert(Slot != -1 && "Module const pool is broken!");
@@ -155,21 +152,21 @@ void BytecodeWriter::processMethod(const Function *M) {
   // Only output the constant pool and other goodies if needed...
   if (!M->isExternal()) {
 
-    // Get slot information about the method...
-    Table.incorporateMethod(M);
+    // Get slot information about the function...
+    Table.incorporateFunction(M);
 
-    // Output information about the constants in the method...
+    // Output information about the constants in the function...
     outputConstants(true);
 
     // Output basic block nodes...
     for_each(M->begin(), M->end(),
 	     bind_obj(this, &BytecodeWriter::processBasicBlock));
     
-    // If needed, output the symbol table for the method...
+    // If needed, output the symbol table for the function...
     if (M->hasSymbolTable())
       outputSymbolTable(*M->getSymbolTable());
     
-    Table.purgeMethod();
+    Table.purgeFunction();
   }
 }
 

@@ -1,13 +1,17 @@
-//===-- llvm/Analysis/SlotCalculator.h - Calculate value slots ---*- C++ -*-==//
+//===-- llvm/SlotCalculator.h - Calculate value slots ------------*- C++ -*-==//
 //
-// This ModuleAnalyzer subclass calculates the slots that values will land in.
-// This is useful for when writing bytecode or assembly out, because you have 
-// to know these things.
+// This class calculates the slots that values will land in.  This is useful for
+// when writing bytecode or assembly out, because you have to know these things.
+//
+// Specifically, this class calculates the "type plane numbering" that you see
+// for a function if you strip out all of the symbols in it.  For assembly
+// writing, this is used when a symbol does not have a name.  For bytecode
+// writing, this is always used, and the symbol table is added on later.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_SLOTCALCULATOR_H
-#define LLVM_ANALYSIS_SLOTCALCULATOR_H
+#ifndef LLVM_SLOTCALCULATOR_H
+#define LLVM_SLOTCALCULATOR_H
 
 #include "llvm/SymTabValue.h"
 #include <vector>
@@ -25,7 +29,7 @@ class SlotCalculator {
   std::map<const Value *, unsigned> NodeMap;
 
   // ModuleLevel - Used to keep track of which values belong to the module,
-  // and which values belong to the currently incorporated method.
+  // and which values belong to the currently incorporated function.
   //
   std::vector<unsigned> ModuleLevel;
 
@@ -47,11 +51,11 @@ public:
     return Table[Plane]; 
   }
 
-  // If you'd like to deal with a method, use these two methods to get its data
-  // into the SlotCalculator!
+  // If you'd like to deal with a function, use these two methods to get its
+  // data into the SlotCalculator!
   //
-  void incorporateMethod(const Function *F);
-  void purgeMethod();
+  void incorporateFunction(const Function *F);
+  void purgeFunction();
 
 protected:
   // insertVal - Insert a value into the value table... Return the slot that it
@@ -68,7 +72,7 @@ protected:
   // doInsertVal - Small helper function to be called only be insertVal.
   int doInsertVal(const Value *D);
 
-  // processModule - Process all of the module level method declarations and
+  // processModule - Process all of the module level function declarations and
   // types that are available.
   //
   void processModule();

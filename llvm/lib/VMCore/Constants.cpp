@@ -10,7 +10,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/SlotCalculator.h"
+#include "llvm/SlotCalculator.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
 
@@ -259,6 +259,7 @@ std::string ConstantPointerRef::getStrValue() const {
   const GlobalValue *V = getValue();
   if (V->hasName()) return "%" + V->getName();
 
+  // FIXME: This is a gross hack.
   SlotCalculator *Table = new SlotCalculator(V->getParent(), true);
   int Slot = Table->getValSlot(V);
   delete Table;
