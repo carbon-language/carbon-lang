@@ -6,6 +6,7 @@
 
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
+#include "llvm/CodeGen/IGNode.h"
 using std::cerr;
 
 //----------------------------------------------------------------------------
@@ -253,5 +254,14 @@ void RegClass::colorIGNode(IGNode *const Node)
 
 }
 
+void RegClass::printIGNodeList() const {
+  std::cerr << "IG Nodes for Register Class " << RegClassID << ":" << "\n";
+  IG.printIGNodeList(); 
+}
+
+void RegClass::printIG() {  
+  std::cerr << "IG for Register Class " << RegClassID << ":" << "\n";
+  IG.printIG(); 
+}
 
 

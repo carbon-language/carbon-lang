@@ -7,6 +7,7 @@
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/RegClass.h"
+#include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
@@ -32,7 +33,7 @@ LiveRangeInfo::~LiveRangeInfo() {
       // live range. We have to make the other entries NULL when we delete
       // a live range.
 
-      for(LiveRange::iterator LI = LR->begin(); LI != LR->end(); ++LI)
+      for (LiveRange::iterator LI = LR->begin(); LI != LR->end(); ++LI)
         LiveRangeMap[*LI] = 0;
       
       delete LR;

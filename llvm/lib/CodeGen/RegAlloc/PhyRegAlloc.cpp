@@ -6,6 +6,7 @@
 
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
+#include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"

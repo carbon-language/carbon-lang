@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/InterferenceGraph.h"
+#include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
