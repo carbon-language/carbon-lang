@@ -113,8 +113,8 @@ public:
   void remove(const value_type& X) {
     if (0 < set_.erase(X)) {
       iterator I = find(vector_.begin(),vector_.end(),X);
-      if (I != vector_.end())
-        vector_.erase(I);
+      assert(I != vector_.end() && "Corrupted SetVector instances!");
+      vector_.erase(I);
     }
   }
 
