@@ -185,7 +185,8 @@ bool Flag::handleOccurance(const char *ArgName, const string &Arg) {
   } else if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
     Value = false;
   } else {
-    return error(": '" + Arg + "' is invalid value for boolean argument! Try 0 or 1");
+    return error(": '" + Arg +
+		 "' is invalid value for boolean argument! Try 0 or 1");
   }
 
   return false;
@@ -208,6 +209,14 @@ bool Int::handleOccurance(const char *ArgName, const string &Arg) {
 //
 bool String::handleOccurance(const char *ArgName, const string &Arg) {
   *this = Arg;
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
+// StringList valued command line option implementation
+//
+bool StringList::handleOccurance(const char *ArgName, const string &Arg) {
+  Values.push_back(Arg);
   return false;
 }
 
