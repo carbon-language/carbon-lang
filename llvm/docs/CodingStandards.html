@@ -1,104 +1,125 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>A Few Coding Standards</title></head>
-<body bgcolor=white>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+  <title>A Few Coding Standards</title>
+</head>
+<body>
 
-<table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+5 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>A Few Coding Standards</b></font></td>
-</tr></table>
+<div class="doc_title">
+  A Few Coding Standards
+</div>
 
 <ol>
-  <li><a href="#introduction">Introduction</a>
+  <li><a href="#introduction">Introduction</a></li>
   <li><a href="#mechanicalissues">Mechanical Source Issues</a>
     <ol>
       <li><a href="#sourceformating">Source Code Formatting</a>
-	<ol>
-          <li><a href="#scf_commenting">Commenting</a>
-          <li><a href="#scf_commentformat">Comment Formatting</a>
-          <li><a href="#scf_includes">#include Style</a>
-          <li><a href="#scf_codewidth">Source Code Width</a>
-          <li><a href="#scf_spacestabs">Use Spaces Instead of Tabs</a>
-          <li><a href="#scf_indentation">Indent Code Consistently</a>
-        </ol>
+        <ol>
+          <li><a href="#scf_commenting">Commenting</a></li>
+          <li><a href="#scf_commentformat">Comment Formatting</a></li>
+          <li><a href="#scf_includes">#include Style</a></li>
+          <li><a href="#scf_codewidth">Source Code Width</a></li>
+          <li><a href="#scf_spacestabs">Use Spaces Instead of Tabs</a></li>
+          <li><a href="#scf_indentation">Indent Code Consistently</a></li>
+        </ol></li>
       <li><a href="#compilerissues">Compiler Issues</a>
         <ol>
-          <li><a href="#ci_warningerrors">Treat Compiler Warnings Like Errors</a>
-          <li><a href="#ci_cpp_features">Which C++ features can I use?</a>
-          <li><a href="#ci_portable_code">Write Portable Code</a>
-        </ol>
-    </ol>
+          <li><a href="#ci_warningerrors">Treat Compiler Warnings Like
+              Errors</a></li>
+          <li><a href="#ci_cpp_features">Which C++ features can I use?</a></li>
+          <li><a href="#ci_portable_code">Write Portable Code</a></li>
+        </ol></li>
+    </ol></li>
   <li><a href="#styleissues">Style Issues</a>
     <ol>
       <li><a href="#macro">The High Level Issues</a>
         <ol>
-          <li><a href="#hl_module">A Public Header File <b>is</b> a Module</a>
-          <li><a href="#hl_dontinclude">#include as Little as Possible</a>
-          <li><a href="#hl_privateheaders">Keep "internal" Headers Private</a>
-        </ol>
+          <li><a href="#hl_module">A Public Header File <b>is</b> a
+              Module</a></li>
+          <li><a href="#hl_dontinclude">#include as Little as Possible</a></li>
+          <li><a href="#hl_privateheaders">Keep "internal" Headers
+              Private</a></li>
+        </ol></li>
       <li><a href="#micro">The Low Level Issues</a>
         <ol>
-          <li><a href="#hl_assert">Assert Liberally</a>
-          <li><a href="#hl_preincrement">Prefer Preincrement</a>
-          <li><a href="#hl_avoidendl">Avoid endl</a>
-          <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a>
-        </ol>
-      <li><a href="#iterators">Writing Iterators</a>
-    </ol>
-  <li><a href="#seealso">See Also</a>
-</ol><p>
+          <li><a href="#hl_assert">Assert Liberally</a></li>
+          <li><a href="#hl_preincrement">Prefer Preincrement</a></li>
+          <li><a href="#hl_avoidendl">Avoid endl</a></li>
+          <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a></li>
+        </ol></li>
+      <li><a href="#iterators">Writing Iterators</a></li>
+    </ol></li>
+  <li><a href="#seealso">See Also</a></li>
+</ol>
 
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="introduction">Introduction
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="introduction">Introduction</a>
+</div>
 <!-- *********************************************************************** -->
 
-This document attempts to describe a few coding standards that are being used in
-the LLVM source tree.  Although no coding standards should be regarded as
+<div class="doc_text">
+
+<p>This document attempts to describe a few coding standards that are being used
+in the LLVM source tree.  Although no coding standards should be regarded as
 absolute requirements to be followed in all instances, coding standards can be
-useful.<p>
+useful.</p>
 
-This document intentionally does not prescribe fixed standards for religious
+<p>This document intentionally does not prescribe fixed standards for religious
 issues such as brace placement and space usage.  For issues like this, follow
-the golden rule:
+the golden rule:</p>
 
-<a name="goldenrule">
-<blockquote><b>If you are adding a significant body of source to a project, feel
-free to use whatever style you are most comfortable with.  If you are extending,
-enhancing, or bug fixing already implemented code, use the style that is already
-being used so that the source is uniform and easy to follow.</b></blockquote>
+<blockquote>
 
-The ultimate goal of these guidelines is the increase readability and
+<p><b><a name="goldenrule">If you are adding a significant body of source to a
+project, feel free to use whatever style you are most comfortable with.  If you
+are extending, enhancing, or bug fixing already implemented code, use the style
+that is already being used so that the source is uniform and easy to
+follow.</a></b></p>
+
+</blockquote>
+
+<p>The ultimate goal of these guidelines is the increase readability and
 maintainability of our common source base. If you have suggestions for topics to
-be included, please mail them to <a href="mailto:sabre@nondot.org">Chris</a>.<p>
+be included, please mail them to <a
+href="mailto:sabre@nondot.org">Chris</a>.</p>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="mechanicalissues">Mechanical Source Issues
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="mechanicalissues">Mechanical Source Issues</a>
+</div>
 <!-- *********************************************************************** -->
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="sourceformating">Source Code Formatting
-</b></font></td></tr></table><ul>
-
+<div class="doc_subsection">
+  <a name="sourceformating">Source Code Formatting</a>
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="scf_commenting"><h4><hr size=0>Commenting</h4><ul>
+<div class="doc_subsubsection">
+  <a name="scf_commenting">Commenting</a>
+</div>
 
-Comments are one critical part of readability and maintainability.  Everyone
+<div class="doc_text">
+
+<p>Comments are one critical part of readability and maintainability.  Everyone
 knows they should comment, so should you.  :)  Although we all should probably
 comment our code more than we do, there are a few very critical places that
-documentation is very useful:<p>
+documentation is very useful:</p>
 
 <ol>
-<h4><li>File Headers</h4>
-Every source file should have a header on it that describes the basic purpose of
-the file.  If a file does not have a header, it should not be checked into CVS.
-Most source trees will probably have a standard file header format.  The
-standard format for the LLVM source tree looks like this:<p>
+<li><h4>File Headers</h4> 
+
+<p>Every source file should have a header on it that
+describes the basic purpose of the file.  If a file does not have a header, it
+should not be checked into CVS.  Most source trees will probably have a standard
+file header format.  The standard format for the LLVM source tree looks like
+this:</p>
 
 <pre>
 //===-- llvm/Instruction.h - Instruction class definition -------*- C++ -*-===//
@@ -109,399 +130,487 @@ standard format for the LLVM source tree looks like this:<p>
 //===----------------------------------------------------------------------===//
 </pre>
 
-A few things to note about this particular format.  The "<tt>-*- C++ -*-</tt>"
-string on the first line is there to tell Emacs that the source file is a C++
-file, not a C file (Emacs assumes .h files are C files by default [Note that tag
-this is not necessary in .cpp files]).  The name of the file is also on the
-first line, along with a very short description of the purpose of the file.
-This is important when printing out code and flipping though lots of pages.<p>
+<p>A few things to note about this particular format.  The "<tt>-*- C++
+-*-</tt>" string on the first line is there to tell Emacs that the source file
+is a C++ file, not a C file (Emacs assumes .h files are C files by default [Note
+that tag this is not necessary in .cpp files]).  The name of the file is also on
+the first line, along with a very short description of the purpose of the file.
+This is important when printing out code and flipping though lots of pages.</p>
 
-The main body of the description does not have to be very long in most cases.
+<p>The main body of the description does not have to be very long in most cases.
 Here it's only two lines.  If an algorithm is being implemented or something
 tricky is going on, a reference to the paper where it is published should be
-included, as well as any notes or "gotchas" in the code to watch out for.<p>
+included, as well as any notes or "gotchas" in the code to watch out for.</p>
 
+</li>
 
-<h4><li>Class overviews</h4>
+<li><h4>Class overviews</h4>
 
-Classes are one fundemental part of a good object oriented design.  As such, a
-class definition should have a comment block that explains what the class is
+<p>Classes are one fundemental part of a good object oriented design.  As such,
+a class definition should have a comment block that explains what the class is
 used for... if it's not obvious.  If it's so completely obvious your grandma
 could figure it out, it's probably safe to leave it out.  Naming classes
-something sane goes a long ways towards avoiding writing documentation.  :)<p>
+something sane goes a long ways towards avoiding writing documentation. :)</p>
 
+</li>
 
-<h4><li>Method information</h4>
+<li><h4>Method information</h4>
 
-Methods defined in a class (as well as any global functions) should also be
+<p>Methods defined in a class (as well as any global functions) should also be
 documented properly.  A quick note about what it does any a description of the
 borderline behaviour is all that is necessary here (unless something
 particularly tricky or insideous is going on).  The hope is that people can
 figure out how to use your interfaces without reading the code itself... that is
-the goal metric.<p>
+the goal metric.</p>
 
-Good things to talk about here are what happens when something unexpected
-happens: does the method return null?  Abort?  Format your hard disk?<p>
+<p>Good things to talk about here are what happens when something unexpected
+happens: does the method return null?  Abort?  Format your hard disk?</p>
+
+</li>
 </ol>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="scf_commentformat"><h4><hr size=0>Comment Formatting</h4><ul>
+<div class="doc_subsubsection">
+  <a name="scf_commentformat">Comment Formatting</a>
+</div>
 
-In general, prefer C++ style (<tt>//</tt>) comments.  They take less space,
+<div class="doc_text">
+
+<p>In general, prefer C++ style (<tt>//</tt>) comments.  They take less space,
 require less typing, don't have nesting problems, etc.  There are a few cases
-when it is useful to use C style (<tt>/* */</tt>) comments however:<p>
+when it is useful to use C style (<tt>/* */</tt>) comments however:</p>
 
 <ol>
-<li>When writing a C code: Obviously if you are writing C code, use C style
-comments.  :)
-<li>When writing a header file that may be #included by a C source file.
-<li>When writing a source file that is used by a tool that only accepts C style
-comments.
-</ol><p>
+  <li>When writing a C code: Obviously if you are writing C code, use C style
+      comments.  :)</li>
+  <li>When writing a header file that may be #included by a C source file.</li>
+  <li>When writing a source file that is used by a tool that only accepts C
+      style comments.</li>
+</ol>
 
-To comment out a large block of code, use <tt>#if 0</tt> and <tt>#endif</tt>.
-These nest properly and are better behaved in general than C style comments.<p>
+<p>To comment out a large block of code, use <tt>#if 0</tt> and <tt>#endif</tt>.
+These nest properly and are better behaved in general than C style comments.</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="scf_includes"><h4><hr size=0>#include Style</h4><ul>
+<div class="doc_subsubsection">
+  <a name="scf_includes">#include Style</a>
+</div>
 
-Immediately after the <a href="#scf_commenting">header file comment</a> (and
+<div class="doc_text">
+
+<p>Immediately after the <a href="#scf_commenting">header file comment</a> (and
 include guards if working on a header file), the <a
 href="hl_dontinclude">minimal</a> list of #includes required by the file should
-be listed.  We prefer these #includes to be listed in this order:<p>
+be listed.  We prefer these #includes to be listed in this order:</p>
 
 <ol>
-<li><a href="#mmheader">Main Module header</a>
-<li><a href="#hl_privateheaders">Local/Private Headers</a>
-<li>llvm/*
-<li>llvm/Analysis/*
-<li>llvm/Assembly/*
-<li>llvm/Bytecode/*
-<li>llvm/CodeGen/*
-<li>...
-<li>Support/*
-<li>Config/*
-<li>System #includes
+  <li><a href="#mmheader">Main Module header</a></li>
+  <li><a href="#hl_privateheaders">Local/Private Headers</a></li>
+  <li>llvm/*</li>
+  <li>llvm/Analysis/*</li>
+  <li>llvm/Assembly/*</li>
+  <li>llvm/Bytecode/*</li>
+  <li>llvm/CodeGen/*</li>
+  <li>...</li>
+  <li>Support/*</li>
+  <li>Config/*</li>
+  <li>System #includes</li>
 </ol>
 
-... and each catagory should be sorted by name.<p>
+<p>... and each catagory should be sorted by name.</p>
 
-<a name="mmheader">The "Main Module Header" file applies to .cpp file which
-implement an interface defined by a .h file.  This #include should always be
-included <b>first</b> regardless of where it lives on the file system.  By
+<p><a name="mmheader">The "Main Module Header"</a> file applies to .cpp file
+which implement an interface defined by a .h file.  This #include should always
+be included <b>first</b> regardless of where it lives on the file system.  By
 including a header file first in the .cpp files that implement the interfaces,
 we ensure that the header does not have any hidden dependencies which are not
 explicitly #included in the header, but should be.  It is also a form of
 documentation in the .cpp file to indicate where the interfaces it implements
-are defined.<p>
+are defined.</p>
 
-
-<!-- _______________________________________________________________________ -->
-</ul><a name="scf_codewidth"><h4><hr size=0>Source Code Width</h4><ul>
-
-Write your code to fit within 80 columns of text.  This helps those of us who like to print out code and look at your code in an xterm without resizing it.  
-
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="scf_spacestabs"><h4><hr size=0>Use Spaces Instead of Tabs</h4><ul>
+<div class="doc_subsubsection">
+  <a name="scf_codewidth">Source Code Width</a>
+</div>
 
-In all cases, prefer spaces to tabs in source files.  People have different
+<div class="doc_text">
+
+<p>Write your code to fit within 80 columns of text.  This helps those of us who
+like to print out code and look at your code in an xterm without resizing
+it.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="scf_spacestabs">Use Spaces Instead of Tabs</a>
+</div>
+
+<div class="doc_text">
+
+<p>In all cases, prefer spaces to tabs in source files.  People have different
 prefered indentation levels, and different styles of indentation that they
 like... this is fine.  What isn't is that different editors/viewers expand tabs
 out to different tab stops.  This can cause your code to look completely
-unreadable, and it is not worth dealing with.<p>
+unreadable, and it is not worth dealing with.</p>
 
-As always, follow the <a href="#goldenrule">Golden Rule</a> above: follow the
+<p>As always, follow the <a href="#goldenrule">Golden Rule</a> above: follow the
 style of existing code if your are modifying and extending it.  If you like four
 spaces of indentation, <b>DO NOT</b> do that in the middle of a chunk of code
 with two spaces of indentation.  Also, do not reindent a whole source file: it
-makes for incredible diffs that are absolutely worthless.<p>
+makes for incredible diffs that are absolutely worthless.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="scf_indentation"><h4><hr size=0>Indent Code Consistently</h4><ul>
+<div class="doc_subsubsection">
+  <a name="scf_indentation">Indent Code Consistently</a>
+</div>
 
-Okay, your first year of programming you were told that indentation is
+<div class="doc_text">
+
+<p>Okay, your first year of programming you were told that indentation is
 important.  If you didn't believe and internalize this then, now is the time.
-Just do it.<p>
+Just do it.</p>
 
-
+</div>
 
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="compilerissues">Compiler Issues
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="compilerissues">Compiler Issues</a>
+</div>
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="ci_warningerrors"><h4><hr size=0>Treat Compiler Warnings Like Errors</h4><ul>
+<div class="doc_subsubsection">
+  <a name="ci_warningerrors">Treat Compiler Warnings Like Errors</a>
+</div>
 
-If your code has compiler warnings in it, something is wrong: you aren't casting
-values correctly, your have "questionable" constructs in your code, or you are
-doing something legitimately wrong.  Compiler warnings can cover up legitimate
-errors in output and make dealing with a translation unit difficult.<p>
+<div class="doc_text">
 
-It is not possible to prevent all warnings from all compilers, nor is it
+<p>If your code has compiler warnings in it, something is wrong: you aren't
+casting values correctly, your have "questionable" constructs in your code, or
+you are doing something legitimately wrong.  Compiler warnings can cover up
+legitimate errors in output and make dealing with a translation unit
+difficult.</p>
+
+<p>It is not possible to prevent all warnings from all compilers, nor is it
 desirable.  Instead, pick a standard compiler (like <tt>gcc</tt>) that provides
 a good thorough set of warnings, and stick to them.  At least in the case of
 <tt>gcc</tt>, it is possible to work around any spurious errors by changing the
 syntax of the code slightly.  For example, an warning that annoys me occurs when
-I write code like this:<p>
+I write code like this:</p>
 
 <pre>
   if (V = getValue()) {
     ..
   }
-</pre><p>
+</pre>
 
-<tt>gcc</tt> will warn me that I probably want to use the <tt>==</tt> operator,
-and that I probably mistyped it.  In most cases, I haven't, and I really don't
-want the spurious errors.  To fix this particular problem, I rewrite the code
-like this:<p>
+<p><tt>gcc</tt> will warn me that I probably want to use the <tt>==</tt>
+operator, and that I probably mistyped it.  In most cases, I haven't, and I
+really don't want the spurious errors.  To fix this particular problem, I
+rewrite the code like this:</p>
 
 <pre>
   if ((V = getValue())) {
     ..
   }
-</pre><p>
+</pre>
 
-...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can be
-fixed by massaging the code appropriately.<p>
+<p>...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can
+be fixed by massaging the code appropriately.</p>
 
-These are the <tt>gcc</tt> warnings that I prefer to enable: <tt>-Wall -Winline
--W -Wwrite-strings -Wno-unused</tt><p>
+<p>These are the <tt>gcc</tt> warnings that I prefer to enable: <tt>-Wall
+-Winline -W -Wwrite-strings -Wno-unused</tt></p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="ci_cpp_features"><h4><hr size=0>Which C++ features can I use?</h4><ul>
+<div class="doc_subsubsection">
+  <a name="ci_cpp_features">Which C++ features can I use?</a>
+</div>
 
-Compilers are finally catching up to the C++ standard.  Most compilers implement
-most features, so you can use just about any features that you would like.  In
-the LLVM source tree, I have chosen to not use these features:<p>
+<div class="doc_text">
+
+<p>Compilers are finally catching up to the C++ standard.  Most compilers
+implement most features, so you can use just about any features that you would
+like.  In the LLVM source tree, I have chosen to not use these features:</p>
 
 <ol>
-<li>Exceptions: Exceptions are very useful for error reporting and handling
+<li><p>Exceptions: Exceptions are very useful for error reporting and handling
 exceptional conditions.  I do not use them in LLVM because they do have an
 associated performance impact (by restricting restructuring of code), and parts
-of LLVM are designed for performance critical purposes.<p>
+of LLVM are designed for performance critical purposes.</p>
 
-Just like most of the rules in this document, this isn't a hard and fast
+<p>Just like most of the rules in this document, this isn't a hard and fast
 requirement.  Exceptions are used in the Parser, because it simplifies error
 reporting <b>significantly</b>, and the LLVM parser is not at all in the
-critical path.<p>
+critical path.</p>
+</li>
 
 <li>RTTI: RTTI has a large cost in terms of executable size, and compilers are
 not yet very good at stomping out "dead" class information blocks.  Because of
-this, typeinfo and dynamic cast are not used.
-</ol><p>
+this, typeinfo and dynamic cast are not used.</li>
+</ol>
 
-Other features, such as templates (without partial specialization) can be used
-freely.  The general goal is to have clear, consise, performant code... if a
-technique assists with that then use it.<p>
+<p>Other features, such as templates (without partial specialization) can be
+used freely.  The general goal is to have clear, consise, performant code... if
+a technique assists with that then use it.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="ci_portable_code"><h4><hr size=0>Write Portable Code</h4><ul>
+<div class="doc_subsubsection">
+  <a name="ci_portable_code">Write Portable Code</a>
+</div>
 
-In almost all cases, it is possible and within reason to write completely
+<div class="doc_text">
+
+<p>In almost all cases, it is possible and within reason to write completely
 portable code.  If there are cases where it isn't possible to write portable
-code, isolate it behind a well defined (and well documented) interface.<p>
+code, isolate it behind a well defined (and well documented) interface.</p>
 
-In practice, this means that you shouldn't assume much about the host compiler,
-including its support for "high tech" features like partial specialization of
-templates.  In fact, Visual C++ 6 could be an important target for our work in
-the future, and we don't want to have to rewrite all of our code to support
-it.<p>
+<p>In practice, this means that you shouldn't assume much about the host
+compiler, including its support for "high tech" features like partial
+specialization of templates.  In fact, Visual C++ 6 could be an important target
+for our work in the future, and we don't want to have to rewrite all of our code
+to support it.</p>
 
-
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="styleissues">Style Issues
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="styleissues">Style Issues</a>
+</div>
 <!-- *********************************************************************** -->
 
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="macro">The High Level Issues
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="macro">The High Level Issues</a>
+</div>
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_module"><h4><hr size=0>A Public Header File <b>is</b> a Module</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_module">A Public Header File <b>is</b> a Module</a>
+</div>
 
-C++ doesn't do too well in the modularity department.  There is no real
+<div class="doc_text">
+
+<p>C++ doesn't do too well in the modularity department.  There is no real
 encapsulation or data hiding (unless you use expensive protocol classes), but it
 is what we have to work with.  When you write a public header file (in the LLVM
 source tree, they live in the top level "include" directory), you are defining a
-module of functionality.<p>
+module of functionality.</p>
 
-Ideally, modules should be completely independent of each other, and their
+<p>Ideally, modules should be completely independent of each other, and their
 header files should only include the absolute minimum number of headers
 possible. A module is not just a class, a function, or a namespace: <a
 href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection
 of these</a> that defines an interface.  This interface may be several
 functions, classes or data structures, but the important issue is how they work
-together.<p>
+together.</p>
 
-In general, a module should be implemented with one or more <tt>.cpp</tt> files.
-Each of these <tt>.cpp</tt> files should include the header that defines their
-interface first.  This ensure that all of the dependences of the module header
-have been properly added to the module header itself, and are not implicit.
-System headers should be included after user headers for a translation unit.<p>
+<p>In general, a module should be implemented with one or more <tt>.cpp</tt>
+files.  Each of these <tt>.cpp</tt> files should include the header that defines
+their interface first.  This ensure that all of the dependences of the module
+header have been properly added to the module header itself, and are not
+implicit.  System headers should be included after user headers for a
+translation unit.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_dontinclude"><h4><hr size=0>#include as Little as Possible</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_dontinclude">#include as Little as Possible</a>
+</div>
 
-<tt>#include</tt> hurts compile time performance.  Don't do it unless you have
-to, especially in header files.<p>
+<div class="doc_text">
 
-But wait, sometimes you need to have the definition of a class to use it, or to
-inherit from it.  In these cases go ahead and #include that header file.  Be
+<p><tt>#include</tt> hurts compile time performance.  Don't do it unless you
+have to, especially in header files.</p>
+
+<p>But wait, sometimes you need to have the definition of a class to use it, or
+to inherit from it.  In these cases go ahead and #include that header file.  Be
 aware however that there are many cases where you don't need to have the full
 definition of a class.  If you are using a pointer or reference to a class, you
 don't need the header file.  If you are simply returning a class instance from a
 prototyped function or method, you don't need it.  In fact, for most cases, you
 simply don't need the definition of a class... and not <tt>#include</tt>'ing
-speeds up compilation.<p>
+speeds up compilation.</p>
 
-It is easy to try to go too overboard on this recommendation, however.  You
+<p>It is easy to try to go too overboard on this recommendation, however.  You
 <b>must</b> include all of the header files that you are using, either directly
 or indirectly (through another header file).  To make sure that you don't
 accidently forget to include a header file in your module header, make sure to
 include your module header <b>first</b> in the implementation file (as mentioned
 above).  This way there won't be any hidden dependencies that you'll find out
-about later...<p>
+about later...</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_privateheaders"><h4><hr size=0>Keep "internal" Headers Private</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_privateheaders">Keep "internal" Headers Private</a>
+</div>
 
-Many modules have a complex implementation that causes them to use more than one
-implementation (<tt>.cpp</tt>) file.  It is often tempting to put the internal
-communication interface (helper classes, extra functions, etc) in the public
-module header file.  Don't do this.  :)<p>
+<div class="doc_text">
 
-If you really need to do something like this, put a private header file in the
-same directory as the source files, and include it locally.  This ensures that
-your private interface remains private and undisturbed by outsiders.<p>
+<p>Many modules have a complex implementation that causes them to use more than
+one implementation (<tt>.cpp</tt>) file.  It is often tempting to put the
+internal communication interface (helper classes, extra functions, etc) in the
+public module header file.  Don't do this.  :)</p>
 
-Note however, that it's okay to put extra implementation methods a public class
-itself... just make them private (or protected), and all is well.<p>
+<p>If you really need to do something like this, put a private header file in
+the same directory as the source files, and include it locally.  This ensures
+that your private interface remains private and undisturbed by outsiders.</p>
 
+<p>Note however, that it's okay to put extra implementation methods a public
+class itself... just make them private (or protected), and all is well.</p>
+
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="micro">The Low Level Issues
-</b></font></td></tr></table><ul>
+<div class="doc_text">
+  <a name="micro">The Low Level Issues</a>
+</div>
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_assert"><h4><hr size=0>Assert Liberally</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_assert">Assert Liberally</a>
+</div>
 
-Use the "<tt>assert</tt>" function to its fullest.  Check all of your
+<div class="doc_text">
+
+<p>Use the "<tt>assert</tt>" function to its fullest.  Check all of your
 preconditions and assumptions, you never know when a bug (not neccesarily even
 yours) might be caught early by an assertion, which reduces debugging time
 dramatically.  The "<tt>&lt;cassert&gt;</tt>" header file is probably already
 included by the header files you are using, so it doesn't cost anything to use
-it.<p>
+it.</p>
 
-To further assist with debugging, make sure to put some kind of error message in
-the assertion statement (which is printed if the assertion is tripped). This
+<p>To further assist with debugging, make sure to put some kind of error message
+in the assertion statement (which is printed if the assertion is tripped). This
 helps the poor debugging make sense of why an assertion is being made and
-enforced, and hopefully what to do about it.  Here is one complete example:<p>
+enforced, and hopefully what to do about it.  Here is one complete example:</p>
 
 <pre>
   inline Value *getOperand(unsigned i) { 
-    assert(i &lt; Operands.size() && "getOperand() out of range!");
+    assert(i &lt; Operands.size() &amp;&amp; "getOperand() out of range!");
     return Operands[i]; 
   }
 </pre>
 
-Here are some examples:
+<p>Here are some examples:</p>
 
 <pre>
-  assert(Ty-&gt;isPointerType() && "Can't allocate a non pointer type!");
+  assert(Ty-&gt;isPointerType() &amp;&amp; "Can't allocate a non pointer type!");
 
-  assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
+  assert((Opcode == Shl || Opcode == Shr) &amp;&amp; "ShiftInst Opcode invalid!");
 
-  assert(idx &lt; getNumSuccessors() && "Successor # out of range!");
+  assert(idx &lt; getNumSuccessors() &amp;&amp; "Successor # out of range!");
 
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  assert(V1.getType() == V2.getType() &amp;&amp; "Constant types must be identical!");
 
-  assert(isa&lt;PHINode&gt;(Succ-&gt;front()) && "Only works on PHId BBs!");
-</pre><p>
+  assert(isa&lt;PHINode&gt;(Succ-&gt;front()) &amp;&amp; "Only works on PHId BBs!");
+</pre>
 
-You get the idea...<p>
+<p>You get the idea...</p>
+
+</div>
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_preincrement"><h4><hr size=0>Prefer Preincrement</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_preincrement">Prefer Preincrement</a>
+</div>
 
-Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++) and
-could very well be a lot faster than it.  Use preincrementation whenever
-possible.<p>
+<div class="doc_text">
 
-The semantics of postincrement include making a copy of the value being
+<p>Hard fast rule: Preincrement (++X) may be no slower than postincrement (X++)
+and could very well be a lot faster than it.  Use preincrementation whenever
+possible.</p>
+
+<p>The semantics of postincrement include making a copy of the value being
 incremented, returning it, and then preincrementing the "work value".  For
 primitive types, this isn't a big deal... but for iterators, it can be a huge
 issue (for example, some iterators contains stack and set objects in them...
 copying an iterator could invoke the copy ctor's of these as well).  In general,
-get in the habit of always using preincrement, and you won't have a problem.<p>
+get in the habit of always using preincrement, and you won't have a problem.</p>
+
+</div>
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_avoidendl"><h4><hr size=0>Avoid endl</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_avoidendl">Avoid endl</a>
+</div>
 
-The <tt>endl</tt> modifier, when used with iostreams outputs a newline to the
+<div class="doc_text">
+
+<p>The <tt>endl</tt> modifier, when used with iostreams outputs a newline to the
 output stream specified.  In addition to doing this, however, it also flushes
-the output stream.  In other words, these are equivalent:<p>
+the output stream.  In other words, these are equivalent:</p>
 
 <pre>
-  cout << endl;
-  cout << "\n" << flush;
+  cout &lt;&lt; endl;
+  cout &lt;&lt; "\n" &lt;&lt; flush;
 </pre>
 
-Most of the time, you probably have no reason to flush the output stream, so it's better to use a literal <tt>"\n"</tt>.<p>
+<p>Most of the time, you probably have no reason to flush the output stream, so
+it's better to use a literal <tt>"\n"</tt>.</p>
 
+</div>
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="hl_exploitcpp"><h4><hr size=0>Exploit C++ to its Fullest</h4><ul>
+<div class="doc_subsubsection">
+  <a name="hl_exploitcpp">Exploit C++ to its Fullest</a>
+</div>
 
-C++ is a powerful language.  With a firm grasp on its capabilities, you can make
+<div class="doc_text">
+
+<p>C++ is a powerful language.  With a firm grasp on its capabilities, you can make
 write effective, consise, readable and maintainable code all at the same time.
 By staying consistent, you reduce the amount of special cases that need to be
 remembered.  Reducing the total number of lines of code you write is a good way
-to avoid documentation, and avoid giving bugs a place to hide.<p>
+to avoid documentation, and avoid giving bugs a place to hide.</p>
 
-For these reasons, come to know and love the contents of your local
+<p>For these reasons, come to know and love the contents of your local
 &lt;algorithm&gt; header file.  Know about &lt;functional&gt; and what it can do
-for you.  C++ is just a tool that wants you to master it. :)<p>
+for you.  C++ is just a tool that wants you to master it. :)</p>
 
-
+</div>
 
 <!-- ======================================================================= -->
-</ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="iterators">Writing Iterators
-</b></font></td></tr></table><ul>
+<div class="doc_subsection">
+  <a name="iterators">Writing Iterators</a>
+</div>
 
-Here's a pretty good summary of how to write your own data structure iterators
+<div class="doc_text">
+
+<p>Here's a pretty good summary of how to write your own data structure iterators
 in a way that is compatible with the STL, and with a lot of other code out there
-(slightly edited by Chris):<p>
+(slightly edited by Chris):</p>
 
 <pre>
-From: Ross Smith <ross.s@ihug.co.nz>
+From: Ross Smith &lt;ross.s@ihug.co.nz&gt;
 Newsgroups: comp.lang.c++.moderated
 Subject: Writing iterators (was: Re: Non-template functions that take iterators)
 Date: 28 Jun 2001 12:07:10 -0400
 
 Andre Majorel wrote:
-> Any pointers handy on "writing STL-compatible iterators for
-> dummies ?"
+&gt; Any pointers handy on "writing STL-compatible iterators for
+&gt; dummies ?"
 
 I'll give it a try...
 
@@ -550,7 +659,7 @@ you actually implement it. Typically it looks something like this
           friend class container;
           public:
             const value_type&amp; operator*() const;
-            const value_type* operator->() const;
+            const value_type* operator-&gt;() const;
             const_iterator&amp; operator++();
             const_iterator operator++(int);
             friend bool operator==(const_iterator lhs,
@@ -585,7 +694,7 @@ implementations; the rest are just boilerplate.
     }
 
   const container::value_type*
-    container::const_iterator::operator->() const {
+    container::const_iterator::operator-&gt;() const {
       return &amp;**this;
     }
 
@@ -599,7 +708,7 @@ increment operator (below), or if the operation is nontrivial, you
 might choose the "lazy" approach and only generate the actual value
 when one of the dereferencing operators is called.
 
-The operator->() function is just boilerplate around a call to
+The operator-&gt;() function is just boilerplate around a call to
 operator*().
 
   container::const_iterator&amp;
@@ -663,7 +772,7 @@ the simple addition of a second class.
           friend class container::const_iterator;
           public:
             value_type&amp; operator*() const;
-            value_type* operator->() const;
+            value_type* operator-&gt;() const;
             iterator&amp; operator++();
             iterator operator++(int);
             friend bool operator==(iterator lhs, iterator rhs);
@@ -678,7 +787,7 @@ the simple addition of a second class.
             const_iterator();
             const_iterator(const iterator&amp; i);
             const value_type&amp; operator*() const;
-            const value_type* operator->() const;
+            const value_type* operator-&gt;() const;
             const_iterator&amp; operator++();
             const_iterator operator++(int);
             friend bool operator==(const_iterator lhs,
@@ -805,35 +914,44 @@ STL-like containers and iterators.
 Ross Smith &lt;ross.s@ihug.co.nz&gt; The Internet Group, Auckland, New Zealand
 </pre>
 
+</div>
 
 <!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0><tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="seealso">See Also
-</b></font></td></tr></table><ul>
+<div class="doc_section">
+  <a name="seealso">See Also</a>
+</div>
 <!-- *********************************************************************** -->
 
-A lot of these comments and recommendations have been culled for other sources.
-Two particularly important books for our work are:<p>
+<div class="doc_text">
+
+<p>A lot of these comments and recommendations have been culled for other
+sources.  Two particularly important books for our work are:</p>
 
 <ol>
-<li><a href="http://www.aw.com/product/0,2627,0201924889,00.html">Effective C++</a> by Scott Meyers.  There is an online version of the book (only some chapters though) <a href="http://www.awlonline.com/cseng/meyerscddemo/">available as well</a>.
-<li><a href="http://cseng.aw.com/book/0,3828,0201633620,00.html">Large-Scale C++ Software Design</a> by John Lakos
-</ol><p>
 
-If you get some free time, and you haven't read them: do so, you might learn
-something. :)
+<li><a href="http://www.aw.com/product/0,2627,0201924889,00.html">Effective
+C++</a> by Scott Meyers.  There is an online version of the book (only some
+chapters though) <a
+href="http://www.awlonline.com/cseng/meyerscddemo/">available as well</a>.</li>
 
+<li><a href="http://cseng.aw.com/book/0,3828,0201633620,00.html">Large-Scale C++
+Software Design</a> by John Lakos</li>
 
-<!-- *********************************************************************** -->
-</ul>
+</ol>
+
+<p>If you get some free time, and you haven't read them: do so, you might learn
+something. :)</p>
+
+</div>
+
 <!-- *********************************************************************** -->
 
 <hr>
-<font size=-1>
-<address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
-<!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
-<!-- hhmts start -->
-Last modified: Sun Oct 12 22:12:43 CDT 2003
-<!-- hhmts end -->
-</font>
-</body></html>
+
+<div class="doc_footer">
+  <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+  Last modified: $Date$
+</div>
+
+</body>
+</html>
