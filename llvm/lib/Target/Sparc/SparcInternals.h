@@ -945,21 +945,11 @@ class UltraSparcRegInfo : public MachineRegInfo
       return res;
 
   }
-                   
 
-#if 0
-  unsigned getRCIDOfMachineOp (const MachineOperand & Op) const {
-
-    unsigned Type = getRegClassIDOfValue( Op.getVRegValue() );
-
-    if( Op.getOperandType() == MachineOperand::MO_CCRegister ) 
-      return Type + 2;               // because of the order of CC classes
-    else return Type;
+  // returns the register tha contains always zero
+  inline unsigned getZeroReg() {
+    return SparcIntRegOrder::g0;
   }
-
-#endif
-
-
 
   void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
 

@@ -90,32 +90,7 @@ UltraSparcSchedInfo::initializeResources()
 
 
 
-//---------------------------------------------------------------------------
-// class UltraSparcRegInfo 
-//
-// Purpose:
-//   This class provides info about sparc register classes.
-//--------------------------------------------------------------------------
 
-#if 0
-UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc *const USI ) : 
-                                                      UltraSparcInfo(USI), 
-                                                      NumOfIntArgRegs(6), 
-                                                      NumOfFloatArgRegs(6) 
-  {    
-    MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
-    MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
-    MachineRegClassArr.push_back( new SparcIntCCRegClass(IntCCRegClassID) );
-    MachineRegClassArr.push_back( new SparcFloatCCRegClass(FloatCCRegClassID));
-
-    assert( SparcFloatRegOrder::StartOfNonVolatileRegs == 6 && 
-	    "6 Float regs are used for float arg passing");
-  }
-
-  // ***** TODO  insert deletes for reg classes 
-UltraSparcRegInfo::~UltraSparcRegInfo(void) { }    // empty destructor 
-
-#endif
 
 //---------------------------------------------------------------------------
 // UltraSparcRegInfo
@@ -427,7 +402,7 @@ UltraSparc::UltraSparc() : TargetMachine("UltraSparc-Native"),
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
   maxAtomicMemOpWordSize = 8;
-  zeroRegNum = 0;			// %g0 always gives 0 on Sparc
+  zeroRegNum = RegInfo.getZeroReg();	   // %g0 always gives 0 on Sparc
 }
 
 
