@@ -406,6 +406,10 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   return doInsertValue(D);
 }
 
+static inline bool hasNullValue(unsigned TyID) {
+  return TyID != Type::LabelTyID && TyID != Type::TypeTyID &&
+         TyID != Type::VoidTyID;
+}
 
 // doInsertValue - This is a small helper function to be called only
 // be insertValue.
@@ -435,7 +439,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
 
   // If this is the first value to get inserted into the type plane, make sure
   // to insert the implicit null value...
-  if (Table[Ty].empty() && Ty >= Type::FirstDerivedTyID && BuildBytecodeInfo) {
+  if (Table[Ty].empty() && BuildBytecodeInfo && hasNullValue(Ty)) {
     Value *ZeroInitializer = Constant::getNullValue(Typ);
 
     // If we are pushing zeroinit, it will be handled below.

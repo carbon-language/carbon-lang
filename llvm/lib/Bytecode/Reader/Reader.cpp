@@ -66,10 +66,17 @@ const Type *BytecodeParser::getType(unsigned ID) {
   throw std::string("Illegal type reference!");
 }
 
+static inline bool hasImplicitNull(unsigned TyID, bool EncodesPrimitiveZeros) {
+  if (!EncodesPrimitiveZeros)
+    return TyID != Type::LabelTyID && TyID != Type::TypeTyID &&
+           TyID != Type::VoidTyID;
+  return TyID >= Type::FirstDerivedTyID;
+}
+
 unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
                                      ValueTable &ValueTab) {
-  assert((!isa<Constant>(Val) || Val->getType()->isPrimitiveType() ||
-          !cast<Constant>(Val)->isNullValue()) &&
+  assert((!isa<Constant>(Val) || !cast<Constant>(Val)->isNullValue()) ||
+          !hasImplicitNull(type, hasExplicitPrimitiveZeros) &&
          "Cannot read null values from bytecode!");
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
 
@@ -88,13 +95,12 @@ unsigned BytecodeParser::insertValue(Value *Val, unsigned type,
   return ValueTab[type]->size()-1 + HasOffset;
 }
 
-
 Value *BytecodeParser::getValue(unsigned type, unsigned oNum, bool Create) {
   assert(type != Type::TypeTyID && "getValue() cannot get types!");
   assert(type != Type::LabelTyID && "getValue() cannot get blocks!");
   unsigned Num = oNum;
 
-  if (type >= FirstDerivedTyID) {
+  if (hasImplicitNull(type, hasExplicitPrimitiveZeros)) {
     if (Num == 0)
       return Constant::getNullValue(getType(type));
     --Num;
@@ -536,6 +542,7 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   hasOldStyleVarargs = false;
   hasVarArgCallPadding = false;
   hasInconsistentModuleGlobalInfo = false;
+  hasExplicitPrimitiveZeros = false;
   FirstDerivedTyID = 14;
 
   switch (RevisionNum) {
@@ -545,16 +552,15 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
     hasExtendedLinkageSpecs = false;
     hasOldStyleVarargs = true;
     hasVarArgCallPadding = true;
-    hasInconsistentModuleGlobalInfo = true;
-
-    break;
+    // FALL THROUGH
   case 0:               //  LLVM 1.0, 1.1 release version
     // Compared to rev #2, we added support for weak linkage, a more dense
     // encoding, and better varargs support.
 
     // Base LLVM 1.0 bytecode format.
     hasInconsistentModuleGlobalInfo = true;
-    break;
+    hasExplicitPrimitiveZeros = true;
+    // FALL THROUGH
   case 1:               // LLVM 1.2 release version
     // LLVM 1.2 added explicit support for emitting strings efficiently.
 

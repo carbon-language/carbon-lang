@@ -161,6 +161,11 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   }
 }
 
+static inline bool hasNullValue(unsigned TyID) {
+  return TyID != Type::LabelTyID && TyID != Type::TypeTyID &&
+         TyID != Type::VoidTyID;
+}
+
 void BytecodeWriter::outputConstants(bool isFunction) {
   ConstantTotalBytes -= Out.size();
   if (isFunction) FunctionConstantTotalBytes -= Out.size();
@@ -190,7 +195,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
         if (isFunction)                  // Don't re-emit module constants
           ValNo += Table.getModuleLevel(pno);
         
-        if (pno >= Type::FirstDerivedTyID) {
+        if (hasNullValue(pno)) {
           // Skip zero initializer
           if (ValNo == 0)
             ValNo = 1;
