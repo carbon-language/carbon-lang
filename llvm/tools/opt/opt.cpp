@@ -23,6 +23,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Transforms/LinkAllPasses.h"
 #include <fstream>
 #include <memory>
 #include <algorithm>

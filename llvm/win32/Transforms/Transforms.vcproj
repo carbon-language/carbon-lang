@@ -229,6 +229,9 @@
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\RaiseAllocations.cpp">
 				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Ipo\StripSymbols.cpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="Scalar"
@@ -265,6 +268,9 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LoopSimplify.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\LoopStrengthReduce.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LoopUnroll.cpp">
@@ -399,6 +405,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Transforms\IPO.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\LinkAllPasses.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Transforms\Utils\Local.h">
