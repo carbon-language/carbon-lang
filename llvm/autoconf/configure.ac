@@ -128,6 +128,10 @@ case $build in
              AC_SUBST(OS,[AIX])
              platform_type="AIX"
              ;;
+        *-*-interix*)
+             AC_SUBST(OS,[SunOS])
+             platform_type="SunOS"
+             ;;
         *-*-win32*)
              AC_SUBST(OS,[Win32])
              platform_type="Win32"
@@ -137,6 +141,11 @@ case $build in
              platform_type="Unknown"
 	     ;;
 esac
+
+dnl Make sure we aren't attempting to configure for an unknown system
+if test $platform_type -eq "Unknown" ; then
+  AC_MSG_ERROR([Platform is unknown, configure can't continue])
+fi
 
 dnl Make a link from lib/System/platform to lib/System/$platform_type
 dnl This helps the #inclusion of the system specific include files
