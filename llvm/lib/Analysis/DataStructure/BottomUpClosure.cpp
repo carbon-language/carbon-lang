@@ -168,6 +168,12 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             // Erase the entry in the globals vector
             Globals.erase(Globals.begin()+g--);
+          } else if (FI.getName() == "printf" || FI.getName() == "sscanf" ||
+                     FI.getName() == "fprintf" || FI.getName() == "open" ||
+                     FI.getName() == "sprintf") {
+
+            // Erase the entry in the globals vector
+            Globals.erase(Globals.begin()+g--);
           }
         }
 
