@@ -581,7 +581,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
           // If this is freopen, merge the file descriptor passed in with the
           // result.
-          Result.mergeWith(getValueDest(**--CS.arg_end()));
+          if (F->getName() == "freopen")
+            Result.mergeWith(getValueDest(**--CS.arg_end()));
 
           return;
         } else if (F->getName() == "fclose" && CS.arg_end()-CS.arg_begin() ==1){
