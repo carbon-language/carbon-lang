@@ -130,11 +130,15 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   Value *V;
   switch (Raw.Opcode) {
+  case Instruction::VarArg:
   case Instruction::Cast: {
     V = getValue(Raw.Ty, Raw.Arg1);
     const Type *Ty = getType(Raw.Arg2);
     if (V == 0 || Ty == 0) { std::cerr << "Invalid cast!\n"; return true; }
-    Res = new CastInst(V, Ty);
+    if (Raw.Opcode == Instruction::Cast)
+      Res = new CastInst(V, Ty);
+    else
+      Res = new VarArgInst(V, Ty);
     return false;
   }
   case Instruction::PHINode: {

@@ -720,7 +720,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI CALL INVOKE CAST SHL SHR
+%token <OtherOpVal> PHI CALL INVOKE CAST SHL SHR VA_ARG
 
 %start Module
 %%
@@ -1612,6 +1612,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   }
   | CAST ResolvedVal TO Types {
     $$ = new CastInst($2, *$4);
+    delete $4;
+  }
+  | VA_ARG ResolvedVal ',' Types {
+    $$ = new VarArgInst($2, *$4);
     delete $4;
   }
   | PHI PHIList {

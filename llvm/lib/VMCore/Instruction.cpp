@@ -91,7 +91,8 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Call:    return "call";
   case Shl:     return "shl";
   case Shr:     return "shr";
-    
+  case VarArg:  return "va_arg";
+
   default: return "<Invalid operator> ";
   }
   

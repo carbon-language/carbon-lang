@@ -35,7 +35,7 @@ static void outputInstructionFormat0(const Instruction *I,
   output_vbr(Type, Out);                         // Result type
 
   unsigned NumArgs = I->getNumOperands();
-  output_vbr(NumArgs + isa<CastInst>(I), Out);
+  output_vbr(NumArgs + (isa<CastInst>(I) || isa<VarArgInst>(I)), Out);
 
   for (unsigned i = 0; i < NumArgs; ++i) {
     int Slot = Table.getValSlot(I->getOperand(i));
@@ -43,9 +43,9 @@ static void outputInstructionFormat0(const Instruction *I,
     output_vbr((unsigned)Slot, Out);
   }
 
-  if (isa<CastInst>(I)) {
+  if (isa<CastInst>(I) || isa<VarArgInst>(I)) {
     int Slot = Table.getValSlot(I->getType());
-    assert(Slot != -1 && "Cast return type unknown?");
+    assert(Slot != -1 && "Cast/VarArg return type unknown?");
     output_vbr((unsigned)Slot, Out);
   }
 
@@ -218,7 +218,7 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   if (Slot > MaxOpSlot) MaxOpSlot = Slot;
 
   // Handle the special case for cast...
-  if (isa<CastInst>(I)) {
+  if (isa<CastInst>(I) || isa<VarArgInst>(I)) {
     // Cast has to encode the destination type as the second argument in the
     // packet, or else we won't know what type to cast to!
     Slots[1] = Table.getValSlot(I.getType());

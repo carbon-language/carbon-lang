@@ -3,8 +3,7 @@
 // This library implements the functionality defined in llvm/Assembly/Writer.h
 //
 // Note that these routines must be extremely tolerant of various errors in the
-// LLVM code, because of of the primary uses of it is for debugging
-// transformations.
+// LLVM code, because it can be used for debugging transformations.
 //
 //===----------------------------------------------------------------------===//
 
@@ -814,8 +813,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(AI->getArraySize(), true);
     }
   } else if (isa<CastInst>(I)) {
-    if (Operand) writeOperand(Operand, true);
+    writeOperand(Operand, true);
     Out << " to ";
+    printType(I.getType());
+  } else if (isa<VarArgInst>(I)) {
+    writeOperand(Operand, true);
+    Out << ", ";
     printType(I.getType());
   } else if (Operand) {   // Print the normal way...
 

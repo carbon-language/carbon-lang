@@ -130,6 +130,7 @@ namespace {  // Anonymous namespace for class
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
     void visitShiftInst(ShiftInst &SI);
+    void visitVarArgInst(VarArgInst &VAI);
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
     void visitLoadInst(LoadInst &LI);
@@ -402,7 +403,12 @@ void Verifier::visitShiftInst(ShiftInst &SI) {
   visitInstruction(SI);
 }
 
-
+void Verifier::visitVarArgInst(VarArgInst &VAI) {
+  Assert1(VAI.getParent()->getParent()->getFunctionType()->isVarArg(),
+          "va_arg instruction may only occur in function with variable args!",
+          &VAI);
+  visitInstruction(VAI);
+}
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   const Type *ElTy =
