@@ -582,6 +582,17 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   }
 }
 
+Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
+                                              const Constant *V1,
+                                              const Constant *V2) {
+  if (Cond == ConstantBool::True)
+    return const_cast<Constant*>(V1);
+  else if (Cond == ConstantBool::False)
+    return const_cast<Constant*>(V2);
+  return 0;
+}
+
+
 /// IdxCompare - Compare the two constants as though they were getelementptr
 /// indices.  This allows coersion of the types to be the same thing.
 ///
