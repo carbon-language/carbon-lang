@@ -201,7 +201,7 @@ main(int argc, char **argv)
           if (Opt->getNormalCtor())
             Passes.add(Opt->getNormalCtor()());
           else if (Opt->getDataCtor())
-            Passes.add(Opt->getDataCtor()(Target.DataLayout));
+            Passes.add(Opt->getDataCtor()(Target.getTargetData()));
           else if (Opt->getTargetCtor())
             Passes.add(Opt->getTargetCtor()(Target));
           else
