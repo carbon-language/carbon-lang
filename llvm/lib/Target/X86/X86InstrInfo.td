@@ -161,7 +161,8 @@ let isCall = 1 in
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
-def LEAVE    : X86Inst<"leave", 0xC9, RawFrm, NoArg>, Imp<[EBP], [EBP]>;
+def LEAVE    : X86Inst<"leave", 0xC9, RawFrm, NoArg>, Imp<[EBP,ESP],[EBP,ESP]>;
+def POPr32   : X86Inst<"pop",   0x58, AddRegFrm, Arg32>, Imp<[ESP],[ESP]>;
 
 let isTwoAddress = 1 in                                      // R32 = bswap R32
   def BSWAPr32 : X86Inst<"bswap", 0xC8, AddRegFrm, Arg32>, TB;
