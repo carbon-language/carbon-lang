@@ -495,6 +495,15 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
           return;
+        } else if (F->getName() == "memmove") {
+          // Merge the first & second arguments, and mark the memory read and
+          // modified.
+          DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
+          RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
+          if (DSNode *N = RetNH.getNode())
+            N->setModifiedMarker()->setReadMarker();
+          return;
+
         } else if (F->getName() == "atoi" || F->getName() == "atof" ||
                    F->getName() == "atol" || F->getName() == "atoll" ||
                    F->getName() == "remove" || F->getName() == "unlink" ||
@@ -753,12 +762,20 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
           return;
-        } else if (F->getName() == "strchr" || F->getName() == "strrchr") {
-          // These read their first argument, and return it.
+        } else if (F->getName() == "strchr" || F->getName() == "strrchr" ||
+                   F->getName() == "strstr") {
+          // These read their arguments, and return the first one
           DSNodeHandle H = getValueDest(**CS.arg_begin());
+          H.mergeWith(getValueDest(*CS.getInstruction())); // Returns buffer
+
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI)
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();
+    
           if (DSNode *N = H.getNode())
             N->setReadMarker();
-          H.mergeWith(getValueDest(*CS.getInstruction())); // Returns buffer
           return;
         } else if (F->getName() == "modf" && CS.arg_end()-CS.arg_begin() == 2) {
           // This writes its second argument, and forces it to double.
