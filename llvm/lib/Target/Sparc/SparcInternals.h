@@ -10,7 +10,7 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineSchedInfo.h"
-#include "llvm/Target/MachineFrameInfo.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/MachineOptInfo.h"

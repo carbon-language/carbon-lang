@@ -13,7 +13,7 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/FunctionFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineFrameInfo.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"

@@ -15,7 +15,7 @@
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MachineFrameInfo.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"

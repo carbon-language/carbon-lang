@@ -8,8 +8,8 @@
 #define X86TARGETMACHINE_H
 
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "X86InstrInfo.h"
-#include "llvm/Target/MachineFrameInfo.h"
 
 class X86TargetMachine : public TargetMachine {
   X86InstrInfo InstrInfo;
