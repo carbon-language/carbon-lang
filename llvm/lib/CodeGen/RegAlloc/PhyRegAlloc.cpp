@@ -1063,8 +1063,8 @@ void PhyRegAlloc::allocateRegisters()
   // before we call constructLiveRanges (now done in the constructor of 
   // PhyRegAlloc class).
 
-  cout << "\n\n ******** AFTER SCHEDULING **********";
-  MachineCodeForMethod::get(Meth).dump();
+  //cout << "\n\n ******** AFTER SCHEDULING **********";
+  //MachineCodeForMethod::get(Meth).dump();
 
 
   constructLiveRanges();                // create LR info
