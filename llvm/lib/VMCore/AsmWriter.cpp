@@ -10,6 +10,7 @@
 
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/SlotCalculator.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
@@ -27,6 +28,9 @@ using std::string;
 using std::map;
 using std::vector;
 using std::ostream;
+
+static RegisterPass<PrintModulePass>   X("printm", "Print module to stderr");
+static RegisterPass<PrintFunctionPass> Y("print", "Print function to stderr");
 
 static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
                                    map<const Type *, string> &TypeTable,
