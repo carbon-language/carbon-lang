@@ -41,11 +41,6 @@ namespace {
         // minor pessimization that saves us from having to worry about 
         // keeping the offsets up to date later when we emit long branch glue.
         return 12;
-      case PPC::MovePCtoLR:
-        // MovePCtoLR is actually a combination of a branch-and-link (bl)
-        // followed by a move from link register to dest reg (mflr)
-        return 8;
-        break;
       case PPC::IMPLICIT_DEF: // no asm emitted
         return 0;
         break;

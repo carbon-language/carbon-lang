@@ -15,7 +15,7 @@
 include "PowerPCInstrFormats.td"
 
 let isTerminator = 1, isReturn = 1 in
-  def BLR : XLForm_2_ext<"blr", 19, 16, 20, 31, 1, 0, 0>;
+  def BLR : XLForm_2_ext<19, 16, 20, 31, 1, 0, 0, (ops), "blr">;
 
 def u5imm   : Operand<i8> {
   let PrintMethod = "printU5ImmOperand";
@@ -26,18 +26,23 @@ def u6imm   : Operand<i8> {
 def u16imm  : Operand<i16> {
   let PrintMethod = "printU16ImmOperand";
 }
+def target : Operand<i32> {
+  let PrintMethod = "printBranchOperand";
+}
+def piclabel: Operand<i32> {
+  let PrintMethod = "printPICLabel";
+}
 
 // Pseudo-instructions:
-def PHI : Pseudo<"PHI">;
-def ADJCALLSTACKDOWN : Pseudo<"ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP : Pseudo<"ADJCALLSTACKUP">;
-let Defs = [LR] in
-  def MovePCtoLR : Pseudo<"MovePCtoLR">;
-def IMPLICIT_DEF : Pseudo<"IMPLICIT_DEF">;
+def PHI : Pseudo<(ops), "; PHI">;
+def ADJCALLSTACKDOWN : Pseudo<(ops), "; ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP : Pseudo<(ops), "; ADJCALLSTACKUP">;
+def IMPLICIT_DEF : Pseudo<(ops), "; IMPLICIT_DEF">;
+def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 
 let isBranch = 1, isTerminator = 1 in {
-  def COND_BRANCH : Pseudo<"COND_BRANCH">;
-  def B : IForm<"b", 18, 0, 0, 0, 0>;
+  def COND_BRANCH : Pseudo<(ops), "; COND_BRANCH">;
+  def B : IForm<18, 0, 0, 0, 0, (ops target:$func), "b $func">;
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
   def BLT : BForm_ext<"blt", 16, 0, 0, 12, 0, 0, 0>;
@@ -55,8 +60,8 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
           LR,XER,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def CALLpcrel : IForm<"bl", 18, 0, 1, 0, 0>;
-  def CALLindirect : XLForm_2_ext<"bctrl", 19, 528, 20, 31, 1, 0, 0>;
+  def CALLpcrel : IForm<18, 0, 1, 0, 0, (ops target:$func), "bl $func">;
+  def CALLindirect : XLForm_2_ext<19, 528, 20, 31, 1, 0, 0, (ops), "bctrl">;
 }
 
 def LA : DForm_2<"la", 14, 0, 0>;
@@ -95,13 +100,6 @@ def LWA : DSForm_1<"lwa", 58, 2, 1, 0>;
 def LD : DSForm_2<"ld", 58, 0, 1, 0>;
 def STD : DSForm_2<"std", 62, 0, 1, 0>;
 def STDU : DSForm_2<"stdu", 62, 1, 1, 0>;
-
-def CMP : XForm_16<"cmp", 31, 0, 0, 0>;
-def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
-def CMPW : XForm_16_ext<"cmpw", 31, 0, 0, 0>;
-def CMPD : XForm_16_ext<"cmpd", 31, 0, 1, 0>;
-def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
-def CMPLD : XForm_16_ext<"cmpld", 31, 32, 1, 0>;
 
 // D-Form instructions.  Most instructions that perform an operation on a
 // register and an immediate are of this type.
@@ -200,6 +198,24 @@ def EXTSH  : XForm_11<31, 922, 0, 0, 0, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS">;
 def EXTSW  : XForm_11<31, 986, 0, 1, 0, (ops GPRC:$rA, GPRC:$rS),
                       "extsw $rA, $rS">;
+def CMP    : XForm_16<31, 0, 0, 0,
+                      (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
+                      "cmp $crD, $long, $rA, $rB">;
+def CMPL   : XForm_16<31, 32, 0, 0,
+                      (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
+                      "cmpl $crD, $long, $rA, $rB">;
+def CMPW   : XForm_16_ext<31, 0, 0, 0,
+                          (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+                          "cmpw $crD, $rA, $rB">;
+def CMPD   : XForm_16_ext<31, 0, 1, 0,
+                          (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+                          "cmpd $crD, $rA, $rB">;
+def CMPLW  : XForm_16_ext<31, 32, 0, 0,
+                          (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+                          "cmplw $crD, $rA, $rB">;
+def CMPLD  : XForm_16_ext<31, 32, 1, 0,
+                          (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+                          "cmpld $crD, $rA, $rB">;
 def FCMPU  : XForm_17<63, 0, 0, 0, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
                       "fcmpu $crD, $fA, $fB">;
 def LFSX   : XForm_25<31, 535, 0, 0, (ops FPRC:$dst, GPRC:$base, GPRC:$index),

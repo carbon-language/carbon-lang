@@ -102,6 +102,16 @@ namespace {
                             MVT::ValueType VT) {
       O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
     }
+    void printBranchOperand(const MachineInstr *MI, unsigned OpNo,
+                          MVT::ValueType VT) {
+      printOp(MI->getOperand(OpNo));
+    }
+    void printPICLabel(const MachineInstr *MI, unsigned OpNo,
+                         MVT::ValueType VT) {
+      // FIXME: should probably be converted to cout.width and cout.fill
+      O << "\"L0000" << LabelNumber << "$pb\"\n";
+      O << "\"L0000" << LabelNumber << "$pb\":";
+    }
 
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
@@ -292,42 +302,6 @@ void PPC32AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
          "Instruction requires VMX support");
   assert(((Desc.TSFlags & PPCII::PPC64) == 0) &&
          "Instruction requires 64 bit support");
-
-  // CALLpcrel and CALLindirect are handled specially here to print only the
-  // appropriate number of args that the assembler expects.  This is because
-  // may have many arguments appended to record the uses of registers that are
-  // holding arguments to the called function.
-  if (Opcode == PPC::COND_BRANCH) {
-    std::cerr << "Error: untranslated conditional branch psuedo instruction!\n";
-    abort();
-  } else if (Opcode == PPC::IMPLICIT_DEF) {
-    --EmittedInsts; // Not an actual machine instruction
-    O << "; IMPLICIT DEF ";
-    printOp(MI->getOperand(0));
-    O << "\n";
-    return;
-  } else if (Opcode == PPC::CALLpcrel) {
-    O << TII.getName(Opcode) << " ";
-    printOp(MI->getOperand(0));
-    O << "\n";
-    return;
-  } else if (Opcode == PPC::CALLindirect) {
-    O << TII.getName(Opcode) << " ";
-    printImmOp(MI->getOperand(0), ArgType[0]);
-    O << ", ";
-    printImmOp(MI->getOperand(1), ArgType[0]);
-    O << "\n";
-    return;
-  } else if (Opcode == PPC::MovePCtoLR) {
-    ++EmittedInsts; // Actually two machine instructions
-    // FIXME: should probably be converted to cout.width and cout.fill
-    O << "bl \"L0000" << LabelNumber << "$pb\"\n";
-    O << "\"L0000" << LabelNumber << "$pb\":\n";
-    O << "\tmflr ";
-    printOp(MI->getOperand(0));
-    O << "\n";
-    return;
-  }
 
   O << TII.getName(Opcode) << " ";
   if (Opcode == PPC::LOADHiAddr) {

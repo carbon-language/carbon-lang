@@ -532,8 +532,8 @@ void ISel::copyGlobalBaseToRegister(MachineBasicBlock *MBB,
     MachineBasicBlock &FirstMBB = F->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     GlobalBaseReg = makeAnotherReg(Type::IntTy);
-    BuildMI(FirstMBB, MBBI, PPC::IMPLICIT_DEF, 0, PPC::LR);
-    BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, GlobalBaseReg);
+    BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
+    BuildMI(FirstMBB, MBBI, PPC::MFLR, 0, GlobalBaseReg).addReg(PPC::LR);
     GlobalBaseInitialized = true;
   }
   // Emit our copy of GlobalBaseReg to the destination register in the
