@@ -1014,7 +1014,7 @@ void ModuloSchedulingPass::computeSchedule() {
 	      if(!ignoreEdge(*schedNode, *I)) {
 		int diff = (*I)->getInEdge(*schedNode).getIteDiff();
 		int ES_Temp = nodesByCycle->first + (*schedNode)->getLatency() - diff * II;
-		DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
+	DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 		DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
 		EarlyStart = std::max(EarlyStart, ES_Temp);
 		hasPred = true;
@@ -1147,7 +1147,8 @@ bool ModuloSchedulingPass::scheduleNode(MSchedGraphNode *node,
   assert(numFound == 1 && "We should have only found one def to this virtual register!"); 
 }*/
 
-void ModuloSchedulingPass::writePrologue(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues) {
+void ModuloSchedulingPass::writePrologues(std::vector<MachineBasicBlock *> &prologues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues) {
+  
   std::map<int, std::set<const MachineInstr*> > inKernel;
   int maxStageCount = 0;
 
@@ -1159,13 +1160,14 @@ void ModuloSchedulingPass::writePrologue(std::vector<MachineBasicBlock *> &prolo
       continue;
 
     //Put int the map so we know what instructions in each stage are in the kernel
-    if(I->second > 0)
+    if(I->second > 0) {
+      DEBUG(std::cerr << "Inserting instruction " << *(I->first->getInst()) << " into map at stage " << I->second << "\n");
       inKernel[I->second].insert(I->first->getInst());
+    }
   }
 
   //Now write the prologues
-  for(std::map<int, std::set<const MachineInstr*> >::iterator I = inKernel.begin(), E = inKernel.end();
-      I != E; ++I) {
+  for(int i = 1; i <= maxStageCount; ++i) {
     BasicBlock *llvmBB = new BasicBlock();
     MachineBasicBlock *machineBB = new MachineBasicBlock(llvmBB);
   
@@ -1173,16 +1175,71 @@ void ModuloSchedulingPass::writePrologue(std::vector<MachineBasicBlock *> &prolo
     //stage that is NOT in the kernel, then it needs to be added into the prologue
     //We go in order to preserve dependencies
     for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
-      if(I->second.count(&*MI))
-	continue;
-      else
-	machineBB->push_back(MI->clone());
+      if(inKernel[i].count(&*MI)) {
+	inKernel[i].erase(&*MI);
+        if(inKernel[i].size() <= 0)
+          break;
+        else
+          continue;
+      }
+      else {
+	DEBUG(std::cerr << "Writing instruction to prologue\n");
+        machineBB->push_back(MI->clone());
+      }
     }
 
+    (((MachineBasicBlock*)origBB)->getParent())->getBasicBlockList().push_back(machineBB);
     prologues.push_back(machineBB);
     llvm_prologues.push_back(llvmBB);
   }
 }
+
+void ModuloSchedulingPass::writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues) {
+  std::map<int, std::set<const MachineInstr*> > inKernel;
+  int maxStageCount = 0;
+  for(MSSchedule::kernel_iterator I = schedule.kernel_begin(), E = schedule.kernel_end(); I != E; ++I) {
+    maxStageCount = std::max(maxStageCount, I->second);
+    
+    //Ignore the branch, we will handle this separately
+    if(I->first->isBranch())
+      continue;
+
+    //Put int the map so we know what instructions in each stage are in the kernel
+    if(I->second > 0) {
+      DEBUG(std::cerr << "Inserting instruction " << *(I->first->getInst()) << " into map at stage " << I->second << "\n");
+      inKernel[I->second].insert(I->first->getInst());
+    }
+  }
+
+  //Now write the epilogues
+  for(int i = 1; i <= maxStageCount; ++i) {
+    BasicBlock *llvmBB = new BasicBlock();
+    MachineBasicBlock *machineBB = new MachineBasicBlock(llvmBB);
+    
+    bool last = false;
+    for(MachineBasicBlock::const_iterator MI = origBB->begin(), ME = origBB->end(); ME != MI; ++MI) {
+      
+      if(!last) {
+        if(inKernel[i].count(&*MI)) {
+          machineBB->push_back(MI->clone());
+          inKernel[i].erase(&*MI);
+          if(inKernel[i].size() <= 0)
+            last = true;
+        }
+      }
+      
+      else
+        machineBB->push_back(MI->clone());
+     
+
+    }
+    (((MachineBasicBlock*)origBB)->getParent())->getBasicBlockList().push_back(machineBB);
+    epilogues.push_back(machineBB);
+    llvm_epilogues.push_back(llvmBB);
+  }
+    
+}
+
 
 
 void ModuloSchedulingPass::reconstructLoop(const MachineBasicBlock *BB) {
@@ -1192,7 +1249,29 @@ void ModuloSchedulingPass::reconstructLoop(const MachineBasicBlock *BB) {
   std::vector<MachineBasicBlock*> prologues;
   std::vector<BasicBlock*> llvm_prologues;
 
+  //Write prologue
+  writePrologues(prologues, BB, llvm_prologues);
 
+  //Print out prologue
+  for(std::vector<MachineBasicBlock*>::iterator I = prologues.begin(), E = prologues.end(); 
+      I != E; ++I) {
+    std::cerr << "PROLOGUE\n";
+    (*I)->print(std::cerr);
+  }
+
+
+  std::vector<MachineBasicBlock*> epilogues;
+  std::vector<BasicBlock*> llvm_epilogues;
+
+  //Write epilogues
+  writeEpilogues(epilogues, BB, llvm_epilogues);
+
+  //Print out prologue
+  for(std::vector<MachineBasicBlock*>::iterator I = epilogues.begin(), E = epilogues.end(); 
+      I != E; ++I) {
+    std::cerr << "EPILOGUE\n";
+    (*I)->print(std::cerr);
+  }
 
   //create a vector of epilogues corresponding to each stage
   /*std::vector<MachineBasicBlock*> epilogues;

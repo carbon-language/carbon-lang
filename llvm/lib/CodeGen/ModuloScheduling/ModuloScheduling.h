@@ -93,8 +93,10 @@ namespace llvm {
     
     //void saveValue(const MachineInstr*, const std::set<Value*>&, std::vector<Value*>*);
 
-    void writePrologue(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues);
+    void writePrologues(std::vector<MachineBasicBlock *> &prologues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues);
 
+    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues);
+  
   public:
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}
     virtual bool runOnFunction(Function &F);
