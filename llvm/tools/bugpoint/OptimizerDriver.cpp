@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "SystemUtils.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -18,20 +19,14 @@
 #include <stdlib.h>
 #include <fstream>
 
-/// removeFile - Delete the specified file
-///
-void BugDriver::removeFile(const std::string &Filename) const {
-  unlink(Filename.c_str());
-}
-
 /// writeProgramToFile - This writes the current "Program" to the named bytecode
 /// file.  If an error occurs, true is returned.
 ///
-bool BugDriver::writeProgramToFile(const std::string &Filename) const {
+bool BugDriver::writeProgramToFile(const std::string &Filename,
+				   Module *M) const {
   std::ofstream Out(Filename.c_str());
   if (!Out.good()) return true;
-
-  WriteBytecodeToFile(Program, Out);
+  WriteBytecodeToFile(M ? M : Program, Out);
   return false;
 }
 
@@ -50,7 +45,7 @@ void BugDriver::EmitProgressBytecode(const PassInfo *Pass,
     return;
   }
 
-  std::cout << "Emitted bytecode to 'bugpoint-" << Filename << ".bc'\n";
+  std::cout << "Emitted bytecode to '" << Filename << "'\n";
   std::cout << "\n*** You can reproduce the problem with: ";
 
   unsigned PassType = Pass->getPassType();
@@ -101,23 +96,11 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
 /// failed.
 ///
 bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
-                          std::string &OutputFilename, bool DeleteOutput) const{
+                          std::string &OutputFilename, bool DeleteOutput,
+			  bool Quiet) const{
   std::cout << std::flush;
+  OutputFilename = getUniqueFilename("bugpoint-output.bc");
 
-  // Agree on a temporary file name to use....
-  char FNBuffer[] = "bugpoint-output.bc-XXXXXX";
-  int TempFD;
-  if ((TempFD = mkstemp(FNBuffer)) == -1) {
-    std::cerr << ToolName << ": ERROR: Cannot create temporary"
-              << " file in the current directory!\n";
-    exit(1);
-  }
-  OutputFilename = FNBuffer;
-
-  // We don't need to hold the temp file descriptor... we will trust that noone
-  // will overwrite/delete the file while we are working on it...
-  close(TempFD);
-  
   pid_t child_pid;
   switch (child_pid = fork()) {
   case -1:    // Error occurred
@@ -143,7 +126,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   if (DeleteOutput)
     removeFile(OutputFilename);
 
-  std::cout << (Status ? "Crashed!\n" : "Success!\n");
+  if (!Quiet) std::cout << (Status ? "Crashed!\n" : "Success!\n");
 
   // Was the child successful?
   return Status != 0;

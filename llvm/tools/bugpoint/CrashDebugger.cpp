@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "SystemUtils.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Pass.h"
@@ -44,8 +45,7 @@ bool BugDriver::debugCrash() {
             << "': " << CrashingPass->getPassName() << "\n";
 
   // Compile the program with just the passes that don't crash.
-  if (LastToPass != 0) {
-    // Don't bother doing this if the first pass crashes...
+  if (LastToPass != 0) { // Don't bother doing this if the first pass crashes...
     std::vector<const PassInfo*> P(PassesToRun.begin(), 
                                    PassesToRun.begin()+LastToPass);
     std::string Filename;
@@ -87,7 +87,7 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
 
   if (CountFunctions(Program) > 1) {
     // Attempt to reduce the input program down to a single function that still
-    // crashes.
+    // crashes.  Do this by removing everything except for that one function...
     //
     std::cout << "\n*** Attempting to reduce the testcase to one function\n";
 
@@ -116,5 +116,16 @@ bool BugDriver::debugPassCrash(const PassInfo *Pass) {
       }
   }
 
+  if (CountFunctions(Program) > 1) {
+    std::cout << "\n*** Couldn't reduce testcase to one function.\n"
+	      << "    Attempting to remove individual functions.\n";
+    std::cout << "XXX Individual function removal unimplemented!\n";
+  }
+
+  // Now that we have deleted the functions that are unneccesary for the
+  // program, try to remove instructions and basic blocks that are not neccesary
+  // to cause the crash.
+  //
+  
   return false;
 }

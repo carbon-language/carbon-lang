@@ -82,19 +82,3 @@ bool BugDriver::run() {
   else
     return debugMiscompilation();
 }
-
-
-/// debugMiscompilation - This method is used when the passes selected are not
-/// crashing, but the generated output is semantically different from the
-/// input.
-///
-bool BugDriver::debugMiscompilation() {
-  std::cout << "*** Debugging miscompilation!\n";
-  std::cerr << "Sorry, bugpoint cannot debug a miscompilation yet!\n";
-
-  // If no reference output was specified, run the program without optimizations
-  // to get a reference output.
-  //
-
-  return true;
-}
