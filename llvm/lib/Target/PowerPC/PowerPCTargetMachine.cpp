@@ -17,14 +17,13 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-
-namespace llvm {
+using namespace llvm;
 
 // allocatePowerPCTargetMachine - Allocate and return a subclass of 
 // TargetMachine that implements the PowerPC backend.
 //
-TargetMachine *allocatePowerPCTargetMachine(const Module &M,
-                                            IntrinsicLowering *IL) {
+TargetMachine *llvm::allocatePowerPCTargetMachine(const Module &M,
+                                                  IntrinsicLowering *IL) {
   return new PowerPCTargetMachine(M, IL);
 }
 
@@ -58,4 +57,3 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createPrologEpilogCodeInserter());
 }
 
-} // end namespace llvm
