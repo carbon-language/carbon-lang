@@ -67,8 +67,13 @@ FunctionPass *llvm::createLowerAllocationsPass() {
 //
 bool LowerAllocations::doInitialization(Module &M) {
   const Type *SBPTy = PointerType::get(Type::SByteTy);
-  MallocFunc = M.getOrInsertFunction("malloc", SBPTy, Type::UIntTy, 0);
-  FreeFunc   = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, 0);
+  MallocFunc = M.getNamedFunction("malloc");
+  FreeFunc   = M.getNamedFunction("free");
+
+  if (MallocFunc == 0)
+    MallocFunc = M.getOrInsertFunction("malloc", SBPTy, Type::UIntTy, 0);
+  if (FreeFunc == 0)
+    FreeFunc   = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, 0);
 
   return true;
 }
@@ -101,13 +106,30 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         MallocArg = BinaryOperator::create(Instruction::Mul, MI->getOperand(0),
                                            MallocArg, "", I);
       }
+
+      const FunctionType *MallocFTy = MallocFunc->getFunctionType();
+      std::vector<Value*> MallocArgs;
       
+      if (MallocFTy->getNumParams() > 0 || MallocFTy->isVarArg()) {
+        if (MallocFTy->getNumParams() > 0 &&
+            MallocFTy->getParamType(0) != Type::UIntTy)
+          MallocArg = new CastInst(MallocArg, MallocFTy->getParamType(0), "",I);
+        MallocArgs.push_back(MallocArg);
+      }
+
+      // If malloc is prototyped to take extra arguments, pass nulls.
+      for (unsigned i = 1; i < MallocFTy->getNumParams(); ++i)
+       MallocArgs.push_back(Constant::getNullValue(MallocFTy->getParamType(i)));
+
       // Create the call to Malloc...
-      CallInst *MCall = new CallInst(MallocFunc,
-                                     std::vector<Value*>(1, MallocArg), "", I);
+      CallInst *MCall = new CallInst(MallocFunc, MallocArgs, "", I);
       
       // Create a cast instruction to convert to the right type...
-      CastInst *MCast = new CastInst(MCall, MI->getType(), "", I);
+      Value *MCast;
+      if (MCall->getType() != Type::VoidTy)
+        MCast = new CastInst(MCall, MI->getType(), "", I);
+      else
+        MCast = Constant::getNullValue(MI->getType());
       
       // Replace all uses of the old malloc inst with the cast inst
       MI->replaceAllUsesWith(MCast);
@@ -115,13 +137,23 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       Changed = true;
       ++NumLowered;
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
-      // Cast the argument to free into a ubyte*...
-      CastInst *MCast = new CastInst(FI->getOperand(0), 
-                                     PointerType::get(Type::SByteTy), "", I);
+      const FunctionType *FreeFTy = FreeFunc->getFunctionType();
+      std::vector<Value*> FreeArgs;
+      
+      if (FreeFTy->getNumParams() > 0 || FreeFTy->isVarArg()) {
+        Value *MCast = FI->getOperand(0);
+        if (FreeFTy->getNumParams() > 0 &&
+            FreeFTy->getParamType(0) != MCast->getType())
+          MCast = new CastInst(MCast, FreeFTy->getParamType(0), "", I);
+        FreeArgs.push_back(MCast);
+      }
+
+      // If malloc is prototyped to take extra arguments, pass nulls.
+      for (unsigned i = 1; i < FreeFTy->getNumParams(); ++i)
+       FreeArgs.push_back(Constant::getNullValue(FreeFTy->getParamType(i)));
       
       // Insert a call to the free function...
-      CallInst *FCall = new CallInst(FreeFunc, std::vector<Value*>(1, MCast),
-                                     "", I);
+      new CallInst(FreeFunc, FreeArgs, "", I);
       
       // Delete the old free instruction
       I = --BBIL.erase(I);
