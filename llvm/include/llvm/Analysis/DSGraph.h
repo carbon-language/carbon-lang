@@ -27,7 +27,7 @@ struct DSGraph {
   // Public data-type declarations...
   typedef hash_map<Value*, DSNodeHandle> ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
-  typedef hash_set<const GlobalValue*> GlobalSetTy;
+  typedef hash_set<GlobalValue*> GlobalSetTy;
 
   /// NodeMapTy - This data type is used when cloning one graph into another to
   /// keep track of the correspondence between the nodes in the old and new
@@ -270,12 +270,31 @@ public:
   /// cloneInto - Clone the specified DSGraph into the current graph.  The
   /// translated ScalarMap for the old function is filled into the OldValMap
   /// member, and the translated ReturnNodes map is returned into ReturnNodes.
+  /// OldNodeMap contains a mapping from the original nodes to the newly cloned
+  /// nodes.
   ///
   /// The CloneFlags member controls various aspects of the cloning process.
   ///
   void cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
                  ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                  unsigned CloneFlags = 0);
+
+  /// clonePartiallyInto - Clone the reachable subset of the specified DSGraph
+  /// into the current graph, for the specified function.
+  ///
+  /// This differs from cloneInto in that it only clones nodes reachable from
+  /// globals, call nodes, the scalars specified in ValBindings, and the return
+  /// value of the specified function.  This method merges the the cloned
+  /// version of the scalars and return value with the specified DSNodeHandles.
+  ///
+  /// On return, OldNodeMap contains a mapping from the original nodes to the
+  /// newly cloned nodes, for the subset of nodes that were actually cloned.
+  ///
+  /// The CloneFlags member controls various aspects of the cloning process.
+  ///
+  void clonePartiallyInto(const DSGraph &G, Function &F, const DSNodeHandle &RetVal,
+                          const ScalarMapTy &ValBindings, NodeMapTy &OldNodeMap,
+                          unsigned CloneFlags = 0);
 
   /// mergeInGraph - The method is used for merging graphs together.  If the
   /// argument graph is not *this, it makes a clone of the specified graph, then
