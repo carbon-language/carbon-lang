@@ -14,7 +14,6 @@
 #include "llvm/iOther.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/StringExtras.h"
@@ -67,20 +66,12 @@ Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and methods
 // Add a prototype for printf if it is not already in the program.
 //
 bool InsertTraceCode::doInitialization(Module *M) {
-  SymbolTable *ST = M->getSymbolTable();
   const Type *SBP = PointerType::get(Type::SByteTy);
   const MethodType *MTy =
     MethodType::get(Type::IntTy, vector<const Type*>(1, SBP), true);
 
-  if (Value *Func = ST->lookup(PointerType::get(MTy), "printf")) {
-    PrintfFunc = cast<Function>(Func);
-    return false;
-  }
-
-  // Create a new method and add it to the module
-  PrintfFunc = new Function(MTy, false, "printf");
-  M->getFunctionList().push_back(PrintfFunc);
-  return true;
+  PrintfFunc = M->getOrInsertFunction("printf", MTy);
+  return false;
 }
 
 
