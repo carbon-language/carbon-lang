@@ -364,6 +364,7 @@ static bool ProcessInternalGlobal(GlobalVariable *GV, Module::giterator &GVI) {
 
   if (GV->use_empty()) {
     DEBUG(std::cerr << "GLOBAL DEAD: " << *GV);
+    GV->getParent()->getGlobalList().erase(GV);
     ++NumDeleted;
     return true;
   }
