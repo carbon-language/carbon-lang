@@ -88,8 +88,9 @@ $(BUILT_SOURCES) : $(ObjMakefiles)
 .PRECIOUS: $(ConfigStatusScript)
 $(ConfigStatusScript): $(ConfigureScript)
 	$(Echo) Reconfiguring with $<
-	$(Verb) $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS)
-	$(Verb) $(ConfigStatusScript)
+	$(Verb) cd $(BUILD_OBJ_ROOT) && \
+	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
+	  $(ConfigStatusScript)
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
