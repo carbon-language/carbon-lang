@@ -44,38 +44,6 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//                           FunctionArgument Class
-//===----------------------------------------------------------------------===//
-
-class FunctionArgument : public Value {  // Defined in the InstrType.cpp file
-  Function *Parent;
-
-  friend class ValueHolder<FunctionArgument,Function,Function>;
-  inline void setParent(Function *parent) { Parent = parent; }
-
-public:
-  FunctionArgument(const Type *Ty, const std::string &Name = "") 
-    : Value(Ty, Value::FunctionArgumentVal, Name) {
-    Parent = 0;
-  }
-
-  // Specialize setName to handle symbol table majik...
-  virtual void setName(const std::string &name, SymbolTable *ST = 0);
-
-  inline const Function *getParent() const { return Parent; }
-  inline       Function *getParent()       { return Parent; }
-
-  virtual void print(std::ostream &OS) const;
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FunctionArgument *) { return true; }
-  static inline bool classof(const Value *V) {
-    return V->getValueType() == FunctionArgumentVal;
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
 //             Classes to function calls and method invocations
 //===----------------------------------------------------------------------===//
 
