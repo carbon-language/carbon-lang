@@ -225,8 +225,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   }
 
   // Make a shared library
-  std::string SharedObject;
-  BD.compileSharedObject(SafeModuleBC, SharedObject);
+  std::string SharedObject = compileSharedObject(SafeModuleBC);
 
   delete SafeModule;
   delete TestModule;

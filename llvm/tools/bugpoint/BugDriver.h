@@ -85,8 +85,8 @@ public:
 
   /// compileSharedObject - This method creates a SharedObject from a given
   /// BytecodeFile for debugging a code generator.
-  int compileSharedObject(const std::string &BytecodeFile,
-                          std::string &SharedObject);
+  ///
+  std::string compileSharedObject(const std::string &BytecodeFile);
 
   /// debugCodeGenerator - This method narrows down a module to a function or
   /// set of functions, using the CBE as a ``safe'' code generator for other

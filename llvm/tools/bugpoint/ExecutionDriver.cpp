@@ -135,16 +135,16 @@ std::string BugDriver::executeProgramWithCBE(std::string OutputFile,
   return executeProgram(OutputFile, BytecodeFile, SharedObject, cbe);
 }
 
-int BugDriver::compileSharedObject(const std::string &BytecodeFile,
-                                   std::string &SharedObject) {
+std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
-  std::string Message, OutputCFile;
+  std::string OutputCFile;
 
   // Using CBE
   cbe->OutputC(BytecodeFile, OutputCFile);
 
 #if 0 /* This is an alternative, as yet unimplemented */
   // Using LLC
+  std::string Message;
   LLC *llc = createLLCtool(Message);
   if (llc->OutputAsm(BytecodeFile, OutputFile)) {
     std::cerr << "Could not generate asm code with `llc', exiting.\n";
@@ -152,12 +152,14 @@ int BugDriver::compileSharedObject(const std::string &BytecodeFile,
   }
 #endif
 
-  gcc->MakeSharedObject(OutputCFile, CFile, SharedObject);
+  std::string SharedObjectFile;
+  if (gcc->MakeSharedObject(OutputCFile, CFile, SharedObject))
+    exit(1);
 
   // Remove the intermediate C file
   removeFile(OutputCFile);
 
-  return 0;
+  return SharedObjectFile;
 }
 
 
