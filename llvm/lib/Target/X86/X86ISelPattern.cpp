@@ -39,6 +39,12 @@ namespace {
   public:
     X86TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
+
+      // X86 is wierd, it always uses i8 for shift amounts and setcc results.
+      setShiftAmountType(MVT::i8);
+      setSetCCResultType(MVT::i8);
+
+      // Set up the register classes.
       addRegisterClass(MVT::i8, X86::R8RegisterClass);
       addRegisterClass(MVT::i16, X86::R16RegisterClass);
       addRegisterClass(MVT::i32, X86::R32RegisterClass);
@@ -2303,10 +2309,35 @@ void ISel::Select(SDOperand N) {
     return;
   }
 
+  case ISD::LOAD:
+    // If this load could be folded into the only using instruction, and if it
+    // is safe to emit the instruction here, try to do so now.
+    if (Node->hasNUsesOfValue(1, 0)) {
+      SDOperand TheVal = N.getValue(0);
+      SDNode *User = 0;
+      for (SDNode::use_iterator UI = Node->use_begin(); ; ++UI) {
+        assert(UI != Node->use_end() && "Didn't find use!");
+        SDNode *UN = *UI;
+        for (unsigned i = 0, e = UN->getNumOperands(); i != e; ++i)
+          if (UN->getOperand(i) == TheVal) {
+            User = UN;
+            goto FoundIt;
+          }
+      }
+    FoundIt:
+      // Only handle unary operators right now.
+      if (User->getNumOperands() == 1) {
+        LoweredTokens.erase(N);
+        SelectExpr(SDOperand(User, 0));
+        return;
+      }
+    }
+    SelectExpr(N);
+    return;
+
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
-  case ISD::LOAD:
   case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
     SelectExpr(N);
