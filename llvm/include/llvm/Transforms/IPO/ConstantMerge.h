@@ -17,7 +17,7 @@
 #ifndef LLVM_TRANSFORMS_CONSTANTMERGE_H
 #define LLVM_TRANSFORMS_CONSTANTMERGE_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 #include <map>
 class ConstPoolVal;
 class GlobalVariable;

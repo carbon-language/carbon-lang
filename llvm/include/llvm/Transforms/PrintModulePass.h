@@ -8,7 +8,7 @@
 #ifndef LLVM_TRANSFORMS_PRINTMODULE_H
 #define LLVM_TRANSFORMS_PRINTMODULE_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Writer.h"
 
@@ -61,6 +61,7 @@ public:
   
   bool doPassFinalization(Module *M) {
     WriteBytecodeToFile(M, *Out);    
+    return false;
   }
 };
 

@@ -10,7 +10,7 @@
 #ifndef LLVM_TRANSFORMS_LOWERALLOCATIONS_H
 #define LLVM_TRANSFORMS_LOWERALLOCATIONS_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 class TargetData;
 
 class LowerAllocations : public Pass {

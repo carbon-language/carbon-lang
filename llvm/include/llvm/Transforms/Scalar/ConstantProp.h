@@ -7,7 +7,7 @@
 #ifndef LLVM_OPT_CONSTANT_PROPOGATION_H
 #define LLVM_OPT_CONSTANT_PROPOGATION_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 class TerminatorInst;
 
 namespace opt {

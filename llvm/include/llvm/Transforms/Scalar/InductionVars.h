@@ -8,8 +8,7 @@
 #ifndef LLVM_OPT_INDUCTION_VARS_H
 #define LLVM_OPT_INDUCTION_VARS_H
 
-#include "llvm/Transforms/Pass.h"
-#include "llvm/Module.h"
+#include "llvm/Pass.h"
 
 namespace opt {
 

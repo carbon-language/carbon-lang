@@ -8,7 +8,7 @@
 #ifndef LLVM_OPT_DCE_H
 #define LLVM_OPT_DCE_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 
 namespace opt {
 

@@ -7,7 +7,7 @@
 #ifndef LLVM_OPT_METHOD_INLINING_H
 #define LLVM_OPT_METHOD_INLINING_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 class CallInst;
 

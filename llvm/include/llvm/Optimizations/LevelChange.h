@@ -9,7 +9,7 @@
 #ifndef LLVM_OPT_LEVELCHANGE_H
 #define LLVM_OPT_LEVELCHANGE_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 

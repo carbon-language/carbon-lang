@@ -9,11 +9,12 @@
 #ifndef LLVM_TRANSFORMS_HOISTPHICONSTANTS_H
 #define LLVM_TRANSFORMS_HOISTPHICONSTANTS_H
 
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 
 struct HoistPHIConstants : public Pass {
+  // doHoistPHIConstants - Hoist constants out of PHI instructions
+  //
   static bool doHoistPHIConstants(Method *M);
-
 
   virtual bool doPerMethodWork(Method *M) { return doHoistPHIConstants(M); }
 };

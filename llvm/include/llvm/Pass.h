@@ -1,6 +1,6 @@
-//===- llvm/Transforms/Pass.h - Base class for XForm Passes ------*- C++ -*--=//
+//===- llvm/Pass.h - Base class for XForm Passes -----------------*- C++ -*--=//
 //
-// This file defines a marker class that indicates that a specified class is a
+// This file defines a base class that indicates that a specified class is a
 // transformation pass implementation.
 //
 // Pass's are designed this way so that it is possible to apply N passes to a
@@ -30,8 +30,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_PASS_H
-#define LLVM_TRANSFORMS_PASS_H
+#ifndef LLVM_PASS_H
+#define LLVM_PASS_H
 
 #include "llvm/Module.h"
 #include "llvm/Method.h"

@@ -8,9 +8,7 @@
 #ifndef LLVM_OPT_SYMBOL_STRIPPING_H
 #define LLVM_OPT_SYMBOL_STRIPPING_H
 
-class Method;
-class Module;
-#include "llvm/Transforms/Pass.h"
+#include "llvm/Pass.h"
 
 namespace opt {
 
