@@ -779,7 +779,7 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
 
   DSNode *DN = new DSNode(*SN, &Dest, true /* Null out all links */);
   DN->maskNodeTypes(BitsToKeep);
-  NH.setNode(DN);
+  NH = DN;
   
   // Next, recursively clone all outgoing links as necessary.  Note that
   // adding these links can cause the node to collapse itself at any time, and
@@ -814,7 +814,7 @@ DSNodeHandle ReachabilityCloner::getClonedNH(const DSNodeHandle &SrcNH) {
     DSNodeHandle &DestGNH = NodeMap[SrcGNH.getNode()];
     assert(DestGNH.getNode() == NH.getNode() &&"Global mapping inconsistent");
     Dest.getNodeForValue(GV).mergeWith(DSNodeHandle(DestGNH.getNode(),
-                                          DestGNH.getOffset()+NH.getOffset()));
+                                       DestGNH.getOffset()+SrcGNH.getOffset()));
     
     if (CloneFlags & DSGraph::UpdateInlinedGlobals)
       Dest.getInlinedGlobals().insert(GV);
@@ -1619,6 +1619,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
                               DSGraph::StripIncompleteBit);
 
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
+  { TIME_REGION(Y, "removeDeadNodes:scalarscan");
   for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end(); I !=E;)
     if (isa<GlobalValue>(I->first)) {             // Keep track of global nodes
       assert(I->second.getNode() && "Null global node?");
@@ -1626,8 +1627,14 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
 
       // Make sure that all globals are cloned over as roots.
-      if (!(Flags & DSGraph::RemoveUnreachableGlobals))
-        GGCloner.getClonedNH(I->second);
+      if (!(Flags & DSGraph::RemoveUnreachableGlobals)) {
+        DSGraph::ScalarMapTy::iterator SMI = 
+          GlobalsGraph->getScalarMap().find(I->first);
+        if (SMI != GlobalsGraph->getScalarMap().end())
+          GGCloner.merge(SMI->second, I->second);
+        else
+          GGCloner.getClonedNH(I->second);
+      }
       ++I;
     } else {
       // Check to see if this is a worthless node generated for non-pointer
@@ -1648,6 +1655,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
         ++I;
       }
     }
+  }
 
   // The return values are alive as well.
   for (ReturnNodesTy::iterator I = ReturnNodes.begin(), E = ReturnNodes.end();
