@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
@@ -268,8 +269,10 @@ Value *TailDup::GetValueInBlock(BasicBlock *BB, Value *OrigVal,
   ValueHolder &BBVal = ValueMap[BB];
   if (BBVal) return BBVal;       // Value already computed for this block?
 
-  assert(pred_begin(BB) != pred_end(BB) &&
-         "Propagating PHI nodes to unreachable blocks?");
+  // If this block has no predecessors, then it must be unreachable, thus, it
+  // doesn't matter which value we use.
+  if (pred_begin(BB) == pred_end(BB))
+    return BBVal = Constant::getNullValue(OrigVal->getType());
 
   // If there is no value already available in this basic block, we need to
   // either reuse a value from an incoming, dominating, basic block, or we need
