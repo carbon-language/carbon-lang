@@ -15,7 +15,10 @@
 // that this may cause other earlier values to become unused.  To make sure that
 // we get them all, we iterate until things stop changing.  Instead, when 
 // removing a value, recheck all of its operands to see if they are now unused.
-// Piece of cake, and more efficient as well.
+// Piece of cake, and more efficient as well.  
+//
+// Note, this is not trivial, because we have to worry about invalidating 
+// iterators.  :(
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,6 +30,8 @@
 #include "llvm/Opt/AllOpts.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CFG.h"
+
+using namespace cfg;
 
 struct ConstPoolDCE { 
   enum { EndOffs = 0 };
@@ -302,6 +307,8 @@ static bool DoDCEPass(Method *M) {
 	
 	// You ARE the weakest link... goodbye
 	delete BB;
+
+	WriteToVCG(M, "MergedInto");
       }
     }
   }
