@@ -443,7 +443,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     Virt2PhysMap::const_iterator it = v2pMap_.find(virtReg);
                     if (it != v2pMap_.end()) {
-                        DEBUG(std::cerr << "\t\t\t%reg" << it->second
+                        DEBUG(std::cerr << "\t\t\t%reg" << it->first
                               << " -> " << mri_->getName(it->second) << '\n');
                         (*currentInstr_)->SetMachineOperandReg(i, it->second);
                     }
