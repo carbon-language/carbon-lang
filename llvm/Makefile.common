@@ -104,18 +104,30 @@ BURG_OPTS = -I
 
 PURIFY := $(PURIFY) -cache-dir="$(BUILD_ROOT_TOP)/../purifycache" -chain-length="30" -messages=all 
 
+ifdef ENABLE_PROFILING
+  ENABLE_OPTIMIZED = 1
+  CONFIGURATION := Profile
+else
+  ifdef ENABLE_OPTIMIZED
+    CONFIGURATION := Release
+  else
+    CONFIGURATION := Debug
+  endif
+endif
+
 # Shorthand for commonly accessed directories
 LIBDEBUG    := $(BUILD_ROOT_TOP)/lib/Debug
 LIBRELEASE  := $(BUILD_ROOT_TOP)/lib/Release
 LIBPROFILE  := $(BUILD_ROOT_TOP)/lib/Profile
+LIBCURRENT  := $(BUILD_ROOT_TOP)/lib/$(CONFIGURATION)
+
 TOOLDEBUG   := $(BUILD_ROOT_TOP)/tools/Debug
 TOOLRELEASE := $(BUILD_ROOT_TOP)/tools/Release
 TOOLPROFILE := $(BUILD_ROOT_TOP)/tools/Profile
+TOOLCURRENT := $(BUILD_ROOT_TOP)/tools/$(CONFIGURATION)
 
 # Verbosity levels
-ifdef VERBOSE
-VERB := 
-else
+ifndef VERBOSE
 VERB := @
 endif
 
@@ -126,7 +138,7 @@ endif
 # Special tools used while building the LLVM tree.  Burg is built as part of the
 # utils directory.
 #
-BURG    := $(TOOLDEBUG)/burg
+BURG    := $(TOOLCURRENT)/burg
 RunBurg := $(BURG) $(BURG_OPTS)
 
 
@@ -134,16 +146,10 @@ RunBurg := $(BURG) $(BURG_OPTS)
 # This automatically enables optimized builds.
 ifdef ENABLE_PROFILING
   PROFILE = -pg
-  ENABLE_OPTIMIZED = 1
-else
-  PROFILE =
 endif
 
 # By default, strip symbol information from executable
-ifdef KEEP_SYMBOLS
-STRIP =
-STRIP_WARN_MSG =
-else
+ifndef KEEP_SYMBOLS
 STRIP = $(PLATFORMSTRIPOPTS)
 STRIP_WARN_MSG = "(without symbols) "
 endif
@@ -265,42 +271,18 @@ LIBNAME_OBJO := $(LIBRELEASE)/$(LIBRARYNAME).o
 LIBNAME_OBJP := $(LIBPROFILE)/$(LIBRARYNAME).o
 LIBNAME_OBJG := $(LIBDEBUG)/$(LIBRARYNAME).o
 
+# dynamic target builds a shared object version of the library...
+dynamic:: $(LIBCURRENT)/lib$(LIBRARYNAME).so
 
-ifndef ENABLE_OPTIMIZED
-BUILD_LIBNAME_G := $(LIBNAME_G)
+# Does the library want a .o version built?
 ifndef DONT_BUILD_RELINKED
-BUILD_LIBNAME_OBJG := $(LIBNAME_OBJG)
+all:: $(LIBCURRENT)/$(LIBRARYNAME).o
 endif
+
+# Does the library want an archive version built?
 ifdef BUILD_ARCHIVE
-BUILD_LIBNAME_AG := $(LIBNAME_AG)
+all:: $(LIBCURRENT)/lib$(LIBRARYNAME).a
 endif
-endif
-
-# If optimized builds are enabled...
-ifdef ENABLE_OPTIMIZED
-  ifdef ENABLE_PROFILING
-    BUILD_LIBNAME_O  := $(LIBNAME_P)
-    ifndef DONT_BUILD_RELINKED
-      BUILD_LIBNAME_OBJO := $(LIBNAME_OBJP)
-    endif
-    ifdef BUILD_ARCHIVE
-      BUILD_LIBNAME_AO := $(LIBNAME_AP)
-    endif
-  else
-    BUILD_LIBNAME_O  := $(LIBNAME_O)
-    ifndef DONT_BUILD_RELINKED
-      BUILD_LIBNAME_OBJO := $(LIBNAME_OBJO)
-    endif
-    ifdef BUILD_ARCHIVE
-      BUILD_LIBNAME_AO := $(LIBNAME_AO)
-    endif
-  endif
-endif
-
-all:: $(BUILD_LIBNAME_AG) $(BUILD_LIBNAME_OBJG)      # Debug
-all:: $(BUILD_LIBNAME_AO) $(BUILD_LIBNAME_OBJO)      # Release
-all:: $(BUILD_LIBNAME_AP) $(BUILD_LIBNAME_OBJP)      # Profile
-dynamic:: $(BUILD_LIBNAME_G) $(BUILD_LIBNAME_O) $(BUILD_LIBNAME_P) # .so files
 
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
@@ -368,16 +350,7 @@ ifdef TOOLNAME
 TOOLEXENAME_G := $(BUILD_ROOT_TOP)/tools/Debug/$(TOOLNAME)
 TOOLEXENAME_O := $(BUILD_ROOT_TOP)/tools/Release/$(TOOLNAME)
 TOOLEXENAME_P := $(BUILD_ROOT_TOP)/tools/Profile/$(TOOLNAME)
-
-ifndef ENABLE_OPTIMIZED
-  TOOLEXENAMES  := $(TOOLEXENAME_G)
-else
-  ifdef ENABLE_PROFILING
-    TOOLEXENAMES := $(TOOLEXENAME_P)
-  else
-    TOOLEXENAMES := $(TOOLEXENAME_O)
-  endif
-endif
+TOOLEXENAMES  := $(BUILD_ROOT_TOP)/tools/$(CONFIGURATION)/$(TOOLNAME)
 
 # USED_LIBS_OPTIONS - Compute the options line that add -llib1 -llib2, etc.
 USED_LIBS_OPTIONS   := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
