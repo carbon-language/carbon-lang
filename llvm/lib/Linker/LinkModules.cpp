@@ -517,18 +517,12 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       DGV->setLinkage(NewLinkage);
 
       if (LinkFromSrc) {
-        if (DGV->isConstant() && !SGV->isConstant())
-          return Error(Err, "Global Variable Collision on global '" + 
-                       SGV->getName() + "': variables differ in const'ness");
         // Inherit const as appropriate
-        if (SGV->isConstant()) DGV->setConstant(true);
+        DGV->setConstant(SGV->isConstant());
         DGV->setInitializer(0);
       } else {
         if (SGV->isConstant() && !DGV->isConstant()) {
-          if (!DGV->isExternal())
-            return Error(Err, "Global Variable Collision on global '" + 
-                         SGV->getName() + "': variables differ in const'ness");
-          else
+          if (DGV->isExternal())
             DGV->setConstant(true);
         }
         SGV->setLinkage(GlobalValue::ExternalLinkage);
