@@ -23,13 +23,13 @@ class VM : public ExecutionEngine {
   MachineCodeEmitter *MCE; // MCE object
 
 public:
-  VM(Module *M, TargetMachine *tm);
+  VM(ModuleProvider *MP, TargetMachine *tm);
   ~VM();
 
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(Module *M);
+  static ExecutionEngine *create(ModuleProvider *MP);
 
   /// run - Start execution with the specified function and arguments.
   ///

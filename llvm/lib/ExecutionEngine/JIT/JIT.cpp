@@ -45,7 +45,7 @@ namespace {
 /// create - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise, return null.
 ///
-ExecutionEngine *VM::create(Module *M) {
+ExecutionEngine *VM::create(ModuleProvider *MP) {
   TargetMachine* (*TargetMachineAllocator)(const Module &) = 0;
 
   // Allow a command-line switch to override what *should* be the default target
@@ -71,14 +71,16 @@ ExecutionEngine *VM::create(Module *M) {
   }
 
   // Allocate a target...
-  TargetMachine *Target = TargetMachineAllocator(*M);
+  TargetMachine *Target = TargetMachineAllocator(*(MP->getModule()));
   assert(Target && "Could not allocate target machine!");
   
   // Create the virtual machine object...
-  return new VM(M, Target);
+  return new VM(MP, Target);
 }
 
-VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
+VM::VM(ModuleProvider *MP, TargetMachine *tm) : ExecutionEngine(MP), TM(*tm),
+  PM(MP)
+{
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
@@ -94,7 +96,10 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
     // Specialize LLVM code for this target machine and then
     // run basic dataflow optimizations on LLVM code.
     PM.add(createPreSelectionPass(TM));
-    PM.run(*M);
+    // We cannot utilize function-at-a-time loading here because PreSelection
+    // is a ModulePass.
+    MP->materializeModule();
+    PM.run(*(MP->getModule()));
   }
 #endif
 

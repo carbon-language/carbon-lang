@@ -43,6 +43,9 @@ void *VM::getPointerToFunction(Function *F) {
   void *&Addr = GlobalAddress[F];   // Function already code gen'd
   if (Addr) return Addr;
 
+  // Make sure we read in the function if it exists in this Module
+  MP->materializeFunction(F);
+
   if (F->isExternal())
     return Addr = getPointerToNamedFunction(F->getName());
 
