@@ -217,6 +217,14 @@ public:
     return this->removeEntry(pmap.find(It->second->getType()), It);
   }
 
+  /// changeName - Given a value with a non-empty name, remove its existing
+  /// entry from the symbol table and insert a new one for Name.  This is
+  /// equivalent to doing "remove(V), V->Name = Name, insert(V)", but is faster,
+  /// and will not temporarily remove the symbol table plane if V is the last
+  /// value in the symtab with that name (which could invalidate iterators to
+  /// that plane).
+  void changeName(Value *V, const std::string &Name);
+
   /// This method will strip the symbol table of its names leaving
   /// the type and values. 
   /// @brief Strip the symbol table. 

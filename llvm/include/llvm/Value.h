@@ -50,6 +50,8 @@ protected:
 private:
   PATypeHolder Ty;
   Use *UseList;
+
+  friend class SymbolTable;    // Allow SymbolTable to directly poke Name.
   std::string Name;
 
   void operator=(const Value &);     // Do not implement
