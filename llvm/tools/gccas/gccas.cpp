@@ -83,6 +83,10 @@ int main(int argc, char **argv) {
     Passes.add(createLICMPass());                   // Hoist loop invariants
     Passes.add(createGCSEPass());                   // Remove common subexprs
     Passes.add(createSCCPPass());                   // Constant prop with SCCP
+
+    // Run instcombine after redundancy elimination to exploit opportunities
+    // opened up by them.
+    Passes.add(createInstructionCombiningPass());
     Passes.add(createDeadCodeEliminationPass());    // Remove Dead code/vars
   }
   Passes.add(new WriteBytecodePass(&Out));        // Write bytecode to file...
