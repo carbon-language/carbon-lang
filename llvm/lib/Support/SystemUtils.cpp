@@ -23,13 +23,12 @@
 #include "Config/sys/wait.h"
 #include "Config/unistd.h"
 #include "Config/errno.h"
-
-namespace llvm {
+using namespace llvm;
 
 /// isExecutableFile - This function returns true if the filename specified
 /// exists and is executable.
 ///
-bool isExecutableFile(const std::string &ExeFileName) {
+bool llvm::isExecutableFile(const std::string &ExeFileName) {
   struct stat Buf;
   if (stat(ExeFileName.c_str(), &Buf))
     return false;  // Must not be executable!
@@ -51,8 +50,8 @@ bool isExecutableFile(const std::string &ExeFileName) {
 /// directory, nor in the PATH.  If the executable cannot be found, return an
 /// empty string.
 /// 
-std::string FindExecutable(const std::string &ExeName,
-                           const std::string &ProgramPath) {
+std::string llvm::FindExecutable(const std::string &ExeName,
+                                 const std::string &ProgramPath) {
   // First check the directory that bugpoint is in.  We can do this if
   // BugPointPath contains at least one / character, indicating that it is a
   // relative path to bugpoint itself.
@@ -116,11 +115,11 @@ static void RedirectFD(const std::string &File, int FD) {
 /// the calling program if there is an error executing the specified program.
 /// It returns the return value of the program, or -1 if a timeout is detected.
 ///
-int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
-                          const std::string &StdInFile,
-                          const std::string &StdOutFile,
-                          const std::string &StdErrFile) {
-
+int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
+                                const char **Args,
+                                const std::string &StdInFile,
+                                const std::string &StdOutFile,
+                                const std::string &StdErrFile) {
   // FIXME: install sigalarm handler here for timeout...
 
   int Child = fork();
@@ -204,9 +203,8 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
 //
 //  This function does not use $PATH to find programs.
 //
-int
-ExecWait (const char * const old_argv[], const char * const old_envp[])
-{
+int llvm::ExecWait(const char * const old_argv[],
+                   const char * const old_envp[]) {
   // Child process ID
   register int child;
 
@@ -273,5 +271,3 @@ ExecWait (const char * const old_argv[], const char * const old_envp[])
   //
   return 1;
 }
-
-} // End llvm namespace

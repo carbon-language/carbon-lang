@@ -15,8 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "Support/StringExtras.h"
-
-namespace llvm {
+using namespace llvm;
 
 static char HexDigit(int V) {
   return V < 10 ? V+'0' : V+'A'-10;
@@ -100,5 +99,3 @@ Mangler::Mangler(Module &m, bool addUnderscorePrefix)
       else
         FoundNames.insert(I->getName());   // Otherwise, keep track of name
 }
-
-} // End llvm namespace

@@ -18,25 +18,26 @@
 #include "Support/FileUtilities.h"
 #include <iostream>
 #include <fstream>
-
-namespace llvm {
+using namespace llvm;
 
 //===---------------------------------------------------------------------===//
 // LLI Implementation of AbstractIntepreter interface
 //
-class LLI : public AbstractInterpreter {
-  std::string LLIPath;          // The path to the LLI executable
-public:
-  LLI(const std::string &Path) : LLIPath(Path) { }
-
-
-  virtual int ExecuteProgram(const std::string &Bytecode,
-                             const std::vector<std::string> &Args,
-                             const std::string &InputFile,
-                             const std::string &OutputFile,
-                             const std::vector<std::string> &SharedLibs = 
+namespace {
+  class LLI : public AbstractInterpreter {
+    std::string LLIPath;          // The path to the LLI executable
+  public:
+    LLI(const std::string &Path) : LLIPath(Path) { }
+    
+    
+    virtual int ExecuteProgram(const std::string &Bytecode,
+                               const std::vector<std::string> &Args,
+                               const std::string &InputFile,
+                               const std::string &OutputFile,
+                               const std::vector<std::string> &SharedLibs = 
                                std::vector<std::string>());
-};
+  };
+}
 
 int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
@@ -148,19 +149,21 @@ LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
 //===---------------------------------------------------------------------===//
 // JIT Implementation of AbstractIntepreter interface
 //
-class JIT : public AbstractInterpreter {
-  std::string LLIPath;          // The path to the LLI executable
-public:
-  JIT(const std::string &Path) : LLIPath(Path) { }
-
-
-  virtual int ExecuteProgram(const std::string &Bytecode,
-                             const std::vector<std::string> &Args,
-                             const std::string &InputFile,
-                             const std::string &OutputFile,
-                             const std::vector<std::string> &SharedLibs = 
+namespace {
+  class JIT : public AbstractInterpreter {
+    std::string LLIPath;          // The path to the LLI executable
+  public:
+    JIT(const std::string &Path) : LLIPath(Path) { }
+    
+    
+    virtual int ExecuteProgram(const std::string &Bytecode,
+                               const std::vector<std::string> &Args,
+                               const std::string &InputFile,
+                               const std::string &OutputFile,
+                               const std::vector<std::string> &SharedLibs = 
                                std::vector<std::string>());
-};
+  };
+}
 
 int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
@@ -396,5 +399,3 @@ GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
   Message = "Found gcc: " + GCCPath + "\n";
   return new GCC(GCCPath);
 }
-
-} // End llvm namespace

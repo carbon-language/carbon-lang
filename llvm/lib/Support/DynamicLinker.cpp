@@ -22,10 +22,9 @@
 #include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
 #include <cassert>
+using namespace llvm;
 
-namespace llvm {
-
-bool LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
+bool llvm::LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
 #if defined (HAVE_DLOPEN)
   if (dlopen (filename, RTLD_NOW | RTLD_GLOBAL) == 0) {
     if (ErrorMessage) *ErrorMessage = dlerror ();
@@ -37,7 +36,7 @@ bool LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
 #endif
 }
 
-void *GetAddressOfSymbol (const char *symbolName) {
+void *llvm::GetAddressOfSymbol (const char *symbolName) {
 #if defined (HAVE_DLOPEN)
 #ifdef RTLD_DEFAULT
   return dlsym (RTLD_DEFAULT, symbolName);
@@ -51,8 +50,6 @@ void *GetAddressOfSymbol (const char *symbolName) {
 }
 
 // soft, cushiony C++ interface.
-void *GetAddressOfSymbol (const std::string &symbolName) {
+void *llvm::GetAddressOfSymbol (const std::string &symbolName) {
   return GetAddressOfSymbol (symbolName.c_str ());
 }
-
-} // End llvm namespace

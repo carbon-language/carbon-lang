@@ -23,8 +23,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cerrno>
-
-namespace llvm {
+using namespace llvm;
 
 using namespace cl;
 
@@ -889,5 +888,3 @@ HHOp("help-hidden", cl::desc("display all available options"),
      cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
 
 } // End anonymous namespace
-
-} // End llvm namespace

@@ -19,8 +19,7 @@
 #include <cstdio>
 #include <signal.h>
 #include "Config/config.h"     // Get the signal handler return type
-
-namespace llvm {
+using namespace llvm;
 
 static std::vector<std::string> FilesToRemove;
 
@@ -58,11 +57,9 @@ static RETSIGTYPE SignalHandler(int Sig) {
 static void RegisterHandler(int Signal) { signal(Signal, SignalHandler); }
 
 // RemoveFileOnSignal - The public API
-void RemoveFileOnSignal(const std::string &Filename) {
+void llvm::RemoveFileOnSignal(const std::string &Filename) {
   FilesToRemove.push_back(Filename);
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
-
-} // End llvm namespace
