@@ -20,12 +20,12 @@ AnalysisID MethodLiveVarInfo::ID(AnalysisID::create<MethodLiveVarInfo>());
 //-----------------------------------------------------------------------------
 
 // gets OutSet of a BB
-const ValueSet *MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
+const ValueSet &MethodLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
   return BB2BBLVMap.find(BB)->second->getOutSet();
 }
 
 // gets InSet of a BB
-const ValueSet *MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
+const ValueSet &MethodLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
   return BB2BBLVMap.find(BB)->second->getInSet();
 }
 
@@ -65,8 +65,6 @@ void MethodLiveVarInfo::constructBBs(const Method *M) {
     BBLiveVar *LVBB = new BBLiveVar(BB, POId);  
     BB2BBLVMap[BB] = LVBB;              // insert the pair to Map
     
-    LVBB->calcDefUseSets();             // calculates the def and in set
-
     if (DEBUG_LV)
       LVBB->printAllSets();
   }
@@ -155,14 +153,14 @@ void MethodLiveVarInfo::releaseMemory() {
 // Gives live variable information before a machine instruction
 //-----------------------------------------------------------------------------
 
-const ValueSet *
+const ValueSet &
 MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
 					    const BasicBlock *BB) {
   if (const ValueSet *LVSet = MInst2LVSetBI[MInst]) {
-    return LVSet;                      // if found, just return the set
+    return *LVSet;                      // if found, just return the set
   } else { 
     calcLiveVarSetsForBB(BB);          // else, calc for all instrs in BB
-    return MInst2LVSetBI[MInst];
+    return *MInst2LVSetBI[MInst];
   }
 }
 
@@ -170,15 +168,15 @@ MethodLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MInst,
 //-----------------------------------------------------------------------------
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
-const ValueSet * 
+const ValueSet & 
 MethodLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
                                            const BasicBlock *BB) {
 
   if (const ValueSet *LVSet = MInst2LVSetAI[MI]) {
-    return LVSet;                       // if found, just return the set
+    return *LVSet;                      // if found, just return the set
   } else { 
     calcLiveVarSetsForBB(BB);           // else, calc for all instrs in BB
-    return MInst2LVSetAI[MI];
+    return *MInst2LVSetAI[MI];
   }
 }
 
@@ -224,7 +222,7 @@ void MethodLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   const MachineCodeForBasicBlock &MIVec = BB->getMachineInstrVec();
 
   ValueSet *CurSet = new ValueSet();
-  const ValueSet *SetAI = getOutSetOfBB(BB); // init SetAI with OutSet
+  const ValueSet *SetAI = &getOutSetOfBB(BB);  // init SetAI with OutSet
   set_union(*CurSet, *SetAI);                  // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB

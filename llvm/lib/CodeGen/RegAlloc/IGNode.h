@@ -37,11 +37,9 @@ class RegClass;
 //----------------------------------------------------------------------------
 
 class IGNode {
-  const int Index;            // index within IGNodeList 
-
-  bool OnStack;               // this has been pushed on to stack for coloring
-
-  std::vector<IGNode *> AdjList;   // adjacency list for this live range
+  const unsigned Index;         // index within IGNodeList 
+  bool OnStack;                 // this has been pushed on to stack for coloring
+  std::vector<IGNode *> AdjList;// adjacency list for this live range
 
   int CurDegree;     
   //
@@ -50,12 +48,14 @@ class IGNode {
   // Decremented when a neighbor is pushed on to the stack. 
   // After that, never incremented/set again nor used.
 
-  LiveRange *const ParentLR;  // parent LR (cannot be a const)
+  LiveRange *const ParentLR;
 public:
 
-  // constructor
-  //
-  IGNode(LiveRange *LR, unsigned index);
+  IGNode(LiveRange *LR, unsigned index) : Index(index), ParentLR(LR) {
+    OnStack = false;
+    CurDegree = -1;
+    ParentLR->setUserIGNode(this);
+  }
 
   inline unsigned int getIndex() const { return Index; }
 

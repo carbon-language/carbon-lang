@@ -18,6 +18,8 @@ using std::cerr;
 BBLiveVar::BBLiveVar(const BasicBlock *bb, unsigned id)
   : BB(bb), POID(id) {
   InSetChanged = OutSetChanged = false;
+
+  calcDefUseSets();
 }
 
 //-----------------------------------------------------------------------------

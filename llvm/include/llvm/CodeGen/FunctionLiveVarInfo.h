@@ -119,17 +119,17 @@ public:
   // --------- Functions to access analysis results -------------------
 
   // gets OutSet of a BB
-  const ValueSet *getOutSetOfBB(const BasicBlock *BB) const;
+  const ValueSet &getOutSetOfBB(const BasicBlock *BB) const;
 
   // gets InSet of a BB
-  const ValueSet *getInSetOfBB(const BasicBlock *BB) const;
+  const ValueSet &getInSetOfBB(const BasicBlock *BB) const;
 
   // gets the Live var set BEFORE an instruction
-  const ValueSet *getLiveVarSetBeforeMInst(const MachineInstr *MI,
+  const ValueSet &getLiveVarSetBeforeMInst(const MachineInstr *MI,
                                            const BasicBlock *BB);
 
   // gets the Live var set AFTER an instruction
-  const ValueSet *getLiveVarSetAfterMInst(const MachineInstr *MI,
+  const ValueSet &getLiveVarSetAfterMInst(const MachineInstr *MI,
                                           const BasicBlock *BB);
 };
 

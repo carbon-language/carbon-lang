@@ -31,11 +31,12 @@ class BBLiveVar {
                     const BasicBlock *PredBB);
 
   // To add an operand which is a def
-  void  addDef(const Value *Op); 
+  void addDef(const Value *Op); 
 
   // To add an operand which is a use
-  void  addUse(const Value *Op);
+  void addUse(const Value *Op);
 
+  void calcDefUseSets();         // calculates the Def & Use sets for this BB
  public:
   BBLiveVar(const BasicBlock *BB, unsigned POID);
 
@@ -44,18 +45,16 @@ class BBLiveVar {
 
   inline unsigned getPOId() const { return POID; }
 
-  void calcDefUseSets();         // calculates the Def & Use sets for this BB
   bool applyTransferFunc();      // calcultes the In in terms of Out 
 
   // calculates Out set using In sets of the predecessors
   bool applyFlowFunc(std::map<const BasicBlock *, BBLiveVar *> &LVMap);    
 
-  inline const ValueSet *getOutSet() const { return &OutSet; }
-  inline const ValueSet  *getInSet() const { return &InSet; }
+  inline const ValueSet &getOutSet() const { return OutSet; }
+  inline const ValueSet  &getInSet() const { return InSet; }
 
   void printAllSets() const;      // for printing Def/In/Out sets
   void printInOutSets() const;    // for printing In/Out sets
 };
 
 #endif
-

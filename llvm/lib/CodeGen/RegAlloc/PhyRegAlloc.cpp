@@ -290,11 +290,11 @@ void PhyRegAlloc::buildInterferenceGraphs()
     //
     for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
 
-      const MachineInstr * MInst = *MInstIterator; 
+      const MachineInstr *MInst = *MInstIterator; 
 
       // get the LV set after the instruction
       //
-      const ValueSet *LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, *BBI);
+      const ValueSet &LVSetAI = LVI->getLiveVarSetAfterMInst(MInst, *BBI);
     
       const bool isCallInst = TM.getInstrInfo().isCall(MInst->getOpCode());
 
@@ -304,7 +304,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
 	// coloring algo to avoid allocating volatile colors to live ranges
 	// that span across calls (since they have to be saved/restored)
 	//
-	setCallInterferences( MInst,  LVSetAI);
+	setCallInterferences(MInst, &LVSetAI);
       }
 
 
@@ -315,7 +315,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
        	if( OpI.isDef() ) {     
 	  // create a new LR iff this operand is a def
 	  //
-	  addInterference(*OpI, LVSetAI, isCallInst );
+	  addInterference(*OpI, &LVSetAI, isCallInst);
 	} 
 
 	// Calculate the spill cost of each live range
@@ -339,7 +339,7 @@ void PhyRegAlloc::buildInterferenceGraphs()
       if(  NumOfImpRefs > 0 ) {
 	for(unsigned z=0; z < NumOfImpRefs; z++) 
 	  if( MInst->implicitRefIsDefined(z) )
-	    addInterference( MInst->getImplicitRef(z), LVSetAI, isCallInst );
+	    addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
       }
 
 
@@ -418,7 +418,7 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 //----------------------------------------------------------------------------
 void PhyRegAlloc::addInterferencesForArgs() {
   // get the InSet of root BB
-  const ValueSet *InSet = LVI->getInSetOfBB(Meth->front());  
+  const ValueSet &InSet = LVI->getInSetOfBB(Meth->front());  
 
   // get the argument list
   const Method::ArgumentListType& ArgList = Meth->getArgumentList();  
@@ -428,7 +428,7 @@ void PhyRegAlloc::addInterferencesForArgs() {
 
 
   for( ; ArgIt != ArgList.end() ; ++ArgIt) {  // for each argument
-    addInterference((Value*)*ArgIt, InSet, false); // add interferences between 
+    addInterference((Value*)*ArgIt, &InSet, false);// add interferences between 
                                               // args and LVars at start
     if( DEBUG_RA > 1)
       cerr << " - %% adding interference for  argument "
@@ -682,13 +682,13 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   unsigned RegType = MRI.getRegType( LR );
   int SpillOff = LR->getSpillOffFromFP();
   RegClass *RC = LR->getRegClass();
-  const ValueSet *LVSetBef =  LVI->getLiveVarSetBeforeMInst(MInst, BB);
+  const ValueSet &LVSetBef = LVI->getLiveVarSetBeforeMInst(MInst, BB);
 
   mcInfo.pushTempValue(TM, MRI.getSpilledRegSize(RegType) );
   
   MachineInstr *MIBef=NULL,  *AdIMid=NULL, *MIAft=NULL;
   
-  int TmpRegU = getUsableUniRegAtMI(RC, RegType, MInst,LVSetBef, MIBef, MIAft);
+  int TmpRegU = getUsableUniRegAtMI(RC, RegType, MInst,&LVSetBef, MIBef, MIAft);
   
   // get the added instructions for this instruciton
   AddedInstrns *AI = AddedInstrMap[ MInst ];
