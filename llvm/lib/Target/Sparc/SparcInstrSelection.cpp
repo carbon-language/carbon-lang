@@ -1479,16 +1479,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(0 && "VRegList should never be the topmost non-chain rule");
         break;
 
-      case 21:	// bool:  Not(bool):	Both these are implemented as:
-      case 421:	// reg:   BNot(reg) :	     reg = reg XOR-NOT 0
-        M = new MachineInstr(XNOR);
-        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                subtreeRoot->leftChild()->getValue());
-        M->SetMachineOperandReg(1, target.getRegInfo().getZeroRegNum());
-        M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,
-                                subtreeRoot->getValue());
-        mvec.push_back(M);
+      case 21:	// bool:  Not(bool,reg): Both these are implemented as:
+      case 421:	// reg:   BNot(reg,reg):	reg = reg XOR-NOT 0
+      { // First find the unary operand. It may be left or right, usually right.
+        Value* notArg = BinaryOperator::getNotArgument(
+                           cast<BinaryOperator>(subtreeRoot->getInstruction()));
+        mvec.push_back(Create3OperandInstr_Reg(XNOR, notArg,
+                                          target.getRegInfo().getZeroRegNum(),
+                                          subtreeRoot->getValue()));
         break;
+      }
 
       case 322:	// reg:   ToBoolTy(bool):
       case 22:	// reg:   ToBoolTy(reg):
@@ -1771,12 +1771,10 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,quot);
         mvec.push_back(M);
         
-        M = new MachineInstr(ChooseMulInstructionByType(
-                                   subtreeRoot->getInstruction()->getType()));
-        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,quot);
-        M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister,
-                                      subtreeRoot->rightChild()->getValue());
-        M->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister,prod);
+        M = Create3OperandInstr(ChooseMulInstructionByType(
+                                   subtreeRoot->getInstruction()->getType()),
+                                quot, subtreeRoot->rightChild()->getValue(),
+                                prod);
         mvec.push_back(M);
         
         M = new MachineInstr(ChooseSubInstructionByType(
@@ -1797,10 +1795,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 138:	// bool:   And(bool, not)
-      case 438:	// bool:   BAnd(bool, not)
-        mvec.push_back(new MachineInstr(ANDN));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+      case 438:	// bool:   BAnd(bool, bnot)
+      { // Use the argument of NOT as the second argument!
+        // Mark the NOT node so that no code is generated for it.
+        InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
+        Value* notArg = BinaryOperator::getNotArgument(
+                           cast<BinaryOperator>(notNode->getInstruction()));
+        notNode->markFoldedIntoParent();
+        mvec.push_back(Create3OperandInstr(ANDN,
+                                           subtreeRoot->leftChild()->getValue(),
+                                           notArg, subtreeRoot->getValue()));
         break;
+      }
 
       case  39:	// bool:   Or(bool, bool)
       case 239:	// bool:   Or(bool, boolconst)
@@ -1811,10 +1817,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 139:	// bool:   Or(bool, not)
-      case 439:	// bool:   BOr(bool, not)
-        mvec.push_back(new MachineInstr(ORN));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+      case 439:	// bool:   BOr(bool, bnot)
+      { // Use the argument of NOT as the second argument!
+        // Mark the NOT node so that no code is generated for it.
+        InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
+        Value* notArg = BinaryOperator::getNotArgument(
+                           cast<BinaryOperator>(notNode->getInstruction()));
+        notNode->markFoldedIntoParent();
+        mvec.push_back(Create3OperandInstr(ORN,
+                                           subtreeRoot->leftChild()->getValue(),
+                                           notArg, subtreeRoot->getValue()));
         break;
+      }
 
       case  40:	// bool:   Xor(bool, bool)
       case 240:	// bool:   Xor(bool, boolconst)
@@ -1825,10 +1839,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 140:	// bool:   Xor(bool, not)
-      case 440:	// bool:   BXor(bool, not)
-        mvec.push_back(new MachineInstr(XNOR));
-        Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
+      case 440:	// bool:   BXor(bool, bnot)
+      { // Use the argument of NOT as the second argument!
+        // Mark the NOT node so that no code is generated for it.
+        InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
+        Value* notArg = BinaryOperator::getNotArgument(
+                           cast<BinaryOperator>(notNode->getInstruction()));
+        notNode->markFoldedIntoParent();
+        mvec.push_back(Create3OperandInstr(XNOR,
+                                           subtreeRoot->leftChild()->getValue(),
+                                           notArg, subtreeRoot->getValue()));
         break;
+      }
 
       case 41:	// boolconst:   SetCC(reg, Constant)
         // 
