@@ -175,14 +175,10 @@ public:
 class LoadInst : public Instruction {
   LoadInst(const LoadInst &LI) : Instruction(LI.getType(), Load) {
     Volatile = LI.isVolatile();
-    Operands.reserve(1);
-    Operands.push_back(Use(LI.Operands[0], this));
+    init(LI.Operands[0]);
   }
   bool Volatile;   // True if this is a volatile load
-  void init(Value *Ptr) {
-    Operands.reserve(1);
-    Operands.push_back(Use(Ptr, this));
-  }
+  void init(Value *Ptr);
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
@@ -228,16 +224,10 @@ public:
 class StoreInst : public Instruction {
   StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store) {
     Volatile = SI.isVolatile();
-    Operands.reserve(2);
-    Operands.push_back(Use(SI.Operands[0], this));
-    Operands.push_back(Use(SI.Operands[1], this));
+    init(SI.Operands[0], SI.Operands[1]);
   }
   bool Volatile;   // True if this is a volatile store
-  void init(Value *Val, Value *Ptr) {
-    Operands.reserve(2);
-    Operands.push_back(Use(Val, this));
-    Operands.push_back(Use(Ptr, this));
-  }
+  void init(Value *Val, Value *Ptr);
 public:
   StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore);
   StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd);
