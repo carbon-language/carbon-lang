@@ -27,24 +27,81 @@ static inline bool Error(std::string *E, const std::string &Message) {
 // ResolveTypes - Attempt to link the two specified types together.  Return true
 // if there is an error and they cannot yet be linked.
 //
-static bool ResolveTypes(Type *DestTy, Type *SrcTy, SymbolTable *DestST, 
-                         const std::string &Name) {
+static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
+                         SymbolTable *DestST, const std::string &Name) {
+  if (DestTy == SrcTy) return false;       // If already equal, noop
+
   // Does the type already exist in the module?
   if (DestTy && !isa<OpaqueType>(DestTy)) {  // Yup, the type already exists...
-    if (DestTy == SrcTy) return false;       // If already equal, noop
-    if (OpaqueType *OT = dyn_cast<OpaqueType>(SrcTy)) {
-      OT->refineAbstractTypeTo(DestTy);
+    if (const OpaqueType *OT = dyn_cast<OpaqueType>(SrcTy)) {
+      const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(DestTy);
     } else {
       return true;  // Cannot link types... neither is opaque and not-equal
     }
   } else {                       // Type not in dest module.  Add it now.
     if (DestTy)                  // Type _is_ in module, just opaque...
-      cast<OpaqueType>(DestTy)->refineAbstractTypeTo(SrcTy);
+      const_cast<OpaqueType*>(cast<OpaqueType>(DestTy))
+                           ->refineAbstractTypeTo(SrcTy);
     else
-      DestST->insert(Name, SrcTy);
+      DestST->insert(Name, const_cast<Type*>(SrcTy));
   }
   return false;
 }
+
+
+// RecursiveResolveTypes - This is just like ResolveTypes, except that it
+// recurses down into derived types, merging the used types if the parent types
+// are compatible.
+//
+static bool RecursiveResolveTypes(const Type *DestTy, const Type *SrcTy,
+                                  SymbolTable *DestST, const std::string &Name){
+  if (DestTy == SrcTy) return false;       // If already equal, noop
+  
+  // If we found our opaque type, resolve it now!
+  if (isa<OpaqueType>(DestTy) || isa<OpaqueType>(SrcTy))
+    return ResolveTypes(DestTy, SrcTy, DestST, Name);
+  
+  // Two types cannot be resolved together if they are of different primitive
+  // type.  For example, we cannot resolve an int to a float.
+  if (DestTy->getPrimitiveID() != SrcTy->getPrimitiveID()) return true;
+
+  // Otherwise, resolve the used type used by this derived type...
+  switch (DestTy->getPrimitiveID()) {
+  case Type::FunctionTyID: {
+    const FunctionType *DFT = cast<FunctionType>(DestTy);
+    const FunctionType *SFT = cast<FunctionType>(SrcTy);
+    if (DFT->isVarArg() != SFT->isVarArg()) return true;
+    for (unsigned i = 0, e = DFT->getNumContainedTypes(); i != e; ++i)
+      if (RecursiveResolveTypes(DFT->getContainedType(i),
+                                SFT->getContainedType(i), DestST, Name))
+        return true;
+    return false;
+  }
+  case Type::StructTyID: {
+    const StructType *DST = cast<StructType>(DestTy);
+    const StructType *SST = cast<StructType>(SrcTy);
+    if (DST->getNumContainedTypes() != SST->getNumContainedTypes()) return 1;
+    for (unsigned i = 0, e = DST->getNumContainedTypes(); i != e; ++i)
+      if (RecursiveResolveTypes(DST->getContainedType(i),
+                                SST->getContainedType(i), DestST, Name))
+        return true;
+    return false;
+  }
+  case Type::ArrayTyID: {
+    const ArrayType *DAT = cast<ArrayType>(DestTy);
+    const ArrayType *SAT = cast<ArrayType>(SrcTy);
+    if (DAT->getNumElements() != SAT->getNumElements()) return true;
+    return RecursiveResolveTypes(DAT->getElementType(), SAT->getElementType(),
+                                 DestST, Name);
+  }
+  case Type::PointerTyID:
+    return RecursiveResolveTypes(cast<PointerType>(DestTy)->getElementType(),
+                                 cast<PointerType>(SrcTy)->getElementType(),
+                                 DestST, Name);
+  default: assert(0 && "Unexpected type!"); return true;
+  }  
+}
+
 
 // LinkTypes - Go through the symbol table of the Src module and see if any
 // types are named in the src module that are not named in the Dst module.
@@ -83,6 +140,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
     // Loop over all of the types, attempting to resolve them if possible...
     unsigned OldSize = DelayedTypesToResolve.size();
 
+    // Try direct resolution by name...
     for (unsigned i = 0; i != DelayedTypesToResolve.size(); ++i) {
       const std::string &Name = DelayedTypesToResolve[i];
       Type *T1 = cast<Type>(VM.find(Name)->second);
@@ -96,18 +154,39 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 
     // Did we not eliminate any types?
     if (DelayedTypesToResolve.size() == OldSize) {
-      // Build up an error message of all of the mismatched types.
-      std::string ErrorMessage;
+      // Attempt to resolve subelements of types.  This allows us to merge these
+      // two types: { int* } and { opaque* }
       for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
         const std::string &Name = DelayedTypesToResolve[i];
-        const Type *T1 = cast<Type>(VM.find(Name)->second);
-        const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
-        ErrorMessage += "  Type named '" + Name + 
-                        "' conflicts.\n    Src='" + T1->getDescription() +
-                        "'.\n   Dest='" + T2->getDescription() + "'\n";
+        Type *T1 = cast<Type>(VM.find(Name)->second);
+        Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+
+        if (!RecursiveResolveTypes(T2, T1, DestST, Name)) {
+          // We are making progress!
+          DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
+          
+          // Go back to the main loop, perhaps we can resolve directly by name
+          // now...
+          break;
+        }
       }
-      return Error(Err, "Type conflict between types in modules:\n" +
-                        ErrorMessage);
+
+      // If we STILL cannot resolve the types, then there is something wrong.
+      // Report the error.
+      if (DelayedTypesToResolve.size() == OldSize) {
+        // Build up an error message of all of the mismatched types.
+        std::string ErrorMessage;
+        for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
+          const std::string &Name = DelayedTypesToResolve[i];
+          const Type *T1 = cast<Type>(VM.find(Name)->second);
+          const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
+          ErrorMessage += "  Type named '" + Name + 
+                          "' conflicts.\n    Src='" + T1->getDescription() +
+                          "'.\n   Dest='" + T2->getDescription() + "'\n";
+        }
+        return Error(Err, "Type conflict between types in modules:\n" +
+                     ErrorMessage);
+      }
     }
   }
 
