@@ -79,8 +79,8 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 /// a series of cleanups intended to get rid of extra cruft on the module
 /// before handing it to the user...
 ///
-Module *BugDriver::performFinalCleanups() const {
-  Module *M = CloneModule(Program);
+Module *BugDriver::performFinalCleanups(Module *InM) const {
+  Module *M = InM ? InM : CloneModule(Program);
 
   // Allow disabling these passes if they crash bugpoint.
   //
@@ -97,7 +97,7 @@ Module *BugDriver::performFinalCleanups() const {
   CleanupPasses.add(createFunctionResolvingPass());
   CleanupPasses.add(createGlobalDCEPass());
   CleanupPasses.add(createDeadTypeEliminationPass());
-  CleanupPasses.add(createDeadArgEliminationPass(true));
+  CleanupPasses.add(createDeadArgEliminationPass(InM == 0));
   CleanupPasses.add(createVerifierPass());
   CleanupPasses.run(*M);
   return M;

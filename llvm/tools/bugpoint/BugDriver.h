@@ -147,9 +147,10 @@ private:
 
   /// performFinalCleanups - This method clones the current Program and performs
   /// a series of cleanups intended to get rid of extra cruft on the module
-  /// before handing it to the user...
+  /// before handing it to the user... if the module parameter is specified, it
+  /// operates directly on the specified Module, modifying it in place.
   ///
-  Module *performFinalCleanups() const;
+  Module *performFinalCleanups(Module *M = 0) const;
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.
