@@ -26,6 +26,7 @@ namespace {
   Statistic<> OverwrittenCalls("call-ovwr", "Number of over-written calls");
   Statistic<> UnmodifiedCalls("call-skip", "Number of unmodified calls");
   Statistic<> CallbackCalls("callback", "Number CompilationCallback() calls");
+  Statistic<> WordsEmitted("words-emitted", "No. of words emitted to memory");
 }
 
 bool UltraSparc::addPassesToEmitMachineCode(FunctionPassManager &PM,
@@ -440,6 +441,7 @@ SparcV9CodeEmitter::~SparcV9CodeEmitter() {
 
 void SparcV9CodeEmitter::emitWord(unsigned Val) {
   // Output the constant in big endian byte order...
+  ++WordsEmitted;
   unsigned byteVal;
   for (int i = 3; i >= 0; --i) {
     byteVal = Val >> 8*i;
