@@ -1,9 +1,14 @@
 
 declare void %exit(int)
 
+int %test(sbyte %C, short %S) {
+  %X = cast short %S to int
+  ret int %X
+}
 
 void %FP(void(int) * %F) {
-	call void %F(int 0)
+	%X = call int %test(sbyte 123, short 1024)
+	call void %F(int %X)
 	ret void
 }
 
