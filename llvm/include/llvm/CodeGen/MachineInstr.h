@@ -12,7 +12,7 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
 #include <iterator>
-#include <hash_set>
+#include <ext/hash_set>
 class Instruction;
 
 //---------------------------------------------------------------------------
