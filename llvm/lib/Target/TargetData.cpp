@@ -145,16 +145,12 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
   return Align;
 }
 
-unsigned TargetData::getIndexedOffset(const Type *ptrTy,
+unsigned TargetData::getIndexedOffset(const Type *Ty,
 				      const std::vector<Value*> &Idx) const {
-  const PointerType *PtrTy = cast<const PointerType>(ptrTy);
   unsigned Result = 0;
 
-  // Get the type pointed to...
-  const Type *Ty = PtrTy->getElementType();
-
-  for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
-    if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
+  for (unsigned CurIDX = 0, E = Idx.size(); CurIDX != E; ++CurIDX) {
+    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
 
@@ -168,10 +164,17 @@ unsigned TargetData::getIndexedOffset(const Type *ptrTy,
       // Update Ty to refer to current element
       Ty = STy->getElementTypes()[FieldNo];
 
-    } else if (isa<const ArrayType>(Ty)) {
-      assert(0 && "Loading from arrays not implemented yet!");
+    } else if (const SequentialType *STy = dyn_cast<SequentialType>(Ty)) {
+      assert(Idx[CurIDX]->getType() == Type::UIntTy &&"Illegal sequential idx");
+      assert(isa<ConstantUInt>(Idx[CurIDX]) &&
+             "getIndexedOffset cannot compute offset of non-constant index!");
+
+      unsigned IndexNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
+      Ty = STy->getElementType();
+      
+      Result += IndexNo*getTypeSize(Ty);
     } else {
-      assert(0 && "Indexing type that is not struct or array?");
+      assert(0 && "Indexing type that is not struct, array, or pointer?");
       return 0;                         // Load directly through ptr
     }
   }
