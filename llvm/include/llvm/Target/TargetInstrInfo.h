@@ -155,10 +155,10 @@ public:
     return false;
   }
 
-  /// Insert a goto (unconditional branch) sequence to MBB, right
-  /// before MBBI
-  virtual void insertGoto(const MachineBasicBlock& MBB,
-                          MachineBasicBlock::iterator MBBI) const {
+  /// Insert a goto (unconditional branch) sequence to TMBB, at the
+  /// end of MBB
+  virtual void insertGoto(MachineBasicBlock& MBB,
+                          MachineBasicBlock& TMBB) const {
     assert(0 && "Target didn't implement insertGoto!");
   }
 
