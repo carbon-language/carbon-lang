@@ -50,6 +50,7 @@ public:
 
   virtual const BasicBlock *getSuccessor(unsigned idx) const {
     assert(0 && "ReturnInst has no successors!");
+    abort();
   }
   virtual unsigned getNumSuccessors() const { return 0; }
 
