@@ -38,8 +38,6 @@ namespace {
 } // End anonymous namespace 
 
 bool LoopExtractor::runOnFunction(Function &F) {
-  std::cerr << F.getName() << "\n";
-
   LoopInfo &LI = getAnalysis<LoopInfo>();
 
   // We don't want to keep extracting the only loop of a function into a new one
