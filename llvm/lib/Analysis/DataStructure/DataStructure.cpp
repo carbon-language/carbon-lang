@@ -2087,8 +2087,7 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
 
 
 /// computeGToGGMapping - Compute the mapping of nodes in the global graph to
-/// nodes in this graph.  Note that any uses of this method are probably bugs,
-/// unless it is known that the globals graph has been merged into this graph!
+/// nodes in this graph.
 void DSGraph::computeGToGGMapping(NodeMapTy &NodeMap) {
   DSGraph &GG = *getGlobalsGraph();
 
@@ -2099,13 +2098,16 @@ void DSGraph::computeGToGGMapping(NodeMapTy &NodeMap) {
 }
                                 
 /// computeGGToGMapping - Compute the mapping of nodes in the global graph to
-/// nodes in this graph.
-void DSGraph::computeGGToGMapping(NodeMapTy &NodeMap) {
-  DSGraph &GG = *getGlobalsGraph();
+/// nodes in this graph.  Note that any uses of this method are probably bugs,
+/// unless it is known that the globals graph has been merged into this graph!
+void DSGraph::computeGGToGMapping(InvNodeMapTy &InvNodeMap) {
+  NodeMapTy NodeMap;
+  computeGToGGMapping(NodeMap);
 
-  DSScalarMap &SM = getScalarMap();
-  for (DSScalarMap::global_iterator I = SM.global_begin(),
-         E = SM.global_end(); I != E; ++I)
-    DSGraph::computeNodeMapping(GG.getNodeForValue(*I), SM[*I], NodeMap);
+  while (!NodeMap.empty()) {
+    InvNodeMap.insert(std::make_pair(NodeMap.begin()->second,
+                                     NodeMap.begin()->first));
+    NodeMap.erase(NodeMap.begin());
+  }
 }
                                 
