@@ -920,7 +920,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F)
 
   ModuloSchedGraphSet *graphSet = new ModuloSchedGraphSet(&F, target);
 
-  //ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
+  ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
   
   printf("runOnFunction  in ModuloSchedulingPass returns\n");
   return false;

@@ -120,7 +120,7 @@ private:
                        const Instruction * _inst,
                        int indexInBB, const TargetMachine &target);
 
-
+  
   friend std::ostream & operator<<(std::ostream & os,
                                    const ModuloSchedGraphNode & edge);
 
