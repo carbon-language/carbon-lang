@@ -4,13 +4,8 @@
   fib.ll better.  Currently I have to do this to get best results:
      as < fib.ll | opt -inline -sccp -dce -sccp -dce |dis
 * fix the constprop   br <x> <dst1> <dst1> case.  Must handle PHI nodes correctly
-* Fix DCE to work better, so that SCCP can show it's true value.
-* Implement ADCE
 * Think about whether edge split SSA form would be useful to do.
-* Inlining should attempt to give block names the same name in the inlined 
-  method (using SymbolTable::getUniqueName)
 * The dropAllReferences code can be a noop when NDEBUG!!!
-* Finish xvcg output
 * pred/succ iterators on basic blocks don't handle switch statements correctly
 * Provide a pass that eliminates critical edges from the CFG
 * I need to provide an option to the bytecode loader to ignore memory 
