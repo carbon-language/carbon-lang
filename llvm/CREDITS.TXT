@@ -11,21 +11,33 @@ E: vadve@cs.uiuc.edu
 W: http://www.cs.uiuc.edu/~vadve/
 D: The Sparc64 backend, provider of much wisdom, and motivator for LLVM
 
+N: Tanya Brethour
+E: tonic@nondot.org
+W: http://nondot.org/~tonic/
+D: The llvm-ar tool
+
 N: Misha Brukman
-E: brukman@uiuc.edu
+E: brukman+llvm@uiuc.edu
 W: http://misha.brukman.net
-D: Portions of X86 and Sparc JIT compilers, various other hacks
+D: Portions of X86 and Sparc JIT compilers, incremental bytecode loader
 
 N: Cameron Buschardt
+E: buschard@uiuc.edu
 D: Author of the mem2reg pass
 
 N: Casey Carter
+E: ccarter@uiuc.edu
 D: Fixes to the Reassociation pass, various improvement patches
+
+N: John T. Criswell
+E: criswell@uiuc.edu
+D: Autoconf support, QMTest database, documentation improvements
 
 N: Brian Gaeke
 E: gaeke@uiuc.edu
 W: http://www.students.uiuc.edu/~gaeke/
 D: Portions of X86 static and JIT compilers, reoptimizer framework cleanups
+D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 
 N: Chris Lattner
 E: sabre@nondot.org
@@ -38,8 +50,8 @@ D: Graph coloring register allocator for the Sparc64 backend
 
 N: Anand Shukla
 E: ashukla@cs.uiuc.edu
-D: The paths pass
+D: The `paths' pass
 
 N: Bill Wendling
 E: wendling@isanbard.org
-D: The Lower Setjmp/Longjmp pass, improvements to the -lowerswitch pass.
+D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
