@@ -129,9 +129,9 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addExternalSymbol(const std::string &Name,
+  const MachineInstrBuilder &addExternalSymbol(const char *FnName,
                                                bool isPCRelative = false) const{
-    MI->addExternalSymbolOperand(Name, isPCRelative);
+    MI->addExternalSymbolOperand(FnName, isPCRelative);
     return *this;
   }
 };

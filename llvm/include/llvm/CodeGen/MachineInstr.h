@@ -17,7 +17,6 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/ADT/iterator"
-#include <string>
 #include <vector>
 #include <cassert>
 
@@ -121,7 +120,7 @@ private:
     int immedVal;		// Constant value for an explicit constant
 
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
-    std::string *SymbolName;    // For MO_ExternalSymbol type
+    const char *SymbolName;     // For MO_ExternalSymbol type
   } contents;
 
   char flags;                   // see bit field definitions above
@@ -177,10 +176,10 @@ private:
     extra.regNum = -1;
   }
 
-  MachineOperand(const std::string &SymName, bool isPCRelative, int Offset)
+  MachineOperand(const char *SymName, bool isPCRelative, int Offset)
     : flags(isPCRelative?PCRELATIVE:0), opType(MO_ExternalSymbol) {
     zeroContents ();
-    contents.SymbolName = new std::string (SymName);
+    contents.SymbolName = SymName;
     extra.offset = Offset;
   }
 
@@ -190,25 +189,16 @@ public:
     zeroContents ();
     contents = M.contents;
     extra = M.extra;
-    if (isExternalSymbol())
-      contents.SymbolName = new std::string(M.getSymbolName());
   }
 
  
-  ~MachineOperand() {
-    if (isExternalSymbol())
-      delete contents.SymbolName;
-  }
+  ~MachineOperand() {}
   
   const MachineOperand &operator=(const MachineOperand &MO) {
-    if (isExternalSymbol())             // if old operand had a symbol name,
-      delete contents.SymbolName;       // release old memory
     contents = MO.contents;
     flags    = MO.flags;
     opType   = MO.opType;
     extra    = MO.extra;
-    if (isExternalSymbol())
-      contents.SymbolName = new std::string(MO.getSymbolName());
     return *this;
   }
 
@@ -298,9 +288,9 @@ public:
         "Wrong MachineOperand accessor");
     return extra.offset;
   }
-  const std::string &getSymbolName() const {
+  const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
-    return *contents.SymbolName;
+    return contents.SymbolName;
   }
 
   /// MachineOperand methods for testing that work on any kind of
@@ -658,7 +648,7 @@ public:
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
   ///
-  void addExternalSymbolOperand(const std::string &SymName, bool isPCRelative) {
+  void addExternalSymbolOperand(const char *SymName, bool isPCRelative) {
     operands.push_back(MachineOperand(SymName, isPCRelative, 0));
   }
 
