@@ -43,6 +43,14 @@ public:
     return *this;
   }
 
+  /// addReg - Add an LLVM value that is to be used as a register...
+  ///
+  const MachineInstrBuilder &addCCReg(Value *V,
+                                      MOTy::UseType Ty = MOTy::Use) const {
+    MI->addCCRegOperand(V, Ty);
+    return *this;
+  }
+
   /// addRegDef - Add an LLVM value that is to be defined as a register... this
   /// is the same as addReg(V, MOTy::Def).
   ///
