@@ -16,6 +16,7 @@
 #include "llvm/Debugger/SourceLanguage.h"
 #include "llvm/Debugger/ProgramInfo.h"
 #include <iostream>
+#include <cassert>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

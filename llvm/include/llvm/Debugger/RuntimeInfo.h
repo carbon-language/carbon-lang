@@ -19,6 +19,7 @@
 #define LLVM_DEBUGGER_RUNTIMEINFO_H
 
 #include <vector>
+#include <cassert>
 
 namespace llvm {
   class ProgramInfo;
