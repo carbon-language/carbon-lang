@@ -292,7 +292,18 @@ void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   currBB = MBB.getBasicBlock();
   BBLocations[currBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
-    emitWord(getBinaryCodeForInstr(*I));
+    if (I->getOpcode() != V9::RDCCR) {
+      emitWord(getBinaryCodeForInstr(*I));
+    } else {
+      // FIXME: The tblgen produced code emitter cannot deal with the fact that
+      // machine operand #0 of the RDCCR instruction should be ignored.  This is
+      // really a bug in the representation of the RDCCR instruction (which has
+      // no need to explicitly represent the CCR dest), but we hack around it
+      // here.
+      unsigned RegNo = getMachineOpValue(*I, I->getOperand(1));
+      RegNo &= (1<<5)-1;
+      emitWord((RegNo << 25) | 2168487936U);
+    }
 }
 
 
