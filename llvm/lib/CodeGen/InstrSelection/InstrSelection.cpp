@@ -202,11 +202,9 @@ InsertCode4AllPhisInMeth(Function *F, TargetMachine &target)
     //
     for( ; IIt != InstList.end(); ++IIt ) {
 
-      if( (*IIt)->getOpcode() == Instruction::PHINode ) {
-
-	PHINode *PN = (PHINode *) (*IIt);
-
-	Value *PhiCpRes = new Value(PN->getType(),PN->getValueType(),"PhiCp:");
+      if (PHINode *PN = dyn_cast<PHINode>(*IIt)) {
+        // FIXME: This is probably wrong...
+	Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
         
 	// for each incoming value of the phi, insert phi elimination
 	//
