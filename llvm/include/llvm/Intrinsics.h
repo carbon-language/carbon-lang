@@ -57,6 +57,10 @@ namespace Intrinsic {
     // Standard libm functions...
     
 
+    // Input/Output intrinsics
+    readport,
+    writeport,
+
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha
     // instructions...
