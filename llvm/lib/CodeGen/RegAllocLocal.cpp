@@ -31,9 +31,6 @@ namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
   Statistic<> NumFused   ("ra-local", "Number of reloads fused into instructions");
-  cl::opt<bool> DisableKill("disable-kill", cl::Hidden,
-                            cl::desc("Disable register kill in local-ra"));
-
   class RA : public MachineFunctionPass {
     const TargetMachine *TM;
     MachineFunction *MF;
@@ -122,8 +119,7 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      if (!DisableKill)
-        AU.addRequired<LiveVariables>();
+      AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
       AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -263,7 +259,6 @@ void RA::removePhysReg(unsigned PhysReg) {
 ///
 void RA::spillVirtReg(MachineBasicBlock &MBB, MachineInstr *I,
                       unsigned VirtReg, unsigned PhysReg) {
-  if (!VirtReg && DisableKill) return;
   assert(VirtReg && "Spilling a physical register is illegal!"
          " Must not have appropriate kill for the register or use exists beyond"
          " the intended one.");
@@ -556,28 +551,26 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
           MRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg()))
         MI = reloadVirtReg(MBB, MI, i);
 
-    if (!DisableKill) {
-      // If this instruction is the last user of anything in registers, kill the
-      // value, freeing the register being used, so it doesn't need to be
-      // spilled to memory.
-      //
-      for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-             KE = LV->killed_end(MI); KI != KE; ++KI) {
-        unsigned VirtReg = KI->second;
-        unsigned PhysReg = VirtReg;
-        if (MRegisterInfo::isVirtualRegister(VirtReg)) {
-          // If the virtual register was never materialized into a register, it
-          // might not be in the map, but it won't hurt to zero it out anyway.
-          unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
-          PhysReg = PhysRegSlot;
-          PhysRegSlot = 0;
-        }
+    // If this instruction is the last user of anything in registers, kill the
+    // value, freeing the register being used, so it doesn't need to be
+    // spilled to memory.
+    //
+    for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
+           KE = LV->killed_end(MI); KI != KE; ++KI) {
+      unsigned VirtReg = KI->second;
+      unsigned PhysReg = VirtReg;
+      if (MRegisterInfo::isVirtualRegister(VirtReg)) {
+        // If the virtual register was never materialized into a register, it
+        // might not be in the map, but it won't hurt to zero it out anyway.
+        unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
+        PhysReg = PhysRegSlot;
+        PhysRegSlot = 0;
+      }
 
-        if (PhysReg) {
-          DEBUG(std::cerr << "  Last use of " << RegInfo->getName(PhysReg)
-                      << "[%reg" << VirtReg <<"], removing it from live set\n");
-          removePhysReg(PhysReg);
-        }
+      if (PhysReg) {
+        DEBUG(std::cerr << "  Last use of " << RegInfo->getName(PhysReg)
+              << "[%reg" << VirtReg <<"], removing it from live set\n");
+        removePhysReg(PhysReg);
       }
     }
 
@@ -629,27 +622,25 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
       }
 
-    if (!DisableKill) {
-      // If this instruction defines any registers that are immediately dead,
-      // kill them now.
-      //
-      for (LiveVariables::killed_iterator KI = LV->dead_begin(MI),
-             KE = LV->dead_end(MI); KI != KE; ++KI) {
-        unsigned VirtReg = KI->second;
-        unsigned PhysReg = VirtReg;
-        if (MRegisterInfo::isVirtualRegister(VirtReg)) {
-          unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
-          PhysReg = PhysRegSlot;
-          assert(PhysReg != 0);
-          PhysRegSlot = 0;
-        }
+    // If this instruction defines any registers that are immediately dead,
+    // kill them now.
+    //
+    for (LiveVariables::killed_iterator KI = LV->dead_begin(MI),
+           KE = LV->dead_end(MI); KI != KE; ++KI) {
+      unsigned VirtReg = KI->second;
+      unsigned PhysReg = VirtReg;
+      if (MRegisterInfo::isVirtualRegister(VirtReg)) {
+        unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
+        PhysReg = PhysRegSlot;
+        assert(PhysReg != 0);
+        PhysRegSlot = 0;
+      }
 
-        if (PhysReg) {
-          DEBUG(std::cerr << "  Register " << RegInfo->getName(PhysReg)
-                          << " [%reg" << VirtReg
-                          << "] is never used, removing it frame live list\n");
-          removePhysReg(PhysReg);
-        }
+      if (PhysReg) {
+        DEBUG(std::cerr << "  Register " << RegInfo->getName(PhysReg)
+              << " [%reg" << VirtReg
+              << "] is never used, removing it frame live list\n");
+        removePhysReg(PhysReg);
       }
     }
   }
@@ -692,15 +683,13 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &Fn.getTarget();
   RegInfo = TM->getRegisterInfo();
+  LV = &getAnalysis<LiveVariables>();
 
   PhysRegsUsed.assign(RegInfo->getNumRegs(), -1);
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
   Virt2PhysRegMap.assign(MF->getSSARegMap()->getNumVirtualRegs(), 0);
-
-  if (!DisableKill)
-    LV = &getAnalysis<LiveVariables>();
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
