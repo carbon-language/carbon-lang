@@ -12,5 +12,9 @@ int %main() {
 	%B = or int %A, 7
 	%C = xor int %B, %A
 
+	%A = and long 4, 8
+	%B = or long %A, 7
+	%C = xor long %B, %A
+
 	ret int 0
 }
