@@ -978,6 +978,10 @@ void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
     addDirectMem(BuildMI(BB, X86::MOVrm32, 5), TmpReg2).addReg(TmpReg1);
     return;
 
+  case LLVMIntrinsic::longjmp:
+    BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
+  case LLVMIntrinsic::setjmp:
+    return;
   default: assert(0 && "Unknown intrinsic for X86!");
   }
 }
