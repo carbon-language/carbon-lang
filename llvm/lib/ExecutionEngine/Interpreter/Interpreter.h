@@ -25,8 +25,10 @@
 namespace llvm {
 
 struct FunctionInfo;
-class gep_type_iterator;
+template<typename T> class generic_gep_type_iterator;
 class ConstantExpr;
+typedef generic_gep_type_iterator<User::op_iterator> gep_type_iterator;
+
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by
 // alloca.  When the function returns, this object is popped off the execution
