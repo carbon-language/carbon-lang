@@ -56,7 +56,8 @@ namespace {
     void InsertPreheaderForLoop(Loop *L);
   };
 
-  RegisterOpt<Preheaders> X("preheaders", "Natural loop pre-header insertion");
+  RegisterOpt<Preheaders> X("preheaders", "Natural loop pre-header insertion",
+                            true);
 }
 
 // Publically exposed interface to pass...
