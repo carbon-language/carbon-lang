@@ -266,7 +266,7 @@ def STL : MForm<0x2C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stl $RA,$DISP($RB
 def STQ : MForm<0x2D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stq $RA,$DISP($RB)">; //Store quadword
 
 //Loads, int
-def LDL : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB)">; // Load sign-extended longword
+def LDL : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldl $RA,$DISP($RB)">; // Load sign-extended longword
 def LDQ : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB)">; //Load quadword
 def LDBU : MForm<0x0A, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldbu $RA,$DISP($RB)">; //Load zero-extended byte
 def LDWU : MForm<0x0C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldwu $RA,$DISP($RB)">; //Load zero-extended word

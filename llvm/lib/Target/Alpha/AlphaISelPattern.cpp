@@ -351,7 +351,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
 	{
 	  Select(Chain);
 	  AlphaLowering.restoreGP(BB);
-	  Opc = DestType == MVT::f64 ? Alpha::LDS : Alpha::LDT;
+	  Opc = DestType == MVT::f64 ? Alpha::LDS_SYM : Alpha::LDT_SYM;
 	  BuildMI(BB, Opc, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
 	}
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
@@ -1046,19 +1046,25 @@ unsigned ISel::SelectExpr(SDOperand N) {
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
 
+      assert(DestType == MVT::i64 && "unknown Load dest type");
+
       if (Address.getOpcode() == ISD::GlobalAddress)
-	{
-	  Select(Chain);
-	  AlphaLowering.restoreGP(BB);
-	  BuildMI(BB, Alpha::LOAD, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-	}
+        {
+          Select(Chain);
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::LOAD, 1, Result).addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
+        }
+      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+        AlphaLowering.restoreGP(BB);
+        BuildMI(BB, Alpha::LOAD, 1, Result).addConstantPoolIndex(CP->getIndex());
+      }
       else
-	{
-	  Select(Chain);
-	  Tmp2 = SelectExpr(Address);
-	  BuildMI(BB, Alpha::LDQ, 2, Result).addImm(0).addReg(Tmp2);
-	}
-      return Result;
+        {
+          Select(Chain);
+          Tmp2 = SelectExpr(Address);
+          BuildMI(BB, Alpha::LDQ, 2, Result).addImm(0).addReg(Tmp2);
+        }
+     return Result;
     }
   }
 
