@@ -27,10 +27,10 @@ using namespace sys;
 
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
-#include "Unix/Signals.cpp"
+#include "Unix/Signals.inc"
 #endif
 #ifdef LLVM_ON_WIN32
-#include "Win32/Signals.cpp"
+#include "Win32/Signals.inc"
 #endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

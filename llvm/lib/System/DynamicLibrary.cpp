@@ -22,7 +22,7 @@
 
 #ifdef LLVM_ON_WIN32
 
-#include "Win32/DynamicLibrary.cpp"
+#include "Win32/DynamicLibrary.inc"
 
 #else
 

@@ -101,10 +101,10 @@ Path::GetDLLSuffix() {
 // Include the truly platform-specific parts of this class.
 
 #if defined(LLVM_ON_UNIX)
-#include "Unix/Path.cpp"
+#include "Unix/Path.inc"
 #endif
 #if defined(LLVM_ON_WIN32)
-#include "Win32/Path.cpp"
+#include "Win32/Path.inc"
 #endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

@@ -50,10 +50,10 @@ TimeValue::normalize( void ) {
 
 /// Include the platform specific portion of TimeValue class
 #ifdef LLVM_ON_UNIX
-#include "Unix/TimeValue.cpp"
+#include "Unix/TimeValue.inc"
 #endif
 #ifdef LLVM_ON_WIN32
-#include "Win32/TimeValue.cpp"
+#include "Win32/TimeValue.inc"
 #endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

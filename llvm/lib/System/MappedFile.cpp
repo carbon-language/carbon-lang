@@ -26,10 +26,10 @@ using namespace sys;
 
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
-#include "Unix/MappedFile.cpp"
+#include "Unix/MappedFile.inc"
 #endif
 #ifdef LLVM_ON_WIN32
-#include "Win32/MappedFile.cpp"
+#include "Win32/MappedFile.inc"
 #endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

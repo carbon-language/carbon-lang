@@ -27,10 +27,10 @@ using namespace sys;
 
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
-#include "Unix/Memory.cpp"
+#include "Unix/Memory.inc"
 #endif
 #ifdef LLVM_ON_WIN32
-#include "Win32/Memory.cpp"
+#include "Win32/Memory.inc"
 #endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
