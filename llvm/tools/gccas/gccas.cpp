@@ -65,7 +65,8 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   addPass(PM, createRaisePointerReferencesPass());// Eliminate casts
   addPass(PM, createPromoteMemoryToRegister());   // Promote alloca's to regs
-  addPass(PM, createReassociatePass());           // Reassociate expressions
+  // Disabling until this is fixed -- Vikram, 7/7/02.
+  // addPass(PM, createReassociatePass());           // Reassociate expressions
   addPass(PM, createInstructionCombiningPass());  // Combine silly seq's
   addPass(PM, createDeadInstEliminationPass());   // Kill InstCombine remnants
   addPass(PM, createLICMPass());                  // Hoist loop invariants
