@@ -226,7 +226,7 @@ bool CBackendNameAllUsedStructs::run(Module &M) {
       // If this is not used, remove it from the symbol table.
       std::set<const Type *>::iterator UTI = UT.find(STy);
       if (UTI == UT.end())
-        MST.remove(I->first, (Type*)I->second);
+        MST.remove(I);
       else
         UT.erase(UTI);
     }
@@ -239,7 +239,7 @@ bool CBackendNameAllUsedStructs::run(Module &M) {
   for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
        I != E; ++I)
     if (const StructType *ST = dyn_cast<StructType>(*I)) {
-      ((Value*)ST)->setName("unnamed", &MST);
+      const_cast<StructType*>(ST)->setName("unnamed", &MST);
       Changed = true;
     }
   return Changed;
