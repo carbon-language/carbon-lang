@@ -41,7 +41,6 @@ namespace {
                    cl::value_desc("directory"));
 
   // Command line options specific to the llvm-db debugger driver
-  cl::opt<bool> Version("version", cl::desc("Print version number and quit"));
   cl::opt<bool> Quiet("quiet", cl::desc("Do not print introductory messages"));
   cl::alias QA1("silent", cl::desc("Alias for -quiet"), cl::aliasopt(Quiet));
   cl::alias QA2("q", cl::desc("Alias for -quiet"), cl::aliasopt(Quiet));
@@ -55,10 +54,8 @@ int main(int argc, char **argv, char * const *envp) {
                               " llvm source-level debugger\n");
   sys::PrintStackTraceOnErrorSignal();
 
-  if (Version || !Quiet) {
+  if (!Quiet)
     std::cout << "llvm-db: The LLVM source-level debugger\n";
-    if (Version) return 1;
-  }
 
   // Merge Inputfile and InputArgs into the InputArgs list...
   if (!InputFile.empty() && InputArgs.empty())
