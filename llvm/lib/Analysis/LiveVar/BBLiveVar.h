@@ -13,6 +13,7 @@
 #include <map>
 class BasicBlock;
 class Value;
+class MachineBasicBlock;
 
 enum LiveVarDebugLevel_t {
   LV_DEBUG_None,
@@ -25,9 +26,10 @@ extern LiveVarDebugLevel_t DEBUG_LV;
 
 class BBLiveVar : public Annotation {
   const BasicBlock &BB;         // pointer to BasicBlock
+  MachineBasicBlock &MBB;       // Pointer to MachineBasicBlock
   unsigned POID;                // Post-Order ID
 
-  ValueSet DefSet;              // Def set (with no preceding uses) for LV analysis
+  ValueSet DefSet;           // Def set (with no preceding uses) for LV analysis
   ValueSet InSet, OutSet;       // In & Out for LV analysis
   bool InSetChanged, OutSetChanged;   // set if the InSet/OutSet is modified
 
@@ -49,15 +51,18 @@ class BBLiveVar : public Annotation {
 
   void calcDefUseSets();         // calculates the Def & Use sets for this BB
 
-  BBLiveVar(const BasicBlock &BB, unsigned POID);
+  BBLiveVar(const BasicBlock &BB, MachineBasicBlock &MBB, unsigned POID);
   ~BBLiveVar() {}                // make dtor private
  public:
-  static BBLiveVar *CreateOnBB(const BasicBlock &BB, unsigned POID);
+  static BBLiveVar *CreateOnBB(const BasicBlock &BB, MachineBasicBlock &MBB,
+                               unsigned POID);
   static BBLiveVar *GetFromBB(const BasicBlock &BB);
   static void RemoveFromBB(const BasicBlock &BB);
 
   inline bool isInSetChanged() const  { return InSetChanged; }    
   inline bool isOutSetChanged() const { return OutSetChanged; }
+
+  MachineBasicBlock &getMachineBasicBlock() const { return MBB; }
 
   inline unsigned getPOId() const { return POID; }
 

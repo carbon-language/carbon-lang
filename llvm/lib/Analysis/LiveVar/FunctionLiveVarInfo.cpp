@@ -8,7 +8,7 @@
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
 #include "BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 #include "Support/SetOperations.h"
@@ -71,31 +71,36 @@ bool FunctionLiveVarInfo::runOnFunction(Function &F) {
 // constructs BBLiveVars and init Def and In sets
 //-----------------------------------------------------------------------------
 
-void FunctionLiveVarInfo::constructBBs(const Function *M) {
-  unsigned int POId = 0;                // Reverse Depth-first Order ID
-  
-  for(po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
-      BBI != BBE; ++BBI, ++POId) { 
-    const BasicBlock &BB = **BBI;        // get the current BB 
+void FunctionLiveVarInfo::constructBBs(const Function *F) {
+  unsigned POId = 0;                // Reverse Depth-first Order ID
+  std::map<const BasicBlock*, unsigned> PONumbering;
 
+  for (po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
+      BBI != BBE; ++BBI)
+    PONumbering[*BBI] = POId++;
+
+  MachineFunction &MF = MachineFunction::get(F);
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+    const BasicBlock &BB = *I->getBasicBlock();        // get the current BB 
     if (DEBUG_LV) std::cerr << " For BB " << RAV(BB) << ":\n";
 
-    // create a new BBLiveVar
-    BBLiveVar *LVBB = BBLiveVar::CreateOnBB(BB, POId);  
+    BBLiveVar *LVBB;
+    std::map<const BasicBlock*, unsigned>::iterator POI = PONumbering.find(&BB);
+    if (POI != PONumbering.end()) {
+      // create a new BBLiveVar
+      LVBB = BBLiveVar::CreateOnBB(BB, *I, POId);  
+    } else {
+      // The PO iterator does not discover unreachable blocks, but the random
+      // iterator later may access these blocks.  We must make sure to
+      // initialize unreachable blocks as well.  However, LV info is not correct
+      // for those blocks (they are not analyzed)
+      //
+      LVBB = BBLiveVar::CreateOnBB(BB, *I, ++POId);
+    }
     
     if (DEBUG_LV)
       LVBB->printAllSets();
   }
-
-  // Since the PO iterator does not discover unreachable blocks,
-  // go over the random iterator and init those blocks as well.
-  // However, LV info is not correct for those blocks (they are not
-  // analyzed)
-  //
-  for (Function::const_iterator BBRI = M->begin(), BBRE = M->end();
-       BBRI != BBRE; ++BBRI, ++POId)
-    if (!BBLiveVar::GetFromBB(*BBRI))                 // Not yet processed?
-      BBLiveVar::CreateOnBB(*BBRI, POId);
 }
 
 
@@ -240,7 +245,9 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 //-----------------------------------------------------------------------------
 
 void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
-  const MachineBasicBlock &MIVec = MachineBasicBlock::get(BB);
+  BBLiveVar *BBLV = BBLiveVar::GetFromBB(*BB);
+  assert(BBLV && "BBLiveVar annotation doesn't exist?");
+  const MachineBasicBlock &MIVec = BBLV->getMachineBasicBlock();
 
   if (DEBUG_LV >= LV_DEBUG_Instr)
     std::cerr << "\n======For BB " << BB->getName()

@@ -18,8 +18,9 @@ using std::cerr;
 
 static AnnotationID AID(AnnotationManager::getID("Analysis::BBLiveVar"));
 
-BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock &BB, unsigned POID) {
-  BBLiveVar *Result = new BBLiveVar(BB, POID);
+BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock &BB, MachineBasicBlock &MBB,
+                                 unsigned POID) {
+  BBLiveVar *Result = new BBLiveVar(BB, MBB, POID);
   BB.addAnnotation(Result);
   return Result;
 }
@@ -34,8 +35,8 @@ void BBLiveVar::RemoveFromBB(const BasicBlock &BB) {
 }
 
 
-BBLiveVar::BBLiveVar(const BasicBlock &bb, unsigned id)
-  : Annotation(AID), BB(bb), POID(id) {
+BBLiveVar::BBLiveVar(const BasicBlock &bb, MachineBasicBlock &mbb, unsigned id)
+  : Annotation(AID), BB(bb), MBB(mbb), POID(id) {
   InSetChanged = OutSetChanged = false;
 
   calcDefUseSets();
@@ -49,15 +50,12 @@ BBLiveVar::BBLiveVar(const BasicBlock &bb, unsigned id)
 //-----------------------------------------------------------------------------
 
 void BBLiveVar::calcDefUseSets() {
-  // get the iterator for machine instructions
-  const MachineBasicBlock &MIVec = MachineBasicBlock::get(&BB);
-
   // iterate over all the machine instructions in BB
-  for (MachineBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
-         MIE = MIVec.rend(); MII != MIE; ++MII) {
+  for (MachineBasicBlock::const_reverse_iterator MII = MBB.rbegin(),
+         MIE = MBB.rend(); MII != MIE; ++MII) {
     const MachineInstr *MI = *MII;
     
-    if (DEBUG_LV >= LV_DEBUG_Verbose) {                            // debug msg
+    if (DEBUG_LV >= LV_DEBUG_Verbose) {
       cerr << " *Iterating over machine instr ";
       MI->dump();
       cerr << "\n";
