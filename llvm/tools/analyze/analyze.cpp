@@ -116,10 +116,6 @@ public:
 
 
 
-template <class PassType, class PassName, AnalysisID &ID>
-Pass *New() {
-  return new PassPrinter<PassType, PassName>(ID);
-}
 template <class PassType, class PassName>
 Pass *New() {
   return new PassPrinter<PassType, PassName>(PassName::ID);
@@ -295,10 +291,10 @@ struct {
   { domtree           , New<FunctionPass, DominatorTree>       },
   { domfrontier       , New<FunctionPass, DominanceFrontier>   },
 
-  { postdomset        , New<FunctionPass, DominatorSet, DominatorSet::PostDomID> },
-  { postidom          , New<FunctionPass, ImmediateDominators, ImmediateDominators::PostDomID> },
-  { postdomtree       , New<FunctionPass, DominatorTree, DominatorTree::PostDomID> },
-  { postdomfrontier   , New<FunctionPass, DominanceFrontier, DominanceFrontier::PostDomID> },
+  { postdomset        , New<FunctionPass, PostDominatorSet>        },
+  { postidom          , New<FunctionPass, ImmediatePostDominators> },
+  { postdomtree       , New<FunctionPass, PostDominatorTree>       },
+  { postdomfrontier   , New<FunctionPass, PostDominanceFrontier>   },
 };
 
 int main(int argc, char **argv) {

@@ -62,8 +62,9 @@ ostream &operator<<(ostream &o, const set<BasicBlock*> &BBs) {
   return o;
 }
 
-void WriteToOutput(const DominatorSet &DS, ostream &o) {
-  for (DominatorSet::const_iterator I = DS.begin(), E = DS.end(); I != E; ++I) {
+void WriteToOutput(const DominatorSetBase &DS, ostream &o) {
+  for (DominatorSetBase::const_iterator I = DS.begin(), E = DS.end();
+       I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nDominator Set For Basic Block\n" << I->first
       << "-------------------------------\n" << I->second << "\n";
@@ -71,8 +72,8 @@ void WriteToOutput(const DominatorSet &DS, ostream &o) {
 }
 
 
-void WriteToOutput(const ImmediateDominators &ID, ostream &o) {
-  for (ImmediateDominators::const_iterator I = ID.begin(), E = ID.end();
+void WriteToOutput(const ImmediateDominatorsBase &ID, ostream &o) {
+  for (ImmediateDominatorsBase::const_iterator I = ID.begin(), E = ID.end();
        I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nImmediate Dominator For Basic Block\n" << *I->first
@@ -81,28 +82,28 @@ void WriteToOutput(const ImmediateDominators &ID, ostream &o) {
 }
 
 
-static ostream &operator<<(ostream &o, const DominatorTree::Node *Node) {
+static ostream &operator<<(ostream &o, const DominatorTreeBase::Node *Node) {
   return o << Node->getNode() << "\n------------------------------------------\n";
 	   
 }
 
-static void PrintDomTree(const DominatorTree::Node *N, ostream &o,
+static void PrintDomTree(const DominatorTreeBase::Node *N, ostream &o,
                          unsigned Lev) {
   o << "Level #" << Lev << ":  " << N;
-  for (DominatorTree::Node::const_iterator I = N->begin(), E = N->end(); 
+  for (DominatorTreeBase::Node::const_iterator I = N->begin(), E = N->end(); 
        I != E; ++I) {
     PrintDomTree(*I, o, Lev+1);
   }
 }
 
-void WriteToOutput(const DominatorTree &DT, ostream &o) {
+void WriteToOutput(const DominatorTreeBase &DT, ostream &o) {
   o << "=============================--------------------------------\n"
     << "Inorder Dominator Tree:\n";
   PrintDomTree(DT[DT.getRoot()], o, 1);
 }
 
-void WriteToOutput(const DominanceFrontier &DF, ostream &o) {
-  for (DominanceFrontier::const_iterator I = DF.begin(), E = DF.end();
+void WriteToOutput(const DominanceFrontierBase &DF, ostream &o) {
+  for (DominanceFrontierBase::const_iterator I = DF.begin(), E = DF.end();
        I != E; ++I) {
     o << "=============================--------------------------------\n"
       << "\nDominance Frontier For Basic Block\n";

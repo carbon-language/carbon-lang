@@ -19,22 +19,12 @@ using std::set;
 //===----------------------------------------------------------------------===//
 
 AnalysisID DominatorSet::ID(AnalysisID::create<DominatorSet>(), true);
-AnalysisID DominatorSet::PostDomID(AnalysisID::create<DominatorSet>(), true);
-
-bool DominatorSet::runOnFunction(Function &F) {
-  Doms.clear();   // Reset from the last time we were run...
-
-  if (isPostDominator())
-    calcPostDominatorSet(F);
-  else
-    calcForwardDominatorSet(F);
-  return false;
-}
+AnalysisID PostDominatorSet::ID(AnalysisID::create<PostDominatorSet>(), true);
 
 // dominates - Return true if A dominates B.  This performs the special checks
 // neccesary if A and B are in the same basic block.
 //
-bool DominatorSet::dominates(Instruction *A, Instruction *B) const {
+bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
   if (BBA != BBB) return dominates(BBA, BBB);
   
@@ -46,10 +36,11 @@ bool DominatorSet::dominates(Instruction *A, Instruction *B) const {
   return &*I == A;
 }
 
-// calcForwardDominatorSet - This method calculates the forward dominator sets
-// for the specified function.
+// runOnFunction - This method calculates the forward dominator sets for the
+// specified function.
 //
-void DominatorSet::calcForwardDominatorSet(Function &F) {
+bool DominatorSet::runOnFunction(Function &F) {
+  Doms.clear();   // Reset from the last time we were run...
   Root = &F.getEntryNode();
   assert(pred_begin(Root) == pred_end(Root) &&
 	 "Root node has predecessors in function!");
@@ -87,13 +78,16 @@ void DominatorSet::calcForwardDominatorSet(Function &F) {
       WorkingSet.clear();              // Clear out the set for next iteration
     }
   } while (Changed);
+  return false;
 }
 
-// Postdominator set constructor.  This ctor converts the specified function to
-// only have a single exit node (return stmt), then calculates the post
-// dominance sets for the function.
+
+// Postdominator set construction.  This converts the specified function to only
+// have a single exit node (return stmt), then calculates the post dominance
+// sets for the function.
 //
-void DominatorSet::calcPostDominatorSet(Function &F) {
+bool PostDominatorSet::runOnFunction(Function &F) {
+  Doms.clear();   // Reset from the last time we were run...
   // Since we require that the unify all exit nodes pass has been run, we know
   // that there can be at most one return instruction in the function left.
   // Get it.
@@ -103,7 +97,7 @@ void DominatorSet::calcPostDominatorSet(Function &F) {
   if (Root == 0) {  // No exit node for the function?  Postdomsets are all empty
     for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
       Doms[FI] = DomSetType();
-    return;
+    return false;
   }
 
   bool Changed;
@@ -140,19 +134,16 @@ void DominatorSet::calcPostDominatorSet(Function &F) {
       WorkingSet.clear();              // Clear out the set for next iteration
     }
   } while (Changed);
+  return false;
 }
 
-// getAnalysisUsage - This obviously provides a dominator set, but it also
-// uses the UnifyFunctionExitNodes pass if building post-dominators
+// getAnalysisUsage - This obviously provides a post-dominator set, but it also
+// requires the UnifyFunctionExitNodes pass.
 //
-void DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
+void PostDominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  if (isPostDominator()) {
-    AU.addProvided(PostDomID);
-    AU.addRequired(UnifyFunctionExitNodes::ID);
-  } else {
-    AU.addProvided(ID);
-  }
+  AU.addProvided(ID);
+  AU.addRequired(UnifyFunctionExitNodes::ID);
 }
 
 
@@ -161,11 +152,11 @@ void DominatorSet::getAnalysisUsage(AnalysisUsage &AU) const {
 //===----------------------------------------------------------------------===//
 
 AnalysisID ImmediateDominators::ID(AnalysisID::create<ImmediateDominators>(), true);
-AnalysisID ImmediateDominators::PostDomID(AnalysisID::create<ImmediateDominators>(), true);
+AnalysisID ImmediatePostDominators::ID(AnalysisID::create<ImmediatePostDominators>(), true);
 
 // calcIDoms - Calculate the immediate dominator mapping, given a set of
 // dominators for every basic block.
-void ImmediateDominators::calcIDoms(const DominatorSet &DS) {
+void ImmediateDominatorsBase::calcIDoms(const DominatorSetBase &DS) {
   // Loop over all of the nodes that have dominators... figuring out the IDOM
   // for each node...
   //
@@ -205,89 +196,67 @@ void ImmediateDominators::calcIDoms(const DominatorSet &DS) {
 //===----------------------------------------------------------------------===//
 
 AnalysisID DominatorTree::ID(AnalysisID::create<DominatorTree>(), true);
-AnalysisID DominatorTree::PostDomID(AnalysisID::create<DominatorTree>(), true);
+AnalysisID PostDominatorTree::ID(AnalysisID::create<PostDominatorTree>(), true);
 
-// DominatorTree::reset - Free all of the tree node memory.
+// DominatorTreeBase::reset - Free all of the tree node memory.
 //
-void DominatorTree::reset() { 
+void DominatorTreeBase::reset() { 
   for (NodeMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
     delete I->second;
   Nodes.clear();
 }
 
 
-#if 0
-// Given immediate dominators, we can also calculate the dominator tree
-DominatorTree::DominatorTree(const ImmediateDominators &IDoms) 
-  : DominatorBase(IDoms.getRoot()) {
-  const Function *M = Root->getParent();
-
-  Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
-
-  // Iterate over all nodes in depth first order...
-  for (df_iterator<const Function*> I = df_begin(M), E = df_end(M); I!=E; ++I) {
-    const BasicBlock *BB = *I, *IDom = IDoms[*I];
-
-    if (IDom != 0) {   // Ignore the root node and other nasty nodes
-      // We know that the immediate dominator should already have a node, 
-      // because we are traversing the CFG in depth first order!
-      //
-      assert(Nodes[IDom] && "No node for IDOM?");
-      Node *IDomNode = Nodes[IDom];
-
-      // Add a new tree node for this BasicBlock, and link it as a child of
-      // IDomNode
-      Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
-    }
-  }
-}
-#endif
-
 void DominatorTree::calculate(const DominatorSet &DS) {
   Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
 
-  if (!isPostDominator()) {
-    // Iterate over all nodes in depth first order...
-    for (df_iterator<BasicBlock*> I = df_begin(Root), E = df_end(Root);
-         I != E; ++I) {
-      BasicBlock *BB = *I;
-      const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
-      unsigned DomSetSize = Dominators.size();
-      if (DomSetSize == 1) continue;  // Root node... IDom = null
+  // Iterate over all nodes in depth first order...
+  for (df_iterator<BasicBlock*> I = df_begin(Root), E = df_end(Root);
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
+    unsigned DomSetSize = Dominators.size();
+    if (DomSetSize == 1) continue;  // Root node... IDom = null
       
-      // Loop over all dominators of this node. This corresponds to looping over
-      // nodes in the dominator chain, looking for a node whose dominator set is
-      // equal to the current nodes, except that the current node does not exist
-      // in it. This means that it is one level higher in the dom chain than the
-      // current node, and it is our idom!  We know that we have already added
-      // a DominatorTree node for our idom, because the idom must be a
-      // predecessor in the depth first order that we are iterating through the
-      // function.
+    // Loop over all dominators of this node. This corresponds to looping over
+    // nodes in the dominator chain, looking for a node whose dominator set is
+    // equal to the current nodes, except that the current node does not exist
+    // in it. This means that it is one level higher in the dom chain than the
+    // current node, and it is our idom!  We know that we have already added
+    // a DominatorTree node for our idom, because the idom must be a
+    // predecessor in the depth first order that we are iterating through the
+    // function.
+    //
+    DominatorSet::DomSetType::const_iterator I = Dominators.begin();
+    DominatorSet::DomSetType::const_iterator End = Dominators.end();
+    for (; I != End; ++I) {   // Iterate over dominators...
+      // All of our dominators should form a chain, where the number of
+      // elements in the dominator set indicates what level the node is at in
+      // the chain.  We want the node immediately above us, so it will have
+      // an identical dominator set, except that BB will not dominate it...
+      // therefore it's dominator set size will be one less than BB's...
       //
-      DominatorSet::DomSetType::const_iterator I = Dominators.begin();
-      DominatorSet::DomSetType::const_iterator End = Dominators.end();
-      for (; I != End; ++I) {   // Iterate over dominators...
-	// All of our dominators should form a chain, where the number of
-	// elements in the dominator set indicates what level the node is at in
-	// the chain.  We want the node immediately above us, so it will have
-	// an identical dominator set, except that BB will not dominate it...
-	// therefore it's dominator set size will be one less than BB's...
-	//
-	if (DS.getDominators(*I).size() == DomSetSize - 1) {
-	  // We know that the immediate dominator should already have a node, 
-	  // because we are traversing the CFG in depth first order!
-	  //
-	  Node *IDomNode = Nodes[*I];
-	  assert(IDomNode && "No node for IDOM?");
-	  
-	  // Add a new tree node for this BasicBlock, and link it as a child of
-	  // IDomNode
-	  Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
-	  break;
-	}
+      if (DS.getDominators(*I).size() == DomSetSize - 1) {
+        // We know that the immediate dominator should already have a node, 
+        // because we are traversing the CFG in depth first order!
+        //
+        Node *IDomNode = Nodes[*I];
+        assert(IDomNode && "No node for IDOM?");
+        
+        // Add a new tree node for this BasicBlock, and link it as a child of
+        // IDomNode
+        Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
+        break;
       }
     }
-  } else if (Root) {
+  }
+}
+
+
+void PostDominatorTree::calculate(const PostDominatorSet &DS) {
+  Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
+
+  if (Root) {
     // Iterate over all nodes in depth first order...
     for (idf_iterator<BasicBlock*> I = idf_begin(Root), E = idf_end(Root);
          I != E; ++I) {
@@ -339,11 +308,11 @@ void DominatorTree::calculate(const DominatorSet &DS) {
 //===----------------------------------------------------------------------===//
 
 AnalysisID DominanceFrontier::ID(AnalysisID::create<DominanceFrontier>(), true);
-AnalysisID DominanceFrontier::PostDomID(AnalysisID::create<DominanceFrontier>(), true);
+AnalysisID PostDominanceFrontier::ID(AnalysisID::create<PostDominanceFrontier>(), true);
 
 const DominanceFrontier::DomSetType &
-DominanceFrontier::calcDomFrontier(const DominatorTree &DT, 
-                                   const DominatorTree::Node *Node) {
+DominanceFrontier::calculate(const DominatorTree &DT, 
+                             const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
@@ -362,7 +331,7 @@ DominanceFrontier::calcDomFrontier(const DominatorTree &DT,
   for (DominatorTree::Node::const_iterator NI = Node->begin(), NE = Node->end();
        NI != NE; ++NI) {
     DominatorTree::Node *IDominee = *NI;
-    const DomSetType &ChildDF = calcDomFrontier(DT, IDominee);
+    const DomSetType &ChildDF = calculate(DT, IDominee);
 
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {
@@ -375,8 +344,8 @@ DominanceFrontier::calcDomFrontier(const DominatorTree &DT,
 }
 
 const DominanceFrontier::DomSetType &
-DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT, 
-                                       const DominatorTree::Node *Node) {
+PostDominanceFrontier::calculate(const PostDominatorTree &DT, 
+                                 const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
@@ -393,10 +362,10 @@ DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT,
   // Loop through and visit the nodes that Node immediately dominates (Node's
   // children in the IDomTree)
   //
-  for (DominatorTree::Node::const_iterator NI = Node->begin(), NE = Node->end();
-       NI != NE; ++NI) {
+  for (PostDominatorTree::Node::const_iterator
+         NI = Node->begin(), NE = Node->end(); NI != NE; ++NI) {
     DominatorTree::Node *IDominee = *NI;
-    const DomSetType &ChildDF = calcPostDomFrontier(DT, IDominee);
+    const DomSetType &ChildDF = calculate(DT, IDominee);
 
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {

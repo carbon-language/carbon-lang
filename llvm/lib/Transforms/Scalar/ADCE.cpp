@@ -55,8 +55,8 @@ public:
   // getAnalysisUsage - We require post dominance frontiers (aka Control
   // Dependence Graph)
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired(DominatorTree::PostDomID);
-    AU.addRequired(DominanceFrontier::PostDomID);
+    AU.addRequired(PostDominatorTree::ID);
+    AU.addRequired(PostDominanceFrontier::ID);
   }
 
 
@@ -93,13 +93,12 @@ void ADCE::markBlockAlive(BasicBlock *BB) {
   // Mark the basic block as being newly ALIVE... and mark all branches that
   // this block is control dependant on as being alive also...
   //
-  DominanceFrontier &CDG =
-    getAnalysis<DominanceFrontier>(DominanceFrontier::PostDomID);
+  PostDominanceFrontier &CDG = getAnalysis<PostDominanceFrontier>();
 
-  DominanceFrontier::const_iterator It = CDG.find(BB);
+  PostDominanceFrontier::const_iterator It = CDG.find(BB);
   if (It != CDG.end()) {
     // Get the blocks that this node is control dependant on...
-    const DominanceFrontier::DomSetType &CDB = It->second;
+    const PostDominanceFrontier::DomSetType &CDB = It->second;
     for_each(CDB.begin(), CDB.end(),   // Mark all their terminators as live
              bind_obj(this, &ADCE::markTerminatorLive));
   }
@@ -191,7 +190,7 @@ bool ADCE::doADCE() {
   // Find the first postdominator of the entry node that is alive.  Make it the
   // new entry node...
   //
-  DominatorTree &DT = getAnalysis<DominatorTree>(DominatorTree::PostDomID);
+  PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
 
   // If there are some blocks dead...
   if (AliveBlocks.size() != Func->size()) {
@@ -218,8 +217,8 @@ bool ADCE::doADCE() {
             // postdominator that is alive, and the last postdominator that is
             // dead...
             //
-            DominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
-            DominatorTree::Node *NextNode = LastNode->getIDom();
+            PostDominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
+            PostDominatorTree::Node *NextNode = LastNode->getIDom();
             while (!AliveBlocks.count(NextNode->getNode())) {
               LastNode = NextNode;
               NextNode = NextNode->getIDom();
