@@ -199,7 +199,7 @@ bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
 static bool DoConstPropPass(Function *F) {
   bool SomethingChanged = false;
 
-  for (Method::iterator BBI = F->begin(); BBI != F->end(); ++BBI) {
+  for (Function::iterator BBI = F->begin(); BBI != F->end(); ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
       if (doConstantPropogation(BB, I))

@@ -35,9 +35,7 @@ using std::vector;
 // To enable debugging, uncomment this...
 //#define DEBUG_MST(x) x
 
-#ifdef DEBUG_MST
-#include "llvm/Assembly/Writer.h"
-#else
+#ifndef DEBUG_MST
 #define DEBUG_MST(x)   // Disable debug code
 #endif
 

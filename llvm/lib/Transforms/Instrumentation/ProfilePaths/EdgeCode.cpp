@@ -22,7 +22,7 @@ using std::vector;
 //This is determined from cond (1-6)
 void getEdgeCode::getCode(Instruction *rInst, 
 			  Instruction *countInst, 
-			  Method *M, 
+			  Function *M, 
 			  BasicBlock *BB){
   
   BasicBlock::InstListType& instList=BB->getInstList();

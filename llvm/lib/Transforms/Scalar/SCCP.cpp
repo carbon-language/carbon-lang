@@ -25,7 +25,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
-#include "llvm/Assembly/Writer.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <map>

@@ -153,7 +153,7 @@ doDecomposeMultiDimRefs(Function *F)
 {
   bool changed = false;
   
-  for (Method::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI)
+  for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI)
     for (BasicBlock::iterator newI, II = (*BI)->begin();
          II != (*BI)->end(); II = ++newI)
       {

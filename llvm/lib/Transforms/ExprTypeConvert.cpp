@@ -21,8 +21,6 @@
 #include <iostream>
 using std::cerr;
 
-#include "llvm/Assembly/Writer.h"
-
 //#define DEBUG_EXPR_CONVERT 1
 
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,

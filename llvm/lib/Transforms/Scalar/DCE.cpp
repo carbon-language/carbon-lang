@@ -30,7 +30,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
 #include "Support/STLExtras.h"

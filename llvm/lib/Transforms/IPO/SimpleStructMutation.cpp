@@ -17,8 +17,6 @@ using std::vector;
 using std::set;
 using std::pair;
 
-#include "llvm/Assembly/Writer.h"
-
 namespace {
   class SimpleStructMutation : public MutateStructTypes {
   public:

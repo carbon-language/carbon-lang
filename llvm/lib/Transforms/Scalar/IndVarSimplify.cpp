@@ -187,7 +187,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
   return Changed;
 }
 
-static bool doit(Method *M, cfg::LoopInfo &Loops) {
+static bool doit(Function *M, cfg::LoopInfo &Loops) {
   // Induction Variables live in the header nodes of the loops of the method...
   return reduce_apply_bool(Loops.getTopLevelLoops().begin(),
                            Loops.getTopLevelLoops().end(),
@@ -197,8 +197,8 @@ static bool doit(Method *M, cfg::LoopInfo &Loops) {
 
 namespace {
   struct InductionVariableSimplify : public MethodPass {
-    virtual bool runOnMethod(Method *M) {
-      return doit(M, getAnalysis<cfg::LoopInfo>());
+    virtual bool runOnMethod(Function *F) {
+      return doit(F, getAnalysis<cfg::LoopInfo>());
     }
     
     virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,

@@ -20,8 +20,6 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
-#include "llvm/Assembly/Writer.h"
-
 //#define DEBUG_PEEPHOLE_INSTS 1
 
 #ifdef DEBUG_PEEPHOLE_INSTS
@@ -419,7 +417,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 static bool DoRaisePass(Function *F) {
   bool Changed = false;
-  for (Method::iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI) {
+  for (Function::iterator MI = F->begin(), ME = F->end(); MI != ME; ++MI) {
     BasicBlock *BB = *MI;
     BasicBlock::InstListType &BIL = BB->getInstList();
 

@@ -29,7 +29,7 @@ using std::cerr;
 // It's public interface consists of a constructor and a doADCE() method.
 //
 class ADCE {
-  Method *M;                            // The method that we are working on...
+  Function *M;                          // The method that we are working on...
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions
   bool MadeChanges;
@@ -39,7 +39,7 @@ class ADCE {
   //
 public:
   // ADCE Ctor - Save the method to operate on...
-  inline ADCE(Method *m) : M(m), MadeChanges(false) {}
+  inline ADCE(Function *m) : M(m), MadeChanges(false) {}
 
   // doADCE() - Run the Agressive Dead Code Elimination algorithm, returning
   // true if the method was modified.
@@ -79,7 +79,7 @@ private:
 //
 bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
 #ifdef DEBUG_ADCE
-  cerr << "Method: " << M;
+  cerr << "Function: " << M;
 #endif
 
   // Iterate over all of the instructions in the method, eliminating trivially
@@ -88,8 +88,8 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
   // instructions live in basic blocks that are unreachable.  These blocks will
   // be eliminated later, along with the instructions inside.
   //
-  for (df_iterator<Method*> BBI = df_begin(M),
-                            BBE = df_end(M);
+  for (df_iterator<Function*> BBI = df_begin(M),
+                              BBE = df_end(M);
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
@@ -156,8 +156,8 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
   }
 
 #ifdef DEBUG_ADCE
-  cerr << "Current Method: X = Live\n";
-  for (Method::iterator I = M->begin(), E = M->end(); I != E; ++I)
+  cerr << "Current Function: X = Live\n";
+  for (Function::iterator I = M->begin(), E = M->end(); I != E; ++I)
     for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end();
          BI != BE; ++BI) {
       if (LiveSet.count(*BI)) cerr << "X ";
@@ -192,7 +192,7 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
 
     } else {
       // We need to move the new entry block to be the first bb of the method.
-      Method::iterator EBI = find(M->begin(), M->end(), EntryBlock);
+      Function::iterator EBI = find(M->begin(), M->end(), EntryBlock);
       std::swap(*EBI, *M->begin());// Exchange old location with start of method
       MadeChanges = true;
     }
@@ -201,7 +201,7 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
   // Now go through and tell dead blocks to drop all of their references so they
   // can be safely deleted.
   //
-  for (Method::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
+  for (Function::iterator BI = M->begin(), BE = M->end(); BI != BE; ++BI) {
     BasicBlock *BB = *BI;
     if (!AliveBlocks.count(BB)) {
       BB->dropAllReferences();
@@ -212,7 +212,7 @@ bool ADCE::doADCE(cfg::DominanceFrontier &CDG) {
   // now because we know that there are no references to dead blocks (because
   // they have dropped all of their references...
   //
-  for (Method::iterator BI = M->begin(); BI != M->end();) {
+  for (Function::iterator BI = M->begin(); BI != M->end();) {
     if (!AliveBlocks.count(*BI)) {
       delete M->getBasicBlocks().remove(BI);
       MadeChanges = true;
@@ -292,7 +292,7 @@ namespace {
   struct AgressiveDCE : public MethodPass {
     // doADCE - Execute the Agressive Dead Code Elimination Algorithm
     //
-    virtual bool runOnMethod(Method *M) {
+    virtual bool runOnMethod(Function *M) {
       return ADCE(M).doADCE(
    getAnalysis<cfg::DominanceFrontier>(cfg::DominanceFrontier::PostDomID));
     }

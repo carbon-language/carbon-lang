@@ -22,12 +22,11 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
+#include "llvm/Type.h"
 #include <algorithm>
 #include <map>
 #include <iostream>
 using std::cerr;
-
-#include "llvm/Assembly/Writer.h"
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.

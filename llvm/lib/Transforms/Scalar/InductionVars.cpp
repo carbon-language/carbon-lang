@@ -22,12 +22,11 @@
 #include "llvm/Transforms/Scalar/InductionVars.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/Analysis/IntervalPartition.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
@@ -185,8 +184,8 @@ static PHINode *InjectSimpleInductionVariable(cfg::Interval *Int) {
 
   if (M->hasSymbolTable()) {
     // Only name the induction variable if the method isn't stripped.
-    PHIName = M->getSymbolTable()->getUniqueName(Type::UIntTy, "ind_var");
-    AddName = M->getSymbolTable()->getUniqueName(Type::UIntTy, "ind_var_next");
+    PHIName = "ind_var";
+    AddName = "ind_var_next";
   }
 
   // Create the neccesary instructions...
