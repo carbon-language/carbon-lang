@@ -18,6 +18,7 @@
 #include <map>
 
 class StructType;
+class CompositeType;
 class GlobalValue;
 
 class MutateStructTypes : public Pass {
@@ -48,7 +49,9 @@ public:
   // the destination structure the field should end up in.  A negative value 
   // indicates that the field should be deleted entirely.
   //
-  MutateStructTypes(const map<const StructType*, vector<int> > &Transforms);
+  typedef map<const StructType*, vector<int> > TransformsType;
+
+  MutateStructTypes(const TransformsType &Transforms);
 
 
   // doPassInitialization - This loops over global constants defined in the
@@ -80,7 +83,7 @@ private:
   // AdjustIndices - Convert the indexes specifed by Idx to the new changed form
   // using the specified OldTy as the base type being indexed into.
   //
-  void AdjustIndices(const StructType *OldTy, vector<ConstPoolVal*> &Idx,
+  void AdjustIndices(const CompositeType *OldTy, vector<Value*> &Idx,
                      unsigned idx = 0);
 };
 
