@@ -44,17 +44,17 @@ class BytecodeReader : public ModuleProvider {
 /// @{
 public:
   /// @brief Default constructor. By default, no handler is used.
-  BytecodeReader( 
-    BytecodeHandler* h = 0
-  ) { 
+  BytecodeReader(BytecodeHandler* h = 0) { 
     decompressedBlock = 0;
     Handler = h;
   }
 
   ~BytecodeReader() { 
     freeState(); 
-    if (decompressedBlock)
+    if (decompressedBlock) {
       ::free(decompressedBlock);
+      decompressedBlock = 0;
+    }
   }
 
 /// @}
@@ -411,7 +411,7 @@ private:
   inline const Type* getSanitizedType(unsigned& ID );
 
   /// @brief Read in and get a sanitized type id
-  inline const Type* BytecodeReader::readSanitizedType();
+  inline const Type* readSanitizedType();
 
   /// @brief Converts a Type* to its type slot number
   unsigned getTypeSlot(const Type *Ty);
