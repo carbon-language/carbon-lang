@@ -13,7 +13,7 @@
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
@@ -60,7 +60,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
   // See the comments below for the choice of this register.
   // 
   MachineFunction& mcInfo = MachineFunction::get(&F);
-  unsigned int staticStackSize = mcInfo.getStaticStackSize();
+  unsigned staticStackSize = mcInfo.getStaticStackSize();
   
   if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
     staticStackSize = (unsigned) frameInfo.getMinStackFrameSize();
@@ -69,51 +69,34 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
                         (unsigned) frameInfo.getStackFrameSizeAlignment()))
     staticStackSize += frameInfo.getStackFrameSizeAlignment() - padsz;
   
-  if (Target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize))
-    {
-      M = new MachineInstr(SAVE);
-      M->SetMachineOperandReg(0, Target.getRegInfo().getStackPointer());
-      M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
-                                   - (int) staticStackSize);
-      M->SetMachineOperandReg(2, Target.getRegInfo().getStackPointer());
-      mvec.push_back(M);
-    }
-  else
-    {
+  int32_t C = - (int) staticStackSize;
+  int SP = Target.getRegInfo().getStackPointer();
+  if (Target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)) {
+    M = BuildMI(SAVE, 3).addMReg(SP).addSImm(C).addMReg(SP);
+    mvec.push_back(M);
+  } else {
       // We have to put the stack size value into a register before SAVE.
       // Use register %g1 since it is volatile across calls.  Note that the
       // local (%l) and in (%i) registers cannot be used before the SAVE!
       // Do this by creating a code sequence equivalent to:
       //        SETSW -(stackSize), %g1
-      int32_t C = - (int) staticStackSize;
       int uregNum = Target.getRegInfo().getUnifiedRegNum(
                            Target.getRegInfo().getRegClassIDOfType(Type::IntTy),
                            SparcIntRegClass::g1);
       
-      M = new MachineInstr(SETHI);
-      M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
-      M->SetMachineOperandReg(1, uregNum); 
+      M = BuildMI(SETHI, 2).addSImm(C).addMReg(uregNum);
       M->setOperandHi32(0);
       mvec.push_back(M);
       
-      M = new MachineInstr(OR);
-      M->SetMachineOperandReg(0, uregNum);
-      M->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed, C);
-      M->SetMachineOperandReg(2, uregNum);
+      M = BuildMI(OR, 3).addMReg(uregNum).addSImm(C).addMReg(uregNum);
       M->setOperandLo32(1);
       mvec.push_back(M);
       
-      M = new MachineInstr(SRA);
-      M->SetMachineOperandReg(0, uregNum);
-      M->SetMachineOperandConst(1, MachineOperand::MO_UnextendedImmed, 0);
-      M->SetMachineOperandReg(2, uregNum);
+      M = BuildMI(SRA, 3).addMReg(uregNum).addZImm(0).addMReg(uregNum);
       mvec.push_back(M);
       
       // Now generate the SAVE using the value in register %g1
-      M = new MachineInstr(SAVE);
-      M->SetMachineOperandReg(0, Target.getRegInfo().getStackPointer());
-      M->SetMachineOperandReg(1, uregNum);
-      M->SetMachineOperandReg(2, Target.getRegInfo().getStackPointer());
+      M = BuildMI(SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP);
       mvec.push_back(M);
     }
 
@@ -130,11 +113,9 @@ void InsertPrologEpilogCode::InsertEpilogCode(Function &F)
     Instruction *TermInst = (Instruction*)BB.getTerminator();
     if (TermInst->getOpcode() == Instruction::Ret)
       {
-        MachineInstr *Restore = new MachineInstr(RESTORE);
-        Restore->SetMachineOperandReg(0, Target.getRegInfo().getZeroRegNum());
-        Restore->SetMachineOperandConst(1, MachineOperand::MO_SignExtendedImmed,
-                                        (int64_t)0);
-        Restore->SetMachineOperandReg(2, Target.getRegInfo().getZeroRegNum());
+        int ZR = Target.getRegInfo().getZeroRegNum();
+        MachineInstr *Restore =
+          BuildMI(RESTORE, 3).addMReg(ZR).addSImm(0).addMReg(ZR);
         
         MachineCodeForInstruction &termMvec =
           MachineCodeForInstruction::get(TermInst);
