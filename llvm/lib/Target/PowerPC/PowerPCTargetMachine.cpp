@@ -37,6 +37,8 @@ namespace llvm {
   cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", 
                              cl::desc("Enable LSR for PPC (beta option!)"), 
                              cl::Hidden);
+  cl::opt<bool> EnablePatternISel("pattern-isel", cl::Hidden,
+                                cl::desc("Enable the pattern isel XXX FIXME"));
 }
 
 namespace {
@@ -96,6 +98,8 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 
   if (LP64)
     PM.add(createPPC64ISelSimple(*this));
+  else if (EnablePatternISel)
+    PM.add(createPPC32ISelPattern(*this));
   else
     PM.add(createPPC32ISelSimple(*this));
 
