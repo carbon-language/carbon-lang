@@ -255,8 +255,7 @@ public:
   virtual void handleConstantPointer( 
     const PointerType* PT, ///< Type of the pointer
     unsigned Slot,         ///< Slot num of initializer value
-    GlobalValue* GV,       ///< Referenced global value
-    Constant* Val          ///< Value of constant
+    GlobalValue* GV        ///< Referenced global value
   ) {}
 
   /// @brief Handle a constant strings (array special case)
