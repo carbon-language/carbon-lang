@@ -83,9 +83,12 @@ def XORrr : F3_1<2, 0b000011, "xor">;
 def XORri : F3_2<2, 0b000011, "xor">;
 
 // Section B.12 - Shift Instructions, p. 107
-def SLLri : F3_1<2, 0b100101, "sll">;
-def SRLri : F3_1<2, 0b100110, "srl">;
-def SRAri : F3_1<2, 0b100111, "sra">;
+def SLLrr : F3_1<2, 0b100101, "sll">;
+def SLLri : F3_2<2, 0b100101, "sll">;
+def SRLrr : F3_1<2, 0b100110, "srl">;
+def SRLri : F3_2<2, 0b100110, "srl">;
+def SRArr : F3_1<2, 0b100111, "sra">;
+def SRAri : F3_2<2, 0b100111, "sra">;
 
 // Section B.13 - Add Instructions, p. 108
 def ADDrr : F3_1<2, 0b000000, "add">;
