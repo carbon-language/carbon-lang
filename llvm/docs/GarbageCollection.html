@@ -234,8 +234,8 @@ zeroed-out block of memory of the appropriate size.</p>
 <div class="doc_text">
 
 <div class="doc_code"><tt>
-  sbyte *%llvm.gcread(sbyte **)<br>
-  void %llvm.gcwrite(sbyte*, sbyte**)
+  sbyte *%llvm.gcread(sbyte *, sbyte **)<br>
+  void %llvm.gcwrite(sbyte*, sbyte*, sbyte**)
 </tt></div>
 
 <p>Several of the more interesting garbage collectors (e.g., generational
@@ -250,7 +250,9 @@ tolerable.</p>
 <p>To support garbage collectors that use read or write barriers, LLVM provides
 the <tt>llvm.gcread</tt> and <tt>llvm.gcwrite</tt> intrinsics.  The first
 intrinsic has exactly the same semantics as a non-volatile LLVM load and the
-second has the same semantics as a non-volatile LLVM store.  At code generation
+second has the same semantics as a non-volatile LLVM store, with the
+additions that they also take a pointer to the start of the memory
+object as an argument.  At code generation
 time, these intrinsics are replaced with calls into the garbage collector
 (<tt><a href="#llvm_gc_readwrite">llvm_gc_read</a></tt> and <tt><a
 href="#llvm_gc_readwrite">llvm_gc_write</a></tt> respectively), which are then
@@ -341,8 +343,8 @@ implementations</a> available.
 
 <div class="doc_text">
   <div class="doc_code"><tt>
-    void *llvm_gc_read(void **)<br>
-    void llvm_gc_write(void*, void**)
+    void *llvm_gc_read(void*, void **)<br>
+    void llvm_gc_write(void*, void *, void**)
  </tt></div>
 
 <p>
@@ -353,8 +355,7 @@ pointer, then return.
 
 <p>
 If an actual read or write barrier is needed, it should be straight-forward to
-implement it.  Note that we may add a pointer to the start of the memory object
-as a parameter in the future, if needed.
+implement it.
 </p>
 
 </div>
