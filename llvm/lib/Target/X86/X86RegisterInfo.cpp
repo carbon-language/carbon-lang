@@ -260,6 +260,9 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::MOV8rr:  NI = MakeRMInst(X86::MOV8rm , FrameIndex, MI); break;
     case X86::MOV16rr: NI = MakeRMInst(X86::MOV16rm, FrameIndex, MI); break;
     case X86::MOV32rr: NI = MakeRMInst(X86::MOV32rm, FrameIndex, MI); break;
+    case X86::CMOVE16rr:  NI = MakeRMInst(X86::CMOVE16rm , FrameIndex, MI); break;
+    case X86::CMOVNE32rr: NI = MakeRMInst(X86::CMOVNE32rm, FrameIndex, MI); break;
+    case X86::CMOVS32rr:  NI = MakeRMInst(X86::CMOVS32rm , FrameIndex, MI); break;
     case X86::ADD8rr:  NI = MakeRMInst(X86::ADD8rm , FrameIndex, MI); break;
     case X86::ADD16rr: NI = MakeRMInst(X86::ADD16rm, FrameIndex, MI); break;
     case X86::ADD32rr: NI = MakeRMInst(X86::ADD32rm, FrameIndex, MI); break;

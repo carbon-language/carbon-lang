@@ -294,9 +294,12 @@ let isTwoAddress = 1 in {
 
 // Conditional moves.  These are modelled as X = cmovXX Y, Z.  Eventually
 // register allocated to cmovXX XY, Z
-def CMOVE16rr : I<"cmove", 0x44, MRMSrcReg>, TB, OpSize;        // if ==, R16 = R16
-def CMOVNE32rr: I<"cmovne",0x45, MRMSrcReg>, TB;                // if !=, R32 = R32
-def CMOVS32rr : I<"cmovs", 0x48, MRMSrcReg>, TB;                // if signed, R32 = R32
+def CMOVE16rr : I   <"cmove", 0x44, MRMSrcReg>, TB, OpSize;        // if ==, R16 = R16
+def CMOVE16rm : Im16<"cmove", 0x44, MRMSrcMem>, TB, OpSize;        // if ==, R16 = [mem16]
+def CMOVNE32rr: I   <"cmovne",0x45, MRMSrcReg>, TB;                // if !=, R32 = R32
+def CMOVNE32rm: Im32<"cmovne",0x45, MRMSrcMem>, TB;                // if !=, R32 = [mem32]
+def CMOVS32rr : I   <"cmovs", 0x48, MRMSrcReg>, TB;                // if signed, R32 = R32
+def CMOVS32rm : Im32<"cmovs", 0x48, MRMSrcMem>, TB;                // if signed, R32 = [mem32]
 
 // unary instructions
 def NEG8r  : I   <"neg", 0xF6, MRM3r>;         // R8  = -R8  = 0-R8
@@ -397,6 +400,7 @@ def XOR16mi8 : Im16i8<"xor", 0x83, MRM6m     >, OpSize;    // [mem16] ^= imm8
 def XOR32mi8 : Im32i8<"xor", 0x83, MRM6m     >;            // [mem32] ^= imm8
 
 // Shift instructions
+// FIXME: provide shorter instructions when imm8 == 1
 def SHL8rCL  : I     <"shl", 0xD2, MRM4r     >        , UsesCL; // R8  <<= cl
 def SHL16rCL : I     <"shl", 0xD3, MRM4r     >, OpSize, UsesCL; // R16 <<= cl
 def SHL32rCL : I     <"shl", 0xD3, MRM4r     >        , UsesCL; // R32 <<= cl
