@@ -19,6 +19,8 @@
 Module *CloneModule(const Module *M) {
   // First off, we need to create the new module...
   Module *New = new Module(M->getModuleIdentifier());
+  New->setEndianness(M->getEndianness());
+  New->setPointerSize(M->getPointerSize());
 
   // Create the value map that maps things from the old module over to the new
   // module.
