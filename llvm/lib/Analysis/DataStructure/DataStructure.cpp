@@ -1228,6 +1228,20 @@ void DSGraph::removeTriviallyDeadNodes() {
   removeIdenticalCalls(FunctionCalls);
   removeIdenticalCalls(AuxFunctionCalls);
 
+  // Loop over all of the nodes in the graph, calling getNode on each field.
+  // This will cause all nodes to update their forwarding edges, causing
+  // forwarded nodes to be delete-able.
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+    DSNode *N = Nodes[i];
+    for (unsigned l = 0, e = N->getNumLinks(); l != e; ++l)
+      N->getLink(l*N->getPointerSize()).getNode();
+  }
+
+  // Likewise, forward any edges from the scalar nodes...
+  for (ScalarMapTy::iterator I = ScalarMap.begin(), E = ScalarMap.end();
+       I != E; ++I)
+    I->second.getNode();
+
   bool isGlobalsGraph = !GlobalsGraph;
 
   for (unsigned i = 0; i != Nodes.size(); ++i) {
