@@ -6,6 +6,23 @@ Current bugs:
 * large fixed-size allocas not correct, although should
   be closer to working.  Added code in PPCRegisterInfo.cpp
   to do >16bit subtractions to the stack pointer.
+* ulong to double.  ahhh, here's the problem:
+  floatdidf assumes signed longs.  so if the high but of a ulong
+  just happens to be set, you get the wrong sign.  The fix for this
+  is to call cmpdi2 to compare against zero, if so shift right by one,
+  convert to fp, and multiply by (add to itself).  the sequence would
+  look like:
+  {r3:r4} holds ulong a;
+  li r5, 0
+  li r6, 0 (set r5:r6 to ulong 0)
+  call cmpdi2 ==> sets r3 <, =, > 0
+  if r3 > 0
+  call floatdidf as usual
+  else
+  shift right ulong a, 1 (we could use emitShift)
+  call floatdidf
+  fadd f1, f1, f1 (fp left shift by 1)
+* linking llvmg++ .s files with gcc instead of g++
 
 Codegen improvements needed:
 * no alias analysis causes us to generate slow code for Shootout/matrix
