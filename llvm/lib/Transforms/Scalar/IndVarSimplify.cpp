@@ -76,8 +76,8 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
   // indvar.  If we don't have one, add one now...
   if (!Canonical) {
     // Create the PHI node for the new induction variable, and insert the phi
-    // node at the end of the other phi nodes...
-    PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar", AfterPHIIt);
+    // node at the start of the PHI nodes...
+    PHINode *PN = new PHINode(Type::UIntTy, "cann-indvar", Header->begin());
 
     // Create the increment instruction to add one to the counter...
     Instruction *Add = BinaryOperator::create(Instruction::Add, PN,
@@ -108,6 +108,12 @@ static bool TransformLoop(LoopInfo *Loops, Loop *Loop) {
     Canonical = &IndVars.back();
     ++NumInserted;
     Changed = true;
+  } else {
+    // If we have a canonical induction variable, make sure that it is the first
+    // one in the basic block.
+    if (&Header->front() != Canonical->Phi)
+      Header->getInstList().splice(Header->begin(), Header->getInstList(),
+                                   Canonical->Phi);
   }
 
   DEBUG(std::cerr << "Induction variables:\n");
