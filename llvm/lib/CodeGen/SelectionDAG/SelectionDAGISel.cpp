@@ -141,13 +141,15 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     // appropriate.
     PHINode *PN;
     for (BasicBlock::iterator I = BB->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I) {
-      unsigned NumElements =TLI.getNumElements(TLI.getValueType(PN->getType()));
-      unsigned PHIReg = ValueMap[PN];
-      assert(PHIReg && "PHI node does not have an assigned virtual register!");
-      for (unsigned i = 0; i != NumElements; ++i)
-        BuildMI(MBB, TargetInstrInfo::PHI, PN->getNumOperands(), PHIReg+i);
-    }
+         (PN = dyn_cast<PHINode>(I)); ++I)
+      if (!PN->use_empty()) {
+        unsigned NumElements =
+          TLI.getNumElements(TLI.getValueType(PN->getType()));
+        unsigned PHIReg = ValueMap[PN];
+        assert(PHIReg &&"PHI node does not have an assigned virtual register!");
+        for (unsigned i = 0; i != NumElements; ++i)
+          BuildMI(MBB, TargetInstrInfo::PHI, PN->getNumOperands(), PHIReg+i);
+      }
   }
 }
 
@@ -786,27 +788,29 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     // nodes and Machine PHI nodes, but the incoming operands have not been
     // emitted yet.
     for (BasicBlock::iterator I = SuccBB->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I) {
-      unsigned Reg;
-      Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
-      if (Constant *C = dyn_cast<Constant>(PHIOp)) {
-        unsigned &RegOut = ConstantsOut[C];
-        if (RegOut == 0) {
-          RegOut = FuncInfo.CreateRegForValue(C);
-          CopyValueToVirtualRegister(SDL, C, RegOut);
+         (PN = dyn_cast<PHINode>(I)); ++I)
+      if (!PN->use_empty()) {
+        unsigned Reg;
+        Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
+        if (Constant *C = dyn_cast<Constant>(PHIOp)) {
+          unsigned &RegOut = ConstantsOut[C];
+          if (RegOut == 0) {
+            RegOut = FuncInfo.CreateRegForValue(C);
+            CopyValueToVirtualRegister(SDL, C, RegOut);
+          }
+          Reg = RegOut;
+        } else {
+          Reg = FuncInfo.ValueMap[PHIOp];
+          assert(Reg && "Didn't codegen value into a register!??");
         }
-        Reg = RegOut;
-      } else {
-        Reg = FuncInfo.ValueMap[PHIOp];
-        assert(Reg && "Didn't codegen value into a register!??");
+        
+        // Remember that this register needs to added to the machine PHI node as
+        // the input for this MBB.
+        unsigned NumElements =
+          TLI.getNumElements(TLI.getValueType(PN->getType()));
+        for (unsigned i = 0, e = NumElements; i != e; ++i)
+          PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
       }
-
-      // Remember that this register needs to added to the machine PHI node as
-      // the input for this MBB.
-      unsigned NumElements =TLI.getNumElements(TLI.getValueType(PN->getType()));
-      for (unsigned i = 0, e = NumElements; i != e; ++i)
-        PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
-    }
   }
   ConstantsOut.clear();
 
