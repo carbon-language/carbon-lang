@@ -1867,38 +1867,14 @@ void ISel::doMultiply(MachineBasicBlock *MBB,
   
   // 64 x 64 -> 64
   if (Class0 == cLong && Class1 == cLong) {
-    unsigned Tmp1 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp2 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp3 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp4 = makeAnotherReg(Type::IntTy);
-    // FIXME: long is not split into two regs
-    BuildMI(*MBB, IP, PPC::MULHWU, 2, Tmp1).addReg(Op0r+1).addReg(Op1r+1);
-    BuildMI(*MBB, IP, PPC::MULLW, 2, DestReg+1).addReg(Op0r+1).addReg(Op1r+1);
-    BuildMI(*MBB, IP, PPC::MULLW, 2, Tmp2).addReg(Op0r+1).addReg(Op1r);
-    BuildMI(*MBB, IP, PPC::ADD, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-    BuildMI(*MBB, IP, PPC::MULLW, 2, Tmp4).addReg(Op0r).addReg(Op1r+1);
-    BuildMI(*MBB, IP, PPC::ADD, 2, DestReg).addReg(Tmp3).addReg(Tmp4);
+    BuildMI(*MBB, IP, PPC::MULLD, 2, DestReg).addReg(Op0r).addReg(Op1r);
     return;
   }
   
   // 64 x 32 or less, promote 32 to 64 and do a 64 x 64
   if (Class0 == cLong && Class1 <= cInt) {
-    unsigned Tmp0 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp1 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp2 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp3 = makeAnotherReg(Type::IntTy);
-    unsigned Tmp4 = makeAnotherReg(Type::IntTy);
-    if (Op1->getType()->isSigned())
-      BuildMI(*MBB, IP, PPC::SRAWI, 2, Tmp0).addReg(Op1r).addImm(31);
-    else
-      BuildMI(*MBB, IP, PPC::LI, 2, Tmp0).addSImm(0);
-    // FIXME: long is not split into two regs
-    BuildMI(*MBB, IP, PPC::MULHWU, 2, Tmp1).addReg(Op0r+1).addReg(Op1r);
-    BuildMI(*MBB, IP, PPC::MULLW, 2, DestReg+1).addReg(Op0r+1).addReg(Op1r);
-    BuildMI(*MBB, IP, PPC::MULLW, 2, Tmp2).addReg(Op0r+1).addReg(Tmp0);
-    BuildMI(*MBB, IP, PPC::ADD, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-    BuildMI(*MBB, IP, PPC::MULLW, 2, Tmp4).addReg(Op0r).addReg(Op1r);
-    BuildMI(*MBB, IP, PPC::ADD, 2, DestReg).addReg(Tmp3).addReg(Tmp4);
+    // FIXME: CLEAR or SIGN EXTEND Op1
+    BuildMI(*MBB, IP, PPC::MULLD, 2, DestReg).addReg(Op0r).addReg(Op1r);
     return;
   }
   
@@ -2139,103 +2115,27 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
     //
     if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(ShiftAmount)) {
       unsigned Amount = CUI->getValue();
-      if (Amount < 32) {
-        if (isLeftShift) {
-          // FIXME: RLWIMI is a use-and-def of DestReg+1, but that violates SSA
-          // FIXME: long
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
-            .addImm(Amount).addImm(0).addImm(31-Amount);
-          BuildMI(*MBB, IP, PPC::RLWIMI, 5).addReg(DestReg).addReg(SrcReg+1)
-            .addImm(Amount).addImm(32-Amount).addImm(31);
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg+1).addReg(SrcReg+1)
-            .addImm(Amount).addImm(0).addImm(31-Amount);
+      assert(Amount < 64 && "Invalid immediate shift amount!");
+      if (isLeftShift) {
+        BuildMI(*MBB, IP, PPC::RLDICR, 3, DestReg).addReg(SrcReg).addImm(Amount)
+          .addImm(63-Amount);
+      } else {
+        if (isSigned) {
+          BuildMI(*MBB, IP, PPC::SRADI, 2, DestReg).addReg(SrcReg)
+            .addImm(Amount);
         } else {
-          // FIXME: RLWIMI is a use-and-def of DestReg, but that violates SSA
-          // FIXME: long
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg+1).addReg(SrcReg+1)
-            .addImm(32-Amount).addImm(Amount).addImm(31);
-          BuildMI(*MBB, IP, PPC::RLWIMI, 5).addReg(DestReg+1).addReg(SrcReg)
-            .addImm(32-Amount).addImm(0).addImm(Amount-1);
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
-            .addImm(32-Amount).addImm(Amount).addImm(31);
-        }
-      } else {                 // Shifting more than 32 bits
-        Amount -= 32;
-        if (isLeftShift) {
-          if (Amount != 0) {
-            // FIXME: long
-            BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg+1)
-              .addImm(Amount).addImm(0).addImm(31-Amount);
-          } else {
-            // FIXME: long
-            BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg+1)
-              .addReg(SrcReg+1);
-          }
-          BuildMI(*MBB, IP, PPC::LI, 1, DestReg+1).addSImm(0);
-        } else {
-          if (Amount != 0) {
-            if (isSigned)
-              BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg+1).addReg(SrcReg)
-                .addImm(Amount);
-            else
-              BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg+1).addReg(SrcReg)
-                .addImm(32-Amount).addImm(Amount).addImm(31);
-          } else {
-            BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-              .addReg(SrcReg);
-          }
-          BuildMI(*MBB, IP,PPC::LI, 1, DestReg).addSImm(0);
+          BuildMI(*MBB, IP, PPC::RLDICL, 3, DestReg).addReg(SrcReg)
+            .addImm(64-Amount).addImm(Amount);
         }
       }
     } else {
-      unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
-      unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
-      unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
-      unsigned TmpReg4 = makeAnotherReg(Type::IntTy);
-      unsigned TmpReg5 = makeAnotherReg(Type::IntTy);
-      unsigned TmpReg6 = makeAnotherReg(Type::IntTy);
-      unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
-      
+      unsigned ShiftReg = getReg (ShiftAmount, MBB, IP);
+
       if (isLeftShift) {
-        BuildMI(*MBB, IP, PPC::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg)
-          .addSImm(32);
-        BuildMI(*MBB, IP, PPC::SLW, 2, TmpReg2).addReg(SrcReg)
-          .addReg(ShiftAmountReg);
-        BuildMI(*MBB, IP, PPC::SRW, 2, TmpReg3).addReg(SrcReg+1)
-          .addReg(TmpReg1);
-        BuildMI(*MBB, IP, PPC::OR, 2,TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
-        BuildMI(*MBB, IP, PPC::ADDI, 2, TmpReg5).addReg(ShiftAmountReg)
-          .addSImm(-32);
-        BuildMI(*MBB, IP, PPC::SLW, 2, TmpReg6).addReg(SrcReg+1)
-          .addReg(TmpReg5);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(TmpReg4)
-          .addReg(TmpReg6);
-        BuildMI(*MBB, IP, PPC::SLW, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(ShiftAmountReg);
+        BuildMI(*MBB, IP, PPC::SLD, 2, DestReg).addReg(SrcReg).addReg(ShiftReg);
       } else {
-        if (isSigned) {
-          // FIXME: Unimplemented
-          // Page C-3 of the PowerPC 32bit Programming Environments Manual
-          std::cerr << "ERROR: Unimplemented: signed right shift of long\n";
-          abort();
-        } else {
-          BuildMI(*MBB, IP, PPC::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg)
-            .addSImm(32);
-          BuildMI(*MBB, IP, PPC::SRW, 2, TmpReg2).addReg(SrcReg+1)
-            .addReg(ShiftAmountReg);
-          BuildMI(*MBB, IP, PPC::SLW, 2, TmpReg3).addReg(SrcReg)
-            .addReg(TmpReg1);
-          BuildMI(*MBB, IP, PPC::OR, 2, TmpReg4).addReg(TmpReg2)
-            .addReg(TmpReg3);
-          BuildMI(*MBB, IP, PPC::ADDI, 2, TmpReg5).addReg(ShiftAmountReg)
-            .addSImm(-32);
-          BuildMI(*MBB, IP, PPC::SRW, 2, TmpReg6).addReg(SrcReg)
-            .addReg(TmpReg5);
-          BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(TmpReg4)
-            .addReg(TmpReg6);
-          BuildMI(*MBB, IP, PPC::SRW, 2, DestReg).addReg(SrcReg)
-            .addReg(ShiftAmountReg);
-        }
+        unsigned Opcode = (isSigned) ? PPC::SRAD : PPC::SRD;
+        BuildMI(*MBB, IP, Opcode, DestReg).addReg(SrcReg).addReg(ShiftReg);
       }
     }
     return;
@@ -2688,16 +2588,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (sourceUnsigned && destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      // FIXME: long
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addSImm(0);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       return;
     }
 
@@ -2730,16 +2621,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (!sourceUnsigned && !destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      // FIXME: long
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       return;
     }
 
@@ -2778,16 +2660,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (sourceUnsigned && !destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      // FIXME: long
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1).
-          addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::LI, 1, DestReg).addSImm(0);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       return;
     }
 
@@ -2830,16 +2703,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
   if (!sourceUnsigned && destUnsigned) {
     // handle long dest class now to keep switch clean
     if (DestClass == cLong) {
-      // FIXME: long
-      if (SrcClass == cLong) {
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg+1)
-          .addReg(SrcReg+1);
-      } else {
-        BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg).addImm(31);
-        BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
-          .addReg(SrcReg);
-      }
+      BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       return;
     }
 
