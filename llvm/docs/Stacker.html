@@ -25,8 +25,10 @@
     <ol>
       <li><a href="#stack">The Stack</a>
       <li><a href="#punctuation">Punctuation</a>
+      <li><a href="#comments">Comments</a>
       <li><a href="#literals">Literals</a>
       <li><a href="#words">Words</a>
+      <li><a href="style">Standard Style</a>
       <li><a href="#builtins">Built-Ins</a>
     </ol>
   </li>
@@ -40,6 +42,8 @@
       <li><a href="#runtime">The Runtime</a></li>
       <li><a href="#driver">Compiler Driver</a></li>
       <li><a href="#tests">Test Programs</a></li>
+      <li><a href="#exercise">Exercise</a></li>
+      <li><a href="#todo">Things Remaining To Be Done</a></li>
     </ol>
   </li>
 </ol>
@@ -53,9 +57,9 @@
 <div class="doc_text">
 <p>This document is another way to learn about LLVM. Unlike the 
 <a href="LangRef.html">LLVM Reference Manual</a> or 
-<a href="ProgrammersManual.html">LLVM Programmer's Manual</a>, this
-document walks you through the implementation of a programming language
-named Stacker. Stacker was invented specifically as a demonstration of
+<a href="ProgrammersManual.html">LLVM Programmer's Manual</a>, we learn
+about LLVM through the experience of creating a simple programming language
+named Stacker.  Stacker was invented specifically as a demonstration of
 LLVM. The emphasis in this document is not on describing the
 intricacies of LLVM itself, but on how to use it to build your own
 compiler system.</p>
@@ -80,7 +84,7 @@ programming language; its very simple.  Although it is computationally
 complete, you wouldn't use it for your next big project. However, 
 the fact that it is complete, its simple, and it <em>doesn't</em> have 
 a C-like syntax make it useful for demonstration purposes. It shows
-that LLVM could be applied to a wide variety of language syntaxes.</p>
+that LLVM could be applied to a wide variety of languages.</p>
 <p>The basic notions behind stacker is very simple. There's a stack of 
 integers (or character pointers) that the program manipulates. Pretty 
 much the only thing the program can do is manipulate the stack and do 
@@ -106,24 +110,30 @@ written Stacker definitions have that characteristic. </p>
 <!-- ======================================================================= -->
 <div class="doc_section"><a name="lessons"></a>Lessons I Learned About LLVM</div>
 <div class="doc_text">
-<p>Stacker was written for two purposes: (a) to get the author over the 
-learning curve and (b) to provide a simple example of how to write a compiler
-using LLVM. During the development of Stacker, many lessons about LLVM were
+<p>Stacker was written for two purposes: </p>
+<ol>
+    <li>to get the author over the learning curve, and</li>
+    <li>to provide a simple example of how to write a compiler using LLVM.</li>
+</ol>
+<p>During the development of Stacker, many lessons about LLVM were
 learned. Those lessons are described in the following subsections.<p>
 </div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="value"></a>Everything's a Value!</div>
 <div class="doc_text">
-<p>Although I knew that LLVM used a Single Static Assignment (SSA) format, 
+<p>Although I knew that LLVM uses a Single Static Assignment (SSA) format, 
 it wasn't obvious to me how prevalent this idea was in LLVM until I really
-started using it.  Reading the Programmer's Manual and Language Reference I
-noted that most of the important LLVM IR (Intermediate Representation) C++ 
+started using it.  Reading the <a href="ProgrammersManual.html">
+Programmer's Manual</a> and <a href="LangRef.html">Language Reference</a>
+I noted that most of the important LLVM IR (Intermediate Representation) C++ 
 classes were derived from the Value class. The full power of that simple
 design only became fully understood once I started constructing executable
 expressions for Stacker.</p>
 <p>This really makes your programming go faster. Think about compiling code
-for the following C/C++ expression: (a|b)*((x+1)/(y+1)). You could write a
-function using LLVM that does exactly that, this way:</p>
+for the following C/C++ expression: <code>(a|b)*((x+1)/(y+1))</code>. Assuming
+the values are on the stack in the order a, b, x, y, this could be
+expressed in stacker as: <code>1 + SWAP 1 + / ROT2 OR *</code>.
+You could write a function using LLVM that computes this expression like this: </p>
 <pre><code>
 Value* 
 expression(BasicBlock*bb, Value* a, Value* b, Value* x, Value* y )
@@ -146,19 +156,19 @@ expression(BasicBlock*bb, Value* a, Value* b, Value* x, Value* y )
 </code></pre>
 <p>"Okay, big deal," you say.  It is a big deal. Here's why. Note that I didn't
 have to tell this function which kinds of Values are being passed in. They could be
-instructions, Constants, Global Variables, etc. Furthermore, if you specify Values
-that are incorrect for this sequence of operations, LLVM will either notice right
-away (at compilation time) or the LLVM Verifier will pick up the inconsistency
-when the compiler runs. In no case will you make a type error that gets passed
-through to the generated program. This <em>really</em> helps you write a compiler
-that always generates correct code!<p>
+<code>Instruction</code>s, <code>Constant</code>s, <code>GlobalVariable</code>s, 
+etc. Furthermore, if you specify Values that are incorrect for this sequence of 
+operations, LLVM will either notice right away (at compilation time) or the LLVM 
+Verifier will pick up the inconsistency when the compiler runs. In no case will 
+you make a type error that gets passed through to the generated program. 
+This <em>really</em> helps you write a compiler that always generates correct code!<p>
 <p>The second point is that we don't have to worry about branching, registers,
 stack variables, saving partial results, etc. The instructions we create 
 <em>are</em> the values we use. Note that all that was created in the above
 code is a Constant value and five operators. Each of the instructions <em>is</em> 
-the resulting value of that instruction.</p>
+the resulting value of that instruction. This saves a lot of time.</p>
 <p>The lesson is this: <em>SSA form is very powerful: there is no difference
-    between a value and the instruction that created it.</em> This is fully
+between a value and the instruction that created it.</em> This is fully
 enforced by the LLVM IR. Use it to your best advantage.</p>
 </div>
 <!-- ======================================================================= -->
@@ -186,8 +196,7 @@ the compiler and the module you just created fails on the LLVM Verifier.</p>
 <div class="doc_subsection"><a name="blocks"></a>Concrete Blocks</div>
 <div class="doc_text">
 <p>After a little initial fumbling around, I quickly caught on to how blocks
-should be constructed. The use of the standard template library really helps
-simply the interface. In general, here's what I learned:
+should be constructed. In general, here's what I learned:
 <ol>
     <li><em>Create your blocks early.</em> While writing your compiler, you 
     will encounter several situations where you know apriori that you will
@@ -206,19 +215,17 @@ simply the interface. In general, here's what I learned:
     <code>getTerminator()</code> method on a <code>BasicBlock</code>), it can
     always be used as the <code>insert_before</code> argument to your instruction
     constructors. This causes the instruction to automatically be inserted in 
-    the RightPlace&tm; place, just before the terminating instruction. The 
+    the RightPlace&trade; place, just before the terminating instruction. The 
     nice thing about this design is that you can pass blocks around and insert 
-    new instructions into them without ever known what instructions came 
+    new instructions into them without ever knowing what instructions came 
     before. This makes for some very clean compiler design.</li>
 </ol>
 <p>The foregoing is such an important principal, its worth making an idiom:</p>
-<pre>
-<code>
+<pre><code>
 BasicBlock* bb = new BasicBlock();</li>
 bb->getInstList().push_back( new Branch( ... ) );
 new Instruction(..., bb->getTerminator() );
-</code>
-</pre>
+</code></pre>
 <p>To make this clear, consider the typical if-then-else statement
 (see StackerCompiler::handle_if() method).  We can set this up
 in a single function using LLVM in the following way: </p>
@@ -254,8 +261,7 @@ MyCompiler::handle_if( BasicBlock* bb, SetCondInst* condition )
 the instructions for the "then" and "else" parts. They would use the third part
 of the idiom almost exclusively (inserting new instructions before the 
 terminator). Furthermore, they could even recurse back to <code>handle_if</code> 
-should they encounter another if/then/else statement and it will all "just work".
-<p>
+should they encounter another if/then/else statement and it will just work.</p>
 <p>Note how cleanly this all works out. In particular, the push_back methods on
 the <code>BasicBlock</code>'s instruction list. These are lists of type 
 <code>Instruction</code> which also happen to be <code>Value</code>s. To create 
@@ -312,10 +318,10 @@ pointer. The second index subscripts the array. If you're a "C" programmer, this
 will run against your grain because you'll naturally think of the global array
 variable and the address of its first element as the same. That tripped me up
 for a while until I realized that they really do differ .. by <em>type</em>.
-Remember that LLVM is a strongly typed language itself. Absolutely everything
+Remember that LLVM is a strongly typed language itself. Everything
 has a type.  The "type" of the global variable is [24 x int]*. That is, its
 a pointer to an array of 24 ints.  When you dereference that global variable with
-a single index, you now have a " [24 x int]" type, the pointer is gone. Although
+a single (0) index, you now have a "[24 x int]" type.  Although
 the pointer value of the dereferenced global and the address of the zero'th element
 in the array will be the same, they differ in their type. The zero'th element has
 type "int" while the pointer value has type "[24 x int]".</p>
@@ -333,7 +339,7 @@ the concepts are related and similar but not precisely the same. This can lead
 you to think you know what a linkage type represents but in fact it is slightly
 different. I recommend you read the 
 <a href="LangRef.html#linkage"> Language Reference on this topic</a> very 
-carefully.<p>
+carefully. Then, read it again.<p>
 <p>Here are some handy tips that I discovered along the way:</p>
 <ul>
     <li>Unitialized means external. That is, the symbol is declared in the current
@@ -366,12 +372,13 @@ functions in the LLVM IR that make things easier. Here's what I learned: </p>
 </div>
 <!-- ======================================================================= -->
 <div class="doc_section"> <a name="lexicon">The Stacker Lexicon</a></div>
+<div class="doc_text"><p>This section describes the Stacker language</p></div>
 <div class="doc_subsection"><a name="stack"></a>The Stack</div>
 <div class="doc_text">
 <p>Stacker definitions define what they do to the global stack. Before
 proceeding, a few words about the stack are in order. The stack is simply
 a global array of 32-bit integers or pointers. A global index keeps track
-of the location of the to of the stack. All of this is hidden from the 
+of the location of the top of the stack. All of this is hidden from the 
 programmer but it needs to be noted because it is the foundation of the 
 conceptual programming model for Stacker. When you write a definition,
 you are, essentially, saying how you want that definition to manipulate
@@ -384,7 +391,7 @@ can be interpreted as an integer with good results. However, using a
 word that interprets that boolean value as a pointer to a string to
 print out will almost always yield a crash. Stacker simply leaves it
 to the programmer to get it right without any interference or hindering
-on interpretation of the stack values. You've been warned :) </p>
+on interpretation of the stack values. You've been warned. :) </p>
 </div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="punctuation"></a>Punctuation</div>
@@ -393,8 +400,31 @@ on interpretation of the stack values. You've been warned :) </p>
 characters are used to introduce and terminate a definition
 (respectively). Except for <em>FORWARD</em> declarations, definitions 
 are all you can specify in Stacker.  Definitions are read left to right. 
-Immediately after the semi-colon comes the name of the word being defined. 
-The remaining words in the definition specify what the word does.</p>
+Immediately after the colon comes the name of the word being defined. 
+The remaining words in the definition specify what the word does. The definition
+is terminated by a semi-colon.</p>
+<p>So, your typical definition will have the form:</p>
+<pre><code>: name ... ;</code></pre>
+<p>The <code>name</code> is up to you but it must start with a letter and contain
+only letters numbers and underscore. Names are case sensitive and must not be
+the same as the name of a built-in word. The <code>...</code> is replaced by
+the stack manipulting words that you wish define <code>name</code> as. <p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="comments"></a>Comments</div>
+<div class="doc_text">
+    <p>Stacker supports two types of comments. A hash mark (#) starts a comment
+    that extends to the end of the line. It is identical to the kind of comments
+    commonly used in shell scripts. A pair of parentheses also surround a comment.
+    In both cases, the content of the comment is ignored by the Stacker compiler. The
+    following does nothing in Stacker.
+    </p>
+<pre><code>
+# This is a comment to end of line
+( This is an enclosed comment )
+</code></pre>
+<p>See the <a href="#example">example</a> program to see how this works in 
+a real program.</p>
 </div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="literals"></a>Literals</div>
@@ -416,11 +446,11 @@ the stack. It is assumed that the programmer knows how the stack
 transformation he applies will affect the program.</p>
 <p>Words in a definition come in two flavors: built-in and programmer
 defined. Simply mentioning the name of a previously defined or declared
-programmer-defined word causes that words definition to be invoked. It
+programmer-defined word causes that word's definition to be invoked. It
 is somewhat like a function call in other languages. The built-in
 words have various effects, described below.</p>
 <p>Sometimes you need to call a word before it is defined. For this, you can
-use the <code>FORWARD</code> declaration. It looks like this</p>
+use the <code>FORWARD</code> declaration. It looks like this:</p>
 <p><code>FORWARD name ;</code></p>
 <p>This simply states to Stacker that "name" is the name of a definition
 that is defined elsewhere. Generally it means the definition can be found
@@ -467,7 +497,7 @@ using the following construction:</p>
     <li><em>b</em> - a boolean truth value</li>
     <li><em>w</em> - a normal integer valued word.</li>
     <li><em>s</em> - a pointer to a string value</li>
-    <li><em>p</em> - a pointer to a malloc's memory block</li>
+    <li><em>p</em> - a pointer to a malloc'd memory block</li>
 </ol>
 </div>
 <div class="doc_text">
@@ -775,15 +805,14 @@ using the following construction:</p>
     <td>ROLL</td>
     <td>x0 x1 .. xn n -- x1 .. xn x0</td>
     <td><b>Not Implemented</b>. This one has been left as an exercise to
-	the student. If you can implement this one you understand Stacker
-	and probably a fair amount about LLVM since this is one of the
-	more complicated Stacker operations.  See the StackerCompiler.cpp 
-	file in the projects/Stacker/lib/compiler directory.  The operation 
-	of ROLL is like a generalized ROT. That is ROLL with n=1 is the 
-	same as ROT. The n value (top of stack) is used as an index to 
-	select a value up the stack that is <em>moved</em> to the top of 
-	the stack. See the implementations of PICk and SELECT to get 
-	some hints.<p>
+	the student. See <a href="#exercise">Exercise</a>. ROLL requires 
+    a value, "n", to be on the top of the stack. This value specifies how 
+    far into the stack to "roll". The n'th value is <em>moved</em> (not
+    copied) from its location and replaces the "n" value on the top of the
+    stack. In this way, all the values between "n" and x0 roll up the stack.
+    The operation of ROLL is a generalized ROT.  The "n" value specifies 
+    how much to rotate. That is, ROLL with n=1 is the same as ROT and 
+    ROLL with n=2 is the same as ROT2.</td>
 </tr>
 <tr><td colspan="4">MEMORY OPERATIONS</td></tr>
 <tr><td>Word</td><td>Name</td><td>Operation</td><td>Description</td></tr>
@@ -1265,6 +1294,53 @@ directory contains everything, as follows:</p>
 <div class="doc_text">
 <p>See projects/Stacker/test/*.st</p>
 </p></div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="exercise">Exercise</a></div>
+<div class="doc_text">
+<p>As you may have noted from a careful inspection of the Built-In word
+definitions, the ROLL word is not implemented. This word was left out of 
+Stacker on purpose so that it can be an exercise for the student.  The exercise 
+is to implement the ROLL functionality (in your own workspace) and build a test 
+program for it.  If you can implement ROLL you understand Stacker and probably 
+a fair amount about LLVM since this is one of the more complicated Stacker 
+operations. The work will almost be completely limited to the 
+<a href="#compiler">compiler</a>.  
+<p>The ROLL word is already recognized by both the lexer and parser but ignored 
+by the compiler. That means you don't have to futz around with figuring out how
+to get the keyword recognized. It already is.  The part of the compiler that
+you need to implement is the <code>ROLL</code> case in the 
+<code>StackerCompiler::handle_word(int)</code> method.</p> See the implementations 
+of PICk and SELECT in the same method to get some hints about how to complete
+this exercise.<p>
+<p>Good luck!</p>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="todo">Things Remaining To Be Done</a></div>
+<div class="doc_text">
+<p>The initial implementation of Stacker has several deficiencies. If you're
+interested, here are some things that could be implemented better:</p>
+<ol>
+    <li>Write an LLVM pass to compute the correct stack depth needed by the
+    program.</li>
+    <li>Write an LLVM pass to optimize the use of the global stack. The code
+    emitted currently is somewhat wasteful. It gets cleaned up a lot by existing
+    passes but more could be done.</li>
+    <li>Add -O -O1 -O2 and -O3 optimization switches to the compiler driver to
+    allow LLVM optimization without using "opt"</li>
+    <li>Make the compiler driver use the LLVM linking facilities (with IPO) before 
+    depending on GCC to do the final link.</li>
+    <li>Clean up parsing. It doesn't handle errors very well.</li>
+    <li>Rearrange the StackerCompiler.cpp code to make better use of inserting
+    instructions before a block's terminating instruction. I didn't figure this
+    technique out until I was nearly done with LLVM. As it is, its a bad example 
+    of how to insert instructions!</li>
+    <li>Provide for I/O to arbitrary files instead of just stdin/stdout.</li>
+    <li>Write additional built-in words.</li>
+    <li>Write additional sample Stacker programs.</li>
+    <li>Add your own compiler writing experiences and tips in the <a href="lessons">
+    Lessons I Learned About LLVM</a> section.</li>
+</ol>
+</div>
 <!-- ======================================================================= -->
 <hr>
 <div class="doc_footer">
