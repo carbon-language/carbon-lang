@@ -22,7 +22,6 @@
 #include "Interpreter.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
@@ -541,47 +540,8 @@ GenericValue lle_X_memcpy(FunctionType *M, const vector<GenericValue> &Args) {
 //===----------------------------------------------------------------------===//
 
 // getFILE - Turn a pointer in the host address space into a legit pointer in
-// the interpreter address space.  For the most part, this is an identity
-// transformation, but if the program refers to stdio, stderr, stdin then they
-// have pointers that are relative to the __iob array.  If this is the case,
-// change the FILE into the REAL stdio stream.
-// 
-static FILE *getFILE(void *Ptr) {
-  static Module *LastMod = 0;
-  static PointerTy IOBBase = 0;
-  static unsigned FILESize;
-
-  if (LastMod != &TheInterpreter->getModule()) { // Module change or initialize?
-    Module *M = LastMod = &TheInterpreter->getModule();
-
-    // Check to see if the currently loaded module contains an __iob symbol...
-    GlobalVariable *IOB = 0;
-    SymbolTable &ST = M->getSymbolTable();
-    for (SymbolTable::iterator I = ST.begin(), E = ST.end(); I != E; ++I) {
-      SymbolTable::VarMap &M = I->second;
-      for (SymbolTable::VarMap::iterator J = M.begin(), E = M.end();
-           J != E; ++J)
-        if (J->first == "__iob")
-          if ((IOB = dyn_cast<GlobalVariable>(J->second)))
-            break;
-      if (IOB) break;
-    }
-  }
-
-  // Check to see if this is a reference to __iob...
-  if (IOBBase) {
-    unsigned FDNum = ((unsigned long)Ptr-IOBBase)/FILESize;
-    if (FDNum == 0)
-      return stdin;
-    else if (FDNum == 1)
-      return stdout;
-    else if (FDNum == 2)
-      return stderr;
-  }
-
-  return (FILE*)Ptr;
-}
-
+// the interpreter address space.  This is an identity transformation.
+#define getFILE(ptr) ((FILE*)ptr)
 
 // FILE *fopen(const char *filename, const char *mode);
 GenericValue lle_X_fopen(FunctionType *M, const vector<GenericValue> &Args) {
