@@ -18,6 +18,10 @@ The <tt>llvm-prof</tt> tool reads in an '<tt>llvmprof.out</tt>' file, a bytecode
 file for the program, and produces a human readable report, suitable for
 determining where the program hotspots are.<p>
 
+This program is often used in conjunction with the <tt>utils/profile.sh</tt>
+script.  This script automatically instruments a program, runs it with the JIT,
+then runs <tt>llvm-prof</tt> to format a report.  To get more information about
+<tt>utils/profile.sh</tt>, execute it with the <tt>--help</tt> option.<p>
 
 <h3>OPTIONS</h3>
 
