@@ -5,8 +5,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CONSTPOOLVALS_H
-#define LLVM_CONSTPOOLVALS_H
+#ifndef LLVM_CONSTANT_VALS_H
+#define LLVM_CONSTANT_VALS_H
 
 #include "llvm/User.h"
 #include "Support/DataTypes.h"
@@ -39,10 +39,10 @@ public:
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
   // Static constructor to get a '0' constant of arbitrary type...
-  static Constant *getNullConstant(const Type *Ty);
+  static Constant *getNullValue(const Type *Ty);
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const = 0;
 
   virtual void print(std::ostream &O) const;
@@ -81,7 +81,7 @@ public:
   inline bool getValue() const { return Val; }
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return this == False; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -125,7 +125,7 @@ public:
   static ConstantInt *get(const Type *Ty, unsigned char V);
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return Val.Unsigned == 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -198,7 +198,7 @@ public:
   inline double getValue() const { return Val; }
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return Val == 0; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -231,7 +231,7 @@ public:
   inline const std::vector<Use> &getValues() const { return Operands; }
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -264,7 +264,7 @@ public:
   inline const std::vector<Use> &getValues() const { return Operands; }
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -293,7 +293,7 @@ public:
   }
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return false; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -316,7 +316,7 @@ public:
   static ConstantPointerNull *get(const PointerType *T);
 
   // isNullValue - Return true if this is the value that would be returned by
-  // getNullConstant.
+  // getNullValue.
   virtual bool isNullValue() const { return true; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
