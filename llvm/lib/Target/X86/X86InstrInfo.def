@@ -91,7 +91,7 @@ I(XORrr16     , "xorw",  0x31,             0, X86II::MRMDestReg | X86II::OpSize)
 I(XORrr32     , "xorl",  0x31,             0, X86II::MRMDestReg)                 // R32 ^= R32   31/r
 
 // Shift instructions
-I(SHLrr8      , "shlb",  0xD2,             0, 0)                                 // R8   <<= cl   D2/4
+I(SHLrr8      , "shlb",  0xD2,             0, X86II::MRMS4r)                     // R8   <<= cl   D2/4
 I(SHLrr16     , "shlw",  0xD3,             0, X86II::OpSize)                     // R16  <<= cl   D3/4
 I(SHLrr32     , "shll",  0xD3,             0, 0)                                 // R32  <<= cl   D3/4
 I(SHLir8      , "shlb",  0xC0,             0, 0)                                 // R8   <<= imm8 C0/4 ib
@@ -121,22 +121,22 @@ I(FUCOMPP     , "fucompp", 0xDA,           0, X86II::Void)                      
 I(FNSTSWr8    , "fnstsw", 0xDF,            0, X86II::Void)                       // AX = fp flags DF E0
 
 // Condition code ops, incl. set if equal/not equal/...
-I(SAHF        , "sahf",  0x9E,             0, 0)                                 // flags = AH    9E
-I(SETAr       , "seta",  0x97,             0, X86II::TB)                         // R8 = > unsign 0F 97
-I(SETAEr      , "setae", 0x93,             0, X86II::TB)                         // R8 = >=unsign 0F 93
-I(SETBr       , "setb",  0x92,             0, X86II::TB)                         // R8 = < unsign 0F 92
-I(SETBEr      , "setbe", 0x96,             0, X86II::TB)                         // R8 = <=unsign 0F 96
-I(SETEr       , "sete",  0x94,             0, X86II::TB)                         // R8 = ==       0F 94
-I(SETGr       , "setg",  0x9F,             0, X86II::TB)                         // R8 = > signed 0F 9F
-I(SETGEr      , "setge", 0x9D,             0, X86II::TB)                         // R8 = >=signed 0F 9D
-I(SETLr       , "setl",  0x9C,             0, X86II::TB)                         // R8 = < signed 0F 9C
-I(SETLEr      , "setle", 0x9E,             0, X86II::TB)                         // R8 = <=signed 0F 9E
-I(SETNEr      , "setne", 0x95,             0, X86II::TB)                         // R8 = !=       0F 95
+I(SAHF        , "sahf",  0x9E,             0, X86II::RawFrm)                     // flags = AH
+I(SETBr       , "setb",  0x92,             0, X86II::TB | X86II::MRMS0r)         // R8 = < unsign
+I(SETAEr      , "setae", 0x93,             0, X86II::TB | X86II::MRMS0r)         // R8 = >=unsign
+I(SETEr       , "sete",  0x94,             0, X86II::TB | X86II::MRMS0r)         // R8 = ==
+I(SETNEr      , "setne", 0x95,             0, X86II::TB | X86II::MRMS0r)         // R8 = !=
+I(SETBEr      , "setbe", 0x96,             0, X86II::TB | X86II::MRMS0r)         // R8 = <=unsign
+I(SETAr       , "seta",  0x97,             0, X86II::TB | X86II::MRMS0r)         // R8 = > unsign
+I(SETLr       , "setl",  0x9C,             0, X86II::TB | X86II::MRMS0r)         // R8 = < signed
+I(SETGEr      , "setge", 0x9D,             0, X86II::TB | X86II::MRMS0r)         // R8 = >=signed
+I(SETLEr      , "setle", 0x9E,             0, X86II::TB | X86II::MRMS0r)         // R8 = <=signed
+I(SETGr       , "setg",  0x9F,             0, X86II::TB | X86II::MRMS0r)         // R8 = > signed
 
 // Integer comparisons
-I(CMPrr8      , "cmpb",  0x38,             0, X86II::MRMDestReg)                 // compare R8,R8   38/r
-I(CMPrr16     , "cmpw",  0x39,             0, X86II::MRMDestReg | X86II::OpSize) // compare R16,R16 39/r
-I(CMPrr32     , "cmpl",  0x39,             0, X86II::MRMDestReg)                 // compare R32,R32 39/r
+I(CMPrr8      , "cmpb",  0x38,             0, X86II::MRMDestReg)                 // compare R8,R8
+I(CMPrr16     , "cmpw",  0x39,             0, X86II::MRMDestReg | X86II::OpSize) // compare R16,R16
+I(CMPrr32     , "cmpl",  0x39,             0, X86II::MRMDestReg)                 // compare R32,R32
 I(CMPri8      , "cmp",   0x80,             0, 0)                                 // compare R8, imm8 80 /7 ib
 
 // Sign extenders (first 3 are good for DIV/IDIV; the others are more general)
