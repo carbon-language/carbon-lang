@@ -528,6 +528,20 @@ SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
 }
 
 
+inline void
+CreateSSAEdge(SchedGraph* graph,
+              MachineInstr* defInstr,
+              SchedGraphNode* node,
+              const Value* val)
+{
+  // this instruction does define value `val'.
+  // if there is a node for it in the same graph, add an edge.
+  SchedGraphNode* defNode = graph->getGraphNodeForInstr(defInstr);
+  if (defNode != NULL && defNode != node)
+    (void) new SchedGraphEdge(defNode, node, val);
+}
+
+
 void
 SchedGraph::addSSAEdge(SchedGraphNode* node,
 		       const Value* val,
@@ -552,22 +566,37 @@ SchedGraph::addSSAEdge(SchedGraphNode* node,
   const MachineInstrInfo& mii = target.getInstrInfo();
   
   for (unsigned i=0, N=defMvec.size(); i < N; i++)
-    for (int o=0, N = mii.getNumOperands(defMvec[i]->getOpCode()); o < N; o++)
-      {
-	const MachineOperand& defOp = defMvec[i]->getOperand(o); 
-	
-	if (defOp.opIsDef()
-	    && (defOp.getOperandType() == MachineOperand::MO_VirtualRegister
-		|| defOp.getOperandType() == MachineOperand::MO_CCRegister)
-	    && (defOp.getVRegValue() == val))
-	  {
-	    // this instruction does define value `val'.
-	    // if there is a node for it in the same graph, add an edge.
-	    SchedGraphNode* defNode = this->getGraphNodeForInstr(defMvec[i]);
-	    if (defNode != NULL && defNode != node)
-              (void) new SchedGraphEdge(defNode, node, val);
-	  }
-      }
+    {
+      bool edgeAddedForInstr = false;
+      
+      // First check the explicit operands
+      for (int o=0, N=mii.getNumOperands(defMvec[i]->getOpCode()); o < N; o++)
+        {
+          const MachineOperand& defOp = defMvec[i]->getOperand(o); 
+          
+          if (defOp.opIsDef()
+              && (defOp.getOperandType() == MachineOperand::MO_VirtualRegister
+                  || defOp.getOperandType() == MachineOperand::MO_CCRegister)
+              && (defOp.getVRegValue() == val))
+            {
+              CreateSSAEdge(this, defMvec[i], node, val);
+              edgeAddedForInstr = true;
+              break;
+            }
+        }
+      
+      // Then check the implicit operands
+      if (! edgeAddedForInstr)
+        {
+          for (unsigned o=0, N=defMvec[i]->getNumImplicitRefs(); o < N; ++o)
+            if (defMvec[i]->implicitRefIsDefined(o))
+              {
+                CreateSSAEdge(this, defMvec[i], node, val);
+                edgeAddedForInstr = true;
+                break;
+              }
+        }
+    }
 }
 
 
@@ -624,18 +653,14 @@ SchedGraph::addEdgesForInstruction(const MachineInstr& minstr,
 	  break;
 	}
     }
-
-  // Add edges for values implicitly used by the machine instruction sequence
-  // for the VM instruction but not made explicit operands.  Examples include
-  // function arguments to a Call instructions or the return value of a Ret
-  // instruction.  We'll conservatively add the dependences to every machine
-  // machine instruction in the instruction sequence for this VM instr
-  // (at least for now, there is never more than one machine instr).
+  
+  // Add edges for values implicitly used by the machine instruction.
+  // Examples include function arguments to a Call instructions or the return
+  // value of a Ret instruction.
   // 
-  const vector<Value*>& implicitUses =
-    instr.getMachineInstrVec().getImplicitUses();
-  for (unsigned i=0; i < implicitUses.size(); ++i)
-    addSSAEdge(node, implicitUses[i], target);
+  for (unsigned i=0, N=minstr.getNumImplicitRefs(); i < N; ++i)
+    if (! minstr.implicitRefIsDefined(i))
+      addSSAEdge(node, minstr.getImplicitRef(i), target);
 }
 
 
