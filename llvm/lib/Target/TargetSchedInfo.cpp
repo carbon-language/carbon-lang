@@ -243,7 +243,7 @@ void InstrRUsage::addUsageDelta(const InstrRUsageDelta &delta) {
 	// for that resource in each cycle.
 	std::vector<resourceId_t>& rvec = this->resourcesByCycle[c];
 	int r;
-	for (r = (int) rvec.size(); r >= 0; r--)
+	for (r = rvec.size() - 1; r >= 0; r--)
 	  if (rvec[r] == delta.resourceId)
 	    {// found last entry for the resource
 	      rvec.erase(rvec.begin() + r);
