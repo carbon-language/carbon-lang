@@ -81,7 +81,6 @@ namespace {
   };
 }  // end of anonymous namespace
 
-
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
@@ -97,11 +96,11 @@ void PromoteMem2Reg::run() {
 
     // Calculate the set of write-locations for each alloca.  This is analogous
     // to counting the number of 'redefinitions' of each variable.
-    std::vector<BasicBlock*> WriteSets;
+    std::vector<BasicBlock*> DefiningBlocks;
     for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E; ++U)
       if (StoreInst *SI = dyn_cast<StoreInst>(cast<Instruction>(*U)))
         // jot down the basic-block it came from
-        WriteSets.push_back(SI->getParent());
+        DefiningBlocks.push_back(SI->getParent());
 
     AllocaLookup[Allocas[i]] = i;
     
@@ -112,27 +111,18 @@ void PromoteMem2Reg::run() {
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
     //
-    for (unsigned j = 0; j != WriteSets.size(); j++) {
+    while (!DefiningBlocks.empty()) {
+      BasicBlock *BB = DefiningBlocks.back();
+      DefiningBlocks.pop_back();
+
       // Look up the DF for this write, add it to PhiNodes
-      DominanceFrontier::const_iterator it = DF.find(WriteSets[j]);
+      DominanceFrontier::const_iterator it = DF.find(BB);
       if (it != DF.end()) {
         const DominanceFrontier::DomSetType &S = it->second;
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
              P != PE; ++P)
           if (QueuePhiNode(*P, i))
-            PhiNodeBlocks.push_back(*P);
-      }
-    }
-    
-    // Perform iterative step
-    for (unsigned k = 0; k != PhiNodeBlocks.size(); k++) {
-      DominanceFrontier::const_iterator it = DF.find(PhiNodeBlocks[k]);
-      if (it != DF.end()) {
-        const DominanceFrontier::DomSetType &S = it->second;
-        for (DominanceFrontier::DomSetType::iterator
-               P = S.begin(), PE = S.end(); P != PE; ++P)
-          if (QueuePhiNode(*P, i))
-            PhiNodeBlocks.push_back(*P);
+            DefiningBlocks.push_back(*P);
       }
     }
   }
