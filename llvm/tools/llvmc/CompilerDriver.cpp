@@ -212,20 +212,20 @@ CompilerDriver::Action* CompilerDriver::GetAction(ConfigData* cd,
   StringVector::iterator PI = pat->args.begin();
   StringVector::iterator PE = pat->args.end();
   while (PI != PE) {
-    if ((*PI)[0] == '@') {
-      if (*PI == "@in@") {
+    if ((*PI)[0] == '%') {
+      if (*PI == "%in%") {
         action->args.push_back(input);
-      } else if (*PI == "@out@") {
+      } else if (*PI == "%out%") {
         action->args.push_back(output);
-      } else if (*PI == "@time@") {
+      } else if (*PI == "%time%") {
         if (timePasses)
           action->args.push_back("-time-passes");
-      } else if (*PI == "@stats@") {
+      } else if (*PI == "%stats%") {
         if (showStats)
           action->args.push_back("-stats");
-      } else if (*PI == "@target@") {
+      } else if (*PI == "%target%") {
         // FIXME: Ignore for now
-      } else if (*PI == "@opt@") {
+      } else if (*PI == "%opt%") {
         if (!emitRawCode) {
           if (pat->isSet(GROKS_DASH_O)) {
             if (optLevel != OPT_NONE) {

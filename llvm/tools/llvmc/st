@@ -5,12 +5,12 @@
 ##########################################################
   lang.name=Stacker 
   lang.opt1=-simplifycfg -instcombine -mem2reg
-  lang.opt2=-simplifycfg -instcombine -mem2reg -scalarrepl -sccp
-  lang.opt3=-simplifycfg -instcombine -mem2reg -scalarrepl -sccp \
+  lang.opt2=-simplifycfg -instcombine -mem2reg -load-vn -gcse -dse -scalarrepl -sccp
+  lang.opt3=-simplifycfg -instcombine -mem2reg -load-vn -gcse -dse -scalarrepl -sccp \
   -branch-combine -adce -globaldce -inline -licm -pre
-  lang.opt4=-simplifycfg -instcombine -mem2reg -scalarrepl -sccp \
+  lang.opt4=-simplifycfg -instcombine -mem2reg -load-vn -gcse -dse -scalarrepl -sccp \
   -ipconstprop -branch-combine -adce -globaldce -inline -licm -pre
-  lang.opt5=-simplifycfg -instcombine -mem2reg -scalarrepl -sccp \
+  lang.opt5=-simplifycfg -instcombine -mem2reg --load-vn -gcse -dse scalarrepl -sccp \
   -ipconstprop -branch-combine -adce -globaldce -inline -licm -pre \
   -block-placement
 
@@ -20,7 +20,7 @@
 
   # Stacker doesn't have a preprocessor but the following
   # allows the -E option to be supported
-  preprocessor.command=cp @in@ @out@
+  preprocessor.command=cp %in% %out%
   preprocessor.required=false
 
 ##########################################################
@@ -29,7 +29,7 @@
 
   # To compile stacker source, we just run the stacker
   # compiler with a default stack size of 2048 entries.
-  translator.command=stkrc -s 2048 @in@ -o @out@ @time@ @stats@
+  translator.command=stkrc -s 2048 %in% -o %out% %time% %stats%
 
   # stkrc doesn't preprocess but we set this to true so
   # that we don't run the cp command by default.
@@ -49,7 +49,7 @@
 ##########################################################
   
   # For optimization, we use the LLVM "opt" program
-  optimizer.command=opt @in@ -o @out@ @opt@ @time@ @stats@
+  optimizer.command=opt %in% -o %out% %opt% %time% %stats%
 
   # opt doesn't (yet) grok -On
   optimizer.groks_dash_O=no
@@ -63,10 +63,11 @@
 ##########################################################
 # Assembler definitions
 ##########################################################
-  assembler.command=llc @in@ -o @out@ @target@ "-regalloc=linearscan" \
-  @time@ @stats@
+  assembler.command=llc %in% -o %out% %target% "-regalloc=linearscan" \
+  %time% %stats%
 
 ##########################################################
 # Linker definitions
 ##########################################################
-  linker.command=gccld @in@ -o @out@ -lstkr_runtime
+  linker.libs=stkr_runtime
+  linker.paths=

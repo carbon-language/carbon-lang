@@ -155,12 +155,12 @@ namespace {
 
     bool parseSubstitution(CompilerDriver::StringVector& optList) {
       switch (token) {
-        case IN_SUBST:          optList.push_back("@in@"); break;
-        case OUT_SUBST:         optList.push_back("@out@"); break;
-        case TIME_SUBST:        optList.push_back("@time@"); break;
-        case STATS_SUBST:       optList.push_back("@stats@"); break;
-        case OPT_SUBST:         optList.push_back("@opt@"); break;
-        case TARGET_SUBST:      optList.push_back("@target@"); break;
+        case IN_SUBST:          optList.push_back("%in%"); break;
+        case OUT_SUBST:         optList.push_back("%out%"); break;
+        case TIME_SUBST:        optList.push_back("%time%"); break;
+        case STATS_SUBST:       optList.push_back("%stats%"); break;
+        case OPT_SUBST:         optList.push_back("%opt%"); break;
+        case TARGET_SUBST:      optList.push_back("%target%"); break;
         default:
           return false;
       }

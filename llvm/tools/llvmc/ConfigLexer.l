@@ -76,7 +76,7 @@ inline llvm::ConfigLexerTokens handleBoolean(llvm::ConfigLexerTokens token) {
 %}
 
 ASSEMBLER       assembler|Assembler|ASSEMBLER
-BadSubst        \@[^iots][a-zA-Z]\@
+BadSubst        \%[^iots][a-zA-Z]\%
 COMMAND         command|Command|COMMAND
 Comment         \#[^\n]*\n
 NewLine         \n
@@ -93,7 +93,7 @@ OPT4            opt4|Opt4|OPT4
 OPT5            opt5|Opt5|OPT5
 OPTIMIZER       optimizer|Optimizer|OPTIMIZER
 OPTIMIZES       optimizes|Optimizes|OPTIMIZES
-Option          [-A-Za-z0-9_:%+/\\|,][-A-Za-z0-9_:%+/\\|,@]*
+Option          [-A-Za-z0-9_:%+/\\|,][-A-Za-z0-9_:+/\\|,@]*
 OUTPUT_IS_ASM   output_is_asm|Output_Is_Asm|OUTPUT_IS_ASM
 PREPROCESSES    preprocesses|PreProcesses|PREPROCESSES
 PREPROCESSOR    preprocessor|PreProcessor|PREPROCESSOR
@@ -154,12 +154,12 @@ No              no|No|NO
 {OPT4}          { return handleContext("opt4",OPT4); }
 {OPT5}          { return handleContext("opt5",OPT5); }
 
-@in@            { return handleSubstitution(IN_SUBST); }
-@out@           { return handleSubstitution(OUT_SUBST); }
-@time@          { return handleSubstitution(TIME_SUBST); }
-@stats@         { return handleSubstitution(STATS_SUBST); }
-@opt@           { return handleSubstitution(OPT_SUBST); }
-@target@        { return handleSubstitution(TARGET_SUBST); }
+%in%            { return handleSubstitution(IN_SUBST); }
+%out%           { return handleSubstitution(OUT_SUBST); }
+%time%          { return handleSubstitution(TIME_SUBST); }
+%stats%         { return handleSubstitution(STATS_SUBST); }
+%opt%           { return handleSubstitution(OPT_SUBST); }
+%target%        { return handleSubstitution(TARGET_SUBST); }
 {BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
 {True}          { return handleBoolean(TRUETOK); }
 {On}            { return handleBoolean(TRUETOK); }
