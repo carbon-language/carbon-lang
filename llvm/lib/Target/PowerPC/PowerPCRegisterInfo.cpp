@@ -68,7 +68,7 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
   abort();
 }
 
-int 
+void 
 PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
                                          unsigned SrcReg, int FrameIdx) const {
@@ -79,17 +79,15 @@ PowerPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC::LR) {
-    MBB.insert(MI, BuildMI(PPC::MFLR, 0, PPC::R0));
-    MBB.insert(MI, addFrameReference(BuildMI(OC,3).addReg(PPC::R0),FrameIdx));
-    return 2;
+    BuildMI(MBB, MI, PPC::MFLR, 0, PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R0),FrameIdx);
   } else {
-    MBB.insert(MI, BuildMI(PPC::IMPLICIT_DEF, 0, PPC::R0));
-    MBB.insert(MI, addFrameReference(BuildMI(OC, 3).addReg(SrcReg),FrameIdx));
-    return 2;
+    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(SrcReg),FrameIdx);
   }
 }
 
-int 
+void
 PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned DestReg, int FrameIdx) const{
@@ -99,32 +97,28 @@ PowerPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   const TargetRegisterClass *RC = getRegClass(DestReg);
   unsigned OC = Opcode[getIdx(RC)];
   if (DestReg == PPC::LR) {
-    MBB.insert(MI, addFrameReference(BuildMI(OC, 2, PPC::R0), FrameIdx));
-    MBB.insert(MI, BuildMI(PPC::MTLR, 1).addReg(PPC::R0));
-    return 2;
+    addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R0), FrameIdx);
+    BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R0);
   } else {
-    MBB.insert(MI, BuildMI(PPC::IMPLICIT_DEF, 0, PPC::R0));
-    MBB.insert(MI, addFrameReference(BuildMI(OC, 2, DestReg), FrameIdx));
-    return 2;
+    BuildMI(MBB, MI, PPC::IMPLICIT_DEF, 0, PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, OC, 2, DestReg), FrameIdx);
   }
 }
 
-int PowerPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator MI,
-                                      unsigned DestReg, unsigned SrcReg,
-                                      const TargetRegisterClass *RC) const {
+void PowerPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MI,
+                                       unsigned DestReg, unsigned SrcReg,
+                                       const TargetRegisterClass *RC) const {
   MachineInstr *I;
 
   if (RC == PowerPC::GPRCRegisterClass) {
-    I = BuildMI(PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PowerPC::FPRCRegisterClass) {
-    I = BuildMI(PPC::FMR, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, PPC::FMR, 1, DestReg).addReg(SrcReg);
   } else { 
     std::cerr << "Attempt to copy register that is not GPR or FPR";
     abort();
   }
-  MBB.insert(MI, I);
-  return 1;
 }
 
 //===----------------------------------------------------------------------===//
