@@ -171,7 +171,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 
 %token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD LET IN
 %token <IntVal>      INTVAL
-%token <StrVal>      ID STRVAL CODEFRAGMENT
+%token <StrVal>      ID VARNAME STRVAL CODEFRAGMENT
 
 %type <Ty>           Type
 %type <Rec>          ClassInst DefInst Object ObjectBody ClassID

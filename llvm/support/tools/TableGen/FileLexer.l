@@ -166,6 +166,8 @@ in             { return IN; }
 
 {Identifier}   { Filelval.StrVal = new std::string(yytext, yytext+yyleng);
                  return ID; }
+${Identifier}  { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
+                 return VARNAME; } 
 
 {StringVal}    { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng-1);
                  return STRVAL; }
