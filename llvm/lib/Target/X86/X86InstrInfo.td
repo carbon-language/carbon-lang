@@ -88,15 +88,8 @@ class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instr
   //
   bit hasOpSizePrefix = 0; // Does this inst have a 0x66 prefix?
 
-  // Flag whether implicit register usage is printed before/after the
-  // instruction
-  bit printImplicitUsesBefore = 0;
+  // Flag whether implicit register usage is printed after the instruction.
   bit printImplicitUsesAfter  = 0;
-
-  // Flag whether implicit register definitions are printed before/after the
-  // instruction
-  bit printImplicitDefsBefore = 0;
-  bit printImplicitDefsAfter  = 0;
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
   FPFormat FPForm;          // What flavor of FP instruction is this?

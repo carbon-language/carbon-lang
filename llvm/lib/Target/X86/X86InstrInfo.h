@@ -169,16 +169,7 @@ namespace X86II {
     // the normal operands.
     PrintImplUsesAfter = 1 << 18,
 
-    // PrintImplUsesBefore - Print out implicit uses in the assembly output
-    // before the normal operands.
-    PrintImplUsesBefore = 1 << 19,
-
-    // PrintImplDefsAfter - Print out implicit defs in the assembly output
-    // after the normal operands.
-    PrintImplDefsBefore = 1 << 20,
-    PrintImplDefsAfter  = 1 << 21,
-
-    OpcodeShift   = 22,
+    OpcodeShift   = 19,
     OpcodeMask    = 0xFF << OpcodeShift,
     // Bits 27 -> 31 are unused
   };

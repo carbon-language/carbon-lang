@@ -40,9 +40,6 @@ def X86InstrInfo : InstrInfo {
                        "ImmTypeBits",
                        "FPFormBits",
                        "printImplicitUsesAfter", 
-                       "printImplicitUsesBefore",
-                       "printImplicitDefsBefore",
-                       "printImplicitDefsAfter",
                        "Opcode"];
   let TSFlagsShifts = [0,
                        5,
@@ -51,10 +48,7 @@ def X86InstrInfo : InstrInfo {
                        13,
                        15,
                        18,
-                       19,
-                       20,
-                       21,
-                       22];
+                       19];
 }
 
 def X86 : Target {
