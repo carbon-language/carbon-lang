@@ -5,10 +5,91 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ConstantHandling.h"
+#include "llvm/Instruction.h"
 #include <cmath>
 
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
 						      &ConstRules::find));
+
+// ConstantFoldInstruction - Attempt to constant fold the specified instruction.
+// If successful, the constant result is returned, if not, null is returned.
+//
+Constant *ConstantFoldInstruction(Instruction *I) {
+  Constant *Op0 = 0;
+  Constant *Op1 = 0;
+
+  if (I->getNumOperands() != 0) {    // Get first operand if it's a constant...
+    Op0 = dyn_cast<Constant>(I->getOperand(0));
+    if (Op0 == 0) return 0;          // Not a constant?, can't fold
+
+    if (I->getNumOperands() != 1) {  // Get second operand if it's a constant...
+      Op1 = dyn_cast<Constant>(I->getOperand(1));
+      if (Op1 == 0) return 0;        // Not a constant?, can't fold
+    }
+  }
+
+  switch (I->getOpcode()) {
+  case Instruction::Cast:
+    return ConstRules::get(*Op0)->castTo(Op0, I->getType());
+  case Instruction::Not:     return ~*Op0;
+  case Instruction::Add:     return *Op0 + *Op1;
+  case Instruction::Sub:     return *Op0 - *Op1;
+  case Instruction::Mul:     return *Op0 * *Op1;
+  case Instruction::Div:     return *Op0 / *Op1;
+  case Instruction::Rem:     return *Op0 % *Op1;
+
+  case Instruction::SetEQ:   return *Op0 == *Op1;
+  case Instruction::SetNE:   return *Op0 != *Op1;
+  case Instruction::SetLE:   return *Op0 <= *Op1;
+  case Instruction::SetGE:   return *Op0 >= *Op1;
+  case Instruction::SetLT:   return *Op0 <  *Op1;
+  case Instruction::SetGT:   return *Op0 >  *Op1;
+  case Instruction::Shl:     return *Op0 << *Op1;
+  case Instruction::Shr:     return *Op0 >> *Op1;
+  default:
+    return 0;
+  }
+}
+
+Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy) {
+  return ConstRules::get(*V)->castTo(V, DestTy);
+}
+
+Constant *ConstantFoldUnaryInstruction(unsigned Opcode, const Constant *V) {
+  switch (Opcode) {
+  case Instruction::Not:  return ~*V;
+  }
+  return 0;
+}
+
+Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
+                                        const Constant *V2) {
+  switch (Opcode) {
+  case Instruction::Add:     return *V1 + *V2;
+  case Instruction::Sub:     return *V1 - *V2;
+  case Instruction::Mul:     return *V1 * *V2;
+  case Instruction::Div:     return *V1 / *V2;
+  case Instruction::Rem:     return *V1 % *V2;
+
+  case Instruction::SetEQ:   return *V1 == *V2;
+  case Instruction::SetNE:   return *V1 != *V2;
+  case Instruction::SetLE:   return *V1 <= *V2;
+  case Instruction::SetGE:   return *V1 >= *V2;
+  case Instruction::SetLT:   return *V1 <  *V2;
+  case Instruction::SetGT:   return *V1 >  *V2;
+  }
+  return 0;
+}
+
+Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1, 
+                                       const Constant *V2) {
+  switch (Opcode) {
+  case Instruction::Shl:     return *V1 << *V2;
+  case Instruction::Shr:     return *V1 >> *V2;
+  default:                   return 0;
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             TemplateRules Class
