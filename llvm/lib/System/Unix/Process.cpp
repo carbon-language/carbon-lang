@@ -74,6 +74,10 @@ Process::GetTotalMemoryUsage()
 #if defined(HAVE_MALLINFO)
   struct mallinfo mi = ::mallinfo();
   return mi.uordblks + mi.hblkhd;
+#elif defined(HAVE_GETRUSAGE)
+  struct rusage usage;
+  ::getrusage(RUSAGE_SELF, &usage);
+  return usage.ru_maxrss;
 #else
 #warning Cannot get total memory size on this platform
   return 0;
