@@ -5,5 +5,13 @@ typedef struct foo {
   int Y;
 } * foo;
 
-foo F;
+foo F1;
+struct foo *F2;
+
+enum bar { test1, test2 };
+
+typedef float bar;
+
+enum bar B1;
+bar B2;
 
