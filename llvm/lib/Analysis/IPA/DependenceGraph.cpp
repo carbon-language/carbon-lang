@@ -24,6 +24,7 @@
 #include "llvm/Analysis/DependenceGraph.h"
 #include "llvm/Function.h"
 
+namespace llvm {
 
 //----------------------------------------------------------------------------
 // class Dependence:
@@ -82,3 +83,5 @@ void DependenceGraph::print(const Function& func, std::ostream &O) const
       if (const DepGraphNode* dgNode = this->getNode(*II))
         dgNode->print(O);
 }
+
+} // End llvm namespace

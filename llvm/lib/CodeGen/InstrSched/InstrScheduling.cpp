@@ -22,6 +22,8 @@
 #include "Support/CommandLine.h"
 #include <algorithm>
 
+namespace llvm {
+
 SchedDebugLevel_t SchedDebugLevel;
 
 static cl::opt<bool> EnableFillingDelaySlots("sched-fill-delay-slots",
@@ -1518,3 +1520,6 @@ bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
 FunctionPass *createInstructionSchedulingWithSSAPass(const TargetMachine &tgt) {
   return new InstructionSchedulingWithSSA(tgt);
 }
+
+} // End llvm namespace
+

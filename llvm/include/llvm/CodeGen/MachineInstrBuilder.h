@@ -25,6 +25,8 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 
+namespace llvm {
+
 class MachineInstrBuilder {
   MachineInstr *MI;
 public:
@@ -161,5 +163,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
                                               NumOperands+1)).addReg(DestReg,
                                                                      MOTy::Def);
 }
+
+} // End llvm namespace
 
 #endif

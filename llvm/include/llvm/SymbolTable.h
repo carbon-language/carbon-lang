@@ -26,6 +26,8 @@
 #include "llvm/Value.h"
 #include <map>
 
+namespace llvm {
+
 class SymbolTable : public AbstractTypeUser,
 		    public std::map<const Type *, 
                                     std::map<const std::string, Value *> > {
@@ -131,5 +133,7 @@ private:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 };
+
+} // End llvm namespace
 
 #endif

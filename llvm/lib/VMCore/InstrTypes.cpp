@@ -19,6 +19,8 @@
 #include "llvm/Type.h"
 #include <algorithm>  // find
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -56,3 +58,5 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
   }
   return Removed;
 }
+
+} // End llvm namespace

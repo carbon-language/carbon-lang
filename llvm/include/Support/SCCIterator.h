@@ -26,6 +26,8 @@
 #include <vector>
 #include <map>
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 ///
 /// scc_iterator - Enumerate the SCCs of a directed graph, in
@@ -196,5 +198,7 @@ template <class T>
 scc_iterator<T> scc_end(T G) {
   return scc_iterator<T>::end(G);
 }
+
+} // End llvm namespace
 
 #endif

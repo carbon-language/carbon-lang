@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/SchedGraphCommon.h"
 #include "Support/STLExtras.h"
 
+namespace llvm {
+
 class SchedGraphCommon;
 
 //
@@ -175,3 +177,4 @@ void SchedGraphCommon::eraseIncidentEdges(SchedGraphNodeCommon* node,
   this->eraseOutgoingEdges(node, addDummyEdges);	
 }
 
+} // End llvm namespace

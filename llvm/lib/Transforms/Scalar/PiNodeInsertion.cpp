@@ -42,6 +42,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumInserted("pinodes", "Number of Pi nodes inserted");
 
@@ -182,3 +184,5 @@ bool PiNodeInserter::insertPiNodeFor(Value *V, BasicBlock *Succ, Value *Rep) {
   return true;
 }
 
+
+} // End llvm namespace

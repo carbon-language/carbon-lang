@@ -17,6 +17,8 @@
 
 #include <string>
 
+namespace llvm {
+
 /// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
 /// name a readable file.
 ///
@@ -94,5 +96,7 @@ bool MakeFileExecutable (const std::string & Filename);
 ///	In case of failure, the file's access attributes are unspecified.
 ///
 bool MakeFileReadable (const std::string & Filename);
+
+} // End llvm namespace
 
 #endif

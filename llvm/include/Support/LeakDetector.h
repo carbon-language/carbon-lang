@@ -23,6 +23,9 @@
 #define SUPPORT_LEAKDETECTOR_H
 
 #include <string>
+
+namespace llvm {
+
 class Value;
 
 struct LeakDetector {
@@ -82,5 +85,7 @@ private:
   static void removeGarbageObjectImpl(void *Object);
   static void checkForGarbageImpl(const std::string &Message);
 };
+
+} // End llvm namespace
 
 #endif

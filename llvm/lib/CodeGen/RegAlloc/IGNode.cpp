@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace llvm {
+
 //-----------------------------------------------------------------------------
 // Sets this IGNode on stack and reduce the degree of neighbors  
 //-----------------------------------------------------------------------------
@@ -56,3 +58,5 @@ IGNode::getCombinedDegree(const IGNode* otherNode) const {
   std::vector<IGNode*>::iterator new_end = unique(nbrs.begin(), nbrs.end());
   return new_end - nbrs.begin();
 }
+
+} // End llvm namespace

@@ -28,6 +28,8 @@
 #include "llvm/Pass.h"
 #include "Config/limits.h"
 
+namespace llvm {
+
 const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
 
 static AnnotationID MF_AID(
@@ -414,3 +416,5 @@ MachineFunctionInfo::getOffset(const Value* val) const
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   return (pair == offsets.end()) ? INVALID_FRAME_OFFSET : pair->second;
 }
+
+} // End llvm namespace

@@ -25,6 +25,8 @@
 #include "Support/Tree.h"
 #include <map>
 
+namespace llvm {
+
 template<class Payload> class InstTreeNode;
 template<class Payload> class InstForest;
 
@@ -287,6 +289,8 @@ InstTreeNode<Payload>::InstTreeNode(InstForest<Payload> &IF, Value *V,
   setChildren(Children);
   getTreeData().first.second = InstructionNode;
 }
+
+} // End llvm namespace
 
 #endif
 

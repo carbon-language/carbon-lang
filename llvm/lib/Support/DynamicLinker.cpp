@@ -23,6 +23,8 @@
 #include "Config/dlfcn.h"
 #include <cassert>
 
+namespace llvm {
+
 bool LinkDynamicObject (const char *filename, std::string *ErrorMessage) {
 #if defined (HAVE_DLOPEN)
   if (dlopen (filename, RTLD_NOW | RTLD_GLOBAL) == 0) {
@@ -52,3 +54,5 @@ void *GetAddressOfSymbol (const char *symbolName) {
 void *GetAddressOfSymbol (const std::string &symbolName) {
   return GetAddressOfSymbol (symbolName.c_str ());
 }
+
+} // End llvm namespace

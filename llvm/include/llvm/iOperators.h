@@ -16,6 +16,8 @@
 
 #include "llvm/InstrTypes.h"
 
+namespace llvm {
+
 /// SetCondInst class - Represent a setCC operator, where CC is eq, ne, lt, gt,
 /// le, or ge.
 ///
@@ -62,5 +64,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

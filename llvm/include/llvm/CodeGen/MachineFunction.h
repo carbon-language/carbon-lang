@@ -22,6 +22,8 @@
 #include "Support/Annotation.h"
 #include "Support/ilist"
 
+namespace llvm {
+
 class Function;
 class TargetMachine;
 class FunctionPass;
@@ -140,5 +142,7 @@ public:
   const MachineBasicBlock & back() const { return BasicBlocks.back(); }
         MachineBasicBlock & back()       { return BasicBlocks.back(); }
 };
+
+} // End llvm namespace
 
 #endif

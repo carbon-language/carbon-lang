@@ -24,6 +24,8 @@
 #include "Config/unistd.h"
 #include "Config/errno.h"
 
+namespace llvm {
+
 /// isExecutableFile - This function returns true if the filename specified
 /// exists and is executable.
 ///
@@ -272,3 +274,4 @@ ExecWait (const char * const old_argv[], const char * const old_envp[])
   return 1;
 }
 
+} // End llvm namespace

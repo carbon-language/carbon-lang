@@ -33,6 +33,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr",PassInfo::Analysis|PassInfo::Optimization);
 static RegisterPass<PrintFunctionPass>
@@ -1052,3 +1054,5 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   }
   return *this;
 }
+
+} // End llvm namespace

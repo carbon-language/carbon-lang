@@ -49,6 +49,8 @@
 #include "Support/Statistic.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumCombined ("instcombine", "Number of insts combined");
   Statistic<> NumConstProp("instcombine", "Number of constant folds");
@@ -2196,3 +2198,5 @@ bool InstCombiner::runOnFunction(Function &F) {
 Pass *createInstructionCombiningPass() {
   return new InstCombiner();
 }
+
+} // End llvm namespace

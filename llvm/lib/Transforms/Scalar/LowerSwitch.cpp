@@ -23,6 +23,8 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumLowered("lowerswitch", "Number of SwitchInst's replaced");
 
@@ -224,3 +226,5 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   // We are now done with the switch instruction, delete it.
   delete SI;
 }
+
+} // End llvm namespace

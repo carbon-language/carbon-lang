@@ -16,6 +16,8 @@
 //    Type implementations
 //===----------------------------------------------------------------------===//
 
+namespace llvm {
+
 void RecTy::dump() const { print(std::cerr); }
 
 Init *BitRecTy::convertValue(BitsInit *BI) {
@@ -681,3 +683,5 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
 
   return Defs;
 }
+
+} // End llvm namespace

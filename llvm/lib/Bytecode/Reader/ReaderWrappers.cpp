@@ -21,6 +21,8 @@
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 // BytecodeFileReader - Read from an mmap'able file descriptor.
 //
@@ -163,7 +165,7 @@ BytecodeStdinReader::BytecodeStdinReader() {
   unsigned char Buffer[4096*4];
 
   // Read in all of the data from stdin, we cannot mmap stdin...
-  while ((BlockSize = read(0 /*stdin*/, Buffer, 4096*4))) {
+  while ((BlockSize = ::read(0 /*stdin*/, Buffer, 4096*4))) {
     if (BlockSize == -1)
       throw std::string("Error reading from stdin!");
     
@@ -249,7 +251,6 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
   return MP;
 }
 
-
 //===----------------------------------------------------------------------===//
 // Wrapper functions
 //===----------------------------------------------------------------------===//
@@ -296,3 +297,5 @@ Module *ParseBytecodeFile(const std::string &Filename, std::string *ErrorStr) {
     return 0;
   }
 }
+
+} // End llvm namespace

@@ -18,6 +18,8 @@
 #include "Support/hash_map"
 #include <string>
 
+namespace llvm {
+
 typedef long long cycles_t; 
 static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
 static const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
@@ -36,13 +38,17 @@ private:
   OpCodePair();			// disable for now
 };
 
+} // End llvm namespace
+
 namespace HASH_NAMESPACE {
-  template <> struct hash<OpCodePair> {
-    size_t operator()(const OpCodePair& pair) const {
+  template <> struct hash<llvm::OpCodePair> {
+    size_t operator()(const llvm::OpCodePair& pair) const {
       return hash<long>()(pair.val);
     }
   };
-}
+} // End HASH_NAMESPACE (a macro) namespace
+
+namespace llvm {
 
 //---------------------------------------------------------------------------
 // class MachineResource 
@@ -320,5 +326,7 @@ protected:
   friend class ModuloScheduling;
   
 };
+
+} // End llvm namespace
 
 #endif

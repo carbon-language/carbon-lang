@@ -16,6 +16,8 @@
 
 #include "TableGenBackend.h"
 
+namespace llvm {
+
 class CodeEmitterGen : public TableGenBackend {
   RecordKeeper &Records;
 public:
@@ -27,5 +29,7 @@ private:
   void emitMachineOpEmitter(std::ostream &o, const std::string &Namespace);
   void emitGetValueBit(std::ostream &o, const std::string &Namespace);
 };
+
+} // End llvm namespace
 
 #endif

@@ -23,6 +23,8 @@
 #include <fstream>
 #include <sstream>
 
+namespace llvm {
+
 // OnlyPrintMain - The DataStructure printer exposes this option to allow
 // printing of only the graph for "main".
 //
@@ -31,7 +33,6 @@ namespace {
   Statistic<> MaxGraphSize   ("dsnode", "Maximum graph size");
   Statistic<> NumFoldedNodes ("dsnode", "Number of folded nodes (in final graph)");
 }
-
 
 void DSNode::dump() const { print(std::cerr, 0); }
 
@@ -280,3 +281,5 @@ void BUDataStructures::print(std::ostream &O, const Module *M) const {
 void TDDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "td.");
 }
+
+} // End llvm namespace

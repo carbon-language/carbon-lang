@@ -18,6 +18,8 @@
 
 #include "llvm/InstrTypes.h"
 
+namespace llvm {
+
 //===---------------------------------------------------------------------------
 // ReturnInst - Return a value (possibly void), from a function.  Execution does
 //              not continue in this function any longer.
@@ -305,5 +307,7 @@ struct UnwindInst : public TerminatorInst {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -15,6 +15,8 @@
 #ifndef LLVM_CODEGEN_PASSES_H
 #define LLVM_CODEGEN_PASSES_H
 
+namespace llvm {
+
 class FunctionPass;
 class PassInfo;
 class TargetMachine;
@@ -51,5 +53,7 @@ FunctionPass *createPrologEpilogCodeInserter();
 /// getRegisterAllocator - This creates an instance of the register allocator
 /// for the Sparc.
 FunctionPass *getRegisterAllocator(TargetMachine &T);
+
+} // End llvm namespace
 
 #endif

@@ -18,6 +18,8 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/hash_set"
 
+namespace llvm {
+
 class Type;
 class Instruction;
 class DSGraph;
@@ -183,5 +185,7 @@ private:
                         std::vector<DSGraph*> &PostOrder,
                         const BUDataStructures::ActualCalleesTy &ActualCallees);
 };
+
+} // End llvm namespace
 
 #endif

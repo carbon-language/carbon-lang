@@ -14,6 +14,8 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
 
+namespace llvm {
+
 /// ctor - always have a valid Module
 ///
 ModuleProvider::ModuleProvider() : TheModule(0) { }
@@ -35,3 +37,5 @@ Module* ModuleProvider::materializeModule() {
 
   return TheModule;
 }
+
+} // End llvm namespace

@@ -26,7 +26,11 @@
 
 #include <iosfwd>
 
+namespace llvm {
+
 class Module;
 void WriteBytecodeToFile(const Module *C, std::ostream &Out);
+
+} // End llvm namespace
 
 #endif

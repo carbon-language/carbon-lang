@@ -29,6 +29,8 @@ int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
 
+namespace llvm {
+
 static Module *ParserResult;
 std::string CurFilename;
 
@@ -686,30 +688,34 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
   return Result;
 }
 
+} // End llvm namespace
+
+using namespace llvm;
+
 %}
 
 %union {
-  Module                           *ModuleVal;
-  Function                         *FunctionVal;
-  std::pair<PATypeHolder*, char*>  *ArgVal;
-  BasicBlock                       *BasicBlockVal;
-  TerminatorInst                   *TermInstVal;
-  Instruction                      *InstVal;
-  Constant                         *ConstVal;
+  llvm::Module                           *ModuleVal;
+  llvm::Function                         *FunctionVal;
+  std::pair<llvm::PATypeHolder*, char*>  *ArgVal;
+  llvm::BasicBlock                       *BasicBlockVal;
+  llvm::TerminatorInst                   *TermInstVal;
+  llvm::Instruction                      *InstVal;
+  llvm::Constant                         *ConstVal;
 
-  const Type                       *PrimType;
-  PATypeHolder                     *TypeVal;
-  Value                            *ValueVal;
+  const llvm::Type                       *PrimType;
+  llvm::PATypeHolder                     *TypeVal;
+  llvm::Value                            *ValueVal;
 
-  std::vector<std::pair<PATypeHolder*,char*> > *ArgList;
-  std::vector<Value*>              *ValueList;
-  std::list<PATypeHolder>          *TypeList;
-  std::list<std::pair<Value*,
-                      BasicBlock*> > *PHIList; // Represent the RHS of PHI node
-  std::vector<std::pair<Constant*, BasicBlock*> > *JumpTable;
-  std::vector<Constant*>           *ConstVector;
+  std::vector<std::pair<llvm::PATypeHolder*,char*> > *ArgList;
+  std::vector<llvm::Value*>              *ValueList;
+  std::list<llvm::PATypeHolder>          *TypeList;
+  std::list<std::pair<llvm::Value*,
+                      llvm::BasicBlock*> > *PHIList; // Represent the RHS of PHI node
+  std::vector<std::pair<llvm::Constant*, llvm::BasicBlock*> > *JumpTable;
+  std::vector<llvm::Constant*>           *ConstVector;
 
-  GlobalValue::LinkageTypes         Linkage;
+  llvm::GlobalValue::LinkageTypes         Linkage;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
   int                               SIntVal;
@@ -718,13 +724,13 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
   bool                              BoolVal;
 
   char                             *StrVal;   // This memory is strdup'd!
-  ValID                             ValIDVal; // strdup'd memory maybe!
+  llvm::ValID                             ValIDVal; // strdup'd memory maybe!
 
-  Instruction::BinaryOps            BinaryOpVal;
-  Instruction::TermOps              TermOpVal;
-  Instruction::MemoryOps            MemOpVal;
-  Instruction::OtherOps             OtherOpVal;
-  Module::Endianness                Endianness;
+  llvm::Instruction::BinaryOps            BinaryOpVal;
+  llvm::Instruction::TermOps              TermOpVal;
+  llvm::Instruction::MemoryOps            MemOpVal;
+  llvm::Instruction::OtherOps             OtherOpVal;
+  llvm::Module::Endianness                Endianness;
 }
 
 %type <ModuleVal>     Module FunctionList
@@ -1891,6 +1897,7 @@ MemoryInst : MALLOC Types {
     $$ = new GetElementPtrInst(getVal(*$2, $3), *$4);
     delete $2; delete $4;
   };
+
 
 %%
 int yyerror(const char *ErrorMsg) {

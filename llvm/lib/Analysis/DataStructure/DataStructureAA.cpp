@@ -17,6 +17,8 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Module.h"
 
+namespace llvm {
+
 namespace {
   class DSAA : public Pass, public AliasAnalysis {
     TDDataStructures *TD;
@@ -176,3 +178,5 @@ void DSAA::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
 #endif
   return getAnalysis<AliasAnalysis>().getMustAliases(P, RetVals);
 }
+
+} // End llvm namespace

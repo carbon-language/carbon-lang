@@ -25,6 +25,8 @@
 #include "llvm/SlotCalculator.h"
 #include "llvm/Instruction.h"
 
+namespace llvm {
+
 class BytecodeWriter {
   std::deque<unsigned char> &Out;
   SlotCalculator Table;
@@ -79,5 +81,6 @@ public:
   }
 };
 
+} // End llvm namespace
 
 #endif

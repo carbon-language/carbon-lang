@@ -17,6 +17,8 @@
 
 #include <vector>
 
+namespace llvm {
+
 template<class ConcreteTreeNode, class Payload>
 class Tree {
   std::vector<ConcreteTreeNode*> Children;        // This nodes children, if any
@@ -55,5 +57,6 @@ public:
   inline const Payload &getTreeData() const { return Data; }
 };
 
+} // End llvm namespace
 
 #endif

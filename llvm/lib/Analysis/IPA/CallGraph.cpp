@@ -53,6 +53,8 @@
 #include "llvm/Support/CallSite.h"
 #include "Support/STLExtras.h"
 
+namespace llvm {
+
 static RegisterAnalysis<CallGraph> X("callgraph", "Call Graph Construction");
 
 static const char * const KnownExternalFunctions[] = {
@@ -349,3 +351,5 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
 }
 
 void CallGraph::stub() {}
+
+} // End llvm namespace

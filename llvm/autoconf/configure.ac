@@ -16,6 +16,7 @@ dnl **************************************************************************
 dnl * Initialize
 dnl **************************************************************************
 AC_INIT([[[LLVM]]],[[[1.0]]],[llvmbugs@cs.uiuc.edu])
+dnl AC_CONFIG_SRC_DIR(lib/VMCore/Pass.cpp)
 
 dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])

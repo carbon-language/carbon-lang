@@ -15,6 +15,8 @@
 #ifndef LLVM_CODEGEN_INSTR_SCHEDULING_H
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
+namespace llvm {
+
 class FunctionPass;
 class TargetMachine;
 
@@ -29,5 +31,7 @@ class TargetMachine;
 //---------------------------------------------------------------------------
 
 FunctionPass *createInstructionSchedulingWithSSAPass(const TargetMachine &TM);
+
+} // End llvm namespace
 
 #endif

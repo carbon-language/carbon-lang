@@ -17,6 +17,8 @@
 #include <set>
 #include <ostream>
 
+namespace llvm {
+
 int
 PrintAndReturn (const char *progname,
                 const std::string &Message,
@@ -69,3 +71,4 @@ LinkFiles (const char * progname,
            const std::vector<std::string> & Files,
            bool Verbose);
 
+} // End llvm namespace

@@ -11,6 +11,8 @@
 #include "llvm/Value.h"
 #include <iostream>
 
+namespace llvm {
+
 std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value 
   const Value &v = V.V;
   if (v.hasName())
@@ -26,3 +28,4 @@ void printSet(const ValueSet &S) {
     std::cerr << RAV(*I);
 }
 
+} // End llvm namespace

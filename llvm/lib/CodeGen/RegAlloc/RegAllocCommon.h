@@ -14,6 +14,8 @@
 #ifndef REGALLOCCOMMON_H
 #define REGALLOCCOMMON_H
 
+namespace llvm {
+
 enum RegAllocDebugLevel_t {
   RA_DEBUG_None         = 0,
   RA_DEBUG_Results      = 1,
@@ -24,5 +26,7 @@ enum RegAllocDebugLevel_t {
 };
 
 extern RegAllocDebugLevel_t DEBUG_RA;
+
+} // End llvm namespace
 
 #endif

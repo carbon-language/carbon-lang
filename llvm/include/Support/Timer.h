@@ -20,6 +20,8 @@
 #include <iosfwd>
 #include <cassert>
 
+namespace llvm {
+
 class TimerGroup;
 
 /// Timer - This class is used to track the amount of time spent between
@@ -156,5 +158,7 @@ private:
     TimersToPrint.push_back(Timer(true, T));
   }
 };
+
+} // End llvm namespace
 
 #endif

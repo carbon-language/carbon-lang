@@ -16,6 +16,9 @@
 #define TARGET_X86_H
 
 #include <iosfwd>
+
+namespace llvm {
+
 class TargetMachine;
 class FunctionPass;
 
@@ -58,6 +61,8 @@ FunctionPass *createEmitX86CodeToMemory();
 // Defines symbolic names for X86 registers.  This defines a mapping from
 // register name to register number.
 //
+} // End llvm namespace
+
 #include "X86GenRegisterNames.inc"
 
 // Defines symbolic names for the X86 instructions.

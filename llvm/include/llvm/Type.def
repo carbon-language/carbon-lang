@@ -16,7 +16,7 @@
 // NOTE: NO INCLUDE GUARD DESIRED!
 
 
-// If the user didn't specify one of the macros, give a default noop defn.
+// If the user did not specify one of the macros, give a default noop defn.
 //
 #ifndef HANDLE_PRIM_TYPE
 #define HANDLE_PRIM_TYPE(x,y)

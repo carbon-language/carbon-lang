@@ -18,6 +18,8 @@
 
 #include "llvm/Instruction.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -133,5 +135,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

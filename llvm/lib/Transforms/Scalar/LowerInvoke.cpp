@@ -23,6 +23,8 @@
 #include "llvm/Constant.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumLowered("lowerinvoke", "Number of invoke & unwinds replaced");
 
@@ -37,6 +39,7 @@ namespace {
   X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 }
 
+// Public Interface To the LowerInvoke pass.
 FunctionPass *createLowerInvokePass() { return new LowerInvoke(); }
 
 // doInitialization - Make sure that there is a prototype for abort in the
@@ -79,3 +82,5 @@ bool LowerInvoke::runOnFunction(Function &F) {
     }
   return Changed;
 }
+
+} // End llvm namespace

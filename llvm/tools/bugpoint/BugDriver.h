@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+namespace llvm {
+
 class PassInfo;
 class Module;
 class Function;
@@ -206,5 +208,7 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes);
 // blocks, making it external.
 //
 void DeleteFunctionBody(Function *F);
+
+} // End llvm namespace
 
 #endif

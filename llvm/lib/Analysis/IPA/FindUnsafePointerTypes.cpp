@@ -30,6 +30,8 @@
 #include "llvm/Support/InstIterator.h"
 #include "Support/CommandLine.h"
 
+namespace llvm {
+
 static RegisterAnalysis<FindUnsafePointerTypes>
 X("unsafepointertypes", "Find Unsafe Pointer Types");
 
@@ -99,3 +101,5 @@ void FindUnsafePointerTypes::print(std::ostream &o, const Module *M) const {
     CW << " #" << Counter << ". " << (Value*)*I << "\n";
   }
 }
+
+} // End llvm namespace

@@ -30,6 +30,8 @@
 #include "Support/STLExtras.h"
 #include "Config/alloca.h"
 
+namespace llvm {
+
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
 //------------------------------------------------------------------------ 
@@ -330,3 +332,5 @@ InstructionNode* InstrForest::buildTreeForInstruction(Instruction *instr) {
   delete [] childArray;
   return treeNode;
 }
+
+} // End llvm namespace

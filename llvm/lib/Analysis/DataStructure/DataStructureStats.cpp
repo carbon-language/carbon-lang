@@ -19,6 +19,8 @@
 #include "Support/Statistic.h"
 #include <vector>
 
+namespace llvm {
+
 namespace {
   Statistic<> TotalNumCallees("totalcallees",
                 "Total number of callee functions at all indirect call sites");
@@ -139,3 +141,5 @@ bool DSGraphStats::runOnFunction(Function& F) {
   visit(F);
   return true;
 }
+
+} // End llvm namespace

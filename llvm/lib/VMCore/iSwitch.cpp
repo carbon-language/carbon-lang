@@ -14,6 +14,8 @@
 #include "llvm/iTerminators.h"
 #include "llvm/BasicBlock.h"
 
+namespace llvm {
+
 SwitchInst::SwitchInst(Value *V, BasicBlock *DefaultDest,
                        Instruction *InsertBefore) 
   : TerminatorInst(Instruction::Switch, InsertBefore) {
@@ -48,3 +50,5 @@ void SwitchInst::removeCase(unsigned idx) {
   assert(idx*2 < Operands.size() && "Successor index out of range!!!");
   Operands.erase(Operands.begin()+idx*2, Operands.begin()+(idx+1)*2);  
 }
+
+} // End llvm namespace

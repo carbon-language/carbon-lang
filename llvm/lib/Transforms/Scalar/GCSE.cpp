@@ -23,6 +23,8 @@
 #include "Support/Statistic.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumInstRemoved("gcse", "Number of instructions removed");
   Statistic<> NumLoadRemoved("gcse", "Number of loads removed");
@@ -55,7 +57,6 @@ namespace {
 
 // createGCSEPass - The public interface to this file...
 FunctionPass *createGCSEPass() { return new GCSE(); }
-
 
 // GCSE::runOnFunction - This is the main transformation entry point for a
 // function.
@@ -269,3 +270,5 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
 
   return Ret;
 }
+
+} // End llvm namespace

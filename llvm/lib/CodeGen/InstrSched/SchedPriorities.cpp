@@ -23,6 +23,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/PostOrderIterator.h"
 
+namespace llvm {
+
 std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd) {
   return os << "Delay for node " << nd->node->getNodeId()
 	    << " = " << (long)nd->delay << "\n";
@@ -278,3 +280,4 @@ SchedPriorities::instructionHasLastUse(FunctionLiveVarInfo &LVI,
   return lastUseMap[MI] = hasLastUse;
 }
 
+} // End llvm namespace

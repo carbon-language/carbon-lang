@@ -26,6 +26,8 @@
 #include "llvm/Instruction.h"
 #include "llvm/ConstantHandling.h"
 
+namespace llvm {
+
 /// Initialize a full (the default) or empty set for the specified type.
 ///
 ConstantRange::ConstantRange(const Type *Ty, bool Full) {
@@ -248,3 +250,5 @@ void ConstantRange::print(std::ostream &OS) const {
 void ConstantRange::dump() const {
   print(std::cerr);
 }
+
+} // End llvm namespace

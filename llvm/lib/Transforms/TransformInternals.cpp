@@ -18,6 +18,8 @@
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 
+namespace llvm {
+
 static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
                                        std::vector<Value*> &Indices,
                                        const TargetData &TD) {
@@ -193,3 +195,5 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
 
   return NextTy;
 }
+
+} // End llvm namespace

@@ -26,6 +26,8 @@
 #include <sstream>
 #include <fstream>
 
+namespace llvm {
+
 /// CFGOnly flag - This is used to control whether or not the CFG graph printer
 /// prints out the contents of basic blocks or not.  This is acceptable because
 /// this code is only really used for debugging purposes.
@@ -112,9 +114,6 @@ namespace {
                                   "Print CFG of function to 'dot' file");
 };
 
-
-
-
 /// viewCFG - This function is meant for use from the debugger.  You can just
 /// say 'call F->viewCFG()' and a ghostview window should pop up from the
 /// program, displaying the CFG of the current function.  This depends on there
@@ -154,3 +153,5 @@ void Function::viewCFGOnly() const {
   viewCFG();
   CFGOnly = false;
 }
+
+} // End llvm namespace

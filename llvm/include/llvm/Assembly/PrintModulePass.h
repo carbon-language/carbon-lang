@@ -21,6 +21,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 
+namespace llvm {
+
 class PrintModulePass : public Pass {
   std::ostream *Out;      // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
@@ -71,5 +73,7 @@ public:
     AU.setPreservesAll();
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -18,6 +18,8 @@
 #include "llvm/Constant.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<>
   NumGlobalsConstanted("ds-opt", "Number of globals marked constant");
@@ -46,7 +48,6 @@ namespace {
 
   RegisterOpt<DSOpt> X("ds-opt", "DSA-based simple optimizations");
 }
-
 
 /// OptimizeGlobals - This method uses information taken from DSA to optimize
 /// global variables.
@@ -96,3 +97,5 @@ bool DSOpt::OptimizeGlobals(Module &M) {
     }
   return Changed;
 }
+
+} // End llvm namespace

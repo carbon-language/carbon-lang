@@ -19,6 +19,8 @@
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   struct DTE : public Pass {
     // doPassInitialization - For this pass, it removes global symbol table
@@ -43,7 +45,6 @@ namespace {
 Pass *createDeadTypeEliminationPass() {
   return new DTE();
 }
-
 
 
 // ShouldNukeSymtabEntry - Return true if this module level symbol table entry
@@ -95,3 +96,5 @@ bool DTE::run(Module &M) {
 
   return Changed;
 }
+
+} // End llvm namespace

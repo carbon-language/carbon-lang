@@ -21,6 +21,8 @@
 #include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Support/InstIterator.h"
 
+namespace llvm {
+
 static RegisterAnalysis<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
 
@@ -106,3 +108,5 @@ void FindUsedTypes::print(std::ostream &o, const Module *M) const {
            E = UsedTypes.end(); I != E; ++I)
       o << "  " << *I << "\n";
 }
+
+} // End llvm namespace

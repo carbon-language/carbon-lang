@@ -22,6 +22,8 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumLowered("lowerallocs", "Number of allocations lowered");
 
@@ -131,3 +133,5 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
   return Changed;
 }
+
+} // End llvm namespace

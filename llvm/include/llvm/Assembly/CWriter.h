@@ -16,7 +16,12 @@
 #define LLVM_ASSEMBLY_CWRITER_H
 
 #include <iosfwd>
+
+namespace llvm {
+
 class Pass;
 Pass *createWriteToCPass(std::ostream &o);
+
+} // End llvm namespace
 
 #endif

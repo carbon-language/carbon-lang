@@ -14,6 +14,8 @@
 #include <map>
 #include "Support/Annotation.h"
 
+namespace llvm {
+
 typedef std::map<const std::string, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
 
@@ -94,3 +96,5 @@ Annotation *AnnotationManager::createAnnotation(AnnotationID ID,
   if (I == getFactMap().end()) return 0;
   return I->second.first(ID, Obj, I->second.second);
 }
+
+} // End llvm namespace

@@ -16,6 +16,8 @@
 #include "llvm/Type.h"
 #include "Support/LeakDetector.h"
 
+namespace llvm {
+
 Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
                          Instruction *InsertBefore)
   : User(ty, Value::InstructionVal, Name) {
@@ -163,3 +165,5 @@ bool Instruction::isTrapping(unsigned op) {
     return false;
   }
 }
+
+} // End llvm namespace

@@ -10,6 +10,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 
+namespace llvm {
+
 namespace {
   class FunctionExtractorPass : public Pass {
     Function *Named;
@@ -90,3 +92,5 @@ namespace {
 Pass *createFunctionExtractionPass(Function *F) {
   return new FunctionExtractorPass(F);
 }
+
+} // End llvm namespace

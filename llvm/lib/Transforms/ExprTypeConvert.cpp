@@ -23,6 +23,8 @@
 #include "Support/Debug.h"
 #include <algorithm>
 
+namespace llvm {
+
 static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &ConvertedTypes,
                                      const TargetData &TD);
@@ -1298,3 +1300,5 @@ ValueHandle::~ValueHandle() {
     //                << Operands[0]->use_size() << " " << Operands[0]);
   }
 }
+
+} // End llvm namespace

@@ -19,6 +19,8 @@
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/FileUtilities.h"
 
+namespace llvm {
+
 class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
   BugDriver &BD;
 public:
@@ -308,3 +310,5 @@ bool BugDriver::debugMiscompilation() {
 
   return false;
 }
+
+} // End llvm namespace

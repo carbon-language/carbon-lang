@@ -50,6 +50,8 @@
 #include "Support/BitSetVector.h"
 #include "Support/hash_map"
 
+namespace llvm {
+
 class Module;
 class Function;
 class CallSite;
@@ -238,5 +240,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+
+} // End llvm namespace
 
 #endif

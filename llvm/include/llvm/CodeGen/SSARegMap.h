@@ -19,6 +19,8 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 
+namespace llvm {
+
 class TargetRegisterClass;
 
 class SSARegMap {
@@ -43,5 +45,7 @@ class SSARegMap {
     return RegClassMap.size()+MRegisterInfo::FirstVirtualRegister-1;
   }
 };
+
+} // End llvm namespace
 
 #endif

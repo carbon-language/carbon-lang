@@ -21,6 +21,8 @@
 #ifndef LLVM_ANALYSIS_VERIFIER_H
 #define LLVM_ANALYSIS_VERIFIER_H
 
+namespace llvm {
+
 class FunctionPass;
 class Module;
 class Function;
@@ -39,5 +41,7 @@ bool verifyModule(const Module &M);
 // verifyFunction - Check a function for errors, useful for use when debugging a
 // pass.
 bool verifyFunction(const Function &F);
+
+} // End llvm namespace
 
 #endif

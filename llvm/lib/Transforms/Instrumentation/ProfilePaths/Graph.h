@@ -19,6 +19,8 @@
 #include <map>
 #include <cstdlib>
 
+namespace llvm {
+
 class Module;
 class Function;
 
@@ -112,8 +114,13 @@ struct graphListElement{
   }
 };
 
+} // End llvm namespace
+
 
 namespace std {
+
+using namespace llvm;
+
   template<>
   struct less<Node *> : public binary_function<Node *, Node *,bool> {
     bool operator()(Node *n1, Node *n2) const {
@@ -134,6 +141,8 @@ namespace std {
     }
   };
 }
+
+namespace llvm {
 
 struct BBSort{
   bool operator()(BasicBlock *BB1, BasicBlock *BB2) const{
@@ -465,6 +474,7 @@ int valueAssignmentToEdges(Graph& g, std::map<Node *, int> nodePriority,
                            std::vector<Edge> &be);
 
 void getBBtrace(std::vector<BasicBlock *> &vBB, int pathNo, Function *M);
+
+} // End llvm namespace
+
 #endif
-
-

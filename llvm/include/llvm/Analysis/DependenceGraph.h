@@ -30,6 +30,8 @@
 #include <utility>
 #include <cassert>
 
+namespace llvm {
+
 class Instruction;
 class Function;
 class Dependence;
@@ -263,5 +265,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+
+} // End llvm namespace
 
 #endif

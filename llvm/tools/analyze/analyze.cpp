@@ -26,6 +26,7 @@
 #include "Support/Timer.h"
 #include <algorithm>
 
+using namespace llvm;
 
 struct ModulePassPrinter : public Pass {
   const PassInfo *PassToPrint;

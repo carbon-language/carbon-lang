@@ -44,6 +44,8 @@
 #include "llvm/Assembly/Writer.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   cl::opt<bool>
   DisablePromotion("disable-licm-promotion", cl::Hidden,
@@ -466,3 +468,5 @@ void LICM::findPromotableValuesInLoop(
     }
   }
 }
+
+} // End llvm namespace

@@ -26,6 +26,8 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/InstIterator.h"
 
+using namespace llvm;
+
 namespace {
   struct InstForestHelper : public FunctionPass {
     Function *F;

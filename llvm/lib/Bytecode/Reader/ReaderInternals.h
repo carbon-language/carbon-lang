@@ -22,6 +22,8 @@
 #include <utility>
 #include <map>
 
+namespace llvm {
+
 // Enable to trace to figure out what the heck is going on when parsing fails
 //#define TRACE_LEVEL 10
 //#define DEBUG_OUTPUT
@@ -225,5 +227,7 @@ static inline void readBlock(const unsigned char *&Buf,
   if (read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size)) throw Error_read;
 #endif
 }
+
+} // End llvm namespace
 
 #endif

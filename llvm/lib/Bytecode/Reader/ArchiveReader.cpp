@@ -22,6 +22,8 @@
 #include "Config/sys/mman.h"
 #include "Config/fcntl.h"
 
+namespace llvm {
+
 namespace {
   struct ar_hdr {
     char name[16];
@@ -39,7 +41,6 @@ namespace {
     SVR4LongFilename,      // a "//" section used for long file names
   };
 }
-
 
 // getObjectType - Determine the type of object that this header represents.
 // This is capable of parsing the variety of special sections used for various
@@ -173,3 +174,5 @@ bool ReadArchiveFile(const std::string &Filename, std::vector<Module*> &Objects,
   
   return Result;
 }
+
+} // End llvm namespace

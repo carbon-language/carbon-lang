@@ -14,6 +14,8 @@
 #ifndef LLVM_TARGET_TARGETFRAMEINFO_H
 #define LLVM_TARGET_TARGETFRAMEINFO_H
 
+namespace llvm {
+
 class MachineFunction;
 
 struct TargetFrameInfo {
@@ -98,5 +100,7 @@ public:
   virtual int getRegSpillAreaBaseRegNum()              const { abort(); }
   virtual int getDynamicAreaBaseRegNum()               const { abort(); }
 };
+
+} // End llvm namespace
 
 #endif

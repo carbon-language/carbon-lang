@@ -17,6 +17,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetRegInfo.h"
 
+namespace llvm {
+
 class Value;
 class TmpInstruction;
 class CallInst;
@@ -88,5 +90,6 @@ public:
   static CallArgsDescriptor *get(const MachineInstr* MI);
 };
 
+} // End llvm namespace
 
 #endif

@@ -24,6 +24,8 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Local.h"
 
+namespace llvm {
+
 bool InlineFunction(CallInst *CI) { return InlineFunction(CallSite(CI)); }
 bool InlineFunction(InvokeInst *II) { return InlineFunction(CallSite(II)); }
 
@@ -278,3 +280,5 @@ bool InlineFunction(CallSite CS) {
   SimplifyCFG(AfterCallBB);
   return true;
 }
+
+} // End llvm namespace

@@ -33,6 +33,8 @@
 #include "SparcInternals.h"
 #include <string>
 
+namespace llvm {
+
 namespace {
 
 Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
@@ -877,12 +879,13 @@ SparcFunctionAsmPrinter::emitFunction(const Function &F)
 
 }  // End anonymous namespace
 
+namespace llvm {
+
 Pass *UltraSparc::getFunctionAsmPrinterPass(std::ostream &Out) {
   return new SparcFunctionAsmPrinter(Out, *this);
 }
 
-
-
+} // End llvm namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -954,3 +957,5 @@ void SparcModuleAsmPrinter::emitGlobals(const Module &M) {
 Pass *UltraSparc::getModuleAsmPrinterPass(std::ostream &Out) {
   return new SparcModuleAsmPrinter(Out, *this);
 }
+
+} // End llvm namespace

@@ -22,6 +22,8 @@
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumMerged("constmerge", "Number of global constants merged");
 
@@ -36,7 +38,6 @@ namespace {
 }
 
 Pass *createConstantMergePass() { return new ConstantMerge(); }
-
 
 bool ConstantMerge::run(Module &M) {
   std::map<Constant*, GlobalVariable*> CMap;
@@ -78,3 +79,5 @@ bool ConstantMerge::run(Module &M) {
 
   return MadeChanges;
 }
+
+} // End llvm namespace

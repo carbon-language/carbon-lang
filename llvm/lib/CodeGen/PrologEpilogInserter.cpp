@@ -25,6 +25,8 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
+namespace llvm {
+
 namespace {
   struct PEI : public MachineFunctionPass {
     const char *getPassName() const {
@@ -65,6 +67,7 @@ namespace {
     void insertPrologEpilogCode(MachineFunction &Fn);
   };
 }
+
 
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
@@ -258,3 +261,5 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 	  break;
 	}
 }
+
+} // End llvm namespace

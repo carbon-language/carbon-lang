@@ -24,6 +24,8 @@
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
 
+using namespace llvm;
+
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
                cl::desc("<input bytecode files>"));

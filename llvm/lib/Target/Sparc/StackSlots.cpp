@@ -20,6 +20,8 @@
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
+namespace llvm {
+
 namespace {
   class StackSlots : public MachineFunctionPass {
     const TargetMachine &Target;
@@ -48,3 +50,5 @@ namespace {
 Pass *createStackSlotsPass(const TargetMachine &Target) {
   return new StackSlots(Target);
 }
+
+} // End llvm namespace

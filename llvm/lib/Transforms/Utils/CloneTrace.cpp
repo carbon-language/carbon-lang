@@ -20,6 +20,8 @@
 #include "llvm/Function.h"
 
 
+namespace llvm {
+
 //Clones the trace (a vector of basic blocks)
 std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace) {
 
@@ -86,3 +88,5 @@ std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace) 
   //return new vector of basic blocks
   return clonedTrace;
 }
+
+} // End llvm namespace

@@ -16,9 +16,11 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 
-class Type;
+class llvm::Type;
 
 #include "X86GenRegisterInfo.h.inc"
+
+namespace llvm {
 
 struct X86RegisterInfo : public X86GenRegisterInfo {
   X86RegisterInfo();
@@ -51,5 +53,7 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   int emitPrologue(MachineFunction &MF) const;
   int emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 };
+
+} // End llvm namespace
 
 #endif

@@ -21,6 +21,8 @@
 #include "llvm/Value.h"
 #include "llvm/CodeGen/ValueSet.h"
 
+namespace llvm {
+
 class RegClass;
 class IGNode;
 
@@ -176,5 +178,7 @@ public:
     return SpillCost;
   }
 };
+
+} // End llvm namespace
 
 #endif

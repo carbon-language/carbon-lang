@@ -16,6 +16,8 @@
 
 #include "llvm/Analysis/Dominators.h"
 
+namespace llvm {
+
 
 /// PostDominatorSet Class - Concrete subclass of DominatorSetBase that is used
 /// to compute the post-dominator set.  Because there can be multiple exit nodes
@@ -116,5 +118,7 @@ private:
 // Make sure that any clients of this file link in PostDominators.cpp
 static IncludeFile
 POST_DOMINATOR_INCLUDE_FILE((void*)&PostDominanceFrontier::stub);
+
+} // End llvm namespace
 
 #endif

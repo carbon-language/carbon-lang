@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 
+namespace llvm {
+
 namespace {
   struct PH : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -131,3 +133,5 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     return false;
   }
 }
+
+} // End llvm namespace

@@ -28,6 +28,9 @@
 #include "Support/Timer.h"
 #include <algorithm>
 #include <iostream>
+
+namespace llvm {
+
 class Annotable;
 
 //===----------------------------------------------------------------------===//
@@ -791,5 +794,7 @@ inline bool PassManagerTraits<Function>::doFinalization(Module &M) {
     ((PMType*)this)->Passes[i]->doFinalization(M);
   return Changed;
 }
+
+} // End llvm namespace
 
 #endif

@@ -25,6 +25,8 @@
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumAdded("lowerrefs", "# of getelementptr instructions added");
 
@@ -35,13 +37,6 @@ namespace {
 
 RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
                              "structure/array references");
-
-FunctionPass
-*createDecomposeMultiDimRefsPass()
-{
-  return new DecomposePass();
-}
-
 
 // runOnBasicBlock - Entry point for array or structure references with multiple
 // indices.
@@ -57,6 +52,11 @@ DecomposePass::runOnBasicBlock(BasicBlock &BB)
   return changed;
 }
 
+FunctionPass
+*createDecomposeMultiDimRefsPass()
+{
+  return new DecomposePass();
+}
 
 // Function: DecomposeArrayRef()
 //  
@@ -134,3 +134,5 @@ DecomposeArrayRef(GetElementPtrInst* GEP)
 
   return true;
 }
+
+} // End llvm namespace

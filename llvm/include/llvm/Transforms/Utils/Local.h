@@ -16,6 +16,9 @@
 #define LLVM_TRANSFORMS_UTILS_LOCAL_H
 
 #include "llvm/Function.h"
+
+namespace llvm {
+
 class Pass;
 
 //===----------------------------------------------------------------------===//
@@ -66,5 +69,7 @@ bool dceInstruction(BasicBlock::iterator &BBI);
 /// WARNING:  The entry node of a method may not be simplified.
 ///
 bool SimplifyCFG(BasicBlock *BB);
+
+} // End llvm namespace
 
 #endif

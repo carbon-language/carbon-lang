@@ -27,8 +27,10 @@
 #define INSERT_LOAD_COUNT
 #define INSERT_STORE
 
+
 using std::vector;
 
+namespace llvm {
 
 static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
                            Value *cnt, Instruction *rInst){ 
@@ -369,3 +371,4 @@ void insertBB(Edge ed,
   }
 }
 
+} // End llvm namespace

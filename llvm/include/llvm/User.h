@@ -22,6 +22,8 @@
 #include "llvm/Value.h"
 #include <vector>
 
+namespace llvm {
+
 class User : public Value {
   User(const User &);             // Do not implement
 protected:
@@ -109,5 +111,7 @@ template<> struct simplify_type<User::const_op_iterator> {
 };
 template<> struct simplify_type<const User::const_op_iterator>
   : public simplify_type<User::const_op_iterator> {};
+
+} // End llvm namespace
 
 #endif

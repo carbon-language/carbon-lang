@@ -23,6 +23,8 @@
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
 
+namespace llvm {
+
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
 //
@@ -902,3 +904,4 @@ bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   return false;
 }
 
+} // End llvm namespace

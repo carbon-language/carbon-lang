@@ -19,6 +19,8 @@
 #include "Support/StringExtras.h"
 #include <set>
 
+namespace llvm {
+
 NodeType::ArgResultTypes NodeType::Translate(Record *R) {
   const std::string &Name = R->getName();
   if (Name == "DNVT_any")  return Any;
@@ -978,9 +980,10 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
   CalculateComputableValues();
   
+  OS << "#include \"llvm/CodeGen/MachineInstrBuilder.h\"\n";
+
   EmitSourceFileHeader("Instruction Selector for the " + Target.getName() +
                        " target", OS);
-  OS << "#include \"llvm/CodeGen/MachineInstrBuilder.h\"\n";
 
   // Output the slot number enums...
   OS << "\nenum { // Slot numbers...\n"
@@ -1290,5 +1293,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
        << "  }\n\n  N->addValue(Val);  // Do not ever recalculate this\n"
        << "  return Val;\n}\n\n";
   }
+  EmitSourceFileTail(OS);
 }
 
+} // End llvm namespace

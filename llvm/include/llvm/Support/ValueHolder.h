@@ -20,6 +20,8 @@
 
 #include "llvm/User.h"
 
+namespace llvm {
+
 struct ValueHolder : public User {
   ValueHolder(Value *V = 0);
   ValueHolder(const ValueHolder &VH) : User(VH.getType(), Value::TypeVal) {
@@ -45,5 +47,7 @@ struct ValueHolder : public User {
     OS << "ValueHolder";
   }
 };
+
+} // End llvm namespace
 
 #endif

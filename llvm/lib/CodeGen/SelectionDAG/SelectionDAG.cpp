@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Type.h"
 
+namespace llvm {
+
 SelectionDAG::~SelectionDAG() {
   for (unsigned i = 0, e = AllNodes.size(); i != e; ++i)
     delete AllNodes[i];
@@ -126,3 +128,5 @@ void SelectionDAGNode::printit(unsigned Offset, unsigned &LastID,
 
   std::cerr << "\n";
 }
+
+} // End llvm namespace

@@ -16,11 +16,13 @@
 #ifndef LLVM_INTRINSICS_H
 #define LLVM_INTRINSICS_H
 
-/// LLVMIntrinsic Namespace - This namespace contains an enum with a value for
+namespace llvm {
+
+/// Intrinsic Namespace - This namespace contains an enum with a value for
 /// every intrinsic/builtin function known by LLVM.  These enum values are
 /// returned by Function::getIntrinsicID().
 ///
-namespace LLVMIntrinsic {
+namespace Intrinsic {
   enum ID {
     not_intrinsic = 0,   // Must be zero
 
@@ -125,6 +127,9 @@ namespace LLVMIntrinsic {
                     // second parameter, the possible values for which are
                     // defined in the AlphaSfpToSq enumeration
   };
-}
+
+} // End Intrinsic namespace
+
+} // End llvm namespace
 
 #endif

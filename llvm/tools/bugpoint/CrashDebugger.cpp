@@ -29,6 +29,8 @@
 #include <fstream>
 #include <set>
 
+namespace llvm {
+
 class DebugCrashes : public ListReducer<const PassInfo*> {
   BugDriver &BD;
 public:
@@ -397,3 +399,5 @@ bool BugDriver::debugCrash() {
 
   return false;
 }
+
+} // End llvm namespace

@@ -22,6 +22,8 @@
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 
+namespace llvm {
+
 // DummyInst - An instance of this class is used to mark the end of the
 // instruction list.  This is not a real instruction.
 //
@@ -141,7 +143,7 @@ void BasicBlock::dropAllReferences() {
 //
 bool BasicBlock::hasConstantReferences() const {
   for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if (::isa<Constant>((Value*)*I))
+    if (isa<Constant>((Value*)*I))
       return true;
 
   return false;
@@ -263,3 +265,5 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   }
   return New;
 }
+
+} // End llvm namespace

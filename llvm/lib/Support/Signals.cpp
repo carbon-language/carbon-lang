@@ -20,6 +20,8 @@
 #include <signal.h>
 #include "Config/config.h"     // Get the signal handler return type
 
+namespace llvm {
+
 static std::vector<std::string> FilesToRemove;
 
 // IntSigs - Signals that may interrupt the program at any time.
@@ -62,3 +64,5 @@ void RemoveFileOnSignal(const std::string &Filename) {
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
+
+} // End llvm namespace

@@ -21,6 +21,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CFG.h"
 
+namespace llvm {
+
 namespace {
   struct PNE : public MachineFunctionPass {
     bool runOnMachineFunction(MachineFunction &Fn) {
@@ -51,6 +53,7 @@ namespace {
   RegisterPass<PNE> X("phi-node-elimination",
 		      "Eliminate PHI nodes for register allocation");
 }
+
 
 const PassInfo *PHIEliminationID = X.getPassInfo();
 
@@ -260,3 +263,5 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 
   return true;
 }
+
+} // End llvm namespace

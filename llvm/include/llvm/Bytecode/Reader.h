@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+namespace llvm {
+
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
 ModuleProvider *getBytecodeModuleProvider(const std::string &Filename);
@@ -52,5 +54,7 @@ Module* ParseBytecodeBuffer(const unsigned char *Buffer,
 bool ReadArchiveFile(const std::string &Filename,
                      std::vector<Module*> &Objects,
                      std::string *ErrorStr = 0);
+
+} // End llvm namespace
 
 #endif

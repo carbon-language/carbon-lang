@@ -17,6 +17,8 @@
 
 #include "llvm/User.h"
 
+namespace llvm {
+
 class AssemblyAnnotationWriter;
 
 template<typename SC> struct ilist_traits;
@@ -150,5 +152,7 @@ public:
 #include "llvm/Instruction.def"
   };
 };
+
+} // End llvm namespace
 
 #endif

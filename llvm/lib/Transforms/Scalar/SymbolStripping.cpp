@@ -26,6 +26,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 static bool StripSymbolTable(SymbolTable &SymTab) {
   bool RemovedSymbol = false;
 
@@ -74,3 +76,5 @@ Pass *createSymbolStrippingPass() {
 Pass *createFullSymbolStrippingPass() {
   return new FullSymbolStripping();
 }
+
+} // End llvm namespace

@@ -27,6 +27,8 @@
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrSelection.h"
 
+namespace llvm {
+
 AnnotationID MCFI_AID(
              AnnotationManager::getID("CodeGen::MachineCodeForInstruction"));
 
@@ -68,3 +70,5 @@ MachineCodeForInstruction::~MachineCodeForInstruction()
   if (callArgsDesc)
     delete callArgsDesc;
 }
+
+} // End llvm namespace

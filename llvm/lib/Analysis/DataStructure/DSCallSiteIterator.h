@@ -19,6 +19,8 @@
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Function.h"
 
+namespace llvm {
+
 struct DSCallSiteIterator {
   // FCs are the edges out of the current node are the call site targets...
   const std::vector<DSCallSite> *FCs;
@@ -128,5 +130,7 @@ public:
     DSCallSiteIterator tmp = *this; ++*this; return tmp; 
   }
 };
+
+} // End llvm namespace
 
 #endif

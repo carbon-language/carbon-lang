@@ -29,6 +29,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 
+namespace llvm {
+
 /// BMI - A special BuildMI variant that takes an iterator to insert the
 /// instruction at as well as a basic block.  This is the version for when you
 /// have a destination register in mind.
@@ -138,7 +140,7 @@ namespace {
     void doCall(const ValueRecord &Ret, MachineInstr *CallMI,
                 const std::vector<ValueRecord> &Args);
     void visitCallInst(CallInst &I);
-    void visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &I);
+    void visitIntrinsicCall(Intrinsic::ID ID, CallInst &I);
 
     // Arithmetic operators
     void visitSimpleBinary(BinaryOperator &B, unsigned OpcodeClass);
@@ -1045,7 +1047,7 @@ void ISel::visitCallInst(CallInst &CI) {
   MachineInstr *TheCall;
   if (Function *F = CI.getCalledFunction()) {
     // Is it an intrinsic function call?
-    if (LLVMIntrinsic::ID ID = (LLVMIntrinsic::ID)F->getIntrinsicID()) {
+    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       visitIntrinsicCall(ID, CI);   // Special intrinsics are not handled here
       return;
     }
@@ -1066,29 +1068,29 @@ void ISel::visitCallInst(CallInst &CI) {
 }         
 
 
-void ISel::visitIntrinsicCall(LLVMIntrinsic::ID ID, CallInst &CI) {
+void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;
   switch (ID) {
-  case LLVMIntrinsic::va_start:
+  case Intrinsic::va_start:
     // Get the address of the first vararg value...
     TmpReg1 = getReg(CI);
     addFrameReference(BuildMI(BB, X86::LEAr32, 5, TmpReg1), VarArgsFrameIndex);
     return;
 
-  case LLVMIntrinsic::va_copy:
+  case Intrinsic::va_copy:
     TmpReg1 = getReg(CI);
     TmpReg2 = getReg(CI.getOperand(1));
     BuildMI(BB, X86::MOVrr32, 1, TmpReg1).addReg(TmpReg2);
     return;
-  case LLVMIntrinsic::va_end: return;   // Noop on X86
+  case Intrinsic::va_end: return;   // Noop on X86
 
-  case LLVMIntrinsic::longjmp:
-  case LLVMIntrinsic::siglongjmp:
+  case Intrinsic::longjmp:
+  case Intrinsic::siglongjmp:
     BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("abort", true); 
     return;
 
-  case LLVMIntrinsic::setjmp:
-  case LLVMIntrinsic::sigsetjmp:
+  case Intrinsic::setjmp:
+  case Intrinsic::sigsetjmp:
     // Setjmp always returns zero...
     BuildMI(BB, X86::MOVir32, 1, getReg(CI)).addZImm(0);
     return;
@@ -2127,7 +2129,6 @@ void ISel::visitFreeInst(FreeInst &I) {
   doCall(ValueRecord(0, Type::VoidTy), TheCall, Args);
 }
    
-
 /// createX86SimpleInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation is a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
@@ -2135,3 +2136,5 @@ void ISel::visitFreeInst(FreeInst &I) {
 FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);
 }
+
+} // End llvm namespace

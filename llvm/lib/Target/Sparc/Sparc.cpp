@@ -27,6 +27,8 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
 
+namespace llvm {
+
 static const unsigned ImplicitRegUseList[] = { 0 }; /* not used yet */
 // Build the MachineInstruction Description Array...
 const TargetInstrDescriptor SparcMachineInstrDesc[] = {
@@ -267,3 +269,5 @@ bool UltraSparc::addPassesToJITCompile(FunctionPassManager &PM) {
 
   return false; // success!
 }
+
+} // End llvm namespace

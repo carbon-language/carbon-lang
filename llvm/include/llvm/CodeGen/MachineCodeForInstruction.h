@@ -28,6 +28,8 @@
 #include "Support/Annotation.h"
 #include <vector>
 
+namespace llvm {
+
 class MachineInstr;
 class Instruction;
 class Value;
@@ -95,5 +97,7 @@ public:
   void setCallArgsDescriptor(CallArgsDescriptor* desc) { callArgsDesc = desc; }
   CallArgsDescriptor* getCallArgsDescriptor() const    { return callArgsDesc; }
 };
+
+} // End llvm namespace
 
 #endif

@@ -23,6 +23,9 @@
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
 #include <vector>
+
+namespace llvm {
+
 class Constant;
 
 class MachineConstantPool {
@@ -53,5 +56,7 @@ public:
   /// dump - Call print(std::cerr) to be called from the debugger.
   void dump() const;
 };
+
+} // End llvm namespace
 
 #endif

@@ -18,6 +18,8 @@
 #ifndef SUPPORT_GRAPHTRAITS_H
 #define SUPPORT_GRAPHTRAITS_H
 
+namespace llvm {
+
 // GraphTraits - This class should be specialized by different graph types...
 // which is why the default version is empty.
 //
@@ -75,5 +77,7 @@ struct Inverse {
 
   inline Inverse(GraphType &G) : Graph(G) {}
 };
+
+} // End llvm namespace
 
 #endif

@@ -16,6 +16,8 @@
 #include "CodeGenWrappers.h"
 #include "Record.h"
 
+namespace llvm {
+
 // runEnums - Print out enum values for all of the instructions.
 void InstrInfoEmitter::runEnums(std::ostream &OS) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
@@ -47,6 +49,7 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
+  EmitSourceFileTail(OS);
 }
 
 void InstrInfoEmitter::printDefList(ListInit *LI, const std::string &Name,
@@ -93,6 +96,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     if (Instructions[i] != PHI)
       emitRecord(Instructions[i], i+1, InstrInfo, OS);
   OS << "};\n";
+  EmitSourceFileTail(OS);
 }
 
 void InstrInfoEmitter::emitRecord(Record *R, unsigned Num, Record *InstrInfo,
@@ -169,3 +173,5 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
   std::cerr << "Unhandled initializer: " << *Val << "\n";
   throw "In record '" + R->getName() + "' for TSFlag emission.";
 }
+
+} // End llvm namespace

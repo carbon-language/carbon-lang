@@ -22,6 +22,8 @@
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
+namespace llvm {
+
 struct MachineFunctionPass : public FunctionPass {
 
   /// runOnMachineFunction - This method must be overloaded to perform the
@@ -36,5 +38,7 @@ struct MachineFunctionPass : public FunctionPass {
     return runOnMachineFunction(MachineFunction::get(&F));
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -19,6 +19,9 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Instruction.h"
 #include "Support/iterator"
+
+namespace llvm {
+
 class Constant;
 
 class constant_iterator : public forward_iterator<const Constant, ptrdiff_t> {
@@ -85,5 +88,7 @@ inline constant_iterator constant_begin(const Function *F) {
 inline constant_iterator constant_end(const Function *F) {
   return constant_iterator(F, true);
 }
+
+} // End llvm namespace
 
 #endif

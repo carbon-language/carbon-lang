@@ -19,6 +19,8 @@
 #include "llvm/SymbolTableListTraits.h"
 #include "llvm/SymbolTable.h"
 
+namespace llvm {
+
 template<typename ValueSubClass, typename ItemParentClass,typename SymTabClass,
          typename SubClass>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
@@ -93,5 +95,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
       first->setParent(NewIP);
   }
 }
+
+} // End llvm namespace
 
 #endif

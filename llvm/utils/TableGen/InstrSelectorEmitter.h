@@ -21,6 +21,8 @@
 #include <map>
 #include <cassert>
 
+namespace llvm {
+
 class DagInit;
 class Init;
 class InstrSelectorEmitter;
@@ -390,5 +392,7 @@ private:
                             TreePatternNode *ArgDecl, Pattern *P,
                             bool PrintArg, std::ostream &OS);
 };
+
+} // End llvm namespace
 
 #endif

@@ -33,6 +33,8 @@
 #include <algorithm>
 #include <set>
 
+namespace llvm {
+
 // InstVal class - This class represents the different lattice values that an 
 // instruction may occupy.  It is a simple class with value semantics.
 //
@@ -253,7 +255,6 @@ private:
 
 
 // createSCCPPass - This is the public interface to this file...
-//
 Pass *createSCCPPass() {
   return new SCCP();
 }
@@ -585,3 +586,5 @@ void SCCP::visitGetElementPtrInst(GetElementPtrInst &I) {
 
   markConstant(&I, ConstantExpr::getGetElementPtr(Ptr, Operands));  
 }
+
+} // End llvm namespace

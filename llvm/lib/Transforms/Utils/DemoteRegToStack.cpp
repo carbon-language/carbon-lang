@@ -22,6 +22,8 @@
 #include "llvm/Type.h"
 #include "Support/hash_set"
 
+namespace llvm {
+
 typedef hash_set<PHINode*>           PhiSet;
 typedef hash_set<PHINode*>::iterator PhiSetIterator;
 
@@ -160,3 +162,5 @@ AllocaInst* DemoteRegToStack(Instruction& X) {
 
   return XSlot;
 }
+
+} // End llvm namespace

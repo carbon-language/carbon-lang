@@ -29,6 +29,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 // StartInst - This enables the -raise-start-inst=foo option to cause the level
 // raising pass to start at instruction "foo", which is immensely useful for
 // debugging!
@@ -54,7 +56,6 @@ NumDCEorCP("raise", "Number of insts DCEd or constprop'd");
 
 static Statistic<>
 NumVarargCallChanges("raise", "Number of vararg call peepholes");
-
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
   DEBUG(std::cerr << "Inst P/H " << ID << "[" << NUM << "] " << I)
@@ -86,10 +87,10 @@ namespace {
   RegisterOpt<RPR> X("raise", "Raise Pointer References");
 }
 
+
 Pass *createRaisePointerReferencesPass() {
   return new RPR();
 }
-
 
 
 // isReinterpretingCast - Return true if the cast instruction specified will
@@ -617,3 +618,5 @@ bool RPR::runOnFunction(Function &F) {
 
   return Changed;
 }
+
+} // End llvm namespace

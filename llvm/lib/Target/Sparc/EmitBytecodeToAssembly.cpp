@@ -18,6 +18,8 @@
 #include "llvm/Bytecode/Writer.h"
 #include <iostream>
 
+namespace llvm {
+
 using std::ostream;
 
 namespace {
@@ -113,3 +115,5 @@ namespace {
 Pass *UltraSparc::getBytecodeAsmPrinterPass(std::ostream &Out) {
   return new SparcBytecodeWriter(Out);
 }
+
+} // End llvm namespace

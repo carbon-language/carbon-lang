@@ -26,6 +26,8 @@
 #include "Support/Statistic.h"
 #include <iostream>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumSpilled ("ra-simple", "Number of registers spilled");
   Statistic<> NumReloaded("ra-simple", "Number of registers reloaded");
@@ -234,3 +236,5 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
 FunctionPass *createSimpleRegisterAllocator() {
   return new RegAllocSimple();
 }
+
+} // End llvm namespace

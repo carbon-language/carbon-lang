@@ -42,6 +42,8 @@
 #include "Support/Statistic.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
   Statistic<> NumOperandsCann("cee", "Number of operands canonicalized");
@@ -1314,3 +1316,5 @@ void Relation::print(std::ostream &OS) const {
 void Relation::dump() const { print(std::cerr); }
 void ValueInfo::dump() const { print(std::cerr, 0); }
 void RegionInfo::dump() const { print(std::cerr); }
+
+} // End llvm namespace

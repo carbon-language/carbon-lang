@@ -31,6 +31,9 @@
 #define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 
 #include "llvm/Support/CallSite.h"
+
+namespace llvm {
+
 class LoadInst;
 class StoreInst;
 class TargetData;
@@ -155,5 +158,7 @@ public:
   bool canInstructionRangeModify(const Instruction &I1, const Instruction &I2,
                                  const Value *Ptr, unsigned Size);
 };
+
+} // End llvm namespace
 
 #endif

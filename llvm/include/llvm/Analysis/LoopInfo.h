@@ -29,6 +29,8 @@
 #include "Support/GraphTraits.h"
 #include <set>
 
+namespace llvm {
+
 class DominatorSet;
 class LoopInfo;
 
@@ -223,5 +225,7 @@ template <> struct GraphTraits<Loop*> {
     return N->getSubLoops().end();
   }
 };
+
+} // End llvm namespace
 
 #endif

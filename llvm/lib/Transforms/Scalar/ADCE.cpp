@@ -28,6 +28,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
   Statistic<> NumInstRemoved ("adce", "Number of instructions removed");
@@ -456,3 +458,5 @@ bool ADCE::doADCE() {
 
   return MadeChanges;
 }
+
+} // End llvm namespace

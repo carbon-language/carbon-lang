@@ -22,6 +22,8 @@
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   cl::opt<bool> PrintCode("print-machineinstrs",
 			  cl::desc("Print generated machine code"));
@@ -153,3 +155,5 @@ void X86TargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
   int32_t OldAddr = (intptr_t) OldWord;
   *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
 }
+
+} // End llvm namespace

@@ -22,6 +22,8 @@
 #include <map>
 #include <set>
 
+namespace llvm {
+
 static inline int64_t getConstantValue(const ConstantInt *CPI) {
   return (int64_t)cast<ConstantInt>(CPI)->getRawValue();
 }
@@ -138,5 +140,7 @@ void ConvertValueToNewType(Value *V, Value *NewVal, ValueMapCache &VMC,
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
                                 std::vector<Value*> &Offsets,
                                 const TargetData &TD, bool StopEarly = true);
+
+} // End llvm namespace
 
 #endif

@@ -24,6 +24,8 @@
 #include <vector>
 #include <iosfwd>
 
+namespace llvm {
+
 class BasicBlock;
 
 //===----------------------------------------------------------------------===//
@@ -145,5 +147,7 @@ template <> struct GraphTraits<Inverse<Interval*> > {
     return pred_end(N);
   }
 };
+
+} // End llvm namespace
 
 #endif

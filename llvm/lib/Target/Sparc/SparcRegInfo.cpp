@@ -27,6 +27,8 @@
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 
+namespace llvm {
+
 enum {
   BadRegClass = ~0
 };
@@ -967,3 +969,5 @@ void UltraSparcRegInfo::printReg(const LiveRange *LR) const {
     std::cerr << "+" << getUnifiedRegName(uRegName+1);
   std::cerr << "]\n";
 }
+
+} // End llvm namespace

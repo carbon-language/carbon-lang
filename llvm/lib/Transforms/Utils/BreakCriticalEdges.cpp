@@ -25,6 +25,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumBroken("break-crit-edges", "Number of blocks inserted");
 
@@ -168,3 +170,5 @@ bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   }
   return true;
 }
+
+} // End llvm namespace

@@ -21,11 +21,15 @@
 #ifndef LLVM_ANALYSIS_LOAD_VALUE_NUMBERING_H
 #define LLVM_ANALYSIS_LOAD_VALUE_NUMBERING_H
 
+namespace llvm {
+
 class Pass;
 
 /// createLoadValueNumberingPass - Create and return a new pass that implements
 /// the ValueNumbering interface.
 ///
 Pass *createLoadValueNumberingPass();
+
+} // End llvm namespace
 
 #endif

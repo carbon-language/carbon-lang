@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/Passes.h"
 #include "Support/CommandLine.h"
 
+namespace llvm {
+
 namespace {
   enum RegAllocName { simple, local };
 
@@ -40,3 +42,5 @@ FunctionPass *createRegisterAllocator()
     return 0; // not reached
   }
 }
+
+} // End llvm namespace

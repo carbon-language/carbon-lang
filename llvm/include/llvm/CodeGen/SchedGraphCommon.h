@@ -18,6 +18,8 @@
 #include "llvm/Value.h"
 #include <vector>
 
+namespace llvm {
+
 class SchedGraphEdge;
 class SchedGraphNode;
 
@@ -216,5 +218,7 @@ public:
   SchedGraphCommon() {}
   ~SchedGraphCommon();
 };
+
+} // End llvm namespace
 
 #endif

@@ -17,6 +17,8 @@
 #include "llvm/DerivedTypes.h"
 #include "SparcInternals.h"
 
+namespace llvm {
+
 // Choose load instruction opcode based on type of value
 inline MachineOpCode
 ChooseLoadInstruction(const Type *DestTy)
@@ -219,5 +221,7 @@ convertOpcodeFromRegToImm(unsigned Opcode) {
     return Opcode;
   }
 }
+
+} // End llvm namespace
 
 #endif

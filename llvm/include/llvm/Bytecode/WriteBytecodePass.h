@@ -19,6 +19,8 @@
 #include "llvm/Bytecode/Writer.h"
 #include <iostream>
 
+namespace llvm {
+
 class WriteBytecodePass : public Pass {
   std::ostream *Out;           // ostream to print on
   bool DeleteStream;
@@ -37,5 +39,7 @@ public:
     return false;
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -16,6 +16,8 @@
 
 #include "llvm/Instruction.h"
 
+namespace llvm {
+
 class Function;
 class InstrForest;
 class MachineInstr;
@@ -101,5 +103,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -16,6 +16,8 @@
 
 #include "llvm/Analysis/DSSupport.h"
 
+namespace llvm {
+
 template<typename BaseType>
 class DSNodeIterator;          // Data structure graph traversal iterator
 class TargetData;
@@ -381,5 +383,7 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
   else     // No node to merge with, so just point to Node
     *this = Node;
 }
+
+} // End llvm namespace
 
 #endif

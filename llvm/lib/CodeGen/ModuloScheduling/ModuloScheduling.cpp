@@ -16,6 +16,8 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 namespace {
   
   class ModuloScheduling : public FunctionPass {
@@ -40,3 +42,5 @@ bool ModuloScheduling::runOnFunction(Function &F) {
   bool Changed = false;
   return Changed;
 }
+
+} // End llvm namespace

@@ -31,6 +31,8 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumEliminated("tailduplicate",
                             "Number of unconditional branches eliminated");
@@ -53,6 +55,7 @@ namespace {
   RegisterOpt<TailDup> X("tailduplicate", "Tail Duplication");
 }
 
+// Public interface to the Tail Duplication pass
 Pass *createTailDuplicationPass() { return new TailDup(); }
 
 /// runOnFunction - Top level algorithm - Loop over each unconditional branch in
@@ -339,3 +342,5 @@ Value *TailDup::GetValueOutBlock(BasicBlock *BB, Value *OrigVal,
 
   return GetValueInBlock(BB, OrigVal, ValueMap, OutValueMap);
 }
+
+} // End llvm namespace

@@ -20,6 +20,8 @@
 #include "llvm/InstrTypes.h"
 #include "Support/iterator"
 
+namespace llvm {
+
 //===--------------------------------------------------------------------===//
 // BasicBlock pred_iterator definition
 //===--------------------------------------------------------------------===//
@@ -263,5 +265,7 @@ template <> struct GraphTraits<Inverse<const Function*> > :
     return &G.Graph->getEntryBlock();
   }
 };
+
+} // End llvm namespace
 
 #endif

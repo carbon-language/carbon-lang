@@ -20,6 +20,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 //************************* Internal Functions *****************************/
 
 static inline void
@@ -163,3 +165,5 @@ bool PeepholeOpts::runOnBasicBlock(BasicBlock &BB) {
 FunctionPass* createPeepholeOptsPass(const TargetMachine &TM) {
   return new PeepholeOpts(TM);
 }
+
+} // End llvm namespace

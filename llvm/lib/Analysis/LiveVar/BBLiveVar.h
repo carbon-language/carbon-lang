@@ -17,6 +17,9 @@
 
 #include "llvm/CodeGen/ValueSet.h"
 #include "Support/hash_map"
+
+namespace llvm {
+
 class BasicBlock;
 class Value;
 class MachineBasicBlock;
@@ -81,5 +84,7 @@ public:
   void printAllSets() const;      // for printing Def/In/Out sets
   void printInOutSets() const;    // for printing In/Out sets
 };
+
+} // End llvm namespace
 
 #endif

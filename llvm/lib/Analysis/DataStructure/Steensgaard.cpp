@@ -20,6 +20,8 @@
 #include "llvm/Module.h"
 #include "Support/Debug.h"
 
+namespace llvm {
+
 namespace {
   class Steens : public Pass, public AliasAnalysis {
     DSGraph *ResultGraph;
@@ -75,7 +77,6 @@ namespace {
   // Register as an implementation of AliasAnalysis
   RegisterAnalysisGroup<AliasAnalysis, Steens> Y;
 }
-
 
 /// ResolveFunctionCall - Resolve the actual arguments of a call to function F
 /// with the specified call site descriptor.  This function links the arguments
@@ -235,3 +236,5 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
   //
   return getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
 }
+
+} // End llvm namespace

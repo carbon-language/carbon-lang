@@ -17,6 +17,8 @@
 #ifndef LLVM_ANALYSIS_EXPRESSIONS_H
 #define LLVM_ANALYSIS_EXPRESSIONS_H
 
+namespace llvm {
+
 class Type;
 class Value;
 class ConstantInt;
@@ -55,5 +57,7 @@ struct ExprType {
   //
   const Type *getExprType(const Type *Default) const;
 };
+
+} // End llvm namespace
 
 #endif

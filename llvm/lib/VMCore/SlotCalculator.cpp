@@ -27,6 +27,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 #if 0
 #define SC_DEBUG(X) std::cerr << X
 #else
@@ -361,3 +363,5 @@ int SlotCalculator::doInsertValue(const Value *D) {
   SC_DEBUG("]\n");
   return (int)DestSlot;
 }
+
+} // End llvm namespace

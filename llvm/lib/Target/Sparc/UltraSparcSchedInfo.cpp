@@ -13,6 +13,8 @@
 
 #include "SparcInternals.h"
 
+using namespace llvm;
+
 /*---------------------------------------------------------------------------
 Scheduling guidelines for SPARC IIi:
 

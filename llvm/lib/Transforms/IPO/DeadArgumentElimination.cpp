@@ -30,6 +30,8 @@
 #include "Support/iterator"
 #include <set>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumArgumentsEliminated("deadargelim",
                                      "Number of unread args removed");
@@ -576,3 +578,6 @@ bool DAE::run(Module &M) {
     RemoveDeadArgumentsFromFunction(*DeadRetVal.begin());
   return true;
 }
+
+} // End llvm namespace
+

@@ -24,6 +24,8 @@
 #include "Support/Statistic.h"
 #include "Config/alloca.h"
 
+namespace llvm {
+
 namespace {
   Statistic<>
   NumEmitted("x86-emitter", "Number of machine instructions emitted");
@@ -589,3 +591,5 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     break;
   }
 }
+
+} // End llvm namespace

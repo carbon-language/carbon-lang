@@ -26,6 +26,9 @@
 
 #include "Support/DataTypes.h"
 #include <iosfwd>
+
+namespace llvm {
+
 class ConstantIntegral;
 class Type;
 
@@ -123,5 +126,7 @@ inline std::ostream &operator<<(std::ostream &OS, const ConstantRange &CR) {
   CR.print(OS);
   return OS;
 }
+
+} // End llvm namespace
 
 #endif

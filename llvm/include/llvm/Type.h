@@ -37,6 +37,8 @@
 #include "Support/GraphTraits.h"
 #include "Support/iterator"
 
+namespace llvm {
+
 class DerivedType;
 class FunctionType;
 class ArrayType;
@@ -323,5 +325,7 @@ template <> struct GraphTraits<const Type*> {
 template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) { 
   return Ty.getPrimitiveID() == Type::PointerTyID;
 }
+
+} // End llvm namespace
 
 #endif

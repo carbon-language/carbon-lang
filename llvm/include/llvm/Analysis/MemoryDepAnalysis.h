@@ -24,6 +24,8 @@
 #include "llvm/Pass.h"
 #include "Support/hash_map"
 
+namespace llvm {
+
 class ModRefTable;
 class DSGraph;
 class FunctionModRefInfo;
@@ -95,5 +97,7 @@ public:
   void print(std::ostream &O) const;
   void dump() const;
 };
+
+} // End llvm namespace
 
 #endif

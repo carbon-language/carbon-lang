@@ -15,6 +15,9 @@
 #define LLVM_IPHINODE_H
 
 #include "llvm/Instruction.h"
+
+namespace llvm {
+
 class BasicBlock;
 
 //===----------------------------------------------------------------------===//
@@ -111,5 +114,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -26,6 +26,8 @@
 
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 
+namespace llvm {
+
 /// addDirectMem - This function is used to add a direct memory reference to the
 /// current instruction -- that is, a dereference of an address in a register,
 /// with no scale, index or displacement. An example is: DWORD PTR [EAX].
@@ -68,5 +70,7 @@ addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
                          int Offset = 0) {
   return MIB.addConstantPoolIndex(CPI).addZImm(1).addReg(0).addSImm(Offset);
 }
+
+} // End llvm namespace
 
 #endif

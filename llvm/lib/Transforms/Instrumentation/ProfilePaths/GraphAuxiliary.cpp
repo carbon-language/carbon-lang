@@ -24,6 +24,8 @@ using std::map;
 using std::vector;
 using std::cerr;
 
+namespace llvm {
+
 //check if 2 edges are equal (same endpoints and same weight)
 static bool edgesEqual(Edge  ed1, Edge ed2){
   return ((ed1==ed2) && ed1.getWeight()==ed2.getWeight());
@@ -673,3 +675,5 @@ void printGraph(Graph &g){
   }
   cerr<<"--------------------Graph\n";
 }
+
+} // End llvm namespace

@@ -17,10 +17,13 @@
 
 #include <string>
 
+namespace llvm {
+
 // RemoveFileOnSignal - This function registers signal handlers to ensure that
 // if a signal gets delivered that the named file is removed.
 //
 void RemoveFileOnSignal(const std::string &Filename);
 
-#endif
+} // End llvm namespace
 
+#endif

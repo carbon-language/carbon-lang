@@ -18,6 +18,8 @@
 #ifndef MODULEPROVIDER_H
 #define MODULEPROVIDER_H
 
+namespace llvm {
+
 class Function;
 class Module;
 
@@ -51,5 +53,7 @@ public:
     return tempM; 
   }
 };
+
+} // End llvm namespace
 
 #endif

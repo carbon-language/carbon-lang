@@ -27,6 +27,9 @@
 #include <map>
 #include <vector>
 #include <cassert>
+
+namespace llvm {
+
 class Value;
 class Type;
 class Instruction;
@@ -361,5 +364,7 @@ typedef ReducedValue<unsigned      , ISD::Constant_i32_Slot> ReducedValue_Consta
 typedef ReducedValue<uint64_t      , ISD::Constant_i64_Slot> ReducedValue_Constant_i64;
 typedef ReducedValue<float         , ISD::Constant_f32_Slot> ReducedValue_Constant_f32;
 typedef ReducedValue<double        , ISD::Constant_f64_Slot> ReducedValue_Constant_f64;
+
+} // End llvm namespace
 
 #endif

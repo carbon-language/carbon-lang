@@ -29,6 +29,8 @@
 #include "llvm/Transforms/Scalar.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
 
   //===--------------------------------------------------------------------===//
@@ -71,6 +73,7 @@ namespace {
                                "Specialize LLVM code for a target machine"
                                createPreselectionPass);
 #endif
+
 }  // end anonymous namespace
 
 
@@ -236,7 +239,6 @@ void PreSelection::visitCallInst(CallInst &I) {
   visitOperands(I, (/*firstOp=*/ I.getCalledFunction()? 1 : 0));
 }
 
-
 //===----------------------------------------------------------------------===//
 // createPreSelectionPass - Public entrypoint for pre-selection pass
 // and this file as a whole...
@@ -244,3 +246,5 @@ void PreSelection::visitCallInst(CallInst &I) {
 FunctionPass* createPreSelectionPass(const TargetMachine &TM) {
   return new PreSelection(TM);
 }
+
+} // End llvm namespace

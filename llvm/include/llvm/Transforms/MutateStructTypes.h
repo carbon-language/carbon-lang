@@ -24,6 +24,8 @@
 #include "llvm/Pass.h"
 #include "llvm/AbstractTypeUser.h"
 
+namespace llvm {
+
 class Value;
 class Type;
 class StructType;
@@ -110,5 +112,7 @@ private:
   void AdjustIndices(const CompositeType *OldTy, std::vector<Value*> &Idx,
                      unsigned idx = 0);
 };
+
+} // End llvm namespace
 
 #endif

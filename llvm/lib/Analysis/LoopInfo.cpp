@@ -21,6 +21,8 @@
 #include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
+namespace llvm {
+
 static RegisterAnalysis<LoopInfo>
 X("loops", "Natural Loop Construction", true);
 
@@ -367,3 +369,5 @@ void Loop::changeExitBlock(BasicBlock *Old, BasicBlock *New) {
     I = std::find(I+1, ExitBlocks.end(), Old);
   }
 }
+
+} // End llvm namespace

@@ -23,6 +23,8 @@
 #include "Support/Casting.h"
 #include <iostream>
 
+namespace llvm {
+
 class Type;
 class Constant;
 class Argument;
@@ -197,5 +199,7 @@ template <> inline bool isa_impl<GlobalVariable, Value>(const Value &Val) {
 template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) { 
   return isa<GlobalVariable>(Val) || isa<Function>(Val);
 }
+
+} // End llvm namespace
 
 #endif

@@ -21,6 +21,9 @@
 #include "Support/iterator"
 #include "Support/hash_map"
 #include "Support/ilist"
+
+namespace llvm {
+
 class AliasAnalysis;
 class LoadInst;
 class StoreInst;
@@ -282,5 +285,7 @@ inline std::ostream& operator<<(std::ostream &OS, const AliasSetTracker &AST) {
   AST.print(OS);
   return OS;
 }
+
+} // End llvm namespace
 
 #endif

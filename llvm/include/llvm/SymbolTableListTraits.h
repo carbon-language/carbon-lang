@@ -25,6 +25,8 @@
 #ifndef LLVM_SYMBOLTABLELISTTRAITS_H
 #define LLVM_SYMBOLTABLELISTTRAITS_H
 
+namespace llvm {
+
 template<typename NodeTy> class ilist_iterator;
 template<typename NodeTy, typename Traits> class iplist;
 template<typename Ty> struct ilist_traits;
@@ -71,5 +73,7 @@ public:
   void setItemParent(ItemParentClass *IP) { ItemParent = IP; }//This is private!
   void setParent(SymTabClass *Parent);  // This is private!
 };
+
+} // End llvm namespace
 
 #endif

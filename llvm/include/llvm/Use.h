@@ -17,6 +17,9 @@
 #define LLVM_USE_H
 
 #include "Support/ilist"
+
+namespace llvm {
+
 template<typename NodeTy> struct ilist_traits;
 class Value;
 class User;
@@ -77,13 +80,13 @@ struct ilist_traits<Use> {
 };
 
 
-template<> struct simplify_type<Use> {
+template<> struct std::simplify_type<Use> {
   typedef Value* SimpleType;
   static SimpleType getSimplifiedValue(const Use &Val) {
     return (SimpleType)Val.get();
   }
 };
-template<> struct simplify_type<const Use> {
+template<> struct std::simplify_type<const Use> {
   typedef Value* SimpleType;
   static SimpleType getSimplifiedValue(const Use &Val) {
     return (SimpleType)Val.get();
@@ -149,5 +152,7 @@ struct UseListConstIteratorWrapper : public iplist<Use>::const_iterator {
     return tmp;
   }
 };
+
+} // End llvm namespace
 
 #endif

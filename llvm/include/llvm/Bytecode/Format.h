@@ -15,6 +15,8 @@
 #ifndef LLVM_BYTECODE_FORMAT_H
 #define LLVM_BYTECODE_FORMAT_H
 
+namespace llvm {
+
 class BytecodeFormat {   // Throw the constants into a poorman's namespace...
   BytecodeFormat();      // do not implement
 public:
@@ -38,4 +40,7 @@ public:
     BasicBlock = 0x31,        // May contain many basic blocks
   };
 };
+
+} // End llvm namespace
+
 #endif

@@ -22,6 +22,8 @@
 #include <cstdarg>
 #include <map>
 
+namespace llvm {
+
 Function *ilist_traits<Function>::createNode() {
   FunctionType *FTy =
     FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
@@ -307,3 +309,5 @@ void Module::mutateConstantPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
     delete Ref;
   }
 }
+
+} // End llvm namespace

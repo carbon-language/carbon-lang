@@ -30,6 +30,7 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Function.h"
 
+namespace llvm {
 
 //----------------------------------------------------------------------------
 // class DepIterState
@@ -253,3 +254,5 @@ void PgmDependenceGraph::dump() const
 
 static RegisterAnalysis<PgmDependenceGraph>
 Z("pgmdep", "Enumerate Program Dependence Graph (data and control)");
+
+} // End llvm namespace

@@ -27,6 +27,8 @@
 #include "Support/Statistic.h"
 #include <set>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumInstKilled("constprop", "Number of instructions killed");
 
@@ -73,3 +75,5 @@ bool ConstantPropagation::runOnFunction(Function &F) {
   }
   return Changed;
 }
+
+} // End llvm namespace

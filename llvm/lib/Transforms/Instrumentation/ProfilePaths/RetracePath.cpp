@@ -21,6 +21,8 @@ using std::vector;
 using std::map;
 using std::cerr;
 
+namespace llvm {
+
 //Routines to get the path trace!
 
 void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g, 
@@ -303,3 +305,5 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
   }
   */
 }
+
+} // End llvm namespace

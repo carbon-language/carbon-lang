@@ -28,6 +28,8 @@
 //
 #include "llvm/Module.h"
 
+namespace llvm {
+
 static RegisterAnalysis<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
@@ -41,8 +43,8 @@ namespace DS {
     return false;
   }
 }
-using namespace DS;
 
+using namespace DS;
 
 namespace {
   cl::opt<bool>
@@ -143,6 +145,8 @@ namespace {
     DSNodeHandle &getLink(const DSNodeHandle &Node, unsigned Link = 0);
   };
 }
+
+using namespace DS;
 
 //===----------------------------------------------------------------------===//
 // DSGraph constructor - Simply use the GraphBuilder to construct the local
@@ -617,3 +621,5 @@ void LocalDataStructures::releaseMemory() {
   delete GlobalsGraph;
   GlobalsGraph = 0;
 }
+
+} // End llvm namespace

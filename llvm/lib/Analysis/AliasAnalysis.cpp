@@ -29,6 +29,8 @@
 #include "llvm/iMemory.h"
 #include "llvm/Target/TargetData.h"
 
+namespace llvm {
+
 // Register the AliasAnalysis interface, providing a nice name to refer to.
 namespace {
   RegisterAnalysisGroup<AliasAnalysis> Z("Alias Analysis");
@@ -123,3 +125,5 @@ namespace {
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis, NoAA> Y;
 }  // End of anonymous namespace
+
+} // End llvm namespace

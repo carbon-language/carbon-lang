@@ -27,6 +27,8 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 //this is used to color vertices
 //during DFS
 
@@ -36,7 +38,7 @@ enum Color{
   BLACK
 };
 
-namespace{
+namespace {
   struct CombineBranches : public FunctionPass {
   private:
     //DominatorSet *DS;
@@ -225,3 +227,5 @@ bool CombineBranches::runOnFunction(Function &F){
   
   return true;
 }
+
+} // End llvm namespace

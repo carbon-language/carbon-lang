@@ -23,6 +23,8 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 
+namespace llvm {
+
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)
 static const uint32_t MAXSIMM = (1 << 12) - 1; // set bits in simm13 field of OR
 
@@ -792,3 +794,5 @@ UltraSparcInstrInfo::CreateZeroExtensionInstructions(
   CreateBitExtensionInstructions(/*signExtend*/ false, target, F, srcVal,
                                  destVal, numLowBits, mvec, mcfi);
 }
+
+} // End llvm namespace

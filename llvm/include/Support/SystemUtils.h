@@ -17,6 +17,8 @@
 
 #include <string>
 
+namespace llvm {
+
 /// isExecutableFile - This function returns true if the filename specified
 /// exists and is executable.
 ///
@@ -45,4 +47,7 @@ int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
 /// wait for it to terminate.
 ///
 int ExecWait (const char * const argv[], const char * const envp[]);
+
+} // End llvm namespace
+
 #endif

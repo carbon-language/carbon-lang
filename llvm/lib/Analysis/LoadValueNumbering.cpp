@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <set>
 
+namespace llvm {
+
 namespace {
   // FIXME: This should not be a FunctionPass.
   struct LoadVN : public FunctionPass, public ValueNumbering {
@@ -69,8 +71,6 @@ namespace {
   // Declare that we implement the ValueNumbering interface
   RegisterAnalysisGroup<ValueNumbering, LoadVN> Y;
 }
-
-
 
 Pass *createLoadValueNumberingPass() { return new LoadVN(); }
 
@@ -340,3 +340,5 @@ bool LoadVN::haveEqualValueNumber(LoadInst *Load, StoreInst *Store,
     return true;
   }
 }
+
+} // End llvm namespace

@@ -17,6 +17,9 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/DataTypes.h"
+
+namespace llvm {
+
 class InstructionNode;
 class TargetMachine;
 class Instruction;
@@ -43,5 +46,7 @@ MachineOperand::MachineOperandType ChooseRegOrImmed(int64_t intValue,
                                          bool canUseImmed,
                                          unsigned& getMachineRegNum,
                                          int64_t& getImmedValue);
+
+} // End llvm namespace
 
 #endif

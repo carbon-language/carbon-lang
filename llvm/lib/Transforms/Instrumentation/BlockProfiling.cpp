@@ -25,6 +25,8 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 static void insertInitializationCall(Function *MainFn, const char *FnName,
                                      GlobalValue *Array) {
   const Type *ArgVTy = PointerType::get(PointerType::get(Type::SByteTy));
@@ -181,3 +183,5 @@ bool BlockProfiler::run(Module &M) {
   insertInitializationCall(Main, "llvm_start_block_profiling", Counters);
   return true;
 }
+
+} // End llvm namespace

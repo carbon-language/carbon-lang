@@ -20,6 +20,9 @@
 
 #include <vector>
 #include <map>
+
+namespace llvm {
+
 class Module;
 class Function;
 class BasicBlock;
@@ -108,5 +111,7 @@ bool InlineFunction(CallSite CS);
 /// phi nodes, adds it to the same function as the original (although there is 
 /// no jump to it) and returns the new vector of basic blocks.
 std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
+
+} // End llvm namespace
 
 #endif

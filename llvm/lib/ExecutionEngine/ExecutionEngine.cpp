@@ -27,6 +27,8 @@
 #include "Support/DynamicLinker.h"
 #include "Config/dlfcn.h"
 
+namespace llvm {
+
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
 
 ExecutionEngine::ExecutionEngine(ModuleProvider *P) : 
@@ -390,3 +392,4 @@ void ExecutionEngine::emitGlobals() {
       InitializeMemory(I->getInitializer(), GlobalAddress[I]);
 }
 
+} // End llvm namespace

@@ -16,6 +16,8 @@
 
 #include "llvm/Target/TargetRegInfo.h"
 
+namespace llvm {
+
 //-----------------------------------------------------------------------------
 // Integer Register Class
 //-----------------------------------------------------------------------------
@@ -216,5 +218,7 @@ struct SparcSpecialRegClass : public TargetRegClassInfo {
 
   const char * const getRegName(unsigned reg) const;
 };
+
+} // End llvm namespace
 
 #endif

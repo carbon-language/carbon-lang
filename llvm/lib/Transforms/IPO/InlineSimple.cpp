@@ -17,6 +17,8 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/IPO.h"
 
+namespace llvm {
+
 namespace {
   // FunctionInfo - For each function, calculate the size of it in blocks and
   // instructions.
@@ -114,3 +116,5 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   InlineCost += CalleeFI.NumInsts*10 + CalleeFI.NumBlocks*20;
   return InlineCost;
 }
+
+} // End llvm namespace

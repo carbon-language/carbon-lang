@@ -15,6 +15,8 @@
 #ifndef LLVM_TARGET_TARGETMACHINEIMPLS_H
 #define LLVM_TARGET_TARGETMACHINEIMPLS_H
 
+namespace llvm {
+
 class TargetMachine;
 class Module;
 
@@ -29,5 +31,7 @@ TargetMachine *allocateSparcTargetMachine(const Module &M);
 // size and different endianness if desired.
 //
 TargetMachine *allocateX86TargetMachine(const Module &M);
+
+} // End llvm namespace
 
 #endif

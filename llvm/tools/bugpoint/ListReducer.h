@@ -17,6 +17,8 @@
 
 #include <vector>
 
+namespace llvm {
+
 template<typename ElTy>
 struct ListReducer {
   enum TestResult {
@@ -108,5 +110,7 @@ struct ListReducer {
     return true; // there are some failure and we've narrowed them down
   }
 };
+
+} // End llvm namespace
 
 #endif

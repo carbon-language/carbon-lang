@@ -19,6 +19,9 @@
 
 #include <string>
 #include "Support/DataTypes.h"
+
+namespace llvm {
+
 class MachineFunction;
 class MachineBasicBlock;
 class MachineConstantPool;
@@ -104,5 +107,7 @@ struct MachineCodeEmitter {
   ///
   static MachineCodeEmitter *createFilePrinterEmitter(MachineCodeEmitter&);
 };
+
+} // End llvm namespace
 
 #endif

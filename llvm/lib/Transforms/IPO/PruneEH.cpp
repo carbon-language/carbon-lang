@@ -23,6 +23,8 @@
 #include "Support/Statistic.h"
 #include <set>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumRemoved("prune-eh", "Number of invokes removed");
 
@@ -104,3 +106,5 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 
   return MadeChange; 
 }
+
+} // End llvm namespace

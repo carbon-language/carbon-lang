@@ -21,6 +21,8 @@
 #include "Support/CommandLine.h"
 #include <memory>
 
+using namespace llvm;
+
 // InputFilename - The filename to read from.
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode file>"),

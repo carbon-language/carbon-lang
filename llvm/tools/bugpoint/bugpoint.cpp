@@ -19,6 +19,8 @@
 #include "Config/unistd.h"
 #include <sys/resource.h>
 
+using namespace llvm;
+
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
                cl::desc("<input llvm ll/bc files>"));

@@ -15,7 +15,7 @@
 
 // NOTE: NO INCLUDE GUARD DESIRED!
 
-// Provide definitions of macros so that users of this file don't have to define
+// Provide definitions of macros so that users of this file do not have to define
 // everything to use it...
 //
 #ifndef FIRST_TERM_INST

@@ -19,6 +19,9 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
+
+namespace llvm {
+
 class Instruction;
 class Pass;
 
@@ -49,7 +52,6 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To);
 // suprising change in program behavior if it is not expected.
 //
 void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum);
-
 
 /// isCriticalEdge - Return true if the specified edge is a critical edge.
 /// Critical edges are edges from a block with multiple successors to a block
@@ -82,5 +84,6 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
   return MadeChange;
 }
 
+} // End llvm namespace
 
 #endif

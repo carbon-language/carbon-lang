@@ -21,6 +21,8 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
 
+namespace llvm {
+
 /// mergeSetIn - Merge the specified alias set into this alias set...
 ///
 void AliasSet::mergeSetIn(AliasSet &AS) {
@@ -294,7 +296,6 @@ void AliasSetTracker::print(std::ostream &OS) const {
 void AliasSet::dump() const { print (std::cerr); }
 void AliasSetTracker::dump() const { print(std::cerr); }
 
-
 //===----------------------------------------------------------------------===//
 //                            AliasSetPrinter Pass
 //===----------------------------------------------------------------------===//
@@ -328,3 +329,5 @@ namespace {
   RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer",
                                   PassInfo::Analysis | PassInfo::Optimization);
 }
+
+} // End llvm namespace

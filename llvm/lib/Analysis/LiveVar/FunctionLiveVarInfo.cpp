@@ -23,6 +23,8 @@
 #include "Support/CommandLine.h"
 #include "BBLiveVar.h"
 
+namespace llvm {
+
 static RegisterAnalysis<FunctionLiveVarInfo>
 X("livevar", "Live Variable Analysis");
 
@@ -318,3 +320,5 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
     SetAI = NewSet;                 
   }
 }
+
+} // End llvm namespace

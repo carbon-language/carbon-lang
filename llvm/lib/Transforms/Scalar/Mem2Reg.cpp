@@ -20,6 +20,8 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumPromoted("mem2reg", "Number of alloca's promoted");
 
@@ -78,3 +80,5 @@ bool PromotePass::runOnFunction(Function &F) {
 Pass *createPromoteMemoryToRegister() {
   return new PromotePass();
 }
+
+} // End llvm namespace

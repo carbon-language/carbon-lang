@@ -34,6 +34,8 @@
 #include "Support/PostOrderIterator.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumLinear ("reassociate","Number of insts linearized");
   Statistic<> NumChanged("reassociate","Number of insts reassociated");
@@ -58,6 +60,7 @@ namespace {
   RegisterOpt<Reassociate> X("reassociate", "Reassociate expressions");
 }
 
+// Public interface to the Reassociate pass
 FunctionPass *createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::BuildRankMap(Function &F) {
@@ -291,3 +294,5 @@ bool Reassociate::runOnFunction(Function &F) {
   ValueRankMap.clear();
   return Changed;
 }
+
+} // End llvm namespace

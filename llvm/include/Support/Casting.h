@@ -15,6 +15,8 @@
 #ifndef SUPPORT_CASTING_H
 #define SUPPORT_CASTING_H
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                          isa<x> Support Templates
 //===----------------------------------------------------------------------===//
@@ -292,5 +294,7 @@ void main() {
 }
 
 #endif
+
+} // End llvm namespace
 
 #endif

@@ -16,6 +16,9 @@
 #define INSTRINFO_EMITTER_H
 
 #include "TableGenBackend.h"
+
+namespace llvm {
+
 class StringInit;
 class IntInit;
 class ListInit;
@@ -37,5 +40,7 @@ private:
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
 };
+
+} // End llvm namespace
 
 #endif

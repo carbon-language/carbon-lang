@@ -49,6 +49,8 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "Support/StringExtras.h"
 
+namespace llvm {
+
 namespace {
   class MappingInfoAsmPrinter : public FunctionPass { 
     std::ostream &Out;
@@ -292,4 +294,6 @@ bool MappingInfoAsmPrinter::doFinalization (Module &M) {
   
   return false;
 }
+
+} // End llvm namespace
 

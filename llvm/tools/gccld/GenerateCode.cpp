@@ -25,11 +25,14 @@
 #include "Support/SystemUtils.h"
 #include "Support/CommandLine.h"
 
+using namespace llvm;
+
 namespace {
   cl::opt<bool>
   DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
 }
 
+namespace llvm {
 
 /// GenerateBytecode - generates a bytecode file from the specified module.
 ///
@@ -221,3 +224,5 @@ GenerateNative(const std::string &OutputFilename,
   // Run the compiler to assembly and link together the program.
   return ExecWait(&(cmd[0]), clean_env);
 }
+
+} // End llvm namespace

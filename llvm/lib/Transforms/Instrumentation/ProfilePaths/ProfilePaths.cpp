@@ -43,6 +43,8 @@
 #include <fstream>
 #include <cstdio>
 
+namespace llvm {
+
 struct ProfilePaths : public FunctionPass {
   bool runOnFunction(Function &F);
 
@@ -245,3 +247,5 @@ bool ProfilePaths::runOnFunction(Function &F){
    
   return true;  // Always modifies function
 }
+
+} // End llvm namespace

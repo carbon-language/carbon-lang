@@ -19,6 +19,8 @@
 #include "llvm/PassManager.h"
 #include "X86InstrInfo.h"
 
+namespace llvm {
+
 class X86TargetMachine : public TargetMachine {
   X86InstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
@@ -54,5 +56,7 @@ public:
 
   virtual void replaceMachineCodeForFunction (void *Old, void *New);
 };
+
+} // End llvm namespace
 
 #endif

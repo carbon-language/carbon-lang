@@ -20,6 +20,8 @@
 #include "llvm/Value.h"
 #include <iostream>
 
+namespace llvm {
+
 class Module;
 class PointerType;
 class SlotCalculator;
@@ -81,5 +83,7 @@ public:
     return *this;
   }
 };
+
+} // End llvm namespace
 
 #endif

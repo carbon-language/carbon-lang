@@ -47,6 +47,8 @@
 #include "Support/STLExtras.h"
 #include <cmath>
 
+namespace llvm {
+
 RegAllocDebugLevel_t DEBUG_RA;
 
 /// The reoptimizer wants to be able to grovel through the register
@@ -1392,3 +1394,5 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   if (DEBUG_RA) std::cerr << "\nRegister allocation complete!\n"; 
   return false;     // Function was not modified
 } 
+
+} // End llvm namespace

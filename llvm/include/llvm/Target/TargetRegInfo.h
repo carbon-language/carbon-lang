@@ -19,6 +19,8 @@
 #include <string>
 #include <cassert>
 
+namespace llvm {
+
 class TargetMachine;
 class IGNode;
 class Type;
@@ -288,5 +290,7 @@ public:
   //
   virtual int getSpilledRegSize(int RegType) const = 0;
 };
+
+} // End llvm namespace
 
 #endif

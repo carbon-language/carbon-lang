@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 // PassNameParser class - Make use of the pass registration mechanism to
 // automatically add a command line argument to opt for each pass.
@@ -113,5 +115,7 @@ struct FilteredPassNameParser : public PassNameParser {
     return (P->getPassType() & Flags) == 0;
   }
 };
+
+} // End llvm namespace
 
 #endif

@@ -23,6 +23,8 @@
 #include "Support/FileUtilities.h"
 #include <memory>
 
+using namespace llvm;
+
 // Anonymous namespace to define command line options for debugging.
 //
 namespace {
@@ -35,6 +37,8 @@ namespace {
   OutputFile("output", cl::desc("Specify a reference program output "
                                 "(for miscompilation detection)"));
 }
+
+namespace llvm {
 
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
@@ -179,3 +183,5 @@ void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs) {
   }
   std::cout << std::flush;
 }
+
+} // End llvm namespace

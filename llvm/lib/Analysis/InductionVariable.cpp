@@ -36,6 +36,8 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/Debug.h"
 
+namespace llvm {
+
 static bool isLoopInvariant(const Value *V, const Loop *L) {
   if (const Instruction *I = dyn_cast<Instruction>(V))
     return !L->contains(I->getParent());
@@ -299,3 +301,5 @@ void InductionVariable::print(std::ostream &o) const {
   }
   o << "\n";
 }
+
+} // End llvm namespace

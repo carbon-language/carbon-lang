@@ -20,6 +20,8 @@
 #include "Support/Debug.h"
 #include "DSCallSiteIterator.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
   Statistic<> NumBUInlines("budatastructures", "Number of graphs inlined");
@@ -316,3 +318,4 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
 }
 
+} // End llvm namespace

@@ -12,6 +12,8 @@
 #include "llvm/Instructions.h"
 #include "llvm/Bytecode/Writer.h"
 
+using namespace llvm;
+
 int main() {
   // Create the "module" or "program" or "translation unit" to hold the
   // function

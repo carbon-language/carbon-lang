@@ -21,6 +21,8 @@
 #include "Support/CommandLine.h"
 #include <cctype>
 
+using namespace llvm;
+
 namespace {
   enum OutputFormatTy { bsd, sysv, posix };
   cl::opt<OutputFormatTy>

@@ -19,6 +19,8 @@
 #ifndef LLVM_PASS_ANALYSIS_SUPPORT_H
 #define LLVM_PASS_ANALYSIS_SUPPORT_H
 
+namespace llvm {
+
 // No need to include Pass.h, we are being included by it!
 
 //===----------------------------------------------------------------------===//
@@ -132,5 +134,7 @@ AnalysisType *Pass::getAnalysisToUpdate() const {
   if (PI == 0) return 0;
   return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
 }
+
+} // End llvm namespace
 
 #endif

@@ -31,6 +31,8 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include <map>
 
+namespace llvm {
+
 class MachineFunction;
 class FunctionLiveVarInfo;
 class MachineInstr;
@@ -178,5 +180,7 @@ private:
 
   void addInterf4PseudoInstr(const MachineInstr *MI);
 };
+
+} // End llvm namespace
 
 #endif

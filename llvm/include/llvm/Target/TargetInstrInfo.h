@@ -18,6 +18,8 @@
 #include <vector>
 #include <cassert>
 
+namespace llvm {
+
 class MachineInstr;
 class TargetMachine;
 class Value;
@@ -414,5 +416,7 @@ public:
     abort();
   }
 };
+
+} // End llvm namespace
 
 #endif

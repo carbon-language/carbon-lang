@@ -43,6 +43,8 @@
 #include "Support/Statistic.h"
 #include "Support/DepthFirstIterator.h"
 
+namespace llvm {
+
 namespace {
   Statistic<>
   NumInserted("loopsimplify", "Number of pre-header blocks inserted");
@@ -81,7 +83,6 @@ namespace {
 // Publically exposed interface to pass...
 const PassInfo *LoopSimplifyID = X.getPassInfo();
 Pass *createLoopSimplifyPass() { return new LoopSimplify(); }
-
 
 /// runOnFunction - Run down all loops in the CFG (recursively, but we could do
 /// it in any convenient order) inserting preheaders...
@@ -566,3 +567,5 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     }
   }
 }
+
+} // End llvm namespace

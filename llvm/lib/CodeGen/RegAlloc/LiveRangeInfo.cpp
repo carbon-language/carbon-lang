@@ -23,6 +23,8 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include "Support/SetOperations.h"
 
+namespace llvm {
+
 unsigned LiveRange::getRegClassID() const { return getRegClass()->getID(); }
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
@@ -411,3 +413,5 @@ void LiveRangeInfo::printLiveRanges() {
     }
   }
 }
+
+} // End llvm namespace

@@ -11,7 +11,7 @@
 Xinclude <cstdio>
 Xinclude <llvm/CodeGen/InstrForest.h>
 
-typedef InstrTreeNode* NODEPTR_TYPE;
+typedef llvm::InstrTreeNode* NODEPTR_TYPE;
 Xdefine OP_LABEL(p)	((p)->opLabel)
 Xdefine LEFT_CHILD(p)	((p)->LeftChild)
 Xdefine RIGHT_CHILD(p)	((p)->RightChild)

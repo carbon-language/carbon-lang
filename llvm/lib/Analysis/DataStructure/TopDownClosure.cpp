@@ -21,6 +21,8 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   RegisterAnalysis<TDDataStructures>   // Register the pass
   Y("tddatastructure", "Top-down Data Structure Analysis");
@@ -310,3 +312,4 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
         << Graph.getFunctionCalls().size() << "]\n");
 }
 
+} // End llvm namespace

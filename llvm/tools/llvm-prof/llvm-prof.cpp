@@ -23,6 +23,8 @@
 #include <map>
 #include <set>
 
+using namespace llvm;
+
 namespace {
   cl::opt<std::string> 
   BytecodeFile(cl::Positional, cl::desc("<program bytecode file>"),

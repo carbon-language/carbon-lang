@@ -40,6 +40,8 @@
 #include <set>
 #include <algorithm>
 
+namespace llvm {
+
 // getNodeHeader - Given a source graph node and the source graph, return the 
 // BasicBlock that is the header node.  This is the opposite of
 // getSourceGraphNode.
@@ -252,5 +254,7 @@ inline interval_part_interval_iterator
 inline interval_part_interval_iterator intervals_end(IntervalPartition &IP) {
   return interval_part_interval_iterator();
 }
+
+} // End llvm namespace
 
 #endif

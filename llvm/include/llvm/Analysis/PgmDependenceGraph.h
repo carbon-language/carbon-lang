@@ -46,6 +46,8 @@
 #include "llvm/Pass.h"
 #include "Support/iterator"
 
+namespace llvm {
+
 class DSGraph;
 class DependenceGraph;
 class PgmDependenceGraph;
@@ -304,7 +306,8 @@ public:
   void dump() const;
 };
 
-
 //===----------------------------------------------------------------------===//
+
+} // End llvm namespace
 
 #endif

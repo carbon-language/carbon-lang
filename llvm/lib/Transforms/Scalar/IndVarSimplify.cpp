@@ -26,6 +26,8 @@
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
   Statistic<> NumInserted("indvars", "Number of canonical indvars added");
@@ -217,3 +219,5 @@ namespace {
 Pass *createIndVarSimplifyPass() {
   return new InductionVariableSimplify();
 }
+
+} // End llvm namespace

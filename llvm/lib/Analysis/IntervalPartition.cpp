@@ -15,6 +15,8 @@
 #include "llvm/Analysis/IntervalIterator.h"
 #include "Support/STLExtras.h"
 
+namespace llvm {
+
 static RegisterAnalysis<IntervalPartition>
 X("intervals", "Interval Partition Construction", true);
 
@@ -108,3 +110,5 @@ IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
   for_each(Intervals.begin(), Intervals.end(), 
 	   bind_obj(this, &IntervalPartition::updatePredecessors));
 }
+
+} // End llvm namespace

@@ -20,6 +20,8 @@
 #include "Support/SystemUtils.h"
 #include <vector>
 
+namespace llvm {
+
 class CBE;
 class LLC;
 
@@ -136,5 +138,7 @@ public:
   //
   int OutputAsm(const std::string &Bytecode, std::string &OutputAsmFile);
 };
+
+} // End llvm namespace
 
 #endif

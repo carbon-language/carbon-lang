@@ -16,8 +16,13 @@
 #define LIB_TRANSFORMS_UTILS_VALUE_MAPPER_H
 
 #include <map>
+
+namespace llvm {
+
 class Value;
 
 Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM);
+
+} // End llvm namespace
 
 #endif

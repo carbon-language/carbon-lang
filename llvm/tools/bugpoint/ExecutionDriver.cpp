@@ -30,6 +30,8 @@ BUGPOINT NOTES:
 #include <fstream>
 #include <iostream>
 
+using namespace llvm;
+
 namespace {
   // OutputType - Allow the user to specify the way code should be run, to test
   // for miscompilation.
@@ -57,6 +59,8 @@ namespace {
                 cl::desc("Additional shared objects to load "
                          "into executing programs"));
 }
+
+namespace llvm {
 
 // Anything specified after the --args option are taken as arguments to the
 // program being debugged.
@@ -232,3 +236,5 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
 bool BugDriver::isExecutingJIT() {
   return InterpreterSel == RunJIT;
 }
+
+} // End llvm namespace

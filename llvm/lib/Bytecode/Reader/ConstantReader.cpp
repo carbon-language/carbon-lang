@@ -20,6 +20,8 @@
 #include "llvm/Constants.h"
 #include <algorithm>
 
+namespace llvm {
+
 const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
 					      const unsigned char *EndBuf) {
   unsigned PrimType;
@@ -356,3 +358,5 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
   
   if (Buf > EndBuf) throw std::string("Read past end of buffer.");
 }
+
+} // End llvm namespace

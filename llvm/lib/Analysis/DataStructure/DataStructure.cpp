@@ -23,6 +23,8 @@
 #include "Support/Timer.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumFolds          ("dsnode", "Number of nodes completely folded");
   Statistic<> NumCallNodesMerged("dsnode", "Number of call nodes merged");
@@ -161,7 +163,6 @@ bool DSNode::isNodeCompletelyFolded() const {
   return getSize() == 1 && Ty == Type::VoidTy && isArray();
 }
 
-
 namespace {
   /// TypeElementWalker Class - Used for implementation of physical subtyping...
   ///
@@ -252,7 +253,7 @@ namespace {
       }
     }
   };
-}
+} // end anonymous namespace
 
 /// ElementTypesAreCompatible - Check to see if the specified types are
 /// "physically" compatible.  If so, return true, else return false.  We only
@@ -1639,6 +1640,7 @@ void DSGraph::mergeInGlobalsGraph() {
   removeTriviallyDeadNodes();
 }
 
+
 /// computeNodeMapping - Given roots in two different DSGraphs, traverse the
 /// nodes reachable from the two graphs, computing the mapping of nodes from
 /// the first to the second graph.
@@ -1669,3 +1671,4 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
       computeNodeMapping(N1->getLink(i), N2->getLink(N2Idx+i), NodeMap);
 }
 
+} // End llvm namespace

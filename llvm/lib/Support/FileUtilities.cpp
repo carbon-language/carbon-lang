@@ -20,6 +20,9 @@
 #include <iostream>
 #include <cstdio>
 
+namespace llvm
+{
+
 /// CheckMagic - Returns true IFF the file named FN begins with Magic. FN must
 /// name a readable file.
 ///
@@ -182,3 +185,5 @@ bool MakeFileExecutable (const std::string &Filename) {
 bool MakeFileReadable (const std::string &Filename) {
   return AddPermissionsBits (Filename, 0444);
 }
+
+} // End llvm namespace

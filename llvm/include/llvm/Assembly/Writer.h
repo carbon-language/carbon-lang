@@ -24,6 +24,9 @@
 #define LLVM_ASSEMBLY_WRITER_H
 
 #include <iosfwd>
+
+namespace llvm {
+
 class Type;
 class Module;
 class Value;
@@ -42,5 +45,7 @@ std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 //
 std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
                              bool PrintName = true, const Module *Context = 0);
+
+} // End llvm namespace
 
 #endif

@@ -19,6 +19,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
+namespace llvm {
+
 /// AllocInfo - Structure representing one instruction's operand's-worth of
 /// register allocation state. We create tables made out of these data
 /// structures to generate mapping information for this register allocator.
@@ -76,5 +78,7 @@ struct AllocInfo {
     return std::string (AllocStateNames[AllocState]);
   }
 };
+
+} // End llvm namespace
 
 #endif // ALLOCINFO_H

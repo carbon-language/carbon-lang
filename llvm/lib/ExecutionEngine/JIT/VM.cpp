@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Target/TargetMachine.h"
 
+namespace llvm {
+
 VM::~VM() {
   delete MCE;
   delete &TM;
@@ -98,3 +100,5 @@ void *VM::recompileAndRelinkFunction(Function *F) {
   TM.replaceMachineCodeForFunction (OldAddr, Addr);
   return Addr;
 }
+
+} // End llvm namespace

@@ -21,6 +21,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/InstVisitor.h"
 
+namespace llvm {
+
 struct SelectionDAGBuilder : public InstVisitor<SelectionDAGBuilder> {
   // DAG - the current dag we are building.
   SelectionDAG &DAG;
@@ -270,3 +272,5 @@ SelectionDAG::SelectionDAG(MachineFunction &f, const TargetMachine &tm,
     SDB.visitBB(const_cast<BasicBlock&>(*I));
   Root = SDB.CurRoot;
 }
+
+} // End llvm namespace

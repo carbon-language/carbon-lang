@@ -19,6 +19,8 @@
 
 using std::vector;
 
+namespace llvm {
+
 const graphListElement *findNodeInList(const Graph::nodeList &NL,
 					      Node *N) {
   for(Graph::nodeList::const_iterator NI = NL.begin(), NE=NL.end(); NI != NE; 
@@ -564,4 +566,4 @@ void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
   color[u]=BLACK;//done with visiting the node and its neighbors
 }
 
-
+} // End llvm namespace

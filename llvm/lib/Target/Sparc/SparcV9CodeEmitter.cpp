@@ -38,6 +38,8 @@
 #include "SparcV9CodeEmitter.h"
 #include "Config/alloca.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> OverwrittenCalls("call-ovwr", "Number of over-written calls");
   Statistic<> UnmodifiedCalls("call-skip", "Number of unmodified calls");
@@ -443,7 +445,6 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
   return (intptr_t)MCE.finishFunctionStub(*F)+4; /* 1 instr past the restore */
 }
 
-
 SparcV9CodeEmitter::SparcV9CodeEmitter(TargetMachine &tm,
                                        MachineCodeEmitter &M): TM(tm), MCE(M)
 {
@@ -808,5 +809,7 @@ void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,
     return (void*)(intptr_t)MCE.getGlobalValueAddress(V);
   }
 }
+
+} // End llvm namespace
 
 #include "SparcV9CodeEmitter.inc"

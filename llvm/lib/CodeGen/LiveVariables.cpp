@@ -33,6 +33,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/DepthFirstIterator.h"
 
+namespace llvm {
+
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
 
 const std::pair<MachineBasicBlock*, unsigned> &
@@ -307,3 +309,5 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   
   return false;
 }
+
+} // End llvm namespace

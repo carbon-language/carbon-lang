@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <memory>
 
+namespace llvm {
+
 static inline void ALIGN32(const unsigned char *&begin,
                            const unsigned char *end) {
   if (align32(begin, end))
@@ -693,3 +695,5 @@ void BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
     throw;
   }
 }
+
+} // End llvm namespace

@@ -25,6 +25,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/StringExtras.h"
 
+namespace llvm {
+
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
 ///
@@ -459,3 +461,5 @@ void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
   if (Allocas.empty()) return;
   PromoteMem2Reg(Allocas, DT, DF, TD).run();
 }
+
+} // End llvm namespace

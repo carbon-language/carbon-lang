@@ -21,6 +21,8 @@
 #include "Support/iterator"
 #include "boost/type_traits/transform_traits.hpp"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //     Extra additions to <functional>
 //===----------------------------------------------------------------------===//
@@ -277,5 +279,7 @@ template <typename T1, typename T2>
 inline tier<T1, T2> tie(T1& f, T2& s) {
   return tier<T1, T2>(f, s);
 }
+
+} // End llvm namespace
 
 #endif

@@ -18,6 +18,8 @@
 #include <string>
 #include <stdio.h>
 
+namespace llvm {
+
 static inline std::string utohexstr(uint64_t X) {
   char Buffer[40];
   char *BufPtr = Buffer+39;
@@ -94,5 +96,7 @@ static inline std::string ftostr(double V) {
   snprintf(Buffer, 200, "%20.6e", V);
   return Buffer;
 }
+
+} // End llvm namespace
 
 #endif

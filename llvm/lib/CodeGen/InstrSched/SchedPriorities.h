@@ -26,6 +26,8 @@
 #include "Support/hash_set"
 #include <list>
 
+namespace llvm {
+
 class Function;
 class MachineInstr;
 class SchedulingManager;
@@ -213,5 +215,7 @@ inline void SchedPriorities::updateTime(cycles_t c) {
 }
 
 std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd);
+
+} // End llvm namespace
 
 #endif

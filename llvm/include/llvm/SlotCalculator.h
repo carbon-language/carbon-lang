@@ -22,6 +22,9 @@
 
 #include <vector>
 #include <map>
+
+namespace llvm {
+
 class Value;
 class Module;
 class Function;
@@ -91,5 +94,7 @@ protected:
   void processSymbolTable(const SymbolTable *ST);
   void processSymbolTableConstants(const SymbolTable *ST);
 };
+
+} // End llvm namespace
 
 #endif

@@ -41,6 +41,8 @@
 #include <Support/iterator>
 #include <cassert>
 
+namespace llvm {
+
 template<typename NodeTy, typename Traits> class iplist;
 template<typename NodeTy> class ilist_iterator;
 
@@ -522,10 +524,12 @@ struct ilist : public iplist<NodeTy> {
   void resize(size_type newsize) { resize(newsize, NodeTy()); }
 };
 
+} // End llvm namespace
+
 namespace std {
   // Ensure that swap uses the fast list swap...
   template<class Ty>
-  void swap(iplist<Ty> &Left, iplist<Ty> &Right) {
+  void swap(llvm::iplist<Ty> &Left, llvm::iplist<Ty> &Right) {
     Left.swap(Right);
   }
 }  // End 'std' extensions...

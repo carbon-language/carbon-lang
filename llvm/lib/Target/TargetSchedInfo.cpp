@@ -15,6 +15,8 @@
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
+namespace llvm {
+
 resourceId_t MachineResource::nextId = 0;
 
 // Check if fromRVec and toRVec have *any* common entries.
@@ -249,3 +251,5 @@ void InstrRUsage::addUsageDelta(const InstrRUsageDelta &delta) {
       assert(r >= 0 && "Resource to remove was unused in cycle c!");
     }
 }
+
+} // End llvm namespace

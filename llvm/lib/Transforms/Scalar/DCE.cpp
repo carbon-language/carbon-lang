@@ -24,6 +24,8 @@
 #include "Support/Statistic.h"
 #include <set>
 
+namespace llvm {
+
 namespace {
   Statistic<> DIEEliminated("die", "Number of insts removed");
   Statistic<> DCEEliminated("dce", "Number of insts removed");
@@ -55,7 +57,6 @@ namespace {
 Pass *createDeadInstEliminationPass() {
   return new DeadInstElimination();
 }
-
 
 
 //===----------------------------------------------------------------------===//
@@ -124,3 +125,5 @@ bool DCE::runOnFunction(Function &F) {
 Pass *createDeadCodeEliminationPass() {
   return new DCE();
 }
+
+} // End llvm namespace

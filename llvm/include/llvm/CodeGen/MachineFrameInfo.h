@@ -38,11 +38,18 @@
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
+namespace llvm {
+
 class TargetData;
 class TargetRegisterClass;
 class Type;
 class MachineFunction;
+
+}
+
 #include <vector>
+
+namespace llvm {
 
 class MachineFrameInfo {
 
@@ -219,5 +226,7 @@ public:
   /// dump - Call print(MF, std::cerr) to be called from the debugger.
   void dump(const MachineFunction &MF) const;
 };
+
+} // End llvm namespace
 
 #endif

@@ -17,6 +17,8 @@
 #include "llvm/iOperators.h"
 #include "llvm/ConstantHandling.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
 //
@@ -180,3 +182,5 @@ bool dceInstruction(BasicBlock::iterator &BBI) {
   }
   return false;
 }
+
+} // End llvm namespace

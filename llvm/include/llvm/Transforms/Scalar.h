@@ -15,6 +15,8 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_H
 #define LLVM_TRANSFORMS_SCALAR_H
 
+namespace llvm {
+
 class Pass;
 class FunctionPass;
 class GetElementPtrInst;
@@ -267,5 +269,7 @@ FunctionPass *createLowerInvokePass();
 //
 Pass *createSymbolStrippingPass();
 Pass *createFullSymbolStrippingPass();
+
+} // End llvm namespace
 
 #endif

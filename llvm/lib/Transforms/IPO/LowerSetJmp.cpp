@@ -47,6 +47,8 @@
 #include "Support/StringExtras.h"
 #include "Support/VectorExtras.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> LongJmpsTransformed("lowersetjmp",
                                   "Number of longjmps transformed");
@@ -538,3 +540,5 @@ Pass* createLowerSetJmpPass()
 {
   return new LowerSetJmp();
 }
+
+} // End llvm namespace

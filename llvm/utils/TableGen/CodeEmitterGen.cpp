@@ -15,6 +15,8 @@
 #include "Record.h"
 #include "Support/Debug.h"
 
+namespace llvm {
+
 void CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
@@ -221,4 +223,8 @@ void CodeEmitterGen::run(std::ostream &o) {
     << "  }\n"
     << "  return Value;\n"
     << "}\n";
+
+  EmitSourceFileTail(o);
 }
+
+} // End llvm namespace

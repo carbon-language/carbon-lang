@@ -19,6 +19,8 @@
 #include "Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 
+namespace llvm {
+
 BasicBlock *ilist_traits<BasicBlock>::createNode() {
   BasicBlock *Ret = new BasicBlock();
   // This should not be garbage monitored.
@@ -158,7 +160,7 @@ void Function::dropAllReferences() {
 }
 
 /// getIntrinsicID - This method returns the ID number of the specified
-/// function, or LLVMIntrinsic::not_intrinsic if the function is not an
+/// function, or Intrinsic::not_intrinsic if the function is not an
 /// intrinsic, or if the pointer is null.  This value is always defined to be
 /// zero to allow easy checking for whether a function is intrinsic or not.  The
 /// particular intrinsic functions which correspond to this value are defined in
@@ -176,21 +178,21 @@ unsigned Function::getIntrinsicID() const {
    std::string name;  // The name of the intrinsic 
    unsigned id;       // Its ID number
   } alpha_intrinsics[] = {
-     { "llvm.alpha.ctlz",      LLVMIntrinsic::alpha_ctlz },
-     { "llvm.alpha.cttz",      LLVMIntrinsic::alpha_cttz },
-     { "llvm.alpha.ctpop",     LLVMIntrinsic::alpha_ctpop },
-     { "llvm.alpha.umulh",     LLVMIntrinsic::alpha_umulh },
-     { "llvm.alpha.vecop",     LLVMIntrinsic::alpha_vecop },
-     { "llvm.alpha.pup",       LLVMIntrinsic::alpha_pup },
-     { "llvm.alpha.bytezap",   LLVMIntrinsic::alpha_bytezap },
-     { "llvm.alpha.bytemanip", LLVMIntrinsic::alpha_bytemanip },
-     { "llvm.alpha.dfp_bop",   LLVMIntrinsic::alpha_dfpbop }, 
-     { "llvm.alpha.dfp_uop",   LLVMIntrinsic::alpha_dfpuop },
-     { "llvm.alpha.unordered", LLVMIntrinsic::alpha_unordered },
-     { "llvm.alpha.uqtodfp",   LLVMIntrinsic::alpha_uqtodfp },
-     { "llvm.alpha.uqtosfp",   LLVMIntrinsic::alpha_uqtosfp },
-     { "llvm.alpha.dfptosq",   LLVMIntrinsic::alpha_dfptosq },
-     { "llvm.alpha.sfptosq",   LLVMIntrinsic::alpha_sfptosq },
+     { "llvm.alpha.ctlz",      Intrinsic::alpha_ctlz },
+     { "llvm.alpha.cttz",      Intrinsic::alpha_cttz },
+     { "llvm.alpha.ctpop",     Intrinsic::alpha_ctpop },
+     { "llvm.alpha.umulh",     Intrinsic::alpha_umulh },
+     { "llvm.alpha.vecop",     Intrinsic::alpha_vecop },
+     { "llvm.alpha.pup",       Intrinsic::alpha_pup },
+     { "llvm.alpha.bytezap",   Intrinsic::alpha_bytezap },
+     { "llvm.alpha.bytemanip", Intrinsic::alpha_bytemanip },
+     { "llvm.alpha.dfp_bop",   Intrinsic::alpha_dfpbop }, 
+     { "llvm.alpha.dfp_uop",   Intrinsic::alpha_dfpuop },
+     { "llvm.alpha.unordered", Intrinsic::alpha_unordered },
+     { "llvm.alpha.uqtodfp",   Intrinsic::alpha_uqtodfp },
+     { "llvm.alpha.uqtosfp",   Intrinsic::alpha_uqtosfp },
+     { "llvm.alpha.dfptosq",   Intrinsic::alpha_dfptosq },
+     { "llvm.alpha.sfptosq",   Intrinsic::alpha_sfptosq },
   };
   const unsigned num_alpha_intrinsics = 
                  sizeof(alpha_intrinsics) / sizeof(*alpha_intrinsics);
@@ -204,17 +206,17 @@ unsigned Function::getIntrinsicID() const {
           return alpha_intrinsics[i].id;
     break;
   case 'l':
-    if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;
+    if (getName() == "llvm.longjmp")  return Intrinsic::longjmp;
     break;
   case 's':
-    if (getName() == "llvm.setjmp")     return LLVMIntrinsic::setjmp;
-    if (getName() == "llvm.sigsetjmp")  return LLVMIntrinsic::sigsetjmp;
-    if (getName() == "llvm.siglongjmp") return LLVMIntrinsic::siglongjmp;
+    if (getName() == "llvm.setjmp")     return Intrinsic::setjmp;
+    if (getName() == "llvm.sigsetjmp")  return Intrinsic::sigsetjmp;
+    if (getName() == "llvm.siglongjmp") return Intrinsic::siglongjmp;
     break;
   case 'v':
-    if (getName() == "llvm.va_copy")  return LLVMIntrinsic::va_copy;
-    if (getName() == "llvm.va_end")   return LLVMIntrinsic::va_end;
-    if (getName() == "llvm.va_start") return LLVMIntrinsic::va_start;
+    if (getName() == "llvm.va_copy")  return Intrinsic::va_copy;
+    if (getName() == "llvm.va_end")   return Intrinsic::va_end;
+    if (getName() == "llvm.va_start") return Intrinsic::va_start;
     break;
   }
   // The "llvm." namespace is reserved!
@@ -257,3 +259,5 @@ void GlobalVariable::setName(const std::string &name, SymbolTable *ST) {
   Value::setName(name);
   if (P && getName() != "") P->getSymbolTable().insert(this);
 }
+
+} // End llvm namespace

@@ -22,6 +22,8 @@
 
 #include "llvm/GlobalValue.h"
 
+namespace llvm {
+
 class Module;
 class Constant;
 class PointerType;
@@ -104,5 +106,7 @@ public:
     return V->getValueType() == Value::GlobalVariableVal;
   }
 };
+
+} // End llvm namespace
 
 #endif

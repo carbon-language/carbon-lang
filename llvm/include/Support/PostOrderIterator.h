@@ -21,6 +21,8 @@
 #include <stack>
 #include <set>
 
+namespace llvm {
+
 template<class GraphT, class GT = GraphTraits<GraphT> >
 class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
   typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
@@ -148,5 +150,7 @@ public:
   inline rpo_iterator begin() { return Blocks.rbegin(); }
   inline rpo_iterator end()   { return Blocks.rend(); }
 };
+
+} // End llvm namespace
 
 #endif

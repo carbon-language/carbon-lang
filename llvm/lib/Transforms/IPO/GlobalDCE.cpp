@@ -22,6 +22,8 @@
 #include "Support/Statistic.h"
 #include <set>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumFunctions("globaldce","Number of functions removed");
   Statistic<> NumVariables("globaldce","Number of global variables removed");
@@ -195,3 +197,5 @@ bool GlobalDCE::SafeToDestroyConstant(Constant *C) {
 
   return true;
 }
+
+} // End llvm namespace

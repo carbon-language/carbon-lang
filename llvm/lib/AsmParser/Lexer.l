@@ -35,6 +35,7 @@
 #define RET_TOK(type, Enum, sym) \
   llvmAsmlval.type = Instruction::Enum; return sym
 
+namespace llvm {
 
 // TODO: All of the static identifiers are figured out by the lexer, 
 // these should be hashed to reduce the lexer size
@@ -120,6 +121,10 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull) {
 
   return BOut;
 }
+
+} // End llvm namespace
+
+using namespace llvm;
 
 #define YY_NEVER_INTERACTIVE 1
 %}

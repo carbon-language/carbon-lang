@@ -27,6 +27,7 @@
 #include <memory>
 #include <algorithm>
 
+using namespace llvm;
 
 // The OptimizationList is automatically populated with registered Passes by the
 // PassNameParser.

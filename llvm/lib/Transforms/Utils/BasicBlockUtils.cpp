@@ -19,6 +19,8 @@
 #include "llvm/Type.h"
 #include <algorithm>
 
+namespace llvm {
+
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
 //
@@ -112,3 +114,5 @@ void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
   if (NewTI)   // If it's a different instruction, replace.
     ReplaceInstWithInst(TI, NewTI);
 }
+
+} // End llvm namespace

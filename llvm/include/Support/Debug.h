@@ -26,6 +26,8 @@
 #ifndef SUPPORT_DEBUG_H
 #define SUPPORT_DEBUG_H
 
+namespace llvm {
+
 // DebugFlag - This boolean is set to true if the '-debug' command line option
 // is specified.  This should probably not be referenced directly, instead, use
 // the DEBUG macro below.
@@ -56,5 +58,7 @@ bool isCurrentDebugType(const char *Type);
 #define DEBUG(X) \
   do { if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
 #endif
+
+} // End llvm namespace
 
 #endif

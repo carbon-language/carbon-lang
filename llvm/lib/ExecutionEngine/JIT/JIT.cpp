@@ -24,6 +24,8 @@
 #define NO_JITS_ENABLED
 #endif
 
+namespace llvm {
+
 namespace {
   enum ArchName { x86, Sparc };
 
@@ -118,3 +120,5 @@ GenericValue VM::run(Function *F, const std::vector<GenericValue> &ArgValues)
   rv.IntVal = ExitCode;
   return rv;
 }
+
+} // End llvm namespace

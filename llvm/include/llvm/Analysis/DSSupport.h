@@ -18,6 +18,8 @@
 #include "Support/hash_set"
 #include "llvm/Support/CallSite.h"
 
+namespace llvm {
+
 class Function;
 class CallInst;
 class Value;
@@ -122,9 +124,13 @@ private:
   DSNode *HandleForwarding() const;
 };
 
+} // End llvm namespace
+
 namespace std {
-  inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
+  inline void swap(llvm::DSNodeHandle &NH1, llvm::DSNodeHandle &NH2) { NH1.swap(NH2); }
 }
+
+namespace llvm {
 
 //===----------------------------------------------------------------------===//
 /// DSCallSite - Representation of a call site via its call instruction,
@@ -287,7 +293,9 @@ public:
   }
 };
 
+} // End llvm namespace
+
 namespace std {
-  inline void swap(DSCallSite &CS1, DSCallSite &CS2) { CS1.swap(CS2); }
+  inline void swap(llvm::DSCallSite &CS1, llvm::DSCallSite &CS2) { CS1.swap(CS2); }
 }
 #endif

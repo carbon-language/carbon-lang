@@ -19,6 +19,8 @@
 #include "Support/StringExtras.h"
 #include <set>
 
+namespace llvm {
+
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   std::vector<Record*> Registers = Records.getAllDerivedDefinitions("Register");
@@ -40,6 +42,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
+  EmitSourceFileTail(OS);
 }
 
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
@@ -68,6 +71,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
       OS << "  extern TargetRegisterClass *" << Name << "RegisterClass;\n";
   }
   OS << "} // end of namespace " << TargetName << "\n\n";
+  EmitSourceFileTail(OS);
 }
 
 // RegisterInfoEmitter::run - Main register file description emitter.
@@ -240,4 +244,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned i = 0, e = CSR.size(); i != e; ++i)
     OS << getQualifiedName(CSR[i]) << ", ";  
   OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
+  EmitSourceFileTail(OS);
 }
+
+} // End llvm namespace

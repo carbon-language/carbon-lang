@@ -20,6 +20,9 @@
 #define DEBUG_TYPE "inline"
 #include "llvm/CallGraphSCCPass.h"
 #include <set>
+
+namespace llvm {
+
 class CallSite;
 
 /// Inliner - This class contains all of the helper code which is used to
@@ -61,5 +64,6 @@ private:
   bool performInlining(CallSite CS, std::set<Function*> &SCC);
 };
 
+} // End llvm namespace
 
 #endif

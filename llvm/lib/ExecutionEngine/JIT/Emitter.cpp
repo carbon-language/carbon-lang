@@ -27,6 +27,8 @@
 #include "Config/unistd.h"
 #include "Config/sys/mman.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumBytes("jit", "Number of bytes of machine code compiled");
   VM *TheVM = 0;
@@ -265,3 +267,5 @@ extern "C" {
     return TheVM->getPointerToNamedFunction(Name);
   }
 }
+
+} // End llvm namespace

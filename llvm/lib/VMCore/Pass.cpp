@@ -21,6 +21,8 @@
 #include "Support/TypeInfo.h"
 #include <set>
 
+namespace llvm {
+
 // IncludeFile - Stub function used to help linking out.
 IncludeFile::IncludeFile(void*) {}
 
@@ -467,3 +469,5 @@ void PassRegistrationListener::enumeratePasses() {
            E = PassInfoMap->end(); I != E; ++I)
       passEnumerate(I->second);
 }
+
+} // End llvm namespace

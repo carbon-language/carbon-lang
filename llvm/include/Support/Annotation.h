@@ -25,6 +25,8 @@
 #include <string>
 #include <cassert>
 
+namespace llvm {
+
 class AnnotationID;
 class Annotation;
 class Annotable;
@@ -216,5 +218,7 @@ inline Annotation *Annotable::getOrCreateAnnotation(AnnotationID ID) const {
   addAnnotation(A);
   return A;
 }
+
+} // End namespace llvm
 
 #endif

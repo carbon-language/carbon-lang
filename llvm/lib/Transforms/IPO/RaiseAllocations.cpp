@@ -22,6 +22,8 @@
 #include "llvm/Support/CallSite.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumRaised("raiseallocs", "Number of allocations raised");
 
@@ -194,3 +196,5 @@ bool RaiseAllocations::run(Module &M) {
 
   return Changed;
 }
+
+} // End llvm namespace

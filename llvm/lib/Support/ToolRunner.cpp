@@ -18,6 +18,8 @@
 #include <iostream>
 #include <fstream>
 
+namespace llvm {
+
 //===---------------------------------------------------------------------===//
 // LLI Implementation of AbstractIntepreter interface
 //
@@ -391,3 +393,5 @@ GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
   Message = "Found gcc: " + GCCPath + "\n";
   return new GCC(GCCPath);
 }
+
+} // End llvm namespace

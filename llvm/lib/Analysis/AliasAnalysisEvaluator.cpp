@@ -26,6 +26,8 @@
 #include "Support/CommandLine.h"
 #include <set>
 
+namespace llvm {
+
 namespace {
   cl::opt<bool> PrintNo  ("print-no-aliases", cl::ReallyHidden);
   cl::opt<bool> PrintMay ("print-may-aliases", cl::ReallyHidden);
@@ -114,3 +116,5 @@ bool AAEval::doFinalization(Module &M) {
             << May*100/Sum << "%/" << Must*100/Sum<<"%\n";
   return false;
 }
+
+} // End llvm namespace

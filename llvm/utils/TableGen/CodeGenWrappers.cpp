@@ -17,6 +17,8 @@
 #include "CodeGenWrappers.h"
 #include "Record.h"
 
+namespace llvm {
+
 /// getValueType - Return the MCV::ValueType that the specified TableGen record
 /// corresponds to.
 MVT::ValueType getValueType(Record *Rec) {
@@ -94,3 +96,5 @@ const std::string &CodeGenTarget::getName() const {
 Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
 }
+
+} // End llvm namespace

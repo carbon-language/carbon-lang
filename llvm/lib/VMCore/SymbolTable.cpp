@@ -17,6 +17,8 @@
 #include "Support/StringExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
 
@@ -354,3 +356,5 @@ void SymbolTable::dump() const {
   std::cout << "Symbol table dump:\n";
   for_each(begin(), end(), DumpPlane);
 }
+
+} // End llvm namespace

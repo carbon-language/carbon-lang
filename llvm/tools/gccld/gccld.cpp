@@ -36,6 +36,8 @@
 #include <fstream>
 #include <memory>
 
+using namespace llvm;
+
 namespace {
   cl::list<std::string> 
   InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
@@ -85,6 +87,8 @@ namespace {
   cl::opt<bool>
   CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
+
+namespace llvm {
 
 //
 // Function: PrintAndReturn ()
@@ -211,6 +215,7 @@ void RemoveEnv(const char * name, char ** const envp) {
   return;
 }
 
+} // End llvm namespace
 
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");

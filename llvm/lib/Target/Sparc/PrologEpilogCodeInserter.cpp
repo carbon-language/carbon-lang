@@ -27,6 +27,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
 
+namespace llvm {
+
 namespace {
   struct InsertPrologEpilogCode : public MachineFunctionPass {
     const char *getPassName() const { return "Sparc Prolog/Epilog Inserter"; }
@@ -177,3 +179,5 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
 FunctionPass *UltraSparc::getPrologEpilogInsertionPass() {
   return new InsertPrologEpilogCode();
 }
+
+} // End llvm namespace

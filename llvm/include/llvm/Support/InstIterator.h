@@ -22,6 +22,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 
+namespace llvm {
+
 // This class implements inst_begin() & inst_end() for
 // inst_iterator and const_inst_iterator's.
 //
@@ -136,5 +138,7 @@ inline const_inst_iterator inst_begin(const Function &F) {
 inline const_inst_iterator inst_end(const Function &F) {
   return const_inst_iterator(F, true);
 }
+
+} // End llvm namespace
 
 #endif

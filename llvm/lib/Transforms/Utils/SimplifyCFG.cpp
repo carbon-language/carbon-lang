@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <functional>
 
+namespace llvm {
+
 // PropagatePredecessors - This gets "Succ" ready to have the predecessors from
 // "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
 // have extra slots added to them to hold the merge edges from BB's
@@ -298,3 +300,5 @@ bool SimplifyCFG(BasicBlock *BB) {
   
   return Changed;
 }
+
+} // End llvm namespace

@@ -18,6 +18,8 @@
 #include "llvm/ConstantHandling.h"
 #include "llvm/Function.h"
 
+namespace llvm {
+
 ExprType::ExprType(Value *Val) {
   if (Val) 
     if (ConstantInt *CPI = dyn_cast<ConstantInt>(Val)) {
@@ -352,3 +354,5 @@ ExprType ClassifyExpression(Value *Expr) {
   // Otherwise, I don't know anything about this value!
   return I;
 }
+
+} // End llvm namespace

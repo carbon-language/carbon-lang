@@ -29,6 +29,8 @@
 #include "llvm/CodeGen/ValueSet.h"
 #include "Support/hash_map"
 
+namespace llvm {
+
 class LiveRange;
 class MachineInstr;
 class RegClass;
@@ -120,5 +122,7 @@ public:
   ///
   void printLiveRanges();
 };
+
+} // End llvm namespace
 
 #endif 

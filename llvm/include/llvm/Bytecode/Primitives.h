@@ -23,6 +23,8 @@
 #include <string>
 #include <deque>
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                             Reading Primitives
 //===----------------------------------------------------------------------===//
@@ -274,5 +276,7 @@ static inline void output_data(void *Ptr, void *End,
 
   if (Align) align32(Out);
 }
+
+} // End llvm namespace
 
 #endif

@@ -13,6 +13,8 @@
 #include "ModuloSchedGraph.h"
 #include "llvm/Type.h"
 
+namespace llvm {
+
 ModuloSchedGraphNode::ModuloSchedGraphNode(unsigned id, int index, 
 					   const Instruction *inst, 
 					   const TargetMachine &targ) 
@@ -135,3 +137,4 @@ ModuloSchedGraphSet::~ModuloSchedGraphSet(){
   //delete all the graphs
 }
 
+} // End llvm namespace

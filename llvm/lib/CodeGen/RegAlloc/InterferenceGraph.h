@@ -30,6 +30,9 @@
 #define INTERFERENCEGRAPH_H
 
 #include <vector>
+
+namespace llvm {
+
 class LiveRange;
 class RegClass;
 class IGNode;
@@ -66,5 +69,7 @@ class InterferenceGraph {
   void printIG() const;
   void printIGNodeList() const;
 };
+
+} // End llvm namespace
 
 #endif

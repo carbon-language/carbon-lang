@@ -28,6 +28,8 @@
 // Include the generated instruction selector...
 #include "X86GenInstrSelector.inc"
 
+namespace llvm {
+
 namespace {
   struct ISel : public FunctionPass, SelectionDAGTargetBuilder {
     TargetMachine &TM;
@@ -114,7 +116,6 @@ void ISel::expandCall(SelectionDAG &SD, CallInst &CI) {
   assert(0 && "ISel::expandCall not implemented!");
 }
 
-
 /// createX86PatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation using pattern matching and a machine
 /// description file.
@@ -122,3 +123,5 @@ void ISel::expandCall(SelectionDAG &SD, CallInst &CI) {
 FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM) {
   return new ISel(TM);  
 }
+
+} // End llvm namespace

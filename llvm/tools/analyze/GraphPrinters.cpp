@@ -20,6 +20,8 @@
 #include "llvm/Analysis/CallGraph.h"
 #include <fstream>
 
+namespace llvm {
+
 template<typename GraphType>
 static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
                              const GraphType &GT) {
@@ -72,3 +74,5 @@ namespace {
   RegisterAnalysis<CallGraphPrinter> P2("print-callgraph",
                                         "Print Call Graph to 'dot' file");
 };
+
+} // End llvm namespace

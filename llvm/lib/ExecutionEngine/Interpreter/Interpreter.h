@@ -22,6 +22,8 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/DataTypes.h"
 
+namespace llvm {
+
 struct FunctionInfo;        // Defined in ExecutionAnnotations.h
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by
@@ -165,5 +167,7 @@ private:  // Helper functions
 				    ExecutionContext &SF);
   void popStackAndReturnValueToCaller(const Type *RetTy, GenericValue Result);
 };
+
+} // End llvm namespace
 
 #endif

@@ -28,6 +28,8 @@
 #include "llvm/Pass.h"
 #include <set>
 
+namespace llvm {
+
 class Instruction;
 
 template <typename GraphType> struct GraphTraits;
@@ -486,5 +488,7 @@ private:
   const DomSetType &calculate(const DominatorTree &DT,
                               const DominatorTree::Node *Node);
 };
+
+} // End llvm namespace
 
 #endif

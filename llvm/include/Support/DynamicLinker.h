@@ -18,6 +18,8 @@
 
 #include <string>
 
+namespace llvm {
+
 /// LinkDynamicObject - Load the named file as a dynamic library
 /// and link it with the currently running process. Returns false
 /// on success, true if there is an error (and sets ErrorMessage
@@ -32,5 +34,7 @@ bool LinkDynamicObject (const char *filename, std::string *ErrorMessage);
 /// 
 void *GetAddressOfSymbol (const char *symbolName);
 void *GetAddressOfSymbol (const std::string &symbolName);
+
+} // End llvm namespace
 
 #endif // SUPPORT_DYNAMICLINKER_H

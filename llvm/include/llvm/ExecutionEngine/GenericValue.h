@@ -17,6 +17,8 @@
 
 #include "Support/DataTypes.h"
 
+namespace llvm {
+
 typedef uint64_t PointerTy;
 
 union GenericValue {
@@ -44,4 +46,6 @@ inline GenericValue PTOGV(void *P) { return GenericValue(P); }
 inline void* GVTOP(const GenericValue &GV) {
   return (void*)(intptr_t)GV.PointerVal;
 }
+
+} // End llvm namespace
 #endif

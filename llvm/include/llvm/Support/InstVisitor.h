@@ -52,6 +52,8 @@
 
 #include "llvm/Instruction.h"
 
+namespace llvm {
+
 class Module;
 
 // We operate on opaque instruction classes, so forward declare all instruction
@@ -63,7 +65,6 @@ class Module;
 // Forward declare the intermediate types...
 class TerminatorInst; class BinaryOperator;
 class AllocationInst;
-
 
 #define DELEGATE(CLASS_TO_VISIT) \
   return ((SubClass*)this)->visit##CLASS_TO_VISIT((CLASS_TO_VISIT&)I)
@@ -185,5 +186,7 @@ struct InstVisitor {
 };
 
 #undef DELEGATE
+
+} // End llvm namespace
 
 #endif

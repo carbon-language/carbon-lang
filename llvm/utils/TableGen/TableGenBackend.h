@@ -17,6 +17,9 @@
 
 #include <string>
 #include <iosfwd>
+
+namespace llvm {
+
 class Record;
 class RecordKeeper;
 
@@ -33,9 +36,15 @@ public:   // Useful helper routines...
   /// ostream.
   void EmitSourceFileHeader(const std::string &Desc, std::ostream &OS) const;
 
+  /// EmitSourceFileTail - Output an LLVm styelf ile tail to the specified
+  /// ostream.
+  void EmitSourceFileTail( std::ostream& OS ) const;
+
   /// getQualifiedName - Return the name of the specified record, with a
   /// namespace qualifier if the record contains one.
   std::string getQualifiedName(Record *R) const;
 };
+
+} // End llvm namespace
 
 #endif

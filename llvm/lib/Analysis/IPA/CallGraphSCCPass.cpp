@@ -19,6 +19,8 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "Support/SCCIterator.h"
 
+namespace llvm {
+
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
 /// always explicitly call the implementation here.
@@ -35,3 +37,5 @@ bool CallGraphSCCPass::run(Module &M) {
     Changed = runOnSCC(*I);
   return Changed;
 }
+
+} // End llvm namespace

@@ -36,6 +36,8 @@
 #include "Config/string.h"
 #include <algorithm>
 
+namespace llvm {
+
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
 static Statistic<> 
@@ -304,3 +306,5 @@ void WriteBytecodeToFile(const Module *C, std::ostream &Out) {
 
   Out.flush();
 }
+
+} // End llvm namespace

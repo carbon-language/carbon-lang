@@ -16,6 +16,8 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> TotalInsts ("instcount", "Number of instructions (of all types)");
   Statistic<> TotalBlocks("instcount", "Number of basic blocks");
@@ -62,3 +64,5 @@ bool InstCount::runOnFunction(Function &F) {
   visit(F);
   return false;
 }
+
+} // End llvm namespace

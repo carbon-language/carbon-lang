@@ -33,6 +33,8 @@
 #include <algorithm>
 #include <set>
 
+namespace llvm {
+
 extern cl::list<std::string> InputArgv;
 
 class ReduceMisCodegenFunctions : public ListReducer<Function*> {
@@ -408,3 +410,5 @@ bool BugDriver::debugCodeGenerator() {
 
   return false;
 }
+
+} // End llvm namespace

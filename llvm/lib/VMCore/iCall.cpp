@@ -17,6 +17,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                        CallInst Implementation
 //===----------------------------------------------------------------------===//
@@ -144,7 +146,11 @@ Function *InvokeInst::getCalledFunction() {
   return 0;
 }
 
+} // End llvm namespace
+
 #include "llvm/Support/CallSite.h"
+
+namespace llvm {
 
 Function *CallSite::getCalledFunction() const {
   Value *Callee = getCalledValue();
@@ -155,3 +161,4 @@ Function *CallSite::getCalledFunction() const {
   return 0;
 }
 
+} // End llvm namespace

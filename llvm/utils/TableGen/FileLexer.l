@@ -28,8 +28,12 @@
 
 %{
 #include "Record.h"
-typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
+typedef std::pair<llvm::Record*, std::vector<llvm::Init*>*> SubClassRefTy;
 #include "FileParser.h"
+
+int Fileparse();
+
+namespace llvm {
 
 // Global variable recording the location of the include directory
 std::string IncludeDirectory;
@@ -69,7 +73,6 @@ std::ostream &err() {
 }
 
 
-int Fileparse();
 
 //
 // Function: ParseFile()
@@ -170,6 +173,10 @@ int yywrap() {
   yy_switch_to_buffer(IncludeStack.back().Buffer);
   return 0;
 }
+
+} // End llvm namespace
+
+using namespace llvm;
 
 %}
 

@@ -16,6 +16,8 @@
 
 #include "llvm/User.h"
 
+namespace llvm {
+
 class Constant : public User {
 protected:
   inline Constant(const Type *Ty) : User(Ty, Value::ConstantVal) {}
@@ -90,5 +92,7 @@ public:
   unsigned mutateReferences(Value* OldV, Value *NewV);
   // END WARNING!!
 };
+
+} // End llvm namespace
 
 #endif

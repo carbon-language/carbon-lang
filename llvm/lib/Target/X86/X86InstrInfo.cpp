@@ -17,6 +17,8 @@
 
 #include "X86GenInstrInfo.inc"
 
+using namespace llvm;
+
 X86InstrInfo::X86InstrInfo()
   : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0]), 0) {
 }

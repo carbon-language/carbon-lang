@@ -57,6 +57,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {  // Anonymous namespace for class
 
   struct Verifier : public FunctionPass, InstVisitor<Verifier> {
@@ -149,7 +151,7 @@ namespace {  // Anonymous namespace for class
     void visitReturnInst(ReturnInst &RI);
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
-    void visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI);
+    void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
 
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
@@ -168,7 +170,6 @@ namespace {  // Anonymous namespace for class
   };
 
   RegisterPass<Verifier> X("verify", "Module Verifier");
-}
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \
@@ -368,7 +369,7 @@ void Verifier::visitCallInst(CallInst &CI) {
             CI.getOperand(i+1), FTy->getParamType(i));
 
   if (Function *F = CI.getCalledFunction())
-    if (LLVMIntrinsic::ID ID = (LLVMIntrinsic::ID)F->getIntrinsicID())
+    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       visitIntrinsicFunctionCall(ID, CI);
 
   visitInstruction(CI);
@@ -500,7 +501,7 @@ void Verifier::visitInstruction(Instruction &I) {
 }
 
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
-void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
+void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   Function *IF = CI.getCalledFunction();
   const FunctionType *FT = IF->getFunctionType();
   Assert1(IF->isExternal(), "Intrinsic functions should never be defined!", IF);
@@ -509,37 +510,37 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   // FIXME: this should check the return type of each intrinsic as well, also
   // arguments!
   switch (ID) {
-  case LLVMIntrinsic::va_start:
+  case Intrinsic::va_start:
     Assert1(CI.getParent()->getParent()->getFunctionType()->isVarArg(),
             "llvm.va_start intrinsic may only occur in function with variable"
             " args!", &CI);
     NumArgs = 0;
     break;
-  case LLVMIntrinsic::va_end:          NumArgs = 1; break;
-  case LLVMIntrinsic::va_copy:         NumArgs = 1; break;
+  case Intrinsic::va_end:          NumArgs = 1; break;
+  case Intrinsic::va_copy:         NumArgs = 1; break;
 
-  case LLVMIntrinsic::setjmp:          NumArgs = 1; break;
-  case LLVMIntrinsic::longjmp:         NumArgs = 2; break;
-  case LLVMIntrinsic::sigsetjmp:       NumArgs = 2; break;
-  case LLVMIntrinsic::siglongjmp:      NumArgs = 2; break;
+  case Intrinsic::setjmp:          NumArgs = 1; break;
+  case Intrinsic::longjmp:         NumArgs = 2; break;
+  case Intrinsic::sigsetjmp:       NumArgs = 2; break;
+  case Intrinsic::siglongjmp:      NumArgs = 2; break;
  
-  case LLVMIntrinsic::alpha_ctlz:      NumArgs = 1; break;
-  case LLVMIntrinsic::alpha_cttz:      NumArgs = 1; break;
-  case LLVMIntrinsic::alpha_ctpop:     NumArgs = 1; break;
-  case LLVMIntrinsic::alpha_umulh:     NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_vecop:     NumArgs = 4; break;
-  case LLVMIntrinsic::alpha_pup:       NumArgs = 3; break;
-  case LLVMIntrinsic::alpha_bytezap:   NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_bytemanip: NumArgs = 3; break;
-  case LLVMIntrinsic::alpha_dfpbop:    NumArgs = 3; break;
-  case LLVMIntrinsic::alpha_dfpuop:    NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_unordered: NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_uqtodfp:   NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_uqtosfp:   NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_dfptosq:   NumArgs = 2; break;
-  case LLVMIntrinsic::alpha_sfptosq:   NumArgs = 2; break;
+  case Intrinsic::alpha_ctlz:      NumArgs = 1; break;
+  case Intrinsic::alpha_cttz:      NumArgs = 1; break;
+  case Intrinsic::alpha_ctpop:     NumArgs = 1; break;
+  case Intrinsic::alpha_umulh:     NumArgs = 2; break;
+  case Intrinsic::alpha_vecop:     NumArgs = 4; break;
+  case Intrinsic::alpha_pup:       NumArgs = 3; break;
+  case Intrinsic::alpha_bytezap:   NumArgs = 2; break;
+  case Intrinsic::alpha_bytemanip: NumArgs = 3; break;
+  case Intrinsic::alpha_dfpbop:    NumArgs = 3; break;
+  case Intrinsic::alpha_dfpuop:    NumArgs = 2; break;
+  case Intrinsic::alpha_unordered: NumArgs = 2; break;
+  case Intrinsic::alpha_uqtodfp:   NumArgs = 2; break;
+  case Intrinsic::alpha_uqtosfp:   NumArgs = 2; break;
+  case Intrinsic::alpha_dfptosq:   NumArgs = 2; break;
+  case Intrinsic::alpha_sfptosq:   NumArgs = 2; break;
 
-  case LLVMIntrinsic::not_intrinsic: 
+  case Intrinsic::not_intrinsic: 
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
   }
 
@@ -548,6 +549,7 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
           "Illegal # arguments for intrinsic function!", IF);
 }
 
+} // End anonymous namespace
 
 //===----------------------------------------------------------------------===//
 //  Implement the public interfaces to this file...
@@ -585,3 +587,5 @@ bool verifyModule(const Module &M) {
   PM.run((Module&)M);
   return V->Broken;
 }
+
+} // End llvm namespace

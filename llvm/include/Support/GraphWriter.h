@@ -28,6 +28,8 @@
 #include <vector>
 #include <iostream>
 
+namespace llvm {
+
 namespace DOT {  // Private functions...
   inline std::string EscapeString(const std::string &Label) {
     std::string Str(Label);
@@ -205,5 +207,7 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G,
   W.writeFooter();
   return O;
 }
+
+} // End llvm namespace
 
 #endif

@@ -15,6 +15,8 @@
 #ifndef LLVM_TRANSFORMS_IPO_H
 #define LLVM_TRANSFORMS_IPO_H
 
+namespace llvm {
+
 class Pass;
 class Function;
 
@@ -118,5 +120,7 @@ Pass *createIPConstantPropagationPass();
 //
 Pass *createSwapElementsPass();
 Pass *createSortElementsPass();
+
+} // End llvm namespace
 
 #endif

@@ -20,6 +20,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+using namespace llvm;
+
 enum ProfilingType {
   ArgumentInfo = 1,   // The command line argument block
   FunctionInfo = 2,   // Function profiling information

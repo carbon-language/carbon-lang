@@ -23,6 +23,8 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include "Support/STLExtras.h"
 
+namespace llvm {
+
 //*********************** Internal Data Structures *************************/
 
 // The following two types need to be classes, not typedefs, so we can use
@@ -737,3 +739,5 @@ void SchedGraphNode::print(std::ostream &os) const {
       os << std::string(16, ' ') << *outEdges[i];
   }
 }
+
+} // End llvm namespace

@@ -29,6 +29,8 @@
 #include "Support/StringExtras.h"
 #include "Support/CommandLine.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
@@ -960,3 +962,5 @@ bool Printer::doFinalization(Module &M) {
   delete Mang;
   return false; // success
 }
+
+} // End llvm namespace

@@ -15,6 +15,9 @@
 #define LLVM_ANALYSIS_DSGRAPH_H
 
 #include "llvm/Analysis/DSNode.h"
+
+namespace llvm {
+
 class GlobalValue;
 
 //===----------------------------------------------------------------------===//
@@ -331,5 +334,7 @@ public:
   ///
   void removeTriviallyDeadNodes();
 };
+
+} // End llvm namespace
 
 #endif

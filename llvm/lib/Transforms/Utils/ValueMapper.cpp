@@ -16,6 +16,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 
+namespace llvm {
+
 Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
@@ -105,3 +107,4 @@ Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   return 0;
 }
 
+} // End llvm namespace

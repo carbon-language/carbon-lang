@@ -16,6 +16,9 @@
 
 #include "llvm/Pass.h"
 #include <set>
+
+namespace llvm {
+
 class Type;
 
 class FindUsedTypes : public Pass {
@@ -58,5 +61,7 @@ public:
 // Make sure that any clients of this file link in PostDominators.cpp
 static IncludeFile
 FIND_USED_TYPES_INCLUDE_FILE((void*)&FindUsedTypes::stub);
+
+} // End llvm namespace
 
 #endif

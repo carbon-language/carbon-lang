@@ -25,6 +25,8 @@
 #include "Support/hash_map"
 #include "Support/GraphTraits.h"
 
+namespace llvm {
+
 class RegToRefVecMap;
 class ValueToDefVecMap;
 class RefVec;
@@ -316,5 +318,7 @@ template <> struct GraphTraits<const SchedGraph*> {
     return succ_end(N);
   }
 };
+
+} // End llvm namespace
 
 #endif

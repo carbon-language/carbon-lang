@@ -32,6 +32,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include <map>
 
+namespace llvm {
+
 class MRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
@@ -206,5 +208,7 @@ public:
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 };
+
+} // End llvm namespace
 
 #endif

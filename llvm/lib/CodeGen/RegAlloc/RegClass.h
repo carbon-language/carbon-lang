@@ -20,6 +20,9 @@
 #include "llvm/Target/TargetRegInfo.h"
 #include "InterferenceGraph.h"
 #include <stack>
+
+namespace llvm {
+
 class TargetRegClassInfo;
 
 
@@ -138,5 +141,7 @@ class RegClass {
   void printIGNodeList() const;
   void printIG();
 };
+
+} // End llvm namespace
 
 #endif

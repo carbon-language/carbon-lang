@@ -28,6 +28,8 @@
 #include "Support/Debug.h"
 #include "Support/SystemUtils.h"
 
+using namespace llvm;
+
 namespace {
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));

@@ -19,6 +19,8 @@
 
 #include <string>
 
+namespace llvm {
+
 /// DefaultDOTGraphTraits - This class provides the default implementations of
 /// all of the DOTGraphTraits methods.  If a specialization does not need to
 /// override all methods here it should inherit so that it can get the default
@@ -95,5 +97,7 @@ struct DefaultDOTGraphTraits {
 ///
 template <typename Ty>
 class DOTGraphTraits : public DefaultDOTGraphTraits {};
+
+} // End llvm namespace
 
 #endif

@@ -14,6 +14,8 @@
 #ifndef LLVM_TRANSFORMS_INSTRUMENTATION_H
 #define LLVM_TRANSFORMS_INSTRUMENTATION_H
 
+namespace llvm {
+
 class Pass;
 
 //===----------------------------------------------------------------------===//
@@ -22,5 +24,7 @@ class Pass;
 //
 Pass *createTraceValuesPassForFunction();     // Just trace function entry/exit
 Pass *createTraceValuesPassForBasicBlocks();  // Trace BB's and methods
+
+} // End llvm namespace
 
 #endif

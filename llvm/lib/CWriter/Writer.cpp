@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <sstream>
 
+namespace llvm {
+
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
     std::ostream &Out; 
@@ -161,7 +163,6 @@ namespace {
     void printIndexingExpression(Value *Ptr, User::op_iterator I,
                                  User::op_iterator E);
   };
-}
 
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
@@ -339,7 +340,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 // compiler agreeing on the conversion process (which is pretty likely since we
 // only deal in IEEE FP).
 //
-static bool isFPCSafeToPrint(const ConstantFP *CFP) {
+bool isFPCSafeToPrint(const ConstantFP *CFP) {
 #if HAVE_PRINTF_A
   char Buffer[100];
   sprintf(Buffer, "%a", CFP->getValue());
@@ -563,7 +564,7 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
 // generateCompilerSpecificCode - This is where we add conditional compilation
 // directives to cater to specific compilers as need be.
 //
-static void generateCompilerSpecificCode(std::ostream& Out) {
+void generateCompilerSpecificCode(std::ostream& Out) {
   // Alloca is hard to get, and we don't want to include stdlib.h here...
   Out << "/* get a declaration for alloca */\n"
       << "#ifdef sun\n"
@@ -1058,7 +1059,7 @@ void CWriter::visitUnwindInst(UnwindInst &I) {
   emittedInvoke = true;
 }
 
-static bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
+bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   // If PHI nodes need copies, we need the copy code...
   if (isa<PHINode>(To->front()) ||
       From->getNext() != To)      // Not directly successor, need goto
@@ -1195,10 +1196,10 @@ void CWriter::visitCastInst(CastInst &I) {
 void CWriter::visitCallInst(CallInst &I) {
   // Handle intrinsic function calls first...
   if (Function *F = I.getCalledFunction())
-    if (LLVMIntrinsic::ID ID = (LLVMIntrinsic::ID)F->getIntrinsicID()) {
+    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       switch (ID) {
       default:  assert(0 && "Unknown LLVM intrinsic!");
-      case LLVMIntrinsic::va_start: 
+      case Intrinsic::va_start: 
         Out << "0; ";
         
         Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
@@ -1212,28 +1213,28 @@ void CWriter::visitCallInst(CallInst &I) {
         writeOperand(&I.getParent()->getParent()->aback());
         Out << ")";
         return;
-      case LLVMIntrinsic::va_end:
+      case Intrinsic::va_end:
         Out << "va_end(*(va_list*)&";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
-      case LLVMIntrinsic::va_copy:
+      case Intrinsic::va_copy:
         Out << "0;";
         Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         Out << "*(va_list*)&";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
-      case LLVMIntrinsic::setjmp:
-      case LLVMIntrinsic::sigsetjmp:
+      case Intrinsic::setjmp:
+      case Intrinsic::sigsetjmp:
         // This intrinsic should never exist in the program, but until we get
         // setjmp/longjmp transformations going on, we should codegen it to
         // something reasonable.  This will allow code that never calls longjmp
         // to work.
         Out << "0";
         return;
-      case LLVMIntrinsic::longjmp:
-      case LLVMIntrinsic::siglongjmp:
+      case Intrinsic::longjmp:
+      case Intrinsic::siglongjmp:
         // Longjmp is not implemented, and never will be.  It would cause an
         // exception throw.
         Out << "abort()";
@@ -1385,9 +1386,12 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
   Out << ");\n  va_end(Tmp); }";
 }
 
+}
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
 Pass *createWriteToCPass(std::ostream &o) { return new CWriter(o); }
+
+} // End llvm namespace

@@ -15,6 +15,8 @@
 #ifndef SUPPORT_SETOPERATIONS_H
 #define SUPPORT_SETOPERATIONS_H
 
+namespace llvm {
+
 // set_union(A, B) - Compute A := A u B, return whether A changed.
 //
 template <class S1Ty, class S2Ty>
@@ -63,5 +65,7 @@ void set_subtract(S1Ty &S1, const S2Ty &S2) {
        SI != SE; ++SI)  
     S1.erase(*SI);
 }
+
+} // End llvm namespace
 
 #endif

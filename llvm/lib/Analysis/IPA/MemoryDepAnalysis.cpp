@@ -31,6 +31,7 @@
 #include "Support/hash_map"
 #include "Support/hash_set"
 
+namespace llvm {
 
 ///--------------------------------------------------------------------------
 /// struct ModRefTable:
@@ -122,7 +123,7 @@ struct ModRefTable {
 class ModRefInfoBuilder : public InstVisitor<ModRefInfoBuilder> {
   const DSGraph&            funcGraph;
   const FunctionModRefInfo& funcModRef;
-  ModRefTable&              modRefTable;
+  struct ModRefTable&       modRefTable;
 
   ModRefInfoBuilder();                         // DO NOT IMPLEMENT
   ModRefInfoBuilder(const ModRefInfoBuilder&); // DO NOT IMPLEMENT
@@ -498,3 +499,5 @@ void MemoryDepAnalysis::dump() const
 static RegisterAnalysis<MemoryDepAnalysis>
 Z("memdep", "Memory Dependence Analysis");
 
+
+} // End llvm namespace

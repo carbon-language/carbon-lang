@@ -23,6 +23,8 @@
 #include "Support/StringExtras.h"
 #include <vector>
 
+namespace llvm {
+
 //----------------------------------------------------------------------------
 // Private constants and data
 //----------------------------------------------------------------------------
@@ -441,3 +443,5 @@ void IPModRef::dump() const
 {
   print(std::cerr);
 }
+
+} // End llvm namespace

@@ -30,6 +30,8 @@
 #include <functional>
 #include <iostream>
 
+namespace llvm {
+
 class BitSetVector {
   enum { BITSET_WORDSIZE = sizeof(long)*8 };
 
@@ -266,4 +268,5 @@ inline bool Disjoint(const BitSetVector& set1,
   return true;
 }
 
+} // End llvm namespace
 #endif

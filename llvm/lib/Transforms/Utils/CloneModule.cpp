@@ -19,6 +19,8 @@
 #include "llvm/Constant.h"
 #include "ValueMapper.h"
 
+namespace llvm {
+
 /// CloneModule - Return an exact copy of the specified module.  This is not as
 /// easy as it might seem because we have to worry about making copies of global
 /// variables and functions, and making their (initializers and references,
@@ -88,3 +90,5 @@ Module *CloneModule(const Module *M) {
 
   return New;
 }
+
+} // End llvm namespace

@@ -27,6 +27,8 @@
 #include <memory>
 #include <fstream>
 
+using namespace llvm;
+
 namespace {
   cl::opt<std::string>
   InputFilename(cl::Positional,cl::desc("<input llvm assembly>"),cl::init("-"));

@@ -20,6 +20,9 @@
 
 int yyerror(const char *ErrorMsg);
 int yylex();
+
+namespace llvm {
+
 extern int Filelineno;
 static Record *CurRec = 0;
 
@@ -160,20 +163,23 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   addSuperClass(SC);
 }
 
+} // End llvm namespace
+
+using namespace llvm;
 
 %}
 
 %union {
-  std::string          *StrVal;
-  int                   IntVal;
-  RecTy                *Ty;
-  Init                 *Initializer;
-  std::vector<Init*>   *FieldList;
-  std::vector<unsigned>*BitList;
-  Record               *Rec;
-  SubClassRefTy        *SubClassRef;
-  std::vector<SubClassRefTy> *SubClassList;
-  std::vector<std::pair<Init*, std::string> > *DagValueList;
+  std::string*                StrVal;
+  int                         IntVal;
+  llvm::RecTy*                Ty;
+  llvm::Init*                 Initializer;
+  std::vector<llvm::Init*>*   FieldList;
+  std::vector<unsigned>*      BitList;
+  llvm::Record*               Rec;
+  SubClassRefTy*              SubClassRef;
+  std::vector<SubClassRefTy>* SubClassList;
+  std::vector<std::pair<llvm::Init*, std::string> >* DagValueList;
 };
 
 %token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD LET IN
@@ -193,6 +199,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 %type <StrVal>       Declaration OptID OptVarName
 
 %start File
+
 %%
 
 ClassID : ID {

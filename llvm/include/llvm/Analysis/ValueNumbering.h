@@ -21,6 +21,9 @@
 #define LLVM_ANALYSIS_VALUE_NUMBERING_H
 
 #include <vector>
+
+namespace llvm {
+
 class Value;
 
 struct ValueNumbering {
@@ -33,5 +36,7 @@ struct ValueNumbering {
 
   virtual ~ValueNumbering();    // We want to be subclassed
 };
+
+} // End llvm namespace
 
 #endif

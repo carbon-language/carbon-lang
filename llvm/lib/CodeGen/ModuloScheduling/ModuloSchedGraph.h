@@ -22,6 +22,7 @@
 #include "Support/hash_map"
 #include <vector>
 
+namespace llvm {
 
 class ModuloSchedGraphNode : public SchedGraphNodeCommon {
 
@@ -105,5 +106,7 @@ public:
 
 
 };
+
+} // End llvm namespace
 
 #endif

@@ -23,9 +23,10 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 
+namespace llvm {
+
 // Make sure that anything that uses AliasAnalysis pulls in this file...
 void BasicAAStub() {}
-
 
 namespace {
   struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
@@ -59,8 +60,6 @@ namespace {
 void BasicAliasAnalysis::initializePass() {
   InitializeAliasAnalysis(this);
 }
-
-
 
 // hasUniqueAddress - Return true if the specified value points to something
 // with a unique, discernable, address.
@@ -364,3 +363,4 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   return MayAlias;
 }
 
+} // End llvm namespace

@@ -21,6 +21,8 @@
 #include "Support/iterator"
 #include "Support/STLExtras.h"
 
+namespace llvm {
+
 template<typename NodeTy>
 class DSNodeIterator : public forward_iterator<const DSNode, ptrdiff_t> {
   friend class DSNode;
@@ -145,5 +147,7 @@ template <> struct GraphTraits<const DSGraph*> {
   static ChildIteratorType child_begin(const NodeType *N) { return N->begin(); }
   static ChildIteratorType child_end(const NodeType *N) { return N->end(); }
 };
+
+} // End llvm namespace
 
 #endif

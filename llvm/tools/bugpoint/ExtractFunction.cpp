@@ -25,7 +25,14 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 
+
+namespace llvm {
+
 bool DisableSimplifyCFG = false;
+
+} // End llvm namespace
+
+using namespace llvm;
 
 namespace {
   cl::opt<bool>
@@ -38,6 +45,8 @@ namespace {
   NoSCFG("disable-simplifycfg", cl::location(DisableSimplifyCFG),
          cl::desc("Do not use the -simplifycfg pass to reduce testcases"));
 }
+
+namespace llvm {
 
 /// deleteInstructionFromProgram - This method clones the current Program and
 /// deletes the specified instruction from the cloned module.  It then runs a
@@ -125,3 +134,5 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   }
   return M;
 }
+
+} // End llvm namespace

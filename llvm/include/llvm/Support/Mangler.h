@@ -14,11 +14,18 @@
 #ifndef LLVM_SUPPORT_MANGLER_H
 #define LLVM_SUPPORT_MANGLER_H
 
+namespace llvm {
+
 class Value;
 class Module;
+
+} // End llvm namespace
+
 #include <map>
 #include <set>
 #include <string>
+
+namespace llvm {
 
 class Mangler {
   /// This keeps track of which global values have had their names
@@ -53,5 +60,7 @@ public:
   /// 
   static std::string makeNameProper(const std::string &x);
 };
+
+} // End llvm namespace
 
 #endif // LLVM_SUPPORT_MANGLER_H

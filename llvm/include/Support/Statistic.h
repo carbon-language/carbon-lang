@@ -26,6 +26,8 @@
 
 #include <iosfwd>
 
+namespace llvm {
+
 // StatisticBase - Nontemplated base class for Statistic<> class...
 class StatisticBase {
   const char *Name;
@@ -77,5 +79,7 @@ public:
   const Statistic &operator+=(const DataType &V) { Value += V; return *this; }
   const Statistic &operator-=(const DataType &V) { Value -= V; return *this; }
 };
+
+} // End llvm namespace
 
 #endif

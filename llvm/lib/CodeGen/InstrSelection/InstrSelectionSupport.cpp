@@ -25,6 +25,7 @@
 #include "llvm/DerivedTypes.h"
 #include "../../Target/Sparc/SparcInstrSelectionSupport.h"  // FIXME!
 
+namespace llvm {
 
 // Generate code to load the constant into a TmpInstruction (virtual reg) and
 // returns the virtual register.
@@ -257,3 +258,5 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
   
   return MVec;
 }
+
+} // End llvm namespace

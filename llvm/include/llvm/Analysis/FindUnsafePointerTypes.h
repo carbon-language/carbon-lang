@@ -27,6 +27,8 @@
 #include "llvm/Pass.h"
 #include <set>
 
+namespace llvm {
+
 class PointerType;
 
 struct FindUnsafePointerTypes : public Pass {
@@ -54,5 +56,7 @@ public:
     AU.setPreservesAll();
   }
 };
+
+} // End llvm namespace
 
 #endif

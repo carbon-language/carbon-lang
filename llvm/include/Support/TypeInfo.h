@@ -18,6 +18,8 @@
 
 #include <typeinfo>
 
+namespace llvm {
+
 struct TypeInfo {
   TypeInfo() {                     // needed for containers
     struct Nil {};  // Anonymous class distinct from all others...
@@ -68,5 +70,7 @@ inline bool operator<=(const TypeInfo &lhs, const TypeInfo &rhs) {
 inline bool operator>=(const TypeInfo &lhs, const TypeInfo &rhs) {
   return !(lhs < rhs);
 }
+
+} // End llvm namespace
 
 #endif

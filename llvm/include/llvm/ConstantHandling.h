@@ -42,6 +42,9 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
+
+namespace llvm {
+
 class PointerType;
 
 //===----------------------------------------------------------------------===//
@@ -244,4 +247,7 @@ Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
                                        const Constant *V2);
 Constant *ConstantFoldGetElementPtr(const Constant *C,
                                     const std::vector<Constant*> &IdxList);
+
+} // End llvm namespace
+
 #endif

@@ -25,6 +25,8 @@
 #include "SparcRegClassInfo.h"
 #include "Config/sys/types.h"
 
+namespace llvm {
+
 class LiveRange;
 class UltraSparc;
 class Pass;
@@ -692,5 +694,7 @@ public:
   // getBytecodeAsmPrinterPass - Emits final LLVM bytecode to assembly file.
   Pass* getBytecodeAsmPrinterPass(std::ostream &Out);
 };
+
+} // End llvm namespace
 
 #endif

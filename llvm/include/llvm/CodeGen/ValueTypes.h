@@ -16,6 +16,8 @@
 #ifndef LLVM_CODEGEN_VALUETYPES_H
 #define LLVM_CODEGEN_VALUETYPES_H
 
+namespace llvm {
+
 /// MVT namespace - This namespace defines the ValueType enum, which contains
 /// the various low-level value types.
 ///
@@ -40,5 +42,6 @@ namespace MVT {  // MVT = Machine Value Types
   };
 };
 
-#endif
+} // End llvm namespace
 
+#endif

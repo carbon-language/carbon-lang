@@ -38,6 +38,8 @@
 #include <vector>
 #include <set>
 
+namespace llvm {
+
 // df_iterator_storage - A private class which is used to figure out where to
 // store the visited set.
 template<class SetType, bool External>   // Non-external set
@@ -223,5 +225,6 @@ idf_ext_iterator<T, SetTy> idf_ext_end(T G, SetTy &S) {
   return idf_ext_iterator<T, SetTy>::end(G, S);
 }
 
+} // End llvm namespace
 
 #endif

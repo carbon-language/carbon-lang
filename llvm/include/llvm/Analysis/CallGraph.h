@@ -51,6 +51,9 @@
 #include "Support/GraphTraits.h"
 #include "Support/STLExtras.h"
 #include "llvm/Pass.h"
+
+namespace llvm {
+
 class Function;
 class Module;
 class CallGraphNode;
@@ -287,5 +290,7 @@ template<> struct GraphTraits<const CallGraph*> :
 // Make sure that any clients of this file link in PostDominators.cpp
 static IncludeFile
 CALLGRAPH_INCLUDE_FILE((void*)&CallGraph::stub);
+
+} // End llvm namespace
 
 #endif

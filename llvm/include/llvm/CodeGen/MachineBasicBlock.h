@@ -15,6 +15,9 @@
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
 #include <vector>
+
+namespace llvm {
+
 class BasicBlock;
 class MachineInstr;
 template <typename T> struct ilist_traits;
@@ -81,5 +84,6 @@ private:   // Methods used to maintain doubly linked list of blocks...
   void setNext(MachineBasicBlock *N) { Next = N; }
 };
 
+} // End llvm namespace
 
 #endif

@@ -23,6 +23,8 @@
 #include <fstream>
 #include <map>
 
+namespace llvm {
+
 // getLibSupportInfoOutputFilename - This ugly hack is brought to you courtesy
 // of constructor/destructor ordering being unspecified by C++.  Basically the
 // problem is that a Statistic<> object gets destroyed, which ends up calling
@@ -265,7 +267,8 @@ void Timer::print(const Timer &Total, std::ostream &OS) {
 }
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
-std::ostream *GetLibSupportInfoOutputFile() {
+std::ostream *
+GetLibSupportInfoOutputFile() {
   std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
   if (LibSupportInfoOutputFilename.empty())
     return &std::cerr;
@@ -349,3 +352,5 @@ void TimerGroup::removeTimer() {
     DefaultTimerGroup = 0;
   }
 }
+
+} // End llvm namespace

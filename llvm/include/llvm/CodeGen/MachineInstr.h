@@ -20,6 +20,8 @@
 #include "Support/Annotation.h"
 #include "Support/iterator"
 
+namespace llvm {
+
 class Value;
 class Function;
 class MachineBasicBlock;
@@ -714,5 +716,7 @@ public:
 std::ostream& operator<<(std::ostream &OS, const MachineInstr &MI);
 std::ostream& operator<<(std::ostream &OS, const MachineOperand &MO);
 void PrintMachineInstructions(const Function *F);
+
+} // End llvm namespace
 
 #endif

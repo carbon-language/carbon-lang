@@ -17,6 +17,8 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //  PostDominatorSet Implementation
 //===----------------------------------------------------------------------===//
@@ -214,3 +216,5 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 // stub - a dummy function to make linking work ok.
 void PostDominanceFrontier::stub() {
 }
+
+} // End llvm namespace

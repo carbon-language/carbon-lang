@@ -18,6 +18,8 @@
 #include "Support/LeakDetector.h"
 #include <algorithm>
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                                Value Class
 //===----------------------------------------------------------------------===//
@@ -107,3 +109,5 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
       setOperand(i, To); // Fix it now...
     }
 }
+
+} // End llvm namespace

@@ -16,6 +16,8 @@
 
 #include "Support/DataTypes.h"
 
+namespace llvm {
+
 inline unsigned log2(uint64_t C) {
   unsigned getPow;
   for (getPow = 0; C > 1; ++getPow)
@@ -32,5 +34,7 @@ inline bool isPowerOf2(int64_t C, unsigned &getPow) {
 
   return false;
 }
+
+} // End llvm namespace
 
 #endif

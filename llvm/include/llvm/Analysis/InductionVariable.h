@@ -27,6 +27,9 @@
 #define LLVM_ANALYSIS_INDUCTIONVARIABLE_H
 
 #include <iosfwd>
+
+namespace llvm {
+
 class Value;
 class PHINode;
 class Instruction;
@@ -59,5 +62,7 @@ public:
 
   void print(std::ostream &OS) const;
 };
+
+} // End llvm namespace
 
 #endif

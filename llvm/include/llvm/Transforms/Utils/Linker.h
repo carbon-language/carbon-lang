@@ -15,6 +15,9 @@
 #define LLVM_TRANSFORMATIONS_UTILS_LINKER_H
 
 #include <string>
+
+namespace llvm {
+
 class Module;
 
 // LinkModules - This function links two modules together, with the resulting
@@ -23,6 +26,8 @@ class Module;
 // the problem.
 //
 bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg = 0);
+
+} // End llvm namespace
 
 #endif
 

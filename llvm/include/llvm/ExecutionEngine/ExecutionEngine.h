@@ -19,6 +19,9 @@
 #include <string>
 #include <map>
 #include <cassert>
+
+namespace llvm {
+
 class Constant;
 class Function;
 union GenericValue;
@@ -91,5 +94,7 @@ protected:
   GenericValue getConstantValue(const Constant *C);
   GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
 };
+
+} // End llvm namespace
 
 #endif

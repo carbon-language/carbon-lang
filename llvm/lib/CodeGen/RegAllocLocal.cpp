@@ -26,6 +26,8 @@
 #include "Support/Statistic.h"
 #include <iostream>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
@@ -202,7 +204,6 @@ namespace {
                        unsigned PhysReg);
   };
 }
-
 
 /// getStackSpaceFor - This allocates space for the specified virtual register
 /// to be held on the stack.
@@ -674,3 +675,5 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
 FunctionPass *createLocalRegisterAllocator() {
   return new RA();
 }
+
+} // End llvm namespace

@@ -19,6 +19,8 @@
 #include "Support/Statistic.h"
 #include <algorithm>
 
+namespace llvm {
+
 static Statistic<> 
 NumInstrs("bytecodewriter", "Number of instructions");
 
@@ -295,3 +297,5 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   // operands or a large operand index that we are referring to.
   outputInstructionFormat0(&I, Opcode, Table, Type, Out);
 }
+
+} // End llvm namespace

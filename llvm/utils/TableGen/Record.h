@@ -21,6 +21,8 @@
 #include <iostream>
 #include <cassert>
 
+namespace llvm {
+
 // RecTy subclasses...
 class BitRecTy;
 class BitsRecTy;
@@ -852,5 +854,7 @@ public:
 std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK);
 
 extern RecordKeeper Records;
+
+} // End llvm namespace
 
 #endif

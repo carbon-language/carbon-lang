@@ -19,6 +19,8 @@
 #include "llvm/Function.h"
 #include "ValueMapper.h"
 
+namespace llvm {
+
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
 //
@@ -140,3 +142,5 @@ Function *CloneFunction(const Function *F,
   CloneFunctionInto(NewF, F, ValueMap, Returns);
   return NewF;                    
 }
+
+} // End llvm namespace

@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include <cassert>
 
+namespace llvm {
+
 class Type;
 class MachineFunction;
 
@@ -279,5 +281,7 @@ public:
   virtual int emitEpilogue(MachineFunction &MF,
                            MachineBasicBlock &MBB) const = 0;
 };
+
+} // End llvm namespace
 
 #endif

@@ -29,9 +29,11 @@
 
 // OutputMode - The different orderings to print basic blocks in...
 enum OutputMode {
-  llvm = 0,           // Generate LLVM assembly (the default)
+  LLVM = 0,           // Generate LLVM assembly (the default)
   c,                  // Generate C code
 };
+
+using namespace llvm;
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
@@ -45,8 +47,8 @@ Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<enum OutputMode>
 WriteMode(cl::desc("Specify the output format:"),
-          cl::values(clEnumVal(llvm, "Output LLVM assembly"),
-                     clEnumVal(c   , "Output C code for program"),
+          cl::values(clEnumVal(LLVM, "Output LLVM assembly"),
+                     clEnumVal(c, "Output C code for program"),
                     0));
 
 int main(int argc, char **argv) {
@@ -116,7 +118,7 @@ int main(int argc, char **argv) {
   PassManager Passes;
 
   switch (WriteMode) {
-  case llvm:           // Output LLVM assembly
+  case LLVM:           // Output LLVM assembly
     Passes.add(new PrintModulePass(Out));
     break;
   case c:              // Convert LLVM to C

@@ -29,16 +29,24 @@
 #include "llvm/Instruction.h"
 #include "Support/hash_map"
 
+namespace llvm {
+
 class Constant;
 class Function;
 class InstrTreeNode;
 class InstrForest;
+
+} // End llvm namespace
+
+using namespace llvm;
 
 //--------------------------------------------------------------------------
 // OpLabel values for special-case nodes created for instruction selection.
 // All op-labels not defined here are identical to the instruction
 // opcode returned by Instruction::getOpcode()
 //--------------------------------------------------------------------------
+//
+
 
 const int  InvalidOp	=  -1;
 const int  VRegListOp   =  97;
@@ -103,6 +111,7 @@ extern void		printtree	(InstrTreeNode*);
 extern int		treecost	(InstrTreeNode*, int, int);
 extern void		printMatches	(InstrTreeNode*);
 
+namespace llvm {
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
@@ -324,5 +333,7 @@ private:
   
   InstructionNode* buildTreeForInstruction(Instruction* instr);
 };
+
+} // End llvm namespace
 
 #endif

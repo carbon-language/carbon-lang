@@ -22,6 +22,8 @@
 #include <fstream>
 #include <set>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumFunctions("internalize", "Number of functions internalized");
   Statistic<> NumGlobals  ("internalize", "Number of global vars internalized");
@@ -119,3 +121,5 @@ namespace {
 Pass *createInternalizePass() {
   return new InternalizePass();
 }
+
+} // End llvm namespace

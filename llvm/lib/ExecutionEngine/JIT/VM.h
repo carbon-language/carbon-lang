@@ -18,6 +18,8 @@
 #include "llvm/PassManager.h"
 #include <map>
 
+namespace llvm {
+
 class Function;
 class GlobalValue;
 class Constant;
@@ -77,5 +79,7 @@ private:
   void setupPassManager();
   void runJITOnFunction (Function *F);
 };
+
+} // End llvm namespace
 
 #endif

@@ -18,6 +18,9 @@
 #include <iosfwd>
 #include <vector>
 #include <string>
+
+namespace llvm {
+
 class Pass;
 
 Pass *getMappingInfoAsmPrinterPass(std::ostream &out);
@@ -40,5 +43,7 @@ public:
 	length = bytes.size(); return &bytes[0];
   }
 };
+
+} // End llvm namespace
 
 #endif

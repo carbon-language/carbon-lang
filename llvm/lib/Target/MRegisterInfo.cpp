@@ -13,6 +13,8 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 
+namespace llvm {
+
 MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
 			     int CFSO, int CFDO)
@@ -41,3 +43,5 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
 MRegisterInfo::~MRegisterInfo() {
   delete[] PhysRegClasses;
 }
+
+} // End llvm namespace

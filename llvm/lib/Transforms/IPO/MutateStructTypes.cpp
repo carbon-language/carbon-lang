@@ -28,6 +28,8 @@
 #include "Support/Debug.h"
 #include <algorithm>
 
+using namespace llvm;
+
 // ValuePlaceHolder - A stupid little marker value.  It appears as an
 // instruction of type Instruction::UserOp1.
 //

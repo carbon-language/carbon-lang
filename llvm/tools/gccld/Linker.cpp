@@ -30,6 +30,8 @@
 #include <memory>
 #include <set>
 
+namespace llvm {
+
 /// FindLib - Try to convert Filename into the name of a file that we can open,
 /// if it does not already name a file we can open, by first trying to open
 /// Filename, then libFilename.<suffix> for each of a set of several common
@@ -405,3 +407,5 @@ bool LinkLibraries(const char *progname,
 
   return false;
 }
+
+} // End llvm namespace

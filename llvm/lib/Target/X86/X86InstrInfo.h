@@ -17,6 +17,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "X86RegisterInfo.h"
 
+namespace llvm {
+
 /// X86II - This namespace holds all of the target specific flags that
 /// instruction info tracks.
 ///
@@ -180,5 +182,7 @@ public:
     return get(Opcode).TSFlags >> X86II::OpcodeShift;
   }
 };
+
+} // End llvm namespace
 
 #endif

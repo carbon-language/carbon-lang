@@ -20,6 +20,8 @@
 
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ReturnBlock, *UnwindBlock;
 public:
@@ -38,5 +40,7 @@ public:
 };
 
 Pass *createUnifyFunctionExitNodesPass();
+
+} // End llvm namespace
 
 #endif

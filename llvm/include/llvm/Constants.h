@@ -18,6 +18,8 @@
 #include "llvm/Constant.h"
 #include "Support/DataTypes.h"
 
+namespace llvm {
+
 class ArrayType;
 class StructType;
 class PointerType;
@@ -574,5 +576,7 @@ public:
     return isa<Constant>(V) && classof(cast<Constant>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

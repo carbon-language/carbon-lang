@@ -18,6 +18,9 @@
 #define LLVM_ASSEMBLY_ASMANNOTATIONWRITER_H
 
 #include <iosfwd>
+
+namespace llvm {
+
 class Function;
 class BasicBlock;
 class Instruction;
@@ -36,5 +39,7 @@ struct AssemblyAnnotationWriter {
   // before an instruction is emitted.
   virtual void emitInstructionAnnot(const Instruction *I, std::ostream &OS) {}
 };
+
+} // End llvm namespace
 
 #endif

@@ -28,6 +28,8 @@
 #include "Support/LeakDetector.h"
 #include <vector>
 
+namespace llvm {
+
 std::vector<MachineInstr*>
 FixConstantOperandsForInstr(Instruction* vmInstr, MachineInstr* minstr,
                             TargetMachine& target);
@@ -82,6 +84,8 @@ namespace {
   };
 }
 
+namespace llvm {
+
 TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
                                Value *s1, Value *s2, const std::string &name)
   : Instruction(s1->getType(), Instruction::UserOp1, name)
@@ -114,6 +118,7 @@ TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
   LeakDetector::removeGarbageObject(this);
 }
 
+} // End llvm namespace
 
 bool InstructionSelection::runOnFunction(Function &F)
 {
@@ -375,7 +380,6 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
 }
 
 
-
 //===----------------------------------------------------------------------===//
 // createInstructionSelectionPass - Public entrypoint for instruction selection
 // and this file as a whole...
@@ -383,3 +387,5 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
 FunctionPass *createInstructionSelectionPass(TargetMachine &T) {
   return new InstructionSelection(T);
 }
+
+} // End llvm namespace

@@ -25,6 +25,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace llvm {
+
 namespace {
   Statistic<> NumFXCH("x86-codegen", "Number of fxch instructions inserted");
   Statistic<> NumFP  ("x86-codegen", "Number of floating point instructions");
@@ -70,7 +72,7 @@ namespace {
     // getSTReg - Return the X86::ST(i) register which contains the specified
     // FP<RegNo> register
     unsigned getSTReg(unsigned RegNo) const {
-      return StackTop - 1 - getSlot(RegNo) + X86::ST0;
+      return StackTop - 1 - getSlot(RegNo) + llvm::X86::ST0;
     }
 
     // pushReg - Push the specifiex FP<n> register onto the stack
@@ -598,3 +600,5 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
   I = MBB->erase(I)-1;  // Remove the pseudo instruction
 }
+
+} // End llvm namespace

@@ -23,6 +23,8 @@
 
 #include "llvm/Instruction.h"
 
+namespace llvm {
+
 class CallInst;
 class InvokeInst;
 
@@ -99,5 +101,7 @@ public:
     return getInstruction() < CS.getInstruction();
   }
 };
+
+} // End llvm namespace
 
 #endif

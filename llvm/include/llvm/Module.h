@@ -21,6 +21,9 @@
 
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+
+namespace llvm {
+
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class ConstantPointerRef;
@@ -212,5 +215,7 @@ inline std::ostream &operator<<(std::ostream &O, const Module &M) {
   M.print(O);
   return O;
 }
+
+} // End llvm namespace
 
 #endif

@@ -18,11 +18,13 @@
 #include "Support/Statistic.h"
 #include <cmath>  // For fmod
 
-Interpreter *TheEE = 0;
+namespace llvm {
 
 namespace {
   Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
 }
+
+Interpreter *TheEE = 0;
 
 //===----------------------------------------------------------------------===//
 //                     Value Manipulation code
@@ -910,3 +912,5 @@ void Interpreter::run() {
     visit(I);   // Dispatch to one of the visit* methods...
   }
 }
+
+} // End llvm namespace

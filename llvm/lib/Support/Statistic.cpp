@@ -27,8 +27,10 @@
 #include <iostream>
 #include <algorithm>
 
+namespace llvm {
+
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
-std::ostream *GetLibSupportInfoOutputFile();
+extern std::ostream *GetLibSupportInfoOutputFile();
 
 unsigned StatisticBase::NumStats = 0;
 
@@ -104,3 +106,5 @@ void StatisticBase::destroy() const {
       delete OutStream;   // Close the file...
   }
 }
+
+} // End llvm namespace

@@ -22,6 +22,8 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Type.h"
 
+namespace llvm {
+
 static RegisterOpt<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
 
@@ -112,3 +114,5 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   ReturnBlock = NewRetBlock;
   return true;
 }
+
+} // End llvm namespace

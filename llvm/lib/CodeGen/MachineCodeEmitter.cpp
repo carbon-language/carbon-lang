@@ -16,6 +16,8 @@
 #include "llvm/Function.h"
 #include <fstream>
 
+namespace llvm {
+
 namespace {
   struct DebugMachineCodeEmitter : public MachineCodeEmitter {
     void startFunction(MachineFunction &F) {
@@ -54,18 +56,7 @@ namespace {
       return 0;
     }
   };
-}
 
-
-/// createDebugMachineCodeEmitter - Return a dynamically allocated machine
-/// code emitter, which just prints the opcodes and fields out the cout.  This
-/// can be used for debugging users of the MachineCodeEmitter interface.
-///
-MachineCodeEmitter *MachineCodeEmitter::createDebugEmitter() {
-  return new DebugMachineCodeEmitter();
-}
-
-namespace {
   class FilePrinterEmitter : public MachineCodeEmitter {
     std::ofstream actual;
     std::ostream &o;
@@ -169,7 +160,18 @@ namespace {
   };
 }
 
+/// createDebugMachineCodeEmitter - Return a dynamically allocated machine
+/// code emitter, which just prints the opcodes and fields out the cout.  This
+/// can be used for debugging users of the MachineCodeEmitter interface.
+///
+MachineCodeEmitter *
+MachineCodeEmitter::createDebugEmitter() {
+  return new DebugMachineCodeEmitter();
+}
+
 MachineCodeEmitter *
 MachineCodeEmitter::createFilePrinterEmitter(MachineCodeEmitter &MCE) {
   return new FilePrinterEmitter(MCE, std::cerr);
 }
+
+} // End llvm namespace

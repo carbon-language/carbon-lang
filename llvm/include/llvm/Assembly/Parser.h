@@ -16,6 +16,8 @@
 
 #include <string>
 
+namespace llvm {
+
 class Module;
 class ParseException;
 
@@ -69,5 +71,7 @@ private :
 
   ParseException &operator=(const ParseException &E); // objects by reference
 };
+
+} // End llvm namespace
 
 #endif

@@ -33,6 +33,8 @@
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumEliminated("tailcallelim", "Number of tail calls removed");
 
@@ -42,6 +44,7 @@ namespace {
   RegisterOpt<TailCallElim> X("tailcallelim", "Tail Call Elimination");
 }
 
+// Public interface to the TailCallElimination pass
 FunctionPass *createTailCallEliminationPass() { return new TailCallElim(); }
 
 
@@ -105,3 +108,4 @@ bool TailCallElim::runOnFunction(Function &F) {
   return MadeChange;
 }
 
+} // End llvm namespace

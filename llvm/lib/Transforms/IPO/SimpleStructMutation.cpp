@@ -23,6 +23,8 @@ using std::vector;
 using std::set;
 using std::pair;
 
+namespace llvm {
+
 namespace {
   struct SimpleStructMutation : public MutateStructTypes {
     enum Transform { SwapElements, SortElements };
@@ -188,3 +190,5 @@ SimpleStructMutation::TransformsType
   
   return Transforms;
 }
+
+} // End llvm namespace

@@ -22,6 +22,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
 
+namespace llvm {
+
 class FunctionType;
 
 // Traits for intrusive list of instructions...
@@ -95,7 +97,7 @@ public:
   virtual bool isExternal() const { return BasicBlocks.empty(); }
 
   /// getIntrinsicID - This method returns the ID number of the specified
-  /// function, or LLVMIntrinsic::not_intrinsic if the function is not an
+  /// function, or Intrinsic::not_intrinsic if the function is not an
   /// instrinsic, or if the pointer is null.  This value is always defined to be
   /// zero to allow easy checking for whether a function is intrinsic or not.
   /// The particular intrinsic functions which correspond to this value are
@@ -219,5 +221,7 @@ public:
   ///
   void dropAllReferences();
 };
+
+} // End llvm namespace
 
 #endif

@@ -26,6 +26,8 @@
 #include "llvm/Analysis/Interval.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //
 // IntervalPartition - This class builds and holds an "interval partition" for
@@ -101,5 +103,7 @@ private:
   //
   void updatePredecessors(Interval *Int);
 };
+
+} // End llvm namespace
 
 #endif

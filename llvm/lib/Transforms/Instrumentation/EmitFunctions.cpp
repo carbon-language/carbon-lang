@@ -17,6 +17,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 
+namespace llvm {
+
 enum Color{
   WHITE,
   GREY,
@@ -104,3 +106,5 @@ bool EmitFunctionTable::run(Module &M){
   M.getGlobalList().push_back(fnCount);
   return true;  // Always modifies program
 }
+
+} // End llvm namespace

@@ -17,6 +17,8 @@
 
 #include "llvm/InstrTypes.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //                                 CastInst Class
 //===----------------------------------------------------------------------===//
@@ -194,5 +196,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif

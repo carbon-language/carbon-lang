@@ -17,6 +17,8 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 // for asserting this IG node is infact in the IGNodeList of this class
 inline static void assertIGNode(const InterferenceGraph *IG,
                                 const IGNode *Node) {
@@ -246,3 +248,5 @@ void InterferenceGraph::printIGNodeList() const {
     }
   }
 }
+
+} // End llvm namespace

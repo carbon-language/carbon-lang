@@ -19,6 +19,8 @@
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 
+namespace llvm {
+
 // Register the ValueNumbering interface, providing a nice name to refer to.
 static RegisterAnalysisGroup<ValueNumbering> X("Value Numbering");
 
@@ -39,6 +41,7 @@ ValueNumbering::~ValueNumbering() {}
 // into the tool that uses it.  As such, we register and implement the class
 // here.
 //
+
 namespace {
   /// BasicVN - This class is the default implementation of the ValueNumbering
   /// interface.  It walks the SSA def-use chains to trivially identify
@@ -62,9 +65,7 @@ namespace {
 
   // Declare that we implement the ValueNumbering interface
   RegisterAnalysisGroup<ValueNumbering, BasicVN, true> Y;
-}  // End of anonymous namespace
 
-namespace {
   /// BVNImpl - Implement BasicVN in terms of a visitor class that
   /// handles the different types of instructions as appropriate.
   ///
@@ -190,3 +191,5 @@ void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
         RetVals.push_back(Other);
       }
 }
+
+} // End llvm namespace

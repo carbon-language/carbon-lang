@@ -22,12 +22,13 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
+namespace llvm {
+
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
   // Register the default SparcV9 implementation...
   RegisterPass<TargetData> X("targetdata", "Target Data Layout");
 }
-
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       uint64_t &Size, unsigned char &Alignment);
@@ -221,3 +222,5 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 
   return Result;
 }
+
+} // End llvm namespace

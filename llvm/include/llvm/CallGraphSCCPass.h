@@ -23,6 +23,8 @@
 
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 class CallGraphNode;
 
 struct CallGraphSCCPass : public Pass {
@@ -45,5 +47,7 @@ struct CallGraphSCCPass : public Pass {
   /// always explicitly call the implementation here.
   virtual void getAnalysisUsage(AnalysisUsage &Info) const;
 };
+
+} // End llvm namespace
 
 #endif

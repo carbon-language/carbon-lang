@@ -26,6 +26,8 @@
 #include "Support/Statistic.h"
 #include "Support/CommandLine.h"
 
+namespace llvm {
+
 bool DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 
 namespace {
@@ -62,3 +64,5 @@ bool isCurrentDebugType(const char *DebugType) {
   return false;
 #endif
 }
+
+} // End llvm namespace

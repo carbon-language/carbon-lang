@@ -29,6 +29,8 @@
 #include "Support/Statistic.h"
 #include <algorithm>
 
+namespace llvm {
+
 namespace {
   Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
   Statistic<> NumGlobals("funcresolve", "Number of global variables resolved");
@@ -329,3 +331,5 @@ bool FunctionResolvingPass::run(Module &M) {
 
   return Changed;
 }
+
+} // End llvm namespace

@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <fstream>
 
+namespace llvm {
+
 enum ActionType {
   PrintRecords,
   GenEmitter,
@@ -406,6 +408,9 @@ static void ParseMachineCode() {
   }
 }
 
+} // End llvm namespace
+
+using namespace llvm;
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
@@ -459,11 +464,16 @@ int main(int argc, char **argv) {
       InstrSelectorEmitter(Records).run(*Out);
       break;
     case PrintEnums:
+    {
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
         *Out << Recs[i] << ", ";
       *Out << "\n";
       break;
+    }
+    default:
+      assert(1 && "Invalid Action");
+      return 1;
     }
   } catch (const std::string &Error) {
     std::cerr << Error << "\n";

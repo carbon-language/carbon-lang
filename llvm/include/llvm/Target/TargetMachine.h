@@ -17,6 +17,8 @@
 #include "llvm/Target/TargetData.h"
 #include <cassert>
 
+namespace llvm {
+
 class TargetInstrInfo;
 class TargetInstrDescriptor;
 class TargetSchedInfo;
@@ -116,5 +118,7 @@ public:
     assert (0 && "Current target cannot replace machine code for functions");
   }
 };
+
+} // End llvm namespace
 
 #endif

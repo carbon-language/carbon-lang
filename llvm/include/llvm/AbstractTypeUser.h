@@ -37,6 +37,8 @@
 //
 #include <cassert>
 
+namespace llvm {
+
 class Type;
 class DerivedType;
 
@@ -164,5 +166,7 @@ private:
   void addRef();
   void dropRef();
 };
+
+} // End llvm namespace
 
 #endif

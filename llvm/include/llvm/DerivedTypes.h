@@ -21,6 +21,8 @@
 #include "llvm/Type.h"
 #include <vector>
 
+namespace llvm {
+
 template<class ValType, class TypeClass> class TypeMap;
 class FunctionValType;
 class ArrayValType;
@@ -489,5 +491,7 @@ inline const Type* PATypeHolder::get() const {
   if (!NewTy) return Ty;
   return *const_cast<PATypeHolder*>(this) = NewTy;
 }
+
+} // End llvm namespace
 
 #endif

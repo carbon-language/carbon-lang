@@ -16,6 +16,8 @@
 
 #include "Support/DataTypes.h"
 
+namespace llvm {
+
 class TargetMachine;
 
 struct TargetCacheInfo {
@@ -58,5 +60,7 @@ public:
     return cacheAssoc[level];
   }
 };
+
+} // End llvm namespace
 
 #endif

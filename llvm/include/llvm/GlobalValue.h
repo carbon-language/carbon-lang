@@ -18,6 +18,9 @@
 #define LLVM_GLOBALVALUE_H
 
 #include "llvm/User.h"
+
+namespace llvm {
+
 class PointerType;
 class Module;
 
@@ -70,5 +73,7 @@ public:
            V->getValueType() == Value::GlobalVariableVal;
   }
 };
+
+} // End llvm namespace
 
 #endif

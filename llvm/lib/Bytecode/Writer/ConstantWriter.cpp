@@ -17,6 +17,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
 
+namespace llvm {
+
 void BytecodeWriter::outputType(const Type *T) {
   output_vbr((unsigned)T->getPrimitiveID(), Out);
   
@@ -202,3 +204,5 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
   }
   return false;
 }
+
+} // End llvm namespace

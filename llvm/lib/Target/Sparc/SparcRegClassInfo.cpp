@@ -17,6 +17,8 @@
 #include "../../CodeGen/RegAlloc/RegAllocCommon.h"   // FIXME!
 #include "../../CodeGen/RegAlloc/IGNode.h"           // FIXME!
 
+namespace llvm {
+
 //-----------------------------------------------------------------------------
 // Int Register Class - method for coloring a node in the interference graph.
 //
@@ -390,3 +392,5 @@ int SparcFloatRegClass::findFloatColor(const LiveRange *LR,
   return -1;
 
 }
+
+} // End llvm namespace

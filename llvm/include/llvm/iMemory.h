@@ -16,6 +16,9 @@
 #define LLVM_IMEMORY_H
 
 #include "llvm/Instruction.h"
+
+namespace llvm {
+
 class PointerType;
 
 //===----------------------------------------------------------------------===//
@@ -295,5 +298,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+} // End llvm namespace
 
 #endif // LLVM_IMEMORY_H

@@ -32,6 +32,8 @@
 #include "Support/Statistic.h"
 #include "Support/StringExtras.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumReplaced("scalarrepl", "Number of allocas broken up");
   Statistic<> NumPromoted("scalarrepl", "Number of allocas promoted");
@@ -61,6 +63,7 @@ namespace {
   RegisterOpt<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
 }
 
+// Public interface to the ScalarReplAggregates pass
 Pass *createScalarReplAggregatesPass() { return new SROA(); }
 
 
@@ -298,3 +301,5 @@ bool SROA::isSafeAllocaToPromote(AllocationInst *AI) {
     }
   return true;
 }
+
+} // End llvm namespace

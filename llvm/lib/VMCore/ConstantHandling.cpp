@@ -17,6 +17,8 @@
 #include "llvm/DerivedTypes.h"
 #include <cmath>
 
+namespace llvm {
+
 AnnotationID ConstRules::AID(AnnotationManager::getID("opt::ConstRules",
 						      &ConstRules::find));
 
@@ -638,3 +640,5 @@ ConstRules *ConstRules::getConstantExprRules() {
   static EmptyRules CERules;
   return &CERules;
 }
+
+} // End llvm namespace

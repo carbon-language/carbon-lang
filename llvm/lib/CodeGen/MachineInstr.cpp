@@ -16,6 +16,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 
+namespace llvm {
+
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
 // This variable is initialized and reset by class TargetInstrInfo.
@@ -289,7 +291,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
    // Specialize printing if op#0 is definition
   if (getNumOperands() &&
       (getOperand(0).opIsDefOnly() || getOperand(0).opIsDefAndUse())) {
-    ::print(getOperand(0), OS, TM);
+      llvm::print(getOperand(0), OS, TM);
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
@@ -300,7 +302,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
     if (i != StartOp)
       OS << ",";
     OS << " ";
-    ::print(mop, OS, TM);
+    llvm::print(mop, OS, TM);
     
     if (mop.opIsDefAndUse())
       OS << "<def&use>";
@@ -433,3 +435,5 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO)
   
   return OS;
 }
+
+} // End llvm namespace

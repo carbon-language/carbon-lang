@@ -18,6 +18,8 @@
 
 #include "TableGenBackend.h"
 
+namespace llvm {
+
 class RegisterInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
 public:
@@ -32,5 +34,7 @@ public:
   // runEnums - Print out enum values for all of the registers.
   void runEnums(std::ostream &o);
 };
+
+} // End llvm namespace
 
 #endif

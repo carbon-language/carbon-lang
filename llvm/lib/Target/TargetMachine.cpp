@@ -16,6 +16,8 @@
 #include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Type.h"
 
+namespace llvm {
+
 //---------------------------------------------------------------------------
 // class TargetMachine
 // 
@@ -49,3 +51,5 @@ void TargetCacheInfo::Initialize() {
   cacheSizes.push_back(1 << 15); cacheSizes.push_back(1 << 20);
   cacheAssoc.push_back(1);       cacheAssoc.push_back(4);
 }
+
+} // End llvm namespace

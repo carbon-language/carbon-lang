@@ -15,11 +15,14 @@
 #ifndef TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
 #define TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
 
+#include <vector>
+
+namespace llvm {
+
 class AllocaInst;
 class DominatorTree;
 class DominanceFrontier;
 class TargetData;
-#include <vector>
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
@@ -34,5 +37,7 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD);
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      DominatorTree &DT, DominanceFrontier &DF,
                      const TargetData &TD);
+
+} // End llvm namespace
 
 #endif

@@ -20,6 +20,8 @@
 #include <map>
 #include <vector>
 
+namespace llvm {
+
 template <class ElemTy>
 class EquivalenceClasses {
   // Maps each element to the element that is the leader of its 
@@ -88,5 +90,7 @@ public:
     return Elem2ECLeaderMap ;
   }
 };
+
+} // End llvm namespace
 
 #endif

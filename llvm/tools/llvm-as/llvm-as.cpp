@@ -24,6 +24,8 @@
 #include <fstream>
 #include <memory>
 
+using namespace llvm;
+
 static cl::opt<std::string> 
 InputFilename(cl::Positional, cl::desc("<input .llvm file>"), cl::init("-"));
 

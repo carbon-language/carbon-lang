@@ -17,6 +17,8 @@
 
 #include "llvm/Value.h"
 
+namespace llvm {
+
 class Argument : public Value {  // Defined in the Function.cpp file
   Function *Parent;
 
@@ -55,5 +57,7 @@ public:
     return V->getValueType() == ArgumentVal;
   }
 };
+
+} // End llvm namespace
 
 #endif

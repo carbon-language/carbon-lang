@@ -15,6 +15,8 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
 
+namespace llvm {
+
 // The useful interface defined by this file... Parse an ASCII file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
@@ -82,3 +84,5 @@ const std::string ParseException::getMessage() const {
   
   return Result + ": " + Message;
 }
+
+} // End llvm namespace

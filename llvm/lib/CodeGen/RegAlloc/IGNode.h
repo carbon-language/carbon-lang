@@ -32,6 +32,9 @@
 
 #include "LiveRange.h"
 #include <vector>
+
+namespace llvm {
+
 class RegClass;
 
 //----------------------------------------------------------------------------
@@ -114,5 +117,7 @@ public:
 
   inline LiveRange *getParentLR() const { return ParentLR; }
 };
+
+} // End llvm namespace
 
 #endif

@@ -33,6 +33,8 @@
 #include "llvm/SymbolTableListTraits.h"
 #include "Support/ilist"
 
+namespace llvm {
+
 class TerminatorInst;
 template <class _Term, class _BB> class SuccIterator;  // Successor Iterator
 template <class _Ptr, class _USE_iterator> class PredIterator;
@@ -170,5 +172,7 @@ public:
   ///
   BasicBlock *splitBasicBlock(iterator I, const std::string &BBName = "");
 };
+
+} // End llvm namespace
 
 #endif

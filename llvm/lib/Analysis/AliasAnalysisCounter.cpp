@@ -16,6 +16,8 @@
 #include "llvm/Pass.h"
 #include <iostream>
 
+namespace llvm {
+
 namespace {
   class AliasAnalysisCounter : public Pass, public AliasAnalysis {
     unsigned No, May, Must;
@@ -108,3 +110,5 @@ namespace {
   X("count-aa", "Count Alias Analysis Query Responses");
   RegisterAnalysisGroup<AliasAnalysis, AliasAnalysisCounter> Y;
 }
+
+} // End llvm namespace

@@ -17,6 +17,9 @@
 
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
+
+namespace llvm {
+
 class MachineFunction;
 class Value;
 class Constant;
@@ -111,5 +114,7 @@ private:
   }
   int allocateOptionalArg(const Type* type);
 };
+
+} // End llvm namespace
 
 #endif

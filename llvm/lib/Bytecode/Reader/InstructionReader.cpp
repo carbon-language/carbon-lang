@@ -22,6 +22,8 @@
 #include "llvm/iOther.h"
 #include "llvm/Module.h"
 
+namespace llvm {
+
 namespace {
   struct RawInst {       // The raw fields out of the bytecode stream...
     unsigned NumOperands;
@@ -32,8 +34,6 @@ namespace {
             std::vector<unsigned> &Args);
   };
 }
-
-
 
 RawInst::RawInst(const unsigned char *&Buf, const unsigned char *EndBuf,
                  std::vector<unsigned> &Args) {
@@ -389,3 +389,5 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
   BB->getInstList().push_back(Result);
   BCR_TRACE(4, *Result);
 }
+
+} // End llvm namespace

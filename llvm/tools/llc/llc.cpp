@@ -23,6 +23,8 @@
 #include <memory>
 #include <fstream>
 
+using namespace llvm;
+
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
 // and back-end code generation options are specified with the target machine.

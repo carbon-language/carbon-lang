@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <sstream>
 
+namespace llvm {
+
 static cl::opt<bool>
 DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
                   cl::desc("Disable pointer hashing in the -trace or -tracem "
@@ -433,3 +435,5 @@ bool InsertTraceCode::runOnFunction(Function &F) {
   
   return true;
 }
+
+} // End llvm namespace

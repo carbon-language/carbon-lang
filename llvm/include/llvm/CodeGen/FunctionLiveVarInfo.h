@@ -39,6 +39,8 @@
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/ValueSet.h"
 
+namespace llvm {
+
 class BBLiveVar;
 class MachineInstr;
 
@@ -103,5 +105,7 @@ public:
   const ValueSet &getLiveVarSetAfterMInst(const MachineInstr *MI,
                                           const BasicBlock *BB = 0);
 };
+
+} // End llvm namespace
 
 #endif

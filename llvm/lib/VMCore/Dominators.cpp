@@ -20,6 +20,8 @@
 #include "Support/DepthFirstIterator.h"
 #include "Support/SetOperations.h"
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
 //  DominatorSet Implementation
 //===----------------------------------------------------------------------===//
@@ -358,3 +360,5 @@ void DominanceFrontierBase::print(std::ostream &o) const {
     o << " is:\t" << I->second << "\n";
   }
 }
+
+} // End llvm namespace

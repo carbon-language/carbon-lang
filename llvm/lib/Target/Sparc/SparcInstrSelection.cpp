@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cmath>
 
+namespace llvm {
+
 static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
                                     std::vector<MachineInstr*>& mvec) {
   mvec.push_back(BuildMI(Opcode, 3).addReg(Node->leftChild()->getValue())
@@ -1390,12 +1392,12 @@ AllUsesAreBranches(const Instruction* setccI)
 // instead of a regular call.  If not that kind of intrinsic, do nothing.
 // Returns true if code was generated, otherwise false.
 // 
-bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
+bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
                       TargetMachine &target,
                       std::vector<MachineInstr*>& mvec)
 {
   switch (iid) {
-  case LLVMIntrinsic::va_start: {
+  case Intrinsic::va_start: {
     // Get the address of the first incoming vararg argument on the stack
     bool ignore;
     Function* func = cast<Function>(callInstr.getParent()->getParent());
@@ -1409,10 +1411,10 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     return true;
   }
 
-  case LLVMIntrinsic::va_end:
+  case Intrinsic::va_end:
     return true;                        // no-op on Sparc
 
-  case LLVMIntrinsic::va_copy:
+  case Intrinsic::va_copy:
     // Simple copy of current va_list (arg1) to new va_list (result)
     mvec.push_back(BuildMI(V9::ORr, 3).
                    addMReg(target.getRegInfo().getZeroRegNum()).
@@ -1420,8 +1422,8 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
                    addRegDef(&callInstr));
     return true;
 
-  case LLVMIntrinsic::sigsetjmp:
-  case LLVMIntrinsic::setjmp: {
+  case Intrinsic::sigsetjmp:
+  case Intrinsic::setjmp: {
     // act as if we return 0
     unsigned g0 = target.getRegInfo().getZeroRegNum();
     mvec.push_back(BuildMI(V9::ORr,3).addMReg(g0).addMReg(g0)
@@ -1429,8 +1431,8 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     return true;
   }
 
-  case LLVMIntrinsic::siglongjmp:
-  case LLVMIntrinsic::longjmp: {
+  case Intrinsic::siglongjmp:
+  case Intrinsic::longjmp: {
     // call abort()
     Module* M = callInstr.getParent()->getParent()->getParent();
     const FunctionType *voidvoidFuncTy =
@@ -2474,8 +2476,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // sequence (e.g., va_start).  Indirect calls cannot be special.
         // 
         bool specialIntrinsic = false;
-        LLVMIntrinsic::ID iid;
-        if (calledFunc && (iid=(LLVMIntrinsic::ID)calledFunc->getIntrinsicID()))
+        Intrinsic::ID iid;
+        if (calledFunc && (iid=(Intrinsic::ID)calledFunc->getIntrinsicID()))
           specialIntrinsic = CodeGenIntrinsic(iid, *callInstr, target, mvec);
 
         // If not, generate the normal call sequence for the function.
@@ -2928,4 +2930,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       }
     }
   }
+}
+
 }

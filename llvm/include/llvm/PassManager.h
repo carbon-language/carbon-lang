@@ -17,6 +17,8 @@
 #ifndef LLVM_PASSMANAGER_H
 #define LLVM_PASSMANAGER_H
 
+namespace llvm {
+
 class Pass;
 class Module;
 class ModuleProvider;
@@ -71,5 +73,7 @@ public:
   ///
   bool run(Function &F);
 };
+
+} // End llvm namespace
 
 #endif

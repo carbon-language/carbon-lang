@@ -20,6 +20,8 @@
 #include "Support/StringExtras.h"
 #include <algorithm>
 
+namespace llvm {
+
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
 ConstantBool *ConstantBool::False = new ConstantBool(false);
 
@@ -1029,3 +1031,5 @@ unsigned Constant::mutateReferences(Value *OldV, Value *NewV) {
     return NumReplaced;
   }
 }
+
+} // End llvm namespace

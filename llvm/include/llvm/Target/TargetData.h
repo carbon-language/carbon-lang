@@ -24,6 +24,9 @@
 #include "Support/Annotation.h"
 #include "Support/DataTypes.h"
 #include <vector>
+
+namespace llvm {
+
 class Value;
 class Type;
 class StructType;
@@ -100,5 +103,7 @@ private:
   friend class TargetData;   // Only TargetData can create this class
   inline StructLayout(const StructType *ST, const TargetData &TD);
 };
+
+} // End llvm namespace
 
 #endif

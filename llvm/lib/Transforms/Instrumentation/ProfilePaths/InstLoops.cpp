@@ -27,6 +27,8 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+
 //this is used to color vertices
 //during DFS
 
@@ -181,3 +183,5 @@ bool InstLoops::runOnFunction(Function &F){
   findAndInstrumentBackEdges(F);
   return true;  // Function was modified.
 }
+
+} // End llvm namespace

@@ -18,6 +18,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
 
+using namespace llvm;
+
 namespace {
   /// CrashOnCalls - This pass is used to test bugpoint.  It intentionally
   /// crashes on any call instructions.

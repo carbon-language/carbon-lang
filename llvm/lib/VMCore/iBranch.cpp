@@ -16,6 +16,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 
+namespace llvm {
+
 BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
                        Instruction *InsertBefore) 
   : TerminatorInst(Instruction::Br, InsertBefore) {
@@ -49,3 +51,5 @@ BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
     Operands.push_back(Use(BI.Operands[2], this));
   }
 }
+
+} // End llvm namespace

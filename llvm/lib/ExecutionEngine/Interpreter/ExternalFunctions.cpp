@@ -32,6 +32,8 @@
 #include <map>
 using std::vector;
 
+namespace llvm {
+
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
 static std::map<const Function *, ExFunc> Functions;
 static std::map<std::string, ExFunc> FuncNames;
@@ -767,3 +769,5 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_llvm.va_end"]  = llvm_va_end;
   FuncNames["lle_X_llvm.va_copy"] = llvm_va_copy;
 }
+
+} // End llvm namespace

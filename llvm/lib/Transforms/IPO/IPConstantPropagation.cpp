@@ -22,6 +22,8 @@
 #include "llvm/Support/CallSite.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumArgumentsProped("ipconstprop",
                                  "Number of args turned into constants");
@@ -121,3 +123,5 @@ bool IPCP::processFunction(Function &F) {
     }
   return MadeChange;
 }
+
+} // End llvm namespace

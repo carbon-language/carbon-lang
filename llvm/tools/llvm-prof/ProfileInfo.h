@@ -18,6 +18,9 @@
 #include <vector>
 #include <string>
 #include <utility>
+
+namespace llvm {
+
 class Module;
 class Function;
 class BasicBlock;
@@ -54,5 +57,7 @@ public:
   //
   void getBlockCounts(std::vector<std::pair<BasicBlock*, unsigned> > &Counts);
 };
+
+} // End llvm namespace
 
 #endif

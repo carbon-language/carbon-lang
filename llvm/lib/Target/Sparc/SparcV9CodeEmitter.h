@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetMachine.h"
 
+namespace llvm {
+
 class GlobalValue;
 class MachineInstr;
 class MachineOperand;
@@ -80,5 +82,7 @@ private:
   unsigned getRealRegNum(unsigned fakeReg, MachineInstr &MI);
 
 };
+
+} // End llvm namespace
 
 #endif

@@ -23,6 +23,8 @@
 
 // No need to include Pass.h, we are being included by it!
 
+namespace llvm {
+
 class TargetMachine;
 
 //===---------------------------------------------------------------------------
@@ -395,4 +397,7 @@ struct PassRegistrationListener {
 struct IncludeFile {
   IncludeFile(void *);
 };
+
+} // End llvm namespace
+
 #endif

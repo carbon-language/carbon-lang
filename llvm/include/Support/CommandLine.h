@@ -27,6 +27,7 @@
 #include <cassert>
 #include "boost/type_traits/object_traits.hpp"
 
+namespace llvm {
 /// cl Namespace - This namespace contains all of the command line option
 /// processing machinery.  It is intentionally a short name to make qualified
 /// usage concise.
@@ -1021,5 +1022,7 @@ struct aliasopt {
 };
 
 } // End namespace cl
+
+} // End namespace llvm
 
 #endif

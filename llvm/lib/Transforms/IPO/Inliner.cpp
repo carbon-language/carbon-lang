@@ -24,6 +24,8 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 
+namespace llvm {
+
 namespace {
   Statistic<> NumInlined("inline", "Number of functions inlined");
   Statistic<> NumDeleted("inline", "Number of functions deleted because all callers found");
@@ -134,3 +136,5 @@ bool Inliner::performInlining(CallSite CS, std::set<Function*> &SCC) {
   }
   return true; 
 }
+
+} // End llvm namespace

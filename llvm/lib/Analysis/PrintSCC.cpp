@@ -31,6 +31,8 @@
 #include "llvm/Support/CFG.h"
 #include "Support/SCCIterator.h"
 
+namespace llvm {
+
 namespace {
   struct CFGSCC : public FunctionPass {
     bool runOnFunction(Function& func);
@@ -101,3 +103,5 @@ bool CallGraphSCC::run(Module &M) {
 
   return true;
 }
+
+} // End llvm namespace

@@ -19,6 +19,8 @@
 #include "Support/DynamicLinker.h"
 #include <iostream>
 
+namespace llvm {
+
 // AtExitHandlers - List of functions to call when the program exits,
 // registered with the atexit() library function.
 static std::vector<void (*)()> AtExitHandlers;
@@ -75,3 +77,5 @@ void *VM::getPointerToNamedFunction(const std::string &Name) {
   
   return Ptr;
 }
+
+} // End llvm namespace

@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+using namespace llvm;
+
 using std::string;
 using std::vector;
 using std::cout;
@@ -69,7 +71,7 @@ namespace {
 
 //Option to generate symbol table or not
 //running llvm-ar -s is the same as ranlib
-cl::opt<bool> SymbolTable ("s", cl::desc("Generate an archive symbol table"));
+cl::opt<bool> SymbolTableOption ("s", cl::desc("Generate an archive symbol table"));
 
 //Archive name
 cl::opt<string> Archive (cl::Positional, cl::desc("<archive file>"), 
@@ -335,7 +337,7 @@ void CreateArchive() {
   ArchiveFile << ARMAG;
 
   //If the '-s' option was specified, generate symbol table.
-  if(SymbolTable) {
+  if(SymbolTableOption) {
     cout << "Symbol Table Start: " << ArchiveFile.tellp() << "\n";
     if(!WriteSymbolTable(ArchiveFile)) {
       std::cerr << "Error creating symbol table. Exiting program.";

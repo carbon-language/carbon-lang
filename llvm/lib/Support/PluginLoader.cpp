@@ -23,6 +23,8 @@
 #include "Config/link.h"
 #include <iostream>
 
+namespace llvm {
+
 namespace {
   struct PluginLoader {
     void operator=(const std::string &Filename) {
@@ -38,3 +40,5 @@ namespace {
 static cl::opt<PluginLoader, false, cl::parser<std::string> >
 LoadOpt("load", cl::ZeroOrMore, cl::value_desc("plugin.so"),
         cl::desc("Load the specified plugin"));
+
+} // End llvm namespace

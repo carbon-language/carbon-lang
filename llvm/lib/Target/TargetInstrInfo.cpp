@@ -15,6 +15,8 @@
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 
+namespace llvm {
+
 // External object describing the machine instructions
 // Initialized only when the TargetMachine class is created
 // and reset when that class is destroyed.
@@ -59,3 +61,5 @@ bool TargetInstrInfo::ConstantTypeMustBeLoaded(const Constant* CV) const {
   assert(CV->getType()->isPrimitiveType() || isa<PointerType>(CV->getType()));
   return !(CV->getType()->isIntegral() || isa<PointerType>(CV->getType()));
 }
+
+} // End llvm namespace

@@ -22,18 +22,22 @@
 #include "llvm/Assembly/Parser.h"
 #include "Support/StringExtras.h"
 
-class Module;
-
 // Global variables exported from the lexer...
 extern std::FILE *llvmAsmin;
 extern int llvmAsmlineno;
 
 // Globals exported by the parser...
-extern std::string CurFilename;
-Module *RunVMAsmParser(const std::string &Filename, FILE *F);
-
 extern char* llvmAsmtext;
 extern int   llvmAsmleng;
+
+namespace llvm {
+
+// Globals exported by the parser...
+extern std::string CurFilename;
+
+class Module;
+Module *RunVMAsmParser(const std::string &Filename, FILE *F);
+
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
 // appropriate character.  If AllowNull is set to false, a \00 value will cause
@@ -208,5 +212,7 @@ static inline int getLineNumFromPlaceHolder(const Value *Val) {
   default:               return ((ValuePlaceHolder*)Val)->getLineNum();
   }
 }
+
+} // End llvm namespace
 
 #endif

@@ -21,6 +21,9 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+
+namespace llvm {
+
 class Record;
 class RecordKeeper;
 
@@ -59,5 +62,7 @@ public:
   // target, lazily reading it from the record keeper as needed.
   // CodeGenInstructionSet *getInstructionSet -
 };
+
+} // End llvm namespace
 
 #endif

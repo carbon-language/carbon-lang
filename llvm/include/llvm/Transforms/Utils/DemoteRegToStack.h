@@ -24,7 +24,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+namespace llvm {
+
 class Instruction;
 class AllocaInst;
 
 AllocaInst *DemoteRegToStack(Instruction &X);
+
+} // End llvm namespace

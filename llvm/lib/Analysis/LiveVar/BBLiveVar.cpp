@@ -21,6 +21,7 @@
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
 
+namespace llvm {
 
 BBLiveVar::BBLiveVar(const BasicBlock &bb, MachineBasicBlock &mbb, unsigned id)
   : BB(bb), MBB(mbb), POID(id) {
@@ -229,6 +230,4 @@ void BBLiveVar::printInOutSets() const {
   std::cerr << "  Out: ";  printSet(OutSet);  std::cerr << "\n";
 }
 
-
-
-
+} // End llvm namespace

@@ -34,6 +34,9 @@
 #include <iosfwd>
 #include <typeinfo>
 #include <cassert>
+
+namespace llvm {
+
 class Value;
 class BasicBlock;
 class Function;
@@ -328,6 +331,8 @@ private:
   virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisUsage &AU);
   virtual void addToPassManager(PassManagerT<BasicBlock> *PM,AnalysisUsage &AU);
 };
+
+} // End llvm namespace
 
 // Include support files that contain important APIs commonly used by Passes,
 // but that we want to separate out to make it easier to read the header files.

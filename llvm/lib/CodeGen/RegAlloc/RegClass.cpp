@@ -16,6 +16,8 @@
 #include "RegClass.h"
 #include "llvm/Target/TargetRegInfo.h"
 
+namespace llvm {
+
 //----------------------------------------------------------------------------
 // This constructor inits IG. The actual matrix is created by a call to 
 // createInterferenceGraph() above.
@@ -245,4 +247,4 @@ void RegClass::printIG() {
   IG.printIG(); 
 }
 
-
+} // End llvm namespace

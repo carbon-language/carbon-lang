@@ -17,6 +17,8 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 
+namespace llvm {
+
 /// create - Create a new interpreter object.  This can never fail.
 ///
 ExecutionEngine *Interpreter::create(Module *M){
@@ -97,3 +99,5 @@ GenericValue Interpreter::run(Function *F,
   rv.IntVal = ExitCode;
   return rv;
 }
+
+} // End llvm namespace
