@@ -84,13 +84,13 @@ namespace X86II {
     // This three-bit field describes the size of a memory operand.
     // I'm just being paranoid not using the zero value; there's 
     // probably no reason you couldn't use it.
-    MemArg8     = 0x1 << 8,
-    MemArg16    = 0x2 << 8,
-    MemArg32    = 0x3 << 8,
-    MemArg64    = 0x4 << 8,
-    MemArg80    = 0x5 << 8,
-    MemArg128   = 0x6 << 8,
-    MemArgMask  = 0x7 << 8,
+    Arg8     = 0x1 << 8,
+    Arg16    = 0x2 << 8,
+    Arg32    = 0x3 << 8,
+    Arg64    = 0x4 << 8,
+    Arg80    = 0x5 << 8,
+    Arg128   = 0x6 << 8,
+    ArgMask  = 0x7 << 8,
   };
 }
 

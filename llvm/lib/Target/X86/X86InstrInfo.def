@@ -74,20 +74,20 @@ I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm, O_EBP, O_EBP)      
 I(MOVrr8      , "movb",  0x88,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R8  = R8
 I(MOVrr16     , "movw",  0x89,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 = R16
 I(MOVrr32     , "movl",  0x89,             0, X86II::MRMDestReg, NoIR, NoIR)                 // R32 = R32
-I(MOVir8      , "movb",  0xB0,             0, X86II::AddRegFrm | X86II::MemArg8, NoIR, NoIR)                  // R8  = imm8
-I(MOVir16     , "movw",  0xB8,             0, X86II::AddRegFrm | X86II::MemArg16 | X86II::OpSize, NoIR, NoIR) // R16 = imm16
-I(MOVir32     , "movl",  0xB8,             0, X86II::AddRegFrm | X86II::MemArg32, NoIR, NoIR)                 // R32 = imm32
-I(MOVmr8      , "movb",  0x8A,             0, X86II::MRMSrcMem | X86II::MemArg8, NoIR, NoIR) // R8  = [mem]
+I(MOVir8      , "movb",  0xB0,             0, X86II::AddRegFrm | X86II::Arg8, NoIR, NoIR)                  // R8  = imm8
+I(MOVir16     , "movw",  0xB8,             0, X86II::AddRegFrm | X86II::Arg16 | X86II::OpSize, NoIR, NoIR) // R16 = imm16
+I(MOVir32     , "movl",  0xB8,             0, X86II::AddRegFrm | X86II::Arg32, NoIR, NoIR)                 // R32 = imm32
+I(MOVmr8      , "movb",  0x8A,             0, X86II::MRMSrcMem | X86II::Arg8, NoIR, NoIR) // R8  = [mem]
 I(MOVmr16     , "movw",  0x8B,             0, X86II::MRMSrcMem | X86II::OpSize |
-                                              X86II::MemArg16, NoIR, NoIR)                   // R16 = [mem]
-I(MOVmr32     , "movl",  0x8B,             0, X86II::MRMSrcMem | X86II::MemArg32, NoIR,
+                                              X86II::Arg16, NoIR, NoIR)                   // R16 = [mem]
+I(MOVmr32     , "movl",  0x8B,             0, X86II::MRMSrcMem | X86II::Arg32, NoIR,
                                                                                   NoIR)      // R32 = [mem]
 I(MOVrm8      , "movb",  0x88,             0, X86II::MRMDestMem | X86II::Void |
-                                              X86II::MemArg8, NoIR, NoIR)                    // [mem] = R8
+                                              X86II::Arg8, NoIR, NoIR)                    // [mem] = R8
 I(MOVrm16     , "movw",  0x89,             0, X86II::MRMDestMem | X86II::Void |
-                                              X86II::OpSize | X86II::MemArg16, NoIR, NoIR)   // [mem] = R16
+                                              X86II::OpSize | X86II::Arg16, NoIR, NoIR)   // [mem] = R16
 I(MOVrm32     , "movl",  0x89,             0, X86II::MRMDestMem | X86II::Void |
-                                              X86II::MemArg32, NoIR, NoIR)                   // [mem] = R32
+                                              X86II::Arg32, NoIR, NoIR)                   // [mem] = R32
 
 I(PUSHr32     , "pushl", 0x50,             0, X86II::AddRegFrm | X86II::Void, NoIR, NoIR)    
 I(POPr32      , "popl",  0x58,             0, X86II::AddRegFrm, NoIR, NoIR)
@@ -96,11 +96,11 @@ I(POPr32      , "popl",  0x58,             0, X86II::AddRegFrm, NoIR, NoIR)
 I(ADDrr8      , "addb",  0x00, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  += R8
 I(ADDrr16     , "addw",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 += R16
 I(ADDrr32     , "addl",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 += R32
-I(ADDri32     , "add",   0x81, M_2_ADDR_FLAG, X86II::MRMS0r |  X86II::MemArg32, NoIR, NoIR)  // R32 += imm32
+I(ADDri32     , "add",   0x81, M_2_ADDR_FLAG, X86II::MRMS0r |  X86II::Arg32, NoIR, NoIR)  // R32 += imm32
 I(SUBrr8      , "subb",  0x2A, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  -= R8
 I(SUBrr16     , "subw",  0x2B, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 -= R16
 I(SUBrr32     , "subl",  0x2B, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 -= R32
-I(SUBri32     , "sub",   0x81, M_2_ADDR_FLAG, X86II::MRMS5r |  X86II::MemArg32, NoIR, NoIR)  // R32 -= imm32
+I(SUBri32     , "sub",   0x81, M_2_ADDR_FLAG, X86II::MRMS5r |  X86II::Arg32, NoIR, NoIR)  // R32 -= imm32
 I(MULrr8      , "mulb",  0xF6,             0, X86II::MRMS4r | X86II::Void, O_AL, O_AX)       // AX   = AL*R8
 I(MULrr16     , "mulw",  0xF7,             0, X86II::MRMS4r | X86II::Void |                  // DX:AX= AX*R16
                                               X86II::OpSize, O_AX, T_AXDX)
@@ -135,21 +135,21 @@ I(XORrr32     , "xorl",  0x31, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)    
 I(SHLrr8      , "shlb",  0xD2, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                     // R8   <<= cl
 I(SHLrr16     , "shlw",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::OpSize, O_CL, NoIR)     // R16  <<= cl
 I(SHLrr32     , "shll",  0xD3, M_2_ADDR_FLAG, X86II::MRMS4r, O_CL, NoIR)                     // R32  <<= cl
-I(SHLir8      , "shlb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::MemArg8, NoIR, NoIR)                     // R8   <<= imm8
-I(SHLir16     , "shlw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::MemArg8 | X86II::OpSize, NoIR, NoIR)     // R16  <<= imm8
-I(SHLir32     , "shll",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::MemArg8, NoIR, NoIR)                     // R32  <<= imm8
+I(SHLir8      , "shlb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::Arg8, NoIR, NoIR)                     // R8   <<= imm8
+I(SHLir16     , "shlw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16  <<= imm8
+I(SHLir32     , "shll",  0xC1, M_2_ADDR_FLAG, X86II::MRMS4r | X86II::Arg8, NoIR, NoIR)                     // R32  <<= imm8
 I(SHRrr8      , "shrb",  0xD2, M_2_ADDR_FLAG, X86II::MRMS5r, O_CL, NoIR)                     // R8  >>>= cl
 I(SHRrr16     , "shrw",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::OpSize, O_CL, NoIR)     // R16 >>>= cl
 I(SHRrr32     , "shrl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS5r, O_CL, NoIR)                     // R32 >>>= cl
-I(SHRir8      , "shrb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::MemArg8, NoIR, NoIR)                     // R8  >>>= imm8
-I(SHRir16     , "shrw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::MemArg8 | X86II::OpSize, NoIR, NoIR)     // R16 >>>= imm8
-I(SHRir32     , "shrl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::MemArg8, NoIR, NoIR)                     // R32 >>>= imm8
+I(SHRir8      , "shrb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8, NoIR, NoIR)                     // R8  >>>= imm8
+I(SHRir16     , "shrw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16 >>>= imm8
+I(SHRir32     , "shrl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8, NoIR, NoIR)                     // R32 >>>= imm8
 I(SARrr8      , "sarb",  0xD2, M_2_ADDR_FLAG, X86II::MRMS7r, O_CL, NoIR)                     // R8   >>= cl
 I(SARrr16     , "sarw",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::OpSize, O_CL, NoIR)     // R16  >>= cl
 I(SARrr32     , "sarl",  0xD3, M_2_ADDR_FLAG, X86II::MRMS7r, O_CL, NoIR)                     // R32  >>= cl
-I(SARir8      , "sarb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::MemArg8, NoIR, NoIR)                     // R8   >>= imm8
-I(SARir16     , "sarw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::MemArg8 | X86II::OpSize, NoIR, NoIR)     // R16  >>= imm8
-I(SARir32     , "sarl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::MemArg8, NoIR, NoIR)                     // R32  >>= imm8
+I(SARir8      , "sarb",  0xC0, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)                     // R8   >>= imm8
+I(SARir16     , "sarw",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8 | X86II::OpSize, NoIR, NoIR)     // R16  >>= imm8
+I(SARir32     , "sarl",  0xC1, M_2_ADDR_FLAG, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)                     // R32  >>= imm8
 
 // Floating point loads
 I(FLDr32      , "flds", 0xD9,              0, X86II::MRMS0m, NoIR, NoIR)                     // push float
@@ -178,7 +178,7 @@ I(SETGr       , "setg",  0x9F,             0, X86II::TB | X86II::MRMS0r, NoIR, N
 I(CMPrr8      , "cmpb",  0x38,             0, X86II::MRMDestReg, NoIR, NoIR)                 // compare R8,R8
 I(CMPrr16     , "cmpw",  0x39,             0, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // compare R16,R16
 I(CMPrr32     , "cmpl",  0x39,             0, X86II::MRMDestReg, NoIR, NoIR)                 // compare R32,R32
-I(CMPri8      , "cmp",   0x80,             0, X86II::MRMS7r | X86II::MemArg8, NoIR, NoIR)    // compare R8, imm8
+I(CMPri8      , "cmp",   0x80,             0, X86II::MRMS7r | X86II::Arg8, NoIR, NoIR)    // compare R8, imm8
 
 // Sign extenders (first 3 are good for DIV/IDIV; the others are more general)
 I(CBW         , "cbw",   0x98,             0, X86II::RawFrm, O_AL, O_AX)                     // AX = signext(AL)

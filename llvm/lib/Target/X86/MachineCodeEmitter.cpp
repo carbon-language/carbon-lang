@@ -204,13 +204,13 @@ static bool isImmediate(const MachineOperand &MO) {
 }
 
 unsigned sizeOfPtr (const MachineInstrDescriptor &Desc) {
-  switch (Desc.TSFlags & X86II::MemArgMask) {
-  case X86II::MemArg8:   return 1;
-  case X86II::MemArg16:  return 2;
-  case X86II::MemArg32:  return 4;
-  case X86II::MemArg64:  return 8;
-  case X86II::MemArg80:  return 10;
-  case X86II::MemArg128: return 16;
+  switch (Desc.TSFlags & X86II::ArgMask) {
+  case X86II::Arg8:   return 1;
+  case X86II::Arg16:  return 2;
+  case X86II::Arg32:  return 4;
+  case X86II::Arg64:  return 8;
+  case X86II::Arg80:  return 10;
+  case X86II::Arg128: return 16;
   default: assert(0 && "Memory size not set!");
   }
 }

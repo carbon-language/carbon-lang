@@ -120,13 +120,13 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
 }
 
 static const std::string sizePtr (const MachineInstrDescriptor &Desc) {
-  switch (Desc.TSFlags & X86II::MemArgMask) {
-    case X86II::MemArg8:   return "BYTE PTR"; 
-    case X86II::MemArg16:  return "WORD PTR"; 
-    case X86II::MemArg32:  return "DWORD PTR"; 
-    case X86II::MemArg64:  return "QWORD PTR"; 
-    case X86II::MemArg80:  return "XWORD PTR"; 
-    case X86II::MemArg128: return "128BIT PTR";  // dunno what the real one is
+  switch (Desc.TSFlags & X86II::ArgMask) {
+    case X86II::Arg8:   return "BYTE PTR"; 
+    case X86II::Arg16:  return "WORD PTR"; 
+    case X86II::Arg32:  return "DWORD PTR"; 
+    case X86II::Arg64:  return "QWORD PTR"; 
+    case X86II::Arg80:  return "XWORD PTR"; 
+    case X86II::Arg128: return "128BIT PTR";  // dunno what the real one is
     default: return "<SIZE?> PTR"; // crack being smoked
   }
 }
