@@ -23,8 +23,9 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicLowering.h"
-#include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/ConstantsScanner.h"
+#include "llvm/Analysis/FindUsedTypes.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -59,6 +60,7 @@ namespace {
     std::ostream &Out; 
     IntrinsicLowering &IL;
     Mangler *Mang;
+    LoopInfo *LI;
     const Module *TheModule;
     std::map<const Type *, std::string> TypeNames;
 
@@ -68,9 +70,16 @@ namespace {
 
     virtual const char *getPassName() const { return "C backend"; }
 
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<LoopInfo>();
+      AU.setPreservesAll();
+    }
+
     virtual bool doInitialization(Module &M);
 
     bool runOnFunction(Function &F) {
+      LI = &getAnalysis<LoopInfo>();
+
       // Output all floating point constants that cannot be printed accurately.
       printFloatingPointConstants(F);
   
@@ -84,7 +93,7 @@ namespace {
       // Free memory...
       delete Mang;
       TypeNames.clear();
-      return true;
+      return false;
     }
 
     std::ostream &printType(std::ostream &Out, const Type *Ty,
@@ -105,6 +114,8 @@ namespace {
     void printFunctionSignature(const Function *F, bool Prototype);
 
     void printFunction(Function &);
+    void printBasicBlock(BasicBlock *BB);
+    void printLoop(Loop *L);
 
     void printConstant(Constant *CPV);
     void printConstantArray(ConstantArray *CPA);
@@ -147,8 +158,13 @@ namespace {
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
-    void visitInvokeInst(InvokeInst &I);
-    void visitUnwindInst(UnwindInst &I);
+    void visitInvokeInst(InvokeInst &I) {
+      assert(0 && "Lowerinvoke pass didn't work!");
+    }
+
+    void visitUnwindInst(UnwindInst &I) {
+      assert(0 && "Lowerinvoke pass didn't work!");
+    }
 
     void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
@@ -176,6 +192,8 @@ namespace {
     void outputLValue(Instruction *I) {
       Out << "  " << Mang->getValueName(I) << " = ";
     }
+
+    bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To);
     void printPHICopiesForSuccessors(BasicBlock *CurBlock, 
                                      unsigned Indent);
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
@@ -399,7 +417,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 // compiler agreeing on the conversion process (which is pretty likely since we
 // only deal in IEEE FP).
 //
-bool isFPCSafeToPrint(const ConstantFP *CFP) {
+static bool isFPCSafeToPrint(const ConstantFP *CFP) {
 #if HAVE_PRINTF_A
   char Buffer[100];
   sprintf(Buffer, "%a", CFP->getValue());
@@ -994,44 +1012,65 @@ void CWriter::printFunction(Function &F) {
 
   // print the basic blocks
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    BasicBlock *Prev = BB->getPrev();
-
-    // Don't print the label for the basic block if there are no uses, or if the
-    // only terminator use is the predecessor basic block's terminator.  We have
-    // to scan the use list because PHI nodes use basic blocks too but do not
-    // require a label to be generated.
-    //
-    bool NeedsLabel = false;
-    for (Value::use_iterator UI = BB->use_begin(), UE = BB->use_end();
-         UI != UE; ++UI)
-      if (TerminatorInst *TI = dyn_cast<TerminatorInst>(*UI))
-        if (TI != Prev->getTerminator() ||
-            isa<SwitchInst>(Prev->getTerminator()) ||
-            isa<InvokeInst>(Prev->getTerminator())) {
-          NeedsLabel = true;
-          break;        
-        }
-
-    if (NeedsLabel) Out << Mang->getValueName(BB) << ":\n";
-
-    // Output all of the instructions in the basic block...
-    for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E; ++II){
-      if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
-        if (II->getType() != Type::VoidTy)
-          outputLValue(II);
-        else
-          Out << "  ";
-        visit(*II);
-        Out << ";\n";
-      }
+    if (Loop *L = LI->getLoopFor(BB)) {
+      if (L->getHeader() == BB && L->getParentLoop() == 0)
+        printLoop(L);
+    } else {
+      printBasicBlock(BB);
     }
-
-    // Don't emit prefix or suffix for the terminator...
-    visit(*BB->getTerminator());
   }
   
   Out << "}\n\n";
 }
+
+void CWriter::printLoop(Loop *L) {
+  Out << "  do {     /* Syntactic loop '" << L->getHeader()->getName()
+      << "' to make GCC happy */\n";
+  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
+    BasicBlock *BB = L->getBlocks()[i];
+    Loop *BBLoop = LI->getLoopFor(BB);
+    if (BBLoop == L)
+      printBasicBlock(BB);
+    else if (BB == BBLoop->getHeader() && BBLoop->getParentLoop() == L)
+      printLoop(BBLoop);      
+  }
+  Out << "  } while (1); /* end of syntactic loop '"
+      << L->getHeader()->getName() << "' */\n";
+}
+
+void CWriter::printBasicBlock(BasicBlock *BB) {
+
+  // Don't print the label for the basic block if there are no uses, or if
+  // the only terminator use is the predecessor basic block's terminator.
+  // We have to scan the use list because PHI nodes use basic blocks too but
+  // do not require a label to be generated.
+  //
+  bool NeedsLabel = false;
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    if (isGotoCodeNecessary(*PI, BB)) {
+      NeedsLabel = true;
+      break;
+    }
+      
+  if (NeedsLabel) Out << Mang->getValueName(BB) << ":\n";
+      
+  // Output all of the instructions in the basic block...
+  for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E;
+       ++II) {
+    if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
+      if (II->getType() != Type::VoidTy)
+        outputLValue(II);
+      else
+        Out << "  ";
+      visit(*II);
+      Out << ";\n";
+    }
+  }
+      
+  // Don't emit prefix or suffix for the terminator...
+  visit(*BB->getTerminator());
+}
+
 
 // Specific Instruction type classes... note that all of the casts are
 // necessary because we use the instruction classes as opaque types...
@@ -1072,22 +1111,18 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
   Out << "  }\n";
 }
 
-void CWriter::visitInvokeInst(InvokeInst &II) {
-  assert(0 && "Lowerinvoke pass didn't work!");
-}
+bool CWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
+  /// FIXME: This should be reenabled, but loop reordering safe!!
+  return true;
+
+  if (From->getNext() != To) // Not the direct successor, we need a goto
+    return true; 
+
+  //isa<SwitchInst>(From->getTerminator())
 
 
-void CWriter::visitUnwindInst(UnwindInst &I) {
-  assert(0 && "Lowerinvoke pass didn't work!");
-}
-
-static bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
-  // If PHI nodes need copies, we need the copy code...
-  if (isa<PHINode>(To->front()) ||
-      From->getNext() != To)      // Not directly successor, need goto
+  if (LI->getLoopFor(From) != LI->getLoopFor(To))
     return true;
-
-  // Otherwise we don't need the code.
   return false;
 }
 
@@ -1108,9 +1143,7 @@ void CWriter::printPHICopiesForSuccessors(BasicBlock *CurBlock,
 
 void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
                                  unsigned Indent) {
-  if (CurBB->getNext() != Succ ||
-      isa<InvokeInst>(CurBB->getTerminator()) ||
-      isa<SwitchInst>(CurBB->getTerminator())) {
+  if (isGotoCodeNecessary(CurBB, Succ)) {
     Out << std::string(Indent, ' ') << "  goto ";
     writeOperand(Succ);
     Out << ";\n";
