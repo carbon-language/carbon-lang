@@ -39,6 +39,25 @@ void AsmPrinter::emitAlignment(unsigned NumBits) const {
   O << AlignDirective << NumBits << "\n";
 }
 
+/// emitZeros - Emit a block of zeros.
+///
+void AsmPrinter::emitZeros(unsigned NumZeros) const {
+  if (NumZeros) {
+    if (ZeroDirective)
+      O << ZeroDirective << NumZeros << "\n";
+    else {
+      if (NumZeros >= 8 && Data64bitsDirective) {
+        for (; NumZeros >= 8; NumZeros -= 8)
+          O << Data64bitsDirective << "0\n";
+      }
+      for (; NumZeros >= 4; NumZeros -= 4)
+        O << Data32bitsDirective << "0\n";
+      for (; NumZeros; --NumZeros)
+        O << Data8bitsDirective << "0\n";
+    }
+  }
+}
+
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
 void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
@@ -159,7 +178,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
   const TargetData &TD = TM.getTargetData();
 
   if (CV->isNullValue()) {
-    O << ZeroDirective << TD.getTypeSize(CV->getType()) << "\n";
+    emitZeros(TD.getTypeSize(CV->getType()));
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
@@ -189,8 +208,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
       emitGlobalConstant(field);
 
       // Insert the field padding unless it's zero bytes...
-      if (padSize)
-        O << ZeroDirective << padSize << "\n";      
+      emitZeros(padSize);
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
@@ -207,7 +225,8 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
       U.FVal = Val;
 
       if (Data64bitsDirective)
-        O << Data64bitsDirective << U.UVal << "\n";
+        O << Data64bitsDirective << U.UVal << "\t" << CommentChar
+          << " double value: " << Val << "\n";
       else if (TD.isBigEndian()) {
         O << Data32bitsDirective << unsigned(U.UVal >> 32)
           << "\t" << CommentChar << " double most significant word "
