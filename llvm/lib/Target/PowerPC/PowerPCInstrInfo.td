@@ -1263,7 +1263,7 @@ def ADJCALLSTACKDOWN : PPC32InstPatternPseudo<"ADJCALLSTACKDOWN", Pseudo>;
 def ADJCALLSTACKUP : PPC32InstPatternPseudo<"ADJCALLSTACKUP", Pseudo>;
 def MovePCtoLR : PPC32InstPatternPseudo<"MovePCtoLR", Pseudo>;
 
-def LOADLoAddr : PPC32InstPattern0 <"addi", Gpr, Gpr0, Simm16, 14, 0, 0>;
+def LOADLoAddr : PPC32InstPattern0 <"lwz", Gpr, Gpr0, Simm16, 14, 0, 0>;
 def LOADHiAddr : PPC32InstPattern0 <"addis", Gpr, Gpr0, Simm16, 15, 0, 0>;
 
 def ADDI : PPC32InstPattern0 <"addi", Gpr, Gpr0, Simm16, 14, 0, 0>;
