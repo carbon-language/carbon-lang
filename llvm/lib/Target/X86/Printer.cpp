@@ -95,21 +95,6 @@ FunctionPass *createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
   return new Printer(o, tm);
 }
 
-/// isStringCompatible - Can we treat the specified array as a string?
-/// Only if it is an array of ubytes or non-negative sbytes.
-///
-static bool isStringCompatible(const ConstantArray *CVA) {
-  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
-  if (ETy == Type::UByteTy) return true;
-  if (ETy != Type::SByteTy) return false;
-
-  for (unsigned i = 0; i < CVA->getNumOperands(); ++i)
-    if (cast<ConstantSInt>(CVA->getOperand(i))->getValue() < 0)
-      return false;
-
-  return true;
-}
-
 /// toOctal - Convert the low order bits of X into an octal digit.
 ///
 static inline char toOctal(int X) {
@@ -120,10 +105,10 @@ static inline char toOctal(int X) {
 /// string, only if the predicate isStringCompatible is true.
 ///
 static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
-  assert(isStringCompatible(CVA) && "Array is not string compatible!");
+  assert(CVA->isString() && "Array is not string compatible!");
 
   O << "\"";
-  for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
+  for (unsigned i = 0; i != CVA->getNumOperands(); ++i) {
     unsigned char C = cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
     if (C == '"') {
@@ -230,7 +215,7 @@ void Printer::emitGlobalConstant(const Constant *CV) {
     O << "\t.zero\t " << TD.getTypeSize(CV->getType()) << "\n";      
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    if (isStringCompatible(CVA)) {
+    if (CVA->isString()) {
       O << "\t.ascii\t";
       printAsCString(O, CVA);
       O << "\n";
