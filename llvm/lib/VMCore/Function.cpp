@@ -84,8 +84,8 @@ void Argument::setParent(Function *parent) {
 
 static bool removeDeadConstantUsers(Constant *C) {
   while (!C->use_empty()) {
-    if (Constant *C = dyn_cast<Constant>(C->use_back())) {
-      if (!removeDeadConstantUsers(C))
+    if (Constant *CU = dyn_cast<Constant>(C->use_back())) {
+      if (!removeDeadConstantUsers(CU))
         return false;  // Constant wasn't dead.
     } else {
       return false;    // Nonconstant user of the global.
