@@ -5,13 +5,6 @@
 // examining the SSA value graph of the function, instead of doing slow, dense,
 // bit-vector computations.
 //
-// This pass works best if it is proceeded with a simple constant propogation
-// pass and an instruction combination pass because this pass does not do any
-// value numbering (in order to be speedy).
-//
-// This pass does not attempt to CSE load instructions, because it does not use
-// pointer analysis to determine when it is safe.
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
