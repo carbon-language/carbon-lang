@@ -101,9 +101,8 @@ protected:
   ///
   inline void setAbstract(bool Val) { Abstract = Val; }
 
-  /// PromoteAbstractToConcrete - This is an internal method used to calculate
-  /// change "Abstract" from true to false when types are refined.
-  ///
+  // PromoteAbstractToConcrete - This is an internal method used to calculate
+  // change "Abstract" from true to false when types are refined.
   bool PromoteAbstractToConcrete(void *);
 
   unsigned getRefCount() const { return RefCount; }
