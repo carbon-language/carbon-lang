@@ -20,6 +20,7 @@
 
 namespace llvm {
 class Value;
+class Type;
 class Module;
 class GlobalValue;
 
@@ -32,6 +33,9 @@ class Mangler {
   Module &M;
   bool AddUnderscorePrefix;
 
+  unsigned TypeCounter;
+  std::map<const Type*, unsigned> TypeMap;
+
   typedef std::map<const Value *, std::string> ValueMap;
   ValueMap Memo;
 
@@ -43,6 +47,10 @@ public:
   // Mangler ctor - if AddUnderscorePrefix is true, then all public global
   // symbols will be prefixed with an underscore.
   Mangler(Module &M, bool AddUnderscorePrefix = false);
+
+  /// getTypeID - Return a unique ID for the specified LLVM type.
+  ///
+  unsigned getTypeID(const Type *Ty);
 
   /// getValueName - Returns the mangled name of V, an LLVM Value,
   /// in the current module.
