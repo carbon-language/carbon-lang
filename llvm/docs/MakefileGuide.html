@@ -30,6 +30,9 @@
     <ol>
       <li><a href="#libraries">Libraries</a></li>
       <li><a href="#tools">Tools</a></li>
+        <ol>
+	  <li><a href="#JIT">JIT Tools</a></li>
+	</ol>
     </ol>
   </li>
   <li><a href="#targets">Targets Supported</a>
@@ -267,6 +270,41 @@
   </p>
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="JIT">JIT Tools</a></div>
+<div class="doc_text">
+  <p>Many tools will want to use the JIT features of LLVM. However, getting the
+  right set of libraries to link with is tedious, platform specific, and error 
+  prone. Additionally, the JIT has special linker switch options that it needs.
+  Consequently, to make it easier to build tools that use the JIT, you can 
+  use a special value for the <tt>LLVMLIBS> variable:</p>
+  <pre><tt>
+      TOOLNAME = my_jit_tool
+      USEDLIBS = mylib
+      LLVMLIBS = JIT
+  </tt></pre>
+  <p>Using a value of <tt>JIT</tt> for <tt>LLVMLIBS</tt> tells the makefile
+  system to construct a special value for LLVMLIBS that gives the program all
+  the LLVM libraries needed to run the JIT. Any additional libraries needed can
+  still be specified with <tt>USEDLIBS</tt>. To get a full understanding of how
+  this changes the linker command, it is recommended that you:</p>
+  <pre><tt>
+      cd examples/Fibonacci
+      make VERBOSE=1
+  </tt></pre>
+  <p>By default, using <tt>LLVMLIBS=JIT</tt> will link in enough to support JIT
+  code generation for the architecture on which the tool is linked. If you need
+  additional target architectures linked in, you may specify them on the command
+  line or in your <tt>Makefile</tt>. For example:</p>
+  <pre><tt>
+      ENABLE_X86_JIT=1
+      ENABLE_SPARCV9_JIT=1
+      ENALBE_PPC_JIT=1
+  </tt></pre>
+  <p>will cause the tool to be able to generate code for all three platforms.
+  </p>
+</div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="targets">Targets Supported</a></div>
 <!-- *********************************************************************** -->
@@ -411,9 +449,18 @@
 <div class="doc_subsection"><a name="install">install</a></div>
 <div class="doc_text">
   <p>This target finalizes shared objects and executables and copies all
-  libraries, headers and executables to the directory given with the 
-  <tt>--prefix</tt> option to <tt>configure</tt>.  When completed, the prefix
-  directory will have everything needed to <b>use</b> LLVM. </p>
+  libraries, headers, executables and documentation to the directory given 
+  with the <tt>--prefix</tt> option to <tt>configure</tt>.  When completed, 
+  the prefix directory will have everything needed to <b>use</b> LLVM. </p>
+  <p>The LLVM makefiles can generate complete <b>internal</b> documentation 
+  for all the classes by using <tt>doxygen</tt>. By default, this feature is 
+  <b>not</b> enabled because it takes a long time and generates a massive 
+  amount of data (>100MB). If you want this feature, you must configure LLVM
+  with the --enable-doxygen switch and ensure that a modern version of doxygen
+  (1.3.7 or later) is available in your <tt>PATH</tt>. You can download 
+  doxygen from 
+  <a href="http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc">
+  here</a>.
 </div>
 
 <!-- ======================================================================= -->
