@@ -239,13 +239,11 @@ public:
 
   virtual int storeRegToStackSlot(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
-                                  unsigned SrcReg, int FrameIndex,
-                                  const TargetRegisterClass *RC) const = 0;
+                                  unsigned SrcReg, int FrameIndex) const = 0;
 
   virtual int loadRegFromStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
-                                   unsigned DestReg, int FrameIndex,
-                                   const TargetRegisterClass *RC) const = 0;
+                                   unsigned DestReg, int FrameIndex) const = 0;
 
   virtual int copyRegToReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
