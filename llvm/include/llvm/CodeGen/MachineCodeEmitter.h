@@ -89,16 +89,6 @@ public:
   /// noted with this interface.
   virtual void addRelocation(const MachineRelocation &MR) = 0;
   
-  /// getGlobalValueAddress - This method is used to get the address of the
-  /// specified global value.  In some cases, however, the address may not yet
-  /// be known at the point that the method is called (for example, getting the
-  /// address of a function which has not yet been code generated).  If this is
-  /// the case, the function returns zero, and the callee has to be able to
-  /// handle the situation.
-  ///
-  virtual uint64_t getGlobalValueAddress(GlobalValue *V) = 0;
-  virtual uint64_t getGlobalValueAddress(const char *SymName) = 0;
-
   // getConstantPoolEntryAddress - Return the address of the 'Index' entry in
   // the constant pool that was last emitted with the 'emitConstantPool' method.
   //
