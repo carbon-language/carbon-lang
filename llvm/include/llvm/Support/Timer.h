@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_TIMER_H
 #define LLVM_SUPPORT_TIMER_H
 
-#include <llvm/Support/DataTypes.h>
+#include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
 #include <iosfwd>
