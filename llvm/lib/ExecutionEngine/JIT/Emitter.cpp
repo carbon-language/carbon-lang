@@ -72,10 +72,9 @@ static void *getMemory(unsigned NumBytes) {
   abort();
 #endif
 
+  int fd = -1;
 #if defined(__linux__)
-#define fd 0
-#else
-#define fd -1
+  fd = 0;
 #endif
   
   unsigned mmapFlags = MAP_PRIVATE|MAP_ANONYMOUS;
