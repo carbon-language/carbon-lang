@@ -58,15 +58,14 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
   
   // The second operand is the stack size. If it does not fit in the
   // immediate field, we have to use a free register to hold the size.
-  // We will assume that local register `l0' is unused since the SAVE
-  // instruction must be the first instruction in each procedure.
+  // See the comments below for the choice of this register.
   // 
   MachineCodeForMethod& mcInfo = MachineCodeForMethod::get(&F);
   unsigned int staticStackSize = mcInfo.getStaticStackSize();
   
   if (staticStackSize < (unsigned) frameInfo.getMinStackFrameSize())
     staticStackSize = (unsigned) frameInfo.getMinStackFrameSize();
-  
+
   if (unsigned padsz = (staticStackSize %
                         (unsigned) frameInfo.getStackFrameSizeAlignment()))
     staticStackSize += frameInfo.getStackFrameSizeAlignment() - padsz;
@@ -83,13 +82,14 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
   else
     {
       // We have to put the stack size value into a register before SAVE.
-      // Use register %l0 to since it must be unused at function entry.
+      // Use register %g1 since it is volatile across calls.  Note that the
+      // local (%l) and in (%i) registers cannot be used before the SAVE!
       // Do this by creating a code sequence equivalent to:
-      //        SETSW -(stackSize), %l0
+      //        SETSW -(stackSize), %g1
       int32_t C = - (int) staticStackSize;
       int uregNum = Target.getRegInfo().getUnifiedRegNum(
                            Target.getRegInfo().getRegClassIDOfType(Type::IntTy),
-                           SparcIntRegClass::l0);
+                           SparcIntRegClass::g1);
       
       M = new MachineInstr(SETHI);
       M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
@@ -110,7 +110,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
       M->SetMachineOperandReg(2, uregNum);
       mvec.push_back(M);
       
-      // Now generate the SAVE using the value in register %l0
+      // Now generate the SAVE using the value in register %g1
       M = new MachineInstr(SAVE);
       M->SetMachineOperandReg(0, Target.getRegInfo().getStackPointer());
       M->SetMachineOperandReg(1, uregNum);
