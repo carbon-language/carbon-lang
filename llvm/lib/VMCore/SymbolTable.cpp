@@ -208,8 +208,8 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 #if DEBUG_ABSTYPE
         cerr << "[Added] refined to abstype: "<<NewType->getDescription()<<endl;
 #endif
+      }
     }
-  }
 
     VarMap &NewPlane = NewTypeIt->second;
     VarMap &OldPlane = TPI->second;
@@ -283,29 +283,29 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   }
 
   TPI = find(Type::TypeTy);
-  assert(TPI != end() &&"Type plane not in symbol table but we contain types!");
-
-  // Loop over all of the types in the symbol table, replacing any references to
-  // OldType with references to NewType.  Note that there may be multiple
-  // occurances, and although we only need to remove one at a time, it's faster
-  // to remove them all in one pass.
-  //
-  VarMap &TyPlane = TPI->second;
-  for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
-    if (I->second == (Value*)OldType) {  // FIXME when Types aren't const.
+  if (TPI != end()) {  
+    // Loop over all of the types in the symbol table, replacing any references to
+    // OldType with references to NewType.  Note that there may be multiple
+    // occurances, and although we only need to remove one at a time, it's faster
+    // to remove them all in one pass.
+    //
+    VarMap &TyPlane = TPI->second;
+    for (VarMap::iterator I = TyPlane.begin(), E = TyPlane.end(); I != E; ++I)
+      if (I->second == (Value*)OldType) {  // FIXME when Types aren't const.
 #if DEBUG_ABSTYPE
-      cerr << "Removing type " << OldType->getDescription() << endl;
+        cerr << "Removing type " << OldType->getDescription() << endl;
 #endif
-      OldType->removeAbstractTypeUser(this);
-
-      I->second = (Value*)NewType;  // TODO FIXME when types aren't const
-      if (NewType->isAbstract()) {
+        OldType->removeAbstractTypeUser(this);
+        
+        I->second = (Value*)NewType;  // TODO FIXME when types aren't const
+        if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-        cerr << "Added type " << NewType->getDescription() << endl;
+          cerr << "Added type " << NewType->getDescription() << endl;
 #endif
-	cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
+          cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
+        }
       }
-    }
+  }
 }
 
 
