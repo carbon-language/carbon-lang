@@ -19,12 +19,13 @@
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
+#include "llvm/CFG.h"         // TODO: Change this when we have a DF.h
+#include "llvm/Support/STLExtras.h"
 #include <list>
 #include <utility>            // Get definition of pair class
-#include <algorithm>          // Get definition of find_if
+#include <algorithm>
 #include <stdio.h>            // This embarasment is due to our flex lexer...
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit 
@@ -34,23 +35,38 @@ int yyparse();
 static Module *ParserResult;
 string CurFilename;
 
+// DEBUG_UPREFS - Define this symbol if you want to enable debugging output
+// relating to upreferences in the input stream.
+//
+//#define DEBUG_UPREFS 1
+#ifdef DEBUG_UPREFS
+#define UR_OUT(X) cerr << X
+#else
+#define UR_OUT(X)
+#endif
+
 // This contains info used when building the body of a method.  It is destroyed
 // when the method is completed.
 //
 typedef vector<Value *> ValueList;           // Numbered defs
 static void ResolveDefinitions(vector<ValueList> &LateResolvers);
+static void ResolveTypes      (vector<PATypeHolder<Type> > &LateResolveTypes);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
-  vector<ValueList> Values;     // Module level numbered definitions
-  vector<ValueList> LateResolveValues;
+  vector<ValueList>    Values;     // Module level numbered definitions
+  vector<ValueList>    LateResolveValues;
+  vector<PATypeHolder<Type> > Types, LateResolveTypes;
 
   void ModuleDone() {
-    // If we could not resolve some blocks at parsing time (forward branches)
-    // resolve the branches now...
+    // If we could not resolve some methods at method compilation time (calls to
+    // methods before they are defined), resolve them now...  Types are resolved
+    // when the constant pool has been completely parsed.
+    //
     ResolveDefinitions(LateResolveValues);
 
     Values.clear();         // Clear out method local definitions
+    Types.clear();
     CurrentModule = 0;
   }
 } CurModule;
@@ -60,6 +76,7 @@ static struct PerMethodInfo {
 
   vector<ValueList> Values;      // Keep track of numbered definitions
   vector<ValueList> LateResolveValues;
+  vector<PATypeHolder<Type> > Types, LateResolveTypes;
   bool isDeclare;                // Is this method a forward declararation?
 
   inline PerMethodInfo() {
@@ -79,6 +96,7 @@ static struct PerMethodInfo {
     ResolveDefinitions(LateResolveValues);
 
     Values.clear();         // Clear out method local definitions
+    Types.clear();
     CurrentMethod = 0;
     isDeclare = false;
   }
@@ -99,11 +117,71 @@ static void InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values){
   }
 }
 
-static Value *getVal(const Type *Type, const ValID &D, 
-                     bool DoNotImprovise = false) {
+// TODO: FIXME when Type are not const
+static void InsertType(const Type *Ty, vector<PATypeHolder<Type> > &Types) {
+  Types.push_back(Ty);
+}
+
+static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
   case 0: {                 // Is it a numbered definition?
-    unsigned type = Type->getUniqueID();
+    unsigned Num = (unsigned)D.Num;
+
+    // Module constants occupy the lowest numbered slots...
+    if (Num < CurModule.Types.size()) 
+      return CurModule.Types[Num];
+
+    Num -= CurModule.Types.size();
+
+    // Check that the number is within bounds...
+    if (Num <= CurMeth.Types.size())
+      return CurMeth.Types[Num];
+  }
+  case 1: {                // Is it a named definition?
+    string Name(D.Name);
+    SymbolTable *SymTab = 0;
+    if (CurMeth.CurrentMethod) 
+      SymTab = CurMeth.CurrentMethod->getSymbolTable();
+    Value *N = SymTab ? SymTab->lookup(Type::TypeTy, Name) : 0;
+
+    if (N == 0) {
+      // Symbol table doesn't automatically chain yet... because the method
+      // hasn't been added to the module...
+      //
+      SymTab = CurModule.CurrentModule->getSymbolTable();
+      if (SymTab)
+        N = SymTab->lookup(Type::TypeTy, Name);
+      if (N == 0) break;
+    }
+
+    D.destroy();  // Free old strdup'd memory...
+    return N->castTypeAsserting();
+  }
+  default:
+    ThrowException("Invalid symbol type reference!");
+  }
+
+  // If we reached here, we referenced either a symbol that we don't know about
+  // or an id number that hasn't been read yet.  We may be referencing something
+  // forward, so just create an entry to be resolved later and get to it...
+  //
+  if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
+
+  vector<PATypeHolder<Type> > *LateResolver = CurMeth.CurrentMethod ? 
+    &CurMeth.LateResolveTypes : &CurModule.LateResolveTypes;
+
+  Type *Typ = new TypePlaceHolder(Type::TypeTy, D);
+  InsertType(Typ, *LateResolver);
+  return Typ;
+}
+
+static Value *getVal(const Type *Ty, const ValID &D, 
+                     bool DoNotImprovise = false) {
+  assert(Ty != Type::TypeTy && "Should use getTypeVal for types!");
+
+  switch (D.Type) {
+  case 0: {                 // Is it a numbered definition?
+    unsigned type = Ty->getUniqueID();
     unsigned Num = (unsigned)D.Num;
 
     // Module constants occupy the lowest numbered slots...
@@ -129,12 +207,15 @@ static Value *getVal(const Type *Type, const ValID &D,
     SymbolTable *SymTab = 0;
     if (CurMeth.CurrentMethod) 
       SymTab = CurMeth.CurrentMethod->getSymbolTable();
-    Value *N = SymTab ? SymTab->lookup(Type, Name) : 0;
+    Value *N = SymTab ? SymTab->lookup(Ty, Name) : 0;
 
     if (N == 0) {
+      // Symbol table doesn't automatically chain yet... because the method
+      // hasn't been added to the module...
+      //
       SymTab = CurModule.CurrentModule->getSymbolTable();
       if (SymTab)
-        N = SymTab->lookup(Type, Name);
+        N = SymTab->lookup(Ty, Name);
       if (N == 0) break;
     }
 
@@ -148,29 +229,29 @@ static Value *getVal(const Type *Type, const ValID &D,
   case 5:{                // Is it a floating point const pool reference?
     ConstPoolVal *CPV = 0;
 
-    // Check to make sure that "Type" is an integral type, and that our 
+    // Check to make sure that "Ty" is an integral type, and that our 
     // value will fit into the specified type...
     switch (D.Type) {
     case 2:
-      if (Type == Type::BoolTy) {  // Special handling for boolean data
-        CPV = new ConstPoolBool(D.ConstPool64 != 0);
+      if (Ty == Type::BoolTy) {  // Special handling for boolean data
+        CPV = ConstPoolBool::get(D.ConstPool64 != 0);
       } else {
-        if (!ConstPoolSInt::isValueValidForType(Type, D.ConstPool64))
+        if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64))
           ThrowException("Symbolic constant pool value '" +
 			 itostr(D.ConstPool64) + "' is invalid for type '" + 
-			 Type->getName() + "'!");
-        CPV = new ConstPoolSInt(Type, D.ConstPool64);
+			 Ty->getName() + "'!");
+        CPV = ConstPoolSInt::get(Ty, D.ConstPool64);
       }
       break;
     case 3:
-      if (!ConstPoolUInt::isValueValidForType(Type, D.UConstPool64)) {
-        if (!ConstPoolSInt::isValueValidForType(Type, D.ConstPool64)) {
+      if (!ConstPoolUInt::isValueValidForType(Ty, D.UConstPool64)) {
+        if (!ConstPoolSInt::isValueValidForType(Ty, D.ConstPool64)) {
           ThrowException("Integral constant pool reference is invalid!");
         } else {     // This is really a signed reference.  Transmogrify.
-          CPV = new ConstPoolSInt(Type, D.ConstPool64);
+          CPV = ConstPoolSInt::get(Ty, D.ConstPool64);
         }
       } else {
-        CPV = new ConstPoolUInt(Type, D.UConstPool64);
+        CPV = ConstPoolUInt::get(Ty, D.UConstPool64);
       }
       break;
     case 4:
@@ -178,30 +259,17 @@ static Value *getVal(const Type *Type, const ValID &D,
       abort();
       break;
     case 5:
-      if (!ConstPoolFP::isValueValidForType(Type, D.ConstPoolFP))
+      if (!ConstPoolFP::isValueValidForType(Ty, D.ConstPoolFP))
 	ThrowException("FP constant invalid for type!!");
       else
-	CPV = new ConstPoolFP(Type, D.ConstPoolFP);
+	CPV = ConstPoolFP::get(Ty, D.ConstPoolFP);
       break;
     }
     assert(CPV && "How did we escape creating a constant??");
-
-    // Scan through the constant table and see if we already have loaded this
-    // constant.
-    //
-    ConstantPool &CP = CurMeth.CurrentMethod ? 
-                         CurMeth.CurrentMethod->getConstantPool() :
-                           CurModule.CurrentModule->getConstantPool();
-    ConstPoolVal *C = CP.find(CPV);      // Already have this constant?
-    if (C) {
-      delete CPV;  // Didn't need this after all, oh well.
-      return C;    // Yup, we already have one, recycle it!
-    }
-    CP.insert(CPV);
-      
-    // Success, everything is kosher. Lets go!
     return CPV;
   }   // End of case 2,3,4
+  default:
+    assert(0 && "Unhandled case!");
   }   // End of switch
 
 
@@ -211,15 +279,15 @@ static Value *getVal(const Type *Type, const ValID &D,
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  // TODO: Attempt to coallecse nodes that are the same with previous ones.
   Value *d = 0;
-  vector<ValueList> *LateResolver = &CurMeth.LateResolveValues;
+  vector<ValueList> *LateResolver =  (CurMeth.CurrentMethod) ? 
+    &CurMeth.LateResolveValues : &CurModule.LateResolveValues;
 
-  switch (Type->getPrimitiveID()) {
-  case Type::LabelTyID:  d = new    BBPlaceHolder(Type, D); break;
-  case Type::MethodTyID: d = new  MethPlaceHolder(Type, D); 
+  switch (Ty->getPrimitiveID()) {
+  case Type::LabelTyID:  d = new   BBPlaceHolder(Ty, D); break;
+  case Type::MethodTyID: d = new MethPlaceHolder(Ty, D); 
                          LateResolver = &CurModule.LateResolveValues; break;
-  default:               d = new ValuePlaceHolder(Type, D); break;
+  default:               d = new ValuePlaceHolder(Ty, D); break;
   }
 
   assert(d != 0 && "How did we not make something?");
@@ -254,17 +322,21 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
 
       Value *TheRealValue = getVal(Type::getUniqueIDType(ty), DID, true);
 
-      if (TheRealValue == 0 && DID.Type == 1)
-        ThrowException("Reference to an invalid definition: '" +DID.getName() +
-                       "' of type '" + V->getType()->getName() + "'",
-		       getLineNumFromPlaceHolder(V));
-      else if (TheRealValue == 0)
-        ThrowException("Reference to an invalid definition: #" +itostr(DID.Num)+
-                       " of type '" + V->getType()->getName() + "'",
-		       getLineNumFromPlaceHolder(V));
+      if (TheRealValue == 0) {
+	if (DID.Type == 1)
+	  ThrowException("Reference to an invalid definition: '" +DID.getName()+
+			 "' of type '" + V->getType()->getDescription() + "'",
+			 getLineNumFromPlaceHolder(V));
+	else
+	  ThrowException("Reference to an invalid definition: #" +
+			 itostr(DID.Num) + " of type '" + 
+			 V->getType()->getDescription() + "'",
+			 getLineNumFromPlaceHolder(V));
+      }
+
+      assert(!V->isType() && "Types should be in LateResolveTypes!");
 
       V->replaceAllUsesWith(TheRealValue);
-      assert(V->use_empty());
       delete V;
     }
   }
@@ -272,101 +344,126 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers) {
   LateResolvers.clear();
 }
 
-// addConstValToConstantPool - This code is used to insert a constant into the
-// current constant pool.  This is designed to make maximal (but not more than
-// possible) reuse (merging) of constants in the constant pool.  This means that
-// multiple references to %4, for example will all get merged.
+
+// ResolveTypes - This goes through the forward referenced type table and makes
+// sure that all type references are complete.  This code is executed after the
+// constant pool of a method or module is completely parsed.
 //
-static ConstPoolVal *addConstValToConstantPool(ConstPoolVal *C) {
-  vector<ValueList> &ValTab = CurMeth.CurrentMethod ? 
-                                  CurMeth.Values : CurModule.Values;
-  ConstantPool &CP = CurMeth.CurrentMethod ? 
-                          CurMeth.CurrentMethod->getConstantPool() : 
-                          CurModule.CurrentModule->getConstantPool();
+static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
+  while (!LateResolveTypes.empty()) {
+    const Type *Ty = LateResolveTypes.back();
+    ValID &DID = getValIDFromPlaceHolder(Ty);
 
-  if (ConstPoolVal *CPV = CP.find(C)) {
-    // Constant already in constant pool. Try to merge the two constants
-    if (CPV->hasName() && !C->hasName()) {
-      // Merge the two values, we inherit the existing CPV's name.  
-      // InsertValue requires that the value have no name to insert correctly
-      // (because we want to fill the slot this constant would have filled)
-      //
-      string Name = CPV->getName();
-      CPV->setName("");
-      InsertValue(CPV, ValTab);
-      CPV->setName(Name);
-      delete C;
-      return CPV;
-    } else if (!CPV->hasName() && C->hasName()) {
-      // If we have a name on this value and there isn't one in the const 
-      // pool val already, propogate it.
-      //
-      CPV->setName(C->getName());
-      delete C;   // Sorry, you're toast
-      return CPV;
-    } else if (!CPV->hasName() && !C->hasName()) {
-      // Neither value has a name, trivially merge them.
-      InsertValue(CPV, ValTab);
-      delete C;
-      return CPV;
-    } else if (CPV->hasName() && C->hasName()) {
-      // Both values have distinct names.  We cannot merge them.
-      // fall through
+    const Type *TheRealType = getTypeVal(DID, true);
+    if (TheRealType == 0) {
+      if (DID.Type == 1)
+	ThrowException("Reference to an invalid type: '" +DID.getName(),
+		       getLineNumFromPlaceHolder(Ty));
+      else
+	ThrowException("Reference to an invalid type: #" + itostr(DID.Num),
+		       getLineNumFromPlaceHolder(Ty));
     }
+
+    // FIXME: When types are not const
+    DerivedType *DTy = const_cast<DerivedType*>(Ty->castDerivedTypeAsserting());
+    
+    // Refine the opaque type we had to the new type we are getting.
+    DTy->refineAbstractTypeTo(TheRealType);
+
+    // No need to delete type, refine does that for us.
+    LateResolveTypes.pop_back();
+  }
+}
+
+static void setValueName(Value *V, const string &Name) {
+  SymbolTable *ST = CurMeth.CurrentMethod ? 
+    CurMeth.CurrentMethod->getSymbolTableSure() : 
+    CurModule.CurrentModule->getSymbolTableSure();
+
+  Value *Existing = ST->lookup(V->getType(), Name);
+  if (Existing) {    // Inserting a name that is already defined???
+    // There is only one case where this is allowed: when we are refining an
+    // opaque type.  In this case, Existing will be an opaque type.
+    if (const Type *Ty = Existing->castType())
+      if (Ty->isOpaqueType()) {
+	// We ARE replacing an opaque type!
+
+	// TODO: FIXME when types are not const!
+	const_cast<DerivedType*>(Ty->castDerivedTypeAsserting())->refineAbstractTypeTo(V->castTypeAsserting());
+	return;
+      }
+
+    // Otherwise, we are a simple redefinition of a value, baaad
+    ThrowException("Redefinition of value name '" + Name + "' in the '" +
+		   V->getType()->getDescription() + "' type plane!");
   }
 
-  // No duplication of value, check to see if our current symbol table already
-  // has a variable of this type and name...
-  //
-  if (C->hasName()) {
-    SymbolTable *SymTab = CurMeth.CurrentMethod ? 
-                                    CurMeth.CurrentMethod->getSymbolTable() :
-                                    CurModule.CurrentModule->getSymbolTable();
-    if (SymTab && SymTab->lookup(C->getType(), C->getName()))
-      ThrowException("<" + C->getType()->getName() + ">:" + C->getName() + 
-		     " already defined in translation unit!");
-  }
-
-  // Everything is happy: Insert into constant pool now!
-  CP.insert(C);
-  InsertValue(C, ValTab);
-  return C;
+  V->setName(Name, ST);
 }
 
 
-struct EqualsType {
-  const Type *T;
-  inline EqualsType(const Type *t) { T = t; }
-  inline bool operator()(const ConstPoolVal *CPV) const {
-    return static_cast<const ConstPoolType*>(CPV)->getValue() == T;
-  }
-};
-
-
-// checkNewType - We have to be careful to add all types referenced by the
-// program to the constant pool of the method or module.  Because of this, we
-// often want to check to make sure that types used are in the constant pool,
-// and add them if they aren't.  That's what this function does.
+//===----------------------------------------------------------------------===//
+// Code for handling upreferences in type names...
 //
-static const Type *checkNewType(const Type *Ty) {
-  ConstantPool &CP = CurMeth.CurrentMethod ? 
-                          CurMeth.CurrentMethod->getConstantPool() : 
-                          CurModule.CurrentModule->getConstantPool();
 
-  // TODO: This should use ConstantPool::ensureTypeAvailable
+// TypeContains - Returns true if Ty contains E in it.
+//
+static bool TypeContains(const Type *Ty, const Type *E) {
+  return find(cfg::tdf_begin(Ty), cfg::tdf_end(Ty), E) != cfg::tdf_end(Ty);
+}
 
-  // Get the type type plane...
-  ConstantPool::PlaneType &P = CP.getPlane(Type::TypeTy);
-  ConstantPool::PlaneType::const_iterator PI = find_if(P.begin(), P.end(), 
-						       EqualsType(Ty));
-  if (PI == P.end()) {
-    vector<ValueList> &ValTab = CurMeth.CurrentMethod ? 
-                                CurMeth.Values : CurModule.Values;
-    ConstPoolVal *CPT = new ConstPoolType(Ty);
-    CP.insert(CPT);
-    InsertValue(CPT, ValTab);
+
+static vector<pair<unsigned, OpaqueType *> > UpRefs;
+
+static PATypeHolder<Type> HandleUpRefs(const Type *ty) {
+  PATypeHolder<Type> Ty(ty);
+  UR_OUT(UpRefs.size() << " upreferences active!\n");
+  for (unsigned i = 0; i < UpRefs.size(); ) {
+    UR_OUT("TypeContains(" << Ty->getDescription() << ", " 
+	   << UpRefs[i].second->getDescription() << ") = " 
+	   << TypeContains(Ty, UpRefs[i].second) << endl);
+    if (TypeContains(Ty, UpRefs[i].second)) {
+      unsigned Level = --UpRefs[i].first;   // Decrement level of upreference
+      UR_OUT("Uplevel Ref Level = " << Level << endl);
+      if (Level == 0) {                     // Upreference should be resolved! 
+	UR_OUT("About to resolve upreference!\n";
+	       string OldName = UpRefs[i].second->getDescription());
+	UpRefs[i].second->refineAbstractTypeTo(Ty);
+	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
+	UR_OUT("Type '" << OldName << "' refined upreference to: "
+	       << (const void*)Ty << ", " << Ty->getDescription() << endl);
+	continue;
+      }
+    }
+
+    ++i;                                  // Otherwise, no resolve, move on...
   }
+  // FIXME: TODO: this should return the updated type
   return Ty;
+}
+
+template <class TypeTy>
+inline static void TypeDone(PATypeHolder<TypeTy> *Ty) {
+  if (UpRefs.size())
+    ThrowException("Invalid upreference in type: " + (*Ty)->getDescription());
+}
+
+// newTH - Allocate a new type holder for the specified type
+template <class TypeTy>
+inline static PATypeHolder<TypeTy> *newTH(const TypeTy *Ty) {
+  return new PATypeHolder<TypeTy>(Ty);
+}
+template <class TypeTy>
+inline static PATypeHolder<TypeTy> *newTH(const PATypeHolder<TypeTy> &TH) {
+  return new PATypeHolder<TypeTy>(TH);
+}
+
+
+// newTHC - Allocate a new type holder for the specified type that can be
+// casted to a new Type type.
+template <class TypeTy, class OldTy>
+inline static PATypeHolder<TypeTy> *newTHC(const PATypeHolder<OldTy> &Old) {
+  return new PATypeHolder<TypeTy>((const TypeTy*)Old.get());
 }
 
 
@@ -391,37 +488,41 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %}
 
 %union {
-  Module                  *ModuleVal;
-  Method                  *MethodVal;
-  MethodArgument          *MethArgVal;
-  BasicBlock              *BasicBlockVal;
-  TerminatorInst          *TermInstVal;
-  Instruction             *InstVal;
-  ConstPoolVal            *ConstVal;
-  const Type              *TypeVal;
-  Value                   *ValueVal;
+  Module                           *ModuleVal;
+  Method                           *MethodVal;
+  MethodArgument                   *MethArgVal;
+  BasicBlock                       *BasicBlockVal;
+  TerminatorInst                   *TermInstVal;
+  Instruction                      *InstVal;
+  ConstPoolVal                     *ConstVal;
 
-  list<MethodArgument*>   *MethodArgList;
-  list<Value*>            *ValueList;
-  list<const Type*>       *TypeList;
+  const Type                       *PrimType;
+  PATypeHolder<Type>               *TypeVal;
+  PATypeHolder<ArrayType>          *ArrayTypeTy;
+  PATypeHolder<StructType>         *StructTypeTy;
+  Value                            *ValueVal;
+
+  list<MethodArgument*>            *MethodArgList;
+  list<Value*>                     *ValueList;
+  list<PATypeHolder<Type> >        *TypeList;
   list<pair<Value*, BasicBlock*> > *PHIList;   // Represent the RHS of PHI node
   list<pair<ConstPoolVal*, BasicBlock*> > *JumpTable;
-  vector<ConstPoolVal*>   *ConstVector;
+  vector<ConstPoolVal*>            *ConstVector;
 
-  int64_t                  SInt64Val;
-  uint64_t                 UInt64Val;
-  int                      SIntVal;
-  unsigned                 UIntVal;
-  double                   FPVal;
+  int64_t                           SInt64Val;
+  uint64_t                          UInt64Val;
+  int                               SIntVal;
+  unsigned                          UIntVal;
+  double                            FPVal;
 
-  char                    *StrVal;   // This memory is allocated by strdup!
-  ValID                    ValIDVal; // May contain memory allocated by strdup
+  char                             *StrVal;   // This memory is strdup'd!
+  ValID                             ValIDVal; // strdup'd memory maybe!
 
-  Instruction::UnaryOps    UnaryOpVal;
-  Instruction::BinaryOps   BinaryOpVal;
-  Instruction::TermOps     TermOpVal;
-  Instruction::MemoryOps   MemOpVal;
-  Instruction::OtherOps    OtherOpVal;
+  Instruction::UnaryOps             UnaryOpVal;
+  Instruction::BinaryOps            BinaryOpVal;
+  Instruction::TermOps              TermOpVal;
+  Instruction::MemoryOps            MemOpVal;
+  Instruction::OtherOps             OtherOpVal;
 }
 
 %type <ModuleVal>     Module MethodList
@@ -435,7 +536,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <MethArgVal>    ArgVal
 %type <PHIList>       PHIList
 %type <ValueList>     ValueRefList ValueRefListE  // For call param lists
-%type <TypeList>      TypeList ArgTypeList
+%type <TypeList>      TypeListI ArgTypeListI
 %type <JumpTable>     JumpTable
 
 %type <ValIDVal>      ValueRef ConstValueRef // Reference to a definition or BB
@@ -455,9 +556,13 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %token  <FPVal>     FPVAL     // Float or Double constant
 
 // Built in types...
-%type  <TypeVal> Types TypesV SIntType UIntType IntType FPType
-%token <TypeVal> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
-%token <TypeVal> FLOAT DOUBLE TYPE LABEL
+%type  <TypeVal> Types TypesV UpRTypes UpRTypesV
+%type  <PrimType> SIntType UIntType IntType FPType PrimType   // Classifications
+%token <TypeVal>  OPAQUE
+%token <PrimType> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
+%token <PrimType> FLOAT DOUBLE TYPE LABEL
+%type  <ArrayTypeTy> ArrayType ArrayTypeI
+%type  <StructTypeTy> StructType StructTypeI
 
 %token <StrVal>     VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal>  OptVAR_ID OptAssign
@@ -505,17 +610,6 @@ EINT64VAL : EUINT64VAL {
   $$ = (int64_t)$1;
 }
 
-// Types includes all predefined types... except void, because you can't do 
-// anything with it except for certain specific things...
-//
-// User defined types are added later...
-//
-Types     : BOOL | SBYTE | UBYTE | SHORT | USHORT | INT | UINT 
-Types     : LONG | ULONG | FLOAT | DOUBLE | TYPE | LABEL
-
-// TypesV includes all of 'Types', but it also includes the void type.
-TypesV    : Types | VOID
-
 // Operations that are notably excluded from this list include: 
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
@@ -528,8 +622,8 @@ ShiftOps  : SHL | SHR
 // thing... for example, only a signed, unsigned, or integral type.
 SIntType :  LONG |  INT |  SHORT | SBYTE
 UIntType : ULONG | UINT | USHORT | UBYTE
-IntType : SIntType | UIntType
-FPType  : FLOAT | DOUBLE
+IntType  : SIntType | UIntType
+FPType   : FLOAT | DOUBLE
 
 // OptAssign - Value producing statements have an optional assignment component
 OptAssign : VAR_ID '=' {
@@ -539,102 +633,178 @@ OptAssign : VAR_ID '=' {
     $$ = 0; 
   }
 
+
+//===----------------------------------------------------------------------===//
+// Types includes all predefined types... except void, because it can only be
+// used in specific contexts (method returning void for example).  To have
+// access to it, a user must explicitly use TypesV.
+//
+
+// TypesV includes all of 'Types', but it also includes the void type.
+TypesV    : Types    | VOID { $$ = newTH($1); }
+UpRTypesV : UpRTypes | VOID { $$ = newTH($1); }
+
+Types     : UpRTypes {
+    TypeDone($$ = $1);
+  }
+
+
+// Derived types are added later...
+//
+PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT 
+PrimType : LONG | ULONG | FLOAT | DOUBLE | TYPE   | LABEL
+UpRTypes : OPAQUE | PrimType { $$ = newTH($1); }
+UpRTypes : ValueRef {                    // Named types are also simple types...
+  $$ = newTH(getTypeVal($1));
+}
+
+// ArrayTypeI - Internal version of ArrayType that can have incomplete uprefs
+//
+ArrayTypeI : '[' UpRTypesV ']' {               // Unsized array type?
+    $$ = newTHC<ArrayType>(HandleUpRefs(ArrayType::get(*$2)));
+    delete $2;
+  }
+  | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
+    $$ = newTHC<ArrayType>(HandleUpRefs(ArrayType::get(*$4, (int)$2)));
+    delete $4;
+  }
+
+StructTypeI : '{' TypeListI '}' {              // Structure type?
+    vector<const Type*> Elements;
+    mapto($2->begin(), $2->end(), back_inserter(Elements), 
+	mem_fun_ref(&PATypeHandle<Type>::get));
+
+    $$ = newTHC<StructType>(HandleUpRefs(StructType::get(Elements)));
+    delete $2;
+  }
+  | '{' '}' {                                  // Empty structure type?
+    $$ = newTH(StructType::get(vector<const Type*>()));
+  }
+
+
+// Include derived types in the Types production.
+//
+UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
+    if ($2 > (uint64_t)INT64_MAX) ThrowException("Value out of range!");
+    OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
+    UpRefs.push_back(make_pair((unsigned)$2, OT));  // Add to vector...
+    $$ = newTH<Type>(OT);
+    UR_OUT("New Upreference!\n");
+  }
+  | UpRTypesV '(' ArgTypeListI ')' {           // Method derived type?
+    vector<const Type*> Params;
+    mapto($3->begin(), $3->end(), back_inserter(Params), 
+	  mem_fun_ref(&PATypeHandle<Type>::get));
+    $$ = newTH(HandleUpRefs(MethodType::get(*$1, Params)));
+    delete $3;      // Delete the argument list
+    delete $1;      // Delete the old type handle
+  }
+  | ArrayTypeI {                               // [Un]sized array type?
+    $$ = newTHC<Type>(*$1); delete $1;
+  }
+  | StructTypeI {                              // Structure type?
+    $$ = newTHC<Type>(*$1); delete $1;
+  }
+  | UpRTypes '*' {                             // Pointer type?
+    $$ = newTH(HandleUpRefs(PointerType::get(*$1)));
+    delete $1;  // Delete the type handle
+  }
+
+// Define some helpful top level types that do not allow UpReferences to escape
+//
+ArrayType  : ArrayTypeI  { TypeDone($$ = $1); }
+StructType : StructTypeI { TypeDone($$ = $1); }
+
+
+
+// TypeList - Used for struct declarations and as a basis for method type 
+// declaration type lists
+//
+TypeListI : UpRTypes {
+    $$ = new list<PATypeHolder<Type> >();
+    $$->push_back(*$1); delete $1;
+  }
+  | TypeListI ',' UpRTypes {
+    ($$=$1)->push_back(*$3); delete $3;
+  }
+
+// ArgTypeList - List of types for a method type declaration...
+ArgTypeListI : TypeListI
+  | TypeListI ',' DOTDOTDOT {
+    ($$=$1)->push_back(Type::VoidTy);
+  }
+  | DOTDOTDOT {
+    ($$ = new list<PATypeHolder<Type> >())->push_back(Type::VoidTy);
+  }
+  | /*empty*/ {
+    $$ = new list<PATypeHolder<Type> >();
+  }
+
+
 // ConstVal - The various declarations that go into the constant pool.  This
 // includes all forward declarations of types, constants, and functions.
 //
 // This is broken into two sections: ExtendedConstVal and ConstVal
 //
-ExtendedConstVal: '[' Types ']' '[' ConstVector ']' { // Nonempty unsized array
-    // Verify all elements are correct type!
-    const ArrayType *AT = ArrayType::getArrayType($2);
-    for (unsigned i = 0; i < $5->size(); i++) {
-      if ($2 != (*$5)[i]->getType())
-	ThrowException("Element #" + utostr(i) + " is not of type '" + 
-		       $2->getName() + "' as required!\nIt is of type '" +
-		       (*$5)[i]->getType()->getName() + "'.");
-    }
+ExtendedConstVal: ArrayType '[' ConstVector ']' { // Nonempty unsized arr
+    const ArrayType *ATy = *$1;
+    const Type *ETy = ATy->getElementType();
+    int NumElements = ATy->getNumElements();
 
-    $$ = new ConstPoolArray(AT, *$5);
-    delete $5;
-  }
-  | '[' Types ']' '[' ']' {                  // Empty unsized array constant
-    vector<ConstPoolVal*> Empty;
-    $$ = new ConstPoolArray(ArrayType::getArrayType($2), Empty);
-  }
-  | '[' Types ']' 'c' STRINGCONSTANT {
-    char *EndStr = UnEscapeLexed($5, true);
-    vector<ConstPoolVal*> Vals;
-    if ($2 == Type::SByteTy) {
-      for (char *C = $5; C != EndStr; ++C)
-	Vals.push_back(addConstValToConstantPool(new ConstPoolSInt($2, *C)));
-    } else if ($2 == Type::UByteTy) {
-      for (char *C = $5; C != EndStr; ++C)
-	Vals.push_back(addConstValToConstantPool(new ConstPoolUInt($2, *C)));
-    } else {
-      ThrowException("Cannot build string arrays of non byte sized elements!");
-    }
-    free($5);
-
-    $$ = new ConstPoolArray(ArrayType::getArrayType($2), Vals);
-  }
-  | '[' EUINT64VAL 'x' Types ']' '[' ConstVector ']' {
-    // Verify all elements are correct type!
-    const ArrayType *AT = ArrayType::getArrayType($4, (int)$2);
-    if ($2 != $7->size())
+    // Verify that we have the correct size...
+    if (NumElements != -1 && NumElements != (int)$3->size())
       ThrowException("Type mismatch: constant sized array initialized with " +
-		     utostr($7->size()) +  " arguments, but has size of " + 
-		     itostr((int)$2) + "!");
+		     utostr($3->size()) +  " arguments, but has size of " + 
+		     itostr(NumElements) + "!");
 
-    for (unsigned i = 0; i < $7->size(); i++) {
-      if ($4 != (*$7)[i]->getType())
+    // Verify all elements are correct type!
+    for (unsigned i = 0; i < $3->size(); i++) {
+      if (ETy != (*$3)[i]->getType())
 	ThrowException("Element #" + utostr(i) + " is not of type '" + 
-		       $4->getName() + "' as required!\nIt is of type '" +
-		       (*$7)[i]->getType()->getName() + "'.");
+		       ETy->getName() + "' as required!\nIt is of type '" +
+		       (*$3)[i]->getType()->getName() + "'.");
     }
 
-    $$ = new ConstPoolArray(AT, *$7);
-    delete $7;
+    $$ = ConstPoolArray::get(ATy, *$3);
+    delete $1; delete $3;
   }
-  | '[' EUINT64VAL 'x' Types ']' '[' ']' {
-    if ($2 != 0) 
+  | ArrayType '[' ']' {
+    int NumElements = (*$1)->getNumElements();
+    if (NumElements != -1 && NumElements != 0) 
       ThrowException("Type mismatch: constant sized array initialized with 0"
-		     " arguments, but has size of " + itostr((int)$2) + "!");
-    vector<ConstPoolVal*> Empty;
-    $$ = new ConstPoolArray(ArrayType::getArrayType($4, 0), Empty);
+		     " arguments, but has size of " + itostr(NumElements) +"!");
+    $$ = ConstPoolArray::get((*$1), vector<ConstPoolVal*>());
+    delete $1;
   }
-  | '[' EUINT64VAL 'x' Types ']' 'c' STRINGCONSTANT {
-    char *EndStr = UnEscapeLexed($7, true);
-    if ($2 != (unsigned)(EndStr-$7))
+  | ArrayType 'c' STRINGCONSTANT {
+    const ArrayType *ATy = *$1;
+    int NumElements = ATy->getNumElements();
+    const Type *ETy = ATy->getElementType();
+    char *EndStr = UnEscapeLexed($3, true);
+    if (NumElements != -1 && NumElements != (EndStr-$3))
       ThrowException("Can't build string constant of size " + 
-		     itostr((int)(EndStr-$7)) +
-		     " when array has size " + itostr((int)$2) + "!");
+		     itostr((int)(EndStr-$3)) +
+		     " when array has size " + itostr(NumElements) + "!");
     vector<ConstPoolVal*> Vals;
-    if ($4 == Type::SByteTy) {
-      for (char *C = $7; C != EndStr; ++C)
-	Vals.push_back(addConstValToConstantPool(new ConstPoolSInt($4, *C)));
-    } else if ($4 == Type::UByteTy) {
-      for (char *C = $7; C != EndStr; ++C)
-	Vals.push_back(addConstValToConstantPool(new ConstPoolUInt($4, *C)));
+    if (ETy == Type::SByteTy) {
+      for (char *C = $3; C != EndStr; ++C)
+	Vals.push_back(ConstPoolSInt::get(ETy, *C));
+    } else if (ETy == Type::UByteTy) {
+      for (char *C = $3; C != EndStr; ++C)
+	Vals.push_back(ConstPoolUInt::get(ETy, *C));
     } else {
+      free($3);
       ThrowException("Cannot build string arrays of non byte sized elements!");
     }
-    free($7);
-
-    $$ = new ConstPoolArray(ArrayType::getArrayType($4, (int)$2), Vals);
+    free($3);
+    $$ = ConstPoolArray::get(ATy, Vals);
+    delete $1;
   }
-  | '{' TypeList '}' '{' ConstVector '}' {
-    StructType::ElementTypes Types($2->begin(), $2->end());
-    delete $2;
-
-    const StructType *St = StructType::getStructType(Types);
-    $$ = new ConstPoolStruct(St, *$5);
-    delete $5;
-  }
-  | '{' '}' '{' '}' {
-    const StructType *St = 
-      StructType::getStructType(StructType::ElementTypes());
-    vector<ConstPoolVal*> Empty;
-    $$ = new ConstPoolStruct(St, Empty);
+  | StructType '{' ConstVector '}' {
+    // FIXME: TODO: Check to see that the constants are compatible with the type
+    // initializer!
+    $$ = ConstPoolStruct::get(*$1, *$3);
+    delete $1; delete $3;
   }
 /*
   | Types '*' ConstVal {
@@ -646,36 +816,33 @@ ExtendedConstVal: '[' Types ']' '[' ConstVector ']' { // Nonempty unsized array
 ConstVal : ExtendedConstVal {
     $$ = $1;
   }
-  | TYPE TypesV {                    // Type constants
-    $$ = new ConstPoolType($2);
-  }
   | SIntType EINT64VAL {     // integral constants
     if (!ConstPoolSInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
-    $$ = new ConstPoolSInt($1, $2);
+    $$ = ConstPoolSInt::get($1, $2);
   } 
   | UIntType EUINT64VAL {           // integral constants
     if (!ConstPoolUInt::isValueValidForType($1, $2))
       ThrowException("Constant value doesn't fit in type!");
-    $$ = new ConstPoolUInt($1, $2);
+    $$ = ConstPoolUInt::get($1, $2);
   } 
   | BOOL TRUE {                     // Boolean constants
-    $$ = new ConstPoolBool(true);
+    $$ = ConstPoolBool::True;
   }
   | BOOL FALSE {                    // Boolean constants
-    $$ = new ConstPoolBool(false);
+    $$ = ConstPoolBool::False;
   }
   | FPType FPVAL {                   // Float & Double constants
-    $$ = new ConstPoolFP($1, $2);
+    $$ = ConstPoolFP::get($1, $2);
   }
 
 // ConstVector - A list of comma seperated constants.
 ConstVector : ConstVector ',' ConstVal {
-    ($$ = $1)->push_back(addConstValToConstantPool($3));
+    ($$ = $1)->push_back($3);
   }
   | ConstVal {
     $$ = new vector<ConstPoolVal*>();
-    $$->push_back(addConstValToConstantPool($1));
+    $$->push_back($1);
   }
 
 
@@ -686,18 +853,28 @@ ConstVector : ConstVector ',' ConstVal {
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign ConstVal { 
     if ($2) {
-      $3->setName($2);
+      setValueName($3, $2);
       free($2);
     }
-
-    addConstValToConstantPool($3);
+    InsertValue($3);
   }
-| ConstPool MethodProto {              // Method prototypes can be in const pool
+  | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
+    if ($2) {
+      // TODO: FIXME when Type are not const
+      setValueName(const_cast<Type*>($4->get()), $2);
+      free($2);
+    } else {
+      InsertType($4->get(),
+		 CurMeth.CurrentMethod ? CurMeth.Types : CurModule.Types);
+    }
+    delete $4;
+  }
+  | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
 /*
   | ConstPool OptAssign GlobalDecl {     // Global declarations appear in CP
     if ($2) {
-      $3->setName($2);
+      setValueName($3, $2);
       free($2);
     }
     //CurModule.CurrentModule->
@@ -732,6 +909,8 @@ MethodList : MethodList Method {
   }
   | ConstPool IMPLEMENTATION {
     $$ = CurModule.CurrentModule;
+    // Resolve circular types before we parse the body of the module
+    ResolveTypes(CurModule.LateResolveTypes);
   }
 
 
@@ -742,9 +921,9 @@ MethodList : MethodList Method {
 OptVAR_ID : VAR_ID | /*empty*/ { $$ = 0; }
 
 ArgVal : Types OptVAR_ID {
-  $$ = new MethodArgument($1);
+  $$ = new MethodArgument(*$1); delete $1;
   if ($2) {      // Was the argument named?
-    $$->setName($2); 
+    setValueName($$, $2);
     free($2);    // The string was strdup'd, so free it now.
   }
 }
@@ -771,12 +950,13 @@ ArgList : ArgListH {
 
 MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
   UnEscapeLexed($2);
-  MethodType::ParamTypes ParamTypeList;
+  vector<const Type*> ParamTypeList;
   if ($4)
     for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I)
       ParamTypeList.push_back((*I)->getType());
 
-  const MethodType *MT = MethodType::getMethodType($1, ParamTypeList);
+  const MethodType *MT = MethodType::get(*$1, ParamTypeList);
+  delete $1;
 
   Method *M = 0;
   if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
@@ -813,6 +993,9 @@ MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
 
 MethodHeader : MethodHeaderH ConstPool BEGINTOK {
   $$ = CurMeth.CurrentMethod;
+
+  // Resolve circular types before we parse the body of the method.
+  ResolveTypes(CurMeth.LateResolveTypes);
 }
 
 Method : BasicBlockList END {
@@ -866,69 +1049,10 @@ ValueRef : INTVAL {           // Is it an integer reference...?
 // type immediately preceeds the value reference, and allows complex constant
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : ExtendedConstVal {
-    $$ = addConstValToConstantPool($1);
+    $$ = $1;
   }
   | Types ValueRef {
-    $$ = getVal($1, $2);
-  }
-
-
-// The user may refer to a user defined type by its typeplane... check for this
-// now...
-//
-Types : ValueRef {
-    Value *D = getVal(Type::TypeTy, $1, true);
-    if (D == 0) ThrowException("Invalid user defined type: " + $1.getName());
-
-    // User defined type not in const pool!
-    ConstPoolType *CPT = (ConstPoolType*)D->castConstantAsserting();
-    $$ = CPT->getValue();
-  }
-  | TypesV '(' ArgTypeList ')' {               // Method derived type?
-    MethodType::ParamTypes Params($3->begin(), $3->end());
-    delete $3;
-    $$ = checkNewType(MethodType::getMethodType($1, Params));
-  }
-  | TypesV '(' ')' {               // Method derived type?
-    MethodType::ParamTypes Params;     // Empty list
-    $$ = checkNewType(MethodType::getMethodType($1, Params));
-  }
-  | '[' Types ']' {
-    $$ = checkNewType(ArrayType::getArrayType($2));
-  }
-  | '[' EUINT64VAL 'x' Types ']' {
-    $$ = checkNewType(ArrayType::getArrayType($4, (int)$2));
-  }
-  | '{' TypeList '}' {
-    StructType::ElementTypes Elements($2->begin(), $2->end());
-    delete $2;
-    $$ = checkNewType(StructType::getStructType(Elements));
-  }
-  | '{' '}' {
-    $$ = checkNewType(StructType::getStructType(StructType::ElementTypes()));
-  }
-  | Types '*' {
-    $$ = checkNewType(PointerType::getPointerType($1));
-  }
-
-// TypeList - Used for struct declarations and as a basis for method type 
-// declaration type lists
-//
-TypeList : Types {
-    $$ = new list<const Type*>();
-    $$->push_back($1);
-  }
-  | TypeList ',' Types {
-    ($$=$1)->push_back($3);
-  }
-
-// ArgTypeList - List of types for a method type declaration...
-ArgTypeList : TypeList 
-  | TypeList ',' DOTDOTDOT {
-    ($$=$1)->push_back(Type::VoidTy);
-  }
-  | DOTDOTDOT {
-    ($$ = new list<const Type*>())->push_back(Type::VoidTy);
+    $$ = getVal(*$1, $2); delete $1;
   }
 
 
@@ -952,7 +1076,7 @@ BasicBlock : InstructionList BBTerminatorInst  {
   }
   | LABELSTR InstructionList BBTerminatorInst  {
     $2->getInstList().push_back($3);
-    $2->setName($1);
+    setValueName($2, $1);
     free($1);         // Free the strdup'd memory...
 
     InsertValue($2);
@@ -1011,8 +1135,8 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   }
 
 Inst : OptAssign InstVal {
-  if ($1)              // Is this definition named??
-    $2->setName($1);   // if so, assign the name...
+  if ($1)                   // Is this definition named??
+    setValueName($2, $1);   // if so, assign the name...
 
   InsertValue($2);
   $$ = $2;
@@ -1020,8 +1144,9 @@ Inst : OptAssign InstVal {
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = new list<pair<Value*, BasicBlock*> >();
-    $$->push_back(make_pair(getVal($1, $3), 
+    $$->push_back(make_pair(getVal(*$1, $3), 
 			 getVal(Type::LabelTy, $5)->castBasicBlockAsserting()));
+    delete $1;
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
@@ -1030,7 +1155,7 @@ PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
   }
 
 
-ValueRefList : ResolvedVal {    // Used for call statements...
+ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
     $$ = new list<Value*>();
     $$->push_back($1);
   }
@@ -1043,9 +1168,10 @@ ValueRefList : ResolvedVal {    // Used for call statements...
 ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; }
 
 InstVal : BinaryOps Types ValueRef ',' ValueRef {
-    $$ = BinaryOperator::create($1, getVal($2, $3), getVal($2, $5));
+    $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
+    delete $2;
   }
   | UnaryOps ResolvedVal {
     $$ = UnaryOperator::create($1, $2);
@@ -1058,7 +1184,8 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     $$ = new ShiftInst($1, $2, $4);
   }
   | CAST ResolvedVal TO Types {
-    $$ = new CastInst($2, $4);
+    $$ = new CastInst($2, *$4);
+    delete $4;
   }
   | PHI PHIList {
     const Type *Ty = $2->front().first->getType();
@@ -1074,13 +1201,14 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
   | CALL TypesV ValueRef '(' ValueRefListE ')' {
     const MethodType *Ty;
 
-    if (!(Ty = $2->isMethodType())) {
+    if (!(Ty = (*$2)->isMethodType())) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
 	ParamTypes.push_back((*I)->getType());
-      Ty = MethodType::get($2, ParamTypes);
+      Ty = MethodType::get(*$2, ParamTypes);
     }
+    delete $2;
 
     Value *V = getVal(Ty, $3);   // Get the method we're calling...
 
@@ -1120,25 +1248,29 @@ UByteList : ',' ConstVector {
 }
 
 MemoryInst : MALLOC Types {
-    $$ = new MallocInst(checkNewType(PointerType::getPointerType($2)));
+    $$ = new MallocInst(PointerType::get(*$2));
+    delete $2;
   }
   | MALLOC Types ',' UINT ValueRef {
-    if (!$2->isArrayType() || ((const ArrayType*)$2)->isSized())
-      ThrowException("Trying to allocate " + $2->getName() + 
+    if (!(*$2)->isArrayType() || ((const ArrayType*)$2->get())->isSized())
+      ThrowException("Trying to allocate " + (*$2)->getName() + 
 		     " as unsized array!");
-    const Type *Ty = checkNewType(PointerType::getPointerType($2));
+    const Type *Ty = PointerType::get(*$2);
     $$ = new MallocInst(Ty, getVal($4, $5));
+    delete $2;
   }
   | ALLOCA Types {
-    $$ = new AllocaInst(checkNewType(PointerType::getPointerType($2)));
+    $$ = new AllocaInst(PointerType::get(*$2));
+    delete $2;
   }
   | ALLOCA Types ',' UINT ValueRef {
-    if (!$2->isArrayType() || ((const ArrayType*)$2)->isSized())
-      ThrowException("Trying to allocate " + $2->getName() + 
+    if (!(*$2)->isArrayType() || ((const ArrayType*)$2->get())->isSized())
+      ThrowException("Trying to allocate " + (*$2)->getName() + 
 		     " as unsized array!");
-    const Type *Ty = checkNewType(PointerType::getPointerType($2));    
+    const Type *Ty = PointerType::get(*$2);
     Value *ArrSize = getVal($4, $5);
     $$ = new AllocaInst(Ty, ArrSize);
+    delete $2;
   }
   | FREE ResolvedVal {
     if (!$2->getType()->isPointerType())
@@ -1148,34 +1280,34 @@ MemoryInst : MALLOC Types {
   }
 
   | LOAD Types ValueRef UByteList {
-    if (!$2->isPointerType())
-      ThrowException("Can't load from nonpointer type: " + $2->getName());
-    if (LoadInst::getIndexedType($2, *$4) == 0)
+    if (!(*$2)->isPointerType())
+      ThrowException("Can't load from nonpointer type: " + (*$2)->getName());
+    if (LoadInst::getIndexedType(*$2, *$4) == 0)
       ThrowException("Invalid indices for load instruction!");
 
-    $$ = new LoadInst(getVal($2, $3), *$4);
+    $$ = new LoadInst(getVal(*$2, $3), *$4);
     delete $4;   // Free the vector...
+    delete $2;
   }
   | STORE ResolvedVal ',' Types ValueRef UByteList {
-    if (!$4->isPointerType())
-      ThrowException("Can't store to a nonpointer type: " + $4->getName());
-    const Type *ElTy = StoreInst::getIndexedType($4, *$6);
+    if (!(*$4)->isPointerType())
+      ThrowException("Can't store to a nonpointer type: " + (*$4)->getName());
+    const Type *ElTy = StoreInst::getIndexedType(*$4, *$6);
     if (ElTy == 0)
       ThrowException("Can't store into that field list!");
     if (ElTy != $2->getType())
       ThrowException("Can't store '" + $2->getType()->getName() +
                      "' into space of type '" + ElTy->getName() + "'!");
-    $$ = new StoreInst($2, getVal($4, $5), *$6);
-    delete $6;
+    $$ = new StoreInst($2, getVal(*$4, $5), *$6);
+    delete $4; delete $6;
   }
   | GETELEMENTPTR Types ValueRef UByteList {
-    if (!$2->isPointerType())
+    if (!(*$2)->isPointerType())
       ThrowException("getelementptr insn requires pointer operand!");
-    if (!GetElementPtrInst::getIndexedType($2, *$4, true))
-      ThrowException("Can't get element ptr '" + $2->getName() + "'!");
-    $$ = new GetElementPtrInst(getVal($2, $3), *$4);
-    delete $4;
-    checkNewType($$->getType());
+    if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
+      ThrowException("Can't get element ptr '" + (*$2)->getName() + "'!");
+    $$ = new GetElementPtrInst(getVal(*$2, $3), *$4);
+    delete $2; delete $4;
   }
 
 %%
