@@ -35,7 +35,6 @@ const MachineInstrDescriptor SparcMachineInstrDesc[] = {
 TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 
 
-
 //----------------------------------------------------------------------------
 // Entry point for register allocation for a module
 //----------------------------------------------------------------------------
