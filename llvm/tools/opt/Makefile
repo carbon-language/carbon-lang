@@ -8,5 +8,7 @@ USEDLIBS = bcreader bcwriter instrument profpaths \
            transformutils vmcore support
 TOOLLINKOPTS = -ldl $(ExportSymbols)
 
+KEEP_SYMBOLS = 1
+
 include $(LEVEL)/Makefile.common
 
