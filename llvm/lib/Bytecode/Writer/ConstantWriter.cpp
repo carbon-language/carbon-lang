@@ -81,10 +81,10 @@ void BytecodeWriter::outputType(const Type *T) {
   }
 
   case Type::ModuleTyID:
-  case Type::PackedTyID:
+  //case Type::PackedTyID:
   default:
     cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-	 << " Type '" << T->getName() << "'\n";
+	 << " Type '" << T->getDescription() << "'\n";
     break;
   }
 }
@@ -113,7 +113,7 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
     break;
 
   case Type::TypeTyID:     // Serialize type type
-    outputType(((const ConstPoolType*)CPV)->getValue());
+    assert(0 && "Types should not be in the ConstPool!");
     break;
 
   case Type::ArrayTyID: {
@@ -123,7 +123,7 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
       output_vbr(size, Out);            // Not for sized arrays!!!
 
     for (unsigned i = 0; i < size; i++) {
-      int Slot = Table.getValSlot(CPA->getValues()[i]);
+      int Slot = Table.getValSlot(CPA->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot, Out);
     }

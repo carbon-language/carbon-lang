@@ -6,13 +6,15 @@
 // variables in the method tables...
 //
 // Note that this file uses an unusual technique of outputting all the bytecode
-// to a vector of unsigned char's, then copies the vector to an ostream.  The
+// to a deque of unsigned char's, then copies the deque to an ostream.  The
 // reason for this is that we must do "seeking" in the stream to do back-
 // patching, and some very important ostreams that we want to support (like
 // pipes) do not support seeking.  :( :( :(
 //
-// The choice of the vector data structure is influenced by the extremely fast
-// "append" speed, plus the free "seek"/replace in the middle of the stream.
+// The choice of the deque data structure is influenced by the extremely fast
+// "append" speed, plus the free "seek"/replace in the middle of the stream. I
+// didn't use a vector because the stream could end up very large and copying
+// the whole thing to reallocate would be kinda silly.
 //
 // Note that the performance of this library is not terribly important, because
 // it shouldn't be used by JIT type applications... so it is not a huge focus
@@ -27,10 +29,11 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/STLExtras.h"
 #include <string.h>
 #include <algorithm>
 
-BytecodeWriter::BytecodeWriter(vector<unsigned char> &o, const Module *M) 
+BytecodeWriter::BytecodeWriter(deque<unsigned char> &o, const Module *M) 
   : Out(o), Table(M, false) {
 
   outputSignature();
@@ -38,14 +41,21 @@ BytecodeWriter::BytecodeWriter(vector<unsigned char> &o, const Module *M)
   // Emit the top level CLASS block.
   BytecodeBlock ModuleBlock(BytecodeFormat::Module, Out);
 
-  // Output largest ID of first "primitive" type:
+  // Output the ID of first "derived" type:
   output_vbr((unsigned)Type::FirstDerivedTyID, Out);
   align32(Out);
 
-  // Do the whole module now!
-  processModule(M);
+  // Output module level constants, including types used by the method protos
+  outputConstants(false);
 
-  // If needed, output the symbol table for the class...
+  // The ModuleInfoBlock follows directly after the Module constant pool
+  outputModuleInfoBlock(M);
+
+  // Do the whole module now! Process each method at a time...
+  for_each(M->begin(), M->end(),
+	   bind_obj(this, &BytecodeWriter::processMethod));
+
+  // If needed, output the symbol table for the module...
   if (M->hasSymbolTable())
     outputSymbolTable(*M->getSymbolTable());
 }
@@ -53,53 +63,55 @@ BytecodeWriter::BytecodeWriter(vector<unsigned char> &o, const Module *M)
 // TODO: REMOVE
 #include "llvm/Assembly/Writer.h"
 
-bool BytecodeWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
-  BytecodeBlock *CPool = new BytecodeBlock(BytecodeFormat::ConstantPool, Out);
+void BytecodeWriter::outputConstants(bool isMethod) {
+  BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
 
   unsigned NumPlanes = Table.getNumPlanes();
-
   for (unsigned pno = 0; pno < NumPlanes; pno++) {
     const vector<const Value*> &Plane = Table.getPlane(pno);
-    if (Plane.empty()) continue;          // Skip empty type planes...
+    if (Plane.empty()) continue;      // Skip empty type planes...
 
-    unsigned ValNo = 0;   // Don't reemit module constants
-    if (isMethod) ValNo = Table.getModuleLevel(pno);
+    unsigned ValNo = 0;
+    if (isMethod)                     // Don't reemit module constants
+      ValNo = Table.getModuleLevel(pno);
+    else if (pno == Type::TypeTyID)
+      ValNo = Type::FirstDerivedTyID; // Start emitting at the derived types...
     
-    unsigned NumConstants = 0;
-    for (unsigned vn = ValNo; vn < Plane.size(); vn++)
-      if (Plane[vn]->isConstant())
-	NumConstants++;
+    // Scan through and ignore method arguments...
+    for (; ValNo < Plane.size() && Plane[ValNo]->isMethodArgument(); ValNo++)
+      /*empty*/;
 
-    if (NumConstants == 0) continue;  // Skip empty type planes...
+    unsigned NC = ValNo;              // Number of constants
+    for (; NC < Plane.size() && 
+	   (Plane[NC]->isConstant() || Plane[NC]->isType()); NC++) /*empty*/;
+    NC -= ValNo;                      // Convert from index into count
+    if (NC == 0) continue;            // Skip empty type planes...
 
     // Output type header: [num entries][type id number]
     //
-    output_vbr(NumConstants, Out);
+    output_vbr(NC, Out);
 
     // Output the Type ID Number...
     int Slot = Table.getValSlot(Plane.front()->getType());
     assert (Slot != -1 && "Type in constant pool but not in method!!");
     output_vbr((unsigned)Slot, Out);
 
-    //cerr << "NC: " << NumConstants << " Slot = " << hex << Slot << endl;
+    //cout << "Emitting " << NC << " constants of type '" 
+    //	 << Plane.front()->getType()->getName() << "' = Slot #" << Slot << endl;
 
-    for (; ValNo < Plane.size(); ValNo++) {
-      const Value *V = Plane[ValNo];
+    for (unsigned i = ValNo; i < ValNo+NC; ++i) {
+      const Value *V = Plane[i];
       if (const ConstPoolVal *CPV = V->castConstant()) {
 	//cerr << "Serializing value: <" << V->getType() << ">: " 
 	//     << ((const ConstPoolVal*)V)->getStrValue() << ":" 
 	//     << Out.size() << "\n";
 	outputConstant(CPV);
+      } else {
+	const Type *Ty = V->castTypeAsserting();
+	outputType(Ty);
       }
     }
   }
-
-  delete CPool;  // End bytecode block section!
-
-  if (!isMethod) // The ModuleInfoBlock follows directly after the c-pool
-    outputModuleInfoBlock(CP.getParentV()->castModuleAsserting());
-
-  return false;
 }
 
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
@@ -116,25 +128,35 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   align32(Out);
 }
 
-bool BytecodeWriter::processMethod(const Method *M) {
+void BytecodeWriter::processMethod(const Method *M) {
   BytecodeBlock MethodBlock(BytecodeFormat::Method, Out);
 
-  Table.incorporateMethod(M);
+  // Only output the constant pool and other goodies if needed...
+  if (!M->isExternal()) {
+    // Get slot information about the method...
+    Table.incorporateMethod(M);
 
-  if (ModuleAnalyzer::processMethod(M)) return true;
-  
-  // If needed, output the symbol table for the method...
-  if (M->hasSymbolTable())
-    outputSymbolTable(*M->getSymbolTable());
+    // Output information about the constants in the method...
+    outputConstants(true);
 
-  Table.purgeMethod();
-  return false;
+    // Output basic block nodes...
+    for_each(M->begin(), M->end(),
+	     bind_obj(this, &BytecodeWriter::processBasicBlock));
+    
+    // If needed, output the symbol table for the method...
+    if (M->hasSymbolTable())
+      outputSymbolTable(*M->getSymbolTable());
+    
+    Table.purgeMethod();
+  }
 }
 
 
-bool BytecodeWriter::processBasicBlock(const BasicBlock *BB) {
+void BytecodeWriter::processBasicBlock(const BasicBlock *BB) {
   BytecodeBlock MethodBlock(BytecodeFormat::BasicBlock, Out);
-  return ModuleAnalyzer::processBasicBlock(BB);
+  // Process all the instructions in the bb...
+  for_each(BB->begin(), BB->end(),
+	   bind_obj(this, &BytecodeWriter::processInstruction));
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
@@ -157,7 +179,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
       Slot = Table.getValSlot(I->second);
-      assert (Slot != -1 && "Value in symtab but not in method!!");
+      assert(Slot != -1 && "Value in symtab but has no slot number!!");
       output_vbr((unsigned)Slot, Out);
       output(I->first, Out, false); // Don't force alignment...
     }
@@ -165,14 +187,31 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 }
 
 void WriteBytecodeToFile(const Module *C, ostream &Out) {
-  assert(C && "You can't write a null class!!");
+  assert(C && "You can't write a null module!!");
 
-  vector<unsigned char> Buffer;
+  deque<unsigned char> Buffer;
 
   // This object populates buffer for us...
   BytecodeWriter BCW(Buffer, C);
 
-  // Okay, write the vector out to the ostream now...
-  Out.write(&Buffer[0], Buffer.size());
+  // Okay, write the deque out to the ostream now... the deque is not
+  // sequential in memory, however, so write out as much as possible in big
+  // chunks, until we're done.
+  //
+  deque<unsigned char>::const_iterator I = Buffer.begin(), E = Buffer.end();
+  while (I != E) {                           // Loop until it's all written
+    // Scan to see how big this chunk is...
+    const unsigned char *ChunkPtr = &*I;
+    const unsigned char *LastPtr = ChunkPtr;
+    while (I != E) {
+      const unsigned char *ThisPtr = &*++I;
+      if (LastPtr+1 != ThisPtr) break;// Advanced by more than a byte of memory?
+      LastPtr = ThisPtr;
+    }
+    
+    // Write out the chunk...
+    Out.write(ChunkPtr, LastPtr-ChunkPtr+(I != E));
+  }
+
   Out.flush();
 }

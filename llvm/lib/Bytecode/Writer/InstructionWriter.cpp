@@ -26,7 +26,7 @@ typedef unsigned char uchar;
 //
 static void outputInstructionFormat0(const Instruction *I,
 				     const SlotCalculator &Table,
-				     unsigned Type, vector<uchar> &Out) {
+				     unsigned Type, deque<uchar> &Out) {
   // Opcode must have top two bits clear...
   output_vbr(I->getOpcode(), Out);               // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
@@ -54,7 +54,7 @@ static void outputInstructionFormat0(const Instruction *I,
 //
 static void outputInstrVarArgsCall(const Instruction *I,
 				   const SlotCalculator &Table, unsigned Type,
-				   vector<uchar> &Out) {
+				   deque<uchar> &Out) {
   assert(I->getOpcode() == Instruction::Call /*|| 
 	 I->getOpcode() == Instruction::ICall */);
   // Opcode must have top two bits clear...
@@ -94,7 +94,7 @@ static void outputInstrVarArgsCall(const Instruction *I,
 //
 static void outputInstructionFormat1(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, vector<uchar> &Out) {
+				     unsigned Type, deque<uchar> &Out) {
   unsigned IType = I->getOpcode();      // Instruction Opcode ID
   
   // bits   Instruction format:
@@ -115,7 +115,7 @@ static void outputInstructionFormat1(const Instruction *I,
 //
 static void outputInstructionFormat2(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, vector<uchar> &Out) {
+				     unsigned Type, deque<uchar> &Out) {
   unsigned IType = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
@@ -139,7 +139,7 @@ static void outputInstructionFormat2(const Instruction *I,
 //
 static void outputInstructionFormat3(const Instruction *I, 
 				     const SlotCalculator &Table, int *Slots,
-				     unsigned Type, vector<uchar> &Out) {
+				     unsigned Type, deque<uchar> &Out) {
   unsigned IType = I->getOpcode();      // Instruction Opcode ID
 
   // bits   Instruction format:
@@ -158,7 +158,9 @@ static void outputInstructionFormat3(const Instruction *I,
   output(Opcode, Out);
 }
 
-bool BytecodeWriter::processInstruction(const Instruction *I) {
+#include "llvm/Assembly/Writer.h"
+
+void BytecodeWriter::processInstruction(const Instruction *I) {
   assert(I->getOpcode() < 64 && "Opcode too big???");
 
   unsigned NumOperands = I->getNumOperands();
@@ -215,7 +217,7 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   } else if (I->getOpcode() == Instruction::Call &&  // Handle VarArg calls
 	     I->getOperand(0)->getType()->isMethodType()->isVarArg()) {
     outputInstrVarArgsCall(I, Table, Type, Out);
-    return false;
+    return;
   }
 
   // Decide which instruction encoding to use.  This is determined primarily by
@@ -228,21 +230,21 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   case 1:
     if (MaxOpSlot < (1 << 12)-1) { // -1 because we use 4095 to indicate 0 ops
       outputInstructionFormat1(I, Table, Slots, Type, Out);
-      return false;
+      return;
     }
     break;
 
   case 2:
     if (MaxOpSlot < (1 << 8)) {
       outputInstructionFormat2(I, Table, Slots, Type, Out);
-      return false;
+      return;
     }
     break;
 
   case 3:
     if (MaxOpSlot < (1 << 6)) {
       outputInstructionFormat3(I, Table, Slots, Type, Out);
-      return false;
+      return;
     }
     break;
   }
@@ -250,5 +252,4 @@ bool BytecodeWriter::processInstruction(const Instruction *I) {
   // If we weren't handled before here, we either have a large number of
   // operands or a large operand index that we are refering to.
   outputInstructionFormat0(I, Table, Type, Out);
-  return false;
 }
