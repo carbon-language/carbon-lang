@@ -22,7 +22,9 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Expressions.h"
+#include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include <algorithm>
@@ -63,8 +65,22 @@ static void PrintClassifiedExprs(Method *M) {
   }
 }
 
+static void PrintInductionVariables(Method *M) {
+  cfg::LoopInfo LI(M);
+  for (Method::inst_iterator I = M->inst_begin(), E = M->inst_end();
+       I != E; ++I) {
+    InductionVariable IV(*I, &LI);
+    if (IV.InductionType != InductionVariable::Unknown)
+      cout << IV;
+  }
+}
+
+
 static void PrintInstForest(Method *M) {
   cout << analysis::InstForest<char>(M);
+}
+static void PrintLoops(Method *M) {
+  cout << cfg::LoopInfo(M);
 }
 static void PrintCallGraph(Module *M) {
   cout << cfg::CallGraph(M);
@@ -111,7 +127,7 @@ static void PrintPostDomFrontier(Method *M) {
 
 enum Ans {
   PassDone,   // Unique Marker
-  print, intervals, exprclassify, instforest, callgraph,
+  print, intervals, exprclassify, instforest, loops, indvars, callgraph,
   printusedtypes, unsafepointertypes,
 
   domset, idom, domtree, domfrontier,
@@ -126,6 +142,8 @@ cl::EnumList<enum Ans> AnalysesList(cl::NoFlags,
   clEnumVal(intervals      , "Print Interval Partitions"),
   clEnumVal(exprclassify   , "Classify Expressions"),
   clEnumVal(instforest     , "Print Instruction Forest"),
+  clEnumVal(loops          , "Print Loops"),
+  clEnumVal(indvars        , "Print Induction Variables"),
   clEnumVal(callgraph      , "Print Call Graph"),
   clEnumVal(printusedtypes , "Print Types Used by Module"),
   clEnumVal(unsafepointertypes, "Print Unsafe Pointer Types"),
@@ -149,6 +167,8 @@ struct {
   { intervals      , PrintIntervalPartition   },
   { exprclassify   , PrintClassifiedExprs     },
   { instforest     , PrintInstForest          },
+  { loops          , PrintLoops               },
+  { indvars        , PrintInductionVariables  },
 
   { domset         , PrintDominatorSets       },
   { idom           , PrintImmediateDominators },
