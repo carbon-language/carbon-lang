@@ -32,7 +32,7 @@ namespace {
       BasicBlock::InstListType &Vals = BB->getInstList();
       bool Changed = false;
       for (BasicBlock::iterator DI = Vals.begin(); DI != Vals.end(); )
-        if (dceInstruction(Vals, DI)) {
+        if (dceInstruction(DI)) {
           Changed = true;
           ++DIEEliminated;
         } else

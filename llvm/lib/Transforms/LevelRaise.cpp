@@ -443,7 +443,7 @@ static bool DoRaisePass(Function *F) {
 
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
       DEBUG(cerr << "Processing: " << *BI);
-      if (dceInstruction(BIL, BI) || doConstantPropogation(BB, BI)) {
+      if (dceInstruction(BI) || doConstantPropogation(BI)) {
         Changed = true; 
         ++NumDCEorCP;
         DEBUG(cerr << "***\t\t^^-- DeadCode Elinated!\n");

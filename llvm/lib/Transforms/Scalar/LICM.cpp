@@ -184,7 +184,7 @@ void LICM::visitBasicBlock(BasicBlock *BB) {
     visit(BB->begin()[i]);
     
     BasicBlock::iterator It = BB->begin()+i;
-    if (dceInstruction(BB->getInstList(), It))
+    if (dceInstruction(It))
       Changed = true;
     else
       ++i;
