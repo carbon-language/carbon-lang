@@ -1,5 +1,5 @@
 //===-- X86ISelPattern.cpp - A pattern matching inst selector for X86 -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
@@ -348,6 +348,8 @@ namespace {
 
     void EmitCMP(SDOperand LHS, SDOperand RHS);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond);
+    void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
+                      unsigned RTrue, unsigned RFalse, unsigned RDest);
     unsigned SelectExpr(SDOperand N);
     bool SelectAddress(SDOperand N, X86AddressMode &AM);
     void Select(SDOperand N);
@@ -620,6 +622,116 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
   if (Opc2)
     BuildMI(BB, Opc2, 1).addMBB(Dest);
   return false;
+}
+
+/// EmitSelectCC - Emit code into BB that performs a select operation between
+/// the two registers RTrue and RFalse, generating a result into RDest.  Return
+/// true if the fold cannot be performed.
+///
+void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
+                        unsigned RTrue, unsigned RFalse, unsigned RDest) {
+  enum Condition {
+    EQ, NE, LT, LE, GT, GE, B, BE, A, AE, P, NP,
+    NOT_SET
+  } CondCode = NOT_SET;
+
+  static const unsigned CMOVTAB16[] = {
+    X86::CMOVE16rr,  X86::CMOVNE16rr, X86::CMOVL16rr,  X86::CMOVLE16rr,
+    X86::CMOVG16rr,  X86::CMOVGE16rr, X86::CMOVB16rr,  X86::CMOVBE16rr,
+    X86::CMOVA16rr,  X86::CMOVAE16rr, X86::CMOVP16rr,  X86::CMOVNP16rr, 
+  };
+  static const unsigned CMOVTAB32[] = {
+    X86::CMOVE32rr,  X86::CMOVNE32rr, X86::CMOVL32rr,  X86::CMOVLE32rr,
+    X86::CMOVG32rr,  X86::CMOVGE32rr, X86::CMOVB32rr,  X86::CMOVBE32rr,
+    X86::CMOVA32rr,  X86::CMOVAE32rr, X86::CMOVP32rr,  X86::CMOVNP32rr, 
+  };
+  static const unsigned CMOVTABFP[] = {
+    X86::FCMOVE ,  X86::FCMOVNE, /*missing*/0, /*missing*/0,
+    /*missing*/0,  /*missing*/0, X86::FCMOVB , X86::FCMOVBE,
+    X86::FCMOVA ,  X86::FCMOVAE, X86::FCMOVP , X86::FCMOVNP
+  };
+
+  if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Cond)) {
+    if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+      switch (SetCC->getCondition()) {
+      default: assert(0 && "Unknown integer comparison!");
+      case ISD::SETEQ:  CondCode = EQ; break;
+      case ISD::SETGT:  CondCode = GT; break;
+      case ISD::SETGE:  CondCode = GE; break;
+      case ISD::SETLT:  CondCode = LT; break;
+      case ISD::SETLE:  CondCode = LE; break;
+      case ISD::SETNE:  CondCode = NE; break;
+      case ISD::SETULT: CondCode = B; break;
+      case ISD::SETUGT: CondCode = A; break;
+      case ISD::SETULE: CondCode = BE; break;
+      case ISD::SETUGE: CondCode = AE; break;
+      }
+    } else {
+      // On a floating point condition, the flags are set as follows:
+      // ZF  PF  CF   op
+      //  0 | 0 | 0 | X > Y
+      //  0 | 0 | 1 | X < Y
+      //  1 | 0 | 0 | X == Y
+      //  1 | 1 | 1 | unordered
+      //
+      switch (SetCC->getCondition()) {
+      default: assert(0 && "Unknown FP comparison!");
+      case ISD::SETUEQ:
+      case ISD::SETEQ:  CondCode = EQ; break;     // True if ZF = 1
+      case ISD::SETOGT:
+      case ISD::SETGT:  CondCode = A;  break;     // True if CF = 0 and ZF = 0
+      case ISD::SETOGE:
+      case ISD::SETGE:  CondCode = AE; break;     // True if CF = 0
+      case ISD::SETULT:
+      case ISD::SETLT:  CondCode = B;  break;     // True if CF = 1
+      case ISD::SETULE:
+      case ISD::SETLE:  CondCode = BE; break;     // True if CF = 1 or ZF = 1
+      case ISD::SETONE:
+      case ISD::SETNE:  CondCode = NE; break;     // True if ZF = 0
+      case ISD::SETUO:  CondCode = P;  break;     // True if PF = 1
+      case ISD::SETO:   CondCode = NP; break;     // True if PF = 0
+      case ISD::SETUGT:      // PF = 1 | (ZF = 0 & CF = 0)
+      case ISD::SETUGE:      // PF = 1 | CF = 0
+      case ISD::SETUNE:      // PF = 1 | ZF = 0
+      case ISD::SETOEQ:      // PF = 0 & ZF = 1
+      case ISD::SETOLT:      // PF = 0 & CF = 1
+      case ISD::SETOLE:      // PF = 0 & (CF = 1 || ZF = 1)
+        // We cannot emit this comparison as a single cmov.
+        break;
+      }
+    }
+  }
+
+  unsigned Opc = 0;
+  if (CondCode != NOT_SET) {
+    switch (SVT) {
+    default: assert(0 && "Cannot select this type!");
+    case MVT::i16: Opc = CMOVTAB16[CondCode]; break;
+    case MVT::i32: Opc = CMOVTAB32[CondCode]; break;
+    case MVT::f32:
+    case MVT::f64: Opc = CMOVTABFP[CondCode]; ContainsFPCode = true; break;
+    }
+  }
+
+  // Finally, if we weren't able to fold this, just emit the condition and test
+  // it.
+  if (CondCode == NOT_SET || Opc == 0) {
+    // Get the condition into the zero flag.
+    unsigned CondReg = SelectExpr(Cond);
+    BuildMI(BB, X86::TEST8rr, 2).addReg(CondReg).addReg(CondReg);
+
+    switch (SVT) {
+    default: assert(0 && "Cannot select this type!");
+    case MVT::i16: Opc = X86::CMOVE16rr; break;
+    case MVT::i32: Opc = X86::CMOVE32rr; break;
+    case MVT::f32:
+    case MVT::f64: Opc = X86::FCMOVE; ContainsFPCode = true; break;
+    }
+  } else {
+    // FIXME: CMP R, 0 -> TEST R, R
+    EmitCMP(Cond.getOperand(0), Cond.getOperand(1));
+  }
+  BuildMI(BB, Opc, 2, RDest).addReg(RTrue).addReg(RFalse);
 }
 
 void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
@@ -1232,19 +1344,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (N.getValueType() != MVT::i1 && N.getValueType() != MVT::i8) {
       Tmp2 = SelectExpr(N.getOperand(1));
       Tmp3 = SelectExpr(N.getOperand(2));
-      Tmp1 = SelectExpr(N.getOperand(0));
-
-      switch (N.getValueType()) {
-      default: assert(0 && "Cannot select this type!");
-      case MVT::i16: Opc = X86::CMOVE16rr; break;
-      case MVT::i32: Opc = X86::CMOVE32rr; break;
-      case MVT::f32:
-      case MVT::f64: Opc = X86::FCMOVE; ContainsFPCode = true; break;
-      }
-
-      // Get the condition into the zero flag.
-      BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(Tmp3);
+      EmitSelectCC(N.getOperand(0), N.getValueType(), Tmp2, Tmp3, Result);
       return Result;
     } else {
       // FIXME: This should not be implemented here, it should be in the generic
@@ -1253,11 +1353,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
                                         N.getOperand(1)));
       Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
                                         N.getOperand(2)));
-      Tmp1 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
-      // FIXME: need subregs to do better than this!
       unsigned TmpReg = MakeReg(MVT::i16);
-      BuildMI(BB, X86::CMOVE16rr, 2, TmpReg).addReg(Tmp2).addReg(Tmp3);
+      EmitSelectCC(N.getOperand(0), MVT::i16, Tmp2, Tmp3, TmpReg);
+      // FIXME: need subregs to do better than this!
       BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(TmpReg);
       BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
       return Result;
