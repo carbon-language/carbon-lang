@@ -49,15 +49,9 @@ namespace {
     // Maps SSA Regs => offsets on the stack where these values are stored
     std::map<unsigned, unsigned> VirtReg2OffsetMap;
 
-    // Maps SSA Regs => physical regs
-    std::map<unsigned, unsigned> SSA2PhysRegMap;
-
     // Maps physical register to their register classes
     PhysRegClassMap PhysRegClasses;
 
-    // Made to combat the incorrect allocation of r2 = add r1, r1
-    std::map<unsigned, unsigned> VirtReg2PhysRegMap;
-    
     // RegsUsed - Keep track of what registers are currently in use.
     std::set<unsigned> RegsUsed;
 
@@ -134,7 +128,6 @@ namespace {
 
     void cleanupAfterFunction() {
       VirtReg2OffsetMap.clear();
-      SSA2PhysRegMap.clear();
       NumBytesAllocated = 4;   // FIXME: This is X86 specific
     }
 
@@ -357,6 +350,9 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
   
   //loop over each basic block
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
+    // Made to combat the incorrect allocation of r2 = add r1, r1
+    std::map<unsigned, unsigned> VirtReg2PhysRegMap;
+
     MachineInstr *MI = *I;
     
     // a preliminary pass that will invalidate any registers that
@@ -406,9 +402,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
               ", phys: " << op.getAllocatedRegNum() << "\n");
       }
     }
-    
     clearAllRegs();
-    VirtReg2PhysRegMap.clear();
   }
 }
 
