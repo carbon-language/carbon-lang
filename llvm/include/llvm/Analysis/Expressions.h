@@ -13,48 +13,46 @@
 #include <assert.h>
 class Value;
 class ConstPoolInt;
-struct ExprAnalysisResult;
+
+namespace analysis {
+
+struct ExprType;
 
 // ClassifyExpression: Analyze an expression to determine the complexity of the
 // expression, and which other values it depends on.  
 //
-ExprAnalysisResult ClassifyExpression(Value *Expr);
+ExprType ClassifyExpression(Value *Expr);
 
-// ExprAnalysisResult - Represent an expression of the form CONST*VAR+CONST
+// ExprType - Represent an expression of the form CONST*VAR+CONST
 // or simpler.  The expression form that yields the least information about the
 // expression is just the Linear form with no offset.
 //
-struct ExprAnalysisResult {
+struct ExprType {
   enum ExpressionType {
     Constant,            // Expr is a simple constant, Offset is value
     Linear,              // Expr is linear expr, Value is Var+Offset
     ScaledLinear,        // Expr is scaled linear exp, Value is Scale*Var+Offset
-  } ExprType;
+  } ExprTy;
 
   const ConstPoolInt *Offset;  // Offset of expr, or null if 0
   Value              *Var;     // Var referenced, if Linear or above (null if 0)
   const ConstPoolInt *Scale;   // Scale of var if ScaledLinear expr (null if 1)
 
-  inline ExprAnalysisResult(const ConstPoolInt *CPV = 0) {
+  inline ExprType(const ConstPoolInt *CPV = 0) {
     Offset = CPV; Var = 0; Scale = 0;
-    ExprType = Constant;
+    ExprTy = Constant;
   }
-  inline ExprAnalysisResult(Value *Val) {
+  inline ExprType(Value *Val) {
     Var = Val; Offset = Scale = 0;
-    ExprType = Var ? Linear : Constant;
+    ExprTy = Var ? Linear : Constant;
   }
-  inline ExprAnalysisResult(const ConstPoolInt *scale, Value *var, 
-			    const ConstPoolInt *offset) {
-    assert(!(Scale && !Var) && "Can't have scaled nonvariable!");
+  inline ExprType(const ConstPoolInt *scale, Value *var, 
+		  const ConstPoolInt *offset) {
     Scale = scale; Var = var; Offset = offset;
-    ExprType = Scale ? ScaledLinear : (Var ? Linear : Constant);
+    ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
   }
-
-
-private:
-  friend ExprAnalysisResult ClassifyExpression(Value *);
-  inline ExprAnalysisResult operator+(const ConstPoolInt *Offset);
-  
 };
+
+} // End namespace analysis
 
 #endif
