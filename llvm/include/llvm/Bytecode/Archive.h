@@ -306,7 +306,10 @@ class Archive {
     /// you intend to modify the archive or traverse its contents (e.g. for
     /// printing).
     /// @brief Open and load an archive file
-    static Archive* OpenAndLoad(const sys::Path& filePath);
+    static Archive* OpenAndLoad(
+      const sys::Path& filePath,    ///< The file path to open and load
+      std::string* ErrorMessage = 0 ///< An optional error string
+    );
 
     /// This method opens an existing archive file from \p Filename and reads in
     /// its symbol table without reading in any of the archive's members. This
@@ -325,7 +328,8 @@ class Archive {
     /// @returns an Archive* that represents the archive file.
     /// @brief Open an existing archive and load its symbols.
     static Archive* OpenAndLoadSymbols(
-      const sys::Path& Filename ///< Name of the archive file to open
+      const sys::Path& Filename,   ///< Name of the archive file to open
+      std::string* ErrorMessage=0  ///< An optional error string
     );
 
     /// This destructor cleans up the Archive object, releases all memory, and
