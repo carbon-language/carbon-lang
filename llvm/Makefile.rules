@@ -167,7 +167,7 @@ STATICUSEDLIBS = $(addsuffix .a, $(USEDLIBS))
 USED_LIB_PATHS_G = $(addprefix $(LEVEL)/lib/Debug/lib, $(STATICUSEDLIBS))
 USED_LIB_PATHS_O = $(addprefix $(LEVEL)/lib/Release/lib, $(STATICUSEDLIBS))
 
-all::   $(TOOLEXENAMES) tags
+all::   $(TOOLEXENAMES)
 clean::
 	rm -f $(TOOLEXENAMES)
 
