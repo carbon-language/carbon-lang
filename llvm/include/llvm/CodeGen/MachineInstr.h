@@ -33,17 +33,6 @@ template <typename T> class ilist_traits;
 typedef int MachineOpCode;
 
 //===----------------------------------------------------------------------===//
-/// Special flags on instructions that modify the opcode.
-/// These flags are unused for now, but having them enforces that some
-/// changes will be needed if they are used.
-///
-enum MachineOpCodeFlags {
-  AnnulFlag,         /// 1 if annul bit is set on a branch
-  PredTakenFlag,     /// 1 if branch should be predicted taken
-  PredNotTakenFlag   /// 1 if branch should be predicted not taken
-};
-
-//===----------------------------------------------------------------------===//
 /// MOTy - MachineOperandType - This namespace contains an enum that describes
 /// how the machine operand is used by the instruction: is it read, defined, or
 /// both?  Note that the MachineInstr/Operator class currently uses bool
@@ -389,10 +378,9 @@ public:
   ///
   MachineInstr(MachineBasicBlock *MBB, int Opcode, unsigned numOps);
   
-  /// Accessors for opcode and associated flags.
+  /// Accessors for opcode.
   ///
   const int getOpcode() const { return opCode; }
-  unsigned getOpCodeFlags() const { return opCodeFlags; }
 
   /// Access to explicit operands of the instruction.
   ///
