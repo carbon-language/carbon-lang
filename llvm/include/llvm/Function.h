@@ -158,7 +158,7 @@ public:
     inline IIty operator->() const { return operator*(); }
 
     inline bool operator==(const InstIterator &y) const { 
-      return BB == y.BB && (BI == y.BI || BB == BBs.end());
+      return BB == y.BB && (BB == BBs.end() || BI == y.BI);
     }
     inline bool operator!=(const InstIterator& y) const { 
       return !operator==(y);
