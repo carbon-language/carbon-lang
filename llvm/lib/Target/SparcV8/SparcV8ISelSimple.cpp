@@ -784,53 +784,80 @@ void V8ISel::visitCallInst(CallInst &I) {
   // Deal with args
   static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
     V8::O4, V8::O5 };
+  const unsigned *OAREnd = &OutgoingArgRegs[6];
   const unsigned *OAR = &OutgoingArgRegs[0];
+  unsigned ArgOffset = 68;
   for (unsigned i = 1; i < I.getNumOperands (); ++i) {
     unsigned ArgReg = getReg (I.getOperand (i));
-    if (i < 7) {
-      if (getClassB (I.getOperand (i)->getType ()) < cLong) {
-        // Schlep it over into the incoming arg register
-        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0)
-          .addReg (ArgReg);
-      } else if (getClassB (I.getOperand (i)->getType ()) == cFloat) {
-        // Single-fp args are passed in integer registers; go through
-        // memory to get them out of FP registers. (Bleh!)
-        unsigned FltAlign = TM.getTargetData().getFloatAlignment();
-        int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-        BuildMI (BB, V8::STFri, 3).addFrameIndex (FI).addSImm (0)
-          .addReg (ArgReg);
-        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI)
-          .addSImm (0);
-      } else if (getClassB (I.getOperand (i)->getType ()) == cDouble) {
-        // Double-fp args are passed in pairs of integer registers; go through
-        // memory to get them out of FP registers. (Bleh!)
-        assert (i <= 5 && "Can't deal with double-fp args past #5 yet");
-        unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
-        int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
-        BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0)
-          .addReg (ArgReg);
-        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI)
-          .addSImm (0);
-        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI)
-          .addSImm (4);
-      } else if (getClassB (I.getOperand (i)->getType ()) == cLong) {
-        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0)
-          .addReg (ArgReg);
-        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0)
-          .addReg (ArgReg+1);
+    if (i == 7 && extraStack)
+      BuildMI (BB, V8::ADJCALLSTACKDOWN, 1).addImm (extraStack);
+    if (getClassB (I.getOperand (i)->getType ()) < cLong) {
+      // Schlep it over into the incoming arg register
+      if (ArgOffset < 92) {
+	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
+	BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-        assert (0 && "Unknown class?!");
+	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg);
       }
+      ArgOffset += 4;
+    } else if (getClassB (I.getOperand (i)->getType ()) == cFloat) {
+      if (ArgOffset < 92) {
+	// Single-fp args are passed in integer registers; go through
+	// memory to get them out of FP registers. (Bleh!)
+	unsigned FltAlign = TM.getTargetData().getFloatAlignment();
+	int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
+	BuildMI (BB, V8::STFri, 3).addFrameIndex (FI).addSImm (0).addReg (ArgReg);
+	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
+	BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
+      } else {
+	BuildMI (BB, V8::STFri, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg);
+      }
+      ArgOffset += 4;
+    } else if (getClassB (I.getOperand (i)->getType ()) == cDouble) {
+      // Double-fp args are passed in pairs of integer registers; go through
+      // memory to get them out of FP registers. (Bleh!)
+      // We'd like to 'std' these right onto the outgoing-args area, but it might
+      // not be 8-byte aligned (e.g., call x(int x, double d)). sigh.
+      unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
+      int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
+      BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0).addReg (ArgReg);
+      if (ArgOffset < 92 && OAR != OAREnd) {
+	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
+	BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
+      } else {
+        unsigned TempReg = makeAnotherReg (Type::IntTy);
+	BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (0);
+	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (TempReg);
+      }
+      ArgOffset += 4;
+      if (ArgOffset < 92 && OAR != OAREnd) {
+	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
+	BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (4);
+      } else {
+        unsigned TempReg = makeAnotherReg (Type::IntTy);
+	BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (4);
+	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (TempReg);
+      }
+      ArgOffset += 4;
+    } else if (getClassB (I.getOperand (i)->getType ()) == cLong) {
+      // do the first half...
+      if (ArgOffset < 92) {
+	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
+	BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
+      } else {
+	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg);
+      }
+      ArgOffset += 4;
+      // ...then do the second half
+      if (ArgOffset < 92) {
+	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
+	BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg+1);
+      } else {
+	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg+1);
+      }
+      ArgOffset += 4;
     } else {
-      if (i == 7 && extraStack)
-        BuildMI (BB, V8::ADJCALLSTACKDOWN, 1).addImm (extraStack);
-      // Store arg into designated outgoing-arg stack slot
-      if (getClassB (I.getOperand (i)->getType ()) < cLong) {
-        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (64+4*i)
-          .addReg (ArgReg);
-      } else {
-        assert (0 && "can't push this kind of excess arg on stack yet");
-      }
+      assert (0 && "Unknown class?!");
     }
   }
 
