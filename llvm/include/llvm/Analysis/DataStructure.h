@@ -1,4 +1,4 @@
-//===- DataStructure.h - Build a Module's call graph -------------*- C++ -*--=//
+//===- DataStructure.h - Build data structure graphs -------------*- C++ -*--=//
 //
 // Implement the LLVM data structure analysis library.
 //
@@ -244,6 +244,10 @@ public:
 
   unsigned getNumArgs() const { return ArgLinks.size(); }
   const PointerValSet &getArgValues(unsigned ArgNo) const {
+    assert(ArgNo < ArgLinks.size() && "Arg # out of range!");
+    return ArgLinks[ArgNo];
+  }
+  PointerValSet &getArgValues(unsigned ArgNo) {
     assert(ArgNo < ArgLinks.size() && "Arg # out of range!");
     return ArgLinks[ArgNo];
   }
