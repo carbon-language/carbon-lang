@@ -6,7 +6,7 @@
 
 #include "llvm/CodeGen/LiveRangeInfo.h"
 #include "RegAllocCommon.h"
-#include "llvm/CodeGen/RegClass.h"
+#include "RegClass.h"
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -15,6 +15,8 @@
 #include "llvm/Function.h"
 #include "Support/SetOperations.h"
 using std::cerr;
+
+unsigned LiveRange::getRegClassID() const { return getRegClass()->getID(); }
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
 			     std::vector<RegClass *> &RCL)
@@ -93,7 +95,8 @@ LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
   LiveRangeMap[Def] = DefRange;           // and update the map.
 
   // set the register class of the new live range
-  DefRange->setRegClass(RegClassList[MRI.getRegClassIDOfValue(Def, isCC)]);
+  DefRange->setRegClass(RegClassList[MRI.getRegClassIDOfType(Def->getType(),
+                                                             isCC)]);
 
   if (DEBUG_RA >= RA_DEBUG_LiveRanges) {
     cerr << "  Creating a LR for def ";
@@ -280,7 +283,6 @@ void LiveRangeInfo::coalesceLRs()
 	      continue;
 
 	    if (MRI.getRegType(LROfDef) == MRI.getRegType(LROfUse)) {
-
 	      // If the two RegTypes are the same
 	      if (!RCOfDef->getInterference(LROfDef, LROfUse) ) {
 

@@ -6,8 +6,8 @@
 
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "RegAllocCommon.h"
+#include "RegClass.h"
 #include "llvm/CodeGen/IGNode.h"
-#include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
@@ -654,7 +654,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   MachineOperand& Op = MInst->getOperand(OpNum);
   bool isDef =  MInst->operandIsDefined(OpNum);
   bool isDefAndUse =  MInst->operandIsDefinedAndUsed(OpNum);
-  unsigned RegType = MRI.getRegType( LR );
+  unsigned RegType = MRI.getRegType(LR);
   int SpillOff = LR->getSpillOffFromFP();
   RegClass *RC = LR->getRegClass();
   const ValueSet &LVSetBef = LVI->getLiveVarSetBeforeMInst(MInst, BB);
@@ -888,7 +888,7 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC,
       if (MInst->getOperandType(OpNum) == MachineOperand::MO_VirtualRegister || 
           MInst->getOperandType(OpNum) == MachineOperand::MO_CCRegister)
         if (const Value* Val = Op.getVRegValue())
-          if (MRI.getRegClassIDOfValue(Val) == RC->getID())
+          if (MRI.getRegClassIDOfType(Val->getType()) == RC->getID())
             if (Op.getAllocatedRegNum() == -1)
               if (LiveRange *LROfVal = LRI.getLiveRangeForValue(Val))
                 if (LROfVal->hasColor() )
