@@ -176,11 +176,11 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   }
   
 
-#if 0
   // Recompute the Incomplete markers and eliminate unreachable nodes.
   Graph->maskIncompleteMarkers();
-  Graph->markIncompleteNodes(/*markFormals*/ ! F.hasInternalLinkage()
+  Graph->markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
+#if 0
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
 #endif
 
