@@ -2228,15 +2228,16 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               // float-to-int instructions to pass the value as an int.
               // To check if it is in teh first $K$, get the register
               // number for the arg #i.
-              int copyRegNum = regInfo.regNumForIntArg(false, false,
-                                                       argNo, regClassIDOfArgReg);
+              int copyRegNum = regInfo.regNumForIntArg(false, false, argNo,
+                                                       regClassIDOfArgReg);
               if (copyRegNum != regInfo.getInvalidRegNum()) {
                 // Create a virtual register to represent copyReg. Mark
                 // this vreg as being an implicit operand of the call MI
                 const Type* loadTy = (argType == Type::FloatTy
                                       ? Type::IntTy : Type::LongTy);
-                TmpInstruction* argVReg= new TmpInstruction(mcfi,loadTy,
-                                                            argVal, NULL, "argRegCopy");
+                TmpInstruction* argVReg = new TmpInstruction(mcfi, loadTy,
+                                                             argVal, NULL,
+                                                             "argRegCopy");
                 callMI->addImplicitRef(argVReg);
                         
                 // Get a temp stack location to use to copy
@@ -2251,22 +2252,23 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 int tmpOffset = MF.getInfo()->allocateLocalVar(argVReg);
                     
                 // Generate the store from FP reg to stack
-                M = BuildMI(ChooseStoreInstruction(argType), 3)
+                unsigned StoreOpcode = ChooseStoreInstruction(argType);
+                M = BuildMI(convertOpcodeFromRegToImm(StoreOpcode), 3)
                   .addReg(argVal).addMReg(regInfo.getFramePointer())
                   .addSImm(tmpOffset);
                 mvec.push_back(M);
                         
                 // Generate the load from stack to int arg reg
-                M = BuildMI(ChooseLoadInstruction(loadTy), 3)
+                unsigned LoadOpcode = ChooseLoadInstruction(loadTy);
+                M = BuildMI(convertOpcodeFromRegToImm(LoadOpcode), 3)
                   .addMReg(regInfo.getFramePointer()).addSImm(tmpOffset)
                   .addReg(argVReg, MOTy::Def);
 
                 // Mark operand with register it should be assigned
                 // both for copy and for the callMI
                 M->SetRegForOperand(M->getNumOperands()-1, copyRegNum);
-                callMI->SetRegForImplicitRef(
-                                             callMI->getNumImplicitRefs()-1, copyRegNum);
-
+                callMI->SetRegForImplicitRef(callMI->getNumImplicitRefs()-1,
+                                             copyRegNum);
                 mvec.push_back(M);
 
                 // Add info about the argument to the CallArgsDescriptor
