@@ -40,11 +40,9 @@ namespace {
 
             std::vector<llvm::BasicBlock*> bbv;
 
-            // The commented out calls below refer to non-existent creation
-            // functions.  They will be uncommented as the functions are added.
-
             (void) llvm::createAggressiveDCEPass();
             (void) llvm::createArgumentPromotionPass();
+            (void) llvm::createBlockProfilerPass();
             (void) llvm::createBreakCriticalEdgesPass();
             (void) llvm::createCFGSimplificationPass();
             (void) llvm::createCombineBranchesPass();
@@ -56,8 +54,10 @@ namespace {
             (void) llvm::createDeadInstEliminationPass();
             (void) llvm::createDeadStoreEliminationPass();
             (void) llvm::createDeadTypeEliminationPass();
+            (void) llvm::createEdgeProfilerPass();
             (void) llvm::createEmitFunctionTablePass();
             (void) llvm::createFunctionInliningPass();
+            (void) llvm::createFunctionProfilerPass();
             (void) llvm::createFunctionResolvingPass();
             (void) llvm::createGCSEPass();
             (void) llvm::createGlobalDCEPass();
@@ -74,11 +74,13 @@ namespace {
             (void) llvm::createLoopUnrollPass();
             (void) llvm::createLoopUnswitchPass();
             (void) llvm::createLowerAllocationsPass();
+            (void) llvm::createLowerConstantExpressionsPass();
             (void) llvm::createLowerGCPass();
             (void) llvm::createLowerInvokePass();
             (void) llvm::createLowerPackedPass();
             (void) llvm::createLowerSetJmpPass();
             (void) llvm::createLowerSwitchPass();
+            (void) llvm::createProfilePathsPass();
             (void) llvm::createPromoteMemoryToRegister();
             (void) llvm::createPruneEHPass();
             (void) llvm::createRaiseAllocationsPass();
@@ -89,6 +91,7 @@ namespace {
             (void) llvm::createSingleLoopExtractorPass();
             (void) llvm::createTailCallEliminationPass();
             (void) llvm::createTailDuplicationPass();
+            (void) llvm::createTraceBasicBlockPass();
             (void) llvm::createTraceValuesPassForBasicBlocks();
             (void) llvm::createTraceValuesPassForFunction();
         }

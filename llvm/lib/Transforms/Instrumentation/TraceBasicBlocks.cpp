@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Instructions.h"
 #include "ProfilingUtils.h"
 #include "llvm/Support/Debug.h"
@@ -31,6 +32,11 @@ namespace {
 
   RegisterOpt<TraceBasicBlocks> X("trace-basic-blocks",
                               "Insert instrumentation for basic block tracing");
+}
+
+ModulePass *llvm::createTraceBasicBlockPass()
+{
+	return new TraceBasicBlocks();
 }
 
 static void InsertInstrumentationCall (BasicBlock *BB,

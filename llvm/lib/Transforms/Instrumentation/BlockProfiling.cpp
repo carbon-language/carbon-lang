@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "ProfilingUtils.h"
 #include <iostream>
 
@@ -35,6 +36,11 @@ namespace {
 
   RegisterOpt<FunctionProfiler> X("insert-function-profiling",
                                "Insert instrumentation for function profiling");
+}
+
+ModulePass *llvm::createFunctionProfilerPass()
+{
+	return new FunctionProfiler();
 }
 
 bool FunctionProfiler::runOnModule(Module &M) {
@@ -76,6 +82,8 @@ namespace {
   RegisterOpt<BlockProfiler> Y("insert-block-profiling",
                                "Insert instrumentation for block profiling");
 }
+
+ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }
 
 bool BlockProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();

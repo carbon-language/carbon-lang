@@ -28,6 +28,20 @@ FunctionPass *createCombineBranchesPass();
 // Reoptimizer support pass: emit table of global functions
 ModulePass *createEmitFunctionTablePass ();
 
+// Reoptimizer support pass: insert function profiling instrumentation
+ModulePass *createFunctionProfilerPass();
+
+// Reoptimizer support pass: insert block profiling instrumentation
+ModulePass *createBlockProfilerPass();
+
+// Reoptimizer support pass: insert edge profiling instrumentation
+ModulePass *createEdgeProfilerPass();
+
+// Reoptimizer support pass: insert basic block tracing instrumentation
+ModulePass *createTraceBasicBlockPass();
+
+// Reoptimizer support pass: insert counting of execute paths instrumentation
+FunctionPass *createProfilePathsPass();
 
 //===----------------------------------------------------------------------===//
 // Support for inserting LLVM code to print values at basic block and function

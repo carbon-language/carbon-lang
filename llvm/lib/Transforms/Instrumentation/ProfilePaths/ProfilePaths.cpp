@@ -31,6 +31,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Constants.h"
@@ -55,6 +56,8 @@ struct ProfilePaths : public FunctionPass {
 };
 
 static RegisterOpt<ProfilePaths> X("paths", "Profile Paths");
+
+FunctionPass *createProfilePathsPass() { return new ProfilePaths(); }
 
 static Node *findBB(std::vector<Node *> &st, BasicBlock *BB){
   for(std::vector<Node *>::iterator si=st.begin(); si!=st.end(); ++si){
