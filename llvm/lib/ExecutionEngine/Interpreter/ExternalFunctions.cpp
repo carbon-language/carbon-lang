@@ -363,6 +363,12 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int clock(void) - Profiling implementation
+GenericValue lle_i_clock(MethodType *M, const vector<GenericValue> &Args) {
+  extern int clock(void);
+  GenericValue GV; GV.IntVal = clock();
+  return GV;
+}
 
 } // End extern "C"
 
@@ -401,4 +407,5 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
   FuncNames["lle_X_printf"]       = lle_X_printf;
   FuncNames["lle_X_sprintf"]      = lle_X_sprintf;
+  FuncNames["lle_i_clock"]        = lle_i_clock;
 }
