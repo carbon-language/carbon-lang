@@ -37,7 +37,7 @@ include/Config/config.h.in: autoconf/configure.ac autoconf/aclocal.m4
 
 install-includes:
 	$(MKDIR) $(includedir)/llvm
-	cd include && find * '!' '(' -name '*~' -o -name .cvsignore ')' -print | grep -v CVS | pax -rwdvpe $(includedir)/llvm
+	cd include && find * '!' '(' -name '*~' -o -name .cvsignore ')' -print | grep -v CVS | pax -rwdvpe $(DESTDIR)$(includedir)/llvm
 
 install:: install-includes
 
