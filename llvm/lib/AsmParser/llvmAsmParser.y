@@ -1295,8 +1295,6 @@ Module : FunctionList {
 //
 FunctionList : FunctionList Function {
     $$ = $1;
-    assert($2->getParent() == 0 && "Function already in module!");
-    $1->getFunctionList().push_back($2);
     CurFun.FunctionDone();
   } 
   | FunctionList FunctionProto {
@@ -1471,18 +1469,13 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
     if (!CurFun.isDeclare && !Fn->isExternal())
       ThrowException("Redefinition of function '" + FunctionName + "'!");
     
-    // If we found a preexisting function prototype, remove it from the
-    // module, so that we don't get spurious conflicts with global & local
-    // variables.
-    //
-    CurModule.CurrentModule->getFunctionList().remove(Fn);
-
     // Make sure to strip off any argument names so we can't get conflicts...
     for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend(); AI != AE; ++AI)
       AI->setName("");
 
   } else  {  // Not already defined?
-    Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName);
+    Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
+                      CurModule.CurrentModule);
     InsertValue(Fn, CurModule.Values);
     CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
   }
@@ -1534,8 +1527,6 @@ Function : BasicBlockList END {
 
 FunctionProto : DECLARE { CurFun.isDeclare = true; } FunctionHeaderH {
   $$ = CurFun.CurrentFunction;
-  assert($$->getParent() == 0 && "Function already in module!");
-  CurModule.CurrentModule->getFunctionList().push_back($$);
   CurFun.FunctionDone();
 };
 
