@@ -10,6 +10,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
+#include "llvm/CodeGen/FunctionFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
@@ -39,7 +41,7 @@ namespace {
     }
     
     bool runOnFunction(Function &F) {
-      MachineFunction::construct(&F, Target).CalculateArgSize();
+      MachineFunction::construct(&F, Target).getInfo()->CalculateArgSize();
       return false;
     }
   };
@@ -95,25 +97,27 @@ Pass *createMachineFunctionPrinterPass() {
 //===---------------------------------------------------------------------===//
 
 MachineFunction::MachineFunction(const Function *F,
-                                 const TargetMachine& target)
-  : Annotation(MF_AID), Fn(F), Target(target) {
+                                 const TargetMachine &TM)
+  : Annotation(MF_AID), Fn(F), Target(TM) {
   SSARegMapping = new SSARegMap();
-
-  // FIXME: move state into another class
-  staticStackSize = automaticVarsSize = regSpillsSize = 0;
-  maxOptionalArgsSize = maxOptionalNumArgs = currentTmpValuesSize = 0;
-  maxTmpValuesSize = 0;
-  compiledAsLeaf = spillsAreaFrozen = automaticVarsAreaFrozen = false;
+  MFInfo = new MachineFunctionInfo(*this);
+  FrameInfo = new FunctionFrameInfo();
 }
 
 MachineFunction::~MachineFunction() { 
   delete SSARegMapping;
+  delete MFInfo;
+  delete FrameInfo;
 }
 
 void MachineFunction::dump() const { print(std::cerr); }
 
 void MachineFunction::print(std::ostream &OS) const {
-  OS << "\n" << *(Value*)Fn->getReturnType() << " \"" << Fn->getName()<< "\"\n";
+  OS << "\n" << *(Value*)Fn->getFunctionType() << " \"" << Fn->getName()
+     << "\"\n";
+
+  // Print Frame Information
+  getFrameInfo()->print(OS);
   
   for (const_iterator BB = begin(); BB != end(); ++BB) {
     BasicBlock *LBB = BB->getBasicBlock();
@@ -163,12 +167,48 @@ void MachineFunction::clearSSARegMap() {
   SSARegMapping = 0;
 }
 
+//===----------------------------------------------------------------------===//
+//  FunctionFrameInfo implementation
+//===----------------------------------------------------------------------===//
+
+void FunctionFrameInfo::print(std::ostream &OS) const {
+  for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
+    const StackObject &SO = Objects[i];
+    OS << "  <fi# " << (int)(i-NumFixedObjects) << "> is ";
+    if (SO.Size == 0)
+      OS << "variable sized";
+    else
+      OS << SO.Size << " byte" << (SO.Size != 1 ? "s" : " ");
+    
+    if (i < NumFixedObjects)
+      OS << " fixed";
+    if (i < NumFixedObjects || SO.SPOffset != -1) {
+      OS << " at location [SP";
+      if (SO.SPOffset > 0)
+	OS << "+" << SO.SPOffset;
+      else if (SO.SPOffset < 0)
+	OS << SO.SPOffset;
+      OS << "]";
+    }
+    OS << "\n";
+  }
+
+  if (HasVarSizedObjects)
+    OS << "  Stack frame contains variable sized objects\n";
+}
+
+void FunctionFrameInfo::dump() const { print(std::cerr); }
+
+
+//===----------------------------------------------------------------------===//
+//  MachineFunctionInfo implementation
+//===----------------------------------------------------------------------===//
 
 static unsigned
 ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
                            unsigned &maxOptionalNumArgs)
 {
-  const MachineFrameInfo& frameInfo = target.getFrameInfo();
+  const TargetFrameInfo &frameInfo = target.getFrameInfo();
   
   unsigned maxSize = 0;
   
@@ -181,7 +221,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
           if (numExtra <= 0)
             continue;
           
-          unsigned int sizeForThisCall;
+          unsigned sizeForThisCall;
           if (frameInfo.argsOnStackHaveFixedSize())
             {
               int argSize = frameInfo.getSizeOfEachArgOnStack(); 
@@ -194,7 +234,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
                      "compute MaxOptionalArgsSize");
               sizeForThisCall = 0;
               for (unsigned i = 0; i < numOperands; ++i)
-                sizeForThisCall += target.DataLayout.getTypeSize(callInst->
+                sizeForThisCall += target.getTargetData().getTypeSize(callInst->
                                               getOperand(i)->getType());
             }
           
@@ -217,52 +257,51 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
 // but they are unrelated.  This one does not align at more than a
 // double-word boundary whereas that one might.
 // 
-inline unsigned int
-SizeToAlignment(unsigned int size, const TargetMachine& target)
+inline unsigned
+SizeToAlignment(unsigned size, const TargetMachine& target)
 {
   unsigned short cacheLineSize = target.getCacheInfo().getCacheLineSize(1); 
   if (size > (unsigned) cacheLineSize / 2)
     return cacheLineSize;
   else
     for (unsigned sz=1; /*no condition*/; sz *= 2)
-      if (sz >= size || sz >= target.DataLayout.getDoubleAlignment())
+      if (sz >= size || sz >= target.getTargetData().getDoubleAlignment())
         return sz;
 }
 
 
-void MachineFunction::CalculateArgSize() {
-  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(Target, Fn,
+void MachineFunctionInfo::CalculateArgSize() {
+  maxOptionalArgsSize = ComputeMaxOptionalArgsSize(MF.getTarget(),
+						   MF.getFunction(),
                                                    maxOptionalNumArgs);
   staticStackSize = maxOptionalArgsSize
-    + Target.getFrameInfo().getMinStackFrameSize();
+    + MF.getTarget().getFrameInfo().getMinStackFrameSize();
 }
 
 int
-MachineFunction::computeOffsetforLocalVar(const TargetMachine& target,
-                                               const Value* val,
-                                               unsigned int& getPaddedSize,
-                                               unsigned int  sizeToUse)
+MachineFunctionInfo::computeOffsetforLocalVar(const Value* val,
+					      unsigned &getPaddedSize,
+					      unsigned  sizeToUse)
 {
   if (sizeToUse == 0)
-    sizeToUse = target.findOptimalStorageSize(val->getType());
-  unsigned int align = SizeToAlignment(sizeToUse, target);
+    sizeToUse = MF.getTarget().findOptimalStorageSize(val->getType());
+  unsigned align = SizeToAlignment(sizeToUse, MF.getTarget());
 
   bool growUp;
-  int firstOffset = target.getFrameInfo().getFirstAutomaticVarOffset(*this,
-                                                                     growUp);
+  int firstOffset = MF.getTarget().getFrameInfo().getFirstAutomaticVarOffset(MF,
+									     growUp);
   int offset = growUp? firstOffset + getAutomaticVarsSize()
                      : firstOffset - (getAutomaticVarsSize() + sizeToUse);
 
-  int aligned = target.getFrameInfo().adjustAlignment(offset, growUp, align);
+  int aligned = MF.getTarget().getFrameInfo().adjustAlignment(offset, growUp, align);
   getPaddedSize = sizeToUse + abs(aligned - offset);
 
   return aligned;
 }
 
 int
-MachineFunction::allocateLocalVar(const TargetMachine& target,
-                                       const Value* val,
-                                       unsigned int sizeToUse)
+MachineFunctionInfo::allocateLocalVar(const Value* val,
+				      unsigned sizeToUse)
 {
   assert(! automaticVarsAreaFrozen &&
          "Size of auto vars area has been used to compute an offset so "
@@ -273,8 +312,8 @@ MachineFunction::allocateLocalVar(const TargetMachine& target,
   int offset = getOffset(val);
   if (offset == INVALID_FRAME_OFFSET)
     {
-      unsigned int getPaddedSize;
-      offset = computeOffsetforLocalVar(target, val, getPaddedSize, sizeToUse);
+      unsigned getPaddedSize;
+      offset = computeOffsetforLocalVar(val, getPaddedSize, sizeToUse);
       offsets[val] = offset;
       incrementAutomaticVarsSize(getPaddedSize);
     }
@@ -282,23 +321,22 @@ MachineFunction::allocateLocalVar(const TargetMachine& target,
 }
 
 int
-MachineFunction::allocateSpilledValue(const TargetMachine& target,
-                                           const Type* type)
+MachineFunctionInfo::allocateSpilledValue(const Type* type)
 {
   assert(! spillsAreaFrozen &&
          "Size of reg spills area has been used to compute an offset so "
          "no more register spill slots should be allocated!");
   
-  unsigned int size  = target.DataLayout.getTypeSize(type);
-  unsigned char align = target.DataLayout.getTypeAlignment(type);
+  unsigned size  = MF.getTarget().getTargetData().getTypeSize(type);
+  unsigned char align = MF.getTarget().getTargetData().getTypeAlignment(type);
   
   bool growUp;
-  int firstOffset = target.getFrameInfo().getRegSpillAreaOffset(*this, growUp);
+  int firstOffset = MF.getTarget().getFrameInfo().getRegSpillAreaOffset(MF, growUp);
   
   int offset = growUp? firstOffset + getRegSpillsSize()
                      : firstOffset - (getRegSpillsSize() + size);
 
-  int aligned = target.getFrameInfo().adjustAlignment(offset, growUp, align);
+  int aligned = MF.getTarget().getFrameInfo().adjustAlignment(offset, growUp, align);
   size += abs(aligned - offset); // include alignment padding in size
   
   incrementRegSpillsSize(size);  // update size of reg. spills area
@@ -307,18 +345,18 @@ MachineFunction::allocateSpilledValue(const TargetMachine& target,
 }
 
 int
-MachineFunction::pushTempValue(const TargetMachine& target,
-                                    unsigned int size)
+MachineFunctionInfo::pushTempValue(unsigned size)
 {
-  unsigned int align = SizeToAlignment(size, target);
+  unsigned align = SizeToAlignment(size, MF.getTarget());
 
   bool growUp;
-  int firstOffset = target.getFrameInfo().getTmpAreaOffset(*this, growUp);
+  int firstOffset = MF.getTarget().getFrameInfo().getTmpAreaOffset(MF, growUp);
 
   int offset = growUp? firstOffset + currentTmpValuesSize
                      : firstOffset - (currentTmpValuesSize + size);
 
-  int aligned = target.getFrameInfo().adjustAlignment(offset, growUp, align);
+  int aligned = MF.getTarget().getFrameInfo().adjustAlignment(offset, growUp,
+							      align);
   size += abs(aligned - offset); // include alignment padding in size
 
   incrementTmpAreaSize(size);    // update "current" size of tmp area
@@ -326,14 +364,12 @@ MachineFunction::pushTempValue(const TargetMachine& target,
   return aligned;
 }
 
-void
-MachineFunction::popAllTempValues(const TargetMachine& target)
-{
+void MachineFunctionInfo::popAllTempValues() {
   resetTmpAreaSize();            // clear tmp area to reuse
 }
 
 int
-MachineFunction::getOffset(const Value* val) const
+MachineFunctionInfo::getOffset(const Value* val) const
 {
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   return (pair == offsets.end()) ? INVALID_FRAME_OFFSET : pair->second;
