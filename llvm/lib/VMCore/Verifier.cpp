@@ -8,7 +8,7 @@
 //
 //  * Both of a binary operator's parameters are the same type
 //  * Verify that the indices of mem access instructions match other operands
-//  . Verify that arithmetic and other things are only performed on first class
+//  * Verify that arithmetic and other things are only performed on first class
 //    types.  Verify that shifts & logicals only happen on integrals f.e.
 //  . All of the constants in a switch statement are of the correct type
 //  * The code is in valid SSA form
@@ -39,6 +39,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/iOperators.h"
 #include "llvm/iMemory.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/PassManager.h"
@@ -101,6 +102,7 @@ namespace {  // Anonymous namespace for class
     void visitBasicBlock(BasicBlock &BB);
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
+    void visitShiftInst(ShiftInst &SI);
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
     void visitLoadInst(LoadInst &LI);
@@ -313,12 +315,44 @@ void Verifier::visitCallInst(CallInst &CI) {
 // of the same type!
 //
 void Verifier::visitBinaryOperator(BinaryOperator &B) {
-  Assert2(B.getOperand(0)->getType() == B.getOperand(1)->getType(),
-          "Both operands to a binary operator are not of the same type!",
-          B.getOperand(0), B.getOperand(1));
+  Assert1(B.getOperand(0)->getType() == B.getOperand(1)->getType(),
+          "Both operands to a binary operator are not of the same type!", &B);
 
+  // Check that logical operators are only used with integral operands.
+  if (B.getOpcode() == Instruction::And || B.getOpcode() == Instruction::Or ||
+      B.getOpcode() == Instruction::Xor) {
+    Assert1(B.getType()->isIntegral(),
+            "Logical operators only work with integral types!", &B);
+    Assert1(B.getType() == B.getOperand(0)->getType(),
+            "Logical operators must have same type for operands and result!",
+            &B);
+  } else if (isa<SetCondInst>(B)) {
+    // Check that setcc instructions return bool
+    Assert1(B.getType() == Type::BoolTy,
+            "setcc instructions must return boolean values!", &B);
+  } else {
+    // Arithmetic operators only work on integer or fp values
+    Assert1(B.getType() == B.getOperand(0)->getType(),
+            "Arithmetic operators must have same type for operands and result!",
+            &B);
+    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint(),
+            "Arithmetic oeprators must have integer or fp type!", &B);
+  }
+  
   visitInstruction(B);
 }
+
+void Verifier::visitShiftInst(ShiftInst &SI) {
+  Assert1(SI.getType()->isInteger(),
+          "Shift must return an integer result!", &SI);
+  Assert1(SI.getType() == SI.getOperand(0)->getType(),
+          "Shift return type must be same as first operand!", &SI);
+  Assert1(SI.getOperand(1)->getType() == Type::UByteTy,
+          "Second operand to shift must be ubyte type!", &SI);
+  visitInstruction(SI);
+}
+
+
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   const Type *ElTy =
@@ -350,7 +384,8 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 // verifyInstruction - Verify that an instruction is well formed.
 //
 void Verifier::visitInstruction(Instruction &I) {
-  Assert1(I.getParent(), "Instruction not embedded in basic block!", &I);
+  BasicBlock *BB = I.getParent();  
+  Assert1(BB, "Instruction not embedded in basic block!", &I);
 
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.  If the use is not an
@@ -390,13 +425,17 @@ void Verifier::visitInstruction(Instruction &I) {
           // Make sure that I dominates the end of pred(i)
           BasicBlock *Pred = PN->getIncomingBlock(i);
           
-          Assert2(DS->dominates(I.getParent(), Pred), 
+          // Use must be dominated by by definition unless use is unreachable!
+          Assert2(DS->dominates(BB, Pred) ||
+                  !DS->dominates(&BB->getParent()->getEntryNode(), Pred),
                   "Instruction does not dominate all uses!",
                   &I, PN);
         }
 
     } else {
-      Assert2(DS->dominates(&I, Use),
+      // Use must be dominated by by definition unless use is unreachable!
+      Assert2(DS->dominates(&I, Use) ||
+              !DS->dominates(&BB->getParent()->getEntryNode(),Use->getParent()),
               "Instruction does not dominate all uses!", &I, Use);
     }
   }
