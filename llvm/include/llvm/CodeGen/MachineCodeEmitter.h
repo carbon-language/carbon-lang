@@ -16,6 +16,7 @@ class MachineBasicBlock;
 class MachineConstantPool;
 class Value;
 class GlobalValue;
+class Function;
 
 struct MachineCodeEmitter {
   virtual ~MachineCodeEmitter() {}
