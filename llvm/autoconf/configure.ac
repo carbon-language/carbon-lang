@@ -409,7 +409,8 @@ dnl=== SECTION 8: Check for specific functions needed
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-AC_CHECK_FUNCS([backtrace getcwd gettimeofday isatty getrusage mkstemp]) 
+AC_CHECK_FUNCS([backtrace getcwd gettimeofday isatty getrusage mkstemp mktemp
+                mkdtemp realpath]) 
 AC_CHECK_FUNCS([strdup strtoq strtoll])
 AC_C_PRINTF_A
 AC_FUNC_ALLOCA
