@@ -7,12 +7,34 @@
 #           regressions and performance changes.  This generates one web page a
 #           day which can be used to access this information.
 #
-# Syntax:   NightlyTest.pl <CVSRootDir> <BuildDir> <WebDir>
+# Syntax:   NightlyTest.pl [OPTIONS] [CVSROOT BUILDDIR WEBDIR]
+#   where
+# OPTIONS may include one or more of the following:
+#  -nocheckout      Do not create, checkout, update, or configure
+#                   the source tree.
+#  -noremove        Do not remove the BUILDDIR after it has been built.
+#  -notest          Do not even attempt to run the test programs. Implies
+#                   -norunningtests.
+#  -norunningtests  Do not run the Olden benchmark suite with
+#                   LARGE_PROBLEM_SIZE enabled.
+#  -parallel        Run two parallel jobs with GNU Make.
+# CVSROOT is the CVS repository from which the tree will be checked out,
+#  specified either in the full :method:user@host:/dir syntax, or
+#  just /dir if using a local repo.
+# BUILDDIR is the directory where sources for this test run will be checked out
+#  AND objects for this test run will be built. This directory MUST NOT
+#  exist before the script is run; it will be created by the cvs checkout
+#  process and erased (unless -noremove is specified; see above.)
+# WEBDIR is the directory into which the test results web page will be written,
+#  AND in which the "index.html" is assumed to be a symlink to the most recent
+#  copy of the results. This directory MUST exist before the script is run.
 #
 use POSIX qw(strftime);
 
-my $HOME = $ENV{HOME};
-my $CVSRootDir = "/home/vadve/vadve/Research/DynOpt/CVSRepository";
+my $HOME = $ENV{'HOME'};
+my $CVSRootDir = $ENV{'CVSROOT'};
+my $CVSRootDir = "/home/vadve/vadve/Research/DynOpt/CVSRepository"
+    unless $CVSRootDir;
 my $BuildDir   = "$HOME/buildtest";
 my $WebDir     = "$HOME/cvs/testresults-X86";
 
@@ -96,6 +118,7 @@ my $NOTEST     = 0;
 my $NORUNNINGTESTS = 0;
 my $MAKEOPTS   = "";
 
+
 # Parse arguments...
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
@@ -142,7 +165,9 @@ chdir $BuildDir or die "Could not change to CVS checkout directory $BuildDir!";
 #
 # Check out the llvm tree, saving CVS messages to the cvs log...
 #
-system "(time -p cvs -d $CVSRootDir co llvm) > $Prefix-CVS-Log.txt 2>&1"
+$CVSOPT = "";
+$CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/; # Use compression if going over ssh.
+system "(time -p cvs $CVSOPT -d $CVSRootDir co llvm) > $Prefix-CVS-Log.txt 2>&1"
   if (!$NOCHECKOUT);
 
 chdir "llvm" or die "Could not change into llvm directory!";
@@ -455,15 +480,15 @@ AddRecord($BuildTime, "running_build_time.txt");
 #
 # Rebuild the graphs now...
 #
-system "/usr/dcs/software/supported/bin/gnuplot " .
-       "$BuildDir/llvm/utils/NightlyTest.gnuplot";
+$GNUPLOT = "/usr/dcs/software/supported/bin/gnuplot";
+$GNUPLOT = "gnuplot" if ! -x $GNUPLOT;
+$PlotScriptFilename = "$BuildDir/llvm/utils/NightlyTest.gnuplot";
+system ($GNUPLOT, $PlotScriptFilename);
 
 #
 # Remove the cvs tree...
 #
 system "rm -rf $BuildDir" if (!$NOCHECKOUT and !$NOREMOVE);
-
-
 
 #
 # Print out information...
@@ -477,7 +502,6 @@ if (0) {
   print "Libraries/Executables/Objects built: $NumLibraries/$NumExecutables/$NumObjects\n";
 
   print "WARNINGS:\n  $WarningsList\n";
-
 
   print "Users committed: $UserCommitList\n";
   print "Added Files: \n  $AddedFilesList\n";
