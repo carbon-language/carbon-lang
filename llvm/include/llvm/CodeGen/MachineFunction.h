@@ -26,13 +26,10 @@ namespace llvm {
 
 class Function;
 class TargetMachine;
-class FunctionPass;
 class SSARegMap;
 class MachineFunctionInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
-
-FunctionPass *createMachineFunctionPrinterPass();
 
 class MachineFunction : private Annotation {
   const Function *Fn;
@@ -103,7 +100,6 @@ public:
   // get()       -- Returns a handle to the object.
   //                This should not be called before "construct()"
   //                for a given Method.
-  // destruct()  -- Destroy the MachineFunction object
   // 
   static MachineFunction& construct(const Function *F, const TargetMachine &TM);
   static void destruct(const Function *F);
