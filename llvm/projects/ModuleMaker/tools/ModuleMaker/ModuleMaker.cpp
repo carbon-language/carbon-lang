@@ -11,6 +11,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Bytecode/Writer.h"
+#include <iostream>
 
 using namespace llvm;
 
