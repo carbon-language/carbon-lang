@@ -315,12 +315,17 @@ void PhyRegAlloc::buildInterferenceGraphs()
 
 void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 
+  bool setInterf = false;
+
   // iterate over  MI operands to find defs
   for( MachineInstr::val_op_const_iterator It1(MInst);!It1.done(); ++It1) {
     
     const LiveRange *const LROfOp1 = LRI.getLiveRangeForValue( *It1 ); 
 
-    if( !LROfOp1 ) continue;
+    if( !LROfOp1 && It1.isDef() )
+      assert( 0 && "No LR for Def in PSEUDO insruction");
+
+    //if( !LROfOp1 ) continue;
 
     MachineInstr::val_op_const_iterator It2 = It1;
     ++It2;
@@ -337,13 +342,22 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
 	if( RCOfOp1 == RCOfOp2 ){ 
 	  RCOfOp1->setInterference( LROfOp1, LROfOp2 );  
 	  //cerr << "\nSet interfs for PSEUDO inst: " << *MInst;
+	  setInterf = true;
 	}
+
 
       } // if Op2 has a LR
 
     } // for all other defs in machine instr
 
   } // for all operands in an instruction
+
+  if( !setInterf && (MInst->getNumOperands() > 2) ) {
+    cerr << "\nInterf not set for any operand in pseudo instr:\n";
+    cerr << *MInst;
+    assert(0 && "Interf not set for pseudo instr with > 2 operands" );
+    
+  }
 
 } 
 
@@ -674,7 +688,7 @@ int PhyRegAlloc::getUsableRegAtMI(RegClass *RC,
   Reg = MRI.getUnifiedRegNum(RC->getID(), Reg);
 
   if( Reg != -1) {
-    // we found an unused register, so we can simply used
+    // we found an unused register, so we can simply use it
     MIBef = MIAft = NULL;
   }
   else {
@@ -751,7 +765,7 @@ int PhyRegAlloc::getUnusedRegAtMI(RegClass *RC,
 //----------------------------------------------------------------------------
 // This method modifies the IsColorUsedArr of the register class passed to it.
 // It sets the bits corresponding to the registers used by this machine
-// instructions. Explicit operands are set.
+// instructions. Both explicit and implicit operands are set.
 //----------------------------------------------------------------------------
 void PhyRegAlloc::setRegsUsedByThisInst(RegClass *RC, 
 				       const MachineInstr *MInst ) {
@@ -763,17 +777,30 @@ void PhyRegAlloc::setRegsUsedByThisInst(RegClass *RC,
    const MachineOperand& Op = MInst->getOperand(OpNum);
 
     if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
-	Op.getOperandType() ==  MachineOperand::MO_CCRegister) {
+	Op.getOperandType() ==  MachineOperand::MO_CCRegister ) {
 
       const Value *const Val =  Op.getVRegValue();
 
       if( !Val ) 
 	if( MRI.getRegClassIDOfValue( Val )== RC->getID() ) {   
 	  int Reg;
-	  if( (Reg=Op.getAllocatedRegNum()) != -1)
+	  if( (Reg=Op.getAllocatedRegNum()) != -1) {
 	    IsColorUsedArr[ Reg ] = true;
+	  }
+	  else {
+	    // it is possilbe that this operand still is not marked with
+	    // a register but it has a LR and that received a color
+
+	    LiveRange *LROfVal =  LRI.getLiveRangeForValue(Val);
+	    if( LROfVal) 
+	      if( LROfVal->hasColor() )
+		IsColorUsedArr[ LROfVal->getColor() ] = true;
+	  }
 	
-	}
+	} // if reg classes are the same
+    }
+    else if (Op.getOperandType() ==  MachineOperand::MO_MachineRegister) {
+      IsColorUsedArr[ Op.getMachineRegNum() ] = true;
     }
  }
  
@@ -1168,7 +1195,7 @@ void PhyRegAlloc::allocateRegisters()
     printMachineCode();                   // only for DEBUGGING
   }
 
-  // char ch;
+  //char ch;
   //cin >> ch;
 
 }
