@@ -350,8 +350,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   case Instruction::GetElementPtr: {
     vector<Value*> Idx;
     if (!isa<PointerType>(Raw.Ty)) return failure(true);
-    const CompositeType *TopTy =
-      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getElementType());
+    const CompositeType *TopTy = dyn_cast<CompositeType>(Raw.Ty);
 
     switch (Raw.NumOperands) {
     case 0: cerr << "Invalid load encountered!\n"; return failure(true);
@@ -366,7 +365,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       Idx.push_back(V = getValue(TopTy->getIndexType(), Raw.Arg2));
       if (!V) return failure(true);
 
-      const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+      const Type *ETy = MemAccessInst::getIndexedType(TopTy, Idx, true);
       const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
       if (!ElTy) return failure(true);
 
@@ -404,8 +403,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   case Instruction::Store: {
     vector<Value*> Idx;
     if (!isa<PointerType>(Raw.Ty)) return failure(true);
-    const CompositeType *TopTy =
-      dyn_cast<CompositeType>(cast<PointerType>(Raw.Ty)->getElementType());
+    const CompositeType *TopTy = dyn_cast<CompositeType>(Raw.Ty);
 
     switch (Raw.NumOperands) {
     case 0: 
@@ -418,13 +416,18 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       break;
     default:
       vector<unsigned> &args = *Raw.VarArgs;
-      for (unsigned i = 0, E = args.size(); i != E; ++i) {
-        const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
-        const CompositeType *ElTy = dyn_cast_or_null<CompositeType>(ETy);
-        if (!ElTy) return failure(true);
+      const CompositeType *ElTy = TopTy;
+      unsigned i, E;
+      for (i = 0, E = args.size(); ElTy && i != E; ++i) {
 	Idx.push_back(V = getValue(ElTy->getIndexType(), args[i]));
 	if (!V) return failure(true);
+
+        const Type *ETy = MemAccessInst::getIndexedType(Raw.Ty, Idx, true);
+        ElTy = dyn_cast_or_null<CompositeType>(ETy);
       }
+      if (i != E)
+        return failure(true);  // didn't use up all of the indices!
+
       delete Raw.VarArgs; 
       break;
     }
