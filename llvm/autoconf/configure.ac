@@ -93,6 +93,13 @@ then
 	AC_MSG_ERROR([g++ required but not found])
 fi
 
+dnl Verify that GCC is version 3.0 or higher
+gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
+if test "$gccmajor" -lt "3"
+then
+	AC_MSG_ERROR([gcc 3.x required])
+fi
+
 dnl Check for GNU Make.  We use its extensions to, so don't build without it
 CHECK_GNU_MAKE
 if test -z "$_cv_gnu_make_command"
@@ -108,6 +115,7 @@ dnl Check for libtool
 AC_PROG_LIBTOOL
 
 dnl Check for our special programs
+AC_PATH_PROG(RPWD,[pwd])
 AC_PATH_PROG(AR,[ar])
 AC_PATH_PROG(SED,[sed])
 AC_PATH_PROG(RM,[rm])
@@ -118,6 +126,26 @@ AC_PATH_PROG(MV,[mv])
 AC_PATH_PROG(DOT,[dot])
 AC_PATH_PROG(ETAGS,[etags])
 AC_PATH_PROG(PURIFY,[purify])
+AC_PATH_PROG(PYTHON,[python])
+AC_PATH_PROG(QMTEST,[qmtest])
+
+dnl Verify that the version of python available is high enough for qmtest
+pyversion=`$PYTHON -V 2>&1 | cut -d\  -f2`
+pymajor=`echo $pyversion | cut -d. -f1`
+pyminor=`echo $pyversion | cut -d. -f2`
+
+if test "$pymajor" -ge "2"
+then
+	if test "$pymajor" -eq "2"
+	then
+		if test "$pyminor" -lt "2"
+		then
+			AC_MSG_ERROR([Python 2.2 or greater required])
+		fi
+	fi
+else
+	AC_MSG_ERROR([Python 2.2 or greater required])
+fi
 
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.config.in"])
@@ -324,6 +352,10 @@ else
 fi
 
 AC_ARG_WITH(objroot,AC_HELP_STRING([--with-objroot],[Location where object files should be placed (default is .)]),AC_SUBST(OBJROOT,[$withval]))
+
+dnl **************************************************************************
+dnl * Configure other software packages (via AC_CONFIG_SUBDIRS)
+dnl **************************************************************************
 
 dnl **************************************************************************
 dnl * Create the output files
