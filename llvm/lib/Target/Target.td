@@ -170,6 +170,12 @@ class InstrInfo {
   //
   list<string> TSFlagsFields = [];
   list<int>    TSFlagsShifts = [];
+
+  // Target can specify its instructions in either big or little-endian formats.
+  // For instance, while both Sparc and PowerPC are big-endian platforms, the
+  // Sparc manual specifies its instructions in the format [31..0] (big), while
+  // PowerPC specifies them using the format [0..31] (little).
+  bit isLittleEndianEncoding = 0;
 }
 
 //===----------------------------------------------------------------------===//
