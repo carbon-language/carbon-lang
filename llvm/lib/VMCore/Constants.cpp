@@ -106,9 +106,7 @@ ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
   case Type::UIntTyID:
   case Type::ULongTyID:  return getAllOnesValue(Ty);
 
-  default:
-    assert(0 && "Non-integral type specified!");
-    return 0;
+  default: return 0;
   }
 }
 
@@ -132,9 +130,7 @@ ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
   case Type::UIntTyID:
   case Type::ULongTyID:  return ConstantUInt::get(Ty, 0);
 
-  default:
-    assert(0 && "Non-integral type specified!");
-    return 0;
+  default: return 0;
   }
 }
 
@@ -157,9 +153,7 @@ ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
     return ConstantUInt::get(Ty, Val);
   }
-  default:
-    assert(0 && "Non-integral type specified!");
-    return 0;
+  default: return 0;
   }
 }
 
