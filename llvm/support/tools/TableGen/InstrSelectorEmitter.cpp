@@ -55,8 +55,8 @@ bool TreePatternNode::updateNodeType(MVT::ValueType VT,
 ///
 void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
   if (!isLeaf()) {
-    for (unsigned i = 0, e = Children.size(); i != e; ++i)
-      Children[i]->InstantiateNonterminals(ISE);
+    for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+      getChild(i)->InstantiateNonterminals(ISE);
     return;
   }
   
@@ -82,9 +82,10 @@ TreePatternNode *TreePatternNode::clone() const {
   if (isLeaf()) {
     New = new TreePatternNode(Value);
   } else {
-    std::vector<TreePatternNode*> CChildren(Children.size());
-    for (unsigned i = 0, e = Children.size(); i != e; ++i)
-      CChildren[i] = Children[i]->clone();
+    std::vector<std::pair<TreePatternNode*, std::string> > CChildren;
+    CChildren.reserve(Children.size());
+    for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+      CChildren.push_back(std::make_pair(getChild(i)->clone(),getChildName(i)));
     New = new TreePatternNode(Operator, CChildren);
   }
   New->setType(Type);
@@ -97,11 +98,10 @@ std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
   OS << "(" << N.getType() << ":";
   OS << N.getOperator()->getName();
   
-  const std::vector<TreePatternNode*> &Children = N.getChildren();
-  if (!Children.empty()) {
-    OS << " " << *Children[0];
-    for (unsigned i = 1, e = Children.size(); i != e; ++i)
-      OS << ", " << *Children[i];
+  if (N.getNumChildren() != 0) {
+    OS << " " << *N.getChild(0);
+    for (unsigned i = 1, e = N.getNumChildren(); i != e; ++i)
+      OS << ", " << *N.getChild(i);
   }  
   return OS << ")";
 }
@@ -133,13 +133,15 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
 
     // Check to see if we have a top-level (set) of a register.
     if (Tree->getOperator()->getName() == "set") {
-      assert(Tree->getChildren().size() == 2 && "Set with != 2 arguments?");
+      assert(Tree->getNumChildren() == 2 && "Set with != 2 arguments?");
       if (!Tree->getChild(0)->isLeaf())
         error("Arg #0 of set should be a register or register class!");
       Result = Tree->getChild(0)->getValueRecord();
       Tree = Tree->getChild(1);
     }
   }
+
+  calculateArgs(Tree, "");
 }
 
 void Pattern::error(const std::string &Msg) const {
@@ -150,6 +152,19 @@ void Pattern::error(const std::string &Msg) const {
   case Expander   : M += "expander "; break;
   }
   throw M + TheRecord->getName() + ": " + Msg;  
+}
+
+/// calculateArgs - Compute the list of all of the arguments to this pattern,
+/// which are the non-void leaf nodes in this pattern.
+///
+void Pattern::calculateArgs(TreePatternNode *N, const std::string &Name) {
+  if (N->isLeaf() || N->getNumChildren() == 0) {
+    if (N->getType() != MVT::isVoid)
+      Args.push_back(std::make_pair(N, Name));
+  } else {
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+      calculateArgs(N->getChild(i), N->getChildName(i));
+  }
 }
 
 /// getIntrinsicType - Check to see if the specified record has an intrinsic
@@ -199,12 +214,13 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
   if (!ISE.getNodeTypes().count(Operator))
     error("Unrecognized node '" + Operator->getName() + "'!");
 
-  std::vector<TreePatternNode*> Children;
+  std::vector<std::pair<TreePatternNode*, std::string> > Children;
   
   for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i) {
     Init *Arg = Dag->getArg(i);
     if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
-      Children.push_back(ParseTreePattern(DI));
+      Children.push_back(std::make_pair(ParseTreePattern(DI),
+                                        Dag->getArgName(i)));
     } else if (DefInit *DefI = dynamic_cast<DefInit*>(Arg)) {
       Record *R = DefI->getDef();
       // Direct reference to a leaf DagNode?  Turn it into a DagNode if its own.
@@ -213,9 +229,10 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
                                 std::vector<std::pair<Init*, std::string> >()));
         --i;  // Revisit this node...
       } else {
-        Children.push_back(new TreePatternNode(DefI));
+        Children.push_back(std::make_pair(new TreePatternNode(DefI),
+                                          Dag->getArgName(i)));
         // If it's a regclass or something else known, set the type.
-        Children.back()->setType(getIntrinsicType(R));
+        Children.back().first->setType(getIntrinsicType(R));
       }
     } else {
       Arg->dump();
@@ -248,17 +265,16 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
 
   // Check to see if we can infer anything about the argument types from the
   // return types...
-  const std::vector<TreePatternNode*> &Children = N->getChildren();
-  if (Children.size() != NT.ArgTypes.size())
+  if (N->getNumChildren() != NT.ArgTypes.size())
     error("Incorrect number of children for " + Operator->getName() + " node!");
 
-  for (unsigned i = 0, e = Children.size(); i != e; ++i) {
-    TreePatternNode *Child = Children[i];
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = N->getChild(i);
     AnyUnset |= InferTypes(Child, MadeChange);
 
     switch (NT.ArgTypes[i]) {
     case NodeType::Arg0:
-      MadeChange |= Child->updateNodeType(Children[0]->getType(),
+      MadeChange |= Child->updateNodeType(N->getChild(0)->getType(),
                                           TheRecord->getName());
       break;
     case NodeType::Val:
@@ -279,7 +295,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     MadeChange |= N->updateNodeType(MVT::isVoid, TheRecord->getName());
     break;
   case NodeType::Arg0:
-    MadeChange |= N->updateNodeType(Children[0]->getType(),
+    MadeChange |= N->updateNodeType(N->getChild(0)->getType(),
                                     TheRecord->getName());
     break;
 
@@ -647,10 +663,9 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
   OS << "\n" << Indent << "// Operand matching costs...\n";
   std::set<std::string> ComputedValues;   // Avoid duplicate computations...
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
-    const std::vector<TreePatternNode*> &Children =
-      Patterns[i].second->getChildren();
-    for (unsigned c = 0, e = Children.size(); c != e; ++c) {
-      TreePatternNode *N = Children[c];
+    TreePatternNode *NParent = Patterns[i].second;
+    for (unsigned c = 0, e = NParent->getNumChildren(); c != e; ++c) {
+      TreePatternNode *N = NParent->getChild(c);
       if (N->isLeaf()) {
         Record *VR = N->getValueRecord();
         const std::string &LeafName = VR->getName();
@@ -819,6 +834,60 @@ static void ReduceAllOperands(TreePatternNode *N, const std::string &Name,
     }
   }
 }
+
+/// PrintExpanderOperand - Print out Arg as part of the instruction emission
+/// process for the expander pattern P.  This argument may be referencing some
+/// values defined in P, or may just be physical register references or
+/// something like that.  If PrintArg is true, we are printing out arguments to
+/// the BuildMI call.  If it is false, we are printing the result register
+/// name.
+void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
+                                                const std::string &NameVar,
+                                                Record *ArgDecl,
+                                                Pattern *P, bool PrintArg,
+                                                std::ostream &OS) {
+  if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
+    Record *Arg = DI->getDef();
+    if (Arg->isSubClassOf("Register")) {
+      // This is a physical register reference... make sure that the instruction
+      // requested a register!
+      if (!ArgDecl->isSubClassOf("RegisterClass"))
+        P->error("Argument mismatch for instruction pattern!");
+
+      // FIXME: This should check to see if the register is in the specified
+      // register class!
+      if (PrintArg) OS << ".addReg(";
+      OS << getQualifiedName(Arg);
+      if (PrintArg) OS << ")";
+      return;
+    } else if (Arg->isSubClassOf("RegisterClass")) {
+      // If this is a symbolic register class reference, we must be using a
+      // named value.
+      if (NameVar.empty()) P->error("Did not specify WHICH register to pass!");
+      if (Arg != ArgDecl) P->error("Instruction pattern mismatch!");
+
+      if (PrintArg) OS << ".addReg(";
+      OS << NameVar;
+      if (PrintArg) OS << ")";
+      return;
+    }
+    P->error("Unknown operand type '" + Arg->getName() + "' to expander!");
+  }
+  P->error("Unknown operand type to expander!");
+}
+
+static std::string getArgName(Pattern *P, const std::string &ArgName, 
+       const std::vector<std::pair<TreePatternNode*, std::string> > &Operands) {
+  assert(P->getNumArgs() == Operands.size() &&"Argument computation mismatch!");
+  if (ArgName.empty()) return "";
+
+  for (unsigned i = 0, e = P->getNumArgs(); i != e; ++i)
+    if (P->getArgName(i) == ArgName)
+      return Operands[i].second + "->Val";
+  P->error("Pattern does not define a value named $" + ArgName + "!");
+  return "";
+}
+
 
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
@@ -1074,6 +1143,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
         // pattern that this is...
         switch (P->getPatternType()) {
         case Pattern::Instruction:
+          // Instruction patterns just emit a single MachineInstr, using BuildMI
           OS << "    BuildMI(MBB, " << Target.getName() << "::"
              << P->getRecord()->getName() << ", " << Operands.size();
           if (P->getResult()) OS << ", NewReg";
@@ -1089,10 +1159,49 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
               OS << ".addZImm(" << Operands[i].second << "->Val)";
             }
           OS << ";\n";
+          break;
+        case Pattern::Expander: {
+          // Expander patterns emit one machine instr for each instruction in
+          // the list of instructions expanded to.
+          ListInit *Insts = P->getRecord()->getValueAsListInit("Result");
+          for (unsigned IN = 0, e = Insts->getSize(); IN != e; ++IN) {
+            DagInit *DIInst = dynamic_cast<DagInit*>(Insts->getElement(IN));
+            if (!DIInst) P->error("Result list must contain instructions!");
+            Pattern *InstPat = getPattern(DIInst->getNodeType());
+            if (!InstPat || InstPat->getPatternType() != Pattern::Instruction)
+              P->error("Instruction list must contain Instruction patterns!");
+            
+            bool hasResult = InstPat->getResult() != 0;
+            if (InstPat->getNumArgs() != DIInst->getNumArgs()-hasResult) {
+              P->error("Incorrect number of arguments specified for inst '" +
+                       InstPat->getRecord()->getName() + "' in result list!");
+            }
 
+            // Start emission of the instruction...
+            OS << "    BuildMI(MBB, " << Target.getName() << "::"
+               << InstPat->getRecord()->getName() << ", "
+               << DIInst->getNumArgs()-hasResult;
+            // Emit register result if necessary..
+            if (Record *R = InstPat->getResult()) {
+              std::string ArgNameVal =
+                getArgName(P, DIInst->getArgName(0), Operands);
+              PrintExpanderOperand(DIInst->getArg(0), ArgNameVal,
+                                   R, P, false, OS << ", ");
+            }
+            OS << ")";
+
+            for (unsigned i = hasResult, e = DIInst->getNumArgs(); i != e; ++i){
+              std::string ArgNameVal =
+                getArgName(P, DIInst->getArgName(i), Operands);
+
+              PrintExpanderOperand(DIInst->getArg(i), ArgNameVal,
+                                  InstPat->getArgRec(i-hasResult), P, true, OS);
+            }
+
+            OS << ";\n";
+          }
           break;
-        case Pattern::Expander:
-          break;
+        }
         default:
           assert(0 && "Reduction of this type of pattern not implemented!");
         }

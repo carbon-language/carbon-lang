@@ -57,13 +57,14 @@ class TreePatternNode {
 
   /// Children - If this is not a leaf (Operator != 0), this is the subtrees
   /// that we contain.
-  std::vector<TreePatternNode*> Children;
+  std::vector<std::pair<TreePatternNode*, std::string> > Children;
 
   /// Value - If this node is a leaf, this indicates what the thing is.
   ///
   Init *Value;
 public:
-  TreePatternNode(Record *o, const std::vector<TreePatternNode*> &c)
+  TreePatternNode(Record *o, const std::vector<std::pair<TreePatternNode*,
+                                                         std::string> > &c)
     : Operator(o), Type(MVT::Other), Children(c), Value(0) {}
   TreePatternNode(Init *V) : Operator(0), Type(MVT::Other), Value(V) {}
 
@@ -76,14 +77,16 @@ public:
 
   bool isLeaf() const { return Operator == 0; }
 
-  const std::vector<TreePatternNode*> &getChildren() const {
-    assert(Operator != 0 && "This is a leaf node!");
-    return Children;
-  }
   unsigned getNumChildren() const { return Children.size(); }
   TreePatternNode *getChild(unsigned c) const {
+    assert(Operator != 0 && "This is a leaf node!");
     assert(c < Children.size() && "Child access out of range!");
-    return getChildren()[c];
+    return Children[c].first;
+  }
+  const std::string &getChildName(unsigned c) const {
+    assert(Operator != 0 && "This is a leaf node!");
+    assert(c < Children.size() && "Child access out of range!");
+    return Children[c].second;
   }
 
   Init *getValue() const {
@@ -151,6 +154,10 @@ private:
   ///
   bool Resolved;
 
+  /// Args - This is a list of all of the arguments to this pattern, which are
+  /// the non-void leaf nodes in this pattern.
+  std::vector<std::pair<TreePatternNode*, std::string> > Args;
+
   /// ISE - the instruction selector emitter coordinating this madness.
   ///
   InstrSelectorEmitter &ISE;
@@ -164,7 +171,9 @@ public:
   /// Pattern - Constructor used for cloning nonterminal patterns
   Pattern(TreePatternNode *tree, Record *rec, bool res,
           InstrSelectorEmitter &ise) : PTy(Nonterminal), Tree(tree), Result(0),
-                                       TheRecord(rec), Resolved(res), ISE(ise){}
+                                       TheRecord(rec), Resolved(res), ISE(ise) {
+    calculateArgs(Tree, "");
+  }
 
   /// getPatternType - Return what flavor of Record this pattern originated from
   ///
@@ -180,6 +189,19 @@ public:
   /// pattern.
   ///
   Record *getRecord() const { return TheRecord; }
+
+  unsigned getNumArgs() const { return Args.size(); }
+  TreePatternNode *getArg(unsigned i) const {
+    assert(i < Args.size() && "Argument reference out of range!");
+    return Args[i].first;
+  }
+  Record *getArgRec(unsigned i) const {
+    return getArg(i)->getValueRecord();
+  }
+  const std::string &getArgName(unsigned i) const {
+    assert(i < Args.size() && "Argument reference out of range!");
+    return Args[i].second;
+  }
 
   bool isResolved() const { return Resolved; }
 
@@ -211,6 +233,7 @@ public:
   void dump() const;
 
 private:
+  void calculateArgs(TreePatternNode *N, const std::string &Name);
   MVT::ValueType getIntrinsicType(Record *R) const;
   TreePatternNode *ParseTreePattern(DagInit *DI);
   bool InferTypes(TreePatternNode *N, bool &MadeChange);
@@ -338,6 +361,16 @@ private:
   void EmitMatchCosters(std::ostream &OS,
             const std::vector<std::pair<Pattern*, TreePatternNode*> > &Patterns,
                         const std::string &VarPrefix, unsigned Indent);
+  
+  /// PrintExpanderOperand - Print out Arg as part of the instruction emission
+  /// process for the expander pattern P.  This argument may be referencing some
+  /// values defined in P, or may just be physical register references or
+  /// something like that.  If PrintArg is true, we are printing out arguments
+  /// to the BuildMI call.  If it is false, we are printing the result register
+  /// name.
+  void PrintExpanderOperand(Init *Arg, const std::string &NameVar,
+                            Record *ArgDecl, Pattern *P,
+                            bool PrintArg, std::ostream &OS);
 };
 
 #endif
