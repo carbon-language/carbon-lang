@@ -8,6 +8,11 @@
                                      { int, float } { int 37, float 1.2312 } ]
 %Z = constant [2 x { int, float }] zeroinitializer
 
+int %test1() {
+	%B = load int* %X
+	ret int %B
+}
+
 float %test2() {
 	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 1, ubyte 1
 	%B = load float* %A
