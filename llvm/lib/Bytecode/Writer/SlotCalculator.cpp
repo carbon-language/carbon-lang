@@ -622,6 +622,32 @@ void SlotCalculator::pruneCompactionTable() {
     }
 }
 
+/// Determine if the compaction table is actually empty. Because the
+/// compaction table always includes the primitive type planes, we 
+/// can't just check getCompactionTable().size() because it will never
+/// be zero. Furthermore, the ModuleLevel factors into whether a given
+/// plane is empty or not. This function does the necessary computation
+/// to determine if its actually empty.
+bool SlotCalculator::CompactionTableIsEmpty() const {
+  // Check a degenerate case, just in case.
+  if (CompactionTable.size() == 0) return true;
+
+  // Check each plane
+  for (unsigned i = 0, e = CompactionTable.size(); i < e; ++i) {
+    // If the plane is not empty
+    if (!CompactionTable[i].empty()) {
+      // If the module level is non-zero then at least the
+      // first element of the plane is valid and therefore not empty.
+      unsigned End = getModuleLevel(i);
+      if (End != 0) 
+        return false;
+    }
+  }
+  // All the compaction table planes are empty so the table is
+  // considered empty too.
+  return true;
+}
+
 int SlotCalculator::getSlot(const Value *V) const {
   // If there is a CompactionTable active...
   if (!CompactionNodeMap.empty()) {

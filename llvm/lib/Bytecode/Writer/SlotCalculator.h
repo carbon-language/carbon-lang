@@ -138,6 +138,9 @@ public:
 
   const TypeList& getCompactionTypes() const { return CompactionTypes; }
 
+  /// @brief Determine if the compaction table (not types) is empty
+  bool CompactionTableIsEmpty() const;
+
 private:
   // getOrCreateSlot - Values can be crammed into here at will... if
   // they haven't been inserted already, they get inserted, otherwise
