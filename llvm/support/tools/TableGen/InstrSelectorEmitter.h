@@ -12,6 +12,8 @@
 #include "CodeGenWrappers.h"
 #include <vector>
 #include <map>
+#include <cassert>
+
 class DagInit;
 class Init;
 class InstrSelectorEmitter;
