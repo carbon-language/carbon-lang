@@ -1641,6 +1641,11 @@ void BytecodeReader::ParseAllFunctionBodies() {
 void BytecodeReader::ParseGlobalTypes() {
   // Read the number of types
   unsigned NumEntries = read_vbr_uint();
+
+  // Ignore the type plane identifier for types if the bc file is pre 1.3
+  if (hasTypeDerivedFromValue)
+    read_vbr_uint();
+
   ParseTypeConstants(ModuleTypes, NumEntries);
 }
 
