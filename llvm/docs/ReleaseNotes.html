@@ -142,6 +142,7 @@ In this release, the following Code Quality issues were fixed:
 
 <ol>
 <li><a href="http://llvm.cs.uiuc.edu/PR187">[loopsimplify] Many pointless phi nodes are created</a></li>
+<li>The X86 backend didn't generate <tt>fchs</tt> to negate floating point numbers</li>
 </ol>
 
 
@@ -163,7 +164,7 @@ canonicalization always makes 32-bit indvars</a></li>
 cause use of invalid pointers!</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR212">[bcreader] Bytecode reader misreads 'long -9223372036854775808'!</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR218">VMCore mishandles double -0.0</a></li>
-
+<li><a href="http://llvm.cs.uiuc.edu/PR219">[X86] X86 backend code generates -0.0 as +0.0</a></li>
 </ol>
 
 
