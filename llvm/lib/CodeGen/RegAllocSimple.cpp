@@ -212,6 +212,7 @@ RegAllocSimple::saveVirtRegToStack (MachineBasicBlock &MBB,
 
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
+///
 void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
   const MachineInstrInfo &MII = TM.getInstrInfo();
 
@@ -220,26 +221,12 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
     MBB.erase(MBB.begin());
     
-    DEBUG(std::cerr << "num invalid regs: " << RegsUsed.size() << "\n");
     DEBUG(std::cerr << "num ops: " << MI->getNumOperands() << "\n");
     assert(MI->getOperand(0).isVirtualRegister() &&
            "PHI node doesn't write virt reg?");
 
-    // a preliminary pass that will invalidate any registers that
-    // are used by the instruction (including implicit uses)
-    invalidatePhysRegs(MI);
-    
-    // Allocate a physical reg to hold this temporary.
-    //
     unsigned virtualReg = MI->getOperand(0).getAllocatedRegNum();
-    unsigned physReg = getFreeReg(virtualReg);
     
-    // Find the register class of the target register: should be the
-    // same as the values we're trying to store there
-    const TargetRegisterClass* regClass = MF->getRegClass(virtualReg);
-    assert(regClass && "Target register class not found!");
-    unsigned dataSize = regClass->getDataSize();
-
     for (int i = MI->getNumOperands() - 1; i >= 2; i-=2) {
       MachineOperand &opVal = MI->getOperand(i-1);
       
@@ -274,27 +261,20 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
         // are inserted right in front of it and not in front of a non-branch
         if (!MII.isBranch(opMI->getOpcode()))
           ++opI;
-        
+
+        unsigned dataSize = MF->getRegClass(virtualReg)->getDataSize();
+
         // Retrieve the constant value from this op, move it to target
         // register of the phi
         if (opVal.isImmediate()) {
-          opI = RegInfo->moveImm2Reg(opBlock, opI, physReg,
+          opI = RegInfo->moveImm2Reg(opBlock, opI, virtualReg,
                                      (unsigned) opVal.getImmedValue(),
                                      dataSize);
         } else {
-          // Allocate a physical register and add a move in the BB
-          unsigned opVirtualReg = opVal.getAllocatedRegNum();
-          unsigned opPhysReg;
-          opI = moveUseToReg(opBlock, opI, opVirtualReg, physReg);
-          
+          opI = RegInfo->moveReg2Reg(opBlock, opI, virtualReg,
+                                     opVal.getAllocatedRegNum(), dataSize);
         }
-
-        // Save that register value to the stack of the TARGET REG
-        saveVirtRegToStack(opBlock, opI, virtualReg, physReg);
       }
-
-      // make regs available to other instructions
-      clearAllRegs();
     }
     
     // really delete the PHI instruction now!
@@ -304,9 +284,6 @@ void RegAllocSimple::EliminatePHINodes(MachineBasicBlock &MBB) {
 
 
 void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
-  // Handle PHI instructions specially: add moves to each pred block
-  EliminatePHINodes(MBB);
-  
   // loop over each instruction
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
     // Made to combat the incorrect allocation of r2 = add r1, r1
@@ -365,6 +342,12 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
 bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   DEBUG(std::cerr << "Machine Function " << "\n");
   MF = &Fn;
+
+  // First pass: eliminate PHI instructions by inserting copies into predecessor
+  // blocks.
+  for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
+       MBB != MBBe; ++MBB)
+    EliminatePHINodes(*MBB);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
