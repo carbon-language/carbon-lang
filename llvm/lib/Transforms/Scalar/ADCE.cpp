@@ -14,11 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Type.h"
-#include "llvm/Analysis/PostDominators.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
 #include "llvm/Constant.h"
+#include "llvm/Instructions.h"
+#include "llvm/Type.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -33,6 +33,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
   Statistic<> NumInstRemoved ("adce", "Number of instructions removed");
+  Statistic<> NumCallRemoved ("adce", "Number of calls and invokes removed");
 
 //===----------------------------------------------------------------------===//
 // ADCE Class
@@ -42,6 +43,7 @@ namespace {
 //
 class ADCE : public FunctionPass {
   Function *Func;                       // The function that we are working on
+  AliasAnalysis *AA;                    // Current AliasAnalysis object
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions
 
@@ -53,6 +55,7 @@ public:
   //
   virtual bool runOnFunction(Function &F) {
     Func = &F;
+    AA = &getAnalysis<AliasAnalysis>();
     bool Changed = doADCE();
     assert(WorkList.empty());
     LiveSet.clear();
@@ -64,6 +67,7 @@ public:
     // We require that all function nodes are unified, because otherwise code
     // can be marked live that wouldn't necessarily be otherwise.
     AU.addRequired<UnifyFunctionExitNodes>();
+    AU.addRequired<AliasAnalysis>();
     AU.addRequired<PostDominatorTree>();
     AU.addRequired<PostDominanceFrontier>();
   }
@@ -189,16 +193,43 @@ bool ADCE::doADCE() {
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
-      if (II->mayWriteToMemory() || isa<ReturnInst>(II) || isa<UnwindInst>(II)){
-	markInstructionLive(II);
-        ++II;  // Increment the inst iterator if the inst wasn't deleted
-      } else if (isInstructionTriviallyDead(II)) {
+      Instruction *I = II++;
+      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+        Function *F = CI->getCalledFunction();
+        if (F && AA->onlyReadsMemory(F)) {
+          if (CI->use_empty()) {
+            BB->getInstList().erase(CI);
+            ++NumCallRemoved;
+          }
+        } else {
+          markInstructionLive(I);
+        }
+      } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+        Function *F = II->getCalledFunction();
+        if (F && AA->onlyReadsMemory(F)) {
+          // The function cannot unwind.  Convert it to a call with a branch
+          // after it to the normal destination.
+          std::vector<Value*> Args(II->op_begin()+1, II->op_end());
+          std::string Name = II->getName(); II->setName("");
+          Instruction *NewCall = new CallInst(F, Args, Name, II);
+          II->replaceAllUsesWith(NewCall);
+          new BranchInst(II->getNormalDest(), II);
+          BB->getInstList().erase(II);
+
+          if (NewCall->use_empty()) {
+            BB->getInstList().erase(NewCall);
+            ++NumCallRemoved;
+          }
+        } else {
+          markInstructionLive(I);
+        }
+      } else if (I->mayWriteToMemory() || isa<ReturnInst>(I) ||
+                 isa<UnwindInst>(I)) {
+	markInstructionLive(I);
+      } else if (isInstructionTriviallyDead(I)) {
         // Remove the instruction from it's basic block...
-        II = BB->getInstList().erase(II);
+        BB->getInstList().erase(I);
         ++NumInstRemoved;
-        MadeChanges = true;
-      } else {
-        ++II;  // Increment the inst iterator if the inst wasn't deleted
       }
     }
   }
