@@ -264,8 +264,9 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV) {
 
 
 
-
-namespace N86 {  // Native X86 Register numbers...
+/// N86 namespace - Native X86 Register numbers... used by X86 backend.
+///
+namespace N86 {
   enum {
     EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7
   };

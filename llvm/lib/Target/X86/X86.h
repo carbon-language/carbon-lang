@@ -41,9 +41,9 @@ Pass *createX86CodePrinterPass(std::ostream &O);
 ///
 Pass *createEmitX86CodeToMemory();
 
-// Put symbolic names in a namespace to avoid causing these to clash with all
-// kinds of other things...
-//
+/// X86 namespace - This namespace contains all of the register and opcode enums
+/// used by the X86 backend.
+///
 namespace X86 {
   // Defines a large number of symbolic names for X86 registers.  This defines a
   // mapping from register name to register number.
