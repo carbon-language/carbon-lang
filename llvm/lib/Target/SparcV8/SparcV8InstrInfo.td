@@ -59,23 +59,36 @@ let rd = 0 in
   def CMPri: F3_2<2, 0b010100, "cmp">;
 
 // Section B.1 - Load Integer Instructions, p. 90
-def LDSBmr: F3_2<3, 0b001001, "ldsb">;
-def LDSHmr: F3_2<3, 0b001010, "ldsh">;
-def LDUBmr: F3_2<3, 0b000001, "ldub">;
-def LDUHmr: F3_2<3, 0b000010, "lduh">;
-def LDmr  : F3_2<3, 0b000000, "ld">;
-def LDDmr : F3_2<3, 0b000011, "ldd">;
+def LDSB: F3_2<3, 0b001001, "ldsb">;
+def LDSH: F3_2<3, 0b001010, "ldsh">;
+def LDUB: F3_2<3, 0b000001, "ldub">;
+def LDUH: F3_2<3, 0b000010, "lduh">;
+def LD  : F3_2<3, 0b000000, "ld">;
+def LDD : F3_2<3, 0b000011, "ldd">;
 
 // Section B.2 - Load Floating-point Instructions, p. 92
-def LDFmr  : F3_2<3, 0b100000, "ld">;
-def LDDFmr : F3_2<3, 0b100011, "ldd">;
-def LDFSRmr: F3_2<3, 0b100001, "ld">;
+def LDFrr  : F3_1<3, 0b100000, "ld">;
+def LDFri  : F3_2<3, 0b100000, "ld">;
+def LDDFrr : F3_1<3, 0b100011, "ldd">;
+def LDDFri : F3_2<3, 0b100011, "ldd">;
+def LDFSRrr: F3_1<3, 0b100001, "ld">;
+def LDFSRri: F3_2<3, 0b100001, "ld">;
 
 // Section B.4 - Store Integer Instructions, p. 95
-def STBrm : F3_2<3, 0b000101, "stb">;
-def STHrm : F3_2<3, 0b000110, "sth">;
-def STrm  : F3_2<3, 0b000100, "st">;
-def STDrm : F3_2<3, 0b000111, "std">;
+def STB : F3_2<3, 0b000101, "stb">;
+def STH : F3_2<3, 0b000110, "sth">;
+def ST  : F3_2<3, 0b000100, "st">;
+def STD : F3_2<3, 0b000111, "std">;
+
+// Section B.5 - Store Floating-point Instructions, p. 97
+def STFrr   : F3_1<3, 0b100100, "st">;
+def STFri   : F3_2<3, 0b100100, "st">;
+def STDFrr  : F3_1<3, 0b100111, "std">;
+def STDFri  : F3_2<3, 0b100111, "std">;
+def STFSRrr : F3_1<3, 0b100101, "st">;
+def STFSRri : F3_2<3, 0b100101, "st">;
+def STDFQrr : F3_1<3, 0b100110, "std">;
+def STDFQri : F3_2<3, 0b100110, "std">;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100, "sethi">;
