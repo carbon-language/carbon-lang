@@ -26,7 +26,7 @@ using std::cerr;
 using std::vector;
 
 UltraSparcRegInfo::UltraSparcRegInfo(const UltraSparc &tgt)
-  : MachineRegInfo(tgt), UltraSparcInfo(&tgt), NumOfIntArgRegs(6), 
+  : MachineRegInfo(tgt), NumOfIntArgRegs(6), 
     NumOfFloatArgRegs(32), InvalidRegNum(1000) {
    
   MachineRegClassArr.push_back(new SparcIntRegClass(IntRegClassID));
@@ -564,7 +564,7 @@ void UltraSparcRegInfo::colorMethodArgs(const Function *Meth,
 //---------------------------------------------------------------------------
 void UltraSparcRegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
 					     LiveRangeInfo& LRI) const {
-  assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
+  assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
   
@@ -750,7 +750,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
 				      PhyRegAlloc &PRA,
 				      const BasicBlock *BB) const {
 
-  assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
+  assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
 
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
   
@@ -955,7 +955,7 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
 void UltraSparcRegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
                                             LiveRangeInfo &LRI) const {
 
-  assert( (UltraSparcInfo->getInstrInfo()).isReturn( RetMI->getOpCode() ) );
+  assert( (target.getInstrInfo()).isReturn( RetMI->getOpCode() ) );
 
   suggestReg4RetAddr(RetMI, LRI);
 
@@ -993,7 +993,7 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
 				      LiveRangeInfo &LRI,
 				      AddedInstrns *RetAI) const {
 
-  assert((UltraSparcInfo->getInstrInfo()).isReturn( RetMI->getOpCode()));
+  assert((target.getInstrInfo()).isReturn( RetMI->getOpCode()));
 
   // if there is an implicit ref, that has to be the ret value
   if(RetMI->getNumImplicitRefs() > 0) {
@@ -1149,6 +1149,7 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
   MachineInstr * MI = NULL;
   switch( RegType ) {
   case IntRegType:
+    assert(target.getInstrInfo().constantFitsInImmedField(STX, Offset));
     MI = new MachineInstr(STX, 3);
     MI->SetMachineOperandReg(0, SrcReg, false);
     MI->SetMachineOperandReg(1, DestPtrReg, false);
@@ -1158,6 +1159,7 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
     break;
 
   case FPSingleRegType:
+    assert(target.getInstrInfo().constantFitsInImmedField(ST, Offset));
     MI = new MachineInstr(ST, 3);
     MI->SetMachineOperandReg(0, SrcReg, false);
     MI->SetMachineOperandReg(1, DestPtrReg, false);
@@ -1167,6 +1169,7 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
     break;
 
   case FPDoubleRegType:
+    assert(target.getInstrInfo().constantFitsInImmedField(STD, Offset));
     MI = new MachineInstr(STD, 3);
     MI->SetMachineOperandReg(0, SrcReg, false);
     MI->SetMachineOperandReg(1, DestPtrReg, false);
@@ -1188,6 +1191,7 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
     
   case FloatCCRegType: 
     assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
+    assert(target.getInstrInfo().constantFitsInImmedField(STXFSR, Offset));
     MI = new MachineInstr(STXFSR, 3);
     MI->SetMachineOperandReg(0, SrcReg, false);
     MI->SetMachineOperandReg(1, DestPtrReg, false);
@@ -1218,6 +1222,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
   MachineInstr * MI = NULL;
   switch (RegType) {
   case IntRegType:
+    assert(target.getInstrInfo().constantFitsInImmedField(LDX, Offset));
     MI = new MachineInstr(LDX, 3);
     MI->SetMachineOperandReg(0, SrcPtrReg, false);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
@@ -1227,6 +1232,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
     break;
 
   case FPSingleRegType:
+    assert(target.getInstrInfo().constantFitsInImmedField(LD, Offset));
     MI = new MachineInstr(LD, 3);
     MI->SetMachineOperandReg(0, SrcPtrReg, false);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
@@ -1236,6 +1242,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
     break;
 
   case FPDoubleRegType:
+    assert(target.getInstrInfo().constantFitsInImmedField(LDD, Offset));
     MI = new MachineInstr(LDD, 3);
     MI->SetMachineOperandReg(0, SrcPtrReg, false);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
@@ -1257,6 +1264,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
     
   case FloatCCRegType: 
     assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
+    assert(target.getInstrInfo().constantFitsInImmedField(LDXFSR, Offset));
     MI = new MachineInstr(LDXFSR, 3);
     MI->SetMachineOperandReg(0, SrcPtrReg, false);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
@@ -1342,7 +1350,7 @@ UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
                                           const BasicBlock *BB,
                                           PhyRegAlloc &PRA) const
 {
-  assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
+  assert ( (target.getInstrInfo()).isCall(CallMI->getOpCode()) );
   
   // has set to record which registers were saved/restored
   //
