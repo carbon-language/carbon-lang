@@ -268,6 +268,17 @@ static bool ExtractLoops(BugDriver &BD,
       exit(1);
     }
     delete ToOptimizeLoopExtracted;
+
+    // All of the Function*'s in the MiscompiledFunctions list are in the old
+    // module.  Make sure to update them to point to the corresponding functions
+    // in the new module.
+    for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i) {
+      Function *OldF = MiscompiledFunctions[i];
+      Function *NewF = 
+        ToNotOptimize->getFunction(OldF->getName(), OldF->getFunctionType());
+      MiscompiledFunctions[i] = NewF;
+    }
+
     BD.setNewProgram(ToNotOptimize);
     MadeChange = true;
   }
