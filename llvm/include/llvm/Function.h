@@ -97,6 +97,13 @@ public:
   unsigned getIntrinsicID() const;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
 
+  /// deleteBody - This method deletes the body of the function, and converts
+  /// the linkage to external.
+  void deleteBody() {
+    dropAllReferences();
+    setLinkage(ExternalLinkage);
+  }
+
   // getNext/Prev - Return the next or previous function in the list.  These
   // methods should never be used directly, and are only used to implement the
   // function list as part of the module.
@@ -175,13 +182,17 @@ public:
     return V->getValueType() == Value::FunctionVal;
   }
 
-  /// dropAllReferences() - This function causes all the subinstructions to "let
+  /// dropAllReferences() - This method causes all the subinstructions to "let
   /// go" of all references that they are maintaining.  This allows one to
-  /// 'delete' a whole class at a time, even though there may be circular
+  /// 'delete' a whole module at a time, even though there may be circular
   /// references... first all references are dropped, and all use counts go to
   /// zero.  Then everything is delete'd for real.  Note that no operations are
   /// valid on an object that has "dropped all references", except operator 
   /// delete.
+  ///
+  /// Since no other object in the module can have references into the body of a
+  /// function, dropping all references deletes the entire body of the function,
+  /// including any contained basic blocks.
   ///
   void dropAllReferences();
 };
