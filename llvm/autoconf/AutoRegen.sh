@@ -22,13 +22,13 @@ if test $? -ne 0 ; then
 fi
 aclocal --version | egrep '1\.9\.2' > /dev/null
 if test $? -ne 0 ; then
-  die "Your aclocal was not detected as being 1.9.1"
+  die "Your aclocal was not detected as being 1.9.2"
 fi
 autoheader --version | egrep '2\.59' > /dev/null
 if test $? -ne 0 ; then
   die "Your autoheader was not detected as being 2.59"
 fi
-libtool --version | grep '1.5.10' > /dev/null
+libtool --version | grep '1\.5\.10' > /dev/null
 if test $? -ne 0 ; then
   die "Your libtool was not detected as being 1.5.10"
 fi
@@ -47,7 +47,7 @@ echo "### commit any configure script that was generated with warnings"
 echo "### present. You should get just three 'Regenerating..' lines."
 echo "######################################################################"
 echo ""
-echo "Regenerating aclocal.m4 with aclocal"
+echo "Regenerating aclocal.m4 with aclocal 1.9.2"
 cwd=`pwd`
 if test $with_automake -eq 1 ; then
   mv configure.ac .configure.ac.save
