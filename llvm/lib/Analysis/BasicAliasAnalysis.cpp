@@ -16,12 +16,12 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 #include "llvm/Argument.h"
-#include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 using namespace llvm;
 
 // Make sure that anything that uses AliasAnalysis pulls in this file...
@@ -288,11 +288,14 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
   //
   std::vector<Value*> Indices1;
   Indices1.reserve(NumGEPOperands-1);
-  for (unsigned i = 1; i != FirstConstantOper; ++i)
-    if (GEP1->getOperand(i)->getType() == Type::UByteTy)
-      Indices1.push_back(GEP1->getOperand(i));
+  
+  for (gep_type_iterator I = gep_type_begin(GEP1);
+       I.getOperandNum() != FirstConstantOper; ++I)
+    if (isa<StructType>(*I))
+      Indices1.push_back(I.getOperand());
     else
       Indices1.push_back(Constant::getNullValue(Type::LongTy));
+
   std::vector<Value*> Indices2;
   Indices2.reserve(NumGEPOperands-1);
   Indices2 = Indices1;           // Copy the zeros prefix...
