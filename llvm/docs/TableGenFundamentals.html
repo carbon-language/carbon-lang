@@ -38,11 +38,11 @@
   </ol>
   <li><a href="#backends">TableGen backends</a></li>
   <ol>
-    <li><a href="#">x</a></li>
+    <li><a href="#">todo</a></li>
   </ol>
   <li><a href="#codegenerator">The LLVM code generator</a></li>
   <ol>
-    <li><a href="#">x</a></li>
+    <li><a href="#">todo</a></li>
   </ol>
 </ul>
 
@@ -63,6 +63,12 @@ makes it easier to structure domain specific information.</p>
 the declarations, and hands the result off to a domain-specific "<a
 href="#backends">TableGen backend</a>" for processing.  The current major user
 of TableGen is the <a href="#codegenerator">LLVM code generator</a>.
+</p>
+
+<p>
+Note that if you work on TableGen much, and use emacs or vim, that you can find
+an emacs "TableGen mode" and a vim language file in <tt>llvm/utils/emacs</tt>
+and <tt>llvm/utils/vim</tt> directory of your LLVM distribution, respectively.
 </p>
 
 </div>
@@ -124,27 +130,27 @@ prints this (at the time of this writing):
 <p>
 <pre>
 ...
-def ADDrr8 {    // Instruction X86Inst I2A8 Pattern
-  string Name = "add";
-  string Namespace = "X86";
-  list&lt;Register&gt; Uses = [];
-  list&lt;Register&gt; Defs = [];
-  bit isReturn = 0;
-  bit isBranch = 0;
-  bit isCall = 0;
-  bit isTwoAddress = 1;
-  bit isTerminator = 0;
-  dag Pattern = (set R8, (plus R8, R8));
-  bits&lt;8&gt; Opcode = { 0, 0, 0, 0, 0, 0, 0, 0 };
+<b>def</b> ADDrr8 {    <i>// Instruction X86Inst I2A8 Pattern</i>
+  <b>string</b> Name = "add";
+  <b>string</b> Namespace = "X86";
+  <b>list</b>&lt;Register&gt; Uses = [];
+  <b>list</b>&lt;Register&gt; Defs = [];
+  <b>bit</b> isReturn = 0;
+  <b>bit</b> isBranch = 0;
+  <b>bit</b> isCall = 0;
+  <b>bit</b> isTwoAddress = 1;
+  <b>bit</b> isTerminator = 0;
+  <b>dag</b> Pattern = (set R8, (plus R8, R8));
+  <b>bits</b>&lt;8&gt; Opcode = { 0, 0, 0, 0, 0, 0, 0, 0 };
   Format Form = MRMDestReg;
-  bits&lt;5&gt; FormBits = { 0, 0, 0, 1, 1 };
+  <b>bits</b>&lt;5&gt; FormBits = { 0, 0, 0, 1, 1 };
   ArgType Type = Arg8;
-  bits&lt;3&gt; TypeBits = { 0, 0, 1 };
-  bit hasOpSizePrefix = 0;
-  bit printImplicitUses = 0;
-  bits&lt;4&gt; Prefix = { 0, 0, 0, 0 };
+  <b>bits</b>&lt;3&gt; TypeBits = { 0, 0, 1 };
+  <b>bit</b> hasOpSizePrefix = 0;
+  <b>bit</b> printImplicitUses = 0;
+  <b>bits</b>&lt;4&gt; Prefix = { 0, 0, 0, 0 };
   FPFormat FPForm = ?;
-  bits&lt;3&gt; FPFormBits = { 0, 0, 0 };
+  <b>bits</b>&lt;3&gt; FPFormBits = { 0, 0, 0 };
 }
 ...
 </pre><p>
@@ -169,7 +175,7 @@ TableGen, all of the information was derived from the following definition:
 </p>
 
 <p><pre>
-def ADDrr8   : I2A8&lt;"add", 0x00, MRMDestReg&gt;,
+<b>def</b> ADDrr8   : I2A8&lt;"add", 0x00, MRMDestReg&gt;,
                Pattern&lt;(set R8, (plus R8, R8))&gt;;
 </pre></p>
 
@@ -284,32 +290,33 @@ TableGen types are:
 
 <p>
 <ul>
-<li>"<tt>bit</tt>" - A 'bit' is a boolean value that can hold either 0 or
+<li>"<tt><b>bit</b></tt>" - A 'bit' is a boolean value that can hold either 0 or
 1.</li>
 
-<li>"<tt>int</tt>" - The 'int' type represents a simple 32-bit integer value, such as 5.</li>
+<li>"<tt><b>int</b></tt>" - The 'int' type represents a simple 32-bit integer
+value, such as 5.</li>
 
-<li>"<tt>string</tt>" - The 'string' type represents an ordered sequence of
-characters of arbitrary length.</li>
+<li>"<tt><b>string</b></tt>" - The 'string' type represents an ordered sequence
+of characters of arbitrary length.</li>
 
-<li>"<tt>bits&lt;n&gt;</tt>" - A 'bits' type is a arbitrary, but fixed, size
-integer that is broken up into individual bits.  This type is useful because it
-can handle some bits being defined while others are undefined.</li>
+<li>"<tt><b>bits</b>&lt;n&gt;</tt>" - A 'bits' type is a arbitrary, but fixed,
+size integer that is broken up into individual bits.  This type is useful
+because it can handle some bits being defined while others are undefined.</li>
 
-<li>"<tt>list&lt;ty&gt;</tt>" - This type represents a list whose elements are
-some other type.  The contained type is arbitrary: it can even be another list
-type.</li>
+<li>"<tt><b>list</b>&lt;ty&gt;</tt>" - This type represents a list whose
+elements are some other type.  The contained type is arbitrary: it can even be
+another list type.</li>
 
 <li>Class type - Specifying a class name in a type context means that the
 defined value must be a subclass of the specified class.  This is useful in
 conjunction with the "list" type, for example, to constrain the elements of the
-list to a common base class (e.g., a <tt>list&lt;Register&gt;</tt> can only
-contain definitions derived from the "<tt>Register</tt>" class).</li>
+list to a common base class (e.g., a <tt><b>list</b>&lt;Register&gt;</tt> can
+only contain definitions derived from the "<tt>Register</tt>" class).</li>
 
-<li>"<tt>code</tt>" - This represents a big hunk of text.  NOTE: I don't
+<li>"<tt><b>code</b></tt>" - This represents a big hunk of text.  NOTE: I don't
 remember why this is distinct from string!</li>
 
-<li>"<tt>dag</tt>" - This type represents a nestable directed graph of
+<li>"<tt><b>dag</b></tt>" - This type represents a nestable directed graph of
 elements.</li>
 </ul>
 </p>
@@ -386,10 +393,10 @@ file:
 </p>
 
 <p><pre>
-class C { bit V = 1; }
-def X : C;
-def Y : C {
-  string Greeting = "hello";
+<b>class</b> C { <b>bit</b> V = 1; }
+<b>def</b> X : C;
+<b>def</b> Y : C {
+  <b>string</b> Greeting = "hello";
 }
 </pre></p>
 
@@ -431,8 +438,8 @@ value for example, a new class could be added to the example above, redefining
 the <tt>V</tt> field for all of its subclasses:</p>
 
 <p><pre>
-class D : C { let V = 0; }
-def Z : D;
+<b>class</b> D : C { let V = 0; }
+<b>def</b> Z : D;
 </pre></p>
 
 <p>
@@ -472,7 +479,7 @@ specified as a double quoted string immediately after the '<tt>include</tt>'
 keyword.  Example:
 
 <p><pre>
-  include "foo.td"
+  <b>include</b> "foo.td"
 </pre></p>
 
 </div>
@@ -497,15 +504,15 @@ and one of more records to bind the values in.  Here are some examples:
 </p>
 
 <p><pre>
-let isTerminator = 1, isReturn = 1 in
-  def RET : X86Inst&lt;"ret", 0xC3, RawFrm, NoArg&gt;;
+<b>let</b> isTerminator = 1, isReturn = 1 <b>in</b>
+  <b>def</b> RET : X86Inst&lt;"ret", 0xC3, RawFrm, NoArg&gt;;
 
-let isCall = 1 in
-  // All calls clobber the non-callee saved registers...
-  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6] in {
-    def CALLpcrel32 : X86Inst&lt;"call", 0xE8, RawFrm, NoArg&gt;;
-    def CALLr32     : X86Inst&lt;"call", 0xFF, MRMS2r, Arg32&gt;;
-    def CALLm32     : X86Inst&lt;"call", 0xFF, MRMS2m, Arg32&gt;;
+<b>let</b> isCall = 1 <b>in</b>
+  <i>// All calls clobber the non-callee saved registers...</i>
+  <b>let</b> Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6] in {
+    <b>def</b> CALLpcrel32 : X86Inst&lt;"call", 0xE8, RawFrm, NoArg&gt;;
+    <b>def</b> CALLr32     : X86Inst&lt;"call", 0xFF, MRMS2r, Arg32&gt;;
+    <b>def</b> CALLm32     : X86Inst&lt;"call", 0xFF, MRMS2m, Arg32&gt;;
   }
 </pre></p>
 
