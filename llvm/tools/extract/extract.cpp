@@ -12,7 +12,6 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
-#include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO.h"
 #include "Support/CommandLine.h"
 #include <memory>

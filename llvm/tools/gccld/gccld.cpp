@@ -20,8 +20,6 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/GlobalDCE.h"
-#include "llvm/Transforms/IPO/Internalize.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
