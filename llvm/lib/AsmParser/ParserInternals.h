@@ -86,7 +86,7 @@ struct ValID {
     ValID D; D.Type = 5; D.ConstPoolFP = Val; return D;
   }
 
-  inline void destroy() {
+  inline void destroy() const {
     if (Type == 1 || Type == 4) free(Name);  // Free this strdup'd memory...
   }
 

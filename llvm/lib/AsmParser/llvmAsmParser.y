@@ -99,7 +99,7 @@ static void InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values) 
   }
 }
 
-static Value *getVal(const Type *Type, ValID &D, 
+static Value *getVal(const Type *Type, const ValID &D, 
                      bool DoNotImprovise = false) {
   switch (D.Type) {
   case 0: {                 // Is it a numbered definition?
@@ -392,6 +392,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   Instruction             *InstVal;
   ConstPoolVal            *ConstVal;
   const Type              *TypeVal;
+  Value                   *ValueVal;
 
   list<MethodArgument*>   *MethodArgList;
   list<Value*>            *ValueList;
@@ -421,7 +422,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
-%type <ConstVal>      ConstVal
+%type <ConstVal>      ConstVal ExtendedConstVal
 %type <ConstVector>   ConstVector UByteList
 %type <MethodArgList> ArgList ArgListH
 %type <MethArgVal>    ArgVal
@@ -431,7 +432,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <JumpTable>     JumpTable
 
 %type <ValIDVal>      ValueRef ConstValueRef // Reference to a definition or BB
-
+%type <ValueVal>      ResolvedVal            // <type> <valref> pair
 // Tokens and types for handling constant integer values
 //
 // ESINT64VAL - A negative number within long long range
@@ -534,35 +535,9 @@ OptAssign : VAR_ID '=' {
 // ConstVal - The various declarations that go into the constant pool.  This
 // includes all forward declarations of types, constants, and functions.
 //
-ConstVal : SIntType EINT64VAL {     // integral constants
-    if (!ConstPoolSInt::isValueValidForType($1, $2))
-      ThrowException("Constant value doesn't fit in type!");
-    $$ = new ConstPoolSInt($1, $2);
-  } 
-  | UIntType EUINT64VAL {           // integral constants
-    if (!ConstPoolUInt::isValueValidForType($1, $2))
-      ThrowException("Constant value doesn't fit in type!");
-    $$ = new ConstPoolUInt($1, $2);
-  } 
-  | BOOL TRUE {                     // Boolean constants
-    $$ = new ConstPoolBool(true);
-  }
-  | BOOL FALSE {                    // Boolean constants
-    $$ = new ConstPoolBool(false);
-  }
-  | FPType FPVAL {                   // Float & Double constants
-    $$ = new ConstPoolFP($1, $2);
-  }
-  | STRING STRINGCONSTANT {         // String constants
-    cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
-    abort();
-    //$$ = new ConstPoolString($2);
-    free($2);
-  } 
-  | TYPE Types {                    // Type constants
-    $$ = new ConstPoolType($2);
-  }
-  | '[' Types ']' '[' ConstVector ']' {      // Nonempty array constant
+// This is broken into two sections: ExtendedConstVal and ConstVal
+//
+ExtendedConstVal: '[' Types ']' '[' ConstVector ']' { // Nonempty unsized array
     // Verify all elements are correct type!
     const ArrayType *AT = ArrayType::getArrayType($2);
     for (unsigned i = 0; i < $5->size(); i++) {
@@ -575,7 +550,7 @@ ConstVal : SIntType EINT64VAL {     // integral constants
     $$ = new ConstPoolArray(AT, *$5);
     delete $5;
   }
-  | '[' Types ']' '[' ']' {                  // Empty array constant
+  | '[' Types ']' '[' ']' {                  // Empty unsized array constant
     vector<ConstPoolVal*> Empty;
     $$ = new ConstPoolArray(ArrayType::getArrayType($2), Empty);
   }
@@ -625,6 +600,36 @@ ConstVal : SIntType EINT64VAL {     // integral constants
   }
 */
 
+ConstVal : ExtendedConstVal
+  | TYPE Types {                    // Type constants
+    $$ = new ConstPoolType($2);
+  }
+  | SIntType EINT64VAL {     // integral constants
+    if (!ConstPoolSInt::isValueValidForType($1, $2))
+      ThrowException("Constant value doesn't fit in type!");
+    $$ = new ConstPoolSInt($1, $2);
+  } 
+  | UIntType EUINT64VAL {           // integral constants
+    if (!ConstPoolUInt::isValueValidForType($1, $2))
+      ThrowException("Constant value doesn't fit in type!");
+    $$ = new ConstPoolUInt($1, $2);
+  } 
+  | BOOL TRUE {                     // Boolean constants
+    $$ = new ConstPoolBool(true);
+  }
+  | BOOL FALSE {                    // Boolean constants
+    $$ = new ConstPoolBool(false);
+  }
+  | FPType FPVAL {                   // Float & Double constants
+    $$ = new ConstPoolFP($1, $2);
+  }
+  | STRING STRINGCONSTANT {         // String constants
+    cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
+    abort();
+    //$$ = new ConstPoolString($2);
+    free($2);
+  } 
+
 // ConstVector - A list of comma seperated constants.
 ConstVector : ConstVector ',' ConstVal {
     ($$ = $1)->push_back(addConstValToConstantPool($3));
@@ -633,6 +638,7 @@ ConstVector : ConstVector ',' ConstVal {
     $$ = new vector<ConstPoolVal*>();
     $$->push_back(addConstValToConstantPool($1));
   }
+
 
 //ExternMethodDecl : EXTERNAL TypesV '(' TypeList ')' {
 //  }
@@ -812,6 +818,17 @@ ValueRef : INTVAL {           // Is it an integer reference...?
     $$ = $1;
   }
 
+// ResolvedVal - a <type> <value> pair.  This is used only in cases where the
+// type immediately preceeds the value reference, and allows complex constant
+// pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
+ResolvedVal : ExtendedConstVal {
+    $$ = addConstValToConstantPool($1);
+  }
+  | Types ValueRef {
+    $$ = getVal($1, $2);
+  }
+
+
 // The user may refer to a user defined type by its typeplane... check for this
 // now...
 //
@@ -899,23 +916,23 @@ InstructionList : InstructionList Inst {
     $$ = new BasicBlock();
   }
 
-BBTerminatorInst : RET Types ValueRef {              // Return with a result...
-    $$ = new ReturnInst(getVal($2, $3));
+BBTerminatorInst : RET ResolvedVal {              // Return with a result...
+    $$ = new ReturnInst($2);
   }
   | RET VOID {                                       // Return with no result...
     $$ = new ReturnInst();
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
-    $$ = new BranchInst((BasicBlock*)getVal(Type::LabelTy, $3));
+    $$ = new BranchInst(getVal(Type::LabelTy, $3)->castBasicBlockAsserting());
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    $$ = new BranchInst((BasicBlock*)getVal(Type::LabelTy, $6), 
-			(BasicBlock*)getVal(Type::LabelTy, $9),
+    $$ = new BranchInst(getVal(Type::LabelTy, $6)->castBasicBlockAsserting(), 
+			getVal(Type::LabelTy, $9)->castBasicBlockAsserting(),
 			getVal(Type::BoolTy, $3));
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
     SwitchInst *S = new SwitchInst(getVal($2, $3), 
-                                   (BasicBlock*)getVal(Type::LabelTy, $6));
+                          getVal(Type::LabelTy, $6)->castBasicBlockAsserting());
     $$ = S;
 
     list<pair<ConstPoolVal*, BasicBlock*> >::iterator I = $8->begin(), 
@@ -926,20 +943,20 @@ BBTerminatorInst : RET Types ValueRef {              // Return with a result...
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
-    ConstPoolVal *V = (ConstPoolVal*)getVal($2, $3, true);
+    ConstPoolVal *V = getVal($2, $3, true)->castConstantAsserting();
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(make_pair(V, (BasicBlock*)getVal($5, $6)));
+    $$->push_back(make_pair(V, getVal($5, $6)->castBasicBlockAsserting()));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new list<pair<ConstPoolVal*, BasicBlock*> >();
-    ConstPoolVal *V = (ConstPoolVal*)getVal($1, $2, true);
+    ConstPoolVal *V = getVal($1, $2, true)->castConstantAsserting();
 
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(make_pair(V, (BasicBlock*)getVal($4, $5)));
+    $$->push_back(make_pair(V, getVal($4, $5)->castBasicBlockAsserting()));
   }
 
 Inst : OptAssign InstVal {
@@ -953,22 +970,22 @@ Inst : OptAssign InstVal {
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = new list<pair<Value*, BasicBlock*> >();
     $$->push_back(make_pair(getVal($1, $3), 
-			    (BasicBlock*)getVal(Type::LabelTy, $5)));
+			 getVal(Type::LabelTy, $5)->castBasicBlockAsserting()));
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
     $1->push_back(make_pair(getVal($1->front().first->getType(), $4),
-			    (BasicBlock*)getVal(Type::LabelTy, $6)));
+			 getVal(Type::LabelTy, $6)->castBasicBlockAsserting()));
   }
 
 
-ValueRefList : Types ValueRef {    // Used for call statements...
+ValueRefList : ResolvedVal {    // Used for call statements...
     $$ = new list<Value*>();
-    $$->push_back(getVal($1, $2));
+    $$->push_back($1);
   }
-  | ValueRefList ',' Types ValueRef {
+  | ValueRefList ',' ResolvedVal {
     $$ = $1;
-    $1->push_back(getVal($3, $4));
+    $1->push_back($3);
   }
 
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
@@ -979,17 +996,18 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     if ($$ == 0)
       ThrowException("binary operator returned null!");
   }
-  | UnaryOps Types ValueRef {
-    $$ = UnaryOperator::create($1, getVal($2, $3));
+  | UnaryOps ResolvedVal {
+    $$ = UnaryOperator::create($1, $2);
     if ($$ == 0)
       ThrowException("unary operator returned null!");
   }
-  | ShiftOps Types ValueRef ',' Types ValueRef {
-    if ($5 != Type::UByteTy) ThrowException("Shift amount must be ubyte!");
-    $$ = new ShiftInst($1, getVal($2, $3), getVal($5, $6));
+  | ShiftOps ResolvedVal ',' ResolvedVal {
+    if ($4->getType() != Type::UByteTy)
+      ThrowException("Shift amount must be ubyte!");
+    $$ = new ShiftInst($1, $2, $4);
   }
-  | CAST Types ValueRef TO Types {
-    $$ = new CastInst(getVal($2, $3), $5);
+  | CAST ResolvedVal TO Types {
+    $$ = new CastInst($2, $4);
   }
   | PHI PHIList {
     const Type *Ty = $2->front().first->getType();
@@ -1071,10 +1089,11 @@ MemoryInst : MALLOC Types {
     Value *ArrSize = getVal($4, $5);
     $$ = new AllocaInst(Ty, ArrSize);
   }
-  | FREE Types ValueRef {
-    if (!$2->isPointerType())
-      ThrowException("Trying to free nonpointer type " + $2->getName() + "!");
-    $$ = new FreeInst(getVal($2, $3));
+  | FREE ResolvedVal {
+    if (!$2->getType()->isPointerType())
+      ThrowException("Trying to free nonpointer type " + 
+                     $2->getType()->getName() + "!");
+    $$ = new FreeInst($2);
   }
 
   | LOAD Types ValueRef UByteList {
@@ -1086,17 +1105,17 @@ MemoryInst : MALLOC Types {
     $$ = new LoadInst(getVal($2, $3), *$4);
     delete $4;   // Free the vector...
   }
-  | STORE Types ValueRef ',' Types ValueRef UByteList {
-    if (!$5->isPointerType())
-      ThrowException("Can't store to a nonpointer type: " + $5->getName());
-    const Type *ElTy = StoreInst::getIndexedType($5, *$7);
+  | STORE ResolvedVal ',' Types ValueRef UByteList {
+    if (!$4->isPointerType())
+      ThrowException("Can't store to a nonpointer type: " + $4->getName());
+    const Type *ElTy = StoreInst::getIndexedType($4, *$6);
     if (ElTy == 0)
       ThrowException("Can't store into that field list!");
-    if (ElTy != $2)
-      ThrowException("Can't store '" + $2->getName() + "' into space of type '"+
-		     ElTy->getName() + "'!");
-    $$ = new StoreInst(getVal($2, $3), getVal($5, $6), *$7);
-    delete $7;
+    if (ElTy != $2->getType())
+      ThrowException("Can't store '" + $2->getType()->getName() +
+                     "' into space of type '" + ElTy->getName() + "'!");
+    $$ = new StoreInst($2, getVal($4, $5), *$6);
+    delete $6;
   }
   | GETELEMENTPTR Types ValueRef UByteList {
     if (!$2->isPointerType())
