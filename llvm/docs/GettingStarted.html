@@ -496,7 +496,16 @@
 		object files, libraries, and executables should be placed.
         If this is set to <tt>.</tt>, then the object files will be placed
         within the source code tree.  If left unspecified, the default value is
-        <tt>.</tt>.
+        the following:
+        <ul>
+                <li>
+                If the USER environment variable is specified and the directory
+                <tt>/localhome/$USER</tt> exists, then the default value is
+                <tt>/localhome/$USER</tt>.
+
+                <li>
+                Otherwise, the default value is <tt>.</tt>.
+        </ul>
 		(See the Section on <a href=#objfiles>
 		The Location of LLVM Object Files</a>
 		for more information.)
@@ -632,7 +641,19 @@
     <p>
     If <i>OBJ_ROOT</i> is specified, then the build system will create a
     directory tree underneath it that resembles the source code's pathname
-    relative to your home directory.
+    relative to your home directory (unless <i>OBJ_ROOT</i> is set to
+    <tt>.</tt>, in which case object files are placed within the LLVM source
+    tree).
+    </p>
+
+    <p>
+    Note that
+    <i>--with-objroot</i>=<tt>.</tt>
+    and
+    <i>--with-objroot</i>=<tt>`pwd`</tt>
+    are not the same thing.  The former will simply place object files within
+    the source tree, while the latter will set the location of object files
+    using the source tree's relative path from the home directory.
     </p>
 
     <p>
