@@ -2587,7 +2587,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   // Handle: [mem] op= CST
   SDOperand Op0 = StVal.getOperand(0);
   SDOperand Op1 = StVal.getOperand(1);
-  unsigned Opc;
+  unsigned Opc = 0;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1)) {
     switch (Op0.getValueType()) { // Use Op0's type because of shifts.
     default: break;
