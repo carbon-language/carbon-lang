@@ -100,6 +100,11 @@ class PoolAllocate : public Pass {
   // If an equivalence class does not require pool arguments, it is not
   // on this map.
   std::map<Function *, int> EqClass2LastPoolArg;
+
+  // Exception flags
+  // CollapseFlag set if all data structures are not pool allocated, due to
+  // collapsing of nodes in the DS graph
+  unsigned CollapseFlag;
   
  public:
   bool run(Module &M);
