@@ -9,11 +9,9 @@
 #include "Interpreter.h"
 #include "llvm/Module.h"
 
-/// createInterpreter - Create a new interpreter object.  This can never fail.
+/// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *ExecutionEngine::createInterpreter(Module *M,
-						    bool DebugMode,
-						    bool TraceMode) {
+ExecutionEngine *Interpreter::create(Module *M, bool DebugMode, bool TraceMode){
   bool isLittleEndian;
   switch (M->getEndianness()) {
   case Module::LittleEndian: isLittleEndian = true; break;

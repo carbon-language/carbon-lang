@@ -48,6 +48,9 @@ public:
                   const std::vector<std::string> &Args,
                   const char ** envp) = 0;
 
+  static ExecutionEngine *create (Module *M, bool ForceInterpreter,
+				  bool DebugMode, bool TraceMode);
+
   /// createJIT - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise it returns null.
   ///

@@ -59,15 +59,9 @@ int main(int argc, char** argv, const char ** envp) {
     exit(1);
   }
 
-  ExecutionEngine *EE = 0;
-
-  // If there is nothing that is forcing us to use the interpreter, make a JIT.
-  if (!ForceInterpreter && !DebugMode && !TraceMode)
-    EE = ExecutionEngine::createJIT(M);
-
-  // If we can't make a JIT, make an interpreter instead.
-  if (EE == 0)
-    EE = ExecutionEngine::createInterpreter(M, DebugMode, TraceMode);
+  ExecutionEngine *EE =
+    ExecutionEngine::create (M, ForceInterpreter, DebugMode, TraceMode);
+  assert (EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
   // Add the module name to the start of the argv vector...
   // But delete .bc first, since programs (and users) might not expect to

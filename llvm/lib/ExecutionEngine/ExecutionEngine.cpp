@@ -15,8 +15,24 @@
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Config/dlfcn.h"
+#include "JIT/VM.h"
+#include "Interpreter/Interpreter.h"
 
 Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
+
+ExecutionEngine *ExecutionEngine::create (Module *M, bool ForceInterpreter,
+					  bool DebugMode, bool TraceMode) {
+  ExecutionEngine *EE = 0;
+
+  // If there is nothing that is forcing us to use the interpreter, make a JIT.
+  if (!ForceInterpreter && !DebugMode && !TraceMode)
+    EE = VM::create(M);
+
+  // If we can't make a JIT, make an interpreter instead.
+  if (EE == 0)
+    EE = Interpreter::create(M, DebugMode, TraceMode);
+  return EE;
+}
 
 // getPointerToGlobal - This returns the address of the specified global
 // value.  This may involve code generation if it's a function.
@@ -28,7 +44,6 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   assert(GlobalAddress[GV] && "Global hasn't had an address allocated yet?");
   return GlobalAddress[GV];
 }
-
 
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
@@ -258,7 +273,6 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
   }
   return Result;
 }
-
 
 // InitializeMemory - Recursive function to apply a Constant value into the
 // specified memory location...

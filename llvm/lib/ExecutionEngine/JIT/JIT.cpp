@@ -41,11 +41,10 @@ namespace {
 #endif /* NO_JITS_ENABLED */
 }
 
-/// createJIT - Create an return a new JIT compiler if there is one available
-/// for the current target.  Otherwise it returns null.
+/// create - Create an return a new JIT compiler if there is one available
+/// for the current target.  Otherwise, return null.
 ///
-ExecutionEngine *ExecutionEngine::createJIT(Module *M) {
-  
+ExecutionEngine *VM::create(Module *M) {
   TargetMachine* (*TargetMachineAllocator)(const Module &) = 0;
 
   // Allow a command-line switch to override what *should* be the default target

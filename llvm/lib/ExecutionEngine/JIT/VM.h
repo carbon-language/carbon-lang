@@ -26,6 +26,11 @@ public:
   VM(Module *M, TargetMachine *tm);
   ~VM();
 
+  /// create - Create an return a new JIT compiler if there is one available
+  /// for the current target.  Otherwise, return null.
+  ///
+  static ExecutionEngine *create(Module *M);
+
   /// run - Start execution with the specified function and arguments.
   ///
   virtual int run(const std::string &FnName,

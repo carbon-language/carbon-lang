@@ -91,8 +91,13 @@ public:
               bool DebugMode, bool TraceMode);
   inline ~Interpreter() { CW.setModule(0); }
 
-  // getExitCode - return the code that should be the exit code for the lli
-  // utility.
+  /// create - Create an interpreter ExecutionEngine. This can never fail.
+  ///
+  static ExecutionEngine *create(Module *M, bool DebugMode, bool TraceMode);
+
+  /// getExitCode - return the code that should be the exit code for the lli
+  /// utility.
+  ///
   inline int getExitCode() const { return ExitCode; }
 
   /// run - Start execution with the specified function and arguments.
