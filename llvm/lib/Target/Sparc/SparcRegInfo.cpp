@@ -742,9 +742,10 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     }
 
     unsigned RegClassID = (RetValLR->getRegClass())->getID();    
-    bool recvCorrectColor = false;
-
+    bool recvCorrectColor;
     unsigned CorrectCol;                // correct color for ret value
+    unsigned UniRetReg;                 // unified number for CorrectCol
+    
     if(RegClassID == IntRegClassID)
       CorrectCol = SparcIntRegOrder::o0;
     else if(RegClassID == FloatRegClassID)
@@ -753,28 +754,26 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
       assert( 0 && "Unknown RegClass");
       return;
     }
+    
+    // convert to unified number
+    UniRetReg = this->getUnifiedRegNum( RegClassID, CorrectCol);	
 
     // Mark the register as used by this instruction
-    CallMI->getRegsUsed().insert(this->getUnifiedRegNum(RegClassID,CorrectCol));
+    CallMI->getRegsUsed().insert(UniRetReg);
     
     // if the LR received the correct color, NOTHING to do
-    if(  RetValLR->hasColor() )
-      if( RetValLR->getColor() == CorrectCol )
-	recvCorrectColor = true;
-
+    recvCorrectColor = RetValLR->hasColor()? RetValLR->getColor() == CorrectCol
+      : false;
+    
     // if we didn't receive the correct color for some reason, 
     // put copy instruction
     if( !recvCorrectColor ) {
-
+      
       unsigned regType = getRegType( RetValLR );
 
-      // the  reg that LR must be colored with 
-      unsigned UniRetReg = getUnifiedRegNum( RegClassID, CorrectCol);	
-      
       if( RetValLR->hasColor() ) {
 	
-	unsigned 
-	  UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
+	unsigned UniRetLRReg=getUnifiedRegNum(RegClassID,RetValLR->getColor());
 	
 	// the return value is coming in UniRetReg but has to go into
 	// the UniRetLRReg
@@ -851,6 +850,8 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
     
     // Repeat for the second copy of the argument, which would be
     // an FP argument being passed to a function with no prototype.
+    // It may either be passed as a copy in an integer register
+    // (in argCopy), or on the stack (useStackSlot).
     const Value *argCopy = argDesc->getArgInfo(i).getArgCopy();
     if (argCopy != NULL)
       {
@@ -872,11 +873,22 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
                               copyRegClassID, copyRegNum, argNo,
                               AddedInstrnsBefore);
       }
+    
+    if (regNum != InvalidRegNum &&
+        argDesc->getArgInfo(i).usesStackSlot())
+      {
+        // Pass the argument via the stack in addition to regNum
+        assert(regType != IntRegType && "Passing an integer arg. twice?");
+        assert(!argCopy && "Passing FP arg in FP reg, INT reg, and stack?");
+        InitializeOutgoingArg(CallMI, CallAI, PRA, LR, regType, RegClassID,
+                              InvalidRegNum, argNo, AddedInstrnsBefore);
+      }
   }  // for each parameter in call instruction
 
   // If we added any instruction before the call instruction, verify
   // that they are in the proper order and if not, reorder them
   // 
+  std::vector<MachineInstr *> ReorderedVec;
   if (!AddedInstrnsBefore.empty()) {
 
     if (DEBUG_RA) {
@@ -885,23 +897,26 @@ void UltraSparcRegInfo::colorCallArgs(MachineInstr *CallMI,
 	cerr  << *(AddedInstrnsBefore[i]);
     }
 
-    std::vector<MachineInstr *> TmpVec;
-    OrderAddedInstrns(AddedInstrnsBefore, TmpVec, PRA);
-
+    OrderAddedInstrns(AddedInstrnsBefore, ReorderedVec, PRA);
+    assert(ReorderedVec.size() >= AddedInstrnsBefore.size()
+           && "Dropped some instructions when reordering!");
+    
     if (DEBUG_RA) {
       cerr << "\nAfter reordering instrns: \n";
-      for(unsigned i = 0; i < TmpVec.size(); i++)
-	cerr << *TmpVec[i];
+      for(unsigned i = 0; i < ReorderedVec.size(); i++)
+	cerr << *ReorderedVec[i];
     }
-
-    // copy the results back from TmpVec to InstrnsBefore
-    for(unsigned i=0; i < TmpVec.size(); i++)
-      CallAI->InstrnsBefore.push_back( TmpVec[i] );
   }
   
-  // now insert caller saving code for this call instruction
+  // Now insert caller saving code for this call instruction
   //
-  insertCallerSavingCode(CallMI, BB, PRA);
+  insertCallerSavingCode(CallAI->InstrnsBefore, CallAI->InstrnsAfter,
+                         CallMI, BB, PRA);
+  
+  // Then insert the final reordered code for the call arguments.
+  // 
+  for(unsigned i=0; i < ReorderedVec.size(); i++)
+    CallAI->InstrnsBefore.push_back( ReorderedVec[i] );
 }
 
 //---------------------------------------------------------------------------
@@ -978,16 +993,17 @@ void UltraSparcRegInfo::colorRetValue(MachineInstr *RetMI,
       return;
     }
 
+    // convert to unified number
+    unsigned UniRetReg = this->getUnifiedRegNum(RegClassID, CorrectCol);
+
     // Mark the register as used by this instruction
-    RetMI->getRegsUsed().insert(this->getUnifiedRegNum(RegClassID, CorrectCol));
+    RetMI->getRegsUsed().insert(UniRetReg);
     
     // if the LR received the correct color, NOTHING to do
-
+    
     if (LR->hasColor() && LR->getColor() == CorrectCol)
       return;
-
-    unsigned UniRetReg = getUnifiedRegNum(RegClassID, CorrectCol);
-
+    
     if (LR->hasColor()) {
 
       // We are here because the LR was allocted a regiter
@@ -1290,10 +1306,13 @@ UltraSparcRegInfo::cpValue2Value(Value *Src,
 //----------------------------------------------------------------------------
 
 
-void UltraSparcRegInfo::insertCallerSavingCode(MachineInstr *CallMI, 
-					       const BasicBlock *BB,
-					       PhyRegAlloc &PRA) const {
-
+void
+UltraSparcRegInfo::insertCallerSavingCode(vector<MachineInstr*>& instrnsBefore,
+                                          vector<MachineInstr*>& instrnsAfter,
+                                          MachineInstr *CallMI, 
+                                          const BasicBlock *BB,
+                                          PhyRegAlloc &PRA) const
+{
   assert ( (UltraSparcInfo->getInstrInfo()).isCall(CallMI->getOpCode()) );
   
   // has set to record which registers were saved/restored
@@ -1321,7 +1340,6 @@ void UltraSparcRegInfo::insertCallerSavingCode(MachineInstr *CallMI,
 	 getUnifiedRegNum((RetValLR->getRegClass())->getID(), 
 				      RetValLR->getColor() ) );
   }
-
 
   const ValueSet &LVSetAft =  PRA.LVI->getLiveVarSetAfterMInst(CallMI, BB);
   ValueSet::const_iterator LIt = LVSetAft.begin();
@@ -1361,11 +1379,6 @@ void UltraSparcRegInfo::insertCallerSavingCode(MachineInstr *CallMI,
 	    int StackOff =  PRA.mcInfo.pushTempValue(target,  
 					       getSpilledRegSize(RegType));
             
-            vector<MachineInstr*>& instrnsBefore =
-              PRA.AddedInstrMap[CallMI].InstrnsBefore;
-            vector<MachineInstr*>& instrnsAfter =
-              PRA.AddedInstrMap[CallMI].InstrnsAfter;
-            
 	    vector<MachineInstr*> AdIBef, AdIAft;
             
 	    //---- Insert code for pushing the reg on stack ----------
@@ -1393,7 +1406,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(MachineInstr *CallMI,
             cpReg2MemMI(instrnsBefore, Reg,getFramePointer(),StackOff,RegType,
                         scratchReg);
             
-            if (AdIBef.size() > 0)
+            if (AdIAft.size() > 0)
               instrnsBefore.insert(instrnsBefore.end(),
                                    AdIAft.begin(), AdIAft.end());
             
