@@ -40,8 +40,8 @@ static inline void RemapInstruction(Instruction *I,
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     const Value *Op = I->getOperand(op);
     Value *V = ValueMap[Op];
-    if (!V && Op->isMethod()) 
-      continue;  // Methods don't get relocated
+    if (!V && (Op->isMethod() || Op->isConstant()))
+      continue;  // Methods and constants don't get relocated
 
     if (!V) {
       cerr << "Val = " << endl << Op << "Addr = " << (void*)Op << endl;
@@ -175,20 +175,6 @@ bool opt::InlineMethod(BasicBlock::iterator CIIt) {
     }
   }
 
-
-  // Copy over the constant pool...
-  //
-  const ConstantPool &CP = CalledMeth->getConstantPool();
-  ConstantPool    &NewCP = CurrentMeth->getConstantPool();
-  for (ConstantPool::plane_const_iterator PI = CP.begin(); PI != CP.end(); ++PI){
-    ConstantPool::PlaneType &Plane = **PI;
-    for (ConstantPool::PlaneType::const_iterator I = Plane.begin(); 
-	 I != Plane.end(); ++I) {
-      ConstPoolVal *NewVal = (*I)->clone(); // Copy existing constant
-      NewCP.insert(NewVal);         // Insert the new copy into local const pool
-      ValueMap[*I] = NewVal;        // Keep track of constant value mappings
-    }
-  }
 
   // Loop over all of the instructions in the method, fixing up operand 
   // references as we go.  This uses ValueMap to do all the hard work.
