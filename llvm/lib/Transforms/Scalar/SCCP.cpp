@@ -1178,7 +1178,6 @@ bool IPSCCP::runOnModule(Module &M) {
       if (!ExecutableBBs.count(BB)) {
         DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
         ++IPNumDeadBlocks;
-        BlocksToErase.push_back(BB);
 
         // Delete the instructions backwards, as it has a reduced likelihood of
         // having to update as many def-use and use-def chains.
@@ -1205,6 +1204,11 @@ bool IPSCCP::runOnModule(Module &M) {
         if (!TI->use_empty())
           TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
         BB->getInstList().erase(TI);
+
+        if (&*BB != &F->front())
+          BlocksToErase.push_back(BB);
+        else
+          new UnreachableInst(BB);
 
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
