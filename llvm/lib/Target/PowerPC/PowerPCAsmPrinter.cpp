@@ -490,7 +490,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
   unsigned int i;
-  
+
   unsigned int ArgCount = Desc.TSFlags & PPC32II::ArgCountMask;
   unsigned int ArgType[] = {
     (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask,
@@ -508,7 +508,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
   if (Opcode == PPC32::MovePCtoLR) {
     O << "mflr r0\n";
-    O << "bcl 20,31,L" << CurrentFnName << "$pb\n";
+    O << "\tbcl 20,31,L" << CurrentFnName << "$pb\n";
     O << "L" << CurrentFnName << "$pb:\n";
     return;
   }
@@ -524,20 +524,14 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     O << ", lo16(";
     printOp(MI->getOperand(2));
     O << "-L" << CurrentFnName << "$pb)\n";
-    return;
-  }
-
-  if (Opcode == PPC32::LOADHiAddr) {
+  } else if (Opcode == PPC32::LOADHiAddr) {
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
     O << ", ha16(" ;
     printOp(MI->getOperand(2));
      O << "-L" << CurrentFnName << "$pb)\n";
-    return;
-  }
-  
-  if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
+  } else if (ArgCount == 3 && ArgType[1] == PPC32II::Disimm16) {
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
@@ -562,8 +556,6 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         O << ", ";
     }
   }
-  
-  return;  
 }
 
 bool Printer::doInitialization(Module &M) {
