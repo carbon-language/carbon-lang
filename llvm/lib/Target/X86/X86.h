@@ -13,7 +13,7 @@ class TargetMachine;
 class Pass;
 
 /// createX86SimpleInstructionSelector - This pass converts an LLVM function
-/// into a machine code representation is a very simple peep-hole fashion.  The
+/// into a machine code representation in a very simple peep-hole fashion.  The
 /// generated code sucks but the implementation is nice and simple.
 ///
 Pass *createX86SimpleInstructionSelector(TargetMachine &TM);
@@ -42,18 +42,15 @@ Pass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm);
 ///
 Pass *createEmitX86CodeToMemory();
 
+// Defines symbolic names for X86 registers.  This defines a mapping from
+// register name to register number.
+//
+#include "X86GenRegisterNames.inc"
+
 /// X86 namespace - This namespace contains all of the register and opcode enums
 /// used by the X86 backend.
 ///
 namespace X86 {
-  // Defines a large number of symbolic names for X86 registers.  This defines a
-  // mapping from register name to register number.
-  //
-  enum Register {
-#define R(ENUM, NAME, FLAGS, TSFLAGS, ALIAS_SET) ENUM,
-#include "X86RegisterInfo.def"
-  };
-
   // This defines a large number of symbolic names for X86 instruction opcodes.
   enum Opcode {
 #define I(ENUM, NAME, BASEOPCODE, FLAGS, TSFLAGS, IMPDEFS, IMPUSES) ENUM,
