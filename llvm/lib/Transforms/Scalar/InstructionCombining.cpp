@@ -934,6 +934,13 @@ static bool isMinValuePlusOne(const ConstantInt *C) {
   return CS->getValue() == Val+1;
 }
 
+// isOneBitSet - Return true if there is exactly one bit set in the specified
+// constant.
+static bool isOneBitSet(const ConstantInt *CI) {
+  uint64_t V = CI->getRawValue();
+  return V && (V & (V-1)) == 0;
+}
+
 /// getSetCondCode - Encode a setcc opcode into a three bit mask.  These bits
 /// are carefully arranged to allow folding of expressions such as:
 ///
@@ -1063,17 +1070,17 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       // Adding a one to a single bit bit-field should be turned into an XOR
       // of the bit.  First thing to check is to see if this AND is with a
       // single bit constant.
-      unsigned long long AndRHSV = cast<ConstantInt>(AndRHS)->getRawValue();
+      uint64_t AndRHSV = cast<ConstantInt>(AndRHS)->getRawValue();
 
       // Clear bits that are not part of the constant.
       AndRHSV &= (1ULL << AndRHS->getType()->getPrimitiveSize()*8)-1;
 
       // If there is only one bit set...
-      if ((AndRHSV & (AndRHSV-1)) == 0) {
+      if (isOneBitSet(cast<ConstantInt>(AndRHS))) {
         // Ok, at this point, we know that we are masking the result of the
         // ADD down to exactly one bit.  If the constant we are adding has
         // no bits set below this bit, then we can eliminate the ADD.
-        unsigned long long AddRHS = cast<ConstantInt>(OpRHS)->getRawValue();
+        uint64_t AddRHS = cast<ConstantInt>(OpRHS)->getRawValue();
             
         // Check to see if any bits below the one bit set in AndRHSV are set.
         if ((AddRHS & (AndRHSV-1)) == 0) {
@@ -1476,61 +1483,66 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       if (LHSI->hasOneUse())
-        if (LHSI->getNumOperands() == 2 &&
-            isa<ConstantInt>(LHSI->getOperand(1))) {
-          // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
-          // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
-          // happens a LOT in code produced by the C front-end, for bitfield
-          // access.
-          if (LHSI->getOpcode() == Instruction::And &&
-              LHSI->getOperand(0)->hasOneUse())
-            if (ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0)))
-              if (ConstantUInt *ShAmt =
-                  dyn_cast<ConstantUInt>(Shift->getOperand(1))) {
-                ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+        switch (LHSI->getOpcode()) {
+        case Instruction::And:
+          if (isa<ConstantInt>(LHSI->getOperand(1))) {
+          
 
-                // We can fold this as long as we can't shift unknown bits into
-                // the mask.  This can only happen with signed shift rights, as
-                // they sign-extend.
-                const Type *Ty = Shift->getType();
-                if (Shift->getOpcode() != Instruction::Shr ||
-                    Shift->getType()->isUnsigned() ||
-                    // To test for the bad case of the signed shr, see if any of
-                    // the bits shifted in could be tested after the mask.
-                    ConstantExpr::getAnd(ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), ConstantUInt::get(Type::UByteTy, Ty->getPrimitiveSize()*8-ShAmt->getValue())), AndCST)->isNullValue()) {
-                  unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
-                    ? Instruction::Shr : Instruction::Shl;
-                  I.setOperand(1, ConstantExpr::get(ShiftOp, CI, ShAmt));
-                  LHSI->setOperand(1, ConstantExpr::get(ShiftOp, AndCST,ShAmt));
-                  LHSI->setOperand(0, Shift->getOperand(0));
-                  WorkList.push_back(Shift); // Shift is probably dead.
-                  AddUsesToWorkList(I);
-                  return &I;
+            // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
+            // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
+            // happens a LOT in code produced by the C front-end, for bitfield
+            // access.
+            if (LHSI->getOperand(0)->hasOneUse())
+              if (ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0)))
+                if (ConstantUInt *ShAmt =
+                    dyn_cast<ConstantUInt>(Shift->getOperand(1))) {
+                  ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+                  
+                  // We can fold this as long as we can't shift unknown bits
+                  // into the mask.  This can only happen with signed shift
+                  // rights, as they sign-extend.
+                  const Type *Ty = Shift->getType();
+                  if (Shift->getOpcode() != Instruction::Shr ||
+                      Shift->getType()->isUnsigned() ||
+                      // To test for the bad case of the signed shr, see if any
+                      // of the bits shifted in could be tested after the mask.
+                      ConstantExpr::getAnd(ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), ConstantUInt::get(Type::UByteTy, Ty->getPrimitiveSize()*8-ShAmt->getValue())), AndCST)->isNullValue()) {
+                    unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
+                      ? Instruction::Shr : Instruction::Shl;
+                    I.setOperand(1, ConstantExpr::get(ShiftOp, CI, ShAmt));
+                    LHSI->setOperand(1,ConstantExpr::get(ShiftOp,AndCST,ShAmt));
+                    LHSI->setOperand(0, Shift->getOperand(0));
+                    WorkList.push_back(Shift); // Shift is probably dead.
+                    AddUsesToWorkList(I);
+                    return &I;
+                  }
                 }
-              }
-        } else if (SelectInst *SI = dyn_cast<SelectInst>(LHSI)) {
+          }
+          break;
+        case Instruction::Select:
           // If either operand of the select is a constant, we can fold the
           // comparison into the select arms, which will cause one to be
           // constant folded and the select turned into a bitwise or.
           Value *Op1 = 0, *Op2 = 0;
-          if (Constant *C = dyn_cast<Constant>(SI->getOperand(1))) {
+          if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
             // Fold the known value into the constant operand.
             Op1 = ConstantExpr::get(I.getOpcode(), C, CI);
             // Insert a new SetCC of the other select operand.
             Op2 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
-                                                      SI->getOperand(2), CI,
+                                                      LHSI->getOperand(2), CI,
                                                       I.getName()), I);
-          } else if (Constant *C = dyn_cast<Constant>(SI->getOperand(2))) {
+          } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
             // Fold the known value into the constant operand.
             Op2 = ConstantExpr::get(I.getOpcode(), C, CI);
             // Insert a new SetCC of the other select operand.
             Op1 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
-                                                      SI->getOperand(1), CI,
+                                                      LHSI->getOperand(1), CI,
                                                       I.getName()), I);
           }
 
           if (Op1)
-            return new SelectInst(SI->getCondition(), Op1, Op2);
+            return new SelectInst(LHSI->getOperand(0), Op1, Op2);
+          break;
         }
 
     // Simplify seteq and setne instructions...
@@ -1591,6 +1603,16 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             if (!ConstantExpr::get(Instruction::And, CI,
                                    NotConstant(BOC))->isNullValue())
               return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
+
+            // If we have ((X & C) == C), turn it into ((X & C) != 0).
+            if (CI == BOC) {
+              // Don't infinite loop if C is null and the & isn't folded yet.
+              if (CI->isNullValue())
+                return ReplaceInstUsesWith(I, ConstantBool::get(!isSetNE));
+              return new SetCondInst(isSetNE ? Instruction::SetEQ :
+                                     Instruction::SetNE, Op0,
+                                     Constant::getNullValue(CI->getType()));
+            }
 
             // Replace (and X, (1 << size(X)-1) != 0) with x < 0, converting X
             // to be a signed value as appropriate.
@@ -2258,6 +2280,34 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                                                "not."+CondVal->getName()), SI);
         return new CastInst(NotCond, SI.getType());
       }
+
+      // If one of the constants is zero (we know they can't both be) and we
+      // have a setcc instruction with zero, and we have an 'and' with the
+      // non-constant value, eliminate this whole mess.  This corresponds to
+      // cases like this: ((X & 27) ? 27 : 0)
+      if (TrueValC->isNullValue() || FalseValC->isNullValue())
+        if (Instruction *IC = dyn_cast<Instruction>(SI.getCondition()))
+          if ((IC->getOpcode() == Instruction::SetEQ ||
+               IC->getOpcode() == Instruction::SetNE) &&
+              isa<ConstantInt>(IC->getOperand(1)) &&
+              cast<Constant>(IC->getOperand(1))->isNullValue())
+            if (Instruction *ICA = dyn_cast<Instruction>(IC->getOperand(0)))
+              if (ICA->getOpcode() == Instruction::And &&
+                  isa<ConstantInt>(ICA->getOperand(1)) && 
+                  (ICA->getOperand(1) == TrueValC || 
+                   ICA->getOperand(1) == FalseValC) && 
+                  isOneBitSet(cast<ConstantInt>(ICA->getOperand(1)))) {
+                // Okay, now we know that everything is set up, we just don't
+                // know whether we have a setne or seteq and whether the true or
+                // false val is the zero.
+                bool ShouldNotVal = !TrueValC->isNullValue();
+                ShouldNotVal ^= IC->getOpcode() == Instruction::SetNE;
+                Value *V = ICA;
+                if (ShouldNotVal)
+                  V = InsertNewInstBefore(BinaryOperator::create(
+                                  Instruction::Xor, V, ICA->getOperand(1)), SI);
+                return ReplaceInstUsesWith(SI, V);
+              }
     }
 
   // See if we are selecting two values based on a comparison of the two values.
