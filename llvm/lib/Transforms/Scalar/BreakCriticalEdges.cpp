@@ -26,6 +26,7 @@ namespace {
       AU.addPreserved<DominatorSet>();
       AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominanceFrontier>();
       AU.addPreservedID(LoopPreheadersID);   // No preheaders deleted.
     }
   };
@@ -64,10 +65,11 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   assert(isCriticalEdge(TI, SuccNum) &&
          "Cannot break a critical edge, if it isn't a critical edge");
   BasicBlock *TIBB = TI->getParent();
+  BasicBlock *DestBB = TI->getSuccessor(SuccNum);
 
   // Create a new basic block, linking it into the CFG.
-  BasicBlock *NewBB = new BasicBlock(TIBB->getName()+"_crit_edge");
-  BasicBlock *DestBB = TI->getSuccessor(SuccNum);
+  BasicBlock *NewBB = new BasicBlock(TIBB->getName() + "." +
+                                     DestBB->getName() + "_crit_edge");
   // Create our unconditional branch...
   BranchInst *BI = new BranchInst(DestBB);
   NewBB->getInstList().push_back(BI);
@@ -120,6 +122,16 @@ void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     //
     if (TINode)        // Don't break unreachable code!
       DT->createNewNode(NewBB, TINode);
+  }
+
+  // Should we update DominanceFrontier information?
+  if (DominanceFrontier *DF = P->getAnalysisToUpdate<DominanceFrontier>()) {
+    // Since the new block is dominated by its only predecessor TIBB,
+    // it cannot be in any block's dominance frontier.  Its dominance
+    // frontier is {DestBB}.
+    DominanceFrontier::DomSetType NewDFSet;
+    NewDFSet.insert(DestBB);
+    DF->addBasicBlock(NewBB, NewDFSet);
   }
 }
 
