@@ -103,8 +103,8 @@ void SymbolTable::insert(Value *N) {
 
   // TODO: The typeverifier should catch this when its implemented
   if (lookup(N->getType(), N->getName())) {
-    cerr << "SymbolTable WARNING: Name already in symbol table: '" 
-         << N->getName() << "'\n";
+    cerr << "SymbolTable ERROR: Name already in symbol table: '" 
+         << N->getName() << "' for type '" << N->getType()->getName() << "'\n";
     abort();  // TODO: REMOVE THIS
   }
 
