@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/TwoAddressInstructionPass.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/CommandLine.h"
@@ -112,6 +113,7 @@ namespace {
       if (!DisableKill)
 	AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
+      AU.addRequired<TwoAddressInstructionPass>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -571,28 +573,13 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned DestVirtReg = MI->getOperand(i).getAllocatedRegNum();
         unsigned DestPhysReg;
 
-        // If DestVirtReg already has a value, forget about it.  Why doesn't
-        // getReg do this right?
+        // If DestVirtReg already has a value, use it.
         std::map<unsigned, unsigned>::iterator DestI =
           Virt2PhysRegMap.find(DestVirtReg);
         if (DestI != Virt2PhysRegMap.end()) {
-          unsigned PhysReg = DestI->second;
-          Virt2PhysRegMap.erase(DestI);
-          removePhysReg(PhysReg);
+          DestPhysReg = DestI->second;
         }
-
-        if (TM->getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
-          // must be same register number as the first operand
-          // This maps a = b + c into b += c, and saves b into a's spot
-          assert(MI->getOperand(1).isPhysicalRegister()  &&
-                 MI->getOperand(1).getAllocatedRegNum() &&
-                 MI->getOperand(1).isUse() &&
-                 "Two address instruction invalid!");
-          DestPhysReg = MI->getOperand(1).getAllocatedRegNum();
-
-          liberatePhysReg(MBB, I, DestPhysReg);
-          assignVirtToPhysReg(DestVirtReg, DestPhysReg);
-        } else {
+        else {
           DestPhysReg = getReg(MBB, I, DestVirtReg);
         }
         markVirtRegModified(DestVirtReg);
