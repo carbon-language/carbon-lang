@@ -349,6 +349,10 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   // We don't need the placeholder anymore!
   delete MethPHolder;
 
+  // If the method is empty, we don't need the method argument entries...
+  if (M->isExternal())
+    M->getArgumentList().delete_all();
+
   DeclareNewGlobalValue(M, MethSlot);
 
   return false;
