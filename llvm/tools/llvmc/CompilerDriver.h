@@ -94,6 +94,7 @@ namespace llvm {
         std::string version;    ///< The version number.
         std::string langName;   ///< The name of the source language 
         StringTable opts;       ///< The o10n options for each level
+        StringVector libpaths;  ///< The library paths
         Action PreProcessor;    ///< PreProcessor command line
         Action Translator;      ///< Translator command line
         Action Optimizer;       ///< Optimizer command line
@@ -187,6 +188,12 @@ namespace llvm {
 
       /// @brief Set the list of -W options to be passed through
       virtual void setWPassThrough(const StringVector& fOpts) = 0;
+
+      /// @brief Determine where a linkage file is located in the file system
+      virtual sys::Path GetPathForLinkageItem(
+        const std::string& link_item, ///< Item to be sought
+        bool native = false           ///< Looking for native?
+      ) = 0;
 
     /// @}
   };
