@@ -82,9 +82,9 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
 	   CSE = callSites.end(); CSI != CSE ; ++CSI) {
       if (CSI->isIndirectCall()) {
 	DSNode *DSN = CSI->getCalleeNode();
-	if (DSN->NodeType == DSNode::Incomplete) 
+	if (DSN->isIncomplete())
 	  std::cerr << "Incomplete node " << CSI->getCallInst();
-	// assert(DSN->NodeType == DSNode::GlobalNode);
+	// assert(DSN->isGlobalNode());
 	std::vector<GlobalValue*> &Callees = DSN->getGlobals();
 	if (Callees.size() > 0) {
 	  Function *firstCalledF = dyn_cast<Function>(*Callees.begin());
@@ -229,13 +229,13 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
   // Mark globals and incomplete nodes as live... (this handles arguments)
   if (F.getName() != "main")
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if (Nodes[i]->NodeType & (DSNode::GlobalNode | DSNode::Incomplete) &&
-          Nodes[i]->NodeType & (DSNode::HeapNode))
+      if ((Nodes[i]->isGlobalNode() || Nodes[i]->isIncomplete()) &&
+          Nodes[i]->isHeapNode())
         Nodes[i]->markReachableNodes(MarkedNodes);
 
   // Marked the returned node as alive...
   if (DSNode *RetNode = G.getRetNode().getNode())
-    if (RetNode->NodeType & DSNode::HeapNode)
+    if (RetNode->isHeapNode())
       RetNode->markReachableNodes(MarkedNodes);
 
   if (MarkedNodes.empty())   // We don't need to clone the function if there
@@ -411,7 +411,7 @@ void PoolAllocate::ProcessFunctionBody(Function &F, Function &NewF) {
   // ones to the NodesToPA vector.
   std::vector<DSNode*> NodesToPA;
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    if (Nodes[i]->NodeType & DSNode::HeapNode &&   // Pick nodes with heap elems
+    if (Nodes[i]->isHeapNode() &&   // Pick nodes with heap elems
         !MarkedNodes.count(Nodes[i]))              // Can't be marked
       NodesToPA.push_back(Nodes[i]);
   
