@@ -38,16 +38,9 @@ endif
 
 # LLVM Tool Definitions...
 #
-ifdef LLVMGCCARCH # FIXME: Remove when new CFE is used on sparc as well!
 LCC      = $(LLVMGCCDIR)/bin/gcc
 LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1
 LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
-else
-LCC      = $(LLVMGCCDIR)/bin/llvm-gcc
-LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/llvm/3.1/cc1
-LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/llvm/lib
-endif
-
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
