@@ -15,7 +15,7 @@ llc_SOURCES = llc.cpp
 
 llc_LDADD = \
   $(call GETOBJS,CWriter,PowerPC,SparcV9,X86,Skeleton,SelectionDAG) \
-  $(call GETOBJS,SparcV9RegAlloc,SparcV9Sched,CodeGen) \
+  $(call GETOBJS,SparcV9RegAlloc,SparcV9InstrSched,CodeGen) \
   $(call GETLIBS,Target) \
   $(call GETOBJS,SparcV9LiveVar) \
   $(call GETLIBS,IPA,Transforms,ScalarOpts,Analysis,TransformUtils) \
