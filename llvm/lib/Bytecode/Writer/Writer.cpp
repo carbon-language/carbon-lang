@@ -235,8 +235,6 @@ void BytecodeWriter::outputType(const Type *T) {
     int Slot = Table.getSlot(AT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_typeid((unsigned)Slot);
-    //std::cerr << "Type slot = " << Slot << " Type = " << T->getName() << endl;
-
     output_vbr(AT->getNumElements());
     break;
   }
@@ -426,9 +424,10 @@ typedef unsigned char uchar;
 //
 // Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]
 //
-void BytecodeWriter::outputInstructionFormat0(const Instruction *I, unsigned Opcode,
-				     const SlotCalculator &Table,
-				     unsigned Type) {
+void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
+                                              unsigned Opcode,
+                                              const SlotCalculator &Table,
+                                              unsigned Type) {
   // Opcode must have top two bits clear...
   output_vbr(Opcode << 2);                  // Instruction Opcode ID
   output_typeid(Type);                      // Result type
@@ -554,9 +553,7 @@ inline void BytecodeWriter::outputInstructionFormat1(const Instruction *I,
   // 19-08: Resulting type plane
   // 31-20: Operand #1 (if set to (2^12-1), then zero operands)
   //
-  unsigned Bits = 1 | (Opcode << 2) | (Type << 8) | (Slots[0] << 20);
-  //  cerr << "1 " << IType << " " << Type << " " << Slots[0] << endl;
-  output(Bits);
+  output(1 | (Opcode << 2) | (Type << 8) | (Slots[0] << 20));
 }
 
 
@@ -575,11 +572,7 @@ inline void BytecodeWriter::outputInstructionFormat2(const Instruction *I,
   // 23-16: Operand #1
   // 31-24: Operand #2  
   //
-  unsigned Bits = 2 | (Opcode << 2) | (Type << 8) |
-                    (Slots[0] << 16) | (Slots[1] << 24);
-  //  cerr << "2 " << IType << " " << Type << " " << Slots[0] << " " 
-  //       << Slots[1] << endl;
-  output(Bits);
+  output(2 | (Opcode << 2) | (Type << 8) | (Slots[0] << 16) | (Slots[1] << 24));
 }
 
 
@@ -599,11 +592,8 @@ inline void BytecodeWriter::outputInstructionFormat3(const Instruction *I,
   // 25-20: Operand #2
   // 31-26: Operand #3
   //
-  unsigned Bits = 3 | (Opcode << 2) | (Type << 8) |
+  output(3 | (Opcode << 2) | (Type << 8) |
           (Slots[0] << 14) | (Slots[1] << 20) | (Slots[2] << 26);
-  //cerr << "3 " << IType << " " << Type << " " << Slots[0] << " " 
-  //     << Slots[1] << " " << Slots[2] << endl;
-  output(Bits);
 }
 
 void BytecodeWriter::outputInstruction(const Instruction &I) {
@@ -790,8 +780,7 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   outputSymbolTable(M->getSymbolTable());
 }
 
-void BytecodeWriter::outputTypes(unsigned TypeNum)
-{
+void BytecodeWriter::outputTypes(unsigned TypeNum) {
   // Write the type plane for types first because earlier planes (e.g. for a
   // primitive type like float) may have constants constructed using types
   // coming later (e.g., via getelementptr from a pointer type).  The type
@@ -864,7 +853,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
     // Output the type plane before any constants!
     outputTypes( Table.getModuleTypeLevel() );
   else
-    // Output module-level string constants before any other constants.x
+    // Output module-level string constants before any other constants.
     outputConstantStrings();
 
   for (unsigned pno = 0; pno != NumPlanes; pno++) {
@@ -1035,7 +1024,8 @@ void BytecodeWriter::outputCompactionTable() {
       (!Table.CompactionTableIsEmpty())) {
     BytecodeBlock CTB(BytecodeFormat::CompactionTableBlockID, *this, 
                       true/*ElideIfEmpty*/);
-    const std::vector<std::vector<const Value*> > &CT =Table.getCompactionTable();
+    const std::vector<std::vector<const Value*> > &CT =
+      Table.getCompactionTable();
     
     // First things first, emit the type compaction table if there is one.
     outputCompactionTypes(Type::FirstDerivedTyID);
@@ -1048,10 +1038,10 @@ void BytecodeWriter::outputCompactionTable() {
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   // Do not output the Bytecode block for an empty symbol table, it just wastes
   // space!
-  if ( MST.isEmpty() ) return;
+  if (MST.isEmpty()) return;
 
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTableBlockID, *this,
-                            true/* ElideIfEmpty*/);
+                            true/*ElideIfEmpty*/);
 
   // Write the number of types 
   output_vbr(MST.num_types());
@@ -1108,9 +1098,8 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out) {
   // sequential in memory, however, so write out as much as possible in big
   // chunks, until we're done.
   //
-
-  std::vector<unsigned char>::const_iterator I = Buffer.begin(),E = Buffer.end();
-  while (I != E) {                           // Loop until it's all written
+  for (std::vector<unsigned char>::const_iterator I = Buffer.begin(),
+         E = Buffer.end(); I != E; ++I) {
     // Scan to see how big this chunk is...
     const unsigned char *ChunkPtr = &*I;
     const unsigned char *LastPtr = ChunkPtr;
