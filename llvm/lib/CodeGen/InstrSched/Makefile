@@ -6,10 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
-
 DIRS  = 
-
 LIBRARYNAME = sched
 
 include $(LEVEL)/Makefile.common
