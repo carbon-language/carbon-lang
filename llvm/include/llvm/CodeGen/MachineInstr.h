@@ -135,6 +135,17 @@ private:
   friend class MachineInstr;
   friend class ValOpIterator<const MachineInstr, const Value>;
   friend class ValOpIterator<      MachineInstr,       Value>;
+
+
+public:
+
+  // this replaces a value with a register after register allcoation
+  void setRegForValue(int Reg) {
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister);
+    opType =  MO_MachineRegister;
+    regNum = Reg;
+  }
+
 };
 
 
@@ -244,6 +255,10 @@ public:
   bool			operandIsDefined(unsigned int i) const;
   
   void			dump		(unsigned int indent = 0) const;
+
+
+
+
   
 public:
   friend ostream& operator<<(ostream& os, const MachineInstr& minstr);
@@ -395,10 +410,10 @@ MachineCodeForVMInstr::~MachineCodeForVMInstr()
 //---------------------------------------------------------------------------
 
 
-class MachineCodeForBasicBlock: public vector<const MachineInstr*> {
+class MachineCodeForBasicBlock: public vector<MachineInstr*> {
 public:
-  typedef vector<const MachineInstr*>::iterator iterator;
-  typedef vector<const MachineInstr*>::const_iterator const_iterator;
+  typedef vector<MachineInstr*>::iterator iterator;
+  typedef vector<MachineInstr*>::const_iterator const_iterator;
 };
 
 
@@ -461,7 +476,7 @@ ostream& operator<<(ostream& os, const MachineInstr& minstr);
 ostream& operator<<(ostream& os, const MachineOperand& mop);
 					 
 
-void	PrintMachineInstructions	(Method* method);
+void	PrintMachineInstructions	(const Method *const method);
 
 
 //**************************************************************************/

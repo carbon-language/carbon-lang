@@ -54,9 +54,9 @@ class SparcIntRegOrder{
      // --- following colors are not available for allocation within this phase
      // --- but can appear for pre-colored ranges 
 
-     g0, i6, i7,  o6,   
+     g0, i6, i7,  o6
 
-     NumOfAllRegs   // place holder to count all possilbe colors
+ 
 
    };
 
@@ -65,6 +65,7 @@ class SparcIntRegOrder{
 
   static unsigned int const StartOfNonVolatileRegs = l0;
   static unsigned int const StartOfAllRegs = g1;
+  static unsigned int const NumOfAllRegs = o6 + 1; 
 
 
   static const string  getRegName(const unsigned reg) {

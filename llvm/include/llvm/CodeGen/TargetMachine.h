@@ -224,8 +224,12 @@ public:
     return getDescriptor(opCode).iclass & M_DUMMY_PHI_FLAG;
   }
 
+
+  // delete this later *******
+  bool isPhi(MachineOpCode opCode) { return isDummyPhiInstr(opCode); }  
   
-  // 
+
+
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
@@ -685,6 +689,10 @@ class Value;
 class LiveRangeInfo;
 class Method;
 class Instruction;
+class LiveRange;
+class AddedInstrns;
+class MachineInstr;
+typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
 
 // A vector of all machine register classes
 typedef vector<const MachineRegClassInfo *> MachineRegClassArrayType;
@@ -715,8 +723,14 @@ public:
 			 LiveRangeInfo & LRI) const = 0;
 
   virtual void colorCallArgs(vector<const Instruction *> & CallInstrList, 
-		     LiveRangeInfo& LRI ) const = 0 ;
+			     LiveRangeInfo& LRI, 
+			     AddedInstrMapType& AddedInstrMap ) const = 0 ;
 
+  virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
+
+  virtual const string getUnifiedRegName(int reg) const = 0;
+
+  //virtual void printReg(const LiveRange *const LR) const =0;
 
   MachineRegInfo() { }
 

@@ -933,10 +933,40 @@ class UltraSparcRegInfo : public MachineRegInfo
  
   void colorArgs(const Method *const Meth, LiveRangeInfo& LRI) const;
 
-  static void printReg(const LiveRange *const LR);
+  static void printReg(const LiveRange *const LR)  ;
 
   void colorCallArgs(vector<const Instruction *> & CallInstrList, 
-		     LiveRangeInfo& LRI ) const;
+		     LiveRangeInfo& LRI, 
+		     AddedInstrMapType& AddedInstrMap ) const;
+
+  // this method provides a unique number for each register 
+  inline int getUnifiedRegNum(int RegClassID, int reg) const {
+
+    if( RegClassID == IntRegClassID && reg < 32 ) 
+      return reg;
+    else if ( RegClassID == FloatRegClassID && reg < 64)
+      return reg + 32;                  // we have 32 int regs
+    else if( RegClassID == FloatCCREgClassID && reg < 4)
+      return reg + 32 + 64;             // 32 int, 64 float
+    else 
+      assert(0 && "Invalid register class or reg number");
+
+  }
+
+  // given the unified register number, this gives the name
+  inline const string getUnifiedRegName(int reg) const {
+
+    if( reg < 32 ) 
+      return SparcIntRegOrder::getRegName(reg);
+    else if ( reg < (64 + 32) )
+      return SparcFloatRegOrder::getRegName( reg  - 32);                  
+    else if( reg < (64+32+4) )
+      assert( 0 && "no float condition reg class yet");
+      // return reg + 32 + 64;             
+    else 
+      assert(0 && "Invalid register number");
+  }
+
 
 };
 
