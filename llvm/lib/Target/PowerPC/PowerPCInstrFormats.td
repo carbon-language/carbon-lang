@@ -419,8 +419,8 @@ class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx,
               dag OL, string asmstr> : I<opcode, ppc64, vmx, OL, asmstr> {
   bits<5> FRT;
   bits<5> FRA;
-  bits<5> FRB;
   bits<5> FRC;
+  bits<5> FRB;
 
   let Inst{6-10}  = FRT;
   let Inst{11-15} = FRA;
