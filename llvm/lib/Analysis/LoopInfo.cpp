@@ -128,12 +128,12 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   std::vector<BasicBlock *> TodoStack;
 
   // Scan the predecessors of BB, checking to see if BB dominates any of
-  // them.
+  // them.  This identifies backedges which target this node...
   for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
     if (DS.dominates(BB, *I))   // If BB dominates it's predecessor...
       TodoStack.push_back(*I);
 
-  if (TodoStack.empty()) return 0;  // Doesn't dominate any predecessors...
+  if (TodoStack.empty()) return 0;  // No backedges to this block...
 
   // Create a new loop to represent this basic block...
   Loop *L = new Loop(BB);
@@ -144,8 +144,29 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
     TodoStack.pop_back();
 
     if (!L->contains(X)) {         // As of yet unprocessed??
+      // Check to see if this block already belongs to a loop.  If this occurs
+      // then we have a case where a loop that is supposed to be a child of the
+      // current loop was processed before the current loop.  When this occurs,
+      // this child loop gets added to a part of the current loop, making it a
+      // sibling to the current loop.  We have to reparent this loop.
+      if (Loop *SubLoop = const_cast<Loop*>(getLoopFor(X)))
+        if (SubLoop->getHeader() == X && X != BB) {
+          // Remove the subloop from it's current parent...
+          assert(SubLoop->ParentLoop && SubLoop->ParentLoop != L);
+          Loop *SLP = SubLoop->ParentLoop;  // SubLoopParent
+          std::vector<Loop*>::iterator I =
+            std::find(SLP->SubLoops.begin(), SLP->SubLoops.end(), SubLoop);
+          assert(I != SLP->SubLoops.end() && "SubLoop not a child of parent?");
+          SLP->SubLoops.erase(I);   // Remove from parent...
+          
+          // Add the subloop to THIS loop...
+          SubLoop->ParentLoop = L;
+          L->SubLoops.push_back(SubLoop);
+        }
+
+      // Normal case, add the block to our loop...
       L->Blocks.push_back(X);
-      
+        
       // Add all of the predecessors of X to the end of the work stack...
       TodoStack.insert(TodoStack.end(), pred_begin(X), pred_end(X));
     }
