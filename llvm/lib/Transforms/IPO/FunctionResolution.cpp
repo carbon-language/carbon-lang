@@ -130,8 +130,8 @@ static bool ResolveFunctions(Module &M, vector<GlobalValue*> &Globals,
       //
       for (unsigned i = 0; i < OldMT->getParamTypes().size(); ++i)
         if (OldMT->getParamTypes()[i] != ConcreteMT->getParamTypes()[i]) {
-          cerr << "Parameter types conflict for" << OldMT
-               << " and " << ConcreteMT;
+          cerr << "Parameter types conflict for: '" << OldMT
+               << "' and '" << ConcreteMT << "'\n";
           return Changed;
         }
       
@@ -231,31 +231,24 @@ static bool ProcessGlobalsWithSameName(Module &M,
       return false;                 // Don't know how to handle this, bail out!
     }
 
-    // Ignore globals that are never used so they don't cause spurious
-    // warnings... here we will actually DCE the function so that it isn't used
-    // later.
-    //
-    if (Globals[i]->isExternal() && Globals[i]->use_empty()) {
-      if (isFunction) {
-        M.getFunctionList().erase(cast<Function>(Globals[i]));
-        ++NumResolved;
-      } else {
-        M.getGlobalList().erase(cast<GlobalVariable>(Globals[i]));
-        ++NumGlobals;
-      }
-
-      Globals.erase(Globals.begin()+i);
-      Changed = true;
-    } else if (isFunction) {
+    if (isFunction) {
       // For functions, we look to merge functions definitions of "int (...)"
       // to 'int (int)' or 'int ()' or whatever else is not completely generic.
       //
       Function *F = cast<Function>(Globals[i]);
       if (!F->isExternal()) {
-        if (Concrete)
+        if (Concrete && !Concrete->isExternal())
           return false;   // Found two different functions types.  Can't choose!
         
         Concrete = Globals[i];
+      } else if (Concrete) {
+        if (Concrete->isExternal()) // If we have multiple external symbols...x
+          if (F->getFunctionType()->getNumParams() > 
+              cast<Function>(Concrete)->getFunctionType()->getNumParams())
+            Concrete = F;  // We are more concrete than "Concrete"!
+
+      } else {
+        Concrete = F;
       }
       ++i;
     } else {
@@ -341,6 +334,31 @@ bool FunctionResolvingPass::run(Module &M) {
   for (std::map<string, vector<GlobalValue*> >::iterator I = Globals.begin(), 
          E = Globals.end(); I != E; ++I)
     Changed |= ProcessGlobalsWithSameName(M, I->second);
+
+  // Now loop over all of the globals, checking to see if any are trivially
+  // dead.  If so, remove them now.
+
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; )
+    if (I->isExternal() && I->use_empty()) {
+      Function *F = I;
+      ++I;
+      M.getFunctionList().erase(F);
+      ++NumResolved;
+      Changed = true;
+    } else {
+      ++I;
+    }
+
+  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; )
+    if (I->isExternal() && I->use_empty()) {
+      GlobalVariable *GV = I;
+      ++I;
+      M.getGlobalList().erase(GV);
+      ++NumGlobals;
+      Changed = true;
+    } else {
+      ++I;
+    }
 
   return Changed;
 }
