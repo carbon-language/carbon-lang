@@ -1320,65 +1320,109 @@ void DSGraph::getFunctionArgumentsForCall(Function *F,
     }
 }
 
-/// PathExistsToClonedNode - Return true if there is a path from this node to a
-/// node cloned by RC that does not go through another global node.  Use the
-/// NodeInfo map to cache information so this is an efficient depth first
-/// traversal.
-static bool PathExistsToClonedNode(const DSNode *N, ReachabilityCloner &RC,
-                                   std::map<const DSNode*, bool> &NodeInfo) {
-  std::map<const DSNode*, bool>::iterator I = NodeInfo.find(N);
-  if (I != NodeInfo.end())
-    return I->second;
-
-  // FIXME: we are potentially re-scc'ing chunks of the graph for all of the
-  // roots!  We need an SCC iterator that supports multiple roots.
-  //
-  // FIXME: This should stop traversal of SCCs when we find something in RC!
-  scc_iterator<const DSNode*> SCCI = scc_begin(N), SCCE = scc_end(N);
-  for (; SCCI != SCCE; ++SCCI) {
-    std::vector<const DSNode*> &SCC = *SCCI;
-    assert(!SCC.empty() && "empty scc??");
-
-    if (NodeInfo.count(SCC[0]))
-      continue;  // already processed.
-
-    bool SCCReachesClonedNode = false;
-
-    for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-      const DSNode *N = SCC[i];
-
-      if (RC.hasClonedNode(N)) {
-        SCCReachesClonedNode = true;
-        goto OutOfLoop;
-      }
-
-      for (DSNode::const_edge_iterator EI = N->edge_begin(), E = N->edge_end();
-           EI != E; ++EI)
-        if (const DSNode *Succ = EI->getNode())
-          if (NodeInfo[Succ]) {
-            SCCReachesClonedNode = true;
-            goto OutOfLoop;
-          }
+namespace {
+  // HackedGraphSCCFinder - This is used to find nodes that have a path from the
+  // node to a node cloned by the ReachabilityCloner object contained.  To be
+  // extra obnoxious it ignores edges from nodes that are globals, and truncates
+  // search at RC marked nodes.  This is designed as an object so that
+  // intermediate results can be memoized across invocations of
+  // PathExistsToClonedNode.
+  struct HackedGraphSCCFinder {
+    ReachabilityCloner &RC;
+    unsigned CurNodeId;
+    std::vector<const DSNode*> SCCStack;
+    std::map<const DSNode*, std::pair<unsigned, bool> > NodeInfo;
+    
+    HackedGraphSCCFinder(ReachabilityCloner &rc) : RC(rc), CurNodeId(1) {
+      // Remove null pointer as a special case.
+      NodeInfo[0] = std::make_pair(0, false);
     }
 
-  OutOfLoop:
-    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-      NodeInfo[SCC[i]] = SCCReachesClonedNode;
+    std::pair<unsigned, bool> &VisitForSCCs(const DSNode *N);
+
+    bool PathExistsToClonedNode(const DSNode *N) {
+      return VisitForSCCs(N).second;
+    }
+
+    bool PathExistsToClonedNode(const DSCallSite &CS) {
+      if (PathExistsToClonedNode(CS.getRetVal().getNode()))
+        return true;
+      for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
+        if (PathExistsToClonedNode(CS.getPtrArg(i).getNode()))
+          return true;
+      return false;
+    }
+  };
+}
+
+std::pair<unsigned, bool> &HackedGraphSCCFinder::
+VisitForSCCs(const DSNode *N) {
+  std::map<const DSNode*, std::pair<unsigned, bool> >::iterator
+    NodeInfoIt = NodeInfo.lower_bound(N);
+  if (NodeInfoIt != NodeInfo.end() && NodeInfoIt->first == N)
+    return NodeInfoIt->second;
+
+  unsigned Min = CurNodeId++;
+  unsigned MyId = Min;
+  std::pair<unsigned, bool> &ThisNodeInfo =
+    NodeInfo.insert(NodeInfoIt,
+                    std::make_pair(N, std::make_pair(MyId, false)))->second;
+
+  // Base case: if we find a global, this doesn't reach the cloned graph
+  // portion.
+  if (N->isGlobalNode()) {
+    ThisNodeInfo.second = false;
+    return ThisNodeInfo;
   }
 
-  return NodeInfo[N];
-}
+  // Base case: if this does reach the cloned graph portion... it does. :)
+  if (RC.hasClonedNode(N)) {
+    ThisNodeInfo.second = true;
+    return ThisNodeInfo;
+  }
 
-static bool PathExistsToClonedNode(const DSCallSite &CS, ReachabilityCloner &RC,
-                                   std::map<const DSNode*, bool> &NodeInfo) {
-  if (PathExistsToClonedNode(CS.getRetVal().getNode(), RC, NodeInfo))
-    return true;
-  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
-    if (PathExistsToClonedNode(CS.getPtrArg(i).getNode(), RC, NodeInfo))
-      return true;
-  return false;
-}
+  SCCStack.push_back(N);
 
+  // Otherwise, check all successors.
+  bool AnyDirectSuccessorsReachClonedNodes = false;
+  for (DSNode::const_edge_iterator EI = N->edge_begin(), EE = N->edge_end();
+       EI != EE; ++EI) {
+    std::pair<unsigned, bool> &SuccInfo = VisitForSCCs(EI->getNode());
+    if (SuccInfo.first < Min) Min = SuccInfo.first;
+    AnyDirectSuccessorsReachClonedNodes |= SuccInfo.second;
+  }
+
+  if (Min != MyId)
+    return ThisNodeInfo;  // Part of a large SCC.  Leave self on stack.
+
+  if (SCCStack.back() == N) {  // Special case single node SCC.
+    SCCStack.pop_back();
+    ThisNodeInfo.second = AnyDirectSuccessorsReachClonedNodes;
+    return ThisNodeInfo;
+  }
+
+  // Find out if any direct successors of any node reach cloned nodes.
+  if (!AnyDirectSuccessorsReachClonedNodes)
+    for (unsigned i = SCCStack.size()-1; SCCStack[i] != N; --i)
+      for (DSNode::const_edge_iterator EI = N->edge_begin(), EE = N->edge_end();
+           EI != EE; ++EI)
+        if (DSNode *N = EI->getNode())
+          if (NodeInfo[N].second) {
+            AnyDirectSuccessorsReachClonedNodes = true;
+            goto OutOfLoop;
+          }
+OutOfLoop:
+  // If any successor reaches a cloned node, mark all nodes in this SCC as
+  // reaching the cloned node.
+  if (AnyDirectSuccessorsReachClonedNodes)
+    while (SCCStack.back() != N) {
+      NodeInfo[SCCStack.back()].second = true;
+      SCCStack.pop_back();
+    }
+  SCCStack.pop_back();
+  ThisNodeInfo.second = true;
+  return ThisNodeInfo;
+}
 
 /// mergeInCallFromOtherGraph - This graph merges in the minimal number of
 /// nodes from G2 into 'this' graph, merging the bindings specified by the
@@ -1438,21 +1482,20 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
   // NodesReachCopiedNodes - Memoize results for efficiency.  Contains a
   // true/false value for every visited node that reaches a copied node without
   // going through a global.
-  std::map<const DSNode*, bool> NodesReachCopiedNodes;
-  NodesReachCopiedNodes[0] = false;  // Initialize null.
+  HackedGraphSCCFinder SCCFinder(RC);
 
   if (!(CloneFlags & DontCloneAuxCallNodes))
     for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
-      if (PathExistsToClonedNode(*I, RC, NodesReachCopiedNodes))
+      if (SCCFinder.PathExistsToClonedNode(*I))
         AuxCallToCopy.push_back(&*I);
 
-  DSScalarMap GSM = Graph.getScalarMap();
+  const DSScalarMap &GSM = Graph.getScalarMap();
   for (DSScalarMap::global_iterator GI = GSM.global_begin(),
          E = GSM.global_end(); GI != E; ++GI) {
     DSNode *GlobalNode = Graph.getNodeForValue(*GI).getNode();
     for (DSNode::edge_iterator EI = GlobalNode->edge_begin(),
            EE = GlobalNode->edge_end(); EI != EE; ++EI)
-      if (PathExistsToClonedNode(EI->getNode(), RC, NodesReachCopiedNodes)) {
+      if (SCCFinder.PathExistsToClonedNode(EI->getNode())) {
         GlobalsToCopy.push_back(*GI);
         break;
       }
