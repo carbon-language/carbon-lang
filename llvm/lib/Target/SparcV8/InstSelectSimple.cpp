@@ -554,6 +554,16 @@ void V8ISel::visitStoreInst(StoreInst &I) {
 }
 
 void V8ISel::visitCallInst(CallInst &I) {
+  MachineInstr *TheCall;
+  // Is it an intrinsic function call?
+  if (Function *F = I.getCalledFunction()) {
+    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
+      visitIntrinsicCall(ID, I);   // Special intrinsics are not handled here
+      return;
+    }
+  }
+
+  // Deal with args
   assert (I.getNumOperands () < 8
           && "Can't handle pushing excess call args on the stack yet");
   static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
@@ -566,18 +576,26 @@ void V8ISel::visitCallInst(CallInst &I) {
         .addReg (ArgReg);
     }
 
-  assert (I.getCalledFunction() && "don't know what to do with NULL function!");
-  BuildMI (BB, V8::CALL, 1).addGlobalAddress(I.getCalledFunction (), true);
+  // Emit call instruction
+  if (Function *F = I.getCalledFunction ()) {
+    BuildMI (BB, V8::CALL, 1).addGlobalAddress (F, true);
+  } else {  // Emit an indirect call...
+    unsigned Reg = getReg (I.getCalledValue ());
+    BuildMI (BB, V8::JMPLrr, 3, V8::O7).addReg (Reg).addReg (V8::G0);
+  }
+
+  // Deal w/ return value: schlep it over into the destination register
   if (I.getType () == Type::VoidTy)
     return;
   unsigned DestReg = getReg (I);
-  // Deal w/ return value
   switch (getClass (I.getType ())) {
     case cByte:
     case cShort:
     case cInt:
-      // Schlep it over into the destination register
       BuildMI (BB, V8::ORrr, 2, DestReg).addReg(V8::G0).addReg(V8::O0);
+      break;
+    case cFloat:
+      BuildMI (BB, V8::FMOVS, 2, DestReg).addReg(V8::F0);
       break;
     default:
       std::cerr << "Return type of call instruction not handled: " << I;
