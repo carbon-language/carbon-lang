@@ -125,6 +125,9 @@ GenerateBytecode (Module *M, bool Strip, bool Internalize, std::ostream *Out) {
     addPass(Passes, createGlobalDCEPass());
   }
 
+  // Make sure everything is still good.
+  Passes.add(createVerifierPass());
+
   // Add the pass that writes bytecode to the output file...
   addPass(Passes, new WriteBytecodePass(Out));
 

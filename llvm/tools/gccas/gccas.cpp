@@ -165,6 +165,9 @@ int main(int argc, char **argv) {
   //
   AddConfiguredTransformationPasses(Passes);
 
+  // Make sure everything is still good.
+  Passes.add(createVerifierPass());
+
   // Write bytecode to file...
   Passes.add(new WriteBytecodePass(Out));
 
