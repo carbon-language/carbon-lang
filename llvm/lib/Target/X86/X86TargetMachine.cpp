@@ -149,7 +149,7 @@ void X86TargetMachine::replaceMachineCodeForFunction (void *Old, void *New) {
   char *OldByte = (char *) Old;
   *OldByte++ = 0xE9;                // Emit JMP opcode.
   int32_t *OldWord = (int32_t *) OldByte;
-  int32_t NewAddr = (int32_t) New;
-  int32_t OldAddr = (int32_t) OldWord;
+  int32_t NewAddr = (intptr_t) New;
+  int32_t OldAddr = (intptr_t) OldWord;
   *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
 }
