@@ -247,10 +247,10 @@ def CMPULT   : OForm< 0x10, 0x1D, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CMPULT $R
 def CMPULTi  : OFormL<0x10, 0x1D, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CMPULT $RA,$L,$RC">; //Compare unsigned quadword less than
 
 //Comparison, FP
-def CMPTEQ : FPForm<0x16, 0x0A5, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmpteq $RA,$RB,$RC">;  //Compare T_floating equal
-def CMPTLE : FPForm<0x16, 0x0A7, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmptle $RA,$RB,$RC">;  //Compare T_floating less than or equal
-def CMPTLT : FPForm<0x16, 0x0A6, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmptlt $RA,$RB,$RC">;  //Compare T_floating less than
-def CMPTUN : FPForm<0x16, 0x0A4, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmptun $RA,$RB,$RC">;  //Compare T_floating unordered
+def CMPTEQ : FPForm<0x16, 0x0A5, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmpteq/su $RA,$RB,$RC">;  //Compare T_floating equal
+def CMPTLE : FPForm<0x16, 0x0A7, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmptle/su $RA,$RB,$RC">;  //Compare T_floating less than or equal
+def CMPTLT : FPForm<0x16, 0x0A6, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmptlt/su $RA,$RB,$RC">;  //Compare T_floating less than
+def CMPTUN : FPForm<0x16, 0x0A4, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cmptun/su $RA,$RB,$RC">;  //Compare T_floating unordered
 
 //There are in the Multimedia extentions, so let's not use them yet
 def MAXSB8  : OForm<0x1C, 0x3E, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "MAXSB8 $RA,$RB,$RC">; //Vector signed byte maximum
