@@ -49,6 +49,11 @@ public:
   inline op_iterator       op_end()         { return Operands.end(); }
   inline const_op_iterator op_end()   const { return Operands.end(); }
 
+  /// op_erase - This method is used to remove one of the arguments from the
+  /// operands list.  Only use this if you know what you are doing.
+  ///
+  op_iterator op_erase(op_iterator I) { return Operands.erase(I); }
+
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this User refers to.  This allows one to
   // 'delete' a whole class at a time, even though there may be circular
