@@ -38,18 +38,7 @@ namespace {
   /// lexically identical expressions.  This does not require any ahead of time
   /// analysis, so it is a very fast default implementation.
   ///
-  struct BasicVN : public FunctionPass, public ValueNumbering {
-  
-    /// Pass Implementation stuff.  This isn't much of a pass.
-    ///
-    bool runOnFunction(Function &) { return false; }
-    
-    /// getAnalysisUsage - Does not modify anything.
-    ///
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-    }
-  
+  struct BasicVN : public ImmutablePass, public ValueNumbering {
     /// getEqualNumberNodes - Return nodes with the same value number as the
     /// specified Value.  This fills in the argument vector with any equal
     /// values.
