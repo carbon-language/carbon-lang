@@ -37,16 +37,25 @@ int64_t         GetConstantValueAsSignedInt     (const Value *V,
 
 
 //---------------------------------------------------------------------------
-// Function: FoldGetElemChain
+// Function: GetMemInstArgs
 // 
 // Purpose:
-//   Fold a chain of GetElementPtr instructions into an equivalent
-//   (Pointer, IndexVector) pair.  Returns the pointer Value, and
-//   stores the resulting IndexVector in argument chainIdxVec.
+//   Get the pointer value and the index vector for a memory operation
+//   (GetElementPtr, Load, or Store).  If all indices of the given memory
+//   operation are constant, fold in constant indices in a chain of
+//   preceding GetElementPtr instructions (if any), and return the
+//   pointer value of the first instruction in the chain.
+//   All folded instructions are marked so no code is generated for them.
+//
+// Return values:
+//   Returns the pointer Value to use.
+//   Returns the resulting IndexVector in idxVec.
+//   Returns true/false in allConstantIndices if all indices are/aren't const.
 //---------------------------------------------------------------------------
 
-Value*		FoldGetElemChain    (const InstructionNode* getElemInstrNode,
-				     std::vector<Value*>& chainIdxVec);
+Value*          GetMemInstArgs  (const InstructionNode* memInstrNode,
+                                 vector<Value*>& idxVec,
+                                 bool& allConstantIndices);
 
 
 //------------------------------------------------------------------------ 
