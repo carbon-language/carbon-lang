@@ -594,8 +594,6 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                                               MachineOperand &MO) {
   int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
                   // or things that get fixed up later by the JIT.
-  assert(MO.getType() != MachineOperand::MO_VirtualRegister &&
-         "ERROR: virtual register found in machine code.");
   if (MO.isPCRelativeDisp()) {
     DEBUG(std::cerr << "PCRelativeDisp: ");
     Value *V = MO.getVRegValue();
