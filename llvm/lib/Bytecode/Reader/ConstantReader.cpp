@@ -13,85 +13,157 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/DerivedTypes.h"
 #include "ReaderInternals.h"
+#include <algorithm>
 
-bool BytecodeParser::parseTypeConstant(const uchar *&Buf, const uchar *EndBuf,
-				       ConstPoolVal *&V) {
-  const Type *Val = 0;
 
+
+const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
+					      const uchar *EndBuf) {
   unsigned PrimType;
-  if (read_vbr(Buf, EndBuf, PrimType)) return failure(true);
+  if (read_vbr(Buf, EndBuf, PrimType)) return failure<const Type*>(0);
 
-  if ((Val = Type::getPrimitiveType((Type::PrimitiveID)PrimType))) {
-    V = new ConstPoolType(Val);    // It's just a primitive ID.
-    return false;
-  }
+  const Type *Val = 0;
+  if ((Val = Type::getPrimitiveType((Type::PrimitiveID)PrimType)))
+    return Val;
   
   switch (PrimType) {
   case Type::MethodTyID: {
     unsigned Typ;
-    if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
+    if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
     const Type *RetType = getType(Typ);
-    if (RetType == 0) return failure(true);
+    if (RetType == 0) return failure(Val);
 
     unsigned NumParams;
-    if (read_vbr(Buf, EndBuf, NumParams)) return failure(true);
+    if (read_vbr(Buf, EndBuf, NumParams)) return failure(Val);
 
-    MethodType::ParamTypes Params;
+    vector<const Type*> Params;
     while (NumParams--) {
-      if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
+      if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
       const Type *Ty = getType(Typ);
-      if (Ty == 0) return failure(true);
+      if (Ty == 0) return failure(Val);
       Params.push_back(Ty);
     }
 
-    Val = MethodType::getMethodType(RetType, Params);
+    Val = MethodType::get(RetType, Params);
     break;
   }
   case Type::ArrayTyID: {
     unsigned ElTyp;
-    if (read_vbr(Buf, EndBuf, ElTyp)) return failure(true);
+    if (read_vbr(Buf, EndBuf, ElTyp)) return failure(Val);
     const Type *ElementType = getType(ElTyp);
-    if (ElementType == 0) return failure(true);
+    if (ElementType == 0) return failure(Val);
 
     int NumElements;
-    if (read_vbr(Buf, EndBuf, NumElements)) return failure(true);
-    Val = ArrayType::getArrayType(ElementType, NumElements);
+    if (read_vbr(Buf, EndBuf, NumElements)) return failure(Val);
+    Val = ArrayType::get(ElementType, NumElements);
     break;
   }
   case Type::StructTyID: {
     unsigned Typ;
-    StructType::ElementTypes Elements;
+    vector<const Type*> Elements;
 
-    if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
+    if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
     while (Typ) {         // List is terminated by void/0 typeid
       const Type *Ty = getType(Typ);
-      if (Ty == 0) return failure(true);
+      if (Ty == 0) return failure(Val);
       Elements.push_back(Ty);
       
-      if (read_vbr(Buf, EndBuf, Typ)) return failure(true);
+      if (read_vbr(Buf, EndBuf, Typ)) return failure(Val);
     }
 
-    Val = StructType::getStructType(Elements);
+    Val = StructType::get(Elements);
     break;
   }
   case Type::PointerTyID: {
     unsigned ElTyp;
-    if (read_vbr(Buf, EndBuf, ElTyp)) return failure(true);
+    if (read_vbr(Buf, EndBuf, ElTyp)) return failure(Val);
     const Type *ElementType = getType(ElTyp);
-    if (ElementType == 0) return failure(true);
-    Val = PointerType::getPointerType(ElementType);
+    if (ElementType == 0) return failure(Val);
+    Val = PointerType::get(ElementType);
     break;
   }
 
   default:
     cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to deserialize"
 	 << " primitive Type " << PrimType << "\n";
-    return failure(true);
+    return failure(Val);
   }
 
-  V = new ConstPoolType(Val);
+  return Val;
+}
+
+// refineAbstractType - The callback method is invoked when one of the
+// elements of TypeValues becomes more concrete...
+//
+void BytecodeParser::refineAbstractType(const DerivedType *OldType, 
+					const Type *NewType) {
+  TypeValuesListTy::iterator I = find(MethodTypeValues.begin(), 
+				      MethodTypeValues.end(), OldType);
+  if (I == MethodTypeValues.end()) {
+    I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), OldType);
+    assert(I != ModuleTypeValues.end() && 
+	   "Can't refine a type I don't know about!");
+  }
+
+  *I = NewType;  // Update to point to new, more refined type.
+}
+
+
+
+// parseTypeConstants - We have to use this wierd code to handle recursive
+// types.  We know that recursive types will only reference the current slab of
+// values in the type plane, but they can forward reference types before they
+// have been read.  For example, Type #0 might be '{ Ty#1 }' and Type #1 might
+// be 'Ty#0*'.  When reading Type #0, type number one doesn't exist.  To fix
+// this ugly problem, we pesimistically insert an opaque type for each type we
+// are about to read.  This means that forward references will resolve to
+// something and when we reread the type later, we can replace the opaque type
+// with a new resolved concrete type.
+//
+bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
+					TypeValuesListTy &Tab,
+					unsigned NumEntries) {
+  assert(Tab.size() == 0 && "I think table should always be empty here!"
+	 "This should simplify later code");
+
+  // Record the base, starting level that we will begin with.
+  unsigned BaseLevel = Tab.size();
+
+  // Insert a bunch of opaque types to be resolved later...
+  for (unsigned i = 0; i < NumEntries; i++)
+    Tab.push_back(PATypeHandle<Type>(OpaqueType::get(), this));
+
+  // Loop through reading all of the types.  Forward types will make use of the
+  // opaque types just inserted.
+  //
+  for (unsigned i = 0; i < NumEntries; i++) {
+    const Type *NewTy = parseTypeConstant(Buf, EndBuf);
+    if (NewTy == 0) return failure(true);
+    BCR_TRACE(4, "Read Type Constant: '" << NewTy << "'\n");
+
+    // Don't insertValue the new type... instead we want to replace the opaque
+    // type with the new concrete value...
+    //
+
+    // Refine the abstract type to the new type.  This causes all uses of the
+    // abstract type to use the newty.  This also will cause the opaque type
+    // to be deleted...
+    //
+    // FIXME when types are not const
+    const_cast<DerivedType*>(Tab[i+BaseLevel]->castDerivedTypeAsserting())->refineAbstractTypeTo(NewTy);
+
+    // This should have replace the old opaque type with the new type in the
+    // value table...
+    assert(Tab[i+BaseLevel] == NewTy && "refineAbstractType didn't work!");
+  }
+
+  BCR_TRACE(5, "Resulting types:\n");
+  for (unsigned i = 0; i < NumEntries; i++) {
+    BCR_TRACE(5, Tab[i+BaseLevel]->castTypeAsserting() << "\n");
+  }
   return false;
 }
+
 
 bool BytecodeParser::parseConstPoolValue(const uchar *&Buf, 
 					 const uchar *EndBuf,
@@ -101,7 +173,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     unsigned Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
     if (Val != 0 && Val != 1) return failure(true);
-    V = new ConstPoolBool(Val == 1);
+    V = ConstPoolBool::get(Val == 1);
     break;
   }
 
@@ -111,14 +183,14 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     unsigned Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
     if (!ConstPoolUInt::isValueValidForType(Ty, Val)) return failure(true);
-    V = new ConstPoolUInt(Ty, Val);
+    V = ConstPoolUInt::get(Ty, Val);
     break;
   }
 
   case Type::ULongTyID: {
     uint64_t Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
-    V = new ConstPoolUInt(Ty, Val);
+    V = ConstPoolUInt::get(Ty, Val);
     break;
   }
 
@@ -128,34 +200,34 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     int Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
     if (!ConstPoolSInt::isValueValidForType(Ty, Val)) return failure(true);
-    V = new ConstPoolSInt(Ty, Val);
+    V = ConstPoolSInt::get(Ty, Val);
     break;
   }
 
   case Type::LongTyID: {
     int64_t Val;
     if (read_vbr(Buf, EndBuf, Val)) return failure(true);
-    V = new ConstPoolSInt(Ty, Val);
+    V = ConstPoolSInt::get(Ty, Val);
     break;
   }
 
   case Type::FloatTyID: {
     float F;
     if (input_data(Buf, EndBuf, &F, &F+1)) return failure(true);
-    V = new ConstPoolFP(Ty, F);
+    V = ConstPoolFP::get(Ty, F);
     break;
   }
 
   case Type::DoubleTyID: {
     double Val;
     if (input_data(Buf, EndBuf, &Val, &Val+1)) return failure(true);
-    V = new ConstPoolFP(Ty, Val);
+    V = ConstPoolFP::get(Ty, Val);
     break;
   }
 
   case Type::TypeTyID:
-    if (parseTypeConstant(Buf, EndBuf, V)) return failure(true);
-    break;
+    assert(0 && "Type constants should be handled seperately!!!");
+    abort();
 
   case Type::ArrayTyID: {
     const ArrayType *AT = (const ArrayType*)Ty;
@@ -173,7 +245,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
       if (!V || !V->isConstant()) return failure(true);
       Elements.push_back((ConstPoolVal*)V);
     }
-    V = new ConstPoolArray(AT, Elements);
+    V = ConstPoolArray::get(AT, Elements);
     break;
   }
 
@@ -191,7 +263,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
       Elements.push_back((ConstPoolVal*)V);      
     }
 
-    V = new ConstPoolStruct(ST, Elements);
+    V = ConstPoolStruct::get(ST, Elements);
     break;
   }    
 
@@ -201,12 +273,13 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
 	 << Ty->getName() << "'\n";
     return failure(true);
   }
+
   return false;
 }
 
 bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
-				       SymTabValue::ConstantPoolType &CP, 
-				       ValueTable &Tab) {
+				       ValueTable &Tab, 
+				       TypeValuesListTy &TypeTab) {
   while (Buf < EndBuf) {
     unsigned NumEntries, Typ;
 
@@ -214,16 +287,17 @@ bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
         read_vbr(Buf, EndBuf, Typ)) return failure(true);
     const Type *Ty = getType(Typ);
     if (Ty == 0) return failure(true);
+    BCR_TRACE(3, "Type: '" << Ty << "'  NumEntries: " << NumEntries << "\n");
 
-    for (unsigned i = 0; i < NumEntries; i++) {
-      ConstPoolVal *I;
-      if (parseConstPoolValue(Buf, EndBuf, Ty, I)) return failure(true);
-#if 0
-      cerr << "  Read const value: <" << I->getType()->getName() 
-	   << ">: " << I->getStrValue() << endl;
-#endif
-      insertValue(I, Tab);
-      CP.insert(I);
+    if (Typ == Type::TypeTyID) {
+      if (parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries)) return true;
+    } else {
+      for (unsigned i = 0; i < NumEntries; i++) {
+	ConstPoolVal *I;
+	if (parseConstPoolValue(Buf, EndBuf, Ty, I)) return failure(true);
+	BCR_TRACE(4, "Read Constant: '" << I << "'\n");
+	insertValue(I, Tab);
+      }
     }
   }
   

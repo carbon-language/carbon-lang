@@ -14,6 +14,16 @@
 #include <map>
 #include <utility>
 
+// Enable to trace to figure out what the heck is going on when parsing fails
+#define TRACE_LEVEL 0
+
+#if TRACE_LEVEL    // ByteCodeReading_TRACEer
+#include "llvm/Assembly/Writer.h"
+#define BCR_TRACE(n, X) if (n < TRACE_LEVEL) cerr << string(n*2, ' ') << X
+#else
+#define BCR_TRACE(n, X)
+#endif
+
 class BasicBlock;
 class Method;
 class Module;
@@ -32,7 +42,7 @@ struct RawInst {       // The raw fields out of the bytecode stream...
   };
 };
 
-class BytecodeParser {
+class BytecodeParser : public AbstractTypeUser {
 public:
   BytecodeParser() {
     // Define this in case we don't see a ModuleGlobalInfo block.
@@ -43,10 +53,15 @@ public:
 private:          // All of this data is transient across calls to ParseBytecode
   typedef vector<Value *> ValueList;
   typedef vector<ValueList> ValueTable;
-  typedef map<const Type *, unsigned> TypeMapType;
   ValueTable Values, LateResolveValues;
   ValueTable ModuleValues, LateResolveModuleValues;
-  TypeMapType TypeMap;
+
+  // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
+  // to deal with forward references to types.
+  //
+  typedef vector<PATypeHandle<Type> > TypeValuesListTy;
+  TypeValuesListTy ModuleTypeValues;
+  TypeValuesListTy MethodTypeValues;
 
   // Information read from the ModuleGlobalInfo section of the file...
   unsigned FirstDerivedTyID;
@@ -61,19 +76,19 @@ private:          // All of this data is transient across calls to ParseBytecode
 private:
   bool ParseModule            (const uchar * Buf, const uchar *End, Module *&);
   bool ParseModuleGlobalInfo  (const uchar *&Buf, const uchar *End, Module *);
-  bool ParseSymbolTable       (const uchar *&Buf, const uchar *End);
-  bool ParseMethod            (const uchar *&Buf, const uchar *End, Module *);
+  bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
+  bool ParseMethod        (const uchar *&Buf, const uchar *End, Module *);
   bool ParseBasicBlock    (const uchar *&Buf, const uchar *End, BasicBlock *&);
   bool ParseInstruction   (const uchar *&Buf, const uchar *End, Instruction *&);
   bool ParseRawInst       (const uchar *&Buf, const uchar *End, RawInst &);
 
   bool ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
-			 SymTabValue::ConstantPoolType &CP, ValueTable &Tab);
-
-
+			 ValueTable &Tab, TypeValuesListTy &TypeTab);
   bool parseConstPoolValue(const uchar *&Buf, const uchar *End,
 			   const Type *Ty, ConstPoolVal *&V);
-  bool parseTypeConstant  (const uchar *&Buf, const uchar *, ConstPoolVal *&);
+  bool parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
+			  TypeValuesListTy &Tab, unsigned NumEntries);
+  const Type *parseTypeConstant(const uchar *&Buf, const uchar *EndBuf);
 
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
@@ -82,6 +97,12 @@ private:
   bool postResolveValues(ValueTable &ValTab);
 
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
+
+
+  // refineAbstractType - The callback method is invoked when one of the
+  // elements of TypeValues becomes more concrete...
+  //
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 };
 
 template<class SuperType>

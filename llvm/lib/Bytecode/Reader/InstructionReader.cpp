@@ -82,7 +82,7 @@ bool BytecodeParser::ParseRawInst(const uchar *&Buf, const uchar *EndBuf,
 
 #if 0
   cerr << "NO: "  << Result.NumOperands   << " opcode: " << Result.Opcode 
-       << " Ty: " << Result.Ty->getName() << " arg1: "   << Result.Arg1 
+       << " Ty: " << Result.Ty->getDescription() << " arg1: "   << Result.Arg1 
        << " arg2: "   << Result.Arg2 << " arg3: "   << Result.Arg3 << endl;
 #endif
   return false;

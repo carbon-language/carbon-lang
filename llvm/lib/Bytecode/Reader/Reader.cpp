@@ -29,9 +29,17 @@ bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
   if (Ty->isPrimitiveType()) {
     Slot = Ty->getPrimitiveID();
   } else {
-    TypeMapType::iterator I = TypeMap.find(Ty);
-    if (I == TypeMap.end()) return failure(true);   // Didn't find type!
-    Slot = I->second;
+    // Check the method level types first...
+    TypeValuesListTy::iterator I = find(MethodTypeValues.begin(),
+					MethodTypeValues.end(), Ty);
+    if (I != MethodTypeValues.end()) {
+      Slot = FirstDerivedTyID+ModuleTypeValues.size()+
+             (&*I - &MethodTypeValues[0]);
+    } else {
+      I = find(ModuleTypeValues.begin(), ModuleTypeValues.end(), Ty);
+      if (I == ModuleTypeValues.end()) return true;   // Didn't find type!
+      Slot = FirstDerivedTyID + (&*I - &ModuleTypeValues[0]);
+    }
   }
   //cerr << "getTypeSlot '" << Ty->getName() << "' = " << Slot << endl;
   return false;
@@ -46,32 +54,20 @@ const Type *BytecodeParser::getType(unsigned ID) {
   const Value *D = getValue(Type::TypeTy, ID, false);
   if (D == 0) return failure<const Type*>(0);
 
-  assert(D->getType() == Type::TypeTy);
-  return ((const ConstPoolType*)D->castConstantAsserting())->getValue();
+  return D->castTypeAsserting();
 }
 
-bool BytecodeParser::insertValue(Value *Def, vector<ValueList> &ValueTab) {
+bool BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
   unsigned type;
-  if (getTypeSlot(Def->getType(), type)) return failure(true);
+  if (getTypeSlot(Val->getType(), type)) return failure(true);
+  assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
   if (ValueTab.size() <= type)
     ValueTab.resize(type+1, ValueList());
 
   //cerr << "insertValue Values[" << type << "][" << ValueTab[type].size() 
-  //     << "] = " << Def << endl;
-
-  if (type == Type::TypeTyID && Def->isConstant()) {
-    const Type *Ty = ((const ConstPoolType*)Def)->getValue();
-    unsigned ValueOffset = FirstDerivedTyID;
-
-    if (&ValueTab == &Values)    // Take into consideration module level types
-      ValueOffset += ModuleValues[type].size();
-
-    if (TypeMap.find(Ty) == TypeMap.end())
-      TypeMap[Ty] = ValueTab[type].size()+ValueOffset;
-  }
-
-  ValueTab[type].push_back(Def);
+  //     << "] = " << Val << endl;
+  ValueTab[type].push_back(Val);
 
   return false;
 }
@@ -83,15 +79,27 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   if (getTypeSlot(Ty, type)) return failure<Value*>(0); // TODO: true
 
   if (type == Type::TypeTyID) {  // The 'type' plane has implicit values
+    assert(Create == false);
     const Type *T = Type::getPrimitiveType((Type::PrimitiveID)Num);
     if (T) return (Value*)T;   // Asked for a primitive type...
 
     // Otherwise, derived types need offset...
     Num -= FirstDerivedTyID;
+
+    // Is it a module level type?
+    if (Num < ModuleTypeValues.size())
+      return (Value*)(const Type*)ModuleTypeValues[Num];
+
+    // Nope, is it a method level type?
+    Num -= ModuleTypeValues.size();
+    if (Num < MethodTypeValues.size())
+      return (Value*)(const Type*)MethodTypeValues[Num];
+
+    return 0;
   }
 
-  if (ModuleValues.size() > type) {
-    if (ModuleValues[type].size() > Num)
+  if (type < ModuleValues.size()) {
+    if (Num < ModuleValues[type].size())
       return ModuleValues[type][Num];
     Num -= ModuleValues[type].size();
   }
@@ -153,22 +161,25 @@ bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf,
   BB = new BasicBlock();
 
   while (Buf < EndBuf) {
-    Instruction *Def;
-    if (ParseInstruction(Buf, EndBuf, Def)) {
+    Instruction *Inst;
+    if (ParseInstruction(Buf, EndBuf, Inst)) {
       delete BB;
       return failure(true);
     }
 
-    if (Def == 0) { delete BB; return failure(true); }
-    if (insertValue(Def, Values)) { delete BB; return failure(true); }
+    if (Inst == 0) { delete BB; return failure(true); }
+    if (insertValue(Inst, Values)) { delete BB; return failure(true); }
 
-    BB->getInstList().push_back(Def);
+    BB->getInstList().push_back(Inst);
+
+    BCR_TRACE(4, Inst);
   }
 
   return false;
 }
 
-bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf) {
+bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
+				      SymbolTable *ST) {
   while (Buf < EndBuf) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries, Typ;
@@ -176,6 +187,9 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf) {
         read_vbr(Buf, EndBuf, Typ)) return failure(true);
     const Type *Ty = getType(Typ);
     if (Ty == 0) return failure(true);
+
+    BCR_TRACE(3, "Plane Type: '" << Ty << "' with " << NumEntries <<
+	      " entries\n");
 
     for (unsigned i = 0; i < NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
@@ -186,8 +200,14 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf) {
 	return failure(true);
 
       Value *D = getValue(Ty, slot, false); // Find mapping...
-      if (D == 0) return failure(true);
-      D->setName(Name);
+      if (D == 0) {
+	BCR_TRACE(3, "FAILED LOOKUP: Slot #" << slot << endl);
+	return failure(true);
+      }
+      BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << D;
+		if (!D->isInstruction()) cerr << endl);
+
+      D->setName(Name, ST);
     }
   }
 
@@ -207,6 +227,8 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   MethodSignatureList.pop_front();
   Method *M = new Method(MTy);
 
+  BCR_TRACE(2, "METHOD TYPE: " << MTy << endl);
+
   const MethodType::ParamTypes &Params = MTy->getParamTypes();
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
@@ -222,17 +244,17 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
     switch (Type) {
     case BytecodeFormat::ConstantPool:
-      if (ParseConstantPool(Buf, Buf+Size, M->getConstantPool(), Values)) {
-	cerr << "Error reading constant pool!\n";
+      BCR_TRACE(2, "BLOCK BytecodeFormat::ConstantPool: {\n");
+      if (ParseConstantPool(Buf, Buf+Size, Values, MethodTypeValues)) {
 	delete M; return failure(true);
       }
       break;
 
     case BytecodeFormat::BasicBlock: {
+      BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
       BasicBlock *BB;
       if (ParseBasicBlock(Buf, Buf+Size, BB) ||
 	  insertValue(BB, Values)) {
-	cerr << "Error parsing basic block!\n";
 	delete M; return failure(true);                // Parse error... :(
       }
 
@@ -241,17 +263,20 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
     }
 
     case BytecodeFormat::SymbolTable:
-      if (ParseSymbolTable(Buf, Buf+Size)) {
-	cerr << "Error reading method symbol table!\n";
+      BCR_TRACE(2, "BLOCK BytecodeFormat::SymbolTable: {\n");
+      if (ParseSymbolTable(Buf, Buf+Size, M->getSymbolTableSure())) {
 	delete M; return failure(true);
       }
       break;
 
     default:
+      BCR_TRACE(2, "BLOCK <unknown>:ignored! {\n");
       Buf += Size;
       if (OldBuf > Buf) return failure(true); // Wrap around!
       break;
     }
+    BCR_TRACE(2, "} end block\n");
+
     if (align32(Buf, EndBuf)) {
       delete M;    // Malformed bc file, read past end of block.
       return failure(true);
@@ -298,15 +323,15 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   while (MethSignature != Type::VoidTyID) { // List is terminated by Void
     const Type *Ty = getType(MethSignature);
     if (!Ty || !Ty->isMethodType()) { 
-      cerr << "Method not meth type! ";
+      cerr << "Method not meth type!  Ty = " << Ty << endl;
       if (Ty) cerr << Ty->getName(); else cerr << MethSignature; cerr << endl; 
       return failure(true); 
     }
 
-    // When the ModuleGlobalInfo section is read, we load the type of each method
-    // and the 'ModuleValues' slot that it lands in.  We then load a placeholder
-    // into its slot to reserve it.  When the method is loaded, this placeholder
-    // is replaced.
+    // When the ModuleGlobalInfo section is read, we load the type of each 
+    // method and the 'ModuleValues' slot that it lands in.  We then load a 
+    // placeholder into its slot to reserve it.  When the method is loaded, this
+    // placeholder is replaced.
 
     // Insert the placeholder...
     Value *Def = new MethPHolder(Ty, 0);
@@ -323,6 +348,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     //
     MethodSignatureList.push_back(make_pair((const MethodType*)Ty, SlotNo));
     if (read_vbr(Buf, End, MethSignature)) return failure(true);
+    BCR_TRACE(2, "Method of type: " << Ty << endl);
   }
 
   if (align32(Buf, End)) return failure(true);
@@ -342,33 +368,36 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   if (Type != BytecodeFormat::Module || Buf+Size != EndBuf)
     return failure(true);                      // Hrm, not a class?
 
+  BCR_TRACE(0, "BLOCK BytecodeFormat::Module: {\n");
   MethodSignatureList.clear();                 // Just in case...
 
   // Read into instance variables...
   if (read_vbr(Buf, EndBuf, FirstDerivedTyID)) return failure(true);
   if (align32(Buf, EndBuf)) return failure(true);
+  BCR_TRACE(1, "FirstDerivedTyID = " << FirstDerivedTyID << "\n");
 
   C = new Module();
-
   while (Buf < EndBuf) {
     const uchar *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) { delete C; return failure(true); }
     switch (Type) {
-    case BytecodeFormat::ModuleGlobalInfo:
-      if (ParseModuleGlobalInfo(Buf, Buf+Size, C)) {
-	cerr << "Error reading class global info section!\n";
+    case BytecodeFormat::ConstantPool:
+      BCR_TRACE(1, "BLOCK BytecodeFormat::ConstantPool: {\n");
+      if (ParseConstantPool(Buf, Buf+Size, ModuleValues, ModuleTypeValues)) {
 	delete C; return failure(true);
       }
       break;
 
-    case BytecodeFormat::ConstantPool:
-      if (ParseConstantPool(Buf, Buf+Size, C->getConstantPool(), ModuleValues)) {
-	cerr << "Error reading class constant pool!\n";
+    case BytecodeFormat::ModuleGlobalInfo:
+      BCR_TRACE(1, "BLOCK BytecodeFormat::ModuleGlobalInfo: {\n");
+
+      if (ParseModuleGlobalInfo(Buf, Buf+Size, C)) {
 	delete C; return failure(true);
       }
       break;
 
     case BytecodeFormat::Method: {
+      BCR_TRACE(1, "BLOCK BytecodeFormat::Method: {\n");
       if (ParseMethod(Buf, Buf+Size, C)) {
 	delete C; return failure(true);               // Error parsing method
       }
@@ -376,23 +405,26 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
     }
 
     case BytecodeFormat::SymbolTable:
-      if (ParseSymbolTable(Buf, Buf+Size)) {
-	cerr << "Error reading class symbol table!\n";
+      BCR_TRACE(1, "BLOCK BytecodeFormat::SymbolTable: {\n");
+      if (ParseSymbolTable(Buf, Buf+Size, C->getSymbolTableSure())) {
 	delete C; return failure(true);
       }
       break;
 
     default:
-      cerr << "Unknown class block: " << Type << endl;
+      cerr << "  Unknown class block: " << Type << endl;
       Buf += Size;
       if (OldBuf > Buf) return failure(true); // Wrap around!
       break;
     }
+    BCR_TRACE(1, "} end block\n");
     if (align32(Buf, EndBuf)) { delete C; return failure(true); }
   }
 
   if (!MethodSignatureList.empty())      // Expected more methods!
     return failure(true);
+
+  BCR_TRACE(0, "} end block\n\n");
   return false;
 }
 
