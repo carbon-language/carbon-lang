@@ -182,10 +182,10 @@ bool AssemblyWriter::processInstruction(const Instruction *I) {
     Out << " " << Operand->getType();
 
     Out << " [";  writeOperand(Operand, false); Out << ",";
-    writeOperand(I->getOperand(1), false); Out << "]";
+    writeOperand(I->getOperand(1), false); Out << " ]";
     for (unsigned op = 2; (Operand = I->getOperand(op)); op += 2) {
       Out << ", [";  writeOperand(Operand, false); Out << ",";
-      writeOperand(I->getOperand(op+1), false); Out << "]";
+      writeOperand(I->getOperand(op+1), false); Out << " ]";
     }
   } else if (I->getInstType() == Instruction::Ret && !Operand) {
     Out << " void";
