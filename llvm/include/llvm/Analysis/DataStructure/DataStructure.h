@@ -25,6 +25,7 @@ class Type;
 class Instruction;
 class DSGraph;
 class DSNode;
+class DSNodeHandle;
 
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
@@ -93,6 +94,10 @@ protected:
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
   hash_multimap<Instruction*, Function*> ActualCallees;
+
+  // This map is only maintained during construction of BU Graphs
+  std::map<std::vector<Function*>,
+           std::pair<DSGraph*, std::vector<DSNodeHandle> > > IndCallGraphMap;
 public:
   ~BUDataStructures() { releaseMemory(); }
 
