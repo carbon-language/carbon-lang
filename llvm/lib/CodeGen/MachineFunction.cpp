@@ -13,19 +13,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetCacheInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
-#include "llvm/Pass.h"
 using namespace llvm;
 
 static AnnotationID MF_AID(
@@ -33,15 +33,15 @@ static AnnotationID MF_AID(
 
 
 namespace {
-  struct Printer : public FunctionPass {
+  struct Printer : public MachineFunctionPass {
     const char *getPassName() const { return "MachineFunction Printer"; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
 
-    bool runOnFunction(Function &F) {
-      MachineFunction::get(&F).dump();
+    bool runOnMachineFunction(MachineFunction &MF) {
+      MF.dump();
       return false;
     }
   };
@@ -49,6 +49,33 @@ namespace {
 
 FunctionPass *llvm::createMachineFunctionPrinterPass() {
   return new Printer();
+}
+
+namespace {
+  struct Deleter : public MachineFunctionPass {
+    const char *getPassName() const { return "Machine Code Deleter"; }
+
+    bool runOnMachineFunction(MachineFunction &MF) {
+      // Delete all of the MachineInstrs out of the function.  When the sparc
+      // backend gets fixed, this can be dramatically simpler, but actually
+      // putting this stuff into the MachineBasicBlock destructor!
+      for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E;
+           ++BB)
+        while (!BB->empty())
+          delete BB->pop_back();
+
+      // Delete the annotation from the function now.
+      MachineFunction::destruct(MF.getFunction());
+      return true;
+    }
+  };
+}
+
+/// MachineCodeDeletion Pass - This pass deletes all of the machine code for
+/// the current function, which should happen after the function has been
+/// emitted to a .s file or to memory.
+FunctionPass *llvm::createMachineCodeDeleter() {
+  return new Deleter();
 }
 
 
@@ -113,9 +140,7 @@ MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
   return *mcInfo;
 }
 
-void
-MachineFunction::destruct(const Function *Fn)
-{
+void MachineFunction::destruct(const Function *Fn) {
   bool Deleted = Fn->deleteAnnotation(MF_AID);
   assert(Deleted && "Machine code did not exist for function!");
 }
