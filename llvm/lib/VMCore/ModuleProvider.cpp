@@ -19,10 +19,13 @@ ModuleProvider::~ModuleProvider() {
 
 /// materializeFunction - make sure the given function is fully read.
 ///
-void ModuleProvider::materializeModule() {
-  if (!TheModule) return;
+Module* ModuleProvider::materializeModule() {
+  // FIXME: throw an exception instead?
+  if (!TheModule) return 0;
 
   for (Module::iterator i = TheModule->begin(), e = TheModule->end();
        i != e; ++i)
     materializeFunction(i);
+
+  return TheModule;
 }
