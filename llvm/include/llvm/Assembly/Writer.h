@@ -88,4 +88,8 @@ inline ostream &operator<<(ostream &o, const Value *I) {
   return o;
 }
 
+inline void DebugValue(const Value *V) {
+  cerr << V << endl;
+}
+
 #endif
