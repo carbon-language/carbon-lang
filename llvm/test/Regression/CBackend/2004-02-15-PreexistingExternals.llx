@@ -1,0 +1,16 @@
+; The intrinsic lowering pass was lowering intrinsics like llvm.memcpy to 
+; explicitly specified prototypes, inserting a new function if the old one
+; didn't exist.  This caused there to be two external memcpy functions in 
+; this testcase for example, which caused the CBE to mangle one, screwing
+; everything up.  :(  Test that this does not happen anymore.
+;
+; RUN: llvm-as < %s | llc -march=c | not grep _memcpy
+
+declare void %llvm.memcpy(sbyte*, sbyte*, uint,uint)
+declare float* %memcpy(int*, uint,int)
+
+int %test(sbyte *%A, sbyte* %B, int* %C) {
+	call float* %memcpy(int* %C, uint 4, int 17)
+	call void %llvm.memcpy(sbyte* %A, sbyte* %B, uint 123, uint 14)
+	ret int 7
+}
