@@ -110,19 +110,6 @@ private:
     return runPasses(PassesToRun, Filename, DeleteOutput);
   }
 
-  /// runPass - Run only the specified pass on the program.
-  ///
-  bool runPass(const PassInfo *P, bool DeleteOutput = true) const {
-    return runPasses(std::vector<const PassInfo*>(1, P), DeleteOutput);
-  }
-  
-  /// extractFunctionFromModule - This method is used to extract the specified
-  /// (non-external) function from the current program, slim down the module,
-  /// and then return it.  This does not modify Program at all, it modifies a
-  /// copy, which it returns.
-  ///
-  Module *extractFunctionFromModule(Function *F) const;
-
   /// deleteInstructionFromProgram - This method clones the current Program and
   /// deletes the specified instruction from the cloned module.  It then runs a
   /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code

@@ -15,31 +15,6 @@
 #include "llvm/Type.h"
 #include "llvm/Constant.h"
 
-/// extractFunctionFromModule - This method is used to extract the specified
-/// (non-external) function from the current program, slim down the module, and
-/// then return it.  This does not modify Program at all, it modifies a copy,
-/// which it returns.
-Module *BugDriver::extractFunctionFromModule(Function *F) const {
-  Module *Result = CloneModule(Program);
-
-  // Translate from the old module to the new copied module...
-  Module::iterator RFI = Result->begin(); // Get iterator to corresponding fn
-  std::advance(RFI, std::distance(Program->begin(), Module::iterator(F)));
-
-  // In addition to just parsing the input from GCC, we also want to spiff it up
-  // a little bit.  Do this now.
-  //
-  PassManager Passes;
-  Passes.add(createFunctionExtractionPass(RFI));  // Extract the function
-  Passes.add(createGlobalDCEPass());              // Delete unreachable globals
-  Passes.add(createFunctionResolvingPass());      // Delete prototypes
-  Passes.add(createDeadTypeEliminationPass());    // Remove dead types...
-  Passes.add(createVerifierPass());
-  Passes.run(*Result);
-  return Result;
-}
-
-
 /// deleteInstructionFromProgram - This method clones the current Program and
 /// deletes the specified instruction from the cloned module.  It then runs a
 /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code which
@@ -69,9 +44,7 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
   // Remove the instruction from the program.
   I->getParent()->getInstList().erase(I);
 
-  // In addition to just parsing the input from GCC, we also want to spiff it up
-  // a little bit.  Do this now.
-  //
+  // Spiff up the output a little bit.
   PassManager Passes;
   if (Simplification > 2)
     Passes.add(createAggressiveDCEPass());          // Remove dead code...
