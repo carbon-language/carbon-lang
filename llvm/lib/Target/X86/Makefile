@@ -1,4 +1,4 @@
-##===- lib/Target/X86/Makefile ----------------------------*- Makefile -*-===##
+##===- lib/Target/X86/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -16,29 +16,28 @@ $(SourceDepend): X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                  X86GenInstrInfo.inc X86GenInstrSelector.inc
 
 X86GenRegisterNames.inc::  X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
-	@echo "Building $< register names with tblgen"
+	@echo "Building X86.td register names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-enums -o $@
 
 X86GenRegisterInfo.h.inc:: X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
-	@echo "Building $< register information header with tblgen"
+	@echo "Building X86.td register information header with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc-header -o $@
 
 X86GenRegisterInfo.inc:: X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
-	@echo "Building $< register information implementation with tblgen"
+	@echo "Building X86.td register information implementation with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-register-desc -o $@
 
 X86GenInstrNames.inc:: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
-	@echo "Building $< instruction names with tblgen"
+	@echo "Building X86.td instruction names with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-enums -o $@
 
 X86GenInstrInfo.inc:: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
-	@echo "Building $< instruction information with tblgen"
+	@echo "Building X86.td instruction information with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-desc -o $@
 
 X86GenInstrSelector.inc:: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
-	@echo "Building $< instruction selector with tblgen"
+	@echo "Building X86.td instruction selector with tblgen"
 	$(VERB) $(TBLGEN) -I $(BUILD_SRC_DIR) $< -gen-instr-selector -o $@
 
 clean::
 	$(VERB) rm -f *.inc
-
