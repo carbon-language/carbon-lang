@@ -1,5 +1,5 @@
 
-void %main() {
+int %main() {
 	%A = and sbyte 4, 8
 	%B = or sbyte %A, 7
 	%C = xor sbyte %B, %A
@@ -12,5 +12,5 @@ void %main() {
 	%B = or int %A, 7
 	%C = xor int %B, %A
 
-	ret void
+	ret int 0
 }
