@@ -35,6 +35,7 @@ namespace {
   Statistic<> NumStores("spiller", "Number of stores added");
   Statistic<> NumLoads ("spiller", "Number of loads added");
   Statistic<> NumReused("spiller", "Number of values reused");
+  Statistic<> NumDSE   ("spiller", "Number of dead stores elided");
 
   enum SpillerName { simple, local };
 
@@ -283,6 +284,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
   // and ".second" is the virtual register that is spilled.
   std::vector<std::pair<unsigned, unsigned> > DefAndUseVReg;
 
+  // MaybeDeadStores - When we need to write a value back into a stack slot,
+  // keep track of the inserted store.  If the stack slot value is never read
+  // (because the value was used from some available register, for example), and
+  // subsequently stored to, the original store is dead.  This map keeps track
+  // of inserted stores that are not used.  If we see a subsequent store to the
+  // same stack slot, the original store is deleted.
+  std::map<int, MachineInstr*> MaybeDeadStores;
+
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
@@ -361,6 +370,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                         ClobberPhysReg(Op.AssignedPhysReg, SpillSlotsAvailable,
                                        PhysRegsAvailable);
 
+                        // Any stores to this stack slot are not dead anymore.
+                        MaybeDeadStores.erase(Op.StackSlot);
+
                         MI.SetMachineOperandReg(Op.Operand, Op.AssignedPhysReg);
                         PhysRegsAvailable[Op.AssignedPhysReg] = Op.StackSlot;
                         SpillSlotsAvailable[Op.StackSlot] = Op.AssignedPhysReg;
@@ -382,6 +394,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
               MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
               // This invalidates PhysReg.
               ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
+
+              // Any stores to this stack slot are not dead anymore.
+              MaybeDeadStores.erase(StackSlot);
 
               MI.SetMachineOperandReg(i, PhysReg);
               PhysRegsAvailable[PhysReg] = StackSlot;
@@ -422,6 +437,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       if (VRM.hasStackSlot(I->second)) {
         int SS = VRM.getStackSlot(I->second);
         DEBUG(std::cerr << " - StackSlot: " << SS << "\n");
+
+        // Any stores to this stack slot are not dead anymore.
+        MaybeDeadStores.erase(SS);
 
         std::map<int, unsigned>::iterator I = SpillSlotsAvailable.find(SS);
         if (I != SpillSlotsAvailable.end()) {
@@ -475,6 +493,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
           DEBUG(std::cerr << "Store:\t" << *next(MII));
           MI.SetMachineOperandReg(i, PhysReg);
+
+          // If there is a dead store to this stack slot, nuke it now.
+          MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
+          if (LastStore) {
+            ++NumDSE;
+            MBB.erase(LastStore);
+          }
+          LastStore = next(MII);
 
           // If the stack slot value was previously available in some other
           // register, change it now.  Otherwise, make the register available,
