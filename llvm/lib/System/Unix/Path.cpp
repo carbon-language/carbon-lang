@@ -178,11 +178,13 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   int fd = ::open(path.c_str(),O_RDONLY);
   if (fd < 0)
     return false;
-  if (0 != ::read(fd, buf, len))
+  ssize_t bytes_read = ::read(fd, buf, len);
+  ::close(fd);
+  if (ssize_t(len) != bytes_read) {
+    Magic.clear();
     return false;
-  close(fd);
-  buf[len] = '\0';
-  Magic = buf;
+  }
+  Magic.assign(buf,len);
   return true;
 }
 
