@@ -30,6 +30,7 @@
 namespace llvm {
 class Constant;
 class ConstantIntegral;
+class ConstantInt;
 class Type;
 
 class ConstantRange {
@@ -39,6 +40,10 @@ class ConstantRange {
   ///
   ConstantRange(const Type *Ty, bool isFullSet = true);
   
+  /// Initialize a range to hold the single specified value.
+  ///
+  ConstantRange(Constant *Value);
+
   /// Initialize a range of values explicitly... this will assert out if
   /// Lower==Upper and Lower != Min or Max for its type, if the two constants
   /// have different types, or if the constant are not integral values.
@@ -74,6 +79,10 @@ class ConstantRange {
   /// for example: [100, 8)
   ///
   bool isWrappedSet() const;
+
+  /// contains - Return true if the specified value is in the set.
+  ///
+  bool contains(ConstantInt *Val) const;
   
   /// getSingleElement - If this set contains a single element, return it,
   /// otherwise return null.
@@ -97,6 +106,10 @@ class ConstantRange {
     return !operator==(CR);
   }
 
+  /// subtract - Subtract the specified constant from the endpoints of this
+  /// constant range.
+  ConstantRange subtract(ConstantInt *CI) const;
+
   /// intersect - Return the range that results from the intersection of this
   /// range with another range.  The resultant range is pruned as much as
   /// possible, but there may be cases where elements are included that are in
@@ -112,6 +125,18 @@ class ConstantRange {
   /// set before.
   ///
   ConstantRange unionWith(const ConstantRange &CR) const;
+
+  /// zeroExtend - Return a new range in the specified integer type, which must
+  /// be strictly larger than the current type.  The returned range will
+  /// correspond to the possible range of values if the source range had been
+  /// zero extended.
+  ConstantRange zeroExtend(const Type *Ty) const;
+
+  /// truncate - Return a new range in the specified integer type, which must be
+  /// strictly smaller than the current type.  The returned range will
+  /// correspond to the possible range of values if the source range had been
+  /// truncated to the specified type.
+  ConstantRange truncate(const Type *Ty) const;
 
   /// print - Print out the bounds to a stream...
   ///

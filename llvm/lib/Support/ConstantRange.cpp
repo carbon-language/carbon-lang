@@ -27,17 +27,28 @@
 #include "llvm/Type.h"
 using namespace llvm;
 
+static ConstantIntegral *Next(ConstantIntegral *CI) {
+  if (CI->getType() == Type::BoolTy)
+    return CI == ConstantBool::True ? ConstantBool::False : ConstantBool::True;
+      
+  Constant *Result = ConstantExpr::getAdd(CI,
+                                          ConstantInt::get(CI->getType(), 1));
+  return cast<ConstantIntegral>(Result);
+}
+
 static bool LT(ConstantIntegral *A, ConstantIntegral *B) {
-  Constant *C = ConstantExpr::get(Instruction::SetLT, A, B);
+  Constant *C = ConstantExpr::getSetLT(A, B);
   assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
   return cast<ConstantBool>(C)->getValue();
 }
 
-static bool GT(ConstantIntegral *A, ConstantIntegral *B) {
-  Constant *C = ConstantExpr::get(Instruction::SetGT, A, B);
+static bool LTE(ConstantIntegral *A, ConstantIntegral *B) {
+  Constant *C = ConstantExpr::getSetLE(A, B);
   assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
   return cast<ConstantBool>(C)->getValue();
 }
+
+static bool GT(ConstantIntegral *A, ConstantIntegral *B) { return LT(B, A); }
 
 static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
   return LT(A, B) ? A : B;
@@ -45,7 +56,6 @@ static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
 static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B) {
   return GT(A, B) ? A : B;
 }
-
 
 /// Initialize a full (the default) or empty set for the specified type.
 ///
@@ -56,6 +66,12 @@ ConstantRange::ConstantRange(const Type *Ty, bool Full) {
     Lower = Upper = ConstantIntegral::getMaxValue(Ty);
   else
     Lower = Upper = ConstantIntegral::getMinValue(Ty);
+}
+
+/// Initialize a range to hold the single specified value.
+///
+ConstantRange::ConstantRange(Constant *V)
+  : Lower(cast<ConstantIntegral>(V)), Upper(Next(cast<ConstantIntegral>(V))) {
 }
 
 /// Initialize a range of values explicitly... this will assert out if
@@ -71,15 +87,6 @@ ConstantRange::ConstantRange(Constant *L, Constant *U)
   assert((L != U || (L == ConstantIntegral::getMaxValue(L->getType()) ||
                      L == ConstantIntegral::getMinValue(L->getType()))) &&
          "Lower == Upper, but they aren't min or max for type!");
-}
-
-static ConstantIntegral *Next(ConstantIntegral *CI) {
-  if (CI->getType() == Type::BoolTy)
-    return CI == ConstantBool::True ? ConstantBool::False : ConstantBool::True;
-      
-  Constant *Result = ConstantExpr::get(Instruction::Add, CI,
-                                       ConstantInt::get(CI->getType(), 1));
-  return cast<ConstantIntegral>(Result);
 }
 
 /// Initialize a set of values that all satisfy the condition with C.
@@ -151,12 +158,35 @@ uint64_t ConstantRange::getSetSize() const {
   }
   
   // Simply subtract the bounds...
-  Constant *Result =
-    ConstantExpr::get(Instruction::Sub, (Constant*)Upper, (Constant*)Lower);
+  Constant *Result = ConstantExpr::getSub(Upper, Lower);
   return cast<ConstantInt>(Result)->getRawValue();
 }
 
+/// contains - Return true if the specified value is in the set.
+///
+bool ConstantRange::contains(ConstantInt *Val) const {
+  if (Lower == Upper) {
+    if (isFullSet()) return true;
+    return false;
+  }
 
+  if (!isWrappedSet())
+    return LTE(Lower, Val) && LT(Val, Upper);
+  return LTE(Lower, Val) || LT(Val, Upper);
+}
+
+
+
+/// subtract - Subtract the specified constant from the endpoints of this
+/// constant range.
+ConstantRange ConstantRange::subtract(ConstantInt *CI) const {
+  assert(CI->getType() == getType() && getType()->isInteger() &&
+         "Cannot subtract from different type range or non-integer!");
+  // If the set is empty or full, don't modify the endpoints.
+  if (Lower == Upper) return *this;
+  return ConstantRange(ConstantExpr::getSub(Lower, CI),
+                       ConstantExpr::getSub(Upper, CI));
+}
 
 
 // intersect1Wrapped - This helper function is used to intersect two ranges when
@@ -244,6 +274,48 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
 
   return *this;
 }
+
+/// zeroExtend - Return a new range in the specified integer type, which must
+/// be strictly larger than the current type.  The returned range will
+/// correspond to the possible range of values if the source range had been
+/// zero extended.
+ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
+  assert(getLower()->getType()->getPrimitiveSize() < Ty->getPrimitiveSize() &&
+         "Not a value extension");
+  if (isFullSet()) {
+    // Change a source full set into [0, 1 << 8*numbytes)
+    unsigned SrcTySize = getLower()->getType()->getPrimitiveSize();
+    return ConstantRange(Constant::getNullValue(Ty),
+                         ConstantUInt::get(Ty, 1ULL << SrcTySize*8));
+  }
+
+  Constant *Lower = getLower();
+  Constant *Upper = getUpper();
+  if (Lower->getType()->isInteger() && !Lower->getType()->isUnsigned()) {
+    // Ensure we are doing a ZERO extension even if the input range is signed.
+    Lower = ConstantExpr::getCast(Lower, Ty->getUnsignedVersion());
+    Upper = ConstantExpr::getCast(Upper, Ty->getUnsignedVersion());
+  }
+
+  return ConstantRange(ConstantExpr::getCast(Lower, Ty),
+                       ConstantExpr::getCast(Upper, Ty));
+}
+
+/// truncate - Return a new range in the specified integer type, which must be
+/// strictly smaller than the current type.  The returned range will
+/// correspond to the possible range of values if the source range had been
+/// truncated to the specified type.
+ConstantRange ConstantRange::truncate(const Type *Ty) const {
+  assert(getLower()->getType()->getPrimitiveSize() > Ty->getPrimitiveSize() &&
+         "Not a value truncation");
+  uint64_t Size = 1ULL << Ty->getPrimitiveSize()*8;
+  if (isFullSet() || getSetSize() >= Size)
+    return ConstantRange(getType());
+
+  return ConstantRange(ConstantExpr::getCast(getLower(), Ty),
+                       ConstantExpr::getCast(getUpper(), Ty));
+}
+
 
 /// print - Print out the bounds to a stream...
 ///
