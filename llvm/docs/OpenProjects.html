@@ -32,6 +32,11 @@
   </ol></li>
 </ul>
 
+<div class="doc_author">
+  <p>Written by the <a href="http://llvm.cs.uiuc.edu/">LLVM Team</a></p>
+</div>
+
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="what">What is this?</a>
@@ -209,9 +214,6 @@ themselves.  It seems natural to want to take advantage of this...</p>
 <li>Implement a flow-sensitive context-insensitive alias analysis algorithm<br>
   - Just an efficient local algorithm perhaps?</li>
 
-<li>Implement an interface to update analyses in response to common code motion
-    transformations</li>
-
 <li>Implement alias-analysis-based optimizations:
   <ul>
   <li>Dead store elimination</li>
@@ -275,8 +277,6 @@ profiling code to work with the generic profiling interfaces.</li>
      - Design some way to represent and query dep analysis</li>
 <li>Implement a strength reduction pass</li>
 <li>Value range propagation pass</li>
-<li>Implement an unswitching pass</li>
-<li>Write a loop unroller, with a simple heuristic for when to unroll</li>
 </ol>
 
 </div>
