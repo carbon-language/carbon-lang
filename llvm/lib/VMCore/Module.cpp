@@ -23,7 +23,7 @@ template class ValueHolder<Method, Module, Module>;
 // Define the GlobalValueRefMap as a struct that wraps a map so that we don't
 // have Module.h depend on <map>
 //
-struct GlobalValueRefMap : public map<GlobalValue*, ConstPoolPointerReference*>{
+struct GlobalValueRefMap : public map<GlobalValue*, ConstPoolPointerRef*>{
 };
 
 
@@ -62,7 +62,7 @@ void Module::dropAllReferences() {
   if (GVRefMap) {
     for (GlobalValueRefMap::iterator I = GVRefMap->begin(), E = GVRefMap->end();
 	 I != E; ++I) {
-      // Delete the ConstPoolPointerReference node...
+      // Delete the ConstPoolPointerRef node...
       I->second->destroyConstant();
     }
 
@@ -88,25 +88,24 @@ bool Module::reduceApply(bool (*Func)(const Method*)) const {
 }
 
 // Accessor for the underlying GlobalValRefMap...
-ConstPoolPointerReference *Module::getConstPoolPointerReference(GlobalValue *V){
+ConstPoolPointerRef *Module::getConstPoolPointerRef(GlobalValue *V){
   // Create ref map lazily on demand...
   if (GVRefMap == 0) GVRefMap = new GlobalValueRefMap();
 
   GlobalValueRefMap::iterator I = GVRefMap->find(V);
   if (I != GVRefMap->end()) return I->second;
 
-  ConstPoolPointerReference *Ref = new ConstPoolPointerReference(V);
+  ConstPoolPointerRef *Ref = new ConstPoolPointerRef(V);
   GVRefMap->insert(make_pair(V, Ref));
 
   return Ref;
 }
 
-void Module::mutateConstPoolPointerReference(GlobalValue *OldGV, 
-					     GlobalValue *NewGV) {
+void Module::mutateConstPoolPointerRef(GlobalValue *OldGV, GlobalValue *NewGV) {
   GlobalValueRefMap::iterator I = GVRefMap->find(OldGV);
   assert(I != GVRefMap->end() && 
-	 "mutateConstPoolPointerReference; OldGV not in table!");
-  ConstPoolPointerReference *Ref = I->second;
+	 "mutateConstPoolPointerRef; OldGV not in table!");
+  ConstPoolPointerRef *Ref = I->second;
 
   // Remove the old entry...
   GVRefMap->erase(I);

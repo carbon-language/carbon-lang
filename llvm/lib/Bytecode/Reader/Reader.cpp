@@ -217,7 +217,7 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
 }
 
 // DeclareNewGlobalValue - Patch up forward references to global values in the
-// form of ConstPoolPointerReferences.
+// form of ConstPoolPointerRef.
 //
 void BytecodeParser::DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot) {
   // Check to see if there is a forward reference to this global variable...
@@ -229,11 +229,11 @@ void BytecodeParser::DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot) {
     BCR_TRACE(3, "Mutating CPPR Forward Ref!\n");
       
     // Loop over all of the uses of the GlobalValue.  The only thing they are
-    // allowed to be at this point is ConstPoolPointerReference's.
+    // allowed to be at this point is ConstPoolPointerRef's.
     assert(OldGV->use_size() == 1 && "Only one reference should exist!");
     while (!OldGV->use_empty()) {
-      User *U = OldGV->use_back();  // Must be a ConstPoolPointerReference...
-      ConstPoolPointerReference *CPPR = cast<ConstPoolPointerReference>(U);
+      User *U = OldGV->use_back();  // Must be a ConstPoolPointerRef...
+      ConstPoolPointerRef *CPPR = cast<ConstPoolPointerRef>(U);
       assert(CPPR->getValue() == OldGV && "Something isn't happy");
       
       BCR_TRACE(4, "Mutating Forward Ref!\n");

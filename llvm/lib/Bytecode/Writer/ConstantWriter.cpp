@@ -145,8 +145,8 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
     const ConstPoolPointer *CPP = cast<const ConstPoolPointer>(CPV);
     if (isa<ConstPoolPointerNull>(CPP)) {
       output_vbr((unsigned)0, Out);
-    } else if (const ConstPoolPointerReference *CPR = 
-	                dyn_cast<ConstPoolPointerReference>(CPP)) {
+    } else if (const ConstPoolPointerRef *CPR = 
+	                dyn_cast<ConstPoolPointerRef>(CPP)) {
       output_vbr((unsigned)1, Out);
       int Slot = Table.getValSlot((Value*)CPR->getValue());
       assert(Slot != -1 && "Global used but not available!!");

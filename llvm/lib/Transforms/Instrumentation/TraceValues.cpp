@@ -41,10 +41,10 @@ const char* const PRINTF = "printf";
 
 #undef USE_PTRREF
 #ifdef USE_PTRREF
-static inline ConstPoolPointerReference*
+static inline ConstPoolPointerRef*
 GetStringRef(Module* module, const char* str)
 {
-  static hash_map<string, ConstPoolPointerReference*> stringRefCache;
+  static hash_map<string, ConstPoolPointerRef*> stringRefCache;
   static Module* lastModule = NULL;
   
   if (lastModule != module)
@@ -53,14 +53,14 @@ GetStringRef(Module* module, const char* str)
       lastModule = module;
     }
   
-  ConstPoolPointerReference* result = stringRefCache[str];
+  ConstPoolPointerRef* result = stringRefCache[str];
   if (result == NULL)
     {
       ConstPoolArray* charArray = ConstPoolArray::get(str);
       GlobalVariable* stringVar =
         new GlobalVariable(charArray->getType(),/*isConst*/true,charArray,str);
       module->getGlobalList().push_back(stringVar);
-      result = ConstPoolPointerReference::get(stringVar);
+      result = ConstPoolPointerRef::get(stringVar);
       assert(result && "Failed to create reference to string constant");
       stringRefCache[str] = result;
     }
@@ -89,7 +89,7 @@ GetStringRef(Module* module, const char* str)
         new GlobalVariable(charArray->getType(),/*isConst*/true,charArray);
       module->getGlobalList().push_back(stringVar);
       result = stringVar;
-      // result = ConstPoolPointerReference::get(stringVar);
+      // result = ConstPoolPointerRef::get(stringVar);
       assert(result && "Failed to create reference to string constant");
       stringRefCache[str] = result;
     }

@@ -112,7 +112,7 @@ private:
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
 
   // DeclareNewGlobalValue - Patch up forward references to global values in the
-  // form of ConstPoolPointerReferences.
+  // form of ConstPoolPointerRefs.
   //
   void DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot);
 

@@ -64,10 +64,9 @@ static Value *RemapOperand(const Value *In, map<const Value*, Value*> &LocalMap,
       Result = ConstPoolStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstPoolPointerNull>(CPV)) {
       Result = CPV;
-    } else if (ConstPoolPointerReference *CPR = 
-               dyn_cast<ConstPoolPointerReference>(CPV)) {
+    } else if (ConstPoolPointerRef *CPR = dyn_cast<ConstPoolPointerRef>(CPV)) {
       Value *V = RemapOperand(CPR->getValue(), LocalMap, GlobalMap);
-      Result = ConstPoolPointerReference::get(cast<GlobalValue>(V));
+      Result = ConstPoolPointerRef::get(cast<GlobalValue>(V));
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }

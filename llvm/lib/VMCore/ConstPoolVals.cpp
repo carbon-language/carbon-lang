@@ -134,7 +134,7 @@ ConstPoolStruct::ConstPoolStruct(const StructType *T,
   }
 }
 
-ConstPoolPointerReference::ConstPoolPointerReference(GlobalValue *GV)
+ConstPoolPointerRef::ConstPoolPointerRef(GlobalValue *GV)
   : ConstPoolPointer(GV->getType()) {
   Operands.push_back(Use(GV, this));
 }
@@ -224,7 +224,7 @@ string ConstPoolPointerNull::getStrValue() const {
   return "null";
 }
 
-string ConstPoolPointerReference::getStrValue() const {
+string ConstPoolPointerRef::getStrValue() const {
   const GlobalValue *V = getValue();
   if (V->hasName()) return "%" + V->getName();
 
@@ -482,17 +482,17 @@ ConstPoolPointerNull *ConstPoolPointerNull::get(const PointerType *Ty) {
   return Result;
 }
 
-//---- ConstPoolPointerReference::get() implementation...
+//---- ConstPoolPointerRef::get() implementation...
 //
-ConstPoolPointerReference *ConstPoolPointerReference::get(GlobalValue *GV) {
+ConstPoolPointerRef *ConstPoolPointerRef::get(GlobalValue *GV) {
   assert(GV->getParent() && "Global Value must be attached to a module!");
 
   // The Module handles the pointer reference sharing...
-  return GV->getParent()->getConstPoolPointerReference(GV);
+  return GV->getParent()->getConstPoolPointerRef(GV);
 }
 
 
-void ConstPoolPointerReference::mutateReference(GlobalValue *NewGV) {
-  getValue()->getParent()->mutateConstPoolPointerReference(getValue(), NewGV);
+void ConstPoolPointerRef::mutateReference(GlobalValue *NewGV) {
+  getValue()->getParent()->mutateConstPoolPointerRef(getValue(), NewGV);
   Operands[0] = NewGV;
 }

@@ -277,7 +277,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
       V = ConstPoolPointerNull::get(PT);
       break;
 
-    case 1: {  // ConstPoolPointerReference value...
+    case 1: {  // ConstPoolPointerRef value...
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
       BCR_TRACE(4, "CPPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
@@ -308,7 +308,7 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
 	}
       }
       
-      V = ConstPoolPointerReference::get(GV);
+      V = ConstPoolPointerRef::get(GV);
       break;
     }
     default:

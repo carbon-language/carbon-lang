@@ -304,20 +304,20 @@ public:
 };
 
 
-// ConstPoolPointerReference - a constant pointer value that is initialized to
+// ConstPoolPointerRef - a constant pointer value that is initialized to
 // point to a global value, which lies at a constant, fixed address.
 //
-class ConstPoolPointerReference : public ConstPoolPointer {
+class ConstPoolPointerRef : public ConstPoolPointer {
   friend class Module;   // Modules maintain these references
-  ConstPoolPointerReference(const ConstPoolPointerReference &); // DNI!
+  ConstPoolPointerRef(const ConstPoolPointerRef &); // DNI!
 
 protected:
-  ConstPoolPointerReference(GlobalValue *GV);
-  ~ConstPoolPointerReference() {}
+  ConstPoolPointerRef(GlobalValue *GV);
+  ~ConstPoolPointerRef() {}
 
   virtual void destroyConstant() { destroyConstantImpl(); }
 public:
-  static ConstPoolPointerReference *get(GlobalValue *GV);
+  static ConstPoolPointerRef *get(GlobalValue *GV);
 
   virtual string getStrValue() const;
 
@@ -329,7 +329,7 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstPoolPointerReference *) { return true; }
+  static inline bool classof(const ConstPoolPointerRef *) { return true; }
   static inline bool classof(const ConstPoolPointer *CPV) {
     return CPV->getNumOperands() == 1;
   }

@@ -18,7 +18,7 @@
 class Method;
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstPoolVals.cpp
-class ConstPoolPointerReference;
+class ConstPoolPointerRef;
 
 class Module : public Value, public SymTabValue {
 public:
@@ -44,10 +44,10 @@ private:
   GlobalValueRefMap *GVRefMap;
 
   // Accessor for the underlying GlobalValRefMap... only through the
-  // ConstPoolPointerReference class...
-  friend class ConstPoolPointerReference;
-  void mutateConstPoolPointerReference(GlobalValue *OldGV, GlobalValue *NewGV);
-  ConstPoolPointerReference *getConstPoolPointerReference(GlobalValue *GV);
+  // ConstPoolPointerRef class...
+  friend class ConstPoolPointerRef;
+  void mutateConstPoolPointerRef(GlobalValue *OldGV, GlobalValue *NewGV);
+  ConstPoolPointerRef *getConstPoolPointerRef(GlobalValue *GV);
 
 public:
   Module();

@@ -61,7 +61,7 @@ static struct PerModuleInfo {
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
   // are defined, and if so, the temporary object that they represent is held
-  // here.  This is used for forward references of ConstPoolPointerReferences.
+  // here.  This is used for forward references of ConstPoolPointerRefs.
   //
   typedef map<pair<const PointerType *, ValID>, GlobalVariable*> GlobalRefsType;
   GlobalRefsType GlobalRefs;
@@ -102,11 +102,11 @@ static struct PerModuleInfo {
       I->first.second.destroy();  // Free string memory if neccesary
       
       // Loop over all of the uses of the GlobalValue.  The only thing they are
-      // allowed to be at this point is ConstPoolPointerReference's.
+      // allowed to be at this point is ConstPoolPointerRef's.
       assert(OldGV->use_size() == 1 && "Only one reference should exist!");
       while (!OldGV->use_empty()) {
-	User *U = OldGV->use_back();  // Must be a ConstPoolPointerReference...
-	ConstPoolPointerReference *CPPR = cast<ConstPoolPointerReference>(U);
+	User *U = OldGV->use_back();  // Must be a ConstPoolPointerRef...
+	ConstPoolPointerRef *CPPR = cast<ConstPoolPointerRef>(U);
 	assert(CPPR->getValue() == OldGV && "Something isn't happy");
 	
 	// Change the const pool reference to point to the real global variable
@@ -987,7 +987,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     }
 
     GlobalValue *GV = cast<GlobalValue>(V);
-    $$ = ConstPoolPointerReference::get(GV);
+    $$ = ConstPoolPointerRef::get(GV);
     delete $1;            // Free the type handle
   }
 
