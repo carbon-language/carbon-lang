@@ -11,7 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <unistd.h>
+#include "Unix.h"
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only generic UNIX code that
@@ -22,13 +31,76 @@ namespace llvm {
 using namespace sys;
 
 unsigned 
-Process::GetPageSize() {
-  // NOTE: The getpagesize function doesn't exist in POSIX 1003.1 and is 
-  // "deprecated" in SUSv2. Platforms including this implementation should
-  // consider sysconf(_SC_PAGE_SIZE) if its available. 
-  static const int page_size = getpagesize();
+Process::GetPageSize() 
+{
+#if defined(HAVE_GETPAGESIZE)
+  static const int page_size = ::getpagesize();
+#elif defined(HAVE_SYSCONF)
+  static long page_size = ::sysconf(_SC_PAGE_SIZE);
+#else
+#warning Cannot get the page size on this machine
+#endif
   return static_cast<unsigned>(page_size);
 }
+
+#if defined(HAVE_SBRK)
+static char* som = reinterpret_cast<char*>(::sbrk(0));
+#endif
+
+uint64_t 
+Process::GetMallocUsage()
+{
+#ifdef HAVE_MALLINFO
+  struct mallinfo mi;
+  mi = ::mallinfo();
+  return mi.uordblks;
+#elif HAVE_SBRK
+  // Note this is only an approximation and more closely resembles
+  // the value returned by mallinfo in the arena field.
+  char * eom = sbrk(0);
+  if (eom != ((char*)-1) && som != ((char*)-1))
+    return eom - som;
+  else
+    return 0;
+#else
+#warning Cannot get malloc info on this platform
+  return 0;
+#endif
+}
+
+uint64_t
+Process::GetTotalMemoryUsage()
+{
+#ifdef HAVE_MALLINFO
+  struct mallinfo mi = ::mallinfo();
+  return mi.uordblks + mi.hblkhd;
+#else
+#warning Cannot get total memory size on this platform
+  return 0;
+#endif
+}
+
+void
+Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time, 
+                      TimeValue& sys_time)
+{
+  elapsed = TimeValue::now();
+#ifdef HAVE_GETRUSAGE
+  struct rusage usage;
+  ::getrusage(RUSAGE_SELF, &usage);
+  user_time.seconds( usage.ru_utime.tv_sec );
+  user_time.microseconds( usage.ru_utime.tv_usec );
+  sys_time.seconds( usage.ru_stime.tv_sec );
+  sys_time.microseconds( usage.ru_stime.tv_usec );
+#else
+#warning Cannot get usage times on this platform
+  user_time.seconds(0);
+  user_time.microseconds(0);
+  sys_time.seconds(0);
+  sys_time.microseconds(0);
+#endif
+}
+
 
 }
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
