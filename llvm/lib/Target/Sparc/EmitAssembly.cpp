@@ -443,7 +443,7 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
 {
   unsigned Opcode = MI->getOpCode();
 
-  if (Target.getInstrInfo().isDummyPhiInstr(Opcode));
+  if (Target.getInstrInfo().isDummyPhiInstr(Opcode))
     return;  // IGNORE PHI NODES
 
   toAsm << "\t" << Target.getInstrInfo().getName(Opcode) << "\t";
