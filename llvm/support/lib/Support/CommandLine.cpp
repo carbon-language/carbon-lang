@@ -34,7 +34,7 @@ static map<string, Option*> &getOpts() {
 static void AddArgument(const string &ArgName, Option *Opt) {
   if (getOpts().find(ArgName) != getOpts().end()) {
     cerr << "CommandLine Error: Argument '" << ArgName
-	 << "' specified more than once!\n";
+	 << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
     getOpts().insert(std::make_pair(ArgName, Opt));
@@ -335,8 +335,17 @@ bool EnumValueBase::handleOccurance(const char *ArgName, const string &Arg) {
   unsigned i;
   for (i = 0; i < ValueMap.size(); ++i)
     if (ValueMap[i].first == Arg) break;
-  if (i == ValueMap.size())
-    return error(": unrecognized alternative '"+Arg+"'!");
+
+  if (i == ValueMap.size()) {
+    string Alternatives;
+    for (i = 0; i < ValueMap.size(); ++i) {
+      if (i) Alternatives += ", ";
+      Alternatives += ValueMap[i].first;
+    }
+
+    return error(": unrecognized alternative '" + Arg +
+                 "'!  Alternatives are: " + Alternatives);
+  }
   Value = ValueMap[i].second.first;
   return false;
 }
