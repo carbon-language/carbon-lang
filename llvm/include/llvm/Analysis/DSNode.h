@@ -159,12 +159,18 @@ public:
   DSNode *getForwardNode() const { return ForwardNH.getNode(); }
 
   /// isForwarding - Return true if this node is forwarding to another.
+  ///
   bool isForwarding() const { return !ForwardNH.isNull(); }
 
+  /// stopForwarding - When the last reference to this forwarding node has been
+  /// dropped, delete the node.
   void stopForwarding() {
     assert(isForwarding() &&
            "Node isn't forwarding, cannot stopForwarding!");
     ForwardNH.setNode(0);
+    assert(ParentGraph == 0 &&
+           "Forwarding nodes must have been removed from graph!");
+    delete this;
   }
 
   /// hasLink - Return true if this memory object has a link in slot #LinkNo
@@ -377,8 +383,8 @@ inline DSNode *DSNodeHandle::getNode() const {
 }
 
 inline void DSNodeHandle::setNode(DSNode *n) const {
-  assert(!n || !n->getForwardNode() && "Cannot set node to a forwarded node!");
-  if (N) N->NumReferrers--;
+  assert(!n || !n->isForwarding() && "Cannot set node to a forwarded node!");
+  if (N) getNode()->NumReferrers--;
   N = n;
   if (N) {
     N->NumReferrers++;

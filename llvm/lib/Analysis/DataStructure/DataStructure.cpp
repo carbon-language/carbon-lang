@@ -46,7 +46,7 @@ namespace {
 using namespace DS;
 
 DSNode *DSNodeHandle::HandleForwarding() const {
-  assert(!N->ForwardNH.isNull() && "Can only be invoked if forwarding!");
+  assert(N->isForwarding() && "Can only be invoked if forwarding!");
 
   // Handle node forwarding here!
   DSNode *Next = N->ForwardNH.getNode();  // Cause recursive shrinkage
@@ -124,6 +124,10 @@ void DSNode::forwardNode(DSNode *To, unsigned Offset) {
   NodeType = DEAD;
   Size = 0;
   Ty = Type::VoidTy;
+
+  // Remove this node from the parent graph's Nodes list.
+  ParentGraph->unlinkNode(this);  
+  ParentGraph = 0;
 }
 
 // addGlobal - Add an entry for a global value to the Globals list.  This also

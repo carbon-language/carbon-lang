@@ -182,6 +182,7 @@ public:
   /// addNode - Add a new node to the graph.
   ///
   void addNode(DSNode *N) { Nodes.push_back(N); }
+  void unlinkNode(DSNode *N) { Nodes.remove(N); }
 
   /// getScalarMap - Get a map that describes what the nodes the scalars in this
   /// function point to...
