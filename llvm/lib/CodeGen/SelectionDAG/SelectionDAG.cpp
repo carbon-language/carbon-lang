@@ -567,8 +567,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(VT == N1.getValueType() &&
            "Shift operators return type must be the same as their first arg");
     assert(MVT::isInteger(VT) && MVT::isInteger(N2.getValueType()) &&
-           "Shifts only work on integers");
-    assert(VT >= MVT::i8 && "Shift amount cannot be a MVT::i1");
+           VT != MVT::i1 && "Shifts only work on integers");
     break;
   default: break;
   }

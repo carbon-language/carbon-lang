@@ -806,6 +806,32 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   return DAG.getCopyToReg(DAG.getRoot(), Op, Reg);
 }
 
+void SelectionDAGISel::
+LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
+               std::vector<SDOperand> &UnorderedChains) {
+  // If this is the entry block, emit arguments.
+  Function &F = *BB->getParent();
+
+  if (BB == &F.front()) {
+    // FIXME: If an argument is only used in one basic block, we could directly
+    // emit it (ONLY) into that block, not emitting the COPY_TO_VREG node.  This
+    // would improve codegen in several cases on X86 by allowing the loads to be
+    // folded into the user operation.
+    std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
+
+    FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
+
+    unsigned a = 0;
+    for (Function::aiterator AI = F.abegin(), E = F.aend(); AI != E; ++AI,++a)
+      if (!AI->use_empty()) {
+        SDL.setValue(AI, Args[a]);
+        UnorderedChains.push_back(
+                 CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]));
+      }
+  }
+}
+
+
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                     FunctionLoweringInfo &FuncInfo) {
@@ -813,23 +839,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   std::vector<SDOperand> UnorderedChains;
   
-  // If this is the entry block, emit arguments.
-  Function *F = LLVMBB->getParent();
-  if (LLVMBB == &F->front()) {
-    // FIXME: If an argument is only used in one basic block, we could directly
-    // emit it (ONLY) into that block, not emitting the COPY_TO_VREG node.  This
-    // would improve codegen in several cases on X86 by allowing the loads to be
-    // folded into the user operation.
-    std::vector<SDOperand> Args = TLI.LowerArguments(*LLVMBB->getParent(), DAG);
-
-    unsigned a = 0;
-    for (Function::aiterator AI = F->abegin(), E = F->aend(); AI != E; ++AI,++a)
-      if (!AI->use_empty()) {
-        SDL.setValue(AI, Args[a]);
-        UnorderedChains.push_back(
-                 CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]));
-      }
-  }
+  // Lower any arguments needed in this block.
+  LowerArguments(LLVMBB, SDL, UnorderedChains);
 
   BB = FuncInfo.MBBMap[LLVMBB];
   SDL.setCurrentBasicBlock(BB);
