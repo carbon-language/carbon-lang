@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETINSTRINFO_H
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "Support/DataTypes.h"
 #include <vector>
 #include <cassert>
@@ -156,8 +157,21 @@ public:
     return false;
   }
 
+  //
+  // Insert a goto (unconditional branch) sequence to MBB, right
+  // before MBBI
+  virtual void insertGoto(const MachineBasicBlock& MBB,
+                          const MachineBasicBlock::iterator MBBI) const {
+    assert(0 && "Target didn't implement insertGoto!");
+  }
 
-
+  //
+  // Reverses the branch condition of the MachineInstr pointed by
+  // MI. The instruction is replaced and the new MI is returned.
+  virtual MachineBasicBlock::iterator
+  reverseBranchCondition(const MachineBasicBlock::iterator MI) const {
+    assert(0 && "Target didn't implement reverseBranchCondition!");
+  }
 
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
