@@ -12,8 +12,7 @@
 #include "WriterInternals.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iOther.h"
-#include "llvm/iTerminators.h"
+#include "llvm/Instructions.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 
@@ -27,11 +26,11 @@ typedef unsigned char uchar;
 //
 // Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]
 //
-static void outputInstructionFormat0(const Instruction *I,
+static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
 				     const SlotCalculator &Table,
 				     unsigned Type, std::deque<uchar> &Out) {
   // Opcode must have top two bits clear...
-  output_vbr(I->getOpcode() << 2, Out);          // Instruction Opcode ID
+  output_vbr(Opcode << 2, Out);                  // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type
 
   unsigned NumArgs = I->getNumOperands();
@@ -62,12 +61,12 @@ static void outputInstructionFormat0(const Instruction *I,
 //
 // Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]
 //
-static void outputInstrVarArgsCall(const Instruction *I,
+static void outputInstrVarArgsCall(const Instruction *I, unsigned Opcode,
 				   const SlotCalculator &Table, unsigned Type,
 				   std::deque<uchar> &Out) {
   assert(isa<CallInst>(I) || isa<InvokeInst>(I));
   // Opcode must have top two bits clear...
-  output_vbr(I->getOpcode() << 2, Out);          // Instruction Opcode ID
+  output_vbr(Opcode << 2, Out);                  // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type (varargs type)
 
   unsigned NumArgs = I->getNumOperands();
@@ -105,11 +104,9 @@ static void outputInstrVarArgsCall(const Instruction *I,
 // outputInstructionFormat1 - Output one operand instructions, knowing that no
 // operand index is >= 2^12.
 //
-static void outputInstructionFormat1(const Instruction *I, 
+static void outputInstructionFormat1(const Instruction *I, unsigned Opcode,
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, std::deque<uchar> &Out) {
-  unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
-  
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 1.
@@ -126,11 +123,9 @@ static void outputInstructionFormat1(const Instruction *I,
 // outputInstructionFormat2 - Output two operand instructions, knowing that no
 // operand index is >= 2^8.
 //
-static void outputInstructionFormat2(const Instruction *I, 
+static void outputInstructionFormat2(const Instruction *I, unsigned Opcode,
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, std::deque<uchar> &Out) {
-  unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
-
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 2.
@@ -150,11 +145,9 @@ static void outputInstructionFormat2(const Instruction *I,
 // outputInstructionFormat3 - Output three operand instructions, knowing that no
 // operand index is >= 2^6.
 //
-static void outputInstructionFormat3(const Instruction *I, 
+static void outputInstructionFormat3(const Instruction *I, unsigned Opcode,
 				     const SlotCalculator &Table, int *Slots,
 				     unsigned Type, std::deque<uchar> &Out) {
-  unsigned Opcode = I->getOpcode();      // Instruction Opcode ID
-
   // bits   Instruction format:
   // --------------------------
   // 01-00: Opcode type, fixed to 3.
@@ -172,7 +165,14 @@ static void outputInstructionFormat3(const Instruction *I,
 }
 
 void BytecodeWriter::processInstruction(const Instruction &I) {
-  assert(I.getOpcode() < 64 && "Opcode too big???");
+  assert(I.getOpcode() < 62 && "Opcode too big???");
+  unsigned Opcode = I.getOpcode();
+
+  // Encode 'volatile load' as 62 and 'volatile store' as 63.
+  if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile())
+    Opcode = 62;
+  if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile())
+    Opcode = 63;
 
   unsigned NumOperands = I.getNumOperands();
   int MaxOpSlot = 0;
@@ -228,13 +228,13 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)){// Handle VarArg calls
     const PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
-      outputInstrVarArgsCall(CI, Table, Type, Out);
+      outputInstrVarArgsCall(CI, Opcode, Table, Type, Out);
       return;
     }
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {// ...  & Invokes
     const PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
     if (cast<FunctionType>(Ty->getElementType())->isVarArg()) {
-      outputInstrVarArgsCall(II, Table, Type, Out);
+      outputInstrVarArgsCall(II, Opcode, Table, Type, Out);
       return;
     }
   }
@@ -250,21 +250,21 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   case 0:
   case 1:
     if (MaxOpSlot < (1 << 12)-1) { // -1 because we use 4095 to indicate 0 ops
-      outputInstructionFormat1(&I, Table, Slots, Type, Out);
+      outputInstructionFormat1(&I, Opcode, Table, Slots, Type, Out);
       return;
     }
     break;
 
   case 2:
     if (MaxOpSlot < (1 << 8)) {
-      outputInstructionFormat2(&I, Table, Slots, Type, Out);
+      outputInstructionFormat2(&I, Opcode, Table, Slots, Type, Out);
       return;
     }
     break;
 
   case 3:
     if (MaxOpSlot < (1 << 6)) {
-      outputInstructionFormat3(&I, Table, Slots, Type, Out);
+      outputInstructionFormat3(&I, Opcode, Table, Slots, Type, Out);
       return;
     }
     break;
@@ -272,5 +272,5 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
 
   // If we weren't handled before here, we either have a large number of
   // operands or a large operand index that we are refering to.
-  outputInstructionFormat0(&I, Table, Type, Out);
+  outputInstructionFormat0(&I, Opcode, Table, Type, Out);
 }
