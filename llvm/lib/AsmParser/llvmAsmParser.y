@@ -1122,10 +1122,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     
       if (I != CurModule.GlobalRefs.end()) {
 	V = I->second;             // Placeholder already exists, use it...
+        $2.destroy();
       } else {
-	// TODO: Include line number info by creating a subclass of
-	// TODO: GlobalVariable here that includes the said information!
-	
 	// Create a placeholder for the global variable reference...
 	GlobalVariable *GV = new GlobalVariable(PT->getElementType(),
                                                 false,

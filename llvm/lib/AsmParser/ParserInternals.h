@@ -67,8 +67,7 @@ static inline void ThrowException(const std::string &message,
 // discriminated union.
 //
 // Note that I can't implement this class in a straight forward manner with 
-// constructors and stuff because it goes in a union, and GCC doesn't like 
-// putting classes with ctor's in unions.  :(
+// constructors and stuff because it goes in a union.
 //
 struct ValID {
   enum {
