@@ -280,8 +280,7 @@ public:
   /// instructions (but only if the Target is using them).  It is responsible
   /// for eliminating these instructions, replacing them with concrete
   /// instructions.  This method need only be implemented if using call frame
-  /// setup/destroy pseudo instructions. The return value is the number of
-  /// instructions added to (negative if removed from) the basic block.
+  /// setup/destroy pseudo instructions.
   ///
   virtual void 
   eliminateCallFramePseudoInstr(MachineFunction &MF,
