@@ -199,7 +199,7 @@ static bool DoConstPropPass(Method *M) {
 
 // returns true on failure, false on success...
 //
-bool opt::DoConstantPropogation(Method *M) {
+bool opt::ConstantPropogation::doConstantPropogation(Method *M) {
   bool Modified = false;
 
   // Fold constants until we make no progress...

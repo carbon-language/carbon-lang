@@ -246,7 +246,7 @@ static inline bool DoMethodInlining(BasicBlock *BB) {
   return false;
 }
 
-bool opt::DoMethodInlining(Method *M) {
+bool opt::MethodInlining::doMethodInlining(Method *M) {
   bool Changed = false;
 
   // Loop through now and inline instructions a basic block at a time...

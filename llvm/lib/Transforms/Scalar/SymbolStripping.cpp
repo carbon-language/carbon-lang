@@ -44,16 +44,16 @@ static bool StripSymbolTable(SymbolTable *SymTab) {
 
 // DoSymbolStripping - Remove all symbolic information from a method
 //
-bool opt::DoSymbolStripping(Method *M) {
+bool opt::SymbolStripping::doSymbolStripping(Method *M) {
   return StripSymbolTable(M->getSymbolTable());
 }
 
-// DoFullSymbolStripping - Remove all symbolic information from all methods 
+// doStripGlobalSymbols - Remove all symbolic information from all methods 
 // in a module, and all module level symbols. (method names, etc...)
 //
-bool opt::DoFullSymbolStripping(Module *M) {
+bool opt::FullSymbolStripping::doStripGlobalSymbols(Module *M) {
   // Remove all symbols from methods in this module... and then strip all of the
   // symbols in this module...
   //  
-  return DoSymbolStripping(M) | StripSymbolTable(M->getSymbolTable());
+  return StripSymbolTable(M->getSymbolTable());
 }

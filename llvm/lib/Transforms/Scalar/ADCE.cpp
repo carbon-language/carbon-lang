@@ -293,9 +293,9 @@ BasicBlock *ADCE::fixupCFG(BasicBlock *BB, set<BasicBlock*> &VisitedBlocks,
 
 
 
-// DoADCE - Execute the Agressive Dead Code Elimination Algorithm
+// doADCE - Execute the Agressive Dead Code Elimination Algorithm
 //
-bool opt::DoADCE(Method *M) {
+bool opt::AgressiveDCE::doADCE(Method *M) {
   if (M->isExternal()) return false;
   ADCE DCE(M);
   return DCE.doADCE();

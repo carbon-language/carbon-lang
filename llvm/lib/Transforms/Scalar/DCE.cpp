@@ -26,6 +26,7 @@
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Support/STLExtras.h"
 #include "llvm/Module.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iTerminators.h"
@@ -293,26 +294,38 @@ static bool DoDCEPass(Method *M) {
 // It is possible that we may require multiple passes over the code to fully
 // eliminate dead code.  Iterate until we are done.
 //
-bool opt::DoDeadCodeElimination(Method *M) {
+bool opt::DeadCodeElimination::doDCE(Method *M) {
   bool Changed = false;
   while (DoDCEPass(M)) Changed = true;
   return Changed;
 }
 
-bool opt::DoDeadCodeElimination(Module *Mod) {
+bool opt::DeadCodeElimination::RemoveUnusedGlobalValues(Module *Mod) {
   bool Changed = false;
 
   for (Module::iterator MI = Mod->begin(); MI != Mod->end(); ) {
     Method *Meth = *MI;
-    if (!Meth->isExternal()) {                 // DCE normal methods
-      Changed |= DoDeadCodeElimination(Meth);
-      ++MI;                                    // Next method please
-    } else if (Meth->use_size() == 0) {        // No references to prototype?
+    if (Meth->isExternal() && Meth->use_size() == 0) {
+      // No references to prototype?
       //cerr << "Removing method proto: " << Meth->getName() << endl;
       delete Mod->getMethodList().remove(MI);  // Remove prototype
       // Remove moves iterator to point to the next one automatically
+      Changed = true;
     } else {
       ++MI;                                    // Skip prototype in use.
+    }
+  }
+
+  for (Module::giterator GI = Mod->gbegin(); GI != Mod->gend(); ) {
+    GlobalVariable *GV = *GI;
+    if (!GV->hasInitializer() && GV->use_size() == 0) {
+      // No references to uninitialized global variable?
+      //cerr << "Removing global var: " << GV->getName() << endl;
+      delete Mod->getGlobalList().remove(GI);
+      // Remove moves iterator to point to the next one automatically
+      Changed = true;
+    } else {
+      ++GI;
     }
   }
 
