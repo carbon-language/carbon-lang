@@ -3,6 +3,10 @@
 // This interface is used to build and manipulate a call graph, which is a very 
 // useful tool for interprocedural optimization.
 //
+// This call graph represents a dynamic method invocation as a null method node.
+// A call graph may only have up to one null method node that represents all of
+// the dynamic method invocations.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_CALLGRAPH_H
