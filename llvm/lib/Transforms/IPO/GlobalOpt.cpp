@@ -738,6 +738,29 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   return NewGV;
 }
 
+/// ValueIsOnlyUsedLocallyOrStoredToOneGlobal - Scan the use-list of V checking
+/// to make sure that there are no complex uses of V.  We permit simple things
+/// like dereferencing the pointer, but not storing through the address, unless
+/// it is to the specified global.
+static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
+                                                      GlobalVariable *GV) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI)
+    if (isa<LoadInst>(*UI) || isa<SetCondInst>(*UI)) {
+      // Fine, ignore.
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+      if (SI->getOperand(0) == V && SI->getOperand(1) != GV)
+        return false;  // Storing the pointer itself... bad.
+      // Otherwise, storing through it, or storing into GV... fine.
+    } else if (isa<GetElementPtrInst>(*UI) || isa<SelectInst>(*UI)) {
+      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(cast<Instruction>(*UI),GV))
+        return false;
+    } else {
+      return false;
+    }
+  return true;
+
+}
+
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
@@ -783,9 +806,8 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
         if (MI->getAllocatedType()->isSized() &&
             NElements->getRawValue()*
                      TD.getTypeSize(MI->getAllocatedType()) < 2048 &&
-            AllUsesOfLoadedValueWillTrapIfNull(GV)) {
-          // FIXME: do more correctness checking to make sure the result of the
-          // malloc isn't squirrelled away somewhere.
+            AllUsesOfLoadedValueWillTrapIfNull(GV) &&
+            ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV)) {
           GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
           return true;
         }
