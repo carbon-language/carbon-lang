@@ -37,11 +37,11 @@ bool isExecutableFile(const std::string &ExeFileName) {
 }
 
 
-// FindExecutable - Find a named executable, giving the argv[0] of program being
-// executed. This allows us to find another LLVM tool if it is built into the
-// same directory, but that directory is neither the current directory, nor in
-// the PATH.  If the executable cannot be found, return an empty string.
-//
+/// FindExecutable - Find a named executable, giving the argv[0] of program
+/// being executed. This allows us to find another LLVM tool if it is built into
+/// the same directory, but that directory is neither the current directory, nor
+/// in the PATH.  If the executable cannot be found, return an empty string.
+/// 
 std::string FindExecutable(const std::string &ExeName,
 			   const std::string &ProgramPath) {
   // First check the directory that bugpoint is in.  We can do this if
