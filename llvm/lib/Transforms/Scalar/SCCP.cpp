@@ -1,6 +1,6 @@
-//===- SCCP.cpp - Sparse Conditional Constant Propogation -----------------===//
+//===- SCCP.cpp - Sparse Conditional Constant Propagation -----------------===//
 //
-// This file implements sparse conditional constant propogation and merging:
+// This file implements sparse conditional constant propagation and merging:
 //
 // Specifically, this:
 //   * Assumes values are constant unless proven otherwise
@@ -75,7 +75,7 @@ public:
 //===----------------------------------------------------------------------===//
 // SCCP Class
 //
-// This class does all of the work of Sparse Conditional Constant Propogation.
+// This class does all of the work of Sparse Conditional Constant Propagation.
 //
 namespace {
 class SCCP : public FunctionPass, public InstVisitor<SCCP> {
@@ -86,7 +86,7 @@ class SCCP : public FunctionPass, public InstVisitor<SCCP> {
   std::vector<BasicBlock*>  BBWorkList;  // The BasicBlock work list
 public:
 
-  // runOnFunction - Run the Sparse Conditional Constant Propogation algorithm,
+  // runOnFunction - Run the Sparse Conditional Constant Propagation algorithm,
   // and return true if the function was modified.
   //
   bool runOnFunction(Function &F);
@@ -239,7 +239,7 @@ Pass *createSCCPPass() {
 // SCCP Class Implementation
 
 
-// runOnFunction() - Run the Sparse Conditional Constant Propogation algorithm,
+// runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {

@@ -557,7 +557,7 @@ bool RPR::DoRaisePass(Function &F) {
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
       DEBUG(cerr << "Processing: " << *BI);
-      if (dceInstruction(BI) || doConstantPropogation(BI)) {
+      if (dceInstruction(BI) || doConstantPropagation(BI)) {
         Changed = true; 
         ++NumDCEorCP;
         DEBUG(cerr << "***\t\t^^-- Dead code eliminated!\n");

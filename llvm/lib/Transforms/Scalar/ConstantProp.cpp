@@ -1,6 +1,6 @@
-//===- ConstantProp.cpp - Code to perform Simple Constant Propogation -----===//
+//===- ConstantProp.cpp - Code to perform Simple Constant Propagation -----===//
 //
-// This file implements constant propogation and merging:
+// This file implements constant propagation and merging:
 //
 // Specifically, this:
 //   * Converts instructions like "add int 1, 2" into 3
@@ -23,7 +23,7 @@
 namespace {
   Statistic<> NumInstKilled("constprop", "Number of instructions killed");
 
-  struct ConstantPropogation : public FunctionPass {
+  struct ConstantPropagation : public FunctionPass {
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -31,15 +31,15 @@ namespace {
     }
   };
 
-  RegisterOpt<ConstantPropogation> X("constprop","Simple constant propogation");
+  RegisterOpt<ConstantPropagation> X("constprop","Simple constant propagation");
 }
 
-Pass *createConstantPropogationPass() {
-  return new ConstantPropogation();
+Pass *createConstantPropagationPass() {
+  return new ConstantPropagation();
 }
 
 
-bool ConstantPropogation::runOnFunction(Function &F) {
+bool ConstantPropagation::runOnFunction(Function &F) {
   // Initialize the worklist to all of the instructions ready to process...
   std::set<Instruction*> WorkList(inst_begin(F), inst_end(F));
   bool Changed = false;
@@ -51,7 +51,7 @@ bool ConstantPropogation::runOnFunction(Function &F) {
     if (!I->use_empty())                 // Don't muck with dead instructions...
       if (Constant *C = ConstantFoldInstruction(I)) {
         // Add all of the users of this instruction to the worklist, they might
-        // be constant propogatable now...
+        // be constant propagatable now...
         for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
              UI != UE; ++UI)
           WorkList.insert(cast<Instruction>(*UI));

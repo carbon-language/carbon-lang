@@ -10,13 +10,13 @@
 #include "llvm/ConstantHandling.h"
 
 //===----------------------------------------------------------------------===//
-//  Local constant propogation...
+//  Local constant propagation...
 //
 
 // ConstantFoldInstruction - If an instruction references constants, try to fold
 // them together...
 //
-bool doConstantPropogation(BasicBlock::iterator &II) {
+bool doConstantPropagation(BasicBlock::iterator &II) {
   if (Constant *C = ConstantFoldInstruction(II)) {
     // Replaces all of the uses of a variable with uses of the constant.
     II->replaceAllUsesWith(C);

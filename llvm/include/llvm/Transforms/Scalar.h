@@ -15,14 +15,14 @@ class TerminatorInst;
 
 //===----------------------------------------------------------------------===//
 //
-// Constant Propogation Pass - A worklist driven constant propogation pass
+// Constant Propagation Pass - A worklist driven constant propagation pass
 //
-Pass *createConstantPropogationPass();
+Pass *createConstantPropagationPass();
 
 
 //===----------------------------------------------------------------------===//
 //
-// Sparse Conditional Constant Propogation Pass
+// Sparse Conditional Constant Propagation Pass
 //
 Pass *createSCCPPass();
 
@@ -152,7 +152,7 @@ Pass *createPromoteMemoryToRegister();
 //===----------------------------------------------------------------------===//
 //
 // This pass reassociates commutative expressions in an order that is designed
-// to promote better constant propogation, GCSE, LICM, PRE...
+// to promote better constant propagation, GCSE, LICM, PRE...
 //
 // For example:  4 + (x + 5)  ->  x + (4 + 5)
 //

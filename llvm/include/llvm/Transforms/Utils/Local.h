@@ -12,13 +12,13 @@
 class Pass;
 
 //===----------------------------------------------------------------------===//
-//  Local constant propogation...
+//  Local constant propagation...
 //
 
-/// doConstantPropogation - Constant prop a specific instruction.  Returns true
-/// and potentially moves the iterator if constant propogation was performed.
+/// doConstantPropagation - Constant prop a specific instruction.  Returns true
+/// and potentially moves the iterator if constant propagation was performed.
 ///
-bool doConstantPropogation(BasicBlock::iterator &I);
+bool doConstantPropagation(BasicBlock::iterator &I);
 
 /// ConstantFoldTerminator - If a terminator instruction is predicated on a
 /// constant value, convert it into an unconditional branch to the constant

@@ -300,7 +300,7 @@ bool CEE::runOnFunction(Function &F) {
 // TransformRegion - Transform the region starting with BB according to the
 // calculated region information for the block.  Transforming the region
 // involves analyzing any information this block provides to successors,
-// propogating the information to successors, and finally transforming
+// propagating the information to successors, and finally transforming
 // successors.
 //
 // This method processes the function in depth first order, which guarantees
@@ -885,7 +885,7 @@ void CEE::PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
     return;
 
   // If we already have information that contradicts the current information we
-  // are propogating, ignore this info.  Something bad must have happened!
+  // are propagating, ignore this info.  Something bad must have happened!
   //
   if (Op1R.contradicts(Opcode, VI)) {
     Op1R.contradicts(Opcode, VI);

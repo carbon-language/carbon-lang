@@ -173,7 +173,7 @@ struct InstVisitor {
   RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
   RetTy visitVarArgInst(VarArgInst &I)              { DELEGATE(Instruction); }
 
-  // Next level propogators... if the user does not overload a specific
+  // Next level propagators... if the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
   // of instructions...
   //
