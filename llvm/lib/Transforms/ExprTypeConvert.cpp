@@ -1134,7 +1134,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
           // Create a cast to convert it to the right type, we know that this
           // is a lossless cast...
           //
-          Params[i] = new CastInst(Params[i], PTs[i], "call.resolve.cast", It);
+          Params[i] = new CastInst(Params[i], PTs[i],  "callarg.cast." +
+                                   Params[i]->getName(), It);
         }
       Meth = NewVal;  // Update call destination to new value
 
