@@ -10,7 +10,7 @@
 <tt>bugpoint</tt>
 
 <h3>SYNOPSIS</h3>
-<tt>bugpoint [options] [input llvm ll/bc files] [LLVM passes] --args &lt;program arguments&gt;...</tt>
+<tt>bugpoint [options] [input LLVM ll/bc files] [LLVM passes] --args &lt;program arguments&gt;...</tt>
 
 <img src="../Debugging.gif" width=444 height=314 align=right>
 <h3>DESCRIPTION</h3>
@@ -18,17 +18,17 @@
 The <tt>bugpoint</tt> tool is a generally useful tool for narrowing down
 problems in LLVM tools and passes.  It can be used to debug three types of
 failures: optimizer crashes, miscompilations by optimizers, or invalid native
-code generation.  It aims to reduce testcases to something useful.  For example,
+code generation.  It aims to reduce test cases to something useful.  For example,
 if <tt><a href="gccas.html">gccas</a></tt> crashes while optimizing a file, it
 will identify the optimization (or combination of optimizations) that causes the
 crash, and reduce the file down to a small example which triggers the crash.<p>
 
 <tt>bugpoint</tt> has been designed to be a useful tool without requiring any
-hooks into the LLVM intrastructure at all.  It works with any and all LLVM
+hooks into the LLVM infrastructure at all.  It works with any and all LLVM
 passes and code generators, and does not need to "know" how they work.  Because
 of this, it may appear to do a lot of stupid things or miss obvious
 simplifications.  Remember, however, that computer time is much cheaper than
-programmer time, so if it takes a long time to reduce a testcase it is still
+programmer time, so if it takes a long time to reduce a test case it is still
 worth it.  :)<p>
 
 <a name="crashdebug">
@@ -45,7 +45,7 @@ specified, <tt>bugpoint</tt> runs the initial program with the C backend (which
 is assumed to generate good code) to generate a reference output.  Once
 <tt>bugpoint</tt> has a reference output to match, it tries executing the
 original program with the <a href="#opt_run-">selected</a> code generator.  If
-the resultant output is different than the reference output, it exters <a
+the resultant output is different than the reference output, it enters <a
 href="#codegendebug">code generator debugging mode</a>.<p>
 
 Otherwise, <tt>bugpoint</tt> runs the LLVM program after all of the LLVM passes
@@ -60,14 +60,14 @@ If an optimizer crashes, <tt>bugpoint</tt> will try a variety of techniques to
 narrow down the list of passes and the code to a more manageable amount.  First,
 <tt>bugpoint</tt> figures out which combination of passes trigger the bug.  This
 is useful when debugging a problem exposed by <tt>gccas</tt> for example,
-because it has over 30 optimization it runs.<p>
+because it runs over 30 optimizations.<p>
 
 Next, <tt>bugpoint</tt> tries removing functions from the module, to reduce the
-size of the testcase to a reasonable amount.  Usually it is able to get it down
+size of the test case to a reasonable amount.  Usually it is able to get it down
 to a single function for intraprocedural optimizations.  Once the number of
 functions has been reduced, it attempts to delete various edges in the control
 flow graph, to reduce the size of the function as much as possible.  Finally,
-<tt>bugpoint</tt> deletes any individual LLVM instructions whose absense does
+<tt>bugpoint</tt> deletes any individual LLVM instructions whose absence does
 not eliminate the failure.  At the end, <tt>bugpoint</tt> should tell you what
 passes crash, give you a bytecode file, and give you instructions on how to
 reproduce the failure with <tt><a href="opt.html">opt</a></tt> or
@@ -114,7 +114,10 @@ non-obvious ways.  Here are some hints and tips:<p>
 <ol>
 <li>In code generator and miscompilation debugging modes, <tt>bugpoint</tt> only
     works with programs that have deterministic output.  Thus, if the program
-    outputs the date, time, or any other "random" data, it should be masked out.
+    outputs the date, time, or any other "random" data, <tt>bugpoint</tt> may
+    misinterpret differences in these data, when output, as the result of a
+    miscompilation.  Programs should be temporarily modified to disable
+    outputs that are likely to vary from run to run.
 
 <li>In code generator and miscompilation debugging modes, debugging will go
     faster if you manually modify the program or its inputs to reduce the
@@ -122,14 +125,16 @@ non-obvious ways.  Here are some hints and tips:<p>
 
 <li><tt>bugpoint</tt> is extremely useful when working on a new optimization:
     it helps track down regressions quickly.  To avoid having to relink
-    <tt>bugpoint</tt> every time you change your optization however, have
+    <tt>bugpoint</tt> every time you change your optimization however, have
     <tt>bugpoint</tt> dynamically load your optimization with the <a
     href="#opt_load"><tt>-load</tt></a> option.
 
 <li><tt>bugpoint</tt> can generate a lot of output and run for a long period of
     time.  It is often useful to capture the output of the program to file.  For
-    example:<br>
-    <tt>bugpoint  ..... |& tee bugpoint.log</tt><p>
+    example, in the C shell, you can type:<br>
+    <tt>bugpoint  ..... |& tee bugpoint.log</tt>
+    <br>to get a copy of <tt>bugpoint</tt>'s output in the file
+    <tt>bugpoint.log</tt>, as well as on your terminal.<p>
 
 </ol>
 
@@ -138,54 +143,58 @@ non-obvious ways.  Here are some hints and tips:<p>
 
 <ul>
 	<li><tt>-additional-so &lt;library.so&gt;</tt><br>
+    Load <tt>&lt;library.so&gt;</tt> into the test program whenever it is run.
+    This is useful if you are debugging programs which depend on non-LLVM
+    libraries (such as the X or curses libraries) to run.<p>
 
-        Use this option to specify .so files which must be loaded by the program
-        when it is run.  This is useful if you are debugging programs which
-        depend on non-LLVM libraries (such as the X or curses libraries) to
-        run.<p>
-
-	<li><tt>-args &lt;arguments&gt;</tt><br>
-
-	All arguments specified after <tt>-args</tt> are passed into the
-	executed program when the program must be executed.  Note that if the
-	program takes an argument which starts with a '-', you should use:
+	<li><tt>-args &lt;program args&gt;</tt><br>
+	Pass all arguments specified after <tt>-args</tt> to the
+	test program whenever it runs.  Note that if any of
+	the <tt>&lt;program args&gt;</tt> start with a '-', you should use:
         <p>
-        <tt>bugpoint .... -args -- (the arguments here)</tt>
+        <tt>bugpoint &lt;bugpoint args&gt; -args -- &lt;program args&gt;</tt>
         <p>
         The "<tt>--</tt>" right after the <tt>-args</tt> option tells
         <tt>bugpoint</tt> to consider any options starting with <tt>-</tt> to be
         part of the <tt>-args</tt> option, not as options to <tt>bugpoint</tt>
         itself.<p>
 
-	<li><tt>-disable-(adce,dce,final-cleanup,simplifycfg)</tt><br>
-	<tt>bugpoint</tt> uses several passes internally for cleanup routines to
-	reduce the size of the program.  If you're trying to find a bug in one
-	of these passes, <tt>bugpoint</tt> may crash.  These options tell
-	<tt>bugpoint</tt> not use the specified passes.<p>
+	<li><tt>-disable-{adce,dce,final-cleanup,simplifycfg}</tt><br>
+    Do not run the specified passes to clean up and reduce the size of the
+    test program. By default, <tt>bugpoint</tt> uses these passes internally
+    when attempting to reduce test programs.  If you're trying to find
+    a bug in one of these passes, <tt>bugpoint</tt> may crash.<p>
 
 	<li> <tt>-help</tt><br>
 	Print a summary of command line options.<p>
 
 	<a name="opt_input"><li><tt>-input &lt;filename&gt;</tt><br>
-	Specify the contents of &lt;stdin&gt; when the program must be executed.
+	Open <tt>&lt;filename&gt;</tt> and redirect the standard input of the
+    test program, whenever it runs, to come from that file.
 	<p>
 
 	<a name="opt_load"><li> <tt>-load &lt;plugin.so&gt;</tt><br>
-	Load the dynamic object plugin.so.  This object should register new
+	Load the dynamic object <tt>&lt;plugin.so&gt;</tt> into <tt>bugpoint</tt>
+    itself.  This object should register new
 	optimization passes.  Once loaded, the object will add new command line
 	options to enable various optimizations.  To see the new complete list
 	of optimizations, use the -help and -load options together:
 	<p>
-	<tt>opt -load  &lt;plugin.so&gt; -help</tt>
+	<tt>bugpoint -load &lt;plugin.so&gt; -help</tt>
 	<p>
 
 	<a name="opt_output"><li><tt>-output &lt;filename&gt;</tt><br>
-	Specify a reference output for the &lt;stdout&gt; file stream.<p>
+    Whenever the test program produces output on its standard output
+    stream, it should match the contents of <tt>&lt;filename&gt;</tt>
+    (the "reference output"). If you do not use this option,
+    <tt>bugpoint</tt> will attempt to generate a reference output by
+    compiling the program with the C backend and running it.<p>
 
-	<a name="opt_run-"><li><tt>-run-(int|jit|llc|cbe)</tt><br>
-	Specify which code generator <tt>bugpoint</tt> should use to run the
-	program.  You may choose the interpreter, the JIT compiler, the static
-	native code compiler, or the C backend.<p>
+	<a name="opt_run-"><li><tt>-run-{int|jit|llc|cbe}</tt><br>
+    Whenever the test program is compiled, <tt>bugpoint</tt> should generate
+    code for it using the specified code generator.  These options allow
+    you to choose the interpreter, the JIT compiler, the static native
+    code compiler, or the C backend, respectively.<p>
 </ul>
 
 <h3>EXIT STATUS</h3>
@@ -201,4 +210,3 @@ Otherwise, if an error occurs, it will exit with a non-zero value.
 Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
 </body>
 </html>
-
