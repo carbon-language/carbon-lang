@@ -180,6 +180,19 @@ Instruction *InstCombiner::visitSub(BinaryOperator *I) {
   if (Value *V = dyn_castNegInst(Op1))
     return BinaryOperator::create(Instruction::Add, Op0, V);
 
+  // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression is
+  // not used by anyone else...
+  //
+  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
+    if (Op1I->use_size() == 1) {
+      // Swap the two operands of the subexpr...
+      Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
+      Op1I->setOperand(0, IIOp1);
+      Op1I->setOperand(1, IIOp0);
+
+      // Create the new top level add instruction...
+      return BinaryOperator::create(Instruction::Add, Op0, Op1);
+    }
   return 0;
 }
 
