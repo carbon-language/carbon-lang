@@ -120,27 +120,26 @@ public:
   virtual void suggestRegs4MethodArgs(const Method *const Meth, 
 			 LiveRangeInfo & LRI) const = 0;
 
-  virtual void suggestRegs4CallArgs(const CallInst *const CallI, 
+  virtual void suggestRegs4CallArgs(const MachineInstr *const CallI, 
 			LiveRangeInfo& LRI, vector<RegClass *> RCL) const = 0;
 
-  virtual void suggestReg4RetValue(const ReturnInst *const RetI, 
+  virtual void suggestReg4RetValue(const MachineInstr *const RetI, 
 				   LiveRangeInfo& LRI) const = 0;
-
-
 
   virtual void colorMethodArgs(const Method *const Meth,  LiveRangeInfo& LRI,
 		       AddedInstrns *const FirstAI) const = 0;
 
-  virtual void colorCallArgs(const CallInst *const CalI, LiveRangeInfo& LRI,
-		     AddedInstrns *const CallAI) const = 0;
+  virtual void colorCallArgs(const MachineInstr *const CalI, 
+			     LiveRangeInfo& LRI,
+			     AddedInstrns *const CallAI) const = 0;
 
-  virtual void colorRetValue(const ReturnInst *const RetI, LiveRangeInfo& LRI,
-		     AddedInstrns *const RetAI) const = 0;
+  virtual void colorRetValue(const MachineInstr *const RetI,LiveRangeInfo& LRI,
+			     AddedInstrns *const RetAI) const = 0;
 
 
 
-  virtual bool handleSpecialMInstr(const MachineInstr * MInst, 
-		       LiveRangeInfo& LRI,  vector<RegClass *> RCL) const  = 0;
+  //virtual bool handleSpecialMInstr(const MachineInstr * MInst, 
+  //		       LiveRangeInfo& LRI,  vector<RegClass *> RCL) const  = 0;
  
   // returns the reg used for pushing the address when a method is called.
   // This can be used for other purposes between calls
