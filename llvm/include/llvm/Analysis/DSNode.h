@@ -8,20 +8,6 @@
 #define LLVM_ANALYSIS_DSNODE_H
 
 #include "llvm/Analysis/DSSupport.h"
-#include <vector>
-#include <map>
-#include <functional>
-#include <string>
-
-class Function;
-class CallInst;
-class Value;
-class GlobalValue;
-class Type;
-
-class DSNode;                  // Each node in the graph
-class DSGraph;                 // A graph for a function
-class DSNodeIterator;          // Data structure graph traversal iterator
 
 //===----------------------------------------------------------------------===//
 /// DSNode - Data structure node class
