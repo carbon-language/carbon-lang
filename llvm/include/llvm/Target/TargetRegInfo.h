@@ -23,7 +23,8 @@ class MachineInstr;
 class RegClass;
 class CallInst;
 class ReturnInst;
-
+class PhyRegAlloc;
+class BasicBlock;
 
 //-----------------------------------------------------------------------------
 // class MachineRegClassInfo
@@ -129,8 +130,8 @@ public:
 		       AddedInstrns *const FirstAI) const = 0;
 
   virtual void colorCallArgs(const MachineInstr *const CalI, 
-			     LiveRangeInfo& LRI,
-			     AddedInstrns *const CallAI) const = 0;
+			     LiveRangeInfo& LRI, AddedInstrns *const CallAI, 
+			     PhyRegAlloc &PRA) const = 0;
 
   virtual void colorRetValue(const MachineInstr *const RetI,LiveRangeInfo& LRI,
 			     AddedInstrns *const RetAI) const = 0;
@@ -177,6 +178,11 @@ public:
   inline virtual unsigned getStackPointer() const=0;
 
   inline virtual int getInvalidRegNum() const=0;
+
+
+  virtual void insertCallerSavingCode(const MachineInstr *MInst, 
+				      const BasicBlock *BB, 
+				      PhyRegAlloc &PRA ) const = 0;
 
 
   //virtual void printReg(const LiveRange *const LR) const =0;
