@@ -31,7 +31,7 @@ int "spec_getc"(int %fd) {
 	br bool %cond266, label %bb3, label %bb2
 
 bb2:					;[#uses=1]
-	%cast273 = getelementptr [17 x sbyte]* %.LC12, uint 0, uint 0		; <sbyte*> [#uses=0]
+	%cast273 = getelementptr [17 x sbyte]* %.LC12, long 0, long 0		; <sbyte*> [#uses=0]
 	br label %bb3
 
 bb3:					;[#uses=2]
@@ -39,19 +39,19 @@ bb3:					;[#uses=2]
 	br bool %cond267, label %bb5, label %bb4
 
 bb4:					;[#uses=2]
-	%reg111 = getelementptr [20 x %FILE]* %__iob, uint 0, uint 1, ubyte 3		; <ubyte*> [#uses=1]
-	%cast274 = getelementptr [34 x sbyte]* %.LC9, uint 0, uint 0		; <sbyte*> [#uses=0]
+	%reg111 = getelementptr [20 x %FILE]* %__iob, long 0, long 1, ubyte 3		; <ubyte*> [#uses=1]
+	%cast274 = getelementptr [34 x sbyte]* %.LC9, long 0, long 0		; <sbyte*> [#uses=0]
 	%cast282 = cast ubyte* %reg111 to %FILE*		; <%FILE*> [#uses=0]
 	call void %exit( int 1 )
 	br label %UnifiedExitNode
 
 bb5:					;[#uses=1]
-	%reg107-idxcast1 = cast int %fd to uint		; <uint> [#uses=2]
-	%reg107-idxcast2 = cast int %fd to uint		; <uint> [#uses=1]
-	%reg1311 = getelementptr [3 x %spec_fd_t]* %spec_fd, uint 0, uint %reg107-idxcast2		; <%spec_fd_t*> [#uses=1]
-	%idx1 = getelementptr [3 x %spec_fd_t]* %spec_fd, uint 0, uint %reg107-idxcast1, ubyte 2		; <int> [#uses=3]
+	%reg107-idxcast1 = cast int %fd to long		; <long> [#uses=2]
+	%reg107-idxcast2 = cast int %fd to long		; <long> [#uses=1]
+	%reg1311 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast2		; <%spec_fd_t*> [#uses=1]
+	%idx1 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast1, ubyte 2		; <int> [#uses=3]
 	%reg1321 = load int* %idx1
-	%idx2 = getelementptr %spec_fd_t* %reg1311, uint 0, ubyte 1		; <int> [#uses=1]
+	%idx2 = getelementptr %spec_fd_t* %reg1311, long 0, ubyte 1		; <int> [#uses=1]
 	%reg1331 = load int* %idx2
 	%cond270 = setlt int %reg1321, %reg1331		; <bool> [#uses=1]
 	br bool %cond270, label %bb9, label %bb6
@@ -62,29 +62,29 @@ bb6:					;[#uses=1]
 	br bool %cond271, label %bb8, label %bb7
 
 bb7:					;[#uses=1]
-	%cast277 = getelementptr [4 x sbyte]* %.LC10, uint 0, uint 0		; <sbyte*> [#uses=0]
+	%cast277 = getelementptr [4 x sbyte]* %.LC10, long 0, long 0		; <sbyte*> [#uses=0]
 	br label %bb8
 
 bb8:					;[#uses=3]
 	br label %UnifiedExitNode
 
 bb9:					;[#uses=1]
-	%reg107-idxcast3 = cast int %fd to uint		; <uint> [#uses=1]
-	%idx3 = getelementptr [3 x %spec_fd_t]* %spec_fd, uint 0, uint %reg107-idxcast3, ubyte 3		; <ubyte*> [#uses=1]
+	%reg107-idxcast3 = cast int %fd to long		; <long> [#uses=1]
+	%idx3 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast3, ubyte 3		; <ubyte*> [#uses=1]
 	%reg1601 = load ubyte** %idx3
-	%reg132-idxcast1 = cast int %reg1321 to uint		; <uint> [#uses=1]
-	%idx4 = getelementptr ubyte* %reg1601, uint %reg132-idxcast1		; <ubyte> [#uses=2]
+	%reg132-idxcast1 = cast int %reg1321 to long		; <long> [#uses=1]
+	%idx4 = getelementptr ubyte* %reg1601, long %reg132-idxcast1		; <ubyte> [#uses=2]
 	%reg1621 = load ubyte* %idx4
-	%cast108 = cast ubyte %reg1621 to uint		; <uint> [#uses=0]
+	%cast108 = cast ubyte %reg1621 to long		; <long> [#uses=0]
 	%reg157 = add int %reg1321, 1		; <int> [#uses=1]
-	%idx5 = getelementptr [3 x %spec_fd_t]* %spec_fd, uint 0, uint %reg107-idxcast1, ubyte 2
+	%idx5 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast1, ubyte 2
 	store int %reg157, int* %idx5
 	%reg163 = load int* %dbglvl		; <int> [#uses=1]
 	%cond272 = setle int %reg163, 4		; <bool> [#uses=1]
 	br bool %cond272, label %bb11, label %bb10
 
 bb10:					;[#uses=1]
-	%cast279 = getelementptr [4 x sbyte]* %.LC11, uint 0, uint 0		; <sbyte*> [#uses=0]
+	%cast279 = getelementptr [4 x sbyte]* %.LC11, long 0, long 0		; <sbyte*> [#uses=0]
 	br label %bb11
 
 bb11:					;[#uses=3]
