@@ -42,4 +42,4 @@ D: The paths pass
 
 N: Bill Wendling
 E: wendling@isanbard.org
-D: The Lower Setjmp/Longjmp pass
+D: The Lower Setjmp/Longjmp pass, improvements to the -lowerswitch pass.
