@@ -8,10 +8,13 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
+#include "llvm/Function.h"
+#include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "Support/StringExtras.h"
+#include <vector>
 
 //----------------------------------------------------------------------------
 // Private constants and data
@@ -25,10 +28,11 @@ Z("ipmodref", "Interprocedural mod/ref analysis");
 // class ModRefInfo
 //----------------------------------------------------------------------------
 
-void ModRefInfo::print(std::ostream &O) const
+void ModRefInfo::print(std::ostream &O,
+                       const std::string& sprefix) const
 {
-  O << std::endl << "Modified   nodes = " << modNodeSet;
-  O              << "Referenced nodes = " << refNodeSet << std::endl;
+  O << sprefix << "Modified   nodes = " << modNodeSet;
+  O << sprefix << "Referenced nodes = " << refNodeSet;
 }
 
 void ModRefInfo::dump() const
@@ -45,15 +49,13 @@ void ModRefInfo::dump() const
 // 
 FunctionModRefInfo::FunctionModRefInfo(const Function& func,
                                        IPModRef& ipmro,
-                                       const DSGraph& tdg,
-                                       const DSGraph& ldg)
+                                       DSGraph* tdgClone)
   : F(func), IPModRefObj(ipmro), 
-    funcTDGraph(tdg),
-    funcLocalGraph(ldg),
-    funcModRefInfo(tdg.getGraphSize())
+    funcTDGraph(tdgClone),
+    funcModRefInfo(tdgClone->getGraphSize())
 {
-  for (unsigned i=0, N = funcTDGraph.getGraphSize(); i < N; ++i)
-    NodeIds[funcTDGraph.getNodes()[i]] = i;
+  for (unsigned i=0, N = funcTDGraph->getGraphSize(); i < N; ++i)
+    NodeIds[funcTDGraph->getNodes()[i]] = i;
 }
 
 
@@ -65,10 +67,12 @@ FunctionModRefInfo::~FunctionModRefInfo()
 
   // Empty map just to make problems easier to track down
   callSiteModRefInfo.clear();
+
+  delete funcTDGraph;
 }
 
 unsigned FunctionModRefInfo::getNodeId(const Value* value) const {
-  return getNodeId(funcTDGraph.getNodeForValue(const_cast<Value*>(value))
+  return getNodeId(funcTDGraph->getNodeForValue(const_cast<Value*>(value))
                    .getNode());
 }
 
@@ -82,21 +86,21 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 {
   // Mark all nodes in the graph that are marked MOD as being mod
   // and all those marked REF as being ref.
-  for (unsigned i = 0, N = funcTDGraph.getGraphSize(); i < N; ++i)
+  for (unsigned i = 0, N = funcTDGraph->getGraphSize(); i < N; ++i)
     {
-      if (funcTDGraph.getNodes()[i]->isModified())
+      if (funcTDGraph->getNodes()[i]->isModified())
         funcModRefInfo.setNodeIsMod(i);
-      if (funcTDGraph.getNodes()[i]->isRead())
+      if (funcTDGraph->getNodes()[i]->isRead())
         funcModRefInfo.setNodeIsRef(i);
     }
 
-  // Compute the Mod/Ref info for all call sites within the function
-  // Use the Local DSgraph, which includes all the call sites in the
-  // original program.
-  const std::vector<DSCallSite>& callSites = funcLocalGraph.getFunctionCalls();
+  // Compute the Mod/Ref info for all call sites within the function.
+  // The call sites are recorded in the TD graph.
+  const std::vector<DSCallSite>& callSites = funcTDGraph->getFunctionCalls();
   for (unsigned i = 0, N = callSites.size(); i < N; ++i)
     computeModRef(callSites[i].getCallInst());
 }
+
 
 // ResolveCallSiteModRefInfo - This method performs the following actions:
 //
@@ -113,52 +117,64 @@ void FunctionModRefInfo::computeModRef(const Function &func)
 //       requested information (because the call site calls an external
 //       function or we cannot determine the complete set of functions invoked).
 //
-DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
-                               std::map<const DSNode*, DSNodeHandle> &NodeMap) {
+DSGraph* FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
+                               std::map<const DSNode*, DSNodeHandle> &NodeMap)
+{
+  // Step #0: Quick check if we are going to fail anyway: avoid
+  // all the graph cloning and map copying in steps #1 and #2.
+  // 
+  if (const Function *F = CI.getCalledFunction())
+    {
+      if (F->isExternal())
+        return 0;   // We cannot compute Mod/Ref info for this callsite...
+    }
+  else
+    {
+      // Eventually, should check here if any callee is external.
+      // For now we are not handling this case anyway.
+      std::cerr << "IP Mod/Ref indirect call not implemented yet: "
+              << "Being conservative\n";
+      return 0;   // We cannot compute Mod/Ref info for this callsite...
+    }
 
   // Step #1: Clone the top-down graph...
-  DSGraph *Result = new DSGraph(funcTDGraph, NodeMap);
+  DSGraph *Result = new DSGraph(*funcTDGraph, NodeMap);
 
   // Step #2: Clear Mod/Ref information...
   Result->maskNodeTypes(~(DSNode::Modified | DSNode::Read));
 
   // Step #3: clone the bottom up graphs for the callees into the caller graph
-  if (const Function *F = CI.getCalledFunction()) {
-    if (F->isExternal()) {
-      delete Result;
-      return 0;   // We cannot compute Mod/Ref info for this callsite...
+  if (const Function *F = CI.getCalledFunction())
+    {
+      assert(!F->isExternal());
+
+      // Build up a DSCallSite for our invocation point here...
+
+      // If the call returns a value, make sure to merge the nodes...
+      DSNodeHandle RetVal;
+      if (DS::isPointerType(CI.getType()))
+        RetVal = Result->getNodeForValue(&CI);
+
+      // Populate the arguments list...
+      std::vector<DSNodeHandle> Args;
+      for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
+        if (DS::isPointerType(CI.getOperand(i)->getType()))
+          Args.push_back(Result->getNodeForValue(CI.getOperand(i)));
+
+      // Build the call site...
+      DSCallSite CS(CI, RetVal, 0, Args);
+
+      // Perform the merging now of the graph for the callee, which will
+      // come with mod/ref bits set...
+      Result->mergeInGraph(CS, IPModRefObj.getBUDSGraph(*F),
+                           DSGraph::StripAllocaBit
+                           | DSGraph::DontCloneCallNodes
+                           | DSGraph::DontCloneAuxCallNodes);
     }
+  else
+    assert(0 && "See error message");
 
-    // Build up a DSCallSite for our invocation point here...
-
-    // If the call returns a value, make sure to merge the nodes...
-    DSNodeHandle RetVal;
-    if (DS::isPointerType(CI.getType()))
-      RetVal = Result->getNodeForValue(&CI);
-
-    // Populate the arguments list...
-    std::vector<DSNodeHandle> Args;
-    for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
-      if (DS::isPointerType(CI.getOperand(i)->getType()))
-        Args.push_back(Result->getNodeForValue(CI.getOperand(i)));
-
-    // Build the call site...
-    DSCallSite CS(CI, RetVal, 0, Args);
-
-    // Perform the merging now of the graph for the callee, which will come with
-    // mod/ref bits set...
-    Result->mergeInGraph(CS, IPModRefObj.getBUDSGraph(*F),
-                         DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
-                         DSGraph::DontCloneAuxCallNodes);
-
-  } else {
-    std::cerr << "IP Mod/Ref indirect call not implemented yet: "
-              << "Being conservative\n";
-    delete Result;
-    return 0;
-  }
-
-  // Remove dead nodes... 
+  // Remove dead nodes aggressively to match the caller's original graph.
   Result->removeDeadNodes();
 
   // Step #4: Return the clone + the mapping (by ref)
@@ -174,26 +190,34 @@ void
 FunctionModRefInfo::computeModRef(const CallInst& callInst)
 {
   // Allocate the mod/ref info for the call site.  Bits automatically cleared.
-  ModRefInfo* callModRefInfo = new ModRefInfo(funcTDGraph.getGraphSize());
+  ModRefInfo* callModRefInfo = new ModRefInfo(funcTDGraph->getGraphSize());
   callSiteModRefInfo[&callInst] = callModRefInfo;
 
   // Get a copy of the graph for the callee with the callee inlined
   std::map<const DSNode*, DSNodeHandle> NodeMap;
-  DSGraph* csgp =
-    ResolveCallSiteModRefInfo(const_cast<CallInst&>(callInst), NodeMap);
-
-  assert(csgp && "FIXME: Cannot handle case where call site mod/ref info"
-         " is not available yet!");
+  DSGraph* csgp = ResolveCallSiteModRefInfo(const_cast<CallInst&>(callInst),
+                                            NodeMap);
+  if (!csgp)
+    { // Callee's side effects are unknown: mark all nodes Mod and Ref.
+      // Eventually this should only mark nodes visible to the callee, i.e.,
+      // exclude stack variables not reachable from any outgoing argument
+      // or any global.
+      callModRefInfo->getModSet().set();
+      callModRefInfo->getRefSet().set();
+      return;
+    }
 
   // For all nodes in the graph, extract the mod/ref information
   const std::vector<DSNode*>& csgNodes = csgp->getNodes();
-  const std::vector<DSNode*>& origNodes = funcTDGraph.getNodes();
+  const std::vector<DSNode*>& origNodes = funcTDGraph->getNodes();
   assert(csgNodes.size() == origNodes.size());
-  for (unsigned i=0, N = csgNodes.size(); i < N; ++i)
+  for (unsigned i=0, N = origNodes.size(); i < N; ++i)
     { 
-      if (csgNodes[i]->isModified())
+      DSNode* csgNode = NodeMap[origNodes[i]].getNode();
+      assert(csgNode && "Inlined and original graphs do not correspond!");
+      if (csgNode->isModified())
         callModRefInfo->setNodeIsMod(getNodeId(origNodes[i]));
-      if (csgNodes[i]->isRead())
+      if (csgNode->isRead())
         callModRefInfo->setNodeIsRef(getNodeId(origNodes[i]));
     }
 
@@ -203,23 +227,118 @@ FunctionModRefInfo::computeModRef(const CallInst& callInst)
 }
 
 
+class DSGraphPrintHelper {
+  const DSGraph& tdGraph;
+  std::vector<std::vector<const Value*> > knownValues; // identifiable objects
+
+public:
+  /*ctor*/ DSGraphPrintHelper(const FunctionModRefInfo& fmrInfo)
+    : tdGraph(fmrInfo.getFuncGraph())
+  {
+    knownValues.resize(tdGraph.getGraphSize());
+
+    // For every identifiable value, save Value pointer in knownValues[i]
+    for (std::map<Value*, DSNodeHandle>::const_iterator
+           I = tdGraph.getScalarMap().begin(),
+           E = tdGraph.getScalarMap().end(); I != E; ++I)
+      if (isa<GlobalValue>(I->first) ||
+          isa<Argument>(I->first) ||
+          isa<LoadInst>(I->first) ||
+          isa<AllocaInst>(I->first) ||
+          isa<MallocInst>(I->first))
+        {
+          unsigned nodeId = fmrInfo.getNodeId(I->second.getNode());
+          knownValues[nodeId].push_back(I->first);
+        }
+  }
+
+  void printValuesInBitVec(std::ostream &O, const BitSetVector& bv) const
+  {
+    assert(bv.size() == knownValues.size());
+
+    if (bv.none())
+      { // No bits are set: just say so and return
+        O << "\tNONE.\n";
+        return;
+      }
+
+    if (bv.all())
+      { // All bits are set: just say so and return
+        O << "\tALL GRAPH NODES.\n";
+        return;
+      }
+
+    for (unsigned i=0, N=bv.size(); i < N; ++i)
+      if (bv.test(i))
+        {
+          O << "\tNode# " << i << " : ";
+          if (! knownValues[i].empty())
+            for (unsigned j=0, NV=knownValues[i].size(); j < NV; j++)
+              {
+                const Value* V = knownValues[i][j];
+
+                if      (isa<GlobalValue>(V))  O << "(Global) ";
+                else if (isa<Argument>(V))     O << "(Target of FormalParm) ";
+                else if (isa<LoadInst>(V))     O << "(Target of LoadInst  ) ";
+                else if (isa<AllocaInst>(V))   O << "(Target of AllocaInst) ";
+                else if (isa<MallocInst>(V))   O << "(Target of MallocInst) ";
+
+                if (V->hasName())             O << V->getName();
+                else if (isa<Instruction>(V)) O << *V;
+                else                          O << "(Value*) 0x" << (void*) V;
+
+                O << std::string((j < NV-1)? "; " : "\n");
+              }
+          else
+            tdGraph.getNodes()[i]->print(O, /*graph*/ NULL);
+        }
+  }
+};
+
+
 // Print the results of the pass.
 // Currently this just prints bit-vectors and is not very readable.
 // 
 void FunctionModRefInfo::print(std::ostream &O) const
 {
-  O << "---------- Mod/ref information for function "
-    << F.getName() << "---------- \n\n";
+  DSGraphPrintHelper DPH(*this);
 
-  O << "Mod/ref info for function body:\n";
-  funcModRefInfo.print(O);
+  O << "========== Mod/ref information for function "
+    << F.getName() << "========== \n\n";
 
+  // First: Print Globals and Locals modified anywhere in the function.
+  // 
+  O << "  -----Mod/Ref in the body of function " << F.getName()<< ":\n";
+
+  O << "    --Objects modified in the function body:\n";
+  DPH.printValuesInBitVec(O, funcModRefInfo.getModSet());
+
+  O << "    --Objects referenced in the function body:\n";
+  DPH.printValuesInBitVec(O, funcModRefInfo.getRefSet());
+
+  O << "    --Mod and Ref vectors for the nodes listed above:\n";
+  funcModRefInfo.print(O, "\t");
+
+  O << "\n";
+
+  // Second: Print Globals and Locals modified at each call site in function
+  // 
   for (std::map<const CallInst*, ModRefInfo*>::const_iterator
          CI = callSiteModRefInfo.begin(), CE = callSiteModRefInfo.end();
        CI != CE; ++CI)
     {
-      O << "Mod/ref info for call site " << CI->first << ":\n";
-      CI->second->print(O);
+      O << "  ----Mod/Ref information for call site\n" << CI->first;
+
+      O << "    --Objects modified at call site:\n";
+      DPH.printValuesInBitVec(O, CI->second->getModSet());
+
+      O << "    --Objects referenced at call site:\n";
+      DPH.printValuesInBitVec(O, CI->second->getRefSet());
+
+      O << "    --Mod and Ref vectors for the nodes listed above:\n";
+      CI->second->print(O, "\t");
+
+      O << "\n";
     }
 
   O << "\n";
@@ -268,11 +387,16 @@ FunctionModRefInfo& IPModRef::getFuncInfo(const Function& func,
   FunctionModRefInfo*& funcInfo = funcToModRefInfoMap[&func];
   assert (funcInfo != NULL || computeIfMissing);
   if (funcInfo == NULL)
-    { // Create a new FunctionModRefInfo object
-      funcInfo = new FunctionModRefInfo(func, *this, // inserts into map
-                              getAnalysis<TDDataStructures>().getDSGraph(func),
-                          getAnalysis<LocalDataStructures>().getDSGraph(func));
-      funcInfo->computeModRef(func);            // computes the mod/ref info
+    { // Create a new FunctionModRefInfo object.
+      // Clone the top-down graph and remove any dead nodes first, because
+      // otherwise original and merged graphs will not match.
+      // The memory for this graph clone will be freed by FunctionModRefInfo.
+      DSGraph* funcTDGraph =
+        new DSGraph(getAnalysis<TDDataStructures>().getDSGraph(func));
+      funcTDGraph->removeDeadNodes();
+
+      funcInfo = new FunctionModRefInfo(func, *this, funcTDGraph); //auto-insert
+      funcInfo->computeModRef(func);  // computes the mod/ref info
     }
   return *funcInfo;
 }
@@ -298,7 +422,7 @@ void IPModRef::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void IPModRef::print(std::ostream &O) const
 {
-  O << "\n========== Results of Interprocedural Mod/Ref Analysis ==========\n";
+  O << "\nRESULTS OF INTERPROCEDURAL MOD/REF ANALYSIS:\n\n";
   
   for (std::map<const Function*, FunctionModRefInfo*>::const_iterator
          mapI = funcToModRefInfoMap.begin(), mapE = funcToModRefInfoMap.end();
