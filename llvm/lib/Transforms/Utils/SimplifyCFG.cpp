@@ -11,11 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "Support/Debug.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -64,19 +66,19 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
       }
     }
 
-  // Loop over all of the PHI nodes in the successor BB
+  // Loop over all of the PHI nodes in the successor BB.
   for (BasicBlock::iterator I = Succ->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     Value *OldVal = PN->removeIncomingValue(BB, false);
     assert(OldVal && "No entry in PHI for Pred BB!");
 
-    // If this incoming value is one of the PHI nodes in BB...
+    // If this incoming value is one of the PHI nodes in BB, the new entries in
+    // the PHI node are the entries from the old PHI.
     if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
       PHINode *OldValPN = cast<PHINode>(OldVal);
-      for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
-             End = BBPreds.end(); PredI != End; ++PredI) {
-        PN->addIncoming(OldValPN->getIncomingValueForBlock(*PredI), *PredI);
-      }
+      for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i)
+        PN->addIncoming(OldValPN->getIncomingValue(i),
+                        OldValPN->getIncomingBlock(i));
     } else {
       for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
              End = BBPreds.end(); PredI != End; ++PredI) {
@@ -563,7 +565,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) ||
       *pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB)) {
-    //cerr << "Removing BB: \n" << BB;
+    DEBUG(std::cerr << "Removing BB: \n" << BB);
 
     // Loop through all of our successors and make sure they know that one
     // of their predecessors is going away.
@@ -611,7 +613,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         // we cannot do this transformation!
         //
 	if (!PropagatePredecessorsForPHIs(BB, Succ)) {
-          //cerr << "Killing Trivial BB: \n" << BB;
+          DEBUG(std::cerr << "Killing Trivial BB: \n" << BB);
           std::string OldName = BB->getName();
 
           std::vector<BasicBlock*>
@@ -636,7 +638,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // this means that we should any newly added incoming edges should
               // use the PHI node as the value for these edges, because they are
               // loop back edges.
-              
               for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
                 if (OldSuccPreds[i] != BB)
                   PN->addIncoming(PN, OldSuccPreds[i]);
@@ -650,8 +651,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 	
           if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
             Succ->setName(OldName);
-          
-          //cerr << "Function after removal: \n" << M;
           return true;
 	}
       }
@@ -919,7 +918,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   }
 
   if (OnlySucc) {
-    //cerr << "Merging: " << BB << "into: " << OnlyPred;
+    DEBUG(std::cerr << "Merging: " << BB << "into: " << OnlyPred);
     TerminatorInst *Term = OnlyPred->getTerminator();
 
     // Resolve any PHI nodes at the start of the block.  They are all
@@ -1016,8 +1015,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       //
       BasicBlock *IfTrue, *IfFalse;
       if (Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse)) {
-        //std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
-        //       << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n";
+        DEBUG(std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+              << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
 
         // Figure out where to insert instructions as necessary.
         BasicBlock::iterator AfterPHIIt = BB->begin();
