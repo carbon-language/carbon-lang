@@ -406,9 +406,6 @@ namespace {
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
 
-//    bool isFoldableLoad(SDOperand Op);
-//    void EmitFoldedLoad(SDOperand Op, IA64AddressMode &AM);
-
     unsigned SelectExpr(SDOperand N);
     void Select(SDOperand N);
   };
@@ -424,6 +421,37 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // Clear state used for selection.
   ExprMap.clear();
   LoweredTokens.clear();
+}
+
+/// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
+/// returns zero when the input is not exactly a power of two.
+static uint64_t ExactLog2(uint64_t Val) {
+  if (Val == 0 || (Val & (Val-1))) return 0;
+  unsigned Count = 0;
+  while (Val != 1) {
+    Val >>= 1;
+    ++Count;
+  }
+  return Count;
+}
+
+/// ponderIntegerDivisionBy - When handling integer divides, if the divide
+/// is by a constant such that we can efficiently codegen it, this
+/// function says what to do. Currently, it returns 0 if the division must
+/// become a genuine divide, and 1 if the division can be turned into a
+/// right shift.
+static unsigned ponderIntegerDivisionBy(SDOperand N, bool isSigned,
+                                      unsigned& Imm) {
+  if (N.getOpcode() != ISD::Constant) return 0; // if not a divide by
+                                                // a constant, give up.
+
+  int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
+
+  if ((Imm = ExactLog2(v))) { // if a division by a power of two, say so 
+    return 1;
+  } 
+  
+  return 0; // fallthrough
 }
 
 unsigned ISel::SelectExpr(SDOperand N) {
@@ -759,6 +787,16 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
   }
 
   case ISD::ADD: {
+    if(DestType == MVT::f64 && N.getOperand(0).getOpcode() == ISD::MUL &&
+       N.getOperand(0).Val->hasOneUse()) { // if we can fold this add
+                                           // into an fma, do so:
+      // ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, IA64::FMA, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result; // early exit
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     if(DestType != MVT::f64)
@@ -771,7 +809,9 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
   case ISD::MUL: {
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    if(DestType != MVT::f64) { // integer multiply, emit some code (FIXME)
+
+    if(DestType != MVT::f64) { // TODO: speed!
+      // boring old integer multiply with xma
       unsigned TempFR1=MakeReg(MVT::f64);
       unsigned TempFR2=MakeReg(MVT::f64);
       unsigned TempFR3=MakeReg(MVT::f64);
@@ -787,6 +827,16 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
   }
   
   case ISD::SUB: {
+    if(DestType == MVT::f64 && N.getOperand(0).getOpcode() == ISD::MUL &&
+       N.getOperand(0).Val->hasOneUse()) { // if we can fold this sub
+                                           // into an fms, do so:
+      // ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, IA64::FMS, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result; // early exit
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     if(DestType != MVT::f64)
@@ -1013,6 +1063,18 @@ pC = pA OR pB
       case ISD::UDIV:  isModulus=false; isSigned=false; break;
       case ISD::SREM:  isModulus=true;  isSigned=true;  break;
       case ISD::UREM:  isModulus=true;  isSigned=false; break;
+    }
+
+    if(!isModulus && !isFP) { // if this is an integer divide,
+      switch (ponderIntegerDivisionBy(N.getOperand(1), isSigned, Tmp3)) {
+	case 1: // division by a constant that's a power of 2
+	  Tmp1 = SelectExpr(N.getOperand(0));
+	  if(isSigned)   // becomes a shift right:
+	    BuildMI(BB, IA64::SHRS, 2, Result).addReg(Tmp1).addImm(Tmp3);
+	  else
+	    BuildMI(BB, IA64::SHRU, 2, Result).addReg(Tmp1).addImm(Tmp3);
+	  return Result; // early exit
+      }
     }
 
     unsigned TmpPR=MakeReg(MVT::i1);  // we need two scratch 
