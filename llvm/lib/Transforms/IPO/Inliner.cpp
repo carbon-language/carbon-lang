@@ -120,13 +120,17 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
               (Callee->hasInternalLinkage() || Callee->hasLinkOnceLinkage())) {
             DEBUG(std::cerr << "    -> Deleting dead function: "
                             << Callee->getName() << "\n");
-            std::set<Function*>::iterator I = SCCFunctions.find(Callee);
-            if (I != SCCFunctions.end())    // Remove function from this SCC.
-              SCCFunctions.erase(I);
+            SCCFunctions.erase(Callee);    // Remove function from this SCC.
 
             // Remove any call graph edges from the callee to its callees.
             while (CalleeNode->begin() != CalleeNode->end())
               CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
+
+            // If the function has external linkage (basically if it's a
+            // linkonce function) remove the edge from the external node to the
+            // callee node.
+            if (!Callee->hasInternalLinkage())
+              CG.getExternalCallingNode()->removeCallEdgeTo(CalleeNode);
 
             // Removing the node for callee from the call graph and delete it.
             delete CG.removeFunctionFromModule(CalleeNode);
