@@ -47,7 +47,7 @@ Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<enum OutputMode>
 WriteMode(cl::desc("Specify the output format:"),
-          cl::values(clEnumVal(LLVM, "Output LLVM assembly"),
+          cl::values(clEnumValN(LLVM, "llvm", "Output LLVM assembly"),
                      clEnumVal(c, "Output C code for program"),
                     0));
 
