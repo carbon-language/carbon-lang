@@ -1,4 +1,4 @@
-//===-- Handler.h - Handle Bytecode Parsing Events --------------*- C++ -*-===//
+//===-- BytecodeHandler.h - Handle Bytecode Parsing Events ------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,15 +8,15 @@
 //===----------------------------------------------------------------------===//
 //
 //  This header file defines the interface to the Bytecode Handler. The handler
-//  is caleld by the Bytecode Reader to obtain out-of-band parsing events for
+//  is called by the Bytecode Reader to obtain out-of-band parsing events for
 //  tasks other then LLVM IR construction.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BYTECODE_HANDLER_H
-#define BYTECODE_HANDLER_H
+#ifndef BYTECODE_BYTECODEHANDLER_H
+#define BYTECODE_BYTECODEHANDLER_H
 
-#include <llvm/Module.h>
+#include "llvm/Module.h"
 
 namespace llvm {
 
@@ -31,6 +31,7 @@ class ConstantArray;
 /// This class provides a a clear separation of concerns between recognizing 
 /// the semantic units of a bytecode file (the Reader) and deciding what to do 
 /// with them (the Handler). 
+///
 /// The BytecodeReader recognizes the content of the bytecode file and
 /// calls the BytecodeHandler methods to let it perform additional tasks. This
 /// arrangement allows Bytecode files to be read and handled for a number of
@@ -48,7 +49,7 @@ public:
   /// @brief Default constructor (empty)
   BytecodeHandler() {}
   /// @brief Virtual destructor (empty)
-  virtual ~BytecodeHandler() {}
+  virtual ~BytecodeHandler();
 
 private:
   BytecodeHandler(const BytecodeHandler &);  // DO NOT IMPLEMENT
@@ -60,16 +61,16 @@ private:
 public:
 
   /// This method is called whenever the parser detects an error in the
-  /// bytecode formatting. Returning true will cause the parser to keep 
-  /// going, however this is inadvisable in most cases. Returning false will
-  /// cause the parser to throw the message as a std::string.
+  /// bytecode formatting. It gives the handler a chance to do something
+  /// with the error message before the parser throws an exception to 
+  /// terminate the parsing. 
   /// @brief Handle parsing errors.
   virtual void handleError(const std::string& str );
 
   /// This method is called at the beginning of a parse before anything is
   /// read in order to give the handler a chance to initialize.
   /// @brief Handle the start of a bytecode parse
-  virtual void handleStart();
+  virtual void handleStart( unsigned byteSize );
 
   /// This method is called at the end of a parse after everything has been
   /// read in order to give the handler a chance to terminate.
@@ -79,7 +80,7 @@ public:
   /// This method is called at the start of a module to indicate that a
   /// module is being parsed.
   /// @brief Handle the start of a module.
-  virtual void handleModuleBegin(const std::string& id);
+  virtual void handleModuleBegin(const std::string& moduleId);
 
   /// This method is called at the end of a module to indicate that the module
   /// previously being parsed has concluded.
@@ -123,8 +124,7 @@ public:
   /// This method is called when the function prototype for a function is
   /// encountered in the module globals block.
   virtual void handleFunctionDeclaration( 
-    Function* Func,              ///< The function being declared
-    const FunctionType* FuncType ///< The type of the function
+    Function* Func ///< The function being declared
   );
 
   /// This method is called at the end of the module globals block.
