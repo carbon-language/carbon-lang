@@ -912,7 +912,7 @@ method.  It takes a single template argument that specifies which pass class you
 want, and returns a reference to that pass.  For example:</p>
 
 <pre>
-   bool LICM::runOnFunction(Function &F) {
+   bool LICM::runOnFunction(Function &amp;F) {
      LoopInfo &amp;LI = getAnalysis&lt;LoopInfo&gt;();
      ...
    }
