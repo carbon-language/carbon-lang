@@ -32,8 +32,6 @@ class MachineFunctionInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
 
-FunctionPass *createMachineCodeConstructionPass(TargetMachine &TM);
-FunctionPass *createMachineCodeDestructionPass();
 FunctionPass *createMachineFunctionPrinterPass();
 
 class MachineFunction : private Annotation {
