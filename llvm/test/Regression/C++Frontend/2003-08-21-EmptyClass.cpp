@@ -2,6 +2,6 @@
 
 struct empty {};
 
-void foo(empty E);
+void foo(empty) {}
 
 void bar() { foo(empty()); }
