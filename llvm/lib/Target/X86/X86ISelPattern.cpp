@@ -46,16 +46,23 @@ namespace {
       
       // FIXME: Eliminate these two classes when legalize can handle promotions
       // well.
-      addRegisterClass(MVT::i1, X86::R8RegisterClass);
-      addRegisterClass(MVT::f32, X86::RFPRegisterClass);
+/**/  addRegisterClass(MVT::i1, X86::R8RegisterClass);
+/**/  //addRegisterClass(MVT::f32, X86::RFPRegisterClass);
+
+      setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
+      setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i16  , Expand);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
+      setOperationAction(ISD::ZERO_EXTEND_INREG, MVT::i1   , Expand);
+      setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
+      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
+      setOperationAction(ISD::SREM             , MVT::f64  , Expand);
+      
+      // These should be promoted to a larger select which is supported.
+/**/  setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
+      setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
       
       computeRegisterProperties();
-
-      setOperationUnsupported(ISD::MEMMOVE, MVT::Other);
-
-      //setOperationUnsupported(ISD::SEXTLOAD, MVT::i1);
-      setOperationUnsupported(ISD::SELECT, MVT::i1);
-      setOperationUnsupported(ISD::SELECT, MVT::i8);
       
       addLegalFPImmediate(+0.0); // FLD0
       addLegalFPImmediate(+1.0); // FLD1
@@ -1698,42 +1705,23 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
   case ISD::SELECT:
-    if (N.getValueType() != MVT::i1 && N.getValueType() != MVT::i8) {
-      if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
-        Tmp2 = SelectExpr(N.getOperand(1));
-        Tmp3 = SelectExpr(N.getOperand(2));
-      } else {
-        Tmp3 = SelectExpr(N.getOperand(2));
-        Tmp2 = SelectExpr(N.getOperand(1));
-      }
-      EmitSelectCC(N.getOperand(0), N.getValueType(), Tmp2, Tmp3, Result);
-      return Result;
+    if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(2));
     } else {
-      // FIXME: This should not be implemented here, it should be in the generic
-      // code!
-      if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
-        Tmp2 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
-                                          N.getOperand(1)));
-        Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
-                                          N.getOperand(2)));
-      } else {
-        Tmp3 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
-                                          N.getOperand(2)));
-        Tmp2 = SelectExpr(CurDAG->getNode(ISD::ZERO_EXTEND, MVT::i16,
-                                          N.getOperand(1)));
-      }
-      unsigned TmpReg = MakeReg(MVT::i16);
-      EmitSelectCC(N.getOperand(0), MVT::i16, Tmp2, Tmp3, TmpReg);
-      // FIXME: need subregs to do better than this!
-      BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(TmpReg);
-      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
-      return Result;
+      Tmp3 = SelectExpr(N.getOperand(2));
+      Tmp2 = SelectExpr(N.getOperand(1));
     }
+    EmitSelectCC(N.getOperand(0), N.getValueType(), Tmp2, Tmp3, Result);
+    return Result;
 
   case ISD::SDIV:
   case ISD::UDIV:
   case ISD::SREM:
   case ISD::UREM: {
+    assert((N.getOpcode() != ISD::SREM || MVT::isInteger(N.getValueType())) &&
+           "We don't support this operator!");
+
     if (N.getOpcode() == ISD::SDIV)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
         // FIXME: These special cases should be handled by the lowering impl!
@@ -1823,10 +1811,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i64: assert(0 && "FIXME: implement i64 DIV/REM libcalls!");
     case MVT::f32: 
     case MVT::f64:
-      if (N.getOpcode() == ISD::SDIV)
-        BuildMI(BB, X86::FpDIV, 2, Result).addReg(Tmp1).addReg(Tmp2);
-      else
-        assert(0 && "FIXME: Emit frem libcall to fmod!");
+      BuildMI(BB, X86::FpDIV, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
 
@@ -2001,6 +1986,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
       ExprMap[N.getValue(1)] = 1;   // Generate the token
     else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1)))
+      if (Node->getValueType(0) == MVT::f64) {
+        assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
+               "Bad EXTLOAD!");
+        addConstantPoolReference(BuildMI(BB, X86::FLD32m, 4, Result),
+                                 CP->getIndex());
+        return Result;
+      }
 
     X86AddressMode AM;
     if (getRegPressure(Node->getOperand(0)) >
@@ -2322,8 +2316,23 @@ void ISel::Select(SDOperand N) {
     // On X86, we can represent all types except for Bool and Float natively.
     X86AddressMode AM;
     MVT::ValueType StoredTy = cast<MVTSDNode>(Node)->getExtraValueType();
-    assert((StoredTy == MVT::i1 || StoredTy == MVT::f32) &&
-           "Unsupported TRUNCSTORE for this target!");
+    assert((StoredTy == MVT::i1 || StoredTy == MVT::f32 ||
+            StoredTy == MVT::i16 /*FIXME: THIS IS JUST FOR TESTING!*/)
+           && "Unsupported TRUNCSTORE for this target!");
+
+    if (StoredTy == MVT::i16) {
+      // FIXME: This is here just to allow testing.  X86 doesn't really have a
+      // TRUNCSTORE i16 operation, but this is required for targets that do not
+      // have 16-bit integer registers.  We occasionally disable 16-bit integer
+      // registers to test the promotion code.
+      Select(N.getOperand(0));
+      Tmp1 = SelectExpr(N.getOperand(1));
+      SelectAddress(N.getOperand(2), AM);
+
+      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
+      addFullAddress(BuildMI(BB, X86::MOV16mr, 5), AM).addReg(X86::AX);
+      return;
+    }
 
     // Store of constant bool?
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
