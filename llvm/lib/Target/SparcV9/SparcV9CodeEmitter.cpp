@@ -49,9 +49,9 @@ namespace {
 }
 
 bool SparcV9TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                    MachineCodeEmitter &MCE) {
+                                                      MachineCodeEmitter &MCE) {
   PM.add(new SparcV9CodeEmitter(*this, MCE));
-  PM.add(createSparcV9MachineCodeDestructionPass()); //Free stuff no longer needed
+  PM.add(createSparcV9MachineCodeDestructionPass());
   return false;
 }
 
@@ -586,7 +586,7 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
 
 void SparcV9JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
   assert (TheJITResolver &&
-	"Can only call replaceMachineCodeForFunction from within JIT");
+          "Can only call replaceMachineCodeForFunction from within JIT");
   uint64_t Target = (uint64_t)(intptr_t)New;
   uint64_t CodeBegin = (uint64_t)(intptr_t)Old;
   TheJITResolver->insertJumpAtAddr(Target, CodeBegin);
