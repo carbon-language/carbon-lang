@@ -1,9 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -disable-pattern-isel=0 | grep sh[lr]d | wc -l | grep 5
 
-; This is currently xfailed, because the expander for long shifts needed to 
-; change and the X86 BE was not updated to match.  FIXME.
-; XFAIL: *
-
 long %test1(long %X, ubyte %C) {
 	%Y = shl long %X, ubyte %C
 	ret long %Y
