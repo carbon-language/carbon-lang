@@ -21,6 +21,10 @@ namespace opt {
   class ConstRules;
 }
 class ConstPoolVal;
+class MethodType;
+class ArrayType;
+class StructType;
+class PointerType;
 
 class Type : public Value {
 public:
@@ -77,6 +81,11 @@ public:
   // do with isSigned.
   // 
   virtual bool isUnsigned() const { return 0; }
+
+  // isIntegral - Equilivent to isSigned() || isUnsigned, but with only a single
+  // virtual function invocation.
+  //
+  virtual bool isIntegral() const { return 0; }
   
   inline unsigned getUniqueID() const { return UID; }
   inline PrimitiveID getPrimitiveID() const { return ID; }
@@ -108,11 +117,19 @@ public:   // These are the builtin types that are always available...
   inline bool isPrimitiveType() const { return ID < FirstDerivedTyID;  }
 
   inline bool isLabelType()     const { return this == LabelTy; }
-  inline bool isMethodType()    const { return ID == MethodTyID;     }
+  inline const MethodType *isMethodType() const { 
+    return ID == MethodTyID ? (const MethodType*)this : 0;
+  }
   inline bool isModuleType()    const { return ID == ModuleTyID;     }
-  inline bool isArrayType()     const { return ID == ArrayTyID;      }
-  inline bool isPointerType()   const { return ID == PointerTyID;    }
-  inline bool isStructType()    const { return ID == StructTyID;     }
+  inline const ArrayType *isArrayType() const { 
+    return ID == ArrayTyID ? (const ArrayType*)this : 0;
+  }
+  inline const PointerType *isPointerType() const { 
+    return ID == PointerTyID ? (const PointerType*)this : 0;
+  }
+  inline const StructType *isStructType() const {
+    return ID == StructTyID ? (const StructType*)this : 0;
+  }
 };
 
 #endif
