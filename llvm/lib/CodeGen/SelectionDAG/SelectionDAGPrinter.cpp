@@ -18,6 +18,23 @@
 #include <fstream>
 using namespace llvm;
 
+namespace llvm {
+  template<>
+  struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {
+    static std::string getGraphName(const SelectionDAG *G) {
+      return G->getMachineFunction().getFunction()->getName();
+    }
+    static std::string getNodeLabel(const SDNode *Node,
+                                    const SelectionDAG *Graph) {
+      return Node->getOperationName();
+    }
+
+    static std::string getNodeAttributes(const SDNode *N) {
+      return "shape=Mrecord";
+    }
+  };
+}
+
 /// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
 /// rendered using 'dot'.
 ///
