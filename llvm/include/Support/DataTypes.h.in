@@ -30,9 +30,16 @@
 # error "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
 #endif
 
+#ifndef _MSC_VER
 // Note that <inttypes.h> includes <stdint.h>, if this is a C99 system.
 @INCLUDE_INTTYPES_H@
 @INCLUDE_SYS_TYPES_H@
+#else
+// Visual C++ doesn't provide standard integer headers, but it does provide
+// built-in data types.
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#endif
 
 #if !defined(INT64_MAX)
 /* We couldn't determine INT64_MAX; default it. */
