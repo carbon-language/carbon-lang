@@ -1130,6 +1130,8 @@ const char *SDNode::getOperationName() const {
   case ISD::ADD:    return "add";
   case ISD::SUB:    return "sub";
   case ISD::MUL:    return "mul";
+  case ISD::MULHU:  return "mulhu";
+  case ISD::MULHS:  return "mulhs";
   case ISD::SDIV:   return "sdiv";
   case ISD::UDIV:   return "udiv";
   case ISD::SREM:   return "srem";

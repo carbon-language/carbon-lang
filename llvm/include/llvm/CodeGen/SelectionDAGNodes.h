@@ -90,7 +90,7 @@ namespace ISD {
 
 
     // Simple binary arithmetic operators.
-    ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
+    ADD, SUB, MUL, MULHU, MULHS, SDIV, UDIV, SREM, UREM,
 
     // Bitwise operators.
     AND, OR, XOR, SHL, SRA, SRL,
