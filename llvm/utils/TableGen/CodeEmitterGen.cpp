@@ -24,15 +24,16 @@ void CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   EmitSourceFileHeader("Machine Code Emitter", o);
-
   std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
 
-  //const std::string &Namespace = Inst->getValue("Namespace")->getName();
+  // Emit function declaration
   o << "unsigned " << Target.getName() << "CodeEmitter::"
     << "getBinaryCodeForInstr(MachineInstr &MI) {\n"
     << "  unsigned Value = 0;\n"
     << "  DEBUG(std::cerr << MI);\n"
     << "  switch (MI.getOpcode()) {\n";
+
+  // Emit a case statement for each opcode
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
        I != E; ++I) {
     Record *R = *I;
