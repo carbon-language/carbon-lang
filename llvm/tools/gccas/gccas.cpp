@@ -68,34 +68,35 @@ static inline void addPass(PassManager &PM, Pass *P) {
 void AddConfiguredTransformationPasses(PassManager &PM) {
   if (Verify) PM.add(createVerifierPass());
 
-  addPass(PM, createFunctionResolvingPass());     // Resolve (...) functions
-  addPass(PM, createGlobalDCEPass());             // Kill unused uinit g-vars
-  addPass(PM, createDeadTypeEliminationPass());   // Eliminate dead types
-  addPass(PM, createConstantMergePass());         // Merge dup global constants
-  addPass(PM, createDeadInstEliminationPass());   // Remove Dead code/vars
-  addPass(PM, createRaiseAllocationsPass());      // call %malloc -> malloc inst
-  addPass(PM, createIndVarSimplifyPass());        // Simplify indvars
+  addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
+  addPass(PM, createGlobalDCEPass());            // Kill unused uinit g-vars
+  addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
+  addPass(PM, createConstantMergePass());        // Merge dup global constants
+  addPass(PM, createVerifierPass());             // Verify that input is correct
+  addPass(PM, createDeadInstEliminationPass());  // Remove Dead code/vars
+  addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
 
   // Level raise is eternally buggy/in need of enhancements.  Allow
   // transformation to stop right before it runs.
   if (StopAtLevelRaise) return;
 
-  addPass(PM, createRaisePointerReferencesPass(TD));// Eliminate casts
-  addPass(PM, createPromoteMemoryToRegister());   // Promote alloca's to regs
+  addPass(PM, createRaisePointerReferencesPass(TD));// Recover type information
+  addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   // Disabling until this is fixed -- Vikram, 7/7/02.
-  // addPass(PM, createReassociatePass());           // Reassociate expressions
-  addPass(PM, createInstructionCombiningPass());  // Combine silly seq's
-  addPass(PM, createDeadInstEliminationPass());   // Kill InstCombine remnants
-  addPass(PM, createLICMPass());                  // Hoist loop invariants
-  addPass(PM, createLoadValueNumberingPass());    // GVN for load instructions
-  addPass(PM, createGCSEPass());                  // Remove common subexprs
-  addPass(PM, createSCCPPass());                  // Constant prop with SCCP
+  // addPass(PM, createReassociatePass());          // Reassociate expressions
+  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+  addPass(PM, createDeadInstEliminationPass());  // Kill InstCombine remnants
+  addPass(PM, createLICMPass());                 // Hoist loop invariants
+  addPass(PM, createLoadValueNumberingPass());   // GVN for load instructions
+  addPass(PM, createGCSEPass());                 // Remove common subexprs
+  addPass(PM, createSCCPPass());                 // Constant prop with SCCP
 
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   addPass(PM, createInstructionCombiningPass());
-  addPass(PM, createAggressiveDCEPass());          // SSA based 'Agressive DCE'
-  addPass(PM, createCFGSimplificationPass());      // Merge & remove BBs
+  addPass(PM, createAggressiveDCEPass());         // SSA based 'Agressive DCE'
+  addPass(PM, createCFGSimplificationPass());     // Merge & remove BBs
 }
 
 
