@@ -493,53 +493,6 @@ if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
 
 if ($BuildError) { $NOFEATURES = 1; $NOREGRESSIONS = 1; $RUNDEJAGNU=0; }
 
-# Get results of feature tests.
-my $FeatureTestResults; # String containing the results of the feature tests
-my $FeatureTime;        # System+CPU Time for feature tests
-my $FeatureWallTime;    # Wall Clock Time for feature tests
-if (!$NOFEATURES) {
-  if ( $VERBOSE ) { print "FEATURE TEST STAGE\n"; }
-  my $feature_output = "$FeatureTestsLog";
-
-  # Run the feature tests so we can summarize the results
-  system "(time -p gmake $MAKEOPTS -C test Feature.t) > $feature_output 2>&1";
-
-  # Extract test results
-  $FeatureTestResults = GetQMTestResults("$feature_output");
-
-  # Extract time of feature tests
-  my $FeatureTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$feature_output";
-  my $FeatureTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$feature_output";
-  $FeatureTime  = $FeatureTimeU+$FeatureTimeS;  # FeatureTime = User+System
-  $FeatureWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$feature_output";
-  # Run the regression tests so we can summarize the results
-} else {
-  $FeatureTestResults = "Skipped by user choice.";
-  $FeatureTime     = "0.0";
-  $FeatureWallTime = "0.0";
-}
-
-if (!$NOREGRESSIONS) {
-  if ( $VERBOSE ) { print "REGRESSION TEST STAGE\n"; }
-  my $regression_output = "$RegressionTestsLog";
-
-  # Run the regression tests so we can summarize the results
-  system "(time -p gmake $MAKEOPTS -C test Regression.t) > $regression_output 2>&1";
-
-  # Extract test results
-  $RegressionTestResults = GetQMTestResults("$regression_output");
-
-  # Extract time of regressions tests
-  my $RegressionTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$regression_output";
-  my $RegressionTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$regression_output";
-  $RegressionTime  = $RegressionTimeU+$RegressionTimeS;  # RegressionTime = User+System
-  $RegressionWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$regression_output";
-} else {
-  $RegressionTestResults = "Skipped by user choice.";
-  $RegressionTime     = "0.0";
-  $RegressionWallTime = "0.0";
-}
-
 my $DejangnuTestResults; # String containing the results of the dejagnu
 if($RUNDEJAGNU) {
   if($VERBOSE) { print "DEJAGNU FEATURE/REGRESSION TEST STAGE\n"; }
@@ -568,8 +521,6 @@ if($RUNDEJAGNU) {
 }
 
 if ($DEBUG) {
-  print $FeatureTestResults;
-  print $RegressionTestResults;
   print $DejagnuTestResults;
 }
 
@@ -890,8 +841,6 @@ if ($VERBOSE) {
   print "CVS Checkout: $CVSCheckoutTime seconds\n";
   print "Files/Dirs/LOC in CVS: $NumFilesInCVS/$NumDirsInCVS/$LOC\n";
   print "Build Time: $BuildTime seconds\n";
-  print "Feature Test Time: $FeatureTime seconds\n";
-  print "Regression Test Time: $RegressionTime seconds\n";
   print "Libraries/Executables/Objects built: $NumLibraries/$NumExecutables/$NumObjects\n";
 
   print "WARNINGS:\n  $WarningsList\n";
