@@ -9,5 +9,6 @@
 LEVEL = ../..
 TOOLNAME = llvmc
 USEDLIBS = support.a
+CONFIG_FILES = st ll
 
 include $(LEVEL)/Makefile.common
