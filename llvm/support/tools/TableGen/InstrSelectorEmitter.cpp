@@ -142,8 +142,6 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
   }
 }
 
-
-
 void Pattern::error(const std::string &Msg) const {
   std::string M = "In ";
   switch (PTy) {
@@ -320,6 +318,9 @@ std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
     OS << " [not completely resolved]";
   return OS;
 }
+
+void Pattern::dump() const { std::cerr << *this; }
+
 
 
 /// getSlotName - If this is a leaf node, return the slot name that the operand
@@ -574,10 +575,20 @@ static void MoveIdenticalPatterns(TreePatternNode *P,
 }
 #endif
 
+static std::string getNodeName(Record *R) {
+  RecordVal *RV = R->getValue("EnumName");
+  if (RV)
+    if (Init *I = RV->getValue())
+      if (StringInit *SI = dynamic_cast<StringInit*>(I))
+        return SI->getValue();
+  return R->getName();
+}
+
+
 static void EmitPatternPredicates(TreePatternNode *Tree,
                                   const std::string &VarName, std::ostream &OS){
   OS << " && " << VarName << "->getNodeType() == ISD::"
-     << Tree->getOperator()->getName();
+     << getNodeName(Tree->getOperator());
 
   for (unsigned c = 0, e = Tree->getNumChildren(); c != e; ++c)
     if (!Tree->getChild(c)->isLeaf())
@@ -643,7 +654,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
 
   std::string LocCostName = VarPrefix + "_Cost";
   OS << Indent << "unsigned " << LocCostName << "Min = ~0U >> 1;\n"
-     << Indent << "unsigned " << VarPrefix << "_PatternMin = NoMatch;\n";
+     << Indent << "unsigned " << VarPrefix << "_PatternMin = NoMatchPattern;\n";
   
 #if 0
   // Separate out all of the patterns into groups based on what their top-level
@@ -697,7 +708,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
         // If it's not a leaf, we have to check to make sure that the current
         // node has the appropriate structure, then recurse into it...
         OS << Indent << "  if (" << VarPrefix << "_Op" << i
-           << "->getNodeType() == ISD::" << C->getOperator()->getName()
+           << "->getNodeType() == ISD::" << getNodeName(C->getOperator())
            << ") {\n";
         std::vector<std::pair<Pattern*, TreePatternNode*> > SubPatterns;
         for (unsigned n = 0, e = Group.size(); n != e; ++n)
@@ -763,7 +774,6 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
   }
 }
 
-
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
   ReadNodeTypes();
@@ -788,8 +798,11 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
   CalculateComputableValues();
   
+  EmitSourceFileHeader("Instruction Selector for the " + Target.getName() +
+                       " target", OS);
+
   // Output the slot number enums...
-  OS << "\n\nenum { // Slot numbers...\n"
+  OS << "\nenum { // Slot numbers...\n"
      << "  LastBuiltinSlot = ISD::NumBuiltinSlots-1, // Start numbering here\n";
   for (PatternOrganizer::iterator I = ComputableValues.begin(),
          E = ComputableValues.end(); I != E; ++I)
@@ -798,9 +811,11 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
   // Output the reduction value typedefs...
   for (PatternOrganizer::iterator I = ComputableValues.begin(),
-         E = ComputableValues.end(); I != E; ++I)
-    OS << "typedef ReduceValue<unsigned, " << I->first
+         E = ComputableValues.end(); I != E; ++I) {
+
+    OS << "typedef ReducedValue<unsigned, " << I->first
        << "_Slot> ReducedValue_" << I->first << ";\n";
+  }
 
   // Output the pattern enums...
   OS << "\n\n"
@@ -822,7 +837,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
      << "  class " << Target.getName() << "ISel {\n"
      << "    SelectionDAG &DAG;\n"
      << "  public:\n"
-     << "    X86ISel(SelectionDag &D) : DAG(D) {}\n"
+     << "    X86ISel(SelectionDAG &D) : DAG(D) {}\n"
      << "    void generateCode();\n"
      << "  private:\n"
      << "    unsigned makeAnotherReg(const TargetRegisterClass *RC) {\n"
@@ -846,7 +861,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
          E = ComputableValues.end(); I != E; ++I)
     for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
            E = I->second.end(); J != E; ++J)
-      OS << "    unsigned Match_" << I->first << "_" << J->first->getName()
+      OS << "    unsigned Match_" << I->first << "_" << getNodeName(J->first)
          << "(SelectionDAGNode *N);\n";
 
   // Output all of the dag reduction methods prototypes...
@@ -860,17 +875,17 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
   OS << "void X86ISel::generateCode() {\n"
      << "  SelectionDAGNode *Root = DAG.getRoot();\n"
-     << "  assert(Root->getValueType() == ISD::Void && "
+     << "  assert(Root->getValueType() == MVT::isVoid && "
                                        "\"Root of DAG produces value??\");\n\n"
      << "  std::cerr << \"\\n\";\n"
-     << "  unsigned Cost = Match_Void_Void(Root);\n"
+     << "  unsigned Cost = Match_Void_void(Root);\n"
      << "  if (Cost >= ~0U >> 1) {\n"
      << "    std::cerr << \"Match failed!\\n\";\n"
      << "    Root->dump();\n"
      << "    abort();\n"
      << "  }\n\n"
      << "  std::cerr << \"Total DAG Cost: \" << Cost << \"\\n\\n\";\n\n"
-     << "  Reduce_Void_Void(Root, 0);\n"
+     << "  Reduce_Void_void(Root, 0);\n"
      << "}\n\n"
      << "//===" << std::string(70, '-') << "===//\n"
      << "//  Matching methods...\n"
@@ -881,9 +896,9 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
     const std::string &SlotName = I->first;
     OS << "unsigned " << Target.getName() << "ISel::Match_" << SlotName
        << "(SelectionDAGNode *N) {\n"
-       << "  assert(N->getValueType() == ISD::"
-       << getName((*I->second.begin()).second[0]->getTree()->getType())<< ");\n"
-       << "  // If we already have a cost available for " << SlotName
+       << "  assert(N->getValueType() == MVT::"
+       << getEnumName((*I->second.begin()).second[0]->getTree()->getType())
+       << ");\n" << "  // If we already have a cost available for " << SlotName
        << " use it!\n"
        << "  if (N->getPatternFor(" << SlotName << "_Slot))\n"
        << "    return N->getCostFor(" << SlotName << "_Slot);\n\n"
@@ -894,32 +909,47 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
 
     for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
            E = I->second.end(); J != E; ++J)
-      OS << "  case ISD::" << J->first->getName() << ":\tCost = Match_"
-         << SlotName << "_" << J->first->getName() << "(N); break;\n";
+      if (!J->first->isSubClassOf("Nonterminal"))
+        OS << "  case ISD::" << getNodeName(J->first) << ":\tCost = Match_"
+           << SlotName << "_" << getNodeName(J->first) << "(N); break;\n";
+    OS << "  }\n";  // End of the switch statement
 
-    OS << "  }\n  return Cost;\n}\n\n";
+    // Emit any patterns which have a nonterminal leaf as the RHS.  These may
+    // match multiple root nodes, so they cannot be handled with the switch...
+    for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
+           E = I->second.end(); J != E; ++J)
+      if (J->first->isSubClassOf("Nonterminal")) {
+        OS << "  unsigned " << J->first->getName() << "_Cost = Match_"
+           << getNodeName(J->first) << "(N);\n"
+           << "  if (" << getNodeName(J->first) << "_Cost < Cost) Cost = "
+           << getNodeName(J->first) << "_Cost;\n";
+      }
+
+    OS << "  return Cost;\n}\n\n";
 
     for (PatternOrganizer::NodesForSlot::iterator J = I->second.begin(),
            E = I->second.end(); J != E; ++J) {
       Record *Operator = J->first;
-      OS << "unsigned " << Target.getName() << "ISel::Match_" << SlotName << "_"
-         << Operator->getName() << "(SelectionDAGNode *N) {\n"
-         << "  unsigned Pattern = NoMatchPattern;\n"
-         << "  unsigned MinCost = ~0U >> 1;\n";
-
-      std::vector<std::pair<Pattern*, TreePatternNode*> > Patterns;
-      for (unsigned i = 0, e = J->second.size(); i != e; ++i)
-        Patterns.push_back(std::make_pair(J->second[i],
-                                          J->second[i]->getTree()));
-      EmitMatchCosters(OS, Patterns, "N", 2);
-
-      OS << "\n  N->setPatternCostFor(" << SlotName
-         << "_Slot, Pattern, MinCost, NumSlots);\n"
-         << "  return MinCost;\n"
-         << "}\n";
+      bool isNonterm = Operator->isSubClassOf("Nonterminal");
+      if (!isNonterm) {
+        OS << "unsigned " << Target.getName() << "ISel::Match_";
+        if (!isNonterm) OS << SlotName << "_";
+        OS << getNodeName(Operator) << "(SelectionDAGNode *N) {\n"
+           << "  unsigned Pattern = NoMatchPattern;\n"
+           << "  unsigned MinCost = ~0U >> 1;\n";
+        
+        std::vector<std::pair<Pattern*, TreePatternNode*> > Patterns;
+        for (unsigned i = 0, e = J->second.size(); i != e; ++i)
+          Patterns.push_back(std::make_pair(J->second[i],
+                                            J->second[i]->getTree()));
+        EmitMatchCosters(OS, Patterns, "N", 2);
+        
+        OS << "\n  N->setPatternCostFor(" << SlotName
+           << "_Slot, Pattern, MinCost, NumSlots);\n"
+           << "  return MinCost;\n"
+           << "}\n";
+      }
     }
-
-    break; // FIXME: REMOVE
   }
 }
 

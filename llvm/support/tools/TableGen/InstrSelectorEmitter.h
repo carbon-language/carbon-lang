@@ -208,6 +208,8 @@ public:
   std::string getSlotName() const;
   static std::string getSlotName(Record *R);
 
+  void dump() const;
+
 private:
   MVT::ValueType getIntrinsicType(Record *R) const;
   TreePatternNode *ParseTreePattern(DagInit *DI);
