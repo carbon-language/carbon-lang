@@ -65,15 +65,33 @@ This is the second public release of the LLVM compiler infrastructure.  This
 release implements the following new features:<p>
 
 <ol>
-<li><a href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new LLVM profiler, similar to gprof</a> is available</li>
-<li>The LLVM C/C++ front-end now compiles on Mac OSX!</li>
+<li><a href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new LLVM profiler, similar to gprof</a> is available</li><p>
+
+<li>LLVM and the C/C++ front-end now compile on Mac OSX!  Mac OSX users can now
+explore the LLVM optimizer with the C backend (note that LLVM requires GCC 3.3
+on Mac OSX).</li><p>
+
+</ol><p>
+
+In this release, the following missing features were implemented:<p>
+
+<ol>
+<li><a href="http://llvm.cs.uiuc.edu/PR88">The interpreter does not support
+invoke or unwind</a></li>
 </ol><p>
 
 In this release, the following Quality of Implementation issues were fixed:<p>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR29">C++ front-end is not generating linkonce linkage type when it can</a></li>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR29">C++ front-end is not generating
+linkonce linkage type when it can</a></li>
+
+<li><a href="http://llvm.cs.uiuc.edu/PR84">C front-end doesn't emit
+getelementptr for address of array element</a></li>
+
 </ol><p>
+
 
 In this release, the following bugs in the previous release were fixed:<p>
 
@@ -158,9 +176,6 @@ sections.
 
 <li>Linking in static archive files (.a files) is very slow (there is no symbol
 table in the archive).<p>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR88">Interpreter does not support invoke
-or unwind</a>.<p>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR82">LLVM cannot handle structures with
 more than 256 elements</a>.<p>
@@ -410,6 +425,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Thu Nov  6 13:21:28 CST 2003
+Last modified: Fri Nov  7 22:26:24 CST 2003
 <!-- hhmts end -->
 </body></html>
