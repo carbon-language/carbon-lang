@@ -608,23 +608,6 @@ install-single-object-library: $(LIBNAME_OBJCUR)
 endif
 
 #------------------------------------------------------------------------
-# Create a TAGS database for emacs
-#------------------------------------------------------------------------
-
-ifneq ($(ETAGS),false)
-ifeq ($(LEVEL), .)
-SRCDIRS := $(wildcard $(SourceDir)/include $(SourceDir)/lib $(SourceDir)/tools)
-
-tags:
-	$(ETAGS) -l c++ `find $(SRCDIRS) -name '*.cpp' -o -name '*.h'`
-all:: tags
-endif
-else
-tags:
-	${ECHO} "Cannot build $@: The program etags is not installed"
-endif
-
-#------------------------------------------------------------------------
 # Handle the TOOLNAME option - used when building tool executables...
 #------------------------------------------------------------------------
 #
