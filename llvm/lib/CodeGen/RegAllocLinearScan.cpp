@@ -628,6 +628,22 @@ void RA::reservePhysReg(unsigned physReg)
         assignVirt2StackSlot(virtReg);
     }
     p2vMap_[physReg] = physReg; // this denotes a reserved physical register
+
+    // if it also aliases any other registers with values spill them too
+    for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as) {
+        unsigned virtReg = p2vMap_[*as];
+        if (virtReg != 0 && virtReg != *as) {
+            // remove interval from active
+            for (IntervalPtrs::iterator i = active_.begin(), e = active_.end();
+                 i != e; ++i) {
+                if ((*i)->reg == virtReg) {
+                    active_.erase(i);
+                    break;
+                }
+            }
+            assignVirt2StackSlot(virtReg);
+        }
+    }
 }
 
 void RA::clearReservedPhysReg(unsigned physReg)
