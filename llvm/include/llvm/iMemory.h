@@ -182,16 +182,19 @@ public:
 				    const vector<ConstPoolVal*> &Indices,
 				    bool AllowStructLeaf = false);
   
-  const vector<ConstPoolVal*> &getIndices() const { return indexVec; }
-
-  inline bool hasIndices() const { return !indexVec.empty(); }
-  
-  virtual Value *getPtrOperand() = 0;
+  Value *getPointerOperand() {
+    return getOperand(getFirstIndexOperandNumber()-1);
+  }
   const Value *getPointerOperand() const {
-    return ((MemAccessInst*)this)->getPtrOperand();
+    return getOperand(getFirstIndexOperandNumber()-1);
   }
   
-  virtual int getFirstOffsetIdx() const = 0;
+  virtual unsigned getFirstIndexOperandNumber() const = 0;
+
+  const vector<ConstPoolVal*> &getIndices() const { return indexVec; }
+  inline bool hasIndices() const {
+    return getNumOperands() <= getFirstIndexOperandNumber();
+  }
 };
 
 
@@ -213,8 +216,8 @@ public:
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
   virtual const char *getOpcodeName() const { return "load"; }  
-  virtual Value *getPtrOperand() { return this->getOperand(0); }
-  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1; }
+
+  virtual unsigned getFirstIndexOperandNumber() const { return 1; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LoadInst *) { return true; }
@@ -247,8 +250,7 @@ public:
   virtual const char *getOpcodeName() const { return "store"; }  
   
   virtual bool hasSideEffects() const { return true; }
-  virtual Value *getPtrOperand() { return this->getOperand(1); }
-  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 2)? 2 : -1;}
+  virtual unsigned getFirstIndexOperandNumber() const { return 2; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StoreInst *) { return true; }
@@ -277,8 +279,7 @@ public:
 		    const string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
-  virtual Value *getPtrOperand() { return this->getOperand(0); }
-  virtual int getFirstOffsetIdx() const { return (this->getNumOperands() > 1)? 1 : -1;}
+  virtual unsigned getFirstIndexOperandNumber() const { return 1; }
   
   inline bool isArraySelector() const { return !isStructSelector(); }
   bool isStructSelector() const;

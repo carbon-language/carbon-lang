@@ -781,17 +781,16 @@ SetOperandsForMemInstr(MachineInstr* minstr,
       // Use the pointer value and the index vector from the Mem instruction.
       // If it is an array reference, get the array offset value.
       // 
-      ptrVal = memInst->getPtrOperand();
+      ptrVal = memInst->getPointerOperand();
 
-      const Type* opType =
-        ((const PointerType*) ptrVal->getType())->getValueType();
+      const Type* opType = cast<PointerType>(ptrVal->getType())->getValueType();
       if (opType->isArrayType())
         {
           assert((memInst->getNumOperands()
-                  == (unsigned) 1 + memInst->getFirstOffsetIdx())
+                  == (unsigned) 1 + memInst->getFirstIndexOperandNumber())
                  && "Array refs must be lowered before Instruction Selection");
           
-          arrayOffsetVal = memInst->getOperand(memInst->getFirstOffsetIdx());
+          arrayOffsetVal = memInst->getOperand(memInst->getFirstIndexOperandNumber());
         }
     }
   
@@ -1835,7 +1834,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 GetElementPtrInst* getElemInst =
                   cast<GetElementPtrInst>(subtreeRoot->getInstruction());
                 const PointerType* ptrType =
-                  (const PointerType*) getElemInst->getPtrOperand()->getType();
+                  cast<PointerType>(getElemInst->getPointerOperand()->getType());
                 if (! ptrType->getValueType()->isArrayType())
                   {// we don't need a separate instr
                     numInstr = 0;		// don't forward operand!

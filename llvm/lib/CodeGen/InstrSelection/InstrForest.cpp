@@ -76,7 +76,7 @@ InstructionNode::InstructionNode(Instruction* I)
     }
   else if ((opLabel == Instruction::Load ||
 	    opLabel == Instruction::GetElementPtr) &&
-	   ((MemAccessInst*)I)->getFirstOffsetIdx() > 0)
+	   cast<MemAccessInst>(I)->hasIndices())
     {
       opLabel = opLabel + 100;		 // load/getElem with index vector
     }

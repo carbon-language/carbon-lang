@@ -630,7 +630,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     Value *Val     = SI->getOperand(0);
-    Value *Pointer = SI->getPtrOperand();
+    Value *Pointer = SI->getPointerOperand();
     
     // Peephole optimize the following instructions:
     // %t1 = getelementptr {<...>} * %StructPtr, <element indices>
@@ -648,7 +648,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
       PRINT_PEEPHOLE2("gep-store:in", GEP, SI);
       ReplaceInstWithInst(BB->getInstList(), BI,
-                          SI = new StoreInst(Val, GEP->getPtrOperand(),
+                          SI = new StoreInst(Val, GEP->getPointerOperand(),
                                              Indices));
       PRINT_PEEPHOLE1("gep-store:out", SI);
       return true;
@@ -685,7 +685,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 
   } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    Value *Pointer = LI->getPtrOperand();
+    Value *Pointer = LI->getPointerOperand();
     
     // Peephole optimize the following instructions:
     // %t1 = getelementptr {<...>} * %StructPtr, <element indices>
@@ -703,7 +703,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
       PRINT_PEEPHOLE2("gep-load:in", GEP, LI);
       ReplaceInstWithInst(BB->getInstList(), BI,
-                          LI = new LoadInst(GEP->getPtrOperand(),
+                          LI = new LoadInst(GEP->getPointerOperand(),
                                             Indices));
       PRINT_PEEPHOLE1("gep-load:out", LI);
       return true;

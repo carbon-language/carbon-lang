@@ -131,8 +131,8 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
         if (!CPV[i]->isNullValue()) return false;
     }
 
-    if (!ExpressionConvertableToType(LI->getPtrOperand(), PointerType::get(Ty),
-                                     CTMap))
+    if (!ExpressionConvertableToType(LI->getPointerOperand(),
+                                     PointerType::get(Ty), CTMap))
       return false;
     break;                                     
   }
@@ -163,7 +163,7 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // get to the right type...
     //
     vector<ConstPoolVal*> Indices = GEP->getIndices();
-    const Type *BaseType = GEP->getPtrOperand()->getType();
+    const Type *BaseType = GEP->getPointerOperand()->getType();
 
     while (Indices.size() &&
            cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
@@ -268,7 +268,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     Res = new LoadInst(ConstPoolVal::getNullConstant(PointerType::get(Ty)), 
                        Name);
     VMC.ExprMap[I] = Res;
-    Res->setOperand(0, ConvertExpressionToType(LI->getPtrOperand(),
+    Res->setOperand(0, ConvertExpressionToType(LI->getPointerOperand(),
                                                PointerType::get(Ty), VMC));
     assert(Res->getOperand(0)->getType() == PointerType::get(Ty));
     assert(Ty == Res->getType());
@@ -310,7 +310,7 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
     // get to the right type...
     //
     vector<ConstPoolVal*> Indices = GEP->getIndices();
-    const Type *BaseType = GEP->getPtrOperand()->getType();
+    const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getValueType();
     Res = 0;
     while (Indices.size() &&
@@ -318,9 +318,9 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
       Indices.pop_back();
       if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
         if (Indices.size() == 0) {
-          Res = new CastInst(GEP->getPtrOperand(), BaseType); // NOOP
+          Res = new CastInst(GEP->getPointerOperand(), BaseType); // NOOP
         } else {
-          Res = new GetElementPtrInst(GEP->getPtrOperand(), Indices, Name);
+          Res = new GetElementPtrInst(GEP->getPointerOperand(), Indices, Name);
         }
         break;
       }
@@ -549,7 +549,7 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     // get to the right type...
     //
     vector<ConstPoolVal*> Indices = GEP->getIndices();
-    const Type *BaseType = GEP->getPtrOperand()->getType();
+    const Type *BaseType = GEP->getPointerOperand()->getType();
 
     while (Indices.size() &&
            cast<ConstPoolUInt>(Indices.back())->getValue() == 0) {
@@ -713,7 +713,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     // get to the right type...
     //
     vector<ConstPoolVal*> Indices = GEP->getIndices();
-    const Type *BaseType = GEP->getPtrOperand()->getType();
+    const Type *BaseType = GEP->getPointerOperand()->getType();
     const Type *PVTy = cast<PointerType>(Ty)->getValueType();
     Res = 0;
     while (Indices.size() &&
@@ -721,9 +721,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       Indices.pop_back();
       if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
         if (Indices.size() == 0) {
-          Res = new CastInst(GEP->getPtrOperand(), BaseType); // NOOP
+          Res = new CastInst(GEP->getPointerOperand(), BaseType); // NOOP
         } else {
-          Res = new GetElementPtrInst(GEP->getPtrOperand(), Indices, Name);
+          Res = new GetElementPtrInst(GEP->getPointerOperand(), Indices, Name);
         }
         break;
       }

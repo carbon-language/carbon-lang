@@ -117,7 +117,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
     getElemInstrNode->getInstruction();
   
   // Initialize return values from the incoming instruction
-  Value* ptrVal = getElemInst->getPtrOperand();
+  Value* ptrVal = getElemInst->getPointerOperand();
   chainIdxVec = getElemInst->getIndices(); // copies index vector values
   
   // Now chase the chain of getElementInstr instructions, if any
@@ -131,7 +131,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       const vector<ConstPoolVal*>& idxVec = getElemInst->getIndices();
       
       // Get the pointer value out of ptrChild and *prepend* its index vector
-      ptrVal = getElemInst->getPtrOperand();
+      ptrVal = getElemInst->getPointerOperand();
       chainIdxVec.insert(chainIdxVec.begin(), idxVec.begin(), idxVec.end());
       
       ptrChild = ptrChild->leftChild();
