@@ -575,7 +575,7 @@ $(OBJDIR)/%.bc: %.ll $(OBJDIR)/.dir $(LLVMAS)
 
 ifdef TARGET
 
-TDFILES := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(BUILD_SRC_DIR)/../Target.td)
+TDFILES := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(BUILD_SRC_ROOT)/lib/Target/Target.td)
 
 $(BUILT_SOURCES): $(TDFILES) 
 
