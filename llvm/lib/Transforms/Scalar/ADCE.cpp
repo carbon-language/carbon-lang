@@ -43,7 +43,6 @@ namespace {
 //
 class ADCE : public FunctionPass {
   Function *Func;                       // The function that we are working on
-  AliasAnalysis *AA;                    // Current AliasAnalysis object
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions
 
@@ -55,7 +54,6 @@ public:
   //
   virtual bool runOnFunction(Function &F) {
     Func = &F;
-    AA = &getAnalysis<AliasAnalysis>();
     bool Changed = doADCE();
     assert(WorkList.empty());
     LiveSet.clear();
@@ -184,6 +182,33 @@ TerminatorInst *ADCE::convertToUnconditionalBranch(TerminatorInst *TI) {
 bool ADCE::doADCE() {
   bool MadeChanges = false;
 
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+
+
+  // Iterate over all invokes in the function, turning invokes into calls if
+  // they cannot throw.
+  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB)
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
+      if (Function *F = II->getCalledFunction())
+        if (AA.onlyReadsMemory(F)) {
+          // The function cannot unwind.  Convert it to a call with a branch
+          // after it to the normal destination.
+          std::vector<Value*> Args(II->op_begin()+3, II->op_end());
+          std::string Name = II->getName(); II->setName("");
+          Instruction *NewCall = new CallInst(F, Args, Name, II);
+          II->replaceAllUsesWith(NewCall);
+          new BranchInst(II->getNormalDest(), II);
+
+          // Update PHI nodes in the unwind destination
+          II->getUnwindDest()->removePredecessor(BB);
+          BB->getInstList().erase(II);
+
+          if (NewCall->use_empty()) {
+            BB->getInstList().erase(NewCall);
+            ++NumCallRemoved;
+          }
+        }
+
   // Iterate over all of the instructions in the function, eliminating trivially
   // dead instructions, and marking instructions live that are known to be 
   // needed.  Perform the walk in depth first order so that we avoid marking any
@@ -197,28 +222,9 @@ bool ADCE::doADCE() {
       Instruction *I = II++;
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         Function *F = CI->getCalledFunction();
-        if (F && AA->onlyReadsMemory(F)) {
+        if (F && AA.onlyReadsMemory(F)) {
           if (CI->use_empty()) {
             BB->getInstList().erase(CI);
-            ++NumCallRemoved;
-          }
-        } else {
-          markInstructionLive(I);
-        }
-      } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-        Function *F = II->getCalledFunction();
-        if (F && AA->onlyReadsMemory(F)) {
-          // The function cannot unwind.  Convert it to a call with a branch
-          // after it to the normal destination.
-          std::vector<Value*> Args(II->op_begin()+3, II->op_end());
-          std::string Name = II->getName(); II->setName("");
-          Instruction *NewCall = new CallInst(F, Args, Name, II);
-          II->replaceAllUsesWith(NewCall);
-          new BranchInst(II->getNormalDest(), II);
-          BB->getInstList().erase(II);
-
-          if (NewCall->use_empty()) {
-            BB->getInstList().erase(NewCall);
             ++NumCallRemoved;
           }
         } else {
