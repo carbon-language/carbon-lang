@@ -684,10 +684,11 @@ ISel::doMultiply(unsigned destReg, const Type *resultType,
 /// with the EAX register explicitly.
 ///
 void ISel::visitMul(BinaryOperator &I) {
+  unsigned DestReg = getReg(I);
+  unsigned Op0Reg  = getReg(I.getOperand(0));
+  unsigned Op1Reg  = getReg(I.getOperand(1));
   MachineBasicBlock::iterator MBBI = BB->end();
-  doMultiply (getReg (I), I.getType (),
-	      getReg (I.getOperand (0)), getReg (I.getOperand (1)),
-              BB, MBBI);
+  doMultiply(DestReg, I.getType(), Op0Reg, Op1Reg, BB, MBBI);
 }
 
 
