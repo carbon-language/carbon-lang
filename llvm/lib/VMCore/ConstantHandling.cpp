@@ -389,64 +389,51 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 
 
 //===----------------------------------------------------------------------===//
-//                            PointerRules Class
+//                            NullPointerRules Class
 //===----------------------------------------------------------------------===//
 //
-// PointerRules provides a concrete base class of ConstRules for pointer types
+// NullPointerRules provides a concrete base class of ConstRules for null
+// pointers.
 //
-struct PointerRules : public TemplateRules<ConstantPointer, PointerRules> {
+struct NullPointerRules : public TemplateRules<ConstantPointer,
+                                               NullPointerRules> {
   static ConstantBool *CastToBool  (const Constant *V) {
-    if (V->isNullValue()) return ConstantBool::False;
-    return 0;  // Can't const prop other types of pointers
+    return ConstantBool::False;
   }
   static ConstantSInt *CastToSByte (const Constant *V) {
-    if (V->isNullValue()) return ConstantSInt::get(Type::SByteTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantSInt::get(Type::SByteTy, 0);
   }
   static ConstantUInt *CastToUByte (const Constant *V) {
-    if (V->isNullValue()) return ConstantUInt::get(Type::UByteTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantUInt::get(Type::UByteTy, 0);
   }
   static ConstantSInt *CastToShort (const Constant *V) {
-    if (V->isNullValue()) return ConstantSInt::get(Type::ShortTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantSInt::get(Type::ShortTy, 0);
   }
   static ConstantUInt *CastToUShort(const Constant *V) {
-    if (V->isNullValue()) return ConstantUInt::get(Type::UShortTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantUInt::get(Type::UShortTy, 0);
   }
   static ConstantSInt *CastToInt   (const Constant *V) {
-    if (V->isNullValue()) return ConstantSInt::get(Type::IntTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantSInt::get(Type::IntTy, 0);
   }
   static ConstantUInt *CastToUInt  (const Constant *V) {
-    if (V->isNullValue()) return ConstantUInt::get(Type::UIntTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantUInt::get(Type::UIntTy, 0);
   }
   static ConstantSInt *CastToLong  (const Constant *V) {
-    if (V->isNullValue()) return ConstantSInt::get(Type::LongTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantSInt::get(Type::LongTy, 0);
   }
   static ConstantUInt *CastToULong (const Constant *V) {
-    if (V->isNullValue()) return ConstantUInt::get(Type::ULongTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantUInt::get(Type::ULongTy, 0);
   }
   static ConstantFP   *CastToFloat (const Constant *V) {
-    if (V->isNullValue()) return ConstantFP::get(Type::FloatTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantFP::get(Type::FloatTy, 0);
   }
   static ConstantFP   *CastToDouble(const Constant *V) {
-    if (V->isNullValue()) return ConstantFP::get(Type::DoubleTy, 0);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantFP::get(Type::DoubleTy, 0);
   }
 
   static Constant *CastToPointer(const ConstantPointer *V,
                                  const PointerType *PTy) {
-    if (V->getType() == PTy)
-      return const_cast<ConstantPointer*>(V);  // Allow cast %PTy %ptr to %PTy
-    if (V->isNullValue())
-      return ConstantPointerNull::get(PTy);
-    return 0;  // Can't const prop other types of pointers
+    return ConstantPointerNull::get(PTy);
   }
 };
 
@@ -592,9 +579,9 @@ struct DirectFPRules
 };
 
 ConstRules &ConstRules::get(const Constant &V1, const Constant &V2) {
-  static EmptyRules   EmptyR;
-  static BoolRules    BoolR;
-  static PointerRules PointerR;
+  static EmptyRules       EmptyR;
+  static BoolRules        BoolR;
+  static NullPointerRules NullPointerR;
   static DirectIntRules<ConstantSInt,   signed char , &Type::SByteTy>  SByteR;
   static DirectIntRules<ConstantUInt, unsigned char , &Type::UByteTy>  UByteR;
   static DirectIntRules<ConstantSInt,   signed short, &Type::ShortTy>  ShortR;
@@ -606,7 +593,8 @@ ConstRules &ConstRules::get(const Constant &V1, const Constant &V2) {
   static DirectFPRules <ConstantFP  , float         , &Type::FloatTy>  FloatR;
   static DirectFPRules <ConstantFP  , double        , &Type::DoubleTy> DoubleR;
 
-  if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2))
+  if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2) ||
+      isa<ConstantPointerRef>(V1) || isa<ConstantPointerRef>(V2))
     return EmptyR;
 
   // FIXME: This assert doesn't work because shifts pass both operands in to
@@ -616,7 +604,7 @@ ConstRules &ConstRules::get(const Constant &V1, const Constant &V2) {
   switch (V1.getType()->getPrimitiveID()) {
   default: assert(0 && "Unknown value type for constant folding!");
   case Type::BoolTyID:    return BoolR;
-  case Type::PointerTyID: return PointerR;
+  case Type::PointerTyID: return NullPointerR;
   case Type::SByteTyID:   return SByteR;
   case Type::UByteTyID:   return UByteR;
   case Type::ShortTyID:   return ShortR;
