@@ -432,7 +432,12 @@ ClassInst : CLASS ObjectBody {
 };
 
 DefInst : DEF ObjectBody {
-  // TODO: If ObjectBody has template arguments, it's an error.
+  if (!$2->getTemplateArgs().empty()) {
+    err() << "Def '" << $2->getName()
+          << "' is not permitted to have template arguments!\n";
+    abort();
+  }
+  // If ObjectBody has template arguments, it's an error.
   if (Records.getDef($2->getName())) {
     err() << "Def '" << $2->getName() << "' already defined!\n";
     abort();
