@@ -144,6 +144,12 @@ bool SCEVCouldNotCompute::hasComputableLoopEvolution(const Loop *L) const {
   return false;
 }
 
+SCEVHandle SCEVCouldNotCompute::
+replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                  const SCEVHandle &Conc) const {
+  return this;
+}
+
 void SCEVCouldNotCompute::print(std::ostream &OS) const {
   OS << "***COULDNOTCOMPUTE***";
 }
@@ -259,6 +265,33 @@ void SCEVCommutativeExpr::print(std::ostream &OS) const {
   OS << ")";
 }
 
+SCEVHandle SCEVCommutativeExpr::
+replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                  const SCEVHandle &Conc) const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    SCEVHandle H = getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc);
+    if (H != getOperand(i)) {
+      std::vector<SCEVHandle> NewOps;
+      NewOps.reserve(getNumOperands());
+      for (unsigned j = 0; j != i; ++j)
+        NewOps.push_back(getOperand(j));
+      NewOps.push_back(H);
+      for (++i; i != e; ++i)
+        NewOps.push_back(getOperand(i)->
+                         replaceSymbolicValuesWithConcrete(Sym, Conc));
+
+      if (isa<SCEVAddExpr>(this))
+        return SCEVAddExpr::get(NewOps);
+      else if (isa<SCEVMulExpr>(this))
+        return SCEVMulExpr::get(NewOps);
+      else
+        assert(0 && "Unknown commutative expr!");
+    }
+  }
+  return this;
+}
+
+
 // SCEVUDivs - Only allow the creation of one SCEVUDivExpr for any particular
 // input.  Don't use a SCEVHandle here, or else the object will never be
 // deleted!
@@ -289,6 +322,28 @@ SCEVAddRecExpr::~SCEVAddRecExpr() {
                                        std::vector<SCEV*>(Operands.begin(),
                                                           Operands.end())));
 }
+
+SCEVHandle SCEVAddRecExpr::
+replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                  const SCEVHandle &Conc) const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    SCEVHandle H = getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc);
+    if (H != getOperand(i)) {
+      std::vector<SCEVHandle> NewOps;
+      NewOps.reserve(getNumOperands());
+      for (unsigned j = 0; j != i; ++j)
+        NewOps.push_back(getOperand(j));
+      NewOps.push_back(H);
+      for (++i; i != e; ++i)
+        NewOps.push_back(getOperand(i)->
+                         replaceSymbolicValuesWithConcrete(Sym, Conc));
+      
+      return get(NewOps, L);
+    }
+  }
+  return this;
+}
+
 
 bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   // This recurrence is invariant w.r.t to QueryLoop iff QueryLoop doesn't
@@ -1086,8 +1141,14 @@ namespace {
     /// createNodeForPHI - Provide the special handling we need to analyze PHI
     /// SCEVs.
     SCEVHandle createNodeForPHI(PHINode *PN);
-    void UpdatePHIUserScalarEntries(Instruction *I, PHINode *PN,
-                                    std::set<Instruction*> &UpdatedInsts);
+
+    /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value
+    /// for the specified instruction and replaces any references to the
+    /// symbolic value SymName with the specified value.  This is used during
+    /// PHI resolution.
+    void ReplaceSymbolicValueWithConcrete(Instruction *I,
+                                          const SCEVHandle &SymName,
+                                          const SCEVHandle &NewVal);
 
     /// ComputeIterationCount - Compute the number of times the specified loop
     /// will iterate.
@@ -1153,26 +1214,27 @@ SCEVHandle ScalarEvolutionsImpl::getSCEV(Value *V) {
   return S;
 }
 
-
-/// UpdatePHIUserScalarEntries - After PHI node analysis, we have a bunch of
-/// entries in the scalar map that refer to the "symbolic" PHI value instead of
-/// the recurrence value.  After we resolve the PHI we must loop over all of the
-/// using instructions that have scalar map entries and update them.
-void ScalarEvolutionsImpl::UpdatePHIUserScalarEntries(Instruction *I,
-                                                      PHINode *PN,
-                                        std::set<Instruction*> &UpdatedInsts) {
+/// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value for
+/// the specified instruction and replaces any references to the symbolic value
+/// SymName with the specified value.  This is used during PHI resolution.
+void ScalarEvolutionsImpl::
+ReplaceSymbolicValueWithConcrete(Instruction *I, const SCEVHandle &SymName,
+                                 const SCEVHandle &NewVal) {
   std::map<Value*, SCEVHandle>::iterator SI = Scalars.find(I);
-  if (SI == Scalars.end()) return;   // This scalar wasn't previous processed.
-  if (UpdatedInsts.insert(I).second && !isa<PHINode>(PN)) {
-    Scalars.erase(SI);                 // Remove the old entry
-    getSCEV(I);                        // Calculate the new entry
-    
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-         UI != E; ++UI)
-      UpdatePHIUserScalarEntries(cast<Instruction>(*UI), PN, UpdatedInsts);
-  }
-}
+  if (SI == Scalars.end()) return;
 
+  SCEVHandle NV =
+    SI->second->replaceSymbolicValuesWithConcrete(SymName, NewVal);
+  if (NV == SI->second) return;  // No change.
+
+  SI->second = NV;       // Update the scalars map!
+
+  // Any instruction values that use this instruction might also need to be
+  // updated!
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI)
+    ReplaceSymbolicValueWithConcrete(cast<Instruction>(*UI), SymName, NewVal);
+}
 
 /// createNodeForPHI - PHI nodes have two cases.  Either the PHI node exists in
 /// a loop header, making it a potential recurrence, or it doesn't.
@@ -1233,13 +1295,7 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
               // entries for the scalars that use the PHI (except for the PHI
               // itself) to use the new analyzed value instead of the "symbolic"
               // value.
-              Scalars.find(PN)->second = PHISCEV;       // Update the PHI value
-              std::set<Instruction*> UpdatedInsts;
-              UpdatedInsts.insert(PN);
-              for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
-                   UI != E; ++UI)
-                UpdatePHIUserScalarEntries(cast<Instruction>(*UI), PN,
-                                           UpdatedInsts);
+              ReplaceSymbolicValueWithConcrete(PN, SymbolicName, PHISCEV);
               return PHISCEV;
             }
           }
