@@ -437,8 +437,6 @@ RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
                                const std::type_info *Pass, bool isDefault)
   : ImplementationInfo(0), isDefaultImplementation(isDefault) {
 
-  std::cerr << "Registering interface: " << Interface.name() << "\n";
-
   InterfaceInfo = const_cast<PassInfo*>(Pass::lookupPassInfo(Interface));
   if (InterfaceInfo == 0) {   // First reference to Interface, add it now.
     InterfaceInfo =   // Create the new PassInfo for the interface...
@@ -450,8 +448,6 @@ RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
          "Trying to join an analysis group that is a normal pass!");
 
   if (Pass) {
-  std::cerr << "Registering interface impl: " << Pass->name() << "\n";
-
     ImplementationInfo = Pass::lookupPassInfo(*Pass);
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
