@@ -115,60 +115,12 @@ public:
   /// for the specified type.
   /// @brief Get a name unique to this symbol table
   std::string getUniqueName(const Type *Ty, 
-    const std::string &BaseName) const;
+                            const std::string &BaseName) const;
 
   /// This function can be used from the debugger to display the
   /// content of the symbol table while debugging.
   /// @brief Print out symbol table on stderr
   void dump() const;  
-
-/// @}
-/// @name Mutators
-/// @{
-public:
-
-  /// This method adds the provided value \p N to the symbol table. 
-  /// The Value must have both a name and a type which are extracted 
-  /// and used to place the value in the correct type plane under 
-  /// the value's name.
-  /// @brief Add a named value to the symbol table
-  inline void insert(Value *Val) {
-    assert(Val && "Can't insert null type into symbol table!");
-    assert(Val->hasName() && "Value must be named to go into symbol table!");
-    insertEntry(Val->getName(), Val->getType(), Val);
-  }
-
-  /// Inserts a type into the symbol table with the specified name. There
-  /// can be a many-to-one mapping between names and types. This method
-  /// allows a type with an existing entry in the symbol table to get
-  /// a new name.
-  /// @brief Insert a type under a new name.
-  void insert(const std::string &Name, const Type *Typ);
-
-  /// This method removes a named value from the symbol table. The
-  /// type and name of the Value are extracted from \p N and used to
-  /// lookup the Value in the correct type plane. If the Value is
-  /// not in the symbol table, this method silently ignores the
-  /// request.
-  /// @brief Remove a named value from the symbol table.
-  void remove(Value* Val);
-
-  /// Remove a type at the specified position in the symbol table.
-  /// @returns the removed Type.
-  Type* remove(type_iterator TI);
-
-  /// changeName - Given a value with a non-empty name, remove its existing
-  /// entry from the symbol table and insert a new one for Name.  This is
-  /// equivalent to doing "remove(V), V->Name = Name, insert(V)", but is faster,
-  /// and will not temporarily remove the symbol table plane if V is the last
-  /// value in the symtab with that name (which could invalidate iterators to
-  /// that plane).
-  void changeName(Value *V, const std::string &Name);
-
-  /// This method will strip the symbol table of its names leaving
-  /// the type and values. 
-  /// @brief Strip the symbol table. 
-  bool strip();
 
 /// @}
 /// @name Iteration
@@ -254,6 +206,57 @@ public:
     assert(Typ && "Can't find type plane with null type!");
     return pmap.find(Typ); 
   }
+
+
+/// @}
+/// @name Mutators
+/// @{
+public:
+
+  /// This method will strip the symbol table of its names leaving the type and
+  /// values.
+  /// @brief Strip the symbol table.
+  bool strip();
+
+  /// Inserts a type into the symbol table with the specified name. There can be
+  /// a many-to-one mapping between names and types. This method allows a type
+  /// with an existing entry in the symbol table to get a new name.
+  /// @brief Insert a type under a new name.
+  void insert(const std::string &Name, const Type *Typ);
+
+  /// Remove a type at the specified position in the symbol table.
+  /// @returns the removed Type.
+  Type* remove(type_iterator TI);
+
+/// @}
+/// @name Mutators used by Value::setName and other LLVM internals.
+/// @{
+public:
+
+  /// This method adds the provided value \p N to the symbol table.  The Value
+  /// must have both a name and a type which are extracted and used to place the
+  /// value in the correct type plane under the value's name.
+  /// @brief Add a named value to the symbol table
+  inline void insert(Value *Val) {
+    assert(Val && "Can't insert null type into symbol table!");
+    assert(Val->hasName() && "Value must be named to go into symbol table!");
+    insertEntry(Val->getName(), Val->getType(), Val);
+  }
+
+  /// This method removes a named value from the symbol table. The type and name
+  /// of the Value are extracted from \p N and used to lookup the Value in the
+  /// correct type plane. If the Value is not in the symbol table, this method
+  /// silently ignores the request.
+  /// @brief Remove a named value from the symbol table.
+  void remove(Value* Val);
+
+  /// changeName - Given a value with a non-empty name, remove its existing
+  /// entry from the symbol table and insert a new one for Name.  This is
+  /// equivalent to doing "remove(V), V->Name = Name, insert(V)", but is faster,
+  /// and will not temporarily remove the symbol table plane if V is the last
+  /// value in the symtab with that name (which could invalidate iterators to
+  /// that plane).
+  void changeName(Value *V, const std::string &Name);
 
 /// @}
 /// @name Internal Methods
