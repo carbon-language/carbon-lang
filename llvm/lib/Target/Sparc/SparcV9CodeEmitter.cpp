@@ -414,6 +414,79 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
 }
 
 
+// WARNING: if the call used the delay slot to do meaningful work, that's not
+// being accounted for, and the behavior will be incorrect!!
+inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target) {
+  static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
+    i7 = SparcIntRegClass::i7,
+    o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0;
+
+  // 
+  // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
+  // 
+
+  // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
+  MachineInstr *STX = BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119);
+  emitWord(getBinaryCodeForInstr(*STX));
+  delete STX;
+
+  // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
+  STX = BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127);
+  emitWord(getBinaryCodeForInstr(*STX));
+  delete STX;
+
+  //
+  // Get address to branch into %i2, using %i1 as a temporary
+  //
+
+  // sethi %uhi(Target), %i1   ;; get upper 22 bits of Target into %i1
+  MachineInstr *SH = BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1);
+  emitWord(getBinaryCodeForInstr(*SH));
+  delete SH;
+
+  // or %i1, %ulo(Target), %i1 ;; get 10 lower bits of upper word into %1
+  MachineInstr *OR = BuildMI(V9::ORi, 3)
+    .addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1);
+  emitWord(getBinaryCodeForInstr(*OR));
+  delete OR;
+
+  // sllx %i1, 32, %i1            ;; shift those 10 bits to the upper word
+  MachineInstr *SL = BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1);
+  emitWord(getBinaryCodeForInstr(*SL));
+  delete SL;
+
+  // sethi %hi(Target), %i2    ;; extract bits 10-31 into the dest reg
+  SH = BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2);
+  emitWord(getBinaryCodeForInstr(*SH));
+  delete SH;
+
+  // or %i1, %i2, %i2             ;; get upper word (in %i1) into %i2
+  OR = BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2);
+  emitWord(getBinaryCodeForInstr(*OR));
+  delete OR;
+
+  // or %i2, %lo(Target), %i2  ;; get lowest 10 bits of Target into %i2
+  OR = BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2);
+  emitWord(getBinaryCodeForInstr(*OR));
+  delete OR;
+
+  // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
+  MachineInstr *LDX = BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1);
+  emitWord(getBinaryCodeForInstr(*LDX));
+  delete LDX;
+
+  // jmpl %i2, %g0, %07          ;; indirect call on %i2
+  MachineInstr *J = BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(07);
+  emitWord(getBinaryCodeForInstr(*J));
+  delete J;
+
+  // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
+  LDX = BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2);
+  emitWord(getBinaryCodeForInstr(*LDX));
+  delete LDX;
+}
+
+
 int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
                                               MachineOperand &MO) {
   int64_t rv = 0; // Return value; defaults to 0 for unhandled cases
@@ -479,10 +552,18 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
         int64_t CurrPC = MCE.getCurrentPCValue();
         DEBUG(std::cerr << "rv addr: 0x" << std::hex << rv << "\n"
                         << "curr PC: 0x" << CurrPC << "\n");
-        rv = (rv - CurrPC) >> 2;
-        if (rv >= (1<<29) || rv <= -(1<<29)) {
-          std::cerr << "addr out of bounds for the 30-bit call: " << rv << "\n";
-          abort();
+        int64_t CallInstTarget = (rv - CurrPC) >> 2;
+        if (CallInstTarget >= (1<<29) || CallInstTarget <= -(1<<29)) {
+          DEBUG(std::cerr << "Making far call!\n");
+          // addresss is out of bounds for the 30-bit call,
+          // make an indirect jump-and-link
+          emitFarCall(rv);
+          // this invalidates the instruction so that the call with an incorrect
+          // address will not be emitted
+          rv = 0; 
+        } else {
+          // The call fits into 30 bits, so just return the corrected address
+          rv = CallInstTarget;
         }
         DEBUG(std::cerr << "returning addr: 0x" << rv << "\n");
       }
@@ -627,8 +708,16 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   currBB = MBB.getBasicBlock();
   BBLocations[currBB] = MCE.getCurrentPCValue();
-  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
-    emitWord(getBinaryCodeForInstr(**I));
+  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
+    unsigned binCode = getBinaryCodeForInstr(**I);
+    if (binCode == (1 << 30)) {
+      // this is an invalid call: the addr is out of bounds. that means a code
+      // sequence has already been emitted, and this is a no-op
+      DEBUG(std::cerr << "Call supressed: already emitted far call.\n");
+    } else {
+      emitWord(binCode);
+    }
+  }
 }
 
 void* SparcV9CodeEmitter::getGlobalAddress(GlobalValue *V, MachineInstr &MI,

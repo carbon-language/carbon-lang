@@ -49,6 +49,8 @@ private:
                          bool isPCRelative);
   bool isFPInstr(MachineInstr &MI);
   unsigned getRealRegNum(unsigned fakeReg, MachineInstr &MI);
+  inline void emitFarCall(uint64_t Addr);
+
 };
 
 #endif
