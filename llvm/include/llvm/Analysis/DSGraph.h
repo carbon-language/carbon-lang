@@ -8,8 +8,11 @@
 #ifndef LLVM_ANALYSIS_DSGRAPH_H
 #define LLVM_ANALYSIS_DSGRAPH_H
 
-#include "llvm/Pass.h"
+#include <vector>
+#include <map>
 
+class Function;
+class Value;
 class GlobalValue;
 class Type;
 
