@@ -17,7 +17,7 @@
 //  . It should be illegal to put a label into any other type (like a structure)
 //    or to return one. [except constant arrays!]
 //  . Right now 'add bool 0, 0' is valid.  This isn't particularly good.
-//  . Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
+//  * Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
 //  * PHI nodes must have an entry for each predecessor, with no extras.
 //  * All basic blocks should only end with terminator insts, not contain them
 //  * The entry node to a method must not have predecessors
@@ -119,7 +119,14 @@ static bool verifyInstruction(const Instruction *I) {
            E = Preds.end(); I != E; ++I)
       Assert2(0, "PHI node does not have entry for a predecessor basic block!",
               PN, *I);
+  } else {
+    // Check that non-phi nodes are not self referential...
+    for (Value::use_const_iterator UI = I->use_begin(), UE = I->use_end();
+         UI != UE; ++UI)
+      Assert1(*UI != (const User*)I,
+              "Only PHI nodes may reference their own value!", I);
   }
+
   return Broken;
 }
 
