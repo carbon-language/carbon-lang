@@ -37,6 +37,12 @@ namespace Intrinsic {
     sigsetjmp,      // Used to represent a sigsetjmp call in C
     siglongjmp,     // Used to represent a siglongjmp call in C
 
+    // Debugging intrinsics...
+    dbg_stoppoint,    // Represents source lines and breakpointable places
+    dbg_region_start, // Start of a region
+    dbg_region_end,   // End of a region
+    dbg_func_start,   // Start of a function
+
     //===------------------------------------------------------------------===//
     // This section defines intrinsic functions used to represent Alpha
     // instructions...
