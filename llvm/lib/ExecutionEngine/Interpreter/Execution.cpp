@@ -435,8 +435,10 @@ void Interpreter::exitCalled(GenericValue GV) {
 /// Pop the last stack frame off of ECStack and then copy the result
 /// back into the result variable if we are not returning void. The
 /// result variable may be the ExitCode, or the Value of the calling
-/// CallInst if there was a previous stack frame. This procedure may
-/// invalidate any ECStack iterators you have.
+/// CallInst if there was a previous stack frame. This method may
+/// invalidate any ECStack iterators you have. This method also takes
+/// care of switching to the normal destination BB, if we are returning
+/// from an invoke.
 ///
 void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
                                                   GenericValue Result) {
@@ -453,9 +455,11 @@ void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
     // If we have a previous stack frame, and we have a previous call, 
     // fill in the return value... 
     ExecutionContext &CallingSF = ECStack.back();
-    if (CallingSF.Caller.getInstruction()) {
+    if (Instruction *I = CallingSF.Caller.getInstruction()) {
       if (CallingSF.Caller.getType() != Type::VoidTy)      // Save result...
-        SetValue(CallingSF.Caller.getInstruction(), Result, CallingSF);
+        SetValue(I, Result, CallingSF);
+      if (InvokeInst *II = dyn_cast<InvokeInst> (I))
+        SwitchToNewBasicBlock (II->getNormalDest (), CallingSF);
       CallingSF.Caller = CallSite();          // We returned from the call...
     }
   }
@@ -476,7 +480,22 @@ void Interpreter::visitReturnInst(ReturnInst &I) {
 }
 
 void Interpreter::visitUnwindInst(UnwindInst &I) {
-  abort ();
+  // Unwind stack
+  Instruction *Inst;
+  do {
+    ECStack.pop_back ();
+    if (ECStack.empty ())
+      abort ();
+    Inst = ECStack.back ().Caller.getInstruction ();
+  } while (!(Inst && isa<InvokeInst> (Inst)));
+
+  // Return from invoke
+  ExecutionContext &InvokingSF = ECStack.back ();
+  InvokingSF.Caller = CallSite ();
+
+  // Go to exceptional destination BB of invoke instruction
+  SwitchToNewBasicBlock (cast<InvokeInst> (Inst)->getExceptionalDest (),
+                         InvokingSF);
 }
 
 void Interpreter::visitBranchInst(BranchInst &I) {
