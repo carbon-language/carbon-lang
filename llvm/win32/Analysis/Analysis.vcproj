@@ -213,6 +213,9 @@
 					RelativePath="..\..\lib\Analysis\DataStructure\DSCallSiteIterator.h">
 				</File>
 				<File
+					RelativePath="..\..\lib\Analysis\DataStructure\EquivClassGraphs.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Analysis\DataStructure\GraphChecker.cpp">
 				</File>
 				<File
