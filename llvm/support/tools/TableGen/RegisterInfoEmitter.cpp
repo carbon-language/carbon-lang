@@ -188,7 +188,12 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   // descriptors now.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     Record *Reg = Registers[i];
-    OS << "    { \"" << Reg->getName() << "\",\t";
+    OS << "    { \"";
+    if (!Reg->getValueAsString("Name").empty())
+      OS << Reg->getValueAsString("Name");
+    else
+      OS << Reg->getName();
+    OS << "\",\t";
     if (RegisterAliases.count(Reg))
       OS << Reg->getName() << "_AliasSet,\t";
     else
