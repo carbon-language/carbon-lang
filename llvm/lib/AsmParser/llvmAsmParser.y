@@ -387,7 +387,7 @@ static Value *getVal(const Type *Ty, const ValID &D) {
   // forward, so just create an entry to be resolved later and get to it...
   //
   Value *d = 0;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::LabelTyID:  d = new   BBPlaceHolder(Ty, D); break;
   default:               d = new ValuePlaceHolder(Ty, D); break;
   }

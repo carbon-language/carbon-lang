@@ -42,7 +42,7 @@ static std::vector<const Type *> UIDMappings;
 static std::map<const Type*, std::string> ConcreteTypeDescriptions;
 static std::map<const Type*, std::string> AbstractTypeDescriptions;
 
-Type::Type(const std::string &name, PrimitiveID id)
+Type::Type(const std::string &name, TypeID id)
   : Value(Type::TypeTy, Value::TypeVal), RefCount(0), ForwardType(0) {
   if (!name.empty())
     ConcreteTypeDescriptions[this] = name;
@@ -64,7 +64,7 @@ const Type *Type::getUniqueIDType(unsigned UID) {
   return UIDMappings[UID];
 }
 
-const Type *Type::getPrimitiveType(PrimitiveID IDNumber) {
+const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
   case VoidTyID  : return VoidTy;
   case BoolTyID  : return BoolTy;
@@ -93,11 +93,11 @@ bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   if ((!isPrimitiveType()    && !isa<PointerType>(this)) ||
       (!isa<PointerType>(Ty) && !Ty->isPrimitiveType())) return false;
 
-  if (getPrimitiveID() == Ty->getPrimitiveID())
+  if (getTypeID() == Ty->getTypeID())
     return true;  // Handles identity cast, and cast of differing pointer types
 
   // Now we know that they are two differing primitive or pointer types
-  switch (getPrimitiveID()) {
+  switch (getTypeID()) {
   case Type::UByteTyID:   return Ty == Type::SByteTy;
   case Type::SByteTyID:   return Ty == Type::UByteTy;
   case Type::UShortTyID:  return Ty == Type::ShortTy;
@@ -115,7 +115,7 @@ bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
 /// getUnsignedVersion - If this is an integer type, return the unsigned
 /// variant of this type.  For example int -> uint.
 const Type *Type::getUnsignedVersion() const {
-  switch (getPrimitiveID()) {
+  switch (getTypeID()) {
   default:
     assert(isInteger()&&"Type::getUnsignedVersion is only valid for integers!");
   case Type::UByteTyID:   
@@ -132,7 +132,7 @@ const Type *Type::getUnsignedVersion() const {
 /// getSignedVersion - If this is an integer type, return the signed variant
 /// of this type.  For example uint -> int.
 const Type *Type::getSignedVersion() const {
-  switch (getPrimitiveID()) {
+  switch (getTypeID()) {
   default:
     assert(isInteger() && "Type::getSignedVersion is only valid for integers!");
   case Type::UByteTyID:   
@@ -152,7 +152,7 @@ const Type *Type::getSignedVersion() const {
 // return zero if the type does not have a size or is not a primitive type.
 //
 unsigned Type::getPrimitiveSize() const {
-  switch (getPrimitiveID()) {
+  switch (getTypeID()) {
 #define HANDLE_PRIM_TYPE(TY,SIZE)  case TY##TyID: return SIZE;
 #include "llvm/Type.def"
   default: return 0;
@@ -220,7 +220,7 @@ static std::string getTypeDescription(const Type *Ty,
   std::string Result;
   TypeStack.push_back(Ty);    // Add us to the stack..
       
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     Result = getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
@@ -318,7 +318,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 // type.
 //
 struct SignedIntType : public Type {
-  SignedIntType(const std::string &Name, PrimitiveID id) : Type(Name, id) {}
+  SignedIntType(const std::string &Name, TypeID id) : Type(Name, id) {}
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 1; }
@@ -330,7 +330,7 @@ struct SignedIntType : public Type {
 };
 
 struct UnsignedIntType : public Type {
-  UnsignedIntType(const std::string &N, PrimitiveID id) : Type(N, id) {}
+  UnsignedIntType(const std::string &N, TypeID id) : Type(N, id) {}
 
   // isUnsigned - Return whether a numeric type is signed.
   virtual bool isUnsigned() const { return 1; }
@@ -342,7 +342,7 @@ struct UnsignedIntType : public Type {
 };
 
 struct OtherType : public Type {
-  OtherType(const std::string &N, PrimitiveID id) : Type(N, id) {}
+  OtherType(const std::string &N, TypeID id) : Type(N, id) {}
 };
 
 static struct TypeType : public Type {
@@ -503,7 +503,7 @@ bool Type::isTypeAbstract() {
 static bool TypesEqual(const Type *Ty, const Type *Ty2,
 		       std::map<const Type *, const Type *> &EqTypes) {
   if (Ty == Ty2) return true;
-  if (Ty->getPrimitiveID() != Ty2->getPrimitiveID()) return false;
+  if (Ty->getTypeID() != Ty2->getTypeID()) return false;
   if (isa<OpaqueType>(Ty))
     return false;  // Two unequal opaque types are never equal
 

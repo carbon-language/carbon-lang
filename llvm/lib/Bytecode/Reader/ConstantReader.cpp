@@ -24,7 +24,7 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
   unsigned PrimType = read_vbr_uint(Buf, EndBuf);
 
   const Type *Val = 0;
-  if ((Val = Type::getPrimitiveType((Type::PrimitiveID)PrimType)))
+  if ((Val = Type::getPrimitiveType((Type::TypeID)PrimType)))
     return Val;
   
   switch (PrimType) {
@@ -190,7 +190,7 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
   
   // Ok, not an ConstantExpr.  We now know how to read the given type...
   const Type *Ty = getType(TypeID);
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::BoolTyID: {
     unsigned Val = read_vbr_uint(Buf, EndBuf);
     if (Val != 0 && Val != 1) throw std::string("Invalid boolean value read.");

@@ -272,7 +272,7 @@ int SparcV9RegInfo::getRegType(int unifiedRegNum) const
 //
 unsigned SparcV9RegInfo::getRegClassIDOfType(const Type *type,
                                                 bool isCCReg) const {
-  Type::PrimitiveID ty = type->getPrimitiveID();
+  Type::TypeID ty = type->getTypeID();
   unsigned res;
     
   // FIXME: Comparing types like this isn't very safe...

@@ -106,7 +106,7 @@ SlotTable::SlotNum SlotTable::remove( const Type* Typ ) {
 // and that their Primitive ID is equal to their slot #
 void SlotTable::insertPrimitives() {
   for (PlaneNum plane = 0; plane < Type::FirstDerivedTyID; ++plane) {
-    const Type* Ty = Type::getPrimitiveType((Type::PrimitiveID) plane);
+    const Type* Ty = Type::getPrimitiveType((Type::TypeID) plane);
     assert(Ty && "Couldn't get primitive type id");
     SlotNum slot = this->insert(Ty);
     assert(slot == plane && "Type slot didn't match plane number");

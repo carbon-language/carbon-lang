@@ -181,7 +181,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       GenericValue GV = getConstantValue(Op);
 
       // Handle cast of pointer to pointer...
-      if (Op->getType()->getPrimitiveID() == C->getType()->getPrimitiveID())
+      if (Op->getType()->getTypeID() == C->getType()->getTypeID())
         return GV;
 
       // Handle a cast of pointer to any integral type...
@@ -190,7 +190,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         
       // Handle cast of integer to a pointer...
       if (isa<PointerType>(C->getType()) && Op->getType()->isIntegral())
-        switch (Op->getType()->getPrimitiveID()) {
+        switch (Op->getType()->getTypeID()) {
         case Type::BoolTyID:    return PTOGV((void*)(uintptr_t)GV.BoolVal);
         case Type::SByteTyID:   return PTOGV((void*)( intptr_t)GV.SByteVal);
         case Type::UByteTyID:   return PTOGV((void*)(uintptr_t)GV.UByteVal);
@@ -221,7 +221,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     abort();
   }
   
-  switch (C->getType()->getPrimitiveID()) {
+  switch (C->getType()->getTypeID()) {
 #define GET_CONST_VAL(TY, CLASS) \
   case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
     GET_CONST_VAL(Bool   , ConstantBool);
@@ -263,7 +263,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
 void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                                          const Type *Ty) {
   if (getTargetData().isLittleEndian()) {
-    switch (Ty->getPrimitiveID()) {
+    switch (Ty->getTypeID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
     case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
@@ -296,7 +296,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
       std::cout << "Cannot store value of type " << Ty << "!\n";
     }
   } else {
-    switch (Ty->getPrimitiveID()) {
+    switch (Ty->getTypeID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
     case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
@@ -337,7 +337,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                                   const Type *Ty) {
   GenericValue Result;
   if (getTargetData().isLittleEndian()) {
-    switch (Ty->getPrimitiveID()) {
+    switch (Ty->getTypeID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
     case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
@@ -371,7 +371,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
       abort();
     }
   } else {
-    switch (Ty->getPrimitiveID()) {
+    switch (Ty->getTypeID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
     case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
@@ -422,7 +422,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     return;
   }
 
-  switch (Init->getType()->getPrimitiveID()) {
+  switch (Init->getType()->getTypeID()) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
     const std::vector<Use> &Val = CPA->getValues();

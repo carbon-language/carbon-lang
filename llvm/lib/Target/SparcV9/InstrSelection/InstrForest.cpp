@@ -79,7 +79,7 @@ InstructionNode::InstructionNode(Instruction* I)
       opLabel = opLabel + 100;	 // bitwise operator
   } else if (opLabel == Instruction::Cast) {
     const Type *ITy = I->getType();
-    switch(ITy->getPrimitiveID())
+    switch(ITy->getTypeID())
     {
     case Type::BoolTyID:    opLabel = ToBoolTy;    break;
     case Type::UByteTyID:   opLabel = ToUByteTy;   break;

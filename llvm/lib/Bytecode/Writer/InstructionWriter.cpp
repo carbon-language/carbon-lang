@@ -70,7 +70,7 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
     
       if (isa<SequentialType>(*TI)) {
         unsigned IdxId;
-        switch (I->getOperand(Idx)->getType()->getPrimitiveID()) {
+        switch (I->getOperand(Idx)->getType()->getTypeID()) {
         default: assert(0 && "Unknown index type!");
         case Type::UIntTyID:  IdxId = 0; break;
         case Type::IntTyID:   IdxId = 1; break;
@@ -298,7 +298,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
            I != E; ++I, ++Idx)
         if (isa<SequentialType>(*I)) {
           unsigned IdxId;
-          switch (GEP->getOperand(Idx)->getType()->getPrimitiveID()) {
+          switch (GEP->getOperand(Idx)->getType()->getTypeID()) {
           default: assert(0 && "Unknown index type!");
           case Type::UIntTyID:  IdxId = 0; break;
           case Type::IntTyID:   IdxId = 1; break;

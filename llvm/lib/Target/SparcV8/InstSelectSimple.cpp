@@ -168,7 +168,7 @@ enum TypeClass {
 };
 
 static TypeClass getClass (const Type *T) {
-  switch (T->getPrimitiveID ()) {
+  switch (T->getTypeID()) {
     case Type::UByteTyID:  case Type::SByteTyID:  return cByte;
     case Type::UShortTyID: case Type::ShortTyID:  return cShort;
     case Type::PointerTyID:

@@ -85,8 +85,7 @@ namespace {
 
   inline const std::string
   TypeToDataDirective(const Type* type) {
-    switch(type->getPrimitiveID())
-    {
+    switch(type->getTypeID()) {
     case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
       return ".byte";
     case Type::UShortTyID: case Type::ShortTyID:

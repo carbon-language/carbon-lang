@@ -194,7 +194,7 @@ static inline ValID &getValIDFromPlaceHolder(const Value *Val) {
       isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
     Ty = cast<PointerType>(Ty)->getElementType();
 
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getDef();
   default:               return ((ValuePlaceHolder*)Val)->getDef();
   }
@@ -206,7 +206,7 @@ static inline int getLineNumFromPlaceHolder(const Value *Val) {
       isa<FunctionType>(cast<PointerType>(Ty)->getElementType()))
     Ty = cast<PointerType>(Ty)->getElementType();
 
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::LabelTyID:  return ((BBPlaceHolder*)Val)->getLineNum();
   default:               return ((ValuePlaceHolder*)Val)->getLineNum();
   }

@@ -97,10 +97,10 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
   
   // Two types cannot be resolved together if they are of different primitive
   // type.  For example, we cannot resolve an int to a float.
-  if (DestTyT->getPrimitiveID() != SrcTyT->getPrimitiveID()) return true;
+  if (DestTyT->getTypeID() != SrcTyT->getTypeID()) return true;
 
   // Otherwise, resolve the used type used by this derived type...
-  switch (DestTyT->getPrimitiveID()) {
+  switch (DestTyT->getTypeID()) {
   case Type::FunctionTyID: {
     if (cast<FunctionType>(DestTyT)->isVarArg() !=
         cast<FunctionType>(SrcTyT)->isVarArg() ||

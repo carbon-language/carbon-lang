@@ -182,7 +182,7 @@ void Interpreter::initializeExecutionEngine() {
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(+, UByte);
     IMPLEMENT_BINARY_OPERATOR(+, SByte);
     IMPLEMENT_BINARY_OPERATOR(+, UShort);
@@ -203,7 +203,7 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(-, UByte);
     IMPLEMENT_BINARY_OPERATOR(-, SByte);
     IMPLEMENT_BINARY_OPERATOR(-, UShort);
@@ -224,7 +224,7 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(*, UByte);
     IMPLEMENT_BINARY_OPERATOR(*, SByte);
     IMPLEMENT_BINARY_OPERATOR(*, UShort);
@@ -245,7 +245,7 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(/, UByte);
     IMPLEMENT_BINARY_OPERATOR(/, SByte);
     IMPLEMENT_BINARY_OPERATOR(/, UShort);
@@ -266,7 +266,7 @@ static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(%, UByte);
     IMPLEMENT_BINARY_OPERATOR(%, SByte);
     IMPLEMENT_BINARY_OPERATOR(%, UShort);
@@ -291,7 +291,7 @@ static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(&, Bool);
     IMPLEMENT_BINARY_OPERATOR(&, UByte);
     IMPLEMENT_BINARY_OPERATOR(&, SByte);
@@ -311,7 +311,7 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2, 
                                   const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(|, Bool);
     IMPLEMENT_BINARY_OPERATOR(|, UByte);
     IMPLEMENT_BINARY_OPERATOR(|, SByte);
@@ -331,7 +331,7 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2, 
                                    const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_BINARY_OPERATOR(^, Bool);
     IMPLEMENT_BINARY_OPERATOR(^, UByte);
     IMPLEMENT_BINARY_OPERATOR(^, SByte);
@@ -363,7 +363,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(==, UByte);
     IMPLEMENT_SETCC(==, SByte);
     IMPLEMENT_SETCC(==, UShort);
@@ -385,7 +385,7 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(!=, UByte);
     IMPLEMENT_SETCC(!=, SByte);
     IMPLEMENT_SETCC(!=, UShort);
@@ -408,7 +408,7 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(<=, UByte);
     IMPLEMENT_SETCC(<=, SByte);
     IMPLEMENT_SETCC(<=, UShort);
@@ -430,7 +430,7 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(>=, UByte);
     IMPLEMENT_SETCC(>=, SByte);
     IMPLEMENT_SETCC(>=, UShort);
@@ -452,7 +452,7 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(<, UByte);
     IMPLEMENT_SETCC(<, SByte);
     IMPLEMENT_SETCC(<, UShort);
@@ -474,7 +474,7 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SETCC(>, UByte);
     IMPLEMENT_SETCC(>, SByte);
     IMPLEMENT_SETCC(>, UShort);
@@ -739,7 +739,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
       GenericValue IdxGV = getOperandValue(I.getOperand(), SF);
 
       uint64_t Idx;
-      switch (I.getOperand()->getType()->getPrimitiveID()) {
+      switch (I.getOperand()->getType()->getTypeID()) {
       default: assert(0 && "Illegal getelementptr index for sequential type!");
       case Type::SByteTyID:  Idx = IdxGV.SByteVal; break;
       case Type::ShortTyID:  Idx = IdxGV.ShortVal; break;
@@ -865,7 +865,7 @@ void Interpreter::visitCallSite(CallSite CS) {
 static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SHIFT(<<, UByte);
     IMPLEMENT_SHIFT(<<, SByte);
     IMPLEMENT_SHIFT(<<, UShort);
@@ -883,7 +883,7 @@ static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeShrInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_SHIFT(>>, UByte);
     IMPLEMENT_SHIFT(>>, SByte);
     IMPLEMENT_SHIFT(>>, UShort);
@@ -924,7 +924,7 @@ void Interpreter::visitShr(ShiftInst &I) {
 
 #define IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY)    \
   case Type::DESTTY##TyID:                      \
-    switch (SrcTy->getPrimitiveID()) {          \
+    switch (SrcTy->getTypeID()) {          \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Bool);    \
       IMPLEMENT_CAST(DESTTY, DESTCTY, UByte);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, SByte);   \
@@ -956,7 +956,7 @@ GenericValue Interpreter::executeCastOperation(Value *SrcVal, const Type *Ty,
   const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
 
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
     IMPLEMENT_CAST_CASE(SByte  , (  signed char));
     IMPLEMENT_CAST_CASE(UShort , (unsigned short));
@@ -1007,7 +1007,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
   GenericValue Src = ECStack[VAList.UIntPairVal.first]
 	.VarArgs[VAList.UIntPairVal.second];
   const Type *Ty = I.getType();
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
     IMPLEMENT_VAARG(UByte);
     IMPLEMENT_VAARG(SByte);
     IMPLEMENT_VAARG(UShort);

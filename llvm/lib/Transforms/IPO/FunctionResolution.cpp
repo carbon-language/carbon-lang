@@ -79,8 +79,8 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       if (!Old->use_empty() && !Concrete->use_empty())
         for (unsigned i = 0; i < NumArguments; ++i)
           if (OldMT->getParamType(i) != ConcreteMT->getParamType(i))
-            if (OldMT->getParamType(i)->getPrimitiveID() != 
-                ConcreteMT->getParamType(i)->getPrimitiveID()) {
+            if (OldMT->getParamType(i)->getTypeID() != 
+                ConcreteMT->getParamType(i)->getTypeID()) {
               std::cerr << "WARNING: Function [" << Old->getName()
                         << "]: Parameter types conflict for: '";
               WriteTypeSymbolic(std::cerr, OldMT, &M);

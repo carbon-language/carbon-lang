@@ -20,14 +20,14 @@
 using namespace llvm;
 
 void BytecodeWriter::outputType(const Type *T) {
-  output_vbr((unsigned)T->getPrimitiveID(), Out);
+  output_vbr((unsigned)T->getTypeID(), Out);
   
   // That's all there is to handling primitive types...
   if (T->isPrimitiveType()) {
     return;     // We might do this if we alias a prim type: %x = type int
   }
 
-  switch (T->getPrimitiveID()) {   // Handle derived types now.
+  switch (T->getTypeID()) {   // Handle derived types now.
   case Type::FunctionTyID: {
     const FunctionType *MT = cast<FunctionType>(T);
     int Slot = Table.getSlot(MT->getReturnType());
@@ -47,7 +47,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
     // Terminate list with VoidTy if we are a varargs function...
     if (MT->isVarArg())
-      output_vbr((unsigned)Type::VoidTy->getPrimitiveID(), Out);
+      output_vbr((unsigned)Type::VoidTyID, Out);
     break;
   }
 
@@ -74,7 +74,7 @@ void BytecodeWriter::outputType(const Type *T) {
     }
 
     // Terminate list with VoidTy
-    output_vbr((unsigned)Type::VoidTy->getPrimitiveID(), Out);
+    output_vbr((unsigned)Type::VoidTyID, Out);
     break;
   }
 
@@ -124,7 +124,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     output_vbr(0U, Out);       // flag as not a ConstantExpr
   }
   
-  switch (CPV->getType()->getPrimitiveID()) {
+  switch (CPV->getType()->getTypeID()) {
   case Type::BoolTyID:    // Boolean Types
     if (cast<ConstantBool>(CPV)->getValue())
       output_vbr(1U, Out);

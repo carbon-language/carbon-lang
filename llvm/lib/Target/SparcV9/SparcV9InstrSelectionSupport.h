@@ -23,7 +23,7 @@ namespace llvm {
 inline MachineOpCode
 ChooseLoadInstruction(const Type *DestTy)
 {
-  switch (DestTy->getPrimitiveID()) {
+  switch (DestTy->getTypeID()) {
   case Type::BoolTyID:
   case Type::UByteTyID:   return V9::LDUBr;
   case Type::SByteTyID:   return V9::LDSBr;
@@ -46,7 +46,7 @@ ChooseLoadInstruction(const Type *DestTy)
 inline MachineOpCode
 ChooseStoreInstruction(const Type *DestTy)
 {
-  switch (DestTy->getPrimitiveID()) {
+  switch (DestTy->getTypeID()) {
   case Type::BoolTyID:
   case Type::UByteTyID:
   case Type::SByteTyID:   return V9::STBr;
@@ -79,7 +79,7 @@ ChooseAddInstructionByType(const Type* resultType)
     opCode = V9::ADDr;
   }
   else
-    switch(resultType->getPrimitiveID())
+    switch(resultType->getTypeID())
     {
     case Type::FloatTyID:  opCode = V9::FADDS; break;
     case Type::DoubleTyID: opCode = V9::FADDD; break;

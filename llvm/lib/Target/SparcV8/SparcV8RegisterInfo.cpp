@@ -127,7 +127,7 @@ void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
 
 const TargetRegisterClass*
 SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::FloatTyID:  return &FPRegsInstance;
   case Type::DoubleTyID: return &DFPRegsInstance;
   case Type::LongTyID:

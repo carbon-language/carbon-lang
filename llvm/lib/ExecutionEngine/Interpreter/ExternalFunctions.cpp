@@ -38,7 +38,7 @@ static std::map<std::string, ExFunc> FuncNames;
 static Interpreter *TheInterpreter;
 
 static char getTypeID(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::VoidTyID:    return 'V';
   case Type::BoolTyID:    return 'o';
   case Type::UByteTyID:   return 'B';

@@ -31,7 +31,7 @@ void SelectionDAG::dump() const {
 /// method works on all scalar LLVM types.
 ///
 MVT::ValueType SelectionDAG::getValueType(const Type *Ty) const {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::VoidTyID: assert(0 && "Void type object in getValueType!");
   default: assert(0 && "Unknown type in DAGBuilder!\n");
   case Type::BoolTyID:    return MVT::i1;

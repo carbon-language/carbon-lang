@@ -150,7 +150,7 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       uint64_t &Size, unsigned char &Alignment) {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::VoidTyID:
   case Type::BoolTyID:
   case Type::UByteTyID:

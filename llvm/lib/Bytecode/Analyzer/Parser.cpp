@@ -145,7 +145,7 @@ const Type *AbstractBytecodeParser::getType(unsigned ID) {
 //cerr << "Looking up Type ID: " << ID << "\n";
 
 if (ID < Type::FirstDerivedTyID)
-  if (const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID))
+  if (const Type *T = Type::getPrimitiveType((Type::TypeID)ID))
     return T;   // Asked for a primitive type...
 
 // Otherwise, derived types need offset...
@@ -467,7 +467,7 @@ const Type *AbstractBytecodeParser::ParseTypeConstant() {
   unsigned PrimType = read_vbr_uint();
 
   const Type *Val = 0;
-  if ((Val = Type::getPrimitiveType((Type::PrimitiveID)PrimType)))
+  if ((Val = Type::getPrimitiveType((Type::TypeID)PrimType)))
     return Val;
   
   switch (PrimType) {
@@ -615,7 +615,7 @@ void AbstractBytecodeParser::ParseConstantValue(unsigned TypeID) {
   
   // Ok, not an ConstantExpr.  We now know how to read the given type...
   const Type *Ty = getType(TypeID);
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::BoolTyID: {
     unsigned Val = read_vbr_uint();
     if (Val != 0 && Val != 1) 

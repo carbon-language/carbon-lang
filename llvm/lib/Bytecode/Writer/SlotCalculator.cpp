@@ -41,8 +41,8 @@ SlotCalculator::SlotCalculator(const Module *M ) {
   //
   SC_DEBUG("Inserting primitive types:\n");
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
-    assert(Type::getPrimitiveType((Type::PrimitiveID)i));
-    insertValue(Type::getPrimitiveType((Type::PrimitiveID)i), true);
+    assert(Type::getPrimitiveType((Type::TypeID)i));
+    insertValue(Type::getPrimitiveType((Type::TypeID)i), true);
   }
 
   if (M == 0) return;   // Empty table...
@@ -58,8 +58,8 @@ SlotCalculator::SlotCalculator(const Function *M ) {
   //
   SC_DEBUG("Inserting primitive types:\n");
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
-    assert(Type::getPrimitiveType((Type::PrimitiveID)i));
-    insertValue(Type::getPrimitiveType((Type::PrimitiveID)i), true);
+    assert(Type::getPrimitiveType((Type::TypeID)i));
+    insertValue(Type::getPrimitiveType((Type::TypeID)i), true);
   }
 
   if (TheModule == 0) return;   // Empty table...
@@ -408,7 +408,7 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
 
   // Make sure to insert the null entry if the thing we are inserting is not a
   // null constant.
-  if (TyPlane.empty() && hasNullValue(V->getType()->getPrimitiveID())) {
+  if (TyPlane.empty() && hasNullValue(V->getType()->getTypeID())) {
     Value *ZeroInitializer = Constant::getNullValue(V->getType());
     if (V != ZeroInitializer) {
       TyPlane.push_back(ZeroInitializer);
@@ -435,7 +435,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   // First step, insert the primitive types.
   CompactionTable.resize(Type::TypeTyID+1);
   for (unsigned i = 0; i != Type::FirstDerivedTyID; ++i) {
-    const Type *PrimTy = Type::getPrimitiveType((Type::PrimitiveID)i);
+    const Type *PrimTy = Type::getPrimitiveType((Type::TypeID)i);
     CompactionTable[Type::TypeTyID].push_back(PrimTy);
     CompactionNodeMap[PrimTy] = i;
   }
@@ -754,7 +754,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
     }
     Ty = (unsigned)ValSlot;
   } else {
-    Ty = Typ->getPrimitiveID();
+    Ty = Typ->getTypeID();
   }
   
   if (Table.size() <= Ty)    // Make sure we have the type plane allocated...

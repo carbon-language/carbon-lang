@@ -249,7 +249,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
     // FP Constants are printed as integer constants to avoid losing
     // precision...
     double Val = CFP->getValue();
-    switch (CFP->getType()->getPrimitiveID()) {
+    switch (CFP->getType()->getTypeID()) {
     default: assert(0 && "Unknown floating point type!");
     case Type::FloatTyID: {
       union FU {                            // Abide by C TBAA rules
@@ -274,7 +274,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
 
   const Type *type = CV->getType();
   O << "\t";
-  switch (type->getPrimitiveID()) {
+  switch (type->getTypeID()) {
   case Type::BoolTyID: case Type::UByteTyID: case Type::SByteTyID:
     O << ".byte";
     break;

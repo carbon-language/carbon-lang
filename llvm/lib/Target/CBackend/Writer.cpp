@@ -255,7 +255,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  const std::string &NameSoFar,
                                  bool IgnoreName) {
   if (Ty->isPrimitiveType())
-    switch (Ty->getPrimitiveID()) {
+    switch (Ty->getTypeID()) {
     case Type::VoidTyID:   return Out << "void "               << NameSoFar;
     case Type::BoolTyID:   return Out << "bool "               << NameSoFar;
     case Type::UByteTyID:  return Out << "unsigned char "      << NameSoFar;
@@ -279,7 +279,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     if (I != TypeNames.end()) return Out << I->second << " " << NameSoFar;
   }
 
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *MTy = cast<FunctionType>(Ty);
     std::stringstream FunctionInnards; 
@@ -518,7 +518,7 @@ void CWriter::printConstant(Constant *CPV) {
     }
   }
 
-  switch (CPV->getType()->getPrimitiveID()) {
+  switch (CPV->getType()->getTypeID()) {
   case Type::BoolTyID:
     Out << (CPV == ConstantBool::False ? "0" : "1"); break;
   case Type::SByteTyID:

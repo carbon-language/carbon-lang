@@ -35,7 +35,7 @@ class DerivedType : public Type, public AbstractTypeUser {
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
 protected:
-  DerivedType(PrimitiveID id) : Type("", id) {}
+  DerivedType(TypeID id) : Type("", id) {}
   ~DerivedType() {
     assert(AbstractTypeUsers.empty());
   }
@@ -149,7 +149,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FunctionType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == FunctionTyID;
+    return T->getTypeID() == FunctionTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));
@@ -161,7 +161,7 @@ public:
 ///
 class CompositeType : public DerivedType {
 protected:
-  inline CompositeType(PrimitiveID id) : DerivedType(id) { }
+  inline CompositeType(TypeID id) : DerivedType(id) { }
 public:
 
   /// getTypeAtIndex - Given an index value into the type, return the type of
@@ -173,9 +173,9 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CompositeType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == ArrayTyID || 
-           T->getPrimitiveID() == StructTyID ||
-           T->getPrimitiveID() == PointerTyID;
+    return T->getTypeID() == ArrayTyID || 
+           T->getTypeID() == StructTyID ||
+           T->getTypeID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));
@@ -230,7 +230,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const StructType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == StructTyID;
+    return T->getTypeID() == StructTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));
@@ -248,7 +248,7 @@ class SequentialType : public CompositeType {
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
 protected:
-  SequentialType(PrimitiveID TID, const Type *ElType) : CompositeType(TID) {
+  SequentialType(TypeID TID, const Type *ElType) : CompositeType(TID) {
     ContainedTys.reserve(1);
     ContainedTys.push_back(PATypeHandle(ElType, this));
   }
@@ -264,7 +264,7 @@ public:
   }
   virtual bool indexValid(const Value *V) const {
     const Type *Ty = V->getType();
-    switch (Ty->getPrimitiveID()) {
+    switch (Ty->getTypeID()) {
     case Type::IntTyID:
     case Type::UIntTyID:
     case Type::LongTyID:
@@ -278,8 +278,8 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SequentialType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == ArrayTyID ||
-           T->getPrimitiveID() == PointerTyID;
+    return T->getTypeID() == ArrayTyID ||
+           T->getTypeID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));
@@ -319,7 +319,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ArrayType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == ArrayTyID;
+    return T->getTypeID() == ArrayTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));
@@ -352,7 +352,7 @@ public:
   // Implement support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PointerType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == PointerTyID;
+    return T->getTypeID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));
@@ -391,7 +391,7 @@ public:
   // Implement support for type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const OpaqueType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getPrimitiveID() == OpaqueTyID;
+    return T->getTypeID() == OpaqueTyID;
   }
   static inline bool classof(const Value *V) {
     return isa<Type>(V) && classof(cast<Type>(V));

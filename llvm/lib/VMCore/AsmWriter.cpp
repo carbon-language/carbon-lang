@@ -262,7 +262,7 @@ static void calcTypeName(const Type *Ty,
 
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
   
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);

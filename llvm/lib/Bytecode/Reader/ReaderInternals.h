@@ -173,7 +173,7 @@ private:
   /// fancy features are supported.
   const Type *getGlobalTableType(unsigned Slot) {
     if (Slot < Type::FirstDerivedTyID) {
-      const Type *Ty = Type::getPrimitiveType((Type::PrimitiveID)Slot);
+      const Type *Ty = Type::getPrimitiveType((Type::TypeID)Slot);
       assert(Ty && "Not a primitive type ID?");
       return Ty;
     }
@@ -185,7 +185,7 @@ private:
 
   unsigned getGlobalTableTypeSlot(const Type *Ty) {
     if (Ty->isPrimitiveType())
-      return Ty->getPrimitiveID();
+      return Ty->getTypeID();
     TypeValuesListTy::iterator I = find(ModuleTypeValues.begin(),
                                         ModuleTypeValues.end(), Ty);
     if (I == ModuleTypeValues.end())

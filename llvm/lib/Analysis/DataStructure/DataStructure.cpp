@@ -432,7 +432,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   while (O < Offset) {
     assert(Offset-O < TD.getTypeSize(SubType) && "Offset out of range!");
 
-    switch (SubType->getPrimitiveID()) {
+    switch (SubType->getTypeID()) {
     case Type::StructTyID: {
       const StructType *STy = cast<StructType>(SubType);
       const StructLayout &SL = *TD.getStructLayout(STy);
@@ -488,7 +488,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     const Type *NextSubType = 0;
     unsigned NextSubTypeSize = 0;
     unsigned NextPadSize = 0;
-    switch (SubType->getPrimitiveID()) {
+    switch (SubType->getTypeID()) {
     case Type::StructTyID: {
       const StructType *STy = cast<StructType>(SubType);
       const StructLayout &SL = *TD.getStructLayout(STy);

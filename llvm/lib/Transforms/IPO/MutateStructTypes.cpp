@@ -54,7 +54,7 @@ const Type *MutateStructTypes::ConvertType(const Type *Ty) {
   PATypeHolder PlaceHolder = OpaqueType::get();
   TypeMap.insert(std::make_pair(Ty, PlaceHolder.get()));
 
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FT = cast<FunctionType>(Ty);
     const Type *RetTy = ConvertType(FT->getReturnType());

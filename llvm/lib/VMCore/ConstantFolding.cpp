@@ -489,7 +489,7 @@ ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
       isa<ConstantPointerRef>(V1) || isa<ConstantPointerRef>(V2))
     return EmptyR;
 
-  switch (V1->getType()->getPrimitiveID()) {
+  switch (V1->getType()->getTypeID()) {
   default: assert(0 && "Unknown value type for constant folding!");
   case Type::BoolTyID:    return BoolR;
   case Type::PointerTyID: return NullPointerR;
@@ -564,7 +564,7 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
 
   ConstRules &Rules = ConstRules::get(V, V);
 
-  switch (DestTy->getPrimitiveID()) {
+  switch (DestTy->getTypeID()) {
   case Type::BoolTyID:    return Rules.castToBool(V);
   case Type::UByteTyID:   return Rules.castToUByte(V);
   case Type::SByteTyID:   return Rules.castToSByte(V);

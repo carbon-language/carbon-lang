@@ -503,7 +503,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
 const TargetRegisterClass*
 X86RegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::LongTyID:
   case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
   default:              assert(0 && "Invalid type to getClass!");

@@ -66,7 +66,7 @@ void Constant::destroyConstantImpl() {
 
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::BoolTyID: {
     static Constant *NullBool = ConstantBool::get(false);
     return NullBool;
@@ -128,7 +128,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
 
 // Static constructor to create the maximum constant of an integral type...
 ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::BoolTyID:   return ConstantBool::True;
   case Type::SByteTyID:
   case Type::ShortTyID:
@@ -152,7 +152,7 @@ ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
 
 // Static constructor to create the minimum constant for an integral type...
 ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::BoolTyID:   return ConstantBool::False;
   case Type::SByteTyID:
   case Type::ShortTyID:
@@ -176,7 +176,7 @@ ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
 
 // Static constructor to create an integral constant with all bits set
 ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   case Type::BoolTyID:   return ConstantBool::True;
   case Type::SByteTyID:
   case Type::ShortTyID:
@@ -243,8 +243,7 @@ ConstantArray::ConstantArray(const ArrayType *T,
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert(V[i]->getType() == T->getElementType() ||
            (T->isAbstract() &&
-            V[i]->getType()->getPrimitiveID() ==
-            T->getElementType()->getPrimitiveID()));
+            V[i]->getType()->getTypeID() == T->getElementType()->getTypeID()));
     Operands.push_back(Use(V[i], this));
   }
 }
@@ -258,8 +257,7 @@ ConstantStruct::ConstantStruct(const StructType *T,
     assert((V[i]->getType() == T->getElementType(i) ||
             ((T->getElementType(i)->isAbstract() ||
               V[i]->getType()->isAbstract()) &&
-             T->getElementType(i)->getPrimitiveID() == 
-                      V[i]->getType()->getPrimitiveID())) &&
+             T->getElementType(i)->getTypeID() == V[i]->getType()->getTypeID())) &&
            "Initializer for struct element doesn't match struct element type!");
     Operands.push_back(Use(V[i], this));
   }
@@ -433,7 +431,7 @@ bool ConstantPointerRef::classof(const Constant *CPV) {
 //                      isValueValidForType implementations
 
 bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   default:
     return false;         // These can't be represented as integers!!!
     // Signed types...
@@ -449,7 +447,7 @@ bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
 }
 
 bool ConstantUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   default:
     return false;         // These can't be represented as integers!!!
 
@@ -466,7 +464,7 @@ bool ConstantUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
 }
 
 bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
-  switch (Ty->getPrimitiveID()) {
+  switch (Ty->getTypeID()) {
   default:
     return false;         // These can't be represented as floating point!
 

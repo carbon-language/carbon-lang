@@ -46,7 +46,7 @@ public:
 
   /// This type is used throughout the code to make it clear that an
   /// unsigned value refers to a type plane number and not something else.
-  /// @brief The type of a plane number (corresponds to Type::PrimitiveID).
+  /// @brief The type of a plane number (corresponds to Type::TypeID).
   typedef unsigned PlaneNum;
 
   /// @brief Some constants used as flags instead of actual slot numbers
@@ -58,7 +58,7 @@ public:
   /// @brief A single plane of Values. Intended index is slot number.
   typedef std::vector<const Value*> ValuePlane; 
 
-  /// @brief A table of Values. Intended index is Type::PrimitiveID.
+  /// @brief A table of Values. Intended index is Type::TypeID.
   typedef std::vector<ValuePlane> ValueTable; 
 
   /// @brief A map of values to slot numbers.

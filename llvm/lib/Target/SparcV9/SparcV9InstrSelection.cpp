@@ -650,7 +650,7 @@ ChooseSubInstructionByType(const Type* resultType)
   if (resultType->isInteger() || isa<PointerType>(resultType)) {
       opCode = V9::SUBr;
   } else {
-    switch(resultType->getPrimitiveID())
+    switch(resultType->getTypeID())
     {
     case Type::FloatTyID:  opCode = V9::FSUBS; break;
     case Type::DoubleTyID: opCode = V9::FSUBD; break;
@@ -691,7 +691,7 @@ ChooseFcmpInstruction(const InstructionNode* instrNode)
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   Value* operand = ((InstrTreeNode*) instrNode->leftChild())->getValue();
-  switch(operand->getType()->getPrimitiveID()) {
+  switch(operand->getType()->getTypeID()) {
   case Type::FloatTyID:  opCode = V9::FCMPS; break;
   case Type::DoubleTyID: opCode = V9::FCMPD; break;
   default: assert(0 && "Invalid type for FCMP instruction"); break; 
@@ -727,7 +727,7 @@ ChooseMulInstructionByType(const Type* resultType)
   if (resultType->isInteger())
     opCode = V9::MULXr;
   else
-    switch(resultType->getPrimitiveID())
+    switch(resultType->getTypeID())
     {
     case Type::FloatTyID:  opCode = V9::FMULS; break;
     case Type::DoubleTyID: opCode = V9::FMULD; break;
@@ -946,7 +946,7 @@ ChooseDivInstruction(TargetMachine &target,
   if (resultType->isInteger())
     opCode = resultType->isSigned()? V9::SDIVXr : V9::UDIVXr;
   else
-    switch(resultType->getPrimitiveID())
+    switch(resultType->getTypeID())
       {
       case Type::FloatTyID:  opCode = V9::FDIVS; break;
       case Type::DoubleTyID: opCode = V9::FDIVD; break;

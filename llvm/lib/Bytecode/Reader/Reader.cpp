@@ -25,7 +25,7 @@ using namespace llvm;
 
 unsigned BytecodeParser::getTypeSlot(const Type *Ty) {
   if (Ty->isPrimitiveType())
-    return Ty->getPrimitiveID();
+    return Ty->getTypeID();
 
   // Scan the compaction table for the type if needed.
   if (CompactionTable.size() > Type::TypeTyID) {
@@ -56,7 +56,7 @@ const Type *BytecodeParser::getType(unsigned ID) {
   //cerr << "Looking up Type ID: " << ID << "\n";
 
   if (ID < Type::FirstDerivedTyID)
-    if (const Type *T = Type::getPrimitiveType((Type::PrimitiveID)ID))
+    if (const Type *T = Type::getPrimitiveType((Type::TypeID)ID))
       return T;   // Asked for a primitive type...
 
   // Otherwise, derived types need offset...

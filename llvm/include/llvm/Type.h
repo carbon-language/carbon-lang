@@ -54,7 +54,7 @@ struct Type : public Value {
   /// Note: If you add an element to this, you need to add an element to the 
   /// Type::getPrimitiveType function, or else things will break!
   ///
-  enum PrimitiveID {
+  enum TypeID {
     VoidTyID = 0  , BoolTyID,           //  0, 1: Basics...
     UByteTyID     , SByteTyID,          //  2, 3: 8 bit types...
     UShortTyID    , ShortTyID,          //  4, 5: 16 bit types...
@@ -74,14 +74,14 @@ struct Type : public Value {
     //PackedTyID  ,                     // SIMD 'packed' format... TODO
     //...
 
-    NumPrimitiveIDs,                    // Must remain as last defined ID
+    NumTypeIDs,                         // Must remain as last defined ID
     FirstDerivedTyID = FunctionTyID,
   };
 
 private:
-  PrimitiveID ID;        // The current base type of this type...
-  unsigned    UID;       // The unique ID number for this class
-  bool        Abstract;  // True if type contains an OpaqueType
+  TypeID   ID;        // The current base type of this type...
+  unsigned UID;       // The unique ID number for this class
+  bool     Abstract;  // True if type contains an OpaqueType
 
   /// RefCount - This counts the number of PATypeHolders that are pointing to
   /// this type.  When this number falls to zero, if the type is abstract and
@@ -93,7 +93,7 @@ private:
   const Type *getForwardedTypeInternal() const;
 protected:
   /// ctor is protected, so only subclasses can create Type objects...
-  Type(const std::string &Name, PrimitiveID id);
+  Type(const std::string &Name, TypeID id);
   virtual ~Type() {}
 
 
@@ -137,10 +137,10 @@ public:
   // are defined in private classes defined in Type.cpp for primitive types.
   //
 
-  /// getPrimitiveID - Return the base type of the type.  This will return one
-  /// of the PrimitiveID enum elements defined above.
+  /// getTypeID - Return the type id for the type.  This will return one
+  /// of the TypeID enum elements defined above.
   ///
-  inline PrimitiveID getPrimitiveID() const { return ID; }
+  inline TypeID getTypeID() const { return ID; }
 
   /// getUniqueID - Returns the UID of the type.  This can be thought of as a
   /// small integer version of the pointer to the type class.  Two types that
@@ -259,7 +259,7 @@ public:
   //
 
   /// getPrimitiveType/getUniqueIDType - Return a type based on an identifier.
-  static const Type *getPrimitiveType(PrimitiveID IDNumber);
+  static const Type *getPrimitiveType(TypeID IDNumber);
   static const Type *getUniqueIDType(unsigned UID);
 
   //===--------------------------------------------------------------------===//
@@ -394,7 +394,7 @@ template <> struct GraphTraits<const Type*> {
 };
 
 template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) { 
-  return Ty.getPrimitiveID() == Type::PointerTyID;
+  return Ty.getTypeID() == Type::PointerTyID;
 }
 
 } // End llvm namespace
