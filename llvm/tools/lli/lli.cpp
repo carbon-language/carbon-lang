@@ -51,17 +51,17 @@ int main(int argc, char** argv) {
 			      " llvm interpreter & dynamic compiler\n");
 
   // Load the bytecode...
-  string ErrorMsg;
+  std::string ErrorMsg;
   Module *M = ParseBytecodeFile(InputFile, &ErrorMsg);
   if (M == 0) {
-    cout << "Error parsing '" << InputFile << "': "
-         << ErrorMsg << "\n";
+    std::cout << "Error parsing '" << InputFile << "': "
+              << ErrorMsg << "\n";
     exit(1);
   }
 
 #if 0
   // Link in the runtime library for LLI...
-  string RuntimeLib = getCurrentExecutablePath();
+  std::string RuntimeLib = getCurrentExecutablePath();
   if (!RuntimeLib.empty()) RuntimeLib += "/";
   RuntimeLib += "RuntimeLib.bc";
 

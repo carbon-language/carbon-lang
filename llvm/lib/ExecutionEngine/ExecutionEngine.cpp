@@ -56,7 +56,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     break;
   default:
-    cout << "ERROR: Constant unimp for type: " << C->getType() << "\n";
+    std::cout << "ERROR: Constant unimp for type: " << C->getType() << "\n";
   }
   return Result;
 }
@@ -92,7 +92,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[7] = (Val.ULongVal >> 56) & 255;
                             break;
     default:
-      cout << "Cannot store value of type " << Ty << "!\n";
+      std::cout << "Cannot store value of type " << Ty << "!\n";
     }
   } else {
     switch (Ty->getPrimitiveID()) {
@@ -123,7 +123,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[0] = (Val.ULongVal >> 56) & 255;
                             break;
     default:
-      cout << "Cannot store value of type " << Ty << "!\n";
+      std::cout << "Cannot store value of type " << Ty << "!\n";
     }
   }
 }
@@ -141,7 +141,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   switch (Init->getType()->getPrimitiveID()) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
-    const vector<Use> &Val = CPA->getValues();
+    const std::vector<Use> &Val = CPA->getValues();
     unsigned ElementSize = 
       getTargetData().getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
     for (unsigned i = 0; i < Val.size(); ++i)
@@ -153,7 +153,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     const ConstantStruct *CPS = cast<ConstantStruct>(Init);
     const StructLayout *SL =
       getTargetData().getStructLayout(cast<StructType>(CPS->getType()));
-    const vector<Use> &Val = CPS->getValues();
+    const std::vector<Use> &Val = CPS->getValues();
     for (unsigned i = 0; i < Val.size(); ++i)
       InitializeMemory(cast<Constant>(Val[i].get()),
                        (char*)Addr+SL->MemberOffsets[i]);
