@@ -117,14 +117,7 @@ DSGraph *FunctionModRefInfo::ResolveCallSiteModRefInfo(CallInst &CI,
                                std::map<const DSNode*, DSNodeHandle> &NodeMap) {
 
   // Step #1: Clone the top-down graph...
-  std::map<const DSNode*, DSNode*> RawNodeMap;
-  DSGraph *Result = new DSGraph(funcTDGraph, RawNodeMap);
-
-  // Convert the NodeMap from a map to DSNode* to be a map to DSNodeHandle's
-  NodeMap.insert(RawNodeMap.begin(), RawNodeMap.end());
-
-  // We are now done with the old map... so free it's memory...
-  RawNodeMap.clear();
+  DSGraph *Result = new DSGraph(funcTDGraph, NodeMap);
 
   // Step #2: Clear Mod/Ref information...
   Result->maskNodeTypes(~(DSNode::Modified | DSNode::Read));
