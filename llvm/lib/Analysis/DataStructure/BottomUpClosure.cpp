@@ -235,7 +235,9 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
   Graph->markIncompleteNodes();
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
 
-  DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << "\n");
+  DEBUG(std::cerr << "  [BU] Done inlining: " << F.getName() << " ["
+        << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()
+        << "]\n");
 
   return *Graph;
 }

@@ -218,8 +218,9 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
 
-  DEBUG(std::cerr << "  [TD] Done inlining callers for: "
-                  << F.getName() << "\n");
+  DEBUG(std::cerr << "  [TD] Done inlining callers for: " << F.getName() << " ["
+        << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()
+        << "]\n");
 
   return *Graph;
 }
