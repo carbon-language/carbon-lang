@@ -170,4 +170,5 @@ void BugDriver::PrintFunctionList(const std::vector<Function*> &Funcs) {
     if (i) std::cout << ", ";
     std::cout << Funcs[i]->getName();
   }
+  std::cout << std::flush;
 }
