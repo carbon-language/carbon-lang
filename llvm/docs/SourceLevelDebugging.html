@@ -11,7 +11,8 @@
 
 <ul>
 
-<img src="venusflytrap.jpg" width=247 height=369 align=right>
+<img src="venusflytrap.jpg" alt="A leafy and green bug eater"
+     width=247 height=369 align=right>
 
   <li><a href="#introduction">Introduction</a></li>
   <ol>
@@ -29,25 +30,34 @@
 
   <li><a href="#architecture">Architecture of the LLVM debugger</a></li>
   <ol>
+    <li><a href="#arch_debugger">The Debugger and InferiorProcess classes</a></li>
+    <li><a href="#arch_info">The RuntimeInfo, ProgramInfo, and SourceLanguage classes</a></li>
+    <li><a href="#arch_llvm-db">The <tt>llvm-db</tt> tool</a></li>
     <li><a href="#arch_todo">Short-term TODO list</a></li>
   </ol>
 
-  <li><a href="#implementation">Debugging information implementation</a></li>
+  <li><a href="#format">Debugging information format</a></li>
   <ol>
-    <li><a href="#impl_common_anchors">Anchors for global objects</a></li>
-    <li><a href="#impl_common_stoppoint">Representing stopping points in the source program</a></li>
-    <li><a href="#impl_common_lifetime">Object lifetimes and scoping</a></li>
-    <li><a href="#impl_common_descriptors">Object descriptor formats</a></li>
+    <li><a href="#format_common_anchors">Anchors for global objects</a></li>
+    <li><a href="#format_common_stoppoint">Representing stopping points in the source program</a></li>
+    <li><a href="#format_common_lifetime">Object lifetimes and scoping</a></li>
+    <li><a href="#format_common_descriptors">Object descriptor formats</a></li>
     <ul>
-      <li><a href="#impl_common_source_files">Representation of source files</a></li>
-      <li><a href="#impl_common_globals">Representation of global objects</a></li>
-      <li><a href="#impl_common_localvars">Representation of local variables</a></li>
+      <li><a href="#format_common_source_files">Representation of source files</a></li>
+      <li><a href="#format_common_program_objects">Representation of program objects</a></li>
+      <li><a href="#format_common_object_contexts">Program object contexts</a></li>
     </ul>
-    <li><a href="#impl_common_intrinsics">Other intrinsic functions</a></li>
+    <li><a href="#format_common_intrinsics">Debugger intrinsic functions</a></li>
+    <li><a href="#format_common_tags">Values for debugger tags</a></li>
   </ol>
-  <li><a href="#impl_ccxx">C/C++ front-end specific debug information</a></li>
+  <li><a href="#ccxx_frontend">C/C++ front-end specific debug information</a></li>
   <ol>
-    <li><a href="#impl_ccxx_descriptors">Object descriptor formats</a></li>
+    <li><a href="#ccxx_pse">Program Scope Entries</a></li>
+    <ul>
+      <li><a href="#ccxx_compilation_units">Compilation unit entries</a></li>
+      <li><a href="#ccxx_modules">Module, namespace, and importing entries</a></li>
+    </ul>
+    <li><a href="#ccxx_dataobjects">Data objects (program variables)</a></li>
   </ol>
 </ul>
 
@@ -58,15 +68,15 @@
 <div class="doc_text">
 
 <p>This document is the central repository for all information pertaining to
-debug information in LLVM.  It describes how to use the <a
-href="CommandGuide/llvm-db.html"><tt>llvm-db</tt> tool</a>, which provides a
-powerful <a href="#llvm-db">source-level debugger</a> to users of LLVM-based
-compilers.  When compiling a program in debug mode, the front-end in use adds
-LLVM debugging information to the program in the form of normal <a
-href="LangRef.html">LLVM program objects</a> as well as a small set of LLVM <a
-href="#implementation">intrinsic functions</a>, which specify the mapping of the
-program in LLVM form to the program in the source language.
-</p>
+debug information in LLVM.  It describes the <a href="#llvm-db">user
+interface</a> for the <a href="CommandGuide/llvm-db.html"><tt>llvm-db</tt>
+tool</a>, which provides a powerful <a href="#llvm-db">source-level debugger</a>
+to users of LLVM-based compilers.  It then describes the <a
+href="#architecture">various components</a> that make up the debugger and the
+libraries which future clients may use.  Finally, it describes the <a
+href="#format">actual format that the LLVM debug information</a> takes,
+which is useful for those interested in creating front-ends or dealing directly
+with the information.</p>
 
 </div>
 
@@ -100,7 +110,7 @@ LLVM should not put any restrictions of the flavor of the source-language, and
 the debugging information should work with any language.</li>
 
 <li>With code generator support, it should be possible to use an LLVM compiler
-to compile a program to native machine code with standard debugging formats.
+to compile a program to native machine code and standard debugging formats.
 This allows compatibility with traditional machine-code level debuggers, like
 GDB or DBX.</li>
 
@@ -108,10 +118,10 @@ GDB or DBX.</li>
 
 <p>
 The approach used by the LLVM implementation is to use a small set of <a
-href="#impl_common_intrinsics">intrinsic functions</a> to define a mapping
+href="#format_common_intrinsics">intrinsic functions</a> to define a mapping
 between LLVM program objects and the source-level objects.  The description of
 the source-level program is maintained in LLVM global variables in an <a
-href="#impl_ccxx">implementation-defined format</a> (the C/C++ front-end
+href="#ccxx_frontend">implementation-defined format</a> (the C/C++ front-end
 currently uses working draft 7 of the <a
 href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3 standard</a>).</p>
 
@@ -207,14 +217,14 @@ scoping rules.</p>
 
 <p>
 After working with the debugger for a while, perhaps the nicest improvement
-would be to add some sort of line editor, such as GNU readline (but that is
+would be to add some sort of line editor, such as GNU readline (but one that is
 compatible with the LLVM license).</p>
 
 <p>
 For someone so inclined, it should be straight-forward to write different
 front-ends for the LLVM debugger, as the LLVM debugging engine is cleanly
-seperated from the <tt>llvm-db</tt> front-end.  A GUI debugger or IDE would be
-an interesting project.
+separated from the <tt>llvm-db</tt> front-end.  A new LLVM GUI debugger or IDE
+would be nice. :)
 </p>
 
 </div>
@@ -252,18 +262,21 @@ a bug or, better yet, submit a patch to add it. :)</p>
 
 <div class="doc_text">
 
-<p><tt>llvm-db</tt> is the first LLVM debugger, and as such was designed to be
-quick to prototype and build, and simple to extend.  It is missing many many
-features, though they should be easy to add over time (patches welcomed!).
-Because the (currently only) debugger backend (implemented in
-"lib/Debugger/UnixLocalInferiorProcess.cpp") was designed to work without any
-cooperation from the code generators, it suffers from the following inherent
-limitations:</p>
+<p><tt>llvm-db</tt> is designed to be modular and easy to extend.  This
+extensibility was key to getting the debugger up-and-running quickly, because we
+can start with simple-but-unsophisicated implementations of various components.
+Because of this, it is currently missing many features, though they should be
+easy to add over time (patches welcomed!).  The biggest inherent limitations of
+<tt>llvm-db</tt> are currently due to extremely simple <a
+href="#arch_debugger">debugger backend</a> (implemented in
+"lib/Debugger/UnixLocalInferiorProcess.cpp") which is designed to work without
+any cooperation from the code generators.  Because it is so simple, it suffers
+from the following inherent limitations:</p>
 
 <p><ul>
 
 <li>Running a program in <tt>llvm-db</tt> is a bit slower than running it with
-<tt>lli</tt>.</li>
+<tt>lli</tt> (i.e., in the JIT).</li>
 
 <li>Inspection of the target hardware is not supported.  This means that you
 cannot, for example, print the contents of X86 registers.</li>
@@ -281,10 +294,11 @@ supported.</li>
 
 </ul></p>
 
-<p>That said, it is still quite useful, and all of these limitations can be
-eliminated by integrating support for the debugger into the code generators.
-See the <a href="#future">future work</a> section for ideas of how to extend
-the LLVM debugger despite these limitations.</p>
+<p>That said, the debugger is still quite useful, and all of these limitations
+can be eliminated by integrating support for the debugger into the code
+generators, and writing a new <a href="#arch_debugger">InferiorProcess</a>
+subclass to use it.  See the <a href="#future">future work</a> section for ideas
+of how to extend the LLVM debugger despite these limitations.</p>
 
 </div>
 
@@ -296,9 +310,48 @@ the LLVM debugger despite these limitations.</p>
 
 <div class="doc_text">
 
-<p>
-TODO
-</p>
+<p>TODO: this is obviously lame, when more is implemented, this can be much
+better.</p>
+
+<p><pre>
+$ <b>llvm-db funccall</b>
+llvm-db: The LLVM source-level debugger
+Loading program... successfully loaded 'funccall.bc'!
+(llvm-db) <b>create</b>
+Starting program: funccall.bc
+main at funccall.c:9:2
+9 ->            q = 0;
+(llvm-db) <b>list main</b>
+4       void foo() {
+5               int t = q;
+6               q = t + 1;
+7       }
+8       int main() {
+9 ->            q = 0;
+10              foo();
+11              q = q - 1;
+12
+13              return q;
+(llvm-db) <b>list</b>
+14      }
+(llvm-db) <b>step</b>
+10 ->           foo();
+(llvm-db) <b>s</b>
+foo at funccall.c:5:2
+5 ->            int t = q;
+(llvm-db) <b>bt</b>
+#0 ->   0x85ffba0 in foo at funccall.c:5:2
+#1      0x85ffd98 in main at funccall.c:10:2
+(llvm-db) <b>finish</b>
+main at funccall.c:11:2
+11 ->           q = q - 1;
+(llvm-db) <b>s</b>
+13 ->           return q;
+(llvm-db) <b>s</b>
+The program stopped with exit code 0
+(llvm-db) <b>quit</b>
+$
+</pre></p>
 
 </div>
 
@@ -386,6 +439,8 @@ information about what these do, or try '<tt>help [command]</tt>' within
 <li>set listsize</li>
 <li>show language</li>
 <li>set language</li>
+<li>show args</li>
+<li>set args [args]</li>
 </ul>
 
 <h2>TODO:</h2>
@@ -415,18 +470,118 @@ information about what these do, or try '<tt>help [command]</tt>' within
 
 <div class="doc_text">
 
-<p><pre>
-lib/Debugger
-  - UnixLocalInferiorProcess.cpp
+<p>
+The LLVM debugger is built out of three distinct layers of software.  These
+layers provide clients with different interface options depending on what pieces
+of they want to implement themselves, and it also promotes code modularity and
+good design.  The three layers are the <a href="#arch_debugger">Debugger
+interface</a>, the <a href="#arch_info">"info" interfaces</a>, and the
+<a href="#arch_llvm-db"><tt>llvm-db</tt> tool</a> itself.
+</p>
+</div>
 
-tools/llvm-db
-  - SourceLanguage interfaces
-  - ProgramInfo/RuntimeInfo
-  - Commands
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="arch_debugger">The Debugger and InferiorProcess classes</a>
+</div>
 
-</pre></p>
+<div class="doc_text">
+<p>
+The Debugger class (defined in the <tt>include/llvm/Debugger/</tt> directory) is
+a low-level class which is used to maintain information about the loaded
+program, as well as start and stop the program running as necessary.  This class
+does not provide any high-level analysis or control over the program, only
+exposing simple interfaces like <tt>load/unloadProgram</tt>,
+<tt>create/killProgram</tt>, <tt>step/next/finish/contProgram</tt>, and
+low-level methods for installing breakpoints.
+</p>
+
+<p>
+The Debugger class is itself a wrapper around the lowest-level InferiorProcess
+class.  This class is used to represent an instance of the program running under
+debugger control.  The InferiorProcess class can be implemented in different
+ways for different targets and execution scenarios (e.g., remote debugging).
+The InferiorProcess class exposes a small and simple collection of interfaces
+which are useful for inspecting the current state of the program (such as
+collecting stack trace information, reading the memory image of the process,
+etc).  The interfaces in this class are designed to be as low-level and simple
+as possible, to make it easy to create new instances of the class.
+</p>
+
+<p>
+The Debugger class exposes the currently active instance of InferiorProcess
+through the <tt>Debugger::getRunningProcess</tt> method, which returns a
+<tt>const</tt> reference to the class.  This means that clients of the Debugger
+class can only <b>inspect</b> the running instance of the program directly.  To
+change the executing process in some way, they must use the interces exposed by
+the Debugger class.
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="arch_info">The RuntimeInfo, ProgramInfo, and SourceLanguage classes</a>
+</div>
+
+<div class="doc_text">
+<p>
+The next-highest level of debugger abstraction is provided through the
+ProgramInfo, RuntimeInfo, SourceLanguage and related classes (also defined in
+the <tt>include/llvm/Debugger/</tt> directory).  These classes efficiently
+decode the debugging information and low-level interfaces exposed by
+InferiorProcess into a higher-level representation, suitable for analysis by the
+debugger.
+</p>
+
+<p>
+The ProgramInfo class exposes a variety of different kinds of information about
+the program objects in the source-level-language.  The SourceFileInfo class
+represents a source-file in the program (e.g. a .cpp or .h file).  The
+SourceFileInfo class captures information such as which SourceLanguage was used
+to compile the file, where the debugger can get access to the actual file text
+(which is lazily loaded on demand), etc.  The SourceFunctionInfo class
+represents a... <b>FIXME: finish</b>.  The ProgramInfo class provides interfaces
+to lazily find and decode the information needed to create the Source*Info
+classes requested by the debugger.
+</p>
+
+<p>
+The RuntimeInfo class exposes information about the currently executed program,
+by decoding information from the InferiorProcess and ProgramInfo classes.  It
+provides a StackFrame class which provides an easy-to-use interface for
+inspecting the current and suspended stack frames in the program.
+</p>
+
+<p>
+The SourceLanguage class is an abstract interface used by the debugger to
+perform all source-language-specific tasks.  For example, this interface is used
+by the ProgramInfo class to decode language-specific types and functions and by
+the debugger front-end (such as <a href="#arch_llvm-db"><tt>llvm-db</tt></a> to
+evaluate source-langauge expressions typed into the debugger.  This class uses
+the RuntimeInfo &amp; ProgramInfo classes to get information about the current
+execution context and the loaded program, respectively.
+</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="arch_llvm-db">The <tt>llvm-db</tt> tool</a>
+</div>
+
+<div class="doc_text">
+<p>
+The <tt>llvm-db</tt> is designed to be a debugger providing an interface as <a
+href="#llvm-db">similar to GDB</a> as reasonable, but no more so than that.
+Because the <a href="#arch_debugger">Debugger</a> and <a
+href="#arch_info">info</a> classes implement all of the heavy lifting and
+analysis, <tt>llvm-db</tt> (which lives in <tt>llvm/tools/llvm-db</tt>) consists
+mainly of of code to interact with the user and parse commands.  The CLIDebugger
+constructor registers all of the builtin commands for the debugger, and each
+command is implemented as a CLIDebugger::[name]Command method.
+</p>
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -456,11 +611,6 @@ reloads.
 </p>
 
 <p>
-<b>run (with args)</b> &amp; <b>set args</b>: These need to be implemented.
-Currently run doesn't support setting arguments as part of the command.  The
-only tricky thing is handling quotes right and stuff.</p>
-
-<p>
 <b>UnixLocalInferiorProcess.cpp speedup</b>: There is no reason for the debugged
 process to code gen the globals corresponding to debug information.  The
 IntrinsicLowering object could instead change descriptors into constant expr
@@ -468,11 +618,16 @@ casts of the constant address of the LLVM objects for the descriptors.  This
 would also allow us to eliminate the mapping back and forth between physical
 addresses that must be done.</p>
 
+<p>
+<b>Process deaths</b>: The InferiorProcessDead exception should be extended to
+know "how" a process died, i.e., it was killed by a signal.  This is easy to
+collect in the UnixLocalInferiorProcess, we just need to represent it.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="implementation">Debugging information implementation</a>
+  <a name="format">Debugging information format</a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -497,32 +652,31 @@ piece of debugging information are deleted (for example, by the
 become dead and be removed by the optimizer.</p>
 
 <p>The debugger is designed to be agnostic about the contents of most of the
-debugging information.  It uses a source-language-specific module to decode the
-information that represents variables, types, functions, namespaces, etc: this
-allows for arbitrary source-language semantics and type-systems to be used, as
-long as there is a module written for the debugger to interpret the information.
+debugging information.  It uses a <a href="#arch_info">source-language-specific
+module</a> to decode the information that represents variables, types,
+functions, namespaces, etc: this allows for arbitrary source-language semantics
+and type-systems to be used, as long as there is a module written for the
+debugger to interpret the information.
 </p>
 
 <p>
 To provide basic functionality, the LLVM debugger does have to make some
 assumptions about the source-level language being debugged, though it keeps
 these to a minimum.  The only common features that the LLVM debugger assumes
-exist are <a href="#impl_common_source_files">source files</a>, <a
-href="#impl_common_globals">global objects</a> (aka methods, messages, global
-variables, etc), and <a href="#impl_common_localvars">local variables</a>.
-These abstract objects are used by the debugger to form stack traces, show
-information about local variables, etc.
+exist are <a href="#format_common_source_files">source files</a>, and <a
+href="#format_program_objects">program objects</a>.  These abstract objects are
+used by the debugger to form stack traces, show information about local
+variables, etc.
 
 <p>This section of the documentation first describes the representation aspects
-<a href="#impl_common">common to any source-language</a>.  The next section
-describes the data layout conventions used by the <a href="#impl_ccxx">C and C++
-front-ends</a>.</p>
+common to any source-language.  The <a href="#ccxx_frontend">next section</a>
+describes the data layout conventions used by the C and C++ front-ends.</p>
 
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="impl_common_anchors">Anchors for global objects</a>
+  <a name="format_common_anchors">Anchors for global objects</a>
 </div>
 
 <div class="doc_text">
@@ -542,8 +696,8 @@ So far, the following names are recognized as anchors by the LLVM debugger:
 </p>
 
 <p><pre>
-  %<a href="#impl_common_source_files">llvm.dbg.translation_units</a> = linkonce global {} {}
-  %<a href="#impl_common_globals">llvm.dbg.globals</a>         = linkonce global {} {}
+  %<a href="#format_common_source_files">llvm.dbg.translation_units</a> = linkonce global {} {}
+  %<a href="#format_program_objects">llvm.dbg.globals</a>         = linkonce global {} {}
 </pre></p>
 
 <p>
@@ -560,7 +714,7 @@ deleted.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="impl_common_stoppoint">
+  <a name="format_common_stoppoint">
      Representing stopping points in the source program
   </a>
 </div>
@@ -574,8 +728,9 @@ front-end inserts calls to the <tt>%llvm.dbg.stoppoint</tt> intrinsic function
 at every point in the program where the debugger should be able to inspect the
 program (these correspond to places the debugger stops when you "<tt>step</tt>"
 through it).  The front-end can choose to place these as fine-grained as it
-would like (for example, before every subexpression was evaluated), but it is
-recommended to only put them after every source statement.</p>
+would like (for example, before every subexpression evaluated), but it is
+recommended to only put them after every source statement that includes
+executable code.</p>
 
 <p>
 Using calls to this intrinsic function to demark legal points for the debugger
@@ -585,21 +740,22 @@ transformations, these calls simply look like calls to an external function,
 which they must assume to do anything (including reading or writing to any part
 of reachable memory).  On the other hand, it does not impact many optimizations,
 such as code motion of non-trapping instructions, nor does it impact
-optimization of subexpressions, or any other code between the stop points.</p>
+optimization of subexpressions, code duplication transformations, or basic-block
+reordering transformations.</p>
 
 <p>
 An important aspect of the calls to the <tt>%llvm.dbg.stoppoint</tt> intrinsic
 is that the function-local debugging information is woven together with use-def
 chains.  This makes it easy for the debugger to, for example, locate the 'next'
-stop point.  For a concrete example of stop points, see <a
-href="#impl_common_lifetime">the next section</a>.</p>
+stop point.  For a concrete example of stop points, see the example in <a
+href="#format_common_lifetime">the next section</a>.</p>
 
 </div>
 
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="impl_common_lifetime">Object lifetimes and scoping</a>
+  <a name="format_common_lifetime">Object lifetimes and scoping</a>
 </div>
 
 <div class="doc_text">
@@ -642,25 +798,25 @@ void %foo() {
     %X = alloca int
     %Y = alloca int
     %Z = alloca int
-    <a name="#icl_ex_D1">%D1</a> = call {}* %llvm.dbg.func.start(<a href="#impl_common_globals">%lldb.global</a>* %d.foo)
-    %D2 = call {}* <a href="#impl_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D1, uint 2, uint 2, <a href="#impl_common_source_files">%lldb.compile_unit</a>* %file)
+    <a name="#icl_ex_D1">%D1</a> = call {}* %llvm.dbg.func.start(<a href="#format_program_objects">%lldb.global</a>* %d.foo)
+    %D2 = call {}* <a href="#format_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D1, uint 2, uint 2, <a href="#format_common_source_files">%lldb.compile_unit</a>* %file)
 
     %D3 = call {}* %llvm.dbg.DEFINEVARIABLE({}* %D2, ...)
     <i>;; Evaluate expression on line 2, assigning to X.</i>
-    %D4 = call {}* <a href="#impl_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D3, uint 3, uint 2, <a href="#impl_common_source_files">%lldb.compile_unit</a>* %file)
+    %D4 = call {}* <a href="#format_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D3, uint 3, uint 2, <a href="#format_common_source_files">%lldb.compile_unit</a>* %file)
 
     %D5 = call {}* %llvm.dbg.DEFINEVARIABLE({}* %D4, ...)
     <i>;; Evaluate expression on line 3, assigning to Y.</i>
-    %D6 = call {}* <a href="#impl_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D5, uint 5, uint 4, <a href="#impl_common_source_files">%lldb.compile_unit</a>* %file)
+    %D6 = call {}* <a href="#format_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D5, uint 5, uint 4, <a href="#format_common_source_files">%lldb.compile_unit</a>* %file)
 
     <a name="#icl_ex_D1">%D7</a> = call {}* %llvm.region.start({}* %D6)
     %D8 = call {}* %llvm.dbg.DEFINEVARIABLE({}* %D7, ...)
     <i>;; Evaluate expression on line 5, assigning to Z.</i>
-    %D9 = call {}* <a href="#impl_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D8, uint 6, uint 4, <a href="#impl_common_source_files">%lldb.compile_unit</a>* %file)
+    %D9 = call {}* <a href="#format_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D8, uint 6, uint 4, <a href="#format_common_source_files">%lldb.compile_unit</a>* %file)
 
     <i>;; Code for line 6.</i>
     %D10 = call {}* %llvm.region.end({}* %D9)
-    %D11 = call {}* <a href="#impl_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D10, uint 8, uint 2, <a href="#impl_common_source_files">%lldb.compile_unit</a>* %file)
+    %D11 = call {}* <a href="#format_common_stoppoint">%llvm.dbg.stoppoint</a>({}* %D10, uint 8, uint 2, <a href="#format_common_source_files">%lldb.compile_unit</a>* %file)
 
     <i>;; Code for line 8.</i>
     <a name="#icl_ex_D1">%D12</a> = call {}* %llvm.region.end({}* %D11)
@@ -672,7 +828,7 @@ void %foo() {
 This example illustrates a few important details about the LLVM debugging
 information.  In particular, it shows how the various intrinsics used are woven
 together with def-use and use-def chains, similar to how <a
-href="#impl_common_anchors">anchors</a> are used with globals.  This allows the
+href="#format_common_anchors">anchors</a> are used with globals.  This allows the
 debugger to analyze the relationship between statements, variable definitions,
 and the code used to implement the function.</p>
 
@@ -681,21 +837,24 @@ In this example, two explicit regions are defined, one with the <a
 href="#icl_ex_D1">definition of the <tt>%D1</tt> variable</a> and one with the
 <a href="#icl_ex_D7">definition of <tt>%D7</tt></a>.  In the case of
 <tt>%D1</tt>, the debug information indicates that the function whose <a
-href="#impl_common_globals">descriptor</a> is specified as an argument to the
+href="#format_program_objects">descriptor</a> is specified as an argument to the
 intrinsic.  This defines a new stack frame whose lifetime ends when the region
 is ended by <a href="#icl_ex_D12">the <tt>%D12</tt> call</a>.</p>
 
 <p>
-Representing the boundaries of functions with regions allows normal LLVM
-interprocedural optimizations to change the boundaries of functions without
-having to worry about breaking mapping information between LLVM and source-level
-functions.  In particular, the inlining optimization requires no modification to
-support inlining with debugging information: there is no correlation drawn
-between LLVM functions and their source-level counterparts.</p>
+Using regions to represent the boundaries of source-level functions allow LLVM
+interprocedural optimizations to arbitrarily modify LLVM functions without
+having to worry about breaking mapping information between the LLVM code and the
+and source-level program.  In particular, the inliner requires no modification
+to support inlining with debugging information: there is no explicit correlation
+drawn between LLVM functions and their source-level counterparts (note however,
+that if the inliner inlines all instances of a non-strong-linkage function into
+its caller that it will not be possible for the user to manually invoke the
+inlined function from the debugger).</p>
 
 <p>
 Once the function has been defined, the <a
-href="#impl_common_stoppoint">stopping point</a> corresponding to line #2 of the
+href="#format_common_stoppoint">stopping point</a> corresponding to line #2 of the
 function is encountered.  At this point in the function, <b>no</b> local
 variables are live.  As lines 2 and 3 of the example are executed, their
 variable definitions are automatically introduced into the program, without the
@@ -708,10 +867,9 @@ introduced because they go out of scope at the same point in the program: line
 In contrast, the <tt>Z</tt> variable goes out of scope at a different time, on
 line 7.  For this reason, it is defined within <a href="#icl_ex_D7">the
 <tt>%D7</tt> region</a>, which kills the availability of <tt>Z</tt> before the
-code for line 8 is executed.  Through the use of LLVM debugger regions,
-arbitrary source-language scoping rules can be supported, as long as they can
-only be nested (ie, one scope cannot partially overlap with a part of another
-scope).
+code for line 8 is executed.  In this way, regions can support arbitrary
+source-language scoping rules, as long as they can only be nested (ie, one scope
+cannot partially overlap with a part of another scope).
 </p>
 
 <p>
@@ -719,7 +877,7 @@ It is worth noting that this scoping mechanism is used to control scoping of all
 declarations, not just variable declarations.  For example, the scope of a C++
 using declaration is controlled with this, and the <tt>llvm-db</tt> C++ support
 routines could use this to change how name lookup is performed (though this is
-not yet implemented).
+not implemented yet).
 </p>
 
 </div>
@@ -727,41 +885,46 @@ not yet implemented).
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="impl_common_descriptors">Object descriptor formats</a>
+  <a name="format_common_descriptors">Object descriptor formats</a>
 </div>
 
 <div class="doc_text">
 <p>
-The LLVM debugger expects the descriptors for global objects to start in a
+The LLVM debugger expects the descriptors for program objects to start in a
 canonical format, but the descriptors can include additional information
-appended at the end.  All LLVM debugging information is versioned, allowing
-backwards compatibility in the case that the core structures need to change in
-some way.  The lowest-level descriptor are those describing <a
-href="#impl_common_source_files">the files containing the program source
-code</a>, all other descriptors refer to them.
+appended at the end that is source-language specific.  All LLVM debugging
+information is versioned, allowing backwards compatibility in the case that the
+core structures need to change in some way.  Also, all debugging information
+objects start with a <a href="#format_common_tags">tag</a> to indicate what type
+of object it is.  The source-language is allows to define its own objects, by
+using unreserved tag numbers.</p>
+
+<p>The lowest-level descriptor are those describing <a
+href="#format_common_source_files">the files containing the program source
+code</a>, as most other descriptors (sometimes indirectly) refer to them.
 </p>
 </div>
 
 
 <!----------------------------------------------------------------------------->
 <div class="doc_subsubsection">
-  <a name="impl_common_source_files">Representation of source files</a>
+  <a name="format_common_source_files">Representation of source files</a>
 </div>
 
 <div class="doc_text">
 <p>
-Source file descriptors were roughly patterned after the Dwarf "compile_unit"
-object.  The descriptor currently is defined to have the following LLVM
-type:</p>
+Source file descriptors are patterned after the Dwarf "compile_unit" object.
+The descriptor currently is defined to have at least the following LLVM
+type entries:</p>
 
 <p><pre>
 %lldb.compile_unit = type {
+       uint,                 <i>;; Tag: <a href="#tag_compile_unit">LLVM_COMPILE_UNIT</a></i>
        ushort,               <i>;; LLVM debug version number</i>
        ushort,               <i>;; Dwarf language identifier</i>
        sbyte*,               <i>;; Filename</i>
        sbyte*,               <i>;; Working directory when compiled</i>
-       sbyte*,               <i>;; Producer of the debug information</i>
-       {}*                   <i>;; Anchor for llvm.dbg.translation_units</i>
+       sbyte*                <i>;; Producer of the debug information</i>
 }
 </pre></p>
 
@@ -770,13 +933,16 @@ These descriptors contain the version number for the debug info, a source
 language ID for the file (we use the Dwarf 3.0 ID numbers, such as
 <tt>DW_LANG_C89</tt>, <tt>DW_LANG_C_plus_plus</tt>, <tt>DW_LANG_Cobol74</tt>,
 etc), three strings describing the filename, working directory of the compiler,
-and an identifier string for the compiler that produced it, and the <a
-href="#impl_common_anchors">anchor</a> for the descriptor.  Here is an example
+and an identifier string for the compiler that produced it.  Note that actual
+compile_unit declarations must also include an <a
+href="#format_common_anchors">anchor</a> to <tt>llvm.dbg.translation_units</tt>,
+but it is not specified where the anchor is to be located.  Here is an example
 descriptor:
 </p>
 
 <p><pre>
 %arraytest_source_file = internal constant %lldb.compile_unit {
+    <a href="#tag_compile_unit">uint 17</a>,                                                      ; Tag value
     ushort 0,                                                     ; Version #0
     ushort 1,                                                     ; DW_LANG_C89
     sbyte* getelementptr ([12 x sbyte]* %.str_1, long 0, long 0), ; filename
@@ -789,78 +955,126 @@ descriptor:
 %.str_3 = internal constant [12 x sbyte] c"llvmgcc 3.4\00"
 </pre></p>
 
+<p>
+Note that the LLVM constant merging pass should eliminate duplicate copies of
+the strings that get emitted to each translation unit, such as the producer.
+</p>
 
 </div>
 
 
 <!----------------------------------------------------------------------------->
 <div class="doc_subsubsection">
-  <a name="impl_common_globals">Representation of global objects</a>
+  <a name="format_program_objects">Representation of program objects</a>
 </div>
 
 <div class="doc_text">
 <p>
-The LLVM debugger needs to know what the source-language global objects, in
-order to build stack traces and other related activities.  Because
-source-languages have widly varying forms of global objects, the LLVM debugger
-only expects the following fields in the descriptor for each global:
+The LLVM debugger needs to know about some source-language program objects, in
+order to build stack traces, print information about local variables, and other
+related activities.  The LLVM debugger differentiates between three different
+types of program objects: subprograms (functions, messages, methods, etc),
+variables (locals and globals), and others.  Because source-languages have
+widely varying forms of these objects, the LLVM debugger expects only a few
+fields in the descriptor for each object:
 </p>
 
 <p><pre>
-%lldb.global = type {
-       <a href="#impl_common_source_files">%lldb.compile_unit</a>*,   <i>;; The translation unit containing the global</i>
-       sbyte*,                <i>;; The global object 'name'</i>
-       [type]*,               <i>;; Source-language type descriptor for global</i>
-       {}*                    <i>;; The anchor for llvm.dbg.globals</i>
+%lldb.object = type {
+       uint,                  <i>;; <a href="#format_common_tag">A tag</a></i>
+       <i>any</i>*,                  <i>;; The <a href="#format_common_object_contexts">context</a> for the object</i>
+       sbyte*                 <i>;; The object 'name'</i>
 }
 </pre></p>
 
 <p>
-The first field contains a pointer to the translation unit the function is
-defined in.  This pointer allows the debugger to find out which version of debug
-information the function corresponds to.  The second field contains a string
-that the debugger can use to identify the subprogram if it does not contain
-explicit support for the source-language in use.  This should be some sort of
-unmangled string that corresponds to the function somehow.
+The first field contains a tag for the descriptor.  The second field contains
+either a pointer to the descriptor for the containing <a
+href="#format_common_source_files">source file</a>, or it contains a pointer to
+another program object whose context pointer eventually reaches a source file.
+Through this <a href="#format_common_object_contexts">context</a> pointer, the
+LLVM debugger can establish the debug version number of the object.</p>
+
+<p>
+The third field contains a string that the debugger can use to identify the
+object if it does not contain explicit support for the source-language in use
+(ie, the 'unknown' source language handler uses this string).  This should be
+some sort of unmangled string that corresponds to the object, but it is a
+quality of implementation issue what exactly it contains (it is legal, though
+not useful, for all of these strings to be null).
 </p>
 
 <p>
 Note again that descriptors can be extended to include source-language-specific
 information in addition to the fields required by the LLVM debugger.  See the <a
-href="#impl_ccxx_descriptors">section on the C/C++ front-end</a> for more
-information.
-</p>
-</div>
-
-
-
-<!----------------------------------------------------------------------------->
-<div class="doc_subsubsection">
-  <a name="impl_common_localvars">Representation of local variables</a>
-</div>
-
-<div class="doc_text">
-<p>
+href="#ccxx_descriptors">section on the C/C++ front-end</a> for more
+information.  Also remember that global objects (functions, selectors, global
+variables, etc) must contain an <a href="format_common_anchors">anchor</a> to
+the <tt>llvm.dbg.globals</tt> variable.
 </p>
 </div>
 
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="impl_common_intrinsics">Other intrinsic functions</a>
+  <a name="format_common_object_contexts">Program object contexts</a>
 </div>
 
 <div class="doc_text">
+<p><pre>
+Allow source-language specific contexts, use to identify namespaces etc
+Must end up in a source file descriptor.
+Debugger core ignores all unknown context objects.
+</pre></p>
+</div>
+
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="format_common_intrinsics">Debugger intrinsic functions</a>
+</div>
+
+<div class="doc_text">
+<p><pre>
+Define each intrinsics, as an extension of the language reference manual.
+
+llvm.dbg.stoppoint
+llvm.dbg.region.start
+llvm.dbg.region.end
+llvm.dbg.function.start
+llvm.dbg.declare
+</pre></p>
+</div>
+
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="format_common_tags">Values for debugger tags</a>
+</div>
+
+<div class="doc_text">
+
 <p>
+Happen to be the same value as the similarly named Dwarf-3 tags, this may change
+in the future.
+</p>
 
 </p>
+<p><pre>
+  <a name="tag_compile_unit">LLVM_COMPILE_UNIT</a>     : 17
+  <a name="tag_subprogram">LLVM_SUBPROGRAM</a>       : 46
+  <a name="tag_variable">LLVM_VARIABLE</a>         : 52
+<!--  <a name="tag_formal_parameter">LLVM_FORMAL_PARAMETER :  5-->
+</pre></p>
 </div>
 
 
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="impl_ccxx">C/C++ front-end specific debug information</a>
+  <a name="ccxx_frontend">C/C++ front-end specific debug information</a>
 </div>
 
 <div class="doc_text">
@@ -871,18 +1085,32 @@ that is effectively identical to <a
 href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3.0</a> in terms of
 information content.  This allows code generators to trivially support native
 debuggers by generating standard dwarf information, and contains enough
-information for non-dwarf targets to translate it other as needed.</p>
+information for non-dwarf targets to translate it as needed.</p>
 
 <p>
-TODO: document extensions to standard debugging objects, document how we
-represent source types, etc.
+The basic debug information required by the debugger is (intentionally) designed
+to be as minimal as possible.  This basic information is so minimal that it is
+unlikely that <b>any</b> source-language could be adequately described by it.
+Because of this, the debugger format was designed for extension to support
+source-language-specific information.  The extended descriptors are read and
+interpreted by the <a href="#arch_info">language-specific</a> modules in the
+debugger if there is support available, otherwise it is ignored.
+</p>
+
+<p>
+This section describes the extensions used to represent C and C++ programs.
+Other languages could pattern themselves after this (which itself is tuned to
+representing programs in the same way that Dwarf 3 does), or they could choose
+to provide completely different extensions if they don't fit into the Dwarf
+model.  As support for debugging information gets added to the various LLVM
+source-language front-ends, the information used should be documented here.
 </p>
 
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="impl_ccxx_descriptors">Object Descriptor Formats</a>
+  <a name="ccxx_pse">Program Scope Entries</a>
 </div>
 
 <div class="doc_text">
@@ -891,6 +1119,41 @@ represent source types, etc.
 </p>
 </div>
 
+<!----------------------------------------------------------------------------->
+<div class="doc_subsubsection">
+  <a name="ccxx_compilation_units">Compilation unit entries</a>
+</div>
+
+<div class="doc_text">
+<p>
+Translation units do not add any information over the standard <a
+href="#format_common_source_files">source file representation</a> already
+expected by the debugger.  As such, it uses descriptors of the type specified,
+with a trailing <a href="#format_common_anchors">anchor</a>.
+</p>
+</div>
+
+<!----------------------------------------------------------------------------->
+<div class="doc_subsubsection">
+  <a name="ccxx_modules">Module, namespace, and importing entries</a>
+</div>
+
+<div class="doc_text">
+<p>
+
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ccxx_dataobjects">Data objects (program variables)</a>
+</div>
+
+<div class="doc_text">
+<p>
+
+</p>
+</div>
 
 
 <!-- *********************************************************************** -->

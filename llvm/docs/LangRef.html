@@ -95,6 +95,7 @@
           <li><a href="#i_va_copy">'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
         </ol>
       </li>
+      <li><a href="#int_debugger">Debugger intrinsics</a>
     </ol>
   </li>
 </ol>
@@ -1587,9 +1588,11 @@ an argument.</p>
 <p>See the <a href="#int_varargs">variable argument processing</a>
 section.</p>
 </div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="intrinsics">Intrinsic Functions</a> </div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
 <p>LLVM supports the notion of an "intrinsic function".  These
 functions have well known names and semantics, and are required to
@@ -1609,9 +1612,12 @@ required that they all be documented here if any are added.</p>
 lowering pass to eliminate the intrinsic or all backends must support
 the intrinsic function.</p>
 </div>
+
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="int_varargs">Variable Argument
-Handling Intrinsics</a> </div>
+<div class="doc_subsection">
+  <a name="int_varargs">Variable Argument Handling Intrinsics</a>
+</div>
+
 <div class="doc_text">
 <p>Variable argument support is defined in LLVM with the <a
  href="#i_vanext"><tt>vanext</tt></a> instruction and these three
@@ -1631,9 +1637,13 @@ used.</p>
  href="#i_va_end">llvm.va_end</a>(sbyte* %aq)<br><br>  ; Stop processing of arguments.<br>  call void %<a
  href="#i_va_end">llvm.va_end</a>(sbyte* %ap2)<br>  ret int %tmp<br>}<br></pre>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_va_start">'<tt>llvm.va_start</tt>'
-Intrinsic</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
+</div>
+
+
 <div class="doc_text">
 <h5>Syntax:</h5>
 <pre>  call va_list ()* %llvm.va_start()<br></pre>
@@ -1650,9 +1660,12 @@ last argument of the function, the compiler can figure that out.</p>
 <p>Note that this intrinsic function is only legal to be called from
 within the body of a variable argument function.</p>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_va_end">'<tt>llvm.va_end</tt>'
-Intrinsic</a> </div>
+<div class="doc_subsubsection">
+ <a name="i_va_end">'<tt>llvm.va_end</tt>' Intrinsic</a>
+</div>
+
 <div class="doc_text">
 <h5>Syntax:</h5>
 <pre>  call void (va_list)* %llvm.va_end(va_list &lt;arglist&gt;)<br></pre>
@@ -1669,9 +1682,12 @@ Calls to <a href="#i_va_start"><tt>llvm.va_start</tt></a> and <a
  href="#i_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly
 with calls to <tt>llvm.va_end</tt>.</p>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_va_copy">'<tt>llvm.va_copy</tt>'
-Intrinsic</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_va_copy">'<tt>llvm.va_copy</tt>' Intrinsic</a>
+</div>
+
 <div class="doc_text">
 <h5>Syntax:</h5>
 <pre>  call va_list (va_list)* %llvm.va_copy(va_list &lt;destarglist&gt;)<br></pre>
@@ -1687,6 +1703,23 @@ element into the returned list.  This intrinsic is necessary because the <tt><a
  href="i_va_start">llvm.va_start</a></tt> intrinsic may be arbitrarily
 complex and require memory allocation, for example.</p>
 </div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_debugger">Debugger Intrinsics</a>
+</div>
+
+<div class="doc_text">
+<p>
+The LLVM debugger intrinsics (which all start with <tt>llvm.dbg.</tt> prefix),
+are described in the <a
+href="SourceLevelDebugging.html#format_common_intrinsics">LLVM Source Level
+Debugging</a> document.
+</p>
+</div>
+
+
 <!-- *********************************************************************** -->
 <hr>
 <div class="doc_footer">
