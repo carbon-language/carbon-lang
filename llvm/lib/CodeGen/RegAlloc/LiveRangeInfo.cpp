@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "llvm/Function.h"
 #include "Support/SetOperations.h"
 using std::cerr;
@@ -354,7 +355,8 @@ void LiveRangeInfo::coalesceLRs()
 	    if (LROfUse == LROfDef)     // nothing to merge if they are same
 	      continue;
 
-	    if (MRI.getRegType(LROfDef) == MRI.getRegType(LROfUse)) {
+	    if (MRI.getRegTypeForLR(LROfDef) ==
+                MRI.getRegTypeForLR(LROfUse)) {
 	      // If the two RegTypes are the same
 	      if (!RCOfDef->getInterference(LROfDef, LROfUse) ) {
 

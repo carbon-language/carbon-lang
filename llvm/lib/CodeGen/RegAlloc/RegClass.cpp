@@ -7,6 +7,7 @@
 #include "RegClass.h"
 #include "RegAllocCommon.h"
 #include "llvm/CodeGen/IGNode.h"
+#include "llvm/Target/TargetRegInfo.h"
 using std::cerr;
 
 //----------------------------------------------------------------------------
@@ -14,14 +15,15 @@ using std::cerr;
 // createInterferenceGraph() above.
 //----------------------------------------------------------------------------
 RegClass::RegClass(const Function *M, 
-		   const TargetRegClassInfo *Mrc,
-		   const ReservedColorListType *RCL)
-                  :  Meth(M), MRC(Mrc), RegClassID( Mrc->getRegClassID() ),
-                     IG(this), IGNodeStack(), ReservedColorList(RCL) {
+                   const TargetRegInfo *_MRI_,
+		   const TargetRegClassInfo *_MRC_)
+                  :  Meth(M), MRI(_MRI_), MRC(_MRC_),
+                     RegClassID( _MRC_->getRegClassID() ),
+                     IG(this), IGNodeStack() {
   if( DEBUG_RA >= RA_DEBUG_Interference)
     cerr << "Created Reg Class: " << RegClassID << "\n";
 
-  IsColorUsedArr.resize(Mrc->getNumOfAllRegs());
+  IsColorUsedArr.resize(MRC->getNumOfAllRegs());
 }
 
 
@@ -133,7 +135,7 @@ bool  RegClass::pushUnconstrainedIGNodes()
     if( IGNode->isOnStack() )
       continue;
                                         // if the degree of IGNode is lower
-    if( (unsigned) IGNode->getCurDegree()  < MRC->getNumOfAvailRegs() ) {   
+    if( (unsigned) IGNode->getCurDegree()  < MRC->getNumOfAvailRegs()) {
       IGNodeStack.push( IGNode );       // push IGNode on to the stack
       IGNode->pushOnStack();            // set OnStack and dec deg of neighs
 
@@ -205,17 +207,8 @@ void RegClass::colorIGNode(IGNode *const Node)
 
   if( ! Node->hasColor() )   {          // not colored as an arg etc.
    
-
     // init all elements of to  IsColorUsedAr  false;
-    //
-    for (unsigned  i=0; i < MRC->getNumOfAllRegs(); i++)
-      IsColorUsedArr[i] = false;
-    
-    // init all reserved_regs to true - we can't use them
-    //
-    for( unsigned i=0; i < ReservedColorList->size() ; i++) {  
-      IsColorUsedArr[(*ReservedColorList)[i]] = true;
-    }
+    clearColorsUsed();
 
     // initialize all colors used by neighbors of this node to true
     LiveRange *LR = Node->getParentLR();
@@ -224,15 +217,22 @@ void RegClass::colorIGNode(IGNode *const Node)
       IGNode *NeighIGNode = Node->getAdjIGNode(n);
       LiveRange *NeighLR = NeighIGNode->getParentLR();
       
-      if (NeighLR->hasColor()) {                        // if has a color
-        IsColorUsedArr[NeighLR->getColor()] = true;  // mark color as used
-      } else if (NeighLR->hasSuggestedColor() &&
-                 NeighLR->isSuggestedColorUsable()) {
-        // this color is suggested for the neighbour, so don't use it
-        IsColorUsedArr[NeighLR->getSuggestedColor()] = true; 
-      }
+      // Don't use a color if it is in use by the neighbour,
+      // or is suggested for use by the neighbour,
+      // markColorsUsed() should be given the color and the reg type for
+      // LR, not for NeighLR, because it should mark registers used based on
+      // the type we are looking for, not on the regType for the neighbour.
+      if (NeighLR->hasColor())
+        this->markColorsUsed(NeighLR->getColor(),
+                             MRI->getRegTypeForLR(NeighLR),
+                             MRI->getRegTypeForLR(LR));  // use LR, not NeighLR
+      else if (NeighLR->hasSuggestedColor() &&
+               NeighLR->isSuggestedColorUsable())
+        this->markColorsUsed(NeighLR->getSuggestedColor(),
+                             MRI->getRegTypeForLR(NeighLR),
+                             MRI->getRegTypeForLR(LR));  // use LR, not NeighLR
     }
-    
+
     // call the target specific code for coloring
     //
     MRC->colorIGNode(Node, IsColorUsedArr);

@@ -13,8 +13,6 @@
 #include <stack>
 class TargetRegClassInfo;
 
-typedef std::vector<unsigned> ReservedColorListType;
-
 
 //-----------------------------------------------------------------------------
 // Class RegClass
@@ -35,18 +33,14 @@ typedef std::vector<unsigned> ReservedColorListType;
 //-----------------------------------------------------------------------------
 class RegClass {
   const Function *const Meth;           // Function we are working on
-  const TargetRegClassInfo *const MRC; // corresponding MRC
+  const TargetRegInfo *MRI;             // Machine register information 
+  const TargetRegClassInfo *const MRC;  // Machine reg. class for this RegClass
   const unsigned RegClassID;            // my int ID
 
   InterferenceGraph IG;                 // Interference graph - constructed by
                                         // buildInterferenceGraph
   std::stack<IGNode *> IGNodeStack;     // the stack used for coloring
 
-  // ReservedColorList - for passing registers that are pre-allocated and cannot
-  // be used by the register allocator for this function.
-  //
-  const ReservedColorListType *const ReservedColorList;
-  
   // IsColorUsedArr - An array used for coloring each node. This array must be
   // of size MRC->getNumOfAllRegs(). Allocated once in the constructor for
   // efficiency.
@@ -65,18 +59,32 @@ class RegClass {
 
   void colorIGNode(IGNode *const Node);
 
+  // This directly marks the colors used by a particular register number
+  // within the register class.  External users should use the public
+  // versions of this function below.
+  inline void markColorUsed(unsigned classRegNum) {
+    assert(classRegNum < IsColorUsedArr.size() && "Invalid register used?");
+    IsColorUsedArr[classRegNum] = true;
+  }
+
+  inline bool isColorUsed(unsigned regNum) const {
+    assert(regNum < IsColorUsedArr.size() && "Invalid register used?");
+    return IsColorUsedArr[regNum];
+  }
 
  public:
 
   RegClass(const Function *M,
-	   const TargetRegClassInfo *MRC,
-	   const ReservedColorListType *RCL = 0);
+	   const TargetRegInfo *_MRI_,
+	   const TargetRegClassInfo *_MRC_);
 
   inline void createInterferenceGraph() { IG.createGraph(); }
 
   inline InterferenceGraph &getIG() { return IG; }
 
   inline const unsigned getID() const { return RegClassID; }
+
+  inline const TargetRegClassInfo* getTargetRegClass() const { return MRC; }
 
   // main method called for coloring regs
   //
@@ -105,8 +113,18 @@ class RegClass {
     { IG.mergeIGNodesOfLRs(LR1, LR2); }
 
 
-  inline std::vector<bool> &getIsColorUsedArr() { return IsColorUsedArr; }
-
+  inline void clearColorsUsed() {
+    IsColorUsedArr.clear();
+    IsColorUsedArr.resize(MRC->getNumOfAllRegs());
+  }
+  inline void markColorsUsed(unsigned ClassRegNum,
+                             int UserRegType,
+                             int RegTypeWanted) {
+    MRC->markColorsUsed(ClassRegNum, UserRegType, RegTypeWanted,IsColorUsedArr);
+  }
+  inline int getUnusedColor(int machineRegType) const {
+    return MRC->findUnusedColor(machineRegType, IsColorUsedArr);
+  }
 
   void printIGNodeList() const;
   void printIG();
