@@ -23802,7 +23802,7 @@ fi
 
 echo "$as_me:$LINENO: checking for shared library suffix" >&5
 echo $ECHO_N "checking for shared library suffix... $ECHO_C" >&6
-eval "SHLIBEXT=$shrext"
+eval "SHLIBEXT=$shrext_cmds"
 echo "$as_me:$LINENO: result: $SHLIBEXT" >&5
 echo "${ECHO_T}$SHLIBEXT" >&6
 SHLIBEXT=$SHLIBEXT
