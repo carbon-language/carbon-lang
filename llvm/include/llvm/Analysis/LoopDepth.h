@@ -19,7 +19,6 @@ public:
   static AnalysisID ID;            // cfg::LoopDepth Analysis ID 
 
   LoopDepthCalculator(AnalysisID id) { assert(id == ID); }
-  LoopDepthCalculator(Method *M);
 
   // This is a pass...
   bool runOnMethod(Method *M);
