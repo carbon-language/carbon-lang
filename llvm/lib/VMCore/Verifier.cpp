@@ -10,16 +10,16 @@
 // This file defines the function verifier interface, that can be used for some
 // sanity checking of input to the system.
 //
-// Note that this does not provide full 'java style' security and verifications,
-// instead it just tries to ensure that code is well formed.
+// Note that this does not provide full `Java style' security and verifications,
+// instead it just tries to ensure that code is well-formed.
 //
-//  * Both of a binary operator's parameters are the same type
+//  * Both of a binary operator's parameters are of the same type
 //  * Verify that the indices of mem access instructions match other operands
-//  * Verify that arithmetic and other things are only performed on first class
+//  * Verify that arithmetic and other things are only performed on first-class
 //    types.  Verify that shifts & logicals only happen on integrals f.e.
-//  . All of the constants in a switch statement are of the correct type
+//  * All of the constants in a switch statement are of the correct type
 //  * The code is in valid SSA form
-//  . It should be illegal to put a label into any other type (like a structure)
+//  * It should be illegal to put a label into any other type (like a structure)
 //    or to return one. [except constant arrays!]
 //  * Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
 //  * PHI nodes must have an entry for each predecessor, with no extras.
@@ -28,7 +28,7 @@
 //  * All basic blocks should only end with terminator insts, not contain them
 //  * The entry node to a function must not have predecessors
 //  * All Instructions must be embedded into a basic block
-//  . Function's cannot take a void typed parameter
+//  * Functions cannot take a void-typed parameter
 //  * Verify that a function's argument list agrees with it's declared type.
 //  * It is illegal to specify a name for a void value.
 //  * It is illegal to have a internal global value with no initializer
