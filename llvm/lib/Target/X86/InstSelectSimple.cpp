@@ -1628,6 +1628,7 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::frameaddress:
           case Intrinsic::memcpy:
           case Intrinsic::memset:
+          case Intrinsic::isnan:
           case Intrinsic::readport:
           case Intrinsic::writeport:
             // We directly implement these intrinsics
@@ -1636,19 +1637,19 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
             // On X86, memory operations are in-order.  Lower this intrinsic
             // into a volatile load.
             Instruction *Before = CI->getPrev();
-            LoadInst * LI = new LoadInst (CI->getOperand(1), "", true, CI);
-            CI->replaceAllUsesWith (LI);
-            BB->getInstList().erase (CI);
+            LoadInst * LI = new LoadInst(CI->getOperand(1), "", true, CI);
+            CI->replaceAllUsesWith(LI);
+            BB->getInstList().erase(CI);
             break;
           }
           case Intrinsic::writeio: {
             // On X86, memory operations are in-order.  Lower this intrinsic
             // into a volatile store.
             Instruction *Before = CI->getPrev();
-            StoreInst * LI = new StoreInst (CI->getOperand(1),
-                                            CI->getOperand(2), true, CI);
-            CI->replaceAllUsesWith (LI);
-            BB->getInstList().erase (CI);
+            StoreInst *LI = new StoreInst(CI->getOperand(1),
+                                          CI->getOperand(2), true, CI);
+            CI->replaceAllUsesWith(LI);
+            BB->getInstList().erase(CI);
             break;
           }
           default:
@@ -1656,12 +1657,11 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
             Instruction *Before = CI->getPrev();
             TM.getIntrinsicLowering().LowerIntrinsicCall(CI);
             if (Before) {        // Move iterator to instruction after call
-              I = Before;  ++I;
+              I = Before; ++I;
             } else {
               I = BB->begin();
             }
           }
-
 }
 
 void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
@@ -1696,6 +1696,19 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       // Values other than zero are not implemented yet.
       BuildMI(BB, X86::MOV32ri, 1, TmpReg1).addImm(0);
     }
+    return;
+
+  case Intrinsic::isnan:
+    TmpReg1 = getReg(CI.getOperand(1));
+    if (0) { // for processors prior to the P6
+      BuildMI(BB, X86::FpUCOM, 2).addReg(TmpReg1).addReg(TmpReg1);
+      BuildMI(BB, X86::FNSTSW8r, 0);
+      BuildMI(BB, X86::SAHF, 1);
+    } else {
+      BuildMI(BB, X86::FpUCOMI, 2).addReg(TmpReg1).addReg(TmpReg1);
+    }
+    TmpReg2 = getReg(CI);
+    BuildMI(BB, X86::SETPr, 0, TmpReg2);
     return;
 
   case Intrinsic::memcpy: {
