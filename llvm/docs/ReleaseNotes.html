@@ -77,18 +77,20 @@ includes a few new features, such as a simple profiler, support for Mac OS/X,
 better interoperability with external source bases, a new example language
 front-end, and improvements in a few optimizations.</p>
 
-<p>At this time, LLVM is known to correctly compile the C &amp; C++ SPEC CPU2000
-benchmarks with the C backend (X86 only), the Olden benchmarks, and the Ptrdist
-benchmarks.  It has also been used to compile
-<b>many</b> other programs.  LLVM now also works with a broad variety of
-C++ programs, though it has still received much less testing than the C
-front-end.
+<p>At this time, LLVM is known to correctly compile and run all non-unwinding C
+&amp; C++ SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist
+benchmarks.  It has also been used to compile <b>many</b> other programs.  LLVM
+now also works with a broad variety of C++ programs, though it has still
+received much less testing than the C front-end.
 </p>
 
 <p>
-Note that the Sparc and X86 backends do not currently support exception throwing
-or long jumping (including 253.perlbmk in SPEC).  For these programs, you must
-use the C backend.  Support for unwinding will be added in a future release.
+The LLVM native code generators are very stable, but do not currently support
+unwinding (exception throwing or <tt>longjmp</tt>ing), which prevent them from
+working with programs like the <tt>253.perlbmk</tt> in SPEC CPU2000.  The C
+backend and the rest of LLVM does support these programs however, so you can
+still use LLVM with them.  Support for unwinding will be added in a future
+release.
 </p>
 
 
