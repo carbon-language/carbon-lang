@@ -14,6 +14,7 @@
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Config/config.h"
 #include <iostream>
 
 using namespace llvm;
