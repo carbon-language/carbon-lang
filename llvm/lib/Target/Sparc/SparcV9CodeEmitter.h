@@ -3,12 +3,14 @@
 #ifndef SPARCV9CODEEMITTER_H
 #define SPARCV9CODEEMITTER_H
 
+#include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
 class SparcV9CodeEmitter : public MachineFunctionPass {
   MachineCodeEmitter &MCE;
+  BasicBlock *BB;
 
 public:
   SparcV9CodeEmitter(MachineCodeEmitter &M) : MCE(M) {}

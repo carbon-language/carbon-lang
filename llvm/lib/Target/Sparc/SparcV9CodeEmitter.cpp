@@ -30,8 +30,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineOperand &MO) {
   } else if (MO.isImmediate()) {
     return MO.getImmedValue();
   } else if (MO.isPCRelativeDisp()) {
-    // FIXME!!!
-    //return MO.getPCRelativeDisp();
+    MCE->saveBBreference(currBB, MO);
     return 0;
   } else {
     assert(0 && "Unknown type of MachineOperand");
@@ -55,6 +54,7 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void SparcV9CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
+  currBB = MBB.getBasicBlock();
   MCE.startBasicBlock(MBB);
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I)
     emitInstruction(**I);
