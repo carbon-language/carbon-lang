@@ -349,9 +349,22 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
         BuildMI (BB, V8::LDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
         break;
       }
+      case cDouble: {
+        // Double-fp args are passed in pairs of integer registers; go through
+        // memory to get them into FP registers. (Double bleh!)
+        unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+          .addReg (IncomingArgRegs[ArgOffset]);
+        ++ArgOffset;
+        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4)
+          .addReg (IncomingArgRegs[ArgOffset]);
+        BuildMI (BB, V8::LDDFri, 2, Reg).addFrameIndex (FI).addSImm (0);
+        break;
+      }
       default:
-        // FIXME: handle cDouble, cLong
-        assert (0 && "64-bit (double, long, etc.) function args not handled");
+        // FIXME: handle cLong
+        assert (0 && "64-bit int (long/ulong) function args not handled");
         return;
       }
 
