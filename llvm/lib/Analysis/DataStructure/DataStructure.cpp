@@ -2077,12 +2077,18 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
   unsigned N2Size = N2->getSize();
   if (N2Size == 0) return;   // No edges to map to.
 
-  for (unsigned i = 0, e = N1->getSize(); i < e; i += DS::PointerSize)
-    if (unsigned(N2Idx)+i < N2Size)
-      computeNodeMapping(N1->getLink(i), N2->getLink(N2Idx+i), NodeMap);
-    else
-      computeNodeMapping(N1->getLink(i),
-                         N2->getLink(unsigned(N2Idx+i) % N2Size), NodeMap);
+  for (unsigned i = 0, e = N1->getSize(); i < e; i += DS::PointerSize) {
+    const DSNodeHandle &N1NH = N1->getLink(i);
+    // Don't call N2->getLink if not needed (avoiding crash if N2Idx is not
+    // aligned right).
+    if (!N1NH.isNull()) {
+      if (unsigned(N2Idx)+i < N2Size)
+        computeNodeMapping(N1NH, N2->getLink(N2Idx+i), NodeMap);
+      else
+        computeNodeMapping(N1NH,
+                           N2->getLink(unsigned(N2Idx+i) % N2Size), NodeMap);
+    }
+  }
 }
 
 
