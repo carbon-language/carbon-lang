@@ -134,7 +134,6 @@ public:
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return Val.Unsigned == 0; }
-  virtual bool isAllOnesValue() const { return Val.Signed == -1; }
   virtual bool isMaxValue() const = 0;
   virtual bool isMinValue() const = 0;
 
@@ -164,6 +163,8 @@ public:
 
   /// getValue - return the underlying value of this constant.
   inline int64_t getValue() const { return Val.Signed; }
+
+  virtual bool isAllOnesValue() const { return getValue() == -1; }
 
   /// isMaxValue - Return true if this is the largest value that may be
   /// represented by this type.
@@ -214,6 +215,7 @@ public:
   /// isMaxValue - Return true if this is the largest value that may be
   /// represented by this type.
   ///
+  virtual bool isAllOnesValue() const;
   virtual bool isMaxValue() const { return isAllOnesValue(); }
   virtual bool isMinValue() const { return getValue() == 0; }
 

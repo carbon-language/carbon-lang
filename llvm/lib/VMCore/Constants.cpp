@@ -173,6 +173,13 @@ ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
   }
 }
 
+bool ConstantUInt::isAllOnesValue() const {
+  unsigned TypeBits = getType()->getPrimitiveSize()*8;
+  uint64_t Val = ~0ULL;                // All ones
+  Val >>= 64-TypeBits;                 // Shift out inappropriate bits
+  return getValue() == Val;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                            ConstantXXX Classes
