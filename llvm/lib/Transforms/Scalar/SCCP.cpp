@@ -285,7 +285,7 @@ bool SCCP::runOnFunction(Function *F) {
     }
   }
 
-#ifdef 0
+#if 0
   for (Function::iterator BBI = F->begin(), BBEnd = F->end();
        BBI != BBEnd; ++BBI)
     if (!BBExecutable.count(*BBI))
