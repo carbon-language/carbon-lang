@@ -10,13 +10,13 @@
 //    with the same name as something in the symbol table, but with a different
 //    address as what is in the symbol table...
 //  . Both of a binary operator's parameters are the same type
-//  . Only PHI nodes can refer to themselves
 //  . All of the constants in a switch statement are of the correct type
 //  . The code is in valid SSA form
 //  . It should be illegal to put a label into any other type (like a structure)
 //    or to return one. [except constant arrays!]
 //  . Right now 'add bool 0, 0' is valid.  This isn't particularly good.
 //  . Only phi nodes can be self referential: 'add int 0, 0 ; <int>:0' is bad
+//  . PHI nodes must have an entry for each predecessor, with no extras.
 //  . All other things that are tested by asserts spread about the code...
 //  . All basic blocks should only end with terminator insts, not contain them
 //  . All methods must have >= 1 basic block
