@@ -736,7 +736,7 @@ void SparcV9AsmPrinter::emitFunction(const Function &F) {
 
   enterSection(AsmPrinter::ReadOnlyData);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    std::string cpiName = ".CPI_" + F.getName() + "_" + utostr(i);
+    std::string cpiName = ".CPI_" + methName + "_" + utostr(i);
     printConstant(CP[i], cpiName);
   }
 
