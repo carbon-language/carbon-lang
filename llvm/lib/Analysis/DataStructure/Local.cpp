@@ -86,9 +86,9 @@ namespace {
   private:
     // Visitor functions, used to handle each instruction type we encounter...
     friend class InstVisitor<GraphBuilder>;
-    void visitMallocInst(MallocInst &MI) { handleAlloc(MI, DSNode::HeapNode); }
-    void visitAllocaInst(AllocaInst &AI) { handleAlloc(AI, DSNode::AllocaNode);}
-    void handleAlloc(AllocationInst &AI, DSNode::NodeTy NT);
+    void visitMallocInst(MallocInst &MI) { handleAlloc(MI, true); }
+    void visitAllocaInst(AllocaInst &AI) { handleAlloc(AI, false); }
+    void handleAlloc(AllocationInst &AI, bool isHeap);
 
     void visitPHINode(PHINode &PN);
 
@@ -108,8 +108,8 @@ namespace {
     /// createNode - Create a new DSNode, ensuring that it is properly added to
     /// the graph.
     ///
-    DSNode *createNode(DSNode::NodeTy NodeType, const Type *Ty = 0) {
-      DSNode *N = new DSNode(NodeType, Ty, &G);   // Create the node
+    DSNode *createNode(const Type *Ty = 0) {
+      DSNode *N = new DSNode(Ty, &G);   // Create the node
       if (DisableFieldSensitivity) {
         N->foldNodeCompletely();
         if (DSNode *FN = N->getForwardNode())
@@ -194,7 +194,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
         NH = I->second;
       } else {
         // This returns a conservative unknown node for any unhandled ConstExpr
-        return NH = createNode(DSNode::UnknownNode);
+        return NH = createNode()->setUnknownNodeMarker();
       }
       if (NH.getNode() == 0) {  // (getelementptr null, X) returns null
         ScalarMap.erase(V);
@@ -204,7 +204,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
 
     } else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C)) {
       // Random constants are unknown mem
-      return NH = createNode(DSNode::UnknownNode);
+      return NH = createNode()->setUnknownNodeMarker();
     } else {
       assert(0 && "Unknown constant type!");
     }
@@ -213,11 +213,11 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
   DSNode *N;
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // Create a new global node for this global variable...
-    N = createNode(DSNode::GlobalNode, GV->getType()->getElementType());
+    N = createNode(GV->getType()->getElementType());
     N->addGlobal(GV);
   } else {
     // Otherwise just create a shadow node
-    N = createNode(DSNode::ShadowNode);
+    N = createNode();
   }
 
   NH.setNode(N);      // Remember that we are pointing to it...
@@ -237,7 +237,7 @@ DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
   DSNodeHandle &Link = Node.getLink(LinkNo);
   if (!Link.getNode()) {
     // If the link hasn't been created yet, make and return a new shadow node
-    Link = createNode(DSNode::ShadowNode);
+    Link = createNode();
   }
   return Link;
 }
@@ -263,8 +263,13 @@ void GraphBuilder::setDestTo(Value &V, const DSNodeHandle &NH) {
 /// Alloca & Malloc instruction implementation - Simply create a new memory
 /// object, pointing the scalar to it.
 ///
-void GraphBuilder::handleAlloc(AllocationInst &AI, DSNode::NodeTy NodeType) {
-  setDestTo(AI, createNode(NodeType));
+void GraphBuilder::handleAlloc(AllocationInst &AI, bool isHeap) {
+  DSNode *N = createNode();
+  if (isHeap)
+    N->setHeapNodeMarker();
+  else
+    N->setAllocaNodeMarker();
+  setDestTo(AI, N);
 }
 
 // PHINode - Make the scalar for the PHI node point to all of the things the
@@ -368,7 +373,7 @@ void GraphBuilder::visitLoadInst(LoadInst &LI) {
   if (Ptr.getNode() == 0) return;
 
   // Make that the node is read from...
-  Ptr.getNode()->NodeType |= DSNode::Read;
+  Ptr.getNode()->setReadMarker();
 
   // Ensure a typerecord exists...
   Ptr.getNode()->mergeTypeInfo(LI.getType(), Ptr.getOffset(), false);
@@ -383,7 +388,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
   if (Dest.getNode() == 0) return;
 
   // Mark that the node is written to...
-  Dest.getNode()->NodeType |= DSNode::Modified;
+  Dest.getNode()->setModifiedMarker();
 
   // Ensure a typerecord exists...
   Dest.getNode()->mergeTypeInfo(StoredTy, Dest.getOffset());
@@ -426,8 +431,9 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {
   // Mark that the node is written to...
-  getValueDest(*FI.getOperand(0)).getNode()->NodeType
-    |= DSNode::Modified | DSNode::HeapNode;
+  DSNode *N = getValueDest(*FI.getOperand(0)).getNode();
+  N->setModifiedMarker();
+  N->setHeapNodeMarker();
 }
 
 /// Handle casts...
@@ -441,7 +447,7 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
       // to track the fact that the node points to SOMETHING, just something we
       // don't know about.  Make an "Unknown" node.
       //
-      setDestTo(CI, createNode(DSNode::UnknownNode));
+      setDestTo(CI, createNode()->setUnknownNodeMarker());
     }
 }
 
@@ -458,7 +464,7 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
       CurNode.mergeWith(getValueDest(**I));
 
   if (CurNode.getNode())
-    CurNode.getNode()->NodeType |= DSNode::UnknownNode;
+    CurNode.getNode()->setUnknownNodeMarker();
 }
 
 

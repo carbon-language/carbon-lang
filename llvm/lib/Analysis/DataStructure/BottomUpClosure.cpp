@@ -33,7 +33,7 @@ static bool isVAHackFn(const Function *F) {
 // if the call sites are not external.
 //
 static inline bool isCompleteNode(DSNode *N) {
-  if (N->NodeType & DSNode::Incomplete) return false;
+  if (N->isIncomplete()) return false;
   const std::vector<GlobalValue*> &Callees = N->getGlobals();
   for (unsigned i = 0, e = Callees.size(); i != e; ++i)
     if (Callees[i]->isExternal())

@@ -49,8 +49,8 @@ DSNode *DSNodeHandle::HandleForwarding() const {
 // DSNode Implementation
 //===----------------------------------------------------------------------===//
 
-DSNode::DSNode(unsigned NT, const Type *T, DSGraph *G)
-  : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(NT) {
+DSNode::DSNode(const Type *T, DSGraph *G)
+  : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(0) {
   // Add the type entry if it is specified...
   if (T) mergeTypeInfo(T, 0);
   G->getNodes().push_back(this);
@@ -68,6 +68,12 @@ void DSNode::assertOK() const {
           Ty == Type::VoidTy && (Size == 0 ||
                                  (NodeType & DSNode::Array))) &&
          "Node not OK!");
+
+  // Check to ensure that the multiobject constraints are met...
+  unsigned Comp = NodeType & DSNode::Composition;
+  assert((NodeType & DSNode::MultiObject) || 
+         Comp == 0 || Comp == DSNode::AllocaNode || Comp == DSNode::HeapNode ||
+         Comp == DSNode::GlobalNode || Comp == DSNode::UnknownNode);
 }
 
 /// forwardNode - Mark this node as being obsolete, and all references to it
@@ -97,6 +103,8 @@ void DSNode::addGlobal(GlobalValue *GV) {
   if (I == Globals.end() || *I != GV) {
     //assert(GV->getType()->getElementType() == Ty);
     Globals.insert(I, GV);
+    if (NodeType & DSNode::Composition)
+      NodeType |= DSNode::MultiObject;
     NodeType |= GlobalNode;
   }
 }
@@ -112,7 +120,8 @@ void DSNode::foldNodeCompletely() {
   ++NumFolds;
 
   // Create the node we are going to forward to...
-  DSNode *DestNode = new DSNode(NodeType|DSNode::Array, 0, ParentGraph);
+  DSNode *DestNode = new DSNode(0, ParentGraph);
+  DestNode->NodeType = NodeType|DSNode::Array;
   DestNode->Ty = Type::VoidTy;
   DestNode->Size = 1;
   DestNode->Globals.swap(Globals);
@@ -446,7 +455,7 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
   // Merge the type entries of the two nodes together...
   if (NH.getNode()->Ty != Type::VoidTy)
     CurNodeH.getNode()->mergeTypeInfo(NH.getNode()->Ty, NOffset);
-  assert((CurNodeH.getNode()->NodeType & DSNode::DEAD) == 0);
+  assert(!CurNodeH.getNode()->isDeadNode());
 
   // If we are merging a node with a completely folded node, then both nodes are
   // now completely folded.
@@ -471,12 +480,17 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
 
   DSNode *N = NH.getNode();
   if (CurNodeH.getNode() == N || N == 0) return;
-  assert((CurNodeH.getNode()->NodeType & DSNode::DEAD) == 0);
+  assert(!CurNodeH.getNode()->isDeadNode());
+
+  // Merge the NodeType information...
+  if ((CurNodeH.getNode()->NodeType & DSNode::Composition) != 0 && 
+      (N->NodeType & DSNode::Composition) != 0)
+    N->NodeType |= DSNode::MultiObject;   // Multiple composition -> multiobject
+  CurNodeH.getNode()->NodeType |= N->NodeType;
 
   // Start forwarding to the new node!
-  CurNodeH.getNode()->NodeType |= N->NodeType;
   N->forwardNode(CurNodeH.getNode(), NOffset);
-  assert((CurNodeH.getNode()->NodeType & DSNode::DEAD) == 0);
+  assert(!CurNodeH.getNode()->isDeadNode());
 
   // Make all of the outgoing links of N now be outgoing links of CurNodeH.
   //
@@ -522,8 +536,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   if (N == 0 || (N == this && NH.getOffset() == Offset))
     return;  // Noop
 
-  assert((N->NodeType & DSNode::DEAD) == 0);
-  assert((NodeType & DSNode::DEAD) == 0);
+  assert(!N->isDeadNode() && !isDeadNode());
   assert(!hasNoReferrers() && "Should not try to fold a useless node!");
 
   if (N == this) {
@@ -630,13 +643,13 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   Nodes.reserve(FN+G.Nodes.size());
 
   // Remove alloca or mod/ref bits as specified...
-  unsigned clearBits = (CloneFlags & StripAllocaBit ? DSNode::AllocaNode : 0)
-    | (CloneFlags & StripModRefBits ? (DSNode::Modified | DSNode::Read) : 0);
-  clearBits |= DSNode::DEAD;  // Clear dead flag...
+  unsigned BitsToClear =((CloneFlags & StripAllocaBit) ? DSNode::AllocaNode : 0)
+    | ((CloneFlags & StripModRefBits) ? (DSNode::Modified | DSNode::Read) : 0);
+  BitsToClear |= DSNode::DEAD;  // Clear dead flag...
   for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
     DSNode *Old = G.Nodes[i];
     DSNode *New = new DSNode(*Old, this);
-    New->NodeType &= ~clearBits;
+    New->maskNodeTypes(~BitsToClear);
     OldNodeMap[Old] = New;
   }
 
@@ -743,16 +756,16 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
 
 // markIncompleteNodes - Mark the specified node as having contents that are not
 // known with the current analysis we have performed.  Because a node makes all
-// of the nodes it can reach imcomplete if the node itself is incomplete, we
+// of the nodes it can reach incomplete if the node itself is incomplete, we
 // must recursively traverse the data structure graph, marking all reachable
 // nodes as incomplete.
 //
 static void markIncompleteNode(DSNode *N) {
   // Stop recursion if no node, or if node already marked...
-  if (N == 0 || (N->NodeType & DSNode::Incomplete)) return;
+  if (N == 0 || (N->isIncomplete())) return;
 
   // Actually mark the node
-  N->NodeType |= DSNode::Incomplete;
+  N->setIncompleteMarker();
 
   // Recusively process children...
   for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
@@ -798,14 +811,15 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
   // Mark all global nodes as incomplete...
   if ((Flags & DSGraph::IgnoreGlobals) == 0)
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if (Nodes[i]->NodeType & DSNode::GlobalNode && Nodes[i]->getNumLinks())
+      if (Nodes[i]->isGlobalNode() && Nodes[i]->getNumLinks())
         markIncompleteNode(Nodes[i]);
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
   if (DSNode *N = Edge.getNode())  // Is there an edge?
     if (N->getNumReferrers() == 1)  // Does it point to a lonely node?
-      if ((N->NodeType & ~DSNode::Incomplete) == 0 && // No interesting info?
+      // No interesting info?
+      if ((N->getNodeFlags() & ~DSNode::Incomplete) == 0 &&
           N->getType() == Type::VoidTy && !N->isNodeCompletelyFolded())
         Edge.setNode(0);  // Kill the edge!
 }
@@ -835,7 +849,7 @@ static void removeIdenticalCalls(std::vector<DSCallSite> &Calls,
     // If the Callee is a useless edge, this must be an unreachable call site,
     // eliminate it.
     if (CS.isIndirectCall() && CS.getCalleeNode()->getNumReferrers() == 1 &&
-        CS.getCalleeNode()->NodeType == 0) {  // No useful info?
+        CS.getCalleeNode()->getNodeFlags() == 0) {  // No useful info?
       std::cerr << "WARNING: Useless call site found??\n";
       CS.swap(Calls.back());
       Calls.pop_back();
@@ -914,8 +928,7 @@ void DSGraph::removeTriviallyDeadNodes() {
 
   for (unsigned i = 0; i != Nodes.size(); ++i) {
     DSNode *Node = Nodes[i];
-    if (!(Node->NodeType & ~(DSNode::Composition | DSNode::Array |
-                             DSNode::DEAD))) {
+    if (!Node->isIncomplete() && !Node->isModified() && !Node->isRead()) {
       // This is a useless node if it has no mod/ref info (checked above),
       // outgoing edges (which it cannot, as it is not modified in this
       // context), and it has no incoming edges.  If it is a global node it may
@@ -923,7 +936,7 @@ void DSGraph::removeTriviallyDeadNodes() {
       // scalar map, so we check those now.
       //
       if (Node->getNumReferrers() == Node->getGlobals().size()) {
-        std::vector<GlobalValue*> &Globals = Node->getGlobals();
+        const std::vector<GlobalValue*> &Globals = Node->getGlobals();
 
         // Loop through and make sure all of the globals are referring directly
         // to the node...
@@ -932,20 +945,16 @@ void DSGraph::removeTriviallyDeadNodes() {
           assert(N == Node && "ScalarMap doesn't match globals list!");
         }
 
-        // Make sure numreferrers still agrees, if so, the node is truely dead.
+        // Make sure NumReferrers still agrees, if so, the node is truly dead.
         if (Node->getNumReferrers() == Globals.size()) {
           for (unsigned j = 0, e = Globals.size(); j != e; ++j)
             ScalarMap.erase(Globals[j]);
-
-          Globals.clear();
-          assert(Node->hasNoReferrers() && "Shouldn't have refs now!");
-          
-          Node->NodeType = DSNode::DEAD;
+          Node->makeNodeDead();
         }
       }
     }
 
-    if ((Node->NodeType & ~DSNode::DEAD) == 0 && Node->hasNoReferrers()) {
+    if (Node->getNodeFlags() == 0 && Node->hasNoReferrers()) {
       // This node is dead!
       delete Node;                        // Free memory...
       Nodes[i--] = Nodes.back();
@@ -1055,7 +1064,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
       // these, prune the scalar pointing to it.
       //
       DSNode *N = I->second.getNode();
-      if (N->NodeType == DSNode::UnknownNode && !isa<Argument>(I->first)) {
+      if (N->isUnknownNode() && !isa<Argument>(I->first)) {
         ScalarMap.erase(I++);
       } else {
         I->second.getNode()->markReachableNodes(Alive);
@@ -1128,7 +1137,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
         GlobalsGraph->Nodes.push_back(N);        // Move node to globals graph
         N->setParentGraph(GlobalsGraph);
       } else {                                 // Otherwise, delete the node
-        assert(((N->NodeType & DSNode::GlobalNode) == 0 ||
+        assert((!N->isGlobalNode() ||
                 (Flags & DSGraph::RemoveUnreachableGlobals))
                && "Killing a global?");
         //std::cerr << "[" << i+1 << "/" << DeadNodes.size()
@@ -1189,7 +1198,7 @@ void DSGraph::AssertGraphOK() const {
     assert(I->second.getNode() && "Null node in scalarmap!");
     AssertNodeInGraph(I->second.getNode());
     if (GlobalValue *GV = dyn_cast<GlobalValue>(I->first)) {
-      assert((I->second.getNode()->NodeType & DSNode::GlobalNode) &&
+      assert(I->second.getNode()->isGlobalNode() &&
              "Global points to node, but node isn't global?");
       AssertNodeContainsGlobal(I->second.getNode(), GV);
     }

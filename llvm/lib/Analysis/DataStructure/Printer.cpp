@@ -38,16 +38,19 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
     if (N->isArray())
       OS << " array";
   }
-  if (N->NodeType) {
+  if (unsigned NodeType = N->getNodeFlags()) {
     OS << ": ";
-    if (N->NodeType & DSNode::AllocaNode ) OS << "S";
-    if (N->NodeType & DSNode::HeapNode   ) OS << "H";
-    if (N->NodeType & DSNode::GlobalNode ) OS << "G";
-    if (N->NodeType & DSNode::UnknownNode) OS << "U";
-    if (N->NodeType & DSNode::Incomplete ) OS << "I";
-    if (N->NodeType & DSNode::Modified   ) OS << "M";
-    if (N->NodeType & DSNode::Read       ) OS << "R";
-    if (N->NodeType & DSNode::DEAD       ) OS << "<dead>";
+    if (NodeType & DSNode::AllocaNode ) OS << "S";
+    if (NodeType & DSNode::HeapNode   ) OS << "H";
+    if (NodeType & DSNode::GlobalNode ) OS << "G";
+    if (NodeType & DSNode::UnknownNode) OS << "U";
+    if (NodeType & DSNode::Incomplete ) OS << "I";
+    if (NodeType & DSNode::Modified   ) OS << "M";
+    if (NodeType & DSNode::Read       ) OS << "R";
+    if (NodeType & DSNode::MultiObject) OS << "m";
+#ifndef NDEBUG
+    if (NodeType & DSNode::DEAD       ) OS << "<dead>";
+#endif
     OS << "\n";
   }
 

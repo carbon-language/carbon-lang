@@ -68,15 +68,12 @@ static const Function *getValueFunction(const Value *V) {
 // alias - This is the only method here that does anything interesting...
 AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
                                        const Value *V2, unsigned V2Size) {
-  // FIXME: This should handle the Size argument as well!
+  if (V1 == V2) return MustAlias;
+
   const Function *F1 = getValueFunction(V1);
   const Function *F2 = getValueFunction(V2);
   assert((!F1 || !F2 || F1 == F2) && "Alias query for 2 different functions?");
   
-
-  // FIXME: This can return must alias if querying a DSNode for a global value
-  // where the node has only the G composition bit set, and only one entry in
-  // the globals list...
   if (F2) F1 = F2;
   if (F1) {
     // Get the graph for a function...
@@ -88,17 +85,33 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
       hash_map<Value*, DSNodeHandle>::iterator J = GSM.find((Value*)V2);
       if (J != GSM.end()) {
         assert(J->second.getNode() && "Scalar map points to null node?");
-        if (I->second.getNode() != J->second.getNode()) {
-          // Return noalias if one of the nodes is complete...
-          if ((~I->second.getNode()->NodeType | ~J->second.getNode()->NodeType)
-              & DSNode::Incomplete)
-            return NoAlias;
-          // both are incomplete, they may alias...
-        } else {
-          // Both point to the same node, see if they point to different
-          // offsets...  FIXME: This needs to know the size of the alias query
-          if (I->second.getOffset() != J->second.getOffset())
-            return NoAlias;
+
+        DSNode  *N1 = I->second.getNode(),  *N2 = J->second.getNode();
+        unsigned O1 = I->second.getOffset(), O2 = J->second.getOffset();
+        
+        // We can only make a judgement of one of the nodes is complete...
+        if (!N1->isIncomplete() || !N2->isIncomplete()) {
+          if (N1 != N2)
+            return NoAlias;   // Completely different nodes.
+
+          // Both point to the same node and same offset, and there is only one
+          // physical memory object represented in the node, return must alias.
+          if (O1 == O2 && !N1->isMultiObject())
+            return MustAlias; // Exactly the same object & offset
+
+          // See if they point to different offsets...  if so, we may be able to
+          // determine that they do not alias...
+          if (O1 != O2) {
+            if (O2 < O1) {    // Ensure that O1 <= O2
+              std::swap(V1, V2);
+              std::swap(O1, O2);
+              std::swap(V1Size, V2Size);
+            }
+
+            // FIXME: This is not correct because we do not handle array
+            // indexing correctly with this check!
+            //if (O1+V1Size <= O2) return NoAlias;
+          }
         }
       }
     }
