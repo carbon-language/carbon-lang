@@ -67,7 +67,8 @@ namespace {
                       cl::desc("Do not strip the LLVM bytecode in executable"));
 
   
-  cl::opt<bool> EnableModSched("enable-ModSched", cl::desc("Enable modulo scheduling pass instead of local scheduling"));
+  cl::opt<bool> EnableModSched("enable-ModSched", 
+	 cl::desc("Enable modulo scheduling pass instead of local scheduling"));
 
   // Register the target.
   RegisterTarget<SparcV9TargetMachine> X("sparcv9", "  SPARC V9");
