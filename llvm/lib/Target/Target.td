@@ -10,7 +10,7 @@
 //
 // Value types - These values correspond to the register types defined in the
 // ValueTypes.h file.
-
+//
 class ValueType { string Namespace = "MVT"; }
 
 def i1   : ValueType;    // One bit boolean value
@@ -53,9 +53,27 @@ class RegisterAliases<Register reg, list<Register> aliases> {
 // registers by register allocators.
 //
 class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
+  // RegType - Specify the ValueType of the registers in this register class.
+  // Note that all registers in a register class must have the same ValueType.
+  //
   ValueType RegType = regType;
+
+  // Alignment - Specify the alignment required of the registers when they are
+  // stored or loaded to memory.
+  //
   int Alignment = alignment;
+
+  // MemberList - Specify which registers are in this class.  If the
+  // allocation_order_* method are not specified, this also defines the order of
+  // allocation used by the register allocator.
+  //
   list<Register> MemberList = regList;
+
+  // allocation_order_* - These methods define the order that the registers
+  // should be allocated.  See the MRegister.h file for more information.
+  //
+  code allocation_order_begin;
+  code allocation_order_end;
 }
 
 
