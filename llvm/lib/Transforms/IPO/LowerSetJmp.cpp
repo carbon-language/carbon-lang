@@ -17,8 +17,6 @@
 //  original except block being executed if it isn't a longjmp except
 //  that is handled by that function.
 //
-// This pass was contributed to LLVM by Bill Wendling.
-//
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
