@@ -20,14 +20,15 @@
 #ifndef SUPPORT_COMMANDLINE_H
 #define SUPPORT_COMMANDLINE_H
 
+#include "Support/type_traits.h"
 #include <string>
 #include <vector>
 #include <utility>
 #include <cstdarg>
 #include <cassert>
-#include "boost/type_traits/object_traits.hpp"
 
 namespace llvm {
+
 /// cl Namespace - This namespace contains all of the command line option
 /// processing machinery.  It is intentionally a short name to make qualified
 /// usage concise.
@@ -719,7 +720,7 @@ template <class DataType, bool ExternalStorage = false,
           class ParserClass = parser<DataType> >
 class opt : public Option, 
             public opt_storage<DataType, ExternalStorage,
-                               ::boost::is_class<DataType>::value> {
+                               is_class<DataType>::value> {
   ParserClass Parser;
 
   virtual bool handleOccurrence(const char *ArgName, const std::string &Arg) {
