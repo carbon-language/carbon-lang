@@ -41,7 +41,10 @@ sub WriteFile {  # (filename, contents)
 
 sub GetRegex {   # (Regex with ()'s, value)
   $_[1] =~ /$_[0]/m;
-  return $1;
+  if (defined($1)) {
+    return $1;
+  }
+  return "?";
 }
 
 sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
@@ -90,6 +93,7 @@ sub FormatTime {
 my $NOCHECKOUT = 0;
 my $NOREMOVE   = 0;
 my $NOTEST     = 0;
+my $NORUNNINGTESTS = 0;
 my $MAKEOPTS   = "";
 
 # Parse arguments...
@@ -98,10 +102,11 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   last if /^--$/;  # Stop processing arguments on --
 
   # List command line options here...
-  if (/^-nocheckout$/) { $NOCHECKOUT = 1; next; }
-  if (/^-noremove$/)   { $NOREMOVE   = 1; next; }
-  if (/^-notest$/)     { $NOTEST     = 1; next; }
-  if (/^-parallel$/)   { $MAKEOPTS   = "-j2 -l3.0"; next; }
+  if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
+  if (/^-noremove$/)       { $NOREMOVE   = 1; next; }
+  if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
+  if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
+  if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -368,9 +373,9 @@ if ($TestError) {
 # If we built the tree successfully, runs of the Olden suite with
 # LARGE_PROBLEM_SIZE on so that we can get some "running" statistics.
 if ($BuildError eq "") {
-  my ($NatTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
+  my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
       $MachCodeSize) = ("","","","","","","");
-  if (!$NOTEST) {
+  if (!$NORUNNINGTESTS) {
     chdir "test/Programs/MultiSource/Olden" or die "Olden tests moved?";
 
     # Clean out previous results...
@@ -386,17 +391,17 @@ if ($BuildError eq "") {
 
   # Now we know we have $Prefix-Olden-tests.txt as the raw output file.  Split
   # it up into records and read the useful information.
-  my @Records = split />>> ========= /, ReadFile "$Prefix-Olden-tests.txt.gz";
+  my @Records = split />>> ========= /, ReadFile "$Prefix-Olden-tests.txt";
   shift @Records;  # Delete the first (garbage) record
 
   # Loop over all of the records, summarizing them into rows for the running
   # totals file.
   my $WallTimeRE = "[A-Za-z0-9.: ]+\\(([0-9.]+) wall clock";
   foreach $Rec (@Records) {
-    my $rNATTime = GetRegex "TEST-RESULT-nat-time: real\s*([.0-9m]+)", $Rec;
-    my $rCBETime = GetRegex "TEST-RESULT-cbe-time: real\s*([.0-9m]+)", $Rec;
-    my $rLLCTime = GetRegex "TEST-RESULT-llc-time: real\s*([.0-9m]+)", $Rec;
-    my $rJITTime = GetRegex "TEST-RESULT-jit-time: real\s*([.0-9m]+)", $Rec;
+    my $rNATTime = GetRegex 'TEST-RESULT-nat-time: real\s*([.0-9m]+)', $Rec;
+    my $rCBETime = GetRegex 'TEST-RESULT-cbe-time: real\s*([.0-9m]+)', $Rec;
+    my $rLLCTime = GetRegex 'TEST-RESULT-llc-time: real\s*([.0-9m]+)', $Rec;
+    my $rJITTime = GetRegex 'TEST-RESULT-jit-time: real\s*([.0-9m]+)', $Rec;
     my $rOptTime = GetRegex "TEST-RESULT-compile: $WallTimeRE", $Rec;
     my $rBytecodeSize = GetRegex 'TEST-RESULT-compile: *([0-9]+)', $Rec;
     my $rMachCodeSize = GetRegex 'TEST-RESULT-jit-machcode: *([0-9]+).*bytes of machine code', $Rec;
@@ -406,19 +411,21 @@ if ($BuildError eq "") {
     $LLCTime .= " " . FormatTime($rLLCTime);
     $JITTime .= " " . FormatTime($rJITTime);
     $OptTime .= " $rOptTime";
-    $BytecodeSize .= " $BytecodeSize";
-    $MachCodeSize .= " $MachCodeSize";
+    $BytecodeSize .= " $rBytecodeSize";
+    $MachCodeSize .= " $rMachCodeSize";
   }
 
   # Now that we have all of the numbers we want, add them to the running totals
   # files.
-  AddRecord($NatTime, "running_Olden_nat_time.txt");
+  AddRecord($NATTime, "running_Olden_nat_time.txt");
   AddRecord($CBETime, "running_Olden_cbe_time.txt");
   AddRecord($LLCTime, "running_Olden_llc_time.txt");
   AddRecord($JITTime, "running_Olden_jit_time.txt");
   AddRecord($OptTime, "running_Olden_opt_time.txt");
   AddRecord($BytecodeSize, "running_Olden_bytecode.txt");
   AddRecord($MachCodeSize, "running_Olden_machcode.txt");
+
+  system "gzip -f $Prefix-Olden-tests.txt";
 }
 
 
@@ -499,6 +506,6 @@ sub AddRecord {
     close FILE;
   }
   push @Records, "$DATE: $Val";
-  WriteFile $Filename, (join "\n", @Records) . "\n";
+  WriteFile "$WebDir/$Filename", (join "\n", @Records) . "\n";
   return @Records;
 }
