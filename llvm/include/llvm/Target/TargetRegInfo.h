@@ -133,7 +133,7 @@ public:
 
   virtual void colorCallArgs(const MachineInstr *const CalI, 
 			     LiveRangeInfo& LRI, AddedInstrns *const CallAI, 
-			     PhyRegAlloc &PRA) const = 0;
+			     PhyRegAlloc &PRA, const BasicBlock *BB) const = 0;
 
   virtual void colorRetValue(const MachineInstr *const RetI,LiveRangeInfo& LRI,
 			     AddedInstrns *const RetAI) const = 0;
@@ -189,8 +189,7 @@ public:
 				      const BasicBlock *BB, 
 				      PhyRegAlloc &PRA ) const = 0;
 
-
-  //virtual void printReg(const LiveRange *const LR) const =0;
+  virtual inline int getSpilledRegSize(const int RegType) const = 0;
 
   MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
 
@@ -200,84 +199,6 @@ public:
 
 
 #endif
-
-
-
-#if 0
-
-//---------------------------------------------------------------------------
-// class MachineRegInfo
-// 
-// Purpose:
-//   Interface to register info of target machine
-// 
-//--------------------------------------------------------------------------
-
-
-
-typedef hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
-
-// A vector of all machine register classes
-typedef vector<const MachineRegClassInfo *> MachineRegClassArrayType;
-
-
-class MachineRegInfo : public NonCopyableV {
-
-protected:
-
-  MachineRegClassArrayType MachineRegClassArr;
-
-
-public:
-
- MachineRegInfo() {}
-  
-  // According the definition of a MachineOperand class, a Value in a
-  // machine instruction can go into either a normal register or a 
-  // condition code register. If isCCReg is true below, the ID of the condition
-  // code regiter class will be returned. Otherwise, the normal register
-  // class (eg. int, float) must be returned.
-  virtual unsigned getRegClassIDOfValue (const Value *const Val,
-					 bool isCCReg = false) const =0;
-
-
-  // returns the register that is hardwired to zero if any (-1 if none)
-  virtual inline int      getZeroRegNum()     const = 0;
-  
-  inline unsigned int getNumOfRegClasses() const { 
-    return MachineRegClassArr.size(); 
-  }  
-
-  const MachineRegClassInfo *const getMachineRegClass(unsigned i) const { 
-    return MachineRegClassArr[i]; 
-  }
-
-
-
-  //virtual unsigned getRegClassIDOfValue (const Value *const Val) const = 0;
-  // this method must give the exact register class of a machine operand
-  // e.g, Int, Float, Int CC, Float CC 
-  //virtual unsigned getRCIDOfMachineOp (const MachineOperand &MO) const = 0;
-
-
-  virtual void colorArgs(const Method *const Meth, 
-			 LiveRangeInfo & LRI) const = 0;
-
-  virtual void colorCallArgs(vector<const Instruction *> & CallInstrList, 
-			     LiveRangeInfo& LRI, 
-			     AddedInstrMapType& AddedInstrMap ) const = 0 ;
-
-  virtual int getUnifiedRegNum(int RegClassID, int reg) const = 0;
-
-  virtual const string getUnifiedRegName(int UnifiedRegNum) const = 0;
-
-  //virtual void printReg(const LiveRange *const LR) const =0;
-};
-
-
-#endif
-
-
 
 
 

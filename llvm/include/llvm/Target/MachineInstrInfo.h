@@ -185,7 +185,6 @@ public:
   }
 
 
-
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
