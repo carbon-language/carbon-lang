@@ -1183,8 +1183,9 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
            "Pool type should not be abstract anymore!");
 
     // Add an allocation and a free for each pool...
-    AllocaInst *PoolAlloc = new AllocaInst(PointerType::get(PI.PoolType),
-                                           0, "pool");
+    AllocaInst *PoolAlloc
+      = new AllocaInst(PointerType::get(PI.PoolType), 0,
+                       CurModule->getTypeName(PI.PoolType));
     PI.Handle = PoolAlloc;
     EntryNodeInsts.push_back(PoolAlloc);
     AllocationInst *AI = Allocs[i]->getAllocation();
@@ -1201,9 +1202,6 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
     Args.push_back(PoolAlloc);    // Pool to initialize
     EntryNodeInsts.push_back(new CallInst(PoolInit, Args));
 
-    // FIXME: add code to initialize inter pool links
-    cerr << "TODO: add code to initialize inter pool links!\n";
-
     // Add code to destroy the pool in all of the exit nodes of the function...
     Args.clear();
     Args.push_back(PoolAlloc);    // Pool to initialize
@@ -1215,6 +1213,31 @@ void PoolAllocate::CreatePools(Function *F, const vector<AllocDSNode*> &Allocs,
       BasicBlock *RetNode = ReturnNodes[EN];
       RetNode->getInstList().insert(RetNode->end()-1, Destroy);
     }
+  }
+
+  // Now that all of the pool descriptors have been created, link them together
+  // so that called functions can get links as neccesary...
+  //
+  for (unsigned i = 0, e = Allocs.size(); i != e; ++i) {
+    PoolInfo &PI = PoolDescs[Allocs[i]];
+
+    // For every pointer in the data structure, initialize a link that
+    // indicates which pool to access...
+    //
+    vector<Value*> Indices(2);
+    Indices[0] = ConstantUInt::get(Type::UIntTy, 0);
+    for (unsigned l = 0, le = PI.Node->getNumLinks(); l != le; ++l)
+      // Only store an entry for the field if the field is used!
+      if (!PI.Node->getLink(l).empty()) {
+        assert(PI.Node->getLink(l).size() == 1 && "Should have only one link!");
+        PointerVal PV = PI.Node->getLink(l)[0];
+        assert(PV.Index == 0 && "Subindexing not supported yet!");
+        PoolInfo &LinkedPool = PoolDescs[PV.Node];
+        Indices[1] = ConstantUInt::get(Type::UByteTy, 1+l);
+      
+        EntryNodeInsts.push_back(new StoreInst(LinkedPool.Handle, PI.Handle,
+                                               Indices));
+      }
   }
 
   // Insert the entry node code into the entry block...
