@@ -35,16 +35,15 @@ using namespace llvm;
 namespace {
   Statistic<> NumReduced ("loop-reduce", "Number of GEPs strength reduced");
 
-  class GEPCache
-  {
+  class GEPCache {
   public:
     GEPCache() : CachedPHINode(0), Map() {}
 
-    GEPCache* operator[](Value *v) {
+    GEPCache *get(Value *v) {
       std::map<Value *, GEPCache>::iterator I = Map.find(v);
       if (I == Map.end())
         I = Map.insert(std::pair<Value *, GEPCache>(v, GEPCache())).first;
-      return &(I->second);
+      return &I->second;
     }
 
     PHINode *CachedPHINode;
@@ -135,7 +134,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   BasicBlock *Header = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
   bool AllConstantOperands = true;
-  Cache = (*Cache)[GEPI->getOperand(0)];
+  Cache = Cache->get(GEPI->getOperand(0));
 
   for (unsigned op = 1, e = GEPI->getNumOperands(); op != e; ++op) {
     Value *operand = GEPI->getOperand(op);
@@ -164,7 +163,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
       AllConstantOperands = false;
     } else
       return;
-    Cache = (*Cache)[operand];
+    Cache = Cache->get(operand);
   }
   assert(indvar > 0 && "Indvar used by GEP not found in operand list");
   
@@ -179,8 +178,8 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
 
   // Don't reduce multiplies that the target can handle via addressing modes.
   uint64_t sz = getAnalysis<TargetData>().getTypeSize(ty);
-  for (unsigned i = 1; i <= MaxTargetAMSize; i *= 2)
-    if (i == sz)
+  if (sz && (sz & (sz-1)) == 0)   // Power of two?
+    if (sz <= (1ULL << (MaxTargetAMSize-1)))
       return;
   
   // If all operands of the GEP we are going to insert into the preheader
@@ -248,7 +247,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
                                                       GEPI->getName() + ".lsr",
                                                       GEPI);
     GEPI->replaceAllUsesWith(newGEP);
-}
+  }
   
   // The old GEP is now dead.
   DeadInsts.insert(GEPI);
