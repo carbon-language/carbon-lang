@@ -115,10 +115,7 @@ namespace {
       }
     }
 
-    void printImplUsesBefore(const TargetInstrDescriptor &Desc);
-    bool printImplDefsBefore(const TargetInstrDescriptor &Desc);
     bool printImplUsesAfter(const TargetInstrDescriptor &Desc, const bool LC);
-    bool printImplDefsAfter(const TargetInstrDescriptor &Desc, const bool LC);
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
     void printMemReference(const MachineInstr *MI, unsigned Op);
@@ -538,44 +535,6 @@ void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op) {
   O << "]";
 }
 
-
-/// printImplUsesBefore - Emit the implicit-use registers for the instruction
-/// described by DESC, if its PrintImplUsesBefore flag is set.
-///
-void X86AsmPrinter::printImplUsesBefore(const TargetInstrDescriptor &Desc) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
-  if (Desc.TSFlags & X86II::PrintImplUsesBefore) {
-    for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
-      // Bug Workaround: See note in X86AsmPrinter::doInitialization about %.
-      O << "%" << RI.get(*p).Name << ", ";
-    }
-  }
-}
-
-/// printImplDefsBefore - Emit the implicit-def registers for the instruction
-/// described by DESC, if its PrintImplUsesBefore flag is set.  Return true if
-/// we printed any registers.
-///
-bool X86AsmPrinter::printImplDefsBefore(const TargetInstrDescriptor &Desc) {
-  bool Printed = false;
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
-  if (Desc.TSFlags & X86II::PrintImplDefsBefore) {
-    const unsigned *p = Desc.ImplicitDefs;
-    if (*p) {
-      O << (Printed ? ", %" : "%") << RI.get (*p).Name;
-      Printed = true;
-      ++p;
-    }
-    while (*p) {
-      // Bug Workaround: See note in X86AsmPrinter::doInitialization about %.
-      O << ", %" << RI.get(*p).Name;
-      ++p;
-    }
-  }
-  return Printed;
-}
-
-
 /// printImplUsesAfter - Emit the implicit-use registers for the instruction
 /// described by DESC, if its PrintImplUsesAfter flag is set.
 ///
@@ -593,38 +552,6 @@ bool X86AsmPrinter::printImplUsesAfter(const TargetInstrDescriptor &Desc,
   if (Desc.TSFlags & X86II::PrintImplUsesAfter) {
     bool emitted = false;
     const unsigned *p = Desc.ImplicitUses;
-    if (*p) {
-      O << (Comma ? ", %" : "%") << RI.get (*p).Name;
-      emitted = true;
-      ++p;
-    }
-    while (*p) {
-      // Bug Workaround: See note in X86AsmPrinter::doInitialization about %.
-      O << ", %" << RI.get(*p).Name;
-      ++p;
-    }
-    return emitted;
-  }
-  return false;
-}
-
-/// printImplDefsAfter - Emit the implicit-definition registers for the
-/// instruction described by DESC, if its PrintImplDefsAfter flag is set.
-///
-/// Inputs:
-///   Comma - List of registers will need a leading comma.
-///   Desc  - Description of the Instruction
-///
-/// Return value:
-///   true  - Emitted one or more registers.
-///   false - Emitted no registers.
-///
-bool X86AsmPrinter::printImplDefsAfter(const TargetInstrDescriptor &Desc,
-                                       const bool Comma = true) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
-  if (Desc.TSFlags & X86II::PrintImplDefsAfter) {
-    bool emitted = false;
-    const unsigned *p = Desc.ImplicitDefs;
     if (*p) {
       O << (Comma ? ", %" : "%") << RI.get (*p).Name;
       emitted = true;
@@ -703,14 +630,11 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
            "Illegal raw instruction!");
     O << TII.getName(MI->getOpcode()) << " ";
 
-    bool LeadingComma = printImplDefsBefore(Desc);
-
+    bool LeadingComma = false;
     if (MI->getNumOperands() == 1) {
-      if (LeadingComma) O << ", ";
       printOp(MI->getOperand(0), true); // Don't print "OFFSET"...
       LeadingComma = true;
     }
-    LeadingComma = printImplDefsAfter(Desc, LeadingComma) || LeadingComma;
     printImplUsesAfter(Desc, LeadingComma);
     O << "\n";
     return;
@@ -738,8 +662,6 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     unsigned Reg = MI->getOperand(0).getReg();
     
     O << TII.getName(MI->getOpcode()) << " ";
-
-    printImplUsesBefore(Desc);   // fcmov*
 
     printOp(MI->getOperand(0));
     if (MI->getNumOperands() == 2 &&
