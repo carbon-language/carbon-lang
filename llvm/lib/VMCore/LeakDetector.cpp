@@ -68,9 +68,6 @@ namespace {
         }
         std::cerr << '\n';
 
-        // Clear out results so we don't get duplicate warnings on
-        // next call...
-        Ts.clear();
         return true;
       }
       return false;
@@ -82,21 +79,26 @@ namespace {
     const char* const Name;
   };
 
-  typedef LeakDetectorImpl<void>  Objects;
-  typedef LeakDetectorImpl<Value> LLVMObjects;
+  LeakDetectorImpl<void>  *Objects;
+  LeakDetectorImpl<Value> *LLVMObjects;
 
-  Objects& getObjects() {
-    static Objects *o = 0;
-    if (o == 0)
-      o = new Objects("GENERIC");
-    return *o;
+  LeakDetectorImpl<void> &getObjects() {
+    if (Objects == 0)
+      Objects = new LeakDetectorImpl<void>("GENERIC");
+    return *Objects;
   }
 
-  LLVMObjects& getLLVMObjects() {
-    static LLVMObjects *o = 0;
-    if (o == 0)
-      o = new LLVMObjects("LLVM");
-    return *o;
+  LeakDetectorImpl<Value> &getLLVMObjects() {
+    if (LLVMObjects == 0)
+      LLVMObjects = new LeakDetectorImpl<Value>("LLVM");
+    return *LLVMObjects;
+  }
+
+  void clearGarbage() {
+    delete Objects;
+    delete LLVMObjects;
+    Objects = 0;
+    LLVMObjects = 0;
   }
 }
 
@@ -122,4 +124,8 @@ void LeakDetector::checkForGarbageImpl(const std::string &Message) {
       getLLVMObjects().hasGarbage(Message))
     std::cerr << "\nThis is probably because you removed an object, but didn't "
                  "delete it.  Please check your code for memory leaks.\n";
+
+  // Clear out results so we don't get duplicate warnings on
+  // next call...
+  clearGarbage();
 }
