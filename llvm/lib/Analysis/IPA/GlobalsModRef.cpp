@@ -101,19 +101,17 @@ namespace {
     }
     bool hasNoModRefInfoForCalls() const { return false; }
 
-    bool doesNotAccessMemory(Function *F) {
+    /// getModRefBehavior - Return the behavior of the specified function if
+    /// called from the specified call site.  The call site may be null in which
+    /// case the most generic behavior of this function should be returned.
+    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS) {
       if (FunctionRecord *FR = getFunctionInfo(F))
         if (FR->FunctionEffect == 0)
-          return true;
-      return AliasAnalysis::doesNotAccessMemory(F);
+          return DoesNotAccessMemory;
+	else if ((FR->FunctionEffect & Mod) == 0)
+	  return OnlyReadsMemory;
+      return AliasAnalysis::getModRefBehavior(F, CS);    
     }
-    bool onlyReadsMemory(Function *F) {
-      if (FunctionRecord *FR = getFunctionInfo(F))
-        if ((FR->FunctionEffect & Mod) == 0)
-          return true;
-      return AliasAnalysis::onlyReadsMemory(F);
-    }
-
 
     virtual void deleteValue(Value *V);
     virtual void copyValue(Value *From, Value *To);

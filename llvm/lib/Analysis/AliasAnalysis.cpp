@@ -57,14 +57,11 @@ bool AliasAnalysis::pointsToConstantMemory(const Value *P) {
   return AA->pointsToConstantMemory(P);
 }
 
-bool AliasAnalysis::doesNotAccessMemory(Function *F) {
+AliasAnalysis::ModRefBehavior
+AliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
+                                 std::vector<PointerAccessInfo> *Info) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->doesNotAccessMemory(F);
-}
-
-bool AliasAnalysis::onlyReadsMemory(Function *F) {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return doesNotAccessMemory(F) || AA->onlyReadsMemory(F);
+  return AA->getModRefBehavior(F, CS, Info);
 }
 
 bool AliasAnalysis::hasNoModRefInfoForCalls() const {

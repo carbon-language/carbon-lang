@@ -113,9 +113,10 @@ void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
   CallSites.push_back(CS);
 
   if (Function *F = CS.getCalledFunction()) {
-    if (AA.doesNotAccessMemory(F))
+    AliasAnalysis::ModRefBehavior Behavior = AA.getModRefBehavior(F, CS);
+    if (Behavior == AliasAnalysis::DoesNotAccessMemory)
       return;
-    else if (AA.onlyReadsMemory(F)) {
+    else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
       AliasTy = MayAlias;
       AccessTy |= Refs;
       return;

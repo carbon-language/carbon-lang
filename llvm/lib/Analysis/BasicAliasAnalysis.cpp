@@ -48,10 +48,17 @@ namespace {
       return MayAlias;
     }
 
+    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS) {
+      return UnknownModRefBehavior;
+    }
+    
+    virtual void getArgumentAccesses(Function *F, CallSite CS,
+                                     std::vector<PointerAccessInfo> &Info) {
+      assert(0 && "This method may not be called on this function!");
+    }
+
     virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }
     virtual bool pointsToConstantMemory(const Value *P) { return false; }
-    virtual bool doesNotAccessMemory(Function *F) { return false; }
-    virtual bool onlyReadsMemory(Function *F) { return false; }
     virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       return ModRef;
     }
@@ -94,9 +101,9 @@ namespace {
     /// global) or not.
     bool pointsToConstantMemory(const Value *P);
 
-    virtual bool doesNotAccessMemory(Function *F);
-    virtual bool onlyReadsMemory(Function *F);
-
+    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+                                             std::vector<PointerAccessInfo> *Info);
+    
   private:
     // CheckGEPInstructions - Check two GEP instructions with known
     // must-aliasing base pointers.  This checks to see if the index expressions
@@ -683,7 +690,8 @@ namespace {
 // that set errno on a domain or other error.
 static const char *DoesntAccessMemoryTable[] = {
   // LLVM intrinsics:
-  "llvm.frameaddress", "llvm.returnaddress", "llvm.readport", "llvm.isunordered",
+  "llvm.frameaddress", "llvm.returnaddress", "llvm.readport",
+  "llvm.isunordered",
 
   "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
   "trunc", "truncf", "truncl", "ldexp",
@@ -723,29 +731,6 @@ static const char *DoesntAccessMemoryTable[] = {
 static const unsigned DAMTableSize =
     sizeof(DoesntAccessMemoryTable)/sizeof(DoesntAccessMemoryTable[0]);
 
-/// doesNotAccessMemory - Return true if we know that the function does not
-/// access memory at all.  Since basicaa does no analysis, we can only do simple
-/// things here.  In particular, if we have an external function with the name
-/// of a standard C library function, we are allowed to assume it will be
-/// resolved by libc, so we can hardcode some entries in here.
-bool BasicAliasAnalysis::doesNotAccessMemory(Function *F) {
-  if (!F->isExternal()) return false;
-
-  static bool Initialized = false;
-  if (!Initialized) {
-    // Sort the table the first time through.
-    std::sort(DoesntAccessMemoryTable, DoesntAccessMemoryTable+DAMTableSize,
-              StringCompare());
-    Initialized = true;
-  }
-
-  const char **Ptr = std::lower_bound(DoesntAccessMemoryTable,
-                                      DoesntAccessMemoryTable+DAMTableSize,
-                                      F->getName().c_str(), StringCompare());
-  return Ptr != DoesntAccessMemoryTable+DAMTableSize && *Ptr == F->getName();
-}
-
-
 static const char *OnlyReadsMemoryTable[] = {
   "atoi", "atol", "atof", "atoll", "atoq", "a64l",
   "bcmp", "memcmp", "memchr", "memrchr", "wmemcmp", "wmemchr", 
@@ -772,23 +757,33 @@ static const char *OnlyReadsMemoryTable[] = {
 
 static const unsigned ORMTableSize =
     sizeof(OnlyReadsMemoryTable)/sizeof(OnlyReadsMemoryTable[0]);
-
-bool BasicAliasAnalysis::onlyReadsMemory(Function *F) {
-  if (doesNotAccessMemory(F)) return true;
-  if (!F->isExternal()) return false;
+        
+AliasAnalysis::ModRefBehavior 
+BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
+                                      std::vector<PointerAccessInfo> *Info) {
+  if (!F->isExternal()) return UnknownModRefBehavior;
 
   static bool Initialized = false;
   if (!Initialized) {
     // Sort the table the first time through.
+    std::sort(DoesntAccessMemoryTable, DoesntAccessMemoryTable+DAMTableSize,
+              StringCompare());
     std::sort(OnlyReadsMemoryTable, OnlyReadsMemoryTable+ORMTableSize,
               StringCompare());
     Initialized = true;
   }
 
-  const char **Ptr = std::lower_bound(OnlyReadsMemoryTable,
-                                      OnlyReadsMemoryTable+ORMTableSize,
+  const char **Ptr = std::lower_bound(DoesntAccessMemoryTable,
+                                      DoesntAccessMemoryTable+DAMTableSize,
                                       F->getName().c_str(), StringCompare());
-  return Ptr != OnlyReadsMemoryTable+ORMTableSize && *Ptr == F->getName();
+  if (Ptr != DoesntAccessMemoryTable+DAMTableSize && *Ptr == F->getName())
+    return DoesNotAccessMemory;
+    
+  Ptr = std::lower_bound(OnlyReadsMemoryTable,
+                         OnlyReadsMemoryTable+ORMTableSize,
+                         F->getName().c_str(), StringCompare());
+  if (Ptr != OnlyReadsMemoryTable+ORMTableSize && *Ptr == F->getName())
+    return OnlyReadsMemory;
+
+  return UnknownModRefBehavior;
 }
-
-
