@@ -857,6 +857,22 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
   unsigned Opc;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(RHS)) {
     Opc = 0;
+    if (isFoldableLoad(LHS)) {
+      switch (RHS.getValueType()) {
+      default: break;
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::CMP8mi;  break;
+      case MVT::i16: Opc = X86::CMP16mi; break;
+      case MVT::i32: Opc = X86::CMP32mi; break;
+      }
+      if (Opc) {
+        X86AddressMode AM;
+        EmitFoldedLoad(LHS, AM);
+        addFullAddress(BuildMI(BB, Opc, 5), AM).addImm(CN->getValue());
+        return;
+      }
+    }
+
     switch (RHS.getValueType()) {
     default: break;
     case MVT::i1:
@@ -867,6 +883,30 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
     if (Opc) {
       unsigned Tmp1 = SelectExpr(LHS);
       BuildMI(BB, Opc, 2).addReg(Tmp1).addImm(CN->getValue());
+      return;
+    }
+  }
+
+  Opc = 0;
+  if (isFoldableLoad(LHS)) {
+    switch (RHS.getValueType()) {
+    default: break;
+    case MVT::i1:
+    case MVT::i8:  Opc = X86::CMP8mr;  break;
+    case MVT::i16: Opc = X86::CMP16mr; break;
+    case MVT::i32: Opc = X86::CMP32mr; break;
+    }
+    if (Opc) {
+      X86AddressMode AM;
+      unsigned Reg;
+      if (getRegPressure(LHS) > getRegPressure(RHS)) {
+        EmitFoldedLoad(LHS, AM);
+        Reg = SelectExpr(RHS);
+      } else {
+        Reg = SelectExpr(RHS);
+        EmitFoldedLoad(LHS, AM);
+      }
+      addFullAddress(BuildMI(BB, Opc, 5), AM).addReg(Reg);
       return;
     }
   }
@@ -1986,8 +2026,13 @@ void ISel::Select(SDOperand N) {
     assert(0 && "Node not handled yet!");
   case ISD::EntryToken: return;  // Noop
   case ISD::CopyToReg:
-    Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1));
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+      Select(N.getOperand(0));
+      Tmp1 = SelectExpr(N.getOperand(1));
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      Select(N.getOperand(0));
+    }
     Tmp2 = cast<CopyRegSDNode>(N)->getReg();
     
     if (Tmp1 != Tmp2) {
