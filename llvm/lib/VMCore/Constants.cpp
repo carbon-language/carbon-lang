@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <iostream>
+#include <limits>
 using namespace llvm;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
@@ -442,6 +443,16 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
 
     // TODO: Figure out how to test if a double can be cast to a float!
   case Type::FloatTyID:
+    return 
+      (std::numeric_limits<double>::has_infinity && 
+       std::numeric_limits<float>::has_infinity &&
+       Val == std::numeric_limits<double>::infinity()) ||
+      (std::numeric_limits<double>::has_quiet_NaN &&
+       std::numeric_limits<float>::has_quiet_NaN &&
+       Val == std::numeric_limits<double>::quiet_NaN()) ||
+      (Val >= -std::numeric_limits<float>::max() && 
+       Val <= std::numeric_limits<float>::max());
+    
   case Type::DoubleTyID:
     return true;          // This is the largest type...
   }
