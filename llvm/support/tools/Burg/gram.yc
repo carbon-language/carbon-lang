@@ -46,46 +46,46 @@ full	: spec
 	;
 
 spec	: decls K_PPERCENT rules
-		= { doSpec($1, $3); }
+		{ doSpec($1, $3); }
 	;
 
-decls	: /* lambda */	= { $$ = 0; }
-	| decls decl	= { $$ = newList($2, $1); }
+decls	: /* lambda */	{ $$ = 0; }
+	| decls decl	{ $$ = newList($2, $1); }
 	;
 
-decl	: K_TERM bindinglist	= { $$ = newArity(-1, $2); }
-	| K_GRAM grammarlist	= { $$ = 0; doGram($2); }
-	| K_START ID		= { $$ = 0; doStart($2); }	/* kludge */
+decl	: K_TERM bindinglist	{ $$ = newArity(-1, $2); }
+	| K_GRAM grammarlist	{ $$ = 0; doGram($2); }
+	| K_START ID		{ $$ = 0; doStart($2); }	/* kludge */
 	;
 
-grammarlist	: /* lambda */		= { $$ = 0; }
-		| grammarlist ID	= { $$ = newList($2, $1); }
+grammarlist	: /* lambda */		{ $$ = 0; }
+		| grammarlist ID	{ $$ = newList($2, $1); }
 		;
 
-bindinglist	: /* lambda */		= { $$ = 0; }
-		| bindinglist binding	= { $$ = newList($2, $1); }
+bindinglist	: /* lambda */		{ $$ = 0; }
+		| bindinglist binding	{ $$ = newList($2, $1); }
 		;
 
-binding	: ID '=' INT	= { $$ = newBinding($1, $3); }
+binding	: ID '=' INT	{ $$ = newBinding($1, $3); }
 	;
 
-rules	: /* lambda */	= { $$ = 0; }
-	| rules rule	= { $$ = newList($2, $1); }
+rules	: /* lambda */	{ $$ = 0; }
+	| rules rule	{ $$ = newList($2, $1); }
 	;
 
-rule	: ID ':' pattern '=' INT cost ';'	= { $$ = newRuleAST($1, $3, $5, $6); }
+rule	: ID ':' pattern '=' INT cost ';'	{ $$ = newRuleAST($1, $3, $5, $6); }
 		;
 
-pattern	: ID 					= { $$ = newPatternAST($1, 0); }
-	| ID '(' pattern ')'			= { $$ = newPatternAST($1, newList($3,0)); }
-	| ID '(' pattern ',' pattern ')'	= { $$ = newPatternAST($1, newList($3, newList($5, 0))); }
+pattern	: ID 					{ $$ = newPatternAST($1, 0); }
+	| ID '(' pattern ')'			{ $$ = newPatternAST($1, newList($3,0)); }
+	| ID '(' pattern ',' pattern ')'	{ $$ = newPatternAST($1, newList($3, newList($5, 0))); }
 	;
 
-cost	: /* lambda */		= { $$ = 0; }
-	| '(' INT costtail ')'	= { $$ = newIntList($2, $3); }
+cost	: /* lambda */		{ $$ = 0; }
+	| '(' INT costtail ')'	{ $$ = newIntList($2, $3); }
 	;
 
-costtail	: /* lambda */		= { $$ = 0; }
-		| ',' INT costtail	= { $$ = newIntList($2, $3); }
-		| INT costtail		= { $$ = newIntList($1, $2); }
+costtail	: /* lambda */		{ $$ = 0; }
+		| ',' INT costtail	{ $$ = newIntList($2, $3); }
+		| INT costtail		{ $$ = newIntList($1, $2); }
 		;
