@@ -105,4 +105,6 @@ public:
   void dropAllReferences();
 };
 
+typedef Method Function;
+
 #endif
