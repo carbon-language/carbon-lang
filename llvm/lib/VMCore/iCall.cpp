@@ -33,7 +33,7 @@ void CallInst::init(Value *Func, const std::vector<Value*> &Params)
 
   assert((Params.size() == FTy->getNumParams() || 
           (FTy->isVarArg() && Params.size() > FTy->getNumParams())) &&
-	 "Calling a function with bad signature");
+         "Calling a function with bad signature");
   for (unsigned i = 0; i != Params.size(); i++)
     Operands.push_back(Use(Params[i], this));
 }
@@ -48,7 +48,7 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2)
 
   assert((MTy->getNumParams() == 2 ||
           (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
-	 "Calling a function with bad signature");
+         "Calling a function with bad signature");
   Operands.push_back(Use(Actual1, this));
   Operands.push_back(Use(Actual2, this));
 }
@@ -63,7 +63,7 @@ void CallInst::init(Value *Func, Value *Actual)
 
   assert((MTy->getNumParams() == 1 ||
           (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
-	 "Calling a function with bad signature");
+         "Calling a function with bad signature");
   Operands.push_back(Use(Actual, this));
 }
 
@@ -81,16 +81,16 @@ void CallInst::init(Value *Func)
 CallInst::CallInst(Value *Func, const std::vector<Value*> &Params, 
                    const std::string &Name, Instruction *InsertBefore) 
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-				 ->getElementType())->getReturnType(),
-		Instruction::Call, Name, InsertBefore) {
+                                 ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertBefore) {
   init(Func, Params);
 }
 
 CallInst::CallInst(Value *Func, const std::vector<Value*> &Params, 
                    const std::string &Name, BasicBlock *InsertAtEnd) 
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-				 ->getElementType())->getReturnType(),
-		Instruction::Call, Name, InsertAtEnd) {
+                                 ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertAtEnd) {
   init(Func, Params);
 }
 
@@ -152,15 +152,11 @@ CallInst::CallInst(const CallInst &CI)
 const Function *CallInst::getCalledFunction() const {
   if (const Function *F = dyn_cast<Function>(Operands[0]))
     return F;
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
-    return cast<Function>(CPR->getValue());
   return 0;
 }
 Function *CallInst::getCalledFunction() {
   if (Function *F = dyn_cast<Function>(Operands[0]))
     return F;
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
-    return cast<Function>(CPR->getValue());
   return 0;
 }
 
@@ -180,30 +176,30 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   
   assert((Params.size() == MTy->getNumParams()) || 
-	 (MTy->isVarArg() && Params.size() > MTy->getNumParams()) &&
-	 "Calling a function with bad signature");
+         (MTy->isVarArg() && Params.size() > MTy->getNumParams()) &&
+         "Calling a function with bad signature");
   
   for (unsigned i = 0; i < Params.size(); i++)
     Operands.push_back(Use(Params[i], this));
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
-		       BasicBlock *IfException,
+                       BasicBlock *IfException,
                        const std::vector<Value*> &Params,
-		       const std::string &Name, Instruction *InsertBefore)
+                       const std::string &Name, Instruction *InsertBefore)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
-				    ->getElementType())->getReturnType(),
-		   Instruction::Invoke, Name, InsertBefore) {
+                                    ->getElementType())->getReturnType(),
+                   Instruction::Invoke, Name, InsertBefore) {
   init(Fn, IfNormal, IfException, Params);
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
-		       BasicBlock *IfException,
+                       BasicBlock *IfException,
                        const std::vector<Value*> &Params,
-		       const std::string &Name, BasicBlock *InsertAtEnd)
+                       const std::string &Name, BasicBlock *InsertAtEnd)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
-				    ->getElementType())->getReturnType(),
-		   Instruction::Invoke, Name, InsertAtEnd) {
+                                    ->getElementType())->getReturnType(),
+                   Instruction::Invoke, Name, InsertAtEnd) {
   init(Fn, IfNormal, IfException, Params);
 }
 
@@ -217,15 +213,11 @@ InvokeInst::InvokeInst(const InvokeInst &CI)
 const Function *InvokeInst::getCalledFunction() const {
   if (const Function *F = dyn_cast<Function>(Operands[0]))
     return F;
-  if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
-    return cast<Function>(CPR->getValue());
   return 0;
 }
 Function *InvokeInst::getCalledFunction() {
   if (Function *F = dyn_cast<Function>(Operands[0]))
     return F;
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Operands[0]))
-    return cast<Function>(CPR->getValue());
   return 0;
 }
 
@@ -233,7 +225,5 @@ Function *CallSite::getCalledFunction() const {
   Value *Callee = getCalledValue();
   if (Function *F = dyn_cast<Function>(Callee))
     return F;
-  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Callee))
-    return cast<Function>(CPR->getValue());
   return 0;
 }
