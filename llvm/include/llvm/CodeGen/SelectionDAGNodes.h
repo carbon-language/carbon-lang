@@ -90,7 +90,11 @@ namespace ISD {
 
 
     // Simple binary arithmetic operators.
-    ADD, SUB, MUL, MULHU, MULHS, SDIV, UDIV, SREM, UREM,
+    ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
+
+    // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
+    // an unsigned/signed value of type i[2*n], then return the top part.
+    MULHU, MULHS,
 
     // Bitwise operators.
     AND, OR, XOR, SHL, SRA, SRL,
