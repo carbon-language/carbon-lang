@@ -288,6 +288,9 @@ public:
   bool          isHiBits64      () const { return flags & HIFLAG64; }
   bool          isLoBits64      () const { return flags & LOFLAG64; }
 
+  MachineOperand& setUse      () { flags |= USEFLAG; return *this; }
+  MachineOperand& setDef      () { flags |= DEFFLAG; return *this; }
+
   // used to check if a machine register has been allocated to this operand
   bool hasAllocatedReg() const {
     return (regNum >= 0 &&
