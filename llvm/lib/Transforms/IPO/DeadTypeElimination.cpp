@@ -151,7 +151,9 @@ bool CleanupGCCOutput::doOneCleanupPass(Method *M) {
 
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         if (CI->getCalledValue() == Malloc) {      // Replace call to malloc?
-          MallocInst *MallocI = new MallocInst(PtrArrSByte, CI->getOperand(1));
+          MallocInst *MallocI = new MallocInst(PtrArrSByte, CI->getOperand(1),
+                                               CI->getName());
+          CI->setName("");
           BI = BIL.insert(BI, MallocI)+1;
           ReplaceInstWithInst(BIL, BI, new CastInst(MallocI, PtrSByte));
           Changed = true;
