@@ -129,7 +129,7 @@ void PhyRegAlloc::addInterference(const Value *const Def,
       if( isCallInst ) {
 	LROfVar->addCallInterference( (const Instruction *const) Def );   
 	// cout << "\n ++Added Call Interf to set:";
-	// LROfVar->printSet();
+	//LROfVar->printSet();
       }
     }
     else if(DEBUG_RA > 1)  { 
@@ -275,7 +275,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 {
   assert( (TM.getInstrInfo()).isCall( MInst->getOpCode() ) );
 
-  int StackOff = 10;  // ****TODO : Change
+  int StackOff = -8;  // ****TODO : Change
   hash_set<unsigned> PushedRegSet;
 
   // Now find the LR of the return value of the call
@@ -349,7 +349,7 @@ void PhyRegAlloc::insertCallerSavingCode(const MachineInstr *MInst,
 	    ((AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
 	    
 	    PushedRegSet.insert( Reg );
-	    StackOff += 4; // ****TODO: Correct ??????
+	    StackOff -= 8; // ****TODO: Correct ??????
 	    cout << "\n $$$ Inserted caller saving instr";
 	    
 	  } // if not already pushed
