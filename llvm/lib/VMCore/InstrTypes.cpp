@@ -25,8 +25,10 @@ TerminatorInst::TerminatorInst(unsigned iType)
 //===----------------------------------------------------------------------===//
 
 // Specialize setName to take care of symbol table majik
-void MethodArgument::setName(const string &name) {
+void MethodArgument::setName(const string &name, SymbolTable *ST) {
   Method *P;
+  assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
+	 "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
   Value::setName(name);
   if (P && hasName()) P->getSymbolTable()->insert(this);

@@ -39,8 +39,10 @@ Method::~Method() {
 }
 
 // Specialize setName to take care of symbol table majik
-void Method::setName(const string &name) {
+void Method::setName(const string &name, SymbolTable *ST) {
   Module *P;
+  assert((ST == 0 || (!getParent() || ST == getParent()->getSymbolTable())) &&
+	 "Invalid symtab argument!");
   if ((P = getParent()) && hasName()) P->getSymbolTable()->remove(this);
   Value::setName(name);
   if (P && getName() != "") P->getSymbolTableSure()->insert(this);
