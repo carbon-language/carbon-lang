@@ -19,12 +19,13 @@
 namespace llvm {
 
 class Function;
-class InstrForest;
-class MachineInstr;
-class InstructionNode;
-class TargetMachine;
-class MachineCodeForInstruction;
 class FunctionPass;
+class InstrForest;
+class InstructionNode;
+class IntrinsicLowering;
+class MachineCodeForInstruction;
+class MachineInstr;
+class TargetMachine;
 
 //===--------------------- Required Functions ---------------------------------
 // Target-dependent functions that MUST be implemented for each target.
@@ -50,7 +51,8 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //   Return a pass that performs machine dependent instruction selection.
 //---------------------------------------------------------------------------
 
-FunctionPass *createInstructionSelectionPass(TargetMachine &Target);
+FunctionPass *createInstructionSelectionPass(TargetMachine &Target,
+                                             IntrinsicLowering &IL);
 
 
 //************************ Exported Data Types *****************************/
