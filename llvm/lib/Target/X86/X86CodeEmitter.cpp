@@ -259,7 +259,8 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   switch (Desc.TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
-    std::cerr << "X86 Machine Code Emitter: No 'form', not emitting: " << MI;
+    if (Opcode != X86::IMPLICIT_DEF && Opcode != X86::IMPLICIT_USE)
+      std::cerr << "X86 Machine Code Emitter: No 'form', not emitting: " << MI;
     break;
 
   case X86II::RawFrm:
@@ -307,7 +308,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(0).getReg(), getX86RegNum(SrcOp.getReg()));
     if (MI.getNumOperands() == 4)
       emitConstant(MI.getOperand(3).getImmedValue(), sizeOfPtr(Desc));
-    break;    
+    break;
   }
   case X86II::MRMDestMem:
     MCE.emitByte(BaseOpcode);
