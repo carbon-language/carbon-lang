@@ -8,27 +8,6 @@
 #include "InstrInfoEmitter.h"
 #include "Record.h"
 
-static void EmitSourceHeader(const std::string &Desc, std::ostream &o) {
-  o << "//===- TableGen'erated file -------------------------------------*-"
-       " C++ -*-===//\n//\n// " << Desc << "\n//\n// Automatically generate"
-       "d file, do not edit!\n//\n//===------------------------------------"
-       "----------------------------------===//\n\n";
-}
-
-static std::string getQualifiedName(Record *R) {
-  std::string Namespace = R->getValueAsString("Namespace");
-  if (Namespace.empty()) return R->getName();
-  return Namespace + "::" + R->getName();
-}
-
-static Record *getTarget(RecordKeeper &RC) {
-  std::vector<Record*> Targets = RC.getAllDerivedDefinitions("Target");
-
-  if (Targets.size() != 1)
-    throw std::string("ERROR: Multiple subclasses of Target defined!");
-  return Targets[0];
-}
-
 // runEnums - Print out enum values for all of the instructions.
 void InstrInfoEmitter::runEnums(std::ostream &OS) {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
@@ -38,7 +17,7 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
 
   std::string Namespace = Insts[0]->getValueAsString("Namespace");
 
-  EmitSourceHeader("Target Instruction Enum Values", OS);
+  EmitSourceFileHeader("Target Instruction Enum Values", OS);
 
   if (!Namespace.empty())
     OS << "namespace " << Namespace << " {\n";
@@ -61,8 +40,8 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
     OS << "}\n";
 }
 
-static void printDefList(ListInit *LI, const std::string &Name,
-                         std::ostream &OS) {
+void InstrInfoEmitter::printDefList(ListInit *LI, const std::string &Name,
+                                    std::ostream &OS) const {
   OS << "static const unsigned " << Name << "[] = { ";
   for (unsigned j = 0, e = LI->getSize(); j != e; ++j)
     if (DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(j)))
@@ -75,7 +54,7 @@ static void printDefList(ListInit *LI, const std::string &Name,
 
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(std::ostream &OS) {
-  EmitSourceHeader("Target Instruction Descriptors", OS);
+  EmitSourceFileHeader("Target Instruction Descriptors", OS);
   Record *Target = getTarget(Records);
   const std::string &TargetName = Target->getName();
   Record *InstrInfo = Target->getValueAsDef("InstructionSet");

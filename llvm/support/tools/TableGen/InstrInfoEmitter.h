@@ -8,13 +8,12 @@
 #ifndef INSTRINFO_EMITTER_H
 #define INSTRINFO_EMITTER_H
 
-#include <iosfwd>
-class RecordKeeper;
-class Record;
+#include "TableGenBackend.h"
 class StringInit;
 class IntInit;
+class ListInit;
 
-class InstrInfoEmitter {
+class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
 public:
   InstrInfoEmitter(RecordKeeper &R) : Records(R) {}
@@ -25,6 +24,8 @@ public:
   // runEnums - Print out enum values for all of the instructions.
   void runEnums(std::ostream &OS);
 private:
+  void printDefList(ListInit *LI, const std::string &Name,
+                    std::ostream &OS) const;
   void emitRecord(Record *R, unsigned Num, Record *InstrInfo, std::ostream &OS);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
