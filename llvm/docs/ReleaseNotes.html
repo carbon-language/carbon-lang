@@ -1,9 +1,9 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>LLVM 1.0 Release Notes</title></head>
+<html><head><title>LLVM 1.1 Release Notes</title></head>
 <body bgcolor=white>
 
 <table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>LLVM 1.0 Release Notes</b></font></td>
+<tr><td>&nbsp; <font size=+3 color="#EEEEFF" face="Georgia,Palatino,Times,Roman"><b>LLVM 1.1 Release Notes</b></font></td>
 </tr></table>
  
 <ol>
@@ -36,9 +36,10 @@
 <!-- *********************************************************************** -->
 
 This document contains the release notes for the LLVM compiler infrastructure,
-release 1.0.  Here we describe how to install LLVM, as well as any known
-problems.  The most up-to-date version of this document can be found on the <a
-href="http://llvm.cs.uiuc.edu/releases/1.0/">LLVM 1.0 web site</a>.  If you are
+release 1.1.  Here we describe the status of LLVM, including any known problems,
+and bug fixes from the previous release.  The most up-to-date version of this
+document can be found on the <a
+href="http://llvm.cs.uiuc.edu/releases/1.1/">LLVM 1.1 web site</a>.  If you are
 not reading this on the LLVM web pages, you should probably go there, because
 this document may be updated after the release.<p>
 
@@ -48,6 +49,10 @@ web site</a>.  If you have questions or comments, the <a
 href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM developer's mailing
 list</a> is a good place to send them.<p>
 
+Note that if you are reading this file from CVS, that this document applies to
+the <i>next</i> release, not the previous one.  To see the release notes for the
+previous release, see the <a href="http://llvm.cs.uiuc.edu/releases/">releases
+page</a>.<p>
 
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
@@ -56,52 +61,21 @@ list</a> is a good place to send them.<p>
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-This is the first public release of the LLVM compiler infrastructure.  As such,
-it is all new!  In particular, we are providing a stable C compiler, beta C++
-compiler, a C back-end, stable X86 and Sparc V9 static and JIT code generators,
-as well as a large suite of scalar and interprocedural optimizations.<p>
-
-The default optimizer sequence used by the C/C++ front-ends is:<p>
+This is the second public release of the LLVM compiler infrastructure.  This
+release implements the following new features:<p>
 
 <ol>
-<li>CFG simplification (-simplifycfg)
-<li>Interprocedural dead code elimination (-globaldce)
-<li>Interprocedural constant propagation (-ipconstprop)
-<li>Dead argument elimination (-deadargelim)
-<li>Exception handling pruning (-prune-eh)
-<li>Function inlining (-inline)
-<li>Instruction combining (-instcombine)
-<li>Cast elimination (-raise)
-<li>Tail duplication (-tailduplicate)
-<li>CFG simplification (-simplifycfg)
-<li>Scalar replacement of aggregates (-scalarrepl)
-<li>Tail call elimination (-tailcallelim)
-<li>Instruction combining (-instcombine)
-<li>Reassociation (-reassociate)
-<li>Instruction combining (-instcombine)
-<li>CFG simplification (-simplifycfg)
-<li>Loop canonicalization (-loopsimplify)
-<li>Loop invariant code motion, with scalar promotion (-licm)
-<li>Global common subexpression elimination, with load elimination (-gcse)
-<li>Sparse conditional constant propagation (-sccp)
-<li>Instruction combining (-instcombine)
-<li>Induction variable canonicalization (-indvars)
-<li>Aggressive dead code elimination (-adce)
-<li>CFG simplication (-simplifycfg)
-<li>Dead type elimination (-deadtypeelim)
-<li>Global constant merging (-constmerge)
+<li>temp</li>
+<li>temp</li>
+<li>temp</li>
 </ol><p>
 
-At link-time, the following optimizations are run:<p>
+In this release, the following bugs were fixed:<p>
 
 <ol>
-<li>Global constant merging (-constmerge)
-<li>[optional] Internalization [which marks most functions and global variables static] (-internalize)
-<li>Interprocedural constant propagation (-ipconstprop)
-<li>Interprocedural dead argument elimination (-deadargelim)
-<li>Instruction combining (-instcombine)
-<li>CFG simplification (-simplifycfg)
-<li>Interprocedural dead code elimination (-globaldce)
+<li>temp</li>
+<li>temp</li>
+<li>temp</li>
 </ol><p>
 
 At this time, LLVM is known to work properly with SPEC CPU 2000, the Olden
@@ -123,16 +97,6 @@ Hat Linux, and Sun UltraSPARC workstations running Solaris 8.
 The core LLVM infrastructure uses "autoconf" for portability, so hopefully we
 work on more platforms than that.  However, it is extremely likely that we
 missed something.  We welcome portability patches and error messages.<p>
-
-
-<!-- *********************************************************************** -->
-</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
-<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="install-instructions">Installation Instructions
-</b></font></td></tr></table><ul>
-<!-- *********************************************************************** -->
-
-FIXME
 
 
 <!-- *********************************************************************** -->
@@ -400,6 +364,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Mon Oct 20 14:04:51 CDT 2003
+Last modified: Sun Oct 26 19:30:33 CST 2003
 <!-- hhmts end -->
 </body></html>
