@@ -247,9 +247,10 @@ ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V) : Constant(T) {
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert(V[i]->getType() == T->getElementType() ||
-           (T->isAbstract() &&
-            V[i]->getType()->getTypeID() == T->getElementType()->getTypeID()));
+    assert((V[i]->getType() == T->getElementType() ||
+            (T->isAbstract() &&
+             V[i]->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+           "Initializer for array element doesn't match array element type!");
     Operands.push_back(Use(V[i], this));
   }
 }
@@ -273,9 +274,10 @@ ConstantPacked::ConstantPacked(const PackedType *T,
                                const std::vector<Constant*> &V) : Constant(T) {
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert(V[i]->getType() == T->getElementType() ||
-           (T->isAbstract() &&
-            V[i]->getType()->getTypeID() == T->getElementType()->getTypeID()));
+    assert((V[i]->getType() == T->getElementType() ||
+            (T->isAbstract() &&
+             V[i]->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+           "Initializer for packed element doesn't match packed element type!");
     Operands.push_back(Use(V[i], this));
   }
 }
