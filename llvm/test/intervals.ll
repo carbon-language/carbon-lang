@@ -14,6 +14,7 @@ L1Header:
 	%i1 = add int 0, 0             ; %i1 = 0
 	br label %L2Body
 L2Body:
+	%wl = phi int [%j, %L1Header], [%wl, %L2Body]    ;; Useless PHI
 	%i2 = phi int [%i1, %L1Header], [%i3, %L2Body]
 	%i3 = add int %i2, 1
 	%L2Done = seteq int %i3, 10
