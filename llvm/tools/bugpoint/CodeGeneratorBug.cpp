@@ -255,7 +255,13 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     std::cout << "\n";
     std::cout << "The shared object was created with:\n  dis -c "
               << SafeModuleBC << " -o temporary.c\n"
-              << "  gcc -shared temporary.c -o " << SharedObject << "\n";
+              << "  gcc -xc temporary.c -O2 -o " << SharedObject
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+              << "-G"            // Compile a shared library, `-G' for Sparc
+#else                             
+              << "-shared"      // `-shared' for Linux/X86, maybe others
+#endif
+              << "\n";
   } else {
     removeFile(TestModuleBC);
     removeFile(SafeModuleBC);
