@@ -34,6 +34,7 @@ public:
 };
 
 class FunctionPass;
+class ImmutablePass;
 class Function;
 
 class FunctionPassManager {
@@ -49,6 +50,11 @@ public:
   /// passes MUST be allocated with 'new'.
   ///
   void add(FunctionPass *P);
+
+  /// add - ImmutablePasses are not FunctionPasses, so we have a 
+  /// special hack to get them into a FunctionPassManager.
+  ///
+  void add(ImmutablePass *IP);
 
   /// run - Execute all of the passes scheduled for execution.  Keep
   /// track of whether any of the passes modifies the function, and if

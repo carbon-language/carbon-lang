@@ -444,8 +444,27 @@ public:
     P->addToPassManager(this, AnUsage);
   }
 
-private:
+  // add - H4x0r an ImmutablePass into a PassManager that might not be
+  // expecting one.
+  //
+  void add(ImmutablePass *P) {
+    // Get information about what analyses the pass uses...
+    AnalysisUsage AnUsage;
+    P->getAnalysisUsage(AnUsage);
+    const std::vector<AnalysisID> &Required = AnUsage.getRequiredSet();
 
+    // Loop over all of the analyses used by this pass,
+    for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
+           E = Required.end(); I != E; ++I) {
+      if (getAnalysisOrNullDown(*I) == 0)
+        add((PassClass*)(*I)->createPass());
+    }
+
+    // Add the ImmutablePass to this PassManager.
+    addPass(P, AnUsage);
+  }
+
+private:
   // addPass - These functions are used to implement the subclass specific
   // behaviors present in PassManager.  Basically the add(Pass*) method ends up
   // reflecting its behavior into a Pass::addToPassManager call.  Subclasses of

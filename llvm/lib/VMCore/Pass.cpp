@@ -78,6 +78,7 @@ bool PassManager::run(Module &M) { return PM->run(M); }
 FunctionPassManager::FunctionPassManager() : PM(new PassManagerT<Function>()) {}
 FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
+void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
 bool FunctionPassManager::run(Function &F) { return PM->run(F); }
 
 
