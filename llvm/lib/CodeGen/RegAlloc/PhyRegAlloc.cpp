@@ -1059,7 +1059,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
         // of copying it to memory and back.  But we have to mark the
         // register as used by this instruction, so it does not get used
         // as a scratch reg. by another operand or anyone else.
-        MInst->insertUsedReg(scratchReg); 
+        ScratchRegsUsed.insert(std::make_pair(MInst, scratchReg));
         MRI.cpReg2RegMI(MIBef, RegU, scratchReg, RegType);
         MRI.cpReg2RegMI(MIAft, scratchReg, RegU, RegType);
       }
@@ -1175,13 +1175,12 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, int RegType,
       markRegisterUsed(MI->getImplicitOp(i).getAllocatedRegNum(), RC,
                        RegType,MRI);
 
-  // The getRegsUsed() method returns the set of scratch registers that are used
-  // to save values across the instruction (e.g., for saving state register
-  // values).
-  const std::set<int> &regsUsed = MI->getRegsUsed();
-  for (std::set<int>::iterator I = regsUsed.begin(),
-         E = regsUsed.end(); I != E; ++I)
-    markRegisterUsed(*I, RC, RegType, MRI);
+  // Add all of the scratch registers that are used to save values across the
+  // instruction (e.g., for saving state register values).
+  std::pair<ScratchRegsUsedTy::iterator, ScratchRegsUsedTy::iterator>
+    IR = ScratchRegsUsed.equal_range(MI);
+  for (ScratchRegsUsedTy::iterator I = IR.first; I != IR.second; ++I)
+    markRegisterUsed(I->second, RC, RegType, MRI);
 
   // If there are implicit references, mark their allocated regs as well
   // 
