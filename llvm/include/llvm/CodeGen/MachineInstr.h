@@ -91,18 +91,18 @@ private:
   int regNum;	                // register number for an explicit register
                                 // will be set for a value after reg allocation
 public:
-  /*ctor*/		MachineOperand	();
-  /*ctor*/		MachineOperand	(MachineOperandType operandType,
-					 Value* _val);
-  /*copy ctor*/		MachineOperand	(const MachineOperand&);
-  /*dtor*/		~MachineOperand	() {}
+  MachineOperand() : immedVal(0), opType(MO_VirtualRegister),
+                     flags(0), regNum(-1) {}
+  MachineOperand(const MachineOperand &M)
+    : immedVal(M.immedVal), opType(M.opType), flags(M.flags), regNum(M.regNum) {
+  }
+  ~MachineOperand() {}
   
   // Accessor methods.  Caller is responsible for checking the
   // operand type before invoking the corresponding accessor.
   // 
-  inline MachineOperandType getOperandType() const {
-    return opType;
-  }
+  MachineOperandType getOperandType() const { return opType; }
+
   inline Value*		getVRegValue	() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_PCRelativeDisp);
@@ -120,24 +120,12 @@ public:
     assert(opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed);
     return immedVal;
   }
-  inline bool		opIsDef		() const {
-    return flags & DEFFLAG;
-  }
-  inline bool		opIsDefAndUse	() const {
-    return flags & DEFUSEFLAG;
-  }
-  inline bool           opHiBits32      () const {
-    return flags & HIFLAG32;
-  }
-  inline bool           opLoBits32      () const {
-    return flags & LOFLAG32;
-  }
-  inline bool           opHiBits64      () const {
-    return flags & HIFLAG64;
-  }
-  inline bool           opLoBits64      () const {
-    return flags & LOFLAG64;
-  }
+  bool		opIsDef		() const { return flags & DEFFLAG; }
+  bool		opIsDefAndUse	() const { return flags & DEFUSEFLAG; }
+  bool          opHiBits32      () const { return flags & HIFLAG32; }
+  bool          opLoBits32      () const { return flags & LOFLAG32; }
+  bool          opHiBits64      () const { return flags & HIFLAG64; }
+  bool          opLoBits64      () const { return flags & LOFLAG64; }
 
   // used to check if a machine register has been allocated to this operand
   inline bool   hasAllocatedReg() const {
@@ -154,20 +142,9 @@ public:
   }
 
   
-public:
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
 private:
-  // These functions are provided so that a vector of operands can be
-  // statically allocated and individual ones can be initialized later.
-  // Give class MachineInstr access to these functions.
-  // 
-  void			Initialize	(MachineOperandType operandType,
-					 Value* _val);
-  void			InitializeConst	(MachineOperandType operandType,
-					 int64_t intValue);
-  void			InitializeReg	(int regNum,
-                                         bool isCCReg);
 
   // Construction methods needed for fine-grain control.
   // These must be accessed via coresponding methods in MachineInstr.
@@ -188,63 +165,6 @@ private:
   
   friend class MachineInstr;
 };
-
-
-inline
-MachineOperand::MachineOperand()
-  : immedVal(0), opType(MO_VirtualRegister), flags(0), regNum(-1)
-{}
-
-inline
-MachineOperand::MachineOperand(MachineOperandType operandType,
-			       Value* _val)
-  : immedVal(0), opType(operandType), flags(0), regNum(-1)
-{}
-
-inline
-MachineOperand::MachineOperand(const MachineOperand& mo)
-  : opType(mo.opType), flags(mo.flags)
-{
-  switch(opType) {
-  case MO_VirtualRegister:
-  case MO_CCRegister:		value = mo.value; break;
-  case MO_MachineRegister:	regNum = mo.regNum; break;
-  case MO_SignExtendedImmed:
-  case MO_UnextendedImmed:
-  case MO_PCRelativeDisp:	immedVal = mo.immedVal; break;
-  default: assert(0);
-  }
-}
-
-inline void
-MachineOperand::Initialize(MachineOperandType operandType,
-			   Value* _val)
-{
-  opType = operandType;
-  value = _val;
-  regNum = -1;
-  flags = 0;
-}
-
-inline void
-MachineOperand::InitializeConst(MachineOperandType operandType,
-				int64_t intValue)
-{
-  opType = operandType;
-  value = NULL;
-  immedVal = intValue;
-  regNum = -1;
-  flags = 0;
-}
-
-inline void
-MachineOperand::InitializeReg(int _regNum, bool isCCReg)
-{
-  opType = isCCReg? MO_CCRegister : MO_MachineRegister;
-  value = NULL;
-  regNum = (int) _regNum;
-  flags = 0;
-}
 
 
 //---------------------------------------------------------------------------
@@ -294,10 +214,10 @@ class MachineInstr : public Annotable,         // MachineInstrs are annotable
   std::vector<bool> regsUsed;
 public:
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
-					 OpCodeMask    _opCodeMask = 0x0);
+					 OpCodeMask    _opCodeMask = 0);
   /*ctor*/		MachineInstr	(MachineOpCode _opCode,
 					 unsigned	numOperands,
-					 OpCodeMask    _opCodeMask = 0x0);
+					 OpCodeMask    _opCodeMask = 0);
   inline           	~MachineInstr	() {}
 
   // 
@@ -309,36 +229,69 @@ public:
 					 OpCodeMask    _opCodeMask = 0x0);
   
   //
-  // The op code.  Note that MachineOpCode is a target-specific type.
+  // The opcode.
   // 
-  const MachineOpCode	getOpCode	() const { return opCode; }
+  const MachineOpCode getOpCode() const { return opCode; }
 
   //
   // Information about explicit operands of the instruction
   // 
-  unsigned int		getNumOperands	() const { return operands.size(); }
+  unsigned getNumOperands() const { return operands.size(); }
   
-  bool			operandIsDefined(unsigned i) const;
-  bool			operandIsDefinedAndUsed(unsigned i) const;
+  bool operandIsDefined(unsigned i) const {
+    return getOperand(i).opIsDef();
+  }
+
+  bool operandIsDefinedAndUsed(unsigned i) const {
+    return getOperand(i).opIsDefAndUse();
+  }
   
-  const MachineOperand& getOperand	(unsigned i) const;
-        MachineOperand& getOperand	(unsigned i);
+  const MachineOperand& getOperand(unsigned i) const {
+    assert(i < operands.size() && "getOperand() out of range!");
+    return operands[i];
+  }
+  MachineOperand& getOperand(unsigned i) {
+    assert(i < operands.size() && "getOperand() out of range!");
+    return operands[i];
+  }
   
   //
   // Information about implicit operands of the instruction
   // 
-  unsigned             	getNumImplicitRefs() const{ return implicitRefs.size();}
+  unsigned getNumImplicitRefs() const{ return implicitRefs.size();}
   
-  bool			implicitRefIsDefined(unsigned i) const;
-  bool			implicitRefIsDefinedAndUsed(unsigned i) const;
+  const Value* getImplicitRef(unsigned i) const {
+    assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
+    return implicitRefs[i].Val;
+  }
+  Value* getImplicitRef(unsigned i) {
+    assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
+    return implicitRefs[i].Val;
+  }
+
+  bool implicitRefIsDefined(unsigned i) const {
+    assert(i < implicitRefs.size() && "implicitRefIsDefined() out of range!");
+    return implicitRefs[i].isDef;
+  }
+  bool implicitRefIsDefinedAndUsed(unsigned i) const {
+    assert(i < implicitRefs.size() && "implicitRefIsDef&Used() out of range!");
+    return implicitRefs[i].isDefAndUse;
+  }
   
-  const Value*          getImplicitRef  (unsigned i) const;
-        Value*          getImplicitRef  (unsigned i);
+  void addImplicitRef(Value* V, bool isDef=false, bool isDefAndUse=false) {
+    implicitRefs.push_back(ImplicitRef(V, isDef, isDefAndUse));
+  }
+  
+  void setImplicitRef(unsigned i, Value* V, bool isDef=false,
+                      bool isDefAndUse=false) {
+    assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
+    implicitRefs[i] = ImplicitRef(V, isDef, isDefAndUse);
+  }
   
   //
   // Information about registers used in this instruction
   // 
-  const std::vector<bool> &getRegsUsed    () const { return regsUsed; }
+  const std::vector<bool> &getRegsUsed() const { return regsUsed; }
   
   // insertUsedReg - Add a register to the Used registers set...
   void insertUsedReg(unsigned Reg) {
@@ -350,9 +303,8 @@ public:
   //
   // Debugging support
   // 
-  void			dump		() const;
-  friend std::ostream& operator<<       (std::ostream& os,
-                                         const MachineInstr& minstr);
+  void dump() const;
+  friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
   //
   // Define iterators to access the Value operands of the Machine Instruction.
@@ -365,44 +317,28 @@ public:
 
   // Access to set the operands when building the machine instruction
   // 
-  void			SetMachineOperandVal(unsigned i,
-                                             MachineOperand::MachineOperandType
-                                               operandType,
-                                             Value* _val,
-                                             bool isDef=false,
-                                             bool isDefAndUse=false);
-  void			SetMachineOperandConst(unsigned i,
-                                           MachineOperand::MachineOperandType
-                                                 operandType,
-                                               int64_t intValue);
-  void			SetMachineOperandReg(unsigned i, int regNum, 
-                                             bool isDef=false,
-                                             bool isDefAndUse=false,
-                                             bool isCCReg=false);
-  
-  void                  addImplicitRef	 (Value* val, 
-                                          bool isDef=false,
-                                          bool isDefAndUse=false);
-  
-  void                  setImplicitRef	 (unsigned i,
-                                          Value* val, 
-                                          bool isDef=false,
-                                          bool isDefAndUse=false);
+  void SetMachineOperandVal(unsigned i,
+                            MachineOperand::MachineOperandType operandType,
+                            Value* V, bool isDef=false, bool isDefAndUse=false);
+  void SetMachineOperandConst(unsigned i,
+                              MachineOperand::MachineOperandType operandType,
+                              int64_t intValue);
+  void SetMachineOperandReg(unsigned i, int regNum, bool isDef=false,
+                            bool isDefAndUse=false, bool isCCReg=false);
 
-  unsigned              substituteValue  (const Value* oldVal,
-                                          Value* newVal,
-                                          bool defsOnly = true);
+  unsigned substituteValue(const Value* oldVal, Value* newVal,
+                           bool defsOnly = true);
 
-  void                  setOperandHi32   (unsigned i);
-  void                  setOperandLo32   (unsigned i);
-  void                  setOperandHi64   (unsigned i);
-  void                  setOperandLo64   (unsigned i);
+  void setOperandHi32(unsigned i) { operands[i].markHi32(); }
+  void setOperandLo32(unsigned i) { operands[i].markLo32(); }
+  void setOperandHi64(unsigned i) { operands[i].markHi64(); }
+  void setOperandLo64(unsigned i) { operands[i].markLo64(); }
   
   
-  // Replaces the Value for the operand with its allocated
+  // SetRegForOperand - Replaces the Value for the operand with its allocated
   // physical register after register allocation is complete.
   // 
-  void                  SetRegForOperand(unsigned i, int regNum);
+  void SetRegForOperand(unsigned i, int regNum);
   
   //
   // Iterator to enumerate machine operands.
@@ -469,113 +405,14 @@ public:
   }
 };
 
-
-inline MachineOperand&
-MachineInstr::getOperand(unsigned int i)
-{
-  assert(i < operands.size() && "getOperand() out of range!");
-  return operands[i];
-}
-
-inline const MachineOperand&
-MachineInstr::getOperand(unsigned int i) const
-{
-  assert(i < operands.size() && "getOperand() out of range!");
-  return operands[i];
-}
-
-inline bool
-MachineInstr::operandIsDefined(unsigned int i) const
-{
-  return getOperand(i).opIsDef();
-}
-
-inline bool
-MachineInstr::operandIsDefinedAndUsed(unsigned int i) const
-{
-  return getOperand(i).opIsDefAndUse();
-}
-
-inline bool
-MachineInstr::implicitRefIsDefined(unsigned i) const
-{
-  assert(i < implicitRefs.size() && "operand out of range!");
-  return implicitRefs[i].isDef;
-}
-
-inline bool
-MachineInstr::implicitRefIsDefinedAndUsed(unsigned i) const
-{
-  assert(i < implicitRefs.size() && "operand out of range!");
-  return implicitRefs[i].isDefAndUse;
-}
-
-inline const Value*
-MachineInstr::getImplicitRef(unsigned i) const
-{
-  assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
-  return implicitRefs[i].Val;
-}
-
-inline Value*
-MachineInstr::getImplicitRef(unsigned i)
-{
-  assert(i < implicitRefs.size() && "getImplicitRef() out of range!");
-  return implicitRefs[i].Val;
-}
-
-inline void
-MachineInstr::addImplicitRef(Value* val, 
-                             bool isDef,
-                             bool isDefAndUse) {
-  implicitRefs.push_back(ImplicitRef(val, isDef, isDefAndUse));
-}
-
-inline void
-MachineInstr::setImplicitRef(unsigned int i,
-                             Value* val, 
-                             bool isDef,
-                             bool isDefAndUse)
-{
-  assert(i < implicitRefs.size() && "setImplicitRef() out of range!");
-  implicitRefs[i].Val = val;
-  implicitRefs[i].isDef = isDef;
-  implicitRefs[i].isDefAndUse = isDefAndUse;
-}
-
-inline void
-MachineInstr::setOperandHi32(unsigned i)
-{
-  operands[i].markHi32();
-}
-
-inline void
-MachineInstr::setOperandLo32(unsigned i)
-{
-  operands[i].markLo32();
-}
-
-inline void
-MachineInstr::setOperandHi64(unsigned i)
-{
-  operands[i].markHi64();
-}
-
-inline void
-MachineInstr::setOperandLo64(unsigned i)
-{
-  operands[i].markLo64();
-}
-
-
 //---------------------------------------------------------------------------
 // Debugging Support
 //---------------------------------------------------------------------------
 
-std::ostream& operator<<    (std::ostream& os, const MachineInstr& minstr);
+std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
-std::ostream& operator<<    (std::ostream& os, const MachineOperand& mop);
+std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 					 
-void	PrintMachineInstructions(const Function *F);
+void PrintMachineInstructions(const Function *F);
 
 #endif

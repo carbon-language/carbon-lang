@@ -47,12 +47,16 @@ MachineInstr::replace(MachineOpCode _opCode,
 void
 MachineInstr::SetMachineOperandVal(unsigned int i,
                                    MachineOperand::MachineOperandType opType,
-                                   Value* _val,
+                                   Value* V,
                                    bool isdef,
                                    bool isDefAndUse)
 {
   assert(i < operands.size());
-  operands[i].Initialize(opType, _val);
+  operands[i].opType = opType;
+  operands[i].value = V;
+  operands[i].regNum = -1;
+  operands[i].flags = 0;
+
   if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
     operands[i].markDef();
   if (isDefAndUse)
@@ -60,25 +64,36 @@ MachineInstr::SetMachineOperandVal(unsigned int i,
 }
 
 void
-MachineInstr::SetMachineOperandConst(unsigned int i,
+MachineInstr::SetMachineOperandConst(unsigned i,
 				MachineOperand::MachineOperandType operandType,
                                      int64_t intValue)
 {
   assert(i < operands.size());
   assert(TargetInstrDescriptors[opCode].resultPos != (int) i &&
          "immed. constant cannot be defined");
-  operands[i].InitializeConst(operandType, intValue);
+
+  operands[i].opType = operandType;
+  operands[i].value = NULL;
+  operands[i].immedVal = intValue;
+  operands[i].regNum = -1;
+  operands[i].flags = 0;
 }
 
 void
-MachineInstr::SetMachineOperandReg(unsigned int i,
+MachineInstr::SetMachineOperandReg(unsigned i,
                                    int regNum,
                                    bool isdef,
                                    bool isDefAndUse,
                                    bool isCCReg)
 {
   assert(i < operands.size());
-  operands[i].InitializeReg(regNum, isCCReg);
+
+  operands[i].opType =
+    isCCReg? MachineOperand::MO_CCRegister : MachineOperand::MO_MachineRegister;
+  operands[i].value = NULL;
+  operands[i].regNum = regNum;
+  operands[i].flags = 0;
+
   if (isdef || TargetInstrDescriptors[opCode].resultPos == (int) i)
     operands[i].markDef();
   if (isDefAndUse)
