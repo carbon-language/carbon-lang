@@ -40,14 +40,11 @@ public:
   virtual bool hasSideEffects() const { return false; }  // Memory & Call insts
 
   // ---------------------------------------------------------------------------
-  // Subclass classification... getInstType() returns a member of 
+  // Subclass classification... getOpcode() returns a member of 
   // one of the enums that is coming soon (down below)...
   //
   virtual const char *getOpcodeName() const = 0;
   unsigned getOpcode() const { return iType; }
-
-  // getInstType is deprecated, use getOpcode() instead.
-  unsigned getInstType() const { return iType; }
 
   inline bool isTerminator() const {   // Instance of TerminatorInst?
     return iType >= FirstTermOp && iType < NumTermOps;

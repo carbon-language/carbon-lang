@@ -37,7 +37,7 @@ class InstrForest;
 //--------------------------------------------------------------------------
 // OpLabel values for special-case nodes created for instruction selection.
 // All op-labels not defined here are identical to the instruction
-// opcode returned by Instruction::getInstType()
+// opcode returned by Instruction::getOpcode()
 //--------------------------------------------------------------------------
 
 const int  InvalidOp	=  -1;
