@@ -108,6 +108,9 @@ benchmarks, and <b>many</b> other C and C++ programs.</p>
   <li>The LLVM source code is much more compatible with Microsoft Visual C++,
       including the JIT and runtime-code generation, though the entire system 
       may not work with it.</li>
+  <li>llvmgcc and llvmg++ now emit source line number information when '-g' is
+      passed in.  This information can be used with llvm-db or other tools and
+      passes.</li>
 </ol>
 
 </div>
