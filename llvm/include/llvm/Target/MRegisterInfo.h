@@ -169,14 +169,13 @@ public:
   //
 
   /// Register class iterators
+  ///
   regclass_iterator regclass_begin() const { return RegClassBegin; }
   regclass_iterator regclass_end() const { return RegClassEnd; }
 
   unsigned getNumRegClasses() const {
     return regclass_end()-regclass_begin();
   }
-  virtual const TargetRegisterClass* getRegClassForType(const Type* Ty) const=0;
-
 
   //===--------------------------------------------------------------------===//
   // Interfaces used by the register allocator and stack frame manipulation
