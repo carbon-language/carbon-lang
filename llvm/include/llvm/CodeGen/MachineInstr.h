@@ -14,6 +14,8 @@
 #include <iterator>
 #include <ext/hash_set>
 class Instruction;
+using std::vector;
+using std::hash_set;
 
 //---------------------------------------------------------------------------
 // class MachineOperand 
