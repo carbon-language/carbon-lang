@@ -21,7 +21,7 @@
 
 #include "llvm/Support/ProgramOptions.h"
 #include "llvm/Support/ProgramOption.h"
-#include "llvm/LLC/LLCOptions.h"
+#include "LLCOptions.h"
 
 
 //---------------------------------------------------------------------------

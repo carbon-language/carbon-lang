@@ -12,22 +12,20 @@
 
 //*************************** User Include Files ***************************/
 
+#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Method.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 #include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
 #include "llvm/LLC/CompileContext.h"
-#include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/InstrSelection.h"
 
 
 //************************* Forward Declarations ***************************/
 
-static bool SelectInstructionsForTree	(BasicTreeNode* treeRoot,
-					 int goalnt,
-					 CompileContext& ccontext);
+static bool SelectInstructionsForTree(BasicTreeNode* treeRoot, int goalnt,
+				      CompileContext& ccontext);
 
 
 //******************* Externally Visible Functions *************************/
@@ -38,10 +36,8 @@ static bool SelectInstructionsForTree	(BasicTreeNode* treeRoot,
 // Returns true if instruction selection failed, false otherwise.
 //---------------------------------------------------------------------------
 
-bool
-SelectInstructionsForMethod(Method* method,
-			    CompileContext& ccontext)
-{
+bool SelectInstructionsForMethod(Method* method, CompileContext& ccontext,
+				 int DebugLevel) {
   bool failed = false;
   
   InstrForest instrForest;
@@ -63,8 +59,7 @@ SelectInstructionsForMethod(Method* method,
       // Invoke BURM to label each tree node with a state
       (void) burm_label(basicNode);
       
-      if (ccontext.getOptions().IntOptionValue(DEBUG_INSTR_SELECT_OPT)
-	  >= DEBUG_BURG_TREES)
+      if (DebugLevel >= DEBUG_BURG_TREES)
 	{
 	  printcover(basicNode, 1, 0);
 	  cerr << "\nCover cost == " << treecost(basicNode, 1, 0) << "\n\n";
@@ -81,8 +76,7 @@ SelectInstructionsForMethod(Method* method,
   
   if (!failed)
     {
-      if ( ccontext.getOptions().IntOptionValue(DEBUG_INSTR_SELECT_OPT)
-	   >= DEBUG_INSTR_TREES)
+      if (DebugLevel >= DEBUG_INSTR_TREES)
 	{
 	  cout << "\n\n*** Instruction trees for method "
 	       << (method->hasName()? method->getName() : "")
@@ -90,8 +84,8 @@ SelectInstructionsForMethod(Method* method,
 	  instrForest.dump();
 	}
       
-      if (ccontext.getOptions().IntOptionValue(DEBUG_INSTR_SELECT_OPT) > 0)
-	PrintMachineInstructions(method, ccontext);	
+      if (DebugLevel >= DEBUG_TREES_NONE)
+	PrintMachineInstructions(method);
     }
   
   return false;
@@ -139,10 +133,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
 }
 
 
-void
-PrintMachineInstructions(Method* method,
-			 CompileContext& ccontext)
-{
+void PrintMachineInstructions(Method* method) {
   cout << "\n" << method->getReturnType()
        << " \"" << method->getName() << "\"" << endl;
   

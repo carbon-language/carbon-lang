@@ -12,29 +12,17 @@
 #ifndef LLVM_CODEGEN_INSTR_SELECTION_H
 #define LLVM_CODEGEN_INSTR_SELECTION_H
 
-//************************** System Include Files **************************/
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/Instruction.h"
-
-//************************* Opaque Declarations ****************************/
-
+#include <vector>
 class CompileContext;
-class Instruction;
 class Method;
 class InstrForest;
-class MachineInstruction;
+class MachineInstr;
+class InstructionNode;
 class TmpInstruction;
+class ConstPoolVal;
 
-
-//************************ Exported Constants ******************************/
-
-const int	DEBUG_INSTR_TREES = 2;
-const int	DEBUG_BURG_TREES  = 5;
-
-
-//****************** External Function Prototypes **************************/
+enum { DEBUG_TREES_NONE = 0, DEBUG_INSTR_TREES = 1, DEBUG_BURG_TREES = 5 };
 
 //---------------------------------------------------------------------------
 // GLOBAL data and an external function that must be implemented
@@ -65,12 +53,12 @@ extern bool	ThisIsAChainRule	(int eruleno);
 //---------------------------------------------------------------------------
 
 bool		SelectInstructionsForMethod	(Method* method,
-						 CompileContext& ccontext);
+						 CompileContext& ccontext,
+						 int DebugLevel);
 
 
 // Debugging function to print the generated instructions
-void		PrintMachineInstructions	(Method* method,
-						 CompileContext& ccontext);
+void		PrintMachineInstructions	(Method* method);
 
 
 //---------------------------------------------------------------------------
