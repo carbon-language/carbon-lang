@@ -80,6 +80,8 @@ public:
     return *I->second;
   }
 
+  /// getCallSites - Return all of the call sites for the specified function
+  ///
   const std::vector<DSCallSite> *getCallSites(const Function &F) const {
     std::map<const Function*, std::vector<DSCallSite> >::const_iterator I
       = CallSites.find(&F);
