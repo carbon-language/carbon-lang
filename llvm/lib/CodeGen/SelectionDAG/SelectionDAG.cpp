@@ -535,6 +535,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::AND  : return getConstant(C1 & C2, VT);
       case ISD::OR   : return getConstant(C1 | C2, VT);
       case ISD::XOR  : return getConstant(C1 ^ C2, VT);
+      case ISD::SHL  : return getConstant(C1 << (int)C2, VT);
+      case ISD::SRL  : return getConstant(C1 >> (unsigned)C2, VT);
+      case ISD::SRA  : return getConstant(N1C->getSignExtended() >>(int)C2, VT);
       default: break;
       }
 
