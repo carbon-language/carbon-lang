@@ -1,4 +1,6 @@
 TODO:
+* poor switch statement codegen
+* load/store to alloca'd array or struct.
 * implement not-R0 register GPR class
 * implement scheduling info
 * implement do-loop pass

@@ -502,6 +502,10 @@ unsigned PPC32ISel::getReg(Value *V, MachineBasicBlock *MBB,
     unsigned Reg = makeAnotherReg(V->getType());
     copyConstantToRegister(MBB, IPt, C, Reg);
     return Reg;
+  } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
+    // Do not emit noop casts at all, unless it's a double -> float cast.
+    if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()))
+      return getReg(CI->getOperand(0), MBB, IPt);
   } else if (AllocaInst *AI = dyn_castFixedAlloca(V)) {
     unsigned Reg = makeAnotherReg(V->getType());
     unsigned FI = getFixedSizedAllocaFI(AI);
@@ -3128,6 +3132,10 @@ void PPC32ISel::visitCastInst(CastInst &CI) {
 
   unsigned SrcClass = getClassB(Op->getType());
   unsigned DestClass = getClassB(CI.getType());
+
+  // Noop casts are not emitted: getReg will return the source operand as the
+  // register to use for any uses of the noop cast.
+  if (DestClass == SrcClass) return;
 
   // If this is a cast from a 32-bit integer to a Long type, and the only uses
   // of the cast are GEP instructions, then the cast does not need to be
