@@ -1011,7 +1011,7 @@ GetInstructionsForProlog(BasicBlock* entryBB,
   mvec[0] = new MachineInstr(SAVE);
   mvec[0]->SetMachineOperand(0, target.getRegInfo().getStackPointer());
   mvec[0]->SetMachineOperand(1, MachineOperand::MO_SignExtendedImmed,
-                                staticStackSize);
+                                - staticStackSize);
   mvec[0]->SetMachineOperand(2, target.getRegInfo().getStackPointer());
   
   return 1;
@@ -1519,8 +1519,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 42:	// bool:   SetCC(reg, reg):
       {
         // If result of the SetCC is only used for a single branch, we can
-        // discard the result.  Otherwise, the boolean value must go into
-        // an integer register.
+        // discard the boolean result and keep only the condition code.
+        // Otherwise, the boolean value must go into an integer register.
+        // To put the boolean result in a register we use a conditional move,
+        // unless the result of the SUBCC instruction can be used as the bool!
+        // This assumes that zero is FALSE and any non-zero integer is TRUE.
         // 
         bool keepBoolVal = (subtreeRoot->parent() == NULL ||
                             ((InstructionNode*) subtreeRoot->parent())
