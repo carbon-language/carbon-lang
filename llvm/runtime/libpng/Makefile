@@ -11,6 +11,7 @@ BYTECODE_LIBRARY=1
 BUILD_ARCHIVE=1
 DONT_BUILD_RELINKED=1
 LIBRARYNAME=png
+CPPFLAGS += -I../zlib
 
 Source = png.c pngset.c pngget.c pngrutil.c pngtrans.c pngwutil.c \
 	       pngread.c pngrio.c pngwio.c pngwrite.c pngrtran.c \
