@@ -77,20 +77,15 @@ MachineCodeEmitter *VM::createSparcEmitter(VM &V) {
 // FIXME: This should be rewritten to support a real memory manager for
 // executable memory pages!
 void * SparcEmitter::getMemory(unsigned NumPages) {
-#if 0
-  void *pa = mmap(0, 4096*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-                  MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+  void *pa;
+  if (NumPages == 0) return 0;
+  static const long pageSize = sysconf (_SC_PAGESIZE);
+  pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
+                  MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (pa == MAP_FAILED) {
     perror("mmap");
     abort();
   }
-#endif
-  void *pa = malloc(4096*NumPages);
-  if (!pa) {
-    perror("malloc");
-    abort();
-  }
-  funcMemory.push_back(pa);
   return pa;
 }
 
