@@ -228,9 +228,9 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     if (M == 0) return failure(true);
 
     // Check to make sure we have a pointer to method type
-    PointerType *PTy = dyn_cast<PointerType>(M->getType());
+    const PointerType *PTy = dyn_cast<PointerType>(M->getType());
     if (PTy == 0) return failure(true);
-    FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
+    const FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
     if (MTy == 0) return failure(true);
 
     vector<Value *> Params;
@@ -288,9 +288,9 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     if (M == 0) return failure(true);
 
     // Check to make sure we have a pointer to method type
-    PointerType *PTy = dyn_cast<PointerType>(M->getType());
+    const PointerType *PTy = dyn_cast<PointerType>(M->getType());
     if (PTy == 0) return failure(true);
-    FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
+    const FunctionType *MTy = dyn_cast<FunctionType>(PTy->getElementType());
     if (MTy == 0) return failure(true);
 
     vector<Value *> Params;

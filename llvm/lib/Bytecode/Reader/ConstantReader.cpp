@@ -160,7 +160,7 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
     // abstract type to use the newty.  This also will cause the opaque type
     // to be deleted...
     //
-    cast<DerivedType>(Tab[i].get())->refineAbstractTypeTo(NewTy);
+    ((DerivedType*)Tab[i].get())->refineAbstractTypeTo(NewTy);
 
     // This should have replace the old opaque type with the new type in the
     // value table... or with a preexisting type that was already in the system
