@@ -35,3 +35,22 @@ int %test6(bool %C) {
 	ret int %V
 }
 
+bool %test7(bool %C, bool %X) {
+        %R = select bool %C, bool true, bool %X    ; R = or C, X
+        ret bool %R
+}
+
+bool %test8(bool %C, bool %X) {
+        %R = select bool %C, bool %X, bool false   ; R = and C, X
+        ret bool %R
+}
+
+bool %test9(bool %C, bool %X) {
+        %R = select bool %C, bool false, bool %X    ; R = and !C, X
+        ret bool %R
+}
+
+bool %test10(bool %C, bool %X) {
+        %R = select bool %C, bool %X, bool true   ; R = or !C, X
+        ret bool %R
+}
