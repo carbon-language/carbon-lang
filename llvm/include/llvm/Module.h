@@ -62,8 +62,7 @@ public:
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
   // Library list iterators
-  typedef LibraryListType::iterator literator;
-  typedef LibraryListType::const_iterator const_literator;
+  typedef LibraryListType::const_iterator lib_iterator;
 
   enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
   enum PointerSize { AnyPointerSize, Pointer32, Pointer64 };
@@ -93,7 +92,7 @@ public:
 
   const std::string& getModuleIdentifier() const { return ModuleID; }
   const std::string& getTargetTriple() const { return TargetTriple; }
-  void setTargetTriple(std::string& T) { TargetTriple = T; }
+  void setTargetTriple(const std::string& T) { TargetTriple = T; }
 
   /// Target endian information...
   Endianness getEndianness() const { return Endian; }
@@ -226,21 +225,23 @@ public:
   inline const Function          &back() const { return FunctionList.back(); }
   inline       Function          &back()       { return FunctionList.back(); }
 
-  // LibraryList interface
-  inline literator           lbegin()       { return LibraryList.begin(); }
-  inline const_literator     lbegin() const { return LibraryList.begin(); }
-  inline literator           lend  ()       { return LibraryList.end();   }
-  inline const_literator     lend  () const { return LibraryList.end();   }
+  //===--------------------------------------------------------------------===//
+  // List of dependent library access functionsns
 
-  inline unsigned             lsize() const { return LibraryList.size(); }
-  inline bool                lempty() const { return LibraryList.empty(); }
-  inline const std::string&  lfront() const { return LibraryList.front(); }
-  inline       std::string&  lfront()       { return LibraryList.front(); }
-  inline const std::string&   lback() const { return LibraryList.back(); }
-  inline       std::string&   lback()       { return LibraryList.back(); }
+  /// @brief Get a constant iterator to beginning of dependent library list.
+  inline lib_iterator lib_begin() const { return LibraryList.begin(); }
 
-  inline void linsert(std::string& Lib){ LibraryList.push_back(Lib); }
-  inline void lremove(std::string& Lib);
+  /// @brief Get a constant iterator to end of dependent library list.
+  inline lib_iterator lib_end() const { return LibraryList.end(); }
+
+  /// @brief Returns the number of items in the list of libraries.
+  inline unsigned lib_size() const { return LibraryList.size(); }
+
+  /// @brief Add a library to the list of dependent libraries
+  inline void addLibrary(const std::string& Lib){ LibraryList.push_back(Lib); }
+
+  /// @brief Remove a library from the list of dependent libraries
+  inline void removeLibrary(const std::string& Lib);
 
   void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
