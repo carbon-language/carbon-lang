@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "twoaddrinstr"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -81,6 +82,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
     bool MadeChange = false;
 
+    DEBUG(std::cerr << "********** REWRITING TWO-ADDR INSTRS **********\n");
+    DEBUG(std::cerr << "********** Function: "
+          << MF.getFunction()->getName() << '\n');
+
     for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
          mbbi != mbbe; ++mbbi) {
         for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
@@ -93,7 +98,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
             ++numTwoAddressInstrs;
 
-            DEBUG(std::cerr << "\tinstruction: "; mi->print(std::cerr, TM));
+            DEBUG(std::cerr << '\t'; mi->print(std::cerr, TM));
 
             assert(mi->getOperand(1).isRegister() &&
                    mi->getOperand(1).getReg() &&
@@ -134,7 +139,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 numInstrsAdded += Added;
 
                 MachineBasicBlock::iterator prevMi = prior(mi);
-                DEBUG(std::cerr << "\t\tadded instruction: ";
+                DEBUG(std::cerr << "\t\tprepend:\t";
                       prevMi->print(std::cerr, TM));
 
                 if (LV) {
@@ -164,7 +169,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             mi->getOperand(0).setUse();
             mi->RemoveOperand(1);
 
-            DEBUG(std::cerr << "\t\tmodified original to: ";
+            DEBUG(std::cerr << "\t\trewrite to:\t";
                   mi->print(std::cerr, TM));
         }
     }
