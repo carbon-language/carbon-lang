@@ -1775,7 +1775,6 @@ static bool isSafeToFoldLoadIntoInstruction(LoadInst &LI, Instruction &User) {
   return true;
 }
 
-
 /// visitSimpleBinary - Implement simple binary operators for integral types...
 /// OperatorClass is one of: 0 for Add, 1 for Sub, 2 for And, 3 for Or, 4 for
 /// Xor.
@@ -1791,22 +1790,31 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
       std::swap(Op0, Op1);  // Make sure any loads are in the RHS.
 
   unsigned Class = getClassB(B.getType());
-  if (isa<LoadInst>(Op1) && Class < cFP &&
+  if (isa<LoadInst>(Op1) && Class != cLong &&
       isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op1), B)) {
 
-    static const unsigned OpcodeTab[][3] = {
-      // Arithmetic operators
-      { X86::ADD8rm, X86::ADD16rm, X86::ADD32rm },  // ADD
-      { X86::SUB8rm, X86::SUB16rm, X86::SUB32rm },  // SUB
-      
-      // Bitwise operators
-      { X86::AND8rm, X86::AND16rm, X86::AND32rm },  // AND
-      { X86:: OR8rm, X86:: OR16rm, X86:: OR32rm },  // OR
-      { X86::XOR8rm, X86::XOR16rm, X86::XOR32rm },  // XOR
-    };
-  
-    assert(Class < cFP && "General code handles 64-bit integer types!");
-    unsigned Opcode = OpcodeTab[OperatorClass][Class];
+    unsigned Opcode;
+    if (Class != cFP) {
+      static const unsigned OpcodeTab[][3] = {
+        // Arithmetic operators
+        { X86::ADD8rm, X86::ADD16rm, X86::ADD32rm },  // ADD
+        { X86::SUB8rm, X86::SUB16rm, X86::SUB32rm },  // SUB
+        
+        // Bitwise operators
+        { X86::AND8rm, X86::AND16rm, X86::AND32rm },  // AND
+        { X86:: OR8rm, X86:: OR16rm, X86:: OR32rm },  // OR
+        { X86::XOR8rm, X86::XOR16rm, X86::XOR32rm },  // XOR
+      };
+      Opcode = OpcodeTab[OperatorClass][Class];
+    } else {
+      static const unsigned OpcodeTab[][2] = {
+        { X86::FADD32m, X86::FADD64m },  // ADD
+        { X86::FSUB32m, X86::FSUB64m },  // SUB
+      };
+      const Type *Ty = Op0->getType();
+      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+      Opcode = OpcodeTab[OperatorClass][Ty == Type::DoubleTy];
+    }
 
     unsigned BaseReg, Scale, IndexReg, Disp;
     getAddressingMode(cast<LoadInst>(Op1)->getOperand(0), BaseReg,
@@ -1814,6 +1822,25 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
 
     unsigned Op0r = getReg(Op0);
     addFullAddress(BuildMI(BB, Opcode, 2, DestReg).addReg(Op0r),
+                   BaseReg, Scale, IndexReg, Disp);
+    return;
+  }
+
+  // If this is a floating point subtract, check to see if we can fold the first
+  // operand in.
+  if (Class == cFP && OperatorClass == 1 &&
+      isa<LoadInst>(Op0) && 
+      isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op0), B)) {
+    const Type *Ty = Op0->getType();
+    assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+    unsigned Opcode = Ty == Type::FloatTy ? X86::FSUBR32m : X86::FSUBR64m;
+
+    unsigned BaseReg, Scale, IndexReg, Disp;
+    getAddressingMode(cast<LoadInst>(Op0)->getOperand(0), BaseReg,
+                      Scale, IndexReg, Disp);
+
+    unsigned Op1r = getReg(Op1);
+    addFullAddress(BuildMI(BB, Opcode, 2, DestReg).addReg(Op1r),
                    BaseReg, Scale, IndexReg, Disp);
     return;
   }
@@ -2146,8 +2173,33 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
 void ISel::visitMul(BinaryOperator &I) {
   unsigned ResultReg = getReg(I);
 
+  Value *Op0 = I.getOperand(0);
+  Value *Op1 = I.getOperand(1);
+
+  // Fold loads into floating point multiplies.
+  if (getClass(Op0->getType()) == cFP) {
+    if (isa<LoadInst>(Op0) && !isa<LoadInst>(Op1))
+      if (!I.swapOperands())
+        std::swap(Op0, Op1);  // Make sure any loads are in the RHS.
+    if (LoadInst *LI = dyn_cast<LoadInst>(Op1))
+      if (isSafeToFoldLoadIntoInstruction(*LI, I)) {
+        const Type *Ty = Op0->getType();
+        assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
+        unsigned Opcode = Ty == Type::FloatTy ? X86::FMUL32m : X86::FMUL64m;
+        
+        unsigned BaseReg, Scale, IndexReg, Disp;
+        getAddressingMode(LI->getOperand(0), BaseReg,
+                          Scale, IndexReg, Disp);
+        
+        unsigned Op0r = getReg(Op0);
+        addFullAddress(BuildMI(BB, Opcode, 2, ResultReg).addReg(Op0r),
+                       BaseReg, Scale, IndexReg, Disp);
+        return;
+      }
+  }
+
   MachineBasicBlock::iterator IP = BB->end();
-  emitMultiply(BB, IP, I.getOperand(0), I.getOperand(1), ResultReg);
+  emitMultiply(BB, IP, Op0, Op1, ResultReg);
 }
 
 void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
@@ -2264,9 +2316,46 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
 ///
 void ISel::visitDivRem(BinaryOperator &I) {
   unsigned ResultReg = getReg(I);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  // Fold loads into floating point divides.
+  if (getClass(Op0->getType()) == cFP) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(Op1))
+      if (isSafeToFoldLoadIntoInstruction(*LI, I)) {
+        const Type *Ty = Op0->getType();
+        assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
+        unsigned Opcode = Ty == Type::FloatTy ? X86::FDIV32m : X86::FDIV64m;
+        
+        unsigned BaseReg, Scale, IndexReg, Disp;
+        getAddressingMode(LI->getOperand(0), BaseReg,
+                          Scale, IndexReg, Disp);
+        
+        unsigned Op0r = getReg(Op0);
+        addFullAddress(BuildMI(BB, Opcode, 2, ResultReg).addReg(Op0r),
+                       BaseReg, Scale, IndexReg, Disp);
+        return;
+      }
+
+    if (LoadInst *LI = dyn_cast<LoadInst>(Op0))
+      if (isSafeToFoldLoadIntoInstruction(*LI, I)) {
+        const Type *Ty = Op0->getType();
+        assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
+        unsigned Opcode = Ty == Type::FloatTy ? X86::FDIVR32m : X86::FDIVR64m;
+        
+        unsigned BaseReg, Scale, IndexReg, Disp;
+        getAddressingMode(LI->getOperand(0), BaseReg,
+                          Scale, IndexReg, Disp);
+        
+        unsigned Op1r = getReg(Op1);
+        addFullAddress(BuildMI(BB, Opcode, 2, ResultReg).addReg(Op1r),
+                       BaseReg, Scale, IndexReg, Disp);
+        return;
+      }
+  }
+
 
   MachineBasicBlock::iterator IP = BB->end();
-  emitDivRemOperation(BB, IP, I.getOperand(0), I.getOperand(1),
+  emitDivRemOperation(BB, IP, Op0, Op1,
                       I.getOpcode() == Instruction::Div, ResultReg);
 }
 
@@ -2531,16 +2620,22 @@ void ISel::visitLoadInst(LoadInst &I) {
   // Check to see if this load instruction is going to be folded into a binary
   // instruction, like add.  If so, we don't want to emit it.  Wouldn't a real
   // pattern matching instruction selector be nice?
-  if (I.hasOneUse() && getClassB(I.getType()) < cFP) {
+  unsigned Class = getClassB(I.getType());
+  if (I.hasOneUse() && Class != cLong) {
     Instruction *User = cast<Instruction>(I.use_back());
     switch (User->getOpcode()) {
-    default: User = 0; break;
     case Instruction::Add:
     case Instruction::Sub:
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
       break;
+    case Instruction::Mul:
+    case Instruction::Div:
+      if (Class == cFP)
+        break;  // Folding only implemented for floating point.
+      // fall through.
+    default: User = 0; break;
     }
 
     if (User) {
@@ -2556,6 +2651,15 @@ void ISel::visitLoadInst(LoadInst &I) {
       if (User->getOperand(1) == &I &&
           isSafeToFoldLoadIntoInstruction(I, *User))
         return;   // Eliminate the load!
+
+      // If this is a floating point sub or div, we won't be able to swap the
+      // operands, but we will still be able to eliminate the load.
+      if (Class == cFP && User->getOperand(0) == &I &&
+          !isa<LoadInst>(User->getOperand(1)) &&
+          (User->getOpcode() == Instruction::Sub ||
+           User->getOpcode() == Instruction::Div) &&
+          isSafeToFoldLoadIntoInstruction(I, *User))
+        return;  // Eliminate the load!
     }
   }
 
@@ -2563,7 +2667,6 @@ void ISel::visitLoadInst(LoadInst &I) {
   unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
   getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
 
-  unsigned Class = getClassB(I.getType());
   if (Class == cLong) {
     addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg),
                    BaseReg, Scale, IndexReg, Disp);
