@@ -508,6 +508,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::InternalLinkage:
           SwitchSection(O, CurSection, ".data");
           break;
+        case GlobalValue::GhostLinkage:
+          std::cerr << "Error: unmaterialized (GhostLinkage) function in asm!";
+          abort();
         }
 
         emitAlignment(Align);
