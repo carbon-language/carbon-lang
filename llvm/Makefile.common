@@ -46,6 +46,14 @@ include $(LEVEL)/Makefile.config
 #
 #ENABLE_OPTIMIZED = 1
 
+
+# Figure out how to do platform specific stuff on this platform.  This is really
+# gross and should be autoconfiscated (automake actually), but should hopefully
+# work on Linux and solaris (SunOS).
+#
+UNAME := $(shell uname)
+include $(LEVEL)/Makefile.$(UNAME)
+
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
 dynamic ::
@@ -142,6 +150,10 @@ LinkO    := $(Link) -O3 -L $(LIBRELEASE)
 # Create one .o file from a bunch of .o files...
 Relink = ld -r
 
+# MakeSO - Create a .so file from a .o files...
+MakeSO   := $(CXX) $(MakeSharedObjectOption) $(PROFILE)
+MakeSOO  := $(MakeSO) -O3
+
 # Create dependancy file from CPP file, send to stdout.
 Depend   := $(CXX) -MM -I$(LEVEL)/include $(CPPFLAGS) 
 
@@ -193,23 +205,6 @@ endif
 #  of it.  For this reason, sometimes it's useful to use libraries as .a files.
 
 ifdef LIBRARYNAME
-
-# Figure out how to make a .so file on this platform.  This is really gross and
-# should be autoconfiscated (automake actually), but should hopefully work on
-# linux and solaris.
-#
-
-# Create a .so file from a .o files...
-UNAME := $(shell uname)
-
-ifeq ($(UNAME), SunOS)
-MakeSO   := $(CXX) -G $(PROFILE)
-else
-MakeSO   := $(CXX) -shared $(PROFILE)
-endif
-
-MakeSOO  := $(MakeSO) -O3
-
 
 LIBNAME_O    := $(LIBRELEASE)/lib$(LIBRARYNAME).so
 LIBNAME_G    := $(LIBDEBUG)/lib$(LIBRARYNAME).so

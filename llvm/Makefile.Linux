@@ -1,0 +1,18 @@
+#===-- Makefile.Linux - Linux specific makefile options ---*- makefile -*--====#
+#
+# This file is included by all other files, through Makefile.common, but only
+# when compiling on a Linux based platform.
+#
+#===-----------------------------------------------------------------------====#
+
+# MakeSharedObjectOption - This option is passed to the linker by
+# Makefile.common when compiling a shared object.
+#
+MakeSharedObjectOption := -shared
+
+# ExportSymbols - This is used by tools that need to make sure that all of their
+# symbols are exported for use at runtime by dlsym.
+#
+ExportSymbols := -Wl,--export-dynamic
+
+
