@@ -62,7 +62,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     NewRetBlock->getInstList().push_back(new ReturnInst(PN));
   } else {
     // If it returns void, just add a return void instruction to the block
-    new ReturnInst(0, NewRetBlock->end());
+    NewRetBlock->getInstList().push_back(new ReturnInst());
   }
 
   // Loop over all of the blocks, replacing the return instruction with an
