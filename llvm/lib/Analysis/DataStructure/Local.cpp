@@ -88,7 +88,7 @@ namespace {
 
     void visitPHINode(PHINode &PN);
 
-    void visitGetElementPtrInst(GetElementPtrInst &GEP);
+    void visitGetElementPtrInst(User &GEP);
     void visitReturnInst(ReturnInst &RI);
     void visitLoadInst(LoadInst &LI);
     void visitStoreInst(StoreInst &SI);
@@ -145,21 +145,38 @@ DSGraph::DSGraph(Function &F) : Func(&F) {
 
 /// getValueDest - Return the DSNode that the actual value points to.
 ///
-DSNodeHandle GraphBuilder::getValueDest(Value &V) {
-  if (Constant *C = dyn_cast<Constant>(&V)) {
-    // FIXME: Return null NH for constants like 10 or null
-    // FIXME: Handle constant exprs here.
+DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
+  Value *V = &Val;
+  if (V == Constant::getNullValue(V->getType()))
+    return 0;  // Null doesn't point to anything, don't add to ScalarMap!
 
-    return 0;   // Constant doesn't point to anything.
-  }
-
-  DSNodeHandle &NH = ScalarMap[&V];
+  DSNodeHandle &NH = ScalarMap[V];
   if (NH.getNode())
     return NH;     // Already have a node?  Just return it...
 
+  if (Constant *C = dyn_cast<Constant>(V))
+    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
+      return NH = getValueDest(*CPR->getValue());
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::Cast)
+        return NH = getValueDest(*CE->getOperand(0));
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        visitGetElementPtrInst(*CE);
+        return ScalarMap[CE];
+      }
+
+      // This returns a conservative unknown node for any unhandled ConstExpr
+      return NH = createNode(DSNode::UnknownNode);
+    } else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C)) {
+      // Random constants are unknown mem
+      return NH = createNode(DSNode::UnknownNode);
+    } else {
+      assert(0 && "Unknown constant type!");
+    }
+
   // Otherwise we need to create a new node to point to...
   DSNode *N;
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(&V)) {
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // Create a new global node for this global variable...
     N = createNode(DSNode::GlobalNode, GV->getType()->getElementType());
     N->addGlobal(GV);
@@ -226,7 +243,7 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
     PNDest.mergeWith(getValueDest(*PN.getIncomingValue(i)));
 }
 
-void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
+void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
   if (Value.getNode() == 0) return;
 
