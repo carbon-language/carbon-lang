@@ -9,16 +9,17 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMexecve
 SHARED_LIBRARY = 1
+DONT_BUILD_RELINKED = 1
 include $(LEVEL)/Makefile.common
 
 all:: llee
 
-llee: $(TOOLDIR)/llee
+llee: $(ToolDir)/llee
 
-$(TOOLDIR)/llee: Makefile
-	@$(ECHO) Constructing llee shell script
-	$(VERB) echo exec env LD_PRELOAD=$(LIBDIR)/libLLVMexecve$(SHLIBEXT) $$\* > $@
-	$(VERB) chmod u+x $@
+$(ToolDir)/llee: Makefile
+	$(Echo) Constructing llee shell script
+	$(Verb) echo exec env LD_PRELOAD=$(LibDir)/libexecve$(SHLIBEXT) $$\* > $@
+	$(Verb) chmod u+x $@
 
 clean::
-	$(VERB) rm -f $(TOOLDIR)/llee
+	$(Verb) rm -f $(ToolDir)/llee

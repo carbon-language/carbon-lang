@@ -28,43 +28,43 @@ Source       := $(MainSrc) $(GenericEHSrc) $(SJLJEHSrc) $(CXXEHSrc)
 include $(LEVEL)/Makefile.common
 
 # CRTEND_A - The result of making 'all' - the final archive file.
-CRTEND_A   = $(LIBDIR)/libcrtend.a
+CRTEND_A   = $(LibDir)/libcrtend.a
 all:: $(CRTEND_A)
 
 # Installation simply requires copying the archive to it's new home.
 $(bytecode_libdir)/libcrtend.a: $(CRTEND_A) $(bytecode_libdir)
-	@$(ECHO) Installing $(CRTEND_A)
-	$(VERB) $(INSTALL) $(CRTEND_A) $(bytecode_libdir)
+	$(Echo) Installing $(CRTEND_A)
+	$(Verb) $(INSTALL) $(CRTEND_A) $(bytecode_libdir)
 
 install:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
 install-bytecode:: $(DESTDIR)$(bytecode_libdir)/libcrtend.a
 
 
-# The four components described in the README
+# The three components described in the README
 Components := main genericeh sjljeh
-ComponentLibs := $(Components:%=$(OBJDIR)/comp_%.bc)
+ComponentLibs := $(Components:%=$(ObjDir)/comp_%.bc)
 
 
 # We build libcrtend.a from the four components described in the README.
-$(CRTEND_A) : $(ComponentLibs) $(LIBDIR)/.dir
-	@$(ECHO) Building final libcrtend.a file from components
-	$(VERB) $(Archive) $@ $(ComponentLibs)
+$(CRTEND_A) : $(ComponentLibs) $(LibDir)/.dir
+	$(Echo) Building final libcrtend.a file from components
+	$(Verb) $(Archive) $@ $(ComponentLibs)
 
-MainObj      := $(OBJDIR)/crtend.bc $(OBJDIR)/listend.bc
-GenericEHObj := $(OBJDIR)/Exception.bc
-SJLJEHObj    := $(OBJDIR)/SJLJ-Exception.bc
+MainObj      := $(ObjDir)/crtend.bc $(ObjDir)/listend.bc
+GenericEHObj := $(ObjDir)/Exception.bc
+SJLJEHObj    := $(ObjDir)/SJLJ-Exception.bc
 
 # __main and ctor/dtor support component
-$(OBJDIR)/comp_main.bc: $(MainObj)
-	@$(ECHO) Linking $(notdir $@) component...
-	$(VERB) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_main.lst $(MainObj) -o $@
+$(ObjDir)/comp_main.bc: $(MainObj)
+	$(Echo) Linking $(notdir $@) component...
+	$(Verb) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_main.lst $(MainObj) -o $@
 
 # Generic exception handling support runtime.
-$(OBJDIR)/comp_genericeh.bc: $(GenericEHObj)
-	@$(ECHO) Linking $(notdir $@) component...
-	$(VERB) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_genericeh.lst $(GenericEHObj) -o $@
+$(ObjDir)/comp_genericeh.bc: $(GenericEHObj)
+	$(Echo) Linking $(notdir $@) component...
+	$(Verb) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_genericeh.lst $(GenericEHObj) -o $@
 
 # setjmp/longjmp exception handling support runtime.
-$(OBJDIR)/comp_sjljeh.bc: $(SJLJEHObj)
-	@$(ECHO) Linking $(notdir $@) component...
-	$(VERB) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst $(SJLJEHObj) -o $@
+$(ObjDir)/comp_sjljeh.bc: $(SJLJEHObj)
+	$(Echo) Linking $(notdir $@) component...
+	$(Verb) $(GCCLD) -link-as-library -internalize-public-api-file=$(BUILD_SRC_DIR)/comp_sjljeh.lst $(SJLJEHObj) -o $@

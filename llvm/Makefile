@@ -20,10 +20,10 @@ EXTRA_DIST := test llvm.spec include
 include $(LEVEL)/Makefile.common
 
 dist-hook::
-	@$(ECHO) Eliminating CVS directories from distribution
-	$(VERB) rm -rf `find $(TopDistDir) -type d -name CVS -print`
-	@$(ECHO) Eliminating files constructed by configure
-	$(VERB) rm -f \
+	$(Echo) Eliminating CVS directories from distribution
+	$(Verb) $(RM) -rf `find $(TopDistDir) -type d -name CVS -print`
+	$(Echo) Eliminating files constructed by configure
+	$(Verb) $(RM) -f \
 	  $(TopDistDir)/include/llvm/ADT/hash_map  \
 	  $(TopDistDir)/include/llvm/ADT/hash_set  \
 	  $(TopDistDir)/include/llvm/ADT/iterator  \
@@ -31,7 +31,7 @@ dist-hook::
 	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
-test :: all
-	cd test; $(MAKE)
+check :: 
+	cd test; $(MAKE) 
 
 tools-only: all

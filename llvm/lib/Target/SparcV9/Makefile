@@ -17,23 +17,21 @@ BUILT_SOURCES = \
 include $(LEVEL)/Makefile.common
 
 SparcV9.burg.in1 : $(BUILD_SRC_DIR)/SparcV9.burg.in
-	@$(ECHO) Pre-processing SparcV9.burg.in
-	$(VERB) $(CXX) -E $(CPPFLAGS) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@
+	$(Echo) Pre-processing SparcV9.burg.in
+	$(Verb) $(CXX) -E $(CPP.Flags) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/Ydefine/#define/' > $@
 
 SparcV9.burm : SparcV9.burg.in1
-	@$(ECHO) Pre-processing SparcV9.burg.in
-	$(VERB) $(CXX) -E $(CPPFLAGS) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/^Xinclude/#include/' | $(SED) 's/^Xdefine/#define/' > $@
+	$(Echo) Pre-processing SparcV9.burg.in
+	$(Verb) $(CXX) -E $(CPP.Flags) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/^Xinclude/#include/' | $(SED) 's/^Xdefine/#define/' > $@
 
 SparcV9.burm.cpp: SparcV9.burm
-	@$(ECHO) "Burging `basename $<`"
-	$(VERB) $(BURG) -I $< -o $@
+	$(Echo) "Burging `basename $<`"
+	$(Verb) $(BURG) -I $< -o $@
 
-TABLEGEN_FILES := $(notdir $(wildcard $(BUILD_SRC_DIR)/*.td))
-
-SparcV9CodeEmitter.inc: $(BUILD_SRC_DIR)/SparcV9.td $(TABLEGEN_FILES) $(TBLGEN)
-	@$(ECHO) "Running tblgen on SparcV9.td"
-	$(VERB) $(TableGen) -gen-emitter -o $@ $<
+SparcV9CodeEmitter.inc: $(BUILD_SRC_DIR)/SparcV9.td $(TDFiles) $(TBLGEN)
+	$(Echo) "Running tblgen on SparcV9.td"
+	$(Verb) $(TableGen) -gen-emitter -o $@ $<
 
 clean::
-	$(VERB) $(RM) -f SparcV9CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
+	$(Verb) $(RM) -f SparcV9CodeEmitter.inc SparcV9.burg.in1 SparcV9.burm SparcV9.burm.cpp
 
