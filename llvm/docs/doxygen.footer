@@ -2,8 +2,11 @@
 <p class="footer">
 Generated on $datetime for $projectname version $projectnumber by
 <a href="http://www.doxygen.org/index.html">doxygen $doxygenversion</a><br/>
-Copyright &copy; 2003, University of Illinois at Urbana-Champaign. All Rights Reserved.<br/>
-<a href="/index.php" onmouseover="window.status='Go To LLVM Home Page';return true;" title="LLVM Home Page">Home Page</a>
-<a href="http://www.doxygen.org/index.html" onmouseover="window.status='Go To Doxygen Home Page';return true;" title="Doxygen Home Page">
+Copyright &copy; 2004, University of Illinois at Urbana-Champaign. All Rights
+Reserved.<br/>
+<a href="/index.html" onmouseover="window.status='Go To LLVM Home Page';return
+true;" title="LLVM Home Page">Home Page</a>
+<a href="http://www.doxygen.org/index.html" onmouseover="window.status='Go To
+Doxygen Home Page';return true;" title="Doxygen Home Page">
 <img src="doxygen.png" alt="Doxygen Logo" style="border:none;"/></a> 
 </p></body></html>
