@@ -55,11 +55,23 @@ namespace {
     // Visitation methods for various instructions.  These methods simply emit
     // fixed X86 code for each instruction.
     //
-    void visitPHINode(PHINode &I);
     void visitReturnInst(ReturnInst &RI);
     void visitBranchInst(BranchInst &BI);
+
+    // Arithmetic operators
     void visitAdd(BinaryOperator &B);
+
+    // Bitwise operators
+    void visitAnd(BinaryOperator &B) { visitBitwise(B, 0); }
+    void visitOr (BinaryOperator &B) { visitBitwise(B, 1); }
+    void visitXor(BinaryOperator &B) { visitBitwise(B, 2); }
+    void visitBitwise(BinaryOperator &B, unsigned OpcodeClass);
+
+    // Binary comparison operators
+
+    // Other operators
     void visitShiftInst(ShiftInst &I);
+    void visitPHINode(PHINode &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "Cannot instruction select: " << I;
@@ -142,19 +154,6 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
   }
 }
 
-/// visitPHINode - Turn an LLVM PHI node into an X86 PHI node...
-///
-void ISel::visitPHINode(PHINode &PN) {
-  MachineInstr *MI = BuildMI(BB, X86::PHI, PN.getNumOperands(), getReg(PN));
-
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-    // FIXME: This will put constants after the PHI nodes in the block, which
-    // is invalid.  They should be put inline into the PHI node eventually.
-    //
-    MI->addRegOperand(getReg(PN.getIncomingValue(i)));
-    MI->addPCDispOperand(PN.getIncomingBlock(i));
-  }
-}
 
 
 /// 'ret' instruction - Here we are interested in meeting the x86 ABI.  As such,
@@ -190,6 +189,50 @@ void ISel::visitBranchInst(BranchInst &BI) {
 
   BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
 }
+
+
+
+/// 'add' instruction - Simply turn this into an x86 reg,reg add instruction.
+void ISel::visitAdd(BinaryOperator &B) {
+  unsigned Op0r = getReg(B.getOperand(0)), Op1r = getReg(B.getOperand(1));
+  unsigned DestReg = getReg(B);
+  unsigned Class = getClass(B.getType());
+
+  static const unsigned Opcodes[] = { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32 };
+
+  if (Class >= sizeof(Opcodes)/sizeof(Opcodes[0]))
+    visitInstruction(B);  // Not handled class yet...
+
+  BuildMI(BB, Opcodes[Class], 2, DestReg).addReg(Op0r).addReg(Op1r);
+
+  // For Longs: Here we have a pair of operands each occupying a pair of
+  // registers.  We need to do an ADDrr32 of the least-significant pair
+  // immediately followed by an ADCrr32 (Add with Carry) of the most-significant
+  // pair.  I don't know how we are representing these multi-register arguments.
+}
+
+/// visitBitwise - Implement the three bitwise operators for integral types...
+/// OperatorClass is one of: 0 for And, 1 for Or, 2 for Xor.
+void ISel::visitBitwise(BinaryOperator &B, unsigned OperatorClass) {
+  if (B.getType() == Type::BoolTy)  // FIXME: Handle bools
+    visitInstruction(B);
+
+  unsigned Class = getClass(B.getType());
+  if (Class > 2)  // FIXME: Handle longs
+    visitInstruction(B);
+
+  static const unsigned OpcodeTab[][4] = {
+    { X86::ANDrr8, X86::ANDrr16, X86::ANDrr32, 0 },  // AND
+    { X86:: ORrr8, X86:: ORrr16, X86:: ORrr32, 0 },  // OR
+    { X86::XORrr8, X86::XORrr16, X86::XORrr32, 0 },  // XOR
+  };
+  
+  unsigned Opcode = OpcodeTab[OperatorClass][Class];
+  unsigned Op0r = getReg(B.getOperand(0));
+  unsigned Op1r = getReg(B.getOperand(1));
+  BuildMI(BB, Opcode, 2, getReg(B)).addReg(Op0r).addReg(Op1r);
+}
+
 
 
 /// Shift instructions: 'shl', 'sar', 'shr' - Some special cases here
@@ -255,26 +298,19 @@ ISel::visitShiftInst (ShiftInst & I)
     }
 }
 
+/// visitPHINode - Turn an LLVM PHI node into an X86 PHI node...
+///
+void ISel::visitPHINode(PHINode &PN) {
+  MachineInstr *MI = BuildMI(BB, X86::PHI, PN.getNumOperands(), getReg(PN));
 
-/// 'add' instruction - Simply turn this into an x86 reg,reg add instruction.
-void ISel::visitAdd(BinaryOperator &B) {
-  unsigned Op0r = getReg(B.getOperand(0)), Op1r = getReg(B.getOperand(1));
-  unsigned DestReg = getReg(B);
-  unsigned Class = getClass(B.getType());
-
-  static const unsigned Opcodes[] = { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32 };
-
-  if (Class >= sizeof(Opcodes)/sizeof(Opcodes[0]))
-    visitInstruction(B);  // Not handled class yet...
-
-  BuildMI(BB, Opcodes[Class], 2, DestReg).addReg(Op0r).addReg(Op1r);
-
-  // For Longs: Here we have a pair of operands each occupying a pair of
-  // registers.  We need to do an ADDrr32 of the least-significant pair
-  // immediately followed by an ADCrr32 (Add with Carry) of the most-significant
-  // pair.  I don't know how we are representing these multi-register arguments.
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+    // FIXME: This will put constants after the PHI nodes in the block, which
+    // is invalid.  They should be put inline into the PHI node eventually.
+    //
+    MI->addRegOperand(getReg(PN.getIncomingValue(i)));
+    MI->addPCDispOperand(PN.getIncomingBlock(i));
+  }
 }
-
 
 
 /// createSimpleX86InstructionSelector - This pass converts an LLVM function

@@ -48,7 +48,18 @@ I(MOVir32     , "movl",               0, 0)           // R32 = imm32  B8+ rd
 // Arithmetic instructions
 I(ADDrr8      , "addb",               0, 0)           // R8  += R8    00/r
 I(ADDrr16     , "addw",               0, 0)           // R16 += R16   01/r
-I(ADDrr32     , "addl",               0, 0)           // R32 += R32   02/r
+I(ADDrr32     , "addl",               0, 0)           // R32 += R32   01/r
+
+// Logical operators
+I(ANDrr8      , "andb",               0, 0)           // R8  &= R8    20/r
+I(ANDrr16     , "andw",               0, 0)           // R16 &= R16   21/r
+I(ANDrr32     , "andl",               0, 0)           // R32 &= R32   21/r
+I(ORrr8       , "orb",                0, 0)           // R8  |= R8    08/r
+I(ORrr16      , "orw",                0, 0)           // R16 |= R16   09/r
+I(ORrr32      , "orl",                0, 0)           // R32 |= R32   09/r
+I(XORrr8      , "xorb",               0, 0)           // R8  ^= R8    30/r
+I(XORrr16     , "xorw",               0, 0)           // R16 ^= R16   31/r
+I(XORrr32     , "xorl",               0, 0)           // R32 ^= R32   31/r
 
 // Shift instructions
 I(SHLrr8      , "shlb",               0, 0)           // R8   <<= cl   D2/4
