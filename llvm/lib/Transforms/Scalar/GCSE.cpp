@@ -256,6 +256,37 @@ bool GCSE::visitUnaryOperator(Instruction *I) {
   return false;
 }
 
+// isIdenticalBinaryInst - Return true if the two binary instructions are
+// identical.
+//
+static inline bool isIdenticalBinaryInst(const Instruction *I1,
+                                         const Instruction *I2) {
+  // Is it embeded in the same function?  (This could be false if LHS
+  // is a constant or global!)
+  if (I1->getOpcode() != I2->getOpcode() ||
+      I1->getParent()->getParent() != I2->getParent()->getParent())
+    return false;
+  
+  // They are identical if both operands are the same!
+  if (I1->getOperand(0) == I2->getOperand(0) &&
+      I1->getOperand(1) == I2->getOperand(1))
+    return true;
+  
+  // If the instruction is commutative and associative, the instruction can
+  // match if the operands are swapped!
+  //
+  if ((I1->getOperand(0) == I2->getOperand(1) &&
+       I1->getOperand(1) == I2->getOperand(0)) &&
+      (I1->getOpcode() == Instruction::Add || 
+       I1->getOpcode() == Instruction::Mul ||
+       I1->getOpcode() == Instruction::And || 
+       I1->getOpcode() == Instruction::Or  ||
+       I1->getOpcode() == Instruction::Xor))
+    return true;
+
+  return false;
+}
+
 bool GCSE::visitBinaryOperator(Instruction *I) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
   Function *F = I->getParent()->getParent();
@@ -264,13 +295,7 @@ bool GCSE::visitBinaryOperator(Instruction *I) {
        UI != UE; ++UI)
     if (Instruction *Other = dyn_cast<Instruction>(*UI))
       // Check to see if this new binary operator is not I, but same operand...
-      if (Other != I && Other->getOpcode() == I->getOpcode() &&
-          // Are the LHS and RHS the same?
-          Other->getOperand(0) == LHS && Other->getOperand(1) == RHS &&
-          // Is it embeded in the same function?  (This could be false if LHS
-          // is a constant or global!)
-          Other->getParent()->getParent() == F) {
-        
+      if (Other != I && isIdenticalBinaryInst(I, Other)) {        
         // These instructions are identical.  Handle the situation.
         CommonSubExpressionFound(I, Other);
         return true;   // One instruction eliminated!
