@@ -516,6 +516,21 @@ struct parser<int> : public basic_parser<int> {
 
 
 //--------------------------------------------------
+// parser<unsigned>
+//
+template<>
+struct parser<unsigned> : public basic_parser<unsigned> {
+  
+  // parse - Return true on error.
+  bool parse(Option &O, const char *ArgName, const std::string &Arg,
+             unsigned &Val);
+
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "uint"; }
+};
+
+
+//--------------------------------------------------
 // parser<double>
 //
 template<>

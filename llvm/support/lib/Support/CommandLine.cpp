@@ -575,11 +575,22 @@ bool parser<bool>::parse(Option &O, const char *ArgName,
 //
 bool parser<int>::parse(Option &O, const char *ArgName,
                         const std::string &Arg, int &Value) {
-  const char *ArgStart = Arg.c_str();
   char *End;
-  Value = (int)strtol(ArgStart, &End, 0);
+  Value = (int)strtol(Arg.c_str(), &End, 0);
   if (*End != 0) 
     return O.error(": '" + Arg + "' value invalid for integer argument!");
+  return false;
+}
+
+// parser<unsigned> implementation
+//
+bool parser<unsigned>::parse(Option &O, const char *ArgName,
+                             const std::string &Arg, unsigned &Value) {
+  char *End;
+  long long int V = strtoll(Arg.c_str(), &End, 0);
+  Value = (unsigned)V;
+  if (*End != 0 || V < 0 || Value != V) 
+    return O.error(": '" + Arg + "' value invalid for uint argument!");
   return false;
 }
 
