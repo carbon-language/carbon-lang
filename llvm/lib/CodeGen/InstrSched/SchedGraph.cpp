@@ -21,8 +21,8 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineRegInfo.h"
-#include "llvm/Support/StringExtras.h"
 #include "llvm/iOther.h"
+#include "Support/StringExtras.h"
 #include <algorithm>
 #include <hash_map>
 #include <vector>
@@ -132,7 +132,7 @@ SchedGraphEdge::~SchedGraphEdge()
 }
 
 void SchedGraphEdge::dump(int indent=0) const {
-  printIndent(indent); cout << *this; 
+  cout << string(indent*2, ' ') << *this; 
 }
 
 
@@ -168,7 +168,7 @@ SchedGraphNode::~SchedGraphNode()
 }
 
 void SchedGraphNode::dump(int indent=0) const {
-  printIndent(indent); cout << *this; 
+  cout << string(indent*2, ' ') << *this; 
 }
 
 
@@ -1023,32 +1023,24 @@ operator<<(ostream& os, const SchedGraphEdge& edge)
 ostream&
 operator<<(ostream& os, const SchedGraphNode& node)
 {
-  printIndent(4, os);
-  os << "Node " << node.nodeId << " : "
-     << "latency = " << node.latency << endl;
-  
-  printIndent(6, os);
+  os << string(8, ' ')
+     << "Node " << node.nodeId << " : "
+     << "latency = " << node.latency << endl << string(12, ' ');
   
   if (node.getMachineInstr() == NULL)
     os << "(Dummy node)" << endl;
   else
     {
-      os << *node.getMachineInstr() << endl;
-  
-      printIndent(6, os);
+      os << *node.getMachineInstr() << endl << string(12, ' ');
       os << node.inEdges.size() << " Incoming Edges:" << endl;
       for (unsigned i=0, N=node.inEdges.size(); i < N; i++)
-	{
-	  printIndent(8, os);
-	  os << * node.inEdges[i];
-	}
+	  os << string(16, ' ') << *node.inEdges[i];
   
-      printIndent(6, os);
-      os << node.outEdges.size() << " Outgoing Edges:" << endl;
+      os << string(12, ' ') << node.outEdges.size()
+         << " Outgoing Edges:" << endl;
       for (unsigned i=0, N=node.outEdges.size(); i < N; i++)
 	{
-	  printIndent(8, os);
-	  os << * node.outEdges[i];
+	  os << string(16, ' ') << * node.outEdges[i];
 	}
     }
   

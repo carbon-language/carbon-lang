@@ -15,13 +15,13 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include <iterator>
-#include "llvm/CodeGen/InstrForest.h"
 #include "Support/DataTypes.h"
-#include "llvm/Support/NonCopyable.h"
+#include "Support/NonCopyable.h"
+#include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
 #include "llvm/Method.h"
+#include <iterator>
 #include <hash_map>
 #include <hash_set>
 #include <values.h>

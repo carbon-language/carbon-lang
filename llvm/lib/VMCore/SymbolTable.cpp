@@ -6,10 +6,10 @@
 
 #include "llvm/SymbolTable.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/Support/StringExtras.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "Support/StringExtras.h"
 
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0

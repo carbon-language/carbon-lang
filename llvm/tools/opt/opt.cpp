@@ -9,7 +9,6 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Optimizations/AllOpts.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Assembly/PrintModulePass.h"
@@ -18,6 +17,7 @@
 #include "llvm/Transforms/LevelChange.h"
 #include "llvm/Transforms/SwapStructContents.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "Support/CommandLine.h"
 #include <fstream>
 #include <memory>
 

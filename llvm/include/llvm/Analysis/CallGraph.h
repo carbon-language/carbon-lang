@@ -16,7 +16,7 @@
 #ifndef LLVM_ANALYSIS_CALLGRAPH_H
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
-#include "llvm/Support/GraphTraits.h"
+#include "Support/GraphTraits.h"
 #include <map>
 #include <vector>
 class Method;

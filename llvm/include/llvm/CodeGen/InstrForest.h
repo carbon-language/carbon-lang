@@ -24,9 +24,9 @@
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
 
-#include "llvm/Support/NonCopyable.h"
-#include "llvm/Support/HashExtras.h"
 #include "llvm/Instruction.h"
+#include "Support/NonCopyable.h"
+#include "Support/HashExtras.h"
 #include <hash_map>
 #include <hash_set>
 

@@ -24,8 +24,8 @@
 
 #include "llvm/Value.h"
 #include "llvm/ValueHolder.h"
-#include "llvm/Support/GraphTraits.h"
 #include "llvm/InstrTypes.h"
+#include "Support/GraphTraits.h"
 #include <iterator>
 
 class Instruction;

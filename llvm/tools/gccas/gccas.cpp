@@ -15,7 +15,7 @@
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Transforms/ConstantMerge.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Support/CommandLine.h"
+#include "Support/CommandLine.h"
 #include <memory>
 #include <fstream>
 #include <string>

@@ -13,15 +13,11 @@
 //************************* User Include Files *****************************/
 
 #include "llvm/CodeGen/InstrScheduling.h"
-#include "SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Instruction.h"
-
-
-//************************ System Include Files *****************************/
-
+#include "Support/CommandLine.h"
+#include "SchedPriorities.h"
 #include <hash_set>
 #include <algorithm>
 #include <iterator>

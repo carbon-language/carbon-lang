@@ -8,7 +8,7 @@
 #ifndef LLVM_TARGET_MACHINEREGINFO_H
 #define LLVM_TARGET_MACHINEREGINFO_H
 
-#include "llvm/Support/NonCopyable.h"
+#include "Support/NonCopyable.h"
 #include <hash_map>
 #include <string>
 

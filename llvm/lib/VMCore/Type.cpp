@@ -5,9 +5,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/Support/StringExtras.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/StringExtras.h"
+#include "Support/STLExtras.h"
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
 // created and later destroyed, all in an effort to make sure that there is only

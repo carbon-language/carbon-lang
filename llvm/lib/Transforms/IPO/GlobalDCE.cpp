@@ -6,9 +6,9 @@
 
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Support/DepthFirstIterator.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "Support/DepthFirstIterator.h"
 #include <set>
 
 static bool RemoveUnreachableMethods(Module *M, cfg::CallGraph *CG) {

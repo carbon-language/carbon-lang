@@ -1,17 +1,15 @@
-//===-- StringExtras.h - Useful string functions -----------------*- C++ -*--=//
+//===-- Support/StringExtras.h - Useful string functions ---------*- C++ -*--=//
 //
 // This file contains some functions that are useful when dealing with strings.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_STRING_EXTRAS_H
-#define LLVM_TOOLS_STRING_EXTRAS_H
+#ifndef SUPPORT_STRING_EXTRAS_H
+#define SUPPORT_STRING_EXTRAS_H
 
+#include "Support/DataTypes.h"
 #include <string>
 #include <stdio.h>
-#include "Support/DataTypes.h"
-
-class ConstPoolArray;
 
 static inline string utostr(uint64_t X, bool isNeg = false) {
   char Buffer[40];
@@ -67,22 +65,5 @@ static inline string ftostr(double V) {
   snprintf(Buffer, 200, "%e", V);
   return Buffer;
 }
-
-static inline void
-printIndent(unsigned int indent, ostream& os=cout, const char* const istr="  ")
-{
-  for (unsigned i=0; i < indent; i++)
-    os << istr;
-}
-
-// Can we treat the specified array as a string?  Only if it is an array of
-// ubytes or non-negative sbytes.
-//
-bool isStringCompatible(ConstPoolArray *CPA);
-
-// getAsCString - Return the specified array as a C compatible string, only if
-// the predicate isStringCompatible is true.
-//
-string getAsCString(ConstPoolArray *CPA);
 
 #endif

@@ -1,5 +1,5 @@
 
-#include "llvm/Support/CommandLine.h"
+#include "Support/CommandLine.h"
 
 #ifndef REG_ALLOC_COMMON_H
 #define  REG_ALLOC_COMMON_H

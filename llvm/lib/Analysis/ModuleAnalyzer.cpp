@@ -12,7 +12,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ConstPoolVals.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/STLExtras.h"
 #include <map>
 
 // processModule - Driver function to call all of my subclasses virtual methods.

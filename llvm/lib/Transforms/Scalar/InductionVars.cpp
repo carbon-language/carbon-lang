@@ -23,9 +23,9 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/STLExtras.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/iOther.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 #include "llvm/Analysis/LoopDepth.h"

@@ -24,7 +24,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Optimizations/DCE.h"
-#include "llvm/Support/STLExtras.h"
 #include "llvm/Module.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Method.h"
@@ -32,6 +31,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
 #include "llvm/Assembly/Writer.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 // dceInstruction - Inspect the instruction at *BBI and figure out if it's

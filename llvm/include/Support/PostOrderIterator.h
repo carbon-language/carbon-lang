@@ -1,4 +1,4 @@
-//===-- llvm/Support/PostOrderIterator.h - Generic PO iterator ---*- C++ -*--=//
+//===-- Support/PostOrderIterator.h - Generic PostOrder iterator -*- C++ -*--=//
 //
 // This file builds on the Support/GraphTraits.h file to build a generic graph
 // post order iterator.  This should work over any graph type that has a
@@ -9,7 +9,7 @@
 #ifndef LLVM_SUPPORT_POSTORDER_ITERATOR_H
 #define LLVM_SUPPORT_POSTORDER_ITERATOR_H
 
-#include "llvm/Support/GraphTraits.h"
+#include "Support/GraphTraits.h"
 #include <iterator>
 #include <stack>
 #include <set>

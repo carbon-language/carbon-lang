@@ -13,7 +13,7 @@
 #ifndef LLVM_CODEGEN_FRAMEINFO_H
 #define LLVM_CODEGEN_FRAMEINFO_H
 
-#include "llvm/Support/NonCopyable.h"
+#include "Support/NonCopyable.h"
 #include <vector>
 
 

@@ -18,8 +18,8 @@
 
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Type.h"
+#include "Support/CommandLine.h"
 
 // Provide a command line option to turn on printing of which instructions cause
 // a type to become invalid

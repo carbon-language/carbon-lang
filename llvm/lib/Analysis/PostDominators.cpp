@@ -6,9 +6,9 @@
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/SimplifyCFG.h"   // To get cfg::UnifyAllExitNodes
-#include "llvm/Support/DepthFirstIterator.h"
-#include "llvm/Support/STLExtras.h"
 #include "llvm/Method.h"
+#include "Support/DepthFirstIterator.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 //===----------------------------------------------------------------------===//

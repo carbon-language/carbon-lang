@@ -10,11 +10,11 @@
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Support/STLExtras.h"
-#include "llvm/Support/DepthFirstIterator.h"
 #include "llvm/Analysis/Writer.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "Support/STLExtras.h"
+#include "Support/DepthFirstIterator.h"
 #include <set>
 #include <algorithm>
 

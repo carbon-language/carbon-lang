@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Interpreter.h"
-#include "llvm/Support/CommandLine.h"
+#include "Support/CommandLine.h"
 
 cl::StringList InputArgv(""   , "Input command line", cl::ConsumeAfter);
 cl::String MainFunction ("f"      , "Function to execute", cl::NoFlags, "main");

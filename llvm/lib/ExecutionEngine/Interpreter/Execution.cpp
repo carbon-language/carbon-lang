@@ -26,7 +26,7 @@ CachedWriter CW;     // Object to accelerate printing of LLVM
 
 
 #ifdef PROFILE_STRUCTURE_FIELDS
-#include "llvm/Support/CommandLine.h"
+#include "Support/CommandLine.h"
 static cl::Flag ProfileStructureFields("profilestructfields", 
                                        "Profile Structure Field Accesses");
 #include <map>

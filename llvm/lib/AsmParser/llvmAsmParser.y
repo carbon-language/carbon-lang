@@ -21,8 +21,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
-#include "llvm/Support/STLExtras.h"
-#include "llvm/Support/DepthFirstIterator.h"
+#include "Support/STLExtras.h"
+#include "Support/DepthFirstIterator.h"
 #include <list>
 #include <utility>            // Get definition of pair class
 #include <algorithm>

@@ -9,14 +9,13 @@
 //
 //===------------------------------------------------------------------------===
 
-#include <iostream.h>
-#include <fstream.h>
-#include <string>
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Support/CommandLine.h"
+#include "Support/CommandLine.h"
+#include <fstream>
+#include <string>
 
 cl::String InputFilename ("", "Parse <arg> file, compile to bytecode", 0, "-");
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "");

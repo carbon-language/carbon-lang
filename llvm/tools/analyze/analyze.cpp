@@ -15,9 +15,7 @@
 #include "llvm/Method.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Analysis/Writer.h"
-
 #include "llvm/Analysis/InstForest.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IntervalPartition.h"
@@ -27,6 +25,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
+#include "Support/CommandLine.h"
 #include <algorithm>
 
 static void PrintMethod(Method *M) {

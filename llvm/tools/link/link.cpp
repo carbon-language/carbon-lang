@@ -13,10 +13,10 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
-#include <fstream.h>
+#include "Support/CommandLine.h"
+#include <fstream>
 #include <memory>
 
 

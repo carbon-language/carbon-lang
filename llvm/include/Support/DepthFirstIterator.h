@@ -1,4 +1,4 @@
-//===- llvm/Support/DepthFirstIterator.h - Depth First iterators -*- C++ -*--=//
+//===- Support/DepthFirstIterator.h - Depth First iterator -------*- C++ -*--=//
 //
 // This file builds on the Support/GraphTraits.h file to build generic depth
 // first graph iterator.
@@ -8,7 +8,7 @@
 #ifndef LLVM_SUPPORT_DEPTH_FIRST_ITERATOR_H
 #define LLVM_SUPPORT_DEPTH_FIRST_ITERATOR_H
 
-#include "llvm/Support/GraphTraits.h"
+#include "Support/GraphTraits.h"
 #include <iterator>
 #include <stack>
 #include <set>

@@ -18,7 +18,7 @@
 #include "llvm/Method.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Support/StringExtras.h"
+#include "Support/StringExtras.h"
 
 class Module;
 

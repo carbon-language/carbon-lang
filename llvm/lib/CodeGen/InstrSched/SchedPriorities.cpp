@@ -19,7 +19,7 @@
 //**************************************************************************/
 
 #include "SchedPriorities.h"
-#include "llvm/Support/PostOrderIterator.h"
+#include "Support/PostOrderIterator.h"
 
 
 SchedPriorities::SchedPriorities(const Method* method,

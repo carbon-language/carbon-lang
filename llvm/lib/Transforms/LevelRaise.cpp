@@ -9,7 +9,6 @@
 #include "llvm/Transforms/LevelChange.h"
 #include "TransformInternals.h"
 #include "llvm/Method.h"
-#include "llvm/Support/STLExtras.h"
 #include "llvm/iOther.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstPoolVals.h"
@@ -17,6 +16,7 @@
 #include "llvm/Optimizations/DCE.h"
 #include "llvm/Optimizations/ConstantProp.h"
 #include "llvm/Analysis/Expressions.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 #include "llvm/Assembly/Writer.h"

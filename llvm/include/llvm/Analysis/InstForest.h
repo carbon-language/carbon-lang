@@ -14,8 +14,8 @@
 #ifndef LLVM_ANALYSIS_INSTFOREST_H
 #define LLVM_ANALYSIS_INSTFOREST_H
 
-#include "llvm/Support/Tree.h"
 #include "llvm/Instruction.h"
+#include "Support/Tree.h"
 #include <map>
 
 namespace analysis {

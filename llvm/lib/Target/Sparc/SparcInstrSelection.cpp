@@ -16,7 +16,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
@@ -24,9 +23,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
+#include "Support/MathExtras.h"
 #include <math.h>
-
-//******************** Internal Data Declarations ************************/
 
 
 //************************* Forward Declarations ***************************/

@@ -17,12 +17,12 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/Target/MachineRegInfo.h"
+#include "Support/CommandLine.h"
 #include <string.h>
 
 

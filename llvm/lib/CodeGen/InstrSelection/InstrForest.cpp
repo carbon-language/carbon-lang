@@ -30,7 +30,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/STLExtras.h"
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode

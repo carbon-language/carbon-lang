@@ -27,8 +27,8 @@
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/HashExtras.h"
-#include "llvm/Support/StringExtras.h"
+#include "Support/StringExtras.h"
+#include "Support/HashExtras.h"
 #include <hash_set>
 #include <sstream>
 

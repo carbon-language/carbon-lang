@@ -12,8 +12,8 @@
 #ifndef LLVM_CODEGEN_INSTR_SCHEDULING_H
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
-#include "llvm/Support/CommandLine.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "Support/CommandLine.h"
 
 class Method;
 class SchedulingManager;

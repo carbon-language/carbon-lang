@@ -7,7 +7,7 @@
 
 #include "llvm/Analysis/LoopDepth.h"
 #include "llvm/Analysis/IntervalPartition.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 inline void LoopDepthCalculator::AddBB(const BasicBlock *BB) {

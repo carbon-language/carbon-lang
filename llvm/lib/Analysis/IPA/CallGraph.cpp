@@ -12,11 +12,11 @@
 
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/Writer.h"
-#include "llvm/Support/STLExtras.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 // getNodeFor - Return the node for the specified method or create one if it

@@ -21,8 +21,8 @@
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Support/STLExtras.h"
-#include "llvm/Support/StringExtras.h"
+#include "Support/StringExtras.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 #include <map>
 

@@ -13,9 +13,9 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
+#include "Support/CommandLine.h"
 #include <memory>
 #include <string>
 #include <fstream>

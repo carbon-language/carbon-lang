@@ -9,8 +9,8 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Support/DepthFirstIterator.h"
 #include "llvm/BasicBlock.h"
+#include "Support/DepthFirstIterator.h"
 #include <algorithm>
 
 bool cfg::Loop::contains(const BasicBlock *BB) const {

@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/IntervalIterator.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/STLExtras.h"
 
 using namespace cfg;
 

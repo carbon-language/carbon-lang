@@ -11,7 +11,7 @@
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Support/PostOrderIterator.h"
+#include "Support/PostOrderIterator.h"
 
 
 /************************** Constructor/Destructor ***************************/

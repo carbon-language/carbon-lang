@@ -19,8 +19,8 @@
 #include "llvm/iOther.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Support/STLExtras.h"
-#include "llvm/Support/DepthFirstIterator.h"
+#include "Support/DepthFirstIterator.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 
 #if 0

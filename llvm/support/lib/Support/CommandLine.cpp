@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/CommandLine.h"
+#include "Support/STLExtras.h"
 #include <vector>
 #include <algorithm>
 #include <map>

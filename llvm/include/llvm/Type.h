@@ -27,7 +27,7 @@
 #define LLVM_TYPE_H
 
 #include "llvm/Value.h"
-#include "llvm/Support/GraphTraits.h"
+#include "Support/GraphTraits.h"
 
 class DerivedType;
 class MethodType;
