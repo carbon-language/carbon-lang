@@ -180,26 +180,59 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
       unsigned ElSize = TD.getTypeSize(ElTy);
 
       // See if the user is indexing into a different cell of this array...
-      if (Offset >= ElSize) {
+      if (Scale && Scale >= ElSize) {
+        // A scale n*ElSize might occur if we are not stepping through
+        // array by one.  In this case, we will have to insert math to munge
+        // the index.
+        //
+        unsigned ScaleAmt = Scale/ElSize;
+        if (Scale-ScaleAmt*ElSize)
+          return 0;  // Didn't scale by a multiple of element size, bail out
+        Scale = ElSize;        
+
+        unsigned Index = Offset/ElSize;       // is zero unless Offset > ElSize
+        Offset -= Index*ElSize;               // Consume part of the offset
+
+        if (BI) {              // Generate code?
+          BasicBlock *BB = (**BI)->getParent();
+          if (Expr.Var->getType() != Type::UIntTy) {
+            CastInst *IdxCast = new CastInst(Expr.Var, Type::UIntTy);
+            if (Expr.Var->hasName())
+              IdxCast->setName(Expr.Var->getName()+"-idxcast");
+            *BI = BB->getInstList().insert(*BI, IdxCast)+1;
+            Expr.Var = IdxCast;
+          }
+
+          if (Scale > ElSize) {  // If we have to scale up our index, do so now
+            Value *ScaleAmtVal = ConstantUInt::get(Type::UIntTy, ScaleAmt);
+            Instruction *Scaler = BinaryOperator::create(Instruction::Mul,
+                                                         Expr.Var,ScaleAmtVal);
+            if (Expr.Var->hasName())
+              Scaler->setName(Expr.Var->getName()+"-scale");
+
+            *BI = BB->getInstList().insert(*BI, Scaler)+1;
+            Expr.Var = Scaler;
+          }
+
+          if (Index) {  // Add an offset to the index
+            Value *IndexAmt = ConstantUInt::get(Type::UIntTy, Index);
+            Instruction *Offseter = BinaryOperator::create(Instruction::Add,
+                                                           Expr.Var, IndexAmt);
+            if (Expr.Var->hasName())
+              Offseter->setName(Expr.Var->getName()+"-offset");
+            *BI = BB->getInstList().insert(*BI, Offseter)+1;
+            Expr.Var = Offseter;
+          }
+        }
+
+        Indices.push_back(Expr.Var);
+        Scale = 0;  // Consume scale factor!
+      } else if (Offset >= ElSize) {
         // Calculate the index that we are entering into the array cell with
         unsigned Index = Offset/ElSize;
         Indices.push_back(ConstantUInt::get(Type::UIntTy, Index));
         Offset -= Index*ElSize;               // Consume part of the offset
 
-      } else if (Scale && Scale != 1) {
-        // Must be indexing into this element with a variable...
-        if (Scale != ElSize)
-          return 0;  // Type must not be finished yet...
-
-        if (Expr.Var->getType() != Type::UIntTy && BI) {
-          BasicBlock *BB = (**BI)->getParent();
-          CastInst *IdxCast = new CastInst(Expr.Var, Type::UIntTy);
-          *BI = BB->getInstList().insert(*BI, IdxCast)+1;
-          Expr.Var = IdxCast;
-        }        
-
-        Indices.push_back(Expr.Var);
-        Scale = 0;  // Consume scale factor!
       } else {
         // Must be indexing a small amount into the first cell of the array
         // Just index into element zero of the array here.
