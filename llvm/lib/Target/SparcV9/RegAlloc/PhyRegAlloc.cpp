@@ -1232,9 +1232,9 @@ bool PhyRegAlloc::doFinalization (Module &M) {
 /// state; this one is cumbersome and does not work well with the JIT.
 ///
 void PhyRegAlloc::finishSavingState (Module &M) {
-  std::cerr << "---- Saving reg. alloc state; SaveStateToModule = "
-            << SaveStateToModule << " ----\n";
-  abort ();
+  if (DEBUG_RA)
+    std::cerr << "---- Saving reg. alloc state; SaveStateToModule = "
+              << SaveStateToModule << " ----\n";
 
   // If saving state into the module, just copy new elements to the
   // correct global.
@@ -1379,9 +1379,10 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   // Save register allocation state for this function in a Constant.
   if (SaveRegAllocState) {
     saveState();
-    if (DEBUG_RA) { // Check our work.
+    if (DEBUG_RA) // Check our work.
       verifySavedState ();
-    }
+    if (!SaveStateToModule)
+      finishSavingState (const_cast<Module&> (*Fn->getParent ()));
   }
 
   // Now update the machine code with register names and add any additional
