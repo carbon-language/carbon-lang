@@ -493,18 +493,38 @@ void ISel::SelectPHINodes() {
 	MBB->insert(MBB->begin()+NumPHIs++, LongPhiMI);
       }
 
+      // PHIValues - Map of blocks to incoming virtual registers.  We use this
+      // so that we only initialize one incoming value for a particular block,
+      // even if the block has multiple entries in the PHI node.
+      //
+      std::map<MachineBasicBlock*, unsigned> PHIValues;
+
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         MachineBasicBlock *PredMBB = MBBMap[PN->getIncomingBlock(i)];
+        unsigned ValReg;
+        std::map<MachineBasicBlock*, unsigned>::iterator EntryIt =
+          PHIValues.lower_bound(PredMBB);
 
-        // Get the incoming value into a virtual register.  If it is not already
-        // available in a virtual register, insert the computation code into
-        // PredMBB
-        //
-	MachineBasicBlock::iterator PI = PredMBB->end();
-	while (PI != PredMBB->begin() &&
-	       TII.isTerminatorInstr((*(PI-1))->getOpcode()))
-	  --PI;
-	unsigned ValReg = getReg(PN->getIncomingValue(i), PredMBB, PI);
+        if (EntryIt != PHIValues.end() && EntryIt->first == PredMBB) {
+          // We already inserted an initialization of the register for this
+          // predecessor.  Recycle it.
+          ValReg = EntryIt->second;
+
+        } else {        
+          // Get the incoming value into a virtual register.  If it is not
+          // already available in a virtual register, insert the computation
+          // code into PredMBB
+          //
+          MachineBasicBlock::iterator PI = PredMBB->end();
+          while (PI != PredMBB->begin() &&
+                 TII.isTerminatorInstr((*(PI-1))->getOpcode()))
+            --PI;
+          ValReg = getReg(PN->getIncomingValue(i), PredMBB, PI);
+
+          // Remember that we inserted a value for this PHI for this predecessor
+          PHIValues.insert(EntryIt, std::make_pair(PredMBB, ValReg));
+        }
+
 	PhiMI->addRegOperand(ValReg);
         PhiMI->addMachineBasicBlockOperand(PredMBB);
 	if (LongPhiMI) {
