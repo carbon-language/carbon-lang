@@ -27,7 +27,8 @@ class MachineFunction;
 /// The offset to the local area is the offset from the stack pointer on
 /// function entry to the first location where function data (local variables,
 /// spill locations) can be stored.
-struct TargetFrameInfo {
+class TargetFrameInfo {
+public:
   enum StackDirection {
     StackGrowsUp,        // Adding to the stack increases the stack address
     StackGrowsDown       // Adding to the stack decreases the stack address

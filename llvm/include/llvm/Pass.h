@@ -38,7 +38,7 @@
 namespace llvm {
 
 class Value;
-struct BasicBlock;
+class BasicBlock;
 class Function;
 class Module;
 class AnalysisUsage;
@@ -56,7 +56,7 @@ typedef const PassInfo* AnalysisID;
 /// constrained passes described below.
 ///
 class Pass {
-  friend class AnalysisResolver;
+  friend struct AnalysisResolver;
   AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
   const PassInfo *PassInfoCache;
 
@@ -211,8 +211,8 @@ inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
 /// interprocedural optimizations and analyses.  ModulePass's may do anything
 /// they want to the program.
 ///
-struct ModulePass : public Pass {
-
+class ModulePass : public Pass {
+public:
   /// runOnModule - Virtual method overriden by subclasses to process the module
   /// being operated on.
   virtual bool runOnModule(Module &M) = 0;
@@ -228,7 +228,8 @@ struct ModulePass : public Pass {
 /// not need to be run.  This is useful for things like target information and
 /// "basic" versions of AnalysisGroups.
 ///
-struct ImmutablePass : public ModulePass {
+class ImmutablePass : public ModulePass {
+public:
   /// initializePass - This method may be overriden by immutable passes to allow
   /// them to perform various initialization actions they require.  This is
   /// primarily because an ImmutablePass can "require" another ImmutablePass,
@@ -255,7 +256,8 @@ private:
 ///  2. Optimizing a function does not cause the addition or removal of any
 ///     functions in the module
 ///
-struct FunctionPass : public ModulePass {
+class FunctionPass : public ModulePass {
+public:
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///

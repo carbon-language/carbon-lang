@@ -61,7 +61,8 @@ const unsigned M_2_ADDR_FLAG           = 1 << 15;
 // before control flow occurs.
 const unsigned M_TERMINATOR_FLAG       = 1 << 16;
 
-struct TargetInstrDescriptor {
+class TargetInstrDescriptor {
+public:
   const char *    Name;          // Assembly language mnemonic for the opcode.
   int             numOperands;   // Number of args; -1 if variable #args
   int             resultPos;     // Position of the result; -1 if no result

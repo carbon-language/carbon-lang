@@ -24,7 +24,7 @@
 namespace llvm {
 
 class DagInit;
-class Init;
+struct Init;
 class InstrSelectorEmitter;
 
 /// NodeType - Represents Information parsed from the DagNode entries.

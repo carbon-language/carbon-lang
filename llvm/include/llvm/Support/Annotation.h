@@ -30,7 +30,7 @@ namespace llvm {
 class AnnotationID;
 class Annotation;
 class Annotable;
-class AnnotationManager;
+struct AnnotationManager;
 
 //===----------------------------------------------------------------------===//
 //
@@ -39,7 +39,7 @@ class AnnotationManager;
 // freely around and passed byvalue with little or no overhead.
 //
 class AnnotationID {
-  friend class AnnotationManager;
+  friend struct AnnotationManager;
   unsigned ID;
 
   AnnotationID();                             // Default ctor is disabled

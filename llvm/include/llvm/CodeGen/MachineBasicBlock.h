@@ -24,7 +24,8 @@ namespace llvm {
 
 // ilist_traits
 template <>
-class ilist_traits<MachineInstr> {
+struct ilist_traits<MachineInstr> {
+protected:
   // this is only set by the MachineBasicBlock owning the ilist
   friend class MachineBasicBlock;
   MachineBasicBlock* parent;
@@ -179,7 +180,7 @@ public:
   int getNumber() const { return Number; }
 
 private:   // Methods used to maintain doubly linked list of blocks...
-  friend class ilist_traits<MachineBasicBlock>;
+  friend struct ilist_traits<MachineBasicBlock>;
 
   MachineBasicBlock *getPrev() const { return Prev; }
   MachineBasicBlock *getNext() const { return Next; }

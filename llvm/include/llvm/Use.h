@@ -35,7 +35,7 @@ class Use {
   Value *Val;
   User *U;
   Use *Prev, *Next;
-  friend class ilist_traits<Use>;
+  friend struct ilist_traits<Use>;
 public:
   inline Use(Value *v, User *user);
   inline Use(const Use &u);

@@ -95,7 +95,7 @@ struct DefaultDOTGraphTraits {
 /// from DefaultDOTGraphTraits if you don't need to override everything.
 ///
 template <typename Ty>
-class DOTGraphTraits : public DefaultDOTGraphTraits {};
+struct DOTGraphTraits : public DefaultDOTGraphTraits {};
 
 } // End llvm namespace
 

@@ -35,7 +35,7 @@
 
 namespace llvm {
 
-class DominatorSet;
+struct DominatorSet;
 class LoopInfo;
 class PHINode;
 class Instruction;

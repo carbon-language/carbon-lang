@@ -29,8 +29,8 @@ class MachineBasicBlock;
 class TargetMachine;
 class GlobalValue;
 
-template <typename T> class ilist_traits;
-template <typename T> class ilist;
+template <typename T> struct ilist_traits;
+template <typename T> struct ilist;
 
 typedef short MachineOpCode;
 
@@ -417,7 +417,7 @@ class MachineInstr {
 
   // Intrusive list support
   //
-  friend class ilist_traits<MachineInstr>;
+  friend struct ilist_traits<MachineInstr>;
 
 public:
   MachineInstr(short Opcode, unsigned numOperands);

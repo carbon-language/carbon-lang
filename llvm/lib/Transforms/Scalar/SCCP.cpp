@@ -135,7 +135,7 @@ public:
   // The implementation of this class
   //
 private:
-  friend class InstVisitor<SCCP>;        // Allow callbacks from visitor
+  friend struct InstVisitor<SCCP>;        // Allow callbacks from visitor
 
   // markConstant - Make a value be marked as "constant".  If the value
   // is not already a constant, add it to the instruction work list so that 

@@ -21,7 +21,7 @@ namespace sys {
 
   /// Forward declare a class used for holding platform specific information
   /// that needs to be 
-  class MappedFileInfo;
+  struct MappedFileInfo;
 
   /// This class provides an abstraction for a memory mapped file in the 
   /// operating system's filesystem. It provides platform independent operations

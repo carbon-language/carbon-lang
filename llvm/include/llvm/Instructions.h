@@ -21,7 +21,7 @@
 
 namespace llvm {
 
-struct BasicBlock;
+class BasicBlock;
 class PointerType;
 
 //===----------------------------------------------------------------------===//
@@ -1159,7 +1159,8 @@ public:
 /// UnwindInst - Immediately exit the current function, unwinding the stack
 /// until an invoke instruction is found.
 ///
-struct UnwindInst : public TerminatorInst {
+class UnwindInst : public TerminatorInst {
+public:
   UnwindInst(Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Unwind, InsertBefore) {
   }
@@ -1196,7 +1197,8 @@ struct UnwindInst : public TerminatorInst {
 /// presence of this instruction indicates some higher level knowledge that the
 /// end of the block cannot be reached.
 ///
-struct UnreachableInst : public TerminatorInst {
+class UnreachableInst : public TerminatorInst {
+public:
   UnreachableInst(Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Unreachable, InsertBefore) {
   }

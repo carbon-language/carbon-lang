@@ -31,7 +31,7 @@ class MachineConstantPool;
 
 // ilist_traits
 template <>
-class ilist_traits<MachineBasicBlock> {
+struct ilist_traits<MachineBasicBlock> {
   // this is only set by the MachineFunction owning the ilist
   friend class MachineFunction;
   MachineFunction* Parent;

@@ -90,7 +90,8 @@ public:
 
 typedef std::map<const Value*, const Type*> ValueTypeCache;
 
-struct ValueMapCache {
+class ValueMapCache {
+public:
   // Operands mapped - Contains an entry if the first value (the user) has had
   // the second value (the operand) mapped already.
   //

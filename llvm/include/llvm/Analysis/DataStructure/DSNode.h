@@ -47,7 +47,7 @@ class DSNode {
   /// doubly-linked ilist in the DSGraph.
   ///
   DSNode *Next, *Prev;
-  friend class ilist_traits<DSNode>;
+  friend struct ilist_traits<DSNode>;
 
   /// Size - The current size of the node.  This should be equal to the size of
   /// the current type record.

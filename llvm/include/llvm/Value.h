@@ -27,7 +27,7 @@ namespace llvm {
 class Constant;
 class Argument;
 class Instruction;
-struct BasicBlock;
+class BasicBlock;
 class GlobalValue;
 class Function;
 class GlobalVariable;

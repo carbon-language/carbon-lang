@@ -114,7 +114,8 @@ public:
 // This object is used to lazily calculate structure layout information for a
 // target machine, based on the TargetData structure.
 //
-struct StructLayout {
+class StructLayout {
+public:
   std::vector<uint64_t> MemberOffsets;
   uint64_t StructSize;
   unsigned StructAlignment;

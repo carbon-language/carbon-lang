@@ -29,7 +29,8 @@ class Value;
 class GlobalValue;
 class Function;
 
-struct MachineCodeEmitter {
+class MachineCodeEmitter {
+public:
   virtual ~MachineCodeEmitter() {}
 
   /// startFunction - This callback is invoked when the specified function is

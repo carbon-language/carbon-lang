@@ -66,7 +66,7 @@ namespace {
 
     Instruction *InsertPt;
 
-    friend class SCEVVisitor<SCEVExpander, Value*>;
+    friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
     SCEVExpander(ScalarEvolution &se, LoopInfo &li) : SE(se), LI(li) {}
 

@@ -39,7 +39,7 @@
 
 namespace llvm {
 
-struct Type;
+class Type;
 class DerivedType;
 
 class AbstractTypeUser {

@@ -630,7 +630,8 @@ public:
 // This pass manager is used to group together all of the BasicBlockPass's
 // into a single unit.
 //
-template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
+template<> class PassManagerTraits<BasicBlock> : public BasicBlockPass {
+public:
   // PassClass - The type of passes tracked by this PassManager
   typedef BasicBlockPass PassClass;
 
@@ -683,7 +684,8 @@ template<> struct PassManagerTraits<BasicBlock> : public BasicBlockPass {
 // This pass manager is used to group together all of the FunctionPass's
 // into a single unit.
 //
-template<> struct PassManagerTraits<Function> : public FunctionPass {
+template<> class PassManagerTraits<Function> : public FunctionPass {
+public:
   // PassClass - The type of passes tracked by this PassManager
   typedef FunctionPass PassClass;
 
@@ -726,7 +728,8 @@ template<> struct PassManagerTraits<Function> : public FunctionPass {
 //
 // This is the top level PassManager implementation that holds generic passes.
 //
-template<> struct PassManagerTraits<Module> : public ModulePass {
+template<> class PassManagerTraits<Module> : public ModulePass {
+public:
   // PassClass - The type of passes tracked by this PassManager
   typedef ModulePass PassClass;
 

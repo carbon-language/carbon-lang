@@ -287,9 +287,9 @@ protected:
   Node *RootNode;
 public:
   class Node {
-    friend class DominatorTree;
-    friend class PostDominatorTree;
-    friend class DominatorTreeBase;
+    friend struct DominatorTree;
+    friend struct PostDominatorTree;
+    friend struct DominatorTreeBase;
     BasicBlock *TheBB;
     Node *IDom;
     std::vector<Node*> Children;

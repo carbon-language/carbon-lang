@@ -22,7 +22,7 @@ namespace llvm {
 class StringInit;
 class IntInit;
 class ListInit;
-class CodeGenInstruction;
+struct CodeGenInstruction;
 
 class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;

@@ -152,7 +152,8 @@ private:
 /// TargetSchedInfo - Common interface to machine information for 
 /// instruction scheduling
 ///
-struct TargetSchedInfo {
+class TargetSchedInfo {
+public:
   const TargetMachine& target;
   
   unsigned maxNumIssueTotal;

@@ -26,7 +26,7 @@ namespace llvm {
 
 class Record;
 class RecordKeeper;
-class CodeGenRegister;
+struct CodeGenRegister;
 
 /// getValueType - Return the MVT::ValueType that the specified TableGen record
 /// corresponds to.

@@ -34,7 +34,7 @@ class DagRecTy;
 class RecordRecTy;
 
 // Init subclasses...
-class Init;
+struct Init;
 class UnsetInit;
 class BitInit;
 class BitsInit;
@@ -107,7 +107,8 @@ inline std::ostream &operator<<(std::ostream &OS, const RecTy &Ty) {
 
 /// BitRecTy - 'bit' - Represent a single bit
 ///
-struct BitRecTy : public RecTy {
+class BitRecTy : public RecTy {
+public:
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(BitInit *BI) { return (Init*)BI; }
   Init *convertValue(BitsInit *BI);
@@ -157,7 +158,8 @@ public:
 
 /// IntRecTy - 'int' - Represent an integer value of no particular size
 ///
-struct IntRecTy : public RecTy {
+class IntRecTy : public RecTy {
+public:
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(IntInit *II) { return (Init*)II; }
   Init *convertValue(BitInit *BI);
@@ -177,7 +179,8 @@ struct IntRecTy : public RecTy {
 
 /// StringRecTy - 'string' - Represent an string value
 ///
-struct StringRecTy : public RecTy {
+class StringRecTy : public RecTy {
+public:
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(StringInit *SI) { return (Init*)SI; }
   Init *convertValue(TypedInit *TI);
@@ -219,7 +222,8 @@ public:
 
 /// CodeRecTy - 'code' - Represent an code fragment, function or method.
 ///
-struct CodeRecTy : public RecTy {
+class CodeRecTy : public RecTy {
+public:
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue( CodeInit *CI) { return (Init*)CI; }
   Init *convertValue(TypedInit *TI);
@@ -234,7 +238,8 @@ struct CodeRecTy : public RecTy {
 
 /// DagRecTy - 'dag' - Represent a dag fragment
 ///
-struct DagRecTy : public RecTy {
+class DagRecTy : public RecTy {
+public:
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue( DagInit *CI) { return (Init*)CI; }
   Init *convertValue(TypedInit *TI);
@@ -343,7 +348,8 @@ inline std::ostream &operator<<(std::ostream &OS, const Init &I) {
 
 /// UnsetInit - ? - Represents an uninitialized value
 ///
-struct UnsetInit : public Init {
+class UnsetInit : public Init {
+public:
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }

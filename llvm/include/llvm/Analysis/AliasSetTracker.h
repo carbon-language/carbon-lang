@@ -34,7 +34,7 @@ class AliasSet;
 class AliasSet {
   friend class AliasSetTracker;
 
-  struct PointerRec;
+  class PointerRec;
   typedef std::pair<Value* const, PointerRec> HashNodePair;
 
   class PointerRec {
@@ -116,7 +116,7 @@ class AliasSet {
   // Volatile - True if this alias set contains volatile loads or stores.
   bool Volatile : 1;
 
-  friend class ilist_traits<AliasSet>;
+  friend struct ilist_traits<AliasSet>;
   AliasSet *getPrev() const { return Prev; }
   AliasSet *getNext() const { return Next; }
   void setPrev(AliasSet *P) { Prev = P; }

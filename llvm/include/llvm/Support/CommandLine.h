@@ -513,8 +513,8 @@ struct basic_parser : public basic_parser_impl {
 // parser<bool>
 //
 template<>
-struct parser<bool> : public basic_parser<bool> {
-
+class parser<bool> : public basic_parser<bool> {
+public:
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
 
@@ -531,8 +531,8 @@ struct parser<bool> : public basic_parser<bool> {
 // parser<int>
 //
 template<>
-struct parser<int> : public basic_parser<int> {
-  
+class parser<int> : public basic_parser<int> {
+public:
   // parse - Return true on error.
   bool parse(Option &O, const char *ArgName, const std::string &Arg, int &Val);
 
@@ -545,8 +545,8 @@ struct parser<int> : public basic_parser<int> {
 // parser<unsigned>
 //
 template<>
-struct parser<unsigned> : public basic_parser<unsigned> {
-  
+class parser<unsigned> : public basic_parser<unsigned> {
+public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, unsigned &Val);
 
@@ -559,7 +559,8 @@ struct parser<unsigned> : public basic_parser<unsigned> {
 // parser<double>
 //
 template<>
-struct parser<double> : public basic_parser<double> {
+class parser<double> : public basic_parser<double> {
+public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, double &Val);
 
@@ -572,7 +573,8 @@ struct parser<double> : public basic_parser<double> {
 // parser<float>
 //
 template<>
-struct parser<float> : public basic_parser<float> {
+class parser<float> : public basic_parser<float> {
+public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, float &Val);
 
@@ -585,7 +587,8 @@ struct parser<float> : public basic_parser<float> {
 // parser<std::string>
 //
 template<>
-struct parser<std::string> : public basic_parser<std::string> {
+class parser<std::string> : public basic_parser<std::string> {
+public:
   // parse - Return true on error.
   bool parse(Option &O, const char *AN, const std::string &Arg, 
              std::string &Value) {
@@ -687,8 +690,8 @@ public:
 // object in all cases that it is used.
 //
 template<class DataType>
-struct opt_storage<DataType,false,true> : public DataType {
-
+class opt_storage<DataType,false,true> : public DataType {
+public:
   template<class T>
   void setValue(const T &V) { DataType::operator=(V); }
 
@@ -701,7 +704,8 @@ struct opt_storage<DataType,false,true> : public DataType {
 // to get at the value.
 //
 template<class DataType>
-struct opt_storage<DataType, false, false> {
+class opt_storage<DataType, false, false> {
+public:
   DataType Value;
 
   // Make sure we initialize the value with the default constructor for the
@@ -864,8 +868,8 @@ public:
 // object in all cases that it is used.
 //
 template<class DataType>
-struct list_storage<DataType, bool> : public std::vector<DataType> {
-
+class list_storage<DataType, bool> : public std::vector<DataType> {
+public:
   template<class T>
   void addValue(const T &V) { push_back(V); }
 };
