@@ -321,21 +321,22 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::f64:
         if (FPR_remaining > 0) {
           if (isVarArg) {
-            MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                            Args[i].first, PtrOff));
+            SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Args[i].first, PtrOff);
+            MemOps.push_back(Store);
             // Float varargs are always shadowed in available integer registers
             if (GPR_remaining > 0) {
-              SDOperand Load = DAG.getLoad(MVT::i32, Chain, PtrOff);
+              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
               MemOps.push_back(Load);
-              args_to_use.push_back(DAG.getCopyToReg(Chain, Load, 
+              args_to_use.push_back(DAG.getCopyToReg(Load, Load, 
                                                      GPR[GPR_idx]));
             }
             if (GPR_remaining > 1 && MVT::f64 == ArgVT) {
               SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
               PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-              SDOperand Load = DAG.getLoad(MVT::i32, Chain, PtrOff);
+              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
               MemOps.push_back(Load);
-              args_to_use.push_back(DAG.getCopyToReg(Chain, Load, 
+              args_to_use.push_back(DAG.getCopyToReg(Load, Load, 
                                                      GPR[GPR_idx+1]));
             }
           }
@@ -521,6 +522,13 @@ unsigned ISel::getGlobalBaseReg() {
 //Check to see if the load is a constant offset from a base register
 void ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 {
+  unsigned imm = 0, opcode = N.getOpcode();
+  if (N.getOpcode() == ISD::ADD)
+    if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, imm)) {
+      Reg = SelectExpr(N.getOperand(0));
+      offset = imm;
+      return;
+    }
   Reg = SelectExpr(N);
   offset = 0;
   return;
