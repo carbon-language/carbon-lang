@@ -27,7 +27,8 @@ namespace {
   // APIList - A list of symbols that should not be marked internal.
   cl::list<std::string>
   APIList("internalize-public-api-list", cl::value_desc("list"),
-          cl::desc("A list of symbol names to preserve"));
+          cl::desc("A list of symbol names to preserve"),
+          cl::CommaSeparated);
  
   class InternalizePass : public Pass {
     std::set<std::string> ExternalNames;
