@@ -36,7 +36,7 @@ namespace {
     const char *getPassName() const { return "SparcV9 Prolog/Epilog Inserter"; }
     
     bool runOnMachineFunction(MachineFunction &F) {
-      if (!F.getInfo()->isCompiledAsLeafMethod()) {
+      if (!F.getInfo<SparcV9FunctionInfo>()->isCompiledAsLeafMethod()) {
         InsertPrologCode(F);
         InsertEpilogCode(F);
       }
@@ -51,7 +51,7 @@ namespace {
 
 static unsigned getStaticStackSize (MachineFunction &MF) {
   const TargetFrameInfo& frameInfo = *MF.getTarget().getFrameInfo();
-  unsigned staticStackSize = MF.getInfo()->getStaticStackSize();
+  unsigned staticStackSize = MF.getInfo<SparcV9FunctionInfo>()->getStaticStackSize();
   if (staticStackSize < (unsigned)SparcV9FrameInfo::MinStackFrameSize)
     staticStackSize = SparcV9FrameInfo::MinStackFrameSize;
   if (unsigned padsz = staticStackSize % 

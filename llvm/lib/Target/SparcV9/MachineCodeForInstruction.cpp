@@ -35,11 +35,11 @@ using namespace llvm;
 
 MachineCodeForInstruction &MachineCodeForInstruction::get(const Instruction *I){
   MachineFunction &MF = MachineFunction::get(I->getParent()->getParent());
-  return MF.getInfo()->MCFIEntries[I];
+  return MF.getInfo<SparcV9FunctionInfo>()->MCFIEntries[I];
 }
 void MachineCodeForInstruction::destroy(const Instruction *I) {
   MachineFunction &MF = MachineFunction::get(I->getParent()->getParent());
-  MF.getInfo()->MCFIEntries.erase(I);
+  MF.getInfo<SparcV9FunctionInfo>()->MCFIEntries.erase(I);
 }
 
 void

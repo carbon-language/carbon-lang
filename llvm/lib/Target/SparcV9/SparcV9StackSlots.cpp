@@ -40,7 +40,7 @@ namespace {
       unsigned Size = Target.getTargetData().getTypeSize(PtrInt);
       
       Value *V = Constant::getNullValue(Type::IntTy);
-      MF.getInfo()->allocateLocalVar(V, 2*Size);
+      MF.getInfo<SparcV9FunctionInfo>()->allocateLocalVar(V, 2*Size);
       return true;
     }
   };

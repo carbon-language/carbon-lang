@@ -424,7 +424,7 @@ void PhyRegAlloc::updateInstruction(MachineBasicBlock::iterator& MII,
   unsigned Opcode = MInst->getOpcode();
 
   // Reset tmp stack positions so they can be reused for each machine instr.
-  MF->getInfo()->popAllTempValues();  
+  MF->getInfo<SparcV9FunctionInfo>()->popAllTempValues();  
 
   // Mark the operands for which regs have been allocated.
   bool instrNeedsSpills = markAllocatedRegs(MII);
@@ -643,7 +643,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   }
 #endif
 
-  MF->getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType));
+  MF->getInfo<SparcV9FunctionInfo>()->pushTempValue(MRI.getSpilledRegSize(RegType));
   
   std::vector<MachineInstr*> MIBef, MIAft;
   std::vector<MachineInstr*> AdIMid;
@@ -796,7 +796,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
 	    // and add them to InstrnsBefore and InstrnsAfter of the
 	    // call instruction
 	    int StackOff =
-              MF->getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType));
+              MF->getInfo<SparcV9FunctionInfo>()->pushTempValue(MRI.getSpilledRegSize(RegType));
             
 	    //---- Insert code for pushing the reg on stack ----------
             
@@ -895,7 +895,7 @@ int PhyRegAlloc::getUsableUniRegAtMI(const int RegType,
     // we couldn't find an unused register. Generate code to free up a reg by
     // saving it on stack and restoring after the instruction
     
-    int TmpOff = MF->getInfo()->pushTempValue(MRI.getSpilledRegSize(RegType));
+    int TmpOff = MF->getInfo<SparcV9FunctionInfo>()->pushTempValue(MRI.getSpilledRegSize(RegType));
     
     RegU = getUniRegNotUsedByThisInst(RC, RegType, MInst);
     
@@ -1103,7 +1103,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
     if (HMI->first && HMI->second) {
       LiveRange *L = HMI->second;       // get the LiveRange
       if (L->isMarkedForSpill()) {      // NOTE: allocating size of long Type **
-        int stackOffset = MF->getInfo()->allocateSpilledValue(Type::LongTy);
+        int stackOffset = MF->getInfo<SparcV9FunctionInfo>()->allocateSpilledValue(Type::LongTy);
         L->setSpillOffFromFP(stackOffset);
         if (DEBUG_RA)
           std::cerr << "  LR# " << L->getUserIGNode()->getIndex()
@@ -1323,7 +1323,7 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
 
   // Reset the temp. area on the stack before use by the first instruction.
   // This will also happen after updating each instruction.
-  MF->getInfo()->popAllTempValues();
+  MF->getInfo<SparcV9FunctionInfo>()->popAllTempValues();
 
   // color incoming args - if the correct color was not received
   // insert code to copy to the correct register

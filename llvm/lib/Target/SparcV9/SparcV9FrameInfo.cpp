@@ -22,15 +22,15 @@ int
 SparcV9FrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo, bool& pos) const 
 {
   // ensure no more auto vars are added
-  mcInfo.getInfo()->freezeAutomaticVarsArea();
+  mcInfo.getInfo<SparcV9FunctionInfo>()->freezeAutomaticVarsArea();
   
   pos = false;                          // static stack area grows downwards
-  unsigned autoVarsSize = mcInfo.getInfo()->getAutomaticVarsSize();
+  unsigned autoVarsSize = mcInfo.getInfo<SparcV9FunctionInfo>()->getAutomaticVarsSize();
   return StaticAreaOffsetFromFP - autoVarsSize; 
 }
 
 int SparcV9FrameInfo::getTmpAreaOffset(MachineFunction& mcInfo, bool& pos) const {
-  MachineFunctionInfo *MFI = mcInfo.getInfo();
+  SparcV9FunctionInfo *MFI = mcInfo.getInfo<SparcV9FunctionInfo>();
   MFI->freezeAutomaticVarsArea();     // ensure no more auto vars are added
   MFI->freezeSpillsArea();            // ensure no more spill slots are added
   
@@ -48,7 +48,7 @@ SparcV9FrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo, bool& pos) const
   // during calls and traps, so they are shifted downwards on each
   // dynamic-size alloca.
   pos = false;
-  unsigned optArgsSize = mcInfo.getInfo()->getMaxOptionalArgsSize();
+  unsigned optArgsSize = mcInfo.getInfo<SparcV9FunctionInfo>()->getMaxOptionalArgsSize();
   if (int extra = optArgsSize % 16)
     optArgsSize += (16 - extra);
   int offset = optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;

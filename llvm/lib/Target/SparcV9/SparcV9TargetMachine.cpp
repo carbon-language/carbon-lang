@@ -98,7 +98,7 @@ namespace {
     }
     
     bool runOnFunction(Function &F) {
-      MachineFunction::construct(&F, Target).getInfo()->CalculateArgSize();
+      MachineFunction::construct(&F, Target).getInfo<SparcV9FunctionInfo>()->CalculateArgSize();
       return false;
     }
   };

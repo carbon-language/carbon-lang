@@ -1149,7 +1149,7 @@ void CreateCodeToCopyFloatToInt(const TargetMachine& target, Function* F,
   // FIXME: For now, we allocate permanent space because the stack frame
   // manager does not allow locals to be allocated (e.g., for alloca) after
   // a temp is allocated!
-  int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val); 
+  int offset = MachineFunction::get(F).getInfo<SparcV9FunctionInfo>()->allocateLocalVar(val); 
 
   unsigned FPReg = target.getRegInfo()->getFramePointer();
 
@@ -1248,7 +1248,7 @@ void CreateCodeToCopyIntToFloat(const TargetMachine& target,
          && "Dest type must be float/double");
 
   // Get a stack slot to use for the copy
-  int offset = MachineFunction::get(F).getInfo()->allocateLocalVar(val);
+  int offset = MachineFunction::get(F).getInfo<SparcV9FunctionInfo>()->allocateLocalVar(val);
 
   // Get the size of the source value being copied. 
   size_t srcSize = target.getTargetData().getTypeSize(val->getType());
@@ -2568,7 +2568,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   // You've gotta love having only 13 bits for constant offset values :-|.
   // 
   unsigned paddedSize;
-  int offsetFromFP = mcInfo.getInfo()->computeOffsetforLocalVar(result,
+  int offsetFromFP = mcInfo.getInfo<SparcV9FunctionInfo>()->computeOffsetforLocalVar(result,
                                                                 paddedSize,
                                                          tsize * numElements);
 
@@ -2581,7 +2581,7 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   }
   
   // else offset fits in immediate field so go ahead and allocate it.
-  offsetFromFP = mcInfo.getInfo()->allocateLocalVar(result, tsize *numElements);
+  offsetFromFP = mcInfo.getInfo<SparcV9FunctionInfo>()->allocateLocalVar(result, tsize *numElements);
   
   // Create a temporary Value to hold the constant offset.
   // This is needed because it may not fit in the immediate field.
@@ -3924,8 +3924,8 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
                 // allocated (e.g., for alloca) after a temp is
                 // allocated!
                 // 
-                // int tmpOffset = MF.getInfo()->pushTempValue(argSize);
-                int tmpOffset = MF.getInfo()->allocateLocalVar(argVReg);
+                // int tmpOffset = MF.getInfo<SparcV9FunctionInfo>()->pushTempValue(argSize);
+                int tmpOffset = MF.getInfo<SparcV9FunctionInfo>()->allocateLocalVar(argVReg);
                     
                 // Generate the store from FP reg to stack
                 unsigned StoreOpcode = ChooseStoreInstruction(argType);
@@ -4083,7 +4083,7 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
           if (isa<Function>(callee))
             callMI->addImplicitRef(retAddrReg, /*isDef*/ true);
 
-          MF.getInfo()->popAllTempValues();  // free temps used for this inst
+          MF.getInfo<SparcV9FunctionInfo>()->popAllTempValues();  // free temps used for this inst
         }
 
         break;

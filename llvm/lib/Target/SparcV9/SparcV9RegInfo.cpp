@@ -466,7 +466,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
                  regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
           
- 	  int TmpOff = MachineFunction::get(Meth).getInfo()->pushTempValue(
+ 	  int TmpOff = MachineFunction::get(Meth).getInfo<SparcV9FunctionInfo>()->pushTempValue(
                                                 getSpilledRegSize(regType));
 	  cpReg2MemMI(InstrnsBefore,
                       UniArgReg, getFramePointer(), TmpOff, IntRegType);

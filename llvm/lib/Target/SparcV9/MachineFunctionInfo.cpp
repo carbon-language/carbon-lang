@@ -1,4 +1,4 @@
-//===-- MachineFunctionInfo.cpp -------------------------------------------===//
+//===-- SparcV9FunctionInfo.cpp -------------------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,15 +19,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 using namespace llvm;
-
-MachineFunctionInfo *MachineFunction::getInfo() const {
-  if (!MFInfo) {
-    MFInfo = new MachineFunctionInfo(*const_cast<MachineFunction*>(this));
-  }
-  return static_cast<MachineFunctionInfo*>(MFInfo);
-}
-
-
 
 static unsigned
 ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
@@ -78,7 +69,7 @@ SizeToAlignment(unsigned size, const TargetMachine& target)
 }
 
 
-void MachineFunctionInfo::CalculateArgSize() {
+void SparcV9FunctionInfo::CalculateArgSize() {
   maxOptionalArgsSize = ComputeMaxOptionalArgsSize(MF.getTarget(),
 						   MF.getFunction(),
                                                    maxOptionalNumArgs);
@@ -86,7 +77,7 @@ void MachineFunctionInfo::CalculateArgSize() {
 }
 
 int
-MachineFunctionInfo::computeOffsetforLocalVar(const Value* val,
+SparcV9FunctionInfo::computeOffsetforLocalVar(const Value* val,
 					      unsigned &getPaddedSize,
 					      unsigned  sizeToUse)
 {
@@ -112,7 +103,7 @@ MachineFunctionInfo::computeOffsetforLocalVar(const Value* val,
 }
 
 
-int MachineFunctionInfo::allocateLocalVar(const Value* val,
+int SparcV9FunctionInfo::allocateLocalVar(const Value* val,
                                           unsigned sizeToUse) {
   assert(! automaticVarsAreaFrozen &&
          "Size of auto vars area has been used to compute an offset so "
@@ -132,7 +123,7 @@ int MachineFunctionInfo::allocateLocalVar(const Value* val,
 }
 
 int
-MachineFunctionInfo::allocateSpilledValue(const Type* type)
+SparcV9FunctionInfo::allocateSpilledValue(const Type* type)
 {
   assert(! spillsAreaFrozen &&
          "Size of reg spills area has been used to compute an offset so "
@@ -156,7 +147,7 @@ MachineFunctionInfo::allocateSpilledValue(const Type* type)
 }
 
 int
-MachineFunctionInfo::pushTempValue(unsigned size)
+SparcV9FunctionInfo::pushTempValue(unsigned size)
 {
   unsigned align = SizeToAlignment(size, MF.getTarget());
 
@@ -175,6 +166,6 @@ MachineFunctionInfo::pushTempValue(unsigned size)
   return aligned;
 }
 
-void MachineFunctionInfo::popAllTempValues() {
+void SparcV9FunctionInfo::popAllTempValues() {
   resetTmpAreaSize();            // clear tmp area to reuse
 }

@@ -1,4 +1,4 @@
-//===-- MachineFunctionInfo.h -----------------------------------*- C++ -*-===//
+//===-- SparcV9FunctionInfo.h -----------------------------------*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -29,7 +29,7 @@ class MachineFunction;
 class Constant;
 class Type;
 
-class MachineFunctionInfo : public MachineFunctionInfoBase {
+class SparcV9FunctionInfo : public MachineFunctionInfo {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
 
@@ -48,7 +48,7 @@ class MachineFunctionInfo : public MachineFunctionInfoBase {
 public:
   hash_map<const Instruction*, MachineCodeForInstruction> MCFIEntries;
 
-  MachineFunctionInfo(MachineFunction &mf) : MF(mf) {
+  SparcV9FunctionInfo(MachineFunction &mf) : MF(mf) {
     staticStackSize = automaticVarsSize = regSpillsSize = 0;
     maxOptionalArgsSize = maxOptionalNumArgs = currentTmpValuesSize = 0;
     maxTmpValuesSize = 0;
