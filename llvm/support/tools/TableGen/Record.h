@@ -48,6 +48,9 @@ inline std::ostream &operator<<(std::ostream &OS, const RecTy &Ty) {
   return OS;
 }
 
+
+/// BitRecTy - 'bit' - Represent a single bit
+///
 struct BitRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(BitInit *BI) { return (Init*)BI; }
@@ -58,6 +61,9 @@ struct BitRecTy : public RecTy {
   void print(std::ostream &OS) const { OS << "bit"; }
 };
 
+
+/// BitsRecTy - 'bits<n>' - Represent a fixed number of bits
+///
 class BitsRecTy : public RecTy {
   unsigned Size;
 public:
@@ -74,6 +80,9 @@ public:
   void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
 };
 
+
+/// IntRecTy - 'int' - Represent an integer value of no particular size
+///
 struct IntRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(IntInit *II) { return (Init*)II; }
@@ -83,6 +92,8 @@ struct IntRecTy : public RecTy {
   void print(std::ostream &OS) const { OS << "int"; }
 };
 
+/// StringRecTy - 'string' - Represent an string value
+///
 struct StringRecTy : public RecTy {
   Init *convertValue(UnsetInit *UI) { return (Init*)UI; }
   Init *convertValue(StringInit *SI) { return (Init*)SI; }
@@ -90,6 +101,9 @@ struct StringRecTy : public RecTy {
   void print(std::ostream &OS) const { OS << "string"; }
 };
 
+/// ListRecTy - 'list<class>' - Represent a list defs, all of which must be
+/// derived from the specified class.
+///
 class ListRecTy : public RecTy {
   Record *Class;
 public:
@@ -100,6 +114,9 @@ public:
   void print(std::ostream &OS) const;
 };
 
+/// RecordRecTy - '<classname>' - Represent an instance of a class, such as:
+/// (R32 X = EAX).
+///
 class RecordRecTy : public RecTy {
   Record *Rec;
 public:
@@ -110,6 +127,8 @@ public:
 
   void print(std::ostream &OS) const;
 };
+
+
 
 //===----------------------------------------------------------------------===//
 //  Initializer Classes
@@ -134,6 +153,9 @@ inline std::ostream &operator<<(std::ostream &OS, const Init &I) {
   I.print(OS); return OS;
 }
 
+
+/// UnsetInit - ? - Represents an uninitialized value
+///
 struct UnsetInit : public Init {
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
@@ -143,6 +165,9 @@ struct UnsetInit : public Init {
   virtual void print(std::ostream &OS) const { OS << "?"; }
 };
 
+
+/// BitInit - true/false - Represent a concrete initializer for a bit.
+///
 class BitInit : public Init {
   bool Value;
 public:
@@ -158,6 +183,9 @@ public:
   virtual void print(std::ostream &OS) const { OS << (Value ? "1" : "0"); }
 };
 
+/// BitsInit - { a, b, c } - Represents an initializer for a BitsRecTy value.
+/// It contains a vector of bits, whose size is determined by the type.
+///
 class BitsInit : public Init {
   std::vector<Init*> Bits;
 public:
@@ -195,6 +223,9 @@ public:
   bool printAsUnset(std::ostream &OS) const;
 };
 
+
+/// IntInit - 7 - Represent an initalization by a literal integer value.
+///
 class IntInit : public Init {
   int Value;
 public:
@@ -211,6 +242,9 @@ public:
   virtual void print(std::ostream &OS) const { OS << Value; }
 };
 
+
+/// StringInit - "foo" - Represent an initialization by a string value.
+///
 class StringInit : public Init {
   std::string Value;
 public:
@@ -224,6 +258,8 @@ public:
   virtual void print(std::ostream &OS) const { OS << "\"" << Value << "\""; }
 };
 
+/// ListInit - [AL, AH, CL] - Represent a list of defs
+///
 class ListInit : public Init {
   std::vector<Record*> Records;
 public:
@@ -245,6 +281,8 @@ public:
   virtual void print(std::ostream &OS) const;
 };
 
+/// VarInit - 'Opcode' - Represent a reference to an entire variable object.
+///
 class VarInit : public Init {
   std::string VarName;
   RecTy *Ty;
@@ -264,6 +302,9 @@ public:
   virtual void print(std::ostream &OS) const { OS << VarName; }
 };
 
+
+/// VarBitInit - Opcode{0} - Represent access to one bit of a variable
+///
 class VarBitInit : public Init {
   VarInit *VI;
   unsigned Bit;
@@ -284,6 +325,9 @@ public:
   virtual Init *resolveReferences(Record &R);
 };
 
+
+/// DefInit - AL - Represent a reference to a 'def' in the description
+///
 class DefInit : public Init {
   Record *Def;
 public:
