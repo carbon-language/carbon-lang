@@ -310,12 +310,12 @@ static void EmitShellScript(char **argv) {
   // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
   // support windows systems, we copy the llvm-stub.exe executable from the
   // build tree to the destination file.
-  std::string llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
-  if (llvmstub.empty()) {
+  sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
+  if (llvmstub.isEmpty()) {
     std::cerr << "Could not find llvm-stub.exe executable!\n";
     exit(1);
   }
-  sys::CopyFile(sys::Path(OutputFilename), sys::Path(llvmstub));
+  sys::CopyFile(sys::Path(OutputFilename), llvmstub);
   return;
 #endif
 
