@@ -29,6 +29,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
@@ -220,7 +221,7 @@ private:
   void visitStoreInst     (Instruction &I) { /*returns void*/ }
   void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
-  void visitCallInst      (Instruction &I) { markOverdefined(&I); }
+  void visitCallInst      (CallInst &I);
   void visitInvokeInst    (TerminatorInst &I) {
     if (I.getType() != Type::VoidTy) markOverdefined(&I);
     visitTerminatorInst(I);
@@ -776,4 +777,35 @@ void SCCP::visitLoadInst(LoadInst &I) {
   // Otherwise we cannot say for certain what value this load will produce.
   // Bail out.
   markOverdefined(IV, &I);
+}
+
+void SCCP::visitCallInst(CallInst &I) {
+  InstVal &IV = ValueState[&I];
+  if (IV.isOverdefined()) return;
+
+  Function *F = I.getCalledFunction();
+  if (F == 0 || !canConstantFoldCallTo(F)) {
+    markOverdefined(IV, &I);
+    return;
+  }
+
+  std::vector<Constant*> Operands;
+  Operands.reserve(I.getNumOperands()-1);
+
+  for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
+    InstVal &State = getValueState(I.getOperand(i));
+    if (State.isUndefined())
+      return;  // Operands are not resolved yet...
+    else if (State.isOverdefined()) {
+      markOverdefined(IV, &I);
+      return;
+    }
+    assert(State.isConstant() && "Unknown state!");
+    Operands.push_back(State.getConstant());
+  }
+
+  if (Constant *C = ConstantFoldCall(F, Operands))
+    markConstant(IV, &I, C);
+  else
+    markOverdefined(IV, &I);
 }
