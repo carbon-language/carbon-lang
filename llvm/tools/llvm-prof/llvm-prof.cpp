@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/InstrTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
@@ -59,21 +60,46 @@ namespace {
   class ProfileAnnotator : public AssemblyAnnotationWriter {
     std::map<const Function  *, unsigned> &FuncFreqs;
     std::map<const BasicBlock*, unsigned> &BlockFreqs;
+    std::map<ProfileInfoLoader::Edge, unsigned> &EdgeFreqs;
   public:
     ProfileAnnotator(std::map<const Function  *, unsigned> &FF,
-                     std::map<const BasicBlock*, unsigned> &BF)
-      : FuncFreqs(FF), BlockFreqs(BF) {}
+                     std::map<const BasicBlock*, unsigned> &BF,
+                     std::map<ProfileInfoLoader::Edge, unsigned> &EF)
+      : FuncFreqs(FF), BlockFreqs(BF), EdgeFreqs(EF) {}
 
     virtual void emitFunctionAnnot(const Function *F, std::ostream &OS) {
       OS << ";;; %" << F->getName() << " called " << FuncFreqs[F]
          << " times.\n;;;\n";
     }
-    virtual void emitBasicBlockAnnot(const BasicBlock *BB, std::ostream &OS) {
+    virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
+                                          std::ostream &OS) {
       if (BlockFreqs.empty()) return;
       if (unsigned Count = BlockFreqs[BB])
-        OS << ";;; Executed " << Count << " times.\n";
+        OS << "\t;;; Basic block executed " << Count << " times.\n";
       else
-        OS << ";;; Never executed!\n";
+        OS << "\t;;; Never executed!\n";
+    }
+
+    virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, std::ostream &OS){
+      if (EdgeFreqs.empty()) return;
+
+      // Figure out how many times each successor executed.
+      std::vector<std::pair<const BasicBlock*, unsigned> > SuccCounts;
+      const TerminatorInst *TI = BB->getTerminator();
+      
+      std::map<ProfileInfoLoader::Edge, unsigned>::iterator I =
+        EdgeFreqs.lower_bound(std::make_pair(const_cast<BasicBlock*>(BB), 0U));
+      for (; I != EdgeFreqs.end() && I->first.first == BB; ++I)
+        if (I->second)
+          SuccCounts.push_back(std::make_pair(TI->getSuccessor(I->first.second),
+                                              I->second));
+      if (!SuccCounts.empty()) {
+        OS << "\t;;; Out-edge counts:";
+        for (unsigned i = 0, e = SuccCounts.size(); i != e; ++i)
+          OS << " [" << SuccCounts[i].second << " -> "
+             << SuccCounts[i].first->getName() << "]";
+        OS << "\n";
+      }
     }
   };
 }
@@ -97,6 +123,7 @@ int main(int argc, char **argv) {
 
   std::map<const Function  *, unsigned> FuncFreqs;
   std::map<const BasicBlock*, unsigned> BlockFreqs;
+  std::map<ProfileInfoLoader::Edge, unsigned> EdgeFreqs;
 
   // Output a report.  Eventually, there will be multiple reports selectable on
   // the command line, for now, just keep things simple.
@@ -177,11 +204,17 @@ int main(int argc, char **argv) {
     BlockFreqs.insert(Counts.begin(), Counts.end());
   }
   
+  if (PI.hasAccurateEdgeCounts()) {
+    std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > Counts;
+    PI.getEdgeCounts(Counts);
+    EdgeFreqs.insert(Counts.begin(), Counts.end());
+  }
+
   if (PrintAnnotatedLLVM || PrintAllCode) {
     std::cout << "\n===" << std::string(73, '-') << "===\n";
     std::cout << "Annotated LLVM code for the module:\n\n";
     
-    ProfileAnnotator PA(FuncFreqs, BlockFreqs);
+    ProfileAnnotator PA(FuncFreqs, BlockFreqs, EdgeFreqs);
 
     if (FunctionsToPrint.empty() || PrintAllCode)
       M->print(std::cout, &PA);
