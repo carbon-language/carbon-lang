@@ -135,7 +135,8 @@ being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
 the full list of objects linked).  Then run:<p>
 
 <pre>
-  <b>gccld</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null
+  <b>as</b> &lt; /dev/null &gt; null.bc
+  <b>gccld</b> -debug-pass=Arguments null.bc
 </pre><p>
 
 ... which will print a list of arguments, indicating the list of passes that
@@ -192,6 +193,6 @@ section is a TODO.  Basically, use bugpoint to track down the problem.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed May 21 17:20:13 CDT 2003
+Last modified: Fri May 23 09:48:53 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
