@@ -18,6 +18,8 @@
 LEVEL = ../../..
 DONT_BUILD_RELINKED=1
 
+EXTRA_DIST   := comp_main.lst comp_genericeh.lst comp_sjljeh.lst
+
 MainSrc      := crtend.c listend.ll
 GenericEHSrc := Exception.cpp
 SJLJEHSrc    := SJLJ-Exception.cpp
