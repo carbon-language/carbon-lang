@@ -31,12 +31,14 @@ struct {
   const string ArgName, Name;
   bool (*OptPtr)(Module *C);
 } OptTable[] = {
-  { "-dce",      "Dead Code Elimination", DoDeadCodeElimination },
-  { "-constprop","Constant Propogation",  DoConstantPropogation }, 
-  { "-inline"   ,"Method Inlining",       DoMethodInlining      },
-  { "-strip"    ,"Strip Symbols",         DoSymbolStripping     },
-  { "-mstrip"   ,"Strip Module Symbols",  DoFullSymbolStripping },
-  { "-indvars"  ,"Simplify Induction Vars", DoInductionVariableCannonicalize },
+  { "-dce"       , "Dead Code Elimination", DoDeadCodeElimination },
+  { "-constprop" , "Constant Propogation",  DoConstantPropogation }, 
+  { "-inline"    , "Method Inlining",       DoMethodInlining      },
+  { "-strip"     , "Strip Symbols",         DoSymbolStripping     },
+  { "-mstrip"    , "Strip Module Symbols",  DoFullSymbolStripping },
+  { "-indvars"   , "Simplify Induction Vars",DoInductionVariableCannonicalize },
+  { "-sccp"      , "Sparse Conditional Constant Prop", DoSCCP<Module> },
+  { "-cpm"       , "Constant Pool Merging", DoConstantPoolMerging },
 };
 
 int main(int argc, char **argv) {
