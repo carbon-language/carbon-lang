@@ -92,14 +92,11 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // Loop over all of the instructions in the function, fixing up operand 
   // references as we go.  This uses ValueMap to do all the hard work.
   //
-  for (Function::const_iterator BB = OldFunc->begin(), BE = OldFunc->end();
-       BB != BE; ++BB) {
-    BasicBlock *NBB = cast<BasicBlock>(ValueMap[BB]);
-    
+  for (Function::iterator BB = cast<BasicBlock>(ValueMap[OldFunc->begin()]),
+         BE = NewFunc->end(); BB != BE; ++BB)
     // Loop over all instructions, fixing each one as we find it...
-    for (BasicBlock::iterator II = NBB->begin(); II != NBB->end(); ++II)
+    for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II)
       RemapInstruction(II, ValueMap);
-  }
 }
 
 /// CloneFunction - Return a copy of the specified function, but without
