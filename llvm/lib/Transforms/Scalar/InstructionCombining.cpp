@@ -493,6 +493,31 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
+
+
+  if (Instruction *Op1I = dyn_cast<Instruction>(Op1))
+    if (Op1I->getOpcode() == Instruction::Or)
+      if (Op1I->getOperand(0) == Op0) {              // B^(B|A) == (A|B)^B
+        cast<BinaryOperator>(Op1I)->swapOperands();
+        I.swapOperands();
+        std::swap(Op0, Op1);
+      } else if (Op1I->getOperand(1) == Op0) {       // B^(A|B) == (A|B)^B
+        I.swapOperands();
+        std::swap(Op0, Op1);
+      }
+
+  if (Instruction *Op0I = dyn_cast<Instruction>(Op0))
+    if (Op0I->getOpcode() == Instruction::Or && Op0I->use_size() == 1) {
+      if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
+        cast<BinaryOperator>(Op0I)->swapOperands();
+      if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
+        Value *NotB = BinaryOperator::createNot(Op1, Op1->getName()+".not", &I);
+        WorkList.push_back(cast<Instruction>(NotB));
+        return BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
+                                      NotB);
+      }
+    }
+
   return Changed ? &I : 0;
 }
 
