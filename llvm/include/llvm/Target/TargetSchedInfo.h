@@ -242,21 +242,20 @@ public:
   inline int	getLongestIssueConflict	() const {
     return longestIssueConflict;
   }
-  
+
   inline  int 	getMinIssueGap		(MachineOpCode fromOp,
 					 MachineOpCode toOp)   const {
-    hash_map<OpCodePair,int>::const_iterator
-      I = issueGaps.find(OpCodePair(fromOp, toOp));
-    return (I == issueGaps.end())? 0 : (*I).second;
+    assert(fromOp < (int) issueGaps.size());
+    const std::vector<int>& toGaps = issueGaps[fromOp];
+    return (toOp < (int) toGaps.size())? toGaps[toOp] : 0;
   }
-  
-  inline const std::vector<MachineOpCode>*
+
+  inline const std::vector<MachineOpCode>&
 		getConflictList(MachineOpCode opCode) const {
-    hash_map<MachineOpCode, std::vector<MachineOpCode> >::const_iterator
-      I = conflictLists.find(opCode);
-    return (I == conflictLists.end())? NULL : & (*I).second;
+    assert(opCode < (int) conflictLists.size());
+    return conflictLists[opCode];
   }
-  
+
   inline  bool	isSingleIssue		(MachineOpCode opCode) const {
     return getInstrRUsage(opCode).isSingleIssue;
   }
@@ -276,6 +275,13 @@ private:
   void computeInstrResources(const std::vector<InstrRUsage>& instrRUForClasses);
   void computeIssueGaps(const std::vector<InstrRUsage>& instrRUForClasses);
   
+  void setGap(int gap, MachineOpCode fromOp, MachineOpCode toOp) {
+    std::vector<int>& toGaps = issueGaps[fromOp];
+    if (toOp >= (int) toGaps.size())
+      toGaps.resize(toOp+1);
+    toGaps[toOp] = gap;
+  }
+  
 protected:
   int		           numSchedClasses;
   const MachineInstrInfo*  mii;
@@ -285,10 +291,10 @@ protected:
   unsigned 		   numUsageDeltas;
   unsigned 		   numIssueDeltas;
   
-  std::vector<InstrRUsage>      instrRUsages;   // indexed by opcode
-  hash_map<OpCodePair,int> issueGaps;      // indexed by opcode pair
-  hash_map<MachineOpCode, std::vector<MachineOpCode> >
-			   conflictLists;       // indexed by opcode
+  std::vector<InstrRUsage> instrRUsages;    // indexed by opcode
+  std::vector<std::vector<int> > issueGaps; // indexed by [opcode1][opcode2]
+  std::vector<std::vector<MachineOpCode> >
+			   conflictLists;   // indexed by [opcode]
 };
 
 #endif

@@ -151,11 +151,12 @@ MachineSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 				   instrRUForClasses)
 {
   int numOpCodes =  mii->getNumRealOpCodes();
-  instrRUsages.resize(numOpCodes);
-  
+  issueGaps.resize(numOpCodes);
+  conflictLists.resize(numOpCodes);
+
   assert(numOpCodes < (1 << MAX_OPCODE_SIZE) - 1
          && "numOpCodes invalid for implementation of class OpCodePair!");
-  
+
   // First, compute issue gaps between pairs of classes based on common
   // resources usages for each class, because most instruction pairs will
   // usually behave the same as their class.
@@ -168,27 +169,27 @@ MachineSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 					 instrRUForClasses[toSC]);
 	classPairGaps[fromSC][toSC] = classPairGap; 
       }
-  
+
   // Now, for each pair of instructions, use the class pair gap if both
   // instructions have identical resource usage as their respective classes.
   // If not, recompute the gap for the pair from scratch.
-  
+
   longestIssueConflict = 0;
-  
+
   for (MachineOpCode fromOp=0; fromOp < numOpCodes; fromOp++)
     for (MachineOpCode toOp=0; toOp < numOpCodes; toOp++)
       {
-	int instrPairGap = 
-	  (instrRUsages[fromOp].sameAsClass && instrRUsages[toOp].sameAsClass)
-	  ? classPairGaps[getSchedClass(fromOp)][getSchedClass(toOp)]
-	  : ComputeMinGap(instrRUsages[fromOp], instrRUsages[toOp]);
-      
-	if (instrPairGap > 0)
-	  {
-	    issueGaps[OpCodePair(fromOp,toOp)] = instrPairGap;
-	    conflictLists[fromOp].push_back(toOp);
-	    longestIssueConflict = std::max(longestIssueConflict, instrPairGap);
-	  }
+        int instrPairGap = 
+          (instrRUsages[fromOp].sameAsClass && instrRUsages[toOp].sameAsClass)
+          ? classPairGaps[getSchedClass(fromOp)][getSchedClass(toOp)]
+          : ComputeMinGap(instrRUsages[fromOp], instrRUsages[toOp]);
+
+        if (instrPairGap > 0)
+          {
+            this->setGap(instrPairGap, fromOp, toOp);
+            conflictLists[fromOp].push_back(toOp);
+            longestIssueConflict=std::max(longestIssueConflict, instrPairGap);
+          }
       }
 }
 
