@@ -263,7 +263,16 @@ public:
     return ContainedTys[0];
   }
   virtual bool indexValid(const Value *V) const {
-    return V->getType()->isInteger();
+    const Type *Ty = V->getType();
+    switch (Ty->getPrimitiveID()) {
+    case Type::IntTyID:
+    case Type::UIntTyID:
+    case Type::LongTyID:
+    case Type::ULongTyID:
+      return true;
+    default:
+      return false;
+    }
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
