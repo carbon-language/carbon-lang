@@ -20,13 +20,10 @@ public:
   //
   static AnalysisID ID;
 
-  FindUsedTypes() {}
-  virtual const char *getPassName() const { return "Find Used Types"; }
-
   // getTypes - After the pass has been run, return the set containing all of
   // the types used in the module.
   //
-  inline const std::set<const Type *> &getTypes() const { return UsedTypes; }
+  const std::set<const Type *> &getTypes() const { return UsedTypes; }
 
   // Print the types found in the module.  If the optional Module parameter is
   // passed in, then the types are printed symbolically if possible, using the

@@ -126,8 +126,6 @@ public:
   CallGraph() : Root(0) {}
   ~CallGraph() { destroy(); }
 
-  virtual const char *getPassName() const { return "Call Graph Construction"; }
-
   // run - Compute the call graph for the specified module.
   virtual bool run(Module &M);
 

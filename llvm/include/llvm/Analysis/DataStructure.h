@@ -332,10 +332,6 @@ public:
 
   ~LocalDataStructures() { releaseMemory(); }
 
-  virtual const char *getPassName() const {
-    return "Local Data Structure Analysis";
-  }
-
   virtual bool run(Module &M);
 
   // getDSGraph - Return the data structure graph for the specified function.
@@ -370,10 +366,6 @@ public:
   static AnalysisID ID;            // BUDataStructure Analysis ID 
 
   ~BUDataStructures() { releaseMemory(); }
-
-  virtual const char *getPassName() const {
-    return "Bottom-Up Data Structure Analysis Closure";
-  }
 
   virtual bool run(Module &M);
 

@@ -28,10 +28,6 @@ struct FindUnsafePointerTypes : public Pass {
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
 
-  FindUnsafePointerTypes() {}
-
-  virtual const char *getPassName() const { return "Find Unsafe Pointer Types";}
-
   // Accessor for underlying type set...
   inline const std::set<PointerType*> &getUnsafeTypes() const {
     return UnsafeTypes;

@@ -98,10 +98,6 @@ struct DominatorSet : public DominatorSetBase {
 
   DominatorSet() : DominatorSetBase(false) {}
 
-  virtual const char *getPassName() const {
-    return "Dominator Set Construction";
-  }
-
   virtual bool runOnFunction(Function &F);
 
   // getAnalysisUsage - This simply provides a dominator set
@@ -120,10 +116,6 @@ struct PostDominatorSet : public DominatorSetBase {
   static AnalysisID ID;            // Build post-dominator set
 
   PostDominatorSet() : DominatorSetBase(true) {}
-
-  virtual const char *getPassName() const {
-    return "Post-Dominator Set Construction";
-  }
 
   virtual bool runOnFunction(Function &F);
 
@@ -176,10 +168,6 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
 
   ImmediateDominators() : ImmediateDominatorsBase(false) {}
 
-  virtual const char *getPassName() const {
-    return "Immediate Dominators Construction";
-  }
-
   virtual bool runOnFunction(Function &F) {
     IDoms.clear();     // Reset from the last time we were run...
     DominatorSet &DS = getAnalysis<DominatorSet>();
@@ -204,10 +192,6 @@ struct ImmediatePostDominators : public ImmediateDominatorsBase {
   static AnalysisID ID;         // Build immediate postdominators
 
   ImmediatePostDominators() : ImmediateDominatorsBase(true) {}
-
-  virtual const char *getPassName() const {
-    return "Immediate Post-Dominators Construction";
-  }
 
   virtual bool runOnFunction(Function &F) {
     IDoms.clear();     // Reset from the last time we were run...
@@ -287,10 +271,6 @@ struct DominatorTree : public DominatorTreeBase {
 
   DominatorTree() : DominatorTreeBase(false) {}
 
-  virtual const char *getPassName() const {
-    return "Dominator Tree Construction";
-  }
-
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
     DominatorSet &DS = getAnalysis<DominatorSet>();
@@ -317,10 +297,6 @@ struct PostDominatorTree : public DominatorTreeBase {
   static AnalysisID ID;         // Build immediate postdominators
 
   PostDominatorTree() : DominatorTreeBase(true) {}
-
-  virtual const char *getPassName() const {
-    return "Post-Dominator Tree Construction";
-  }
 
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
@@ -372,10 +348,6 @@ struct DominanceFrontier : public DominanceFrontierBase {
 
   DominanceFrontier() : DominanceFrontierBase(false) {}
 
-  virtual const char *getPassName() const {
-    return "Dominance Frontier Construction";
-  }
-
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();
     DominatorTree &DT = getAnalysis<DominatorTree>();
@@ -404,10 +376,6 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
   static AnalysisID ID;         // Build post dominance frontier
 
   PostDominanceFrontier() : DominanceFrontierBase(true) {}
-
-  virtual const char *getPassName() const {
-    return "Post-Dominance Frontier Construction";
-  }
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

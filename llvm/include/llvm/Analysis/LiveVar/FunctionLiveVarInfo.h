@@ -58,8 +58,8 @@
 */
 
 
-#ifndef METH_LIVE_VAR_INFO_H
-#define METH_LIVE_VAR_INFO_H
+#ifndef FUNCTION_LIVE_VAR_INFO_H
+#define FUNCTION_LIVE_VAR_INFO_H
 
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LiveVar/ValueSet.h"
@@ -90,8 +90,6 @@ class FunctionLiveVarInfo : public FunctionPass {
   
 public:
   static AnalysisID ID;    // We are an analysis, we must have an ID
-
-  virtual const char *getPassName() const { return "Live Variable Analysis"; }
 
   // --------- Implement the FunctionPass interface ----------------------
 

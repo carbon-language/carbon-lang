@@ -71,8 +71,6 @@ public:
   // LoopInfo ctor - Calculate the natural loop information for a CFG
   ~LoopInfo() { releaseMemory(); }
 
-  const char *getPassName() const { return "Natural Loop Analysis"; }
-
   const std::vector<Loop*> &getTopLevelLoops() const { return TopLevelLoops; }
 
   // getLoopFor - Return the inner most loop that BB lives in.  If a basic block

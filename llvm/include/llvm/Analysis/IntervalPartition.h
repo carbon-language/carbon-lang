@@ -39,8 +39,6 @@ public:
 
   IntervalPartition() : RootInterval(0) {}
 
-  const char *getPassName() const { return "Interval Partition Construction"; }
-
   // run - Calculate the interval partition for this function
   virtual bool runOnFunction(Function &F);
 
