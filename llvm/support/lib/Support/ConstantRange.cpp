@@ -67,16 +67,16 @@ ConstantRange::ConstantRange(unsigned SetCCOpcode, ConstantIntegral *C) {
     Upper = C;
     return;
   case Instruction::SetGT:
-    Upper = ConstantIntegral::getMaxValue(C->getType());
     Lower = Next(C);
+    Upper = ConstantIntegral::getMinValue(C->getType());  // Min = Next(Max)
     return;
   case Instruction::SetLE:
     Lower = ConstantIntegral::getMinValue(C->getType());
     Upper = Next(C);
     return;
   case Instruction::SetGE:
-    Upper = ConstantIntegral::getMaxValue(C->getType());
     Lower = C;
+    Upper = ConstantIntegral::getMinValue(C->getType());  // Min = Next(Max)
     return;
   }
 }
