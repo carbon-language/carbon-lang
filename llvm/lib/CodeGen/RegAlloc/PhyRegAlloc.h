@@ -19,7 +19,7 @@
 #ifndef PHY_REG_ALLOC_H
 #define PHY_REG_ALLOC_H
 
-#include "llvm/CodeGen/LiveRangeInfo.h"
+#include "LiveRangeInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include <map>
 

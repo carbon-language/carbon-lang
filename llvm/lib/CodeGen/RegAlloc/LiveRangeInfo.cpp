@@ -4,7 +4,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/LiveRangeInfo.h"
+#include "LiveRangeInfo.h"
 #include "RegAllocCommon.h"
 #include "RegClass.h"
 #include "IGNode.h"
