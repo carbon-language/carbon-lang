@@ -6,9 +6,6 @@
 // LLVM code, because of of the primary uses of it is for debugging
 // transformations.
 //
-// TODO: print out the type name instead of the full type if a particular type
-// is in the symbol table...
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/CachedWriter.h"
