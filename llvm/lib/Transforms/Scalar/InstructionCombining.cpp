@@ -2035,7 +2035,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
             New = new MallocInst(CastElTy, Amt, Name);
           else
             New = new AllocaInst(CastElTy, Amt, Name);
-          InsertNewInstBefore(New, CI);
+          InsertNewInstBefore(New, *AI);
           return ReplaceInstUsesWith(CI, New);
         }
       }
