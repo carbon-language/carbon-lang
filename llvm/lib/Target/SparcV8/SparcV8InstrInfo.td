@@ -116,13 +116,24 @@ def SRArr : F3_1<2, 0b100111, "sra">;
 def SRAri : F3_2<2, 0b100111, "sra">;
 
 // Section B.13 - Add Instructions, p. 108
-def ADDrr : F3_1<2, 0b000000, "add">;
-def ADDri : F3_2<2, 0b000000, "add">;
+def ADDrr   : F3_1<2, 0b000000, "add">;
+def ADDri   : F3_2<2, 0b000000, "add">;
+def ADDCCrr : F3_1<2, 0b010000, "addcc">;
+def ADDCCri : F3_2<2, 0b010000, "addcc">;
+def ADDXrr  : F3_1<2, 0b001000, "addx">;
+def ADDXri  : F3_2<2, 0b001000, "addx">;
+def ADDXCCrr: F3_1<2, 0b011000, "addxcc">;
+def ADDXCCri: F3_2<2, 0b011000, "addxcc">;
 
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr   : F3_1<2, 0b000100, "sub">;
+def SUBri   : F3_2<2, 0b000100, "sub">;
 def SUBCCrr : F3_1<2, 0b010100, "subcc">;
 def SUBCCri : F3_2<2, 0b010100, "subcc">;
+def SUBXrr  : F3_1<2, 0b001100, "subx">;
+def SUBXri  : F3_2<2, 0b001100, "subx">;
+def SUBXCCrr: F3_1<2, 0b011100, "subxcc">;
+def SUBXCCri: F3_2<2, 0b011100, "subxcc">;
 
 // Section B.18 - Multiply Instructions, p. 113
 def UMULrr : F3_1<2, 0b001010, "umul">;
