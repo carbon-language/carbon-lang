@@ -807,6 +807,7 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define LLVM_NANSF(NanStr) __builtin_nansf(NanStr) /* Float */\n"
       << "#define LLVM_INF           __builtin_inf()         /* Double */\n"
       << "#define LLVM_INFF          __builtin_inff()        /* Float */\n"
+      << "#define LLVM_PREFETCH(addr,rw,locality)          __builtin_prefetch(addr,rw,locality)\n"
       << "#else\n"
       << "#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
       << "#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
@@ -814,6 +815,7 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define LLVM_NANSF(NanStr) 0.0F                    /* Float */\n"
       << "#define LLVM_INF           ((double)0.0)           /* Double */\n"
       << "#define LLVM_INFF          0.0F                    /* Float */\n"
+      << "#define LLVM_PREFETCH(addr,rw,locality)          \n"
       << "#endif\n";
 }
 
@@ -1430,6 +1432,7 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::frameaddress:
           case Intrinsic::setjmp:
           case Intrinsic::longjmp:
+          case Intrinsic::prefetch:
             // We directly implement these intrinsics
             break;
           default:
@@ -1504,6 +1507,16 @@ void CWriter::visitCallInst(CallInst &I) {
         writeOperand(I.getOperand(2));
         Out << ')';
         return;
+      case Intrinsic::prefetch:
+	// This is only supported on GCC for now...
+	Out << "LLVM_PREFETCH((const void *)";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
+        writeOperand(I.getOperand(2));
+        Out << ", ";
+        writeOperand(I.getOperand(3));
+        Out << ")";
+	return;
       }
     }
 
