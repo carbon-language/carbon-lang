@@ -28,7 +28,6 @@
         <ol>
           <li><a href="#ci_warningerrors">Treat Compiler Warnings Like
               Errors</a></li>
-          <li><a href="#ci_cpp_features">Which C++ features can I use?</a></li>
           <li><a href="#ci_portable_code">Write Portable Code</a></li>
         </ol></li>
     </ol></li>
@@ -46,13 +45,16 @@
         <ol>
           <li><a href="#hl_assert">Assert Liberally</a></li>
           <li><a href="#hl_preincrement">Prefer Preincrement</a></li>
-          <li><a href="#hl_avoidendl">Avoid endl</a></li>
+          <li><a href="#hl_avoidendl">Avoid std::endl</a></li>
           <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a></li>
         </ol></li>
-      <li><a href="#iterators">Writing Iterators</a></li>
     </ol></li>
   <li><a href="#seealso">See Also</a></li>
 </ol>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
 
 
 <!-- *********************************************************************** -->
@@ -112,8 +114,7 @@ knows they should comment, so should you.  :)  Although we all should probably
 comment our code more than we do, there are a few very critical places that
 documentation is very useful:</p>
 
-<ol>
-<li><h4>File Headers</h4> 
+<b>File Headers</b>
 
 <p>Every source file should have a header on it that
 describes the basic purpose of the file.  If a file does not have a header, it
@@ -123,28 +124,38 @@ this:</p>
 
 <pre>
 //===-- llvm/Instruction.h - Instruction class definition -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Instruction class, which is the
 // base class for all of the VM instructions.
 //
 //===----------------------------------------------------------------------===//
+
 </pre>
 
-<p>A few things to note about this particular format.  The "<tt>-*- C++
+<p>A few things to note about this particular format:  The "<tt>-*- C++
 -*-</tt>" string on the first line is there to tell Emacs that the source file
 is a C++ file, not a C file (Emacs assumes .h files are C files by default [Note
 that tag this is not necessary in .cpp files]).  The name of the file is also on
 the first line, along with a very short description of the purpose of the file.
 This is important when printing out code and flipping though lots of pages.</p>
 
+<p>The next section in the file is a concise note that defines the license that
+the file is released under.  This makes it perfectly clear what terms the source
+code can be distributed under.</p>
+
 <p>The main body of the description does not have to be very long in most cases.
 Here it's only two lines.  If an algorithm is being implemented or something
 tricky is going on, a reference to the paper where it is published should be
 included, as well as any notes or "gotchas" in the code to watch out for.</p>
 
-</li>
-
-<li><h4>Class overviews</h4>
+<b>Class overviews</b>
 
 <p>Classes are one fundemental part of a good object oriented design.  As such,
 a class definition should have a comment block that explains what the class is
@@ -152,9 +163,8 @@ used for... if it's not obvious.  If it's so completely obvious your grandma
 could figure it out, it's probably safe to leave it out.  Naming classes
 something sane goes a long ways towards avoiding writing documentation. :)</p>
 
-</li>
 
-<li><h4>Method information</h4>
+<b>Method information</b>
 
 <p>Methods defined in a class (as well as any global functions) should also be
 documented properly.  A quick note about what it does any a description of the
@@ -165,9 +175,6 @@ the goal metric.</p>
 
 <p>Good things to talk about here are what happens when something unexpected
 happens: does the method return null?  Abort?  Format your hard disk?</p>
-
-</li>
-</ol>
 
 </div>
 
@@ -335,40 +342,6 @@ be fixed by massaging the code appropriately.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ci_cpp_features">Which C++ features can I use?</a>
-</div>
-
-<div class="doc_text">
-
-<p>Compilers are finally catching up to the C++ standard.  Most compilers
-implement most features, so you can use just about any features that you would
-like.  In the LLVM source tree, I have chosen to not use these features:</p>
-
-<ol>
-<li><p>Exceptions: Exceptions are very useful for error reporting and handling
-exceptional conditions.  I do not use them in LLVM because they do have an
-associated performance impact (by restricting restructuring of code), and parts
-of LLVM are designed for performance critical purposes.</p>
-
-<p>Just like most of the rules in this document, this isn't a hard and fast
-requirement.  Exceptions are used in the Parser, because it simplifies error
-reporting <b>significantly</b>, and the LLVM parser is not at all in the
-critical path.</p>
-</li>
-
-<li>RTTI: RTTI has a large cost in terms of executable size, and compilers are
-not yet very good at stomping out "dead" class information blocks.  Because of
-this, typeinfo and dynamic cast are not used.</li>
-</ol>
-
-<p>Other features, such as templates (without partial specialization) can be
-used freely.  The general goal is to have clear, consise, performant code... if
-a technique assists with that then use it.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
   <a name="ci_portable_code">Write Portable Code</a>
 </div>
 
@@ -480,7 +453,7 @@ class itself... just make them private (or protected), and all is well.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_text">
+<div class="doc_subsection">
   <a name="micro">The Low Level Issues</a>
 </div>
 
@@ -553,18 +526,18 @@ get in the habit of always using preincrement, and you won't have a problem.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hl_avoidendl">Avoid endl</a>
+  <a name="hl_avoidendl">Avoid std::endl</a>
 </div>
 
 <div class="doc_text">
 
-<p>The <tt>endl</tt> modifier, when used with iostreams outputs a newline to the
-output stream specified.  In addition to doing this, however, it also flushes
-the output stream.  In other words, these are equivalent:</p>
+<p>The <tt>std::endl</tt> modifier, when used with iostreams outputs a newline
+to the output stream specified.  In addition to doing this, however, it also
+flushes the output stream.  In other words, these are equivalent:</p>
 
 <pre>
-  cout &lt;&lt; endl;
-  cout &lt;&lt; "\n" &lt;&lt; flush;
+  std::cout &lt;&lt; std::endl;
+  std::cout &lt;&lt; "\n" &lt;&lt; std::flush;
 </pre>
 
 <p>Most of the time, you probably have no reason to flush the output stream, so
@@ -591,331 +564,6 @@ for you.  C++ is just a tool that wants you to master it. :)</p>
 
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="iterators">Writing Iterators</a>
-</div>
-
-<div class="doc_text">
-
-<p>Here's a pretty good summary of how to write your own data structure iterators
-in a way that is compatible with the STL, and with a lot of other code out there
-(slightly edited by Chris):</p>
-
-<pre>
-From: Ross Smith &lt;ross.s@ihug.co.nz&gt;
-Newsgroups: comp.lang.c++.moderated
-Subject: Writing iterators (was: Re: Non-template functions that take iterators)
-Date: 28 Jun 2001 12:07:10 -0400
-
-Andre Majorel wrote:
-&gt; Any pointers handy on "writing STL-compatible iterators for
-&gt; dummies ?"
-
-I'll give it a try...
-
-The usual situation requiring user-defined iterators is that you have
-a type that bears some resemblance to an STL container, and you want
-to provide iterators so it can be used with STL algorithms. You need
-to ask three questions:
-
-First, is this simply a wrapper for an underlying collection of
-objects that's held somewhere as a real STL container, or is it a
-"virtual container" for which iteration is (under the hood) more
-complicated than simply incrementing some underlying iterator (or
-pointer or index or whatever)? In the former case you can frequently
-get away with making your container's iterators simply typedefs for
-those of the underlying container; your begin() function would call
-member_container.begin(), and so on.
-
-Second, do you only need read-only iterators, or do you need separate
-read-only (const) and read-write (non-const) iterators?
-
-Third, which kind of iterator (input, output, forward, bidirectional,
-or random access) is appropriate? If you're familiar with the
-properties of the iterator types (if not, visit
-<a href="http://www.sgi.com/tech/stl/">http://www.sgi.com/tech/stl/</a>), the appropriate choice should be
-obvious from the semantics of the container.
-
-I'll start with forward iterators, as the simplest case that's likely
-to come up in normal code. Input and output iterators have some odd
-properties and rarely need to be implemented in user code; I'll leave
-them out of discussion. Bidirectional and random access iterators are
-covered below.
-
-The exact behaviour of a forward iterator is spelled out in the
-Standard in terms of a set of expressions with specified behaviour,
-rather than a set of member functions, which leaves some leeway in how
-you actually implement it. Typically it looks something like this
-(I'll start with the const-iterator-only situation):
-
-  #include &lt;iterator&gt;
-
-  class container {
-    public:
-      typedef something_or_other value_type;
-      class const_iterator:
-        public std::iterator&lt;std::forward_iterator_tag, value_type&gt; {
-          friend class container;
-          public:
-            const value_type&amp; operator*() const;
-            const value_type* operator-&gt;() const;
-            const_iterator&amp; operator++();
-            const_iterator operator++(int);
-            friend bool operator==(const_iterator lhs,
-                                   const_iterator rhs);
-            friend bool operator!=(const_iterator lhs,
-                                   const_iterator rhs);
-          private:
-            //...
-        };
-      //...
-  };
-
-An iterator should always be derived from an instantiation of the
-std::iterator template. The iterator's life cycle functions
-(constructors, destructor, and assignment operator) aren't declared
-here; in most cases the compiler-generated ones are sufficient. The
-container needs to be a friend of the iterator so that the container's
-begin() and end() functions can fill in the iterator's private members
-with the appropriate values.
-
-<i>[Chris's Note: I prefer to not make my iterators friends.  Instead, two
-ctor's are provided for the iterator class: one to start at the end of the
-container, and one at the beginning.  Typically this is done by providing
-two constructors with different signatures.]</i>
-
-There are normally only three member functions that need nontrivial
-implementations; the rest are just boilerplate.
-
-  const container::value_type&amp;
-    container::const_iterator::operator*() const {
-      // find the element and return a reference to it
-    }
-
-  const container::value_type*
-    container::const_iterator::operator-&gt;() const {
-      return &amp;**this;
-    }
-
-If there's an underlying real container, operator*() can just return a
-reference to the appropriate element. If there's no actual container
-and the elements need to be generated on the fly -- what I think of as
-a "virtual container" -- things get a bit more complicated; you'll
-probably need to give the iterator a value_type member object, and
-fill it in when you need to. This might be done as part of the
-increment operator (below), or if the operation is nontrivial, you
-might choose the "lazy" approach and only generate the actual value
-when one of the dereferencing operators is called.
-
-The operator-&gt;() function is just boilerplate around a call to
-operator*().
-
-  container::const_iterator&amp;
-    container::const_iterator::operator++() {
-      // the incrementing logic goes here
-      return *this;
-    }
-
-  container::const_iterator
-    container::const_iterator::operator++(int) {
-      const_iterator old(*this);
-      ++*this;
-      return old;
-    }
-
-Again, the incrementing logic will usually be trivial if there's a
-real container involved, more complicated if you're working with a
-virtual container. In particular, watch out for what happens when you
-increment past the last valid item -- this needs to produce an
-iterator that will compare equal to container.end(), and making this
-work is often nontrivial for virtual containers.
-
-The post-increment function is just boilerplate again (and
-incidentally makes it obvious why all the experts recommend using
-pre-increment wherever possible).
-
-  bool operator==(container::const_iterator lhs,
-                  container::const_iterator rhs) {
-    // equality comparison goes here
-  }
-
-  bool operator!=(container::const_iterator lhs,
-                  container::const_iterator rhs) {
-    return !(lhs == rhs);
-  }
-
-For a real container, the equality comparison will usually just
-compare the underlying iterators (or pointers or indices or whatever).
-The semantics of comparisons for virtual container iterators are often
-tricky. Remember that iterator comparison only needs to be defined for
-iterators into the same container, so you can often simplify things by
-taking for granted that lhs and rhs both point into the same container
-object. Again, the second function is just boilerplate.
-
-It's a matter of taste whether iterator arguments are passed by value
-or reference; I've shown tham passed by value to reduce clutter, but
-if the iterator contains several data members, passing by reference
-may be better.
-
-That convers the const-iterator-only situation. When we need separate
-const and mutable iterators, one small complication is added beyond
-the simple addition of a second class.
-
-  class container {
-    public:
-      typedef something_or_other value_type;
-      class const_iterator;
-      class iterator:
-        public std::iterator&lt;std::forward_iterator_tag, value_type&gt; {
-          friend class container;
-          friend class container::const_iterator;
-          public:
-            value_type&amp; operator*() const;
-            value_type* operator-&gt;() const;
-            iterator&amp; operator++();
-            iterator operator++(int);
-            friend bool operator==(iterator lhs, iterator rhs);
-            friend bool operator!=(iterator lhs, iterator rhs);
-          private:
-            //...
-        };
-      class const_iterator:
-        public std::iterator&lt;std::forward_iterator_tag, value_type&gt; {
-          friend class container;
-          public:
-            const_iterator();
-            const_iterator(const iterator&amp; i);
-            const value_type&amp; operator*() const;
-            const value_type* operator-&gt;() const;
-            const_iterator&amp; operator++();
-            const_iterator operator++(int);
-            friend bool operator==(const_iterator lhs,
-                                   const_iterator rhs);
-            friend bool operator!=(const_iterator lhs,
-                                   const_iterator rhs);
-          private:
-            //...
-        };
-      //...
-  };
-
-There needs to be a conversion from iterator to const_iterator (so
-that mixed-type operations, such as comparison between an iterator and
-a const_iterator, will work). This is done here by giving
-const_iterator a conversion constructor from iterator (equivalently,
-we could have given iterator an operator const_iterator()), which
-requires const_iterator to be a friend of iterator, so it can copy its
-data members. (It also requires the addition of an explicit default
-constructor to const_iterator, since the existence of another
-user-defined constructor inhibits the compiler-defined one.)
-
-Bidirectional iterators add just two member functions to forward
-iterators:
-
-  class iterator:
-    public std::iterator&lt;std::bidirectional_iterator_tag, value_type&gt; {
-      public:
-        //...
-        iterator&amp; operator--();
-        iterator operator--(int);
-        //...
-    };
-
-I won't detail the implementations, they're obvious variations on
-operator++().
-
-Random access iterators add several more member and friend functions:
-
-  class iterator:
-    public std::iterator&lt;std::random_access_iterator_tag, value_type&gt; {
-      public:
-        //...
-        iterator&amp; operator+=(difference_type rhs);
-        iterator&amp; operator-=(difference_type rhs);
-        friend iterator operator+(iterator lhs, difference_type rhs);
-        friend iterator operator+(difference_type lhs, iterator rhs);
-        friend iterator operator-(iterator lhs, difference_type rhs);
-        friend difference_type operator-(iterator lhs, iterator rhs);
-        friend bool operator&lt;(iterator lhs, iterator rhs);
-        friend bool operator&gt;(iterator lhs, iterator rhs);
-        friend bool operator&lt;=(iterator lhs, iterator rhs);
-        friend bool operator&gt;=(iterator lhs, iterator rhs);
-        //...
-    };
-
-  container::iterator&amp;
-    container::iterator::operator+=(container::difference_type rhs) {
-      // add rhs to iterator position
-      return *this;
-    }
-
-  container::iterator&amp;
-    container::iterator::operator-=(container::difference_type rhs) {
-      // subtract rhs from iterator position
-      return *this;
-    }
-
-  container::iterator operator+(container::iterator lhs,
-                                container::difference_type rhs) {
-    return iterator(lhs) += rhs;
-  }
-
-  container::iterator operator+(container::difference_type lhs,
-                                container::iterator rhs) {
-    return iterator(rhs) += lhs;
-  }
-
-  container::iterator operator-(container::iterator lhs,
-                                container::difference_type rhs) {
-    return iterator(lhs) -= rhs;
-  }
-
-  container::difference_type operator-(container::iterator lhs,
-                                       container::iterator rhs) {
-    // calculate distance between iterators
-  }
-
-  bool operator&lt;(container::iterator lhs, container::iterator rhs) {
-    // perform less-than comparison
-  }
-
-  bool operator&gt;(container::iterator lhs, container::iterator rhs) {
-    return rhs &lt; lhs;
-  }
-
-  bool operator&lt;=(container::iterator lhs, container::iterator rhs) {
-    return !(rhs &lt; lhs);
-  }
-
-  bool operator&gt;=(container::iterator lhs, container::iterator rhs) {
-    return !(lhs &lt; rhs);
-  }
-
-Four of the functions (operator+=(), operator-=(), the second
-operator-(), and operator&lt;()) are nontrivial; the rest are
-boilerplate.
-
-One feature of the above code that some experts may disapprove of is
-the declaration of all the free functions as friends, when in fact
-only a few of them need direct access to the iterator's private data.
-I originally got into the habit of doing this simply to keep the
-declarations together; declaring some functions inside the class and
-some outside seemed awkward. Since then, though, I've been told that
-there's a subtle difference in the way name lookup works for functions
-declared inside a class (as friends) and outside, so keeping them
-together in the class is probably a good idea for practical as well as
-aesthetic reasons.
-
-I hope all this is some help to anyone who needs to write their own
-STL-like containers and iterators.
-
--- 
-Ross Smith &lt;ross.s@ihug.co.nz&gt; The Internet Group, Auckland, New Zealand
-</pre>
-
-</div>
-
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="seealso">See Also</a>
@@ -932,7 +580,9 @@ sources.  Two particularly important books for our work are:</p>
 <li><a href="http://www.aw.com/product/0,2627,0201924889,00.html">Effective
 C++</a> by Scott Meyers.  There is an online version of the book (only some
 chapters though) <a
-href="http://www.awlonline.com/cseng/meyerscddemo/">available as well</a>.</li>
+href="http://www.awlonline.com/cseng/meyerscddemo/">available as well</a>.  Also
+interesting and useful are "More Effective C++" and "Effective STL" by the same
+author.</li>
 
 <li><a href="http://cseng.aw.com/book/0,3828,0201633620,00.html">Large-Scale C++
 Software Design</a> by John Lakos</li>
