@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/System/SysConfig.h"
-
 namespace llvm {
 
 // Some LLVM programs such as bugpoint produce core files as a normal part of

@@ -16,7 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include "llvm/System/MappedFile.h"
 #include "llvm/System/Process.h"
 
 namespace llvm {

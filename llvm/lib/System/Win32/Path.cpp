@@ -20,7 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include <llvm/System/Path.h>
 #include <fstream>
 #include <malloc.h>
 

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include "llvm/System/Process.h"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code 
