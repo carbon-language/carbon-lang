@@ -299,7 +299,7 @@ value, such as 5.</li>
 <li>"<tt><b>string</b></tt>" - The 'string' type represents an ordered sequence
 of characters of arbitrary length.</li>
 
-<li>"<tt><b>bits</b>&lt;n&gt;</tt>" - A 'bits' type is a arbitrary, but fixed,
+<li>"<tt><b>bits</b>&lt;n&gt;</tt>" - A 'bits' type is an arbitrary, but fixed,
 size integer that is broken up into individual bits.  This type is useful
 because it can handle some bits being defined while others are undefined.</li>
 
@@ -363,7 +363,7 @@ including nested 'dag' values.</li>
 </ul></p>
 
 <p>
-Note that all of the values have rules specifying how they convert to to values
+Note that all of the values have rules specifying how they convert to values
 for different types.  These rules allow you to assign a value like "7" to a
 "bits&lt;4&gt;" value, for example.
 </p>
@@ -387,8 +387,8 @@ information that TableGen collects.  Records are defined with a <tt>def</tt> or
 href="templateargs">template arguments</a>".  If the record has superclasses,
 they are specified as a comma seperated list that starts with a colon character
 (":").  If <a href="#valuedef">value definitions</a> or <a href="#recordlet">let
-expressions</a> are needed for the class they are enclosed in curly braces
-("{}"), otherwise the record ends with a semicolon.  Here is a simple TableGen
+expressions</a> are needed for the class, they are enclosed in curly braces
+("{}"); otherwise, the record ends with a semicolon.  Here is a simple TableGen
 file:
 </p>
 
@@ -408,7 +408,7 @@ bit value.  The <tt>Y</tt> definition also gets the Greeting member as well.
 
 <p>
 In general, classes are useful for collecting together the commonality between a
-group of records, and isolating it in a single places.  Also, classes permit the
+group of records and isolating it in a single place.  Also, classes permit the
 specification of default values for their subclasses, allowing the subclasses to
 override them as they wish.
 </p>
@@ -423,7 +423,7 @@ override them as they wish.
 <div class="doc_text">
 <p>
 Value definitions define named entries in records.  A value must be defined
-before it can be referred to as the operand for another value definition, or
+before it can be referred to as the operand for another value definition or
 before the value is reset with a <a href="#recordlet">let expression</a>.  A
 value is defined by specifying a <a href="#types">TableGen type</a> and a name.
 If an initial value is available, it may be specified after the type with an
@@ -439,9 +439,9 @@ equal sign.  Value definitions require terminating semicolons.
 <p>
 A record-level let expression is used to change the value of a value definition
 in a record.  This is primarily useful when a superclass defines a value that a
-derived class or definitions wants to override.  Let expressions consist of the
-'<tt>let</tt>' keyword, followed by a value name, an equal sign ("="), and a new
-value for example, a new class could be added to the example above, redefining
+derived class or definition wants to override.  Let expressions consist of the
+'<tt>let</tt>' keyword followed by a value name, an equal sign ("="), and a new
+value.  For example, a new class could be added to the example above, redefining
 the <tt>V</tt> field for all of its subclasses:</p>
 
 <p><pre>
