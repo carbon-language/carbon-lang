@@ -25,6 +25,7 @@
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
 #include "llvm/Transforms/Instrumentation/ProfilePaths.h"
+#include "llvm/Transforms/Instrumentation/EmitFunctions.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
@@ -53,7 +54,7 @@ enum Opts {
   indvars, instcombine, sccp, adce, raise, reassociate, mem2reg, pinodes,
 
   // Instrumentation
-  trace, tracem, paths,
+  trace, tracem, paths, emitfuncs,
 
   // Interprocedural optimizations...
   internalize, globaldce, swapstructs, sortstructs, poolalloc,
@@ -94,7 +95,7 @@ struct {
   { sccp       , createSCCPPass                   },
   { adce       , createAggressiveDCEPass          },
   { raise      , createRaisePointerReferencesPass },
-  { reassociate, createReassociatePass            },
+  /* { reassociate, createReassociatePass            },*/
   { mem2reg    , createPromoteMemoryToRegister    },
   { pinodes    , createPiNodeInsertionPass        },
   { lowerrefs  , createDecomposeMultiDimRefsPass  },
@@ -102,6 +103,7 @@ struct {
   { trace      , createTraceValuesPassForBasicBlocks },
   { tracem     , createTraceValuesPassForFunction    },
   { paths      , createProfilePathsPass              },
+  { emitfuncs  , createEmitFunctionTablePass },
   { print      , createPrintFunctionPass },
   { printm     , createPrintModulePass   },
   { verify     , createVerifierPass      },
@@ -162,6 +164,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(trace      , "Insert BB and Function trace code"),
   clEnumVal(tracem     , "Insert Function trace code only"),
   clEnumVal(paths      , "Insert path profiling instrumentation"),
+  clEnumVal(emitfuncs  , "Insert function pointer table"),
   clEnumVal(print      , "Print working function to stderr"),
   clEnumVal(printm     , "Print working module to stderr"),
   clEnumVal(verify     , "Verify module is well formed"),
