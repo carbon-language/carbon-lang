@@ -43,6 +43,8 @@ namespace {
   enum FileType { AsmFile, CFile };
 }
 
+extern cl::list<std::string> InputArgv;
+
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
 /// LLVM bytecode in a variety of ways.  This abstract interface hides this
 /// complexity behind a simple interface.
@@ -93,17 +95,19 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
     exit(1);
   }
 
-  const char *Args[] = {
-    LLIPath.c_str(),
-    "-abort-on-exception",
-    "-quiet",
-    "-force-interpreter=true",
-    Bytecode.c_str(),
-    0
-  };
+  std::vector<const char*> Args;
+  Args.push_back(LLIPath.c_str());
+  Args.push_back("-abort-on-exception");
+  Args.push_back("-quiet");
+  Args.push_back("-force-interpreter=true");
+  Args.push_back(Bytecode.c_str());
+  // Add optional parameters to the running program from Argv
+  for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
+    Args.push_back(InputArgv[i].c_str());
+  Args.push_back(0);
 
   std::cout << "<lli>";
-  return RunProgramWithTimeout(LLIPath, Args,
+  return RunProgramWithTimeout(LLIPath, &Args[0],
                                InputFile, OutputFile, OutputFile);
 }
 
@@ -148,44 +152,37 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
                         const std::string &OutputFile,
                         const std::string &SharedLib) {
   std::string OutputBinary = getUniqueFilename("bugpoint.gcc.exe");
-  const char **GCCArgs;
+  std::vector<const char*> GCCArgs;
 
-  const char *ArgsWithoutSO[] = {
-    GCCPath.c_str(),
-    "-x", (fileType == AsmFile) ? "assembler" : "c",
-    ProgramFile.c_str(),         // Specify the input filename...
-    "-o", OutputBinary.c_str(),  // Output to the right filename...
-    "-lm",                       // Hard-code the math library...
-    "-O2",                       // Optimize the program a bit...
-    0
-  };
-  const char *ArgsWithSO[] = {
-    GCCPath.c_str(),
-    SharedLib.c_str(),           // Specify the shared library to link in...
-    "-x", (fileType == AsmFile) ? "assembler" : "c",
-    ProgramFile.c_str(),         // Specify the input filename...
-    "-o", OutputBinary.c_str(),  // Output to the right filename...
-    "-lm",                       // Hard-code the math library...
-    "-O2",                       // Optimize the program a bit...
-    0
-  };
+  GCCArgs.push_back(GCCPath.c_str());
+  if (!SharedLib.empty()) // Specify the shared library to link in...
+    GCCArgs.push_back(SharedLib.c_str());
+  GCCArgs.push_back("-x");
+  GCCArgs.push_back((fileType == AsmFile) ? "assembler" : "c");
+  GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
+  GCCArgs.push_back("-o");
+  GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
+  GCCArgs.push_back("-lm");                // Hard-code the math library...
+  GCCArgs.push_back("-O2");                // Optimize the program a bit...
+  GCCArgs.push_back(0);                    // NULL terminator
 
-  GCCArgs = (SharedLib.empty()) ? ArgsWithoutSO : ArgsWithSO;
   std::cout << "<gcc>";
-  if (RunProgramWithTimeout(GCCPath, GCCArgs, "/dev/null", "/dev/null",
+  if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], "/dev/null", "/dev/null",
                             "/dev/null")) {
-    ProcessFailure(GCCArgs);
+    ProcessFailure(&GCCArgs[0]);
     exit(1);
   }
 
-  const char *ProgramArgs[] = {
-    OutputBinary.c_str(),
-    0
-  };
+  std::vector<const char*> ProgramArgs;
+  ProgramArgs.push_back(OutputBinary.c_str());
+  // Add optional parameters to the running program from Argv
+  for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
+    ProgramArgs.push_back(InputArgv[i].c_str());
+  ProgramArgs.push_back(0);                // NULL terminator
 
   // Now that we have a binary, run it!
   std::cout << "<program>";
-  int ProgramResult = RunProgramWithTimeout(OutputBinary, ProgramArgs,
+  int ProgramResult = RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
                                             InputFile, OutputFile, OutputFile);
   std::cout << "\n";
   removeFile(OutputBinary);
