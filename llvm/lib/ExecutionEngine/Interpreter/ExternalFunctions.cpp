@@ -3,10 +3,12 @@
 //  This file contains both code to deal with invoking "external" functions, but
 //  also contains code that implements "exported" external functions.
 //
-//  External functions in LLI are implemented by dlopen'ing the lli executable
-//  and using dlsym to look op the functions that we want to invoke.  If a
-//  function is found, then the arguments are mangled and passed in to the
-//  function call.
+//  External functions in the interpreter are implemented by 
+//  using the system's dynamic loader to look up the address of the function
+//  we want to invoke.  If a function is found, then one of the
+//  many lle_* wrapper functions in this file will translate its arguments from
+//  GenericValues to the types the function is actually expecting, before the
+//  function is called.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +23,7 @@
 #include "Config/link.h"
 #include <cmath>
 #include "Config/stdio.h"
+#include "Support/DynamicLinker.h"
 using std::vector;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
@@ -52,25 +55,24 @@ static char getTypeID(const Type *Ty) {
   }
 }
 
-static ExFunc lookupFunction(const Function *M) {
+static ExFunc lookupFunction(const Function *F) {
   // Function not found, look it up... start by figuring out what the
   // composite function name should be.
   std::string ExtName = "lle_";
-  const FunctionType *MT = M->getFunctionType();
-  for (unsigned i = 0, e = MT->getNumContainedTypes(); i != e; ++i)
-    ExtName += getTypeID(MT->getContainedType(i));
-  ExtName += "_" + M->getName();
+  const FunctionType *FT = F->getFunctionType();
+  for (unsigned i = 0, e = FT->getNumContainedTypes(); i != e; ++i)
+    ExtName += getTypeID(FT->getContainedType(i));
+  ExtName += "_" + F->getName();
 
-  //std::cout << "Tried: '" << ExtName << "'\n";
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
-    FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ExtName.c_str());
+    FnPtr = (ExFunc)GetAddressOfSymbol(ExtName);
   if (FnPtr == 0)
-    FnPtr = FuncNames["lle_X_"+M->getName()];
+    FnPtr = FuncNames["lle_X_"+F->getName()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
-    FnPtr = (ExFunc)dlsym(RTLD_DEFAULT, ("lle_X_"+M->getName()).c_str());
+    FnPtr = (ExFunc)GetAddressOfSymbol(("lle_X_"+F->getName()).c_str());
   if (FnPtr != 0)
-    Functions.insert(std::make_pair(M, FnPtr));  // Cache for later
+    Functions.insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;
 }
 
