@@ -483,7 +483,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
     if (MI->getNumOperands() == 3) {
       unsigned Size = 4;
-      emitConstant(O, MI->getOperand(1).getImmedValue(), Size);
+      emitConstant(O, MI->getOperand(2).getImmedValue(), Size);
     }
 
     O << "\n\t\t\t\t";
