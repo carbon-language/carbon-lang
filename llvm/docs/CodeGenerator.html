@@ -68,12 +68,12 @@ The LLVM target-independent code generator consists of five main components:</p>
 
 <ol>
 <li><a href="#targetdesc">Abstract target description</a> interfaces which
-capture improtant properties about various aspects of the machine independently
+capture important properties about various aspects of the machine, independently
 of how they will be used.  These interfaces are defined in
 <tt>include/llvm/Target/</tt>.</li>
 
 <li>Classes used to represent the <a href="#codegendesc">machine code</a> being
-generator for a target.  These classes are intended to be abstract enough to
+generated for a target.  These classes are intended to be abstract enough to
 represent the machine code for <i>any</i> target machine.  These classes are
 defined in <tt>include/llvm/CodeGen/</tt>.</li>
 
@@ -99,8 +99,8 @@ Depending on which part of the code generator you are interested in working on,
 different pieces of this will be useful to you.  In any case, you should be
 familiar with the <a href="#targetdesc">target description</a> and <a
 href="#codegendesc">machine code representation</a> classes.  If you want to add
-a backend for a new target, you will need <a href="#targetimpls">implement the
-targe description</a> classes for your new target and understand the <a
+a backend for a new target, you will need to <a href="#targetimpls">implement the
+target description</a> classes for your new target and understand the <a
 href="LangRef.html">LLVM code representation</a>.  If you are interested in
 implementing a new <a href="#codegenalgs">code generation algorithm</a>, it
 should only depend on the target-description and machine code representation
@@ -133,7 +133,7 @@ implements these two interfaces, and does its own thing.  Another example of a
 code generator like this is a (purely hypothetical) backend that converts LLVM
 to the GCC RTL form and uses GCC to emit machine code for a target.</p>
 
-<p>The other implication of this design is that it is possible to design and
+<p>This design also implies that it is possible to design and
 implement radically different code generators in the LLVM system that do not
 make use of any of the built-in components.  Doing so is not recommended at all,
 but could be required for radically different targets that do not fit into the
@@ -164,9 +164,9 @@ quality code generation for standard register-based microprocessors.  Code
 generation in this model is divided into the following stages:</p>
 
 <ol>
-<li><b>Instruction Selection</b> - Determining a efficient implementation of the
+<li><b>Instruction Selection</b> - Determining an efficient implementation of the
 input LLVM code in the target instruction set.  This stage produces the initial
-code for the program in the target instruction set the makes use of virtual
+code for the program in the target instruction set, then makes use of virtual
 registers in SSA form and physical registers that represent any required
 register assignments due to target constraints or calling conventions.</li>
 
@@ -191,7 +191,7 @@ elimination and stack packing.</li>
 "final" machine code can go here, such as spill code scheduling and peephole
 optimizations.</li>
 
-<li><b>Code Emission</b> - The final stage actually outputs the machine code for
+<li><b>Code Emission</b> - The final stage actually outputs the code for
 the current function, either in the target assembler format or in machine
 code.</li>
 
@@ -200,11 +200,13 @@ code.</li>
 <p>
 The code generator is based on the assumption that the instruction selector will
 use an optimal pattern matching selector to create high-quality sequences of
-native code.  Alternative code generator designs based on pattern expansion and
-aggressive iterative peephole optimization are much slower.  This design is
-designed to permit efficient compilation (important for JIT environments) and
-aggressive optimization (used when generate code offline) by allowing components
-of varying levels of sophisication to be used for any step of compilation.</p>
+native instructions.  Alternative code generator designs based on pattern 
+expansion and
+aggressive iterative peephole optimization are much slower.  This design 
+permits efficient compilation (important for JIT environments) and
+aggressive optimization (used when generating code offline) by allowing 
+components of varying levels of sophisication to be used for any step of 
+compilation.</p>
 
 <p>
 In addition to these stages, target implementations can insert arbitrary
@@ -253,7 +255,7 @@ as inputs or other algorithm-specific data structures).</p>
 <p>All of the target description classes (except the <tt><a
 href="#targetdata">TargetData</a></tt> class) are designed to be subclassed by
 the concrete target implementation, and have virtual methods implemented.  To
-get to these implementations, <tt><a
+get to these implementations, the <tt><a
 href="#targetmachine">TargetMachine</a></tt> class provides accessors that
 should be implemented by the target.</p>
 
@@ -269,7 +271,7 @@ should be implemented by the target.</p>
 <p>The <tt>TargetMachine</tt> class provides virtual methods that are used to
 access the target-specific implementations of the various target description
 classes (with the <tt>getInstrInfo</tt>, <tt>getRegisterInfo</tt>,
-<tt>getFrameInfo</tt>, ... methods).  This class is designed to be subclassed by
+<tt>getFrameInfo</tt>, ... methods).  This class is designed to be specialized by
 a concrete target implementation (e.g., <tt>X86TargetMachine</tt>) which
 implements the various virtual methods.  The only required target description
 class is the <a href="#targetdata"><tt>TargetData</tt></a> class, but if the
