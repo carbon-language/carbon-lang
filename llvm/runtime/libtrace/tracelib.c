@@ -20,25 +20,29 @@
 
 /* use #defines until we have inlining */
 
-typedef int64_t Generic;
-typedef uint64_t Index;
-typedef uint64_t Pointer;
+#ifndef sun
+typedef uint32_t Pointer;               /* int representation of a pointer */
+#else
+typedef uint64_t Pointer;               /* int representation of a pointer */
+#endif
+typedef uint32_t Index;                 /* type of index/size for hash table */
+typedef uint32_t Generic;               /* type of values stored in table */ 
 
 /* Index IntegerHashFunc(const Generic value, const Index size) */
 #define IntegerHashFunc(value, size) \
-  (((value << 3) ^ (value >> 3)) % size)
+  ( ((((Index) value) << 3) ^ (((Index) value) >> 3)) % size )
 
 /* Index IntegerRehashFunc(const Generic oldHashValue, const Index size) */
 #define IntegerRehashFunc(oldHashValue, size) \
-  ((oldHashValue+16) % size) /* 16 is relatively prime to a Mersenne prime! */
+  ((Index) ((oldHashValue+16) % size)) /* 16 is relatively prime to a Mersenne prime! */
 
 /* Index PointerHashFunc(const void* value, const Index size) */
 #define PointerHashFunc(value, size) \
-  IntegerHashFunc((Pointer) value, size)
+  IntegerHashFunc((Index) value, size)
 
 /* Index PointerRehashFunc(const void* value, const Index size) */
 #define PointerRehashFunc(value, size) \
-  IntegerRehashFunc((Pointer) value, size)
+  IntegerRehashFunc((Index) value, size)
 
 
 /*===---------------------------------------------------------------------=====
@@ -375,7 +379,7 @@ main(int argc, char** argv)
   /* print sequence numbers out again to compare with (-r) and w/o release */
   for (i=argc-1; i >= 0; --i)
     for (j=0; argv[i][j]; ++j)
-      printf("Sequence number for argc[%d][%d] (%c) = Hash(%p) = %d\n",
+      printf("Sequence number for argc[%d][%d] (%c) = %d\n",
              i, j, argv[i][j], argv[i]+j, HashPointerToSeqNum(argv[i]+j));
   
   return 0;
