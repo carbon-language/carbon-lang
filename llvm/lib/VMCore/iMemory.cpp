@@ -161,8 +161,8 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
     // of being refined to another type (and hence, may have dropped all
     // references to what it was using before).  So, use the new forwarded
     // type.
-    if (Ptr->getForwardedType()) {
-      Ptr = Ptr->getForwardedType();
+    if (const Type * Ty = Ptr->getForwardedType()) {
+      Ptr = Ty;
     }
   }
   return CurIdx == Idx.size() ? Ptr : 0;
