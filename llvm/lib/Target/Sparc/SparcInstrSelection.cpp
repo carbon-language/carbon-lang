@@ -1251,18 +1251,14 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         Instruction* returnReg = new TmpInstruction(returnInstr);
         MachineCodeForInstruction::get(returnInstr).addTemp(returnReg);
         
-        M = new MachineInstr(JMPLRET);
-        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                returnReg);
-        M->SetMachineOperandConst(1,MachineOperand::MO_SignExtendedImmed,
-                                  (int64_t)8);
-        M->SetMachineOperandReg(2, target.getRegInfo().getZeroRegNum());
+        M = BuildMI(JMPLRET, 3).addReg(returnReg).addSImm(8)
+                       .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def);
         
         if (returnInstr->getReturnValue() != NULL)
           M->addImplicitRef(returnInstr->getReturnValue());
         
         mvec.push_back(M);
-        mvec.push_back(new MachineInstr(NOP));
+        mvec.push_back(BuildMI(NOP, 0));
         
         break;
       }  
@@ -1998,8 +1994,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         if (isa<Function>(callee))      // direct function call
           M = BuildMI(CALL, 1).addPCDisp(callee);
         else                            // indirect function call
-          M = BuildMI(JMPLCALL,
-                      3).addReg(callee).addSImm((int64_t)0).addReg(retAddrReg);
+          M = BuildMI(JMPLCALL, 3).addReg(callee).addSImm((int64_t)0)
+                                  .addRegDef(retAddrReg);
         mvec.push_back(M);
 
         const FunctionType* funcType =
