@@ -27,10 +27,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/ConstantHandling.h"
+#include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -1129,20 +1130,10 @@ static bool CheckCondition(Constant *Bound, Constant *C,
   assert(C != 0 && "C is not specified!");
   if (Bound == 0) return false;
 
-  ConstantBool *Val;
-  switch (BO) {
-  default: assert(0 && "Unknown Condition code!");
-  case Instruction::SetEQ: Val = *Bound == *C; break;
-  case Instruction::SetNE: Val = *Bound != *C; break;
-  case Instruction::SetLT: Val = *Bound <  *C; break;
-  case Instruction::SetGT: Val = *Bound >  *C; break;
-  case Instruction::SetLE: Val = *Bound <= *C; break;
-  case Instruction::SetGE: Val = *Bound >= *C; break;
-  }
-
-  // ConstantHandling code may not succeed in the comparison...
-  if (Val == 0) return false;
-  return !Val->getValue();  // Return true if the condition is false...
+  Constant *Val = ConstantExpr::get(BO, Bound, C);
+  if (ConstantBool *CB = dyn_cast<ConstantBool>(Val))
+    return !CB->getValue();  // Return true if the condition is false...
+  return false;
 }
 
 // contradicts - Return true if the relationship specified by the operand
