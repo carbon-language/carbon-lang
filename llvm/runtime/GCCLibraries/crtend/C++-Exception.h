@@ -55,7 +55,7 @@ inline llvm_cxx_exception *get_cxx_exception(llvm_exception *E) throw() {
 namespace __cxxabiv1 {
   // Invokes given handler, dying appropriately if the user handler was
   // so inconsiderate as to return.
-  extern void __terminate(std::terminate_handler) __attribute__((noreturn));
+  extern void __terminate(std::terminate_handler) throw() __attribute__((noreturn));
   extern void __unexpected(std::unexpected_handler) __attribute__((noreturn));
   
   // The current installed user handlers.
@@ -74,8 +74,10 @@ extern "C" {
     throw();
   void *__llvm_cxxeh_begin_catch() throw();
   void *__llvm_cxxeh_begin_catch_if_isa(void *CatchType) throw();
-  void __llvm_cxxeh_end_catch() /* might throw */;
+  void __llvm_cxxeh_end_catch(void *Exception) /* might throw */;
   void __llvm_cxxeh_rethrow() throw();
+  void *__llvm_cxxeh_get_last_caught() throw();
+
   void __llvm_cxxeh_check_eh_spec(void *Info, ...);
 }
 

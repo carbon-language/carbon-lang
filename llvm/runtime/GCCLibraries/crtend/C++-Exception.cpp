@@ -11,6 +11,12 @@
 #include <cstdlib>
 #include <cstdarg>
 
+//#define DEBUG
+
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 //===----------------------------------------------------------------------===//
 // Generic exception support
 //
@@ -18,7 +24,11 @@
 // Thread local state for exception handling.
 // FIXME: This should really be made thread-local!
 //
-static llvm_exception *CaughtExceptionStack = 0;
+
+// LastCaughtException - The last exception caught by this handler.  This is for
+// implementation of _rethrow and _get_last_caught.
+//
+static llvm_exception *LastCaughtException = 0;
 
 // UncaughtExceptionStack - The stack of exceptions currently being thrown.
 static llvm_exception *UncaughtExceptionStack = 0;
@@ -76,12 +86,8 @@ void __llvm_cxxeh_free_exception(void *ObjectPtr) throw() {
 // exception.
 //
 static void cxx_destructor(llvm_exception *LE) /* might throw */{
+  assert(LE->Next == 0 && "On the uncaught stack??");
   llvm_cxx_exception *E = get_cxx_exception(LE);
-
-  // The exception is no longer caught.
-  assert(CaughtExceptionStack == LE &&
-         "Destroying an exception which is not the current caught exception?");
-  CaughtExceptionStack = LE->Next;
 
   struct ExceptionFreer {
     void *Ptr;
@@ -110,6 +116,7 @@ void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
   E->BaseException.Next = UncaughtExceptionStack;
   UncaughtExceptionStack = &E->BaseException;
   E->BaseException.HandlerCount = 0;
+  E->BaseException.isRethrown = 0;
 
   E->TypeInfo = (const std::type_info*)TypeInfoPtr;
   E->ExceptionObjectDestructor = DtorPtr;
@@ -121,14 +128,16 @@ void __llvm_cxxeh_throw(void *ObjectPtr, void *TypeInfoPtr,
 // CXXExceptionISA - use the type info object stored in the exception to see if
 // TypeID matches and, if so, to adjust the exception object pointer.
 //
-static void *CXXExceptionISA(llvm_cxx_exception *E, const std::type_info *Type){
+static void *CXXExceptionISA(llvm_cxx_exception *E,
+                             const std::type_info *Type) throw() {
   // ThrownPtr is a pointer to the object being thrown...
   void *ThrownPtr = E+1;
   const std::type_info *ThrownType = E->TypeInfo;
 
+#if 0
   // FIXME: this code exists in the GCC exception handling library: I haven't
   // thought about this yet, so it should be verified at some point!
-#if 1
+
   // Pointer types need to adjust the actual pointer, not
   // the pointer to pointer that is the exception object.
   // This also has the effect of passing pointer types
@@ -137,8 +146,13 @@ static void *CXXExceptionISA(llvm_cxx_exception *E, const std::type_info *Type){
     ThrownPtr = *(void **)ThrownPtr;
 #endif
 
-  if (Type->__do_catch(ThrownType, &ThrownPtr, 1))
+  if (Type->__do_catch(ThrownType, &ThrownPtr, 1)) {
+#ifdef DEBUG
+    printf("isa<%s>(%s):  0x%p -> 0x%p\n", Type->name(), ThrownType->name(),
+           E+1, ThrownPtr);
+#endif
     return ThrownPtr;
+  }
 
   return 0;
 }
@@ -175,11 +189,17 @@ void *__llvm_cxxeh_begin_catch() throw() {
   UncaughtExceptionStack = E->Next;
   
   // The exception is now caught.
-  E->Next = CaughtExceptionStack;
-  CaughtExceptionStack = E;
+  LastCaughtException = E;
+  E->Next = 0;
+  E->isRethrown = 0;
 
   // Increment the handler count for this exception.
   E->HandlerCount++;
+
+#ifdef DEBUG
+  printf("Exiting begin_catch Ex=0x%p HandlerCount=%d!\n", E+1,
+         E->HandlerCount);
+#endif
   
   // Return a pointer to the raw exception object.
   return E+1;
@@ -200,22 +220,44 @@ void *__llvm_cxxeh_begin_catch_if_isa(void *CatchType) throw() {
   return ObjPtr;
 }
 
+// __llvm_cxxeh_get_last_caught - Return the last exception that was caught by
+// ...begin_catch.
+//
+void *__llvm_cxxeh_get_last_caught() throw() {
+  assert(LastCaughtException && "No exception caught!!");
+  return LastCaughtException+1;
+}
 
 // __llvm_cxxeh_end_catch - This function decrements the HandlerCount of the
 // top-level caught exception, destroying it if this is the last handler for the
 // exception.
 //
-void __llvm_cxxeh_end_catch() /* might throw */ {
-  llvm_exception *E = CaughtExceptionStack;
+void __llvm_cxxeh_end_catch(void *Ex) /* might throw */ {
+  llvm_exception *E = (llvm_exception*)Ex - 1;
   assert(E && "There are no caught exceptions!");
   
   // If this is the last handler using the exception, destroy it now!
-  if (--E->HandlerCount == 0)
+  if (--E->HandlerCount == 0 && !E->isRethrown) {
+#ifdef DEBUG
+    printf("Destroying exception!\n");
+#endif
     E->ExceptionDestructor(E);        // Release memory for the exception
+  }
+#ifdef DEBUG
+  printf("Exiting end_catch Ex=0x%p HandlerCount=%d!\n", Ex, E->HandlerCount);
+#endif
 }
 
+// __llvm_cxxeh_call_terminate - This function is called when the dtor for an
+// object being destroyed due to an exception throw throws an exception.  This
+// is illegal because it would cause multiple exceptions to be active at one
+// time.
 void __llvm_cxxeh_call_terminate() throw() {
-  __terminate(__terminate_handler);
+  void (*Handler)(void) = __terminate_handler;
+  if (UncaughtExceptionStack)
+    if (UncaughtExceptionStack->ExceptionType == CXXException)
+      Handler = get_cxx_exception(UncaughtExceptionStack)->TerminateHandler;
+  __terminate(Handler);
 }
 
 
@@ -225,19 +267,21 @@ void __llvm_cxxeh_call_terminate() throw() {
 // prepared to deal with foreign exceptions.
 //
 void __llvm_cxxeh_rethrow() throw() {
-  llvm_exception *E = CaughtExceptionStack;
+  llvm_exception *E = LastCaughtException;
   if (E == 0)
-    // 15.1.8 - If there are no uncaught exceptions being thrown, 'throw;'
-    // should call terminate.
+    // 15.1.8 - If there are no exceptions being thrown, 'throw;' should call
+    // terminate.
     //
     __terminate(__terminate_handler);
 
-  // Otherwise we have an exception to rethrow. Move it back to the uncaught
-  // stack.
-  CaughtExceptionStack = E->Next;
+  // Otherwise we have an exception to rethrow.  Mark the exception as such.
+  E->isRethrown = 1;
+
+  // Add the exception to the top of the uncaught stack, to preserve the
+  // invariant that the top of the uncaught stack is the current exception.
   E->Next = UncaughtExceptionStack;
   UncaughtExceptionStack = E;
-  
+
   // Return to the caller, which should perform the unwind now.
 }
 
@@ -283,8 +327,8 @@ void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
     // Whatever exception this is, it is not allowed by the (empty) spec, call
     // unexpected, according to 15.4.8.
     try {
-      __llvm_cxxeh_begin_catch();   // Start the catch
-      __llvm_cxxeh_end_catch();     // Free the exception
+      void *Ex = __llvm_cxxeh_begin_catch();   // Start the catch
+      __llvm_cxxeh_end_catch(Ex);              // Free the exception
       __unexpected(__unexpected_handler);
     } catch (...) {
       // Any exception thrown by unexpected cannot match the ehspec.  Call
@@ -307,10 +351,10 @@ void __llvm_cxxeh_check_eh_spec(void *Info, ...) {
   // permitted to pass through) or not a C++ exception that is allowed.  Kill
   // the exception and call the unexpected handler.
   try {
-    __llvm_cxxeh_begin_catch();   // Start the catch
-    __llvm_cxxeh_end_catch();     // Free the exception
+    void *Ex = __llvm_cxxeh_begin_catch();   // Start the catch
+    __llvm_cxxeh_end_catch(Ex);              // Free the exception
   } catch (...) {
-    __terminate(__terminate_handler);   // Exception dtor threw
+    __terminate(__terminate_handler);        // Exception dtor threw
   }
 
   try {

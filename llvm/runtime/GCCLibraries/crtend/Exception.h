@@ -31,6 +31,14 @@ struct llvm_exception {
   // falls to zero, the exception is destroyed.
   //
   unsigned HandlerCount;
+
+  // isRethrown - This field is set on an exception if it has been 'throw;'n.
+  // This is needed because the exception might exit through a number of the
+  // end_catch statements matching the number of begin_catch statements that
+  // have been processed.  When this happens, the exception should become
+  // uncaught, not dead.
+  //
+  int isRethrown;
 };
 
 enum {
