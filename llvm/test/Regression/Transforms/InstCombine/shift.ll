@@ -28,8 +28,8 @@ int "test4"(ubyte %A) {
 	ret int %B
 }
 
-int "test5"(int %A) {
-	%B = shr int %A, ubyte 32  ;; shift all bits out
-	ret int %B
+uint "test5"(uint %A) {
+	%B = shr uint %A, ubyte 32  ;; shift all bits out
+	ret uint %B
 }
 
