@@ -233,7 +233,7 @@ Instruction *GCSE::EliminateCSE(Instruction *I, Instruction *Other) {
     //
     // Here there are no shared dominators.  Additionally, this had the habit of
     // moving computations where they were not always computed.  For example, in
-    // a cast like this:
+    // a case like this:
     //  if (c) {
     //    if (d)  ...
     //    else ... X+Y ...
