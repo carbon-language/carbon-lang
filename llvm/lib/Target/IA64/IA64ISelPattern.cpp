@@ -80,10 +80,6 @@ namespace {
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
 
-      // We don't support these yet.
-      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
-      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
-      
       computeRegisterProperties();
 
       addLegalFPImmediate(+0.0);
@@ -794,7 +790,21 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
       BuildMI(BB, IA64::FSUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   }
-		 
+
+  case ISD::FABS: {
+    Tmp1 = SelectExpr(N.getOperand(0));
+    assert(DestType == MVT::f64 && "trying to fabs something other than f64?");
+    BuildMI(BB, IA64::FABS, 1, Result).addReg(Tmp1);
+    return Result;
+  }
+ 
+  case ISD::FNEG: {
+    Tmp1 = SelectExpr(N.getOperand(0));
+    assert(DestType == MVT::f64 && "trying to fneg something other than f64?");
+    BuildMI(BB, IA64::FNEG, 1, Result).addReg(Tmp1);
+    return Result;
+  }
+      	 
   case ISD::AND: {
      switch (N.getValueType()) {
     default: assert(0 && "Cannot AND this type!");

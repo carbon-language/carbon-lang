@@ -227,6 +227,10 @@ def FMA : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
   "fma $dst = $src1, $src2, $src3;;">;
 def FNMA : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
   "fnma $dst = $src1, $src2, $src3;;">;
+def FABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "fabs $dst = $src;;">;
+def FNEG : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "fneg $dst = $src;;">;
 
 def CFMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
