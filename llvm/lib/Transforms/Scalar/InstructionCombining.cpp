@@ -123,8 +123,7 @@ static Instruction *CombineIndicies(MemAccessInst *MAI) {
   case Instruction::Load:
     return new LoadInst(Src->getOperand(0), Indices, MAI->getName());
   case Instruction::Store:
-    return new StoreInst(MAI->getOperand(0), Src->getOperand(0),
-                         Indices, MAI->getName());
+    return new StoreInst(MAI->getOperand(0), Src->getOperand(0), Indices);
   default:
     assert(0 && "Unknown memaccessinst!");
     break;
