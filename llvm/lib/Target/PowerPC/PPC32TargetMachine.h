@@ -38,14 +38,7 @@ public:
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
   
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
-
   static unsigned getModuleMatchQuality(const Module &M);
-
-  // Two shared sets between the instruction selector and the printer allow for
-  // correct linkage on Darwin
-  std::set<GlobalValue*> CalledFunctions;
-  std::set<GlobalValue*> AddressTaken;
 };
 
 } // end namespace llvm

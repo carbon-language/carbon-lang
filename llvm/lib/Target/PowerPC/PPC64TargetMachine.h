@@ -31,8 +31,6 @@ public:
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
   
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
-
   static unsigned getModuleMatchQuality(const Module &M);
 };
 

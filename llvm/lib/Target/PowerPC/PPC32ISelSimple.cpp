@@ -11,7 +11,6 @@
 #include "PowerPC.h"
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
-#include "PPC32.h"
 #include "PPC32TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"

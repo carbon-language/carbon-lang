@@ -15,12 +15,18 @@
 #ifndef TARGET_POWERPC_H
 #define TARGET_POWERPC_H
 
+#include <iosfwd>
+
 namespace llvm {
 
 class FunctionPass;
+class TargetMachine;
 
 FunctionPass *createPowerPCPEI();
 FunctionPass *createPPCBranchSelectionPass();
+FunctionPass *createPPC32ISelSimple(TargetMachine &TM);
+FunctionPass *createPPC64ISelSimple(TargetMachine &TM);
+FunctionPass *createPPC32AsmPrinter(std::ostream &OS,TargetMachine &TM);
 
 } // end namespace llvm;
 
