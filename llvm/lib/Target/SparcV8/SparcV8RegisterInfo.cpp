@@ -30,10 +30,18 @@ int SparcV8RegisterInfo::storeRegToStackSlot(
   unsigned SrcReg, int FrameIdx,
   const TargetRegisterClass *RC) const
 {
-  assert (RC == SparcV8::IntRegsRegisterClass
-          && "Can only store 32-bit values to stack slots");
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  BuildMI (MBB, I, V8::ST, 3).addFrameIndex (FrameIdx).addSImm (0).addReg (SrcReg);
+  if (RC == SparcV8::IntRegsRegisterClass) 
+    BuildMI (MBB, I, V8::ST, 3).addFrameIndex (FrameIdx).addSImm (0)
+      .addReg (SrcReg);
+  else if (RC == SparcV8::FPRegsRegisterClass)
+    BuildMI (MBB, I, V8::STFri, 3).addFrameIndex (FrameIdx).addSImm (0)
+      .addReg (SrcReg);
+  else if (RC == SparcV8::DFPRegsRegisterClass)
+    BuildMI (MBB, I, V8::STDFri, 3).addFrameIndex (FrameIdx).addSImm (0)
+      .addReg (SrcReg);
+  else
+    assert (0 && "Can't store this register to stack slot");
   return 1;
 }
 
@@ -43,9 +51,16 @@ int SparcV8RegisterInfo::loadRegFromStackSlot(
   unsigned DestReg, int FrameIdx,
   const TargetRegisterClass *RC) const
 {
-  assert (RC == SparcV8::IntRegsRegisterClass
-          && "Can only load 32-bit registers from stack slots");
-  BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
+  if (RC == SparcV8::IntRegsRegisterClass) 
+    BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
+  else if (RC == SparcV8::FPRegsRegisterClass)
+    BuildMI (MBB, I, V8::LDFri, 2, DestReg).addFrameIndex (FrameIdx)
+      .addSImm (0);
+  else if (RC == SparcV8::DFPRegsRegisterClass)
+    BuildMI (MBB, I, V8::LDDFri, 2, DestReg).addFrameIndex (FrameIdx)
+      .addSImm (0);
+  else
+    assert (0 && "Can't load this register from stack slot");
   return 1;
 }
 
@@ -53,9 +68,12 @@ int SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator I,
                                       unsigned DestReg, unsigned SrcReg,
                                       const TargetRegisterClass *RC) const {
-  assert (RC == SparcV8::IntRegsRegisterClass
-          && "Can only copy 32-bit registers");
-  BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
+  if (RC == SparcV8::IntRegsRegisterClass) 
+    BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
+  else if (RC == SparcV8::FPRegsRegisterClass)
+    BuildMI (MBB, I, V8::FMOVS, 1, DestReg).addReg (SrcReg);
+  else
+    assert (0 && "Can't copy this register");
   return 1;
 }
 
