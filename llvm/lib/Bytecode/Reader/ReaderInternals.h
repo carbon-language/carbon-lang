@@ -37,7 +37,8 @@ namespace llvm {
 
 struct LazyFunctionInfo {
   const unsigned char *Buf, *EndBuf;
-  unsigned FunctionSlot;
+  LazyFunctionInfo(const unsigned char *B = 0, const unsigned char *EB = 0)
+    : Buf(B), EndBuf(EB) {}
 };
 
 class BytecodeParser : public ModuleProvider {
@@ -104,13 +105,13 @@ private:
 
   std::vector<BasicBlock*> ParsedBasicBlocks;
 
-  // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
-  // references to global values or constants.  Such values may be referenced
-  // before they are defined, and if so, the temporary object that they
-  // represent is held here.
+  // ConstantFwdRefs - This maintains a mapping between <Type, Slot #>'s and
+  // forward references to constants.  Such values may be referenced before they
+  // are defined, and if so, the temporary object that they represent is held
+  // here.
   //
-  typedef std::map<std::pair<const Type *, unsigned>, Value*>  GlobalRefsType;
-  GlobalRefsType GlobalRefs;
+  typedef std::map<std::pair<const Type*,unsigned>, Constant*> ConstantRefsType;
+  ConstantRefsType ConstantFwdRefs;
 
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
@@ -123,7 +124,7 @@ private:
   // each function in the module.  When the function is loaded, this function is
   // filled in.
   //
-  std::vector<std::pair<Function*, unsigned> > FunctionSignatureList;
+  std::vector<Function*> FunctionSignatureList;
 
   // Constant values are read in after global variables.  Because of this, we
   // must defer setting the initializers on global variables until after module
@@ -136,7 +137,7 @@ private:
   // information about each function: its begin and end pointer in the buffer
   // and its FunctionSlot.
   // 
-  std::map<Function*, LazyFunctionInfo*> LazyFunctionLoadMap;
+  std::map<Function*, LazyFunctionInfo> LazyFunctionLoadMap;
   
 private:
   void freeTable(ValueTable &Tab) {
@@ -169,14 +170,13 @@ private:
                          ValueTable &Tab, TypeValuesListTy &TypeTab);
   Constant *parseConstantValue(const unsigned char *&Buf,
                                const unsigned char *End,
-                               const Type *Ty);
+                               unsigned TypeID);
   void parseTypeConstants(const unsigned char *&Buf,
                           const unsigned char *EndBuf,
                           TypeValuesListTy &Tab, unsigned NumEntries);
   const Type *parseTypeConstant(const unsigned char *&Buf,
                                 const unsigned char *EndBuf);
 
-  Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   Value      *getValue(unsigned TypeID, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
   BasicBlock *getBasicBlock(unsigned ID);
@@ -185,13 +185,12 @@ private:
     return getConstantValue(getTypeSlot(Ty), num);
   }
 
-  unsigned insertValue(Value *V, ValueTable &Table);
   unsigned insertValue(Value *V, unsigned Type, ValueTable &Table);
 
   unsigned getTypeSlot(const Type *Ty);
 
-  // resolve all references to the placeholder (if any) for the given value
-  void ResolveReferencesToValue(Value *Val, unsigned Slot);
+  // resolve all references to the placeholder (if any) for the given constant
+  void ResolveReferencesToConstant(Constant *C, unsigned Slot);
 };
 
 template<class SuperType>
