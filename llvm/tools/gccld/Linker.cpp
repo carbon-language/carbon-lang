@@ -205,7 +205,9 @@ static bool LinkInArchive(Module *M,
              E = UndefinedSymbols.end(); I != E; ++I)
         if (DefSymbols.count(*I)) {
           if (Verbose)
-            std::cerr << "  Found object providing symbol '" << *I << "'...\n";
+            std::cerr << "  Found object '"
+                      << Objects[i]->getModuleIdentifier ()
+                      << "' providing symbol '" << *I << "'...\n";
           ObjectRequired = true;
           break;
         }
@@ -377,7 +379,8 @@ bool LinkLibraries(const char *progname,
       // we're doing a native link and give an error if we're doing a bytecode
       // link.
       if (!Native) {
-        PrintAndReturn(progname, "Cannot find library -l" + Libraries[i] + "\n");
+        PrintAndReturn(progname, "Cannot find library -l" + Libraries[i]
+                       + "\n");
         return true;
       }
     }
@@ -386,20 +389,24 @@ bool LinkLibraries(const char *progname,
     // is not installed as a library. Detect that and link the library.
     if (IsArchive(Pathname)) {
       if (Verbose)
-        std::cerr << "Trying to link archive '" << Pathname << "' (-l" << Libraries[i] << ")\n";
+        std::cerr << "Trying to link archive '" << Pathname << "' (-l"
+                  << Libraries[i] << ")\n";
 
       if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": Error linking in archive '" + Pathname + "' (-l" + Libraries[i] + ")");
+                       ": Error linking in archive '" + Pathname
+                       + "' (-l" + Libraries[i] + ")");
         return true;
       }
     } else if (IsBytecode(Pathname)) {
       if (Verbose)
-        std::cerr << "Trying to link bytecode file '" << Pathname << "' (-l" << Libraries[i] << ")\n";
+        std::cerr << "Trying to link bytecode file '" << Pathname
+                  << "' (-l" << Libraries[i] << ")\n";
 
       if (LinkInFile(HeadModule, Pathname, ErrorMessage, Verbose)) {
         PrintAndReturn(progname, ErrorMessage,
-                       ": error linking in bytecode file '" + Pathname + "' (-l" + Libraries[i] + ")");
+                       ": error linking in bytecode file '" + Pathname
+                       + "' (-l" + Libraries[i] + ")");
         return true;
       }
     }
