@@ -8,8 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines target properties related to datatype size/offset/alignment
-// information.  It uses lazy annotations to cache information about how 
-// structure types are laid out and used.
+// information.
 //
 // This structure should be created once, filled in if the defaults are not
 // correct and then passed around by const&.  None of the members functions
@@ -33,11 +32,10 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
 			       uint64_t &Size, unsigned char &Alignment);
 
 //===----------------------------------------------------------------------===//
-// Support for StructLayout Annotation
+// Support for StructLayout
 //===----------------------------------------------------------------------===//
 
-StructLayout::StructLayout(const StructType *ST, const TargetData &TD) 
-  : Annotation(TD.getStructLayoutAID()) {
+StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   StructAlignment = 0;
   StructSize = 0;
 
@@ -71,16 +69,6 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
     StructSize = (StructSize/StructAlignment + 1) * StructAlignment;
 }
 
-Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
-				      void *D) {
-  const TargetData &TD = *(const TargetData*)D;
-  assert(AID == TD.AID && "Target data annotation ID mismatch!");
-  const Type *Ty = cast<Type>((const Value *)T);
-  assert(isa<StructType>(Ty) && 
-	 "Can only create StructLayout annotation on structs!");
-  return new StructLayout(cast<StructType>(Ty), TD);
-}
-
 //===----------------------------------------------------------------------===//
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
@@ -90,9 +78,7 @@ TargetData::TargetData(const std::string &TargetName,
                        unsigned char PtrAl, unsigned char DoubleAl,
                        unsigned char FloatAl, unsigned char LongAl, 
                        unsigned char IntAl, unsigned char ShortAl,
-                       unsigned char ByteAl)
-  : AID(AnnotationManager::getID("TargetData::" + TargetName)) {
-  AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
+                       unsigned char ByteAl) {
 
   // If this assert triggers, a pass "required" TargetData information, but the
   // top level tool did not provide once for it.  We do not want to default
@@ -114,10 +100,7 @@ TargetData::TargetData(const std::string &TargetName,
   ByteAlignment    = ByteAl;
 }
 
-TargetData::TargetData(const std::string &ToolName, const Module *M)
-  : AID(AnnotationManager::getID("TargetData::" + ToolName)) {
-  AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
-
+TargetData::TargetData(const std::string &ToolName, const Module *M) {
   LittleEndian     = M->getEndianness() != Module::BigEndian;
   PointerSize      = M->getPointerSize() != Module::Pointer64 ? 4 : 8;
   PointerAlignment = PointerSize;
@@ -129,8 +112,38 @@ TargetData::TargetData(const std::string &ToolName, const Module *M)
   ByteAlignment    = 1;
 }
 
+static std::map<std::pair<const TargetData*,const StructType*>,
+                StructLayout> *Layouts = 0;
+
+
 TargetData::~TargetData() {
-  AnnotationManager::registerAnnotationFactory(AID, 0);   // Deregister factory
+  if (Layouts) {
+    // Remove any layouts for this TD.
+    std::map<std::pair<const TargetData*,
+      const StructType*>, StructLayout>::iterator
+      I = Layouts->lower_bound(std::make_pair(this, (const StructType*)0));
+    while (I != Layouts->end() && I->first.first == this)
+      Layouts->erase(I++);
+    if (Layouts->empty()) {
+      delete Layouts;
+      Layouts = 0;
+    }
+  }
+}
+
+const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
+  if (Layouts == 0)
+    Layouts = new std::map<std::pair<const TargetData*,const StructType*>,
+                           StructLayout>();
+  std::map<std::pair<const TargetData*,const StructType*>,
+                     StructLayout>::iterator
+    I = Layouts->lower_bound(std::make_pair(this, Ty));
+  if (I != Layouts->end() && I->first.first == this && I->first.second == Ty)
+    return &I->second;
+  else {
+    return &Layouts->insert(I, std::make_pair(std::make_pair(this, Ty),
+                                              StructLayout(Ty, *this)))->second;
+  }
 }
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
