@@ -14,8 +14,9 @@ OPTLIBS  = LLVMTransforms LLVMInstrumentation LLVMProfilePaths
 ANALIBS  = LLVMDataStructure LLVMipa LLVMTarget.a 
 
 USEDLIBS = LLVMipo LLVMScalarOpts LLVMAnalysis $(OPTLIBS) $(ANALIBS) \
-	   LLVMTransformUtils LLVMAsmParser LLVMBCReader LLVMBCWriter LLVMCore \
-	   LLVMSupport.a LLVMSystem.a
+	   LLVMTransformUtils \
+	   LLVMAsmParser LLVMLinker.a LLVMBCReader LLVMBCWriter \
+	   LLVMCore LLVMSupport.a LLVMSystem.a
 
 TOOLLINKOPTS = $(PLATFORMLIBDL)
 
