@@ -36,10 +36,6 @@ public:
   }
   inline unsigned getNumOperands() const { return Operands.size(); }
 
-  inline std::vector<Value*> copyOperands() const {
-    return std::vector<Value*>(op_begin(), op_end());
-  }
-
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
   //
