@@ -21,6 +21,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
+#include <alloca.h>
 
 using namespace llvm;
 
