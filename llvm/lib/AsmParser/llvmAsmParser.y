@@ -59,13 +59,13 @@ static bool ObsoleteVarArgs;
 // destroyed when the function is completed.
 //
 typedef std::vector<Value *> ValueList;           // Numbered defs
-static void ResolveDefinitions(std::map<unsigned,ValueList> &LateResolvers,
-                               std::map<unsigned,ValueList> *FutureLateResolvers = 0);
+static void ResolveDefinitions(std::map<const Type *,ValueList> &LateResolvers,
+                               std::map<const Type *,ValueList> *FutureLateResolvers = 0);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
-  std::map<unsigned,ValueList> Values;  // Module level numbered definitions
-  std::map<unsigned,ValueList> LateResolveValues;
+  std::map<const Type *, ValueList> Values; // Module level numbered definitions
+  std::map<const Type *,ValueList> LateResolveValues;
   std::vector<PATypeHolder>    Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
 
@@ -146,8 +146,8 @@ static struct PerModuleInfo {
 static struct PerFunctionInfo {
   Function *CurrentFunction;     // Pointer to current function being created
 
-  std::map<unsigned,ValueList> Values;   // Keep track of numbered definitions
-  std::map<unsigned,ValueList> LateResolveValues;
+  std::map<const Type*, ValueList> Values;   // Keep track of #'d definitions
+  std::map<const Type*, ValueList> LateResolveValues;
   std::vector<PATypeHolder> Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
   SymbolTable LocalSymtab;
@@ -173,9 +173,8 @@ static struct PerFunctionInfo {
     if (CurrentFunction->hasName()) {
       FID = ValID::create((char*)CurrentFunction->getName().c_str());
     } else {
-      unsigned Slot = CurrentFunction->getType()->getUniqueID();
       // Figure out which slot number if is...
-      ValueList &List = CurModule.Values[Slot];
+      ValueList &List = CurModule.Values[CurrentFunction->getType()];
       for (unsigned i = 0; ; ++i) {
         assert(i < List.size() && "Function not found!");
         if (List[i] == CurrentFunction) {
@@ -201,15 +200,13 @@ static bool inFunctionScope() { return CurFun.CurrentFunction != 0; }
 //               Code to handle definitions of all the types
 //===----------------------------------------------------------------------===//
 
-static int InsertValue(Value *D,
-                       std::map<unsigned,ValueList> &ValueTab = CurFun.Values) {
-  if (D->hasName()) return -1;           // Is this a numbered definition?
+static int InsertValue(Value *V,
+                  std::map<const Type*,ValueList> &ValueTab = CurFun.Values) {
+  if (V->hasName()) return -1;           // Is this a numbered definition?
 
   // Yes, insert the value into the value table...
-  unsigned type = D->getType()->getUniqueID();
-  //printf("Values[%d][%d] = %d\n", type, ValueTab[type].size(), D);
-  ValueList &List = ValueTab[type];
-  List.push_back(D);
+  ValueList &List = ValueTab[V->getType()];
+  List.push_back(V);
   return List.size()-1;
 }
 
@@ -296,11 +293,10 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 
   switch (D.Type) {
   case ValID::NumberVal: {                 // Is it a numbered definition?
-    unsigned type = Ty->getUniqueID();
     unsigned Num = (unsigned)D.Num;
 
     // Module constants occupy the lowest numbered slots...
-    std::map<unsigned,ValueList>::iterator VI = CurModule.Values.find(type);
+    std::map<const Type*,ValueList>::iterator VI = CurModule.Values.find(Ty);
     if (VI != CurModule.Values.end()) {
       if (Num < VI->second.size()) 
         return VI->second[Num];
@@ -308,7 +304,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     }
 
     // Make sure that our type is within bounds
-    VI = CurFun.Values.find(type);
+    VI = CurFun.Values.find(Ty);
     if (VI == CurFun.Values.end()) return 0;
 
     // Check that the number is within bounds...
@@ -418,10 +414,10 @@ static Value *getVal(const Type *Ty, const ValID &D) {
 // time (forward branches, phi functions for loops, etc...) resolve the 
 // defs now...
 //
-static void ResolveDefinitions(std::map<unsigned,ValueList> &LateResolvers,
-                               std::map<unsigned,ValueList> *FutureLateResolvers) {
+static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
+                               std::map<const Type*,ValueList> *FutureLateResolvers) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
-  for (std::map<unsigned,ValueList>::iterator LRI = LateResolvers.begin(),
+  for (std::map<const Type*,ValueList>::iterator LRI = LateResolvers.begin(),
          E = LateResolvers.end(); LRI != E; ++LRI) {
     ValueList &List = LRI->second;
     while (!List.empty()) {
@@ -429,8 +425,7 @@ static void ResolveDefinitions(std::map<unsigned,ValueList> &LateResolvers,
       List.pop_back();
       ValID &DID = getValIDFromPlaceHolder(V);
 
-      Value *TheRealValue =
-        getValNonImprovising(Type::getUniqueIDType(LRI->first), DID);
+      Value *TheRealValue = getValNonImprovising(LRI->first, DID);
       if (TheRealValue) {
         V->replaceAllUsesWith(TheRealValue);
         delete V;
