@@ -215,8 +215,10 @@ bool ADCE::doADCE() {
   // instructions live in basic blocks that are unreachable.  These blocks will
   // be eliminated later, along with the instructions inside.
   //
-  for (df_iterator<Function*> BBI = df_begin(Func), BBE = df_end(Func);
-       BBI != BBE; ++BBI) {
+  std::set<BasicBlock*> ReachableBBs;
+  for (df_ext_iterator<BasicBlock*>
+         BBI = df_ext_begin(&Func->front(), ReachableBBs),
+         BBE = df_ext_end(&Func->front(), ReachableBBs); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
       Instruction *I = II++;
@@ -279,6 +281,7 @@ bool ADCE::doADCE() {
     WorkList.pop_back();
 
     BasicBlock *BB = I->getParent();
+    if (!ReachableBBs.count(BB)) continue;
     if (!AliveBlocks.count(BB)) {     // Basic block not alive yet...
       AliveBlocks.insert(BB);         // Block is now ALIVE!
       markBlockAlive(BB);             // Make it so now!
