@@ -360,6 +360,10 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   if (N == 0 || (N == this && NH.getOffset() == Offset))
     return;  // Noop
 
+  assert((N->NodeType & DSNode::DEAD) == 0);
+  assert((NodeType & DSNode::DEAD) == 0);
+  assert(!hasNoReferrers() && "Should not try to fold a useless node!");
+
   if (N == this) {
     // We cannot merge two pieces of the same node together, collapse the node
     // completely.
@@ -370,22 +374,33 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   }
 
   // Merge the type entries of the two nodes together...
-  if (N->Ty.Ty != Type::VoidTy)
+  if (N->Ty.Ty != Type::VoidTy) {
     mergeTypeInfo(N->Ty.Ty, Offset);
+
+    // mergeTypeInfo can cause collapsing, which can cause this node to become
+    // dead.
+    if (hasNoReferrers()) return;
+  }
+  assert((NodeType & DSNode::DEAD) == 0);
 
   // If we are merging a node with a completely folded node, then both nodes are
   // now completely folded.
   //
   if (isNodeCompletelyFolded()) {
-    if (!N->isNodeCompletelyFolded())
+    if (!N->isNodeCompletelyFolded()) {
       N->foldNodeCompletely();
+      if (hasNoReferrers()) return;
+    }
   } else if (N->isNodeCompletelyFolded()) {
     foldNodeCompletely();
     Offset = 0;
+    if (hasNoReferrers()) return;
   }
   N = NH.getNode();
+  assert((NodeType & DSNode::DEAD) == 0);
 
   if (this == N || N == 0) return;
+  assert((NodeType & DSNode::DEAD) == 0);
 
   // If both nodes are not at offset 0, make sure that we are merging the node
   // at an later offset into the node with the zero offset.
@@ -412,6 +427,8 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   unsigned NOffset = NH.getOffset()-Offset;
   unsigned NSize = N->getSize();
 
+  assert((NodeType & DSNode::DEAD) == 0);
+
   // Remove all edges pointing at N, causing them to point to 'this' instead.
   // Make sure to adjust their offset, not just the node pointer.
   //
@@ -419,6 +436,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     DSNodeHandle &Ref = *N->Referrers.back();
     Ref = DSNodeHandle(this, NOffset+Ref.getOffset());
   }
+  assert((NodeType & DSNode::DEAD) == 0);
 
   // Make all of the outgoing links of N now be outgoing links of this.  This
   // can cause recursive merging!
@@ -482,6 +500,7 @@ DSGraph::DSGraph(const DSGraph &G,
 
 DSGraph::~DSGraph() {
   FunctionCalls.clear();
+  AuxFunctionCalls.clear();
   ScalarMap.clear();
   RetNode.setNode(0);
 
@@ -520,7 +539,7 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNodeHandle> &OldNodeMap) {
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
                                 std::map<Value*, DSNodeHandle> &OldValMap,
                               std::map<const DSNode*, DSNodeHandle> &OldNodeMap,
-                                AllocaBit StripAllocas) {
+                                unsigned CloneFlags) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
 
@@ -531,6 +550,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
     DSNode *Old = G.Nodes[i];
     DSNode *New = new DSNode(*Old);
+    New->NodeType &= ~DSNode::DEAD;  // Clear dead flag...
     Nodes.push_back(New);
     OldNodeMap[Old] = New;
   }
@@ -540,7 +560,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     Nodes[i]->remapLinks(OldNodeMap);
 
   // Remove alloca markers as specified
-  if (StripAllocas == StripAllocaBit)
+  if (CloneFlags & StripAllocaBit)
     for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
       Nodes[i]->NodeType &= ~DSNode::AllocaNode;
 
@@ -562,11 +582,19 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     }
   }
 
-  // Copy the function calls list...
-  unsigned FC = FunctionCalls.size();  // FirstCall
-  FunctionCalls.reserve(FC+G.FunctionCalls.size());
-  for (unsigned i = 0, ei = G.FunctionCalls.size(); i != ei; ++i)
-    FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
+  if (!(CloneFlags & DontCloneCallNodes)) {
+    // Copy the function calls list...
+    unsigned FC = FunctionCalls.size();  // FirstCall
+    FunctionCalls.reserve(FC+G.FunctionCalls.size());
+    for (unsigned i = 0, ei = G.FunctionCalls.size(); i != ei; ++i)
+      FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
+
+    // Copy the auxillary function calls list...
+    FC = AuxFunctionCalls.size();  // FirstCall
+    AuxFunctionCalls.reserve(FC+G.AuxFunctionCalls.size());
+    for (unsigned i = 0, ei = G.AuxFunctionCalls.size(); i != ei; ++i)
+      AuxFunctionCalls.push_back(DSCallSite(G.AuxFunctionCalls[i], OldNodeMap));
+  }
 
   // Return the returned node pointer...
   DSNodeHandle &MappedRet = OldNodeMap[G.RetNode.getNode()];
@@ -580,7 +608,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 /// graph.
 ///
 void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
-                           AllocaBit StripAllocas) {
+                           unsigned CloneFlags) {
   std::map<Value*, DSNodeHandle> OldValMap;
   DSNodeHandle RetVal;
   std::map<Value*, DSNodeHandle> *ScalarMap = &OldValMap;
@@ -594,7 +622,7 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
     
     // The clone call may invalidate any of the vectors in the data
     // structure graph.  Strip locals and don't copy the list of callers
-    RetVal = cloneInto(Graph, OldValMap, OldNodeMap, StripAllocas);
+    RetVal = cloneInto(Graph, OldValMap, OldNodeMap, CloneFlags);
     ScalarMap = &OldValMap;
   } else {
     RetVal = getRetNode();
@@ -899,7 +927,7 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
       GlobalNodes.insert(G.getNodes()[i]);
 
   // Add all call nodes to the same set
-  vector<DSCallSite> &Calls = G.getFunctionCalls();
+  vector<DSCallSite> &Calls = G.getAuxFunctionCalls();
   if (FilterCalls) {
     for (unsigned i = 0, e = Calls.size(); i != e; ++i) {
       for (unsigned j = 0, e = Calls[i].getNumPtrArgs(); j != e; ++j)
