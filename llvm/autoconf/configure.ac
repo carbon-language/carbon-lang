@@ -430,7 +430,7 @@ dnl Check for ANSI C/POSIX header files
 AC_CHECK_HEADERS(assert.h fcntl.h limits.h sys/time.h unistd.h errno.h signal.h math.h)
 
 dnl Check for system specific header files
-AC_CHECK_HEADERS(malloc.h strings.h sys/mman.h sys/resource.h)
+AC_CHECK_HEADERS(malloc.h sys/mman.h sys/resource.h)
 
 dnl Check for header files associated with dlopen and friends
 AC_CHECK_HEADERS(dlfcn.h link.h)
