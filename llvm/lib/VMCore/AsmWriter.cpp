@@ -65,10 +65,12 @@ bool AssemblyWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
 
   ModuleAnalyzer::processConstPool(CP, isMethod);
   
-  if (isMethod)
-    Out << "begin";
-  else
+  if (isMethod) {
+    if (!CP.getParentV()->castMethodAsserting()->isExternal())
+      Out << "begin";
+  } else {
     Out << "implementation\n";
+  }
   return false;
 }
 
@@ -103,11 +105,13 @@ bool AssemblyWriter::processConstant(const ConstPoolVal *CPV) {
 //
 bool AssemblyWriter::processMethod(const Method *M) {
   // Print out the return type and name...
-  Out << "\n" << M->getReturnType() << " \"" << M->getName() << "\"(";
+  Out << "\n" << (M->isExternal() ? "declare " : "") 
+      << M->getReturnType() << " \"" << M->getName() << "\"(";
   Table.incorporateMethod(M);
   ModuleAnalyzer::processMethod(M);
   Table.purgeMethod();
-  Out << "end\n";
+  if (!M->isExternal())
+    Out << "end\n";
   return false;
 }
 
