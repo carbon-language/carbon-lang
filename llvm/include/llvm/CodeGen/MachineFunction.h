@@ -97,7 +97,10 @@ public:
   void addRegMap(unsigned Reg, const TargetRegisterClass *RegClass) {
     SSARegMapping->addRegMap(Reg, RegClass);
   }
-  void clearSSARegMap() { delete SSARegMapping; }
+  void clearSSARegMap() { 
+    delete SSARegMapping;
+    SSARegMapping = NULL;
+  }
 
   // Provide accessors for the MachineBasicBlock list...
   typedef iplist<MachineBasicBlock> BasicBlockListType;
