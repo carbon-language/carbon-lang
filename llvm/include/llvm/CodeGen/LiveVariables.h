@@ -72,6 +72,7 @@ class LiveVariables : public MachineFunctionPass {
   /// liveness for values that are not in this set.
   ///
   std::vector<bool> AllocatablePhysicalRegisters;
+
 private:   // Intermediate data structures
 
   /// BBMap - Maps LLVM basic blocks to their corresponding machine basic block.
@@ -89,30 +90,60 @@ public:
 
   /// killed_iterator - Iterate over registers killed by a machine instruction
   ///
-  typedef std::multimap<MachineInstr*,
-			unsigned>::const_iterator killed_iterator;
+  typedef std::multimap<MachineInstr*, unsigned>::iterator killed_iterator;
   
   /// killed_begin/end - Get access to the range of registers killed by a
   /// machine instruction.
-  killed_iterator killed_begin(MachineInstr *MI) const {
+  killed_iterator killed_begin(MachineInstr *MI) {
     return RegistersKilled.lower_bound(MI);
   }
-  killed_iterator killed_end(MachineInstr *MI) const {
+  killed_iterator killed_end(MachineInstr *MI) {
     return RegistersKilled.upper_bound(MI);
   }
+  std::pair<killed_iterator, killed_iterator>
+  killed_range(MachineInstr *MI) {
+    return RegistersKilled.equal_range(MI);
+  }
 
-  killed_iterator dead_begin(MachineInstr *MI) const {
+  killed_iterator dead_begin(MachineInstr *MI) {
     return RegistersDead.lower_bound(MI);
   }
-  killed_iterator dead_end(MachineInstr *MI) const {
+  killed_iterator dead_end(MachineInstr *MI) {
     return RegistersDead.upper_bound(MI);
   }
+  std::pair<killed_iterator, killed_iterator>
+  dead_range(MachineInstr *MI) {
+    return RegistersDead.equal_range(MI);
+  }
 
-  /// addVirtualRegisterKill - Add information about the fact that the specified
+  //===--------------------------------------------------------------------===//
+  //  API to update live variable information
+
+  /// addVirtualRegisterKilled - Add information about the fact that the
+  /// specified register is killed after being used by the specified
+  /// instruction.
+  ///
+  void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
+    RegistersKilled.insert(std::make_pair(MI, IncomingReg));
+  }
+
+  /// removeVirtualRegistersKilled - Remove all of the specified killed
+  /// registers from the live variable information.
+  void removeVirtualRegistersKilled(killed_iterator B, killed_iterator E) {
+    RegistersKilled.erase(B, E);
+  }
+
+  /// addVirtualRegisterDead - Add information about the fact that the specified
   /// register is dead after being used by the specified instruction.
   ///
-  void addVirtualRegisterKill(unsigned IncomingReg, MachineInstr *MI) {
+  void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
     RegistersDead.insert(std::make_pair(MI, IncomingReg));
+  }
+
+  /// removeVirtualRegistersKilled - Remove all of the specified killed
+  /// registers from the live variable information.
+  void removeVirtualRegistersDead(killed_iterator B, killed_iterator E) {
+    RegistersDead.erase(B, E);
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
