@@ -397,6 +397,8 @@ ISel::visitCallInst (CallInst & CI)
 	{
 	case cByte:
 	case cShort:
+	  // Promote V to 32 bits wide, and move the result into EAX,
+	  // then push EAX.
 	  promote32 (X86::EAX, v);
 	  BuildMI (BB, X86::PUSHr32, 1).addReg (X86::EAX);
 	  break;
@@ -405,7 +407,7 @@ ISel::visitCallInst (CallInst & CI)
 	  BuildMI (BB, X86::PUSHr32, 1).addReg (argReg);
 	  break;
 	default:
-	  // FIXME
+	  // FIXME: long/ulong/double args not handled.
 	  visitInstruction (CI);
 	  break;
 	}
