@@ -378,7 +378,6 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
     }
     DEBUG(std::cerr << "\t\tregister with min weight: "
           << mri_->getName(minReg) << " (" << minWeight << ")\n");
-    assert(minReg != 0 && "Didn't find a register to spill?");
 
     // if the current has the minimum weight, we need to modify it,
     // push it back in unhandled and let the linear scan algorithm run
