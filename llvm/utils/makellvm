@@ -1,8 +1,8 @@
 #!/bin/csh -f
 
 	## LLVMDIR is simply the directory where this script resides!
-set THISEXEC = $0		## cannot use :h on $0 for some reason
-set LLVMDIR = $THISEXEC:h
+set thisExec = $0		## cannot use :h on $0 for some reason
+set LLVMDIR = `echo {$thisExec:h} | sed 's/\/utils$//'`
 set EXEC = opt
 
 if ($#argv > 0) then
@@ -13,4 +13,4 @@ if ($#argv > 0) then
     set EXEC = $argv[1]
 endif
 
-gnumake && (cd $LLVMDIR/tools/$EXEC && gnumake)
+gmake && (cd $LLVMDIR/tools/$EXEC && gmake)
