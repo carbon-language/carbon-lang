@@ -1493,7 +1493,7 @@ Value *SCEVAddRecExpr::expandCodeFor(ScalarEvolutionRewriter &SER,
   SCEVHandle IH = SCEVUnknown::get(I);   // Get I as a "symbolic" SCEV.
 
   SCEVHandle V = evaluateAtIteration(IH);
-  std::cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
+  //std::cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
   return SER.ExpandCodeFor(V, InsertPt, Ty);
 }
@@ -1916,11 +1916,13 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
       return HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
     break;
   default:
+#if 0
     std::cerr << "ComputeIterationCount ";
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
       std::cerr << "[unsigned] ";
     std::cerr << *LHS << "   "
               << Instruction::getOpcodeName(Cond) << "   " << *RHS << "\n";
+#endif
   }
   return UnknownValue;
 }
@@ -2118,8 +2120,10 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
     SCEVConstant *R1 = dyn_cast<SCEVConstant>(Roots.first);
     SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
+#if 0
       std::cerr << "HFTZ: " << *V << " - sol#1: " << *R1
                 << "  sol#2: " << *R2 << "\n";
+#endif
       // Pick the smallest positive root value.
       assert(R1->getType()->isUnsigned()&&"Didn't canonicalize to unsigned?");
       if (ConstantBool *CB =
