@@ -83,8 +83,7 @@ public:
 
 
 
-class FunctionType : public DerivedType {
-public:
+struct FunctionType : public DerivedType {
   typedef std::vector<PATypeHandle> ParamTypes;
 private:
   PATypeHandle ResultType;
@@ -150,7 +149,6 @@ public:
 class CompositeType : public DerivedType {
 protected:
   inline CompositeType(PrimitiveID id) : DerivedType(id) { }
-
 public:
 
   // getTypeAtIndex - Given an index value into the type, return the type of the
@@ -250,7 +248,6 @@ protected:
     : CompositeType(TID), ElementType(PATypeHandle(ElType, this)) {
   }
 public:
-
   inline const Type *getElementType() const { return ElementType; }
 
   virtual const Type *getContainedType(unsigned i) const { 
@@ -295,7 +292,6 @@ protected:
   // from GCC to make them protected:  warning: `class ArrayType' only 
   // defines private constructors and has no friends
 
-
   // Private ctor - Only can be created by a static member...
   ArrayType(const Type *ElType, unsigned NumEl);
 public:
@@ -329,7 +325,6 @@ protected:
   // from GCC to make them protected:  warning: `class PointerType' only 
   // defines private constructors and has no friends
 
-
   // Private ctor - Only can be created by a static member...
   PointerType(const Type *ElType);
 public:
@@ -354,9 +349,8 @@ public:
 
 
 class OpaqueType : public DerivedType {
-private:
-  OpaqueType(const OpaqueType &);                   // Do not implement
-  const OpaqueType &operator=(const OpaqueType &);  // Do not implement
+  OpaqueType(const OpaqueType &);                   // DO NOT IMPLEMENT
+  const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
 protected:
   // This should really be private, but it squelches a bogus warning
   // from GCC to make them protected:  warning: `class OpaqueType' only 
@@ -364,7 +358,6 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   OpaqueType();
-
 public:
 
   // get - Static factory method for the OpaqueType class...
