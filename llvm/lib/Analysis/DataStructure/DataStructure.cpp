@@ -86,7 +86,7 @@ void DSNode::foldNodeCompletely() {
     (*I)->setOffset(0);
 
   // If we have links, merge all of our outgoing links together...
-  for (unsigned i = 1, e = Links.size(); i < e; ++i)
+  for (unsigned i = 1; i < Links.size(); ++i)
     Links[0].mergeWith(Links[i]);
   Links.resize(1);
 }
@@ -903,8 +903,8 @@ void DSGraph::removeTriviallyDeadNodes() {
       }
     }
 
-    if ((Node->NodeType & ~DSNode::DEAD) == 0 &&
-        Node->getReferrers().empty()) {   // This node is dead!
+    if ((Node->NodeType & ~DSNode::DEAD) == 0 && Node->hasNoReferrers()) {
+      // This node is dead!
       delete Node;                        // Free memory...
       Nodes.erase(Nodes.begin()+i--);         // Remove from node list...
     }
@@ -1066,7 +1066,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
         assert(((N->NodeType & DSNode::GlobalNode) == 0 ||
                 (Flags & DSGraph::RemoveUnreachableGlobals))
                && "Killing a global?");
-        while (!N->getReferrers().empty())       // Rewrite referrers
+        while (!N->hasNoReferrers())             // Rewrite referrers
           N->getReferrers().back()->setNode(0);
         delete N;                                // Usecount is zero
       }
