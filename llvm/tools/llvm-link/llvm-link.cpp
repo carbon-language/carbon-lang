@@ -6,10 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Module.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
-#include "llvm/Module.h"
+#include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <fstream>
@@ -123,6 +124,11 @@ int main(int argc, char **argv) {
     // Make sure that the Out file gets unlink'd from the disk if we get a
     // SIGINT
     RemoveFileOnSignal(OutputFilename);
+  }
+
+  if (verifyModule(*Composite.get())) {
+    std::cerr << argv[0] << ": linked module is broken!\n";
+    return 1;
   }
 
   if (Verbose) std::cerr << "Writing bytecode...\n";
