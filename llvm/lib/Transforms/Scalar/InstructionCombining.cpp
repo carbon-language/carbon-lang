@@ -618,6 +618,19 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (match(RHS, m_And(m_Value(), m_ConstantInt(C2))))
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
 
+  // (X + (X << C2)) --> X * ((1 << C2) + 1)
+  // ((X << C2) + X) --> X * ((1 << C2) + 1)
+  Value *Tmp;
+  if ((RHS->hasOneUse() && match(RHS, m_Shl(m_Value(Tmp),
+                                            m_ConstantInt(C2))) && LHS == Tmp)||
+      (LHS->hasOneUse() && match(LHS, m_Shl(m_Value(Tmp),
+                                            m_ConstantInt(C2))) && RHS == Tmp)){
+    ConstantInt *One = ConstantInt::get(LHS->getType(), 1);
+    Constant *NewRHS =
+      ConstantExpr::getAdd(ConstantExpr::getShl(One, C2), One);
+    return BinaryOperator::createMul(Tmp, NewRHS);
+  }
+
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     Value *X;
     if (match(LHS, m_Not(m_Value(X)))) {   // ~X + C --> (C-1) - X
