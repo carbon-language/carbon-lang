@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/iMemory.h"
 #include "llvm/iTerminators.h"

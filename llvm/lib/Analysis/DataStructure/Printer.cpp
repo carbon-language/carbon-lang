@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DSGraph.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
