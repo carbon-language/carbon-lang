@@ -1415,11 +1415,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
 {
   switch (iid) {
   case LLVMIntrinsic::va_start: {
-    // FIXME: this needs to be updated!
-    abort();
-
-    // Get the address of the first vararg value on stack and copy it to
-    // the argument of va_start(va_list* ap).
+    // Get the address of the first incoming vararg argument on the stack
     bool ignore;
     Function* func = cast<Function>(callInstr.getParent()->getParent());
     int numFixedArgs   = func->getFunctionType()->getNumParams();
@@ -1428,7 +1424,7 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     int firstVarArgOff = numFixedArgs * argSize + target.getFrameInfo().
       getFirstIncomingArgOffset(MachineFunction::get(func), ignore);
     mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).
-                   addRegDef(callInstr.getOperand(1)));
+                   addRegDef(&callInstr));
     return true;
   }
 
@@ -1436,14 +1432,11 @@ bool CodeGenIntrinsic(LLVMIntrinsic::ID iid, CallInst &callInstr,
     return true;                        // no-op on Sparc
 
   case LLVMIntrinsic::va_copy:
-    // FIXME: this needs to be updated!
-    abort();
-
-    // Simple copy of current va_list (arg2) to new va_list (arg1)
+    // Simple copy of current va_list (arg1) to new va_list (result)
     mvec.push_back(BuildMI(V9::ORr, 3).
                    addMReg(target.getRegInfo().getZeroRegNum()).
-                   addReg(callInstr.getOperand(2)).
-                   addReg(callInstr.getOperand(1)));
+                   addReg(callInstr.getOperand(1)).
+                   addRegDef(&callInstr));
     return true;
 
   case LLVMIntrinsic::sigsetjmp:
@@ -2842,23 +2835,28 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
-      case 65:	// reg:   VANext(reg): the va_next instruction
-      case 66:	// reg:   VAArg (reg): the va_arg instruction
-      {
-        abort();        // FIXME: This is incorrect!
-#if 0
-        // Use value initialized by va_start as pointer to args on the stack.
-        // Load argument via current pointer value, then increment pointer.
+      case 65:	// reg:   VANext(reg):  the va_next(va_list, type) instruction
+      { // Increment the va_list pointer register according to the type.
+        // All LLVM argument types are <= 64 bits, so use one doubleword.
+        Instruction* vaNextI = subtreeRoot->getInstruction();
+        assert(target.getTargetData().getTypeSize(vaNextI->getType()) <= 8 &&
+               "We assumed that all LLVM parameter types <= 8 bytes!");
         int argSize = target.getFrameInfo().getSizeOfEachArgOnStack();
+        mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaNextI->getOperand(0)).
+                       addSImm(argSize).addRegDef(vaNextI));
+      }
+
+      case 66:	// reg:   VAArg (reg): the va_arg instruction
+      { // Load argument from stack using current va_list pointer value.
+        // Use 64-bit load for all non-FP args, and LDDF or double for FP.
         Instruction* vaArgI = subtreeRoot->getInstruction();
-        MachineOpCode loadOp = vaArgI->getType()->isFloatingPoint()? V9::LDDFi
-                                                                   : V9::LDXi;
+        MachineOpCode loadOp = (vaArgI->getType()->isFloatingPoint()
+                                ? (vaArgI->getType() == Type::FloatTy
+                                   ? V9::LDFi : V9::LDDFi)
+                                : V9::LDXi);
         mvec.push_back(BuildMI(loadOp, 3).addReg(vaArgI->getOperand(0)).
                        addSImm(0).addRegDef(vaArgI));
-        mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaArgI->getOperand(0)).
-                       addSImm(argSize).addRegDef(vaArgI->getOperand(0)));
         break;
-#endif
       }
       
       case 71:	// reg:     VReg
