@@ -8,9 +8,7 @@
 #include "SparcInternals.h"
 #include "llvm/Target/Sparc.h"
 #include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-#include <iostream>
 using std::cerr;
 
 // Build the MachineInstruction Description Array...
