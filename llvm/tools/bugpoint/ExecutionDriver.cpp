@@ -34,6 +34,10 @@ namespace {
 			    clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
 			    clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
 			    0));
+
+  cl::opt<std::string>
+  InputFile("input", cl::init("/dev/null"),
+            cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
 }
 
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
@@ -86,7 +90,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
   };
   
   return RunProgramWithTimeout(LLIPath, Args,
-			       "/dev/null", OutputFile, OutputFile);
+			       InputFile, OutputFile, OutputFile);
 }
 
 
