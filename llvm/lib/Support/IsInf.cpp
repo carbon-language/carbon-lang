@@ -24,6 +24,9 @@ using std::isinf;
 // apparently this has been a problem with Solaris for years.
 # include <ieeefp.h>
 static int isinf(double x) { return !finite(x) && x==x; }
+#elif defined(_MSC_VER)
+#include <float.h>
+#define isinf(X) (!_finite(X))
 #else
 # error "Don't know how to get isinf()"
 #endif
