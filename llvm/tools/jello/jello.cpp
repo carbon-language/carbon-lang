@@ -11,6 +11,7 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
 #include "VM.h"
+#include <memory>
 
 namespace {
   cl::opt<std::string>
@@ -32,7 +33,8 @@ int main(int argc, char **argv) {
 
   // Allocate a target... in the future this will be controllable on the
   // command line.
-  std::auto_ptr<TargetMachine> Target(allocateX86TargetMachine());
+  std::auto_ptr<TargetMachine> Target(
+		 allocateX86TargetMachine(TM::PtrSize64 | TM::BigEndian));
   assert(Target.get() && "Could not allocate target machine!");
 
   // Parse the input bytecode file...
