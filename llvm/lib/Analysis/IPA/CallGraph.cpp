@@ -163,14 +163,6 @@ void CallGraph::dump() const {
 // Implementations of public modification methods
 //
 
-// Functions to keep a call graph up to date with a function that has been
-// modified
-//
-void CallGraph::addFunctionToModule(Function *F) {
-  assert(0 && "not implemented");
-  abort();
-}
-
 // removeFunctionFromModule - Unlink the function from this module, returning
 // it.  Because this removes the function from the module, the call graph node
 // is destroyed.  This is only valid if the function does not call any other
@@ -187,6 +179,20 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
   Mod->getFunctionList().remove(F);
   return F;
 }
+
+// changeFunction - This method changes the function associated with this
+// CallGraphNode, for use by transformations that need to change the prototype
+// of a Function (thus they must create a new Function and move the old code
+// over).
+void CallGraph::changeFunction(Function *OldF, Function *NewF) {
+  iterator I = FunctionMap.find(OldF);
+  CallGraphNode *&New = FunctionMap[NewF];
+  assert(I != FunctionMap.end() && I->second && !New &&
+         "OldF didn't exist in CG or NewF already does!");
+  New = I->second;
+  FunctionMap.erase(I);
+}
+
 
 void CallGraph::stub() {}
 
