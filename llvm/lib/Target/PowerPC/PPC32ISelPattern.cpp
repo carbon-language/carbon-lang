@@ -729,6 +729,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (sext && byte) {
       Tmp3 = Result;
       Result = MakeReg(MVT::i32);
+    } else {
+      Tmp3 = 0;  // Silence GCC warning.
     }
     if(Address.getOpcode() == ISD::FrameIndex) {
       BuildMI(BB, Opc, 2, Result)
