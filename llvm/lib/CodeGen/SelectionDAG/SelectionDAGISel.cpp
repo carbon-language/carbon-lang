@@ -257,7 +257,20 @@ public:
     std::map<const Value*, unsigned>::const_iterator VMI =
       FuncInfo.ValueMap.find(V);
     assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
-    return N = DAG.getCopyFromReg(VMI->second, VT, DAG.getEntryNode());
+
+    MVT::ValueType RegVT = VT;
+    if (TLI.getTypeAction(VT) == 1)          // Must promote this value?
+      RegVT = TLI.getTypeToTransformTo(VT);
+
+    N = DAG.getCopyFromReg(VMI->second, RegVT, DAG.getEntryNode());
+
+    if (RegVT != VT)
+      if (MVT::isFloatingPoint(VT))
+        N = DAG.getNode(ISD::FP_ROUND, VT, N);
+      else
+        N = DAG.getNode(ISD::TRUNCATE, VT, N);
+
+    return N;
   }
 
   const SDOperand &setValue(const Value *V, SDOperand NewN) {
@@ -777,6 +790,14 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   assert((Op.getOpcode() != ISD::CopyFromReg ||
           cast<RegSDNode>(Op)->getReg() != Reg) &&
          "Copy from a reg to the same reg!");
+  MVT::ValueType VT = Op.getValueType();
+  if (TLI.getTypeAction(VT) == 1) {       // Must promote this value?
+    if (MVT::isFloatingPoint(VT))
+      Op = DAG.getNode(ISD::FP_EXTEND, TLI.getTypeToTransformTo(VT), Op);
+    else
+      Op = DAG.getNode(ISD::ZERO_EXTEND, TLI.getTypeToTransformTo(VT), Op);
+  }
+
   return DAG.getCopyToReg(DAG.getRoot(), Op, Reg);
 }
 
