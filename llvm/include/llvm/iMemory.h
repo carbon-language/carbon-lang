@@ -130,10 +130,6 @@ public:
 				    const vector<ConstPoolVal*> &Indices,
 				    bool AllowStructLeaf = false);
   
-  static unsigned int getIndexedOfsetForTarget(const Type *Ptr, 
-					  const vector<ConstPoolVal*> &Indices,
-					  const TargetMachine& targetMachine);
-  
   const vector<ConstPoolVal*>& getIndexVec() const { return indexVec; }
   
   virtual Value* getPtrOperand() = 0;
