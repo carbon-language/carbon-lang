@@ -18,12 +18,10 @@
 #define LLVM_CODEGEN_PHYSREGTRACKER_H
 
 #include "llvm/CodeGen/MachineFunction.h"
-#include <vector>
 
 namespace llvm {
 
     class PhysRegTracker {
-    private:
         const MRegisterInfo* mri_;
         std::vector<unsigned> regUse_;
 
@@ -50,10 +48,8 @@ namespace llvm {
             assert(MRegisterInfo::isPhysicalRegister(physReg) &&
                    "should be physical register!");
             ++regUse_[physReg];
-            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as) {
-                physReg = *as;
-                ++regUse_[physReg];
-            }
+            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as)
+                ++regUse_[*as];
         }
 
         void delRegUse(unsigned physReg) {
@@ -62,9 +58,8 @@ namespace llvm {
             assert(regUse_[physReg] != 0);
             --regUse_[physReg];
             for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as) {
-                physReg = *as;
-                assert(regUse_[physReg] != 0);
-                --regUse_[physReg];
+                assert(regUse_[*as] != 0);
+                --regUse_[*as];
             }
         }
 
