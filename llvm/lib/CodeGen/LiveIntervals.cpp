@@ -179,16 +179,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     return true;
 }
 
-namespace {
-    /// CompareIntervalStar - This is a simple comparison function for interval
-    /// pointers.  It compares based on their starting point.
-    struct CompareIntervalStar {
-        bool operator()(LiveInterval *LHS, LiveInterval* RHS) const {
-            return LHS->start() < RHS->start();
-        }
-    };
-}
-
 std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
     const LiveInterval& li,
     VirtRegMap& vrm,
@@ -282,7 +272,7 @@ std::vector<LiveInterval*> LiveIntervals::addIntervalsForSpills(
     // The proper way to fix this is to process all uses of the vreg before we 
     // process any defs.  However, this would require refactoring the above 
     // blob of code, which I'm not feeling up to right now.
-    std::sort(added.begin(), added.end(), CompareIntervalStar());
+    std::sort(added.begin(), added.end(), less_ptr<LiveInterval>());
     return added;
 }
 
