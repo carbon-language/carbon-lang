@@ -109,7 +109,7 @@ prdirs::
 ###########################################################################
 .SUFFIXES:
 .SUFFIXES: .c .cpp .h .hpp .y .l
-.SUFFIXES: .lo .o .a .$(SHLIBEXT) .bc .td
+.SUFFIXES: .lo .o .a $(SHLIBEXT) .bc .td
 .SUFFIXES: .ps .dot .d
 
 #
