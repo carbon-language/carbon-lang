@@ -36,15 +36,14 @@ include "SparcV8InstrInfo_F3.td"
 //===----------------------------------------------------------------------===//
 
 // Pseudo instructions.
-def PHI : InstV8 {
-  let Name = "PHI";
+class PseudoInstV8<string nm> : InstV8  {
+  let Name = nm;
 }
-def ADJCALLSTACKDOWN : InstV8 {
-  let Name = "ADJCALLSTACKDOWN";
-}
-def ADJCALLSTACKUP : InstV8 {
-  let Name = "ADJCALLSTACKUP";
-}
+def PHI : PseudoInstV8<"PHI">;
+def ADJCALLSTACKDOWN : PseudoInstV8<"ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP : PseudoInstV8<"ADJCALLSTACKUP">;
+def IMPLICIT_USE : PseudoInstV8<"IMPLICIT_USE">;
+def IMPLICIT_DEF : PseudoInstV8<"IMPLICIT_DEF">;
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
