@@ -20,9 +20,9 @@ using std::set;
 //===----------------------------------------------------------------------===//
 
 static RegisterAnalysis<DominatorSet>
-A("domset", "Dominator Set Construction");
+A("domset", "Dominator Set Construction", true);
 static RegisterAnalysis<PostDominatorSet>
-B("postdomset", "Post-Dominator Set Construction");
+B("postdomset", "Post-Dominator Set Construction", true);
 
 AnalysisID DominatorSet::ID = A;
 AnalysisID PostDominatorSet::ID = B;
@@ -173,9 +173,9 @@ void DominatorSetBase::print(std::ostream &o) const {
 //===----------------------------------------------------------------------===//
 
 static RegisterAnalysis<ImmediateDominators>
-C("idom", "Immediate Dominators Construction");
+C("idom", "Immediate Dominators Construction", true);
 static RegisterAnalysis<ImmediatePostDominators>
-D("postidom", "Immediate Post-Dominators Construction");
+D("postidom", "Immediate Post-Dominators Construction", true);
 
 AnalysisID ImmediateDominators::ID = C;
 AnalysisID ImmediatePostDominators::ID = D;
@@ -229,9 +229,9 @@ void ImmediateDominatorsBase::print(ostream &o) const {
 //===----------------------------------------------------------------------===//
 
 static RegisterAnalysis<DominatorTree>
-E("domtree", "Dominator Tree Construction");
+E("domtree", "Dominator Tree Construction", true);
 static RegisterAnalysis<PostDominatorTree>
-F("postdomtree", "Post-Dominator Tree Construction");
+F("postdomtree", "Post-Dominator Tree Construction", true);
 
 AnalysisID DominatorTree::ID = E;
 AnalysisID PostDominatorTree::ID = F;
@@ -365,9 +365,9 @@ void DominatorTreeBase::print(std::ostream &o) const {
 //===----------------------------------------------------------------------===//
 
 static RegisterAnalysis<DominanceFrontier>
-G("domfrontier", "Dominance Frontier Construction");
+G("domfrontier", "Dominance Frontier Construction", true);
 static RegisterAnalysis<PostDominanceFrontier>
-H("postdomfrontier", "Post-Dominance Frontier Construction");
+H("postdomfrontier", "Post-Dominance Frontier Construction", true);
 
 AnalysisID DominanceFrontier::ID = G;
 AnalysisID PostDominanceFrontier::ID = H;

@@ -11,7 +11,7 @@
 using std::make_pair;
 
 static RegisterAnalysis<IntervalPartition>
-X("intervals", "Interval Partition Construction");
+X("intervals", "Interval Partition Construction", true);
 
 AnalysisID IntervalPartition::ID = X;
 

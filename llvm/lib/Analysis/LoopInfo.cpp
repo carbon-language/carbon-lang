@@ -15,7 +15,7 @@
 #include <algorithm>
 
 static RegisterAnalysis<LoopInfo>
-X("loops", "Natural Loop Construction");
+X("loops", "Natural Loop Construction", true);
 AnalysisID LoopInfo::ID = X;
 
 //===----------------------------------------------------------------------===//
