@@ -530,9 +530,19 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   BasicBlock *NewBBSucc = *succ_begin(NewBB);
   DominatorSet &DS = getAnalysis<DominatorSet>();
 
+  // Update dominator information...  The blocks that dominate NewBB are the
+  // intersection of the dominators of predecessors, plus the block itself.
+  //
+  DominatorSet::DomSetType NewBBDomSet = DS.getDominators(PredBlocks[0]);
+  for (unsigned i = 1, e = PredBlocks.size(); i != e; ++i)
+    set_intersect(NewBBDomSet, DS.getDominators(PredBlocks[i]));
+  NewBBDomSet.insert(NewBB);  // All blocks dominate themselves...
+  DS.addBasicBlock(NewBB, NewBBDomSet);
+
   // The newly inserted basic block will dominate existing basic blocks iff the
   // PredBlocks dominate all of the non-pred blocks.  If all predblocks dominate
   // the non-pred blocks, then they all must be the same block!
+  //
   bool NewBBDominatesNewBBSucc = true;
   {
     BasicBlock *OnePred = PredBlocks[0];
@@ -551,15 +561,18 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
         }
   }
 
-  // Update dominator information...  The blocks that dominate NewBB are the
-  // intersection of the dominators of predecessors, plus the block itself.
-  // The newly created basic block does not dominate anything except itself.
-  //
-  DominatorSet::DomSetType NewBBDomSet = DS.getDominators(PredBlocks[0]);
-  for (unsigned i = 1, e = PredBlocks.size(); i != e; ++i)
-    set_intersect(NewBBDomSet, DS.getDominators(PredBlocks[i]));
-  NewBBDomSet.insert(NewBB);  // All blocks dominate themselves...
-  DS.addBasicBlock(NewBB, NewBBDomSet);
+  // The other scenario where the new block can dominate its successors are when
+  // all predecessors of NewBBSucc that are not NewBB are dominated by NewBBSucc
+  // already.
+  if (!NewBBDominatesNewBBSucc) {
+    NewBBDominatesNewBBSucc = true;
+    for (pred_iterator PI = pred_begin(NewBBSucc), E = pred_end(NewBBSucc);
+         PI != E; ++PI)
+      if (*PI != NewBB && !DS.dominates(NewBBSucc, *PI)) {
+        NewBBDominatesNewBBSucc = false;
+        break;
+      }
+  }
 
   // If NewBB dominates some blocks, then it will dominate all blocks that
   // NewBBSucc does.
