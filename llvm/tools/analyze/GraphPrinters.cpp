@@ -10,9 +10,14 @@
 #include "Support/GraphWriter.h"
 #include "llvm/Pass.h"
 #include "llvm/iTerminators.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CFG.h"
 #include <sstream>
 #include <fstream>
+
+//===----------------------------------------------------------------------===//
+//                         Control Flow Graph Printer
+//===----------------------------------------------------------------------===//
 
 template<>
 struct DOTGraphTraits<Function*> : public DefaultDOTGraphTraits {
@@ -70,7 +75,6 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
 
 namespace {
   struct CFGPrinter : public FunctionPass {
-    Function *F;
     virtual bool runOnFunction(Function &Func) {
       WriteGraphToFile(std::cerr, "cfg."+Func.getName(), &Func);
       return false;
@@ -85,4 +89,44 @@ namespace {
 
   RegisterAnalysis<CFGPrinter> P1("print-cfg",
                                   "Print CFG of function to 'dot' file");
+};
+
+
+
+//===----------------------------------------------------------------------===//
+//                              Call Graph Printer
+//===----------------------------------------------------------------------===//
+
+template<>
+struct DOTGraphTraits<CallGraph*> : public DefaultDOTGraphTraits {
+  static std::string getGraphName(CallGraph *F) {
+    return "Call Graph";
+  }
+
+  static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
+    if (Node->getFunction())
+      return Node->getFunction()->getName();
+    else
+      return "Indirect call node";
+  }
+};
+
+
+namespace {
+  struct CallGraphPrinter : public Pass {
+    virtual bool run(Module &M) {
+      WriteGraphToFile(std::cerr, "callgraph", &getAnalysis<CallGraph>());
+      return false;
+    }
+
+    void print(std::ostream &OS) const {}
+    
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<CallGraph>();
+      AU.setPreservesAll();
+    }
+  };
+
+  RegisterAnalysis<CallGraphPrinter> P2("print-callgraph",
+                                        "Print Call Graph to 'dot' file");
 };
