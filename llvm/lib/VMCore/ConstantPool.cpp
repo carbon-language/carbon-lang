@@ -217,6 +217,11 @@ ConstPoolBool::ConstPoolBool(bool V, const string &Name = "")
   : ConstPoolVal(Type::BoolTy, Name) {
   Val = V;
 }
+ConstPoolBool::ConstPoolBool(const Type *Ty, bool V, const string &Name = "") 
+  : ConstPoolVal(Type::BoolTy, Name) {
+  Val = V;
+  assert(Ty == Type::BoolTy && "BoolTy is only valid type for bool constant");
+}
 
 ConstPoolInt::ConstPoolInt(const Type *Ty, uint64_t V, const string &Name)
   : ConstPoolVal(Ty, Name) { Val.Unsigned = V; }
