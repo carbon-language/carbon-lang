@@ -111,6 +111,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
   if (Inst.isBranch)     OS << "|M_BRANCH_FLAG";
   if (Inst.isBarrier)    OS << "|M_BARRIER_FLAG";
+  if (Inst.hasDelaySlot) OS << "|M_DELAY_SLOT_FLAG";
   if (Inst.isCall)       OS << "|M_CALL_FLAG";
   if (Inst.isTwoAddress) OS << "|M_2_ADDR_FLAG";
   if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";

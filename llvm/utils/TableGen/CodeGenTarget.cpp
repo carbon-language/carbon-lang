@@ -197,6 +197,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isCall       = R->getValueAsBit("isCall");
   isTwoAddress = R->getValueAsBit("isTwoAddress");
   isTerminator = R->getValueAsBit("isTerminator");
+  hasDelaySlot = R->getValueAsBit("hasDelaySlot");
 
   try {
     DagInit *DI = R->getValueAsDag("OperandList");

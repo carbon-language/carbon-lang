@@ -73,6 +73,7 @@ namespace llvm {
     bool isCall;
     bool isTwoAddress;
     bool isTerminator;
+    bool hasDelaySlot;
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
 
