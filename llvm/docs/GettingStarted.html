@@ -96,8 +96,8 @@ from the LLVM suite.</p>
     <ol>
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt>
       <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf -</tt>
-      <li><b>Sparc Only:</b><br>
-      <tt>cd cfrontend/sparc<br>
+      <li><b>Sparc and MacOS X Only:</b><br>
+      <tt>cd cfrontend/<i>platform</i><br>
           ./fixheaders</tt>
     </ol></li>
 
@@ -106,7 +106,7 @@ from the LLVM suite.</p>
     <li>With the distributed files:
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-      <li><tt>gunzip --stdout llvm.tar.gz | tar -xvf -</tt>
+      <li><tt>gunzip --stdout llvm-<i>version</i>.tar.gz | tar -xvf -</tt>
       <li><tt>cd llvm</tt>
     </ol></li>
 
@@ -382,23 +382,23 @@ file is a TAR archive that is compressed with the gzip program.
 
 <p> The files are as follows:
 <dl>
-    <dt>llvm-1.1.tar.gz
+    <dt>llvm-1.2.tar.gz
     <dd>This is the source code to the LLVM suite.
     <p>
 
-    <dt>cfrontend-1.1.sparc-sun-solaris2.8.tar.gz
+    <dt>cfrontend-1.2.sparc-sun-solaris2.8.tar.gz
     <dd>This is the binary release of the GCC front end for Solaris/Sparc.
     <p>
 
-    <dt>cfrontend-1.1.i686-redhat-linux-gnu.tar.gz
+    <dt>cfrontend-1.2.i686-redhat-linux-gnu.tar.gz
     <dd>This is the binary release of the GCC front end for Linux/x86.
     <p>
 
-    <dt>cfrontend-1.1.i386-unknown-freebsd5.1.tar.gz
+    <dt>cfrontend-1.2.i386-unknown-freebsd5.1.tar.gz
     <dd>This is the binary release of the GCC front end for FreeBSD/x86.
     <p>
 
-    <dt>cfrontend-1.1.powerpc-apple-darwin7.0.0.tar.gz
+    <dt>cfrontend-1.2.powerpc-apple-darwin7.0.0.tar.gz
     <dd>This is the binary release of the GCC front end for MacOS X/PPC.
 </dl>
 
@@ -433,6 +433,10 @@ label:</p>
 
 <ul>
   <li>
+  Release 1.2: <b>RELEASE_12</b>
+  </li>
+
+  <li>
   Release 1.1: <b>RELEASE_11</b>
   </li>
 
@@ -441,8 +445,14 @@ label:</p>
   </li>
 </ul>
 
-<p>Note that the GCC front end is not included in the CVS repository. You
-should have downloaded the binary distribution for your platform.</p>
+<p>
+If you would like to get the GCC front end source code, you can also get it
+from the CVS repository:
+<ul>
+  <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co
+      llvm-gcc</tt>
+</ul>
+</p>
 
 </div>
 
@@ -469,7 +479,7 @@ location must be specified when the LLVM suite is configured.</p>
 <p>If you are using Solaris/Sparc or MacOS X/PPC, you will need to fix the
 header files:</p>
 
-<p><tt>cd cfrontend/sparc<br>
+<p><tt>cd cfrontend/<i>platform</i><br>
    ./fixheaders</tt></p>
 
 <p>The binary versions of the GCC front end may not suit all of your needs.  For
@@ -527,7 +537,7 @@ script to configure the build system:</p>
 <dl>
   <dt><i>--with-llvmgccdir=LLVMGCCDIR</i>
   <dd>
-    Path to the location where the LLVM C front end binaries and
+    Path to the location where the LLVM GCC front end binaries and
     associated libraries were installed.  This must be specified as an
     absolute pathname.
     <p>
@@ -553,6 +563,19 @@ script to configure the build system:</p>
     benchmarks.  If <tt>directory</tt> is left unspecified, <tt>configure</tt>
     uses the default value
     <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
+    <p>
+  <dt><i>--enable-spec95</i>
+  <dt><i>--enable-spec95=&lt;<tt>directory</tt>&gt;</i>
+  <dd>
+    Enable the use of SPEC95 when testing LLVM.  It is similar to the
+    <i>--enable-spec2000</i> option.
+    <p>
+  <dt><i>--enable-povray</i>
+  <dt><i>--enable-povray=&lt;<tt>directory</tt>&gt;</i>
+  <dd>
+    Enable the use of Povray as an external test.  Versions of Povray written
+    in C should work.  This option is similar to the <i>--enable-spec2000</i>
+    option.
 </dl>
 
 <p>To configure LLVM, follow these steps:</p>
@@ -751,7 +774,7 @@ named after the build type:</p>
 <div class="doc_text">
 
 <p>One useful source of information about the LLVM source base is the LLVM <a
-href="http://www.doxygen.org">doxygen</a> documentation, available at <tt><a
+href="http://www.doxygen.org">doxygen</a> documentation available at <tt><a
 href="http://llvm.cs.uiuc.edu/doxygen/">http://llvm.cs.uiuc.edu/doxygen/</a></tt>.
 The following is a brief introduction to code layout:</p>
 
@@ -888,7 +911,7 @@ the LLVM infrastructure.</p>
 <p>The <b>tools</b> directory contains the executables built out of the
 libraries above, which form the main part of the user interface.  You can
 always get help for a tool by typing <tt>tool_name --help</tt>.  The
-following is a brief introduction to the most important tools.</p>
+following is a brief introduction to the most important tools:</p>
 
 <dl>
   <dt><tt><b>analyze</b></tt> <dd><tt>analyze</tt> is used to run a specific
