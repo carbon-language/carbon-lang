@@ -566,13 +566,15 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 
       GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
       if (DGV->hasInitializer()) {
-        assert(SGV->getLinkage() == DGV->getLinkage());
         if (SGV->hasExternalLinkage()) {
           if (DGV->getInitializer() != SInit)
             return Error(Err, "Global Variable Collision on '" + 
                          SGV->getType()->getDescription() +"':%"+SGV->getName()+
                          " - Global variables have different initializers");
         } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage()) {
+          // Nothing is required, mapped values will take the new global
+          // automatically.
+        } else if (SGV->hasLinkOnceLinkage() || SGV->hasWeakLinkage()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
         } else if (DGV->hasAppendingLinkage()) {
