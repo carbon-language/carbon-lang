@@ -28,6 +28,8 @@
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
 //  * It is illegal to specify a name for a void value.
 //  * It is illegal to have a internal function that is just a declaration
+//  * It is illegal to have a ret instruction that returns a value that does not
+//    agree with the function return value type.
 //  . All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
@@ -39,6 +41,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iTerminators.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/CFG.h"
 #include "Support/STLExtras.h"
@@ -69,8 +72,8 @@ static long ValidTypes[Type::FirstDerivedTyID] = {
 static inline void CheckFailed(const char *Cond, const std::string &Message,
                                const Value *V1 = 0, const Value *V2 = 0) {
   std::cerr << Message << "\n";
-  if (V1) { V1->dump(); std::cerr << "\n"; }
-  if (V2) { V2->dump(); std::cerr << "\n"; }
+  if (V1) { std::cerr << V1 << "\n"; }
+  if (V2) { std::cerr << V2 << "\n"; }
 }
 
 // Assert - We know that cond should be true, if not print an error message.
@@ -89,6 +92,18 @@ static bool verifyInstruction(const Instruction *I) {
   assert(I->getParent() && "Instruction not embedded in basic block!");
   Assert1(!isa<TerminatorInst>(I),
           "Terminator instruction found embedded in basic block!\n", I);
+
+  if (isa<ReturnInst>(I)) {
+    const Function *F = I->getParent()->getParent();
+    if (I->getNumOperands() == 0)
+      Assert1(F->getReturnType() == Type::VoidTy,
+              "Function returns no value, but ret instruction found that does!",
+              I);
+    else
+      Assert2(F->getReturnType() == I->getOperand(0)->getType(),
+              "Function return type does not match operand "
+              "type of return inst!", I, F->getReturnType());
+  }
 
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.
