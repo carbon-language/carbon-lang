@@ -24,11 +24,10 @@
 
 namespace llvm {
 
-class Type;
 class Constant;
 class Argument;
 class Instruction;
-class BasicBlock;
+struct BasicBlock;
 class GlobalValue;
 class Function;
 class GlobalVariable;

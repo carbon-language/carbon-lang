@@ -43,7 +43,8 @@ template<> struct ilist_traits<GlobalVariable>
   static iplist<GlobalVariable> &getList(Module *M);
 };
 
-struct Module {
+class Module {
+public:
   typedef iplist<GlobalVariable> GlobalListType;
   typedef iplist<Function> FunctionListType;
 

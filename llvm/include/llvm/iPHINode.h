@@ -18,7 +18,7 @@
 
 namespace llvm {
 
-class BasicBlock;
+struct BasicBlock;
 
 //===----------------------------------------------------------------------===//
 //                               PHINode Class

@@ -38,7 +38,7 @@
 namespace llvm {
 
 class Value;
-class BasicBlock;
+struct BasicBlock;
 class Function;
 class Module;
 class AnalysisUsage;

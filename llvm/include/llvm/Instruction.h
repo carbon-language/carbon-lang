@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-class AssemblyAnnotationWriter;
+struct AssemblyAnnotationWriter;
 
 template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
