@@ -133,8 +133,8 @@ void DSGC::verify(const DSGraph &G) {
       }
 
       unsigned Flags = 0;
-      for (++ColonPos; ColonPos != I->size(); ++ColonPos)
-        switch ((*I)[ColonPos]) {
+      for (unsigned C = ColonPos+1; C != I->size(); ++C)
+        switch ((*I)[C]) {
         case 'S': Flags |= DSNode::AllocaNode;  break;
         case 'H': Flags |= DSNode::HeapNode;    break;
         case 'G': Flags |= DSNode::GlobalNode;  break;
