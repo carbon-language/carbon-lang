@@ -15,6 +15,7 @@
 #define POWERPC32_TARGETMACHINE_H
 
 #include "PowerPCTargetMachine.h"
+#include "PPC32JITInfo.h"
 #include "PPC32InstrInfo.h"
 #include "llvm/PassManager.h"
 
@@ -24,6 +25,7 @@ class IntrinsicLowering;
 
 class PPC32TargetMachine : public PowerPCTargetMachine {
   PPC32InstrInfo InstrInfo;
+  PPC32JITInfo JITInfo;
 
 public:
   PPC32TargetMachine(const Module &M, IntrinsicLowering *IL);
@@ -31,6 +33,12 @@ public:
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
+
+  virtual TargetJITInfo *getJITInfo() {
+    return &JITInfo;
+  }
+
+  static unsigned getJITMatchQuality();
 
   static unsigned getModuleMatchQuality(const Module &M);
 

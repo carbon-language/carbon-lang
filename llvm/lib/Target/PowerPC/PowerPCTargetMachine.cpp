@@ -52,12 +52,11 @@ namespace {
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            IntrinsicLowering *IL,
                                            const TargetData &TD,
-                                           const PowerPCFrameInfo &TFI,
-                                           const PowerPCJITInfo &TJI) 
-  : TargetMachine(name, IL, TD), FrameInfo(TFI), JITInfo(TJI) 
+                                           const PowerPCFrameInfo &TFI)
+  : TargetMachine(name, IL, TD), FrameInfo(TFI)
 {}
 
-unsigned PowerPCTargetMachine::getJITMatchQuality() {
+unsigned PPC32TargetMachine::getJITMatchQuality() {
   return 0;
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
   return 10;
@@ -132,6 +131,12 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createPPC32ISelSimple(TM));
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
+
+  // Must run branch selection immediately preceding the asm printer
+  PM.add(createPPCBranchSelectionPass());
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
 }
 
 void PowerPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
@@ -143,14 +148,14 @@ void PowerPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC32ID, IL, 
                          TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,4),
-                         PowerPCFrameInfo(*this, false), PPC32JITInfo(*this)) {}
+                         PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC64ID, IL,
                          TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,4),
-                         PowerPCFrameInfo(*this, true), PPC64JITInfo(*this)) {}
+                         PowerPCFrameInfo(*this, true)) {}
 
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (M.getEndianness()  == Module::BigEndian &&
