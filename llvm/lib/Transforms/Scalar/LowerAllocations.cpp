@@ -37,6 +37,9 @@ namespace {
     /// a module contains a declaration for a malloc and a free function.
     ///
     bool doInitialization(Module &M);
+
+    virtual bool doInitialization(Function&f) 
+      { return BasicBlockPass::doInitialization(f); }
     
     /// runOnBasicBlock - This method does the actual work of converting
     /// instructions over, assuming that the pass has already been initialized.
