@@ -1,4 +1,4 @@
-##===- projects/ModuleMaker/Makefile -----------------------*- Makefile -*-===##
+##===- examples/ModuleMaker --------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,22 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-#
-# This is a sample Makefile for a project that uses LLVM.
-#
+LEVEL=../..
+TOOLNAME=ModuleMaker
+USEDLIBS= bcwriter vmcore support.a
 
-#
-# Indicates our relative path to the top of the project's root directory.
-#
-LEVEL = .
-
-#
-# Directories that needs to be built.
-#
-DIRS = tools
-
-#
-# Include the Master Makefile that knows how to build all.
-#
 include $(LEVEL)/Makefile.common
-

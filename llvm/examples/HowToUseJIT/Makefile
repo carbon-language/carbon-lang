@@ -6,7 +6,7 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../../..
+LEVEL = ../..
 TOOLNAME = HowToUseJIT
 USEDLIBS = lli-jit lli-interpreter codegen executionengine x86 selectiondag \
 	   scalaropts analysis.a transformutils.a bcreader target.a vmcore \

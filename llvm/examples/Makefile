@@ -6,10 +6,11 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL=../..
+LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-DIRS:= $(patsubst %/Makefile,%,$(wildcard $(SourceDir)/*/Makefile))
+#PARALLEL_DIRS:= $(patsubst %/Makefile,%,$(wildcard $(SourceDir)/*/Makefile))
+PARALLEL_DIRS:= Fibonacci HowToUseJIT ModuleMaker
 
-include $(BUILD_SRC_ROOT)/Makefile.rules
+include $(LEVEL)/Makefile.common
