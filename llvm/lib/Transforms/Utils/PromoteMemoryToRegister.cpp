@@ -51,14 +51,20 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
 
 namespace {
   struct PromoteMem2Reg {
-    const std::vector<AllocaInst*> &Allocas;        // the alloca instructions..
-    std::vector<unsigned> VersionNumbers;           // Current version counters
+    // Allocas - The alloca instructions being promoted
+    const std::vector<AllocaInst*> &Allocas;
     DominanceFrontier &DF;
     const TargetData &TD;
 
-    std::map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
+    // AllocaLookup - Reverse mapping of Allocas
+    std::map<AllocaInst*, unsigned>  AllocaLookup;
+
+    // VersionNumbers - Current version counters for each alloca
+    std::vector<unsigned> VersionNumbers;
     
-    std::vector<std::vector<BasicBlock*> > PhiNodes;// Idx corresponds 2 Allocas
+    // PhiNodes - Each alloca contains a list of basic blocks which contain PHI
+    // nodes for the alloca.
+    std::vector<std::vector<BasicBlock*> > PhiNodes;
     
     // NewPhiNodes - The PhiNodes we're adding.
     std::map<BasicBlock*, std::vector<PHINode*> > NewPhiNodes;
@@ -84,26 +90,25 @@ void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
   VersionNumbers.resize(Allocas.size());
+  PhiNodes.resize(Allocas.size());
 
-  for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
-    assert(isAllocaPromotable(Allocas[i], TD) &&
+  for (unsigned i = 0; i != Allocas.size(); ++i) {
+    AllocaInst *AI = Allocas[i];
+
+    assert(isAllocaPromotable(AI, TD) &&
            "Cannot promote non-promotable alloca!");
     assert(Allocas[i]->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
-    AllocaLookup[Allocas[i]] = i;
-  }
-
-  PhiNodes.resize(Allocas.size());
-  for (unsigned i = 0; i != Allocas.size(); ++i) {
-    AllocaInst *AI = Allocas[i];
 
     // Calculate the set of write-locations for each alloca.  This is analogous
     // to counting the number of 'redefinitions' of each variable.
     std::vector<BasicBlock*> WriteSets;
     for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E; ++U)
-      if (StoreInst *SI = dyn_cast<StoreInst>(*U))
+      if (StoreInst *SI = dyn_cast<StoreInst>(cast<Instruction>(*U)))
         // jot down the basic-block it came from
         WriteSets.push_back(SI->getParent());
+
+    AllocaLookup[Allocas[i]] = i;
     
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
@@ -120,12 +125,13 @@ void PromoteMem2Reg::run() {
     }
     
     // Perform iterative step
-    for (unsigned k = 0; k != PhiNodes[i].size(); k++) {
-      DominanceFrontier::const_iterator it = DF.find(PhiNodes[i][k]);
+    std::vector<BasicBlock*> &AllocaPhiNodes = PhiNodes[i];
+    for (unsigned k = 0; k != AllocaPhiNodes.size(); k++) {
+      DominanceFrontier::const_iterator it = DF.find(AllocaPhiNodes[k]);
       if (it != DF.end()) {
-        const DominanceFrontier::DomSetType     &S = it->second;
-        for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
-             P != PE; ++P)
+        const DominanceFrontier::DomSetType &S = it->second;
+        for (DominanceFrontier::DomSetType::iterator
+               P = S.begin(), PE = S.end(); P != PE; ++P)
           QueuePhiNode(*P, i);
       }
     }
@@ -231,7 +237,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       if (AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand())) {
-        std::map<Instruction*, unsigned>::iterator AI = AllocaLookup.find(Src);
+        std::map<AllocaInst*, unsigned>::iterator AI = AllocaLookup.find(Src);
         if (AI != AllocaLookup.end()) {
           Value *V = IncomingVals[AI->second];
 
@@ -244,7 +250,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
       // Delete this instruction and mark the name as the current holder of the
       // value
       if (AllocaInst *Dest = dyn_cast<AllocaInst>(SI->getPointerOperand())) {
-        std::map<Instruction *, unsigned>::iterator ai =AllocaLookup.find(Dest);
+        std::map<AllocaInst *, unsigned>::iterator ai = AllocaLookup.find(Dest);
         if (ai != AllocaLookup.end()) {
           // what value were we writing?
           IncomingVals[ai->second] = SI->getOperand(0);
