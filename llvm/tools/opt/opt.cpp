@@ -20,6 +20,7 @@
 #include "llvm/Transforms/SymbolStripping.h"
 #include "llvm/Transforms/ChangeAllocations.h"
 #include "llvm/Transforms/IPO/SimpleStructMutation.h"
+#include "llvm/Transforms/IPO/Internalize.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO/PoolAllocate.h"
 #include "llvm/Transforms/Scalar/DCE.h"
@@ -54,7 +55,7 @@ enum Opts {
   trace, tracem, paths,
 
   // Interprocedural optimizations...
-  globaldce, swapstructs, sortstructs, poolalloc,
+  internalize, globaldce, swapstructs, sortstructs, poolalloc,
 };
 
 static Pass *createPrintFunctionPass() {
@@ -100,6 +101,8 @@ struct {
   { raiseallocs, createRaiseAllocationsPass  },
   { cleangcc   , createCleanupGCCOutputPass  },
   { funcresolve, createFunctionResolvingPass },
+
+  { internalize, createInternalizePass  },
   { globaldce  , createGlobalDCEPass    },
   { swapstructs, createSwapElementsPass },
   { sortstructs, createSortElementsPass },
@@ -132,6 +135,7 @@ cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(adce       , "Agressive DCE"),
   clEnumVal(mem2reg    , "Promote alloca locations to registers"),
 
+  clEnumVal(internalize, "Mark all fn's internal except for main"),
   clEnumVal(globaldce  , "Remove unreachable globals"),
   clEnumVal(swapstructs, "Swap structure types around"),
   clEnumVal(sortstructs, "Sort structure elements"),
