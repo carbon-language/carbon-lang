@@ -21,45 +21,55 @@ struct DefaultDOTGraphTraits {
   /// getGraphName - Return the label for the graph as a whole.  Printed at the
   /// top of the graph.
   ///
-  static std::string getGraphName(void *Graph) { return ""; }
+  static std::string getGraphName(const void *Graph) { return ""; }
 
   /// getGraphProperties - Return any custom properties that should be included
   /// in the top level graph structure for dot.  By default, we resize the graph
   /// to fit on a letter size page.
   ///
-  static std::string getGraphProperties(void *Graph) {
+  static std::string getGraphProperties(const void *Graph) {
     return "\tsize=\"7.5,10\";\n";    // Size to fit on a page
   }
 
   /// getNodeLabel - Given a node and a pointer to the top level graph, return
   /// the label to print in the node.
-  static std::string getNodeLabel(void *Node, void *Graph) { return ""; }
+  static std::string getNodeLabel(const void *Node, const void *Graph) {
+    return "";
+  }
 
   /// If you want to specify custom node attributes, this is the place to do so
   ///
-  static std::string getNodeAttributes(void *Node) { return ""; }
+  static std::string getNodeAttributes(const void *Node) { return ""; }
 
   /// If you want to override the dot attributes printed for a particular edge,
   /// override this method.
   template<typename EdgeIter>
-  static std::string getEdgeAttributes(void *Node, EdgeIter EI) { return ""; }
+  static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
+    return "";
+  }
 
   /// getEdgeSourceLabel - If you want to label the edge source itself,
   /// implement this method.
   template<typename EdgeIter>
-  static std::string getEdgeSourceLabel(void *Node, EdgeIter I) { return ""; }
+  static std::string getEdgeSourceLabel(const void *Node, EdgeIter I) {
+    return "";
+  }
 
   /// edgeTargetsEdgeSource - This method returns true if this outgoing edge
   /// should actually target another edge source, not a node.  If this method is
   /// implemented, getEdgeTarget should be implemented.
   template<typename EdgeIter>
-  static bool edgeTargetsEdgeSource(void *Node, EdgeIter I) { return false; }
+  static bool edgeTargetsEdgeSource(const void *Node, EdgeIter I) {
+    return false;
+  }
 
   /// getEdgeTarget - If edgeTargetsEdgeSource returns true, this method is
   /// called to determine which outgoing edge of Node is the target of this
   /// edge.
   template<typename EdgeIter>
-  static EdgeIter getEdgeTarget(void *Node, EdgeIter I) { return I; }
+  static EdgeIter getEdgeTarget(const void *Node, EdgeIter I) {
+    return I;
+  }
 
   /// addCustomGraphFeatures - If a graph is made up of more than just
   /// straight-forward nodes and edges, this is the place to put all of the
@@ -68,7 +78,7 @@ struct DefaultDOTGraphTraits {
   /// it to add things to the output graph.
   ///
   template<typename GraphWriter>
-  static void addCustomGraphFeatures(void *Graph, GraphWriter &GW) {}
+  static void addCustomGraphFeatures(const void *Graph, GraphWriter &GW) {}
 };
 
 
