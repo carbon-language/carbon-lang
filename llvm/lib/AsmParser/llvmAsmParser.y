@@ -903,7 +903,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 	Vals.push_back(ConstantSInt::get(ETy, *C));
     } else if (ETy == Type::UByteTy) {
       for (char *C = $3; C != EndStr; ++C)
-	Vals.push_back(ConstantUInt::get(ETy, *C));
+	Vals.push_back(ConstantUInt::get(ETy, (unsigned char)*C));
     } else {
       free($3);
       ThrowException("Cannot build string arrays of non byte sized elements!");
