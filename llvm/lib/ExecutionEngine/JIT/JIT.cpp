@@ -50,5 +50,9 @@ int VM::run(const std::string &FnName, const std::vector<std::string> &Args) {
   char **Argv = (char**)CreateArgv(Args);
 
   // Call the main function...
-  return PF(Args.size(), Argv);
+  int Result = PF(Args.size(), Argv);
+
+  // Run any atexit handlers now!
+  runAtExitHandlers();
+  return Result;
 }

@@ -12,6 +12,17 @@
 #include <dlfcn.h>    // dlsym access
 #include <iostream>
 
+// AtExitList - List of functions registered with the at_exit function
+static std::vector<void (*)()> AtExitList;
+
+void VM::runAtExitHandlers() {
+  while (!AtExitList.empty()) {
+    void (*Fn)() = AtExitList.back();
+    AtExitList.pop_back();
+    Fn();
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Function stubs that are invoked instead of raw system calls
 //===----------------------------------------------------------------------===//
@@ -21,12 +32,14 @@ static void NoopFn() {}
 
 // jit_exit - Used to intercept the "exit" system call.
 static void jit_exit(int Status) {
-  exit(Status);  // Do nothing for now.
+  VM::runAtExitHandlers();   // Run at_exit handlers...
+  exit(Status);
 }
 
 // jit_atexit - Used to intercept the "at_exit" system call.
 static int jit_atexit(void (*Fn)(void)) {
-  return atexit(Fn);    // Do nothing for now.
+  AtExitList.push_back(Fn);    // Take note of at_exit handler...
+  return 0;  // Always successful
 }
 
 //===----------------------------------------------------------------------===//
@@ -38,7 +51,7 @@ static int jit_atexit(void (*Fn)(void)) {
 void *VM::getPointerToNamedFunction(const std::string &Name) {
   // Check to see if this is one of the functions we want to intercept...
   if (Name == "exit") return (void*)&jit_exit;
-  if (Name == "at_exit") return (void*)&jit_atexit;
+  if (Name == "atexit") return (void*)&jit_atexit;
 
   // If it's an external function, look it up in the process image...
   void *Ptr = dlsym(0, Name.c_str());

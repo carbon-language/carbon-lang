@@ -27,6 +27,7 @@ class VM : public ExecutionEngine {
   // handler to lazily patch up references...
   //
   std::map<void*, Function*> FunctionRefs;
+
 public:
   VM(Module *M, TargetMachine *tm);
   ~VM();
@@ -54,6 +55,12 @@ public:
   // which causes lazy compilation of the target function.
   // 
   static void CompilationCallback();
+
+  /// runAtExitHandlers - Before exiting the program, at_exit functions must be
+  /// called.  This method calls them.
+  ///
+  static void runAtExitHandlers();
+
 private:
   static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();
