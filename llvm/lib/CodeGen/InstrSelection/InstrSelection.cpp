@@ -71,12 +71,9 @@ namespace {
     }
     
     bool runOnFunction(Function &F);
+    virtual const char *getPassName() const { return "Instruction Selection"; }
   };
 }
-
-// Register the pass...
-static RegisterLLC<InstructionSelection>
-X("instselect", "Instruction Selection", createInstructionSelectionPass);
 
 TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
                                Value *s1, Value *s2, const std::string &name)
@@ -384,6 +381,6 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
 // createInstructionSelectionPass - Public entrypoint for instruction selection
 // and this file as a whole...
 //
-Pass *createInstructionSelectionPass(TargetMachine &T) {
+FunctionPass *createInstructionSelectionPass(TargetMachine &T) {
   return new InstructionSelection(T);
 }

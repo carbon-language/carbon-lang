@@ -68,12 +68,6 @@ public:
   bool runOnBasicBlock(BasicBlock &BB); // apply this pass to each BB
 };
 
-
-// Register the pass with llc only, and not opt...
-static RegisterLLC<PeepholeOpts>
-X("peephole", "Peephole Optimization", createPeepholeOptsPass);
-
-
 /* Apply a list of peephole optimizations to this machine instruction
  * within its local context.  They are allowed to delete MI or any
  * instruction before MI, but not 
@@ -128,7 +122,7 @@ PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
 // createPeepholeOptsPass - Public entrypoint for peephole optimization
 // and this file as a whole...
 //
-Pass*
+FunctionPass*
 createPeepholeOptsPass(TargetMachine &T)
 {
   return new PeepholeOpts(T);
