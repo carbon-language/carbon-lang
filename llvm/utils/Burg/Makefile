@@ -17,7 +17,7 @@ include $(LEVEL)/Makefile.common
 gram.tab.c gram.tab.h: gram.yc
 	$(VERB) $(BISON) -o gram.tab.c -d $<
 
-$(SourceDir)/lex.c: gram.tab.h
+$(OBJDIR)/lex.o : gram.tab.h
 
 clean::
 	$(VERB) $(RM) -rf gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
