@@ -263,8 +263,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             DEBUG(printFreeRegs("\tfree registers", rc));
         }
 
-        //assert(verifyIntervals());
-
         processActiveIntervals(i);
         processInactiveIntervals(i);
         
@@ -398,56 +396,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             }
             --currentInstr_; // restore currentInstr_ iterator
             tempDefOperands_.clear();
-        }
-    }
-
-    return true;
-}
-
-bool RA::verifyIntervals()
-{
-    std::set<unsigned> assignedRegisters;
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
-        if ((*i)->reg >= MRegisterInfo::FirstVirtualRegister) {
-            unsigned reg = v2pMap_.find((*i)->reg)->second;
-
-            bool inserted = assignedRegisters.insert(reg).second;
-            assert(inserted && "registers in active list conflict");
-        }
-    }
-
-    for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end();
-         ++i) {
-        if ((*i)->reg >= MRegisterInfo::FirstVirtualRegister) {
-            unsigned reg = v2pMap_.find((*i)->reg)->second;
-
-            bool inserted = assignedRegisters.insert(reg).second;
-            assert(inserted && "registers in inactive list conflict");
-        }
-    }
-
-    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
-        unsigned reg = (*i)->reg;
-        if (reg >= MRegisterInfo::FirstVirtualRegister) {
-            reg = v2pMap_.find((*i)->reg)->second;
-        }
-
-        for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as) {
-            assert(assignedRegisters.find(*as) == assignedRegisters.end() &&
-                   "registers in active list alias each other");
-        }
-    }
-
-    for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end();
-         ++i) {
-        unsigned reg = (*i)->reg;
-        if (reg >= MRegisterInfo::FirstVirtualRegister) {
-            reg = v2pMap_.find((*i)->reg)->second;
-        }
-
-        for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as) {
-            assert(assignedRegisters.find(*as) == assignedRegisters.end() &&
-                   "registers in inactive list alias each other");
         }
     }
 
