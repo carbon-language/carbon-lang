@@ -424,6 +424,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
+    // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
+    if (ConstantFPSDNode *CFP =
+        dyn_cast<ConstantFPSDNode>(Node->getOperand(1))) {
+      if (CFP->getValueType(0) == MVT::f32) {
+        union {
+          unsigned I;
+          float    F;
+        } V;
+        V.F = CFP->getValue();
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
+                             DAG.getConstant(V.I, MVT::i32), Tmp2);
+      } else {
+        assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
+        union {
+          uint64_t I;
+          double   F;
+        } V;
+        V.F = CFP->getValue();
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
+                             DAG.getConstant(V.I, MVT::i64), Tmp2);
+      }
+      Op = Result;
+      Node = Op.Val;
+    }
+
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Legal: {
       SDOperand Val = LegalizeOp(Node->getOperand(1));
