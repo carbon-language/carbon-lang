@@ -45,9 +45,9 @@ public:
   virtual ~GlobalValue();
 
   /// If the usage is empty (except transitively dead constants), then this
-  /// global value can can be safely deleted since the destructor wll 
+  /// global value can can be safely deleted since the destructor will 
   /// delete the dead constants as well.
-  /// @brief Determine if theusage of this global value is empty except 
+  /// @brief Determine if the usage of this global value is empty except 
   /// for transitively dead constants.
   bool use_empty_except_constants();
 
