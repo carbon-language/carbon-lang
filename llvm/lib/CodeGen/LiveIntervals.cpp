@@ -502,7 +502,9 @@ void LiveIntervals::joinIntervals()
                     const TargetRegisterClass *rcA, *rcB;
                     rcA = mf_->getSSARegMap()->getRegClass(intA->reg);
                     rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
-                    assert(rcA == rcB && "registers must be of the same class");
+                    // if they are not of the same register class we continue
+                    if (rcA != rcB)
+                        continue;
 
                     // if their intervals do not overlap we join them
                     if (!intB->overlaps(*intA)) {
@@ -523,6 +525,13 @@ void LiveIntervals::joinIntervals()
                     assert(MRegisterInfo::isPhysicalRegister(intA->reg) &&
                            MRegisterInfo::isVirtualRegister(intB->reg) &&
                            "A must be physical and B must be virtual");
+
+                    const TargetRegisterClass *rcA, *rcB;
+                    rcA = mri_->getRegClass(intA->reg);
+                    rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
+                    // if they are not of the same register class we continue
+                    if (rcA != rcB)
+                        continue;
 
                     if (!intA->overlaps(*intB) &&
                         !overlapsAliases(*intA, *intB)) {
