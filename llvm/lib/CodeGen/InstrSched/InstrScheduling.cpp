@@ -38,7 +38,7 @@ SDL_opt("dsched", cl::Hidden, cl::location(SchedDebugLevel),
  clEnumValN(Sched_PrintMachineCode, "y", "print machine code after scheduling"),
  clEnumValN(Sched_PrintSchedTrace,  "t", "print trace of scheduling actions"),
  clEnumValN(Sched_PrintSchedGraphs, "g", "print scheduling graphs"),
-                   0));
+                   clEnumValEnd));
 
 
 //************************* Internal Data Types *****************************/
