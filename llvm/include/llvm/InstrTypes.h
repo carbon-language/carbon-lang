@@ -23,7 +23,9 @@ class SymTabValue;
 //
 class TerminatorInst : public Instruction {
 public:
-  TerminatorInst(unsigned iType);
+  TerminatorInst(Instruction::TermOps iType);
+  TerminatorInst(const Type *Ty, Instruction::TermOps iType,
+		 const string &Name = "");
   inline ~TerminatorInst() {}
 
   // Terminators must implement the methods required by Instruction...
