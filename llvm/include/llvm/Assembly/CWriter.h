@@ -19,8 +19,8 @@
 
 namespace llvm {
 
-class Pass;
-Pass *createWriteToCPass(std::ostream &o);
+class PassManager;
+void AddPassesToWriteC(PassManager &PM, std::ostream &o);
 
 } // End llvm namespace
 
