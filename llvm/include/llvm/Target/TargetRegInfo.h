@@ -178,7 +178,7 @@ public:
   // a regId in a register class to a common Id, or vice versa,
   // we use the folloing two methods.
   //
-  // Thsi method converts from class reg. number to unified register number.
+  // This method converts from class reg. number to unified register number.
   int getUnifiedRegNum(unsigned regClassID, int reg) const {
     if (reg == getInvalidRegNum()) { return getInvalidRegNum(); }
     assert(regClassID < getNumOfRegClasses() && "Invalid register class");
@@ -195,7 +195,8 @@ public:
     
     int totalRegs = 0, rcid = 0, NC = getNumOfRegClasses();  
     while (rcid < NC &&
-           uRegNum >= totalRegs + (int) MachineRegClassArr[rcid]->getNumOfAllRegs()) {
+           uRegNum>= totalRegs+(int)MachineRegClassArr[rcid]->getNumOfAllRegs())
+    {
       totalRegs += MachineRegClassArr[rcid]->getNumOfAllRegs();
       rcid++;
     }
