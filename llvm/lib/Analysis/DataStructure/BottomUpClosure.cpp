@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Timer.h"
 using namespace llvm;
 
 namespace {
@@ -114,9 +115,11 @@ DSGraph &BUDataStructures::getOrCreateGraph(Function *F) {
   DSGraph *&Graph = DSInfo[F];
   if (Graph) return *Graph;
 
-  // Copy the local version into DSInfo...
-  Graph = new DSGraph(getAnalysis<LocalDataStructures>().getDSGraph(*F),
-                      GlobalECs);
+  DSGraph &LocGraph = getAnalysis<LocalDataStructures>().getDSGraph(*F);
+  
+  // Steal the local graph.
+  Graph = new DSGraph(GlobalECs, LocGraph.getTargetData());
+  Graph->spliceFrom(LocGraph);
 
   Graph->setGlobalsGraph(GlobalsGraph);
   Graph->setPrintAuxCalls();
@@ -235,66 +238,57 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
   } else {
     // SCCFunctions - Keep track of the functions in the current SCC
     //
-    hash_set<DSGraph*> SCCGraphs;
+    std::vector<DSGraph*> SCCGraphs;
 
-    Function *NF;
-    std::vector<Function*>::iterator FirstInSCC = Stack.end();
-    DSGraph *SCCGraph = 0;
-    do {
-      NF = *--FirstInSCC;
-      ValMap[NF] = ~0U;
+    unsigned SCCSize = 1;
+    Function *NF = Stack.back();
+    ValMap[NF] = ~0U;
+    DSGraph &SCCGraph = getDSGraph(*NF);
 
-      // Figure out which graph is the largest one, in order to speed things up
-      // a bit in situations where functions in the SCC have widely different
-      // graph sizes.
-      DSGraph &NFGraph = getDSGraph(*NF);
-      SCCGraphs.insert(&NFGraph);
-      // FIXME: If we used a better way of cloning graphs (ie, just splice all
-      // of the nodes into the new graph), this would be completely unneeded!
-      if (!SCCGraph || SCCGraph->getGraphSize() < NFGraph.getGraphSize())
-        SCCGraph = &NFGraph;
-    } while (NF != F);
-
-    std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
-              << SCCGraphs.size() << "\n";
-
-    // Compute the Max SCC Size...
-    if (MaxSCC < SCCGraphs.size())
-      MaxSCC = SCCGraphs.size();
+    { NamedRegionTimer XX("asldkfjasdf");
 
     // First thing first, collapse all of the DSGraphs into a single graph for
-    // the entire SCC.  We computed the largest graph, so clone all of the other
-    // (smaller) graphs into it.  Discard all of the old graphs.
+    // the entire SCC.  Splice all of the graphs into one and discard all of the
+    // old graphs.
     //
-    for (hash_set<DSGraph*>::iterator I = SCCGraphs.begin(),
-           E = SCCGraphs.end(); I != E; ++I) {
-      DSGraph &G = **I;
-      if (&G != SCCGraph) {
-        SCCGraph->cloneInto(G);
+    while (NF != F) {
+      Stack.pop_back();
+      NF = Stack.back();
+      ValMap[NF] = ~0U;
 
-        // Update the DSInfo map and delete the old graph...
-        for (DSGraph::retnodes_iterator I = G.retnodes_begin(),
-               E = G.retnodes_end(); I != E; ++I)
-          DSInfo[I->first] = SCCGraph;
-        delete &G;
-      }
+      DSGraph &NFG = getDSGraph(*NF);
+
+      // Update the Function -> DSG map.
+      for (DSGraph::retnodes_iterator I = NFG.retnodes_begin(),
+             E = NFG.retnodes_end(); I != E; ++I)
+        DSInfo[I->first] = &SCCGraph;
+
+      SCCGraph.spliceFrom(NFG);
+      delete &NFG;
+
+      ++SCCSize;
     }
+    Stack.pop_back();
+    }
+    std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
+              << SCCSize << "\n";
+
+    // Compute the Max SCC Size.
+    if (MaxSCC < SCCSize)
+      MaxSCC = SCCSize;
 
     // Clean up the graph before we start inlining a bunch again...
-    SCCGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
+    SCCGraph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
     // Now that we have one big happy family, resolve all of the call sites in
     // the graph...
-    calculateGraph(*SCCGraph);
-    DEBUG(std::cerr << "  [BU] Done inlining SCC  [" << SCCGraph->getGraphSize()
-                    << "+" << SCCGraph->getAuxFunctionCalls().size() << "]\n");
+    calculateGraph(SCCGraph);
+    DEBUG(std::cerr << "  [BU] Done inlining SCC  [" << SCCGraph.getGraphSize()
+                    << "+" << SCCGraph.getAuxFunctionCalls().size() << "]\n");
 
     std::cerr << "DONE with SCC #: " << MyID << "\n";
 
     // We never have to revisit "SCC" processed functions...
-    
-    // Drop the stuff we don't need from the end of the stack
-    Stack.erase(FirstInSCC, Stack.end());
     return MyID;
   }
 
