@@ -65,7 +65,7 @@ struct SparcInstrInfo : public TargetInstrInfo {
     if (MI.getOpcode() == V9::SETHI && MI.getNumOperands() == 2) {
       const MachineOperand &op0 = MI.getOperand(0), &op1 = MI.getOperand(1);
       if (op0.isImmediate() && op0.getImmedValue() == 0 &&
-          op1.isMachineRegister() &&
+          op1.getType() == MachineOperand::MO_MachineRegister &&
           op1.getMachineRegNum() == SparcIntRegClass::g0)
       {
         return true;
