@@ -120,9 +120,21 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   
   // Output the types for the global variables in the module...
   for (Module::const_giterator I = M->gbegin(), End = M->gend(); I != End;++I) {
-    int Slot = Table.getValSlot((*I)->getType());
+    const GlobalVariable *GV = *I;
+    int Slot = Table.getValSlot(GV->getType());
     assert(Slot != -1 && "Module global vars is broken!");
-    output_vbr((unsigned)Slot, Out);
+
+    // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
+    unsigned oSlot = ((unsigned)Slot << 2) | (GV->hasInitializer() << 1) | 
+                        GV->isConstant();
+    output_vbr(oSlot, Out);
+
+    // If we have an initialized, output it now.
+    if (GV->hasInitializer()) {
+      Slot = Table.getValSlot(GV->getInitializer());
+      assert(Slot != -1 && "No slot for global var initializer!");
+      output_vbr((unsigned)Slot, Out);
+    }
   }
   output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
 

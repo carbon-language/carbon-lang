@@ -223,11 +223,13 @@ int SlotCalculator::getValSlot(const Value *D) const {
 
 
 int SlotCalculator::insertValue(const Value *D) {
-  if (const ConstPoolVal *CPV = D->castConstant()) {
+  if (D->isConstant() || D->isGlobal()) {
+    const User *U = (const User *)D;
     // This makes sure that if a constant has uses (for example an array
-    // of const ints), that they are inserted also.
+    // of const ints), that they are inserted also.  Same for global variable
+    // initializers.
     //
-    for_each(CPV->op_begin(), CPV->op_end(), 
+    for_each(U->op_begin(), U->op_end(), 
 	     bind_obj(this, &SlotCalculator::insertValue));
   }
 

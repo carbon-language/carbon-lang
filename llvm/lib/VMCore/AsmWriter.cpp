@@ -123,9 +123,17 @@ void AssemblyWriter::processModule(const Module *M) {
 }
 
 void AssemblyWriter::processGlobal(const GlobalVariable *GV) {
-  Out << "global ";
   if (GV->hasName()) Out << "%" << GV->getName() << " = ";
-  Out << GV->getType()->getDescription() << endl;
+
+  if (!GV->hasInitializer()) Out << "uninitialized ";
+
+  Out << (GV->isConstant() ? "constant " : "global ") 
+      << GV->getType()->getValueType()->getDescription();
+
+  if (GV->hasInitializer())
+    writeOperand(GV->getInitializer(), false, false);
+
+  Out << endl;
 }
 
 

@@ -82,12 +82,18 @@ void Method::dropAllReferences() {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalVariable::GlobalVariable(const Type *Ty, const string &Name = "")
-  : Value(Ty, Value::GlobalVal, Name), Parent(0) {
+GlobalVariable::GlobalVariable(const Type *Ty, bool isConstant,
+			       ConstPoolVal *Initializer = 0, 
+			       const string &Name = "")
+  : User(Ty, Value::GlobalVal, Name), Parent(0), Constant(isConstant) {
   assert(Ty->isPointerType() &&                   // No unsized array pointers
-	 (!Ty->dyncastPointerType()->isArrayType() ||
-	  Ty->dyncastPointerType()->dyncastArrayType()->isSized()) &&
+	 (!Ty->castPointerType()->isArrayType() ||
+	  Ty->castPointerType()->castArrayType()->isSized()) &&
 	 "Global Variables must be pointers to a sized type!");
+  if (Initializer) Operands.push_back(Use((Value*)Initializer, this));
+
+  assert(!isConstant || hasInitializer() &&
+	 "Globals Constants must have an initializer!"); 
 }
 
 // Specialize setName to take care of symbol table majik

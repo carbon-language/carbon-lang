@@ -323,14 +323,29 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   unsigned VarType;
   if (read_vbr(Buf, End, VarType)) return failure(true);
   while (VarType != Type::VoidTyID) { // List is terminated by Void
-    const Type *Ty = getType(VarType);
+    // VarType Fields: bit0 = isConstant, bit1 = hasInitializer, bit2+ = slot#
+    const Type *Ty = getType(VarType >> 2);
     if (!Ty || !Ty->isPointerType()) { 
       cerr << "Global not pointer type!  Ty = " << Ty << endl;
       return failure(true); 
     }
 
+    ConstPoolVal *Initializer = 0;
+    if (VarType & 2) { // Does it have an initalizer?
+      // Do not improvise... values must have been stored in the constant pool,
+      // which should have been read before now.
+      //
+      unsigned InitSlot;
+      if (read_vbr(Buf, End, InitSlot)) return failure(true);
+      
+      Value *V = getValue(Ty->castPointerType()->getValueType(),
+			  InitSlot, false);
+      if (V == 0) return failure(true);
+      Initializer = V->castConstantAsserting();
+    }
+
     // Create the global variable...
-    GlobalVariable *GV = new GlobalVariable(Ty);
+    GlobalVariable *GV = new GlobalVariable(Ty, VarType & 1, Initializer);
     insertValue(GV, ModuleValues);
     C->getGlobalList().push_back(GV);
 
