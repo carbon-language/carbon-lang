@@ -203,7 +203,7 @@ public:
     assert(isMachineBasicBlock() && "Can't get MBB in non-MBB operand!");
     return MBB;
   }
-  unsigned getFrameIndex() const { assert(isFrameIndex()); return immedVal; }
+  int getFrameIndex() const { assert(isFrameIndex()); return immedVal; }
 
   bool          opIsUse         () const { return (flags & USEDEFMASK) == 0; }
   bool		opIsDef		() const { return flags & DEFFLAG; }
@@ -313,12 +313,6 @@ public:
   MachineInstr(MachineBasicBlock *MBB, MachineOpCode Opcode, unsigned numOps);
   
 
-  /// replace - Support to rewrite a machine instruction in place: for now,
-  /// simply replace() and then set new operands with Set.*Operand methods
-  /// below.
-  /// 
-  void replace(MachineOpCode Opcode, unsigned numOperands);
-  
   // The opcode.
   // 
   const MachineOpCode getOpcode() const { return opCode; }
@@ -338,10 +332,12 @@ public:
     return operands[i];
   }
 
+  // FIXME: ELIMINATE
   MachineOperand::MachineOperandType getOperandType(unsigned i) const {
     return getOperand(i).getType();
   }
 
+  // FIXME: ELIMINATE: Misleading name: Definition not defined.
   bool operandIsDefined(unsigned i) const {
     return getOperand(i).opIsDef();
   }
@@ -401,21 +397,6 @@ public:
   typedef ValOpIterator<const MachineInstr*,const Value*> const_val_op_iterator;
   typedef ValOpIterator<      MachineInstr*,      Value*> val_op_iterator;
 
-  // Access to set the operands when building the machine instruction
-  // 
-  void SetMachineOperandVal     (unsigned i,
-                                 MachineOperand::MachineOperandType operandType,
-                                 Value* V,
-                                 bool isDef=false,
-                                 bool isDefAndUse=false);
-
-  void SetMachineOperandConst   (unsigned i,
-                                 MachineOperand::MachineOperandType operandType,
-                                 int64_t intValue);
-
-  void SetMachineOperandReg     (unsigned i,
-                                 int regNum,
-                                 bool isDef=false);
 
   //===--------------------------------------------------------------------===//
   // Accessors to add operands when building up machine instructions
@@ -518,6 +499,35 @@ public:
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(Idx, MachineOperand::MO_FrameIndex));
   }
+
+
+  //===--------------------------------------------------------------------===//
+  // Accessors used to modify instructions in place.
+  //
+  // FIXME: Move this stuff to MachineOperand itself!
+
+  /// replace - Support to rewrite a machine instruction in place: for now,
+  /// simply replace() and then set new operands with Set.*Operand methods
+  /// below.
+  /// 
+  void replace(MachineOpCode Opcode, unsigned numOperands);
+
+  // Access to set the operands when building the machine instruction
+  // 
+  void SetMachineOperandVal     (unsigned i,
+                                 MachineOperand::MachineOperandType operandType,
+                                 Value* V,
+                                 bool isDef=false,
+                                 bool isDefAndUse=false);
+
+  void SetMachineOperandConst   (unsigned i,
+                                 MachineOperand::MachineOperandType operandType,
+                                 int64_t intValue);
+
+  void SetMachineOperandReg     (unsigned i,
+                                 int regNum,
+                                 bool isDef=false);
+
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
                            bool defsOnly = true);
