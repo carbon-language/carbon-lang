@@ -260,8 +260,7 @@ FunctionPass *createLowerSwitchPass();
 // into calls to abort().
 //
 FunctionPass *createLowerInvokePass();
-
-
+extern const PassInfo *LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
 //
