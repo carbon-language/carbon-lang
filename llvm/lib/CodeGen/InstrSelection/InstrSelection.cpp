@@ -19,6 +19,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
+#include "Support/LeakDetector.h"
 using std::cerr;
 using std::vector;
 
@@ -70,6 +71,29 @@ namespace {
 // Register the pass...
 static RegisterLLC<InstructionSelection>
 X("instselect", "Instruction Selection", createInstructionSelectionPass);
+
+TmpInstruction::TmpInstruction(Value *s1, Value *s2, const std::string &name)
+  : Instruction(s1->getType(), Instruction::UserOp1, name) {
+  Operands.push_back(Use(s1, this));  // s1 must be nonnull
+  if (s2) {
+    Operands.push_back(Use(s2, this));
+  }
+
+  // TmpInstructions should not be garbage checked.
+  LeakDetector::removeGarbageObject(this);
+}
+  
+// Constructor that requires the type of the temporary to be specified.
+// Both S1 and S2 may be NULL.(
+TmpInstruction::TmpInstruction(const Type *Ty, Value *s1, Value* s2,
+                               const std::string &name)
+  : Instruction(Ty, Instruction::UserOp1, name) {
+  if (s1) { Operands.push_back(Use(s1, this)); }
+  if (s2) { Operands.push_back(Use(s2, this)); }
+
+  // TmpInstructions should not be garbage checked.
+  LeakDetector::removeGarbageObject(this);
+}
 
 
 bool InstructionSelection::runOnFunction(Function &F)
