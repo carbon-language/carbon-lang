@@ -55,19 +55,17 @@ public:
   // this is true for external methods, defined as forward "declare"ations
   bool isExternal() const { return BasicBlocks.empty(); }
 
-
-  // Get the underlying elements of the Method...
+  // Get the underlying elements of the Method... both the argument list and
+  // basic block list are empty for external methods.
+  //
   inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }
   inline       ArgumentListType &getArgumentList()      { return ArgumentList; }
 
   inline const BasicBlocksType  &getBasicBlocks() const { return BasicBlocks; }
   inline       BasicBlocksType  &getBasicBlocks()       { return BasicBlocks; }
 
-  inline const BasicBlock*       getEntryNode() const   { return front(); }
-  inline       BasicBlock*       getEntryNode()         { return front(); }
-  
-  inline const BasicBlock*       getExitNode()  const   { return back();  }
-  inline       BasicBlock*       getExitNode()          { return back();  }
+  inline const BasicBlock       *getEntryNode() const   { return front(); }
+  inline       BasicBlock       *getEntryNode()         { return front(); }
   
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions
