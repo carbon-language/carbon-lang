@@ -14,7 +14,7 @@
 // 
 //===------------------------------------------------------------------------===
 
-#include "llvm/Driver/CompilerDriver.h"
+#include "CompilerDriver.h"
 #include "llvm/System/Signals.h"
 #include "Support/CommandLine.h"
 #include <iostream>
