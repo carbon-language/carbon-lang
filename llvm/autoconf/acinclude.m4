@@ -6210,6 +6210,7 @@ AC_DEFUN([AC_CONFIG_MAKEFILE],
 # http://www.gnu.org/software/ac-archive/htmldoc/ac_cxx_have_ext_slist.html
 AC_DEFUN([AC_C_PRINTF_A],
 [
+        AC_MSG_CHECKING([for printf %a format specifier])
 	AC_LANG_SAVE
 	AC_LANG_C
 	AC_RUN_IFELSE(
@@ -6229,6 +6230,7 @@ AC_DEFUN([AC_C_PRINTF_A],
 		                 return (0);]]]),
 		ac_c_printf_a=yes,ac_c_printf_a=no)
 	AC_LANG_RESTORE
+        AC_MSG_RESULT($ac_c_printf_a)
 	if test "$ac_c_printf_a" = "yes"; then
 		AC_DEFINE([HAVE_PRINTF_A],[1],[Define to have the %a format string])
 	fi
@@ -6239,6 +6241,7 @@ AC_DEFUN([AC_C_PRINTF_A],
 #
 AC_DEFUN([AC_LINK_USE_R],
 [
+  AC_MSG_CHECKING([for compiler -Wl,-R<path> option])
   AC_LANG_SAVE
   AC_LANG_C
   oldcflags="$CFLAGS"
@@ -6246,6 +6249,7 @@ AC_DEFUN([AC_LINK_USE_R],
   AC_LINK_IFELSE([int main() { return 0; }],[ac_cv_link_use_r=yes],[ac_cv_link_use_r=no])
   CFLAGS="$oldcflags"
   AC_LANG_RESTORE
+  AC_MSG_RESULT($ac_cv_link_use_r)
   if test "$ac_cv_link_use_r" = yes
   then
     AC_DEFINE([HAVE_LINK_R],[1],[Define if you can use -Wl,-R. to pass -R. to the linker, in order to add the current directory to the dynamic linker search path.])
