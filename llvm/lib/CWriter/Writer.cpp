@@ -522,11 +522,13 @@ void CWriter::printModule(Module *M) {
 
   // Global variable declarations...
   if (!M->gempty()) {
-    Out << "\n/* Global Variable Declarations */\n";
+    Out << "\n/* External Global Variable Declarations */\n";
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
-      Out << (I->hasExternalLinkage() ? "extern " : "static ");
-      printType(I->getType()->getElementType(), getValueName(I));
-      Out << ";\n";
+      if (I->hasExternalLinkage()) {
+        Out << "extern ";
+        printType(I->getType()->getElementType(), getValueName(I));
+        Out << ";\n";
+      }
     }
   }
 
@@ -539,11 +541,13 @@ void CWriter::printModule(Module *M) {
     }
   }
 
-  // Output the global variable contents...
+  // Output the global variable definitions and contents...
   if (!M->gempty()) {
-    Out << "\n\n/* Global Data */\n";
+    Out << "\n\n/* Global Variable Definitions and Initialization */\n";
     for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
-      if (I->hasInternalLinkage()) Out << "static ";
+      if (I->hasExternalLinkage())
+        continue;                       // printed above!
+      Out << "static ";
       printType(I->getType()->getElementType(), getValueName(I));
       
       if (I->hasInitializer()) {
