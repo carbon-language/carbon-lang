@@ -167,6 +167,22 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   unsigned Opcode = MI->getOpcode();
   const MachineInstrDescriptor &Desc = get(Opcode);
 
+  if (Opcode == X86::PHI) {
+    printOp(O, MI->getOperand(0), RI);
+    O << " = phi ";
+    for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
+      if (i != 1) O << ", ";
+      O << "[";
+      printOp(O, MI->getOperand(i), RI);
+      O << ", ";
+      printOp(O, MI->getOperand(i+1), RI);
+      O << "]";
+    }
+    O << "\n";
+    return;
+  }
+
+
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::RawFrm:
     // The accepted forms of Raw instructions are:
