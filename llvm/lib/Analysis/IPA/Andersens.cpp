@@ -612,11 +612,12 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
   // These functions don't induce any points-to constraints.
   if (F->getName() == "printf" || F->getName() == "fprintf" ||
       F->getName() == "sprintf" ||
-      F->getName() == "fgets" ||
+      F->getName() == "fgets" || F->getName() == "__assert_fail" ||
       F->getName() == "open" || F->getName() == "fopen" ||
       F->getName() == "fclose" || F->getName() == "fflush" ||
       F->getName() == "rewind" ||
-      F->getName() == "atoi" || F->getName() == "unlink" ||
+      F->getName() == "atoi" || F->getName() == "atol" ||
+      F->getName() == "unlink" ||
       F->getName() == "sscanf" || F->getName() == "fscanf" ||
       F->getName() == "llvm.memset" || F->getName() == "memcmp" ||
       F->getName() == "read" || F->getName() == "write")
@@ -633,8 +634,10 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
     return true;
   }
 
-  if (F->getName() == "realloc") {
-    // Result = Arg
+  // Result = Arg0
+  if (F->getName() == "realloc" || F->getName() == "strchr" ||
+      F->getName() == "strrchr" || F->getName() == "strstr" ||
+      F->getName() == "strtok") {
     Constraints.push_back(Constraint(Constraint::Copy,
                                      getNode(CS.getInstruction()),
                                      getNode(CS.getArgument(0))));
