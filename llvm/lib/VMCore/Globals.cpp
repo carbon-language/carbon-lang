@@ -50,25 +50,15 @@ static bool removeDeadConstantUsers(Constant* C) {
 /// This function returns true if the global value is now dead.  If all 
 /// users of this global are not dead, this method may return false and
 /// leave some of them around.
-bool GlobalValue::removeDeadConstantUsers() {
+void GlobalValue::removeDeadConstantUsers() {
   while(!use_empty()) {
     if (Constant* User = dyn_cast<Constant>(use_back())) {
       if (!::removeDeadConstantUsers(User))
-        return false; // Constant wasn't dead
+        return; // Constant wasn't dead
     } else {
-      return false; // Non-constant usage;
+      return; // Non-constant usage;
     }
   }
-  return true;
-}
-
-/// This virtual destructor is responsible for deleting any transitively dead
-/// Constants that are using the GlobalValue.
-GlobalValue::~GlobalValue() {
-  // Its an error to attempt destruction with non-constant uses remaining.
-  bool okay_to_destruct = removeDeadConstantUsers();
-  assert(okay_to_destruct && 
-         "Can't destroy GlobalValue with non-constant uses.");
 }
 
 /// Override destroyConstant to make sure it doesn't get called on 
