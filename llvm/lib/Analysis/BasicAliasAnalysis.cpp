@@ -83,9 +83,9 @@ namespace {
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
 
-    /// hasNoModRefInfoForCalls - We have no way to test one call against
-    /// another, unless they are pure or const.
-    virtual bool hasNoModRefInfoForCalls() const { return true; }
+    /// hasNoModRefInfoForCalls - We can provide mod/ref information against
+    /// non-escaping allocations.
+    virtual bool hasNoModRefInfoForCalls() const { return false; }
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
