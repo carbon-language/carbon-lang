@@ -30,8 +30,6 @@
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
 #include "Support/FileUtilities.h"
-#include <algorithm>
-#include <set>
 using namespace llvm;
 
 namespace llvm {
@@ -255,71 +253,19 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   return Result;
 }
 
-namespace {
-  struct Disambiguator {
-    std::set<std::string>  SymbolNames;
-    std::set<GlobalValue*> Symbols;
-    uint64_t uniqueCounter;
-    bool externalOnly;
-  public:
-    Disambiguator() : uniqueCounter(0), externalOnly(true) {}
-    void setExternalOnly(bool value) { externalOnly = value; }
-    void add(GlobalValue &V) {
-      // If we're only processing externals and this isn't external, bail
-      if (externalOnly && !V.isExternal()) return;
-      // If we're already processed this symbol, don't add it again
-      if (Symbols.count(&V) != 0) return;
-      // Ignore intrinsic functions
-      if (Function *F = dyn_cast<Function>(&V))
-        if (F->getIntrinsicID() != 0)
-          return;
-
-      std::string SymName = V.getName();
-
-      // Use the Mangler facility to make symbol names that will be valid in
-      // shared objects.
-      SymName = Mangler::makeNameProper(SymName);
-      V.setName(SymName);
-
-      if (SymbolNames.count(SymName) == 0) {
-        DEBUG(std::cerr << "Disambiguator: adding " << SymName
-                        << ", no conflicts.\n");
-        SymbolNames.insert(SymName);
-      } else { 
-        // Mangle name before adding
-        std::string newName;
-        do {
-          newName = SymName + "_" + utostr(uniqueCounter);
-          if (SymbolNames.count(newName) == 0) break;
-          else ++uniqueCounter;
-        } while (1);
-        //while (SymbolNames.count(V->getName()+utostr(uniqueCounter++))==0);
-        DEBUG(std::cerr << "Disambiguator: conflict: " << SymName
-                        << ", adding: " << newName << "\n");
-        V.setName(newName);
-        SymbolNames.insert(newName);
-      }
-      Symbols.insert(&V);
-    }
-  };
-}
-
 static void DisambiguateGlobalSymbols(Module *M) {
-  // First, try not to cause collisions by minimizing chances of renaming an
+  // Try not to cause collisions by minimizing chances of renaming an
   // already-external symbol, so take in external globals and functions as-is.
-  Disambiguator D;
+  // The code should work correctly without disambiguation (assuming the same
+  // mangler is used by the two code generators), but having symbols with the
+  // same name causes warnings to be emitted by the code generator.
+  Mangler Mang(*M);
   DEBUG(std::cerr << "Disambiguating globals (external-only)\n");
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) D.add(*I);
+  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I)
+    I->setName(Mang.getValueName(I));
   DEBUG(std::cerr << "Disambiguating functions (external-only)\n");
-  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I) D.add(*I);
-
-  // Now just rename functions and globals as necessary, keeping what's already
-  // in the set unique.
-  D.setExternalOnly(false);
-  DEBUG(std::cerr << "Disambiguating globals\n");
-  for (Module::giterator I = M->gbegin(), E = M->gend(); I != E; ++I) D.add(*I);
-  DEBUG(std::cerr << "Disambiguating globals\n");
-  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I) D.add(*I);
+  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I)
+    I->setName(Mang.getValueName(I));
 }
 
 
