@@ -35,6 +35,7 @@ namespace {
     MachineFunction *MF;
     const TargetMachine *TM;
     const MRegisterInfo *RegInfo;
+    bool *PhysRegsEverUsed;
     
     // StackSlotForVirtReg - Maps SSA Regs => frame index on the stack where
     // these values are spilled
@@ -118,8 +119,10 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
     assert(RI+regIdx != RE && "Not enough registers!");
     unsigned PhysReg = *(RI+regIdx);
     
-    if (!RegsUsed[PhysReg])
+    if (!RegsUsed[PhysReg]) {
+      PhysRegsEverUsed[PhysReg] = true;
       return PhysReg;
+    }
   }
 }
 
@@ -156,19 +159,20 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     RegsUsed.resize(RegInfo->getNumRegs());
     
-    // a preliminary pass that will invalidate any registers that
-    // are used by the instruction (including implicit uses)
+    // This is a preliminary pass that will invalidate any registers that are
+    // used by the instruction (including implicit uses).
     unsigned Opcode = MI->getOpcode();
     const TargetInstrDescriptor &Desc = TM->getInstrInfo()->get(Opcode);
-    const unsigned *Regs = Desc.ImplicitUses;
-    while (*Regs)
-      RegsUsed[*Regs++] = true;
+    const unsigned *Regs;
+    for (Regs = Desc.ImplicitUses; *Regs; ++Regs)
+      RegsUsed[*Regs] = true;
     
-    Regs = Desc.ImplicitDefs;
-    while (*Regs)
-      RegsUsed[*Regs++] = true;
+    for (Regs = Desc.ImplicitDefs; *Regs; ++Regs) {
+      RegsUsed[*Regs] = true;
+      PhysRegsEverUsed[*Regs] = true;
+    }
     
-    // Loop over uses, move from memory into registers
+    // Loop over uses, move from memory into registers.
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
       MachineOperand &op = MI->getOperand(i);
       
@@ -224,6 +228,10 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &MF->getTarget();
   RegInfo = TM->getRegisterInfo();
+
+  PhysRegsEverUsed = new bool[RegInfo->getNumRegs()];
+  std::fill(PhysRegsEverUsed, PhysRegsEverUsed+RegInfo->getNumRegs(), false);
+  Fn.setUsedPhysRegs(PhysRegsEverUsed);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
