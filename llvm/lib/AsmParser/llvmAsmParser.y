@@ -247,7 +247,8 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
 static Value *lookupInSymbolTable(const Type *Ty, const string &Name) {
   SymbolTable *SymTab = 
-    inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() : 0;
+    inFunctionScope() ? CurMeth.CurrentFunction->getSymbolTable() :
+                        CurModule.CurrentModule->getSymbolTable();
   return SymTab ? SymTab->lookup(Ty, Name) : 0;
 }
 
@@ -402,7 +403,7 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers,
         // resolver table
         InsertValue(V, *FutureLateResolvers);
       } else {
-	if (DID.Type == 1)
+	if (DID.Type == ValID::NameVal)
 	  ThrowException("Reference to an invalid definition: '" +DID.getName()+
 			 "' of type '" + V->getType()->getDescription() + "'",
 			 getLineNumFromPlaceHolder(V));
