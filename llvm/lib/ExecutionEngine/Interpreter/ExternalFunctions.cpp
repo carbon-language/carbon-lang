@@ -481,11 +481,17 @@ GenericValue lle_X_strcpy(FunctionType *M, const vector<GenericValue> &Args) {
   return PTOGV(strcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1])));
 }
 
-// long strlen(const char *src);
+// size_t strlen(const char *src);
 GenericValue lle_X_strlen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
+  size_t strlenResult = strlen ((char *) GVTOP (Args[0]));
   GenericValue Ret;
-  Ret.LongVal = strlen((char*)GVTOP(Args[0]));
+  if (sizeof (size_t) == sizeof (uint64_t)) {
+    Ret.ULongVal = strlenResult;
+  } else {
+    assert (sizeof (size_t) == sizeof (unsigned int));
+    Ret.UIntVal = strlenResult;
+  }
   return Ret;
 }
 
