@@ -37,24 +37,6 @@ bool CheckBytecodeOutputToConsole(
 sys::Path FindExecutable(const std::string &ExeName,
                          const std::string &ProgramPath);
 
-/// RunProgramWithTimeout - This function provides an alternate interface to the
-/// sys::Program::ExecuteAndWait interface.
-/// @see sys:Program::ExecuteAndWait
-inline int RunProgramWithTimeout(const sys::Path &ProgramPath,
-                                const char **Args,
-                                const sys::Path &StdInFile,
-                                const sys::Path &StdOutFile,
-                                const sys::Path &StdErrFile,
-                                unsigned NumSeconds = 0) {
-  const sys::Path* redirects[3];
-  redirects[0] = &StdInFile;
-  redirects[1] = &StdOutFile;
-  redirects[2] = &StdErrFile;
-  
-  return 
-    sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
-}
-
 } // End llvm namespace
 
 #endif
