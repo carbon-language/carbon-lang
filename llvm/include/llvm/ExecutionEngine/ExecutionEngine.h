@@ -16,7 +16,6 @@
 #define EXECUTION_ENGINE_H
 
 #include <vector>
-#include <string>
 #include <map>
 #include <cassert>
 
@@ -67,29 +66,29 @@ public:
     CurVal = Addr;
   }
 
-  // getPointerToGlobalIfAvailable - This returns the address of the specified
-  // global value if it is available, otherwise it returns null.
-  //
+  /// getPointerToGlobalIfAvailable - This returns the address of the specified
+  /// global value if it is available, otherwise it returns null.
+  ///
   void *getPointerToGlobalIfAvailable(const GlobalValue *GV) {
     std::map<const GlobalValue*, void*>::iterator I = GlobalAddress.find(GV);
     return I != GlobalAddress.end() ? I->second : 0;
   }
 
-  // getPointerToGlobal - This returns the address of the specified global
-  // value.  This may involve code generation if it's a function.
-  //
+  /// getPointerToGlobal - This returns the address of the specified global
+  /// value.  This may involve code generation if it's a function.
+  ///
   void *getPointerToGlobal(const GlobalValue *GV);
 
-  // getPointerToFunction - The different EE's represent function bodies in
-  // different ways.  They should each implement this to say what a function
-  // pointer should look like.
-  //
+  /// getPointerToFunction - The different EE's represent function bodies in
+  /// different ways.  They should each implement this to say what a function
+  /// pointer should look like.
+  ///
   virtual void *getPointerToFunction(Function *F) = 0;
 
-  // getPointerToFunctionOrStub - If the specified function has been code-gen'd,
-  // return a pointer to the function.  If not, compile it, or use a stub to
-  // implement lazy compilation if available.
-  //
+  /// getPointerToFunctionOrStub - If the specified function has been
+  /// code-gen'd, return a pointer to the function.  If not, compile it, or use
+  /// a stub to implement lazy compilation if available.
+  ///
   virtual void *getPointerToFunctionOrStub(Function *F) {
     // Default implementation, just codegen the function.
     return getPointerToFunction(F);
@@ -99,7 +98,7 @@ public:
   void InitializeMemory(const Constant *Init, void *Addr);
 
   /// recompileAndRelinkFunction - This method is used to force a function
-  /// which has already been compiled, to be compiled again, possibly
+  /// which has already been compiled to be compiled again, possibly
   /// after it has been modified. Then the entry to the old copy is overwritten
   /// with a branch to the new copy. If there was no old copy, this acts
   /// just like VM::getPointerToFunction().
