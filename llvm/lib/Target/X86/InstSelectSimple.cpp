@@ -504,9 +504,9 @@ static unsigned getSetCCNumber(unsigned Opcode) {
   case Instruction::SetEQ: return 0;
   case Instruction::SetNE: return 1;
   case Instruction::SetLT: return 2;
-  case Instruction::SetGT: return 3;
-  case Instruction::SetLE: return 4;
-  case Instruction::SetGE: return 5;
+  case Instruction::SetGE: return 3;
+  case Instruction::SetGT: return 4;
+  case Instruction::SetLE: return 5;
   }
 }
 
@@ -515,12 +515,12 @@ static unsigned getSetCCNumber(unsigned Opcode) {
 // seteq -> sete        sete
 // setne -> setne       setne
 // setlt -> setl        setb
+// setge -> setge       setae
 // setgt -> setg        seta
 // setle -> setle       setbe
-// setge -> setge       setae
 static const unsigned SetCCOpcodeTab[2][6] = {
-  {X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAr, X86::SETBEr, X86::SETAEr},
-  {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGr, X86::SETLEr, X86::SETGEr},
+  {X86::SETEr, X86::SETNEr, X86::SETBr, X86::SETAEr, X86::SETAr, X86::SETBEr},
+  {X86::SETEr, X86::SETNEr, X86::SETLr, X86::SETGEr, X86::SETGr, X86::SETLEr},
 };
 
 bool ISel::EmitComparisonGetSignedness(unsigned OpNum, Value *Op0, Value *Op1) {
@@ -678,14 +678,24 @@ void ISel::visitReturnInst(ReturnInst &I) {
   BuildMI(BB, X86::RET, 0);
 }
 
+// getBlockAfter - Return the basic block which occurs lexically after the
+// specified one.
+static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
+  Function::iterator I = BB; ++I;  // Get iterator to next block
+  return I != BB->getParent()->end() ? &*I : 0;
+}
+
 /// visitBranchInst - Handle conditional and unconditional branches here.  Note
 /// that since code layout is frozen at this point, that if we are trying to
 /// jump to a block that is the immediate successor of the current block, we can
 /// just make a fall-through (but we don't currently).
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
-  if (!BI.isConditional()) {
-    BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+  BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
+
+  if (!BI.isConditional()) {  // Unconditional branch?
+    if (BI.getSuccessor(0) != NextBB)
+      BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
     return;
   }
 
@@ -696,8 +706,15 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
     BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addZImm(0);
-    BuildMI(BB, X86::JE, 1).addPCDisp(BI.getSuccessor(1));
-    BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+    if (BI.getSuccessor(1) == NextBB) {
+      if (BI.getSuccessor(0) != NextBB)
+        BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
+    } else {
+      BuildMI(BB, X86::JE, 1).addPCDisp(BI.getSuccessor(1));
+      
+      if (BI.getSuccessor(0) != NextBB)
+        BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+    }
     return;
   }
 
@@ -710,16 +727,25 @@ void ISel::visitBranchInst(BranchInst &BI) {
   // seteq -> je          je
   // setne -> jne         jne
   // setlt -> jl          jb
+  // setge -> jge         jae
   // setgt -> jg          ja
   // setle -> jle         jbe
-  // setge -> jge         jae
   static const unsigned OpcodeTab[2][6] = {
-    { X86::JE, X86::JNE, X86::JB, X86::JA, X86::JBE, X86::JAE },
-    { X86::JE, X86::JNE, X86::JL, X86::JG, X86::JLE, X86::JGE },
+    { X86::JE, X86::JNE, X86::JB, X86::JAE, X86::JA, X86::JBE },
+    { X86::JE, X86::JNE, X86::JL, X86::JGE, X86::JG, X86::JLE },
   };
   
-  BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(0));
-  BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(1));
+  if (BI.getSuccessor(0) != NextBB) {
+    BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(0));
+    if (BI.getSuccessor(1) != NextBB)
+      BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(1));
+  } else {
+    // Change to the inverse condition...
+    if (BI.getSuccessor(1) != NextBB) {
+      OpNum ^= 1;
+      BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(1));
+    }
+  }
 }
 
 
