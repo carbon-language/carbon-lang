@@ -2077,13 +2077,13 @@ I/O port.
 <h5>Arguments:</h5>
 
 <p>
-The first argument to this intrinsic indicates the hardware I/O address to
-which data should be written.  The address is in the hardware I/O address
-namespace (as opposed to being a memory location for memory mapped I/O).
+The first argument is the value to write to the I/O port.
 </p>
 
 <p>
-The second argument is the value to write to the I/O port.
+The second argument indicates the hardware I/O address to which data should be
+written.  The address is in the hardware I/O address namespace (as opposed to
+being a memory location for memory mapped I/O).
 </p>
 
 <h5>Semantics:</h5>
@@ -2107,7 +2107,7 @@ value written must be 8, 16, or 32 bits in length.
 
 <h5>Syntax:</h5>
 <pre>
-  call &lt;integer type&gt; (&lt;integer type&gt;)* %llvm.readio (&lt;integer type&gt; &lt;address&gt;)
+  call &lt;result&gt; (&lt;ty&gt;*)* %llvm.readio (&lt;ty&gt; * &lt;pointer&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2120,24 +2120,28 @@ address.
 <h5>Arguments:</h5>
 
 <p>
-The argument to this intrinsic indicates the memory address from which to read
-the data.
+The argument to this intrinsic is a pointer indicating the memory address from
+which to read the data.  The data must be a
+<a href="#t_firstclass">first class</a> type.
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
 The '<tt>llvm.readio</tt>' intrinsic reads data from a memory mapped I/O
-location specified by <i>address</i> and returns the value.  The address and
-return value must be integers, but the size allowed for each is dependent upon
-the platform upon which the program is code generated.
+location specified by <i>pointer</i> and returns the value.  The argument must
+be a pointer, and the return value must be a
+<a href="#t_firstclass">first class</a> type.  However, certain architectures
+may not support I/O on all first class types.  For example, 32 bit processors
+may only support I/O on data types that are 32 bits or less.
 </p>
 
 <p>
-This intrinsic ensures that the I/O data read occurs in instruction order in
-relation to other I/O data reads and writes (as opposed to a normal load, where
-hardware scheduling can re-arrange the actual memory accesses to occur out of
-order).
+This intrinsic enforces an in-order memory model for llvm.readio and
+llvm.writeio calls on machines that use dynamic scheduling.  Dynamically
+scheduled processors may execute loads and stores out of order, re-ordering at
+run time accesses to memory mapped I/O registers.  Using these intrinsics
+ensures that accesses to memory mapped I/O registers occur in program order.
 </p>
 
 </div>
@@ -2151,7 +2155,7 @@ order).
 
 <h5>Syntax:</h5>
 <pre>
-  call void (&lt;integer type&gt;, &lt;integer type&gt;)* %llvm.writeio (&lt;integer type&gt; &lt;value&gt;, &lt;integer type&gt; &lt;address&gt;)
+  call void (&lt;ty1&gt;, &lt;ty2&gt;*)* %llvm.writeio (&lt;ty1&gt; &lt;value&gt;, &lt;ty2&gt; * &lt;pointer&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2164,28 +2168,27 @@ mapped I/O address.
 <h5>Arguments:</h5>
 
 <p>
-The first argument to this intrinsic indicates the memory address to which data
-should be written.
-</p>
-
-<p>
-The second argument is the value to write to the memory mapped I/O location.
+The first argument is the value to write to the memory mapped I/O location.
+The second argument is a pointer indicating the memory address to which the
+data should be written.
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
 The '<tt>llvm.writeio</tt>' intrinsic writes <i>value</i> to the memory mapped
-I/O address specified by <i>address</i>.  The address and value must be
-integers, but the size is dependent upon the platform upon which the program is
-code generated.
+I/O address specified by <i>pointer</i>.  The value must be a
+<a href="#t_firstclass">first class</a> type.  However, certain architectures
+may not support I/O on all first class types.  For example, 32 bit processors
+may only support I/O on data types that are 32 bits or less.
 </p>
 
 <p>
-This intrinsic ensures that the I/O data write occurs in instruction order in
-relation to other I/O data reads and writes (as opposed to a normal store,
-where hardware scheduling can re-arrange the actual memory accesses to occur
-out of order).
+This intrinsic enforces an in-order memory model for llvm.readio and
+llvm.writeio calls on machines that use dynamic scheduling.  Dynamically
+scheduled processors may execute loads and stores out of order, re-ordering at
+run time accesses to memory mapped I/O registers.  Using these intrinsics
+ensures that accesses to memory mapped I/O registers occur in program order.
 </p>
 
 </div>
