@@ -454,7 +454,7 @@ public:
   ///
   /// The CloneFlags member controls various aspects of the cloning process.
   ///
-  void cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
+  void cloneInto(const DSGraph &G,
                  ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                  unsigned CloneFlags = 0);
 
