@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
