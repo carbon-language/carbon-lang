@@ -126,35 +126,6 @@ static struct PerModuleInfo {
     }
     return Ret;
   }
-
-  // DeclareNewGlobalValue - Called every time a new GV has been defined.  This
-  // is used to remove things from the forward declaration map, resolving them
-  // to the correct thing as needed.
-  //
-  void DeclareNewGlobalValue(GlobalValue *GV, ValID D) {
-    // Check to see if there is a forward reference to this global variable...
-    // if there is, eliminate it and patch the reference to use the new def'n.
-    GlobalRefsType::iterator I =
-      GlobalRefs.find(std::make_pair(GV->getType(), D));
-
-    if (I != GlobalRefs.end()) {
-      GlobalValue *OldGV = I->second;   // Get the placeholder...
-      I->first.second.destroy();  // Free string memory if necessary
-
-      // Replace all uses of the placeholder with the new GV
-      OldGV->replaceAllUsesWith(GV); 
-      
-      // Remove OldGV from the module...
-      if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(OldGV))
-        CurrentModule->getGlobalList().erase(GVar);
-      else
-        CurrentModule->getFunctionList().erase(cast<Function>(OldGV));
-      
-      // Remove the map entry for the global now that it has been created...
-      GlobalRefs.erase(I);
-    }
-  }
-
 } CurModule;
 
 static struct PerFunctionInfo {
@@ -209,7 +180,6 @@ static struct PerFunctionInfo {
         }
       }
     }
-    CurModule.DeclareNewGlobalValue(CurrentFunction, FID);
 
     Values.clear();         // Clear out function local definitions
     Types.clear();          // Clear out function local types
@@ -237,41 +207,17 @@ static int InsertValue(Value *V,
 
 static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
-  case ValID::NumberVal: {                 // Is it a numbered definition?
-    unsigned Num = (unsigned)D.Num;
-
+  case ValID::NumberVal:               // Is it a numbered definition?
     // Module constants occupy the lowest numbered slots...
-    if (Num < CurModule.Types.size()) 
-      return CurModule.Types[Num];
-
-    Num -= CurModule.Types.size();
-
-    // Check that the number is within bounds...
-    if (Num <= CurFun.Types.size())
-      return CurFun.Types[Num];
+    if ((unsigned)D.Num < CurModule.Types.size()) 
+      return CurModule.Types[(unsigned)D.Num];
     break;
-  }
-  case ValID::NameVal: {                // Is it a named definition?
-    std::string Name(D.Name);
-    SymbolTable *SymTab = 0;
-    Type *N = 0;
-    if (inFunctionScope()) {
-      SymTab = &CurFun.CurrentFunction->getSymbolTable();
-      N = SymTab->lookupType(Name);
+  case ValID::NameVal:                 // Is it a named definition?
+    if (const Type *N = CurModule.CurrentModule->getTypeByName(D.Name)) {
+      D.destroy();  // Free old strdup'd memory...
+      return N;
     }
-
-    if (N == 0) {
-      // Symbol table doesn't automatically chain yet... because the function
-      // hasn't been added to the module...
-      //
-      SymTab = &CurModule.CurrentModule->getSymbolTable();
-      N = SymTab->lookupType(Name);
-      if (N == 0) break;
-    }
-
-    D.destroy();  // Free old strdup'd memory...
-    return cast<Type>(N);
-  }
+    break;
   default:
     ThrowException("Internal parser error: Invalid symbol type reference!");
   }
@@ -438,7 +384,8 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
     break;
   case ValID::NameVal:                  // Is it a named definition?
     Name = ID.Name;
-    if (Value *N = lookupInSymbolTable(Type::LabelTy, Name))
+    if (Value *N = CurFun.CurrentFunction->
+                   getSymbolTable().lookup(Type::LabelTy, Name))
       BB = cast<BasicBlock>(N);
     break;
   }
@@ -605,43 +552,13 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   if (isa<FunctionType>(Ty))
     ThrowException("Cannot declare global vars of function type!");
 
-  // If this global has a name, check to see if there is already a definition
-  // of this global in the module.  If so, merge as appropriate.  Note that
-  // this is really just a hack around problems in the CFE.  :(
+  const PointerType *PTy = PointerType::get(Ty); 
+
   std::string Name;
   if (NameStr) {
     Name = NameStr;      // Copy string
     free(NameStr);       // Free old string
-
-    SymbolTable &ST = CurModule.CurrentModule->getSymbolTable();
-    if (Value *Existing = ST.lookup(Ty, Name)) {
-      // We are a simple redefinition of a value, check to see if it is defined
-      // the same as the old one...
-      GlobalVariable *EGV = cast<GlobalVariable>(Existing); 
-
-      // We are allowed to redefine a global variable in two circumstances:
-      // 1. If at least one of the globals is uninitialized or 
-      // 2. If both initializers have the same value.
-      //
-      if (!EGV->hasInitializer() || !Initializer ||
-          EGV->getInitializer() == Initializer) {
-
-        // Make sure the existing global version gets the initializer!  Make
-        // sure that it also gets marked const if the new version is.
-        if (Initializer && !EGV->hasInitializer())
-          EGV->setInitializer(Initializer);
-        if (isConstantGlobal)
-          EGV->setConstant(true);
-        EGV->setLinkage(Linkage);
-        return;
-      }
-
-      ThrowException("Redefinition of value named '" + Name + "' in the '" +
-                     Ty->getDescription() + "' type plane!");
-    }
   }
-
-  const PointerType *PTy = PointerType::get(Ty); 
 
   // See if this global value was forward referenced.  If so, recycle the
   // object.
@@ -661,11 +578,42 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     GV->setInitializer(Initializer);
     GV->setLinkage(Linkage);
     GV->setConstant(isConstantGlobal);
-  } else {
-    // Otherwise there is no existing GV to use, create one now.
-    new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name, 
-                       CurModule.CurrentModule);
+    return;
   }
+
+  // If this global has a name, check to see if there is already a definition
+  // of this global in the module.  If so, merge as appropriate.  Note that
+  // this is really just a hack around problems in the CFE.  :(
+  if (!Name.empty()) {
+    // We are a simple redefinition of a value, check to see if it is defined
+    // the same as the old one.
+    if (GlobalVariable *EGV = 
+                CurModule.CurrentModule->getGlobalVariable(Name, Ty)) {
+      // We are allowed to redefine a global variable in two circumstances:
+      // 1. If at least one of the globals is uninitialized or 
+      // 2. If both initializers have the same value.
+      //
+      if (!EGV->hasInitializer() || !Initializer ||
+          EGV->getInitializer() == Initializer) {
+
+        // Make sure the existing global version gets the initializer!  Make
+        // sure that it also gets marked const if the new version is.
+        if (Initializer && !EGV->hasInitializer())
+          EGV->setInitializer(Initializer);
+        if (isConstantGlobal)
+          EGV->setConstant(true);
+        EGV->setLinkage(Linkage);
+        return;
+      }
+
+      ThrowException("Redefinition of global variable named '" + Name + 
+                     "' in the '" + Ty->getDescription() + "' type plane!");
+    }
+  }
+
+  // Otherwise there is no existing GV to use, create one now.
+  new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name, 
+                     CurModule.CurrentModule);
 }
 
 // setTypeName - Set the specified type to the name given.  The name may be
@@ -676,6 +624,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the type plane, it is inserted and false is returned.
 static bool setTypeName(const Type *T, char *NameStr) {
+  assert(!inFunctionScope() && "Can't give types function-local names!");
   if (NameStr == 0) return false;
   
   std::string Name(NameStr);      // Copy string
@@ -685,12 +634,13 @@ static bool setTypeName(const Type *T, char *NameStr) {
   if (T == Type::VoidTy) 
     ThrowException("Can't assign name '" + Name + "' to the void type!");
 
-  SymbolTable &ST = inFunctionScope() ? 
-    CurFun.CurrentFunction->getSymbolTable() : 
-    CurModule.CurrentModule->getSymbolTable();
+  // Set the type name, checking for conflicts as we do so.
+  bool AlreadyExists = CurModule.CurrentModule->addTypeName(Name, T);
 
-  // Inserting a name that is already defined???
-  if (Type *Existing = ST.lookupType(Name)) {
+  if (AlreadyExists) {   // Inserting a name that is already defined???
+    const Type *Existing = CurModule.CurrentModule->getTypeByName(Name);
+    assert(Existing && "Conflict but no matching type?");
+
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
     if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Existing)) {
@@ -709,9 +659,6 @@ static bool setTypeName(const Type *T, char *NameStr) {
     ThrowException("Redefinition of type named '" + Name + "' in the '" +
 		   T->getDescription() + "' type plane!");
   }
-
-  // Okay, its a newly named type. Set its name.
-  if (!Name.empty()) ST.insert(Name, T);
 
   return false;
 }
@@ -1292,16 +1239,19 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
         $2.destroy();
       } else {
         std::string Name;
+        if ($2.Type == ValID::NameVal) Name = $2.Name;
 
-        /// FIXME: We shouldn't be creating global vars as forward refs for
-        /// functions at all here!
-        if (!isa<FunctionType>(PT->getElementType()))
-          if ($2.Type == ValID::NameVal) Name = $2.Name;
-
-	// Create a placeholder for the global variable reference...
-	GlobalVariable *GV = new GlobalVariable(PT->getElementType(), false,
-                                                GlobalValue::ExternalLinkage,0,
-                                                Name, CurModule.CurrentModule);
+	// Create the forward referenced global.
+        GlobalValue *GV;
+        if (const FunctionType *FTy = 
+                 dyn_cast<FunctionType>(PT->getElementType())) {
+          GV = new Function(FTy, GlobalValue::ExternalLinkage, Name,
+                            CurModule.CurrentModule);
+        } else {
+	  GV = new GlobalVariable(PT->getElementType(), false,
+                                  GlobalValue::ExternalLinkage, 0,
+                                  Name, CurModule.CurrentModule);
+        }
 
 	// Keep track of the fact that we have a forward ref to recycle it
 	CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, $2), GV));
@@ -1551,6 +1501,7 @@ ArgList : ArgListH {
 FunctionHeaderH : TypesV Name '(' ArgList ')' {
   UnEscapeLexed($2);
   std::string FunctionName($2);
+  free($2);  // Free strdup'd memory!
   
   if (!(*$1)->isFirstClassType() && *$1 != Type::VoidTy)
     ThrowException("LLVM functions cannot return aggregate types!");
@@ -1569,25 +1520,39 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   const PointerType *PFT = PointerType::get(FT);
   delete $1;
 
+  ValID ID;
+  if (!FunctionName.empty()) {
+    ID = ValID::create((char*)FunctionName.c_str());
+  } else {
+    ID = ValID::create((int)CurModule.Values[PFT].size());
+  }
+
   Function *Fn = 0;
-  // Is the function already in symtab?
-  if ((Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
-    // Yes it is.  If this is the case, either we need to be a forward decl,
-    // or it needs to be.
+  // See if this function was forward referenced.  If so, recycle the object.
+  if (GlobalValue *FWRef = CurModule.GetForwardRefForGlobal(PFT, ID)) {
+    // Move the function to the end of the list, from whereever it was 
+    // previously inserted.
+    Fn = cast<Function>(FWRef);
+    CurModule.CurrentModule->getFunctionList().remove(Fn);
+    CurModule.CurrentModule->getFunctionList().push_back(Fn);
+  } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
+             (Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
+    // If this is the case, either we need to be a forward decl, or it needs 
+    // to be.
     if (!CurFun.isDeclare && !Fn->isExternal())
       ThrowException("Redefinition of function '" + FunctionName + "'!");
     
-    // Make sure to strip off any argument names so we can't get conflicts...
-    for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend(); AI != AE; ++AI)
-      AI->setName("");
+    // Make sure to strip off any argument names so we can't get conflicts.
+    if (Fn->isExternal())
+      for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend();
+           AI != AE; ++AI)
+        AI->setName("");
 
   } else  {  // Not already defined?
     Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
                       CurModule.CurrentModule);
     InsertValue(Fn, CurModule.Values);
-    CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
   }
-  free($2);  // Free strdup'd memory!
 
   CurFun.FunctionStart(Fn);
 
