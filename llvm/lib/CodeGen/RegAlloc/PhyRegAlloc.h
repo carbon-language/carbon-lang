@@ -99,15 +99,11 @@ public:
   const char *getPassName () const {
     return "Traditional graph-coloring reg. allocator";
   }
-    
-  // access to register classes by class ID
-  // 
-  const RegClass* getRegClassByID(unsigned id) const {
+
+  inline const RegClass* getRegClassByID(unsigned id) const {
     return RegClassList[id];
   }
-  RegClass* getRegClassByID(unsigned id) {
-    return RegClassList[id];
-  }
+  inline RegClass *getRegClassByID(unsigned id) { return RegClassList[id]; }
 
 private:
   void addInterference(const Value *Def, const ValueSet *LVSet, 
@@ -146,7 +142,6 @@ private:
 
   void printLabel(const Value *Val);
   void printMachineCode();
-
 
   int getUsableUniRegAtMI(int RegType, const ValueSet *LVSetBef,
 			  MachineInstr *MI,
