@@ -678,7 +678,8 @@ def SRAXi6 : F3_13<2, 0b100111, "srax">;                 // srax r, shcnt64, r
 // Section A.51: Store Barrier - p224
 // Not currently used in the Sparc backend
 
-// Section A.52: Store Floating-point -p225
+// Section A.52: Store Floating-point - p225
+// Store instructions all want their rd register first
 def STFr  : F3_1rd<3, 0b100100, "st">;                      // st r, [r+r]
 def STFi  : F3_2rd<3, 0b100100, "st">;                      // st r, [r+i]
 def STDFr : F3_1rd<3, 0b100111, "std">;                     // std r, [r+r]
@@ -690,25 +691,31 @@ def STQFr : F3_1rd<3, 0b100110, "stq">;                     // stq r, [r+r]
 def STQFi : F3_2rd<3, 0b100110, "stq">;                     // stq r, [r+i]
 #endif
 
+// FIXME: An encoding needs to be chosen here, because STFSRx expect rd=0,
+// while STXFSRx expect rd=1, but assembly syntax dictates %fsr as first arg.
+// These are being disabled because they aren't used in the Sparc backend.
+#if 0
 set isDeprecated = 1 in {
-  def STFSRr : F3_1<3, 0b100101, "st">;                   // st r, [r+r]
-  def STFSRi : F3_2<3, 0b100101, "st">;                   // st r, [r+i]
+  def STFSRr : F3_1<3, 0b100101, "st">;                   // st  %fsr, [r+r]
+  def STFSRi : F3_2<3, 0b100101, "st">;                   // st  %fsr, [r+i]
 }
-def STXFSRr : F3_1<3, 0b100101, "stq">;                   // stx r, [r+r]
-def STXFSRi : F3_2<3, 0b100101, "stq">;                   // stx r, [r+i]
+def STXFSRr : F3_1<3, 0b100101, "stx">;                   // stx %fsr, [r+r]
+def STXFSRi : F3_2<3, 0b100101, "stx">;                   // stx %fsr, [r+i]
+#endif
 
 // Section A.53: Store Floating-Point into Alternate Space - p227
 // Not currently used in the Sparc backend
 
 // Section A.54: Store Integer - p229
-def STBr : F3_1<3, 0b000101, "stb">;                     // stb r, [r+r]
-def STBi : F3_2<3, 0b000101, "stb">;                     // stb r, [r+i]
-def STHr : F3_1<3, 0b000110, "stb">;                     // stb r, [r+r]
-def STHi : F3_2<3, 0b000110, "stb">;                     // stb r, [r+i]
-def STWr : F3_1<3, 0b000100, "stb">;                     // stb r, [r+r]
-def STWi : F3_2<3, 0b000100, "stb">;                     // stb r, [r+i]
-def STXr : F3_1<3, 0b001110, "stb">;                     // stb r, [r+r]
-def STXi : F3_2<3, 0b001110, "stb">;                     // stb r, [r+i]
+// Store instructions all want their rd register first
+def STBr : F3_1rd<3, 0b000101, "stb">;                     // stb r, [r+r]
+def STBi : F3_2rd<3, 0b000101, "stb">;                     // stb r, [r+i]
+def STHr : F3_1rd<3, 0b000110, "sth">;                     // stb r, [r+r]
+def STHi : F3_2rd<3, 0b000110, "sth">;                     // stb r, [r+i]
+def STWr : F3_1rd<3, 0b000100, "stw">;                     // stb r, [r+r]
+def STWi : F3_2rd<3, 0b000100, "stw">;                     // stb r, [r+i]
+def STXr : F3_1rd<3, 0b001110, "stx">;                     // stb r, [r+r]
+def STXi : F3_2rd<3, 0b001110, "stx">;                     // stb r, [r+i]
 
 // Section A.55: Store Integer into Alternate Space - p231
 // Not currently used in the Sparc backend
