@@ -1178,12 +1178,12 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
         
       case LLVMIntrinsic::setjmp:
-        Out << "setjmp((jmp_buf)";
+        Out << "setjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
       case LLVMIntrinsic::longjmp:
-        Out << "longjmp((jmp_buf)";
+        Out << "longjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ", ";
         writeOperand(I.getOperand(2));
