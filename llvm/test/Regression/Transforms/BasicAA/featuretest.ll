@@ -63,7 +63,9 @@ int %gep_distance_test2({int,int}* %A, long %distance) {
         ret int %r
 }
 
-int %foo(int * %A) {
+; Test that we can do funny pointer things and that distance calc will still 
+; work.
+int %gep_distance_test3(int * %A) {
 	%X = load int* %A
 	%B = cast int* %A to sbyte*
 	%C = getelementptr sbyte* %B, long 4
