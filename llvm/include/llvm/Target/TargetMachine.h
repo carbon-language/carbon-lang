@@ -78,6 +78,12 @@ public:
   ///
   virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) = 0;
 
+  /// addPassesToJITCompile - Add passes to the specified pass manager to
+  /// implement a fast dynamic compiler for this target.  Return true if this is
+  /// not supported for this target.
+  ///
+  virtual bool addPassesToJITCompile(PassManager &PM) { return true; }
+
   /// getPrologEpilogCodeInserter - Create pass to insert prolog/epilog code.
   /// 
   virtual Pass* getPrologEpilogInsertionPass() = 0;
