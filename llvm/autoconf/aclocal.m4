@@ -6111,12 +6111,12 @@ ac_cv_func_mmap_file,
 [AC_LANG_SAVE
   AC_LANG_C
   AC_TRY_RUN([
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -6125,7 +6125,7 @@ ac_cv_func_mmap_file,
 
   int fd;
   int main () {
-  fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != MAP_FAILED);}],
+  fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != (int) MAP_FAILED);}],
   ac_cv_func_mmap_file=yes, ac_cv_func_mmap_file=no)
   AC_LANG_RESTORE
 ])
