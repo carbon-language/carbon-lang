@@ -151,6 +151,10 @@ Constant *BytecodeParser::getConstantValue(unsigned TypeSlot, unsigned Slot) {
   if (Value *V = getValue(TypeSlot, Slot, false))
     if (Constant *C = dyn_cast<Constant>(V))
       return C;   // If we already have the value parsed, just return it
+    else if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
+      // ConstantPointerRef's are an abomination, but at least they don't have
+      // to infest bytecode files.
+      return ConstantPointerRef::get(GV);
     else
       throw std::string("Reference of a value is expected to be a constant!");
 
@@ -637,10 +641,10 @@ void BytecodeParser::ParseModule(const unsigned char *Buf,
     // Look up the initializer value...
     // FIXME: Preserve this type ID!
     unsigned TypeSlot = getTypeSlot(GV->getType()->getElementType());
-    if (Value *V = getValue(TypeSlot, Slot, false)) {
+    if (Constant *CV = getConstantValue(TypeSlot, Slot)) {
       if (GV->hasInitializer()) 
         throw std::string("Global *already* has an initializer?!");
-      GV->setInitializer(cast<Constant>(V));
+      GV->setInitializer(CV);
     } else
       throw std::string("Cannot find initializer value.");
   }
