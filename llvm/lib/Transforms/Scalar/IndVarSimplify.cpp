@@ -276,6 +276,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   BasicBlock::iterator InsertPt = BlockToInsertInto->begin();
   while (isa<PHINode>(InsertPt)) ++InsertPt;
 
+  bool HasConstantItCount = isa<SCEVConstant>(SE->getIterationCount(L));
+
   std::set<Instruction*> InstructionsToDelete;
   
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
@@ -284,7 +286,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         if (I->getType()->isInteger()) {      // Is an integer instruction
           SCEVHandle SH = SE->getSCEV(I);
-          if (SH->hasComputableLoopEvolution(L)) {   // Varies predictably
+          if (SH->hasComputableLoopEvolution(L) ||    // Varies predictably
+              HasConstantItCount) {
             // Find out if this predictably varying value is actually used
             // outside of the loop.  "extra" as opposed to "intra".
             std::vector<User*> ExtraLoopUsers;
@@ -296,7 +299,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
               // Okay, this instruction has a user outside of the current loop
               // and varies predictably in this loop.  Evaluate the value it
               // contains when the loop exits, and insert code for it.
-              SCEVHandle ExitValue = SE->getSCEVAtScope(I,L->getParentLoop());
+              SCEVHandle ExitValue = SE->getSCEVAtScope(I, L->getParentLoop());
               if (!isa<SCEVCouldNotCompute>(ExitValue)) {
                 Changed = true;
                 ++NumReplaced;
