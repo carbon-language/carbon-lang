@@ -237,8 +237,6 @@ inline X *dyn_cast(Y Val) {
 //
 template <class X, class Y>
 inline X *dyn_cast_or_null(Y Val) {
-  assert((Val == 0 || isa<X>(Val)) &&
-         "cast_or_null<Ty>() argument of uncompatible type!");
   return (Val && isa<X>(Val)) ? cast<X>(Val) : 0;
 }
 
