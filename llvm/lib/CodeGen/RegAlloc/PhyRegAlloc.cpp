@@ -682,8 +682,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     cerr << "\nFor Inst " << *MInst;
     cerr << " - SPILLED LR: "; printSet(*LR);
     cerr << "\n - Added Instructions:";
-    for_each(MIBef.begin(), MIBef.end(), mem_fun(&MachineInstr::dump));
-    for_each(MIAft.begin(), MIAft.end(), mem_fun(&MachineInstr::dump));
+    for_each(MIBef.begin(), MIBef.end(), std::mem_fun(&MachineInstr::dump));
+    for_each(MIAft.begin(), MIAft.end(), std::mem_fun(&MachineInstr::dump));
   }
 }
 
