@@ -175,7 +175,8 @@ private:
   std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
            SDNode *> BinaryOps;
 
-  std::map<std::pair<std::pair<SDOperand, SDOperand>, ISD::CondCode>,
+  std::map<std::pair<std::pair<SDOperand, SDOperand>,
+                     std::pair<ISD::CondCode, MVT::ValueType> >,
            SetCCSDNode*> SetCCs;
 
   std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,
