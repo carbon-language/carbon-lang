@@ -127,7 +127,9 @@ private:
   void visitSetCondInst(SetCondInst *SCI) {}  // SetEQ & friends are ignored
   void visitFreeInst(FreeInst *FI) {}         // Ignore free instructions
   void visitInstruction(Instruction *I) {
-    std::cerr << "\n\n\nUNKNOWN INSTRUCTION type: " << I << "\n\n\n";
+    std::cerr << "\n\n\nUNKNOWN INSTRUCTION type: ";
+    I->dump();
+    std::cerr << "\n\n\n";
     assert(0 && "Cannot proceed");
   }
 };
