@@ -3663,6 +3663,21 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
     Src = CPR->getValue();
 
+  // If this is a getelementptr null, with all constant integer indices, just
+  // replace it with TargetReg = 42.
+  if (isa<ConstantPointerNull>(Src)) {
+    User::op_iterator I = IdxBegin;
+    for (; I != IdxEnd; ++I)
+      if (!isa<ConstantInt>(*I))
+        break;
+    if (I == IdxEnd) {   // All constant indices
+      unsigned Offset = TD.getIndexedOffset(Src->getType(),
+                                         std::vector<Value*>(IdxBegin, IdxEnd));
+      BuildMI(*MBB, IP, X86::MOV32ri, 1, TargetReg).addImm(Offset);
+      return;
+    }
+  }
+
   std::vector<Value*> GEPOps;
   GEPOps.resize(IdxEnd-IdxBegin+1);
   GEPOps[0] = Src;
