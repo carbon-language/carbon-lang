@@ -122,60 +122,46 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 
     LiveVariables::VarInfo& vi = lv_->getVarInfo(reg);
 
+    Interval* interval = 0;
     Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
-    // handle multiple definition case (machine instructions violating
-    // ssa after phi-elimination
-    if (r2iit != r2iMap_.end()) {
-        unsigned ii = r2iit->second;
-        Interval& interval = intervals_[ii];
-        unsigned end = getInstructionIndex(mbb->back()) + 1;
-        DEBUG(std::cerr << "\t\t\t\tadding range: ["
-              << instrIndex << ',' << end << "]\n");
-        interval.addRange(instrIndex, end);
-        DEBUG(std::cerr << "\t\t\t\t" << interval << '\n');
-    }
-    else {
+    if (r2iit == r2iMap_.end()) {
         // add new interval
         intervals_.push_back(Interval(reg));
-        Interval& interval = intervals_.back();
         // update interval index for this register
         r2iMap_[reg] = intervals_.size() - 1;
+        interval = &intervals_.back();
+    }
+    else {
+        interval = &intervals_[r2iit->second];
+    }
 
-        for (MbbIndex2MbbMap::iterator
-                 it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
-             it != itEnd; ++it) {
-            unsigned liveBlockIndex = it->first;
-            MachineBasicBlock* liveBlock = it->second;
-            if (liveBlockIndex < vi.AliveBlocks.size() &&
-                vi.AliveBlocks[liveBlockIndex]) {
-                unsigned start =  getInstructionIndex(liveBlock->front());
-                unsigned end = getInstructionIndex(liveBlock->back()) + 1;
-                DEBUG(std::cerr << "\t\t\t\tadding range: ["
-                      << start << ',' << end << "]\n");
-                interval.addRange(start, end);
-            }
+    for (MbbIndex2MbbMap::iterator
+             it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
+         it != itEnd; ++it) {
+        unsigned liveBlockIndex = it->first;
+        MachineBasicBlock* liveBlock = it->second;
+        if (liveBlockIndex < vi.AliveBlocks.size() &&
+            vi.AliveBlocks[liveBlockIndex]) {
+            unsigned start =  getInstructionIndex(liveBlock->front());
+            unsigned end = getInstructionIndex(liveBlock->back()) + 1;
+            interval->addRange(start, end);
         }
+    }
 
-        bool killedInDefiningBasicBlock = false;
-        for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
-            MachineBasicBlock* killerBlock = vi.Kills[i].first;
-            MachineInstr* killerInstr = vi.Kills[i].second;
-            killedInDefiningBasicBlock |= mbb == killerBlock;
-            unsigned start = (mbb == killerBlock ?
-                              instrIndex :
-                              getInstructionIndex(killerBlock->front()));
-            unsigned end = getInstructionIndex(killerInstr) + 1;
-            DEBUG(std::cerr << "\t\t\t\tadding range: ["
-                  << start << ',' << end << "]\n");
-            interval.addRange(start, end);
-        }
+    bool killedInDefiningBasicBlock = false;
+    for (int i = 0, e = vi.Kills.size(); i != e; ++i) {
+        MachineBasicBlock* killerBlock = vi.Kills[i].first;
+        MachineInstr* killerInstr = vi.Kills[i].second;
+        killedInDefiningBasicBlock |= mbb == killerBlock;
+        unsigned start = (mbb == killerBlock ?
+                          instrIndex :
+                          getInstructionIndex(killerBlock->front()));
+        unsigned end = getInstructionIndex(killerInstr) + 1;
+    }
 
-        if (!killedInDefiningBasicBlock) {
-            unsigned end = getInstructionIndex(mbb->back()) + 1;
-            interval.addRange(instrIndex, end);
-        }
-
-        DEBUG(std::cerr << "\t\t\t\t" << interval << '\n');
+    if (!killedInDefiningBasicBlock) {
+        unsigned end = getInstructionIndex(mbb->back()) + 1;
+        interval->addRange(instrIndex, end);
     }
 }
 
@@ -220,20 +206,14 @@ exit:
     if (r2iit != r2iMap_.end()) {
         unsigned ii = r2iit->second;
         Interval& interval = intervals_[ii];
-        DEBUG(std::cerr << "\t\t\t\tadding range: ["
-              << start << ',' << end << "]\n");
         interval.addRange(start, end);
-        DEBUG(std::cerr << "\t\t\t\t" << interval << '\n');
     }
     else {
         intervals_.push_back(Interval(reg));
         Interval& interval = intervals_.back();
         // update interval index for this register
         r2iMap_[reg] = intervals_.size() - 1;
-        DEBUG(std::cerr << "\t\t\t\tadding range: ["
-              << start << ',' << end << "]\n");
         interval.addRange(start, end);
-        DEBUG(std::cerr << "\t\t\t\t" << interval << '\n');
     }
 }
 
@@ -308,6 +288,42 @@ void LiveIntervals::computeIntervals()
     std::sort(intervals_.begin(), intervals_.end(), StartPointComp());
     DEBUG(std::copy(intervals_.begin(), intervals_.end(),
                     std::ostream_iterator<Interval>(std::cerr, "\n")));
+}
+
+void LiveIntervals::Interval::addRange(unsigned start, unsigned end)
+{
+    DEBUG(std::cerr << "\t\t\t\tadding range: [" << start <<','<< end << "]\n");
+    //assert(start < end && "invalid range?");
+    Range range = std::make_pair(start, end);
+    Ranges::iterator it =
+        ranges.insert(std::upper_bound(ranges.begin(), ranges.end(), range),
+                      range);
+
+    DEBUG(std::cerr << "\t\t\t\tbefore merge forward: " << *this << '\n');
+    mergeRangesForward(it);
+    DEBUG(std::cerr << "\t\t\t\tbefore merge backward: " << *this << '\n');
+    mergeRangesBackward(it);
+    DEBUG(std::cerr << "\t\t\t\tafter merging: " << *this << '\n');
+}
+
+void LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
+{
+    for (Ranges::iterator next = it + 1;
+         next != ranges.end() && it->second >= next->first; ) {
+        it->second = std::max(it->second, next->second);
+        next = ranges.erase(next);
+    }
+}
+
+void LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
+{
+    for (Ranges::iterator prev = it - 1;
+         it != ranges.begin() && it->first <= prev->second; ) {
+        it->first = std::min(it->first, prev->first);
+        it->second = std::max(it->second, prev->second);
+        it = ranges.erase(prev);
+        prev = it - 1;
+    }
 }
 
 std::ostream& llvm::operator<<(std::ostream& os,

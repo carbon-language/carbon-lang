@@ -59,55 +59,12 @@ namespace llvm {
                 return end() <= index;
             }
 
-            bool overlaps(unsigned index) const {
-                for (Ranges::const_iterator
-                         i = ranges.begin(), e = ranges.end(); i != e; ++i) {
-                    if (index >= i->first && index < i->second) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            void addRange(unsigned start, unsigned end) {
-                Range range = std::make_pair(start, end);
-                Ranges::iterator it =
-                    std::lower_bound(ranges.begin(), ranges.end(), range);
-
-                if (it == ranges.end()) {
-                    it = ranges.insert(it, range);
-                    goto exit;
-                }
-
-                assert(range.first <= it->first && "got wrong iterator?");
-                // merge ranges if necesary
-                if (range.first < it->first) {
-                    if (range.second >= it->first) {
-                        it->first = range.first;
-                    }
-                    else {
-                        it = ranges.insert(it, range);
-                        assert(it != ranges.end() && "wtf?");
-                        goto exit;
-                    }
-                }
-
-            exit:
-                mergeRangesIfNecessary(it);
-            }
+            void addRange(unsigned start, unsigned end);
 
         private:
-            void mergeRangesIfNecessary(Ranges::iterator it) {
-                while (it != ranges.begin()) {
-                    Ranges::iterator prev = it - 1;
-                    if (prev->second < it->first) {
-                        break;
-                    }
-                    prev->second = it->second;
-                    ranges.erase(it);
-                    it = prev;
-                }
-            }
+            void mergeRangesForward(Ranges::iterator it);
+
+            void mergeRangesBackward(Ranges::iterator it);
         };
 
         struct StartPointComp {
