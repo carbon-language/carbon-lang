@@ -291,10 +291,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
     // Virtual registers may be defined multiple times (due to phi 
-    // elimination).  Much of what we do only has to be done once for the vreg.
-    // We use an empty interval to detect the first time we see a vreg.
+    // elimination and 2-addr elimination).  Much of what we do only has to be 
+    // done once for the vreg.  We use an empty interval to detect the first 
+    // time we see a vreg.
     if (interval.empty()) {
-
        // Get the Idx of the defining instructions.
        unsigned defIndex = getDefIndex(getInstructionIndex(mi));
 
@@ -351,11 +351,21 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 
     } else {
        // If this is the second time we see a virtual register definition, it
-       // must be due to phi elimination.  In this case, the defined value will
-       // be live until the end of the basic block it is defined in.
-       unsigned defIndex = getDefIndex(getInstructionIndex(mi));
-       interval.addRange(defIndex, 
-                         getInstructionIndex(&mbb->back()) + InstrSlots::NUM);
+       // must be due to phi elimination or two addr elimination.  If this is
+       // the result of two address elimination, then the vreg is the first
+       // operand, and is a def-and-use.
+       if (mi->getOperand(0).isRegister() && 
+           mi->getOperand(0).getReg() == interval.reg &&
+           mi->getOperand(0).isDef() && mi->getOperand(0).isUse()) {
+         // If this is a two-address definition, just ignore it.
+       } else {
+         // Otherwise, this must be because of phi elimination.  In this case, 
+         // the defined value will be live until the end of the basic block it
+         // is defined in.
+         unsigned defIndex = getDefIndex(getInstructionIndex(mi));
+         interval.addRange(defIndex, 
+                           getInstructionIndex(&mbb->back()) + InstrSlots::NUM);
+       }
     }
 
     DEBUG(std::cerr << '\n');
