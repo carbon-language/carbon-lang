@@ -2535,17 +2535,18 @@ static Value *InsertSignExtendToPtrTy(Value *V, const Type *DTy,
 
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
+  Value *PtrOp = GEP.getOperand(0);
   // Is it 'getelementptr %P, long 0'  or 'getelementptr %P'
   // If so, eliminate the noop.
   if (GEP.getNumOperands() == 1)
-    return ReplaceInstUsesWith(GEP, GEP.getOperand(0));
+    return ReplaceInstUsesWith(GEP, PtrOp);
 
   bool HasZeroPointerIndex = false;
   if (Constant *C = dyn_cast<Constant>(GEP.getOperand(1)))
     HasZeroPointerIndex = C->isNullValue();
 
   if (GEP.getNumOperands() == 2 && HasZeroPointerIndex)
-    return ReplaceInstUsesWith(GEP, GEP.getOperand(0));
+    return ReplaceInstUsesWith(GEP, PtrOp);
 
   // Eliminate unneeded casts for indices.
   bool MadeChange = false;
@@ -2601,46 +2602,37 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   std::vector<Value*> SrcGEPOperands;
-  if (GetElementPtrInst *Src = dyn_cast<GetElementPtrInst>(GEP.getOperand(0))) {
+  if (GetElementPtrInst *Src = dyn_cast<GetElementPtrInst>(PtrOp)) {
     SrcGEPOperands.assign(Src->op_begin(), Src->op_end());
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP.getOperand(0))) {
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(PtrOp)) {
     if (CE->getOpcode() == Instruction::GetElementPtr)
       SrcGEPOperands.assign(CE->op_begin(), CE->op_end());
   }
 
   if (!SrcGEPOperands.empty()) {
+    // Note that if our source is a gep chain itself that we wait for that
+    // chain to be resolved before we perform this transformation.  This
+    // avoids us creating a TON of code in some cases.
+    //
+    if (isa<GetElementPtrInst>(SrcGEPOperands[0]) &&
+        cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2)
+      return 0;   // Wait until our source is folded to completion.
+
     std::vector<Value *> Indices;
+
+    // Find out whether the last index in the source GEP is a sequential idx.
+    bool EndsWithSequential = false;
+    for (gep_type_iterator I = gep_type_begin(*cast<User>(PtrOp)),
+           E = gep_type_end(*cast<User>(PtrOp)); I != E; ++I)
+      if (!isa<StructType>(*I))
+        EndsWithSequential = true;
   
     // Can we combine the two pointer arithmetics offsets?
-    if (SrcGEPOperands.size() == 2 && isa<Constant>(SrcGEPOperands[1]) &&
-        isa<Constant>(GEP.getOperand(1))) {
-      Constant *SGC = cast<Constant>(SrcGEPOperands[1]);
-      Constant *GC  = cast<Constant>(GEP.getOperand(1));
-      if (SGC->getType() != GC->getType()) {
-        SGC = ConstantExpr::getSignExtend(SGC, Type::LongTy);
-        GC = ConstantExpr::getSignExtend(GC, Type::LongTy);
-      }
-      
-      // Replace: gep (gep %P, long C1), long C2, ...
-      // With:    gep %P, long (C1+C2), ...
-      GEP.setOperand(0, SrcGEPOperands[0]);
-      GEP.setOperand(1, ConstantExpr::getAdd(SGC, GC));
-      if (Instruction *I = dyn_cast<Instruction>(GEP.getOperand(0)))
-        AddUsersToWorkList(*I);   // Reduce use count of Src
-      return &GEP;
-    } else if (SrcGEPOperands.size() == 2) {
+    if (EndsWithSequential) {
       // Replace: gep (gep %P, long B), long A, ...
       // With:    T = long A+B; gep %P, T, ...
       //
-      // Note that if our source is a gep chain itself that we wait for that
-      // chain to be resolved before we perform this transformation.  This
-      // avoids us creating a TON of code in some cases.
-      //
-      if (isa<GetElementPtrInst>(SrcGEPOperands[0]) &&
-          cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2)
-        return 0;   // Wait until our source is folded to completion.
-
-      Value *Sum, *SO1 = SrcGEPOperands[1], *GO1 = GEP.getOperand(1);
+      Value *Sum, *SO1 = SrcGEPOperands.back(), *GO1 = GEP.getOperand(1);
       if (SO1 == Constant::getNullValue(SO1->getType())) {
         Sum = GO1;
       } else if (GO1 == Constant::getNullValue(GO1->getType())) {
@@ -2670,13 +2662,26 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             }
           }
         }
-        Sum = BinaryOperator::create(Instruction::Add, SO1, GO1,
-                                     GEP.getOperand(0)->getName()+".sum", &GEP);
-        WorkList.push_back(cast<Instruction>(Sum));
+        if (isa<Constant>(SO1) && isa<Constant>(GO1))
+          Sum = ConstantExpr::getAdd(cast<Constant>(SO1), cast<Constant>(GO1));
+        else {
+          Sum = BinaryOperator::create(Instruction::Add, SO1, GO1,
+                                       PtrOp->getName()+".sum", &GEP);
+          WorkList.push_back(cast<Instruction>(Sum));
+        }
       }
-      GEP.setOperand(0, SrcGEPOperands[0]);
-      GEP.setOperand(1, Sum);
-      return &GEP;
+
+      // Recycle the GEP we already have if possible.
+      if (SrcGEPOperands.size() == 2) {
+        GEP.setOperand(0, SrcGEPOperands[0]);
+        GEP.setOperand(1, Sum);
+        return &GEP;
+      } else {
+        Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
+                       SrcGEPOperands.end()-1);
+        Indices.push_back(Sum);
+        Indices.insert(Indices.end(), GEP.op_begin()+2, GEP.op_end());
+      }
     } else if (isa<Constant>(*GEP.idx_begin()) && 
                cast<Constant>(*GEP.idx_begin())->isNullValue() &&
                SrcGEPOperands.size() != 1) { 
@@ -2684,27 +2689,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
                      SrcGEPOperands.end());
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
-    } else if (SrcGEPOperands.back() ==
-               Constant::getNullValue(SrcGEPOperands.back()->getType())) {
-      // We have to check to make sure this really is an ARRAY index we are
-      // ending up with, not a struct index.
-      generic_gep_type_iterator<std::vector<Value*>::iterator>
-        GTI = gep_type_begin(SrcGEPOperands[0]->getType(),
-                             SrcGEPOperands.begin()+1, SrcGEPOperands.end());
-      std::advance(GTI, SrcGEPOperands.size()-2);
-      if (isa<SequentialType>(*GTI)) {
-        // If the src gep ends with a constant array index, merge this get into
-        // it, even if we have a non-zero array index.
-        Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
-                       SrcGEPOperands.end()-1);
-        Indices.insert(Indices.end(), GEP.idx_begin(), GEP.idx_end());
-      }
     }
 
     if (!Indices.empty())
       return new GetElementPtrInst(SrcGEPOperands[0], Indices, GEP.getName());
 
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(GEP.getOperand(0))) {
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(PtrOp)) {
     // GEP of global variable.  If all of the indices for this GEP are
     // constants, we can promote this to a constexpr instead of an instruction.
 
@@ -2721,7 +2711,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Replace all uses of the GEP with the new constexpr...
       return ReplaceInstUsesWith(GEP, CE);
     }
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP.getOperand(0))) {
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(PtrOp)) {
     if (CE->getOpcode() == Instruction::Cast) {
       if (HasZeroPointerIndex) {
         // transform: GEP (cast [10 x ubyte]* X to [0 x ubyte]*), long 0, ...
