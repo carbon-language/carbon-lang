@@ -70,8 +70,19 @@ namespace {
     std::cerr << "Linker: ";
     DumpAction(&cd->Linker);
   }
-}
 
+  void CleanupTempFile(const char* fname) {
+    if (0 == access(fname, F_OK | R_OK))
+      unlink(fname);
+  }
+
+  /// This specifies the passes to run for OPT_FAST_COMPILE (-O1)
+  /// which should reduce the volume of code and make compilation
+  /// faster. This is also safe on any llvm module. 
+  static const char* DefaultOptimizations[] = {
+    "-simplifycfg", "-mem2reg", "-mergereturn", "-instcombine",
+  };
+}
 
 CompilerDriver::CompilerDriver(ConfigDataProvider& confDatProv )
   : cdp(&confDatProv)
@@ -215,7 +226,7 @@ void CompilerDriver::DoAction(Action*a)
 }
 
 int CompilerDriver::execute(const InputList& InpList, 
-                            const sys::Path& Output ) {
+                            const std::string& Output ) {
   // Echo the configuration of options if we're running verbose
   if (isDebug)
   {
@@ -248,12 +259,15 @@ int CompilerDriver::execute(const InputList& InpList,
   std::vector<Action*> actions;
 
   // Create a temporary directory for our temporary files
-  sys::Path TempDir(sys::Path::CONSTRUCT_TEMP_DIR);
-  sys::Path TempPreprocessorOut;
-  sys::Path TempTranslatorOut;
-  sys::Path TempOptimizerOut;
-  sys::Path TempAssemblerOut;
-  sys::Path TempLinkerOut;
+  char temp_name[64];
+  strcpy(temp_name,"/tmp/llvm_XXXXXX");
+  if (0 == mkdtemp(temp_name))
+      error("Can't create temporary directory");
+  std::string TempDir(temp_name);
+  std::string TempPreprocessorOut(TempDir + "/preproc.tmp");
+  std::string TempTranslatorOut(TempDir + "/trans.tmp");
+  std::string TempOptimizerOut(TempDir + "/opt.tmp");
+  std::string TempAssemblerOut(TempDir + "/asm.tmp");
 
   /// PRE-PROCESSING / TRANSLATION / OPTIMIZATION / ASSEMBLY phases
   // for each input item
@@ -304,8 +318,6 @@ int CompilerDriver::execute(const InputList& InpList,
     // Get the preprocessing action, if needed, or error if appropriate
     if (!a.program.empty()) {
       if (a.isSet(REQUIRED_FLAG) || finalPhase == PREPROCESSING) {
-        TempPreprocessorOut = TempDir;
-        TempPreprocessorOut.append_file("preproc.out");
         actions.push_back(GetAction(cd,I->first,
               TempPreprocessorOut,PREPROCESSING));
       }
@@ -324,8 +336,6 @@ int CompilerDriver::execute(const InputList& InpList,
     // Get the translation action, if needed, or error if appropriate
     if (!a.program.empty()) {
       if (a.isSet(REQUIRED_FLAG) || finalPhase == TRANSLATION) {
-        TempTranslatorOut = TempDir;
-        TempTranslatorOut.append_file("trans.out");
         actions.push_back(GetAction(cd,I->first,TempTranslatorOut,TRANSLATION));
       }
     } else if (finalPhase == TRANSLATION) {
@@ -342,8 +352,6 @@ int CompilerDriver::execute(const InputList& InpList,
 
     // Get the optimization action, if needed, or error if appropriate
     if (!a.program.empty()) {
-      TempOptimizerOut = TempDir;
-      TempOptimizerOut.append_file("trans.out");
       actions.push_back(GetAction(cd,I->first,TempOptimizerOut,OPTIMIZATION));
     } else if (finalPhase == OPTIMIZATION) {
       error(cd->langName + " does not support optimization");
@@ -367,14 +375,13 @@ int CompilerDriver::execute(const InputList& InpList,
   }
 
   // Cleanup files
-  if (TempPreprocessorOut.exists())
-    TempPreprocessorOut.remove_file();
-  if (TempTranslatorOut.exists())
-    TempTranslatorOut.remove_file();
-  if (TempOptimizerOut.exists())
-    TempOptimizerOut.remove_file();
-  if (TempDir.exists())
-    TempDir.remove_directory();
+  CleanupTempFile(TempPreprocessorOut.c_str());
+  CleanupTempFile(TempTranslatorOut.c_str());
+  CleanupTempFile(TempOptimizerOut.c_str());
+
+  // Cleanup temporary directory we created
+  if (0 == access(TempDir.c_str(), F_OK | W_OK))
+    rmdir(TempDir.c_str());
 
   return 0;
 }

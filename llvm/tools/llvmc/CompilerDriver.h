@@ -14,7 +14,6 @@
 #ifndef LLVM_TOOLS_LLVMC_COMPILERDRIVER_H
 #define LLVM_TOOLS_LLVMC_COMPILERDRIVER_H
 
-#include "llvm/System/Path.h"
 #include <string>
 #include <vector>
 
@@ -66,7 +65,7 @@ namespace llvm {
       /// a vector of filename/filetype pairs. The filetype is used to look up
       /// the configuration of the actions to be taken by the driver.
       /// @brief The Input Data to the execute method
-      typedef std::vector<std::pair<sys::Path,std::string> > InputList;
+      typedef std::vector<std::pair<std::string,std::string> > InputList;
 
       /// This type is read from configuration files or otherwise provided to
       /// the CompilerDriver through a "ConfigDataProvider". It serves as both
@@ -75,7 +74,7 @@ namespace llvm {
       /// language.
       struct Action {
         Action() : inputAt(0) , outputAt(0), flags(0) {}
-        sys::Path program;     ///< The program to execve
+        std::string program;   ///< The program to execve
         StringVector args;     ///< Arguments to the program
         size_t inputAt;        ///< Argument index to insert input file
         size_t outputAt;       ///< Argument index to insert output file
@@ -122,7 +121,7 @@ namespace llvm {
       virtual void error(const std::string& errmsg);
 
       /// @brief Execute the actions requested for the given input list.
-      virtual int execute(const InputList& list, const sys::Path& output);
+      virtual int execute(const InputList& list, const std::string& output);
 
     /// @}
     /// @name Mutators
