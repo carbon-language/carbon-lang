@@ -11,6 +11,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/PreSelection.h"
 #include "llvm/CodeGen/StackSlots.h"
 #include "llvm/CodeGen/PeepholeOpts.h"
@@ -59,7 +60,6 @@ TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 //---------------------------------------------------------------------------
 // class UltraSparcFrameInfo 
 // 
-// Purpose:
 //   Interface to stack frame layout info for the UltraSPARC.
 //   Starting offsets for each area of the stack frame are aligned at
 //   a multiple of getStackFrameSizeAlignment().
@@ -77,10 +77,11 @@ int
 UltraSparcFrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo,
                                            bool& pos) const
 {
-  mcInfo.freezeAutomaticVarsArea();     // ensure no more auto vars are added
+  // ensure no more auto vars are added
+  mcInfo.getInfo()->freezeAutomaticVarsArea();
   
   pos = false;                          // static stack area grows downwards
-  unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
+  unsigned autoVarsSize = mcInfo.getInfo()->getAutomaticVarsSize();
   return StaticAreaOffsetFromFP - autoVarsSize; 
 }
 
@@ -88,12 +89,13 @@ int
 UltraSparcFrameInfo::getTmpAreaOffset(MachineFunction& mcInfo,
                                       bool& pos) const
 {
-  mcInfo.freezeAutomaticVarsArea();     // ensure no more auto vars are added
-  mcInfo.freezeSpillsArea();            // ensure no more spill slots are added
+  MachineFunctionInfo *MFI = mcInfo.getInfo();
+  MFI->freezeAutomaticVarsArea();     // ensure no more auto vars are added
+  MFI->freezeSpillsArea();            // ensure no more spill slots are added
   
   pos = false;                          // static stack area grows downwards
-  unsigned int autoVarsSize = mcInfo.getAutomaticVarsSize();
-  unsigned int spillAreaSize = mcInfo.getRegSpillsSize();
+  unsigned autoVarsSize = MFI->getAutomaticVarsSize();
+  unsigned spillAreaSize = MFI->getRegSpillsSize();
   int offset = autoVarsSize + spillAreaSize;
   return StaticAreaOffsetFromFP - offset;
 }
@@ -107,7 +109,7 @@ UltraSparcFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo,
   // during calls and traps, so they are shifted downwards on each
   // dynamic-size alloca.
   pos = false;
-  unsigned int optArgsSize = mcInfo.getMaxOptionalArgsSize();
+  unsigned optArgsSize = mcInfo.getInfo()->getMaxOptionalArgsSize();
   if (int extra = optArgsSize % getStackFrameSizeAlignment())
     optArgsSize += (getStackFrameSizeAlignment() - extra);
   int offset = optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
