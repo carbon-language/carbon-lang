@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DSGraphTraits.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/iOther.h"
@@ -20,6 +20,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
+#include "Support/DepthFirstIterator.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
 #include "Support/Timer.h"
@@ -1181,6 +1182,13 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   }
 }
 
+static bool PathExistsToClonedNode(const DSNode *N, ReachabilityCloner &RC) {
+  for (df_iterator<const DSNode*> I = df_begin(N), E = df_end(N); I != E; ++I)
+    if (RC.hasClonedNode(*I))
+      return true;
+  return false;
+}
+
 
 /// mergeInGraph - The method is used for merging graphs together.  If the
 /// argument graph is not *this, it makes a clone of the specified graph, then
@@ -1240,11 +1248,36 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     }
     
     // Clone over all globals that appear in the caller and callee graphs.
+    hash_set<GlobalVariable*> NonCopiedGlobals;
     for (DSScalarMap::global_iterator GI = Graph.getScalarMap().global_begin(),
            E = Graph.getScalarMap().global_end(); GI != E; ++GI)
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*GI))
         if (ScalarMap.count(GV))
           RC.merge(ScalarMap[GV], Graph.getNodeForValue(GV));
+        else
+          NonCopiedGlobals.insert(GV);
+    
+    // If the global does not appear in the callers graph we generally don't
+    // want to copy the node.  However, if there is a path from the node global
+    // node to a node that we did copy in the graph, we *must* copy it to
+    // maintain the connection information.  Every time we decide to include a
+    // new global, this might make other globals live, so we must iterate
+    // unfortunately.
+    bool MadeChange = false;
+    for (hash_set<GlobalVariable*>::iterator I = NonCopiedGlobals.begin();
+         I != NonCopiedGlobals.end();) {
+      DSNode *GlobalNode = Graph.getNodeForValue(*I).getNode();
+      if (RC.hasClonedNode(GlobalNode)) {
+        // Already cloned it, remove from set.
+        NonCopiedGlobals.erase(I++);
+      } else if (PathExistsToClonedNode(GlobalNode, RC)) {
+        RC.getClonedNH(Graph.getNodeForValue(*I));
+        NonCopiedGlobals.erase(I++);
+      } else {
+        ++I;
+      }
+    }
+
   } else {
     DSNodeHandle RetVal = getReturnNodeFor(F);
 
