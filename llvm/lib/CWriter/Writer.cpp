@@ -514,7 +514,7 @@ void CWriter::printModule(Module *M) {
   }
 
   // printing stdlib inclusion
-  // Out << "#include <stdlib.h>\n";
+  Out << "#include <stdlib.h>\n";
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n"
