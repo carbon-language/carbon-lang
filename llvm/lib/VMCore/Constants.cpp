@@ -18,8 +18,6 @@ using std::map;
 using std::pair;
 using std::make_pair;
 using std::vector;
-using std::cerr;
-using std::endl;
 
 ConstantBool *ConstantBool::True  = new ConstantBool(true);
 ConstantBool *ConstantBool::False = new ConstantBool(false);
@@ -71,13 +69,10 @@ void Constant::destroyConstantImpl() {
   while (!use_empty()) {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
-    if (!isa<Constant>(V)) {
-      std::cerr << "While deleting: ";
-      dump();
-      std::cerr << "\nUse still stuck around after Def is destroyed: ";
-      V->dump();
-      std::cerr << "\n";
-    }
+    if (!isa<Constant>(V))
+      std::cerr << "While deleting: " << *this
+                << "\n\nUse still stuck around after Def is destroyed: "
+                << *V << "\n\n";
 #endif
     assert(isa<Constant>(V) && "References remain to Constant being destroyed");
     Constant *CPV = cast<Constant>(V);
@@ -156,7 +151,7 @@ ConstantExpr::ConstantExpr(unsigned opCode, Constant* C1,
 }
 
 ConstantExpr::ConstantExpr(unsigned opCode, Constant* C,
-                          const std::vector<Value*>& IdxList, const Type *Ty)
+                          const std::vector<Constant*> &IdxList, const Type *Ty)
   : Constant(Ty), iType(opCode) {
   Operands.reserve(1+IdxList.size());
   Operands.push_back(Use(C, this));
@@ -170,27 +165,27 @@ ConstantExpr::ConstantExpr(unsigned opCode, Constant* C,
 //                           classof implementations
 
 bool ConstantInt::classof(const Constant *CPV) {
-  return CPV->getType()->isIntegral() && ! isa<ConstantExpr>(CPV);
+  return CPV->getType()->isIntegral() && !isa<ConstantExpr>(CPV);
 }
 bool ConstantSInt::classof(const Constant *CPV) {
-  return CPV->getType()->isSigned() && ! isa<ConstantExpr>(CPV);
+  return CPV->getType()->isSigned() && !isa<ConstantExpr>(CPV);
 }
 bool ConstantUInt::classof(const Constant *CPV) {
-  return CPV->getType()->isUnsigned() && ! isa<ConstantExpr>(CPV);
+  return CPV->getType()->isUnsigned() && !isa<ConstantExpr>(CPV);
 }
 bool ConstantFP::classof(const Constant *CPV) {
   const Type *Ty = CPV->getType();
   return ((Ty == Type::FloatTy || Ty == Type::DoubleTy) &&
-          ! isa<ConstantExpr>(CPV));
+          !isa<ConstantExpr>(CPV));
 }
 bool ConstantArray::classof(const Constant *CPV) {
-  return isa<ArrayType>(CPV->getType()) && ! isa<ConstantExpr>(CPV);
+  return isa<ArrayType>(CPV->getType()) && !isa<ConstantExpr>(CPV);
 }
 bool ConstantStruct::classof(const Constant *CPV) {
-  return isa<StructType>(CPV->getType()) && ! isa<ConstantExpr>(CPV);
+  return isa<StructType>(CPV->getType()) && !isa<ConstantExpr>(CPV);
 }
 bool ConstantPointer::classof(const Constant *CPV) {
-  return (isa<PointerType>(CPV->getType()) && ! isa<ConstantExpr>(CPV));
+  return (isa<PointerType>(CPV->getType()) && !isa<ConstantExpr>(CPV));
 }
 
 
@@ -396,114 +391,86 @@ ConstantPointerRef *ConstantPointerRef::get(GlobalValue *GV) {
 typedef pair<unsigned, vector<Constant*> > ExprMapKeyType;
 static ValueMap<const ExprMapKeyType, ConstantExpr> ExprConstants;
 
-ConstantExpr*
-ConstantExpr::get(unsigned opCode, Constant *C, const Type *Ty) {
+ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C, const Type *Ty) {
 
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C);
-  const ExprMapKeyType& key = make_pair(opCode, argVec);
-  ConstantExpr* result = ExprConstants.get(Ty, key);
-  if (result)
-    return result;
+  const ExprMapKeyType &Key = make_pair(Opcode, argVec);
+  ConstantExpr *Result = ExprConstants.get(Ty, Key);
+  if (Result) return Result;
   
   // Its not in the table so create a new one and put it in the table.
   // Check the operands for consistency first
-  if (opCode != Instruction::Cast &&
-      (opCode < Instruction::FirstUnaryOp ||
-       opCode >= Instruction::NumUnaryOps)) {
-    std::cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
-         << " in unary constant expression" << std::endl;
-    return NULL;       // Not Cast or other unary opcode
-  }
+  assert(Opcode == Instruction::Cast ||
+         (Opcode >= Instruction::FirstUnaryOp &&
+          Opcode < Instruction::NumUnaryOps) &&
+         "Invalid opcode in unary ConstantExpr!");
+
   // type of operand will not match result for Cast operation
-  if (opCode != Instruction::Cast && Ty != C->getType()) {
-    cerr << "Type of operand in unary constant expression should match result" << endl;
-    return NULL;
-  }
+  assert((Opcode == Instruction::Cast || Ty == C->getType()) &&
+         "Type of operand in unary constant expression should match result");
   
-  result = new ConstantExpr(opCode, C, Ty);
-  ExprConstants.add(Ty, key, result);
-  return result;
+  Result = new ConstantExpr(Opcode, C, Ty);
+  ExprConstants.add(Ty, Key, Result);
+  return Result;
 }
 
-ConstantExpr*
-ConstantExpr::get(unsigned opCode, Constant *C1, Constant *C2,const Type *Ty) {
+ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
+                                const Type *Ty) {
 
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  const ExprMapKeyType& key = make_pair(opCode, argVec);
-  ConstantExpr* result = ExprConstants.get(Ty, key);
-  if (result)
-    return result;
+  const ExprMapKeyType &Key = make_pair(Opcode, argVec);
+  ConstantExpr *Result = ExprConstants.get(Ty, Key);
+  if (Result) return Result;
   
   // Its not in the table so create a new one and put it in the table.
   // Check the operands for consistency first
-  if (opCode < Instruction::FirstBinaryOp ||
-      opCode >= Instruction::NumBinaryOps) {
-    cerr << "Invalid opcode " << ConstantExpr::getOpcodeName(opCode)
-         << " in binary constant expression" << endl;
-    return NULL;
-  }
-  if (Ty != C1->getType() || Ty != C2->getType()) {
-    cerr << "Types of both operands in binary constant expression should match result" << endl;
-    return NULL;
-  }
+  assert((Opcode >= Instruction::FirstBinaryOp &&
+          Opcode < Instruction::NumBinaryOps) &&
+         "Invalid opcode  in binary constant expression");
+
+  assert(Ty == C1->getType() && Ty == C2->getType() &&
+         "Operand types in binary constant expression should match result");
   
-  result = new ConstantExpr(opCode, C1, C2, Ty);
-  ExprConstants.add(Ty, key, result);
-  return result;
+  Result = new ConstantExpr(Opcode, C1, C2, Ty);
+  ExprConstants.add(Ty, Key, Result);
+  return Result;
 }
 
-ConstantExpr*
-ConstantExpr::get(unsigned opCode, Constant*C,
-                  const std::vector<Value*>& idxList, const Type *Ty) {
+ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C,
+                                const std::vector<Constant*> &IdxList,
+                                const Type *Ty) {
 
   // Look up the constant in the table first to ensure uniqueness
   vector<Constant*> argVec(1, C);
-  for(vector<Value*>::const_iterator VI=idxList.begin(), VE=idxList.end();
-      VI != VE; ++VI)
-    if (Constant *C = dyn_cast<Constant>(*VI))
-        argVec.push_back(C);
-    else {
-      cerr << "Non-constant index in constant GetElementPtr expr";
-      return NULL;
-    }
+  argVec.insert(argVec.end(), IdxList.begin(), IdxList.end());
   
-  const ExprMapKeyType& key = make_pair(opCode, argVec);
-  ConstantExpr* result = ExprConstants.get(Ty, key);
-  if (result)
-    return result;
+  const ExprMapKeyType &Key = make_pair(Opcode, argVec);
+  ConstantExpr *Result = ExprConstants.get(Ty, Key);
+  if (Result) return Result;
   
   // Its not in the table so create a new one and put it in the table.
   // Check the operands for consistency first
   // Must be a getElementPtr.  Check for valid getElementPtr expression.
   // 
-  if (opCode != Instruction::GetElementPtr) {
-    cerr << "operator other than GetElementPtr used with an index list" << endl;
-    return NULL;
-  }
-  if (!isa<ConstantPointer>(C)) {
-    cerr << "Constant GelElementPtr expression using something other than a constant pointer" << endl;
-    return NULL;
-  }
-  if (!isa<PointerType>(Ty)) {
-    cerr << "Non-pointer type for constant GelElementPtr expression" << endl;
-    return NULL;
-  }
-  const Type* fldType = GetElementPtrInst::getIndexedType(C->getType(),
-                                                          idxList, true);
-  if (!fldType) {
-    cerr << "Invalid index list for constant GelElementPtr expression" << endl;
-    return NULL;
-  }
-  if (cast<PointerType>(Ty)->getElementType() != fldType) {
-    cerr << "Type for constant GelElementPtr expression does not match field type" << endl;
-    return NULL;
-  }
+  assert(Opcode == Instruction::GetElementPtr &&
+         "Operator other than GetElementPtr used with an index list");
+
+  assert(isa<PointerType>(Ty) &&
+         "Non-pointer type for constant GelElementPtr expression");
+
+  std::vector<Value*> ValIdxList(IdxList.begin(), IdxList.end());
+  const Type *fldType = GetElementPtrInst::getIndexedType(C->getType(),
+                                                          ValIdxList, true);
+  assert(fldType && "Invalid index list for constant GelElementPtr expression");
+
+  assert(cast<PointerType>(Ty)->getElementType() == fldType &&
+         "Type for constant GelElementPtr expression doesn't match field type");
   
-  result = new ConstantExpr(opCode, C, idxList, Ty);
-  ExprConstants.add(Ty, key, result);
-  return result;
+  Result = new ConstantExpr(Opcode, C, IdxList, Ty);
+  ExprConstants.add(Ty, Key, Result);
+  return Result;
 }
 
 // destroyConstant - Remove the constant from the constant table...
@@ -513,18 +480,16 @@ void ConstantExpr::destroyConstant() {
   destroyConstantImpl();
 }
 
-const char*
-ConstantExpr::getOpcodeName(unsigned opCode) {
-  return Instruction::getOpcodeName(opCode);
+const char *ConstantExpr::getOpcodeName(unsigned Opcode) {
+  return Instruction::getOpcodeName(Opcode);
 }
 
 
 //---- ConstantPointerRef::mutateReferences() implementation...
 //
-unsigned
-ConstantPointerRef::mutateReferences(Value* OldV, Value *NewV) {
+unsigned ConstantPointerRef::mutateReferences(Value *OldV, Value *NewV) {
   assert(getValue() == OldV && "Cannot mutate old value if I'm not using it!");
-  GlobalValue* NewGV = cast<GlobalValue>(NewV);
+  GlobalValue *NewGV = cast<GlobalValue>(NewV);
   getValue()->getParent()->mutateConstantPointerRef(getValue(), NewGV);
   Operands[0] = NewGV;
   return 1;
@@ -533,14 +498,13 @@ ConstantPointerRef::mutateReferences(Value* OldV, Value *NewV) {
 
 //---- ConstantPointerExpr::mutateReferences() implementation...
 //
-unsigned
-ConstantExpr::mutateReferences(Value* OldV, Value *NewV) {
-  unsigned numReplaced = 0;
-  Constant* NewC = cast<Constant>(NewV);
-  for (unsigned i=0, N = getNumOperands(); i < N; ++i)
+unsigned ConstantExpr::mutateReferences(Value* OldV, Value *NewV) {
+  unsigned NumReplaced = 0;
+  Constant *NewC = cast<Constant>(NewV);
+  for (unsigned i = 0, N = getNumOperands(); i != N; ++i)
     if (Operands[i] == OldV) {
-      ++numReplaced;
+      ++NumReplaced;
       Operands[i] = NewC;
     }
-  return numReplaced;
+  return NumReplaced;
 }
