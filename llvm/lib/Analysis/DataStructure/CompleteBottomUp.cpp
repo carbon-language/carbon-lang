@@ -16,6 +16,8 @@
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/DSGraph.h"
+#include "Support/SCCIterator.h"
+#include "Support/STLExtras.h"
 using namespace llvm;
 
 namespace {
@@ -23,7 +25,6 @@ namespace {
   X("cbudatastructure", "'Complete' Bottom-up Data Structure Analysis");
 }
 
-using namespace DS;
 
 // run - Calculate the bottom up data structure graphs for each function in the
 // program.
@@ -62,14 +63,143 @@ bool CompleteBUDataStructures::run(Module &M) {
   }
 #endif
 
-  // Start by copying all of the BU data structures graphs over, verbatim.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal()) {
-      DSInfo[I] = new DSGraph(BU.getDSGraph(*I));
-      DSInfo[I]->setGlobalsGraph(GlobalsGraph);
-      DSInfo[I]->setPrintAuxCalls();
-    }
+  std::vector<DSGraph*> Stack;
+  hash_map<DSGraph*, unsigned> ValMap;
+  unsigned NextID = 1;
 
+  if (Function *Main = M.getMainFunction()) {
+    calculateSCCGraphs(getOrCreateGraph(*Main), Stack, NextID, ValMap);
+  } else {
+    std::cerr << "CBU-DSA: No 'main' function found!\n";
+  }
+  
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal() && !DSInfo.count(I))
+      calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
 
   return false;
+}
+
+DSGraph &CompleteBUDataStructures::getOrCreateGraph(Function &F) {
+  // Has the graph already been created?
+  DSGraph *&Graph = DSInfo[&F];
+  if (Graph) return *Graph;
+
+  // Copy the BU graph...
+  Graph = new DSGraph(getAnalysis<BUDataStructures>().getDSGraph(F));
+  Graph->setGlobalsGraph(GlobalsGraph);
+  Graph->setPrintAuxCalls();
+
+  // Make sure to update the DSInfo map for all of the functions currently in
+  // this graph!
+  for (DSGraph::ReturnNodesTy::iterator I = Graph->getReturnNodes().begin();
+       I != Graph->getReturnNodes().end(); ++I)
+    DSInfo[I->first] = Graph;
+
+  return *Graph;
+}
+
+
+
+unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
+                                                  std::vector<DSGraph*> &Stack,
+                                                  unsigned &NextID, 
+                                         hash_map<DSGraph*, unsigned> &ValMap) {
+  assert(!ValMap.count(&FG) && "Shouldn't revisit functions!");
+  unsigned Min = NextID++, MyID = Min;
+  ValMap[&FG] = Min;
+  Stack.push_back(&FG);
+
+  // The edges out of the current node are the call site targets...
+  for (unsigned i = 0, e = FG.getFunctionCalls().size(); i != e; ++i) {
+    Instruction *Call = FG.getFunctionCalls()[i].getCallSite().getInstruction();
+
+    // Loop over all of the actually called functions...
+    ActualCalleesTy::iterator I, E;
+    for (tie(I, E) = ActualCallees.equal_range(Call); I != E; ++I) {
+      DSGraph &Callee = getOrCreateGraph(*I->second);
+      unsigned M;
+      // Have we visited the destination function yet?
+      hash_map<DSGraph*, unsigned>::iterator It = ValMap.find(&Callee);
+      if (It == ValMap.end())  // No, visit it now.
+        M = calculateSCCGraphs(Callee, Stack, NextID, ValMap);
+      else                    // Yes, get it's number.
+        M = It->second;
+      if (M < Min) Min = M;
+    }
+  }
+
+  assert(ValMap[&FG] == MyID && "SCC construction assumption wrong!");
+  if (Min != MyID)
+    return Min;         // This is part of a larger SCC!
+
+  // If this is a new SCC, process it now.
+  bool IsMultiNodeSCC = false;
+  while (Stack.back() != &FG) {
+    DSGraph *NG = Stack.back();
+    ValMap[NG] = ~0U;
+
+    DSGraph::NodeMapTy NodeMap;
+    FG.cloneInto(*NG, FG.getScalarMap(), FG.getReturnNodes(), NodeMap, 0);
+
+    // Update the DSInfo map and delete the old graph...
+    for (DSGraph::ReturnNodesTy::iterator I = NG->getReturnNodes().begin();
+         I != NG->getReturnNodes().end(); ++I)
+      DSInfo[I->first] = &FG;
+    delete NG;
+    
+    Stack.pop_back();
+    IsMultiNodeSCC = true;
+  }
+
+  // Clean up the graph before we start inlining a bunch again...
+  if (IsMultiNodeSCC)
+    FG.removeTriviallyDeadNodes();
+  
+  Stack.pop_back();
+  processGraph(FG);
+  ValMap[&FG] = ~0U;
+  return MyID;
+}
+
+
+/// processGraph - Process the BU graphs for the program in bottom-up order on
+/// the SCC of the __ACTUAL__ call graph.  This builds "complete" BU graphs.
+void CompleteBUDataStructures::processGraph(DSGraph &G) {
+  // The edges out of the current node are the call site targets...
+  for (unsigned i = 0, e = G.getFunctionCalls().size(); i != e; ++i) {
+    const DSCallSite &CS = G.getFunctionCalls()[i];
+    Instruction *TheCall = CS.getCallSite().getInstruction();
+
+    // The Normal BU pass will have taken care of direct calls well already,
+    // don't worry about them.
+    if (!CS.getCallSite().getCalledFunction()) {
+      // Loop over all of the actually called functions...
+      ActualCalleesTy::iterator I, E;
+      for (tie(I, E) = ActualCallees.equal_range(TheCall); I != E; ++I) {
+        Function *CalleeFunc = I->second;
+        if (!CalleeFunc->isExternal()) {
+          // Merge the callee's graph into this graph.  This works for normal
+          // calls or for self recursion within an SCC.
+          G.mergeInGraph(CS, *CalleeFunc, getOrCreateGraph(*CalleeFunc),
+                         DSGraph::KeepModRefBits |
+                         DSGraph::StripAllocaBit |
+                         DSGraph::DontCloneCallNodes);
+        }
+      }
+    }
+  }
+
+  // Re-materialize nodes from the globals graph.
+  // Do not ignore globals inlined from callees -- they are not up-to-date!
+  G.getInlinedGlobals().clear();
+  G.updateFromGlobalGraph();
+
+  // Recompute the Incomplete markers
+  G.maskIncompleteMarkers();
+  G.markIncompleteNodes(DSGraph::MarkFormalArgs);
+
+  // Delete dead nodes.  Treat globals that are unreachable but that can
+  // reach live nodes as live.
+  G.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 }

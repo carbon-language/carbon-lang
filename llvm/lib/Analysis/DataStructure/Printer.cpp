@@ -283,3 +283,8 @@ void TDDataStructures::print(std::ostream &O, const Module *M) const {
   printCollection(*this, O, M, "td.");
 }
 
+void CompleteBUDataStructures::print(std::ostream &O, const Module *M) const {
+  printCollection(*this, O, M, "cbu.");
+}
+
+
