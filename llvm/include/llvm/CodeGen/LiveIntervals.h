@@ -85,8 +85,6 @@ namespace llvm {
         };
 
         typedef std::list<Interval> Intervals;
-        typedef std::map<unsigned, unsigned> Reg2RegMap;
-        typedef std::vector<MachineBasicBlock*> MachineBasicBlockPtrs;
 
     private:
         MachineFunction* mf_;
@@ -108,6 +106,7 @@ namespace llvm {
         typedef std::map<unsigned, Intervals::iterator> Reg2IntervalMap;
         Reg2IntervalMap r2iMap_;
 
+        typedef std::map<unsigned, unsigned> Reg2RegMap;
         Reg2RegMap r2rMap_;
 
         Intervals intervals_;
@@ -118,6 +117,11 @@ namespace llvm {
 
         /// runOnMachineFunction - pass entry point
         virtual bool runOnMachineFunction(MachineFunction&);
+
+        Interval& getInterval(unsigned reg) {
+            assert(r2iMap_.count(reg)&& "Interval does not exist for register");
+            return *r2iMap_.find(reg)->second;
+        }
 
         unsigned getInstructionIndex(MachineInstr* instr) const;
 
