@@ -40,8 +40,10 @@ class StoreInst;
 class TargetData;
 
 class AliasAnalysis {
-  const TargetData *TD;
 protected:
+  const TargetData *TD;
+  AliasAnalysis *AA;       // Previous Alias Analysis to chain to.
+
   /// InitializeAliasAnalysis - Subclasses must call this method to initialize
   /// the AliasAnalysis interface before any other methods are called.  This is
   /// typically called by the run* methods of these subclasses.  This may be
@@ -55,7 +57,7 @@ protected:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 public:
-  AliasAnalysis() : TD(0) {}
+  AliasAnalysis() : TD(0), AA(0) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
   /// getTargetData - Every alias analysis implementation depends on the size of
@@ -82,9 +84,7 @@ public:
   /// analysis implementations.
   ///
   virtual AliasResult alias(const Value *V1, unsigned V1Size,
-                            const Value *V2, unsigned V2Size) {
-    return MayAlias;
-  }
+                            const Value *V2, unsigned V2Size);
 
   /// getMustAliases - If there are any pointers known that must alias this
   /// pointer, return them now.  This allows alias-set based alias analyses to
@@ -92,13 +92,13 @@ public:
   /// alias analysis supports this, it should ADD any must aliased pointers to
   /// the specified vector.
   ///
-  virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) {}
+  virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals);
 
   /// pointsToConstantMemory - If the specified pointer is known to point into
   /// constant global memory, return true.  This allows disambiguation of store
   /// instructions from constant pointers.
   ///
-  virtual bool pointsToConstantMemory(const Value *P) { return false; }
+  virtual bool pointsToConstantMemory(const Value *P);
 
   /// doesNotAccessMemory - If the specified function is known to never read or
   /// write memory, return true.  If the function only reads from known-constant
@@ -111,7 +111,7 @@ public:
   ///
   /// This property corresponds to the GCC 'const' attribute.
   ///
-  virtual bool doesNotAccessMemory(Function *F) { return false; }
+  virtual bool doesNotAccessMemory(Function *F);
 
   /// onlyReadsMemory - If the specified function is known to only read from
   /// non-volatile memory (or not access memory at all), return true.  Functions
@@ -122,7 +122,7 @@ public:
   ///
   /// This property corresponds to the GCC 'pure' attribute.
   ///
-  virtual bool onlyReadsMemory(Function *F) { return doesNotAccessMemory(F); }
+  virtual bool onlyReadsMemory(Function *F);
 
 
   //===--------------------------------------------------------------------===//
@@ -158,8 +158,7 @@ public:
   /// Remember that if you override this and chain to another analysis, you must
   /// make sure that it doesn't have mod/ref info either.
   ///
-  virtual bool hasNoModRefInfoForCalls() const { return false; }
-
+  virtual bool hasNoModRefInfoForCalls() const;
 
   /// Convenience functions...
   ModRefResult getModRefInfo(LoadInst *L, Value *P, unsigned Size);
@@ -180,6 +179,10 @@ public:
     }
   }
 
+  //===--------------------------------------------------------------------===//
+  /// Higher level methods for querying mod/ref information.
+  ///
+
   /// canBasicBlockModify - Return true if it is possible for execution of the
   /// specified basic block to modify the value pointed to by Ptr.
   ///
@@ -192,6 +195,35 @@ public:
   ///
   bool canInstructionRangeModify(const Instruction &I1, const Instruction &I2,
                                  const Value *Ptr, unsigned Size);
+
+  //===--------------------------------------------------------------------===//
+  /// Methods that clients should call when they transform the program to allow
+  /// alias analyses to update their internal data structures.  Note that these
+  /// methods may be called on any instruction, regardless of whether or not
+  /// they have pointer-analysis implications.
+  ///
+
+  /// deleteValue - This method should be called whenever an LLVM Value is
+  /// deleted from the program, for example when an instruction is found to be
+  /// redundant and is eliminated.
+  ///
+  virtual void deleteValue(Value *V);
+
+  /// copyValue - This method should be used whenever a preexisting value in the
+  /// program is copied or cloned, introducing a new value.  Note that analysis
+  /// implementations should tolerate clients that use this method to introduce
+  /// the same value multiple times: if the analysis already knows about a
+  /// value, it should ignore the request.
+  ///
+  virtual void copyValue(Value *From, Value *To);
+
+  /// replaceWithNewValue - This method is the obvious combination of the two
+  /// above, and it provided as a helper to simplify client code.
+  ///
+  void replaceWithNewValue(Value *Old, Value *New) {
+    copyValue(Old, New);
+    deleteValue(Old);
+  }
 };
 
 // Because of the way .a files work, we must force the BasicAA implementation to
