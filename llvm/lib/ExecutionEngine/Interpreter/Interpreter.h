@@ -8,12 +8,9 @@
 #define LLI_INTERPRETER_H
 
 // Uncomment this line to enable profiling of structure field accesses.
-#define PROFILE_STRUCTURE_FIELDS 1
-
+//#define PROFILE_STRUCTURE_FIELDS 1
 
 #include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 #include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
 
@@ -110,6 +107,7 @@ public:
   // getExitCode - return the code that should be the exit code for the lli
   // utility.
   inline int getExitCode() const { return ExitCode; }
+  inline Module *getModule() const { return CurMod; }
 
   // enableProfiling() - Turn profiling on, clear stats?
   void enableProfiling() { Profile = true; }
