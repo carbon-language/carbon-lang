@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
@@ -43,106 +44,6 @@ namespace {
   Statistic<> NumHoistedLoads("licm", "Number of load insts hoisted");
   Statistic<> NumPromoted("licm", "Number of memory locations promoted to registers");
 
-  /// LoopBodyInfo - We recursively traverse loops from most-deeply-nested to
-  /// least-deeply-nested.  For all of the loops nested within the current one,
-  /// we keep track of information so that we don't have to repeat queries.
-  ///
-  struct LoopBodyInfo {
-    std::vector<CallInst*> Calls;          // Call instructions in loop
-    std::vector<InvokeInst*> Invokes;      // Invoke instructions in loop
-
-    // StoredPointers - Targets of store instructions...
-    std::set<Value*> StoredPointers;
-
-    // LoadedPointers - Source pointers for load instructions...
-    std::set<Value*> LoadedPointers;
-
-    enum PointerClass {
-      PointerUnknown = 0, // Nothing is known about this pointer yet
-      PointerMustStore,   // Memory is stored to ONLY through this pointer
-      PointerMayStore,    // Memory is stored to through this or other pointers
-      PointerNoStore      // Memory is not modified in this loop
-    };
-
-    // PointerIsModified - Keep track of information as we find out about it in
-    // the loop body...
-    //
-    std::map<Value*, enum PointerClass> PointerIsModified;
-
-    /// CantModifyAnyPointers - Return true if no memory modifying instructions
-    /// occur in this loop.  This is just a conservative approximation, because
-    /// a call may not actually store anything.
-    bool CantModifyAnyPointers() const {
-      return Calls.empty() && Invokes.empty() && StoredPointers.empty();
-    }
-
-    /// incorporate - Incorporate information about a subloop into the current
-    /// loop.
-    void incorporate(const LoopBodyInfo &OtherLBI);
-    void incorporate(BasicBlock &BB);  // do the same for a basic block
-
-    PointerClass getPointerInfo(Value *V, AliasAnalysis &AA) {
-      PointerClass &VInfo = PointerIsModified[V];
-      if (VInfo == PointerUnknown)
-        VInfo = calculatePointerInfo(V, AA);
-      return VInfo;
-    }
-  private:
-    /// calculatePointerInfo - Calculate information about the specified
-    /// pointer.
-    PointerClass calculatePointerInfo(Value *V, AliasAnalysis &AA) const;
-  };
-}
-
-/// incorporate - Incorporate information about a subloop into the current loop.
-void LoopBodyInfo::incorporate(const LoopBodyInfo &OtherLBI) {
-  // Do not incorporate NonModifiedPointers (which is just a cache) because it
-  // is too much trouble to make sure it's still valid.
-  Calls.insert  (Calls.end(),  OtherLBI.Calls.begin(),  OtherLBI.Calls.end());
-  Invokes.insert(Invokes.end(),OtherLBI.Invokes.begin(),OtherLBI.Invokes.end());
-  StoredPointers.insert(OtherLBI.StoredPointers.begin(),
-                        OtherLBI.StoredPointers.end());
-  LoadedPointers.insert(OtherLBI.LoadedPointers.begin(),
-                        OtherLBI.LoadedPointers.end());
-}
-
-void LoopBodyInfo::incorporate(BasicBlock &BB) {
-  for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
-    if (CallInst *CI = dyn_cast<CallInst>(&*I))
-      Calls.push_back(CI);
-    else if (StoreInst *SI = dyn_cast<StoreInst>(&*I))
-      StoredPointers.insert(SI->getOperand(1));
-    else if (LoadInst *LI = dyn_cast<LoadInst>(&*I))
-      LoadedPointers.insert(LI->getOperand(0));
-
-  if (InvokeInst *II = dyn_cast<InvokeInst>(BB.getTerminator()))
-    Invokes.push_back(II);
-}
-
-
-// calculatePointerInfo - Calculate information about the specified pointer.
-LoopBodyInfo::PointerClass LoopBodyInfo::calculatePointerInfo(Value *V,
-                                                      AliasAnalysis &AA) const {
-  for (unsigned i = 0, e = Calls.size(); i != e; ++i)
-    if (AA.getModRefInfo(Calls[i], V, ~0))
-      return PointerMayStore;
-
-  for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
-    if (AA.getModRefInfo(Invokes[i], V, ~0))
-      return PointerMayStore;
-
-  PointerClass Result = PointerNoStore;
-  for (std::set<Value*>::const_iterator I = StoredPointers.begin(),
-         E = StoredPointers.end(); I != E; ++I)
-    if (AA.alias(V, ~0, *I, ~0))
-      if (V == *I)
-        Result = PointerMustStore;   // If this is the only alias, return must
-      else
-        return PointerMayStore;      // We have to return may
-  return Result;
-}
-
-namespace {
   struct LICM : public FunctionPass, public InstVisitor<LICM> {
     virtual bool runOnFunction(Function &F);
 
@@ -154,7 +55,7 @@ namespace {
       AU.addRequiredID(LoopPreheadersID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<DominanceFrontier>();
+      AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<AliasAnalysis>();
     }
 
@@ -164,11 +65,11 @@ namespace {
     bool Changed;            // Set to true when we change anything.
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
-    LoopBodyInfo *CurLBI;    // Information about the current loop...
+    AliasSetTracker *CurAST; // AliasSet information for the current loop...
 
     /// visitLoop - Hoist expressions out of the specified loop...    
     ///
-    void visitLoop(Loop *L, LoopBodyInfo &LBI);
+    void visitLoop(Loop *L, AliasSetTracker &AST);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
@@ -198,8 +99,8 @@ namespace {
     /// store into the memory location pointed to by V.
     /// 
     bool pointerInvalidatedByLoop(Value *V) {
-      // Check to see if any of the basic blocks in CurLoop invalidate V.
-      return CurLBI->getPointerInfo(V, *AA) != LoopBodyInfo::PointerNoStore;
+      // Check to see if any of the basic blocks in CurLoop invalidate *V.
+      return CurAST->getAliasSetForPointer(V, 0).isMod();
     }
 
     /// isLoopInvariant - Return true if the specified value is loop invariant
@@ -269,8 +170,8 @@ bool LICM::runOnFunction(Function &) {
   const std::vector<Loop*> &TopLevelLoops = LI->getTopLevelLoops();
   for (std::vector<Loop*>::const_iterator I = TopLevelLoops.begin(),
          E = TopLevelLoops.end(); I != E; ++I) {
-    LoopBodyInfo LBI;
-    LICM::visitLoop(*I, LBI);
+    AliasSetTracker AST(*AA);
+    LICM::visitLoop(*I, AST);
   }
   return Changed;
 }
@@ -278,32 +179,32 @@ bool LICM::runOnFunction(Function &) {
 
 /// visitLoop - Hoist expressions out of the specified loop...    
 ///
-void LICM::visitLoop(Loop *L, LoopBodyInfo &LBI) {
+void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   // Recurse through all subloops before we process this loop...
   for (std::vector<Loop*>::const_iterator I = L->getSubLoops().begin(),
          E = L->getSubLoops().end(); I != E; ++I) {
-    LoopBodyInfo SubLBI;
-    LICM::visitLoop(*I, SubLBI);
+    AliasSetTracker SubAST(*AA);
+    LICM::visitLoop(*I, SubAST);
 
     // Incorporate information about the subloops into this loop...
-    LBI.incorporate(SubLBI);
+    AST.add(SubAST);
   }
   CurLoop = L;
-  CurLBI = &LBI;
+  CurAST = &AST;
 
   // Get the preheader block to move instructions into...
   Preheader = L->getLoopPreheader();
   assert(Preheader&&"Preheader insertion pass guarantees we have a preheader!");
 
   // Loop over the body of this loop, looking for calls, invokes, and stores.
-  // Because subloops have already been incorporated into LBI, we skip blocks in
+  // Because subloops have already been incorporated into AST, we skip blocks in
   // subloops.
   //
   const std::vector<BasicBlock*> &LoopBBs = L->getBlocks();
   for (std::vector<BasicBlock*>::const_iterator I = LoopBBs.begin(),
          E = LoopBBs.end(); I != E; ++I)
     if (LI->getLoopFor(*I) == L)        // Ignore blocks in subloops...
-      LBI.incorporate(**I);             // Incorporate the specified basic block
+      AST.add(**I);                     // Incorporate the specified basic block
 
   // We want to visit all of the instructions in this loop... that are not parts
   // of our subloops (they have already had their invariants hoisted out of
@@ -472,57 +373,37 @@ void LICM::findPromotableValuesInLoop(
                              std::map<Value*, AllocaInst*> &ValueToAllocaMap) {
   Instruction *FnStart = CurLoop->getHeader()->getParent()->begin()->begin();
 
-  for (std::set<Value*>::iterator I = CurLBI->StoredPointers.begin(),
-         E = CurLBI->StoredPointers.end(); I != E; ++I) {
-    Value *V = *I;
-    if (isLoopInvariant(V) &&
-        CurLBI->getPointerInfo(V, *AA) == LoopBodyInfo::PointerMustStore) {
+  // Loop over all of the alias sets in the tracker object...
+  for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
+       I != E; ++I) {
+    AliasSet &AS = *I;
+    // We can promote this alias set if it has a store, if it is a "Must" alias
+    // set, and if the pointer is loop invariant.
+    if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
+        isLoopInvariant(AS.begin()->first)) {
+      assert(AS.begin() != AS.end() &&
+             "Must alias set should have at least one pointer element in it!");
+      Value *V = AS.begin()->first;
 
-      // Don't add a new entry for this stored pointer if it aliases something
-      // we have already processed.
-      std::map<Value*, AllocaInst*>::iterator V2AMI = 
-        ValueToAllocaMap.lower_bound(V);
-      if (V2AMI == ValueToAllocaMap.end() || V2AMI->first != V) {
-        // Check to make sure that any loads in the loop are either NO or MUST
-        // aliases.  We cannot rewrite loads that _might_ come from this memory
-        // location.
-
-        bool PointerOk = true;
-        for (std::set<Value*>::const_iterator I =CurLBI->LoadedPointers.begin(),
-               E = CurLBI->LoadedPointers.end(); PointerOk && I != E; ++I)
-          switch (AA->alias(V, ~0, *I, ~0)) {
-          case AliasAnalysis::MustAlias:
-            if (V->getType() != (*I)->getType())
-              PointerOk = false;
-            break;
-          case AliasAnalysis::MayAlias:
-            PointerOk = false;
-          case AliasAnalysis::NoAlias:
-            break;
-          }
-
-        if (PointerOk) {
-          const Type *Ty = cast<PointerType>(V->getType())->getElementType();
-          AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
-          PromotedValues.push_back(std::make_pair(AI, V));
-          ValueToAllocaMap.insert(V2AMI, std::make_pair(V, AI));
-
-          DEBUG(std::cerr << "LICM: Promoting value: " << *V << "\n");
-
-          // Loop over all of the loads and stores that alias this pointer,
-          // adding them to the Value2AllocaMap as well...
-          for (std::set<Value*>::const_iterator
-                 I = CurLBI->LoadedPointers.begin(),
-                 E = CurLBI->LoadedPointers.end(); I != E; ++I)
-            if (AA->alias(V, ~0, *I, ~0) == AliasAnalysis::MustAlias)
-              ValueToAllocaMap[*I] = AI;
-
-          for (std::set<Value*>::const_iterator
-                 I = CurLBI->StoredPointers.begin(),
-                 E = CurLBI->StoredPointers.end(); I != E; ++I)
-            if (AA->alias(V, ~0, *I, ~0) == AliasAnalysis::MustAlias)
-              ValueToAllocaMap[*I] = AI;
+      // Check that all of the pointers in the alias set have the same type.  We
+      // cannot (yet) promote a memory location that is loaded and stored in
+      // different sizes.
+      bool PointerOk = true;
+      for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
+        if (V->getType() != I->first->getType()) {
+          PointerOk = false;
+          break;
         }
+
+      if (PointerOk) {
+        const Type *Ty = cast<PointerType>(V->getType())->getElementType();
+        AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
+        PromotedValues.push_back(std::make_pair(AI, V));
+        
+        for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
+          ValueToAllocaMap.insert(std::make_pair(I->first, AI));
+        
+        DEBUG(std::cerr << "LICM: Promoting value: " << *V << "\n");
       }
     }
   }
