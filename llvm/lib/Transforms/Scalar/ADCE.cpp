@@ -144,13 +144,16 @@ bool ADCE::dropReferencesOfDeadInstructionsInLiveBlock(BasicBlock *BB) {
         // #arguments != #predecessors, so we remove them now.
         //
         PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+
+      } else {
+        if (isa<CallInst>(I))
+          ++NumCallRemoved;
+        else
+          ++NumInstRemoved;
         
         // Delete the instruction...
-        I = BB->getInstList().erase(I);
+        BB->getInstList().erase(I++);
         Changed = true;
-        ++NumInstRemoved;
-      } else {
-        ++I;
       }
     } else {
       ++I;
@@ -497,8 +500,11 @@ bool ADCE::doADCE() {
       for (BasicBlock::iterator II = BI->begin(); II != --BI->end(); )
         if (!LiveSet.count(II)) {             // Is this instruction alive?
           // Nope... remove the instruction from it's basic block...
+          if (isa<CallInst>(II))
+            ++NumCallRemoved;
+          else
+            ++NumInstRemoved;
           II = BI->getInstList().erase(II);
-          ++NumInstRemoved;
           MadeChanges = true;
         } else {
           ++II;
