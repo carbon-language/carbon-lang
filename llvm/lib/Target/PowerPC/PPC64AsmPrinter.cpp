@@ -491,7 +491,7 @@ void Printer::printOp(const MachineOperand &MO,
       GlobalValue *GV = MO.getGlobal();
 
       if (Function *F = dyn_cast<Function>(GV)) {
-        O << "." << F->getName();
+        O << Mang->getValueName(F);
       } else if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
         // output the label name
         O << GVToLabelMap[GVar];
@@ -666,7 +666,7 @@ bool Printer::doInitialization(Module &M) {
     O << '\n';
   }
 
-  Mang = new Mangler(M, "_");
+  Mang = new Mangler(M, ".");
   return false; // success
 }
 
