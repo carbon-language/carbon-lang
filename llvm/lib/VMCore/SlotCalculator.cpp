@@ -27,7 +27,7 @@ SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   //
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::PrimitiveID)i));
-    insertVal(Type::getPrimitiveType((Type::PrimitiveID)i));
+    insertVal(Type::getPrimitiveType((Type::PrimitiveID)i), true);
   }
 
   if (M == 0) return;   // Empty table...
@@ -45,7 +45,7 @@ SlotCalculator::SlotCalculator(const Method *M, bool IgnoreNamed) {
   //
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::PrimitiveID)i));
-    insertVal(Type::getPrimitiveType((Type::PrimitiveID)i));
+    insertVal(Type::getPrimitiveType((Type::PrimitiveID)i), true);
   }
 
   if (TheModule == 0) return;   // Empty table...
@@ -141,17 +141,25 @@ int SlotCalculator::getValSlot(const Value *D) const {
   return (int)I->second;
 }
 
-void SlotCalculator::insertVal(const Value *D) {
+void SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
   if (D == 0) return;
 
   // If this node does not contribute to a plane, or if the node has a 
   // name and we don't want names, then ignore the silly node...
   //
-  if (D->getType() == Type::VoidTy || (IgnoreNamedNodes && D->hasName())) 
-    return;
+  if (!dontIgnore)                               // Don't ignore nonignorables!
+    if (D->getType() == Type::VoidTy ||          // Ignore void type nodes
+	(IgnoreNamedNodes && 
+	 (D->hasName() || (D->isConstant() && !(D->getType() == Type::TypeTy)))))
+	 return;// If IgnoreNamed nodes, ignore if it's a constant or has a name
 
   const Type *Typ = D->getType();
-  unsigned Ty = Typ->getPrimitiveID();
+  unsigned Ty;
+
+  // Used for debugging DefSlot=-1 assertion...
+  //if (Typ == Type::TypeTy)
+  //  cerr << "Inserting type '" << D->castTypeAsserting()->getName() << "'!\n";
+
   if (Typ->isDerivedType()) {
     int DefSlot = getValSlot(Typ);
     if (DefSlot == -1) {                // Have we already entered this type?
@@ -159,15 +167,13 @@ void SlotCalculator::insertVal(const Value *D) {
       // example, if you say 'malloc uint', this defines a type 'uint*' that
       // may be undefined at this point.
       //
-      cerr << "SHOULDN'T HAPPEN Adding Type ba: " << Typ->getName() << endl;
-      assert(0 && "Shouldn't this be taken care of by processType!?!?!");
-      // Nope... add this to the Type plane now!
-      insertVal(Typ);
-
-      DefSlot = getValSlot(Typ);
-      assert(DefSlot >= 0 && "Type didn't get inserted correctly!");
+      cerr << "Type '" << Typ->getName() << "' unknown!\n";
+      assert(0 && "Shouldn't type be in constant pool!?!?!");
+      abort();
     }
     Ty = (unsigned)DefSlot;
+  } else {
+    Ty = Typ->getPrimitiveID();
   }
   
   if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
