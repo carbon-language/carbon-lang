@@ -23,6 +23,7 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <set>
+#include <iostream>
 using std::string;
 using std::map;
 using std::ostream;
