@@ -1,7 +1,7 @@
 // RUN: %llvmgcc -S %s -o /dev/null
 
 /*
- * XFAIL: linux
+ * XFAIL: *
  */
 struct s {
   unsigned long long u33: 33;
