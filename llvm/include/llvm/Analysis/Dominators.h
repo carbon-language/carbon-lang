@@ -105,6 +105,8 @@ struct DominatorSet : public DominatorSetBase {
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
+private:
+  void calculateDominatorsFromBlock(BasicBlock *BB);
 };
 
 
