@@ -17,22 +17,14 @@
 #include "llvm/ADT/StringExtras.h"
 #include <cassert>
 #include <string>
-
-#ifdef HAVE_BZIP2
-#ifdef HAVE_BZLIB_H
-#include <bzlib.h>
-#define BZIP2_GOOD
-#endif 
-#endif 
-
-#ifdef HAVE_ZLIB
-#ifdef HAVE_ZLIB_H
-#include <zlib.h>
-#define ZLIB_GOOD
-#endif
-#endif
+#include "bzip2/bzlib.h"
 
 namespace {
+
+enum CompressionTypes {
+  COMP_TYPE_NONE  = '0',
+  COMP_TYPE_BZIP2 = '2',
+};
 
 inline int getdata(char*& buffer, unsigned& size, 
                    llvm::Compressor::OutputDataCallback* cb, void* context) {
@@ -157,10 +149,10 @@ struct BufferContext {
     // Figure out what to return to the Compressor. If this is the first call,
     // then bc->buff will be null. In this case we want to return the entire
     // buffer because there was no previous allocation.  Otherwise, when the
-    // buffer is reallocated, we save the new base pointer in the BufferContext.buff
-    // field but return the address of only the extension, mid-way through the
-    // buffer (since its size was doubled). Furthermore, the sz result must be
-    // 1/2 the total size of the buffer.
+    // buffer is reallocated, we save the new base pointer in the 
+    // BufferContext.buff field but return the address of only the extension, 
+    // mid-way through the buffer (since its size was doubled). Furthermore, 
+    // the sz result must be 1/2 the total size of the buffer.
     if (bc->buff == 0 ) {
       buff = bc->buff = new_buff;
       sz = new_size;
@@ -247,161 +239,108 @@ namespace llvm {
 
 // Compress in one of three ways
 uint64_t Compressor::compress(const char* in, unsigned size, 
-    OutputDataCallback* cb, Algorithm hint, void* context ) {
+    OutputDataCallback* cb, void* context ) {
   assert(in && "Can't compress null buffer");
   assert(size && "Can't compress empty buffer");
   assert(cb && "Can't compress without a callback function");
 
   uint64_t result = 0;
 
-  switch (hint) {
-    case COMP_TYPE_BZIP2: {
-#if defined(BZIP2_GOOD)
-      // Set up the bz_stream
-      bz_stream bzdata;
-      bzdata.bzalloc = 0;
-      bzdata.bzfree = 0;
-      bzdata.opaque = 0;
-      bzdata.next_in = (char*)in;
-      bzdata.avail_in = size;
-      bzdata.next_out = 0;
-      bzdata.avail_out = 0;
-      switch ( BZ2_bzCompressInit(&bzdata, 5, 0, 100) ) {
-        case BZ_CONFIG_ERROR: throw std::string("bzip2 library mis-compiled");
-        case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
-        case BZ_MEM_ERROR:    throw std::string("Out of memory");
-        case BZ_OK:
-        default:
-          break;
-      }
+  // For small files, we just don't bother compressing. bzip2 isn't very good
+  // with tiny files and can actually make the file larger, so we just avoid
+  // it altogether.
+  if (size > 256) {
+    // Set up the bz_stream
+    bz_stream bzdata;
+    bzdata.bzalloc = 0;
+    bzdata.bzfree = 0;
+    bzdata.opaque = 0;
+    bzdata.next_in = (char*)in;
+    bzdata.avail_in = size;
+    bzdata.next_out = 0;
+    bzdata.avail_out = 0;
+    switch ( BZ2_bzCompressInit(&bzdata, 5, 0, 100) ) {
+      case BZ_CONFIG_ERROR: throw std::string("bzip2 library mis-compiled");
+      case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
+      case BZ_MEM_ERROR:    throw std::string("Out of memory");
+      case BZ_OK:
+      default:
+        break;
+    }
 
-      // Get a block of memory
+    // Get a block of memory
+    if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
+      BZ2_bzCompressEnd(&bzdata);
+      throw std::string("Can't allocate output buffer");
+    }
+
+    // Put compression code in first byte
+    (*bzdata.next_out++) = COMP_TYPE_BZIP2;
+    bzdata.avail_out--;
+
+    // Compress it
+    int bzerr = BZ_FINISH_OK;
+    while (BZ_FINISH_OK == (bzerr = BZ2_bzCompress(&bzdata, BZ_FINISH))) {
       if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzCompressEnd(&bzdata);
         throw std::string("Can't allocate output buffer");
       }
-
-      // Put compression code in first byte
-      (*bzdata.next_out++) = COMP_TYPE_BZIP2;
-      bzdata.avail_out--;
-
-      // Compress it
-      int bzerr = BZ_FINISH_OK;
-      while (BZ_FINISH_OK == (bzerr = BZ2_bzCompress(&bzdata, BZ_FINISH))) {
-        if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
-          BZ2_bzCompressEnd(&bzdata);
-          throw std::string("Can't allocate output buffer");
-        }
-      }
-      switch (bzerr) {
-        case BZ_SEQUENCE_ERROR:
-        case BZ_PARAM_ERROR: throw std::string("Param/Sequence error");
-        case BZ_FINISH_OK:
-        case BZ_STREAM_END: break;
-        default: throw std::string("Oops: ") + utostr(unsigned(bzerr));
-      }
-
-      // Finish
-      result = (static_cast<uint64_t>(bzdata.total_out_hi32) << 32) |
-          bzdata.total_out_lo32 + 1;
-
-      BZ2_bzCompressEnd(&bzdata);
-      break;
-#else
-      // FALL THROUGH
-#endif
+    }
+    switch (bzerr) {
+      case BZ_SEQUENCE_ERROR:
+      case BZ_PARAM_ERROR: throw std::string("Param/Sequence error");
+      case BZ_FINISH_OK:
+      case BZ_STREAM_END: break;
+      default: throw std::string("Oops: ") + utostr(unsigned(bzerr));
     }
 
-    case COMP_TYPE_ZLIB: {
-#if defined(ZLIB_GOOD)
-      z_stream zdata;
-      zdata.zalloc = Z_NULL;
-      zdata.zfree = Z_NULL;
-      zdata.opaque = Z_NULL;
-      zdata.next_in = (Bytef*)in;
-      zdata.avail_in = size;
-      if (Z_OK != deflateInit(&zdata,6))
-        throw std::string(zdata.msg ? zdata.msg : "zlib error");
+    // Finish
+    result = (static_cast<uint64_t>(bzdata.total_out_hi32) << 32) |
+        bzdata.total_out_lo32 + 1;
 
-      if (0 != getdata((char*&)(zdata.next_out), zdata.avail_out,cb,context)) {
-        deflateEnd(&zdata);
-        throw std::string("Can't allocate output buffer");
-      }
+    BZ2_bzCompressEnd(&bzdata);
+  } else {
+    // Do null compression, for small files
+    NULLCOMP_stream sdata;
+    sdata.next_in = (char*)in;
+    sdata.avail_in = size;
+    NULLCOMP_init(&sdata);
 
-      (*zdata.next_out++) = COMP_TYPE_ZLIB;
-      zdata.avail_out--;
-
-      int flush = 0;
-      while ( Z_OK == deflate(&zdata,0) && zdata.avail_out == 0) {
-        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out, cb,context)) {
-          deflateEnd(&zdata);
-          throw std::string("Can't allocate output buffer");
-        }
-      }
-
-      while ( Z_STREAM_END != deflate(&zdata, Z_FINISH)) {
-        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out, cb,context)) {
-          deflateEnd(&zdata);
-          throw std::string("Can't allocate output buffer");
-        }
-      }
-
-      result = static_cast<uint64_t>(zdata.total_out) + 1;
-      deflateEnd(&zdata);
-      break;
-
-#else
-    // FALL THROUGH
-#endif
+    if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
+      throw std::string("Can't allocate output buffer");
     }
 
-    case COMP_TYPE_SIMPLE: {
-      NULLCOMP_stream sdata;
-      sdata.next_in = (char*)in;
-      sdata.avail_in = size;
-      NULLCOMP_init(&sdata);
+    *(sdata.next_out++) = COMP_TYPE_NONE;
+    sdata.avail_out--;
 
+    while (!NULLCOMP_compress(&sdata)) {
       if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
         throw std::string("Can't allocate output buffer");
       }
-
-      *(sdata.next_out++) = COMP_TYPE_SIMPLE;
-      sdata.avail_out--;
-
-      while (!NULLCOMP_compress(&sdata)) {
-        if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
-          throw std::string("Can't allocate output buffer");
-        }
-      }
-
-      result = sdata.output_count + 1;
-      NULLCOMP_end(&sdata);
-      break;
     }
-    default:
-      throw std::string("Invalid compression type hint");
+
+    result = sdata.output_count + 1;
+    NULLCOMP_end(&sdata);
   }
   return result;
 }
 
 uint64_t 
-Compressor::compressToNewBuffer(const char* in, unsigned size, char*&out,
-                                Algorithm hint) {
+Compressor::compressToNewBuffer(const char* in, unsigned size, char*&out) {
   BufferContext bc(size);
-  unsigned result = compress(in,size,BufferContext::callback,hint,(void*)&bc);
+  unsigned result = compress(in,size,BufferContext::callback,(void*)&bc);
   out = bc.buff;
   return result;
 }
 
 uint64_t 
-Compressor::compressToStream(const char*in, unsigned size, std::ostream& out,
-                             Algorithm hint) {
+Compressor::compressToStream(const char*in, unsigned size, std::ostream& out) {
   // Set up the context and writer
   WriterContext ctxt(&out,size / 2);
 
   // Compress everything after the magic number (which we'll alter)
   uint64_t zipSize = Compressor::compress(in,size,
-    WriterContext::callback, hint, (void*)&ctxt);
+    WriterContext::callback, (void*)&ctxt);
 
   if (ctxt.chunk) {
     ctxt.write(zipSize - ctxt.written);
@@ -410,7 +349,7 @@ Compressor::compressToStream(const char*in, unsigned size, std::ostream& out,
 }
 
 // Decompress in one of three ways
-uint64_t Compressor::decompress(const char *in, unsigned size, 
+uint64_t Compressor::decompress(const char *in, unsigned size,
                                 OutputDataCallback* cb, void* context) {
   assert(in && "Can't decompress null buffer");
   assert(size > 1 && "Can't decompress empty buffer");
@@ -420,9 +359,6 @@ uint64_t Compressor::decompress(const char *in, unsigned size,
 
   switch (*in++) {
     case COMP_TYPE_BZIP2: {
-#if !defined(BZIP2_GOOD)
-      throw std::string("Can't decompress BZIP2 data");
-#else
       // Set up the bz_stream
       bz_stream bzdata;
       bzdata.bzalloc = 0;
@@ -471,45 +407,9 @@ uint64_t Compressor::decompress(const char *in, unsigned size,
         bzdata.total_out_lo32;
       BZ2_bzDecompressEnd(&bzdata);
       break;
-#endif
     }
 
-    case COMP_TYPE_ZLIB: {
-#if !defined(ZLIB_GOOD)
-      throw std::string("Can't decompress ZLIB data");
-#else
-      z_stream zdata;
-      zdata.zalloc = Z_NULL;
-      zdata.zfree = Z_NULL;
-      zdata.opaque = Z_NULL;
-      zdata.next_in = (Bytef*)(in);
-      zdata.avail_in = size - 1;
-      if ( Z_OK != inflateInit(&zdata))
-        throw std::string(zdata.msg ? zdata.msg : "zlib error");
-
-      if (0 != getdata((char*&)zdata.next_out, zdata.avail_out,cb,context)) {
-        inflateEnd(&zdata);
-        throw std::string("Can't allocate output buffer");
-      }
-
-      int zerr = Z_OK;
-      while (Z_OK == (zerr = inflate(&zdata,0))) {
-        if (0 != getdata((char*&)zdata.next_out, zdata.avail_out,cb,context)) {
-          inflateEnd(&zdata);
-          throw std::string("Can't allocate output buffer");
-        }
-      }
-
-      if (zerr != Z_STREAM_END)
-        throw std::string(zdata.msg?zdata.msg:"zlib error");
-
-      result = static_cast<uint64_t>(zdata.total_out);
-      inflateEnd(&zdata);
-      break;
-#endif
-    }
-
-    case COMP_TYPE_SIMPLE: {
+    case COMP_TYPE_NONE: {
       NULLCOMP_stream sdata;
       sdata.next_in = (char*)in;
       sdata.avail_in = size - 1;
