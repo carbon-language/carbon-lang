@@ -54,7 +54,7 @@ static void printPass(PassType &P, ostream &O, Function &F) {
 // specialize the template here for them...
 //
 template<>
-static void printPass(DataStructure &P, ostream &O, Module &M) {
+static void printPass(LocalDataStructures &P, ostream &O, Module &M) {
   P.print(O, &M);
 }
 
@@ -275,10 +275,10 @@ struct {
   { exprs             , Create<PrinterPass<Exprs> >             },
 
   // IP Analyses...
-  { printmodule       , createPrintModulePass            },
+  { printmodule       , createPrintModulePass             },
   { printusedtypes    , New<Pass, FindUsedTypes>          },
   { callgraph         , New<Pass, CallGraph>              },
-  { datastructure     , New<Pass, DataStructure>          },
+  { datastructure     , New<Pass, LocalDataStructures>    },
   { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
 
   // Dominator analyses
