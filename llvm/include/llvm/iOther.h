@@ -70,6 +70,7 @@ public:
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
   void init(Value *Func, const std::vector<Value*> &Params);
+  void init(Value *Func, Value *Actual1, Value *Actual2);
   void init(Value *Func, Value *Actual);
   void init(Value *Func);
 
@@ -79,7 +80,12 @@ public:
   CallInst(Value *F, const std::vector<Value*> &Par,
            const std::string &Name, BasicBlock *InsertAtEnd);
 
-  // Alternate CallInst ctors w/ one actual & no actuals, respectively.
+  // Alternate CallInst ctors w/ two actuals, w/ one actual and no
+  // actuals, respectively.
+  CallInst(Value *F, Value *Actual1, Value *Actual2,
+           const std::string& Name = "", Instruction *InsertBefore = 0);
+  CallInst(Value *F, Value *Actual1, Value *Actual2,
+           const std::string& Name, BasicBlock *InsertAtEnd);
   CallInst(Value *F, Value *Actual, const std::string& Name = "",
            Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *Actual, const std::string& Name,

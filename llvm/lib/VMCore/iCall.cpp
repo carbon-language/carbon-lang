@@ -38,6 +38,21 @@ void CallInst::init(Value *Func, const std::vector<Value*> &Params)
     Operands.push_back(Use(Params[i], this));
 }
 
+void CallInst::init(Value *Func, Value *Actual1, Value *Actual2)
+{
+  Operands.reserve(3);
+  Operands.push_back(Use(Func, this));
+  
+  const FunctionType *MTy = 
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+
+  assert((MTy->getNumParams() == 2 ||
+          (MTy->isVarArg() && MTy->getNumParams() == 0)) &&
+	 "Calling a function with bad signature");
+  Operands.push_back(Use(Actual1, this));
+  Operands.push_back(Use(Actual2, this));
+}
+
 void CallInst::init(Value *Func, Value *Actual)
 {
   Operands.reserve(2);
@@ -77,6 +92,22 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
 				 ->getElementType())->getReturnType(),
 		Instruction::Call, Name, InsertAtEnd) {
   init(Func, Params);
+}
+
+CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
+                   const std::string &Name, Instruction  *InsertBefore)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertBefore) {
+  init(Func, Actual1, Actual2);
+}
+
+CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
+                   const std::string &Name, BasicBlock  *InsertAtEnd)
+  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                   ->getElementType())->getReturnType(),
+                Instruction::Call, Name, InsertAtEnd) {
+  init(Func, Actual1, Actual2);
 }
 
 CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
