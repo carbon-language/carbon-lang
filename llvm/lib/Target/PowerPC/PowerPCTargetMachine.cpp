@@ -97,7 +97,7 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createUnreachableBlockEliminationPass());
 
   if (LP64)
-    PM.add(createPPC64ISelSimple(*this));
+    PM.add(createPPC64ISelPattern(*this));
   else if (EnablePatternISel)
     PM.add(createPPC32ISelPattern(*this));
   else

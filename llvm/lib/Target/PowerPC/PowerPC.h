@@ -25,7 +25,7 @@ class TargetMachine;
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPC32ISelSimple(TargetMachine &TM);
 FunctionPass *createPPC32ISelPattern(TargetMachine &TM);
-FunctionPass *createPPC64ISelSimple(TargetMachine &TM);
+FunctionPass *createPPC64ISelPattern(TargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
