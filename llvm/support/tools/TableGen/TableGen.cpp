@@ -11,6 +11,7 @@
 #include "Record.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
+#include "Support/FileUtilities.h"
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
 #include <algorithm>
@@ -391,15 +392,18 @@ int main(int argc, char **argv) {
 
   std::ostream *Out = &std::cout;
   if (OutputFilename != "-") {
-    Out = new std::ofstream(OutputFilename.c_str());
+    // Output to a .tmp file, because we don't actually want to overwrite the
+    // output file unless the generated file is different or the specified file
+    // does not exist.
+    Out = new std::ofstream((OutputFilename+".tmp").c_str());
 
     if (!Out->good()) {
-      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      std::cerr << argv[0] << ": error opening " << OutputFilename << ".tmp!\n";
       return 1;
     }
 
     // Make sure the file gets removed if *gasp* tablegen crashes...
-    RemoveFileOnSignal(OutputFilename);
+    RemoveFileOnSignal(OutputFilename+".tmp");
   }
 
   try {
@@ -438,6 +442,16 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (Out != &std::cout) delete Out;
+  if (Out != &std::cout) {
+    delete Out;                               // Close the file
+    
+    // Now that we have generated the result, check to see if we either don't
+    // have the requested file, or if the requested file is different than the
+    // file we generated.  If so, move the generated file over the requested
+    // file.  Otherwise, just remove the file we just generated, so 'make'
+    // doesn't try to regenerate tons of dependencies.
+    //
+    MoveFileOverIfUpdated(OutputFilename+".tmp", OutputFilename);
+  }
   return 0;
 }
