@@ -34,11 +34,14 @@ endif
 .PRECIOUS: Output/%.llvm.bc
 .PRECIOUS: Output/%.llvm
 
+# Find the location of the platform specific LLVM GCC libraries
+LLVMGCCLIBDIR=$(dir $(shell $(LLVMGCC) -print-file-name=libgcc.a))
+
 # LLVM Tool Definitions (LLVMGCC, LLVMGXX, LLVMAS are provided by Makefile.rules)
 LLI      = $(LLVMTOOLCURRENT)/lli
 LLC      = $(LLVMTOOLCURRENT)/llc
 LGCCAS   = $(LLVMTOOLCURRENT)/gccas
-LGCCLD   = $(LGCCLDPROG) -L$(LLVMGCCDIR)/lib/gcc/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
+LGCCLD   = $(LGCCLDPROG) -L$(LLVMGCCLIBDIR) -L$(LLVMGCCDIR)/lib
 LDIS     = $(LLVMTOOLCURRENT)/llvm-dis 
 LOPT     = $(LLVMTOOLCURRENT)/opt
 LLINK    = $(LLVMTOOLCURRENT)/llvm-link
