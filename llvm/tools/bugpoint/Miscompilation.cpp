@@ -108,7 +108,11 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     exit(1);
   }
   removeFile(BytecodeResult);  // No longer need the file on disk
-    
+
+  // Don't check if there are no passes in the suffix.
+  if (Suffix.empty())
+    return NoFailure;
+  
   std::cout << "Checking to see if '" << getPassesString(Suffix)
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
