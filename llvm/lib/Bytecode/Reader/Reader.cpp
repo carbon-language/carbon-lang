@@ -175,7 +175,8 @@ inline void BytecodeReader::read_double(double& DoubleVal) {
     double d;
     uint64_t i;
   } DoubleUnion;
-  DoubleUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24) |
+  DoubleUnion.i = (uint64_t(At[0]) <<  0) | (uint64_t(At[1]) << 8) | 
+                  (uint64_t(At[2]) << 16) | (uint64_t(At[3]) << 24) |
                   (uint64_t(At[4]) << 32) | (uint64_t(At[5]) << 40) | 
                   (uint64_t(At[6]) << 48) | (uint64_t(At[7]) << 56);
   At+=sizeof(uint64_t);
