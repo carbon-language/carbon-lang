@@ -61,6 +61,7 @@
 #ifndef FUNCTION_LIVE_VAR_INFO_H
 #define FUNCTION_LIVE_VAR_INFO_H
 
+#include "Support/hash_map"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/ValueSet.h"
 
@@ -69,10 +70,12 @@ class MachineInstr;
 
 class FunctionLiveVarInfo : public FunctionPass {
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
-  std::map<const MachineInstr *, const ValueSet *> MInst2LVSetBI; 
+  // These sets are owned by this map and will be freed in releaseMemory().
+  hash_map<const MachineInstr *, ValueSet *> MInst2LVSetBI; 
 
-  // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst
-  std::map<const MachineInstr *, const ValueSet *> MInst2LVSetAI; 
+  // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst.
+  // These sets are just pointers to sets in MInst2LVSetBI or BBLiveVar.
+  hash_map<const MachineInstr *, ValueSet *> MInst2LVSetAI; 
 
   // Stored Function that the data is computed with respect to
   const Function *M;
@@ -104,11 +107,13 @@ public:
 
   // --------- Functions to access analysis results -------------------
 
-  // gets OutSet of a BB
+  // get OutSet of a BB
   const ValueSet &getOutSetOfBB(const BasicBlock *BB) const;
+        ValueSet &getOutSetOfBB(const BasicBlock *BB)      ;
 
-  // gets InSet of a BB
+  // get InSet of a BB
   const ValueSet &getInSetOfBB(const BasicBlock *BB) const;
+        ValueSet &getInSetOfBB(const BasicBlock *BB)      ;
 
   // gets the Live var set BEFORE an instruction.
   // if BB is specified and the live var set has not yet been computed,
