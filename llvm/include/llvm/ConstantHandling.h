@@ -113,7 +113,8 @@ public:
     case Type::LongTyID:   return castToLong(V);
     case Type::FloatTyID:  return castToFloat(V);
     case Type::DoubleTyID: return castToDouble(V);
-    case Type::PointerTyID:return castToPointer(V, (PointerType*)Ty);
+    case Type::PointerTyID:
+      return castToPointer(V, reinterpret_cast<const PointerType*>(Ty));
     default: return 0;
     }
   }
@@ -125,7 +126,7 @@ public:
   static inline ConstRules *get(const Constant &V1, const Constant &V2) {
     if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2))
       return getConstantExprRules();
-    return (ConstRules*)V1.getType()->getOrCreateAnnotation(AID);
+    return static_cast<ConstRules*>(V1.getType()->getOrCreateAnnotation(AID));
   }
 private:
   static ConstRules *getConstantExprRules();

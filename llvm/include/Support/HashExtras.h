@@ -31,7 +31,9 @@ template <> struct hash<std::string> {
 
 // Provide a hash function for arbitrary pointers...
 template <class T> struct hash<T *> {
-  inline size_t operator()(const T *Val) const { return (size_t)Val; }
+  inline size_t operator()(const T *Val) const {
+    return reinterpret_cast<size_t>(Val);
+  }
 };
 
 }  // End namespace std

@@ -50,7 +50,8 @@ public:
   virtual void setSuccessor(unsigned idx, BasicBlock *B) = 0;
 
   inline BasicBlock *getSuccessor(unsigned idx) {
-    return (BasicBlock*)((const TerminatorInst *)this)->getSuccessor(idx);
+    const TerminatorInst *TI = this;
+    return const_cast<BasicBlock*>(TI->getSuccessor(idx));
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -110,7 +111,7 @@ public:
   static       Value*    getNotArgument(      BinaryOperator* Bop);
 
   BinaryOps getOpcode() const { 
-    return (BinaryOps)Instruction::getOpcode();
+    return static_cast<BinaryOps>(Instruction::getOpcode());
   }
 
   virtual Instruction *clone() const {

@@ -87,7 +87,7 @@ public:
   inline bool isConditional()   const { return Operands.size() == 3; }
 
   inline Value *getCondition() const {
-    return isUnconditional() ? 0 : (Value*)Operands[2].get();
+    return isUnconditional() ? 0 : reinterpret_cast<Value*>(Operands[2].get());
   }
 
   void setCondition(Value *V) {
@@ -100,7 +100,7 @@ public:
   //
   void setUnconditionalDest(BasicBlock *Dest) {
     if (isConditional()) Operands.erase(Operands.begin()+1, Operands.end());
-    Operands[0] = (Value*)Dest;
+    Operands[0] = reinterpret_cast<Value*>(Dest);
   }
 
   virtual const BasicBlock *getSuccessor(unsigned i) const {
@@ -109,12 +109,13 @@ public:
                       cast<BasicBlock>(Operands[1].get());
   }
   inline BasicBlock *getSuccessor(unsigned idx) {
-    return (BasicBlock*)((const BranchInst *)this)->getSuccessor(idx);
+    const BranchInst *BI = this;
+    return const_cast<BasicBlock*>(BI->getSuccessor(idx));
   }
 
   virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for Branch!");
-    Operands[idx] = (Value*)NewSucc;
+    Operands[idx] = reinterpret_cast<Value*>(NewSucc);
   }
 
   virtual unsigned getNumSuccessors() const { return 1+isConditional(); }
@@ -176,7 +177,7 @@ public:
 
   virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
-    Operands[idx*2+1] = (Value*)NewSucc;
+    Operands[idx*2+1] = reinterpret_cast<Value*>(NewSucc);
   }
 
   // getSuccessorValue - Return the value associated with the specified
@@ -243,11 +244,11 @@ public:
   }
 
   inline void setNormalDest(BasicBlock *B){
-    Operands[1] = (Value*)B;
+    Operands[1] = reinterpret_cast<Value*>(B);
   }
 
   inline void setExceptionalDest(BasicBlock *B){
-    Operands[2] = (Value*)B;
+    Operands[2] = reinterpret_cast<Value*>(B);
   }
 
   virtual const BasicBlock *getSuccessor(unsigned i) const {
@@ -261,7 +262,7 @@ public:
 
   virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < 2 && "Successor # out of range for invoke!");
-    Operands[idx+1] = (Value*)NewSucc;
+    Operands[idx+1] = reinterpret_cast<Value*>(NewSucc);
   }
 
   virtual unsigned getNumSuccessors() const { return 2; }

@@ -301,7 +301,7 @@ public:
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline const ArrayType *getType() const {
-    return (ArrayType*)Value::getType();
+    return reinterpret_cast<const ArrayType*>(Value::getType());
   }
 
   /// getAsString - If the sub-element type of this array is either sbyte or
@@ -354,7 +354,7 @@ public:
 
   /// getType() specialization - Reduce amount of casting...
   inline const StructType *getType() const {
-    return (StructType*)Value::getType();
+    return reinterpret_cast<const StructType*>(Value::getType());
   }
 
   /// getValues - Return a vector of the component constants that make up this
@@ -394,10 +394,11 @@ public:
 class ConstantPointer : public Constant {
   ConstantPointer(const ConstantPointer &);      // DO NOT IMPLEMENT
 protected:
-  inline ConstantPointer(const PointerType *T) : Constant((const Type*)T) {}
+  inline ConstantPointer(const PointerType *T)
+    : Constant(reinterpret_cast<const Type*>(T)) { }
 public:
   inline const PointerType *getType() const {
-    return (PointerType*)Value::getType();
+    return reinterpret_cast<const PointerType*>(Value::getType());
   }
 
   /// isNullValue - Return true if this is the value that would be returned by

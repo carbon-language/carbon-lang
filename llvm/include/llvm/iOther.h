@@ -113,7 +113,9 @@ public:
     Operands.push_back(Use(SA, this));
   }
 
-  OtherOps getOpcode() const { return (OtherOps)Instruction::getOpcode(); }
+  OtherOps getOpcode() const {
+    return static_cast<OtherOps>(Instruction::getOpcode());
+  }
 
   virtual Instruction *clone() const { return new ShiftInst(*this); }
 

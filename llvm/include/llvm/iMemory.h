@@ -47,7 +47,7 @@ public:
 
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
-    return (const PointerType*)Instruction::getType(); 
+    return reinterpret_cast<const PointerType*>(Instruction::getType()); 
   }
 
   // getAllocatedType - Return the type that is being allocated by the
@@ -237,7 +237,7 @@ public:
 
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &EPI)
-    : Instruction((Type*)EPI.getType(), GetElementPtr) {
+    : Instruction(reinterpret_cast<const Type*>(EPI.getType()), GetElementPtr) {
     Operands.reserve(EPI.Operands.size());
     for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
@@ -249,7 +249,7 @@ public:
   
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
-    return (PointerType*)Instruction::getType();
+    return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
   /// getIndexedType - Returns the type of the element that would be loaded with

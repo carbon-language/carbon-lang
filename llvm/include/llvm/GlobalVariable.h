@@ -70,18 +70,18 @@ public:
   ///
   inline Constant *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return (Constant*)Operands[0].get();
+    return reinterpret_cast<Constant*>(Operands[0].get());
   }
   inline Constant *getInitializer() {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return (Constant*)Operands[0].get();
+    return reinterpret_cast<Constant*>(Operands[0].get());
   }
   inline void setInitializer(Constant *CPV) {
     if (CPV == 0) {
       if (hasInitializer()) Operands.pop_back();
     } else {
       if (!hasInitializer()) Operands.push_back(Use(0, this));
-      Operands[0] = (Value*)CPV;
+      Operands[0] = reinterpret_cast<Value*>(CPV);
     }
   }
 

@@ -46,7 +46,7 @@ public:
 
   /// getType - Global values are always pointers.
   inline const PointerType *getType() const {
-    return (const PointerType*)User::getType();
+    return reinterpret_cast<const PointerType*>(User::getType());
   }
 
   bool hasExternalLinkage()  const { return Linkage == ExternalLinkage; }

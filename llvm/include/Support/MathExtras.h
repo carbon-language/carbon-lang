@@ -28,7 +28,7 @@ inline unsigned log2(uint64_t C) {
 inline bool isPowerOf2(int64_t C, unsigned &getPow) {
   if (C < 0) C = -C;
   if (C > 0 && C == (C & ~(C - 1))) {
-    getPow = log2((uint64_t)C);
+    getPow = log2(static_cast<uint64_t>(C));
     return true;
   }
 

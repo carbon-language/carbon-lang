@@ -47,15 +47,15 @@ struct MallocAllocator {
   size_type max_size() const { return ~0 / sizeof(T); }
   
   static pointer allocate(size_t n, void* hint = 0) {
-    return (pointer)malloc(n*sizeof(T));
+    return static_cast<pointer>(malloc(n*sizeof(T)));
   }
 
   static void deallocate(pointer p, size_t n) {
-    free((void*)p);
+    free(static_cast<void*>(p));
   }
 
   void construct(pointer p, const T &val) {
-    new((void*)p) T(val);
+    new(static_cast<void*>(p)) T(val);
   }
   void destroy(pointer p) {
     p->~T();

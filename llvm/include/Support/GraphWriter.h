@@ -100,7 +100,7 @@ public:
   void writeNode(NodeType *Node) {
     std::string NodeAttributes = DOTTraits::getNodeAttributes(Node);
       
-    O << "\tNode" << (void*)Node << " [shape=record,";
+    O << "\tNode" << reinterpret_cast<const void*>(Node) << " [shape=record,";
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";
     O << "label=\"{"
       << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
@@ -137,10 +137,11 @@ public:
         // Figure out which edge this targets...
         unsigned Offset = std::distance(GTraits::child_begin(TargetNode),
                                         TargetIt);
-        DestPort = (int)Offset;
+        DestPort = static_cast<int>(Offset);
       }
 
-      emitEdge((void *)Node, edgeidx, (void*)TargetNode, DestPort,
+      emitEdge(reinterpret_cast<const void*>(Node), edgeidx,
+               reinterpret_cast<const void*>(TargetNode), DestPort,
                DOTTraits::getEdgeAttributes(Node, EI));
     }
   }
@@ -178,7 +179,7 @@ public:
     O << "\tNode" << SrcNodeID;
     if (SrcNodePort >= 0)
       O << ":g" << SrcNodePort;
-    O << " -> Node" << (void*)DestNodeID;
+    O << " -> Node" << reinterpret_cast<const void*>(DestNodeID);
     if (DestNodePort >= 0)
       O << ":g" << DestNodePort;    
 

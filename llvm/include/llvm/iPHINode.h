@@ -58,11 +58,11 @@ public:
   /// getIncomingBlock - Return incoming basic block #x
   BasicBlock *getIncomingBlock(unsigned i) const { 
     assert(i*2+1 < Operands.size() && "Invalid value number!");
-    return (BasicBlock*)Operands[i*2+1].get();
+    return reinterpret_cast<BasicBlock*>(Operands[i*2+1].get());
   }
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
     assert(i*2+1 < Operands.size() && "Invalid value number!");
-    Operands[i*2+1] = (Value*)BB;
+    Operands[i*2+1] = reinterpret_cast<Value*>(BB);
   }
   unsigned getOperandNumForIncomingBlock(unsigned i) {
     return i*2+1;
@@ -73,7 +73,7 @@ public:
     assert(getType() == D->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
     Operands.push_back(Use(D, this));
-    Operands.push_back(Use((Value*)BB, this));
+    Operands.push_back(Use(reinterpret_cast<Value*>(BB), this));
   }
   
   /// removeIncomingValue - Remove an incoming value.  This is useful if a

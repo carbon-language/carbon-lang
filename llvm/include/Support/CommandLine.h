@@ -148,19 +148,23 @@ public:
 
   inline enum NumOccurrences getNumOccurrencesFlag() const {
     int NO = Flags & OccurrencesMask;
-    return NO ? (enum NumOccurrences)NO : getNumOccurrencesFlagDefault();
+    return NO ? static_cast<enum NumOccurrences>(NO)
+              : getNumOccurrencesFlagDefault();
   }
   inline enum ValueExpected getValueExpectedFlag() const {
     int VE = Flags & ValueMask;
-    return VE ? (enum ValueExpected)VE : getValueExpectedFlagDefault();
+    return VE ? static_cast<enum ValueExpected>(VE)
+              : getValueExpectedFlagDefault();
   }
   inline enum OptionHidden getOptionHiddenFlag() const {
     int OH = Flags & HiddenMask;
-    return OH ? (enum OptionHidden)OH : getOptionHiddenFlagDefault();
+    return OH ? static_cast<enum OptionHidden>(OH)
+              : getOptionHiddenFlagDefault();
   }
   inline enum FormattingFlags getFormattingFlag() const {
     int OH = Flags & FormattingMask;
-    return OH ? (enum FormattingFlags)OH : getFormattingFlagDefault();
+    return OH ? static_cast<enum FormattingFlags>(OH)
+              : getFormattingFlagDefault();
   }
   inline unsigned getMiscFlags() const {
     return Flags & MiscMask;
@@ -307,7 +311,7 @@ public:
 
     // Process the varargs portion of the values...
     while (const char *EnumName = va_arg(ValueArgs, const char *)) {
-      DataType EnumVal = (DataType)va_arg(ValueArgs, int);
+      DataType EnumVal = static_cast<DataType>(va_arg(ValueArgs, int));
       const char *EnumDesc = va_arg(ValueArgs, const char *);
       Values.push_back(std::make_pair(EnumName,      // Add value to value map
                                       std::make_pair(EnumVal, EnumDesc)));
@@ -452,7 +456,8 @@ public:
   template <class DT>
   void addLiteralOption(const char *Name, const DT &V, const char *HelpStr) {
     assert(findOption(Name) == Values.size() && "Option already exists!");
-    Values.push_back(std::make_pair(Name, std::make_pair((DataType)V,HelpStr)));
+    Values.push_back(std::make_pair(Name,
+                             std::make_pair(static_cast<DataType>(V),HelpStr)));
   }
 
   // removeLiteralOption - Remove the specified option.

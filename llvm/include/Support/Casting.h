@@ -37,7 +37,7 @@ template<typename From> struct simplify_type {
 template<typename From> struct simplify_type<const From> {
   typedef const From SimpleType;
   static SimpleType &getSimplifiedValue(const From &Val) {
-    return simplify_type<From>::getSimplifiedValue((From&)Val);
+    return simplify_type<From>::getSimplifiedValue(static_cast<From&>(Val));
   }
 };
 
@@ -178,7 +178,8 @@ template<class To, class From, class SimpleFrom> struct cast_convert_val {
 template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
   // This _is_ a simple type, just cast it.
   static typename cast_retty<To, FromTy>::ret_type doit(const FromTy &Val) {
-    return (typename cast_retty<To, FromTy>::ret_type)Val;
+    return reinterpret_cast<typename cast_retty<To, FromTy>::ret_type>(
+                         const_cast<FromTy&>(Val));
   }
 };
 

@@ -226,7 +226,8 @@ struct RegisterOpt : public RegisterPassBase {
   RegisterOpt(const char *PassArg, const char *Name, FunctionPass *(*ctor)(),
               bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::Optimization, (Pass*(*)())ctor));
+                              PassInfo::Optimization, 
+                              static_cast<Pass*(*)()>(ctor)));
     if (CFGOnly) setOnlyUsesCFG();
   }
 
@@ -246,7 +247,7 @@ struct RegisterOpt : public RegisterPassBase {
               bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization, 0,
-                              (Pass*(*)(TargetMachine&))targetctor));
+                            static_cast<Pass*(*)(TargetMachine&)>(targetctor)));
     if (CFGOnly) setOnlyUsesCFG();
   }
 };
