@@ -91,6 +91,13 @@ TargetData::TargetData(const std::string &TargetName,
   : AID(AnnotationManager::getID("TargetData::" + TargetName)) {
   AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
 
+  // If this assert triggers, a pass "required" TargetData information, but the
+  // top level tool did not provide once for it.  We do not want to default
+  // construct, or else we might end up using a bad endianness or pointer size!
+  //
+  assert(!TargetName.empty() &&
+         "ERROR: Tool did not specify a target data to use!");
+
   LittleEndian     = isLittleEndian;
   SubWordDataSize  = SubWordSize;
   IntegerRegSize   = IntRegSize;
