@@ -18,7 +18,10 @@
 #include "Support/CommandLine.h"
 #include <iostream>
 
+bool DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
+
 static cl::Flag Enabled("stats", "Enable statistics output from program");
+static cl::Flag Debug(DebugFlag, "debug", "Enable debug output", cl::Hidden);
 
 // Print information when destroyed, iff command line option is specified
 void StatisticBase::destroy() const {
