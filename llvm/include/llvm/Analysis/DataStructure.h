@@ -20,6 +20,7 @@ class GlobalValue;
 class FunctionDSGraph;
 class DataStructure;
 class DSNodeIterator;
+class ShadowDSNode;
 
 // FIXME: move this somewhere private
 unsigned countPointerFields(const Type *Ty);
@@ -113,6 +114,8 @@ class DSNode {
   std::vector<PointerValSet> FieldLinks;
   std::vector<Value*> Pointers;   // Values pointing to me...
   std::vector<PointerValSet*> Referrers;
+
+  std::vector<std::pair<const Type *, ShadowDSNode *> > SynthNodes;
   
   DSNode(const DSNode &);         // DO NOT IMPLEMENT
   void operator=(const DSNode &); // DO NOT IMPLEMENT
@@ -186,6 +189,10 @@ public:
     return New;
   }
 
+  // synthesizeNode - Create a new shadow node that is to be linked into this
+  // chain..
+  //
+  ShadowDSNode *synthesizeNode(const Type *Ty, FunctionRepBuilder *Rep);
 
   virtual void dropAllReferences() {
     FieldLinks.clear();
@@ -320,30 +327,25 @@ private:
 //
 class ShadowDSNode : public DSNode {
   friend class FunctionDSGraph;
+  friend class FunctionRepBuilder;
   Module *Mod;
-  ShadowDSNode *ShadowParent;   // Nonnull if this is a synthesized node...
-  std::vector<std::pair<const Type *, ShadowDSNode *> > SynthNodes;
+  DSNode *ShadowParent;              // Nonnull if this is a synthesized node...
 public:
   ShadowDSNode(const Type *Ty, Module *M);
   virtual std::string getCaption() const;
 
-  // synthesizeNode - Create a new shadow node that is to be linked into this
-  // chain..
-  //
-  ShadowDSNode *synthesizeNode(const Type *Ty, FunctionRepBuilder *Rep);
-
   // isEquivalentTo - Return true if the nodes should be merged...
   virtual bool isEquivalentTo(DSNode *Node) const;
+
+  DSNode *getShadowParent() const { return ShadowParent; }
 
   // Support type inquiry through isa, cast, and dyn_cast...
   static bool classof(const ShadowDSNode *) { return true; }
   static bool classof(const DSNode *N) { return N->NodeType == ShadowNode; }
 
 private:
-  ShadowDSNode(const Type *Ty, Module *M, ShadowDSNode *ShadParent);
+  ShadowDSNode(const Type *Ty, Module *M, DSNode *ShadParent);
 protected:
-  virtual void mapNode(std::map<const DSNode*, DSNode*> &NodeMap,
-                       const DSNode *Old);
   virtual ShadowDSNode *cloneImpl() const {
     if (ShadowParent)
       return new ShadowDSNode(getType(), Mod, ShadowParent);
