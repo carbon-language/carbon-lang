@@ -554,7 +554,7 @@ void ISel::SelectPHINodes() {
 //
 static SetCondInst *canFoldSetCCIntoBranch(Value *V) {
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
-    if (SCI->use_size() == 1 && isa<BranchInst>(SCI->use_back()) &&
+    if (SCI->hasOneUse() && isa<BranchInst>(SCI->use_back()) &&
         SCI->getParent() == cast<BranchInst>(SCI->use_back())->getParent()) {
       const Type *Ty = SCI->getOperand(0)->getType();
       if (Ty != Type::LongTy && Ty != Type::ULongTy)

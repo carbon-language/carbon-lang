@@ -103,7 +103,7 @@ static struct PerModuleInfo {
       
       // Loop over all of the uses of the GlobalValue.  The only thing they are
       // allowed to be is ConstantPointerRef's.
-      assert(OldGV->use_size() == 1 && "Only one reference should exist!");
+      assert(OldGV->hasOneUse() && "Only one reference should exist!");
       User *U = OldGV->use_back();  // Must be a ConstantPointerRef...
       ConstantPointerRef *CPR = cast<ConstantPointerRef>(U);
         

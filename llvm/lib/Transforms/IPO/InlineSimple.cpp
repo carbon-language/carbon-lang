@@ -49,7 +49,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   // If there is only one call of the function, and it has internal linkage,
   // make it almost guaranteed to be inlined.
   //
-  if (Callee->use_size() == 1 && Callee->hasInternalLinkage())
+  if (Callee->hasOneUse() && Callee->hasInternalLinkage())
     InlineCost -= 30000;
 
   // Add to the inline quality for properties that make the call valuable to

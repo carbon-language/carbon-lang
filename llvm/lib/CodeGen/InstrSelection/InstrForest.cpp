@@ -297,7 +297,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	  // is used directly, i.e., made a child of the instruction node.
 	  // 
 	  InstrTreeNode* opTreeNode;
-	  if (isa<Instruction>(operand) && operand->use_size() == 1 &&
+	  if (isa<Instruction>(operand) && operand->hasOneUse() &&
 	      cast<Instruction>(operand)->getParent() == instr->getParent() &&
 	      instr->getOpcode() != Instruction::PHINode &&
 	      instr->getOpcode() != Instruction::Call)

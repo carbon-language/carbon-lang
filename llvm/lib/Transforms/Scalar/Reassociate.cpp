@@ -126,7 +126,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
   // only expression using it...
   //
   if (BinaryOperator *LHSI = dyn_cast<BinaryOperator>(LHS))
-    if (LHSI->getOpcode() == I->getOpcode() && LHSI->use_size() == 1) {
+    if (LHSI->getOpcode() == I->getOpcode() && LHSI->hasOneUse()) {
       // If the rank of our current RHS is less than the rank of the LHS's LHS,
       // then we reassociate the two instructions...
 
@@ -177,7 +177,7 @@ static Value *NegateValue(Value *V, BasicBlock::iterator &BI) {
   // we introduce tons of unnecessary negation instructions...
   //
   if (Instruction *I = dyn_cast<Instruction>(V))
-    if (I->getOpcode() == Instruction::Add && I->use_size() == 1) {
+    if (I->getOpcode() == Instruction::Add && I->hasOneUse()) {
       Value *RHS = NegateValue(I->getOperand(1), BI);
       Value *LHS = NegateValue(I->getOperand(0), BI);
 
@@ -242,7 +242,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
         Instruction *RHSI = dyn_cast<Instruction>(I->getOperand(1));
         if (LHSI && (int)LHSI->getOpcode() == I->getOpcode() &&
             RHSI && (int)RHSI->getOpcode() == I->getOpcode() &&
-            RHSI->use_size() == 1) {
+            RHSI->hasOneUse()) {
           // Insert a new temporary instruction... (A+B)+C
           BinaryOperator *Tmp = BinaryOperator::create(I->getOpcode(), LHSI,
                                                        RHSI->getOperand(0),

@@ -1271,7 +1271,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 }
 
 ValueHandle::~ValueHandle() {
-  if (Operands[0]->use_size() == 1) {
+  if (Operands[0]->hasOneUse()) {
     Value *V = Operands[0];
     Operands[0] = 0;   // Drop use!
 

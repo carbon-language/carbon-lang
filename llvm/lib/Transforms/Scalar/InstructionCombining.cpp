@@ -159,7 +159,7 @@ static unsigned getComplexity(Value *V) {
 // isOnlyUse - Return true if this instruction will be deleted if we stop using
 // it.
 static bool isOnlyUse(Value *V) {
-  return V->use_size() == 1 || isa<Constant>(V);
+  return V->hasOneUse() || isa<Constant>(V);
 }
 
 // SimplifyCommutative - This performs a few simplifications for commutative
@@ -238,7 +238,7 @@ static inline Value *dyn_castNotVal(Value *V) {
 // non-constant operand of the multiply.
 //
 static inline Value *dyn_castFoldableMul(Value *V) {
-  if (V->use_size() == 1 && V->getType()->isInteger())
+  if (V->hasOneUse() && V->getType()->isInteger())
     if (Instruction *I = dyn_cast<Instruction>(V))
       if (I->getOpcode() == Instruction::Mul)
         if (isa<Constant>(I->getOperand(1)))
@@ -292,7 +292,7 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
 
   // Otherwise, if the LHS is not of the same opcode as the root, return.
   Instruction *LHSI = dyn_cast<Instruction>(LHS);
-  while (LHSI && LHSI->getOpcode() == Opcode && LHSI->use_size() == 1) {
+  while (LHSI && LHSI->getOpcode() == Opcode && LHSI->hasOneUse()) {
     // Should we apply this transform to the RHS?
     bool ShouldApply = F.shouldApply(LHSI->getOperand(1));
 
@@ -484,7 +484,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       return BinaryOperator::createNot(Op1);
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
-    if (Op1I->use_size() == 1) {
+    if (Op1I->hasOneUse()) {
       // Replace (x - (y - z)) with (x + (z - y)) if the (y - z) subexpression
       // is not used by anyone else...
       //
@@ -749,7 +749,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     if ((*AndRHS & *OpRHS)->isNullValue()) {
       // (X ^ C1) & C2 --> (X & C2) iff (C1&C2) == 0
       return BinaryOperator::create(Instruction::And, X, AndRHS);
-    } else if (Op->use_size() == 1) {
+    } else if (Op->hasOneUse()) {
       // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
       std::string OpName = Op->getName(); Op->setName("");
       Instruction *And = BinaryOperator::create(Instruction::And,
@@ -767,7 +767,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       if (Together == AndRHS) // (X | C) & C --> C
         return ReplaceInstUsesWith(TheAnd, AndRHS);
       
-      if (Op->use_size() == 1 && Together != OpRHS) {
+      if (Op->hasOneUse() && Together != OpRHS) {
         // (X | C1) & C2 --> (X | (C1&C2)) & C2
         std::string Op0Name = Op->getName(); Op->setName("");
         Instruction *Or = BinaryOperator::create(Instruction::Or, X,
@@ -778,7 +778,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     }
     break;
   case Instruction::Add:
-    if (Op->use_size() == 1) {
+    if (Op->hasOneUse()) {
       // Adding a one to a single bit bit-field should be turned into an XOR
       // of the bit.  First thing to check is to see if this AND is with a
       // single bit constant.
@@ -987,7 +987,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
       if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0I))
-        if (RHS == ConstantBool::True && SCI->use_size() == 1)
+        if (RHS == ConstantBool::True && SCI->hasOneUse())
           return new SetCondInst(SCI->getInverseCondition(),
                                  SCI->getOperand(0), SCI->getOperand(1));
           
@@ -1026,7 +1026,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       }
 
   if (Instruction *Op0I = dyn_cast<Instruction>(Op0))
-    if (Op0I->getOpcode() == Instruction::Or && Op0I->use_size() == 1) {
+    if (Op0I->getOpcode() == Instruction::Or && Op0I->hasOneUse()) {
       if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
         cast<BinaryOperator>(Op0I)->swapOperands();
       if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
@@ -1144,7 +1144,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               return new SetCondInst(I.getOpcode(), BOp0, NegVal);
             else if (Value *NegVal = dyn_castNegVal(BOp0))
               return new SetCondInst(I.getOpcode(), NegVal, BOp1);
-            else if (BO->use_size() == 1) {
+            else if (BO->hasOneUse()) {
               Instruction *Neg = BinaryOperator::createNeg(BOp1, BO->getName());
               BO->setName("");
               InsertNewInstBefore(Neg, I);
@@ -1291,7 +1291,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
     // If the operand is an bitwise operator with a constant RHS, and the
     // shift is the only use, we can pull it out of the shift.
-    if (Op0->use_size() == 1)
+    if (Op0->hasOneUse())
       if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0))
         if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
           bool isValid = true;     // Valid only for And, Or, Xor
@@ -1533,7 +1533,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // propagate the cast into the instruction.  Also, only handle integral types
   // for now.
   if (Instruction *SrcI = dyn_cast<Instruction>(Src))
-    if (SrcI->use_size() == 1 && Src->getType()->isIntegral() &&
+    if (SrcI->hasOneUse() && Src->getType()->isIntegral() &&
         CI.getType()->isInteger()) {  // Don't mess with casts to bool here
       const Type *DestTy = CI.getType();
       unsigned SrcBitSize = getTypeSizeInBits(Src->getType());

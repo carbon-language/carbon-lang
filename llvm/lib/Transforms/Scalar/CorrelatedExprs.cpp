@@ -379,7 +379,7 @@ static bool isBlockSimpleEnough(BasicBlock *BB) {
   // Check the common case first: empty block, or block with just a setcc.
   if (BB->size() == 1 ||
       (BB->size() == 2 && &BB->front() == BI->getCondition() &&
-       BI->getCondition()->use_size() == 1))
+       BI->getCondition()->hasOneUse()))
     return true;
 
   // Check the more complex case now...
