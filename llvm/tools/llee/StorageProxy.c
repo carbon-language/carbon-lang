@@ -97,5 +97,5 @@ void* llvmReadFile(const char *key, size_t *size) {
  */
 int llvmExecve(const char *filename, char *const argv[], char *const envp[]) {
   char* cacheFile = computeCachedFile(filename);
-  executeProgram(cacheFile, argv, envp);
+  return executeProgram(cacheFile, argv, envp);
 }
