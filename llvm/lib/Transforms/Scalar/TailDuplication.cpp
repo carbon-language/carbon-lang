@@ -114,9 +114,14 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   // with a single successor if the block has many other predecessors.  This can
   // cause an N^2 explosion in CFG edges (and PHI node entries), as seen in
   // cases that have a large number of indirect gotos.
-  if (DTI->getNumSuccessors() > 8)
-    if (std::distance(PI, PE) * DTI->getNumSuccessors() > 128)
-      return false;
+  unsigned NumSuccs = DTI->getNumSuccessors();
+  if (NumSuccs > 8) {
+    unsigned TooMany = 128;
+    if (NumSuccs >= TooMany) return false;
+    TooMany = TooMany/NumSuccs;
+    for (; PI != PE; ++PI)
+      if (TooMany-- == 0) return false;
+  }
 
   return true;  
 }
