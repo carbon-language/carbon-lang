@@ -1,0 +1,12 @@
+; RUN: as < %s | lli -force-interpreter=false -no-local-ra=false
+;-print-machineinstrs 
+
+int %main() {
+	%A = add int 0, 0   ; %A = 0
+	%B = add int 0, 1   ; %B = 1
+	br label %bb1
+bb1:
+	%X = mul int %A, %B ; %X = 0*1 = 0
+	%R = sub int %B, 1  ; %r = 0
+	ret int %R
+}

@@ -1,0 +1,7 @@
+; RUN: as < %s | lli -force-interpreter=false -no-local-ra
+
+int %main(int %B) {
+	;%B = add int 0, 1
+	%R = sub int %B, 1  ; %r = 0
+	ret int %R
+}
