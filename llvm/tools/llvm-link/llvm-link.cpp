@@ -18,11 +18,10 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
+#include "Support/FileUtilities.h"
 #include "Support/Signals.h"
 #include <fstream>
 #include <memory>
-#include <sys/types.h>     // For FileExists
-#include <sys/stat.h>
 
 using namespace llvm;
 
@@ -46,12 +45,6 @@ static cl::list<std::string>
 LibPaths("L", cl::desc("Specify a library search path"), cl::ZeroOrMore,
          cl::value_desc("directory"), cl::Prefix);
 
-// FileExists - Return true if the specified string is an openable file...
-static inline bool FileExists(const std::string &FN) {
-  struct stat StatBuf;
-  return stat(FN.c_str(), &StatBuf) != -1;
-}
-
 // LoadFile - Read the specified bytecode file in and return it.  This routine
 // searches the link path for the specified file to try to find it...
 //
@@ -64,7 +57,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 
   while (1) {
     if (Verbose) std::cerr << "Loading '" << Filename << "'\n";
-    if (FileExists(Filename)) FoundAFile = true;
+    if (getFileSize(Filename) != -1) FoundAFile = true;
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
