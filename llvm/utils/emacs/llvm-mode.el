@@ -2,7 +2,7 @@
 ;; Description:
 ;;         Major mode for the LLVM assembler language.
 ;; Updated:
-;;         Oct 8, 2002
+;;         Apr 22, 2003
 ;; Code:
 
 ;; Create mode-specific tables.
@@ -28,7 +28,7 @@
    ;; Hex constants
    '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
    ;; Keywords
-   '("begin\\|end\\|true\\|false\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not" . font-lock-keyword-face)
+   '("begin\\|end\\|true\\|false\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize" . font-lock-keyword-face)
    ;; Types
    '("void\\|bool\\|sbyte\\|ubyte\\|u?short\\|u?int\\|u?long\\|float\\|double\\|type\\|label\\|opaque" . font-lock-type-face)
    ;; Arithmetic and Logical Operators

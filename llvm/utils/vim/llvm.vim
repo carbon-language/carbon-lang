@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	llvm
-" Maintainer:	Nick Hildenbrandt <hldnbrnd@uiuc.edu>
-" Updated:	2002-10-07
+" Maintainer:	?
+" Updated:	2003-04-22
 
 if version < 600
   syntax clear
@@ -28,7 +28,8 @@ syn keyword llvmStatement begin end true false
 syn keyword llvmStatement declare global constant const
 syn keyword llvmStatement internal uninitialized external implementation
 syn keyword llvmStatement linkonce appending
-syn keyword llvmStatement null to except not
+syn keyword llvmStatement null to except not target endian pointersize
+syn keyword llvmStatement big little
 
 "syn match llvmFunction /%[a-zA-Z\$._\-][a-zA-Z\$._\-0-9]*/
 syn match llvmNumber /\<\d\+\>/
