@@ -6,7 +6,7 @@
 // Purpose:
 //	Machine-independent driver file for instruction selection.
 //	This file constructs a forest of BURG instruction trees and then
-//      use the BURG-generated tree grammar (BURM) to find the optimal
+//      uses the BURG-generated tree grammar (BURM) to find the optimal
 //      instruction sequences for a given machine.
 //	
 // History:
@@ -17,8 +17,6 @@
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Type.h"
-#include "llvm/iMemory.h"
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
@@ -116,47 +114,6 @@ SelectInstructionsForMethod(Method* method, TargetMachine &Target)
     }
   
   return false;
-}
-
-
-//---------------------------------------------------------------------------
-// Function: FoldGetElemChain
-// 
-// Purpose:
-//   Fold a chain of GetElementPtr instructions into an equivalent
-//   (Pointer, IndexVector) pair.  Returns the pointer Value, and
-//   stores the resulting IndexVector in argument chainIdxVec.
-//---------------------------------------------------------------------------
-
-Value*
-FoldGetElemChain(const InstructionNode* getElemInstrNode,
-		 vector<ConstPoolVal*>& chainIdxVec)
-{
-  MemAccessInst* getElemInst = (MemAccessInst*)
-    getElemInstrNode->getInstruction();
-  
-  // Initialize return values from the incoming instruction
-  Value* ptrVal = getElemInst->getPtrOperand();
-  chainIdxVec = getElemInst->getIndexVec(); // copies index vector values
-  
-  // Now chase the chain of getElementInstr instructions, if any
-  InstrTreeNode* ptrChild = getElemInstrNode->leftChild();
-  while (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
-	 ptrChild->getOpLabel() == GetElemPtrIdx)
-    {
-      // Child is a GetElemPtr instruction
-      getElemInst = (MemAccessInst*)
-	((InstructionNode*) ptrChild)->getInstruction();
-      const vector<ConstPoolVal*>& idxVec = getElemInst->getIndexVec();
-      
-      // Get the pointer value out of ptrChild and *prepend* its index vector
-      ptrVal = getElemInst->getPtrOperand();
-      chainIdxVec.insert(chainIdxVec.begin(), idxVec.begin(), idxVec.end());
-      
-      ptrChild = ptrChild->leftChild();
-    }
-  
-  return ptrVal;
 }
 
 
