@@ -392,12 +392,10 @@ public:
   }
 
   virtual void handleConstantPointer( const PointerType* PT, 
-      unsigned Slot, GlobalValue* GV, Constant* PtrVal) {
+      unsigned Slot, GlobalValue* GV ) {
     dump << "       PNTR: " << PT->getDescription() 
          << " Slot=" << Slot << " GlobalValue=";
     GV->print(dump);
-    dump << "\n        Value=";
-    PtrVal->print(dump);
     dump << "\n";
     bca.numConstants++;
     bca.numValues++;
