@@ -11,6 +11,7 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/STLExtras.h"
 #include "Support/Statistic.h"
+#include "Support/Timer.h"
 #include <algorithm>
 #include <set>
 
@@ -77,7 +78,8 @@ void DSNode::foldNodeCompletely() {
   ++NumFolds;
 
   // We are no longer typed at all...
-  Ty = DSTypeRec(Type::VoidTy, true);
+  Ty = Type::VoidTy;
+  NodeType |= Array;
   Size = 1;
 
   // Loop over all of our referrers, making them point to our zero bytes of
@@ -97,7 +99,7 @@ void DSNode::foldNodeCompletely() {
 /// all of the field sensitivity that may be present in the node.
 ///
 bool DSNode::isNodeCompletelyFolded() const {
-  return getSize() == 1 && Ty.Ty == Type::VoidTy && Ty.isArray;
+  return getSize() == 1 && Ty == Type::VoidTy && isArray();
 }
 
 
@@ -117,15 +119,15 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   //  Size = 1, Ty = Void, Array = 1: The node is collapsed
   //  Otherwise, sizeof(Ty) = Size
   //
-  assert(((Size == 0 && Ty.Ty == Type::VoidTy && !Ty.isArray) ||
-          (Size == 0 && !Ty.Ty->isSized() && !Ty.isArray) ||
-          (Size == 1 && Ty.Ty == Type::VoidTy && Ty.isArray) ||
-          (Size == 0 && !Ty.Ty->isSized() && !Ty.isArray) ||
-          (TD.getTypeSize(Ty.Ty) == Size)) &&
+  assert(((Size == 0 && Ty == Type::VoidTy && !isArray()) ||
+          (Size == 0 && !Ty->isSized() && !isArray()) ||
+          (Size == 1 && Ty == Type::VoidTy && isArray()) ||
+          (Size == 0 && !Ty->isSized() && !isArray()) ||
+          (TD.getTypeSize(Ty) == Size)) &&
          "Size member of DSNode doesn't match the type structure!");
   assert(NewTy != Type::VoidTy && "Cannot merge void type into DSNode!");
 
-  if (Offset == 0 && NewTy == Ty.Ty)
+  if (Offset == 0 && NewTy == Ty)
     return false;  // This should be a common case, handle it efficiently
 
   // Return true immediately if the node is completely folded.
@@ -150,13 +152,14 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   // we can't, we fold the node completely, if we can, we potentially update our
   // internal state.
   //
-  if (Ty.Ty == Type::VoidTy) {
+  if (Ty == Type::VoidTy) {
     // If this is the first type that this node has seen, just accept it without
     // question....
     assert(Offset == 0 && "Cannot have an offset into a void node!");
-    assert(!Ty.isArray && "This shouldn't happen!");
-    Ty.Ty = NewTy;
-    Ty.isArray = WillBeArray;
+    assert(!isArray() && "This shouldn't happen!");
+    Ty = NewTy;
+    NodeType &= ~Array;
+    if (WillBeArray) NodeType |= Array;
     Size = NewTySize;
 
     // Calculate the number of outgoing links from this node.
@@ -168,7 +171,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   if (Offset+NewTySize > Size) {
     // It is illegal to grow this node if we have treated it as an array of
     // objects...
-    if (Ty.isArray) {
+    if (isArray()) {
       foldNodeCompletely();
       return true;
     }
@@ -186,9 +189,10 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     // hit the other code path here.  If the other code path decides it's not
     // ok, it will collapse the node as appropriate.
     //
-    const Type *OldTy = Ty.Ty;
-    Ty.Ty = NewTy;
-    Ty.isArray = WillBeArray;
+    const Type *OldTy = Ty;
+    Ty = NewTy;
+    NodeType &= ~Array;
+    if (WillBeArray) NodeType |= Array;
     Size = NewTySize;
 
     // Must grow links to be the appropriate size...
@@ -202,11 +206,11 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   assert(Offset <= Size &&
          "Cannot merge something into a part of our type that doesn't exist!");
 
-  // Find the section of Ty.Ty that NewTy overlaps with... first we find the
+  // Find the section of Ty that NewTy overlaps with... first we find the
   // type that starts at offset Offset.
   //
   unsigned O = 0;
-  const Type *SubType = Ty.Ty;
+  const Type *SubType = Ty;
   while (O < Offset) {
     assert(Offset-O < TD.getTypeSize(SubType) && "Offset out of range!");
 
@@ -247,17 +251,27 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
   // composite type...
   //
   unsigned SubTypeSize = SubType->isSized() ? TD.getTypeSize(SubType) : 0;
+  unsigned PadSize = SubTypeSize; // Size, including pad memory which is ignored
   while (SubType != NewTy) {
     const Type *NextSubType = 0;
     unsigned NextSubTypeSize = 0;
+    unsigned NextPadSize = 0;
     switch (SubType->getPrimitiveID()) {
-    case Type::StructTyID:
-      NextSubType = cast<StructType>(SubType)->getElementTypes()[0];
-      NextSubTypeSize = TD.getTypeSize(SubType);
+    case Type::StructTyID: {
+      const StructType *STy = cast<StructType>(SubType);
+      const StructLayout &SL = *TD.getStructLayout(STy);
+      if (SL.MemberOffsets.size() > 1)
+        NextPadSize = SL.MemberOffsets[1];
+      else
+        NextPadSize = SubTypeSize;
+      NextSubType = STy->getElementTypes()[0];
+      NextSubTypeSize = TD.getTypeSize(NextSubType);
       break;
+    }
     case Type::ArrayTyID:
       NextSubType = cast<ArrayType>(SubType)->getElementType();
-      NextSubTypeSize = TD.getTypeSize(SubType);
+      NextSubTypeSize = TD.getTypeSize(NextSubType);
+      NextPadSize = NextSubTypeSize;
       break;
     default: ;
       // fall out 
@@ -266,10 +280,11 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     if (NextSubType == 0)
       break;   // In the default case, break out of the loop
 
-    if (NextSubTypeSize < NewTySize)
+    if (NextPadSize < NewTySize)
       break;   // Don't allow shrinking to a smaller type than NewTySize
     SubType = NextSubType;
     SubTypeSize = NextSubTypeSize;
+    PadSize = NextPadSize;
   }
 
   // If we found the type exactly, return it...
@@ -288,11 +303,14 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     if (SubType->isInteger() && isa<PointerType>(NewTy) ||
         NewTy->isInteger() && isa<PointerType>(SubType))
       return false;
-
+  } else if (NewTySize > SubTypeSize && NewTySize <= PadSize) {
+    // We are accessing the field, plus some structure padding.  Ignore the
+    // structure padding.
+    return false;
   }
 
 
-  DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty.Ty
+  DEBUG(std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty
                   << "\n due to:" << NewTy << " @ " << Offset << "!\n"
                   << "SubType: " << SubType << "\n\n");
 
@@ -322,8 +340,8 @@ void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
 // duplicates are not allowed and both are sorted.  This assumes that 'T's are
 // efficiently copyable and have sane comparison semantics.
 //
-template<typename T>
-void MergeSortedVectors(vector<T> &Dest, const vector<T> &Src) {
+static void MergeSortedVectors(vector<GlobalValue*> &Dest,
+                               const vector<GlobalValue*> &Src) {
   // By far, the most common cases will be the simple ones.  In these cases,
   // avoid having to allocate a temporary vector...
   //
@@ -332,22 +350,22 @@ void MergeSortedVectors(vector<T> &Dest, const vector<T> &Src) {
   } else if (Dest.empty()) {     // Just copy the result in...
     Dest = Src;
   } else if (Src.size() == 1) {  // Insert a single element...
-    const T &V = Src[0];
-    typename vector<T>::iterator I =
+    const GlobalValue *V = Src[0];
+    vector<GlobalValue*>::iterator I =
       std::lower_bound(Dest.begin(), Dest.end(), V);
     if (I == Dest.end() || *I != Src[0])  // If not already contained...
       Dest.insert(I, Src[0]);
   } else if (Dest.size() == 1) {
-    T Tmp = Dest[0];                      // Save value in temporary...
+    GlobalValue *Tmp = Dest[0];           // Save value in temporary...
     Dest = Src;                           // Copy over list...
-    typename vector<T>::iterator I =
+    vector<GlobalValue*>::iterator I =
       std::lower_bound(Dest.begin(), Dest.end(), Tmp);
     if (I == Dest.end() || *I != Tmp)     // If not already contained...
       Dest.insert(I, Tmp);
 
   } else {
     // Make a copy to the side of Dest...
-    vector<T> Old(Dest);
+    vector<GlobalValue*> Old(Dest);
     
     // Make space for all of the type entries now...
     Dest.resize(Dest.size()+Src.size());
@@ -407,8 +425,8 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   unsigned NSize = N->getSize();
 
   // Merge the type entries of the two nodes together...
-  if (N->Ty.Ty != Type::VoidTy) {
-    mergeTypeInfo(N->Ty.Ty, NOffset);
+  if (N->Ty != Type::VoidTy) {
+    mergeTypeInfo(N->Ty, NOffset);
 
     // mergeTypeInfo can cause collapsing, which can cause this node to become
     // dead.
@@ -423,14 +441,14 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     if (!N->isNodeCompletelyFolded()) {
       N->foldNodeCompletely();
       if (hasNoReferrers()) return;
-       NSize = N->getSize();
+      NSize = N->getSize();
     }
   } else if (N->isNodeCompletelyFolded()) {
     foldNodeCompletely();
     if (hasNoReferrers()) return;
     Offset = 0;
     NOffset = NH.getOffset();
-     NSize = N->getSize();
+    NSize = N->getSize();
   }
   N = NH.getNode();
   if (this == N || N == 0) return;
@@ -464,15 +482,17 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
       // merging just occured, causing THIS node to get merged into oblivion.
       // If that happens, we must not try to merge any more edges into it!
       //
-      if (Size == 0) return;
+      if (Size == 0)
+        return;             // Node is now dead
+      if (Size == 1)
+        break;              // Node got collapsed
     }
   }
 
   // Now that there are no outgoing edges, all of the Links are dead.
   N->Links.clear();
   N->Size = 0;
-  N->Ty.Ty = Type::VoidTy;
-  N->Ty.isArray = false;
+  N->Ty = Type::VoidTy;
 
   // Merge the node types
   NodeType |= N->NodeType;
@@ -568,6 +588,10 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
     Nodes.push_back(New);
     OldNodeMap[Old] = New;
   }
+
+#ifndef NDEBUG
+  Timer::addPeakMemoryMeasurement();
+#endif
 
   // Rewrite the links in the new nodes to point into the current graph now.
   for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
@@ -786,7 +810,7 @@ static inline void killIfUselessEdge(DSNodeHandle &Edge) {
   if (DSNode *N = Edge.getNode())  // Is there an edge?
     if (N->getReferrers().size() == 1)  // Does it point to a lonely node?
       if ((N->NodeType & ~DSNode::Incomplete) == 0 && // No interesting info?
-          N->getType().Ty == Type::VoidTy && !N->isNodeCompletelyFolded())
+          N->getType() == Type::VoidTy && !N->isNodeCompletelyFolded())
         Edge.setNode(0);  // Kill the edge!
 }
 
