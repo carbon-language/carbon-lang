@@ -50,7 +50,6 @@ namespace {
       
       computeRegisterProperties();
 
-      setOperationUnsupported(ISD::MEMCPY, MVT::Other);
       setOperationUnsupported(ISD::MEMMOVE, MVT::Other);
 
       setOperationUnsupported(ISD::MUL, MVT::i8);
@@ -2088,6 +2087,51 @@ void ISel::Select(SDOperand N) {
     BuildMI(BB, Opcode, 0);
     return;
   }
+  case ISD::MEMCPY:
+    Select(N.getOperand(0));  // Select the chain.
+    unsigned Align =
+      (unsigned)cast<ConstantSDNode>(Node->getOperand(4))->getValue();
+    if (Align == 0) Align = 1;
+
+    // Turn the byte code into # iterations
+    unsigned CountReg;
+    unsigned Opcode;
+    switch (Align & 3) {
+    case 2:   // WORD aligned
+      CountReg = MakeReg(MVT::i32);
+      if (ConstantSDNode *I = dyn_cast<ConstantSDNode>(Node->getOperand(3))) {
+        BuildMI(BB, X86::MOV32ri, 1, CountReg).addImm(I->getValue()/2);
+      } else {
+        unsigned ByteReg = SelectExpr(Node->getOperand(3));
+        BuildMI(BB, X86::SHR32ri, 2, CountReg).addReg(ByteReg).addImm(1);
+      }
+      Opcode = X86::REP_MOVSW;
+      break;
+    case 0:   // DWORD aligned
+      CountReg = MakeReg(MVT::i32);
+      if (ConstantSDNode *I = dyn_cast<ConstantSDNode>(Node->getOperand(3))) {
+        BuildMI(BB, X86::MOV32ri, 1, CountReg).addImm(I->getValue()/4);
+      } else {
+        unsigned ByteReg = SelectExpr(Node->getOperand(3));
+        BuildMI(BB, X86::SHR32ri, 2, CountReg).addReg(ByteReg).addImm(2);
+      }
+      Opcode = X86::REP_MOVSD;
+      break;
+    default:  // BYTE aligned
+      CountReg = SelectExpr(Node->getOperand(3));
+      Opcode = X86::REP_MOVSB;
+      break;
+    }
+
+    // No matter what the alignment is, we put the source in ESI, the
+    // destination in EDI, and the count in ECX.
+    unsigned TmpReg1 = SelectExpr(Node->getOperand(1));
+    unsigned TmpReg2 = SelectExpr(Node->getOperand(2));
+    BuildMI(BB, X86::MOV32rr, 1, X86::ECX).addReg(CountReg);
+    BuildMI(BB, X86::MOV32rr, 1, X86::EDI).addReg(TmpReg1);
+    BuildMI(BB, X86::MOV32rr, 1, X86::ESI).addReg(TmpReg2);
+    BuildMI(BB, Opcode, 0);
+    return;
   }
   assert(0 && "Should not be reached!");
 }
