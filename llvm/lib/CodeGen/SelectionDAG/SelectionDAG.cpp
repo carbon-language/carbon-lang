@@ -428,6 +428,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
+    else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND) {
+      // If the source is smaller than the dest, we still need an extend.
+      if (Operand.Val->getOperand(0).getValueType() < VT)
+        return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
+      else if (Operand.Val->getOperand(0).getValueType() > VT)
+        return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
+      else
+        return Operand.Val->getOperand(0);
+    }
     break;
   }
 
