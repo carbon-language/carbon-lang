@@ -236,6 +236,10 @@ void BytecodeWriter::outputFunction(const Function *F) {
 }
 
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
+  // Do not output the Bytecode block for an empty symbol table, it just wastes
+  // space!
+  if (MST.begin() == MST.end()) return;
+
   BytecodeBlock FunctionBlock(BytecodeFormat::SymbolTable, Out);
 
   for (SymbolTable::const_iterator TI = MST.begin(); TI != MST.end(); ++TI) {
