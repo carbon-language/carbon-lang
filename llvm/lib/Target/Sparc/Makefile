@@ -45,6 +45,9 @@ TARGET_NAME := SparcV9
 
 TABLEGEN_FILES := $(notdir $(wildcard $(SourceDir)/*.td))
 
+# Make sure that tblgen is run, first thing.
+$(SourceDepend): $(TARGET_NAME)CodeEmitter.inc
+
 $(TARGET_NAME)CodeEmitter.cpp:: $(TARGET_NAME)CodeEmitter.inc
 
 $(TARGET_NAME)CodeEmitter.inc:: $(SourceDir)/$(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
