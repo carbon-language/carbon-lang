@@ -285,34 +285,39 @@ static void printCollection(const Collection &C, std::ostream &O,
       DSGraph &Gr = C.getDSGraph((Function&)*I);
       unsigned NumCalls = Gr.shouldPrintAuxCalls() ?
         Gr.getAuxFunctionCalls().size() : Gr.getFunctionCalls().size();
+      bool IsDuplicateGraph = false;
 
       if (I->getName() == "main" || !OnlyPrintMain) {
         Function *SCCFn = Gr.retnodes_begin()->first;
         if (&*I == SCCFn) {
-          TotalNumNodes += Gr.getGraphSize();
-          TotalCallNodes += NumCalls;
-
           Gr.writeGraphToFile(O, Prefix+I->getName());
         } else {
-          // Don't double count node/call nodes.
+          IsDuplicateGraph = true; // Don't double count node/call nodes.
           O << "Didn't write '" << Prefix+I->getName()
             << ".dot' - Graph already emitted to '" << Prefix+SCCFn->getName()
             << "\n";
         }
       } else {
-        TotalNumNodes += Gr.getGraphSize();
-        TotalCallNodes += NumCalls;
-        O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
-          << Gr.getGraphSize() << "+" << NumCalls << "]\n";
+        Function *SCCFn = Gr.retnodes_begin()->first;
+        if (&*I == SCCFn) {
+          O << "Skipped Writing '" << Prefix+I->getName() << ".dot'... ["
+            << Gr.getGraphSize() << "+" << NumCalls << "]\n";
+        } else {
+          IsDuplicateGraph = true; // Don't double count node/call nodes.
+        }
       }
 
-      unsigned GraphSize = Gr.getGraphSize();
-      if (MaxGraphSize < GraphSize) MaxGraphSize = GraphSize;
+      if (!IsDuplicateGraph) {
+        unsigned GraphSize = Gr.getGraphSize();
+        if (MaxGraphSize < GraphSize) MaxGraphSize = GraphSize;
 
-      for (DSGraph::node_iterator NI = Gr.node_begin(), E = Gr.node_end();
-           NI != E; ++NI)
-        if (NI->isNodeCompletelyFolded())
-          ++NumFoldedNodes;
+        TotalNumNodes += Gr.getGraphSize();
+        TotalCallNodes += NumCalls;
+        for (DSGraph::node_iterator NI = Gr.node_begin(), E = Gr.node_end();
+             NI != E; ++NI)
+          if (NI->isNodeCompletelyFolded())
+            ++NumFoldedNodes;
+      }
     }
 
   DSGraph &GG = C.getGlobalsGraph();
