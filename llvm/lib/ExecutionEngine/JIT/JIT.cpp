@@ -20,9 +20,6 @@
 #include "llvm/Target/TargetMachineImpls.h"
 #include "Support/CommandLine.h"
 
-// FIXME: REMOVE THIS
-#include "llvm/PassManager.h"
-
 #if !defined(ENABLE_X86_JIT) && !defined(ENABLE_SPARC_JIT)
 #define NO_JITS_ENABLED
 #endif
