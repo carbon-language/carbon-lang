@@ -18,12 +18,8 @@
 
 #include "Unix.h"
 
-#include <time.h>
-#include <sys/time.h>
-
 namespace llvm {
   using namespace sys;
-
 
 std::string TimeValue::toString() const {
   char buffer[32];
