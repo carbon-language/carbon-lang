@@ -26,6 +26,7 @@ class Type;
 class Instruction;
 class GlobalValue;
 class DSGraph;
+class DSCallSite;
 class DSNode;
 class DSNodeHandle;
 
@@ -181,6 +182,25 @@ class TDDataStructures : public ModulePass {
   /// GlobalECs - The equivalence classes for each global value that is merged
   /// with other global values in the DSGraphs.
   EquivalenceClasses<GlobalValue*> GlobalECs;
+
+  /// CallerCallEdges - For a particular graph, we keep a list of these records
+  /// which indicates which graphs call this function and from where.
+  struct CallerCallEdge {
+    DSGraph *CallerGraph;        // The graph of the caller function.
+    const DSCallSite *CS;        // The actual call site.
+    Function *CalledFunction;    // The actual function being called.
+
+    CallerCallEdge(DSGraph *G, const DSCallSite *cs, Function *CF)
+      : CallerGraph(G), CS(cs), CalledFunction(CF) {}
+
+    bool operator<(const CallerCallEdge &RHS) const {
+      return CallerGraph < RHS.CallerGraph ||
+            (CallerGraph == RHS.CallerGraph && CS < RHS.CS);
+    }
+  };
+
+  std::map<DSGraph*, std::vector<CallerCallEdge> > CallerEdges;
+
 public:
   ~TDDataStructures() { releaseMyMemory(); }
 
@@ -227,7 +247,7 @@ private:
   void markReachableFunctionsExternallyAccessible(DSNode *N,
                                                   hash_set<DSNode*> &Visited);
 
-  void inlineGraphIntoCallees(DSGraph &G);
+  void InlineCallersIntoGraph(DSGraph &G);
   DSGraph &getOrCreateDSGraph(Function &F);
   void ComputePostOrder(Function &F, hash_set<DSGraph*> &Visited,
                         std::vector<DSGraph*> &PostOrder,
