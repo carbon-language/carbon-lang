@@ -25,6 +25,7 @@
 #define IGNODE_H
 
 #include "LiveRange.h"
+#include <vector>
 class RegClass;
 
 //----------------------------------------------------------------------------
