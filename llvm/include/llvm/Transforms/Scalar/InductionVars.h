@@ -10,8 +10,6 @@
 
 #include "llvm/Pass.h"
 
-namespace opt {
-
 struct InductionVariableCannonicalize : public MethodPass {
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
@@ -21,7 +19,5 @@ struct InductionVariableCannonicalize : public MethodPass {
     return doIt(M);
   }
 };
-
-}  // end namespace opt
 
 #endif

@@ -32,8 +32,6 @@ using std::cerr;
 
 #include "llvm/Analysis/LoopDepth.h"
 
-using namespace opt;
-
 // isLoopInvariant - Return true if the specified value/basic block source is 
 // an interval invariant computation.
 //
@@ -373,7 +371,7 @@ static bool ProcessIntervalPartition(cfg::IntervalPartition &IP) {
 // This function loops over an interval partition of a program, reducing it
 // until the graph is gone.
 //
-bool opt::InductionVariableCannonicalize::doIt(Method *M) {
+bool InductionVariableCannonicalize::doIt(Method *M) {
   // TODO: REMOVE
   if (0) {   // Print basic blocks with their depth
     LoopDepthCalculator LDC(M);
