@@ -1441,7 +1441,7 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
     for (DSScalarMap::global_iterator I = ScalarMap.global_begin(),
            E = ScalarMap.global_end(); I != E; ++I)
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
-        if (!GV->isConstant())
+        if (!GV->isConstant() || !GV->hasInitializer())
           markIncompleteNode(ScalarMap[GV].getNode());
 }
 
