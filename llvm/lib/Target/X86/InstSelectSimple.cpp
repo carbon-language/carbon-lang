@@ -839,16 +839,14 @@ void ISel::getAddressingMode(Value *Addr, unsigned &BaseReg, unsigned &Scale,
 // canFoldSetCCIntoBranchOrSelect - Return the setcc instruction if we can fold
 // it into the conditional branch or select instruction which is the only user
 // of the cc instruction.  This is the case if the conditional branch is the
-// only user of the setcc, and if the setcc is in the same basic block as the
-// conditional branch.  We also don't handle long arguments below, so we reject
-// them here as well.
+// only user of the setcc.  We also don't handle long arguments below, so we 
+// reject them here as well.
 //
 static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
     if (SCI->hasOneUse()) {
       Instruction *User = cast<Instruction>(SCI->use_back());
       if ((isa<BranchInst>(User) || isa<SelectInst>(User)) &&
-          SCI->getParent() == User->getParent() &&
           (getClassB(SCI->getOperand(0)->getType()) != cLong ||
            SCI->getOpcode() == Instruction::SetEQ ||
            SCI->getOpcode() == Instruction::SetNE))
