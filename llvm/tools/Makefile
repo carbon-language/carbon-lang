@@ -19,7 +19,7 @@ include $(LEVEL)/Makefile.config
 # rewritten to not depend on fork at which time they should be added back to
 # the list above.
 
-ifneq ($(OS),Win32)
+ifeq ($(OS),Win32)
 PARALLEL_DIRS := $(filter-out bugpoint llvm-db,$(PARALLEL_DIRS))
 endif
 
