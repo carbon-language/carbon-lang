@@ -14,6 +14,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/PassNameParser.h"
 #include <algorithm>
 
@@ -113,6 +114,9 @@ int main(int argc, char **argv) {
   // about to build...
   //
   PassManager Passes;
+
+  // Make sure the input LLVM is well formed.
+  Passes.add(createVerifierPass());
 
   // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < AnalysesList.size(); ++i) {
