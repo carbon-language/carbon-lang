@@ -130,6 +130,8 @@ implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }
 string          { return STRING; }
 null            { return NULL_TOK; }
+to              { return TO; }
+except          { return EXCEPT; }
 
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
@@ -167,7 +169,6 @@ setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
 setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 
-to              { return TO; }
 phi             { RET_TOK(OtherOpVal, PHINode, PHI); }
 call            { RET_TOK(OtherOpVal, Call, CALL); }
 cast            { RET_TOK(OtherOpVal, Cast, CAST); }
@@ -177,6 +178,7 @@ shr             { RET_TOK(OtherOpVal, Shr, SHR); }
 ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }
 switch          { RET_TOK(TermOpVal, Switch, SWITCH); }
+invoke          { RET_TOK(TermOpVal, Invoke, INVOKE); }
 
 
 malloc          { RET_TOK(MemOpVal, Malloc, MALLOC); }
