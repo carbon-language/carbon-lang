@@ -49,7 +49,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     const char *Value = "";
     const char *ArgName = "";
     if (argv[i][0] != '-') {   // Unnamed argument?
-      Handler = getOpts()[""];
+      map<string, Option*>::iterator I = getOpts().find("");
+      Handler = I != getOpts().end() ? I->second : 0;
       Value = argv[i];
     } else {               // We start with a - or --, eat dashes
       ArgName = argv[i]+1;
@@ -63,8 +64,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 	++Value;            // Advance to value...
 
       if (*ArgName != 0) {
-	string ArgNameStr(ArgName, ArgNameEnd); // Extract arg name part
-	Handler = getOpts()[ArgNameStr];
+	// Extract arg name part
+        map<string, Option*>::iterator I = getOpts().find(string(ArgName, ArgNameEnd));
+        Handler = I != getOpts().end() ? I->second : 0;
       }
     }
 
