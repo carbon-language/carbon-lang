@@ -362,6 +362,10 @@ components, please contact us on the llvmdev list.</p>
     mark values live across a setjmp as volatile</a>. This missing feature 
   only affects targets whose setjmp/longjmp libraries do not save and restore 
   the entire register file.</li>
+  <li><a href="http://llvm.cs.uiuc.edu/PR427">[bytecode] Assertion on V1
+    Bytecode Files</a>. This bug won't be fixed because V1 bytecode had its own
+    problems, no one is using V1 bytecode any more, and the fix is non-trivial.
+  </li>
 </ul>
 </div>
 
