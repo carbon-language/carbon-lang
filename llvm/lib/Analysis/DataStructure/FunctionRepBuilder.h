@@ -10,6 +10,7 @@
 
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Support/InstVisitor.h"
+#include <iostream>
 
 // DEBUG_DATA_STRUCTURE_CONSTRUCTION - Define this to 1 if you want debug output
 //#define DEBUG_DATA_STRUCTURE_CONSTRUCTION 1
@@ -48,12 +49,12 @@ class FunctionRepBuilder : InstVisitor<FunctionRepBuilder> {
 
   // ValueMap - Mapping between values we are processing and the possible
   // datastructures that they may point to...
-  map<Value*, PointerValSet> ValueMap;
+  std::map<Value*, PointerValSet> ValueMap;
 
   // CallMap - Keep track of which call nodes correspond to which call insns.
   // The reverse mapping is stored in the CallDSNodes themselves.
   //
-  map<CallInst*, CallDSNode*> CallMap;
+  std::map<CallInst*, CallDSNode*> CallMap;
 
   // Worklist - Vector of (pointer typed) instructions to process still...
   std::vector<Instruction *> WorkList;
@@ -87,7 +88,7 @@ public:
 
   const PointerValSet &getRetNode() const { return RetNode; }
 
-  const map<Value*, PointerValSet> &getValueMap() const { return ValueMap; }
+  const std::map<Value*, PointerValSet> &getValueMap() const { return ValueMap; }
 private:
   static PointerVal getIndexedPointerDest(const PointerVal &InP,
                                           const MemAccessInst &MAI);
@@ -97,15 +98,16 @@ private:
     // While the worklist still has instructions to process, process them!
     while (!WorkList.empty()) {
       Instruction *I = WorkList.back(); WorkList.pop_back();
+
 #ifdef DEBUG_DATA_STRUCTURE_CONSTRUCTION
-      cerr << "Processing worklist inst: " << I;
+      std::cerr << "Processing worklist inst: " << I;
 #endif
     
       visit(*I); // Dispatch to a visitXXX function based on instruction type...
 #ifdef DEBUG_DATA_STRUCTURE_CONSTRUCTION
       if (I->hasName() && ValueMap.count(I)) {
-        cerr << "Inst %" << I->getName() << " value is:\n";
-        ValueMap[I].print(cerr);
+        std::cerr << "Inst %" << I->getName() << " value is:\n";
+        ValueMap[I].print(std::cerr);
       }
 #endif
     }

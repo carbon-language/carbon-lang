@@ -13,6 +13,9 @@
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <sstream>
+#include <iostream>
+using std::map;
+using std::string;
 
 bool AllocDSNode::isEquivalentTo(DSNode *Node) const {
   if (AllocDSNode *N = dyn_cast<AllocDSNode>(Node))
@@ -28,7 +31,7 @@ void AllocDSNode::mergeInto(DSNode *Node) const {
 }
 
 bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
-  if (GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node)) {
+  if (const GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node)) {
     if (G->Val != Val) return false;
 
     // Check that the outgoing links are identical...
@@ -124,8 +127,8 @@ DSNode::DSNode(enum NodeTy NT, const Type *T) : Ty(T), NodeType(NT) {
 }
 
 void DSNode::removeReferrer(PointerValSet *PVS) {
-  vector<PointerValSet*>::iterator I = std::find(Referrers.begin(),
-                                                 Referrers.end(), PVS);
+  std::vector<PointerValSet*>::iterator I = std::find(Referrers.begin(),
+						      Referrers.end(), PVS);
   assert(I != Referrers.end() && "PVS not pointing to node!");
   Referrers.erase(I);
 }
@@ -175,14 +178,14 @@ static string escapeLabel(const string &In) {
   return Label;
 }
 
-void DSNode::dump() const { print(cerr); }
+void DSNode::dump() const { print(std::cerr); }
 
 void DSNode::print(std::ostream &O) const {
   string Caption = escapeLabel(getCaption());
 
   O << "\t\tNode" << (void*)this << " [ label =\"{" << Caption;
 
-  const vector<PointerValSet> *Links = getAuxLinks();
+  const std::vector<PointerValSet> *Links = getAuxLinks();
   if (Links && !Links->empty()) {
     O << "|{";
     for (unsigned i = 0; i < Links->size(); ++i) {
@@ -237,7 +240,7 @@ bool AllocDSNode::isAllocaNode() const {
 
 
 string AllocDSNode::getCaption() const {
-  stringstream OS;
+  std::stringstream OS;
   OS << (isMallocNode() ? "new " : "alloca ");
 
   WriteTypeSymbolic(OS, getType(),
@@ -252,7 +255,7 @@ GlobalDSNode::GlobalDSNode(GlobalValue *V)
 }
 
 string GlobalDSNode::getCaption() const {
-  stringstream OS;
+  std::stringstream OS;
   if (isa<Function>(Val))
     OS << "fn ";
   else
@@ -275,7 +278,7 @@ ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, DSNode *ShadParent)
 }
 
 std::string ShadowDSNode::getCaption() const {
-  stringstream OS;
+  std::stringstream OS;
   OS << "shadow ";
   WriteTypeSymbolic(OS, getType(), Mod);
   return OS.str();
@@ -290,7 +293,7 @@ CallDSNode::CallDSNode(CallInst *ci) : DSNode(CallNode, ci->getType()), CI(ci) {
 }
 
 string CallDSNode::getCaption() const {
-  stringstream OS;
+  std::stringstream OS;
   if (const Function *CM = CI->getCalledFunction())
     OS << "call " << CM->getName();
   else
@@ -334,7 +337,7 @@ void FunctionDSGraph::printFunction(std::ostream &O,
   for (std::map<Value*, PointerValSet>::const_iterator I = ValueMap.begin(),
          E = ValueMap.end(); I != E; ++I) {
     if (I->second.size()) {             // Only output nodes with edges...
-      stringstream OS;
+      std::stringstream OS;
       WriteTypeSymbolic(OS, I->first->getType(), Func->getParent());
 
       // Create node for I->first
@@ -357,7 +360,7 @@ void FunctionDSGraph::printFunction(std::ostream &O,
 // graph...
 //
 FunctionDSGraph::FunctionDSGraph(const FunctionDSGraph &DSG) : Func(DSG.Func) {
-  vector<PointerValSet> Args;
+  std::vector<PointerValSet> Args;
   RetNode = cloneFunctionIntoSelf(DSG, true, Args);
 }
 
@@ -370,7 +373,7 @@ FunctionDSGraph::FunctionDSGraph(const FunctionDSGraph &DSG) : Func(DSG.Func) {
 //
 PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
                                                      bool CloneValueMap,
-                                                  vector<PointerValSet> &Args) {
+                                                  std::vector<PointerValSet> &Args) {
   map<const DSNode*, DSNode*> NodeMap;  // Map from old graph to new graph...
   unsigned StartAllocSize = AllocNodes.size();
   AllocNodes.reserve(StartAllocSize+DSG.AllocNodes.size());
@@ -453,13 +456,13 @@ FunctionDSGraph::~FunctionDSGraph() {
   RetNode.clear();
   ValueMap.clear();
   for_each(AllocNodes.begin(), AllocNodes.end(),
-           mem_fun(&DSNode::dropAllReferences));
+           std::mem_fun(&DSNode::dropAllReferences));
   for_each(ShadowNodes.begin(), ShadowNodes.end(),
-           mem_fun(&DSNode::dropAllReferences));
+           std::mem_fun(&DSNode::dropAllReferences));
   for_each(GlobalNodes.begin(), GlobalNodes.end(),
-           mem_fun(&DSNode::dropAllReferences));
+           std::mem_fun(&DSNode::dropAllReferences));
   for_each(CallNodes.begin(), CallNodes.end(),
-           mem_fun(&DSNode::dropAllReferences));
+           std::mem_fun(&DSNode::dropAllReferences));
   for_each(AllocNodes.begin(),  AllocNodes.end(),  deleter<DSNode>);
   for_each(ShadowNodes.begin(), ShadowNodes.end(), deleter<DSNode>);
   for_each(GlobalNodes.begin(), GlobalNodes.end(), deleter<DSNode>);

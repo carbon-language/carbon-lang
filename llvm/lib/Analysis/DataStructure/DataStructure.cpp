@@ -8,6 +8,7 @@
 #include "llvm/Module.h"
 #include <fstream>
 #include <algorithm>
+#include <iostream>
 
 //===----------------------------------------------------------------------===//
 // DataStructure Class Implementation
@@ -46,7 +47,7 @@ void DataStructure::print(std::ostream &O, Module *M) const {
         getClosedDSGraph(I);
       }
     gettimeofday(&TV2, 0);
-    cerr << "Analysis took "
+    std::cerr << "Analysis took "
          << (TV2.tv_sec-TV1.tv_sec)*1000000+(TV2.tv_usec-TV1.tv_usec)
          << " microseconds.\n";
   }
@@ -54,9 +55,10 @@ void DataStructure::print(std::ostream &O, Module *M) const {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
 
-      string Filename = "ds." + I->getName() + ".dot";
+      std::string Filename = "ds." + I->getName() + ".dot";
       O << "Writing '" << Filename << "'...";
-      ofstream F(Filename.c_str());
+      std::ofstream F(Filename.c_str());
+
       if (F.good()) {
         F << "digraph DataStructures {\n"
           << "\tnode [shape=Mrecord];\n"
@@ -121,7 +123,7 @@ bool PointerValSet::operator<(const PointerValSet &PVS) const {
   if (Vals.size() > PVS.Vals.size()) return false;
   if (Vals.size() == 1) return Vals[0] < PVS.Vals[0];  // Most common case
 
-  vector<PointerVal> S1(Vals), S2(PVS.Vals);
+  std::vector<PointerVal> S1(Vals), S2(PVS.Vals);
   sort(S1.begin(), S1.end());
   sort(S2.begin(), S2.end());
   return S1 < S2;
@@ -131,7 +133,7 @@ bool PointerValSet::operator==(const PointerValSet &PVS) const {
   if (Vals.size() != PVS.Vals.size()) return false;
   if (Vals.size() == 1) return Vals[0] == PVS.Vals[0];  // Most common case...
 
-  vector<PointerVal> S1(Vals), S2(PVS.Vals);
+  std::vector<PointerVal> S1(Vals), S2(PVS.Vals);
   sort(S1.begin(), S1.end());
   sort(S2.begin(), S2.end());
   return S1 == S2;
@@ -150,7 +152,7 @@ bool PointerValSet::add(const PointerVal &PV, Value *Pointer) {
 // removePointerTo - Remove a single pointer val that points to the specified
 // node...
 void PointerValSet::removePointerTo(DSNode *Node) {
-  vector<PointerVal>::iterator I = std::find(Vals.begin(), Vals.end(), Node);
+  std::vector<PointerVal>::iterator I = std::find(Vals.begin(), Vals.end(), Node);
   assert(I != Vals.end() && "Couldn't remove nonexistent edge!");
   Vals.erase(I);
   Node->removeReferrer(this);

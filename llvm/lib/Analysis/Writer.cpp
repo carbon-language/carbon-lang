@@ -14,6 +14,7 @@
 #include <iterator>
 #include <algorithm>
 #include <string>
+#include <iostream>
 using std::ostream;
 using std::set;
 using std::vector;

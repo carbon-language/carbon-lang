@@ -19,13 +19,14 @@
 #include "llvm/Value.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 
 //#define DEBUG_NODE_ELIMINATE 1
 
 static void DestroyFirstNodeOfPair(DSNode *N1, DSNode *N2) {
 #ifdef DEBUG_NODE_ELIMINATE
-  cerr << "Found Indistinguishable Node:\n";
-  N1->print(cerr);
+  std::cerr << "Found Indistinguishable Node:\n";
+  N1->print(std::cerr);
 #endif
 
   // The nodes can be merged.  Make sure that N2 contains all of the
@@ -177,16 +178,16 @@ bool FunctionDSGraph::UnlinkUndistinguishableNodes() {
 }
 
 static void MarkReferredNodesReachable(DSNode *N,
-                                       vector<ShadowDSNode*> &ShadowNodes,
-                                       vector<bool> &ReachableShadowNodes,
-                                       vector<AllocDSNode*>  &AllocNodes,
-                                       vector<bool> &ReachableAllocNodes);
+                                       std::vector<ShadowDSNode*> &ShadowNodes,
+                                       std::vector<bool> &ReachableShadowNodes,
+                                       std::vector<AllocDSNode*>  &AllocNodes,
+                                       std::vector<bool> &ReachableAllocNodes);
 
 static inline void MarkReferredNodeSetReachable(const PointerValSet &PVS,
-                                            vector<ShadowDSNode*> &ShadowNodes,
-                                            vector<bool> &ReachableShadowNodes,
-                                            vector<AllocDSNode*>  &AllocNodes,
-                                            vector<bool> &ReachableAllocNodes) {
+                                            std::vector<ShadowDSNode*> &ShadowNodes,
+                                            std::vector<bool> &ReachableShadowNodes,
+                                            std::vector<AllocDSNode*>  &AllocNodes,
+                                            std::vector<bool> &ReachableAllocNodes) {
   for (unsigned i = 0, e = PVS.size(); i != e; ++i)
     if (isa<ShadowDSNode>(PVS[i].Node) || isa<AllocDSNode>(PVS[i].Node))
       MarkReferredNodesReachable(PVS[i].Node, ShadowNodes, ReachableShadowNodes,
@@ -194,21 +195,21 @@ static inline void MarkReferredNodeSetReachable(const PointerValSet &PVS,
 }
 
 static void MarkReferredNodesReachable(DSNode *N,
-                                       vector<ShadowDSNode*> &ShadowNodes,
-                                       vector<bool> &ReachableShadowNodes,
-                                       vector<AllocDSNode*>  &AllocNodes,
-                                       vector<bool> &ReachableAllocNodes) {
+                                       std::vector<ShadowDSNode*> &ShadowNodes,
+                                       std::vector<bool> &ReachableShadowNodes,
+                                       std::vector<AllocDSNode*>  &AllocNodes,
+                                       std::vector<bool> &ReachableAllocNodes) {
   assert(ShadowNodes.size() == ReachableShadowNodes.size());
   assert(AllocNodes.size()  == ReachableAllocNodes.size());
 
   if (ShadowDSNode *Shad = dyn_cast<ShadowDSNode>(N)) {
-    vector<ShadowDSNode*>::iterator I =
+    std::vector<ShadowDSNode*>::iterator I =
       std::find(ShadowNodes.begin(), ShadowNodes.end(), Shad);
     unsigned i = I-ShadowNodes.begin();
     if (ReachableShadowNodes[i]) return;  // Recursion detected, abort...
     ReachableShadowNodes[i] = true;
   } else if (AllocDSNode *Alloc = dyn_cast<AllocDSNode>(N)) {
-    vector<AllocDSNode*>::iterator I =
+    std::vector<AllocDSNode*>::iterator I =
       std::find(AllocNodes.begin(), AllocNodes.end(), Alloc);
     unsigned i = I-AllocNodes.begin();
     if (ReachableAllocNodes[i]) return;  // Recursion detected, abort...
@@ -229,8 +230,8 @@ static void MarkReferredNodesReachable(DSNode *N,
 }
 
 void FunctionDSGraph::MarkEscapeableNodesReachable(
-                                       vector<bool> &ReachableShadowNodes,
-                                       vector<bool> &ReachableAllocNodes) {
+                                       std::vector<bool> &ReachableShadowNodes,
+                                       std::vector<bool> &ReachableAllocNodes) {
   // Mark all shadow nodes that have edges from other nodes as reachable.  
   // Recursively mark any shadow nodes pointed to by the newly live shadow
   // nodes as also alive.
@@ -260,8 +261,8 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
     // Reachable*Nodes - Contains true if there is an edge from a reachable
     // node to the numbered node...
     //
-    vector<bool> ReachableShadowNodes(ShadowNodes.size());
-    vector<bool> ReachableAllocNodes (AllocNodes.size());
+    std::vector<bool> ReachableShadowNodes(ShadowNodes.size());
+    std::vector<bool> ReachableAllocNodes (AllocNodes.size());
     
     MarkEscapeableNodesReachable(ReachableShadowNodes, ReachableAllocNodes);
 
@@ -282,8 +283,8 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
       if (!ReachableShadowNodes[i]) {
         // Track all unreachable nodes...
 #if DEBUG_NODE_ELIMINATE
-        cerr << "Unreachable node eliminated:\n";
-        ShadowNodes[i]->print(cerr);
+        std::cerr << "Unreachable node eliminated:\n";
+        ShadowNodes[i]->print(std::cerr);
 #endif
         ShadowNodes[i]->removeAllIncomingEdges();
         delete ShadowNodes[i];
@@ -299,8 +300,8 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
       if (!ReachableAllocNodes[i]) {
         // Track all unreachable nodes...
 #if DEBUG_NODE_ELIMINATE
-        cerr << "Unreachable node eliminated:\n";
-        AllocNodes[i]->print(cerr);
+        std::cerr << "Unreachable node eliminated:\n";
+        AllocNodes[i]->print(std::cerr);
 #endif
         AllocNodes[i]->removeAllIncomingEdges();
         delete AllocNodes[i];
@@ -346,9 +347,9 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
 // getEscapingAllocations - Add all allocations that escape the current
 // function to the specified vector.
 //
-void FunctionDSGraph::getEscapingAllocations(vector<AllocDSNode*> &Allocs) {
-  vector<bool> ReachableShadowNodes(ShadowNodes.size());
-  vector<bool> ReachableAllocNodes (AllocNodes.size());
+void FunctionDSGraph::getEscapingAllocations(std::vector<AllocDSNode*> &Allocs) {
+  std::vector<bool> ReachableShadowNodes(ShadowNodes.size());
+  std::vector<bool> ReachableAllocNodes (AllocNodes.size());
     
   MarkEscapeableNodesReachable(ReachableShadowNodes, ReachableAllocNodes);
 
@@ -360,9 +361,9 @@ void FunctionDSGraph::getEscapingAllocations(vector<AllocDSNode*> &Allocs) {
 // getNonEscapingAllocations - Add all allocations that do not escape the
 // current function to the specified vector.
 //
-void FunctionDSGraph::getNonEscapingAllocations(vector<AllocDSNode*> &Allocs) {
-  vector<bool> ReachableShadowNodes(ShadowNodes.size());
-  vector<bool> ReachableAllocNodes (AllocNodes.size());
+void FunctionDSGraph::getNonEscapingAllocations(std::vector<AllocDSNode*> &Allocs) {
+  std::vector<bool> ReachableShadowNodes(ShadowNodes.size());
+  std::vector<bool> ReachableAllocNodes (AllocNodes.size());
     
   MarkEscapeableNodesReachable(ReachableShadowNodes, ReachableAllocNodes);
 

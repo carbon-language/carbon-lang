@@ -259,8 +259,8 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
 
     if (DEBUG_LV >= LV_DEBUG_Instr) {
       std::cerr << "\nLive var sets before/after instruction " << *MI;
-      cerr << "  Before: ";   printSet(*NewSet);  cerr << "\n";
-      cerr << "  After : ";   printSet(*SetAI);   cerr << "\n";
+      std::cerr << "  Before: ";   printSet(*NewSet);  std::cerr << "\n";
+      std::cerr << "  After : ";   printSet(*SetAI);   std::cerr << "\n";
     }
 
     // SetAI will be used in the next iteration

@@ -15,6 +15,7 @@
 #include "llvm/Constants.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 
 // synthesizeNode - Create a new shadow node that is to be linked into this
 // chain..
@@ -32,8 +33,10 @@ ShadowDSNode *DSNode::synthesizeNode(const Type *Ty,
     if (SynthNodes[i].first == Ty) return SynthNodes[i].second;
 
   // No we haven't.  Do so now and add it to our list of saved nodes...
+
   ShadowDSNode *SN = Rep->makeSynthesizedShadow(Ty, this);
-  SynthNodes.push_back(make_pair(Ty, SN));
+  SynthNodes.push_back(std::make_pair(Ty, SN));
+
   return SN;
 }
 
@@ -281,10 +284,10 @@ void FunctionRepBuilder::visitStoreInst(StoreInst &SI) {
       PointerVal Dest = getIndexedPointerDest(PtrPVS[pi], SI);
 
 #if 0
-      cerr << "Setting Dest:\n";
-      Dest.print(cerr);
-      cerr << "to point to Src:\n";
-      SrcPtr.print(cerr);
+      std::cerr << "Setting Dest:\n";
+      Dest.print(std::cerr);
+      std::cerr << "to point to Src:\n";
+      SrcPtr.print(std::cerr);
 #endif
 
       // Add SrcPtr into the Dest field...
@@ -338,7 +341,7 @@ FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
   // at things.  They can only point to their node, so there is no use keeping
   // them.
   //
-  for (map<Value*, PointerValSet>::iterator I = ValueMap.begin(),
+  for (std::map<Value*, PointerValSet>::iterator I = ValueMap.begin(),
          E = ValueMap.end(); I != E;)
     if (isa<GlobalValue>(I->first)) {
 #if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
