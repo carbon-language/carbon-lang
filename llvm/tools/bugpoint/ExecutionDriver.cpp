@@ -35,17 +35,18 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    RunLLI, RunJIT, RunLLC, RunCBE
+    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE
   };
 
   cl::opt<OutputType>
   InterpreterSel(cl::desc("Specify how LLVM code should be executed:"),
-                 cl::values(clEnumValN(RunLLI, "run-int", "Execute with the interpreter"),
+                 cl::values(clEnumValN(AutoPick, "auto", "Use best guess"),
+                            clEnumValN(RunLLI, "run-int", "Execute with the interpreter"),
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
                             0),
-                 cl::init(RunCBE));
+                 cl::init(AutoPick));
 
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
@@ -73,13 +74,30 @@ InputArgv("args", cl::Positional, cl::desc("<program arguments>..."),
 bool BugDriver::initializeExecutionEnvironment() {
   std::cout << "Initializing execution environment: ";
 
-  // FIXME: This should default to searching for the best interpreter to use on
-  // this platform, which would be JIT, then LLC, then CBE, then LLI.
-
   // Create an instance of the AbstractInterpreter interface as specified on
   // the command line
   std::string Message;
   switch (InterpreterSel) {
+  case AutoPick:
+    InterpreterSel = RunCBE;
+    Interpreter = AbstractInterpreter::createCBE(getToolName(), Message);
+    if (!Interpreter) {
+      InterpreterSel = RunJIT;
+      Interpreter = AbstractInterpreter::createJIT(getToolName(), Message);
+    }
+    if (!Interpreter) {
+      InterpreterSel = RunLLC;
+      Interpreter = AbstractInterpreter::createLLC(getToolName(), Message);
+    }
+    if (!Interpreter) {
+      InterpreterSel = RunLLI;
+      Interpreter = AbstractInterpreter::createLLI(getToolName(), Message);
+    }
+    if (!Interpreter) {
+      InterpreterSel = AutoPick;
+      Message = "Sorry, I can't automatically select an interpreter!\n";
+    }
+    break;
   case RunLLI:
     Interpreter = AbstractInterpreter::createLLI(getToolName(), Message);
     break;
