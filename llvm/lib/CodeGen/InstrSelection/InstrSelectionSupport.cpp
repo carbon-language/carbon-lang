@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
+#include "../../Target/Sparc/SparcInstrSelectionSupport.h"
 using std::vector;
 
 //*************************** Local Functions ******************************/
@@ -186,6 +187,12 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
                                       immedValue);
             if (opType == MachineOperand::MO_VirtualRegister)
               constantThatMustBeLoaded = true;
+            else {
+              // The optype has changed from being a register to an immediate
+              // This means we need to change the opcode, e.g. ADDr -> ADDi
+              unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
+              minstr->setOpcode(newOpcode);
+            }
           }
         }
       else
@@ -212,6 +219,13 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
               opValue = isSigned
                 ? (Value*)ConstantSInt::get(Type::LongTy, immedValue)
                 : (Value*)ConstantUInt::get(Type::ULongTy,(uint64_t)immedValue);
+            }
+          else 
+            {
+              // The optype has changed from being a register to an immediate
+              // This means we need to change the opcode, e.g. ADDr -> ADDi
+              unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
+              minstr->setOpcode(newOpcode);
             }
         }
 
