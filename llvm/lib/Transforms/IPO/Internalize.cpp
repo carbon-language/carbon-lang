@@ -42,7 +42,7 @@ namespace {
 
       // Mark all global variables with initializers as internal as well...
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
-        if (I->hasInitializer() && I->hasExternalLinkage()) {
+        if (!I->isExternal() && I->hasExternalLinkage()) {
           I->setInternalLinkage(true);
           Changed = true;
           ++NumGlobals;
