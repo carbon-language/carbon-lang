@@ -1,15 +1,13 @@
-//===-- DCE.h - Functions that perform Dead Code Elimination -----*- C++ -*--=//
+//===-- DCE.h - Passes that perform Dead Code Elimination --------*- C++ -*--=//
 //
-// This family of functions is useful for performing dead code elimination of 
-// various sorts.
+// This family of passes is useful for performing dead code elimination of
+// various strengths.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TRANSFORMS_SCALAR_DCE_H
 #define LLVM_TRANSFORMS_SCALAR_DCE_H
 
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
 class Pass;
 
 //===----------------------------------------------------------------------===//
@@ -33,15 +31,6 @@ Pass *createDeadInstEliminationPass();
 
 Pass *createDeadCodeEliminationPass();
 
-// dceInstruction - Inspect the instruction at *BBI and figure out if it's
-// [trivially] dead.  If so, remove the instruction and update the iterator
-// to point to the instruction that immediately succeeded the original
-// instruction.
-//
-bool dceInstruction(BasicBlock::InstListType &BBIL,
-                    BasicBlock::iterator &BBI);
-
-
 
 //===----------------------------------------------------------------------===//
 // AgressiveDCE - This pass uses the SSA based Agressive DCE algorithm.  This
@@ -49,17 +38,5 @@ bool dceInstruction(BasicBlock::InstListType &BBIL,
 // it more successful are removing non-obviously dead instructions.
 //
 Pass *createAgressiveDCEPass();
-
-
-// SimplifyCFG - This function is used to do simplification of a CFG.  For
-// example, it adjusts branches to branches to eliminate the extra hop, it
-// eliminates unreachable basic blocks, and does other "peephole" optimization
-// of the CFG.  It returns true if a modification was made, and returns an 
-// iterator that designates the first element remaining after the block that
-// was deleted.
-//
-// WARNING:  The entry node of a method may not be simplified.
-//
-bool SimplifyCFG(Function::iterator &BBIt);
 
 #endif
