@@ -167,6 +167,15 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
     }
   }
 
+  if (verifyModule(*SafeModule) || verifyModule(*TestModule)) {
+    std::cerr << "Bugpoint has a bug, an corrupted a module!!\n";
+    abort();
+  }
+
+  // Clean up the modules, removing extra cruft that we don't need anymore...
+  SafeModule = BD.performFinalCleanups(SafeModule);
+  TestModule = BD.performFinalCleanups(TestModule);
+
   DEBUG(std::cerr << "Safe module:\n";
         typedef Module::iterator MI;
         typedef Module::giterator MGI;
@@ -185,10 +194,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
 
   // Write out the bytecode to be sent to CBE
   std::string SafeModuleBC = getUniqueFilename("bugpoint.safe.bc");
-  if (verifyModule(*SafeModule)) {
-    std::cerr << "Bytecode file corrupted!\n";
-    exit(1);
-  }
+
   if (BD.writeProgramToFile(SafeModuleBC, SafeModule)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
