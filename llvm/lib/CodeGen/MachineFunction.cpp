@@ -35,7 +35,7 @@ static AnnotationID MF_AID(
 namespace {
   struct Printer : public MachineFunctionPass {
     std::ostream *OS;
-    const std::string &Banner;
+    const std::string Banner;
 
     Printer (std::ostream *_OS, const std::string &_Banner) :
       OS (_OS), Banner (_Banner) { }
