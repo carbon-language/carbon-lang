@@ -29,8 +29,14 @@
       <li><a href="#actions">Actions</a></li>
     </ol>
   </li>
-  <li><a href="#details">Details</a>
   <li><a href="#configuration">Configuration</a>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#filetypes">Configuration Files</a></li>
+      <li><a href="#syntax">Syntax</a></li>
+      <li><a href="#substitutions">Substitutions</a></li>
+      <li><a href="#sample">Sample Config File</a></li>
+    </ol>
   <li><a href="#glossary">Glossary</a>
 </ol>
 <div class="doc_author">
@@ -262,12 +268,6 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="details">Details</a></div>
-<!-- *********************************************************************** -->
-<div class="doc_text">
-</div>
-
-<!-- *********************************************************************** -->
 <div class="doc_section"><a name="configuration">Configuration</a></div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
@@ -360,6 +360,9 @@ optimization.</p>
     <li>If the LLVM installation directory (typically <tt>/usr/local/llvm</tt>
     contains a sub-directory named <tt>etc</tt> then that directory will be
     tried last.</li>
+    <li>A standard "system" directory will be searched next. This is typically
+    <tt>/etc/llvm</tt> on UNIX&trade; and <tt>C:\WINNT</tt> on Microsoft
+    Windows&trade;.</li>
     <li>If the configuration file sought still can't be found, <tt>llvmc</tt>
     will print an error message and exit.</li>
   </ol>
@@ -393,8 +396,11 @@ optimization.</p>
   compatible with Java's property files. Here are the syntax rules:</p>
   <ul>
     <li>The file encoding is ASCII.</li>
-    <li>The file is line oriented. There should be one configuration item per
-    line. Lines are terminated by the newline character (0x0A).</li>
+    <li>The file is line oriented. There should be one configuration definition 
+    per line. Lines are terminated by the newline character (0x0A).</li>
+    <li>A backslash (<tt>\</tt>) before a newline causes the newline to be
+    ignored. This is useful for line continuation of long definitions. A
+    backslash anywhere else is recognized as a backslash.</li>
     <li>A configuration item consists of a name, an <tt>=</tt> and a value.</li>
     <li>A name consists of a sequence of identifiers separated by period.</li>
     <li>An identifier consists of specific keywords made up of only lower case
@@ -435,122 +441,364 @@ optimization.</p>
   default value. Each identifier may appear as all lower case, first letter
   capitalized or all upper case.</p>
   <table>
-    <tr>
-      <th>Name</th>
-      <th>Value Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-    <tr><td colspan="4"><h4>LANG ITEMS</h4></td></tr>
-    <tr>
-      <td><b>lang.name</b></td>
-      <td>string</td>
-      <td class="td_left">Provides the common name for a language definition. 
-        For example "C++", "Pascal", "FORTRAN", etc.</td>
-      <td><i>blank</i></td>
-    </tr>
-    <tr>
-      <td><b>lang.opt1</b></td>
-      <td>string</td>
-      <td class="td_left">Specifies the parameters to give the optimizer when <tt>-O1</tt> is
-        specified on the <tt>llvmc</tt> command line.</td>
-      <td><tt>-simplifycfg -instcombine -mem2reg</tt></td>
-    </tr>
-    <tr>
-      <td><b>lang.opt2</b></td>
-      <td>string</td>
-      <td class="td_left">Specifies the parameters to give the optimizer when <tt>-O2</tt> is
-        specified on the <tt>llvmc</tt> command line.</td>
-      <td><i>TBD</i></td>
-    </tr>
-    <tr>
-      <td><b>lang.opt3</b></td>
-      <td>string</td>
-      <td class="td_left">Specifies the parameters to give the optimizer when <tt>-O3</tt> is
-        specified on the <tt>llvmc</tt> command line.</td>
-      <td><i>TBD</i></td>
-    </tr>
-    <tr>
-      <td><b>lang.opt4</b></td>
-      <td>string</td>
-      <td class="td_left">Specifies the parameters to give the optimizer when <tt>-O4</tt> is
-        specified on the <tt>llvmc</tt> command line.</td>
-      <td><i>TBD</i></td>
-    </tr>
-    <tr>
-      <td><b>lang.opt5</b></td>
-      <td>string</td>
-      <td class="td_left">Specifies the parameters to give the optimizer when <tt>-O5</tt> is
-        specified on the <tt>llvmc</tt> command line.</td>
-      <td><i>TBD</i></td>
-    </tr>
-    <tr><td colspan="4"><h4>PREPROCESSOR ITEMS</h4></td></tr>
-    <tr>
-      <td><b>preprocessor.command</b></td>
-      <td>command</td>
-      <td class="td_left">This provides the command prototype that will be used 
-        to run the preprocessor. Valid substitutions are <tt>@in@</tt> for the 
-        input file and <tt>@out@</tt> for the output file. This is generally only 
-        used with the <tt>-E</tt> option.</td>
-      <td>&lt;blank&gt;</td>
-    </tr>
-    <tr>
-      <td><b>preprocessor.required</b></td>
-      <td>boolean</td>
-      <td class="td_left">This item specifies whether the pre-processing phase
-        is required by the language. If the value is true, then the
-        <tt>preprocessor.command</tt> value must not be blank. With this option,
-        <tt>llvmc</tt> will always run the preprocessor as it assumes that the
-        translation and optimization phases don't know how to pre-process their
-        input.</td>
-      <td>false</td>
-    </tr>
-    <tr><td colspan="4"><h4>TRANSLATOR ITEMS</h4></td></tr>
-    <tr>
-      <td><b>translator.command</b></td>
-      <td>command</td>
-      <td class="td_left">This provides the command prototype that will be used 
-        to run the translator. Valid substitutions are <tt>@in@</tt> for the 
-        input file and <tt>@out@</tt> for the output file.</td>
-      <td>&lt;blank&gt;</td>
-    </tr>
-    <tr>
-      <td><b>translator.output</b></td>
-      <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
-      <td class="td_left">This item specifies the kind of output the language's 
-        translator generates.</td>
-      <td><tt>bytecode</tt></td>
-    </tr>
-    <tr>
-      <td><b>translator.preprocesses</b></td>
-      <td>boolean</td>
-      <td class="td_left">Indicates that the translator also preprocesses. If this is true, then
-        <tt>llvmc</tt> will skip the pre-processing phase whenever the final
-        phase is not pre-processing.</td>
-      <td><tt>false</tt></td>
-    </tr>
-    <tr>
-      <td><b>translator.optimizers</b></td>
-      <td>boolean</td>
-      <td class="td_left">Indicates that the translator also optimizes. If this is true, then
-        <tt>llvmc</tt> will skip the optimization phase whenever the final phase
-        is optimization or later.</td>
-      <td><tt>false</tt></td>
-    </tr>
-    <tr>
-      <td><b>translator.groks_dash_o</b></td>
-      <td>boolean</td>
-      <td class="td_left">Indicates that the translator understands the <i>intent</i> of the
-        various <tt>-O</tt><i>n</i> options to <tt>llvmc</tt>. This will cause the
-        <tt>-O</tt><i>n</i> option to be based to the translator instead of the
-        equivalent options provided by <tt>lang.opt</tt><i>n</i>.</td>
-      <td><tt>false</tt></td>
-    </tr>
-    <tr><td colspan="4"><h4>OPTIMIZER ITEMS</h4></td></tr>
-    <tr><td colspan="4"><h4>ASSEMBLER ITEMS</h4></td></tr>
-    <tr><td colspan="4"><h4>LINKER ITEMS</h4></td></tr>
+    <tbody>
+      <tr>
+        <th>Name</th>
+        <th>Value Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+      <tr><td colspan="4"><h4>LANG ITEMS</h4></td></tr>
+      <tr>
+        <td><b>lang.name</b></td>
+        <td>string</td>
+        <td class="td_left">Provides the common name for a language definition. 
+          For example "C++", "Pascal", "FORTRAN", etc.</td>
+        <td><i>blank</i></td>
+      </tr>
+      <tr>
+        <td><b>lang.opt1</b></td>
+        <td>string</td>
+        <td class="td_left">Specifies the parameters to give the optimizer when
+          <tt>-O1</tt> is specified on the <tt>llvmc</tt> command line.</td>
+        <td><tt>-simplifycfg -instcombine -mem2reg</tt></td>
+      </tr>
+      <tr>
+        <td><b>lang.opt2</b></td>
+        <td>string</td>
+        <td class="td_left">Specifies the parameters to give the optimizer when
+          <tt>-O2</tt> is specified on the <tt>llvmc</tt> command line.</td>
+        <td><i>TBD</i></td>
+      </tr>
+      <tr>
+        <td><b>lang.opt3</b></td>
+        <td>string</td>
+        <td class="td_left">Specifies the parameters to give the optimizer when
+          <tt>-O3</tt> is specified on the <tt>llvmc</tt> command line.</td>
+        <td><i>TBD</i></td>
+      </tr>
+      <tr>
+        <td><b>lang.opt4</b></td>
+        <td>string</td>
+        <td class="td_left">Specifies the parameters to give the optimizer when
+          <tt>-O4</tt> is specified on the <tt>llvmc</tt> command line.</td>
+        <td><i>TBD</i></td>
+      </tr>
+      <tr>
+        <td><b>lang.opt5</b></td>
+        <td>string</td>
+        <td class="td_left">Specifies the parameters to give the optimizer when 
+          <tt>-O5</tt> is specified on the <tt>llvmc</tt> command line.</td>
+        <td><i>TBD</i></td>
+      </tr>
+      <tr><td colspan="4"><h4>PREPROCESSOR ITEMS</h4></td></tr>
+      <tr>
+        <td><b>preprocessor.command</b></td>
+        <td>command</td>
+        <td class="td_left">This provides the command prototype that will be used
+          to run the preprocessor.  This is generally only used with the 
+          <tt>-E</tt> option.</td>
+        <td>&lt;blank&gt;</td>
+      </tr>
+      <tr>
+        <td><b>preprocessor.required</b></td>
+        <td>boolean</td>
+        <td class="td_left">This item specifies whether the pre-processing phase
+          is required by the language. If the value is true, then the
+          <tt>preprocessor.command</tt> value must not be blank. With this option,
+          <tt>llvmc</tt> will always run the preprocessor as it assumes that the
+          translation and optimization phases don't know how to pre-process their
+          input.</td>
+        <td>false</td>
+      </tr>
+      <tr><td colspan="4"><h4>TRANSLATOR ITEMS</h4></td></tr>
+      <tr>
+        <td><b>translator.command</b></td>
+        <td>command</td>
+        <td class="td_left">This provides the command prototype that will be used 
+          to run the translator. Valid substitutions are <tt>@in@</tt> for the 
+          input file and <tt>@out@</tt> for the output file.</td>
+        <td>&lt;blank&gt;</td>
+      </tr>
+      <tr>
+        <td><b>translator.output</b></td>
+        <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td class="td_left">This item specifies the kind of output the language's 
+          translator generates.</td>
+        <td><tt>bytecode</tt></td>
+      </tr>
+      <tr>
+        <td><b>translator.preprocesses</b></td>
+        <td>boolean</td>
+        <td class="td_left">Indicates that the translator also preprocesses. If
+          this is true, then <tt>llvmc</tt> will skip the pre-processing phase
+          whenever the final phase is not pre-processing.</td>
+        <td><tt>false</tt></td>
+      </tr>
+      <tr>
+        <td><b>translator.optimizers</b></td>
+        <td>boolean</td>
+        <td class="td_left">Indicates that the translator also optimizes. If
+          this is true, then <tt>llvmc</tt> will skip the optimization phase
+          whenever the final phase is optimization or later.</td>
+        <td><tt>false</tt></td>
+      </tr>
+      <tr>
+        <td><b>translator.groks_dash_o</b></td>
+        <td>boolean</td>
+        <td class="td_left">Indicates that the translator understands the
+          <i>intent</i> of the various <tt>-O</tt><i>n</i> options to
+          <tt>llvmc</tt>. This will cause the <tt>-O</tt><i>n</i> option to be
+          given to the translator instead of the equivalent options provided by
+          <tt>lang.opt</tt><i>n</i>.</td>
+        <td><tt>false</tt></td>
+      </tr>
+      <tr><td colspan="4"><h4>OPTIMIZER ITEMS</h4></td></tr>
+      <tr>
+        <td><b>optimizer.command</b></td>
+        <td>command</td>
+        <td class="td_left">This provides the command prototype that will be used 
+          to run the optimizer. Valid substitutions are <tt>@in@</tt> for the 
+          input file and <tt>@out@</tt> for the output file.</td>
+        <td>&lt;blank&gt;</td>
+      </tr>
+      <tr>
+        <td><b>optimizer.output</b></td>
+        <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td class="td_left">This item specifies the kind of output the language's 
+          optimizer generates.</td>
+        <td><tt>bytecode</tt></td>
+      </tr>
+      <tr>
+        <td><b>optimizer.preprocesses</b></td>
+        <td>boolean</td>
+        <td class="td_left">Indicates that the optimizer also preprocesses. If
+          this is true, then <tt>llvmc</tt> will skip the pre-processing phase
+          whenever the final phase is optimization or later.</td>
+        <td><tt>false</tt></td>
+      </tr>
+      <tr>
+        <td><b>optimizer.translates</b></td>
+        <td>boolean</td>
+        <td class="td_left">Indicates that the optimizer also translates. If
+          this is true, then <tt>llvmc</tt> will skip the translation phase
+          whenever the final phase is optimization or later.</td>
+        <td><tt>false</tt></td>
+      </tr>
+      <tr>
+        <td><b>optimizer.groks_dash_o</b></td>
+        <td>boolean</td>
+        <td class="td_left">Indicates that the translator understands the
+          <i>intent</i> of the various <tt>-O</tt><i>n</i> options to
+          <tt>llvmc</tt>. This will cause the <tt>-O</tt><i>n</i> option to be
+          given to the translator instead of the equivalent options provided by
+          <tt>lang.opt</tt><i>n</i>.</td>
+        <td><tt>false</tt></td>
+      </tr>
+      <tr><td colspan="4"><h4>ASSEMBLER ITEMS</h4></td></tr>
+      <tr>
+        <td><b>assembler.command</b></td>
+        <td>command</td>
+        <td class="td_left">This provides the command prototype that will be used 
+          to run the assembler. Valid substitutions are <tt>@in@</tt> for the 
+          input file and <tt>@out@</tt> for the output file.</td>
+        <td>&lt;blank&gt;</td>
+      </tr>
+      <tr><td colspan="4"><h4>LINKER ITEMS</h4></td></tr>
+      <tr>
+        <td><b>linker.libs</b></td>
+        <td>library names</td>
+        <td class="td_left">This provides the list of runtime libraries that the
+          source language <i>could</i> link with. In general, the libraries
+          needed will be encoded into the LLVM Assembly or bytecode file.
+          However, this list tells <tt>llvmc</tt> the names of the ones that
+          apply to this source language. The names provided here should be 
+          unadorned with no suffix and no "lib" prefix.
+        </td>
+        <td>&lt;blank&gt;</td>
+      </tr>
+      <tr>
+        <td><b>linker.lib_paths</b></td>
+        <td>Fully qualifed local path names</td>
+        <td class="td_left">This item provides a list of potential directories
+          in which the source language's runtime libraries might be located. If
+          a given object file compiled with this language's translator is linked
+          then those libraries will be given as <tt>-L</tt> options to the
+          linker.</td>
+        <td><tt>&lt;blank&gt;</tt></td>
+      </tr>
+      <tr>
+        <td><b>linker.output</b></td>
+        <td><tt>native</tt>, <tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td class="td_left">This item specifies the kind of output the language's 
+          translator generates.</td>
+        <td><tt>bytecode</tt></td>
+      </tr>
+    </tbody>
   </table>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="substitutions">Substitutions</a></div>
+<div class="doc_text">
+  <p>On any configruation item that ends in <tt>command</tt>, you must
+  specify substitution tokens.  Substitution tokens begin and end with a percent
+  sign (<tt>%</tt>) and are replaced by the corresponding text. Any substitution
+  token may be given on any <tt>command</tt> line but some are more useful than
+  others. In particular each command <em>should</em> have both an <tt>%in%</tt>
+  and an <tt>%out%</tt> substittution. The table below provides definitions of
+  each of the allowed substitution tokens.</p>
+  <table>
+    <tbody>
+      <tr>
+        <th>Substitution Token</th>
+        <th>Replacement Description</th>
+      </tr>
+      <tr>
+        <td><tt>%args%</tt></td>
+        <td class="td_left">Replaced with all the tool-specific arguments given
+          to <tt>llvmc</tt> via the <tt>-T</tt> set of options. This just allows
+          you to place these arguments in the correct place on the command line.
+          If the %args% option does not appear on your command line, then you
+          are explicitly disallowing the <tt>-T</tt> option for your tool.
+        </td>
+      <tr>
+        <td><tt>%in%</tt></td>
+        <td class="td_left">Replaced with the full path of the input file. You
+          needn't worry about the cascading of file names. <tt>llvmc</tt> will
+          create temporary files and ensure that the output of one phase is the
+          input to the next phase.</td>
+      </tr>
+      <tr>
+        <td><tt>%opt%</tt></td>
+        <td class="td_left">Replaced with the optimization options for the
+          tool. If the tool understands the <tt>-O</tt> options then that will
+          be passed. Otherwise, the <tt>lang.optN</tt> series of configuration
+          items will specify which arguments are to be given.</td>
+      </tr>
+      <tr>
+        <td><tt>%out%</tt></td>
+        <td class="td_left">Replaced with the full path of the output file.
+          Note that this is not necessarily the output file specified with the
+          <tt>-o</tt> option on <tt>llvmc</tt>'s command line. It might be a
+          temporary file that will be passed to a subsequent phase's input.
+        </td>
+      </tr>
+      <tr>
+        <td><tt>%stats%</tt></td>
+        <td class="td_left">If your command accepts the <tt>-stats</tt> option,
+          use this substitution token. If the user requested <tt>-stats</tt> 
+          from the <tt>llvmc</tt> command line then this token will be replaced
+          with <tt>-stats</tt>, otherwise it will be ignored.
+        </td>
+      </tr>
+      <tr>
+        <td><tt>%target%</tt></td>
+        <td class="td_left">Replaced with the name of the target "machine" for 
+          which code should be generated. The value used here is taken from the
+          <tt>llvmc</tt> option <tt>-march</tt>.
+        </td>
+      </tr>
+      <tr>
+        <td><tt>%time%</tt></td>
+        <td class="td_left">If your command accepts the <tt>-time-passes</tt> 
+          option, use this substitution token. If the user requested 
+          <tt>-time-passes</tt> from the <tt>llvmc</tt> command line then this 
+          token will be replaced with <tt>-time-passes</tt>, otherwise it will 
+          be ignored.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="sample">Sample Config File</a></div>
+<div class="doc_text">
+  <p>Since an example is always instructive, here's how the Stacker language
+  configuration file looks.</p>
+  <pre><tt>
+# Stacker Configuration File For llvmc
+
+##########################################################
+# Language definitions
+##########################################################
+  lang.name=Stacker 
+  lang.opt1=-simplifycfg -instcombine -mem2reg
+  lang.opt2=-simplifycfg -instcombine -mem2reg -load-vn \
+    -gcse -dse -scalarrepl -sccp 
+  lang.opt3=-simplifycfg -instcombine -mem2reg -load-vn \
+    -gcse -dse -scalarrepl -sccp -branch-combine -adce \
+    -globaldce -inline -licm -pre
+  lang.opt4=-simplifycfg -instcombine -mem2reg -load-vn \
+    -gcse -dse -scalarrepl -sccp -ipconstprop \
+    -branch-combine -adce -globaldce -inline -licm -pre
+  lang.opt5=-simplifycfg -instcombine -mem2reg --load-vn \
+    -gcse -dse scalarrepl -sccp -ipconstprop \
+    -branch-combine -adce -globaldce -inline -licm -pre \
+    -block-placement
+
+##########################################################
+# Pre-processor definitions
+##########################################################
+
+  # Stacker doesn't have a preprocessor but the following
+  # allows the -E option to be supported
+  preprocessor.command=cp %in% %out%
+  preprocessor.required=false
+
+##########################################################
+# Translator definitions
+##########################################################
+
+  # To compile stacker source, we just run the stacker
+  # compiler with a default stack size of 2048 entries.
+  translator.command=stkrc -s 2048 %in% -o %out% %time% \
+    %stats% %args%
+
+  # stkrc doesn't preprocess but we set this to true so
+  # that we don't run the cp command by default.
+  translator.preprocesses=true
+
+  # The translator is required to run.
+  translator.required=true
+
+  # stkrc doesn't do any optimization, it just translates
+  translator.optimizes=no
+
+  # stkrc doesn't handle the -On options
+  translator.groks_dash_O=no
+
+##########################################################
+# Optimizer definitions
+##########################################################
+  
+  # For optimization, we use the LLVM "opt" program
+  optimizer.command=opt %in% -o %out% %opt% %time% %stats% \
+    %args%
+
+  # opt doesn't (yet) grok -On
+  optimizer.groks_dash_O=no
+
+  # opt doesn't translate
+  optimizer.translates = no
+
+  # opt doesn't preprocess
+  optimizer.preprocesses=no
+
+##########################################################
+# Assembler definitions
+##########################################################
+  assembler.command=llc %in% -o %out% %target% \
+    "-regalloc=linearscan" %time% %stats%
+
+##########################################################
+# Linker definitions
+##########################################################
+  linker.libs=stkr_runtime
+  linker.paths=
+</tt></pre>
+  
 
 <!-- *********************************************************************** -->
 <div class="doc_section"><a name="glossary">Glossary</a></div>
