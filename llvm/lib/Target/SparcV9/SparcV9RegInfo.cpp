@@ -14,7 +14,6 @@
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
-#include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "MachineInstrAnnot.h"
@@ -27,6 +26,7 @@
 #include "SparcV9RegClassInfo.h"
 #include "SparcV9RegInfo.h"
 #include "SparcV9TargetMachine.h"
+#include "SparcV9TmpInstr.h"
 #include <iostream>
 
 namespace llvm {
