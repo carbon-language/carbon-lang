@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/SymbolStripping.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/SymbolTable.h"

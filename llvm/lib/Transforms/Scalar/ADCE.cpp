@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Writer.h"

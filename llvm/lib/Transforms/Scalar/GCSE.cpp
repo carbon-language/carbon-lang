@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/GCSE.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/iMemory.h"
 #include "llvm/Analysis/Dominators.h"

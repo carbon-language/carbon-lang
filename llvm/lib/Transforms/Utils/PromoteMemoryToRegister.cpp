@@ -17,7 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/PromoteMemoryToRegister.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/iMemory.h"
 #include "llvm/iPHINode.h"

@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/IndVarSimplify.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/InductionVariable.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/iPHINode.h"

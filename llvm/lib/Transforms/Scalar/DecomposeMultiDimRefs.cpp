@@ -8,7 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/DecomposeMultiDimRefs.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constant.h"
 #include "llvm/iMemory.h"

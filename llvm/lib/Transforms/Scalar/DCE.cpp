@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/DCE.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"

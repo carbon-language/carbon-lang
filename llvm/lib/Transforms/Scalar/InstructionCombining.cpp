@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/InstructionCombining.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/iMemory.h"
