@@ -41,7 +41,7 @@ public:
 
   /// materializeModule - make sure the entire Module has been completely read.
   ///
-  Module* materializeModule();
+  virtual Module* materializeModule() = 0;
 
   /// releaseModule - no longer delete the Module* when provider is destroyed.
   ///
@@ -64,6 +64,7 @@ struct ExistingModuleProvider : public ModuleProvider {
     TheModule = M;
   }
   void materializeFunction(Function *F) {}
+  Module* materializeModule() { return TheModule; }
 };
 
 } // End llvm namespace
