@@ -251,22 +251,25 @@ a <tt>BasicBlock</tt>:
 
 <pre>
   // blk is a pointer to a BasicBlock instance
-  for(BasicBlock::iterator i = blk->begin(), e = blk->end(); i != e; ++i) {
-     // the next statement works since operator<<(ostream&,...) 
-     // is overloaded for Instruction&
+  for(BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i) {
+     // the next statement works since operator&lt;&lt;(ostream&amp;,...) 
+     // is overloaded for Instruction&amp;
 
-     cerr << *i << endl;
+     cerr &lt;&lt; *i &lt;&lt; endl;
   }
 </pre>
 
 However, this isn't really the best way to print out the contents of a
 <tt>BasicBlock</tt>!  Since the ostream operators are overloaded for
 virtually anything you'll care about, you could have just invoked the
-print routine on the basic block itself: <tt>cerr << blk <<
-endl;</tt>.  You might expect this to print out the pointer value of
-blk, but operator<< is overloaded for BasicBlock* as well: if you
-really want to print the pointer value explicitly, you'll have to
-cast.
+print routine on the basic block itself: <tt>cerr &lt;&lt; *blk &lt;&lt;
+"\n";</tt>.<p>
+
+Note that currently operator&lt;&lt; is implemented for <tt>Value*</tt>, so it 
+will print out the contents of the pointer, instead of 
+the pointer value you might expect.  This is a deprecated interface that will
+be removed in the future, so it's best not to depend on it.  To print out the
+pointer value for now, you must cast to <tt>void*</tt>.<p>
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="iterate_convert"><hr size=0>Turning an iterator into a class
