@@ -883,11 +883,12 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
   BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
-  BuildMI(BB, X86::FP_REG_KILL, 0);
 
   if (!BI.isConditional()) {  // Unconditional branch?
-    if (BI.getSuccessor(0) != NextBB)
+    if (BI.getSuccessor(0) != NextBB) {
+      BuildMI(BB, X86::FP_REG_KILL, 0);
       BuildMI(BB, X86::JMP, 1).addPCDisp(BI.getSuccessor(0));
+    }
     return;
   }
 
@@ -898,6 +899,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
     BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addZImm(0);
+    BuildMI(BB, X86::FP_REG_KILL, 0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
@@ -936,6 +938,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
       X86::JS, X86::JNS },
   };
   
+  BuildMI(BB, X86::FP_REG_KILL, 0);
   if (BI.getSuccessor(0) != NextBB) {
     BuildMI(BB, OpcodeTab[isSigned][OpNum], 1).addPCDisp(BI.getSuccessor(0));
     if (BI.getSuccessor(1) != NextBB)
