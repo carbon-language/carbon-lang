@@ -71,7 +71,7 @@ static bool MallocConvertableToType(MallocInst *MI, const Type *Ty,
   unsigned OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
 
   // Must have a scale or offset to analyze it...
-  if (!Expr.Offset && !Expr.Scale) return false;
+  if (!Expr.Offset && !Expr.Scale && OldTypeSize == 1) return false;
 
   // Get the offset and scale of the allocation...
   int OffsetVal = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
