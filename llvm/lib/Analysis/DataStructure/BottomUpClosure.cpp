@@ -94,7 +94,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
                                            std::vector<Function*> &Stack,
                                            unsigned &NextID, 
                                      hash_map<Function*, unsigned> &ValMap) {
-  assert(ValMap.find(F) == ValMap.end() && "Shouldn't revisit functions!");
+  assert(!ValMap.count(F) && "Shouldn't revisit functions!");
   unsigned Min = NextID++, MyID = Min;
   ValMap[F] = Min;
   Stack.push_back(F);
@@ -260,7 +260,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
 
     if (Callee->isExternal()) {
       // Ignore this case, simple varargs functions we cannot stub out!
-    } else if (ReturnNodes.find(Callee) != ReturnNodes.end()) {
+    } else if (ReturnNodes.count(Callee)) {
       // Self recursion... simply link up the formal arguments with the
       // actual arguments...
       DEBUG(std::cerr << "    Self Inlining: " << Callee->getName() << "\n");
