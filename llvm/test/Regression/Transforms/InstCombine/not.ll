@@ -8,9 +8,9 @@
 
 implementation
 
-int "test1"(int %A) {
-	%B = xor int %A
-	%C = xor int %B
+int %test1(int %A) {
+	%B = xor int %A, -1
+	%C = xor int %B, -1
 	ret int %C
 }
 
