@@ -1528,6 +1528,24 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       // operand is a constant, simplify a bit.
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0)) {
         switch (BO->getOpcode()) {
+        case Instruction::Rem:
+          // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
+          if (CI->isNullValue() && isa<ConstantSInt>(BO->getOperand(1)) &&
+              BO->hasOneUse() &&
+              cast<ConstantSInt>(BO->getOperand(1))->getValue() > 1)
+            if (unsigned L2 =
+                Log2(cast<ConstantSInt>(BO->getOperand(1))->getValue())) {
+              const Type *UTy = BO->getType()->getUnsignedVersion();
+              Value *NewX = InsertNewInstBefore(new CastInst(BO->getOperand(0),
+                                                             UTy, "tmp"), I);
+              Constant *RHSCst = ConstantUInt::get(UTy, 1ULL << L2);
+              Value *NewRem =InsertNewInstBefore(BinaryOperator::createRem(NewX,
+                                                    RHSCst, BO->getName()), I);
+              return BinaryOperator::create(I.getOpcode(), NewRem,
+                                            Constant::getNullValue(UTy));
+            }
+          break;          
+
         case Instruction::Add:
           // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
           if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
