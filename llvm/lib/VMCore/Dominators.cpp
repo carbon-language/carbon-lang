@@ -211,15 +211,13 @@ bool ImmediateDominators::runOnFunction(Function &F) {
 }
 
 void ImmediateDominatorsBase::print(std::ostream &o) const {
-  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+  Function *F = getRoots()[0]->getParent();
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     o << "  Immediate Dominator For Basic Block:";
-    if (I->first)
-      WriteAsOperand(o, I->first, false);
-    else
-      o << " <<exit node>>";
+    WriteAsOperand(o, I, false);
     o << " is:";
-    if (I->second)
-      WriteAsOperand(o, I->second, false);
+    if (BasicBlock *ID = get(I))
+      WriteAsOperand(o, ID, false);
     else
       o << " <<exit node>>";
     o << "\n";
