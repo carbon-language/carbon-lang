@@ -71,7 +71,7 @@ static struct PerModuleInfo {
 
   /// PlaceHolderInfo - When temporary placeholder objects are created, remember
   /// how they were referenced and one which line of the input they came from so
-  /// that we can resolve them alter and print error messages as appropriate.
+  /// that we can resolve them later and print error messages as appropriate.
   std::map<Value*, std::pair<ValID, int> > PlaceHolderInfo;
 
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
@@ -1639,16 +1639,6 @@ BasicBlock : InstructionList OptAssign BBTerminatorInst  {
     $1->getInstList().push_back($3);
     InsertValue($1);
     $$ = $1;
-  }
-  | LABELSTR InstructionList OptAssign BBTerminatorInst  {
-    setValueName($4, $3);
-    InsertValue($4);
-
-    $2->getInstList().push_back($4);
-    setValueName($2, $1);
-
-    InsertValue($2);
-    $$ = $2;
   };
 
 InstructionList : InstructionList Inst {
@@ -1656,7 +1646,18 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
+    // FIXME: Should check to see if there is a forward ref'd basic block that
+    // we can use and reuse it as appropriate.  It doesn't make sense just to
+    // make forward ref'd blocks then discard them.
     $$ = CurBB = new BasicBlock("", CurFun.CurrentFunction);
+  }
+  | LABELSTR {
+    // FIXME: Should check to see if there is a forward ref'd basic block that
+    // we can use and reuse it as appropriate.  It doesn't make sense just to
+    // make forward ref'd blocks then discard them.
+    $$ = CurBB = new BasicBlock("", CurFun.CurrentFunction);
+    setValueName($$, $1);
+    InsertValue($$);
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
