@@ -111,7 +111,7 @@ and performance.
   <li>Read the documentation.</li>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
-  <li>Install the GCC front end:
+  <li>Install the GCC front end if you intend to compile C or C++:
     <ol>
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
       <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf -</tt>
@@ -121,63 +121,39 @@ and performance.
       <li>Add the cfrontend's "bin" directory to your PATH variable</li>
     </ol></li>
 
-  <li>Get the Source Code
+  <li>Get the LLVM Source Code
   <ul>
-    <li>With the distributed files:
+    <li>With the distributed files (or use <a href="#checkout">CVS</a>):
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
       <li><tt>gunzip --stdout llvm-<i>version</i>.tar.gz | tar -xvf -</tt>
-      <li><tt>cd llvm</tt></li>
     </ol></li>
 
-    <li>With anonymous CVS access (or use a <a href="#mirror">mirror</a>):
-    <ol>
-      <li><tt>cd <i>where-you-want-llvm-to-live</i></tt></li>
-      <li><tt>cvs -d
-          :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt></li>
-      <li>Hit the return key when prompted for the password.
-      <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm 
-          co llvm</tt></li>
-      <li><tt>cd llvm</tt></li>
-      <li><tt>cvs up -P -d</tt></li>
-    </ol></li>
   </ul></li>
 
-  <li>Get the Test Suite Source Code (<em>optional</em>)
+  <li><b>[Optional]</b> Get the Test Suite Source Code 
   <ul>
-    <li>With the distributed files:
+    <li>With the distributed files (or use <a href="#checkout">CVS</a>):
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
       <li><tt>cd llvm/projects</tt>
       <li><tt>gunzip --stdout llvm-test-<i>version</i>.tar.gz | tar -xvf -</tt>
-      <li><tt>cd ..</tt></li>
     </ol></li>
 
-    <li>With anonymous CVS access (or use a <a href="#mirror">mirror</a>):
-    <ol>
-      <li><tt>cd <i>where-you-want-llvm-to-live</i></tt></li>
-      <li><tt>cd llvm/projects</tt>
-      <li><tt>cvs -d
-          :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt></li>
-      <li>Hit the return key when prompted for the password.
-      <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm 
-          co llvm-test</tt></li>
-      <li><tt>cd llvm-test</tt></li>
-      <li><tt>cvs up -P -d</tt></li>
-      <li><tt>cd ..</tt></li>
-    </ol></li>
   </ul></li>
 
 
   <li>Configure the LLVM Build Environment
   <ol>
-    <li>Change directory to where you want to store the LLVM object
-        files and run <tt>configure</tt> to configure the Makefiles and
-        header files for the default platform. Useful options include:
+    <li><tt>cd <i>where-you-want-to-build-llvm</i></tt></li>
+    <li><tt><i>/path/to/llvm/</i>configure [options]</tt><br>
+    Some common options:
+
       <ul>
         <li><tt>--prefix=<i>directory</i></tt>
         <p>Specify for <i>directory</i> the full pathname of where you
-        want the LLVM tools and libraries to be installed.</p></li>
+        want the LLVM tools and libraries to be installed (default
+        <tt>/usr/local</tt>).</p></li>
         <li><tt>--with-llvmgccdir=<i>directory</i></tt>
         <p>Optionally, specify for <i>directory</i> the full pathname of the 
         C/C++ FrontEnd installation to use with this LLVM configuration. If
@@ -1003,19 +979,21 @@ named after the build type:</p>
 <div class="doc_text">
 
 <p>
-If you're running on a linux system that supports the "<a
+If you're running on a Linux system that supports the "<a
   href="http://www.tat.physik.uni-tuebingen.de/~rguenth/linux/binfmt_misc.html">
   binfmt_misc</a>"
 module, and you have root access on the system, you can set your system up to
 execute LLVM bytecode files directly.  To do this, use commands like this (the
 first command may not be required if you are already using the module):</p>
 
+<div class="doc_code">
 <pre>
    $ mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
-   $ echo ':llvm:M::llvm::/path/to/lli:' > /proc/sys/fs/binfmt_misc/register
+   $ echo ':llvm:M::llvm::/path/to/lli:' &gt; /proc/sys/fs/binfmt_misc/register
    $ chmod u+x hello.bc                (if needed)
    $ ./hello.bc
 </pre>
+</div>
 
 <p>
 This allows you to execute LLVM bytecode files directly.  Thanks to Jack
