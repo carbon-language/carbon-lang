@@ -28,7 +28,7 @@ Type::Type(const string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
   setDescription(name);
   ID = id;
-  Abstract = false;
+  Abstract = Recursive = false;
   UID = CurUID++;       // Assign types UID's as they are created
   UIDMappings.push_back(this);
 }
