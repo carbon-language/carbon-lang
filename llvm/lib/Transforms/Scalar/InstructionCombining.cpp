@@ -1294,7 +1294,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   // Instcombine load (constant global) into the value loaded...
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
-    if (GV->isConstant())
+    if ((GV->isConstant()) && (!(GV->isExternal())))
       return ReplaceInstUsesWith(LI, GV->getInitializer());
 
   // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded...
