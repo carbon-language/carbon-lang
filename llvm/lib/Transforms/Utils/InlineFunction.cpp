@@ -175,13 +175,11 @@ bool InlineFunction(CallSite CS) {
     
     for (BasicBlock::iterator I = LastBlock->begin(), E = LastBlock->end();
          I != E; )
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-        ++I;  // Move to the next instruction
-        LastBlock->getInstList().remove(AI);
-        Caller->front().getInstList().insert(InsertPoint, AI);      
-      } else {
-        ++I;
-      }
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I++))
+        if (isa<Constant>(AI->getArraySize())) {
+          LastBlock->getInstList().remove(AI);
+          Caller->front().getInstList().insert(InsertPoint, AI);      
+        }
   }
 
   // If we just inlined a call due to an invoke instruction, scan the inlined
