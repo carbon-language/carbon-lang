@@ -36,6 +36,13 @@ public:
   static MachineCodeForInstruction &get(const Instruction *I);
   static void destroy(const Instruction *I);
 
+  // dropAllReferences() - This function drops all references within
+  // temporary (hidden) instructions created in implementing the original
+  // VM intruction.  This ensures there are no remaining "uses" within
+  // these hidden instructions, before the values of a method are freed.
+  //
+  void dropAllReferences();
+
   const std::vector<Value*> &getTempValues() const { return tempVec; }
         std::vector<Value*> &getTempValues()       { return tempVec; }
   
