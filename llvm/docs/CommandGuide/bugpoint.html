@@ -152,6 +152,11 @@ non-obvious ways.  Here are some hints and tips:<p>
     <tt>bugpoint</tt> crashes before you see its "All input ok" message,
     you might try <tt>llvm-link -v</tt> on the same set of input files. If
     that also crashes, you may be experiencing a linker bug.
+
+<li>If your program is <b>supposed</b> to crash, <tt>bugpoint</tt> will be
+    confused. One way to deal with this is to cause bugpoint to ignore the exit
+    code from your program, by giving it the <tt>-check-exit-code=false</tt>
+    option.
     
 </ol>
 
