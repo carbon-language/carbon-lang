@@ -64,6 +64,7 @@ FLEX     = @LEX@
 #
 # Paths to miscellaneous programs.
 #
+RPWD    = @RPWD@
 SED     = @SED@
 RM      = @RM@
 ECHO    = @ECHO@
@@ -84,7 +85,7 @@ LLVMGCCARCH := @target@/3.4-llvm
 # object files.
 # 
 #OBJ_ROOT = .
-OBJ_ROOT := @OBJROOT@
+OBJ_ROOT := .
 
 # Path to location for LLVM front-end this should only be specified here if you
 # want to override the value set in Makefile.$(uname)
@@ -168,4 +169,67 @@ PAPIDIR := @PAPIDIR@
 # Disable LLC diffs for testing.
 #
 @DISABLE_LLC_DIFFS@
+
+###########################################################################
+# Directory Configuration
+#	This section of the Makefile determines what is where.  To be
+#	specific, there are several locations that need to be defined:
+#
+#	o LLVM_SRC_ROOT  : The root directory of the LLVM source code.
+#	o LLVM_OBJ_ROOT  : The root directory containing the built LLVM code.
+#
+#	o BUILD_SRC_DIR  : The directory containing the code to build.
+#	o BUILD_SRC_ROOT : The root directory of the code to build.
+#
+#	o BUILD_OBJ_DIR  : The directory in which compiled code will be placed.
+#	o BUILD_OBJ_ROOT : The root directory in which compiled code is placed.
+#
+###########################################################################
+
+#
+# Set the object build directory.  By default, it is the current directory.
+#
+ifndef BUILD_OBJ_DIR
+BUILD_OBJ_DIR := $(subst //,/,$(shell $(RPWD)))
+endif
+
+#
+# Set the root of the object directory.
+#
+ifndef BUILD_OBJ_ROOT
+BUILD_OBJ_ROOT := $(subst //,/,$(shell cd $(BUILD_OBJ_DIR)/$(LEVEL); $(RPWD)))
+endif
+
+#
+# Set the source build directory.  That is almost always the current directory.
+#
+ifndef BUILD_SRC_DIR
+BUILD_SRC_DIR := $(subst //,/,@abs_top_srcdir@/$(patsubst $(BUILD_OBJ_ROOT)%,%,$(BUILD_OBJ_DIR)))
+endif
+
+#
+# Set the source root directory.
+#
+ifndef BUILD_SRC_ROOT
+BUILD_SRC_ROOT := $(subst //,/,@abs_top_srcdir@)
+endif
+
+#
+# Set the LLVM object directory.
+#
+ifndef LLVM_OBJ_ROOT
+ifdef LLVM_SRC_ROOT
+LLVM_OBJ_ROOT := $(shell cd $(LLVM_SRC_ROOT); $(RPWD))
+else
+LLVM_OBJ_ROOT := $(BUILD_OBJ_ROOT)
+endif
+endif
+
+#
+# Set the LLVM source directory.
+# It is typically the root directory of what we're compiling now.
+#
+ifndef LLVM_SRC_ROOT
+LLVM_SRC_ROOT := $(BUILD_SRC_ROOT)
+endif
 
