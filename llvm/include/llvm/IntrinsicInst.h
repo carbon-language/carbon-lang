@@ -42,6 +42,33 @@ namespace llvm {
     static Value *StripPointerCasts(Value *Ptr);
   };
 
+  /// DbgStopPointInst - This represent llvm.dbg.stoppoint instructions.
+  ///
+  struct DbgStopPointInst : public IntrinsicInst {
+
+    Value *getChain() const { return const_cast<Value*>(getOperand(1)); }
+    unsigned getLineNo() const {
+      return cast<ConstantInt>(getOperand(2))->getRawValue();
+    }
+    unsigned getColNo() const {
+      return cast<ConstantInt>(getOperand(3))->getRawValue();
+    }
+    Value *getContext() const { return const_cast<Value*>(getOperand(4)); }
+
+   
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgStopPointInst *) { return true; }
+    static inline bool classof(const CallInst *I) {
+      if (const Function *CF = I->getCalledFunction())
+        return CF->getIntrinsicID() == Intrinsic::dbg_stoppoint;
+      return false;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<CallInst>(V) && classof(cast<CallInst>(V));
+    }
+  };
+
+
 
   /// MemIntrinsic - This is the common base class for memset/memcpy/memmove.
   ///
