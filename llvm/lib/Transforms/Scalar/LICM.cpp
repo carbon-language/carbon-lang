@@ -603,9 +603,7 @@ void LICM::PromoteValuesInLoop() {
 
   const std::vector<BasicBlock*> &ExitBlocks = CurLoop->getExitBlocks();
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    if (!ProcessedBlocks.count(ExitBlocks[i])) {
-      ProcessedBlocks.insert(ExitBlocks[i]);
-    
+    if (ProcessedBlocks.insert(ExitBlocks[i]).second) {
       // Copy all of the allocas into their memory locations...
       BasicBlock::iterator BI = ExitBlocks[i]->begin();
       while (isa<PHINode>(*BI))
