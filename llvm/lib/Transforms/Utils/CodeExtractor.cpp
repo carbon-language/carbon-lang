@@ -443,7 +443,7 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
                       brInst);
       }
 
-      // Rewrite branches into exists which return a value based on which
+      // Rewrite branches into exits which return a value based on which
       // exit we take from this function
       if (brInst->isUnconditional()) {
         if (!contains(code, brInst->getSuccessor(0))) {
@@ -564,6 +564,14 @@ Function *CodeExtractor::ExtractCodeRegion(const std::vector<BasicBlock*> &code)
   moveCodeToFunction(code, newFunction);
 
   return newFunction;
+}
+
+/// ExtractCodeRegion - slurp a sequence of basic blocks into a brand new
+/// function
+///
+Function* llvm::ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
+  CodeExtractor CE;
+  return CE.ExtractCodeRegion(code);
 }
 
 /// ExtractBasicBlock - slurp a natural loop into a brand new function
