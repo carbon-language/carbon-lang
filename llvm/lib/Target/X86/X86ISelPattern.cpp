@@ -53,7 +53,7 @@ namespace {
 
       setOperationUnsupported(ISD::MEMMOVE, MVT::Other);
 
-      setOperationUnsupported(ISD::MUL, MVT::i8);
+      //setOperationUnsupported(ISD::SEXTLOAD, MVT::i1);
       setOperationUnsupported(ISD::SELECT, MVT::i1);
       setOperationUnsupported(ISD::SELECT, MVT::i8);
       
@@ -1957,7 +1957,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     EmitSetCC(BB, Result, cast<SetCCSDNode>(N)->getCondition(),
               MVT::isFloatingPoint(N.getOperand(1).getValueType()));
     return Result;
-  case ISD::LOAD: {
+  case ISD::LOAD:
     // Make sure we generate both values.
     if (Result != 1)
       ExprMap[N.getValue(1)] = 1;   // Generate the token
@@ -1993,7 +1993,99 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
     }
     return Result;
+
+  case ISD::EXTLOAD:          // Arbitrarily codegen extloads as MOVZX*
+  case ISD::ZEXTLOAD: {
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    X86AddressMode AM;
+    if (getRegPressure(Node->getOperand(0)) >
+           getRegPressure(Node->getOperand(1))) {
+      Select(Node->getOperand(0)); // chain
+      SelectAddress(Node->getOperand(1), AM);
+    } else {
+      SelectAddress(Node->getOperand(1), AM);
+      Select(Node->getOperand(0)); // chain
+    }
+
+    switch (Node->getValueType(0)) {
+    default: assert(0 && "Unknown type to sign extend to.");
+    case MVT::f64:
+      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
+             "Bad EXTLOAD!");
+      addFullAddress(BuildMI(BB, X86::FLD32m, 5, Result), AM);
+      break;
+    case MVT::i32:
+      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+      default:
+        assert(0 && "Bad zero extend!");
+      case MVT::i1:
+      case MVT::i8:
+        addFullAddress(BuildMI(BB, X86::MOVZX32rm8, 5, Result), AM);
+        break;
+      case MVT::i16:
+        addFullAddress(BuildMI(BB, X86::MOVZX32rm16, 5, Result), AM);
+        break;
+      }
+      break;
+    case MVT::i16:
+      assert(cast<MVTSDNode>(Node)->getExtraValueType() <= MVT::i8 &&
+             "Bad zero extend!");
+      addFullAddress(BuildMI(BB, X86::MOVSX16rm8, 5, Result), AM);
+      break;
+    case MVT::i8:
+      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i1 &&
+             "Bad zero extend!");
+      addFullAddress(BuildMI(BB, X86::MOV8rm, 5, Result), AM);
+      break;
+    }
+    return Result;
   }
+  case ISD::SEXTLOAD: {
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    X86AddressMode AM;
+    if (getRegPressure(Node->getOperand(0)) >
+           getRegPressure(Node->getOperand(1))) {
+      Select(Node->getOperand(0)); // chain
+      SelectAddress(Node->getOperand(1), AM);
+    } else {
+      SelectAddress(Node->getOperand(1), AM);
+      Select(Node->getOperand(0)); // chain
+    }
+
+    switch (Node->getValueType(0)) {
+    case MVT::i8: assert(0 && "Cannot sign extend from bool!");
+    default: assert(0 && "Unknown type to sign extend to.");
+    case MVT::i32:
+      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+      default:
+      case MVT::i1: assert(0 && "Cannot sign extend from bool!");
+      case MVT::i8:
+        addFullAddress(BuildMI(BB, X86::MOVSX32rm8, 5, Result), AM);
+        break;
+      case MVT::i16:
+        addFullAddress(BuildMI(BB, X86::MOVSX32rm16, 5, Result), AM);
+        break;
+      }
+      break;
+    case MVT::i16:
+      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i8 &&
+             "Cannot sign extend from bool!");
+      addFullAddress(BuildMI(BB, X86::MOVSX16rm8, 5, Result), AM);
+      break;
+    }
+    return Result;
+  }
+
   case ISD::DYNAMIC_STACKALLOC:
     // Generate both result values.
     if (Result != 1)
@@ -2216,11 +2308,59 @@ void ISel::Select(SDOperand N) {
 
     return;
   }
+
+  case ISD::EXTLOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD:
   case ISD::LOAD:
   case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
     SelectExpr(N);
     return;
+
+  case ISD::TRUNCSTORE: {  // truncstore chain, val, ptr :storety
+    // On X86, we can represent all types except for Bool and Float natively.
+    X86AddressMode AM;
+    MVT::ValueType StoredTy = cast<MVTSDNode>(Node)->getExtraValueType();
+    assert((StoredTy == MVT::i1 || StoredTy == MVT::f32) &&
+           "Unsupported TRUNCSTORE for this target!");
+
+    // Store of constant bool?
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(2))) {
+        Select(N.getOperand(0));
+        SelectAddress(N.getOperand(2), AM);
+      } else {
+        SelectAddress(N.getOperand(2), AM);
+        Select(N.getOperand(0));
+      }
+      addFullAddress(BuildMI(BB, X86::MOV8mi, 5), AM).addImm(CN->getValue());
+      return;
+    }
+
+    switch (StoredTy) {
+    default: assert(0 && "Cannot truncstore this type!");
+    case MVT::i1: Opc = X86::MOV8mr; break;
+    case MVT::f32: Opc = X86::FST32m; break;
+    }
+    
+    std::vector<std::pair<unsigned, unsigned> > RP;
+    RP.push_back(std::make_pair(getRegPressure(N.getOperand(0)), 0));
+    RP.push_back(std::make_pair(getRegPressure(N.getOperand(1)), 1));
+    RP.push_back(std::make_pair(getRegPressure(N.getOperand(2)), 2));
+    std::sort(RP.begin(), RP.end());
+
+    for (unsigned i = 0; i != 3; ++i)
+      switch (RP[2-i].second) {
+      default: assert(0 && "Unknown operand number!");
+      case 0: Select(N.getOperand(0)); break;
+      case 1: Tmp1 = SelectExpr(N.getOperand(1)); break;
+      case 2: SelectAddress(N.getOperand(2), AM); break;
+      }
+
+    addFullAddress(BuildMI(BB, Opc, 4+1), AM).addReg(Tmp1);
+    return;
+  }
   case ISD::STORE: {
     X86AddressMode AM;
 
