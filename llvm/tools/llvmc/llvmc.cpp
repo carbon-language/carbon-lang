@@ -228,6 +228,12 @@ int main(int argc, char **argv) {
     // Construct the CompilerDriver object
     CompilerDriver CD(Provider);
 
+    // If the LLVM_LIB_SEARCH_PATH environment variable is
+    // set, append it to the list of places to search for libraries
+    std::string srchPath = getenv("LLVM_LIB_SEARCH_PATH");
+    if (!srchPath.empty())
+      LibPaths.push_back(srchPath);
+
     // Configure the driver based on options
     CD.setVerbose(Verbose);
     CD.setDebug(Debug);
