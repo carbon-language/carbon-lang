@@ -285,7 +285,7 @@ string CallDSNode::getCaption() const {
     OS << "call " << CM->getName();
   else
     OS << "call <indirect>";
-  OS << "|Ret: ";
+  OS << ": ";
   WriteTypeSymbolic(OS, getType(),
                     CI->getParent()->getParent()->getParent());
   return OS.str();

@@ -74,12 +74,16 @@ static void ResolveNodeTo(DSNode *Node, const PointerValSet &ToVals) {
 // node that we can inline...
 //
 static bool isResolvableCallNode(CallDSNode *CN) {
-  // Only operate on call nodes with direct method calls
-  Function *F = CN->getCall()->getCalledFunction();
-  if (F == 0) return false;
+  // Only operate on call nodes with direct function calls
+  if (CN->getArgValues(0).size() == 1 &&
+      isa<GlobalDSNode>(CN->getArgValues(0)[0].Node)) {
+    GlobalDSNode *GDN = cast<GlobalDSNode>(CN->getArgValues(0)[0].Node);
+    Function *F = cast<Function>(GDN->getGlobal());
 
-  // Only work on call nodes with direct calls to methods with bodies.
-  return !F->isExternal();
+    // Only work on call nodes with direct calls to methods with bodies.
+    return !F->isExternal();
+  }
+  return false;
 }
 
 
@@ -100,9 +104,8 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
   NI = std::find_if(CallNodes.begin(), CallNodes.end(), isResolvableCallNode);
   while (NI != CallNodes.end()) {
     CallDSNode *CN = *NI;
-    // FIXME: This should work based on the pointer val set of the first arg
-    // link (which is the function to call)
-    Function *F = CN->getCall()->getCalledFunction();
+    GlobalDSNode *FGDN = cast<GlobalDSNode>(CN->getArgValues(0)[0].Node);
+    Function *F = cast<Function>(FGDN->getGlobal());
 
     if (NumInlines++ == 100) {      // CUTE hack huh?
       cerr << "Infinite (?) recursion halted\n";
