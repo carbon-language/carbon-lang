@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include <iostream>
@@ -92,6 +93,8 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
 
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+
+  const TargetData &TD = AA.getTargetData();
   
   std::set<Value *> Pointers;
   std::set<CallSite> CallSites;
@@ -118,9 +121,17 @@ bool AAEval::runOnFunction(Function &F) {
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (std::set<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
-       I1 != E; ++I1)
-    for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2)
-      switch (AA.alias(*I1, 0, *I2, 0)) {
+       I1 != E; ++I1) {
+    unsigned I1Size = 0;
+    const Type *I1ElTy = cast<PointerType>((*I1)->getType())->getElementType();
+    if (I1ElTy->isSized()) I1Size = TD.getTypeSize(I1ElTy);
+
+    for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
+      unsigned I2Size = 0;
+      const Type *I2ElTy =cast<PointerType>((*I2)->getType())->getElementType();
+      if (I2ElTy->isSized()) I2Size = TD.getTypeSize(I2ElTy);
+
+      switch (AA.alias(*I1, I1Size, *I2, I2Size)) {
       case AliasAnalysis::NoAlias:
         PrintResults("NoAlias", PrintNoAlias, *I1, *I2, F.getParent());
         ++NoAlias; break;
@@ -133,37 +144,36 @@ bool AAEval::runOnFunction(Function &F) {
       default:
         std::cerr << "Unknown alias query result!\n";
       }
+    }
+  }
 
   // Mod/ref alias analysis: compare all pairs of calls and values
   for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
        V != Ve; ++V) {
     unsigned Size = 0;
-    if (const PointerType *PTy = dyn_cast<PointerType>((*V)->getType()))
-      if (!(Size = PTy->getElementType()->getPrimitiveSize()))
-        if (isa<PointerType>(PTy->getElementType()))
-          Size = 4;   // This is a hack, but it's good enough for eval.
+    const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
+    if (ElTy->isSized()) Size = TD.getTypeSize(ElTy);
 
-    if (Size) 
-      for (std::set<CallSite>::iterator C = CallSites.begin(), 
-             Ce = CallSites.end(); C != Ce; ++C) {
-        Instruction *I = C->getInstruction();
-        switch (AA.getModRefInfo(*C, *V, Size)) {
-        case AliasAnalysis::NoModRef:
-          PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
-          ++NoModRef; break;
-        case AliasAnalysis::Mod:
-          PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
-          ++Mod; break;
-        case AliasAnalysis::Ref:
-          PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
-          ++Ref; break;
-        case AliasAnalysis::ModRef:
-          PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
-          ++ModRef; break;
-        default:
-          std::cerr << "Unknown alias query result!\n";
-        }
+    for (std::set<CallSite>::iterator C = CallSites.begin(), 
+           Ce = CallSites.end(); C != Ce; ++C) {
+      Instruction *I = C->getInstruction();
+      switch (AA.getModRefInfo(*C, *V, Size)) {
+      case AliasAnalysis::NoModRef:
+        PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
+        ++NoModRef; break;
+      case AliasAnalysis::Mod:
+        PrintModRefResults("     Mod", PrintMod, I, *V, F.getParent());
+        ++Mod; break;
+      case AliasAnalysis::Ref:
+        PrintModRefResults("     Ref", PrintRef, I, *V, F.getParent());
+        ++Ref; break;
+      case AliasAnalysis::ModRef:
+        PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
+        ++ModRef; break;
+      default:
+        std::cerr << "Unknown alias query result!\n";
       }
+    }
   }
 
   return false;
