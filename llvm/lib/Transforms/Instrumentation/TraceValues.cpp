@@ -19,22 +19,16 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
 #include "Support/StringExtras.h"
+#include <algorithm>
 #include <sstream>
 using std::vector;
 using std::string;
 
+static cl::Flag DisablePtrHashing("tracedisablehashdisable",
+                                  "Disable pointer hashing", cl::NoFlags);
 
-enum TraceHashPtrOpt {
-   HashToSeqNum, NoHash
-};
-
-static cl::Enum<enum TraceHashPtrOpt> TraceHashPtrs("tracehash", cl::NoFlags,
-  "Hash pointer values when tracing",
-  clEnumValN(HashToSeqNum, "on", "Hash pointers to sequence number"),
-  clEnumValN(NoHash ,      "off","Disable hashing of pointers"), 0);
-
-
-static cl::StringList TraceFuncName ("tracefunc", "trace these functions", cl::NoFlags);
+static cl::StringList TraceFuncName ("tracefunc", "trace only specific funct"
+                                     "ions", cl::NoFlags);
 
 
 // We trace a particular function if no functions to trace were specified
@@ -45,19 +39,14 @@ TraceThisFunction(Function* func)
 {
   if (TraceFuncName.getNumOccurances() == 0)
     return true;
-  
-  for (std::vector<std::string>::const_iterator SI=TraceFuncName.begin(),
-         SE=TraceFuncName.end(); SI != SE; ++SI)
-    if (func->getName() == *SI)
-      return true;
-  
-  return false;
+
+  return std::find(TraceFuncName.begin(), TraceFuncName.end(), func->getName())
+                  != TraceFuncName.end();
 }
 
 
 namespace {
-  class ExternalFuncs {
-  public:
+  struct ExternalFuncs {
     Function *PrintfFunc, *HashPtrFunc, *ReleasePtrFunc;
     Function *RecordPtrFunc, *PushOnEntryFunc, *ReleaseOnReturnFunc;
     void doInitialization(Module *M); // Add prototypes for external functions
@@ -114,20 +103,18 @@ void ExternalFuncs::doInitialization(Module *M) {
   const FunctionType *MTy =
     FunctionType::get(Type::IntTy, vector<const Type*>(1, SBP), true);
   PrintfFunc = M->getOrInsertFunction("printf", MTy);
-  
-  // Use varargs functions with no args instead of func(sbyte*) so that
-  // we don't have to generate cast instructions below :-)
-  // 
+
+  // uint (sbyte*)
   const FunctionType *hashFuncTy =
-    FunctionType::get(Type::UIntTy, vector<const Type*>(), true);
+    FunctionType::get(Type::UIntTy, vector<const Type*>(1, SBP), false);
   HashPtrFunc = M->getOrInsertFunction("HashPointerToSeqNum", hashFuncTy);
   
-  // varargs again, same reason.
-  const FunctionType *voidVAFuncTy =
-    FunctionType::get(Type::VoidTy, vector<const Type*>(), true);
+  // void (sbyte*)
+  const FunctionType *voidSBPFuncTy =
+    FunctionType::get(Type::VoidTy, vector<const Type*>(1, SBP), false);
   
-  ReleasePtrFunc =M->getOrInsertFunction("ReleasePointerSeqNum", voidVAFuncTy);
-  RecordPtrFunc = M->getOrInsertFunction("RecordPointer", voidVAFuncTy);
+  ReleasePtrFunc =M->getOrInsertFunction("ReleasePointerSeqNum", voidSBPFuncTy);
+  RecordPtrFunc = M->getOrInsertFunction("RecordPointer", voidSBPFuncTy);
   
   const FunctionType *voidvoidFuncTy =
     FunctionType::get(Type::VoidTy, vector<const Type*>(), false);
@@ -198,7 +185,7 @@ static string getPrintfCodeFor(const Value *V) {
   else if (V->getType() == Type::LabelTy)
     return "0x%p";
   else if (isa<PointerType>(V->getType()))
-    return (TraceHashPtrs == NoHash)? "0x%p" : "%d";
+    return DisablePtrHashing ? "0x%p" : "%d";
   else if (V->getType()->isIntegral() || V->getType() == Type::BoolTy)
     return "%d";
   
@@ -230,9 +217,15 @@ static void InsertPrintInst(Value *V,BasicBlock *BB, BasicBlock::iterator &BBI,
   BBI = BB->getInstList().insert(BBI, GEP)+1;
   
   // Insert a call to the hash function if this is a pointer value
-  if (V && isa<PointerType>(V->getType()) && TraceHashPtrs == HashToSeqNum) {
-    vector<Value*> HashArgs;
-    HashArgs.push_back(V);
+  if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
+    const Type *SBP = PointerType::get(Type::SByteTy);
+    if (V->getType() != SBP) {   // Cast pointer to be sbyte*
+      Instruction *I = new CastInst(V, SBP, "Hash_cast");
+      BBI = BB->getInstList().insert(BBI, I)+1;
+      V = I;
+    }
+
+    vector<Value*> HashArgs(1, V);
     V = new CallInst(HashPtrToSeqNum, HashArgs, "ptrSeqNum");
     BBI = BB->getInstList().insert(BBI, cast<Instruction>(V))+1;
   }
@@ -260,8 +253,14 @@ static void
 InsertReleaseInst(Value *V, BasicBlock *BB,
                   BasicBlock::iterator &BBI,
                   Function* ReleasePtrFunc) {
-  vector<Value*> releaseArgs;
-  releaseArgs.push_back(V);
+  
+  const Type *SBP = PointerType::get(Type::SByteTy);
+  if (V->getType() != SBP) {   // Cast pointer to be sbyte*
+    Instruction *I = new CastInst(V, SBP, "RPSN_cast");
+    BBI = BB->getInstList().insert(BBI, I)+1;
+    V = I;
+  }
+  vector<Value*> releaseArgs(1, V);
   Instruction *I = new CallInst(ReleasePtrFunc, releaseArgs);
   BBI = BB->getInstList().insert(BBI, I)+1;
 }
@@ -270,8 +269,13 @@ static void
 InsertRecordInst(Value *V, BasicBlock *BB,
                  BasicBlock::iterator &BBI,
                  Function* RecordPtrFunc) {
-  vector<Value*> releaseArgs;
-  releaseArgs.push_back(V);
+    const Type *SBP = PointerType::get(Type::SByteTy);
+  if (V->getType() != SBP) {   // Cast pointer to be sbyte*
+    Instruction *I = new CastInst(V, SBP, "RP_cast");
+    BBI = BB->getInstList().insert(BBI, I)+1;
+    V = I;
+  }
+  vector<Value*> releaseArgs(1, V);
   Instruction *I = new CallInst(RecordPtrFunc, releaseArgs);
   BBI = BB->getInstList().insert(BBI, I)+1;
 }
@@ -393,7 +397,8 @@ static inline void InsertCodeToShowFunctionEntry(Function *M, Function *Printf,
   for (Function::ArgumentListType::const_iterator
          I = argList.begin(), E = argList.end(); I != E; ++I, ++ArgNo) {
     InsertVerbosePrintInst((Value*)*I, BB, BBI,
-                           "  Arg #" + utostr(ArgNo), Printf, HashPtrToSeqNum);
+                           "  Arg #" + utostr(ArgNo) + ": ", Printf,
+                           HashPtrToSeqNum);
   }
 }
 
@@ -435,7 +440,7 @@ bool InsertTraceCode::doit(Function *M, bool traceBasicBlockExits,
                                   externalFuncs.HashPtrFunc);
   
   // Push a pointer set for recording alloca'd pointers at entry.
-  if (TraceHashPtrs == HashToSeqNum)
+  if (!DisablePtrHashing)
     InsertPushOnEntryFunc(M, externalFuncs.PushOnEntryFunc);
   
   for (Function::iterator BI = M->begin(); BI != M->end(); ++BI) {
@@ -447,7 +452,7 @@ bool InsertTraceCode::doit(Function *M, bool traceBasicBlockExits,
       TraceValuesAtBBExit(BB, externalFuncs.PrintfFunc,
                           externalFuncs.HashPtrFunc, &valuesStoredInFunction);
     
-    if (TraceHashPtrs == HashToSeqNum)  // release seq. numbers on free/ret
+    if (!DisablePtrHashing)          // release seq. numbers on free/ret
       ReleasePtrSeqNumbers(BB, externalFuncs);
   }
   
@@ -459,7 +464,7 @@ bool InsertTraceCode::doit(Function *M, bool traceBasicBlockExits,
                                      externalFuncs.HashPtrFunc);
       
       // Release all recorded pointers before RETURN.  Do this LAST!
-      if (TraceHashPtrs == HashToSeqNum)
+      if (!DisablePtrHashing)
         InsertReleaseRecordedInst(exitBlocks[i],
                                   externalFuncs.ReleaseOnReturnFunc);
     }
