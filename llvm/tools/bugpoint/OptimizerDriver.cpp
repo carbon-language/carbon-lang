@@ -33,7 +33,7 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
 
 
 /// EmitProgressBytecode - This function is used to output the current Program
-/// to a file named "bugpoing-ID.bc".
+/// to a file named "bugpoint-ID.bc".
 ///
 void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
   // Output the input to the current pass to a bytecode file, emit a message
