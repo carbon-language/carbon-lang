@@ -29,9 +29,16 @@ using std::cerr;
 // Return the global command line option vector.  Making it a function scoped
 // static ensures that it will be initialized correctly before its first use.
 //
+static map<string,Option*> *CommandLineOptions = 0;
 static map<string, Option*> &getOpts() {
-  static map<string,Option*> CommandLineOptions;
-  return CommandLineOptions;
+  if (CommandLineOptions == 0) CommandLineOptions = new map<string,Option*>();
+  return *CommandLineOptions;
+}
+
+static Option *getOption(const string &Str) {
+  if (CommandLineOptions == 0) return 0;
+  map<string,Option*>::iterator I = CommandLineOptions->find(Str);
+  return I != CommandLineOptions->end() ? I->second : 0;
 }
 
 static vector<Option*> &getPositionalOpts() {
@@ -39,13 +46,26 @@ static vector<Option*> &getPositionalOpts() {
   return Positional;
 }
 
-static void AddArgument(const string &ArgName, Option *Opt) {
-  if (getOpts().find(ArgName) != getOpts().end()) {
+static void AddArgument(const char *ArgName, Option *Opt) {
+  if (getOption(ArgName)) {
     cerr << "CommandLine Error: Argument '" << ArgName
 	 << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
-    getOpts().insert(std::make_pair(ArgName, Opt));
+    getOpts()[ArgName] = Opt;
+  }
+}
+
+// RemoveArgument - It's possible that the argument is no longer in the map if
+// options have already been processed and the map has been deleted!
+// 
+static void RemoveArgument(const char *ArgName, Option *Opt) {
+  if (CommandLineOptions == 0) return;
+  assert(getOption(ArgName) == Opt && "Arg not in map!");
+  CommandLineOptions->erase(ArgName);
+  if (CommandLineOptions->empty()) {
+    delete CommandLineOptions;
+    CommandLineOptions = 0;
   }
 }
 
@@ -103,25 +123,25 @@ static inline bool isPrefixedOrGrouping(const Option *O) {
 static Option *getOptionPred(std::string Name, unsigned &Length,
                              bool (*Pred)(const Option*)) {
   
-  map<string, Option*>::iterator I = getOpts().find(Name);
-  if (I != getOpts().end() && Pred(I->second)) {
+  Option *Op = getOption(Name);
+  if (Op && Pred(Op)) {
     Length = Name.length();
-    return I->second;
+    return Op;
   }
 
   if (Name.size() == 1) return 0;
   do {
     Name.erase(Name.end()-1, Name.end());   // Chop off the last character...
-    I = getOpts().find(Name);
+    Op = getOption(Name);
 
     // Loop while we haven't found an option and Name still has at least two
     // characters in it (so that the next iteration will not be the empty
     // string...
-  } while ((I == getOpts().end() || !Pred(I->second)) && Name.size() > 1);
+  } while ((Op == 0 || !Pred(Op)) && Name.size() > 1);
 
-  if (I != getOpts().end() && Pred(I->second)) {
+  if (Op && Pred(Op)) {
     Length = Name.length();
-    return I->second;      // Found one!
+    return Op;             // Found one!
   }
   return 0;                // No option found!
 }
@@ -384,7 +404,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Free all of the memory allocated to the map.  Command line options may only
   // be processed once!
-  Opts.clear();
+  delete CommandLineOptions;
+  CommandLineOptions = 0;
   PositionalOpts.clear();
 
   // If we had an error processing our arguments, don't let the program execute
@@ -445,8 +466,7 @@ void Option::addArgument(const char *ArgStr) {
 
 void Option::removeArgument(const char *ArgStr) {
   if (ArgStr[0]) {
-    assert(getOpts()[ArgStr] == this && "Arg not in map!");
-    getOpts().erase(ArgStr);
+    RemoveArgument(ArgStr, this);
   } else if (getFormattingFlag() == Positional) {
     vector<Option*>::iterator I =
       std::find(getPositionalOpts().begin(), getPositionalOpts().end(), this);
