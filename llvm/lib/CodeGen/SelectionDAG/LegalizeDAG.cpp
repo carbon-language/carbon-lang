@@ -917,6 +917,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getNode(ISD::FP_EXTEND, NVT, Op);
     assert(isa<ConstantFPSDNode>(Result) && "Didn't constant fold fp_extend?");
     break;
+  case ISD::SETCC:
+    assert(getTypeAction(TLI.getSetCCResultTy()) == Legal &&
+           "SetCC type is not legal??");
+    Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
+                          TLI.getSetCCResultTy(), Node->getOperand(0),
+                          Node->getOperand(1));
+    Result = LegalizeOp(Result);
+    break;
 
   case ISD::TRUNCATE:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
