@@ -1194,11 +1194,11 @@ void CWriter::visitReturnInst(ReturnInst &I) {
 }
 
 void CWriter::visitSwitchInst(SwitchInst &SI) {
-  printPHICopiesForSuccessors(SI.getParent(), 0);
 
   Out << "  switch (";
   writeOperand(SI.getOperand(0));
   Out << ") {\n  default:\n";
+  printPHICopiesForSuccessor (SI.getParent(), SI.getDefaultDest(), 2);
   printBranchToBlock(SI.getParent(), SI.getDefaultDest(), 2);
   Out << ";\n";
   for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2) {
@@ -1206,6 +1206,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
     writeOperand(SI.getOperand(i));
     Out << ":\n";
     BasicBlock *Succ = cast<BasicBlock>(SI.getOperand(i+1));
+    printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
     printBranchToBlock(SI.getParent(), Succ, 2);
     if (Succ == SI.getParent()->getNext())
       Out << "    break;\n";
