@@ -85,24 +85,23 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 
 
 
+namespace {
+  cl::opt<std::string>
+  InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"),
+                cl::value_desc("filename"));
 
-static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"),
-              cl::value_desc("filename"));
+  cl::opt<bool> Quiet("q", cl::desc("Don't print analysis pass names"));
+  cl::alias    QuietA("quiet", cl::desc("Alias for -q"),
+                      cl::aliasopt(Quiet));
 
-static cl::opt<bool> Quiet("q", cl::desc("Don't print analysis pass names"));
-static cl::alias    QuietA("quiet", cl::desc("Alias for -q"),
-                           cl::aliasopt(Quiet));
+  // The AnalysesList is automatically populated with registered Passes by the
+  // PassNameParser.
+  //
+  cl::list<const PassInfo*, bool, FilteredPassNameParser<PassInfo::Analysis> >
+  AnalysesList(cl::desc("Analyses available:"));
 
-// The AnalysesList is automatically populated with registered Passes by the
-// PassNameParser.
-//
-static cl::list<const PassInfo*, bool,
-                FilteredPassNameParser<PassInfo::Analysis> >
-AnalysesList(cl::desc("Analyses available:"));
-
-
-static Timer BytecodeLoadTimer("Bytecode Loader");
+  Timer BytecodeLoadTimer("Bytecode Loader");
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
