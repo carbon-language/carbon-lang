@@ -93,11 +93,6 @@ namespace {
     // FrameIndex for the alloca.
     std::map<AllocaInst*, unsigned> AllocaMap;
 
-    // A Reg to hold the base address used for global loads and stores, and a
-    // flag to set whether or not we need to emit it for this function.
-    unsigned GlobalBaseReg;
-    bool GlobalBaseInitialized;
-    
     ISel(TargetMachine &tm) : TM(reinterpret_cast<PPC64TargetMachine&>(tm)), 
       F(0), BB(0) {}
 
@@ -157,9 +152,6 @@ namespace {
         F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
 
       BB = &F->front();
-
-      // Make sure we re-emit a set of the global base reg if necessary
-      GlobalBaseInitialized = false;
 
       // Copy incoming arguments off of the stack...
       LoadArgumentsToVirtualRegs(Fn);
@@ -356,13 +348,6 @@ namespace {
                              Value *Cond, Value *TrueVal, Value *FalseVal,
                              unsigned DestReg);
 
-    /// copyGlobalBaseToRegister - Output the instructions required to put the
-    /// base address to use for accessing globals into a register.
-    ///
-    void ISel::copyGlobalBaseToRegister(MachineBasicBlock *MBB,
-                                        MachineBasicBlock::iterator IP,
-                                        unsigned R);
-
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
@@ -507,27 +492,6 @@ unsigned ISel::getFixedSizedAllocaFI(AllocaInst *AI) {
 }
 
 
-/// copyGlobalBaseToRegister - Output the instructions required to put the
-/// base address to use for accessing globals into a register.
-///
-void ISel::copyGlobalBaseToRegister(MachineBasicBlock *MBB,
-                                    MachineBasicBlock::iterator IP,
-                                    unsigned R) {
-  if (!GlobalBaseInitialized) {
-    // Insert the set of GlobalBaseReg into the first MBB of the function
-    MachineBasicBlock &FirstMBB = F->front();
-    MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    GlobalBaseReg = makeAnotherReg(Type::IntTy);
-    BuildMI(FirstMBB, MBBI, PPC::IMPLICIT_DEF, 0, PPC::LR);
-    BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, GlobalBaseReg);
-    GlobalBaseInitialized = true;
-  }
-  // Emit our copy of GlobalBaseReg to the destination register in the
-  // current MBB
-  BuildMI(*MBB, IP, PPC::OR, 2, R).addReg(GlobalBaseReg)
-    .addReg(GlobalBaseReg);
-}
-
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
 ///
@@ -561,6 +525,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       unsigned CPI = CP->getConstantPoolIndex(C);
       BuildMI(*MBB, IP, PPC::LD, 1, R)
         .addReg(PPC::R2).addConstantPoolIndex(CPI);
+      return;
     }
     
     assert(Class <= cInt && "Type not handled yet!");
@@ -907,7 +872,7 @@ static unsigned getPPCOpcodeForSetCCNumber(unsigned Opcode) {
 
 /// emitUCOM - emits an unordered FP compare.
 void ISel::emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
-                     unsigned LHS, unsigned RHS) {
+                    unsigned LHS, unsigned RHS) {
     BuildMI(*MBB, IP, PPC::FCMPU, 2, PPC::CR0).addReg(LHS).addReg(RHS);
 }
 
@@ -1406,7 +1371,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
           // pass the float in an int.  Otherwise, put it on the stack.
           if (isVarArg) {
             BuildMI(BB, PPC::STFS, 3).addReg(ArgReg).addSImm(ArgOffset)
-            .addReg(PPC::R1);
+              .addReg(PPC::R1);
             if (GPR_remaining > 0) {
               BuildMI(BB, PPC::LWZ, 2, GPR[GPR_idx])
               .addSImm(ArgOffset).addReg(ArgReg);
@@ -1794,10 +1759,8 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   // registers and emit the appropriate opcode.
   unsigned Op0r = getReg(Op0, MBB, IP);
   unsigned Op1r = getReg(Op1, MBB, IP);
-
   unsigned Opcode = OpcodeTab[OperatorClass];
   BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
-  return;
 }
 
 // ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
@@ -2114,7 +2077,7 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       }
     }
   } else {                  // The shift amount is non-constant.
-    unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
+    unsigned ShiftAmountReg = getReg(ShiftAmount, MBB, IP);
 
     if (isLeftShift) {
       BuildMI(*MBB, IP, PPC::SLW, 2, DestReg).addReg(SrcReg)
@@ -2522,7 +2485,7 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
         // PhiMBB:
         //   DestReg = phi [ IntTmp, OldMBB ], [ XorReg, XorMBB ]
         BB = PhiMBB;
-        BuildMI(BB, PPC::PHI, 2, DestReg).addReg(IntTmp).addMBB(OldMBB)
+        BuildMI(BB, PPC::PHI, 4, DestReg).addReg(IntTmp).addMBB(OldMBB)
           .addReg(XorReg).addMBB(XorMBB);
       }
     }
@@ -2674,10 +2637,8 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
         // sbyte -1 -> ubyte 0xFFFFFFFF
         BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       break;
-    case cLong:
-      ++SrcReg;
-      // Fall through
     case cInt:
+    case cLong:
       if (DestClass == cInt)
         BuildMI(*MBB, IP, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
       else
