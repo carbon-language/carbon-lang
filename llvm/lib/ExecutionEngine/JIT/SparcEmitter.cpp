@@ -30,7 +30,7 @@ namespace {
     
     std::vector<std::pair<BasicBlock*,
                           std::pair<unsigned*,MachineInstr*> > > BBRefs;
-    std::map<BasicBlock*, unsigned> BBLocations;
+    std::map<BasicBlock*, long> BBLocations;
     std::vector<void*> ConstantPoolAddresses;
   public:
     SparcEmitter(VM &vm) : TheVM(vm) {}
@@ -94,15 +94,20 @@ void SparcEmitter::finishFunction(MachineFunction &F) {
   ConstantPoolAddresses.clear();
   // Re-write branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned Location = BBLocations[BBRefs[i].first];
+    long Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
     std::cerr << "attempting to resolve BB: " << i << "\n";
     for (unsigned i=0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &op = MI->getOperand(i);
       if (op.isPCRelativeDisp()) {
+        // the instruction's branch target is made such that it branches to
+        // PC + (br target * 4), so undo that arithmetic here:
+        // Location is the target of the branch
+        // Ref is the location of the instruction, and hence the PC
+        unsigned branchTarget = (Location - (long)Ref) >> 2;
         MI->SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed,
-                                   Location);
+                                   branchTarget);
         std::cerr << "Rewrote BB ref: ";
         unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
         *Ref = fixedInstr;
@@ -135,7 +140,7 @@ void SparcEmitter::emitConstantPool(MachineConstantPool *MCP) {
 
 
 void SparcEmitter::startBasicBlock(MachineBasicBlock &BB) {
-  BBLocations[BB.getBasicBlock()] = (unsigned)(intptr_t)CurByte;
+  BBLocations[BB.getBasicBlock()] = (long)(intptr_t)CurByte;
 }
 
 
