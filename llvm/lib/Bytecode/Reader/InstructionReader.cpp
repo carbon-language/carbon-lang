@@ -310,7 +310,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       if (!TopTy) throw std::string("Invalid getelementptr instruction!"); 
 
       unsigned ValIdx = Args[i];
-      unsigned IdxTy;
+      unsigned IdxTy = 0;
       if (!hasRestrictedGEPTypes) {
         // Struct indices are always uints, sequential type indices can be any
         // of the 32 or 64-bit integer types.  The actual choice of type is
