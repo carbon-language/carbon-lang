@@ -14,6 +14,15 @@
 class BasicBlock;
 class Value;
 
+enum LiveVarDebugLevel_t {
+  LV_DEBUG_None,
+  LV_DEBUG_Normal,
+  LV_DEBUG_Instr,
+  LV_DEBUG_Verbose
+};
+
+extern LiveVarDebugLevel_t DEBUG_LV;
+
 class BBLiveVar : public Annotation {
   const BasicBlock *BB;         // pointer to BasicBlock
   unsigned POID;                // Post-Order ID
