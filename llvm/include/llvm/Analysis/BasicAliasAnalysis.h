@@ -1,12 +1,8 @@
 //===- llvm/Analysis/BasicAliasAnalysis.h - Alias Analysis Impl -*- C++ -*-===//
 //
-// This file defines the generic AliasAnalysis interface, which is used as the
-// common interface used by all clients of alias analysis information, and
-// implemented by all alias analysis implementations.
-//
-// Implementations of this interface must implement the various virtual methods,
-// which automatically provides functionality for the entire suite of client
-// APIs.
+// This file defines the default implementation of the Alias Analysis interface
+// that simply implements a few identities (two different globals cannot alias,
+// etc), but otherwise does no analysis.
 //
 //===----------------------------------------------------------------------===//
 
