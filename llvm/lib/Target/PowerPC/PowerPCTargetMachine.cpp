@@ -33,6 +33,10 @@ namespace llvm {
   cl::opt<bool> AIX("aix", 
                     cl::desc("Generate AIX/xcoff instead of Darwin/MachO"), 
                     cl::Hidden);
+
+  cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", 
+                             cl::desc("Enable LSR for PPC (beta option!)"), 
+                             cl::Hidden);
 }
 
 namespace {
@@ -70,6 +74,9 @@ unsigned PPC32TargetMachine::getJITMatchQuality() {
 bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
                                                    std::ostream &Out) {
   bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(this));
+
+  if (EnablePPCLSR)
+    PM.add(createLoopStrengthReducePass());
   
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -113,6 +120,9 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 }
 
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  if (EnablePPCLSR)
+    PM.add(createLoopStrengthReducePass());
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
