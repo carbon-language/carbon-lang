@@ -113,7 +113,7 @@ ipo_iterator<T> ipo_end(T G){
 //
 // This class should be used like this:
 // {
-//   ReversePostOrderTraversal<Method*> RPOT(MethodPtr); // Expensive to create
+//   ReversePostOrderTraversal<Function*> RPOT(FuncPtr); // Expensive to create
 //   for (rpo_iterator I = RPOT.begin(); I != RPOT.end(); ++I) {
 //      ...
 //   }
