@@ -22,9 +22,9 @@
 
 namespace llvm {
 
-typedef long long cycles_t; 
-static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
-static const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
+typedef long long CycleCount_t; 
+static const CycleCount_t HUGE_LATENCY = ~((long long) 1 << (sizeof(CycleCount_t)-2));
+static const CycleCount_t INVALID_LATENCY = -HUGE_LATENCY; 
 
 //---------------------------------------------------------------------------
 // class MachineResource 
@@ -78,7 +78,7 @@ struct InstrClassRUsage {
   unsigned      maxNumIssue;
   bool	        isSingleIssue;
   bool	        breaksGroup;
-  cycles_t      numBubbles;
+  CycleCount_t      numBubbles;
   
   // Feasible slots to use for instructions in this class.
   // The size of vector S[] is `numSlots'.
@@ -109,7 +109,7 @@ struct InstrIssueDelta {
   MachineOpCode	opCode;
   bool		isSingleIssue;
   bool		breaksGroup;
-  cycles_t	numBubbles;
+  CycleCount_t	numBubbles;
 };
 
 
@@ -119,13 +119,13 @@ struct InstrRUsage {
   // Issue restrictions for this instruction
   bool		isSingleIssue;
   bool		breaksGroup;
-  cycles_t	numBubbles;
+  CycleCount_t	numBubbles;
   
   // Feasible slots to use for this instruction.
   std::vector<bool> feasibleSlots;
   
   // Resource usages for this instruction, with one resource vector per cycle.
-  cycles_t	numCycles;
+  CycleCount_t	numCycles;
   std::vector<std::vector<resourceId_t> > resourcesByCycle;
   
 private:

@@ -61,22 +61,22 @@ RUConflict(const std::vector<resourceId_t>& fromRVec,
 }
 
 
-static cycles_t
+static CycleCount_t
 ComputeMinGap(const InstrRUsage &fromRU, 
 	      const InstrRUsage &toRU)
 {
-  cycles_t minGap = 0;
+  CycleCount_t minGap = 0;
   
   if (fromRU.numBubbles > 0)
     minGap = fromRU.numBubbles;
   
   if (minGap < fromRU.numCycles) {
     // only need to check from cycle `minGap' onwards
-    for (cycles_t gap=minGap; gap <= fromRU.numCycles-1; gap++) {
+    for (CycleCount_t gap=minGap; gap <= fromRU.numCycles-1; gap++) {
       // check if instr. #2 can start executing `gap' cycles after #1
       // by checking for resource conflicts in each overlapping cycle
-      cycles_t numOverlap =std::min(fromRU.numCycles - gap, toRU.numCycles);
-      for (cycles_t c = 0; c <= numOverlap-1; c++)
+      CycleCount_t numOverlap =std::min(fromRU.numCycles - gap, toRU.numCycles);
+      for (CycleCount_t c = 0; c <= numOverlap-1; c++)
         if (RUConflict(fromRU.resourcesByCycle[gap + c],
                        toRU.resourcesByCycle[c])) {
           // conflict found so minGap must be more than `gap'

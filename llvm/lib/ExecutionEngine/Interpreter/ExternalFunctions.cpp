@@ -461,7 +461,7 @@ GenericValue lle_X_scanf(FunctionType *M, const vector<GenericValue> &args) {
 
 // int clock(void) - Profiling implementation
 GenericValue lle_i_clock(FunctionType *M, const vector<GenericValue> &Args) {
-  extern int clock(void);
+  extern unsigned int clock(void);
   GenericValue GV; GV.IntVal = clock();
   return GV;
 }
