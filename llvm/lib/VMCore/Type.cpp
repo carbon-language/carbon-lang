@@ -481,8 +481,6 @@ namespace llvm {
 // PromoteAbstractToConcrete - This is a recursive function that walks a type
 // graph calculating whether or not a type is abstract.
 //
-// This method returns true if the type is found to still be abstract.
-//
 void Type::PromoteAbstractToConcrete() {
   if (!isAbstract()) return;
 
@@ -505,7 +503,10 @@ void Type::PromoteAbstractToConcrete() {
         for (Type::subtype_iterator CI = SCC[i]->subtype_begin(),
                E = SCC[i]->subtype_end(); CI != E; ++CI)
           if ((*CI)->isAbstract())
-            return;               // Not going to be concrete, sorry.
+            // If the child type is in our SCC, it doesn't make the entire SCC
+            // abstract unless there is a non-SCC abstract type.
+            if (std::find(SCC.begin(), SCC.end(), *CI) == SCC.end())
+              return;               // Not going to be concrete, sorry.
       
       // Okay, we just discovered this whole SCC is now concrete, mark it as
       // such!
@@ -513,6 +514,10 @@ void Type::PromoteAbstractToConcrete() {
         assert(SCC[i]->isAbstract() && "Why are we processing concrete types?");
         
         SCC[i]->setAbstract(false);
+      }
+
+      for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+        assert(!SCC[i]->isAbstract() && "Concrete type became abstract?");
         // The type just became concrete, notify all users!
         cast<DerivedType>(SCC[i])->notifyUsesThatTypeBecameConcrete();
       }
