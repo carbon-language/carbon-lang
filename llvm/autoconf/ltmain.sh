@@ -405,11 +405,6 @@ if test -z "$show_help"; then
 	  continue
 	  ;;
 
-	-only-static)
-	  build_libtool_libs=no
-	  continue
-	  ;;
-
 	-prefer-pic)
 	  pic_mode=yes
 	  continue
