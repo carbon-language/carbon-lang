@@ -26,7 +26,7 @@
 
 
 static inline MachineInstr*
-CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest,
+CreateIntSetInstruction(int64_t C, Value* dest,
                         vector<TmpInstruction*>& tempVec)
 {
   MachineInstr* minstr;
@@ -43,11 +43,32 @@ CreateIntSetInstruction(int64_t C, bool isSigned, Value* dest,
                                    /*isdef*/ true);
       minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,dest);
     }
-  if (isSigned)
+  else
     {
       minstr = new MachineInstr(SETSW);
       minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
       minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, dest);
+    }
+  
+  return minstr;
+}
+
+static inline MachineInstr*
+CreateUIntSetInstruction(uint64_t C, Value* dest,
+                         vector<TmpInstruction*>& tempVec)
+{
+  MachineInstr* minstr;
+  if (C > (unsigned int) ~0)
+    { // C does not fit in 32 bits
+      TmpInstruction* tmpReg =
+        new TmpInstruction(Instruction::UserOp1, Type::IntTy, NULL, NULL);
+      tempVec.push_back(tmpReg);
+      
+      minstr = new MachineInstr(SETX);
+      minstr->SetMachineOperand(0, MachineOperand::MO_SignExtendedImmed, C);
+      minstr->SetMachineOperand(1, MachineOperand::MO_VirtualRegister, tmpReg,
+                                   /*isdef*/ true);
+      minstr->SetMachineOperand(2, MachineOperand::MO_VirtualRegister,dest);
     }
   else
     {
@@ -105,10 +126,18 @@ UltraSparcInstrInfo::CreateCodeToLoadConst(Value* val,
   
   if (valType->isIntegral() || valType == Type::BoolTy)
     {
-      bool isValidConstant;
-      int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
-      assert(isValidConstant && "Unrecognized constant");
-      minstr = CreateIntSetInstruction(C, valType->isSigned(), dest, tempVec);
+      if (ConstantUInt* uval = dyn_cast<ConstantUInt>(val))
+        {
+          uint64_t C = uval->getValue();
+          minstr = CreateUIntSetInstruction(C, dest, tempVec);
+        }
+      else
+        {
+          bool isValidConstant;
+          int64_t C = GetConstantValueAsSignedInt(val, isValidConstant);
+          assert(isValidConstant && "Unrecognized constant");
+          minstr = CreateIntSetInstruction(C, dest, tempVec);
+        }
       minstrVec.push_back(minstr);
     }
   else
