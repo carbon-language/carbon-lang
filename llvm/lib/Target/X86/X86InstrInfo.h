@@ -7,7 +7,7 @@
 #ifndef X86INSTRUCTIONINFO_H
 #define X86INSTRUCTIONINFO_H
 
-#include "llvm/Target/MInstructionInfo.h"
+#include "llvm/Target/InstructionInfo.h"
 #include "X86RegisterInfo.h"
 
 class X86InstructionInfo : public MInstructionInfo {

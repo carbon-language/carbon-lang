@@ -13,7 +13,7 @@
 /// the function is in SSA form or not, although when in SSA form, we obviously
 /// don't care about being consumable by an assembler.
 ///
-void X86PrintCode(const MFunction *MF, std::ostream &O) {
+void X86PrintCode(const MachineFunction *MF, std::ostream &O) {
   O << "x86 printing not implemented yet!\n";
 
   // This should use the X86InstructionInfo::print method to print assembly for
