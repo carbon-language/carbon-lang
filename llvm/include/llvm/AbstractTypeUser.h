@@ -127,10 +127,17 @@ public:
 // as both a handle (as above) and an AbstractTypeUser.  It uses the callback to
 // keep its pointer member updated to the current version of the type.
 //
-struct PATypeHolder : public AbstractTypeUser, public PATypeHandle {
-  inline PATypeHolder(const Type *ty) : PATypeHandle(ty, this) {}
-  inline PATypeHolder(const PATypeHolder &T)
-    : AbstractTypeUser(T), PATypeHandle(T, this) {}
+class PATypeHolder : public AbstractTypeUser {
+  PATypeHandle Handle;
+public:
+  PATypeHolder(const Type *ty) : Handle(ty, this) {}
+  PATypeHolder(const PATypeHolder &T) : AbstractTypeUser(), Handle(T, this) {}
+
+  operator const Type *() const { return Handle; }
+  const Type *get() const { return Handle; }
+
+  // operator-> - Allow user to dereference handle naturally...
+  inline const Type *operator->() const { return Handle; }
 
   // refineAbstractType - All we do is update our PATypeHandle member to point
   // to the new type.
@@ -140,23 +147,23 @@ struct PATypeHolder : public AbstractTypeUser, public PATypeHandle {
 
     // Check to see if the type just became concrete.  If so, we have to
     // removeUser to get off its AbstractTypeUser list
-    removeUserFromConcrete();
+    Handle.removeUserFromConcrete();
 
     if ((const Type*)OldTy != NewTy)
-      PATypeHandle::operator=(NewTy);
+      Handle.operator=(NewTy);
   }
 
   // operator= - Allow assignment to handle
-  inline const Type *operator=(const Type *ty) {
-    return PATypeHandle::operator=(ty);
+  const Type *operator=(const Type *ty) {
+    return Handle = ty;
   }
 
   // operator= - Allow assignment to handle
-  inline const Type *operator=(const PATypeHandle &T) {
-    return PATypeHandle::operator=(T);
+  const Type *operator=(const PATypeHandle &T) {
+    return Handle = T;
   }
-  inline const Type *operator=(const PATypeHolder &H) {
-    return PATypeHandle::operator=(H);
+  const Type *operator=(const PATypeHolder &H) {
+    return Handle = H;
   }
 
   void dump() const;
