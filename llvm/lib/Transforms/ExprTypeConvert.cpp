@@ -65,6 +65,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 // ExpressionConvertableToType - Return true if it is possible
 bool ExpressionConvertableToType(Value *V, const Type *Ty,
                                  ValueTypeCache &CTMap) {
+  if (V->getType() == Ty) return true;  // Expression already correct type!
+
   // Expression type must be holdable in a register.
   if (!isFirstClassType(Ty))
     return false;
@@ -72,16 +74,6 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   ValueTypeCache::iterator CTMI = CTMap.find(V);
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
   CTMap[V] = Ty;
-
-  // Expressions are only convertable if all of the users of the expression can
-  // have this value converted.  This makes use of the map to avoid infinite
-  // recursion.
-  //
-  if (isa<Instruction>(V)) {
-    for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
-      if (!OperandConvertableToType(*I, V, Ty, CTMap))
-        return false;
-  }
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
@@ -96,7 +88,16 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
     return false;              // Otherwise, we can't convert!
   }
-  if (I->getType() == Ty) return false;  // Expression already correct type!
+
+  // Expressions are only convertable if all of the users of the expression can
+  // have this value converted.  This makes use of the map to avoid infinite
+  // recursion.
+  //
+  if (isa<Instruction>(V)) {
+    for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
+      if (!OperandConvertableToType(*I, V, Ty, CTMap))
+        return false;
+  }
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -116,7 +117,13 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
-    if (LI->hasIndices()) return false;
+    if (LI->hasIndices()) {
+      // We can't convert a load expression if it has indices... unless they are
+      // all zero.
+      const vector<ConstPoolVal*> &CPV = LI->getIndices();
+      for (unsigned i = 0; i < CPV.size(); ++i)
+        if (!CPV[i]->isNullValue()) return false;
+    }
 
     return ExpressionConvertableToType(LI->getPtrOperand(),
                                        PointerType::get(Ty), CTMap);
@@ -226,7 +233,15 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 
   case Instruction::Load: {
     LoadInst *LI = cast<LoadInst>(I);
-    assert(!LI->hasIndices());
+#ifndef NDEBUG
+    if (LI->hasIndices()) {
+      // We can't convert a load expression if it has indices... unless they are
+      // all zero.
+      const vector<ConstPoolVal*> &CPV = LI->getIndices();
+      for (unsigned i = 0; i < CPV.size(); ++i)
+        assert(CPV[i]->isNullValue() && "Load index not 0!");
+    }
+#endif
     Res = new LoadInst(ConstPoolVal::getNullConstant(PointerType::get(Ty)), 
                        Name);
     VMC.ExprMap[I] = Res;
@@ -393,7 +408,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     }
     // FALLTHROUGH
   case Instruction::Sub: {
-    CTMap[I] = Ty;
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
     return RetValConvertableToType(I, Ty, CTMap) &&
            ExpressionConvertableToType(OtherOp, Ty, CTMap);
@@ -408,7 +422,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     // FALL THROUGH
   case Instruction::Shl:
     assert(I->getOperand(0) == V);
-    CTMap[I] = Ty;
     return RetValConvertableToType(I, Ty, CTMap);
 
   case Instruction::Load:
@@ -432,8 +445,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
           // See if the leaf type is compatible with the old return type...
           if (TD.getTypeSize(Ty) != TD.getTypeSize(LI->getType()))
             return false;
-
-          CTMap[LI] = Ty;
           return RetValConvertableToType(LI, Ty, CTMap);
         }
         return false;
@@ -442,7 +453,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
       if (TD.getTypeSize(PVTy) != TD.getTypeSize(LI->getType()))
         return false;
 
-      CTMap[LI] = PVTy;
       return RetValConvertableToType(LI, PVTy, CTMap);
     }
     return false;
@@ -473,7 +483,6 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
   }
 
   case Instruction::PHINode: {
-    CTMap[I] = Ty;
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i)
       if (!ExpressionConvertableToType(PN->getIncomingValue(i), Ty, CTMap))
