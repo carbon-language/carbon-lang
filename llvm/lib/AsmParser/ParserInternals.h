@@ -130,6 +130,20 @@ struct ValID {
       abort();
     }
   }
+
+  bool operator<(const ValID &V) const {
+    if (Type != V.Type) return Type < V.Type;
+    switch (Type) {
+    case NumberVal:     return Num < V.Num;
+    case ConstStringVal:
+    case NameVal:       return strcmp(Name, V.Name) < 0;
+    case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
+    case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
+    case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;
+    case ConstNullVal:  return false;
+    default:  assert(0 && "Unknown value type!"); return false;
+    }
+  }
 };
 
 
