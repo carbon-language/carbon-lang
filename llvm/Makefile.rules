@@ -854,13 +854,13 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 #---------------------------------------------------------
 ifdef SHARED_LIBRARY
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
+$(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(Verb) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir 
+$(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
 	$(Verb) if $(LTCompile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACd" "$(ObjDir)/$*.d"; \
@@ -871,13 +871,13 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir
 #---------------------------------------------------------
 else
 
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
+$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Verb) if $(Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.CXXd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
 
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir
+$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build"
 	$(Verb) if $(Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.Cd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.Cd" "$(ObjDir)/$*.d"; \
@@ -888,13 +888,13 @@ endif
 #---------------------------------------------------------
 # Create .bc files in the ObjDir directory from .cpp and .c files...
 #---------------------------------------------------------
-$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS)
+$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
-$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS)
+$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
@@ -905,30 +905,30 @@ else
 
 ifdef SHARED_LIBRARY
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir 
+$(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(LTCompile.CXX) $< -o $@ 
 
-$(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir 
+$(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
 	$(LTCompile.C) $< -o $@ 
 
 else
 
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir
+$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Compile.CXX) $< -o $@ 
 
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir
+$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
 	$(Compile.C) $< -o $@ 
 endif
 
-$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS)
+$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ 
 
-$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS)
+$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@
 
@@ -950,48 +950,102 @@ ifdef TARGET
 
 TDFiles := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
+INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
+.PRECIOUS: $(INCTMPFiles) $(INCFiles)
 
-$(INCFiles) : $(TBLGEN) $(TDFiles)
+# All of these files depend on tblgen and the .td files.
+$(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 
-%GenRegisterNames.inc : %.td 
+
+$(TARGET:%=$(ObjDir)/%GenRegisterNames.inc.tmp): \
+$(ObjDir)/%GenRegisterNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register names with tblgen"
 	$(Verb) $(TableGen) -gen-register-enums -o $@ $<
 
-%GenRegisterInfo.h.inc : %.td 
+$(TARGET:%=%GenRegisterNames.inc): \
+%GenRegisterNames.inc : $(ObjDir)/%GenRegisterNames.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenRegisterInfo.h.inc.tmp): \
+$(ObjDir)/%GenRegisterInfo.h.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register information header with tblgen"
 	$(Verb) $(TableGen) -gen-register-desc-header -o $@ $<
 
-%GenRegisterInfo.inc : %.td
+$(TARGET:%=%GenRegisterInfo.h.inc): \
+%GenRegisterInfo.h.inc : $(ObjDir)/%GenRegisterInfo.h.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenRegisterInfo.inc.tmp): \
+$(ObjDir)/%GenRegisterInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register info implementation with tblgen"
 	$(Verb) $(TableGen) -gen-register-desc -o $@ $<
 
-%GenInstrNames.inc : %.td
+$(TARGET:%=%GenRegisterInfo.inc): \
+%GenRegisterInfo.inc : $(ObjDir)/%GenRegisterInfo.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenInstrNames.inc.tmp): \
+$(ObjDir)/%GenInstrNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction names with tblgen"
 	$(Verb) $(TableGen) -gen-instr-enums -o $@ $<
 
-%GenInstrInfo.inc : %.td
+$(TARGET:%=%GenInstrNames.inc): \
+%GenInstrNames.inc : $(ObjDir)/%GenInstrNames.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenInstrInfo.inc.tmp): \
+$(ObjDir)/%GenInstrInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction information with tblgen"
 	$(Verb) $(TableGen) -gen-instr-desc -o $@ $<
 
-%GenAsmWriter.inc : %.td
+$(TARGET:%=%GenInstrInfo.inc): \
+%GenInstrInfo.inc : $(ObjDir)/%GenInstrInfo.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenAsmWriter.inc.tmp): \
+$(ObjDir)/%GenAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -o $@ $<
 
-%GenATTAsmWriter.inc : %.td
+$(TARGET:%=%GenAsmWriter.inc): \
+%GenAsmWriter.inc : $(ObjDir)/%GenAsmWriter.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenATTAsmWriter.inc.tmp): \
+$(ObjDir)/%GenATTAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) AT&T assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -o $@ $< 
 
-%GenIntelAsmWriter.inc : %.td
+$(TARGET:%=%GenATTAsmWriter.inc): \
+%GenATTAsmWriter.inc : $(ObjDir)/%GenATTAsmWriter.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenIntelAsmWriter.inc.tmp): \
+$(ObjDir)/%GenIntelAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) Intel assembly writer with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $@ $< 
 
-%GenInstrSelector.inc: %.td
+$(TARGET:%=%GenIntelAsmWriter.inc): \
+%GenIntelAsmWriter.inc : $(ObjDir)/%GenIntelAsmWriter.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenInstrSelector.inc.tmp): \
+$(ObjDir)/%GenInstrSelector.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction selector with tblgen"
 	$(Verb) $(TableGen) -gen-instr-selector -o $@ $< 
 
-%GenCodeEmitter.inc:: %.td
+$(TARGET:%=%GenInstrSelector.inc): \
+%GenInstrSelector.inc : $(ObjDir)/%GenInstrSelector.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
+
+$(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
+$(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"
 	$(Verb) $(TableGen) -gen-emitter -o $@ $<
+
+$(TARGET:%=%GenCodeEmitter.inc): \
+%GenCodeEmitter.inc : $(ObjDir)/%GenCodeEmitter.inc.tmp
+	$(Verb) cmp -s $@ $< || cp $< $@
 
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
@@ -1405,6 +1459,7 @@ printvars::
 	$(Echo) "Sources        : " '$(Sources)'
 	$(Echo) "TDFiles        : " '$(TDFiles)'
 	$(Echo) "INCFiles       : " '$(INCFiles)'
+	$(Echo) "INCTMPFiles    : " '$(INCTMPFiles)'
 	$(Echo) "Compile.CXX    : " '$(Compile.CXX)'
 	$(Echo) "Compile.C      : " '$(Compile.C)'
 	$(Echo) "Archive        : " '$(Archive)'
