@@ -3,7 +3,12 @@ proc llvm-runtest { programs objdir subdir target_triplet llvmgcc llvmgxx prcont
     set path [file join $objdir $subdir]
     
     #Make Output Directory if it does not exist already
-    cd $path
+    if { [file exists path] } {
+	cd $path
+    } else {
+	file mkdir $path
+	cd $path
+    }
     
     file mkdir Output
  
