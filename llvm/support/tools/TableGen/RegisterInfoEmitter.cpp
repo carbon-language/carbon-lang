@@ -41,20 +41,24 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
     OS << "}\n";
 }
 
-static Record *getRegisterInfo(RecordKeeper &RC) {
-  std::vector<Record*> RegisterInfos =
-    Records.getAllDerivedDefinitions("RegisterInfo");
+static Record *getTarget(RecordKeeper &RC) {
+  std::vector<Record*> Targets = RC.getAllDerivedDefinitions("Target");
 
-  if (RegisterInfos.size() != 1)
-    throw std::string("ERROR: Multiple subclasses of RegisterInfo defined!");
-  return RegisterInfos[0];
+  if (Targets.size() != 1)
+    throw std::string("ERROR: Multiple subclasses of Target defined!");
+  return Targets[0];
+}
+
+static std::string getQualifiedName(Record *R) {
+  std::string Namespace = R->getValueAsString("Namespace");
+  if (Namespace.empty()) return R->getName();
+  return Namespace + "::" + R->getName();
 }
 
 void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   EmitSourceHeader("Register Information Header Fragment", OS);
   
-  std::string ClassName =
-    getRegisterInfo(Records)->getValueAsString("ClassName");
+  std::string ClassName = getTarget(Records)->getName() + "GenRegisterInfo";
 
   OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
 
@@ -63,12 +67,6 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  const unsigned* getCalleeSaveRegs() const;\n"
      << "};\n\n";
-}
-
-static std::string getQualifiedName(Record *R) {
-  std::string Namespace = R->getValueAsString("Namespace");
-  if (Namespace.empty()) return R->getName();
-  return Namespace + "::" + R->getName();
 }
 
 // RegisterInfoEmitter::run - Main register file description emitter.
@@ -95,7 +93,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     Record *RC = RegisterClasses[rc];
     std::string Name = RC->getName();
-    if (Name[9] == '.') {
+    if (Name.size() > 9 && Name[9] == '.') {
       static unsigned AnonCounter = 0;
       Name = "AnonRegClass_"+utostr(AnonCounter++);
     }
@@ -107,7 +105,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "[] = {\n    ";
     ListInit *RegList = RC->getValueAsListInit("MemberList");
     for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
-      Record *Reg = RegList->getElement(i);
+      DefInit *RegDef = dynamic_cast<DefInit*>(RegList->getElement(i));
+      if (!RegDef) throw "Register class member is not a record!";      
+      Record *Reg = RegDef->getDef();
       if (!Reg->isSubClassOf(RegisterClass))
         throw "Register Class member '" + Reg->getName() +
               " does not derive from the Register class!";
@@ -152,17 +152,19 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     // Add information that R aliases all of the elements in the list... and
     // that everything in the list aliases R.
     for (unsigned j = 0, e = LI->getSize(); j != e; ++j) {
-      if (RegisterAliases[R].count(LI->getElement(j)))
+      DefInit *Reg = dynamic_cast<DefInit*>(LI->getElement(j));
+      if (!Reg) throw "ERROR: Alias list element is not a def!";
+      if (RegisterAliases[R].count(Reg->getDef()))
         std::cerr << "Warning: register alias between " << getQualifiedName(R)
-                  << " and " << getQualifiedName(LI->getElement(j))
+                  << " and " << getQualifiedName(Reg->getDef())
                   << " specified multiple times!\n";
-      RegisterAliases[R].insert(LI->getElement(j));
+      RegisterAliases[R].insert(Reg->getDef());
 
-      if (RegisterAliases[LI->getElement(j)].count(R))
+      if (RegisterAliases[Reg->getDef()].count(R))
         std::cerr << "Warning: register alias between " << getQualifiedName(R)
-                  << " and " << getQualifiedName(LI->getElement(j))
+                  << " and " << getQualifiedName(Reg->getDef())
                   << " specified multiple times!\n";
-      RegisterAliases[LI->getElement(j)].insert(R);
+      RegisterAliases[Reg->getDef()].insert(R);
     }
   }
 
@@ -196,8 +198,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
 
-  Record *RegisterInfo = getRegisterInfo(Records);
-  std::string ClassName = RegisterInfo->getValueAsString("ClassName");
+  Record *Target = getTarget(Records);
+  std::string ClassName = Target->getName() + "GenRegisterInfo";
   
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
@@ -210,8 +212,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "const unsigned* " << ClassName << "::getCalleeSaveRegs() const {\n"
      << "  static const unsigned CalleeSaveRegs[] = {\n    ";
 
-  ListInit *LI = RegisterInfo->getValueAsListInit("CalleeSavedRegisters");
+  ListInit *LI = Target->getValueAsListInit("CalleeSavedRegisters");
   for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    OS << getQualifiedName(LI->getElement(i)) << ", ";  
+    if (DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(i)))
+      OS << getQualifiedName(DI->getDef()) << ", ";  
+    else
+      throw "Expected register definition in CalleeSavedRegisters list!";
   OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
 }
