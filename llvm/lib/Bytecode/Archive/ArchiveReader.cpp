@@ -309,18 +309,25 @@ Archive::loadSymbolTable() {
   if (mbr->isForeignSymbolTable()) {
     // Skip the foreign symbol table, we don't do anything with it
     At += mbr->getSize();
+    if (mbr->getSize() % 2 != 0)
+      At++;
     delete mbr;
 
-    // See if there's a string table too
+    // Read the next one
     FirstFile = At;
     mbr = parseMemberHeader(At,End);
-    if (mbr->isStringTable()) {
-      strtab.assign((const char*)mbr->getData(),mbr->getSize());
-      At += mbr->getSize();
-      delete mbr;
-      FirstFile = At;
-      mbr = parseMemberHeader(At,End);
-    }
+  }
+
+  if (mbr->isStringTable()) {
+    // Process the string table entry
+    strtab.assign((const char*)mbr->getData(),mbr->getSize());
+    At += mbr->getSize();
+    if (mbr->getSize() % 2 != 0)
+      At++;
+    delete mbr;
+    // Get the next one
+    FirstFile = At;
+    mbr = parseMemberHeader(At,End);
   }
 
   // See if its the symbol table
@@ -432,6 +439,11 @@ Archive::findModulesDefiningSymbols(const std::set<std::string>& symbols,
             mbr->getPath().get();
         }
       }
+
+      // Go to the next file location
+      At += mbr->getSize();
+      if (mbr->getSize() % 2 != 0)
+        At++;
     }
   }
 
