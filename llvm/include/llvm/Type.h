@@ -29,8 +29,6 @@
 // users of the unknown type, causing them to reference a new, more concrete
 // type.  Opaque types are deleted when their use list dwindles to zero users.
 //
-// Opaque types are considered to be first-class types.
-// 
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TYPE_H
@@ -192,11 +190,10 @@ public:
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
 
   /// isFirstClassType - Return true if the value is holdable in a register.
-  /// Note that we consider opaque types to be first class, as they may be
-  /// resolved to a first class type later.
+  ///
   inline bool isFirstClassType() const {
     return (ID != VoidTyID && ID <= LastPrimitiveTyID) || 
-            ID == PointerTyID || ID == PackedTyID || ID == OpaqueTyID;
+            ID == PointerTyID || ID == PackedTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
