@@ -65,6 +65,11 @@ namespace X86II {
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
     TB          = 1 << 4,
+
+    // OpSize - Set if this instruction requires an operand size prefix (0x66),
+    // which most often indicates that the instruction operates on 16 bit data
+    // instead of 32 bit data.
+    OpSize      = 1 << 5,
   };
 }
 
