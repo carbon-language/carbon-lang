@@ -77,7 +77,12 @@ namespace llvm {
       // The common case is that we will only create one register for this
       // value.  If we have that case, create and return the virtual register.
       unsigned NV = TLI.getNumElements(VT);
-      if (NV == 1) return MakeReg(VT);
+      if (NV == 1) {
+        // If we are promoting this value, pick the next largest supported type.
+        while (!TLI.hasNativeSupportFor(VT))
+          VT = (MVT::ValueType)(VT+1);
+        return MakeReg(VT);
+      }
     
       // If this value is represented with multiple target registers, make sure
       // to create enough consequtive registers of the right (smaller) type.
