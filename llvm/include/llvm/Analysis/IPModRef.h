@@ -125,7 +125,7 @@ class FunctionModRefInfo {
 
   void          computeModRef   (const Function &func);
   void          computeModRef   (const CallInst& callInst);
-  DSGraph *ResolveCallSiteModRefInfo(const CallInst &CI,
+  DSGraph *ResolveCallSiteModRefInfo(CallInst &CI,
                                 std::map<const DSNode*, DSNodeHandle> &NodeMap);
 
 public:
@@ -202,6 +202,11 @@ public:
   const FunctionModRefInfo& getFunctionModRefInfo(const Function& func) {
     return getFuncInfo(func);
   }
+
+  /// getBUDSGraph - This method returns the BU data structure graph for F
+  /// through the use of the BUDataStructures object.
+  ///
+  const DSGraph &getBUDSGraph(const Function &F);
 
   // Debugging support methods
   // 
