@@ -267,7 +267,7 @@ MachineOperand::InitializeReg(int _regNum, bool isCCReg)
 //---------------------------------------------------------------------------
 
 class MachineInstr :  public Annotable,         // Values are annotable
-                      public NonCopyableV {     // Disable copy operations
+                      public NonCopyable {      // Disable copy operations
   MachineOpCode    opCode;              // the opcode
   OpCodeMask       opCodeMask;          // extra bits for variants of an opcode
   vector<MachineOperand> operands;      // the operands
