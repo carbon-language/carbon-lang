@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | llvm-as | lli
+; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep '%G = alloca int'
 
 ; In this testcase, %bar stores to the global G.  Make sure that inlining does
 ; not cause it to store to the G in main instead.
