@@ -142,19 +142,44 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     std::swap(V1Size, V2Size);
   }
 
-  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1)) {
-    AliasResult R = alias(GEP->getOperand(0), V1Size, V2, V2Size);
-    if (R == NoAlias) return NoAlias;
-    if (R == MustAlias) {
-      // If there is at least one non-zero constant index, we know they cannot
-      // alias.
-      for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-        if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
-          if (!C->isNullValue())
+  if (V1Size != ~0U && V2Size != ~0U)
+    if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V1)) {
+      AliasResult R = alias(GEP->getOperand(0), V1Size, V2, V2Size);
+      if (R == NoAlias) return NoAlias;
+      if (R == MustAlias) {
+        // If there is at least one non-zero constant index, we know they cannot
+        // alias.
+        bool ConstantFound = false;
+        for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+          if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
+            if (!C->isNullValue()) {
+              ConstantFound = true;
+              break;
+          }
+        if (ConstantFound) {
+          if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
             return NoAlias;
+          
+          // Otherwise we have to check to see that the distance is more than
+          // the size of the argument... build an index vector that is equal to
+          // the arguments provided, except substitute 0's for any variable
+          // indexes we find...
+          
+          std::vector<Value*> Indices;
+          Indices.reserve(GEP->getNumOperands()-1);
+          for (unsigned i = 1; i != GEP->getNumOperands(); ++i)
+            if (const Constant *C = dyn_cast<Constant>(GEP->getOperand(i)))
+              Indices.push_back((Value*)C);
+            else
+              Indices.push_back(Constant::getNullValue(Type::LongTy));
+          const Type *Ty = GEP->getOperand(0)->getType();
+          int Offset = getTargetData().getIndexedOffset(Ty, Indices);
+          if (Offset >= (int)V2Size || Offset <= -(int)V1Size)
+            return NoAlias;
+        }
+      }
     }
-  }
-
+  
   return MayAlias;
 }
 
