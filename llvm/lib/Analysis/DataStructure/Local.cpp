@@ -59,25 +59,31 @@ namespace {
   /// graph by performing a single pass over the function in question.
   ///
   class GraphBuilder : InstVisitor<GraphBuilder> {
-    Function &F;
     DSGraph &G;
-    DSNodeHandle &RetNode;               // Node that gets returned...
+    DSNodeHandle *RetNode;               // Node that gets returned...
     DSGraph::ScalarMapTy &ScalarMap;
-    std::vector<DSCallSite> &FunctionCalls;
+    std::vector<DSCallSite> *FunctionCalls;
 
   public:
     GraphBuilder(Function &f, DSGraph &g, DSNodeHandle &retNode, 
-                 DSGraph::ScalarMapTy &SM, std::vector<DSCallSite> &fc)
-      : F(f), G(g), RetNode(retNode), ScalarMap(SM),
-        FunctionCalls(fc) {
+                 std::vector<DSCallSite> &fc)
+      : G(g), RetNode(&retNode), ScalarMap(G.getScalarMap()),
+        FunctionCalls(&fc) {
 
       // Create scalar nodes for all pointer arguments...
-      for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I)
+      for (Function::aiterator I = f.abegin(), E = f.aend(); I != E; ++I)
         if (isPointerType(I->getType()))
           getValueDest(*I);
 
-      visit(F);  // Single pass over the function
+      visit(f);  // Single pass over the function
     }
+
+    // GraphBuilder ctor for working on the globals graph
+    GraphBuilder(DSGraph &g)
+      : G(g), RetNode(0), ScalarMap(G.getScalarMap()), FunctionCalls(0) {
+    }
+
+    void mergeInGlobalInitializer(GlobalVariable *GV);
 
   private:
     // Visitor functions, used to handle each instruction type we encounter...
@@ -100,6 +106,8 @@ namespace {
     void visitInstruction(Instruction &I);
 
     void visitCallSite(CallSite CS);
+
+    void MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C);
   private:
     // Helper functions used to implement the visitation functions...
 
@@ -143,7 +151,7 @@ DSGraph::DSGraph(Function &F, DSGraph *GG) : GlobalsGraph(GG) {
   DEBUG(std::cerr << "  [Loc] Calculating graph for: " << F.getName() << "\n");
 
   // Use the graph builder to construct the local version of the graph
-  GraphBuilder B(F, *this, ReturnNodes[&F], ScalarMap, FunctionCalls);
+  GraphBuilder B(F, *this, ReturnNodes[&F], FunctionCalls);
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
@@ -287,7 +295,6 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
   if (Value.getNode() == 0) return;
 
-  unsigned Offset = 0;
   const PointerType *PTy = cast<PointerType>(GEP.getOperand(0)->getType());
   const Type *CurTy = PTy->getElementType();
 
@@ -325,6 +332,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 #endif
 
   // All of these subscripts are indexing INTO the elements we have...
+  unsigned Offset = 0;
   for (unsigned i = 2, e = GEP.getNumOperands(); i < e; ++i)
     if (GEP.getOperand(i)->getType() == Type::LongTy) {
       // Get the type indexing into...
@@ -390,7 +398,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
   // Mark that the node is written to...
   Dest.getNode()->setModifiedMarker();
 
-  // Ensure a typerecord exists...
+  // Ensure a type-record exists...
   Dest.getNode()->mergeTypeInfo(StoredTy, Dest.getOffset());
 
   // Avoid adding edges from null, or processing non-"pointer" stores
@@ -400,7 +408,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
 
 void GraphBuilder::visitReturnInst(ReturnInst &RI) {
   if (RI.getNumOperands() && isPointerType(RI.getOperand(0)->getType()))
-    RetNode.mergeWith(getValueDest(*RI.getOperand(0)));
+    RetNode->mergeWith(getValueDest(*RI.getOperand(0)));
 }
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
@@ -448,10 +456,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
   // Add a new function call entry...
   if (Callee)
-    FunctionCalls.push_back(DSCallSite(CS, RetVal, Callee, Args));
+    FunctionCalls->push_back(DSCallSite(CS, RetVal, Callee, Args));
   else
-    FunctionCalls.push_back(DSCallSite(CS, RetVal, CS.getCalledFunction(),
-                                       Args));
+    FunctionCalls->push_back(DSCallSite(CS, RetVal, CS.getCalledFunction(),
+                                        Args));
 }
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {
@@ -498,6 +506,42 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
 // LocalDataStructures Implementation
 //===----------------------------------------------------------------------===//
 
+// MergeConstantInitIntoNode - Merge the specified constant into the node
+// pointed to by NH.
+void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
+  // Ensure a type-record exists...
+  NH.getNode()->mergeTypeInfo(C->getType(), NH.getOffset());
+
+  if (C->getType()->isFirstClassType()) {
+    if (isPointerType(C->getType()))
+      // Avoid adding edges from null, or processing non-"pointer" stores
+      NH.addEdgeTo(getValueDest(*C));
+    return;
+  }
+  
+  if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
+    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+      // We don't currently do any indexing for arrays...
+      MergeConstantInitIntoNode(NH, cast<Constant>(CA->getOperand(i)));
+  } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+    const StructLayout *SL = TD.getStructLayout(CS->getType());
+    for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
+      DSNodeHandle NewNH(NH.getNode(), NH.getOffset()+SL->MemberOffsets[i]);
+      MergeConstantInitIntoNode(NewNH, cast<Constant>(CS->getOperand(i)));
+    }
+  } else {
+    assert(0 && "Unknown constant type!");
+  }
+}
+
+void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
+  assert(!GV->isExternal() && "Cannot merge in external global!");
+  // Get a node handle to the global node and merge the initializer into it.
+  DSNodeHandle NH = getValueDest(*GV);
+  MergeConstantInitIntoNode(NH, GV->getInitializer());
+}
+
+
 bool LocalDataStructures::run(Module &M) {
   GlobalsGraph = new DSGraph();
 
@@ -505,6 +549,16 @@ bool LocalDataStructures::run(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
       DSInfo.insert(std::make_pair(I, new DSGraph(*I, GlobalsGraph)));
+
+  GraphBuilder GGB(*GlobalsGraph);
+
+  // Add initializers for all of the globals to the globals graph...
+  for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+    if (!I->isExternal())
+      GGB.mergeInGlobalInitializer(I);
+
+  GlobalsGraph->markIncompleteNodes(DSGraph::MarkFormalArgs);
+  GlobalsGraph->removeTriviallyDeadNodes();
   return false;
 }
 
