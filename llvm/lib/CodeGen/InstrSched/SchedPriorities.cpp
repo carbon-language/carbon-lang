@@ -19,6 +19,7 @@
 //**************************************************************************/
 
 #include "SchedPriorities.h"
+#include "llvm/Support/PostOrderIterator.h"
 
 
 SchedPriorities::SchedPriorities(const Method* method,
@@ -50,8 +51,7 @@ SchedPriorities::initialize()
 void
 SchedPriorities::computeDelays(const SchedGraph* graph)
 {
-  sg_po_const_iterator poIter = sg_po_const_iterator::begin(graph->getRoot());
-  sg_po_const_iterator poEnd  = sg_po_const_iterator::end(  graph->getRoot());
+  po_iterator<const SchedGraph*> poIter = po_begin(graph), poEnd =po_end(graph);
   for ( ; poIter != poEnd; ++poIter)
     {
       const SchedGraphNode* node = *poIter;

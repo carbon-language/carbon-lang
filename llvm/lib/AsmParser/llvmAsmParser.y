@@ -21,8 +21,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
-#include "llvm/CFG.h"         // TODO: Change this when we have a DF.h
 #include "llvm/Support/STLExtras.h"
+#include "llvm/Support/DepthFirstIterator.h"
 #include <list>
 #include <utility>            // Get definition of pair class
 #include <algorithm>
@@ -417,7 +417,7 @@ static void setValueName(Value *V, char *NameStr) {
 // TypeContains - Returns true if Ty contains E in it.
 //
 static bool TypeContains(const Type *Ty, const Type *E) {
-  return find(cfg::tdf_begin(Ty), cfg::tdf_end(Ty), E) != cfg::tdf_end(Ty);
+  return find(df_begin(Ty), df_end(Ty), E) != df_end(Ty);
 }
 
 

@@ -6,8 +6,9 @@
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/SimplifyCFG.h"   // To get cfg::UnifyAllExitNodes
-#include "llvm/CFG.h"
+#include "llvm/Support/DepthFirstIterator.h"
 #include "llvm/Support/STLExtras.h"
+#include "llvm/Method.h"
 #include <algorithm>
 
 //===----------------------------------------------------------------------===//
@@ -59,7 +60,7 @@ void cfg::DominatorSet::calcForwardDominatorSet(const Method *M) {
     Changed = false;
 
     DomSetType WorkingSet;
-    df_const_iterator It = df_begin(M), End = df_end(M);
+    df_iterator<const Method*> It = df_begin(M), End = df_end(M);
     for ( ; It != End; ++It) {
       const BasicBlock *BB = *It;
       pred_const_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
@@ -110,7 +111,7 @@ cfg::DominatorSet::DominatorSet(Method *M, bool PostDomSet)
 
     set<const BasicBlock*> Visited;
     DomSetType WorkingSet;
-    idf_const_iterator It = idf_begin(Root), End = idf_end(Root);
+    idf_iterator<const BasicBlock*> It = idf_begin(Root), End = idf_end(Root);
     for ( ; It != End; ++It) {
       const BasicBlock *BB = *It;
       succ_const_iterator PI = succ_begin(BB), PEnd = succ_end(BB);
@@ -201,7 +202,7 @@ cfg::DominatorTree::DominatorTree(const ImmediateDominators &IDoms)
   Nodes[Root] = new Node(Root, 0);   // Add a node for the root...
 
   // Iterate over all nodes in depth first order...
-  for (df_const_iterator I = df_begin(M), E = df_end(M); I != E; ++I) {
+  for (df_iterator<const Method*> I = df_begin(M), E = df_end(M); I != E; ++I) {
     const BasicBlock *BB = *I, *IDom = IDoms[*I];
 
     if (IDom != 0) {   // Ignore the root node and other nasty nodes
@@ -223,16 +224,17 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
 
   if (!isPostDominator()) {
     // Iterate over all nodes in depth first order...
-    for (df_const_iterator I = df_begin(Root), E = df_end(Root); I != E; ++I) {
+    for (df_iterator<const BasicBlock*> I = df_begin(Root), E = df_end(Root);
+         I != E; ++I) {
       const BasicBlock *BB = *I;
       const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
       unsigned DomSetSize = Dominators.size();
       if (DomSetSize == 1) continue;  // Root node... IDom = null
       
-      // Loop over all dominators of this node.  This corresponds to looping over
+      // Loop over all dominators of this node. This corresponds to looping over
       // nodes in the dominator chain, looking for a node whose dominator set is
       // equal to the current nodes, except that the current node does not exist
-      // in it.  This means that it is one level higher in the dom chain than the
+      // in it. This means that it is one level higher in the dom chain than the
       // current node, and it is our idom!  We know that we have already added
       // a DominatorTree node for our idom, because the idom must be a
       // predecessor in the depth first order that we are iterating through the
@@ -241,11 +243,11 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
       DominatorSet::DomSetType::const_iterator I = Dominators.begin();
       DominatorSet::DomSetType::const_iterator End = Dominators.end();
       for (; I != End; ++I) {   // Iterate over dominators...
-	// All of our dominators should form a chain, where the number of elements
-	// in the dominator set indicates what level the node is at in the chain.
-	// We want the node immediately above us, so it will have an identical 
-	// dominator set, except that BB will not dominate it... therefore it's
-	// dominator set size will be one less than BB's...
+	// All of our dominators should form a chain, where the number of
+	// elements in the dominator set indicates what level the node is at in
+	// the chain.  We want the node immediately above us, so it will have
+	// an identical dominator set, except that BB will not dominate it...
+	// therefore it's dominator set size will be one less than BB's...
 	//
 	if (DS.getDominators(*I).size() == DomSetSize - 1) {
 	  // We know that the immediate dominator should already have a node, 
@@ -263,20 +265,21 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
     }
   } else if (Root) {
     // Iterate over all nodes in depth first order...
-    for (idf_const_iterator I = idf_begin(Root), E = idf_end(Root); I != E; ++I) {
+    for (idf_iterator<const BasicBlock*> I = idf_begin(Root), E = idf_end(Root);
+         I != E; ++I) {
       const BasicBlock *BB = *I;
       const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
       unsigned DomSetSize = Dominators.size();
       if (DomSetSize == 1) continue;  // Root node... IDom = null
       
-      // Loop over all dominators of this node.  This corresponds to looping over
-      // nodes in the dominator chain, looking for a node whose dominator set is
-      // equal to the current nodes, except that the current node does not exist
-      // in it.  This means that it is one level higher in the dom chain than the
-      // current node, and it is our idom!  We know that we have already added
-      // a DominatorTree node for our idom, because the idom must be a
-      // predecessor in the depth first order that we are iterating through the
-      // method.
+      // Loop over all dominators of this node.  This corresponds to looping
+      // over nodes in the dominator chain, looking for a node whose dominator
+      // set is equal to the current nodes, except that the current node does
+      // not exist in it.  This means that it is one level higher in the dom
+      // chain than the current node, and it is our idom!  We know that we have
+      // already added a DominatorTree node for our idom, because the idom must
+      // be a predecessor in the depth first order that we are iterating through
+      // the method.
       //
       DominatorSet::DomSetType::const_iterator I = Dominators.begin();
       DominatorSet::DomSetType::const_iterator End = Dominators.end();

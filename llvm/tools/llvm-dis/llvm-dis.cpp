@@ -23,7 +23,8 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Method.h"
-#include "llvm/CFG.h"
+#include "llvm/Support/DepthFirstIterator.h"
+#include "llvm/Support/PostOrderIterator.h"
 
 // OutputMode - The different orderings to print basic blocks in...
 enum OutputMode {
@@ -99,19 +100,19 @@ int main(int argc, char **argv) {
 
       switch (WriteMode) {
       case dfo:                   // Depth First ordering
-	copy(cfg::df_begin(M), cfg::df_end(M),
+	copy(df_begin(M), df_end(M),
 	     ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rdfo:            // Reverse Depth First ordering
-	copy(cfg::df_begin(M, true), cfg::df_end(M),
+	copy(df_begin(M, true), df_end(M),
 	     ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case po:                    // Post Order
-	copy(cfg::po_begin(M), cfg::po_end(M),
+	copy(po_begin(M), po_end(M),
 	     ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;
       case rpo: {           // Reverse Post Order
-	cfg::ReversePostOrderTraversal RPOT(M);
+	ReversePostOrderTraversal RPOT(M);
 	copy(RPOT.begin(), RPOT.end(),
 	     ostream_iterator<BasicBlock*>(*Out, "\n"));
 	break;

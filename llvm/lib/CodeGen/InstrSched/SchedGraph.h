@@ -19,13 +19,14 @@
 #ifndef LLVM_CODEGEN_SCHEDGRAPH_H
 #define LLVM_CODEGEN_SCHEDGRAPH_H
 
-#include "llvm/CFGdecls.h"			// just for graph iterators
 #include "llvm/Support/NonCopyable.h"
 #include "llvm/Support/HashExtras.h"
+#include "llvm/Support/GraphTraits.h"
 #include <hash_map>
 
 class Value;
 class Instruction;
+class TerminatorInst;
 class BasicBlock;
 class Method;
 class TargetMachine;
@@ -480,13 +481,36 @@ inline sg_succ_const_iterator succ_end(  const SchedGraphNode *N) {
   return sg_succ_const_iterator(N->endOutEdges());
 }
 
-// 
-// po_iterator
-// po_const_iterator
+// Provide specializations of GraphTraits to be able to use graph iterators on
+// the scheduling graph!
 //
-typedef cfg::POIterator<SchedGraphNode, sg_succ_iterator> sg_po_iterator;
-typedef cfg::POIterator<const SchedGraphNode, 
-		        sg_succ_const_iterator> sg_po_const_iterator;
+template <> struct GraphTraits<SchedGraph*> {
+  typedef SchedGraphNode NodeType;
+  typedef sg_succ_iterator ChildIteratorType;
+
+  static inline NodeType *getEntryNode(SchedGraph *SG) { return SG->getRoot(); }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return succ_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return succ_end(N);
+  }
+};
+
+template <> struct GraphTraits<const SchedGraph*> {
+  typedef const SchedGraphNode NodeType;
+  typedef sg_succ_const_iterator ChildIteratorType;
+
+  static inline NodeType *getEntryNode(const SchedGraph *SG) {
+    return SG->getRoot();
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return succ_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return succ_end(N);
+  }
+};
 
 
 //************************ External Functions *****************************/

@@ -20,7 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/STLExtras.h"
-#include "llvm/CFG.h"
+#include "llvm/Support/DepthFirstIterator.h"
 #include <algorithm>
 
 #if 0
@@ -264,8 +264,8 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore = false) {
     // the type itself is. This also assures us that we will not hit infinite
     // recursion on recursive types...
     //
-    for (cfg::tdf_iterator I = cfg::tdf_begin(TheTy, true), 
-                           E = cfg::tdf_end(TheTy); I != E; ++I)
+    for (df_iterator<const Type*> I = df_begin(TheTy, true), 
+                                  E = df_end(TheTy); I != E; ++I)
       if (*I != TheTy) {
 	// If we haven't seen this sub type before, add it to our type table!
 	const Type *SubTy = *I;

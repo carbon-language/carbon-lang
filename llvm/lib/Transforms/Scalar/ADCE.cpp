@@ -11,8 +11,8 @@
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/STLExtras.h"
+#include "llvm/Support/DepthFirstIterator.h"
 #include "llvm/Analysis/Writer.h"
-#include "llvm/CFG.h"
 #include "llvm/iTerminators.h"
 #include <set>
 #include <algorithm>
@@ -90,7 +90,8 @@ bool ADCE::doADCE() {
   // instructions live in basic blocks that are unreachable.  These blocks will
   // be eliminated later, along with the instructions inside.
   //
-  for (cfg::df_iterator BBI = cfg::df_begin(M), BBE = cfg::df_end(M);
+  for (df_iterator<Method*> BBI = df_begin(M),
+                            BBE = df_end(M);
        BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {

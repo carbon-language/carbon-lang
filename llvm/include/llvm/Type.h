@@ -27,6 +27,7 @@
 #define LLVM_TYPE_H
 
 #include "llvm/Value.h"
+#include "llvm/Support/GraphTraits.h"
 
 class DerivedType;
 class MethodType;
@@ -263,5 +264,35 @@ inline Type::TypeIterator Type::subtype_begin() const {
 inline Type::TypeIterator Type::subtype_end() const {
   return TypeIterator(this, getNumContainedTypes());
 }
+
+
+// Provide specializations of GraphTraits to be able to treat a type as a 
+// graph of sub types...
+
+template <> struct GraphTraits<Type*> {
+  typedef Type NodeType;
+  typedef Type::subtype_iterator ChildIteratorType;
+
+  static inline NodeType *getEntryNode(Type *T) { return T; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->subtype_begin(); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->subtype_end();
+  }
+};
+
+template <> struct GraphTraits<const Type*> {
+  typedef const Type NodeType;
+  typedef Type::subtype_iterator ChildIteratorType;
+
+  static inline NodeType *getEntryNode(const Type *T) { return T; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return N->subtype_begin(); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return N->subtype_end();
+  }
+};
 
 #endif

@@ -13,6 +13,7 @@
 #include "llvm/Instruction.h"
 #include <map>
 #include <utility>
+#include <list>
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 #define TRACE_LEVEL 0

@@ -60,7 +60,7 @@ inline succ_const_iterator succ_begin(const BasicBlock *BB);
 inline succ_iterator       succ_end  (      BasicBlock *BB);
 inline succ_const_iterator succ_end  (const BasicBlock *BB);
 
-
+#if 0
 //===--------------------------------------------------------------------===//
 // <Reverse> Depth First CFG iterator code
 //===--------------------------------------------------------------------===//
@@ -137,6 +137,7 @@ inline po_iterator       po_begin(      BasicBlock *BB);
 inline po_const_iterator po_begin(const BasicBlock *BB);
 inline po_iterator       po_end  (      BasicBlock *BB);
 inline po_const_iterator po_end  (const BasicBlock *BB);
+#endif
 
 }    // End namespace cfg
 

@@ -13,7 +13,6 @@
 
 #include "llvm/SymTabValue.h"
 #include "llvm/BasicBlock.h"
-#include <list>
 
 class Instruction;
 class BasicBlock;
@@ -199,6 +198,34 @@ public:
   inline inst_iterator inst_end()   { return inst_iterator(*this, true); }
   inline inst_const_iterator inst_begin() const { return inst_const_iterator(*this); }
   inline inst_const_iterator inst_end()   const { return inst_const_iterator(*this, true); }
+};
+
+// Provide specializations of GraphTraits to be able to treat a method as a 
+// graph of basic blocks... these are the same as the basic block iterators,
+// except that the root node is implicitly the first node of the method.
+//
+template <> struct GraphTraits<Method*> : public GraphTraits<BasicBlock*> {
+  static NodeType *getEntryNode(Method *M) { return M->front(); }
+};
+template <> struct GraphTraits<const Method*> :
+  public GraphTraits<const BasicBlock*> {
+  static NodeType *getEntryNode(const Method *M) { return M->front(); }
+};
+
+// Provide specializations of GraphTraits to be able to treat a method as a 
+// graph of basic blocks... and to walk it in inverse order.  Inverse order for
+// a method is considered to be when traversing the predecessor edges of a BB
+// instead of the successor edges.
+//
+template <> struct GraphTraits<Inverse<Method*> > :
+  public GraphTraits<Inverse<BasicBlock*> > {
+  static NodeType *getEntryNode(Inverse<Method *> G) { return G.Graph->front();}
+};
+template <> struct GraphTraits<Inverse<const Method*> > :
+  public GraphTraits<Inverse<const BasicBlock*> > {
+  static NodeType *getEntryNode(Inverse<const Method *> G) {
+    return G.Graph->front();
+  }
 };
 
 #endif

@@ -7,7 +7,6 @@
 
 #include "llvm/Analysis/Interval.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/CFG.h"
 
 using namespace cfg;
 

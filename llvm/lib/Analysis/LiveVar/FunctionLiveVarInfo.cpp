@@ -11,7 +11,7 @@
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
-
+#include "llvm/Support/PostOrderIterator.h"
 
 
 /************************** Constructor/Destructor ***************************/
@@ -47,9 +47,9 @@ void MethodLiveVarInfo::constructBBs()
 {
   unsigned int POId = 0;                // Reverse Depth-first Order ID
 
-  cfg::po_const_iterator BBI = cfg::po_begin(Meth);
+  po_iterator<const Method*> BBI = po_begin(Meth);
 
-  for(  ; BBI != cfg::po_end(Meth) ; ++BBI, ++POId) 
+  for(  ; BBI != po_end(Meth) ; ++BBI, ++POId) 
   { 
 
     if(DEBUG_LV) cout << " For BB " << (*BBI)->getName() << ":" << endl ;
@@ -77,9 +77,9 @@ bool MethodLiveVarInfo::doSingleBackwardPass()
   if(DEBUG_LV) 
     cout << endl <<  " After Backward Pass ..." << endl;
 
-  cfg::po_const_iterator BBI = cfg::po_begin(Meth);
+  po_iterator<const Method*> BBI = po_begin(Meth);
 
-  for( ; BBI != cfg::po_end(Meth) ; ++BBI) 
+  for( ; BBI != po_end(Meth) ; ++BBI) 
   { 
 
     BBLiveVar* LVBB = BB2BBLVMap[*BBI];

@@ -24,7 +24,9 @@
 
 #include "llvm/Value.h"               // Get the definition of Value
 #include "llvm/ValueHolder.h"
-#include "llvm/CFGdecls.h"
+#include "llvm/Support/GraphTraits.h"
+
+#include "llvm/CFGdecls.h"   // TODO FIXME: remove
 
 class Instruction;
 class Method;
@@ -139,5 +141,69 @@ public:
   //
   BasicBlock *splitBasicBlock(iterator I);
 };
+
+#include "llvm/CFG.h"  // TODO FIXME when succ iterators are in BB.h
+
+// Provide specializations of GraphTraits to be able to treat a method as a 
+// graph of basic blocks...
+
+template <> struct GraphTraits<BasicBlock*> {
+  typedef BasicBlock NodeType;
+  typedef BasicBlock::succ_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(BasicBlock *BB) { return BB; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return cfg::succ_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return cfg::succ_end(N); 
+  }
+};
+
+template <> struct GraphTraits<const BasicBlock*> {
+  typedef const BasicBlock NodeType;
+  typedef BasicBlock::succ_const_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(const BasicBlock *BB) { return BB; }
+
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return cfg::succ_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return cfg::succ_end(N); 
+  }
+};
+
+// Provide specializations of GraphTraits to be able to treat a method as a 
+// graph of basic blocks... and to walk it in inverse order.  Inverse order for
+// a method is considered to be when traversing the predecessor edges of a BB
+// instead of the successor edges.
+//
+template <> struct GraphTraits<Inverse<BasicBlock*> > {
+  typedef BasicBlock NodeType;
+  typedef BasicBlock::pred_iterator ChildIteratorType;
+  static NodeType *getEntryNode(Inverse<BasicBlock *> G) { return G.Graph; }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return cfg::pred_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return cfg::pred_end(N); 
+  }
+};
+
+template <> struct GraphTraits<Inverse<const BasicBlock*> > {
+  typedef const BasicBlock NodeType;
+  typedef BasicBlock::pred_const_iterator ChildIteratorType;
+  static NodeType *getEntryNode(Inverse<const BasicBlock*> G) {
+    return G.Graph; 
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) { 
+    return cfg::pred_begin(N); 
+  }
+  static inline ChildIteratorType child_end(NodeType *N) { 
+    return cfg::pred_end(N); 
+  }
+};
+
 
 #endif
