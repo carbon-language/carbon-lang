@@ -177,6 +177,18 @@ non-obvious ways.  Here are some hints and tips:<p>
         part of the <tt>-args</tt> option, not as options to <tt>bugpoint</tt>
         itself.<p>
 
+	<li><tt>-tool-args &lt;tool args&gt;</tt><br>
+	Pass all arguments specified after <tt>-tool-args</tt> to the
+	LLVM tool under test (llc, lli, etc.) whenever it runs.
+	You should use this option in the following way:
+        <p>
+        <tt>bugpoint &lt;bugpoint args&gt; -tool-args -- &lt;tool args&gt;</tt>
+        <p>
+        The "<tt>--</tt>" right after the <tt>-tool-args</tt> option tells
+        <tt>bugpoint</tt> to consider any options starting with <tt>-</tt> to be
+        part of the <tt>-tool-args</tt> option, not as options to
+        <tt>bugpoint</tt> itself. (See <tt>-args</tt>, above.)<p>
+
 	<li><tt>-check-exit-code={true,false}</tt><br>
     Assume a non-zero exit code or core dump from the test program is
     a failure. Defaults to true.<p>
