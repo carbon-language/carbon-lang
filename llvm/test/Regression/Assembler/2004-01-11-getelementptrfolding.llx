@@ -1,0 +1,11 @@
+; RUN: llvm-as < %s | llvm-dis | not grep 'getelementptr.*getelementptr'
+
+        %struct.TUVVertex = type { short, short, short, short }
+        %struct.TTriangleItem = type { sbyte*, sbyte*, [3 x %struct.TUVVertex] }
+
+%data_triangleItems = internal constant [2908 x %struct.TTriangleItem] zeroinitializer          
+
+void %foo() {
+        store short 0, short* getelementptr ([3 x %struct.TUVVertex]* getelementptr ([2908 x %struct.TTriangleItem]* %data_triangleItems, long 0, long 0, ubyte 2), long 0, long 0, ubyte 0)
+	ret void
+}
