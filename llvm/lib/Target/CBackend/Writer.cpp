@@ -1079,7 +1079,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
       std::string ArgName;
       if (F->arg_begin()->hasName() || !Prototype)
         ArgName = Mang->getValueName(F->arg_begin());
-      printType(FunctionInnards, F->arg_front().getType(), ArgName);
+      printType(FunctionInnards, F->arg_begin()->getType(), ArgName);
       for (Function::const_arg_iterator I = ++F->arg_begin(), E = F->arg_end();
            I != E; ++I) {
         FunctionInnards << ", ";

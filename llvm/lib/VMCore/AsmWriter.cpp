@@ -956,7 +956,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 ///
 void AssemblyWriter::printArgument(const Argument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
-  if (Arg != &Arg->getParent()->arg_front()) Out << ", ";
+  if (Arg != Arg->getParent()->arg_begin()) Out << ", ";
 
   // Output type...
   printType(Arg->getType());
