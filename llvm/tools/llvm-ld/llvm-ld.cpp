@@ -527,11 +527,11 @@ int main(int argc, char **argv, char **envp) {
     }
   
     // Make the script executable...
-    MakeFileExecutable(OutputFilename);
+    sys::Path(OutputFilename).makeExecutable();
 
     // Make the bytecode file readable and directly executable in LLEE as well
-    MakeFileExecutable(RealBytecodeOutput);
-    MakeFileReadable(RealBytecodeOutput);
+    sys::Path(RealBytecodeOutput).makeExecutable();
+    sys::Path(RealBytecodeOutput).makeReadable();
   }
 
   return 0;
