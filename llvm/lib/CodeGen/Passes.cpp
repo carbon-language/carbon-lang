@@ -20,7 +20,8 @@ using namespace llvm;
 namespace {
   enum RegAllocName { simple, local, linearscan, iterativescan };
 
-  cl::opt<RegAllocName RegAlloc(
+  cl::opt<RegAllocName>
+  RegAlloc(
     "regalloc",
     cl::desc("Register allocator to use: (default = simple)"),
     cl::Prefix,
