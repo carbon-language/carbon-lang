@@ -69,8 +69,6 @@ public:
   }
 
   unsigned getDataSize() const { return RegSize; }
-
-  //void getAliases(void);
 };
 
 
@@ -80,10 +78,19 @@ public:
 /// that we can turn register number into a register descriptor.
 ///
 class MRegisterInfo {
-  const MRegisterDesc *Desc;    // Pointer to the descriptor array
-  unsigned NumRegs;             // Number of entries in the array
+public:
+  typedef const TargetRegisterClass * const * regclass_iterator;
+private:
+  const MRegisterDesc *Desc;                  // Pointer to the descriptor array
+  unsigned NumRegs;                           // Number of entries in the array
+
+  regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
+
+  const TargetRegisterClass **PhysRegClasses; // Reg class for each register
 protected:
-  MRegisterInfo(const MRegisterDesc *D, unsigned NR) : Desc(D), NumRegs(NR) {}
+  MRegisterInfo(const MRegisterDesc *D, unsigned NR,
+                regclass_iterator RegClassBegin, regclass_iterator RegClassEnd);
+  virtual ~MRegisterInfo();
 public:
 
   enum {                        // Define some target independant constants
@@ -115,6 +122,15 @@ public:
   ///
   const MRegisterDesc &get(unsigned RegNo) const { return operator[](RegNo); }
 
+  /// getRegClass - Return the register class for the specified physical
+  /// register.
+  ///
+  const TargetRegisterClass *getRegClass(unsigned RegNo) const {
+    assert(RegNo < NumRegs && "Register number out of range!");
+    assert(PhysRegClasses[RegNo] && "Register is not in a class!");
+    return PhysRegClasses[RegNo];
+  }
+
   /// getAliasSet - Return the set of registers aliased by the specified
   /// register, or a null list of there are none.  The list returned is zero
   /// terminated.
@@ -122,6 +138,35 @@ public:
   const unsigned *getAliasSet(unsigned RegNo) const {
     return get(RegNo).AliasSet;
   }
+
+  virtual unsigned getFramePointer() const = 0;
+  virtual unsigned getStackPointer() const = 0;
+
+  virtual const unsigned* getCalleeSaveRegs() const = 0;
+  virtual const unsigned* getCallerSaveRegs() const = 0;
+
+
+  //===--------------------------------------------------------------------===//
+  // Register Class Information
+  //
+
+  /// Register class iterators
+  regclass_iterator regclass_begin() const { return RegClassBegin; }
+  regclass_iterator regclass_end() const { return RegClassEnd; }
+
+  unsigned getNumRegClasses() const {
+    return regclass_end()-regclass_begin();
+  }
+  virtual const TargetRegisterClass* getRegClassForType(const Type* Ty) const=0;
+
+
+  //===--------------------------------------------------------------------===//
+  // Interfaces used primarily by the register allocator to move data around
+  // between registers, immediates and memory.
+  //
+
+  virtual void emitPrologue(MachineFunction &MF, unsigned Bytes) const = 0;
+  virtual void emitEpilogue(MachineBasicBlock &MBB, unsigned Bytes) const = 0;
 
   virtual MachineBasicBlock::iterator
   storeReg2RegOffset(MachineBasicBlock &MBB,
@@ -144,27 +189,6 @@ public:
   moveImm2Reg(MachineBasicBlock &MBB,
               MachineBasicBlock::iterator MBBI,
               unsigned DestReg, unsigned Imm, unsigned dataSize) const = 0;
-
-  virtual void
-  emitPrologue(MachineFunction &MF, unsigned numBytes) const = 0;
-
-  virtual void
-  emitEpilogue(MachineBasicBlock &MBB, unsigned numBytes) const = 0;
-
-  virtual const unsigned* getCalleeSaveRegs() const = 0;
-  virtual const unsigned* getCallerSaveRegs() const = 0;
-
-  virtual unsigned getFramePointer() const = 0;
-  virtual unsigned getStackPointer() const = 0;
-
-  /// Register class iterators
-  typedef const TargetRegisterClass * const * const_iterator;
-
-  virtual const_iterator regclass_begin() const = 0;
-  virtual const_iterator regclass_end() const = 0;
-
-  virtual unsigned getNumRegClasses() const = 0;
-  virtual const TargetRegisterClass* getRegClassForType(const Type* Ty) const=0;
 };
 
 #endif
