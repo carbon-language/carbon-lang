@@ -6130,7 +6130,7 @@ ac_cv_func_mmap_file,
   AC_LANG_RESTORE
 ])
 if test "$ac_cv_func_mmap_file" = yes; then
-   AC_DEFINE(HAVE_MMAP_FILE)
+   AC_DEFINE([HAVE_MMAP_FILE],[],[Define if mmap() can map files into memory])
    AC_SUBST(MMAP_FILE,[yes])
 fi
 ])
@@ -6152,7 +6152,7 @@ ac_cv_header_mmap_anon,
   AC_LANG_RESTORE
 ])
 if test "$ac_cv_header_mmap_anon" = yes; then
-   AC_DEFINE(HAVE_MMAP_ANONYMOUS)
+   AC_DEFINE([HAVE_MMAP_ANONYMOUS],[],[Define if mmap() uses MAP_ANONYMOUS to map anonymous pages, or undefine if it uses MAP_ANON])
 fi
 ])
 
