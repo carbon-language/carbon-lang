@@ -78,7 +78,7 @@ endif
 CompileCommonOpts = $(PROFILE) -Wall -W  -Wwrite-strings -Wno-unused -I$(LEVEL)/include
 
 # Compile a file, don't link...
-Compile  = $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts) $(PROFILE)
+Compile  = $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(CompileCommonOpts)
 CompileG = $(Compile) -g  -D_DEBUG
 CompileO = $(Compile) -O3 -DNDEBUG -finline-functions -felide-constructors -fnonnull-objects -freg-struct-return -fshort-enums
 
@@ -160,12 +160,15 @@ LIBNAME_AG   := $(LIBDEBUG)/lib$(LIBRARYNAME).a
 LIBNAME_OBJO := $(LIBRELEASE)/$(LIBRARYNAME).o
 LIBNAME_OBJG := $(LIBDEBUG)/$(LIBRARYNAME).o
 
+
+ifndef ENABLE_OPTIMIZED
 BUILD_LIBNAME_G := $(LIBNAME_G)
 ifndef DONT_BUILD_RELINKED
 BUILD_LIBNAME_OBJG := $(LIBNAME_OBJG)
 endif
 ifdef BUILD_ARCHIVE
 BUILD_LIBNAME_AG := $(LIBNAME_AG)
+endif
 endif
 
 # If optimized builds are enabled...
