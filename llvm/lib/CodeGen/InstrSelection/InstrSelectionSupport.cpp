@@ -107,9 +107,10 @@ GetConstantValueAsSignedInt(const Value *V,
 // Function: FoldGetElemChain
 // 
 // Purpose:
-//   Fold a chain of GetElementPtr instructions into an equivalent
-//   (Pointer, IndexVector) pair.  Returns the pointer Value, and
-//   stores the resulting IndexVector in argument chainIdxVec.
+//   Fold a chain of GetElementPtr instructions containing only
+//   structure offsets into an equivalent (Pointer, IndexVector) pair.
+//   Returns the pointer Value, and stores the resulting IndexVector
+//   in argument chainIdxVec.
 //---------------------------------------------------------------------------
 
 Value*
@@ -120,11 +121,13 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
     getElemInstrNode->getInstruction();
   
   // Initialize return values from the incoming instruction
-  Value* ptrVal = getElemInst->getPointerOperand();
-  chainIdxVec = getElemInst->copyIndices();
+  Value* ptrVal = NULL;
+  assert(chainIdxVec.size() == 0);
   
-  // Now chase the chain of getElementInstr instructions, if any
-  InstrTreeNode* ptrChild = getElemInstrNode->leftChild();
+  // Now chase the chain of getElementInstr instructions, if any.
+  // Check for any array indices and stop there.
+  // 
+  const InstrTreeNode* ptrChild = getElemInstrNode;
   while (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
 	 ptrChild->getOpLabel() == GetElemPtrIdx)
     {
@@ -132,10 +135,32 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       getElemInst = (MemAccessInst*)
 	((InstructionNode*) ptrChild)->getInstruction();
       const vector<Value*>& idxVec = getElemInst->copyIndices();
+      bool allStructureOffsets = true;
       
-      // Get the pointer value out of ptrChild and *prepend* its index vector
-      ptrVal = getElemInst->getPointerOperand();
-      chainIdxVec.insert(chainIdxVec.begin(), idxVec.begin(), idxVec.end());
+      // If it is a struct* access, the first offset must be array index [0],
+      // and all other offsets must be structure (not array) offsets
+      if (!isa<ConstantUInt>(idxVec.front()) ||
+          cast<ConstantUInt>(idxVec.front())->getValue() != 0)
+        allStructureOffsets = false;
+      
+      if (allStructureOffsets)
+        for (unsigned int i=1; i < idxVec.size(); i++)
+          if (idxVec[i]->getType() == Type::UIntTy)
+            {
+              allStructureOffsets = false; 
+              break;
+            }
+      
+      if (allStructureOffsets)
+        { // Get pointer value out of ptrChild and *prepend* its index vector
+          ptrVal = getElemInst->getPointerOperand();
+          chainIdxVec.insert(chainIdxVec.begin(),
+                             idxVec.begin()+1, idxVec.end());
+          ((InstructionNode*) ptrChild)->markFoldedIntoParent();
+                                        // mark so no code is generated
+        }
+      else // cannot fold this getElementPtr instr. or any further ones
+        break;
       
       ptrChild = ptrChild->leftChild();
     }
