@@ -105,7 +105,7 @@ bool GlobalDCE::RemoveIfDead(GlobalValue *GV) {
     // Eliminate all global variables that are unused, and that are internal, or
     // do not have an initializer.
     //
-    if (!GVar->hasExternalLinkage() || !GVar->hasInitializer()) {
+    if (GVar->hasInternalLinkage() || GVar->isExternal()) {
       Constant *Init = GVar->hasInitializer() ? GVar->getInitializer() : 0;
       GV->getParent()->getGlobalList().erase(GVar);
       ++NumVariables;
