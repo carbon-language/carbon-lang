@@ -92,11 +92,10 @@ public:
   Interpreter(Module *M, bool isLittleEndian, bool isLongPointer);
   inline ~Interpreter() { }
 
-  /// runAtExitHandlers - Run any functions registered by the
-  /// program's calls to atexit(3), which we intercept and store in
-  /// AtExitHandlers.
+  /// runAtExitHandlers - Run any functions registered by the program's calls to
+  /// atexit(3), which we intercept and store in AtExitHandlers.
   ///
-  void runAtExitHandlers ();
+  void runAtExitHandlers();
 
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
@@ -104,8 +103,8 @@ public:
 
   /// run - Start execution with the specified function and arguments.
   ///
-  virtual GenericValue run(Function *F,
-			   const std::vector<GenericValue> &ArgValues);
+  virtual GenericValue runFunction(Function *F,
+                                   const std::vector<GenericValue> &ArgValues);
 
   /// recompileAndRelinkFunction - For the interpreter, functions are always
   /// up-to-date.
