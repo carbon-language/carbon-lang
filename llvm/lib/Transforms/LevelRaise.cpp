@@ -51,7 +51,6 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 
 
 
-#if 0  // Unneccesary code, handled by convert exprs
 // Peephole optimize the following instructions:
 // %t1 = cast ? to x *
 // %t2 = add x * %SP, %t1              ;; Constant must be 2nd operand
@@ -117,8 +116,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
       OtherPtr = C;
     }
 
-    GetElementPtrInst *GEP = new GetElementPtrInst(OtherPtr, Indices,
-                                                   I->getName());
+    GetElementPtrInst *GEP = new GetElementPtrInst(OtherPtr, Indices);
 
     PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
     
@@ -128,7 +126,6 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   }
   return true;
 }
-#endif
 
 // Peephole optimize the following instructions:
 // %t1 = cast ulong <const int> to {<...>} *
@@ -269,16 +266,17 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 #endif
         return true;
       }
-#if 0
-      // Otherwise find out it this cast is a cast to a pointer type, which is
-      // then added to some other pointer, then loaded or stored through.  If
-      // so, convert the add into a getelementptr instruction...
-      //
-      if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
-        if (HandleCastToPointer(BI, DestPTy))
-          return true;
+    }
+
+    // Otherwise find out it this cast is a cast to a pointer type, which is
+    // then added to some other pointer, then loaded or stored through.  If
+    // so, convert the add into a getelementptr instruction...
+    //
+    if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
+      if (HandleCastToPointer(BI, DestPTy)) {
+        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
+        return true;
       }
-#endif
     }
 
     // Check to see if we are casting from a structure pointer to a pointer to
