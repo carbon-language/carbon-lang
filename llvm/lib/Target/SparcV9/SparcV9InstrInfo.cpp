@@ -74,6 +74,12 @@ SparcV9InstrInfo::ConvertConstantToIntType(const TargetMachine &target,
     return (uint64_t) CB->getValue();
   }
 
+  // ConstantPointerNull: it's really just a big, shiny version of zero.
+  if (const ConstantPointerNull *CPN = dyn_cast<ConstantPointerNull>(V)) {
+    isValidConstant = true;
+    return 0;
+  }
+
   // For other types of constants, some conversion may be needed.
   // First, extract the constant operand according to its own type
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
