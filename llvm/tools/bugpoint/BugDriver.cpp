@@ -60,7 +60,9 @@ Module *BugDriver::ParseInputFile(const std::string &InputFilename) const {
 }
 
 // This method takes the specified list of LLVM input files, attempts to load
-// them, either as assembly or bytecode, then link them together.
+// them, either as assembly or bytecode, then link them together. It returns
+// true on failure (if, for example, an input bytecode file could not be
+// parsed), and false on success.
 //
 bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
   assert(Program == 0 && "Cannot call addSources multiple times!");
