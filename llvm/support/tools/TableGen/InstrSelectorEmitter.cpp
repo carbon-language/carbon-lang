@@ -110,18 +110,17 @@ void Pattern::error(const std::string &Msg) {
 
 static MVT::ValueType getIntrinsicType(Record *R) {
   // Check to see if this is a register or a register class...
-  const std::vector<Record*> &SuperClasses = R->getSuperClasses();
-  for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-    if (SuperClasses[i]->getName() == "RegisterClass") {
-      return getValueType(R->getValueAsDef("RegType"));
-    } else if (SuperClasses[i]->getName() == "Register") {
-      std::cerr << "WARNING: Explicit registers not handled yet!\n";
-      return MVT::Other;
-    } else if (SuperClasses[i]->getName() == "Nonterminal") {
-      //std::cerr << "Warning nonterminal type not handled yet:" << R->getName()
-      //          << "\n";
-      return MVT::Other;
-    }
+  if (R->isSubClassOf("RegisterClass")) {
+    return getValueType(R->getValueAsDef("RegType"));
+  } else if (R->isSubClassOf("Register")) {
+    std::cerr << "WARNING: Explicit registers not handled yet!\n";
+    return MVT::Other;
+  } else if (R->isSubClassOf("Nonterminal")) {
+    //std::cerr << "Warning nonterminal type not handled yet:" << R->getName()
+    //          << "\n";
+    return MVT::Other;
+  }
+
   throw "Error: Unknown value used: " + R->getName();
 }
 
