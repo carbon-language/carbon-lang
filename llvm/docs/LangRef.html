@@ -72,13 +72,14 @@
         </ol>
       <li><a href="#otherops">Other Operations</a>
         <ol>
+          <li><a href="#i_phi"  >'<tt>phi</tt>'   Instruction</a>
           <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a>
           <li><a href="#i_call" >'<tt>call</tt>'  Instruction</a>
-          <li><a href="#i_icall">'<tt>icall</tt>' Instruction</a>
-          <li><a href="#i_phi"  >'<tt>phi</tt>'   Instruction</a>
         </ol>
     </ol>
+<!--
   <li><a href="#related">Related Work</a>
+-->
 </ol>
 
 
@@ -752,13 +753,15 @@ provided as part of the constant values type.<p>
                  to label &lt;normal label&gt; except label &lt;exception label&gt;
 </pre>
 
-<h5>Overview:</h5> The '<tt>invoke</tt>' instruction is used to cause control
-flow to transfer to a specified function, with the possibility of control flow
-transfer to either the '<tt>normal label</tt>' label or the '<tt>exception
-label</tt>'.  The '<tt><a href="#i_call">call</a></tt>' instruction is closely
-related, but guarantees that control flow either never returns from the called
-function, or that it returns to the instruction succeeding the '<tt><a
-href="#i_call">call</a></tt>' instruction.<p>
+<h5>Overview:</h5>
+
+The '<tt>invoke</tt>' instruction is used to cause control flow to transfer to a
+specified function, with the possibility of control flow transfer to either the
+'<tt>normal label</tt>' label or the '<tt>exception label</tt>'.  The '<tt><a
+href="#i_call">call</a></tt>' instruction is closely related, but guarantees
+that control flow either never returns from the called function, or that it
+returns to the instruction succeeding the '<tt><a href="#i_call">call</a></tt>'
+instruction.<p>
 
 <h5>Arguments:</h5>
 
@@ -774,7 +777,8 @@ an arbitrary pointer to function value.<p>
 function to be invoked.
 
 <li>'<tt>function args</tt>': argument list whose types match the function
-signature argument types.
+signature argument types.  If the function signature indicates the function
+accepts a variable number of arguments, the extra arguments can be specified. 
 
 <li>'<tt>normal label</tt>': the label reached when the called function executes
 a '<tt><a href="#i_ret">ret</a></tt>' instruction.
@@ -826,7 +830,7 @@ There is only one unary operator: the '<a href="#i_not"><tt>not</tt></a>' instru
 The  '<tt>not</tt>' instruction returns the bitwise complement of its operand.<p>
 
 <h5>Arguments:</h5>
-The single argument to '<tt>not</tt>' must be of of <a href="#t_integral">integral</a> type.<p>
+The single argument to '<tt>not</tt>' must be of of <a href="#t_integral">integral</a> or bool type.<p>
 
 
 <h5>Semantics:</h5> The '<tt>not</tt>' instruction returns the bitwise
@@ -980,7 +984,13 @@ The  '<tt>rem</tt>' instruction returns the remainder from the division of its t
 The two arguments to the '<tt>rem</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
-TODO: remainder or modulus?<p>
+
+This returns the <i>remainder</i> of a division (where the result has the same
+sign as the divisor), not the <i>modulus</i> (where the result has the same sign
+as the dividend) of a value.  For more information about the difference, see: <a
+href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The Math
+Forum</a>.<p>
+
 ...<p>
 
 <h5>Example:</h5>
@@ -1002,24 +1012,37 @@ TODO: remainder or modulus?<p>
   &lt;result&gt; = setge &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
 </pre>
 
-<h5>Overview:</h5>
-The '<tt>set<i>cc</i></tt>' family of instructions returns a boolean value based on a comparison of their two operands.<p>
+<h5>Overview:</h5> The '<tt>set<i>cc</i></tt>' family of instructions returns a
+boolean value based on a comparison of their two operands.<p>
 
 <h5>Arguments:</h5> The two arguments to the '<tt>set<i>cc</i></tt>'
 instructions must be of <a href="#t_firstclass">first class</a> or <a
 href="#t_pointer">pointer</a> type (it is not possible to compare
 '<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>' or '<tt>void</tt>'
-values).  Both arguments must have identical types.<p>
+values, etc...).  Both arguments must have identical types.<p>
 
-The '<tt>setlt</tt>', '<tt>setgt</tt>', '<tt>setle</tt>', and '<tt>setge</tt>' instructions do not operate on '<tt>bool</tt>' typed arguments.<p>
+The '<tt>setlt</tt>', '<tt>setgt</tt>', '<tt>setle</tt>', and '<tt>setge</tt>'
+instructions do not operate on '<tt>bool</tt>' typed arguments.<p>
 
 <h5>Semantics:</h5>
-The '<tt>seteq</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if both operands are equal.<br>
-The '<tt>setne</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if both operands are unequal.<br>
-The '<tt>setlt</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if the first operand is less than the second operand.<br>
-The '<tt>setgt</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if the first operand is greater than the second operand.<br>
-The '<tt>setle</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if the first operand is less than or equal to the second operand.<br>
-The '<tt>setge</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if the first operand is greater than or equal to the second operand.<p>
+
+The '<tt>seteq</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
+both operands are equal.<br>
+
+The '<tt>setne</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
+both operands are unequal.<br>
+
+The '<tt>setlt</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
+the first operand is less than the second operand.<br>
+
+The '<tt>setgt</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
+the first operand is greater than the second operand.<br>
+
+The '<tt>setle</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
+the first operand is less than or equal to the second operand.<br>
+
+The '<tt>setge</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>' value if
+the first operand is greater than or equal to the second operand.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1057,7 +1080,10 @@ bitwise binary operators is always the same type as its first operand.<p>
 The '<tt>and</tt>' instruction returns the bitwise logical and of its two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>and</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.  Both arguments must have identical types.<p>
+
+The two arguments to the '<tt>and</tt>' instruction must be either <a
+href="#t_integral">integral</a> or <tt>bool</tt> values.  Both arguments must
+have identical types.<p>
 
 
 <h5>Semantics:</h5>
@@ -1087,8 +1113,8 @@ inclusive or of its two operands.<p>
 <h5>Arguments:</h5>
 
 The two arguments to the '<tt>or</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.
-Both arguments must have identical types.<p>
+href="#t_integral">integral</a> or <tt>bool</tt> values.  Both arguments must
+have identical types.<p>
 
 
 <h5>Semantics:</h5>
@@ -1119,8 +1145,8 @@ two operands.<p>
 <h5>Arguments:</h5>
 
 The two arguments to the '<tt>xor</tt>' instruction must be either <a
-href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.
-Both arguments must have identical types.<p>
+href="#t_integral">integral</a> or <tt>bool</tt> values.  Both arguments must
+have identical types.<p>
 
 
 <h5>Semantics:</h5>
@@ -1202,7 +1228,7 @@ The first argument to the '<tt>shr</tt>' instruction must be an  <a href="#t_int
 <a name="memoryops">Memory Access Operations
 </b></font></td></tr></table><ul>
 
-Accessing memory in SSA form is, well, sticky at best.  This section describes how to read and write memory in LLVM.<p>
+Accessing memory in SSA form is, well, sticky at best.  This section describes how to read, write, allocate and free memory in LLVM.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -1255,12 +1281,13 @@ The '<tt>free</tt>' instruction returns memory back to the unused memory heap, t
 
 <h5>Arguments:</h5>
 
-'<tt>value</tt>' shall be a pointer value that points to a value that was allocated with the '<tt><a href="#i_malloc">malloc</a></tt>' instruction.<p>
+'<tt>value</tt>' shall be a pointer value that points to a value that was
+allocated with the '<tt><a href="#i_malloc">malloc</a></tt>' instruction.<p>
 
 
 <h5>Semantics:</h5>
-Memory is available for use after this point.  The contents of the '<tt>value</tt>' pointer are undefined after this instruction.<p>
 
+Access to the memory pointed to by the pointer is not longer defined after this instruction executes.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -1379,11 +1406,7 @@ operand.<p>
 <h5>Overview:</h5>
 
 The '<tt>getelementptr</tt>' instruction is used to get the address of a
-subelement of an aggregate data structure.  In addition to being present as an
-explicit instruction, the '<tt>getelementptr</tt>' functionality is present in
-both the '<tt><a href="#i_load">load</a></tt>' and '<tt><a
-href="#i_store">store</a></tt>' instructions to allow more compact specification
-of common expressions.<p>
+subelement of an aggregate data structure.<p>
 
 <h5>Arguments:</h5>
 
@@ -1393,15 +1416,77 @@ the arguments provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
 levels of a structure.<p>
 
-TODO.
+For example, lets consider a C code fragment and how it gets compiled to
+LLVM:<p>
+
+<pre>
+struct RT {
+  char A;
+  int B[10][20];
+  char C;
+};
+struct ST {
+  int X;
+  double Y;
+  struct RT Z;
+};
+
+int *foo(struct ST *s) {
+  return &amp;s[1].Z.B[5][13];
+}
+</pre>
+
+The LLVM code generated by the GCC frontend is:
+
+<pre>
+%RT = type { sbyte, [10 x [20 x int]], sbyte }
+%ST = type { int, double, %RT }
+
+int* "foo"(%ST* %s) {
+  %reg = getelementptr %ST* %s, uint 1, ubyte 2, ubyte 1, uint 5, uint 13
+  ret int* %reg
+}
+</pre>
 
 <h5>Semantics:</h5>
+
+The index types specified for the '<tt>getelementptr</tt>' instruction depend on
+the pointer type that is being index into.  <a href="t_pointer">Pointer</a> and
+<a href="t_array">array</a> types require '<tt>uint</tt>' values, and <a
+href="t_struct">structure</a> types require '<tt>ubyte</tt>'
+<b>constants</b>.<p>
+
+In the example above, the first index is indexing into the '<tt>%ST*</tt>' type,
+which is a pointer, yielding a '<tt>%ST</tt>' = '<tt>{ int, double, %RT }</tt>'
+type, a structure.  The second index indexes into the third element of the
+structure, yielding a '<tt>%RT</tt>' = '<tt>{ sbyte, [10 x [20 x int]], sbyte
+}</tt>' type, another structure.  The third index indexes into the second
+element of the structure, yielding a '<tt>[10 x [20 x int]]</tt>' type, an
+array.  The two dimensions of the array are subscripted into, yielding an
+'<tt>int</tt>' type.  The '<tt>getelementptr</tt>' instruction return a pointer
+to this element, thus yielding a '<tt>int*</tt>' type.<p>
+
+Note that it is perfectly legal to index partially through a structure,
+returning a pointer to an inner element.  Because of this, the LLVM code for the
+given testcase is equivalent to:<p>
+
+<pre>
+int* "foo"(%ST* %s) {
+  %t1 = getelementptr %ST* %s , uint 1                        <i>; yields %ST*:%t1</i>
+  %t2 = getelementptr %ST* %t1, uint 0, ubyte 2               <i>; yields %RT*:%t2</i>
+  %t3 = getelementptr %RT* %t2, uint 0, ubyte 1               <i>; yields [10 x [20 x int]]*:%t3</i>
+  %t4 = getelementptr [10 x [20 x int]]* %t3, uint 0, uint 5  <i>; yields [20 x int]*:%t4</i>
+  %t5 = getelementptr [20 x int]* %t4, uint 0, uint 13        <i>; yields int*:%t5</i>
+  ret int* %t5
+}
+</pre>
+
 
 
 <h5>Example:</h5>
 <pre>
-  %aptr = getelementptr {int, [12 x ubyte]}* %sptr, 1   <i>; yields {[12 x ubyte]*}:aptr</i>
-  %ub   = load [12x ubyte]* %aptr, 4                    <i>;yields {ubyte}:ub</i>
+  <i>; yields {[12 x ubyte]*}:aptr</i>
+  %aptr = getelementptr {int, [12 x ubyte]}* %sptr, uint 0, ubyte 1
 </pre>
 
 
@@ -1416,30 +1501,73 @@ The instructions in this catagory are the "miscellaneous" functions, that defy b
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_cast"><h4><hr size=0>'<tt>cast .. to</tt>' Instruction</h4><ul>
-
-<h1>TODO</h1>
-
-<a name="logical_integrals">
-  Talk about what is considered true or false for integrals.
-
-
+</ul><a name="i_phi"><h4><hr size=0>'<tt>phi</tt>' Instruction</h4><ul>
 
 <h5>Syntax:</h5>
 <pre>
+  &lt;result&gt; = phi &lt;ty&gt; [ &lt;val0&gt;, &lt;label0&gt;], ...
 </pre>
 
 <h5>Overview:</h5>
 
+The '<tt>phi</tt>' instruction is used to implement the &phi; node in the SSA
+graph representing the function.<p>
 
 <h5>Arguments:</h5>
 
+The type of the incoming values are specified with the first type field.  After
+this, the '<tt>phi</tt>' instruction takes a list of pairs as arguments, with
+one pair for each predecessor basic block of the current block.<p>
+
+There must be no non-phi instructions between the start of a basic block and the
+PHI instructions: i.e. PHI instructions must be first in a basic block.<p>
 
 <h5>Semantics:</h5>
 
+At runtime, the '<tt>phi</tt>' instruction logically takes on the value
+specified by the parameter, depending on which basic block we came from in the
+last <a href="#terminators">terminator</a> instruction.<p>
+
+<h5>Example:</h5>
+
+<pre>
+Loop:       ; Infinite loop that counts from 0 on up...
+  %indvar = phi uint [ 0, %LoopHeader ], [ %nextindvar, %Loop ]
+  %nextindvar = add uint %indvar, 1
+  br label %Loop
+</pre>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_cast"><h4><hr size=0>'<tt>cast .. to</tt>' Instruction</h4><ul>
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;result&gt; = cast &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>cast</tt>' instruction is used as the primitive means to convert
+integers to floating point, change data type sizes, and break type safety (by
+casting pointers).<p>
+
+<h5>Arguments:</h5>
+
+The '<tt>cast</tt>' instruction takes a value to case, which must be a first
+class value, and a type to cast it to, which must also be a first class type.<p>
+
+<h5>Semantics:</h5>
+
+This instruction follows the C rules for explicit casts when determining how the
+data being cast must change to fit in its new container.<p>
+
+When casting to bool, any value that would be considered true in the context of a C '<tt>if</tt>' condition is converted to the boolean '<tt>true</tt>' values, all else are '<tt>false</tt>'.<p>
 
 <h5>Example:</h5>
 <pre>
+  %X = cast int 257 to ubyte              <i>; yields ubyte:1</i>
+  %Y = cast int 123 to bool               <i>; yields bool::true</i>
 </pre>
 
 
@@ -1449,65 +1577,55 @@ The instructions in this catagory are the "miscellaneous" functions, that defy b
 
 <h5>Syntax:</h5>
 <pre>
-
+  &lt;result&gt; = call &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
+The '<tt>call</tt>' instruction represents a simple function call.<p>
 
 <h5>Arguments:</h5>
 
+This instruction requires several arguments:<p>
+<ol>
+
+<li>'<tt>ty</tt>': shall be the signature of the pointer to function value being
+invoked.  The argument types must match the types implied by this signature.<p>
+
+<li>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a function to be
+invoked. In most cases, this is a direct function invocation, but indirect
+<tt>call</tt>'s are just as possible, calling an arbitrary pointer to function
+values.<p>
+
+<li>'<tt>function args</tt>': argument list whose types match the function
+signature argument types.  If the function signature indicates the function
+accepts a variable number of arguments, the extra arguments can be specified. 
+</ol>
 
 <h5>Semantics:</h5>
 
+The '<tt>call</tt>' instruction is used to cause control flow to transfer to a
+specified function, with its incoming arguments bound to the specified values.
+Upon a '<tt><a href="#i_ret">ret</a></tt>' instruction in the called function,
+control flow continues with the instruction after the function call, and the
+return value of the function is bound to the result argument.  This is a simpler
+case of the <a href="#i_invoke">invoke</a> instruction.<p>
 
 <h5>Example:</h5>
 <pre>
   %retval = call int %test(int %argc)
+  call int(sbyte*, ...) *%printf(sbyte* %msg, int 12, sbyte 42);
+
 </pre>
 
+<!--
 
-<!-- _______________________________________________________________________ --></ul><a name="i_icall"><h3><hr size=0>'<tt>icall</tt>' Instruction</h3><ul>
-
-Indirect calls are desperately needed to implement virtual function tables (C++, java) and function pointers (C, C++, ...).<p>
-
-A new instruction <tt>icall</tt> or similar should be introduced to represent an indirect call.<p>
-
-Example:
-<pre>
-  %retval = icall int %funcptr(int %arg1)          <i>; yields {int}:%retval</i>
-</pre>
-
-
-
-<!-- _______________________________________________________________________ -->
-</ul><a name="i_phi"><h4><hr size=0>'<tt>phi</tt>' Instruction</h4><ul>
-
-<h5>Syntax:</h5>
-<pre>
-</pre>
-
-<h5>Overview:</h5>
-
-
-<h5>Arguments:</h5>
-
-
-<h5>Semantics:</h5>
-
-
-<h5>Example:</h5>
-<pre>
-</pre>
-
-
-
-<!-- *********************************************************************** -->
+<!x- *********************************************************************** -x>
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
 <a name="related">Related Work
 </b></font></td></tr></table><ul>
-<!-- *********************************************************************** -->
+<!x- *********************************************************************** -x>
 
 
 Codesigned virtual machines.<p>
@@ -1542,7 +1660,7 @@ Codesigned virtual machines.<p>
 <DD>This interview influenced the design and thought process behind LLVM in several ways, most notably the way that derived types are written in text format. See the question that starts with "you defined the C declarator syntax as an experiment that failed".<p>
 </dl>
 
-<!-- _______________________________________________________________________ -->
+<!x- _______________________________________________________________________ -x>
 </ul><a name="rw_vectorization"><h3><hr size=0>Vectorized Architectures</h3><ul>
 
 <dl>
@@ -1558,10 +1676,16 @@ Codesigned virtual machines.<p>
 <dt><a href="http://www.nondot.org/~sabre/os/H1ChipFeatures/VISInstructionSetUsersManual.pdf">Sun VIS ISA</a>
 <DD>Desciption here<p>
 
+<a name="rw_powerpc_simd">
+<dt>PowerPC Altivec
+<DD>Desciption here<p>
 
 </dl>
 
 more...
+
+-->
+
 
 <!-- *********************************************************************** -->
 </ul>
@@ -1573,7 +1697,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Fri May  3 14:39:52 CDT 2002
+Last modified: Mon May  6 17:07:42 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
