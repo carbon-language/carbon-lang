@@ -112,34 +112,34 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
   if (RI.Opcode >= Instruction::BinaryOpsBegin &&
       RI.Opcode <  Instruction::BinaryOpsEnd  && Args.size() == 2)
     return BinaryOperator::create((Instruction::BinaryOps)RI.Opcode,
-                                  getValue(InstTy, Args[0]),
-                                  getValue(InstTy, Args[1]));
+                                  getValue(RI.Type, Args[0]),
+                                  getValue(RI.Type, Args[1]));
 
   switch (RI.Opcode) {
   case Instruction::VarArg:
-    return new VarArgInst(getValue(InstTy, Args[0]), getType(Args[1]));
+    return new VarArgInst(getValue(RI.Type, Args[0]), getType(Args[1]));
   case Instruction::Cast:
-    return new CastInst(getValue(InstTy, Args[0]), getType(Args[1]));
+    return new CastInst(getValue(RI.Type, Args[0]), getType(Args[1]));
   case Instruction::PHINode: {
     if (Args.size() == 0 || (Args.size() & 1))
       throw std::string("Invalid phi node encountered!\n");
 
     PHINode *PN = new PHINode(InstTy);
     for (unsigned i = 0, e = Args.size(); i != e; i += 2)
-      PN->addIncoming(getValue(InstTy, Args[i]), getBasicBlock(Args[i+1]));
+      PN->addIncoming(getValue(RI.Type, Args[i]), getBasicBlock(Args[i+1]));
     return PN;
   }
 
   case Instruction::Shl:
   case Instruction::Shr:
     return new ShiftInst((Instruction::OtherOps)RI.Opcode,
-                         getValue(InstTy, Args[0]),
+                         getValue(RI.Type, Args[0]),
                          getValue(Type::UByteTyID, Args[1]));
   case Instruction::Ret:
     if (Args.size() == 0)
       return new ReturnInst();
     else if (Args.size() == 1)
-      return new ReturnInst(getValue(InstTy, Args[0]));
+      return new ReturnInst(getValue(RI.Type, Args[0]));
     break;
 
   case Instruction::Br:
@@ -154,10 +154,10 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     if (Args.size() & 1)
       throw std::string("Switch statement with odd number of arguments!");
 
-    SwitchInst *I = new SwitchInst(getValue(InstTy, Args[0]),
+    SwitchInst *I = new SwitchInst(getValue(RI.Type, Args[0]),
                                    getBasicBlock(Args[1]));
     for (unsigned i = 2, e = Args.size(); i != e; i += 2)
-      I->addCase(cast<Constant>(getValue(InstTy, Args[i])),
+      I->addCase(cast<Constant>(getValue(RI.Type, Args[i])),
                  getBasicBlock(Args[i+1]));
     return I;
   }
@@ -166,7 +166,7 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     if (Args.size() == 0)
       throw std::string("Invalid call instruction encountered!");
 
-    Value *F = getValue(InstTy, Args[0]);
+    Value *F = getValue(RI.Type, Args[0]);
 
     // Check to make sure we have a pointer to function type
     const PointerType *PTy = dyn_cast<PointerType>(F->getType());
@@ -192,14 +192,14 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
         throw std::string("Invalid call instruction!");
 
       for (unsigned i = 2, e = Args.size(); i != e; i += 2)
-        Params.push_back(getValue(getType(Args[i]), Args[i+1]));
+        Params.push_back(getValue(Args[i], Args[i+1]));
     }
 
     return new CallInst(F, Params);
   }
   case Instruction::Invoke: {
     if (Args.size() < 3) throw std::string("Invalid invoke instruction!");
-    Value *F = getValue(InstTy, Args[0]);
+    Value *F = getValue(RI.Type, Args[0]);
 
     // Check to make sure we have a pointer to function type
     const PointerType *PTy = dyn_cast<PointerType>(F->getType());
@@ -261,7 +261,7 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
   case Instruction::Free:
     if (!isa<PointerType>(InstTy))
       throw std::string("Invalid free instruction!");
-    return new FreeInst(getValue(InstTy, Args[0]));
+    return new FreeInst(getValue(RI.Type, Args[0]));
 
   case Instruction::GetElementPtr: {
     if (Args.size() == 0 || !isa<PointerType>(InstTy))
@@ -277,21 +277,21 @@ Instruction *BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
     }
 
-    return new GetElementPtrInst(getValue(InstTy, Args[0]), Idx);
+    return new GetElementPtrInst(getValue(RI.Type, Args[0]), Idx);
   }
 
   case 62:   // volatile load
   case Instruction::Load:
     if (Args.size() != 1 || !isa<PointerType>(InstTy))
       throw std::string("Invalid load instruction!");
-    return new LoadInst(getValue(InstTy, Args[0]), "", RI.Opcode == 62);
+    return new LoadInst(getValue(RI.Type, Args[0]), "", RI.Opcode == 62);
 
   case 63:   // volatile store 
   case Instruction::Store: {
     if (!isa<PointerType>(InstTy) || Args.size() != 2)
       throw std::string("Invalid store instruction!");
 
-    Value *Ptr = getValue(InstTy, Args[1]);
+    Value *Ptr = getValue(RI.Type, Args[1]);
     const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
     return new StoreInst(getValue(ValTy, Args[0]), Ptr, RI.Opcode == 63);
   }

@@ -385,7 +385,8 @@ void BytecodeParser::materializeFunction(Function* F) {
 
   // Resolve forward references
   while (!ForwardReferences.empty()) {
-    std::map<std::pair<unsigned,unsigned>, Value*>::iterator I = ForwardReferences.begin();
+    std::map<std::pair<unsigned,unsigned>, Value*>::iterator I =
+      ForwardReferences.begin();
     unsigned type = I->first.first;
     unsigned Slot = I->first.second;
     Value *PlaceHolder = I->second;
