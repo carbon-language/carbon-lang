@@ -10,11 +10,20 @@
 #ifndef LLVM_ASSEMBLY_CACHED_WRITER_H
 #define LLVM_ASSEMBLY_CACHED_WRITER_H
 
-#include "llvm/Assembly/Writer.h"
+#include "llvm/Value.h"
 #include <iostream>
 
-class AssemblyWriter;  // Internal private class
+class GlobalVariable;
+class Function;
+class FunctionArgument;
+class BasicBlock;
+class Instruction;
+class Constant;
+class PointerType;
 class SlotCalculator;
+
+
+class AssemblyWriter;  // Internal private class
 
 class CachedWriter {
   AssemblyWriter *AW;

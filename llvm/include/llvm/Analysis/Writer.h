@@ -8,7 +8,7 @@
 #ifndef LLVM_ANALYSIS_WRITER_H
 #define LLVM_ANALYSIS_WRITER_H
 
-#include "llvm/Assembly/Writer.h"
+#include <iosfwd>
 
 namespace cfg {
 
