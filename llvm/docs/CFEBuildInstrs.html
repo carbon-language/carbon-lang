@@ -116,7 +116,7 @@ and Settings" directory).  We welcome patches to fix this issue.
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
    --enable-languages=c,c++
- % gmake all-gcc
+ % gmake
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
 </pre>
@@ -127,7 +127,7 @@ and Settings" directory).  We welcome patches to fix this issue.
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
    --enable-languages=c,c++ --disable-c-mbchar
- % gmake all-gcc
+ % gmake
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
 </pre>
@@ -147,7 +147,7 @@ functions from C as referenced from C++, so we typically configure with
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
    --disable-shared --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8 \
    --disable-c-mbchar
- % gmake all-gcc
+ % gmake
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
  % gmake all; gmake install
 </pre>
