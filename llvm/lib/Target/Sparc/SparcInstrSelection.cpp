@@ -11,26 +11,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcInternals.h"
 #include "SparcInstrSelectionSupport.h"
+#include "SparcInternals.h"
 #include "SparcRegClassInfo.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineInstrAnnot.h"
-#include "llvm/CodeGen/InstrForest.h"
-#include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionInfo.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Module.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/InstrSelectionSupport.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "Support/MathExtras.h"
-#include <math.h>
 #include <algorithm>
+#include <cmath>
 
 static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
                                     std::vector<MachineInstr*>& mvec) {
