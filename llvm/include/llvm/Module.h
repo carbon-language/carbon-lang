@@ -201,7 +201,7 @@ public:
   inline reverse_giterator       grend  ()       { return GlobalList.rend();   }
   inline const_reverse_giterator grend  () const { return GlobalList.rend();   }
 
-  inline unsigned                  gsize() const { return GlobalList.size(); }
+  inline size_t                    gsize() const { return GlobalList.size(); }
   inline bool                     gempty() const { return GlobalList.empty(); }
   inline const GlobalVariable    &gfront() const { return GlobalList.front(); }
   inline       GlobalVariable    &gfront()       { return GlobalList.front(); }
@@ -219,7 +219,7 @@ public:
   inline reverse_iterator       rend  ()       { return FunctionList.rend();   }
   inline const_reverse_iterator rend  () const { return FunctionList.rend();   }
 
-  inline unsigned                 size() const { return FunctionList.size(); }
+  inline size_t                   size() const { return FunctionList.size(); }
   inline bool                    empty() const { return FunctionList.empty(); }
   inline const Function         &front() const { return FunctionList.front(); }
   inline       Function         &front()       { return FunctionList.front(); }
@@ -236,7 +236,7 @@ public:
   inline lib_iterator lib_end() const { return LibraryList.end(); }
 
   /// @brief Returns the number of items in the list of libraries.
-  inline unsigned lib_size() const { return LibraryList.size(); }
+  inline size_t lib_size() const { return LibraryList.size(); }
 
   /// @brief Add a library to the list of dependent libraries
   inline void addLibrary(const std::string& Lib){ LibraryList.insert(Lib); }

@@ -275,7 +275,7 @@ class GetElementPtrInst : public Instruction {
     : Instruction((static_cast<const Instruction*>(&EPI)->getType()),
                   GetElementPtr) {
     Operands.reserve(EPI.Operands.size());
-    for (unsigned i = 0, E = EPI.Operands.size(); i != E; ++i)
+    for (unsigned i = 0, E = (unsigned)EPI.Operands.size(); i != E; ++i)
       Operands.push_back(Use(EPI.Operands[i], this));
   }
   void init(Value *Ptr, const std::vector<Value*> &Idx);
@@ -712,7 +712,7 @@ public:
 
   /// getNumIncomingValues - Return the number of incoming edges
   ///
-  unsigned getNumIncomingValues() const { return Operands.size()/2; }
+  unsigned getNumIncomingValues() const { return (unsigned)Operands.size()/2; }
 
   /// getIncomingValue - Return incoming value #x
   ///
@@ -994,7 +994,7 @@ public:
   /// getNumCases - return the number of 'cases' in this switch instruction.
   /// Note that case #0 is always the default case.
   unsigned getNumCases() const {
-    return Operands.size()/2;
+    return (unsigned)Operands.size()/2;
   }
 
   /// getCaseValue - Return the specified case value.  Note that case #0, the
@@ -1055,7 +1055,7 @@ public:
     assert(idx < getNumSuccessors() && "Successor # out of range!");
     return cast<Constant>(Operands[idx*2].get());
   }
-  virtual unsigned getNumSuccessors() const { return Operands.size()/2; }
+  virtual unsigned getNumSuccessors() const { return (unsigned)Operands.size()/2; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SwitchInst *) { return true; }

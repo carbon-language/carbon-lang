@@ -140,7 +140,7 @@ public:
   /// getNumParams - Return the number of fixed parameters this function type
   /// requires.  This does not consider varargs.
   ///
-  unsigned getNumParams() const { return ContainedTys.size()-1; }
+  unsigned getNumParams() const { return (unsigned)ContainedTys.size()-1; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
@@ -206,7 +206,7 @@ public:
   element_iterator element_end() const { return ContainedTys.end(); }
 
   // Random access to the elements
-  unsigned getNumElements() const { return ContainedTys.size(); }
+  unsigned getNumElements() const { return (unsigned)ContainedTys.size(); }
   const Type *getElementType(unsigned N) const {
     assert(N < ContainedTys.size() && "Element number out of range!");
     return ContainedTys[N];

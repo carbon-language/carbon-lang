@@ -44,7 +44,7 @@ public:
     assert(i < Operands.size() && "setOperand() out of range!");
     Operands[i] = Val;
   }
-  inline unsigned getNumOperands() const { return Operands.size(); }
+  inline unsigned getNumOperands() const { return (unsigned)Operands.size(); }
 
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...

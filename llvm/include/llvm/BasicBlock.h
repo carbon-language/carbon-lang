@@ -121,7 +121,7 @@ public:
   inline reverse_iterator       rend  ()       { return InstList.rend();   }
   inline const_reverse_iterator rend  () const { return InstList.rend();   }
 
-  inline unsigned                 size() const { return InstList.size();  }
+  inline size_t                   size() const { return InstList.size();  }
   inline bool                    empty() const { return InstList.empty(); }
   inline const Instruction      &front() const { return InstList.front(); }
   inline       Instruction      &front()       { return InstList.front(); }

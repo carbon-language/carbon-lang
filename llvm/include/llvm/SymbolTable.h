@@ -119,7 +119,7 @@ public:
   unsigned type_size(const Type *TypeID) const;
 
   /// @brief The number of name/type pairs is returned.
-  inline unsigned num_types() const { return tmap.size(); }
+  inline unsigned num_types() const { return (unsigned)tmap.size(); }
 
   /// Finds the value \p val in the symbol table and returns its
   /// name. Only the type plane associated with the type of \p val
