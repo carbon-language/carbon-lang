@@ -1304,6 +1304,47 @@ void DSGraph::cloneInto(const DSGraph &G, unsigned CloneFlags) {
   }
 }
 
+/// spliceFrom - Logically perform the operation of cloning the RHS graph into
+/// this graph, then clearing the RHS graph.  Instead of performing this as
+/// two seperate operations, do it as a single, much faster, one.
+///
+void DSGraph::spliceFrom(DSGraph &RHS) {
+  // Change all of the nodes in RHS to think we are their parent.
+  for (NodeListTy::iterator I = RHS.Nodes.begin(), E = RHS.Nodes.end();
+       I != E; ++I)
+    I->setParentGraph(this);
+  // Take all of the nodes.
+  Nodes.splice(Nodes.end(), RHS.Nodes);
+  
+  // Take all of the calls.
+  FunctionCalls.splice(FunctionCalls.end(), RHS.FunctionCalls);
+  AuxFunctionCalls.splice(AuxFunctionCalls.end(), RHS.AuxFunctionCalls);
+
+  // Take all of the return nodes.
+  ReturnNodes.insert(RHS.ReturnNodes.begin(), RHS.ReturnNodes.end());
+  RHS.ReturnNodes.clear();
+
+  // Merge the scalar map in.
+  ScalarMap.spliceFrom(RHS.ScalarMap);
+}
+
+/// spliceFrom - Copy all entries from RHS, then clear RHS.
+///
+void DSScalarMap::spliceFrom(DSScalarMap &RHS) {
+  // Special case if this is empty.
+  if (ValueMap.empty()) {
+    ValueMap.swap(RHS.ValueMap);
+    GlobalSet.swap(RHS.GlobalSet);
+  } else {
+    GlobalSet.insert(RHS.GlobalSet.begin(), RHS.GlobalSet.end());
+    for (ValueMapTy::iterator I = RHS.ValueMap.begin(), E = RHS.ValueMap.end();
+         I != E; ++I)
+      ValueMap[I->first].mergeWith(I->second);
+    RHS.ValueMap.clear();
+  }
+}
+
+
 /// getFunctionArgumentsForCall - Given a function that is currently in this
 /// graph, return the DSNodeHandles that correspond to the pointer-compatible
 /// function arguments.  The vector is filled in with the return value (or
