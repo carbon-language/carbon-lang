@@ -52,6 +52,7 @@ std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
   }  
   return OS << ")";
 }
+
 void TreePatternNode::dump() const { std::cerr << *this; }
 
 //===----------------------------------------------------------------------===//
@@ -126,11 +127,33 @@ static MVT::ValueType getIntrinsicType(Record *R) {
 
 TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
   Record *Operator = DI->getNodeType();
+  const std::vector<Init*> &Args = DI->getArgs();
+
+  if (Operator->isSubClassOf("ValueType")) {
+    // If the operator is a ValueType, then this must be "type cast" of a leaf
+    // node.
+    if (Args.size() != 1)
+      error("Type cast only valid for a leaf node!");
+    
+    Init *Arg = Args[0];
+    TreePatternNode *New;
+    if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
+      New = new TreePatternNode(DI);
+      // If it's a regclass or something else known, set the type.
+      New->setType(getIntrinsicType(DI->getDef()));
+    } else {
+      Arg->dump();
+      error("Unknown leaf value for tree pattern!");
+    }
+
+    // Apply the type cast...
+    New->updateNodeType(getValueType(Operator), TheRecord->getName());
+    return New;
+  }
 
   if (!ISE.getNodeTypes().count(Operator))
     error("Unrecognized node '" + Operator->getName() + "'!");
 
-  const std::vector<Init*> &Args = DI->getArgs();
   std::vector<TreePatternNode*> Children;
   
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
