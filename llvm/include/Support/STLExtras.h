@@ -46,7 +46,7 @@ struct bitwise_or : public std::binary_function<Ty, Ty, bool> {
 // deleter - Very very very simple method that is used to invoke operator
 // delete on something.  It is used like this: 
 //
-//   for_each(V.begin(), B.end(), deleter<cfg::Interval>);
+//   for_each(V.begin(), B.end(), deleter<Interval>);
 //
 template <class T> 
 static inline void deleter(T *Ptr) { 
