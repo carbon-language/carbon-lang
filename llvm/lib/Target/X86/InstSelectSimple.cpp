@@ -225,12 +225,12 @@ void ISel::visitSetCCInst(SetCondInst &I, unsigned OpNum) {
     // FIXME: assuming var1, var2 are in memory, if not, spill to
     // stack first
   case cFloat:  // Floats
-    BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg1);
-    BuildMI (BB, X86::FLDr4, 1, X86::NoReg).addReg (reg2);
+    BuildMI (BB, X86::FLDr4, 1).addReg (reg1);
+    BuildMI (BB, X86::FLDr4, 1).addReg (reg2);
     break;
   case cDouble:  // Doubles
-    BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg1);
-    BuildMI (BB, X86::FLDr8, 1, X86::NoReg).addReg (reg2);
+    BuildMI (BB, X86::FLDr8, 1).addReg (reg1);
+    BuildMI (BB, X86::FLDr8, 1).addReg (reg2);
     break;
   case cLong:
   default:
@@ -522,7 +522,7 @@ void ISel::visitShiftInst (ShiftInst &I) {
       const unsigned *OpTab = // Figure out the operand table to use
         NonConstantOperand[isLeftShift*2+isOperandSigned];
 
-      BuildMI(BB, OpTab[OperandClass], 2, DestReg).addReg(Op0r).addReg(X86::CL);
+      BuildMI(BB, OpTab[OperandClass], 1, DestReg).addReg(Op0r);
     }
 }
 
