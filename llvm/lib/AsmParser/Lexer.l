@@ -111,7 +111,7 @@ NInteger  -[0-9]+
 
 /* FPConstant - A Floating point constant.
    TODO: Expand lexer to support 10e50 FP constant notation */
-FPConstant -?[0-9]+[.][0-9]*
+FPConstant [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
 
 %%
 
