@@ -12,7 +12,9 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
-#include <Support/hash_set>
+#include "Support/hash_set"
+#include "Support/ilist"
+
 class Value;
 class Function;
 class Constant;
@@ -24,11 +26,14 @@ Pass *createMachineCodeConstructionPass(TargetMachine &Target);
 Pass *createMachineCodeDestructionPass();
 
 class MachineFunction : private Annotation {
-  hash_set<const Constant*> constantsForConstPool;
-  hash_map<const Value*, int> offsets;
-  const         Function* method;
+  const Function *method;
+
+  // List of machine basic blocks in function
+  iplist<MachineBasicBlock> BasicBlocks;
 
   // FIXME: State should be held elsewhere...
+  hash_set<const Constant*> constantsForConstPool;
+  hash_map<const Value*, int> offsets;
   unsigned	staticStackSize;
   unsigned	automaticVarsSize;
   unsigned	regSpillsSize;

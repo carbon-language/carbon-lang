@@ -11,11 +11,13 @@
 #include <vector>
 class BasicBlock;
 class MachineInstr;
+template <typename T> struct ilist_traits;
 
 extern AnnotationID MCFBB_AID;
 
 class MachineBasicBlock : public Annotation {
   std::vector<MachineInstr*> Insts;
+  MachineBasicBlock *Prev, *Next;
 public:
   MachineBasicBlock() : Annotation(MCFBB_AID) {}
   ~MachineBasicBlock() {}
@@ -70,6 +72,14 @@ public:
     Insts.pop_back();
     return R;
   }
+
+private:   // Methods used to maintain doubly linked list of blocks...
+  friend class ilist_traits<MachineBasicBlock>;
+
+  MachineBasicBlock *getPrev() const { return Prev; }
+  MachineBasicBlock *getNext() const { return Next; }
+  void setPrev(MachineBasicBlock *P) { Prev = P; }
+  void setNext(MachineBasicBlock *N) { Next = N; }
 };
 
 
