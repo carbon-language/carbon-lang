@@ -12,6 +12,7 @@
 #include "llvm/ValueHolderImpl.h"
 #include "llvm/Support/STLExtras.h"
 #include "llvm/Type.h"
+#include "llvm/ConstPoolVals.h"
 #include <map>
 
 // Instantiate Templates - This ugliness is the price we have to pay

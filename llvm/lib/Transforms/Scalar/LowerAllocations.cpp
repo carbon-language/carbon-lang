@@ -13,6 +13,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/ConstPoolVals.h"
 
 // doPassInitialization - For the lower allocations pass, this ensures that a
 // module contains a declaration for a malloc and a free function.
