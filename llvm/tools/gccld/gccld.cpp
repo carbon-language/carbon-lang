@@ -56,6 +56,9 @@ namespace {
   cl::opt<bool>
   NoInternalize("disable-internalize",
                 cl::desc("Do not mark all symbols as internal"));
+  static cl::alias
+  ExportDynamic("export-dynamic", cl::desc("Alias for -disable-internalize"),
+                cl::aliasopt(NoInternalize));
 
   cl::opt<bool>
   LinkAsLibrary("link-as-library", cl::desc("Link the .bc files together as a"
