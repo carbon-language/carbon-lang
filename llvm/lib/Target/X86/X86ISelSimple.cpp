@@ -962,7 +962,6 @@ unsigned X86ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
               cast<ConstantInt>(Op0I->getOperand(1))->getRawValue();
             BuildMI(*MBB, IP, TESTTab[Class], 2).addReg(LHS).addImm(Imm);
             
-            std::cerr << "FOLDED SETCC and AND!\n";
             if (OpNum == 2) return 6;   // Map jl -> js
             if (OpNum == 3) return 7;   // Map jg -> jns
             return OpNum;
