@@ -139,6 +139,15 @@ public:
                                            vector<MachineInstr*>& minstrVec,
                                            vector<TmpInstruction*>& tempVec,
                                            TargetMachine& target) const;
+
+ // create copy instruction(s)
+  virtual void
+  CreateCopyInstructionsByType(const TargetMachine& target,
+                             Value* src,
+                             Instruction* dest,
+                             vector<MachineInstr*>& minstrVec) const;
+
+
 };
 
 
@@ -1278,7 +1287,7 @@ private:
   static const int MinStackFrameSize                       = 176;
   static const int NumFixedOutgoingArgs                    =   6;
   static const int SizeOfEachArgOnStack                    =   8;
-  static const int StaticAreaOffsetFromFP                  =   0 + OFFSET;
+  static const int StaticAreaOffsetFromFP                  =  0 + OFFSET;
   static const int FirstIncomingArgOffsetFromFP            = 128 + OFFSET;
   static const int FirstOptionalIncomingArgOffsetFromFP    = 176 + OFFSET;
   static const int FirstOutgoingArgOffsetFromSP            = 128 + OFFSET;

@@ -893,7 +893,6 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
 // register number
 //---------------------------------------------------------------------------
 
-
 MachineInstr * UltraSparcRegInfo::cpReg2RegMI(const unsigned SrcReg, 
 					      const unsigned DestReg,
 					      const int RegType) const {
@@ -1040,21 +1039,53 @@ MachineInstr * UltraSparcRegInfo::cpMem2RegMI(const unsigned SrcPtrReg,
 
 
 
-// Following method is Not needed now
 
-MachineInstr* UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest) const {
+//---------------------------------------------------------------------------
+// Generate a copy instruction to copy a value to another. Temporarily
+// used by PhiElimination code.
+//---------------------------------------------------------------------------
+
+
+MachineInstr * UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest) const{
+
+  int RegType = getRegType( Src );
+
+  assert( (RegType==getRegType(Src))  && "Src & Dest are diff types");
 
   MachineInstr * MI = NULL;
 
-  MI = new MachineInstr(ADD, 3);
-  MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
-  MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
-  MI->SetMachineOperand(2, MachineOperand:: MO_VirtualRegister, Dest, true);
-  
+  switch( RegType ) {
+    
+  case IntRegType:
+
+    MI = new MachineInstr(ADD, 3);
+    MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperand(1, SparcIntRegOrder::g0, false);
+    MI->SetMachineOperand(2, MachineOperand:: MO_VirtualRegister, Dest, true);
+    break;
+
+  case FPSingleRegType:
+    MI = new MachineInstr(FMOVS, 2);
+    MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperand(1, MachineOperand:: MO_VirtualRegister, Dest, true);
+    break;
+
+
+  case FPDoubleRegType:
+    MI = new MachineInstr(FMOVD, 2);
+    MI->SetMachineOperand(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperand(1, MachineOperand:: MO_VirtualRegister, Dest, true);
+    break;
+
+  default:
+    assert(0 && "Unknow RegType in CpValu2Value");
+  }
 
   return MI;
-
 }
+
+
+
 
 
 

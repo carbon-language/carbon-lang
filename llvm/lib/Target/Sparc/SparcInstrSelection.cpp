@@ -943,11 +943,12 @@ ForwardOperand(InstructionNode* treeNode,
 }
 
 
-void
+
+void UltraSparcInstrInfo::
 CreateCopyInstructionsByType(const TargetMachine& target,
                              Value* src,
                              Instruction* dest,
-                             vector<MachineInstr*>& minstrVec)
+                             vector<MachineInstr*>& minstrVec) const
 {
   bool loadConstantToReg = false;
   
@@ -1002,6 +1003,7 @@ CreateCopyInstructionsByType(const TargetMachine& target,
       minstrVec.push_back(minstr);
     }
 }
+
 
 
 //******************* Externally Visible Functions *************************/
@@ -2048,7 +2050,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       else
         {
           vector<MachineInstr*> minstrVec;
-          CreateCopyInstructionsByType(target,
+          target.getInstrInfo().CreateCopyInstructionsByType(target,
                 subtreeRoot->getInstruction()->getOperand(forwardOperandNum),
                 subtreeRoot->getInstruction(), minstrVec);
           assert(minstrVec.size() > 0);
