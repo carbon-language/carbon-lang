@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/PeepholeOpts.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
@@ -100,7 +100,16 @@ bool
 PeepholeOpts::runOnBasicBlock(BasicBlock &BB)
 {
   // Get the machine instructions for this BB
-  MachineBasicBlock& mvec = MachineBasicBlock::get(&BB);
+  // FIXME: MachineBasicBlock::get() is deprecated, hence inlining the function
+  const Function *F = BB.getParent();
+  MachineFunction &MF = MachineFunction::get(F);
+  MachineBasicBlock *MBB = NULL;
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+    if (I->getBasicBlock() == &BB)
+      MBB = I;
+  }
+  assert(MBB && "MachineBasicBlock object not found for specified block!");
+  MachineBasicBlock &mvec = *MBB;
 
   // Iterate over all machine instructions in the BB
   // Use a reverse iterator to allow deletion of MI or any instruction after it.

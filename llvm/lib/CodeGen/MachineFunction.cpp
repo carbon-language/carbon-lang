@@ -72,21 +72,6 @@ Pass *createMachineCodeDestructionPass() {
 }
 
 
-// get - This deprecated static method returns the MachineBasicBlock object
-// for the specified BasicBlock.
-//
-MachineBasicBlock& MachineBasicBlock::get(const BasicBlock *BB) {
-  const Function *F = BB->getParent();
-  MachineFunction &MF = MachineFunction::get(F);
-
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    if (I->getBasicBlock() == BB)
-      return *I;
-  assert(0 && "MachineBasicBlock object not found for specified block!");
-  return get(BB);
-}
-
-
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//

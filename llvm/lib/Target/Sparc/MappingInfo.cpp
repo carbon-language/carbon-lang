@@ -10,7 +10,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include <map>
 using std::vector;
@@ -109,7 +109,7 @@ unsigned getMappingInfoForFunction::writeNumber(unsigned X) {
 }
 
 //Assign a number to each Function 
-bool getMappingInfoForFunction::doInitialization(Module &M){
+bool getMappingInfoForFunction::doInitialization(Module &M) {
   unsigned i = 0;
   for (Module::iterator FI = M.begin(), FE = M.end();
        FI != FE; ++FI){
@@ -122,24 +122,25 @@ bool getMappingInfoForFunction::doInitialization(Module &M){
 }
      
 //Assign a Number to each BB
-void getMappingInfoForFunction::create_BB_to_MInumber_Key(Function &FI){
+void getMappingInfoForFunction::create_BB_to_MInumber_Key(Function &FI) {
   unsigned i = 0;
-  for (Function::iterator BI = FI.begin(), BE = FI.end(); 
-       BI != BE; ++BI){
-    MachineBasicBlock &miBB = MachineBasicBlock::get(BI);
+  MachineFunction &MF = MachineFunction::get(&FI);
+  for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
+       BI != BE; ++BI) {
+    MachineBasicBlock &miBB = *BI;
     BBkey[miBB[0]] = i;
     i = i+(miBB.size());
   }
 }
 
 //Assign a number to each MI wrt beginning of the BB
-void getMappingInfoForFunction::create_MI_to_number_Key(Function &FI){
-  for (Function::iterator BI=FI.begin(), BE=FI.end(); 
-       BI != BE; ++BI){
-    MachineBasicBlock &miBB = MachineBasicBlock::get(BI);
+void getMappingInfoForFunction::create_MI_to_number_Key(Function &FI) {
+  MachineFunction &MF = MachineFunction::get(&FI);
+  for (MachineFunction::iterator BI=MF.begin(), BE=MF.end(); BI != BE; ++BI) {
+    MachineBasicBlock &miBB = *BI;
     unsigned j = 0;
     for(MachineBasicBlock::iterator miI=miBB.begin(), miE=miBB.end();
-	miI!=miE; ++miI, ++j){
+	miI!=miE; ++miI, ++j) {
       MIkey[*miI]=j;
     }
   }
@@ -148,10 +149,11 @@ void getMappingInfoForFunction::create_MI_to_number_Key(Function &FI){
 //BBtoMImap: contains F#, BB#, 
 //              MI#[wrt beginning of F], #MI in BB
 void getMappingInfoForFunction::writeBBToMImap(Function &FI){
-  unsigned bb=0;
-  for (Function::iterator BI = FI.begin(), 
-	 BE = FI.end(); BI != BE; ++BI, ++bb){
-    MachineBasicBlock &miBB = MachineBasicBlock::get(BI);
+  unsigned bb = 0;
+  MachineFunction &MF = MachineFunction::get(&FI);  
+  for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
+       BI != BE; ++BI, ++bb) {
+    MachineBasicBlock &miBB = *BI;
     writeNumber(bb);
     //Out << " BB: "<<(void *)BI<<"\n";
     //for(int i=0; i<miBB.size(); ++i)
@@ -163,11 +165,11 @@ void getMappingInfoForFunction::writeBBToMImap(Function &FI){
 
 //LLVMtoMImap: contains F#, BB#, LLVM#, 
 //                           MIs[wrt to beginning of BB] 
-void getMappingInfoForFunction::writeLLVMToMImap(Function &FI){
+void getMappingInfoForFunction::writeLLVMToMImap(Function &FI) {
 
   unsigned bb =0;
   for (Function::iterator BI = FI.begin(),  BE = FI.end(); 
-       BI != BE; ++BI, ++bb){
+       BI != BE; ++BI, ++bb) {
     unsigned li = 0;
     writeNumber(bb);
     //std::cerr<<"BasicBlockNumber= "<<bb<<"\n";
@@ -177,7 +179,7 @@ void getMappingInfoForFunction::writeLLVMToMImap(Function &FI){
     //std::cerr<<"BasicBlockSize  = "<<BI->size()<<"\n";
 
     for (BasicBlock::iterator II = BI->begin(), 
-	   IE = BI->end(); II != IE; ++II, ++li){
+	   IE = BI->end(); II != IE; ++II, ++li) {
     //Out << "I: "<<*II<<"\n";
       MachineCodeForInstruction& miI = 
 	MachineCodeForInstruction::get(II);
