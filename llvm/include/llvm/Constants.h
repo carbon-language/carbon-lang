@@ -350,7 +350,7 @@ protected:
                const std::vector<Value*>& IdxList, const Type *Ty);
   ~ConstantExpr() {}
   
-  virtual void destroyConstant() { destroyConstantImpl(); }
+  virtual void destroyConstant();
   
 public:
   // Static methods to construct a ConstantExpr of different kinds.
@@ -358,7 +358,7 @@ public:
   static ConstantExpr *get(unsigned opCode,
                            Constant *C1, Constant *C2, const Type *Ty);
   static ConstantExpr *get(unsigned opCode, Constant* C,
-                           const std::vector<Value*>& idxList, const Type *Ty);
+                       const std::vector<Value*>& idxList, const Type *Ty);
   
   // isNullValue - Return true if this is the value that would be returned by
   // getNullValue.
