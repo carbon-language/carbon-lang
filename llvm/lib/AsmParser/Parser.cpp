@@ -13,14 +13,12 @@
 
 #include "ParserInternals.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/Verifier.h"
-
-namespace llvm {
+using namespace llvm;
 
 // The useful interface defined by this file... Parse an ASCII file, and return
 // the internal representation in a nice slice'n'dice'able representation.
 //
-Module *ParseAssemblyFile(const std::string &Filename) {
+Module *llvm::ParseAssemblyFile(const std::string &Filename) {
   FILE *F = stdin;
 
   if (Filename != "-") {
@@ -84,5 +82,3 @@ const std::string ParseException::getMessage() const {
   
   return Result + ": " + Message;
 }
-
-} // End llvm namespace
