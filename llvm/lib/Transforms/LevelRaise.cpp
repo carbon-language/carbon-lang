@@ -375,11 +375,13 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (RetValConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE2("CAST-DEST-EXPR-CONV:in ", CI, Src);
 
+        //cerr << "\nCONVERTING EXPR TYPE:\n";
         ValueMapCache ValueMap;
         ConvertUsersType(CI, Src, ValueMap);  // This will delete CI!
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
-        PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", I);
+        PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
+        //cerr << "DONE CONVERTING EXPR TYPE: ";// << BB->getParent();
         return true;
       }
     }

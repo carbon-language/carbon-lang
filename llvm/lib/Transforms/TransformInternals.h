@@ -29,6 +29,14 @@ extern const TargetData TD;
 bool losslessCastableTypes(const Type *T1, const Type *T2);
 
 
+// isFirstClassType - Return true if a value of the specified type can be held
+// in a register.
+//
+static inline bool isFirstClassType(const Type *Ty) {
+  return Ty->isPrimitiveType() || Ty->isPointerType();
+}
+
+
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
 //
@@ -51,7 +59,7 @@ struct ValueMapCache {
   // Operands mapped - Contains an entry if the first value (the user) has had
   // the second value (the operand) mapped already.
   //
-  set<pair<const User*, const Value*> > OperandsMapped;
+  set<const User*> OperandsMapped;
 
   // Expression Map - Contains an entry from the old value to the new value of
   // an expression that has been converted over.
@@ -75,10 +83,7 @@ void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC);
 class ValueHandle : public Instruction {
   ValueHandle(const ValueHandle &); // DO NOT IMPLEMENT
 public:
-  ValueHandle(Value *V) : Instruction(Type::VoidTy, UserOp1, "") {
-    Operands.push_back(Use(V, this));
-  }
-
+  ValueHandle(Value *V);
   ~ValueHandle();
 
   virtual Instruction *clone() const { abort(); return 0; }
