@@ -191,13 +191,8 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
 }
 
 
-//
-// Function: ExecWait ()
-//
-// Description:
-//  This function executes a program with the specified arguments and
-//  environment.  It then waits for the progarm to termiante and then returns
-//  to the caller.
+// ExecWait - executes a program with the specified arguments and environment.
+// It then waits for the progarm to termiante and then returns to the caller.
 //
 // Inputs:
 //  argv - The arguments to the program as an array of C strings.  The first
@@ -230,10 +225,8 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
 int llvm::ExecWait(const char * const old_argv[],
                    const char * const old_envp[]) {
 #ifdef HAVE_SYS_WAIT_H
-  //
   // Create local versions of the parameters that can be passed into execve()
   // without creating const problems.
-  //
   char ** const argv = (char ** const) old_argv;
   char ** const envp = (char ** const) old_envp;
 
@@ -256,7 +249,7 @@ int llvm::ExecWait(const char * const old_argv[],
       break;
   }
 
-  // Parent process: Wait for the child process to termiante.
+  // Parent process: Wait for the child process to terminate.
   int status;
   if ((wait (&status)) == -1)
     return 1;
