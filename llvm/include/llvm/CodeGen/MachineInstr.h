@@ -13,6 +13,7 @@
 #include "Support/Annotation.h"
 #include "Support/NonCopyable.h"
 #include "Support/iterator"
+#include <set>
 class Value;
 class Function;
 class MachineBasicBlock;
@@ -21,12 +22,27 @@ class GlobalValue;
 
 typedef int MachineOpCode;
 
+///---------------------------------------------------------------------------
+/// Special flags on instructions that modify the opcode.
+/// These flags are unused for now, but having them enforces that some
+/// changes will be needed if they are used.
+///---------------------------------------------------------------------------
+
+enum MachineOpCodeFlags {
+  AnnulFlag,         /// 1 if annul bit is set on a branch
+  PredTakenFlag,     /// 1 if branch should be predicted taken
+  PredNotTakenFlag   /// 1 if branch should be predicted not taken
+};
+
+///---------------------------------------------------------------------------
 /// MOTy - MachineOperandType - This namespace contains an enum that describes
 /// how the machine operand is used by the instruction: is it read, defined, or
 /// both?  Note that the MachineInstr/Operator class currently uses bool
 /// arguments to represent this information instead of an enum.  Eventually this
 /// should change over to use this _easier to read_ representation instead.
 ///
+///---------------------------------------------------------------------------
+
 namespace MOTy {
   enum UseType {
     Use,             /// This machine operand is only read by the instruction
@@ -275,16 +291,15 @@ public:
 
   // used to get the reg number if when one is allocated
   int getAllocatedRegNum() const {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
-	   opType == MO_MachineRegister);
+    assert(hasAllocatedReg());
     return regNum;
   }
 
+  // ********** TODO: get rid of this duplicate code! ***********
   unsigned getReg() const {
-    assert(hasAllocatedReg() && "Cannot call MachineOperand::getReg()!");
-    return regNum;
+    return getAllocatedRegNum();
   }    
-  
+
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
 private:
@@ -329,12 +344,13 @@ private:
 class MachineInstr: public NonCopyable {      // Disable copy operations
 
   MachineOpCode    opCode;              // the opcode
+  unsigned         opCodeFlags;         // flags modifying instrn behavior
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
 
   // regsUsed - all machine registers used for this instruction, including regs
   // used to save values across the instruction.  This is a bitset of registers.
-  std::vector<bool> regsUsed;
+  std::set<int>    regsUsed;
 
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
@@ -361,6 +377,10 @@ public:
   const MachineOpCode getOpcode() const { return opCode; }
   const MachineOpCode getOpCode() const { return opCode; }
 
+  // Opcode flags.
+  // 
+  unsigned       getOpCodeFlags() const { return opCodeFlags; }
+
   //
   // Access to explicit operands of the instruction
   // 
@@ -373,6 +393,18 @@ public:
   MachineOperand& getOperand(unsigned i) {
     assert(i < getNumOperands() && "getOperand() out of range!");
     return operands[i];
+  }
+
+  //
+  // Access to explicit or implicit operands of the instruction
+  // This returns the i'th entry in the operand vector.
+  // That represents the i'th explicit operand or the (i-N)'th implicit operand,
+  // depending on whether i < N or i >= N.
+  // 
+  const MachineOperand& getExplOrImplOperand(unsigned i) const {
+    assert(i < operands.size() && "getExplOrImplOperand() out of range!");
+    return (i < getNumOperands()? getOperand(i)
+                                : getImplicitOp(i - getNumOperands()));
   }
 
   //
@@ -402,15 +434,18 @@ public:
                                  bool isDef=false, bool isDefAndUse=false);
 
   //
-  // Information about registers used in this instruction
+  // Information about registers used in this instruction.
   // 
-  const std::vector<bool> &getRegsUsed() const { return regsUsed; }
+  const std::set<int> &getRegsUsed() const {
+    return regsUsed;
+  }
+  bool isRegUsed(int regNum) const {
+    return regsUsed.find(regNum) != regsUsed.end();
+  }
   
-  // insertUsedReg - Add a register to the Used registers set...
+  // insertusedreg - Add a register to the Used registers set...
   void insertUsedReg(unsigned Reg) {
-    if (Reg >= regsUsed.size())
-      regsUsed.resize(Reg+1);
-    regsUsed[Reg] = true;
+    regsUsed.insert((int) Reg);
   }
 
   //
@@ -612,10 +647,12 @@ public:
   void setOperandLo64(unsigned i) { operands[i].markLo64(); }
   
   
-  // SetRegForOperand - Replaces the Value for the operand with its allocated
-  // physical register after register allocation is complete.
+  // SetRegForOperand -
+  // SetRegForImplicitRef -
+  // Mark an explicit or implicit operand with its allocated physical register.
   // 
   void SetRegForOperand(unsigned i, int regNum);
+  void SetRegForImplicitRef(unsigned i, int regNum);
 
   //
   // Iterator to enumerate machine operands.
