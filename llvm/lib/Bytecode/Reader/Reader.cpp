@@ -711,7 +711,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
                                    getBasicBlock(Oprnds[1]),
                                    Oprnds.size()/2-1);
     for (unsigned i = 2, e = Oprnds.size(); i != e; i += 2)
-      I->addCase(cast<Constant>(getValue(iType, Oprnds[i])),
+      I->addCase(cast<ConstantInt>(getValue(iType, Oprnds[i])),
                  getBasicBlock(Oprnds[i+1]));
     Result = I;
     break;
