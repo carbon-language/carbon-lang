@@ -642,15 +642,21 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
         WriteAsOperand(toAsm, CV, false, false) << "\n";
       }
     }
+  else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
+    { // This is a constant address for a global variable or method.
+      // Use the name of the variable or method as the address value.
+      if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(CPR->getValue()))
+        toAsm << getID(GV);
+      else if (const Function* F = dyn_cast<Function>(CPR->getValue()))
+        toAsm << getID(F);
+      else
+        assert(0 && "Unexpected constant reference type");
+    }
   else if (const ConstantPointer* CPP = dyn_cast<ConstantPointer>(CV))
     {
       assert(CPP->isNullValue() &&
              "Cannot yet print non-null pointer constants to assembly");
       toAsm << "0\n";
-    }
-  else if (isa<ConstantPointerRef>(CV))
-    {
-      assert(0 && "Cannot yet initialize pointer refs in assembly");
     }
   else
     {
