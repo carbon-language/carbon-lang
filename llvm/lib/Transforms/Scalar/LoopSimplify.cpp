@@ -250,8 +250,11 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
 
       // Can we eliminate this phi node now?
       if (Value *V = hasConstantValue(PN)) {
-        PN->replaceAllUsesWith(V);
-        BB->getInstList().erase(PN);
+        if (!isa<Instruction>(V) ||
+            getAnalysis<DominatorSet>().dominates(cast<Instruction>(V), PN)) {
+          PN->replaceAllUsesWith(V);
+          BB->getInstList().erase(PN);
+        }
       }
     }
     
@@ -426,22 +429,24 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
-static PHINode *FindPHIToPartitionLoops(Loop *L) {
+static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
-    if (Value *V = hasConstantValue(PN)) {
-      // This is a degenerate PHI already, don't modify it!
-      PN->replaceAllUsesWith(V);
-      PN->getParent()->getInstList().erase(PN);
-    } else {
-      // Scan this PHI node looking for a use of the PHI node by itself.
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (PN->getIncomingValue(i) == PN &&
-            L->contains(PN->getIncomingBlock(i)))
-          // We found something tasty to remove.
-          return PN;
-    }
+    if (Value *V = hasConstantValue(PN))
+      if (!isa<Instruction>(V) || DS.dominates(cast<Instruction>(V), PN)) {
+        // This is a degenerate PHI already, don't modify it!
+        PN->replaceAllUsesWith(V);
+        PN->getParent()->getInstList().erase(PN);
+        continue;
+      }
+
+    // Scan this PHI node looking for a use of the PHI node by itself.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (PN->getIncomingValue(i) == PN &&
+          L->contains(PN->getIncomingBlock(i)))
+        // We found something tasty to remove.
+        return PN;
   }
   return 0;
 }
@@ -464,7 +469,7 @@ static PHINode *FindPHIToPartitionLoops(Loop *L) {
 /// created.
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
-  PHINode *PN = FindPHIToPartitionLoops(L);
+  PHINode *PN = FindPHIToPartitionLoops(L, getAnalysis<DominatorSet>());
   if (PN == 0) return 0;  // No known way to partition.
 
   // Pull out all predecessors that have varying values in the loop.  This

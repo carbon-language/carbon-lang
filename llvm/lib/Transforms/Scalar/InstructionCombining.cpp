@@ -3364,7 +3364,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       }
       AddUsersToWorkList(*Caller);
     } else {
-      NV = Constant::getNullValue(Caller->getType());
+      NV = UndefValue::get(Caller->getType());
     }
   }
 
@@ -3380,9 +3380,23 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  // FIXME: hasConstantValue should ignore undef values!
-  if (Value *V = hasConstantValue(&PN))
-    return ReplaceInstUsesWith(PN, V);
+  if (Value *V = hasConstantValue(&PN)) {
+    // If V is an instruction, we have to be certain that it dominates PN.
+    // However, because we don't have dom info, we can't do a perfect job.
+    if (Instruction *I = dyn_cast<Instruction>(V)) {
+      // We know that the instruction dominates the PHI if there are no undef
+      // values coming in.
+      for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+        if (isa<UndefValue>(PN.getIncomingValue(i))) {
+          std::cerr << "HAD TO DISABLE PHI ELIM IN IC!\n";
+          V = 0;
+          break;
+        }
+    }
+
+    if (V)
+      return ReplaceInstUsesWith(PN, V);
+  }
 
   // If the only user of this instruction is a cast instruction, and all of the
   // incoming values are constants, change this PHI to merge together the casted
