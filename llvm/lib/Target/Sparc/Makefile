@@ -48,13 +48,8 @@ TARGET_NAME := SparcV9
 
 TABLEGEN_FILES := $(wildcard *.td)
 
-$(TARGET_NAME)CodeEmitter.inc.tmp: $(TABLEGEN_FILES) $(TBLGEN)
-	@${ECHO} "TableGen-erating " $(TARGET_NAME)
+$(TARGET_NAME)CodeEmitter.inc: $(TABLEGEN_FILES) $(TBLGEN)
 	$(TBLGEN) $(TARGET_NAME).td -gen-emitter -o $@
 
-$(TARGET_NAME)CodeEmitter.inc: $(TARGET_NAME)CodeEmitter.inc.tmp
-	$(VERB) # Only copy over the real .inc file if it has changed!
-	$(VERB) diff $@ $< > /dev/null || cp $< $@
-
 clean::
-	${RM} -f $(TARGET_NAME)CodeEmitter.inc $(TARGET_NAME)CodeEmitter.inc.tmp
+	${RM} -f $(TARGET_NAME)CodeEmitter.inc
