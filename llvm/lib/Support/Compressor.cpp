@@ -328,7 +328,7 @@ uint64_t Compressor::compress(const char* in, unsigned size,
 uint64_t 
 Compressor::compressToNewBuffer(const char* in, unsigned size, char*&out) {
   BufferContext bc(size);
-  unsigned result = compress(in,size,BufferContext::callback,(void*)&bc);
+  uint64_t result = compress(in,size,BufferContext::callback,(void*)&bc);
   out = bc.buff;
   return result;
 }
