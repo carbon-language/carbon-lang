@@ -2,7 +2,7 @@
 //
 // This library converts LLVM code to C code, compilable by GCC.
 //
-//===-----------------------------------------------------------------------==//
+//===----------------------------------------------------------------------===//
 #include "llvm/Assembly/CWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -20,23 +20,19 @@
 #include <algorithm>
 #include <set>
 #include <sstream>
-using std::string;
-using std::map;
-using std::ostream;
-
 
 namespace {
   class CWriter : public Pass, public InstVisitor<CWriter> {
-    ostream &Out; 
+    std::ostream &Out; 
     SlotCalculator *Table;
     const Module *TheModule;
-    map<const Type *, string> TypeNames;
+    std::map<const Type *, std::string> TypeNames;
     std::set<const Value*> MangledGlobals;
     bool needsMalloc;
 
-    map<const ConstantFP *, unsigned> FPConstantMap;
+    std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
-    CWriter(ostream &o) : Out(o) {}
+    CWriter(std::ostream &o) : Out(o) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -61,13 +57,14 @@ namespace {
       return false;
     }
 
-    ostream &printType(std::ostream &Out, const Type *Ty, const string &VariableName = "",
-                       bool IgnoreName = false, bool namedContext = true);
+    std::ostream &printType(std::ostream &Out, const Type *Ty,
+                            const std::string &VariableName = "",
+                            bool IgnoreName = false, bool namedContext = true);
 
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
 
-    string getValueName(const Value *V);
+    std::string getValueName(const Value *V);
 
   private :
     bool nameAllUsedStructureTypes(Module &M);
@@ -137,9 +134,9 @@ namespace {
 
 // We dont want identifier names with ., space, -  in them. 
 // So we replace them with _
-static string makeNameProper(string x) {
-  string tmp;
-  for (string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
+static std::string makeNameProper(std::string x) {
+  std::string tmp;
+  for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
     switch (*sI) {
     case '.': tmp += "d_"; break;
     case ' ': tmp += "s_"; break;
@@ -150,11 +147,11 @@ static string makeNameProper(string x) {
   return tmp;
 }
 
-string CWriter::getValueName(const Value *V) {
+std::string CWriter::getValueName(const Value *V) {
   if (V->hasName()) {              // Print out the label if it exists...
     if (isa<GlobalValue>(V) &&     // Do not mangle globals...
-        cast<GlobalValue>(V)->hasExternalLinkage()) // Unless it's internal or
-      //!MangledGlobals.count(V))  // Unless the name would collide if we don't
+        (cast<GlobalValue>(V)->hasExternalLinkage() &&// Unless it's internal or
+         !MangledGlobals.count(V))) // Unless the name would collide if we don't
       return makeNameProper(V->getName());
 
     return "l" + utostr(V->getType()->getUniqueID()) + "_" +
@@ -167,15 +164,16 @@ string CWriter::getValueName(const Value *V) {
 }
 
 // A pointer type should not use parens around *'s alone, e.g., (**)
-inline bool ptrTypeNameNeedsParens(const string &NameSoFar) {
+inline bool ptrTypeNameNeedsParens(const std::string &NameSoFar) {
   return (NameSoFar.find_last_not_of('*') != std::string::npos);
 }
 
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
-ostream &CWriter::printType(std::ostream &Out, const Type *Ty, const string &NameSoFar,
-                            bool IgnoreName, bool namedContext) {
+std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
+                                 const std::string &NameSoFar,
+                                 bool IgnoreName, bool namedContext) {
   if (Ty->isPrimitiveType())
     switch (Ty->getPrimitiveID()) {
     case Type::VoidTyID:   return Out << "void "               << NameSoFar;
@@ -197,7 +195,7 @@ ostream &CWriter::printType(std::ostream &Out, const Type *Ty, const string &Nam
   
   // Check to see if the type is named.
   if (!IgnoreName || isa<OpaqueType>(Ty)) {
-    map<const Type *, string>::iterator I = TypeNames.find(Ty);
+    std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
     if (I != TypeNames.end()) {
       return Out << I->second << " " << NameSoFar;
     }
@@ -221,7 +219,7 @@ ostream &CWriter::printType(std::ostream &Out, const Type *Ty, const string &Nam
       FunctionInards << "...";
     }
     FunctionInards << ")";
-    string tstr = FunctionInards.str();
+    std::string tstr = FunctionInards.str();
     printType(Out, MTy->getReturnType(), tstr);
     return Out;
   }
@@ -262,7 +260,7 @@ ostream &CWriter::printType(std::ostream &Out, const Type *Ty, const string &Nam
 
   case Type::OpaqueTyID: {
     static int Count = 0;
-    string TyName = "struct opaque_" + itostr(Count++);
+    std::string TyName = "struct opaque_" + itostr(Count++);
     assert(TypeNames.find(Ty) == TypeNames.end());
     TypeNames[Ty] = TyName;
     return Out << TyName << " " << NameSoFar;
@@ -395,7 +393,7 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::FloatTyID:
   case Type::DoubleTyID: {
     ConstantFP *FPC = cast<ConstantFP>(CPV);
-    map<const ConstantFP *, unsigned>::iterator I = FPConstantMap.find(FPC);
+    std::map<const ConstantFP*, unsigned>::iterator I = FPConstantMap.find(FPC);
     if (I != FPConstantMap.end()) {
       // Because of FP precision problems we must load from a stack allocated
       // value that holds the value in hex.
@@ -501,8 +499,7 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
   return Changed;
 }
 
-static void generateAllocaDecl(ostream& Out) 
-{
+static void generateAllocaDecl(std::ostream& Out) {
   // On SunOS, we need to insert the alloca macro & proto for the builtin.
   Out << "#ifdef sun\n"
       << "extern void *__builtin_alloca(unsigned long);\n"
@@ -516,7 +513,7 @@ void CWriter::printModule(Module *M) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   {  // Scope to delete the FoundNames set when we are done with it...
-    std::set<string> FoundNames;
+    std::set<std::string> FoundNames;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (I->hasName())                      // If the global has a name...
         if (FoundNames.count(I->getName()))  // And the name is already used
@@ -575,7 +572,8 @@ void CWriter::printModule(Module *M) {
     needsMalloc = true;
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
       // If the function is external and the name collides don't print it.
-      // Sometimes the bytecode likes to have multiple "declerations" for external functions
+      // Sometimes the bytecode likes to have multiple "declerations" for
+      // external functions
       if (I->hasInternalLinkage() || !MangledGlobals.count(I)){
         printFunctionSignature(I, true);
         Out << ";\n";
@@ -642,7 +640,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I)
     if (const Type *STy = dyn_cast<StructType>(I->second)) {
-      string Name = "struct l_" + makeNameProper(I->first);
+      std::string Name = "struct l_" + makeNameProper(I->first);
       Out << Name << ";\n";
       TypeNames.insert(std::make_pair(STy, Name));
     }
@@ -653,7 +651,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
   Out << "/* Typedefs */\n";
   for (I = ST.type_begin(Type::TypeTy); I != End; ++I) {
     const Type *Ty = cast<Type>(I->second);
-    string Name = "l_" + makeNameProper(I->first);
+    std::string Name = "l_" + makeNameProper(I->first);
     Out << "typedef ";
     printType(Out, Ty, Name);
     Out << ";\n";
@@ -691,7 +689,7 @@ void CWriter::printContainedStructs(const Type *Ty,
       
       //Print structure type out..
       StructPrinted.insert(STy);
-      string Name = TypeNames[STy];  
+      std::string Name = TypeNames[STy];  
       printType(Out, STy, Name, true);
       Out << ";\n\n";
     }
@@ -721,7 +719,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     
   if (!F->isExternal()) {
     if (!F->aempty()) {
-      string ArgName;
+      std::string ArgName;
       if (F->abegin()->hasName() || !Prototype)
         ArgName = getValueName(F->abegin());
       printType(FunctionInards, F->afront().getType(), ArgName);
@@ -899,14 +897,14 @@ void CWriter::printBranchToBlock(BasicBlock *CurBB, BasicBlock *Succ,
   for (BasicBlock::iterator I = Succ->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     //  now we have to do the printing
-    Out << string(Indent, ' ');
+    Out << std::string(Indent, ' ');
     outputLValue(PN);
     writeOperand(PN->getIncomingValue(PN->getBasicBlockIndex(CurBB)));
     Out << ";   /* for PHI node */\n";
   }
 
   if (CurBB->getNext() != Succ) {
-    Out << string(Indent, ' ') << "  goto ";
+    Out << std::string(Indent, ' ') << "  goto ";
     writeOperand(Succ);
     Out << ";\n";
   }
@@ -976,8 +974,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
 void CWriter::visitCastInst(CastInst &I) {
   Out << "(";
-  printType(Out, I.getType(), string(""),/*ignoreName*/false,
-            /*namedContext*/false);
+  printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
   Out << ")";
   if (isa<PointerType>(I.getType())&&I.getOperand(0)->getType()->isIntegral() ||
       isa<PointerType>(I.getOperand(0)->getType())&&I.getType()->isIntegral()) {
