@@ -440,10 +440,10 @@ SparcFunctionAsmPrinter::emitMachineInst(const MachineInstr *MI)
 {
   unsigned Opcode = MI->getOpCode();
 
-  if (TargetInstrDescriptors[Opcode].iclass & M_DUMMY_PHI_FLAG)
+  if (Target.getInstrInfo().isDummyPhiInstr(Opcode));
     return;  // IGNORE PHI NODES
 
-  toAsm << "\t" << TargetInstrDescriptors[Opcode].opCodeString << "\t";
+  toAsm << "\t" << Target.getInstrInfo().getName(Opcode) << "\t";
 
   unsigned Mask = getOperandMask(Opcode);
   
