@@ -71,10 +71,24 @@ struct DefOne : public DefVal {
 };
 
 
+// getUnsignedConstant - Return a constant value of the specified type.  If the
+// constant value is not valid for the specified type, return null.  This cannot
+// happen for values in the range of 0 to 127.
+//
 static ConstantInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
   if (Ty->isPointerType()) Ty = Type::ULongTy;
-  return Ty->isSigned() ? (ConstantInt*)ConstantSInt::get(Ty, V)
-                        : (ConstantInt*)ConstantUInt::get(Ty, V);
+  if (Ty->isSigned()) {
+    // If this value is not a valid unsigned value for this type, return null!
+    if (V > 127 && ((int64_t)V < 0 ||
+                    !ConstantSInt::isValueValidForType(Ty, (int64_t)V)))
+      return 0;
+    return ConstantSInt::get(Ty, V);
+  } else {
+    // If this value is not a valid unsigned value for this type, return null!
+    if (V > 255 && !ConstantUInt::isValueValidForType(Ty, V))
+      return 0;
+    return ConstantUInt::get(Ty, V);
+  }
 }
 
 // Add - Helper function to make later code simpler.  Basically it just adds
@@ -270,7 +284,20 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
 	   "Shift amount must always be a unsigned byte!");
     uint64_t ShiftAmount = ((ConstantUInt*)Right.Offset)->getValue();
     ConstantInt *Multiplier = getUnsignedConstant(1ULL << ShiftAmount, Ty);
-    
+
+    // We don't know how to classify it if they are shifting by more than what
+    // is reasonable.  In most cases, the result will be zero, but there is one
+    // class of cases where it is not, so we cannot optimize without checking
+    // for it.  The case is when you are shifting a signed value by 1 less than
+    // the number of bits in the value.  For example:
+    //    %X = shl sbyte %Y, ubyte 7
+    // will try to form an sbyte multiplier of 128, which will give a null
+    // multiplier, even though the result is not 0.  Until we can check for this
+    // case, be conservative.  TODO.
+    //
+    if (Multiplier == 0)
+      return Expr;
+
     return ExprType(DefOne(Left.Scale, Ty) * Multiplier, Left.Var,
 		    DefZero(Left.Offset, Ty) * Multiplier);
   }  // end case Instruction::Shl
