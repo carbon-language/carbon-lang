@@ -46,7 +46,8 @@ MachineInstr::SetMachineOperand(unsigned int i,
 {
   assert(i < operands.size());
   operands[i].Initialize(operandType, _val);
-  operands[i].isDef = isdef;
+  operands[i].isDef = isdef ||
+		      TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
 
 void
@@ -56,7 +57,8 @@ MachineInstr::SetMachineOperand(unsigned int i,
 {
   assert(i < operands.size());
   operands[i].InitializeConst(operandType, intValue);
-  operands[i].isDef = isdef;
+  operands[i].isDef = isdef ||
+		      TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
 
 void
@@ -65,7 +67,8 @@ MachineInstr::SetMachineOperand(unsigned int i,
 {
   assert(i < operands.size());
   operands[i].InitializeReg(regNum);
-  operands[i].isDef = isdef;
+  operands[i].isDef = isdef ||
+		      TargetInstrDescriptors[opCode].resultPos == (int) i;
 }
 
 void
@@ -249,9 +252,9 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
   
   // If operand 3 (result) can be discarded, use a dead register if one exists
   if (canDiscardResult && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, target.zeroRegNum, true);
+    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue(), true);
+    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
 
   return returnFlags;
 }
@@ -281,9 +284,9 @@ Set3OperandsFromInstr(MachineInstr* minstr,
   
   // result operand: if it can be discarded, use a dead register if one exists
   if (canDiscardResult && target.zeroRegNum >= 0)
-    minstr->SetMachineOperand(resultPosition, target.zeroRegNum, true);
+    minstr->SetMachineOperand(resultPosition, target.zeroRegNum);
   else
-    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue(), true);
+    minstr->SetMachineOperand(resultPosition, MachineOperand::MO_VirtualRegister, vmInstrNode->getValue());
 }
 
 
