@@ -52,14 +52,11 @@ class DSGraph;
 class DependenceGraph;
 class PgmDependenceGraph;
 
-
-///---------------------------------------------------------------------------
-/// enum PDGIteratorFlags
-/// 
-/// These bit flags specify which dependences incident on a statement are to be
-/// enumerated: Memory deps, SSA deps, Control deps, or any combination thereof.
-///---------------------------------------------------------------------------
-
+//---------------------------------------------------------------------------
+/// enum PDGIteratorFlags - specify which dependences incident on a statement
+/// are to be enumerated: Memory deps, SSA deps, Control deps, or any
+/// combination thereof.
+///
 enum PDGIteratorFlags {
   MemoryDeps  = 0x1,                                 // load/store/call deps
   SSADeps     = 0x2,                                 // SSA deps (true)
@@ -68,16 +65,12 @@ enum PDGIteratorFlags {
   AllDeps     = MemoryDeps | SSADeps | ControlDeps   // shorthand for all three
 };
 
-
-///---------------------------------------------------------------------------
-/// struct DepIterState
-/// 
-/// This data type is primarily an internal implementation detail.
+//---------------------------------------------------------------------------
+/// struct DepIterState - an internal implementation detail.
 /// It are exposed here only to give inlinable access to field dep,
 /// which is the representation for the current dependence pointed to by
 /// a PgmDependenceGraph::iterator.
-///---------------------------------------------------------------------------
-
+///
 class DepIterState {
 private:
   typedef char IterStateFlags;
@@ -93,12 +86,12 @@ public:
   PDGIteratorFlags           depFlags:8;     // which deps are we enumerating?
   IterStateFlags             iterFlags:8;    // marking where the iter stands
 
-  /*ctor*/ DepIterState  (DependenceGraph* _memDepGraph,
-                          Instruction&     I, 
-                          bool             incomingDeps,
-                          PDGIteratorFlags whichDeps);
+  DepIterState(DependenceGraph* _memDepGraph,
+               Instruction&     I, 
+               bool             incomingDeps,
+               PDGIteratorFlags whichDeps);
 
-  bool  operator==(const DepIterState& S) {
+  bool operator==(const DepIterState& S) {
     assert(memDepGraph == S.memDepGraph &&
            "Incompatible iterators! This is a probable sign of something BAD.");
     return (iterFlags == S.iterFlags &&
@@ -109,39 +102,38 @@ public:
 
   // Is the iteration completely done?
   // 
-  bool          done            () const { return iterFlags & AllDone; }
+  bool done() const { return iterFlags & AllDone; }
 
-  // Bump this iterator logically by 1 (to next dependence) and reset the
-  // dep field to represent the new dependence if there is one.
-  // Set done = true otherwise.
-  // 
-  void          Next          ();
+  /// Next - Bump this iterator logically by 1 (to next dependence) and reset
+  /// the dep field to represent the new dependence if there is one.
+  /// Set done = true otherwise.
+  /// 
+  void Next();
 
-  // Find the first memory dependence for the current Mem In/Out iterators.
-  // Sets dep to that dependence and returns true if one is found.
-  // Returns false and leaves dep unchanged otherwise.
-  // 
-  bool          SetFirstMemoryDep();
+  /// SetFirstMemoryDep - Find the first memory dependence for the current Mem
+  /// In/Out iterators. Sets dep to that dependence and returns true if one is
+  /// found. Returns false and leaves dep unchanged otherwise.
+  /// 
+  bool SetFirstMemoryDep();
 
-  // Find the next valid data dependence for the current SSA In/Out iterators.
-  // A valid data dependence is one that is to/from an Instruction.
-  // E.g., an SSA edge from a formal parameter is not a valid dependence.
-  // Sets dep to that dependence and returns true if a valid one is found.
-  // Returns false and leaves dep unchanged otherwise.
-  // 
-  bool          SetFirstSSADep  ();
+  /// SetFirstSSADep - Find the next valid data dependence for the current SSA
+  /// In/Out iterators. A valid data dependence is one that is to/from an
+  /// Instruction. E.g., an SSA edge from a formal parameter is not a valid
+  /// dependence. Sets dep to that dependence and returns true if a valid one is
+  /// found. Returns false and leaves dep unchanged otherwise.
+  ///
+  bool SetFirstSSADep();
 };
 
 
-///---------------------------------------------------------------------------
-/// The dependence iterator class.  This class represents a pointer to
-/// a single dependence in the program dependence graph.  It is essentially
-/// like a pointer to an object of class Dependence but it is much more
-/// efficient to retrieve information about the dependence directly rather
-/// than constructing the equivalent Dependence object (since that object
-/// is normally not constructed for SSA def-use dependences).
-///---------------------------------------------------------------------------
-
+//---------------------------------------------------------------------------
+/// PDGIterator Class - represents a pointer to a single dependence in the
+/// program dependence graph.  It is essentially like a pointer to an object of
+/// class Dependence but it is much more efficient to retrieve information about
+/// the dependence directly rather than constructing the equivalent Dependence
+/// object (since that object is normally not constructed for SSA def-use
+/// dependences).
+///
 class PDGIterator: public forward_iterator<Dependence, ptrdiff_t> {
   DepIterState* istate;
 
@@ -159,44 +151,43 @@ class PDGIterator: public forward_iterator<Dependence, ptrdiff_t> {
 public:
   typedef PDGIterator _Self;
 
-  /*ctor*/      PDGIterator     (DepIterState* _istate) : istate(_istate) { }
-  /*dtor*/     ~PDGIterator     ()                        { delete istate; }
+  PDGIterator(DepIterState* _istate) : istate(_istate) {}
+  ~PDGIterator() { delete istate; }
 
-  /*copy*/      PDGIterator     (const PDGIterator& I)
-    : istate(new DepIterState(*I.istate)) { }
+  PDGIterator(const PDGIterator& I) :istate(new DepIterState(*I.istate)) {}
 
-  PDGIterator& operator=        (const PDGIterator& I) {
+  PDGIterator& operator=(const PDGIterator& I) {
     if (istate) delete istate;
     istate = new DepIterState(*I.istate);
     return *this;
   }
 
-  // Check if the iteration is complete
-  // 
-  bool          fini()       const { return !istate || istate->done(); }
+  /// fini - check if the iteration is complete
+  /// 
+  bool fini() const { return !istate || istate->done(); }
 
   // Retrieve the underlying Dependence.  Returns NULL if fini().
   // 
-  Dependence*   operator*()  const { return fini() ?  NULL : &istate->dep; }
-  Dependence*   operator->() const { assert(!fini()); return &istate->dep; }
+  Dependence* operator*()  const { return fini() ?  NULL : &istate->dep; }
+  Dependence* operator->() const { assert(!fini()); return &istate->dep; }
 
   // Increment the iterator
   // 
-  _Self&        operator++()       { if (!fini()) istate->Next(); return *this;}
-  _Self&        operator++(int);   // do not implement!
+  _Self& operator++() { if (!fini()) istate->Next(); return *this;}
+  _Self& operator++(int);   // do not implement!
 
   // Equality comparison: a "null" state should compare equal to done
   // This is efficient for comparing with "end" or with itself, but could
   // be quite inefficient for other cases.
   // 
-  bool          operator==(const PDGIterator& I) const {
+  bool operator==(const PDGIterator& I) const {
     if (I.istate == NULL)               // most common case: iter == end()
       return (istate == NULL || istate->done());
     if (istate == NULL)
       return (I.istate == NULL || I.istate->done());
     return (*istate == *I.istate);
   }
-  bool          operator!=(const PDGIterator& I) const {
+  bool operator!=(const PDGIterator& I) const {
     return ! (*this == I);
   }
 };
@@ -219,15 +210,15 @@ class PgmDependenceGraph: public Pass {
   // print helper function.
   void printOutgoingSSADeps(Instruction& I, std::ostream &O);
 
-  // MakeIterator --
-  // The first version creates and initializes an iterator as specified.
-  // The second version creates a null iterator representing end-of-iteration.
-  // 
-  PDGIterator   MakeIterator    (Instruction&     I,
-                                 bool             incomingDeps,
-                                 PDGIteratorFlags whichDeps);
+  /// MakeIterator - creates and initializes an iterator as specified.
+  ///
+  PDGIterator   MakeIterator(Instruction&     I,
+                             bool             incomingDeps,
+                             PDGIteratorFlags whichDeps);
   
-  PDGIterator  MakeIterator     () { return PDGIterator(NULL); }
+  /// MakeIterator - creates a null iterator representing end-of-iteration.
+  /// 
+  PDGIterator  MakeIterator() { return PDGIterator(NULL); }
 
   friend class PDGIterator;
   friend class DepIterState;
@@ -237,13 +228,13 @@ public:
   /* typedef PDGIterator<const Dependence> const iterator; */
 
 public:
-  PgmDependenceGraph() : memDepGraph(NULL) { }
-  ~PgmDependenceGraph() { }
+  PgmDependenceGraph() : memDepGraph(NULL) {}
+  ~PgmDependenceGraph() {}
 
   /// Iterators to enumerate the program dependence graph for a function.
   /// Note that this does not provide "end" iterators to check for completion.
   /// Instead, just use iterator::fini() or iterator::operator*() == NULL
-  // 
+  ///
   iterator  inDepBegin(Instruction& I, PDGIteratorFlags whichDeps = AllDeps) {
     return MakeIterator(I, /*inDeps*/ true, whichDeps);
   }
@@ -257,7 +248,7 @@ public:
     return MakeIterator();
   }
 
-  ///------------------------------------------------------------------------
+  //------------------------------------------------------------------------
   /// TEMPORARY FUNCTIONS TO MAKE THIS A MODULE PASS ---
   /// These functions will go away once this class becomes a FunctionPass.
 
@@ -305,8 +296,6 @@ public:
   void print(std::ostream &O) const;
   void dump() const;
 };
-
-//===----------------------------------------------------------------------===//
 
 } // End llvm namespace
 

@@ -61,6 +61,7 @@ public:
   /// getTargetData - Every alias analysis implementation depends on the size of
   /// data items in the current Target.  This provides a uniform way to handle
   /// it.
+  ///
   const TargetData &getTargetData() const { return *TD; }
 
   //===--------------------------------------------------------------------===//

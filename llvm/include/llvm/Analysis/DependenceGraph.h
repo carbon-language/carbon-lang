@@ -25,10 +25,10 @@
 #define LLVM_ANALYSIS_DEPENDENCEGRAPH_H
 
 #include "Support/hash_map"
-#include <iosfwd>
-#include <vector>
-#include <utility>
 #include <cassert>
+#include <iosfwd>
+#include <utility>
+#include <vector>
 
 namespace llvm {
 
@@ -38,11 +38,9 @@ class Dependence;
 class DepGraphNode;
 class DependenceGraph;
 
-
 //----------------------------------------------------------------------------
-// enum DependenceType: The standard data dependence types.
-//----------------------------------------------------------------------------
-
+/// enum DependenceType - The standard data dependence types
+///
 enum DependenceType {
   NoDependence       = 0x0,
   TrueDependence     = 0x1,
@@ -52,13 +50,10 @@ enum DependenceType {
   IncomingFlag       = 0x10         // is this an incoming or outgoing dep?
 };
 
-
 //----------------------------------------------------------------------------
-// class Dependence:
-// 
-// A representation of a simple (non-loop-related) dependence.
-//----------------------------------------------------------------------------
-
+/// Dependence Class - A representation of a simple (non-loop-related)
+/// dependence.
+///
 class Dependence {
   DepGraphNode*   toOrFromNode;
   unsigned char  depType;
@@ -68,8 +63,7 @@ public:
     : toOrFromNode(toOrFromN),
       depType(type | (isIncoming? IncomingFlag : 0x0)) { }
 
-  /* copy ctor*/ Dependence     (const Dependence& D)
-    : toOrFromNode(D.toOrFromNode),
+  Dependence(const Dependence& D) : toOrFromNode(D.toOrFromNode),
       depType(D.depType) { }
 
   bool operator==(const Dependence& D) const {
@@ -84,17 +78,17 @@ public:
 
   /// Get source or sink depending on what type of node this is!
   /// 
-  DepGraphNode*  getSrc() {
+  DepGraphNode* getSrc() {
     assert(depType & IncomingFlag); return toOrFromNode;
   }
-  const DepGraphNode*  getSrc() const {
+  const DepGraphNode* getSrc() const {
     assert(depType & IncomingFlag); return toOrFromNode;
   }
 
-  DepGraphNode*  getSink() {
+  DepGraphNode* getSink() {
     assert(! (depType & IncomingFlag)); return toOrFromNode;
   }
-  const DepGraphNode*  getSink() const {
+  const DepGraphNode* getSink() const {
     assert(! (depType & IncomingFlag)); return toOrFromNode;
   }
 
@@ -104,9 +98,8 @@ public:
 
   // Default constructor: Do not use directly except for graph builder code
   // 
-  /*ctor*/ Dependence() : toOrFromNode(NULL), depType(NoDependence) { }
+  Dependence() : toOrFromNode(NULL), depType(NoDependence) { }
 };
-
 
 #ifdef SUPPORTING_LOOP_DEPENDENCES
 struct LoopDependence: public Dependence {
@@ -119,12 +112,9 @@ struct LoopDependence: public Dependence {
 
 
 //----------------------------------------------------------------------------
-// class DepGraphNode:
-// 
-// A representation of a single node in a dependence graph, corresponding
-// to a single instruction.
-//----------------------------------------------------------------------------
-
+/// DepGraphNode Class - A representation of a single node in a dependence
+/// graph, corresponding to a single instruction.
+///
 class DepGraphNode {
   Instruction*  instr;
   std::vector<Dependence>  inDeps;
@@ -134,22 +124,21 @@ class DepGraphNode {
   typedef std::vector<Dependence>::      iterator       iterator;
   typedef std::vector<Dependence>::const_iterator const_iterator;
 
-        iterator           inDepBegin()         { return inDeps.begin(); }
-  const_iterator           inDepBegin()   const { return inDeps.begin(); }
-        iterator           inDepEnd()           { return inDeps.end(); }
-  const_iterator           inDepEnd()     const { return inDeps.end(); }
+        iterator inDepBegin()        { return inDeps.begin(); }
+  const_iterator inDepBegin()  const { return inDeps.begin(); }
+        iterator inDepEnd()          { return inDeps.end();   }
+  const_iterator inDepEnd()    const { return inDeps.end();   }
   
-        iterator           outDepBegin()        { return outDeps.begin(); }
-  const_iterator           outDepBegin()  const { return outDeps.begin(); }
-        iterator           outDepEnd()          { return outDeps.end(); }
-  const_iterator           outDepEnd()    const { return outDeps.end(); }
+        iterator outDepBegin()       { return outDeps.begin(); }
+  const_iterator outDepBegin() const { return outDeps.begin(); }
+        iterator outDepEnd()         { return outDeps.end();   }
+  const_iterator outDepEnd()   const { return outDeps.end();   }
 
 public:
-
   DepGraphNode(Instruction& I) : instr(&I) { }
 
-        Instruction&       getInstr()           { return *instr; }
-  const Instruction&       getInstr()     const { return *instr; }
+        Instruction& getInstr()       { return *instr; }
+  const Instruction& getInstr() const { return *instr; }
 
   /// Debugging support methods
   /// 
@@ -158,14 +147,11 @@ public:
 
 
 //----------------------------------------------------------------------------
-// class DependenceGraph:
-// 
-// A representation of a dependence graph for a procedure.
-// The primary query operation here is to look up a DepGraphNode for
-// a particular instruction, and then use the in/out dependence iterators
-// for the node.
-//----------------------------------------------------------------------------
-
+/// DependenceGraph Class - A representation of a dependence graph for a
+/// procedure. The primary query operation here is to look up a DepGraphNode for
+/// a particular instruction, and then use the in/out dependence iterators
+/// for the node.
+///
 class DependenceGraph {
   DependenceGraph(const DependenceGraph&); // DO NOT IMPLEMENT
   void operator=(const DependenceGraph&);  // DO NOT IMPLEMENT
@@ -177,7 +163,7 @@ class DependenceGraph {
   DepNodeMapType depNodeMap;
 
   inline DepGraphNode* getNodeInternal(Instruction& inst,
-                                       bool  createIfMissing = false) {
+                                       bool createIfMissing = false) {
     map_iterator I = depNodeMap.find(&inst);
     if (I == depNodeMap.end())
       return (!createIfMissing)? NULL :
@@ -240,10 +226,10 @@ public:
   void print(const Function& func, std::ostream &O) const;
 
 public:
-  /// Functions for adding and modifying the dependence graph.
+  /// AddSimpleDependence - adding and modifying the dependence graph.
   /// These should to be used only by dependence analysis implementations.
-  void AddSimpleDependence(Instruction& fromI,
-                           Instruction& toI,
+  ///
+  void AddSimpleDependence(Instruction& fromI, Instruction& toI,
                            DependenceType depType) {
     DepGraphNode* fromNode = getNodeInternal(fromI, /*create*/ true);
     DepGraphNode* toNode   = getNodeInternal(toI,   /*create*/ true);
@@ -252,8 +238,8 @@ public:
   }
 
 #ifdef SUPPORTING_LOOP_DEPENDENCES
-  /// This interface is a placeholder to show what information is needed.
-  /// It will probably change when it starts being used.
+  // This interface is a placeholder to show what information is needed.
+  // It will probably change when it starts being used.
   void AddLoopDependence(Instruction&  fromI,
                          Instruction&  toI,
                          DependenceType      depType,
@@ -263,8 +249,6 @@ public:
                          LoopInfo*           enclosingLoop);
 #endif // SUPPORTING_LOOP_DEPENDENCES
 };
-
-//===----------------------------------------------------------------------===//
 
 } // End llvm namespace
 

@@ -42,7 +42,7 @@ class FunctionModRefInfo;
 
 class MemoryDepAnalysis : public Pass {
   /// The following map and depGraph pointer are temporary until this class
-  /// becomes a FunctionPass instead of a module Pass. */
+  /// becomes a FunctionPass instead of a module Pass.
   hash_map<Function*, DependenceGraph*> funcMap;
   DependenceGraph* funcDepGraph;
 
@@ -51,6 +51,7 @@ class MemoryDepAnalysis : public Pass {
   const FunctionModRefInfo* funcModRef;
 
   /// Internal routine that processes each SCC of the CFG.
+  ///
   void ProcessSCC(std::vector<BasicBlock*> &SCC, ModRefTable& ModRefAfter,
                   bool HasLoop);
 
@@ -61,9 +62,10 @@ public:
   ~MemoryDepAnalysis();
 
   /// Driver function to compute dependence graphs for every function.
+  ///
   bool run(Module &M);
 
-  /// getGraph() -- Retrieve the dependence graph for a function.
+  /// getGraph - Retrieve the dependence graph for a function.
   /// This is temporary and will go away once this is a FunctionPass.
   /// At that point, this class should directly inherit from DependenceGraph.
   /// 
@@ -73,8 +75,7 @@ public:
     return *I->second;
   }
   const DependenceGraph& getGraph(Function& F) const {
-    hash_map<Function*, DependenceGraph*>::const_iterator
-      I = funcMap.find(&F);
+    hash_map<Function*, DependenceGraph*>::const_iterator I = funcMap.find(&F);
     assert(I != funcMap.end());
     return *I->second;
   }
@@ -82,7 +83,6 @@ public:
   /// Release depGraphs held in the Function -> DepGraph map.
   /// 
   virtual void releaseMemory();
-
 
   /// Driver functions to compute the Load/Store Dep. Graph per function.
   /// 

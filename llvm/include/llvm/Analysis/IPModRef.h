@@ -65,23 +65,18 @@ class ModRefInfo;               // Result of IP Mod/Ref for one entity
 class FunctionModRefInfo;       // ModRefInfo for a func and all calls in it
 class IPModRef;                 // Pass that computes IP Mod/Ref info
 
-//---------------------------------------------------------------------------
-// class ModRefInfo 
-// 
-// Purpose:
-//   Representation of Mod/Ref information for a single function or callsite.
-//   This is represented as a pair of bit vectors, one each for Mod and Ref.
-//   Each bit vector is indexed by the node id of the DS graph node index.
-//---------------------------------------------------------------------------
-
+//----------------------------------------------------------------------------
+/// ModRefInfo Class - Representation of Mod/Ref information for a single
+/// function or callsite. This is represented as a pair of bit vectors, one each
+/// for Mod and Ref. Each bit vector is indexed by the node id of the DS graph
+/// node index.
+///
 class ModRefInfo {
   BitSetVector   modNodeSet;            // set of modified nodes
   BitSetVector   refNodeSet;            // set of referenced nodes
   
 public:
-  // 
   // Methods to construct ModRefInfo objects.
-  // 
   ModRefInfo(unsigned int numNodes)
     : modNodeSet(numNodes),
       refNodeSet(numNodes) { }
@@ -95,9 +90,7 @@ public:
   void setNodeIsMod (unsigned nodeId)   { modNodeSet[nodeId] = true; }
   void setNodeIsRef (unsigned nodeId)   { refNodeSet[nodeId] = true; }
 
-  //
   // Methods to query the mod/ref info
-  // 
   bool nodeIsMod (unsigned nodeId) const  { return modNodeSet.test(nodeId); }
   bool nodeIsRef (unsigned nodeId) const  { return refNodeSet.test(nodeId); }
   bool nodeIsKill(unsigned nodeId) const  { return false; }
@@ -115,15 +108,12 @@ public:
 
 
 //----------------------------------------------------------------------------
-// class FunctionModRefInfo
-// 
-// Representation of the results of IP Mod/Ref analysis for a function
-// and for each of the call sites within the function.
-// Each of these are represented as bit vectors of size = the number of
-// nodes in the top-dwon DS graph of the function.  Nodes are identified by
-// their nodeId, in the range [0 .. funcTDGraph.size()-1].
-//----------------------------------------------------------------------------
-
+/// FunctionModRefInfo Class - Representation of the results of IP Mod/Ref
+/// analysis for a function and for each of the call sites within the function.
+/// Each of these are represented as bit vectors of size = the number of nodes
+/// in the top-dwon DS graph of the function.  Nodes are identified by their
+/// nodeId, in the range [0 .. funcTDGraph.size()-1].
+///
 class FunctionModRefInfo {
   const Function&       F;                  // The function
   IPModRef&             IPModRefObj;        // The IPModRef Object owning this
@@ -135,33 +125,33 @@ class FunctionModRefInfo {
 
   friend class IPModRef;
 
-  void          computeModRef   (const Function &func);
-  void          computeModRef   (CallSite call);
-  DSGraph *ResolveCallSiteModRefInfo(CallSite CS,
-                                hash_map<const DSNode*, DSNodeHandle> &NodeMap);
+  void computeModRef(const Function &func);
+  void computeModRef(CallSite call);
+  DSGraph*
+  ResolveCallSiteModRefInfo(CallSite CS,
+                            hash_map<const DSNode*, DSNodeHandle> &NodeMap);
 
 public:
-  /* ctor */    FunctionModRefInfo      (const Function& func,
-                                         IPModRef&       IPModRefObj,
-                                         DSGraph*        tdgClone);
-  /* dtor */    ~FunctionModRefInfo     ();
+  FunctionModRefInfo(const Function& func, IPModRef &IPModRefObj,
+                     DSGraph* tdgClone);
+  ~FunctionModRefInfo();
 
   // Identify the function and its relevant DS graph
   // 
-  const Function& getFunction() const   { return F; }
-  const DSGraph&  getFuncGraph() const  { return *funcTDGraph; }
+  const Function& getFunction() const  { return F; }
+  const DSGraph&  getFuncGraph() const { return *funcTDGraph; }
 
   // Retrieve Mod/Ref results for a single call site and for the function body
   // 
-  const ModRefInfo*     getModRefInfo  (const Function& func) const {
+  const ModRefInfo* getModRefInfo(const Function& func) const {
     return &funcModRefInfo;
   }
-  const ModRefInfo*     getModRefInfo  (const CallInst& callInst) const {
+  const ModRefInfo* getModRefInfo(const CallInst& callInst) const {
     std::map<const Instruction*, ModRefInfo*>::const_iterator I = 
       callSiteModRefInfo.find((Instruction*)&callInst);
     return (I == callSiteModRefInfo.end()) ? NULL : I->second;
   }
-  const ModRefInfo*     getModRefInfo  (const InvokeInst& II) const {
+  const ModRefInfo* getModRefInfo(const InvokeInst& II) const {
     std::map<const Instruction*, ModRefInfo*>::const_iterator I = 
       callSiteModRefInfo.find((Instruction*)&II);
     return (I == callSiteModRefInfo.end()) ? NULL : I->second;
@@ -169,13 +159,13 @@ public:
 
   // Get the nodeIds used to index all Mod/Ref information for current function
   //
-  unsigned              getNodeId       (const DSNode* node) const {
+  unsigned getNodeId(const DSNode* node) const {
     std::map<const DSNode*, unsigned>::const_iterator iter = NodeIds.find(node);
     assert(iter != NodeIds.end() && iter->second < funcModRefInfo.getSize());
     return iter->second;
   }
 
-  unsigned              getNodeId       (const Value* value) const;
+  unsigned getNodeId(const Value* value) const;
 
   // Debugging support methods
   void print(std::ostream &O) const;
@@ -184,19 +174,15 @@ public:
 
 
 //----------------------------------------------------------------------------
-// class IPModRef
-// 
-// Purpose:
-// An interprocedural pass that computes IP Mod/Ref info for functions and
-// for individual call sites.
-// 
-// Given the DSGraph of a function, this class can be queried for
-// a ModRefInfo object describing all the nodes in the DSGraph that are
-// (a) modified, and (b) referenced during an execution of the function
-// from an arbitrary callsite, or during an execution of a single call-site
-// within the function.
-//----------------------------------------------------------------------------
-
+/// IPModRef Class - An interprocedural pass that computes IP Mod/Ref info for
+/// functions and for individual call sites.
+/// 
+/// Given the DSGraph of a function, this class can be queried for
+/// a ModRefInfo object describing all the nodes in the DSGraph that are
+/// (a) modified, and (b) referenced during an execution of the function
+/// from an arbitrary callsite, or during an execution of a single call-site
+/// within the function.
+///
 class IPModRef : public Pass {
   std::map<const Function*, FunctionModRefInfo*> funcToModRefInfoMap;
   Module* M;
@@ -204,17 +190,18 @@ class IPModRef : public Pass {
   FunctionModRefInfo& getFuncInfo(const Function& func,
                                   bool computeIfMissing = false);
 public:
-  IPModRef() : M(NULL)  { }
-  ~IPModRef()           { }
+  IPModRef() : M(NULL)  {}
+  ~IPModRef()           {}
 
-  // Driver function to run IP Mod/Ref on a Module.
-  // This initializes the module reference, and then computes IPModRef
-  // results immediately if demand-driven analysis was *not* specified.
-  // 
+  /// run - Driver function to run IP Mod/Ref on a Module.
+  /// This initializes the module reference, and then computes IPModRef
+  /// results immediately if demand-driven analysis was *not* specified.
+  /// 
   virtual bool run(Module &M);
 
-  // Retrieve the Mod/Ref information for a single function
-  // 
+  /// getFunctionModRefInfo - Retrieve the Mod/Ref information for a single
+  /// function
+  /// 
   const FunctionModRefInfo& getFunctionModRefInfo(const Function& func) {
     return getFuncInfo(func);
   }
@@ -229,17 +216,16 @@ public:
   void print(std::ostream &O) const;
   void dump() const;
 
-  // Release memory held by this pass when the pass pipeline is done
-  // 
+  /// releaseMemory - Release memory held by this pass when the pass pipeline is
+  /// done
+  /// 
   virtual void releaseMemory();
 
-  // getAnalysisUsage - This pass requires top-down data structure graphs.
-  // It modifies nothing.
-  // 
+  /// getAnalysisUsage - This pass requires top-down data structure graphs.
+  /// It modifies nothing.
+  /// 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 };
-
-//===----------------------------------------------------------------------===//
 
 } // End llvm namespace
 

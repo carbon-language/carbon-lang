@@ -25,15 +25,15 @@ class ConstantInt;
 
 struct ExprType;
 
-/// ClassifyExpr: Analyze an expression to determine the complexity of the
+/// ClassifyExpr - Analyze an expression to determine the complexity of the
 /// expression, and which other values it depends on.
 ///
 ExprType ClassifyExpr(Value *Expr);
 
-// ExprType - Represent an expression of the form CONST*VAR+CONST
-// or simpler.  The expression form that yields the least information about the
-// expression is just the Linear form with no offset.
-//
+/// ExprType Class - Represent an expression of the form CONST*VAR+CONST
+/// or simpler.  The expression form that yields the least information about the
+/// expression is just the Linear form with no offset.
+///
 struct ExprType {
   enum ExpressionType {
     Constant,            // Expr is a simple constant, Offset is value
@@ -52,9 +52,9 @@ struct ExprType {
   ExprType(Value *Val);        // Create a linear or constant expression
   ExprType(const ConstantInt *scale, Value *var, const ConstantInt *offset);
 
-  // If this expression has an intrinsic type, return it.  If it is zero, return
-  // the specified type.
-  //
+  /// If this expression has an intrinsic type, return it.  If it is zero,
+  /// return the specified type.
+  ///
   const Type *getExprType(const Type *Default) const;
 };
 

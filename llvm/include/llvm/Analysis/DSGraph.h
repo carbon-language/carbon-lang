@@ -56,6 +56,7 @@ public:
 
   /// replaceScalar - When an instruction needs to be modified, this method can
   /// be used to update the scalar map to remove the old and insert the new.
+  ///
   void replaceScalar(Value *Old, Value *New) {
     iterator I = find(Old);
     assert(I != end() && "Old value is not in the map!");
@@ -189,6 +190,7 @@ public:
 
   /// getFunctionNames - Return a space separated list of the name of the
   /// functions in this graph (if any)
+  ///
   std::string getFunctionNames() const;
 
   /// addNode - Add a new node to the graph.
@@ -240,6 +242,7 @@ public:
 
   /// getReturnNodes - Return the mapping of functions to their return nodes for
   /// this graph.
+  ///
   const ReturnNodesTy &getReturnNodes() const { return ReturnNodes; }
         ReturnNodesTy &getReturnNodes()       { return ReturnNodes; }
 
@@ -273,6 +276,7 @@ public:
 
   /// viewGraph - Emit a dot graph, run 'dot', run gv on the postscript file,
   /// then cleanup.  For use from the debugger.
+  ///
   void viewGraph() const;
 
   void writeGraphToFile(std::ostream &O, const std::string &GraphName) const;
@@ -354,7 +358,6 @@ public:
   void mergeInGraph(const DSCallSite &CS, Function &F, const DSGraph &Graph,
                     unsigned CloneFlags);
 
-
   /// getCallSiteForArguments - Get the arguments and return value bindings for
   /// the specified function in the current graph.
   ///
@@ -389,54 +392,57 @@ public:
 };
 
 
-  /// ReachabilityCloner - This class is used to incrementally clone and merge
-  /// nodes from a non-changing source graph into a potentially mutating
-  /// destination graph.  Nodes are only cloned over on demand, either in
-  /// responds to a merge() or getClonedNH() call.  When a node is cloned over,
-  /// all of the nodes reachable from it are automatically brought over as well.
-  class ReachabilityCloner {
-    DSGraph &Dest;
-    const DSGraph &Src;
+/// ReachabilityCloner - This class is used to incrementally clone and merge
+/// nodes from a non-changing source graph into a potentially mutating
+/// destination graph.  Nodes are only cloned over on demand, either in
+/// responds to a merge() or getClonedNH() call.  When a node is cloned over,
+/// all of the nodes reachable from it are automatically brought over as well.
+///
+class ReachabilityCloner {
+  DSGraph &Dest;
+  const DSGraph &Src;
 
-    /// BitsToKeep - These bits are retained from the source node when the
-    /// source nodes are merged into the destination graph.
-    unsigned BitsToKeep;
-    unsigned CloneFlags;
+  /// BitsToKeep - These bits are retained from the source node when the
+  /// source nodes are merged into the destination graph.
+  unsigned BitsToKeep;
+  unsigned CloneFlags;
 
-    // NodeMap - A mapping from nodes in the source graph to the nodes that
-    // represent them in the destination graph.
-    DSGraph::NodeMapTy NodeMap;
-  public:
-    ReachabilityCloner(DSGraph &dest, const DSGraph &src, unsigned cloneFlags)
-      : Dest(dest), Src(src), CloneFlags(cloneFlags) {
-      assert(&Dest != &Src && "Cannot clone from graph to same graph!");
-      BitsToKeep = ~DSNode::DEAD;
-      if (CloneFlags & DSGraph::StripAllocaBit)
-        BitsToKeep &= ~DSNode::AllocaNode;
-      if (CloneFlags & DSGraph::StripModRefBits)
-        BitsToKeep &= ~(DSNode::Modified | DSNode::Read);
-      if (CloneFlags & DSGraph::StripIncompleteBit)
-        BitsToKeep &= ~DSNode::Incomplete;
-    }
-    
-    DSNodeHandle getClonedNH(const DSNodeHandle &SrcNH);
+  // NodeMap - A mapping from nodes in the source graph to the nodes that
+  // represent them in the destination graph.
+  DSGraph::NodeMapTy NodeMap;
+public:
+  ReachabilityCloner(DSGraph &dest, const DSGraph &src, unsigned cloneFlags)
+    : Dest(dest), Src(src), CloneFlags(cloneFlags) {
+    assert(&Dest != &Src && "Cannot clone from graph to same graph!");
+    BitsToKeep = ~DSNode::DEAD;
+    if (CloneFlags & DSGraph::StripAllocaBit)
+      BitsToKeep &= ~DSNode::AllocaNode;
+    if (CloneFlags & DSGraph::StripModRefBits)
+      BitsToKeep &= ~(DSNode::Modified | DSNode::Read);
+    if (CloneFlags & DSGraph::StripIncompleteBit)
+      BitsToKeep &= ~DSNode::Incomplete;
+  }
+  
+  DSNodeHandle getClonedNH(const DSNodeHandle &SrcNH);
 
-    void merge(const DSNodeHandle &NH, const DSNodeHandle &SrcNH);
+  void merge(const DSNodeHandle &NH, const DSNodeHandle &SrcNH);
 
-    /// mergeCallSite - Merge the nodes reachable from the specified src call
-    /// site into the nodes reachable from DestCS.
-    void mergeCallSite(const DSCallSite &DestCS, const DSCallSite &SrcCS);
+  /// mergeCallSite - Merge the nodes reachable from the specified src call
+  /// site into the nodes reachable from DestCS.
+  ///
+  void mergeCallSite(const DSCallSite &DestCS, const DSCallSite &SrcCS);
 
-    bool clonedAnyNodes() const { return !NodeMap.empty(); }
+  bool clonedAnyNodes() const { return !NodeMap.empty(); }
 
-    /// hasClonedNode - Return true if the specified node has been cloned from
-    /// the source graph into the destination graph.
-    bool hasClonedNode(const DSNode *N) {
-      return NodeMap.count(N);
-    }
+  /// hasClonedNode - Return true if the specified node has been cloned from
+  /// the source graph into the destination graph.
+  bool hasClonedNode(const DSNode *N) {
+    return NodeMap.count(N);
+  }
 
-    void destroy() { NodeMap.clear(); }
-  };
+  void destroy() { NodeMap.clear(); }
+};
+
 } // End llvm namespace
 
 #endif

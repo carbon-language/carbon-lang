@@ -35,10 +35,9 @@ class Instruction;
 template <typename GraphType> struct GraphTraits;
 
 //===----------------------------------------------------------------------===//
-//
-// DominatorBase - Base class that other, more interesting dominator analyses
-// inherit from.
-//
+/// DominatorBase - Base class that other, more interesting dominator analyses
+/// inherit from.
+///
 class DominatorBase : public FunctionPass {
 protected:
   std::vector<BasicBlock*> Roots;
@@ -46,21 +45,22 @@ protected:
 
   inline DominatorBase(bool isPostDom) : Roots(), IsPostDominators(isPostDom) {}
 public:
-  // Return the root blocks of the current CFG.  This may include multiple
-  // blocks if we are computing post dominators.  For forward dominators, this
-  // will always be a single block (the entry node).
+  /// getRoots -  Return the root blocks of the current CFG.  This may include
+  /// multiple blocks if we are computing post dominators.  For forward
+  /// dominators, this will always be a single block (the entry node).
+  ///
   inline const std::vector<BasicBlock*> &getRoots() const { return Roots; }
 
-  // Returns true if analysis based of postdoms
+  /// isPostDominator - Returns true if analysis based of postdoms
+  ///
   bool isPostDominator() const { return IsPostDominators; }
 };
 
 
 //===----------------------------------------------------------------------===//
-//
-// ImmediateDominators - Calculate the immediate dominator for each node in a
-// function.
-//
+/// ImmediateDominators - Calculate the immediate dominator for each node in a
+/// function.
+///
 class ImmediateDominatorsBase : public DominatorBase {
 protected:
   std::map<BasicBlock*, BasicBlock*> IDoms;
@@ -76,14 +76,15 @@ public:
   inline const_iterator end()   const { return IDoms.end(); }
   inline const_iterator find(BasicBlock* B) const { return IDoms.find(B);}
 
-  // operator[] - Return the idom for the specified basic block.  The start
-  // node returns null, because it does not have an immediate dominator.
-  //
+  /// operator[] - Return the idom for the specified basic block.  The start
+  /// node returns null, because it does not have an immediate dominator.
+  ///
   inline BasicBlock *operator[](BasicBlock *BB) const {
     return get(BB);
   }
 
-  // get() - Synonym for operator[].
+  /// get() - Synonym for operator[].
+  ///
   inline BasicBlock *get(BasicBlock *BB) const {
     std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
@@ -105,19 +106,21 @@ public:
   /// change the current immediate dominator for the specified block to another
   /// block.  This method requires that BB already have an IDom, otherwise just
   /// use addNewBlock.
+  ///
   void setImmediateDominator(BasicBlock *BB, BasicBlock *NewIDom) {
     assert(IDoms.find(BB) != IDoms.end() && "BB doesn't have idom yet!");
     IDoms[BB] = NewIDom;
   }
 
-  // print - Convert to human readable form
+  /// print - Convert to human readable form
+  ///
   virtual void print(std::ostream &OS) const;
 };
 
 //===-------------------------------------
-// ImmediateDominators Class - Concrete subclass of ImmediateDominatorsBase that
-// is used to compute a normal immediate dominator set.
-//
+/// ImmediateDominators Class - Concrete subclass of ImmediateDominatorsBase
+/// that is used to compute a normal immediate dominator set.
+///
 struct ImmediateDominators : public ImmediateDominatorsBase {
   ImmediateDominators() : ImmediateDominatorsBase(false) {}
 
@@ -158,12 +161,11 @@ private:
 
 
 //===----------------------------------------------------------------------===//
-//
-// DominatorSet - Maintain a set<BasicBlock*> for every basic block in a
-// function, that represents the blocks that dominate the block.  If the block
-// is unreachable in this function, the set will be empty.  This cannot happen
-// for reachable code, because every block dominates at least itself.
-//
+/// DominatorSet - Maintain a set<BasicBlock*> for every basic block in a
+/// function, that represents the blocks that dominate the block.  If the block
+/// is unreachable in this function, the set will be empty.  This cannot happen
+/// for reachable code, because every block dominates at least itself.
+///
 struct DominatorSetBase : public DominatorBase {
   typedef std::set<BasicBlock*> DomSetType;    // Dom set for a bb
   // Map of dom sets
@@ -197,6 +199,7 @@ public:
 
   /// isReachable - Return true if the specified basicblock is reachable.  If
   /// the block is reachable, we have dominator set information for it.
+  ///
   bool isReachable(BasicBlock *BB) const {
     return !getDominators(BB).empty();
   }
@@ -214,6 +217,7 @@ public:
   }
 
   /// print - Convert to human readable form
+  ///
   virtual void print(std::ostream &OS) const;
 
   /// dominates - Return true if A dominates B.  This performs the special
@@ -227,14 +231,15 @@ public:
 
   /// addBasicBlock - Call to update the dominator set with information about a
   /// new block that was inserted into the function.
+  ///
   void addBasicBlock(BasicBlock *BB, const DomSetType &Dominators) {
     assert(find(BB) == end() && "Block already in DominatorSet!");
     Doms.insert(std::make_pair(BB, Dominators));
   }
 
-  // addDominator - If a new block is inserted into the CFG, then method may be
-  // called to notify the blocks it dominates that it is in their set.
-  //
+  /// addDominator - If a new block is inserted into the CFG, then method may be
+  /// called to notify the blocks it dominates that it is in their set.
+  ///
   void addDominator(BasicBlock *BB, BasicBlock *NewDominator) {
     iterator I = find(BB);
     assert(I != end() && "BB is not in DominatorSet!");
@@ -244,9 +249,9 @@ public:
 
 
 //===-------------------------------------
-// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
-// compute a normal dominator set.
-//
+/// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
+/// compute a normal dominator set.
+///
 struct DominatorSet : public DominatorSetBase {
   DominatorSet() : DominatorSetBase(false) {}
 
@@ -257,7 +262,8 @@ struct DominatorSet : public DominatorSetBase {
     return Roots[0];
   }
 
-  // getAnalysisUsage - This simply provides a dominator set
+  /// getAnalysisUsage - This simply provides a dominator set
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<ImmediateDominators>();
     AU.setPreservesAll();
@@ -266,9 +272,8 @@ struct DominatorSet : public DominatorSetBase {
 
 
 //===----------------------------------------------------------------------===//
-//
-// DominatorTree - Calculate the immediate dominator tree for a function.
-//
+/// DominatorTree - Calculate the immediate dominator tree for a function.
+///
 struct DominatorTreeBase : public DominatorBase {
   class Node;
 protected:
@@ -298,18 +303,18 @@ public:
     inline Node *getIDom() const { return IDom; }
     inline const std::vector<Node*> &getChildren() const { return Children; }
 
-    // dominates - Returns true iff this dominates N.  Note that this is not a 
-    // constant time operation!
+    /// dominates - Returns true iff this dominates N.  Note that this is not a 
+    /// constant time operation!
+    ///
     inline bool dominates(const Node *N) const {
       const Node *IDom;
       while ((IDom = N->getIDom()) != 0 && IDom != this)
-	N = IDom;   // Walk up the tree
+      N = IDom;   // Walk up the tree
       return IDom != 0;
     }
 
   private:
-    inline Node(BasicBlock *BB, Node *iDom) 
-      : TheBB(BB), IDom(iDom) {}
+    inline Node(BasicBlock *BB, Node *iDom) : TheBB(BB), IDom(iDom) {}
     inline Node *addChild(Node *C) { Children.push_back(C); return C; }
 
     void setIDom(Node *NewIDom);
@@ -333,13 +338,13 @@ public:
     return getNode(BB);
   }
 
-  // getRootNode - This returns the entry node for the CFG of the function.  If
-  // this tree represents the post-dominance relations for a function, however,
-  // this root may be a node with the block == NULL.  This is the case when
-  // there are multiple exit nodes from a particular function.  Consumers of
-  // post-dominance information must be capable of dealing with this
-  // possibility.
-  //
+  /// getRootNode - This returns the entry node for the CFG of the function.  If
+  /// this tree represents the post-dominance relations for a function, however,
+  /// this root may be a node with the block == NULL.  This is the case when
+  /// there are multiple exit nodes from a particular function.  Consumers of
+  /// post-dominance information must be capable of dealing with this
+  /// possibility.
+  ///
   Node *getRootNode() { return RootNode; }
   const Node *getRootNode() const { return RootNode; }
 
@@ -366,14 +371,15 @@ public:
   }
 
   /// print - Convert to human readable form
+  ///
   virtual void print(std::ostream &OS) const;
 };
 
 
 //===-------------------------------------
-// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
-// compute a normal dominator tree.
-//
+/// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
+/// compute a normal dominator tree.
+///
 struct DominatorTree : public DominatorTreeBase {
   DominatorTree() : DominatorTreeBase(false) {}
 
@@ -400,9 +406,9 @@ private:
 };
 
 //===-------------------------------------
-// DominatorTree GraphTraits specialization so the DominatorTree can be
-// iterable by generic graph iterators.
-
+/// DominatorTree GraphTraits specialization so the DominatorTree can be
+/// iterable by generic graph iterators.
+///
 template <> struct GraphTraits<DominatorTree::Node*> {
   typedef DominatorTree::Node NodeType;
   typedef NodeType::iterator  ChildIteratorType;
@@ -426,9 +432,8 @@ template <> struct GraphTraits<DominatorTree*>
 };
 
 //===----------------------------------------------------------------------===//
-//
-// DominanceFrontier - Calculate the dominance frontiers for a function.
-//
+/// DominanceFrontier - Calculate the dominance frontiers for a function.
+///
 struct DominanceFrontierBase : public DominatorBase {
   typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
@@ -465,15 +470,16 @@ public:
     I->second.erase(Node);
   }
 
-  // print - Convert to human readable form
+  /// print - Convert to human readable form
+  ///
   virtual void print(std::ostream &OS) const;
 };
 
 
 //===-------------------------------------
-// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
-// compute a normal dominator tree.
-//
+/// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
+/// compute a normal dominator tree.
+///
 struct DominanceFrontier : public DominanceFrontierBase {
   DominanceFrontier() : DominanceFrontierBase(false) {}
 

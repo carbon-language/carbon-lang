@@ -35,9 +35,9 @@ namespace DS { // FIXME: After the paper, this should get cleaned up
          PointerSize = 1 << PointerShift
   };
 
-  // isPointerType - Return true if this first class type is big enough to hold
-  // a pointer.
-  //
+  /// isPointerType - Return true if this first class type is big enough to hold
+  /// a pointer.
+  ///
   bool isPointerType(const Type *Ty);
 };
 
@@ -89,6 +89,7 @@ public:
 
   /// isNull - Check to see if getNode() == 0, without going through the trouble
   /// of checking to see if we are forwarding...
+  ///
   bool isNull() const { return N == 0; }
 
   // Allow explicit conversion to DSNode...
@@ -112,7 +113,8 @@ public:
   ///
   void mergeWith(const DSNodeHandle &N) const;
 
-  // hasLink - Return true if there is a link at the specified offset...
+  /// hasLink - Return true if there is a link at the specified offset...
+  ///
   inline bool hasLink(unsigned Num) const;
 
   /// getLink - Treat this current node pointer as a pointer to a structure of
@@ -262,8 +264,9 @@ public:
     }
   }
 
-  // mergeWith - Merge the return value and parameters of the these two call
-  // sites.
+  /// mergeWith - Merge the return value and parameters of the these two call
+  /// sites.
+  ///
   void mergeWith(DSCallSite &CS) {
     getRetVal().mergeWith(CS.getRetVal());
     unsigned MinArgs = getNumPtrArgs();

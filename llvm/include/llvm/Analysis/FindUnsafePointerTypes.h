@@ -40,18 +40,18 @@ public:
     return UnsafeTypes;
   }
 
-  // run - Inspect the operations that the specified module does on
-  // values of various types.  If they are deemed to be 'unsafe' note that the
-  // type is not safe to transform.
-  //
+  /// run - Inspect the operations that the specified module does on
+  /// values of various types.  If they are deemed to be 'unsafe' note that the
+  /// type is not safe to transform.
+  ///
   virtual bool run(Module &M);
 
-  // print - Loop over the results of the analysis, printing out unsafe types.
-  //
+  /// print - Loop over the results of the analysis, printing out unsafe types.
+  ///
   void print(std::ostream &o, const Module *Mod) const;
 
-  // getAnalysisUsage - Of course, we provide ourself...
-  //
+  /// getAnalysisUsage - Of course, we provide ourself...
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }

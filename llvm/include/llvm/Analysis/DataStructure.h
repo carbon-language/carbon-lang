@@ -27,9 +27,9 @@ class DSNode;
 
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
-  // isPointerType - Return true if this first class type is big enough to hold
-  // a pointer.
-  //
+  /// isPointerType - Return true if this first class type is big enough to hold
+  /// a pointer.
+  ///
   bool isPointerType(const Type *Ty);
 }
 
@@ -53,7 +53,8 @@ public:
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
-  // getDSGraph - Return the data structure graph for the specified function.
+  /// getDSGraph - Return the data structure graph for the specified function.
+  ///
   DSGraph &getDSGraph(const Function &F) const {
     hash_map<Function*, DSGraph*>::const_iterator I =
       DSInfo.find(const_cast<Function*>(&F));
@@ -63,13 +64,17 @@ public:
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
 
-  // print - Print out the analysis results...
+  /// print - Print out the analysis results...
+  ///
   void print(std::ostream &O, const Module *M) const;
 
-  // If the pass pipeline is done with this pass, we can release our memory...
+  /// releaseMemory - if the pass pipeline is done with this pass, we can
+  /// release our memory...
+  /// 
   virtual void releaseMemory();
 
-  // getAnalysisUsage - This obviously provides a data structure graph.
+  /// getAnalysisUsage - This obviously provides a data structure graph.
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AU.addRequired<TargetData>();
@@ -77,10 +82,10 @@ public:
 };
 
 
-// BUDataStructures - The analysis that computes the interprocedurally closed
-// data structure graphs for all of the functions in the program.  This pass
-// only performs a "Bottom Up" propagation (hence the name).
-//
+/// BUDataStructures - The analysis that computes the interprocedurally closed
+/// data structure graphs for all of the functions in the program.  This pass
+/// only performs a "Bottom Up" propagation (hence the name).
+///
 class BUDataStructures : public Pass {
 protected:
   // DSInfo, one graph for each function
@@ -96,7 +101,8 @@ public:
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
-  // getDSGraph - Return the data structure graph for the specified function.
+  /// getDSGraph - Return the data structure graph for the specified function.
+  ///
   DSGraph &getDSGraph(const Function &F) const {
     hash_map<Function*, DSGraph*>::const_iterator I =
       DSInfo.find(const_cast<Function*>(&F));
@@ -106,10 +112,13 @@ public:
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
 
-  // print - Print out the analysis results...
+  /// print - Print out the analysis results...
+  ///
   void print(std::ostream &O, const Module *M) const;
 
-  // If the pass pipeline is done with this pass, we can release our memory...
+  /// releaseMemory - if the pass pipeline is done with this pass, we can
+  /// release our memory...
+  ///
   virtual void releaseMemory();
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -136,10 +145,10 @@ private:
 };
 
 
-// TDDataStructures - Analysis that computes new data structure graphs
-// for each function using the closed graphs for the callers computed
-// by the bottom-up pass.
-//
+/// TDDataStructures - Analysis that computes new data structure graphs
+/// for each function using the closed graphs for the callers computed
+/// by the bottom-up pass.
+///
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
@@ -154,7 +163,8 @@ public:
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
-  // getDSGraph - Return the data structure graph for the specified function.
+  /// getDSGraph - Return the data structure graph for the specified function.
+  ///
   DSGraph &getDSGraph(const Function &F) const {
     hash_map<Function*, DSGraph*>::const_iterator I =
       DSInfo.find(const_cast<Function*>(&F));
@@ -164,13 +174,16 @@ public:
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
 
-  // print - Print out the analysis results...
+  /// print - Print out the analysis results...
+  ///
   void print(std::ostream &O, const Module *M) const;
 
-  // If the pass pipeline is done with this pass, we can release our memory...
+  /// If the pass pipeline is done with this pass, we can release our memory...
+  ///
   virtual void releaseMyMemory();
 
-  // getAnalysisUsage - This obviously provides a data structure graph.
+  /// getAnalysisUsage - This obviously provides a data structure graph.
+  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AU.addRequired<BUDataStructures>();
@@ -188,11 +201,11 @@ private:
 };
 
 
-// CompleteBUDataStructures - This is the exact same as the bottom-up graphs,
-// but we use take a completed call graph and inline all indirect callees into
-// their callers graphs, making the result more useful for things like pool
-// allocation.
-//
+/// CompleteBUDataStructures - This is the exact same as the bottom-up graphs,
+/// but we use take a completed call graph and inline all indirect callees into
+/// their callers graphs, making the result more useful for things like pool
+/// allocation.
+///
 struct CompleteBUDataStructures : public BUDataStructures {
   virtual bool run(Module &M);
 
@@ -200,7 +213,8 @@ struct CompleteBUDataStructures : public BUDataStructures {
     return DSInfo.find(const_cast<Function*>(&F)) != DSInfo.end();
   }
 
-  // getDSGraph - Return the data structure graph for the specified function.
+  /// getDSGraph - Return the data structure graph for the specified function.
+  ///
   DSGraph &getDSGraph(const Function &F) const {
     hash_map<Function*, DSGraph*>::const_iterator I =
       DSInfo.find(const_cast<Function*>(&F));
@@ -217,7 +231,8 @@ struct CompleteBUDataStructures : public BUDataStructures {
     AU.addRequired<TDDataStructures>();
   }
 
-  // print - Print out the analysis results...
+  /// print - Print out the analysis results...
+  ///
   void print(std::ostream &O, const Module *M) const;
 
 private:
@@ -227,8 +242,6 @@ private:
   DSGraph &getOrCreateGraph(Function &F);
   void processGraph(DSGraph &G);
 };
-
-
 
 } // End llvm namespace
 

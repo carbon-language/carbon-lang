@@ -40,10 +40,12 @@ class DSNode {
   /// that this node really is.  When nodes get folded together, the node to be
   /// eliminated has these fields filled in, otherwise ForwardNH.getNode() is
   /// null.
+  ///
   DSNodeHandle ForwardNH;
 
   /// Next, Prev - These instance variables are used to keep the node on a
   /// doubly-linked ilist in the DSGraph.
+  ///
   DSNode *Next, *Prev;
   friend class ilist_traits<DSNode>;
 
@@ -105,12 +107,14 @@ public:
   
   /// DSNode ctor - Create a node of the specified type, inserting it into the
   /// specified graph.
+  ///
   DSNode(const Type *T, DSGraph *G);
 
   /// DSNode "copy ctor" - Copy the specified node, inserting it into the
   /// specified graph.  If NullLinks is true, then null out all of the links,
   /// but keep the same number of them.  This can be used for efficiency if the
   /// links are just going to be clobbered anyway.
+  ///
   DSNode(const DSNode &, DSGraph *G, bool NullLinks = false);
 
   ~DSNode() {
@@ -133,8 +137,10 @@ public:
   ///
   unsigned getSize() const { return Size; }
 
-  // getType - Return the node type of this object...
+  /// getType - Return the node type of this object...
+  ///
   const Type *getType() const { return Ty; }
+
   bool isArray() const { return NodeType & Array; }
 
   /// hasNoReferrers - Return true if nothing is pointing to this node at all.
@@ -156,6 +162,7 @@ public:
 
   /// getForwardNode - This method returns the node that this node is forwarded
   /// to, if any.
+  ///
   DSNode *getForwardNode() const { return ForwardNH.getNode(); }
 
   /// isForwarding - Return true if this node is forwarding to another.
@@ -164,9 +171,10 @@ public:
 
   /// stopForwarding - When the last reference to this forwarding node has been
   /// dropped, delete the node.
+  ///
   void stopForwarding() {
     assert(isForwarding() &&
-           "Node isn't forwarding, cannot stopForwarding!");
+           "Node isn't forwarding, cannot stopForwarding()!");
     ForwardNH.setNode(0);
     assert(ParentGraph == 0 &&
            "Forwarding nodes must have been removed from graph!");
@@ -184,6 +192,7 @@ public:
   }
 
   /// getLink - Return the link at the specified offset.
+  ///
   DSNodeHandle &getLink(unsigned Offset) {
     assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&
            "Pointer offset not aligned correctly!");
@@ -283,6 +292,7 @@ public:
 
   /// getNodeFlags - Return all of the flags set on the node.  If the DEAD flag
   /// is set, hide it from the caller.
+  ///
   unsigned getNodeFlags() const { return NodeType & ~DEAD; }
 
   bool isAllocaNode()  const { return NodeType & AllocaNode; }
@@ -331,6 +341,7 @@ public:
 
   /// remapLinks - Change all of the Links in the current node according to the
   /// specified mapping.
+  ///
   void remapLinks(hash_map<const DSNode*, DSNodeHandle> &OldNodeMap);
 
   /// markReachableNodes - This method recursively traverses the specified
@@ -423,7 +434,7 @@ inline void DSNodeHandle::setLink(unsigned Off, const DSNodeHandle &NH) {
   getNode()->setLink(Off+Offset, NH);
 }
 
-///  addEdgeTo - Add an edge from the current node to the specified node.  This
+/// addEdgeTo - Add an edge from the current node to the specified node.  This
 /// can cause merging of nodes in the graph.
 ///
 inline void DSNodeHandle::addEdgeTo(unsigned Off, const DSNodeHandle &Node) {
