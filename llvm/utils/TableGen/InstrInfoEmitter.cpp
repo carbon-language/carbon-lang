@@ -107,6 +107,7 @@ void InstrInfoEmitter::emitRecord(Record *R, unsigned Num, Record *InstrInfo,
   // Emit all of the target indepedent flags...
   if (R->getValueAsBit("isReturn"))     OS << "|M_RET_FLAG";
   if (R->getValueAsBit("isBranch"))     OS << "|M_BRANCH_FLAG";
+  if (R->getValueAsBit("isBarrier"))    OS << "|M_BARRIER_FLAG";
   if (R->getValueAsBit("isCall"  ))     OS << "|M_CALL_FLAG";
   if (R->getValueAsBit("isTwoAddress")) OS << "|M_2_ADDR_FLAG";
   if (R->getValueAsBit("isTerminator")) OS << "|M_TERMINATOR_FLAG";
