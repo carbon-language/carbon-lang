@@ -30,10 +30,15 @@ class MachineConstantPool {
 public:
 
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
-  /// an existing one.  This should eventually allow sharing of duplicate
-  /// objects in the constant pool, but this is adequate for now.
+  /// an existing one.
   ///
   unsigned getConstantPoolIndex(Constant *C) {
+    // Check to see if we already have this constant.
+    //
+    // FIXME, this could be made much more efficient for large constant pools.
+    for (unsigned i = 0, e = Constants.size(); i != e; ++i)
+      if (Constants[i] == C)
+        return i;
     Constants.push_back(C);
     return Constants.size()-1;
   }
