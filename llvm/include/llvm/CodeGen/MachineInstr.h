@@ -14,7 +14,6 @@
 #include <Support/iterator>
 #include <Support/hash_set>
 class Instruction;
-using std::vector;
 
 //---------------------------------------------------------------------------
 // class MachineOperand 
@@ -281,10 +280,10 @@ class MachineInstr :  public Annotable,         // Values are annotable
                       public NonCopyable {      // Disable copy operations
   MachineOpCode    opCode;              // the opcode
   OpCodeMask       opCodeMask;          // extra bits for variants of an opcode
-  vector<MachineOperand> operands;      // the operands
-  vector<Value*>   implicitRefs;        // values implicitly referenced by this
-  vector<bool>     implicitIsDef;       //  machine instruction (eg, call args)
-  vector<bool>     implicitIsDefAndUse; //
+  std::vector<MachineOperand> operands; // the operands
+  std::vector<Value*>   implicitRefs;   // values implicitly referenced by this
+  std::vector<bool>     implicitIsDef;  //  machine instruction (eg, call args)
+  std::vector<bool>     implicitIsDefAndUse;
   hash_set<int>    regsUsed;            // all machine registers used for this
                                         //  instruction, including regs used
                                         //  to save values across the instr.
