@@ -676,7 +676,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 // fix up references to values.  At this point we know that Dest is an external
 // function, and that Src is not.
 //
-static bool LinkFunctionBody(Function *Dest, const Function *Src,
+static bool LinkFunctionBody(Function *Dest, Function *Src,
                              std::map<const Value*, Value*> &GlobalMap,
                              std::string *Err) {
   assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
@@ -684,7 +684,7 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
 
   // Go through and convert function arguments over...
   Function::aiterator DI = Dest->abegin();
-  for (Function::const_aiterator I = Src->abegin(), E = Src->aend();
+  for (Function::aiterator I = Src->abegin(), E = Src->aend();
        I != E; ++I, ++DI) {
     DI->setName(I->getName());  // Copy the name information over...
 
@@ -692,27 +692,8 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
     LocalMap.insert(std::make_pair(I, DI));
   }
 
-  // Loop over all of the basic blocks, copying the instructions over...
-  //
-  for (Function::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
-    // Create new basic block and add to mapping and the Dest function...
-    BasicBlock *DBB = new BasicBlock(I->getName(), Dest);
-    LocalMap.insert(std::make_pair(I, DBB));
-
-    // Loop over all of the instructions in the src basic block, copying them
-    // over.  Note that this is broken in a strict sense because the cloned
-    // instructions will still be referencing values in the Src module, not
-    // the remapped values.  In our case, however, we will not get caught and 
-    // so we can delay patching the values up until later...
-    //
-    for (BasicBlock::const_iterator II = I->begin(), IE = I->end(); 
-         II != IE; ++II) {
-      Instruction *DI = II->clone();
-      DI->setName(II->getName());
-      DBB->getInstList().push_back(DI);
-      LocalMap.insert(std::make_pair(II, DI));
-    }
-  }
+  // Splice the body of the source function into the dest function.
+  Dest->getBasicBlockList().splice(Dest->end(), Src->getBasicBlockList());
 
   // At this point, all of the instructions and values of the function are now
   // copied over.  The only problem is that they are still referencing values in
@@ -723,7 +704,8 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
-        *OI = RemapOperand(*OI, LocalMap, &GlobalMap);
+        if (!isa<Instruction>(*OI) && !isa<BasicBlock>(*OI))
+          *OI = RemapOperand(*OI, LocalMap, &GlobalMap);
 
   return false;
 }
@@ -733,14 +715,14 @@ static bool LinkFunctionBody(Function *Dest, const Function *Src,
 // source module into the DestModule.  This consists basically of copying the
 // function over and fixing up references to values.
 //
-static bool LinkFunctionBodies(Module *Dest, const Module *Src,
+static bool LinkFunctionBodies(Module *Dest, Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
                                std::string *Err) {
 
   // Loop over all of the functions in the src module, mapping them over as we
   // go
   //
-  for (Module::const_iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF){
+  for (Module::iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF) {
     if (!SF->isExternal()) {                  // No body if function is external
       Function *DF = cast<Function>(ValueMap[SF]); // Destination function
 
