@@ -38,6 +38,7 @@ class MethodLiveVarInfo;
 
 enum SchedDebugLevel_t {
   Sched_NoDebugInfo,
+  Sched_Disable,
   Sched_PrintMachineCode, 
   Sched_PrintSchedTrace,
   Sched_PrintSchedGraphs,
