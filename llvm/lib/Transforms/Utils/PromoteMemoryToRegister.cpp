@@ -4,7 +4,8 @@
 // alloca instructions which only have loads and stores as uses.  An alloca is
 // transformed by using dominator frontiers to place PHI nodes, then traversing
 // the function in depth-first order to rewrite loads and stores as appropriate.
-// This is just the standard SSA construction algorithm.
+// This is just the standard SSA construction algorithm to construct "pruned"
+// SSA form.
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,6 +43,7 @@ namespace {
   struct PromoteMem2Reg {
     // Allocas - The alloca instructions being promoted
     std::vector<AllocaInst*> Allocas;
+    DominatorTree &DT;
     DominanceFrontier &DF;
     const TargetData &TD;
 
@@ -55,29 +57,33 @@ namespace {
     std::set<BasicBlock*> Visited;
 
   public:
-    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominanceFrontier &df,
-                   const TargetData &td) : Allocas(A), DF(df), TD(td) {}
+    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
+                   DominanceFrontier &df, const TargetData &td)
+      : Allocas(A), DT(dt), DF(df), TD(td) {}
 
     void run();
 
   private:
+    void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
+                               std::set<PHINode*> &DeadPHINodes);
     void PromoteLocallyUsedAlloca(AllocaInst *AI);
 
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     std::vector<Value*> &IncVals);
-    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version);
+    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
+                      std::set<PHINode*> &InsertedPHINodes);
   };
 }  // end of anonymous namespace
 
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
-  for (unsigned i = 0; i != Allocas.size(); ++i) {
-    AllocaInst *AI = Allocas[i];
+  for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
+    AllocaInst *AI = Allocas[AllocaNum];
 
     assert(isAllocaPromotable(AI, TD) &&
            "Cannot promote non-promotable alloca!");
-    assert(Allocas[i]->getParent()->getParent() == &F &&
+    assert(AI->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
 
     if (AI->use_empty()) {
@@ -85,15 +91,17 @@ void PromoteMem2Reg::run() {
       AI->getParent()->getInstList().erase(AI);
 
       // Remove the alloca from the Allocas list, since it has been processed
-      Allocas[i] = Allocas.back();
+      Allocas[AllocaNum] = Allocas.back();
       Allocas.pop_back();
-      --i;
+      --AllocaNum;
       continue;
     }
 
-    // Calculate the set of write-locations for each alloca.  This is analogous
-    // to counting the number of 'redefinitions' of each variable.
+    // Calculate the set of read and write-locations for each alloca.  This is
+    // analogous to counting the number of 'uses' and 'definitions' of each
+    // variable.
     std::vector<BasicBlock*> DefiningBlocks;
+    std::vector<BasicBlock*> UsingBlocks;
 
     BasicBlock *OnlyBlock = 0;
     bool OnlyUsedInOneBlock = true;
@@ -106,6 +114,9 @@ void PromoteMem2Reg::run() {
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
         // Remember the basic blocks which define new values for the alloca
         DefiningBlocks.push_back(SI->getParent());
+      } else {
+        // Otherwise it must be a load instruction, keep track of variable reads
+        UsingBlocks.push_back(cast<LoadInst>(User)->getParent());
       }
 
       if (OnlyUsedInOneBlock) {
@@ -122,22 +133,17 @@ void PromoteMem2Reg::run() {
       PromoteLocallyUsedAlloca(AI);
 
       // Remove the alloca from the Allocas list, since it has been processed
-      Allocas[i] = Allocas.back();
+      Allocas[AllocaNum] = Allocas.back();
       Allocas.pop_back();
-      --i;
+      --AllocaNum;
       continue;
     }
-
-    AllocaLookup[Allocas[i]] = i;
-    
-    // PhiNodeBlocks - A list of blocks that phi nodes have been inserted for
-    // this alloca.
-    std::vector<BasicBlock*> PhiNodeBlocks;
 
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
     //
     unsigned CurrentVersion = 0;
+    std::set<PHINode*> InsertedPHINodes;
     while (!DefiningBlocks.empty()) {
       BasicBlock *BB = DefiningBlocks.back();
       DefiningBlocks.pop_back();
@@ -148,10 +154,45 @@ void PromoteMem2Reg::run() {
         const DominanceFrontier::DomSetType &S = it->second;
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
              P != PE; ++P)
-          if (QueuePhiNode(*P, i, CurrentVersion))
+          if (QueuePhiNode(*P, AllocaNum, CurrentVersion, InsertedPHINodes))
             DefiningBlocks.push_back(*P);
       }
     }
+
+    // Now that we have inserted PHI nodes along the Iterated Dominance Frontier
+    // of the writes to the variable, scan through the reads of the variable,
+    // marking PHI nodes which are actually necessary as alive (by removing them
+    // from the InsertedPHINodes set).  This is not perfect: there may PHI
+    // marked alive because of loads which are dominated by stores, but there
+    // will be no unmarked PHI nodes which are actually used.
+    //
+    for (unsigned i = 0, e = UsingBlocks.size(); i != e; ++i)
+      MarkDominatingPHILive(UsingBlocks[i], AllocaNum, InsertedPHINodes);
+    UsingBlocks.clear();
+
+    // If there are any PHI nodes which are now known to be dead, remove them!
+    for (std::set<PHINode*>::iterator I = InsertedPHINodes.begin(),
+           E = InsertedPHINodes.end(); I != E; ++I) {
+      PHINode *PN = *I;
+      std::vector<PHINode*> &BBPNs = NewPhiNodes[PN->getParent()];
+      BBPNs[AllocaNum] = 0;
+
+      // Check to see if we just removed the last inserted PHI node from this
+      // basic block.  If so, remove the entry for the basic block.
+      bool HasOtherPHIs = false;
+      for (unsigned i = 0, e = BBPNs.size(); i != e; ++i)
+        if (BBPNs[i]) {
+          HasOtherPHIs = true;
+          break;
+        }
+      if (!HasOtherPHIs)
+        NewPhiNodes.erase(PN->getParent());
+
+      PN->getParent()->getInstList().erase(PN);      
+    }
+
+    // Keep the reverse mapping of the 'Allocas' array. 
+    AllocaLookup[Allocas[AllocaNum]] = AllocaNum;
   }
   
   if (Allocas.empty())
@@ -215,7 +256,7 @@ void PromoteMem2Reg::run() {
       // Now we loop through all BB's which have entries in FirstPHI and remove
       // them from the Preds list.
       for (unsigned i = 0, e = FirstPHI->getNumIncomingValues(); i != e; ++i) {
-        // Do a log(n) search of teh Preds list for the entry we want.
+        // Do a log(n) search of the Preds list for the entry we want.
         std::vector<BasicBlock*>::iterator EntIt =
           std::lower_bound(Preds.begin(), Preds.end(),
                            FirstPHI->getIncomingBlock(i));
@@ -233,6 +274,43 @@ void PromoteMem2Reg::run() {
         Value *NullVal = Constant::getNullValue(PN->getType());
         for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
           PN->addIncoming(NullVal, Preds[pred]);
+      }
+    }
+  }
+}
+
+// MarkDominatingPHILive - Mem2Reg wants to construct "pruned" SSA form, not
+// "minimal" SSA form.  To do this, it inserts all of the PHI nodes on the IDF
+// as usual (inserting the PHI nodes in the DeadPHINodes set), then processes
+// each read of the variable.  For each block that reads the variable, this
+// function is called, which removes used PHI nodes from the DeadPHINodes set.
+// After all of the reads have been processed, any PHI nodes left in the
+// DeadPHINodes set are removed.
+//
+void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
+                                           std::set<PHINode*> &DeadPHINodes) {
+  // Scan the immediate dominators of this block looking for a block which has a
+  // PHI node for Alloca num.  If we find it, mark the PHI node as being alive!
+  for (DominatorTree::Node *N = DT[BB]; N; N = N->getIDom()) {
+    BasicBlock *DomBB = N->getBlock();
+    std::map<BasicBlock*, std::vector<PHINode*> >::iterator
+      I = NewPhiNodes.find(DomBB);
+    if (I != NewPhiNodes.end() && I->second[AllocaNum]) {
+      // Ok, we found an inserted PHI node which dominates this value.
+      PHINode *DominatingPHI = I->second[AllocaNum];
+
+      // Find out if we previously thought it was dead.
+      std::set<PHINode*>::iterator DPNI = DeadPHINodes.find(DominatingPHI);
+      if (DPNI != DeadPHINodes.end()) {
+        // Ok, until now, we thought this PHI node was dead.  Mark it as being
+        // alive/needed.
+        DeadPHINodes.erase(DPNI);
+
+        // Now that we have marked the PHI node alive, also mark any PHI nodes
+        // which it might use as being alive as well.
+        for (pred_iterator PI = pred_begin(DomBB), PE = pred_end(DomBB);
+             PI != PE; ++PI)
+          MarkDominatingPHILive(*PI, AllocaNum, DeadPHINodes);
       }
     }
   }
@@ -278,7 +356,8 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(AllocaInst *AI) {
 // Alloca returns true if there wasn't already a phi-node for that variable
 //
 bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
-                                  unsigned &Version) {
+                                  unsigned &Version,
+                                  std::set<PHINode*> &InsertedPHINodes) {
   // Look up the basic-block in question
   std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
@@ -291,9 +370,15 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   BBPNs[AllocaNo] = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
                                 Allocas[AllocaNo]->getName() + "." +
                                         utostr(Version++), BB->begin());
+  InsertedPHINodes.insert(BBPNs[AllocaNo]);
   return true;
 }
 
+
+// RenamePass - Recursively traverse the CFG of the function, renaming loads and
+// stores to the allocas which we are promoting.  IncomingVals indicates what
+// value each Alloca contains on exit from the predecessor block Pred.
+//
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 std::vector<Value*> &IncomingVals) {
 
@@ -347,7 +432,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
     }
   }
 
-  // Recurse to our successors
+  // Recurse to our successors.
   TerminatorInst *TI = BB->getTerminator();
   for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
     std::vector<Value*> OutgoingVals(IncomingVals);
@@ -365,5 +450,5 @@ void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      const TargetData &TD) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
-  PromoteMem2Reg(Allocas, DF, TD).run();
+  PromoteMem2Reg(Allocas, DT, DF, TD).run();
 }
