@@ -623,6 +623,31 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return BinaryOperator::createSub(C, X);
     }
 
+    // (X & FF00) + xx00  -> (X+xx00) & FF00
+    if (LHS->hasOneUse() && match(LHS, m_And(m_Value(X), m_ConstantInt(C2)))) {
+      Constant *Anded = ConstantExpr::getAnd(CRHS, C2);
+      if (Anded == CRHS) {
+        // See if all bits from the first bit set in the Add RHS up are included
+        // in the mask.  First, get the rightmost bit.
+        uint64_t AddRHSV = CRHS->getRawValue();
+
+        // Form a mask of all bits from the lowest bit added through the top.
+        uint64_t AddRHSHighBits = ~((AddRHSV & -AddRHSV)-1);
+        AddRHSHighBits &= (1ULL << C2->getType()->getPrimitiveSize()*8)-1;
+
+        // See if the and mask includes all of these bits.
+        uint64_t AddRHSHighBitsAnd = AddRHSHighBits & C2->getRawValue();
+        
+        if (AddRHSHighBits == AddRHSHighBitsAnd) {
+          // Okay, the xform is safe.  Insert the new add pronto.
+          Value *NewAdd = InsertNewInstBefore(BinaryOperator::createAdd(X, CRHS,
+                                                            LHS->getName()), I);
+          return BinaryOperator::createAnd(NewAdd, C2);
+        }
+      }
+    }
+
+
     // Try to fold constant add into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(LHS))
       if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
