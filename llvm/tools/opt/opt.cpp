@@ -61,7 +61,7 @@ cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce      , "Dead Code Elimination"),
   clEnumVal(constprop, "Simple Constant Propogation"),
- clEnumValN(inlining , "inline", "Method Inlining"),
+ clEnumValN(inlining , "inline", "Method Integration"),
   clEnumVal(strip    , "Strip Symbols"),
   clEnumVal(mstrip   , "Strip Module Symbols"),
   clEnumVal(indvars  , "Simplify Induction Variables"),
