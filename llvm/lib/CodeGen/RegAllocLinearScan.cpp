@@ -227,14 +227,14 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
     // reserve R32: EDI, EBX,
     //         R16:  DI,  BX,
-    //         R8:   DH,  BH,
+    //         R8:   BH,  BL
     //         RFP: FP5, FP6
     reserved_.push_back(19); /* EDI */
     reserved_.push_back(17); /* EBX */
     reserved_.push_back(12); /*  DI */
     reserved_.push_back( 7); /*  BX */
-    reserved_.push_back(11); /*  DH */
     reserved_.push_back( 4); /*  BH */
+    reserved_.push_back( 5); /*  BL */
     reserved_.push_back(28); /* FP5 */
     reserved_.push_back(29); /* FP6 */
 
