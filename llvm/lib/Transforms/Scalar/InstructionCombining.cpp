@@ -2934,9 +2934,8 @@ bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
   TD = &getAnalysis<TargetData>();
 
-  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i) {
-      WorkList.push_back(&*i);
-  }
+  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
+    WorkList.push_back(&*i);
 
 
   while (!WorkList.empty()) {
@@ -2997,6 +2996,10 @@ bool InstCombiner::runOnFunction(Function &F) {
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();
         InstParent->getInstList().insert(I, Result);
+
+        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+          if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
+            WorkList.push_back(OpI);
 
         // Everything uses the new instruction now...
         I->replaceAllUsesWith(Result);
