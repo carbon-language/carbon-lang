@@ -72,8 +72,8 @@ class PATypeHandle {
 
   // These functions are defined at the bottom of Type.h.  See the comment there
   // for justification.
-  inline void addUser();
-  inline void removeUser();
+  void addUser();
+  void removeUser();
 public:
   // ctor - Add use to type if abstract.  Note that Ty must not be null
   inline PATypeHandle(const Type *ty, AbstractTypeUser *user) 
@@ -121,7 +121,7 @@ public:
   // this, we MUST remove ourself from the AbstractTypeUser list, even though
   // the type is apparently concrete.
   //
-  inline void removeUserFromConcrete();
+  void removeUserFromConcrete();
 };
 
 
