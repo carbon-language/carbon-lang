@@ -8,32 +8,32 @@
 
 implementation
 
-int "test1"(int %A) {
+int %test1(int %A) {
 	%B = and int %A, 0     ; zero result
 	ret int %B
 }
 
-int "test2"(int %A) {
+int %test2(int %A) {
 	%B = and int %A, -1    ; noop
 	ret int %B
 }
 
-bool "test3"(bool %A) {
+bool %test3(bool %A) {
 	%B = and bool %A, false  ; always = false
 	ret bool %B
 }
 
-bool "test4"(bool %A) {
+bool %test4(bool %A) {
 	%B = and bool %A, true  ; noop
 	ret bool %B
 }
 
-int "test5"(int %A) {
+int %test5(int %A) {
 	%B = and int %A, %A
 	ret int %B
 }
 
-bool "test6"(bool %A) {
+bool %test6(bool %A) {
 	%B = and bool %A, %A
 	ret bool %B
 }
