@@ -62,24 +62,15 @@ namespace llvm {
 
 typedef unsigned resourceId_t;
 
-struct MachineResource {
+struct CPUResource {
   const std::string rname;
   resourceId_t rid;
-  
-  MachineResource(const std::string &resourceName)
-    : rname(resourceName), rid(nextId++) {}
-  
-private:
-  static resourceId_t nextId;
-  MachineResource();			// disable
-};
-
-
-struct CPUResource : public MachineResource {
   int maxNumUsers;   // MAXINT if no restriction
   
-  CPUResource(const std::string& rname, int maxUsers)
-    : MachineResource(rname), maxNumUsers(maxUsers) {}
+  CPUResource(const std::string& resourceName, int maxUsers)
+    : rname(resourceName), rid(nextId++), maxNumUsers(maxUsers) {}
+private:
+  static resourceId_t nextId;
 };
 
 
@@ -312,8 +303,7 @@ protected:
 
 
 
-  friend class ModuloSchedGraph;
-  friend class ModuloScheduling;
+  friend class ModuloSchedulingPass;
   
 };
 

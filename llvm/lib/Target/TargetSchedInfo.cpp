@@ -17,7 +17,7 @@
 
 namespace llvm {
 
-resourceId_t MachineResource::nextId = 0;
+resourceId_t CPUResource::nextId = 0;
 
 // Check if fromRVec and toRVec have *any* common entries.
 // Assume the vectors are sorted in increasing order.
