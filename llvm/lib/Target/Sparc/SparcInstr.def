@@ -526,8 +526,8 @@ I(RESTOREi, "restore",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, M_INT_FLAG | M_AR
 
 // Read and Write CCR register from/to an int reg
 I(RDCCR,  "rd",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
-I(WRCCRr,  "wr",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
-I(WRCCRi,  "wr",         2,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(WRCCRr,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
+I(WRCCRi,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,  M_INT_FLAG | M_CC_FLAG)
 
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.
