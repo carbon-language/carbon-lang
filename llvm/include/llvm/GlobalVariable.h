@@ -42,10 +42,22 @@ public:
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
-  // The initializer for the global variable/constant is held by Operands[0] if
-  // an initializer is specified.
-  //
-  inline bool hasInitializer() const { return !Operands.empty(); }
+  /// isExternal - Is this global variable lacking an initializer?  If so, the
+  /// global variable is defined in some other translation unit, and is thus
+  /// externally defined here.
+  ///
+  bool isExternal() const { return Operands.empty(); }
+
+  /// hasInitializer - Unless a global variable isExternal(), it has an
+  /// initializer.  The initializer for the global variable/constant is held by
+  /// Operands[0] if an initializer is specified.
+  ///
+  inline bool hasInitializer() const { return !isExternal(); }
+
+  /// getInitializer - Return the initializer for this global variable.  It is
+  /// illegal to call this method if the global is external, because we cannot
+  /// tell what the value is initialized to!
+  ///
   inline Constant *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
     return (Constant*)Operands[0].get();
@@ -63,17 +75,16 @@ public:
     }
   }
 
-  // getNext/Prev - Return the next or previous instruction in the list.  The
-  // last node in the list is a terminator instruction.
+  // getNext/Prev - Return the next or previous global variable in the list.
         GlobalVariable *getNext()       { return Next; }
   const GlobalVariable *getNext() const { return Next; }
         GlobalVariable *getPrev()       { return Prev; }
   const GlobalVariable *getPrev() const { return Prev; }
 
-  // If the value is a global constant, its value is immutable throughout the
-  // runtime execution of the program.  Assigning a value into the constant
-  // leads to undefined behavior.
-  //
+  /// If the value is a global constant, its value is immutable throughout the
+  /// runtime execution of the program.  Assigning a value into the constant
+  /// leads to undefined behavior.
+  ///
   inline bool isConstant() const { return isConstantGlobal; }
 
   virtual void print(std::ostream &OS) const;
