@@ -4215,7 +4215,6 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
          Scan != E; ++Scan)
       if (Scan->mayWriteToMemory())
         return false;
-    std::cerr << "SUNK LOAD: " << *LI;
   }
 
   BasicBlock::iterator InsertPos = DestBlock->begin();
