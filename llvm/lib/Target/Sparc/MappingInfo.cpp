@@ -106,7 +106,7 @@ void getMappingInfoForFunction::writeEpilogue(const std::string &symbolPrefix,
 
 /// outByte -- NOT DONE YET.
 void outByte (unsigned char b) {
-  Out << "\t.byte " << tmp << "\n";
+  //Out << "\t.byte " << tmp << "\n";
 }
 
 
