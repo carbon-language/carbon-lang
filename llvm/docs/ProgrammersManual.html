@@ -1136,9 +1136,9 @@ the <tt>Instruction</tt> class</h4><ul>
 Returns the <a href="#BasicBlock"><tt>BasicBlock</tt></a> that this
 <tt>Instruction</tt> is embedded into.<p>
 
-<li><tt>bool hasSideEffects()</tt><p>
+<li><tt>bool mayWriteToMemory()</tt><p>
 
-Returns true if the instruction has side effects, i.e. it is a <tt>call</tt>,
+Returns true if the instruction writes to memory, i.e. it is a <tt>call</tt>,
 <tt>free</tt>, <tt>invoke</tt>, or <tt>store</tt>.<p>
 
 <li><tt>unsigned getOpcode()</tt><p>
@@ -1745,6 +1745,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Nov 20 12:21:34 CST 2002
+Last modified: Mon Feb 24 14:45:19 CST 2003
 <!-- hhmts end -->
 </font></body></html>
