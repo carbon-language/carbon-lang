@@ -149,17 +149,6 @@ CallInst::CallInst(const CallInst &CI)
     Operands.push_back(Use(CI.Operands[i], this));
 }
 
-const Function *CallInst::getCalledFunction() const {
-  if (const Function *F = dyn_cast<Function>(Operands[0]))
-    return F;
-  return 0;
-}
-Function *CallInst::getCalledFunction() {
-  if (Function *F = dyn_cast<Function>(Operands[0]))
-    return F;
-  return 0;
-}
-
 
 //===----------------------------------------------------------------------===//
 //                        InvokeInst Implementation
@@ -208,25 +197,6 @@ InvokeInst::InvokeInst(const InvokeInst &CI)
   Operands.reserve(CI.Operands.size());
   for (unsigned i = 0; i < CI.Operands.size(); ++i)
     Operands.push_back(Use(CI.Operands[i], this));
-}
-
-const Function *InvokeInst::getCalledFunction() const {
-  if (const Function *F = dyn_cast<Function>(Operands[0]))
-    return F;
-  return 0;
-}
-Function *InvokeInst::getCalledFunction() {
-  if (Function *F = dyn_cast<Function>(Operands[0]))
-    return F;
-  return 0;
-}
-
-// FIXME: Is this supposed to be here?
-Function *CallSite::getCalledFunction() const {
-  Value *Callee = getCalledValue();
-  if (Function *F = dyn_cast<Function>(Callee))
-    return F;
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
