@@ -164,10 +164,10 @@ clean::
 	rm -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(LEVEL)/tools/Debug/.dir
-	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS)
+	$(LinkG) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS) $(TOOLLINKOPTS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(LEVEL)/tools/Release/.dir
-	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS)
+	$(LinkO) -o $@ $(ObjectsG) $(USED_LIBS_OPTIONS) $(TOOLLINKOPTS)
 
 endif
 
