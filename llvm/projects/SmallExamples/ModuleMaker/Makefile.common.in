@@ -3,17 +3,17 @@
 # directories up.  The source tree location we do not know; let the LLVM
 # Makefiles find it for us.
 #
-LLVM_OBJ_ROOT=$(LEVEL)/../..
+LLVM_OBJ_ROOT=$(LEVEL)/../../..
 
 #
 # Grab the LLVM configuration file.
 #
-include $(LEVEL)/../../Makefile.config
+include $(LEVEL)/../../../Makefile.config
 
 #
 # Reconfigure the source directories
 #
-BUILD_SRC_ROOT:=$(LLVM_SRC_ROOT)/projects/ModuleMaker
+BUILD_SRC_ROOT:=$(LLVM_SRC_ROOT)/projects/SmallExamples/ModuleMaker
 BUILD_SRC_DIR := $(subst //,/,$(BUILD_SRC_ROOT)/$(patsubst $(BUILD_OBJ_ROOT)%,%,$(BUILD_OBJ_DIR)))
 
 #
