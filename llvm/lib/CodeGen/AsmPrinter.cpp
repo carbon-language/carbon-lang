@@ -31,10 +31,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 void AsmPrinter::setupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getValueName((Value*)MF.getFunction());
-
 }
-
-
 
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
@@ -203,7 +200,9 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
       } U;
       U.FVal = Val;
 
-      if (TD.isBigEndian()) {
+      if (Data64bitsDirective)
+        O << Data64bitsDirective << U.UVal << "\n";
+      else if (TD.isBigEndian()) {
         O << Data32bitsDirective << unsigned(U.UVal >> 32)
           << "\t; double most significant word " << Val << "\n";
         O << Data32bitsDirective << unsigned(U.UVal)
@@ -229,7 +228,9 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint64_t Val = CI->getRawValue();
         
-      if (TD.isBigEndian()) {
+      if (Data64bitsDirective)
+        O << Data64bitsDirective << Val << "\n";
+      else if (TD.isBigEndian()) {
         O << Data32bitsDirective << unsigned(Val >> 32)
           << "\t; Double-word most significant word " << Val << "\n";
         O << Data32bitsDirective << unsigned(Val)
@@ -245,7 +246,6 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
   }
 
   const Type *type = CV->getType();
-  O << "\t";
   switch (type->getTypeID()) {
   case Type::UByteTyID: case Type::SByteTyID:
     O << Data8bitsDirective;
