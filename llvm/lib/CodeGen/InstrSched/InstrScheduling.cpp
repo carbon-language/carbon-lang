@@ -410,7 +410,7 @@ public:
   }
   
   inline unsigned getNumChoicesInClass	(const InstrSchedClass& sc) const {
-    assert(sc < (int) numInClass.size() && "Invalid op code or sched class!");
+    assert(sc < numInClass.size() && "Invalid op code or sched class!");
     return numInClass[sc];
   }
   
@@ -429,7 +429,7 @@ public:
     // Increment numInClass[c] for the sched class to which the instr belongs.
     choiceVec.push_back(node);
     const InstrSchedClass& sc = schedInfo.getSchedClass(node->getOpCode());
-    assert(sc < (int) numInClass.size());
+    assert(sc < numInClass.size());
     numInClass[sc]++;
   }
   
@@ -483,7 +483,7 @@ public:
     
     // and decrement the instr count for the sched class to which it belongs
     const InstrSchedClass& sc = schedInfo.getSchedClass(node->getOpCode());
-    assert(sc < (int) numInClass.size());
+    assert(sc < numInClass.size());
     numInClass[sc]--;
   }
 
