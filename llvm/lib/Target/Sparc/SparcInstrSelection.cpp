@@ -839,7 +839,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
           // It must be an array ref.  Check if the offset is a constant,
           // and that the indexing has been lowered to a single offset.
           // 
-          assert(ptrType->getElementType()->isArrayType());
+          assert(isa<SequentialType>(ptrType->getElementType()));
           assert(arrayOffsetVal != NULL
                  && "Expect to be given Value* for array offsets");
           
