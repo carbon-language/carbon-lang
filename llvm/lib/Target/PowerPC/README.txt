@@ -22,7 +22,6 @@ TODO:
   shift right ulong a, 1 (we could use emitShift)
   call floatdidf
   fadd f1, f1, f1 (fp left shift by 1)
-* setCondInst needs to know branchless versions of seteq/setne/etc
 * cast elimination pass (uint -> sbyte -> short, kill the byte -> short)
 * should hint to the branch select pass that it doesn't need to print the
   second unconditional branch, so we don't end up with things like:
@@ -34,11 +33,6 @@ Currently failing tests that should pass:
 * SingleSource
   `- Regression
   |  `- casts (ulong to fp failure)
-  `- Benchmarks
-  |  `- Shootout-C++ : most programs fail, miscompilations
 * MultiSource
   |- Applications
   |  `- hbd: miscompilation
-  |  `- d (make_dparser): miscompilation
-  `- Benchmarks
-     `- MallocBench/gs: miscompilation
