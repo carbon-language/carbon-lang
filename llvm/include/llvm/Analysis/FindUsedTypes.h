@@ -14,16 +14,13 @@ class Type;
 
 class FindUsedTypes : public Pass {
   std::set<const Type *> UsedTypes;
-
-  bool IncludeSymbolTables;
 public:
   // FindUsedTypes ctor - This pass can optionally include types that are
   // referenced only in symbol tables, but the default is not to.
   //
   static AnalysisID ID;
-  static AnalysisID IncludeSymbolTableID;
 
-  FindUsedTypes(AnalysisID id) : IncludeSymbolTables(id != ID) {}
+  FindUsedTypes(AnalysisID id) {}
   virtual const char *getPassName() const { return "Find Used Types"; }
 
   // getTypes - After the pass has been run, return the set containing all of
@@ -42,11 +39,6 @@ private:
   // collection of used types.
   //
   void IncorporateType(const Type *Ty);
-
-  // IncorporateSymbolTable - Add all types referenced by the specified symtab
-  // into the collection of used types.
-  //
-  void IncorporateSymbolTable(const SymbolTable *ST);
 
 public:
   // run - This incorporates all types used by the specified module
