@@ -18,6 +18,11 @@ int %test2(int %A) {
 	ret int %B
 }
 
+ubyte %test2a(ubyte %A) {
+	%B = or ubyte %A, 255
+	ret ubyte %B
+}
+
 bool %test3(bool %A) {
 	%B = or bool %A, false
 	ret bool %B
@@ -74,4 +79,15 @@ uint %test13(uint %A) { ; (A|B)^B == A & (~B)
 	%t1 = or uint %A, 123
 	%r  = xor uint %t1, 123
 	ret uint %r
+}
+
+ubyte %test14(ubyte %A) {
+	%B = or ubyte %A, 254
+	%C = or ubyte %B, 1
+	ret ubyte %C
+}
+ubyte %test15(ubyte %A) {
+	%B = xor ubyte %A, 17
+	%C = xor ubyte %B, 17
+	ret ubyte %C
 }

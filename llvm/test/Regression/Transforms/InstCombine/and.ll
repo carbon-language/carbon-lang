@@ -43,3 +43,9 @@ int %test7(int %A) {         ; A & ~A == 0
         %B = and int %A, %NotA
         ret int %B
 }
+
+ubyte %test8(ubyte %A) {    ; AND associates
+	%B = and ubyte %A, 3
+	%C = and ubyte %B, 4
+	ret ubyte %C
+}

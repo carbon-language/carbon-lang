@@ -32,3 +32,9 @@ int %test5(int %A) {
 	%B = mul int %A, 8
 	ret int %B
 }
+
+int %test6(ubyte %A) {
+	%B = mul ubyte %A, 8
+	%C = mul ubyte %B, 13
+	ret ubyte %C
+}
