@@ -44,6 +44,10 @@ public:
     return CallSite();
   }
 
+  /// getType - Return the type of the instruction that generated this call site
+  ///
+  const Type *getType () const { return I->getType (); }
+
   /// getInstruction - Return the instruction this call site corresponds to
   ///
   Instruction *getInstruction() const { return I; }
@@ -83,6 +87,7 @@ public:
       return I->op_begin()+3; // Skip Function, BB, BB
   }
   arg_iterator arg_end() const { return I->op_end(); }
+  unsigned arg_size() const { return arg_end() - arg_begin(); }
 
   bool operator<(const CallSite &CS) const {
     return getInstruction() < CS.getInstruction();
