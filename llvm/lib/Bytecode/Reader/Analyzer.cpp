@@ -21,7 +21,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Bytecode/BytecodeHandler.h"
 #include <iomanip>
 #include <sstream>
@@ -116,9 +115,9 @@ public:
 
     if ( bca.progressiveVerify ) {
       try {
-	verifyModule(*M, ThrowExceptionAction);
+        verifyModule(*M, ThrowExceptionAction);
       } catch ( std::string& msg ) {
-	bca.VerifyInfo += "Verify@Finish: " + msg + "\n";
+        bca.VerifyInfo += "Verify@Finish: " + msg + "\n";
       }
     }
   }
@@ -132,9 +131,9 @@ public:
     dump << "  } End Module " << id << "\n";
     if ( bca.progressiveVerify ) {
       try {
-	verifyModule(*M, ThrowExceptionAction);
+        verifyModule(*M, ThrowExceptionAction);
       } catch ( std::string& msg ) {
-	bca.VerifyInfo += "Verify@EndModule: " + msg + "\n";
+        bca.VerifyInfo += "Verify@EndModule: " + msg + "\n";
       }
     }
   }
@@ -145,8 +144,8 @@ public:
     Module::PointerSize PointerSize   ///< PointerSize indicator
   ) { 
     dump << "    RevisionNum: " << int(RevisionNum) 
-	 << " Endianness: " << Endianness
-	 << " PointerSize: " << PointerSize << "\n";
+         << " Endianness: " << Endianness
+         << " PointerSize: " << PointerSize << "\n";
   }
 
   virtual void handleModuleGlobalsBegin() { 
@@ -165,11 +164,11 @@ public:
 
     dump << "      GV: "
          << ( initSlot == 0 ? "Uni" : "I" ) << "nitialized, "
-	 << ( isConstant? "Constant, " : "Variable, ")
-	 << " Linkage=" << Linkage << " Type=" 
-	 << ElemType->getDescription() 
-	 << " Slot=" << SlotNum << " InitSlot=" << initSlot 
-	 << "\n";
+         << ( isConstant? "Constant, " : "Variable, ")
+         << " Linkage=" << Linkage << " Type=" 
+         << ElemType->getDescription() 
+         << " Slot=" << SlotNum << " InitSlot=" << initSlot 
+         << "\n";
   }
 
   virtual void handleType( const Type* Ty ) { 
@@ -178,7 +177,7 @@ public:
   }
 
   virtual void handleFunctionDeclaration( 
-    Function* Func	    ///< The function
+    Function* Func            ///< The function
   ) {
     bca.numFunctions++;
     bca.numValues++;
@@ -197,9 +196,9 @@ public:
     dump << "    } END BLOCK: ModuleGlobalInfo\n";
     if ( bca.progressiveVerify ) {
       try {
-	verifyModule(*M, ThrowExceptionAction);
+        verifyModule(*M, ThrowExceptionAction);
       } catch ( std::string& msg ) {
-	bca.VerifyInfo += "Verify@EndModuleGlobalInfo: " + msg + "\n";
+        bca.VerifyInfo += "Verify@EndModuleGlobalInfo: " + msg + "\n";
       }
     }
   }
@@ -216,7 +215,7 @@ public:
   virtual void handleCompactionTableType( unsigned i, unsigned TypSlot, 
       const Type* Ty ) {
     dump << "        Type: " << i << " Slot:" << TypSlot 
-	      << " is " << Ty->getDescription() << "\n"; 
+              << " is " << Ty->getDescription() << "\n"; 
   }
 
   virtual void handleCompactionTableValue( 
@@ -225,8 +224,8 @@ public:
     unsigned ValSlot, 
     const Type* Ty ) { 
     dump << "        Value: " << i << " TypSlot: " << TypSlot 
-	 << " ValSlot:" << ValSlot << " is " << Ty->getDescription() 
-	 << "\n";
+         << " ValSlot:" << ValSlot << " is " << Ty->getDescription() 
+         << "\n";
   }
 
   virtual void handleCompactionTableEnd() { 
@@ -241,19 +240,19 @@ public:
   virtual void handleSymbolTablePlane(unsigned Ty, unsigned NumEntries, 
     const Type* Typ) { 
     dump << "      Plane: Ty=" << Ty << " Size=" << NumEntries
-	 << " Type: " << Typ->getDescription() << "\n"; 
+         << " Type: " << Typ->getDescription() << "\n"; 
   }
 
   virtual void handleSymbolTableType(unsigned i, unsigned slot, 
     const std::string& name ) { 
     dump << "        Type " << i << " Slot=" << slot
-	      << " Name: " << name << "\n"; 
+              << " Name: " << name << "\n"; 
   }
 
   virtual void handleSymbolTableValue(unsigned i, unsigned slot, 
     const std::string& name ) { 
     dump << "        Value " << i << " Slot=" << slot
-	      << " Name: " << name << "\n";
+              << " Name: " << name << "\n";
   }
 
   virtual void handleSymbolTableEnd() { 
@@ -291,9 +290,9 @@ public:
 
     if ( bca.progressiveVerify ) {
       try {
-	verifyModule(*M, ThrowExceptionAction);
+        verifyModule(*M, ThrowExceptionAction);
       } catch ( std::string& msg ) {
-	bca.VerifyInfo += "Verify@EndFunction: " + msg + "\n";
+        bca.VerifyInfo += "Verify@EndFunction: " + msg + "\n";
       }
     }
   }
@@ -306,10 +305,10 @@ public:
   }
 
   virtual bool handleInstruction( unsigned Opcode, const Type* iType, 
-				std::vector<unsigned>& Operands, unsigned Size){
+                                std::vector<unsigned>& Operands, unsigned Size){
     dump << "    INST: OpCode=" 
-	 << Instruction::getOpcodeName(Opcode) << " Type=" 
-	 << iType->getDescription() << "\n";
+         << Instruction::getOpcodeName(Opcode) << " Type=" 
+         << iType->getDescription() << "\n";
     for ( unsigned i = 0; i < Operands.size(); ++i ) 
       dump << "      Op#" << i << " Slot=" << Operands[i] << "\n";
 
@@ -358,8 +357,8 @@ public:
 
   virtual void handleConstantArray( const ArrayType* AT, 
           std::vector<Constant*>& Elements,
-	  unsigned TypeSlot,
-	  Constant* ArrayVal ) {
+          unsigned TypeSlot,
+          Constant* ArrayVal ) {
     dump << "      ARRAY: " << AT->getDescription() 
          << " TypeSlot=" << TypeSlot << "\n";
     for ( unsigned i = 0; i < Elements.size(); ++i ) {
@@ -378,7 +377,7 @@ public:
   virtual void handleConstantStruct(
         const StructType* ST,
         std::vector<Constant*>& Elements,
-	Constant* StructVal)
+        Constant* StructVal)
   {
     dump << "      STRUC: " << ST->getDescription() << "\n";
     for ( unsigned i = 0; i < Elements.size(); ++i ) {
@@ -394,7 +393,7 @@ public:
   virtual void handleConstantPointer( const PointerType* PT, 
       unsigned Slot, GlobalValue* GV, Constant* PtrVal) {
     dump << "       PNTR: " << PT->getDescription() 
-	 << " Slot=" << Slot << " GlobalValue=";
+         << " Slot=" << Slot << " GlobalValue=";
     GV->print(dump);
     dump << "\n        Value=";
     PtrVal->print(dump);
@@ -415,9 +414,9 @@ public:
     dump << "    } END BLOCK: GlobalConstants\n";
     if ( bca.progressiveVerify ) {
       try {
-	verifyModule(*M, ThrowExceptionAction);
+        verifyModule(*M, ThrowExceptionAction);
       } catch ( std::string& msg ) {
-	bca.VerifyInfo += "Verify@EndGlobalConstants: " + msg + "\n";
+        bca.VerifyInfo += "Verify@EndGlobalConstants: " + msg + "\n";
       }
     }
   }
