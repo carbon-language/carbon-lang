@@ -81,7 +81,9 @@ bool IPCP::processFunction(Function &F) {
       
       // Check out all of the potentially constant arguments
       CallSite::arg_iterator AI = CS.arg_begin();
-      for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI) {
+      Function::aiterator Arg = F.abegin();
+      for (unsigned i = 0, e = ArgumentConstants.size(); i != e;
+           ++i, ++AI, ++Arg) {
         if (*AI == &F) return false;  // Passes the function into itself
 
         if (!ArgumentConstants[i].second) {
@@ -94,7 +96,7 @@ bool IPCP::processFunction(Function &F) {
               ++NumNonconstant;
               if (NumNonconstant == ArgumentConstants.size()) return false;
             }
-          } else {
+          } else if (*AI != &*Arg) {    // Ignore recursive calls with same arg
             // This is not a constant argument.  Mark the argument as
             // non-constant.
             ArgumentConstants[i].second = true;
