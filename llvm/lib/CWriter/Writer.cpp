@@ -244,7 +244,8 @@ ostream &CWriter::printType(const Type *Ty, const string &NameSoFar,
     // Do not need parens around "* NameSoFar" if NameSoFar consists only
     // of zero or more '*' chars *and* this is not an unnamed pointer type
     // such as the result type in a cast statement.  Otherwise, enclose in ( ).
-    if (ptrTypeNameNeedsParens(NameSoFar) || !namedContext)
+    if (ptrTypeNameNeedsParens(NameSoFar) || !namedContext || 
+        PTy->getElementType()->getPrimitiveID() == Type::ArrayTyID)
       ptrName = "(" + ptrName + ")";    // 
 
     return printType(PTy->getElementType(), ptrName);
