@@ -33,6 +33,7 @@ Value::~Value() {
   // a <badref>
   //
   if (Uses.begin() != Uses.end()) {
+    cerr << "While deleting: " << this;
     for (use_const_iterator I = Uses.begin(); I != Uses.end(); ++I)
       cerr << "Use still stuck around after Def is destroyed:" << *I << endl;
   }
