@@ -135,8 +135,8 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
                               bool defsOnly, bool notDefsAndUses,
                               bool& someArgsWereIgnored)
 {
-  assert((defsOnly || !notDefsAndUses) &&
-         "notDefsAndUses is irrelevant if defsOnly == false.");
+  assert((!defsOnly || !notDefsAndUses) &&
+         "notDefsAndUses is irrelevant if defsOnly == true.");
   
   unsigned numSubst = 0;
 
