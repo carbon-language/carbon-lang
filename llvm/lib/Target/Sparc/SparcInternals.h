@@ -371,8 +371,7 @@ class UltraSparcRegInfo : public MachineRegInfo
     UltraSparcInfo(& (const UltraSparc&) tgt), 
     NumOfIntArgRegs(6), 
     NumOfFloatArgRegs(32),
-    InvalidRegNum(1000),
-    SizeOfOperandOnStack(8) {
+    InvalidRegNum(1000) {
    
     MachineRegClassArr.push_back( new SparcIntRegClass(IntRegClassID) );
     MachineRegClassArr.push_back( new SparcFloatRegClass(FloatRegClassID) );
