@@ -191,9 +191,12 @@ def FSUBQ : F3_16<2, 0b110100, 0x47, "fsubq">;    // fsubq f, f, f
 def FCMPS  : F3_15<2, 0b110101, 0b010100001, "fcmps">;   // fcmps  %fcc, r1, r2
 def FCMPD  : F3_15<2, 0b110101, 0b010100010, "fcmpd">;   // fcmpd  %fcc, r1, r2
 def FCMPQ  : F3_15<2, 0b110101, 0b010100011, "fcmpq">;   // fcmpq  %fcc, r1, r2
+// Currently unused in the Sparc backend
+#if 0
 def FCMPES : F3_15<2, 0b110101, 0b010100101, "fcmpes">;  // fcmpes %fcc, r1, r2
 def FCMPED : F3_15<2, 0b110101, 0b010100110, "fcmped">;  // fcmped %fcc, r1, r2
 def FCMPEQ : F3_15<2, 0b110101, 0b010100111, "fcmpeq">;  // fcmpeq %fcc, r1, r2
+#endif
 
 // Section A.14: Convert floating-point to integer - p161
 def FSTOX : F3_14<2, 0b110100, 0b010000001, "fstox">;   // fstox rs2, rd
