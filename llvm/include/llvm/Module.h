@@ -13,14 +13,14 @@
 #define LLVM_MODULE_H
 
 #include "llvm/Value.h"
-#include "llvm/SymTabValue.h"
 #include "llvm/ValueHolder.h"
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class ConstantPointerRef;
 class FunctionType;
+class SymbolTable;
 
-class Module : public Value, public SymTabValue {
+class Module : public Annotable {
 public:
   typedef ValueHolder<GlobalVariable, Module, Module> GlobalListType;
   typedef ValueHolder<Function, Module, Module> FunctionListType;
@@ -42,6 +42,8 @@ private:
   FunctionListType FunctionList;     // The Functions
 
   GlobalValueRefMap *GVRefMap;
+
+  SymbolTable *SymTab;
 
   // Accessor for the underlying GlobalValRefMap... only through the
   // ConstantPointerRef class...
@@ -79,6 +81,28 @@ public:
   inline       GlobalListType &getGlobalList()        { return GlobalList; }
   inline const FunctionListType &getFunctionList() const { return FunctionList;}
   inline       FunctionListType &getFunctionList()       { return FunctionList;}
+
+
+  //===--------------------------------------------------------------------===//
+  // Symbol table support functions...
+  
+  // hasSymbolTable() - Returns true if there is a symbol table allocated to
+  // this object AND if there is at least one name in it!
+  //
+  bool hasSymbolTable() const;
+
+  // CAUTION: The current symbol table may be null if there are no names (ie, 
+  // the symbol table is empty) 
+  //
+  inline       SymbolTable *getSymbolTable()       { return SymTab; }
+  inline const SymbolTable *getSymbolTable() const { return SymTab; }
+
+  // getSymbolTableSure is guaranteed to not return a null pointer, because if
+  // the method does not already have a symtab, one is created.  Use this if
+  // you intend to put something into the symbol table for the method.
+  //
+  SymbolTable *getSymbolTableSure();
+
 
   //===--------------------------------------------------------------------===//
   // Module iterator forwarding functions
@@ -119,13 +143,7 @@ public:
   inline const Function          *back() const { return FunctionList.back(); }
   inline       Function          *back()       { return FunctionList.back(); }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Module *T) { return true; }
-  static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::ModuleVal;
-  }
-
-  virtual void print(std::ostream &OS) const;
+  void print(std::ostream &OS) const;
 
   // dropAllReferences() - This function causes all the subinstructions to "let
   // go" of all references that they are maintaining.  This allows one to
