@@ -153,8 +153,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
   MachineFunction &MF = MachineFunction::get(&F);
  
   DependenceAnalyzer &DA = getAnalysis<DependenceAnalyzer>();
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  TargetData &TD = getAnalysis<TargetData>();
+  
 
   //Worklist
   std::vector<MachineBasicBlock*> Worklist;
@@ -192,7 +191,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
       continue;
     }
 
-    MSchedGraph *MSG = new MSchedGraph(*BI, target, AA, TD, indVarInstrs[*BI], DA, machineTollvm[*BI]);
+    MSchedGraph *MSG = new MSchedGraph(*BI, target, indVarInstrs[*BI], DA, machineTollvm[*BI]);
     
     //Write Graph out to file
     DEBUG(WriteGraphToFile(std::cerr, F.getName(), MSG));
@@ -260,18 +259,17 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
     
     //Final scheduling step is to reconstruct the loop only if we actual have
     //stage > 0
-    if(schedule.getMaxStage() != 0 && haveSched) {
+    if(haveSched) {
       reconstructLoop(*BI);
       ++MSLoops;
       Changed = true;
-    }
-    else {
-      if(!haveSched)
-	++NoSched;
-      else
+
+      if(schedule.getMaxStage() == 0)
 	++SameStage;
-      DEBUG(std::cerr << "Max stage is 0, so no change in loop or reached cap\n");
     }
+    else
+      ++NoSched;
+        
     //Clear out our maps for the next basic block that is processed
     nodeToAttributesMap.clear();
     partialOrder.clear();
@@ -437,6 +435,12 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
   //Convert list of LLVM Instructions to list of Machine instructions
   std::map<const MachineInstr*, unsigned> mIndVar;
   for(std::set<Instruction*>::iterator N = indVar.begin(), NE = indVar.end(); N != NE; ++N) {
+    
+    //If we have a load, we can't handle this loop because there is no way to preserve dependences
+    //between loads and stores
+    if(isa<LoadInst>(*N))
+      return false;
+
     MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(*N);
     for (unsigned j = 0; j < tempMvec.size(); j++) {
       MachineOpCode OC = (tempMvec[j])->getOpcode();
@@ -449,8 +453,8 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
     }
   }
 
-   //Must have some guts to the loop body
-  if(mIndVar.size() >= (BI->size()-2))
+   //Must have some guts to the loop body (more then 1 instr, dont count nops in size)
+  if(mIndVar.size() >= (BI->size()-3))
     return false;
 
   //Put into a map for future access
@@ -1332,17 +1336,8 @@ void ModuloSchedulingPass::computePartialOrder() {
       if(PO->count(I->first))
 	found = true;
     }
-    if(!found) {
-      if(I->first->isBranch() && !I->first->hasPredecessors()) {
-	if(std::find(branches.begin(), branches.end(), I->first) == branches.end())
-	  branches.push_back(I->first); 
-      }
-      else {
-	lastNodes.insert(I->first);
-	if(!I->first->hasPredecessors())
-	  noPredNodes.insert(I->first);
-      }
-    }
+    if(!found)
+      lastNodes.insert(I->first);
   }
 
   //For each node w/out preds, see if there is a path to one of the
@@ -1360,40 +1355,29 @@ void ModuloSchedulingPass::computePartialOrder() {
 
   //Break up remaining nodes that are not in the partial order
   ///into their connected compoenents
-    /*while(lastNodes.size() > 0) {
+    while(lastNodes.size() > 0) {
       std::set<MSchedGraphNode*> ccSet;
       connectedComponentSet(*(lastNodes.begin()),ccSet, lastNodes);
       if(ccSet.size() > 0)
 	partialOrder.push_back(ccSet);
-	}*/
-    if(lastNodes.size() > 0)
-      partialOrder.push_back(lastNodes);
-  
- 
+    }
+    
+    
   //Clean up branches by putting them in final order
-  std::map<unsigned, MSchedGraphNode*> branchOrder;
-  for(std::vector<MSchedGraphNode*>::iterator I = branches.begin(), E = branches.end(); I != E; ++I)
-    branchOrder[(*I)->getIndex()] = *I;
-
-  for(std::map<unsigned, MSchedGraphNode*>::reverse_iterator I = branchOrder.rbegin(), E = branchOrder.rend(); I != E; ++I)
-    FinalNodeOrder.push_back(I->second);
-
+    assert(branches.size() == 0 && "We should not have any branches in our graph");
 }
 
 
 void ModuloSchedulingPass::connectedComponentSet(MSchedGraphNode *node, std::set<MSchedGraphNode*> &ccSet, std::set<MSchedGraphNode*> &lastNodes) {
 
 //Add to final set
-if( !ccSet.count(node) && lastNodes.count(node)) {
+  if( !ccSet.count(node) && lastNodes.count(node)) {
     lastNodes.erase(node);
-    if(node->isBranch() && !node->hasPredecessors())
-      FinalNodeOrder.push_back(node);
-    else
-      ccSet.insert(node);
+    ccSet.insert(node);
   }
   else
     return;
-
+  
   //Loop over successors and recurse if we have not seen this node before
   for(MSchedGraphNode::succ_iterator node_succ = node->succ_begin(), end=node->succ_end(); node_succ != end; ++node_succ) {
     connectedComponentSet(*node_succ, ccSet, lastNodes);
@@ -2552,7 +2536,8 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
 
 
   //Write prologue
-  writePrologues(prologues, BB, llvm_prologues, valuesToSave, newValues, newValLocation);
+  if(schedule.getMaxStage() != 0)
+    writePrologues(prologues, BB, llvm_prologues, valuesToSave, newValues, newValLocation);
     
   //Print out epilogues and prologue
   DEBUG(for(std::vector<MachineBasicBlock*>::iterator I = prologues.begin(), E = prologues.end(); 
@@ -2571,7 +2556,8 @@ void ModuloSchedulingPass::reconstructLoop(MachineBasicBlock *BB) {
   std::vector<BasicBlock*> llvm_epilogues;
 
   //Write epilogues
-  writeEpilogues(epilogues, BB, llvm_epilogues, valuesToSave, newValues, newValLocation, kernelPHIs);
+  if(schedule.getMaxStage() != 0)
+    writeEpilogues(epilogues, BB, llvm_epilogues, valuesToSave, newValues, newValLocation, kernelPHIs);
 
 
   //Fix our branches
@@ -2607,51 +2593,53 @@ void ModuloSchedulingPass::fixBranches(std::vector<MachineBasicBlock *> &prologu
 
   const TargetInstrInfo *TMI = target.getInstrInfo();
 
-  //Fix prologue branches
-  for(unsigned I = 0; I <  prologues.size(); ++I) {
-   
-     //Find terminator since getFirstTerminator does not work!
-    for(MachineBasicBlock::reverse_iterator mInst = prologues[I]->rbegin(), mInstEnd = prologues[I]->rend(); mInst != mInstEnd; ++mInst) {
-      MachineOpCode OC = mInst->getOpcode();
-      //If its a branch update its branchto
-      if(TMI->isBranch(OC)) {
-	for(unsigned opNum = 0; opNum < mInst->getNumOperands(); ++opNum) {
-	  MachineOperand &mOp = mInst->getOperand(opNum);
-	  if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
-	    //Check if we are branching to the kernel, if not branch to epilogue
-	    if(mOp.getVRegValue() == BB->getBasicBlock()) { 
-	      if(I == prologues.size()-1)
-		mOp.setValueReg(llvmKernelBB);
-	      else
-		mOp.setValueReg(llvm_prologues[I+1]);
-	    }
-	    else {
-	      mOp.setValueReg(llvm_epilogues[(llvm_epilogues.size()-1-I)]);
+  if(schedule.getMaxStage() != 0) {
+    //Fix prologue branches
+    for(unsigned I = 0; I <  prologues.size(); ++I) {
+      
+      //Find terminator since getFirstTerminator does not work!
+      for(MachineBasicBlock::reverse_iterator mInst = prologues[I]->rbegin(), mInstEnd = prologues[I]->rend(); mInst != mInstEnd; ++mInst) {
+	MachineOpCode OC = mInst->getOpcode();
+	//If its a branch update its branchto
+	if(TMI->isBranch(OC)) {
+	  for(unsigned opNum = 0; opNum < mInst->getNumOperands(); ++opNum) {
+	    MachineOperand &mOp = mInst->getOperand(opNum);
+	    if (mOp.getType() == MachineOperand::MO_PCRelativeDisp) {
+	      //Check if we are branching to the kernel, if not branch to epilogue
+	      if(mOp.getVRegValue() == BB->getBasicBlock()) { 
+		if(I == prologues.size()-1)
+		  mOp.setValueReg(llvmKernelBB);
+		else
+		  mOp.setValueReg(llvm_prologues[I+1]);
+	      }
+	      else {
+		mOp.setValueReg(llvm_epilogues[(llvm_epilogues.size()-1-I)]);
+	      }
 	    }
 	  }
+
+	  DEBUG(std::cerr << "New Prologue Branch: " << *mInst << "\n");
 	}
-
-	DEBUG(std::cerr << "New Prologue Branch: " << *mInst << "\n");
       }
-    }
 
 
-    //Update llvm basic block with our new branch instr
-    DEBUG(std::cerr << BB->getBasicBlock()->getTerminator() << "\n");
-    const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
+      //Update llvm basic block with our new branch instr
+      DEBUG(std::cerr << BB->getBasicBlock()->getTerminator() << "\n");
+      const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
    
-    if(I == prologues.size()-1) {
-      TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
-						 llvm_epilogues[(llvm_epilogues.size()-1-I)], 
-						 branchVal->getCondition(), 
-						 llvm_prologues[I]);
-    }
-    else
-      TerminatorInst *newBranch = new BranchInst(llvm_prologues[I+1],
-						 llvm_epilogues[(llvm_epilogues.size()-1-I)], 
-						 branchVal->getCondition(), 
-						 llvm_prologues[I]);
+      if(I == prologues.size()-1) {
+	TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
+						   llvm_epilogues[(llvm_epilogues.size()-1-I)], 
+						   branchVal->getCondition(), 
+						   llvm_prologues[I]);
+      }
+      else
+	TerminatorInst *newBranch = new BranchInst(llvm_prologues[I+1],
+						   llvm_epilogues[(llvm_epilogues.size()-1-I)], 
+						   branchVal->getCondition(), 
+						   llvm_prologues[I]);
 
+    }
   }
 
   Value *origBranchExit = 0;
@@ -2673,6 +2661,8 @@ void ModuloSchedulingPass::fixBranches(std::vector<MachineBasicBlock *> &prologu
 	      origBranchExit = mOp.getVRegValue();
 	      mOp.setValueReg(llvm_epilogues[0]);
 	    }
+	    else
+	      origBranchExit = mOp.getVRegValue();
 	}
       }
     }
@@ -2681,14 +2671,24 @@ void ModuloSchedulingPass::fixBranches(std::vector<MachineBasicBlock *> &prologu
   //Update kernelLLVM branches
   const BranchInst *branchVal = dyn_cast<BranchInst>(BB->getBasicBlock()->getTerminator());
   
-  assert(llvm_epilogues.size() != 0 && "We must have epilogues!");
+  assert(origBranchExit != 0 && "We must have the original bb the kernel exits to!");
   
-  TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
-					     llvm_epilogues[0], 
-					     branchVal->getCondition(), 
-					     llvmKernelBB);
+  if(epilogues.size() > 0) {
+    TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
+					       llvm_epilogues[0], 
+					       branchVal->getCondition(), 
+					       llvmKernelBB);
+  }
+  else {
+    BasicBlock *origBBExit = dyn_cast<BasicBlock>(origBranchExit);
+    assert(origBBExit !=0 && "Original exit basic block must be set");
+    TerminatorInst *newBranch = new BranchInst(llvmKernelBB,
+					       origBBExit,
+					       branchVal->getCondition(), 
+					       llvmKernelBB);
+  }
 
-
+  if(schedule.getMaxStage() != 0) {
    //Lastly add unconditional branches for the epilogues
    for(unsigned I = 0; I <  epilogues.size(); ++I) {
      
@@ -2720,6 +2720,7 @@ void ModuloSchedulingPass::fixBranches(std::vector<MachineBasicBlock *> &prologu
      BuildMI(epilogues[I], V9::NOP, 0);
      
    }
+  }
 
    //FIX UP Machine BB entry!!
    //We are looking at the predecesor of our loop basic block and we want to change its ba instruction

@@ -141,8 +141,8 @@ void MSchedGraph::deleteNode(MSchedGraphNode *node) {
 //Create a graph for a machine block. The ignoreInstrs map is so that we ignore instructions
 //associated to the index variable since this is a special case in Modulo Scheduling.
 //We only want to deal with the body of the loop.
-MSchedGraph::MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ, AliasAnalysis &AA, 
-			 TargetData &TD, std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
+MSchedGraph::MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ, 
+			 std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
 			 DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm
 			 )
   : BB(bb), Target(targ) {
@@ -153,7 +153,7 @@ MSchedGraph::MSchedGraph(const MachineBasicBlock *bb, const TargetMachine &targ,
   //DEBUG(std::cerr << "Constructing graph for " << bb << "\n");
 
   //Create nodes and edges for this BB
-  buildNodesAndEdges(AA, TD, ignoreInstrs, DA, machineTollvm);
+  buildNodesAndEdges(ignoreInstrs, DA, machineTollvm);
 
   //Experimental!
   //addBranchEdges();
@@ -273,8 +273,7 @@ void MSchedGraph::addBranchEdges() {
 
 
 //Add edges between the nodes
-void MSchedGraph::buildNodesAndEdges(AliasAnalysis &AA, TargetData &TD, 
-				     std::map<const MachineInstr*, unsigned> &ignoreInstrs,
+void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ignoreInstrs,
 				     DependenceAnalyzer &DA,
 				     std::map<MachineInstr*, Instruction*> &machineTollvm) {
   
@@ -411,7 +410,7 @@ void MSchedGraph::buildNodesAndEdges(AliasAnalysis &AA, TargetData &TD,
 
   }
 
-  addMemEdges(memInstructions, AA, TD, DA, machineTollvm);
+  addMemEdges(memInstructions, DA, machineTollvm);
   addMachRegEdges(regNumtoNodeMap);
 
   //Finally deal with PHI Nodes and Value*
@@ -590,8 +589,7 @@ void MSchedGraph::addMachRegEdges(std::map<int, std::vector<OpIndexNodePair> >& 
 
 //Add edges between all loads and stores
 //Can be less strict with alias analysis and data dependence analysis.
-void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, AliasAnalysis &AA, 
-			      TargetData &TD, DependenceAnalyzer &DA, 
+void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, DependenceAnalyzer &DA, 
 			      std::map<MachineInstr*, Instruction*> &machineTollvm) {
 
   //Get Target machine instruction info
@@ -610,101 +608,23 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, Alia
     for(unsigned destIndex = srcIndex + 1; destIndex < memInst.size(); ++destIndex) {
   
       MachineInstr *destInst = (MachineInstr*) memInst[destIndex]->getInst();
-      bool malias = false;
-
+     
       DEBUG(std::cerr << "MInst1: " << *srcInst << "\n");
       DEBUG(std::cerr << "Inst1: " << *machineTollvm[srcInst] << "\n");
       DEBUG(std::cerr << "MInst2: " << *destInst << "\n");
       DEBUG(std::cerr << "Inst2: " << *machineTollvm[destInst] << "\n");
 
-      //Add Anti dependencies (store after load)
-      //Source is a Load
-      if(TMI->isLoad(srcNodeOpCode)) {
+      DependenceResult dr = DA.getDependenceInfo(machineTollvm[srcInst], machineTollvm[destInst]);
 
-	//Destination is a store
-	if(TMI->isStore(destInst->getOpcode())) {
-
-	  //Get the Value* that we are reading from the load, always the first op
-	  const MachineOperand &mOp = srcInst->getOperand(0);
-	  const MachineOperand &mOp2 = destInst->getOperand(0);
-	  
-	  if(mOp.hasAllocatedReg())
-	    if(mOp.getReg() == SparcV9::g0)
-	      continue;
-	    else
-	      malias = true;
-	  if(mOp2.hasAllocatedReg())
-	    if(mOp2.getReg() == SparcV9::g0)
-	      continue;
-	    else
-	      malias = true;
-
-	     //compare to DA
-	  DependenceResult dr = DA.getDependenceInfo(machineTollvm[srcInst], machineTollvm[destInst]);
-	  
-	  //Only add the edge if we can't verify that they do not alias
-	  if(malias || AA.alias(mOp2.getVRegValue(), 
-		      (unsigned)TD.getTypeSize(mOp2.getVRegValue()->getType()),
-		      mOp.getVRegValue(), 
-		      (unsigned)TD.getTypeSize(mOp.getVRegValue()->getType()))
-	     != AliasAnalysis::NoAlias) {
-	    
-	    //Add edge from load to store
-	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					  MSchedGraphEdge::MemoryDep, 
-					  MSchedGraphEdge::AntiDep);
-
-	    assert(dr.dependences.size() == 1 && "Expected at least one dependence\n");
-
-	  }
-	  else
-	    assert(dr.dependences.size() == 0 && "Expected no dependence\n");
-	}
+      for(std::vector<Dependence>::iterator d = dr.dependences.begin(), de = dr.dependences.end();
+	  d != de; ++d) {
+	//Add edge from load to store
+	memInst[srcIndex]->addOutEdge(memInst[destIndex], 
+				      MSchedGraphEdge::MemoryDep, 
+				      d->getDepType(), d->getIteDiff());
+	
       }
-	
-      //If source is a store, add output and true dependencies
-      if(TMI->isStore(srcNodeOpCode)) {
 
-	//Get the Value* that we are reading from the load, always the first op
-	const MachineOperand &mOp = srcInst->getOperand(0);
-	const MachineOperand &mOp2 = destInst->getOperand(0);
-	
-	if(mOp.hasAllocatedReg())
-	  if(mOp.getReg() == SparcV9::g0)
-	    continue;
-	  else
-	    malias = true;
-	if(mOp2.hasAllocatedReg())
-	  if(mOp2.getReg() == SparcV9::g0)
-	    continue;
-	  else
-	    malias = true;
-	
-	//compare to DA
-	DependenceResult dr = DA.getDependenceInfo(machineTollvm[srcInst], machineTollvm[destInst]);
-	
-	//Only add the edge if we can't verify that they do not alias
-	if(malias || AA.alias(mOp2.getVRegValue(), 
-		    (unsigned)TD.getTypeSize(mOp2.getVRegValue()->getType()),
-		    mOp.getVRegValue(), 
-		    (unsigned)TD.getTypeSize(mOp.getVRegValue()->getType()))
-	   != AliasAnalysis::NoAlias) {
-	  
-	  if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
-	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					  MSchedGraphEdge::MemoryDep, 
-					  MSchedGraphEdge::OutputDep);
-	  else
-	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					  MSchedGraphEdge::MemoryDep, 
-					  MSchedGraphEdge::TrueDep);
-	  assert(dr.dependences.size() == 1 && "Expected at least one dependence\n");
-
-	}
-	
-	else
-	  assert(dr.dependences.size() == 0 && "Expected no dependence\n");
-      }
     }
     
     //All instructions before the src in execution order have an iteration delay of 1
@@ -732,16 +652,16 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, Alia
 	    malias = true;
 	
 	//Only add the edge if we can't verify that they do not alias
-	if(AA.alias(mOp2.getVRegValue(), 
+	/*if(AA.alias(mOp2.getVRegValue(), 
 		    (unsigned)TD.getTypeSize(mOp2.getVRegValue()->getType()),
 		    mOp.getVRegValue(), 
 		    (unsigned)TD.getTypeSize(mOp.getVRegValue()->getType()))
-	   != AliasAnalysis::NoAlias) {
+		    != AliasAnalysis::NoAlias) {*/
 	  if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
 	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
 					  MSchedGraphEdge::MemoryDep, 
 					  MSchedGraphEdge::AntiDep, 1);
-	}
+	  //}
       }
       if(TMI->isStore(srcNodeOpCode)) {
 	
@@ -761,11 +681,11 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, Alia
 	    malias = true;
 
 	//Only add the edge if we can't verify that they do not alias
-	if(AA.alias(mOp2.getVRegValue(), 
+	/*if(AA.alias(mOp2.getVRegValue(), 
 		    (unsigned)TD.getTypeSize(mOp2.getVRegValue()->getType()),
 		    mOp.getVRegValue(), 
 		    (unsigned)TD.getTypeSize(mOp.getVRegValue()->getType()))
-	   != AliasAnalysis::NoAlias) {
+		    != AliasAnalysis::NoAlias) {*/
 
 	  if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
 	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
@@ -775,7 +695,7 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, Alia
 	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
 					  MSchedGraphEdge::MemoryDep, 
 					  MSchedGraphEdge::TrueDep, 1);
-	}
+	  //}
       }
       
     }

@@ -149,8 +149,6 @@ namespace llvm {
     // getAnalysisUsage
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DependenceAnalyzer>();
-      AU.addRequired<AliasAnalysis>();
-      AU.addRequired<TargetData>();
     }
 
   };
