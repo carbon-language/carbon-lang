@@ -69,6 +69,9 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       if (isa<LoadInst>(I)) {
         GS.isLoaded = true;
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+        // Don't allow a store OF the address, only stores TO the address.
+        if (SI->getOperand(0) == V) return true;
+
         // If this store is just storing the initializer into a global (i.e. not
         // changing the value), ignore it.  For now we just handle direct
         // stores, no stores to fields of aggregates.
@@ -239,9 +242,6 @@ bool GlobalOpt::runOnModule(Module &M) {
           
           ++NumMarked;
           Changed = true;
-        } else if (!GS.isNotSuitableForSRA &&
-                   !GV->getInitializer()->getType()->isFirstClassType()) {
-          //std::cerr << "COULD SRA: " << *GV;
         }
       }
     }
