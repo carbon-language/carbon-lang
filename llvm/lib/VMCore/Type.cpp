@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <iostream>
@@ -443,44 +444,76 @@ void DerivedType::dropAllTypeUses() {
   }
 }
 
+
+
+/// TypePromotionGraph and graph traits - this is designed to allow us to do
+/// efficient SCC processing of type graphs.  This is the exact same as
+/// GraphTraits<Type*>, except that we pretend that concrete types have no
+/// children to avoid processing them.
+struct TypePromotionGraph {
+  Type *Ty;
+  TypePromotionGraph(Type *T) : Ty(T) {}
+};
+
+namespace llvm {
+  template <> struct GraphTraits<TypePromotionGraph> {
+    typedef Type NodeType;
+    typedef Type::subtype_iterator ChildIteratorType;
+    
+    static inline NodeType *getEntryNode(TypePromotionGraph G) { return G.Ty; }
+    static inline ChildIteratorType child_begin(NodeType *N) { 
+      if (N->isAbstract())
+        return N->subtype_begin(); 
+      else           // No need to process children of concrete types.
+        return N->subtype_end(); 
+    }
+    static inline ChildIteratorType child_end(NodeType *N) { 
+      return N->subtype_end();
+    }
+  };
+}
+
+
 // PromoteAbstractToConcrete - This is a recursive function that walks a type
 // graph calculating whether or not a type is abstract.
 //
 // This method returns true if the type is found to still be abstract.
 //
-bool Type::PromoteAbstractToConcrete(void *Ptr) {
-  if (!isAbstract())                           // Base case for the recursion
-    return false;                              // Primitive = leaf type
-  
-  if (isa<OpaqueType>(this))                   // Base case for the recursion
-    return true;                               // This whole type is abstract!
+void Type::PromoteAbstractToConcrete() {
+  if (!isAbstract()) return;
 
-  /// KnownAbstractTypes - This set contains all of the types that we know for
-  /// sure are abstract.  Once we discover that a type really is abstract, we
-  /// remember this so we don't have to do potentially exponential amounts of
-  /// checking in some cases.
-  std::set<Type*> &KnownAbstractTypes = *(std::set<Type*>*)Ptr;
-  if (KnownAbstractTypes.count(this))
-    return true;    // We already know this type is abstract!
+  scc_iterator<TypePromotionGraph> SI = scc_begin(TypePromotionGraph(this));
+  scc_iterator<TypePromotionGraph> SE = scc_end  (TypePromotionGraph(this));
 
-  // We have to guard against recursion.  To do this, we temporarily mark this
-  // type as concrete, so that if we get back to here recursively we will think
-  // it's not abstract, and thus not scan it again.
-  setAbstract(false);
+  for (; SI != SE; ++SI) {
+    std::vector<Type*> &SCC = *SI;
 
-  // Scan all of the sub-types.  If any of them are abstract, than so is this
-  // one!
-  for (Type::subtype_iterator I = subtype_begin(), E = subtype_end(); 
-       I != E; ++I)
-    if (const_cast<Type*>(I->get())->PromoteAbstractToConcrete(Ptr)) {
-      KnownAbstractTypes.insert(this);
-      setAbstract(true);        // Restore the abstract bit.
-      return true;              // This type is abstract if subtype is abstract!
+    // Concrete types are leaves in the tree.  Since an SCC will either be all
+    // abstract or all concrete, we only need to check one type.
+    if (SCC[0]->isAbstract()) {
+      if (isa<OpaqueType>(SCC[0]))
+        return;     // Not going to be concrete, sorry.
+
+      // If all of the children of all of the types in this SCC are concrete,
+      // then this SCC is now concrete as well.  If not, neither this SCC, nor
+      // any parent SCCs will be concrete, so we might as well just exit.
+      for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+        for (Type::subtype_iterator CI = SCC[i]->subtype_begin(),
+               E = SCC[i]->subtype_end(); CI != E; ++CI)
+          if ((*CI)->isAbstract())
+            return;               // Not going to be concrete, sorry.
+      
+      // Okay, we just discovered this whole SCC is now concrete, mark it as
+      // such!
+      for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+        assert(SCC[i]->isAbstract() && "Why are we processing concrete types?");
+        
+        SCC[i]->setAbstract(false);
+        // The type just became concrete, notify all users!
+        cast<DerivedType>(SCC[i])->notifyUsesThatTypeBecameConcrete();
+      }
     }
-  
-  // Nothing looks abstract here.  Restore the abstract flag.
-  setAbstract(true);
-  return false;
+  }
 }
 
 
@@ -730,15 +763,8 @@ public:
 
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
-    if (Ty->isAbstract()) {
-      std::set<Type*> KnownAbstractTypes;
-      if (!Ty->PromoteAbstractToConcrete(&KnownAbstractTypes))
-        Ty->setAbstract(false);
-
-      // If the type just became concrete, notify all users!
-      if (!Ty->isAbstract())
-        Ty->notifyUsesThatTypeBecameConcrete();
-    }
+    if (Ty->isAbstract())
+      Ty->PromoteAbstractToConcrete();
   }
   
   void print(const char *Arg) const {
