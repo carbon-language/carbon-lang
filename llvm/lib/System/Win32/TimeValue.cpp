@@ -2,7 +2,7 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Jeff Cohen and is distributed under the 
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
@@ -11,18 +11,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Include the generic Unix implementation
-#include "../Unix/Unix.h"
+#include "Win32.h"
 
 namespace llvm {
 using namespace sys;
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Win32 specific code 
-//===          and must not be generic UNIX code (see ../Unix/TimeValue.cpp)
+//=== WARNING: Implementation here must contain only Win32 specific code.
 //===----------------------------------------------------------------------===//
 
-// FIXME: Need TimeValue::now()
+TimeValue TimeValue::now() {
+  __int64 ft;
+  GetSystemTimeAsFileTime(reinterpret_cast<FILETIME *>(&ft));
+
+  return TimeValue(
+    static_cast<TimeValue::SecondsType>( ft / 10000000 +
+      Win32ZeroTime.seconds_ ),
+    static_cast<TimeValue::NanoSecondsType>( (ft % 10000000) * 100) );
+}
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 
