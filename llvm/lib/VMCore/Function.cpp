@@ -15,11 +15,11 @@
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
 //
-template class ValueHolder<MethodArgument, Method>;
-template class ValueHolder<BasicBlock    , Method>;
+template class ValueHolder<MethodArgument, Method, Method>;
+template class ValueHolder<BasicBlock    , Method, Method>;
 
 Method::Method(const MethodType *Ty, const string &name) 
-  : SymTabValue(Ty, Value::MethodVal, name), BasicBlocks(this), 
+  : Value(Ty, Value::MethodVal, name), SymTabValue(this), BasicBlocks(this), 
     ArgumentList(this, this) {
   assert(Ty->isMethodType() && "Method signature must be of method type!");
   Parent = 0;

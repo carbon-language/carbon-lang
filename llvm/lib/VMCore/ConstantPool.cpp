@@ -23,6 +23,11 @@ void ConstantPool::setParent(SymTabValue *STV) {
     Planes[i]->setParent(Parent);  
 }
 
+const Value *ConstantPool::getParentV() const { return Parent->getSTVParent(); }
+Value *ConstantPool::getParentV() { return Parent->getSTVParent(); }
+
+
+
 // Constant getPlane - Returns true if the type plane does not exist, otherwise
 // updates the pointer to point to the correct plane.
 //

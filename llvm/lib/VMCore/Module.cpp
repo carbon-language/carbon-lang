@@ -14,10 +14,10 @@
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a DefHolderImpl.h file seperate from DefHolder.h!  :(
 //
-template class ValueHolder<Method, Module>;
+template class ValueHolder<Method, Module, Module>;
 
 Module::Module()
-  : SymTabValue(0/*TODO: REAL TYPE*/, Value::ModuleVal, ""),
+  : Value(0/*TODO: REAL TYPE*/, Value::ModuleVal, ""), SymTabValue(this),
     MethodList(this, this) {
 }
 

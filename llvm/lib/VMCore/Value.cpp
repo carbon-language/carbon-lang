@@ -106,10 +106,10 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
 //
-template class ValueHolder<ConstPoolVal, SymTabValue>;
+template class ValueHolder<ConstPoolVal, SymTabValue, SymTabValue>;
 
-SymTabValue::SymTabValue(const Type *Ty, ValueTy dty, const string &name = "") 
-  : Value(Ty, dty, name), ConstPool(this) { 
+SymTabValue::SymTabValue(Value *p) : ConstPool(this), ValueParent(p) { 
+  assert(ValueParent && "SymTavValue without parent!?!");
   ParentSymTab = SymTab = 0;
 }
 

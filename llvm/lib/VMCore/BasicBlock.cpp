@@ -17,13 +17,12 @@
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
 //
-template class ValueHolder<Instruction, BasicBlock>;
+template class ValueHolder<Instruction, BasicBlock, Method>;
 
-BasicBlock::BasicBlock(const string &name, Method *parent)
+BasicBlock::BasicBlock(const string &name, Method *Parent)
   : Value(Type::LabelTy, Value::BasicBlockVal, name), InstList(this, 0) {
-
-  if (parent)
-    parent->getBasicBlocks().push_back(this);
+  if (Parent)
+    Parent->getBasicBlocks().push_back(this);
 }
 
 BasicBlock::~BasicBlock() {

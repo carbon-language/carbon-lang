@@ -95,3 +95,6 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
     Operands.push_back(Use(Idx[i], this));
 }
 
+bool GetElementPtrInst::isStructSelector() const {
+  return ((PointerType*)Operands[0]->getType())->getValueType()->isStructType();
+}
