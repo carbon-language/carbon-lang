@@ -52,8 +52,7 @@ public:
   void *getPointerToFunction(const Function *F);
 
 private:
-  static MachineCodeEmitter *createX86Emitter(VM &V);
-  static MachineCodeEmitter *createSparcEmitter(VM &V);
+  static MachineCodeEmitter *createEmitter(VM &V);
   void setupPassManager();
 };
 
