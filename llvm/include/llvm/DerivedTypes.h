@@ -160,7 +160,6 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   ArrayType(const Type *ElType, int NumEl);
-
 public:
 
   inline const Type *getElementType() const { return ElementType; }
@@ -252,7 +251,6 @@ protected:
 
   // Private ctor - Only can be created by a static member...
   PointerType(const Type *ElType);
-
 public:
 
   inline const Type *getValueType() const { return ValueType; }
@@ -323,6 +321,12 @@ template <class TypeSubClass> void PATypeHandle<TypeSubClass>::addUser() {
 }
 template <class TypeSubClass> void PATypeHandle<TypeSubClass>::removeUser() {
   if (Ty->isAbstract())
+    cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
+}
+
+template <class TypeSubClass>
+void PATypeHandle<TypeSubClass>::removeUserFromConcrete() {
+  if (!Ty->isAbstract())
     cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
 }
 

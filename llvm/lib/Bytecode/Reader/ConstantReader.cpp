@@ -103,7 +103,8 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
 //
 void BytecodeParser::refineAbstractType(const DerivedType *OldType, 
 					const Type *NewType) {
-  if (OldType == NewType) return;  // Type is modified, but same
+  if (OldType == NewType &&
+      OldType->isAbstract()) return;  // Type is modified, but same
 
   TypeValuesListTy::iterator I = find(MethodTypeValues.begin(), 
 				      MethodTypeValues.end(), OldType);
@@ -113,7 +114,12 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
 	   "Can't refine a type I don't know about!");
   }
 
-  *I = NewType;  // Update to point to new, more refined type.
+  if (OldType == NewType) {
+    assert(!OldType->isAbstract());
+    I->removeUserFromConcrete();
+  } else {
+    *I = NewType;  // Update to point to new, more refined type.
+  }
 }
 
 

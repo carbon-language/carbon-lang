@@ -25,6 +25,10 @@ SymbolTable::~SymbolTable() {
 	cast<DerivedType>(Ty)->removeAbstractTypeUser(this);
     }
   }
+
+  // TODO: FIXME: BIG ONE: This doesn't unreference abstract types for the planes
+  // that could still have entries!
+
 #ifndef NDEBUG   // Only do this in -g mode...
   bool LeftoverValues = true;
   for (iterator i = begin(); i != end(); ++i) {
@@ -173,27 +177,27 @@ void SymbolTable::insertEntry(const string &Name, const Type *VTy, Value *V) {
 // This function is called when one of the types in the type plane are refined
 void SymbolTable::refineAbstractType(const DerivedType *OldType,
 				     const Type *NewType) {
-  if (OldType == NewType) return;  // Noop, don't waste time dinking around
-
-  // Get a handle to the new type plane...
-  iterator NewTypeIt = find(NewType);
-  if (NewTypeIt == super::end()) {      // If no plane exists, add one
-    NewTypeIt = super::insert(make_pair(NewType, VarMap())).first;
-
-    if (NewType->isAbstract()) {
-      cast<DerivedType>(NewType)->addAbstractTypeUser(this);
-#if DEBUG_ABSTYPE
-      cerr << "refined to abstype: " << NewType->getDescription() <<endl;
-#endif
-    }
-  }
-
-  VarMap &NewPlane = NewTypeIt->second;
+  if (OldType == NewType && OldType->isAbstract())
+    return;  // Noop, don't waste time dinking around
 
   // Search to see if we have any values of the type oldtype.  If so, we need to
   // move them into the newtype plane...
   iterator TPI = find(OldType);
-  if (TPI != end()) {
+  if (OldType != NewType && TPI != end()) {
+    // Get a handle to the new type plane...
+    iterator NewTypeIt = find(NewType);
+    if (NewTypeIt == super::end()) {      // If no plane exists, add one
+      NewTypeIt = super::insert(make_pair(NewType, VarMap())).first;
+      
+      if (NewType->isAbstract()) {
+        cast<DerivedType>(NewType)->addAbstractTypeUser(this);
+#if DEBUG_ABSTYPE
+        cerr << "[Added] refined to abstype: "<<NewType->getDescription()<<endl;
+#endif
+    }
+  }
+
+    VarMap &NewPlane = NewTypeIt->second;
     VarMap &OldPlane = TPI->second;
     while (!OldPlane.empty()) {
       pair<const string, Value*> V = *OldPlane.begin();
@@ -256,6 +260,12 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 
     // Remove the plane that is no longer used
     erase(TPI);
+  } else if (TPI != end()) {
+    assert(OldType == NewType);
+#if DEBUG_ABSTYPE
+    cerr << "Removing SELF type " << OldType->getDescription() << endl;
+#endif
+    OldType->removeAbstractTypeUser(this);
   }
 
   TPI = find(Type::TypeTy);

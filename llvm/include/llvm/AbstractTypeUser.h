@@ -35,6 +35,16 @@ public:
   // after this method is invoked, OldType shall be deleted, so referencing it
   // is quite unwise.
   //
+  // Another case that is important to consider is when a type is refined, but
+  // stays in the same place in memory.  In this case OldTy will equal NewTy.
+  // This callback just notifies ATU's that the underlying structure of the type
+  // has changed... but any previously used properties are still valid.
+  //
+  // Note that it is possible to refine a type with parameters OldTy==NewTy, and
+  // OldTy is no longer abstract.  In this case, abstract type users should
+  // release their hold on a type, because it went from being abstract to
+  // concrete.
+  //
   virtual void refineAbstractType(const DerivedType *OldTy,
 				  const Type *NewTy) = 0;
 };
@@ -94,6 +104,14 @@ public:
 
   // operator-> - Allow user to dereference handle naturally...
   inline const TypeSubClass *operator->() const { return Ty; }
+
+  // removeUserFromConcrete - This function should be called when the User is
+  // notified that our type is refined... and the type is being refined to
+  // itself, which is now a concrete type.  When a type becomes concrete like
+  // this, we MUST remove ourself from the AbstractTypeUser list, even though
+  // the type is apparently concrete.
+  //
+  inline void removeUserFromConcrete();
 };
 
 
@@ -113,7 +131,13 @@ public:
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
     assert(get() == OldTy && "Can't refine to unknown value!");
-    PATypeHandle<TypeSC>::operator=((const TypeSC*)NewTy);
+
+    // Check to see if the type just became concrete.  If so, we have to
+    // removeUser to get off its AbstractTypeUser list
+    removeUserFromConcrete();
+
+    if (OldTy != NewTy)
+      PATypeHandle<TypeSC>::operator=((const TypeSC*)NewTy);
   }
 
   // operator= - Allow assignment to handle

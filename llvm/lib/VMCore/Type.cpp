@@ -151,6 +151,11 @@ ArrayType::ArrayType(const Type *ElType, int NumEl)
   NumElements = NumEl;
   setDerivedTypeProperties();
 }
+ArrayType::~ArrayType() {
+#ifdef DEBUG_MERGE_TYPES
+  cerr << "Destroyed type: " << getDescription() << endl;
+#endif
+}
 
 StructType::StructType(const vector<const Type*> &Types)
   : DerivedType("", StructTyID) {
@@ -165,6 +170,11 @@ StructType::StructType(const vector<const Type*> &Types)
 PointerType::PointerType(const Type *E) : DerivedType("", PointerTyID),
 			  ValueType(PATypeHandle<Type>(E, this)) {
   setDerivedTypeProperties();
+}
+PointerType::~PointerType() {
+#ifdef DEBUG_MERGE_TYPES
+  cerr << "Destoyed type: " << getDescription() << endl;
+#endif
 }
 
 OpaqueType::OpaqueType() : DerivedType("", OpaqueTyID) {
@@ -381,7 +391,16 @@ public:
   // corrected.
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    if (OldTy == NewTy) return;
+    if (OldTy == NewTy) {
+      if (!OldTy->isAbstract()) {
+        // Check to see if the type just became concrete.
+        // If so, remove self from user list.
+        for (MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+          if (I->second == OldTy)
+            I->second.removeUserFromConcrete();
+      }
+      return;
+    }
 #ifdef DEBUG_MERGE_TYPES
     cerr << "Removing Old type from Tab: " << (void*)OldTy << ", "
 	 << OldTy->getDescription() << "  replacement == " << (void*)NewTy
@@ -426,9 +445,19 @@ protected:
 
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldTy, const Type *NewTy) = 0;
+
+  // typeBecameConcrete - This callback occurs when a contained type refines
+  // to itself, but becomes concrete in the process.  Our subclass should remove
+  // itself from the ATU list of the specified type.
+  //
+  virtual void typeBecameConcrete(const DerivedType *Ty) = 0;
   
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    if (OldTy == NewTy) return;
+    if (OldTy == NewTy) {
+      if (!OldTy->isAbstract())
+        typeBecameConcrete(OldTy);
+      return;
+    }
     TypeMap<ValType, TypeClass> &Table = MyTable;     // Copy MyTable reference
     ValType Tmp(*(ValType*)this);                     // Copy this.
     PATypeHandle<TypeClass> OldType(Table.get(*(ValType*)this), this);
@@ -481,6 +510,13 @@ public:
       if (ArgTypes[i] == OldType) ArgTypes[i] = NewType;
   }
 
+  virtual void typeBecameConcrete(const DerivedType *Ty) {
+    if (RetTy == Ty) RetTy.removeUserFromConcrete();
+
+    for (unsigned i = 0; i < ArgTypes.size(); ++i)
+      if (ArgTypes[i] == Ty) ArgTypes[i].removeUserFromConcrete();
+  }
+
   inline bool operator<(const MethodValType &MTV) const {
     if (RetTy.get() < MTV.RetTy.get()) return true;
     if (RetTy.get() > MTV.RetTy.get()) return false;
@@ -529,6 +565,12 @@ public:
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
     if (ValTy == OldType) ValTy = NewType;
+  }
+
+  virtual void typeBecameConcrete(const DerivedType *Ty) {
+    assert(ValTy == Ty &&
+           "Contained type became concrete but we're not using it!");
+    ValTy.removeUserFromConcrete();
   }
 
   inline bool operator<(const ArrayValType &MTV) const {
@@ -587,6 +629,11 @@ public:
       if (ElTypes[i] == OldType) ElTypes[i] = NewType;
   }
 
+  virtual void typeBecameConcrete(const DerivedType *Ty) {
+    for (unsigned i = 0; i < ElTypes.size(); ++i)
+      if (ElTypes[i] == Ty) ElTypes[i].removeUserFromConcrete();
+  }
+
   inline bool operator<(const StructValType &STV) const {
     return ElTypes < STV.ElTypes;
   }
@@ -629,6 +676,12 @@ public:
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
     if (ValTy == OldType) ValTy = NewType;
+  }
+
+  virtual void typeBecameConcrete(const DerivedType *Ty) {
+    assert(ValTy == Ty &&
+           "Contained type became concrete but we're not using it!");
+    ValTy.removeUserFromConcrete();
   }
 
   inline bool operator<(const PointerValType &MTV) const {
@@ -675,22 +728,20 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
       AbstractTypeUsers.erase(AbstractTypeUsers.begin()+i-1);
       
 #ifdef DEBUG_MERGE_TYPES
-      cerr << "  removeAbstractTypeUser[" << (void*)this << ", "
-	   << getDescription() << "][" << AbstractTypeUsers.size()
-	   << "] User = " << U << endl;
+      cerr << "  removeAbstractTypeUser<" << (void*)this << ", "
+	   << getDescription() << ">[" << i << "] User = " << U << endl;
 #endif
 
-      if (AbstractTypeUsers.empty()) {
+      if (AbstractTypeUsers.empty() && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
-	cerr << "DELETEing unused abstract type: " << getDescription()
-	     << "[" << (void*)this << "]" << endl;
+	cerr << "DELETEing unused abstract type: <" << getDescription()
+	     << ">[" << (void*)this << "]" << endl;
 #endif
 	delete this;                  // No users of this abstract type!
       }
       return;
     }
   }
-  assert(isAbstract() && "removeAbstractTypeUser: Type not abstract!");
   assert(0 && "AbstractTypeUser not in user list!");
 }
 
@@ -746,6 +797,9 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
 #endif
       User->refineAbstractType(this, NewTy);
 
+      if (AbstractTypeUsers.size() == OldSize) {
+        User->refineAbstractType(this, NewTy);
+      }
       assert(AbstractTypeUsers.size() != OldSize &&
 	     "AbsTyUser did not remove self from user list!");
     }
@@ -786,6 +840,19 @@ void DerivedType::typeIsRefined() {
   }
 
   --isRefining;
+
+#ifndef _NDEBUG
+  if (!(isAbstract() || AbstractTypeUsers.empty()))
+    for (unsigned i = 0; i < AbstractTypeUsers.size(); ++i) {
+      if (AbstractTypeUsers[i] != this) {
+        // Debugging hook
+        cerr << "FOUND FAILURE\n";
+        AbstractTypeUsers[i]->refineAbstractType(this, this);
+        assert(0 && "Type became concrete,"
+               " but it still has abstract type users hanging around!");
+      }
+  }
+#endif
 }
   
 
@@ -803,6 +870,12 @@ void MethodType::refineAbstractType(const DerivedType *OldType,
        << NewType->getDescription() << "])\n";
 #endif
 
+  if (!OldType->isAbstract()) {
+    if (ResultType == OldType) ResultType.removeUserFromConcrete();
+    for (unsigned i = 0; i < ParamTys.size(); ++i)
+      if (ParamTys[i] == OldType) ParamTys[i].removeUserFromConcrete();
+  }
+
   if (OldType != NewType) {
     if (ResultType == OldType) ResultType = NewType;
 
@@ -812,10 +885,10 @@ void MethodType::refineAbstractType(const DerivedType *OldType,
 
   const MethodType *MT = MethodTypes.containsEquivalent(this);
   if (MT && MT != this) {
-    refineAbstractTypeTo(MT);          // Different type altogether...
+    refineAbstractTypeTo(MT);            // Different type altogether...
   } else {
     setDerivedTypeProperties();          // Update the name and isAbstract
-    typeIsRefined();                   // Same type, different contents...
+    typeIsRefined();                     // Same type, different contents...
   }
 }
 
@@ -831,6 +904,11 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
+
+  if (!OldType->isAbstract()) {
+    assert(ElementType == OldType);
+    ElementType.removeUserFromConcrete();
+  }
 
   ElementType = NewType;
   const ArrayType *AT = ArrayTypes.containsEquivalent(this);
@@ -854,12 +932,18 @@ void StructType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
+  if (!OldType->isAbstract()) {
+    for (unsigned i = 0; i < ETypes.size(); ++i)
+      if (ETypes[i] == OldType)
+        ETypes[i].removeUserFromConcrete();
+  }
+
   if (OldType != NewType) {
     // Update old type to new type in the array...
     for (unsigned i = 0; i < ETypes.size(); ++i)
       if (ETypes[i] == OldType)
         ETypes[i] = NewType;
-  }
+  } 
 
   const StructType *ST = StructTypes.containsEquivalent(this);
   if (ST && ST != this) {
@@ -881,6 +965,11 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
+
+  if (!OldType->isAbstract()) {
+    assert(ValueType == OldType);
+    ValueType.removeUserFromConcrete();
+  }
 
   ValueType = NewType;
   const PointerType *PT = PointerTypes.containsEquivalent(this);
