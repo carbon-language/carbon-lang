@@ -111,6 +111,22 @@ namespace {
     /// in predecessor basic blocks.
     void EliminatePHINodes(MachineBasicBlock &MBB);
 
+    /// isAllocatableRegister - A register may be used by the program if it's
+    /// not the stack or frame pointer.
+    bool isAllocatableRegister(unsigned R) const {
+      unsigned FP = RegInfo->getFramePointer(), SP = RegInfo->getStackPointer();
+      // Don't allocate the Frame or Stack pointers
+      if (R == FP || R == SP)
+        return false;
+
+      // Check to see if this register aliases the stack or frame pointer...
+      if (const unsigned *AliasSet = RegInfo->getAliasSet(R)) {
+        for (unsigned i = 0; AliasSet[i]; ++i)
+          if (AliasSet[i] == FP || AliasSet[i] == SP)
+            return false;
+      }
+      return true;
+    }
 
     /// getStackSpaceFor - This returns the offset of the specified virtual
     /// register on the stack, allocating space if neccesary.
@@ -129,6 +145,16 @@ namespace {
     ///
     void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                       unsigned VirtReg, unsigned PhysReg);
+
+    /// spillPhysReg - This method spills the specified physical register into
+    /// the virtual register slot associated with it.
+    //
+    void spillPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
+                      unsigned PhysReg) {
+      assert(PhysRegsUsed.find(PhysReg) != PhysRegsUsed.end() &&
+             "Physical register is not used: cannot spill it!");
+      spillVirtReg(MBB, I, PhysRegsUsed[PhysReg], PhysReg);
+    }
 
     void AssignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg);
 
@@ -219,9 +245,7 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
        It != E; ++It) {
     unsigned R = *It;
     if (PhysRegsUsed.find(R) == PhysRegsUsed.end())   // Is reg unused?
-      /// FIXME: Hack
-      if (R != RegInfo->getFramePointer() && R != RegInfo->getStackPointer() &&
-          R != 13 && R != 14) {
+      if (isAllocatableRegister(R)) {
         // Found an unused register!
         PhysReg = R;
         break;
@@ -231,6 +255,7 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
   // If we didn't find an unused register, scavange one now!
   if (PhysReg == 0) {
     unsigned i = 0;
+    assert(!PhysRegsUseOrder.empty() && "No allocated registers??");
     while (PhysRegClasses[PhysRegsUseOrder[i]] != RegClass) {
       ++i;
       assert(i != PhysRegsUseOrder.size() &&
@@ -240,8 +265,16 @@ unsigned RA::getFreeReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     // At this point PhysRegsUseOrder[i] is the least recently used register of
     // compatible register class.  Spill it to memory and reap its remains.
     PhysReg = PhysRegsUseOrder[i];
-    spillVirtReg(MBB, I, PhysRegsUsed[PhysReg], PhysReg);
+    spillPhysReg(MBB, I, PhysReg);
   }
+
+  // If the selected register aliases any other registers, we must make sure to
+  // spill them as well...
+  if (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg))
+    for (unsigned i = 0; AliasSet[i]; ++i)
+      if (PhysRegsUsed.count(AliasSet[i]))     // Spill aliased register...
+        spillPhysReg(MBB, I, AliasSet[i]);
+
 
   // Now that we know which register we need to assign this to, do it now!
   AssignVirtToPhysReg(VirtReg, PhysReg);
@@ -417,7 +450,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
           // Spill the incoming value, because we are about to change the
           // register contents.
-          spillVirtReg(MBB, I, PhysRegsUsed[DestPhysReg], DestPhysReg);
+          spillPhysReg(MBB, I, DestPhysReg);
           AssignVirtToPhysReg(DestVirtReg, DestPhysReg);
         } else {
           DestPhysReg = getFreeReg(MBB, I, DestVirtReg);
