@@ -19,6 +19,20 @@
 #include <iostream>
 using namespace llvm;
 
+static const Type *getTypeFor(MVT::ValueType VT) {
+  switch (VT) {
+  default: assert(0 && "Unknown MVT!");
+  case MVT::i1: return Type::BoolTy;
+  case MVT::i8: return Type::UByteTy;
+  case MVT::i16: return Type::UShortTy;
+  case MVT::i32: return Type::UIntTy;
+  case MVT::i64: return Type::ULongTy;
+  case MVT::f32: return Type::FloatTy;
+  case MVT::f64: return Type::DoubleTy;
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
 /// hacks on it until the target machine can handle it.  This involves
@@ -403,7 +417,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
         switch (getTypeAction(Node->getOperand(i).getValueType())) {
         case Legal:
-          NewValues.push_back(LegalizeOp(Node->getOperand(1)));
+          NewValues.push_back(LegalizeOp(Node->getOperand(i)));
           break;
         case Expand: {
           SDOperand Lo, Hi;
@@ -638,10 +652,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
   }
 
-  // If we are lowering to a type that the target doesn't support, we will have
-  // to iterate lowering.
-  if (!isTypeLegal(NVT))
-    NeedsAnotherIteration = true;
+  // Expanding to multiple registers needs to perform an optimization step, and
+  // is not careful to avoid operations the target does not support.  Make sure
+  // that all generated operations are legalized in the next iteration.
+  NeedsAnotherIteration = true;
+  const char *LibCallName = 0;
 
   LegalizeAction Action;
   switch (Node->getOpcode()) {
@@ -750,6 +765,51 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // The high part is just a zero.
     Hi = DAG.getConstant(0, NVT);
     break;
+
+    // These operators cannot be expanded directly, emit them as calls to
+    // library functions.
+  case ISD::FP_TO_SINT:
+    if (Node->getOperand(0).getValueType() == MVT::f32)
+      LibCallName = "__fixsfdi";
+    else
+      LibCallName = "__fixdfdi";
+    break;
+  case ISD::FP_TO_UINT:
+    if (Node->getOperand(0).getValueType() == MVT::f32)
+      LibCallName = "__fixunssfdi";
+    else
+      LibCallName = "__fixunsdfdi";
+    break;
+
+  case ISD::ADD:  LibCallName = "__adddi3"; break;
+  case ISD::SUB:  LibCallName = "__subdi3"; break;
+  case ISD::MUL:  LibCallName = "__muldi3"; break;
+  case ISD::SDIV: LibCallName = "__divdi3"; break;
+  case ISD::UDIV: LibCallName = "__udivdi3"; break;
+  case ISD::SREM: LibCallName = "__moddi3"; break;
+  case ISD::UREM: LibCallName = "__umoddi3"; break;
+  case ISD::SHL:  LibCallName = "__lshrdi3"; break;
+  case ISD::SRA:  LibCallName = "__ashrdi3"; break;
+  case ISD::SRL:  LibCallName = "__ashldi3"; break;
+  }
+
+  // Int2FP -> __floatdisf/__floatdidf
+
+  // If this is to be expanded into a libcall... do so now.
+  if (LibCallName) {
+    TargetLowering::ArgListTy Args;
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+      Args.push_back(std::make_pair(Node->getOperand(i),
+                               getTypeFor(Node->getOperand(i).getValueType())));
+    SDOperand Callee = DAG.getExternalSymbol(LibCallName, TLI.getPointerTy());
+
+    // We don't care about token chains for libcalls.  We just use the entry
+    // node as our input and ignore the output chain.  This allows us to place
+    // calls wherever we need them to satisfy data dependences.
+    SDOperand Result = TLI.LowerCallTo(DAG.getEntryNode(),
+                                       getTypeFor(Op.getValueType()), Callee,
+                                       Args, DAG).first;
+    ExpandOp(Result, Lo, Hi);
   }
 
   // Remember in a map if the values will be reused later.
