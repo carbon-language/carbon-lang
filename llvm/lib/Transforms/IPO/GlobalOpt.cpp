@@ -225,7 +225,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
 static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
   ConstantInt *CI = dyn_cast<ConstantInt>(Idx);
   if (!CI) return 0;
-  uint64_t IdxV = CI->getRawValue();
+  unsigned IdxV = (unsigned)CI->getRawValue();
 
   if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Agg)) {
     if (IdxV < CS->getNumOperands()) return CS->getOperand(IdxV);
@@ -394,7 +394,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     // Ignore the 1th operand, which has to be zero or else the program is quite
     // broken (undefined).  Get the 2nd operand, which is the structure or array
     // index.
-    unsigned Val = cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
+    unsigned Val =
+       (unsigned)cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
     if (Val >= NewGlobals.size()) Val = 0; // Out of bound array access.
 
     Value *NewPtr = NewGlobals[Val];
@@ -641,7 +642,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     // If we have an array allocation, transform it to a single element
     // allocation to make the code below simpler.
     Type *NewTy = ArrayType::get(MI->getAllocatedType(),
-                                 NElements->getRawValue());
+                                 (unsigned)NElements->getRawValue());
     MallocInst *NewMI =
       new MallocInst(NewTy, Constant::getNullValue(Type::UIntTy),
                      MI->getName(), MI);
