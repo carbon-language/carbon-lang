@@ -65,7 +65,7 @@ void *X86JITInfo::getJITStubForFunction(Function *F, MachineCodeEmitter &MCE) {
 }
 
 void X86JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
-  unsigned char *OldByte = (char *) Old;
+  unsigned char *OldByte = (unsigned char *) Old;
   *OldByte++ = 0xE9;                // Emit JMP opcode.
   int32_t *OldWord = (int32_t *) OldByte;
   int32_t NewAddr = (intptr_t) New;
