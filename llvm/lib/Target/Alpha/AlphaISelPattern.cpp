@@ -624,18 +624,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
       SDOperand Address = N.getOperand(1);
       Select(Chain);
 
-      switch(Node->getValueType(0)) {
-      default: Node->dump(); assert(0 && "Unknown type to sign extend to.");
-      case MVT::i64:
+      assert(Node->getValueType(0) == MVT::i64 && "Unknown type to sign extend to.");
+      if (opcode == ISD::LOAD)
+        Opc = Alpha::LDQ;
+      else
         switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
         default: Node->dump(); assert(0 && "Bad sign extend!");
-        case MVT::i64: Opc = Alpha::LDQ; assert(opcode == ISD::LOAD && "Not Load"); break;
         case MVT::i32: Opc = Alpha::LDL; assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
         case MVT::i16: Opc = Alpha::LDWU; assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
         case MVT::i8: Opc = Alpha::LDBU; assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         }
-      }
 
       if (Address.getOpcode() == ISD::GlobalAddress)
         {
@@ -1106,6 +1105,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
    {
       assert (DestType == MVT::i64 && "only quads can be loaded to");
       MVT::ValueType SrcType = N.getOperand(0).getValueType();
+      assert (SrcType == MVT::f32 || SrcType == MVT::f64);
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
 
       //The hard way:
