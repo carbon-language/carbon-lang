@@ -84,6 +84,13 @@ struct MachineCodeEmitter {
   /// can be used for debugging users of the MachineCodeEmitter interface.
   ///
   static MachineCodeEmitter *createDebugMachineCodeEmitter();
+
+  /// createFilePrinterMachineCodeEmitter - Return a dynamically allocated
+  /// machine code emitter, which prints binary code to a file.  This
+  /// can be used for debugging users of the MachineCodeEmitter interface.
+  ///
+  static MachineCodeEmitter*
+  createFilePrinterMachineCodeEmitter(MachineCodeEmitter&);
 };
 
 #endif
