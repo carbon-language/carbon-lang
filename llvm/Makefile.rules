@@ -17,7 +17,8 @@
 #
 # 3. Source - If specified, this sets the source code filenames.  If this
 #    is not set, it defaults to be all of the .cpp, .c, .y, and .l files 
-#    in the current directory.
+#    in the current directory.  Also, if you want to build files in addition
+#    to the local files, you can use the ExtraSource variable
 #
 
 # Default Rule:  Make sure it's also a :: rule
@@ -78,9 +79,9 @@ MakeLib   = $(AR)
 
 # Source includes all of the cpp files, and objects are derived from the
 # source files...
-# The local Makefile can list other Source files via Source = ...
+# The local Makefile can list other Source files via ExtraSource = ...
 # 
-Source  := $(Source) $(wildcard *.cpp *.c *.y *.l)
+Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 
 Objs = $(sort $(addsuffix .o,$(basename $(Source))))
 ObjectsO = $(addprefix Release/,$(Objs))

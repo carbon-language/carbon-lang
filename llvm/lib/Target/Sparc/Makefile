@@ -1,7 +1,7 @@
 LEVEL = ../../..
 LIBRARYNAME = sparc
 
-Source = Sparc.burm.cpp 
+ExtraSource = Sparc.burm.cpp 
 
 include $(LEVEL)/Makefile.common
 
