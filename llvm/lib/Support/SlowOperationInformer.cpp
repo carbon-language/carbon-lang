@@ -17,6 +17,7 @@
 #include <sstream>
 #include <signal.h>
 #include <unistd.h>
+#include <cassert>
 using namespace llvm;
 
 /// OperationCancelled - This flag is set by the SIGINT signal handler if the
