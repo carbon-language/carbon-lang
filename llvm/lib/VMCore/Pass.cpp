@@ -7,11 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassManager.h"
+#include "PassManagerT.h"         // PassManagerT implementation
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "Support/STLExtras.h"
-#include <algorithm>
+#include "Support/CommandLine.h"
+#include <typeinfo>
+#include <iostream>
 
 // Source of unique analysis ID #'s.
 unsigned AnalysisID::NextID = 0;
@@ -21,15 +24,22 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
   P->Resolver = AR;
 }
 
+//===----------------------------------------------------------------------===//
+// PassManager implementation - The PassManager class is a simple Pimpl class
+// that wraps the PassManagerT template.
+//
+PassManager::PassManager() : PM(new PassManagerT<Module>()) {}
+PassManager::~PassManager() { delete PM; }
+void PassManager::add(Pass *P) { PM->add(P); }
+bool PassManager::run(Module *M) { return PM->run(M); }
 
+
+//===----------------------------------------------------------------------===//
 // Pass debugging information.  Often it is useful to find out what pass is
 // running when a crash occurs in a utility.  When this library is compiled with
 // debugging on, a command line option (--debug-pass) is enabled that causes the
 // pass name to be printed before it executes.
 //
-#include "Support/CommandLine.h"
-#include <typeinfo>
-#include <iostream>
 
 // Different debug levels that can be enabled...
 enum PassDebugLevel {
@@ -131,6 +141,20 @@ void FunctionPass::addToPassManager(PassManagerT<Function> *PM,
                                     AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
+
+// doesNotModifyCFG - This function should be called by our subclasses to
+// implement the getAnalysisUsage virtual function, iff they do not:
+//
+//  1. Add or remove basic blocks from the function
+//  2. Modify terminator instructions in any way.
+//
+// This function annotates the AnalysisUsage info object to say that analyses
+// that only depend on the CFG are preserved by this pass.
+//
+void FunctionPass::doesNotModifyCFG(AnalysisUsage &Info) {
+
+}
+
 
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation

@@ -11,7 +11,7 @@
 // Passes should extend one of the classes below, depending on the guarantees
 // that it can make about what will be modified as it is run.  For example, most
 // global optimizations should derive from FunctionPass, because they do not add
-// or delete functionss, they operate on the internals of the function.
+// or delete functions, they operate on the internals of the function.
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,13 +26,8 @@ class Function;
 class Module;
 class AnalysisUsage;
 class AnalysisID;
-class Pass;
 template<class UnitType> class PassManagerT;
 struct AnalysisResolver;
-
-// PassManager - Top level PassManagerT instantiation intended to be used.
-// Implemented in PassManager.h
-typedef PassManagerT<Module> PassManager;
 
 //===----------------------------------------------------------------------===//
 // Pass interface - Implemented by all 'passes'.  Subclass this if you are an
@@ -142,6 +137,18 @@ struct FunctionPass : public Pass {
   // run - On a function, we simply initialize, run the function, then finalize.
   //
   bool run(Function *F);
+
+protected:
+  // doesNotModifyCFG - This function should be called by our subclasses to
+  // implement the getAnalysisUsage virtual function, iff they do not:
+  //
+  //  1. Add or remove basic blocks from the function
+  //  2. Modify terminator instructions in any way.
+  //
+  // This function annotates the AnalysisUsage info object to say that analyses
+  // that only depend on the CFG are preserved by this pass.
+  //
+  void doesNotModifyCFG(AnalysisUsage &Info);
 
 private:
   friend class PassManagerT<Module>;
