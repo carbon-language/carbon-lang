@@ -17,7 +17,8 @@
 using std::vector;
 
 namespace {
-  Statistic<> NumFolds("dsnode", "Number of nodes completely folded");
+  Statistic<> NumFolds          ("dsnode", "Number of nodes completely folded");
+  Statistic<> NumCallNodesMerged("dsnode", "Number of call nodes merged");
 };
 
 namespace DS {   // TODO: FIXME
@@ -443,7 +444,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
 
   // Merge the node types
   NodeType |= N->NodeType;
-  N->NodeType = 0;   // N is now a dead node.
+  N->NodeType = DEAD;   // N is now a dead node.
 
   // Merge the globals list...
   if (!N->Globals.empty()) {
@@ -497,17 +498,6 @@ DSGraph::~DSGraph() {
 void DSGraph::dump() const { print(std::cerr); }
 
 
-// Helper function used to clone a function list.
-// 
-static void CopyFunctionCallsList(const vector<DSCallSite>& fromCalls,
-                                  vector<DSCallSite> &toCalls,
-                                  std::map<const DSNode*, DSNode*> &NodeMap) {
-  unsigned FC = toCalls.size();  // FirstCall
-  toCalls.reserve(FC+fromCalls.size());
-  for (unsigned i = 0, ei = fromCalls.size(); i != ei; ++i)
-    toCalls.push_back(DSCallSite(fromCalls[i], NodeMap));
-}
-
 /// remapLinks - Change all of the Links in the current node according to the
 /// specified mapping.
 ///
@@ -528,6 +518,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
                                 std::map<const DSNode*, DSNode*> &OldNodeMap,
                                 AllocaBit StripAllocas) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
+  assert(&G != this && "Cannot clone graph into itself!");
 
   unsigned FN = Nodes.size();           // First new node...
 
@@ -560,14 +551,18 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
       std::map<Value*, DSNodeHandle>::iterator GVI = ScalarMap.find(I->first);
       if (GVI != ScalarMap.end()) {   // Is the global value in this fn already?
         GVI->second.mergeWith(H);
+        OldNodeMap[I->second.getNode()] = H.getNode();
       } else {
         ScalarMap[I->first] = H;      // Add global pointer to this graph
       }
     }
   }
-  // Copy the function calls list...
-  CopyFunctionCallsList(G.FunctionCalls, FunctionCalls, OldNodeMap);
 
+  // Copy the function calls list...
+  unsigned FC = FunctionCalls.size();  // FirstCall
+  FunctionCalls.reserve(FC+G.FunctionCalls.size());
+  for (unsigned i = 0, ei = G.FunctionCalls.size(); i != ei; ++i)
+    FunctionCalls.push_back(DSCallSite(G.FunctionCalls[i], OldNodeMap));
 
   // Return the returned node pointer...
   return DSNodeHandle(OldNodeMap[G.RetNode.getNode()], G.RetNode.getOffset());
@@ -729,7 +724,8 @@ static void removeRefsToGlobal(DSNode* N,
 //
 bool DSGraph::isNodeDead(DSNode *N) {
   // Is it a trivially dead shadow node...
-  if (N->getReferrers().empty() && N->NodeType == 0)
+  if (N->getReferrers().empty() &&
+      (N->NodeType == 0 || N->NodeType == DSNode::DEAD))
     return true;
 
   // Is it a function node or some other trivially unused global?
@@ -753,6 +749,9 @@ static void removeIdenticalCalls(vector<DSCallSite> &Calls,
   std::sort(Calls.begin(), Calls.end());
   Calls.erase(std::unique(Calls.begin(), Calls.end()),
               Calls.end());
+
+  // Track the number of call nodes merged away...
+  NumCallNodesMerged += NumFns-Calls.size();
 
   DEBUG(if (NumFns != Calls.size())
           std::cerr << "Merged " << (NumFns-Calls.size())
@@ -936,7 +935,7 @@ static void markGlobalsAlive(DSGraph &G, std::set<DSNode*> &Alive,
 // inlining graphs.
 //
 void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
-  assert((!KeepAllGlobals || KeepCalls) &&
+  assert((!KeepAllGlobals || KeepCalls) &&  // FIXME: This should be an enum!
          "KeepAllGlobals without KeepCalls is meaningless");
 
   // Reduce the amount of work we have to do...
@@ -961,22 +960,13 @@ void DSGraph::removeDeadNodes(bool KeepAllGlobals, bool KeepCalls) {
          E = ScalarMap.end(); I != E; ++I)
     markAlive(I->second.getNode(), Alive);
 
-#if 0
-  // Marge all nodes reachable by global nodes, as alive.  Isn't this covered by
-  // the ScalarMap?
-  //
-  if (KeepAllGlobals)
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if (Nodes[i]->NodeType & DSNode::GlobalNode)
-        markAlive(Nodes[i], Alive);
-#endif
-
   // The return value is alive as well...
   markAlive(RetNode.getNode(), Alive);
 
   // Mark all globals or cast nodes that can reach a live node as alive.
   // This also marks all nodes reachable from such nodes as alive.
   // Of course, if KeepAllGlobals is specified, they would be live already.
+
   if (!KeepAllGlobals)
     markGlobalsAlive(*this, Alive, !KeepCalls);
 

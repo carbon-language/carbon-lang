@@ -182,7 +182,7 @@ static void printCollection(const Collection &C, std::ostream &O,
     }
 
   O << "\nGraphs contain [" << TotalNumNodes << "+" << TotalCallNodes 
-    << "] nodes total\n";
+    << "] nodes total" << std::endl;
 }
 
 

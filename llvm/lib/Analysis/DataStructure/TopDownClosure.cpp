@@ -138,7 +138,8 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   // Loop over all call sites of this function, merging each one into this
   // graph.
   //
-  DEBUG(std::cerr << "  [TD] Inlining callers for: " << F.getName() << "\n");
+  DEBUG(std::cerr << "  [TD] Inlining " << CallSitesP->size()
+                  << " callers for: " << F.getName() << "\n");
   const std::vector<DSCallSite> &CallSites = *CallSitesP;
   for (unsigned c = 0, ce = CallSites.size(); c != ce; ++c) {
     const DSCallSite &CallSite = CallSites[c];
