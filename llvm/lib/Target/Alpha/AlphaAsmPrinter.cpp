@@ -211,14 +211,13 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
  
   if (CP.empty()) return;
 
-  abort();
-//   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-//     O << "\t.section\t.rodata\n";
-//     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-//     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
-//       << *CP[i] << "\n";
-//     //emitGlobalConstant(CP[i]);
-//   }
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    O << "\t.section\t.rodata\n";
+    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    O << "$CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
+      << *CP[i] << "\n";
+    emitGlobalConstant(CP[i]);
+  }
 }
 
 bool AlphaAsmPrinter::doInitialization(Module &M)
