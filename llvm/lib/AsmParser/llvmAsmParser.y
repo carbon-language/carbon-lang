@@ -1756,6 +1756,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   }
   | PHI_TOK PHIList {
     const Type *Ty = $2->front().first->getType();
+    if (!Ty->isFirstClassType())
+      ThrowException("PHI node operands must be of first class type!");
     $$ = new PHINode(Ty);
     $$->op_reserve($2->size()*2);
     while ($2->begin() != $2->end()) {
