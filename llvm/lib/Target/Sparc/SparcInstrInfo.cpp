@@ -235,9 +235,9 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(Function *F,
                                          std::vector<TmpInstruction*>& tempVec,
                                          TargetMachine& target) const
 {
-  assert((val->getType()->isIntegral() || val->getType()->isPointerType())
+  assert((val->getType()->isIntegral() || isa<PointerType>(val->getType()))
          && "Source type must be integral");
-  assert((dest->getType() == Type::FloatTy || dest->getType() == Type::DoubleTy)
+  assert(dest->getType()->isFloatingPoint()
          && "Dest type must be float/double");
   
   MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(F);
@@ -279,9 +279,9 @@ UltraSparcInstrInfo::CreateCodeToCopyFloatToInt(Function *F,
                                         std::vector<TmpInstruction*>& tempVec,
                                         TargetMachine& target) const
 {
-  assert((val->getType() ==Type::FloatTy || val->getType() ==Type::DoubleTy)
+  assert(val->getType()->isFloatingPoint()
          && "Source type must be float/double");
-  assert((dest->getType()->isIntegral() || dest->getType()->isPointerType())
+  assert((dest->getType()->isIntegral() || isa<PointerType>(dest->getType()))
          && "Dest type must be integral");
   
   MachineCodeForMethod& mcinfo = MachineCodeForMethod::get(F);

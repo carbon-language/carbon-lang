@@ -176,9 +176,7 @@ ChooseBccInstruction(const InstructionNode* instrNode,
   BinaryOperator* setCCInstr = (BinaryOperator*) setCCNode->getInstruction();
   const Type* setCCType = setCCInstr->getOperand(0)->getType();
   
-  isFPBranch = (setCCType == Type::FloatTy || setCCType == Type::DoubleTy); 
-  
-  if (isFPBranch) 
+  if (setCCType->isFloatingPoint())
     return ChooseBFpccInstruction(instrNode, setCCInstr);
   else
     return ChooseBpccInstruction(instrNode, setCCInstr);
@@ -387,10 +385,8 @@ CreateAddConstInstruction(const InstructionNode* instrNode)
   // 
   const Type* resultType = instrNode->getInstruction()->getType();
   
-  if (resultType == Type::FloatTy ||
-      resultType == Type::DoubleTy)
-    {
-      double dval = cast<ConstantFP>(constOp)->getValue();
+  if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp)) {
+      double dval = FPC->getValue();
       if (dval == 0.0)
         minstr = CreateMovFloatInstruction(instrNode, resultType);
     }
@@ -404,8 +400,7 @@ ChooseSubInstructionByType(const Type* resultType)
 {
   MachineOpCode opCode = INVALID_OPCODE;
   
-  if (resultType->isIntegral() ||
-      resultType->isPointerType())
+  if (resultType->isIntegral() || isa<PointerType>(resultType))
     {
       opCode = SUB;
     }
@@ -435,13 +430,11 @@ CreateSubConstInstruction(const InstructionNode* instrNode)
   // 
   const Type* resultType = instrNode->getInstruction()->getType();
   
-  if (resultType == Type::FloatTy ||
-      resultType == Type::DoubleTy)
-    {
-      double dval = cast<ConstantFP>(constOp)->getValue();
-      if (dval == 0.0)
-        minstr = CreateMovFloatInstruction(instrNode, resultType);
-    }
+  if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp)) {
+    double dval = FPC->getValue();
+    if (dval == 0.0)
+      minstr = CreateMovFloatInstruction(instrNode, resultType);
+  }
   
   return minstr;
 }
@@ -537,7 +530,7 @@ CreateMulConstInstruction(const TargetMachine &target,
   // 
   const Type* resultType = destVal->getType();
   
-  if (resultType->isIntegral() || resultType->isPointerType())
+  if (resultType->isIntegral() || isa<PointerType>(resultType))
     {
       unsigned pow;
       bool isValidConst;
@@ -583,10 +576,9 @@ CreateMulConstInstruction(const TargetMachine &target,
     }
   else
     {
-      if (resultType == Type::FloatTy ||
-          resultType == Type::DoubleTy)
+      if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp))
         {
-          double dval = cast<ConstantFP>(constOp)->getValue();
+          double dval = FPC->getValue();
           if (fabs(dval) == 1)
             {
               bool needNeg = (dval < 0);
@@ -771,10 +763,9 @@ CreateDivConstInstruction(TargetMachine &target,
     }
   else
     {
-      if (resultType == Type::FloatTy ||
-          resultType == Type::DoubleTy)
+      if (ConstantFP *FPC = dyn_cast<ConstantFP>(constOp))
         {
-          double dval = cast<ConstantFP>(constOp)->getValue();
+          double dval = FPC->getValue();
           if (fabs(dval) == 1)
             {
               bool needNeg = (dval < 0);
@@ -987,7 +978,7 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
       
       // This is a real structure reference if the ptr target is a
       // structure type, and the first offset is [0] (eliminate that offset).
-      if (firstIndexIsZero && ptrType->getElementType()->isStructType())
+      if (firstIndexIsZero && isa<StructType>(ptrType->getElementType()))
         {
           // Compute the offset value using the index vector. Create a
           // virtual reg. for it since it may not fit in the immed field.
@@ -1373,7 +1364,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         bool isValidConst;
         
         if ((constVal->getType()->isIntegral()
-             || constVal->getType()->isPointerType())
+             || isa<PointerType>(constVal->getType()))
             && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
             && isValidConst)
           {
@@ -1519,7 +1510,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 22:	// reg:   ToBoolTy(reg):
       {
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
-        assert(opType->isIntegral() || opType->isPointerType()
+        assert(opType->isIntegral() || isa<PointerType>(opType)
                || opType == Type::BoolTy);
         forwardOperandNum = 0;          // forward first operand to user
         break;
@@ -1532,7 +1523,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral() ||
-               opType->isPointerType() ||
+               isa<PointerType>(opType) ||
                opType == Type::BoolTy && "Cast is illegal for other types");
         forwardOperandNum = 0;          // forward first operand to user
         break;
@@ -1545,7 +1536,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       {
         const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         if (opType->isIntegral()
-            || opType->isPointerType()
+            || isa<PointerType>(opType)
             || opType == Type::BoolTy)
           {
             forwardOperandNum = 0;          // forward first operand to user
@@ -1559,7 +1550,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             Value* destForCast;
             vector<MachineInstr*> minstrVec;
             
-            if (opType == Type::FloatTy || opType == Type::DoubleTy)
+            if (opType->isFloatingPoint())
               {
                 // Create a temporary to represent the INT register
                 // into which the FP value will be copied via memory.
@@ -1629,7 +1620,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 Instruction *dest = subtreeRoot->getInstruction();
                 Value* srcForCast;
                 int n = 0;
-                if (opType != Type::FloatTy && opType != Type::DoubleTy)
+                if (opType->isFloatingPoint())
                   {
                     // Create a temporary to represent the FP register
                     // into which the integer will be copied via memory.
@@ -1872,12 +1863,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // a FP condition code register.
         // 
         Value* leftVal = subtreeRoot->leftChild()->getValue();
-        bool isFPCompare = (leftVal->getType() == Type::FloatTy || 
-                            leftVal->getType() == Type::DoubleTy);
+        bool isFPCompare = leftVal->getType()->isFloatingPoint();
         
         TmpInstruction* tmpForCC = GetTmpForCC(setCCInstr,
                                      setCCInstr->getParent()->getParent(),
-                                     isFPCompare? Type::FloatTy : Type::IntTy);
+                                     isFPCompare ? Type::FloatTy : Type::IntTy);
         MachineCodeForInstruction::get(setCCInstr).addTemp(tmpForCC);
         
         if (! isFPCompare)
@@ -2104,8 +2094,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 62:	// reg:   Shl(reg, reg)
       { const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral()
-               || opType == Type::BoolTy
-               || opType->isPointerType()&& "Shl unsupported for other types");
+               || isa<PointerType>(opType)&& "Shl unsupported for other types");
         mvec.push_back(new MachineInstr((opType == Type::LongTy)? SLLX : SLL));
         Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
@@ -2114,8 +2103,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 63:	// reg:   Shr(reg, reg)
       { const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
         assert(opType->isIntegral()
-               || opType == Type::BoolTy
-               || opType->isPointerType() &&"Shr unsupported for other types");
+               || isa<PointerType>(opType) &&"Shr unsupported for other types");
         mvec.push_back(new MachineInstr((opType->isSigned()
                                    ? ((opType == Type::LongTy)? SRAX : SRA)
                                    : ((opType == Type::LongTy)? SRLX : SRL))));

@@ -16,7 +16,7 @@ static inline const Type *checkType(const Type *Ty) {
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
                                const std::string &Name = "")
   : Instruction(Ty, iTy, Name) {
-  assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
+  assert(isa<PointerType>(Ty) && "Can't allocate a non pointer type!");
 
   // ArraySize defaults to 1.
   if (!ArraySize) ArraySize = ConstantUInt::get(Type::UIntTy, 1);
@@ -51,7 +51,7 @@ const Type *AllocationInst::getAllocatedType() const {
 const Type* MemAccessInst::getIndexedType(const Type *Ptr, 
 					  const std::vector<Value*> &Idx,
 					  bool AllowCompositeLeaf = false) {
-  if (!Ptr->isPointerType()) return 0;   // Type isn't a pointer type!
+  if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
 
   // Handle the special case of the empty set index set...
   if (Idx.empty()) return cast<PointerType>(Ptr)->getElementType();
@@ -143,7 +143,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 //===----------------------------------------------------------------------===//
 
 FreeInst::FreeInst(Value *Ptr) : Instruction(Type::VoidTy, Free, "") {
-  assert(Ptr->getType()->isPointerType() && "Can't free nonpointer!");
+  assert(isa<PointerType>(Ptr->getType()) && "Can't free nonpointer!");
   Operands.reserve(1);
   Operands.push_back(Use(Ptr, this));
 }

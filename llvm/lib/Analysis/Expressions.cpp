@@ -76,7 +76,7 @@ struct DefOne : public DefVal {
 // happen for values in the range of 0 to 127.
 //
 static ConstantInt *getUnsignedConstant(uint64_t V, const Type *Ty) {
-  if (Ty->isPointerType()) Ty = Type::ULongTy;
+  if (isa<PointerType>(Ty)) Ty = Type::ULongTy;
   if (Ty->isSigned()) {
     // If this value is not a valid unsigned value for this type, return null!
     if (V > 127 && ((int64_t)V < 0 ||
@@ -320,7 +320,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
   case Instruction::Cast: {
     ExprType Src(ClassifyExpression(I->getOperand(0)));
     const Type *DestTy = I->getType();
-    if (DestTy->isPointerType())
+    if (isa<PointerType>(DestTy))
       DestTy = Type::ULongTy;  // Pointer types are represented as ulong
 
     /*

@@ -57,7 +57,7 @@ bool FindUnsafePointerTypes::run(Module *Mod) {
     for (const_inst_iterator I = inst_begin(M), E = inst_end(M); I != E; ++I) {
       const Instruction *Inst = *I;
       const Type *ITy = Inst->getType();
-      if (ITy->isPointerType() && !UnsafeTypes.count((PointerType*)ITy))
+      if (isa<PointerType>(ITy) && !UnsafeTypes.count((PointerType*)ITy))
         if (!isSafeInstruction(Inst)) {
           UnsafeTypes.insert((PointerType*)ITy);
 

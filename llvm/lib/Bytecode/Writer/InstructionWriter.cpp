@@ -198,7 +198,7 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
     break;
   case Instruction::Store:
     Ty = I->getOperand(1)->getType();  // Encode the pointer type...
-    assert(Ty->isPointerType() && "Store to nonpointer type!?!?");
+    assert(isa<PointerType>(Ty) && "Store to nonpointer type!?!?");
     break;
   default:              // Otherwise use the default behavior...
     Ty = NumOperands ? I->getOperand(0)->getType() : I->getType();

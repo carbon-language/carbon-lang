@@ -321,7 +321,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     return ConstantFP::get(Ty, D.ConstPoolFP);
     
   case ValID::ConstNullVal:      // Is it a null value?
-    if (!Ty->isPointerType())
+    if (!isa<PointerType>(Ty))
       ThrowException("Cannot create a a non pointer null!");
     return ConstantPointerNull::get(cast<PointerType>(Ty));
     
@@ -1549,14 +1549,14 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | FREE ResolvedVal {
-    if (!$2->getType()->isPointerType())
+    if (!isa<PointerType>($2->getType()))
       ThrowException("Trying to free nonpointer type " + 
                      $2->getType()->getDescription() + "!");
     $$ = new FreeInst($2);
   }
 
   | LOAD Types ValueRef IndexList {
-    if (!(*$2)->isPointerType())
+    if (!isa<PointerType>(*$2))
       ThrowException("Can't load from nonpointer type: " +
 		     (*$2)->getDescription());
     if (LoadInst::getIndexedType(*$2, *$4) == 0)
@@ -1567,7 +1567,7 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | STORE ResolvedVal ',' Types ValueRef IndexList {
-    if (!(*$4)->isPointerType())
+    if (!isa<PointerType>(*$4))
       ThrowException("Can't store to a nonpointer type: " +
                      (*$4)->getDescription());
     const Type *ElTy = StoreInst::getIndexedType(*$4, *$6);
@@ -1580,7 +1580,7 @@ MemoryInst : MALLOC Types {
     delete $4; delete $6;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    if (!(*$2)->isPointerType())
+    if (!isa<PointerType>(*$2))
       ThrowException("getelementptr insn requires pointer operand!");
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
       ThrowException("Can't get element ptr '" + (*$2)->getDescription()+ "'!");

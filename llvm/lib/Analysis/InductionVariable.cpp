@@ -99,7 +99,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
 
     // Okay, we have found an induction variable. Save the start and step values
     const Type *ETy = Phi->getType();
-    if (ETy->isPointerType()) ETy = Type::ULongTy;
+    if (isa<PointerType>(ETy)) ETy = Type::ULongTy;
 
     Start = (Value*)(E1.Offset ? E1.Offset : ConstantInt::get(ETy, 0));
     Step  = (Value*)(E2.Offset ? E2.Offset : ConstantInt::get(ETy, 0));
@@ -132,7 +132,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
 	  StepE.Var != Phi) return;
 
       const Type *ETy = Phi->getType();
-      if (ETy->isPointerType()) ETy = Type::ULongTy;
+      if (isa<PointerType>(ETy)) ETy = Type::ULongTy;
       Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy, 0));
     } else {   // We were able to get a step value, simplify with expr analysis
       ExprType StepE = analysis::ClassifyExpression(Step);
@@ -145,7 +145,7 @@ InductionVariable::InductionVariable(PHINode *P, LoopInfo *LoopInfo) {
         else
           Step = Constant::getNullValue(Step->getType());
         const Type *ETy = Phi->getType();
-        if (ETy->isPointerType()) ETy = Type::ULongTy;
+        if (isa<PointerType>(ETy)) ETy = Type::ULongTy;
         Step  = (Value*)(StepE.Offset ? StepE.Offset : ConstantInt::get(ETy,0));
       }
     }

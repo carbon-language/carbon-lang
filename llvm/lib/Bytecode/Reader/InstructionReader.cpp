@@ -345,7 +345,7 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
 
   case Instruction::Free:
     V = getValue(Raw.Ty, Raw.Arg1);
-    if (!V->getType()->isPointerType()) return failure(true);
+    if (!isa<PointerType>(V->getType())) return failure(true);
     Res = new FreeInst(V);
     return false;
 

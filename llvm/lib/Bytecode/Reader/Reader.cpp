@@ -389,7 +389,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
     // bit2 = isInternal, bit3+ = slot#
     const Type *Ty = getType(VarType >> 3);
-    if (!Ty || !Ty->isPointerType()) { 
+    if (!Ty || !isa<PointerType>(Ty)) { 
       Error = "Global not pointer type!  Ty = " + Ty->getDescription();
       return failure(true); 
     }

@@ -277,7 +277,7 @@ ChooseRegOrImmed(Value* val,
   
   // Otherwise it needs to be an integer or a NULL pointer
   if (! CPV->getType()->isIntegral() &&
-      ! (CPV->getType()->isPointerType() &&
+      ! (isa<PointerType>(CPV->getType()) &&
          CPV->isNullValue()))
     return opType;
   
@@ -287,7 +287,7 @@ ChooseRegOrImmed(Value* val,
   // unsigned constants to signed).
   // 
   int64_t intValue;
-  if (CPV->getType()->isPointerType())
+  if (isa<PointerType>(CPV->getType()))
     {
       intValue = 0;
     }
