@@ -60,8 +60,8 @@ static struct PerModuleInfo {
   Module *CurrentModule;
   vector<ValueList>    Values;     // Module level numbered definitions
   vector<ValueList>    LateResolveValues;
-  vector<PATypeHolder<Type> > Types;
-  map<ValID, PATypeHolder<Type> > LateResolveTypes;
+  vector<PATypeHolder> Types;
+  map<ValID, PATypeHolder> LateResolveTypes;
 
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
@@ -140,8 +140,8 @@ static struct PerFunctionInfo {
 
   vector<ValueList> Values;      // Keep track of numbered definitions
   vector<ValueList> LateResolveValues;
-  vector<PATypeHolder<Type> > Types;
-  map<ValID, PATypeHolder<Type> > LateResolveTypes;
+  vector<PATypeHolder> Types;
+  map<ValID, PATypeHolder> LateResolveTypes;
   bool isDeclare;                // Is this method a forward declararation?
 
   inline PerFunctionInfo() {
@@ -187,7 +187,7 @@ static int InsertValue(Value *D, vector<ValueList> &ValueTab = CurMeth.Values) {
 }
 
 // TODO: FIXME when Type are not const
-static void InsertType(const Type *Ty, vector<PATypeHolder<Type> > &Types) {
+static void InsertType(const Type *Ty, vector<PATypeHolder> &Types) {
   Types.push_back(Ty);
 }
 
@@ -236,10 +236,10 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
 
-  map<ValID, PATypeHolder<Type> > &LateResolver = inFunctionScope() ? 
+  map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
     CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
   
-  map<ValID, PATypeHolder<Type> >::iterator I = LateResolver.find(D);
+  map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
   if (I != LateResolver.end()) {
     return I->second;
   }
@@ -443,17 +443,17 @@ static void ResolveDefinitions(vector<ValueList> &LateResolvers,
 // refering to the number can be resolved.  Do this now.
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
-  vector<PATypeHolder<Type> > &Types = inFunctionScope() ? 
+  vector<PATypeHolder> &Types = inFunctionScope() ? 
      CurMeth.Types : CurModule.Types;
 
    ValID D;
    if (Name) D = ValID::create(Name);
    else      D = ValID::create((int)Types.size());
 
-   map<ValID, PATypeHolder<Type> > &LateResolver = inFunctionScope() ? 
+   map<ValID, PATypeHolder> &LateResolver = inFunctionScope() ? 
      CurMeth.LateResolveTypes : CurModule.LateResolveTypes;
   
-   map<ValID, PATypeHolder<Type> >::iterator I = LateResolver.find(D);
+   map<ValID, PATypeHolder>::iterator I = LateResolver.find(D);
    if (I != LateResolver.end()) {
      cast<DerivedType>(I->second.get())->refineAbstractTypeTo(ToTy);
      LateResolver.erase(I);
@@ -463,7 +463,7 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
 // ResolveTypes - At this point, all types should be resolved.  Any that aren't
 // are errors.
 //
-static void ResolveTypes(map<ValID, PATypeHolder<Type> > &LateResolveTypes) {
+static void ResolveTypes(map<ValID, PATypeHolder> &LateResolveTypes) {
   if (!LateResolveTypes.empty()) {
     const ValID &DID = LateResolveTypes.begin()->first;
 
@@ -558,8 +558,8 @@ static bool TypeContains(const Type *Ty, const Type *E) {
 
 static vector<pair<unsigned, OpaqueType *> > UpRefs;
 
-static PATypeHolder<Type> HandleUpRefs(const Type *ty) {
-  PATypeHolder<Type> Ty(ty);
+static PATypeHolder HandleUpRefs(const Type *ty) {
+  PATypeHolder Ty(ty);
   UR_OUT("Type '" << ty->getDescription() << 
          "' newly formed.  Resolving upreferences.\n" <<
          UpRefs.size() << " upreferences active!\n");
@@ -586,22 +586,6 @@ static PATypeHolder<Type> HandleUpRefs(const Type *ty) {
   }
   // FIXME: TODO: this should return the updated type
   return Ty;
-}
-
-template <class TypeTy>
-inline static void TypeDone(PATypeHolder<TypeTy> *Ty) {
-  if (UpRefs.size())
-    ThrowException("Invalid upreference in type: " + (*Ty)->getDescription());
-}
-
-// newTH - Allocate a new type holder for the specified type
-template <class TypeTy>
-inline static PATypeHolder<TypeTy> *newTH(const TypeTy *Ty) {
-  return new PATypeHolder<TypeTy>(Ty);
-}
-template <class TypeTy>
-inline static PATypeHolder<TypeTy> *newTH(const PATypeHolder<TypeTy> &TH) {
-  return new PATypeHolder<TypeTy>(TH);
 }
 
 
@@ -635,12 +619,12 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
   Constant                         *ConstVal;
 
   const Type                       *PrimType;
-  PATypeHolder<Type>               *TypeVal;
+  PATypeHolder                     *TypeVal;
   Value                            *ValueVal;
 
   std::list<std::pair<FunctionArgument*,char*> > *FunctionArgList;
   std::vector<Value*>              *ValueList;
-  std::list<PATypeHolder<Type> >   *TypeList;
+  std::list<PATypeHolder>          *TypeList;
   std::list<std::pair<Value*,
                       BasicBlock*> > *PHIList; // Represent the RHS of PHI node
   std::list<std::pair<Constant*, BasicBlock*> > *JumpTable;
@@ -699,7 +683,6 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 // Built in types...
 %type  <TypeVal> Types TypesV UpRTypes UpRTypesV
 %type  <PrimType> SIntType UIntType IntType FPType PrimType   // Classifications
-%token <TypeVal>  OPAQUE
 %token <PrimType> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
 %token <PrimType> FLOAT DOUBLE TYPE LABEL
 
@@ -708,7 +691,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
-%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL
+%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL OPAQUE
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -782,11 +765,13 @@ OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; }
 //
 
 // TypesV includes all of 'Types', but it also includes the void type.
-TypesV    : Types    | VOID { $$ = newTH($1); }
-UpRTypesV : UpRTypes | VOID { $$ = newTH($1); }
+TypesV    : Types    | VOID { $$ = new PATypeHolder($1); }
+UpRTypesV : UpRTypes | VOID { $$ = new PATypeHolder($1); }
 
 Types     : UpRTypes {
-    TypeDone($$ = $1);
+    if (UpRefs.size())
+      ThrowException("Invalid upreference in type: " + (*$1)->getDescription());
+    $$ = $1;
   }
 
 
@@ -794,9 +779,14 @@ Types     : UpRTypes {
 //
 PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT 
 PrimType : LONG | ULONG | FLOAT | DOUBLE | TYPE   | LABEL
-UpRTypes : OPAQUE | PrimType { $$ = newTH($1); }
+UpRTypes : OPAQUE {
+    $$ = new PATypeHolder(OpaqueType::get());
+  }
+  | PrimType {
+    $$ = new PATypeHolder($1);
+  }
 UpRTypes : ValueRef {                    // Named types are also simple types...
-  $$ = newTH(getTypeVal($1));
+  $$ = new PATypeHolder(getTypeVal($1));
 }
 
 // Include derived types in the Types production.
@@ -805,7 +795,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     if ($2 > (uint64_t)INT64_MAX) ThrowException("Value out of range!");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
     UpRefs.push_back(make_pair((unsigned)$2, OT));  // Add to vector...
-    $$ = newTH<Type>(OT);
+    $$ = new PATypeHolder(OT);
     UR_OUT("New Upreference!\n");
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
@@ -815,12 +805,12 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    $$ = newTH(HandleUpRefs(FunctionType::get(*$1, Params, isVarArg)));
+    $$ = new PATypeHolder(HandleUpRefs(FunctionType::get(*$1,Params,isVarArg)));
     delete $3;      // Delete the argument list
     delete $1;      // Delete the old type handle
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
-    $$ = newTH<Type>(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
+    $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
     delete $4;
   }
   | '{' TypeListI '}' {                        // Structure type?
@@ -828,14 +818,14 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     mapto($2->begin(), $2->end(), std::back_inserter(Elements), 
 	std::mem_fun_ref(&PATypeHandle<Type>::get));
 
-    $$ = newTH<Type>(HandleUpRefs(StructType::get(Elements)));
+    $$ = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
     delete $2;
   }
   | '{' '}' {                                  // Empty structure type?
-    $$ = newTH<Type>(StructType::get(vector<const Type*>()));
+    $$ = new PATypeHolder(StructType::get(vector<const Type*>()));
   }
   | UpRTypes '*' {                             // Pointer type?
-    $$ = newTH<Type>(HandleUpRefs(PointerType::get(*$1)));
+    $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
     delete $1;
   }
 
@@ -843,7 +833,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
 // declaration type lists
 //
 TypeListI : UpRTypes {
-    $$ = new list<PATypeHolder<Type> >();
+    $$ = new list<PATypeHolder>();
     $$->push_back(*$1); delete $1;
   }
   | TypeListI ',' UpRTypes {
@@ -856,10 +846,10 @@ ArgTypeListI : TypeListI
     ($$=$1)->push_back(Type::VoidTy);
   }
   | DOTDOTDOT {
-    ($$ = new list<PATypeHolder<Type> >())->push_back(Type::VoidTy);
+    ($$ = new list<PATypeHolder>())->push_back(Type::VoidTy);
   }
   | /*empty*/ {
-    $$ = new list<PATypeHolder<Type> >();
+    $$ = new list<PATypeHolder>();
   }
 
 
