@@ -14,6 +14,7 @@
 
 #include "llvm/Target/TargetSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include <algorithm>
 #include <iostream>
 using namespace llvm;
 
@@ -175,12 +176,13 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
   // resources usages for each class, because most instruction pairs will
   // usually behave the same as their class.
   // 
-  int classPairGaps[numSchedClasses][numSchedClasses];
+  int* classPairGaps =
+    static_cast<int*>(alloca(sizeof(int) * numSchedClasses * numSchedClasses));
   for (InstrSchedClass fromSC=0; fromSC < numSchedClasses; fromSC++)
     for (InstrSchedClass toSC=0; toSC < numSchedClasses; toSC++) {
       int classPairGap = ComputeMinGap(instrRUForClasses[fromSC],
                                        instrRUForClasses[toSC]);
-      classPairGaps[fromSC][toSC] = classPairGap; 
+      classPairGaps[fromSC*numSchedClasses + toSC] = classPairGap; 
     }
 
   // Now, for each pair of instructions, use the class pair gap if both
@@ -193,7 +195,7 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
     for (MachineOpCode toOp=0; toOp < numOpCodes; toOp++) {
       int instrPairGap = 
         (instrRUsages[fromOp].sameAsClass && instrRUsages[toOp].sameAsClass)
-        ? classPairGaps[getSchedClass(fromOp)][getSchedClass(toOp)]
+        ? classPairGaps[getSchedClass(fromOp)*numSchedClasses + getSchedClass(toOp)]
         : ComputeMinGap(instrRUsages[fromOp], instrRUsages[toOp]);
 
       if (instrPairGap > 0) {
@@ -228,7 +230,7 @@ void InstrRUsage::setTo(const InstrClassRUsage& classRU) {
   // Sort each resource usage vector by resourceId_t to speed up conflict
   // checking
   for (unsigned i=0; i < this->resourcesByCycle.size(); i++)
-    sort(resourcesByCycle[i].begin(), resourcesByCycle[i].end());
+    std::sort(resourcesByCycle[i].begin(), resourcesByCycle[i].end());
 }
 
 // Add the extra resource usage requirements specified in the delta.
