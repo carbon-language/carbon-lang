@@ -2496,6 +2496,9 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
           switch (Op0BO->getOpcode()) {
           default: isValid = false; break;   // Do not perform transform!
+          case Instruction::Add:
+            isValid = isLeftShift;
+            break;
           case Instruction::Or:
           case Instruction::Xor:
             highBitSet = false;
