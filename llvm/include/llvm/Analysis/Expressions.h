@@ -11,6 +11,7 @@
 #define LLVM_ANALYSIS_EXPRESSIONS_H
 
 #include <assert.h>
+class Type;
 class Value;
 class ConstPoolInt;
 
@@ -42,15 +43,13 @@ struct ExprType {
     Offset = CPV; Var = 0; Scale = 0;
     ExprTy = Constant;
   }
-  inline ExprType(Value *Val) {
-    Var = Val; Offset = Scale = 0;
-    ExprTy = Var ? Linear : Constant;
-  }
-  inline ExprType(const ConstPoolInt *scale, Value *var, 
-		  const ConstPoolInt *offset) {
-    Scale = scale; Var = var; Offset = offset;
-    ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
-  }
+  ExprType(Value *Val);        // Create a linear or constant expression
+  ExprType(const ConstPoolInt *scale, Value *var, const ConstPoolInt *offset);
+
+  // If this expression has an intrinsic type, return it.  If it is zero, return
+  // the specified type.
+  //
+  const Type *getExprType(const Type *Default) const;
 };
 
 } // End namespace analysis
