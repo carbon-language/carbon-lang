@@ -260,6 +260,17 @@ public:
                                            vector<MachineInstr*>& minstrVec,
                                            vector<TmpInstruction*>& tempVec,
                                            TargetMachine& target) const = 0;
+
+
+  // create copy instruction(s)
+  virtual void
+  CreateCopyInstructionsByType(const TargetMachine& target,
+			       Value* src,
+			       Instruction* dest,
+			       vector<MachineInstr*>& minstrVec) const = 0;
+
+
+
 };
 
 #endif
