@@ -90,6 +90,11 @@
             <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt>
             <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf
             -</tt>
+            <li><b>Sparc Only:</b><br>
+            <tt>
+            cd cfrontend/sparc<br>
+            ./fixheaders
+            </tt>
         </ol>
 
         <p>
@@ -204,8 +209,7 @@
     native code may not work on your platform.
     <p>
     The GCC front end is not very portable at the moment.  If you want to get
-    it to work on another platform, you can always request
-    <a href="mailto:llvm-request@zion.cs.uiuc.edu">a copy of the source</a>
+    it to work on another platform, you can download a copy of the source
     and try to compile it on your platform.
     </p>
 
@@ -377,7 +381,8 @@
 
     <p>
     Before configuring and compiling the LLVM suite, you need to extract the
-    LLVM GCC front end from the binary distribution.  It is used for building the
+    LLVM GCC front end from the binary distribution.  It is used for building
+    the
     bytecode libraries later used by the GCC front end for linking programs, and
     its location must be specified when the LLVM suite is configured.
     </p>
@@ -390,6 +395,29 @@
         -</tt>
     </ol>
 
+    If you are on a Sparc/Solaris machine, you will need to fix the header
+    files:
+
+    <p>
+
+    <tt>
+    cd cfrontend/sparc
+    <br>
+    ./fixheaders
+    </tt>
+
+    <p>
+    The binary versions of the GCC front end may not suit all of your needs.
+    For example, the binary distribution may include an old version of a system
+    header file, not "fix" a header file that needs to be fixed for GCC, or it
+    may be linked with libraries not available on your system.
+    </p>
+
+    <p>
+    In cases like these, you may want to try
+    <a href="CFEBuildInstrs.html">building the GCC front end from source.</a>
+    This is not for the faint of heart, so be forewarned.
+    </p>
     <!------------------------------------------------------------------------->
     <h3><a name="config">Local LLVM Configuration</a></h3>
     <!------------------------------------------------------------------------->
@@ -1010,10 +1038,12 @@
     If you have any questions or run into any snags (or you have any
     additions...), please send an email to
     <a href="mailto:sabre@nondot.org">Chris Lattner</a>.</p>
+    <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+    <br>
 
-	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
-	    <!-- hhmts start -->
-Last modified: Mon Aug 11 13:52:22 CDT 2003
-<!-- hhmts end -->
+	<!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
+	<!-- hhmts start -->
+    Last modified: Mon Oct 27 12:00:00 CDT 2003
+    <!-- hhmts end -->
   </body>
 </html>
