@@ -73,7 +73,8 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 release primarily improves the <a href="#codequality">performance of the
 code</a> produced by all aspects of the LLVM compiler, adds many <a
 href="#newfeatures">new features</a>, <a href="#bugfix">fixes a few
-bugs</a>, and speeds up the compiler.</p>
+bugs</a>, speeds up the compiler, and introduces a new (experimental)
+PowerPC code generator.</p>
 
 <p> At this time, LLVM is known to correctly compile and run all C &amp; C++
 SPEC CPU95 &amp; 2000 benchmarks, the Olden benchmarks, and the Ptrdist 
@@ -349,8 +350,10 @@ initialized unsigned bitfields</a></li>
 <li>Intel and AMD machines running Red Hat Linux and FreeBSD (and probably 
     other unix-like systems).</li>
 <li>Sun UltraSPARC workstations running Solaris 8.</li>
-<li>PowerPC-based Mac OS X boxes, running 10.2 and above.</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries.</li>
+<li>PowerPC-based Mac OS X boxes, running 10.2 and above.  Note that no JIT
+support is available yet, and LLC support is beta.  The C backend can be used
+to produce stable code for this platform.</li>
 </ul>
 
 <p>The core LLVM infrastructure uses
