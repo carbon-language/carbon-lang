@@ -346,10 +346,6 @@ class MachineInstr {
   std::vector<MachineOperand> operands; // the operands
   unsigned numImplicitRefs;             // number of implicit operands
 
-  // regsUsed - all machine registers used for this instruction, including regs
-  // used to save values across the instruction.  This is a bitset of registers.
-  std::set<int>    regsUsed;
-
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
@@ -436,17 +432,6 @@ public:
     assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
     SetMachineOperandVal(i + getNumOperands(),
                          MachineOperand::MO_VirtualRegister, V);
-  }
-
-  //
-  // Information about registers used in this instruction.
-  // 
-  const std::set<int> &getRegsUsed() const {
-    return regsUsed;
-  }
-  void insertUsedReg(unsigned Reg) {
-    assert(((int) Reg) >= 0 && "Invalid register being marked as used");
-    regsUsed.insert((int) Reg);
   }
 
   //
