@@ -234,9 +234,8 @@ def B6 : GR<0, "b6">;
 // in IA64RegisterInfo.cpp
 
 def GR : RegisterClass<i64, 64, 
-       [/*r2,*/ r3, 
-        r8, r9, r10, r11, r14, /*r15, */
-        r16, r17, r18, r19, r20, r21, /*r22,*/ r23,
+       [r3,  r8,  r9,  r10, r11, r14,
+        r16, r17, r18, r19, r20, r21, r23,
         r24, r25, r26, r27, r28, r29, r30, r31,
         r32, r33, r34, r35, r36, r37, r38, r39,
         r40, r41, r42, r43, r44, r45, r46, r47,
@@ -249,7 +248,17 @@ def GR : RegisterClass<i64, 64,
         r96, r97, r98, r99, r100, r101, r102, r103,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
-        r120, r121, r122, r123, r124, r125, r126, r127]>;
+        r120, r121, r122, r123, r124, r125, r126, r127,
+	r0, r1, r2, r12, r13, r15, r22]> // these last 7 are special (look down)
+
+  {
+    let Methods = [{
+      iterator allocation_order_end(MachineFunction &MF) const {
+	return end()-7; // 7 special registers
+      }
+  }];
+}
+
 
 // these are the scratch (+stacked) FP registers
 // ZERO (F0) and ONE (F1) are not here
