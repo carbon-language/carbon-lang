@@ -19,21 +19,18 @@
 //**************************************************************************/
 
 #include "SchedPriorities.h"
+#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "Support/PostOrderIterator.h"
 #include <iostream>
 using std::cerr;
 
-SchedPriorities::SchedPriorities(const Method* method,
-				 const SchedGraph* _graph)
-  : curTime(0),
-    graph(_graph),
-    methodLiveVarInfo(method),	                          // expensive!
-    nodeDelayVec(_graph->getNumNodes(), INVALID_LATENCY), // make errors obvious
-    earliestForNode(_graph->getNumNodes(), 0),
+SchedPriorities::SchedPriorities(const Method *method, const SchedGraph *G,
+                                 MethodLiveVarInfo &LVI)
+  : curTime(0), graph(G), methodLiveVarInfo(LVI),
+    nodeDelayVec(G->getNumNodes(), INVALID_LATENCY), // make errors obvious
+    earliestForNode(G->getNumNodes(), 0),
     earliestReadyTime(0),
-    nextToTry(candsAsHeap.begin())
-{
-  methodLiveVarInfo.analyze();
+    nextToTry(candsAsHeap.begin()) {
   computeDelays(graph);
 }
 

@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
+#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h" // FIXME: Remove when AnalysisUsage sets can be symbolic!
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
 #include "SchedPriorities.h"
@@ -1491,46 +1492,60 @@ instrIsFeasible(const SchedulingManager& S,
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-bool
-ScheduleInstructionsWithSSA(Method* method,
-			    const TargetMachine &target)
-{
-  SchedGraphSet graphSet(method, target);	
-  
-  if (SchedDebugLevel >= Sched_PrintSchedGraphs)
-    {
-      cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
-      graphSet.dump();
+namespace {
+  class InstructionSchedulingWithSSA : public MethodPass {
+    const TargetMachine &Target;
+  public:
+    inline InstructionSchedulingWithSSA(const TargetMachine &T) : Target(T) {}
+
+    // getAnalysisUsageInfo - We use LiveVarInfo...
+    virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                      Pass::AnalysisSet &Destroyed,
+                                      Pass::AnalysisSet &Provided) {
+      Requires.push_back(MethodLiveVarInfo::ID);
     }
+
+    bool runOnMethod(Method *M) {
+      cerr << "Instr scheduling failed for method " << ((Value*)M)->getName()
+           << "\n\n";
+      SchedGraphSet graphSet(M, Target);	
   
-  for (SchedGraphSet::const_iterator GI=graphSet.begin();
-       GI != graphSet.end(); ++GI)
-    {
-      SchedGraph* graph = GI->second;
-      const vector<const BasicBlock*>& bbvec = graph->getBasicBlocks();
-      assert(bbvec.size() == 1 && "Cannot schedule multiple basic blocks");
-      const BasicBlock* bb = bbvec[0];
+      if (SchedDebugLevel >= Sched_PrintSchedGraphs) {
+        cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";
+        graphSet.dump();
+      }
+  
+      for (SchedGraphSet::const_iterator GI=graphSet.begin();
+           GI != graphSet.end(); ++GI) {
+        SchedGraph* graph = GI->second;
+        const vector<const BasicBlock*> &bbvec = graph->getBasicBlocks();
+        assert(bbvec.size() == 1 && "Cannot schedule multiple basic blocks");
+        const BasicBlock* bb = bbvec[0];
       
-      if (SchedDebugLevel >= Sched_PrintSchedTrace)
-	cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
+        if (SchedDebugLevel >= Sched_PrintSchedTrace)
+          cerr << "\n*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
-      SchedPriorities schedPrio(method, graph);	     // expensive!
-      SchedulingManager S(target, graph, schedPrio);
-      
-      ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
-      
-      ForwardListSchedule(S);			     // computes schedule in S
-      
-      RecordSchedule(GI->first, S);		     // records schedule in BB
+        // expensive!
+        SchedPriorities schedPrio(M, graph, getAnalysis<MethodLiveVarInfo>());
+        SchedulingManager S(Target, graph, schedPrio);
+        
+        ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
+        
+        ForwardListSchedule(S);	                     // computes schedule in S
+        
+        RecordSchedule(GI->first, S);                // records schedule in BB
+      }
+  
+      if (SchedDebugLevel >= Sched_PrintMachineCode) {
+        cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
+        MachineCodeForMethod::get(M).dump();
+      }
+  
+      return false;
     }
-  
-  if (SchedDebugLevel >= Sched_PrintMachineCode)
-    {
-      cerr << "\n*** Machine instructions after INSTRUCTION SCHEDULING\n";
-      MachineCodeForMethod::get(method).dump();
-    }
-  
-  return false;					 // no reason to fail yet
+  };
+} // end anonymous namespace
+
+MethodPass *createInstructionSchedulingWithSSAPass(const TargetMachine &T) {
+  return new InstructionSchedulingWithSSA(T);
 }
-
-

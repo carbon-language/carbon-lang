@@ -23,7 +23,6 @@
 
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
 #include "Support/CommandLine.h"
 #include <list>
@@ -31,6 +30,7 @@
 class Method;
 class MachineInstr;
 class SchedulingManager;
+class MethodLiveVarInfo;
 
 //---------------------------------------------------------------------------
 // Debug option levels for instruction scheduling
@@ -124,8 +124,8 @@ private:
 
 class SchedPriorities: public NonCopyable {
 public:
-  /*ctor*/	SchedPriorities		(const Method* method,
-					 const SchedGraph* _graph);
+  SchedPriorities(const Method *M, const SchedGraph *G, MethodLiveVarInfo &LVI);
+                  
   
   // This must be called before scheduling begins.
   void		initialize		();
@@ -154,7 +154,7 @@ private:
 private:
   cycles_t curTime;
   const SchedGraph* graph;
-  MethodLiveVarInfo methodLiveVarInfo;
+  MethodLiveVarInfo &methodLiveVarInfo;
   std::hash_map<const MachineInstr*, bool> lastUseMap;
   std::vector<cycles_t> nodeDelayVec;
   std::vector<cycles_t> earliestForNode;
