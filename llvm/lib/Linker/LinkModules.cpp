@@ -531,6 +531,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
           else
             DGV->setConstant(true);
         }
+        SGV->setLinkage(GlobalValue::ExternalLinkage);
+        SGV->setInitializer(0);
       }
 
       ValueMap.insert(std::make_pair(SGV,
