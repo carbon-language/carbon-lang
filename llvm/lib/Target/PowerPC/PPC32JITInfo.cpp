@@ -81,12 +81,13 @@ static void CompilationCallback() {
   // does not need to go through the stub anymore.
   unsigned CameFromOrigInst = CameFromOrig[-1];
   if ((CameFromOrigInst >> 26) == 18) {     // Direct call.
-    intptr_t Offset = ((intptr_t)Target-(intptr_t)CameFromOrig) >> 2;
+    intptr_t Offset = ((intptr_t)Target-(intptr_t)CameFromOrig+4) >> 2;
     if (Offset >= -(1 << 23) && Offset < (1 << 23)) {   // In range?
-      // FIXME: hasn't been tested at all.
-      // Clear the original target out:
+      // Clear the original target out.
       CameFromOrigInst &= (63 << 26) | 3;
-      CameFromOrigInst |= Offset << 2;
+      // Fill in the new target.
+      CameFromOrigInst |= (Offset & ((1 << 24)-1)) << 2;
+      // Replace the call.
       CameFromOrig[-1] = CameFromOrigInst;
     }
   }
