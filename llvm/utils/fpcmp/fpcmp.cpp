@@ -37,25 +37,11 @@ namespace {
 /// OpenFile - mmap the specified file into the address space for reading, and
 /// return the length and address of the buffer.
 static void OpenFile(const std::string &Filename, unsigned &Len, char* &BufPtr){
-  int FD = open(Filename.c_str(), O_RDONLY);
-  if (FD == -1 || (Len = getFileSize(Filename)) == ~0U) {
+  BufPtr = (char*)ReadFileIntoAddressSpace(Filename, Len);
+  if (BufPtr == 0) {
     std::cerr << "Error: cannot open file '" << Filename << "'\n";
     exit(2);
   }
-
-  // mmap in the file all at once...
-  BufPtr = (char*)mmap(0, Len, PROT_READ, MAP_PRIVATE, FD, 0);
-  
-  if (BufPtr == (char*)MAP_FAILED) {
-    std::cerr << "Error: cannot open file '" << Filename << "'\n";
-    exit(2);
-  }
-
-  // If mmap decided that the files were empty, it might have returned a
-  // null pointer. If so, make a new, fake pointer -- it shouldn't matter
-  // what it contains, because Len is 0, and it should never be read.
-  if (BufPtr == 0 && Len == 0)
-    BufPtr = new char[1];
 }
 
 static bool isNumberChar(char C) {
