@@ -98,6 +98,7 @@ def SRAri : F3_2<2, 0b100111, "sra">;
 
 // Section B.13 - Add Instructions, p. 108
 def ADDrr : F3_1<2, 0b000000, "add">;
+def ADDri : F3_2<2, 0b000000, "add">;
 
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr   : F3_1<2, 0b000100, "sub">;
