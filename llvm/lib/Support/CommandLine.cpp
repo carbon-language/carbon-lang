@@ -346,7 +346,7 @@ bool EnumValueBase::handleOccurance(const char *ArgName, const string &Arg) {
     return error(": unrecognized alternative '" + Arg +
                  "'!  Alternatives are: " + Alternatives);
   }
-  Value = ValueMap[i].second.first;
+  setValue(ValueMap[i].second.first);
   return false;
 }
 

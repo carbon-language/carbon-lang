@@ -176,12 +176,22 @@ public:
 // Boolean/flag command line option
 //
 class Flag : public Option {
-  bool Value;
+  bool &Value;
+  bool DValue;
   virtual bool handleOccurance(const char *ArgName, const std::string &Arg);
 public:
   inline Flag(const char *ArgStr, const char *Message, int Flags = 0, 
-	      bool DefaultVal = 0) : Option(ArgStr, Message, Flags), 
-				     Value(DefaultVal) {}
+	      bool DefaultVal = false)
+    : Option(ArgStr, Message, Flags), Value(DValue) {
+    Value = DefaultVal;
+  }
+
+  inline Flag(bool &UpdateVal, const char *ArgStr, const char *Message,
+              int Flags = 0, bool DefaultVal = false)
+    : Option(ArgStr, Message, Flags), Value(UpdateVal) {
+    Value = DefaultVal;
+  }
+
   operator const bool() const { return Value; }
   inline bool operator=(bool Val) { Value = Val; return Val; }
 };
@@ -278,7 +288,6 @@ public:
 
 class EnumValueBase : public EnumBase {
 protected:
-  int Value;
   inline EnumValueBase(const char *ArgStr, const char *Help, int Flags)
     : EnumBase(ArgStr, Help, Flags) {}
   inline EnumValueBase(int Flags) : EnumBase(Flags) {}
@@ -293,6 +302,9 @@ protected:
   // to-be-maintained width is specified.
   //
   virtual void printOptionInfo(unsigned GlobalWidth) const;
+
+  // setValue - Subclasses override this when they need to receive a new value
+  virtual void setValue(int Val) = 0;
 };
 
 template <class E>  // The enum we are representing
@@ -300,17 +312,31 @@ class Enum : public EnumValueBase {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired;
   }
+  E DVal;
+  E &Value;
+
+  // setValue - Subclasses override this when they need to receive a new value
+  virtual void setValue(int Val) { Value = (E)Val; }
 public:
   inline Enum(const char *ArgStr, int Flags, const char *Help, ...)
-    : EnumValueBase(ArgStr, Help, Flags) {
+    : EnumValueBase(ArgStr, Help, Flags), Value(DVal) {
     va_list Values;
     va_start(Values, Help);
     processValues(Values);
     va_end(Values);
-    Value = ValueMap.front().second.first; // Grab default value
+    Value = (E)ValueMap.front().second.first; // Grab default value
   }
 
-  inline operator E() const { return (E)Value; }
+  inline Enum(E &EUpdate, const char *ArgStr, int Flags, const char *Help, ...)
+    : EnumValueBase(ArgStr, Help, Flags), Value(EUpdate) {
+    va_list Values;
+    va_start(Values, Help);
+    processValues(Values);
+    va_end(Values);
+    Value = (E)ValueMap.front().second.first; // Grab default value
+  }
+
+  inline operator E() const { return Value; }
   inline E operator=(E Val) { Value = Val; return Val; }
 };
 
@@ -337,14 +363,27 @@ protected:
 
 template <class E>  // The enum we are representing
 class EnumFlags : public EnumFlagsBase {
+  E DVal;
+  E &Value;
+
+  // setValue - Subclasses override this when they need to receive a new value
+  virtual void setValue(int Val) { Value = (E)Val; }
 public:
-  inline EnumFlags(int Flags, ...) : EnumFlagsBase(Flags) {
+  inline EnumFlags(int Flags, ...) : EnumFlagsBase(Flags), Value(DVal) {
     va_list Values;
     va_start(Values, Flags);
     processValues(Values);
     va_end(Values);
     registerArgs();
-    Value = ValueMap.front().second.first; // Grab default value
+    Value = (E)ValueMap.front().second.first; // Grab default value
+  }
+  inline EnumFlags(E &RV, int Flags, ...) : EnumFlagsBase(Flags), Value(RV) {
+    va_list Values;
+    va_start(Values, Flags);
+    processValues(Values);
+    va_end(Values);
+    registerArgs();
+    Value = (E)ValueMap.front().second.first; // Grab default value
   }
 
   inline operator E() const { return (E)Value; }
