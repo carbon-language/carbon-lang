@@ -624,7 +624,6 @@ bool LocalDataStructures::run(Module &M) {
       GGB.mergeInGlobalInitializer(I);
 
   GlobalsGraph->markIncompleteNodes(DSGraph::MarkFormalArgs);
-  GlobalsGraph->removeTriviallyDeadNodes();
   return false;
 }
 
