@@ -10,6 +10,7 @@
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Annotation.h"
 #include "Support/NonCopyable.h"
 #include "Support/HashExtras.h"
 #include "Support/hash_set"
@@ -59,9 +60,38 @@ public:
   static MachineFunction& construct(const Function *method,
                                          const TargetMachine &target);
   static void destruct(const Function *F);
-  static MachineFunction& get(const Function* function);
-  
+  static MachineFunction& get(const Function *F);
 
+  // Provide accessors for the MachineBasicBlock list...
+  typedef iplist<MachineBasicBlock> BasicBlockListType;
+  typedef BasicBlockListType::iterator iterator;
+  typedef BasicBlockListType::const_iterator const_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>             reverse_iterator;
+
+  // Provide accessors for basic blocks...
+  const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
+        BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
+ 
+  //===--------------------------------------------------------------------===//
+  // BasicBlock iterator forwarding functions
+  //
+  iterator                 begin()       { return BasicBlocks.begin(); }
+  const_iterator           begin() const { return BasicBlocks.begin(); }
+  iterator                 end  ()       { return BasicBlocks.end();   }
+  const_iterator           end  () const { return BasicBlocks.end();   }
+
+  reverse_iterator        rbegin()       { return BasicBlocks.rbegin(); }
+  const_reverse_iterator  rbegin() const { return BasicBlocks.rbegin(); }
+  reverse_iterator        rend  ()       { return BasicBlocks.rend();   }
+  const_reverse_iterator  rend  () const { return BasicBlocks.rend();   }
+
+  unsigned                  size() const { return BasicBlocks.size(); }
+  bool                     empty() const { return BasicBlocks.empty(); }
+  const MachineBasicBlock &front() const { return BasicBlocks.front(); }
+        MachineBasicBlock &front()       { return BasicBlocks.front(); }
+  const MachineBasicBlock &back() const { return BasicBlocks.back(); }
+        MachineBasicBlock &back()       { return BasicBlocks.back(); }
 
   //===--------------------------------------------------------------------===//
   //

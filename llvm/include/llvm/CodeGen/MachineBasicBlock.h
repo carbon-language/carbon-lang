@@ -7,31 +7,28 @@
 #ifndef LLVM_CODEGEN_MACHINEBASICBLOCK_H
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
-#include "llvm/Annotation.h"
 #include <vector>
 class BasicBlock;
 class MachineInstr;
 template <typename T> struct ilist_traits;
 
-extern AnnotationID MCFBB_AID;
-
-class MachineBasicBlock : public Annotation {
+class MachineBasicBlock {
   std::vector<MachineInstr*> Insts;
   MachineBasicBlock *Prev, *Next;
+  BasicBlock *BB;
 public:
-  MachineBasicBlock() : Annotation(MCFBB_AID) {}
+  MachineBasicBlock(BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {}
   ~MachineBasicBlock() {}
   
-  // Static methods to retrieve or destroy the MachineBasicBlock
-  // object for a given basic block.
-  static MachineBasicBlock& get(const BasicBlock *BB) {
-    return *(MachineBasicBlock*)
-      ((Annotable*)BB)->getOrCreateAnnotation(MCFBB_AID);
-  }
-  
-  static void destroy(const BasicBlock *BB) {
-    ((Annotable*)BB)->deleteAnnotation(MCFBB_AID);
-  }
+  // get - This deprecated static method returns the MachineBasicBlock object
+  // for the specified BasicBlock.
+  //
+  static MachineBasicBlock& get(const BasicBlock *BB);
+
+  /// getBasicBlock - Return the LLVM basic block that this instance
+  /// corresponded to originally.
+  ///
+  BasicBlock *getBasicBlock() const { return BB; }
   
   typedef std::vector<MachineInstr*>::iterator                iterator;
   typedef std::vector<MachineInstr*>::const_iterator    const_iterator;

@@ -139,14 +139,20 @@ bool InstructionSelection::runOnFunction(Function &F)
     }
   
   //
-  // Record instructions in the vector for each basic block
+  // Create the MachineBasicBlock records and add all of the MachineInstrs
+  // defined in the MachineCodeForInstruction objects to also live in the
+  // MachineBasicBlock objects.
   // 
-  for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  MachineFunction &MF = MachineFunction::get(&F);
+  for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+    MachineBasicBlock *MCBB = new MachineBasicBlock(BI);
+    MF.getBasicBlockList().push_back(MCBB);
+
     for (BasicBlock::iterator II = BI->begin(); II != BI->end(); ++II) {
       MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(II);
-      MachineBasicBlock &MCBB = MachineBasicBlock::get(BI);
-      MCBB.insert(MCBB.end(), mvec.begin(), mvec.end());
+      MCBB->insert(MCBB->end(), mvec.begin(), mvec.end());
     }
+  }
 
   // Insert phi elimination code
   InsertCodeForPhis(F);
