@@ -2478,6 +2478,8 @@ Value *ScalarEvolutionRewriter::ExpandCodeFor(SCEVHandle SH,
   else if (Instruction *I = dyn_cast<Instruction>(V)) {
     // FIXME: check to see if there is already a cast!
     BasicBlock::iterator IP = I; ++IP;
+    if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+      IP = II->getNormalDest()->begin();
     while (isa<PHINode>(IP)) ++IP;
     return new CastInst(V, Ty, V->getName(), IP);
   } else {
