@@ -22,6 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Constant.h"
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
@@ -283,10 +284,14 @@ void LoadVN::getEqualNumberNodes(Value *V,
   //
   std::map<BasicBlock*, std::vector<LoadInst*> >  CandidateLoads;
   std::map<BasicBlock*, std::vector<StoreInst*> > CandidateStores;
+  std::set<AllocationInst*> Allocations;
   
   while (!PointerSources.empty()) {
     Value *Source = PointerSources.back();
     PointerSources.pop_back();                // Get a source pointer...
+
+    if (AllocationInst *AI = dyn_cast<AllocationInst>(Source))
+      Allocations.insert(AI);
     
     for (Value::use_iterator UI = Source->use_begin(), UE = Source->use_end();
          UI != UE; ++UI)
@@ -329,6 +334,15 @@ void LoadVN::getEqualNumberNodes(Value *V,
     if (isa<LoadInst>(I) && Instrs.count(I)) {
       RetVals.push_back(I);
       Instrs.erase(I);
+    } else if (AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
+      // If we run into an allocation of the value being loaded, then the
+      // contenxt are not initialized.  We can return any value, so we will
+      // return a zero.
+      if (Allocations.count(AI)) {
+        LoadInvalidatedInBBBefore = true;
+        RetVals.push_back(Constant::getNullValue(LI->getType()));
+        break;
+      }
     }
 
     if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
