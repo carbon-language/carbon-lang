@@ -64,7 +64,7 @@ CallGraphNode *CallGraph::getNodeFor(Function *F) {
 void CallGraph::addToCallGraph(Function *F) {
   CallGraphNode *Node = getNodeFor(F);
 
-  // If this function has external linkage, 
+  // If this function has external linkage, anything could call it...
   if (!F->hasInternalLinkage()) {
     ExternalNode->addCalledFunction(Node);
 
@@ -75,9 +75,12 @@ void CallGraph::addToCallGraph(Function *F) {
       else
         Root = Node;          // Found a main, keep track of it!
     }
-  } else if (F->isExternal()) { // Not defined in this xlation unit?
-    Node->addCalledFunction(ExternalNode);  // It could call anything...
   }
+  
+  // If this function is not defined in this translation unit, it could call
+  // anything.
+  if (F->isExternal())
+    Node->addCalledFunction(ExternalNode);
 
   // Loop over all of the users of the function... looking for callers...
   //
