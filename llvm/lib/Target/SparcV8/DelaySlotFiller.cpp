@@ -12,21 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcV8.h"
-#include "SparcV8InstrInfo.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Mangler.h"
 #include "Support/Statistic.h"
-#include "Support/StringExtras.h"
-#include "Support/CommandLine.h"
-#include <cctype>
+
 using namespace llvm;
 
 namespace {
