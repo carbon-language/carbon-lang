@@ -826,6 +826,9 @@ void X86ISel::getAddressingMode(Value *Addr, X86AddressMode &AM) {
     AM.BaseType = X86AddressMode::FrameIndexBase;
     AM.Base.FrameIndex = getFixedSizedAllocaFI(AI);
     return;
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(Addr)) {
+    AM.GV = GV;
+    return;
   }
 
   // If it's not foldable, reset addr mode.
@@ -3108,7 +3111,7 @@ void X86ISel::visitStoreInst(StoreInst &I) {
       addFullAddress(BuildMI(BB, Opcode, 5), AM).addImm(Val);
     }
   } else if (isa<ConstantPointerNull>(I.getOperand(0))) {
-     addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(0);
+    addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(0);
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
     addFullAddress(BuildMI(BB, X86::MOV8mi, 5), AM).addImm(CB->getValue());
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0))) {
@@ -3139,6 +3142,11 @@ void X86ISel::visitStoreInst(StoreInst &I) {
     AM.Disp += 4;
     addFullAddress(BuildMI(BB, X86::MOV32mr, 5), AM).addReg(ValReg+1);
   } else {
+    // FIXME: stop emitting these two instructions:
+    //    movl $global,%eax
+    //    movl %eax,(%ebx)
+    // when one instruction will suffice.  That includes when the global
+    // has an offset applied to it.
     unsigned ValReg = getReg(I.getOperand(0));
     static const unsigned Opcodes[] = {
       X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST32m
@@ -3663,12 +3671,11 @@ void X86ISel::getGEPIndex(MachineBasicBlock *MBB,
     return;
   }
 
-#if 0   // FIXME: TODO!
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    // FIXME: When addressing modes are more powerful/correct, we could load
-    // global addresses directly as 32-bit immediates.
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(GEPOps.back())) {
+    AM.GV = GV;
+    GEPOps.pop_back();
+    return;
   }
-#endif
 
   AM.Base.Reg = MBB ? getReg(GEPOps[0], MBB, IP) : 1;
   GEPOps.pop_back();        // Consume the last GEP operand
@@ -3744,8 +3751,11 @@ void X86ISel::emitGEPOperation(MachineBasicBlock *MBB,
       }
 
       if (AM.BaseType == X86AddressMode::RegBase &&
-              AM.IndexReg == 0 && AM.Disp == 0)
+          AM.IndexReg == 0 && AM.Disp == 0 && !AM.GV)
         BuildMI(*MBB, IP, X86::MOV32rr, 1, TargetReg).addReg(AM.Base.Reg);
+      else if (AM.BaseType == X86AddressMode::RegBase && AM.Base.Reg == 0 &&
+               AM.IndexReg == 0 && AM.Disp == 0)
+        BuildMI(*MBB, IP, X86::MOV32ri, 1, TargetReg).addGlobalAddress(AM.GV);
       else
         addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TargetReg), AM);
       --IP;
