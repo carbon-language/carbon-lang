@@ -4,6 +4,9 @@
 // creating a tool.  It provides a simple, minimalistic interface that is easily
 // extensible and supports nonlocal (library) command line options.
 //
+// Note that rather than trying to figure out what this code does, you could try
+// reading the library documentation located in docs/CommandLine.html
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
