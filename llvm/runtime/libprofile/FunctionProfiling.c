@@ -32,10 +32,11 @@ static void FuncProfAtExitHandler() {
 /* llvm_start_func_profiling - This is the main entry point of the function
  * profiling library.  It is responsible for setting up the atexit handler.
  */
-void llvm_start_func_profiling(int argc, const char **argv,
-                               unsigned *arrayStart, unsigned numElements) {
-  save_arguments(argc, argv);
+int llvm_start_func_profiling(int argc, const char **argv,
+                              unsigned *arrayStart, unsigned numElements) {
+  int Ret = save_arguments(argc, argv);
   ArrayStart = arrayStart;
   NumElements = numElements;
   atexit(FuncProfAtExitHandler);
+  return Ret;
 }

@@ -34,10 +34,11 @@ static void BlockProfAtExitHandler() {
 /* llvm_start_block_profiling - This is the main entry point of the block
  * profiling library.  It is responsible for setting up the atexit handler.
  */
-void llvm_start_block_profiling(int argc, const char **argv,
-                                unsigned *arrayStart, unsigned numElements) {
-  save_arguments(argc, argv);
+int llvm_start_block_profiling(int argc, const char **argv,
+                               unsigned *arrayStart, unsigned numElements) {
+  int Ret = save_arguments(argc, argv);
   ArrayStart = arrayStart;
   NumElements = numElements;
   atexit(BlockProfAtExitHandler);
+  return Ret;
 }

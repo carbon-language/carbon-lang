@@ -27,9 +27,9 @@ static unsigned SavedArgsLength = 0;
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
  */
-void save_arguments(int argc, const char **argv) {
+int save_arguments(int argc, const char **argv) {
   unsigned Length, i;
-  if (SavedArgs || !argv) return;  /* This can be called multiple times */
+  if (SavedArgs || !argv) return argc;  /* This can be called multiple times */
 
   for (Length = 0, i = 0; i != (unsigned)argc; ++i)
     Length += strlen(argv[i])+1;
@@ -43,6 +43,8 @@ void save_arguments(int argc, const char **argv) {
   }
 
   SavedArgsLength = Length;
+
+  return argc;
 }
 
 

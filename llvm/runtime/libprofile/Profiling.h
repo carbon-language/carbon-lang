@@ -18,7 +18,7 @@
 /* save_arguments - Save argc and argv as passed into the program for the file
  * we output.
  */
-void save_arguments(int argc, const char **argv);
+int save_arguments(int argc, const char **argv);
 
 enum ProfilingType {
   Arguments = 1,   /* The command line argument block */
