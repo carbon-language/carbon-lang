@@ -48,6 +48,7 @@ class TypedInit;
 class VarInit;
 class FieldInit;
 class VarBitInit;
+class VarListElementInit;
 
 // Other classes...
 class Record;
@@ -481,6 +482,13 @@ public:
     return Ty->convertValue(this);
   }
 
+  /// resolveReferences - This method is used by classes that refer to other
+  /// variables which may not be defined at the time they expression is formed.
+  /// If a value is set for the variable later, this method will be called on
+  /// users of the value to allow the value to propagate out.
+  ///
+  virtual Init *resolveReferences(Record &R);
+
   virtual void print(std::ostream &OS) const;
 };
 
@@ -495,11 +503,19 @@ public:
 
   RecTy *getType() const { return Ty; }
 
+  virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+  virtual Init *convertInitListSlice(const std::vector<unsigned> &Elements);
+
   /// resolveBitReference - This method is used to implement
   /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
-  /// simply return the resolved value, otherwise we return this.
+  /// simply return the resolved value, otherwise we return null.
   ///
   virtual Init *resolveBitReference(Record &R, unsigned Bit) = 0;
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, unsigned Elt) = 0;
 };
 
 /// VarInit - 'Opcode' - Represent a reference to an entire variable object.
@@ -515,9 +531,8 @@ public:
 
   const std::string &getName() const { return VarName; }
 
-  virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
-
   virtual Init *resolveBitReference(Record &R, unsigned Bit);
+  virtual Init *resolveListElementReference(Record &R, unsigned Elt);
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
@@ -558,6 +573,38 @@ public:
   virtual Init *resolveReferences(Record &R);
 };
 
+/// VarListElementInit - List[4] - Represent access to one element of a var or 
+/// field.
+class VarListElementInit : public TypedInit {
+  TypedInit *TI;
+  unsigned Element;
+public:
+  VarListElementInit(TypedInit *T, unsigned E)
+    : TypedInit(dynamic_cast<ListRecTy*>(T->getType())->getElementType()),
+                TI(T), Element(E) {
+    assert(T->getType() && dynamic_cast<ListRecTy*>(T->getType()) &&
+           "Illegal VarBitInit expression!");
+  }
+
+  virtual Init *convertInitializerTo(RecTy *Ty) {
+    return Ty->convertValue(this);
+  }
+
+  TypedInit *getVariable() const { return TI; }
+  unsigned getElementNum() const { return Element; }
+
+  virtual Init *resolveBitReference(Record &R, unsigned Bit);
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  virtual Init *resolveListElementReference(Record &R, unsigned Elt);
+
+  virtual void print(std::ostream &OS) const {
+    TI->print(OS); OS << "[" << Element << "]";
+  }
+  virtual Init *resolveReferences(Record &R);
+};
 
 /// DefInit - AL - Represent a reference to a 'def' in the description
 ///
@@ -596,9 +643,8 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
-
   virtual Init *resolveBitReference(Record &R, unsigned Bit);
+  virtual Init *resolveListElementReference(Record &R, unsigned Elt);
 
   virtual Init *resolveReferences(Record &R);
 

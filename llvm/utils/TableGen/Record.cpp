@@ -320,6 +320,28 @@ Init *ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
   return new ListInit(Vals);
 }
 
+Init *ListInit::resolveReferences(Record &R) {
+  std::vector<Init*> Resolved;
+  Resolved.reserve(getSize());
+  bool Changed = false;
+
+  for (unsigned i = 0, e = getSize(); i != e; ++i) {
+    Init *E;
+    Init *CurElt = getElement(i);
+
+    do {
+      E = CurElt;
+      CurElt = CurElt->resolveReferences(R);
+      Changed |= E != CurElt;
+    } while (E != CurElt);
+    Resolved.push_back(E);
+  }
+
+  if (Changed)
+    return new ListInit(Resolved);
+  return this;
+}
+
 void ListInit::print(std::ostream &OS) const {
   OS << "[";
   for (unsigned i = 0, e = Values.size(); i != e; ++i) {
@@ -329,7 +351,7 @@ void ListInit::print(std::ostream &OS) const {
   OS << "]";
 }
 
-Init *VarInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
+Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsRecTy *T = dynamic_cast<BitsRecTy*>(getType());
   if (T == 0) return 0;  // Cannot subscript a non-bits variable...
   unsigned NumBits = T->getNumBits();
@@ -345,9 +367,24 @@ Init *VarInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   return BI;
 }
 
+Init *TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
+  ListRecTy *T = dynamic_cast<ListRecTy*>(getType());
+  if (T == 0) return 0;  // Cannot subscript a non-list variable...
+
+  if (Elements.size() == 1)
+    return new VarListElementInit(this, Elements[0]);
+
+  std::vector<Init*> ListInits;
+  ListInits.reserve(Elements.size());
+  for (unsigned i = 0, e = Elements.size(); i != e; ++i)
+    ListInits.push_back(new VarListElementInit(this, Elements[i]));
+  return new ListInit(ListInits);
+}
+
+
 Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
   if (R.isTemplateArg(getName()))
-    return this;
+    return 0;
 
   RecordVal *RV = R.getValue(getName());
   assert(RV && "Reference to a non-existant variable?");
@@ -359,8 +396,26 @@ Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
 
   if (!dynamic_cast<UnsetInit*>(B))  // If the bit is not set...
     return B;                        // Replace the VarBitInit with it.
-  return this;
+  return 0;
 }
+
+Init *VarInit::resolveListElementReference(Record &R, unsigned Elt) {
+  if (R.isTemplateArg(getName()))
+    return 0;
+
+  RecordVal *RV = R.getValue(getName());
+  assert(RV && "Reference to a non-existant variable?");
+  ListInit *LI = dynamic_cast<ListInit*>(RV->getValue());
+  assert(LI && "Invalid list element!");
+
+  if (Elt >= LI->getSize())
+    return 0;  // Out of range reference.
+  Init *E = LI->getElement(Elt);
+  if (!dynamic_cast<UnsetInit*>(E))  // If the element is set
+    return E;                        // Replace the VarListElementInit with it.
+  return 0;
+}
+
 
 RecTy *VarInit::getFieldType(const std::string &FieldName) const {
   if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(getType()))
@@ -396,10 +451,27 @@ Init *VarInit::resolveReferences(Record &R) {
   
 
 Init *VarBitInit::resolveReferences(Record &R) {
-  Init *I = getVariable()->resolveBitReference(R, getBitNum());
-  if (I != getVariable())
+  if (Init *I = getVariable()->resolveBitReference(R, getBitNum()))
     return I;
   return this;
+}
+
+Init *VarListElementInit::resolveReferences(Record &R) {
+  if (Init *I = getVariable()->resolveListElementReference(R, getElementNum()))
+    return I;
+  return this;
+}
+
+Init *VarListElementInit::resolveBitReference(Record &R, unsigned Bit) {
+  // FIXME: This should be implemented, to support references like:
+  // bit B = AA[0]{1};
+  return 0;
+}
+
+Init *VarListElementInit::resolveListElementReference(Record &R, unsigned Elt) {
+  // FIXME: This should be implemented, to support references like:
+  // int B = AA[0][1];
+  return 0;
 }
 
 RecTy *DefInit::getFieldType(const std::string &FieldName) const {
@@ -417,25 +489,8 @@ void DefInit::print(std::ostream &OS) const {
   OS << Def->getName();
 }
 
-Init *FieldInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
-  BitsRecTy *T = dynamic_cast<BitsRecTy*>(getType());
-  if (T == 0) return 0;  // Cannot subscript a non-bits field...
-  unsigned NumBits = T->getNumBits();
-
-  BitsInit *BI = new BitsInit(Bits.size());
-  for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    if (Bits[i] >= NumBits) {
-      delete BI;
-      return 0;
-    }
-    BI->setBit(i, new VarBitInit(this, Bits[i]));
-  }
-  return BI;
-}
-
 Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
-  Init *BitsVal = Rec->getFieldInit(R, FieldName);
-  if (BitsVal)
+  if (Init *BitsVal = Rec->getFieldInit(R, FieldName))
     if (BitsInit *BI = dynamic_cast<BitsInit*>(BitsVal)) {
       assert(Bit < BI->getNumBits() && "Bit reference out of range!");
       Init *B = BI->getBit(Bit);
@@ -443,7 +498,19 @@ Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
       if (dynamic_cast<BitInit*>(B))  // If the bit is set...
         return B;                     // Replace the VarBitInit with it.
     }
-  return this;
+  return 0;
+}
+
+Init *FieldInit::resolveListElementReference(Record &R, unsigned Elt) {
+  if (Init *ListVal = Rec->getFieldInit(R, FieldName))
+    if (ListInit *LI = dynamic_cast<ListInit*>(ListVal)) {
+      if (Elt >= LI->getSize()) return 0;
+      Init *E = LI->getElement(Elt);
+
+      if (!dynamic_cast<UnsetInit*>(E))  // If the bit is set...
+        return E;                  // Replace the VarListElementInit with it.
+    }
+  return 0;
 }
 
 Init *FieldInit::resolveReferences(Record &R) {
