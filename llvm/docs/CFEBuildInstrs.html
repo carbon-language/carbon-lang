@@ -225,14 +225,6 @@ variable.</p>
 the same options as the last time. This will cause the configuration to now find
 the newly built llvm-gcc and llvm-g++ executables. </p></li>
 
-<li><p>If you edited header files during the C/C++ front-end build as
-described in "Fix 1" above, you must now copy those header files from
-<code>$CFEINSTALL/<i>target-triplet</i>/sys-include</code> to
-<code>$CFEINSTALL/lib/gcc/<i>target-triplet</i>/3.4-llvm/include</code>.
-(This should be the "include" directory in the same directory as the
-libgcc.a library, which you can find by running
-<code>$CFEINSTALL/bin/llvm-gcc --print-libgcc-file-name</code>.)</p></li>
-
 <li><p>Rebuild your CVS tree.  This shouldn't cause the whole thing to be
   rebuilt, but it should build the runtime libraries.  After the tree is
   built, install the runtime libraries into your GCC front-end build tree.
@@ -251,7 +243,7 @@ link times. Use the <tt>llvm-ranlib</tt> tool to do this, as follows:</p>
  % llvm-ranlib libiberty.a
  % llvm-ranlib libstdc++.a
  % llvm-ranlib libsupc++.a
- % cd $CFEINSTALL/lib/<i>target-triplet</i>/3.4-llvm
+ % cd $CFEINSTALL/lib/gcc/<i>target-triplet</i>/3.4-llvm
  % llvm-ranlib libgcc.a
  % llvm-ranlib libgcov.a
 </pre>
