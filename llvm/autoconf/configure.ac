@@ -342,28 +342,43 @@ else
 	AC_SUBST(USE_SPEC95,[[USE_SPEC95=1]])
 fi
 
-dnl Povray External Benchmark
-AC_ARG_ENABLE(povray,AC_HELP_STRING([--enable-povray],[Compile Povray benchmark (default is NO)]),,enableval=no)
-if test ${enableval} = "no"
-then
-	if test -d /home/vadve/shared/benchmarks/povray31
+dnl We can use POV-Ray as an external benchmark, if they have the sources.
+AC_ARG_ENABLE(povray,
+ AC_HELP_STRING([--enable-povray=ARG], 
+                [Use POV-Ray as a benchmark (srcs in DIR)]),
+ povray=$enableval,
+ povray=auto)
+AC_MSG_CHECKING([for POV-Ray benchmark sources])
+case "$povray" in
+yes)
+    defaultdir=/home/vadve/shared/benchmarks/povray31
+	if test -d $defaultdir
 	then
-		AC_SUBST(POVRAY_ROOT,[/home/vadve/shared/benchmarks/povray31])
+		AC_SUBST(POVRAY_ROOT,[$defaultdir])
 		AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
-	else
-		AC_SUBST(USE_POVRAY,[[]])
-		AC_SUBST(POVRAY_ROOT,[])
-	fi
-else
-	if test ${enableval} = ""
-	then
-		AC_SUBST(POVRAY_ROOT,[/home/vadve/shared/benchmarks/povray31])
-	else
-		AC_SUBST(POVRAY_ROOT,[${enableval}])
-	fi
-	AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
-fi
-
+        povray="yes, found in $defaultdir"
+    else
+        povray=no
+    fi
+    ;;
+auto|no)
+    AC_SUBST(POVRAY_ROOT,[])
+    AC_SUBST(USE_POVRAY,[[]])
+    povray=no
+    ;;
+*)  if test -d "$povray"
+    then
+        AC_SUBST(POVRAY_ROOT,"$povray")
+        AC_SUBST(USE_POVRAY,[[USE_POVRAY=1]])
+        povray="yes, in $povray"
+    else
+        AC_SUBST(POVRAY_ROOT,[])
+        AC_SUBST(USE_POVRAY,[[]])
+        povray="no, not found in $povray"
+    fi
+    ;;
+esac
+AC_MSG_RESULT($povray)
 
 dnl Precompiled Bytecode Option
 AC_ARG_ENABLE(precompiled_bytecode,AC_HELP_STRING([--enable-precompiled_bytecode],[Use pre-compiled bytecode (default is NO)]),,enableval=no)
