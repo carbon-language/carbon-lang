@@ -59,7 +59,7 @@ namespace {
     cl::opt<bool>
     join("join-liveintervals",
          cl::desc("Join compatible live intervals"),
-         cl::init(true));
+         cl::init(false));
 };
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
