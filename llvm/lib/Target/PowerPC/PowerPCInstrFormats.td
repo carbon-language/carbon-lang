@@ -130,7 +130,15 @@ class DForm_3<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   : DForm_1<opcode, ppc64, vmx, OL, asmstr>;
 
 class DForm_4<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr> 
-  : DForm_base<opcode, ppc64, vmx, OL, asmstr>;
+  : I<opcode, ppc64, vmx, OL, asmstr> {
+  bits<5>  B;
+  bits<5>  A;
+  bits<16> C;
+  
+  let Inst{6-10}  = A;
+  let Inst{11-15} = B;
+  let Inst{16-31} = C;
+}
               
 class DForm_4_zero<bits<6> opcode, bit ppc64, bit vmx, dag OL, string asmstr>
   : DForm_1<opcode, ppc64, vmx, OL, asmstr> {
