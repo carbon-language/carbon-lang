@@ -368,7 +368,7 @@ void GraphBuilder::visitLoadInst(LoadInst &LI) {
   Ptr.getNode()->NodeType |= DSNode::Read;
 
   // Ensure a typerecord exists...
-  Ptr.getNode()->mergeTypeInfo(LI.getType(), Ptr.getOffset());
+  Ptr.getNode()->mergeTypeInfo(LI.getType(), Ptr.getOffset(), false);
 
   if (isPointerType(LI.getType()))
     setDestTo(LI, getLink(Ptr));

@@ -152,7 +152,8 @@ bool DSNode::isNodeCompletelyFolded() const {
 ///
 /// This method returns true if the node is completely folded, otherwise false.
 ///
-bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
+bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
+                           bool FoldIfIncompatible) {
   // Check to make sure the Size member is up-to-date.  Size can be one of the
   // following:
   //  Size = 0, Ty = Void: Nothing is known about this node.
@@ -213,14 +214,14 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
     // It is illegal to grow this node if we have treated it as an array of
     // objects...
     if (isArray()) {
-      foldNodeCompletely();
+      if (FoldIfIncompatible) foldNodeCompletely();
       return true;
     }
 
     if (Offset) {  // We could handle this case, but we don't for now...
       DEBUG(std::cerr << "UNIMP: Trying to merge a growth type into "
                       << "offset != 0: Collapsing!\n");
-      foldNodeCompletely();
+      if (FoldIfIncompatible) foldNodeCompletely();
       return true;
     }
 
@@ -277,7 +278,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
       break;
     }
     default:
-      foldNodeCompletely();
+      if (FoldIfIncompatible) foldNodeCompletely();
       return true;
     }
   }
@@ -356,7 +357,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
                   << "\n due to:" << NewTy << " @ " << Offset << "!\n"
                   << "SubType: " << SubType << "\n\n");
 
-  foldNodeCompletely();
+  if (FoldIfIncompatible) foldNodeCompletely();
   return true;
 }
 
