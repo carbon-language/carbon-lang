@@ -591,22 +591,17 @@ static void setValueName(Value *V, char *NameStr) {
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the typeplane, false is returned.
 //
-static bool setValueNameMergingDuplicates(Value *V, char *NameStr) {
-  assert(V->getType() != Type::VoidTy && "Global or constant of type void?");
-
+static bool setValueNameMergingDuplicates(GlobalValue *V, char *NameStr) {
   if (NameStr == 0) return false;
 
   std::string Name(NameStr);      // Copy string
   free(NameStr);                  // Free old string
 
-  // FIXME: If we eliminated the function constant pool (which we should), this
-  // would just unconditionally look at the module symtab.
-  SymbolTable &ST = inFunctionScope() ? 
-    CurFun.CurrentFunction->getSymbolTable() : 
-    CurModule.CurrentModule->getSymbolTable();
+  SymbolTable &ST = CurModule.CurrentModule->getSymbolTable();
 
   Value *Existing = ST.lookup(V->getType(), Name);
   if (Existing) {    // Inserting a name that is already defined???
+
     // We are a simple redefinition of a value, check to see if it is defined
     // the same as the old one...
     if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
@@ -630,8 +625,6 @@ static bool setValueNameMergingDuplicates(Value *V, char *NameStr) {
           return true;   // They are equivalent!
         }
       }
-    } else if (const Constant *C = dyn_cast<Constant>(Existing)) {
-      if (C == V) return true;      // Constants are equal to themselves
     }
 
     ThrowException("Redefinition of value named '" + Name + "' in the '" +
@@ -1571,24 +1564,14 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   const PointerType *PFT = PointerType::get(FT);
   delete $1;
 
-  Function *Fn = 0;
   // Is the function already in symtab?
-  if ((Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
-    // Yes it is.  If this is the case, either we need to be a forward decl,
-    // or it needs to be.
-    if (!CurFun.isDeclare && !Fn->isExternal())
-      ThrowException("Redefinition of function '" + FunctionName + "'!");
-    
-    // Make sure to strip off any argument names so we can't get conflicts...
-    for (Function::aiterator AI = Fn->abegin(), AE = Fn->aend(); AI != AE; ++AI)
-      AI->setName("");
+  if (CurModule.CurrentModule->getFunction(FunctionName, FT))
+    ThrowException("Redefinition of function '" + FunctionName + "'!");
 
-  } else  {  // Not already defined?
-    Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
-                      CurModule.CurrentModule);
-    InsertValue(Fn, CurModule.Values);
-    CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
-  }
+  Function *Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
+                              CurModule.CurrentModule);
+  InsertValue(Fn, CurModule.Values);
+  CurModule.DeclareNewGlobalValue(Fn, ValID::create($2));
   free($2);  // Free strdup'd memory!
 
   CurFun.FunctionStart(Fn);
