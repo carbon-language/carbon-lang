@@ -25,15 +25,12 @@
 //*************************** User Include Files ***************************/
 
 #include "llvm/CodeGen/InstrForest.h"
-#include "llvm/Module.h"
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
-
-//************************ Class Implementations **************************/
 
 
 //------------------------------------------------------------------------ 

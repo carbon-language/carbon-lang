@@ -13,10 +13,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/CodeGen/TargetMachine.h"
-#include "vector"
-
-class TargetMachine;
-
+#include <vector>
 
 // Future derived types: SIMD packed format
 

@@ -15,30 +15,10 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-//************************** System Include Files **************************/
-
-#include <string>
-#include <vector>
-
-//*************************** User Include Files ***************************/
-
+#include "llvm/CodeGen/InstrForest.h"
 #include "llvm/Tools/DataTypes.h"
-#include "llvm/Instruction.h"
 #include "llvm/Support/Unique.h"
 #include "llvm/CodeGen/TargetMachine.h"
-
-
-//************************* Opaque Declarations ****************************/
-
-class Value;
-class InstrTreeNode;
-class InstructionNode;
-class MachineInstr;
-class MachineInstrInfo;
-class MachineOperand;
-
-
-//************************ Exported Data Types *****************************/
 
 //---------------------------------------------------------------------------
 // class MachineOperand 

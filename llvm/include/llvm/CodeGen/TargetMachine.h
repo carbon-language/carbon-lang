@@ -12,21 +12,12 @@
 #ifndef LLVM_CODEGEN_TARGETMACHINE_H
 #define LLVM_CODEGEN_TARGETMACHINE_H
 
-//************************** System Include Files **************************/
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/Support/Unique.h"
 #include "llvm/Tools/DataTypes.h"
-
-//************************* Opaque Declarations ****************************/
+#include <string>
 
 class Type;
 class StructType;
-class MachineInstrInfo;
-
-
-//************************ Exported Data Types *****************************/
 
 
 //---------------------------------------------------------------------------

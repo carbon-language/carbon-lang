@@ -10,22 +10,13 @@
 //**************************************************************************/
 
 
-//************************** System Include Files **************************/
-
 //*************************** User Include Files ***************************/
 
-#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/TargetMachine.h"
-
-
-//************************* Opaque Declarations ****************************/
-
-class StructType;
-class MachineInstrInfo;
+#include "llvm/DerivedTypes.h"
 
 
 //************************ Class Implementations **************************/
-
 
 //---------------------------------------------------------------------------
 // function TargetMachine::findOptimalMemberOffsets 

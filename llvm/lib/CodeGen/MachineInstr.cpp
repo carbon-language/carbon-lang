@@ -12,22 +12,10 @@
 //	7/2/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
-
-//************************** System Include Files **************************/
-
-#include <strstream.h>
-#include <string>
-#include <vector>
-
-//*************************** User Include Files ***************************/
-
-#include "llvm/Type.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/ConstPoolVals.h"
-#include "llvm/Value.h"
-#include "llvm/Instruction.h"
-#include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/ConstPoolVals.h"
+#include "llvm/Instruction.h"
+#include <strstream>
 
 //************************ Class Implementations **************************/
 

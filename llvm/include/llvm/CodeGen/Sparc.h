@@ -12,28 +12,13 @@
 #ifndef LLVM_CODEGEN_SPARC_H
 #define LLVM_CODEGEN_SPARC_H
 
-//************************** System Include Files **************************/
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/CodeGen/TargetMachine.h"
-#include "llvm/CodeGen/MachineInstr.h"
-
-
-//************************* Opaque Declarations ****************************/
-
-
-//************************ Exported Constants ******************************/
-
 
 // OpCodeMask definitions for the Sparc V9
 // 
 const OpCodeMask	Immed		= 0x00002000; // immed or reg operand?
 const OpCodeMask	Annul		= 0x20000000; // annul delay instr?
 const OpCodeMask	PredictTaken	= 0x00080000; // predict branch taken?
-
-
-//************************ Exported Data Types *****************************/
 
 
 //---------------------------------------------------------------------------
