@@ -21,27 +21,9 @@
 /// BROKEN: Should not include sparc stuff directly into here
 #include "../../Target/Sparc/SparcInternals.h"  //  Only for PHI defn
 
-static AnnotationID AID(AnnotationManager::getID("Analysis::BBLiveVar"));
-
-BBLiveVar *BBLiveVar::CreateOnBB(const BasicBlock &BB, MachineBasicBlock &MBB,
-                                 unsigned POID) {
-  BBLiveVar *Result = new BBLiveVar(BB, MBB, POID);
-  BB.addAnnotation(Result);
-  return Result;
-}
-
-BBLiveVar *BBLiveVar::GetFromBB(const BasicBlock &BB) {
-  return (BBLiveVar*)BB.getAnnotation(AID);
-}
-
-void BBLiveVar::RemoveFromBB(const BasicBlock &BB) {
-  bool Deleted = BB.deleteAnnotation(AID);
-  assert(Deleted && "BBLiveVar annotation did not exist!");
-}
-
 
 BBLiveVar::BBLiveVar(const BasicBlock &bb, MachineBasicBlock &mbb, unsigned id)
-  : Annotation(AID), BB(bb), MBB(mbb), POID(id) {
+  : BB(bb), MBB(mbb), POID(id) {
   InSetChanged = OutSetChanged = false;
 
   calcDefUseSets();
@@ -205,7 +187,8 @@ bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
 // propagates in set to OutSets of PREDECESSORs
 //-----------------------------------------------------------------------------
 
-bool BBLiveVar::applyFlowFunc() {
+bool BBLiveVar::applyFlowFunc(hash_map<const BasicBlock*,
+                                       BBLiveVar*> &BBLiveVarInfo) {
   // IMPORTANT: caller should check whether inset changed 
   //            (else no point in calling)
   
@@ -216,7 +199,7 @@ bool BBLiveVar::applyFlowFunc() {
 
   for (pred_const_iterator PI = pred_begin(&BB), PE = pred_end(&BB);
        PI != PE ; ++PI) {
-    BBLiveVar *PredLVBB = BBLiveVar::GetFromBB(**PI);
+    BBLiveVar *PredLVBB = BBLiveVarInfo[*PI];
 
     // do set union
     if (setPropagate(&PredLVBB->OutSet, &InSet, *PI)) {  

@@ -47,18 +47,18 @@ clEnumValN(LV_DEBUG_Verbose, "v", "print def, use sets for every instrn also"),
 
 // gets OutSet of a BB
 const ValueSet &FunctionLiveVarInfo::getOutSetOfBB(const BasicBlock *BB) const {
-  return BBLiveVar::GetFromBB(*BB)->getOutSet();
+  return BBLiveVarInfo.find(BB)->second->getOutSet();
 }
       ValueSet &FunctionLiveVarInfo::getOutSetOfBB(const BasicBlock *BB)       {
-  return BBLiveVar::GetFromBB(*BB)->getOutSet();
+  return BBLiveVarInfo[BB]->getOutSet();
 }
 
 // gets InSet of a BB
 const ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB) const {
-  return BBLiveVar::GetFromBB(*BB)->getInSet();
+  return BBLiveVarInfo.find(BB)->second->getInSet();
 }
-      ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB)       {
-  return BBLiveVar::GetFromBB(*BB)->getInSet();
+ValueSet &FunctionLiveVarInfo::getInSetOfBB(const BasicBlock *BB) {
+  return BBLiveVarInfo[BB]->getInSet();
 }
 
 
@@ -103,15 +103,16 @@ void FunctionLiveVarInfo::constructBBs(const Function *F) {
     std::map<const BasicBlock*, unsigned>::iterator POI = PONumbering.find(&BB);
     if (POI != PONumbering.end()) {
       // create a new BBLiveVar
-      LVBB = BBLiveVar::CreateOnBB(BB, *I, POId);  
+      LVBB = new BBLiveVar(BB, *I, POId);
     } else {
       // The PO iterator does not discover unreachable blocks, but the random
       // iterator later may access these blocks.  We must make sure to
       // initialize unreachable blocks as well.  However, LV info is not correct
       // for those blocks (they are not analyzed)
       //
-      LVBB = BBLiveVar::CreateOnBB(BB, *I, ++POId);
+      LVBB = new BBLiveVar(BB, *I, ++POId);
     }
+    BBLiveVarInfo[&BB] = LVBB;
     
     if (DEBUG_LV)
       LVBB->printAllSets();
@@ -130,7 +131,7 @@ bool FunctionLiveVarInfo::doSingleBackwardPass(const Function *M,
   bool NeedAnotherIteration = false;
   for (po_iterator<const Function*> BBI = po_begin(M), BBE = po_end(M);
        BBI != BBE; ++BBI) {
-    BBLiveVar *LVBB = BBLiveVar::GetFromBB(**BBI);
+    BBLiveVar *LVBB = BBLiveVarInfo[*BBI];
     assert(LVBB && "BasicBlock information not set for block!");
 
     if (DEBUG_LV) std::cerr << " For BB " << (*BBI)->getName() << ":\n";
@@ -142,7 +143,7 @@ bool FunctionLiveVarInfo::doSingleBackwardPass(const Function *M,
     // OutSets are initialized to EMPTY.  Recompute on first iter or if InSet
     // changed.
     if (iter == 0 || LVBB->isInSetChanged())        // to calc Outsets of preds
-      NeedAnotherIteration |= LVBB->applyFlowFunc();
+      NeedAnotherIteration |= LVBB->applyFlowFunc(BBLiveVarInfo);
     
     if (DEBUG_LV) LVBB->printInOutSets();
   }
@@ -153,10 +154,12 @@ bool FunctionLiveVarInfo::doSingleBackwardPass(const Function *M,
 
 
 void FunctionLiveVarInfo::releaseMemory() {
-  // First remove all BBLiveVar annotations created in constructBBs().
-  if (M)
+  // First remove all BBLiveVars created in constructBBs().
+  if (M) {
     for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-      BBLiveVar::RemoveFromBB(*I);
+      delete BBLiveVarInfo[I];
+    BBLiveVarInfo.clear();
+  }
   M = 0;
 
   // Then delete all objects of type ValueSet created in calcLiveVarSetsForBB
@@ -263,7 +266,7 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 //-----------------------------------------------------------------------------
 
 void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
-  BBLiveVar *BBLV = BBLiveVar::GetFromBB(*BB);
+  BBLiveVar *BBLV = BBLiveVarInfo[BB];
   assert(BBLV && "BBLiveVar annotation doesn't exist?");
   const MachineBasicBlock &MIVec = BBLV->getMachineBasicBlock();
   const MachineFunction &MF = MachineFunction::get(M);
