@@ -522,12 +522,9 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     for (unsigned i = 0; i < MRegisterInfo::FirstVirtualRegister; ++i)
         regWeight[i] = 0.0F;
 
-    // for each interval in active that overlaps
+    // for each interval in active
     for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
          i != e; ++i) {
-        if (!cur->overlaps(**i))
-            continue;
-
         unsigned reg = (*i)->reg;
         if (reg >= MRegisterInfo::FirstVirtualRegister) {
             reg = v2pMap_[reg];
