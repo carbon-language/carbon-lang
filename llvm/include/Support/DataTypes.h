@@ -21,7 +21,7 @@
 
 #include <inttypes.h>
 
-#ifdef LINUX
+#ifdef __linux__
 #define __STDC_LIMIT_MACROS 1
 #include <stdint.h>       // Defined by ISO C 99
 #include <endian.h>
