@@ -123,27 +123,29 @@ void X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
 
 void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 					MachineBasicBlock::iterator &II) const {
-  unsigned i = 3;
+  unsigned i = 0;
   MachineInstr &MI = **II;
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
-  // This must be part of a four operand memory reference.  Replace the
-  // FrameIndex with the offset and the base register with EBP.
-  MI.SetMachineOperandReg(i-3, hasFP(MF) ? X86::EBP : X86::ESP);
-
-  // Now replace the frame index itself with the offset from EBP.
   int FrameIndex = MI.getOperand(i).getFrameIndex();
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+
+  // This must be part of a four operand memory reference.  Replace the
+  // FrameIndex with base register with EBP.  Add add an offset to the offset.
+  MI.SetMachineOperandReg(i, hasFP(MF) ? X86::EBP : X86::ESP);
+
+  // Now add the frame object offset to the offset from EBP.
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
+               MI.getOperand(i+3).getImmedValue();
 
   if (!hasFP(MF) && hasSPAdjust(MF)) {
     const MachineFrameInfo *MFI = MF.getFrameInfo();
     Offset += MFI->getStackSize() + MFI->getMaxCallFrameSize();
   }
 
-  MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
+  MI.SetMachineOperandConst(i+3, MachineOperand::MO_SignExtendedImmed, Offset);
 }
 
 void X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
@@ -332,15 +334,14 @@ X86RegisterInfo::X86RegisterInfo()
 const TargetRegisterClass*
 X86RegisterInfo::getRegClassForType(const Type* Ty) const {
   switch (Ty->getPrimitiveID()) {
-  default:                assert(0 && "Invalid type to getClass!");
+  case Type::LongTyID:
+  case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
+  default:              assert(0 && "Invalid type to getClass!");
   case Type::BoolTyID:
   case Type::SByteTyID:
   case Type::UByteTyID:   return &X86ByteRegisterClassInstance;
   case Type::ShortTyID:
   case Type::UShortTyID:  return &X86ShortRegisterClassInstance;
-  case Type::LongTyID:    // FIXME: Longs are not handled yet!
-  case Type::ULongTyID:   // FIXME: Treat these like ints, this is bogus!
-    
   case Type::IntTyID:
   case Type::UIntTyID:
   case Type::PointerTyID: return &X86IntRegisterClassInstance;
