@@ -22,8 +22,6 @@ class SSARegMap {
   }
 
  public:
-  SSARegMap() {}
-
   const TargetRegisterClass* getRegClass(unsigned Reg) {
     unsigned actualReg = rescale(Reg);
     assert(actualReg < RegClassMap.size() && "Register out of bounds");
