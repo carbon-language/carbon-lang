@@ -1,0 +1,10 @@
+; RUN: llvm-as < %s | opt -dse | llvm-dis | grep 'store int 0'
+
+void %test({int,int }* %P) {
+	%Q = getelementptr {int,int}* %P, int 1
+	%X = getelementptr {int,int}* %Q, int 0, uint 1
+	%Y = getelementptr {int,int}* %Q, int 1, uint 1
+	store int 0, int* %X
+	store int 1, int* %Y
+	ret void
+}
