@@ -57,7 +57,8 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
   }
 }
 
-Annotation *TargetData::TypeAnFactory(AnnotationID AID, Annotable *T, void *D) {
+Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
+				      void *D) {
   const TargetData &TD = *(const TargetData*)D;
   assert(AID == TD.AID && "Target data annotation ID mismatch!");
   const Type *Ty = ((const Value *)T)->castTypeAsserting();
