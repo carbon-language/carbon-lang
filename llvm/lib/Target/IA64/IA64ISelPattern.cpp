@@ -80,6 +80,9 @@ namespace {
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
 
+      // We don't support these yet.
+      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
+      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
       
       computeRegisterProperties();
 

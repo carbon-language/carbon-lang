@@ -53,6 +53,10 @@ namespace {
       // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
+
+      // We don't support these yet.
+      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
+      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
       
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); // 

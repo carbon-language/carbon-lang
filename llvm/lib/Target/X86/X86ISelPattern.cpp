@@ -63,6 +63,10 @@ namespace {
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
+
+      // We don't support these yet.
+      setOperationAction(ISD::FNEG             , MVT::f64  , Expand);
+      setOperationAction(ISD::FABS             , MVT::f64  , Expand);
       
       // These should be promoted to a larger select which is supported.
 /**/  setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
