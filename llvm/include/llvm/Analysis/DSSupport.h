@@ -20,7 +20,6 @@ class Type;
 
 class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
-class DSNodeIterator;          // Data structure graph traversal iterator
 
 namespace DS { // FIXME: After the paper, this should get cleaned up
   enum { PointerShift = 3,     // 64bit ptrs = 3, 32 bit ptrs = 2
@@ -98,20 +97,6 @@ public:
 };
 
 inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
-
-//===----------------------------------------------------------------------===//
-/// DSTypeRec - This structure is used to represent a single type that is held
-/// in a DSNode.
-///
-struct DSTypeRec {
-  const Type *Ty;                 // The type itself...
-  bool isArray;                   // Have we accessed an array of elements?
-  
-  DSTypeRec(const Type *T = 0, bool A = false)
-    : Ty(T), isArray(A) {}
-};
-
-
 
 //===----------------------------------------------------------------------===//
 /// DSCallSite - Representation of a call site via its call instruction,
