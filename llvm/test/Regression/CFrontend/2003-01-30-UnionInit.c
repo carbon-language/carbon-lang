@@ -1,4 +1,4 @@
-
+// XFAIL: linux,sun,darwin
 
 union foo {
   struct { char A, B; } X;

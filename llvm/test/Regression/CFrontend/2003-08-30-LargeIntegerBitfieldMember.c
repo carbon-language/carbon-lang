@@ -1,4 +1,3 @@
-
 struct foo {
   unsigned int I:1;
   unsigned char J[1][123];

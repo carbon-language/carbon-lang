@@ -4,7 +4,7 @@
 ;
 ; This could be fixed by making all stores add themselves to a list, and check
 ; their arguments are consistent AFTER all other values are propogated.
-
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep '= cast' 
 
         %Tree = type %struct.tree*

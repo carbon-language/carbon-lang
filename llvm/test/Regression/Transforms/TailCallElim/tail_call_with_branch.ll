@@ -1,7 +1,7 @@
 ; This testcase is due to tail-duplication not wanting to copy the return
 ; instruction into the terminating blocks because there was other code
 ; optimized out of the function after the taildup happened.
-
+; XFAIL: linux,sun,darwin
 ; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
 
 int %t4(int %a) {

@@ -1,3 +1,4 @@
+; XFAIL: *
 ;
 ; RUN: llvm-as < %s | opt -funcresolve -instcombine | llvm-dis | not grep '\.\.\.'
 

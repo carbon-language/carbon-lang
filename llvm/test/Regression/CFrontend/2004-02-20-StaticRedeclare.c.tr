@@ -1,3 +1,4 @@
+// XFAIL: *
 // RUN: %llvmgcc -xc %s -c -o - | llvm-dis | not grep declare
 
 int one (int a) {

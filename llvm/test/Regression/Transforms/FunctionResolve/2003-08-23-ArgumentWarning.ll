@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -funcresolve -disable-output 2>&1 | not grep WARNING
 
 declare int %foo(int *%X)

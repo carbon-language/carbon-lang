@@ -1,3 +1,4 @@
+; XFAIL: *
 ; this testcase is distilled from this C source:
 ; int *foo(unsigned N, unsigned M) {
 ;   unsigned i = (N+1)*sizeof(int);

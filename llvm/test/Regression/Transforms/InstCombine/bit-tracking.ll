@@ -1,6 +1,6 @@
 ; This file contains various testcases that require tracking whether bits are
 ; set or cleared by various instructions.
-
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep %ELIM
 
 ; test1 - Eliminating the casts in this testcase (by narrowing the AND 

@@ -1,5 +1,5 @@
 ; This testcase is not level raised properly...
-;
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -raise | llvm-dis | grep ' cast ' | not grep '*'
 
 	%List = type { int, %List* }

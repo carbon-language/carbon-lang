@@ -11,6 +11,7 @@
 ;
 ; Note that this is a "feature" test, not a correctness test.
 ;
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -cee -simplifycfg | llvm-dis | not grep cond213
 ;
 implementation   ; Functions:

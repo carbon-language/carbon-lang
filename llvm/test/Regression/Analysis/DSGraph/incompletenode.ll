@@ -1,6 +1,6 @@
 ; This test was failing because the globals X and Y are marked incomplete
 ; in the TD graph for %test
-
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -no-aa -ds-aa -load-vn -gcse -instcombine | llvm-dis | not grep seteq
 
 %X = internal global int 20

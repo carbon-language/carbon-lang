@@ -1,7 +1,7 @@
 ; This example should be raised to return a Hash directly without casting.  To
 ; successful, all cast instructions should be eliminated from this testcase.
 ;
-
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep cast 
 
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *

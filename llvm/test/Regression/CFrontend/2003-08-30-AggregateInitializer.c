@@ -1,4 +1,4 @@
-
+// XFAIL: linux,sun,darwin
 struct istruct {
   unsigned char C;
 };

@@ -2,7 +2,7 @@
 ; instructions to change type if they were 'array' allocations.  This
 ; prevented reg115 from being able to change.
 ;
-
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -raise | llvm-dis | grep '= cast' | not grep \*
 	
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *

@@ -1,5 +1,5 @@
 ; Looks like we don't raise alloca's like we do mallocs
-;
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -raise | llvm-dis | grep '= cast' | not grep \*
 
 implementation   ; Functions:

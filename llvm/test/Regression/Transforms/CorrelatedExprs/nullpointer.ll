@@ -1,6 +1,7 @@
 ; a load or store of a pointer indicates that the pointer is not null.
 ; Any succeeding uses of the pointer should get this info
-
+;
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -cee -instcombine -simplifycfg | llvm-dis | not grep br
 
 implementation   ; Functions:

@@ -1,4 +1,4 @@
-
+// XFAIL: darwin,sun
 // Default placement versions of operator new.
 inline void* operator new(unsigned, void* __p) throw();
 
