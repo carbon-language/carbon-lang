@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Path.h"
+#include <cassert>
 
 namespace llvm {
 using namespace sys;
