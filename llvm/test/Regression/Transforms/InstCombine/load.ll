@@ -6,10 +6,7 @@
 %X = constant int 42
 %Y = constant [2 x { int, float }] [ { int, float } { int 12, float 1.0 }, 
                                      { int, float } { int 37, float 1.2312 } ]
-int %test1() {
-	%B = load int* %X
-	ret int %B
-}
+%Z = constant [2 x { int, float }] zeroinitializer
 
 float %test2() {
 	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 1, ubyte 1
@@ -17,10 +14,15 @@ float %test2() {
 	ret float %B
 }
 
+
 int %test3() {
 	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 0, ubyte 0
 	%B = load int* %A
 	ret int %B
 }
 
-
+int %test4() {
+	%A = getelementptr [2 x { int, float}]* %Z, long 0, long 1, ubyte 0
+	%B = load int* %A
+	ret int %B
+}
