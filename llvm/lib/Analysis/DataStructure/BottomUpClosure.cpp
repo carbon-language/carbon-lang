@@ -354,11 +354,11 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       continue;
     } else {
       DSGraph *GI;
+      Instruction *TheCall = CS.getCallSite().getInstruction();
 
       if (CalledFuncs.size() == 1) {
         Function *Callee = CalledFuncs[0];
-        ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
-                                            Callee));
+        ActualCallees.insert(std::make_pair(TheCall, Callee));
 
         // Get the data structure graph for the called function.
         GI = &getDSGraph(*Callee);  // Graph to inline
@@ -378,12 +378,16 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         std::cerr << "  calls " << CalledFuncs.size()
                   << " fns from site: " << CS.getCallSite().getInstruction() 
                   << "  " << *CS.getCallSite().getInstruction();
-        unsigned NumToPrint = CalledFuncs.size();
-        if (NumToPrint > 8) NumToPrint = 8;
         std::cerr << "   Fns =";
+        unsigned NumPrinted = 0;
+
         for (std::vector<Function*>::iterator I = CalledFuncs.begin(),
-               E = CalledFuncs.end(); I != E && NumToPrint; ++I, --NumToPrint)
-          std::cerr << " " << (*I)->getName();
+               E = CalledFuncs.end(); I != E; ++I) {
+          if (NumPrinted++ < 8) std::cerr << " " << (*I)->getName();
+
+          // Add the call edges to the call graph.
+          ActualCallees.insert(std::make_pair(TheCall, *I));
+        }
         std::cerr << "\n";
 
         // See if we already computed a graph for this set of callees.
