@@ -292,6 +292,11 @@ extern const PassInfo *LowerInvokePassID;
 /// pass, which lowers garbage collection intrinsics to normal LLVM code.
 ///
 FunctionPass *createLowerGCPass();
+
+//===----------------------------------------------------------------------===//
+// Returns a pass which converts all instances of ConstantExpression
+// into regular LLVM instructions.
+FunctionPass* createLowerConstantExpressionsPass();
   
 
 //===----------------------------------------------------------------------===//
