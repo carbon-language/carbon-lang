@@ -1130,6 +1130,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   Value *Op0NotVal = dyn_castNotVal(Op0);
   Value *Op1NotVal = dyn_castNotVal(Op1);
 
+  if (Op0NotVal == Op1 || Op1NotVal == Op0)  // A & ~A  == ~A & A == 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
   // (~A & ~B) == (~(A | B)) - Demorgan's Law
   if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
     Instruction *Or = BinaryOperator::createOr(Op0NotVal, Op1NotVal,
@@ -1137,9 +1140,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     InsertNewInstBefore(Or, I);
     return BinaryOperator::createNot(Or);
   }
-
-  if (Op0NotVal == Op1 || Op1NotVal == Op0)  // A & ~A  == ~A & A == 0
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
   if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
@@ -1271,6 +1271,18 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                               ConstantInt::get(I.getType(), 1));
           return BinaryOperator::createAdd(Op0I->getOperand(1), ConstantRHS);
         }
+
+      // ~(~X & Y) --> (X | ~Y)
+      if (Op0I->getOpcode() == Instruction::And && RHS->isAllOnesValue()) {
+        if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
+        if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
+          Instruction *NotY =
+            BinaryOperator::createNot(Op0I->getOperand(1), 
+                                      Op0I->getOperand(1)->getName()+".not");
+          InsertNewInstBefore(NotY, I);
+          return BinaryOperator::createOr(Op0NotVal, NotY);
+        }
+      }
           
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
         switch (Op0I->getOpcode()) {
