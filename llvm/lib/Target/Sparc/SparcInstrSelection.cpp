@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constants.h"
-#include "llvm/ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
@@ -56,7 +55,7 @@ static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
 
 
 // Check for a constant 0.
-inline bool
+static inline bool
 IsZero(Value* idx)
 {
   return (idx == ConstantSInt::getNullValue(idx->getType()));
@@ -896,9 +895,9 @@ CreateCheapestMulConstInstruction(const TargetMachine &target,
   Value* constOp;
   if (isa<Constant>(lval) && isa<Constant>(rval)) {
     // both operands are constant: evaluate and "set" in dest
-    Constant* P = ConstantFoldBinaryInstruction(Instruction::Mul,
-                                                cast<Constant>(lval),
-                                                cast<Constant>(rval));
+    Constant* P = ConstantExpr::get(Instruction::Mul,
+                                    cast<Constant>(lval),
+                                    cast<Constant>(rval));
     target.getInstrInfo().CreateCodeToLoadConst(target,F,P,destVal,mvec,mcfi);
   }
   else if (isa<Constant>(rval))         // rval is constant, but not lval
