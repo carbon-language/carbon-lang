@@ -101,7 +101,7 @@ bool DecomposeArrayRef(GetElementPtrInst* GEP);
 // examining the SSA value graph of the function, instead of doing slow
 // bit-vector computations.
 //
-Pass *createGCSEPass();
+FunctionPass *createGCSEPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -132,7 +132,7 @@ Pass *createInstructionCombiningPass();
 // LICM - This pass is a simple natural loop based loop invariant code motion
 // pass.
 //
-Pass *createLICMPass();
+FunctionPass *createLICMPass();
 
 
 //===----------------------------------------------------------------------===//
@@ -179,7 +179,7 @@ Pass *createPromoteMemoryToRegister();
 //
 // For example:  4 + (x + 5)  ->  x + (4 + 5)
 //
-Pass *createReassociatePass();
+FunctionPass *createReassociatePass();
 
 //===----------------------------------------------------------------------===//
 //
