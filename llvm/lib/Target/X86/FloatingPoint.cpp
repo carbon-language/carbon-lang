@@ -321,13 +321,13 @@ static const TableEntry PopTable[] = {
   { X86::FDIVRrST0, X86::FDIVRPrST0 },
   { X86::FDIVrST0 , X86::FDIVPrST0  },
 
-  { X86::FISTm16  , X86::FISTPm16   },
-  { X86::FISTm32  , X86::FISTPm32   },
+  { X86::FIST16m  , X86::FISTP16m   },
+  { X86::FIST32m  , X86::FISTP32m   },
 
   { X86::FMULrST0 , X86::FMULPrST0  },
 
-  { X86::FSTm32   , X86::FSTPm32    },
-  { X86::FSTm64   , X86::FSTPm64    },
+  { X86::FST32m   , X86::FSTP32m    },
+  { X86::FST64m   , X86::FSTP64m    },
   { X86::FSTrr    , X86::FSTPrr     },
 
   { X86::FSUBRrST0, X86::FSUBRPrST0 },
@@ -398,20 +398,20 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 	 E = LV->killed_end(MI); KI != E; ++KI)
     KillsSrc |= KI->second == X86::FP0+Reg;
 
-  // FSTPr80 and FISTPr64 are strange because there are no non-popping versions.
+  // FSTP80r and FISTP64r are strange because there are no non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
   // on the stack instead of moving it.  This ensure that popping the value is
   // always ok.
   //
-  if ((MI->getOpcode() == X86::FSTPm80 ||
-       MI->getOpcode() == X86::FISTPm64) && !KillsSrc) {
+  if ((MI->getOpcode() == X86::FSTP80m ||
+       MI->getOpcode() == X86::FISTP64m) && !KillsSrc) {
     duplicateToTop(Reg, 7 /*temp register*/, I);
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
   }
   MI->RemoveOperand(MI->getNumOperands()-1);    // Remove explicit ST(0) operand
   
-  if (MI->getOpcode() == X86::FSTPm80 || MI->getOpcode() == X86::FISTPm64) {
+  if (MI->getOpcode() == X86::FSTP80m || MI->getOpcode() == X86::FISTP64m) {
     assert(StackTop > 0 && "Stack empty??");
     --StackTop;
   } else if (KillsSrc) { // Last use of operand?

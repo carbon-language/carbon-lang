@@ -59,7 +59,7 @@ int X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          unsigned SrcReg, int FrameIdx,
                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
-    { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTPm80 };
+    { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FSTP80m };
   MachineInstr *I = addFrameReference(BuildMI(Opcode[getIdx(RC)], 5),
 				       FrameIdx).addReg(SrcReg);
   MBB.insert(MI, I);
@@ -71,7 +71,7 @@ int X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           unsigned DestReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const{
   static const unsigned Opcode[] =
-    { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDm80 };
+    { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD80m };
   unsigned OC = Opcode[getIdx(RC)];
   MBB.insert(MI, addFrameReference(BuildMI(OC, 4, DestReg), FrameIdx));
   return 1;
@@ -82,7 +82,7 @@ int X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                   unsigned DestReg, unsigned SrcReg,
                                   const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
-    { X86::MOVrr8, X86::MOVrr16, X86::MOVrr32, X86::FpMOV };
+    { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV };
   MBB.insert(MI, BuildMI(Opcode[getIdx(RC)],1,DestReg).addReg(SrcReg));
   return 1;
 }
@@ -142,90 +142,90 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
   MachineInstr* NI = 0;
   if (i == 0) {
     switch(MI->getOpcode()) {
-    case X86::XCHGrr8: NI = MakeMRInst(X86::XCHGmr8 ,FrameIndex, MI); break;
-    case X86::XCHGrr16:NI = MakeMRInst(X86::XCHGmr16,FrameIndex, MI); break;
-    case X86::XCHGrr32:NI = MakeMRInst(X86::XCHGmr32,FrameIndex, MI); break;
-    case X86::MOVrr8:  NI = MakeMRInst(X86::MOVmr8 , FrameIndex, MI); break;
-    case X86::MOVrr16: NI = MakeMRInst(X86::MOVmr16, FrameIndex, MI); break;
-    case X86::MOVrr32: NI = MakeMRInst(X86::MOVmr32, FrameIndex, MI); break;
-    case X86::MOVri8:  NI = MakeMIInst(X86::MOVmi8 , FrameIndex, MI); break;
-    case X86::MOVri16: NI = MakeMIInst(X86::MOVmi16, FrameIndex, MI); break;
-    case X86::MOVri32: NI = MakeMIInst(X86::MOVmi32, FrameIndex, MI); break;
-    case X86::MULr8:   NI = MakeMInst( X86::MULm8 ,  FrameIndex, MI); break;
-    case X86::MULr16:  NI = MakeMInst( X86::MULm16,  FrameIndex, MI); break;
-    case X86::MULr32:  NI = MakeMInst( X86::MULm32,  FrameIndex, MI); break;
-    case X86::DIVr8:   NI = MakeMInst( X86::DIVm8 ,  FrameIndex, MI); break;
-    case X86::DIVr16:  NI = MakeMInst( X86::DIVm16,  FrameIndex, MI); break;
-    case X86::DIVr32:  NI = MakeMInst( X86::DIVm32,  FrameIndex, MI); break;
-    case X86::IDIVr8:  NI = MakeMInst( X86::IDIVm8 , FrameIndex, MI); break;
-    case X86::IDIVr16: NI = MakeMInst( X86::IDIVm16, FrameIndex, MI); break;
-    case X86::IDIVr32: NI = MakeMInst( X86::IDIVm32, FrameIndex, MI); break;
-    case X86::NEGr8:   NI = MakeMInst( X86::NEGm8 ,  FrameIndex, MI); break;
-    case X86::NEGr16:  NI = MakeMInst( X86::NEGm16,  FrameIndex, MI); break;
-    case X86::NEGr32:  NI = MakeMInst( X86::NEGm32,  FrameIndex, MI); break;
-    case X86::NOTr8:   NI = MakeMInst( X86::NOTm8 ,  FrameIndex, MI); break;
-    case X86::NOTr16:  NI = MakeMInst( X86::NOTm16,  FrameIndex, MI); break;
-    case X86::NOTr32:  NI = MakeMInst( X86::NOTm32,  FrameIndex, MI); break;
-    case X86::INCr8:   NI = MakeMInst( X86::INCm8 ,  FrameIndex, MI); break;
-    case X86::INCr16:  NI = MakeMInst( X86::INCm16,  FrameIndex, MI); break;
-    case X86::INCr32:  NI = MakeMInst( X86::INCm32,  FrameIndex, MI); break;
-    case X86::DECr8:   NI = MakeMInst( X86::DECm8 ,  FrameIndex, MI); break;
-    case X86::DECr16:  NI = MakeMInst( X86::DECm16,  FrameIndex, MI); break;
-    case X86::DECr32:  NI = MakeMInst( X86::DECm32,  FrameIndex, MI); break;
-    case X86::ADDrr8:  NI = MakeMRInst(X86::ADDmr8 , FrameIndex, MI); break;
-    case X86::ADDrr16: NI = MakeMRInst(X86::ADDmr16, FrameIndex, MI); break;
-    case X86::ADDrr32: NI = MakeMRInst(X86::ADDmr32, FrameIndex, MI); break;
-    case X86::ADCrr32: NI = MakeMRInst(X86::ADCmr32, FrameIndex, MI); break;
-    case X86::ADDri8:  NI = MakeMIInst(X86::ADDmi8 , FrameIndex, MI); break;
-    case X86::ADDri16: NI = MakeMIInst(X86::ADDmi16, FrameIndex, MI); break;
-    case X86::ADDri32: NI = MakeMIInst(X86::ADDmi32, FrameIndex, MI); break;
-    case X86::SUBrr8:  NI = MakeMRInst(X86::SUBmr8 , FrameIndex, MI); break;
-    case X86::SUBrr16: NI = MakeMRInst(X86::SUBmr16, FrameIndex, MI); break;
-    case X86::SUBrr32: NI = MakeMRInst(X86::SUBmr32, FrameIndex, MI); break;
-    case X86::SBBrr32: NI = MakeMRInst(X86::SBBmr32, FrameIndex, MI); break;
-    case X86::SUBri8:  NI = MakeMIInst(X86::SUBmi8 , FrameIndex, MI); break;
-    case X86::SUBri16: NI = MakeMIInst(X86::SUBmi16, FrameIndex, MI); break;
-    case X86::SUBri32: NI = MakeMIInst(X86::SUBmi32, FrameIndex, MI); break;
-    case X86::ANDrr8:  NI = MakeMRInst(X86::ANDmr8 , FrameIndex, MI); break;
-    case X86::ANDrr16: NI = MakeMRInst(X86::ANDmr16, FrameIndex, MI); break;
-    case X86::ANDrr32: NI = MakeMRInst(X86::ANDmr32, FrameIndex, MI); break;
-    case X86::ANDri8:  NI = MakeMIInst(X86::ANDmi8 , FrameIndex, MI); break;
-    case X86::ANDri16: NI = MakeMIInst(X86::ANDmi16, FrameIndex, MI); break;
-    case X86::ANDri32: NI = MakeMIInst(X86::ANDmi32, FrameIndex, MI); break;
-    case X86::ORrr8:   NI = MakeMRInst(X86::ORmr8 ,  FrameIndex, MI); break;
-    case X86::ORrr16:  NI = MakeMRInst(X86::ORmr16,  FrameIndex, MI); break;
-    case X86::ORrr32:  NI = MakeMRInst(X86::ORmr32,  FrameIndex, MI); break;
-    case X86::ORri8:   NI = MakeMIInst(X86::ORmi8 ,  FrameIndex, MI); break;
-    case X86::ORri16:  NI = MakeMIInst(X86::ORmi16,  FrameIndex, MI); break;
-    case X86::ORri32:  NI = MakeMIInst(X86::ORmi32,  FrameIndex, MI); break;
-    case X86::XORrr8:  NI = MakeMRInst(X86::XORmr8 , FrameIndex, MI); break;
-    case X86::XORrr16: NI = MakeMRInst(X86::XORmr16, FrameIndex, MI); break;
-    case X86::XORrr32: NI = MakeMRInst(X86::XORmr32, FrameIndex, MI); break;
-    case X86::XORri8:  NI = MakeMIInst(X86::XORmi8 , FrameIndex, MI); break;
-    case X86::XORri16: NI = MakeMIInst(X86::XORmi16, FrameIndex, MI); break;
-    case X86::XORri32: NI = MakeMIInst(X86::XORmi32, FrameIndex, MI); break;
-    case X86::SHLrCL8: NI = MakeMInst( X86::SHLmCL8 ,FrameIndex, MI); break;
-    case X86::SHLrCL16:NI = MakeMInst( X86::SHLmCL16,FrameIndex, MI); break;
-    case X86::SHLrCL32:NI = MakeMInst( X86::SHLmCL32,FrameIndex, MI); break;
-    case X86::SHLri8:  NI = MakeMIInst(X86::SHLmi8 , FrameIndex, MI); break;
-    case X86::SHLri16: NI = MakeMIInst(X86::SHLmi16, FrameIndex, MI); break;
-    case X86::SHLri32: NI = MakeMIInst(X86::SHLmi32, FrameIndex, MI); break;
-    case X86::SHRrCL8: NI = MakeMInst( X86::SHRmCL8 ,FrameIndex, MI); break;
-    case X86::SHRrCL16:NI = MakeMInst( X86::SHRmCL16,FrameIndex, MI); break;
-    case X86::SHRrCL32:NI = MakeMInst( X86::SHRmCL32,FrameIndex, MI); break;
-    case X86::SHRri8:  NI = MakeMIInst(X86::SHRmi8 , FrameIndex, MI); break;
-    case X86::SHRri16: NI = MakeMIInst(X86::SHRmi16, FrameIndex, MI); break;
-    case X86::SHRri32: NI = MakeMIInst(X86::SHRmi32, FrameIndex, MI); break;
-    case X86::SARrCL8: NI = MakeMInst( X86::SARmCL8 ,FrameIndex, MI); break;
-    case X86::SARrCL16:NI = MakeMInst( X86::SARmCL16,FrameIndex, MI); break;
-    case X86::SARrCL32:NI = MakeMInst( X86::SARmCL32,FrameIndex, MI); break;
-    case X86::SARri8:  NI = MakeMIInst(X86::SARmi8 , FrameIndex, MI); break;
-    case X86::SARri16: NI = MakeMIInst(X86::SARmi16, FrameIndex, MI); break;
-    case X86::SARri32: NI = MakeMIInst(X86::SARmi32, FrameIndex, MI); break;
-    case X86::SHLDrrCL32:NI = MakeMRInst( X86::SHLDmrCL32,FrameIndex, MI);break;
-    case X86::SHLDrr32i8:NI = MakeMRIInst(X86::SHLDmr32i8,FrameIndex, MI);break;
-    case X86::SHRDrrCL32:NI = MakeMRInst( X86::SHRDmrCL32,FrameIndex, MI);break;
-    case X86::SHRDrr32i8:NI = MakeMRIInst(X86::SHRDmr32i8,FrameIndex, MI);break;
+    case X86::XCHG8rr: NI = MakeMRInst(X86::XCHG8mr ,FrameIndex, MI); break;
+    case X86::XCHG16rr:NI = MakeMRInst(X86::XCHG16mr,FrameIndex, MI); break;
+    case X86::XCHG32rr:NI = MakeMRInst(X86::XCHG32mr,FrameIndex, MI); break;
+    case X86::MOV8rr:  NI = MakeMRInst(X86::MOV8mr , FrameIndex, MI); break;
+    case X86::MOV16rr: NI = MakeMRInst(X86::MOV16mr, FrameIndex, MI); break;
+    case X86::MOV32rr: NI = MakeMRInst(X86::MOV32mr, FrameIndex, MI); break;
+    case X86::MOV8ri:  NI = MakeMIInst(X86::MOV8mi , FrameIndex, MI); break;
+    case X86::MOV16ri: NI = MakeMIInst(X86::MOV16mi, FrameIndex, MI); break;
+    case X86::MOV32ri: NI = MakeMIInst(X86::MOV32mi, FrameIndex, MI); break;
+    case X86::MUL8r:   NI = MakeMInst( X86::MUL8m ,  FrameIndex, MI); break;
+    case X86::MUL16r:  NI = MakeMInst( X86::MUL16m,  FrameIndex, MI); break;
+    case X86::MUL32r:  NI = MakeMInst( X86::MUL32m,  FrameIndex, MI); break;
+    case X86::DIV8r:   NI = MakeMInst( X86::DIV8m ,  FrameIndex, MI); break;
+    case X86::DIV16r:  NI = MakeMInst( X86::DIV16m,  FrameIndex, MI); break;
+    case X86::DIV32r:  NI = MakeMInst( X86::DIV32m,  FrameIndex, MI); break;
+    case X86::IDIV8r:  NI = MakeMInst( X86::IDIV8m , FrameIndex, MI); break;
+    case X86::IDIV16r: NI = MakeMInst( X86::IDIV16m, FrameIndex, MI); break;
+    case X86::IDIV32r: NI = MakeMInst( X86::IDIV32m, FrameIndex, MI); break;
+    case X86::NEG8r:   NI = MakeMInst( X86::NEG8m ,  FrameIndex, MI); break;
+    case X86::NEG16r:  NI = MakeMInst( X86::NEG16m,  FrameIndex, MI); break;
+    case X86::NEG32r:  NI = MakeMInst( X86::NEG32m,  FrameIndex, MI); break;
+    case X86::NOT8r:   NI = MakeMInst( X86::NOT8m ,  FrameIndex, MI); break;
+    case X86::NOT16r:  NI = MakeMInst( X86::NOT16m,  FrameIndex, MI); break;
+    case X86::NOT32r:  NI = MakeMInst( X86::NOT32m,  FrameIndex, MI); break;
+    case X86::INC8r:   NI = MakeMInst( X86::INC8m ,  FrameIndex, MI); break;
+    case X86::INC16r:  NI = MakeMInst( X86::INC16m,  FrameIndex, MI); break;
+    case X86::INC32r:  NI = MakeMInst( X86::INC32m,  FrameIndex, MI); break;
+    case X86::DEC8r:   NI = MakeMInst( X86::DEC8m ,  FrameIndex, MI); break;
+    case X86::DEC16r:  NI = MakeMInst( X86::DEC16m,  FrameIndex, MI); break;
+    case X86::DEC32r:  NI = MakeMInst( X86::DEC32m,  FrameIndex, MI); break;
+    case X86::ADD8rr:  NI = MakeMRInst(X86::ADD8mr , FrameIndex, MI); break;
+    case X86::ADD16rr: NI = MakeMRInst(X86::ADD16mr, FrameIndex, MI); break;
+    case X86::ADD32rr: NI = MakeMRInst(X86::ADD32mr, FrameIndex, MI); break;
+    case X86::ADC32rr: NI = MakeMRInst(X86::ADC32mr, FrameIndex, MI); break;
+    case X86::ADD8ri:  NI = MakeMIInst(X86::ADD8mi , FrameIndex, MI); break;
+    case X86::ADD16ri: NI = MakeMIInst(X86::ADD16mi, FrameIndex, MI); break;
+    case X86::ADD32ri: NI = MakeMIInst(X86::ADD32mi, FrameIndex, MI); break;
+    case X86::SUB8rr:  NI = MakeMRInst(X86::SUB8mr , FrameIndex, MI); break;
+    case X86::SUB16rr: NI = MakeMRInst(X86::SUB16mr, FrameIndex, MI); break;
+    case X86::SUB32rr: NI = MakeMRInst(X86::SUB32mr, FrameIndex, MI); break;
+    case X86::SBB32rr: NI = MakeMRInst(X86::SBB32mr, FrameIndex, MI); break;
+    case X86::SUB8ri:  NI = MakeMIInst(X86::SUB8mi , FrameIndex, MI); break;
+    case X86::SUB16ri: NI = MakeMIInst(X86::SUB16mi, FrameIndex, MI); break;
+    case X86::SUB32ri: NI = MakeMIInst(X86::SUB32mi, FrameIndex, MI); break;
+    case X86::AND8rr:  NI = MakeMRInst(X86::AND8mr , FrameIndex, MI); break;
+    case X86::AND16rr: NI = MakeMRInst(X86::AND16mr, FrameIndex, MI); break;
+    case X86::AND32rr: NI = MakeMRInst(X86::AND32mr, FrameIndex, MI); break;
+    case X86::AND8ri:  NI = MakeMIInst(X86::AND8mi , FrameIndex, MI); break;
+    case X86::AND16ri: NI = MakeMIInst(X86::AND16mi, FrameIndex, MI); break;
+    case X86::AND32ri: NI = MakeMIInst(X86::AND32mi, FrameIndex, MI); break;
+    case X86::OR8rr:   NI = MakeMRInst(X86::OR8mr ,  FrameIndex, MI); break;
+    case X86::OR16rr:  NI = MakeMRInst(X86::OR16mr,  FrameIndex, MI); break;
+    case X86::OR32rr:  NI = MakeMRInst(X86::OR32mr,  FrameIndex, MI); break;
+    case X86::OR8ri:   NI = MakeMIInst(X86::OR8mi ,  FrameIndex, MI); break;
+    case X86::OR16ri:  NI = MakeMIInst(X86::OR16mi,  FrameIndex, MI); break;
+    case X86::OR32ri:  NI = MakeMIInst(X86::OR32mi,  FrameIndex, MI); break;
+    case X86::XOR8rr:  NI = MakeMRInst(X86::XOR8mr , FrameIndex, MI); break;
+    case X86::XOR16rr: NI = MakeMRInst(X86::XOR16mr, FrameIndex, MI); break;
+    case X86::XOR32rr: NI = MakeMRInst(X86::XOR32mr, FrameIndex, MI); break;
+    case X86::XOR8ri:  NI = MakeMIInst(X86::XOR8mi , FrameIndex, MI); break;
+    case X86::XOR16ri: NI = MakeMIInst(X86::XOR16mi, FrameIndex, MI); break;
+    case X86::XOR32ri: NI = MakeMIInst(X86::XOR32mi, FrameIndex, MI); break;
+    case X86::SHL8rCL: NI = MakeMInst( X86::SHL8mCL ,FrameIndex, MI); break;
+    case X86::SHL16rCL:NI = MakeMInst( X86::SHL16mCL,FrameIndex, MI); break;
+    case X86::SHL32rCL:NI = MakeMInst( X86::SHL32mCL,FrameIndex, MI); break;
+    case X86::SHL8ri:  NI = MakeMIInst(X86::SHL8mi , FrameIndex, MI); break;
+    case X86::SHL16ri: NI = MakeMIInst(X86::SHL16mi, FrameIndex, MI); break;
+    case X86::SHL32ri: NI = MakeMIInst(X86::SHL32mi, FrameIndex, MI); break;
+    case X86::SHR8rCL: NI = MakeMInst( X86::SHR8mCL ,FrameIndex, MI); break;
+    case X86::SHR16rCL:NI = MakeMInst( X86::SHR16mCL,FrameIndex, MI); break;
+    case X86::SHR32rCL:NI = MakeMInst( X86::SHR32mCL,FrameIndex, MI); break;
+    case X86::SHR8ri:  NI = MakeMIInst(X86::SHR8mi , FrameIndex, MI); break;
+    case X86::SHR16ri: NI = MakeMIInst(X86::SHR16mi, FrameIndex, MI); break;
+    case X86::SHR32ri: NI = MakeMIInst(X86::SHR32mi, FrameIndex, MI); break;
+    case X86::SAR8rCL: NI = MakeMInst( X86::SAR8mCL ,FrameIndex, MI); break;
+    case X86::SAR16rCL:NI = MakeMInst( X86::SAR16mCL,FrameIndex, MI); break;
+    case X86::SAR32rCL:NI = MakeMInst( X86::SAR32mCL,FrameIndex, MI); break;
+    case X86::SAR8ri:  NI = MakeMIInst(X86::SAR8mi , FrameIndex, MI); break;
+    case X86::SAR16ri: NI = MakeMIInst(X86::SAR16mi, FrameIndex, MI); break;
+    case X86::SAR32ri: NI = MakeMIInst(X86::SAR32mi, FrameIndex, MI); break;
+    case X86::SHLD32rrCL:NI = MakeMRInst( X86::SHLD32mrCL,FrameIndex, MI);break;
+    case X86::SHLD32rri8:NI = MakeMRIInst(X86::SHLD32mri8,FrameIndex, MI);break;
+    case X86::SHRD32rrCL:NI = MakeMRInst( X86::SHRD32mrCL,FrameIndex, MI);break;
+    case X86::SHRD32rri8:NI = MakeMRIInst(X86::SHRD32mri8,FrameIndex, MI);break;
     case X86::SETBr:   NI = MakeMInst( X86::SETBm,   FrameIndex, MI); break;
     case X86::SETAEr:  NI = MakeMInst( X86::SETAEm,  FrameIndex, MI); break;
     case X86::SETEr:   NI = MakeMInst( X86::SETEm,   FrameIndex, MI); break;
@@ -238,61 +238,61 @@ bool X86RegisterInfo::foldMemoryOperand(MachineBasicBlock::iterator &MI,
     case X86::SETGEr:  NI = MakeMInst( X86::SETGEm,  FrameIndex, MI); break;
     case X86::SETLEr:  NI = MakeMInst( X86::SETLEm,  FrameIndex, MI); break;
     case X86::SETGr:   NI = MakeMInst( X86::SETGm,   FrameIndex, MI); break;
-    case X86::TESTrr8: NI = MakeMRInst(X86::TESTmr8 ,FrameIndex, MI); break;
-    case X86::TESTrr16:NI = MakeMRInst(X86::TESTmr16,FrameIndex, MI); break;
-    case X86::TESTrr32:NI = MakeMRInst(X86::TESTmr32,FrameIndex, MI); break;
-    case X86::TESTri8: NI = MakeMIInst(X86::TESTmi8 ,FrameIndex, MI); break;
-    case X86::TESTri16:NI = MakeMIInst(X86::TESTmi16,FrameIndex, MI); break;
-    case X86::TESTri32:NI = MakeMIInst(X86::TESTmi32,FrameIndex, MI); break;
-    case X86::CMPrr8:  NI = MakeMRInst(X86::CMPmr8 , FrameIndex, MI); break;
-    case X86::CMPrr16: NI = MakeMRInst(X86::CMPmr16, FrameIndex, MI); break;
-    case X86::CMPrr32: NI = MakeMRInst(X86::CMPmr32, FrameIndex, MI); break;
-    case X86::CMPri8:  NI = MakeMIInst(X86::CMPmi8 , FrameIndex, MI); break;
-    case X86::CMPri16: NI = MakeMIInst(X86::CMPmi16, FrameIndex, MI); break;
-    case X86::CMPri32: NI = MakeMIInst(X86::CMPmi32, FrameIndex, MI); break;
+    case X86::TEST8rr: NI = MakeMRInst(X86::TEST8mr ,FrameIndex, MI); break;
+    case X86::TEST16rr:NI = MakeMRInst(X86::TEST16mr,FrameIndex, MI); break;
+    case X86::TEST32rr:NI = MakeMRInst(X86::TEST32mr,FrameIndex, MI); break;
+    case X86::TEST8ri: NI = MakeMIInst(X86::TEST8mi ,FrameIndex, MI); break;
+    case X86::TEST16ri:NI = MakeMIInst(X86::TEST16mi,FrameIndex, MI); break;
+    case X86::TEST32ri:NI = MakeMIInst(X86::TEST32mi,FrameIndex, MI); break;
+    case X86::CMP8rr:  NI = MakeMRInst(X86::CMP8mr , FrameIndex, MI); break;
+    case X86::CMP16rr: NI = MakeMRInst(X86::CMP16mr, FrameIndex, MI); break;
+    case X86::CMP32rr: NI = MakeMRInst(X86::CMP32mr, FrameIndex, MI); break;
+    case X86::CMP8ri:  NI = MakeMIInst(X86::CMP8mi , FrameIndex, MI); break;
+    case X86::CMP16ri: NI = MakeMIInst(X86::CMP16mi, FrameIndex, MI); break;
+    case X86::CMP32ri: NI = MakeMIInst(X86::CMP32mi, FrameIndex, MI); break;
     default: break; // Cannot fold
     }
   } else if (i == 1) {
     switch(MI->getOpcode()) {
-    case X86::XCHGrr8: NI = MakeRMInst(X86::XCHGrm8 ,FrameIndex, MI); break;
-    case X86::XCHGrr16:NI = MakeRMInst(X86::XCHGrm16,FrameIndex, MI); break;
-    case X86::XCHGrr32:NI = MakeRMInst(X86::XCHGrm32,FrameIndex, MI); break;
-    case X86::MOVrr8:  NI = MakeRMInst(X86::MOVrm8 , FrameIndex, MI); break;
-    case X86::MOVrr16: NI = MakeRMInst(X86::MOVrm16, FrameIndex, MI); break;
-    case X86::MOVrr32: NI = MakeRMInst(X86::MOVrm32, FrameIndex, MI); break;
-    case X86::ADDrr8:  NI = MakeRMInst(X86::ADDrm8 , FrameIndex, MI); break;
-    case X86::ADDrr16: NI = MakeRMInst(X86::ADDrm16, FrameIndex, MI); break;
-    case X86::ADDrr32: NI = MakeRMInst(X86::ADDrm32, FrameIndex, MI); break;
-    case X86::ADCrr32: NI = MakeRMInst(X86::ADCrm32, FrameIndex, MI); break;
-    case X86::SUBrr8:  NI = MakeRMInst(X86::SUBrm8 , FrameIndex, MI); break;
-    case X86::SUBrr16: NI = MakeRMInst(X86::SUBrm16, FrameIndex, MI); break;
-    case X86::SUBrr32: NI = MakeRMInst(X86::SUBrm32, FrameIndex, MI); break;
-    case X86::SBBrr32: NI = MakeRMInst(X86::SBBrm32, FrameIndex, MI); break;
-    case X86::ANDrr8:  NI = MakeRMInst(X86::ANDrm8 , FrameIndex, MI); break;
-    case X86::ANDrr16: NI = MakeRMInst(X86::ANDrm16, FrameIndex, MI); break;
-    case X86::ANDrr32: NI = MakeRMInst(X86::ANDrm32, FrameIndex, MI); break;
-    case X86::ORrr8:   NI = MakeRMInst(X86::ORrm8 ,  FrameIndex, MI); break;
-    case X86::ORrr16:  NI = MakeRMInst(X86::ORrm16,  FrameIndex, MI); break;
-    case X86::ORrr32:  NI = MakeRMInst(X86::ORrm32,  FrameIndex, MI); break;
-    case X86::XORrr8:  NI = MakeRMInst(X86::XORrm8 , FrameIndex, MI); break;
-    case X86::XORrr16: NI = MakeRMInst(X86::XORrm16, FrameIndex, MI); break;
-    case X86::XORrr32: NI = MakeRMInst(X86::XORrm32, FrameIndex, MI); break;
-    case X86::TESTrr8: NI = MakeRMInst(X86::TESTrm8 ,FrameIndex, MI); break;
-    case X86::TESTrr16:NI = MakeRMInst(X86::TESTrm16,FrameIndex, MI); break;
-    case X86::TESTrr32:NI = MakeRMInst(X86::TESTrm32,FrameIndex, MI); break;
-    case X86::IMULrr16:NI = MakeRMInst(X86::IMULrm16,FrameIndex, MI); break;
-    case X86::IMULrr32:NI = MakeRMInst(X86::IMULrm32,FrameIndex, MI); break;
-    case X86::IMULrri16: NI = MakeRMIInst(X86::IMULrmi16, FrameIndex, MI);break;
-    case X86::IMULrri32: NI = MakeRMIInst(X86::IMULrmi32, FrameIndex, MI);break;
-    case X86::CMPrr8:  NI = MakeRMInst(X86::CMPrm8 , FrameIndex, MI); break;
-    case X86::CMPrr16: NI = MakeRMInst(X86::CMPrm16, FrameIndex, MI); break;
-    case X86::CMPrr32: NI = MakeRMInst(X86::CMPrm32, FrameIndex, MI); break;
-    case X86::MOVSXr16r8: NI = MakeRMInst(X86::MOVSXr16m8 , FrameIndex, MI); break;
-    case X86::MOVSXr32r8: NI = MakeRMInst(X86::MOVSXr32m8, FrameIndex, MI); break;
-    case X86::MOVSXr32r16:NI = MakeRMInst(X86::MOVSXr32m16, FrameIndex, MI); break;
-    case X86::MOVZXr16r8: NI = MakeRMInst(X86::MOVZXr16m8 , FrameIndex, MI); break;
-    case X86::MOVZXr32r8: NI = MakeRMInst(X86::MOVZXr32m8, FrameIndex, MI); break;
-    case X86::MOVZXr32r16:NI = MakeRMInst(X86::MOVZXr32m16, FrameIndex, MI); break;
+    case X86::XCHG8rr: NI = MakeRMInst(X86::XCHG8rm ,FrameIndex, MI); break;
+    case X86::XCHG16rr:NI = MakeRMInst(X86::XCHG16rm,FrameIndex, MI); break;
+    case X86::XCHG32rr:NI = MakeRMInst(X86::XCHG32rm,FrameIndex, MI); break;
+    case X86::MOV8rr:  NI = MakeRMInst(X86::MOV8rm , FrameIndex, MI); break;
+    case X86::MOV16rr: NI = MakeRMInst(X86::MOV16rm, FrameIndex, MI); break;
+    case X86::MOV32rr: NI = MakeRMInst(X86::MOV32rm, FrameIndex, MI); break;
+    case X86::ADD8rr:  NI = MakeRMInst(X86::ADD8rm , FrameIndex, MI); break;
+    case X86::ADD16rr: NI = MakeRMInst(X86::ADD16rm, FrameIndex, MI); break;
+    case X86::ADD32rr: NI = MakeRMInst(X86::ADD32rm, FrameIndex, MI); break;
+    case X86::ADC32rr: NI = MakeRMInst(X86::ADC32rm, FrameIndex, MI); break;
+    case X86::SUB8rr:  NI = MakeRMInst(X86::SUB8rm , FrameIndex, MI); break;
+    case X86::SUB16rr: NI = MakeRMInst(X86::SUB16rm, FrameIndex, MI); break;
+    case X86::SUB32rr: NI = MakeRMInst(X86::SUB32rm, FrameIndex, MI); break;
+    case X86::SBB32rr: NI = MakeRMInst(X86::SBB32rm, FrameIndex, MI); break;
+    case X86::AND8rr:  NI = MakeRMInst(X86::AND8rm , FrameIndex, MI); break;
+    case X86::AND16rr: NI = MakeRMInst(X86::AND16rm, FrameIndex, MI); break;
+    case X86::AND32rr: NI = MakeRMInst(X86::AND32rm, FrameIndex, MI); break;
+    case X86::OR8rr:   NI = MakeRMInst(X86::OR8rm ,  FrameIndex, MI); break;
+    case X86::OR16rr:  NI = MakeRMInst(X86::OR16rm,  FrameIndex, MI); break;
+    case X86::OR32rr:  NI = MakeRMInst(X86::OR32rm,  FrameIndex, MI); break;
+    case X86::XOR8rr:  NI = MakeRMInst(X86::XOR8rm , FrameIndex, MI); break;
+    case X86::XOR16rr: NI = MakeRMInst(X86::XOR16rm, FrameIndex, MI); break;
+    case X86::XOR32rr: NI = MakeRMInst(X86::XOR32rm, FrameIndex, MI); break;
+    case X86::TEST8rr: NI = MakeRMInst(X86::TEST8rm ,FrameIndex, MI); break;
+    case X86::TEST16rr:NI = MakeRMInst(X86::TEST16rm,FrameIndex, MI); break;
+    case X86::TEST32rr:NI = MakeRMInst(X86::TEST32rm,FrameIndex, MI); break;
+    case X86::IMUL16rr:NI = MakeRMInst(X86::IMUL16rm,FrameIndex, MI); break;
+    case X86::IMUL32rr:NI = MakeRMInst(X86::IMUL32rm,FrameIndex, MI); break;
+    case X86::IMUL16rri: NI = MakeRMIInst(X86::IMUL16rmi, FrameIndex, MI);break;
+    case X86::IMUL32rri: NI = MakeRMIInst(X86::IMUL32rmi, FrameIndex, MI);break;
+    case X86::CMP8rr:  NI = MakeRMInst(X86::CMP8rm , FrameIndex, MI); break;
+    case X86::CMP16rr: NI = MakeRMInst(X86::CMP16rm, FrameIndex, MI); break;
+    case X86::CMP32rr: NI = MakeRMInst(X86::CMP32rm, FrameIndex, MI); break;
+    case X86::MOVSX16rr8: NI = MakeRMInst(X86::MOVSX16rm8 , FrameIndex, MI); break;
+    case X86::MOVSX32rr8: NI = MakeRMInst(X86::MOVSX32rm8, FrameIndex, MI); break;
+    case X86::MOVSX32rr16:NI = MakeRMInst(X86::MOVSX32rm16, FrameIndex, MI); break;
+    case X86::MOVZX16rr8: NI = MakeRMInst(X86::MOVZX16rm8 , FrameIndex, MI); break;
+    case X86::MOVZX32rr8: NI = MakeRMInst(X86::MOVZX32rm8, FrameIndex, MI); break;
+    case X86::MOVZX32rr16:NI = MakeRMInst(X86::MOVZX32rm16, FrameIndex, MI); break;
     default: break;
     }
   }
@@ -336,11 +336,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-	New=BuildMI(X86::SUBri32, 1, X86::ESP, MachineOperand::UseAndDef)
+	New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
               .addZImm(Amount);
       } else {
 	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
-	New=BuildMI(X86::ADDri32, 1, X86::ESP, MachineOperand::UseAndDef)
+	New=BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
               .addZImm(Amount);
       }
 
@@ -403,21 +403,21 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+4;
 
     if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MachineOperand::UseAndDef)
+      MI= BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
             .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
 
     // Save EBP into the appropriate stack slot...
-    MI = addRegOffset(BuildMI(X86::MOVmr32, 5),    // mov [ESP-<offset>], EBP
+    MI = addRegOffset(BuildMI(X86::MOV32mr, 5),    // mov [ESP-<offset>], EBP
 		      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
     MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...
     if (NumBytes == 4)    // mov EBP, ESP
-      MI = BuildMI(X86::MOVrr32, 2, X86::EBP).addReg(X86::ESP);
+      MI = BuildMI(X86::MOV32rr, 2, X86::EBP).addReg(X86::ESP);
     else                  // lea EBP, [ESP+StackSize]
-      MI = addRegOffset(BuildMI(X86::LEAr32, 5, X86::EBP), X86::ESP,NumBytes-4);
+      MI = addRegOffset(BuildMI(X86::LEA32r, 5, X86::EBP), X86::ESP,NumBytes-4);
 
     MBB.insert(MBBI, MI);
 
@@ -440,7 +440,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes) {
       // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUBri32, 1, X86::ESP, MachineOperand::UseAndDef)
+      MI= BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
             .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
@@ -461,18 +461,18 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
     
     // mov ESP, EBP
-    MI = BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP);
+    MI = BuildMI(X86::MOV32rr, 1,X86::ESP).addReg(X86::EBP);
     MBB.insert(MBBI, MI);
 
     // pop EBP
-    MI = BuildMI(X86::POPr32, 0, X86::EBP);
+    MI = BuildMI(X86::POP32r, 0, X86::EBP);
     MBB.insert(MBBI, MI);
   } else {
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-      MI =BuildMI(X86::ADDri32, 1, X86::ESP, MachineOperand::UseAndDef)
+      MI =BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
             .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }

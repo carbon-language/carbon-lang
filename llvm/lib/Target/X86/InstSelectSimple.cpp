@@ -310,7 +310,7 @@ namespace {
         RegMap.erase(V);  // Assign a new name to this constant if ref'd again
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         // Move the address of the global into the register
-        BuildMI(*MBB, IPt, X86::MOVri32, 1, Reg).addGlobalAddress(GV);
+        BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
         RegMap.erase(V);  // Assign a new name to this address if ref'd again
       }
 
@@ -427,19 +427,19 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     if (Class == cLong) {
       // Copy the value into the register pair.
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-      BuildMI(*MBB, IP, X86::MOVri32, 1, R).addImm(Val & 0xFFFFFFFF);
-      BuildMI(*MBB, IP, X86::MOVri32, 1, R+1).addImm(Val >> 32);
+      BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addImm(Val & 0xFFFFFFFF);
+      BuildMI(*MBB, IP, X86::MOV32ri, 1, R+1).addImm(Val >> 32);
       return;
     }
 
     assert(Class <= cInt && "Type not handled yet!");
 
     static const unsigned IntegralOpcodeTab[] = {
-      X86::MOVri8, X86::MOVri16, X86::MOVri32
+      X86::MOV8ri, X86::MOV16ri, X86::MOV32ri
     };
 
     if (C->getType() == Type::BoolTy) {
-      BuildMI(*MBB, IP, X86::MOVri8, 1, R).addImm(C == ConstantBool::True);
+      BuildMI(*MBB, IP, X86::MOV8ri, 1, R).addImm(C == ConstantBool::True);
     } else {
       ConstantInt *CI = cast<ConstantInt>(C);
       BuildMI(*MBB, IP, IntegralOpcodeTab[Class],1,R).addImm(CI->getRawValue());
@@ -456,15 +456,15 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       const Type *Ty = CFP->getType();
 
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-      unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLDm32 : X86::FLDm64;
+      unsigned LoadOpcode = Ty == Type::FloatTy ? X86::FLD32m : X86::FLD64m;
       addConstantPoolReference(BuildMI(*MBB, IP, LoadOpcode, 4, R), CPI);
     }
 
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
-    BuildMI(*MBB, IP, X86::MOVri32, 1, R).addImm(0);
+    BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-    BuildMI(*MBB, IP, X86::MOVri32, 1, R).addGlobalAddress(CPR->getValue());
+    BuildMI(*MBB, IP, X86::MOV32ri, 1, R).addGlobalAddress(CPR->getValue());
   } else {
     std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
@@ -493,29 +493,29 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     switch (getClassB(I->getType())) {
     case cByte:
       FI = MFI->CreateFixedObject(1, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVrm8, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOV8rm, 4, Reg), FI);
       break;
     case cShort:
       FI = MFI->CreateFixedObject(2, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVrm16, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Reg), FI);
       break;
     case cInt:
       FI = MFI->CreateFixedObject(4, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVrm32, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg), FI);
       break;
     case cLong:
       FI = MFI->CreateFixedObject(8, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOVrm32, 4, Reg), FI);
-      addFrameReference(BuildMI(BB, X86::MOVrm32, 4, Reg+1), FI, 4);
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg), FI);
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg+1), FI, 4);
       ArgOffset += 4;   // longs require 4 additional bytes
       break;
     case cFP:
       unsigned Opcode;
       if (I->getType() == Type::FloatTy) {
-        Opcode = X86::FLDm32;
+        Opcode = X86::FLD32m;
         FI = MFI->CreateFixedObject(4, ArgOffset);
       } else {
-        Opcode = X86::FLDm64;
+        Opcode = X86::FLD64m;
         FI = MFI->CreateFixedObject(8, ArgOffset);
         ArgOffset += 4;   // doubles require 4 additional bytes
       }
@@ -786,7 +786,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       // !=.  These should have been strength reduced already anyway.
       if (Op1v == 0 && (CompTy->isSigned() || OpNum < 2)) {
         static const unsigned TESTTab[] = {
-          X86::TESTrr8, X86::TESTrr16, X86::TESTrr32
+          X86::TEST8rr, X86::TEST16rr, X86::TEST32rr
         };
         BuildMI(*MBB, IP, TESTTab[Class], 2).addReg(Op0r).addReg(Op0r);
 
@@ -796,7 +796,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       }
 
       static const unsigned CMPTab[] = {
-        X86::CMPri8, X86::CMPri16, X86::CMPri32
+        X86::CMP8ri, X86::CMP16ri, X86::CMP32ri
       };
 
       BuildMI(*MBB, IP, CMPTab[Class], 2).addReg(Op0r).addImm(Op1v);
@@ -807,7 +807,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op1))
     if (CFP->isExactlyValue(+0.0) || CFP->isExactlyValue(-0.0)) {
       BuildMI(*MBB, IP, X86::FTST, 1).addReg(Op0r);
-      BuildMI(*MBB, IP, X86::FNSTSWr8, 0);
+      BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
       BuildMI(*MBB, IP, X86::SAHF, 1);
       return OpNum;
     }
@@ -819,17 +819,17 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
     // compare 8-bit with 8-bit, 16-bit with 16-bit, 32-bit with
     // 32-bit.
   case cByte:
-    BuildMI(*MBB, IP, X86::CMPrr8, 2).addReg(Op0r).addReg(Op1r);
+    BuildMI(*MBB, IP, X86::CMP8rr, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cShort:
-    BuildMI(*MBB, IP, X86::CMPrr16, 2).addReg(Op0r).addReg(Op1r);
+    BuildMI(*MBB, IP, X86::CMP16rr, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cInt:
-    BuildMI(*MBB, IP, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
+    BuildMI(*MBB, IP, X86::CMP32rr, 2).addReg(Op0r).addReg(Op1r);
     break;
   case cFP:
     BuildMI(*MBB, IP, X86::FpUCOM, 2).addReg(Op0r).addReg(Op1r);
-    BuildMI(*MBB, IP, X86::FNSTSWr8, 0);
+    BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
     BuildMI(*MBB, IP, X86::SAHF, 1);
     break;
 
@@ -838,9 +838,9 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       unsigned LoTmp = makeAnotherReg(Type::IntTy);
       unsigned HiTmp = makeAnotherReg(Type::IntTy);
       unsigned FinalTmp = makeAnotherReg(Type::IntTy);
-      BuildMI(*MBB, IP, X86::XORrr32, 2, LoTmp).addReg(Op0r).addReg(Op1r);
-      BuildMI(*MBB, IP, X86::XORrr32, 2, HiTmp).addReg(Op0r+1).addReg(Op1r+1);
-      BuildMI(*MBB, IP, X86::ORrr32,  2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
+      BuildMI(*MBB, IP, X86::XOR32rr, 2, LoTmp).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, X86::XOR32rr, 2, HiTmp).addReg(Op0r+1).addReg(Op1r+1);
+      BuildMI(*MBB, IP, X86::OR32rr,  2, FinalTmp).addReg(LoTmp).addReg(HiTmp);
       break;  // Allow the sete or setne to be generated from flags set by OR
     } else {
       // Emit a sequence of code which compares the high and low parts once
@@ -856,13 +856,13 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       // classes!  Until then, hardcode registers so that we can deal with their
       // aliases (because we don't have conditional byte moves).
       //
-      BuildMI(*MBB, IP, X86::CMPrr32, 2).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, X86::CMP32rr, 2).addReg(Op0r).addReg(Op1r);
       BuildMI(*MBB, IP, SetCCOpcodeTab[0][OpNum], 0, X86::AL);
-      BuildMI(*MBB, IP, X86::CMPrr32, 2).addReg(Op0r+1).addReg(Op1r+1);
+      BuildMI(*MBB, IP, X86::CMP32rr, 2).addReg(Op0r+1).addReg(Op1r+1);
       BuildMI(*MBB, IP, SetCCOpcodeTab[CompTy->isSigned()][OpNum], 0, X86::BL);
       BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, X86::BH);
       BuildMI(*MBB, IP, X86::IMPLICIT_DEF, 0, X86::AH);
-      BuildMI(*MBB, IP, X86::CMOVErr16, 2, X86::BX).addReg(X86::BX)
+      BuildMI(*MBB, IP, X86::CMOVE16rr, 2, X86::BX).addReg(X86::BX)
                                                    .addReg(X86::AX);
       // NOTE: visitSetCondInst knows that the value is dumped into the BL
       // register at this point for long values...
@@ -904,7 +904,7 @@ void ISel::emitSetCCOperation(MachineBasicBlock *MBB,
   } else {
     // Handle long comparisons by copying the value which is already in BL into
     // the register we want...
-    BuildMI(*MBB, IP, X86::MOVrr8, 1, TargetReg).addReg(X86::BL);
+    BuildMI(*MBB, IP, X86::MOV8rr, 1, TargetReg).addReg(X86::BL);
   }
 }
 
@@ -923,20 +923,20 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
   case cByte:
     // Extend value into target register (8->32)
     if (isUnsigned)
-      BuildMI(BB, X86::MOVZXr32r8, 1, targetReg).addReg(Reg);
+      BuildMI(BB, X86::MOVZX32rr8, 1, targetReg).addReg(Reg);
     else
-      BuildMI(BB, X86::MOVSXr32r8, 1, targetReg).addReg(Reg);
+      BuildMI(BB, X86::MOVSX32rr8, 1, targetReg).addReg(Reg);
     break;
   case cShort:
     // Extend value into target register (16->32)
     if (isUnsigned)
-      BuildMI(BB, X86::MOVZXr32r16, 1, targetReg).addReg(Reg);
+      BuildMI(BB, X86::MOVZX32rr16, 1, targetReg).addReg(Reg);
     else
-      BuildMI(BB, X86::MOVSXr32r16, 1, targetReg).addReg(Reg);
+      BuildMI(BB, X86::MOVSX32rr16, 1, targetReg).addReg(Reg);
     break;
   case cInt:
     // Move value into target register (32->32)
-    BuildMI(BB, X86::MOVrr32, 1, targetReg).addReg(Reg);
+    BuildMI(BB, X86::MOV32rr, 1, targetReg).addReg(Reg);
     break;
   default:
     assert(0 && "Unpromotable operand class in promote32");
@@ -976,8 +976,8 @@ void ISel::visitReturnInst(ReturnInst &I) {
     BuildMI(BB, X86::IMPLICIT_USE, 2).addReg(X86::ST0).addReg(X86::ESP);
     break;
   case cLong:
-    BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(RetReg);
-    BuildMI(BB, X86::MOVrr32, 1, X86::EDX).addReg(RetReg+1);
+    BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(RetReg);
+    BuildMI(BB, X86::MOV32rr, 1, X86::EDX).addReg(RetReg+1);
     // Declare that EAX & EDX are live on exit
     BuildMI(BB, X86::IMPLICIT_USE, 3).addReg(X86::EAX).addReg(X86::EDX)
       .addReg(X86::ESP);
@@ -1016,7 +1016,7 @@ void ISel::visitBranchInst(BranchInst &BI) {
     // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
-    BuildMI(BB, X86::CMPri8, 2).addReg(condReg).addImm(0);
+    BuildMI(BB, X86::CMP8ri, 2).addReg(condReg).addImm(0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, X86::JNE, 1).addPCDisp(BI.getSuccessor(0));
@@ -1105,29 +1105,29 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         // Promote arg to 32 bits wide into a temporary register...
         unsigned R = makeAnotherReg(Type::UIntTy);
         promote32(R, Args[i]);
-        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
+        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
                      X86::ESP, ArgOffset).addReg(R);
         break;
       }
       case cInt:
-        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
+        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
                      X86::ESP, ArgOffset).addReg(ArgReg);
         break;
       case cLong:
-        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
+        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
                      X86::ESP, ArgOffset).addReg(ArgReg);
-        addRegOffset(BuildMI(BB, X86::MOVmr32, 5),
+        addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
                      X86::ESP, ArgOffset+4).addReg(ArgReg+1);
         ArgOffset += 4;        // 8 byte entry, not 4.
         break;
         
       case cFP:
         if (Args[i].Ty == Type::FloatTy) {
-          addRegOffset(BuildMI(BB, X86::FSTm32, 5),
+          addRegOffset(BuildMI(BB, X86::FST32m, 5),
                        X86::ESP, ArgOffset).addReg(ArgReg);
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-          addRegOffset(BuildMI(BB, X86::FSTm64, 5),
+          addRegOffset(BuildMI(BB, X86::FST64m, 5),
                        X86::ESP, ArgOffset).addReg(ArgReg);
           ArgOffset += 4;       // 8 byte entry, not 4.
         }
@@ -1157,7 +1157,7 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       // Integral results are in %eax, or the appropriate portion
       // thereof.
       static const unsigned regRegMove[] = {
-        X86::MOVrr8, X86::MOVrr16, X86::MOVrr32
+        X86::MOV8rr, X86::MOV16rr, X86::MOV32rr
       };
       static const unsigned AReg[] = { X86::AL, X86::AX, X86::EAX };
       BuildMI(BB, regRegMove[DestClass], 1, Ret.Reg).addReg(AReg[DestClass]);
@@ -1167,8 +1167,8 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
       BuildMI(BB, X86::FpGETRESULT, 1, Ret.Reg);
       break;
     case cLong:   // Long values are left in EDX:EAX
-      BuildMI(BB, X86::MOVrr32, 1, Ret.Reg).addReg(X86::EAX);
-      BuildMI(BB, X86::MOVrr32, 1, Ret.Reg+1).addReg(X86::EDX);
+      BuildMI(BB, X86::MOV32rr, 1, Ret.Reg).addReg(X86::EAX);
+      BuildMI(BB, X86::MOV32rr, 1, Ret.Reg+1).addReg(X86::EDX);
       break;
     default: assert(0 && "Unknown class!");
     }
@@ -1190,7 +1190,7 @@ void ISel::visitCallInst(CallInst &CI) {
     TheCall = BuildMI(X86::CALLpcrel32, 1).addGlobalAddress(F, true);
   } else {  // Emit an indirect call...
     unsigned Reg = getReg(CI.getCalledValue());
-    TheCall = BuildMI(X86::CALLr32, 1).addReg(Reg);
+    TheCall = BuildMI(X86::CALL32r, 1).addReg(Reg);
   }
 
   std::vector<ValueRecord> Args;
@@ -1240,13 +1240,13 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::va_start:
     // Get the address of the first vararg value...
     TmpReg1 = getReg(CI);
-    addFrameReference(BuildMI(BB, X86::LEAr32, 5, TmpReg1), VarArgsFrameIndex);
+    addFrameReference(BuildMI(BB, X86::LEA32r, 5, TmpReg1), VarArgsFrameIndex);
     return;
 
   case Intrinsic::va_copy:
     TmpReg1 = getReg(CI);
     TmpReg2 = getReg(CI.getOperand(1));
-    BuildMI(BB, X86::MOVrr32, 1, TmpReg1).addReg(TmpReg2);
+    BuildMI(BB, X86::MOV32rr, 1, TmpReg1).addReg(TmpReg2);
     return;
   case Intrinsic::va_end: return;   // Noop on X86
 
@@ -1256,15 +1256,15 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     if (cast<Constant>(CI.getOperand(1))->isNullValue()) {
       if (ID == Intrinsic::returnaddress) {
         // Just load the return address
-        addFrameReference(BuildMI(BB, X86::MOVrm32, 4, TmpReg1),
+        addFrameReference(BuildMI(BB, X86::MOV32rm, 4, TmpReg1),
                           ReturnAddressIndex);
       } else {
-        addFrameReference(BuildMI(BB, X86::LEAr32, 4, TmpReg1),
+        addFrameReference(BuildMI(BB, X86::LEA32r, 4, TmpReg1),
                           ReturnAddressIndex, -4);
       }
     } else {
       // Values other than zero are not implemented yet.
-      BuildMI(BB, X86::MOVri32, 1, TmpReg1).addImm(0);
+      BuildMI(BB, X86::MOV32ri, 1, TmpReg1).addImm(0);
     }
     return;
 
@@ -1286,7 +1286,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       } else {
         CountReg = makeAnotherReg(Type::IntTy);
         unsigned ByteReg = getReg(CI.getOperand(3));
-        BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addImm(1);
+        BuildMI(BB, X86::SHR32ri, 2, CountReg).addReg(ByteReg).addImm(1);
       }
       Opcode = X86::REP_MOVSW;
       break;
@@ -1296,7 +1296,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       } else {
         CountReg = makeAnotherReg(Type::IntTy);
         unsigned ByteReg = getReg(CI.getOperand(3));
-        BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addImm(2);
+        BuildMI(BB, X86::SHR32ri, 2, CountReg).addReg(ByteReg).addImm(2);
       }
       Opcode = X86::REP_MOVSD;
       break;
@@ -1310,9 +1310,9 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // destination in EDI, and the count in ECX.
     TmpReg1 = getReg(CI.getOperand(1));
     TmpReg2 = getReg(CI.getOperand(2));
-    BuildMI(BB, X86::MOVrr32, 1, X86::ECX).addReg(CountReg);
-    BuildMI(BB, X86::MOVrr32, 1, X86::EDI).addReg(TmpReg1);
-    BuildMI(BB, X86::MOVrr32, 1, X86::ESI).addReg(TmpReg2);
+    BuildMI(BB, X86::MOV32rr, 1, X86::ECX).addReg(CountReg);
+    BuildMI(BB, X86::MOV32rr, 1, X86::EDI).addReg(TmpReg1);
+    BuildMI(BB, X86::MOV32rr, 1, X86::ESI).addReg(TmpReg2);
     BuildMI(BB, Opcode, 0);
     return;
   }
@@ -1338,9 +1338,9 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
           unsigned ByteReg = getReg(CI.getOperand(3));
-          BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addImm(1);
+          BuildMI(BB, X86::SHR32ri, 2, CountReg).addReg(ByteReg).addImm(1);
         }
-        BuildMI(BB, X86::MOVri16, 1, X86::AX).addImm((Val << 8) | Val);
+        BuildMI(BB, X86::MOV16ri, 1, X86::AX).addImm((Val << 8) | Val);
         Opcode = X86::REP_STOSW;
         break;
       case 0:   // DWORD aligned
@@ -1349,15 +1349,15 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
         } else {
           CountReg = makeAnotherReg(Type::IntTy);
           unsigned ByteReg = getReg(CI.getOperand(3));
-          BuildMI(BB, X86::SHRri32, 2, CountReg).addReg(ByteReg).addImm(2);
+          BuildMI(BB, X86::SHR32ri, 2, CountReg).addReg(ByteReg).addImm(2);
         }
         Val = (Val << 8) | Val;
-        BuildMI(BB, X86::MOVri32, 1, X86::EAX).addImm((Val << 16) | Val);
+        BuildMI(BB, X86::MOV32ri, 1, X86::EAX).addImm((Val << 16) | Val);
         Opcode = X86::REP_STOSD;
         break;
       default:  // BYTE aligned
         CountReg = getReg(CI.getOperand(3));
-        BuildMI(BB, X86::MOVri8, 1, X86::AL).addImm(Val);
+        BuildMI(BB, X86::MOV8ri, 1, X86::AL).addImm(Val);
         Opcode = X86::REP_STOSB;
         break;
       }
@@ -1365,7 +1365,7 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       // If it's not a constant value we are storing, just fall back.  We could
       // try to be clever to form 16 bit and 32 bit values, but we don't yet.
       unsigned ValReg = getReg(CI.getOperand(2));
-      BuildMI(BB, X86::MOVrr8, 1, X86::AL).addReg(ValReg);
+      BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(ValReg);
       CountReg = getReg(CI.getOperand(3));
       Opcode = X86::REP_STOSB;
     }
@@ -1374,8 +1374,8 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // destination in EDI, and the count in ECX.
     TmpReg1 = getReg(CI.getOperand(1));
     //TmpReg2 = getReg(CI.getOperand(2));
-    BuildMI(BB, X86::MOVrr32, 1, X86::ECX).addReg(CountReg);
-    BuildMI(BB, X86::MOVrr32, 1, X86::EDI).addReg(TmpReg1);
+    BuildMI(BB, X86::MOV32rr, 1, X86::ECX).addReg(CountReg);
+    BuildMI(BB, X86::MOV32rr, 1, X86::EDI).addReg(TmpReg1);
     BuildMI(BB, Opcode, 0);
     return;
   }
@@ -1416,13 +1416,13 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
         switch (Class) {
         default: assert(0 && "Unknown class for this function!");
         case cByte:
-          BuildMI(*MBB, IP, X86::NEGr8, 1, DestReg).addReg(op1Reg);
+          BuildMI(*MBB, IP, X86::NEG8r, 1, DestReg).addReg(op1Reg);
           return;
         case cShort:
-          BuildMI(*MBB, IP, X86::NEGr16, 1, DestReg).addReg(op1Reg);
+          BuildMI(*MBB, IP, X86::NEG16r, 1, DestReg).addReg(op1Reg);
           return;
         case cInt:
-          BuildMI(*MBB, IP, X86::NEGr32, 1, DestReg).addReg(op1Reg);
+          BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg).addReg(op1Reg);
           return;
         }
       }
@@ -1437,13 +1437,13 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   if (!isa<ConstantInt>(Op1) || Class == cLong) {
     static const unsigned OpcodeTab[][4] = {
       // Arithmetic operators
-      { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32, X86::FpADD },  // ADD
-      { X86::SUBrr8, X86::SUBrr16, X86::SUBrr32, X86::FpSUB },  // SUB
+      { X86::ADD8rr, X86::ADD16rr, X86::ADD32rr, X86::FpADD },  // ADD
+      { X86::SUB8rr, X86::SUB16rr, X86::SUB32rr, X86::FpSUB },  // SUB
       
       // Bitwise operators
-      { X86::ANDrr8, X86::ANDrr16, X86::ANDrr32, 0 },  // AND
-      { X86:: ORrr8, X86:: ORrr16, X86:: ORrr32, 0 },  // OR
-      { X86::XORrr8, X86::XORrr16, X86::XORrr32, 0 },  // XOR
+      { X86::AND8rr, X86::AND16rr, X86::AND32rr, 0 },  // AND
+      { X86:: OR8rr, X86:: OR16rr, X86:: OR32rr, 0 },  // OR
+      { X86::XOR8rr, X86::XOR16rr, X86::XOR32rr, 0 },  // XOR
     };
     
     bool isLong = false;
@@ -1460,7 +1460,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     
     if (isLong) {        // Handle the upper 32 bits of long values...
       static const unsigned TopTab[] = {
-        X86::ADCrr32, X86::SBBrr32, X86::ANDrr32, X86::ORrr32, X86::XORrr32
+        X86::ADC32rr, X86::SBB32rr, X86::AND32rr, X86::OR32rr, X86::XOR32rr
       };
       BuildMI(*MBB, IP, TopTab[OperatorClass], 2,
           DestReg+1).addReg(Op0r+1).addReg(Op1r+1);
@@ -1474,34 +1474,34 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
 
   // xor X, -1 -> not X
   if (OperatorClass == 4 && Op1C->isAllOnesValue()) {
-    static unsigned const NOTTab[] = { X86::NOTr8, X86::NOTr16, X86::NOTr32 };
+    static unsigned const NOTTab[] = { X86::NOT8r, X86::NOT16r, X86::NOT32r };
     BuildMI(*MBB, IP, NOTTab[Class], 1, DestReg).addReg(Op0r);
     return;
   }
 
   // add X, -1 -> dec X
   if (OperatorClass == 0 && Op1C->isAllOnesValue()) {
-    static unsigned const DECTab[] = { X86::DECr8, X86::DECr16, X86::DECr32 };
+    static unsigned const DECTab[] = { X86::DEC8r, X86::DEC16r, X86::DEC32r };
     BuildMI(*MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
     return;
   }
 
   // add X, 1 -> inc X
   if (OperatorClass == 0 && Op1C->equalsInt(1)) {
-    static unsigned const DECTab[] = { X86::INCr8, X86::INCr16, X86::INCr32 };
+    static unsigned const DECTab[] = { X86::INC8r, X86::INC16r, X86::INC32r };
     BuildMI(*MBB, IP, DECTab[Class], 1, DestReg).addReg(Op0r);
     return;
   }
   
   static const unsigned OpcodeTab[][3] = {
     // Arithmetic operators
-    { X86::ADDri8, X86::ADDri16, X86::ADDri32 },  // ADD
-    { X86::SUBri8, X86::SUBri16, X86::SUBri32 },  // SUB
+    { X86::ADD8ri, X86::ADD16ri, X86::ADD32ri },  // ADD
+    { X86::SUB8ri, X86::SUB16ri, X86::SUB32ri },  // SUB
     
     // Bitwise operators
-    { X86::ANDri8, X86::ANDri16, X86::ANDri32 },  // AND
-    { X86:: ORri8, X86:: ORri16, X86:: ORri32 },  // OR
-    { X86::XORri8, X86::XORri16, X86::XORri32 },  // XOR
+    { X86::AND8ri, X86::AND16ri, X86::AND32ri },  // AND
+    { X86:: OR8ri, X86:: OR16ri, X86:: OR32ri },  // OR
+    { X86::XOR8ri, X86::XOR16ri, X86::XOR32ri },  // XOR
   };
   
   assert(Class < 3 && "General code handles 64-bit integer types!");
@@ -1527,14 +1527,14 @@ void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
     return;
   case cInt:
   case cShort:
-    BuildMI(*MBB, MBBI, Class == cInt ? X86::IMULrr32:X86::IMULrr16, 2, DestReg)
+    BuildMI(*MBB, MBBI, Class == cInt ? X86::IMUL32rr:X86::IMUL16rr, 2, DestReg)
       .addReg(op0Reg).addReg(op1Reg);
     return;
   case cByte:
     // Must use the MUL instruction, which forces use of AL...
-    BuildMI(*MBB, MBBI, X86::MOVrr8, 1, X86::AL).addReg(op0Reg);
-    BuildMI(*MBB, MBBI, X86::MULr8, 1).addReg(op1Reg);
-    BuildMI(*MBB, MBBI, X86::MOVrr8, 1, DestReg).addReg(X86::AL);
+    BuildMI(*MBB, MBBI, X86::MOV8rr, 1, X86::AL).addReg(op0Reg);
+    BuildMI(*MBB, MBBI, X86::MUL8r, 1).addReg(op1Reg);
+    BuildMI(*MBB, MBBI, X86::MOV8rr, 1, DestReg).addReg(X86::AL);
     return;
   default:
   case cLong: assert(0 && "doMultiply cannot operate on LONG values!");
@@ -1565,28 +1565,28 @@ void ISel::doMultiplyConst(MachineBasicBlock *MBB,
     switch (Class) {
     default: assert(0 && "Unknown class for this function!");
     case cByte:
-      BuildMI(*MBB, IP, X86::SHLri32,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
       return;
     case cShort:
-      BuildMI(*MBB, IP, X86::SHLri32,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
       return;
     case cInt:
-      BuildMI(*MBB, IP, X86::SHLri32,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
       return;
     }
   }
   
   if (Class == cShort) {
-    BuildMI(*MBB, IP, X86::IMULrri16,2,DestReg).addReg(op0Reg).addImm(ConstRHS);
+    BuildMI(*MBB, IP, X86::IMUL16rri,2,DestReg).addReg(op0Reg).addImm(ConstRHS);
     return;
   } else if (Class == cInt) {
-    BuildMI(*MBB, IP, X86::IMULrri32,2,DestReg).addReg(op0Reg).addImm(ConstRHS);
+    BuildMI(*MBB, IP, X86::IMUL32rri,2,DestReg).addReg(op0Reg).addImm(ConstRHS);
     return;
   }
 
   // Most general case, emit a normal multiply...
   static const unsigned MOVriTab[] = {
-    X86::MOVri8, X86::MOVri16, X86::MOVri32
+    X86::MOV8ri, X86::MOV16ri, X86::MOV32ri
   };
 
   unsigned TmpReg = makeAnotherReg(DestTy);
@@ -1620,26 +1620,26 @@ void ISel::visitMul(BinaryOperator &I) {
 
     // Long value.  We have to do things the hard way...
     // Multiply the two low parts... capturing carry into EDX
-    BuildMI(BB, X86::MOVrr32, 1, X86::EAX).addReg(Op0Reg);
-    BuildMI(BB, X86::MULr32, 1).addReg(Op1Reg);  // AL*BL
+    BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Op0Reg);
+    BuildMI(BB, X86::MUL32r, 1).addReg(Op1Reg);  // AL*BL
 
     unsigned OverflowReg = makeAnotherReg(Type::UIntTy);
-    BuildMI(BB, X86::MOVrr32, 1, DestReg).addReg(X86::EAX);     // AL*BL
-    BuildMI(BB, X86::MOVrr32, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
+    BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);     // AL*BL
+    BuildMI(BB, X86::MOV32rr, 1, OverflowReg).addReg(X86::EDX); // AL*BL >> 32
 
     MachineBasicBlock::iterator MBBI = BB->end();
     unsigned AHBLReg = makeAnotherReg(Type::UIntTy);   // AH*BL
-    BuildMI(*BB, MBBI, X86::IMULrr32,2,AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
+    BuildMI(*BB, MBBI, X86::IMUL32rr,2,AHBLReg).addReg(Op0Reg+1).addReg(Op1Reg);
 
     unsigned AHBLplusOverflowReg = makeAnotherReg(Type::UIntTy);
-    BuildMI(*BB, MBBI, X86::ADDrr32, 2,                  // AH*BL+(AL*BL >> 32)
+    BuildMI(*BB, MBBI, X86::ADD32rr, 2,                  // AH*BL+(AL*BL >> 32)
             AHBLplusOverflowReg).addReg(AHBLReg).addReg(OverflowReg);
     
     MBBI = BB->end();
     unsigned ALBHReg = makeAnotherReg(Type::UIntTy); // AL*BH
-    BuildMI(*BB, MBBI, X86::IMULrr32,2,ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
+    BuildMI(*BB, MBBI, X86::IMUL32rr,2,ALBHReg).addReg(Op0Reg).addReg(Op1Reg+1);
     
-    BuildMI(*BB, MBBI, X86::ADDrr32, 2,         // AL*BH + AH*BL + (AL*BL >> 32)
+    BuildMI(*BB, MBBI, X86::ADD32rr, 2,         // AL*BH + AH*BL + (AL*BL >> 32)
             DestReg+1).addReg(AHBLplusOverflowReg).addReg(ALBHReg);
   }
 }
@@ -1698,14 +1698,14 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   }
 
   static const unsigned Regs[]     ={ X86::AL    , X86::AX     , X86::EAX     };
-  static const unsigned MovOpcode[]={ X86::MOVrr8, X86::MOVrr16, X86::MOVrr32 };
-  static const unsigned SarOpcode[]={ X86::SARri8, X86::SARri16, X86::SARri32 };
-  static const unsigned ClrOpcode[]={ X86::MOVri8, X86::MOVri16, X86::MOVri32 };
+  static const unsigned MovOpcode[]={ X86::MOV8rr, X86::MOV16rr, X86::MOV32rr };
+  static const unsigned SarOpcode[]={ X86::SAR8ri, X86::SAR16ri, X86::SAR32ri };
+  static const unsigned ClrOpcode[]={ X86::MOV8ri, X86::MOV16ri, X86::MOV32ri };
   static const unsigned ExtRegs[]  ={ X86::AH    , X86::DX     , X86::EDX     };
 
   static const unsigned DivOpcode[][4] = {
-    { X86::DIVr8 , X86::DIVr16 , X86::DIVr32 , 0 },  // Unsigned division
-    { X86::IDIVr8, X86::IDIVr16, X86::IDIVr32, 0 },  // Signed division
+    { X86::DIV8r , X86::DIV16r , X86::DIV32r , 0 },  // Unsigned division
+    { X86::IDIV8r, X86::IDIV16r, X86::IDIV32r, 0 },  // Signed division
   };
 
   bool isSigned   = Ty->isSigned();
@@ -1759,17 +1759,17 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
   unsigned Class = getClass (ResultTy);
   
   static const unsigned ConstantOperand[][4] = {
-    { X86::SHRri8, X86::SHRri16, X86::SHRri32, X86::SHRDrr32i8 },  // SHR
-    { X86::SARri8, X86::SARri16, X86::SARri32, X86::SHRDrr32i8 },  // SAR
-    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrr32i8 },  // SHL
-    { X86::SHLri8, X86::SHLri16, X86::SHLri32, X86::SHLDrr32i8 },  // SAL = SHL
+    { X86::SHR8ri, X86::SHR16ri, X86::SHR32ri, X86::SHRD32rri8 },  // SHR
+    { X86::SAR8ri, X86::SAR16ri, X86::SAR32ri, X86::SHRD32rri8 },  // SAR
+    { X86::SHL8ri, X86::SHL16ri, X86::SHL32ri, X86::SHLD32rri8 },  // SHL
+    { X86::SHL8ri, X86::SHL16ri, X86::SHL32ri, X86::SHLD32rri8 },  // SAL = SHL
   };
 
   static const unsigned NonConstantOperand[][4] = {
-    { X86::SHRrCL8, X86::SHRrCL16, X86::SHRrCL32 },  // SHR
-    { X86::SARrCL8, X86::SARrCL16, X86::SARrCL32 },  // SAR
-    { X86::SHLrCL8, X86::SHLrCL16, X86::SHLrCL32 },  // SHL
-    { X86::SHLrCL8, X86::SHLrCL16, X86::SHLrCL32 },  // SAL = SHL
+    { X86::SHR8rCL, X86::SHR16rCL, X86::SHR32rCL },  // SHR
+    { X86::SAR8rCL, X86::SAR16rCL, X86::SAR32rCL },  // SAR
+    { X86::SHL8rCL, X86::SHL16rCL, X86::SHL32rCL },  // SHL
+    { X86::SHL8rCL, X86::SHL16rCL, X86::SHL32rCL },  // SAL = SHL
   };
 
   // Longs, as usual, are handled specially...
@@ -1793,14 +1793,14 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       } else {                 // Shifting more than 32 bits
         Amount -= 32;
         if (isLeftShift) {
-          BuildMI(*MBB, IP, X86::SHLri32, 2,
+          BuildMI(*MBB, IP, X86::SHL32ri, 2,
               DestReg + 1).addReg(SrcReg).addImm(Amount);
-          BuildMI(*MBB, IP, X86::MOVri32, 1,
+          BuildMI(*MBB, IP, X86::MOV32ri, 1,
               DestReg).addImm(0);
         } else {
-          unsigned Opcode = isSigned ? X86::SARri32 : X86::SHRri32;
+          unsigned Opcode = isSigned ? X86::SAR32ri : X86::SHR32ri;
           BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(SrcReg+1).addImm(Amount);
-          BuildMI(*MBB, IP, X86::MOVri32, 1, DestReg+1).addImm(0);
+          BuildMI(*MBB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
         }
       }
     } else {
@@ -1810,52 +1810,52 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         // If this is a SHR of a Long, then we need to do funny sign extension
         // stuff.  TmpReg gets the value to use as the high-part if we are
         // shifting more than 32 bits.
-        BuildMI(*MBB, IP, X86::SARri32, 2, TmpReg).addReg(SrcReg).addImm(31);
+        BuildMI(*MBB, IP, X86::SAR32ri, 2, TmpReg).addReg(SrcReg).addImm(31);
       } else {
         // Other shifts use a fixed zero value if the shift is more than 32
         // bits.
-        BuildMI(*MBB, IP, X86::MOVri32, 1, TmpReg).addImm(0);
+        BuildMI(*MBB, IP, X86::MOV32ri, 1, TmpReg).addImm(0);
       }
 
       // Initialize CL with the shift amount...
       unsigned ShiftAmountReg = getReg(ShiftAmount, MBB, IP);
-      BuildMI(*MBB, IP, X86::MOVrr8, 1, X86::CL).addReg(ShiftAmountReg);
+      BuildMI(*MBB, IP, X86::MOV8rr, 1, X86::CL).addReg(ShiftAmountReg);
 
       unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
       unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
       if (isLeftShift) {
         // TmpReg2 = shld inHi, inLo
-        BuildMI(*MBB, IP, X86::SHLDrrCL32,2,TmpReg2).addReg(SrcReg+1)
+        BuildMI(*MBB, IP, X86::SHLD32rrCL,2,TmpReg2).addReg(SrcReg+1)
                                                     .addReg(SrcReg);
         // TmpReg3 = shl  inLo, CL
-        BuildMI(*MBB, IP, X86::SHLrCL32, 1, TmpReg3).addReg(SrcReg);
+        BuildMI(*MBB, IP, X86::SHL32rCL, 1, TmpReg3).addReg(SrcReg);
 
         // Set the flags to indicate whether the shift was by more than 32 bits.
-        BuildMI(*MBB, IP, X86::TESTri8, 2).addReg(X86::CL).addImm(32);
+        BuildMI(*MBB, IP, X86::TEST8ri, 2).addReg(X86::CL).addImm(32);
 
         // DestHi = (>32) ? TmpReg3 : TmpReg2;
-        BuildMI(*MBB, IP, X86::CMOVNErr32, 2, 
+        BuildMI(*MBB, IP, X86::CMOVNE32rr, 2, 
                 DestReg+1).addReg(TmpReg2).addReg(TmpReg3);
         // DestLo = (>32) ? TmpReg : TmpReg3;
-        BuildMI(*MBB, IP, X86::CMOVNErr32, 2,
+        BuildMI(*MBB, IP, X86::CMOVNE32rr, 2,
             DestReg).addReg(TmpReg3).addReg(TmpReg);
       } else {
         // TmpReg2 = shrd inLo, inHi
-        BuildMI(*MBB, IP, X86::SHRDrrCL32,2,TmpReg2).addReg(SrcReg)
+        BuildMI(*MBB, IP, X86::SHRD32rrCL,2,TmpReg2).addReg(SrcReg)
                                                     .addReg(SrcReg+1);
         // TmpReg3 = s[ah]r  inHi, CL
-        BuildMI(*MBB, IP, isSigned ? X86::SARrCL32 : X86::SHRrCL32, 1, TmpReg3)
+        BuildMI(*MBB, IP, isSigned ? X86::SAR32rCL : X86::SHR32rCL, 1, TmpReg3)
                        .addReg(SrcReg+1);
 
         // Set the flags to indicate whether the shift was by more than 32 bits.
-        BuildMI(*MBB, IP, X86::TESTri8, 2).addReg(X86::CL).addImm(32);
+        BuildMI(*MBB, IP, X86::TEST8ri, 2).addReg(X86::CL).addImm(32);
 
         // DestLo = (>32) ? TmpReg3 : TmpReg2;
-        BuildMI(*MBB, IP, X86::CMOVNErr32, 2, 
+        BuildMI(*MBB, IP, X86::CMOVNE32rr, 2, 
                 DestReg).addReg(TmpReg2).addReg(TmpReg3);
 
         // DestHi = (>32) ? TmpReg : TmpReg3;
-        BuildMI(*MBB, IP, X86::CMOVNErr32, 2, 
+        BuildMI(*MBB, IP, X86::CMOVNE32rr, 2, 
                 DestReg+1).addReg(TmpReg3).addReg(TmpReg);
       }
     }
@@ -1871,7 +1871,7 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         DestReg).addReg(SrcReg).addImm(CUI->getValue());
   } else {                  // The shift amount is non-constant.
     unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
-    BuildMI(*MBB, IP, X86::MOVrr8, 1, X86::CL).addReg(ShiftAmountReg);
+    BuildMI(*MBB, IP, X86::MOV8rr, 1, X86::CL).addReg(ShiftAmountReg);
 
     const unsigned *Opc = NonConstantOperand[isLeftShift*2+isSigned];
     BuildMI(*MBB, IP, Opc[Class], 1, DestReg).addReg(SrcReg);
@@ -1906,18 +1906,18 @@ void ISel::visitLoadInst(LoadInst &I) {
 
   unsigned Class = getClassB(I.getType());
   if (Class == cLong) {
-    addFullAddress(BuildMI(BB, X86::MOVrm32, 4, DestReg),
+    addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg),
                    BaseReg, Scale, IndexReg, Disp);
-    addFullAddress(BuildMI(BB, X86::MOVrm32, 4, DestReg+1),
+    addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg+1),
                    BaseReg, Scale, IndexReg, Disp+4);
     return;
   }
 
   static const unsigned Opcodes[] = {
-    X86::MOVrm8, X86::MOVrm16, X86::MOVrm32, X86::FLDm32
+    X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD32m
   };
   unsigned Opcode = Opcodes[Class];
-  if (I.getType() == Type::DoubleTy) Opcode = X86::FLDm64;
+  if (I.getType() == Type::DoubleTy) Opcode = X86::FLD64m;
   addFullAddress(BuildMI(BB, Opcode, 4, DestReg),
                  BaseReg, Scale, IndexReg, Disp);
 }
@@ -1951,35 +1951,35 @@ void ISel::visitStoreInst(StoreInst &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(0))) {
     uint64_t Val = CI->getRawValue();
     if (Class == cLong) {
-      addFullAddress(BuildMI(BB, X86::MOVmi32, 5),
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
                      BaseReg, Scale, IndexReg, Disp).addImm(Val & ~0U);
-      addFullAddress(BuildMI(BB, X86::MOVmi32, 5),
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
                      BaseReg, Scale, IndexReg, Disp+4).addImm(Val>>32);
     } else {
       static const unsigned Opcodes[] = {
-        X86::MOVmi8, X86::MOVmi16, X86::MOVmi32
+        X86::MOV8mi, X86::MOV16mi, X86::MOV32mi
       };
       unsigned Opcode = Opcodes[Class];
       addFullAddress(BuildMI(BB, Opcode, 5),
                      BaseReg, Scale, IndexReg, Disp).addImm(Val);
     }
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
-    addFullAddress(BuildMI(BB, X86::MOVmi8, 5),
+    addFullAddress(BuildMI(BB, X86::MOV8mi, 5),
                    BaseReg, Scale, IndexReg, Disp).addImm(CB->getValue());
   } else {    
     if (Class == cLong) {
       unsigned ValReg = getReg(I.getOperand(0));
-      addFullAddress(BuildMI(BB, X86::MOVmr32, 5),
+      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
                      BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
-      addFullAddress(BuildMI(BB, X86::MOVmr32, 5),
+      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
                      BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
     } else {
       unsigned ValReg = getReg(I.getOperand(0));
       static const unsigned Opcodes[] = {
-        X86::MOVmr8, X86::MOVmr16, X86::MOVmr32, X86::FSTm32
+        X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST32m
       };
       unsigned Opcode = Opcodes[Class];
-      if (ValTy == Type::DoubleTy) Opcode = X86::FSTm64;
+      if (ValTy == Type::DoubleTy) Opcode = X86::FST64m;
       addFullAddress(BuildMI(BB, Opcode, 1+4),
                      BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
     }
@@ -2028,22 +2028,22 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   if (DestTy == Type::BoolTy) {
     switch (SrcClass) {
     case cByte:
-      BuildMI(*BB, IP, X86::TESTrr8, 2).addReg(SrcReg).addReg(SrcReg);
+      BuildMI(*BB, IP, X86::TEST8rr, 2).addReg(SrcReg).addReg(SrcReg);
       break;
     case cShort:
-      BuildMI(*BB, IP, X86::TESTrr16, 2).addReg(SrcReg).addReg(SrcReg);
+      BuildMI(*BB, IP, X86::TEST16rr, 2).addReg(SrcReg).addReg(SrcReg);
       break;
     case cInt:
-      BuildMI(*BB, IP, X86::TESTrr32, 2).addReg(SrcReg).addReg(SrcReg);
+      BuildMI(*BB, IP, X86::TEST32rr, 2).addReg(SrcReg).addReg(SrcReg);
       break;
     case cLong: {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
-      BuildMI(*BB, IP, X86::ORrr32, 2, TmpReg).addReg(SrcReg).addReg(SrcReg+1);
+      BuildMI(*BB, IP, X86::OR32rr, 2, TmpReg).addReg(SrcReg).addReg(SrcReg+1);
       break;
     }
     case cFP:
       BuildMI(*BB, IP, X86::FTST, 1).addReg(SrcReg);
-      BuildMI(*BB, IP, X86::FNSTSWr8, 0);
+      BuildMI(*BB, IP, X86::FNSTSW8r, 0);
       BuildMI(*BB, IP, X86::SAHF, 1);
       break;
     }
@@ -2055,7 +2055,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   }
 
   static const unsigned RegRegMove[] = {
-    X86::MOVrr8, X86::MOVrr16, X86::MOVrr32, X86::FpMOV, X86::MOVrr32
+    X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV, X86::MOV32rr
   };
 
   // Implement casts between values of the same type class (as determined by
@@ -2074,12 +2074,12 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
         // reading it back.
         unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FrameIdx = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-        addFrameReference(BuildMI(*BB, IP, X86::FSTm32, 5), FrameIdx).addReg(SrcReg);
-        addFrameReference(BuildMI(*BB, IP, X86::FLDm32, 5, DestReg), FrameIdx);
+        addFrameReference(BuildMI(*BB, IP, X86::FST32m, 5), FrameIdx).addReg(SrcReg);
+        addFrameReference(BuildMI(*BB, IP, X86::FLD32m, 5, DestReg), FrameIdx);
       }
     } else if (SrcClass == cLong) {
-      BuildMI(*BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
-      BuildMI(*BB, IP, X86::MOVrr32, 1, DestReg+1).addReg(SrcReg+1);
+      BuildMI(*BB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg);
+      BuildMI(*BB, IP, X86::MOV32rr, 1, DestReg+1).addReg(SrcReg+1);
     } else {
       assert(0 && "Cannot handle this type of cast instruction!");
       abort();
@@ -2095,8 +2095,8 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     if (isLong) DestClass = cInt;
 
     static const unsigned Opc[][4] = {
-      { X86::MOVSXr16r8, X86::MOVSXr32r8, X86::MOVSXr32r16, X86::MOVrr32 }, // s
-      { X86::MOVZXr16r8, X86::MOVZXr32r8, X86::MOVZXr32r16, X86::MOVrr32 }  // u
+      { X86::MOVSX16rr8, X86::MOVSX32rr8, X86::MOVSX32rr16, X86::MOV32rr }, // s
+      { X86::MOVZX16rr8, X86::MOVZX32rr8, X86::MOVZX32rr16, X86::MOV32rr }  // u
     };
     
     bool isUnsigned = SrcTy->isUnsigned();
@@ -2105,16 +2105,16 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
 
     if (isLong) {  // Handle upper 32 bits as appropriate...
       if (isUnsigned)     // Zero out top bits...
-        BuildMI(*BB, IP, X86::MOVri32, 1, DestReg+1).addImm(0);
+        BuildMI(*BB, IP, X86::MOV32ri, 1, DestReg+1).addImm(0);
       else                // Sign extend bottom half...
-        BuildMI(*BB, IP, X86::SARri32, 2, DestReg+1).addReg(DestReg).addImm(31);
+        BuildMI(*BB, IP, X86::SAR32ri, 2, DestReg+1).addReg(DestReg).addImm(31);
     }
     return;
   }
 
   // Special case long -> int ...
   if (SrcClass == cLong && DestClass == cInt) {
-    BuildMI(*BB, IP, X86::MOVrr32, 1, DestReg).addReg(SrcReg);
+    BuildMI(*BB, IP, X86::MOV32rr, 1, DestReg).addReg(SrcReg);
     return;
   }
   
@@ -2143,21 +2143,21 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       // We don't have the facilities for directly loading byte sized data from
       // memory (even signed).  Promote it to 16 bits.
       PromoteType = Type::ShortTy;
-      PromoteOpcode = X86::MOVSXr16r8;
+      PromoteOpcode = X86::MOVSX16rr8;
       break;
     case Type::UByteTyID:
       PromoteType = Type::ShortTy;
-      PromoteOpcode = X86::MOVZXr16r8;
+      PromoteOpcode = X86::MOVZX16rr8;
       break;
     case Type::UShortTyID:
       PromoteType = Type::IntTy;
-      PromoteOpcode = X86::MOVZXr32r16;
+      PromoteOpcode = X86::MOVZX32rr16;
       break;
     case Type::UIntTyID: {
       // Make a 64 bit temporary... and zero out the top of it...
       unsigned TmpReg = makeAnotherReg(Type::LongTy);
-      BuildMI(*BB, IP, X86::MOVrr32, 1, TmpReg).addReg(SrcReg);
-      BuildMI(*BB, IP, X86::MOVri32, 1, TmpReg+1).addImm(0);
+      BuildMI(*BB, IP, X86::MOV32rr, 1, TmpReg).addReg(SrcReg);
+      BuildMI(*BB, IP, X86::MOV32ri, 1, TmpReg+1).addImm(0);
       SrcTy = Type::LongTy;
       SrcClass = cLong;
       SrcReg = TmpReg;
@@ -2173,7 +2173,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     
     if (PromoteType) {
       unsigned TmpReg = makeAnotherReg(PromoteType);
-      unsigned Opc = SrcTy->isSigned() ? X86::MOVSXr16r8 : X86::MOVZXr16r8;
+      unsigned Opc = SrcTy->isSigned() ? X86::MOVSX16rr8 : X86::MOVZX16rr8;
       BuildMI(*BB, IP, Opc, 1, TmpReg).addReg(SrcReg);
       SrcTy = PromoteType;
       SrcClass = getClass(PromoteType);
@@ -2185,18 +2185,18 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       F->getFrameInfo()->CreateStackObject(SrcTy, TM.getTargetData());
 
     if (SrcClass == cLong) {
-      addFrameReference(BuildMI(*BB, IP, X86::MOVmr32, 5),
+      addFrameReference(BuildMI(*BB, IP, X86::MOV32mr, 5),
                         FrameIdx).addReg(SrcReg);
-      addFrameReference(BuildMI(*BB, IP, X86::MOVmr32, 5),
+      addFrameReference(BuildMI(*BB, IP, X86::MOV32mr, 5),
                         FrameIdx, 4).addReg(SrcReg+1);
     } else {
-      static const unsigned Op1[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
+      static const unsigned Op1[] = { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr };
       addFrameReference(BuildMI(*BB, IP, Op1[SrcClass], 5),
                         FrameIdx).addReg(SrcReg);
     }
 
     static const unsigned Op2[] =
-      { 0/*byte*/, X86::FILDm16, X86::FILDm32, 0/*FP*/, X86::FILDm64 };
+      { 0/*byte*/, X86::FILD16m, X86::FILD32m, 0/*FP*/, X86::FILD64m };
     addFrameReference(BuildMI(*BB, IP, Op2[SrcClass], 5, DestReg), FrameIdx);
 
     // We need special handling for unsigned 64-bit integer sources.  If the
@@ -2204,27 +2204,27 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     // negative 64-bit number.  In this case, add an offset value.
     if (SrcTy == Type::ULongTy) {
       // Emit a test instruction to see if the dynamic input value was signed.
-      BuildMI(*BB, IP, X86::TESTrr32, 2).addReg(SrcReg+1).addReg(SrcReg+1);
+      BuildMI(*BB, IP, X86::TEST32rr, 2).addReg(SrcReg+1).addReg(SrcReg+1);
 
       // If the sign bit is set, get a pointer to an offset, otherwise get a
       // pointer to a zero.
       MachineConstantPool *CP = F->getConstantPool();
       unsigned Zero = makeAnotherReg(Type::IntTy);
       Constant *Null = Constant::getNullValue(Type::UIntTy);
-      addConstantPoolReference(BuildMI(*BB, IP, X86::LEAr32, 5, Zero), 
+      addConstantPoolReference(BuildMI(*BB, IP, X86::LEA32r, 5, Zero), 
                                CP->getConstantPoolIndex(Null));
       unsigned Offset = makeAnotherReg(Type::IntTy);
       Constant *OffsetCst = ConstantUInt::get(Type::UIntTy, 0x5f800000);
                                              
-      addConstantPoolReference(BuildMI(*BB, IP, X86::LEAr32, 5, Offset),
+      addConstantPoolReference(BuildMI(*BB, IP, X86::LEA32r, 5, Offset),
                                CP->getConstantPoolIndex(OffsetCst));
       unsigned Addr = makeAnotherReg(Type::IntTy);
-      BuildMI(*BB, IP, X86::CMOVSrr32, 2, Addr).addReg(Zero).addReg(Offset);
+      BuildMI(*BB, IP, X86::CMOVS32rr, 2, Addr).addReg(Zero).addReg(Offset);
 
       // Load the constant for an add.  FIXME: this could make an 'fadd' that
       // reads directly from memory, but we don't support these yet.
       unsigned ConstReg = makeAnotherReg(Type::DoubleTy);
-      addDirectMem(BuildMI(*BB, IP, X86::FLDm32, 4, ConstReg), Addr);
+      addDirectMem(BuildMI(*BB, IP, X86::FLD32m, 4, ConstReg), Addr);
 
       BuildMI(*BB, IP, X86::FpADD, 2, RealDestReg)
                 .addReg(ConstReg).addReg(DestReg);
@@ -2239,22 +2239,22 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     // mode when truncating to an integer value.
     //
     int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
-    addFrameReference(BuildMI(*BB, IP, X86::FNSTCWm16, 4), CWFrameIdx);
+    addFrameReference(BuildMI(*BB, IP, X86::FNSTCW16m, 4), CWFrameIdx);
 
     // Load the old value of the high byte of the control word...
     unsigned HighPartOfCW = makeAnotherReg(Type::UByteTy);
-    addFrameReference(BuildMI(*BB, IP, X86::MOVrm8, 4, HighPartOfCW),
+    addFrameReference(BuildMI(*BB, IP, X86::MOV8rm, 4, HighPartOfCW),
                       CWFrameIdx, 1);
 
     // Set the high part to be round to zero...
-    addFrameReference(BuildMI(*BB, IP, X86::MOVmi8, 5),
+    addFrameReference(BuildMI(*BB, IP, X86::MOV8mi, 5),
                       CWFrameIdx, 1).addImm(12);
 
     // Reload the modified control word now...
-    addFrameReference(BuildMI(*BB, IP, X86::FLDCWm16, 4), CWFrameIdx);
+    addFrameReference(BuildMI(*BB, IP, X86::FLDCW16m, 4), CWFrameIdx);
     
     // Restore the memory image of control word to original value
-    addFrameReference(BuildMI(*BB, IP, X86::MOVmr8, 5),
+    addFrameReference(BuildMI(*BB, IP, X86::MOV8mr, 5),
                       CWFrameIdx, 1).addReg(HighPartOfCW);
 
     // We don't have the facilities for directly storing byte sized data to
@@ -2279,21 +2279,21 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       F->getFrameInfo()->CreateStackObject(StoreTy, TM.getTargetData());
 
     static const unsigned Op1[] =
-      { 0, X86::FISTm16, X86::FISTm32, 0, X86::FISTPm64 };
+      { 0, X86::FIST16m, X86::FIST32m, 0, X86::FISTP64m };
     addFrameReference(BuildMI(*BB, IP, Op1[StoreClass], 5),
                       FrameIdx).addReg(SrcReg);
 
     if (DestClass == cLong) {
-      addFrameReference(BuildMI(*BB, IP, X86::MOVrm32, 4, DestReg), FrameIdx);
-      addFrameReference(BuildMI(*BB, IP, X86::MOVrm32, 4, DestReg+1),
+      addFrameReference(BuildMI(*BB, IP, X86::MOV32rm, 4, DestReg), FrameIdx);
+      addFrameReference(BuildMI(*BB, IP, X86::MOV32rm, 4, DestReg+1),
                         FrameIdx, 4);
     } else {
-      static const unsigned Op2[] = { X86::MOVrm8, X86::MOVrm16, X86::MOVrm32 };
+      static const unsigned Op2[] = { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm };
       addFrameReference(BuildMI(*BB, IP, Op2[DestClass], 4, DestReg), FrameIdx);
     }
 
     // Reload the original control word now...
-    addFrameReference(BuildMI(*BB, IP, X86::FLDCWm16, 4), CWFrameIdx);
+    addFrameReference(BuildMI(*BB, IP, X86::FLDCW16m, 4), CWFrameIdx);
     return;
   }
 
@@ -2327,7 +2327,7 @@ void ISel::visitVANextInst(VANextInst &I) {
   }
 
   // Increment the VAList pointer...
-  BuildMI(BB, X86::ADDri32, 2, DestReg).addReg(VAList).addImm(Size);
+  BuildMI(BB, X86::ADD32ri, 2, DestReg).addReg(VAList).addImm(Size);
 }
 
 void ISel::visitVAArgInst(VAArgInst &I) {
@@ -2342,15 +2342,15 @@ void ISel::visitVAArgInst(VAArgInst &I) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 4, DestReg), VAList);
+    addDirectMem(BuildMI(BB, X86::MOV32rm, 4, DestReg), VAList);
     break;
   case Type::ULongTyID:
   case Type::LongTyID:
-    addDirectMem(BuildMI(BB, X86::MOVrm32, 4, DestReg), VAList);
-    addRegOffset(BuildMI(BB, X86::MOVrm32, 4, DestReg+1), VAList, 4);
+    addDirectMem(BuildMI(BB, X86::MOV32rm, 4, DestReg), VAList);
+    addRegOffset(BuildMI(BB, X86::MOV32rm, 4, DestReg+1), VAList, 4);
     break;
   case Type::DoubleTyID:
-    addDirectMem(BuildMI(BB, X86::FLDm64, 4, DestReg), VAList);
+    addDirectMem(BuildMI(BB, X86::FLD64m, 4, DestReg), VAList);
     break;
   }
 }
@@ -2532,9 +2532,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       }
 
       if (IndexReg == 0 && Disp == 0)
-        BuildMI(*MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
+        BuildMI(*MBB, IP, X86::MOV32rr, 1, TargetReg).addReg(BaseReg);
       else
-        addFullAddress(BuildMI(*MBB, IP, X86::LEAr32, 5, TargetReg),
+        addFullAddress(BuildMI(*MBB, IP, X86::LEA32r, 5, TargetReg),
                        BaseReg, Scale, IndexReg, Disp);
       --IP;
       TargetReg = NextTarget;
@@ -2543,10 +2543,10 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // all operands are consumed but the base pointer.  If so, just load it
       // into the register.
       if (GlobalValue *GV = dyn_cast<GlobalValue>(GEPOps[0])) {
-        BuildMI(*MBB, IP, X86::MOVri32, 1, TargetReg).addGlobalAddress(GV);
+        BuildMI(*MBB, IP, X86::MOV32ri, 1, TargetReg).addGlobalAddress(GV);
       } else {
         unsigned BaseReg = getReg(GEPOps[0], MBB, IP);
-        BuildMI(*MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
+        BuildMI(*MBB, IP, X86::MOV32rr, 1, TargetReg).addReg(BaseReg);
       }
       break;                // we are now done
 
@@ -2580,7 +2580,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
         if (!CSI->isNullValue()) {
           unsigned Offset = elementSize*CSI->getValue();
           unsigned Reg = makeAnotherReg(Type::UIntTy);
-          BuildMI(*MBB, IP, X86::ADDri32, 2, TargetReg)
+          BuildMI(*MBB, IP, X86::ADD32ri, 2, TargetReg)
                                 .addReg(Reg).addImm(Offset);
           --IP;            // Insert the next instruction before this one.
           TargetReg = Reg; // Codegen the rest of the GEP into this
@@ -2589,7 +2589,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
         // If the element size is 1, we don't have to multiply, just add
         unsigned idxReg = getReg(idx, MBB, IP);
         unsigned Reg = makeAnotherReg(Type::UIntTy);
-        BuildMI(*MBB, IP, X86::ADDrr32, 2,TargetReg).addReg(Reg).addReg(idxReg);
+        BuildMI(*MBB, IP, X86::ADD32rr, 2,TargetReg).addReg(Reg).addReg(idxReg);
         --IP;            // Insert the next instruction before this one.
         TargetReg = Reg; // Codegen the rest of the GEP into this
       } else {
@@ -2607,7 +2607,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
 
         // Emit an ADD to add OffsetReg to the basePtr.
         unsigned Reg = makeAnotherReg(Type::UIntTy);
-        BuildMI(*MBB, IP, X86::ADDrr32, 2, TargetReg)
+        BuildMI(*MBB, IP, X86::ADD32rr, 2, TargetReg)
                           .addReg(Reg).addReg(OffsetReg);
 
         // Step to the first instruction of the multiply.
@@ -2641,7 +2641,7 @@ void ISel::visitAllocaInst(AllocaInst &I) {
       
       // Create a new stack object using the frame manager...
       int FrameIdx = F->getFrameInfo()->CreateStackObject(TySize, Alignment);
-      addFrameReference(BuildMI(BB, X86::LEAr32, 5, getReg(I)), FrameIdx);
+      addFrameReference(BuildMI(BB, X86::LEA32r, 5, getReg(I)), FrameIdx);
       return;
     }
   }
@@ -2657,18 +2657,18 @@ void ISel::visitAllocaInst(AllocaInst &I) {
 
   // AddedSize = add <TotalSizeReg>, 15
   unsigned AddedSizeReg = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, X86::ADDri32, 2, AddedSizeReg).addReg(TotalSizeReg).addImm(15);
+  BuildMI(BB, X86::ADD32ri, 2, AddedSizeReg).addReg(TotalSizeReg).addImm(15);
 
   // AlignedSize = and <AddedSize>, ~15
   unsigned AlignedSize = makeAnotherReg(Type::UIntTy);
-  BuildMI(BB, X86::ANDri32, 2, AlignedSize).addReg(AddedSizeReg).addImm(~15);
+  BuildMI(BB, X86::AND32ri, 2, AlignedSize).addReg(AddedSizeReg).addImm(~15);
   
   // Subtract size from stack pointer, thereby allocating some space.
-  BuildMI(BB, X86::SUBrr32, 2, X86::ESP).addReg(X86::ESP).addReg(AlignedSize);
+  BuildMI(BB, X86::SUB32rr, 2, X86::ESP).addReg(X86::ESP).addReg(AlignedSize);
 
   // Put a pointer to the space into the result register, by copying
   // the stack pointer.
-  BuildMI(BB, X86::MOVrr32, 1, getReg(I)).addReg(X86::ESP);
+  BuildMI(BB, X86::MOV32rr, 1, getReg(I)).addReg(X86::ESP);
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.

@@ -62,9 +62,9 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
   MachineInstr *Next = (NextI != MBB.end()) ? &*NextI : (MachineInstr*)0;
   unsigned Size = 0;
   switch (MI->getOpcode()) {
-  case X86::MOVrr8:
-  case X86::MOVrr16:
-  case X86::MOVrr32:   // Destroy X = X copies...
+  case X86::MOV8rr:
+  case X86::MOV16rr:
+  case X86::MOV32rr:   // Destroy X = X copies...
     if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
       I = MBB.erase(I);
       return true;
@@ -75,7 +75,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     // immediate despite the fact that the operands are 16 or 32 bits.  Because
     // this can save three bytes of code size (and icache space), we want to
     // shrink them if possible.
-  case X86::IMULrri16: case X86::IMULrri32:
+  case X86::IMUL16rri: case X86::IMUL32rri:
     assert(MI->getNumOperands() == 3 && "These should all have 3 operands!");
     if (MI->getOperand(2).isImmediate()) {
       int Val = MI->getOperand(2).getImmedValue();
@@ -84,8 +84,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned Opcode;
         switch (MI->getOpcode()) {
         default: assert(0 && "Unknown opcode value!");
-        case X86::IMULrri16: Opcode = X86::IMULrri16b; break;
-        case X86::IMULrri32: Opcode = X86::IMULrri32b; break;
+        case X86::IMUL16rri: Opcode = X86::IMUL16rri8; break;
+        case X86::IMUL32rri: Opcode = X86::IMUL32rri8; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned R1 = MI->getOperand(1).getReg();
@@ -97,7 +97,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     return false;
 
 #if 0
-  case X86::IMULrmi16: case X86::IMULrmi32:
+  case X86::IMUL16rmi: case X86::IMUL32rmi:
     assert(MI->getNumOperands() == 6 && "These should all have 6 operands!");
     if (MI->getOperand(5).isImmediate()) {
       int Val = MI->getOperand(5).getImmedValue();
@@ -106,8 +106,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned Opcode;
         switch (MI->getOpcode()) {
         default: assert(0 && "Unknown opcode value!");
-        case X86::IMULrmi16: Opcode = X86::IMULrmi16b; break;
-        case X86::IMULrmi32: Opcode = X86::IMULrmi32b; break;
+        case X86::IMUL16rmi: Opcode = X86::IMUL16rmi8; break;
+        case X86::IMUL32rmi: Opcode = X86::IMUL32rmi8; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned R1 = MI->getOperand(1).getReg();
@@ -123,11 +123,11 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     return false;
 #endif
 
-  case X86::ADDri16:  case X86::ADDri32:
-  case X86::SUBri16:  case X86::SUBri32:
-  case X86::ANDri16:  case X86::ANDri32:
-  case X86::ORri16:   case X86::ORri32:
-  case X86::XORri16:  case X86::XORri32:
+  case X86::ADD16ri:  case X86::ADD32ri:
+  case X86::SUB16ri:  case X86::SUB32ri:
+  case X86::AND16ri:  case X86::AND32ri:
+  case X86::OR16ri:   case X86::OR32ri:
+  case X86::XOR16ri:  case X86::XOR32ri:
     assert(MI->getNumOperands() == 2 && "These should all have 2 operands!");
     if (MI->getOperand(1).isImmediate()) {
       int Val = MI->getOperand(1).getImmedValue();
@@ -136,16 +136,16 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned Opcode;
         switch (MI->getOpcode()) {
         default: assert(0 && "Unknown opcode value!");
-        case X86::ADDri16:  Opcode = X86::ADDri16b; break;
-        case X86::ADDri32:  Opcode = X86::ADDri32b; break;
-        case X86::SUBri16:  Opcode = X86::SUBri16b; break;
-        case X86::SUBri32:  Opcode = X86::SUBri32b; break;
-        case X86::ANDri16:  Opcode = X86::ANDri16b; break;
-        case X86::ANDri32:  Opcode = X86::ANDri32b; break;
-        case X86::ORri16:   Opcode = X86::ORri16b; break;
-        case X86::ORri32:   Opcode = X86::ORri32b; break;
-        case X86::XORri16:  Opcode = X86::XORri16b; break;
-        case X86::XORri32:  Opcode = X86::XORri32b; break;
+        case X86::ADD16ri:  Opcode = X86::ADD16ri8; break;
+        case X86::ADD32ri:  Opcode = X86::ADD32ri8; break;
+        case X86::SUB16ri:  Opcode = X86::SUB16ri8; break;
+        case X86::SUB32ri:  Opcode = X86::SUB32ri8; break;
+        case X86::AND16ri:  Opcode = X86::AND16ri8; break;
+        case X86::AND32ri:  Opcode = X86::AND32ri8; break;
+        case X86::OR16ri:   Opcode = X86::OR16ri8; break;
+        case X86::OR32ri:   Opcode = X86::OR32ri8; break;
+        case X86::XOR16ri:  Opcode = X86::XOR16ri8; break;
+        case X86::XOR32ri:  Opcode = X86::XOR32ri8; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         I = MBB.insert(MBB.erase(I),
@@ -156,11 +156,11 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     }
     return false;
 
-  case X86::ADDmi16:  case X86::ADDmi32:
-  case X86::SUBmi16:  case X86::SUBmi32:
-  case X86::ANDmi16:  case X86::ANDmi32:
-  case X86::ORmi16:  case X86::ORmi32:
-  case X86::XORmi16:  case X86::XORmi32:
+  case X86::ADD16mi:  case X86::ADD32mi:
+  case X86::SUB16mi:  case X86::SUB32mi:
+  case X86::AND16mi:  case X86::AND32mi:
+  case X86::OR16mi:  case X86::OR32mi:
+  case X86::XOR16mi:  case X86::XOR32mi:
     assert(MI->getNumOperands() == 5 && "These should all have 5 operands!");
     if (MI->getOperand(4).isImmediate()) {
       int Val = MI->getOperand(4).getImmedValue();
@@ -169,16 +169,16 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         unsigned Opcode;
         switch (MI->getOpcode()) {
         default: assert(0 && "Unknown opcode value!");
-        case X86::ADDmi16:  Opcode = X86::ADDmi16b; break;
-        case X86::ADDmi32:  Opcode = X86::ADDmi32b; break;
-        case X86::SUBmi16:  Opcode = X86::SUBmi16b; break;
-        case X86::SUBmi32:  Opcode = X86::SUBmi32b; break;
-        case X86::ANDmi16:  Opcode = X86::ANDmi16b; break;
-        case X86::ANDmi32:  Opcode = X86::ANDmi32b; break;
-        case X86::ORmi16:   Opcode = X86::ORmi16b; break;
-        case X86::ORmi32:   Opcode = X86::ORmi32b; break;
-        case X86::XORmi16:  Opcode = X86::XORmi16b; break;
-        case X86::XORmi32:  Opcode = X86::XORmi32b; break;
+        case X86::ADD16mi:  Opcode = X86::ADD16mi8; break;
+        case X86::ADD32mi:  Opcode = X86::ADD32mi8; break;
+        case X86::SUB16mi:  Opcode = X86::SUB16mi8; break;
+        case X86::SUB32mi:  Opcode = X86::SUB32mi8; break;
+        case X86::AND16mi:  Opcode = X86::AND16mi8; break;
+        case X86::AND32mi:  Opcode = X86::AND32mi8; break;
+        case X86::OR16mi:   Opcode = X86::OR16mi8; break;
+        case X86::OR32mi:   Opcode = X86::OR32mi8; break;
+        case X86::XOR16mi:  Opcode = X86::XOR16mi8; break;
+        case X86::XOR32mi:  Opcode = X86::XOR32mi8; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned Scale = MI->getOperand(1).getImmedValue();
@@ -193,15 +193,15 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     return false;
 
 #if 0
-  case X86::MOVri32: Size++;
-  case X86::MOVri16: Size++;
-  case X86::MOVri8:
+  case X86::MOV32ri: Size++;
+  case X86::MOV16ri: Size++;
+  case X86::MOV8ri:
     // FIXME: We can only do this transformation if we know that flags are not
     // used here, because XOR clobbers the flags!
     if (MI->getOperand(1).isImmediate()) {         // avoid mov EAX, <value>
       int Val = MI->getOperand(1).getImmedValue();
       if (Val == 0) {                              // mov EAX, 0 -> xor EAX, EAX
-	static const unsigned Opcode[] ={X86::XORrr8,X86::XORrr16,X86::XORrr32};
+	static const unsigned Opcode[] ={X86::XOR8rr,X86::XOR16rr,X86::XOR32rr};
 	unsigned Reg = MI->getOperand(0).getReg();
 	I = MBB.insert(MBB.erase(I),
                        BuildMI(Opcode[Size], 2, Reg).addReg(Reg).addReg(Reg));
@@ -212,8 +212,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     }
     return false;
 #endif
-  case X86::BSWAPr32:        // Change bswap EAX, bswap EAX into nothing
-    if (Next->getOpcode() == X86::BSWAPr32 &&
+  case X86::BSWAP32r:        // Change bswap EAX, bswap EAX into nothing
+    if (Next->getOpcode() == X86::BSWAP32r &&
 	MI->getOperand(0).getReg() == Next->getOperand(0).getReg()) {
       I = MBB.erase(MBB.erase(I));
       return true;
@@ -387,7 +387,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
   // Attempt to fold instructions used by the base register into the instruction
   if (MachineInstr *DefInst = getDefiningInst(BaseRegOp)) {
     switch (DefInst->getOpcode()) {
-    case X86::MOVri32:
+    case X86::MOV32ri:
       // If there is no displacement set for this instruction set one now.
       // FIXME: If we can fold two immediates together, we should do so!
       if (DisplacementOp.isImmediate() && !DisplacementOp.getImmedValue()) {
@@ -398,7 +398,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
       }
       break;
 
-    case X86::ADDrr32:
+    case X86::ADD32rr:
       // If the source is a register-register add, and we do not yet have an
       // index register, fold the add into the memory address.
       if (IndexReg == 0) {
@@ -409,7 +409,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
       }
       break;
 
-    case X86::SHLri32:
+    case X86::SHL32ri:
       // If this shift could be folded into the index portion of the address if
       // it were the index register, move it to the index register operand now,
       // so it will be folded in below.
@@ -427,7 +427,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
   // Attempt to fold instructions used by the index into the instruction
   if (MachineInstr *DefInst = getDefiningInst(IndexRegOp)) {
     switch (DefInst->getOpcode()) {
-    case X86::SHLri32: {
+    case X86::SHL32ri: {
       // Figure out what the resulting scale would be if we folded this shift.
       unsigned ResScale = Scale * (1 << DefInst->getOperand(2).getImmedValue());
       if (isValidScaleAmount(ResScale)) {
@@ -478,15 +478,15 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
   switch (MI->getOpcode()) {
 
     // Register to memory stores.  Format: <base,scale,indexreg,immdisp>, srcreg
-  case X86::MOVmr32: case X86::MOVmr16: case X86::MOVmr8:
-  case X86::MOVmi32: case X86::MOVmi16: case X86::MOVmi8:
+  case X86::MOV32mr: case X86::MOV16mr: case X86::MOV8mr:
+  case X86::MOV32mi: case X86::MOV16mi: case X86::MOV8mi:
     // Check to see if we can fold the source instruction into this one...
     if (MachineInstr *SrcInst = getDefiningInst(MI->getOperand(4))) {
       switch (SrcInst->getOpcode()) {
         // Fold the immediate value into the store, if possible.
-      case X86::MOVri8:  return Propagate(MI, 4, SrcInst, 1, X86::MOVmi8);
-      case X86::MOVri16: return Propagate(MI, 4, SrcInst, 1, X86::MOVmi16);
-      case X86::MOVri32: return Propagate(MI, 4, SrcInst, 1, X86::MOVmi32);
+      case X86::MOV8ri:  return Propagate(MI, 4, SrcInst, 1, X86::MOV8mi);
+      case X86::MOV16ri: return Propagate(MI, 4, SrcInst, 1, X86::MOV16mi);
+      case X86::MOV32ri: return Propagate(MI, 4, SrcInst, 1, X86::MOV32mi);
       default: break;
       }
     }
@@ -496,9 +496,9 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
       return true;
     break;
 
-  case X86::MOVrm32:
-  case X86::MOVrm16:
-  case X86::MOVrm8:
+  case X86::MOV32rm:
+  case X86::MOV16rm:
+  case X86::MOV8rm:
     // If we can optimize the addressing expression, do so now.
     if (OptimizeAddress(MI, 1))
       return true;

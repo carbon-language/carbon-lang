@@ -772,7 +772,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // is misassembled by gas in intel_syntax mode as its 32-bit
     // equivalent "fstp DWORD PTR [...]". Workaround: Output the raw
     // opcode bytes instead of the instruction.
-    if (MI->getOpcode() == X86::FSTPm80) {
+    if (MI->getOpcode() == X86::FSTP80m) {
       if ((MI->getOperand(0).getReg() == X86::ESP)
 	  && (MI->getOperand(1).getImmedValue() == 1)) {
         if (Op3.isImmediate() && 
@@ -793,7 +793,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // misassembled by gas in intel_syntax mode as its 32-bit
     // equivalent "fld DWORD PTR [...]". Workaround: Output the raw
     // opcode bytes instead of the instruction.
-    if (MI->getOpcode() == X86::FLDm80 &&
+    if (MI->getOpcode() == X86::FLD80m &&
         MI->getOperand(0).getReg() == X86::ESP &&
         MI->getOperand(1).getImmedValue() == 1) {
       if (Op3.isImmediate() && Op3.getImmedValue() >= -128 &&
@@ -813,7 +813,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // 64 bit modes." libopcodes disassembles it as "fild DWORD PTR
     // [...]", which is wrong. Workaround: Output the raw opcode bytes
     // instead of the instruction.
-    if (MI->getOpcode() == X86::FILDm64 &&
+    if (MI->getOpcode() == X86::FILD64m &&
         MI->getOperand(0).getReg() == X86::ESP &&
         MI->getOperand(1).getImmedValue() == 1) {
       if (Op3.isImmediate() && Op3.getImmedValue() >= -128 &&
@@ -834,7 +834,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // "fistpll DWORD PTR [...]", which is wrong. Workaround: Output
     // "fistpll DWORD PTR " instead, which is what libopcodes is
     // expecting to see.
-    if (MI->getOpcode() == X86::FISTPm64) {
+    if (MI->getOpcode() == X86::FISTP64m) {
       O << "fistpll DWORD PTR ";
       printMemReference(MI, 0);
       if (MI->getNumOperands() == 5) {
