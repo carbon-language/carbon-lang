@@ -1,4 +1,4 @@
-##===- runtime/GCCLibraries/libgcc/Makefile ------------------------------*- Makefile -*-===##
+##===- runtime/GCCLibraries/libgcc/Makefile ----------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #

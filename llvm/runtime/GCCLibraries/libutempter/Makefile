@@ -1,4 +1,4 @@
-##===- runtime/GCCLibraries/libutempter/Makefile ------------------------------*- Makefile -*-===##
+##===- runtime/GCCLibraries/libutempter/Makefile -----------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
