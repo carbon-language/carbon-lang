@@ -136,6 +136,11 @@ public:
     return SubclassID;
   }
 
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Value *V) {
+    return true; // Values are always values.
+  }
+
 private:
   /// FIXME: this is a gross hack, needed by another gross hack.  Eliminate!
   void setValueType(unsigned VT) { SubclassID = VT; }
