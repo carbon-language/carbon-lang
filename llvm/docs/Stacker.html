@@ -1374,11 +1374,6 @@ interested, here are some things that could be implemented better:</p>
     <li>Write an LLVM pass to compute the correct stack depth needed by the
     program. Currently the stack is set to a fixed number which means programs
     with large numbers of definitions might fail.</li>
-    <li>Enhance to run on 64-bit platforms like SPARC. Right now the size of a
-    pointer on 64-bit machines will cause incorrect results because of the
-    32-bit size of a stack element currently supported. This feature was not
-    implemented because LLVM needs a union type to be able to support the
-    different sizes correctly (portably and efficiently).</li>
     <li>Write an LLVM pass to optimize the use of the global stack. The code
     emitted currently is somewhat wasteful. It gets cleaned up a lot by existing
     passes but more could be done.</li>
