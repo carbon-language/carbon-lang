@@ -41,7 +41,7 @@ namespace {
                                       "Live Interval Analysis");
 
     Statistic<> numIntervals("liveintervals", "Number of intervals");
-    Statistic<> numJoined   ("liveintervals", "Number of intervals joined");
+    Statistic<> numJoined   ("liveintervals", "Number of joined intervals");
 
     cl::opt<bool>
     join("join-liveintervals",
