@@ -117,7 +117,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
           // If we inlined the last possible call site to the function,
           // delete the function body now.
           if (Callee->use_empty() && Callee != Caller &&
-              (Callee->hasInternalLinkage() || Callee->hasLinkOnceLinkage())) {
+              Callee->hasInternalLinkage()) {
             DEBUG(std::cerr << "    -> Deleting dead function: "
                             << Callee->getName() << "\n");
             SCCFunctions.erase(Callee);    // Remove function from this SCC.
@@ -125,12 +125,6 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
             // Remove any call graph edges from the callee to its callees.
             while (CalleeNode->begin() != CalleeNode->end())
               CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
-
-            // If the function has external linkage (basically if it's a
-            // linkonce function) remove the edge from the external node to the
-            // callee node.
-            if (!Callee->hasInternalLinkage())
-              CG.getExternalCallingNode()->removeCallEdgeTo(CalleeNode);
 
             // Removing the node for callee from the call graph and delete it.
             delete CG.removeFunctionFromModule(CalleeNode);
@@ -145,3 +139,30 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   return Changed;
 }
 
+// doFinalization - Remove now-dead linkonce functions at the end of
+// processing to avoid breaking the SCC traversal.
+bool Inliner::doFinalization(CallGraph &CG) {
+  bool Changed = false;
+  for (CallGraph::iterator I = CG.begin(), E = CG.end(); I != E; ) {
+    CallGraphNode *CGN = (++I)->second;
+    Function *F = CGN ? CGN->getFunction() : 0;
+    if (F && (F->hasLinkOnceLinkage() || F->hasInternalLinkage()) &&
+        F->use_empty()) {
+      // Remove any call graph edges from the callee to its callees.
+      while (CGN->begin() != CGN->end())
+        CGN->removeCallEdgeTo(*(CGN->end()-1));
+      
+      // If the function has external linkage (basically if it's a
+      // linkonce function) remove the edge from the external node to the
+      // callee node.
+      if (!F->hasInternalLinkage())
+        CG.getExternalCallingNode()->removeCallEdgeTo(CGN);
+      
+      // Removing the node for callee from the call graph and delete it.
+      delete CG.removeFunctionFromModule(CGN);
+      ++NumDeleted;
+      Changed = true;
+    }
+  }
+  return Changed;
+}

@@ -35,6 +35,11 @@ struct Inliner : public CallGraphSCCPass {
   // Pass class.
   virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
 
+  // doFinalization - Remove now-dead linkonce functions at the end of
+  // processing to avoid breaking the SCC traversal.
+  virtual bool doFinalization(CallGraph &CG);
+
+
   /// This method returns the value specified by the -inline-threshold value,
   /// specified on the command line.  This is typically not directly needed.
   ///
