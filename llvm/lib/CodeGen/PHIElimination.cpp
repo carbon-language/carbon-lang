@@ -76,8 +76,9 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     // into the phi node destination.
     //
     MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
-    if (AfterPHIsIt != MBB.end())
-      while ((*AfterPHIsIt)->getOpcode() == TargetInstrInfo::PHI) ++AfterPHIsIt;
+    while (AfterPHIsIt != MBB.end() &&
+           (*AfterPHIsIt)->getOpcode() == TargetInstrInfo::PHI)
+      ++AfterPHIsIt;    // Skip over all of the PHI nodes...
     RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC);
     
     // Update live variable information if there is any...
