@@ -25,7 +25,8 @@ class TargetMachine;
 // allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the Sparc backend.
 //
-TargetMachine *allocateSparcTargetMachine();
+TargetMachine *allocateSparcTargetMachine(unsigned Configuration =
+                                          TM::PtrSize64|TM::BigEndian);
 
 // allocateX86TargetMachine - Allocate and return a subclass of TargetMachine
 // that implements the X86 backend.  The X86 target machine can run in
@@ -33,6 +34,6 @@ TargetMachine *allocateSparcTargetMachine();
 // size and different endianness if desired.
 //
 TargetMachine *allocateX86TargetMachine(unsigned Configuration =
-					   TM::PtrSize32|TM::LittleEndian);
+                                        TM::PtrSize32|TM::LittleEndian);
 
 #endif
