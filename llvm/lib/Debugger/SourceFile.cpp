@@ -12,11 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Debugger/SourceFile.h"
-#include "llvm/Support/SlowOperationInformer.h"
-#include <iostream>
-#include <cerrno>
-#include <fcntl.h>
-#include <unistd.h>
 using namespace llvm;
 
 /// readFile - Load Filename 
@@ -75,4 +70,3 @@ void SourceFile::getSourceLine(unsigned LineNo, const char *&LineStart,
 
   assert(LineEnd >= LineStart && "We somehow got our pointers swizzled!");
 }
- 
