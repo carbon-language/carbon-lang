@@ -407,10 +407,10 @@ dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 
 dnl dlopen() is required for plugin support.
-AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1]),AC_MSG_WARN([dlopen() not found - disabling plugin support]))
+AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],[Define if dlopen() is available on this platform.]),AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
 dnl mallinfo is optional; the code can compile (minus features) without it
-AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1]))
+AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],[Define if mallinfo() is available on this platform.]))
 
 dnl
 dnl The math libraries are used by the test code, but not by the actual LLVM
@@ -449,7 +449,7 @@ AC_C_CONST
 AC_C_INLINE
 
 dnl Check for machine endian-ness
-AC_C_BIGENDIAN(AC_DEFINE([ENDIAN_BIG]),AC_DEFINE(ENDIAN_LITTLE))
+AC_C_BIGENDIAN(AC_DEFINE([ENDIAN_BIG],[],[Define if the machine is Big-Endian]),AC_DEFINE([ENDIAN_LITTLE],[],[Define if the machine is Little-Endian]))
 
 dnl Check for types
 AC_TYPE_PID_T
@@ -481,7 +481,11 @@ then
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll)
+AC_CHECK_FUNCS(getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll strsignal)
+AC_CHECK_DECLS([sys_siglist],[],[],[
+#if HAVE_SIGNAL_H
+#include <signal.h>
+#endif])
 
 dnl
 dnl Need to check mmap for MAP_PRIVATE, MAP_ANONYMOUS, MAP_ANON, MAP_FIXED
