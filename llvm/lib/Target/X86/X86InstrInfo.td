@@ -311,8 +311,8 @@ def ADDmi32  : I2A32<"add", 0x81, MRM0m     >;         // [mem32] += I32
 
 def ADDri16b : I2A8 <"add", 0x83, MRM0r     >, OpSize;   // ADDri with sign extended 8 bit imm
 def ADDri32b : I2A8 <"add", 0x83, MRM0r     >;
-def ADDmi16b : I2A8 <"add", 0x83, MRM0m     >, OpSize; // [mem16] += I8
-def ADDmi32b : I2A8 <"add", 0x83, MRM0m     >;         // [mem32] += I8
+// def ADDmi16b : I2A8 <"add", 0x83, MRM0m     >, OpSize; // [mem16] += I8
+// def ADDmi32b : I2A8 <"add", 0x83, MRM0m     >;         // [mem32] += I8
 
 def ADCrr32  : I2A32<"adc", 0x11, MRMDestReg>;         // R32 += R32+Carry
 def ADCrm32  : I2A32<"adc", 0x11, MRMSrcMem >;         // R32 += [mem32]+Carry
@@ -337,8 +337,8 @@ def SUBmi32  : I2A32<"sub", 0x81, MRM5m     >;         // [mem32] -= I32
 
 def SUBri16b : I2A8 <"sub", 0x83, MRM5r     >, OpSize;
 def SUBri32b : I2A8 <"sub", 0x83, MRM5r     >;
-def SUBmi16b : I2A8 <"sub", 0x83, MRM5m     >, OpSize; // [mem16] -= I8
-def SUBmi32b : I2A8 <"sub", 0x83, MRM5m     >;         // [mem32] -= I8
+// def SUBmi16b : I2A8 <"sub", 0x83, MRM5m     >, OpSize; // [mem16] -= I8
+// def SUBmi32b : I2A8 <"sub", 0x83, MRM5m     >;         // [mem32] -= I8
 
 def SBBrr32  : I2A32<"sbb", 0x19, MRMDestReg>;         // R32 -= R32+Borrow
 def SBBrm32  : I2A32<"sbb", 0x19, MRMSrcMem >;         // R32 -= [mem32]+Borrow
@@ -357,8 +357,8 @@ def IMULrri16b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8 >,     OpSize;  // R16 = 
 def IMULrri32b : X86Inst<"imul", 0x6B, MRMSrcReg, Arg8 >;              // R32 = R32*I8
 def IMULrmi16  : X86Inst<"imul", 0x69, MRMSrcMem, Arg16>,     OpSize;  // R16 = [mem16]*I16
 def IMULrmi32  : X86Inst<"imul", 0x69, MRMSrcMem, Arg32>;              // R32 = [mem32]*I32
-def IMULrmi16b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >,     OpSize;  // R16 = [mem16]*I8
-def IMULrmi32b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >;              // R32 = [mem32]*I8
+// def IMULrmi16b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >,     OpSize;  // R16 = [mem16]*I8
+// def IMULrmi32b : X86Inst<"imul", 0x6B, MRMSrcMem, Arg8 >;              // R32 = [mem32]*I8
 
 
 
@@ -382,8 +382,8 @@ def ANDmi32  : I2A32<"and", 0x81, MRM4m     >;            // [mem32] &= imm32
 
 def ANDri16b : I2A8 <"and", 0x83, MRM4r     >, OpSize;    // R16 &= imm8
 def ANDri32b : I2A8 <"and", 0x83, MRM4r     >;            // R32 &= imm8
-def ANDmi16b : I2A8 <"and", 0x83, MRM4m     >, OpSize;    // [mem16] &= imm8
-def ANDmi32b : I2A8 <"and", 0x83, MRM4m     >;            // [mem32] &= imm8
+// def ANDmi16b : I2A8 <"and", 0x83, MRM4m     >, OpSize;    // [mem16] &= imm8
+// def ANDmi32b : I2A8 <"and", 0x83, MRM4m     >;            // [mem32] &= imm8
 
 
 
@@ -407,8 +407,8 @@ def ORmi32   : I2A32<"or" , 0x81, MRM1m     >;            // [mem32] |= imm32
 
 def ORri16b  : I2A8 <"or" , 0x83, MRM1r     >, OpSize;    // R16 |= imm8
 def ORri32b  : I2A8 <"or" , 0x83, MRM1r     >;            // R32 |= imm8
-def ORmi16b  : I2A8 <"or" , 0x83, MRM1m     >, OpSize;    // [mem16] |= imm8
-def ORmi32b  : I2A8 <"or" , 0x83, MRM1m     >;            // [mem32] |= imm8
+// def ORmi16b  : I2A8 <"or" , 0x83, MRM1m     >, OpSize;    // [mem16] |= imm8
+// def ORmi32b  : I2A8 <"or" , 0x83, MRM1m     >;            // [mem32] |= imm8
 
 
 def XORrr8   : I2A8 <"xor", 0x30, MRMDestReg>,         Pattern<(set R8 , (xor R8 , R8 ))>;
@@ -430,8 +430,8 @@ def XORmi32  : I2A32<"xor", 0x81, MRM6m     >;            // [mem32] ^= R32
 
 def XORri16b : I2A8 <"xor", 0x83, MRM6r     >, OpSize;    // R16 ^= imm8
 def XORri32b : I2A8 <"xor", 0x83, MRM6r     >;            // R32 ^= imm8
-def XORmi16b : I2A8 <"xor", 0x83, MRM6m     >, OpSize;    // [mem16] ^= imm8
-def XORmi32b : I2A8 <"xor", 0x83, MRM6m     >;            // [mem32] ^= imm8
+// def XORmi16b : I2A8 <"xor", 0x83, MRM6m     >, OpSize;    // [mem16] ^= imm8
+// def XORmi32b : I2A8 <"xor", 0x83, MRM6m     >;            // [mem32] ^= imm8
 
 // Test instructions are just like AND, except they don't generate a result.
 def TESTrr8  : X86Inst<"test", 0x84, MRMDestReg, Arg8 >;          // flags = R8  & R8
@@ -464,9 +464,9 @@ def SHLmCL32 : I2A32<"shl", 0xD3, MRM4m     >        , UsesCL; // [mem32] <<= cl
 def SHLri8   : I2A8 <"shl", 0xC0, MRM4r     >;                 // R8  <<= imm8
 def SHLri16  : I2A8 <"shl", 0xC1, MRM4r     >, OpSize;         // R16 <<= imm8
 def SHLri32  : I2A8 <"shl", 0xC1, MRM4r     >;                 // R32 <<= imm8
-def SHLmi8   : I2A8 <"shl", 0xC0, MRM4m     >;                 // [mem8]  <<= imm8
-def SHLmi16  : I2A8 <"shl", 0xC1, MRM4m     >, OpSize;         // [mem16] <<= imm8
-def SHLmi32  : I2A8 <"shl", 0xC1, MRM4m     >;                 // [mem32] <<= imm8
+// def SHLmi8   : I2A8 <"shl", 0xC0, MRM4m     >;                 // [mem8]  <<= imm8
+// def SHLmi16  : I2A8 <"shl", 0xC1, MRM4m     >, OpSize;         // [mem16] <<= imm8
+// def SHLmi32  : I2A8 <"shl", 0xC1, MRM4m     >;                 // [mem32] <<= imm8
 
 def SHRrCL8  : I2A8 <"shr", 0xD2, MRM5r     >        , UsesCL; // R8  >>= cl
 def SHRrCL16 : I2A16<"shr", 0xD3, MRM5r     >, OpSize, UsesCL; // R16 >>= cl
@@ -478,9 +478,9 @@ def SHRmCL32 : I2A32<"shr", 0xD3, MRM5m     >        , UsesCL; // [mem32] >>= cl
 def SHRri8   : I2A8 <"shr", 0xC0, MRM5r     >;                 // R8  >>= imm8
 def SHRri16  : I2A8 <"shr", 0xC1, MRM5r     >, OpSize;         // R16 >>= imm8
 def SHRri32  : I2A8 <"shr", 0xC1, MRM5r     >;                 // R32 >>= imm8
-def SHRmi8   : I2A8 <"shr", 0xC0, MRM5m     >;                 // [mem8]  >>= imm8
-def SHRmi16  : I2A8 <"shr", 0xC1, MRM5m     >, OpSize;         // [mem16] >>= imm8
-def SHRmi32  : I2A8 <"shr", 0xC1, MRM5m     >;                 // [mem32] >>= imm8
+// def SHRmi8   : I2A8 <"shr", 0xC0, MRM5m     >;                 // [mem8]  >>= imm8
+// def SHRmi16  : I2A8 <"shr", 0xC1, MRM5m     >, OpSize;         // [mem16] >>= imm8
+// def SHRmi32  : I2A8 <"shr", 0xC1, MRM5m     >;                 // [mem32] >>= imm8
 
 def SARrCL8  : I2A8 <"sar", 0xD2, MRM7r     >        , UsesCL; // R8  >>>= cl
 def SARrCL16 : I2A16<"sar", 0xD3, MRM7r     >, OpSize, UsesCL; // R16 >>>= cl
@@ -492,19 +492,19 @@ def SARmCL32 : I2A32<"sar", 0xD3, MRM7m     >        , UsesCL; // [mem32] >>>= c
 def SARri8   : I2A8 <"sar", 0xC0, MRM7r     >;                 // R8  >>>= imm8
 def SARri16  : I2A8 <"sar", 0xC1, MRM7r     >, OpSize;         // R16 >>>= imm8
 def SARri32  : I2A8 <"sar", 0xC1, MRM7r     >;                 // R32 >>>= imm8
-def SARmi8   : I2A8 <"sar", 0xC0, MRM7m     >;                 // [mem8]  >>>= imm8
-def SARmi16  : I2A8 <"sar", 0xC1, MRM7m     >, OpSize;         // [mem16] >>>= imm8
-def SARmi32  : I2A8 <"sar", 0xC1, MRM7m     >;                 // [mem32] >>>= imm8
+// def SARmi8   : I2A8 <"sar", 0xC0, MRM7m     >;                 // [mem8]  >>>= imm8
+// def SARmi16  : I2A8 <"sar", 0xC1, MRM7m     >, OpSize;         // [mem16] >>>= imm8
+// def SARmi32  : I2A8 <"sar", 0xC1, MRM7m     >;                 // [mem32] >>>= imm8
 
 def SHLDrrCL32 : I2A32<"shld", 0xA5, MRMDestReg>, TB, UsesCL;   // R32 <<= R32,R32 cl
 def SHLDmrCL32 : I2A32<"shld", 0xA5, MRMDestMem>, TB, UsesCL;   // [mem32] <<= [mem32],R32 cl
 def SHLDrri32  : I2A8 <"shld", 0xA4, MRMDestReg>, TB;           // R32 <<= R32,R32 imm8
-def SHLDmri32  : I2A8 <"shld", 0xA4, MRMDestMem>, TB;           // [mem32] <<= [mem32],R32 imm8
+// def SHLDmri32  : I2A8 <"shld", 0xA4, MRMDestMem>, TB;           // [mem32] <<= [mem32],R32 imm8
 
 def SHRDrrCL32 : I2A32<"shrd", 0xAD, MRMDestReg>, TB, UsesCL;   // R32 >>= R32,R32 cl
 def SHRDmrCL32 : I2A32<"shrd", 0xAD, MRMDestMem>, TB, UsesCL;   // [mem32] >>= [mem32],R32 cl
 def SHRDrri32  : I2A8 <"shrd", 0xAC, MRMDestReg>, TB;           // R32 >>= R32,R32 imm8
-def SHRDmri32  : I2A8 <"shrd", 0xAC, MRMDestMem>, TB;           // [mem32] >>= [mem32],R32 imm8
+// def SHRDmri32  : I2A8 <"shrd", 0xAC, MRMDestMem>, TB;           // [mem32] >>= [mem32],R32 imm8
 
 // Condition code ops, incl. set if equal/not equal/...
 def SAHF     : X86Inst<"sahf" , 0x9E, RawFrm, Arg8>, Imp<[AH],[]>;  // flags = AH

@@ -156,7 +156,10 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     }
     return false;
 
-
+// FIXME: The printer currently does not play well with instructions
+// that have immediates and memory operands with size mismatches so
+// the following are disabled.
+#if 0
   case X86::ADDmi16:  case X86::ADDmi32:
   case X86::SUBmi16:  case X86::SUBmi32:
   case X86::ANDmi16:  case X86::ANDmi32:
@@ -192,6 +195,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
       }
     }
     return false;
+#endif
 
 #if 0
   case X86::MOVri32: Size++;
