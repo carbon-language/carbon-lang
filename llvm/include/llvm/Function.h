@@ -87,6 +87,16 @@ public:
   ///
   virtual bool isExternal() const { return BasicBlocks.empty(); }
 
+  /// getIntrinsicID - This method returns the ID number of the specified
+  /// function, or LLVMIntrinsic::not_intrinsic if the function is not an
+  /// instrinsic, or if the pointer is null.  This value is always defined to be
+  /// zero to allow easy checking for whether a function is intrinsic or not.
+  /// The particular intrinsic functions which correspond to this value are
+  /// defined in llvm/Intrinsics.h.
+  ///
+  unsigned getIntrinsicID() const;
+  bool isIntrinsic() const { return getIntrinsicID() != 0; }
+
   // getNext/Prev - Return the next or previous function in the list.  These
   // methods should never be used directly, and are only used to implement the
   // function list as part of the module.
