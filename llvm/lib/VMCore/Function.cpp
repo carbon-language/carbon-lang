@@ -253,6 +253,9 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.memmove")  return Intrinsic::memmove;
     if (getName() == "llvm.memset")  return Intrinsic::memset;
     break;
+  case 'p':
+    if (getName() == "llvm.prefetch")  return Intrinsic::prefetch; 
+    break;
   case 'r':
     if (getName() == "llvm.returnaddress")  return Intrinsic::returnaddress;
     if (getName() == "llvm.readport")       return Intrinsic::readport;
