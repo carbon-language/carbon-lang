@@ -6,8 +6,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
+#ifndef _POSIX_MAPPED_FILES
+#define _POSIX_MAPPED_FILES
+#endif
 #include "VM.h"
-#include "Config/sys/mman.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -15,6 +17,8 @@
 #include "llvm/Module.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Config/unistd.h"
+#include "Config/sys/mman.h"
 #include <stdio.h>
 
 namespace {
@@ -40,12 +44,6 @@ namespace {
     inline void endFunctionBody(unsigned char *FunctionEnd);    
   };
 }
-
-#ifndef _POSIX_MAPPED_FILES
-#define _POSIX_MAPPED_FILES
-#endif
-#include <unistd.h>
-#include <sys/mman.h>
 
 // getMemory - Return a pointer to the specified number of bytes, which is
 // mapped as executable readable and writable.
