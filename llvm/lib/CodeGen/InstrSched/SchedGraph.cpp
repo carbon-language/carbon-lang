@@ -12,12 +12,6 @@
  *	7/20/01	 -  Vikram Adve  -  Created
  ***************************************************************************/
 
-//************************** System Include Files **************************/
-
-#include <algorithm>
-
-//*************************** User Include Files ***************************/
-
 #include "llvm/InstrTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
@@ -25,6 +19,8 @@
 #include "llvm/CodeGen/SchedGraph.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/TargetMachine.h"
+#include "llvm/Support/StringExtras.h"
+#include <algorithm>
 
 //************************* Class Implementations **************************/
 
@@ -102,6 +98,10 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNode* _src,
   sink->addInEdge(this);
 }
 
+void SchedGraphEdge::dump(int indent=0) const {
+  printIndent(indent); cout << *this; 
+}
+
 
 // 
 // class SchedGraphNode
@@ -133,6 +133,10 @@ SchedGraphNode::~SchedGraphNode()
   // a node deletes its outgoing edges only
   for (unsigned i=0, N=outEdges.size(); i < N; i++)
     delete outEdges[i];
+}
+
+void SchedGraphNode::dump(int indent=0) const {
+  printIndent(indent); cout << *this; 
 }
 
 
