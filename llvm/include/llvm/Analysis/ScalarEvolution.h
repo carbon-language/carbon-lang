@@ -44,14 +44,8 @@ namespace llvm {
     friend class SCEVHandle;
     void addRef() { ++RefCount; }
     void dropRef() {
-      if (--RefCount == 0) {
-#if 0
-        std::cerr << "DELETING: " << this << ": ";
-        print(std::cerr);
-        std::cerr << "\n";
-#endif
+      if (--RefCount == 0)
         delete this;
-      }
     }
 
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
