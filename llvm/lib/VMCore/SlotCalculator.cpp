@@ -287,20 +287,28 @@ int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
     SC_DEBUG("  Inserted type: " << TheTy->getDescription() << " slot=" <<
              ResultSlot << "\n");
 
-    // Loop over any contained types in the definition... in depth first order.
+    // Loop over any contained types in the definition... in reverse depth
+    // first order.
     //
+    std::vector<const Type*> DfsOrder;
     for (df_iterator<const Type*> I = df_begin(TheTy), E = df_end(TheTy);
-         I != E; ++I)
+         I != E; ++I) {
       if (*I != TheTy) {
 	// If we haven't seen this sub type before, add it to our type table!
-	const Type *SubTy = *I;
-	if (getSlot(SubTy) == -1) {
-	  SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
-	  int Slot = doInsertValue(SubTy);
-	  SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
-		   " slot=" << Slot << "\n");
-	}
+	DfsOrder.push_back(*I);
       }
+    }
+
+    for (std::vector<const Type*>::const_reverse_iterator
+             I = DfsOrder.rbegin(), E = DfsOrder.rend(); I != E; ++I) {
+        const Type *SubTy = *I;
+      if (getSlot(SubTy) == -1) {
+	SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
+        int Slot = doInsertValue(SubTy);
+        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
+                 " slot=" << Slot << "\n");
+      }
+    }
     return ResultSlot;
   }
 
