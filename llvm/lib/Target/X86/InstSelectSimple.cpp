@@ -567,23 +567,22 @@ void ISel::SelectPHINodes() {
   const Function &LF = *F->getFunction();  // The LLVM function...
   for (Function::const_iterator I = LF.begin(), E = LF.end(); I != E; ++I) {
     const BasicBlock *BB = I;
-    MachineBasicBlock *MBB = MBBMap[I];
+    MachineBasicBlock &MBB = *MBBMap[I];
 
     // Loop over all of the PHI nodes in the LLVM basic block...
-    MachineBasicBlock::iterator instr = MBB->begin();
+    MachineBasicBlock::iterator PHIInsertPoint = MBB.begin();
     for (BasicBlock::const_iterator I = BB->begin();
          PHINode *PN = const_cast<PHINode*>(dyn_cast<PHINode>(I)); ++I) {
 
       // Create a new machine instr PHI node, and insert it.
       unsigned PHIReg = getReg(*PN);
-      MachineInstr *PhiMI = BuildMI(X86::PHI, PN->getNumOperands(), PHIReg);
-      MBB->insert(instr, PhiMI);
+      MachineInstr *PhiMI = BuildMI(MBB, PHIInsertPoint,
+                                    X86::PHI, PN->getNumOperands(), PHIReg);
 
       MachineInstr *LongPhiMI = 0;
-      if (PN->getType() == Type::LongTy || PN->getType() == Type::ULongTy) {
-        LongPhiMI = BuildMI(X86::PHI, PN->getNumOperands(), PHIReg+1);
-        MBB->insert(instr, LongPhiMI);
-      }
+      if (PN->getType() == Type::LongTy || PN->getType() == Type::ULongTy)
+        LongPhiMI = BuildMI(MBB, PHIInsertPoint,
+                            X86::PHI, PN->getNumOperands(), PHIReg+1);
 
       // PHIValues - Map of blocks to incoming virtual registers.  We use this
       // so that we only initialize one incoming value for a particular block,
@@ -636,6 +635,13 @@ void ISel::SelectPHINodes() {
           LongPhiMI->addMachineBasicBlockOperand(PredMBB);
         }
       }
+
+      // Now that we emitted all of the incoming values for the PHI node, make
+      // sure to reposition the InsertPoint after the PHI that we just added.
+      // This is needed because we might have inserted a constant into this
+      // block, right after the PHI's which is before the old insert point!
+      PHIInsertPoint = LongPhiMI ? LongPhiMI : PhiMI;
+      ++PHIInsertPoint;
     }
   }
 }
