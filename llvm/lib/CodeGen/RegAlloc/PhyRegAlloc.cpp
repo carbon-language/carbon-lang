@@ -547,7 +547,7 @@ void PhyRegAlloc::updateInstruction(MachineInstr* MInst, BasicBlock* BB)
         {
           const Value* Val = Op.getVRegValue();
           if (const LiveRange *LR = LRI.getLiveRangeForValue(Val))
-            if (! LR->hasColor())
+            if (LR->isMarkedForSpill())
               insertCode4SpilledLR(LR, MInst, BB, OpNum);
         }
     } // for each operand
@@ -710,10 +710,12 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   vector<MachineInstr*> MIBef, MIAft;
   vector<MachineInstr*> AdIMid;
   
-  // Choose a register to hold the spilled value.  This may insert code
-  // before and after MInst to free up the value.  If so, this code should
-  // be first and last in the spill sequence before/after MInst.
-  int TmpRegU = getUsableUniRegAtMI(RegType, &LVSetBef, MInst, MIBef, MIAft);
+  // Choose a register to hold the spilled value, if one was not preallocated.
+  // This may insert code before and after MInst to free up the value.  If so,
+  // this code should be first/last in the spill sequence before/after MInst.
+  int TmpRegU=(LR->hasColor()
+               ? MRI.getUnifiedRegNum(LR->getRegClass()->getID(),LR->getColor())
+               : getUsableUniRegAtMI(RegType, &LVSetBef, MInst, MIBef,MIAft));
   
   // Set the operand first so that it this register does not get used
   // as a scratch register for later calls to getUsableUniRegAtMI below
@@ -749,7 +751,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AdIMid.clear();
   }
   
-  if (isDef) {   // if this is a Def
+  if (isDef || isDefAndUse) {   // if this is a Def
     // for a DEF, we have to store the value produced by this instruction
     // on the stack position allocated for this LR
     
@@ -1125,8 +1127,8 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
 
   for ( ; HMI != HMIEnd ; ++HMI) {
     if (HMI->first && HMI->second) {
-      LiveRange *L = HMI->second;      // get the LiveRange
-      if (!L->hasColor()) {   //  NOTE: ** allocating the size of long Type **
+      LiveRange *L = HMI->second;       // get the LiveRange
+      if (L->isMarkedForSpill()) {      // NOTE: allocating size of long Type **
         int stackOffset = MF.getInfo()->allocateSpilledValue(Type::LongTy);
         L->setSpillOffFromFP(stackOffset);
         if (DEBUG_RA)
