@@ -132,7 +132,7 @@ void SlotCalculator::processModule() {
   // all non-value types are pushed to the end of the type table, giving nice
   // low numbers to the types that can be used by instructions, thus reducing
   // the amount of explodage we suffer.
-  if (!IgnoreNamedNodes && Table[Type::TypeTyID].size() >= 0/*64*/) {
+  if (!IgnoreNamedNodes && Table[Type::TypeTyID].size() >= 64) {
     // Scan through the type table moving value types to the start of the table.
     TypePlane *Types = &Table[Type::TypeTyID];
     unsigned FirstNonValueTypeID = 0;
