@@ -97,14 +97,27 @@ Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
 }
 
+/// getAsmWriter - Return the AssemblyWriter definition for this target.
+///
+Record *CodeGenTarget::getAsmWriter() const {
+  return TargetRec->getValueAsDef("AssemblyWriter");
+}
+
+
 void CodeGenTarget::ReadInstructions() const {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   if (Insts.size() == 0)
     throw std::string("No 'Instruction' subclasses defined!");
 
-  for (unsigned i = 0, e = Insts.size(); i != e; ++i)
-    Instructions.insert(std::make_pair(Insts[i]->getName(), Insts[i]));
+  std::string InstFormatName =
+    getAsmWriter()->getValueAsString("InstFormatName");
+
+  for (unsigned i = 0, e = Insts.size(); i != e; ++i) {
+    std::string AsmStr = Insts[i]->getValueAsString(InstFormatName);
+    Instructions.insert(std::make_pair(Insts[i]->getName(),
+                                       CodeGenInstruction(Insts[i], AsmStr)));
+  }
 }
 
 /// getPHIInstruction - Return the designated PHI instruction.
@@ -117,10 +130,10 @@ const CodeGenInstruction &CodeGenTarget::getPHIInstruction() const {
   return I->second;
 }
 
-CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R) {
+CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
+  : TheDef(R), AsmString(AsmStr) {
   Name      = R->getValueAsString("Name");
   Namespace = R->getValueAsString("Namespace");
-  AsmString = R->getValueAsString("AsmString");
 
   isReturn     = R->getValueAsBit("isReturn");
   isBranch     = R->getValueAsBit("isBranch");

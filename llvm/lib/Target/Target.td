@@ -133,20 +133,6 @@ class Instruction {
 }
 
 
-// InstrInfo - This class should only be instantiated once to provide parameters
-// which are global to the the target machine.
-//
-class InstrInfo {
-  Instruction PHIInst;
-
-  // If the target wants to associate some target-specific information with each
-  // instruction, it should provide these two lists to indicate how to assemble
-  // the target specific information into the 32 bits available.
-  //
-  list<string> TSFlagsFields = [];
-  list<int>    TSFlagsShifts = [];
-}
-
 /// ops definition - This is just a simple marker used to identify the operands
 /// list for an instruction.  This should be used like this:
 ///     (ops R32:$dst, R32:$src) or something similar.
@@ -166,6 +152,40 @@ def i16imm : Operand<i16>;
 def i32imm : Operand<i32>;
 def i64imm : Operand<i64>;
 
+// InstrInfo - This class should only be instantiated once to provide parameters
+// which are global to the the target machine.
+//
+class InstrInfo {
+  Instruction PHIInst;
+
+  // If the target wants to associate some target-specific information with each
+  // instruction, it should provide these two lists to indicate how to assemble
+  // the target specific information into the 32 bits available.
+  //
+  list<string> TSFlagsFields = [];
+  list<int>    TSFlagsShifts = [];
+}
+
+//===----------------------------------------------------------------------===//
+// AsmWriter - This class can be implemented by targets that need to customize
+// the format of the .s file writer.
+//
+// Subtargets can have multiple different asmwriters (e.g. AT&T vs Intel syntax
+// on X86 for example).
+//
+class AsmWriter {
+  // AsmWriterClassName - This specifies the suffix to use for the asmwriter
+  // class.  Generated AsmWriter classes are always prefixed with the target
+  // name.
+  string AsmWriterClassName  = "AsmPrinter";
+
+  // InstFormatName - AsmWriters can specify the name of the format string to
+  // print instructions with.
+  string InstFormatName = "AsmString";
+}
+def DefaultAsmWriter : AsmWriter;
+
+
 //===----------------------------------------------------------------------===//
 // Target - This class contains the "global" target information
 //
@@ -178,8 +198,11 @@ class Target {
   // this target.  Typically this is an i32 or i64 type.
   ValueType PointerType;
 
-  // InstructionSet - Instruction set description for this target
+  // InstructionSet - Instruction set description for this target.
   InstrInfo InstructionSet;
+
+  // AssemblyWriter - The AsmWriter instance to use for this target.
+  AsmWriter AssemblyWriter = DefaultAsmWriter;
 }
 
 

@@ -56,9 +56,13 @@ public:
 
   MVT::ValueType getPointerType() const { return PointerType; }
 
-  // getInstructionSet - Return the InstructionSet object.
+  /// getInstructionSet - Return the InstructionSet object.
   ///
   Record *getInstructionSet() const;
+
+  /// getAsmWriter - Return the AssemblyWriter definition for this target.
+  ///
+  Record *getAsmWriter() const;
 
   /// getPHIInstruction - Return the designated PHI instruction.
   const CodeGenInstruction &getPHIInstruction() const;
