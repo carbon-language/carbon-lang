@@ -28,6 +28,15 @@
 #include "llvm/Instruction.h"
 using namespace llvm;
 
+MachineCodeForInstruction &MachineCodeForInstruction::get(const Instruction *I){
+  return *(MachineCodeForInstruction*)I->getOrCreateAnnotation(MCFI_AID);
+}
+void MachineCodeForInstruction::destroy(const Instruction *I) {
+  I->deleteAnnotation(MCFI_AID);
+}
+
+
+
 AnnotationID llvm::MCFI_AID(
              AnnotationManager::getID("CodeGen::MachineCodeForInstruction"));
 
