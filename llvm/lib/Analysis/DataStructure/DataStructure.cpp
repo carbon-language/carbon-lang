@@ -1652,13 +1652,13 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
   if (Entry.getNode()) {
     // Termination of recursion!
     assert(Entry.getNode() == N2 &&
-           Entry.getOffset() == (NH1.getOffset()+NH2.getOffset()) &&
+           Entry.getOffset() == (NH2.getOffset()-NH1.getOffset()) &&
            "Inconsistent mapping detected!");
     return;
   }
   
   Entry.setNode(N2);
-  Entry.setOffset(NH1.getOffset()+NH2.getOffset());
+  Entry.setOffset(NH2.getOffset()-NH1.getOffset());
 
   // Loop over all of the fields that N1 and N2 have in common, recursively
   // mapping the edges together now.
