@@ -122,41 +122,50 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // source path the PHI.
       MachineBasicBlock &opBlock = *MI->getOperand(i).getMachineBasicBlock();
 
+      // Figure out where to insert the copy, which is at the end of the
+      // predecessor basic block, but before any terminator/branch
+      // instructions...
+      MachineBasicBlock::iterator I = opBlock.end();
+      if (I != opBlock.begin()) {  // Handle empty blocks
+        --I;
+        // must backtrack over ALL the branches in the previous block
+        while (MII.isTerminatorInstr((*I)->getOpcode()) &&
+               I != opBlock.begin())
+          --I;
+        
+        // move back to the first branch instruction so new instructions
+        // are inserted right in front of it and not in front of a non-branch
+        if (!MII.isTerminatorInstr((*I)->getOpcode()))
+          ++I;
+      }
+      
       // Check to make sure we haven't already emitted the copy for this block.
       // This can happen because PHI nodes may have multiple entries for the
       // same basic block.  It doesn't matter which entry we use though, because
       // all incoming values are guaranteed to be the same for a particular bb.
       //
-      // Note that this is N^2 in the number of phi node entries, but since the
-      // # of entries is usually small, this is not a problem.  FIXME: this
-      // should just check to see if there is already a copy in the bottom of
-      // this basic block!
+      // If we emitted a copy for this basic block already, it will be right
+      // where we want to insert one now.  Just check for a definition of the
+      // register we are interested in!
       //
       bool HaveNotEmitted = true;
-      for (int op = MI->getNumOperands() - 1; op != i; op -= 2)
-        if (&opBlock == MI->getOperand(op).getMachineBasicBlock()) {
-          HaveNotEmitted = false;
-          break;
+      
+      if (I != opBlock.begin()) {
+        MachineInstr *PrevInst = *(I-1);
+        for (unsigned i = 0, e = PrevInst->getNumOperands(); i != e; ++i) {
+          MachineOperand &MO = PrevInst->getOperand(i);
+          if (MO.isVirtualRegister() && MO.getReg() == IncomingReg)
+            if (MO.opIsDef() || MO.opIsDefAndUse()) {
+              HaveNotEmitted = false;
+              break;
+            }             
         }
+      }
 
       if (HaveNotEmitted) {
-        MachineBasicBlock::iterator I = opBlock.end();
-        if (I != opBlock.begin()) {  // Handle empty blocks
-          --I;
-          // must backtrack over ALL the branches in the previous block
-          while (MII.isTerminatorInstr((*I)->getOpcode()) &&
-                 I != opBlock.begin())
-            --I;
-        
-          // move back to the first branch instruction so new instructions
-          // are inserted right in front of it and not in front of a non-branch
-          if (!MII.isTerminatorInstr((*I)->getOpcode()))
-            ++I;
-        }
-
-	assert(opVal.isVirtualRegister() &&
-	       "Machine PHI Operands must all be virtual registers!");
-	RegInfo->copyRegToReg(opBlock, I, IncomingReg, opVal.getReg(), RC);
+        assert(opVal.isVirtualRegister() &&
+               "Machine PHI Operands must all be virtual registers!");
+        RegInfo->copyRegToReg(opBlock, I, IncomingReg, opVal.getReg(), RC);
       }
     }
     
