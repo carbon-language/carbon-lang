@@ -79,6 +79,7 @@ inline llvm::ConfigLexerTokens handleValueContext(llvm::ConfigLexerTokens token)
 ASSEMBLER       assembler|Assembler|ASSEMBLER
 COMMAND         command|Command|COMMAND
 LANG            lang|Lang|LANG
+LIBS            libs|Libs|LIBS
 LINKER		linker|Linker|LINKER
 NAME            name|Name|NAME
 OPT1            opt1|Opt1|OPT1
@@ -100,7 +101,7 @@ False           false|False|FALSE|off|Off|OFF|no|No|NO
 Bytecode        bc|BC|bytecode|Bytecode|BYTECODE
 Assembly        asm|ASM|assembly|Assembly|ASSEMBLY
 
-BadSubst        \%[^iots][a-zA-Z]\%
+BadSubst        \%[a-zA-Z]*\%
 Comment         \#[^\r\n]*\r?\n
 NewLine         \r?\n
 Eq              \=
@@ -113,7 +114,7 @@ White           [ \t]*
 
 %%
 
-{White}         { /* Ignore whitespace */ }
+{White}         { if (ConfigLexerState.in_value) return SPACE; }
 
 {Comment}       { /* Ignore comments */
                   ConfigLexerState.in_value = false; 
@@ -134,9 +135,12 @@ White           [ \t]*
                   return EQUALS; 
                 }
 
+{Sep}           { return SEPARATOR; }
+
 {VERSION}       { return handleNameContext(VERSION_TOK); }
 
 {LANG}          { return handleNameContext(LANG); }
+{LIBS}          { return handleNameContext(LIBS); }
 {NAME}          { return handleNameContext(NAME); }
 {OPT1}          { return handleNameContext(OPT1); }
 {OPT2}          { return handleNameContext(OPT2); }
@@ -173,7 +177,6 @@ White           [ \t]*
 %fOpts%         { return handleSubstitution(FOPTS_SUBST); }
 %MOpts%         { return handleSubstitution(MOPTS_SUBST); }
 %WOpts%         { return handleSubstitution(WOPTS_SUBST); }
-{BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
 
 {Assembly}      { return handleValueContext(ASSEMBLY); }
 {Bytecode}      { return handleValueContext(BYTECODE); }
@@ -186,8 +189,6 @@ White           [ \t]*
                   --ConfigLexerState.StringVal.end());
                   return STRING;
                 }
-{Sep}           { if (ConfigLexerState.in_value) { ConfigLexerState.StringVal = yytext;
-                    return OPTION; } }
-
+{BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
 
 %%
