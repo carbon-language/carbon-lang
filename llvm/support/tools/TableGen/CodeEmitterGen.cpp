@@ -209,7 +209,7 @@ void CodeEmitterGen::run(std::ostream &o) {
   }
 
   o << "  default:\n"
-    << "    DEBUG(std::cerr << \"Not supported instr: \" << MI << \"\\n\");\n"
+    << "    std::cerr << \"Not supported instr: \" << MI << \"\\n\";\n"
     << "    abort();\n"
     << "  }\n"
     << "  return Value;\n"
