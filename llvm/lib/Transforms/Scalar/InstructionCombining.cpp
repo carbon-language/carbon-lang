@@ -1520,10 +1520,15 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0)) {
         switch (BO->getOpcode()) {
         case Instruction::Add:
-          if (CI->isNullValue()) {
+          // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
+          if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
+            return new SetCondInst(I.getOpcode(), BO->getOperand(0),
+                                   ConstantExpr::getSub(CI, BOp1C));
+          } else if (CI->isNullValue()) {
             // Replace ((add A, B) != 0) with (A != -B) if A or B is
             // efficiently invertible, or if the add has just this one use.
             Value *BOp0 = BO->getOperand(0), *BOp1 = BO->getOperand(1);
+            
             if (Value *NegVal = dyn_castNegVal(BOp1))
               return new SetCondInst(I.getOpcode(), BOp0, NegVal);
             else if (Value *NegVal = dyn_castNegVal(BOp0))
