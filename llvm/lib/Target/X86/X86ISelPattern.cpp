@@ -1818,6 +1818,57 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1);
     return Result;
 
+  case ISD::MULHU:
+    switch (N.getValueType()) {
+    default: assert(0 && "Unsupported VT!");
+    case MVT::i8:  Tmp2 = X86::MUL8r;  break;
+    case MVT::i16: Tmp2 = X86::MUL16r;  break;
+    case MVT::i32: Tmp2 = X86::MUL32r;  break;
+    }
+    // FALL THROUGH
+  case ISD::MULHS: {
+    unsigned MovOpc, LowReg, HiReg;
+    switch (N.getValueType()) {
+    default: assert(0 && "Unsupported VT!");
+    case MVT::i8:  
+      MovOpc = X86::MOV8rr;
+      LowReg = X86::AL;
+      HiReg = X86::AH;
+      Opc = X86::IMUL8r;
+      break;
+    case MVT::i16:
+      MovOpc = X86::MOV16rr;
+      LowReg = X86::AX;
+      HiReg = X86::DX;
+      Opc = X86::IMUL16r;
+      break;
+    case MVT::i32:
+      MovOpc = X86::MOV32rr;
+      LowReg = X86::EAX;
+      HiReg = X86::EDX;
+      Opc = X86::IMUL32r;
+      break;
+    }
+    if (Node->getOpcode() != ISD::MULHS)
+      Opc = Tmp2;  // Get the MULHU opcode.
+
+    Op0 = Node->getOperand(0);
+    Op1 = Node->getOperand(1);
+    if (getRegPressure(Op0) > getRegPressure(Op1)) {
+      Tmp1 = SelectExpr(Op0);
+      Tmp2 = SelectExpr(Op1);
+    } else {
+      Tmp2 = SelectExpr(Op1);
+      Tmp1 = SelectExpr(Op0);
+    }
+
+    // FIXME: Implement folding of loads into the memory operands here!
+    BuildMI(BB, MovOpc, 1, LowReg).addReg(Tmp1);
+    BuildMI(BB, Opc, 1).addReg(Tmp2);
+    BuildMI(BB, MovOpc, 1, Result).addReg(HiReg);
+    return Result;
+  }    
+
   case ISD::SUB:
   case ISD::MUL:
   case ISD::AND:
