@@ -27,59 +27,13 @@
 #include "Support/Statistic.h"
 #include "Support/STLExtras.h"
 #include "LiveIntervals.h"
+#include "PhysRegTracker.h"
 #include <algorithm>
 using namespace llvm;
 
 namespace {
     Statistic<> numStores("ra-linearscan", "Number of stores added");
     Statistic<> numLoads ("ra-linearscan", "Number of loads added");
-
-    class PhysRegTracker {
-    private:
-        const MRegisterInfo* mri_;
-        std::vector<unsigned> regUse_;
-
-    public:
-        PhysRegTracker(MachineFunction* mf)
-            : mri_(mf ? mf->getTarget().getRegisterInfo() : NULL) {
-            if (mri_) {
-                regUse_.assign(mri_->getNumRegs(), 0);
-            }
-        }
-
-        PhysRegTracker(const PhysRegTracker& rhs)
-            : mri_(rhs.mri_),
-              regUse_(rhs.regUse_) {
-        }
-
-        const PhysRegTracker& operator=(const PhysRegTracker& rhs) {
-            mri_ = rhs.mri_;
-            regUse_ = rhs.regUse_;
-            return *this;
-        }
-
-        void addPhysRegUse(unsigned physReg) {
-            ++regUse_[physReg];
-            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as) {
-                physReg = *as;
-                ++regUse_[physReg];
-            }
-        }
-
-        void delPhysRegUse(unsigned physReg) {
-            assert(regUse_[physReg] != 0);
-            --regUse_[physReg];
-            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as) {
-                physReg = *as;
-                assert(regUse_[physReg] != 0);
-                --regUse_[physReg];
-            }
-        }
-
-        bool isPhysRegAvail(unsigned physReg) const {
-            return regUse_[physReg] == 0;
-        }
-    };
 
     class RA : public MachineFunctionPass {
     private:
@@ -285,7 +239,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
         // if this register is fixed we are done
         if (MRegisterInfo::isPhysicalRegister(cur->reg)) {
-            prt_.addPhysRegUse(cur->reg);
+            prt_.addRegUse(cur->reg);
             active_.push_back(cur);
             handled_.push_back(cur);
         }
@@ -308,7 +262,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         if (MRegisterInfo::isVirtualRegister(reg)) {
             reg = v2pMap_[reg];
         }
-        prt_.delPhysRegUse(reg);
+        prt_.delRegUse(reg);
     }
 
     DEBUG(printVirtRegAssignment());
@@ -401,7 +355,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
-            prt_.delPhysRegUse(reg);
+            prt_.delRegUse(reg);
             // remove from active
             i = active_.erase(i);
         }
@@ -411,7 +365,7 @@ void RA::processActiveIntervals(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
-            prt_.delPhysRegUse(reg);
+            prt_.delRegUse(reg);
             // add to inactive
             inactive_.push_back(*i);
             // remove from active
@@ -441,7 +395,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
             if (MRegisterInfo::isVirtualRegister(reg)) {
                 reg = v2pMap_[reg];
             }
-            prt_.addPhysRegUse(reg);
+            prt_.addRegUse(reg);
             // add to active
             active_.push_back(*i);
             // remove from inactive
@@ -485,7 +439,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             unsigned reg = (*i)->reg;
             if (MRegisterInfo::isVirtualRegister(reg))
                 reg = v2pMap_[reg];
-            prt_.addPhysRegUse(reg);
+            prt_.addRegUse(reg);
             updateSpillWeights(reg, (*i)->weight);
         }
     }
@@ -496,7 +450,7 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
              e = fixed_.end(); i != e; ++i) {
         if (cur->overlaps(**i)) {
             unsigned reg = (*i)->reg;
-            prt_.addPhysRegUse(reg);
+            prt_.addRegUse(reg);
             updateSpillWeights(reg, (*i)->weight);
         }
     }
@@ -611,12 +565,12 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             active_.erase(it);
             if (MRegisterInfo::isPhysicalRegister(i->reg)) {
                 fixed_.push_front(i);
-                prt_.delPhysRegUse(i->reg);
+                prt_.delRegUse(i->reg);
             }
             else {
                 Virt2PhysMap::iterator v2pIt = v2pMap_.find(i->reg);
                 clearVirtReg(v2pIt);
-                prt_.delPhysRegUse(v2pIt->second);
+                prt_.delRegUse(v2pIt->second);
                 if (i->spilled()) {
                     if (!i->empty()) {
                         IntervalPtrs::iterator it = unhandled_.begin();
@@ -671,10 +625,10 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
             DEBUG(std::cerr << "\t\t\tundo changes for: " << **i << '\n');
             active_.push_back(*i);
             if (MRegisterInfo::isPhysicalRegister((*i)->reg))
-                prt_.addPhysRegUse((*i)->reg);
+                prt_.addRegUse((*i)->reg);
             else {
                 assert(v2pMap_.count((*i)->reg));
-                prt_.addPhysRegUse(v2pMap_.find((*i)->reg)->second);
+                prt_.addRegUse(v2pMap_.find((*i)->reg)->second);
             }
         }
     }
@@ -766,7 +720,7 @@ RA::assignVirt2PhysReg(unsigned virtReg, unsigned physReg)
     tie(it, inserted) = v2pMap_.insert(std::make_pair(virtReg, physReg));
     assert(inserted && "attempting to assign a virt->phys mapping to an "
            "already mapped register");
-    prt_.addPhysRegUse(physReg);
+    prt_.addRegUse(physReg);
     return it;
 }
 
