@@ -44,16 +44,9 @@ Pass *llvm::createGlobalConstifierPass() { return new Constifier(); }
 ///
 static bool isStoredThrough(Value *V) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (Constant *C = dyn_cast<Constant>(*UI)) {
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-        if (isStoredThrough(CE))
-          return true;
-      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
-        if (isStoredThrough(GV)) return true;
-      } else {
-        // Must be an element of a constant array or something.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
+      if (isStoredThrough(CE))
         return true;
-      }
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
       if (I->getOpcode() == Instruction::GetElementPtr) {
         if (isStoredThrough(I)) return true;
