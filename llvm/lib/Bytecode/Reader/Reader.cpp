@@ -30,6 +30,8 @@
 #include <algorithm>
 using namespace llvm;
 
+#include "llvm/Support/Timer.h"
+
 namespace {
 
 /// @brief A class for maintaining the slot number definition
@@ -1690,39 +1692,13 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
 
   // Resolve forward references.  Replace any uses of a forward reference value
   // with the real value.
-
-  // replaceAllUsesWith is very inefficient for instructions which have a LARGE
-  // number of operands.  PHI nodes often have forward references, and can also
-  // often have a very large number of operands.
-  //
-  // FIXME: REEVALUATE.  replaceAllUsesWith is _much_ faster now, and this code
-  // should be simplified back to using it!
-  //
-  std::map<Value*, Value*> ForwardRefMapping;
-  for (std::map<std::pair<unsigned,unsigned>, Value*>::iterator 
-         I = ForwardReferences.begin(), E = ForwardReferences.end();
-       I != E; ++I)
-    ForwardRefMapping[I->second] = getValue(I->first.first, I->first.second,
-                                            false);
-
-  for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Value* V = I->getOperand(i))
-          if (Argument *A = dyn_cast<Argument>(V)) {
-            std::map<Value*, Value*>::iterator It = ForwardRefMapping.find(A);
-            if (It != ForwardRefMapping.end()) I->setOperand(i, It->second);
-          }
-
   while (!ForwardReferences.empty()) {
-    std::map<std::pair<unsigned,unsigned>, Value*>::iterator I =
-      ForwardReferences.begin();
+    std::map<std::pair<unsigned,unsigned>, Value*>::iterator
+      I = ForwardReferences.begin();
+    Value *V = getValue(I->first.first, I->first.second, false);
     Value *PlaceHolder = I->second;
+    PlaceHolder->replaceAllUsesWith(V);
     ForwardReferences.erase(I);
-
-    // Now that all the uses are gone, delete the placeholder...
-    // If we couldn't find a def (error case), then leak a little
-    // memory, because otherwise we can't remove all uses!
     delete PlaceHolder;
   }
 
