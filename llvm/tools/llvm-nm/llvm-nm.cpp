@@ -16,10 +16,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/CommandLine.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/Module.h"
+#include "llvm/Bytecode/Reader.h"
+#include "Support/CommandLine.h"
 #include <cctype>
 
 namespace {
