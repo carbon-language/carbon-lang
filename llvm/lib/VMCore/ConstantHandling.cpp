@@ -344,6 +344,25 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
   static Constant *Xor(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() ^ V2->getValue());
   }
+
+  // Casting operators.  ick
+#define DEF_CAST(TYPE, CLASS, CTYPE) \
+  static CLASS *CastTo##TYPE  (const ConstantBool *V) {    \
+    return CLASS::get(Type::TYPE##Ty, (CTYPE)(bool)V->getValue()); \
+  }
+
+  DEF_CAST(Bool  , ConstantBool, bool)
+  DEF_CAST(SByte , ConstantSInt, signed char)
+  DEF_CAST(UByte , ConstantUInt, unsigned char)
+  DEF_CAST(Short , ConstantSInt, signed short)
+  DEF_CAST(UShort, ConstantUInt, unsigned short)
+  DEF_CAST(Int   , ConstantSInt, signed int)
+  DEF_CAST(UInt  , ConstantUInt, unsigned int)
+  DEF_CAST(Long  , ConstantSInt, int64_t)
+  DEF_CAST(ULong , ConstantUInt, uint64_t)
+  DEF_CAST(Float , ConstantFP  , float)
+  DEF_CAST(Double, ConstantFP  , double)
+#undef DEF_CAST
 };
 
 
