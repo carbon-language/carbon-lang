@@ -12,11 +12,12 @@
 #define LIVE_RANGE_H
 
 #include "llvm/Analysis/LiveVar/ValueSet.h"
-#include "llvm/Type.h"
+#include "llvm/Value.h"
 #include <iostream>
 
 class RegClass;
 class IGNode;
+class Type;
 
 class LiveRange : public ValueSet {
   RegClass *MyRegClass;       // register classs (e.g., int, FP) for this LR
@@ -134,10 +135,6 @@ public:
     return (*begin())->getType();  // set's don't have a front
   }
   
-  inline Type::PrimitiveID getTypeID() const {
-    return getType()->getPrimitiveID();
-  }
-
   inline void setSuggestedColor(int Col) {
     if (SuggestedColor == -1)
       SuggestedColor = Col;

@@ -25,7 +25,6 @@
 #ifndef IG_NODE_H
 #define IG_NODE_H
 
-
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/LiveRange.h"
 class LiveRange;
@@ -56,35 +55,25 @@ public:
 
   // constructor
   //
-  IGNode(LiveRange *const LR, unsigned int index);
+  IGNode(LiveRange *LR, unsigned index);
 
-  // an empty destructor
-  //
-  ~IGNode() { }                        
-
-
-  inline unsigned int getIndex() const 
-    { return Index; }
+  inline unsigned int getIndex() const { return Index; }
 
   // adjLists must be updated only once.  However, the CurDegree can be changed
   //
-  inline void addAdjIGNode( IGNode *const AdjNode) 
-    { AdjList.push_back(AdjNode);  } 
+  inline void addAdjIGNode(IGNode *AdjNode) { AdjList.push_back(AdjNode);  } 
 
-  inline IGNode * getAdjIGNode(unsigned int ind) const 
-    { assert ( ind < AdjList.size()); return AdjList[ ind ]; }
+  inline IGNode *getAdjIGNode(unsigned ind) const 
+    { assert ( ind < AdjList.size()); return AdjList[ind]; }
 
   // delete a node in AdjList - node must be in the list
   // should not be called often
   //
-  void delAdjIGNode(const IGNode *const Node); 
+  void delAdjIGNode(const IGNode *Node); 
 
-  inline unsigned int getNumOfNeighbors() const 
-    { return AdjList.size() ; }
+  inline unsigned getNumOfNeighbors() const { return AdjList.size(); }
 
-
-  inline bool isOnStack() const 
-    { return OnStack; }
+  inline bool isOnStack() const { return OnStack; }
 
   // remove form IG and pushes on to stack (reduce the degree of neighbors)
   //
@@ -95,16 +84,16 @@ public:
   // after all modifications to the IG are over (i.e., all neighbors are
   // fixed).
   //
-  inline void setCurDegree() 
-    { assert( CurDegree == -1);   CurDegree = AdjList.size(); }
+  inline void setCurDegree() {
+    assert(CurDegree == -1);
+    CurDegree = AdjList.size();
+  }
 
-  inline int getCurDegree() const 
-    { return CurDegree; }
+  inline int getCurDegree() const { return CurDegree; }
 
   // called when a neigh is pushed on to stack
   //
-  inline void decCurDegree() 
-    { assert( CurDegree > 0 ); --CurDegree; }
+  inline void decCurDegree() { assert(CurDegree > 0); --CurDegree; }
 
 
   // The following methods call the methods in ParentLR
@@ -112,39 +101,24 @@ public:
   // If many of these are called within a single scope,
   // consider calling the methods directly on LR
 
+  inline void setRegClass(RegClass *RC) { ParentLR->setRegClass(RC);  }
 
-  inline void setRegClass(RegClass *const RC) 
-    { ParentLR->setRegClass(RC);  }
+  inline RegClass *getRegClass() const { return ParentLR->getRegClass(); }
 
-  inline RegClass *const getRegClass() const {
-    return ParentLR->getRegClass();
-  }
+  inline bool hasColor() const { return ParentLR->hasColor();  }
 
-  inline bool hasColor() const 
-    { return ParentLR->hasColor();  }
+  inline unsigned int getColor() const { return ParentLR->getColor();  }
 
-  inline unsigned int getColor() const 
-    { return ParentLR->getColor();  }
+  inline void setColor(unsigned Col) { ParentLR->setColor(Col);  }
 
-  inline void setColor(unsigned int Col) 
-    { ParentLR->setColor(Col);  }
+  inline void markForSpill() { ParentLR->markForSpill(); }
 
-  inline void markForSpill() 
-    { ParentLR->markForSpill();  }
-
-  inline void markForSaveAcrossCalls() 
-    { ParentLR->markForSaveAcrossCalls();  }
+  inline void markForSaveAcrossCalls() { ParentLR->markForSaveAcrossCalls();  }
 
   inline unsigned int isCallInterference() const 
   { return ParentLR->isCallInterference(); } 
 
-  inline LiveRange *getParentLR() const 
-    { return ParentLR; }
-
-  inline Type::PrimitiveID getTypeID() const 
-    { return ParentLR->getTypeID(); }
-
-
+  inline LiveRange *getParentLR() const { return ParentLR; }
 };
 
 #endif
