@@ -41,6 +41,10 @@
 #
 #ENABLE_OPTIMIZED = 1
 
+# If you do not want to build into /shared, uncomment this
+#
+#BUILD_ROOT = .
+
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
 dynamic ::
@@ -51,6 +55,17 @@ all ::
 
 # Default for install is to at least build everything...
 install ::
+
+
+# Figure out which directory to build stuff into.  We want to build into the
+# /shared directory by default because it is guaranteed to be local to the
+# current machine.
+#
+ifndef BUILD_ROOT
+LOGIN_NAME := $(shell whoami)
+CUR_DIRECTORY := $(shell pwd)
+BUILD_ROOT := /shared/$(LOGIN_NAME)$(patsubst $(HOME)%,%,$(CUR_DIRECTORY))
+endif
 
 #--------------------------------------------------------------------
 # Installation configuration options... 
@@ -67,10 +82,10 @@ BURG_OPTS = -I
 PURIFY = /usr/dcs/applications/purify/bin/purify -cache-dir="$(HOME)/purifycache" -chain-length="30" -messages=all 
 
 # Shorthand for commonly accessed directories
-LIBDEBUG    = $(LEVEL)/lib/Debug
-LIBRELEASE  = $(LEVEL)/lib/Release
-TOOLDEBUG   = $(LEVEL)/tools/Debug
-TOOLRELEASE = $(LEVEL)/tools/Release
+LIBDEBUG    = $(BUILD_ROOT)/$(LEVEL)/lib/Debug
+LIBRELEASE  = $(BUILD_ROOT)/$(LEVEL)/lib/Release
+TOOLDEBUG   = $(BUILD_ROOT)/$(LEVEL)/tools/Debug
+TOOLRELEASE = $(BUILD_ROOT)/$(LEVEL)/tools/Release
 
 #---------------------------------------------------------
 # Compilation options...
@@ -128,8 +143,8 @@ MakeLib   = $(AR)
 Source  := $(ExtraSource) $(wildcard *.cpp *.c *.y *.l)
 
 Objs := $(sort $(patsubst Debug/%.o, %.o, $(addsuffix .o,$(basename $(Source)))))
-ObjectsO = $(addprefix Release/,$(Objs))
-ObjectsG = $(addprefix Debug/,$(Objs))
+ObjectsO = $(addprefix $(BUILD_ROOT)/Release/,$(Objs)))
+ObjectsG = $(addprefix $(BUILD_ROOT)/Debug/,$(Objs))
 
 
 #---------------------------------------------------------
@@ -198,28 +213,28 @@ all:: $(BUILD_LIBNAME_AG) $(BUILD_LIBNAME_OBJG)      # Debug
 all:: $(BUILD_LIBNAME_AO) $(BUILD_LIBNAME_OBJO)      # Release
 dynamic:: $(BUILD_LIBNAME_G) $(BUILD_LIBNAME_O)      # .so files
 
-$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir Depend/.dir
+$(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	$(MakeSOO) -o $@ $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir Depend/.dir
+$(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	$(MakeSO) -g -o $@ $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 
-$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir Depend/.dir
+$(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	@echo ======= Linking $(LIBRARYNAME) release library =======
 	@rm -f $@
 	$(MakeLib) $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir Depend/.dir
+$(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	@echo ======= Linking $(LIBRARYNAME) debug library =======
 	@rm -f $@
 	$(MakeLib) $@ $(ObjectsG) $(LibSubDirs)
 
-$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir Depend/.dir
+$(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(LIBRELEASE)/.dir
 	$(Relink) -o $@ $(ObjectsO) $(LibSubDirs)
 
-$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir Depend/.dir
+$(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(LIBDEBUG)/.dir
 	$(Relink) -o $@ $(ObjectsG) $(LibSubDirs)
 
 endif
@@ -282,27 +297,28 @@ endif
 
 
 #---------------------------------------------------------
-.PRECIOUS: Depend/.dir Debug/.dir Release/.dir
+.PRECIOUS: $(BUILD_ROOT)/Depend/.dir
+.PRECIOUS: $(BUILD_ROOT)/Debug/.dir $(BUILD_ROOT)/Release/.dir
 
 # Create dependencies for the *.cpp files...
-Depend/%.d: %.cpp Depend/.dir
+$(BUILD_ROOT)/Depend/%.d: %.cpp $(BUILD_ROOT)/Depend/.dir
 	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
-Depend/%.d: %.c Depend/.dir
+$(BUILD_ROOT)/Depend/%.d: %.c $(BUILD_ROOT)/Depend/.dir
 	$(Depend) $< | sed 's|$*\.o *|Release/& Debug/& Depend/$(@F)|g' > $@
 
 # Create .o files in the ObjectFiles directory from the .cpp and .c files...
-Release/%.o: %.cpp Release/.dir Depend/.dir
+$(BUILD_ROOT)/Release/%.o: %.cpp $(BUILD_ROOT)/Release/.dir
 	$(CompileO) $< -o $@
 
 #Release/%.o: %.c Release/.dir Depend/.dir
 #	$(CompileOC) $< -o $@
 
-Debug/%.o: %.cpp Debug/.dir Depend/.dir
+$(BUILD_ROOT)/Debug/%.o: %.cpp $(BUILD_ROOT)/Debug/.dir
 	$(CompileG) $< -o $@
 
-#Debug/%.o: %.c Debug/.dir Depend/.dir
+#Debug/%.o: %.c Debug/.dir 
 #	$(CompileGC) $< -o $@
 
 # Create a .cpp source file from a flex input file... this uses sed to cut down
@@ -330,7 +346,7 @@ clean::
 # If dependancies were generated for the file that included this file,
 # include the dependancies now...
 #
-SourceDepend = $(addsuffix .d,$(addprefix Depend/,$(basename $(filter-out Debug/%, $(Source)))))
+SourceDepend = $(addsuffix .d,$(addprefix $(BUILD_ROOT)/Depend/,$(basename $(filter-out Debug/%, $(Source)))))
 ifneq ($(SourceDepend),)
 include $(SourceDepend)
 endif
