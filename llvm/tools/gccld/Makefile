@@ -1,6 +1,6 @@
 LEVEL = ../..
 
 TOOLNAME = gccld
-USEDLIBS = transforms ipo ipa analysis scalaropts target bcreader bcwriter vmcore support
+USEDLIBS = ipo analysis transforms ipa scalaropts transformutils target bcreader bcwriter vmcore support
 
 include $(LEVEL)/Makefile.common
