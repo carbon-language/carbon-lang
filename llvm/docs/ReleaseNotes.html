@@ -65,19 +65,20 @@ This is the second public release of the LLVM compiler infrastructure.  This
 release implements the following new features:<p>
 
 <ol>
-<li><a href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new LLVM profiler, similar to gprof</a> is available</li><p>
+<p><li><a
+href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new
+LLVM profiler, similar to gprof</a> is available</li></p>
 
-<li>LLVM and the C/C++ front-end now compile on Mac OSX!  Mac OSX users can now
-explore the LLVM optimizer with the C backend (note that LLVM requires GCC 3.3
-on Mac OSX).</li><p>
+<p><li>LLVM and the C/C++ front-end now compile on Mac OSX!  Mac OSX users can
+now explore the LLVM optimizer with the C backend (note that LLVM requires GCC
+3.3 on Mac OSX).</li></p>
 
-<li>LLVM has been <a
+<p><li>LLVM has been <a
 href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000554.html">moved
 into an 'llvm' C++ namespace</a>, for easier integration with third-party
 code.</a> Note that due to a bug in GDB 5.x, to debug namespacified LLVM code,
-you will need to upgrade to GDB 6.</li>
-
-</ol><p>
+you will need to upgrade to GDB 6.</li></p>
+</ol>
 
 In this release, the following missing features were implemented:<p>
 
@@ -86,10 +87,10 @@ In this release, the following missing features were implemented:<p>
 invoke or unwind</a></li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR99">Interpreter does not support the
-<tt>vaarg</tt> instruction</a></li><p>
+<tt>vaarg</tt> instruction</a></li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR117">llvm-nm cannot read archive
-files</a></li><p>
+files</a></li>
 
 </ol><p>
 
@@ -107,6 +108,11 @@ getelementptr for address of array element</a></li>
 build problems</a></li>
 
 <li><a href="http://llvm.cs.uiuc.edu/PR114">LLVM header files should be -Wold-style-cast clean</a></li>
+
+
+<li>The LLVM bytecode reader has been <a
+href="http://llvm.cs.uiuc.edu/PR127">sped up a lot</a> (up to 4x in some
+cases).</li>
 
 </ol><p>
 
@@ -157,6 +163,9 @@ many platforms, such as X86.
 <li><a href="http://llvm.cs.uiuc.edu/PR128">[llvmg++] Cannot use pointer to member to initialize global</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR130">[vmcore] Symbol table doesn't rename colliding variables during type resolution</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR131">[llvm-gcc] ?: operator as lvalue not implemented</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR133">[C/C++] Bogus warning about taking the address of 'register' variable</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR97">bugpoint must not pass -R<directory> to Mach-O linker</a></li>
+
 </ol><p>
 
 At this time, LLVM is known to work properly with SPEC CPU 2000, the Olden
@@ -459,6 +468,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Tue Nov 18 19:06:34 CST 2003
+Last modified: Wed Nov 19 15:42:00 CST 2003
 <!-- hhmts end -->
 </body></html>
