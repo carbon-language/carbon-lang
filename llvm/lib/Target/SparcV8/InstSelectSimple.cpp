@@ -288,14 +288,13 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   } else if (isa<ConstantPointerNull>(C)) {
     // Copy zero (null pointer) to the register.
     BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm (0);
-  } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
     // Copy it with a SETHI/OR pair; the JIT + asmwriter should recognize
     // that SETHI %reg,global == SETHI %reg,%hi(global) and 
     // OR %reg,global,%reg == OR %reg,%lo(global),%reg.
     unsigned TmpReg = makeAnotherReg (C->getType ());
-    BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addGlobalAddress (CPR->getValue());
-    BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (TmpReg)
-      .addGlobalAddress (CPR->getValue ());
+    BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addGlobalAddress(GV);
+    BuildMI (*MBB, IP, V8::ORri, 2, R).addReg(TmpReg).addGlobalAddress(GV);
   } else {
     std::cerr << "Offending constant: " << *C << "\n";
     assert (0 && "Can't copy this kind of constant into register yet");
