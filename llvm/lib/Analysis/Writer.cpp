@@ -26,3 +26,43 @@ void cfg::WriteToOutput(const Interval *I, ostream &o) {
   copy(I->Successors.begin(), I->Successors.end(), 
        ostream_iterator<BasicBlock*>(o, "\n"));
 }
+
+#include "llvm/Analysis/Dominators.h"
+
+ostream &operator<<(ostream &o, const set<const BasicBlock*> &BBs) {
+  copy(BBs.begin(), BBs.end(), ostream_iterator<const BasicBlock*>(o, "\n"));
+  return o;
+}
+
+void cfg::WriteToOutput(const DominatorSet &DS, ostream &o) {
+  for (DominatorSet::const_iterator I = DS.begin(), E = DS.end(); I != E; ++I) {
+    o << "=============================--------------------------------\n"
+      << "\nDominator Set For Basic Block\n" << I->first
+      << "-------------------------------\n" << I->second << endl;
+  }
+}
+
+
+void cfg::WriteToOutput(const ImmediateDominators &ID, ostream &o) {
+  for (ImmediateDominators::const_iterator I = ID.begin(), E = ID.end();
+       I != E; ++I) {
+    o << "=============================--------------------------------\n"
+      << "\nImmediate Dominator For Basic Block\n" << I->first
+      << "is: \n" << I->second << endl;
+  }
+}
+
+
+void cfg::WriteToOutput(const DominatorTree &DT, ostream &o) {
+
+}
+
+void cfg::WriteToOutput(const DominanceFrontier &DF, ostream &o) {
+  for (DominanceFrontier::const_iterator I = DF.begin(), E = DF.end();
+       I != E; ++I) {
+    o << "=============================--------------------------------\n"
+      << "\nDominance Frontier For Basic Block\n" << I->first
+      << "is: \n" << I->second << endl;
+  }
+}
+
