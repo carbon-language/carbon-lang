@@ -38,8 +38,11 @@ namespace {
     ConstantPlaceHolder();                       // DO NOT IMPLEMENT
     void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
   public:
+    Use Op;
     ConstantPlaceHolder(const Type *Ty) 
-      : ConstantExpr(Ty, Instruction::UserOp1, 0, 0) {}
+      : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
+        Op(UndefValue::get(Type::IntTy), this) {
+    }
   };
 }
 
