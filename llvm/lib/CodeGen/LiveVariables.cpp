@@ -146,14 +146,15 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 
   for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
        *AliasSet; ++AliasSet) {
-    if (MachineInstr *LastUse = PhysRegInfo[*AliasSet]) {
-      if (PhysRegUsed[*AliasSet])
-	RegistersKilled.insert(std::make_pair(LastUse, *AliasSet));
+    unsigned Alias = *AliasSet;
+    if (MachineInstr *LastUse = PhysRegInfo[Alias]) {
+      if (PhysRegUsed[Alias])
+	RegistersKilled.insert(std::make_pair(LastUse, Alias));
       else
-	RegistersDead.insert(std::make_pair(LastUse, *AliasSet));
+	RegistersDead.insert(std::make_pair(LastUse, Alias));
     }
-    PhysRegInfo[*AliasSet] = MI;
-    PhysRegUsed[*AliasSet] = false;
+    PhysRegInfo[Alias] = MI;
+    PhysRegUsed[Alias] = false;
   }
 }
 
