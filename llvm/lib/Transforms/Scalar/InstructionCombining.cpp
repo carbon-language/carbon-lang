@@ -2516,7 +2516,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
   if (isa<UndefValue>(Op0)) {            // undef >>s X -> undef
     if (!isLeftShift && I.getType()->isSigned())
-      return ReplaceInstUsesWith(I, Op1);
+      return ReplaceInstUsesWith(I, Op0);
     else                         // undef << X -> 0   AND  undef >>u X -> 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
