@@ -120,14 +120,10 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = 4;
       if (GPR_remaining > 0) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
-        unsigned virtReg = 
-          MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i32));
-        argt = newroot = DAG.getCopyFromReg(virtReg, MVT::i32, DAG.getRoot());
+        argt = newroot = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32,
+                                            DAG.getRoot());
         if (ObjectVT != MVT::i32)
           argt = DAG.getNode(ISD::TRUNCATE, ObjectVT, newroot);
-        argVR.push_back(virtReg);
-        argPR.push_back(GPR[GPR_idx]);
-        argOp.push_back(PPC::OR);
       } else {
         needsLoad = true;
       }
@@ -137,25 +133,13 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       if (GPR_remaining > 1) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx+1]);
-        SDOperand root = DAG.getRoot();
-        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
-          root, DAG.getConstant(1, MVT::i32));
-        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
-          root, DAG.getConstant(0, MVT::i32));
-        
-        // Create the pair of virtual registers
-        MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i32));
-        unsigned virtReg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i32))-1;
-        
         // Copy the extracted halves into the virtual registers
-        SDOperand argHi = DAG.getCopyFromReg(virtReg, MVT::i32, Hi);
-        SDOperand argLo = DAG.getCopyFromReg(virtReg+1, MVT::i32, Lo);
-          
+        SDOperand argHi = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, 
+                                             DAG.getRoot());
+        SDOperand argLo = DAG.getCopyFromReg(GPR[GPR_idx+1], MVT::i32, argHi);
         // Build the outgoing arg thingy
-        argt = newroot = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
-        argVR.push_back(virtReg);       argVR.push_back(virtReg+1);
-        argPR.push_back(GPR[GPR_idx]);  argPR.push_back(GPR[GPR_idx+1]);
-        argOp.push_back(PPC::OR);       argOp.push_back(PPC::OR);
+        argt = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
+        newroot = argLo;
       } else {
         needsLoad = true; 
       }
@@ -164,12 +148,8 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       case MVT::f64: ObjSize = 8;
       if (FPR_remaining > 0) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, FPR[FPR_idx]);
-        unsigned virtReg = 
-          MF.getSSARegMap()->createVirtualRegister(getRegClassFor(ObjectVT));
-        argt = newroot = DAG.getCopyFromReg(virtReg, ObjectVT, DAG.getRoot());
-        argVR.push_back(virtReg);
-        argPR.push_back(FPR[FPR_idx]);
-        argOp.push_back(PPC::FMR);
+        argt = newroot = DAG.getCopyFromReg(FPR[FPR_idx], ObjectVT, 
+                                            DAG.getRoot());
         --FPR_remaining;
         ++FPR_idx;
       } else {
@@ -197,13 +177,6 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     
     DAG.setRoot(newroot.getValue(1));
     ArgValues.push_back(argt);
-  }
-
-  for (int i = 0, count = argVR.size(); i < count; ++i) {
-    if (argOp[i] == PPC::FMR)
-      BuildMI(&BB, argOp[i], 1, argVR[i]).addReg(argPR[i]);
-    else
-      BuildMI(&BB, argOp[i], 2, argVR[i]).addReg(argPR[i]).addReg(argPR[i]);
   }
 
   // If the function takes variable number of arguments, make a frame index for
@@ -1014,11 +987,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)
       InVals.push_back(SelectExpr(N.getOperand(i)));
     if (N.getOpcode() == ISD::ADD_PARTS) {
-      BuildMI(BB, PPC::ADDC, 2, Result+1).addReg(InVals[1]).addReg(InVals[3]);
-      BuildMI(BB, PPC::ADDE, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+      BuildMI(BB, PPC::ADDC, 2, Result+1).addReg(InVals[0]).addReg(InVals[2]);
+      BuildMI(BB, PPC::ADDE, 2, Result).addReg(InVals[1]).addReg(InVals[3]);
     } else {
-      BuildMI(BB, PPC::SUBFC, 2, Result+1).addReg(InVals[1]).addReg(InVals[3]);
-      BuildMI(BB, PPC::SUBFE, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
+      BuildMI(BB, PPC::SUBFC, 2, Result+1).addReg(InVals[2]).addReg(InVals[0]);
+      BuildMI(BB, PPC::SUBFE, 2, Result).addReg(InVals[3]).addReg(InVals[1]);
     }
     return Result+N.ResNo;
   }

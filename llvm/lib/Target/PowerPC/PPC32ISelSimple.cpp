@@ -2389,7 +2389,7 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
                                           unsigned DestReg) {
   // Arithmetic and Bitwise operators
   static const unsigned OpcodeTab[] = {
-    PPC::ADD, PPC::SUB, PPC::AND, PPC::OR, PPC::XOR
+    PPC::ADD, PPC::SUBF, PPC::AND, PPC::OR, PPC::XOR
   };
   static const unsigned LongOpTab[2][5] = {
     { PPC::ADDC, PPC::SUBFC, PPC::AND, PPC::OR, PPC::XOR },
@@ -2443,6 +2443,17 @@ void PPC32ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   // registers and emit the appropriate opcode.
   unsigned Op0r = getReg(Op0, MBB, IP);
   unsigned Op1r = getReg(Op1, MBB, IP);
+
+  // Subtracts have their operands swapped
+  if (OperatorClass == 1) {
+    if (Class != cLong) {
+      BuildMI(*MBB, IP, PPC::SUBF, 2, DestReg).addReg(Op1r).addReg(Op0r);
+    } else {
+      BuildMI(*MBB, IP, PPC::SUBFC, 2, DestReg+1).addReg(Op1r+1).addReg(Op0r+1);
+      BuildMI(*MBB, IP, PPC::SUBFE, 2, DestReg).addReg(Op1r).addReg(Op0r);
+    }
+    return;
+  }
 
   if (Class != cLong) {
     unsigned Opcode = OpcodeTab[OperatorClass];
@@ -3876,7 +3887,7 @@ void PPC32ISel::visitAllocaInst(AllocaInst &I) {
     .addImm(0).addImm(27);
   
   // Subtract size from stack pointer, thereby allocating some space.
-  BuildMI(BB, PPC::SUB, 2, PPC::R1).addReg(PPC::R1).addReg(AlignedSize);
+  BuildMI(BB, PPC::SUBF, 2, PPC::R1).addReg(AlignedSize).addReg(PPC::R1);
 
   // Put a pointer to the space into the result register, by copying
   // the stack pointer.
