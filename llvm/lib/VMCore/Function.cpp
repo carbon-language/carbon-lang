@@ -159,7 +159,7 @@ void Function::dropAllReferences() {
 /// llvm/Intrinsics.h.
 ///
 unsigned Function::getIntrinsicID() const {
-  if (getName().size() <= 6 || getName()[4] != '.' || getName()[0] != 'l' ||
+  if (getName().size() <= 5 || getName()[4] != '.' || getName()[0] != 'l' ||
       getName()[1] != 'l' || getName()[2] != 'v' || getName()[3] != 'm')
     return 0;  // All intrinsics start with 'llvm.'
   
