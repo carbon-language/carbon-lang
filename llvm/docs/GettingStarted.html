@@ -1036,6 +1036,19 @@
             <tt>configure</tt> to do its work without having to adjust your
             <tt>PATH</tt> permanently.
         </ol>
+
+        <dt><b>I've upgraded to a new version of LLVM, and I get strange build
+        errors.</b>
+        <dd>
+        Sometimes changes to the LLVM source code alters how the build system
+        works.  Changes in libtool, autoconf, or header file dependencies are
+        especially prone to this sort of problem.
+        <p>
+        The best thing to try is to remove the old files and re-build.  In most
+        cases, this takes care of the problem.  To do this, just type <tt>make
+        clean</tt> and then <tt>make</tt> in the directory that fails to build.
+        <p>
+
     </dl>
 
     <!--=====================================================================-->
