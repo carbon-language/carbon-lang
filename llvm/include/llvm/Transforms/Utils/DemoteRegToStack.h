@@ -1,4 +1,5 @@
 //===- DemoteRegToStack.h - Move a virtual reg. to stack --------*- C++ -*-===//
+//
 // This file provides the function:
 //     AllocaInst* DemoteRegToStack(Instruction& X):
 //
@@ -13,9 +14,10 @@
 // (4) Delete X and all the Phis, which should all now be dead.
 //
 // Returns the pointer to the alloca inserted to create a stack slot for X.
-//---------------------------------------------------------------------------- 
+//
+//===----------------------------------------------------------------------===//
 
 class Instruction;
 class AllocaInst;
 
-extern AllocaInst* DemoteRegToStack(Instruction& X);
+AllocaInst *DemoteRegToStack(Instruction &X);
