@@ -24,7 +24,7 @@ using std::cerr;
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
-               cl::desc("Load <arg> files, linking them together"));
+               cl::desc("<input bytecode files>"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"), cl::init("-"),
