@@ -237,9 +237,10 @@ namespace {
     // Visitation methods for various instructions.  These methods simply emit
     // fixed PowerPC code for each instruction.
 
-    // Control flow operators
+    // Control flow operators.
     void visitReturnInst(ReturnInst &RI);
     void visitBranchInst(BranchInst &BI);
+    void visitUnreachableInst(UnreachableInst &UI) {}
 
     struct ValueRecord {
       Value *Val;
@@ -575,6 +576,10 @@ void PPC32ISel::copyGlobalBaseToRegister(MachineBasicBlock *MBB,
 void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
                                        MachineBasicBlock::iterator IP,
                                        Constant *C, unsigned R) {
+  if (isa<UndefValue>(C)) {
+    BuildMI(*MBB, IP, PPC::IMPLICIT_DEF, 0, R);
+    return;
+  }
   if (C->getType()->isIntegral()) {
     unsigned Class = getClassB(C->getType());
 
@@ -2117,9 +2122,8 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
   
   // xor X, -1 -> not X
   if (Opcode == 4) {
-    ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op1);
-    ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1);
-    if ((CSI && CSI->isAllOnesValue()) || (CUI && CUI->isAllOnesValue())) {
+    ConstantInt *CI = dyn_cast<ConstantSInt>(Op1);
+    if (CI && CI->isAllOnesValue()) {
       BuildMI(*MBB, IP, PPC::NOR, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
       return;
     }
