@@ -268,7 +268,9 @@ LLVMAS  := $(LLVMTOOLCURRENT)/llvm-as
 # LEVEL/include          : config.h files for the project
 # LLVM_SRC_ROOT/include  : Files global to LLVM.
 #
-CPPFLAGS += -I$(BUILD_OBJ_DIR) -I$(BUILD_SRC_DIR) -I$(LLVM_OBJ_ROOT)/include -I$(BUILD_SRC_ROOT)/include -I$(LEVEL)/include -I$(LLVM_SRC_ROOT)/include
+CPPFLAGS += -I$(BUILD_OBJ_DIR) -I$(BUILD_SRC_DIR) -I$(LLVM_OBJ_ROOT)/include \
+            -I$(BUILD_SRC_ROOT)/include -I$(LEVEL)/include \
+            -I$(LLVM_SRC_ROOT)/include
 
 # By default, strip symbol information from executable
 ifndef KEEP_SYMBOLS
@@ -342,7 +344,8 @@ AR       = ${AR_PATH} cq
 # The local Makefile can list other Source files via ExtraSource = ...
 # 
 ifndef Source
-Source  := $(notdir $(ExtraSource) $(wildcard $(SourceDir)/*.cpp $(SourceDir)/*.c $(SourceDir)/*.y $(SourceDir)/*.l))
+Source  := $(notdir $(ExtraSource) $(wildcard $(SourceDir)/*.cpp \
+                    $(SourceDir)/*.c $(SourceDir)/*.y $(SourceDir)/*.l))
 endif
 
 #
