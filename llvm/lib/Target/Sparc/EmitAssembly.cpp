@@ -184,14 +184,11 @@ namespace {
     }
 
     void PrintZeroBytesToPad(int numBytes) {
-      for (/* no init */; numBytes >= 8; numBytes -= 8)
-        printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
-
-      if (numBytes >= 4) {
-        printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
-        numBytes -= 4;
-      }
-
+      //
+      // Always use single unsigned bytes for padding.  We don't know upon
+      // what data size the beginning address is aligned, so using anything
+      // other than a byte may cause alignment errors in the assembler.
+      //
       while (numBytes--)
         printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
     }
