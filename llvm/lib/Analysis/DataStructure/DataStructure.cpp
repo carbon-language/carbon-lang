@@ -1071,9 +1071,6 @@ void DSGraph::updateFromGlobalGraph() {
       if (It != GlobalsGraph->ScalarMap.end())
         RC.merge(getNodeForValue(*I), It->second);
     }
-  
-  // Merging global nodes leaves behind unused nodes: get rid of them now.
-  removeTriviallyDeadNodes();
 }
 
 /// cloneInto - Clone the specified DSGraph into the current graph.  The
@@ -1597,7 +1594,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 
   // Reduce the amount of work we have to do... remove dummy nodes left over by
   // merging...
-  //removeTriviallyDeadNodes();
+  removeTriviallyDeadNodes();
 
   TIME_REGION(X, "removeDeadNodes");
 
