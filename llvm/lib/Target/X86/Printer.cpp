@@ -196,20 +196,22 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // or it takes a register and an immediate of the same size as the register
     // (move immediate f.e.).  Note that this immediate value might be stored as
     // an LLVM value, to represent, for example, loading the address of a global
-    // into a register.
+    // into a register.  The initial register might be duplicated if this is a
+    // M_2_ADDR_REG instruction
     //
     assert(MI->getOperand(0).isRegister() &&
            (MI->getNumOperands() == 1 || 
             (MI->getNumOperands() == 2 &&
              (MI->getOperand(1).getVRegValueOrNull() ||
-              MI->getOperand(1).isImmediate()))) &&
+              MI->getOperand(1).isImmediate() ||
+	      MI->getOperand(1).isRegister()))) &&
            "Illegal form for AddRegFrm instruction!");
 
     unsigned Reg = MI->getOperand(0).getReg();
     
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
-    if (MI->getNumOperands() == 2) {
+    if (MI->getNumOperands() == 2 && !MI->getOperand(1).isRegister()) {
       O << ", ";
       printOp(O, MI->getOperand(1), RI);
     }

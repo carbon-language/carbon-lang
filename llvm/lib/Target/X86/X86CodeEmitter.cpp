@@ -238,7 +238,8 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     break;
   case X86II::AddRegFrm:
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
-    if (MI.getNumOperands() == 2) {
+    if (MI.getNumOperands() == 2 && (MI.getOperand(1).isImmediate() ||
+	MI.getOperand(1).getVRegValueOrNull())) {
       unsigned Size = sizeOfPtr(Desc);
       if (Value *V = MI.getOperand(1).getVRegValueOrNull()) {
         assert(Size == 4 && "Don't know how to emit non-pointer values!");
