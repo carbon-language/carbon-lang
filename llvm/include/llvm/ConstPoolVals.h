@@ -22,6 +22,7 @@ class StructType;
 class ConstPoolVal : public User {
 protected:
   inline ConstPoolVal(const Type *Ty) : User(Ty, Value::ConstantVal) {}
+  ~ConstPoolVal() {}
 
 public:
   // Specialize setName to handle symbol table majik...
@@ -46,6 +47,7 @@ class ConstPoolBool : public ConstPoolVal {
   bool Val;
   ConstPoolBool(const ConstPoolBool &);     // DO NOT IMPLEMENT
   ConstPoolBool(bool V);
+  ~ConstPoolBool() {}
 public:
   static ConstPoolBool *True, *False;  // The True & False values
 
@@ -73,6 +75,7 @@ protected:
   } Val;
   ConstPoolInt(const ConstPoolInt &);      // DO NOT IMPLEMENT
   ConstPoolInt(const Type *Ty, uint64_t V);
+  ~ConstPoolInt() {}
 public:
   // equalsInt - Provide a helper method that can be used to determine if the 
   // constant contained within is equal to a constant.  This only works for very
@@ -98,6 +101,7 @@ class ConstPoolSInt : public ConstPoolInt {
   ConstPoolSInt(const ConstPoolSInt &);      // DO NOT IMPLEMENT
 protected:
   ConstPoolSInt(const Type *Ty, int64_t V);
+  ~ConstPoolSInt() {}
 public:
   static ConstPoolSInt *get(const Type *Ty, int64_t V);
 
@@ -115,6 +119,7 @@ class ConstPoolUInt : public ConstPoolInt {
   ConstPoolUInt(const ConstPoolUInt &);      // DO NOT IMPLEMENT
 protected:
   ConstPoolUInt(const Type *Ty, uint64_t V);
+  ~ConstPoolUInt() {}
 public:
   static ConstPoolUInt *get(const Type *Ty, uint64_t V);
 
@@ -133,6 +138,7 @@ class ConstPoolFP : public ConstPoolVal {
   ConstPoolFP(const ConstPoolFP &);      // DO NOT IMPLEMENT
 protected:
   ConstPoolFP(const Type *Ty, double V);
+  ~ConstPoolFP() {}
 public:
   static ConstPoolFP *get(const Type *Ty, double V);
 
@@ -150,6 +156,7 @@ class ConstPoolArray : public ConstPoolVal {
   ConstPoolArray(const ConstPoolArray &);      // DO NOT IMPLEMENT
 protected:
   ConstPoolArray(const ArrayType *T, const vector<ConstPoolVal*> &Val);
+  ~ConstPoolArray() {}
 public:
   static ConstPoolArray *get(const ArrayType *T, const vector<ConstPoolVal*> &);
 
@@ -166,6 +173,7 @@ class ConstPoolStruct : public ConstPoolVal {
   ConstPoolStruct(const ConstPoolStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstPoolStruct(const StructType *T, const vector<ConstPoolVal*> &Val);
+  ~ConstPoolStruct() {}
 public:
   static ConstPoolStruct *get(const StructType *T,
 			      const vector<ConstPoolVal*> &V);
