@@ -267,13 +267,25 @@ ConstantStruct::ConstantStruct(const StructType *T,
 
 ConstantPointerRef::ConstantPointerRef(GlobalValue *GV)
   : Constant(GV->getType()) {
+  Operands.reserve(1);
   Operands.push_back(Use(GV, this));
 }
 
 ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
   : Constant(Ty), iType(Opcode) {
+  Operands.reserve(1);
   Operands.push_back(Use(C, this));
 }
+
+// Select instruction creation ctor
+ConstantExpr::ConstantExpr(Constant *C, Constant *V1, Constant *V2)
+  : Constant(V1->getType()), iType(Instruction::Select) {
+  Operands.reserve(3);
+  Operands.push_back(Use(C, this));
+  Operands.push_back(Use(V1, this));
+  Operands.push_back(Use(V2, this));
+}
+
 
 static bool isSetCC(unsigned Opcode) {
   return Opcode == Instruction::SetEQ || Opcode == Instruction::SetNE ||
@@ -283,6 +295,7 @@ static bool isSetCC(unsigned Opcode) {
 
 ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
   : Constant(isSetCC(Opcode) ? Type::BoolTy : C1->getType()), iType(Opcode) {
+  Operands.reserve(2);
   Operands.push_back(Use(C1, this));
   Operands.push_back(Use(C2, this));
 }
@@ -997,6 +1010,11 @@ namespace llvm {
       case Instruction::Cast:
         New = ConstantExpr::getCast(OldC->getOperand(0), NewTy);
         break;
+      case Instruction::Select:
+        New = ConstantExpr::getSelectTy(NewTy, OldC->getOperand(0),
+                                        OldC->getOperand(1),
+                                        OldC->getOperand(2));
+        break;
       case Instruction::Shl:
       case Instruction::Shr:
         New = ConstantExpr::getShiftTy(NewTy, OldC->getOpcode(),
@@ -1056,6 +1074,23 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key = std::make_pair(Opcode, argVec);
+  return ExprConstants.getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
+                                    Constant *V1, Constant *V2) {
+  assert(C->getType() == Type::BoolTy && "Select condition must be bool!");
+  assert(V1->getType() == V2->getType() && "Select value types must match!");
+  assert(V1->getType()->isFirstClassType() && "Cannot select aggregate type!");
+
+  if (ReqTy == V1->getType())
+    if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
+      return SC;        // Fold common cases
+
+  std::vector<Constant*> argVec(3, C);
+  argVec[1] = V1;
+  argVec[2] = V2;
+  ExprMapKeyType Key = std::make_pair(Instruction::Select, argVec);
   return ExprConstants.getOrCreate(ReqTy, Key);
 }
 
