@@ -494,7 +494,7 @@ namespace sys {
       /// already unique. 
       /// @throws std::string if an unrecoverable error occurs.
       /// @brief Make the current path name unique in the file system.
-      void makeUnique();
+      void makeUnique( bool reuse_current = true );
 
       /// This method attempts to create a directory in the file system with the
       /// same name as the Path object. The \p create_parents parameter controls
@@ -529,7 +529,7 @@ namespace sys {
       /// the newly generated temporary file name is unique in the file system.
       /// @throws std::string if there is an error
       /// @brief Create a unique temporary file
-      bool createTemporaryFile();
+      bool createTemporaryFile(bool reuse_current = false);
 
       /// This method attempts to destroy the directory named by the last in 
       /// the Path name.  If \p remove_contents is false, an attempt will be 

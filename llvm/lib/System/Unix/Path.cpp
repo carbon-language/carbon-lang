@@ -481,13 +481,13 @@ Path::createFile() {
 }
 
 bool
-Path::createTemporaryFile() {
+Path::createTemporaryFile(bool reuse_current) {
   // Make sure we're dealing with a file
   if (!isFile()) 
     return false;
 
   // Make this into a unique file name
-  makeUnique();
+  makeUnique( reuse_current );
 
   // create the file
   int outFile = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
@@ -600,8 +600,8 @@ CopyFile(const sys::Path &Dest, const sys::Path &Src) {
 }
 
 void 
-Path::makeUnique() {
-  if (!exists())
+Path::makeUnique(bool reuse_current) {
+  if (reuse_current && !exists())
     return; // File doesn't exist already, just use it!
 
   // Append an XXXXXX pattern to the end of the file for use with mkstemp, 

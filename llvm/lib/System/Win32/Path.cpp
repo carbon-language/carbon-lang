@@ -587,8 +587,8 @@ CopyFile(const sys::Path &Dest, const sys::Path &Src) {
 }
 
 void 
-Path::makeUnique() {
-  if (!exists())
+Path::makeUnique( bool reuse_current ) {
+  if (reuse_current && !exists())
     return; // File doesn't exist already, just use it!
 
   Path dir (*this);
@@ -600,6 +600,16 @@ Path::makeUnique() {
     ThrowError("Cannot make unique filename for '" + path + "'");
 
   path = newName;
+}
+
+bool
+Path::createTemporaryFile(bool reuse_current) {
+  // Make sure we're dealing with a file
+  if (!isFile()) 
+    return false;
+
+  // Make this into a unique file name
+  makeUnique( reuse_current );
 }
 
 }
