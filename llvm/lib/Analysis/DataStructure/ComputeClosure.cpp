@@ -11,9 +11,6 @@
 #include "llvm/iOther.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
-#ifdef DEBUG_IP_CLOSURE
-#include "llvm/Assembly/Writer.h"
-#endif
 
 // Make all of the pointers that point to Val also point to N.
 //

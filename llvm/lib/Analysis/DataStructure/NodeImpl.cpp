@@ -5,12 +5,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DataStructureGraph.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/Assembly/Writer.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <sstream>
