@@ -1636,6 +1636,24 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
       }
 
+      // Fold common multiplies into LEA instructions.
+      if (Node->getOpcode() == ISD::MUL && N.getValueType() == MVT::i32) {
+        switch ((int)CN->getValue()) {
+        default: break;
+        case 3:
+        case 5:
+        case 9:
+          X86AddressMode AM;
+          // Remove N from exprmap so SelectAddress doesn't get confused.
+          ExprMap.erase(N);
+          SelectAddress(N, AM);
+          // Restore it to the map.
+          ExprMap[N] = Result;
+          addFullAddress(BuildMI(BB, X86::LEA32r, 4, Result), AM);
+          return Result;
+        }
+      }
+
       switch (N.getValueType()) {
       default: assert(0 && "Cannot xor this type!");
       case MVT::i1:
