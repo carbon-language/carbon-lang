@@ -33,7 +33,8 @@ class PassInfo {
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
   Pass *(*NormalCtor)();               // No argument ctor
-  Pass *(*DataCtor)(const TargetData&);// Ctor taking TargetData object...
+  Pass *(*DataCtor)(const TargetData&);// Ctor taking const TargetData object...
+  Pass *(*TargetCtor)(TargetMachine&);   // Ctor taking TargetMachine object...
 
 public:
   /// PassType - Define symbolic constants that can be used to test to see if
@@ -48,9 +49,11 @@ public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti, 
-           unsigned pt, Pass *(*normal)(), Pass *(*data)(const TargetData &))
+           unsigned pt, Pass *(*normal)() = 0,
+           Pass *(*datactor)(const TargetData &) = 0,
+           Pass *(*targetctor)(TargetMachine &) = 0)
     : PassName(name), PassArgument(arg), TypeInfo(ti), PassType(pt),
-      NormalCtor(normal), DataCtor(data) {
+      NormalCtor(normal), DataCtor(datactor), TargetCtor(targetctor)  {
   }
 
   /// getPassName - Return the friendly name for the pass, never returns null
@@ -96,10 +99,18 @@ public:
 
   /// getDataCtor - Return a pointer to a function that creates an instance of
   /// the pass and returns it.  This returns a constructor for a version of the
-  /// pass that takes a TArgetData object as a parameter.
+  /// pass that takes a TargetData object as a parameter.
   ///
   Pass *(*getDataCtor() const)(const TargetData &) {
     return DataCtor;
+  }
+
+  /// getTargetCtor - Return a pointer to a function that creates an instance of
+  /// the pass and returns it.  This returns a constructor for a version of the
+  /// pass that takes a TargetMachine object as a parameter.
+  ///
+  Pass *(*getTargetCtor() const)(TargetMachine &) {
+    return TargetCtor;
   }
 
   /// addInterfaceImplemented - This method is called when this pass is
@@ -167,13 +178,13 @@ struct RegisterPass : public RegisterPassBase {
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, unsigned PassTy = 0) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
-                              callDefaultCtor<PassName>, 0));
+                              callDefaultCtor<PassName>));
   }
 
   // Register Pass using default constructor explicitly...
   RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
                Pass *(*ctor)()) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, ctor,0));
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, ctor));
   }
 
   // Register Pass using TargetData constructor...
@@ -183,11 +194,18 @@ struct RegisterPass : public RegisterPassBase {
                               0, datactor));
   }
 
+  // Register Pass using TargetMachine constructor...
+  RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
+               Pass *(*targetctor)(TargetMachine &)) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
+                              0, 0, targetctor));
+  }
+
   // Generic constructor version that has an unknown ctor type...
   template<typename CtorType>
   RegisterPass(const char *PassArg, const char *Name, unsigned PassTy,
                CtorType *Fn) {
-    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, 0, 0));
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy, 0));
   }
 };
 
@@ -199,14 +217,14 @@ struct RegisterOpt : public RegisterPassBase {
   RegisterOpt(const char *PassArg, const char *Name) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization,
-                              callDefaultCtor<PassName>, 0));
+                              callDefaultCtor<PassName>));
   }
 
   /// Register Pass using default constructor explicitly...
   ///
   RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)()) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::Optimization, ctor, 0));
+                              PassInfo::Optimization, ctor));
   }
 
   /// Register Pass using TargetData constructor...
@@ -215,6 +233,14 @@ struct RegisterOpt : public RegisterPassBase {
                Pass *(*datactor)(const TargetData &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization, 0, datactor));
+  }
+
+  /// Register Pass using TargetMachine constructor...
+  ///
+  RegisterOpt(const char *PassArg, const char *Name,
+               Pass *(*targetctor)(TargetMachine &)) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Optimization, 0, 0, targetctor));
   }
 };
 
@@ -230,7 +256,7 @@ struct RegisterAnalysis : public RegisterPassBase {
                    bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Analysis,
-                              callDefaultCtor<PassName>, 0));
+                              callDefaultCtor<PassName>));
     if (CFGOnly)
       setPreservesCFG();
   }
@@ -244,14 +270,14 @@ struct RegisterLLC : public RegisterPassBase {
   RegisterLLC(const char *PassArg, const char *Name) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::LLC,
-                              callDefaultCtor<PassName>, 0));
+                              callDefaultCtor<PassName>));
   }
 
   /// Register Pass using default constructor explicitly...
   ///
   RegisterLLC(const char *PassArg, const char *Name, Pass *(*ctor)()) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::LLC, ctor, 0));
+                              PassInfo::LLC, ctor));
   }
 
   /// Register Pass using TargetData constructor...
@@ -267,7 +293,7 @@ struct RegisterLLC : public RegisterPassBase {
   RegisterLLC(const char *PassArg, const char *Name,
                Pass *(*datactor)(TargetMachine &)) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::LLC, 0, 0));
+                              PassInfo::LLC));
   }
 };
 
