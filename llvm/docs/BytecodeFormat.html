@@ -1556,6 +1556,34 @@ describes the differences between that version and the one that <i>follows</i>.
 </p>
 </div>
 <!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="vers12">Version 1.3 Differences From 
+    1.4</a></div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Aligned Data</div>
+<div class="doc_text">
+  <p>In version 1.3, certain data items were aligned to 32-bit boundaries. In
+  version 1.4, alignment of data was done away with completely. The need for
+  alignment has gone away and the only thing it adds is bytecode file size
+  overhead. In most cases this overhead was small. However, in functions with
+  large numbers of format 0 instructions (GEPs and PHIs with lots of parameters)
+  or regular instructions with large valued operands (e.g. because there's just
+  a lot of instructions in the function) the overhead can be extreme. In one
+  test case, the overhead was 44,000 bytes (34% of the total file size).
+  Consequently in release 1.4, the decision was made to eliminate alignment
+  altogether.</p>
+  <p>In version 1.3 format, the following bytecode constructs were aligned (i.e.
+  they were followed by one to three bytes of padding):</p>
+  <ul>
+    <li>All blocks.</li>
+    <li>Instructions using the long format (format 0).</li>
+    <li>All call instructions that called a var args function.</li>
+    <li>The target triple (a string field at the end of the module block).</li>
+    <li>The version field (immediately following the signature).</li>
+  </ul>
+  <p>None of these constructs are aligned in version 1.4</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="vers12">Version 1.2 Differences
 From 1.3</a></div>
 <!-- _______________________________________________________________________ -->
