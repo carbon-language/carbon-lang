@@ -117,7 +117,8 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
 //
 // Algorithm:
 //
-//     If the single int CC register is used (either as icc or xcc)
+//     If (node has any interferences)
+//         /* all interference operations can use only one register! */
 //         mark the LR for spilling
 //     else {
 //         if (the LR is a 64-bit comparison) use %xcc
@@ -130,30 +131,33 @@ void SparcIntRegClass::colorIGNode(IGNode * Node,
 void SparcIntCCRegClass::colorIGNode(IGNode *Node,
                                      std::vector<bool> &IsColorUsedArr) const
 {
-  if (IsColorUsedArr[xcc] && IsColorUsedArr[icc])
+  if (Node->getNumOfNeighbors() > 0)
     Node->getParentLR()->markForSpill();
-  else {
-    // Choose whether to use %xcc or %icc based on type of value compared
-    const LiveRange* ccLR = Node->getParentLR();
-    const Type* setCCType = (* ccLR->begin())->getType(); // any Value in LR
-    assert(setCCType->isIntegral() || isa<PointerType>(setCCType));
-    int ccReg = ((isa<PointerType>(setCCType) || setCCType == Type::LongTy)
-                 ? xcc : icc);
+
+  // Mark the appropriate register in any case (even if it needs to be spilled)
+  // because there is only one possible register, but more importantly, the
+  // spill algorithm cannot find it.  In particular, we have to choose
+  // whether to use %xcc or %icc based on type of value compared
+  // 
+  const LiveRange* ccLR = Node->getParentLR();
+  const Type* setCCType = (* ccLR->begin())->getType(); // any Value in LR
+  assert(setCCType->isIntegral() || isa<PointerType>(setCCType));
+  int ccReg = ((isa<PointerType>(setCCType) || setCCType == Type::LongTy)
+               ? xcc : icc);
 
 #ifndef NDEBUG
-    // Let's just make sure values of two different types have not been
-    // coalesced into this LR.
-    for (ValueSet::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
-      const Type* ccType = (*I)->getType();
-      assert((ccReg == xcc && (isa<PointerType>(ccType)
-                               || ccType == Type::LongTy)) ||
-             (ccReg == icc && ccType->isIntegral() && ccType != Type::LongTy)
-             && "Comparisons needing different intCC regs coalesced in LR!");
-    }
+  // Let's just make sure values of two different types have not been
+  // coalesced into this LR.
+  for (ValueSet::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
+    const Type* ccType = (*I)->getType();
+    assert((ccReg == xcc && (isa<PointerType>(ccType)
+                             || ccType == Type::LongTy)) ||
+           (ccReg == icc && ccType->isIntegral() && ccType != Type::LongTy)
+           && "Comparisons needing different intCC regs coalesced in LR!");
+  }
 #endif
 
-    Node->setColor(ccReg);                // only one int cc reg is available
-  }
+  Node->setColor(ccReg);                // only one int cc reg is available
 }
 
 
