@@ -501,13 +501,6 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   } else if (getOpcode() == Instruction::Cast) {
     assert(getOperand(0) == From && "Cast only has one use!");
     Replacement = ConstantExpr::getCast(To, getType());
-  } else if (getOpcode() == Instruction::Shl ||
-             getOpcode() == Instruction::Shr) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    Replacement = ConstantExpr::getShift(getOpcode(), C1, C2);
   } else if (getNumOperands() == 2) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);
@@ -958,7 +951,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   return ExprConstants.getOrCreate(ReqTy, Key);
 }
 
-/// getShift - Return a shift left or shift right constant expr
+/// getShiftTy - Return a shift left or shift right constant expr
 Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
                                    Constant *C1, Constant *C2) {
   // Check the operands for consistency first
