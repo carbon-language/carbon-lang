@@ -59,7 +59,7 @@ VPATH=$(SourceDir)
 ###########################################################################
 
 # Ensure people re-run configure when it gets updated
-all::$(LLVM_OBJ_ROOT)/include/Config/config.h
+all::$(LLVM_OBJ_ROOT)/config.status
 
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
@@ -780,7 +780,7 @@ $(BUILD_OBJ_DIR)/Depend/%.d: %.c $(BUILD_OBJ_DIR)/Depend/.dir
 #
 # Autoconf Dependencies.
 #
-$(LLVM_OBJ_ROOT)/include/Config/config.h:: $(LLVM_SRC_ROOT)/configure
+$(LLVM_OBJ_ROOT)/config.status:: $(LLVM_SRC_ROOT)/configure
 	@${ECHO} "You need to re-run $(LLVM_SRC_ROOT)/configure"
 	@${ECHO} "inside the directory $(LLVM_OBJ_ROOT)"
 	$(VERB) exit 1
