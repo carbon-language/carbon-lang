@@ -260,6 +260,9 @@ void JITResolver::SaveRegisters(uint64_t DoubleFP[], uint64_t CC[],
                           "=m"(DoubleFP[26]), "=m"(DoubleFP[27]),
                           "=m"(DoubleFP[28]), "=m"(DoubleFP[29]),
                           "=m"(DoubleFP[30]), "=m"(DoubleFP[31]));
+#else
+  std::cerr << "ERROR: RUNNING CODE THAT ONLY WORKS ON A SPARCV9 HOST!\n";
+  abort();
 #endif
 }
 
@@ -316,6 +319,9 @@ void JITResolver::RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[],
                            "m"(DoubleFP[26]), "m"(DoubleFP[27]),
                            "m"(DoubleFP[28]), "m"(DoubleFP[29]),
                            "m"(DoubleFP[30]), "m"(DoubleFP[31]));
+#else
+  std::cerr << "ERROR: RUNNING CODE THAT ONLY WORKS ON A SPARCV9 HOST!\n";
+  abort();
 #endif
 }
 
@@ -338,6 +344,9 @@ void JITResolver::CompilationCallback() {
   DEBUG(std::cerr << "Read i7 (return addr) = "
                   << std::hex << returnAddr << ", value: "
                   << std::hex << *(unsigned*)returnAddr << "\n");
+#else
+  std::cerr << "ERROR: RUNNING CODE THAT ONLY WORKS ON A SPARCV9 HOST!\n";
+  abort();
 #endif
 
   // If we can rewrite the ORIGINAL caller, we eliminate the whole need for a
