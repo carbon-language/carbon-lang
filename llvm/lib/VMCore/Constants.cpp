@@ -216,7 +216,7 @@ bool ConstantUInt::isAllOnesValue() const {
 //                             Normal Constructors
 
 ConstantIntegral::ConstantIntegral(const Type *Ty, uint64_t V)
-  : Constant(Ty) {
+  : Constant(Ty, SimpleConstantVal, 0, 0) {
     Val.Unsigned = V;
 }
 
@@ -238,67 +238,77 @@ ConstantUInt::ConstantUInt(const Type *Ty, uint64_t V) : ConstantInt(Ty, V) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
-ConstantFP::ConstantFP(const Type *Ty, double V) : Constant(Ty) {
+ConstantFP::ConstantFP(const Type *Ty, double V)
+  : Constant(Ty, SimpleConstantVal, 0, 0) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
   Val = V;
 }
 
 ConstantArray::ConstantArray(const ArrayType *T,
-                             const std::vector<Constant*> &V) : Constant(T) {
+                             const std::vector<Constant*> &V)
+  : Constant(T, SimpleConstantVal, new Use[V.size()], V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant array");
-  Operands.reserve(V.size());
+  Use *OL = OperandList;
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert((V[i]->getType() == T->getElementType() ||
             (T->isAbstract() &&
-             V[i]->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+             V[i]->getType()->getTypeID()==T->getElementType()->getTypeID())) &&
            "Initializer for array element doesn't match array element type!");
-    Operands.push_back(Use(V[i], this));
+    OL[i].init(V[i], this);
   }
 }
 
+ConstantArray::~ConstantArray() {
+  delete [] OperandList;
+}
+
 ConstantStruct::ConstantStruct(const StructType *T,
-                               const std::vector<Constant*> &V) : Constant(T) {
+                               const std::vector<Constant*> &V)
+  : Constant(T, SimpleConstantVal, new Use[V.size()], V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant structure");
-  Operands.reserve(V.size());
+  Use *OL = OperandList;
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert((V[i]->getType() == T->getElementType(i) ||
             ((T->getElementType(i)->isAbstract() ||
               V[i]->getType()->isAbstract()) &&
-             T->getElementType(i)->getTypeID() == V[i]->getType()->getTypeID())) &&
+             T->getElementType(i)->getTypeID()==V[i]->getType()->getTypeID()))&&
            "Initializer for struct element doesn't match struct element type!");
-    Operands.push_back(Use(V[i], this));
+    OL[i].init(V[i], this);
   }
 }
 
+ConstantStruct::~ConstantStruct() {
+  delete [] OperandList;
+}
+
+
 ConstantPacked::ConstantPacked(const PackedType *T,
-                               const std::vector<Constant*> &V) : Constant(T) {
-  Operands.reserve(V.size());
+                               const std::vector<Constant*> &V)
+  : Constant(T, SimpleConstantVal, new Use[V.size()], V.size()) {
+  Use *OL = OperandList;
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert((V[i]->getType() == T->getElementType() ||
             (T->isAbstract() &&
-             V[i]->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+             V[i]->getType()->getTypeID()==T->getElementType()->getTypeID())) &&
            "Initializer for packed element doesn't match packed element type!");
-    Operands.push_back(Use(V[i], this));
+    OL[i].init(V[i], this);
   }
 }
 
-ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
-  : Constant(Ty, ConstantExprVal), iType(Opcode) {
-  Operands.reserve(1);
-  Operands.push_back(Use(C, this));
+ConstantPacked::~ConstantPacked() {
+  delete [] OperandList;
 }
 
-// Select instruction creation ctor
-ConstantExpr::ConstantExpr(Constant *C, Constant *V1, Constant *V2)
-  : Constant(V1->getType(), ConstantExprVal), iType(Instruction::Select) {
-  Operands.reserve(3);
-  Operands.push_back(Use(C, this));
-  Operands.push_back(Use(V1, this));
-  Operands.push_back(Use(V2, this));
-}
-
+/// UnaryConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement unary constant exprs.
+class UnaryConstantExpr : public ConstantExpr {
+  Use Op;
+public:
+  UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
+    : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {}
+};
 
 static bool isSetCC(unsigned Opcode) {
   return Opcode == Instruction::SetEQ || Opcode == Instruction::SetNE ||
@@ -306,22 +316,47 @@ static bool isSetCC(unsigned Opcode) {
          Opcode == Instruction::SetLE || Opcode == Instruction::SetGE;
 }
 
-ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
-  : Constant(isSetCC(Opcode) ? Type::BoolTy : C1->getType(), ConstantExprVal),
-    iType(Opcode) {
-  Operands.reserve(2);
-  Operands.push_back(Use(C1, this));
-  Operands.push_back(Use(C2, this));
-}
+/// BinaryConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement binary constant exprs.
+class BinaryConstantExpr : public ConstantExpr {
+  Use Ops[2];
+public:
+  BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
+    : ConstantExpr(isSetCC(Opcode) ? Type::BoolTy : C1->getType(),
+                   Opcode, Ops, 2) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+  }
+};
 
-ConstantExpr::ConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
-                           const Type *DestTy)
-  : Constant(DestTy, ConstantExprVal), iType(Instruction::GetElementPtr) {
-  Operands.reserve(1+IdxList.size());
-  Operands.push_back(Use(C, this));
-  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-    Operands.push_back(Use(IdxList[i], this));
-}
+/// SelectConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement select constant exprs.
+class SelectConstantExpr : public ConstantExpr {
+  Use Ops[3];
+public:
+  SelectConstantExpr(Constant *C1, Constant *C2, Constant *C3)
+    : ConstantExpr(C2->getType(), Instruction::Select, Ops, 3) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+    Ops[2].init(C3, this);
+  }
+};
+
+/// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
+/// used behind the scenes to implement getelementpr constant exprs.
+struct GetElementPtrConstantExpr : public ConstantExpr {
+  GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+                            const Type *DestTy)
+    : ConstantExpr(DestTy, Instruction::GetElementPtr,
+                   new Use[IdxList.size()+1], IdxList.size()+1) {
+    OperandList[0].init(C, this);
+    for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+      OperandList[i+1].init(IdxList[i], this);
+  }
+  ~GetElementPtrConstantExpr() {
+    delete [] OperandList;    
+  }
+};
 
 /// ConstantExpr::get* - Return some common constants without having to
 /// specify the full Instruction::OPCODE identifier.
@@ -1162,18 +1197,18 @@ namespace llvm {
   struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
     static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V) {
       if (V.first == Instruction::Cast)
-        return new ConstantExpr(Instruction::Cast, V.second[0], Ty);
+        return new UnaryConstantExpr(Instruction::Cast, V.second[0], Ty);
       if ((V.first >= Instruction::BinaryOpsBegin &&
            V.first < Instruction::BinaryOpsEnd) ||
           V.first == Instruction::Shl || V.first == Instruction::Shr)
-        return new ConstantExpr(V.first, V.second[0], V.second[1]);
+        return new BinaryConstantExpr(V.first, V.second[0], V.second[1]);
       if (V.first == Instruction::Select)
-        return new ConstantExpr(V.second[0], V.second[1], V.second[2]);
+        return new SelectConstantExpr(V.second[0], V.second[1], V.second[2]);
       
       assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
       
       std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
-      return new ConstantExpr(V.second[0], IdxList, Ty);
+      return new GetElementPtrConstantExpr(V.second[0], IdxList, Ty);
     }
   };
 
