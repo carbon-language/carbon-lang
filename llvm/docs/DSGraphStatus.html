@@ -13,6 +13,70 @@ Floating point entries are only highlighted if they double or half their
 previous value.<p>
 
 <hr>
+<a name="20021109-2"><h2>Nov 9, 2002 #2:</h2>
+
+This has the first part of the globals graph implemented, this simply deletes
+the nodes that should be moved to the globals graph, without saving them and
+then later merging them back in (The GlobGr size indicates the size of the
+globals graph: right now it is empty, this will be fixed in the future).  From
+this we can get some <b>best case</b> times that the final algorithm will not be
+able to match, but it is interesting to see badly how the N<sup>2</sup> case
+hurts the TD pass.<p>
+
+Note that I now know that gap and vortex are not working because of an infinite
+loop in the algorithm, now that this is identified, hopefully it will be fixed
+shortly.<p>
+
+Note that these numbers are still with a debug build.  Compiling with
+optimizations and without assertions improves run time 3-4x.<p>
+
+<pre>
+Name:                     Anlyz: LocTime: BUTime:  TDTime:  TotTime:      LocSize: BUSize:  TDSize:    TotSize:     NumFold  NumNodes   main   __main GlobGr
+254.gap.lib                 4.92 *        *        *        *        |    *        *        *          *          |    *     *          *      *      *      
+255.vortex.lib              2.78 *        *        *        *        |    *        *        *          *          |    *     *          *      *      *      
+300.twolf.lib               <b>3.50</b> 0.2890   <b>0.3094</b>   <b>0.5272</b>   <b>1.6337</b>   |    <b>487976</b>   <b>434248</b>   <b>418472</b>     <b>1340696</b>    |    <b>794</b>   <b>4223+808</b>   <b>88+45</b>  <b>0+0</b>    0+0    
+197.parser.lib              <b>1.70</b> 0.1517   <b>0.1978</b>   <b>0.2152</b>   <b>0.7588</b>   |    <b>408560</b>   <b>243688</b>   <b>213776</b>     <b>985496</b>     |    <b>1327</b>  <b>2257+706</b>   <b>14+6</b>   <b>0+0</b>    0+0    
+burg.llvm.lib               <b>1.14</b> 0.1056   <b>0.1296</b>   <b>0.1720</b>   <b>0.5084</b>   |    <b>530224</b>   <b>478880</b>   <b>179080</b>     <b>1188184</b>    |    <b>722</b>   <b>2167+577</b>   <b>30+7</b>   <b>0+0</b>    0+0    
+164.gzip.llvm.lib           0.65 0.0406   <b>0.0256</b>   <b>0.0328</b>   <b>0.1651</b>   |    <b>201664</b>   <b>129304</b>   <b>70864</b>      <b>499448</b>     |    <b>24</b>    <b>971+87</b>     <b>8+2</b>    <b>0+0</b>    0+0    
+optimizer-eval.llvm.lib     0.40 0.0170   <b>0.0366</b>   0.2099   0.3047   |    <b>81584</b>    <b>79352</b>    <b>62232</b>      <b>241544</b>     |    *     <b>309+41</b>     <b>72+27</b>  <b>0+0</b>    0+0    
+256.bzip2.lib               <b>0.29</b> 0.0249   <b>0.0107</b>   <b>0.0112</b>   <b>0.0943</b>   |    <b>139536</b>   <b>84752</b>    <b>39720</b>      <b>336224</b>     |    <b>*</b>     <b>563+37</b>     <b>8+2</b>    <b>0+0</b>    0+0    
+181.mcf.lib                 0.20 0.0185   0.0247   <b>0.0285</b>   0.1042   |    <b>111384</b>   <b>145912</b>   <b>43544</b>      <b>318080</b>     |    <b>156</b>   <b>393+51</b>     <b>23+10</b>  <b>0+0</b>    0+0    
+sim.llvm.lib                0.18 0.0143   0.0106   <b>0.0129</b>   0.0765   |    <b>55376</b>    <b>83072</b>    <b>21968</b>      <b>255424</b>     |    *     <b>261+36</b>     <b>39+22</b>  <b>0+0</b>    0+0    
+voronoi.llvm.lib            0.15 0.0152   0.0203   0.0309   0.0807   |    <b>79696</b>    <b>87280</b>    <b>27336</b>      <b>208088</b>     |    <b>18</b>    <b>299+77</b>     <b>15+8</b>   <b>0+0</b>    0+0    
+bh.llvm.lib                 0.13 0.0120   0.0100   <b>0.0110</b>   0.0506   |    <b>55864</b>    <b>72480</b>    <b>27632</b>      <b>220640</b>     |    <b>61</b>    <b>194+35</b>     <b>6+2</b>    <b>0+0</b>    0+0    
+sgefa.llvm.lib              0.12 0.0088   <b>0.0165</b>   <b>0.0199</b>   0.0616   |    <b>85904</b>    <b>82032</b>    <b>67032</b>      <b>260632</b>     |    *     <b>130+24</b>     <b>24+14</b>  <b>0+0</b>    0+0    
+health.llvm.lib             0.07 0.0051   0.0065   0.0054   0.0243   |    <b>29880</b>    <b>31328</b>    <b>7816</b>       <b>76624</b>      |    71    <b>79+29</b>      <b>10+4</b>   <b>0+0</b>    0+0    
+em3d.llvm.lib               0.07 0.0059   0.0058   <b>0.0058</b>   0.0254   |    <b>24280</b>    <b>33360</b>    <b>13344</b>      <b>87784</b>      |    <b>10</b>    <b>179+27</b>     <b>12+4</b>   <b>0+0</b>    0+0    
+power.llvm.lib              0.06 0.0043   0.0029   0.0051   0.0197   |    <b>28512</b>    <b>17808</b>    <b>8008</b>       <b>62168</b>      |    *     <b>81+18</b>      <b>11+2</b>   <b>0+0</b>    0+0    
+tsp.llvm.lib                0.05 0.0051   0.0031   <b>0.0027</b>   0.0185   |    <b>25704</b>    <b>14576</b>    <b>5040</b>       <b>52488</b>      |    <b>21</b>    <b>42+15</b>      <b>7+4</b>    <b>0+0</b>    0+0    
+perimeter.llvm.lib          0.05 0.0030   0.0036   0.0020   0.0163   |    <b>14936</b>    <b>22008</b>    <b>4296</b>       <b>53856</b>      |    *     <b>35+15</b>      <b>7+4</b>    <b>0+0</b>    0+0    
+mst.llvm.lib                0.05 0.0051   0.0033   <b>0.0038</b>   0.0193   |    <b>27408</b>    <b>16880</b>    <b>7216</b>       <b>66352</b>      |    10    <b>97+15</b>      <b>12+3</b>   <b>0+0</b>    0+0    
+lists.llvm.lib              0.05 0.0042   0.0058   0.0071   0.0227   |    <b>24544</b>    <b>17384</b>    <b>13696</b>      <b>67736</b>      |    <b>30</b>    <b>67+26</b>      <b>3+1</b>    <b>0+0</b>    0+0    
+hash.llvm.lib               0.05 0.0030   0.0033   0.0041   0.0168   |    <b>17936</b>    <b>25000</b>    <b>8544</b>       <b>64752</b>      |    *     <b>117+17</b>     <b>14+6</b>   <b>0+0</b>    0+0    
+objinst.llvm.lib            0.04 0.0018   0.0018   0.0033   0.0122   |    <b>11072</b>    <b>16344</b>    <b>12040</b>      <b>53016</b>      |    <b>35</b>    <b>45+14</b>      <b>16+10</b>  <b>0+0</b>    0+0    
+methcall.llvm.lib           0.04 0.0017   0.0015   0.0029   0.0111   |    <b>10984</b>    <b>9816</b>     <b>11880</b>      <b>46696</b>      |    <b>30</b>    <b>43+12</b>      <b>14+8</b>   <b>0+0</b>    0+0    
+llubenchmark.llvm.lib       0.04 0.0021   <b>0.0010</b>   <b>0.0015</b>   0.0115   |    <b>4728</b>     <b>9384</b>     <b>2808</b>       <b>33656</b>      |    *     <b>31+7</b>       <b>15+5</b>   <b>0+0</b>    0+0    
+bisort.llvm.lib             0.04 0.0029   0.0022   <b>0.0019</b>   0.0128   |    <b>13608</b>    <b>11840</b>    <b>3888</b>       <b>46256</b>      |    *     <b>35+13</b>      <b>7+4</b>    <b>0+0</b>    0+0    
+treeadd.llvm.lib            0.03 0.0014   0.0009   0.0010   0.0071   |    <b>3856</b>     <b>12496</b>    <b>2392</b>       <b>35088</b>      |    *     <b>25+7</b>       <b>6+3</b>    <b>0+0</b>    0+0    
+sumarraymalloc.llvm.lib     0.03 0.0009   0.0008   0.0010   0.0063   |    <b>7040</b>     <b>2192</b>     <b>2656</b>       <b>26000</b>      |    *     <b>23+5</b>       <b>7+4</b>    <b>0+0</b>    0+0    
+sieve.llvm.lib              0.03 0.0007   0.0005   0.0006   0.0063   |    <b>2176</b>     <b>5832</b>     <b>1968</b>       <b>23424</b>      |    *     <b>22+2</b>       <b>12+1</b>   <b>0+0</b>    0+0    
+matrixTranspose.llvm.lib    <b>0.03</b> 0.0005   0.0002   0.0003   0.0026   |    <b>4248</b>     <b>792</b>      <b>1088</b>       <b>8520</b>       |    *     <b>8+1</b>        <b>5+1</b>    <b>0+0</b>    0+0    
+matrix.llvm.lib             0.03 0.0013   0.0013   0.0015   0.0085   |    <b>8720</b>     <b>8704</b>     <b>3416</b>       <b>36888</b>      |    *     <b>38+9</b>       <b>12+8</b>   <b>0+0</b>    0+0    
+ary3.llvm.lib               0.03 0.0012   0.0012   0.0012   0.0078   |    <b>8648</b>     <b>14136</b>    <b>3328</b>       <b>37712</b>      |    6     <b>44+5</b>       <b>12+3</b>   <b>0+0</b>    0+0    
+random.llvm.lib             0.02 0.0008   0.0004   0.0005   0.0047   |    <b>2056</b>     <b>4720</b>     <b>1656</b>       <b>21416</b>      |    *     <b>15+2</b>       <b>3+1</b>    <b>0+0</b>    0+0    
+pi.llvm.lib                 0.02 0.0007   0.0003   <b>0.0005</b>   0.0036   |    <b>5392</b>     <b>1384</b>     <b>4768</b>       <b>11544</b>      |    *     <b>17+2</b>       <b>13+2</b>   <b>0+0</b>    0+0    
+hello.llvm.lib              0.02 0.0004   <b>0.0001</b>   <b>0.0001</b>   0.0015   |    <b>752</b>      <b>2952</b>     <b>472</b>        <b>6512</b>       |    *     <b>2+0</b>        <b>0+0</b>    <b>0+0</b>    0+0    
+heapsort.llvm.lib           0.02 0.0009   0.0006   0.0007   0.0062   |    <b>7448</b>     <b>6864</b>     <b>2360</b>       <b>28040</b>      |    *     <b>26+3</b>       <b>7+2</b>    <b>0+0</b>    0+0    
+fib2.llvm.lib               0.02 0.0008   0.0007   0.0007   0.0055   |    <b>2416</b>     <b>5680</b>     <b>2000</b>       <b>25744</b>      |    *     <b>21+5</b>       <b>8+3</b>    <b>0+0</b>    0+0    
+ackermann.llvm.lib          <b>0.02</b> <b>0.0007</b>   <b>0.0004</b>   <b>0.0005</b>   <b>0.0046</b>   |    <b>1744</b>     <b>5368</b>     <b>1552</b>       <b>22048</b>      |    *     <b>13+2</b>       <b>3+1</b>    <b>0+0</b>    0+0    
+sumarray.llvm.lib           0.01 0.0003   0.0002   0.0002   0.0021   |    <b>904</b>      <b>2232</b>     <b>624</b>        <b>3760</b>       |    *     <b>6+1</b>        <b>4+1</b>    0+0    0+0    
+sumarray2d.llvm.lib         0.01 0.0004   0.0002   0.0003   0.0026   |    <b>4208</b>     <b>856</b>      <b>3656</b>       <b>10904</b>      |    *     <b>10+1</b>       <b>7+1</b>    <b>0+0</b>    0+0    
+printargs.llvm.lib          0.01 0.0004   0.0002   0.0003   0.0023   |    <b>1240</b>     <b>704</b>      <b>1064</b>       <b>5152</b>       |    *     <b>6+1</b>        <b>4+1</b>    <b>0+0</b>    0+0    
+indvars.llvm.lib            0.01 0.0005   0.0003   0.0003   0.0030   |    <b>1744</b>     <b>4088</b>     <b>1032</b>       <b>9704</b>       |    *     <b>13+1</b>       <b>8+1</b>    <b>0+0</b>    0+0    
+</pre><p>
+
+
+<hr>
 <a name="20021109-1"><h2>Nov 9, 2002:</h2>
 
 Same as the <a href="#20021108-3">previous run</a>, but now with a small tweak:
@@ -406,7 +470,7 @@ burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:7
     <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Nov  6 19:57:57 CST 2002 -->
 <!-- hhmts start -->
-Last modified: Sat Nov  9 14:13:12 CST 2002
+Last modified: Sun Nov 10 01:26:16 CST 2002
 <!-- hhmts end -->
   </body>
 </html>
