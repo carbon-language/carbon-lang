@@ -847,10 +847,8 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
     } else {  // Performing array indexing. Just skip the 0
       ++I;
     }
-  } else if (HasImplicitAddress) {
-    
   }
-    
+
   for (; I != E; ++I)
     if ((*I)->getType() == Type::UIntTy) {
       Out << "[";
@@ -862,11 +860,13 @@ void CWriter::printIndexingExpression(Value *Ptr, User::op_iterator I,
 }
 
 void CWriter::visitLoadInst(LoadInst &I) {
-  printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
+  Out << "*";
+  writeOperand(I.getOperand(0));
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-  printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
+  Out << "*";
+  writeOperand(I.getPointerOperand());
   Out << " = ";
   writeOperand(I.getOperand(0));
 }

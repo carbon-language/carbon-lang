@@ -1638,7 +1638,7 @@ MemoryInst : MALLOC Types {
     if (!isa<PointerType>($2->get()))
       ThrowException("Can't load from nonpointer type: " +
 		     (*$2)->getDescription());
-    if (LoadInst::getIndexedType(*$2, *$4) == 0)
+    if (GetElementPtrInst::getIndexedType(*$2, *$4) == 0)
       ThrowException("Invalid indices for load instruction!");
 
     Value *Src = getVal(*$2, $3);
@@ -1661,7 +1661,7 @@ MemoryInst : MALLOC Types {
     if (!isa<PointerType>($4->get()))
       ThrowException("Can't store to a nonpointer type: " +
                      (*$4)->getDescription());
-    const Type *ElTy = StoreInst::getIndexedType(*$4, *$6);
+    const Type *ElTy = GetElementPtrInst::getIndexedType(*$4, *$6);
     if (ElTy == 0)
       ThrowException("Can't store into that field list!");
     if (ElTy != $2->getType())
