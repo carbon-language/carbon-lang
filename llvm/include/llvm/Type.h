@@ -173,7 +173,7 @@ public:
 
   /// isFirstClassType - Return true if the value is holdable in a register.
   inline bool isFirstClassType() const {
-    return isPrimitiveType() || ID == PointerTyID;
+    return (ID != VoidTyID && ID < TypeTyID) || ID == PointerTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
