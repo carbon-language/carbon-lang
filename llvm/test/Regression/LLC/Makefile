@@ -7,7 +7,7 @@ include $(LEVEL)/test/Programs/SingleSource/Makefile.singlesrc
 
 TESTS := $(wildcard *.ll) $(wildcard *.c)
 
-all:: $(addprefix Output/, $(TESTS:%.ll=%.ts))
+all:: $(addprefix Output/, $(filter-out %.c, $(TESTS:%.ll=%.ts)))
 
 Output/%.ts: Output/%.bc $(LLC) Output/.dir
 	@echo "======== Compiling $< =========="
