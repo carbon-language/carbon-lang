@@ -159,16 +159,6 @@ public:
     insertEntry(Val->getName(), Val->getType(), Val);
   }
 
-  /// Inserts a constant into the symbol table with the specified
-  /// name. There can be a many to one mapping between names and constants.
-  /// @brief Insert a constant or type.
-  inline void insert(const std::string &Name, Value *Val) {
-    assert(Val && "Can't insert null type into symbol table!");
-    assert(isa<Constant>(Val) &&
-           "Can only insert constants into a symbol table!");
-    insertEntry(Name, Val->getType(), Val);
-  }
-
   /// Inserts a type into the symbol table with the specified name. There
   /// can be a many-to-one mapping between names and types. This method
   /// allows a type with an existing entry in the symbol table to get
@@ -193,16 +183,6 @@ public:
   /// table, this method silently ignores the request.
   /// @brief Remove a named type from the symbol table.
   void remove(const Type* Typ);
-
-  /// Remove a constant or type with the specified name from the 
-  /// symbol table.
-  /// @returns the removed Value.
-  /// @brief Remove a constant or type from the symbol table.
-  inline Value* remove(const std::string &Name, Value *Val) {
-    assert(Val && "Can't remove null value from symbol table!");
-    plane_iterator PI = pmap.find(Val->getType());
-    return removeEntry(PI, PI->second.find(Name));
-  }
 
   /// Remove a type at the specified position in the symbol table.
   /// @returns the removed Type.
