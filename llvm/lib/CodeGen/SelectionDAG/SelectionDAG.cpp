@@ -922,9 +922,12 @@ void SDNode::dump() const {
 
 void SelectionDAG::dump() const {
   std::cerr << "SelectionDAG has " << AllNodes.size() << " nodes:";
-  for (unsigned i = 0, e = AllNodes.size(); i != e; ++i) {
+  std::vector<SDNode*> Nodes(AllNodes);
+  std::sort(Nodes.begin(), Nodes.end());
+
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     std::cerr << "\n  ";
-    AllNodes[i]->dump();
+    Nodes[i]->dump();
   }
   std::cerr << "\n\n";
 }
