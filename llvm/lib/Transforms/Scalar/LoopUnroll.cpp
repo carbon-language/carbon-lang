@@ -136,21 +136,23 @@ bool LoopUnroll::visitLoop(Loop *L) {
   ConstantInt *TripCountC = dyn_cast_or_null<ConstantInt>(L->getTripCount());
   if (!TripCountC) return Changed;  // Must have constant trip count!
 
-  unsigned TripCount = TripCountC->getRawValue();
-  if (TripCount != TripCountC->getRawValue() || TripCount == 0)
+  uint64_t TripCountFull = TripCountC->getRawValue();
+  if (TripCountFull != TripCountC->getRawValue() || TripCountFull == 0)
     return Changed; // More than 2^32 iterations???
 
   unsigned LoopSize = ApproximateLoopSize(L);
   DEBUG(std::cerr << "Loop Unroll: F[" << BB->getParent()->getName()
         << "] Loop %" << BB->getName() << " Loop Size = " << LoopSize
-        << " Trip Count = " << TripCount << " - ");
-  uint64_t Size = (uint64_t)LoopSize*(uint64_t)TripCount;
+        << " Trip Count = " << TripCountFull << " - ");
+  uint64_t Size = (uint64_t)LoopSize*TripCountFull;
   if (Size > UnrollThreshold) {
     DEBUG(std::cerr << "TOO LARGE: " << Size << ">" << UnrollThreshold << "\n");
     return Changed;
   }
   DEBUG(std::cerr << "UNROLLING!\n");
-  
+ 
+  unsigned TripCount = (unsigned)TripCountFull;
+
   BasicBlock *LoopExit = BI->getSuccessor(L->contains(BI->getSuccessor(0)));
 
   // Create a new basic block to temporarily hold all of the cloned code.
