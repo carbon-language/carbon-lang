@@ -36,9 +36,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOperators.h"
-#include "llvm/iPHINode.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "Support/Statistic.h"
 using namespace llvm;

@@ -25,7 +25,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
-#include "llvm/iOperators.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"

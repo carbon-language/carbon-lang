@@ -18,10 +18,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "MemoryDepAnalysis.h"
-#include "llvm/Module.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOther.h"
 #include "IPModRef.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/InstVisitor.h"

@@ -17,9 +17,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
-#include "llvm/iMemory.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/InstIterator.h"
 #include <vector>
 #include <iostream>
