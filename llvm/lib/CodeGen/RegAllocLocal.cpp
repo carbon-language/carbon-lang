@@ -547,6 +547,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   assert(PhysRegsUseOrder.empty() && "Physical regs still allocated?");
 }
 
+
 /// EmitPrologue - Use the register info object to add a prologue to the
 /// function and save any callee saved registers we are responsible for.
 ///
@@ -564,18 +565,19 @@ void RA::EmitPrologue() {
     unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
 
     // Insert the spill to the stack frame...
+    ++NumSpilled;
     I = RegInfo.storeReg2RegOffset(MBB, I, CSRegs[i], RegInfo.getFramePointer(),
                                    -Offset, RegClass->getDataSize());
   }
-
-  // Round stack allocation up to a nice alignment to keep the stack aligned
-  // FIXME: This is X86 specific!  Move to RegInfo.emitPrologue()!
-  NumBytesAllocated = (NumBytesAllocated + 3) & ~3;
 
   // Add prologue to the function...
   RegInfo.emitPrologue(*MF, NumBytesAllocated);
 }
 
+
+/// EmitEpilogue - Use the register info object to add a epilogue to the
+/// function and restore any callee saved registers we are responsible for.
+///
 void RA::EmitEpilogue(MachineBasicBlock &MBB) {
   // Insert instructions before the return.
   MachineBasicBlock::iterator I = --MBB.end();
@@ -584,6 +586,7 @@ void RA::EmitEpilogue(MachineBasicBlock &MBB) {
   for (unsigned i = 0; CSRegs[i]; ++i) {
     const TargetRegisterClass *RegClass = PhysRegClasses[CSRegs[i]];
     unsigned Offset = getStackSpaceFor(CSRegs[i], RegClass);
+    ++NumReloaded;
     I = RegInfo.loadRegOffset2Reg(MBB, I, CSRegs[i], RegInfo.getFramePointer(),
                                   -Offset, RegClass->getDataSize());
     --I;  // Insert in reverse order
