@@ -119,16 +119,16 @@ std::string Printer::valToExprString(const Value* V) {
 /// and return this as a string.
 ///
 std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
-  std::string S;
   const TargetData &TD = TM.getTargetData();
   switch(CE->getOpcode()) {
   case Instruction::GetElementPtr:
     { // generate a symbolic expression for the byte address
       const Value* ptrVal = CE->getOperand(0);
       std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-      S += "(" + valToExprString(ptrVal) + ") + ("
-	+ utostr(TD.getIndexedOffset(ptrVal->getType(),idxVec)) + ")";
-      break;
+      if (unsigned Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec))
+        return "(" + valToExprString(ptrVal) + ") + " + utostr(Offset);
+      else
+        return valToExprString(ptrVal);
     }
 
   case Instruction::Cast:
@@ -143,23 +143,19 @@ std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
 	      || (isa<PointerType>(Ty)
 		  && (OpTy == Type::LongTy || OpTy == Type::ULongTy)))
 	     || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
-		  && (OpTy-> isLosslesslyConvertibleTo(Ty))))
+		  && (OpTy->isLosslesslyConvertibleTo(Ty))))
 	     && "FIXME: Don't yet support this kind of constant cast expr");
-      S += "(" + valToExprString(Op) + ")";
+      return "(" + valToExprString(Op) + ")";
     }
-    break;
 
   case Instruction::Add:
-    S += "(" + valToExprString(CE->getOperand(0)) + ") + ("
-      + valToExprString(CE->getOperand(1)) + ")";
-    break;
+    return "(" + valToExprString(CE->getOperand(0)) + ") + ("
+               + valToExprString(CE->getOperand(1)) + ")";
 
   default:
     assert(0 && "Unsupported operator in ConstantExprToString()");
-    break;
+    return "";
   }
-
-  return S;
 }
 
 /// printSingleConstantValue - Print a single constant value.
