@@ -15,9 +15,9 @@
 // This is useful for reporting information like the number of instructions
 // simplified, optimized or removed by various transformations, like this:
 //
-// static Statistic<> NumInstEliminated("GCSE - Number of instructions killed");
+// static Statistic<> NumInstsKilled("gcse", "Number of instructions killed");
 //
-// Later, in the code: ++NumInstEliminated;
+// Later, in the code: ++NumInstsKilled;
 //
 //===----------------------------------------------------------------------===//
 
