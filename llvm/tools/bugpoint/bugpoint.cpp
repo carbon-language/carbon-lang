@@ -23,7 +23,10 @@ static cl::list<const PassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv);
+  cl::ParseCommandLineOptions(argc, argv,
+                              " LLVM automatic testcase reducer. See\nhttp://"
+                              "llvm.cs.uiuc.edu/docs/CommandGuide/bugpoint.html"
+                              " for more information.\n");
 
   BugDriver D(argv[0]);
   if (D.addSources(InputFilenames)) return 1;
