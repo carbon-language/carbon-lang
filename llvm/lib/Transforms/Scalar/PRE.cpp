@@ -152,20 +152,13 @@ bool PRE::runOnFunction(Function &F) {
 bool PRE::ProcessBlock(BasicBlock *BB) {
   bool Changed = false;
 
+  // DISABLED: This pass invalidates iterators and then uses them.
+  return false;
+
   // PRE expressions first defined in this block...
-  Instruction *PrevInst = 0;
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); )
-    if (ProcessExpression(I)) {
-      // The current instruction may have been deleted, make sure to back up to
-      // PrevInst instead.
-      if (PrevInst)
-        I = PrevInst;
-      else
-        I = BB->begin();
+    if (ProcessExpression(I++))
       Changed = true;
-    } else {
-      PrevInst = I++;
-    }
 
   return Changed;
 }
