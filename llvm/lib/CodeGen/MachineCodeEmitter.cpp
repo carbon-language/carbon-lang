@@ -158,9 +158,7 @@ namespace {
       }
     }
     void emitPCRelativeDisp(Value *V) {
-      // put block in mapping BB -> { instr, address }. when BB is beginning to
-      // output, find instr, set disp, overwrite instr at addr using the
-      // unsigned value gotten from emitter
+      if (MCE) MCE->emitPCRelativeDisp(V);
     }
 
     void emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
@@ -173,9 +171,15 @@ namespace {
     void emitFunctionConstantValueAddress(unsigned ConstantNum, int Offset) {
       if (MCE) MCE->emitFunctionConstantValueAddress(ConstantNum, Offset);
     }
+
+    virtual void saveBBreference(BasicBlock* BB, MachineInstr &MI) {
+      if (MCE) MCE->saveBBreference(BB, MI);
+    }
+
   };
 }
 
-MachineCodeEmitter *MachineCodeEmitter::createFilePrinterMachineCodeEmitter(MachineCodeEmitter &MCE) {
+MachineCodeEmitter *MachineCodeEmitter::createFilePrinterMachineCodeEmitter
+(MachineCodeEmitter &MCE) {
   return new FilePrinterMachineCodeEmitter(MCE, std::cerr);
 }

@@ -10,7 +10,10 @@
 #ifndef LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
 #define LLVM_CODEGEN_MACHINE_CODE_EMITTER_H
 
+#include <iostream>
 #include <string>
+class BasicBlock;
+class MachineInstr;
 class MachineFunction;
 class MachineBasicBlock;
 class MachineConstantPool;
@@ -91,6 +94,11 @@ struct MachineCodeEmitter {
   ///
   static MachineCodeEmitter*
   createFilePrinterMachineCodeEmitter(MachineCodeEmitter&);
+
+  /// 
+  virtual void saveBBreference(BasicBlock* BB, MachineInstr &MI) {
+    std::cerr << "Save BB reference unimplemented\n";
+  }
 };
 
 #endif
