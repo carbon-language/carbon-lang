@@ -153,11 +153,6 @@ case $llvm_cv_platform_type in
     ;;
 esac
 
-dnl Make a link from lib/System/platform to lib/System/$llvm_cv_os_type
-dnl This helps the #inclusion of the system specific include files
-dnl for the operating system abstraction library, lib/System.
-AC_CONFIG_LINKS(lib/System/platform:lib/System/$llvm_cv_os_type)
-
 dnl If we are targetting a Sparc machine running Solaris, pretend that it is
 dnl V9, since that is all that we support at the moment, and autoconf will only
 dnl tell us we're a sparc.
