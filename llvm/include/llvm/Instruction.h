@@ -18,7 +18,7 @@ class Instruction : public User {
   BasicBlock *Parent;
   unsigned iType;      // InstructionType
 
-  friend class ValueHolder<Instruction,BasicBlock>;
+  friend class ValueHolder<Instruction,BasicBlock,Method>;
   inline void setParent(BasicBlock *P) { Parent = P; }
 
 public:

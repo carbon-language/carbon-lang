@@ -21,10 +21,10 @@ class MethodArgument;
 class MethodType;
 class Module;
 
-class Method : public SymTabValue {
+class Method : public Value, public SymTabValue {
 public:
-  typedef ValueHolder<MethodArgument, Method> ArgumentListType;
-  typedef ValueHolder<BasicBlock    , Method> BasicBlocksType;
+  typedef ValueHolder<MethodArgument, Method, Method> ArgumentListType;
+  typedef ValueHolder<BasicBlock    , Method, Method> BasicBlocksType;
 
   // BasicBlock iterators...
   typedef BasicBlocksType::iterator iterator;
@@ -40,7 +40,7 @@ private:
 
   Module *Parent;                  // The module that contains this method
 
-  friend class ValueHolder<Method,Module>;
+  friend class ValueHolder<Method,Module, Module>;
   void setParent(Module *parent);
 
 public:

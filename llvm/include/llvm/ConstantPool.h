@@ -10,14 +10,14 @@
 
 #include <vector>
 #include "llvm/ValueHolder.h"
-
-class ConstPoolVal;
 class SymTabValue;
+class ConstPoolVal;
 class Type;
+class Value;
 
 class ConstantPool {
 public:
-  typedef ValueHolder<ConstPoolVal, SymTabValue> PlaneType;
+  typedef ValueHolder<ConstPoolVal, SymTabValue, SymTabValue> PlaneType;
 private:
   typedef vector<PlaneType*> PlanesType;
   PlanesType Planes;
@@ -30,6 +30,8 @@ public:
 
   inline       SymTabValue *getParent()       { return Parent; }
   inline const SymTabValue *getParent() const { return Parent; }
+  const Value *getParentV() const;
+        Value *getParentV()      ;
 
   void setParent(SymTabValue *STV);
 

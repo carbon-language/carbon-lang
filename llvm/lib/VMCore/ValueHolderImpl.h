@@ -13,8 +13,9 @@
 #include "llvm/SymbolTable.h"
 #include <algorithm>
 
-template<class ValueSubclass, class ItemParentType>
-void ValueHolder<ValueSubclass,ItemParentType>::setParent(SymTabValue *P) { 
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::setParent(SymTabType *P) { 
   if (Parent) {     // Remove all of the items from the old symbol table..
     SymbolTable *SymTab = Parent->getSymbolTable();
     for (iterator I = begin(); I != end(); ++I)
@@ -31,8 +32,9 @@ void ValueHolder<ValueSubclass,ItemParentType>::setParent(SymTabValue *P) {
 }
 
 
-template<class ValueSubclass, class ItemParentType>
-void ValueHolder<ValueSubclass,ItemParentType>::remove(ValueSubclass *D) {
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::remove(ValueSubclass *D) {
   iterator I(find(begin(), end(), D));
   assert(I != end() && "Value not in ValueHolder!!");
   remove(I);
@@ -42,8 +44,9 @@ void ValueHolder<ValueSubclass,ItemParentType>::remove(ValueSubclass *D) {
 // specified by the iterator, and leaves the iterator pointing to the element
 // that used to follow the element deleted.
 //
-template<class ValueSubclass, class ItemParentType>
-ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::remove(iterator &DI) {
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::remove(iterator &DI) {
   assert(DI != ValueList.end() && 
          "Trying to remove the end of the def list!!!");
   
@@ -59,8 +62,9 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::remove(iterator &DI) {
   return i;
 }
 
-template<class ValueSubclass, class ItemParentType>
-ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::pop_back() {
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::pop_back() {
   assert(!ValueList.empty() && "Can't pop_back an empty valuelist!");
   ValueSubclass *i = ValueList.back();
   ValueList.pop_back();
@@ -74,8 +78,8 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>::pop_back() {
 }
 
 
-template<class ValueSubclass, class ItemParentType>
-ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+ValueSubclass *ValueHolder<ValueSubclass,ItemParentType,SymTabType>
 ::remove(const iterator &DI) {
   assert(DI != ValueList.end() && 
          "Trying to remove the end of the def list!!!");
@@ -92,8 +96,9 @@ ValueSubclass *ValueHolder<ValueSubclass,ItemParentType>
   return i;
 }
 
-template<class ValueSubclass, class ItemParentType>
-void ValueHolder<ValueSubclass,ItemParentType>::push_front(ValueSubclass *Inst) {
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::push_front(ValueSubclass *Inst) {
   assert(Inst->getParent() == 0 && "Value already has parent!");
   Inst->setParent(ItemParent);
 
@@ -104,8 +109,9 @@ void ValueHolder<ValueSubclass,ItemParentType>::push_front(ValueSubclass *Inst) 
     Parent->getSymbolTableSure()->insert(Inst);
 }
 
-template<class ValueSubclass, class ItemParentType>
-void ValueHolder<ValueSubclass,ItemParentType>::push_back(ValueSubclass *Inst) {
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+void ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::push_back(ValueSubclass *Inst) {
   assert(Inst->getParent() == 0 && "Value already has parent!");
   Inst->setParent(ItemParent);
 
@@ -119,10 +125,10 @@ void ValueHolder<ValueSubclass,ItemParentType>::push_back(ValueSubclass *Inst) {
 // indicated iterator position, and returns an interator to the newly inserted
 // value.
 //
-template<class ValueSubclass, class ItemParentType>
-ValueHolder<ValueSubclass,ItemParentType>::iterator
-ValueHolder<ValueSubclass,ItemParentType>::insert(iterator Pos,
-							   ValueSubclass *Inst){
+template<class ValueSubclass, class ItemParentType, class SymTabType>
+ValueHolder<ValueSubclass,ItemParentType,SymTabType>::iterator
+ValueHolder<ValueSubclass,ItemParentType,SymTabType>
+::insert(iterator Pos, ValueSubclass *Inst) {
   assert(Inst->getParent() == 0 && "Value already has parent!");
   Inst->setParent(ItemParent);
 

@@ -32,11 +32,11 @@ class TerminatorInst;
 
 class BasicBlock : public Value {       // Basic blocks are data objects also
 public:
-  typedef ValueHolder<Instruction, BasicBlock> InstListType;
+  typedef ValueHolder<Instruction, BasicBlock, Method> InstListType;
 private :
   InstListType InstList;
 
-  friend class ValueHolder<BasicBlock,Method>;
+  friend class ValueHolder<BasicBlock,Method,Method>;
   void setParent(Method *parent);
 
 public:
@@ -57,8 +57,8 @@ public:
   // Specialize setName to take care of symbol table majik
   virtual void setName(const string &name);
 
-  const Method *getParent() const { return (const Method*)InstList.getParent();}
-        Method *getParent()       { return (Method*)InstList.getParent(); }
+  const Method *getParent() const { return InstList.getParent(); }
+        Method *getParent()       { return InstList.getParent(); }
 
   // getTerminator() - If this is a well formed basic block, then this returns
   // a pointer to the terminator instruction.  If it is not, then you get a null

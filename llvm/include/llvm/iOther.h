@@ -87,7 +87,7 @@ public:
 class MethodArgument : public Value {  // Defined in the InstrType.cpp file
   Method *Parent;
 
-  friend class ValueHolder<MethodArgument,Method>;
+  friend class ValueHolder<MethodArgument,Method,Method>;
   inline void setParent(Method *parent) { Parent = parent; }
 
 public:

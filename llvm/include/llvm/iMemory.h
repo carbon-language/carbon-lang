@@ -178,6 +178,9 @@ public:
 		    const string &Name = "");
   virtual Instruction *clone() const { return new GetElementPtrInst(*this); }
   virtual const char *getOpcodeName() const { return "getelementptr"; }  
+
+  inline bool isArraySelector() const { return !isStructSelector(); }
+  bool isStructSelector() const;
 };
 
 #endif // LLVM_IMEMORY_H

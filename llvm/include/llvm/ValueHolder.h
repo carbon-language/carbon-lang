@@ -13,22 +13,27 @@
 #define LLVM_VALUEHOLDER_H
 
 #include <vector>
-class SymTabValue;
 
-// ItemParentType ItemParent - I call setParent() on all of my 
-// "ValueSubclass" items, and this is the value that I pass in.
+// ValueSubClass  - The type of objects that I hold
+// ItemParentType - I call setParent() on all of my "ValueSubclass" items, and
+//                  this is the value that I pass in.
+// SymTabType     - This is the class type (which should be derived from
+//                  SymTabValue), whose symtab I insert my ValueSubClass items
+//                  into.  Most of the time it is ItemParentType, but
+//                  Instructions have item parents of bb's but symtabtype's of
+//                  a Method
 //
-template<class ValueSubclass, class ItemParentType> 
+template<class ValueSubclass, class ItemParentType, class SymTabType> 
 class ValueHolder {
   // TODO: Should I use a deque instead of a vector?
   vector<ValueSubclass*> ValueList;
 
   ItemParentType *ItemParent;
-  SymTabValue *Parent;
+  SymTabType *Parent;
 
   ValueHolder(const ValueHolder &V);   // DO NOT IMPLEMENT
 public:
-  inline ValueHolder(ItemParentType *IP, SymTabValue *parent = 0) { 
+  inline ValueHolder(ItemParentType *IP, SymTabType *parent = 0) { 
     assert(IP && "Item parent may not be null!");
     ItemParent = IP;
     Parent = 0;
@@ -41,9 +46,9 @@ public:
     assert(Parent == 0 && "Should have been unlinked from method!");
   }
 
-  inline const SymTabValue *getParent() const { return Parent; }
-  inline SymTabValue *getParent() { return Parent; }
-  void setParent(SymTabValue *Parent);  // Defined in ValueHolderImpl.h
+  inline const SymTabType *getParent() const { return Parent; }
+  inline SymTabType *getParent() { return Parent; }
+  void setParent(SymTabType *Parent);  // Defined in ValueHolderImpl.h
 
   inline unsigned size() const { return ValueList.size(); }
   inline bool empty()    const { return ValueList.empty(); }

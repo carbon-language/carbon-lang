@@ -23,7 +23,7 @@ class StructType;
 class ConstPoolVal : public User {
   SymTabValue *Parent;
 
-  friend class ValueHolder<ConstPoolVal, SymTabValue>;
+  friend class ValueHolder<ConstPoolVal, SymTabValue, SymTabValue>;
   inline void setParent(SymTabValue *parent) { 
     Parent = parent;
   }
@@ -50,6 +50,8 @@ public:
 
   inline const SymTabValue *getParent() const { return Parent; }
   inline       SymTabValue *getParent()       { return Parent; }
+  inline const     Value *getParentV() const { return Parent->getSTVParent(); }
+  inline           Value *getParentV()       { return Parent->getSTVParent(); }
 };
 
 

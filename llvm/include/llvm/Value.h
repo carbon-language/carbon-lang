@@ -19,7 +19,8 @@ class Instruction;
 class BasicBlock;
 class Method;
 class Module;
-template<class ValueSubclass, class ItemParentType> class ValueHolder;
+template<class ValueSubclass, class ItemParentType, class SymTabType> 
+  class ValueHolder;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class

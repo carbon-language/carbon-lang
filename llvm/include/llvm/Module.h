@@ -8,12 +8,13 @@
 #ifndef LLVM_MODULE_H
 #define LLVM_MODULE_H
 
+#include "llvm/Value.h"
 #include "llvm/SymTabValue.h"
 class Method;
 
-class Module : public SymTabValue {
+class Module : public Value, public SymTabValue {
 public:
-  typedef ValueHolder<Method, Module> MethodListType;
+  typedef ValueHolder<Method, Module, Module> MethodListType;
 
   // Method iterators...
   typedef MethodListType::iterator iterator;

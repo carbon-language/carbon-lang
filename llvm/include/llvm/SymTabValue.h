@@ -1,31 +1,35 @@
-//===-- llvm/SymTabDef.h - Implement SymbolTable Defs ------------*- C++ -*--=//
+//===-- llvm/SymTabValue.h - Implement SymbolTable Values --------*- C++ -*--=//
 //
-// This subclass of Def implements a def that has a symbol table for keeping
-// track of children.  This is used by the DefHolder template class...
+// This subclass of Value implements a def that has a symbol table for keeping
+// track of children.  This is used by the ValueHolder template class...
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYMTABDEF_H
-#define LLVM_SYMTABDEF_H
+#ifndef LLVM_SYMTAB_VALUE_H
+#define LLVM_SYMTAB_VALUE_H
 
-#include "llvm/Value.h"               // Get the definition of Value
 #include "llvm/ConstantPool.h"
 
 class SymbolTable;
 class ConstPoolVal;
+class Value;
 
-class SymTabValue : public Value {
+class SymTabValue {
 public:
   typedef ConstantPool ConstantPoolType;
 private:
   SymbolTable *SymTab, *ParentSymTab;
   ConstantPool ConstPool;   // The constant pool
+  Value *ValueParent;
 
 protected:
   void setParentSymTab(SymbolTable *ST);
 public:
-  SymTabValue(const Type *Ty, ValueTy dty, const string &name = "");
-  ~SymTabValue();    // Implemented in Def.cpp
+  SymTabValue(Value *Parent);
+  ~SymTabValue();    // Implemented in Value.cpp
+
+  inline       Value *getSTVParent()       { return ValueParent; }
+  inline const Value *getSTVParent() const { return ValueParent; }
 
   // hasSymbolTable() - Returns true if there is a symbol table allocated to
   // this object AND if there is at least one name in it!
@@ -45,7 +49,7 @@ public:
   // the method does not already have a symtab, one is created.  Use this if
   // you intend to put something into the symbol table for the method.
   //
-  SymbolTable *getSymbolTableSure();  // Implemented in Def.cpp
+  SymbolTable *getSymbolTableSure();  // Implemented in Value.cpp
 };
 
 #endif
