@@ -920,15 +920,31 @@ void SDNode::dump() const {
 
 }
 
+static void DumpNodes(SDNode *N, unsigned indent) {
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    if (N->getOperand(i).Val->hasOneUse())
+      DumpNodes(N->getOperand(i).Val, indent+2);
+    else
+      std::cerr << "\n" << std::string(indent+2, ' ')
+                << (void*)N->getOperand(i).Val << ": <multiple use>";
+    
+
+  std::cerr << "\n" << std::string(indent, ' ');
+  N->dump();
+}
+
 void SelectionDAG::dump() const {
   std::cerr << "SelectionDAG has " << AllNodes.size() << " nodes:";
   std::vector<SDNode*> Nodes(AllNodes);
   std::sort(Nodes.begin(), Nodes.end());
 
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-    std::cerr << "\n  ";
-    Nodes[i]->dump();
+    if (!Nodes[i]->hasOneUse() && Nodes[i] != getRoot().Val)
+      DumpNodes(Nodes[i], 2);
   }
+
+  DumpNodes(getRoot().Val, 2);
+
   std::cerr << "\n\n";
 }
 
