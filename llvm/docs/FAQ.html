@@ -71,6 +71,9 @@
      <li>What is this <tt>__main()</tt> call that gets inserted into
          <tt>main()</tt>?</li>
      <li>Where did all of my code go??</li>
+     <li>What is this <tt>llvm.global_ctors</tt> and
+          <tt>_GLOBAL__I__tmp_webcompile...</tt> stuff that happens when I
+          #include &lt;iostream&gt;?</li>
   </ol>
   </li>
 </ol>
@@ -448,6 +451,42 @@ leaving it in a local variable.  If you really want to constrain the optimizer,
 you can read from and assign to <tt>volatile</tt> global variables.
 </p>
 </div>
+
+<!--=========================================================================-->
+
+<div class="question"><p>
+What is this <tt>llvm.global_ctors</tt> and <tt>_GLOBAL__I__tmp_webcompile...</tt> stuff that happens when I #include &lt;iostream&gt;?
+</p></div>
+
+<div class="answer">
+<p>
+If you #include the &lt;iostream&gt; header into a C++ translation unit, the
+file will probably use the <tt>std::cin</tt>/<tt>std::cout</tt>/... global
+objects.  However, C++ does not guarantee an order of initialization between
+static objects in different translation units, so if a static ctor/dtor in your
+.cpp file used <tt>std::cout</tt>, for example, the object would not necessarily
+be automatically initialized before your use.
+</p>
+
+<p>
+To make <tt>std::cout</tt> and friends work correctly in these scenarios, the
+STL that we use declares a static object that gets created in every translation
+unit that includes &lt;iostream&gt;.  This object has a static constructor and
+destructor that initializes and destroys the global iostream objects before they
+could possibly be used in the file.  The code that you see in the .ll file
+corresponds to the constructor and destructor registration code.
+</p>
+
+<p>
+If you would like to make it easier to <b>understand</b> the LLVM code generated
+by the compiler in the demo page, consider using printf instead of iostreams to
+print values.
+</p>
+</div>
+
+
+     <li>
+
 
 <!-- *********************************************************************** -->
 <!-- *********************************************************************** -->
