@@ -1,16 +1,10 @@
-// $Id$
-//***************************************************************************
-// File:
-//	SchedGraph.cpp
-// 
-// Purpose:
-//	Scheduling graph based on SSA graph plus extra dependence edges
-//	capturing dependences due to machine resources (machine registers,
-//	CC registers, and any others).
-// 
-// History:
-//	7/20/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===- SchedGraph.cpp - Scheduling Graph Implementation -------------------===//
+//
+// Scheduling graph based on SSA graph plus extra dependence edges capturing
+// dependences due to machine resources (machine registers, CC registers, and
+// any others).
+//
+//===----------------------------------------------------------------------===//
 
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrSelection.h"
@@ -18,12 +12,10 @@
 #include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 #include "llvm/iOther.h"
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
-#include <iostream>
 
 using std::vector;
 using std::pair;
@@ -356,21 +348,21 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   if (first == termMvec.size())
     return;
   
-  SchedGraphNode* firstBrNode = this->getGraphNodeForInstr(termMvec[first]);
+  SchedGraphNode* firstBrNode = getGraphNodeForInstr(termMvec[first]);
   
   // Add CD edges from each instruction in the sequence to the
   // *last preceding* branch instr. in the sequence 
   // Use a latency of 0 because we only need to prevent out-of-order issue.
   // 
-  for (int i = (int) termMvec.size()-1; i > (int) first; i--) 
+  for (unsigned i = termMvec.size(); i > first+1; --i)
     {
-      SchedGraphNode* toNode = this->getGraphNodeForInstr(termMvec[i]);
+      SchedGraphNode* toNode = getGraphNodeForInstr(termMvec[i-1]);
       assert(toNode && "No node for instr generated for branch?");
       
-      for (int j = i-1; j >= 0; j--) 
-	if (mii.isBranch(termMvec[j]->getOpCode()))
+      for (unsigned j = i-1; j != 0; --j) 
+	if (mii.isBranch(termMvec[j-1]->getOpCode()))
 	  {
-	    SchedGraphNode* brNode = this->getGraphNodeForInstr(termMvec[j]);
+	    SchedGraphNode* brNode = getGraphNodeForInstr(termMvec[j-1]);
 	    assert(brNode && "No node for instr generated for branch?");
 	    (void) new SchedGraphEdge(brNode, toNode, SchedGraphEdge::CtrlDep,
 				      SchedGraphEdge::NonDataDep, 0);
@@ -381,9 +373,9 @@ SchedGraph::addCDEdges(const TerminatorInst* term,
   // Add CD edges from each instruction preceding the first branch
   // to the first branch.  Use a latency of 0 as above.
   // 
-  for (int i = first-1; i >= 0; i--) 
+  for (unsigned i = first; i != 0; --i)
     {
-      SchedGraphNode* fromNode = this->getGraphNodeForInstr(termMvec[i]);
+      SchedGraphNode* fromNode = getGraphNodeForInstr(termMvec[i-1]);
       assert(fromNode && "No node for instr generated for branch?");
       (void) new SchedGraphEdge(fromNode, firstBrNode, SchedGraphEdge::CtrlDep,
 				SchedGraphEdge::NonDataDep, 0);
