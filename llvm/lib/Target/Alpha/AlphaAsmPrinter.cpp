@@ -37,8 +37,10 @@ namespace {
     unsigned LabelNumber;
  
      AlphaAsmPrinter(std::ostream &o, TargetMachine &tm) 
-       : AsmPrinter(o, tm), LabelNumber(0),  AlignmentIsInBytes(false)
-    { }
+       : AsmPrinter(o, tm), LabelNumber(0)
+    {
+      AlignmentIsInBytes = false;
+    }
 
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
