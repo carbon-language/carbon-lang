@@ -305,6 +305,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::BRCOND:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // FIXME: booleans might not be legal!
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the condition.
+    // Basic block destination (Op#2) is always legal.
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
+                           Node->getOperand(2));
+    break;
+
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
