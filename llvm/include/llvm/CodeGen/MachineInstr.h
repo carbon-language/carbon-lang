@@ -322,9 +322,8 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
-  /// markHi32, markLo32, etc. - These methods must be accessed via
-  /// corresponding methods in MachineInstr.  These methods are deprecated
-  /// and only used by the SPARC v9 back-end.
+  /// markHi32, markLo32, etc. - These methods are deprecated and only used by
+  /// the SPARC v9 back-end.
   ///
   void markHi32()      { flags |= HIFLAG32; }
   void markLo32()      { flags |= LOFLAG32; }
