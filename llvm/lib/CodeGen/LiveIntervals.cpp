@@ -106,6 +106,33 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     computeIntervals();
 
+    // compute spill weights
+    const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
+
+    for (MbbIndex2MbbMap::iterator
+             it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
+         it != itEnd; ++it) {
+        MachineBasicBlock* mbb = it->second;
+
+        unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
+
+        for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
+             mi != miEnd; ++mi) {
+            MachineInstr* instr = *mi;
+            for (int i = instr->getNumOperands() - 1; i >= 0; --i) {
+                MachineOperand& mop = instr->getOperand(i);
+
+                if (!mop.isVirtualRegister())
+                    continue;
+
+                unsigned reg = mop.getAllocatedRegNum();
+                Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
+                assert(r2iit != r2iMap_.end());
+                intervals_[r2iit->second].weight += pow(10.0F, loopDepth);
+            }
+        }
+    }
+
     return true;
 }
 
@@ -255,16 +282,12 @@ void LiveIntervals::computeIntervals()
 {
     DEBUG(std::cerr << "computing live intervals:\n");
 
-    const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
-
     for (MbbIndex2MbbMap::iterator
              it = mbbi2mbbMap_.begin(), itEnd = mbbi2mbbMap_.end();
          it != itEnd; ++it) {
         MachineBasicBlock* mbb = it->second;
         DEBUG(std::cerr << "machine basic block: "
               << mbb->getBasicBlock()->getName() << "\n");
-
-        unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
 
         for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
              mi != miEnd; ++mi) {
@@ -296,12 +319,6 @@ void LiveIntervals::computeIntervals()
                     else
                         handleVirtualRegisterDef(mbb, mi, reg);
                 }
-
-                // update weights
-                Reg2IntervalMap::iterator r2iit = r2iMap_.find(reg);
-                if (r2iit != r2iMap_.end() &&
-                    reg >= MRegisterInfo::FirstVirtualRegister)
-                    intervals_[r2iit->second].weight += pow(10.0F, loopDepth);
             }
         }
     }
