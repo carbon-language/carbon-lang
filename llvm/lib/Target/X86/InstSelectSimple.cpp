@@ -192,10 +192,6 @@ namespace {
     ///
     void promote32(unsigned targetReg, const ValueRecord &VR);
 
-    /// EmitByteSwap - Byteswap SrcReg into DestReg.
-    ///
-    void EmitByteSwap(unsigned DestReg, unsigned SrcReg, unsigned Class);
-    
     /// emitGEPOperation - Common code shared between visitGetElementPtrInst and
     /// constant expression GEP support.
     ///
@@ -214,6 +210,11 @@ namespace {
                                    MachineBasicBlock::iterator &IP,
                                    Value *Op0, Value *Op1,
                                    unsigned OperatorClass, unsigned TargetReg);
+
+    void emitDivRemOperation(MachineBasicBlock *BB,
+                             MachineBasicBlock::iterator &IP,
+                             unsigned Op0Reg, unsigned Op1Reg, bool isDiv,
+                             const Type *Ty, unsigned TargetReg);
 
     /// emitSetCCOperation - Common code shared between visitSetCondInst and
     /// constant expression support.
@@ -354,6 +355,22 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       emitSimpleBinaryOperation(MBB, IP, CE->getOperand(0), CE->getOperand(1),
                                 Class, R);
       return;
+
+    case Instruction::Mul: {
+      unsigned Op0Reg = getReg(CE->getOperand(0), MBB, IP);
+      unsigned Op1Reg = getReg(CE->getOperand(1), MBB, IP);
+      doMultiply(MBB, IP, R, CE->getType(), Op0Reg, Op1Reg);
+      return;
+    }
+    case Instruction::Div:
+    case Instruction::Rem: {
+      unsigned Op0Reg = getReg(CE->getOperand(0), MBB, IP);
+      unsigned Op1Reg = getReg(CE->getOperand(1), MBB, IP);
+      emitDivRemOperation(MBB, IP, Op0Reg, Op1Reg,
+                          CE->getOpcode() == Instruction::Div,
+                          CE->getType(), R);
+      return;
+    }
 
     case Instruction::SetNE:
     case Instruction::SetEQ:
@@ -1339,21 +1356,30 @@ void ISel::visitMul(BinaryOperator &I) {
 /// instructions work differently for signed and unsigned operands.
 ///
 void ISel::visitDivRem(BinaryOperator &I) {
-  unsigned Class = getClass(I.getType());
-  unsigned Op0Reg, Op1Reg, ResultReg = getReg(I);
+  unsigned Op0Reg = getReg(I.getOperand(0));
+  unsigned Op1Reg = getReg(I.getOperand(1));
+  unsigned ResultReg = getReg(I);
 
+  MachineBasicBlock::iterator IP = BB->end();
+  emitDivRemOperation(BB, IP, Op0Reg, Op1Reg, I.getOpcode() == Instruction::Div,
+                      I.getType(), ResultReg);
+}
+
+void ISel::emitDivRemOperation(MachineBasicBlock *BB,
+                               MachineBasicBlock::iterator &IP,
+                               unsigned Op0Reg, unsigned Op1Reg, bool isDiv,
+                               const Type *Ty, unsigned ResultReg) {
+  unsigned Class = getClass(Ty);
   switch (Class) {
   case cFP:              // Floating point divide
-    if (I.getOpcode() == Instruction::Div) {
-      Op0Reg = getReg(I.getOperand(0));
-      Op1Reg = getReg(I.getOperand(1));
+    if (isDiv) {
       BuildMI(BB, X86::FpDIV, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
     } else {               // Floating point remainder...
       MachineInstr *TheCall =
         BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("fmod", true);
       std::vector<ValueRecord> Args;
-      Args.push_back(ValueRecord(I.getOperand(0)));
-      Args.push_back(ValueRecord(I.getOperand(1)));
+      Args.push_back(ValueRecord(Op0Reg, Type::DoubleTy));
+      Args.push_back(ValueRecord(Op1Reg, Type::DoubleTy));
       doCall(ValueRecord(ResultReg, Type::DoubleTy), TheCall, Args);
     }
     return;
@@ -1361,14 +1387,13 @@ void ISel::visitDivRem(BinaryOperator &I) {
     static const char *FnName[] =
       { "__moddi3", "__divdi3", "__umoddi3", "__udivdi3" };
 
-    unsigned NameIdx = I.getType()->isUnsigned()*2;
-    NameIdx += I.getOpcode() == Instruction::Div;
+    unsigned NameIdx = Ty->isUnsigned()*2 + isDiv;
     MachineInstr *TheCall =
       BuildMI(X86::CALLpcrel32, 1).addExternalSymbol(FnName[NameIdx], true);
 
     std::vector<ValueRecord> Args;
-    Args.push_back(ValueRecord(I.getOperand(0)));
-    Args.push_back(ValueRecord(I.getOperand(1)));
+    Args.push_back(ValueRecord(Op0Reg, Type::LongTy));
+    Args.push_back(ValueRecord(Op1Reg, Type::LongTy));
     doCall(ValueRecord(ResultReg, Type::LongTy), TheCall, Args);
     return;
   }
@@ -1388,17 +1413,16 @@ void ISel::visitDivRem(BinaryOperator &I) {
     { X86::IDIVr8, X86::IDIVr16, X86::IDIVr32, 0 },  // Signed division
   };
 
-  bool isSigned   = I.getType()->isSigned();
+  bool isSigned   = Ty->isSigned();
   unsigned Reg    = Regs[Class];
   unsigned ExtReg = ExtRegs[Class];
 
   // Put the first operand into one of the A registers...
-  Op0Reg = getReg(I.getOperand(0));
   BuildMI(BB, MovOpcode[Class], 1, Reg).addReg(Op0Reg);
 
   if (isSigned) {
     // Emit a sign extension instruction...
-    unsigned ShiftResult = makeAnotherReg(I.getType());
+    unsigned ShiftResult = makeAnotherReg(Ty);
     BuildMI(BB, SarOpcode[Class], 2, ShiftResult).addReg(Op0Reg).addZImm(31);
     BuildMI(BB, MovOpcode[Class], 1, ExtReg).addReg(ShiftResult);
   } else {
@@ -1407,11 +1431,10 @@ void ISel::visitDivRem(BinaryOperator &I) {
   }
 
   // Emit the appropriate divide or remainder instruction...
-  Op1Reg = getReg(I.getOperand(1));
   BuildMI(BB, DivOpcode[isSigned][Class], 1).addReg(Op1Reg);
 
   // Figure out which register we want to pick the result out of...
-  unsigned DestReg = (I.getOpcode() == Instruction::Div) ? Reg : ExtReg;
+  unsigned DestReg = isDiv ? Reg : ExtReg;
   
   // Put the result into the destination register...
   BuildMI(BB, MovOpcode[Class], 1, ResultReg).addReg(DestReg);
@@ -1540,35 +1563,6 @@ void ISel::visitShiftInst(ShiftInst &I) {
 
     const unsigned *Opc = NonConstantOperand[isLeftShift*2+isSigned];
     BuildMI(BB, Opc[Class], 1, DestReg).addReg(SrcReg);
-  }
-}
-
-
-/// EmitByteSwap - Byteswap SrcReg into DestReg.
-///
-void ISel::EmitByteSwap(unsigned DestReg, unsigned SrcReg, unsigned Class) {
-  // Emit the byte swap instruction...
-  switch (Class) {
-  case cByte:
-    // No byteswap necessary for 8 bit value...
-    BuildMI(BB, X86::MOVrr8, 1, DestReg).addReg(SrcReg);
-    break;
-  case cInt:
-    // Use the 32 bit bswap instruction to do a 32 bit swap...
-    BuildMI(BB, X86::BSWAPr32, 1, DestReg).addReg(SrcReg);
-    break;
-    
-  case cShort:
-    // For 16 bit we have to use an xchg instruction, because there is no
-    // 16-bit bswap.  XCHG is necessarily not in SSA form, so we force things
-    // into AX to do the xchg.
-    //
-    BuildMI(BB, X86::MOVrr16, 1, X86::AX).addReg(SrcReg);
-    BuildMI(BB, X86::XCHGrr8, 2).addReg(X86::AL, MOTy::UseAndDef)
-      .addReg(X86::AH, MOTy::UseAndDef);
-    BuildMI(BB, X86::MOVrr16, 1, DestReg).addReg(X86::AX);
-    break;
-  default: assert(0 && "Cannot byteswap this class!");
   }
 }
 
