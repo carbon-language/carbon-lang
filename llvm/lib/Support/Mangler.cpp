@@ -81,7 +81,7 @@ std::string Mangler::getValueName(const Value *V) {
 }
 
 Mangler::Mangler(Module &m, bool addUnderscorePrefix)
-  : M(m), AddUnderscorePrefix(addUnderscorePrefix) {
+  : M(m), AddUnderscorePrefix(addUnderscorePrefix), Count(0) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::set<std::string> FoundNames;
