@@ -26,8 +26,8 @@ DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
                   cl::desc("Disable pointer hashing"));
 
 static cl::list<string>
-TraceFuncName("tracefunc", cl::desc("trace only specific functions"),
-              cl::value_desc("function"), cl::Hidden);
+TraceFuncNames("tracefunc", cl::desc("trace only specific functions"),
+	       cl::value_desc("function"), cl::Hidden);
 
 static void TraceValuesAtBBExit(BasicBlock *BB,
                                 Function *Printf, Function* HashPtrToSeqNum,
@@ -37,13 +37,12 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
 // or if the function is in the specified list.
 // 
 inline static bool
-TraceThisFunction(Function &func)
+TraceThisFunction(Function &F)
 {
-  if (TraceFuncName.size() == 0)
-    return true;
+  if (TraceFuncNames.empty()) return true;
 
-  return std::find(TraceFuncName.begin(), TraceFuncName.end(), func.getName())
-                  != TraceFuncName.end();
+  return std::find(TraceFuncNames.begin(), TraceFuncNames.end(), F.getName())
+                  != TraceFuncNames.end();
 }
 
 
@@ -222,7 +221,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
     Tmp.erase(Tmp.begin(), I);
     I = std::find(Tmp.begin(), Tmp.end(), '%');
   }
-
+  Message += Tmp;
   Module *Mod = BB->getParent()->getParent();
 
   // Turn the marker string into a global variable...
@@ -232,7 +231,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
   Instruction *GEP = 
     new GetElementPtrInst(fmtVal,
                           vector<Value*>(2,ConstantSInt::get(Type::LongTy, 0)),
-                          "trstr", InsertBefore);
+                          "trstrp", InsertBefore);
   
   // Insert a call to the hash function if this is a pointer value
   if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
@@ -350,7 +349,7 @@ static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
   Instruction *InsertPos = BB.begin();
 
   std::ostringstream OutStr;
-  WriteAsOperand(OutStr, &F, true);
+  WriteAsOperand(OutStr, &F);
   InsertPrintInst(0, &BB, InsertPos, "ENTERING FUNCTION: " + OutStr.str(),
                   Printf, HashPtrToSeqNum);
 
