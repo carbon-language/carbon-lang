@@ -14,19 +14,19 @@
 //	
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
-#include "llvm/CodeGen/InstrForest.h"
-#include "llvm/CodeGen/MachineCodeForInstruction.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/TargetRegInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Pass.h"
+#include "llvm/CodeGen/InstrForest.h"
+#include "llvm/CodeGen/InstrSelection.h"
+#include "llvm/CodeGen/InstrSelectionSupport.h"
+#include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegInfo.h"
 #include "Support/CommandLine.h"
 #include "Support/LeakDetector.h"
-using std::vector;
+#include <vector>
 
 std::vector<MachineInstr*>
 FixConstantOperandsForInstr(Instruction* vmInstr, MachineInstr* minstr,
@@ -66,7 +66,7 @@ namespace {
     TargetMachine &Target;
     void InsertCodeForPhis(Function &F);
     void InsertPhiElimInstructions(BasicBlock *BB,
-                                   const vector<MachineInstr*>& CpVec);
+                                   const std::vector<MachineInstr*>& CpVec);
     void SelectInstructionsForTree(InstrTreeNode* treeRoot, int goalnt);
     void PostprocessMachineCodeForTree(InstructionNode* instrNode,
                                        int ruleForNode, short* nts);
@@ -89,9 +89,8 @@ TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
   mcfi.addTemp(this);
 
   Operands.push_back(Use(s1, this));  // s1 must be non-null
-  if (s2) {
+  if (s2)
     Operands.push_back(Use(s2, this));
-  }
 
   // TmpInstructions should not be garbage checked.
   LeakDetector::removeGarbageObject(this);
@@ -106,8 +105,10 @@ TmpInstruction::TmpInstruction(MachineCodeForInstruction& mcfi,
 {
   mcfi.addTemp(this);
 
-  if (s1) { Operands.push_back(Use(s1, this)); }
-  if (s2) { Operands.push_back(Use(s2, this)); }
+  if (s1) 
+    Operands.push_back(Use(s1, this));
+  if (s2)
+    Operands.push_back(Use(s2, this));
 
   // TmpInstructions should not be garbage checked.
   LeakDetector::removeGarbageObject(this);
@@ -121,37 +122,34 @@ bool InstructionSelection::runOnFunction(Function &F)
   // 
   InstrForest instrForest(&F);
   
-  if (SelectDebugLevel >= Select_DebugInstTrees)
-    {
-      std::cerr << "\n\n*** Input to instruction selection for function "
-	        << F.getName() << "\n\n" << F
-                << "\n\n*** Instruction trees for function "
-                << F.getName() << "\n\n";
-      instrForest.dump();
-    }
+  if (SelectDebugLevel >= Select_DebugInstTrees) {
+    std::cerr << "\n\n*** Input to instruction selection for function "
+              << F.getName() << "\n\n" << F
+              << "\n\n*** Instruction trees for function "
+              << F.getName() << "\n\n";
+    instrForest.dump();
+  }
   
   //
   // Invoke BURG instruction selection for each tree
   // 
   for (InstrForest::const_root_iterator RI = instrForest.roots_begin();
-       RI != instrForest.roots_end(); ++RI)
-    {
-      InstructionNode* basicNode = *RI;
-      assert(basicNode->parent() == NULL && "A `root' node has a parent?"); 
+       RI != instrForest.roots_end(); ++RI) {
+    InstructionNode* basicNode = *RI;
+    assert(basicNode->parent() == NULL && "A `root' node has a parent?"); 
       
-      // Invoke BURM to label each tree node with a state
-      burm_label(basicNode);
+    // Invoke BURM to label each tree node with a state
+    burm_label(basicNode);
       
-      if (SelectDebugLevel >= Select_DebugBurgTrees)
-	{
-	  printcover(basicNode, 1, 0);
-	  std::cerr << "\nCover cost == " << treecost(basicNode, 1, 0) <<"\n\n";
-	  printMatches(basicNode);
-	}
-      
-      // Then recursively walk the tree to select instructions
-      SelectInstructionsForTree(basicNode, /*goalnt*/1);
+    if (SelectDebugLevel >= Select_DebugBurgTrees) {
+      printcover(basicNode, 1, 0);
+      std::cerr << "\nCover cost == " << treecost(basicNode, 1, 0) <<"\n\n";
+      printMatches(basicNode);
     }
+      
+    // Then recursively walk the tree to select instructions
+    SelectInstructionsForTree(basicNode, /*goalnt*/1);
+  }
   
   //
   // Create the MachineBasicBlock records and add all of the MachineInstrs
@@ -172,11 +170,10 @@ bool InstructionSelection::runOnFunction(Function &F)
   // Insert phi elimination code
   InsertCodeForPhis(F);
   
-  if (SelectDebugLevel >= Select_PrintMachineCode)
-    {
-      std::cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
-      MachineFunction::get(&F).dump();
-    }
+  if (SelectDebugLevel >= Select_PrintMachineCode) {
+    std::cerr << "\n*** Machine instructions after INSTRUCTION SELECTION\n";
+    MachineFunction::get(&F).dump();
+  }
   
   return true;
 }
@@ -187,8 +184,7 @@ bool InstructionSelection::runOnFunction(Function &F)
 //-------------------------------------------------------------------------
 
 void
-InstructionSelection::InsertCodeForPhis(Function &F)
-{
+InstructionSelection::InsertCodeForPhis(Function &F) {
   // for all basic blocks in function
   //
   MachineFunction &MF = MachineFunction::get(&F);
@@ -207,12 +203,12 @@ InstructionSelection::InsertCodeForPhis(Function &F)
       //
       for (unsigned i = 0; i < PN->getNumIncomingValues(); ++i) {
         // insert the copy instruction to the predecessor BB
-        vector<MachineInstr*> mvec, CpVec;
+        std::vector<MachineInstr*> mvec, CpVec;
         Target.getRegInfo().cpValue2Value(PN->getIncomingValue(i), PhiCpRes,
                                           mvec);
-        for (vector<MachineInstr*>::iterator MI=mvec.begin();
+        for (std::vector<MachineInstr*>::iterator MI=mvec.begin();
              MI != mvec.end(); ++MI) {
-          vector<MachineInstr*> CpVec2 =
+          std::vector<MachineInstr*> CpVec2 =
             FixConstantOperandsForInstr(const_cast<PHINode*>(PN), *MI, Target);
           CpVec2.push_back(*MI);
           CpVec.insert(CpVec.end(), CpVec2.begin(), CpVec2.end());
@@ -221,7 +217,7 @@ InstructionSelection::InsertCodeForPhis(Function &F)
         InsertPhiElimInstructions(PN->getIncomingBlock(i), CpVec);
       }
       
-      vector<MachineInstr*> mvec;
+      std::vector<MachineInstr*> mvec;
       Target.getRegInfo().cpValue2Value(PhiCpRes, const_cast<PHINode*>(PN),
                                         mvec);
       BB->insert(BB->begin(), mvec.begin(), mvec.end());
@@ -236,7 +232,7 @@ InstructionSelection::InsertCodeForPhis(Function &F)
 
 void
 InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
-                                            const vector<MachineInstr*>& CpVec)
+                                        const std::vector<MachineInstr*>& CpVec)
 { 
   Instruction *TermInst = (Instruction*)BB->getTerminator();
   MachineCodeForInstruction &MC4Term = MachineCodeForInstruction::get(TermInst);
@@ -304,50 +300,47 @@ InstructionSelection::SelectInstructionsForTree(InstrTreeNode* treeRoot,
   // (If this is a list node, not an instruction, then skip this step).
   // This function is specific to the target architecture.
   // 
-  if (treeRoot->opLabel != VRegListOp)
-    {
-      vector<MachineInstr*> minstrVec;
+  if (treeRoot->opLabel != VRegListOp) {
+    std::vector<MachineInstr*> minstrVec;
       
-      InstructionNode* instrNode = (InstructionNode*)treeRoot;
-      assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
+    InstructionNode* instrNode = (InstructionNode*)treeRoot;
+    assert(instrNode->getNodeType() == InstrTreeNode::NTInstructionNode);
       
-      GetInstructionsByRule(instrNode, ruleForNode, nts, Target, minstrVec);
+    GetInstructionsByRule(instrNode, ruleForNode, nts, Target, minstrVec);
       
-      MachineCodeForInstruction &mvec = 
-        MachineCodeForInstruction::get(instrNode->getInstruction());
-      mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
-    }
+    MachineCodeForInstruction &mvec = 
+      MachineCodeForInstruction::get(instrNode->getInstruction());
+    mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
+  }
   
   // Then, recursively compile the child nodes, if any.
   // 
-  if (nts[0])
-    { // i.e., there is at least one kid
-      InstrTreeNode* kids[2];
-      int currentRule = ruleForNode;
-      burm_kids(treeRoot, currentRule, kids);
+  if (nts[0]) {
+    // i.e., there is at least one kid
+    InstrTreeNode* kids[2];
+    int currentRule = ruleForNode;
+    burm_kids(treeRoot, currentRule, kids);
     
-      // First skip over any chain rules so that we don't visit
-      // the current node again.
-      // 
-      while (ThisIsAChainRule(currentRule))
-	{
-	  currentRule = burm_rule(treeRoot->state, nts[0]);
-	  nts = burm_nts[currentRule];
-	  burm_kids(treeRoot, currentRule, kids);
-	}
-      
-      // Now we have the first non-chain rule so we have found
-      // the actual child nodes.  Recursively compile them.
-      // 
-      for (unsigned i = 0; nts[i]; i++)
-	{
-	  assert(i < 2);
-	  InstrTreeNode::InstrTreeNodeType nodeType = kids[i]->getNodeType();
-	  if (nodeType == InstrTreeNode::NTVRegListNode ||
-	      nodeType == InstrTreeNode::NTInstructionNode)
-            SelectInstructionsForTree(kids[i], nts[i]);
-	}
+    // First skip over any chain rules so that we don't visit
+    // the current node again.
+    // 
+    while (ThisIsAChainRule(currentRule)) {
+      currentRule = burm_rule(treeRoot->state, nts[0]);
+      nts = burm_nts[currentRule];
+      burm_kids(treeRoot, currentRule, kids);
     }
+      
+    // Now we have the first non-chain rule so we have found
+    // the actual child nodes.  Recursively compile them.
+    // 
+    for (unsigned i = 0; nts[i]; i++) {
+      assert(i < 2);
+      InstrTreeNode::InstrTreeNodeType nodeType = kids[i]->getNodeType();
+      if (nodeType == InstrTreeNode::NTVRegListNode ||
+          nodeType == InstrTreeNode::NTInstructionNode)
+        SelectInstructionsForTree(kids[i], nts[i]);
+    }
+  }
   
   // Finally, do any post-processing on this node after its children
   // have been translated
@@ -373,13 +366,12 @@ InstructionSelection::PostprocessMachineCodeForTree(InstructionNode* instrNode,
   // 
   Instruction* vmInstr = instrNode->getInstruction();
   MachineCodeForInstruction &mvec = MachineCodeForInstruction::get(vmInstr);
-  for (unsigned i = mvec.size(); i != 0; --i)
-    {
-      vector<MachineInstr*> loadConstVec =
-        FixConstantOperandsForInstr(vmInstr, mvec[i-1], Target);
+  for (unsigned i = mvec.size(); i != 0; --i) {
+    std::vector<MachineInstr*> loadConstVec =
+      FixConstantOperandsForInstr(vmInstr, mvec[i-1], Target);
       
-      mvec.insert(mvec.begin()+i-1, loadConstVec.begin(), loadConstVec.end());
-    }
+    mvec.insert(mvec.begin()+i-1, loadConstVec.begin(), loadConstVec.end());
+  }
 }
 
 

@@ -66,17 +66,14 @@ ChooseRegOrImmed(int64_t intValue,
   getImmedValue = 0;
 
   if (canUseImmed &&
-      target.getInstrInfo().constantFitsInImmedField(opCode, intValue))
-    {
+      target.getInstrInfo().constantFitsInImmedField(opCode, intValue)) {
       opType = isSigned? MachineOperand::MO_SignExtendedImmed
                        : MachineOperand::MO_UnextendedImmed;
       getImmedValue = intValue;
-    }
-  else if (intValue == 0 && target.getRegInfo().getZeroRegNum() >= 0)
-    {
-      opType = MachineOperand::MO_MachineRegister;
-      getMachineRegNum = target.getRegInfo().getZeroRegNum();
-    }
+  } else if (intValue == 0 && target.getRegInfo().getZeroRegNum() >= 0) {
+    opType = MachineOperand::MO_MachineRegister;
+    getMachineRegNum = target.getRegInfo().getZeroRegNum();
+  }
 
   return opType;
 }
@@ -158,52 +155,48 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
         MachineOperand::MO_VirtualRegister;
 
       // Operand may be a virtual register or a compile-time constant
-      if (mop.getType() == MachineOperand::MO_VirtualRegister)
-        {
-          assert(mop.getVRegValue() != NULL);
-          opValue = mop.getVRegValue();
-          if (Constant *opConst = dyn_cast<Constant>(opValue)) {
-            opType = ChooseRegOrImmed(opConst, opCode, target,
-                                      (immedPos == (int)op), machineRegNum,
-                                      immedValue);
-            if (opType == MachineOperand::MO_VirtualRegister)
-              constantThatMustBeLoaded = true;
-          }
-        }
-      else
-        {
-          assert(mop.isImmediate());
-          bool isSigned = mop.getType() == MachineOperand::MO_SignExtendedImmed;
-
-          // Bit-selection flags indicate an instruction that is extracting
-          // bits from its operand so ignore this even if it is a big constant.
-          if (mop.opHiBits32() || mop.opLoBits32() ||
-              mop.opHiBits64() || mop.opLoBits64())
-            continue;
-
-          opType = ChooseRegOrImmed(mop.getImmedValue(), isSigned,
-                                    opCode, target, (immedPos == (int)op), 
-                                    machineRegNum, immedValue);
-
-          if (opType == MachineOperand::MO_SignExtendedImmed ||
-              opType == MachineOperand::MO_UnextendedImmed) {
-            // The optype is an immediate value
-            // This means we need to change the opcode, e.g. ADDr -> ADDi
-            unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
-            minstr->setOpcode(newOpcode);
-          }
-
-          if (opType == mop.getType()) 
-            continue;           // no change: this is the most common case
-
+      if (mop.getType() == MachineOperand::MO_VirtualRegister) {
+        assert(mop.getVRegValue() != NULL);
+        opValue = mop.getVRegValue();
+        if (Constant *opConst = dyn_cast<Constant>(opValue)) {
+          opType = ChooseRegOrImmed(opConst, opCode, target,
+                                    (immedPos == (int)op), machineRegNum,
+                                    immedValue);
           if (opType == MachineOperand::MO_VirtualRegister)
-            {
-              constantThatMustBeLoaded = true;
-              opValue = isSigned
-                ? (Value*)ConstantSInt::get(Type::LongTy, immedValue)
-                : (Value*)ConstantUInt::get(Type::ULongTy,(uint64_t)immedValue);
-            }
+            constantThatMustBeLoaded = true;
         }
+      } else {
+        assert(mop.isImmediate());
+        bool isSigned = mop.getType() == MachineOperand::MO_SignExtendedImmed;
+
+        // Bit-selection flags indicate an instruction that is extracting
+        // bits from its operand so ignore this even if it is a big constant.
+        if (mop.opHiBits32() || mop.opLoBits32() ||
+            mop.opHiBits64() || mop.opLoBits64())
+          continue;
+
+        opType = ChooseRegOrImmed(mop.getImmedValue(), isSigned,
+                                  opCode, target, (immedPos == (int)op), 
+                                  machineRegNum, immedValue);
+
+        if (opType == MachineOperand::MO_SignExtendedImmed ||
+            opType == MachineOperand::MO_UnextendedImmed) {
+          // The optype is an immediate value
+          // This means we need to change the opcode, e.g. ADDr -> ADDi
+          unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
+          minstr->setOpcode(newOpcode);
+        }
+
+        if (opType == mop.getType()) 
+          continue;           // no change: this is the most common case
+
+        if (opType == MachineOperand::MO_VirtualRegister) {
+          constantThatMustBeLoaded = true;
+          opValue = isSigned
+            ? (Value*)ConstantSInt::get(Type::LongTy, immedValue)
+            : (Value*)ConstantUInt::get(Type::ULongTy,(uint64_t)immedValue);
+        }
+      }
 
       if (opType == MachineOperand::MO_MachineRegister)
         minstr->SetMachineOperandReg(op, machineRegNum);
@@ -250,16 +243,16 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
           InsertCodeToLoadConstant(F, oldVal, vmInstr, MVec, target);
         minstr->setImplicitRef(i, tmpReg);
         
-        if (isCall)
-          { // find and replace the argument in the CallArgsDescriptor
-            unsigned i=lastCallArgNum;
-            while (argDesc->getArgInfo(i).getArgVal() != oldVal)
-              ++i;
-            assert(i < argDesc->getNumArgs() &&
-                   "Constant operands to a call *must* be in the arg list");
-            lastCallArgNum = i;
-            argDesc->getArgInfo(i).replaceArgVal(tmpReg);
-          }
+        if (isCall) {
+          // find and replace the argument in the CallArgsDescriptor
+          unsigned i=lastCallArgNum;
+          while (argDesc->getArgInfo(i).getArgVal() != oldVal)
+            ++i;
+          assert(i < argDesc->getNumArgs() &&
+                 "Constant operands to a call *must* be in the arg list");
+          lastCallArgNum = i;
+          argDesc->getArgInfo(i).replaceArgVal(tmpReg);
+        }
       }
   
   return MVec;
