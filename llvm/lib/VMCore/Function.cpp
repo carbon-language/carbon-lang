@@ -224,6 +224,7 @@ unsigned Function::getIntrinsicID() const {
     break;
   case 'i':
     if (getName() == "llvm.isnan") return Intrinsic::isnan;
+    if (getName() == "llvm.isunordered") return Intrinsic::isunordered;
     break;
   case 'l':
     if (getName() == "llvm.longjmp")  return Intrinsic::longjmp;

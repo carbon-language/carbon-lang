@@ -688,12 +688,22 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
 
-  case Intrinsic::isnan: 
+  case Intrinsic::isnan:
     Assert1(FT->getNumParams() == 1 && FT->getParamType(0)->isFloatingPoint(),
             "Illegal prototype for llvm.isnan", IF);
     Assert1(FT->getReturnType() == Type::BoolTy,
             "Illegal prototype for llvm.isnan", IF);
     NumArgs = 1;
+    break;
+
+  case Intrinsic::isunordered:
+    Assert1(FT->getNumParams() == 2 &&
+            FT->getParamType(0)->isFloatingPoint() &&
+            FT->getParamType(1)->isFloatingPoint(),
+            "Illegal prototype for llvm.isunordered", IF);
+    Assert1(FT->getReturnType() == Type::BoolTy,
+            "Illegal prototype for llvm.isunordered", IF);
+    NumArgs = 2;
     break;
 
   case Intrinsic::setjmp:          NumArgs = 1; break;

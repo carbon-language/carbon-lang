@@ -61,6 +61,7 @@ namespace Intrinsic {
 
     // libm related functions.
     isnan,          // Return true if fp argument is a NAN.
+    isunordered,    // Return true if fp arguments are unordered
 
     // Input/Output intrinsics.
     readport,

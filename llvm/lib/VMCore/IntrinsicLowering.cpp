@@ -208,6 +208,12 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     Type::BoolTy, isnanFCache);
     break;
   }
+  case Intrinsic::isunordered: {
+    static Function *isunorderedFCache = 0;
+    ReplaceCallWith("isunordered", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::BoolTy, isunorderedFCache);
+    break;
+  }
   }
   
   assert(CI->use_empty() &&
