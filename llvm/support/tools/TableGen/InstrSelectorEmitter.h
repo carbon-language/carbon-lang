@@ -199,6 +199,9 @@ private:
   // ProcessInstructionPatterns - Read in all subclasses of Instruction, and
   // process those with a useful Pattern field.
   void ProcessInstructionPatterns();
+
+  // ProcessExpanderPatterns - Read in all of the expanded patterns.
+  void ProcessExpanderPatterns();
 };
 
 #endif

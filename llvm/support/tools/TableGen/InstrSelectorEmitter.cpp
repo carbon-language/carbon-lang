@@ -42,6 +42,7 @@ void TreePatternNode::dump() const { std::cerr << *this; }
 ///
 void InstrSelectorEmitter::ProcessNodeTypes() {
   std::vector<Record*> Nodes = Records.getAllDerivedDefinitions("DagNode");
+  DEBUG(std::cerr << "Getting node types: ");
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     Record *Node = Nodes[i];
     
@@ -70,8 +71,9 @@ void InstrSelectorEmitter::ProcessNodeTypes() {
 
     // Add the node type mapping now...
     NodeTypes[Node] = NodeType(RetTy, ArgTypes);
-    DEBUG(std::cerr << "Got node type '" << Node->getName() << "'\n");
+    DEBUG(std::cerr << Node->getName() << ", ");
   }
+  DEBUG(std::cerr << "DONE!\n");
 }
 
 static MVT::ValueType getIntrinsicType(Record *R) {
@@ -106,10 +108,10 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
     AnyUnset = InferTypes(Tree, MadeChange);
   } while ((AnyUnset || MadeChange) && !(AnyUnset && !MadeChange));
 
-  if (PTy == Instruction) {
+  if (PTy == Instruction || PTy == Expander) {
     // Check to make sure there is not any unset types in the tree pattern...
     if (AnyUnset) {
-      std::cerr << "In instruction pattern: " << *Tree << "\n";
+      std::cerr << "In pattern: " << *Tree << "\n";
       error("Could not infer all types!");
     }
 
@@ -296,6 +298,20 @@ void InstrSelectorEmitter::ProcessInstructionPatterns() {
   }
 }
 
+/// ProcessExpanderPatterns - Read in all expander patterns...
+///
+void InstrSelectorEmitter::ProcessExpanderPatterns() {
+  std::vector<Record*> Expanders = Records.getAllDerivedDefinitions("Expander");
+  for (unsigned i = 0, e = Expanders.size(); i != e; ++i) {
+    Record *Expander = Expanders[i];
+    DagInit *DI = Expanders[i]->getValueAsDag("Pattern");
+
+    Pattern *P = new Pattern(Pattern::Expander, DI, Expanders[i], *this);
+
+    DEBUG(std::cerr << "Parsed " << *P << "\n");
+  }
+}
+
 
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
@@ -308,5 +324,5 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   ProcessInstructionPatterns();
 
   // Read all of the Expander patterns in...
-  
+  ProcessExpanderPatterns();
 }
