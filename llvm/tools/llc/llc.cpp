@@ -8,6 +8,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Optimizations/Normalize.h"
 #include "llvm/CodeGen/Sparc.h"
+#include "llvm/CodeGen/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
@@ -42,7 +43,7 @@ static bool CompileModule(Module *M, TargetMachine &Target) {
 
 int main(int argc, char** argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-  UltraSparc Target;
+  TargetMachine *Target = allocateSparcTargetMachine();
   
   Module *module = ParseBytecodeFile(InputFilename);
   if (module == 0) {
@@ -50,7 +51,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (CompileModule(module, Target)) {
+  if (CompileModule(module, *Target)) {
     cerr << "Error compiling " << InputFilename << "!\n";
     delete module;
     return 1;
@@ -58,6 +59,7 @@ int main(int argc, char** argv) {
   
   // Clean up and exit
   delete module;
+  delete Target;
   return 0;
 }
 

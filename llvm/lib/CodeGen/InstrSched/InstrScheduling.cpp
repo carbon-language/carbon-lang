@@ -401,6 +401,7 @@ private:
   
 public:
   /*ctor*/	SchedulingManager	(const TargetMachine& _target,
+					 const MachineSchedInfo &schedinfo, 
 					 const SchedGraph* graph,
 					 SchedPriorities& schedPrio);
   /*dtor*/	~SchedulingManager	() {}
@@ -562,16 +563,17 @@ private:
 
 /*ctor*/
 SchedulingManager::SchedulingManager(const TargetMachine& target,
+				     const MachineSchedInfo &schedinfo,
 				     const SchedGraph* graph,
 				     SchedPriorities& _schedPrio)
-  : nslots(target.getSchedInfo().getMaxNumIssueTotal()),
-    schedInfo(target.getSchedInfo()),
+  : nslots(schedinfo.getMaxNumIssueTotal()),
+    schedInfo(schedinfo),
     schedPrio(_schedPrio),
     isched(nslots, graph->getNumNodes()),
     totalInstrCount(graph->getNumNodes() - 2),
     nextEarliestIssueTime(0),
     choicesForSlot(nslots),
-    numInClass(target.getSchedInfo().getNumSchedClasses(), 0),	// set all to 0
+    numInClass(schedinfo.getNumSchedClasses(), 0),	// set all to 0
     nextEarliestStartTime(target.getInstrInfo().getNumRealOpCodes(),
 			  (cycles_t) 0)				// set all to 0
 {
@@ -623,10 +625,8 @@ SchedulingManager::updateEarliestStartTimes(const SchedGraphNode* node,
 //   are still in SSA form.
 //---------------------------------------------------------------------------
 
-bool
-ScheduleInstructionsWithSSA(Method* method,
-			    const TargetMachine &target)
-{
+bool ScheduleInstructionsWithSSA(Method* method, const TargetMachine &target,
+				 const MachineSchedInfo &schedInfo) {
   SchedGraphSet graphSet(method, target);	
   
   if (SchedDebugLevel >= Sched_PrintSchedGraphs)
@@ -648,7 +648,7 @@ ScheduleInstructionsWithSSA(Method* method,
 	cout << endl << "*** TRACE OF INSTRUCTION SCHEDULING OPERATIONS\n\n";
       
       SchedPriorities schedPrio(method, graph);	     // expensive!
-      SchedulingManager S(target, graph, schedPrio);
+      SchedulingManager S(target, schedInfo, graph, schedPrio);
       
       ChooseInstructionsForDelaySlots(S, bb, graph); // modifies graph
       

@@ -8,11 +8,13 @@
 #ifndef SPARC_INTERNALS_H
 #define SPARC_INTERNALS_H
 
-#include "llvm/CodeGen/Sparc.h"
+#include "llvm/CodeGen/TargetMachine.h"
 #include "SparcRegInfo.h"
 
 #include <sys/types.h>
 #include "llvm/Type.h"
+
+class UltraSparc;
 
 // OpCodeMask definitions for the Sparc V9
 // 
@@ -1663,5 +1665,32 @@ public:
 protected:
   virtual void	initializeResources	();
 };
+
+
+//---------------------------------------------------------------------------
+// class UltraSparcMachine 
+// 
+// Purpose:
+//   Primary interface to machine description for the UltraSPARC.
+//   Primarily just initializes machine-dependent parameters in
+//   class TargetMachine, and creates machine-dependent subclasses
+//   for classes such as MachineInstrInfo. 
+//---------------------------------------------------------------------------
+
+class UltraSparc : public TargetMachine {
+  UltraSparcInstrInfo InstInfo;
+  UltraSparcSchedInfo InstSchedulingInfo;
+public:
+  UltraSparc();
+  virtual ~UltraSparc() {}
+
+  virtual const MachineInstrInfo& getInstrInfo() const { return InstInfo; }
+
+  // compileMethod - For the sparc, we do instruction selection, followed by
+  // delay slot scheduling, then register allocation.
+  //
+  virtual bool compileMethod(Method *M);
+};
+
 
 #endif

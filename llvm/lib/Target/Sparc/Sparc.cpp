@@ -8,6 +8,7 @@
 //	7/15/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
+#include "llvm/CodeGen/Sparc.h"
 #include "SparcInternals.h"
 #include "llvm/Method.h"
 #include "llvm/CodeGen/InstrScheduling.h"
@@ -91,21 +92,13 @@ UltraSparcSchedInfo::initializeResources()
 // 
 //---------------------------------------------------------------------------
 
-UltraSparc::UltraSparc() : TargetMachine("UltraSparc-Native") {
-  machineInstrInfo = new UltraSparcInstrInfo();
-  machineSchedInfo = new UltraSparcSchedInfo(machineInstrInfo); 
-  
+UltraSparc::UltraSparc() : TargetMachine("UltraSparc-Native"),
+			   InstSchedulingInfo(&InstInfo) {
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
   maxAtomicMemOpWordSize = 8;
   zeroRegNum = 0;			// %g0 always gives 0 on Sparc
 }
-
-UltraSparc::~UltraSparc() {
-  delete (UltraSparcInstrInfo*) machineInstrInfo;
-  delete (UltraSparcSchedInfo*) machineSchedInfo;
-}
-
 
 bool UltraSparc::compileMethod(Method *M) {
   if (SelectInstructionsForMethod(M, *this)) {
@@ -114,10 +107,15 @@ bool UltraSparc::compileMethod(Method *M) {
     return true;
   }
   
-  if (ScheduleInstructionsWithSSA(M, *this)) {
+  if (ScheduleInstructionsWithSSA(M, *this, InstSchedulingInfo)) {
     cerr << "Instruction scheduling before allocation failed for method "
        << M->getName() << "\n\n";
     return true;
   }
   return false;
 }
+
+// allocateSparcTargetMachine - Allocate and return a subclass of TargetMachine
+// that implements the Sparc backend.
+//
+TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
