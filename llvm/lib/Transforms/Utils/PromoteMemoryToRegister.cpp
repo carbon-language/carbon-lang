@@ -49,9 +49,6 @@ namespace {
     // AllocaLookup - Reverse mapping of Allocas
     std::map<AllocaInst*, unsigned>  AllocaLookup;
 
-    // VersionNumbers - Current version counters for each alloca
-    std::vector<unsigned> VersionNumbers;
-    
     // NewPhiNodes - The PhiNodes we're adding.
     std::map<BasicBlock*, std::vector<PHINode*> > NewPhiNodes;
 
@@ -67,14 +64,12 @@ namespace {
   private:
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     std::vector<Value*> &IncVals);
-    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
+    bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version);
   };
 }  // end of anonymous namespace
 
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
-
-  VersionNumbers.resize(Allocas.size());
 
   for (unsigned i = 0; i != Allocas.size(); ++i) {
     AllocaInst *AI = Allocas[i];
@@ -101,6 +96,7 @@ void PromoteMem2Reg::run() {
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
     //
+    unsigned CurrentVersion = 0;
     while (!DefiningBlocks.empty()) {
       BasicBlock *BB = DefiningBlocks.back();
       DefiningBlocks.pop_back();
@@ -111,7 +107,7 @@ void PromoteMem2Reg::run() {
         const DominanceFrontier::DomSetType &S = it->second;
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
              P != PE; ++P)
-          if (QueuePhiNode(*P, i))
+          if (QueuePhiNode(*P, i, CurrentVersion))
             DefiningBlocks.push_back(*P);
       }
     }
@@ -199,7 +195,8 @@ void PromoteMem2Reg::run() {
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
 //
-bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
+bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
+                                  unsigned &Version) {
   // Look up the basic-block in question
   std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
@@ -211,8 +208,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // BasicBlock.
   BBPNs[AllocaNo] = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
                                 Allocas[AllocaNo]->getName() + "." +
-                                         utostr(VersionNumbers[AllocaNo]++),
-                                BB->begin());
+                                        utostr(Version++), BB->begin());
   return true;
 }
 
