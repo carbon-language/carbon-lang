@@ -186,6 +186,12 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
                                       immedValue);
             if (opType == MachineOperand::MO_VirtualRegister)
               constantThatMustBeLoaded = true;
+            else {
+              // The optype has changed from being a register to an immediate
+              // This means we need to change the opcode, e.g. ADDr -> ADDi
+              unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
+              minstr->setOpcode(newOpcode);
+            }
           }
         }
       else
@@ -202,6 +208,13 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
           opType = ChooseRegOrImmed(mop.getImmedValue(), isSigned,
                                     opCode, target, (immedPos == (int)op), 
                                     machineRegNum, immedValue);
+
+          if (opType == MachineOperand::MO_SignExtendedImmed) {
+            // The optype is an immediate value
+            // This means we need to change the opcode, e.g. ADDr -> ADDi
+            unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
+            minstr->setOpcode(newOpcode);
+          }
 
           if (opType == mop.getType()) 
             continue;           // no change: this is the most common case
@@ -220,10 +233,6 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       else if (opType == MachineOperand::MO_SignExtendedImmed ||
                opType == MachineOperand::MO_UnextendedImmed) {
         minstr->SetMachineOperandConst(op, opType, immedValue);
-        // The optype has changed from being a register to an immediate
-        // This means we need to change the opcode, e.g. ADDr -> ADDi
-        unsigned newOpcode = convertOpcodeFromRegToImm(opCode);
-        minstr->setOpcode(newOpcode);
       } else if (constantThatMustBeLoaded ||
                (opValue && isa<GlobalValue>(opValue)))
         { // opValue is a constant that must be explicitly loaded into a reg
