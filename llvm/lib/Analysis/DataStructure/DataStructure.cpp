@@ -1005,6 +1005,24 @@ static bool CallSiteUsesAliveArgs(DSCallSite &CS, std::set<DSNode*> &Alive,
   return false;
 }
 
+// GlobalIsAlivenessRoot - Return true if the specified global node is
+// intrinsically alive in the context of the current graph (ie, it is a root of
+// aliveness).  For TD graphs, no globals are.  For the BU graphs all are unless
+// they are trivial globals...
+//
+static bool GlobalIsAlivenessRoot(DSNode *N, unsigned Flags) {
+  if (Flags & DSGraph::RemoveUnreachableGlobals)
+    return false;                 // If we are to remove all globals, go for it.
+
+  // Ok, we are keeping globals... hrm, we can still delete it if it has no
+  // links, and no mod/ref or other info...  If it is not modified, it can't
+  // have links...
+  //
+  if ((N->NodeType & ~(DSNode::Composition | DSNode::Array)) == 0)
+    return false;
+  return true;
+}
+
 // removeDeadNodes - Use a more powerful reachability analysis to eliminate
 // subgraphs that are unreachable.  This often occurs because the data
 // structure doesn't "escape" into it's caller, and thus should be eliminated
@@ -1024,8 +1042,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   // Mark all nodes reachable by (non-global) scalar nodes as alive...
   for (std::map<Value*, DSNodeHandle>::iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I)
-    if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
-        !isa<GlobalValue>(I->first))              // Don't mark globals!
+    if (!isa<GlobalValue>(I->first) ||
+        GlobalIsAlivenessRoot(I->second.getNode(), Flags))
       I->second.getNode()->markReachableNodes(Alive);
     else                    // Keep track of global nodes
       GlobalNodes.push_back(std::make_pair(I->first, I->second.getNode()));
@@ -1042,7 +1060,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 
   std::vector<bool> FCallsAlive(FunctionCalls.size());
   for (unsigned i = 0, e = FunctionCalls.size(); i != e; ++i)
-    if (CallSiteUsesAliveArgs(FunctionCalls[i], Alive, Visited)) {
+    if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
+        CallSiteUsesAliveArgs(FunctionCalls[i], Alive, Visited)) {
       FunctionCalls[i].markReachableNodes(Alive);
       FCallsAlive[i] = true;
     }
