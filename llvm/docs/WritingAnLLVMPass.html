@@ -204,6 +204,14 @@ we are operating on <tt><a
 href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Function.html">Function</a></tt>'s.</p>
 
 <p>Next we have:</p>
+<pre>
+<b>using namespace llvm;</b>
+</pre>
+<p>... which is required because the functions from the include files 
+live in the llvm namespace.
+</p>
+
+<p>Next we have:</p>
 
 <pre>
 <b>namespace</b> {
@@ -258,6 +266,8 @@ depending on what it is to be used for.  For "optimizations" we use the
 <pre>
 <b>#include</b> "<a href="http://llvm.cs.uiuc.edu/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.cs.uiuc.edu/doxygen/Function_8h-source.html">llvm/Function.h</a>"
+
+<b>using namespace llvm;</b>
 
 <b>namespace</b> {
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
