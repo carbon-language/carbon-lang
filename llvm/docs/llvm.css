@@ -8,6 +8,9 @@
 /* No borders on image links */
 a:link img, a:visited img {border-style: none}
 
+address img { float: right; width: 88px; height: 31px; }
+address     { clear: right; }
+
 /* 
  * Documentation 
  */
