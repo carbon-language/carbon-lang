@@ -1,10 +1,10 @@
 ; Test that any rethrown exceptions in an inlined function are automatically
 ; turned into branches to the invoke destination.
 
-; RUN: as < %s | opt -inline | dis | not grep 'call void %llvm.exc.rethrow'
+; RUN: as < %s | opt -inline | dis | not grep 'call void %llvm.unwind'
 
 declare void %might_throw()
-declare void %llvm.exc.rethrow()
+declare void %llvm.unwind()
 
 implementation
 
@@ -13,7 +13,7 @@ internal int %callee() {
 cont:
 	ret int 0
 exc:	; This just rethrows the exception!
-	call void %llvm.exc.rethrow()
+	call void %llvm.unwind()
 	ret int 123  ; DEAD!
 }
 
