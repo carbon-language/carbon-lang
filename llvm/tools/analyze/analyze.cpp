@@ -20,32 +20,57 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IntervalPartition.h"
 
-static void PrintIntervalPartition(const Method *M) {
-  cout << cfg::IntervalPartition((Method*)M);
+static void PrintMethod(Method *M) {
+  cout << M;
 }
 
-static void PrintDominatorSets(const Method *M) {
+static void PrintIntervalPartition(Method *M) {
+  cout << cfg::IntervalPartition(M);
+}
+
+
+static void PrintDominatorSets(Method *M) {
   cout << cfg::DominatorSet(M);
 }
-static void PrintImmediateDominators(const Method *M) {
+static void PrintImmediateDominators(Method *M) {
   cout << cfg::ImmediateDominators(M);
 }
-static void PrintDominatorTree(const Method *M) {
+static void PrintDominatorTree(Method *M) {
   cout << cfg::DominatorTree(M);
 }
-static void PrintDominanceFrontier(const Method *M) {
+static void PrintDominanceFrontier(Method *M) {
   cout << cfg::DominanceFrontier(M);
+}
+
+static void PrintPostDominatorSets(Method *M) {
+  cout << cfg::DominatorSet(M, true);
+}
+static void PrintImmediatePostDoms(Method *M) {
+  cout << cfg::ImmediateDominators(cfg::DominatorSet(M, true));
+}
+static void PrintPostDomTree(Method *M) {
+  cout << cfg::DominatorTree(cfg::DominatorSet(M, true));
+}
+static void PrintPostDomFrontier(Method *M) {
+  cout << cfg::DominanceFrontier(cfg::DominatorSet(M, true));
 }
 
 struct {
   const string ArgName, Name;
-  void (*AnPtr)(const Method *M);
+  void (*AnPtr)(Method *M);
 } AnTable[] = {
-  { "-intervals"    , "Interval Partition"  , PrintIntervalPartition },
-  { "-domset"       , "Dominator Sets"      , PrintDominatorSets },
-  { "-immdom"       , "Immediate Dominators", PrintImmediateDominators },
-  { "-domtree"      , "Dominator Tree"      , PrintDominatorTree },
-  { "-domfrontier"  , "Dominance Frontier"  , PrintDominanceFrontier },
+  { "-print"          , "Print each Method"       , PrintMethod },
+  { "-intervals"      , "Interval Partition"      , PrintIntervalPartition },
+
+  { "-domset"         , "Dominator Sets"          , PrintDominatorSets },
+  { "-idom"           , "Immediate Dominators"    , PrintImmediateDominators },
+  { "-domtree"        , "Dominator Tree"          , PrintDominatorTree },
+  { "-domfrontier"    , "Dominance Frontier"      , PrintDominanceFrontier },
+
+  { "-postdomset"     , "Postdominator Sets"      , PrintPostDominatorSets },
+  { "-postidom"       , "Immediate Postdominators", PrintImmediatePostDoms },
+  { "-postdomtree"    , "Post Dominator Tree"     , PrintPostDomTree },
+  { "-postdomfrontier", "Postdominance Frontier"  , PrintPostDomFrontier },
 };
 
 int main(int argc, char **argv) {
@@ -56,7 +81,7 @@ int main(int argc, char **argv) {
     if (string(argv[i]) == string("--help")) {
       cerr << argv[0] << " usage:\n"
            << "  " << argv[0] << " --help\t - Print this usage information\n"
-	   << "\t  --quiet\t - Do not print optimization name before output\n";
+	   << "\t  --quiet\t - Do not print analysis name before output\n";
       for (unsigned j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); ++j) {
 	cerr << "\t   " << AnTable[j].ArgName << "\t - Print " 
 	     << AnTable[j].Name << endl;
@@ -68,18 +93,15 @@ int main(int argc, char **argv) {
     }
   }
   
-  const Module *C = ParseBytecodeFile(Options.getInputFilename());
-  if (C == 0) {
-    C = ParseAssemblyFile(Options);
-    if (C == 0) {
-      cerr << "Input file didn't read correctly.\n";
-      return 1;
-    }
+  Module *C = ParseBytecodeFile(Options.getInputFilename());
+  if (!C && !(C = ParseAssemblyFile(Options))) {
+    cerr << "Input file didn't read correctly.\n";
+    return 1;
   }
 
   // Loop over all of the methods in the module...
-  for (Module::const_iterator I = C->begin(), E = C->end(); I != E; ++I) {
-    const Method *M = *I;
+  for (Module::iterator I = C->begin(), E = C->end(); I != E; ++I) {
+    Method *M = *I;
 
     // Loop over all of the optimizations to be run...
     for (int i = 1; i < argc; i++) {
@@ -88,7 +110,8 @@ int main(int argc, char **argv) {
       for (j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); j++) {
 	if (string(argv[i]) == AnTable[j].ArgName) {
 	  if (!Quiet)
-	    cerr << "Running: " << AnTable[j].Name << " analysis!\n";
+	    cerr << "Running: " << AnTable[j].Name << " analysis on '"
+		 << ((Value*)M)->getName() << "'!\n";
 	  AnTable[j].AnPtr(M);
 	  break;
 	}
