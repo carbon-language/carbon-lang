@@ -80,6 +80,12 @@ namespace llvm {
   ///
   FunctionPass *createPrologEpilogCodeInserter();
 
+  /// BranchFolding Pass - This pass performs machine code CFG based
+  /// optimizations to delete branches to branches, eliminate branches to
+  /// successor blocks (creating fall throughs), and eliminating branches over
+  /// branches.
+  FunctionPass *createBranchFoldingPass();
+
   /// MachineCodeDeletion Pass - This pass deletes all of the machine code for
   /// the current function, which should happen after the function has been
   /// emitted to a .s file or to memory.
