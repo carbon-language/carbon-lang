@@ -80,7 +80,7 @@ namespace {
         OS << *I;
       
         if ((*I)->getType() == Type::VoidTy) continue;
-        ExprType R = ClassifyExpression(*I);
+        ExprType R = ClassifyExpr(*I);
         if (R.Var == *I) continue;  // Doesn't tell us anything
       
         OS << "\t\tExpr =";
