@@ -510,9 +510,39 @@ void alias::printOptionInfo(unsigned GlobalWidth) const {
 // Parser Implementation code...
 //
 
+// basic_parser implementation
+//
+
+// Return the width of the option tag for printing...
+unsigned basic_parser_impl::getOptionWidth(const Option &O) const {
+  unsigned Len = std::strlen(O.ArgStr);
+  if (const char *ValName = getValueName())
+    Len += std::strlen(getValueStr(O, ValName))+3;
+
+  return Len + 6;
+}
+
+// printOptionInfo - Print out information about this option.  The 
+// to-be-maintained width is specified.
+//
+void basic_parser_impl::printOptionInfo(const Option &O,
+                                        unsigned GlobalWidth) const {
+  cerr << "  -" << O.ArgStr;
+
+  if (const char *ValName = getValueName())
+    cerr << "=<" << getValueStr(O, ValName) << ">";
+
+  cerr << string(GlobalWidth-getOptionWidth(O), ' ') << " - "
+       << O.HelpStr << "\n";
+}
+
+
+
+
 // parser<bool> implementation
 //
-bool parser<bool>::parseImpl(Option &O, const string &Arg, bool &Value) {
+bool parser<bool>::parse(Option &O, const char *ArgName,
+                         const string &Arg, bool &Value) {
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" || 
       Arg == "1") {
     Value = true;
@@ -525,25 +555,10 @@ bool parser<bool>::parseImpl(Option &O, const string &Arg, bool &Value) {
   return false;
 }
 
-// Return the width of the option tag for printing...
-unsigned parser<bool>::getOptionWidth(const Option &O) const {
-  return std::strlen(O.ArgStr)+6;
-}
-
-// printOptionInfo - Print out information about this option.  The 
-// to-be-maintained width is specified.
-//
-void parser<bool>::printOptionInfo(const Option &O, unsigned GlobalWidth) const{
-  unsigned L = std::strlen(O.ArgStr);
-  cerr << "  -" << O.ArgStr << string(GlobalWidth-L-6, ' ') << " - "
-       << O.HelpStr << "\n";
-}
-
-
-
 // parser<int> implementation
 //
-bool parser<int>::parseImpl(Option &O, const string &Arg, int &Value) {
+bool parser<int>::parse(Option &O, const char *ArgName,
+                        const string &Arg, int &Value) {
   const char *ArgStart = Arg.c_str();
   char *End;
   Value = (int)strtol(ArgStart, &End, 0);
@@ -552,24 +567,9 @@ bool parser<int>::parseImpl(Option &O, const string &Arg, int &Value) {
   return false;
 }
 
-// Return the width of the option tag for printing...
-unsigned parser<int>::getOptionWidth(const Option &O) const {
-  return std::strlen(O.ArgStr)+std::strlen(getValueStr(O, "int"))+9;
-}
-
-// printOptionInfo - Print out information about this option.  The 
-// to-be-maintained width is specified.
+// parser<double>/parser<float> implementation
 //
-void parser<int>::printOptionInfo(const Option &O, unsigned GlobalWidth) const{
-  cerr << "  -" << O.ArgStr << "=<" << getValueStr(O, "int") << ">"
-       << string(GlobalWidth-getOptionWidth(O), ' ') << " - "
-       << O.HelpStr << "\n";
-}
-
-
-// parser<double> implementation
-//
-bool parser<double>::parseImpl(Option &O, const string &Arg, double &Value) {
+static bool parseDouble(Option &O, const string &Arg, double &Value) {
   const char *ArgStart = Arg.c_str();
   char *End;
   Value = strtod(ArgStart, &End);
@@ -578,39 +578,21 @@ bool parser<double>::parseImpl(Option &O, const string &Arg, double &Value) {
   return false;
 }
 
-// Return the width of the option tag for printing...
-unsigned parser<double>::getOptionWidth(const Option &O) const {
-  return std::strlen(O.ArgStr)+std::strlen(getValueStr(O, "number"))+9;
+bool parser<double>::parse(Option &O, const char *AN,
+                           const std::string &Arg, double &Val) {
+  return parseDouble(O, Arg, Val);
 }
 
-// printOptionInfo - Print out information about this option.  The 
-// to-be-maintained width is specified.
-//
-void parser<double>::printOptionInfo(const Option &O,
-                                     unsigned GlobalWidth) const{
-  cerr << "  -" << O.ArgStr << "=<" << getValueStr(O, "number") << ">"
-       << string(GlobalWidth-getOptionWidth(O), ' ')
-       << " - " << O.HelpStr << "\n";
+bool parser<float>::parse(Option &O, const char *AN,
+                          const std::string &Arg, float &Val) {
+  double dVal;
+  if (parseDouble(O, Arg, dVal))
+    return true;
+  Val = (float)dVal;
+  return false;
 }
 
 
-// parser<string> implementation
-//
-
-// Return the width of the option tag for printing...
-unsigned parser<string>::getOptionWidth(const Option &O) const {
-  return std::strlen(O.ArgStr)+std::strlen(getValueStr(O, "string"))+9;
-}
-
-// printOptionInfo - Print out information about this option.  The 
-// to-be-maintained width is specified.
-//
-void parser<string>::printOptionInfo(const Option &O,
-                                     unsigned GlobalWidth) const{
-  cerr << "  -" << O.ArgStr << " <" << getValueStr(O, "string") << ">"
-       << string(GlobalWidth-getOptionWidth(O), ' ')
-       << " - " << O.HelpStr << "\n";
-}
 
 // generic_parser_base implementation
 //
@@ -729,18 +711,8 @@ public:
     if (!PosOpts.empty() && PosOpts[0]->getNumOccurancesFlag() == ConsumeAfter)
       CAOpt = PosOpts[0];
 
-    for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i) {
+    for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i)
       cerr << " " << PosOpts[i]->HelpStr;
-      switch (PosOpts[i]->getNumOccurancesFlag()) {
-      case Optional:    cerr << "?"; break;
-      case ZeroOrMore:  cerr << "*"; break;
-      case Required:    break;
-      case OneOrMore:   cerr << "+"; break;
-      case ConsumeAfter:
-      default:
-        assert(0 && "Unknown NumOccurances Flag Value!");
-      }
-    }
 
     // Print the consume after option info if it exists...
     if (CAOpt) cerr << " " << CAOpt->HelpStr;
@@ -771,10 +743,10 @@ HelpPrinter HiddenPrinter(true);
 
 cl::opt<HelpPrinter, true, parser<bool> > 
 HOp("help", cl::desc("display available options (--help-hidden for more)"),
-    cl::location(NormalPrinter));
+    cl::location(NormalPrinter), cl::ValueDisallowed);
 
 cl::opt<HelpPrinter, true, parser<bool> >
 HHOp("help-hidden", cl::desc("display all available options"),
-     cl::location(HiddenPrinter), cl::Hidden);
+     cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
 
 } // End anonymous namespace
