@@ -33,6 +33,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
@@ -1246,7 +1247,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
     BasicBlock *Succ = cast<BasicBlock>(SI.getOperand(i+1));
     printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
     printBranchToBlock(SI.getParent(), Succ, 2);
-    if (Succ == SI.getParent()->getNext())
+    if (Succ == next(Function::iterator(SI.getParent())))
       Out << "    break;\n";
   }
   Out << "  }\n";
@@ -1260,11 +1261,10 @@ bool CWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   /// FIXME: This should be reenabled, but loop reordering safe!!
   return true;
 
-  if (From->getNext() != To) // Not the direct successor, we need a goto
-    return true; 
+  if (next(Function::iterator(From)) != Function::iterator(To))
+    return true;  // Not the direct successor, we need a goto.
 
   //isa<SwitchInst>(From->getTerminator())
-
 
   if (LI->getLoopFor(From) != LI->getLoopFor(To))
     return true;
@@ -1443,7 +1443,10 @@ void CWriter::lowerIntrinsics(Function &F) {
             break;
           default:
             // All other intrinsic calls we must lower.
-            Instruction *Before = CI->getPrev();
+            Instruction *Before = 0;
+            if (CI != &BB->front()) 
+              Before = prior(BasicBlock::iterator(CI));
+              
             IL.LowerIntrinsicCall(CI);
             if (Before) {        // Move iterator to instruction after call
               I = Before; ++I;
