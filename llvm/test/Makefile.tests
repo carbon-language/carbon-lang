@@ -8,11 +8,15 @@
 ## Special targets to build a program from multiple source files
 ## 
 ifdef PROG
-  default:    $(PROG)
-  .SECONDARY: $(PROG).clean.bc	## keep %.clean.bc from being deleted
 
-  $(PROG).bc: $(OBJS)
-	$(LLINK) -f $(OBJS) -o $@
+default:    $(PROG).clean.bc $(PROG).native
+  #.SECONDARY: $(PROG).clean.bc	## keep %.clean.bc from being deleted
+
+$(PROG).bc: $(OBJS)
+	$(LLINK) -f $(OBJS) -o $@ $(CFLAGS)
+
+$(PROG).native: $(OBJS:.o=.c)
+	gcc -o $@ $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall
 endif
 
 TOOLS    = $(LEVEL)/tools/Debug
@@ -63,8 +67,7 @@ clean :
 	$(LLC) -f -trace $(LLCFLAGS) $<
 
 %.o: %.c
-	$(LCC) $(LCFLAGS) -S -o $*.ll $<
-	$(LAS) -o $@ $*.ll
+	$(LCC) $(LCFLAGS) -c -o $@ $<
 
 %.bc: %.ll
 	$(LAS) -f $<
