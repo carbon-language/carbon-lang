@@ -26,14 +26,14 @@ CC := @CC@
 #
 # Compilation flags for the C and C++ compilers.
 #
-CPPFLAGS=@DEFS@
-CCFLAGS=@DEFS@
-LDFLAGS=@LDFLAGS@
+CPPFLAGS+=@DEFS@
+CCFLAGS+=@DEFS@
+LDFLAGS+=@LDFLAGS@
 
 #
 # Removed since it prevents the tests from working properly.
 #
-#LIBS=@LIBS@
+#LIBS+=@LIBS@
 
 #
 # Libraries needed by tools
