@@ -87,9 +87,14 @@ public:
   }
   static const char* getOpcodeName(unsigned OpCode);
 
-  inline bool isTerminator() const {   // Instance of TerminatorInst?
-    return iType >= TermOpsBegin && iType < TermOpsEnd;
+  static inline bool isTerminator(unsigned OpCode) {
+    return OpCode >= TermOpsBegin && OpCode < TermOpsEnd;
   }
+
+  inline bool isTerminator() const {   // Instance of TerminatorInst?
+    return isTerminator(iType);
+  }
+
   inline bool isBinaryOp() const {
     return iType >= BinaryOpsBegin && iType < BinaryOpsEnd;
   }

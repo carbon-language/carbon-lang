@@ -1,4 +1,4 @@
-##===- lib/Bytecode/Makefile -------------------------------*- Makefile -*-===##
+##===- lib/Bytecode/Reader/Makefile ------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
-DIRS = Analyzer Reader Writer
+LEVEL = ../../..
+LIBRARYNAME = bcanalyzer
 
 include $(LEVEL)/Makefile.common
 

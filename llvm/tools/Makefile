@@ -9,7 +9,8 @@
 
 LEVEL := ..
 PARALLEL_DIRS := llvm-as llvm-dis opt gccas llc llvm-link lli gccld llvm-stub \
-                 analyze extract bugpoint llvm-nm llvm-prof llvm-db llvm-ar
+                 analyze extract bugpoint llvm-nm llvm-prof llvm-db llvm-ar \
+		 llvm-abcd
 
 include $(LEVEL)/Makefile.common
 
