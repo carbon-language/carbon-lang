@@ -8,6 +8,7 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/Target/TargetData.h"
+#include <cassert>
 
 class TargetInstrInfo;
 class TargetInstrDescriptor;
@@ -100,11 +101,12 @@ public:
   }
 
   /// replaceMachineCodeForFunction - Make it so that calling the
-  /// function whose machine code is at OLD turns into a call to NEW. Returns
-  /// true iff an error occurred. FIXME: this is JIT-specific.
+  /// function whose machine code is at OLD turns into a call to NEW,
+  /// perhaps by overwriting OLD with a branch to NEW. FIXME: this is
+  /// JIT-specific.
   ///
-  virtual bool replaceMachineCodeForFunction (void *Old, void *New) {
-    return true;
+  virtual void replaceMachineCodeForFunction (void *Old, void *New) {
+    assert (0 && "Current target cannot replace machine code for functions");
   }
 };
 
