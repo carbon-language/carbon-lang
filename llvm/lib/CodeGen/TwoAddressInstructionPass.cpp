@@ -141,12 +141,23 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             unsigned regC = mi->getOperand(2).getReg();
             if (LV.KillsRegister(mi, regC)) {
               DEBUG(std::cerr << "2addr: COMMUTING  : " << *mi);
-              mi->SetMachineOperandReg(2, regB);
-              mi->SetMachineOperandReg(1, regC);
-              DEBUG(std::cerr << "2addr: COMMUTED TO: " << *mi);
-              ++NumCommuted;
-              regB = regC;
-              goto InstructionRearranged;
+              MachineInstr *NewMI = TII.commuteInstruction(mi);
+              if (NewMI == 0) {
+                DEBUG(std::cerr << "2addr: COMMUTING FAILED!\n");
+              } else {
+                DEBUG(std::cerr << "2addr: COMMUTED TO: " << *NewMI);
+                // If the instruction changed to commute it, update livevar.
+                if (NewMI != mi) {
+                  LV.instructionChanged(mi, NewMI);  // Update live variables
+                  mbbi->insert(mi, NewMI);           // Insert the new inst
+                  mbbi->erase(mi);                   // Nuke the old inst.
+                  mi = NewMI;
+                }                  
+
+                ++NumCommuted;
+                regB = regC;
+                goto InstructionRearranged;
+              }
             }
           }
           // If this instruction is potentially convertible to a true
