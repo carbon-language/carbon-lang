@@ -51,8 +51,7 @@ namespace llvm {
     /// @{
     private:
       /// @brief This type is used internally to hold the configuration data.
-      typedef hash_map<std::string,CompilerDriver::ConfigData*,
-          hash<std::string>,std::equal_to<std::string> > ConfigDataMap;
+      typedef hash_map<std::string,CompilerDriver::ConfigData*> ConfigDataMap;
       ConfigDataMap Configurations; ///< The cache of configurations
       sys::Path configDir;
     /// @}
