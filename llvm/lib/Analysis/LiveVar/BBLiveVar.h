@@ -19,14 +19,15 @@ class BBLiveVar : public Annotation {
   const BasicBlock *BB;         // pointer to BasicBlock
   unsigned POID;                // Post-Order ID
 
-  ValueSet DefSet;              // Def set for LV analysis
+  ValueSet DefSet;              // Def set (with no preceding uses) for LV analysis
   ValueSet InSet, OutSet;       // In & Out for LV analysis
   bool InSetChanged, OutSetChanged;   // set if the InSet/OutSet is modified
 
-                                // map that contains phi args->BB they came
-                                // set by calcDefUseSets & used by setPropagate
-  std::map<const Value *, const BasicBlock *> PhiArgMap;  
-
+                                // map that contains PredBB -> Phi arguments
+                                // coming in on that edge.  such uses have to be
+                                // treated differently from ordinary uses.
+  std::map<const BasicBlock *, ValueSet> PredToEdgeInSetMap;
+  
   // method to propogate an InSet to OutSet of a predecessor
   bool setPropagate(ValueSet *OutSetOfPred, 
                     const ValueSet *InSetOfThisBB,

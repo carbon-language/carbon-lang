@@ -58,7 +58,7 @@ void BBLiveVar::calcDefUseSets() {
          MIE = MIVec.rend(); MII != MIE; ++MII) {
     const MachineInstr *MI = *MII;
     
-    if (DEBUG_LV > 1) {                            // debug msg
+    if (DEBUG_LV >= LV_DEBUG_Verbose) {                            // debug msg
       cerr << " *Iterating over machine instr ";
       MI->dump();
       cerr << "\n";
@@ -75,8 +75,6 @@ void BBLiveVar::calcDefUseSets() {
       if (MI->implicitRefIsDefined(i))
 	addDef(MI->getImplicitRef(i));
     
-    bool IsPhi = MI->getOpCode() == PHI;
- 
     // iterate over MI operands to find uses
     for (MachineInstr::const_val_op_iterator OpI = MI->begin(), OpE = MI->end();
          OpI != OpE; ++OpI) {
@@ -85,26 +83,37 @@ void BBLiveVar::calcDefUseSets() {
       if (isa<BasicBlock>(Op))
 	continue;             // don't process labels
 
-      if (!OpI.isDef()) {   // add to Defs only if this operand is a use
-	addUse(Op);
+      if (!OpI.isDef()) {   // add to Uses only if this operand is a use
 
-	if (IsPhi) {         // for a phi node
-	  // put args into the PhiArgMap (Val -> BB)
+        //
+        // *** WARNING: The following code for handling dummy PHI machine
+        //     instructions is untested.  The previous code was broken and I
+        //     fixed it, but it turned out to be unused as long as Phi elimination
+        //     is performed during instruction selection.
+        // 
+        // Put Phi operands in UseSet for the incoming edge, not node.
+        // They must not "hide" later defs, and must be handled specially
+        // during set propagation over the CFG.
+	if (MI->getOpCode() == PHI) {         // for a phi node
           const Value *ArgVal = Op;
-	  const Value *BBVal = *++OpI; // increment to point to BB of value
+	  const BasicBlock *PredBB = cast<BasicBlock>(*++OpI); // next ptr is BB
 	  
-	  PhiArgMap[ArgVal] = cast<BasicBlock>(BBVal); 
+	  PredToEdgeInSetMap[PredBB].insert(ArgVal); 
 	  
-	  if (DEBUG_LV > 1)
+	  if (DEBUG_LV >= LV_DEBUG_Verbose)
 	    cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
-                 << RAV(PhiArgMap[ArgVal]) << "\n";
+                 << RAV(PredBB) << endl;
 	} // if( IsPhi )
+        else {
+          // It is not a Phi use: add to regular use set and remove later defs.
+          addUse(Op);
+        }
       } // if a use
     } // for all operands
 
     // do for implicit operands as well
     for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i) {
-      assert(!IsPhi && "Phi cannot have implicit opeands");
+      assert(MI->getOpCode() != PHI && "Phi cannot have implicit opeands");
       const Value *Op = MI->getImplicitRef(i);
 
       if (Op->getType()->isLabelType())             // don't process labels
@@ -123,10 +132,10 @@ void BBLiveVar::calcDefUseSets() {
 //-----------------------------------------------------------------------------
 void  BBLiveVar::addDef(const Value *Op) {
   DefSet.insert(Op);     // operand is a def - so add to def set
-  InSet.erase(Op);       // this definition kills any uses
+  InSet.erase(Op);       // this definition kills any later uses
   InSetChanged = true; 
 
-  if (DEBUG_LV > 1) cerr << "  +Def: " << RAV(Op) << "\n";
+  if (DEBUG_LV >= LV_DEBUG_Verbose) cerr << "  +Def: " << RAV(Op) << "\n";
 }
 
 
@@ -135,16 +144,16 @@ void  BBLiveVar::addDef(const Value *Op) {
 //-----------------------------------------------------------------------------
 void  BBLiveVar::addUse(const Value *Op) {
   InSet.insert(Op);   // An operand is a use - so add to use set
-  OutSet.erase(Op);   // remove if there is a def below this use
+  DefSet.erase(Op);   // remove if there is a def below this use
   InSetChanged = true; 
 
-  if (DEBUG_LV > 1) cerr << "   Use: " << RAV(Op) << "\n";
+  if (DEBUG_LV >= LV_DEBUG_Verbose) cerr << "   Use: " << RAV(Op) << "\n";
 }
 
 
 //-----------------------------------------------------------------------------
 // Applies the transfer function to a basic block to produce the InSet using
-// the outset. 
+// the OutSet. 
 //-----------------------------------------------------------------------------
 
 bool BBLiveVar::applyTransferFunc() {
@@ -160,28 +169,32 @@ bool BBLiveVar::applyTransferFunc() {
 
 
 //-----------------------------------------------------------------------------
-// calculates Out set using In sets of the predecessors
+// calculates Out set using In sets of the successors
 //-----------------------------------------------------------------------------
 
 bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet, 
                              const BasicBlock *PredBB) {
   bool Changed = false;
-
-  // for all all elements in InSet
+  
+  // merge all members of InSet into OutSet of the predecessor
   for (ValueSet::const_iterator InIt = InSet->begin(), InE = InSet->end();
-       InIt != InE; ++InIt) {  
-    const BasicBlock *PredBBOfPhiArg = PhiArgMap[*InIt];
-
-    // Only propogate liveness of the value if it is either not an argument of
-    // a PHI node, or if it IS an argument, AND 'PredBB' is the basic block
-    // that it is coming in from.  THIS IS BROKEN because the same value can
-    // come in from multiple predecessors (and it's not a multimap)!
-    //
-    if (PredBBOfPhiArg == 0 || PredBBOfPhiArg == PredBB)
-      if (OutSet->insert(*InIt).second)
-        Changed = true;
-  }
-
+       InIt != InE; ++InIt)
+    if ((OutSet->insert(*InIt)).second)
+      Changed = true;
+  
+  // 
+  //**** WARNING: The following code for handling dummy PHI machine
+  //     instructions is untested.  See explanation above.
+  // 
+  // then merge all members of the EdgeInSet for the predecessor into the OutSet
+  const ValueSet& EdgeInSet = PredToEdgeInSetMap[PredBB];
+  for (ValueSet::const_iterator InIt = EdgeInSet.begin(), InE = EdgeInSet.end();
+       InIt != InE; ++InIt)
+    if ((OutSet->insert(*InIt)).second)
+      Changed = true;
+  // 
+  //****
+  
   return Changed;
 } 
 
@@ -193,13 +206,13 @@ bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
 bool BBLiveVar::applyFlowFunc() {
   // IMPORTANT: caller should check whether inset changed 
   //            (else no point in calling)
-
+  
   // If this BB changed any OutSets of preds whose POID is lower, than we need
   // another iteration...
   //
   bool needAnotherIt = false;  
 
-  for (pred_const_iterator PI = pred_begin(BB), PE = pred_begin(BB);
+  for (pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
        PI != PE ; ++PI) {
     BBLiveVar *PredLVBB = BBLiveVar::GetFromBB(*PI);
 
