@@ -109,21 +109,9 @@ namespace X86II {
     DE = 9 << Op0Shift,   DF = 10 << Op0Shift,
 
     //===------------------------------------------------------------------===//
-    // This three-bit field describes the size of a memory operand.  Zero is
-    // unused so that we can tell if we forgot to set a value.
-    MemShift = 10,
-    MemMask  = 7 << MemShift,
-    Mem8     = 1 << MemShift,
-    Mem16    = 2 << MemShift,
-    Mem32    = 3 << MemShift,
-    Mem64    = 4 << MemShift,
-    Mem80    = 5 << MemShift,
-    Mem128   = 6 << MemShift,
-
-    //===------------------------------------------------------------------===//
     // This two-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    ImmShift = 13,
+    ImmShift = 10,
     ImmMask  = 7 << ImmShift,
     Imm8     = 1 << ImmShift,
     Imm16    = 2 << ImmShift,
@@ -133,7 +121,7 @@ namespace X86II {
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = 15,
+    FPTypeShift = 12,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -165,13 +153,10 @@ namespace X86II {
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
     SpecialFP  = 7 << FPTypeShift,
 
-    // PrintImplUsesAfter - Print out implicit uses in the assembly output after
-    // the normal operands.
-    PrintImplUsesAfter = 1 << 18,
-
-    OpcodeShift   = 19,
+    // Bit 15 is unused.
+    OpcodeShift   = 16,
     OpcodeMask    = 0xFF << OpcodeShift,
-    // Bits 27 -> 31 are unused
+    // Bits 24 -> 31 are unused
   };
 }
 

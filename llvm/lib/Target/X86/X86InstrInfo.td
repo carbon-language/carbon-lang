@@ -62,18 +62,6 @@ def Imm8   : ImmType<1>;
 def Imm16  : ImmType<2>;
 def Imm32  : ImmType<3>;
 
-// MemType - This specifies the immediate type used by an instruction. This is
-// part of the ad-hoc solution used to emit machine instruction encodings by our
-// machine code emitter.
-class MemType<bits<3> val> {
-  bits<3> Value = val;
-}
-def NoMem  : MemType<0>;
-def Mem16  : MemType<2>;
-def Mem32  : MemType<3>;
-def Mem64  : MemType<4>;
-def Mem80  : MemType<5>;
-
 // FPFormat - This specifies what form this FP instruction has.  This is used by
 // the Floating-Point stackifier pass.
 class FPFormat<bits<3> val> {
@@ -89,25 +77,22 @@ def CondMovFP  : FPFormat<6>;
 def SpecialFP  : FPFormat<7>;
 
 
-class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instruction {
+class X86Inst<bits<8> opcod, Format f, ImmType i, dag ops, string AsmStr> : Instruction {
   let Namespace = "X86";
 
-  let Name = nam;
   bits<8> Opcode = opcod;
   Format Form = f;
   bits<5> FormBits = Form.Value;
-  MemType MemT = m;
-  bits<3> MemTypeBits = MemT.Value;
   ImmType ImmT = i;
   bits<2> ImmTypeBits = ImmT.Value;
+
+  dag OperandList = ops;
+  string AsmString = AsmStr;
 
   //
   // Attributes specific to X86 instructions...
   //
   bit hasOpSizePrefix = 0; // Does this inst have a 0x66 prefix?
-
-  // Flag whether implicit register usage is printed after the instruction.
-  bit printImplicitUsesAfter  = 0;
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
   FPFormat FPForm;          // What flavor of FP instruction is this?
@@ -117,12 +102,6 @@ class X86Inst<string nam, bits<8> opcod, Format f, MemType m, ImmType i> : Instr
 class Imp<list<Register> uses, list<Register> defs> {
   list<Register> Uses = uses;
   list<Register> Defs = defs;
-}
-
-// II - InstructionInfo - this will eventually replace the I class.
-class II<dag ops, string AsmStr> {
-  dag OperandList = ops;
-  string AsmString = AsmStr;
 }
 
 
@@ -144,12 +123,11 @@ class DF     { bits<4> Prefix = 10; }
 //===----------------------------------------------------------------------===//
 // Instruction templates...
 
-class I<bits<8> o, Format f, dag ops, string asm> : X86Inst<"", o, f, NoMem, NoImm>, II<ops, asm>;
+class I<bits<8> o, Format f, dag ops, string asm> : X86Inst<o, f, NoImm, ops, asm>;
 
-class Ii<bits<8> o, Format f, ImmType i> : X86Inst<"", o, f, NoMem, i>;
-class Ii8 <bits<8> o, Format f, dag ops, string asm> : Ii<o, f, Imm8 >, II<ops, asm>;
-class Ii16<bits<8> o, Format f, dag ops, string asm> : Ii<o, f, Imm16>, II<ops, asm>;
-class Ii32<bits<8> o, Format f, dag ops, string asm> : Ii<o, f, Imm32>, II<ops, asm>;
+class Ii8 <bits<8> o, Format f, dag ops, string asm> : X86Inst<o, f, Imm8 , ops, asm>;
+class Ii16<bits<8> o, Format f, dag ops, string asm> : X86Inst<o, f, Imm16, ops, asm>;
+class Ii32<bits<8> o, Format f, dag ops, string asm> : X86Inst<o, f, Imm32, ops, asm>;
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
@@ -893,7 +871,7 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops R32:$dst, i16mem:$src), "movzx $dst, $s
 
 // Floating point instruction template
 class FPI<bits<8> o, Format F, FPFormat fp, dag ops, string asm>
-  : X86Inst<"", o, F, NoMem, NoImm>, II<ops, asm> {
+  : X86Inst<o, F, NoImm, ops, asm> {
   let FPForm = fp; let FPFormBits = FPForm.Value;
 }
 
