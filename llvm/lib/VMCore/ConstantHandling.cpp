@@ -6,6 +6,7 @@
 
 #include "llvm/ConstantHandling.h"
 #include "llvm/iPHINode.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include <cmath>
 
@@ -45,26 +46,15 @@ Constant *ConstantFoldInstruction(Instruction *I) {
     }
   }
 
+  if (isa<BinaryOperator>(I))
+    return ConstantExpr::get(I->getOpcode(), Op0, Op1);    
+
   switch (I->getOpcode()) {
   case Instruction::Cast:
-    return ConstRules::get(*Op0, *Op0)->castTo(Op0, I->getType());
-  case Instruction::Add:     return *Op0 + *Op1;
-  case Instruction::Sub:     return *Op0 - *Op1;
-  case Instruction::Mul:     return *Op0 * *Op1;
-  case Instruction::Div:     return *Op0 / *Op1;
-  case Instruction::Rem:     return *Op0 % *Op1;
-  case Instruction::And:     return *Op0 & *Op1;
-  case Instruction::Or:      return *Op0 | *Op1;
-  case Instruction::Xor:     return *Op0 ^ *Op1;
-
-  case Instruction::SetEQ:   return *Op0 == *Op1;
-  case Instruction::SetNE:   return *Op0 != *Op1;
-  case Instruction::SetLE:   return *Op0 <= *Op1;
-  case Instruction::SetGE:   return *Op0 >= *Op1;
-  case Instruction::SetLT:   return *Op0 <  *Op1;
-  case Instruction::SetGT:   return *Op0 >  *Op1;
-  case Instruction::Shl:     return *Op0 << *Op1;
-  case Instruction::Shr:     return *Op0 >> *Op1;
+    return ConstantExpr::getCast(Op0, I->getType());
+  case Instruction::Shl:
+  case Instruction::Shr:
+    return ConstantExpr::getShift(I->getOpcode(), Op0, Op1);
   case Instruction::GetElementPtr: {
     std::vector<Constant*> IdxList;
     IdxList.reserve(I->getNumOperands()-1);
@@ -74,7 +64,7 @@ Constant *ConstantFoldInstruction(Instruction *I) {
         IdxList.push_back(C);
       else
         return 0;  // Non-constant operand
-    return ConstantFoldGetElementPtr(Op0, IdxList);
+    return ConstantExpr::getGetElementPtr(Op0, IdxList);
   }
   default:
     return 0;
