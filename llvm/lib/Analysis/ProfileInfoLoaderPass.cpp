@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/BasicBlock.h"
+#include "llvm/InstrTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
@@ -60,11 +62,25 @@ Pass *llvm::createProfileLoaderPass(const std::string &Filename) {
 
 bool LoaderPass::run(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename, M);
-  ExecutionCounts.clear();
-  if (PIL.hasAccurateBlockCounts()) {
-    std::vector<std::pair<BasicBlock*, unsigned> > Counts;
-    PIL.getBlockCounts(Counts);
-    ExecutionCounts.insert(Counts.begin(), Counts.end());
+  EdgeCounts.clear();
+  bool PrintedWarning = false;
+  
+  std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > ECs;
+  PIL.getEdgeCounts(ECs);
+  for (unsigned i = 0, e = ECs.size(); i != e; ++i) {
+    BasicBlock *BB = ECs[i].first.first;
+    unsigned SuccNum = ECs[i].first.second;
+    TerminatorInst *TI = BB->getTerminator();
+    if (SuccNum >= TI->getNumSuccessors()) {
+      if (!PrintedWarning) {
+        std::cerr << "WARNING: profile information is inconsistent with "
+                  << "the current program!\n";
+        PrintedWarning = true;
+      }
+    } else {
+      EdgeCounts[std::make_pair(BB, TI->getSuccessor(SuccNum))]+= ECs[i].second;
+    }
   }
+
   return false;
 }
