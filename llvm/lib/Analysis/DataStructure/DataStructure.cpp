@@ -1003,10 +1003,11 @@ void GlobalDSGraph::removeReference(const DSGraph* referrer) {
   }
 }
 
-// Bits used in the next function
-static const char ExternalTypeBits = DSNode::GlobalNode | DSNode::NewNode;
-
 #if 0
+// Bits used in the next function
+static const char ExternalTypeBits = DSNode::GlobalNode | DSNode::HeapNode;
+
+
 // GlobalDSGraph::cloneNodeInto - Clone a global node and all its externally
 // visible target links (and recursively their such links) into this graph.
 // NodeCache maps the node being cloned to its clone in the Globals graph,

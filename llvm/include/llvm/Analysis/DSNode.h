@@ -63,7 +63,7 @@ public:
   enum NodeTy {
     ShadowNode  = 0,        // Nothing is known about this node...
     AllocaNode  = 1 << 0,   // This node was allocated with alloca
-    NewNode     = 1 << 1,   // This node was allocated with malloc
+    HeapNode    = 1 << 1,   // This node was allocated with malloc
     GlobalNode  = 1 << 2,   // This node was allocated by a global var decl
     UnknownNode = 1 << 3,   // This node points to unknown allocated memory 
     Incomplete  = 1 << 4,   // This node may not be complete

@@ -84,7 +84,7 @@ namespace {
   private:
     // Visitor functions, used to handle each instruction type we encounter...
     friend class InstVisitor<GraphBuilder>;
-    void visitMallocInst(MallocInst &MI) { handleAlloc(MI, DSNode::NewNode); }
+    void visitMallocInst(MallocInst &MI) { handleAlloc(MI, DSNode::HeapNode); }
     void visitAllocaInst(AllocaInst &AI) { handleAlloc(AI, DSNode::AllocaNode);}
     void handleAlloc(AllocationInst &AI, DSNode::NodeTy NT);
 
