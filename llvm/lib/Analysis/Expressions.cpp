@@ -276,7 +276,7 @@ ExprType ClassifyExpression(Value *Expr) {
     if (Right.Offset == 0) return Left;   // shl x, 0 = x
     assert(Right.Offset->getType() == Type::UByteTy &&
 	   "Shift amount must always be a unsigned byte!");
-    uint64_t ShiftAmount = ((ConstantUInt*)Right.Offset)->getValue();
+    uint64_t ShiftAmount = cast<ConstantUInt>(Right.Offset)->getValue();
     ConstantInt *Multiplier = getUnsignedConstant(1ULL << ShiftAmount, Ty);
 
     // We don't know how to classify it if they are shifting by more than what
