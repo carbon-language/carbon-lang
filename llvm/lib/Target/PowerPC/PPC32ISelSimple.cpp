@@ -524,9 +524,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // GV is located at PC + distance
     unsigned CurPC = makeAnotherReg(Type::IntTy);
     unsigned TmpReg = makeAnotherReg(GV->getType());
-    unsigned Opcode = GV->hasWeakLinkage() ? 
-      PPC32::LOADLoIndirect : 
-      PPC32::LOADLoDirect;
+    unsigned Opcode = (GV->hasWeakLinkage() || GV->isExternal()) ? 
+      PPC32::LOADLoIndirect : PPC32::LOADLoDirect;
       
     // Move PC to destination reg
     BuildMI(*MBB, IP, PPC32::MovePCtoLR, 0, CurPC);
@@ -2481,7 +2480,8 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       unsigned SrcReg2 = makeAnotherReg(Type::IntTy);
       BuildMI(*MBB, IP, PPC32::OR, 2, SrcReg2).addReg(SrcReg).addReg(SrcReg+1);
       BuildMI(*MBB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg2).addImm(-1);
-      BuildMI(*MBB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg2);
+      BuildMI(*MBB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg)
+        .addReg(SrcReg2);
       break;
     }
     case cFP32:
