@@ -11,11 +11,11 @@
 
 #include "llvm/Pass.h"
 
-struct UnifyMethodExitNodes : public FunctionPass {
+struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ExitNode;
 public:
   static AnalysisID ID;            // Pass ID
-  UnifyMethodExitNodes(AnalysisID id = ID) : ExitNode(0) { assert(ID == id); }
+  UnifyFunctionExitNodes(AnalysisID id = ID) : ExitNode(0) { assert(ID == id); }
 
   // UnifyAllExitNodes - Unify all exit nodes of the CFG by creating a new
   // BasicBlock, and converting all returns to unconditional branches to this
@@ -37,8 +37,8 @@ public:
   }
 };
 
-static inline Pass *createUnifyMethodExitNodesPass() {
-  return new UnifyMethodExitNodes();
+static inline Pass *createUnifyFunctionExitNodesPass() {
+  return new UnifyFunctionExitNodes();
 }
 
 #endif
