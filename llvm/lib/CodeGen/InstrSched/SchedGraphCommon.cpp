@@ -78,8 +78,6 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon* _src,
 }
 
 
-
-
 void SchedGraphEdge::dump(int indent) const {
   std::cerr << std::string(indent*2, ' ') << *this; 
 }
