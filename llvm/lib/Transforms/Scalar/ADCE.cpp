@@ -331,10 +331,17 @@ bool ADCE::doADCE() {
       }
   }
 
-  // Loop over all of the basic blocks in the function, dropping references of
-  // the dead basic blocks
+  // We make changes if there are any dead blocks in the function...
+  if (unsigned NumDeadBlocks = Func->size() - AliveBlocks.size()) {
+    MadeChanges = true;
+    NumBlockRemoved += NumDeadBlocks;
+  }
+
+  // Loop over all of the basic blocks in the function, removing control flow
+  // edges to live blocks (also eliminating any entries in PHI functions in
+  // referenced blocks).
   //
-  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB) {
+  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB)
     if (!AliveBlocks.count(BB)) {
       // Remove all outgoing edges from this basic block and convert the
       // terminator into a return instruction.
@@ -354,12 +361,16 @@ bool ADCE::doADCE() {
         BB->getInstList().push_back(new ReturnInst(RetTy != Type::VoidTy ?
                                            Constant::getNullValue(RetTy) : 0));
       }
-
-      BB->dropAllReferences();
-      ++NumBlockRemoved;
-      MadeChanges = true;
     }
-  }
+
+
+  // Loop over all of the basic blocks in the function, dropping references of
+  // the dead basic blocks.  We must do this after the previous step to avoid
+  // dropping references to PHIs which still have entries...
+  //
+  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB)
+    if (!AliveBlocks.count(BB))
+      BB->dropAllReferences();
 
   // Now loop through all of the blocks and delete the dead ones.  We can safely
   // do this now because we know that there are no references to dead blocks
