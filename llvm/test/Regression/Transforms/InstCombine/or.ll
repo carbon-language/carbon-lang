@@ -150,3 +150,9 @@ uint %test23(uint %A) {
 	ret uint %C
 }
 
+uint %test24(uint %A) {
+	%B = or uint %A, 12
+	%C = and uint %B, 8    ; Always equal to 8
+	ret uint %C 
+}
+
