@@ -191,29 +191,22 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   }
 
   // Next, brutally remove the operand list.
-  std::vector<SDNode*> Operands;
   while (!N->Operands.empty()) {
-    SDOperand O = N->Operands.back();
+    SDNode *O = N->Operands.back().Val;
     N->Operands.pop_back();
-    Operands.push_back(O.Val);
-    O.Val->removeUser(N);
+    O->removeUser(N);
+
+    // Now that we removed this operand, see if there are no uses of it left.
+    DeleteNodeIfDead(O, NodeSet);
   }
   
   // Remove the node from the nodes set and delete it.
   std::set<SDNode*> &AllNodeSet = *(std::set<SDNode*>*)NodeSet;
   AllNodeSet.erase(N);
-  delete N;
 
   // Now that the node is gone, check to see if any of the operands of this node
   // are dead now.
-
-  // Remove duplicate operand entries.
-  std::sort(Operands.begin(), Operands.end());
-  Operands.erase(std::unique(Operands.begin(), Operands.end()),
-                 Operands.end());
-  
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-    DeleteNodeIfDead(Operands[i], NodeSet);
+  delete N;
 }
 
 
@@ -733,6 +726,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getNode(ISD::BR, MVT::Other, N1, N3);
       else
         return N1;         // Never-taken branch
+    break;
   }
 
   SDNode *N = new SDNode(Opcode, N1, N2, N3);
