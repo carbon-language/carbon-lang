@@ -203,11 +203,15 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
   //
-  if (Ty->isPrimitiveType()) return Out << Ty->getDescription();
+  if (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))
+    return Out << Ty->getDescription();
 
   // Check to see if the type is named.
   std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
   if (I != TypeNames.end()) return Out << I->second;
+
+  if (isa<OpaqueType>(Ty))
+    return Out << "opaque";
 
   // Otherwise we have a type that has not been named but is a derived type.
   // Carefully recurse the type hierarchy to print out any contained symbolic
