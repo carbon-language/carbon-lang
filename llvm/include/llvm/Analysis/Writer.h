@@ -51,6 +51,20 @@ namespace cfg {
   inline ostream &operator <<(ostream &o, const DominanceFrontier &DF) {
     WriteToOutput(DF, o); return o;
   }
+
+  // Stuff for printing out a callgraph...
+  class CallGraph;
+  class CallGraphNode;
+
+  void WriteToOutput(const CallGraph &, ostream &o);
+  inline ostream &operator <<(ostream &o, const CallGraph &CG) {
+    WriteToOutput(CG, o); return o;
+  }
+  
+  void WriteToOutput(const CallGraphNode *, ostream &o);
+  inline ostream &operator <<(ostream &o, const CallGraphNode *CG) {
+    WriteToOutput(CG, o); return o;
+  }
 }  // End namespace CFG
 
 #endif
