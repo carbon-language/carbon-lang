@@ -20,59 +20,93 @@
 //===          independent code. 
 //===----------------------------------------------------------------------===//
 
+static bool did_initialize_ltdl = false;
+
+static inline void check_ltdl_initialization() {
+  if (!did_initialize_ltdl) {
+    if (0 != lt_dlinit())
+      throw std::string(lt_dlerror());
+    did_initialize_ltdl = true;
+  }
+}
+
+static std::vector<lt_dlhandle> OpenedHandles;
+
 namespace llvm {
 
 using namespace sys;
 
 DynamicLibrary::DynamicLibrary() : handle(0) {
-  if (0 != lt_dlinit())
-    throw std::string(lt_dlerror());
+  check_ltdl_initialization();
 
-  handle = lt_dlopen(0);
+  lt_dlhandle a_handle = lt_dlopen(0);
 
-  if (handle == 0)
+  if (a_handle == 0)
     throw std::string("Can't open program as dynamic library");
+  
+  handle = a_handle;
+  OpenedHandles.push_back(a_handle);
 }
 
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
-  if (0 != lt_dlinit())
-    throw std::string(lt_dlerror());
+  check_ltdl_initialization();
 
-  handle = lt_dlopen(filename);
+  lt_dlhandle a_handle = lt_dlopen(filename);
 
-  if (handle == 0)
-    handle = lt_dlopenext(filename);
+  if (a_handle == 0)
+    a_handle = lt_dlopenext(filename);
 
-  if (handle == 0)
-    throw std::string("Can't open dynamic library:") + filename;
+  if (a_handle == 0)
+    throw std::string("Can't open :") + filename + ": " + lt_dlerror();
+
+  handle = a_handle;
+  OpenedHandles.push_back(a_handle);
 }
 
 DynamicLibrary::~DynamicLibrary() {
-  if (handle)
-    lt_dlclose((lt_dlhandle)handle);
+  lt_dlhandle a_handle = (lt_dlhandle) handle;
+  if (a_handle) {
+    lt_dlclose(a_handle);
 
-  lt_dlexit();
+    for (std::vector<lt_dlhandle>::iterator I = OpenedHandles.begin(),
+         E = OpenedHandles.end(); I != E; ++I) {
+      if (*I == a_handle) {
+        // Note: don't use the swap/pop_back trick here. Order is important.
+        OpenedHandles.erase(I);
+      }
+    }
+  }
+}
+
+void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
+  check_ltdl_initialization();
+  lt_dlhandle a_handle = lt_dlopen(filename);
+
+  if (a_handle == 0)
+    a_handle = lt_dlopenext(filename);
+
+  if (a_handle == 0)
+    throw std::string("Can't open :") + filename + ": " + lt_dlerror();
+
+  lt_dlmakeresident(a_handle);
+
+  OpenedHandles.push_back(a_handle);
+}
+
+void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
+  check_ltdl_initialization();
+  for (std::vector<lt_dlhandle>::iterator I = OpenedHandles.begin(),
+       E = OpenedHandles.end(); I != E; ++I) {
+    lt_ptr ptr = lt_dlsym(*I, symbolName);
+    if (ptr)
+      return ptr;
+  }
+  return 0;
 }
 
 void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
   assert(handle != 0 && "Invalid DynamicLibrary handle");
-  return lt_dlsym((lt_dlhandle) handle,symbolName);
+  return lt_dlsym((lt_dlhandle) handle, symbolName);
 }
-
-#if 0 
-DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
-  assert(!"Have ltdl.h but not libltdl.a!");
-}
-
-DynamicLibrary::~DynamicLibrary() {
-  assert(!"Have ltdl.h but not libltdl.a!");
-}
-
-void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
-  assert(!"Have ltdl.h but not libltdl.a!");
-  return 0;
-}
-
-#endif
 
 } // namespace llvm
