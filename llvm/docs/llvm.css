@@ -50,3 +50,4 @@ address     { clear: right; }
 .doc_table	    { text-align: center; width: 90%; 
                   padding: 1px 1px 1px 1px; border: 1px; }
 
+.doc_warning    { color: red; font-weight: bold }
