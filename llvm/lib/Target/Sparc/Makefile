@@ -11,3 +11,6 @@ Debug/Sparc.burg.in1 : Sparc.burg.in Debug/.dir
 Debug/Sparc.burg : Debug/Sparc.burg.in1 Debug/.dir
 	g++ -E -I$(LEVEL)/include -D_DEBUG -x c++ $< | sed '/^# /d' | sed 's/Xinclude/#include/g' | sed 's/Xdefine/#define/g' > $@
 
+Depend/Sparc.burm.d:
+	touch $@
+
