@@ -55,8 +55,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         return getConstantValue(Op);
 
       // Handle a cast of pointer to any integral type...
-      if (isa<PointerType>(Op->getType()) &&
-          (C->getType() == Type::LongTy || C->getType() == Type::ULongTy))
+      if (isa<PointerType>(Op->getType()) && C->getType()->isIntegral())
         return getConstantValue(Op);
         
       // Handle cast of long to pointer...
