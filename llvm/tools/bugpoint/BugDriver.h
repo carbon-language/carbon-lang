@@ -30,8 +30,6 @@ class Instruction;
 class DebugCrashes;
 class ReduceMiscompilingPasses;
 class ReduceMiscompilingFunctions;
-class ReduceCrashingFunctions;
-class ReduceCrashingBlocks;
 
 class CBE;
 class GCC;

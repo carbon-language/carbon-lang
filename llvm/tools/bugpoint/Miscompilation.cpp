@@ -159,7 +159,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   }
 
   // First step: clone the module for the two halves of the program we want.
-  Module *ToOptimize = CloneModule(BD.Program);
+  Module *ToOptimize = CloneModule(BD.getProgram());
 
   // Second step: Make sure functions & globals are all external so that linkage
   // between the two modules will work.
@@ -231,7 +231,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   if (!EmitBytecode)
     std::cout << "done.\n";
 
-  delete BD.Program;   // Delete the old "ToOptimize" module
+  delete BD.getProgram();   // Delete the old "ToOptimize" module
   BD.Program = BD.ParseInputFile(BytecodeResult);
 
   if (EmitBytecode) {
@@ -270,7 +270,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   // output, then 'Funcs' are being misoptimized!
   bool Broken = BD.diffProgram();
 
-  delete BD.Program;  // Delete the hacked up program
+  delete BD.Program;         // Delete the hacked up program
   BD.Program = OldProgram;   // Restore the original
 
   std::cout << (Broken ? " nope.\n" : " yup.\n");

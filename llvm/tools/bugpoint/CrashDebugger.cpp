@@ -144,7 +144,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
 }
 
 
-namespace llvm {
+namespace {
   /// ReduceCrashingBlocks reducer - This works by setting the terminators of
   /// all terminators except the specified basic blocks to a 'ret' instruction,
   /// then running the simplify-cfg pass.  This has the effect of chopping up
