@@ -528,10 +528,35 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Cond
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
     Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
-    
-    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-        Tmp3 != Node->getOperand(2))
-      Result = DAG.getNode(ISD::SELECT, Node->getValueType(0), Tmp1, Tmp2,Tmp3);
+
+    switch (TLI.getOperationAction(Node->getOpcode(), Tmp2.getValueType())) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2))
+        Result = DAG.getNode(ISD::SELECT, Node->getValueType(0),
+                             Tmp1, Tmp2, Tmp3);
+      break;
+    case TargetLowering::Promote: {
+      MVT::ValueType NVT =
+        TLI.getTypeToPromoteTo(ISD::SELECT, Tmp2.getValueType());
+      unsigned ExtOp, TruncOp;
+      if (MVT::isInteger(Tmp2.getValueType())) {
+        ExtOp = ISD::ZERO_EXTEND;
+        TruncOp  = ISD::TRUNCATE;
+      } else {
+        ExtOp = ISD::FP_EXTEND;
+        TruncOp  = ISD::FP_ROUND;
+      }
+      // Promote each of the values to the new type.
+      Tmp2 = DAG.getNode(ExtOp, NVT, Tmp2);
+      Tmp3 = DAG.getNode(ExtOp, NVT, Tmp3);
+      // Perform the larger operation, then round down.
+      Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2,Tmp3);
+      Result = DAG.getNode(TruncOp, Node->getValueType(0), Result);
+      break;
+    }
+    }
     break;
   case ISD::SETCC:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
@@ -634,7 +659,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp3 = LegalizeOp(Node->getOperand(2));
     SDOperand Tmp4 = LegalizeOp(Node->getOperand(3));
     SDOperand Tmp5 = LegalizeOp(Node->getOperand(4));
-    if (TLI.isOperationSupported(Node->getOpcode(), MVT::Other)) {
+
+    switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
+    default: assert(0 && "This action not implemented for this operation!");
+    case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3) ||
           Tmp5 != Node->getOperand(4)) {
@@ -643,7 +671,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Ops.push_back(Tmp4); Ops.push_back(Tmp5);
         Result = DAG.getNode(Node->getOpcode(), MVT::Other, Ops);
       }
-    } else {
+      break;
+    case TargetLowering::Expand: {
       // Otherwise, the target does not support this operation.  Lower the
       // operation to an explicit libcall as appropriate.
       MVT::ValueType IntPtr = TLI.getPointerTy();
@@ -672,6 +701,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         TLI.LowerCallTo(Tmp1, Type::VoidTy,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
       Result = LegalizeOp(CallResult.second);
+      break;
+    }
+    case TargetLowering::Custom:
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Tmp1); Ops.push_back(Tmp2); Ops.push_back(Tmp3);
+      Ops.push_back(Tmp4); Ops.push_back(Tmp5);
+      Result = DAG.getNode(Node->getOpcode(), MVT::Other, Ops);
+      Result = TLI.LowerOperation(Result);
+      Result = LegalizeOp(Result);
+      break;
     }
     break;
   }
@@ -776,7 +815,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     // If this operation is not supported, convert it to a shl/shr or load/store
     // pair.
-    if (!TLI.isOperationSupported(Node->getOpcode(), ExtraVT)) {
+    switch (TLI.getOperationAction(Node->getOpcode(), ExtraVT)) {
+    default: assert(0 && "This action not supported for this op yet!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
+                             ExtraVT);
+      break;
+    case TargetLowering::Expand:
       // If this is an integer extend and shifts are supported, do that.
       if (Node->getOpcode() == ISD::ZERO_EXTEND_INREG) {
         // NOTE: we could fall back on load/store here too for targets without
@@ -819,10 +865,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         assert(0 && "Unknown op");
       }
       Result = LegalizeOp(Result);
-    } else {
-      if (Tmp1 != Node->getOperand(0))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
-                             ExtraVT);
+      break;
     }
     break;
   }
