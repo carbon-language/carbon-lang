@@ -41,7 +41,15 @@ namespace llvm {
     ///
     std::string CurrentFnName;
 
-    AsmPrinter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
+    // Properties to be set by the derived class ctor, used to configure the
+    // asmwriter.
+
+    /// UsesUnderscorePrefix - If this flag is set to true, all identifiers
+    /// printed by the asmwriter will include a '_' prefix.
+    bool UsesUnderscorePrefix;
+
+    AsmPrinter(std::ostream &o, TargetMachine &tm)
+      : O(o), TM(tm), UsesUnderscorePrefix(false) { }
 
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
