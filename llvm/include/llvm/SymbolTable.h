@@ -101,7 +101,7 @@ public:
   /// @returns null if the name is not found, otherwise the Type
   /// associated with the \p name.
   /// @brief Lookup a type by name.
-  Type* lookupType( const std::string& name ) const;
+  Type* lookupType(const std::string& name) const;
 
   /// @returns true iff the type map is not empty.
   /// @brief Determine if there are types in the symbol table
@@ -125,11 +125,11 @@ public:
   /// name. Only the type plane associated with the type of \p val
   /// is searched.
   /// @brief Return the name of a value
-  std::string get_name( const Value* Val ) const;
+  std::string get_name(const Value* Val) const;
 
   /// Finds the type \p Ty in the symbol table and returns its name.
   /// @brief Return the name of a type
-  std::string get_name( const Type* Ty ) const;
+  std::string get_name(const Type* Ty) const;
 
   /// Given a base name, return a string that is either equal to it or 
   /// derived from it that does not already occur in the symbol table 
@@ -176,7 +176,7 @@ public:
   /// @brief Insert a type under a new name.
   inline void insert(const std::string &Name, const Type *Typ) {
     assert(Typ && "Can't insert null type into symbol table!");
-    insertEntry(Name, Typ );
+    insertEntry(Name, Typ);
   }
 
   /// This method removes a named value from the symbol table. The
@@ -192,7 +192,7 @@ public:
   /// the Type in the type map. If the Type is not in the symbol
   /// table, this method silently ignores the request.
   /// @brief Remove a named type from the symbol table.
-  void remove(const Type* Typ );
+  void remove(const Type* Typ);
 
   /// Remove a constant or type with the specified name from the 
   /// symbol table.
@@ -297,15 +297,15 @@ public:
   /// This method returns a plane_const_iterator for iteration over
   /// the type planes starting at a specific plane, given by \p Ty.
   /// @brief Find a type plane.
-  inline plane_const_iterator find(const Type* Typ ) const {
+  inline plane_const_iterator find(const Type* Typ) const {
     assert(Typ && "Can't find type plane with null type!");
-    return pmap.find( Typ );
+    return pmap.find(Typ);
   }
 
   /// This method returns a plane_iterator for iteration over the
   /// type planes starting at a specific plane, given by \p Ty.
   /// @brief Find a type plane.
-  inline plane_iterator find( const Type* Typ ) { 
+  inline plane_iterator find(const Type* Typ) { 
     assert(Typ && "Can't find type plane with null type!");
     return pmap.find(Typ); 
   }
@@ -314,10 +314,10 @@ public:
   /// interface is deprecated and may go away in the future.
   /// @deprecated
   /// @brief Find a type plane
-  inline const ValueMap* findPlane( const Type* Typ ) const {
+  inline const ValueMap* findPlane(const Type* Typ) const {
     assert(Typ && "Can't find type plane with null type!");
-    plane_const_iterator I = pmap.find( Typ );
-    if ( I == pmap.end() ) return 0;
+    plane_const_iterator I = pmap.find(Typ);
+    if (I == pmap.end()) return 0;
     return &I->second;
   }
 
