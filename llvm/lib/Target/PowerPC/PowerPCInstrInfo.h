@@ -64,8 +64,9 @@ namespace PPCII {
 
 class PowerPCInstrInfo : public TargetInstrInfo {
   const PowerPCRegisterInfo RI;
+  bool is64bit;
 public:
-  PowerPCInstrInfo();
+  PowerPCInstrInfo(bool is64b);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

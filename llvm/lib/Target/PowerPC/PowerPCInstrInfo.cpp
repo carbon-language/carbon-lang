@@ -18,8 +18,10 @@
 #include <iostream>
 using namespace llvm;
 
-PowerPCInstrInfo::PowerPCInstrInfo()
-  : TargetInstrInfo(PowerPCInsts, sizeof(PowerPCInsts)/sizeof(PowerPCInsts[0]))
+PowerPCInstrInfo::PowerPCInstrInfo(bool is64b)
+  : TargetInstrInfo(PowerPCInsts, sizeof(PowerPCInsts)/sizeof(PowerPCInsts[0])),
+    RI(is64b),
+    is64bit(is64b)
 { }
 
 bool PowerPCInstrInfo::isMoveInstr(const MachineInstr& MI,
