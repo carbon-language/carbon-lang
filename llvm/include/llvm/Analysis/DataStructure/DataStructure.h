@@ -157,11 +157,12 @@ public:
     return ActualCallees;
   }
 
-  ActualCalleesTy::iterator callee_begin(Instruction *I) const {
+  typedef ActualCalleesTy::const_iterator callee_iterator;
+  callee_iterator callee_begin(Instruction *I) const {
     return ActualCallees.lower_bound(std::pair<Instruction*,Function*>(I, 0));
   }
 
-  ActualCalleesTy::iterator callee_end(Instruction *I) const {
+  callee_iterator callee_end(Instruction *I) const {
     I = (Instruction*)((char*)I + 1);
     return ActualCallees.lower_bound(std::pair<Instruction*,Function*>(I, 0));
   }
