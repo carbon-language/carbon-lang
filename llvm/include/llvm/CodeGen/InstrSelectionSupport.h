@@ -58,48 +58,6 @@ Value*          GetMemInstArgs  (InstructionNode* memInstrNode,
                                  bool& allConstantIndices);
 
 
-//------------------------------------------------------------------------ 
-// Function Set2OperandsFromInstr
-// Function Set3OperandsFromInstr
-// 
-// Purpose:
-// 
-// For the common case of 2- and 3-operand arithmetic/logical instructions,
-// set the m/c instr. operands directly from the VM instruction's operands.
-// Check whether the first or second operand is 0 and can use a dedicated
-// "0" register.
-// Check whether the second operand should use an immediate field or register.
-// (First and third operands are never immediates for such instructions.)
-// 
-// Arguments:
-// canDiscardResult: Specifies that the result operand can be discarded
-//		     by using the dedicated "0"
-// 
-// op1position, op2position and resultPosition: Specify in which position
-//		     in the machine instruction the 3 operands (arg1, arg2
-//		     and result) should go.
-// 
-// RETURN VALUE: unsigned flags, where
-//	flags & 0x01	=> operand 1 is constant and needs a register
-//	flags & 0x02	=> operand 2 is constant and needs a register
-//------------------------------------------------------------------------ 
-
-void		Set2OperandsFromInstr	(MachineInstr* minstr,
-					 InstructionNode* vmInstrNode,
-					 const TargetMachine& targetMachine,
-					 bool canDiscardResult = false,
-					 int op1Position = 0,
-					 int resultPosition = 1);
-
-void		Set3OperandsFromInstr	(MachineInstr* minstr,
-					 InstructionNode* vmInstrNode,
-					 const TargetMachine& targetMachine,
-					 bool canDiscardResult = false,
-					 int op1Position = 0,
-					 int op2Position = 1,
-					 int resultPosition = 2);
-
-
 //---------------------------------------------------------------------------
 // Function: ChooseRegOrImmed
 // 
