@@ -562,15 +562,17 @@ Path::destroyDirectory(bool remove_contents) const {
   // If it doesn't exist, we're done.
   if (!exists()) return true;
 
-  char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
-  path.copy(pathname,path.length()+1);
+  char *pathname = reinterpret_cast<char *>(_alloca(path.length()+2));
   int lastchar = path.length() - 1 ;
-  if (pathname[lastchar] == '/')
-    pathname[lastchar] = 0;
+  path.copy(pathname,lastchar+2);
+
+  // Make path end with '/*'.
+  pathname[lastchar+1] = '*';
+  pathname[lastchar+2] = 0;
 
   if (remove_contents) {
     WIN32_FIND_DATA fd;
-    HANDLE h = FindFirstFile(path.c_str(), &fd);
+    HANDLE h = FindFirstFile(pathname, &fd);
 
     // It's a bad idea to alter the contents of a directory while enumerating
     // its contents.  So build a list of its contents first, then destroy them.
@@ -610,6 +612,7 @@ Path::destroyDirectory(bool remove_contents) const {
     }
   }
 
+  pathname[lastchar] = 0;
   if (!RemoveDirectory(pathname))
     ThrowError(std::string(pathname) + ": Can't destroy directory: ");
   return true;
