@@ -302,16 +302,19 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       if (Raw.NumOperands < 3) return true;
 
       Normal = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2));
-      Except = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
+      if (Raw.NumOperands ==  3)
+        Except = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg3));
+      else {
+        Except = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
 
-      FunctionType::ParamTypes::const_iterator It = PL.begin();
-      for (unsigned i = 1; i < args.size(); i++) {
-	if (It == PL.end()) return true;
-	// TODO: Check getValue for null!
-	Params.push_back(getValue(*It++, args[i]));
+        FunctionType::ParamTypes::const_iterator It = PL.begin();
+        for (unsigned i = 1; i < args.size(); i++) {
+          if (It == PL.end()) return true;
+          // TODO: Check getValue for null!
+          Params.push_back(getValue(*It++, args[i]));
+        }
+        if (It != PL.end()) return true;
       }
-
-      if (It != PL.end()) return true;
     } else {
       if (args.size() < 4) return true;
 
@@ -326,7 +329,8 @@ bool BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       }
     }
 
-    delete Raw.VarArgs;
+    if (Raw.NumOperands > 3)
+      delete Raw.VarArgs;
     Res = new InvokeInst(M, Normal, Except, Params);
     return false;
   }
