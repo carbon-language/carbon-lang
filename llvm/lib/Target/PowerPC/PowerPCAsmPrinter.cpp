@@ -472,10 +472,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
            I->hasLinkOnceLinkage())) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
-          O << ".lcomm " << name << "," << TD.getTypeSize(C->getType())
-            << "," << Align;
+          O << ".lcomm " << name << "," << Size << "," << Align;
         else 
-          O << ".comm " << name << "," << TD.getTypeSize(C->getType());
+          O << ".comm " << name << "," << Size;
         O << "\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
         O << '\n';
