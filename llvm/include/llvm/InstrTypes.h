@@ -11,9 +11,6 @@
 
 #include "llvm/Instruction.h"
 
-class Method;
-class SymTabValue;
-
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -25,7 +22,7 @@ class TerminatorInst : public Instruction {
 protected:
   TerminatorInst(Instruction::TermOps iType);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-		 const std::string &Name = "");
+                 const std::string &Name = "");
 public:
 
   // Terminators must implement the methods required by Instruction...
