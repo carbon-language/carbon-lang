@@ -108,12 +108,12 @@ public:
   inline reverse_iterator       rend  ()       { return InstList.rend();   }
   inline const_reverse_iterator rend  () const { return InstList.rend();   }
 
-  inline unsigned                 size() const { return InstList.size(); }
+  inline unsigned                 size() const { return InstList.size();  }
   inline bool                    empty() const { return InstList.empty(); }
   inline const Instruction      &front() const { return InstList.front(); }
   inline       Instruction      &front()       { return InstList.front(); }
-  inline const Instruction       &back()  const { return InstList.back(); }
-  inline       Instruction       &back()        { return InstList.back(); }
+  inline const Instruction       &back() const { return InstList.back();  }
+  inline       Instruction       &back()       { return InstList.back();  }
 
   /// getInstList() - Return the underlying instruction list container.  You
   /// need to access it directly if you want to modify it currently.
