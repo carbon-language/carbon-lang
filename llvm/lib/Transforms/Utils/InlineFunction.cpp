@@ -191,10 +191,14 @@ bool InlineFunction(CallSite CS) {
           
           // Next, create the new invoke instruction, inserting it at the end
           // of the old basic block.
-          new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
-                         std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
-                         CI->getName(), BB->getTerminator());
-          
+          InvokeInst *II =
+            new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
+                           std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
+                           CI->getName(), BB->getTerminator());
+
+          // Make sure that anything using the call now uses the invoke!
+          CI->replaceAllUsesWith(II);
+
           // Delete the unconditional branch inserted by splitBasicBlock
           BB->getInstList().pop_back();
           Split->getInstList().pop_front();  // Delete the original call
