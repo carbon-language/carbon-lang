@@ -7,65 +7,88 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Guarantees that all loops with identifiable, linear, induction variables will
-// be transformed to have a single, canonical, induction variable.  After this
-// pass runs, it guarantees the the first PHI node of the header block in the
-// loop is the canonical induction variable if there is one.
+// This transformation analyzes and transforms the induction variables (and
+// computations derived from them) into simpler forms suitable for subsequent
+// analysis and transformation.
+//
+// This transformation make the following changes to each loop with an
+// identifiable induction variable:
+//   1. All loops are transformed to have a SINGLE canonical induction variable
+//      which starts at zero and steps by one.
+//   2. The canonical induction variable is guaranteed to be the first PHI node
+//      in the loop header block.
+//   3. Any pointer arithmetic recurrences are raised to use array subscripts.
+//
+// If the trip count of a loop is computable, this pass also makes the following
+// changes:
+//   1. The exit condition for the loop is canonicalized to compare the
+//      induction value against the exit value.  This turns loops like:
+//        'for (i = 7; i*i < 1000; ++i)' into 'for (i = 0; i != 25; ++i)'
+//   2. Any use outside of the loop of an expression derived from the indvar
+//      is changed to compute the derived value outside of the loop, eliminating
+//      the dependence on the exit value of the induction variable.  If the only
+//      purpose of the loop is to compute the exit value of some derived
+//      expression, this transformation will make the loop dead.
+//
+// This transformation should be followed by strength reduction after all of the
+// desired loop transformations have been performed.  Additionally, on targets
+// where it is profitable, the loop could be transformed to count down to zero
+// (the "do loop" optimization).
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "indvar"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Constants.h"
-#include "llvm/Type.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Constant.h"
 #include "llvm/Instructions.h"
-#include "llvm/Analysis/InductionVariable.h"
+#include "llvm/Type.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "Support/Debug.h"
+#include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 using namespace llvm;
 
 namespace {
   Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
+  Statistic<> NumPointer ("indvars", "Number of pointer indvars promoted");
   Statistic<> NumInserted("indvars", "Number of canonical indvars added");
+  Statistic<> NumReplaced("indvars", "Number of exit values replaced");
+  Statistic<> NumLFTR    ("indvars", "Number of loop exit tests replaced");
 
   class IndVarSimplify : public FunctionPass {
-    LoopInfo *Loops;
-    TargetData *TD;
+    LoopInfo        *LI;
+    ScalarEvolution *SE;
     bool Changed;
   public:
     virtual bool runOnFunction(Function &) {
-      Loops = &getAnalysis<LoopInfo>();
-      TD = &getAnalysis<TargetData>();
+      LI = &getAnalysis<LoopInfo>();
+      SE = &getAnalysis<ScalarEvolution>();
       Changed = false;
 
       // Induction Variables live in the header nodes of loops
-      for (LoopInfo::iterator I = Loops->begin(), E = Loops->end(); I != E; ++I)
+      for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
         runOnLoop(*I);
       return Changed;
     }
 
-    unsigned getTypeSize(const Type *Ty) {
-      if (unsigned Size = Ty->getPrimitiveSize())
-        return Size;
-      return TD->getTypeSize(Ty);  // Must be a pointer
-    }
-
-    Value *ComputeAuxIndVarValue(InductionVariable &IV, Value *CIV);  
-    void ReplaceIndVar(InductionVariable &IV, Value *Counter);
-
-    void runOnLoop(Loop *L);
-
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();   // Need pointer size
-      AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
+      AU.addRequired<ScalarEvolution>();
+      AU.addRequired<LoopInfo>();
       AU.addPreservedID(LoopSimplifyID);
       AU.setPreservesCFG();
     }
+  private:
+    void runOnLoop(Loop *L);
+    void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
+                                    std::set<Instruction*> &DeadInsts);
+    void LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
+                                   Value *IndVar, ScalarEvolutionRewriter &RW);
+    void RewriteLoopExitValues(Loop *L);
+
+    void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
   RegisterOpt<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
@@ -75,298 +98,323 @@ Pass *llvm::createIndVarSimplifyPass() {
 }
 
 
-void IndVarSimplify::runOnLoop(Loop *Loop) {
-  // Transform all subloops before this loop...
-  for (LoopInfo::iterator I = Loop->begin(), E = Loop->end(); I != E; ++I)
+/// DeleteTriviallyDeadInstructions - If any of the instructions is the
+/// specified set are trivially dead, delete them and see if this makes any of
+/// their operands subsequently dead.
+void IndVarSimplify::
+DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
+  while (!Insts.empty()) {
+    Instruction *I = *Insts.begin();
+    Insts.erase(Insts.begin());
+    if (isInstructionTriviallyDead(I)) {
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
+          Insts.insert(U);
+      SE->deleteInstructionFromRecords(I);
+      I->getParent()->getInstList().erase(I);
+      Changed = true;
+    }
+  }
+}
+
+
+/// EliminatePointerRecurrence - Check to see if this is a trivial GEP pointer
+/// recurrence.  If so, change it into an integer recurrence, permitting
+/// analysis by the SCEV routines.
+void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN, 
+                                                BasicBlock *Preheader,
+                                            std::set<Instruction*> &DeadInsts) {
+  assert(PN->getNumIncomingValues() == 2 && "Noncanonicalized loop!");
+  unsigned PreheaderIdx = PN->getBasicBlockIndex(Preheader);
+  unsigned BackedgeIdx = PreheaderIdx^1;
+  if (GetElementPtrInst *GEPI =
+      dyn_cast<GetElementPtrInst>(PN->getIncomingValue(BackedgeIdx)))
+    if (GEPI->getOperand(0) == PN) {
+      assert(GEPI->getNumOperands() == 2 && "GEP types must mismatch!");
+          
+      // Okay, we found a pointer recurrence.  Transform this pointer
+      // recurrence into an integer recurrence.  Compute the value that gets
+      // added to the pointer at every iteration.
+      Value *AddedVal = GEPI->getOperand(1);
+
+      // Insert a new integer PHI node into the top of the block.
+      PHINode *NewPhi = new PHINode(AddedVal->getType(),
+                                    PN->getName()+".rec", PN);
+      NewPhi->addIncoming(Constant::getNullValue(NewPhi->getType()),
+                          Preheader);
+      // Create the new add instruction.
+      Value *NewAdd = BinaryOperator::create(Instruction::Add, NewPhi,
+                                             AddedVal,
+                                             GEPI->getName()+".rec", GEPI);
+      NewPhi->addIncoming(NewAdd, PN->getIncomingBlock(BackedgeIdx));
+          
+      // Update the existing GEP to use the recurrence.
+      GEPI->setOperand(0, PN->getIncomingValue(PreheaderIdx));
+          
+      // Update the GEP to use the new recurrence we just inserted.
+      GEPI->setOperand(1, NewAdd);
+
+      // Finally, if there are any other users of the PHI node, we must
+      // insert a new GEP instruction that uses the pre-incremented version
+      // of the induction amount.
+      if (!PN->use_empty()) {
+        BasicBlock::iterator InsertPos = PN; ++InsertPos;
+        while (isa<PHINode>(InsertPos)) ++InsertPos;
+        std::string Name = PN->getName(); PN->setName("");
+        Value *PreInc =
+          new GetElementPtrInst(PN->getIncomingValue(PreheaderIdx),
+                                std::vector<Value*>(1, NewPhi), Name,
+                                InsertPos);
+        PN->replaceAllUsesWith(PreInc);
+      }
+
+      // Delete the old PHI for sure, and the GEP if its otherwise unused.
+      DeadInsts.insert(PN);
+
+      ++NumPointer;
+      Changed = true;
+    }
+}
+
+/// LinearFunctionTestReplace - This method rewrites the exit condition of the
+/// loop to be a canonical != comparison against the loop induction variable.
+/// This pass is able to rewrite the exit tests of any loop where the SCEV
+/// analysis can determine the trip count of the loop, which is actually a much
+/// broader range than just linear tests.
+void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
+                                               Value *IndVar,
+                                               ScalarEvolutionRewriter &RW) {
+  // Find the exit block for the loop.  We can currently only handle loops with
+  // a single exit.
+  if (L->getExitBlocks().size() != 1) return;
+  BasicBlock *ExitBlock = L->getExitBlocks()[0];
+
+  // Make sure there is only one predecessor block in the loop.
+  BasicBlock *ExitingBlock = 0;
+  for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
+       PI != PE; ++PI)
+    if (L->contains(*PI)) {
+      if (ExitingBlock == 0)
+        ExitingBlock = *PI;
+      else
+        return;  // Multiple exits from loop to this block.
+    }
+  assert(ExitingBlock && "Loop info is broken");
+
+  if (!isa<BranchInst>(ExitingBlock->getTerminator()))
+    return;  // Can't rewrite non-branch yet
+  BranchInst *BI = cast<BranchInst>(ExitingBlock->getTerminator());
+  assert(BI->isConditional() && "Must be conditional to be part of loop!");
+
+  std::set<Instruction*> InstructionsToDelete;
+  if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
+    InstructionsToDelete.insert(Cond);
+
+  // Expand the code for the iteration count into the preheader of the loop.
+  BasicBlock *Preheader = L->getLoopPreheader();
+  Value *ExitCnt = RW.ExpandCodeFor(IterationCount, Preheader->getTerminator(),
+                                    IndVar->getType());
+
+  // Insert a new setne or seteq instruction before the branch.
+  Instruction::BinaryOps Opcode;
+  if (L->contains(BI->getSuccessor(0)))
+    Opcode = Instruction::SetNE;
+  else
+    Opcode = Instruction::SetEQ;
+
+  Value *Cond = new SetCondInst(Opcode, IndVar, ExitCnt, "exitcond", BI);
+  BI->setCondition(Cond);
+  ++NumLFTR;
+  Changed = true;
+
+  DeleteTriviallyDeadInstructions(InstructionsToDelete);
+}
+
+
+/// RewriteLoopExitValues - Check to see if this loop has a computable
+/// loop-invariant execution count.  If so, this means that we can compute the
+/// final value of any expressions that are recurrent in the loop, and
+/// substitute the exit values from the loop into any instructions outside of
+/// the loop that use the final values of the current expressions.
+void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
+  BasicBlock *Preheader = L->getLoopPreheader();
+
+  // Scan all of the instructions in the loop, looking at those that have
+  // extra-loop users and which are recurrences.
+  ScalarEvolutionRewriter Rewriter(*SE, *LI);
+
+  // We insert the code into the preheader of the loop if the loop contains
+  // multiple exit blocks, or in the exit block if there is exactly one.
+  BasicBlock *BlockToInsertInto;
+  if (L->getExitBlocks().size() == 1)
+    BlockToInsertInto = L->getExitBlocks()[0];
+  else
+    BlockToInsertInto = Preheader;
+  BasicBlock::iterator InsertPt = BlockToInsertInto->begin();
+  while (isa<PHINode>(InsertPt)) ++InsertPt;
+
+  std::set<Instruction*> InstructionsToDelete;
+  
+  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
+    if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
+      BasicBlock *BB = L->getBlocks()[i];
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        if (I->getType()->isInteger()) {      // Is an integer instruction
+          SCEVHandle SH = SE->getSCEV(I);
+          if (SH->hasComputableLoopEvolution(L)) {   // Varies predictably
+            // Find out if this predictably varying value is actually used
+            // outside of the loop.  "extra" as opposed to "intra".
+            std::vector<User*> ExtraLoopUsers;
+            for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+                 UI != E; ++UI)
+              if (!L->contains(cast<Instruction>(*UI)->getParent()))
+                ExtraLoopUsers.push_back(*UI);
+            if (!ExtraLoopUsers.empty()) {
+              // Okay, this instruction has a user outside of the current loop
+              // and varies predictably in this loop.  Evaluate the value it
+              // contains when the loop exits, and insert code for it.
+              SCEVHandle ExitValue = SE->getSCEVAtScope(I,L->getParentLoop());
+              if (!isa<SCEVCouldNotCompute>(ExitValue)) {
+                Changed = true;
+                ++NumReplaced;
+                Value *NewVal = Rewriter.ExpandCodeFor(ExitValue, InsertPt,
+                                                       I->getType());
+
+                // Rewrite any users of the computed value outside of the loop
+                // with the newly computed value.
+                for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i)
+                  ExtraLoopUsers[i]->replaceUsesOfWith(I, NewVal);
+
+                // If this instruction is dead now, schedule it to be removed.
+                if (I->use_empty())
+                  InstructionsToDelete.insert(I);
+              }
+            }
+          }
+        }
+    }
+
+  DeleteTriviallyDeadInstructions(InstructionsToDelete);
+}
+
+
+void IndVarSimplify::runOnLoop(Loop *L) {
+  // First step.  Check to see if there are any trivial GEP pointer recurrences.
+  // If there are, change them into integer recurrences, permitting analysis by
+  // the SCEV routines.
+  //
+  BasicBlock *Header    = L->getHeader();
+  BasicBlock *Preheader = L->getLoopPreheader();
+  
+  std::set<Instruction*> DeadInsts;
+  for (BasicBlock::iterator I = Header->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    if (isa<PointerType>(PN->getType()))
+      EliminatePointerRecurrence(PN, Preheader, DeadInsts);
+
+  if (!DeadInsts.empty())
+    DeleteTriviallyDeadInstructions(DeadInsts);
+
+
+  // Next, transform all loops nesting inside of this loop.
+  for (LoopInfo::iterator I = L->begin(), E = L->end(); I != E; ++I)
     runOnLoop(*I);
 
-  // Get the header node for this loop.  All of the phi nodes that could be
-  // induction variables must live in this basic block.
+  // Check to see if this loop has a computable loop-invariant execution count.
+  // If so, this means that we can compute the final value of any expressions
+  // that are recurrent in the loop, and substitute the exit values from the
+  // loop into any instructions outside of the loop that use the final values of
+  // the current expressions.
   //
-  BasicBlock *Header = Loop->getHeader();
-  
-  // Loop over all of the PHI nodes in the basic block, calculating the
-  // induction variables that they represent... stuffing the induction variable
-  // info into a vector...
-  //
-  std::vector<InductionVariable> IndVars;    // Induction variables for block
-  BasicBlock::iterator AfterPHIIt = Header->begin();
-  for (; PHINode *PN = dyn_cast<PHINode>(AfterPHIIt); ++AfterPHIIt)
-    IndVars.push_back(InductionVariable(PN, Loops));
-  // AfterPHIIt now points to first non-phi instruction...
+  SCEVHandle IterationCount = SE->getIterationCount(L);
+  if (!isa<SCEVCouldNotCompute>(IterationCount))
+    RewriteLoopExitValues(L);
 
-  // If there are no phi nodes in this basic block, there can't be indvars...
+  // Next, analyze all of the induction variables in the loop, canonicalizing
+  // auxillary induction variables.
+  std::vector<std::pair<PHINode*, SCEVHandle> > IndVars;
+
+  for (BasicBlock::iterator I = Header->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    if (PN->getType()->isInteger()) {  // FIXME: when we have fast-math, enable!
+      SCEVHandle SCEV = SE->getSCEV(PN);
+      if (SCEV->hasComputableLoopEvolution(L))
+        if (SE->shouldSubstituteIndVar(SCEV))  // HACK!
+          IndVars.push_back(std::make_pair(PN, SCEV));
+    }
+
+  // If there are no induction variables in the loop, there is nothing more to
+  // do.
   if (IndVars.empty()) return;
-  
-  // Loop over the induction variables, looking for a canonical induction
-  // variable, and checking to make sure they are not all unknown induction
-  // variables.  Keep track of the largest integer size of the induction
-  // variable.
+
+  // Compute the type of the largest recurrence expression.
   //
-  InductionVariable *Canonical = 0;
-  unsigned MaxSize = 0;
-
-  for (unsigned i = 0; i != IndVars.size(); ++i) {
-    InductionVariable &IV = IndVars[i];
-
-    if (IV.InductionType != InductionVariable::Unknown) {
-      unsigned IVSize = getTypeSize(IV.Phi->getType());
-
-      if (IV.InductionType == InductionVariable::Canonical &&
-          !isa<PointerType>(IV.Phi->getType()) && IVSize >= MaxSize)
-        Canonical = &IV;
-      
-      if (IVSize > MaxSize) MaxSize = IVSize;
-
-      // If this variable is larger than the currently identified canonical
-      // indvar, the canonical indvar is not usable.
-      if (Canonical && IVSize > getTypeSize(Canonical->Phi->getType()))
-        Canonical = 0;
-    }
+  const Type *LargestType = IndVars[0].first->getType();
+  bool DifferingSizes = false;
+  for (unsigned i = 1, e = IndVars.size(); i != e; ++i) {
+    const Type *Ty = IndVars[i].first->getType();
+    DifferingSizes |= Ty->getPrimitiveSize() != LargestType->getPrimitiveSize();
+    if (Ty->getPrimitiveSize() > LargestType->getPrimitiveSize())
+      LargestType = Ty;
   }
 
-  // No induction variables, bail early... don't add a canonical indvar
-  if (MaxSize == 0) return;
+  // Create a rewriter object which we'll use to transform the code with.
+  ScalarEvolutionRewriter Rewriter(*SE, *LI);
 
+  // Now that we know the largest of of the induction variables in this loop,
+  // insert a canonical induction variable of the largest size.
+  Value *IndVar = Rewriter.GetOrInsertCanonicalInductionVariable(L,LargestType);
+  ++NumInserted;
+  Changed = true;
 
-  // Figure out what the exit condition of the loop is.  We can currently only
-  // handle loops with a single exit.  If we cannot figure out what the
-  // termination condition is, we leave this variable set to null.
-  //
-  SetCondInst *TermCond = 0;
-  if (Loop->getExitBlocks().size() == 1) {
-    // Get ExitingBlock - the basic block in the loop which contains the branch
-    // out of the loop.
-    BasicBlock *Exit = Loop->getExitBlocks()[0];
-    pred_iterator PI = pred_begin(Exit);
-    assert(PI != pred_end(Exit) && "Should have one predecessor in loop!");
-    BasicBlock *ExitingBlock = *PI;
-    assert(++PI == pred_end(Exit) && "Exit block should have one pred!");
-    assert(Loop->isLoopExit(ExitingBlock) && "Exiting block is not loop exit!");
+  if (!isa<SCEVCouldNotCompute>(IterationCount))
+    LinearFunctionTestReplace(L, IterationCount, IndVar, Rewriter);
 
-    // Since the block is in the loop, yet branches out of it, we know that the
-    // block must end with multiple destination terminator.  Which means it is
-    // either a conditional branch, a switch instruction, or an invoke.
-    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
-      assert(BI->isConditional() && "Unconditional branch has multiple succs?");
-      TermCond = dyn_cast<SetCondInst>(BI->getCondition());
-    } else {
-      // NOTE: if people actually exit loops with switch instructions, we could
-      // handle them, but I don't think this is important enough to spend time
-      // thinking about.
-      assert(isa<SwitchInst>(ExitingBlock->getTerminator()) ||
-             isa<InvokeInst>(ExitingBlock->getTerminator()) &&
-             "Unknown multi-successor terminator!");
-    }
+#if 0
+  // If there were induction variables of other sizes, cast the primary
+  // induction variable to the right size for them, avoiding the need for the
+  // code evaluation methods to insert induction variables of different sizes.
+  // FIXME!
+  if (DifferingSizes) {
+    std::map<unsigned, Value*> InsertedSizes;
+    for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
+    }    
   }
+#endif
 
-  if (TermCond)
-    DEBUG(std::cerr << "INDVAR: Found termination condition: " << *TermCond);
+  // Now that we have a canonical induction variable, we can rewrite any
+  // recurrences in terms of the induction variable.  Start with the auxillary
+  // induction variables, and recursively rewrite any of their uses.
+  BasicBlock::iterator InsertPt = Header->begin();
+  while (isa<PHINode>(InsertPt)) ++InsertPt;
 
-  // Okay, we want to convert other induction variables to use a canonical
-  // indvar.  If we don't have one, add one now...
-  if (!Canonical) {
-    // Create the PHI node for the new induction variable, and insert the phi
-    // node at the start of the PHI nodes...
-    const Type *IVType;
-    switch (MaxSize) {
-    default: assert(0 && "Unknown integer type size!");
-    case 1: IVType = Type::UByteTy; break;
-    case 2: IVType = Type::UShortTy; break;
-    case 4: IVType = Type::UIntTy; break;
-    case 8: IVType = Type::ULongTy; break;
-    }
-    
-    PHINode *PN = new PHINode(IVType, "cann-indvar", Header->begin());
-
-    // Create the increment instruction to add one to the counter...
-    Instruction *Add = BinaryOperator::create(Instruction::Add, PN,
-                                              ConstantUInt::get(IVType, 1),
-                                              "next-indvar", AfterPHIIt);
-
-    // Figure out which block is incoming and which is the backedge for the loop
-    BasicBlock *Incoming, *BackEdgeBlock;
-    pred_iterator PI = pred_begin(Header);
-    assert(PI != pred_end(Header) && "Loop headers should have 2 preds!");
-    if (Loop->contains(*PI)) {  // First pred is back edge...
-      BackEdgeBlock = *PI++;
-      Incoming      = *PI++;
-    } else {
-      Incoming      = *PI++;
-      BackEdgeBlock = *PI++;
-    }
-    assert(PI == pred_end(Header) && "Loop headers should have 2 preds!");
-    
-    // Add incoming values for the PHI node...
-    PN->addIncoming(Constant::getNullValue(IVType), Incoming);
-    PN->addIncoming(Add, BackEdgeBlock);
-
-    // Analyze the new induction variable...
-    IndVars.push_back(InductionVariable(PN, Loops));
-    assert(IndVars.back().InductionType == InductionVariable::Canonical &&
-           "Just inserted canonical indvar that is not canonical!");
-    Canonical = &IndVars.back();
-    ++NumInserted;
+  while (!IndVars.empty()) {
+    PHINode *PN = IndVars.back().first;
+    Value *NewVal = Rewriter.ExpandCodeFor(IndVars.back().second, InsertPt,
+                                           PN->getType());
+    // Replace the old PHI Node with the inserted computation.
+    PN->replaceAllUsesWith(NewVal);
+    DeadInsts.insert(PN);
+    IndVars.pop_back();
+    ++NumRemoved;
     Changed = true;
-    DEBUG(std::cerr << "INDVAR: Inserted canonical iv: " << *PN);
-  } else {
-    // If we have a canonical induction variable, make sure that it is the first
-    // one in the basic block.
-    if (&Header->front() != Canonical->Phi)
-      Header->getInstList().splice(Header->begin(), Header->getInstList(),
-                                   Canonical->Phi);
-    DEBUG(std::cerr << "IndVar: Existing canonical iv used: "
-                    << *Canonical->Phi);
   }
 
-  DEBUG(std::cerr << "INDVAR: Replacing Induction variables:\n");
+  DeleteTriviallyDeadInstructions(DeadInsts);
 
-  // Get the current loop iteration count, which is always the value of the
-  // canonical phi node...
-  //
-  PHINode *IterCount = Canonical->Phi;
-
-  // Loop through and replace all of the auxiliary induction variables with
-  // references to the canonical induction variable...
-  //
-  for (unsigned i = 0; i != IndVars.size(); ++i) {
-    InductionVariable *IV = &IndVars[i];
-
-    DEBUG(IV->print(std::cerr));
-
-    // Don't modify the canonical indvar or unrecognized indvars...
-    if (IV != Canonical && IV->InductionType != InductionVariable::Unknown) {
-      ReplaceIndVar(*IV, IterCount);
-      Changed = true;
-      ++NumRemoved;
+  // TODO: In the future we could replace all instructions in the loop body with
+  // simpler expressions.  It's not clear how useful this would be though or if
+  // the code expansion cost would be worth it!  We probably shouldn't do this
+  // until we have a way to reuse expressions already in the code.
+#if 0
+  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
+    if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
+      BasicBlock *BB = L->getBlocks()[i];
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        if (I->getType()->isInteger() &&      // Is an integer instruction
+            !Rewriter.isInsertedInstruction(I)) {
+          SCEVHandle SH = SE->getSCEV(I);
+        }
     }
-  }
+#endif
 }
-
-/// ComputeAuxIndVarValue - Given an auxillary induction variable, compute and
-/// return a value which will always be equal to the induction variable PHI, but
-/// is based off of the canonical induction variable CIV.
-///
-Value *IndVarSimplify::ComputeAuxIndVarValue(InductionVariable &IV, Value *CIV){
-  Instruction *Phi = IV.Phi;
-  const Type *IVTy = Phi->getType();
-  if (isa<PointerType>(IVTy))    // If indexing into a pointer, make the
-    IVTy = TD->getIntPtrType();  // index the appropriate type.
-
-  BasicBlock::iterator AfterPHIIt = Phi;
-  while (isa<PHINode>(AfterPHIIt)) ++AfterPHIIt;
-  
-  Value *Val = CIV;
-  if (Val->getType() != IVTy)
-    Val = new CastInst(Val, IVTy, Val->getName(), AfterPHIIt);
-
-  if (!isa<ConstantInt>(IV.Step) ||   // If the step != 1
-      !cast<ConstantInt>(IV.Step)->equalsInt(1)) {
-    
-    // If the types are not compatible, insert a cast now...
-    if (IV.Step->getType() != IVTy)
-      IV.Step = new CastInst(IV.Step, IVTy, IV.Step->getName(), AfterPHIIt);
-    
-    Val = BinaryOperator::create(Instruction::Mul, Val, IV.Step,
-                                 Phi->getName()+"-scale", AfterPHIIt);
-  }
-  
-  // If this is a pointer indvar...
-  if (isa<PointerType>(Phi->getType())) {
-    std::vector<Value*> Idx;
-    // FIXME: this should not be needed when we fix PR82!
-    if (Val->getType() != Type::LongTy)
-      Val = new CastInst(Val, Type::LongTy, Val->getName(), AfterPHIIt);
-    Idx.push_back(Val);
-    Val = new GetElementPtrInst(IV.Start, Idx,
-                                Phi->getName()+"-offset",
-                                AfterPHIIt);
-    
-  } else if (!isa<Constant>(IV.Start) ||   // If Start != 0...
-             !cast<Constant>(IV.Start)->isNullValue()) {
-    // If the types are not compatible, insert a cast now...
-    if (IV.Start->getType() != IVTy)
-      IV.Start = new CastInst(IV.Start, IVTy, IV.Start->getName(),
-                               AfterPHIIt);
-    
-    // Insert the instruction after the phi nodes...
-    Val = BinaryOperator::create(Instruction::Add, Val, IV.Start,
-                                 Phi->getName()+"-offset", AfterPHIIt);
-  }
-  
-  // If the PHI node has a different type than val is, insert a cast now...
-  if (Val->getType() != Phi->getType())
-    Val = new CastInst(Val, Phi->getType(), Val->getName(), AfterPHIIt);
-
-  // Move the PHI name to it's new equivalent value...
-  std::string OldName = Phi->getName();
-  Phi->setName("");
-  Val->setName(OldName);
-
-  return Val;
-}
-
-// ReplaceIndVar - Replace all uses of the specified induction variable with
-// expressions computed from the specified loop iteration counter variable.
-// Return true if instructions were deleted.
-void IndVarSimplify::ReplaceIndVar(InductionVariable &IV, Value *CIV) {
-  Value *IndVarVal = 0;
-  PHINode *Phi = IV.Phi;
-  
-  assert(Phi->getNumOperands() == 4 &&
-         "Only expect induction variables in canonical loops!");
-
-  // Remember the incoming values used by the PHI node
-  std::vector<Value*> PHIOps;
-  PHIOps.reserve(2);
-  PHIOps.push_back(Phi->getIncomingValue(0));
-  PHIOps.push_back(Phi->getIncomingValue(1));
-
-  // Delete all of the operands of the PHI node... so that the to-be-deleted PHI
-  // node does not cause any expressions to be computed that would not otherwise
-  // be.
-  Phi->dropAllReferences();
-
-  // Now that we are rid of unneeded uses of the PHI node, replace any remaining
-  // ones with the appropriate code using the canonical induction variable.
-  while (!Phi->use_empty()) {
-    Instruction *U = cast<Instruction>(Phi->use_back());
-
-    // TODO: Perform LFTR here if possible
-    if (0) {
-
-    } else {
-      // Replace all uses of the old PHI node with the new computed value...
-      if (IndVarVal == 0)
-        IndVarVal = ComputeAuxIndVarValue(IV, CIV);
-      U->replaceUsesOfWith(Phi, IndVarVal);
-    }
-  }
-
-  // If the PHI is the last user of any instructions for computing PHI nodes
-  // that are irrelevant now, delete those instructions.
-  while (!PHIOps.empty()) {
-    Instruction *MaybeDead = dyn_cast<Instruction>(PHIOps.back());
-    PHIOps.pop_back();
-    
-    if (MaybeDead && isInstructionTriviallyDead(MaybeDead) && 
-        (!isa<PHINode>(MaybeDead) ||
-         MaybeDead->getParent() != Phi->getParent())) {
-      PHIOps.insert(PHIOps.end(), MaybeDead->op_begin(),
-                    MaybeDead->op_end());
-      MaybeDead->getParent()->getInstList().erase(MaybeDead);
-      
-      // Erase any duplicates entries in the PHIOps list.
-      std::vector<Value*>::iterator It =
-        std::find(PHIOps.begin(), PHIOps.end(), MaybeDead);
-      while (It != PHIOps.end()) {
-        PHIOps.erase(It);
-        It = std::find(PHIOps.begin(), PHIOps.end(), MaybeDead);
-      }
-    }
-  }
-
-  // Delete the old, now unused, phi node...
-  Phi->getParent()->getInstList().erase(Phi);
-}
-
