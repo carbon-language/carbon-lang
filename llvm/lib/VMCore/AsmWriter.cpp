@@ -320,6 +320,7 @@ void AssemblyWriter::printModule(const Module *M) {
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) Out << "%" << GV->getName() << " = ";
 
+  if (GV->hasInternalLinkage()) Out << "internal ";
   if (!GV->hasInitializer()) Out << "uninitialized ";
 
   Out << (GV->isConstant() ? "constant " : "global ");
@@ -383,7 +384,8 @@ void AssemblyWriter::printConstant(const ConstPoolVal *CPV) {
 //
 void AssemblyWriter::printMethod(const Method *M) {
   // Print out the return type and name...
-  Out << "\n" << (M->isExternal() ? "declare " : "");
+  Out << "\n" << (M->isExternal() ? "declare " : "")
+      << (M->hasInternalLinkage() ? "internal " : "");
   printType(M->getReturnType()) << " \"" << M->getName() << "\"(";
   Table.incorporateMethod(M);
 

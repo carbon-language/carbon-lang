@@ -125,6 +125,7 @@ declare         { return DECLARE; }
 global          { return GLOBAL; }
 constant        { return CONSTANT; }
 const           { return CONST; }
+internal        { return INTERNAL; }
 uninitialized   { return UNINIT; }
 implementation  { return IMPLEMENTATION; }
 \.\.\.          { return DOTDOTDOT; }

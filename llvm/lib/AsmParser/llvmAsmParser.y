@@ -451,7 +451,7 @@ static bool ResolveType(PATypeHolder<Type> &T) {
 // refering to the number can be resolved.  Do this now.
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
-  vector<PATypeHolder<Type> > &Types = inMethodScope ? 
+  vector<PATypeHolder<Type> > &Types = inMethodScope() ? 
      CurMeth.Types : CurModule.Types;
 
    ValID D;
@@ -684,7 +684,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <ValueList>     IndexList                   // For GEP derived indices
 %type <TypeList>      TypeListI ArgTypeListI
 %type <JumpTable>     JumpTable
-%type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
+%type <BoolVal>       GlobalType OptInternal      // GLOBAL or CONSTANT? Intern?
 
 // ValueRef - Unresolved reference to a definition or BB
 %type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
@@ -715,7 +715,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE GLOBAL CONSTANT UNINIT
-%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST
+%token TO EXCEPT DOTDOTDOT STRING NULL_TOK CONST INTERNAL
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -780,6 +780,7 @@ OptAssign : VAR_ID '=' {
     $$ = 0; 
   }
 
+OptInternal : INTERNAL { $$ = true; } | /*empty*/ { $$ = false; }
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
@@ -987,7 +988,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 	// TODO: GlobalVariable here that includes the said information!
 	
 	// Create a placeholder for the global variable reference...
-	GlobalVariable *GV = new GlobalVariable(PT->getValueType(), false);
+	GlobalVariable *GV = new GlobalVariable(PT->getValueType(), false,true);
 	// Keep track of the fact that we have a forward ref to recycle it
 	CurModule.GlobalRefs.insert(make_pair(make_pair(PT, $2), GV));
 
@@ -1067,14 +1068,14 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
   }
   | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
-  | ConstPool OptAssign GlobalType ConstVal {
-    const Type *Ty = $4->getType();
+  | ConstPool OptAssign OptInternal GlobalType ConstVal {
+    const Type *Ty = $5->getType();
     // Global declarations appear in Constant Pool
-    ConstPoolVal *Initializer = $4;
+    ConstPoolVal *Initializer = $5;
     if (Initializer == 0)
       ThrowException("Global value initializer is not a constant!");
 	 
-    GlobalVariable *GV = new GlobalVariable(Ty, $3, Initializer);
+    GlobalVariable *GV = new GlobalVariable(Ty, $4, $3, Initializer);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
       int Slot = InsertValue(GV, CurModule.Values);
@@ -1087,10 +1088,10 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       }
     }
   }
-  | ConstPool OptAssign UNINIT GlobalType Types {
-    const Type *Ty = *$5;
+  | ConstPool OptAssign OptInternal UNINIT GlobalType Types {
+    const Type *Ty = *$6;
     // Global declarations appear in Constant Pool
-    GlobalVariable *GV = new GlobalVariable(Ty, $4);
+    GlobalVariable *GV = new GlobalVariable(Ty, $5, $3);
     if (!setValueName(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
       int Slot = InsertValue(GV, CurModule.Values);
@@ -1169,51 +1170,52 @@ ArgList : ArgListH {
     $$ = 0;
   }
 
-MethodHeaderH : TypesV STRINGCONSTANT '(' ArgList ')' {
-  UnEscapeLexed($2);
+MethodHeaderH : OptInternal TypesV STRINGCONSTANT '(' ArgList ')' {
+  UnEscapeLexed($3);
+  string MethodName($3);
+  
   vector<const Type*> ParamTypeList;
-  if ($4)
-    for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I)
+  if ($5)
+    for (list<MethodArgument*>::iterator I = $5->begin(); I != $5->end(); ++I)
       ParamTypeList.push_back((*I)->getType());
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const MethodType  *MT  = MethodType::get(*$1, ParamTypeList, isVarArg);
+  const MethodType  *MT  = MethodType::get(*$2, ParamTypeList, isVarArg);
   const PointerType *PMT = PointerType::get(MT);
-  delete $1;
+  delete $2;
 
   Method *M = 0;
   if (SymbolTable *ST = CurModule.CurrentModule->getSymbolTable()) {
-    if (Value *V = ST->lookup(PMT, $2)) {  // Method already in symtab?
+    if (Value *V = ST->lookup(PMT, MethodName)) {  // Method already in symtab?
       M = cast<Method>(V);
 
       // Yes it is.  If this is the case, either we need to be a forward decl,
       // or it needs to be.
       if (!CurMeth.isDeclare && !M->isExternal())
-	ThrowException("Redefinition of method '" + string($2) + "'!");      
+	ThrowException("Redefinition of method '" + MethodName + "'!");      
     }
   }
 
   if (M == 0) {  // Not already defined?
-    M = new Method(MT, $2);
+    M = new Method(MT, $1, MethodName);
     InsertValue(M, CurModule.Values);
-    CurModule.DeclareNewGlobalValue(M, ValID::create($2));
+    CurModule.DeclareNewGlobalValue(M, ValID::create($3));
   }
-
-  free($2);  // Free strdup'd memory!
+  free($3);  // Free strdup'd memory!
 
   CurMeth.MethodStart(M);
 
   // Add all of the arguments we parsed to the method...
-  if ($4 && !CurMeth.isDeclare) {        // Is null if empty...
+  if ($5 && !CurMeth.isDeclare) {        // Is null if empty...
     Method::ArgumentListType &ArgList = M->getArgumentList();
 
-    for (list<MethodArgument*>::iterator I = $4->begin(); I != $4->end(); ++I) {
+    for (list<MethodArgument*>::iterator I = $5->begin(); I != $5->end(); ++I) {
       InsertValue(*I);
       ArgList.push_back(*I);
     }
-    delete $4;                     // We're now done with the argument list
+    delete $5;                     // We're now done with the argument list
   }
 }
 
