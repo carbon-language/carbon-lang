@@ -355,7 +355,7 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   // now completely folded.
   //
   if (isNodeCompletelyFolded()) {
-    NH.getNode()->foldNodeCompletely();
+    N->foldNodeCompletely();
   } else if (NH.getNode()->isNodeCompletelyFolded()) {
     foldNodeCompletely();
     Offset = 0;
@@ -365,6 +365,10 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   // at an later offset into the node with the zero offset.
   //
   if (Offset > NH.getOffset()) {
+    N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
+    return;
+  } else if (Offset == NH.getOffset() && getSize() < N->getSize()) {
+    // If the offsets are the same, merge the smaller node into the bigger node
     N->mergeWith(DSNodeHandle(this, Offset), NH.getOffset());
     return;
   }
@@ -381,9 +385,15 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   //
   unsigned NOffset = NH.getOffset()-Offset;
 
+  // If our destination node is too small... try to grow it.
+  if (N->getSize()+NOffset > getSize() &&
+      growNode(N->getSize()+NOffset)) {
+    // Catastrophic failure occured and we had to collapse the node.  In this
+    // case, collapse the other node as well.
+    N->foldNodeCompletely();
+    NOffset = 0;
+  }
   unsigned NSize = N->getSize();
-  assert(NSize+NOffset <= getSize() &&
-         "Don't know how to merge extend a merged nodes size yet!");
 
   // Remove all edges pointing at N, causing them to point to 'this' instead.
   // Make sure to adjust their offset, not just the node pointer.
