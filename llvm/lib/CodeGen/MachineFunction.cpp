@@ -62,6 +62,27 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
   return new Printer(OS, Banner);
 }
 
+namespace {
+  struct Deleter : public MachineFunctionPass {
+    const char *getPassName() const { return "Machine Code Deleter"; }
+
+    bool runOnMachineFunction(MachineFunction &MF) {
+      // Delete the annotation from the function now.
+      MachineFunction::destruct(MF.getFunction());
+      return true;
+    }
+  };
+}
+
+/// MachineCodeDeletion Pass - This pass deletes all of the machine code for
+/// the current function, which should happen after the function has been
+/// emitted to a .s file or to memory.
+FunctionPass *llvm::createMachineCodeDeleter() {
+  return new Deleter();
+}
+
+
+
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//

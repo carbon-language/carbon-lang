@@ -212,6 +212,8 @@ namespace {
 bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                   MachineCodeEmitter &MCE) {
   PM.add(new Emitter(MCE));
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
   return false;
 }
 

@@ -104,6 +104,9 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   if (!DisableOutput)
     PM.add(createX86CodePrinterPass(Out, *this));
 
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
   return false; // success!
 }
 
