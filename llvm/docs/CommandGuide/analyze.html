@@ -5,38 +5,29 @@ LLVM: analyze tool
 
 <body bgcolor=white>
 
-<center>
-<h1>LLVM: analyze tool</h1>
-</center>
+<center><h1>LLVM: <tt>analyze</tt> tool</h1></center>
 <HR>
 
-<h3>
-NAME
-</h3>
+<h3>NAME</h3>
+<tt>analyze</tt>
 
-analyze
+<h3>SYNOPSIS</h3>
+<tt>analyze [options] [filename]</tt>
 
-<h3>
-SYNOPSIS
-</h3>
+<h3>DESCRIPTION</h3>
 
-analyze [options] [filename]
-<h3>
-DESCRIPTION
-</h3>
-
-The analyze command performs various analysis of LLVM assembly code or
+The <tt>analyze</tt> command performs various analysis of LLVM assembly code or
 bytecode.  It will usually print the results on standard output, but in a few
 cases, it will print output to standard error or generate a file with the
 analysis output (which is usually done when the output is meant for another
 program).
 <p>
-If filename is omitted or is -, analyze reads its input from standard input.
-It first attempts to interpret its input as LLVM bytecode.  If it encounters an
-error, it then attempts to parse the input as LLVM assembly language.
-<h3>
-OPTIONS
-</h3>
+If filename is omitted or is -, <tt>analyze</tt> reads its input from standard
+input.  It first attempts to interpret its input as LLVM bytecode.  If it
+encounters an error, it then attempts to parse the input as LLVM assembly
+language.
+
+<h3>OPTIONS</h3>
 
 <ul>
 	<li> -help
@@ -64,26 +55,24 @@ OPTIONS
 	<br>
 	Load the specified dynamic object with name plugin.so.  This file
 	should contain additional analysis passes that register themselves with
-	the analyze program after being loaded.
+	the <tt>analyze</tt> program after being loaded.
 	<p>
+
 	After being loaded, additional command line options are made available
-	for running the passes made available by plugin.so.  Use '<tt>analyze
-        -load &lt;plugin.so&gt; -help</tt>' to see the new list of available 
-	analysis passes.
+	for running the passes made available by plugin.so.  Use
+	'<tt><tt>analyze</tt> -load &lt;plugin.so&gt; -help</tt>' to see the new
+	list of available analysis passes.
 	<p>
 </ul>
 
-<h3>
-EXIT STATUS
-</h3>
+<h3>EXIT STATUS</h3>
 
-If analyze succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>analyze</tt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
 
-<h3>
-SEE ALSO
-</h3>
-opt
+<h3>SEE ALSO</h3>
+
+<a href="opt.html"><tt>opt</tt></a>
 
 <HR>
 Maintained by the <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.
