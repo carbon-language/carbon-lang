@@ -18,6 +18,7 @@
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <functional>
+#include <set>
 using namespace llvm;
 
 // PropagatePredecessorsForPHIs - This gets "Succ" ready to have the
@@ -286,6 +287,47 @@ static void ErasePossiblyDeadInstructionTree(Instruction *I) {
   }
 }
 
+/// SafeToMergeTerminators - Return true if it is safe to merge these two
+/// terminator instructions together.
+///
+static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
+  if (SI1 == SI2) return false;  // Can't merge with self!
+
+  // It is not safe to merge these two switch instructions if they have a common
+  // successor, and if that successor has a PHI node, and if that PHI node has
+  // conflicting incoming values from the two switch blocks.
+  BasicBlock *SI1BB = SI1->getParent();
+  BasicBlock *SI2BB = SI2->getParent();
+  std::set<BasicBlock*> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
+
+  for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
+    if (SI1Succs.count(*I))
+      for (BasicBlock::iterator BBI = (*I)->begin();
+           PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI)
+        if (PN->getIncomingValueForBlock(SI1BB) !=
+            PN->getIncomingValueForBlock(SI2BB))
+          return false;
+        
+  return true;
+}
+
+/// AddPredecessorToBlock - Update PHI nodes in Succ to indicate that there will
+/// now be entries in it from the 'NewPred' block.  The values that will be
+/// flowing into the PHI nodes will be the same as those coming in from
+/// ExistPred, and existing predecessor of Succ.
+static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
+                                  BasicBlock *ExistPred) {
+  assert(std::find(succ_begin(ExistPred), succ_end(ExistPred), Succ) !=
+         succ_end(ExistPred) && "ExistPred is not a predecessor of Succ!");
+  if (!isa<PHINode>(Succ->begin())) return; // Quick exit if nothing to do
+
+  for (BasicBlock::iterator I = Succ->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    Value *V = PN->getIncomingValueForBlock(ExistPred);
+    PN->addIncoming(V, NewPred);
+  }
+}
+
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
 // eliminates unreachable basic blocks, and does other "peephole" optimization
@@ -302,7 +344,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
 
   // Remove basic blocks that have no predecessors... which are unreachable.
-  if (pred_begin(BB) == pred_end(BB)) {
+  if (pred_begin(BB) == pred_end(BB) ||
+      *pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB)) {
     //cerr << "Removing BB: \n" << BB;
 
     // Loop through all of our successors and make sure they know that one
@@ -439,7 +482,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // We know there are no successors, so just nuke the block.
           M->getBasicBlockList().erase(BB);
 
-        
         return true;
       }
     }
@@ -470,6 +512,112 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       
       Preds.pop_back();
     }
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->begin())) {
+    // If the only instruction in this block is a switch instruction, see if we
+    // can fold the switch instruction into a switch in a predecessor block.
+    std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+    while (!Preds.empty()) {
+      BasicBlock *Pred = Preds.back();
+      Preds.pop_back();
+
+      // If the two blocks are switching on the same value, we can merge this
+      // switch into the predecessor's switch.
+      if (SwitchInst *PSI = dyn_cast<SwitchInst>(Pred->getTerminator()))
+        if (PSI->getCondition() == SI->getCondition() &&
+            SafeToMergeTerminators(SI, PSI)) {
+          // Figure out which 'cases' to copy from SI to PSI.
+          std::vector<std::pair<Constant*, BasicBlock*> > Cases;
+          BasicBlock *NewDefault = 0;
+          if (PSI->getDefaultDest() == BB) {
+            // If this is the default destination from PSI, only the edges in SI
+            // that don't occur in PSI, or that branch to BB will be activated.
+            std::set<Constant*> PSIHandled;
+            for (unsigned i = 1, e = PSI->getNumSuccessors(); i != e; ++i)
+              if (PSI->getSuccessor(i) != BB)
+                PSIHandled.insert(PSI->getCaseValue(i));
+              else {
+                // This entry will be replaced.
+                PSI->removeCase(i);
+                --i; --e;
+              }
+
+            NewDefault = SI->getDefaultDest();
+            for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+              Constant *C = SI->getCaseValue(i);
+              if (!PSIHandled.count(C))
+                Cases.push_back(std::make_pair(C, SI->getSuccessor(i)));
+            }
+
+          } else {
+            // If this is not the default destination from PSI, only the edges
+            // in SI that occur in PSI with a destination of BB will be
+            // activated.
+            std::set<Constant*> PSIHandled;
+            for (unsigned i = 1, e = PSI->getNumSuccessors(); i != e; ++i)
+              if (PSI->getSuccessor(i) == BB) {
+                // We know that BB doesn't have any PHI nodes in it, so just
+                // drop the edges.
+                PSIHandled.insert(PSI->getCaseValue(i));
+                PSI->removeCase(i);
+                --i; --e;
+              }
+
+            // Okay, now we know which constants were sent to BB from the
+            // predecessor.  Figure out where they will all go now.
+            for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+              Constant *C = SI->getCaseValue(i);
+              if (PSIHandled.count(C)) {
+                // If this is one we are capable of getting...
+                Cases.push_back(std::make_pair(C, SI->getSuccessor(i)));
+                PSIHandled.erase(C);         // This constant is taken care of
+              }
+            }
+
+            // If there are any constants vectored to BB that SI doesn't handle,
+            // they must go to the default destination of SI.
+            for (std::set<Constant*>::iterator I = PSIHandled.begin(),
+                   E = PSIHandled.end(); I != E; ++I)
+              Cases.push_back(std::make_pair(*I, SI->getDefaultDest()));
+          }
+
+          // Okay, at this point, we know which cases need to be added to the
+          // PSI switch and which destinations they go to.  If PSI needs its
+          // default destination changed, NewDefault is set.  Start changing
+          // stuff now.
+          if (NewDefault) {
+            AddPredecessorToBlock(NewDefault, Pred, BB);
+            PSI->setSuccessor(0, NewDefault);
+          }
+
+          // Okay, add all of the cases now.
+          for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
+            AddPredecessorToBlock(Cases[i].second, Pred, BB);
+            PSI->addCase(Cases[i].first, Cases[i].second);
+          }
+
+          // Okay, last check.  If BB is still a successor of PSI, then we must
+          // have an infinite loop case.  If so, add an infinitely looping block
+          // to handle the case to preserve the behavior of the code.
+          BasicBlock *InfLoopBlock = 0;
+          for (unsigned i = 0, e = PSI->getNumSuccessors(); i != e; ++i)
+            if (PSI->getSuccessor(i) == BB) {
+              if (InfLoopBlock == 0) {
+                // Insert it at the end of the loop, because it's either code,
+                // or it won't matter if it's hot. :)
+                InfLoopBlock = new BasicBlock("infloop", BB->getParent());
+                new BranchInst(InfLoopBlock, InfLoopBlock);
+              }
+              PSI->setSuccessor(i, InfLoopBlock);
+            }
+          
+          Changed = true;
+        }
+    }
+
+    // If we removed all predecessors of this block, recursively call
+    // SimplifyCFG to remove it.
+    if (pred_begin(BB) == pred_end(BB))
+      return SimplifyCFG(BB);
   }
 
   // Merge basic blocks into their predecessor if there is only one distinct
