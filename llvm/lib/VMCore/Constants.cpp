@@ -31,10 +31,6 @@ ConstantBool *ConstantBool::False = new ConstantBool(false);
 //                              Constant Class
 //===----------------------------------------------------------------------===//
 
-void Constant::setName(const std::string &Name) {
-  // Constants can't take names.
-}
-
 void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These

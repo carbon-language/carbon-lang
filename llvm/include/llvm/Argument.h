@@ -39,9 +39,6 @@ public:
   ///
   Argument(const Type *Ty, const std::string &Name = "", Function *F = 0);
 
-  /// setName - Specialize setName to handle symbol table majik.
-  virtual void setName(const std::string &name);
-
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
  

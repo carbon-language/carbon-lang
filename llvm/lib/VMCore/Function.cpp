@@ -62,15 +62,6 @@ Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
     Par->getArgumentList().push_back(this);
 }
 
-
-// Specialize setName to take care of symbol table majik
-void Argument::setName(const std::string &name) {
-  Function *P;
-  if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable().insert(this);
-}
-
 void Argument::setParent(Function *parent) {
   if (getParent())
     LeakDetector::addGarbageObject(this);
@@ -116,14 +107,6 @@ Function::~Function() {
   ArgumentList.clear();
   ArgumentList.setParent(0);
   delete SymTab;
-}
-
-// Specialize setName to take care of symbol table majik
-void Function::setName(const std::string &name) {
-  Module *P;
-  if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable().insert(this);
 }
 
 void Function::setParent(Module *parent) {

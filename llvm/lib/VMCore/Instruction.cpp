@@ -57,15 +57,6 @@ void Instruction::setParent(BasicBlock *P) {
   Parent = P;
 }
 
-// Specialize setName to take care of symbol table majik
-void Instruction::setName(const std::string &name) {
-  BasicBlock *P = 0; Function *PP = 0;
-  if ((P = getParent()) && (PP = P->getParent()) && hasName())
-    PP->getSymbolTable().remove(this);
-  Value::setName(name);
-  if (PP && hasName()) PP->getSymbolTable().insert(this);
-}
-
 void Instruction::removeFromParent() {
   getParent()->getInstList().remove(this);
 }

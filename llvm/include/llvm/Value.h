@@ -75,9 +75,7 @@ public:
   inline bool               hasName() const { return !Name.empty(); }
   inline const std::string &getName() const { return Name; }
 
-  virtual void setName(const std::string &name) {
-    Name = name;
-  }
+  void setName(const std::string &name);
   
   /// replaceAllUsesWith - Go through the uses list for this definition and make
   /// each use point to "V" instead of "this".  After this completes, 'this's 

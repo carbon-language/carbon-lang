@@ -54,9 +54,6 @@ public:
     assert(Parent == 0 && "Instruction still linked in the program!");
   }
 
-  // Specialize setName to handle symbol table majik.
-  virtual void setName(const std::string &name);
-  
   /// mayWriteToMemory - Return true if this instruction may modify memory.
   ///
   virtual bool mayWriteToMemory() const { return false; }

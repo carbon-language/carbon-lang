@@ -16,7 +16,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
@@ -93,14 +92,6 @@ void BasicBlock::setParent(Function *parent) {
 
   if (getParent())
     LeakDetector::removeGarbageObject(this);
-}
-
-// Specialize setName to take care of symbol table majik
-void BasicBlock::setName(const std::string &name) {
-  Function *P;
-  if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable().insert(this);
 }
 
 void BasicBlock::removeFromParent() {

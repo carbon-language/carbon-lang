@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/InstrTypes.h"
-#include "llvm/SymbolTable.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Constant.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Module.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/Support/LeakDetector.h"
 #include <algorithm>
 #include <iostream>
@@ -92,6 +92,31 @@ unsigned Value::getNumUses() const {
   return (unsigned)std::distance(use_begin(), use_end());
 }
 
+
+void Value::setName(const std::string &name) {
+  if (Name == name) return;   // Name is already set.
+
+  SymbolTable *ST = 0;
+
+  if (Instruction *I = dyn_cast<Instruction>(this)) {
+    if (BasicBlock *P = I->getParent())
+      if (Function *PP = P->getParent())
+        ST = &PP->getSymbolTable();
+  } else if (BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
+    if (Function *P = BB->getParent()) ST = &P->getSymbolTable();
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
+    if (Module *P = GV->getParent()) ST = &P->getSymbolTable();
+  } else if (Argument *A = dyn_cast<Argument>(this)) {
+    if (Function *P = A->getParent()) ST = &P->getSymbolTable();
+  } else {
+    assert(isa<Constant>(this) && "Unknown value type!");
+    return;  // no name is setable for this.
+  }
+
+  if (ST && hasName()) ST->remove(this);
+  Name = name;
+  if (ST && hasName()) ST->insert(this);
+}
 
 // uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
 // except that it doesn't have all of the asserts.  The asserts fail because we

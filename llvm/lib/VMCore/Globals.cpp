@@ -99,14 +99,6 @@ void GlobalVariable::setParent(Module *parent) {
     LeakDetector::removeGarbageObject(this);
 }
 
-// Specialize setName to take care of symbol table majik
-void GlobalVariable::setName(const std::string &name) {
-  Module *P;
-  if ((P = getParent()) && hasName()) P->getSymbolTable().remove(this);
-  Value::setName(name);
-  if (P && hasName()) P->getSymbolTable().insert(this);
-}
-
 void GlobalVariable::removeFromParent() {
   getParent()->getGlobalList().remove(this);
 }

@@ -85,9 +85,6 @@ public:
            const std::string &N = "", Module *M = 0);
   ~Function();
 
-  // Specialize setName to handle symbol table majik.
-  virtual void setName(const std::string &name);
-
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me
 
