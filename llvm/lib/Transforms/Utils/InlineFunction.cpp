@@ -73,7 +73,7 @@ bool llvm::InlineFunction(CallSite CS) {
     // Clone the entire body of the callee into the caller.  
     CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i");
   }    
-  
+
   // Remember the first block that is newly cloned over.
   Function::iterator FirstNewBlock = LastBlock; ++FirstNewBlock;
 
@@ -84,14 +84,21 @@ bool llvm::InlineFunction(CallSite CS) {
   //
   if (isa<AllocaInst>(FirstNewBlock->begin())) {
     BasicBlock::iterator InsertPoint = Caller->begin()->begin();
-    while (isa<AllocaInst>(InsertPoint)) ++InsertPoint;
-    
     for (BasicBlock::iterator I = FirstNewBlock->begin(),
            E = FirstNewBlock->end(); I != E; )
       if (AllocaInst *AI = dyn_cast<AllocaInst>(I++))
         if (isa<Constant>(AI->getArraySize())) {
-          FirstNewBlock->getInstList().remove(AI);
-          Caller->front().getInstList().insert(InsertPoint, AI);      
+          // Scan for the block of allocas that we can move over.
+          while (isa<AllocaInst>(I) &&
+                 isa<Constant>(cast<AllocaInst>(I)->getArraySize()))
+            ++I;
+
+          // Transfer all of the allocas over in a block.  Using splice means
+          // that they instructions aren't removed from the symbol table, then
+          // reinserted.
+          Caller->front().getInstList().splice(InsertPoint,
+                                               FirstNewBlock->getInstList(),
+                                               AI, I);
         }
   }
 
