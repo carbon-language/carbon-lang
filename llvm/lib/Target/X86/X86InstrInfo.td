@@ -369,7 +369,7 @@ def IDIV32m: I<0xF7, MRM7m, (ops i32mem:$src),     // EDX:EAX/[mem32] = EAX,EDX
 def CBW : I<0x98, RawFrm, (ops),
             "{cbtw|cbw}">, Imp<[AL],[AH]>;   // AX = signext(AL)
 def CWD : I<0x99, RawFrm, (ops),
-            "{cwtl|cwd}">, Imp<[AX],[DX]>;   // DX:AX = signext(AX)
+            "{cwtd|cwd}">, Imp<[AX],[DX]>;   // DX:AX = signext(AX)
 def CDQ : I<0x99, RawFrm, (ops),
             "{cltd|cdq}">, Imp<[EAX],[EDX]>; // EDX:EAX = signext(EAX)
           
@@ -1372,19 +1372,22 @@ def FADDrST0   : FPrST0Inst <0xC0, (ops RST:$op),
 def FADDPrST0  : FPrST0PInst<0xC0, (ops RST:$op),
                              "faddp $op">;
 
+// NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
+// of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
+// we have to put some 'r's in and take them out of wierd places.
 def FSUBRST0r  : FPST0rInst <0xE8, (ops RST:$op),
                              "fsubr $op">;
 def FSUBrST0   : FPrST0Inst <0xE8, (ops RST:$op),
-                             "fsub {%ST(0), $op|$op, %ST(0)}">;
+                             "fsub{r} {%ST(0), $op|$op, %ST(0)}">;
 def FSUBPrST0  : FPrST0PInst<0xE8, (ops RST:$op),
-                             "fsubp $op">;
+                             "fsub{r}p $op">;
 
 def FSUBST0r   : FPST0rInst <0xE0, (ops RST:$op),
                              "fsub $op">;
 def FSUBRrST0  : FPrST0Inst <0xE0, (ops RST:$op),
-                             "fsubr {%ST(0), $op|$op, %ST(0)}">;
+                             "fsub{|r} {%ST(0), $op|$op, %ST(0)}">;
 def FSUBRPrST0 : FPrST0PInst<0xE0, (ops RST:$op),
-                             "fsubrp $op">;
+                             "fsub{|r}p $op">;
 
 def FMULST0r   : FPST0rInst <0xC8, (ops RST:$op),
                              "fmul $op">;
@@ -1396,16 +1399,16 @@ def FMULPrST0  : FPrST0PInst<0xC8, (ops RST:$op),
 def FDIVRST0r  : FPST0rInst <0xF8, (ops RST:$op),
                              "fdivr $op">;
 def FDIVrST0   : FPrST0Inst <0xF8, (ops RST:$op),
-                             "fdiv {%ST(0), $op|$op, %ST(0)}">;
+                             "fdiv{r} {%ST(0), $op|$op, %ST(0)}">;
 def FDIVPrST0  : FPrST0PInst<0xF8, (ops RST:$op),
-                             "fdivp $op">;
+                             "fdiv{r}p $op">;
 
 def FDIVST0r   : FPST0rInst <0xF0, (ops RST:$op),  // ST(0) = ST(0) / ST(i)
                              "fdiv $op">;
 def FDIVRrST0  : FPrST0Inst <0xF0, (ops RST:$op),  // ST(i) = ST(0) / ST(i)
-                             "fdivr {%ST(0), $op|$op, %ST(0)}">;
+                             "fdiv{|r} {%ST(0), $op|$op, %ST(0)}">;
 def FDIVRPrST0 : FPrST0PInst<0xF0, (ops RST:$op),  // ST(i) = ST(0) / ST(i), pop
-                             "fdivrp $op">;
+                             "fdiv{|r}p $op">;
 
 // Floating point compares
 def FUCOMr    : FPI<0xE0, AddRegFrm, CompareFP,   // FPSW = cmp ST(0) with ST(i)
