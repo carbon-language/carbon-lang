@@ -47,12 +47,6 @@ class SelectionDAGLegalize {
     Expand,           // This integer type should be broken into smaller pieces.
   };
 
-  /// TransformToType - For any value types we are promoting or expanding, this
-  /// contains the value type that we are changing to.  For Expanded types, this
-  /// contains one step of the expand (e.g. i64 -> i32), even if there are
-  /// multiple steps required (e.g. i64 -> i16)
-  MVT::ValueType TransformToType[MVT::LAST_VALUETYPE];
-
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// value type, where the two bits correspond to the LegalizeAction enum.
   /// This can be queried with "getTypeAction(VT)".
@@ -87,37 +81,6 @@ class SelectionDAGLegalize {
   void AddPromotedOperand(SDOperand From, SDOperand To) {
     bool isNew = PromotedNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
-  }
-
-  /// setValueTypeAction - Set the action for a particular value type.  This
-  /// assumes an action has not already been set for this value type.
-  void setValueTypeAction(MVT::ValueType VT, LegalizeAction A) {
-    ValueTypeActions |= A << (VT*2);
-    if (A == Promote) {
-      MVT::ValueType PromoteTo;
-      if (VT == MVT::f32)
-        PromoteTo = MVT::f64;
-      else {
-        unsigned LargerReg = VT+1;
-        while (!TLI.hasNativeSupportFor((MVT::ValueType)LargerReg)) {
-          ++LargerReg;
-          assert(MVT::isInteger((MVT::ValueType)LargerReg) &&
-                 "Nothing to promote to??");
-        }
-        PromoteTo = (MVT::ValueType)LargerReg;
-      }
-
-      assert(MVT::isInteger(VT) == MVT::isInteger(PromoteTo) &&
-             MVT::isFloatingPoint(VT) == MVT::isFloatingPoint(PromoteTo) &&
-             "Can only promote from int->int or fp->fp!");
-      assert(VT < PromoteTo && "Must promote to a larger type!");
-      TransformToType[VT] = PromoteTo;
-    } else if (A == Expand) {
-      assert(MVT::isInteger(VT) && VT > MVT::i8 &&
-             "Cannot expand this type: target must support SOME integer reg!");
-      // Expand to the next smaller integer type!
-      TransformToType[VT] = (MVT::ValueType)(VT-1);
-    }
   }
 
 public:
@@ -165,24 +128,9 @@ private:
 
 SelectionDAGLegalize::SelectionDAGLegalize(TargetLowering &tli,
                                            SelectionDAG &dag)
-  : TLI(tli), DAG(dag), ValueTypeActions(0) {
-
+  : TLI(tli), DAG(dag), ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= 16 &&
          "Too many value types for ValueTypeActions to hold!");
-  
-  // Inspect all of the ValueType's possible, deciding how to process them.
-  for (unsigned IntReg = MVT::i1; IntReg <= MVT::i128; ++IntReg)
-    // If TLI says we are expanding this type, expand it!
-    if (TLI.getNumElements((MVT::ValueType)IntReg) != 1)
-      setValueTypeAction((MVT::ValueType)IntReg, Expand);
-    else if (!TLI.hasNativeSupportFor((MVT::ValueType)IntReg))
-      // Otherwise, if we don't have native support, we must promote to a
-      // larger type.
-      setValueTypeAction((MVT::ValueType)IntReg, Promote);
-  
-  // If the target does not have native support for F32, promote it to F64.
-  if (!TLI.hasNativeSupportFor(MVT::f32))
-    setValueTypeAction(MVT::f32, Promote);
 }
 
 void SelectionDAGLegalize::LegalizeDAG() {
@@ -192,6 +140,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
 
   ExpandedNodes.clear();
   LegalizedNodes.clear();
+  PromotedNodes.clear();
 
   // Remove dead nodes now.
   DAG.RemoveDeadNodes(OldRoot.Val);
@@ -597,7 +546,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // If this is an FP compare, the operands have already been extended.
       if (MVT::isInteger(Node->getOperand(0).getValueType())) {
         MVT::ValueType VT = Node->getOperand(0).getValueType();
-        MVT::ValueType NVT = TransformToType[VT];
+        MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
 
         // Otherwise, we have to insert explicit sign or zero extends.  Note
         // that we could insert sign extends for ALL conditions, but zero extend
@@ -880,7 +829,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 /// is made about the top bits: it may be zero, sign-extended, or garbage.
 SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType NVT = TransformToType[VT];
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   assert(getTypeAction(VT) == Promote &&
          "Caller should expand or legalize operands that are not promotable!");
   assert(NVT > VT && MVT::isInteger(NVT) == MVT::isInteger(VT) &&
@@ -1103,7 +1052,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 /// Lo/Hi values are returned.
 void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType NVT = TransformToType[VT];
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   SDNode *Node = Op.Val;
   assert(getTypeAction(VT) == Expand && "Not an expanded type!");
   assert(MVT::isInteger(VT) && "Cannot expand FP values!");
