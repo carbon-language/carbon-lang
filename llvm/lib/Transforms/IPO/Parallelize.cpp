@@ -158,11 +158,7 @@ public:
 Cilkifier::Cilkifier(Module& M)
 {
   // create the dummy Sync function and add it to the Module
-  DummySyncFunc = new Function(FunctionType::get( Type::VoidTy,
-                                                 std::vector<const Type*>(),
-                                                 /*isVararg*/ false),
-                               GlobalValue::ExternalLinkage, DummySyncFuncName,
-                               &M);
+  DummySyncFunc = M.getOrInsertFunction(DummySyncFuncName, Type::VoidTy, 0);
 }
 
 void Cilkifier::TransformFunc(Function* F,
