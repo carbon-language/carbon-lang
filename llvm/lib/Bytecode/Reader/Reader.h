@@ -47,13 +47,14 @@ public:
   BytecodeReader( 
     BytecodeHandler* h = 0
   ) { 
+    decompressedBlock = 0;
     Handler = h;
   }
 
   ~BytecodeReader() { 
     freeState(); 
-    if (bi.buff != 0)
-      ::free(bi.buff);
+    if (decompressedBlock)
+      ::free(decompressedBlock);
   }
 
 /// @}
@@ -66,18 +67,6 @@ public:
 
   /// @brief The type used for a vector of potentially abstract types
   typedef std::vector<PATypeHolder> TypeListTy;
-
-  /// This structure is only used when a bytecode file is compressed.
-  /// As bytecode is being decompressed, the memory buffer might need
-  /// to be reallocated. The buffer allocation is handled in a callback 
-  /// and this structure is needed to retain information across calls
-  /// to the callback.
-  /// @brief An internal buffer object used for handling decompression
-  struct BufferInfo {
-    char* buff;
-    unsigned size;
-    BufferInfo() { buff = 0; size = 0; }
-  };
 
   /// This type provides a vector of Value* via the User class for
   /// storage of Values that have been constructed when reading the
@@ -251,7 +240,7 @@ protected:
 /// @name Data
 /// @{
 private:
-  BufferInfo bi;       ///< Buffer info for decompression
+  char*  decompressedBlock; ///< Result of decompression 
   BufPtr MemStart;     ///< Start of the memory buffer
   BufPtr MemEnd;       ///< End of the memory buffer
   BufPtr BlockStart;   ///< Start of current block being parsed
