@@ -30,7 +30,7 @@ class TemplateRules : public ConstRules {
   // Redirecting functions that cast to the appropriate types
   //===--------------------------------------------------------------------===//
 
-  virtual ConstPoolVal *not(const ConstPoolVal *V) const {
+  virtual ConstPoolVal *op_not(const ConstPoolVal *V) const {
     return SubClassName::Not((const ArgType *)V);
   }
 
