@@ -25,6 +25,7 @@
 #include "llvm/Intrinsics.h"
 #include "Support/MathExtras.h"
 #include <math.h>
+#include <algorithm>
 
 static inline void Add3OperandInstr(unsigned Opcode, InstructionNode* Node,
                                     std::vector<MachineInstr*>& mvec) {
@@ -429,13 +430,8 @@ ChooseMovFpcciInstruction(const InstructionNode* instrNode)
 }
 
 
-// Assumes that SUBcc v1, v2 -> v3 has been executed.
-// In most cases, we want to clear v3 and then follow it by instruction
-// MOVcc 1 -> v3.
-// Set mustClearReg=false if v3 need not be cleared before conditional move.
-// Set valueToMove=0 if we want to conditionally move 0 instead of 1
-//                      (i.e., we want to test inverse of a condition)
-// (The latter two cases do not seem to arise because SetNE needs nothing.)
+// ChooseMovpcciForSetCC -- Choose a conditional-move instruction
+// based on the type of SetCC operation.
 // 
 // WARNING: since this function has only one caller, it always returns
 // the opcode that expects an immediate and a register. If this function
@@ -444,24 +440,57 @@ ChooseMovFpcciInstruction(const InstructionNode* instrNode)
 //
 // It will be necessary to expand convertOpcodeFromRegToImm() to handle the
 // new cases of opcodes.
+// 
 static MachineOpCode
-ChooseMovpcciAfterSub(const InstructionNode* instrNode)
+ChooseMovpcciForSetCC(const InstructionNode* instrNode)
+{
+  MachineOpCode opCode = V9::INVALID_OPCODE;
+
+  const Type* opType = instrNode->leftChild()->getValue()->getType();
+  assert(opType->isIntegral() || isa<PointerType>(opType));
+  bool noSign = opType->isUnsigned() || isa<PointerType>(opType);
+  
+  switch(instrNode->getInstruction()->getOpcode())
+  {
+  case Instruction::SetEQ: opCode = V9::MOVEi;                        break;
+  case Instruction::SetLE: opCode = noSign? V9::MOVLEUi : V9::MOVLEi; break;
+  case Instruction::SetGE: opCode = noSign? V9::MOVCCi  : V9::MOVGEi; break;
+  case Instruction::SetLT: opCode = noSign? V9::MOVCSi  : V9::MOVLi;  break;
+  case Instruction::SetGT: opCode = noSign? V9::MOVGUi  : V9::MOVGi;  break;
+  case Instruction::SetNE: opCode = V9::MOVNEi;                       break;
+  default: assert(0 && "Unrecognized LLVM instr!"); break; 
+  }
+  
+  return opCode;
+}
+
+
+// ChooseMovpregiForSetCC -- Choose a conditional-move-on-register-value
+// instruction based on the type of SetCC operation.  These instructions
+// compare a register with 0 and perform the move is the comparison is true.
+// 
+// WARNING: like the previous function, this function it always returns
+// the opcode that expects an immediate and a register.  See above.
+// 
+static MachineOpCode
+ChooseMovpregiForSetCC(const InstructionNode* instrNode)
 {
   MachineOpCode opCode = V9::INVALID_OPCODE;
   
   switch(instrNode->getInstruction()->getOpcode())
   {
-  case Instruction::SetEQ: opCode = V9::MOVEi;  break;
-  case Instruction::SetLE: opCode = V9::MOVLEi; break;
-  case Instruction::SetGE: opCode = V9::MOVGEi; break;
-  case Instruction::SetLT: opCode = V9::MOVLi;  break;
-  case Instruction::SetGT: opCode = V9::MOVGi;  break;
-  case Instruction::SetNE: opCode = V9::MOVNEi; break;
+  case Instruction::SetEQ: opCode = V9::MOVRZi;  break;
+  case Instruction::SetLE: opCode = V9::MOVRLEZi; break;
+  case Instruction::SetGE: opCode = V9::MOVRGEZi; break;
+  case Instruction::SetLT: opCode = V9::MOVRLZi;  break;
+  case Instruction::SetGT: opCode = V9::MOVRGZi;  break;
+  case Instruction::SetNE: opCode = V9::MOVRNZi; break;
   default: assert(0 && "Unrecognized VM instr!"); break; 
   }
   
   return opCode;
 }
+
 
 static inline MachineOpCode
 ChooseConvertToFloatInstr(OpLabel vopCode, const Type* opType)
@@ -963,27 +992,46 @@ CreateDivConstInstruction(TargetMachine &target,
         Value* shiftOperand;
 
         if (resultType->isSigned()) {
-          // The result may be negative and we need to add one before shifting 
-          // a negative value.  Use:
-          //      srl i0, 31, x0; add x0, i0, i1         (if i0 is <= 32 bits)
-          // or
-          //      srlx i0, 63, x0; add x0, i0, i1         (if i0 is 64 bits)
-          // to compute i1=i0+1 if i0 < 0 and i1=i0 otherwise.  
+          // For N / 2^k, if the operand N is negative,
+          // we need to add (2^k - 1) before right-shifting by k, i.e.,
           // 
-          TmpInstruction *srlTmp, *addTmp;
+          //    (N / 2^k) = N >> k,               if N >= 0;
+          //                (N + 2^k - 1) >> k,   if N < 0
+          // 
+          // If N is <= 32 bits, use:
+          //    sra N, 31, t1           // t1 = ~0,         if N < 0,  0 else
+          //    srl t1, 32-k, t2        // t2 = 2^k - 1,    if N < 0,  0 else
+          //    add t2, N, t3           // t3 = N + 2^k -1, if N < 0,  N else
+	  //    sra t3, k, result       // result = N / 2^k
+          // 
+          // If N is 64 bits, use:
+          //    srax N,  k-1,  t1       // t1 = sign bit in high k positions
+          //    srlx t1, 64-k, t2       // t2 = 2^k - 1,    if N < 0,  0 else
+          //    add t2, N, t3           // t3 = N + 2^k -1, if N < 0,  N else
+	  //    sra t3, k, result       // result = N / 2^k
+          //
+          TmpInstruction *sraTmp, *srlTmp, *addTmp;
           MachineCodeForInstruction& mcfi
             = MachineCodeForInstruction::get(destVal);
-          srlTmp = new TmpInstruction(mcfi, resultType, LHS, 0, "getSign");
+          sraTmp = new TmpInstruction(mcfi, resultType, LHS, 0, "getSign");
+          srlTmp = new TmpInstruction(mcfi, resultType, LHS, 0, "getPlus2km1");
           addTmp = new TmpInstruction(mcfi, resultType, LHS, srlTmp,"incIfNeg");
+
+          // Create the SRA or SRAX instruction to get the sign bit
+          mvec.push_back(BuildMI((resultType==Type::LongTy) ?
+                                 V9::SRAXi6 : V9::SRAi5, 3)
+                         .addReg(LHS)
+                         .addSImm((resultType==Type::LongTy)? pow-1 : 31)
+                         .addRegDef(sraTmp));
 
           // Create the SRL or SRLX instruction to get the sign bit
           mvec.push_back(BuildMI((resultType==Type::LongTy) ?
                                  V9::SRLXi6 : V9::SRLi5, 3)
-                         .addReg(LHS)
-                         .addSImm((resultType==Type::LongTy)? 63 : 31)
+                         .addReg(sraTmp)
+                         .addSImm((resultType==Type::LongTy)? 64-pow : 32-pow)
                          .addRegDef(srlTmp));
 
-          // Create the ADD instruction to add 1 for negative values
+          // Create the ADD instruction to add 2^pow-1 for negative values
           mvec.push_back(BuildMI(V9::ADDr, 3).addReg(LHS).addReg(srlTmp)
                          .addRegDef(addTmp));
 
@@ -1441,6 +1489,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   unsigned allocaSize = 0;
   MachineInstr* M, *M2;
   unsigned L;
+  bool foldCase = false;
 
   mvec.clear(); 
   
@@ -1489,9 +1538,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
           BuildMI(V9::JMPLRETi, 3).addReg(returnAddrTmp).addSImm(8)
           .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def);
       
-        // Insert a copy to copy the return value to the appropriate register
-        // -- For FP values, create a FMOVS or FMOVD instruction
-        // -- For non-FP values, create an add-with-0 instruction
+        // If ther is a value to return, we need to:
+        // (a) Sign-extend the value if it is smaller than 8 bytes (reg size)
+        // (b) Insert a copy to copy the return value to the appropriate reg.
+        //     -- For FP values, create a FMOVS or FMOVD instruction
+        //     -- For non-FP values, create an add-with-0 instruction
         // 
         if (retVal != NULL) {
           const UltraSparcRegInfo& regInfo =
@@ -1503,19 +1554,39 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                 : (unsigned) SparcIntRegClass::i0);
           retRegNum = regInfo.getUnifiedRegNum(regClassID, retRegNum);
 
-          // Create a virtual register to represent it and mark
-          // this vreg as being an implicit operand of the ret MI
+          // () Insert sign-extension instructions for small signed values.
+          // 
+          Value* retValToUse = retVal;
+          if (retType->isIntegral() && retType->isSigned()) {
+            unsigned retSize = target.getTargetData().getTypeSize(retType);
+            if (retSize <= 4) {
+              // create a temporary virtual reg. to hold the sign-extension
+              retValToUse = new TmpInstruction(mcfi, retVal);
+
+              // sign-extend retVal and put the result in the temporary reg.
+              target.getInstrInfo().CreateSignExtensionInstructions
+                (target, returnInstr->getParent()->getParent(),
+                 retVal, retValToUse, 8*retSize, mvec, mcfi);
+            }
+          }
+
+          // (b) Now, insert a copy to to the appropriate register:
+          //     -- For FP values, create a FMOVS or FMOVD instruction
+          //     -- For non-FP values, create an add-with-0 instruction
+          // 
+          // First, create a virtual register to represent the register and
+          // mark this vreg as being an implicit operand of the ret MI.
           TmpInstruction* retVReg = 
-            new TmpInstruction(mcfi, retVal, NULL, "argReg");
-            
+            new TmpInstruction(mcfi, retValToUse, NULL, "argReg");
+          
           retMI->addImplicitRef(retVReg);
             
           if (retType->isFloatingPoint())
             M = (BuildMI(retType==Type::FloatTy? V9::FMOVS : V9::FMOVD, 2)
-                 .addReg(retVal).addReg(retVReg, MOTy::Def));
+                 .addReg(retValToUse).addReg(retVReg, MOTy::Def));
           else
             M = (BuildMI(ChooseAddInstructionByType(retType), 3)
-                 .addReg(retVal).addSImm((int64_t) 0)
+                 .addReg(retValToUse).addSImm((int64_t) 0)
                  .addReg(retVReg, MOTy::Def));
 
           // Mark the operand with the register it should be assigned
@@ -1667,8 +1738,26 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         assert(0 && "VRegList should never be the topmost non-chain rule");
         break;
 
-      case 21:	// bool:  Not(bool,reg): Both these are implemented as:
-      case 421:	// reg:   BNot(reg,reg):	reg = reg XOR-NOT 0
+      case 21:	// bool:  Not(bool,reg): Compute with a conditional-move-on-reg
+      { // First find the unary operand. It may be left or right, usually right.
+        Instruction* notI = subtreeRoot->getInstruction();
+        Value* notArg = BinaryOperator::getNotArgument(
+                           cast<BinaryOperator>(subtreeRoot->getInstruction()));
+        unsigned ZeroReg = target.getRegInfo().getZeroRegNum();
+
+        // Unconditionally set register to 0
+        mvec.push_back(BuildMI(V9::SETHI, 2).addZImm(0).addRegDef(notI));
+
+        // Now conditionally move 1 into the register.
+        // Mark the register as a use (as well as a def) because the old
+        // value will be retained if the condition is false.
+        mvec.push_back(BuildMI(V9::MOVRZi, 3).addReg(notArg).addZImm(1)
+                       .addReg(notI, MOTy::UseAndDef));
+
+        break;
+      }
+
+      case 421:	// reg:   BNot(reg,reg): Compute as reg = reg XOR-NOT 0
       { // First find the unary operand. It may be left or right, usually right.
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(subtreeRoot->getInstruction()));
@@ -1678,11 +1767,28 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
 
+      case 322:	// reg:   Not(tobool, reg):
+        // Fold CAST-TO-BOOL with NOT by inverting the sense of cast-to-bool
+        foldCase = true;
+        // Just fall through!
+
       case 22:	// reg:   ToBoolTy(reg):
       {
-        const Type* opType = subtreeRoot->leftChild()->getValue()->getType();
-        assert(opType->isIntegral() || isa<PointerType>(opType));
-        forwardOperandNum = 0;          // forward first operand to user
+        Instruction* castI = subtreeRoot->getInstruction();
+        Value* opVal = subtreeRoot->leftChild()->getValue();
+        assert(opVal->getType()->isIntegral() ||
+               isa<PointerType>(opVal->getType()));
+
+        // Unconditionally set register to 0
+        mvec.push_back(BuildMI(V9::SETHI, 2).addZImm(0).addRegDef(castI));
+
+        // Now conditionally move 1 into the register.
+        // Mark the register as a use (as well as a def) because the old
+        // value will be retained if the condition is false.
+        MachineOpCode opCode = foldCase? V9::MOVRZi : V9::MOVRNZi;
+        mvec.push_back(BuildMI(opCode, 3).addReg(opVal).addZImm(1)
+                       .addReg(castI, MOTy::UseAndDef));
+
         break;
       }
       
@@ -1692,6 +1798,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 26:	// reg:   ToShortTy(reg)
       case 27:	// reg:   ToUIntTy(reg)
       case 28:	// reg:   ToIntTy(reg)
+      case 29:	// reg:   ToULongTy(reg)
+      case 30:	// reg:   ToLongTy(reg)
       {
         //======================================================================
         // Rules for integer conversions:
@@ -1713,64 +1821,87 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // 
         // Since we assume 2s complement representations, this implies:
         // 
-        // -- if operand is smaller than destination, zero-extend or sign-extend
-        //    according to the signedness of the *operand*: source decides.
-        //    ==> we have to do nothing here!
+        // -- If operand is smaller than destination, zero-extend or sign-extend
+        //    according to the signedness of the *operand*: source decides:
+        //    (1) If operand is signed, sign-extend it.
+        //        If dest is unsigned, zero-ext the result!
+        //    (2) If operand is unsigned, our current invariant is that
+        //        it's high bits are correct, so zero-extension is not needed.
         // 
-        // -- if operand is same size as or larger than destination, and the
-        //    destination is *unsigned*, zero-extend the operand: dest. decides
-        // 
-        // -- if operand is same size as or larger than destination, and the
-        //    destination is *signed*, the choice is implementation defined:
-        //    we sign-extend the operand: i.e., again dest. decides.
-        //    Note: this matches both Sun's cc and gcc3.2.
+        // -- If operand is same size as or larger than destination,
+        //    zero-extend or sign-extend according to the signedness of
+        //    the *destination*: destination decides:
+        //    (1) If destination is signed, sign-extend (truncating if needed)
+        //        This choice is implementation defined.  We sign-extend the
+        //        operand, which matches both Sun's cc and gcc3.2.
+        //    (2) If destination is unsigned, zero-extend (truncating if needed)
         //======================================================================
 
         Instruction* destI =  subtreeRoot->getInstruction();
+        Function* currentFunc = destI->getParent()->getParent();
+        MachineCodeForInstruction& mcfi=MachineCodeForInstruction::get(destI);
+
         Value* opVal = subtreeRoot->leftChild()->getValue();
         const Type* opType = opVal->getType();
-        if (opType->isIntegral() || isa<PointerType>(opType)) {
-          unsigned opSize = target.getTargetData().getTypeSize(opType);
-          unsigned destSize =
-            target.getTargetData().getTypeSize(destI->getType());
-          if (opSize >= destSize) {
-            // Operand is same size as or larger than dest:
-            // zero- or sign-extend, according to the signeddness of
-            // the destination (see above).
-            if (destI->getType()->isSigned())
-              target.getInstrInfo().CreateSignExtensionInstructions(target,
-                    destI->getParent()->getParent(), opVal, destI, 8*destSize,
-                    mvec, MachineCodeForInstruction::get(destI));
-            else
-              target.getInstrInfo().CreateZeroExtensionInstructions(target,
-                    destI->getParent()->getParent(), opVal, destI, 8*destSize,
-                    mvec, MachineCodeForInstruction::get(destI));
-          } else
-            forwardOperandNum = 0;          // forward first operand to user
+        const Type* destType = destI->getType();
+        unsigned opSize   = target.getTargetData().getTypeSize(opType);
+        unsigned destSize = target.getTargetData().getTypeSize(destType);
+        
+        bool isIntegral = opType->isIntegral() || isa<PointerType>(opType);
+
+        if (opType == Type::BoolTy ||
+            opType == destType ||
+            isIntegral && opSize == destSize && opSize == 8) {
+          // nothing to do in all these cases
+          forwardOperandNum = 0;          // forward first operand to user
+
         } else if (opType->isFloatingPoint()) {
-          CreateCodeToConvertFloatToInt(target, opVal, destI, mvec,
-                                        MachineCodeForInstruction::get(destI));
+
+          CreateCodeToConvertFloatToInt(target, opVal, destI, mvec, mcfi);
           if (destI->getType()->isUnsigned())
             maskUnsignedResult = true; // not handled by fp->int code
-        } else
-          assert(0 && "Unrecognized operand type for convert-to-unsigned");
 
-        break;
-      }
+        } else if (isIntegral) {
 
-      case 29:	// reg:   ToULongTy(reg)
-      case 30:	// reg:   ToLongTy(reg)
-      {
-        Value* opVal = subtreeRoot->leftChild()->getValue();
-        const Type* opType = opVal->getType();
-        if (opType->isIntegral() || isa<PointerType>(opType))
-          forwardOperandNum = 0;          // forward first operand to user
-        else if (opType->isFloatingPoint()) {
-          Instruction* destI =  subtreeRoot->getInstruction();
-          CreateCodeToConvertFloatToInt(target, opVal, destI, mvec,
-                                        MachineCodeForInstruction::get(destI));
+          bool opSigned     = opType->isSigned();
+          bool destSigned   = destType->isSigned();
+          unsigned extSourceInBits = 8 * std::min<unsigned>(opSize, destSize);
+
+          assert(! (opSize == destSize && opSigned == destSigned) &&
+                 "How can different int types have same size and signedness?");
+
+          bool signExtend = (opSize <  destSize && opSigned ||
+                             opSize >= destSize && destSigned);
+
+          bool signAndZeroExtend = (opSize < destSize && destSize < 8u &&
+                                    opSigned && !destSigned);
+          assert(!signAndZeroExtend || signExtend);
+
+          bool zeroExtendOnly = opSize >= destSize && !destSigned;
+          assert(!zeroExtendOnly || !signExtend);
+
+          if (signExtend) {
+            Value* signExtDest = (signAndZeroExtend
+                                  ? new TmpInstruction(mcfi, destType, opVal)
+                                  : destI);
+
+            target.getInstrInfo().CreateSignExtensionInstructions
+              (target, currentFunc,opVal,signExtDest,extSourceInBits,mvec,mcfi);
+
+            if (signAndZeroExtend)
+              target.getInstrInfo().CreateZeroExtensionInstructions
+              (target, currentFunc, signExtDest, destI, 8*destSize, mvec, mcfi);
+          }
+          else if (zeroExtendOnly) {
+            target.getInstrInfo().CreateZeroExtensionInstructions
+              (target, currentFunc, opVal, destI, extSourceInBits, mvec, mcfi);
+          }
+          else
+            forwardOperandNum = 0;          // forward first operand to user
+
         } else
-          assert(0 && "Unrecognized operand type for convert-to-signed");
+          assert(0 && "Unrecognized operand type for convert-to-integer");
+
         break;
       }
       
@@ -1914,126 +2045,234 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // ELSE FALL THROUGH
       
       case 36:	// reg:   Div(reg, reg)
+      {
         maskUnsignedResult = true;
-        Add3OperandInstr(ChooseDivInstruction(target, subtreeRoot),
-                         subtreeRoot, mvec);
+
+        // If second operand of divide is smaller than 64 bits, we have
+        // to make sure the unused top bits are correct because they affect
+        // the result.  These bits are already correct for unsigned values.
+        // They may be incorrect for signed values, so sign extend to fill in.
+        Instruction* divI = subtreeRoot->getInstruction();
+        Value* divOp2 = subtreeRoot->rightChild()->getValue();
+        Value* divOpToUse = divOp2;
+        if (divOp2->getType()->isSigned()) {
+          unsigned opSize=target.getTargetData().getTypeSize(divOp2->getType());
+          if (opSize < 8) {
+            MachineCodeForInstruction& mcfi=MachineCodeForInstruction::get(divI);
+            divOpToUse = new TmpInstruction(mcfi, divOp2);
+            target.getInstrInfo().
+              CreateSignExtensionInstructions(target,
+                                              divI->getParent()->getParent(),
+                                              divOp2, divOpToUse,
+                                              8*opSize, mvec, mcfi);
+          }
+        }
+
+        mvec.push_back(BuildMI(ChooseDivInstruction(target, subtreeRoot), 3)
+                       .addReg(subtreeRoot->leftChild()->getValue())
+                       .addReg(divOpToUse)
+                       .addRegDef(divI));
+
         break;
+      }
 
       case  37:	// reg:   Rem(reg, reg)
       case 237:	// reg:   Rem(reg, Constant)
       {
         maskUnsignedResult = true;
-        Instruction* remInstr = subtreeRoot->getInstruction();
 
-        MachineCodeForInstruction& mcfi=MachineCodeForInstruction::get(remInstr);
-        TmpInstruction* quot = new TmpInstruction(mcfi,
-                                        subtreeRoot->leftChild()->getValue(),
-                                        subtreeRoot->rightChild()->getValue());
-        TmpInstruction* prod = new TmpInstruction(mcfi,
-                                        quot,
-                                        subtreeRoot->rightChild()->getValue());
+        Instruction* remI   = subtreeRoot->getInstruction();
+        Value* divOp1 = subtreeRoot->leftChild()->getValue();
+        Value* divOp2 = subtreeRoot->rightChild()->getValue();
+
+        MachineCodeForInstruction& mcfi = MachineCodeForInstruction::get(remI);
         
-        M = BuildMI(ChooseDivInstruction(target, subtreeRoot), 3)
-                             .addReg(subtreeRoot->leftChild()->getValue())
-                             .addReg(subtreeRoot->rightChild()->getValue())
-                             .addRegDef(quot);
-        mvec.push_back(M);
+        // If second operand of divide is smaller than 64 bits, we have
+        // to make sure the unused top bits are correct because they affect
+        // the result.  These bits are already correct for unsigned values.
+        // They may be incorrect for signed values, so sign extend to fill in.
+        // 
+        Value* divOpToUse = divOp2;
+        if (divOp2->getType()->isSigned()) {
+          unsigned opSize=target.getTargetData().getTypeSize(divOp2->getType());
+          if (opSize < 8) {
+            divOpToUse = new TmpInstruction(mcfi, divOp2);
+            target.getInstrInfo().
+              CreateSignExtensionInstructions(target,
+                                              remI->getParent()->getParent(),
+                                              divOp2, divOpToUse,
+                                              8*opSize, mvec, mcfi);
+          }
+        }
+
+        // Now compute: result = rem V1, V2 as:
+        //      result = V1 - (V1 / signExtend(V2)) * signExtend(V2)
+        // 
+        TmpInstruction* quot = new TmpInstruction(mcfi, divOp1, divOpToUse);
+        TmpInstruction* prod = new TmpInstruction(mcfi, quot, divOpToUse);
+
+        mvec.push_back(BuildMI(ChooseDivInstruction(target, subtreeRoot), 3)
+                       .addReg(divOp1).addReg(divOpToUse).addRegDef(quot));
         
-        unsigned MulOpcode =
-          ChooseMulInstructionByType(subtreeRoot->getInstruction()->getType());
-        Value *MulRHS = subtreeRoot->rightChild()->getValue();
-        M = BuildMI(MulOpcode, 3).addReg(quot).addReg(MulRHS).addReg(prod,
-                                                                     MOTy::Def);
-        mvec.push_back(M);
+        mvec.push_back(BuildMI(ChooseMulInstructionByType(remI->getType()), 3)
+                       .addReg(quot).addReg(divOpToUse).addRegDef(prod));
         
-        unsigned Opcode = ChooseSubInstructionByType(
-                                   subtreeRoot->getInstruction()->getType());
-        M = BuildMI(Opcode, 3).addReg(subtreeRoot->leftChild()->getValue())
-                              .addReg(prod).addRegDef(subtreeRoot->getValue());
-        mvec.push_back(M);
+        mvec.push_back(BuildMI(ChooseSubInstructionByType(remI->getType()), 3)
+                       .addReg(divOp1).addReg(prod).addRegDef(remI));
+        
         break;
       }
       
       case  38:	// bool:   And(bool, bool)
+      case 138:	// bool:   And(bool, not)
       case 238:	// bool:   And(bool, boolconst)
       case 338:	// reg :   BAnd(reg, reg)
       case 538:	// reg :   BAnd(reg, Constant)
         Add3OperandInstr(V9::ANDr, subtreeRoot, mvec);
         break;
 
-      case 138:	// bool:   And(bool, not)
       case 438:	// bool:   BAnd(bool, bnot)
       { // Use the argument of NOT as the second argument!
         // Mark the NOT node so that no code is generated for it.
+        // If the type is boolean, set 1 or 0 in the result register.
         InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(notNode->getInstruction()));
         notNode->markFoldedIntoParent();
-        Value *LHS = subtreeRoot->leftChild()->getValue();
-        Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(V9::ANDNr, 3).addReg(LHS).addReg(notArg)
-                                       .addReg(Dest, MOTy::Def));
+        Value *lhs = subtreeRoot->leftChild()->getValue();
+        Value *dest = subtreeRoot->getValue();
+        mvec.push_back(BuildMI(V9::ANDNr, 3).addReg(lhs).addReg(notArg)
+                                       .addReg(dest, MOTy::Def));
+
+        if (notArg->getType() == Type::BoolTy)
+          { // set 1 in result register if result of above is non-zero
+            mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
+                           .addReg(dest, MOTy::UseAndDef));
+          }
+
         break;
       }
 
       case  39:	// bool:   Or(bool, bool)
+      case 139:	// bool:   Or(bool, not)
       case 239:	// bool:   Or(bool, boolconst)
       case 339:	// reg :   BOr(reg, reg)
       case 539:	// reg :   BOr(reg, Constant)
         Add3OperandInstr(V9::ORr, subtreeRoot, mvec);
         break;
 
-      case 139:	// bool:   Or(bool, not)
       case 439:	// bool:   BOr(bool, bnot)
       { // Use the argument of NOT as the second argument!
         // Mark the NOT node so that no code is generated for it.
+        // If the type is boolean, set 1 or 0 in the result register.
         InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(notNode->getInstruction()));
         notNode->markFoldedIntoParent();
-        Value *LHS = subtreeRoot->leftChild()->getValue();
-        Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(V9::ORNr, 3).addReg(LHS).addReg(notArg)
-                       .addReg(Dest, MOTy::Def));
+        Value *lhs = subtreeRoot->leftChild()->getValue();
+        Value *dest = subtreeRoot->getValue();
+
+        mvec.push_back(BuildMI(V9::ORNr, 3).addReg(lhs).addReg(notArg)
+                       .addReg(dest, MOTy::Def));
+
+        if (notArg->getType() == Type::BoolTy)
+          { // set 1 in result register if result of above is non-zero
+            mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
+                           .addReg(dest, MOTy::UseAndDef));
+          }
+
         break;
       }
 
       case  40:	// bool:   Xor(bool, bool)
+      case 140:	// bool:   Xor(bool, not)
       case 240:	// bool:   Xor(bool, boolconst)
       case 340:	// reg :   BXor(reg, reg)
       case 540:	// reg :   BXor(reg, Constant)
         Add3OperandInstr(V9::XORr, subtreeRoot, mvec);
         break;
 
-      case 140:	// bool:   Xor(bool, not)
       case 440:	// bool:   BXor(bool, bnot)
       { // Use the argument of NOT as the second argument!
         // Mark the NOT node so that no code is generated for it.
+        // If the type is boolean, set 1 or 0 in the result register.
         InstructionNode* notNode = (InstructionNode*) subtreeRoot->rightChild();
         Value* notArg = BinaryOperator::getNotArgument(
                            cast<BinaryOperator>(notNode->getInstruction()));
         notNode->markFoldedIntoParent();
-        Value *LHS = subtreeRoot->leftChild()->getValue();
-        Value *Dest = subtreeRoot->getValue();
-        mvec.push_back(BuildMI(V9::XNORr, 3).addReg(LHS).addReg(notArg)
-                       .addReg(Dest, MOTy::Def));
+        Value *lhs = subtreeRoot->leftChild()->getValue();
+        Value *dest = subtreeRoot->getValue();
+        mvec.push_back(BuildMI(V9::XNORr, 3).addReg(lhs).addReg(notArg)
+                       .addReg(dest, MOTy::Def));
+
+        if (notArg->getType() == Type::BoolTy)
+          { // set 1 in result register if result of above is non-zero
+            mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
+                           .addReg(dest, MOTy::UseAndDef));
+          }
         break;
       }
 
-      case 41:	// boolconst:   SetCC(reg, Constant)
+      case 41:	// setCCconst:   SetCC(reg, Constant)
+      { // Comparison is with a constant:
         // 
-        // If the SetCC was folded into the user (parent), it will be
-        // caught above.  All other cases are the same as case 42,
-        // so just fall through.
+        // If the bool result must be computed into a register (see below),
+        // and the constant is int ZERO, we can use the MOVR[op] instructions
+        // and avoid the SUBcc instruction entirely.
+        // Otherwise this is just the same as case 42, so just fall through.
         // 
+        // The result of the SetCC must be computed and stored in a register if
+        // it is used outside the current basic block (so it must be computed
+        // as a boolreg) or it is used by anything other than a branch.
+        // We will use a conditional move to do this.
+        // 
+        Instruction* setCCInstr = subtreeRoot->getInstruction();
+        bool computeBoolVal = (subtreeRoot->parent() == NULL ||
+                               ! AllUsesAreBranches(setCCInstr));
+
+        if (computeBoolVal)
+          {
+            InstrTreeNode* constNode = subtreeRoot->rightChild();
+            assert(constNode &&
+                   constNode->getNodeType() ==InstrTreeNode::NTConstNode);
+            Constant *constVal = cast<Constant>(constNode->getValue());
+            bool isValidConst;
+            
+            if ((constVal->getType()->isInteger()
+                 || isa<PointerType>(constVal->getType()))
+                && GetConstantValueAsSignedInt(constVal, isValidConst) == 0
+                && isValidConst)
+              {
+                // That constant is an integer zero after all...
+                // Use a MOVR[op] to compute the boolean result
+                // Unconditionally set register to 0
+                mvec.push_back(BuildMI(V9::SETHI, 2).addZImm(0)
+                               .addRegDef(setCCInstr));
+                
+                // Now conditionally move 1 into the register.
+                // Mark the register as a use (as well as a def) because the old
+                // value will be retained if the condition is false.
+                MachineOpCode movOpCode = ChooseMovpregiForSetCC(subtreeRoot);
+                mvec.push_back(BuildMI(movOpCode, 3)
+                               .addReg(subtreeRoot->leftChild()->getValue())
+                               .addZImm(1).addReg(setCCInstr, MOTy::UseAndDef));
+                
+                break;
+              }
+          }
+        // ELSE FALL THROUGH
+      }
+
       case 42:	// bool:   SetCC(reg, reg):
       {
         // This generates a SUBCC instruction, putting the difference in a
         // result reg. if needed, and/or setting a condition code if needed.
         // 
         Instruction* setCCInstr = subtreeRoot->getInstruction();
-        Value* leftVal = subtreeRoot->leftChild()->getValue();
-        bool isFPCompare = leftVal->getType()->isFloatingPoint();
+        Value* leftVal  = subtreeRoot->leftChild()->getValue();
+        Value* rightVal = subtreeRoot->rightChild()->getValue();
+        const Type* opType = leftVal->getType();
+        bool isFPCompare = opType->isFloatingPoint();
         
         // If the boolean result of the SetCC is used outside the current basic
         // block (so it must be computed as a boolreg) or is used by anything
@@ -2058,26 +2297,52 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                     setCCInstr->getParent()->getParent(),
                                     leftVal->getType(),
                                     MachineCodeForInstruction::get(setCCInstr));
+
+        // If the operands are signed values smaller than 4 bytes, then they
+        // must be sign-extended in order to do a valid 32-bit comparison
+        // and get the right result in the 32-bit CC register (%icc).
+        // 
+        Value* leftOpToUse  = leftVal;
+        Value* rightOpToUse = rightVal;
+        if (opType->isIntegral() && opType->isSigned()) {
+          unsigned opSize = target.getTargetData().getTypeSize(opType);
+          if (opSize < 4) {
+            MachineCodeForInstruction& mcfi =
+              MachineCodeForInstruction::get(setCCInstr); 
+
+            // create temporary virtual regs. to hold the sign-extensions
+            leftOpToUse  = new TmpInstruction(mcfi, leftVal);
+            rightOpToUse = new TmpInstruction(mcfi, rightVal);
+            
+            // sign-extend each operand and put the result in the temporary reg.
+            target.getInstrInfo().CreateSignExtensionInstructions
+              (target, setCCInstr->getParent()->getParent(),
+               leftVal, leftOpToUse, 8*opSize, mvec, mcfi);
+            target.getInstrInfo().CreateSignExtensionInstructions
+              (target, setCCInstr->getParent()->getParent(),
+               rightVal, rightOpToUse, 8*opSize, mvec, mcfi);
+          }
+        }
+
         if (! isFPCompare) {
           // Integer condition: set CC and discard result.
-          M = BuildMI(V9::SUBccr, 4)
-            .addReg(subtreeRoot->leftChild()->getValue())
-            .addReg(subtreeRoot->rightChild()->getValue())
-            .addMReg(target.getRegInfo().getZeroRegNum(), MOTy::Def)
-            .addCCReg(tmpForCC, MOTy::Def);
+          mvec.push_back(BuildMI(V9::SUBccr, 4)
+                         .addReg(leftOpToUse)
+                         .addReg(rightOpToUse)
+                         .addMReg(target.getRegInfo().getZeroRegNum(),MOTy::Def)
+                         .addCCReg(tmpForCC, MOTy::Def));
         } else {
           // FP condition: dest of FCMP should be some FCCn register
-          M = BuildMI(ChooseFcmpInstruction(subtreeRoot), 3)
-            .addCCReg(tmpForCC, MOTy::Def)
-            .addReg(subtreeRoot->leftChild()->getValue())
-            .addReg(subtreeRoot->rightChild()->getValue());
+          mvec.push_back(BuildMI(ChooseFcmpInstruction(subtreeRoot), 3)
+                         .addCCReg(tmpForCC, MOTy::Def)
+                         .addReg(leftOpToUse)
+                         .addReg(rightOpToUse));
         }
-        mvec.push_back(M);
         
         if (computeBoolVal) {
           MachineOpCode movOpCode = (isFPCompare
                                      ? ChooseMovFpcciInstruction(subtreeRoot)
-                                     : ChooseMovpcciAfterSub(subtreeRoot));
+                                     : ChooseMovpcciForSetCC(subtreeRoot));
 
           // Unconditionally set register to 0
           M = BuildMI(V9::SETHI, 2).addZImm(0).addRegDef(setCCInstr);
@@ -2172,8 +2437,8 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // This can also handle any intrinsics that are just function calls.
         // 
         if (! specialIntrinsic) {
-          MachineFunction& MF =
-            MachineFunction::get(callInstr->getParent()->getParent());
+          Function* currentFunc = callInstr->getParent()->getParent();
+          MachineFunction& MF = MachineFunction::get(currentFunc);
           MachineCodeForInstruction& mcfi =
             MachineCodeForInstruction::get(callInstr); 
           const UltraSparcRegInfo& regInfo =
@@ -2211,19 +2476,45 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             new CallArgsDescriptor(callInstr, retAddrReg,isVarArgs,noPrototype);
           assert(callInstr->getOperand(0) == callee
                  && "This is assumed in the loop below!");
-          
+
+          // Insert sign-extension instructions for small signed values,
+          // if this is an unknown function (i.e., called via a funcptr)
+          // or an external one (i.e., which may not be compiled by llc).
+          // 
+          if (calledFunc == NULL || calledFunc->isExternal()) {
+            for (unsigned i=1, N=callInstr->getNumOperands(); i < N; ++i) {
+              Value* argVal = callInstr->getOperand(i);
+              const Type* argType = argVal->getType();
+              if (argType->isIntegral() && argType->isSigned()) {
+                unsigned argSize = target.getTargetData().getTypeSize(argType);
+                if (argSize <= 4) {
+                  // create a temporary virtual reg. to hold the sign-extension
+                  TmpInstruction* argExtend = new TmpInstruction(mcfi, argVal);
+
+                  // sign-extend argVal and put the result in the temporary reg.
+                  target.getInstrInfo().CreateSignExtensionInstructions
+                    (target, currentFunc, argVal, argExtend,
+                     8*argSize, mvec, mcfi);
+
+                  // replace argVal with argExtend in CallArgsDescriptor
+                  argDesc->getArgInfo(i-1).replaceArgVal(argExtend);
+                }
+              }
+            }
+          }
+
           // Insert copy instructions to get all the arguments into
           // all the places that they need to be.
           // 
           for (unsigned i=1, N=callInstr->getNumOperands(); i < N; ++i) {
             int argNo = i-1;
-            Value* argVal = callInstr->getOperand(i);
+            CallArgInfo& argInfo = argDesc->getArgInfo(argNo);
+            Value* argVal = argInfo.getArgVal(); // don't use callInstr arg here
             const Type* argType = argVal->getType();
             unsigned regType = regInfo.getRegType(argType);
             unsigned argSize = target.getTargetData().getTypeSize(argType);
             int regNumForArg = TargetRegInfo::getInvalidRegNum();
             unsigned regClassIDOfArgReg;
-            CallArgInfo& argInfo = argDesc->getArgInfo(argNo);
 
             // Check for FP arguments to varargs functions.
             // Any such argument in the first $K$ args must be passed in an
@@ -2346,7 +2637,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 new TmpInstruction(mcfi, argVal, NULL, "argReg");
 
               callMI->addImplicitRef(argVReg);
-                    
+              
               // Generate the reg-to-reg copy into the outgoing arg reg.
               // -- For FP values, create a FMOVS or FMOVD instruction
               // -- For non-FP values, create an add-with-0 instruction
@@ -2357,7 +2648,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 M = (BuildMI(ChooseAddInstructionByType(argType), 3)
                      .addReg(argVal).addSImm((int64_t) 0)
                      .addReg(argVReg, MOTy::Def));
-                    
+              
               // Mark the operand with the register it should be assigned
               M->SetRegForOperand(M->getNumOperands()-1, regNumForArg);
               callMI->SetRegForImplicitRef(callMI->getNumImplicitRefs()-1,
@@ -2505,20 +2796,43 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
     if (dest->getType()->isUnsigned()) {
       unsigned destSize=target.getTargetData().getTypeSize(dest->getType());
       if (destSize <= 4) {
-        // Mask high bits.  Use a TmpInstruction to represent the
+        // Mask high 64 - N bits, where N = 4*destSize.
+        
+        // Use a TmpInstruction to represent the
         // intermediate result before masking.  Since those instructions
         // have already been generated, go back and substitute tmpI
         // for dest in the result position of each one of them.
-        TmpInstruction *tmpI =
-          new TmpInstruction(MachineCodeForInstruction::get(dest),
-                             dest->getType(), dest, NULL, "maskHi");
+        // 
+        MachineCodeForInstruction& mcfi = MachineCodeForInstruction::get(dest);
+        TmpInstruction *tmpI = new TmpInstruction(mcfi, dest->getType(),
+                                                  dest, NULL, "maskHi");
+        Value* srlArgToUse = tmpI;
 
-        for (unsigned i=0, N=mvec.size(); i < N; ++i)
-          mvec[i]->substituteValue(dest, tmpI);
+        unsigned numSubst = 0;
+        for (unsigned i=0, N=mvec.size(); i < N; ++i) {
+          bool someArgsWereIgnored = false;
+          numSubst += mvec[i]->substituteValue(dest, tmpI, /*defsOnly*/ true,
+                                               /*defsAndUses*/ false,
+                                               someArgsWereIgnored);
+          assert(!someArgsWereIgnored &&
+                 "Operand `dest' exists but not replaced: probably bogus!");
+        }
+        assert(numSubst > 0 && "Operand `dest' not replaced: probably bogus!");
 
-        M = BuildMI(V9::SRLi5, 3).addReg(tmpI).addZImm(8*(4-destSize))
-          .addReg(dest, MOTy::Def);
-        mvec.push_back(M);
+        // Left shift 32-N if size (N) is less than 32 bits.
+        // Use another tmp. virtual registe to represent this result.
+        if (destSize < 4) {
+          srlArgToUse = new TmpInstruction(mcfi, dest->getType(),
+                                           tmpI, NULL, "maskHi2");
+          mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpI)
+                         .addZImm(8*(4-destSize))
+                         .addReg(srlArgToUse, MOTy::Def));
+        }
+
+        // Logical right shift 32-N to get zero extension in top 64-N bits.
+        mvec.push_back(BuildMI(V9::SRLi5, 3).addReg(srlArgToUse)
+                       .addZImm(8*(4-destSize)).addReg(dest, MOTy::Def));
+
       } else if (destSize < 8) {
         assert(0 && "Unsupported type size: 32 < size < 64 bits");
       }
