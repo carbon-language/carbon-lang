@@ -86,9 +86,9 @@ public:
 
 class FunctionType : public DerivedType {
 public:
-  typedef std::vector<PATypeHandle<Type> > ParamTypes;
+  typedef std::vector<PATypeHandle> ParamTypes;
 private:
-  PATypeHandle<Type> ResultType;
+  PATypeHandle ResultType;
   ParamTypes ParamTys;
   bool isVarArgs;
 
@@ -181,7 +181,7 @@ public:
 
 class StructType : public CompositeType {
 public:
-  typedef std::vector<PATypeHandle<Type> > ElementTypes;
+  typedef std::vector<PATypeHandle> ElementTypes;
 
 private:
   ElementTypes ETypes;                              // Element types of struct
@@ -245,10 +245,10 @@ class SequentialType : public CompositeType {
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
 protected:
-  PATypeHandle<Type> ElementType;
+  PATypeHandle ElementType;
 
   SequentialType(PrimitiveID TID, const Type *ElType)
-    : CompositeType(TID), ElementType(PATypeHandle<Type>(ElType, this)) {
+    : CompositeType(TID), ElementType(PATypeHandle(ElType, this)) {
   }
 public:
 
@@ -390,18 +390,17 @@ public:
 // contains an AbstractTypeUser instance, so there is no good way to factor out
 // the code.  Hence this bit of uglyness.
 //
-template <class TypeSubClass> void PATypeHandle<TypeSubClass>::addUser() {
+inline void PATypeHandle::addUser() {
   assert(Ty && "Type Handle has a null type!");
   if (Ty->isAbstract())
     cast<DerivedType>(Ty)->addAbstractTypeUser(User);
 }
-template <class TypeSubClass> void PATypeHandle<TypeSubClass>::removeUser() {
+inline void PATypeHandle::removeUser() {
   if (Ty->isAbstract())
     cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
 }
 
-template <class TypeSubClass>
-void PATypeHandle<TypeSubClass>::removeUserFromConcrete() {
+inline void PATypeHandle::removeUserFromConcrete() {
   if (!Ty->isAbstract())
     cast<DerivedType>(Ty)->removeAbstractTypeUser(User);
 }

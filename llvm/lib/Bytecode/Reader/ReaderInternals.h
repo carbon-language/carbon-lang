@@ -104,7 +104,7 @@ private:          // All of this data is transient across calls to ParseBytecode
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
   //
-  typedef std::vector<PATypeHandle<Type> > TypeValuesListTy;
+  typedef std::vector<PATypeHandle> TypeValuesListTy;
   TypeValuesListTy ModuleTypeValues;
   TypeValuesListTy FunctionTypeValues;
 

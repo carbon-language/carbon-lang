@@ -139,7 +139,7 @@ bool BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
 
   // Insert a bunch of opaque types to be resolved later...
   for (unsigned i = 0; i < NumEntries; ++i)
-    Tab.push_back(PATypeHandle<Type>(OpaqueType::get(), this));
+    Tab.push_back(PATypeHandle(OpaqueType::get(), this));
 
   // Loop through reading all of the types.  Forward types will make use of the
   // opaque types just inserted.

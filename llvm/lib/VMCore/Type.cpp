@@ -216,11 +216,11 @@ Type *Type::LabelTy  = &TheLabelTy;
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params, 
                            bool IsVarArgs) : DerivedType(FunctionTyID), 
-    ResultType(PATypeHandle<Type>(Result, this)),
+    ResultType(PATypeHandle(Result, this)),
     isVarArgs(IsVarArgs) {
   ParamTys.reserve(Params.size());
   for (unsigned i = 0; i < Params.size(); ++i)
-    ParamTys.push_back(PATypeHandle<Type>(Params[i], this));
+    ParamTys.push_back(PATypeHandle(Params[i], this));
 
   setDerivedTypeProperties();
 }
@@ -230,7 +230,7 @@ StructType::StructType(const std::vector<const Type*> &Types)
   ETypes.reserve(Types.size());
   for (unsigned i = 0; i < Types.size(); ++i) {
     assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
-    ETypes.push_back(PATypeHandle<Type>(Types[i], this));
+    ETypes.push_back(PATypeHandle(Types[i], this));
   }
   setDerivedTypeProperties();
 }
@@ -427,20 +427,20 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 //
 template<class ValType, class TypeClass>
 class TypeMap : public AbstractTypeUser {
-  typedef std::map<ValType, PATypeHandle<TypeClass> > MapTy;
+  typedef std::map<ValType, PATypeHandle> MapTy;
   MapTy Map;
 public:
   ~TypeMap() { print("ON EXIT"); }
 
   inline TypeClass *get(const ValType &V) {
-    typename std::map<ValType, PATypeHandle<TypeClass> >::iterator I
+    typename std::map<ValType, PATypeHandle>::iterator I
       = Map.find(V);
     // TODO: FIXME: When Types are not CONST.
     return (I != Map.end()) ? (TypeClass*)I->second.get() : 0;
   }
 
   inline void add(const ValType &V, TypeClass *T) {
-    Map.insert(std::make_pair(V, PATypeHandle<TypeClass>(T, this)));
+    Map.insert(std::make_pair(V, PATypeHandle(T, this)));
     print("add");
   }
 
@@ -521,7 +521,7 @@ protected:
 
     TypeMap<ValType, TypeClass> &Table = MyTable;     // Copy MyTable reference
     ValType Tmp(*(ValType*)this);                     // Copy this.
-    PATypeHandle<TypeClass> OldType(Table.get(*(ValType*)this), this);
+    PATypeHandle OldType(Table.get(*(ValType*)this), this);
     Table.remove(*(ValType*)this);                    // Destroy's this!
 
     // Refine temporary to new state...
@@ -546,8 +546,8 @@ protected:
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
 class FunctionValType : public ValTypeBase<FunctionValType, FunctionType> {
-  PATypeHandle<Type> RetTy;
-  std::vector<PATypeHandle<Type> > ArgTypes;
+  PATypeHandle RetTy;
+  std::vector<PATypeHandle> ArgTypes;
   bool isVarArg;
 public:
   FunctionValType(const Type *ret, const std::vector<const Type*> &args,
@@ -555,7 +555,7 @@ public:
     : ValTypeBase<FunctionValType, FunctionType>(Tab), RetTy(ret, this),
       isVarArg(IVA) {
     for (unsigned i = 0; i < args.size(); ++i)
-      ArgTypes.push_back(PATypeHandle<Type>(args[i], this));
+      ArgTypes.push_back(PATypeHandle(args[i], this));
   }
 
   // We *MUST* have an explicit copy ctor so that the TypeHandles think that
@@ -566,7 +566,7 @@ public:
       isVarArg(MVT.isVarArg) {
     ArgTypes.reserve(MVT.ArgTypes.size());
     for (unsigned i = 0; i < MVT.ArgTypes.size(); ++i)
-      ArgTypes.push_back(PATypeHandle<Type>(MVT.ArgTypes[i], this));
+      ArgTypes.push_back(PATypeHandle(MVT.ArgTypes[i], this));
   }
 
   // Subclass should override this... to update self as usual
@@ -615,7 +615,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 // Array Type Factory...
 //
 class ArrayValType : public ValTypeBase<ArrayValType, ArrayType> {
-  PATypeHandle<Type> ValTy;
+  PATypeHandle ValTy;
   unsigned Size;
 public:
   ArrayValType(const Type *val, int sz, TypeMap<ArrayValType, ArrayType> &Tab)
@@ -671,14 +671,14 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 // StructValType - Define a class to hold the key that goes into the TypeMap
 //
 class StructValType : public ValTypeBase<StructValType, StructType> {
-  std::vector<PATypeHandle<Type> > ElTypes;
+  std::vector<PATypeHandle> ElTypes;
 public:
   StructValType(const std::vector<const Type*> &args,
 		TypeMap<StructValType, StructType> &Tab)
     : ValTypeBase<StructValType, StructType>(Tab) {
     ElTypes.reserve(args.size());
     for (unsigned i = 0, e = args.size(); i != e; ++i)
-      ElTypes.push_back(PATypeHandle<Type>(args[i], this));
+      ElTypes.push_back(PATypeHandle(args[i], this));
   }
 
   // We *MUST* have an explicit copy ctor so that the TypeHandles think that
@@ -688,7 +688,7 @@ public:
     : ValTypeBase<StructValType, StructType>(SVT){
     ElTypes.reserve(SVT.ElTypes.size());
     for (unsigned i = 0, e = SVT.ElTypes.size(); i != e; ++i)
-      ElTypes.push_back(PATypeHandle<Type>(SVT.ElTypes[i], this));
+      ElTypes.push_back(PATypeHandle(SVT.ElTypes[i], this));
   }
 
   // Subclass should override this... to update self as usual
@@ -731,7 +731,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
 // PointerValType - Define a class to hold the key that goes into the TypeMap
 //
 class PointerValType : public ValTypeBase<PointerValType, PointerType> {
-  PATypeHandle<Type> ValTy;
+  PATypeHandle ValTy;
 public:
   PointerValType(const Type *val, TypeMap<PointerValType, PointerType> &Tab)
     : ValTypeBase<PointerValType, PointerType>(Tab), ValTy(val, this) {}

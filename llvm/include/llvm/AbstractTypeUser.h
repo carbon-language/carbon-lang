@@ -58,9 +58,8 @@ public:
 // example.  This class is a simple class used to keep the use list of abstract
 // types up-to-date.
 //
-template <class TypeSubClass>
 class PATypeHandle {
-  const TypeSubClass *Ty;
+  const Type *Ty;
   AbstractTypeUser * const User;
 
   // These functions are defined at the bottom of Type.h.  See the comment there
@@ -69,7 +68,7 @@ class PATypeHandle {
   inline void removeUser();
 public:
   // ctor - Add use to type if abstract.  Note that Ty must not be null
-  inline PATypeHandle(const TypeSubClass *ty, AbstractTypeUser *user) 
+  inline PATypeHandle(const Type *ty, AbstractTypeUser *user) 
     : Ty(ty), User(user) {
     addUser();
   }
@@ -83,11 +82,11 @@ public:
   inline ~PATypeHandle() { removeUser(); }
 
   // Automatic casting operator so that the handle may be used naturally
-  inline operator const TypeSubClass *() const { return Ty; }
-  inline const TypeSubClass *get() const { return Ty; }
+  inline operator const Type *() const { return Ty; }
+  inline const Type *get() const { return Ty; }
 
   // operator= - Allow assignment to handle
-  inline const TypeSubClass *operator=(const TypeSubClass *ty) {
+  inline const Type *operator=(const Type *ty) {
     if (Ty != ty) {   // Ensure we don't accidentally drop last ref to Ty
       removeUser();
       Ty = ty;
@@ -97,16 +96,16 @@ public:
   }
 
   // operator= - Allow assignment to handle
-  inline const TypeSubClass *operator=(const PATypeHandle &T) {
+  inline const Type *operator=(const PATypeHandle &T) {
     return operator=(T.Ty);
   }
 
-  inline bool operator==(const TypeSubClass *ty) {
+  inline bool operator==(const Type *ty) {
     return Ty == ty;
   }
 
   // operator-> - Allow user to dereference handle naturally...
-  inline const TypeSubClass *operator->() const { return Ty; }
+  inline const Type *operator->() const { return Ty; }
 
   // removeUserFromConcrete - This function should be called when the User is
   // notified that our type is refined... and the type is being refined to
@@ -122,10 +121,10 @@ public:
 // as both a handle (as above) and an AbstractTypeUser.  It uses the callback to
 // keep its pointer member updated to the current version of the type.
 //
-struct PATypeHolder : public AbstractTypeUser, public PATypeHandle<Type> {
-  inline PATypeHolder(const Type *ty) : PATypeHandle<Type>(ty, this) {}
+struct PATypeHolder : public AbstractTypeUser, public PATypeHandle {
+  inline PATypeHolder(const Type *ty) : PATypeHandle(ty, this) {}
   inline PATypeHolder(const PATypeHolder &T)
-    : AbstractTypeUser(T), PATypeHandle<Type>(T, this) {}
+    : AbstractTypeUser(T), PATypeHandle(T, this) {}
 
   // refineAbstractType - All we do is update our PATypeHandle member to point
   // to the new type.
@@ -138,20 +137,20 @@ struct PATypeHolder : public AbstractTypeUser, public PATypeHandle<Type> {
     removeUserFromConcrete();
 
     if ((const Type*)OldTy != NewTy)
-      PATypeHandle<Type>::operator=(NewTy);
+      PATypeHandle::operator=(NewTy);
   }
 
   // operator= - Allow assignment to handle
   inline const Type *operator=(const Type *ty) {
-    return PATypeHandle<Type>::operator=(ty);
+    return PATypeHandle::operator=(ty);
   }
 
   // operator= - Allow assignment to handle
-  inline const Type *operator=(const PATypeHandle<Type> &T) {
-    return PATypeHandle<Type>::operator=(T);
+  inline const Type *operator=(const PATypeHandle &T) {
+    return PATypeHandle::operator=(T);
   }
   inline const Type *operator=(const PATypeHolder &H) {
-    return PATypeHandle<Type>::operator=(H);
+    return PATypeHandle::operator=(H);
   }
 
   void dump() const;

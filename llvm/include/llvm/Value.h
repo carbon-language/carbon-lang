@@ -50,7 +50,7 @@ public:
 private:
   std::vector<User *> Uses;
   std::string Name;
-  PATypeHandle<Type> Ty;
+  PATypeHandle Ty;
   ValueTy VTy;
 
   void operator=(const Value &);     // Do not implement
