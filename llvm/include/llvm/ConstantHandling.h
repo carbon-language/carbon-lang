@@ -62,9 +62,6 @@ protected:
 public:
   static AnnotationID AID;    // AnnotationID for this class
 
-  // Unary Operators...
-  virtual Constant *op_not(const Constant *V) const = 0;
-
   // Binary Operators...
   virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
   virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
@@ -126,11 +123,6 @@ private :
   ConstRules(const ConstRules &);             // Do not implement
   ConstRules &operator=(const ConstRules &);  // Do not implement
 };
-
-
-inline Constant *operator~(const Constant &V) {
-  return ConstRules::get(V)->op_not(&V);
-}
 
 
 // Standard binary operators...
@@ -224,7 +216,6 @@ Constant *ConstantFoldInstruction(Instruction *I);
 
 // Constant fold various types of instruction...
 Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy);
-Constant *ConstantFoldUnaryInstruction(unsigned Opcode, const Constant *V);
 Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                         const Constant *V2);
 Constant *ConstantFoldShiftInstruction(unsigned Opcode, const Constant *V1,
