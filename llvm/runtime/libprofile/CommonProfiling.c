@@ -99,7 +99,7 @@ void write_profiling_data(enum ProfilingType PT, unsigned *Start,
 
     /* Output the command line arguments to the file. */
     {
-      int PTy = Arguments;
+      int PTy = ArgumentInfo;
       int Zeros = 0;
       write(OutFile, &PTy, sizeof(int));
       write(OutFile, &SavedArgsLength, sizeof(unsigned));

@@ -25,7 +25,7 @@ static unsigned NumElements;
 static void FuncProfAtExitHandler() {
   /* Just write out the data we collected.
    */
-  write_profiling_data(Function, ArrayStart, NumElements);
+  write_profiling_data(FunctionInfo, ArrayStart, NumElements);
 }
 
 

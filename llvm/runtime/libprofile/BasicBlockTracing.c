@@ -23,7 +23,7 @@ static unsigned *ArrayStart, *ArrayEnd, *ArrayCursor;
  * and reset the cursor to point to the beginning of the buffer.
  */
 static void WriteAndFlushBBTraceData () {
-  write_profiling_data(BBTrace, ArrayStart, (ArrayCursor - ArrayStart));
+  write_profiling_data(BBTraceInfo, ArrayStart, (ArrayCursor - ArrayStart));
   ArrayCursor = ArrayStart;
 }
 
