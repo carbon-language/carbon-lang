@@ -224,7 +224,7 @@ static std::map<std::pair<SCEV*, const Type*>,
                 SCEVZeroExtendExpr*> SCEVZeroExtends;
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
-  : SCEV(scTruncate), Op(Op), Ty(ty) {
+  : SCEV(scTruncate), Op(op), Ty(ty) {
   assert(Op->getType()->isInteger() && Ty->isInteger() &&
          Ty->isUnsigned() &&
          "Cannot zero extend non-integer value!");
