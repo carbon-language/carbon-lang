@@ -215,10 +215,11 @@ void TimerGroup::removeTimer() {
       std::cerr << "===" << std::string(73, '-') << "===\n"
                 << std::string(Padding, ' ') << Name << "\n"
                 << "===" << std::string(73, '-')
-                << "===\n  Total Execution Time: " << std::fixed
-                << Total.getProcessTime()
-                << " seconds (" << Total.getWallTime() << std::scientific
-                << " wall clock)\n\n";
+                << "===\n  Total Execution Time: ";
+
+      // Hack for GCC 2.96... :( it doesn't support manipulators!
+      fprintf(stderr, "%.4f seconds (%.4f wall clock)\n\n",
+              Total.getProcessTime(), Total.getWallTime());
 
       if (Total.UserTime)
         std::cerr << "   ---User Time---";
