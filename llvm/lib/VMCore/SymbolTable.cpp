@@ -293,7 +293,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   if (TPI != end()) {  
     // Loop over all of the types in the symbol table, replacing any references
     // to OldType with references to NewType.  Note that there may be multiple
-    // occurances, and although we only need to remove one at a time, it's
+    // occurrences, and although we only need to remove one at a time, it's
     // faster to remove them all in one pass.
     //
     VarMap &TyPlane = TPI->second;
