@@ -329,7 +329,7 @@ void Printer::printConstantValueOnly(const Constant *CV) {
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (isStringCompatible(CVA)) {
       // print the string alone and return
-      O << "\t.string\t" << getAsCString(CVA) << "\n";
+      O << "\t.ascii\t" << getAsCString(CVA) << "\n";
     } else { // Not a string.  Print the values in successive locations
       const std::vector<Use> &constValues = CVA->getValues();
       for (unsigned i=0; i < constValues.size(); i++)
