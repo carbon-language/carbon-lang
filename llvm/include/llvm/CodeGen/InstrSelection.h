@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/InstrSelection.h --------------------------*- C++ -*--===//
+//===-- llvm/CodeGen/InstrSelection.h ---------------------------*- C++ -*-===//
 //
 // External interface to instruction selection.
 //
@@ -20,8 +20,6 @@ class FunctionPass;
 //===--------------------- Required Functions ---------------------------------
 // Target-dependent functions that MUST be implemented for each target.
 //
-
-const unsigned MAX_INSTR_PER_VMINSTR = 8;
 
 extern void	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 int ruleForNode,
