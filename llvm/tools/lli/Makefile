@@ -12,6 +12,7 @@ Debug/RuntimeLib.c: RuntimeLib.lc
 	cp -f $< $@
 
 Debug/RuntimeLib.o: Debug/RuntimeLib.c
+	@-rm $@
 	/home/vadve/lattner/cvs/gcc_install/bin/gcc $< -c -o $@
 
 $(LEVEL)/tools/Debug/RuntimeLib.bc: Debug/RuntimeLib.o

@@ -29,7 +29,7 @@ union GenericValue {
   int64_t         LongVal;
   double          DoubleVal;
   float           FloatVal;
-  GenericValue *PointerVal;
+  uint64_t      PointerVal;
 };
 
 typedef vector<GenericValue> ValuePlaneTy;

@@ -263,7 +263,7 @@ bool Interpreter::callMainMethod(const string &Name,
       return true;
     }
 
-    GenericValue GV; GV.PointerVal = (GenericValue*)CreateArgv(InputArgv);
+    GenericValue GV; GV.PointerVal = (uint64_t)CreateArgv(InputArgv);
     Args.push_back(GV);
   }
     // fallthrough

@@ -51,7 +51,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
       GET_CONST_VAL(Double , ConstPoolFP);
     case Type::PointerTyID:
       if (isa<ConstPoolPointerNull>(CPV)) {
-        Result.PointerVal = 0;
+        Result.ULongVal = 0;
       } else if (ConstPoolPointerRef *CPR =dyn_cast<ConstPoolPointerRef>(CPV)) {
         assert(0 && "Not implemented!");
       } else {
@@ -66,7 +66,7 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     GlobalAddress *Address = 
       (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
     GenericValue Result;
-    Result.PointerVal = (GenericValue*)Address->Ptr;
+    Result.ULongVal = (uint64_t)(GenericValue*)Address->Ptr;
     return Result;
   } else {
     unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
@@ -218,9 +218,6 @@ Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
 
 #define IMPLEMENT_BINARY_OPERATOR(OP, TY) \
    case Type::TY##TyID: Dest.TY##Val = Src1.TY##Val OP Src2.TY##Val; break
-#define IMPLEMENT_BINARY_PTR_OPERATOR(OP) \
-   case Type::PointerTyID: Dest.PointerVal = \
-     (GenericValue*)((unsigned long)Src1.PointerVal OP (unsigned long)Src2.PointerVal); break
 
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty, ExecutionContext &SF) {
@@ -236,7 +233,7 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(+, Long);
     IMPLEMENT_BINARY_OPERATOR(+, Float);
     IMPLEMENT_BINARY_OPERATOR(+, Double);
-    IMPLEMENT_BINARY_PTR_OPERATOR(+);
+    IMPLEMENT_BINARY_OPERATOR(+, Pointer);
   default:
     cout << "Unhandled type for Add instruction: " << Ty << endl;
   }
@@ -257,9 +254,51 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(-, Long);
     IMPLEMENT_BINARY_OPERATOR(-, Float);
     IMPLEMENT_BINARY_OPERATOR(-, Double);
-    IMPLEMENT_BINARY_PTR_OPERATOR(-);
+    IMPLEMENT_BINARY_OPERATOR(-, Pointer);
   default:
     cout << "Unhandled type for Sub instruction: " << Ty << endl;
+  }
+  return Dest;
+}
+
+static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty, ExecutionContext &SF) {
+  GenericValue Dest;
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(*, UByte);
+    IMPLEMENT_BINARY_OPERATOR(*, SByte);
+    IMPLEMENT_BINARY_OPERATOR(*, UShort);
+    IMPLEMENT_BINARY_OPERATOR(*, Short);
+    IMPLEMENT_BINARY_OPERATOR(*, UInt);
+    IMPLEMENT_BINARY_OPERATOR(*, Int);
+    IMPLEMENT_BINARY_OPERATOR(*, ULong);
+    IMPLEMENT_BINARY_OPERATOR(*, Long);
+    IMPLEMENT_BINARY_OPERATOR(*, Float);
+    IMPLEMENT_BINARY_OPERATOR(*, Double);
+    IMPLEMENT_BINARY_OPERATOR(*, Pointer);
+  default:
+    cout << "Unhandled type for Mul instruction: " << Ty << endl;
+  }
+  return Dest;
+}
+
+static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2, 
+				   const Type *Ty, ExecutionContext &SF) {
+  GenericValue Dest;
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_BINARY_OPERATOR(/, UByte);
+    IMPLEMENT_BINARY_OPERATOR(/, SByte);
+    IMPLEMENT_BINARY_OPERATOR(/, UShort);
+    IMPLEMENT_BINARY_OPERATOR(/, Short);
+    IMPLEMENT_BINARY_OPERATOR(/, UInt);
+    IMPLEMENT_BINARY_OPERATOR(/, Int);
+    IMPLEMENT_BINARY_OPERATOR(/, ULong);
+    IMPLEMENT_BINARY_OPERATOR(/, Long);
+    IMPLEMENT_BINARY_OPERATOR(/, Float);
+    IMPLEMENT_BINARY_OPERATOR(/, Double);
+    IMPLEMENT_BINARY_OPERATOR(/, Pointer);
+  default:
+    cout << "Unhandled type for Mul instruction: " << Ty << endl;
   }
   return Dest;
 }
@@ -402,6 +441,8 @@ static void executeBinaryInst(BinaryOperator *I, ExecutionContext &SF) {
   switch (I->getOpcode()) {
   case Instruction::Add: R = executeAddInst(Src1, Src2, Ty, SF); break;
   case Instruction::Sub: R = executeSubInst(Src1, Src2, Ty, SF); break;
+  case Instruction::Mul: R = executeMulInst(Src1, Src2, Ty, SF); break;
+  case Instruction::Div: R = executeDivInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetEQ: R = executeSetEQInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetNE: R = executeSetNEInst(Src1, Src2, Ty, SF); break;
   case Instruction::SetLE: R = executeSetLEInst(Src1, Src2, Ty, SF); break;
@@ -511,8 +552,8 @@ void Interpreter::executeAllocInst(AllocationInst *I, ExecutionContext &SF) {
 
   // Allocate enough memory to hold the type...
   GenericValue Result;
-  Result.PointerVal = (GenericValue*)malloc(NumElements * TD.getTypeSize(Ty));
-  assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
+  Result.ULongVal = (uint64_t)malloc(NumElements * TD.getTypeSize(Ty));
+  assert(Result.ULongVal != 0 && "Null pointer returned by malloc!");
   SetValue(I, Result, SF);
 
   if (I->getOpcode() == Instruction::Alloca) {
@@ -524,12 +565,13 @@ static void executeFreeInst(FreeInst *I, ExecutionContext &SF) {
   assert(I->getOperand(0)->getType()->isPointerType() && "Freeing nonptr?");
   GenericValue Value = getOperandValue(I->getOperand(0), SF);
   // TODO: Check to make sure memory is allocated
-  free(Value.PointerVal);   // Free memory
+  free((void*)Value.ULongVal);   // Free memory
 }
 
 static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   assert(I->getNumOperands() == 1 && "NI!");
-  GenericValue *Ptr = getOperandValue(I->getPtrOperand(), SF).PointerVal;
+  GenericValue *Ptr =
+    (GenericValue*)getOperandValue(I->getPtrOperand(), SF).ULongVal;
   GenericValue Result;
 
   switch (I->getType()->getPrimitiveID()) {
@@ -541,10 +583,10 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
   case Type::UIntTyID:
   case Type::IntTyID:     Result.IntVal = Ptr->IntVal; break;
   case Type::ULongTyID:
-  case Type::LongTyID:    Result.LongVal = Ptr->LongVal; break;
+  case Type::LongTyID:
+  case Type::PointerTyID: Result.ULongVal = Ptr->ULongVal; break;
   case Type::FloatTyID:   Result.FloatVal = Ptr->FloatVal; break;
   case Type::DoubleTyID:  Result.DoubleVal = Ptr->DoubleVal; break;
-  case Type::PointerTyID: Result.PointerVal =(GenericValue*)Ptr->LongVal; break;
   default:
     cout << "Cannot load value of type " << I->getType() << "!\n";
   }
@@ -553,7 +595,8 @@ static void executeLoadInst(LoadInst *I, ExecutionContext &SF) {
 }
 
 static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
-  GenericValue *Ptr = getOperandValue(I->getPtrOperand(), SF).PointerVal;
+  GenericValue *Ptr =
+    (GenericValue *)getOperandValue(I->getPtrOperand(), SF).ULongVal;
   GenericValue Val = getOperandValue(I->getOperand(0), SF);
   assert(I->getNumOperands() == 2 && "NI!");
 
@@ -566,10 +609,10 @@ static void executeStoreInst(StoreInst *I, ExecutionContext &SF) {
   case Type::UIntTyID:
   case Type::IntTyID:     Ptr->IntVal = Val.IntVal; break;
   case Type::ULongTyID:
-  case Type::LongTyID:    Ptr->LongVal = Val.LongVal; break;
+  case Type::LongTyID:
+  case Type::PointerTyID: Ptr->LongVal = Val.LongVal; break;
   case Type::FloatTyID:   Ptr->FloatVal = Val.FloatVal; break;
   case Type::DoubleTyID:  Ptr->DoubleVal = Val.DoubleVal; break;
-  case Type::PointerTyID: Ptr->PointerVal = Val.PointerVal; break;
   default:
     cout << "Cannot store value of type " << I->getType() << "!\n";
   }
@@ -665,10 +708,8 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
       IMPLEMENT_CAST(DESTTY, DESTCTY, UInt);    \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Int);     \
       IMPLEMENT_CAST(DESTTY, DESTCTY, ULong);   \
-      IMPLEMENT_CAST(DESTTY, DESTCTY, Long);
-
-#define IMPLEMENT_CAST_CASE_PTR_IMP(DESTTY, DESTCTY) \
-      IMPLEMENT_CAST(DESTTY, DESTCTY, Pointer)
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Long);    \
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Pointer);
 
 #define IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY) \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Float);   \
@@ -683,17 +724,6 @@ static void executeShrInst(ShiftInst *I, ExecutionContext &SF) {
 #define IMPLEMENT_CAST_CASE(DESTTY, DESTCTY) \
    IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY);   \
    IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY); \
-   IMPLEMENT_CAST_CASE_PTR_IMP(DESTTY, DESTCTY); \
-   IMPLEMENT_CAST_CASE_END()
-
-#define IMPLEMENT_CAST_CASE_FP(DESTTY, DESTCTY) \
-   IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY);   \
-   IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY); \
-   IMPLEMENT_CAST_CASE_END()
-
-#define IMPLEMENT_CAST_CASE_PTR(DESTTY, DESTCTY) \
-   IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY);   \
-   IMPLEMENT_CAST_CASE_PTR_IMP(DESTTY, DESTCTY); \
    IMPLEMENT_CAST_CASE_END()
 
 static void executeCastInst(CastInst *I, ExecutionContext &SF) {
@@ -711,9 +741,9 @@ static void executeCastInst(CastInst *I, ExecutionContext &SF) {
     IMPLEMENT_CAST_CASE(Int   ,   signed int );
     IMPLEMENT_CAST_CASE(ULong , uint64_t );
     IMPLEMENT_CAST_CASE(Long  ,  int64_t );
-    IMPLEMENT_CAST_CASE_FP(Float ,          float);
-    IMPLEMENT_CAST_CASE_FP(Double,          double);
-    IMPLEMENT_CAST_CASE_PTR(Pointer, GenericValue *);
+    IMPLEMENT_CAST_CASE(Pointer, uint64_t);
+    IMPLEMENT_CAST_CASE(Float ,          float);
+    IMPLEMENT_CAST_CASE(Double,          double);
   default:
     cout << "Unhandled dest type for cast instruction: " << Ty << endl;
   }
@@ -944,7 +974,7 @@ void Interpreter::printValue(const Type *Ty, GenericValue V) {
   case Type::ULongTyID:  cout << V.ULongVal;  break;
   case Type::FloatTyID:  cout << V.FloatVal;  break;
   case Type::DoubleTyID: cout << V.DoubleVal; break;
-  case Type::PointerTyID:cout << V.PointerVal; break;
+  case Type::PointerTyID:cout << (void*)V.ULongVal; break;
   default:
     cout << "- Don't know how to print value of this type!";
     break;

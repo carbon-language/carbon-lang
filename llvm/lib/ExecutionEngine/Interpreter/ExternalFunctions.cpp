@@ -14,6 +14,7 @@
 #include <map>
 #include <dlfcn.h>
 #include <link.h>
+#include <math.h>
 
 typedef GenericValue (*ExFunc)(MethodType *, const vector<GenericValue> &);
 static map<const Method *, ExFunc> Functions;
@@ -169,5 +170,26 @@ GenericValue lle_Vi_exit(MethodType *M, const vector<GenericValue> &Args) {
   TheInterpreter->exitCalled(Args[0]);
   return GenericValue();
 }
+
+// void *malloc(uint)
+GenericValue lle_PI_malloc(MethodType *M, const vector<GenericValue> &Args) {
+  GenericValue GV;
+  GV.LongVal = (uint64_t)malloc(Args[0].UIntVal);
+  return GV;
+}
+
+// void free(void *)
+GenericValue lle_VP_free(MethodType *M, const vector<GenericValue> &Args) {
+  free((void*)Args[0].LongVal);
+  return GenericValue();
+}
+
+// double pow(double, double)
+GenericValue lle_DDD_pow(MethodType *M, const vector<GenericValue> &Args) {
+  GenericValue GV;
+  GV.DoubleVal = pow(GV.DoubleVal, GV.DoubleVal);
+  return GV;
+}
+
 
 } // End extern "C"
