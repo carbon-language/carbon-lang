@@ -1431,10 +1431,10 @@ void UltraSparcRegInfo::insertCallerSavingCode(MachineInstr *CallMI,
 	      cerr << "\nFor call inst:" << *CallMI;
 	      cerr << " -inserted caller saving instrs: Before:\n\t ";
               for_each(instrnsBefore.begin(), instrnsBefore.end(),
-                       mem_fun(&MachineInstr::dump));
+                       std::mem_fun(&MachineInstr::dump));
 	      cerr << " -and After:\n\t ";
               for_each(instrnsAfter.begin(), instrnsAfter.end(),
-                       mem_fun(&MachineInstr::dump));
+                       std::mem_fun(&MachineInstr::dump));
 	    }	    
 	  } // if not already pushed
 
