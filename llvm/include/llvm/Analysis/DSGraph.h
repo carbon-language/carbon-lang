@@ -15,15 +15,24 @@
 struct DSGraph {
   // Public data-type declarations...
   typedef hash_map<Value*, DSNodeHandle> ScalarMapTy;
+  typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
 
+  /// NodeMapTy - This data type is used when cloning one graph into another to
+  /// keep track of the correspondence between the nodes in the old and new
+  /// graphs.
+  typedef hash_map<const DSNode*, DSNodeHandle> NodeMapTy;
 private:
-  Function *Func;          // Func - The LLVM function this graph corresponds to
   DSGraph *GlobalsGraph;   // Pointer to the common graph of global objects
   bool PrintAuxCalls;      // Should this graph print the Aux calls vector?
 
-  DSNodeHandle RetNode;    // The node that gets returned...
   std::vector<DSNode*> Nodes;
   ScalarMapTy ScalarMap;
+
+  // ReturnNodes - A return value for every function merged into this graph.
+  // Each DSGraph may have multiple functions merged into it at any time, which
+  // is used for representing SCCs.
+  //
+  ReturnNodesTy ReturnNodes;
 
   // FunctionCalls - This vector maintains a single entry for each call
   // instruction in the current graph.  The first entry in the vector is the
@@ -42,7 +51,7 @@ private:
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
   // Create a new, empty, DSGraph.
-  DSGraph() : Func(0), GlobalsGraph(0), PrintAuxCalls(false) {}
+  DSGraph() : GlobalsGraph(0), PrintAuxCalls(false) {}
   DSGraph(Function &F, DSGraph *GlobalsGraph); // Compute the local DSGraph
 
   // Copy ctor - If you want to capture the node mapping between the source and
@@ -54,14 +63,8 @@ public:
   // method.
   //
   DSGraph(const DSGraph &DSG);
-  DSGraph(const DSGraph &DSG, hash_map<const DSNode*, DSNodeHandle> &NodeMap);
+  DSGraph(const DSGraph &DSG, NodeMapTy &NodeMap);
   ~DSGraph();
-
-  bool hasFunction() const { return Func != 0; }
-  Function &getFunction() const {
-    assert(hasFunction() && "Cannot call getFunction on graph without a fn!");
-    return *Func;
-  }
 
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
   void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }
@@ -116,14 +119,27 @@ public:
     return I->second;
   }
 
-  const DSNodeHandle &getRetNode() const { return RetNode; }
-        DSNodeHandle &getRetNode()       { return RetNode; }
+  /// getReturnNodes - Return the mapping of functions to their return nodes for
+  /// this graph.
+  const ReturnNodesTy &getReturnNodes() const { return ReturnNodes; }
+        ReturnNodesTy &getReturnNodes()       { return ReturnNodes; }
 
+  /// getReturnNodeFor - Return the return node for the specified function.
+  ///
+  DSNodeHandle &getReturnNodeFor(Function &F) {
+    ReturnNodesTy::iterator I = ReturnNodes.find(&F);
+    assert(I != ReturnNodes.end() && "F not in this DSGraph!");
+    return I->second;
+  }
+
+  /// getGraphSize - Return the number of nodes in this graph.
+  ///
   unsigned getGraphSize() const {
     return Nodes.size();
   }
 
   /// print - Print a dot graph to the specified ostream...
+  ///
   void print(std::ostream &O) const;
 
   /// dump - call print(std::cerr), for use from the debugger...
@@ -170,8 +186,8 @@ public:
   };
   void removeDeadNodes(unsigned Flags);
 
-  // CloneFlags enum - Bits that may be passed into the cloneInto method to
-  // specify how to clone the function graph.
+  /// CloneFlags enum - Bits that may be passed into the cloneInto method to
+  /// specify how to clone the function graph.
   enum CloneFlags {
     StripAllocaBit        = 1 << 0, KeepAllocaBit     = 0 << 0,
     DontCloneCallNodes    = 1 << 1, CloneCallNodes    = 0 << 0,
@@ -179,15 +195,15 @@ public:
     StripModRefBits       = 1 << 3, KeepModRefBits    = 0 << 0,
   };
 
-  // cloneInto - Clone the specified DSGraph into the current graph, returning
-  // the Return node of the graph.  The translated ScalarMap for the old
-  // function is filled into the OldValMap member.  If StripAllocas is set to
-  // 'StripAllocaBit', Alloca markers are removed from the graph as the graph is
-  // being cloned.
-  //
-  DSNodeHandle cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
-                         hash_map<const DSNode*, DSNodeHandle> &OldNodeMap,
-                         unsigned CloneFlags = 0);
+  /// cloneInto - Clone the specified DSGraph into the current graph.  The
+  /// translated ScalarMap for the old function is filled into the OldValMap
+  /// member, and the translated ReturnNodes map is returned into ReturnNodes.
+  ///
+  /// The CloneFlags member controls various aspects of the cloning process.
+  ///
+  void cloneInto(const DSGraph &G, ScalarMapTy &OldValMap,
+                 ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
+                 unsigned CloneFlags = 0);
 
   /// mergeInGraph - The method is used for merging graphs together.  If the
   /// argument graph is not *this, it makes a clone of the specified graph, then
@@ -195,7 +211,8 @@ public:
   /// the graph.  If the StripAlloca's argument is 'StripAllocaBit' then Alloca
   /// markers are removed from nodes.
   ///
-  void mergeInGraph(DSCallSite &CS, const DSGraph &Graph, unsigned CloneFlags);
+  void mergeInGraph(DSCallSite &CS, Function &F, const DSGraph &Graph,
+                    unsigned CloneFlags);
 
   // Methods for checking to make sure graphs are well formed...
   void AssertNodeInGraph(const DSNode *N) const {
