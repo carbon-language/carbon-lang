@@ -745,12 +745,12 @@ def STXi : F3_2rd<3, 0b001110, "stx">;                     // stb r, [r+i]
 
 // Section A.56: Subtract - p233
 def SUBr    : F3_1<2, 0b000100, "sub">;                   // sub r, r, r
-def SUBi    : F3_1<2, 0b000100, "sub">;                   // sub r, i, r
+def SUBi    : F3_2<2, 0b000100, "sub">;                   // sub r, i, r
 def SUBccr  : F3_1<2, 0b010100, "subcc">;                 // subcc r, r, r
-def SUBcci  : F3_1<2, 0b010100, "subcc">;                 // subcc r, i, r
+def SUBcci  : F3_2<2, 0b010100, "subcc">;                 // subcc r, i, r
 def SUBCr   : F3_1<2, 0b001100, "subc">;                  // subc r, r, r
-def SUBCi   : F3_1<2, 0b001100, "subc">;                  // subc r, i, r
+def SUBCi   : F3_2<2, 0b001100, "subc">;                  // subc r, i, r
 def SUBCccr : F3_1<2, 0b011100, "subccc">;                // subccc r, r, r
-def SUBCcci : F3_1<2, 0b011100, "subccc">;                // subccc r, i, r
+def SUBCcci : F3_2<2, 0b011100, "subccc">;                // subccc r, i, r
 
 // FIXME: More...?
