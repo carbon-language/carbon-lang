@@ -494,99 +494,100 @@ unsigned LiveIntervals::rep(unsigned reg)
     return reg;
 }
 
-void LiveIntervals::joinIntervals()
-{
-    DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
-
+void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
+    DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
     const TargetInstrInfo& tii = *tm_->getInstrInfo();
 
-    for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
-         mbbi != mbbe; ++mbbi) {
-        MachineBasicBlock* mbb = mbbi;
-        DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
+    for (MachineBasicBlock::iterator mi = MBB->begin(), mie = MBB->end();
+         mi != mie; ++mi) {
+        const TargetInstrDescriptor& tid = tii.get(mi->getOpcode());
+        DEBUG(std::cerr << getInstructionIndex(mi) << '\t';
+              mi->print(std::cerr, tm_););
 
-        for (MachineBasicBlock::iterator mi = mbb->begin(), mie = mbb->end();
-             mi != mie; ++mi) {
-            const TargetInstrDescriptor& tid = tii.get(mi->getOpcode());
-            DEBUG(std::cerr << getInstructionIndex(mi) << '\t';
-                  mi->print(std::cerr, tm_););
+        // we only join virtual registers with allocatable
+        // physical registers since we do not have liveness information
+        // on not allocatable physical registers
+        unsigned regA, regB;
+        if (tii.isMoveInstr(*mi, regA, regB) &&
+            (MRegisterInfo::isVirtualRegister(regA) ||
+             lv_->getAllocatablePhysicalRegisters()[regA]) &&
+            (MRegisterInfo::isVirtualRegister(regB) ||
+             lv_->getAllocatablePhysicalRegisters()[regB])) {
 
-            // we only join virtual registers with allocatable
-            // physical registers since we do not have liveness information
-            // on not allocatable physical registers
-            unsigned regA, regB;
-            if (tii.isMoveInstr(*mi, regA, regB) &&
-                (MRegisterInfo::isVirtualRegister(regA) ||
-                 lv_->getAllocatablePhysicalRegisters()[regA]) &&
-                (MRegisterInfo::isVirtualRegister(regB) ||
-                 lv_->getAllocatablePhysicalRegisters()[regB])) {
+            // get representative registers
+            regA = rep(regA);
+            regB = rep(regB);
 
-                // get representative registers
-                regA = rep(regA);
-                regB = rep(regB);
+            // if they are already joined we continue
+            if (regA == regB)
+                continue;
 
-                // if they are already joined we continue
-                if (regA == regB)
+            Reg2IntervalMap::iterator r2iA = r2iMap_.find(regA);
+            assert(r2iA != r2iMap_.end() &&
+                   "Found unknown vreg in 'isMoveInstr' instruction");
+            Reg2IntervalMap::iterator r2iB = r2iMap_.find(regB);
+            assert(r2iB != r2iMap_.end() &&
+                   "Found unknown vreg in 'isMoveInstr' instruction");
+
+            Intervals::iterator intA = r2iA->second;
+            Intervals::iterator intB = r2iB->second;
+
+            // both A and B are virtual registers
+            if (MRegisterInfo::isVirtualRegister(intA->reg) &&
+                MRegisterInfo::isVirtualRegister(intB->reg)) {
+
+                const TargetRegisterClass *rcA, *rcB;
+                rcA = mf_->getSSARegMap()->getRegClass(intA->reg);
+                rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
+                // if they are not of the same register class we continue
+                if (rcA != rcB)
                     continue;
 
-                Reg2IntervalMap::iterator r2iA = r2iMap_.find(regA);
-                assert(r2iA != r2iMap_.end() &&
-                       "Found unknown vreg in 'isMoveInstr' instruction");
-                Reg2IntervalMap::iterator r2iB = r2iMap_.find(regB);
-                assert(r2iB != r2iMap_.end() &&
-                       "Found unknown vreg in 'isMoveInstr' instruction");
+                // if their intervals do not overlap we join them
+                if (!intB->overlaps(*intA)) {
+                    intA->join(*intB);
+                    r2iB->second = r2iA->second;
+                    r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
+                    intervals_.erase(intB);
+                }
+            } else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
+                       MRegisterInfo::isPhysicalRegister(intB->reg)) {
+                if (MRegisterInfo::isPhysicalRegister(intB->reg)) {
+                    std::swap(regA, regB);
+                    std::swap(intA, intB);
+                    std::swap(r2iA, r2iB);
+                }
 
-                Intervals::iterator intA = r2iA->second;
-                Intervals::iterator intB = r2iB->second;
+                assert(MRegisterInfo::isPhysicalRegister(intA->reg) &&
+                       MRegisterInfo::isVirtualRegister(intB->reg) &&
+                       "A must be physical and B must be virtual");
 
-                // both A and B are virtual registers
-                if (MRegisterInfo::isVirtualRegister(intA->reg) &&
-                    MRegisterInfo::isVirtualRegister(intB->reg)) {
+                const TargetRegisterClass *rcA, *rcB;
+                rcA = mri_->getRegClass(intA->reg);
+                rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
+                // if they are not of the same register class we continue
+                if (rcA != rcB)
+                    continue;
 
-                    const TargetRegisterClass *rcA, *rcB;
-                    rcA = mf_->getSSARegMap()->getRegClass(intA->reg);
-                    rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
-                    // if they are not of the same register class we continue
-                    if (rcA != rcB)
-                        continue;
-
-                    // if their intervals do not overlap we join them
-                    if (!intB->overlaps(*intA)) {
-                        intA->join(*intB);
-                        r2iB->second = r2iA->second;
-                        r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
-                        intervals_.erase(intB);
-                    }
-                } else if (MRegisterInfo::isPhysicalRegister(intA->reg) ^
-                           MRegisterInfo::isPhysicalRegister(intB->reg)) {
-                    if (MRegisterInfo::isPhysicalRegister(intB->reg)) {
-                        std::swap(regA, regB);
-                        std::swap(intA, intB);
-                        std::swap(r2iA, r2iB);
-                    }
-
-                    assert(MRegisterInfo::isPhysicalRegister(intA->reg) &&
-                           MRegisterInfo::isVirtualRegister(intB->reg) &&
-                           "A must be physical and B must be virtual");
-
-                    const TargetRegisterClass *rcA, *rcB;
-                    rcA = mri_->getRegClass(intA->reg);
-                    rcB = mf_->getSSARegMap()->getRegClass(intB->reg);
-                    // if they are not of the same register class we continue
-                    if (rcA != rcB)
-                        continue;
-
-                    if (!intA->overlaps(*intB) &&
-                        !overlapsAliases(*intA, *intB)) {
-                        intA->join(*intB);
-                        r2iB->second = r2iA->second;
-                        r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
-                        intervals_.erase(intB);
-                    }
+                if (!intA->overlaps(*intB) &&
+                    !overlapsAliases(*intA, *intB)) {
+                    intA->join(*intB);
+                    r2iB->second = r2iA->second;
+                    r2rMap_.insert(std::make_pair(intB->reg, intA->reg));
+                    intervals_.erase(intB);
                 }
             }
         }
     }
+}
+
+void LiveIntervals::joinIntervals()
+{
+    DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
+
+    for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
+         I != E; ++I)
+      joinIntervalsInMachineBB(I);
 }
 
 bool LiveIntervals::overlapsAliases(const LiveInterval& lhs,

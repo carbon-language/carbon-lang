@@ -169,6 +169,10 @@ namespace llvm {
         /// joinIntervals - join compatible live intervals
         void joinIntervals();
 
+        /// joinIntervalsInMachineBB - Join intervals based on move
+        /// instructions in the specified basic block.
+        void joinIntervalsInMachineBB(MachineBasicBlock *MBB);
+
         /// handleRegisterDef - update intervals for a register def
         /// (calls handlePhysicalRegisterDef and
         /// handleVirtualRegisterDef)
