@@ -8,6 +8,7 @@
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Constant.h"
 #include "llvm/iPHINode.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
@@ -131,7 +132,9 @@ void BasicBlock::removePredecessor(BasicBlock *Pred) {
       // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
       if (max_idx == 2)
 	PN->replaceAllUsesWith(PN->getOperand(0));
-      delete getInstList().remove(begin());  // Remove the PHI node
+      else // Otherwise there are no incoming values/edges, replace with dummy
+        PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+      delete getInstList().remove(begin());    // Remove the PHI node
     }
   } else {
     // Okay, now we know that we need to remove predecessor #pred_idx from all
