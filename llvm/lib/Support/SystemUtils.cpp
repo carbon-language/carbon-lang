@@ -142,7 +142,10 @@ int llvm::RunProgramWithTimeout(const std::string &ProgramPath,
   case 0:               // Child
     RedirectFD(StdInFile, 0);      // Redirect file descriptors...
     RedirectFD(StdOutFile, 1);
-    RedirectFD(StdErrFile, 2);
+    if (StdOutFile != StdErrFile)
+      RedirectFD(StdErrFile, 2);
+    else
+      dup2(1, 2);
 
     execv(ProgramPath.c_str(), (char *const *)Args);
     std::cerr << "Error executing program: '" << ProgramPath;
