@@ -16,6 +16,7 @@
 %option noreject
 %option noyymore
 
+%x comment
 
 %{
 #include "Record.h"
@@ -28,6 +29,8 @@ static int ParseInt(const char *Str) {
     return strtol(Str+2, 0, 2);
   return strtol(Str, 0, 0); 
 }
+
+static int CommentDepth = 0;
 
 %}
 
@@ -63,4 +66,14 @@ in             { return IN; }
 
 [ \t\n]+       { /* Ignore whitespace */ }
 .              { return Filetext[0]; }
+
+
+"/*"                    { BEGIN(comment); CommentDepth++; }
+<comment>[^*/]*         /* eat anything that's not a '*' or '/' */
+<comment>"*"+[^*/]*     /* eat up '*'s not followed by '/'s */
+<comment>"/*"           { ++CommentDepth; }
+<comment>"/"+[^*]*      /* eat up /'s not followed by *'s */
+<comment>"*"+"/"        { if (!--CommentDepth) { BEGIN(INITIAL); } }
+<comment><<EOF>>        { fprintf(stderr, "Unterminated comment!\n"); abort(); }
+
 %%
