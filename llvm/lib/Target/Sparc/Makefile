@@ -1,13 +1,7 @@
 LEVEL = ../../..
 LIBRARYNAME = sparc
 
-## List source files in link order
-Source  = \
-	  Sparc.cpp \
-	  Sparc.burm.cpp \
-	  SparcInstrSelection.cpp \
-	  SparcRegClassInfo.cpp \
-	  SparcRegInfo.cpp EmitAssembly.cpp
+Source = Sparc.burm.cpp 
 
 include $(LEVEL)/Makefile.common
 
