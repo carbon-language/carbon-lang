@@ -1062,26 +1062,29 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
 /// visitReturnInst - implemented with BLR
 ///
 void ISel::visitReturnInst(ReturnInst &I) {
-  Value *RetVal = I.getOperand(0);
-  switch (getClassB(RetVal->getType())) {
-  case cByte:   // integral return values: extend or move into r3 and return
-  case cShort:
-  case cInt:
-    promote32(PPC32::R3, ValueRecord(RetVal));
-    break;
-  case cFP: {   // Floats & Doubles: Return in f1
-    unsigned RetReg = getReg(RetVal);
-    BuildMI(BB, PPC32::FMR, 1, PPC32::F1).addReg(RetReg);
-    break;
-  }
-  case cLong: {
-    unsigned RetReg = getReg(RetVal);
-    BuildMI(BB, PPC32::OR, 2, PPC32::R3).addReg(RetReg).addReg(RetReg);
-    BuildMI(BB, PPC32::OR, 2, PPC32::R4).addReg(RetReg+1).addReg(RetReg+1);
-    break;
-  }
-  default:
-    visitInstruction(I);
+  // Only do the processing if this is a non-void return
+  if (I.getNumOperands() > 0) {
+    Value *RetVal = I.getOperand(0);
+    switch (getClassB(RetVal->getType())) {
+    case cByte:   // integral return values: extend or move into r3 and return
+    case cShort:
+    case cInt:
+      promote32(PPC32::R3, ValueRecord(RetVal));
+      break;
+    case cFP: {   // Floats & Doubles: Return in f1
+      unsigned RetReg = getReg(RetVal);
+      BuildMI(BB, PPC32::FMR, 1, PPC32::F1).addReg(RetReg);
+      break;
+    }
+    case cLong: {
+      unsigned RetReg = getReg(RetVal);
+      BuildMI(BB, PPC32::OR, 2, PPC32::R3).addReg(RetReg).addReg(RetReg);
+      BuildMI(BB, PPC32::OR, 2, PPC32::R4).addReg(RetReg+1).addReg(RetReg+1);
+      break;
+    }
+    default:
+      visitInstruction(I);
+    }
   }
   BuildMI(BB, PPC32::BLR, 1).addImm(0);
 }
