@@ -61,7 +61,6 @@ void UltraSparcRegInfo::suggestReg4CallAddr(const MachineInstr * CallMI) const
 
   MachineOperand & MO  = ( MachineOperand &) CallMI->getOperand(2);
   MO.setRegForValue( getUnifiedRegNum( IntRegClassID,SparcIntRegOrder::o7) );
-
 }
 
 

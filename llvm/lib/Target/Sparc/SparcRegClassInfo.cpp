@@ -31,9 +31,13 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
     if( NeighLR->hasColor() )                        // if has a color
       IsColorUsedArr[ NeighLR->getColor() ] = true; // record that color
 
-    else if( NeighLR->hasSuggestedColor() )        // or has a suggest col   
-      IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true; 
-    
+    else if( NeighLR->hasSuggestedColor() ) {
+
+	// if the neighbout can use the suggested color 
+	if( NeighLR-> isSuggestedColorUsable() ) 
+	  IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true; 
+    }    
+
   }
 
   if( DEBUG_RA ) {
@@ -49,7 +53,7 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, bool IsColorUsedArr[]) const
 
     if( ! IsColorUsedArr[ SugCol ] ) {
 
-      if(! (isRegVolatile( SugCol ) &&  LR->isCallInterference()) ) {
+      if( LR->isSuggestedColorUsable()  ) {
 
 	// if the suggested color is volatile, we should use it only if
 	// there are no call interferences. Otherwise, it will get spilled.
@@ -205,9 +209,16 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,bool IsColorUsedArr[]) const
 	  IsColorUsedArr[ (NeighLR->getColor()) + 1 ] = true;  
       }
       else if( NeighLR->hasSuggestedColor() )   {   // if neigh has sugg color
-      	IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
-	if( NeighLR->getTypeID() == Type::DoubleTyID )
-	  IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
+
+	if( NeighLR-> isSuggestedColorUsable() ) {
+
+	  // if the neighbout can use the suggested color 
+	  
+	  IsColorUsedArr[ NeighLR->getSuggestedColor() ] = true;
+	  if( NeighLR->getTypeID() == Type::DoubleTyID )
+	    IsColorUsedArr[ (NeighLR->getSuggestedColor()) + 1 ] = true;  
+	}
+
       }
 
   }
