@@ -16,8 +16,8 @@ Output/%.tbc: %.ll $(LAS) Output/.dir
 	$(LAS) -d -f $< -o $@ > /dev/null 2>&1 || \
                  ( rm -f $@; $(FAILURE) $@ )
 
-all:: $(addprefix Output/, $(FTESTS:%.llx=%.ll.out))
+all:: $(addprefix Output/, $(FTESTS:%.llx=%.llx.out))
 
-Output/%.ll.out: %.llx Output/.dir $(LAS)
+Output/%.llx.out: %.llx Output/.dir $(LAS)
 	-$(TESTRUNR) $<
 
