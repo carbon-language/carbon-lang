@@ -1,0 +1,19 @@
+LLVM pre-release license:
+
+This is a pre-release distribution of the LLVM software and is provided for
+evaluation only.  This version of the LLVM software or modifications thereof
+should not be distributed to third parties for any purpose.  Any third parties
+interested in it can request a copy directly by sending e-mail to
+llvmdev@cs.uiuc.edu.  As this is an evaluation release, we would appreciate any
+and all feedback, ideas, and reports of bugs that you encounter.  These can be
+submitted through the llvmbugs@cs.uiuc.edu or llvmdev@cs.uiuc.edu mailing lists
+as appropriate.  We thank you for your interest in LLVM and look forward to any
+comments or feedback you may have.
+
+THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
+SOFTWARE.
