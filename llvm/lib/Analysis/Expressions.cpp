@@ -284,21 +284,30 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
 
   case Instruction::Cast: {
     ExprType Src(ClassifyExpression(I->getOperand(0)));
-    if (Src.ExprTy != ExprType::Constant)
-      return I;
-    const ConstPoolInt *Offs = Src.Offset;
-    if (Offs == 0) return ExprType();
-
     const Type *DestTy = I->getType();
     if (DestTy->isPointerType())
       DestTy = Type::ULongTy;  // Pointer types are represented as ulong
 
-    assert(DestTy->isIntegral() && "Can only handle integral types!");
+    /*
+    if (!Src.getExprType(0)->isLosslesslyConvertableTo(DestTy)) {
+      if (Src.ExprTy != ExprType::Constant)
+        return I;  // Converting cast, and not a constant value...
+    }
+    */
 
-    const ConstPoolVal *CPV =ConstRules::get(*Offs)->castTo(Offs, DestTy);
-    if (!CPV) return I;
-    assert(CPV->getType()->isIntegral() && "Must have an integral type!");
-    return cast<ConstPoolInt>(CPV);
+    const ConstPoolInt *Offset = Src.Offset;
+    const ConstPoolInt *Scale  = Src.Scale;
+    if (Offset) {
+      const ConstPoolVal *CPV = ConstantFoldCastInstruction(Offset, DestTy);
+      if (!CPV) return I;
+      Offset = cast<ConstPoolInt>(CPV);
+    }
+    if (Scale) {
+      const ConstPoolVal *CPV = ConstantFoldCastInstruction(Scale, DestTy);
+      if (!CPV) return I;
+      Scale = cast<ConstPoolInt>(CPV);
+    }
+    return ExprType(Scale, Src.Var, Offset);
   } // end case Instruction::Cast
     // TODO: Handle SUB, SHR?
 
