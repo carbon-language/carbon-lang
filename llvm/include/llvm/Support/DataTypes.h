@@ -20,6 +20,7 @@
 #define LLVM_SUPPORT_DATATYPES_H
 
 #ifdef LINUX
+#define __STDC_LIMIT_MACROS 1
 #include <stdint.h>       // Defined by ISO C 99
 #include <endian.h>
 
