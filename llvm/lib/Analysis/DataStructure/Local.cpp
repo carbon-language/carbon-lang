@@ -50,6 +50,9 @@ namespace {
   DisableDirectCallOpt("disable-direct-call-dsopt", cl::Hidden,
                        cl::desc("Disable direct call optimization in "
                                 "DSGraph construction"));
+  cl::opt<bool>
+  DisableFieldSensitivity("disable-ds-field-sensitivity", cl::Hidden,
+                          cl::desc("Disable field sensitivity in DSGraphs"));
 
   //===--------------------------------------------------------------------===//
   //  GraphBuilder Class
@@ -108,6 +111,8 @@ namespace {
     DSNode *createNode(DSNode::NodeTy NodeType, const Type *Ty = 0) {
       DSNode *N = new DSNode(NodeType, Ty);   // Create the node
       Nodes.push_back(N);                     // Add node to nodes list
+      if (DisableFieldSensitivity)
+        N->foldNodeCompletely();
       return N;
     }
 
