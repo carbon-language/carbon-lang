@@ -1911,12 +1911,12 @@ case $build in
         *-*-freebsd*)
              OS=Linux
 
-             platform_type="Linux"
+             platform_type="FreeBSD"
              ;;
         *-*-interix*)
              OS=SunOS
 
-             platform_type="SunOS"
+             platform_type="Interix"
              ;;
 	*-*-linux*)
              OS=Linux

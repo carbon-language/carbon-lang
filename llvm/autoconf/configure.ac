@@ -116,11 +116,11 @@ case $build in
              ;;
         *-*-freebsd*)
              AC_SUBST(OS,[Linux])
-             platform_type="Linux"
+             platform_type="FreeBSD"
              ;;
         *-*-interix*)
              AC_SUBST(OS,[SunOS])
-             platform_type="SunOS"
+             platform_type="Interix"
              ;;
 	*-*-linux*)
              AC_SUBST(OS,[Linux])
