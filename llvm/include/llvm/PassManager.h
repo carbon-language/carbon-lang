@@ -12,6 +12,7 @@
 
 class Pass;
 class Module;
+class ModuleProvider;
 template<class UnitType> class PassManagerT;
 
 class PassManager {
@@ -39,8 +40,9 @@ class Function;
 
 class FunctionPassManager {
   PassManagerT<Function> *PM;    // This is a straightforward Pimpl class
+  ModuleProvider *MP;
 public:
-  FunctionPassManager();
+  FunctionPassManager(ModuleProvider *P);
   ~FunctionPassManager();
 
   /// add - Add a pass to the queue of passes to run.  This passes
