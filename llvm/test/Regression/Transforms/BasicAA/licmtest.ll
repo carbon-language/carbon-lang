@@ -14,11 +14,11 @@
 implementation
 
 int %test(bool %c) {
-	%Atmp = load int* %A
+	%ToRemove = load int* %A
 	br label %Loop
 Loop:
-	%ToRemove = load int* %A
-	store int %ToRemove, int* %B  ; Store cannot alias %A
+	%Atmp = load int* %A
+	store int %Atmp, int* %B  ; Store cannot alias %A
 
 	br bool %c, label %Out, label %Loop
 Out:
