@@ -27,15 +27,6 @@ using std::vector;
 //************************* Forward Declarations ***************************/
 
 
-static void SetMemOperands_Internal     (vector<MachineInstr*>& mvec,
-                                         vector<MachineInstr*>::iterator mvecI,
-                                         const InstructionNode* vmInstrNode,
-                                         Value* ptrVal,
-                                         std::vector<Value*>& idxVec,
-                                         bool allConstantIndices,
-                                         const TargetMachine& target);
-
-
 //************************ Internal Functions ******************************/
 
 
@@ -325,15 +316,15 @@ CreateConvertToIntInstr(Type::PrimitiveID destTID, Value* srcVal,Value* destVal)
   return M;
 }
 
-// CreateCodeToConvertIntToFloat: Convert FP value to signed or unsigned integer
+// CreateCodeToConvertFloatToInt: Convert FP value to signed or unsigned integer
 // The FP value must be converted to the dest type in an FP register,
 // and the result is then copied from FP to int register via memory.
 static void
-CreateCodeToConvertIntToFloat (const TargetMachine& target,
-                               Value* opVal,
-                               Instruction* destI,
-                               std::vector<MachineInstr*>& mvec,
-                               MachineCodeForInstruction& mcfi)
+CreateCodeToConvertFloatToInt(const TargetMachine& target,
+                              Value* opVal,
+                              Instruction* destI,
+                              std::vector<MachineInstr*>& mvec,
+                              MachineCodeForInstruction& mcfi)
 {
   // Create a temporary to represent the FP register into which the
   // int value will placed after conversion.  The type of this temporary
@@ -959,76 +950,19 @@ IsZero(Value* idx)
 
 static void
 SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
-                       vector<MachineInstr*>::iterator mvecI,
                        const InstructionNode* vmInstrNode,
                        const TargetMachine& target)
 {
-  GetElementPtrInst* memInst =
-    cast<GetElementPtrInst>(vmInstrNode->getInstruction());
-  
-  // Variables to hold the index vector and ptr value.
-  // The major work here is to extract these for all 3 instruction types
-  // and to try to fold chains of constant indices into a single offset.
-  // After that, we call SetMemOperands_Internal(), which creates the
-  // appropriate operands for the machine instruction.
+  Instruction* memInst = vmInstrNode->getInstruction();
+  vector<MachineInstr*>::iterator mvecI = mvec.end() - 1;
+
+  // Index vector, ptr value, and flag if all indices are const.
   vector<Value*> idxVec;
-  bool allConstantIndices = true;
-  Value* ptrVal = memInst->getPointerOperand();
+  bool allConstantIndices;
+  Value* ptrVal = GetMemInstArgs(vmInstrNode, idxVec, allConstantIndices);
 
-  // If there is a GetElemPtr instruction to fold in to this instr,
-  // it must be in the left child for Load and GetElemPtr, and in the
-  // right child for Store instructions.
-  InstrTreeNode* ptrChild = (vmInstrNode->getOpLabel() == Instruction::Store
-                             ? vmInstrNode->rightChild()
-                             : vmInstrNode->leftChild()); 
-
-  // Check if all indices are constant for this instruction
-  for (User::op_iterator OI=memInst->idx_begin(),OE=memInst->idx_end();
-       allConstantIndices && OI != OE; ++OI)
-    if (! isa<Constant>(*OI))
-      allConstantIndices = false; 
-
-  // If we have only constant indices, fold chains of constant indices
-  // in this and any preceding GetElemPtr instructions.
-  bool foldedGEPs = false;
-  if (allConstantIndices &&
-      (ptrChild->getOpLabel() == Instruction::GetElementPtr ||
-       ptrChild->getOpLabel() == GetElemPtrIdx))
-    if (Value* newPtr = FoldGetElemChain((InstructionNode*) ptrChild, idxVec)) {
-      ptrVal = newPtr;
-      foldedGEPs = true;
-    }
-
-  // Append the index vector of the current instruction, if any.
-  // Skip the leading [0] index if preceding GEPs were folded into this.
-  if (memInst->getNumIndices() > 0) {
-    assert((!foldedGEPs || IsZero(*memInst->idx_begin())) && "1st index not 0");
-    idxVec.insert(idxVec.end(),
-                  memInst->idx_begin() + foldedGEPs, memInst->idx_end());
-  }
-
-  // Now create the appropriate operands for the machine instruction
-  SetMemOperands_Internal(mvec, mvecI, vmInstrNode,
-                          ptrVal, idxVec, allConstantIndices, target);
-}
-
-
-// Generate the correct operands (and additional instructions if needed)
-// for the given pointer and given index vector.
-//
-static void
-SetMemOperands_Internal(vector<MachineInstr*>& mvec,
-                        vector<MachineInstr*>::iterator mvecI,
-                        const InstructionNode* vmInstrNode,
-                        Value* ptrVal,
-                        vector<Value*>& idxVec,
-                        bool allConstantIndices,
-                        const TargetMachine& target)
-{
-  GetElementPtrInst* memInst =
-    cast<GetElementPtrInst>(vmInstrNode->getInstruction());
-  
-  // Initialize so we default to storing the offset in a register.
+  // Now create the appropriate operands for the machine instruction.
+  // First, initialize so we default to storing the offset in a register.
   int64_t smallConstOffset = 0;
   Value* valueForRegOffset = NULL;
   MachineOperand::MachineOperandType offsetOpType =
@@ -1060,6 +994,7 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
                  && "Array refs must be lowered before Instruction Selection");
 
           Value* idxVal = idxVec[IsZero(idxVec[0])];
+          assert(! isa<Constant>(idxVal) && "Need to sign-extend uint to 64b!");
 
           vector<MachineInstr*> mulVec;
           Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
@@ -1080,6 +1015,9 @@ SetMemOperands_Internal(vector<MachineInstr*>& mvec,
                                mulVec,
                                MachineCodeForInstruction::get(memInst),
                                INVALID_MACHINE_OPCODE);
+
+          // Sign-extend the result of MUL  from 32 to 64 bits.
+          target.getInstrInfo().CreateSignExtensionInstructions(target, memInst->getParent()->getParent(), addr, /*srcSizeInBits*/32, addr, mulVec, MachineCodeForInstruction::get(memInst));
 
           // Insert mulVec[] before *mvecI in mvec[] and update mvecI
           // to point to the same instruction it pointed to before.
@@ -1333,7 +1271,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(new MachineInstr(
                          ChooseStoreInstruction(
                             subtreeRoot->leftChild()->getValue()->getType())));
-        SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
+        SetOperandsForMemInstr(mvec, subtreeRoot, target);
         break;
 
       case 5:	// stmt:   BrUncond
@@ -1531,8 +1469,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               forwardOperandNum = 0;          // forward first operand to user
           }
         else if (opType->isFloatingPoint())
-          CreateCodeToConvertIntToFloat(target, opVal, destI, mvec,
-                                        MachineCodeForInstruction::get(destI));
+          {
+            CreateCodeToConvertFloatToInt(target, opVal, destI, mvec,
+                                         MachineCodeForInstruction::get(destI));
+            maskUnsignedResult = true;  // not handled by convert code
+          }
         else
           assert(0 && "Unrecognized operand type for convert-to-unsigned");
 
@@ -1589,7 +1530,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               }
           }
         else if (opType->isFloatingPoint())
-          CreateCodeToConvertIntToFloat(target, opVal, destI, mvec, mcfi);
+          CreateCodeToConvertFloatToInt(target, opVal, destI, mvec, mcfi);
         else
           assert(0 && "Unrecognized operand type for convert-to-signed");
 
@@ -1975,11 +1916,9 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 51:	// reg:   Load(reg)
       case 52:	// reg:   Load(ptrreg)
-      case 53:	// reg:   LoadIdx(reg,reg)
-      case 54:	// reg:   LoadIdx(ptrreg,reg)
         mvec.push_back(new MachineInstr(ChooseLoadInstruction(
                                      subtreeRoot->getValue()->getType())));
-        SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
+        SetOperandsForMemInstr(mvec, subtreeRoot, target);
         break;
 
       case 55:	// reg:   GetElemPtr(reg)
@@ -1987,7 +1926,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // If the GetElemPtr was folded into the user (parent), it will be
         // caught above.  For other cases, we have to compute the address.
         mvec.push_back(new MachineInstr(ADD));
-        SetOperandsForMemInstr(mvec, mvec.end()-1, subtreeRoot, target);
+        SetOperandsForMemInstr(mvec, subtreeRoot, target);
         break;
         
       case 57:	// reg:  Alloca: Implement as 1 instruction:
@@ -2214,7 +2153,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       // we need to clear high bits of result value.
       assert(forwardOperandNum < 0 && "Need mask but no instruction generated");
       Instruction* dest = subtreeRoot->getInstruction();
-      if (! dest->getType()->isSigned())
+      if (dest->getType()->isUnsigned())
         {
           unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
           if (destSize < target.DataLayout.getIntegerRegize())
