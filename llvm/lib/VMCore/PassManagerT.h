@@ -208,7 +208,6 @@ public:
                                           E = LastUseOf.end(); I != E; ++I)
       LastUserOf[I->second].push_back(I->first);
 
-
     // Output debug information...
     if (Parent == 0) PMDebug::PerformPassStartupStuff(this);
 
@@ -397,6 +396,16 @@ public:
 
     if (I != CurrentAnalyses.end()) {
       LastUseOf[I->second] = User;    // Local pass, extend the lifetime
+
+      // Prolong live range of analyses that are needed after an analysis pass
+      // is destroyed, for querying by subsequent passes
+      AnalysisUsage AnUsage;
+      I->second->getAnalysisUsage(AnUsage);
+      const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
+      for (std::vector<AnalysisID>::const_iterator i = IDs.begin(),
+             e = IDs.end(); i != e; ++i)
+        markPassUsed(*i, User);
+
     } else {
       // Pass not in current available set, must be a higher level pass
       // available to us, propagate to parent pass manager...  We tell the
