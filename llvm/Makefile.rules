@@ -74,7 +74,7 @@ preconditions : $(PreConditions)
 #------------------------------------------------------------------------
 # Make sure the BUILT_SOURCES are built first
 #------------------------------------------------------------------------
-$(filter-out clean clean-local,UserTargets):: $(BUILT_SOURCES)
+$(filter-out clean clean-local,$(UserTargets)):: $(BUILT_SOURCES)
 
 clean-local::
 ifneq ($(strip $(BUILT_SOURCES)),)
