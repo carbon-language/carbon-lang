@@ -48,32 +48,6 @@ struct SparcV9InstrInfo : public TargetInstrInfo {
       return -1;
   }
 
-  /// createNOPinstr - returns the target's implementation of NOP, which is
-  /// usually a pseudo-instruction, implemented by a degenerate version of
-  /// another instruction, e.g. X86: xchg ax, ax; SparcV9: sethi 0, g0
-  ///
-  MachineInstr* createNOPinstr() const {
-    return BuildMI(V9::SETHI, 2).addZImm(0).addReg(SparcV9IntRegClass::g0);
-  }
-
-  /// isNOPinstr - not having a special NOP opcode, we need to know if a given
-  /// instruction is interpreted as an `official' NOP instr, i.e., there may be
-  /// more than one way to `do nothing' but only one canonical way to slack off.
-  ///
-  bool isNOPinstr(const MachineInstr &MI) const {
-    // Make sure the instruction is EXACTLY `sethi g0, 0'
-    if (MI.getOpcode() == V9::SETHI && MI.getNumOperands() == 2) {
-      const MachineOperand &op0 = MI.getOperand(0), &op1 = MI.getOperand(1);
-      if (op0.isImmediate() && op0.getImmedValue() == 0 &&
-          op1.getType() == MachineOperand::MO_MachineRegister &&
-          op1.getMachineRegNum() == SparcV9IntRegClass::g0)
-      {
-        return true;
-      }
-    }
-    return false;
-  }
-  
   virtual bool hasResultInterlock(MachineOpCode opCode) const
   {
     // All UltraSPARC instructions have interlocks (note that delay slots
