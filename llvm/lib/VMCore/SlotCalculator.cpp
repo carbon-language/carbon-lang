@@ -97,12 +97,62 @@ void SlotCalculator::processModule() {
     if (I->hasInitializer())
       getOrCreateSlot(I->getInitializer());
 
+#if 0
+  // FIXME: Empirically, this causes the bytecode files to get BIGGER, because
+  // it explodes the operand size numbers to be bigger than can be handled
+  // compactly, which offsets the ~40% savings in constant sizes.  Whoops.
+
+  // If we are emitting a bytecode file, scan all of the functions for their
+  // constants, which allows us to emit more compact modules.  This is optional,
+  // and is just used to compactify the constants used by different functions
+  // together.
+  if (!IgnoreNamedNodes) {
+    SC_DEBUG("Inserting function constants:\n");
+    for (Module::const_iterator F = TheModule->begin(), E = TheModule->end();
+         F != E; ++F)
+      for_each(constant_begin(F), constant_end(F),
+               bind_obj(this, &SlotCalculator::getOrCreateSlot));
+  }
+#endif
+
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
   //
   if (!IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");
     processSymbolTable(&TheModule->getSymbolTable());
+  }
+
+  // Now that we have collected together all of the information relevant to the
+  // module, compactify the type table if it is particularly big and outputting
+  // a bytecode file.  The basic problem we run into is that some programs have
+  // a large number of types, which causes the type field to overflow its size,
+  // which causes instructions to explode in size (particularly call
+  // instructions).  To avoid this behavior, we "sort" the type table so that
+  // all non-value types are pushed to the end of the type table, giving nice
+  // low numbers to the types that can be used by instructions, thus reducing
+  // the amount of explodage we suffer.
+  if (!IgnoreNamedNodes && Table[Type::TypeTyID].size() >= 64) {
+    // Scan through the type table moving value types to the start of the table.
+    TypePlane &Types = Table[Type::TypeTyID];
+    unsigned FirstNonValueTypeID = 0;
+    for (unsigned i = 0, e = Types.size(); i != e; ++i)
+      if (cast<Type>(Types[i])->isFirstClassType() ||
+          cast<Type>(Types[i])->isPrimitiveType()) {
+        // Check to see if we have to shuffle this type around.  If not, don't
+        // do anything.
+        if (i != FirstNonValueTypeID) {
+          // Swap the type ID's.
+          std::swap(Types[i], Types[FirstNonValueTypeID]);
+
+          // Keep the NodeMap up to date.
+          std::swap(NodeMap[Types[i]], NodeMap[Types[FirstNonValueTypeID]]);
+
+          // When we move a type, make sure to move its value plane as needed.
+          std::swap(Table[i], Table[FirstNonValueTypeID]);
+        }
+        ++FirstNonValueTypeID;
+      }
   }
 
   SC_DEBUG("end processModule!\n");
@@ -162,7 +212,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     // If there is a symbol table, it is possible that the user has names for
     // constants that are not being used.  In this case, we will have problems
     // if we don't emit the constants now, because otherwise we will get 
-    // symboltable references to constants not in the output.  Scan for these
+    // symbol table references to constants not in the output.  Scan for these
     // constants now.
     //
     processSymbolTableConstants(&F->getSymbolTable());
