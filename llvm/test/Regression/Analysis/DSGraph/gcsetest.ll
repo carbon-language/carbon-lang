@@ -20,12 +20,22 @@ implementation
 	ret %intpair* %C
 }
 
+int* %getp(%intpair* %P) {
+	%pp = getelementptr %intpair* %P, long 0, ubyte 0
+	%V = load int** %pp
+	ret int *%V
+}
+
+int* %getq(%intpair* %P) {
+	%pp = getelementptr %intpair* %P, long 0, ubyte 1
+	%V = load int** %pp
+	ret int *%V
+}
+
 int %test() {
 	%C = call %intpair* %alloc_pair()
-	%C1p = getelementptr %intpair* %C, long 0, ubyte 0
-	%C2p = getelementptr %intpair* %C, long 0, ubyte 1
-	%A = load int** %C1p
-	%B = load int** %C2p
+	%A = call int* %getp(%intpair* %C)
+	%B = call int* %getp(%intpair* %C)
 	%A1 = load int* %A
 
 	store int 123, int* %B  ; Store cannot alias %A
@@ -33,12 +43,6 @@ int %test() {
 	%A2 = load int* %A
 	%ELIM_x = sub int %A1, %A2
 	ret int %ELIM_x
-}
-
-int* %getp(%intpair* %P) {
-	%pp = getelementptr %intpair* %P, long 0, ubyte 0
-	%V = load int** %pp
-	ret int *%V
 }
 
 int %test2() {   ; Test context sensitivity
@@ -53,3 +57,13 @@ int %test2() {   ; Test context sensitivity
 	ret int %ELIM_x
 }
 
+int %test3() {
+	%C = call %intpair* %alloc_pair()
+	%P1 = call int* %getp(%intpair* %C)
+	%P2 = call int* %getq(%intpair* %C)
+	%X = load int* %P1
+	store int 7, int* %P2
+	%Y = load int* %P1
+	%ELIM_x = sub int %X, %Y   ; Check field sensitivity
+	ret int %ELIM_x
+}
