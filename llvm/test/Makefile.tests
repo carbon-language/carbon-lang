@@ -1,6 +1,6 @@
-## -*-Makefile-*-
-##------------------------------------------------------------------------
-## Common rules for generating, linking, and compiling via LLVM.
+##-----------------------------------------------------------*-Makefile-*-
+## Common rules for generating, linking, and compiling via LLVM.  This is
+## used to implement a robust testing framework for LLVM
 ##------------------------------------------------------------------------
 
 ## NOTE: This is preliminary and will change in the future
@@ -10,8 +10,8 @@ include ${LEVEL}/Makefile.common
 
 .PHONY: clean default
 
-## keep %.linked.bc and %.s from being deleted while we're debugging
-.PRECIOUS: %.bc %.s %.ll
+## keep %.bc and %.s from being deleted while we're debugging
+.PRECIOUS: Output/%.bc Output/%.ll %.s Output/.dir
 
 
 TOOLS    = $(LEVEL)/tools/Debug
@@ -25,16 +25,16 @@ LLINK    = $(TOOLS)/link
 LLCFLAGS =
 
 LCC      = /home/vadve/lattner/cvs/gcc_install/bin/gcc
-LCFLAGS  = -O2 $(LOCAL_LCFLAGS) -Wall
+LCFLAGS  += -O2 -Wall
 
 LLCLIB   = $(LEVEL)/test/runtime.o
-LIBS     = $(LLCLIB) $(LOCAL_LIBS)
+LIBS    += $(LLCLIB)
 
 ifeq ($(TRACE), yes)
-    LLCFLAGS := $(LLCFLAGS) -trace
+    LLCFLAGS += -trace
 endif
 ifeq ($(TRACEM), yes)
-    LLCFLAGS := $(LLCFLAGS) -tracem
+    LLCFLAGS += -tracem
 endif
 
 NATGCC  = /usr/dcs/software/supported/bin/gcc
@@ -42,32 +42,8 @@ NATGCC  = /usr/dcs/software/supported/bin/gcc
 CC      = /opt/SUNWspro/bin/cc
 AS	= /opt/SUNWspro/bin/cc
 DIS     = /usr/ccs/bin/dis
-CP	= /bin/cp -p
-CFLAGS  = -g -xarch=v9 $(LOCAL_CFLAGS)
-CCFLAGS = $(CFLAGS)
-LDFLAGS = $(CFLAGS) $(LOCAL_LDFLAGS)
-ASFLAGS = -c $(CFLAGS)
-
-## Special targets to build a program from multiple source files
-## 
-ifdef PROG
-
-  default:    $(PROG) $(PROG).native
-
-  ifeq ($(strip $(OBJS)),)
-    BCOBJS = $(PROG).bc
-  else
-    BCOBJS = $(OBJS:.o=.bc)
-  endif
-
-  $(PROG).linked.bc: $(BCOBJS)
-	$(LLINK) -f $(BCOBJS) -o $(PROG).tmp.bc
-	$(LOPT) -cleangcc -raise -constprop -dce $(PROG).tmp.bc -o $@ -f
-	$(RM) $(PROG).tmp.bc
-
-  $(PROG).native: $(OBJS:.o=.c)
-	$(CC) $(OBJS:.o=.c) -g $(LOCAL_LCFLAGS) $(CFLAGS) -lm -o $@
-endif
+CP	= /bin/cp -f
+CFLAGS  += -g -xarch=v9
 
 ## Special target to force target-dependent library to be compiled
 ## directly to native code.
@@ -75,11 +51,12 @@ endif
 $(LLCLIB): $(LLCLIB:.o=.c)
 	cd $(LEVEL)/test; $(MAKE) $(@F)
 
-runtime.o: runtime.c
-	$(CC) -c $(CCFLAGS) $<
+#runtime.o: runtime.c
+#	$(CC) -c $(CCFLAGS) $<
 
 clean ::
-	$(RM) *.bc *.mc *.s *.o a.out core $(PROG) $(PROG).native
+	$(RM) *.bc *.mc *.s *.o a.out core
+	$(RM) -rf Output/
 
 %.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
@@ -90,23 +67,20 @@ clean ::
 
 
 ## FIXME: LIBS should be specified, not hardcoded to -lm
-%.native: %.c
-	$(NATGCC) $+ -lm -o $@
+#Output/%.native: %.c Output/.dir
+#	$(NATGCC) $+ -lm -o $@
 
-%.ll: %.c $(LCC)
+Output/%.ll: %.c $(LCC) Output/.dir
 	$(LCC) $(LCFLAGS) -S $< -o $@
 
 %.bc: %.ll $(LAS)
 	$(LAS) $< -o $@
 
-%.linked.bc: %.bc
-	$(CP) $< $@
+#%.s: %.linked.bc
+#	$(LLC) -f $(LCFLAGS) $< -o $@
 
-%.s: %.linked.bc
-	$(LLC) -f $(LLCFLAGS) $< -o $@
-
-%: %.o $(LIBS)
-	$(CC) $(LDFLAGS) $< $(LIBS) -o $@
+#%: %.o $(LIBS)
+#	$(CC) $(LDFLAGS) $< $(LIBS) -o $@
 
 
 ## Cancel built-in implicit rules that override above rules
