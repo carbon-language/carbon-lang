@@ -58,12 +58,14 @@ Pass *createScalarReplAggregatesPass() { return new SROA(); }
 
 
 bool SROA::runOnFunction(Function &F) {
-  bool Changed = false, LocalChange;
-  do {
-    LocalChange = performScalarRepl(F);
-    LocalChange |= performPromotion(F);
-    Changed |= LocalChange;
-  } while (LocalChange);
+  bool Changed = performPromotion(F);
+  while (1) {
+    bool LocalChange = performScalarRepl(F);
+    if (!LocalChange) break;   // No need to repromote if no scalarrepl
+    Changed = true;
+    LocalChange = performPromotion(F);
+    if (!LocalChange) break;   // No need to re-scalarrepl if no promotion
+  }
 
   return Changed;
 }
@@ -75,7 +77,7 @@ bool SROA::performPromotion(Function &F) {
 
   BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
 
-  bool Changed  = false;
+  bool Changed = false;
   
   while (1) {
     Allocas.clear();
