@@ -19,6 +19,9 @@
 //       shifts are performed first, then or's, then and's, then xor's.
 //    3. SetCC instructions are converted from <,>,<=,>= to ==,!= if possible
 //    4. All SetCC instructions on boolean values are replaced with logical ops
+//    5. add X, X is represented as (X*2) => (X << 1)
+//    6. Multiplies with a power-of-two constant argument are transformed into
+//       shifts.
 //    N. This list is incomplete
 //
 //===----------------------------------------------------------------------===//
@@ -272,6 +275,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (RHS == Constant::getNullValue(I.getType()))
     return ReplaceInstUsesWith(I, LHS);
 
+  // Convert 'add X, X' to 'shl X, 1'
+  if (LHS == RHS && I.getType()->isInteger())
+    return new ShiftInst(Instruction::Shl, LHS,
+                         ConstantInt::get(Type::UByteTy, 1));
+
   // -A + B  -->  B - A
   if (Value *V = dyn_castNegVal(LHS))
     return BinaryOperator::create(Instruction::Sub, RHS, V);
@@ -390,6 +398,14 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // Simplify mul instructions with a constant RHS...
   if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+
+      // ((X << C1)*C2) == (X * (C2 << C1))
+      if (ShiftInst *SI = dyn_cast<ShiftInst>(Op0))
+        if (SI->getOpcode() == Instruction::Shl)
+          if (Constant *ShOp = dyn_cast<Constant>(SI->getOperand(1)))
+            return BinaryOperator::create(Instruction::Mul, SI->getOperand(0),
+                                          *CI << *ShOp);
+
       const Type *Ty = CI->getType();
       int64_t Val = (int64_t)cast<ConstantInt>(CI)->getRawValue();
       switch (Val) {
@@ -399,8 +415,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Op1);  // Eliminate 'mul double %X, 0'
       case 1:
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul int %X, 1'
-      case 2:                     // Convert 'mul int %X, 2' to 'add int %X, %X'
-        return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
       }
 
       if (uint64_t C = Log2(Val))            // Replace X*(2^C) with X << C
@@ -902,6 +916,14 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         (!Op0->getType()->isSigned() || isLeftShift))
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
 
+    // ((X*C1) << C2) == (X * (C1 << C2))
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
+      if (BO->getOpcode() == Instruction::Mul && isLeftShift)
+        if (Constant *BOOp = dyn_cast<Constant>(BO->getOperand(1)))
+          return BinaryOperator::create(Instruction::Mul, BO->getOperand(0),
+                                        *BOOp << *CUI);
+    
+
     // If the operand is an bitwise operator with a constant RHS, and the
     // shift is the only use, we can pull it out of the shift.
     if (Op0->use_size() == 1)
@@ -989,12 +1011,6 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           }
         }
       }
-
-    // Check to see if we are shifting left by 1.  If so, turn it into an add
-    // instruction.
-    if (isLeftShift && CUI->equalsInt(1))
-      // Convert 'shl int %X, 1' to 'add int %X, %X'
-      return BinaryOperator::create(Instruction::Add, Op0, Op0, I.getName());
   }
 
   return 0;
