@@ -17,11 +17,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Linker.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
-#include "llvm/Constants.h"
+#include "llvm/Assembly/Writer.h"
 
 namespace llvm {
 
@@ -239,7 +240,11 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
         const Type *T1 = cast<Type>(VM.find(Name)->second);
         const Type *T2 = cast<Type>(DestST->lookup(Type::TypeTy, Name));
         std::cerr << "WARNING: Type conflict between types named '" << Name
-                  <<  "'.\n    Src='" << *T1 << "'.\n   Dest='" << *T2 << "'\n";
+                  <<  "'.\n    Src='";
+        WriteTypeSymbolic(std::cerr, T1, Src);
+        std::cerr << "'.\n   Dest='";
+        WriteTypeSymbolic(std::cerr, T2, Dest);
+        std::cerr << "'\n";
 
         // Remove the symbol name from the destination.
         DelayedTypesToResolve.pop_back();
