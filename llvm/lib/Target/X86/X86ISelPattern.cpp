@@ -370,6 +370,7 @@ namespace {
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
     bool TryToFoldLoadOpStore(SDNode *Node);
 
+    bool EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg);
     void EmitCMP(SDOperand LHS, SDOperand RHS, bool isOnlyUse);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
     void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
@@ -1141,6 +1142,84 @@ void ISel::EmitFoldedLoad(SDOperand Op, X86AddressMode &AM) {
     assert(0 && "Load emitted more than once!");
 }
 
+// EmitDoubleShift - Pattern match the expression (Op1|Op2), where we know that
+// op1 and op2 are i32 values with one use each (the or).  If we can form a SHLD
+// or SHRD, emit the instruction (generating the value into DestReg) and return
+// true.
+bool ISel::EmitDoubleShift(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
+  if (Op1.getOpcode() == ISD::SHL && Op2.getOpcode() == ISD::SRL) {
+    // good!
+  } else if (Op2.getOpcode() == ISD::SHL && Op1.getOpcode() == ISD::SRL) {
+    std::swap(Op1, Op2);  // Op1 is the SHL now.
+  } else {
+    return false;  // No match
+  }
+
+  SDOperand ShlVal = Op1.getOperand(0);
+  SDOperand ShlAmt = Op1.getOperand(1);
+  SDOperand ShrVal = Op2.getOperand(0);
+  SDOperand ShrAmt = Op2.getOperand(1);
+
+  // Find out if ShrAmt = 32-ShlAmt  or  ShlAmt = 32-ShrAmt.
+  if (ShlAmt.getOpcode() == ISD::SUB && ShlAmt.getOperand(1) == ShrAmt)
+    if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShlAmt.getOperand(0)))
+      if (SubCST->getValue() == 32) {
+        // (A >> ShrAmt) | (B << (32-ShrAmt)) ==> SHRD A, B, ShrAmt
+        unsigned AReg, BReg;
+        if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
+          AReg = SelectExpr(ShrVal);
+          BReg = SelectExpr(ShlVal);
+        } else {
+          BReg = SelectExpr(ShlVal);
+          AReg = SelectExpr(ShrVal);
+        }
+        unsigned ShAmt = SelectExpr(ShrAmt);
+        BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
+        BuildMI(BB, X86::SHRD32rrCL,2,DestReg).addReg(AReg).addReg(BReg);
+        return true;
+      }
+
+  if (ShrAmt.getOpcode() == ISD::SUB && ShrAmt.getOperand(1) == ShlAmt)
+    if (ConstantSDNode *SubCST = dyn_cast<ConstantSDNode>(ShrAmt.getOperand(0)))
+      if (SubCST->getValue() == 32) {
+        // (A << ShlAmt) | (B >> (32-ShlAmt)) ==> SHLD A, B, ShrAmt
+        unsigned AReg, BReg;
+        if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
+          AReg = SelectExpr(ShrVal);
+          BReg = SelectExpr(ShlVal);
+        } else {
+          BReg = SelectExpr(ShlVal);
+          AReg = SelectExpr(ShrVal);
+        }
+        unsigned ShAmt = SelectExpr(ShlAmt);
+        BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(ShAmt);
+        BuildMI(BB, X86::SHLD32rrCL,2,DestReg).addReg(AReg).addReg(BReg);
+        return true;
+      }
+
+  if (ConstantSDNode *ShrCst = dyn_cast<ConstantSDNode>(ShrAmt))
+    if (ConstantSDNode *ShlCst = dyn_cast<ConstantSDNode>(ShlAmt))
+      if (ShrCst->getValue() < 32 && ShlCst->getValue() < 32) {
+        if (ShrCst->getValue() == 32-ShlCst->getValue()) {
+          // (A >> 5) | (B << 27) --> SHRD A, B, 5
+          unsigned AReg, BReg;
+          if (getRegPressure(ShlVal) > getRegPressure(ShrVal)) {
+            AReg = SelectExpr(ShrVal);
+            BReg = SelectExpr(ShlVal);
+          } else {
+            BReg = SelectExpr(ShlVal);
+            AReg = SelectExpr(ShrVal);
+          }
+          BuildMI(BB, X86::SHRD32rri8, 3, DestReg).addReg(AReg).addReg(BReg)
+            .addImm(ShrCst->getValue());
+          return true;
+        }
+      }
+
+
+  return false;
+}
+
 unsigned ISel::SelectExpr(SDOperand N) {
   unsigned Result;
   unsigned Tmp1, Tmp2, Tmp3;
@@ -1658,7 +1737,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Op0 = Node->getOperand(0);
     Op1 = Node->getOperand(1);
 
-    if (Node->getOpcode() == ISD::SUB && MVT::isInteger(N.getValueType()))
+    if (Node->getOpcode() == ISD::OR && N.getValueType() == MVT::i32 &&
+        Op0.hasOneUse() && Op1.hasOneUse())          // Match SHLD and SHRD.
+      if (EmitDoubleShift(Op0, Op1, Result))
+        return Result;
+
+    if (Node->getOpcode() == ISD::SUB)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(0)))
         if (CN->isNullValue()) {   // 0 - N -> neg N
           switch (N.getValueType()) {
