@@ -14,3 +14,8 @@ distclean:: clean
 	                  $(LEVEL)/config.log \
 	                  $(LEVEL)/TAGS
 
+AUTOCONF = autoconf
+
+configure: autoconf/configure.ac
+	cd autoconf && $(AUTOCONF) -o ../configure configure.ac
+
