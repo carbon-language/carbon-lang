@@ -53,23 +53,6 @@ static void DestroyFirstNodeOfPair(DSNode *N1, DSNode *N2) {
     assert(RanOnce && "Node on user set but cannot find the use!");
   }
 
-  // If we are about to eliminate a call node that returns a pointer, make the
-  // shadow node it points to not be critical anymore!
-  //
-  if (isa<CallDSNode>(N1) && N1->getNumLinks()) {
-    assert(N1->getNumLinks() == 1 && "Call node can only return one pointer!");
-    PointerValSet &PVS = N1->getLink(0);
-    
-    for (unsigned i = 0, e = PVS.size(); i != e; ++i)
-      if (ShadowDSNode *Shad = dyn_cast<ShadowDSNode>(PVS[i].Node))
-        if (Shad->isCriticalNode()) {
-          Shad->resetCriticalMark();  // Only unmark _ONE_ node..
-          break;
-        }
-
-  }
-
-
   N1->removeAllIncomingEdges();
   delete N1;
 }
@@ -80,9 +63,10 @@ static void DestroyFirstNodeOfPair(DSNode *N1, DSNode *N2) {
 //
 static bool isIndistinguishableNode(DSNode *DN) {
   if (DN->getReferrers().empty()) {       // No referrers...
-    if (isa<ShadowDSNode>(DN) || isa<AllocDSNode>(DN))
+    if (isa<ShadowDSNode>(DN) || isa<AllocDSNode>(DN)) {
+      delete DN;
       return true;  // Node is trivially dead
-    else
+    } else
       return false;
   }
   
@@ -328,17 +312,30 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
       }
   }
 
-  // Loop over the global nodes, removing nodes that have no edges into them.
-  //
+  // Loop over the global nodes, removing nodes that have no edges into them or
+  // out of them.
+  // 
   for (std::vector<GlobalDSNode*>::iterator I = GlobalNodes.begin();
        I != GlobalNodes.end(); )
-    if ((*I)->getReferrers().empty()) {       // No referrers...
-      delete *I;
-      I = GlobalNodes.erase(I);                     // Remove the node...
-      Changed = true;
+    if ((*I)->getReferrers().empty()) {
+      GlobalDSNode *GDN = *I;
+      bool NoLinks = true;    // Make sure there are no outgoing links...
+      for (unsigned i = 0, e = GDN->getNumLinks(); i != e; ++i)
+        if (!GDN->getLink(i).empty()) {
+          NoLinks = false;
+          break;
+        }
+      if (NoLinks) {
+        delete GDN;
+        I = GlobalNodes.erase(I);                     // Remove the node...
+        Changed = true;
+      } else {
+        ++I;
+      }
     } else {
       ++I;
     }
+  
   return Changed;
 }
 

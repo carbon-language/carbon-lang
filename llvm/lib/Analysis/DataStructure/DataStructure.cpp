@@ -56,7 +56,7 @@ void DataStructure::print(std::ostream &O, Module *M) const {
     if (!(*I)->isExternal()) {
 
       string Filename = "ds." + (*I)->getName() + ".dot";
-      O << "Writing '" << Filename << "'...\n";
+      O << "Writing '" << Filename << "'...";
       ofstream F(Filename.c_str());
       if (F.good()) {
         F << "digraph DataStructures {\n"
@@ -72,9 +72,12 @@ void DataStructure::print(std::ostream &O, Module *M) const {
       } else {
         O << "  error opening file for writing!\n";
       }
-      
-      O << (*I)->getName() << " " << getDSGraph(*I).getGraphSize() << " "
-        << getClosedDSGraph(*I).getGraphSize() << "\n";
+
+      if (Time) 
+        O << " [" << getDSGraph(*I).getGraphSize() << ", "
+          << getClosedDSGraph(*I).getGraphSize() << "]\n";
+      else
+        O << "\n";
     }
 }
 

@@ -100,6 +100,8 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
   NI = std::find_if(CallNodes.begin(), CallNodes.end(), isResolvableCallNode);
   while (NI != CallNodes.end()) {
     CallDSNode *CN = *NI;
+    // FIXME: This should work based on the pointer val set of the first arg
+    // link (which is the function to call)
     Function *F = CN->getCall()->getCalledFunction();
 
     if (NumInlines++ == 100) {      // CUTE hack huh?
@@ -181,14 +183,14 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
                                   RetVals));
 
       // If the call node has arguments, process them now!
-      assert(Args.size() == CN->getNumArgs() &&
+      assert(Args.size() == CN->getNumArgs()-1 &&
              "Call node doesn't match function?");
 
       for (unsigned i = 0, e = Args.size(); i != e; ++i) {
         // Now we make all of the nodes inside of the incorporated method
         // point to the real arguments values, not to the shadow nodes for the
         // argument.
-        ResolveNodesTo(Args[i], CN->getArgValues(i));
+        ResolveNodesTo(Args[i], CN->getArgValues(i+1));
       }
 
       // Loop through the nodes, deleting alloca nodes in the inlined function.
@@ -230,5 +232,19 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
     
     // Move on to the next call node...
     NI = std::find_if(CallNodes.begin(), CallNodes.end(), isResolvableCallNode);
+  }
+
+  // Drop references to globals...
+  CallMap.clear();
+
+  bool Changed = true;
+  while (Changed) {
+    // Eliminate shadow nodes that are not distinguishable from some other
+    // node in the graph...
+    //
+    Changed = UnlinkUndistinguishableNodes();
+
+    // Eliminate shadow nodes that are now extraneous due to linking...
+    Changed |= RemoveUnreachableNodes();
   }
 }

@@ -69,7 +69,7 @@ void InitVisitor::visitCallInst(CallInst *CI) {
     // Create a critical shadow node to represent the memory object that the
     // return value points to...
     ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
-                                          Func->getParent(), true);
+                                          Func->getParent());
     Rep->ShadowNodes.push_back(Shad);
     
     // The return value of the function is a pointer to the shadow value
@@ -88,7 +88,7 @@ void InitVisitor::visitCallInst(CallInst *CI) {
   // Loop over all of the operands of the call instruction (except the first
   // one), to look for global variable references...
   //
-  for_each(CI->op_begin()+1, CI->op_end(),   // Skip first arg
+  for_each(CI->op_begin(), CI->op_end(),
            bind_obj(this, &InitVisitor::visitOperand));
 }
 
@@ -150,7 +150,7 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
       // Add a shadow value for it to represent what it is pointing to and add
       // this to the value map...
       ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
-                                            Func->getParent(), true);
+                                            Func->getParent());
       ShadowNodes.push_back(Shad);
       ValueMap[Arg].add(PointerVal(Shad), Arg);
       
@@ -296,12 +296,8 @@ void FunctionRepBuilder::visitStoreInst(StoreInst *SI) {
 
 void FunctionRepBuilder::visitCallInst(CallInst *CI) {
   CallDSNode *DSN = CallMap[CI];
-   
-  unsigned PtrNum = 0, i = 0;
-  if (isa<Function>(CI->getOperand(0)))
-    ++i;          // Not an Indirect function call? Skip the function pointer...
-
-  for (unsigned e = CI->getNumOperands(); i != e; ++i)
+  unsigned PtrNum = 0;
+  for (unsigned i = 0, e = CI->getNumOperands(); i != e; ++i)
     if (isa<PointerType>(CI->getOperand(i)->getType()))
       DSN->addArgValue(PtrNum++, ValueMap[CI->getOperand(i)]);
 }
@@ -332,6 +328,22 @@ FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
   CallNodes   = Builder.getCallNodes();
   RetNode     = Builder.getRetNode();
   ValueMap    = Builder.getValueMap();
+
+  // Remove all entries in the value map that consist of global values pointing
+  // at things.  They can only point to their node, so there is no use keeping
+  // them.
+  //
+  for (map<Value*, PointerValSet>::iterator I = ValueMap.begin(),
+         E = ValueMap.end(); I != E;)
+    if (isa<GlobalValue>(I->first)) {
+#if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
+      I = ValueMap.erase(I);
+#else
+      ValueMap.erase(I);            // This is really lame.
+      I = ValueMap.begin();         // GCC's stdc++ lib doesn't return an it!
+#endif
+    } else
+      ++I;
 
   bool Changed = true;
   while (Changed) {

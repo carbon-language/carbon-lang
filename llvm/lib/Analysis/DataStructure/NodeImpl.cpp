@@ -40,8 +40,8 @@ bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
 //
 bool CallDSNode::isEquivalentTo(DSNode *Node) const {
   if (CallDSNode *C = dyn_cast<CallDSNode>(Node)) {
-    if (C->CI->getCalledFunction() != CI->getCalledFunction() ||
-        getReferrers().size() != C->getReferrers().size())
+    if (getReferrers().size() != C->getReferrers().size() ||
+        C->getType() != getType())
       return false; // Quick check...
 
     // Check that the outgoing links are identical...
@@ -70,7 +70,6 @@ bool CallDSNode::isEquivalentTo(DSNode *Node) const {
 //
 bool ShadowDSNode::isEquivalentTo(DSNode *Node) const {
   return getType() == Node->getType();
-  return !isCriticalNode();              // Must not be a critical node...
 }
 
 
@@ -237,31 +236,31 @@ GlobalDSNode::GlobalDSNode(GlobalValue *V)
 
 string GlobalDSNode::getCaption() const {
   stringstream OS;
+  if (isa<Function>(Val))
+    OS << "fn ";
+  else
+    OS << "global ";
+
   WriteTypeSymbolic(OS, getType(), Val->getParent());
-  return "global " + OS.str() + " %" + Val->getName();
+  return OS.str() + " %" + Val->getName();
 }
 
 
-ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, bool C = false)
-  : DSNode(ShadowNode, Ty) {
+ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M) : DSNode(ShadowNode, Ty) {
   Mod = M;
   ShadowParent = 0;
-  CriticalNode = C;
 }
 
 ShadowDSNode::ShadowDSNode(const Type *Ty, Module *M, ShadowDSNode *ShadParent)
   : DSNode(ShadowNode, Ty) {
   Mod = M;
   ShadowParent = ShadParent;
-  CriticalNode = false;
 }
 
 std::string ShadowDSNode::getCaption() const {
   stringstream OS;
-  if (CriticalNode) OS << "# ";
   OS << "shadow ";
   WriteTypeSymbolic(OS, getType(), Mod);
-  if (CriticalNode) OS << " #";
   return OS.str();
 }
 
@@ -281,10 +280,7 @@ void ShadowDSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap,
 
 CallDSNode::CallDSNode(CallInst *ci) : DSNode(CallNode, ci->getType()), CI(ci) {
   unsigned NumPtrs = 0;
-  if (!isa<Function>(ci->getOperand(0)))
-    NumPtrs++;   // Include the method pointer...
-
-  for (unsigned i = 1, e = ci->getNumOperands(); i != e; ++i)
+  for (unsigned i = 0, e = ci->getNumOperands(); i != e; ++i)
     if (isa<PointerType>(ci->getOperand(i)->getType()))
       NumPtrs++;
   ArgLinks.resize(NumPtrs);
@@ -334,7 +330,7 @@ void FunctionDSGraph::printFunction(std::ostream &O,
   O << "\n";
   for (std::map<Value*, PointerValSet>::const_iterator I = ValueMap.begin(),
          E = ValueMap.end(); I != E; ++I) {
-    if (I->second.size()) {  // Only output nodes with edges...
+    if (I->second.size()) {             // Only output nodes with edges...
       stringstream OS;
       WriteTypeSymbolic(OS, I->first->getType(), Func->getParent());
 
