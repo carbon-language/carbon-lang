@@ -49,8 +49,7 @@ LibPathsO = -L $(LEVEL)/lib/Support/Release \
             -L $(LEVEL)/lib/Optimizations/Release \
             -L $(LEVEL)/lib/CodeGen/InstrSelection/Release \
             -L $(LEVEL)/lib/CodeGen/TargetMachine/Release \
-            -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release \
-            -L $(LEVEL)/lib/LLC/Release
+            -L $(LEVEL)/lib/CodeGen/TargetMachine/Sparc/Release
 
 LibPathsG = $(LibPathsO:Release=Debug)
 
