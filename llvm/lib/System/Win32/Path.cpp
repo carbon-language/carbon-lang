@@ -244,14 +244,6 @@ Path::isBytecodeFile() const {
 }
 
 bool
-Path::isArchive() const {
-  if (readable()) {
-    return hasMagicNumber("!<arch>\012");
-  }
-  return false;
-}
-
-bool
 Path::exists() const {
   DWORD attr = GetFileAttributes(path.c_str());
   return attr != INVALID_FILE_ATTRIBUTES;

@@ -97,7 +97,7 @@ void* MappedFile::map() {
   return base_;
 }
 
-size_t MappedFile::size() {
+size_t MappedFile::size() const {
   assert(info_ && "MappedFile not initialized");
   return info_->size;
 }
