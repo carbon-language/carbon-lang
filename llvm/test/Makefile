@@ -126,6 +126,7 @@ check:: site.exp
 
 clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test/Regression -name Output -type d -print`
+	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test/Feature -name Output -type d -print`
 
 site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo 'Making a new site.exp file...'
