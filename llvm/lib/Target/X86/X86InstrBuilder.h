@@ -27,7 +27,7 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
                                                unsigned Reg) {
   // Because memory references are always represented with four
   // values, this adds: Reg, [1, NoReg, 0] to the instruction.
-  return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(0);
+  return MIB.addReg(Reg).addZImm(1).addReg(0).addSImm(0);
 }
 
 
@@ -37,7 +37,7 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
 ///
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
                                                unsigned Reg, int Offset) {
-  return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(Offset);
+  return MIB.addReg(Reg).addZImm(1).addReg(0).addSImm(Offset);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of
@@ -47,7 +47,7 @@ inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
 ///
 inline const MachineInstrBuilder &
 addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
-  return MIB.addFrameIndex(FI).addZImm(1).addMReg(0).addSImm(Offset);
+  return MIB.addFrameIndex(FI).addZImm(1).addReg(0).addSImm(Offset);
 }
 
 /// addConstantPoolReference - This function is used to add a reference to the
@@ -59,7 +59,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
 			 int Offset = 0) {
-  return MIB.addConstantPoolIndex(CPI).addZImm(1).addMReg(0).addSImm(Offset);
+  return MIB.addConstantPoolIndex(CPI).addZImm(1).addReg(0).addSImm(Offset);
 }
 
 #endif
