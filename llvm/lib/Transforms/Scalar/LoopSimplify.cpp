@@ -162,21 +162,31 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   // incoming edges in BB into new PHI nodes in NewBB.
   //
   if (!Preds.empty()) {  // Is the loop not obviously dead?
-    for (BasicBlock::iterator I = BB->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-      
-      // Create the new PHI node, insert it into NewBB at the end of the block
-      PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
-        
-      // Move all of the edges from blocks outside the loop to the new PHI
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-        Value *V = PN->removeIncomingValue(Preds[i]);
-        NewPHI->addIncoming(V, Preds[i]);
+    if (Preds.size() == 1) {
+      // No need to insert one operand PHI nodes!  Instead, just update the
+      // incoming block ID's.
+      for (BasicBlock::iterator I = BB->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+        unsigned i = PN->getBasicBlockIndex(Preds[0]);
+        PN->setIncomingBlock(i, NewBB);
       }
-      
-      // Add an incoming value to the PHI node in the loop for the preheader
-      // edge
-      PN->addIncoming(NewPHI, NewBB);
+    } else {
+      for (BasicBlock::iterator I = BB->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+        
+        // Create the new PHI node, insert it into NewBB at the end of the block
+        PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
+        
+        // Move all of the edges from blocks outside the loop to the new PHI
+        for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+          Value *V = PN->removeIncomingValue(Preds[i]);
+          NewPHI->addIncoming(V, Preds[i]);
+        }
+        
+        // Add an incoming value to the PHI node in the loop for the preheader
+        // edge.
+        PN->addIncoming(NewPHI, NewBB);
+      }
     }
     
     // Now that the PHI nodes are updated, actually move the edges from
