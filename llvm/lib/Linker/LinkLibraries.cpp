@@ -2,7 +2,7 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencerand is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the 
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
