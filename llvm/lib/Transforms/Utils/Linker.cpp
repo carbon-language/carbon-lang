@@ -463,11 +463,16 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                    "' have different linkage specifiers!");
     } else if (SGV->hasExternalLinkage()) {
       // Allow linking two exactly identical external global variables...
-      if (SGV->isConstant() != DGV->isConstant() ||
-          SGV->getInitializer() != DGV->getInitializer())
+      if (SGV->isConstant() != DGV->isConstant())
         return Error(Err, "Global Variable Collision on '" + 
                      SGV->getType()->getDescription() + " %" + SGV->getName() +
                      "' - Global variables differ in const'ness");
+
+      if (SGV->getInitializer() != DGV->getInitializer())
+        return Error(Err, "Global Variable Collision on '" + 
+                     SGV->getType()->getDescription() + " %" + SGV->getName() +
+                    "' - External linkage globals have different initializers");
+
       ValueMap.insert(std::make_pair(SGV, DGV));
     } else if (SGV->hasLinkOnceLinkage()) {
       // If the global variable has a name, and that name is already in use in
