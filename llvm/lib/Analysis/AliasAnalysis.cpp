@@ -165,7 +165,7 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
   if (const Instruction *I = dyn_cast<CastInst>(V1))
     return alias(I->getOperand(0), V2);
   if (const Instruction *I = dyn_cast<CastInst>(V2))
-    return alias(I->getOperand(0), V1);
+    return alias(V1, I->getOperand(0));
 
   // If we have two gep instructions with identical indices, return an alias
   // result equal to the alias result of the original pointer...
@@ -197,7 +197,7 @@ AliasAnalysis::Result BasicAliasAnalysis::alias(const Value *V1,
         // doesn't tell us anything.
         //
         if (AllConstant &&
-            alias(GEP1->getOperand(0), GEP2->getOperand(1)) != MayAlias)
+            alias(GEP1->getOperand(0), GEP2->getOperand(0)) != MayAlias)
             return NoAlias;
       }
 
