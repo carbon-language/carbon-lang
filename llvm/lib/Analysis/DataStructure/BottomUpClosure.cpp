@@ -61,6 +61,15 @@ bool BUDataStructures::runOnModule(Module &M) {
 
   NumCallEdges += ActualCallees.size();
 
+  // If we computed any temporary indcallgraphs, free them now.
+  for (std::map<std::vector<Function*>,
+         std::pair<DSGraph*, std::vector<DSNodeHandle> > >::iterator I =
+         IndCallGraphMap.begin(), E = IndCallGraphMap.end(); I != E; ++I) {
+    I->second.second.clear();  // Drop arg refs into the graph.
+    delete I->second.first;
+  }
+  IndCallGraphMap.clear();
+
   // At the end of the bottom-up pass, the globals graph becomes complete.
   // FIXME: This is not the right way to do this, but it is sorta better than
   // nothing!  In particular, externally visible globals and unresolvable call
@@ -265,10 +274,11 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
   DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
 
   bool Printed = false;
+  std::vector<Function*> CalledFuncs;
   while (!TempFCs.empty()) {
     DSCallSite &CS = *TempFCs.begin();
 
-    std::set<Function*> CalledFuncs;
+    CalledFuncs.clear();
 
     if (CS.isDirectCall()) {
       Function *F = CS.getCalleeFunc();
@@ -277,7 +287,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
           TempFCs.erase(TempFCs.begin());
           continue;
         } else {
-          CalledFuncs.insert(F);
+          CalledFuncs.push_back(F);
         }
     } else {
       DSNode *Node = CS.getCalleeNode();
@@ -286,76 +296,107 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         for (unsigned i = 0, e = Node->getGlobals().size(); i != e; ++i)
           if (Function *CF = dyn_cast<Function>(Node->getGlobals()[i]))
             if (isResolvableFunc(CF) && !CF->isExternal())
-              CalledFuncs.insert(CF);
+              CalledFuncs.push_back(CF);
     }
 
     if (CalledFuncs.empty()) {
       // Remember that we could not resolve this yet!
       AuxCallsList.splice(AuxCallsList.end(), TempFCs, TempFCs.begin());
       continue;
-    } else if (CalledFuncs.size() == 1) {
-      Function *Callee = *CalledFuncs.begin();
-
-      ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
-                                          Callee));
-
-      // Get the data structure graph for the called function.
-      //
-      DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-      
-      DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-            << "[" << GI.getGraphSize() << "+"
-            << GI.getAuxFunctionCalls().size() << "] into '"
-            << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
-            << Graph.getAuxFunctionCalls().size() << "]\n");
-      Graph.mergeInGraph(CS, *Callee, GI,
-                         DSGraph::KeepModRefBits | 
-                         DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
-      ++NumBUInlines;
-      
-#if 0
-      Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
-                             Callee->getName());
-#endif
     } else {
-      if (!Printed)
-        std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
-      std::cerr << "  calls " << CalledFuncs.size()
-                << " fns from site: " << CS.getCallSite().getInstruction() 
-                << "  " << *CS.getCallSite().getInstruction();
-      unsigned NumToPrint = CalledFuncs.size();
-      if (NumToPrint > 8) NumToPrint = 8;
-      std::cerr << "   Fns =";
-      for (std::set<Function*>::iterator I = CalledFuncs.begin(),
-             E = CalledFuncs.end(); I != E && NumToPrint; ++I, --NumToPrint)
-        std::cerr << " " << (*I)->getName();
-      std::cerr << "\n";
+      DSGraph *GI;
 
-      // Inline all of the called functions.
-      for (std::set<Function*>::iterator I = CalledFuncs.begin(),
-             E = CalledFuncs.end(); I != E; ++I) {
-        Function *Callee = *I;
+      if (CalledFuncs.size() == 1) {
+        Function *Callee = CalledFuncs[0];
         ActualCallees.insert(std::make_pair(CS.getCallSite().getInstruction(),
                                             Callee));
-          
+
         // Get the data structure graph for the called function.
-        //
-        DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
-        
-        DEBUG(std::cerr << "    Inlining graph for " << Callee->getName()
-              << "[" << GI.getGraphSize() << "+"
-              << GI.getAuxFunctionCalls().size() << "] into '"
+        GI = &getDSGraph(*Callee);  // Graph to inline
+        DEBUG(std::cerr << "    Inlining graph for " << Callee->getName());
+
+        DEBUG(std::cerr << "[" << GI->getGraphSize() << "+"
+              << GI->getAuxFunctionCalls().size() << "] into '"
               << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
               << Graph.getAuxFunctionCalls().size() << "]\n");
-        Graph.mergeInGraph(CS, *Callee, GI,
+        Graph.mergeInGraph(CS, *Callee, *GI,
                            DSGraph::KeepModRefBits | 
                            DSGraph::StripAllocaBit|DSGraph::DontCloneCallNodes);
         ++NumBUInlines;
-        
-#if 0
-        Graph.writeGraphToFile(std::cerr, "bu_" + F.getName() + "_after_" +
-                               Callee->getName());
-#endif
+      } else {
+        if (!Printed)
+          std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
+        std::cerr << "  calls " << CalledFuncs.size()
+                  << " fns from site: " << CS.getCallSite().getInstruction() 
+                  << "  " << *CS.getCallSite().getInstruction();
+        unsigned NumToPrint = CalledFuncs.size();
+        if (NumToPrint > 8) NumToPrint = 8;
+        std::cerr << "   Fns =";
+        for (std::vector<Function*>::iterator I = CalledFuncs.begin(),
+               E = CalledFuncs.end(); I != E && NumToPrint; ++I, --NumToPrint)
+          std::cerr << " " << (*I)->getName();
+        std::cerr << "\n";
+
+        // See if we already computed a graph for this set of callees.
+        std::sort(CalledFuncs.begin(), CalledFuncs.end());
+        std::pair<DSGraph*, std::vector<DSNodeHandle> > &IndCallGraph =
+          IndCallGraphMap[CalledFuncs];
+
+        if (IndCallGraph.first == 0) {
+          std::vector<Function*>::iterator I = CalledFuncs.begin(),
+            E = CalledFuncs.end();
+          
+          // Start with a copy of the first graph.
+          GI = IndCallGraph.first = new DSGraph(getDSGraph(**I));
+          GI->setGlobalsGraph(Graph.getGlobalsGraph());
+          std::vector<DSNodeHandle> &Args = IndCallGraph.second;
+
+          // Get the argument nodes for the first callee.  The return value is
+          // the 0th index in the vector.
+          GI->getFunctionArgumentsForCall(*I, Args);
+
+          // Merge all of the other callees into this graph.
+          for (++I; I != E; ++I) {
+            // If the graph already contains the nodes for the function, don't
+            // bother merging it in again.
+            if (!GI->containsFunction(*I)) {
+              DSGraph::NodeMapTy NodeMap;
+              GI->cloneInto(getDSGraph(**I), GI->getScalarMap(),
+                            GI->getReturnNodes(), NodeMap);
+              ++NumBUInlines;
+            }
+
+            std::vector<DSNodeHandle> NextArgs;
+            GI->getFunctionArgumentsForCall(*I, NextArgs);
+            unsigned i = 0, e = Args.size();
+            for (; i != e; ++i) {
+              if (i == NextArgs.size()) break;
+              Args[i].mergeWith(NextArgs[i]);
+            }
+            for (e = NextArgs.size(); i != e; ++i)
+              Args.push_back(NextArgs[i]);
+          }
+          
+          // Clean up the final graph!
+          GI->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
+        } else {
+          std::cerr << "***\n*** RECYCLED GRAPH ***\n***\n";
+        }
+
+        GI = IndCallGraph.first;
+
+        // Merge the unified graph into this graph now.
+        DEBUG(std::cerr << "    Inlining multi callee graph "
+              << "[" << GI->getGraphSize() << "+"
+              << GI->getAuxFunctionCalls().size() << "] into '"
+              << Graph.getFunctionNames() << "' [" << Graph.getGraphSize() <<"+"
+              << Graph.getAuxFunctionCalls().size() << "]\n");
+
+        Graph.mergeInGraph(CS, IndCallGraph.second, *GI,
+                           DSGraph::KeepModRefBits | 
+                           DSGraph::StripAllocaBit |
+                           DSGraph::DontCloneCallNodes);
+        ++NumBUInlines;
       }
     }
     TempFCs.erase(TempFCs.begin());
