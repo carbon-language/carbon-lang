@@ -51,6 +51,7 @@
           <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a></li>
           <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a></li>
           <li><a href="#i_unwind">'<tt>unwind</tt>'  Instruction</a></li>
+          <li><a href="#i_unreachable">'<tt>unreachable</tt>' Instruction</a></li>
         </ol>
       </li>
       <li><a href="#binaryops">Binary Operations</a>
@@ -753,8 +754,9 @@ the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction).</p>
 <p>There are five different terminator instructions: the '<a
  href="#i_ret"><tt>ret</tt></a>' instruction, the '<a href="#i_br"><tt>br</tt></a>'
 instruction, the '<a href="#i_switch"><tt>switch</tt></a>' instruction,
-the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction, and the '<a
- href="#i_unwind"><tt>unwind</tt></a>' instruction.</p>
+the '<a href="#i_invoke"><tt>invoke</tt></a>' instruction, the '<a
+ href="#i_unwind"><tt>unwind</tt></a>' instruction, and the '<a
+ href="#i_unreachable"><tt>unreachable</tt></a>' instruction.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_ret">'<tt>ret</tt>'
@@ -920,26 +922,63 @@ support them.</p>
 <pre>  %retval = invoke int %Test(int 15)<br>              to label %Continue<br>              except label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 </div>
+
+
 <!-- _______________________________________________________________________ -->
+
 <div class="doc_subsubsection"> <a name="i_unwind">'<tt>unwind</tt>'
 Instruction</a> </div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  unwind<br></pre>
+<pre>
+  unwind
+</pre>
+
 <h5>Overview:</h5>
-<p>The '<tt>unwind</tt>' instruction unwinds the stack, continuing
-control flow at the first callee in the dynamic call stack which used
-an <a href="#i_invoke"><tt>invoke</tt></a> instruction to perform the
-call.  This is primarily used to implement exception handling.</p>
+
+<p>The '<tt>unwind</tt>' instruction unwinds the stack, continuing control flow
+at the first callee in the dynamic call stack which used an <a
+href="#i_invoke"><tt>invoke</tt></a> instruction to perform the call.  This is
+primarily used to implement exception handling.</p>
+
 <h5>Semantics:</h5>
-<p>The '<tt>unwind</tt>' intrinsic causes execution of the current
-function to immediately halt.  The dynamic call stack is then searched
-for the first <a href="#i_invoke"><tt>invoke</tt></a> instruction on
-the call stack.  Once found, execution continues at the "exceptional"
-destination block specified by the <tt>invoke</tt> instruction.  If
-there is no <tt>invoke</tt> instruction in the dynamic call chain,
-undefined behavior results.</p>
+
+<p>The '<tt>unwind</tt>' intrinsic causes execution of the current function to
+immediately halt.  The dynamic call stack is then searched for the first <a
+href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.  Once found,
+execution continues at the "exceptional" destination block specified by the
+<tt>invoke</tt> instruction.  If there is no <tt>invoke</tt> instruction in the
+dynamic call chain, undefined behavior results.</p>
 </div>
+
+<!-- _______________________________________________________________________ -->
+
+<div class="doc_subsubsection"> <a name="i_unreachable">'<tt>unreachable</tt>'
+Instruction</a> </div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  unreachable
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>unreachable</tt>' instruction has no defined semantics.  This
+instruction is used to inform the optimizer that a particular portion of the
+code is not reachable.  This can be used to indicate that the code after a
+no-return function cannot be reached, and other facts.</p>
+
+<h5>Semantics:</h5>
+
+<p>The '<tt>unreachable</tt>' instruction has no defined semantics.</p>
+</div>
+
+
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="binaryops">Binary Operations</a> </div>
 <div class="doc_text">
