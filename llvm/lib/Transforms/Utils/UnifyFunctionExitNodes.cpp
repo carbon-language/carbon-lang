@@ -49,8 +49,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
 
   if (F.getReturnType() != Type::VoidTy) {
     // If the function doesn't return void... add a PHI node to the block...
-    PHINode *PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
-    NewRetBlock->getInstList().push_back(PN);
+    PHINode *PN = new PHINode(F.getReturnType(), "UnifiedRetVal",
+                              NewRetBlock.end());
 
     // Add an incoming element to the PHI node for every return instruction that
     // is merging into this new block...
@@ -59,10 +59,10 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
       PN->addIncoming((*I)->getTerminator()->getOperand(0), *I);
 
     // Add a return instruction to return the result of the PHI node...
-    NewRetBlock->getInstList().push_back(new ReturnInst(PN));
+    new ReturnInst(PN, NewRetBlock.end());
   } else {
     // If it returns void, just add a return void instruction to the block
-    NewRetBlock->getInstList().push_back(new ReturnInst());
+    new ReturnInst(0, NewRetBlock.end());
   }
 
   // Loop over all of the blocks, replacing the return instruction with an
@@ -71,7 +71,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   for (vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
                                      E = ReturningBlocks.end(); I != E; ++I) {
     (*I)->getInstList().pop_back();  // Remove the return insn
-    (*I)->getInstList().push_back(new BranchInst(NewRetBlock));
+    new BranchInst(NewRetBlock, (*I)->end());
   }
   ExitNode = NewRetBlock;
   return true;

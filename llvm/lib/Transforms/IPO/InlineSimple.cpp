@@ -93,12 +93,11 @@ bool InlineFunction(CallInst *CI) {
   //
   PHINode *PHI = 0;
   if (CalledFunc->getReturnType() != Type::VoidTy) {
-    PHI = new PHINode(CalledFunc->getReturnType(), CI->getName());
-
     // The PHI node should go at the front of the new basic block to merge all 
     // possible incoming values.
     //
-    NewBB->getInstList().push_front(PHI);
+    PHI = new PHINode(CalledFunc->getReturnType(), CI->getName(),
+                      NewBB->begin());
 
     // Anything that used the result of the function call should now use the PHI
     // node as their operand.
@@ -164,7 +163,7 @@ bool InlineFunction(CallInst *CI) {
       }
 
       // Add a branch to the code that was after the original Call.
-      IBB->getInstList().push_back(new BranchInst(NewBB));
+      new BranchInst(NewBB, IBB->end());
       break;
     }
     case Instruction::Br:
