@@ -73,17 +73,9 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 				       const std::string &Name,
                                        BasicBlock *InsertAtEnd) {
-  assert(S1->getType() == S2->getType() &&
-         "Cannot create binary operator with two operands of differing type!");
-  switch (Op) {
-  // Binary comparison operators...
-  case SetLT: case SetGT: case SetLE:
-  case SetGE: case SetEQ: case SetNE:
-    return new SetCondInst(Op, S1, S2, Name, InsertAtEnd);
-
-  default:
-    return new BinaryOperator(Op, S1, S2, S1->getType(), Name, InsertAtEnd);
-  }
+  BinaryOperator *Res = create(Op, S1, S2, Name);
+  InsertAtEnd->getInstList().push_back(Res);
+  return Res;
 }
 
 BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
