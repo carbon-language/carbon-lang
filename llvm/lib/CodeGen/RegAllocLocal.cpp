@@ -160,7 +160,7 @@ namespace {
     /// the virtual register slot specified by VirtReg.  It then updates the RA
     /// data structures to indicate the fact that PhysReg is now available.
     ///
-    void spillVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
+    void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                       unsigned VirtReg, unsigned PhysReg);
 
     /// spillPhysReg - This method spills the specified physical register into
@@ -258,7 +258,7 @@ void RA::removePhysReg(unsigned PhysReg) {
 /// virtual register slot specified by VirtReg.  It then updates the RA data
 /// structures to indicate the fact that PhysReg is now available.
 ///
-void RA::spillVirtReg(MachineBasicBlock &MBB, MachineInstr *I,
+void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       unsigned VirtReg, unsigned PhysReg) {
   assert(VirtReg && "Spilling a physical register is illegal!"
          " Must not have appropriate kill for the register or use exists beyond"
