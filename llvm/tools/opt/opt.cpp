@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 // LLVM Modular Optimizer Utility: opt
 //
 // Optimizations may be specified an arbitrary number of times on the command

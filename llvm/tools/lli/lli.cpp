@@ -6,7 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-// 
 //
 // This utility provides a way to execute LLVM bytecode without static
 // compilation.  This consists of a very simple and slow (but portable)
