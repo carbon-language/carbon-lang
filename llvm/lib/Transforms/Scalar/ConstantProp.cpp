@@ -179,43 +179,16 @@ bool ConstantFoldTerminator(BasicBlock *BB, BasicBlock::iterator &II,
 //
 bool doConstantPropogation(BasicBlock *BB, BasicBlock::iterator &II) {
   Instruction *Inst = *II;
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Inst)) {
-    Constant *D1 = dyn_cast<Constant>(BO->getOperand(0));
-    Constant *D2 = dyn_cast<Constant>(BO->getOperand(1));
-
-    if (D1 && D2)
-      return ConstantFoldBinaryInst(BB, II, BO, D1, D2);
-
-  } else if (CastInst *CI = dyn_cast<CastInst>(Inst)) {
-    Constant *D = dyn_cast<Constant>(CI->getOperand(0));
-    if (D) return ConstantFoldCast(BB, II, CI, D);
-                                         
-  } else if (UnaryOperator *UInst = dyn_cast<UnaryOperator>(Inst)) {
-    Constant *D = dyn_cast<Constant>(UInst->getOperand(0));
-    if (D) return ConstantFoldUnaryInst(BB, II, UInst, D);
-  } else if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
+  if (TerminatorInst *TInst = dyn_cast<TerminatorInst>(Inst)) {
     return ConstantFoldTerminator(BB, II, TInst);
+  } else if (Constant *C = ConstantFoldInstruction(Inst)) {
+    // Replaces all of the uses of a variable with uses of the constant.
+    Inst->replaceAllUsesWith(C);
+  
+    // Remove the instruction from the basic block...
+    delete BB->getInstList().remove(II);
+    return true;
 
-  } else if (PHINode *PN = dyn_cast<PHINode>(Inst)) {
-    // If it's a PHI node and only has one operand
-    // Then replace it directly with that operand.
-    assert(PN->getNumOperands() && "PHI Node must have at least one operand!");
-    if (PN->getNumOperands() == 1) {    // If the PHI Node has exactly 1 operand
-      Value *V = PN->getOperand(0);
-      PN->replaceAllUsesWith(V);                 // Replace all uses of this PHI
-                                                 // Unlink from basic block
-      PN->getParent()->getInstList().remove(II);
-      if (PN->hasName())                         // Inherit PHINode name
-	V->setName(PN->getName(), BB->getParent()->getSymbolTableSure());
-      delete PN;                                 // Finally, delete the node...
-      return true;
-    }
-  } else if (ShiftInst *SI = dyn_cast<ShiftInst>(Inst)) {
-    Constant *D1 = dyn_cast<Constant>(SI->getOperand(0));
-    Constant *D2 = dyn_cast<Constant>(SI->getOperand(1));
-
-    if (D1 && D2)
-      return ConstantFoldShiftInst(BB, II, SI, D1, D2);
   }
 
   return false;
