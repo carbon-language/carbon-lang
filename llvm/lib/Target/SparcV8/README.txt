@@ -28,10 +28,9 @@ To-do
 -----
 
 * support setcc on longs
-* support basic binary operations on longs
-  - use libc procedures instead of open-coding for:
-    __div64 __mul64 __rem64 __udiv64 __umul64 __urem64
+* support shifts on longs
 * support casting 64-bit integers to FP types
+* support FP rem
 
 $Date$
 
