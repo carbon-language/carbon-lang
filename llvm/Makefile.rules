@@ -465,6 +465,47 @@ endif
 # Library Build Rules: Four ways to build a library
 ###############################################################################
 
+#---------------------------------------------------------
+# Bytecode Module Targets:
+#   If the user set MODULE_NAME then they want to build a
+#   bytecode module from the sources. We compile all the
+#   sources and link it together into a single bytecode
+#   module.
+#---------------------------------------------------------
+
+ifdef MODULE_NAME
+
+Module     := $(LibDir)/$(MODULE_NAME).bc
+LinkModule := $(LLVMGCC) -shared -nostdlib
+
+ifdef EXPORTED_SYMBOL_FILE
+LinkMOdule += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+endif
+
+$(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
+	$(Echo) Building $(BuildMOde) Bytecode Module $(notdir $@)
+	$(Verb) $(LinkModule) -o $@ $(ObjectsBC)
+
+all-local:: $(Module)
+
+clean-local::
+ifneq ($(strip $(Module)),)
+	-$(Verb) $(RM) -f $(Module)
+endif
+
+DestModule := $(bytecode_libdir)/$(MODULE_NAME).bc
+
+install-local:: $(DestModule)
+
+$(DestModule): $(bytecode_libdir) $(Module) 
+	$(Echo) Installing $(BuildMode) Bytecode Module $(DestModule)
+	$(Verb) $(INSTALL) $(Module) $@
+
+uninstall-local::
+	$(Echo) Uninstalling $(BuildMode) Bytecode Module $(DestModule)
+	-$(Verb) $(RM) -f $(DestModule)
+
+endif
 
 # if we're building a library ...
 ifdef LIBRARYNAME
@@ -1299,6 +1340,7 @@ printvars::
 	$(Echo) "LibDir         : " '$(LibDir)'
 	$(Echo) "ToolDir        : " '$(ToolDir)'
 	$(Echo) "ExmplDir       : " '$(ExmplDir)'
+	$(Echo) "Sources        : " '$(Sources)'
 	$(Echo) "TDFiles        : " '$(TDFiles)'
 	$(Echo) "INCFiles       : " '$(INCFiles)'
 	$(Echo) "Compile.CXX    : " '$(Compile.CXX)'
@@ -1306,3 +1348,4 @@ printvars::
 	$(Echo) "Archive        : " '$(Archive)'
 	$(Echo) "YaccFiles      : " '$(YaccFiles)'
 	$(Echo) "LexFiles       : " '$(LexFiles)'
+	$(Echo) "Module         : " '$(Module)'
