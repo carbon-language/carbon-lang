@@ -12,15 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
-BUGPOINT NOTES:
-
-1. Bugpoint should not leave any files behind if the program works properly
-2. There should be an option to specify the program name, which specifies a
-   unique string to put into output files.  This allows operation in the
-   SingleSource directory, e.g. default to the first input filename.
-*/
-
 #include "BugDriver.h"
 #include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
