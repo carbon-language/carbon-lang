@@ -320,11 +320,11 @@ void WriteToAssembly(const ConstPoolVal *CPV, ostream &o) {
   // A Constant pool value may have a parent that is either a method or a 
   // module.  Untangle this now...
   //
-  if (CPV->getParent() == 0 || CPV->getParent()->isMethod()) {
-    SlotTable = new SlotCalculator((Method*)CPV->getParent(), true);
+  if (const Method *Meth = CPV->getParentV()->castMethod()) {
+    SlotTable = new SlotCalculator(Meth, true);
   } else {
     SlotTable =
-      new SlotCalculator(CPV->getParent()->castModuleAsserting(), true);
+      new SlotCalculator(CPV->getParentV()->castModuleAsserting(), true);
   }
 
   AssemblyWriter W(o, *SlotTable);
