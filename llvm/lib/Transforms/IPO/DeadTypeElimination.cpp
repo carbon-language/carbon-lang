@@ -122,6 +122,7 @@ bool CleanupGCCOutput::PatchUpMethodReferences(Module *M) {
           delete Methods[i];
           Methods.erase(Methods.begin()+i);
           Changed = true;
+          continue;
         }
       }
       
