@@ -195,6 +195,7 @@ void RemoveEnv(const char * name, char ** const envp) {
 
 int main(int argc, char **argv, char **envp) {
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
+  PrintStackTraceOnErrorSignal();
 
   std::string ModuleID("gccld-output");
   std::auto_ptr<Module> Composite(new Module(ModuleID));

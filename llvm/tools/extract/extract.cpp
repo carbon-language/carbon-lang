@@ -19,6 +19,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 #include <memory>
 #include <fstream>
 using namespace llvm;
@@ -42,6 +43,7 @@ ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
+  PrintStackTraceOnErrorSignal();
 
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {

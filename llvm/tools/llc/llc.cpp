@@ -69,7 +69,8 @@ GetFileNameRoot(const std::string &InputFilename)
 //
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-  
+  PrintStackTraceOnErrorSignal();
+
   // Load the module to be compiled...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {

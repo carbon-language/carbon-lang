@@ -20,6 +20,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "Support/CommandLine.h"
+#include "Support/Signals.h"
 
 using namespace llvm;
 
@@ -46,6 +47,7 @@ namespace {
 int main(int argc, char **argv, char * const *envp) {
   cl::ParseCommandLineOptions(argc, argv,
                               " llvm interpreter & dynamic compiler\n");
+  PrintStackTraceOnErrorSignal();
 
   // Load the bytecode...
   std::string ErrorMsg;

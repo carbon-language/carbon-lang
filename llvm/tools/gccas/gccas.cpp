@@ -107,6 +107,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .s -> .o assembler for GCC\n");
+  PrintStackTraceOnErrorSignal();
 
   std::auto_ptr<Module> M;
   try {
