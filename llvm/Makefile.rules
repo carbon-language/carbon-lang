@@ -228,8 +228,8 @@ CFERuntimeLibDir := $(LLVMGCCDIR)/lib
 #--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
 #--------------------------------------------------------------------
-EchoCmd  := $(ECHO) llvm[$(MAKELEVEL)]:
-Echo     := @$(EchoCmd)
+EchoCmd  = $(ECHO) llvm[$(MAKELEVEL)]:
+Echo     = @$(EchoCmd)
 ifndef LIBTOOL
 LIBTOOL  := $(LLVM_OBJ_ROOT)/mklib
 endif
