@@ -139,7 +139,7 @@ namespace {
                 if (It != BasicBlock::iterator(CI)) {
                   // Splice the cast immediately after the operand in question.
                   BasicBlock::InstListType &InstList =
-                    I->getParent()->getInstList();
+                    It->getParent()->getInstList();
                   InstList.splice(It, CI->getParent()->getInstList(), CI);
                 }
                 return CI;
