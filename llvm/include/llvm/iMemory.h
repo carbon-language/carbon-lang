@@ -159,6 +159,8 @@ public:
 
   virtual Instruction *clone() const { return new LoadInst(*this); }
 
+  virtual bool mayWriteToMemory() const { return isVolatile(); }
+
   Value *getPointerOperand() { return getOperand(0); }
   const Value *getPointerOperand() const { return getOperand(0); }
   static unsigned getPointerOperandIndex() { return 0U; }
