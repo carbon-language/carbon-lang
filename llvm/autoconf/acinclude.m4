@@ -6013,9 +6013,12 @@ using namespace std;
   ac_cv_cxx_have_std_iterator=yes, ac_cv_cxx_have_std_iterator=no)
   AC_LANG_RESTORE
 ])
-if test "$ac_cv_cxx_have_std_iterator" = yes; then
-   AC_DEFINE(HAVE_STD_ITERATOR,,[define if the compiler has STL iterators])
+HAVE_STD_ITERATOR=0
+if test "$ac_cv_cxx_have_std_iterator" = yes
+then
+   HAVE_STD_ITERATOR=1
 fi
+AC_SUBST(HAVE_STD_ITERATOR)
 ])
 
 #
@@ -6035,9 +6038,12 @@ using namespace std;
   ac_cv_cxx_have_bi_iterator=yes, ac_cv_cxx_have_bi_iterator=no)
   AC_LANG_RESTORE
 ])
-if test "$ac_cv_cxx_have_bi_iterator" = yes; then
-   AC_DEFINE(HAVE_BI_ITERATOR,,[define if the compiler has bidirectional iterator])
+HAVE_BI_ITERATOR=0
+if test "$ac_cv_cxx_have_bi_iterator" = yes
+then
+   HAVE_BI_ITERATOR=1
 fi
+AC_SUBST(HAVE_BI_ITERATOR)
 ])
 
 #
@@ -6057,9 +6063,12 @@ using namespace std;
   ac_cv_cxx_have_fwd_iterator=yes, ac_cv_cxx_have_fwd_iterator=no)
   AC_LANG_RESTORE
 ])
-if test "$ac_cv_cxx_have_fwd_iterator" = yes; then
-   AC_DEFINE(HAVE_FWD_ITERATOR,,[define if the compiler has STL iterators])
+HAVE_FWD_ITERATOR=0
+if test "$ac_cv_cxx_have_fwd_iterator" = yes
+then
+   HAVE_FWD_ITERATOR=1
 fi
+AC_SUBST(HAVE_FWD_ITERATOR)
 ])
 
 #
