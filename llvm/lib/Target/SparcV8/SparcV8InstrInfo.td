@@ -28,8 +28,8 @@ class InstV8 : Instruction {          // SparcV8 instruction baseline
   bit isPrivileged = 0; // Is this a privileged instruction?
 }
 
-include "SparcV8Instrs_F2.td"
-include "SparcV8Instrs_F3.td"
+include "SparcV8InstrInfo_F2.td"
+include "SparcV8InstrInfo_F3.td"
 
 //===----------------------------------------------------------------------===//
 // Instructions

@@ -18,8 +18,8 @@ include "../Target.td"
 // Register File Description
 //===----------------------------------------------------------------------===//
 
-include "SparcV8Reg.td"
-include "SparcV8Instrs.td"
+include "SparcV8RegisterInfo.td"
+include "SparcV8InstrInfo.td"
 
 def SparcV8InstrInfo : InstrInfo {
   let PHIInst  = PHI;
