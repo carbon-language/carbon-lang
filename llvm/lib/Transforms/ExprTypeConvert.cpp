@@ -47,7 +47,8 @@ static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
 
   // Deal with the type to allocate, not the pointer type...
   Ty = cast<PointerType>(Ty)->getElementType();
-  if (!Ty->isSized()) return false;      // Can only alloc something with a size
+  if (!Ty->isSized() || !MI->getType()->getElementType()->isSized())
+    return false;      // Can only alloc something with a size
 
   // Analyze the number of bytes allocated...
   ExprType Expr = ClassifyExpr(MI->getArraySize());
