@@ -369,12 +369,17 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
 
 /// Handle casts...
 void GraphBuilder::visitCastInst(CastInst &CI) {
-  if (isPointerType(CI.getType())) {
-    if (isPointerType(CI.getOperand(0)->getType()))
+  if (isPointerType(CI.getType()))
+    if (isPointerType(CI.getOperand(0)->getType())) {
+      // Cast one pointer to the other, just act like a copy instruction
       setDestTo(CI, getValueDest(*CI.getOperand(0)));
-    else
-      ; // FIXME: "Other" node
-  }
+    } else {
+      // Cast something (floating point, small integer) to a pointer.  We need
+      // to track the fact that the node points to SOMETHING, just something we
+      // don't know about.  Make an "Unknown" node.
+      //
+      setDestTo(CI, createNode(DSNode::UnknownNode));
+    }
 }
 
 
