@@ -432,7 +432,13 @@ ifdef CONFIG_FILES
 install-local:: $(sysconfdir) $(CONFIG_FILES)
 	$(Echo) Installing Configuration Files To $(sysconfdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
-		$(INSTALL) $(BUILD_SRC_DIR)/$${file} $(sysconfdir) ; \
+          if test -f $(BUILD_OBJ_DIR)/$${file} ; then \
+            $(INSTALL) $(BUILD_OBJ_DIR)/$${file} $(sysconfdir) ; \
+          elif test -f $(BUILD_SRC_DIR)/$${file} ; then \
+            $(INSTALL) $(BUILD_SRC_DIR)/$${file} $(sysconfdir) ; \
+          else \
+            $(ECHO) Error: cannot find config file $${file}. ; \
+          fi \
 	done
 
 uninstall-local::
