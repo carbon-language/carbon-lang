@@ -9,21 +9,24 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "X86InstrInfo.h"
+#include "llvm/Target/MachineFrameInfo.h"
 
 class X86TargetMachine : public TargetMachine {
-  X86InstrInfo instrInfo;
+  X86InstrInfo InstrInfo;
+  TargetFrameInfo FrameInfo;
 public:
   X86TargetMachine(unsigned Configuration);
 
-  virtual const X86InstrInfo     &getInstrInfo() const { return instrInfo; }
+  virtual const X86InstrInfo     &getInstrInfo() const { return InstrInfo; }
+  virtual const TargetFrameInfo  &getFrameInfo() const { return FrameInfo; }
+  virtual const MRegisterInfo *getRegisterInfo() const {
+    return &InstrInfo.getRegisterInfo();
+  }
+
   virtual const MachineSchedInfo &getSchedInfo() const { abort(); }
   virtual const MachineRegInfo   &getRegInfo()   const { abort(); }
-  virtual const MachineFrameInfo &getFrameInfo() const { abort(); }
   virtual const MachineCacheInfo &getCacheInfo() const { abort(); }
   virtual const MachineOptInfo   &getOptInfo()   const { abort(); }
-  virtual const MRegisterInfo *getRegisterInfo() const {
-    return &instrInfo.getRegisterInfo();
-  }
 
   /// addPassesToJITCompile - Add passes to the specified pass manager to
   /// implement a fast dynamic compiler for this target.  Return true if this is
