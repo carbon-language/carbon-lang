@@ -153,6 +153,7 @@ endif
 BURG    := $(TOOLCURRENT)/burg
 RunBurg := $(BURG) $(BURG_OPTS)
 
+TBLGEN  := $(TOOLCURRENT)/tblgen
 
 # Enable this for profiling support with 'gprof'
 # This automatically enables optimized builds.
