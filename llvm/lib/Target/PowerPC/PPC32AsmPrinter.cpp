@@ -152,13 +152,16 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
 void PowerPCAsmPrinter::emitGlobalConstant(const Constant *CV) {  
   const TargetData &TD = TM.getTargetData();
 
-  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    if (isStringCompatible(CVA)) {
-      O << "\t.ascii ";
+  if (CV->isNullValue()) {
+    O << "\t.space\t" << TD.getTypeSize(CV->getType()) << "\n";
+    return;
+  } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+    if (CVA->isString()) {
+      O << "\t.ascii\t";
       printAsCString(O, CVA);
       O << "\n";
     } else { // Not a string.  Print the values in successive locations
-      for (unsigned i=0, e = CVA->getNumOperands(); i != e; i++)
+      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
         emitGlobalConstant(CVA->getOperand(i));
     }
     return;
@@ -166,7 +169,7 @@ void PowerPCAsmPrinter::emitGlobalConstant(const Constant *CV) {
     // Print the fields in successive locations. Pad to align if needed!
     const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
     unsigned sizeSoFar = 0;
-    for (unsigned i = 0, e = CVS->getNumOperands(); i != e; i++) {
+    for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
       const Constant* field = CVS->getOperand(i);
 
       // Check if padding is needed and insert one or more 0s.
@@ -243,12 +246,7 @@ void PowerPCAsmPrinter::emitGlobalConstant(const Constant *CV) {
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");
   default:
-    if (CV == Constant::getNullValue(type)) {  // Zero initializer?
-      O << ".space\t" << TD.getTypeSize(type) << "\n";      
-      return;
-    }
-    std::cerr << "Can't handle printing: " << *CV;
-    abort();
+    assert (0 && "Can't handle printing this type of thing");
     break;
   }
   O << "\t";
