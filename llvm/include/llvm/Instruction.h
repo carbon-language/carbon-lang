@@ -43,6 +43,10 @@ protected:
               Instruction *InsertBefore = 0);
 public:
 
+  ~Instruction() {
+    assert(Parent == 0 && "Instruction still linked in the program!");
+  }
+
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
   
