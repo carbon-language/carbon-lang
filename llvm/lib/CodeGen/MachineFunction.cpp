@@ -11,7 +11,7 @@
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
-#include "llvm/CodeGen/FunctionFrameInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
@@ -101,7 +101,7 @@ MachineFunction::MachineFunction(const Function *F,
   : Annotation(MF_AID), Fn(F), Target(TM) {
   SSARegMapping = new SSARegMap();
   MFInfo = new MachineFunctionInfo(*this);
-  FrameInfo = new FunctionFrameInfo();
+  FrameInfo = new MachineFrameInfo();
 }
 
 MachineFunction::~MachineFunction() { 
@@ -168,10 +168,10 @@ void MachineFunction::clearSSARegMap() {
 }
 
 //===----------------------------------------------------------------------===//
-//  FunctionFrameInfo implementation
+//  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
 
-void FunctionFrameInfo::print(std::ostream &OS) const {
+void MachineFrameInfo::print(std::ostream &OS) const {
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
     OS << "  <fi# " << (int)(i-NumFixedObjects) << "> is ";
@@ -197,7 +197,7 @@ void FunctionFrameInfo::print(std::ostream &OS) const {
     OS << "  Stack frame contains variable sized objects\n";
 }
 
-void FunctionFrameInfo::dump() const { print(std::cerr); }
+void MachineFrameInfo::dump() const { print(std::cerr); }
 
 
 //===----------------------------------------------------------------------===//

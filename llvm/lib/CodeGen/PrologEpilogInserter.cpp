@@ -12,7 +12,7 @@
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/FunctionFrameInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -114,7 +114,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
 	++I;
       }
 
-  FunctionFrameInfo *FFI = Fn.getFrameInfo();
+  MachineFrameInfo *FFI = Fn.getFrameInfo();
   FFI->setHasCalls(HasCalls);
   FFI->setMaxCallFrameSize(MaxCallFrameSize);
 
@@ -185,7 +185,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   assert(StackGrowsDown && "Only tested on stack down growing targets!");
  
   // Loop over all of the stack objects, assigning sequential addresses...
-  FunctionFrameInfo *FFI = Fn.getFrameInfo();
+  MachineFrameInfo *FFI = Fn.getFrameInfo();
 
   // Start at the beginning of the local area...
   int Offset = -TFI.getOffsetOfLocalArea();

@@ -8,7 +8,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/CodeGen/FunctionFrameInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Statistic.h"
