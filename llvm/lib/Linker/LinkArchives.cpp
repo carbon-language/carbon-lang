@@ -195,18 +195,14 @@ bool llvm::LinkInArchive(Module *M,
     for (std::set<ModuleProvider*>::iterator I=Modules.begin(), E=Modules.end();
          I != E; ++I) {
       // Get the module we must link in.
-      Module* aModule = (*I)->releaseModule();
+      std::auto_ptr<Module> aModule((*I)->releaseModule());
 
-      // Link it in
-      if (LinkModules(M, aModule, ErrorMessage)) {
+      // Link it in.
+      if (LinkModules(M, aModule.get(), ErrorMessage)) {
         // don't create a memory leak
-        delete aModule;
         delete arch;
         return true;   // Couldn't link in the right object file...        
       }
-        
-      // Since we have linked in this object, throw it away now.
-      delete aModule;
     }
 
     // We have linked in a set of modules determined by the archive to satisfy
