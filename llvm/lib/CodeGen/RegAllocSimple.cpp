@@ -20,7 +20,7 @@
 #include "Support/Statistic.h"
 #include <map>
 
-//namespace {
+namespace {
   struct RegAllocSimple : public FunctionPass {
     TargetMachine &TM;
     MachineBasicBlock *CurrMBB;
@@ -111,7 +111,7 @@
     }
   };
 
-//}
+}
 
 unsigned RegAllocSimple::allocateStackSpaceFor(unsigned VirtReg,
                                             const TargetRegisterClass *regClass)
@@ -289,6 +289,9 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
       
       // really delete the instruction
       delete MI;
+
+      // make regs available to other instructions
+      clearAllRegs();
     }
 
     //loop over each basic block
