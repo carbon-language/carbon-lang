@@ -81,14 +81,16 @@ Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
 //===----------------------------------------------------------------------===//
 
 TargetData::TargetData(const std::string &TargetName,
-             unsigned char IntRegSize, unsigned char PtrSize,
-	     unsigned char PtrAl, unsigned char DoubleAl,
-	     unsigned char FloatAl, unsigned char LongAl, 
-	     unsigned char IntAl, unsigned char ShortAl,
-	     unsigned char ByteAl)
+                       bool isLittleEndian,
+                       unsigned char IntRegSize, unsigned char PtrSize,
+                       unsigned char PtrAl, unsigned char DoubleAl,
+                       unsigned char FloatAl, unsigned char LongAl, 
+                       unsigned char IntAl, unsigned char ShortAl,
+                       unsigned char ByteAl)
   : AID(AnnotationManager::getID("TargetData::" + TargetName)) {
   AnnotationManager::registerAnnotationFactory(AID, TypeAnFactory, this);
 
+  LittleEndian     = isLittleEndian;
   IntegerRegSize   = IntRegSize;
   PointerSize      = PtrSize;
   PointerAlignment = PtrAl;

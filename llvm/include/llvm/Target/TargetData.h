@@ -23,6 +23,7 @@ class StructType;
 class StructLayout;
 
 class TargetData : public ImmutablePass {
+  bool          LittleEndian;          // Defaults to false
   unsigned char ByteAlignment;         // Defaults to 1 bytes
   unsigned char ShortAlignment;        // Defaults to 2 bytes
   unsigned char IntAlignment;          // Defaults to 4 bytes
@@ -37,6 +38,7 @@ class TargetData : public ImmutablePass {
   static Annotation *TypeAnFactory(AnnotationID, const Annotable *, void *);
 public:
   TargetData(const std::string &TargetName = "SparcV9",
+             bool LittleEndian = false,
              unsigned char IntRegSize = 8,
              unsigned char PtrSize = 8,
 	     unsigned char PtrAl = 8, unsigned char DoubleAl = 8,
@@ -45,6 +47,11 @@ public:
 	     unsigned char ByteAl = 1);
   ~TargetData();  // Not virtual, do not subclass this class
 
+  /// Target endianness...
+  bool          isLittleEndian()      const { return     LittleEndian; }
+  bool          isBigEndian()         const { return    !LittleEndian; }
+
+  /// Target alignment constraints
   unsigned char getByteAlignment()    const { return    ByteAlignment; }
   unsigned char getShortAlignment()   const { return   ShortAlignment; }
   unsigned char getIntAlignment()     const { return     IntAlignment; }
@@ -52,8 +59,8 @@ public:
   unsigned char getFloatAlignment()   const { return   FloatAlignment; }
   unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
   unsigned char getPointerAlignment() const { return PointerAlignment; }
-  unsigned char getPointerSize()      const { return PointerSize; }
-  unsigned char getIntegerRegize()    const { return IntegerRegSize; }
+  unsigned char getPointerSize()      const { return      PointerSize; }
+  unsigned char getIntegerRegize()    const { return   IntegerRegSize; }
   AnnotationID  getStructLayoutAID()  const { return AID; }
 
   // getTypeSize - Return the number of bytes neccesary to hold the specified
