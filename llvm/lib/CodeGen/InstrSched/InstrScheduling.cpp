@@ -13,7 +13,6 @@
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 #include "Support/CommandLine.h"
 #include <algorithm>
 using std::cerr;

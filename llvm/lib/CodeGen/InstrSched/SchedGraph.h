@@ -1,20 +1,15 @@
-/* -*-C++-*-
- ****************************************************************************
- * File:
- *	SchedGraph.h
- * 
- * Purpose:
- *	Scheduling graph based on SSA graph plus extra dependence edges
- *	capturing dependences due to machine resources (machine registers,
- *	CC registers, and any others).
- * 
- * Strategy:
- *	This graph tries to leverage the SSA graph as much as possible,
- *	but captures the extra dependences through a common interface.
- * 
- * History:
- *	7/20/01	 -  Vikram Adve  -  Created
- ***************************************************************************/
+//===-- SchedGraph.h - Scheduling Graph --------------------------*- C++ -*--=//
+//
+// Purpose:
+//	Scheduling graph based on SSA graph plus extra dependence edges
+//	capturing dependences due to machine resources (machine registers,
+//	CC registers, and any others).
+// 
+// Strategy:
+//	This graph tries to leverage the SSA graph as much as possible,
+//	but captures the extra dependences through a common interface.
+// 
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_SCHEDGRAPH_H
 #define LLVM_CODEGEN_SCHEDGRAPH_H

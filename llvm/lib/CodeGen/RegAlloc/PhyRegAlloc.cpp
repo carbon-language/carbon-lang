@@ -1,13 +1,8 @@
-//***************************************************************************
-// File:
-//	PhyRegAlloc.cpp
+//===-- PhyRegAlloc.cpp ---------------------------------------------------===//
 // 
-// Purpose:
-//      Register allocation for LLVM.
-//	
-// History:
-//	9/10/01	 -  Ruchira Sasanka - created.
-//**************************************************************************/
+//  Register allocation for LLVM.
+// 
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/RegisterAllocation.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"

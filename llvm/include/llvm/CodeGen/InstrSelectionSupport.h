@@ -1,15 +1,9 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	InstrSelectionSupport.h
-// 
-// Purpose:
-//	Target-independent instruction selection code.
-//      See SparcInstrSelection.cpp for usage.
+//===-- llvm/CodeGen/InstrSelectionSupport.h --------------------*- C++ -*-===//
+//
+//  Target-independent instruction selection code.  See SparcInstrSelection.cpp
+//  for usage.
 //      
-// History:
-//	10/10/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_INSTR_SELECTION_SUPPORT_H
 #define LLVM_CODEGEN_INSTR_SELECTION_SUPPORT_H

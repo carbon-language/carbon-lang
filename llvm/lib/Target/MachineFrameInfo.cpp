@@ -1,21 +1,13 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	MachineFrameInfo.cpp
+//===-- MachineFrameInfo.cpp-----------------------------------------------===//
 // 
-// Purpose:
-//	Interface to layout of stack frame on target machine.
-//      Most functions of class MachineFrameInfo have to be machine-specific
-//      so there is little code here.
+// Interface to layout of stack frame on target machine.  Most functions of
+// class MachineFrameInfo have to be machine-specific so there is little code
+// here.
 // 
-// History:
-//	 4/17/02	 -  Vikram Adve  -  Created
-//**************************************************************************/
-
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
-
 
 int
 MachineFrameInfo::getIncomingArgOffset(MachineCodeForMethod& mcInfo,

@@ -1,8 +1,5 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	InstrForest.h
-// 
+//===-- llvm/CodeGen/InstForest.h ------------------------------*- C++ -*--===//
+//
 // Purpose:
 //	Convert SSA graph to instruction trees for instruction selection.
 // 
@@ -17,9 +14,7 @@
 //  (2) O and I are part of the same basic block, and
 //  (3) O has only a single use, viz., I.
 // 
-// History:
-//	6/28/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H

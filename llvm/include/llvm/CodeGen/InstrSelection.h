@@ -1,14 +1,8 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	InstrSelection.h
-// 
-// Purpose:
-//	External interface to instruction selection.
-// 
-// History:
-//	7/02/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===-- llvm/CodeGen/InstrSelection.h --------------------------*- C++ -*--===//
+//
+// External interface to instruction selection.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_INSTR_SELECTION_H
 #define LLVM_CODEGEN_INSTR_SELECTION_H
@@ -21,9 +15,9 @@ class InstructionNode;
 class TargetMachine;
 class Pass;
 
-/************************* Required Functions *******************************
- * Target-dependent functions that MUST be implemented for each target.
- ***************************************************************************/
+//===--------------------- Required Functions ---------------------------------
+// Target-dependent functions that MUST be implemented for each target.
+//
 
 const unsigned MAX_INSTR_PER_VMINSTR = 8;
 

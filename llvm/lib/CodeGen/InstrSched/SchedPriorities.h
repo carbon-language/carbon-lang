@@ -1,10 +1,4 @@
-// -*-C++-*-
-//***************************************************************************
-// File:
-//	SchedPriorities.h
-// 
-// Purpose:
-//	Encapsulate heuristics for instruction scheduling.
+//===-- SchedPriorities.h - Encapsulate scheduling heuristics --*- C++ -*--===//
 // 
 // Strategy:
 //    Priority ordering rules:
@@ -13,10 +7,8 @@
 //    (3) Instruction that has the maximum number of dependent instructions.
 //    Note that rules 2 and 3 are only used if issue conflicts prevent
 //    choosing a higher priority instruction by rule 1.
-// 
-// History:
-//	7/30/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_SCHEDPRIORITIES_H
 #define LLVM_CODEGEN_SCHEDPRIORITIES_H
@@ -26,7 +18,7 @@
 #include "llvm/Target/MachineSchedInfo.h"
 #include <list>
 #include <Support/hash_set>
-#include <iostream>
+
 class Function;
 class MachineInstr;
 class SchedulingManager;

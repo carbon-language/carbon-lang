@@ -1,29 +1,20 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	MachineInstrAnnot.h
+//===-- llvm/CodeGen/MachineInstrAnnot.h ------------------------*- C++ -*-===//
+//
+//  Annotations used to pass information between code generation phases.
 // 
-// Purpose:
-//      Annotations used to pass information between code generation phases.
-// 
-// History:
-//	5/10/02	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//===----------------------------------------------------------------------===//
 
 #ifndef MACHINE_INSTR_ANNOT_h
 #define MACHINE_INSTR_ANNOT_h
 
 #include "llvm/Annotation.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include <vector>
 
 class Value;
 class TmpInstruction;
 class CallInst;
 
-
 class CallArgInfo {
-private:
   // Flag values for different argument passing methods
   static const unsigned char IntArgReg = 0x1;
   static const unsigned char FPArgReg  = 0x2;
@@ -60,9 +51,8 @@ public:
 
 
 class CallArgsDescriptor: public Annotation { // Annotation for a MachineInstr
-private:
   static AnnotationID AID;              // AnnotationID for this class
-  std::vector<CallArgInfo> argInfoVec;       // Descriptor for each argument
+  std::vector<CallArgInfo> argInfoVec;  // Descriptor for each argument
   const CallInst* callInstr;            // The call instruction == result value
   const Value* funcPtr;                 // Pointer for indirect calls 
   TmpInstruction* retAddrReg;           // Tmp value for return address reg.

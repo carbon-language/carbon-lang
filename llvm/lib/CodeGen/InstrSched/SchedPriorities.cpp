@@ -1,10 +1,4 @@
-// $Id$ -*-C++-*-
-//***************************************************************************
-// File:
-//	SchedPriorities.h
-// 
-// Purpose:
-//	Encapsulate heuristics for instruction scheduling.
+//===-- SchedPriorities.h - Encapsulate scheduling heuristics -------------===//
 // 
 // Strategy:
 //    Priority ordering rules:
@@ -13,10 +7,8 @@
 //    (3) Instruction that has the maximum number of dependent instructions.
 //    Note that rules 2 and 3 are only used if issue conflicts prevent
 //    choosing a higher priority instruction by rule 1.
-// 
-// History:
-//	7/30/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
+//
+//===----------------------------------------------------------------------===//
 
 #include "SchedPriorities.h"
 #include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h"
