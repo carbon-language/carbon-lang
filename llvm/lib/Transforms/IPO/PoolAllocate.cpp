@@ -254,13 +254,26 @@ void PoolAllocate::InlineIndirectCalls(Function &F, DSGraph &G,
 
 void PoolAllocate::FindFunctionPoolArgs(Function &F) {
 
-  // The DSGraph is merged with the globals graph. 
   DSGraph &G = BU->getDSGraph(F);
-  G.mergeInGlobalsGraph();
-
+ 
   // Inline the potential targets of indirect calls
   hash_set<Function*> visitedFuncs;
   InlineIndirectCalls(F, G, visitedFuncs);
+
+  // The DSGraph is merged with the globals graph. 
+  G.mergeInGlobalsGraph();
+
+  // The nodes reachable from globals need to be recognized as potential 
+  // arguments. This is required because, upon merging in the globals graph,
+  // the nodes pointed to by globals that are not live are not marked 
+  // incomplete.
+  hash_set<DSNode*> NodesFromGlobals;
+  for (DSGraph::ScalarMapTy::iterator I = G.getScalarMap().begin(), 
+	 E = G.getScalarMap().end(); I != E; ++I)
+    if (isa<GlobalValue>(I->first)) {             // Found a global
+      DSNodeHandle &GH = I->second;
+      GH.getNode()->markReachableNodes(NodesFromGlobals);
+    }
 
   // At this point the DS Graphs have been modified in place including
   // information about globals as well as indirect calls, making it useful
@@ -296,8 +309,8 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
       if (Nodes[i]->isGlobalNode() && !Nodes[i]->isIncomplete())
         DEBUG(std::cerr << "Global node is not Incomplete\n");
-      if ((Nodes[i]->isIncomplete() || Nodes[i]->isGlobalNode()) && 
-	  Nodes[i]->isHeapNode())
+      if ((Nodes[i]->isIncomplete() || Nodes[i]->isGlobalNode() || 
+	   NodesFromGlobals.count(Nodes[i])) && Nodes[i]->isHeapNode())
         Nodes[i]->markReachableNodes(MarkedNodes);
     }
 
