@@ -71,16 +71,6 @@ public:
            V->getValueType() == Value::ConstantVal ||
            V->getValueType() == Value::InstructionVal;
   }
-
-  // addOperand - This is a special purpose API that should not be used in most
-  // cases.  It adds an empty (null) operand to the instruction specified.  This
-  // is currently used by the back end as part of the "lowering" process... most
-  // optimizations will not handle instructions that are not in their normal
-  // form, so this method should be used with care.
-  //
-  void addOperand() {
-    Operands.push_back(Use(0, this));
-  }
 };
 
 #endif
