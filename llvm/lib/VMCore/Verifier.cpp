@@ -112,11 +112,17 @@ namespace {  // Anonymous namespace for class
 
     bool doFinalization(Module &M) {
       // Scan through, checking all of the external function's linkage now...
-      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
         visitGlobalValue(*I);
+
+        // Check to make sure function prototypes are okay.
+        if (I->isExternal()) visitFunction(*I);
+      }
 
       for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
         visitGlobalValue(*I);
+
+      
 
       // If the module is broken, abort at this time.
       abortIfBroken();
@@ -284,10 +290,14 @@ void Verifier::visitFunction(Function &F) {
 
   // Check that the argument values match the function type for this function...
   unsigned i = 0;
-  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++i)
+  for (Function::aiterator I = F.abegin(), E = F.aend(); I != E; ++I, ++i) {
     Assert2(I->getType() == FT->getParamType(i),
             "Argument value does not match function argument type!",
             I, FT->getParamType(i));
+    // Make sure no aggregates are passed by value.
+    Assert1(I->getType()->isFirstClassType(), 
+            "Functions cannot take aggregates as arguments by value!", I);
+   }
 
   if (!F.isExternal()) {
     verifySymbolTable(F.getSymbolTable());
