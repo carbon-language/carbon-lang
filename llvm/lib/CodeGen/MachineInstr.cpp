@@ -7,6 +7,14 @@
 #include "llvm/Target/MachineInstrInfo.h"  // FIXME: shouldn't need this!
 using std::cerr;
 
+// Global variable holding an array of descriptors for machine instructions.
+// The actual object needs to be created separately for each target machine.
+// This variable is initialized and reset by class MachineInstrInfo.
+// 
+// FIXME: This should be a property of the target so that more than one target
+// at a time can be active...
+//
+extern const MachineInstrDescriptor *TargetInstrDescriptors;
 
 // Constructor for instructions with fixed #operands (nearly all)
 MachineInstr::MachineInstr(MachineOpCode _opCode)

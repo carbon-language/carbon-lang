@@ -29,16 +29,6 @@ typedef unsigned InstrSchedClass;
 const MachineOpCode INVALID_MACHINE_OPCODE = -1;
 
 
-// Global variable holding an array of descriptors for machine instructions.
-// The actual object needs to be created separately for each target machine.
-// This variable is initialized and reset by class MachineInstrInfo.
-// 
-// FIXME: This should be a property of the target so that more than one target
-// at a time can be active...
-//
-extern const MachineInstrDescriptor *TargetInstrDescriptors;
-
-
 //---------------------------------------------------------------------------
 // struct MachineInstrDescriptor:
 //	Predefined information about each machine instruction.
