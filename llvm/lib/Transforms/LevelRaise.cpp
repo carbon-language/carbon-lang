@@ -14,17 +14,29 @@
 #include "llvm/Pass.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/Analysis/Expressions.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "Support/STLExtras.h"
 #include "Support/StatisticReporter.h"
+#include "Support/CommandLine.h"
 #include <algorithm>
 using std::cerr;
 
-static Statistic<> NumLoadStorePeepholes("raise\t\t- Number of load/store peepholes");
-static Statistic<> NumGEPInstFormed("raise\t\t- Number of other getelementptr's formed");
-static Statistic<> NumExprTreesConv("raise\t\t- Number of expression trees converted");
+// StartInst - This enables the -raise-start-inst=foo option to cause the level
+// raising pass to start at instruction "foo", which is immensely useful for
+// debugging!
+//
+static cl::String StartInst("raise-start-inst", "Start raise pass at the "
+                            "instruction with the specified name", cl::Hidden);
+
+static Statistic<> NumLoadStorePeepholes("raise\t\t- Number of load/store "
+                                         "peepholes");
+static Statistic<> NumGEPInstFormed("raise\t\t- Number of other "
+                                    "getelementptr's formed");
+static Statistic<> NumExprTreesConv("raise\t\t- Number of expression trees"
+                                    " converted");
 static Statistic<> NumCastOfCast("raise\t\t- Number of cast-of-self removed");
-static Statistic<> NumDCEorCP("raise\t\t- Number of insts DCE'd or constprop'd");
+static Statistic<> NumDCEorCP("raise\t\t- Number of insts DCEd or constprop'd");
 
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
@@ -221,6 +233,9 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
         DEBUG(cerr << "DONE CONVERTING SRC EXPR TYPE: \n" << BB->getParent());
+
+        DEBUG(assert(verifyFunction(*BB->getParent()) == false &&
+                     "Function broken!"));
         ++NumExprTreesConv;
         return true;
       }
@@ -240,6 +255,9 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
         DEBUG(cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent());
+
+        DEBUG(assert(verifyFunction(*BB->getParent()) == false &&
+                     "Function broken!"));
         ++NumExprTreesConv;
         return true;
       }
@@ -468,6 +486,21 @@ static bool doRPR(Function &F) {
   //
   bool Changed = false, LocalChange;
   
+
+  // If the StartInst option was specified, then Peephole optimize that
+  // instruction first if it occurs in this function.
+  //
+  if (!StartInst.empty()) {
+    for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
+      for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI)
+        if (BI->getName() == StartInst) {
+          bool SavedDebug = DebugFlag;  // Save the DEBUG() controlling flag.
+          DebugFlag = true;             // Turn on DEBUG's
+          Changed |= PeepholeOptimize(BB, BI);
+          DebugFlag = SavedDebug;       // Restore DebugFlag to previous state
+        }
+  }
+
   do {
     DEBUG(cerr << "Looping: \n" << F);
 
