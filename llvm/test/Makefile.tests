@@ -31,9 +31,9 @@ endif
 .PRECIOUS: Output/%.llvm
 
 ifdef ENABLE_OPTIMIZED
-TOOLS    = $(BUILD_ROOT_TOP)/tools/Release
+TOOLS    = $(BUILD_OBJ_ROOT)/tools/Release
 else
-TOOLS    = $(BUILD_ROOT_TOP)/tools/Debug
+TOOLS    = $(BUILD_OBJ_ROOT)/tools/Debug
 endif
 
 # LLVM Tool Definitions...
@@ -60,7 +60,7 @@ FAILURE  = $(LEVEL)/test/Failure.sh
 TESTRUNR = $(LEVEL)/test/TestRunner.sh
 
 # Native Tool Definitions
-NATGCC  = /usr/dcs/software/supported/bin/gcc
+NATGCC  = $(CC)
 CP	= /bin/cp -f
 
 ## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
