@@ -225,6 +225,10 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::SHLD32rri8:return MakeMRIInst(X86::SHLD32mri8,FrameIndex, MI);
     case X86::SHRD32rrCL:return MakeMRInst( X86::SHRD32mrCL,FrameIndex, MI);
     case X86::SHRD32rri8:return MakeMRIInst(X86::SHRD32mri8,FrameIndex, MI);
+    case X86::SHLD16rrCL:return MakeMRInst( X86::SHLD16mrCL,FrameIndex, MI);
+    case X86::SHLD16rri8:return MakeMRIInst(X86::SHLD16mri8,FrameIndex, MI);
+    case X86::SHRD16rrCL:return MakeMRInst( X86::SHRD16mrCL,FrameIndex, MI);
+    case X86::SHRD16rri8:return MakeMRIInst(X86::SHRD16mri8,FrameIndex, MI);
     case X86::SETBr:     return MakeMInst( X86::SETBm,   FrameIndex, MI);
     case X86::SETAEr:    return MakeMInst( X86::SETAEm,  FrameIndex, MI);
     case X86::SETEr:     return MakeMInst( X86::SETEm,   FrameIndex, MI);

@@ -881,6 +881,12 @@ def SHLD32rrCL : I<0xA5, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
 def SHRD32rrCL : I<0xAD, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                    "shrd{l} {%cl, $src2, $dst|$dst, $src2, %CL}">,
                    Imp<[CL],[]>, TB;
+def SHLD16rrCL : I<0xA5, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
+                   "shld{w} {%cl, $src2, $dst|$dst, $src2, %CL}">,
+                   Imp<[CL],[]>, TB, OpSize;
+def SHRD16rrCL : I<0xAD, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
+                   "shrd{w} {%cl, $src2, $dst|$dst, $src2, %CL}">,
+                   Imp<[CL],[]>, TB, OpSize;
 
 let isCommutable = 1 in {  // These instructions commute to each other.
 def SHLD32rri8 : Ii8<0xA4, MRMDestReg,
@@ -889,6 +895,14 @@ def SHLD32rri8 : Ii8<0xA4, MRMDestReg,
 def SHRD32rri8 : Ii8<0xAC, MRMDestReg,
                      (ops R32:$dst, R32:$src1, R32:$src2, i8imm:$src3),
                      "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}">, TB;
+def SHLD16rri8 : Ii8<0xA4, MRMDestReg,
+                     (ops R16:$dst, R16:$src1, R16:$src2, i8imm:$src3),
+                     "shld{w} {$src3, $src2, $dst|$dst, $src2, $src3}">,
+                     TB, OpSize;
+def SHRD16rri8 : Ii8<0xAC, MRMDestReg,
+                     (ops R16:$dst, R16:$src1, R16:$src2, i8imm:$src3),
+                     "shrd{w} {$src3, $src2, $dst|$dst, $src2, $src3}">,
+                     TB, OpSize;
 }
 
 let isTwoAddress = 0 in {
@@ -904,6 +918,21 @@ let isTwoAddress = 0 in {
   def SHRD32mri8 : Ii8<0xAC, MRMDestMem, 
                        (ops i32mem:$dst, R32:$src2, i8imm:$src3),
                        "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}">, TB;
+
+  def SHLD16mrCL : I<0xA5, MRMDestMem, (ops i16mem:$dst, R16:$src2),
+                     "shld{w} {%cl, $src2, $dst|$dst, $src2, %CL}">,
+                     Imp<[CL],[]>, TB, OpSize;
+  def SHRD16mrCL : I<0xAD, MRMDestMem, (ops i16mem:$dst, R16:$src2),
+                    "shrd{w} {%cl, $src2, $dst|$dst, $src2, %CL}">,
+                    Imp<[CL],[]>, TB, OpSize;
+  def SHLD16mri8 : Ii8<0xA4, MRMDestMem,
+                      (ops i16mem:$dst, R16:$src2, i8imm:$src3),
+                      "shld{w} {$src3, $src2, $dst|$dst, $src2, $src3}">,
+                      TB, OpSize;
+  def SHRD16mri8 : Ii8<0xAC, MRMDestMem, 
+                       (ops i16mem:$dst, R16:$src2, i8imm:$src3),
+                       "shrd{w} {$src3, $src2, $dst|$dst, $src2, $src3}">,
+                       TB, OpSize;
 }
 
 
