@@ -11,7 +11,7 @@ TOOLNAME = llc
 USEDLIBS = sparc \
            x86 \
            powerpc \
-	   selectiondag \
+           selectiondag \
            regalloc \
            sched \
            select \
