@@ -1,9 +1,7 @@
-##-----------------------------------------------------------*-Makefile-*-
+##----------------------------------------------------------*- Makefile -*-===##
 ## Common rules for generating, linking, and compiling via LLVM.  This is
 ## used to implement a robust testing framework for LLVM
-##------------------------------------------------------------------------
-
-## NOTE: This is preliminary and will change in the future
+##-------------------------------------------------------------------------===##
 
 # If the user specified a TEST= option on the command line, we do not want to do
 # the default testing type.  Instead, we change the default target to be the
@@ -40,13 +38,20 @@ endif
 
 # LLVM Tool Definitions...
 #
+ifdef LLVMGCCARCH # FIXME: Remove when new CFE is used on sparc as well!
+LCC      = $(LLVMGCCDIR)/bin/gcc
+LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH)/cc1
+LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/lib/gcc-lib/$(LLVMGCCARCH) -L$(LLVMGCCDIR)/lib
+else
 LCC      = $(LLVMGCCDIR)/bin/llvm-gcc
 LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/llvm/3.1/cc1
+LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/llvm/lib
+endif
+
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LAS      = $(TOOLS)/as
 LGCCAS   = $(TOOLS)/gccas
-LGCCLD   = $(TOOLS)/gccld -L$(LLVMGCCDIR)/llvm/lib
 LDIS     = $(TOOLS)/dis 
 LOPT     = $(TOOLS)/opt
 LLINK    = $(TOOLS)/link
