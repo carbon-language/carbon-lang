@@ -17,9 +17,9 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
-#include "../../Target/SparcV9/MachineCodeForInstruction.h"
-#include "../../Target/SparcV9/LiveVar/FunctionLiveVarInfo.h"
-#include "../../Target/SparcV9/SparcV9InstrInfo.h"
+#include "../MachineCodeForInstruction.h"
+#include "../LiveVar/FunctionLiveVarInfo.h"
+#include "../SparcV9InstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>

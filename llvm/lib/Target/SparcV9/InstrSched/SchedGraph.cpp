@@ -19,9 +19,9 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "../../Target/SparcV9/MachineCodeForInstruction.h"
-#include "../../Target/SparcV9/SparcV9RegInfo.h"
-#include "../../Target/SparcV9/SparcV9InstrInfo.h"
+#include "../MachineCodeForInstruction.h"
+#include "../SparcV9RegInfo.h"
+#include "../SparcV9InstrInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
 
