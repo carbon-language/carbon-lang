@@ -89,6 +89,36 @@ bool TailCallElim::runOnFunction(Function &F) {
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
       MadeChange |= ProcessReturningBlock(Ret, OldEntry, ArgumentPHIs);
   
+  // If we eliminated any tail recursions, it's possible that we inserted some
+  // silly PHI nodes which just merge an initial value (the incoming operand)
+  // with themselves.  Check to see if we did and clean up our mess if so.  This
+  // occurs when a function passes an argument straight through to its tail
+  // call.
+  if (!ArgumentPHIs.empty()) {
+    unsigned NumIncoming = ArgumentPHIs[0]->getNumIncomingValues();
+    for (unsigned i = 0, e = ArgumentPHIs.size(); i != e; ++i) {
+      PHINode *PN = ArgumentPHIs[i];
+      Value *V = 0;
+      for (unsigned op = 0, e = NumIncoming; op != e; ++op) {
+        Value *Op = PN->getIncomingValue(op);
+        if (Op != PN) {
+          if (V == 0) {
+            V = Op;     // First value seen?
+          } else if (V != Op) {
+            V = 0;
+            break;
+          }
+        }
+      }
+
+      // If the PHI Node is a dynamic constant, replace it with the value it is.
+      if (V) {
+        PN->replaceAllUsesWith(V);
+        PN->getParent()->getInstList().erase(PN);
+      }
+    }
+  }
+
   return MadeChange;
 }
 
@@ -143,16 +173,40 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
   for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator())) {
       Value *RetOp = RI->getOperand(0);
-      if (isa<Constant>(RetOp)) {
-        if (ReturnedValue && RetOp != ReturnedValue)
-          return 0;     // Cannot transform if differing constants are returned.
-        ReturnedValue = RetOp;
+      if (RetOp != I) { // Ignore the one returning I.
+        // We can only perform this transformation if the value returned is
+        // evaluatable at the start of the initial invocation of the function,
+        // instead of at the end of the evaluation.
+        //
+        // We currently handle static constants and arguments that are not
+        // modified as part of the recursion.
+        if (!isa<Constant>(RetOp)) {    // Constants are always ok
+          // Check to see if this is an immutable argument, if so, the value
+          // will be available to initialize the accumulator.
+          if (Argument *Arg = dyn_cast<Argument>(RetOp)) {
+            // Figure out which argument number this is...
+            unsigned ArgNo = 0;
+            for (Function::aiterator AI = F->abegin(); &*AI != Arg; ++AI)
+              ++ArgNo;
+            
+            // If we are passing this argument into call as the corresponding
+            // argument operand, then the argument is dynamically constant.
+            // Otherwise, we cannot transform this function safely.
+            if (CI->getOperand(ArgNo+1) != Arg)
+              return 0;
 
-      } else if (RetOp != I) { // Ignore the one returning I.
-        return 0;  // Not returning a constant, cannot transform.
+          } else {
+            // Not a constant or immutable argument, we can't safely transform.
+            return 0;
+          }
+        }
+        
+        if (ReturnedValue && RetOp != ReturnedValue)
+          return 0;     // Cannot transform if differing values are returned.
+        ReturnedValue = RetOp;
       }
     }
-
+  
   // Ok, if we passed this battery of tests, we can perform accumulator
   // recursion elimination.
   return ReturnedValue;
