@@ -11,6 +11,7 @@
 #
 
 FILENAME=$1
+TESTNAME=$1
 SUBST=$1
 OUTPUT=Output/$FILENAME.out
 
@@ -20,19 +21,22 @@ if test $# != 1; then
   # and the file to output to.
   SUBST=$2
   OUTPUT=$3
+  TESTNAME=$3
 fi
+
+ulimit -t 40
 
 SCRIPT=$OUTPUT.script
 grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g" > $SCRIPT
 
 
 /bin/sh $SCRIPT > $OUTPUT 2>&1 || (
-  echo "******************** TEST '$FILENAME' FAILED! ********************"
+  echo "******************** TEST '$TESTNAME' FAILED! ********************"
   echo "Command: "
   cat $SCRIPT
   echo "Output:"
   cat $OUTPUT
   rm $OUTPUT
-  echo "******************** TEST '$FILENAME' FAILED! ********************"
+  echo "******************** TEST '$TESTNAME' FAILED! ********************"
 )
 
