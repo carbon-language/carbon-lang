@@ -97,11 +97,6 @@ private:
 
   // Information about the module, extracted from the bytecode revision number.
   unsigned char RevisionNum;        // The rev # itself
-  bool hasExtendedLinkageSpecs;     // Supports more than 4 linkage types
-  bool hasOldStyleVarargs;          // Has old version of varargs intrinsics?
-  bool hasVarArgCallPadding;        // Bytecode has extra padding in vararg call
-
-  bool usesOldStyleVarargs;         // Does this module USE old style varargs?
 
   // Flags to distinguish LLVM 1.0 & 1.1 bytecode formats (revision #0)
 

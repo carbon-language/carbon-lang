@@ -353,8 +353,7 @@ void BytecodeParser::materializeFunction(Function* F) {
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
 
   unsigned LinkageType = read_vbr_uint(Buf, EndBuf);
-  if ((!hasExtendedLinkageSpecs && LinkageType > 3) ||
-      ( hasExtendedLinkageSpecs && LinkageType > 4))
+  if (LinkageType > 4)
     throw std::string("Invalid linkage type for Function.");
   switch (LinkageType) {
   case 0: Linkage = GlobalValue::ExternalLinkage; break;
@@ -553,21 +552,12 @@ void BytecodeParser::ParseModuleGlobalInfo(const unsigned char *&Buf,
   // Read global variables...
   unsigned VarType = read_vbr_uint(Buf, End);
   while (VarType != Type::VoidTyID) { // List is terminated by Void
-    unsigned SlotNo;
+    // VarType Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3,4 =
+    // Linkage, bit4+ = slot#
+    unsigned SlotNo = VarType >> 5;
+    unsigned LinkageID = (VarType >> 2) & 7;
     GlobalValue::LinkageTypes Linkage;
 
-    unsigned LinkageID;
-    if (hasExtendedLinkageSpecs) {
-      // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-      // bit2,3,4 = Linkage, bit4+ = slot#
-      SlotNo = VarType >> 5;
-      LinkageID = (VarType >> 2) & 7;
-    } else {
-      // VarType Fields: bit0 = isConstant, bit1 = hasInitializer,
-      // bit2,3 = Linkage, bit4+ = slot#
-      SlotNo = VarType >> 4;
-      LinkageID = (VarType >> 2) & 3;
-    }
     switch (LinkageID) {
     default: assert(0 && "Unknown linkage type!");
     case 0: Linkage = GlobalValue::ExternalLinkage;  break;
@@ -655,20 +645,10 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   RevisionNum = Version >> 4;
 
   // Default values for the current bytecode version
-  hasExtendedLinkageSpecs = true;
-  hasOldStyleVarargs = false;
-  hasVarArgCallPadding = false;
   hasInconsistentModuleGlobalInfo = false;
   hasExplicitPrimitiveZeros = false;
 
   switch (RevisionNum) {
-  case 2:               // LLVM pre-1.0 release: will be deleted on the next rev
-    // Version #2 only supported 4 linkage types.  It didn't support weak
-    // linkage.
-    hasExtendedLinkageSpecs = false;
-    hasOldStyleVarargs = true;
-    hasVarArgCallPadding = true;
-    // FALL THROUGH
   case 0:               //  LLVM 1.0, 1.1 release version
     // Compared to rev #2, we added support for weak linkage, a more dense
     // encoding, and better varargs support.
@@ -789,7 +769,6 @@ void BytecodeParser::ParseBytecode(const unsigned char *Buf, unsigned Length,
 
   TheModule = new Module(ModuleID);
   try { 
-    usesOldStyleVarargs = false;
     ParseModule(Buf, EndBuf);
   } catch (std::string &Error) {
     freeState();       // Must destroy handles before deleting module!

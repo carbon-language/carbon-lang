@@ -124,34 +124,7 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
     Result = new VAArgInst(getValue(RI.Type, Args[0]), getType(Args[1]));
     break;
   case Instruction::VANext:
-    if (!hasOldStyleVarargs) {
-      Result = new VANextInst(getValue(RI.Type, Args[0]), getType(Args[1]));
-    } else {
-      // In the old-style varargs scheme, this was the "va_arg" instruction.
-      // Emit emulation code now.
-      if (!usesOldStyleVarargs) {
-        usesOldStyleVarargs = true;
-        std::cerr << "WARNING: this bytecode file uses obsolete features.  "
-                  << "Disassemble and assemble to update it.\n";
-      }
-
-      Value *VAListPtr = getValue(RI.Type, Args[0]);
-      const Type *ArgTy = getType(Args[1]);
-
-      // First, load the valist...
-      Instruction *CurVAList = new LoadInst(VAListPtr, "");
-      BB->getInstList().push_back(CurVAList);
-      
-      // Construct the vaarg
-      Result = new VAArgInst(CurVAList, ArgTy);
-      
-      // Now we must advance the pointer and update it in memory.
-      Instruction *TheVANext = new VANextInst(CurVAList, ArgTy);
-      BB->getInstList().push_back(TheVANext);
-      
-      BB->getInstList().push_back(new StoreInst(TheVANext, VAListPtr));
-    }
-
+    Result = new VANextInst(getValue(RI.Type, Args[0]), getType(Args[1]));
     break;
   case Instruction::Cast:
     Result = new CastInst(getValue(RI.Type, Args[0]), getType(Args[1]));
@@ -234,21 +207,17 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       if (It != FTy->param_end())
         throw std::string("Invalid call instruction!");
     } else {
-      Args.erase(Args.begin(), Args.begin()+1+hasVarArgCallPadding);
+      Args.erase(Args.begin(), Args.begin()+1);
 
       unsigned FirstVariableOperand;
-      if (!hasVarArgCallPadding) {
-        if (Args.size() < FTy->getNumParams())
-          throw std::string("Call instruction missing operands!");
+      if (Args.size() < FTy->getNumParams())
+        throw std::string("Call instruction missing operands!");
 
-        // Read all of the fixed arguments
-        for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i)),Args[i]));
-
-        FirstVariableOperand = FTy->getNumParams();
-      } else {
-        FirstVariableOperand = 0;
-      }
+      // Read all of the fixed arguments
+      for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+        Params.push_back(getValue(getTypeSlot(FTy->getParamType(i)),Args[i]));
+      
+      FirstVariableOperand = FTy->getNumParams();
 
       if ((Args.size()-FirstVariableOperand) & 1) // Must be pairs of type/value
         throw std::string("Invalid call instruction!");
@@ -286,28 +255,16 @@ void BytecodeParser::ParseInstruction(const unsigned char *&Buf,
       if (It != FTy->param_end())
         throw std::string("Invalid invoke instruction!");
     } else {
-      Args.erase(Args.begin(), Args.begin()+1+hasVarArgCallPadding);
+      Args.erase(Args.begin(), Args.begin()+1);
 
-      unsigned FirstVariableArgument;
-      if (!hasVarArgCallPadding) {
-        Normal = getBasicBlock(Args[0]);
-        Except = getBasicBlock(Args[1]);
-
-        FirstVariableArgument = FTy->getNumParams()+2;
-        for (unsigned i = 2; i != FirstVariableArgument; ++i)
-          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
-                                    Args[i]));
-          
-      } else {
-        if (Args.size() < 4) throw std::string("Invalid invoke instruction!");
-        if (Args[0] != Type::LabelTyID || Args[2] != Type::LabelTyID)
-          throw std::string("Invalid invoke instruction!");
-        Normal = getBasicBlock(Args[1]);
-        Except = getBasicBlock(Args[3]);
-
-        FirstVariableArgument = 4;
-      }
-
+      Normal = getBasicBlock(Args[0]);
+      Except = getBasicBlock(Args[1]);
+      
+      unsigned FirstVariableArgument = FTy->getNumParams()+2;
+      for (unsigned i = 2; i != FirstVariableArgument; ++i)
+        Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
+                                  Args[i]));
+      
       if (Args.size()-FirstVariableArgument & 1)  // Must be pairs of type/value
         throw std::string("Invalid invoke instruction!");
 
