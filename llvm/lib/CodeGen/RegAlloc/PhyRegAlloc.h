@@ -85,7 +85,7 @@ class PhyRegAlloc : public FunctionPass {
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
   const LoopInfo *LoopDepthCalc;        // to calculate loop depths 
 
-  std::map<const Function *, std::vector<Constant *> > FnAllocState;
+  std::map<const Function *, std::vector<AllocInfo> > FnAllocState;
 
   PhyRegAlloc(const PhyRegAlloc&);     // DO NOT IMPLEMENT
   void operator=(const PhyRegAlloc&);  // DO NOT IMPLEMENT
