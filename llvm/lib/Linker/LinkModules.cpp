@@ -425,6 +425,20 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
   return false;
 }
 
+// Gross hack, see call sites.
+static void CoutHack(GlobalVariable *GV1, GlobalVariable *GV2) {
+  const Type *GV1Ty = GV1->getType()->getElementType();
+  const Type *GV2Ty = GV2->getType()->getElementType();
+
+  if (GV1->isExternal() && isa<StructType>(GV1Ty) &&
+      GV2->hasInitializer() && GV2->hasExternalLinkage() && 
+      GV2->getInitializer()->isNullValue() && isa<ArrayType>(GV2Ty) &&
+      cast<ArrayType>(GV2Ty)->getElementType() == Type::SByteTy) {
+    GV1->setInitializer(Constant::getNullValue(GV1Ty));
+    GV2->setInitializer(0);
+  }
+}
+
 // LinkGlobals - Loop through the global variables in the src module and merge
 // them into the dest module.
 static bool LinkGlobals(Module *Dest, Module *Src,
@@ -458,6 +472,15 @@ static bool LinkGlobals(Module *Dest, Module *Src,
 
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
            "Global must either be external or have an initializer!");
+
+    // This is a gross hack to handle cin/cout until PR400 is implemented.  If
+    // we are linking an external struct against a zero-initialized array of
+    // sbytes, move the initializer from the array to the struct so we keep the
+    // struct type.
+    if (DGV) {
+      CoutHack(DGV, SGV);
+      CoutHack(SGV, DGV);
+    }
 
     GlobalValue::LinkageTypes NewLinkage;
     bool LinkFromSrc;
