@@ -292,14 +292,66 @@ def CDQ    : I<"cdq", 0x99, RawFrm >, Imp<[EAX],[EDX]>;              // EDX:EAX 
 //
 let isTwoAddress = 1 in {
 
-// Conditional moves.  These are modelled as X = cmovXX Y, Z.  Eventually
-// register allocated to cmovXX XY, Z
+// Conditional moves
+def CMOVB16rr : I   <"cmove", 0x42, MRMSrcReg>, TB, OpSize;        // if <u, R16 = R16
+def CMOVB16rm : Im16<"cmove", 0x42, MRMSrcMem>, TB, OpSize;        // if <u, R16 = [mem16]
+def CMOVB32rr : I   <"cmove", 0x42, MRMSrcReg>, TB;                // if <u, R32 = R32
+def CMOVB32rm : Im32<"cmove", 0x42, MRMSrcMem>, TB;                // if <u, R32 = [mem32]
+
+def CMOVAE16rr: I   <"cmove", 0x43, MRMSrcReg>, TB, OpSize;        // if >=u, R16 = R16
+def CMOVAE16rm: Im16<"cmove", 0x43, MRMSrcMem>, TB, OpSize;        // if >=u, R16 = [mem16]
+def CMOVAE32rr: I   <"cmove", 0x43, MRMSrcReg>, TB;                // if >=u, R32 = R32
+def CMOVAE32rm: Im32<"cmove", 0x43, MRMSrcMem>, TB;                // if >=u, R32 = [mem32]
+
 def CMOVE16rr : I   <"cmove", 0x44, MRMSrcReg>, TB, OpSize;        // if ==, R16 = R16
 def CMOVE16rm : Im16<"cmove", 0x44, MRMSrcMem>, TB, OpSize;        // if ==, R16 = [mem16]
+def CMOVE32rr : I   <"cmove", 0x44, MRMSrcReg>, TB;                // if ==, R32 = R32
+def CMOVE32rm : Im32<"cmove", 0x44, MRMSrcMem>, TB;                // if ==, R32 = [mem32]
+
+def CMOVNE16rr: I   <"cmovne",0x45, MRMSrcReg>, TB, OpSize;        // if !=, R16 = R16
+def CMOVNE16rm: Im16<"cmovne",0x45, MRMSrcMem>, TB, OpSize;        // if !=, R16 = [mem16]
 def CMOVNE32rr: I   <"cmovne",0x45, MRMSrcReg>, TB;                // if !=, R32 = R32
 def CMOVNE32rm: Im32<"cmovne",0x45, MRMSrcMem>, TB;                // if !=, R32 = [mem32]
+
+def CMOVBE16rr: I   <"cmovne",0x46, MRMSrcReg>, TB, OpSize;        // if <=u, R16 = R16
+def CMOVBE16rm: Im16<"cmovne",0x46, MRMSrcMem>, TB, OpSize;        // if <=u, R16 = [mem16]
+def CMOVBE32rr: I   <"cmovne",0x46, MRMSrcReg>, TB;                // if <=u, R32 = R32
+def CMOVBE32rm: Im32<"cmovne",0x46, MRMSrcMem>, TB;                // if <=u, R32 = [mem32]
+
+def CMOVA16rr : I   <"cmove", 0x47, MRMSrcReg>, TB, OpSize;        // if >u, R16 = R16
+def CMOVA16rm : Im16<"cmove", 0x47, MRMSrcMem>, TB, OpSize;        // if >u, R16 = [mem16]
+def CMOVA32rr : I   <"cmove", 0x47, MRMSrcReg>, TB;                // if >u, R32 = R32
+def CMOVA32rm : Im32<"cmove", 0x47, MRMSrcMem>, TB;                // if >u, R32 = [mem32]
+
+def CMOVS16rr : I   <"cmovs", 0x48, MRMSrcReg>, TB, OpSize;        // if signed, R16 = R16
+def CMOVS16rm : Im16<"cmovs", 0x48, MRMSrcMem>, TB, OpSize;        // if signed, R16 = [mem16]
 def CMOVS32rr : I   <"cmovs", 0x48, MRMSrcReg>, TB;                // if signed, R32 = R32
 def CMOVS32rm : Im32<"cmovs", 0x48, MRMSrcMem>, TB;                // if signed, R32 = [mem32]
+
+def CMOVNS16rr: I   <"cmovs", 0x49, MRMSrcReg>, TB, OpSize;        // if !signed, R16 = R16
+def CMOVNS16rm: Im16<"cmovs", 0x49, MRMSrcMem>, TB, OpSize;        // if !signed, R16 = [mem16]
+def CMOVNS32rr: I   <"cmovs", 0x49, MRMSrcReg>, TB;                // if !signed, R32 = R32
+def CMOVNS32rm: Im32<"cmovs", 0x49, MRMSrcMem>, TB;                // if !signed, R32 = [mem32]
+
+def CMOVL16rr : I   <"cmove", 0x4C, MRMSrcReg>, TB, OpSize;        // if <s, R16 = R16
+def CMOVL16rm : Im16<"cmove", 0x4C, MRMSrcMem>, TB, OpSize;        // if <s, R16 = [mem16]
+def CMOVL32rr : I   <"cmove", 0x4C, MRMSrcReg>, TB;                // if <s, R32 = R32
+def CMOVL32rm : Im32<"cmove", 0x4C, MRMSrcMem>, TB;                // if <s, R32 = [mem32]
+
+def CMOVGE16rr: I   <"cmove", 0x4D, MRMSrcReg>, TB, OpSize;        // if >=s, R16 = R16
+def CMOVGE16rm: Im16<"cmove", 0x4D, MRMSrcMem>, TB, OpSize;        // if >=s, R16 = [mem16]
+def CMOVGE32rr: I   <"cmove", 0x4D, MRMSrcReg>, TB;                // if >=s, R32 = R32
+def CMOVGE32rm: Im32<"cmove", 0x4D, MRMSrcMem>, TB;                // if >=s, R32 = [mem32]
+
+def CMOVLE16rr: I   <"cmovne",0x4E, MRMSrcReg>, TB, OpSize;        // if <=s, R16 = R16
+def CMOVLE16rm: Im16<"cmovne",0x4E, MRMSrcMem>, TB, OpSize;        // if <=s, R16 = [mem16]
+def CMOVLE32rr: I   <"cmovne",0x4E, MRMSrcReg>, TB;                // if <=s, R32 = R32
+def CMOVLE32rm: Im32<"cmovne",0x4E, MRMSrcMem>, TB;                // if <=s, R32 = [mem32]
+
+def CMOVG16rr : I   <"cmove", 0x4F, MRMSrcReg>, TB, OpSize;        // if >s, R16 = R16
+def CMOVG16rm : Im16<"cmove", 0x4F, MRMSrcMem>, TB, OpSize;        // if >s, R16 = [mem16]
+def CMOVG32rr : I   <"cmove", 0x4F, MRMSrcReg>, TB;                // if >s, R32 = R32
+def CMOVG32rm : Im32<"cmove", 0x4F, MRMSrcMem>, TB;                // if >s, R32 = [mem32]
 
 // unary instructions
 def NEG8r  : I   <"neg", 0xF6, MRM3r>;         // R8  = -R8  = 0-R8
