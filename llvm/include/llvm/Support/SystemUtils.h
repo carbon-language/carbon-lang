@@ -24,7 +24,10 @@ namespace llvm {
 /// advising against display of bytecode and return true. Otherwise just return
 /// false
 /// @brief Check for output written to a console
-bool CheckBytecodeOutputToConsole(std::ostream* stream_to_check);
+bool CheckBytecodeOutputToConsole(
+  std::ostream* stream_to_check, ///< The stream to be checked
+  bool print_warning = true ///< Control whether warnings are printed
+);
 
 /// FindExecutable - Find a named executable, giving the argv[0] of program
 /// being executed. This allows us to find another LLVM tool if it is built into
