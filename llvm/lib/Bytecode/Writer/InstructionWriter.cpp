@@ -207,9 +207,10 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
   //
   const Type *Ty;
   switch (I.getOpcode()) {
+  case Instruction::Select:
   case Instruction::Malloc:
   case Instruction::Alloca:
-    Ty = I.getType();  // Malloc & Alloca ALWAYS want to encode the return type
+    Ty = I.getType();  // These ALWAYS want to encode the return type
     break;
   case Instruction::Store:
     Ty = I.getOperand(1)->getType();  // Encode the pointer type...
