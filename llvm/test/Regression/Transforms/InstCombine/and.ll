@@ -65,3 +65,13 @@ uint %test10(uint %A) {
 	%D = and uint %C, 1   ; (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
 	ret uint %D
 }
+
+uint %test11(uint %A, uint* %P) {
+	%B = or uint %A, 3
+	%C = xor uint %B, 12
+	store uint %C, uint* %P    ; additional use of C
+	%D = and uint %C, 3        ; %C = and uint %B, 3 --> 3
+	ret uint %D
+}
+
+
