@@ -26,7 +26,7 @@ Sparc.burm : Sparc.burg.in1
 	$(CXX) -E -I$(LLVM_SRC_ROOT)/include $(DEBUG_FLAG) -x c++ $< | $(SED) '/^#/d' | $(SED) 's/^Xinclude/#include/' | $(SED) 's/^Xdefine/#define/' > $@
 
 Sparc.burm.cpp: Sparc.burm
-	@echo "Burging $<"
+	@echo "Burging `basename $<`"
 	$(RunBurg) $< -o $@
 
 $(BUILD_OBJ_DIR)/Debug/Sparc.burm.lo: Sparc.burm.cpp
@@ -48,7 +48,7 @@ TABLEGEN_FILES := $(notdir $(wildcard $(SourceDir)/*.td))
 $(TARGET_NAME)CodeEmitter.cpp:: $(TARGET_NAME)CodeEmitter.inc
 
 $(TARGET_NAME)CodeEmitter.inc:: $(SourceDir)/$(TARGET_NAME).td $(TABLEGEN_FILES) $(TBLGEN)
-	@echo "Tblgen'ing $<"
+	@echo "Tblgen'ing `basename $<`"
 	$(TBLGEN) -I $(SourceDir) $< -gen-emitter -o $@
 
 clean::
