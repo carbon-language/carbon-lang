@@ -1094,7 +1094,9 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if ($5->getType() != Type::UByteTy)
       ThrowException("Shift count for shift constant must be unsigned byte!");
-    $$ = ConstantExpr::get($1, $3, $5);
+    if (!$3->getType()->isIntegral())
+      ThrowException("Shift constant expression requires integral operand!");
+    $$ = ConstantExpr::getShift($1, $3, $5);
   };
 
 
