@@ -1176,8 +1176,8 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
       // Advance the argument iterator to the first pointer argument...
       while (AI != F.aend() && !isPointerType(AI->getType())) {
         ++AI;
-#ifndef NDEBUG
-        if (AI == F.aend())
+#ifndef NDEBUG  // FIXME: We should merge vararg arguments!
+        if (AI == F.aend() && !F.getFunctionType()->isVarArg())
           std::cerr << "Bad call to Function: " << F.getName() << "\n";
 #endif
       }
@@ -1227,8 +1227,8 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
       // Advance the argument iterator to the first pointer argument...
       while (AI != F.aend() && !isPointerType(AI->getType())) {
         ++AI;
-#ifndef NDEBUG
-        if (AI == F.aend())
+#ifndef NDEBUG // FIXME: We should merge varargs arguments!!
+        if (AI == F.aend() && !F.getFunctionType()->isVarArg())
           std::cerr << "Bad call to Function: " << F.getName() << "\n";
 #endif
       }
@@ -1490,14 +1490,18 @@ void DSGraph::removeTriviallyDeadNodes() {
       if (Node->getNumReferrers() == Node->getGlobals().size()) {
         const std::vector<GlobalValue*> &Globals = Node->getGlobals();
 
+        // Loop through and make sure all of the globals are referring directly
+        // to the node...
+        for (unsigned j = 0, e = Globals.size(); j != e; ++j) {
+          DSNode *N = getNodeForValue(Globals[j]).getNode();
+          assert(N == Node && "ScalarMap doesn't match globals list!");
+        }
+
         // Make sure NumReferrers still agrees, if so, the node is truly dead.
-        // Remove the scalarmap entries, which will drop the actual referrer
-        // count to zero.
         if (Node->getNumReferrers() == Globals.size()) {
           for (unsigned j = 0, e = Globals.size(); j != e; ++j)
             ScalarMap.erase(Globals[j]);
-          if (Node->hasNoReferrers())
-            Node->makeNodeDead();
+          Node->makeNodeDead();
         }
       }
     }
