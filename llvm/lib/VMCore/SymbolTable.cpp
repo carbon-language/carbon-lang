@@ -39,10 +39,10 @@ SymbolTable::~SymbolTable() {
   for (plane_iterator PI = pmap.begin(); PI != pmap.end(); ++PI) {
     for (value_iterator VI = PI->second.begin(); VI != PI->second.end(); ++VI)
       if (!isa<Constant>(VI->second) ) {
-	std::cerr << "Value still in symbol table! Type = '"
+        std::cerr << "Value still in symbol table! Type = '"
                   << PI->first->getDescription() << "' Name = '"
                   << VI->first << "'\n";
-	LeftoverValues = false;
+        LeftoverValues = false;
       }
   }
   
@@ -300,15 +300,13 @@ bool SymbolTable::strip( void ) {
     value_iterator B = Plane.begin(), Bend = Plane.end();
     while (B != Bend) {   // Found nonempty type plane!
       Value *V = B->second;
-      if (isa<Constant>(V)) {
-	remove(V);
+      if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()){
+        // Set name to "", removing from symbol table!
+        V->setName("", this);
         RemovedSymbol = true;
-      } else {
-        if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()){
-          // Set name to "", removing from symbol table!
-          V->setName("", this);
-          RemovedSymbol = true;
-        }
+      } else if (isa<Constant>(V) ) {
+        remove(V);
+        RemovedSymbol = true;
       }
       ++B;
     }
@@ -326,7 +324,7 @@ bool SymbolTable::strip( void ) {
 
 // This function is called when one of the types in the type plane are refined
 void SymbolTable::refineAbstractType(const DerivedType *OldType,
-				     const Type *NewType) {
+                                     const Type *NewType) {
 
   // Search to see if we have any values of the type Oldtype.  If so, we need to
   // move them into the newtype plane...
@@ -441,9 +439,9 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
       I->second = (Type*)NewType;  // TODO FIXME when types aren't const
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-	std::cerr << "Added type " << NewType->getDescription() << "\n";
+        std::cerr << "Added type " << NewType->getDescription() << "\n";
 #endif
-	cast<DerivedType>(NewType)->addAbstractTypeUser(this);
+        cast<DerivedType>(NewType)->addAbstractTypeUser(this);
       }
     }
   }
