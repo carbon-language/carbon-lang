@@ -56,7 +56,7 @@ const ResourceId MachineFPRegsRID  = -4; // use +ve numbers for actual regs
 class SchedGraphEdge: public NonCopyable {
 public:
   enum SchedGraphEdgeDepType {
-    CtrlDep, MemoryDep, DefUseDep, MachineRegister, MachineResource
+    CtrlDep, MemoryDep, ValueDep, MachineRegister, MachineResource
   };
   enum DataDepOrderType {
     TrueDep = 0x1, AntiDep=0x2, OutputDep=0x4, NonDataDep=0x8
@@ -82,21 +82,21 @@ public:
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
 				       SchedGraphEdgeDepType _depType,
-				       unsigned int     _depOrderType =TrueDep,
+				       unsigned int     _depOrderType,
 				       int _minDelay = -1);
   
-  // constructor for explicit def-use or memory def-use edge
+  // constructor for explicit value dependence (may be true/anti/output)
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
 				       const Value*    _val,
-				       unsigned int     _depOrderType =TrueDep,
+				       unsigned int     _depOrderType,
 				       int _minDelay = -1);
   
   // constructor for machine register dependence
   /*ctor*/		SchedGraphEdge(SchedGraphNode* _src,
 				       SchedGraphNode* _sink,
 				       unsigned int    _regNum,
-				       unsigned int     _depOrderType =TrueDep,
+				       unsigned int     _depOrderType,
 				       int _minDelay = -1);
   
   // constructor for any other machine resource dependences.
@@ -115,7 +115,7 @@ public:
   SchedGraphEdgeDepType getDepType	() const { return depType; }
   
   const Value*		getValue	() const {
-    assert(depType == DefUseDep || depType == MemoryDep); return val;
+    assert(depType == ValueDep); return val;
   }
   int			getMachineReg	() const {
     assert(depType == MachineRegister); return machineRegNum;
@@ -335,12 +335,10 @@ private:
   void		addMachineRegEdges	(RegToRefVecMap& regToRefVecMap,
 					 const TargetMachine& target);
   
-  void		addSSAEdge		(SchedGraphNode* node,
+  void		addEdgesForValue	(SchedGraphNode* refNode,
                                          const RefVec& defVec,
                                          const Value* defValue,
-					 const TargetMachine& target);
-  
-  void		addNonSSAEdgesForValue	(const Instruction* instr,
+                                         bool  refNodeIsDef,
 					 const TargetMachine& target);
   
   void		addDummyEdges		();
