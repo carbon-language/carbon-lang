@@ -18,6 +18,7 @@
 
 #include "Support/DOTGraphTraits.h"
 #include "Support/GraphTraits.h"
+#include <vector>
 #include <iostream>
 
 namespace DOT {  // Private functions...
@@ -136,7 +137,8 @@ public:
 
   /// emitSimpleNode - Outputs a simple (non-record) node
   void emitSimpleNode(const void *ID, const std::string &Attr,
-                      const std::string &Label, unsigned NumEdgeSources = 0) {
+                      const std::string &Label, unsigned NumEdgeSources = 0,
+                      const std::vector<std::string> *EdgeSourceLabels = 0) {
     O << "\tNode" << ID << "[ ";
     if (!Attr.empty())
       O << Attr << ",";
@@ -149,6 +151,7 @@ public:
       for (unsigned i = 0; i != NumEdgeSources; ++i) {
         if (i) O << "|";
         O << "<g" << i << ">";
+        if (EdgeSourceLabels) O << (*EdgeSourceLabels)[i];
       }
       O << "}}";
     }
