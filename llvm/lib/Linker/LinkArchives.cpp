@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
+#include "llvm/ADT/SetOperations.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -25,6 +26,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/SystemUtils.h"
 #include <algorithm>
@@ -106,7 +108,7 @@ void
 llvm::GetAllUndefinedSymbols(Module *M,
                              std::set<std::string> &UndefinedSymbols) {
   std::set<std::string> DefinedSymbols;
-  UndefinedSymbols.clear();   // Start out empty
+  UndefinedSymbols.clear();
   
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName()) {
@@ -172,6 +174,7 @@ bool llvm::LinkInArchive(Module *M,
   // no reason to link in any archive files.
   std::set<std::string> UndefinedSymbols;
   GetAllUndefinedSymbols(M, UndefinedSymbols);
+  
   if (UndefinedSymbols.empty()) {
     if (Verbose) std::cerr << "  No symbols undefined, don't link library!\n";
     return false;  // No need to link anything in!
@@ -184,35 +187,58 @@ bool llvm::LinkInArchive(Module *M,
 
   Archive* arch = AutoArch.get();
 
+  // Save a set of symbols that are not defined by the archive. Since we're
+  // entering a loop, there's no point searching for these multiple times. This
+  // variable is used to "set_subtract" from the set of undefined symbols.
+  std::set<std::string> NotDefinedByArchive;
+
   // While we are linking in object files, loop.
   while (true) {     
+
+    // Find the modules we need to link into the target module
     std::set<ModuleProvider*> Modules;
-    // Find the modules we need to link
     arch->findModulesDefiningSymbols(UndefinedSymbols, Modules);
 
-    // If we didn't find any more modules to link this time, we are done.
+    // If we didn't find any more modules to link this time, we are done 
+    // searching this archive.
     if (Modules.empty())
       break;
+
+    // Any symbols remaining in UndefinedSymbols after
+    // findModulesDefiningSymbols are ones that the archive does not define. So
+    // we add them to the NotDefinedByArchive variable now.
+    NotDefinedByArchive.insert(UndefinedSymbols.begin(),
+        UndefinedSymbols.end());;
 
     // Loop over all the ModuleProviders that we got back from the archive
     for (std::set<ModuleProvider*>::iterator I=Modules.begin(), E=Modules.end();
          I != E; ++I) {
+
       // Get the module we must link in.
       std::auto_ptr<Module> AutoModule( (*I)->releaseModule() );
-
       Module* aModule = AutoModule.get();
 
       // Link it in
       if (LinkModules(M, aModule, ErrorMessage))
-        return true;   // Couldn't link in the right object file...        
+        return true;   // Couldn't link in the module
     }
 
-    // We have linked in a set of modules determined by the archive to satisfy
-    // our missing symbols. Linking in the new modules will have satisfied some
-    // symbols but may introduce additional missing symbols. We need to update
-    // the list of undefined symbols and try again until the archive doesn't
-    // have any modules that satisfy our symbols. 
+    // Get the undefined symbols from the aggregate module. This recomputes the
+    // symbols we still need after the new modules have been linked in.
     GetAllUndefinedSymbols(M, UndefinedSymbols);
+
+    // At this point we have two sets of undefined symbols: UndefinedSymbols
+    // which holds the undefined symbols from all the modules, and 
+    // NotDefinedByArchive which holds symbols we know the archive doesn't
+    // define. There's no point searching for symbols that we won't find in the
+    // archive so we subtract these sets.
+    set_subtract<std::set<std::string>,std::set<std::string> >(
+        UndefinedSymbols,NotDefinedByArchive);
+    
+    // If there's no symbols left, no point in continuing to search the
+    // archive.
+    if (UndefinedSymbols.empty())
+      break;
   }
   
   return false;
