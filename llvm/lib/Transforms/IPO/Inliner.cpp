@@ -1,4 +1,4 @@
-//===- InlineCommon.cpp - Code common to all inliners ---------------------===//
+//===- Inliner.cpp - Code common to all inliners --------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -90,9 +90,8 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   // from inlining other functions.
   std::vector<CallSite> CallSites;
 
-  for (std::set<Function*>::iterator SCCI = SCCFunctions.begin(),
-         E = SCCFunctions.end(); SCCI != E; ++SCCI)
-    if (Function *F = *SCCI)
+  for (unsigned i = 0, e = SCC.size(); i != e; ++i)
+    if (Function *F = SCC[i]->getFunction())
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
           CallSite CS = CallSite::get(I);
