@@ -69,3 +69,9 @@ void llvm::RemoveFileOnSignal(const std::string &Filename) {
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
+
+/// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
+/// SIGSEGV) is delivered to the process, print a stack trace and then exit.
+void llvm::PrintStackTraceOnErrorSignal() {
+  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+}
