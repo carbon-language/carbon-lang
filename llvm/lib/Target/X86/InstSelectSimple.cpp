@@ -702,6 +702,15 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       return OpNum;
     }
 
+  // Special case handling of comparison against +/- 0.0
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op1))
+    if (CFP->isExactlyValue(+0.0) || CFP->isExactlyValue(-0.0)) {
+      BMI(MBB, IP, X86::FTST, 1).addReg(Op0r);
+      BMI(MBB, IP, X86::FNSTSWr8, 0);
+      BMI(MBB, IP, X86::SAHF, 1);
+      return OpNum;
+    }
+
   unsigned Op1r = getReg(Op1, MBB, IP);
   switch (Class) {
   default: assert(0 && "Unknown type class!");
