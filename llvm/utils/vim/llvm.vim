@@ -26,7 +26,8 @@ syn keyword llvmStatement malloc alloca free load store getelementptr
 
 syn keyword llvmStatement begin end true false
 syn keyword llvmStatement declare global constant const
-syn keyword llvmStatement internal unititialized external implementation
+syn keyword llvmStatement internal uninitialized external implementation
+syn keyword llvmStatement linkonce appending
 syn keyword llvmStatement null to except not
 
 "syn match llvmFunction /%[a-zA-Z\$._\-][a-zA-Z\$._\-0-9]*/
