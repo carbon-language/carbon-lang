@@ -375,7 +375,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     // positional option and keep the rest for the consume after.  The above
     // loop would have assigned no values to positional options in this case.
     //
-    if (PositionalOpts.size() == 2 && ValNo == 0)
+    if (PositionalOpts.size() == 2 && ValNo == 0 && !PositionalVals.empty())
       ErrorParsing |= ProvidePositionalOption(PositionalOpts[1],
                                               PositionalVals[ValNo++]);
     
