@@ -1,7 +1,7 @@
 
-; RUN: llvm-as < %s | llvm-dis -c > f1.cbe.c
-; RUN: gcc -B/usr/bin/ f1.cbe.c -o f1.cbe
-; RUN: ./f1.cbe
+; RUN: llvm-as < %s | llvm-dis -c > %t1.cbe.c
+; RUN: gcc -B/usr/bin/ %t1.cbe.c -o %t1.cbe
+; RUN: %t1.cbe
 
 bool %doTest(ubyte %x) {
 	%dec.0 = add ubyte %x, 255
