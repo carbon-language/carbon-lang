@@ -453,10 +453,10 @@ void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
     // If we have a previous stack frame, and we have a previous call, 
     // fill in the return value... 
     ExecutionContext &CallingSF = ECStack.back();
-    if (CallingSF.Caller) {
-      if (CallingSF.Caller->getType() != Type::VoidTy)      // Save result...
-        SetValue(CallingSF.Caller, Result, CallingSF);
-      CallingSF.Caller = 0;          // We returned from the call...
+    if (CallingSF.Caller.getInstruction()) {
+      if (CallingSF.Caller.getType() != Type::VoidTy)      // Save result...
+        SetValue(CallingSF.Caller.getInstruction(), Result, CallingSF);
+      CallingSF.Caller = CallSite();          // We returned from the call...
     }
   }
 }
@@ -639,7 +639,7 @@ void Interpreter::visitStoreInst(StoreInst &I) {
 
 void Interpreter::visitCallInst(CallInst &I) {
   ExecutionContext &SF = ECStack.back();
-  SF.Caller = &I;
+  SF.Caller = CallSite(&I);
   std::vector<GenericValue> ArgVals;
   ArgVals.reserve(I.getNumOperands()-1);
   for (unsigned i = 1; i < I.getNumOperands(); ++i) {
@@ -804,8 +804,8 @@ void Interpreter::visitVANextInst(VANextInst &I) {
 //
 void Interpreter::callFunction(Function *F,
                                const std::vector<GenericValue> &ArgVals) {
-  assert((ECStack.empty() || ECStack.back().Caller == 0 || 
-	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
+  assert((ECStack.empty() || ECStack.back().Caller.getInstruction() == 0 || 
+	  ECStack.back().Caller.arg_size() == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
   // Make a new stack frame... and fill it in.
   ECStack.push_back(ExecutionContext());

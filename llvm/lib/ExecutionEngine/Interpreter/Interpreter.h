@@ -18,6 +18,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/DataTypes.h"
 
@@ -64,8 +65,8 @@ struct ExecutionContext {
   BasicBlock::iterator  CurInst;    // The next instruction to execute
   std::map<Value *, GenericValue> Values; // LLVM values used in this invocation
   std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
-  CallInst             *Caller;     // Holds the call that called subframes.
-                                    // NULL if main func or debugger invoked fn
+  CallSite             Caller;     // Holds the call that called subframes.
+                                   // NULL if main func or debugger invoked fn
   AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
 };
 
