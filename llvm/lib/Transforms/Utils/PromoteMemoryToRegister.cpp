@@ -62,10 +62,6 @@ namespace {
     // VersionNumbers - Current version counters for each alloca
     std::vector<unsigned> VersionNumbers;
     
-    // PhiNodes - Each alloca contains a list of basic blocks which contain PHI
-    // nodes for the alloca.
-    std::vector<std::vector<BasicBlock*> > PhiNodes;
-    
     // NewPhiNodes - The PhiNodes we're adding.
     std::map<BasicBlock*, std::vector<PHINode*> > NewPhiNodes;
 
@@ -90,7 +86,6 @@ void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
   VersionNumbers.resize(Allocas.size());
-  PhiNodes.resize(Allocas.size());
 
   for (unsigned i = 0; i != Allocas.size(); ++i) {
     AllocaInst *AI = Allocas[i];
@@ -110,6 +105,10 @@ void PromoteMem2Reg::run() {
 
     AllocaLookup[Allocas[i]] = i;
     
+    // PhiNodeBlocks - A list of blocks that phi nodes have been inserted for
+    // this alloca.
+    std::vector<BasicBlock*> PhiNodeBlocks;
+
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
     //
@@ -120,19 +119,20 @@ void PromoteMem2Reg::run() {
         const DominanceFrontier::DomSetType &S = it->second;
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
              P != PE; ++P)
-          QueuePhiNode(*P, i);
+          if (QueuePhiNode(*P, i))
+            PhiNodeBlocks.push_back(*P);
       }
     }
     
     // Perform iterative step
-    std::vector<BasicBlock*> &AllocaPhiNodes = PhiNodes[i];
-    for (unsigned k = 0; k != AllocaPhiNodes.size(); k++) {
-      DominanceFrontier::const_iterator it = DF.find(AllocaPhiNodes[k]);
+    for (unsigned k = 0; k != PhiNodeBlocks.size(); k++) {
+      DominanceFrontier::const_iterator it = DF.find(PhiNodeBlocks[k]);
       if (it != DF.end()) {
         const DominanceFrontier::DomSetType &S = it->second;
         for (DominanceFrontier::DomSetType::iterator
                P = S.begin(), PE = S.end(); P != PE; ++P)
-          QueuePhiNode(*P, i);
+          if (QueuePhiNode(*P, i))
+            PhiNodeBlocks.push_back(*P);
       }
     }
   }
@@ -198,7 +198,6 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
     PN->addIncoming(NullVal, Preds[i]);
 
   BBPNs[AllocaNo] = PN;
-  PhiNodes[AllocaNo].push_back(BB);
   return true;
 }
 
