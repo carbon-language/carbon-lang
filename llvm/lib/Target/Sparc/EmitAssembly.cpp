@@ -155,11 +155,7 @@ private :
   unsigned getOperandMask(unsigned Opcode) {
     switch (Opcode) {
     case SUBcc:   return 1 << 3;  // Remove CC argument
-    case BA:    case BRZ:         // Remove Arg #0, which is always null or xcc
-    case BRLEZ: case BRLZ:
-    case BRNZ:  case BRGZ:
-    case BRGEZ:   return 1 << 0;
-
+    case BA:      return 1 << 0;  // Remove Arg #0, which is always null or xcc
     default:      return 0;       // By default, don't hack operands...
     }
   }
