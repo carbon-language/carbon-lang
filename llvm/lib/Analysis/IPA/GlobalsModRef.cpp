@@ -159,7 +159,8 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
       Readers.clear(); Writers.clear();
     }
 
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
     if (I->hasInternalLinkage()) {
       if (!AnalyzeUsesOfGlobal(I, Readers, Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
