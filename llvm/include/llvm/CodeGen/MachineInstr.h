@@ -80,6 +80,7 @@ public:
     MO_UnextendedImmed,
     MO_PCRelativeDisp,
     MO_MachineBasicBlock,       // MachineBasicBlock reference
+    MO_FrameIndex,              // Abstract Stack Frame Index
   };
   
 private:
@@ -182,28 +183,27 @@ public:
   bool isImmediate() const {
     return opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed;
   }
+  bool isFrameIndex() const { return opType == MO_FrameIndex; }
 
-  inline Value*		getVRegValue	() const {
+  Value* getVRegValue() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
-	   opType == MO_PCRelativeDisp);
+	   isPCRelativeDisp());
     return value;
   }
-  inline Value*		getVRegValueOrNull() const {
+  Value* getVRegValueOrNull() const {
     return (opType == MO_VirtualRegister || opType == MO_CCRegister || 
-            opType == MO_PCRelativeDisp)? value : NULL;
+            isPCRelativeDisp()) ? value : NULL;
   }
-  inline int            getMachineRegNum() const {
+  int getMachineRegNum() const {
     assert(opType == MO_MachineRegister);
     return regNum;
   }
-  inline int64_t	getImmedValue	() const {
-    assert(isImmediate());
-    return immedVal;
-  }
+  int64_t getImmedValue() const { assert(isImmediate()); return immedVal; }
   MachineBasicBlock *getMachineBasicBlock() const {
     assert(isMachineBasicBlock() && "Can't get MBB in non-MBB operand!");
     return MBB;
   }
+  unsigned getFrameIndex() const { assert(isFrameIndex()); return immedVal; }
 
   bool          opIsUse         () const { return (flags & USEDEFMASK) == 0; }
   bool		opIsDef		() const { return flags & DEFFLAG; }
@@ -214,20 +214,20 @@ public:
   bool          opLoBits64      () const { return flags & LOFLAG64; }
 
   // used to check if a machine register has been allocated to this operand
-  inline bool   hasAllocatedReg() const {
+  bool hasAllocatedReg() const {
     return (regNum >= 0 &&
             (opType == MO_VirtualRegister || opType == MO_CCRegister || 
              opType == MO_MachineRegister));
   }
 
   // used to get the reg number if when one is allocated
-  inline int  getAllocatedRegNum() const {
+  int getAllocatedRegNum() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
 	   opType == MO_MachineRegister);
     return regNum;
   }
 
-  inline unsigned getReg() const {
+  unsigned getReg() const {
     assert(hasAllocatedReg() && "Cannot call MachineOperand::getReg()!");
     return regNum;
   }    
@@ -509,6 +509,14 @@ public:
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(MBB));
+  }
+
+  /// addFrameIndexOperand - Add an abstract frame index to the instruction
+  ///
+  void addFrameIndexOperand(unsigned Idx) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(Idx, MachineOperand::MO_FrameIndex));
   }
 
   unsigned substituteValue(const Value* oldVal, Value* newVal,
