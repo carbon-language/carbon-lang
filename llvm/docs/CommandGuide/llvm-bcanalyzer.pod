@@ -57,7 +57,7 @@ occurs, it will exit with a non-zero value, usually 1.
 
 =head1 SEE ALSO
 
-L<llvm-dis>, L<docs/BytecodeFormat.html>
+L<llvm-dis>, L<http://llvm.cs.uiuc.edu/docs/BytecodeFormat.html>
 
 =head1 AUTHORS
 
