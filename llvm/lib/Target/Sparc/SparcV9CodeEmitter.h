@@ -50,8 +50,9 @@ public:
 
   /// emitFarCall - produces a code sequence to make a call to a destination
   /// that does not fit in the 30 bits that a call instruction allows.
-  ///
-  void emitFarCall(uint64_t Addr);
+  /// If the function F is non-null, this also saves the return address in
+  /// the LazyResolver map of the JITResolver.
+  void emitFarCall(uint64_t Addr, Function *F = 0);
 
 private:    
   /// getMachineOpValue - 

@@ -34,18 +34,34 @@ namespace {
     SparcV9CodeEmitter &SparcV9;
     MachineCodeEmitter &MCE;
 
-    // LazyCodeGenMap - Keep track of call sites for functions that are to be
-    // lazily resolved.
+    /// LazyCodeGenMap - Keep track of call sites for functions that are to be
+    /// lazily resolved.
+    ///
     std::map<uint64_t, Function*> LazyCodeGenMap;
 
-    // LazyResolverMap - Keep track of the lazy resolver created for a
-    // particular function so that we can reuse them if necessary.
+    /// LazyResolverMap - Keep track of the lazy resolver created for a
+    /// particular function so that we can reuse them if necessary.
+    ///
     std::map<Function*, uint64_t> LazyResolverMap;
+
+  public:
+    enum CallType { ShortCall, FarCall };
+
+  private:
+    /// We need to keep track of whether we used a simple call or a far call
+    /// (many instructions) in sequence. This means we need to keep track of
+    /// what type of stub we generate.
+    static std::map<uint64_t, CallType> LazyCallFlavor;
+
   public:
     JITResolver(SparcV9CodeEmitter &V9,
                 MachineCodeEmitter &mce) : SparcV9(V9), MCE(mce) {}
     uint64_t getLazyResolver(Function *F);
     uint64_t addFunctionReference(uint64_t Address, Function *F);
+    void deleteFunctionReference(uint64_t Address);
+    void addCallFlavor(uint64_t Address, CallType Flavor) {
+      LazyCallFlavor[Address] = Flavor;
+    }
 
     // Utility functions for accessing data from static callback
     uint64_t getCurrentPCValue() {
@@ -65,6 +81,7 @@ namespace {
   };
 
   JITResolver *TheJITResolver;
+  std::map<uint64_t, JITResolver::CallType> JITResolver::LazyCallFlavor;
 }
 
 /// addFunctionReference - This method is called when we need to emit the
@@ -73,8 +90,19 @@ namespace {
 /// keep track of where we are.
 ///
 uint64_t JITResolver::addFunctionReference(uint64_t Address, Function *F) {
-  LazyCodeGenMap[Address] = F;  
+  LazyCodeGenMap[Address] = F;
   return (intptr_t)&JITResolver::CompilationCallback;
+}
+
+/// deleteFunctionReference - If we are emitting a far call, we already added a
+/// reference to the function, but it is now incorrect, since the address to the
+/// JIT resolver is too far away to be a simple call instruction. This is used
+/// to remove the address from the map.
+///
+void JITResolver::deleteFunctionReference(uint64_t Address) {
+  std::map<uint64_t, Function*>::iterator I = LazyCodeGenMap.find(Address);
+  assert(I != LazyCodeGenMap.end() && "Not in map!");
+  LazyCodeGenMap.erase(I);  
 }
 
 uint64_t JITResolver::resolveFunctionReference(uint64_t RetAddr) {
@@ -102,80 +130,42 @@ uint64_t JITResolver::insertFarJumpAtAddr(int64_t Target, uint64_t Addr) {
     i7 = SparcIntRegClass::i7,
     o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0;
 
-  // 
-  // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
-  // 
+  MachineInstr* BinaryCode[] = {
+    //
+    // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
+    //
+    // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
+    BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119),
+    // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
+    BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127),
+    //
+    // Get address to branch into %i2, using %i1 as a temporary
+    //
+    // sethi %uhi(Target), %i1     ;; get upper 22 bits of Target into %i1
+    BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1),
+    // or %i1, %ulo(Target), %i1   ;; get 10 lower bits of upper word into %1
+    BuildMI(V9::ORi, 3).addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1),
+    // sllx %i1, 32, %i1           ;; shift those 10 bits to the upper word
+    BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1),
+    // sethi %hi(Target), %i2      ;; extract bits 10-31 into the dest reg
+    BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2),
+    // or %i1, %i2, %i2            ;; get upper word (in %i1) into %i2
+    BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2),
+    // or %i2, %lo(Target), %i2    ;; get lowest 10 bits of Target into %i2
+    BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2),
+    // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
+    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1),
+    // jmpl %i2, %g0, %g0          ;; indirect branch on %i2
+    BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(g0),
+    // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
+    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2)
+  };
 
-  // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
-  MachineInstr *STX = BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*STX);
-  delete STX;
-  Addr += 4;
-
-  // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
-  STX = BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*STX);
-  delete STX;
-  Addr += 4;
-
-  //
-  // Get address to branch into %i2, using %i1 as a temporary
-  //
-
-  // sethi %uhi(Target), %i1   ;; get upper 22 bits of Target into %i1
-  MachineInstr *SH = BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*SH);
-  delete SH;
-  Addr += 4;
-
-  // or %i1, %ulo(Target), %i1 ;; get 10 lower bits of upper word into %1
-  MachineInstr *OR = BuildMI(V9::ORi, 3)
-    .addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*OR);
-  delete OR;
-  Addr += 4;
-
-  // sllx %i1, 32, %i1            ;; shift those 10 bits to the upper word
-  MachineInstr *SL = BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*SL);
-  delete SL;
-  Addr += 4;
-
-  // sethi %hi(Target), %i2    ;; extract bits 10-31 into the dest reg
-  SH = BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*SH);
-  delete SH;
-  Addr += 4;
-
-  // or %i1, %i2, %i2             ;; get upper word (in %i1) into %i2
-  OR = BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*OR);
-  delete OR;
-  Addr += 4;
-
-  // or %i2, %lo(Target), %i2  ;; get lowest 10 bits of Target into %i2
-  OR = BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*OR);
-  delete OR;
-  Addr += 4;
-
-  // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
-  MachineInstr *LDX = BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*LDX);
-  delete LDX;
-  Addr += 4;
-
-  // jmpl %i2, %g0, %g0          ;; indirect branch on %i2
-  MachineInstr *J = BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(g0);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*J);
-  delete J;
-  Addr += 4;
-
-  // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
-  LDX = BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2);
-  *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*LDX);
-  delete LDX;
-  Addr += 4;
+  for (unsigned i=0, e=sizeof(BinaryCode)/sizeof(BinaryCode[0]); i!=e; ++i) {
+    *((unsigned*)(intptr_t)Addr) = getBinaryCodeForInstr(*BinaryCode[i]);
+    delete BinaryCode[i];
+    Addr += 4;
+  }
 
   return Addr;
 }
@@ -184,86 +174,57 @@ void JITResolver::CompilationCallback() {
   uint64_t CameFrom = (uint64_t)(intptr_t)__builtin_return_address(0);
   int64_t Target = (int64_t)TheJITResolver->resolveFunctionReference(CameFrom);
   DEBUG(std::cerr << "In callback! Addr=0x" << std::hex << CameFrom << "\n");
-
-  // Rewrite the call target... so that we don't fault every time we execute
-  // the call.
-#if 0
-  int64_t RealCallTarget = (int64_t)
-    ((NewVal - TheJITResolver->getCurrentPCValue()) >> 4);
-  if (RealCallTarget >= (1<<22) || RealCallTarget <= -(1<<22)) {
-    std::cerr << "Address out of bounds for 22bit BA: " << RealCallTarget<<"\n";
-    abort();
-  }
+#if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
+  register int64_t returnAddr;
+  __asm__ __volatile__ ("add %%i7, %%g0, %0" : "=r" (returnAddr) : );
+  DEBUG(std::cerr << "Read i7 (return addr) = "
+                  << std::hex << returnAddr << ", value: "
+                  << std::hex << *(unsigned*)returnAddr << "\n");
 #endif
 
-  //uint64_t CurrPC    = TheJITResolver->getCurrentPCValue();
-  // we will insert 9 instructions before we do the actual jump
-  //int64_t NewTarget  = (NewVal - 9*4 - InstAddr) >> 2;
-
-  static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
-    i7 = SparcIntRegClass::i7, o6 = SparcIntRegClass::o6,
-    o7 = SparcIntRegClass::o7, g0 = SparcIntRegClass::g0;
-
-  // Subtract 4 to overwrite the 'save' that's there now
-  uint64_t InstAddr = CameFrom-4;
-
-  InstAddr = TheJITResolver->insertFarJumpAtAddr(Target, InstAddr);
-
-  // CODE SHOULD NEVER GO PAST THIS LOAD!! The real function should return to
-  // the original caller, not here!!
-
-  // FIXME: add call 0 to make sure?!?
-
-  // =============== THE REAL STUB ENDS HERE =========================
-
-  // What follows below is one-time restore code, because this callback may be
-  // changing registers in unpredictible ways. However, since it is executed
-  // only once per function (after the function is resolved, the callback is no
-  // longer in the path), this has to be done only once.
+  // Rewrite the call target so that we don't fault every time we execute it.
   //
-  // Thus, it is after the regular stub code. The call back returns to THIS
-  // point, but every other call to the target function will execute the code
-  // above. Hence, this code is one-time use.
 
-  uint64_t OneTimeRestore = InstAddr;
+  static const unsigned o6 = SparcIntRegClass::o6;
 
-  // restore %g0, 0, %g0
-  //MachineInstr *R = BuildMI(V9::RESTOREi, 3).addMReg(g0).addSImm(0)
-  //                                          .addMReg(g0, MOTy::Def);
-  //*((unsigned*)(intptr_t)InstAddr)=TheJITResolver->getBinaryCodeForInstr(*R);
-  //delete R;
-
-  // FIXME: BuildMI() above crashes. Encode the instruction directly.
-  // restore %g0, 0, %g0
-  *((unsigned*)(intptr_t)InstAddr) = 0x81e82000U;
-  InstAddr += 4;  
-
-  InstAddr = TheJITResolver->insertFarJumpAtAddr(Target, InstAddr);
+  // Subtract enough to overwrite up to the 'save' instruction
+  // This depends on whether we made a short call (1 instruction) to the
+  // farCall (10 instructions)
+  uint64_t Offset = (LazyCallFlavor[CameFrom] == ShortCall) ? 4 : 40;
+  uint64_t CodeBegin = CameFrom - Offset;
+  
+  // Make sure that what we're about to overwrite is indeed "save"
+  MachineInstr *SV = BuildMI(V9::SAVEi, 3).addReg(o6).addSImm(-192).addReg(o6);
+  unsigned SaveInst = TheJITResolver->getBinaryCodeForInstr(*SV);
+  delete SV;
+  unsigned CodeInMem = *(unsigned*)(intptr_t)CodeBegin;
+  assert(CodeInMem == SaveInst && "About to overwrite smthg not a save instr!");
+  DEBUG(std::cerr << "Emitting a far jump to 0x" << std::hex << Target << "\n");
+  TheJITResolver->insertFarJumpAtAddr(Target, CodeBegin);
 
   // FIXME: if the target function is close enough to fit into the 19bit disp of
   // BA, we should use this version, as its much cheaper to generate.
-  /*
-  MachineInstr *MI = BuildMI(V9::BA, 1).addSImm(RealCallTarget);
-  *((unsigned*)(intptr_t)InstAddr) = TheJITResolver->getBinaryCodeForInstr(*MI);
+#if 0  
+  uint64_t InstAddr = CodeBegin;
+  // ba <target>
+  MachineInstr *MI = BuildMI(V9::BA, 1).addSImm(Target);
+  *((unsigned*)(intptr_t)InstAddr)=TheJITResolver->getBinaryCodeForInstr(*MI);
+  InstAddr += 4;
   delete MI;
-  InstAddr += 4;
 
-  // Add another NOP
-  MachineInstr *Nop = BuildMI(V9::NOP, 0);
-  *((unsigned*)(intptr_t)InstAddr)=TheJITResolver->getBinaryCodeForInstr(*Nop);
-  delete Nop;
-  InstAddr += 4;
+  // nop
+  MI = BuildMI(V9::NOP, 0);
+  *((unsigned*)(intptr_t))=TheJITResolver->getBinaryCodeForInstr(*Nop);
+  delete MI;
+#endif
 
-  MachineInstr *BA = BuildMI(V9::BA, 1).addSImm(RealCallTarget-2);
-  *((unsigned*)(intptr_t)InstAddr) = TheJITResolver->getBinaryCodeForInstr(*BA);
-  delete BA;
-  */
-
-  // Change the return address to reexecute the call instruction...
+  // Change the return address to reexecute the restore, then the jump
   // The return address is really %o7, but will disappear after this function
   // returns, and the register windows are rotated away.
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-  __asm__ __volatile__ ("or %%g0, %0, %%i7" : : "r" (OneTimeRestore-8));
+  __asm__ __volatile__ ("sub %%i7, %0, %%i7" : : "r" (Offset+12));
+  DEBUG(std::cerr << "Callback setting return addr to "
+                  << std::hex << (CameFrom-Offset-12) << "\n");
 #endif
 }
 
@@ -274,12 +235,19 @@ void JITResolver::CompilationCallback() {
 /// directly.
 ///
 uint64_t JITResolver::emitStubForFunction(Function *F) {
-  MCE.startFunctionStub(*F, 6);
+  MCE.startFunctionStub(*F, 20);
 
   DEBUG(std::cerr << "Emitting stub at addr: 0x" 
                   << std::hex << MCE.getCurrentPCValue() << "\n");
 
-  unsigned o6 = SparcIntRegClass::o6;
+  unsigned o6 = SparcIntRegClass::o6, g0 = SparcIntRegClass::g0;
+
+  // restore %g0, 0, %g0
+  MachineInstr *R = BuildMI(V9::RESTOREi, 3).addMReg(g0).addSImm(0)
+                                            .addMReg(g0, MOTy::Def);
+  SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*R));
+  delete R;
+
   // save %sp, -192, %sp
   MachineInstr *SV = BuildMI(V9::SAVEi, 3).addReg(o6).addSImm(-192).addReg(o6);
   SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*SV));
@@ -288,8 +256,12 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
   int64_t CurrPC = MCE.getCurrentPCValue();
   int64_t Addr = (int64_t)addFunctionReference(CurrPC, F);
   int64_t CallTarget = (Addr-CurrPC) >> 2;
-  if (CallTarget >= (1 << 30) || CallTarget <= -(1 << 30)) {
-    SparcV9.emitFarCall(Addr);
+  //if (CallTarget >= (1 << 29) || CallTarget <= -(1 << 29)) {
+    // Since this is a far call, the actual address of the call is shifted
+    // by the number of instructions it takes to calculate the exact address
+    deleteFunctionReference(CurrPC);
+    SparcV9.emitFarCall(Addr, F);
+#if 0
   } else {
     // call CallTarget              ;; invoke the callback
     MachineInstr *Call = BuildMI(V9::CALL, 1).addSImm(CallTarget);
@@ -300,10 +272,13 @@ uint64_t JITResolver::emitStubForFunction(Function *F) {
     MachineInstr *Nop = BuildMI(V9::NOP, 0);
     SparcV9.emitWord(SparcV9.getBinaryCodeForInstr(*Nop));
     delete Nop;
+
+    addCallFlavor(CurrPC, ShortCall);
   }
+#endif
 
   SparcV9.emitWord(0xDEADBEEF); // marker so that we know it's really a stub
-  return (intptr_t)MCE.finishFunctionStub(*F);
+  return (intptr_t)MCE.finishFunctionStub(*F)+4; /* 1 instr past the restore */
 }
 
 
@@ -391,74 +366,54 @@ SparcV9CodeEmitter::getRealRegNum(unsigned fakeReg,
 
 // WARNING: if the call used the delay slot to do meaningful work, that's not
 // being accounted for, and the behavior will be incorrect!!
-inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target) {
+inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
   static const unsigned i1 = SparcIntRegClass::i1, i2 = SparcIntRegClass::i2,
     i7 = SparcIntRegClass::i7, o6 = SparcIntRegClass::o6,
     o7 = SparcIntRegClass::o7, g0 = SparcIntRegClass::g0;
 
-  // 
-  // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
-  // 
+  MachineInstr* BinaryCode[] = {
+    // 
+    // Save %i1, %i2 to the stack so we can form a 64-bit constant in %i2
+    // 
+    // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
+    BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119),
+    // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
+    BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127),
+    //
+    // Get address to branch into %i2, using %i1 as a temporary
+    //
+    // sethi %uhi(Target), %i1   ;; get upper 22 bits of Target into %i1
+    BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1),
+    // or %i1, %ulo(Target), %i1 ;; get 10 lower bits of upper word into %1
+    BuildMI(V9::ORi, 3).addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1),
+    // sllx %i1, 32, %i1            ;; shift those 10 bits to the upper word
+    BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1),
+    // sethi %hi(Target), %i2    ;; extract bits 10-31 into the dest reg
+    BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2),
+    // or %i1, %i2, %i2             ;; get upper word (in %i1) into %i2
+    BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2),
+    // or %i2, %lo(Target), %i2  ;; get lowest 10 bits of Target into %i2
+    BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2),
+    // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
+    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1),
+    // jmpl %i2, %g0, %o7          ;; indirect call on %i2
+    BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(o7),
+    // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
+    BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2)
+  };
 
-  // stx %i1, [%sp + 2119]       ;; save %i1 to the stack, used as temp
-  MachineInstr *STX = BuildMI(V9::STXi, 3).addReg(i1).addReg(o6).addSImm(2119);
-  emitWord(getBinaryCodeForInstr(*STX));
-  delete STX;
+  for (unsigned i=0, e=sizeof(BinaryCode)/sizeof(BinaryCode[0]); i!=e; ++i) {
+    // This is where we save the return address in the LazyResolverMap!!
+    if (i == 9 && F != 0) { // Do this right before the JMPL
+      uint64_t CurrPC = MCE.getCurrentPCValue();
+      TheJITResolver->addFunctionReference(CurrPC, F);
+      // Remember that this is a far call, to subtract appropriate offset later
+      TheJITResolver->addCallFlavor(CurrPC, JITResolver::FarCall);
+    }
 
-  // stx %i2, [%sp + 2127]       ;; save %i2 to the stack
-  STX = BuildMI(V9::STXi, 3).addReg(i2).addReg(o6).addSImm(2127);
-  emitWord(getBinaryCodeForInstr(*STX));
-  delete STX;
-
-  //
-  // Get address to branch into %i2, using %i1 as a temporary
-  //
-
-  // sethi %uhi(Target), %i1   ;; get upper 22 bits of Target into %i1
-  MachineInstr *SH = BuildMI(V9::SETHI, 2).addSImm(Target >> 42).addReg(i1);
-  emitWord(getBinaryCodeForInstr(*SH));
-  delete SH;
-
-  // or %i1, %ulo(Target), %i1 ;; get 10 lower bits of upper word into %1
-  MachineInstr *OR = BuildMI(V9::ORi, 3)
-    .addReg(i1).addSImm((Target >> 32) & 0x03ff).addReg(i1);
-  emitWord(getBinaryCodeForInstr(*OR));
-  delete OR;
-
-  // sllx %i1, 32, %i1            ;; shift those 10 bits to the upper word
-  MachineInstr *SL = BuildMI(V9::SLLXi6, 3).addReg(i1).addSImm(32).addReg(i1);
-  emitWord(getBinaryCodeForInstr(*SL));
-  delete SL;
-
-  // sethi %hi(Target), %i2    ;; extract bits 10-31 into the dest reg
-  SH = BuildMI(V9::SETHI, 2).addSImm((Target >> 10) & 0x03fffff).addReg(i2);
-  emitWord(getBinaryCodeForInstr(*SH));
-  delete SH;
-
-  // or %i1, %i2, %i2             ;; get upper word (in %i1) into %i2
-  OR = BuildMI(V9::ORr, 3).addReg(i1).addReg(i2).addReg(i2);
-  emitWord(getBinaryCodeForInstr(*OR));
-  delete OR;
-
-  // or %i2, %lo(Target), %i2  ;; get lowest 10 bits of Target into %i2
-  OR = BuildMI(V9::ORi, 3).addReg(i2).addSImm(Target & 0x03ff).addReg(i2);
-  emitWord(getBinaryCodeForInstr(*OR));
-  delete OR;
-
-  // ldx [%sp + 2119], %i1       ;; restore %i1 -> 2119 = BIAS(2047) + 72
-  MachineInstr *LDX = BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2119).addReg(i1);
-  emitWord(getBinaryCodeForInstr(*LDX));
-  delete LDX;
-
-  // jmpl %i2, %g0, %o7          ;; indirect call on %i2
-  MachineInstr *J = BuildMI(V9::JMPLRETr, 3).addReg(i2).addReg(g0).addReg(o7);
-  emitWord(getBinaryCodeForInstr(*J));
-  delete J;
-
-  // ldx [%sp + 2127], %i2       ;; restore %i2 -> 2127 = BIAS(2047) + 80
-  LDX = BuildMI(V9::LDXi, 3).addReg(o6).addSImm(2127).addReg(i2);
-  emitWord(getBinaryCodeForInstr(*LDX));
-  delete LDX;
+    emitWord(getBinaryCodeForInstr(*BinaryCode[i]));
+    delete BinaryCode[i];
+  }
 }
 
 
