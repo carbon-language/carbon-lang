@@ -688,23 +688,35 @@ void ISel::InsertFPRegKills() {
         if (I->getOperand(i).isRegister()) {
           unsigned Reg = I->getOperand(i).getReg();
           if (MRegisterInfo::isVirtualRegister(Reg))
-            if (RegMap.getRegClass(Reg)->getSize() == 10) {
-              UsesFPReg = true;
-              break;
-            }
+            if (RegMap.getRegClass(Reg)->getSize() == 10)
+              goto UsesFPReg;
         }
-    if (UsesFPReg) {
-      // Okay, this block uses an FP register.  If the block has successors (ie,
-      // it's not an unwind/return), insert the FP_REG_KILL instruction.
-      if (BB->getBasicBlock()->getTerminator()->getNumSuccessors() &&
-          RequiresFPRegKill(BB->getBasicBlock())) {
-        // Rewind past any terminator instructions that might exist.
-        MachineBasicBlock::iterator I = BB->end();
-        while (I != BB->begin() && TII.isTerminatorInstr((--I)->getOpcode()));
-        ++I;
-        BMI(BB, I, X86::FP_REG_KILL, 0);
-        ++NumFPKill;
+
+    // If we haven't found an FP register use or def in this basic block, check
+    // to see if any of our successors has an FP PHI node, which will cause a
+    // copy to be inserted into this block.
+    if (!UsesFPReg)
+      for (succ_const_iterator SI = succ_begin(BB->getBasicBlock()),
+             E = succ_end(BB->getBasicBlock()); SI != E; ++SI) {
+        MachineBasicBlock *SBB = MBBMap[*SI];
+        for (MachineBasicBlock::iterator I = SBB->begin();
+             I != SBB->end() && I->getOpcode() == X86::PHI; ++I) {
+          if (RegMap.getRegClass(I->getOperand(0).getReg())->getSize() == 10)
+            goto UsesFPReg;
+        }
       }
+    continue;
+  UsesFPReg:
+    // Okay, this block uses an FP register.  If the block has successors (ie,
+    // it's not an unwind/return), insert the FP_REG_KILL instruction.
+    if (BB->getBasicBlock()->getTerminator()->getNumSuccessors() &&
+        RequiresFPRegKill(BB->getBasicBlock())) {
+      // Rewind past any terminator instructions that might exist.
+      MachineBasicBlock::iterator I = BB->end();
+      while (I != BB->begin() && TII.isTerminatorInstr((--I)->getOpcode()));
+      ++I;
+      BMI(BB, I, X86::FP_REG_KILL, 0);
+      ++NumFPKill;
     }
   }
 }
