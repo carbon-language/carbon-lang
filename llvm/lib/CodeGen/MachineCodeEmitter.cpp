@@ -47,10 +47,15 @@ namespace {
                 << (void*) Ptr << ") ";
     }
 
+    void addRelocation(const MachineRelocation &MR) {
+      std::cout << "<relocation> ";
+    }
+
     uint64_t getGlobalValueAddress(GlobalValue *V) { return 0; }
     uint64_t getGlobalValueAddress(const char *Name) { return 0; }
     uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
     uint64_t getCurrentPCValue() { return 0; }
+    uint64_t getCurrentPCOffset() { return 0; }
 
     // forceCompilationOf - Force the compilation of the specified function, and
     // return its address, because we REALLY need the address now.
@@ -157,6 +162,13 @@ namespace {
     uint64_t getCurrentPCValue() {
       return MCE.getCurrentPCValue();
     }
+    uint64_t getCurrentPCOffset() {
+      return MCE.getCurrentPCOffset();
+    }
+    void addRelocation(const MachineRelocation &MR) {
+      return MCE.addRelocation(MR);
+    }
+
     // forceCompilationOf - Force the compilation of the specified function, and
     // return its address, because we REALLY need the address now.
     //

@@ -75,6 +75,20 @@ public:
   ///
   virtual void emitWord(unsigned W) = 0;
 
+  /// getCurrentPCValue - This returns the address that the next emitted byte
+  /// will be output to.
+  ///
+  virtual uint64_t getCurrentPCValue() = 0;
+
+
+  /// getCurrentPCOffset - Return the offset from the start of the emitted
+  /// buffer that we are currently writing to.
+  virtual uint64_t getCurrentPCOffset() = 0;
+
+  /// addRelocation - Whenever a relocatable address is needed, it should be
+  /// noted with this interface.
+  virtual void addRelocation(const MachineRelocation &MR) = 0;
+  
   /// getGlobalValueAddress - This method is used to get the address of the
   /// specified global value.  In some cases, however, the address may not yet
   /// be known at the point that the method is called (for example, getting the
@@ -89,11 +103,6 @@ public:
   // the constant pool that was last emitted with the 'emitConstantPool' method.
   //
   virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
-
-  // getCurrentPCValue - This returns the address that the next emitted byte
-  // will be output to.
-  //
-  virtual uint64_t getCurrentPCValue() = 0;
 
   // forceCompilationOf - Force the compilation of the specified function, and
   // return its address, because we REALLY need the address now.
