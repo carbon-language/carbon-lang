@@ -39,3 +39,15 @@ int %test5(int %A, int %B) {
         ret int %D
 }
 
+int %test6(int %A) {
+        %B = mul int 7, %A
+        %C = add int %B, %A      ; C = 7*A+A == 8*A == A << 3
+        ret int %C
+}
+
+int %test7(int %A) {
+        %B = mul int 7, %A
+        %C = add int %A, %B      ; C = A+7*A == 8*A == A << 3
+        ret int %C
+}
+

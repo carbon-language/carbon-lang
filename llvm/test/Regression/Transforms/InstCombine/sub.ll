@@ -47,3 +47,15 @@ int %test7(int %A) {
 	ret int %B
 }
 
+int %test8(int %A) {
+        %B = mul int 9, %A
+        %C = sub int %B, %A      ; C = 9*A-A == A*8 == A << 3
+        ret int %C
+}
+
+int %test9(int %A) {
+        %B = mul int 3, %A
+        %C = sub int %A, %B      ; C = A-3*A == A*-2
+        ret int %C
+}
+
