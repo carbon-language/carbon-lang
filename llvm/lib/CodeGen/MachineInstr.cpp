@@ -12,10 +12,19 @@
 //	7/2/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
-#include "llvm/CodeGen/MachineInstr.h"
+
+//************************** System Include Files ***************************/
+
+#include <strstream>
+
+
+//*************************** User Include Files ***************************/
+
+#include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Instruction.h"
-#include <strstream>
+#include "llvm/CodeGen/MachineInstr.h"
+
 
 //************************ Class Implementations **************************/
 
@@ -204,7 +213,7 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
   
   unsigned returnFlags = 0x0;
   
-  // Check if operand 1 is 0 and if so, try to use the register that gives 0, if any.
+  // Check if operand 1 is 0.  If so, try to use a hardwired 0 register.
   Value* op1Value = vmInstrNode->leftChild()->getValue();
   bool isValidConstant;
   int64_t intValue = GetConstantValueAsSignedInt(op1Value, isValidConstant);
@@ -220,8 +229,8 @@ Set3OperandsFromInstrJUNK(MachineInstr* minstr,
 					    op1Value);
     }
   
-  // Check if operand 2 (if any) fits in the immediate field of the instruction,
-  // of if it is 0 and can use a dedicated machine register
+  // Check if operand 2 (if any) fits in the immed. field of the instruction,
+  // or if it is 0 and can use a dedicated machine register
   if (op2Position >= 0)
     {
       Value* op2Value = vmInstrNode->rightChild()->getValue();
@@ -332,4 +341,27 @@ ChooseRegOrImmed(Value* val,
     }
   
   return opType;
+}
+
+
+void
+PrintMachineInstructions(Method* method)
+{
+  cout << "\n" << method->getReturnType()
+       << " \"" << method->getName() << "\"" << endl;
+  
+  for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
+    {
+      BasicBlock* bb = *BI;
+      cout << "\n"
+	   << (bb->hasName()? bb->getName() : "Label")
+	   << " (" << bb << ")" << ":"
+	   << endl;
+      
+      MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+      for (unsigned i=0; i < mvec.size(); i++)
+	cout << "\t" << *mvec[i] << endl;
+    } 
+  cout << endl << "End method \"" << method->getName() << "\""
+       << endl << endl;
 }
