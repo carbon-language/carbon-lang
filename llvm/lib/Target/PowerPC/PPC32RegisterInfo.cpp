@@ -286,8 +286,6 @@ void PPC32RegisterInfo::emitEpilogue(MachineFunction &MF,
 
   if (NumBytes != 0) {
     if (hasFP(MF)) {
-      MI = BuildMI(PPC::OR, 2, PPC::R1).addReg(PPC::R31).addReg(PPC::R31);
-      MBB.insert(MBBI, MI);
       MI = BuildMI(PPC::LWZ, 2, PPC::R31).addSImm(GPRSize).addReg(PPC::R31);
       MBB.insert(MBBI, MI);
     }
