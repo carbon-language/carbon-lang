@@ -299,6 +299,9 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
       MadeChange |= Child->updateNodeType(ISE.getTarget().getPointerType(),
                                           TheRecord->getName());
       break;
+    case NodeType::Void:
+      MadeChange |= Child->updateNodeType(MVT::isVoid, TheRecord->getName());
+      break;
     default: assert(0 && "Invalid argument ArgType!");
     }
   }
@@ -449,8 +452,6 @@ void InstrSelectorEmitter::ReadNodeTypes() {
         throw "In node " + Node->getName() + ", arg 0 cannot have type 'arg0'!";
       if (a == 1 && ArgTypes.back() == NodeType::Arg1)
         throw "In node " + Node->getName() + ", arg 1 cannot have type 'arg1'!";
-      if (ArgTypes.back() == NodeType::Void)
-        throw "In node " + Node->getName() + ", args cannot be void type!";
     }
     if ((RetTy == NodeType::Arg0 && Args->getSize() == 0) ||
         (RetTy == NodeType::Arg1 && Args->getSize() < 2))
