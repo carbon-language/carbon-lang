@@ -1088,9 +1088,9 @@ bool LocalDataStructures::runOnModule(Module &M) {
   // together the globals into equivalence classes.
   for (DSGraph::node_iterator I = GlobalsGraph->node_begin(),
          E = GlobalsGraph->node_end(); I != E; ++I)
-    if (I->getGlobals().size() > 1) {
+    if (I->getGlobalsList().size() > 1) {
       // First, build up the equivalence set for this block of globals.
-      const std::vector<GlobalValue*> &GVs = I->getGlobals();
+      const std::vector<GlobalValue*> &GVs = I->getGlobalsList();
       GlobalValue *First = GVs[0];
       for (unsigned i = 1, e = GVs.size(); i != e; ++i)
         GlobalECs.unionSets(First, GVs[i]);
