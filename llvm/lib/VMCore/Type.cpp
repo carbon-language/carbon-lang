@@ -67,6 +67,57 @@ const Type *Type::getPrimitiveType(PrimitiveID IDNumber) {
   }
 }
 
+// isLosslesslyConvertableTo - Return true if this type can be converted to
+// 'Ty' without any reinterpretation of bits.  For example, uint to int.
+//
+bool Type::isLosslesslyConvertableTo(const Type *Ty) const {
+  if (this == Ty) return true;
+  if ((!isPrimitiveType() && !Ty->isPointerType()) ||
+      (!isPointerType()   && !Ty->isPrimitiveType())) return false;
+
+  if (getPrimitiveID() == Ty->getPrimitiveID())
+    return true;  // Handles identity cast, and cast of differing pointer types
+
+  // Now we know that they are two differing primitive or pointer types
+  switch (getPrimitiveID()) {
+  case Type::UByteTyID:   return Ty == Type::SByteTy;
+  case Type::SByteTyID:   return Ty == Type::UByteTy;
+  case Type::UShortTyID:  return Ty == Type::ShortTy;
+  case Type::ShortTyID:   return Ty == Type::UShortTy;
+  case Type::UIntTyID:    return Ty == Type::IntTy;
+  case Type::IntTyID:     return Ty == Type::UIntTy;
+  case Type::ULongTyID:
+  case Type::LongTyID:
+  case Type::PointerTyID:
+    return Ty == Type::ULongTy || Ty == Type::LongTy ||
+           Ty->getPrimitiveID() == Type::PointerTyID;
+  default:
+    return false;  // Other types have no identity values
+  }
+}
+
+
+bool StructType::indexValid(const Value *V) const {
+  if (!isa<ConstPoolVal>(V)) return false;
+  if (V->getType() != Type::UByteTy) return false;
+  unsigned Idx = cast<ConstPoolUInt>(V)->getValue();
+  return Idx < ETypes.size();
+}
+
+// getTypeAtIndex - Given an index value into the type, return the type of the
+// element.  For a structure type, this must be a constant value...
+//
+const Type *StructType::getTypeAtIndex(const Value *V) const {
+  assert(isa<ConstPoolVal>(V) && "Structure index must be a constant!!");
+  assert(V->getType() == Type::UByteTy && "Structure index must be ubyte!");
+  unsigned Idx = cast<ConstPoolUInt>(V)->getValue();
+  assert(Idx < ETypes.size() && "Structure index out of range!");
+  assert(indexValid(V) && "Invalid structure index!"); // Duplicate check
+
+  return ETypes[Idx];
+}
+
+
 //===----------------------------------------------------------------------===//
 //                           Auxilliary classes
 //===----------------------------------------------------------------------===//
@@ -147,13 +198,13 @@ MethodType::MethodType(const Type *Result, const vector<const Type*> &Params,
 }
 
 ArrayType::ArrayType(const Type *ElType, int NumEl)
-  : DerivedType("", ArrayTyID), ElementType(PATypeHandle<Type>(ElType, this)) {
+  : CompositeType("", ArrayTyID), ElementType(PATypeHandle<Type>(ElType, this)){
   NumElements = NumEl;
   setDerivedTypeProperties();
 }
 
 StructType::StructType(const vector<const Type*> &Types)
-  : DerivedType("", StructTyID) {
+  : CompositeType("", StructTyID) {
   ETypes.reserve(Types.size());
   for (unsigned i = 0; i < Types.size(); ++i) {
     assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
