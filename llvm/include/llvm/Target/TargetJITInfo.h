@@ -48,6 +48,7 @@ namespace llvm {
     /// address.  Return the address of the resultant function.
     virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
       assert(0 && "This target doesn't implement emitFunctionStub!");
+      return 0;
     }
 
     /// LazyResolverFn - This typedef is used to represent the function that
