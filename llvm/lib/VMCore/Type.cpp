@@ -41,7 +41,7 @@ Type::Type(const std::string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
   ConcreteTypeDescriptions[this] = name;
   ID = id;
-  Abstract = Recursive = false;
+  Abstract = false;
   UID = CurUID++;       // Assign types UID's as they are created
   UIDMappings.push_back(this);
 }
@@ -136,7 +136,7 @@ static std::string getTypeDescription(const Type *Ty,
     return Desc;
   }
   
-  if (!Ty->isAbstract() && !Ty->isRecursive()) {  // Base case for the recursion
+  if (!Ty->isAbstract()) {                       // Base case for the recursion
     std::map<const Type*, std::string>::iterator I =
       ConcreteTypeDescriptions.find(Ty);
     if (I != ConcreteTypeDescriptions.end()) return I->second;
@@ -372,7 +372,6 @@ PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
 }
 
 OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
-  setRecursive(false);
   setAbstract(true);
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << getDescription() << "\n";
@@ -393,8 +392,8 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 // when it hits non-abstract types that aren't recursive.
 //
 static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
-                         bool &isAbstract, bool &isRecursive) {
-  if (!Ty->isAbstract() && !Ty->isRecursive()) // Base case for the recursion
+                         bool &isAbstract) {
+  if (!Ty->isAbstract())                       // Base case for the recursion
     return;                                    // Primitive = leaf type
   
   if (isa<OpaqueType>(Ty)) {                   // Base case for the recursion
@@ -404,37 +403,32 @@ static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
 
   // Check to see if the Type is already on the stack...
   for (unsigned Slot = 0; Slot != TypeStack.size(); ++Slot)
-    if (TypeStack[Slot] == Ty) { // Scan for type
-      isRecursive = true;                         // We know we are recursive
-      return;
-    }
+    if (TypeStack[Slot] == Ty)   // Scan for type
+      return;                    // is a recursive check.
 
   // Recursive case: derived type...
   TypeStack.push_back(Ty);    // Add us to the stack..
 
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
-    getTypeProps(*I, TypeStack, isAbstract, isRecursive);
-    if (isAbstract && isRecursive) break;
+    getTypeProps(*I, TypeStack, isAbstract);
+    if (isAbstract) break;
   }
       
   TypeStack.pop_back();       // Remove self from stack...
 }
 
 
-// setDerivedTypeProperties - This function is used to calculate the
-// isAbstract, isRecursive, and the Description settings for a type.  The
-// getTypeProps function does all the dirty work.
+// setDerivedTypeProperties - This function is used to calculate the isAbstract
+// setting for a type.  The getTypeProps function does all the dirty work.
 //
 void DerivedType::setDerivedTypeProperties() {
   std::vector<const Type *> TypeStack;
-  bool isAbstract = false, isRecursive = false;
+  bool isAbstract = false;
 
   setAbstract(true);
-  setRecursive(true);
-  getTypeProps(this, TypeStack, isAbstract, isRecursive);
+  getTypeProps(this, TypeStack, isAbstract);
   setAbstract(isAbstract);
-  setRecursive(isRecursive);
 }
 
 
