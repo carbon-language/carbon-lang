@@ -111,10 +111,7 @@ public:
   
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
   
-  inline _NodeType* operator*() const {
-    assert(cycleNum < S.groups.size());
-    return (*S.groups[cycleNum])[slotNum];
-  }
+  inline _NodeType* operator*() const;
   inline _NodeType* operator->() const { return operator*(); }
   
          _Self& operator++();				// Preincrement
@@ -201,10 +198,16 @@ public: // accessor functions to query chosen schedule
   }
   
 private:
-  friend class iterator;
-  friend class const_iterator;
+  friend class ScheduleIterator<SchedGraphNode>;
+  friend class ScheduleIterator<const SchedGraphNode>;
   /*ctor*/	InstrSchedule	();	// Disable: DO NOT IMPLEMENT.
 };
+
+template<class NodeType>
+inline NodeType *ScheduleIterator<NodeType>::operator*() const {
+  assert(cycleNum < S.groups.size());
+  return (*S.groups[cycleNum])[slotNum];
+}
 
 
 /*ctor*/
