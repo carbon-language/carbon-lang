@@ -172,15 +172,14 @@ MVT::ValueType Pattern::getIntrinsicType(Record *R) const {
 
 TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
   Record *Operator = DI->getNodeType();
-  const std::vector<Init*> &Args = DI->getArgs();
 
   if (Operator->isSubClassOf("ValueType")) {
     // If the operator is a ValueType, then this must be "type cast" of a leaf
     // node.
-    if (Args.size() != 1)
+    if (DI->getNumArgs() != 1)
       error("Type cast only valid for a leaf node!");
     
-    Init *Arg = Args[0];
+    Init *Arg = DI->getArg(0);
     TreePatternNode *New;
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
       New = new TreePatternNode(DI);
@@ -201,8 +200,8 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
 
   std::vector<TreePatternNode*> Children;
   
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    Init *Arg = Args[i];
+  for (unsigned i = 0, e = DI->getNumArgs(); i != e; ++i) {
+    Init *Arg = DI->getArg(i);
     if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
       Children.push_back(ParseTreePattern(DI));
     } else if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {

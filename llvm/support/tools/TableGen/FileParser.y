@@ -161,12 +161,12 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   int                   IntVal;
   RecTy                *Ty;
   Init                 *Initializer;
-  std::vector<Init*>   *DagValueList;
   std::vector<Init*>   *FieldList;
   std::vector<unsigned>*BitList;
   Record               *Rec;
   SubClassRefTy        *SubClassRef;
   std::vector<SubClassRefTy> *SubClassList;
+  std::vector<std::pair<Init*, std::string> > *DagValueList;
 };
 
 %token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD LET IN
@@ -183,7 +183,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 %type <DagValueList> DagArgList DagArgListNE
 %type <FieldList>    ValueList ValueListNE
 %type <BitList>      BitList OptBitList RBitList
-%type <StrVal>       Declaration OptID
+%type <StrVal>       Declaration OptID OptVarName
 
 %start File
 %%
@@ -282,16 +282,26 @@ Value : INTVAL {
     delete $2; delete $3;
   };
 
-DagArgListNE : Value {
-    $$ = new std::vector<Init*>();
-    $$->push_back($1);
+OptVarName : /* empty */ {
+    $$ = new std::string();
   }
-  | DagArgListNE ',' Value {
-    $1->push_back($3);
+  | ':' VARNAME {
+    $$ = $2;
+  };
+
+DagArgListNE : Value OptVarName {
+    $$ = new std::vector<std::pair<Init*, std::string> >();
+    $$->push_back(std::make_pair($1, *$2));
+    delete $2;
+  }
+  | DagArgListNE ',' Value OptVarName {
+    $1->push_back(std::make_pair($3, *$4));
+    delete $4;
+    $$ = $1;
   };
 
 DagArgList : /*empty*/ {
-    $$ = new std::vector<Init*>();
+    $$ = new std::vector<std::pair<Init*, std::string> >();
   }
   | DagArgListNE { $$ = $1; };
 

@@ -591,9 +591,16 @@ public:
 class DagInit : public Init {
   Record *NodeTypeDef;
   std::vector<Init*> Args;
+  std::vector<std::string> ArgNames;
 public:
-  DagInit(Record *D, std::vector<Init*> &a) : NodeTypeDef(D) {
-    Args.swap(a);  // DESTRUCTIVELY take the arguments
+  DagInit(Record *D, const std::vector<std::pair<Init*, std::string> > &args)
+    : NodeTypeDef(D) {
+    Args.reserve(args.size());
+    ArgNames.reserve(args.size());
+    for (unsigned i = 0, e = args.size(); i != e; ++i) {
+      Args.push_back(args[i].first);
+      ArgNames.push_back(args[i].second);
+    }
   }
   
   virtual Init *convertInitializerTo(RecTy *Ty) {
@@ -601,7 +608,16 @@ public:
   }
 
   Record *getNodeType() const { return NodeTypeDef; }
-  const std::vector<Init*> &getArgs() const { return Args; }
+
+  unsigned getNumArgs() const { return Args.size(); }
+  Init *getArg(unsigned Num) const {
+    assert(Num < Args.size() && "Arg number out of range!");
+    return Args[Num];
+  }
+  const std::string &getArgName(unsigned Num) const {
+    assert(Num < ArgNames.size() && "Arg number out of range!");
+    return ArgNames[Num];
+  }
 
   virtual void print(std::ostream &OS) const;
 };

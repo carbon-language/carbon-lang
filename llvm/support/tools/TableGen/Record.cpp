@@ -438,8 +438,11 @@ void DagInit::print(std::ostream &OS) const {
   OS << "(" << NodeTypeDef->getName();
   if (Args.size()) {
     OS << " " << *Args[0];
-    for (unsigned i = 1, e = Args.size(); i != e; ++i)
+    if (!ArgNames[0].empty()) OS << ":$" << ArgNames[0];
+    for (unsigned i = 1, e = Args.size(); i != e; ++i) {
       OS << ", " << *Args[i];
+      if (!ArgNames[i].empty()) OS << ":$" << ArgNames[i];
+    }
   }
   OS << ")";
 }
