@@ -486,31 +486,60 @@ struct AddMaskingAnd {
   }
 };
 
-static Value *FoldOperationIntoSelectOperand(Instruction &BI, Value *SO,
+static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
+  if (isa<CastInst>(I)) {
+    if (Constant *SOC = dyn_cast<Constant>(SO))
+      return ConstantExpr::getCast(SOC, I.getType());
+    
+    return IC->InsertNewInstBefore(new CastInst(SO, I.getType(),
+                                                SO->getName() + ".cast"), I);
+  }
+
   // Figure out if the constant is the left or the right argument.
-  bool ConstIsRHS = isa<Constant>(BI.getOperand(1));
-  Constant *ConstOperand = cast<Constant>(BI.getOperand(ConstIsRHS));
+  bool ConstIsRHS = isa<Constant>(I.getOperand(1));
+  Constant *ConstOperand = cast<Constant>(I.getOperand(ConstIsRHS));
 
   if (Constant *SOC = dyn_cast<Constant>(SO)) {
     if (ConstIsRHS)
-      return ConstantExpr::get(BI.getOpcode(), SOC, ConstOperand);
-    return ConstantExpr::get(BI.getOpcode(), ConstOperand, SOC);
+      return ConstantExpr::get(I.getOpcode(), SOC, ConstOperand);
+    return ConstantExpr::get(I.getOpcode(), ConstOperand, SOC);
   }
 
   Value *Op0 = SO, *Op1 = ConstOperand;
   if (!ConstIsRHS)
     std::swap(Op0, Op1);
   Instruction *New;
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&BI))
-    New = BinaryOperator::create(BO->getOpcode(), Op0, Op1);
-  else if (ShiftInst *SI = dyn_cast<ShiftInst>(&BI))
-    New = new ShiftInst(SI->getOpcode(), Op0, Op1);
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I))
+    New = BinaryOperator::create(BO->getOpcode(), Op0, Op1,SO->getName()+".op");
+  else if (ShiftInst *SI = dyn_cast<ShiftInst>(&I))
+    New = new ShiftInst(SI->getOpcode(), Op0, Op1, SO->getName()+".sh");
   else {
     assert(0 && "Unknown binary instruction type!");
     abort();
   }
-  return IC->InsertNewInstBefore(New, BI);
+  return IC->InsertNewInstBefore(New, I);
+}
+
+// FoldOpIntoSelect - Given an instruction with a select as one operand and a
+// constant as the other operand, try to fold the binary operator into the
+// select arguments.  This also works for Cast instructions, which obviously do
+// not have a second operand.
+static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
+                                     InstCombiner *IC) {
+  // Don't modify shared select instructions
+  if (!SI->hasOneUse()) return 0;
+  Value *TV = SI->getOperand(1);
+  Value *FV = SI->getOperand(2);
+
+  if (isa<Constant>(TV) || isa<Constant>(FV)) {
+    Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, IC);
+    Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, IC);
+
+    return new SelectInst(SI->getCondition(), SelectTrueVal,
+                          SelectFalseVal);
+  }
+  return 0;
 }
 
 
@@ -553,26 +582,6 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     }
   }
   return ReplaceInstUsesWith(I, NewPN);
-}
-
-// FoldBinOpIntoSelect - Given an instruction with a select as one operand and a
-// constant as the other operand, try to fold the binary operator into the
-// select arguments.
-static Instruction *FoldBinOpIntoSelect(Instruction &BI, SelectInst *SI,
-                                        InstCombiner *IC) {
-  // Don't modify shared select instructions
-  if (!SI->hasOneUse()) return 0;
-  Value *TV = SI->getOperand(1);
-  Value *FV = SI->getOperand(2);
-
-  if (isa<Constant>(TV) || isa<Constant>(FV)) {
-    Value *SelectTrueVal = FoldOperationIntoSelectOperand(BI, TV, IC);
-    Value *SelectFalseVal = FoldOperationIntoSelectOperand(BI, FV, IC);
-
-    return new SelectInst(SI->getCondition(), SelectTrueVal,
-                          SelectFalseVal);
-  }
-  return 0;
 }
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
@@ -667,10 +676,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       }
     }
 
-
     // Try to fold constant add into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(LHS))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
   }
 
@@ -761,7 +769,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     // Try to fold constant sub into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
 
     if (isa<PHINode>(Op0))
@@ -889,7 +897,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
     // Try to fold constant mul into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
 
     if (isa<PHINode>(Op0))
@@ -990,7 +998,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 
     if (!RHS->isNullValue()) {
       if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-        if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+        if (Instruction *R = FoldOpIntoSelect(I, SI, this))
           return R;
       if (isa<PHINode>(Op0))
         if (Instruction *NV = FoldOpIntoPhi(I))
@@ -1066,7 +1074,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
 
     if (!RHS->isNullValue()) {
       if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-        if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+        if (Instruction *R = FoldOpIntoSelect(I, SI, this))
           return R;
       if (isa<PHINode>(Op0))
         if (Instruction *NV = FoldOpIntoPhi(I))
@@ -1251,6 +1259,70 @@ struct FoldSetCCLogical {
 };
 
 
+/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  V and Mask are known to
+/// be the same type.
+static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
+  if (isa<UndefValue>(V) || Mask->isNullValue())
+    return true;
+  if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
+    return ConstantExpr::getAnd(CI, Mask)->isNullValue();
+  
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    switch (I->getOpcode()) {
+    case Instruction::And:
+      // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
+        if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
+          return true;
+      break;
+    case Instruction::Cast: {
+      const Type *SrcTy = I->getOperand(0)->getType();
+      if (SrcTy->isIntegral()) {
+        // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
+        if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
+            ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
+          return true;
+
+        // If this is a noop cast, recurse.
+        if (SrcTy != Type::BoolTy)
+          if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() ==I->getType()) ||
+              SrcTy->getSignedVersion() == I->getType()) {
+            Constant *NewMask =
+              ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
+            return MaskedValueIsZero(I->getOperand(0),
+                                     cast<ConstantIntegral>(NewMask));
+          }
+      }
+      break;
+    }
+    case Instruction::Shl:
+      // (shl X, C1) & C2 == 0   iff  (-1 << C1) & C2 == 0
+      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1))) {
+        Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
+        C1 = ConstantExpr::getShl(C1, SA);
+        C1 = ConstantExpr::getAnd(C1, Mask);
+        if (C1->isNullValue())
+          return true;
+      }
+      break;
+    case Instruction::Shr:
+      // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+        if (I->getType()->isUnsigned()) {
+          Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
+          C1 = ConstantExpr::getShr(C1, SA);
+          C1 = ConstantExpr::getAnd(C1, Mask);
+          if (C1->isNullValue())
+            return true;
+        }
+      break;
+    }
+  }
+
+  return false;
+}
+
 // OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
 // the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
 // guaranteed to be either a shift instruction or a binary operator.
@@ -1265,10 +1337,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 
   switch (Op->getOpcode()) {
   case Instruction::Xor:
-    if (Together->isNullValue()) {
-      // (X ^ C1) & C2 --> (X & C2) iff (C1&C2) == 0
-      return BinaryOperator::createAnd(X, AndRHS);
-    } else if (Op->hasOneUse()) {
+    if (Op->hasOneUse()) {
       // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
       std::string OpName = Op->getName(); Op->setName("");
       Instruction *And = BinaryOperator::createAnd(X, AndRHS, OpName);
@@ -1277,20 +1346,15 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     }
     break;
   case Instruction::Or:
-    // (X | C1) & C2 --> X & C2 iff C1 & C1 == 0
-    if (Together->isNullValue())
-      return BinaryOperator::createAnd(X, AndRHS);
-    else {
-      if (Together == AndRHS) // (X | C) & C --> C
-        return ReplaceInstUsesWith(TheAnd, AndRHS);
+    if (Together == AndRHS) // (X | C) & C --> C
+      return ReplaceInstUsesWith(TheAnd, AndRHS);
       
-      if (Op->hasOneUse() && Together != OpRHS) {
-        // (X | C1) & C2 --> (X | (C1&C2)) & C2
-        std::string Op0Name = Op->getName(); Op->setName("");
-        Instruction *Or = BinaryOperator::createOr(X, Together, Op0Name);
-        InsertNewInstBefore(Or, TheAnd);
-        return BinaryOperator::createAnd(Or, AndRHS);
-      }
+    if (Op->hasOneUse() && Together != OpRHS) {
+      // (X | C1) & C2 --> (X | (C1&C2)) & C2
+      std::string Op0Name = Op->getName(); Op->setName("");
+      Instruction *Or = BinaryOperator::createOr(X, Together, Op0Name);
+      InsertNewInstBefore(Or, TheAnd);
+      return BinaryOperator::createAnd(Or, AndRHS);
     }
     break;
   case Instruction::Add:
@@ -1445,27 +1509,103 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (isa<UndefValue>(Op1))                         // X & undef -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  // and X, X = X   and X, 0 == 0
-  if (Op0 == Op1 || Op1 == Constant::getNullValue(I.getType()))
+  // and X, X = X
+  if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Op1);
 
   // and X, -1 == X
-  if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
-    if (RHS->isAllOnesValue())
+  if (ConstantIntegral *AndRHS = dyn_cast<ConstantIntegral>(Op1)) {
+    if (AndRHS->isAllOnesValue())              // and X, -1 == X
       return ReplaceInstUsesWith(I, Op0);
+
+    if (MaskedValueIsZero(Op0, AndRHS))        // LHS & RHS == 0
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
+    // If the mask is not masking out any bits, there is no reason to do the
+    // and in the first place.
+    if (MaskedValueIsZero(Op0,
+                          cast<ConstantIntegral>(ConstantExpr::getNot(AndRHS))))
+        return ReplaceInstUsesWith(I, Op0);
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
       Instruction *Op0I = cast<Instruction>(Op0);
-      Value *X = Op0I->getOperand(0);
+      Value *Op0LHS = Op0I->getOperand(0);
+      Value *Op0RHS = Op0I->getOperand(1);
+      switch (Op0I->getOpcode()) {
+      case Instruction::Xor:
+      case Instruction::Or:
+        // (X ^ V) & C2 --> (X & C2) iff (V & C2) == 0
+        // (X | V) & C2 --> (X & C2) iff (V & C2) == 0
+        if (MaskedValueIsZero(Op0LHS, AndRHS))
+          return BinaryOperator::createAnd(Op0RHS, AndRHS);      
+        if (MaskedValueIsZero(Op0RHS, AndRHS))
+          return BinaryOperator::createAnd(Op0LHS, AndRHS);      
+        break;
+      case Instruction::And:
+        // (X & V) & C2 --> 0 iff (V & C2) == 0
+        if (MaskedValueIsZero(Op0LHS, AndRHS) ||
+            MaskedValueIsZero(Op0RHS, AndRHS))
+          return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+        break;
+      }
+
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
-        if (Instruction *Res = OptAndOp(Op0I, Op0CI, RHS, I))
+        if (Instruction *Res = OptAndOp(Op0I, Op0CI, AndRHS, I))
           return Res;
+    } else if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
+      const Type *SrcTy = CI->getOperand(0)->getType();
+
+      // If this is an integer sign or zero extension instruction.
+      if (SrcTy->isIntegral() &&
+          SrcTy->getPrimitiveSize() < CI->getType()->getPrimitiveSize()) {
+
+        if (SrcTy->isUnsigned()) {
+          // See if this and is clearing out bits that are known to be zero
+          // anyway (due to the zero extension).
+          Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy);
+          Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());
+          Constant *Result = ConstantExpr::getAnd(Mask, AndRHS);
+          if (Result == Mask)  // The "and" isn't doing anything, remove it.
+            return ReplaceInstUsesWith(I, CI);
+          if (Result != AndRHS) { // Reduce the and RHS constant.
+            I.setOperand(1, Result);
+            return &I;
+          }
+
+        } else {
+          if (CI->hasOneUse() && SrcTy->isInteger()) {
+            // We can only do this if all of the sign bits brought in are masked
+            // out.  Compute this by first getting 0000011111, then inverting
+            // it.
+            Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy);
+            Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());
+            Mask = ConstantExpr::getNot(Mask);    // 1's in the new bits.
+            if (ConstantExpr::getAnd(Mask, AndRHS)->isNullValue()) {
+              // If the and is clearing all of the sign bits, change this to a
+              // zero extension cast.  To do this, cast the cast input to
+              // unsigned, then to the requested size.
+              Value *CastOp = CI->getOperand(0);
+              Instruction *NC =
+                new CastInst(CastOp, CastOp->getType()->getUnsignedVersion(),
+                             CI->getName()+".uns");
+              NC = InsertNewInstBefore(NC, I);
+              // Finally, insert a replacement for CI.
+              NC = new CastInst(NC, CI->getType(), CI->getName());
+              CI->setName("");
+              NC = InsertNewInstBefore(NC, I);
+              WorkList.push_back(CI);  // Delete CI later.
+              I.setOperand(0, NC);
+              return &I;               // The AND operand was modified.
+            }
+          }
+        }
+      }
     }
 
     // Try to fold constant and into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
     if (isa<PHINode>(Op0))
       if (Instruction *NV = FoldOpIntoPhi(I))
@@ -1599,8 +1739,11 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // or X, -1 == -1
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
-    if (RHS->isAllOnesValue())
-      return ReplaceInstUsesWith(I, Op1);
+    // If X is known to only contain bits that already exist in RHS, just
+    // replace this instruction with RHS directly.
+    if (MaskedValueIsZero(Op0,
+                          cast<ConstantIntegral>(ConstantExpr::getNot(RHS))))
+      return ReplaceInstUsesWith(I, RHS);
 
     ConstantInt *C1; Value *X;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
@@ -1622,7 +1765,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
     // Try to fold constant and into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
     if (isa<PHINode>(Op0))
       if (Instruction *NV = FoldOpIntoPhi(I))
@@ -1840,7 +1983,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
     // Try to fold constant and into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
     if (isa<PHINode>(Op0))
       if (Instruction *NV = FoldOpIntoPhi(I))
@@ -2671,7 +2814,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   // Try to fold constant and into select arguments.
   if (isa<Constant>(Op0))
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
 
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
@@ -2697,15 +2840,48 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
     
     // Try to fold constant and into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldBinOpIntoSelect(I, SI, this))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
     if (isa<PHINode>(Op0))
       if (Instruction *NV = FoldOpIntoPhi(I))
         return NV;
 
-    // If the operand is an bitwise operator with a constant RHS, and the
-    // shift is the only use, we can pull it out of the shift.
-    if (Op0->hasOneUse())
+    if (Op0->hasOneUse()) {
+      // If this is a SHL of a sign-extending cast, see if we can turn the input
+      // into a zero extending cast (a simple strength reduction).
+      if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
+        const Type *SrcTy = CI->getOperand(0)->getType();
+        if (isLeftShift && SrcTy->isInteger() && SrcTy->isSigned() &&
+            SrcTy->getPrimitiveSize() < CI->getType()->getPrimitiveSize()) {
+          // We can change it to a zero extension if we are shifting out all of
+          // the sign extended bits.  To check this, form a mask of all of the
+          // sign extend bits, then shift them left and see if we have anything
+          // left.
+          Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy); //     1111
+          Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());   // 00001111
+          Mask = ConstantExpr::getNot(Mask);   // 1's in the sign bits: 11110000
+          if (ConstantExpr::getShl(Mask, CUI)->isNullValue()) {
+            // If the shift is nuking all of the sign bits, change this to a
+            // zero extension cast.  To do this, cast the cast input to
+            // unsigned, then to the requested size.
+            Value *CastOp = CI->getOperand(0);
+            Instruction *NC =
+              new CastInst(CastOp, CastOp->getType()->getUnsignedVersion(),
+                           CI->getName()+".uns");
+            NC = InsertNewInstBefore(NC, I);
+            // Finally, insert a replacement for CI.
+            NC = new CastInst(NC, CI->getType(), CI->getName());
+            CI->setName("");
+            NC = InsertNewInstBefore(NC, I);
+            WorkList.push_back(CI);  // Delete CI later.
+            I.setOperand(0, NC);
+            return &I;               // The SHL operand was modified.
+          }
+        }
+      }
+
+      // If the operand is an bitwise operator with a constant RHS, and the
+      // shift is the only use, we can pull it out of the shift.
       if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0))
         if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
           bool isValid = true;     // Valid only for And, Or, Xor
@@ -2749,6 +2925,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
                                           NewRHS);
           }
         }
+    }
 
     // If this is a shift of a shift, see if we can fold the two together...
     if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0))
@@ -2926,9 +3103,10 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // If casting the result of another cast instruction, try to eliminate this
   // one!
   //
-  if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {
-    if (isEliminableCastOfCast(CSrc->getOperand(0)->getType(),
-                               CSrc->getType(), CI.getType(), TD)) {
+  if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
+    Value *A = CSrc->getOperand(0);
+    if (isEliminableCastOfCast(A->getType(), CSrc->getType(),
+                               CI.getType(), TD)) {
       // This instruction now refers directly to the cast's src operand.  This
       // has a good chance of making CSrc dead.
       CI.setOperand(0, CSrc->getOperand(0));
@@ -2938,18 +3116,27 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     // If this is an A->B->A cast, and we are dealing with integral types, try
     // to convert this into a logical 'and' instruction.
     //
-    if (CSrc->getOperand(0)->getType() == CI.getType() &&
+    if (A->getType()->isInteger() && 
         CI.getType()->isInteger() && CSrc->getType()->isInteger() &&
-        CI.getType()->isUnsigned() && CSrc->getType()->isUnsigned() &&
-        CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()){
+        CSrc->getType()->isUnsigned() &&   // B->A cast must zero extend
+        CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()&&
+        A->getType()->getPrimitiveSize() == CI.getType()->getPrimitiveSize()) {
       assert(CSrc->getType() != Type::ULongTy &&
              "Cannot have type bigger than ulong!");
       uint64_t AndValue = (1ULL << CSrc->getType()->getPrimitiveSize()*8)-1;
-      Constant *AndOp = ConstantUInt::get(CI.getType(), AndValue);
-      return BinaryOperator::createAnd(CSrc->getOperand(0), AndOp);
+      Constant *AndOp = ConstantUInt::get(A->getType()->getUnsignedVersion(),
+                                          AndValue);
+      AndOp = ConstantExpr::getCast(AndOp, A->getType());
+      Instruction *And = BinaryOperator::createAnd(CSrc->getOperand(0), AndOp);
+      if (And->getType() != CI.getType()) {
+        And->setName(CSrc->getName()+".mask");
+        InsertNewInstBefore(And, CI);
+        And = new CastInst(And, CI.getType());
+      }
+      return And;
     }
   }
-
+  
   // If this is a cast to bool, turn it into the appropriate setne instruction.
   if (CI.getType() == Type::BoolTy)
     return BinaryOperator::createSetNE(CI.getOperand(0),
@@ -3001,6 +3188,9 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         }
       }
 
+  if (SelectInst *SI = dyn_cast<SelectInst>(Src))
+    if (Instruction *NV = FoldOpIntoSelect(CI, SI, this))
+      return NV;
   if (isa<PHINode>(Src))
     if (Instruction *NV = FoldOpIntoPhi(CI))
       return NV;
