@@ -1,7 +1,7 @@
 LEVEL = ../..
 
 TOOLNAME = dis
-USEDLIBS = bcreader vmcore support.a cwriter
+USEDLIBS = bcreader cwriter ipa.a vmcore support.a
 include $(LEVEL)/Makefile.common
 
 
