@@ -138,9 +138,8 @@ class PhyRegAlloc: public NonCopyable
   void setRegsUsedByThisInst(RegClass *RC, const MachineInstr *MInst );
   int getRegNotUsedByThisInst(RegClass *RC, const MachineInstr *MInst);
 
+  void addInterf4PseudoInstr(const MachineInstr *MInst);
 
-
-  void PhyRegAlloc::insertPhiEleminateInstrns();
 
  public:
 
@@ -150,29 +149,6 @@ class PhyRegAlloc: public NonCopyable
   void allocateRegisters();             // main method called for allocatin
 
 };
-
-
-
-/*
-
-
-What to do:
-
-  * Insert IntCCReg checking code to insertCallerSaving
-  * add methods like cpCCReg2Mem & cpMem2CCReg (these will accept an array
-  and push back or push_front the instr according to PUSH_BACK, PUSH_FRONT
-  flags
-
-*/
-  
-  
-
-
-
-
-
-
-
 
 
 #endif
