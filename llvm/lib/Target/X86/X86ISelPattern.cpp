@@ -444,7 +444,7 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // basic blocks.  This will be a huge win, but we are waiting on the global
   // allocators before we can do this.
   //
-  if (ContainsFPCode && BB->succ_size()) {
+  if (ContainsFPCode) {
     BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
     ++NumFPKill;
   }
