@@ -10,7 +10,7 @@
 
 
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/Analysis/LiveVar/BBLiveVar.h"
+#include "BBLiveVar.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/BasicBlock.h"
 #include "Support/PostOrderIterator.h"

@@ -7,7 +7,7 @@
 #ifndef LIVE_VAR_BB_H
 #define LIVE_VAR_BB_H
 
-#include "LiveVarSet.h"
+#include "llvm/Analysis/LiveVar/LiveVarSet.h"
 #include <map>
 class Method;
 class BasicBlock;
