@@ -68,12 +68,21 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   const TargetInstrInfo &MII = MF.getTarget().getInstrInfo();
   const MRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
+  // VRegPHIUseCount - Keep track of the number of times each virtual register
+  // is used by PHI nodes in this block.
+  std::map<unsigned, unsigned> VRegPHIUseCount;
+
   // Get an iterator to the first instruction after the last PHI node (this may
-  // allso be the end of the basic block).
+  // allso be the end of the basic block).  While we are scanning the PHIs,
+  // populate the VRegPHIUseCount map.
   MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
   while (AfterPHIsIt != MBB.end() &&
-         AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI)
+         AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI) {
+    MachineInstr *PHI = AfterPHIsIt;
+    for (unsigned i = 1, e = PHI->getNumOperands(); i < e; i += 2)
+      VRegPHIUseCount[PHI->getOperand(i).getReg()]++;
     ++AfterPHIsIt;    // Skip over all of the PHI nodes...
+  }
 
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
     // Unlink the PHI node from the basic block... but don't delete the PHI yet
@@ -133,6 +142,11 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           LV->addVirtualRegisterDead(Range[i].second, &MBB, PHICopy);
       }
     }
+
+    // Adjust the VRegPHIUseCount map to account for the removal of this PHI
+    // node.
+    for (unsigned i = 1; i != MI->getNumOperands(); i += 2)
+      VRegPHIUseCount[MI->getOperand(i).getReg()]--;
 
     // Now loop over all of the incoming arguments, changing them to copy into
     // the IncomingReg register in the corresponding predecessor basic block.
@@ -217,18 +231,11 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
               }
 
             // Is it used by any PHI instructions in this block?
-            if (ValueIsLive) break;
-
-            // Loop over all of the PHIs in this successor, checking to see if
-            // the register is being used...
-            for (MachineBasicBlock::iterator BBI = MBB->begin(), E=MBB->end();
-                 BBI != E && BBI->getOpcode() == TargetInstrInfo::PHI;
-                 ++BBI)
-              for (unsigned i = 1, e = BBI->getNumOperands(); i < e; i += 2)
-                if (BBI->getOperand(i).getReg() == SrcReg) {
-                  ValueIsLive = true;
-                  break;
-                }
+            if (!ValueIsLive) {
+              std::map<unsigned,unsigned>::iterator I =
+                VRegPHIUseCount.find(SrcReg);
+              ValueIsLive = I != VRegPHIUseCount.end() && I->second;
+            }
           }
           
           // Okay, if we now know that the value is not live out of the block,
