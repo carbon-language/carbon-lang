@@ -16,8 +16,9 @@
 #include "SparcRegClassInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineInstrInfo.h"
-#include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineSchedInfo.h"
+#include "llvm/Target/MachineFrameInfo.h"
+#include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/Type.h"
 
@@ -115,13 +116,24 @@ public:
                                       vector<TmpInstruction*>& tempVec) const;
 
   
-  // Create an instruction sequence to copy an integer value `val' from an
-  // integer to a floating point register `dest'.  val must be an integral
-  // type.  dest must be a Float or Double.
+  // Create an instruction sequence to copy an integer value `val'
+  // to a floating point value `dest' by copying to memory and back.
+  // val must be an integral type.  dest must be a Float or Double.
   // The generated instructions are returned in `minstrVec'.
   // Any temp. registers (TmpInstruction) created are returned in `tempVec'.
   // 
   virtual void  CreateCodeToCopyIntToFloat(Method* method,
+                                           Value* val,
+                                           Instruction* dest,
+                                           vector<MachineInstr*>& minstrVec,
+                                           vector<TmpInstruction*>& tempVec,
+                                           TargetMachine& target) const;
+
+  // Similarly, create an instruction sequence to copy an FP value
+  // `val' to an integer value `dest' by copying to memory and back.
+  // See the previous function for information about return values.
+  // 
+  virtual void  CreateCodeToCopyFloatToInt(Method* method,
                                            Value* val,
                                            Instruction* dest,
                                            vector<MachineInstr*>& minstrVec,
@@ -1229,16 +1241,33 @@ public:
   }
   
 private:
+  // All stack addresses must be offset by 0x7ff (2047) on Sparc V9.
+  static const int OFFSET                                  = (int) 0x7ff;
   static const int StackFrameSizeAlignment                 =  16;
   static const int MinStackFrameSize                       = 176;
   static const int NumFixedOutgoingArgs                    =   6;
   static const int SizeOfEachArgOnStack                    =   8;
-  static const int StaticAreaOffsetFromFP                  =  -1;
-  static const int FirstIncomingArgOffsetFromFP            = 126;
-  static const int FirstOutgoingArgOffsetFromSP            = 128;
-  static const int FirstOptionalOutgoingArgOffsetFromSP    = 176;
+  static const int StaticAreaOffsetFromFP                  =  -1 + OFFSET;
+  static const int FirstIncomingArgOffsetFromFP            = 128 + OFFSET;
+  static const int FirstOptionalIncomingArgOffsetFromFP    = 176 + OFFSET;
+  static const int FirstOutgoingArgOffsetFromSP            = 128 + OFFSET;
+  static const int FirstOptionalOutgoingArgOffsetFromSP    = 176 + OFFSET;
 };
 
+
+//---------------------------------------------------------------------------
+// class UltraSparcCacheInfo 
+// 
+// Purpose:
+//   Interface to cache parameters for the UltraSPARC.
+//   Just use defaults for now.
+//---------------------------------------------------------------------------
+
+class UltraSparcCacheInfo: public MachineCacheInfo {
+public:
+  /*ctor*/          UltraSparcCacheInfo  (const TargetMachine& target) :
+    MachineCacheInfo(target) {} 
+};
 
 
 //---------------------------------------------------------------------------
@@ -1257,6 +1286,7 @@ private:
   UltraSparcSchedInfo schedInfo;
   UltraSparcRegInfo   regInfo;
   UltraSparcFrameInfo frameInfo;
+  UltraSparcCacheInfo cacheInfo;
 public:
   UltraSparc();
   virtual ~UltraSparc() {}
@@ -1265,6 +1295,7 @@ public:
   virtual const MachineSchedInfo &getSchedInfo() const { return schedInfo; }
   virtual const MachineRegInfo   &getRegInfo()   const { return regInfo; }
   virtual const MachineFrameInfo &getFrameInfo() const { return frameInfo; }
+  virtual const MachineCacheInfo &getCacheInfo() const { return cacheInfo; }
   
   // compileMethod - For the sparc, we do instruction selection, followed by
   // delay slot scheduling, then register allocation.
