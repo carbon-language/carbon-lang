@@ -33,7 +33,7 @@ class DenseMap {
     ToIndexT toIndex_;
 
 public:
-    DenseMap() { }
+    DenseMap() : nullVal_(T()) { }
 
     explicit DenseMap(const T& val) : nullVal_(val) { }
 
