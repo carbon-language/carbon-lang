@@ -250,9 +250,6 @@ public:
   //return wether the BasicBlock 'bb' contains a loop
   bool isLoop(const BasicBlock *bb);
 
-  //return this basibBlock contains a loop
-  bool isLoop();
-
   //return the node for the input instruction
   ModuloSchedGraphNode *getGraphNodeForInst(const Instruction *inst) const {
     const_iterator onePair = this->find(inst);
@@ -293,11 +290,12 @@ public:
   using map_base::begin;
   using map_base::end;
 
-  void noteModuloSchedGraphNodeForInst(const Instruction *inst,
-                                       ModuloSchedGraphNode *node)
-  {
+  void addHash(const Instruction *inst,
+	       ModuloSchedGraphNode *node){
+    
     assert((*this)[inst] == NULL);
     (*this)[inst] = node;
+    
   }
 
   // Graph builder
@@ -308,10 +306,7 @@ public:
 
   // Build nodes for BasicBlock
   void buildNodesforBB(const TargetMachine &target,
-                       const BasicBlock *bb,
-                       NodeVec &memNode,
-                       RegToRefVecMap &regToRefVecMap,
-                       ValueToDefVecMap &valueToDefVecMap);
+                       const BasicBlock *bb);
 
   //find definitiona and use information for all nodes
   void findDefUseInfoAtInstr(const TargetMachine &target,
@@ -328,9 +323,6 @@ public:
 
   //add memory dependence dges
   void addMemEdges(const BasicBlock *bb);
-
-  //add dummy edges
-  void addDummyEdges();
 
   //computer source restrictoin II
   int computeResII(const BasicBlock *bb);

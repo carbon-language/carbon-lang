@@ -79,15 +79,15 @@ public:
   printSchedule() { 
 
     //return ModuloScheduling::DebugLevel >= DebugLevel_PrintSchedule; 
-    return false;
+    return true;
 
-
+    
   }
   static bool 
   printScheduleProcess() {
   
     //return DebugLevel >= DebugLevel_PrintScheduleProcess;
-    return false;
+    return true;
 
 
   }
@@ -180,7 +180,7 @@ public:
   ModuloSchedulingSet(ModuloSchedGraphSet _graphSet): graphSet(_graphSet) {
     for (unsigned i = 0; i < graphSet.size(); i++) {
       ModuloSchedGraph & graph = *(graphSet[i]);
-      if (graph.isLoop())
+      if (graph.isLoop(graph.getBasicBlock()))
         ModuloScheduling ModuloScheduling(graph);
     }
   };

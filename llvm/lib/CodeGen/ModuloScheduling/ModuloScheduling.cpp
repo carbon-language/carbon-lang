@@ -97,28 +97,34 @@ void ModuloScheduling::instrScheduling()
     graph.dump(bb);
   }
   //construction of prologue, kernel and epilogue
+  
+  /*
   BasicBlock *kernel = bb->splitBasicBlock(bb->begin());
   BasicBlock *prologue = bb;
   BasicBlock *epilogue = kernel->splitBasicBlock(kernel->begin());
+  */
 
   // Construct prologue
-  constructPrologue(prologue);
+  /*constructPrologue(prologue);*/
 
   // Construct kernel
-  constructKernel(prologue, kernel, epilogue);
+  
+  /*constructKernel(prologue, kernel, epilogue);*/
 
   // Construct epilogue
-  constructEpilogue(epilogue, succ_bb);
 
+  /*constructEpilogue(epilogue, succ_bb);*/
+  
   //print the BasicBlocks if necessary
-  if (ModuloScheduling::printSchedule()) {
-    DEBUG_PRINT(std::cerr << "dumping the prologue block:\n");
-    graph.dump(prologue);
-    DEBUG_PRINT(std::cerr << "dumping the kernel block\n");
-    graph.dump(kernel);
-    DEBUG_PRINT(std::cerr << "dumping the epilogue block\n");
-    graph.dump(epilogue);
-  }
+//    if (0){
+//      DEBUG_PRINT(std::cerr << "dumping the prologue block:\n");
+//      graph.dump(prologue);
+//      DEBUG_PRINT(std::cerr << "dumping the kernel block\n");
+//      graph.dump(kernel);
+//      DEBUG_PRINT(std::cerr << "dumping the epilogue block\n");
+//      graph.dump(epilogue);
+//    }
+
 }
 
 // Clear memory from the last round and initialize if necessary
@@ -526,7 +532,7 @@ void ModuloScheduling::constructEpilogue(BasicBlock *epilogue,
         Instruction *ist = (Instruction *) coreSchedule[i][j]->getInst();
         ist->getParent()->getInstList().erase(ist);
       }
-  //**************************************************************//
+
 
 
   //finally, insert an unconditional branch instruction at the end
@@ -900,23 +906,29 @@ namespace {
     }
 
     // getAnalysisUsage - We use LiveVarInfo...
-        virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       //AU.addRequired(FunctionLiveVarInfo::ID);
-    } bool runOnFunction(Function & F);
+    }
+    
+    bool runOnFunction(Function & F);
   };
 }                               // end anonymous namespace
 
 
 bool ModuloSchedulingPass::runOnFunction(Function &F)
 {
-  ModuloSchedGraphSet *graphSet = new ModuloSchedGraphSet(&F, target);
-  ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
 
+  ModuloSchedGraphSet *graphSet = new ModuloSchedGraphSet(&F, target);
+
+  //ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
+  
+  printf("runOnFunction  in ModuloSchedulingPass returns\n");
   return false;
 }
 
 
 Pass *createModuloSchedulingPass(const TargetMachine & tgt)
 {
+  printf("creating modulo scheduling \n");
   return new ModuloSchedulingPass(tgt);
 }

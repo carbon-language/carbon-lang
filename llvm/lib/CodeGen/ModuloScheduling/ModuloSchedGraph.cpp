@@ -21,83 +21,42 @@
 #include <vector>
 #include <math.h>
 
+
 #define UNIDELAY 1
 
-//*********************** Internal Data Structures *************************/
+using std::cerr;
+using std::endl;
+using std::vector;
 
-// The following two types need to be classes, not typedefs, so we can use
-// opaque declarations in SchedGraph.h
-// 
-struct RefVec:public std::vector<std::pair<ModuloSchedGraphNode*,int> > {
-  typedef std::vector<std::pair<ModuloSchedGraphNode*,
-                                int> >::iterator iterator;
-  typedef std::vector<std::pair<ModuloSchedGraphNode*,
-                                int> >::const_iterator const_iterator;
-};
 
-struct RegToRefVecMap:public hash_map<int,RefVec> {
-  typedef hash_map<int,RefVec>::iterator iterator;
-  typedef hash_map<int,RefVec>::const_iterator const_iterator;
-};
+/***********member functions for ModuloSchedGraphNode*********/
 
-struct ValueToDefVecMap:public hash_map<const Instruction*,RefVec> {
-  typedef hash_map<const Instruction*, RefVec>::iterator iterator;
-  typedef hash_map<const Instruction*,
-                        RefVec>::const_iterator const_iterator;
-};
-
-// class Modulo SchedGraphNode
 
 ModuloSchedGraphNode::ModuloSchedGraphNode(unsigned int in_nodeId,
                                            const BasicBlock * in_bb,
                                            const Instruction * in_inst,
                                            int indexInBB,
                                            const TargetMachine & target)
-:SchedGraphNodeCommon(in_nodeId, indexInBB), inst(in_inst)
-{
+  :SchedGraphNodeCommon(in_nodeId, indexInBB), inst(in_inst){
+  
   if (inst) {
     //FIXME: find the latency 
-    //currently setthe latency to zero
+    //currently set the latency to zero
     latency = 0;
   }
 }
 
-//class ModuloScheGraph
 
-void ModuloSchedGraph::addDummyEdges()
-{
-  assert(graphRoot->outEdges.size() == 0);
+/***********member functions for ModuloSchedGraph*********/
 
-  for (const_iterator I = begin(); I != end(); ++I) {
-    ModuloSchedGraphNode *node = (ModuloSchedGraphNode *) ((*I).second);
-    assert(node != graphRoot && node != graphLeaf);
-    if (node->beginInEdges() == node->endInEdges())
-      (void) new SchedGraphEdge(graphRoot, node, SchedGraphEdge::CtrlDep,
-                                SchedGraphEdge::NonDataDep, 0);
-    if (node->beginOutEdges() == node->endOutEdges())
-      (void) new SchedGraphEdge(node, graphLeaf, SchedGraphEdge::CtrlDep,
-                                SchedGraphEdge::NonDataDep, 0);
-  }
-}
-
-bool isDefinition(const Instruction *I)
-{
-  //if(TerminatorInst::classof(I)||FreeInst::classof(I) || StoreInst::classof(I) || CallInst::classof(I))
-  if (!I->hasName())
-    return false;
-  else
-    return true;
-}
-
-void ModuloSchedGraph::addDefUseEdges(const BasicBlock *bb)
-{
+void 
+ModuloSchedGraph::addDefUseEdges(const BasicBlock *bb){
+  
   //collect def instructions, store them in vector
-  //  const TargetInstrInfo& mii = target.getInstrInfo();
   const TargetInstrInfo & mii = target.getInstrInfo();
-
-  typedef std::vector < ModuloSchedGraphNode * >DefVec;
-  DefVec defVec;
-
+  vector < ModuloSchedGraphNode * > defVec;
+  
+  
   //find those def instructions
   for (BasicBlock::const_iterator I = bb->begin(), E = bb->end(); I != E; ++I) {
     if (I->getType() != Type::VoidTy) {
@@ -115,38 +74,40 @@ void ModuloSchedGraph::addDefUseEdges(const BasicBlock *bb)
       Instruction *inst = (Instruction *) (*I);
       ModuloSchedGraphNode *node = NULL;
 
-      for (BasicBlock::const_iterator I = bb->begin(), E = bb->end();
-           I != E; ++I)
-        if ((const Instruction *) I == inst) {
+      for (BasicBlock::const_iterator ins = bb->begin(), E = bb->end();
+           ins != E; ++ins)
+        if ((const Instruction *) ins == inst) {
           node = (*this)[inst];
           break;
         }
 
-      assert(inst != NULL && " Use not an Instruction ?");
 
-      if (node == NULL)         //inst is not an instruction in this block
-      {
+      if (node == NULL){
+	
+	//inst is not an instruction in this block
+	//do nothing
+
       } else {
         // Add a flow edge from the def instruction to the ref instruction
-
+	// This is a true dependence, so the delay is equal to the 
+	//delay of the preceding node.
+	
+        int delay = 0;
+	
         // self loop will not happen in SSA form
         assert(defVec[i] != node && "same node?");
 
-        // This is a true dependence, so the delay is equal to the delay of the
-        // pred node.
-        int delay = 0;
         MachineCodeForInstruction & tempMvec =
             MachineCodeForInstruction::get(value);
         for (unsigned j = 0; j < tempMvec.size(); j++) {
           MachineInstr *temp = tempMvec[j];
-          //delay +=mii.minLatency(temp->getOpCode());
           delay = std::max(delay, mii.minLatency(temp->getOpCode()));
         }
 
         SchedGraphEdge *trueEdge =
-            new SchedGraphEdge(defVec[i], node, value,
+	  new SchedGraphEdge(defVec[i], node, value,
                                SchedGraphEdge::TrueDep, delay);
-
+	
         // if the ref instruction is before the def instrution
         // then the def instruction must be a phi instruction 
         // add an anti-dependence edge to from the ref instruction to the def
@@ -163,11 +124,14 @@ void ModuloSchedGraph::addDefUseEdges(const BasicBlock *bb)
   }
 }
 
-void ModuloSchedGraph::addCDEdges(const BasicBlock * bb) {
+void 
+ModuloSchedGraph::addCDEdges(const BasicBlock * bb) {
+
   // find the last instruction in the basic block
   // see if it is an branch instruction. 
-  // If yes, then add an edge from each node expcept the last node to the last
-  // node
+  // If yes, then add an edge from each node expcept the last node 
+  //to the last node
+
   const Instruction *inst = &(bb->back());
   ModuloSchedGraphNode *lastNode = (*this)[inst];
   if (TerminatorInst::classof(inst))
@@ -179,7 +143,7 @@ void ModuloSchedGraph::addCDEdges(const BasicBlock * bb) {
         (void) new SchedGraphEdge(node, lastNode, SchedGraphEdge::CtrlDep,
                                   SchedGraphEdge::NonDataDep, 0);
       }
-
+      
     }
 }
 
@@ -206,30 +170,46 @@ static const unsigned int SG_DepOrderArray[][3] = {
 // Use latency 1 just to ensure that memory operations are ordered;
 // latency does not otherwise matter (true dependences enforce that).
 // 
-void ModuloSchedGraph::addMemEdges(const BasicBlock * bb) {
+void 
+ModuloSchedGraph::addMemEdges(const BasicBlock * bb) {
 
-  std::vector<ModuloSchedGraphNode*> memNodeVec;
-
+  vector<ModuloSchedGraphNode*> memNodeVec;
+  
   //construct the memNodeVec
-  for (BasicBlock::const_iterator I = bb->begin(), E = bb->end(); I != E; ++I) {
+  for (BasicBlock::const_iterator I = bb->begin(), 
+	 E = bb->end(); I != E; ++I) {
+
     if (LoadInst::classof(I) || StoreInst::classof(I)
         || CallInst::classof(I)) {
+
       ModuloSchedGraphNode *node = (*this)[(const Instruction *) I];
       memNodeVec.push_back(node);
+      
     }
   }
 
-  // Instructions in memNodeVec are in execution order within the basic block,
-  // so simply look at all pairs <memNodeVec[i], memNodeVec[j: j > i]>.
-  // 
+  // Instructions in memNodeVec are in execution order within the 
+  // basic block, so simply look at all pairs 
+  // <memNodeVec[i], memNodeVec[j: j > i]>.
+
   for (unsigned im = 0, NM = memNodeVec.size(); im < NM; im++) {
-    const Instruction *fromInst = memNodeVec[im]->getInst();
-    int fromType = CallInst::classof(fromInst) ? SG_CALL_REF
-        : LoadInst::classof(fromInst) ? SG_LOAD_REF : SG_STORE_REF;
+    
+    const Instruction *fromInst,*toInst;
+    int toType, fromType;
+    
+    //get the first mem instruction and instruction type
+    fromInst = memNodeVec[im]->getInst();
+    fromType = CallInst::classof(fromInst) ? SG_CALL_REF
+      : LoadInst::classof(fromInst) ? SG_LOAD_REF : SG_STORE_REF;
+    
     for (unsigned jm = im + 1; jm < NM; jm++) {
-      const Instruction *toInst = memNodeVec[jm]->getInst();
-      int toType = CallInst::classof(toInst) ? SG_CALL_REF
+      
+      //get the second mem instruction and instruction type
+      toInst = memNodeVec[jm]->getInst();
+      toType = CallInst::classof(toInst) ? SG_CALL_REF
           : LoadInst::classof(toInst) ? SG_LOAD_REF : SG_STORE_REF;
+      
+      //add two edges if not both of them are LOAD instructions
       if (fromType != SG_LOAD_REF || toType != SG_LOAD_REF) {
         (void) new SchedGraphEdge(memNodeVec[im], memNodeVec[jm],
                                   SchedGraphEdge::MemoryDep,
@@ -239,8 +219,10 @@ void ModuloSchedGraph::addMemEdges(const BasicBlock * bb) {
             new SchedGraphEdge(memNodeVec[jm], memNodeVec[im],
                                SchedGraphEdge::MemoryDep,
                                SG_DepOrderArray[toType][fromType], 1);
-        edge->setIteDiff(1);
 
+	//set the iteration difference for this edge to 1.
+        edge->setIteDiff(1);
+	
       }
     }
   }
@@ -248,36 +230,32 @@ void ModuloSchedGraph::addMemEdges(const BasicBlock * bb) {
 
 
 
-void ModuloSchedGraph::buildNodesforBB(const TargetMachine &target,
-                                       const BasicBlock *bb,
-                                    std::vector<ModuloSchedGraphNode*> &memNode,
-                                       RegToRefVecMap &regToRefVecMap,
-                                       ValueToDefVecMap &valueToDefVecMap)
-{
-  //const TargetInstrInfo& mii=target.getInstrInfo();
-
-  //Build graph nodes for each LLVM instruction and gather def/use info.
-  //Do both together in a single pass over all machine instructions.
-
+void 
+ModuloSchedGraph::buildNodesforBB(const TargetMachine &target,
+				  const BasicBlock *bb){
+  
   int i = 0;
-  for (BasicBlock::const_iterator I = bb->begin(), E = bb->end(); I != E; 
-       ++I) {
-    ModuloSchedGraphNode *node =
-        new ModuloSchedGraphNode(getNumNodes(), bb, I, i, target);
+  ModuloSchedGraphNode *node;
+
+  for (BasicBlock::const_iterator I = bb->begin(), E = bb->end(); 
+       I != E; ++I) {
+    
+    node=new ModuloSchedGraphNode(getNumNodes(), bb, I, i, target);
+    
     i++;
-    this->noteModuloSchedGraphNodeForInst(I, node);
+    
+    this->addHash(I, node);
   }
 
-  //this function finds some info about instruction in basic block for later use
-  //findDefUseInfoAtInstr(target, node,
-  //memNode,regToRefVecMap,valueToDefVecMap);
 }
 
 
-bool ModuloSchedGraph::isLoop(const BasicBlock *bb) {
+bool 
+ModuloSchedGraph::isLoop(const BasicBlock *bb) {
+  
   //only if the last instruction in the basicblock is branch instruction and 
   //there is at least an option to branch itself
-
+  
   const Instruction *inst = &(bb->back());
   if (BranchInst::classof(inst)) {
     for (unsigned i = 0; i < ((BranchInst *) inst)->getNumSuccessors();
@@ -288,24 +266,6 @@ bool ModuloSchedGraph::isLoop(const BasicBlock *bb) {
     }
   }
 
-  return false;
-
-}
-
-bool ModuloSchedGraph::isLoop() {
-  //only if the last instruction in the basicblock is branch instruction and 
-  //there is at least an option to branch itself
-
-  assert(this->bb&& "the basicblock is not empty");
-  const Instruction *inst = &(bb->back());
-  if (BranchInst::classof(inst))
-    for (unsigned i = 0; i < ((BranchInst *) inst)->getNumSuccessors();
-         i++) {
-      BasicBlock *sb = ((BranchInst *) inst)->getSuccessor(i);
-      if (sb == bb)
-        return true;
-    }
-  
   return false;
 
 }
@@ -872,27 +832,6 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
 
   assert(this->bb && "The basicBlock is NULL?");
 
-  // Use this data structure to note all machine operands that compute
-  // ordinary LLVM values.  These must be computed defs (i.e., instructions). 
-  // Note that there may be multiple machine instructions that define
-  // each Value.
-  ValueToDefVecMap valueToDefVecMap;
-
-  // Use this data structure to note all memory instructions.
-  // We use this to add memory dependence edges without a second full walk.
-  // 
-  // vector<const Instruction*> memVec;
-  std::vector<ModuloSchedGraphNode*> memNodeVec;
-
-  // Use this data structure to note any uses or definitions of
-  // machine registers so we can add edges for those later without
-  // extra passes over the nodes.
-  // The vector holds an ordered list of references to the machine reg,
-  // ordered according to control-flow order.  This only works for a
-  // single basic block, hence the assertion.  Each reference is identified
-  // by the pair: <node, operand-number>.
-  // 
-  RegToRefVecMap regToRefVecMap;
 
   // Make a dummy root node.  We'll add edges to the real roots later.
   graphRoot = new ModuloSchedGraphNode(0, NULL, NULL, -1, target);
@@ -913,21 +852,21 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
 
   if (ModuloScheduling::printScheduleProcess())
     this->dump(bb);
-
-  if (!isLoop(bb)) {
-    DEBUG_PRINT(std::cerr << " dumping non-loop BB:\n");
-    dump(bb);
-  }
+  
   if (isLoop(bb)) {
-    buildNodesforBB(target, bb, memNodeVec, regToRefVecMap,
-                    valueToDefVecMap);
 
+    DEBUG_PRINT(cerr << "building nodes for this BasicBlock\n");
+    buildNodesforBB(target, bb);
+    
+    DEBUG_PRINT(cerr << "adding def-use edge to this basic block\n");
     this->addDefUseEdges(bb);
+
+    DEBUG_PRINT(cerr << "adding CD edges to this basic block\n");
     this->addCDEdges(bb);
+
+    DEBUG_PRINT(cerr << "adding memory edges to this basicblock\n");
     this->addMemEdges(bb);
-
-    //this->dump();
-
+    
     int ResII = this->computeResII(bb);
     if (ModuloScheduling::printScheduleProcess())
       DEBUG_PRINT(std::cerr << "ResII is " << ResII << "\n");
@@ -942,11 +881,12 @@ void ModuloSchedGraph::buildGraph(const TargetMachine & target)
       this->dumpNodeProperty();
 
     this->orderNodes();
-
+    
     if (ModuloScheduling::printScheduleProcess())
       this->dump();
-    //this->instrScheduling();
 
+    //this->instrScheduling();
+    
     //this->dumpScheduling();
   }
 }
@@ -1229,31 +1169,8 @@ int ModuloSchedGraph::computeResII(const BasicBlock * bb)
   return ResII;
 }
 
-ModuloSchedGraphSet::ModuloSchedGraphSet(const Function *function,
-                                         const TargetMachine &target)
-:  method(function)
-{
-  buildGraphsForMethod(method, target);
-}
 
 
-ModuloSchedGraphSet::~ModuloSchedGraphSet()
-{
-  //delete all the graphs
-  for (iterator I = begin(), E = end(); I != E; ++I)
-    delete *I;
-}
-
-void ModuloSchedGraphSet::dump() const
-{
-  DEBUG_PRINT(std::cerr << " ====== ModuloSched graphs for function `" << 
-        method->getName() << "' =========\n\n");
-  for (const_iterator I = begin(); I != end(); ++I)
-    (*I)->dump();
-
-  DEBUG_PRINT(std::cerr << "\n=========End graphs for function `" << method->getName()
-        << "' ==========\n\n");
-}
 
 void ModuloSchedGraph::dump(const BasicBlock * bb)
 {
@@ -1308,15 +1225,68 @@ void ModuloSchedGraph::dumpNodeProperty() const
   }
 }
 
-void ModuloSchedGraphSet::buildGraphsForMethod(const Function *F,
-                                               const TargetMachine &target)
-{
+
+
+
+/************member functions for ModuloSchedGraphSet**************/
+
+ModuloSchedGraphSet::ModuloSchedGraphSet(const Function *function,
+                                         const TargetMachine &target)
+:  method(function){
+  
+  buildGraphsForMethod(method, target);
+
+}
+
+
+ModuloSchedGraphSet::~ModuloSchedGraphSet(){
+  
+  //delete all the graphs
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    delete *I;
+}
+
+
+
+void 
+ModuloSchedGraphSet::buildGraphsForMethod(const Function *F,
+					  const TargetMachine &target){
+  
   for (Function::const_iterator BI = F->begin(); BI != F->end(); ++BI){
     const BasicBlock* local_bb;
+    
     local_bb=BI;
     addGraph(new ModuloSchedGraph((BasicBlock*)local_bb, target));
   }
+  
 }
+
+void 
+ModuloSchedGraphSet::dump() const{
+  
+  DEBUG_PRINT(std::cerr << " ====== ModuloSched graphs for function `" << 
+	      method->getName() << "' =========\n\n");
+  for (const_iterator I = begin(); I != end(); ++I)
+    (*I)->dump();
+  
+  DEBUG_PRINT(std::cerr << "\n=========End graphs for function `" << method->getName()
+	      << "' ==========\n\n");
+}
+
+
+
+
+/********************misc functions***************************/
+
+
+static void 
+dumpBasicBlock(const BasicBlock * bb){
+  
+  DEBUG_PRINT(std::cerr << "dumping basic block:");
+  DEBUG_PRINT(std::cerr << (bb->hasName()? bb->getName() : "block")
+	      << " (" << bb << ")" << "\n");
+}
+
 
 std::ostream& operator<<(std::ostream &os,
                          const ModuloSchedGraphNode &node)
