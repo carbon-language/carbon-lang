@@ -75,24 +75,27 @@ set isDeprecated = 1 in {
 }
 
 // Section A.5: p167
-//set op2 = 0b101 in {
-  //def FBPA     : F2_3<0b1000, "fbpa">;              // Branch always
-  //def FBPN     : F2_3<0b0000, "fbpn">;              // Branch never
-  //def FBPU     : F2_3<0b0111, "fbpu">;              // Branch on unordered
-  //def FBPG     : F2_3<0b0110, "fbpg">;              // Branch >
-  //def FBPUG    : F2_3<0b0101, "fbpug">;             // Branch on unordered or >
-  //def FBPL     : F2_3<0b0100, "fbpl">;              // Branch <
-  //def FBPUL    : F2_3<0b0011, "fbpul">;             // Branch on unordered or <
-  //def FBPLG    : F2_3<0b0010, "fbplg">;             // Branch < or >
-  //def FBPNE    : F2_3<0b0001, "fbpne">;             // Branch !=
-  //def FBPE     : F2_3<0b1001, "fbpe">;              // Branch ==
-  //def FBPUE    : F2_3<0b1010, "fbpue">;             // Branch on unordered or ==
-  //def FBPGE    : F2_3<0b1011, "fbpge">;             // Branch > or ==
-  //def FBPUGE   : F2_3<0b1100, "fbpuge">;            // Branch unord or > or ==
-  //def FBPLE    : F2_3<0b1101, "fbple">;             // Branch < or ==
-  //def FBPULE   : F2_3<0b1110, "fbpule">;            // Branch unord or < or ==
-  //def FBPO     : F2_3<0b1111, "fbpo">;              // Branch on ordered
-//}
+// Not used in the Sparc backend
+#if 0
+set op2 = 0b101 in {
+  def FBPA     : F2_3<0b1000, "fbpa">;              // Branch always
+  def FBPN     : F2_3<0b0000, "fbpn">;              // Branch never
+  def FBPU     : F2_3<0b0111, "fbpu">;              // Branch on unordered
+  def FBPG     : F2_3<0b0110, "fbpg">;              // Branch >
+  def FBPUG    : F2_3<0b0101, "fbpug">;             // Branch on unordered or >
+  def FBPL     : F2_3<0b0100, "fbpl">;              // Branch <
+  def FBPUL    : F2_3<0b0011, "fbpul">;             // Branch on unordered or <
+  def FBPLG    : F2_3<0b0010, "fbplg">;             // Branch < or >
+  def FBPNE    : F2_3<0b0001, "fbpne">;             // Branch !=
+  def FBPE     : F2_3<0b1001, "fbpe">;              // Branch ==
+  def FBPUE    : F2_3<0b1010, "fbpue">;             // Branch on unordered or ==
+  def FBPGE    : F2_3<0b1011, "fbpge">;             // Branch > or ==
+  def FBPUGE   : F2_3<0b1100, "fbpuge">;            // Branch unord or > or ==
+  def FBPLE    : F2_3<0b1101, "fbple">;             // Branch < or ==
+  def FBPULE   : F2_3<0b1110, "fbpule">;            // Branch unord or < or ==
+  def FBPO     : F2_3<0b1111, "fbpo">;              // Branch on ordered
+}
+#endif
 
 // Section A.6: Branch on Integer condition codes (Bicc) - p146
 set isDeprecated = 1 in {
@@ -117,26 +120,29 @@ set isDeprecated = 1 in {
 }
 
 // Section A.7: Branch on integer condition codes with prediction - p148
-//set op2 = 0b001 in {
-//  def BPA     : F2_3<0b1000, "bpa">;              // Branch always
-//  def BPN     : F2_3<0b0000, "bpn">;              // Branch never
-//  def BPNE    : F2_3<0b1001, "bpne">;             // Branch !=
-//  def BPE     : F2_3<0b0001, "bpe">;              // Branch ==
-//  def BPG     : F2_3<0b1010, "bpg">;              // Branch >
-//  def BPLE    : F2_3<0b0010, "bple">;             // Branch <=
-//  def BPGE    : F2_3<0b1011, "bpge">;             // Branch >=
-//  def BPL     : F2_3<0b0011, "bpl">;              // Branch <
-//  def BPGU    : F2_3<0b1100, "bpgu">;             // Branch unsigned >
-//  def BPLEU   : F2_3<0b0100, "bpleu">;            // Branch unsigned <=
-//  def BPCC    : F2_3<0b1101, "bpcc">;             // Branch unsigned >=
-//  def BPCS    : F2_3<0b0101, "bpcs">;             // Branch unsigned <=
-//  def BPPOS   : F2_3<0b1110, "bppos">;            // Branch on positive
-//  def BPNEG   : F2_3<0b0110, "bpneg">;            // Branch on negative
-//  def BPVC    : F2_3<0b1111, "bpvc">;             // Branch on overflow clear
-//  def BPVS    : F2_3<0b0111, "bpvs">;             // Branch on overflow set
-//}
+// Not used in the Sparc backend
+#if 0
+set op2 = 0b001 in {
+  def BPA     : F2_3<0b1000, "bpa">;              // Branch always
+  def BPN     : F2_3<0b0000, "bpn">;              // Branch never
+  def BPNE    : F2_3<0b1001, "bpne">;             // Branch !=
+  def BPE     : F2_3<0b0001, "bpe">;              // Branch ==
+  def BPG     : F2_3<0b1010, "bpg">;              // Branch >
+  def BPLE    : F2_3<0b0010, "bple">;             // Branch <=
+  def BPGE    : F2_3<0b1011, "bpge">;             // Branch >=
+  def BPL     : F2_3<0b0011, "bpl">;              // Branch <
+  def BPGU    : F2_3<0b1100, "bpgu">;             // Branch unsigned >
+  def BPLEU   : F2_3<0b0100, "bpleu">;            // Branch unsigned <=
+  def BPCC    : F2_3<0b1101, "bpcc">;             // Branch unsigned >=
+  def BPCS    : F2_3<0b0101, "bpcs">;             // Branch unsigned <=
+  def BPPOS   : F2_3<0b1110, "bppos">;            // Branch on positive
+  def BPNEG   : F2_3<0b0110, "bpneg">;            // Branch on negative
+  def BPVC    : F2_3<0b1111, "bpvc">;             // Branch on overflow clear
+  def BPVS    : F2_3<0b0111, "bpvs">;             // Branch on overflow set
+}
+#endif
 
-// Section A.8: p175 - CALL - the only Format #1 instruction
+// Section A.8: CALL - p151, the only Format #1 instruction
 def CALL : InstV9 {
   bits<30> disp;
   set op = 1;
@@ -151,22 +157,27 @@ def CALL : InstV9 {
 
 // Section A.10: Divide (64-bit / 32-bit) - p178
 // Not used in the Sparc backend
-//set isDeprecated = 1 in {
-  //def UDIVr   : F3_1<2, 0b001110, "udiv">;        // udiv r, r, r
-  //def UDIVi   : F3_2<2, 0b001110, "udiv">;        // udiv r, r, i
-  //def SDIVr   : F3_1<2, 0b001111, "sdiv">;        // sdiv r, r, r
-  //def SDIVi   : F3_2<2, 0b001111, "sdiv">;        // sdiv r, r, i
-  //def UDIVCCr : F3_1<2, 0b011110, "udivcc">;      // udivcc r, r, r
-  //def UDIVCCi : F3_2<2, 0b011110, "udivcc">;      // udivcc r, r, i
-  //def SDIVCCr : F3_1<2, 0b011111, "sdivcc">;      // sdivcc r, r, r
-  //def SDIVCCi : F3_2<2, 0b011111, "sdivcc">;      // sdivcc r, r, i
-//}
+#if 0
+set isDeprecated = 1 in {
+  def UDIVr   : F3_1<2, 0b001110, "udiv">;        // udiv r, r, r
+  def UDIVi   : F3_2<2, 0b001110, "udiv">;        // udiv r, r, i
+  def SDIVr   : F3_1<2, 0b001111, "sdiv">;        // sdiv r, r, r
+  def SDIVi   : F3_2<2, 0b001111, "sdiv">;        // sdiv r, r, i
+  def UDIVCCr : F3_1<2, 0b011110, "udivcc">;      // udivcc r, r, r
+  def UDIVCCi : F3_2<2, 0b011110, "udivcc">;      // udivcc r, r, i
+  def SDIVCCr : F3_1<2, 0b011111, "sdivcc">;      // sdivcc r, r, r
+  def SDIVCCi : F3_2<2, 0b011111, "sdivcc">;      // sdivcc r, r, i
+}
+#endif
 
 // Section A.11: DONE and RETRY - p181
-//set isPrivileged = 1 in {
-  //def DONE    : F3_18<0, "done">;                 // done
-  //def RETRY   : F3_18<1, "retry">;                // retry
-//}
+// Not used in the Sparc backend
+#if 0
+set isPrivileged = 1 in {
+  def DONE    : F3_18<0, "done">;                 // done
+  def RETRY   : F3_18<1, "retry">;                // retry
+}
+#endif
 
 // Section A.12: Floating-Point Add and Subtract - p182
 def FADDS : F3_16<2, 0b110100, 0x41, "fadds">;    // fadds f, f, f
@@ -175,6 +186,41 @@ def FADDQ : F3_16<2, 0b110100, 0x43, "faddq">;    // faddq f, f, f
 def FSUBS : F3_16<2, 0b110100, 0x45, "fsubs">;    // fsubs f, f, f
 def FSUBD : F3_16<2, 0b110100, 0x46, "fsubd">;    // fsubd f, f, f
 def FSUBQ : F3_16<2, 0b110100, 0x47, "fsubq">;    // fsubq f, f, f
+
+// Section A.13: Floating-point compare - p159
+// FIXME: FCMPS, FCMPD, FCMPQ !!!
+#if 0
+def FSTOX : F3_14<2, 0b110100, 0b011001001, "fstod">;   // fstod rs2, rd
+def FDTOX : F3_14<2, 0b110100, 0b011001101, "fstoq">;   // fstoq rs2, rd
+def FQTOX : F3_14<2, 0b110100, 0b011000110, "fstos">;   // fstos rs2, rd
+def FSTOI : F3_14<2, 0b110100, 0b011001110, "fdtoq">;   // fdtoq rs2, rd
+def FDTOI : F3_14<2, 0b110100, 0b011000111, "fqtos">;   // fqtos rs2, rd
+def FQTOI : F3_14<2, 0b110100, 0b011001011, "fqtod">;   // fqtod rs2, rd
+#endif
+
+// Section A.14: Convert floating-point to integer - p161
+def FSTOX : F3_14<2, 0b110100, 0b010000001, "fstox">;   // fstox rs2, rd
+def FDTOX : F3_14<2, 0b110100, 0b010000010, "fstox">;   // fstox rs2, rd
+def FQTOX : F3_14<2, 0b110100, 0b010000011, "fstox">;   // fstox rs2, rd
+def FSTOI : F3_14<2, 0b110100, 0b011010001, "fstoi">;   // fstoi rs2, rd
+def FDTOI : F3_14<2, 0b110100, 0b011010010, "fdtoi">;   // fdtoi rs2, rd
+def FQTOI : F3_14<2, 0b110100, 0b011010011, "fqtoi">;   // fqtoi rs2, rd
+
+// Section A.15: Convert between floating-point formats - p162
+def FSTOD : F3_14<2, 0b110100, 0b011001001, "fstod">;   // fstod rs2, rd
+def FSTOQ : F3_14<2, 0b110100, 0b011001101, "fstoq">;   // fstoq rs2, rd
+def FDTOS : F3_14<2, 0b110100, 0b011000110, "fstos">;   // fstos rs2, rd
+def FDTOQ : F3_14<2, 0b110100, 0b011001110, "fdtoq">;   // fdtoq rs2, rd
+def FQTOS : F3_14<2, 0b110100, 0b011000111, "fqtos">;   // fqtos rs2, rd
+def FQTOD : F3_14<2, 0b110100, 0b011001011, "fqtod">;   // fqtod rs2, rd
+
+// Section A.16: Convert integer to floating-point - p163
+def FXTOS : F3_14<2, 0b110100, 0b010000100, "fxtos">;   // fxtos rs2, rd
+def FXTOD : F3_14<2, 0b110100, 0b010001000, "fxtod">;   // fxtod rs2, rd
+def FXTOQ : F3_14<2, 0b110100, 0b010001100, "fxtoq">;   // fxtoq rs2, rd
+def FITOS : F3_14<2, 0b110100, 0b011000100, "fitos">;   // fitos rs2, rd
+def FITOD : F3_14<2, 0b110100, 0b011001000, "fitod">;   // fitod rs2, rd
+def FITOQ : F3_14<2, 0b110100, 0b011001100, "fitoq">;   // fitoq rs2, rd
 
 // Section A.17: Floating-Point Move - p164
 def FMOVS : F3_14<2, 0b110100, 0b000000001, "fmovs">;   // fmovs r, r
@@ -218,9 +264,6 @@ def JMPLCALLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
 def JMPLRETr  : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
 def JMPLRETi  : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
 
-// FIXME: FCMPS, FCMPD, FCMPQ !!!
-// FIXME: FMULS, FMULD, FMULQ, ...
-
 // Section A.25: Load Floating-Point - p173
 def LDFr  : F3_1<3, 0b100000, "ld">;             // ld [r+r], r
 def LDFi  : F3_2<3, 0b100000, "ld">;             // ld [r+i], r
@@ -256,10 +299,12 @@ def LDUWi : F3_2<3, 0b000000, "lduw">;           // lduw [r+i], r
 // LDD should no longer be used, LDX should be used instead
 def LDXr : F3_1<3, 0b001011, "ldx">;              // ldx [r+r], r
 def LDXi : F3_2<3, 0b001011, "ldx">;              // ldx [r+i], r
-//set isDeprecated = 1 in {
-//  def LDDr : F3_1<3, 0b000011, "ldd">;            // ldd [r+r], r
-//  def LDDi : F3_2<3, 0b000011, "ldd">;            // ldd [r+i], r
-//}
+#if 0
+set isDeprecated = 1 in {
+  def LDDr : F3_1<3, 0b000011, "ldd">;            // ldd [r+r], r
+  def LDDi : F3_2<3, 0b000011, "ldd">;            // ldd [r+i], r
+}
+#endif
 
 // Section A.31: Logical operations
 def ANDr    : F3_1<2, 0b000001, "and">;          // and r, r, r
@@ -288,6 +333,9 @@ def XNORr   : F3_1<2, 0b000111, "xnor">;         // xnor r, r, r
 def XNORi   : F3_2<2, 0b000111, "xnor">;         // xnor r, r, i
 def XNORccr : F3_1<2, 0b010111, "xnorcc">;       // xnorcc r, r, r
 def XNORcci : F3_2<2, 0b010111, "xnorcc">;       // xnorcc r, r, i
+
+// Section A.32: Memory Barrier - p186
+// Not currently used in the Sparc backend
 
 #if 0
 // Section A.33: Move Floating-Point Register on Condition (FMOVcc)
@@ -331,8 +379,44 @@ def FMOVFO   : F4_7<2, 0b110101, 0b1111, "fmovfo">;      // fmovfo r, r
 // FIXME: Section A.34: Move F-P Register on Integer Register (FMOVr)
 
 
-// FIXME: Section A.35: Move Integer Register on Condition (MOVcc)
+// Section A.35: Move Integer Register on Condition (MOVcc) - p194
+// For integer condition codes
+#if 0
+def MOVA    :
+def MOVN    :
+def MOVNE   :
+def MOVE    :
+def MOVG    :
+def MOVLE   :
+def MOVGE   :
+def MOVL    :
+def MOVGU   :
+def MOVLEU  :
+def MOVCC   :
+def MOVCS   :
+def MOVPOS  :
+def MOVNEG  :
+def MOVVC   :
+def MOVVS   :
 
+// For floating-point condition codes
+def MOVFA   :
+def MOVFN   :
+def MOVFU   :
+def MOVFG   :
+def MOVFUG  :
+def MOVFL   :
+def MOVFUL  :
+def MOVFLG  :
+def MOVFNE  :
+def MOVFE   :
+def MOVFUE  :
+def MOVFGE  :
+def MOVFUGE :
+def MOVFLE  :
+def MOVFULE :
+def MOVFO   :
+#endif
 
 // FIXME: Section A.36: Move Integer Register on Register Condition (MOVR)
 
@@ -346,19 +430,21 @@ def SDIVXi : F3_2<2, 0b101101, "sdivx">;       // mulx  r, i, r
 def UDIVXi : F3_2<2, 0b001101, "udivx">;       // mulx  r, i, r
 
 // Section A.38: Multiply (32-bit) - p200
-// Not used in the Sparc backend?
-//set Inst{13} = 0 in {
-//  def UMULr   : F3_1<2, 0b001010, "umul">;        // umul   r, r, r
-//  def SMULr   : F3_1<2, 0b001011, "smul">;        // smul   r, r, r
-//  def UMULCCr : F3_1<2, 0b011010, "umulcc">;      // mulcc  r, r, r
-//  def SMULCCr : F3_1<2, 0b011011, "smulcc">;      // smulcc r, r, r
-//}
-//set Inst{13} = 1 in {
-//  def UMULi   : F3_1<2, 0b001010, "umul">;        // umul   r, i, r
-//  def SMULi   : F3_1<2, 0b001011, "smul">;        // smul   r, i, r
-//  def UMULCCi : F3_1<2, 0b011010, "umulcc">;      // umulcc r, i, r
-//  def SMULCCi : F3_1<2, 0b011011, "smulcc">;      // smulcc r, i, r
-//}
+// Not used in the Sparc backend
+#if 0
+set Inst{13} = 0 in {
+  def UMULr   : F3_1<2, 0b001010, "umul">;        // umul   r, r, r
+  def SMULr   : F3_1<2, 0b001011, "smul">;        // smul   r, r, r
+  def UMULCCr : F3_1<2, 0b011010, "umulcc">;      // mulcc  r, r, r
+  def SMULCCr : F3_1<2, 0b011011, "smulcc">;      // smulcc r, r, r
+}
+set Inst{13} = 1 in {
+  def UMULi   : F3_1<2, 0b001010, "umul">;        // umul   r, i, r
+  def SMULi   : F3_1<2, 0b001011, "smul">;        // smul   r, i, r
+  def UMULCCi : F3_1<2, 0b011010, "umulcc">;      // umulcc r, i, r
+  def SMULCCi : F3_1<2, 0b011011, "smulcc">;      // smulcc r, i, r
+}
+#endif
 
 // Section A.39: FIXME
 
@@ -403,15 +489,19 @@ set op2 = 0b100 in {
 }
 
 // Section A.49: Shift - p221
-// uses 5 least significant bits of rs2
-//set x = 0 in {
-//  def SLLr5  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
-//  def SRLr5  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
-//  def SRAr5  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
-//  def SLLXr5 : F3_11<2, 0b100101, "sllx">;               // sllx r, r, r
-//  def SRLXr5 : F3_11<2, 0b100110, "srlx">;               // srlx r, r, r
-//  def SRAXr5 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
-//}
+// Not currently used in the Sparc backend
+#if 0
+ uses 5 least significant bits of rs2
+set x = 0 in {
+  def SLLr5  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
+  def SRLr5  : F3_11<2, 0b100110, "srl">;                // srl r, r, r
+  def SRAr5  : F3_11<2, 0b100111, "sra">;                // sra r, r, r
+  def SLLXr5 : F3_11<2, 0b100101, "sllx">;               // sllx r, r, r
+  def SRLXr5 : F3_11<2, 0b100110, "srlx">;               // srlx r, r, r
+  def SRAXr5 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
+}
+#endif
+
 // uses 6 least significant bits of rs2
 set x = 1 in {
   def SLLr6  : F3_11<2, 0b100101, "sll">;                // sll r, r, r
@@ -422,12 +512,15 @@ set x = 1 in {
   def SRAXr6 : F3_11<2, 0b100111, "srax">;               // srax r, r, r
 }
 
-//def SLLi5  : F3_12<2, 0b100101, "sll">;                // sll r, shcnt32, r
-//def SRLi5  : F3_12<2, 0b100110, "srl">;                // srl r, shcnt32, r
-//def SRAi5  : F3_12<2, 0b100111, "sra">;                // sra r, shcnt32, r
-//def SLLXi5 : F3_12<2, 0b100101, "sllx">;               // sllx r, shcnt32, r
-//def SRLXi5 : F3_12<2, 0b100110, "srlx">;               // srlx r, shcnt32, r
-//def SRAXi5 : F3_12<2, 0b100111, "srax">;               // srax r, shcnt32, r
+// Not currently used in the Sparc backend
+#if 0
+def SLLi5  : F3_12<2, 0b100101, "sll">;                // sll r, shcnt32, r
+def SRLi5  : F3_12<2, 0b100110, "srl">;                // srl r, shcnt32, r
+def SRAi5  : F3_12<2, 0b100111, "sra">;                // sra r, shcnt32, r
+def SLLXi5 : F3_12<2, 0b100101, "sllx">;               // sllx r, shcnt32, r
+def SRLXi5 : F3_12<2, 0b100110, "srlx">;               // srlx r, shcnt32, r
+def SRAXi5 : F3_12<2, 0b100111, "srax">;               // srax r, shcnt32, r
+#endif
 
 def SLLi6  : F3_13<2, 0b100101, "sll">;                  // sll r, shcnt64, r
 def SRLi6  : F3_13<2, 0b100110, "srl">;                  // srl r, shcnt64, r
@@ -445,9 +538,13 @@ def STFr  : F3_1<3, 0b100100, "st">;                      // st r, [r+r]
 def STFi  : F3_2<3, 0b100100, "st">;                      // st r, [r+i]
 def STDFr : F3_1<3, 0b100111, "std">;                     // std r, [r+r]
 def STDFi : F3_2<3, 0b100111, "std">;                     // std r, [r+i]
+
 // Not currently used in the Sparc backend
-//def STQFr : F3_1<3, 0b100110, "stq">;                     // stq r, [r+r]
-//def STQFi : F3_2<3, 0b100110, "stq">;                     // stq r, [r+i]
+#if 0
+def STQFr : F3_1<3, 0b100110, "stq">;                     // stq r, [r+r]
+def STQFi : F3_2<3, 0b100110, "stq">;                     // stq r, [r+i]
+#endif
+
 set isDeprecated = 1 in {
   def STFSRr : F3_1<3, 0b100101, "st">;                   // st r, [r+r]
   def STFSRi : F3_2<3, 0b100101, "st">;                   // st r, [r+i]
