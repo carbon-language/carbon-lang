@@ -42,6 +42,11 @@ namespace {
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
+
+  cl::opt<std::string>
+  FakeArgv0("fake-argv0",
+            cl::desc("Override the 'argv[0]' value passed into the executing"
+                     " program"), cl::value_desc("executable"));
 }
 
 static std::vector<std::string> makeStringVector(char * const *envp) {
@@ -138,14 +143,18 @@ int main(int argc, char **argv, char * const *envp) {
     ExecutionEngine::create(MP, ForceInterpreter);
   assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
-  // Add the module's name to the start of the vector of arguments to main().
-  // But delete .bc first, since programs (and users) might not expect to
-  // see it.
-  const std::string ByteCodeFileSuffix(".bc");
-  if (InputFile.rfind(ByteCodeFileSuffix) ==
-      InputFile.length() - ByteCodeFileSuffix.length()) {
-    InputFile.erase (InputFile.length() - ByteCodeFileSuffix.length());
+  // If the user specifically requested an argv[0] to pass into the program, do
+  // it now.
+  if (!FakeArgv0.empty()) {
+    InputFile = FakeArgv0;
+  } else {
+    // Otherwise, if there is a .bc suffix on the executable strip it off, it
+    // might confuse the program.
+    if (InputFile.rfind(".bc") == InputFile.length() - 3)
+      InputFile.erase(InputFile.length() - 3);
   }
+
+  // Add the module's name to the start of the vector of arguments to main().
   InputArgv.insert(InputArgv.begin(), InputFile);
 
   // Run the main function!
