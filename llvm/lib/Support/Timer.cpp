@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
+#include <functional>
 
 static TimerGroup *DefaultTimerGroup = 0;
 static TimerGroup *getDefaultTimerGroup() {

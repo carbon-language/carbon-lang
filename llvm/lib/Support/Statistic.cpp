@@ -18,6 +18,7 @@
 #include "Support/CommandLine.h"
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 bool DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
 

@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include <string>
 
 class Function;
 class CallInst;
