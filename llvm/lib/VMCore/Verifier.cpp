@@ -25,7 +25,7 @@
 //  * Verify that a function's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
 //  * It is illegal to specify a name for a void value.
-//  * It is illegal to have a internal function that is just a declaration
+//  * It is illegal to have a internal global value with no intitalizer
 //  * It is illegal to have a ret instruction that returns a value that does not
 //    agree with the function return value type.
 //  * Function call argument types match the function prototype
@@ -97,6 +97,10 @@ namespace {  // Anonymous namespace for class
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
         if (I->isExternal() && I->hasInternalLinkage())
           CheckFailed("Function Declaration has Internal Linkage!", I);
+
+      for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+        if (I->isExternal() && I->hasInternalLinkage())
+          CheckFailed("Global Variable is external with internal linkage!", I);
 
       // If the module is broken, abort at this time.
       abortIfBroken();
