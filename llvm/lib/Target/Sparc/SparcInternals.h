@@ -683,12 +683,12 @@ public:
   virtual const TargetOptInfo    &getOptInfo()   const { return optInfo; }
 
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
-  virtual bool addPassesToJITCompile(PassManager &PM);
-  virtual bool addPassesToEmitMachineCode(PassManager &PM,
+  virtual bool addPassesToJITCompile(FunctionPassManager &PM);
+  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
 
   // getPrologEpilogInsertionPass - Inserts prolog/epilog code.
-  Pass* getPrologEpilogInsertionPass();
+  FunctionPass* getPrologEpilogInsertionPass();
 
   // getFunctionAsmPrinterPass - Writes out machine code for a single function
   Pass* getFunctionAsmPrinterPass(std::ostream &Out);
