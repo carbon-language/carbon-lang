@@ -99,16 +99,6 @@ private:
   std::vector<bool> AllocatablePhysicalRegisters;
 
 private:   // Intermediate data structures
-
-  /// BBMap - This provides a numbering of the basic blocks in the function.
-  ///
-  std::map<MachineBasicBlock*, unsigned> BBMap;
-
-  /// BBIdxMap - This contains the inverse mapping of BBMap, going from block ID
-  /// numbers to the corresponding MachineBasicBlock.  This is lazily computed
-  /// when the getIndexMachineBasicBlock() method is called.
-  std::vector<MachineBasicBlock*> BBIdxMap;
-  
   const MRegisterInfo *RegInfo;
 
   MachineInstr **PhysRegInfo;
@@ -120,17 +110,6 @@ private:   // Intermediate data structures
 public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
-
-  /// getMachineBasicBlockIndex - Turn a MachineBasicBlock into an index number
-  /// suitable for use with VarInfo's.
-  ///
-  unsigned getMachineBasicBlockIndex(MachineBasicBlock *MBB) const {
-    return BBMap.find(MBB)->second;
-  }
-
-  /// getIndexMachineBasicBlock() - Given a block index, return the
-  /// MachineBasicBlock corresponding to it.
-  MachineBasicBlock *getIndexMachineBasicBlock(unsigned Idx);
 
   /// killed_iterator - Iterate over registers killed by a machine instruction
   ///
@@ -253,8 +232,6 @@ public:
     VirtRegInfo.clear();
     RegistersKilled.clear();
     RegistersDead.clear();
-    BBMap.clear();
-    BBIdxMap.clear();
   }
 
   /// getVarInfo - Return the VarInfo structure for the specified VIRTUAL
