@@ -11,6 +11,9 @@
 #include "llvm/Module.h"
 #include "Support/CommandLine.h"
 
+// FIXME: REMOVE THIS
+#include "llvm/PassManager.h"
+
 namespace {
   cl::opt<std::string>
   Arch("march", cl::desc("Architecture: `x86' or `sparc'"), cl::Prefix,
@@ -26,7 +29,6 @@ namespace {
 #endif
 
 }
-
 
 /// createJIT - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise it returns null.
@@ -65,6 +67,17 @@ VM::VM(Module *M, TargetMachine *tm) : ExecutionEngine(M), TM(*tm) {
   MCE = createEmitter(*this);
 
   setupPassManager();
+
+  // THIS GOES BEYOND UGLY HACKS
+  if (TM.getName() == "UltraSparc-Native") {
+    extern Pass *createPreSelectionPass(TargetMachine &TM);
+    PassManager PM;
+    // Specialize LLVM code for this target machine and then
+    // run basic dataflow optimizations on LLVM code.
+    PM.add(createPreSelectionPass(TM));
+    PM.run(*M);
+  }
+
   emitGlobals();
 }
 
