@@ -20,36 +20,20 @@
 #include <vector>
 #include <map>
 
-//--------------------------------------------------------------------------
-// class SCC - A simple representation of an SCC in a generic Graph.
-//--------------------------------------------------------------------------
-
+//===----------------------------------------------------------------------===//
+///
+/// TarjanSCC_iterator - Enumerate the SCCs of a directed graph, in
+/// reverse topological order of the SCC DAG.
+///
 template<class GraphT, class GT = GraphTraits<GraphT> >
-struct SCC : public std::vector<typename GT::NodeType*> {
-
-  typedef typename GT::NodeType NodeType;
+class TarjanSCC_iterator
+  : public forward_iterator<std::vector<typename GT::NodeType>, ptrdiff_t> {
+  typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
-
-  typedef std::vector<typename GT::NodeType*> super;
-  typedef typename super::iterator               iterator;
-  typedef typename super::const_iterator         const_iterator;
-  typedef typename super::reverse_iterator       reverse_iterator;
-  typedef typename super::const_reverse_iterator const_reverse_iterator;
-};
-
-//--------------------------------------------------------------------------
-// class TarjanSCC_iterator: Enumerate the SCCs of a directed graph, in
-// reverse topological order of the SCC DAG.
-//--------------------------------------------------------------------------
-
-template<class GraphT, class GT = GraphTraits<GraphT> >
-class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t> {
-  typedef SCC<GraphT, GT> SccTy;
+  typedef std::vector<NodeType*> SccTy;
   typedef forward_iterator<SccTy, ptrdiff_t> super;
   typedef typename super::reference reference;
   typedef typename super::pointer pointer;
-  typedef typename GT::NodeType          NodeType;
-  typedef typename GT::ChildIteratorType ChildItTy;
 
   // The visit counters used to detect when a complete SCC is on the stack.
   // visitNum is the global counter.
