@@ -26,10 +26,9 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrAnnot.h"
 #include "llvm/CodeGen/InstrSelection.h"
+using namespace llvm;
 
-namespace llvm {
-
-AnnotationID MCFI_AID(
+AnnotationID llvm::MCFI_AID(
              AnnotationManager::getID("CodeGen::MachineCodeForInstruction"));
 
 static Annotation *CreateMCFI(AnnotationID AID, const Annotable *, void *) {
@@ -53,8 +52,7 @@ MachineCodeForInstruction::dropAllReferences()
 }
 
 
-MachineCodeForInstruction::~MachineCodeForInstruction()
-{
+MachineCodeForInstruction::~MachineCodeForInstruction() {
   // Let go of all uses in temp. instructions
   dropAllReferences();
   
@@ -67,8 +65,5 @@ MachineCodeForInstruction::~MachineCodeForInstruction()
     delete (*this)[i];
 
   // Free the CallArgsDescriptor if it exists.
-  if (callArgsDesc)
-    delete callArgsDesc;
+  delete callArgsDesc;
 }
-
-} // End llvm namespace
