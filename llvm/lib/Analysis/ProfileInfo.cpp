@@ -29,9 +29,7 @@ ProfileInfo::~ProfileInfo() {}
 //
 
 namespace {
-  struct NoProfileInfo : public ImmutablePass, public ProfileInfo {
-    unsigned getExecutionCount(BasicBlock *BB) { return 0; }
-  };
+  struct NoProfileInfo : public ImmutablePass, public ProfileInfo {};
  
   // Register this pass...
   RegisterOpt<NoProfileInfo>

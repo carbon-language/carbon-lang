@@ -26,7 +26,6 @@ namespace {
 
   class LoaderPass : public Pass, public ProfileInfo {
     std::string Filename;
-    std::map<BasicBlock*, unsigned> ExecutionCounts;
   public:
     LoaderPass(const std::string &filename = "")
       : Filename(filename) {
@@ -43,11 +42,6 @@ namespace {
 
     /// run - Load the profile information from the specified file.
     virtual bool run(Module &M);
-
-    virtual unsigned getExecutionCount(BasicBlock *BB) {
-      std::map<BasicBlock*, unsigned>::iterator I = ExecutionCounts.find(BB);
-      return I != ExecutionCounts.end() ? I->second : 0;
-    }
   };
  
   RegisterOpt<LoaderPass>
@@ -65,7 +59,8 @@ Pass *llvm::createProfileLoaderPass(const std::string &Filename) {
 }
 
 bool LoaderPass::run(Module &M) {
-  ProfileInfoLoader PIL("opt", Filename, M);
+  ProfileInfoLoader PIL("profile-loader", Filename, M);
+  ExecutionCounts.clear();
   if (PIL.hasAccurateBlockCounts()) {
     std::vector<std::pair<BasicBlock*, unsigned> > Counts;
     PIL.getBlockCounts(Counts);
