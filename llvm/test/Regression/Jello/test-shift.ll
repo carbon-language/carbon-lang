@@ -1,5 +1,5 @@
 ; test shifts
-void %main() {
+int %main() {
     %i = add int 10, 0
     %u = add uint 20, 0
     %shamt = add ubyte 0, 0
@@ -23,5 +23,5 @@ void %main() {
     %temp07 = shr int %i, ubyte 6
     ;  1                     1               1
     %temp08 = shr uint %u, ubyte 7
-    ret void
+    ret int 0
 }

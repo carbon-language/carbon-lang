@@ -1,5 +1,5 @@
 
-void %main() {
+int %main() {
 	%A = add sbyte 0, 12
 	%B = sub sbyte %A, %A
 	%C = mul sbyte %B, %B
@@ -24,5 +24,5 @@ void %main() {
 	%F = div uint 5, 6
 	%G = rem uint 6, 5
 
-	ret void
+	ret int 0
 }
