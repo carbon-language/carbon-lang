@@ -357,6 +357,10 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
   if (VMCI != VMC.ExprMap.end()) {
     assert(VMCI->second->getType() == Ty);
+
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      ValueHandle IHandle(VMC, I);  // Remove I if it is unused now!
+
     return VMCI->second;
   }
 
@@ -1084,13 +1088,11 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 #endif
 
   for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
-       OI != OE; ++OI) {
-    Instruction *U = dyn_cast<Instruction>(*OI);
-    if (U) {
+       OI != OE; ++OI)
+    if (Instruction *U = dyn_cast<Instruction>(*OI)) {
       *OI = 0;
-      RecursiveDelete(Cache, dyn_cast<Instruction>(U));
+      RecursiveDelete(Cache, U);
     }
-  }
 
   I->getParent()->getInstList().remove(I);
 
