@@ -67,6 +67,7 @@ namespace {
     void emitConstantValueOnly(const Constant *CV);
     void emitGlobalConstant(const Constant *CV);
     void printConstantPool(MachineConstantPool *MCP);
+    void printOperand(const MachineOperand &MI);
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);
@@ -364,6 +365,44 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
+void V8Printer::printOperand(const MachineOperand &MO) {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  switch (MO.getType()) {
+  case MachineOperand::MO_VirtualRegister:
+    if (Value *V = MO.getVRegValueOrNull()) {
+      O << "<" << V->getName() << ">";
+      return;
+    }
+    // FALLTHROUGH
+  case MachineOperand::MO_MachineRegister:
+    if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
+      O << "%" << RI.get(MO.getReg()).Name;
+    else
+      O << "%reg" << MO.getReg();
+    return;
+
+  case MachineOperand::MO_SignExtendedImmed:
+  case MachineOperand::MO_UnextendedImmed:
+    O << (int)MO.getImmedValue();
+    return;
+  case MachineOperand::MO_PCRelativeDisp: {
+    ValueMapTy::const_iterator i = NumberForBB.find(MO.getVRegValue());
+    assert (i != NumberForBB.end()
+            && "Could not find a BB in the NumberForBB map!");
+    O << ".LBB" << i->second << " # PC rel: " << MO.getVRegValue()->getName();
+    return;
+  }
+  case MachineOperand::MO_GlobalAddress:
+    O << Mang->getValueName(MO.getGlobal());
+    return;
+  case MachineOperand::MO_ExternalSymbol:
+    O << MO.getSymbolName();
+    return;
+  default:
+    O << "<unknown operand type>"; return;    
+  }
+}
+
 /// printMachineInstruction -- Print out a single SparcV8 LLVM instruction
 /// MI in GAS syntax to the current output stream.
 ///
@@ -371,7 +410,29 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
-  O << Desc.Name << "\n";  // not yet done
+  O << Desc.Name << " ";
+  
+  // print non-immediate, non-register-def operands
+  // then print immediate operands
+  // then print register-def operands.
+  std::vector<MachineOperand> print_order;
+  for (unsigned i = 0; i < MI->getNumOperands (); ++i)
+    if (!(MI->getOperand (i).isImmediate ()
+          || (MI->getOperand (i).isRegister ()
+              && MI->getOperand (i).isDef ())))
+      print_order.push_back (MI->getOperand (i));
+  for (unsigned i = 0; i < MI->getNumOperands (); ++i)
+    if (MI->getOperand (i).isImmediate ())
+      print_order.push_back (MI->getOperand (i));
+  for (unsigned i = 0; i < MI->getNumOperands (); ++i)
+    if (MI->getOperand (i).isRegister () && MI->getOperand (i).isDef ())
+      print_order.push_back (MI->getOperand (i));
+  for (unsigned i = 0, e = print_order.size (); i != e; ++i) { 
+    printOperand (print_order[i]);
+    if (i != (print_order.size () - 1))
+      O << ", ";
+  }
+  O << "\n";
 }
 
 bool V8Printer::doInitialization(Module &M) {
