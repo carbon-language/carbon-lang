@@ -469,6 +469,10 @@ static bool LinkFunctionBodies(Module *Dest, const Module *Src,
 // shouldn't be relied on to be consistent.
 //
 bool LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
+  if (Dest->getEndianness() != Src->getEndianness())
+    std::cerr << "WARNING: Linking two modules of different endianness!\n";
+  if (Dest->getPointerSize() != Src->getPointerSize())
+    std::cerr << "WARNING: Linking two modules of different pointer size!\n";
 
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
