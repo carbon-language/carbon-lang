@@ -282,9 +282,6 @@ void insertBB(Edge ed,
   TerminatorInst *TI=BB1->getTerminator();
   BasicBlock *newBB=new BasicBlock(ctr, BB1->getParent());
 
-  //get code for the new BB
-  edgeCode->getCode(rInst, countInst, BB1->getParent(), newBB, numPaths, Methno);
- 
   //Is terminator a branch instruction?
   //then we need to change branch destinations to include new BB
 
@@ -309,6 +306,10 @@ void insertBB(Edge ed,
     Instruction *newBI2=new BranchInst(BB2);
     newBB->getInstList().push_back(newBI2);
   }
+
+  //get code for the new BB
+  edgeCode->getCode(rInst, countInst, BB1->getParent(), newBB, numPaths, Methno);
+
   
   //std::cerr<<"After casting\n";
   //get code for the new BB
