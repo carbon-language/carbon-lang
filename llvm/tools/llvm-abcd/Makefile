@@ -9,5 +9,5 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-abcd
-USEDLIBS = bcanalyzer vmcore support.a
+USEDLIBS = bcreader vmcore support.a
 include $(LEVEL)/Makefile.common
