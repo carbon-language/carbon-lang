@@ -216,7 +216,6 @@ DSNodeHandle &GraphBuilder::getValueDest(Value &V) {
 }
 
 
-
 /// getLink - This method is used to return the specified link in the
 /// specified node if one exists.  If a link does not already exist (it's
 /// null), then we create a new node, link it, then return it.  We must
@@ -356,7 +355,7 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
 
 void GraphBuilder::visitCallInst(CallInst &CI) {
   // Add a new function call entry...
-  FunctionCalls.push_back(DSCallSite(CI));
+  FunctionCalls.push_back(CI);
   DSCallSite &Args = FunctionCalls.back();
 
   // Set up the return value...
