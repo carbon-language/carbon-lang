@@ -32,16 +32,8 @@ namespace {
                           std::pair<unsigned*,MachineInstr*> > > BBRefs;
     std::map<BasicBlock*, unsigned> BBLocations;
     std::vector<void*> ConstantPoolAddresses;
-    std::vector<void*> funcMemory;
   public:
     SparcEmitter(VM &vm) : TheVM(vm) {}
-    ~SparcEmitter() {
-      while (! funcMemory.empty()) {
-        void* addr = funcMemory.back();
-        free(addr);
-        funcMemory.pop_back();
-      }
-    }
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
@@ -76,12 +68,12 @@ MachineCodeEmitter *VM::createSparcEmitter(VM &V) {
 
 // FIXME: This should be rewritten to support a real memory manager for
 // executable memory pages!
-void * SparcEmitter::getMemory(unsigned NumPages) {
+void* SparcEmitter::getMemory(unsigned NumPages) {
   void *pa;
   if (NumPages == 0) return 0;
   static const long pageSize = sysconf (_SC_PAGESIZE);
   pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-                  MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+            MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (pa == MAP_FAILED) {
     perror("mmap");
     abort();
@@ -91,28 +83,32 @@ void * SparcEmitter::getMemory(unsigned NumPages) {
 
 
 void SparcEmitter::startFunction(MachineFunction &F) {
-  CurBlock = (unsigned char *)getMemory(8);
   std::cerr << "Starting function " << F.getFunction()->getName() << "\n";
+  CurBlock = (unsigned char *)getMemory(8);
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
   TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 void SparcEmitter::finishFunction(MachineFunction &F) {
+  std::cerr << "Finishing function " << F.getFunction()->getName() << "\n";
   ConstantPoolAddresses.clear();
   // Re-write branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
+    std::cerr << "attempting to resolve BB: " << i << "\n";
     for (unsigned i=0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &op = MI->getOperand(i);
-      if (op.isImmediate()) {
-        MI->SetMachineOperandConst(i, op.getType(), Location);
+      if (op.isPCRelativeDisp()) {
+        MI->SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed,
+                                   Location);
+        std::cerr << "Rewrote BB ref: ";
+        unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
+        *Ref = fixedInstr;
         break;
       }
     }
-    unsigned fixedInstr = SparcV9CodeEmitter::getBinaryCodeForInstr(*MI);
-    *Ref = fixedInstr;
   }
   BBRefs.clear();
   BBLocations.clear();
