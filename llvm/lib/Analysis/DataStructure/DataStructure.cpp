@@ -703,6 +703,23 @@ Function &DSCallSite::getCaller() const {
 // DSGraph Implementation
 //===----------------------------------------------------------------------===//
 
+/// getFunctionNames - Return a space separated list of the name of the
+/// functions in this graph (if any)
+std::string DSGraph::getFunctionNames() const {
+  switch (getReturnNodes().size()) {
+  case 0: return "Globals graph";
+  case 1: return getReturnNodes().begin()->first->getName();
+  default:
+    std::string Return;
+    for (DSGraph::ReturnNodesTy::const_iterator I = getReturnNodes().begin();
+         I != getReturnNodes().end(); ++I)
+      Return += I->first->getName() + " ";
+    Return.erase(Return.end()-1, Return.end());   // Remove last space character
+    return Return;
+  }
+}
+
+
 DSGraph::DSGraph(const DSGraph &G) : GlobalsGraph(0) {
   PrintAuxCalls = false;
   NodeMapTy NodeMap;

@@ -80,6 +80,10 @@ public:
   const std::vector<DSNode*> &getNodes() const { return Nodes; }
         std::vector<DSNode*> &getNodes()       { return Nodes; }
 
+  /// getFunctionNames - Return a space separated list of the name of the
+  /// functions in this graph (if any)
+  std::string getFunctionNames() const;
+
   /// addNode - Add a new node to the graph.
   ///
   void addNode(DSNode *N) { Nodes.push_back(N); }
