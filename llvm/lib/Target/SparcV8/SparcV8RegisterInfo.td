@@ -61,7 +61,7 @@ let Namespace = "V8" in {
 // FIXME: the register order should be defined in terms of the preferred
 // allocation order...
 //
-def IntRegs : RegisterClass<i32, 8, [G0, G1, G2, G3, G4, G5, G6, G7,
+def IntRegs : RegisterClass<i32, 8, [G1, G2, G3, G4, G5, G6, G7, G0,
                                      O0, O1, O2, O3, O4, O5, O6, O7,
                                      L0, L1, L2, L3, L4, L5, L6, L7,
                                      I0, I1, I2, I3, I4, I5, I6, I7]>;
