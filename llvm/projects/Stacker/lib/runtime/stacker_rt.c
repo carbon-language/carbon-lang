@@ -1,4 +1,4 @@
-//===-- stacker_rt.c - Runtime Suppor For Stacker Compiler ------*- C++ -*-===//
+//===-- stacker_rt.c - Runtime Support For Stacker Compiler -----*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
