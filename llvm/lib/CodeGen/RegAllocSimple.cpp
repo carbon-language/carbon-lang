@@ -1,4 +1,4 @@
-//===-- RegAllocSimple.cpp - A simple generic register allocator --- ------===//
+//===-- RegAllocSimple.cpp - A simple generic register allocator ----------===//
 //
 // This file implements a simple register allocator. *Very* simple.
 //
@@ -11,32 +11,6 @@
 #include "Support/Statistic.h"
 #include <iostream>
 #include <set>
-
-#if 0
-/// PhysRegClassMap - Construct a mapping of physical register numbers to their
-/// register classes.
-///
-/// NOTE: This class will eventually be pulled out to somewhere shared.
-///
-class PhysRegClassMap {
-  std::map<unsigned, const TargetRegisterClass*> PhysReg2RegClassMap;
-public:
-  PhysRegClassMap(const MRegisterInfo *RI) {
-    for (MRegisterInfo::const_iterator I = RI->regclass_begin(),
-           E = RI->regclass_end(); I != E; ++I)
-      for (unsigned i=0; i < (*I)->getNumRegs(); ++i)
-        PhysReg2RegClassMap[(*I)->getRegister(i)] = *I;
-  }
-
-  const TargetRegisterClass *operator[](unsigned Reg) {
-    assert(PhysReg2RegClassMap[Reg] && "Register is not a known physreg!");
-    return PhysReg2RegClassMap[Reg];
-  }
-
-  const TargetRegisterClass *get(unsigned Reg) { return operator[](Reg); }
-};
-#endif
-
 
 namespace {
   Statistic<> NumSpilled ("ra-simple", "Number of registers spilled");
@@ -367,6 +341,6 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-Pass *createSimpleX86RegisterAllocator(TargetMachine &TM) {
+Pass *createSimpleRegisterAllocator(TargetMachine &TM) {
   return new RegAllocSimple(TM);
 }
