@@ -1,3 +1,4 @@
+* BytecodeWriter should use a deque<unsigned char> instead of vector!!!
 * Eliminate the method signature from a call instruction.  It should look like
   this: call int %func(int 2, int %reg118)
 * Indirect calls should use the icall instruction
