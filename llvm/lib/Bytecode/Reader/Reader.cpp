@@ -30,8 +30,6 @@
 #include <algorithm>
 using namespace llvm;
 
-#include "llvm/Support/Timer.h"
-
 namespace {
 
 /// @brief A class for maintaining the slot number definition
