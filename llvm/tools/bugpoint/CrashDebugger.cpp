@@ -39,32 +39,37 @@ DebugCrashes::TestResult
 DebugCrashes::doTest(std::vector<const PassInfo*> &Prefix,
                      std::vector<const PassInfo*> &Suffix) {
   std::string PrefixOutput;
+  Module *OrigProgram = 0;
   if (!Prefix.empty()) {
     std::cout << "Checking to see if these passes crash: "
               << getPassesString(Prefix) << ": ";
     if (BD.runPasses(Prefix, PrefixOutput))
       return KeepPrefix;
+
+    OrigProgram = BD.Program;
+
+    BD.Program = BD.ParseInputFile(PrefixOutput);
+    if (BD.Program == 0) {
+      std::cerr << BD.getToolName() << ": Error reading bytecode file '"
+                << PrefixOutput << "'!\n";
+      exit(1);
+    }
+    removeFile(PrefixOutput);
   }
 
   std::cout << "Checking to see if these passes crash: "
             << getPassesString(Suffix) << ": ";
-  Module *OrigProgram = BD.Program;
-  BD.Program = BD.ParseInputFile(PrefixOutput);
-  if (BD.Program == 0) {
-    std::cerr << BD.getToolName() << ": Error reading bytecode file '"
-              << PrefixOutput << "'!\n";
-    exit(1);
-  }
-  removeFile(PrefixOutput);
-
+  
   if (BD.runPasses(Suffix)) {
     delete OrigProgram;            // The suffix crashes alone...
     return KeepSuffix;
   }
 
   // Nothing failed, restore state...
-  delete BD.Program;
-  BD.Program = OrigProgram;
+  if (OrigProgram) {
+    delete BD.Program;
+    BD.Program = OrigProgram;
+  }
   return NoFailure;
 }
 
