@@ -132,24 +132,32 @@ void SlotCalculator::processModule() {
   // all non-value types are pushed to the end of the type table, giving nice
   // low numbers to the types that can be used by instructions, thus reducing
   // the amount of explodage we suffer.
-  if (!IgnoreNamedNodes && Table[Type::TypeTyID].size() >= 64) {
+  if (!IgnoreNamedNodes && Table[Type::TypeTyID].size() >= 0/*64*/) {
     // Scan through the type table moving value types to the start of the table.
-    TypePlane &Types = Table[Type::TypeTyID];
+    TypePlane *Types = &Table[Type::TypeTyID];
     unsigned FirstNonValueTypeID = 0;
-    for (unsigned i = 0, e = Types.size(); i != e; ++i)
-      if (cast<Type>(Types[i])->isFirstClassType() ||
-          cast<Type>(Types[i])->isPrimitiveType()) {
+    for (unsigned i = 0, e = Types->size(); i != e; ++i)
+      if (cast<Type>((*Types)[i])->isFirstClassType() ||
+          cast<Type>((*Types)[i])->isPrimitiveType()) {
         // Check to see if we have to shuffle this type around.  If not, don't
         // do anything.
         if (i != FirstNonValueTypeID) {
+          assert(i != Type::TypeTyID && FirstNonValueTypeID != Type::TypeTyID &&
+                 "Cannot move around the type plane!");
+
           // Swap the type ID's.
-          std::swap(Types[i], Types[FirstNonValueTypeID]);
+          std::swap((*Types)[i], (*Types)[FirstNonValueTypeID]);
 
           // Keep the NodeMap up to date.
-          std::swap(NodeMap[Types[i]], NodeMap[Types[FirstNonValueTypeID]]);
+          NodeMap[(*Types)[i]] = i;
+          NodeMap[(*Types)[FirstNonValueTypeID]] = FirstNonValueTypeID;
 
           // When we move a type, make sure to move its value plane as needed.
-          std::swap(Table[i], Table[FirstNonValueTypeID]);
+          if (Table.size() > FirstNonValueTypeID) {
+            if (Table.size() <= i) Table.resize(i+1);
+            std::swap(Table[i], Table[FirstNonValueTypeID]);
+            Types = &Table[Type::TypeTyID];
+          }
         }
         ++FirstNonValueTypeID;
       }
