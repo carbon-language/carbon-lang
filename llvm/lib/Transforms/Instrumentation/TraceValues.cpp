@@ -87,6 +87,9 @@ bool InsertTraceCode::doInitialization(Module *M) {
 static inline GlobalVariable *getStringRef(Module *M, const string &str) {
   // Create a constant internal string reference...
   Constant *Init = ConstantArray::get(str);
+
+  // Create the global variable and record it in the module
+  // The GV will be renamed to a unique name if needed.
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true, true, Init,
                                           "trstr");
   M->getGlobalList().push_back(GV);
