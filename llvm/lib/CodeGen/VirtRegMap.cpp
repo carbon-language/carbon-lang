@@ -133,25 +133,29 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
   const TargetMachine& TM = MF.getTarget();
   const MRegisterInfo& MRI = *TM.getRegisterInfo();
 
-  DenseMap<bool, VirtReg2IndexFunctor> Loaded;
+  // LoadedRegs - Keep track of which vregs are loaded, so that we only load
+  // each vreg once (in the case where a spilled vreg is used by multiple
+  // operands).  This is always smaller than the number of operands to the
+  // current machine instr, so it should be small.
+  std::vector<unsigned> LoadedRegs;
 
   for (MachineFunction::iterator mbbi = MF.begin(), E = MF.end();
        mbbi != E; ++mbbi) {
     DEBUG(std::cerr << mbbi->getBasicBlock()->getName() << ":\n");
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
-      Loaded.grow(MF.getSSARegMap()->getLastVirtReg());
-      for (unsigned i = 0,e = mii->getNumOperands(); i != e; ++i){
+      for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
         MachineOperand& mop = mii->getOperand(i);
         if (mop.isRegister() && mop.getReg() &&
             MRegisterInfo::isVirtualRegister(mop.getReg())) {
           unsigned virtReg = mop.getReg();
           unsigned physReg = VRM.getPhys(virtReg);
           if (mop.isUse() && VRM.hasStackSlot(mop.getReg()) &&
-              !Loaded[virtReg]) {
+              std::find(LoadedRegs.begin(), LoadedRegs.end(),
+                        virtReg) == LoadedRegs.end()) {
             MRI.loadRegFromStackSlot(*mbbi, mii, physReg,
                                      VRM.getStackSlot(virtReg));
-            Loaded[virtReg] = true;
+            LoadedRegs.push_back(virtReg);
             DEBUG(std::cerr << '\t';
                   prior(mii)->print(std::cerr, &TM));
             ++NumLoads;
@@ -166,7 +170,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
         }
       }
       DEBUG(std::cerr << '\t'; mii->print(std::cerr, &TM));
-      Loaded.clear();
+      LoadedRegs.clear();
     }
   }
   return true;
