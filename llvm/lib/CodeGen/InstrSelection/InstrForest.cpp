@@ -201,7 +201,6 @@ inline void
 InstrForest::noteTreeNodeForInstr(Instruction *instr,
 				  InstructionNode *treeNode)
 {
-  assert(treeNode->getNodeType() == InstrTreeNode::NTInstructionNode);
   (*this)[instr] = treeNode;
   treeRoots.push_back(treeNode);	// mark node as root of a new tree
 }
@@ -212,8 +211,8 @@ InstrForest::setLeftChild(InstrTreeNode *parent, InstrTreeNode *child)
 {
   parent->LeftChild = child;
   child->Parent = parent;
-  if (child->getNodeType() == InstrTreeNode::NTInstructionNode)
-    eraseRoot((InstructionNode*) child); // no longer a tree root
+  if (InstructionNode* instrNode = dyn_cast<InstructionNode>(child))
+    eraseRoot(instrNode); // no longer a tree root
 }
 
 inline void
@@ -221,8 +220,8 @@ InstrForest::setRightChild(InstrTreeNode *parent, InstrTreeNode *child)
 {
   parent->RightChild = child;
   child->Parent = parent;
-  if (child->getNodeType() == InstrTreeNode::NTInstructionNode)
-    eraseRoot((InstructionNode*) child); // no longer a tree root
+  if (InstructionNode* instrNode = dyn_cast<InstructionNode>(child))
+    eraseRoot(instrNode); // no longer a tree root
 }
 
 
