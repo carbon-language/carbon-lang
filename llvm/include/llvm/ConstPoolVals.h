@@ -38,7 +38,7 @@ public:
   // Specialize setName to handle symbol table majik...
   virtual void setName(const string &name, SymbolTable *ST = 0);
 
-  virtual string getStrValue() const = 0;
+  virtual string getStrValue(bool useLLVMSyntax = true) const = 0;
 
   // Static constructor to get a '0' constant of arbitrary type...
   static ConstPoolVal *getNullConstant(const Type *Ty);
@@ -74,7 +74,7 @@ public:
   // inverted - Return the opposite value of the current value.
   inline ConstPoolBool *inverted() const { return (this==True) ? False : True; }
 
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
   inline bool getValue() const { return Val; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -137,7 +137,7 @@ protected:
 public:
   static ConstPoolSInt *get(const Type *Ty, int64_t V);
 
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
   static bool isValueValidForType(const Type *Ty, int64_t V);
   inline int64_t getValue() const { return Val.Signed; }
@@ -161,7 +161,7 @@ protected:
 public:
   static ConstPoolUInt *get(const Type *Ty, uint64_t V);
 
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
   static bool isValueValidForType(const Type *Ty, uint64_t V);
   inline uint64_t getValue() const { return Val.Unsigned; }
@@ -187,7 +187,7 @@ protected:
 public:
   static ConstPoolFP *get(const Type *Ty, double V);
 
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
   static bool isValueValidForType(const Type *Ty, double V);
   inline double getValue() const { return Val; }
@@ -215,8 +215,11 @@ public:
   static ConstPoolArray *get(const ArrayType *T, const vector<ConstPoolVal*> &);
   static ConstPoolArray *get(const string &Initializer);
   
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
+  // Treat the array as a string if it is an array of ubytes or non-neg sbytes
+  bool isString() const;
+  
   inline const vector<Use> &getValues() const { return Operands; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -242,7 +245,7 @@ public:
   static ConstPoolStruct *get(const StructType *T,
 			      const vector<ConstPoolVal*> &V);
 
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
   inline const vector<Use> &getValues() const { return Operands; }
 
@@ -268,7 +271,7 @@ protected:
   inline ConstPoolPointer(const PointerType *T) : ConstPoolVal((const Type*)T){}
   ~ConstPoolPointer() {}
 public:
-  virtual string getStrValue() const = 0;
+  virtual string getStrValue(bool useLLVMSyntax = true) const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstPoolPointer *) { return true; }
@@ -286,7 +289,7 @@ protected:
   inline ConstPoolPointerNull(const PointerType *T) : ConstPoolPointer(T) {}
   inline ~ConstPoolPointerNull() {}
 public:
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
   static ConstPoolPointerNull *get(const PointerType *T);
 
@@ -319,7 +322,7 @@ protected:
 public:
   static ConstPoolPointerRef *get(GlobalValue *GV);
 
-  virtual string getStrValue() const;
+  virtual string getStrValue(bool useLLVMSyntax = true) const;
 
   const GlobalValue *getValue() const { 
     return cast<GlobalValue>(Operands[0].get());
