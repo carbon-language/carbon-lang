@@ -103,6 +103,9 @@ public:
   }
 private:
   DSGraph &calculateGraph(Function &F, unsigned Indent);
+  bool ResolveFunctionCalls(DSGraph &G, unsigned &FirstResolvableCall,
+                            std::map<Function*, DSCallSite> &InProcess,
+                            unsigned Indent);
 };
 
 
