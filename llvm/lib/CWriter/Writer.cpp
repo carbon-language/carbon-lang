@@ -412,7 +412,7 @@ static string calcTypeNameVar(const Type *Ty,
 // potentially named portion and the variable associated with the type.
 static ostream &printTypeVarInt(ostream &Out, const Type *Ty,
                              map<const Type *, string> &TypeNames,
-			     string VariableName) {
+			     const string &VariableName) {
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
   
@@ -508,12 +508,18 @@ namespace {
     
     inline void write(const Module *M) { printModule(M); }
 
-    ostream& printTypeVar(const Type *Ty, string VariableName, ostream &Out);
-    ostream& printType(const Type *Ty, ostream &Out);
-    void writeOperand(const Value *Operand, bool PrintType,ostream &Out, 
-		      bool PrintName = true);
+    ostream& printTypeVar(const Type *Ty, const string &VariableName) {
+      return printTypeVarInt(Out, Ty, TypeNames, VariableName);
+    }
 
+
+
+    ostream& printType(const Type *Ty, ostream &Out);
+    void writeOperand(const Value *Operand, ostream &Out,bool PrintName = true);
+
+    string getValueName(const Value *V);
   private :
+
     void printModule(const Module *M);
     void printSymbolTable(const SymbolTable &ST);
     void printConstant(const Constant *CPV);
@@ -531,33 +537,18 @@ namespace {
 
   /* CLASS InstLocalVarsVisitor */
   class InstLocalVarsVisitor : public InstVisitor<InstLocalVarsVisitor> {
-    SlotCalculator& Table;
-  
+    CWriter& CW;
     void handleTerminator(TerminatorInst *tI, int indx);
-    
   public:
     CLocalVars CLV;
     
-    InstLocalVarsVisitor(SlotCalculator& table) : Table(table) {}
+    InstLocalVarsVisitor(CWriter &cw) : CW(cw) {}
     
     void visitInstruction(Instruction *I) {
-      string tempostr;
-      if (I && I->hasName() && !isa<PHINode>(I)) {
-	tempostr = "llvm__" + makeNameProper(I->getName()) + "_" +
-	  itostr((int)I->getType()->getUniqueID());
-	CLV.addLocalVar(I->getType(), tempostr);
-      } else  if (I) {
-	int Slot = Table.getValSlot(I);
-	//if (Slot < 0) then  it is a instruction with no 
-	// value (like return void )
-	if ((Slot >= 0) && !isa<PHINode>(I)) {
-	  tempostr = "llvm__tmp_";
-	  tempostr += itostr(Slot) + "_" + 
-	    itostr((int)I->getType()->getUniqueID());
-	  CLV.addLocalVar(I->getType(), tempostr);
-	}
+      if (I->getType() != Type::VoidTy) {
+        string tempostr = CW.getValueName(I);
+        CLV.addLocalVar(I->getType(), tempostr);
       }
-      
     }
 
     void visitBranchInst(BranchInst *I) {
@@ -566,8 +557,26 @@ namespace {
 	handleTerminator(I, 1);
     }
   };
-  
+}
 
+void InstLocalVarsVisitor::handleTerminator(TerminatorInst *tI,int indx) {
+  BasicBlock *bb = tI->getSuccessor(indx);
+
+  BasicBlock::const_iterator insIt = bb->begin();
+  while (insIt != bb->end()) {
+    if (const PHINode *pI = dyn_cast<PHINode>(*insIt)) {
+      // Its a phinode!
+      // Calculate the incoming index for this
+      assert(pI->getBasicBlockIndex(tI->getParent()) != -1);
+
+      CLV.addLocalVar(pI->getType(), CW.getValueName(pI));
+    } else
+      break;
+    insIt++;
+  }
+}
+
+namespace {
   /* CLASS CInstPrintVisitor */
 
   class CInstPrintVisitor: public InstVisitor<CInstPrintVisitor> {
@@ -602,79 +611,27 @@ namespace {
     void visitPHINode(PHINode *I);
     void visitUnaryOperator (UnaryOperator *I);
     void visitBinaryOperator(BinaryOperator *I);
-
   };
-  
 }
-
-void InstLocalVarsVisitor::handleTerminator(TerminatorInst *tI,int indx) {
-  BasicBlock *bb = tI->getSuccessor(indx);
-  BasicBlock::const_iterator insIt = bb->begin();
-  while (insIt != bb->end()) {
-    if (const PHINode *pI = dyn_cast<const PHINode>(*insIt)) {
-      //Its a phinode!
-      //Calculate the incoming index for this
-      int incindex = pI->getBasicBlockIndex(tI->getParent());
-      if (incindex != -1)
-	if (pI && pI->hasName()) {
-	  string tempostr;
-	  tempostr = "llvm__" + makeNameProper(pI->getName()) + "_" + 
-	    itostr((int)pI->getType()->getUniqueID());
-	  CLV.addLocalVar(pI->getType(), tempostr) ;
-	} else {
-	  string tempostr;
-	  int Slot = Table.getValSlot(pI);
-	  if (Slot >= 0) {
-	    tempostr = "llvm__tmp_" + itostr(Slot) + "_" 
-	      + itostr((int)pI->getType()->getUniqueID());
-	    CLV.addLocalVar(pI->getType(), tempostr);
-	  }
-	}
-      
-    }
-    else break;
-    insIt++;
-  }
-}
-
-/* Implementation of CInstPrintVisitor */
 
 void CInstPrintVisitor::outputLValue(Instruction *I) {
-  if (I && I->hasName() && !isa<PHINode>(I)) {
-    Out << "llvm__" << makeNameProper(I->getName()) << "_" 
-	 << I->getType()->getUniqueID() << " = ";
-  } else {
-    int Slot = Table.getValSlot(I);
-    //if (Slot < 0) then  it is a instruction with no value (like return void )
-    if ((Slot >= 0) && !isa<PHINode>(I))
-      Out << "llvm__tmp_" << Slot << "_" << I->getType()->getUniqueID() 
-	  << " = ";
-  }
+  Out << "  " << CW.getValueName(I) << " = ";
 }
 
 void CInstPrintVisitor::printPhiFromNextBlock(TerminatorInst *tI, int indx) {
   BasicBlock *bb = tI->getSuccessor(indx);
   BasicBlock::const_iterator insIt = bb->begin();
   while (insIt != bb->end()) {
-    if (const PHINode *pI = dyn_cast<const PHINode>(*insIt)) {
+    if (PHINode *pI = dyn_cast<PHINode>(*insIt)) {
       //Its a phinode!
       //Calculate the incoming index for this
       int incindex = pI->getBasicBlockIndex(tI->getParent());
-      if (incindex != -1)
-	{
-	  //now we have to do the printing
-	  if (pI && pI->hasName()) {
-	    Out << "llvm__" << makeNameProper(pI->getName()) << "_" 
-		<< pI->getType()->getUniqueID() << " = ";
-	  } else {
-	    int Slot = Table.getValSlot(pI);
-	    if (Slot >= 0) 
-	      Out << "llvm__tmp_" << Slot << "_" 
-		  << pI->getType()->getUniqueID() << " = ";
-	  }
-	  CW.writeOperand(pI->getIncomingValue(incindex),false, Out);
-	  Out << ";\n";
-	}
+      if (incindex != -1) {
+        //now we have to do the printing
+        outputLValue(pI);
+        CW.writeOperand(pI->getIncomingValue(incindex), Out);
+        Out << ";\n";
+      }
     }
     else break;
     insIt++;
@@ -688,7 +645,7 @@ void CInstPrintVisitor::visitCastInst(CastInst *I) {
   Out << "(";
   CW.printType(I->getType(), Out);
   Out << ")";
-  CW.writeOperand(Operand, false, Out);
+  CW.writeOperand(Operand, Out);
   Out << ";\n";
 }
 
@@ -714,10 +671,10 @@ void CInstPrintVisitor::visitCallInst(CallInst *I) {
   }
   Out << "(";
   if (I->getNumOperands() > 1) 
-    CW.writeOperand(I->getOperand(1), false, Out);
+    CW.writeOperand(I->getOperand(1), Out);
   for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; ++op) {
     Out << ",";
-    CW.writeOperand(I->getOperand(op), false, Out);
+    CW.writeOperand(I->getOperand(op), Out);
   }
   
   Out << " );\n";
@@ -727,10 +684,10 @@ void CInstPrintVisitor::visitShr(ShiftInst *I) {
   outputLValue(I);
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   Out << "(";
-  CW.writeOperand(Operand, false, Out);
+  CW.writeOperand(Operand, Out);
   Out << " >> ";
   Out << "(";
-  CW.writeOperand(I->getOperand(1), false, Out);
+  CW.writeOperand(I->getOperand(1), Out);
   Out << "));\n";
 }
 
@@ -738,10 +695,10 @@ void CInstPrintVisitor::visitShl(ShiftInst *I) {
   outputLValue(I);
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   Out << "(";
-  CW.writeOperand(Operand, false, Out);
+  CW.writeOperand(Operand, Out);
   Out << " << ";
   Out << "(";
-  CW.writeOperand(I->getOperand(1), false, Out);
+  CW.writeOperand(I->getOperand(1), Out);
   Out << "));\n";
 }
 
@@ -751,7 +708,7 @@ void CInstPrintVisitor::visitShl(ShiftInst *I) {
 void CInstPrintVisitor::visitReturnInst(ReturnInst *I) {
   Out << "return ";
   if (I->getNumOperands())
-    CW.writeOperand(I->getOperand(0), false, Out);
+    CW.writeOperand(I->getOperand(0), Out);
   Out << ";\n";
 }
 
@@ -759,21 +716,21 @@ void CInstPrintVisitor::visitBranchInst(BranchInst *I) {
   TerminatorInst *tI = cast<TerminatorInst>(I);
   if (I->isConditional()) {
     Out << "  if (";
-    CW.writeOperand(I->getCondition(), false, Out);
+    CW.writeOperand(I->getCondition(), Out);
     Out << ")\n";
     printPhiFromNextBlock(tI,0);
     Out << "    goto ";
-    CW.writeOperand(I->getOperand(0), false, Out);
+    CW.writeOperand(I->getOperand(0), Out);
     Out << ";\n";
     Out << "  else\n";
     printPhiFromNextBlock(tI,1);
     Out << "    goto ";
-    CW.writeOperand(I->getOperand(1),false, Out);
+    CW.writeOperand(I->getOperand(1), Out);
     Out << ";\n";
   } else {
     printPhiFromNextBlock(tI,0);
     Out << "  goto ";
-    CW.writeOperand(I->getOperand(0), false, Out);
+    CW.writeOperand(I->getOperand(0), Out);
     Out << ";\n";
   }
   Out << "\n";
@@ -795,11 +752,11 @@ void CInstPrintVisitor::visitMallocInst(MallocInst *I) {
   CW.printType(cast<const PointerType>(I->getType())->getElementType(), Out);
   Out << "*) malloc(sizeof(";
   CW.printTypeVar(cast<const PointerType>(I->getType())->getElementType(), 
-	       tempstr, Out);
+                  tempstr);
   Out << ")";
   if (I->getNumOperands()) {
     Out << " * " ;
-    CW.writeOperand(Operand, false, Out);
+    CW.writeOperand(Operand, Out);
   }
   Out << ");";
 }
@@ -809,14 +766,14 @@ void CInstPrintVisitor::visitAllocaInst(AllocaInst *I) {
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   string tempstr = "";
   Out << "(";
-  CW.printTypeVar(I->getType(), tempstr, Out);
+  CW.printTypeVar(I->getType(), tempstr);
   Out << ") alloca(sizeof(";
-  CW.printTypeVar(cast<const PointerType>(I->getType())->getElementType(), 
-	       tempstr, Out);
+  CW.printTypeVar(cast<PointerType>(I->getType())->getElementType(), 
+                  tempstr);
   Out << ")";
   if (I->getNumOperands()) {
     Out << " * " ;
-    CW.writeOperand(Operand, false, Out);
+    CW.writeOperand(Operand, Out);
   }
   Out << ");\n";
 }
@@ -824,7 +781,7 @@ void CInstPrintVisitor::visitAllocaInst(AllocaInst *I) {
 void CInstPrintVisitor::visitFreeInst(FreeInst   *I) {
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   Out << "free(";
-  CW.writeOperand(Operand, false, Out);
+  CW.writeOperand(Operand, Out);
   Out << ");\n";
 }
 
@@ -833,7 +790,7 @@ void CInstPrintVisitor::visitLoadInst(LoadInst   *I) {
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   if (I->getNumOperands() <= 1) {
     Out << "*";
-    CW.writeOperand(Operand,false, Out);     
+    CW.writeOperand(Operand, Out);     
   }
   else {
     //Check if it is an array type or struct type ptr!
@@ -843,12 +800,12 @@ void CInstPrintVisitor::visitLoadInst(LoadInst   *I) {
       arrtype = 0;
     if (arrtype && isa<GlobalValue>(Operand))
       Out << "(&";
-    CW.writeOperand(Operand,false, Out);
+    CW.writeOperand(Operand,Out);
     for (unsigned i = 1, E = I->getNumOperands(); i != E; ++i) {
       if (i == 1) {
 	if (arrtype || !isa<GlobalValue>(Operand)) {
 	  Out << "[";
-	  CW.writeOperand(I->getOperand(i), false, Out);
+	  CW.writeOperand(I->getOperand(i),  Out);
 	  Out << "]";
 	}
 	if (isa<GlobalValue>(Operand) && arrtype)
@@ -858,7 +815,7 @@ void CInstPrintVisitor::visitLoadInst(LoadInst   *I) {
 	if (arrtype == 1) Out << "[";
 	else 
 	  Out << ".field";
-	CW.writeOperand(I->getOperand(i), false, Out);
+	CW.writeOperand(I->getOperand(i), Out);
 	if (arrtype == 1) Out << "]";
       }
     }
@@ -870,7 +827,7 @@ void CInstPrintVisitor::visitStoreInst(StoreInst  *I) {
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   if (I->getNumOperands() <= 2) {
     Out << "*";
-    CW.writeOperand(I->getOperand(1), false, Out);
+    CW.writeOperand(I->getOperand(1), Out);
   }
   else {
     //Check if it is an array type or struct type ptr!
@@ -879,12 +836,12 @@ void CInstPrintVisitor::visitStoreInst(StoreInst  *I) {
       arrtype = 0;
     if (isa<GlobalValue>(I->getOperand(1)) && arrtype)
       Out << "(&";
-    CW.writeOperand(I->getOperand(1), false, Out);
+    CW.writeOperand(I->getOperand(1), Out);
     for (unsigned i = 2, E = I->getNumOperands(); i != E; ++i) {
       if (i == 2) {
 	if (arrtype || !isa<GlobalValue>(I->getOperand(1))) {
 	  Out << "[";
-	  CW.writeOperand(I->getOperand(i), false, Out);
+	  CW.writeOperand(I->getOperand(i), Out);
 	  Out << "]";
 	}
 	if (isa<GlobalValue>(I->getOperand(1)) && arrtype)
@@ -894,13 +851,13 @@ void CInstPrintVisitor::visitStoreInst(StoreInst  *I) {
 	if (arrtype == 1) Out << "[";
 	else 
 	  Out << ".field";
-	CW.writeOperand(I->getOperand(i), false, Out);
+	CW.writeOperand(I->getOperand(i), Out);
 	if (arrtype == 1) Out << "]";
       }
     }
   }
   Out << " = ";
-  CW.writeOperand(Operand,false, Out);
+  CW.writeOperand(Operand, Out);
   Out << ";\n";
 }
 
@@ -909,7 +866,7 @@ void CInstPrintVisitor::visitGetElementPtrInst(GetElementPtrInst *I) {
   Operand = I->getNumOperands() ? I->getOperand(0) : 0;
   Out << " &(";
   if (I->getNumOperands() <= 1)
-    CW.writeOperand(Operand,false, Out);
+    CW.writeOperand(Operand, Out);
   else {
     //Check if it is an array type or struct type ptr!
     int arrtype = 1;
@@ -917,12 +874,12 @@ void CInstPrintVisitor::visitGetElementPtrInst(GetElementPtrInst *I) {
       arrtype = 0;
     if ((isa<GlobalValue>(Operand)) && arrtype)
       Out << "(&";    
-    CW.writeOperand(Operand,false, Out);
+    CW.writeOperand(Operand, Out);
     for (unsigned i = 1, E = I->getNumOperands(); i != E; ++i) {
       if (i == 1) {
 	if (arrtype || !isa<GlobalValue>(Operand)){
 	  Out << "[";
-	  CW.writeOperand(I->getOperand(i), false, Out);
+	  CW.writeOperand(I->getOperand(i), Out);
 	  Out << "]";
 	}
 	if (isa<GlobalValue>(Operand) && arrtype)
@@ -932,7 +889,7 @@ void CInstPrintVisitor::visitGetElementPtrInst(GetElementPtrInst *I) {
 	if (arrtype == 1) Out << "[";
 	else 
 	  Out << ".field";
-	CW.writeOperand(I->getOperand(i), false, Out);
+	CW.writeOperand(I->getOperand(i), Out);
 	if (arrtype == 1) Out << "]";
       }
     }
@@ -949,7 +906,7 @@ void CInstPrintVisitor::visitUnaryOperator (UnaryOperator *I) {
     outputLValue(I);
     Operand = I->getNumOperands() ? I->getOperand(0) : 0;
     Out << "!(";
-    CW.writeOperand(Operand,false, Out);
+    CW.writeOperand(Operand, Out);
     Out << ");\n";
   }
   else {
@@ -969,18 +926,29 @@ void CInstPrintVisitor::visitBinaryOperator(BinaryOperator *I) {
   Out << "(";
   if (Operand->getType()->getPrimitiveID() == Type::PointerTyID)
     Out << "(long long)";
-  CW.writeOperand(Operand,false, Out);
+  CW.writeOperand(Operand, Out);
   Out << getOpcodeOperName(I);
   // Need the extra parenthisis if the second operand is < 0
   Out << '(';
   if (I->getOperand(1)->getType()->getPrimitiveID() == Type::PointerTyID)
     Out << "(long long)";
-  CW.writeOperand(I->getOperand(1),false, Out);
+  CW.writeOperand(I->getOperand(1), Out);
   Out << ')';
   Out << ");\n";
 }
 
 /* END : CInstPrintVisitor implementation */
+
+string CWriter::getValueName(const Value *V) {
+  if (V->hasName())              // Print out the label if it exists...
+    return "llvm__" + makeNameProper(V->getName()) + "_" +
+           utostr(V->getType()->getUniqueID());
+
+  int Slot = Table.getValSlot(V);
+  assert(Slot >= 0 && "Invalid value!");
+  return "llvm__tmp_" + itostr(Slot) + "_" +
+         utostr(V->getType()->getUniqueID());
+}
 
 void CWriter::printModule(const Module *M) {
   // printing stdlib inclusion
@@ -988,10 +956,10 @@ void CWriter::printModule(const Module *M) {
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n"
-      << "#include <alloca.h>\n"
+      << "#include <alloca.h>\n\n"
 
     // Provide a definition for null if one does not already exist.
-      << "#ifndef NULL\n#define NULL 0\n#endif\n"
+      << "#ifndef NULL\n#define NULL 0\n#endif\n\n"
       << "typedef unsigned char bool;\n"
 
       << "\n\n/* Global Symbols */\n";
@@ -1017,17 +985,14 @@ void CWriter::printModule(const Module *M) {
 
 // prints the global constants
 void CWriter::printGlobal(const GlobalVariable *GV) {
-  string tempostr;
-  if (GV->hasName()) 
-    tempostr = "llvm__" + makeNameProper(GV->getName()) + "_" + 
-      itostr((int)GV->getType()->getUniqueID());
+  string tempostr = getValueName(GV);
   if (GV->hasInternalLinkage()) Out << "static ";
 
-  printTypeVar(GV->getType()->getElementType(), tempostr, Out);
+  printTypeVar(GV->getType()->getElementType(), tempostr);
 
   if (GV->hasInitializer()) {
     Out << " = " ;
-    writeOperand(GV->getInitializer(), false, Out, false);
+    writeOperand(GV->getInitializer(), Out, false);
   }
 
   Out << ";\n";
@@ -1080,26 +1045,14 @@ void CWriter::printConstant(const Constant *CPV) {
   // Dinakar : Don't know what to do with unnamed constants
   // should do something about it later.
 
-  string tempostr;
-  if (CPV->hasName()) {
-    // Print out name...
-    tempostr = "llvm__" + makeNameProper(CPV->getName()) + "_" + 
-      itostr((int)CPV->getType()->getUniqueID());
-  } else {
-    int Slot = Table.getValSlot(CPV); // slot number 
-    if (Slot >= 0)  
-      tempostr = "llvm__tmp_" + itostr(Slot) + "_" + 
-	itostr((int)CPV->getType()->getUniqueID());
-    else 
-      tempostr = "<badref>";
-  }
+  string tempostr = getValueName(CPV);
   
   // Print out the constant type...
-  printTypeVar(CPV->getType(), tempostr, Out);
+  printTypeVar(CPV->getType(), tempostr);
   
   Out << " = ";
   // Write the value out now...
-  writeOperand(CPV, false, Out, false);
+  writeOperand(CPV, Out, false);
   
   Out << "\n";
 }
@@ -1148,24 +1101,10 @@ void CWriter::printFunctionSignature(const Function *F) {
 //
 void CWriter::printFunctionArgument(const Argument *Arg) {
   // Insert commas as we go... the first arg doesn't get a comma
-  string tempostr;
   if (Arg != Arg->getParent()->getArgumentList().front()) Out << ", ";
   
-  // Output name, if available...
-  if (Arg->hasName()) {
-    tempostr = "llvm__" + makeNameProper(Arg->getName()) + "_" + 
-      itostr((int)Arg->getType()->getUniqueID());
-  } else if (Table.getValSlot(Arg) < 0) {
-    tempostr = "<badref>";
-  }
-  else {
-    tempostr = "llvm__tmp_" + itostr(Table.getValSlot(Arg)) + "_" +
-      itostr((int)Arg->getType()->getUniqueID());
-  }
   // Output type...
-  // printType(Arg->getType(), Out);
-  // Out << " " << tempostr;
-  printTypeVar (Arg->getType(), tempostr, Out);
+  printTypeVar(Arg->getType(), getValueName(Arg));
 }
 
 void CWriter::printFunction(const Function *F) {
@@ -1175,7 +1114,7 @@ void CWriter::printFunction(const Function *F) {
   // output methods on the CLocalVars and Function* objects.
     
   // gather local variable information for each basic block
-  InstLocalVarsVisitor ILV(Table);
+  InstLocalVarsVisitor ILV(*this);
   ILV.visit((Function *)F);
 
   printFunctionSignature(F);
@@ -1195,7 +1134,7 @@ void CWriter::printFunction(const Function *F) {
     for (listiter = iter->second.begin(); listiter != iter->second.end(); 
          ++listiter) {
       Out << "  ";
-      printTypeVar(iter->first, *listiter, Out);
+      printTypeVar(iter->first, *listiter);
       Out << ";\n";
     }
   }
@@ -1207,32 +1146,12 @@ void CWriter::printFunction(const Function *F) {
 }
 
 void CWriter::outputBasicBlock(const BasicBlock* BB) {
-
-  if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "llvm__" << makeNameProper(BB->getName()) << "_" 
-	<< BB->getType()->getUniqueID() << ":\n";
-  } else {
-    int Slot = Table.getValSlot(BB);
-    Out << "llvm__tmp_";
-    if (Slot >= 0) 
-      Out << Slot << "_" << BB->getType()->getUniqueID() << ":\n";         
-    // Extra newline seperates out label's
-    else 
-      Out << "<badref>\n"; 
-  }
+  Out << getValueName(BB) << ":\n";
 
   // Output all of the instructions in the basic block...
   // print the basic blocks
   CInstPrintVisitor CIPV(*this, Table, Out);
   CIPV.visit((BasicBlock *) BB);
-}
-
-// printTypeVar - Go to extreme measures to attempt to print out a short, 
-// symbolic version of a type name.
-//
-ostream& CWriter::printTypeVar(const Type *Ty, string VariableName, 
-		      ostream &Out) {
-  return printTypeVarInt(Out, Ty, TypeNames, VariableName);
 }
 
 // printType - Go to extreme measures to attempt to print out a short, symbolic
@@ -1242,13 +1161,8 @@ ostream& CWriter::printType(const Type *Ty, ostream &Out) {
 }
 
 
-void CWriter::writeOperand(const Value *Operand, bool PrintType, 
+void CWriter::writeOperand(const Value *Operand,
                            ostream &Out, bool PrintName = true) {
-  if (PrintType) { 
-    Out << " "; 
-    printType(Operand->getType(), Out); 
-  }
-
   if (PrintName && Operand->hasName()) {   
     // If Operand has a name.
     Out << "llvm__" << makeNameProper(Operand->getName()) << "_" << 
