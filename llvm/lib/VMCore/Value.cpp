@@ -8,7 +8,6 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/SymTabValue.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Type.h"
 #ifndef NDEBUG      // Only in -g mode...
@@ -20,8 +19,8 @@
 //                                Value Class
 //===----------------------------------------------------------------------===//
 
-Value::Value(const Type *ty, ValueTy vty, const string &name = "") : Name(name){
-  Ty = ty;
+Value::Value(const Type *ty, ValueTy vty, const string &name = "")
+  : Name(name), Ty(ty, this) {
   VTy = vty;
 }
 
@@ -57,6 +56,16 @@ void Value::replaceAllUsesWith(Value *D) {
 #endif
     assert(Uses.size() != NumUses && "Didn't remove definition!");
   }
+}
+
+// refineAbstractType - This function is implemented because we use
+// potentially abstract types, and these types may be resolved to more
+// concrete types after we are constructed.  For the value class, we simply
+// change Ty to point to the right type.  :)
+//
+void Value::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+  assert(Ty.get() == (const Type*)OldTy &&"Can't refine anything but my type!");
+  Ty = NewTy;
 }
 
 void Value::killUse(User *i) {
@@ -103,22 +112,13 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 //                             SymTabValue Class
 //===----------------------------------------------------------------------===//
 
-// Instantiate Templates - This ugliness is the price we have to pay
-// for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
-//
-template class ValueHolder<ConstPoolVal, SymTabValue, SymTabValue>;
-
-SymTabValue::SymTabValue(Value *p) : ConstPool(this), ValueParent(p) { 
+SymTabValue::SymTabValue(Value *p) : ValueParent(p) { 
   assert(ValueParent && "SymTavValue without parent!?!");
   ParentSymTab = SymTab = 0;
 }
 
 
 SymTabValue::~SymTabValue() {
-  ConstPool.dropAllReferences();
-  ConstPool.delete_all();
-  ConstPool.setParent(0);
-
   delete SymTab;
 }
 
