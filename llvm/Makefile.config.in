@@ -48,6 +48,7 @@ MV      = mv
 INSTALL = @INSTALL@
 DOT     = @DOT@
 ETAGS   = @ETAGS@
+ETAGSFLAGS = @ETAGSFLAGS@
 
 # Determine the target for which LLVM should generate code.
 LLVMGCCARCH := @target@/3.4-llvm
