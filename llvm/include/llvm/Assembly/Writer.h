@@ -5,6 +5,9 @@
 // can print VM code at a variety of granularities, ranging from a whole class
 // down to an individual instruction.  This makes it useful for debugging.
 //
+// This file also defines functions that allow it to output files that a program
+// called VCG can read.
+//
 // This library uses the Analysis library to figure out offsets for
 // variables in the method tables...
 //
@@ -30,6 +33,15 @@ void WriteToAssembly(const Method  *Method, ostream &o);
 void WriteToAssembly(const BasicBlock  *BB, ostream &o);
 void WriteToAssembly(const Instruction *In, ostream &o);
 void WriteToAssembly(const ConstPoolVal *V, ostream &o);
+
+// WriteToVCG - Dump the specified structure to a VCG file.  If method is
+// dumped, then the file named is created.  If a module is to be written, a
+// family of files with a common base name is created, with a method name
+// suffix.
+//
+void WriteToVCG(const Module *Module, const string &Filename);
+void WriteToVCG(const Method *Method, const string &Filename);
+
 
 
 
