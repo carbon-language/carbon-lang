@@ -515,8 +515,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
                              DAG.getConstant(V.I, MVT::i64), Tmp2);
       }
-      Op = Result;
-      Node = Op.Val;
+      Node = Result.Val;
     }
 
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
