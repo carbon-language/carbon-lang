@@ -184,7 +184,7 @@ non-obvious ways.  Here are some hints and tips:<p>
     Assume a non-zero exit code or core dump from the test program is
     a failure. Defaults to true.<p>
 
-	<li><tt>-disable-{adce,dce,simplifycfg}</tt><br>
+	<li><tt>-disable-{dce,simplifycfg}</tt><br>
     Do not run the specified passes to clean up and reduce the size of the
     test program. By default, <tt>bugpoint</tt> uses these passes internally
     when attempting to reduce test programs.  If you're trying to find
