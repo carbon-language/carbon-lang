@@ -37,8 +37,17 @@ struct ConvertConstantType;
 ///
 class ConstantIntegral : public Constant {
 protected:
-  ConstantIntegral(const Type *Ty) : Constant(Ty) {}
+  union {
+    int64_t  Signed;
+    uint64_t Unsigned;
+  } Val;
+  ConstantIntegral(const Type *Ty, uint64_t V);
 public:
+
+  /// getRawValue - return the underlying value of this constant as a 64-bit
+  /// unsigned integer value.
+  ///
+  inline uint64_t getRawValue() const { return Val.Unsigned; }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
@@ -79,7 +88,6 @@ public:
 /// ConstantBool - Boolean Values
 ///
 class ConstantBool : public ConstantIntegral {
-  bool Val;
   ConstantBool(bool V);
 public:
   static ConstantBool *True, *False;  // The True & False values
@@ -93,7 +101,7 @@ public:
 
   /// getValue - return the boolean value of this constant.
   ///
-  inline bool getValue() const { return Val; }
+  inline bool getValue() const { return static_cast<bool>(getRawValue()); }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
@@ -120,10 +128,6 @@ public:
 ///
 class ConstantInt : public ConstantIntegral {
 protected:
-  union {
-    int64_t  Signed;
-    uint64_t Unsigned;
-  } Val;
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const Type *Ty, uint64_t V);
 public:
@@ -142,11 +146,6 @@ public:
   /// value.  as above, we work only with very small values here.
   ///
   static ConstantInt *get(const Type *Ty, unsigned char V);
-
-  /// getRawValue - return the underlying value of this constant as a 64-bit
-  /// unsigned integer value.
-  ///
-  inline uint64_t getRawValue() const { return Val.Unsigned; }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.

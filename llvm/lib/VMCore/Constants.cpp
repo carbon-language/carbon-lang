@@ -212,12 +212,15 @@ bool ConstantUInt::isAllOnesValue() const {
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstantBool::ConstantBool(bool V) : ConstantIntegral(Type::BoolTy) {
-  Val = V;
+ConstantIntegral::ConstantIntegral(const Type *Ty, uint64_t V)
+  : Constant(Ty) {
+    Val.Unsigned = V;
 }
 
-ConstantInt::ConstantInt(const Type *Ty, uint64_t V) : ConstantIntegral(Ty) {
-  Val.Unsigned = V;
+ConstantBool::ConstantBool(bool V) : ConstantIntegral(Type::BoolTy, V) {
+}
+
+ConstantInt::ConstantInt(const Type *Ty, uint64_t V) : ConstantIntegral(Ty, V) {
 }
 
 ConstantSInt::ConstantSInt(const Type *Ty, int64_t V) : ConstantInt(Ty, V) {
