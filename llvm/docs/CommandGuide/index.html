@@ -1,123 +1,132 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
   <title>LLVM Command Guide</title>
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
 </head>
+<body>
 
-<body bgcolor=white>
+<div class="doc_title">
+  LLVM Command Guide
+</div>
 
-<center><h1>LLVM Command Guide<br></h1></center>
+<div class="doc_text">
 
-This document is the reference manual for the LLVM utilities.  It will
-show you how to use the LLVM commands and what all of their options
-are.
+<p>This document is the reference manual for the LLVM utilities.  It will
+show you how to use the LLVM commands and what their options are.  Note that in
+the descriptions below, `bytecode' and `program' refer to LLVM bytecode files
+and assembly programs, respectively.</p>
 
-<table width=100% border=0>
-<tr><td valign=top width=50%>
+<ul>
+  <li><a href="#basic">Basic Commands</a></li>
+  <li><a href="#frontend">C and C++ Frond-end Commands</a></li>
+  <li><a href="#debug">Debugging commands</a></li>
+</ul>
 
-<!--===============================================================-->
-<center><h2><a name="llvmcmds">Basic Commands</a><hr></h2></center>
-<!--===============================================================-->
+</div>
 
-<dl compact>
-	<dt><A href="llvm-as.html"><b>llvm-as</b></A>
-	<dd>
-	Assemble a human-readable LLVM program into LLVM bytecode.
-	<p>
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="basic">Basic Commands</a>
+</div>
+<!-- *********************************************************************** -->
 
-	<dt><A href="llvm-dis.html"><b>llvm-dis</b></A>
-	<dd>
-	Disassemble an LLVM bytecode file into human-readable form.
-	<p>
+<div class="doc_text">
 
-	<dt><A href="analyze.html"><b>analyze</b></A>
-	<dd>
-	Analyze an LLVM bytecode file.
-	<p>
+<ul>
 
-	<dt><A href="opt.html"><b>opt</b></A>
-	<dd>
-	Optimize an LLVM bytecode file.
-	<p>
+<li><a href="llvm-as.html"><b>llvm-as</b></a> - 
+    assemble a human-readable program into bytecode</li>
 
-	<dt><A href="llc.html"><b>llc</b></A>
-	<dd>
-	Compile an LLVM bytecode program into native machine code.
-        <p>
+<li><a href="llvm-dis.html"><b>llvm-dis</b></a> -
+    disassemble a bytecode file into human-readable form</li>
 
-	<dt><A href="lli.html"><b>lli</b></A>
-	<dd>
-	Run an LLVM bytecode program using either an interpreter or a
-	JIT compiler.
-	<p>
+<li><a href="analyze.html"><b>analyze</b></a> -
+    analyze a bytecode file</li>
 
-	<dt><A href="llvm-link.html"><b>llvm-link</b></A>
-	<dd>
-	Link several LLVM bytecode files together into one LLVM
-	bytecode file.
-	<p>
+<li><a href="opt.html"><b>opt</b></a> -
+    optimize a bytecode file</li>
 
-	<dt><A href="llvm-nm.html"><b>llvm-nm</b></A>
-	<dd>
-	Print out the names and types of symbols in an LLVM bytecode file.
-	<p>
+<li><a href="llc.html"><b>llc</b></a> - 
+    compile a bytecode program into native machine code</li>
 
-	<dt><A href="llvm-prof.html"><b>llvm-prof</b></A>
-	<dd>
-        Transform raw '<tt>llvmprof.out</tt>' data into a human readable report.
-	<p>
-</dl>
+<li><a href="lli.html"><b>lli</b></a> - 
+    run a bytecode program using either an interpreter or a JIT compiler</li>
 
-</td><td valign=top width=50%>
+<li><a href="llvm-link.html"><b>llvm-link</b></A>
+    link several bytecode files into one</li>
 
-<!--===============================================================-->
-<center><h2><a name="llvmcmds">C and C++ Front-end Commands</a><hr></h2></center>
-<!--===============================================================-->
+<li><a href="llvm-nm.html"><b>llvm-nm</b></a>
+    print out the names and types of symbols in a bytecode file</li>
 
-<dl compact>
-	<dt><A href="llvmgcc.html"><b>llvmgcc</b></A>
-	<dd>
-	GCC-based C front end for LLVM.
-	<p>
+<li><a href="llvm-prof.html"><b>llvm-prof</b></a> -
+    transform raw `<tt>llvmprof.out</tt>' data into a human-readable report</li>
 
-	<dt><A href="llvmgxx.html"><b>llvmg++</b></A>
-	<dd>
-	GCC-based C++ front end for LLVM.
-	<p>
+</ul>
 
-	<dt><A href="gccas.html"><b>gccas</b></A>
-	<dd>
-	LLVM assembler used by GCC and other native compiler tools.
-	<p>
+</div>
 
-	<dt><A href="gccld.html"><b>gccld</b></A>
-	<dd>
-	LLVM linker used by GCC and other native compiler tools.
-</dl>
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="frontend">C and C++ Front-end Commands</a>
+</div>
+<!-- *********************************************************************** -->
 
-<!--===============================================================-->
-<center><h2><a name="llvmcmds">Debugging Tools</a><hr></h2></center>
-<!--===============================================================-->
+<div class="doc_text">
 
-<dl compact>
-	<dt><A href="bugpoint.html"><b>bugpoint</b></A>
-	<dd>
-	Trace an LLVM bytecode program and reduce its failure to a
-	simple testcase.
-	<p>
+<ul>
 
-	<dt><A href="extract.html"><b>extract</b></A>
-	<dd>
-	Extract a function from an LLVM bytecode file.
-</dl>
-</td></tr></table>
+<li><a href="llvmgcc.html"><b>llvmgcc</b></a> -
+    GCC-based C front end for LLVM
+
+<li><a href="llvmgxx.html"><b>llvmg++</b></a> -
+    GCC-based C++ front end for LLVM</li>
+
+<li><a href="gccas.html"><b>gccas</b></a> -
+    optimizing assembler used by llvm-g++ and llvm-gcc</li>
+
+<li><a href="gccld.html"><b>gccld</b></a> -
+    optimizing linker used by llvm-g++ and llvm-gcc</li>
+
+</ul>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="debug">Debugging Tools</a>
+</div>
+<!-- *********************************************************************** -->
 
 
-<hr><font size=-1>
-Maintained by the 
-<a href="http://llvm.cs.uiuc.edu">LLVM Team</a>.<br>
-Last modified: $Date$
-</font>
+<div class="doc_text">
+
+<ul>
+
+<li><a href="bugpoint.html"><b>bugpoint</b></a> -
+    automatic test-case reducer</li>
+
+<li><a href="extract.html"><b>extract</b></a> -
+    extract a function from an LLVM bytecode file</li>
+
+</ul>
+
+</div>
+
+<!-- *********************************************************************** -->
+
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:criswell at cs dot uiuc dot edu">John Criswell</a><br>
+  <a href="http://llvm.cs.uiuc.edu">LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
 
 </body>
 </html>
