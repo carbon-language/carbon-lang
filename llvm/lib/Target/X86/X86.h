@@ -29,11 +29,12 @@ Pass *createX86PeepholeOptimizerPass();
 ///
 Pass *createX86FloatingPointStackifierPass();
 
-/// createX86CodePrinterPass - Print out the specified machine code function to
-/// the specified stream.  This function should work regardless of whether or
-/// not the function is in SSA form or not.
+/// createX86CodePrinterPass - Returns a pass that prints the X86
+/// assembly code for a MachineFunction to the given output stream,
+/// using the given target machine description.  This should work
+/// regardless of whether the function is in SSA form.
 ///
-Pass *createX86CodePrinterPass(std::ostream &O);
+Pass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm);
 
 /// X86EmitCodeToMemory - This function converts a register allocated function
 /// into raw machine code in a dynamically allocated chunk of memory.  A pointer

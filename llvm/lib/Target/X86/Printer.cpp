@@ -33,11 +33,16 @@ namespace {
   std::set<const Value *> MangledGlobals;
 
   struct Printer : public MachineFunctionPass {
-    /// Output stream on which we're printing assembly code. This is
-    /// assigned by the constructor and never changes.
+    /// Output stream on which we're printing assembly code.
     ///
     std::ostream &O;
-    Printer(std::ostream &o) : O(o) { }
+
+    /// Target machine description which we query for reg. names, data
+    /// layout, etc.
+    ///
+    TargetMachine &TM;
+
+    Printer(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
 
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
@@ -55,17 +60,11 @@ namespace {
     virtual const char *getPassName() const {
       return "X86 Assembly Printer";
     }
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
-    }
 
-    void printMachineInstruction(const MachineInstr *MI,
-				 const TargetMachine &TM) const;
+    void printMachineInstruction(const MachineInstr *MI) const;
     void printOp(const MachineOperand &MO,
-		 const MRegisterInfo &RI, bool elideOffsetKeyword = false) const;
-    void printMemReference(const MachineInstr *MI,
-			   unsigned Op,
-			   const MRegisterInfo &RI) const;
+		 bool elideOffsetKeyword = false) const;
+    void printMemReference(const MachineInstr *MI, unsigned Op) const;
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     std::string ConstantExprToString(const ConstantExpr* CE);
@@ -79,11 +78,12 @@ namespace {
 } // end of anonymous namespace
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86
-/// assembly code for a MachineFunction to the specified stream.  This
-/// should work regardless of whether the function is in SSA form.
+/// assembly code for a MachineFunction to the given output stream,
+/// using the given target machine description.  This should work
+/// regardless of whether the function is in SSA form.
 ///
-Pass *createX86CodePrinterPass(std::ostream &O) {
-  return new Printer(O);
+Pass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm) {
+  return new Printer(o, tm);
 }
 
 /// makeNameProper - We don't want identifier names with ., space, or
@@ -166,7 +166,7 @@ std::string Printer::valToExprString(const Value* V) {
 ///
 std::string Printer::ConstantExprToString(const ConstantExpr* CE) {
   std::string S;
-  TargetData &TD = getAnalysis<TargetData>();
+  const TargetData &TD = TM.getTargetData();
   switch(CE->getOpcode()) {
   case Instruction::GetElementPtr:
     { // generate a symbolic expression for the byte address
@@ -359,7 +359,7 @@ Printer::printConstantValueOnly(const Constant* CV,
 				int numPadBytesAfter /* = 0 */)
 {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
-  TargetData &TD = getAnalysis<TargetData>();
+  const TargetData &TD = TM.getTargetData();
 
   if (CVA && isStringCompatible(CVA))
     { // print the string alone and return
@@ -418,7 +418,7 @@ Printer::printConstantValueOnly(const Constant* CV,
 ///
 void Printer::printConstantPool(MachineConstantPool *MCP){
   const std::vector<Constant*> &CP = MCP->getConstants();
-  TargetData &TD = getAnalysis<TargetData>();
+  const TargetData &TD = TM.getTargetData();
  
   if (CP.empty()) return;
 
@@ -439,7 +439,6 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   // BBNumber is used here so that a given Printer will never give two
   // BBs the same name. (If you have a better way, please let me know!)
   static unsigned BBNumber = 0;
-  const TargetMachine &TM = MF.getTarget();
 
   // What's my mangled name?
   CurrentFnName = getValueName(MF.getFunction());
@@ -472,7 +471,7 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 	 II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
-      printMachineInstruction(*II, TM);
+      printMachineInstruction(*II);
     }
   }
 
@@ -495,8 +494,8 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
 }
 
 void Printer::printOp(const MachineOperand &MO,
-		      const MRegisterInfo &RI,
 		      bool elideOffsetKeyword /* = false */) const {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (Value *V = MO.getVRegValueOrNull()) {
@@ -547,9 +546,8 @@ static const std::string sizePtr(const TargetInstrDescriptor &Desc) {
   }
 }
 
-void Printer::printMemReference(const MachineInstr *MI,
-				unsigned Op,
-				const MRegisterInfo &RI) const {
+void Printer::printMemReference(const MachineInstr *MI, unsigned Op) const {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   if (MI->getOperand(Op).isFrameIndex()) {
@@ -575,7 +573,7 @@ void Printer::printMemReference(const MachineInstr *MI,
   O << "[";
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
-    printOp(BaseReg, RI);
+    printOp(BaseReg);
     NeedPlus = true;
   }
 
@@ -583,7 +581,7 @@ void Printer::printMemReference(const MachineInstr *MI,
     if (NeedPlus) O << " + ";
     if (ScaleVal != 1)
       O << ScaleVal << "*";
-    printOp(IndexReg, RI);
+    printOp(IndexReg);
     NeedPlus = true;
   }
 
@@ -601,11 +599,9 @@ void Printer::printMemReference(const MachineInstr *MI,
 }
 
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
-/// MI in Intel syntax to the current output stream, using the given
-/// TargetMachine.
+/// MI in Intel syntax to the current output stream.
 ///
-void Printer::printMachineInstruction(const MachineInstr *MI,
-				      const TargetMachine &TM) const {
+void Printer::printMachineInstruction(const MachineInstr *MI) const {
   unsigned Opcode = MI->getOpcode();
   const TargetInstrInfo &TII = TM.getInstrInfo();
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
@@ -618,21 +614,21 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
     // seen by the assembler (e.g., IMPLICIT_USEs.)
     O << "# ";
     if (Opcode == X86::PHI) {
-      printOp(MI->getOperand(0), RI);
+      printOp(MI->getOperand(0));
       O << " = phi ";
       for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
 	if (i != 1) O << ", ";
 	O << "[";
-	printOp(MI->getOperand(i), RI);
+	printOp(MI->getOperand(i));
 	O << ", ";
-	printOp(MI->getOperand(i+1), RI);
+	printOp(MI->getOperand(i+1));
 	O << "]";
       }
     } else {
       unsigned i = 0;
       if (MI->getNumOperands() && (MI->getOperand(0).opIsDefOnly() || 
                                    MI->getOperand(0).opIsDefAndUse())) {
-	printOp(MI->getOperand(0), RI);
+	printOp(MI->getOperand(0));
 	O << " = ";
 	++i;
       }
@@ -642,7 +638,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
 	O << " ";
 	if (MI->getOperand(i).opIsDefOnly() || 
             MI->getOperand(i).opIsDefAndUse()) O << "*";
-	printOp(MI->getOperand(i), RI);
+	printOp(MI->getOperand(i));
 	if (MI->getOperand(i).opIsDefOnly() || 
             MI->getOperand(i).opIsDefAndUse()) O << "*";
       }
@@ -665,7 +661,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
     O << TII.getName(MI->getOpcode()) << " ";
 
     if (MI->getNumOperands() == 1) {
-      printOp(MI->getOperand(0), RI, true); // Don't print "OFFSET"...
+      printOp(MI->getOperand(0), true); // Don't print "OFFSET"...
     }
     O << "\n";
     return;
@@ -692,14 +688,14 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
     unsigned Reg = MI->getOperand(0).getReg();
     
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(MI->getOperand(0), RI);
+    printOp(MI->getOperand(0));
     if (MI->getNumOperands() == 2 &&
 	(!MI->getOperand(1).isRegister() ||
 	 MI->getOperand(1).getVRegValueOrNull() ||
 	 MI->getOperand(1).isGlobalAddress() ||
 	 MI->getOperand(1).isExternalSymbol())) {
       O << ", ";
-      printOp(MI->getOperand(1), RI);
+      printOp(MI->getOperand(1));
     }
     if (Desc.TSFlags & X86II::PrintImplUses) {
       for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
@@ -733,12 +729,12 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
            && "Bad format for MRMDestReg!");
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(MI->getOperand(0), RI);
+    printOp(MI->getOperand(0));
     O << ", ";
-    printOp(MI->getOperand(1+isTwoAddr), RI);
+    printOp(MI->getOperand(1+isTwoAddr));
     if (MI->getNumOperands() == 4) {
       O << ", ";
-      printOp(MI->getOperand(3), RI);
+      printOp(MI->getOperand(3));
     }
     O << "\n";
     return;
@@ -752,9 +748,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
            MI->getOperand(4).isRegister() && "Bad format for MRMDestMem!");
 
     O << TII.getName(MI->getOpCode()) << " " << sizePtr(Desc) << " ";
-    printMemReference(MI, 0, RI);
+    printMemReference(MI, 0);
     O << ", ";
-    printOp(MI->getOperand(4), RI);
+    printOp(MI->getOperand(4));
     O << "\n";
     return;
   }
@@ -779,9 +775,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
       O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(MI->getOperand(0), RI);
+    printOp(MI->getOperand(0));
     O << ", ";
-    printOp(MI->getOperand(MI->getNumOperands()-1), RI);
+    printOp(MI->getOperand(MI->getNumOperands()-1));
     O << "\n";
     return;
   }
@@ -800,9 +796,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
       O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(MI->getOperand(0), RI);
+    printOp(MI->getOperand(0));
     O << ", " << sizePtr(Desc) << " ";
-    printMemReference(MI, MI->getNumOperands()-4, RI);
+    printMemReference(MI, MI->getNumOperands()-4);
     O << "\n";
     return;
   }
@@ -831,10 +827,10 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
       O << "**";
 
     O << TII.getName(MI->getOpCode()) << " ";
-    printOp(MI->getOperand(0), RI);
+    printOp(MI->getOperand(0));
     if (MI->getOperand(MI->getNumOperands()-1).isImmediate()) {
       O << ", ";
-      printOp(MI->getOperand(MI->getNumOperands()-1), RI);
+      printOp(MI->getOperand(MI->getNumOperands()-1));
     }
     if (Desc.TSFlags & X86II::PrintImplUses) {
       for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
@@ -926,20 +922,20 @@ void Printer::printMachineInstruction(const MachineInstr *MI,
     // expecting to see.
     if (MI->getOpCode() == X86::FISTPr64) {
       O << "fistpll DWORD PTR ";
-      printMemReference(MI, 0, RI);
+      printMemReference(MI, 0);
       if (MI->getNumOperands() == 5) {
 	O << ", ";
-	printOp(MI->getOperand(4), RI);
+	printOp(MI->getOperand(4));
       }
       O << "\t# ";
     }
     
     O << TII.getName(MI->getOpCode()) << " ";
     O << sizePtr(Desc) << " ";
-    printMemReference(MI, 0, RI);
+    printMemReference(MI, 0);
     if (MI->getNumOperands() == 5) {
       O << ", ";
-      printOp(MI->getOperand(4), RI);
+      printOp(MI->getOperand(4));
     }
     O << "\n";
     return;
@@ -988,7 +984,7 @@ static const Function *isConstantFunctionPointerRef(const Constant *C) {
 
 bool Printer::doFinalization(Module &M)
 {
-  TargetData &TD = getAnalysis<TargetData>();
+  const TargetData &TD = TM.getTargetData();
   // Print out module-level global variables here.
   for (Module::const_giterator I = M.gbegin(), E = M.gend(); I != E; ++I) {
     std::string name(getValueName(I));

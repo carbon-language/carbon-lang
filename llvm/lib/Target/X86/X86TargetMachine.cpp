@@ -50,7 +50,7 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createX86FloatingPointStackifierPass());
   PM.add(createPrologEpilogCodeInserter());
   PM.add(createX86PeepholeOptimizerPass());
-  PM.add(createX86CodePrinterPass(Out));
+  PM.add(createX86CodePrinterPass(Out, *this));
   return false; // success!
 }
 
@@ -92,7 +92,7 @@ bool X86TargetMachine::addPassesToJITCompile(PassManager &PM) {
   PM.add(createX86PeepholeOptimizerPass());
 
   if (PrintCode)  // Print the register-allocated code
-    PM.add(createX86CodePrinterPass(std::cerr));
+    PM.add(createX86CodePrinterPass(std::cerr, *this));
 
   return false; // success!
 }
