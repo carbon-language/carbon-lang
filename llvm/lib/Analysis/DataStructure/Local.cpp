@@ -529,7 +529,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           }
           return;
         } else if (F->getName() == "read" || F->getName() == "pipe" ||
-                   F->getName() == "wait") {
+                   F->getName() == "wait" || F->getName() == "time") {
           // These functions write all of their pointer operands.
           for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
                AI != E; ++AI) {
@@ -556,16 +556,14 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               N->mergeTypeInfo(PTy->getElementType(), StatBuf.getOffset());
           }
           return;
-        } else if (F->getName() == "fopen" || F->getName() == "fdopen") {
-          // fopen reads the mode argument strings.
-          CallSite::arg_iterator AI = CS.arg_begin();
-          if (isPointerType((*AI)->getType())) {
-            DSNodeHandle Path = getValueDest(**AI);
-            if (DSNode *N = Path.getNode()) N->setReadMarker();
-          }
-
-          DSNodeHandle Mode = getValueDest(**++AI);
-          if (DSNode *N = Mode.getNode()) N->setReadMarker();
+        } else if (F->getName() == "fopen" || F->getName() == "fdopen" ||
+                   F->getName() == "freopen") {
+          // These functions read all of their pointer operands.
+          for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+               AI != E; ++AI)
+            if (isPointerType((*AI)->getType()))
+              if (DSNode *N = getValueDest(**AI).getNode())
+                N->setReadMarker();
           
           // fopen allocates in an unknown way and writes to the file
           // descriptor.  Also, merge the allocated type into the node.
@@ -576,6 +574,11 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
               N->mergeTypeInfo(PTy->getElementType(), Result.getOffset());
           }
+
+          // If this is freopen, merge the file descriptor passed in with the
+          // result.
+          Result.mergeWith(getValueDest(**--CS.arg_end()));
+
           return;
         } else if (F->getName() == "fclose" && CS.arg_end()-CS.arg_begin() ==1){
           // fclose reads and deallocates the memory in an unknown way for the
@@ -592,7 +595,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                    (F->getName() == "fflush" || F->getName() == "feof" ||
                     F->getName() == "fileno" || F->getName() == "clearerr" ||
                     F->getName() == "rewind" || F->getName() == "ftell" ||
-                    F->getName() == "ferror")) {
+                    F->getName() == "ferror" || F->getName() == "fgetc" ||
+                    F->getName() == "fgetc" || F->getName() == "_IO_getc")) {
           // fflush reads and writes the memory for the file descriptor.  It
           // merges the FILE type into the descriptor.
           DSNodeHandle H = getValueDest(**CS.arg_begin());
@@ -645,8 +649,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           return;
         } else if (F->getName() == "ungetc" || F->getName() == "fputc" ||
                    F->getName() == "fputs" || F->getName() == "putc" ||
-                   F->getName() == "ftell" || F->getName() == "rewind") {
-          // These functions read and write the memory for the file descriptor.
+                   F->getName() == "ftell" || F->getName() == "rewind" ||
+                   F->getName() == "_IO_putc") {
+          // These functions read and write the memory for the file descriptor,
+          // which is passes as the last argument.
           DSNodeHandle H = getValueDest(**--CS.arg_end());
           if (DSNode *N = H.getNode()) {
             N->setReadMarker()->setModifiedMarker();
