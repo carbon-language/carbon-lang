@@ -8,8 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains a FunctionPass called MappingInfoAsmPrinter,
-// which creates two maps: one between LLVM Instructions and MachineInstrs
-// (the "LLVM I TO MI MAP"), and another between MachineBasicBlocks and
+// which creates a map between MachineBasicBlocks and
 // MachineInstrs (the "BB TO MI MAP").
 //
 // As a side effect, it outputs this information as .byte directives to
@@ -18,20 +17,6 @@
 // binary is loaded. Therefore, it may contain some hidden SPARC-architecture
 // dependencies. Currently this question is purely theoretical as the
 // Reoptimizer works only on the SPARC.
-//
-// The LLVM I TO MI MAP consists of a set of information for each
-// BasicBlock in a Function, ordered from begin() to end(). The information
-// for a BasicBlock consists of
-//  1) its (0-based) index in the Function,
-//  2) the number of LLVM Instructions it contains, and
-//  3) information for each Instruction, in sequence from the begin()
-//     to the end() of the BasicBlock. The information for an Instruction
-//     consists of
-//     1) its (0-based) index in the BasicBlock,
-//     2) the number of MachineInstrs that correspond to that Instruction
-//        (as reported by MachineCodeForInstruction), and
-//     3) the MachineInstr number calculated by create_MI_to_number_Key,
-//        for each of the MachineInstrs that correspond to that Instruction.
 //
 // The BB TO MI MAP consists of a three-element tuple for each
 // MachineBasicBlock in a function, ordered from begin() to end() of
@@ -46,7 +31,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "MachineCodeForInstruction.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace llvm {
@@ -64,9 +48,7 @@ namespace {
     std::map<Function *, unsigned> Fkey; // Function # for all functions.
     bool doInitialization(Module &M);
     void create_BB_to_MInumber_Key(Function &FI, InstructionKey &key);
-    void create_MI_to_number_Key(Function &FI, InstructionKey &key);
     void buildBBMIMap (Function &FI, MappingInfo &Map);
-    void buildLMIMap (Function &FI, MappingInfo &Map);
     void writeNumber(unsigned X);
     void selectOutputMap (MappingInfo &m) { currentOutputMap = &m; }
     void outByte (unsigned char b) { currentOutputMap->outByte (b); }
@@ -89,16 +71,11 @@ ModulePass *getMappingInfoAsmPrinterPass(std::ostream &out){
 bool MappingInfoAsmPrinter::runOnFunction(Function &FI) {
   unsigned num = Fkey[&FI]; // Function number for the current function.
 
-  // Create objects to hold the maps.
-  MappingInfo LMIMap ("LLVM I TO MI MAP", "LMIMap", num);
+  // Create an object to hold the map, then build the map.
   MappingInfo BBMIMap ("BB TO MI MAP", "BBMIMap", num);
-
-  // Now, build the maps.
-  buildLMIMap (FI, LMIMap);
   buildBBMIMap (FI, BBMIMap);
 
   // Now, write out the maps.
-  LMIMap.dumpAssembly (Out);
   BBMIMap.dumpAssembly (Out);
 
   return false; 
@@ -147,7 +124,7 @@ bool MappingInfoAsmPrinter::doInitialization(Module &M) {
 /// therein by its first MachineInstr.
 ///
 void MappingInfoAsmPrinter::create_BB_to_MInumber_Key(Function &FI,
-                                                     InstructionKey &key) {
+                                                      InstructionKey &key) {
   unsigned i = 0;
   MachineFunction &MF = MachineFunction::get(&FI);
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
@@ -155,27 +132,6 @@ void MappingInfoAsmPrinter::create_BB_to_MInumber_Key(Function &FI,
     MachineBasicBlock &miBB = *BI;
     key[&miBB.front()] = i;
     i = i+(miBB.size());
-  }
-}
-
-/// create_MI_to_number_Key - Assign a number to each MachineInstr
-/// in the given Function with respect to its enclosing MachineBasicBlock, as
-/// follows: Numberings start at 0 in each MachineBasicBlock. MachineInstrs
-/// are numbered from begin() to end() in their MachineBasicBlock. Each
-/// MachineInstr is numbered, then the numbering is incremented by 1. The
-/// side-effect of this method is to fill in the parameter KEY
-/// with the mapping from MachineInstrs to numbers.
-///
-void MappingInfoAsmPrinter::create_MI_to_number_Key(Function &FI,
-                                                   InstructionKey &key) {
-  MachineFunction &MF = MachineFunction::get(&FI);
-  for (MachineFunction::iterator BI=MF.begin(), BE=MF.end(); BI != BE; ++BI) {
-    MachineBasicBlock &miBB = *BI;
-    unsigned j = 0;
-    for(MachineBasicBlock::iterator miI = miBB.begin(), miE = miBB.end();
-        miI != miE; ++miI, ++j) {
-      key[miI] = j;
-    }
   }
 }
 
@@ -198,34 +154,6 @@ void MappingInfoAsmPrinter::buildBBMIMap(Function &FI, MappingInfo &Map) {
     writeNumber(BBkey[&miBB.front()]);
     writeNumber(miBB.size());
   }
-}
-
-/// buildLMIMap - Build the LLVM I TO MI MAP for the function FI,
-/// and save it into the parameter MAP.
-///
-void MappingInfoAsmPrinter::buildLMIMap(Function &FI, MappingInfo &Map) {
-  unsigned bb = 0;
-  // First build temporary table used to write out the map.
-  InstructionKey MIkey;
-  create_MI_to_number_Key(FI, MIkey);
-
-  selectOutputMap (Map);
-  for (Function::iterator BI = FI.begin(), BE = FI.end(); 
-       BI != BE; ++BI, ++bb) {
-    unsigned li = 0;
-    writeNumber(bb);
-    writeNumber(BI->size());
-    for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
-         ++II, ++li) {
-      MachineCodeForInstruction& miI = MachineCodeForInstruction::get(II);
-      writeNumber(li);
-      writeNumber(miI.size());
-      for (MachineCodeForInstruction::iterator miII = miI.begin(), 
-           miIE = miI.end(); miII != miIE; ++miII) {
-	     writeNumber(MIkey[*miII]);
-      }
-    }
-  } 
 }
 
 void MappingInfo::byteVector::dumpAssembly (std::ostream &Out) {
@@ -282,18 +210,7 @@ bool MappingInfoAsmPrinter::doFinalization (Module &M) {
   }
   writeEpilogue(Out, "FunctionBB");
   
-  writePrologue(Out, "FUNCTION TO LI MAP", "FunctionLI");
-  f=0;
-  for(Module::iterator FI = M.begin (), FE = M.end (); FE != FI; ++FI) {
-    if (FI->isExternal ())
-      continue;
-    Out << "\t.xword LMIMap" << f << "\n";
-    ++f;
-  }
-  writeEpilogue(Out, "FunctionLI");
-  
   return false;
 }
 
 } // End llvm namespace
-
