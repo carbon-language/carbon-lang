@@ -14,6 +14,19 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Type.h"
 #include "llvm/Constant.h"
+#include "Support/CommandLine.h"
+
+namespace {
+  cl::opt<bool>
+  NoADCE("disable-adce",
+         cl::desc("Do not use the -adce pass to reduce testcases"));
+  cl::opt<bool>
+  NoDCE ("disable-dce",
+         cl::desc("Do not use the -dce pass to reduce testcases"));
+  cl::opt<bool>
+  NoSCFG("disable-simplifycfg",
+         cl::desc("Do not use the -simplifycfg pass to reduce testcases"));
+}
 
 /// deleteInstructionFromProgram - This method clones the current Program and
 /// deletes the specified instruction from the cloned module.  It then runs a
@@ -46,12 +59,12 @@ Module *BugDriver::deleteInstructionFromProgram(Instruction *I,
 
   // Spiff up the output a little bit.
   PassManager Passes;
-  if (Simplification > 2)
+  if (Simplification > 2 && !NoADCE)
     Passes.add(createAggressiveDCEPass());          // Remove dead code...
   //Passes.add(createInstructionCombiningPass());
-  if (Simplification > 1)
+  if (Simplification > 1 && !NoDCE)
     Passes.add(createDeadCodeEliminationPass());
-  if (Simplification)
+  if (Simplification && !NoSCFG)
     Passes.add(createCFGSimplificationPass());      // Delete dead control flow
 
   Passes.add(createVerifierPass());
