@@ -114,10 +114,12 @@ static std::ostream &operator<<(std::ostream &o, const set<BasicBlock*> &BBs) {
 }
 
 void DominatorSetBase::print(std::ostream &o) const {
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
     o << "=============================--------------------------------\n"
-      << "\nDominator Set For Basic Block\n" << I->first
-      << "-------------------------------\n" << I->second << "\n";
+      << "\nDominator Set For Basic Block: ";
+    WriteAsOperand(o, I->first, false);
+    o  << "\n-------------------------------\n" << I->second << "\n";
+  }
 }
 
 //===----------------------------------------------------------------------===//
