@@ -53,7 +53,7 @@ let isCall = 1,
 let isReturn = 1, isTerminator = 1 in
   def RETURN : PseudoInstAlpha<(ops ), "ret $$31,($$26),1">; //Return from subroutine
 
-let Uses = [R28] in
+let Uses = [R28, R29] in
   def LOAD_IMM : PseudoInstAlpha<(ops GPRC:$RC, s64imm:$IMM), "ldiq $RC,$IMM">; //Load Immediate Quadword
 
 let Uses = [R29, R28] in {
@@ -79,7 +79,8 @@ let Uses = [R29, R28] in {
   def STT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stt $RA,$DISP">; //store double
 }
 
-let Uses = [R28, R23, R24, R25, R26] in
+let Uses = [R28, R23, R24, R25, R26, R29],
+    Defs = [R29] in
 {
   def REMQU : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remqu $RA,$RB,$RC">; //unsigned remander
   def REMQ  : PseudoInstAlpha<(ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$RC">; //unsigned remander
@@ -274,11 +275,10 @@ let isReturn = 1, isTerminator = 1 in
 def JMP : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "jmp $RD,($RS),0">; //Jump
 let isCall = 1,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
-            R20, R21, R22, R23, R24, R25, R27, R29,
+            R20, R21, R22, R23, R24, R25, R27, R28, R29,
             F0, F1,
             F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
-            F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30],
-    Uses = [R29] in {
+            F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30] in {
     def JSR : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr $RD,($RS),$DISP">; //Jump to subroutine
     def BSR : BForm<0x34, (ops GPRC:$RD, s21imm:$DISP), "bsr $RD,$DISP">; //Branch to subroutine
 }
@@ -286,7 +286,7 @@ let isCall = 1,
 def JSR_COROUTINE : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "jsr_coroutine $RD,($RS),1">; //Jump to subroutine return
 def BR : BForm<0x30, (ops GPRC:$RD, s21imm:$DISP), "br $RD,$DISP">; //Branch
 
-let Uses = [R29, R28] in {
+let Uses = [R28] in {
 //Stores, int
 def STB : MForm<0x0E, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stw $RA,$DISP($RB)">; // Store word
