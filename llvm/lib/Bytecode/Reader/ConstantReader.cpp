@@ -200,7 +200,8 @@ bool BytecodeParser::parseConstantValue(const uchar *&Buf, const uchar *EndBuf,
       const Type *argTy = getType(argTypeSlot);
       if (argTy == 0) return failure(true);
       
-      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << argTy << "'  slot: " << argValSlot << "\n");
+      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << argTy << "'  slot: "
+                << argValSlot << "\n");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
       Value *Val = getValue(argTy, argValSlot, false);
