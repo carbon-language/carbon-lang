@@ -61,7 +61,13 @@ let Namespace = "X86" in {
 // top-level register classes.  The order specified in the register list is
 // implicitly defined to be the register allocation order.
 //
-def R8  : RegisterClass<i8,  8, [AL, AH, CL, CH, DL, DH, BL, BH]>;
+
+// List AL,CL,DL before AH,CH,DH, as X86 processors often suffer from false
+// dependences between upper and lower parts of the register.  BL and BH are
+// last because they are call clobbered. Both Athlon and P4 chips suffer this
+// issue.
+def R8  : RegisterClass<i8,  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
+
 def R16 : RegisterClass<i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
