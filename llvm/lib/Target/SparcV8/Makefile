@@ -1,4 +1,4 @@
-##===- lib/Target/Sparc/V8/Makefile ------------------------*- Makefile -*-===##
+##===- lib/Target/SparcV8/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,7 +6,7 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ../../../..
+LEVEL = ../../..
 LIBRARYNAME = LLVMSparcV8
 TARGET = SparcV8
 

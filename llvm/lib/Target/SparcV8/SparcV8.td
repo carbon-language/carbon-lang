@@ -14,7 +14,7 @@
 // Target-independent interfaces which we are implementing
 //===----------------------------------------------------------------------===//
 
-include "../../Target.td"
+include "../Target.td"
 
 //===----------------------------------------------------------------------===//
 // Register File Description
