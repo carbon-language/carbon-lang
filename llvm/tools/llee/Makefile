@@ -1,21 +1,15 @@
 LEVEL = ../..
-include $(LEVEL)/Makefile.config
+LIBRARYNAME = execve
+SHARED_LIBRARY = 1
+include $(LEVEL)/Makefile.common
 
-SRCS = ExecveHandler.c SysUtils.c
+all:: llee
 
-OBJS = $(SRCS:%.c=%.o)
-SO   = execve.so
+llee: $(DESTTOOLCURRENT)/llee
 
-all: $(SO)
-	
-%.o: %.c
-	gcc -g -I../../include -D_GNU_SOURCE $< -c -o $@
+$(DESTTOOLCURRENT)/llee: Makefile
+	echo exec env LD_PRELOAD=$(DESTLIBCURRENT)/execve.so $$\* > $@
+	chmod u+x $@
 
-$(SO): $(OBJS)
-	gcc -g -shared -ldl -rdynamic $(OBJS) -o $@
-
-execve_test: execve_test.c
-	gcc -g $< -o $@
-
-clean:
-	rm -f $(OBJS) $(SO)
+clean::
+	rm -f $(DESTTOOLCURRENT)/llee

@@ -6,34 +6,45 @@
 //===----------------------------------------------------------------------===//
 
 #include "SysUtils.h"
-#include "Config/sys/types.h"
-#include "Config/sys/stat.h"
-#include "Config/fcntl.h"
-#include "Config/sys/wait.h"
-#include "Config/unistd.h"
+#include "Config/dlfcn.h"
 #include "Config/errno.h"
+#include "Config/fcntl.h"
+#include "Config/unistd.h"
+#include "Config/sys/stat.h"
+#include "Config/sys/types.h"
+#include "Config/sys/wait.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/*
+ * isExecutable - This function returns true if given struct stat describes the
+ * file as being executable.
+ */ 
+unsigned isExecutable(const struct stat *buf) {
+  if (!(buf->st_mode & S_IFREG))
+    return 0;                         // Not a regular file?
+
+  if (buf->st_uid == getuid())        // Owner of file?
+    return buf->st_mode & S_IXUSR;
+  else if (buf->st_gid == getgid())   // In group of file?
+    return buf->st_mode & S_IXGRP;
+  else                                // Unrelated to file?
+    return buf->st_mode & S_IXOTH;
+}
 
 /*
  * isExecutableFile - This function returns true if the filename specified
  * exists and is executable.
  */
 unsigned isExecutableFile(const char *ExeFileName) {
-  struct stat Buf;
-  if (stat(ExeFileName, &Buf))
+  struct stat buf;
+  if (stat(ExeFileName, &buf))
     return 0;                        // Must not be executable!
 
-  if (!(Buf.st_mode & S_IFREG))
-    return 0;                        // Not a regular file?
-
-  if (Buf.st_uid == getuid())        // Owner of file?
-    return Buf.st_mode & S_IXUSR;
-  else if (Buf.st_gid == getgid())   // In group of file?
-    return Buf.st_mode & S_IXGRP;
-  else                               // Unrelated to file?
-    return Buf.st_mode & S_IXOTH;
+  return isExecutable(&buf);
 }
+
 
 /*
  * FindExecutable - Find a named executable in the directories listed in $PATH.
@@ -80,4 +91,30 @@ char *FindExecutable(const char *ExeName) {
 
   /* If we fell out, we ran out of directories to search, return failure. */
   return NULL;
+}
+
+/*
+ * The type of the execve() function is long and boring, but required.
+ */
+typedef int(*execveTy)(const char*, char *const[], char *const[]);
+
+/*
+ * This method finds the real `execve' call in the C library and executes the
+ * given program.
+ */
+int executeProgram(const char *filename, char *const argv[], char *const envp[])
+{
+  /*
+   * Find a pointer to the *real* execve() function starting the search in the
+   * next library and forward, to avoid finding the one defined in this file.
+   */
+  char *error;
+  execveTy execvePtr = (execveTy) dlsym(RTLD_NEXT, "execve");
+  if ((error = dlerror()) != NULL) {
+    fprintf(stderr, "%s\n", error);
+    return -1;
+  }
+
+  /* Really execute the program */
+  return execvePtr(filename, argv, envp);
 }
