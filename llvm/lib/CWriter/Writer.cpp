@@ -90,7 +90,7 @@ namespace {
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || !I.hasOneUse() ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) || 
-          isa<LoadInst>(I) || isa<VarArgInst>(I))
+          isa<LoadInst>(I) || isa<VAArgInst>(I) || isa<VANextInst>(I))
         // Don't inline a load across a store or other bad things!
         return false;
 
@@ -135,7 +135,8 @@ namespace {
     void visitLoadInst  (LoadInst   &I);
     void visitStoreInst (StoreInst  &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
-    void visitVarArgInst(VarArgInst &I);
+    void visitVANextInst(VANextInst &I);
+    void visitVAArgInst (VAArgInst &I);
 
     void visitInstruction(Instruction &I) {
       std::cerr << "C Writer does not know about " << I;
@@ -1181,26 +1182,25 @@ void CWriter::visitCallInst(CallInst &I) {
       switch (ID) {
       default:  assert(0 && "Unknown LLVM intrinsic!");
       case LLVMIntrinsic::va_start: 
-        Out << "va_start(*(va_list*)";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
+        Out << "0; ";
+        
+        Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         // Output the last argument to the enclosing function...
         writeOperand(&I.getParent()->getParent()->aback());
         Out << ")";
         return;
       case LLVMIntrinsic::va_end:
-        Out << "va_end(*(va_list*)";
+        Out << "va_end(*(va_list*)&";
         writeOperand(I.getOperand(1));
         Out << ")";
         return;
       case LLVMIntrinsic::va_copy:
-        Out << "va_copy(*(va_list*)";
+        Out << "0;";
+        Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
+        Out << "*(va_list*)&";
         writeOperand(I.getOperand(1));
-        Out << ", (va_list)";
-        writeOperand(I.getOperand(2));
         Out << ")";
         return;
-
       case LLVMIntrinsic::setjmp:
       case LLVMIntrinsic::sigsetjmp:
         // This intrinsic should never exist in the program, but until we get
@@ -1346,12 +1346,21 @@ void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
   printIndexingExpression(I.getPointerOperand(), I.idx_begin(), I.idx_end());
 }
 
-void CWriter::visitVarArgInst(VarArgInst &I) {
-  Out << "va_arg((va_list)*";
-  writeOperand(I.getOperand(0));
-  Out << ", ";
-  printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
+void CWriter::visitVANextInst(VANextInst &I) {
+  Out << Mang->getValueName(I.getOperand(0));
+  Out << ";  va_arg(*(va_list*)&" << Mang->getValueName(&I) << ", ";
+  printType(Out, I.getArgType(), "", /*ignoreName*/false,
+            /*namedContext*/false);
   Out << ")";  
+}
+
+void CWriter::visitVAArgInst(VAArgInst &I) {
+  Out << "0;\n";
+  Out << "{ va_list Tmp; va_copy(Tmp, *(va_list*)&";
+  writeOperand(I.getOperand(0));
+  Out << ");\n  " << Mang->getValueName(&I) << " = va_arg(Tmp, ";
+  printType(Out, I.getType(), "", /*ignoreName*/false, /*namedContext*/false);
+  Out << ");\n  va_end(Tmp); }";
 }
 
 

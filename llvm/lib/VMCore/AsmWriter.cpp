@@ -661,7 +661,10 @@ void AssemblyWriter::printFunction(const Function *F) {
     }
 
   printType(F->getReturnType()) << " ";
-  if (!F->getName().empty()) Out << getLLVMName(F->getName());
+  if (!F->getName().empty())
+    Out << getLLVMName(F->getName());
+  else
+    Out << "\"\"";
   Out << "(";
   Table.incorporateFunction(F);
 
@@ -882,10 +885,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     writeOperand(Operand, true);
     Out << " to ";
     printType(I.getType());
-  } else if (isa<VarArgInst>(I)) {
+  } else if (isa<VAArgInst>(I)) {
     writeOperand(Operand, true);
     Out << ", ";
     printType(I.getType());
+  } else if (const VANextInst *VAN = dyn_cast<VANextInst>(&I)) {
+    writeOperand(Operand, true);
+    Out << ", ";
+    printType(VAN->getArgType());
   } else if (Operand) {   // Print the normal way...
 
     // PrintAllTypes - Instructions who have operands of all the same type 
