@@ -24,7 +24,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
 #include <iostream>
-
 using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
@@ -406,14 +405,16 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     const GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
     // Check to see if may have to link the global.
-    if (SGV->hasName() && !SGV->hasInternalLinkage()) {
-      std::map<std::string, GlobalValue*>::iterator EGV =
-        GlobalsByName.find(SGV->getName());
-      if (EGV != GlobalsByName.end())
-        DGV = dyn_cast<GlobalVariable>(EGV->second);
-      if (DGV && RecursiveResolveTypes(SGV->getType(), DGV->getType(), ST, ""))
-        DGV = 0;  // FIXME: gross.
-    }
+    if (SGV->hasName() && !SGV->hasInternalLinkage())
+      if (!(DGV = Dest->getGlobalVariable(SGV->getName(),
+                                          SGV->getType()->getElementType()))) {
+        std::map<std::string, GlobalValue*>::iterator EGV =
+          GlobalsByName.find(SGV->getName());
+        if (EGV != GlobalsByName.end())
+          DGV = dyn_cast<GlobalVariable>(EGV->second);
+        if (DGV && RecursiveResolveTypes(SGV->getType(), DGV->getType(), ST, ""))
+          DGV = 0;  // FIXME: gross.
+      }
 
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
            "Global must either be external or have an initializer!");
@@ -587,12 +588,14 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     Function *DF = 0;
     if (SF->hasName() && !SF->hasInternalLinkage()) {
       // Check to see if may have to link the function.
-      std::map<std::string, GlobalValue*>::iterator EF =
-        GlobalsByName.find(SF->getName());
-      if (EF != GlobalsByName.end())
-        DF = dyn_cast<Function>(EF->second);
-      if (DF && RecursiveResolveTypes(SF->getType(), DF->getType(), ST, ""))
-        DF = 0;  // FIXME: gross.
+      if (!(DF = Dest->getFunction(SF->getName(), SF->getFunctionType()))) {
+        std::map<std::string, GlobalValue*>::iterator EF =
+          GlobalsByName.find(SF->getName());
+        if (EF != GlobalsByName.end())
+          DF = dyn_cast<Function>(EF->second);
+        if (DF && RecursiveResolveTypes(SF->getType(), DF->getType(), ST, ""))
+          DF = 0;  // FIXME: gross.
+      }
     }
 
     if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
