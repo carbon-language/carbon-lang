@@ -993,9 +993,12 @@ ConstVal : SIntType EINT64VAL {     // integral constants
   };
 
 
-ConstExpr: Types CAST ConstVal {
-    $$ = ConstantExpr::getCast($3, $1->get());
+ConstExpr: Types CAST ConstVal TO Types {
+    $$ = ConstantExpr::getCast($3, $5->get());
+    if ($1->get() != $5->get())
+      ThrowException("Mismatching ConstExpr cast type");
     delete $1;
+    delete $5;
   }
   | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
     if (!isa<PointerType>($4->getType()))
