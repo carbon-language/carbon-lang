@@ -231,63 +231,68 @@ void RA::initIntervalSets()
 void RA::processActiveIntervals(IntervalPtrs::value_type cur)
 {
   DEBUG(std::cerr << "\tprocessing active intervals:\n");
-  for (IntervalPtrs::reverse_iterator
-         i = active_.rbegin(); i != active_.rend();) {
-    unsigned reg = (*i)->reg;
+  IntervalPtrs::iterator ii = active_.begin(), ie = active_.end();
+  while (ii != ie) {
+    LiveInterval* i = *ii;
+    unsigned reg = i->reg;
+
     // remove expired intervals
-    if ((*i)->expiredAt(cur->start())) {
-      DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
+    if (i->expiredAt(cur->start())) {
+      DEBUG(std::cerr << "\t\tinterval " << *i << " expired\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
       prt_->delRegUse(reg);
-      // remove from active
-      i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
+      // swap with last element and move end iterator back one position
+      std::iter_swap(ii, --ie);
     }
     // move inactive intervals to inactive list
-    else if (!(*i)->liveAt(cur->start())) {
-      DEBUG(std::cerr << "\t\tinterval " << **i << " inactive\n");
+    else if (!i->liveAt(cur->start())) {
+      DEBUG(std::cerr << "\t\tinterval " << *i << " inactive\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
       prt_->delRegUse(reg);
       // add to inactive
-      inactive_.push_back(*i);
-      // remove from active
-      i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
+      inactive_.push_back(i);
+      // swap with last element and move end iterator back one postion
+      std::iter_swap(ii, --ie);
     }
     else {
-      ++i;
+      ++ii;
     }
   }
+  active_.erase(ie, active_.end());
 }
 
 void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
 {
   DEBUG(std::cerr << "\tprocessing inactive intervals:\n");
-  for (IntervalPtrs::reverse_iterator
-         i = inactive_.rbegin(); i != inactive_.rend();) {
-    unsigned reg = (*i)->reg;
+  IntervalPtrs::iterator ii = inactive_.begin(), ie = inactive_.end();
+  while (ii != ie) {
+    LiveInterval* i = *ii;
+    unsigned reg = i->reg;
 
     // remove expired intervals
-    if ((*i)->expiredAt(cur->start())) {
-      DEBUG(std::cerr << "\t\tinterval " << **i << " expired\n");
-      // remove from inactive
-      i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
+    if (i->expiredAt(cur->start())) {
+      DEBUG(std::cerr << "\t\tinterval " << *i << " expired\n");
+      // swap with last element and move end iterator back one position
+      std::iter_swap(ii, --ie);
     }
     // move re-activated intervals in active list
-    else if ((*i)->liveAt(cur->start())) {
-      DEBUG(std::cerr << "\t\tinterval " << **i << " active\n");
+    else if (i->liveAt(cur->start())) {
+      DEBUG(std::cerr << "\t\tinterval " << *i << " active\n");
       if (MRegisterInfo::isVirtualRegister(reg))
         reg = vrm_->getPhys(reg);
       prt_->addRegUse(reg);
       // add to active
-      active_.push_back(*i);
-      // remove from inactive
-      i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
+      active_.push_back(i);
+      // swap with last element and move end iterator back one position
+      std::iter_swap(ii, --ie);
     }
     else {
-      ++i;
+      ++ii;
     }
   }
+  inactive_.erase(ie, inactive_.end());
 }
 
 void RA::updateSpillWeights(unsigned reg, SpillWeights::value_type weight)
