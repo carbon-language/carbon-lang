@@ -498,7 +498,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
   unsigned int i;
 
-  unsigned int ArgCount = Desc.TSFlags & PPC32II::ArgCountMask;
+  unsigned int ArgCount = MI->getNumOperands();
+    //Desc.TSFlags & PPC32II::ArgCountMask;
   unsigned int ArgType[] = {
     (Desc.TSFlags >> PPC32II::Arg0TypeShift) & PPC32II::ArgTypeMask,
     (Desc.TSFlags >> PPC32II::Arg1TypeShift) & PPC32II::ArgTypeMask,
@@ -554,7 +555,8 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     O << ", ";
     printOp(MI->getOperand(1));
     O << "(";
-    if (MI->getOperand(2).getReg() == PPC32::R0)
+    if (MI->getOperand(2).hasAllocatedReg() &&
+        MI->getOperand(2).getReg() == PPC32::R0)
       O << "0";
     else
       printOp(MI->getOperand(2));
