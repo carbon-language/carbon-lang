@@ -2672,14 +2672,14 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
   }
 
   static const unsigned MovOpcode[]={ X86::MOV8rr, X86::MOV16rr, X86::MOV32rr };
-  static const unsigned NEGOpcode[] = { X86::NEG8r, X86::NEG16r, X86::NEG32r };
+  static const unsigned NEGOpcode[]={ X86::NEG8r,  X86::NEG16r,  X86::NEG32r };
   static const unsigned SAROpcode[]={ X86::SAR8ri, X86::SAR16ri, X86::SAR32ri };
   static const unsigned SHROpcode[]={ X86::SHR8ri, X86::SHR16ri, X86::SHR32ri };
   static const unsigned ADDOpcode[]={ X86::ADD8rr, X86::ADD16rr, X86::ADD32rr };
 
   // Special case signed division by power of 2.
-  if (isDiv)
-    if (ConstantSInt *CI = dyn_cast<ConstantSInt>(Op1)) {
+  if (ConstantSInt *CI = dyn_cast<ConstantSInt>(Op1))
+    if (isDiv) {
       assert(Class != cLong && "This doesn't handle 64-bit divides!");
       int V = CI->getValue();
 
@@ -2740,6 +2740,42 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
           .addReg(TmpReg3).addImm(Log);
         if (isNeg)
           BuildMI(*BB, IP, NEGOpcode[Class], 1, ResultReg).addReg(TmpReg4);
+        return;
+      }
+    } else {    // X % C
+      assert(Class != cLong && "This doesn't handle 64-bit remainder!");
+      int V = CI->getValue();
+
+      if (V == 2 || V == -2) {       // X % 2, X % -2
+        std::cerr << "SREM 2\n";
+        static const unsigned SExtOpcode[] = { X86::CBW, X86::CWD, X86::CDQ };
+        static const unsigned BaseReg[]    = { X86::AL , X86::AX , X86::EAX };
+        static const unsigned SExtReg[]    = { X86::AH , X86::DX , X86::EDX };
+        static const unsigned ANDOpcode[]  = {
+          X86::AND8ri, X86::AND16ri, X86::AND32ri
+        };
+        static const unsigned XOROpcode[]  = {
+          X86::XOR8rr, X86::XOR16rr, X86::XOR32rr
+        };
+        static const unsigned SUBOpcode[]  = {
+          X86::SUB8rr, X86::SUB16rr, X86::SUB32rr
+        };
+
+        // Sign extend result into reg of -1 or 0.
+        unsigned Op0Reg = getReg(Op0, BB, IP);
+        BuildMI(*BB, IP, MovOpcode[Class], 1, BaseReg[Class]).addReg(Op0Reg);
+        BuildMI(*BB, IP, SExtOpcode[Class], 0);
+        unsigned TmpReg0 = makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, MovOpcode[Class], 1, TmpReg0).addReg(SExtReg[Class]);
+
+        unsigned TmpReg1 = makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, ANDOpcode[Class], 2, TmpReg1).addReg(Op0Reg).addImm(1);
+        
+        unsigned TmpReg2 = makeAnotherReg(Op0->getType());
+        BuildMI(*BB, IP, XOROpcode[Class], 2,
+                TmpReg2).addReg(TmpReg1).addReg(TmpReg0);
+        BuildMI(*BB, IP, SUBOpcode[Class], 2,
+                ResultReg).addReg(TmpReg2).addReg(TmpReg0);
         return;
       }
     }
