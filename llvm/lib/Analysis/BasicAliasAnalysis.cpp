@@ -23,7 +23,7 @@
 #include "llvm/Argument.h"
 #include "llvm/iOther.h"
 #include "llvm/Constants.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -41,10 +41,13 @@ namespace {
     
     virtual void initializePass();
 
-    // alias - This is the only method here that does anything interesting...
-    //
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
+
+    /// pointsToConstantMemory - Chase pointers until we find a (constant
+    /// global) or not.
+    bool pointsToConstantMemory(const Value *P);
+
   private:
     // CheckGEPInstructions - Check two GEP instructions with known
     // must-aliasing base pointers.  This checks to see if the index expressions
@@ -124,6 +127,14 @@ static const Value *GetGEPOperands(const Value *V, std::vector<Value*> &GEPOps){
   return V;
 }
 
+/// pointsToConstantMemory - Chase pointers until we find a (constant
+/// global) or not.
+bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
+  const Value *V = getUnderlyingObject(P);
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    return GV->isConstant();
+  return false;
+}
 
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
 // as array references.  Note that this function is heavily tail recursive.
