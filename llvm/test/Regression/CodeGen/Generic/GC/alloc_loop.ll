@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc
+
 implementation
 
 declare sbyte* %llvm_gc_allocate(uint)

@@ -1,5 +1,5 @@
-target endian = big
-target pointersize = 32
+; All of these ands and shifts should be folded into rlwimi's
+; RUN: llvm-as < rlwimi.ll | llc -march=ppc32 | not grep and
 
 implementation   ; Functions:
 
