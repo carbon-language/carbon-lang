@@ -86,6 +86,8 @@ namespace {
   CO4("version-script", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<bool>
   CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
+  cl::opt<std::string>
+  CO6("h", cl::Hidden, cl::desc("Compatibility option: ignored"));
 }
 
 namespace llvm {
