@@ -2,10 +2,7 @@
 ; successful, all cast instructions should be eliminated from this testcase.
 ;
 
-; RUN: if as < %s | opt -raise | dis | grep cast 
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | grep-not cast 
 
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *
 	%hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int }

@@ -3,10 +3,7 @@
 ; prevented reg115 from being able to change.
 ;
 
-; RUN: if as < %s | opt -raise | dis | grep '= cast' | grep \*
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | grep '= cast' | grep-not \*
 	
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *
 	%HashEntry = type { uint, sbyte *, \2 } *

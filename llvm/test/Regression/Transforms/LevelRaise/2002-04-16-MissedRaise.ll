@@ -5,18 +5,11 @@
 ;   return (int*)malloc(i+j);
 ; }
 
-; RUN: if as < %s | opt -raise | dis | grep ' cast ' | grep '*'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | grep ' cast ' | not grep '*'
 
 implementation
 
-declare sbyte* "malloc"(uint)
-
-int* "test"(uint %N, uint %M)
-begin
-bb0:					;[#uses=0]
+int* %test(uint %N, uint %M) {
 	%reg111 = shl uint %N, ubyte 2		; <uint> [#uses=1]
 	%reg109 = add uint %reg111, 4		; <uint> [#uses=1]
 	%reg114 = shl uint %M, ubyte 2		; <uint> [#uses=1]
@@ -25,4 +18,4 @@ bb0:					;[#uses=0]
 	%reg117 = malloc sbyte, uint %reg116		; <sbyte*> [#uses=1]
 	%cast221 = cast sbyte* %reg117 to int*		; <int*> [#uses=1]
 	ret int* %cast221
-end
+}

@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -raise | dis | grep cast
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | not grep cast
 
 void %test(...) { ret void }
 

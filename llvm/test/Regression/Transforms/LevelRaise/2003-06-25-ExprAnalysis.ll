@@ -1,9 +1,6 @@
 ; The expr analysis routines were being too aggressive across cast instructions!
 
-; RUN: if as < %s | opt -raise | dis | grep 4294967295
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | not grep 4294967295
 
 target endian = big
 target pointersize = 64

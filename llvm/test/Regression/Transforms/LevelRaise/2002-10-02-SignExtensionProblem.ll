@@ -1,7 +1,4 @@
-; RUN: if as < %s | opt -raise | dis | grep 4294967295
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | grep -v uint | not grep 4294967295
 
 %length_code = uninitialized global [256 x ubyte]
 

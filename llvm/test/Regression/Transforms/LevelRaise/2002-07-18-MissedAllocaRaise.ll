@@ -1,9 +1,6 @@
 ; Looks like we don't raise alloca's like we do mallocs
 ;
-; RUN: if as < %s | opt -raise | dis | grep '= cast' | grep \*
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | grep '= cast' | not grep \*
 
 implementation   ; Functions:
 

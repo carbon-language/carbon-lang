@@ -8,10 +8,7 @@
 ;     x[j*i-12] = j;
 ; }
 
-; RUN: if as < %s | opt -raise | dis | grep ' cast ' | grep '*'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -raise | dis | grep ' cast ' | not grep '*'
 
 implementation
 
