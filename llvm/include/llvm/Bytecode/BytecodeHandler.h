@@ -116,6 +116,14 @@ public:
     unsigned initSlot         ///< Slot number of GV's initializer (0 if none)
   ) {}
 
+  /// This method is called when a type list is recognized. It simply
+  /// provides the number of types that the list contains. The handler
+  /// should expect that number of calls to handleType.
+  /// @brief Handle a type
+  virtual void handleTypeList( 
+    unsigned numEntries ///< The number of entries in the type list
+  ) {}
+
   /// This method is called when a new type is recognized. The type is 
   /// converted from the bytecode and passed to this method.
   /// @brief Handle a type
@@ -133,6 +141,14 @@ public:
   /// its constant value. Because of forward referencing, etc. this is
   /// done towards the end of the module globals block
   virtual void handleGlobalInitializer(GlobalVariable*, Constant* ) {}
+
+  /// This method is called for each dependent library name found
+  /// in the module globals block.
+  virtual void handleDependentLibrary(const std::string& libName) {}
+
+  /// This method is called if the module globals has a non-empty target 
+  /// triple
+  virtual void handleTargetTriple(const std::string& triple) {}
 
   /// This method is called at the end of the module globals block.
   /// @brief Handle end of module globals block.
