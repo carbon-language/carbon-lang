@@ -20,18 +20,17 @@ class MachineInstr;
 class InstructionNode;
 class TargetMachine;
 
-
 /************************* Required Functions *******************************
  * Target-dependent functions that MUST be implemented for each target.
  ***************************************************************************/
 
 const unsigned MAX_INSTR_PER_VMINSTR = 8;
 
-extern unsigned	GetInstructionsByRule	(InstructionNode* subtreeRoot,
+extern void	GetInstructionsByRule	(InstructionNode* subtreeRoot,
 					 int ruleForNode,
 					 short* nts,
 					 TargetMachine &Target,
-					 MachineInstr** minstrVec);
+                                         vector<MachineInstr*>& mvec);
 
 extern unsigned	GetInstructionsForProlog(BasicBlock* entryBB,
 					 TargetMachine &Target,
