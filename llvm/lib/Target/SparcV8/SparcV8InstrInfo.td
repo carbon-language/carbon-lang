@@ -126,18 +126,24 @@ def RESTORErr : F3_1<2, 0b111101, "restore">;        // restore r, r, r
 def RESTOREri : F3_2<2, 0b111101, "restore">;        // restore r, i, r
 
 // Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
-def BA   : F2_2<0b1000, 0b010, "ba">;
-def BN   : F2_2<0b0000, 0b010, "bn">;
-def BNE  : F2_2<0b1001, 0b010, "bne">;
-def BE   : F2_2<0b0001, 0b010, "be">;
-def BG   : F2_2<0b1010, 0b010, "bg">;
-def BLE  : F2_2<0b0010, 0b010, "ble">;
-def BGE  : F2_2<0b1011, 0b010, "bge">;
-def BL   : F2_2<0b0011, 0b010, "bl">;
-def BGU  : F2_2<0b1100, 0b010, "bgu">;
-def BLEU : F2_2<0b0100, 0b010, "bleu">;
-def BCC  : F2_2<0b1101, 0b010, "bcc">;
-def BCS  : F2_2<0b0101, 0b010, "bcs">;
+
+// conditional branch class:
+class BranchV8<bits<4> cc, string nm> : F2_2<cc, 0b010, nm> {
+  let isBranch = 1;
+  let isTerminator = 1;
+}
+def BA   : BranchV8<0b1000, "ba">;
+def BN   : BranchV8<0b0000, "bn">;
+def BNE  : BranchV8<0b1001, "bne">;
+def BE   : BranchV8<0b0001, "be">;
+def BG   : BranchV8<0b1010, "bg">;
+def BLE  : BranchV8<0b0010, "ble">;
+def BGE  : BranchV8<0b1011, "bge">;
+def BL   : BranchV8<0b0011, "bl">;
+def BGU  : BranchV8<0b1100, "bgu">;
+def BLEU : BranchV8<0b0100, "bleu">;
+def BCC  : BranchV8<0b1101, "bcc">;
+def BCS  : BranchV8<0b0101, "bcs">;
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
@@ -150,6 +156,7 @@ def CALL : InstV8 {
 }
 
 // Section B.25 - Jump and Link, p. 126
+// FIXME: are they to be used as branches, calls, or returns? (not used now)
 def JMPLrr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
 def JMPLri : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
