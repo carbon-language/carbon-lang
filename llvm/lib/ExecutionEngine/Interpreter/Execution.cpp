@@ -820,6 +820,41 @@ void Interpreter::visitVANextInst(VANextInst &I) {
   SetValue(&I, VAList, SF);
 }
 
+#define IMPLEMENT_VAARG(TY) \
+   case Type::TY##TyID: Dest.TY##Val = Src.TY##Val; break
+
+void Interpreter::visitVAArgInst(VAArgInst &I) {
+  ExecutionContext &SF = ECStack.back();
+
+  // Get the incoming valist element.  LLI treats the valist as an integer.
+  GenericValue VAList = getOperandValue(I.getOperand(0), SF);
+  unsigned Argument = VAList.IntVal;
+  assert(Argument < SF.VarArgs.size() &&
+         "Accessing past the last vararg argument!");
+  GenericValue Dest, Src = SF.VarArgs[Argument];
+  const Type *Ty = I.getType();
+  switch (Ty->getPrimitiveID()) {
+    IMPLEMENT_VAARG(UByte);
+    IMPLEMENT_VAARG(SByte);
+    IMPLEMENT_VAARG(UShort);
+    IMPLEMENT_VAARG(Short);
+    IMPLEMENT_VAARG(UInt);
+    IMPLEMENT_VAARG(Int);
+    IMPLEMENT_VAARG(ULong);
+    IMPLEMENT_VAARG(Long);
+    IMPLEMENT_VAARG(Pointer);
+    IMPLEMENT_VAARG(Float);
+    IMPLEMENT_VAARG(Double);
+    IMPLEMENT_VAARG(Bool);
+  default:
+    std::cout << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
+    abort();
+  }
+  
+  // Set the Value of this Instruction.
+  SetValue(&I, Dest, SF);
+}
+
 //===----------------------------------------------------------------------===//
 //                        Dispatch and Execution Code
 //===----------------------------------------------------------------------===//

@@ -130,6 +130,7 @@ public:
   void visitShl(ShiftInst &I);
   void visitShr(ShiftInst &I);
   void visitVANextInst(VANextInst &I);
+  void visitVAArgInst(VAArgInst &I);
   void visitInstruction(Instruction &I) {
     std::cerr << I;
     assert(0 && "Instruction not interpretable yet!");
