@@ -219,12 +219,32 @@ struct RegisterOpt : public RegisterPassBase {
     if (CFGOnly) setOnlyUsesCFG();
   }
 
+  /// Register FunctionPass using default constructor explicitly...
+  ///
+  RegisterOpt(const char *PassArg, const char *Name, FunctionPass *(*ctor)(),
+              bool CFGOnly = false) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Optimization, (Pass*(*)())ctor));
+    if (CFGOnly) setOnlyUsesCFG();
+  }
+
   /// Register Pass using TargetMachine constructor...
   ///
   RegisterOpt(const char *PassArg, const char *Name,
                Pass *(*targetctor)(TargetMachine &), bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
                               PassInfo::Optimization, 0, targetctor));
+    if (CFGOnly) setOnlyUsesCFG();
+  }
+
+  /// Register FunctionPass using TargetMachine constructor...
+  ///
+  RegisterOpt(const char *PassArg, const char *Name,
+              FunctionPass *(*targetctor)(TargetMachine &),
+              bool CFGOnly = false) {
+    registerPass(new PassInfo(Name, PassArg, typeid(PassName),
+                              PassInfo::Optimization, 0,
+                              (Pass*(*)(TargetMachine&))targetctor));
     if (CFGOnly) setOnlyUsesCFG();
   }
 };
