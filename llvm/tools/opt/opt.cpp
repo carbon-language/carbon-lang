@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    // Make sure that the Output file gets unlink'd from the disk if we get a
+    // Make sure that the Output file gets unlinked from the disk if we get a
     // SIGINT
     RemoveFileOnSignal(OutputFilename);
   }

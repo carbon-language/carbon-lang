@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
   else {
     Out = new std::ofstream(OutputFilename.c_str(), std::ios::out);
 
-    // Make sure that the Out file gets unlink'd from the disk if we get a
+    // Make sure that the Out file gets unlinked from the disk if we get a
     // signal
     RemoveFileOnSignal(OutputFilename);
   }
