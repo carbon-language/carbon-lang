@@ -7,12 +7,17 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file provides the Win32 specific implementation of  DynamicLibrary.
+// This file provides the Win32 specific implementation of DynamicLibrary.
 //
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+
+#ifdef __MINGW
+#include <imagehlp.h>
+#else
 #include <dbghelp.h>
+#endif
 
 #pragma comment(lib, "dbghelp.lib")
 
@@ -26,13 +31,27 @@ using namespace sys;
 
 static std::vector<HMODULE> OpenedHandles;
 
-BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
-                           ULONG ModuleBase,
-                           ULONG ModuleSize,
-                           PVOID UserContext)
-{
-  OpenedHandles.push_back((HMODULE)ModuleBase);
-  return TRUE;
+extern "C" {
+  static BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
+                                    ULONG ModuleBase,
+                                    ULONG ModuleSize,
+                                    PVOID UserContext)
+  {
+    // Ignore VC++ runtimes prior to 7.1.  Somehow some of them get loaded
+    // into the process.
+    if (stricmp(ModuleName, "msvci70") != 0 &&
+        stricmp(ModuleName, "msvcirt") != 0 &&
+        stricmp(ModuleName, "msvcp50") != 0 &&
+        stricmp(ModuleName, "msvcp60") != 0 &&
+        stricmp(ModuleName, "msvcp70") != 0 &&
+        stricmp(ModuleName, "msvcr70") != 0 &&
+        stricmp(ModuleName, "msvcrt") != 0 &&
+        stricmp(ModuleName, "msvcrt20") != 0 &&
+        stricmp(ModuleName, "msvcrt40") != 0) {
+      OpenedHandles.push_back((HMODULE)ModuleBase);
+    }
+    return TRUE;
+  }
 }
 
 DynamicLibrary::DynamicLibrary() : handle(0) {
@@ -83,7 +102,7 @@ void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
     EnumerateLoadedModules(GetCurrentProcess(), ELM_Callback, 0);
   }
 
-  // Because we don't remember the handles, we will never free them; hence,
+  // Because we don't remember the handle, we will never free it; hence,
   // it is loaded permanently.
 }
 
