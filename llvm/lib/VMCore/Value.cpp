@@ -37,7 +37,7 @@ Value::Value(const Type *ty, unsigned scid, const std::string &name)
            isa<OpaqueType>(ty)) &&
            "Cannot create non-first-class values except for constants!");
   if (ty == Type::VoidTy)
-    assert(name == "" && "Cannot have named void values!");
+    assert(name.empty() && "Cannot have named void values!");
 }
 
 Value::~Value() {
