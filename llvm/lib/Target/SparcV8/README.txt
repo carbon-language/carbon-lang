@@ -18,8 +18,8 @@ are the known SingleSource failures:
 	Benchmarks/Shootout-C++/moments
 	Benchmarks/Shootout-C++/random
 
-Here are the known MultiSource test failures, neglecting FreeBench
-and MallocBench:
+Here are the known MultiSource test failures, neglecting FreeBench,
+MallocBench, and Prolangs-C++:
 
   Applications/siod
   Applications/lambda
@@ -27,14 +27,14 @@ and MallocBench:
   Applications/hbd
   Applications/hexxagon
   Benchmarks/Fhourstones
-  Benchmarks/McCat/04-bisect
   Benchmarks/McCat/03-testtrie
   Benchmarks/McCat/18-imp
+  Benchmarks/Olden/tsp
   Benchmarks/Ptrdist/anagram
-  Benchmarks/sim
-  Benchmarks/Prolangs-C/TimberWolfMC
-  Benchmarks/Prolangs-C/allroots
-  Benchmarks/Prolangs-C/archie-client
+  Benchmarks/Prolangs-C/bison/mybison
+  Benchmarks/Prolangs-C/fixoutput
+  Benchmarks/Prolangs-C/gnugo
+  Benchmarks/Prolangs-C/plot2fig
 
 To-do
 -----
