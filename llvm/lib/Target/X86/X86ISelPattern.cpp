@@ -410,6 +410,7 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
   
     Result = MaxRegUse+NumExtraMaxRegUsers;
   }
+
   //std::cerr << " WEIGHT: " << Result << " ";  N->dump(); std::cerr << "\n";
   return Result;
 }
@@ -1106,6 +1107,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
   case ISD::TRUNCATE:
+    // Fold TRUNCATE (LOAD P) into a smaller load from P.
+    if (isFoldableLoad(N.getOperand(0))) {
+      switch (N.getValueType()) {
+      default: assert(0 && "Unknown truncate!");
+      case MVT::i1:
+      case MVT::i8:  Opc = X86::MOV8rm;  break;
+      case MVT::i16: Opc = X86::MOV16rm; break;
+      }
+      X86AddressMode AM;
+      EmitFoldedLoad(N.getOperand(0), AM);
+      addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
+      return Result;
+    }
+
     // Handle cast of LARGER int to SMALLER int using a move to EAX followed by
     // a move out of AX or AL.
     switch (N.getOperand(0).getValueType()) {
