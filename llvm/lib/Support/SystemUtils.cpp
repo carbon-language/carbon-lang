@@ -12,16 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define _POSIX_MAPPED_FILES
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/Config/fcntl.h"
-#include "llvm/Config/pagesize.h"
-#include "llvm/Config/unistd.h"
-#include "llvm/Config/windows.h"
-#include "llvm/Config/sys/mman.h"
-#include "llvm/Config/sys/stat.h"
-#include "llvm/Config/sys/types.h"
-#include "llvm/Config/sys/wait.h"
+#include "llvm/System/Program.h"
+#include <unistd.h>
+#include <wait.h>
+#include <sys/fcntl.h>
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
@@ -29,25 +24,6 @@
 #include <iostream>
 #include <signal.h>
 using namespace llvm;
-
-/// isExecutableFile - This function returns true if the filename specified
-/// exists and is executable.
-///
-bool llvm::isExecutableFile(const std::string &ExeFileName) {
-  struct stat Buf;
-  if (stat(ExeFileName.c_str(), &Buf))
-    return false;  // Must not be executable!
-
-  if (!(Buf.st_mode & S_IFREG))
-    return false;                    // Not a regular file?
-
-  if (Buf.st_uid == getuid())        // Owner of file?
-    return Buf.st_mode & S_IXUSR;
-  else if (Buf.st_gid == getgid())   // In group of file?
-    return Buf.st_mode & S_IXGRP;
-  else                               // Unrelated to file?
-    return Buf.st_mode & S_IXOTH;
-}
 
 /// isStandardOutAConsole - Return true if we can tell that the standard output
 /// stream goes to a terminal window or console.
@@ -67,48 +43,21 @@ bool llvm::isStandardOutAConsole() {
 /// empty string.
 /// 
 #undef FindExecutable   // needed on windows :(
-std::string llvm::FindExecutable(const std::string &ExeName,
+sys::Path llvm::FindExecutable(const std::string &ExeName,
                                  const std::string &ProgramPath) {
-  // First check the directory that bugpoint is in.  We can do this if
-  // BugPointPath contains at least one / character, indicating that it is a
+  // First check the directory that the calling program is in.  We can do this 
+  // if ProgramPath contains at least one / character, indicating that it is a
   // relative path to bugpoint itself.
   //
-  std::string Result = ProgramPath;
-  while (!Result.empty() && Result[Result.size()-1] != '/')
-    Result.erase(Result.size()-1, 1);
+  sys::Path Result ( ProgramPath );
+  Result.elideFile();
 
-  if (!Result.empty()) {
-    Result += ExeName;
-    if (isExecutableFile(Result)) return Result; // Found it?
+  if (!Result.isEmpty()) {
+    Result.appendFile(ExeName);
+    if (Result.executable()) return Result;
   }
 
-  // Okay, if the path to the program didn't tell us anything, try using the
-  // PATH environment variable.
-  const char *PathStr = getenv("PATH");
-  if (PathStr == 0) return "";
-
-  // Now we have a colon separated list of directories to search... try them...
-  unsigned PathLen = strlen(PathStr);
-  while (PathLen) {
-    // Find the first colon...
-    const char *Colon = std::find(PathStr, PathStr+PathLen, ':');
-    
-    // Check to see if this first directory contains the executable...
-    std::string FilePath = std::string(PathStr, Colon) + '/' + ExeName;
-    if (isExecutableFile(FilePath))
-      return FilePath;                    // Found the executable!
-   
-    // Nope it wasn't in this directory, check the next range!
-    PathLen -= Colon-PathStr;
-    PathStr = Colon;
-    while (*PathStr == ':') {   // Advance past colons
-      PathStr++;
-      PathLen--;
-    }
-  }
-
-  // If we fell out, we ran out of directories in PATH to search, return failure
-  return "";
+  return sys::Program::FindProgramByName(ExeName);
 }
 
 static void RedirectFD(const std::string &File, int FD) {
