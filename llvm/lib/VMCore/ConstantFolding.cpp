@@ -631,7 +631,7 @@ static bool isMaybeZeroSizedType(const Type *Ty) {
 
     // If all of elements have zero size, this does too.
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-      if (!isMaybeZeroSizedType(Ty)) return false;
+      if (!isMaybeZeroSizedType(STy->getElementType(i))) return false;
     return true;
 
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
