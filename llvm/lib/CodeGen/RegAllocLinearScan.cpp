@@ -552,8 +552,7 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
 
     if (cur->weight < minWeight) {
         restoreRegUse();
-        DEBUG(std::cerr << "\t\t\t\tspilling : " << mri_->getName(minReg)
-              << ", weight: " << cur->weight << '\n');
+        DEBUG(std::cerr << "\t\t\t\tspilling : " << *cur << '\n');
         assignVirt2StackSlot(cur->reg);
     }
     else {
@@ -570,9 +569,7 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
                 toSpill.find(v2pMap_[reg]) != toSpill.end() &&
                 cur->overlaps(**i)) {
                 spilled.push_back(v2pMap_[reg]);
-                DEBUG(std::cerr << "\t\t\t\tspilling : "
-                      << mri_->getName(minReg) << ", weight: "
-                      << (*i)->weight << '\n');
+                DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
                 assignVirt2StackSlot(reg);
                 i = active_.erase(i);
             }
@@ -586,9 +583,7 @@ void RA::assignStackSlotAtInterval(Intervals::const_iterator cur)
             if (reg >= MRegisterInfo::FirstVirtualRegister &&
                 toSpill.find(v2pMap_[reg]) != toSpill.end() &&
                 cur->overlaps(**i)) {
-                DEBUG(std::cerr << "\t\t\t\tspilling : "
-                      << mri_->getName(minReg) << ", weight: "
-                      << (*i)->weight << '\n');
+                DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
                 assignVirt2StackSlot(reg);
                 i = inactive_.erase(i);
             }
