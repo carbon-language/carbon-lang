@@ -16,17 +16,16 @@
 #define SUPPORT_TARJANSCCITERATOR_H
 
 #include "Support/GraphTraits.h"
-#include "Support/Debug.h"
 #include "Support/iterator"
 #include <vector>
 #include <map>
 
 //--------------------------------------------------------------------------
-// class SCC : A simple representation of an SCC in a generic Graph.
+// class SCC - A simple representation of an SCC in a generic Graph.
 //--------------------------------------------------------------------------
 
 template<class GraphT, class GT = GraphTraits<GraphT> >
-struct SCC: public std::vector<typename GT::NodeType*> {
+struct SCC : public std::vector<typename GT::NodeType*> {
 
   typedef typename GT::NodeType NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
@@ -43,7 +42,7 @@ struct SCC: public std::vector<typename GT::NodeType*> {
   bool HasLoop() const {
     if (size() > 1) return true;
     NodeType* N = front();
-    for (ChildItTy CI=GT::child_begin(N), CE=GT::child_end(N); CI != CE; ++CI)
+    for (ChildItTy CI = GT::child_begin(N), CE=GT::child_end(N); CI != CE; ++CI)
       if (*CI == N)
         return true;
     return false;
@@ -56,8 +55,7 @@ struct SCC: public std::vector<typename GT::NodeType*> {
 //--------------------------------------------------------------------------
 
 template<class GraphT, class GT = GraphTraits<GraphT> >
-class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
-{
+class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t> {
   typedef SCC<GraphT, GT> SccTy;
   typedef forward_iterator<SccTy, ptrdiff_t> super;
   typedef typename super::reference reference;
@@ -185,32 +183,27 @@ public:
     _Self tmp = *this; ++*this; return tmp; 
   }
 
-  // Retrieve a pointer to the current SCC.  Returns NULL when done.
-  inline const SccTy* operator*() const { 
-    assert(!CurrentSCC.empty() || VisitStack.empty());
-    return CurrentSCC.empty()? NULL : &CurrentSCC;
+  // Retrieve a reference to the current SCC
+  inline const SccTy &operator*() const { 
+    assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
+    return CurrentSCC;
   }
-  inline SccTy* operator*() { 
-    assert(!CurrentSCC.empty() || VisitStack.empty());
-    return CurrentSCC.empty()? NULL : &CurrentSCC;
+  inline SccTy &operator*() { 
+    assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
+    return CurrentSCC;
   }
 };
 
 
-// Global constructor for the Tarjan SCC iterator.  Use *I == NULL or I.fini()
-// to test termination efficiently, instead of I == the "end" iterator.
+// Global constructor for the Tarjan SCC iterator.
 template <class T>
-TarjanSCC_iterator<T> tarj_begin(T G)
-{
+TarjanSCC_iterator<T> tarj_begin(T G) {
   return TarjanSCC_iterator<T>::begin(G);
 }
 
 template <class T>
-TarjanSCC_iterator<T> tarj_end(T G)
-{
+TarjanSCC_iterator<T> tarj_end(T G) {
   return TarjanSCC_iterator<T>::end(G);
 }
-
-//===----------------------------------------------------------------------===//
 
 #endif
