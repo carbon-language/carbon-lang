@@ -60,7 +60,7 @@ public:
     Text,
     ReadOnlyData,
     InitRWData,
-    UninitRWData,
+    ZeroInitRWData,
   } CurSection;
 
   AsmPrinter(std::ostream &os, const TargetMachine &T)
@@ -105,7 +105,7 @@ public:
       case Text:         toAsm << "\".text\""; break;
       case ReadOnlyData: toAsm << "\".rodata\",#alloc"; break;
       case InitRWData:   toAsm << "\".data\",#alloc,#write"; break;
-      case UninitRWData: toAsm << "\".bss\",#alloc,#write"; break;
+      case ZeroInitRWData: toAsm << "\".bss\",#alloc,#write"; break;
       }
     toAsm << "\n";
   }
@@ -541,28 +541,29 @@ public:
   }
 
 private:
-  void emitGlobalsAndConstants(const Module &M);
+  void emitGlobalsAndConstants  (const Module &M);
 
-  void printGlobalVariable(const GlobalVariable *GV);
-  void printSingleConstant(   const Constant* CV);
-  void printConstantValueOnly(const Constant* CV);
-  void printConstant(         const Constant* CV, std::string valID = "");
+  void printGlobalVariable      (const GlobalVariable *GV);
+  void PrintZeroBytesToPad      (int numBytes);
+  void printSingleConstantValue (const Constant* CV);
+  void printConstantValueOnly   (const Constant* CV, int numPadBytes = 0);
+  void printConstant            (const Constant* CV, std::string valID = "");
 
-  static void FoldConstants(const Module &M,
-                            hash_set<const Constant*> &moduleConstants);
+  static void FoldConstants     (const Module &M,
+                                 hash_set<const Constant*> &moduleConstants);
 };
 
 
 // Can we treat the specified array as a string?  Only if it is an array of
 // ubytes or non-negative sbytes.
 //
-static bool isStringCompatible(const ConstantArray *CPA) {
-  const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
+static bool isStringCompatible(const ConstantArray *CVA) {
+  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
   if (ETy == Type::UByteTy) return true;
   if (ETy != Type::SByteTy) return false;
 
-  for (unsigned i = 0; i < CPA->getNumOperands(); ++i)
-    if (cast<ConstantSInt>(CPA->getOperand(i))->getValue() < 0)
+  for (unsigned i = 0; i < CVA->getNumOperands(); ++i)
+    if (cast<ConstantSInt>(CVA->getOperand(i))->getValue() < 0)
       return false;
 
   return true;
@@ -576,16 +577,16 @@ static inline char toOctal(int X) {
 // getAsCString - Return the specified array as a C compatible string, only if
 // the predicate isStringCompatible is true.
 //
-static string getAsCString(const ConstantArray *CPA) {
-  assert(isStringCompatible(CPA) && "Array is not string compatible!");
+static string getAsCString(const ConstantArray *CVA) {
+  assert(isStringCompatible(CVA) && "Array is not string compatible!");
 
   string Result;
-  const Type *ETy = cast<ArrayType>(CPA->getType())->getElementType();
+  const Type *ETy = cast<ArrayType>(CVA->getType())->getElementType();
   Result = "\"";
-  for (unsigned i = 0; i < CPA->getNumOperands(); ++i) {
+  for (unsigned i = 0; i < CVA->getNumOperands(); ++i) {
     unsigned char C = (ETy == Type::SByteTy) ?
-      (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
-      (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
+      (unsigned char)cast<ConstantSInt>(CVA->getOperand(i))->getValue() :
+      (unsigned char)cast<ConstantUInt>(CVA->getOperand(i))->getValue();
 
     if (C == '"') {
       Result += "\\\"";
@@ -649,23 +650,29 @@ TypeToDataDirective(const Type* type)
     }
 }
 
+// Get the size of the type
+// 
+inline unsigned int
+TypeToSize(const Type* type, const TargetMachine& target)
+{
+  return target.findOptimalStorageSize(type);
+}
+
 // Get the size of the constant for the given target.
 // If this is an unsized array, return 0.
 // 
 inline unsigned int
 ConstantToSize(const Constant* CV, const TargetMachine& target)
 {
-  if (const ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
+  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
     {
-      const ArrayType *aty = cast<ArrayType>(CPA->getType());
+      const ArrayType *aty = cast<ArrayType>(CVA->getType());
       if (ArrayTypeIsString(aty))
-        return 1 + CPA->getNumOperands();
+        return 1 + CVA->getNumOperands();
     }
   
-  return target.findOptimalStorageSize(CV->getType());
+  return TypeToSize(CV->getType(), target);
 }
-
-
 
 // Align data larger than one L1 cache line on L1 cache line boundaries.
 // Align all smaller data on the next higher 2^x boundary (4, 8, ...).
@@ -687,7 +694,7 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 inline unsigned int
 TypeToAlignment(const Type* type, const TargetMachine& target)
 {
-  return SizeToAlignment(target.findOptimalStorageSize(type), target);
+  return SizeToAlignment(TypeToSize(type, target), target);
 }
 
 // Get the size of the constant and then use SizeToAlignment.
@@ -695,9 +702,9 @@ TypeToAlignment(const Type* type, const TargetMachine& target)
 inline unsigned int
 ConstantToAlignment(const Constant* CV, const TargetMachine& target)
 {
-  if (const ConstantArray* CPA = dyn_cast<ConstantArray>(CV))
-    if (ArrayTypeIsString(cast<ArrayType>(CPA->getType())))
-      return SizeToAlignment(1 + CPA->getNumOperands(), target);
+  if (const ConstantArray* CVA = dyn_cast<ConstantArray>(CV))
+    if (ArrayTypeIsString(cast<ArrayType>(CVA->getType())))
+      return SizeToAlignment(1 + CVA->getNumOperands(), target);
   
   return TypeToAlignment(CV->getType(), target);
 }
@@ -705,7 +712,7 @@ ConstantToAlignment(const Constant* CV, const TargetMachine& target)
 
 // Print a single constant value.
 void
-SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
+SparcModuleAsmPrinter::printSingleConstantValue(const Constant* CV)
 {
   assert(CV->getType() != Type::VoidTy &&
          CV->getType() != Type::TypeTy &&
@@ -759,31 +766,68 @@ SparcModuleAsmPrinter::printSingleConstant(const Constant* CV)
     }
 }
 
-// Print a constant value or values (it may be an aggregate).
-// Uses printSingleConstant() to print each individual value.
 void
-SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV)
+SparcModuleAsmPrinter::PrintZeroBytesToPad(int numBytes)
 {
-  const ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
-  
-  if (CPA && isStringCompatible(CPA))
+  for ( ; numBytes >= 8; numBytes -= 8)
+    printSingleConstantValue(Constant::getNullValue(Type::ULongTy));
+
+  if (numBytes >= 4)
+    {
+      printSingleConstantValue(Constant::getNullValue(Type::UIntTy));
+      numBytes -= 4;
+    }
+
+  while (numBytes--)
+    printSingleConstantValue(Constant::getNullValue(Type::UByteTy));
+}
+
+// Print a constant value or values (it may be an aggregate).
+// Uses printSingleConstantValue() to print each individual value.
+void
+SparcModuleAsmPrinter::printConstantValueOnly(const Constant* CV,
+                                              int numPadBytes /* = 0*/)
+{
+  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+
+  if (numPadBytes)
+    PrintZeroBytesToPad(numPadBytes);
+
+  if (CVA && isStringCompatible(CVA))
     { // print the string alone and return
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << "\n";
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
     }
-  else if (CPA)
+  else if (CVA)
     { // Not a string.  Print the values in successive locations
-      const std::vector<Use> &constValues = CPA->getValues();
+      const std::vector<Use> &constValues = CVA->getValues();
       for (unsigned i=0; i < constValues.size(); i++)
         printConstantValueOnly(cast<Constant>(constValues[i].get()));
     }
-  else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CV))
-    { // Print the fields in successive locations
-      const std::vector<Use>& constValues = CPS->getValues();
-      for (unsigned i=0; i < constValues.size(); i++)
-        printConstantValueOnly(cast<Constant>(constValues[i].get()));
+  else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
+    { // Print the fields in successive locations. Pad to align if needed!
+      const StructLayout *cvsLayout =
+        Target.DataLayout.getStructLayout(CVS->getType());
+      const std::vector<Use>& constValues = CVS->getValues();
+      unsigned sizeSoFar = 0;
+      for (unsigned i=0, N = constValues.size(); i < N; i++)
+        {
+          const Constant* field = cast<Constant>(constValues[i].get());
+
+          // Check if padding is needed and insert one or more 0s.
+          unsigned fieldSize = Target.DataLayout.getTypeSize(field->getType());
+          int padSize = ((i == N-1? cvsLayout->StructSize
+                                  : cvsLayout->MemberOffsets[i+1])
+                         - cvsLayout->MemberOffsets[i]) - fieldSize;
+          sizeSoFar += (fieldSize + padSize);
+
+          // Now print the actual field value
+          printConstantValueOnly(field, padSize);
+        }
+      assert(sizeSoFar == cvsLayout->StructSize &&
+             "Layout of constant struct may be incorrect!");
     }
   else
-    printSingleConstant(CV);
+    printSingleConstantValue(CV);
 }
 
 // Print a constant (which may be an aggregate) prefixed by all the
@@ -798,11 +842,11 @@ SparcModuleAsmPrinter::printConstant(const Constant* CV, string valID)
   toAsm << "\t.align\t" << ConstantToAlignment(CV, Target) << "\n";
   
   // Print .size and .type only if it is not a string.
-  const ConstantArray *CPA = dyn_cast<ConstantArray>(CV);
-  if (CPA && isStringCompatible(CPA))
+  const ConstantArray *CVA = dyn_cast<ConstantArray>(CV);
+  if (CVA && isStringCompatible(CVA))
     { // print it as a string and return
       toAsm << valID << ":\n";
-      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CPA) << "\n";
+      toAsm << "\t" << ".ascii" << "\t" << getAsCString(CVA) << "\n";
       return;
     }
   
@@ -833,14 +877,14 @@ void SparcModuleAsmPrinter::printGlobalVariable(const GlobalVariable* GV)
   if (GV->hasExternalLinkage())
     toAsm << "\t.global\t" << getID(GV) << "\n";
   
-  if (GV->hasInitializer())
+  if (GV->hasInitializer() && ! GV->getInitializer()->isNullValue())
     printConstant(GV->getInitializer(), getID(GV));
   else {
     toAsm << "\t.align\t" << TypeToAlignment(GV->getType()->getElementType(),
                                                 Target) << "\n";
     toAsm << "\t.type\t" << getID(GV) << ",#object\n";
     toAsm << "\t.reserve\t" << getID(GV) << ","
-          << Target.findOptimalStorageSize(GV->getType()->getElementType())
+          << TypeToSize(GV->getType()->getElementType(), Target)
           << "\n";
   }
 }
@@ -863,17 +907,18 @@ void SparcModuleAsmPrinter::emitGlobalsAndConstants(const Module &M) {
     printConstant(*I);
 
   // Output global variables...
-  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI) {
-    if (GI->hasInitializer() && GI->isConstant()) {
-      enterSection(AsmPrinter::ReadOnlyData);  // read-only, initialized data
-    } else if (GI->hasInitializer() && !GI->isConstant()) { // read-write data
-      enterSection(AsmPrinter::InitRWData);
-    } else {
-      assert (!GI->hasInitializer() && "Unexpected global variable type found");
-      enterSection(AsmPrinter::UninitRWData);       // Uninitialized data
+  for (Module::const_giterator GI = M.gbegin(), GE = M.gend(); GI != GE; ++GI)
+    if (! GI->isExternal()) {
+      assert(GI->hasInitializer());
+      if (GI->isConstant())
+        enterSection(AsmPrinter::ReadOnlyData);   // read-only, initialized data
+      else if (GI->getInitializer()->isNullValue())
+        enterSection(AsmPrinter::ZeroInitRWData); // read-write zero data
+      else
+        enterSection(AsmPrinter::InitRWData);     // read-write non-zero data
+
+      printGlobalVariable(GI);
     }
-    printGlobalVariable(GI);
-  }
 
   toAsm << "\n";
 }
