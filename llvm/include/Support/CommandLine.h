@@ -17,6 +17,7 @@
 #include <vector>
 #include <utility>
 #include <cstdarg>
+#include <cassert>
 #include "boost/type_traits/object_traits.hpp"
 
 /// cl Namespace - This namespace contains all of the command line option
