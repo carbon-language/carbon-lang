@@ -762,7 +762,10 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 void SelectionDAGISel::CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
                                                   Value *V, unsigned Reg) {
   SelectionDAG &DAG = SDL.DAG;
-  DAG.setRoot(DAG.getCopyToReg(DAG.getRoot(), SDL.getValue(V), Reg));
+  SDOperand Op = SDL.getValue(V);
+  if (CopyRegSDNode *CR = dyn_cast<CopyRegSDNode>(Op))
+    assert(CR->getReg() != Reg && "Copy from a reg to the same reg!");
+  DAG.setRoot(DAG.getCopyToReg(DAG.getRoot(), Op, Reg));
 }
 
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
@@ -798,7 +801,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // Ensure that all instructions which are used outside of their defining
   // blocks are available as virtual registers.
   for (BasicBlock::iterator I = LLVMBB->begin(), E = LLVMBB->end(); I != E;++I)
-    if (!I->use_empty()) {
+    if (!I->use_empty() && !isa<PHINode>(I)) {
       std::map<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
         CopyValueToVirtualRegister(SDL, I, VMI->second);
