@@ -16,13 +16,11 @@
 #include <sys/resource.h>
 
 namespace llvm {
-using namespace sys;
-
 
 // Some LLVM programs such as bugpoint produce core files as a normal part of
 // their operation. To prevent the disk from filling up, this configuration item
 // does what's necessary to prevent their generation.
-void PreventCoreFiles() {
+void sys::PreventCoreFiles() {
   struct rlimit rlim;
   rlim.rlim_cur = rlim.rlim_max = 0;
   int res = setrlimit(RLIMIT_CORE, &rlim);
