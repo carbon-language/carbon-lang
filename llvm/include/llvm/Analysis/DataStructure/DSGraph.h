@@ -375,6 +375,15 @@ public:
                  ReturnNodesTy &OldReturnNodes, NodeMapTy &OldNodeMap,
                  unsigned CloneFlags = 0);
 
+  /// getFunctionArgumentsForCall - Given a function that is currently in this
+  /// graph, return the DSNodeHandles that correspond to the pointer-compatible
+  /// function arguments.  The vector is filled in with the return value (or
+  /// null if it is not pointer compatible), followed by all of the
+  /// pointer-compatible arguments.
+  void getFunctionArgumentsForCall(Function *F,
+                                   std::vector<DSNodeHandle> &Args) const;
+
+
   /// mergeInGraph - The method is used for merging graphs together.  If the
   /// argument graph is not *this, it makes a clone of the specified graph, then
   /// merges the nodes specified in the call site with the formal arguments in
