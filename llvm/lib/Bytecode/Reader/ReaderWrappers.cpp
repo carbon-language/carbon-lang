@@ -331,7 +331,7 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
 static void getSymbols(Module*M, std::vector<std::string>& symbols) {
   // Loop over global variables
   for (Module::giterator GI = M->gbegin(), GE=M->gend(); GI != GE; ++GI)
-    if (GI->hasInitializer() && !GI->hasInternalLinkage())
+    if (!GI->isExternal() && !GI->hasInternalLinkage())
       if (!GI->getName().empty())
         symbols.push_back(GI->getName());
 
