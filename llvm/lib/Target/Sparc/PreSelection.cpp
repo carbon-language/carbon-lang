@@ -214,8 +214,8 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
                           "constantGEP", &insertBefore);
 
     default:                            // must be a binary operator
-      assert(CE->getOpcode() >= Instruction::FirstBinaryOp &&
-             CE->getOpcode() <  Instruction::NumBinaryOps &&
+      assert(CE->getOpcode() >= Instruction::BinaryOpsBegin &&
+             CE->getOpcode() <  Instruction::BinaryOpsEnd &&
              "Unrecognized opcode in ConstantExpr");
       getArg1 = CE->getOperand(0);
       if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))

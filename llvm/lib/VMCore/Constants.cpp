@@ -634,8 +634,8 @@ ConstantExpr *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   
   // Its not in the table so create a new one and put it in the table.
   // Check the operands for consistency first
-  assert((Opcode >= Instruction::FirstBinaryOp &&
-          Opcode < Instruction::NumBinaryOps) &&
+  assert((Opcode >= Instruction::BinaryOpsBegin &&
+          Opcode < Instruction::BinaryOpsEnd) &&
          "Invalid opcode in binary constant expression");
 
   assert(C1->getType() == C2->getType() &&

@@ -179,7 +179,7 @@ static inline bool TraceThisOpCode(unsigned opCode) {
   // Explicitly test for opCodes *not* to trace so that any new opcodes will
   // be traced by default (VoidTy's are already excluded)
   // 
-  return (opCode  < Instruction::FirstOtherOp &&
+  return (opCode  < Instruction::OtherOpsBegin &&
           opCode != Instruction::Alloca &&
           opCode != Instruction::PHINode &&
           opCode != Instruction::Cast);

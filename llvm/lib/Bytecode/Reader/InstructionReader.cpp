@@ -122,8 +122,8 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   if (ParseRawInst(Buf, EndBuf, Raw))
     return true;
 
-  if (Raw.Opcode >= Instruction::FirstBinaryOp &&
-      Raw.Opcode <  Instruction::NumBinaryOps  && Raw.NumOperands == 2) {
+  if (Raw.Opcode >= Instruction::BinaryOpsBegin &&
+      Raw.Opcode <  Instruction::BinaryOpsEnd  && Raw.NumOperands == 2) {
     Res = BinaryOperator::create((Instruction::BinaryOps)Raw.Opcode,
 				 getValue(Raw.Ty, Raw.Arg1),
 				 getValue(Raw.Ty, Raw.Arg2));

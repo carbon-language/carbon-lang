@@ -266,15 +266,15 @@ CreateIntSetInstruction(const TargetMachine& target,
 // Entry == 0 ==> no immediate constant field exists at all.
 // Entry >  0 ==> abs(immediate constant) <= Entry
 // 
-vector<int> MaxConstantsTable(Instruction::NumOtherOps);
+vector<int> MaxConstantsTable(Instruction::OtherOpsEnd);
 
 static int
 MaxConstantForInstr(unsigned llvmOpCode)
 {
   int modelOpCode = -1;
 
-  if (llvmOpCode >= Instruction::FirstBinaryOp &&
-      llvmOpCode <  Instruction::NumBinaryOps)
+  if (llvmOpCode >= Instruction::BinaryOpsBegin &&
+      llvmOpCode <  Instruction::BinaryOpsEnd)
     modelOpCode = ADD;
   else
     switch(llvmOpCode) {
@@ -300,15 +300,15 @@ static void
 InitializeMaxConstantsTable()
 {
   unsigned op;
-  assert(MaxConstantsTable.size() == Instruction::NumOtherOps &&
+  assert(MaxConstantsTable.size() == Instruction::OtherOpsEnd &&
          "assignments below will be illegal!");
-  for (op = Instruction::FirstTermOp; op < Instruction::NumTermOps; ++op)
+  for (op = Instruction::TermOpsBegin; op < Instruction::TermOpsEnd; ++op)
     MaxConstantsTable[op] = MaxConstantForInstr(op);
-  for (op = Instruction::FirstBinaryOp; op < Instruction::NumBinaryOps; ++op)
+  for (op = Instruction::BinaryOpsBegin; op < Instruction::BinaryOpsEnd; ++op)
     MaxConstantsTable[op] = MaxConstantForInstr(op);
-  for (op = Instruction::FirstMemoryOp; op < Instruction::NumMemoryOps; ++op)
+  for (op = Instruction::MemoryOpsBegin; op < Instruction::MemoryOpsEnd; ++op)
     MaxConstantsTable[op] = MaxConstantForInstr(op);
-  for (op = Instruction::FirstOtherOp; op < Instruction::NumOtherOps; ++op)
+  for (op = Instruction::OtherOpsBegin; op < Instruction::OtherOpsEnd; ++op)
     MaxConstantsTable[op] = MaxConstantForInstr(op);
 }
 

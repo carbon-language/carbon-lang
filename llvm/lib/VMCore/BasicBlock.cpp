@@ -19,7 +19,7 @@
 // instruction list.  This is not a real instruction.
 //
 struct DummyInst : public Instruction {
-  DummyInst() : Instruction(Type::VoidTy, NumOtherOps) {
+  DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd) {
     // This should not be garbage monitored.
     LeakDetector::removeGarbageObject(this);
   }
@@ -33,7 +33,7 @@ struct DummyInst : public Instruction {
   // Methods for support type inquiry through isa, cast, and dyn_cast...
   static inline bool classof(const DummyInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == NumOtherOps;
+    return I->getOpcode() == OtherOpsEnd;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
