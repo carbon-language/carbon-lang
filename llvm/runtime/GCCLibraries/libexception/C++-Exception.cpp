@@ -42,9 +42,9 @@ void *__llvm_eh_current_uncaught_exception_type(unsigned HandlerType) {
 }
 
 
-/*===----------------------------------------------------------------------===**
- * C++ Specific exception handling support...
- */
+//===----------------------------------------------------------------------===//
+// C++ Specific exception handling support...
+//
 
 // __llvm_cxxeh_allocate_exception - This function allocates space for the
 // specified number of bytes, plus a C++ exception object header.
@@ -113,8 +113,8 @@ void __llvm_cxxeh_throw(void *ObjectPtr, const std::type_info *TypeInfoPtr,
 
   E->TypeInfo = TypeInfoPtr;
   E->ExceptionObjectDestructor = DtorPtr;
-  E->UnexpectedHandler = 0;  /* FIXME */
-  E->TerminateHandler = 0;   /* FIXME */
+  E->UnexpectedHandler = 0;  // FIXME
+  E->TerminateHandler = 0;   // FIXME
 }
 
 // __llvm_cxxeh_current_uncaught_exception_isa - This function checks to see if
@@ -126,7 +126,7 @@ void *__llvm_cxxeh_current_uncaught_exception_isa(
                                          const std::type_info *CatchType) {
   assert(UncaughtExceptionStack && "No uncaught exception!");
   if (UncaughtExceptionStack->ExceptionType != CXXException)
-    return 0;     /* If it's not a c++ exception, it doesn't match! */
+    return 0;     // If it's not a c++ exception, it doesn't match!
 
   // If it is a C++ exception, use the type info object stored in the exception
   // to see if TypeID matches and, if so, to adjust the exception object
@@ -156,68 +156,83 @@ void *__llvm_cxxeh_current_uncaught_exception_isa(
 }
 
 
-/* __llvm_cxxeh_begin_catch - This function is called by "exception handlers",
- * which transition an exception from being uncaught to being caught.  It
- * returns a pointer to the exception object portion of the exception.  This
- * function must work with foreign exceptions.
- */
+// __llvm_cxxeh_begin_catch - This function is called by "exception handlers",
+// which transition an exception from being uncaught to being caught.  It
+// returns a pointer to the exception object portion of the exception.  This
+// function must work with foreign exceptions.
+//
 void *__llvm_cxxeh_begin_catch(void) {
   llvm_exception *E = UncaughtExceptionStack;
   assert(UncaughtExceptionStack && "There are no uncaught exceptions!?!?");
 
-  /* The exception is now no longer uncaught... */
+  // The exception is now no longer uncaught.
   UncaughtExceptionStack = E->Next;
   
-  /* The exception is now caught... */
+  // The exception is now caught.
   E->Next = CaughtExceptionStack;
   CaughtExceptionStack = E->Next;
 
-  /* Increment the handler count for this exception. */
+  // Increment the handler count for this exception.
   E->HandlerCount++;
-
-  /* Return a pointer to the exception object */
+  
+  // Return a pointer to the raw exception object.
   return E+1;
 }
 
-/* __llvm_cxxeh_end_catch - This function decrements the HandlerCount of the
- * top-level caught exception, destroying it if this is the last handler for the
- * exception.
- */
+// __llvm_cxxeh_begin_catch_if_isa - This function checks to see if the current
+// uncaught exception is of the specified type.  If not, it returns a null
+// pointer, otherwise it 'catches' the exception and returns a pointer to the
+// object of the specified type.  This function does never succeeds with foreign
+// exceptions (because they can never be of type CatchType).
+//
+void *__llvm_cxxeh_begin_catch_if_isa(const std::type_info *CatchType) {
+  void *ObjPtr = __llvm_cxxeh_current_uncaught_exception_isa(CatchType);
+  if (!ObjPtr) return 0;
+  
+  // begin_catch, meaning that the object is now "caught", not "uncaught"
+  __llvm_cxxeh_begin_catch();
+  return ObjPtr;
+}
+
+
+// __llvm_cxxeh_end_catch - This function decrements the HandlerCount of the
+// top-level caught exception, destroying it if this is the last handler for the
+// exception.
+//
 void __llvm_cxxeh_end_catch(void) {
   llvm_exception *E = CaughtExceptionStack;
   assert(E && "There are no caught exceptions!");
   
-  /* If this is the last handler using the exception, destroy it now! */
+  // If this is the last handler using the exception, destroy it now!
   if (--E->HandlerCount == 0) {
-    CaughtExceptionStack = E->Next;   /* Unlink from the stack */
-    E->ExceptionDestructor(E);        /* Release memory for the exception */
+    CaughtExceptionStack = E->Next;   // Unlink from the stack
+    E->ExceptionDestructor(E);        // Release memory for the exception
   }
 }
 
-/* __llvm_cxxeh_rethrow - This function turns the top-level caught exception
- * into an uncaught exception, in preparation for an llvm.unwind, which should
- * follow immediately after the call to this function.  This function must be
- * prepared to deal with foreign exceptions.
- */
+// __llvm_cxxeh_rethrow - This function turns the top-level caught exception
+// into an uncaught exception, in preparation for an llvm.unwind, which should
+// follow immediately after the call to this function.  This function must be
+// prepared to deal with foreign exceptions.
+//
 void __llvm_cxxeh_rethrow(void) {
   llvm_exception *E = CaughtExceptionStack;
   if (E == 0) {
-    /* 15.1.8 - If there are no uncaught exceptions being thrown, 'throw;'
-     * should call terminate.
-     */
-    /* FIXME */assert(0 && "FIXME: this should call E->Terminate!");
+    // 15.1.8 - If there are no uncaught exceptions being thrown, 'throw;'
+    // should call terminate.
+    //
+    assert(0 && "FIXME: this should call E->Terminate!"); // FIXME!
   }
 
-  /* Otherwise we have an exception to rethrow. Move it back to the uncaught
-   * stack.
-   */
+  // Otherwise we have an exception to rethrow. Move it back to the uncaught
+  // stack.
   CaughtExceptionStack = E->Next;
   E->Next = UncaughtExceptionStack;
   UncaughtExceptionStack = E;
 
-  /* Decrement the number of handlers which are using the exception. */
+  // Decrement the number of handlers which are using the exception.
   --E->HandlerCount;
   
-  /* Return to the caller, which should perform the unwind now. */
+  // Return to the caller, which should perform the unwind now.
 }
 

@@ -54,6 +54,7 @@ extern "C" {
 
   void * __llvm_cxxeh_current_uncaught_exception_isa(const std::type_info *Ty);
   void *__llvm_cxxeh_begin_catch(void);
+  void *__llvm_cxxeh_begin_catch_if_isa(const std::type_info *CatchType);
   void __llvm_cxxeh_end_catch(void);
 
   void __llvm_cxxeh_rethrow(void);
