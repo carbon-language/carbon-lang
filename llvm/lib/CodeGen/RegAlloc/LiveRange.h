@@ -11,7 +11,7 @@
 #ifndef LIVE_RANGE_H
 #define LIVE_RANGE_H
 
-#include "llvm/Analysis/LiveVar/ValueSet.h"
+#include "llvm/CodeGen/ValueSet.h"
 #include "llvm/Value.h"
 
 class RegClass;

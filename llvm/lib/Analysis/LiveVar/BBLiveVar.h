@@ -8,7 +8,7 @@
 #ifndef LIVE_VAR_BB_H
 #define LIVE_VAR_BB_H
 
-#include "llvm/Analysis/LiveVar/ValueSet.h"
+#include "llvm/CodeGen/ValueSet.h"
 #include "Support/Annotation.h"
 #include <map>
 class BasicBlock;

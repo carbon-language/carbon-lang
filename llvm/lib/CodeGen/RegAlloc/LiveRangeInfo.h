@@ -20,7 +20,7 @@
 #define LIVE_RANGE_INFO_H
 
 #include "Support/HashExtras.h"
-#include "llvm/Analysis/LiveVar/ValueSet.h"
+#include "llvm/CodeGen/ValueSet.h"
 
 class LiveRange;
 class MachineInstr;

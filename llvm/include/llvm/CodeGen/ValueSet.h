@@ -1,3 +1,8 @@
+//
+// VALUESET.H - This header is OBSOLETE, do not use it for new code.
+//
+// FIXME: Eliminate this file.
+
 #ifndef VALUE_SET_H
 #define VALUE_SET_H
 

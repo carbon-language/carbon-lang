@@ -62,7 +62,7 @@
 #define FUNCTION_LIVE_VAR_INFO_H
 
 #include "llvm/Pass.h"
-#include "llvm/Analysis/LiveVar/ValueSet.h"
+#include "llvm/CodeGen/ValueSet.h"
 
 class BBLiveVar;
 class MachineInstr;
