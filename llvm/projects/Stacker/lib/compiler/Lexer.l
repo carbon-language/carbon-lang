@@ -31,10 +31,10 @@
 #include "StackerParser.h"
 
 /* Conversion of text ints to binary */
-static uint64_t IntToVal(const char *Buffer) {
-  uint64_t Result = 0;
+static int64_t IntToVal(const char *Buffer) {
+  int64_t Result = 0;
   for (; *Buffer; Buffer++) {
-    uint64_t OldRes = Result;
+    int64_t OldRes = Result;
     Result *= 10;
     Result += *Buffer-'0';
     if (Result < OldRes)   // Uh, oh, overflow detected!!!
@@ -44,10 +44,10 @@ static uint64_t IntToVal(const char *Buffer) {
 }
 
 /* Conversion of text hexadecimal ints to binary */
-static uint64_t HexIntToVal(const char *Buffer) {
-  uint64_t Result = 0;
+static int64_t HexIntToVal(const char *Buffer) {
+  int64_t Result = 0;
   for (; *Buffer; ++Buffer) {
-    uint64_t OldRes = Result;
+    int64_t OldRes = Result;
     Result *= 16;
     char C = *Buffer;
     if (C >= '0' && C <= '9')

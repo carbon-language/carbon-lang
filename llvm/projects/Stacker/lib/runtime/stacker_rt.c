@@ -21,18 +21,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern long long _index_;
-extern int _stack_[];
+extern int64_t _index_;
+extern int64_t _stack_[];
 extern void _MAIN_();
 
 void
 _stacker_dump_stack_()
 {
-    int i;
+    int64_t i;
     printf("Stack Dump:\n");
     for (i = _index_; i > 0; i-- )
     {
-	printf("#%03d: %d\n", i, _stack_[i] );
+	printf("#%03lld: %lld\n", i, _stack_[i] );
     }
 }
 
@@ -51,7 +51,7 @@ main ( int argc, char** argv )
     {
 	if ( isdigit( (int) argv[--a][0] ) )
 	{
-	    _stack_[_index_++] = atoi( argv[a] );
+	    _stack_[_index_++] = atoll( argv[a] );
 	}
 	else
 	{

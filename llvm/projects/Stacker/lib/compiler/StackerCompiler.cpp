@@ -60,9 +60,6 @@ StackerCompiler::StackerCompiler()
     , Three(0)
     , Four(0)
     , Five(0)
-    , IZero(0)
-    , IOne(0)
-    , ITwo(0)
     , no_arguments()
     , echo(false)
     , stack_size(256)
@@ -121,8 +118,8 @@ StackerCompiler::compile(
 	TheModule = new Module( CurFilename );
 
 	// Create a type to represent the stack. This is the same as the LLVM 
-	// Assembly type [ 256 x int ]
-	stack_type = ArrayType::get( Type::IntTy, stack_size );
+	// Assembly type [ 256 x long ]
+	stack_type = ArrayType::get( Type::LongTy, stack_size );
 
 	// Create a global variable for the stack. Note the use of appending 
 	// linkage linkage so that multiple modules will make the stack larger. 
@@ -240,9 +237,6 @@ StackerCompiler::compile(
 	Three = ConstantInt::get( Type::LongTy, 3 );
 	Four = ConstantInt::get( Type::LongTy, 4 );
 	Five = ConstantInt::get( Type::LongTy, 5 );
-	IZero = ConstantInt::get( Type::IntTy, 0 );
-	IOne = ConstantInt::get( Type::IntTy, 1 );
-	ITwo = ConstantInt::get( Type::IntTy, 2 );
 
 	// Reset the current line number
 	Stackerlineno = 1;    
@@ -366,8 +360,8 @@ StackerCompiler::push_value( BasicBlock* bb, Value* val )
     GetElementPtrInst* gep = cast<GetElementPtrInst>( 
 	    get_stack_pointer( bb ) );
 
-    // Cast the value to an integer .. hopefully it works
-    CastInst* cast_inst = new CastInst( val, Type::IntTy );
+    // Cast the value to a long .. hopefully it works
+    CastInst* cast_inst = new CastInst( val, Type::LongTy );
     bb->getInstList().push_back( cast_inst );
 
     // Store the value
@@ -378,10 +372,10 @@ StackerCompiler::push_value( BasicBlock* bb, Value* val )
 }
 
 Instruction*
-StackerCompiler::push_integer(BasicBlock* bb, int32_t value )
+StackerCompiler::push_integer(BasicBlock* bb, int64_t value )
 {
     // Just push a constant integer value
-    return push_value( bb, ConstantSInt::get( Type::IntTy, value ) );
+    return push_value( bb, ConstantSInt::get( Type::LongTy, value ) );
 }
 
 Instruction*
@@ -639,7 +633,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
 
     // Compare the condition against 0 
     SetCondInst* cond_inst = new SetCondInst( Instruction::SetNE, cond, 
-	ConstantSInt::get( Type::IntTy, 0) );
+	ConstantSInt::get( Type::LongTy, 0) );
     bb->getInstList().push_back( cond_inst );
 
     // Create an exit block
@@ -723,7 +717,7 @@ StackerCompiler::handle_while( char* todo )
 
     // Compare the condition against 0 
     SetCondInst* cond_inst = new SetCondInst( 
-	Instruction::SetNE, cond, ConstantSInt::get( Type::IntTy, 0) );
+	Instruction::SetNE, cond, ConstantSInt::get( Type::LongTy, 0) );
     test->getInstList().push_back( cond_inst );
 
     // Add the branch instruction
@@ -789,7 +783,7 @@ StackerCompiler::handle_string( char * value )
 }
 
 BasicBlock* 
-StackerCompiler::handle_integer( const int32_t value )
+StackerCompiler::handle_integer( const int64_t value )
 {
     // Create a new basic block for the push operation
     BasicBlock* bb = new BasicBlock((echo?"int":""));
@@ -927,7 +921,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("INCR");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	BinaryOperator* addop = 
-	    BinaryOperator::create( Instruction::Add, op1, IOne );
+	    BinaryOperator::create( Instruction::Add, op1, One );
 	bb->getInstList().push_back( addop );
 	push_value( bb, addop );
 	break;
@@ -937,7 +931,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("DECR");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	BinaryOperator* subop = BinaryOperator::create( Instruction::Sub, op1,
-	    ConstantSInt::get( Type::IntTy, 1 ) );
+	    ConstantSInt::get( Type::LongTy, 1 ) );
 	bb->getInstList().push_back( subop );
 	push_value( bb, subop );
 	break;
@@ -1007,7 +1001,7 @@ StackerCompiler::handle_word( int tkn )
 	// bb->getInstList().push_back( negop );
 	// So we'll multiply by -1 (ugh)
 	BinaryOperator* multop = BinaryOperator::create( Instruction::Mul, op1,
-	    ConstantSInt::get( Type::IntTy, -1 ) );
+	    ConstantSInt::get( Type::LongTy, -1 ) );
 	bb->getInstList().push_back( multop );
 	push_value( bb, multop );
 	break;
@@ -1020,7 +1014,7 @@ StackerCompiler::handle_word( int tkn )
 
 	// Determine if its negative
 	SetCondInst* cond_inst = 
-	    new SetCondInst( Instruction::SetLT, op1, IZero );
+	    new SetCondInst( Instruction::SetLT, op1, Zero );
 	bb->getInstList().push_back( cond_inst );
 
 	// Create a block for storing the result
@@ -1367,7 +1361,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("PICK");
 	LoadInst* n = cast<LoadInst>( stack_top( bb ) );
 	BinaryOperator* addop = 
-	    BinaryOperator::create( Instruction::Add, n, IOne );
+	    BinaryOperator::create( Instruction::Add, n, One );
 	bb->getInstList().push_back( addop );
 	LoadInst* x0 = cast<LoadInst>( stack_top( bb, addop ) );
 	replace_top( bb, x0 );
@@ -1379,11 +1373,11 @@ StackerCompiler::handle_word( int tkn )
 	LoadInst* m = cast<LoadInst>( stack_top(bb) );
 	LoadInst* n = cast<LoadInst>( stack_top(bb, One) );
 	BinaryOperator* index = 
-	    BinaryOperator::create( Instruction::Add, m, IOne );
+	    BinaryOperator::create( Instruction::Add, m, One );
 	bb->getInstList().push_back( index );
 	LoadInst* Xm = cast<LoadInst>( stack_top(bb, index ) );
 	BinaryOperator* n_plus_1 = 
-	    BinaryOperator::create( Instruction::Add, n, IOne );
+	    BinaryOperator::create( Instruction::Add, n, One );
 	bb->getInstList().push_back( n_plus_1 );
 	decr_stack_index( bb, n_plus_1 );
 	replace_top( bb, Xm );
@@ -1496,9 +1490,13 @@ StackerCompiler::handle_word( int tkn )
 	// Get the result value
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 
+	// Cast down to an integer
+	CastInst* caster = new CastInst( op1, Type::IntTy );
+	bb->getInstList().push_back( caster );
+
 	// Call exit(3)
 	std::vector<Value*> params;
-	params.push_back(op1);
+	params.push_back(caster);
 	CallInst* call_inst = new CallInst( TheExit, params );
 	bb->getInstList().push_back( call_inst );
 	break;
@@ -1514,7 +1512,7 @@ StackerCompiler::handle_word( int tkn )
 	    new GetElementPtrInst( ChrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 
-	// Get the character to print (a newline)
+	// Get the character to print (a tab)
 	ConstantSInt* newline = ConstantSInt::get(Type::IntTy, 
 	    static_cast<int>('\t'));
 
@@ -1536,7 +1534,7 @@ StackerCompiler::handle_word( int tkn )
 	    new GetElementPtrInst( ChrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 
-	// Get the character to print (a newline)
+	// Get the character to print (a space)
 	ConstantSInt* newline = ConstantSInt::get(Type::IntTy, 
 	    static_cast<int>(' '));
 

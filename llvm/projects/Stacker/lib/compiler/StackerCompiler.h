@@ -140,7 +140,7 @@ class StackerCompiler
 
 	/// @brief Handle the push of an integer onto the stack.
 	/// @param value The integer value to be pushed.
-	BasicBlock* handle_integer( const int32_t value );
+	BasicBlock* handle_integer( const int64_t value );
 
 	/// @brief Handle one of the reserved words (given as a token)
 	BasicBlock* handle_word( int tkn );
@@ -169,7 +169,7 @@ class StackerCompiler
 	/// @brief Generate code to push any value onto the stack.
 	Instruction* push_value( BasicBlock* bb, Value* value );
 	/// @brief Generate code to push a constant integer onto the stack.
-	Instruction* push_integer( BasicBlock* bb, int32_t value );
+	Instruction* push_integer( BasicBlock* bb, int64_t value );
 	/// @brief Generate code to pop an integer off the stack.
 	Instruction* pop_integer( BasicBlock* bb );
 	/// @brief Generate code to push a string pointer onto the stack.
@@ -211,9 +211,6 @@ class StackerCompiler
 	ConstantInt*		Three;		///< long constant 3
 	ConstantInt*		Four;		///< long constant 4
 	ConstantInt*		Five;		///< long constant 5
-	ConstantInt*		IZero;		///< int constant 0
-	ConstantInt*		IOne;		///< int constant 1
-	ConstantInt*		ITwo;		///< int constant 2
 	std::vector<Value*> 	no_arguments;	///< no arguments for Stacker
 	bool 			echo;		///< Echo flag
 	size_t			stack_size;	///< Size of stack to gen.

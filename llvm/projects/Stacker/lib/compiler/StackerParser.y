@@ -39,7 +39,7 @@ int yyparse();
   llvm::Module*		ModuleVal;
   llvm::Function* 	FunctionVal;
   llvm::BasicBlock*	BasicBlockVal;
-  uint32_t              IntegerVal;
+  int64_t               IntegerVal;
   char*                 StringVal;
 }
 
