@@ -197,8 +197,7 @@ unsigned Function::getIntrinsicID() const {
     break;
   case 'e':
     if (getName() == "llvm.exc.getcurrent")return LLVMIntrinsic::exc_getcurrent;
-    if (getName() == "llvm.exc.rethrow")   return LLVMIntrinsic::exc_rethrow;
-    if (getName() == "llvm.exc.throw")     return LLVMIntrinsic::exc_throw;
+    if (getName() == "llvm.exc.setcurrent")return LLVMIntrinsic::exc_setcurrent;
     break;
   case 'l':
     if (getName() == "llvm.longjmp")  return LLVMIntrinsic::longjmp;
@@ -207,6 +206,9 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.setjmp")     return LLVMIntrinsic::setjmp;
     if (getName() == "llvm.sigsetjmp")  return LLVMIntrinsic::sigsetjmp;
     if (getName() == "llvm.siglongjmp") return LLVMIntrinsic::siglongjmp;
+    break;
+  case 'u':
+    if (getName() == "llvm.unwind")     return LLVMIntrinsic::unwind;
     break;
   case 'v':
     if (getName() == "llvm.va_copy")  return LLVMIntrinsic::va_copy;

@@ -522,8 +522,8 @@ void Verifier::visitIntrinsicFunctionCall(LLVMIntrinsic::ID ID, CallInst &CI) {
   case LLVMIntrinsic::va_end:          NumArgs = 1; break;
   case LLVMIntrinsic::va_copy:         NumArgs = 2; break;
 
-  case LLVMIntrinsic::exc_throw:       NumArgs = 1; break;
-  case LLVMIntrinsic::exc_rethrow:     NumArgs = 0; break;
+  case LLVMIntrinsic::unwind:          NumArgs = 0; break;
+  case LLVMIntrinsic::exc_setcurrent:  NumArgs = 1; break;
   case LLVMIntrinsic::exc_getcurrent:  NumArgs = 0; break;
 
   case LLVMIntrinsic::setjmp:          NumArgs = 1; break;
