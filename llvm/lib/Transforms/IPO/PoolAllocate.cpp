@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "PoolAllocation"
 #include "llvm/Transforms/PoolAllocate.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Analysis/DataStructure.h"
@@ -18,8 +19,6 @@
 #include "Support/Debug.h"
 #include "Support/VectorExtras.h"
 using namespace PA;
-
-#define DEBUG_TYPE "PoolAllocation"
 
 namespace {
   const Type *VoidPtrTy = PointerType::get(Type::SByteTy);
@@ -212,7 +211,7 @@ void PoolAllocate::AddPoolPrototypes() {
 // caller
 //
 void PoolAllocate::InlineIndirectCalls(Function &F, DSGraph &G, 
-				       hash_set<Function*> &visited) {
+                                       hash_set<Function*> &visited) {
   std::vector<DSCallSite> callSites = G.getFunctionCalls();
   
   visited.insert(&F);
@@ -220,26 +219,26 @@ void PoolAllocate::InlineIndirectCalls(Function &F, DSGraph &G,
   // For each indirect call site in the function, inline all the potential
   // targets
   for (std::vector<DSCallSite>::iterator CSI = callSites.begin(),
-	 CSE = callSites.end(); CSI != CSE; ++CSI) {
+         CSE = callSites.end(); CSI != CSE; ++CSI) {
     if (CSI->isIndirectCall()) {
       CallInst &CI = CSI->getCallInst();
       std::pair<std::multimap<CallInst*, Function*>::iterator,
-	std::multimap<CallInst*, Function*>::iterator> Targets =
-	CallInstTargets.equal_range(&CI);
+        std::multimap<CallInst*, Function*>::iterator> Targets =
+        CallInstTargets.equal_range(&CI);
       for (std::multimap<CallInst*, Function*>::iterator TFI = Targets.first,
-	     TFE = Targets.second; TFI != TFE; ++TFI) {
+             TFE = Targets.second; TFI != TFE; ++TFI) {
 	DSGraph &TargetG = BU->getDSGraph(*TFI->second);
-	// Call the function recursively if the callee is not yet inlined
-	// and if it hasn't been visited in this sequence of calls
-	// The latter is dependent on the fact that the graphs of all functions
-	// in an SCC are actually the same
-	if (InlinedFuncs.find(TFI->second) == InlinedFuncs.end() && 
-	    visited.find(TFI->second) == visited.end()) {
-	  InlineIndirectCalls(*TFI->second, TargetG, visited);
-	}
-	G.mergeInGraph(*CSI, *TFI->second, TargetG, DSGraph::KeepModRefBits | 
-		       DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
-		       DSGraph::DontCloneAuxCallNodes); 
+        // Call the function recursively if the callee is not yet inlined
+        // and if it hasn't been visited in this sequence of calls
+        // The latter is dependent on the fact that the graphs of all functions
+        // in an SCC are actually the same
+        if (InlinedFuncs.find(TFI->second) == InlinedFuncs.end() && 
+            visited.find(TFI->second) == visited.end()) {
+          InlineIndirectCalls(*TFI->second, TargetG, visited);
+        }
+        G.mergeInGraph(*CSI, *TFI->second, TargetG, DSGraph::KeepModRefBits | 
+                       DSGraph::KeepAllocaBit | DSGraph::DontCloneCallNodes |
+                       DSGraph::DontCloneAuxCallNodes); 
       }
     }
   }
@@ -248,8 +247,6 @@ void PoolAllocate::InlineIndirectCalls(Function &F, DSGraph &G,
   // function targets' DS Graphs.  This ensures that every function is inlined
   // exactly once
   InlinedFuncs.insert(&F);
-
-  
 }
 
 void PoolAllocate::FindFunctionPoolArgs(Function &F) {
@@ -295,7 +292,7 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
   if (F.getName() != "main")
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
       if (Nodes[i]->isGlobalNode() && !Nodes[i]->isIncomplete())
-	DEBUG(std::cerr << "Global node is not Incomplete\n");
+        DEBUG(std::cerr << "Global node is not Incomplete\n");
       if ((Nodes[i]->isIncomplete() || Nodes[i]->isGlobalNode()) && 
 	  Nodes[i]->isHeapNode())
         Nodes[i]->markReachableNodes(MarkedNodes);
@@ -950,58 +947,56 @@ void FuncTransform::visitCallInst(CallInst &CI) {
       for ( ; AI != AE; ++AI, ++OpNum) {
 	if (!isa<Constant>(CI.getOperand(OpNum)))
 	  CalcNodeMapping(getDSNodeHFor(CI.getOperand(OpNum)), 
-			  CG.getScalarMap()[AI],
-			  NodeMapping);
+                          CG.getScalarMap()[AI], NodeMapping);
       }
       assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
       
       if (CI.getType() != Type::VoidTy)
-	CalcNodeMapping(getDSNodeHFor(&CI),
-                        CG.getReturnNodeFor(*TFI->second), 
-			NodeMapping);
+        CalcNodeMapping(getDSNodeHFor(&CI),
+                        CG.getReturnNodeFor(*TFI->second), NodeMapping);
       
       // Map the nodes that are pointed to by globals.
       // For all globals map getDSNodeForGlobal(g)->CG.getDSNodeForGlobal(g)
       for (DSGraph::ScalarMapTy::iterator SMI = G.getScalarMap().begin(), 
-	     SME = G.getScalarMap().end(); SMI != SME; ++SMI)
-	if (isa<GlobalValue>(SMI->first)) { 
-	  CalcNodeMapping(SMI->second, 
-			  CG.getScalarMap()[SMI->first],
-			  NodeMapping);
-	}
+             SME = G.getScalarMap().end(); SMI != SME; ++SMI)
+        if (isa<GlobalValue>(SMI->first)) { 
+          CalcNodeMapping(SMI->second, 
+                          CG.getScalarMap()[SMI->first], NodeMapping);
+        }
 
       unsigned idx = CFI->PoolArgFirst;
 
       // The following loop determines the pool pointers corresponding to 
       // CFI.
       for (unsigned i = 0, e = CFI->ArgNodes.size(); i != e; ++i, ++idx) {
-	if (NodeMapping.count(CFI->ArgNodes[i])) {
-	  assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
-	  DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
-	  if (LocalNode) {
-	    assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
-	    PoolArgs[idx] = FI.PoolDescriptors.find(LocalNode)->second;
-	  }
-	  else
-	    // LocalNode is null when a constant is passed in as a parameter
-	    PoolArgs[idx] = Constant::getNullValue(PoolDescPtr);
-	} else {
-	  PoolArgs[idx] = Constant::getNullValue(PoolDescPtr);
-	}
+        if (NodeMapping.count(CFI->ArgNodes[i])) {
+          assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
+          DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
+          if (LocalNode) {
+            assert(FI.PoolDescriptors.count(LocalNode) &&
+                   "Node not pool allocated?");
+            PoolArgs[idx] = FI.PoolDescriptors.find(LocalNode)->second;
+          }
+          else
+            // LocalNode is null when a constant is passed in as a parameter
+            PoolArgs[idx] = Constant::getNullValue(PoolDescPtr);
+        } else {
+          PoolArgs[idx] = Constant::getNullValue(PoolDescPtr);
+        }
       }
     }
     
     // Push the pool arguments into Args.
     if (PAInfo.EqClass2LastPoolArg.count(FuncClass)) {
       for (int i = 0; i <= PAInfo.EqClass2LastPoolArg[FuncClass]; ++i) {
-	if (PoolArgs.find(i) != PoolArgs.end())
-	  Args.push_back(PoolArgs[i]);
-	else
-	  Args.push_back(Constant::getNullValue(PoolDescPtr));
+        if (PoolArgs.find(i) != PoolArgs.end())
+          Args.push_back(PoolArgs[i]);
+        else
+          Args.push_back(Constant::getNullValue(PoolDescPtr));
       }
     
-      assert (Args.size()== (unsigned) PAInfo.EqClass2LastPoolArg[FuncClass] + 1 
-	      && "Call has same number of pool args as the called function");
+      assert(Args.size()== (unsigned) PAInfo.EqClass2LastPoolArg[FuncClass] + 1
+             && "Call has same number of pool args as the called function");
     }
 
     // Add the rest of the arguments (the original arguments of the function)...
@@ -1104,7 +1099,8 @@ void FuncTransform::visitCallInst(CallInst &CI) {
 
 	DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
 	if (LocalNode) {
-	  assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
+	  assert(FI.PoolDescriptors.count(LocalNode) &&
+                 "Node not pool allocated?");
 	  Args.push_back(FI.PoolDescriptors.find(LocalNode)->second);
 	} else
 	  Args.push_back(Constant::getNullValue(PoolDescPtr));
