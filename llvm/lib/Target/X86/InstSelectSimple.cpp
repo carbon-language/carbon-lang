@@ -1964,11 +1964,12 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
 
   // Special case: op Reg, load [mem]
   if (isa<LoadInst>(Op0) && !isa<LoadInst>(Op1) && Class != cLong &&
+      Op0->hasOneUse() && 
       isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op0), B))
     if (!B.swapOperands())
       std::swap(Op0, Op1);  // Make sure any loads are in the RHS.
 
-  if (isa<LoadInst>(Op1) && Class != cLong &&
+  if (isa<LoadInst>(Op1) && Class != cLong && Op1->hasOneUse() &&
       isSafeToFoldLoadIntoInstruction(*cast<LoadInst>(Op1), B)) {
 
     unsigned Opcode;
