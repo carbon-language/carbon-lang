@@ -25,22 +25,20 @@
 #include "Support/StringExtras.h"
 #include <algorithm>
 #include <sstream>
-using std::vector;
-using std::string;
 
 static cl::opt<bool>
 DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
                   cl::desc("Disable pointer hashing in the -trace or -tracem "
                            "passes"));
 
-static cl::list<string>
+static cl::list<std::string>
 TraceFuncNames("tracefunc", cl::desc("Only trace specific functions in the "
                                      "-trace or -tracem passes"),
 	       cl::value_desc("function"), cl::Hidden);
 
 static void TraceValuesAtBBExit(BasicBlock *BB,
                                 Function *Printf, Function* HashPtrToSeqNum,
-                                vector<Instruction*> *valuesStoredInFunction);
+                             std::vector<Instruction*> *valuesStoredInFunction);
 
 // We trace a particular function if no functions to trace were specified
 // or if the function is in the specified list.
@@ -79,7 +77,8 @@ namespace {
     //
     bool doit(Function *M);
 
-    virtual void handleBasicBlock(BasicBlock *BB, vector<Instruction*> &VI) = 0;
+    virtual void handleBasicBlock(BasicBlock *BB,
+                                  std::vector<Instruction*> &VI) = 0;
 
     // runOnFunction - This method does the work.
     //
@@ -92,12 +91,14 @@ namespace {
 
   struct FunctionTracer : public InsertTraceCode {
     // Ignore basic blocks here...
-    virtual void handleBasicBlock(BasicBlock *BB, vector<Instruction*> &VI) {}
+    virtual void handleBasicBlock(BasicBlock *BB,
+                                  std::vector<Instruction*> &VI) {}
   };
 
   struct BasicBlockTracer : public InsertTraceCode {
     // Trace basic blocks here...
-    virtual void handleBasicBlock(BasicBlock *BB, vector<Instruction*> &VI) {
+    virtual void handleBasicBlock(BasicBlock *BB,
+                                  std::vector<Instruction*> &VI) {
       TraceValuesAtBBExit(BB, externalFuncs.PrintfFunc,
                           externalFuncs.HashPtrFunc, &VI);
     }
@@ -123,7 +124,7 @@ Pass *createTraceValuesPassForBasicBlocks() {  // Trace BB's and functions
 void ExternalFuncs::doInitialization(Module &M) {
   const Type *SBP = PointerType::get(Type::SByteTy);
   const FunctionType *MTy =
-    FunctionType::get(Type::IntTy, vector<const Type*>(1, SBP), true);
+    FunctionType::get(Type::IntTy, std::vector<const Type*>(1, SBP), true);
   PrintfFunc = M.getOrInsertFunction("printf", MTy);
 
   // uint (sbyte*)
@@ -150,7 +151,7 @@ bool InsertTraceCode::doInitialization(Module &M) {
 }
 
 
-static inline GlobalVariable *getStringRef(Module *M, const string &str) {
+static inline GlobalVariable *getStringRef(Module *M, const std::string &str) {
   // Create a constant internal string reference...
   Constant *Init = ConstantArray::get(str);
 
@@ -204,7 +205,7 @@ static bool ShouldTraceValue(const Instruction *I) {
     (isa<LoadInst>(I) || LiveAtBBExit(I));
 }
 
-static string getPrintfCodeFor(const Value *V) {
+static std::string getPrintfCodeFor(const Value *V) {
   if (V == 0) return "";
   if (V->getType()->isFloatingPoint())
     return "%g";
@@ -221,12 +222,12 @@ static string getPrintfCodeFor(const Value *V) {
 
 
 static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
-                            string Message,
+                            std::string Message,
                             Function *Printf, Function* HashPtrToSeqNum) {
   // Escape Message by replacing all % characters with %% chars.
-  string Tmp;
+  std::string Tmp;
   std::swap(Tmp, Message);
-  string::iterator I = std::find(Tmp.begin(), Tmp.end(), '%');
+  std::string::iterator I = std::find(Tmp.begin(), Tmp.end(), '%');
   while (I != Tmp.end()) {
     Message.append(Tmp.begin(), I);
     Message += "%%";
@@ -242,7 +243,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
 
   // Turn the format string into an sbyte *
   Constant *GEP =ConstantExpr::getGetElementPtr(ConstantPointerRef::get(fmtVal),
-                     vector<Constant*>(2,Constant::getNullValue(Type::LongTy)));
+                std::vector<Constant*>(2,Constant::getNullValue(Type::LongTy)));
   
   // Insert a call to the hash function if this is a pointer value
   if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
@@ -250,12 +251,12 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
     if (V->getType() != SBP)     // Cast pointer to be sbyte*
       V = new CastInst(V, SBP, "Hash_cast", InsertBefore);
 
-    vector<Value*> HashArgs(1, V);
+    std::vector<Value*> HashArgs(1, V);
     V = new CallInst(HashPtrToSeqNum, HashArgs, "ptrSeqNum", InsertBefore);
   }
   
   // Insert the first print instruction to print the string flag:
-  vector<Value*> PrintArgs;
+  std::vector<Value*> PrintArgs;
   PrintArgs.push_back(GEP);
   if (V) PrintArgs.push_back(V);
   new CallInst(Printf, PrintArgs, "trace", InsertBefore);
@@ -264,7 +265,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
 
 static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
                                    Instruction *InsertBefore,
-                                   const string &Message, Function *Printf,
+                                   const std::string &Message, Function *Printf,
                                    Function* HashPtrToSeqNum) {
   std::ostringstream OutStr;
   if (V) WriteAsOperand(OutStr, V);
@@ -281,7 +282,7 @@ InsertReleaseInst(Value *V, BasicBlock *BB,
   if (V->getType() != SBP)    // Cast pointer to be sbyte*
     V = new CastInst(V, SBP, "RPSN_cast", InsertBefore);
 
-  vector<Value*> releaseArgs(1, V);
+  std::vector<Value*> releaseArgs(1, V);
   new CallInst(ReleasePtrFunc, releaseArgs, "", InsertBefore);
 }
 
@@ -293,7 +294,7 @@ InsertRecordInst(Value *V, BasicBlock *BB,
   if (V->getType() != SBP)     // Cast pointer to be sbyte*
     V = new CastInst(V, SBP, "RP_cast", InsertBefore);
 
-  vector<Value*> releaseArgs(1, V);
+  std::vector<Value*> releaseArgs(1, V);
   new CallInst(RecordPtrFunc, releaseArgs, "", InsertBefore);
 }
 
@@ -324,7 +325,7 @@ ReleasePtrSeqNumbers(BasicBlock *BB,
 // 
 static void TraceValuesAtBBExit(BasicBlock *BB,
                                 Function *Printf, Function* HashPtrToSeqNum,
-                                vector<Instruction*> *valuesStoredInFunction) {
+                            std::vector<Instruction*> *valuesStoredInFunction) {
   // Get an iterator to point to the insertion location, which is
   // just before the terminator instruction.
   // 
@@ -395,8 +396,8 @@ bool InsertTraceCode::runOnFunction(Function &F) {
   if (!TraceThisFunction(F))
     return false;
   
-  vector<Instruction*> valuesStoredInFunction;
-  vector<BasicBlock*>  exitBlocks;
+  std::vector<Instruction*> valuesStoredInFunction;
+  std::vector<BasicBlock*>  exitBlocks;
 
   // Insert code to trace values at function entry
   InsertCodeToShowFunctionEntry(F, externalFuncs.PrintfFunc,
@@ -404,7 +405,7 @@ bool InsertTraceCode::runOnFunction(Function &F) {
   
   // Push a pointer set for recording alloca'd pointers at entry.
   if (!DisablePtrHashing)
-    new CallInst(externalFuncs.PushOnEntryFunc, vector<Value*>(), "",
+    new CallInst(externalFuncs.PushOnEntryFunc, std::vector<Value*>(), "",
                  F.getEntryBlock().begin());
 
   for (Function::iterator BB = F.begin(); BB != F.end(); ++BB) {
@@ -426,8 +427,8 @@ bool InsertTraceCode::runOnFunction(Function &F) {
       
       // Release all recorded pointers before RETURN.  Do this LAST!
       if (!DisablePtrHashing)
-        new CallInst(externalFuncs.ReleaseOnReturnFunc, vector<Value*>(), "",
-                     exitBlocks[i]->getTerminator());
+        new CallInst(externalFuncs.ReleaseOnReturnFunc, std::vector<Value*>(),
+                     "", exitBlocks[i]->getTerminator());
     }
   
   return true;
