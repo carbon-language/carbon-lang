@@ -13,6 +13,7 @@
 
 #include "SparcInternals.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Constants.h"
@@ -229,7 +230,7 @@ private :
   unsigned getOperandMask(unsigned Opcode) {
     switch (Opcode) {
     case SUBcc:   return 1 << 3;  // Remove CC argument
-    case BA:      return 1 << 0;  // Remove Arg #0, which is always null or xcc
+  //case BA:      return 1 << 0;  // Remove Arg #0, which is always null or xcc
     default:      return 0;       // By default, don't hack operands...
     }
   }
@@ -375,7 +376,7 @@ SparcFunctionAsmPrinter::emitBasicBlock(const BasicBlock *BB)
   toAsm << getID(BB) << ":\n";
 
   // Get the vector of machine instructions corresponding to this bb.
-  const MachineCodeForBasicBlock &MIs = BB->getMachineInstrVec();
+  const MachineCodeForBasicBlock &MIs = MachineCodeForBasicBlock::get(BB);
   MachineCodeForBasicBlock::const_iterator MII = MIs.begin(), MIE = MIs.end();
 
   // Loop over all of the instructions in the basic block...
