@@ -160,12 +160,14 @@ White           [ \t]*
 {LINKER}        { return handleNameContext(LINKER); }
 
 %args%          { return handleSubstitution(ARGS_SUBST); }
+%force%         { return handleSubstitution(FORCE_SUBST); }
 %in%            { return handleSubstitution(IN_SUBST); }
-%out%           { return handleSubstitution(OUT_SUBST); }
-%time%          { return handleSubstitution(TIME_SUBST); }
-%stats%         { return handleSubstitution(STATS_SUBST); }
 %opt%           { return handleSubstitution(OPT_SUBST); }
+%out%           { return handleSubstitution(OUT_SUBST); }
+%stats%         { return handleSubstitution(STATS_SUBST); }
 %target%        { return handleSubstitution(TARGET_SUBST); }
+%time%          { return handleSubstitution(TIME_SUBST); }
+%verbose%       { return handleSubstitution(VERBOSE_SUBST); }
 {BadSubst}      { YY_FATAL_ERROR("Invalid substitution token"); }
 
 {Assembly}      { return handleValueContext(ASSEMBLY); }

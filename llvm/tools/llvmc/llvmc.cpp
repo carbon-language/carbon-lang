@@ -108,6 +108,9 @@ cl::list<std::string> Libraries("l", cl::Prefix,
 cl::opt<std::string> OutputFilename("o", 
   cl::desc("Override output filename"), cl::value_desc("filename"));
 
+cl::opt<bool> ForceOutput("f", cl::Optional, cl::init(false),
+  cl::desc("Force output files to be overridden"));
+
 cl::opt<std::string> OutputMachine("m", cl::Prefix,
   cl::desc("Specify a target machine"), cl::value_desc("machine"));
                                                                                                                                             
@@ -156,7 +159,7 @@ static cl::opt<bool> EmitRawCode("emit-raw-code", cl::Hidden, cl::Optional,
 static cl::opt<bool> PipeCommands("pipe", cl::Optional,
   cl::desc("Invoke sub-commands by linking input/output with pipes"));
 
-static cl::opt<bool> KeepTemporaries("keep-temps", cl::Optional,
+static cl::opt<bool> KeepTemps("keep-temps", cl::Optional,
   cl::desc("Don't delete the temporary files created during compilation"));
 
 //===------------------------------------------------------------------------===
@@ -199,15 +202,16 @@ const std::string GetFileType(const std::string& fname, unsigned pos ) {
 
 /// @brief The main program for llvmc
 int main(int argc, char **argv) {
+  // Make sure we print stack trace if we get bad signals
+  sys::PrintStackTraceOnErrorSignal();
+
   try {
-    // Make sure we print stack trace if we get bad signals
-    PrintStackTraceOnErrorSignal();
 
     // Parse the command line options
     cl::ParseCommandLineOptions(argc, argv, 
-      " LLVM Compilation Driver (llvmc)\n\n"
+      " LLVM Compiler Driver (llvmc)\n\n"
       "  This program provides easy invocation of the LLVM tool set\n"
-      "  and source language compiler tools.\n"
+      "  and other compiler tools.\n"
     );
 
     // Deal with unimplemented options.
@@ -220,13 +224,12 @@ int main(int argc, char **argv) {
       else
         throw "An output file must be specified. Please use the -o option";
 
-
     // Construct the ConfigDataProvider object
     LLVMC_ConfigDataProvider Provider;
-    Provider.setConfigDir(ConfigDir);
+    Provider.setConfigDir(sys::Path(ConfigDir));
 
     // Construct the CompilerDriver object
-    CompilerDriver CD(Provider);
+    CompilerDriver* CD = CompilerDriver::Get(Provider);
 
     // If the LLVM_LIB_SEARCH_PATH environment variable is
     // set, append it to the list of places to search for libraries
@@ -234,30 +237,37 @@ int main(int argc, char **argv) {
     if (!srchPath.empty())
       LibPaths.push_back(srchPath);
 
-    // Configure the driver based on options
-    CD.setVerbose(Verbose);
-    CD.setDebug(Debug);
-    CD.setDryRun(DryRun);
-    CD.setFinalPhase(FinalPhase);
-    CD.setOptimization(OptLevel);
-    CD.setOutputMachine(OutputMachine);
-    CD.setEmitNativeCode(Native);
-    CD.setEmitRawCode(EmitRawCode);
-    CD.setTimeActions(TimeActions);
-    CD.setTimePasses(TimePassesIsEnabled);
-    CD.setShowStats(ShowStats);
-    CD.setKeepTemporaries(KeepTemporaries);
-    CD.setLibraryPaths(LibPaths);
+    // Set the driver flags based on command line options
+    unsigned flags = 0;
+    if (Verbose)        flags |= CompilerDriver::VERBOSE_FLAG;
+    if (Debug)          flags |= CompilerDriver::DEBUG_FLAG;
+    if (DryRun)         flags |= CompilerDriver::DRY_RUN_FLAG;
+    if (ForceOutput)    flags |= CompilerDriver::FORCE_FLAG;
+    if (Native)         flags |= CompilerDriver::EMIT_NATIVE_FLAG;
+    if (EmitRawCode)    flags |= CompilerDriver::EMIT_RAW_FLAG;
+    if (KeepTemps)      flags |= CompilerDriver::KEEP_TEMPS_FLAG;
+    if (ShowStats)      flags |= CompilerDriver::SHOW_STATS_FLAG;
+    if (TimeActions)    flags |= CompilerDriver::TIME_ACTIONS_FLAG;
+    if (TimePassesIsEnabled) flags |= CompilerDriver::TIME_PASSES_FLAG;
+    CD->setDriverFlags(flags);
+
+    // Specify requred parameters
+    CD->setFinalPhase(FinalPhase);
+    CD->setOptimization(OptLevel);
+    CD->setOutputMachine(OutputMachine);
+    CD->setLibraryPaths(LibPaths);
+
+    // Provide additional tool arguments
     if (!PreprocessorToolOpts.empty())
-        CD.setPhaseArgs(CompilerDriver::PREPROCESSING, PreprocessorToolOpts);
+        CD->setPhaseArgs(CompilerDriver::PREPROCESSING, PreprocessorToolOpts);
     if (!TranslatorToolOpts.empty())
-        CD.setPhaseArgs(CompilerDriver::TRANSLATION, TranslatorToolOpts);
+        CD->setPhaseArgs(CompilerDriver::TRANSLATION, TranslatorToolOpts);
     if (!OptimizerToolOpts.empty())
-        CD.setPhaseArgs(CompilerDriver::OPTIMIZATION, OptimizerToolOpts);
+        CD->setPhaseArgs(CompilerDriver::OPTIMIZATION, OptimizerToolOpts);
     if (!AssemblerToolOpts.empty())
-        CD.setPhaseArgs(CompilerDriver::ASSEMBLY,AssemblerToolOpts);
+        CD->setPhaseArgs(CompilerDriver::ASSEMBLY,AssemblerToolOpts);
     if (!LinkerToolOpts.empty())
-        CD.setPhaseArgs(CompilerDriver::LINKING, LinkerToolOpts);
+        CD->setPhaseArgs(CompilerDriver::LINKING, LinkerToolOpts);
 
     // Prepare the list of files to be compiled by the CompilerDriver.
     CompilerDriver::InputList InpList;
@@ -288,7 +298,7 @@ int main(int argc, char **argv) {
     }
 
     // Tell the driver to do its thing
-    int result = CD.execute(InpList,OutputFilename);
+    int result = CD->execute(InpList,sys::Path(OutputFilename));
     if (result != 0) {
       throw "Error executing actions. Terminated.\n";
       return result;

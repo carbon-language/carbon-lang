@@ -57,6 +57,7 @@ enum ConfigLexerTokens {
   COMMAND,      ///< The name "command" (and variants)
   EQUALS,       ///< The equals sign, =
   FALSETOK,     ///< A boolean false value (false/no/off)
+  FORCE_SUBST,  ///< The substitution item %force%
   IN_SUBST,     ///< The substitution item %in%
   INTEGER,      ///< An integer 
   LANG,         ///< The name "lang" (and variants)
@@ -85,6 +86,7 @@ enum ConfigLexerTokens {
   TRANSLATES,   ///< The name "translates" (and variants)
   TRANSLATOR,   ///< The name "translator" (and variants)
   TRUETOK,      ///< A boolean true value (true/yes/on)
+  VERBOSE_SUBST,///< The substitution item %verbose%
   VERSION,      ///< The name "version" (and variants)
 };
 

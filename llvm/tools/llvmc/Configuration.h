@@ -29,7 +29,6 @@ namespace llvm {
     /// @name Constructor
     /// @{
     public:
-      LLVMC_ConfigDataProvider();
       virtual ~LLVMC_ConfigDataProvider();
 
     /// @name Methods
@@ -40,7 +39,9 @@ namespace llvm {
         ProvideConfigData(const std::string& filetype);
 
       /// @brief Allow the configuration directory to be set
-      virtual void setConfigDir(const std::string& dirName) { configDir = dirName; }
+      virtual void setConfigDir(const sys::Path& dirName) { 
+        configDir = dirName; 
+      }
 
     private:
       CompilerDriver::ConfigData* ReadConfigData(const std::string& ftype);
@@ -53,7 +54,7 @@ namespace llvm {
       typedef hash_map<std::string,CompilerDriver::ConfigData*,
           hash<std::string>,std::equal_to<std::string> > ConfigDataMap;
       ConfigDataMap Configurations; ///< The cache of configurations
-      std::string configDir;
+      sys::Path configDir;
     /// @}
   };
 }
