@@ -42,7 +42,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumLowered("lowerinvoke", "Number of invoke & unwinds replaced");
-  cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support", 
+  cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
  cl::desc("Make the -lowerinvoke pass insert expensive, but correct, EH code"));
 
   class LowerInvoke : public FunctionPass {

@@ -135,6 +135,10 @@ bool TailDup::canEliminateUnconditionalBranch(TerminatorInst *TI) {
       Instruction *User = cast<Instruction>(*UI);
       if (User->getParent() != Tail && User->getParent() != BB)
         return false;
+
+      // The 'swap' problem foils the tail duplication rewriting code.
+      if (isa<PHINode>(User) && User->getParent() == Tail)
+        return false;
     }
   return true;
 }
