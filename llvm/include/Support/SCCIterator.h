@@ -16,7 +16,7 @@
 #define SUPPORT_TARJANSCCITERATOR_H
 
 #include "Support/GraphTraits.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include "Support/iterator"
 #include <vector>
 #include <stack>
@@ -55,11 +55,6 @@ struct SCC: public std::vector<typename GT::NodeType*> {
 // class TarjanSCC_iterator: Enumerate the SCCs of a directed graph, in
 // reverse topological order of the SCC DAG.
 //--------------------------------------------------------------------------
-
-namespace {
-  Statistic<> NumSCCs("NumSCCs", "Number of Strongly Connected Components");
-  Statistic<> MaxSCCSize("MaxSCCSize", "Size of largest Strongly Connected Component");
-}
 
 template<class GraphT, class GT = GraphTraits<GraphT> >
 class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
@@ -152,10 +147,6 @@ class TarjanSCC_iterator : public forward_iterator<SCC<GraphT, GT>, ptrdiff_t>
               SCCNodeStack.pop();
               nodeVisitNumbers[CurrentSCC.back()] = ~0UL; 
             } while (CurrentSCC.back() != visitingN);
-
-            ++NumSCCs;
-            if (CurrentSCC.size() > MaxSCCSize) MaxSCCSize = CurrentSCC.size();
-            
             return;
           }
       }
