@@ -121,7 +121,7 @@
 
 ;; Associate .ll files with llvm-mode
 (setq auto-mode-alist
-      (append '(("\\.ll$" . llvm-mode)) auto-mode-alist))
+   (append '(("\\.ll$" . llvm-mode) ("\\.llx$" . llvm-mode)) auto-mode-alist))
 
 (provide 'llvm-mode)
 ;; end of llvm-mode.el
