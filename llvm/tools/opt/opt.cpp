@@ -48,10 +48,11 @@ static cl::opt<bool>
 PrintEachXForm("p", cl::desc("Print module after each transformation"));
 
 static cl::opt<bool>
-NoOutput("no-output", cl::desc("Do not write result bytecode file"), cl::Hidden);
+NoOutput("disable-output",
+         cl::desc("Do not write result bytecode file"), cl::Hidden);
 
 static cl::opt<bool>
-NoVerify("no-verify", cl::desc("Do not verify result module"), cl::Hidden);
+NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
 
 static cl::opt<bool>
 Quiet("q", cl::desc("Don't print 'program modified' message"));

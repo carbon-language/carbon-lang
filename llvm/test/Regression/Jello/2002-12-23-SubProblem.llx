@@ -1,4 +1,4 @@
-; RUN: as < %s | lli -force-interpreter=false -no-local-ra
+; RUN: as < %s | lli -force-interpreter=false -disable-local-ra
 
 int %main(int %B) {
 	;%B = add int 0, 1

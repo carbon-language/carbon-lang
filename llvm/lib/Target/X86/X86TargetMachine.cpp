@@ -15,7 +15,7 @@
 #include <iostream>
 
 namespace {
-  cl::opt<bool> NoLocalRA("no-local-ra",
+  cl::opt<bool> NoLocalRA("disable-local-ra",
                           cl::desc("Use Simple RA instead of Local RegAlloc"));
   cl::opt<bool> PrintCode("print-machineinstrs",
 			  cl::desc("Print generated machine code"));

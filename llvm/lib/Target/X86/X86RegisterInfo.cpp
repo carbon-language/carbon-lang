@@ -19,7 +19,7 @@
 
 namespace {
   cl::opt<bool>
-  NoFPElim("no-fp-elim",
+  NoFPElim("disable-fp-elim",
 	   cl::desc("Disable frame pointer elimination optimization"));
 }
 

@@ -13,7 +13,7 @@ all:: $(addprefix Output/, $(TESTS:%.ll=%.out))
 LLI_FLAGS = -force-interpreter=false
 
 ifdef DISABLE_FP_ELIM
-LLI_FLAGS += -no-fp-elim
+LLI_FLAGS += -disable-fp-elim
 endif
 
 Output/%.out: Output/%.bc $(LLI)
