@@ -124,7 +124,7 @@ protected:
   MRegisterInfo(const MRegisterDesc *D, unsigned NR,
                 regclass_iterator RegClassBegin, regclass_iterator RegClassEnd,
 		int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);
-  virtual ~MRegisterInfo() {}
+  virtual ~MRegisterInfo();
 public:
 
   enum {                        // Define some target independent constants

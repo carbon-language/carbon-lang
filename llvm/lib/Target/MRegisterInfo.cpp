@@ -26,6 +26,8 @@ MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
   CallFrameDestroyOpcode = CFDO;
 }
 
+MRegisterInfo::~MRegisterInfo() {}
+
 std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
   std::vector<bool> Allocatable(NumRegs);
   for (MRegisterInfo::regclass_iterator I = regclass_begin(),
