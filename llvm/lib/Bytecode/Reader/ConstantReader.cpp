@@ -12,6 +12,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "ReaderInternals.h"
 #include <algorithm>
 
@@ -44,7 +45,10 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
       Params.push_back(Ty);
     }
 
-    Val = MethodType::get(RetType, Params);
+    bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
+    if (isVarArg) Params.pop_back();
+
+    Val = MethodType::get(RetType, Params, isVarArg);
     break;
   }
   case Type::ArrayTyID: {
@@ -97,6 +101,8 @@ const Type *BytecodeParser::parseTypeConstant(const uchar *&Buf,
 //
 void BytecodeParser::refineAbstractType(const DerivedType *OldType, 
 					const Type *NewType) {
+  if (OldType == NewType) return;  // Type is modified, but same
+
   TypeValuesListTy::iterator I = find(MethodTypeValues.begin(), 
 				      MethodTypeValues.end(), OldType);
   if (I == MethodTypeValues.end()) {
@@ -123,11 +129,7 @@ void BytecodeParser::refineAbstractType(const DerivedType *OldType,
 bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
 					TypeValuesListTy &Tab,
 					unsigned NumEntries) {
-  assert(Tab.size() == 0 && "I think table should always be empty here!"
-	 "This should simplify later code");
-
-  // Record the base, starting level that we will begin with.
-  unsigned BaseLevel = Tab.size();
+  assert(Tab.size() == 0 && "should not have read type constants in before!");
 
   // Insert a bunch of opaque types to be resolved later...
   for (unsigned i = 0; i < NumEntries; i++)
@@ -137,7 +139,7 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
   // opaque types just inserted.
   //
   for (unsigned i = 0; i < NumEntries; i++) {
-    const Type *NewTy = parseTypeConstant(Buf, EndBuf);
+    const Type *NewTy = parseTypeConstant(Buf, EndBuf), *OldTy = Tab[i].get();
     if (NewTy == 0) return failure(true);
     BCR_TRACE(4, "Read Type Constant: '" << NewTy << "'\n");
 
@@ -149,16 +151,16 @@ bool BytecodeParser::parseTypeConstants(const uchar *&Buf, const uchar *EndBuf,
     // abstract type to use the newty.  This also will cause the opaque type
     // to be deleted...
     //
-    cast<DerivedType>(Tab[i+BaseLevel].get())->refineAbstractTypeTo(NewTy);
+    cast<DerivedType>(Tab[i].get())->refineAbstractTypeTo(NewTy);
 
     // This should have replace the old opaque type with the new type in the
-    // value table...
-    assert(Tab[i+BaseLevel] == NewTy && "refineAbstractType didn't work!");
+    // value table... or with a preexisting type that was already in the system
+    assert(Tab[i] != OldTy && "refineAbstractType didn't work!");
   }
 
   BCR_TRACE(5, "Resulting types:\n");
   for (unsigned i = 0; i < NumEntries; i++) {
-    BCR_TRACE(5, cast<const Type>(Tab[i+BaseLevel]) << "\n");
+    BCR_TRACE(5, cast<const Type>(Tab[i]) << "\n");
   }
   return false;
 }
@@ -270,10 +272,48 @@ bool BytecodeParser::parseConstPoolValue(const uchar *&Buf,
     const PointerType *PT = cast<const PointerType>(Ty);
     unsigned SubClass;
     if (read_vbr(Buf, EndBuf, SubClass)) return failure(true);
-    if (SubClass != 0) return failure(true);
+    switch (SubClass) {
+    case 0:    // ConstPoolPointerNull value...
+      V = ConstPoolPointerNull::get(PT);
+      break;
 
+    case 1: {  // ConstPoolPointerReference value...
+      unsigned Slot;
+      if (read_vbr(Buf, EndBuf, Slot)) return failure(true);
+      BCR_TRACE(4, "CPPR: Type: '" << Ty << "'  slot: " << Slot << "\n");
 
-    V = ConstPoolPointer::getNull(PT);
+      // Check to see if we have already read this global variable yet...
+      Value *Val = getValue(PT, Slot, false);
+      GlobalValue *GV;
+      if (Val) {
+	if (!(GV = dyn_cast<GlobalValue>(Val))) return failure(true);
+	BCR_TRACE(5, "Value Found in ValueTable!\n");
+      } else {         // Nope... see if we have previously forward ref'd it
+	GlobalRefsType::iterator I = GlobalRefs.find(make_pair(PT, Slot));
+	if (I != GlobalRefs.end()) {
+	  BCR_TRACE(5, "Previous forward ref found!\n");
+	  GV = I->second;
+	} else {
+	  BCR_TRACE(5, "Creating new forward ref variable!\n");
+
+	  // Create a placeholder for the global variable reference...
+	  GlobalVariable *GVar = new GlobalVariable(PT->getValueType(), false);
+
+	  // Keep track of the fact that we have a forward ref to recycle it
+	  GlobalRefs.insert(make_pair(make_pair(PT, Slot), GVar));
+
+	  // Must temporarily push this value into the module table...
+	  TheModule->getGlobalList().push_back(GVar);
+	  GV = GVar;
+	}
+      }
+      
+      V = ConstPoolPointerReference::get(GV);
+      break;
+    }
+    default:
+      return failure(true);
+    }
     break;
   }
 
@@ -306,7 +346,7 @@ bool BytecodeParser::ParseConstantPool(const uchar *&Buf, const uchar *EndBuf,
 	ConstPoolVal *I;
 	if (parseConstPoolValue(Buf, EndBuf, Ty, I)) return failure(true);
 	BCR_TRACE(4, "Read Constant: '" << I << "'\n");
-	insertValue(I, Tab);
+	if (insertValue(I, Tab) == -1) return failure(true);
       }
     }
   }

@@ -1,4 +1,4 @@
-//===- ReadInst.cpp - Code to read an instruction from bytecode -------------===
+//===- ReadInst.cpp - Code to read an instruction from bytecode -----------===//
 //
 // This file defines the mechanism to read an instruction from a bytecode 
 // stream.
@@ -9,7 +9,7 @@
 // TODO: Change from getValue(Raw.Arg1) etc, to getArg(Raw, 1)
 //       Make it check type, so that casts are checked.
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
@@ -193,13 +193,19 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
   }
 
   case Instruction::Call: {
-    Method *M = cast<Method>(getValue(Raw.Ty, Raw.Arg1));
+    Value *M = getValue(Raw.Ty, Raw.Arg1);
     if (M == 0) return failure(true);
 
-    vector<Value *> Params;
-    const MethodType::ParamTypes &PL = M->getMethodType()->getParamTypes();
+    // Check to make sure we have a pointer to method type
+    PointerType *PTy = dyn_cast<PointerType>(M->getType());
+    if (PTy == 0) return failure(true);
+    MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType());
+    if (MTy == 0) return failure(true);
 
-    if (!M->getMethodType()->isVarArg()) {
+    vector<Value *> Params;
+    const MethodType::ParamTypes &PL = MTy->getParamTypes();
+
+    if (!MTy->isVarArg()) {
       MethodType::ParamTypes::const_iterator It = PL.begin();
 
       switch (Raw.NumOperands) {
@@ -224,21 +230,74 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
       }
       if (It != PL.end()) return failure(true);
     } else {
-      // The first parameter does not have a type specifier... because there
-      // must be at least one concrete argument to a vararg type...
-      Params.push_back(getValue(PL.front(), Raw.Arg2));
+      if (Raw.NumOperands > 2) {
+	vector<unsigned> &args = *Raw.VarArgs;
+	if (args.size() < 1) return failure(true);
 
-      vector<unsigned> &args = *Raw.VarArgs;
-      if ((args.size() & 1) != 0)
-	return failure(true);  // Must be pairs of type/value
-      for (unsigned i = 0; i < args.size(); i+=2) {
-	// TODO: Check getValue for null!
-	Params.push_back(getValue(getType(args[i]), args[i+1]));
+	if ((args.size() & 1) != 0)
+	  return failure(true);  // Must be pairs of type/value
+	for (unsigned i = 0; i < args.size(); i+=2) {
+	  const Type *Ty = getType(args[i]);
+	  if (Ty == 0)
+	    return failure(true);
+	  
+	  Value *V = getValue(Ty, args[i+1]);
+	  if (V == 0) return failure(true);
+	  Params.push_back(V);
+	}
+	delete Raw.VarArgs;
       }
-      delete Raw.VarArgs;
     }
 
     Res = new CallInst(M, Params);
+    return false;
+  }
+  case Instruction::Invoke: {
+    Value *M = getValue(Raw.Ty, Raw.Arg1);
+    if (M == 0) return failure(true);
+
+    // Check to make sure we have a pointer to method type
+    PointerType *PTy = dyn_cast<PointerType>(M->getType());
+    if (PTy == 0) return failure(true);
+    MethodType *MTy = dyn_cast<MethodType>(PTy->getValueType());
+    if (MTy == 0) return failure(true);
+
+    vector<Value *> Params;
+    const MethodType::ParamTypes &PL = MTy->getParamTypes();
+    vector<unsigned> &args = *Raw.VarArgs;
+
+    BasicBlock *Normal, *Except;
+
+    if (!MTy->isVarArg()) {
+      if (Raw.NumOperands < 3) return failure(true);
+
+      Normal = cast<BasicBlock>(getValue(Type::LabelTy, Raw.Arg2));
+      Except = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
+
+      MethodType::ParamTypes::const_iterator It = PL.begin();
+      for (unsigned i = 1; i < args.size(); i++) {
+	if (It == PL.end()) return failure(true);
+	// TODO: Check getValue for null!
+	Params.push_back(getValue(*It++, args[i]));
+      }
+
+      if (It != PL.end()) return failure(true);
+    } else {
+      if (args.size() < 4) return failure(true);
+
+      Normal = cast<BasicBlock>(getValue(Type::LabelTy, args[0]));
+      Except = cast<BasicBlock>(getValue(Type::LabelTy, args[2]));
+
+      if ((args.size() & 1) != 0)
+	return failure(true);  // Must be pairs of type/value
+      for (unsigned i = 4; i < args.size(); i+=2) {
+	// TODO: Check getValue for null!
+	Params.push_back(getValue(getType(args[i]), args[i+1]));
+      }
+    }
+
+    delete Raw.VarArgs;
+    Res = new InvokeInst(M, Normal, Except, Params);
     return false;
   }
   case Instruction::Malloc:

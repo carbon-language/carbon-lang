@@ -58,9 +58,9 @@ const Type *BytecodeParser::getType(unsigned ID) {
   return cast<Type>(D);
 }
 
-bool BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
+int BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
   unsigned type;
-  if (getTypeSlot(Val->getType(), type)) return failure(true);
+  if (getTypeSlot(Val->getType(), type)) return failure<int>(-1);
   assert(type != Type::TypeTyID && "Types should never be insertValue'd!");
  
   if (ValueTab.size() <= type)
@@ -70,7 +70,7 @@ bool BytecodeParser::insertValue(Value *Val, vector<ValueList> &ValueTab) {
   //     << "] = " << Val << endl;
   ValueTab[type].push_back(Val);
 
-  return false;
+  return ValueTab[type].size()-1;
 }
 
 Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
@@ -89,12 +89,12 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
 
     // Is it a module level type?
     if (Num < ModuleTypeValues.size())
-      return (Value*)(const Type*)ModuleTypeValues[Num];
+      return (Value*)ModuleTypeValues[Num].get();
 
     // Nope, is it a method level type?
     Num -= ModuleTypeValues.size();
     if (Num < MethodTypeValues.size())
-      return (Value*)(const Type*)MethodTypeValues[Num];
+      return (Value*)MethodTypeValues[Num].get();
 
     return 0;
   }
@@ -117,13 +117,13 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
     cerr << "Creating method pholder! : " << type << ":" << oNum << " " 
 	 << Ty->getName() << endl;
     d = new MethPHolder(Ty, oNum);
-    insertValue(d, LateResolveModuleValues);
+    if (insertValue(d, LateResolveModuleValues) ==-1) return failure<Value*>(0);
     return d;
   default:                   d = new   DefPHolder(Ty, oNum); break;
   }
 
   assert(d != 0 && "How did we not make something?");
-  if (insertValue(d, LateResolveValues)) return failure<Value*>(0);
+  if (insertValue(d, LateResolveValues) == -1) return failure<Value*>(0);
   return d;
 }
 
@@ -141,8 +141,8 @@ bool BytecodeParser::postResolveValues(ValueTable &ValTab) {
       Value *NewDef = getValue(D->getType(), IDNumber, false);
       if (NewDef == 0) {
 	Error = true;  // Unresolved thinger
-	cerr << "Unresolvable reference found: <" << D->getType()->getName()
-	     << ">:" << IDNumber << "!\n";
+	cerr << "Unresolvable reference found: <"
+	      << D->getType()->getDescription() << ">:" << IDNumber << "!\n";
       } else {
 	// Fixup all of the uses of this placeholder def...
         D->replaceAllUsesWith(NewDef);
@@ -169,7 +169,7 @@ bool BytecodeParser::ParseBasicBlock(const uchar *&Buf, const uchar *EndBuf,
     }
 
     if (Inst == 0) { delete BB; return failure(true); }
-    if (insertValue(Inst, Values)) { delete BB; return failure(true); }
+    if (insertValue(Inst, Values) == -1) { delete BB; return failure(true); }
 
     BB->getInstList().push_back(Inst);
 
@@ -216,6 +216,41 @@ bool BytecodeParser::ParseSymbolTable(const uchar *&Buf, const uchar *EndBuf,
   return false;
 }
 
+// DeclareNewGlobalValue - Patch up forward references to global values in the
+// form of ConstPoolPointerReferences.
+//
+void BytecodeParser::DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot) {
+  // Check to see if there is a forward reference to this global variable...
+  // if there is, eliminate it and patch the reference to use the new def'n.
+  GlobalRefsType::iterator I = GlobalRefs.find(make_pair(GV->getType(), Slot));
+
+  if (I != GlobalRefs.end()) {
+    GlobalVariable *OldGV = I->second;   // Get the placeholder...
+    BCR_TRACE(3, "Mutating CPPR Forward Ref!\n");
+      
+    // Loop over all of the uses of the GlobalValue.  The only thing they are
+    // allowed to be at this point is ConstPoolPointerReference's.
+    assert(OldGV->use_size() == 1 && "Only one reference should exist!");
+    while (!OldGV->use_empty()) {
+      User *U = OldGV->use_back();  // Must be a ConstPoolPointerReference...
+      ConstPoolPointerReference *CPPR = cast<ConstPoolPointerReference>(U);
+      assert(CPPR->getValue() == OldGV && "Something isn't happy");
+      
+      BCR_TRACE(4, "Mutating Forward Ref!\n");
+      
+      // Change the const pool reference to point to the real global variable
+      // now.  This should drop a use from the OldGV.
+      CPPR->mutateReference(GV);
+    }
+    
+    // Remove GV from the module...
+    GV->getParent()->getGlobalList().remove(OldGV);
+    delete OldGV;                        // Delete the old placeholder
+    
+    // Remove the map entry for the global now that it has been created...
+    GlobalRefs.erase(I);
+  }
+}
 
 bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf, 
 				 Module *C) {
@@ -237,7 +272,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   for (MethodType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It) {
     MethodArgument *MA = new MethodArgument(*It);
-    if (insertValue(MA, Values)) { delete M; return failure(true); }
+    if (insertValue(MA, Values) == -1) { delete M; return failure(true); }
     M->getArgumentList().push_back(MA);
   }
 
@@ -258,7 +293,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
       BCR_TRACE(2, "BLOCK BytecodeFormat::BasicBlock: {\n");
       BasicBlock *BB;
       if (ParseBasicBlock(Buf, Buf+Size, BB) ||
-	  insertValue(BB, Values)) {
+	  insertValue(BB, Values) == -1) {
 	delete M; return failure(true);                // Parse error... :(
       }
 
@@ -314,11 +349,13 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   // We don't need the placeholder anymore!
   delete MethPHolder;
 
+  DeclareNewGlobalValue(M, MethSlot);
+
   return false;
 }
 
 bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
-					  Module *C) {
+					   Module *Mod) {
   if (!MethodSignatureList.empty()) 
     return failure(true);  // Two ModuleGlobal blocks?
 
@@ -334,7 +371,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     }
 
     const PointerType *PTy = cast<const PointerType>(Ty);
-    Ty = PTy->getValueType();
+    const Type *ElTy = PTy->getValueType();
 
     ConstPoolVal *Initializer = 0;
     if (VarType & 2) { // Does it have an initalizer?
@@ -344,18 +381,24 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       unsigned InitSlot;
       if (read_vbr(Buf, End, InitSlot)) return failure(true);
       
-      Value *V = getValue(Ty, InitSlot, false);
+      Value *V = getValue(ElTy, InitSlot, false);
       if (V == 0) return failure(true);
       Initializer = cast<ConstPoolVal>(V);
     }
 
     // Create the global variable...
-    GlobalVariable *GV = new GlobalVariable(Ty, VarType & 1, Initializer);
-    insertValue(GV, ModuleValues);
-    C->getGlobalList().push_back(GV);
+    GlobalVariable *GV = new GlobalVariable(ElTy, VarType & 1, Initializer);
+    int DestSlot = insertValue(GV, ModuleValues);
+    if (DestSlot == -1) return failure(true);
+
+    Mod->getGlobalList().push_back(GV);
+
+    DeclareNewGlobalValue(GV, unsigned(DestSlot));
+
+    BCR_TRACE(2, "Global Variable of type: " << PTy->getDescription() 
+	      << " into slot #" << DestSlot << endl);
 
     if (read_vbr(Buf, End, VarType)) return failure(true);
-    BCR_TRACE(2, "Global Variable of type: " << PTy->getDescription() << endl);
   }
 
   // Read the method signatures for all of the methods that are coming, and 
@@ -380,7 +423,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
 
     // Insert the placeholder...
     Value *Val = new MethPHolder(Ty, 0);
-    insertValue(Val, ModuleValues);
+    if (insertValue(Val, ModuleValues) == -1) return failure(true);
 
     // Figure out which entry of its typeslot it went into...
     unsigned TypeSlot;
@@ -422,7 +465,7 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   if (align32(Buf, EndBuf)) return failure(true);
   BCR_TRACE(1, "FirstDerivedTyID = " << FirstDerivedTyID << "\n");
 
-  C = new Module();
+  TheModule = C = new Module();
   while (Buf < EndBuf) {
     const uchar *OldBuf = Buf;
     if (readBlock(Buf, EndBuf, Type, Size)) { delete C; return failure(true); }

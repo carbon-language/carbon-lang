@@ -29,6 +29,7 @@ class BasicBlock;
 class Method;
 class Module;
 class Type;
+class PointerType;
 
 typedef unsigned char uchar;
 
@@ -52,10 +53,21 @@ public:
 
   Module *ParseBytecode(const uchar *Buf, const uchar *EndBuf);
 private:          // All of this data is transient across calls to ParseBytecode
+  Module *TheModule;   // Current Module being read into...
+  
   typedef vector<Value *> ValueList;
   typedef vector<ValueList> ValueTable;
   ValueTable Values, LateResolveValues;
   ValueTable ModuleValues, LateResolveModuleValues;
+
+  // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
+  // references to global values.  Global values may be referenced before they
+  // are defined, and if so, the temporary object that they represent is held
+  // here.
+  //
+  typedef map<pair<const PointerType *, unsigned>, GlobalVariable*>
+                                                               GlobalRefsType;
+  GlobalRefsType GlobalRefs;
 
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
@@ -94,11 +106,15 @@ private:
   Value      *getValue(const Type *Ty, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
 
-  bool insertValue(Value *D, vector<ValueList> &D);
+  int insertValue(Value *D, vector<ValueList> &D);  // -1 = Failure
   bool postResolveValues(ValueTable &ValTab);
 
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
 
+  // DeclareNewGlobalValue - Patch up forward references to global values in the
+  // form of ConstPoolPointerReferences.
+  //
+  void DeclareNewGlobalValue(GlobalValue *GV, unsigned Slot);
 
   // refineAbstractType - The callback method is invoked when one of the
   // elements of TypeValues becomes more concrete...
