@@ -24,43 +24,35 @@
 #include <memory>
 #include <set>
 
-//
-// Function: FileExists ()
-//
-// Description:
-//  Determine if the specified filename exists and is readable.
-//
-// Inputs:
-//  FN - The name of the file.
-//
-// Outputs:
-//  None.
-//
-// Return Value:
-//  TRUE - The file exists and is readable.
-//  FALSE - The file does not exist or is unreadable.
-//
+/// FileExists - determines if the specified filename exists and is readable.
+///
+/// Inputs:
+///  FN - The name of the file.
+///
+/// Outputs:
+///  None.
+///
+/// Return Value:
+///  TRUE - The file exists and is readable.
+///  FALSE - The file does not exist or is unreadable.
+///
 static inline bool FileExists(const std::string &FN) {
   return access(FN.c_str(), R_OK | F_OK) != -1;
 }
 
-//
-// Function: IsArchive ()
-//
-// Description:
-//  Determine if the specified file is an ar archive.  It determines this by
-//  checking the magic string at the beginning of the file.
-//
-// Inputs:
-//  filename - A C++ string containing the name of the file.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  TRUE  - The file is an archive.
-//  FALSE - The file is not an archive.
-//
+/// IsArchive - determines if the specified file is an ar archive
+/// by checking the magic string at the beginning of the file.
+///
+/// Inputs:
+///  filename - A C++ string containing the name of the file.
+///
+/// Outputs:
+///  None.
+///
+/// Return value:
+///  TRUE  - The file is an archive.
+///  FALSE - The file is not an archive.
+///
 static inline bool IsArchive(const std::string &filename) {
   std::string ArchiveMagic("!<arch>\012");
   char buf[1 + ArchiveMagic.size()];
@@ -70,24 +62,20 @@ static inline bool IsArchive(const std::string &filename) {
   return ArchiveMagic == buf;
 }
 
-//
-// Function: FindLib ()
-//
-// Description:
-//  This function locates a particular library.  It will prepend and append
-//  various directories, prefixes, and suffixes until it can find the library.
-//
-// Inputs:
-//  Filename  - Name of the file to find.
-//  Paths     - List of directories to search.
-//
-// Outputs:
-//  None.
-//
-// Return value:
-//  The name of the file is returned.
-//  If the file is not found, an empty string is returned.
-//
+/// FindLib - locates a particular library.  It will prepend and append
+/// various directories, prefixes, and suffixes until it can find the library.
+///
+/// Inputs:
+///  Filename  - Name of the file to find.
+///  Paths     - List of directories to search.
+///
+/// Outputs:
+///  None.
+///
+/// Return value:
+///  The name of the file is returned.
+///  If the file is not found, an empty string is returned.
+///
 static std::string
 FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
   // Determine if the pathname can be found as it stands.
@@ -124,22 +112,19 @@ FindLib(const std::string &Filename, const std::vector<std::string> &Paths) {
   return std::string();
 }
 
-//
-// Function: GetAllDefinedSymbols ()
-//
-// Description:
-//  Find all of the defined symbols in the specified module.
-//
-// Inputs:
-//  M - The module in which to find defined symbols.
-//
-// Outputs:
-//  DefinedSymbols - A set of C++ strings that will contain the name of all
-//                   defined symbols.
-//
-// Return value:
-//  None.
-//
+/// GetAllDefinedSymbols - finds all of the defined symbols in the specified 
+/// module.
+///
+/// Inputs:
+///  M - The module in which to find defined symbols.
+///
+/// Outputs:
+///  DefinedSymbols - A set of C++ strings that will contain the name of all
+///                   defined symbols.
+///
+/// Return value:
+///  None.
+///
 void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
@@ -149,25 +134,21 @@ void GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
       DefinedSymbols.insert(I->getName());
 }
 
-//
-// Function: GetAllUndefinedSymbols ()
-//
-// Description:
-//  This calculates the set of undefined symbols that still exist in an LLVM
-//  module.  This is a bit tricky because there may be two symbols with the
-//  same name but different LLVM types that will be resolved to each other but
-//  aren't currently (thus we need to treat it as resolved).
-//
-// Inputs:
-//  M - The module in which to find undefined symbols.
-//
-// Outputs:
-//  UndefinedSymbols - A set of C++ strings containing the name of all
-//                     undefined symbols.
-//
-// Return value:
-//  None.
-//
+/// GetAllUndefinedSymbols - calculates the set of undefined symbols that still
+/// exist in an LLVM module. This is a bit tricky because there may be two
+/// symbols with the same name but different LLVM types that will be resolved to
+/// each other but aren't currently (thus we need to treat it as resolved).
+///
+/// Inputs:
+///  M - The module in which to find undefined symbols.
+///
+/// Outputs:
+///  UndefinedSymbols - A set of C++ strings containing the name of all
+///                     undefined symbols.
+///
+/// Return value:
+///  None.
+///
 void
 GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   std::set<std::string> DefinedSymbols;
@@ -198,22 +179,18 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 }
 
 
-//
-// Function: LoadObject ()
-//
-// Description:
-//  Read the specified bytecode object file.
-//
-// Inputs:
-//  FN - The name of the file to load.
-//
-// Outputs:
-//  OutErrorMessage - The error message to give back to the caller.
-//
-// Return Value:
-//  A pointer to a module represening the bytecode file is returned.
-//  If an error occurs, the pointer is 0.
-//
+/// LoadObject - reads the specified bytecode object file.
+///
+/// Inputs:
+///  FN - The name of the file to load.
+///
+/// Outputs:
+///  OutErrorMessage - The error message to give back to the caller.
+///
+/// Return Value:
+///  A pointer to a module represening the bytecode file is returned.
+///  If an error occurs, the pointer is 0.
+///
 std::auto_ptr<Module>
 LoadObject(const std::string & FN, std::string &OutErrorMessage) {
   std::string ErrorMessage;
@@ -224,25 +201,21 @@ LoadObject(const std::string & FN, std::string &OutErrorMessage) {
   return std::auto_ptr<Module>();
 }
 
-//
-// Function: LinkInArchive ()
-//
-// Description:
-//  This function will open an archive library and link in all objects which
-//  provide symbols that are currently undefined.
-//
-// Inputs:
-//  M        - The module in which to link the archives.
-//  Filename - The pathname of the archive.
-//  Verbose  - Flags whether verbose messages should be printed.
-//
-// Outputs:
-//  ErrorMessage - A C++ string detailing what error occurred, if any.
-//
-// Return Value:
-//  TRUE  - An error occurred.
-//  FALSE - No errors.
-//
+/// LinkInArchive - opens an archive library and link in all objects which
+/// provide symbols that are currently undefined.
+///
+/// Inputs:
+///  M        - The module in which to link the archives.
+///  Filename - The pathname of the archive.
+///  Verbose  - Flags whether verbose messages should be printed.
+///
+/// Outputs:
+///  ErrorMessage - A C++ string detailing what error occurred, if any.
+///
+/// Return Value:
+///  TRUE  - An error occurred.
+///  FALSE - No errors.
+///
 static bool LinkInArchive(Module *M,
                           const std::string &Filename,
                           std::string &ErrorMessage,
@@ -315,25 +288,21 @@ static bool LinkInArchive(Module *M,
   return false;
 }
 
-//
-// Function: LinkInFile ()
-//
-// Description:
-//  This function will open an archive library and link in all objects which
-//  provide symbols that are currently undefined.
-//
-// Inputs:
-//  HeadModule - The module in which to link the archives.
-//  Filename   - The pathname of the archive.
-//  Verbose    - Flags whether verbose messages should be printed.
-//
-// Outputs:
-//  ErrorMessage - A C++ string detailing what error occurred, if any.
-//
-// Return Value:
-//  TRUE  - An error occurred.
-//  FALSE - No errors.
-//
+/// LinkInFile - opens an archive library and link in all objects which
+/// provide symbols that are currently undefined.
+///
+/// Inputs:
+///  HeadModule - The module in which to link the archives.
+///  Filename   - The pathname of the archive.
+///  Verbose    - Flags whether verbose messages should be printed.
+///
+/// Outputs:
+///  ErrorMessage - A C++ string detailing what error occurred, if any.
+///
+/// Return Value:
+///  TRUE  - An error occurred.
+///  FALSE - No errors.
+///
 static bool LinkInFile(Module *HeadModule,
                        const std::string &Filename,
                        std::string &ErrorMessage,
@@ -345,31 +314,26 @@ static bool LinkInFile(Module *HeadModule,
   return LinkModules(HeadModule, M.get(), &ErrorMessage);
 }
 
-//
-// Function: LinkFiles ()
-//
-// Description:
-//  This function takes a module and a list of files and links them all
-//  together.  It locates the file either in the current directory, as it's
-//  absolute or relative pathname, or as a file somewhere in
-//  LLVM_LIB_SEARCH_PATH.
-//
-// Inputs:
-//  progname   - The name of the program (infamous argv[0]).
-//  HeadModule - The module under which all files will be linked.
-//  Files      - A vector of C++ strings indicating the LLVM bytecode filenames
-//               to be linked.  The names can refer to a mixture of pure LLVM
-//               bytecode files and archive (ar) formatted files.
-//  Verbose    - Flags whether verbose output should be printed while linking.
-//
-// Outputs:
-//  HeadModule - The module will have the specified LLVM bytecode files linked
-//               in.
-//
-// Return value:
-//  FALSE - No errors.
-//  TRUE  - Some error occurred.
-//
+/// LinkFiles - takes a module and a list of files and links them all together.
+/// It locates the file either in the current directory, as its absolute
+/// or relative pathname, or as a file somewhere in LLVM_LIB_SEARCH_PATH.
+///
+/// Inputs:
+///  progname   - The name of the program (infamous argv[0]).
+///  HeadModule - The module under which all files will be linked.
+///  Files      - A vector of C++ strings indicating the LLVM bytecode filenames
+///               to be linked.  The names can refer to a mixture of pure LLVM
+///               bytecode files and archive (ar) formatted files.
+///  Verbose    - Flags whether verbose output should be printed while linking.
+///
+/// Outputs:
+///  HeadModule - The module will have the specified LLVM bytecode files linked
+///               in.
+///
+/// Return value:
+///  FALSE - No errors.
+///  TRUE  - Some error occurred.
+///
 bool LinkFiles(const char *progname,
                Module *HeadModule,
                const std::vector<std::string> &Files,
@@ -427,28 +391,24 @@ bool LinkFiles(const char *progname,
   return false;
 }
 
-//
-// Function: LinkLibraries ()
-//
-// Description:
-//  This function takes the specified library files and links them into the
-//  main bytecode object file.
-//
-// Inputs:
-//  progname   - The name of the program (infamous argv[0]).
-//  HeadModule - The module into which all necessary libraries will be linked.
-//  Libraries  - The list of libraries to link into the module.
-//  LibPaths   - The list of library paths in which to find libraries.
-//  Verbose    - Flags whether verbose messages should be printed.
-//  Native     - Flags whether native code is being generated.
-//
-// Outputs:
-//  HeadModule - The module will have all necessary libraries linked in.
-//
-// Return value:
-//  FALSE - No error.
-//  TRUE  - Error.
-//
+/// LinkLibraries - takes the specified library files and links them into the
+/// main bytecode object file.
+///
+/// Inputs:
+///  progname   - The name of the program (infamous argv[0]).
+///  HeadModule - The module into which all necessary libraries will be linked.
+///  Libraries  - The list of libraries to link into the module.
+///  LibPaths   - The list of library paths in which to find libraries.
+///  Verbose    - Flags whether verbose messages should be printed.
+///  Native     - Flags whether native code is being generated.
+///
+/// Outputs:
+///  HeadModule - The module will have all necessary libraries linked in.
+///
+/// Return value:
+///  FALSE - No error.
+///  TRUE  - Error.
+///
 bool LinkLibraries(const char *progname,
                    Module *HeadModule,
                    const std::vector<std::string> &Libraries,
