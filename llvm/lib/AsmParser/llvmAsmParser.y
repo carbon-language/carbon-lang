@@ -79,7 +79,7 @@ static struct PerModuleInfo {
   // GlobalRefs - This maintains a mapping between <Type, ValID>'s and forward
   // references to global values.  Global values may be referenced before they
   // are defined, and if so, the temporary object that they represent is held
-  // here.  This is used for forward references of ConstantPointerRefs.
+  // here.  This is used for forward references of GlobalValues.
   //
   typedef std::map<std::pair<const PointerType *,
                              ValID>, GlobalValue*> GlobalRefsType;
@@ -282,10 +282,10 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
     if (!ConstantUInt::isValueValidForType(Ty, D.UConstPool64)) {
       if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64)) {
-	ThrowException("Integral constant '" + utostr(D.UConstPool64) +
+        ThrowException("Integral constant '" + utostr(D.UConstPool64) +
                        "' is invalid or out of range!");
       } else {     // This is really a signed reference.  Transmogrify.
-	return ConstantSInt::get(Ty, D.ConstPool64);
+        return ConstantSInt::get(Ty, D.ConstPool64);
       }
     } else {
       return ConstantUInt::get(Ty, D.UConstPool64);
@@ -452,15 +452,15 @@ static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
         // resolver table
         InsertValue(V, *FutureLateResolvers);
       } else {
-	if (DID.Type == ValID::NameVal)
-	  ThrowException("Reference to an invalid definition: '" +DID.getName()+
-			 "' of type '" + V->getType()->getDescription() + "'",
-			 PHI->second.second);
-	else
-	  ThrowException("Reference to an invalid definition: #" +
-			 itostr(DID.Num) + " of type '" + 
-			 V->getType()->getDescription() + "'",
-			 PHI->second.second);
+        if (DID.Type == ValID::NameVal)
+          ThrowException("Reference to an invalid definition: '" +DID.getName()+
+                         "' of type '" + V->getType()->getDescription() + "'",
+                         PHI->second.second);
+        else
+          ThrowException("Reference to an invalid definition: #" +
+                         itostr(DID.Num) + " of type '" + 
+                         V->getType()->getDescription() + "'",
+                         PHI->second.second);
       }
     }
   }
@@ -643,7 +643,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
 
     // Any other kind of (non-equivalent) redefinition is an error.
     ThrowException("Redefinition of type named '" + Name + "' in the '" +
-		   T->getDescription() + "' type plane!");
+                   T->getDescription() + "' type plane!");
   }
 
   return false;
@@ -703,8 +703,8 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 
   for (unsigned i = 0; i != UpRefs.size(); ++i) {
     UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", " 
-	   << UpRefs[i].second->getDescription() << ") = " 
-	   << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << "\n");
+           << UpRefs[i].second->getDescription() << ") = " 
+           << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << "\n");
     if (TypeContains(Ty, UpRefs[i].LastContainedTy)) {
       // Decrement level of upreference
       unsigned Level = --UpRefs[i].NestingLevel;
@@ -721,7 +721,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
           UR_OUT("  * Type '" << OldName << "' refined upreference to: "
                  << (const void*)Ty << ", " << Ty->getDescription() << "\n");
         }
-	UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
+        UpRefs.erase(UpRefs.begin()+i);     // Remove from upreference list...
         --i;                                // Do not skip the next element...
       }
     }
@@ -1025,7 +1025,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     std::vector<const Type*> Params;
     mapto($3->begin(), $3->end(), std::back_inserter(Params), 
-	  std::mem_fun_ref(&PATypeHolder::get));
+          std::mem_fun_ref(&PATypeHolder::get));
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
@@ -1040,7 +1040,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   | '{' TypeListI '}' {                        // Structure type?
     std::vector<const Type*> Elements;
     mapto($2->begin(), $2->end(), std::back_inserter(Elements), 
-	std::mem_fun_ref(&PATypeHolder::get));
+        std::mem_fun_ref(&PATypeHolder::get));
 
     $$ = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
     delete $2;
@@ -1093,15 +1093,15 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     // Verify that we have the correct size...
     if (NumElements != -1 && NumElements != (int)$3->size())
       ThrowException("Type mismatch: constant sized array initialized with " +
-		     utostr($3->size()) +  " arguments, but has size of " + 
-		     itostr(NumElements) + "!");
+                     utostr($3->size()) +  " arguments, but has size of " + 
+                     itostr(NumElements) + "!");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $3->size(); i++) {
       if (ETy != (*$3)[i]->getType())
-	ThrowException("Element #" + utostr(i) + " is not of type '" + 
-		       ETy->getDescription() +"' as required!\nIt is of type '"+
-		       (*$3)[i]->getType()->getDescription() + "'.");
+        ThrowException("Element #" + utostr(i) + " is not of type '" + 
+                       ETy->getDescription() +"' as required!\nIt is of type '"+
+                       (*$3)[i]->getType()->getDescription() + "'.");
     }
 
     $$ = ConstantArray::get(ATy, *$3);
@@ -1116,7 +1116,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       ThrowException("Type mismatch: constant sized array initialized with 0"
-		     " arguments, but has size of " + itostr(NumElements) +"!");
+                     " arguments, but has size of " + itostr(NumElements) +"!");
     $$ = ConstantArray::get(ATy, std::vector<Constant*>());
     delete $1;
   }
@@ -1131,15 +1131,15 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     char *EndStr = UnEscapeLexed($3, true);
     if (NumElements != -1 && NumElements != (EndStr-$3))
       ThrowException("Can't build string constant of size " + 
-		     itostr((int)(EndStr-$3)) +
-		     " when array has size " + itostr(NumElements) + "!");
+                     itostr((int)(EndStr-$3)) +
+                     " when array has size " + itostr(NumElements) + "!");
     std::vector<Constant*> Vals;
     if (ETy == Type::SByteTy) {
       for (char *C = $3; C != EndStr; ++C)
-	Vals.push_back(ConstantSInt::get(ETy, *C));
+        Vals.push_back(ConstantSInt::get(ETy, *C));
     } else if (ETy == Type::UByteTy) {
       for (char *C = $3; C != EndStr; ++C)
-	Vals.push_back(ConstantUInt::get(ETy, (unsigned char)*C));
+        Vals.push_back(ConstantUInt::get(ETy, (unsigned char)*C));
     } else {
       free($3);
       ThrowException("Cannot build string arrays of non byte sized elements!");
@@ -1195,7 +1195,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       ThrowException("Global const reference must be a pointer type!");
 
     // ConstExprs can exist in the body of a function, thus creating
-    // ConstantPointerRefs whenever they refer to a variable.  Because we are in
+    // GlobalValues whenever they refer to a variable.  Because we are in
     // the context of a function, getValNonImprovising will search the functions
     // symbol table instead of the module symbol table for the global symbol,
     // which throws things all off.  To get around this, we just tell
@@ -1218,35 +1218,34 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
       // First check to see if the forward references value is already created!
       PerModuleInfo::GlobalRefsType::iterator I =
-	CurModule.GlobalRefs.find(std::make_pair(PT, $2));
+        CurModule.GlobalRefs.find(std::make_pair(PT, $2));
     
       if (I != CurModule.GlobalRefs.end()) {
-	V = I->second;             // Placeholder already exists, use it...
+        V = I->second;             // Placeholder already exists, use it...
         $2.destroy();
       } else {
         std::string Name;
         if ($2.Type == ValID::NameVal) Name = $2.Name;
 
-	// Create the forward referenced global.
+        // Create the forward referenced global.
         GlobalValue *GV;
         if (const FunctionType *FTy = 
                  dyn_cast<FunctionType>(PT->getElementType())) {
           GV = new Function(FTy, GlobalValue::ExternalLinkage, Name,
                             CurModule.CurrentModule);
         } else {
-	  GV = new GlobalVariable(PT->getElementType(), false,
+          GV = new GlobalVariable(PT->getElementType(), false,
                                   GlobalValue::ExternalLinkage, 0,
                                   Name, CurModule.CurrentModule);
         }
 
-	// Keep track of the fact that we have a forward ref to recycle it
-	CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, $2), GV));
-	V = GV;
+        // Keep track of the fact that we have a forward ref to recycle it
+        CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, $2), GV));
+        V = GV;
       }
     }
 
-    GlobalValue *GV = cast<GlobalValue>(V);
-    $$ = ConstantPointerRef::get(GV);
+    $$ = cast<GlobalValue>(V);
     delete $1;            // Free the type handle
   }
   | Types ConstExpr {
@@ -1730,12 +1729,12 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
-	if ((*ArgI)->getType() != *I)
-	  ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
-			 (*I)->getDescription() + "'!");
+        if ((*ArgI)->getType() != *I)
+          ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
+                         (*I)->getDescription() + "'!");
 
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
-	ThrowException("Invalid number of parameters detected!");
+        ThrowException("Invalid number of parameters detected!");
 
       $$ = new InvokeInst(V, Normal, Except, *$5);
     }
@@ -1891,7 +1890,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$->op_reserve($2->size()*2);
     while ($2->begin() != $2->end()) {
       if ($2->front().first->getType() != Ty) 
-	ThrowException("All elements of a PHI node must be of the same type!");
+        ThrowException("All elements of a PHI node must be of the same type!");
       cast<PHINode>($$)->addIncoming($2->front().first, $2->front().second);
       $2->pop_front();
     }
@@ -1937,12 +1936,12 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
-	if ((*ArgI)->getType() != *I)
-	  ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
-			 (*I)->getDescription() + "'!");
+        if ((*ArgI)->getType() != *I)
+          ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
+                         (*I)->getDescription() + "'!");
 
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
-	ThrowException("Invalid number of parameters detected!");
+        ThrowException("Invalid number of parameters detected!");
 
       $$ = new CallInst(V, *$5);
     }
@@ -1995,7 +1994,7 @@ MemoryInst : MALLOC Types {
   | OptVolatile LOAD Types ValueRef {
     if (!isa<PointerType>($3->get()))
       ThrowException("Can't load from nonpointer type: " +
-		     (*$3)->getDescription());
+                     (*$3)->getDescription());
     $$ = new LoadInst(getVal(*$3, $4), "", $1);
     delete $3;
   }
