@@ -103,6 +103,15 @@ public:
   }
 private:
   DSGraph &calculateGraph(Function &F);
+
+  // inlineNonSCCGraphs - This method is almost like the other two calculate
+  // graph methods.  This one is used to inline function graphs (from functions
+  // outside of the SCC) into functions in the SCC.  It is not supposed to touch
+  // functions IN the SCC at all.
+  //
+  DSGraph &BUDataStructures::inlineNonSCCGraphs(Function &F,
+                                             std::set<Function*> &SCCFunctions);
+ 
   DSGraph &calculateSCCGraph(Function &F,
                              std::set<Function*> &InlinedSCCFunctions);
   void calculateReachableGraphs(Function *F);
@@ -113,13 +122,6 @@ private:
   unsigned calculateGraphs(Function *F, std::vector<Function*> &Stack,
                            unsigned &NextID, 
                            std::map<Function*, unsigned> &ValMap);
-
-
-  /*
-  bool ResolveFunctionCalls(DSGraph &G, unsigned &FirstResolvableCall,
-                            std::map<Function*, DSCallSite> &InProcess,
-                            unsigned Indent);
-  */
 };
 
 
