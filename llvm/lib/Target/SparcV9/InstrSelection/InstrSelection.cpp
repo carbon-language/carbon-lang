@@ -220,8 +220,7 @@ InstructionSelection::InsertCodeForPhis(Function &F) {
   for (MachineFunction::iterator BB = MF.begin(); BB != MF.end(); ++BB) {
     for (BasicBlock::const_iterator IIt = BB->getBasicBlock()->begin();
          const PHINode *PN = dyn_cast<PHINode>(IIt); ++IIt) {
-      // FIXME: This is probably wrong...
-      Value *PhiCpRes = new PHINode(PN->getType(), "PhiCp:");
+      Value *PhiCpRes = new PHINode(PN->getType(), PN->getName() + ":PhiCp");
 
       // The leak detector shouldn't track these nodes.  They are not garbage,
       // even though their parent field is never filled in.
@@ -254,11 +253,10 @@ InstructionSelection::InsertCodeForPhis(Function &F) {
   } // for all BBs in function
 }
 
-//-------------------------------------------------------------------------
-// Thid method inserts a copy instruction to a predecessor BB as a result
-// of phi elimination.
-//-------------------------------------------------------------------------
-
+/// InsertPhiElimInstructions - Inserts the instructions in CpVec into the
+/// MachineBasicBlock corresponding to BB, just before its terminator
+/// instruction. This is used by InsertCodeForPhis() to insert copies, above.
+///
 void
 InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
                                         const std::vector<MachineInstr*>& CpVec)
@@ -268,19 +266,9 @@ InstructionSelection::InsertPhiElimInstructions(BasicBlock *BB,
   MachineInstr *FirstMIOfTerm = MC4Term.front();
   assert (FirstMIOfTerm && "No Machine Instrs for terminator");
 
-  MachineFunction &MF = MachineFunction::get(BB->getParent());
-
-  // FIXME: if PHI instructions existed in the machine code, this would be
-  // unnecessary.
-  MachineBasicBlock *MBB = 0;
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    if (I->getBasicBlock() == BB) {
-      MBB = I;
-      break;
-    }
-
+  MachineBasicBlock *MBB = FirstMIOfTerm->getParent();
+  assert(MBB && "Machine BB for predecessor's terminator not found");
   MachineBasicBlock::iterator MCIt = FirstMIOfTerm;
-
   assert(MCIt != MBB->end() && "Start inst of terminator not found");
   
   // insert the copy instructions just before the first machine instruction
