@@ -176,14 +176,6 @@ namespace {
       return CurAST->getAliasSetForPointer(V, 0).isMod();
     }
 
-    /// isLoopInvariant - Return true if the specified value is loop invariant
-    ///
-    inline bool isLoopInvariant(Value *V) {
-      if (Instruction *I = dyn_cast<Instruction>(V))
-        return !CurLoop->contains(I->getParent());
-      return true;  // All non-instructions are loop invariant
-    }
-
     bool canSinkOrHoistInst(Instruction &I);
     bool isLoopInvariantInst(Instruction &I);
     bool isNotUsedInLoop(Instruction &I);
@@ -421,7 +413,7 @@ bool LICM::isNotUsedInLoop(Instruction &I) {
 bool LICM::isLoopInvariantInst(Instruction &I) {
   // The instruction is loop invariant if all of its operands are loop-invariant
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-    if (!isLoopInvariant(I.getOperand(i)))
+    if (!CurLoop->isLoopInvariant(I.getOperand(i)))
       return false;
 
   // If we got this far, the instruction is loop invariant!
@@ -714,7 +706,7 @@ void LICM::findPromotableValuesInLoop(
     // set, if the pointer is loop invariant, if if we are not eliminating any
     // volatile loads or stores.
     if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
-        !AS.isVolatile() && isLoopInvariant(AS.begin()->first)) {
+        !AS.isVolatile() && CurLoop->isLoopInvariant(AS.begin()->first)) {
       assert(AS.begin() != AS.end() &&
              "Must alias set should have at least one pointer element in it!");
       Value *V = AS.begin()->first;
