@@ -51,16 +51,16 @@ Xdefine PANIC		printf
                  * The last one is the bitwise Not(val) == XOR val, 11..1.
                  * Note that it is also a binary operator, not unary.
                  */
-%term BAnd=111
-%term BOr=112
-%term BXor=113
-%term BNot=213
+%term BAnd=112
+%term BOr=113
+%term BXor=114
+%term BNot=214
                 /* The next one is the boolean Not(val) == bool XOR val, true
                  * Note that it is also a binary operator, not unary.
                  */
-%term  Not=313
+%term  Not=314
 
-%term SetCC=114	/* use this to match all SetCC instructions */
+%term SetCC=115	/* use this to match all SetCC instructions */
 	/* %term SetEQ=13 */
 	/* %term SetNE=14 */
 	/* %term SetLE=15 */
@@ -70,28 +70,28 @@ Xdefine PANIC		printf
 %term Malloc=MallocOPCODE
 %term Free=FreeOPCODE
 %term Alloca=AllocaOPCODE
-%term AllocaN=122               /* alloca with arg N */
+%term AllocaN=123               /* alloca with arg N */
 %term Load=LoadOPCODE
 %term Store=StoreOPCODE
 %term GetElemPtr=GetElementPtrOPCODE
-%term GetElemPtrIdx=125         /* getElemPtr with index vector */
+%term GetElemPtrIdx=126         /* getElemPtr with index vector */
 
 %term Phi=PHIOPCODE
 
 %term Cast=CastOPCODE /* cast that will be ignored. others are made explicit */
-%term ToBoolTy=127
-%term ToUByteTy=128
-%term ToSByteTy=129
-%term ToUShortTy=130
-%term ToShortTy=131
-%term ToUIntTy=132
-%term ToIntTy=133
-%term ToULongTy=134
-%term ToLongTy=135
-%term ToFloatTy=136
-%term ToDoubleTy=137
-%term ToArrayTy=138
-%term ToPointerTy=139
+%term ToBoolTy=128
+%term ToUByteTy=129
+%term ToSByteTy=130
+%term ToUShortTy=131
+%term ToShortTy=132
+%term ToUIntTy=133
+%term ToIntTy=134
+%term ToULongTy=135
+%term ToLongTy=136
+%term ToFloatTy=137
+%term ToDoubleTy=138
+%term ToArrayTy=139
+%term ToPointerTy=140
 
 %term Call=CallOPCODE
 %term Shl=ShlOPCODE
