@@ -1,9 +1,6 @@
 ; Test merging of blocks that only have PHI nodes in them
 ;
-; RUN: if as < %s | opt -simplifycfg | dis | grep 'N:'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -simplifycfg | dis | not grep 'N:'
 ;
 
 int %test(bool %a, bool %b) {

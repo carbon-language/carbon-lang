@@ -2,10 +2,7 @@
 ; where the mergedinto block doesn't have any PHI nodes, and is in fact 
 ; dominated by the block-to-be-eliminated
 ;
-; RUN: if as < %s | opt -simplifycfg | dis | grep 'N:'
-; RUN: then exit 1
-; RUN: else exit 0
-; RUN: fi
+; RUN: as < %s | opt -simplifycfg | dis | not grep 'N:'
 ;
 
 int %test(bool %a, bool %b) {
