@@ -22,7 +22,7 @@ class ConstantPointerRef;
 class Module : public Value, public SymTabValue {
 public:
   typedef ValueHolder<GlobalVariable, Module, Module> GlobalListType;
-  typedef ValueHolder<Method, Module, Module> MethodListType;
+  typedef ValueHolder<Function, Module, Module> FunctionListType;
 
   // Global Variable iterators...
   typedef GlobalListType::iterator                             giterator;
@@ -30,15 +30,15 @@ public:
   typedef std::reverse_iterator<giterator>             reverse_giterator;
   typedef std::reverse_iterator<const_giterator> const_reverse_giterator;
 
-  // Method iterators...
-  typedef MethodListType::iterator                            iterator;
-  typedef MethodListType::const_iterator                const_iterator;
+  // Function iterators...
+  typedef FunctionListType::iterator                            iterator;
+  typedef FunctionListType::const_iterator                const_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 private:
   GlobalListType GlobalList;     // The Global Variables
-  MethodListType MethodList;     // The Methods
+  FunctionListType FunctionList;     // The Functions
 
   GlobalValueRefMap *GVRefMap;
 
@@ -57,14 +57,14 @@ public:
   //
   bool reduceApply(bool (*Func)(GlobalVariable*));
   bool reduceApply(bool (*Func)(const GlobalVariable*)) const;
-  bool reduceApply(bool (*Func)(Method*));
-  bool reduceApply(bool (*Func)(const Method*)) const;
+  bool reduceApply(bool (*Func)(Function*));
+  bool reduceApply(bool (*Func)(const Function*)) const;
 
   // Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
   inline       GlobalListType &getGlobalList()        { return GlobalList; }
-  inline const MethodListType &getMethodList() const  { return MethodList; }
-  inline       MethodListType &getMethodList()        { return MethodList; }
+  inline const FunctionListType &getFunctionList() const { return FunctionList;}
+  inline       FunctionListType &getFunctionList()       { return FunctionList;}
 
   //===--------------------------------------------------------------------===//
   // Module iterator forwarding functions
@@ -88,22 +88,22 @@ public:
 
 
 
-  inline iterator                begin()       { return MethodList.begin(); }
-  inline const_iterator          begin() const { return MethodList.begin(); }
-  inline iterator                end  ()       { return MethodList.end();   }
-  inline const_iterator          end  () const { return MethodList.end();   }
+  inline iterator                begin()       { return FunctionList.begin(); }
+  inline const_iterator          begin() const { return FunctionList.begin(); }
+  inline iterator                end  ()       { return FunctionList.end();   }
+  inline const_iterator          end  () const { return FunctionList.end();   }
 
-  inline reverse_iterator       rbegin()       { return MethodList.rbegin(); }
-  inline const_reverse_iterator rbegin() const { return MethodList.rbegin(); }
-  inline reverse_iterator       rend  ()       { return MethodList.rend();   }
-  inline const_reverse_iterator rend  () const { return MethodList.rend();   }
+  inline reverse_iterator       rbegin()       { return FunctionList.rbegin(); }
+  inline const_reverse_iterator rbegin() const { return FunctionList.rbegin(); }
+  inline reverse_iterator       rend  ()       { return FunctionList.rend();   }
+  inline const_reverse_iterator rend  () const { return FunctionList.rend();   }
 
-  inline unsigned                 size() const { return MethodList.size(); }
-  inline bool                    empty() const { return MethodList.empty(); }
-  inline const Method           *front() const { return MethodList.front(); }
-  inline       Method           *front()       { return MethodList.front(); }
-  inline const Method            *back() const { return MethodList.back(); }
-  inline       Method            *back()       { return MethodList.back(); }
+  inline unsigned                 size() const { return FunctionList.size(); }
+  inline bool                    empty() const { return FunctionList.empty(); }
+  inline const Function         *front() const { return FunctionList.front(); }
+  inline       Function         *front()       { return FunctionList.front(); }
+  inline const Function          *back() const { return FunctionList.back(); }
+  inline       Function          *back()       { return FunctionList.back(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Module *T) { return true; }

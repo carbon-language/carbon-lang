@@ -1,7 +1,8 @@
 //===-- llvm/Value.h - Definition of the Value class -------------*- C++ -*--=//
 //
 // This file defines the very important Value class.  This is subclassed by a
-// bunch of other important classes, like Def, Method, Module, Type, etc...
+// bunch of other important classes, like Instruction, Function, Module, Type,
+// etc...
 //
 // This file also defines the Use<> template for users of value.
 //
@@ -19,7 +20,7 @@
 class User;
 class Type;
 class Constant;
-class MethodArgument;
+class FunctionArgument;
 class Instruction;
 class BasicBlock;
 class GlobalValue;
@@ -41,10 +42,10 @@ public:
   enum ValueTy {
     TypeVal,                // This is an instance of Type
     ConstantVal,            // This is an instance of Constant
-    MethodArgumentVal,      // This is an instance of MethodArgument
+    FunctionArgumentVal,    // This is an instance of FunctionArgument
     InstructionVal,         // This is an instance of Instruction
     BasicBlockVal,          // This is an instance of BasicBlock
-    MethodVal,              // This is an instance of Method
+    FunctionVal,            // This is an instance of Function
     GlobalVariableVal,      // This is an instance of GlobalVariable
     ModuleVal,              // This is an instance of Module
   };
@@ -257,11 +258,11 @@ template <> inline bool isa<Constant, const Value*>(const Value *Val) {
 template <> inline bool isa<Constant, Value*>(Value *Val) { 
   return Val->getValueType() == Value::ConstantVal; 
 }
-template <> inline bool isa<MethodArgument, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::MethodArgumentVal;
+template <> inline bool isa<FunctionArgument, const Value*>(const Value *Val) { 
+  return Val->getValueType() == Value::FunctionArgumentVal;
 }
-template <> inline bool isa<MethodArgument, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::MethodArgumentVal;
+template <> inline bool isa<FunctionArgument, Value*>(Value *Val) { 
+  return Val->getValueType() == Value::FunctionArgumentVal;
 }
 template <> inline bool isa<Instruction, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::InstructionVal;
@@ -276,10 +277,10 @@ template <> inline bool isa<BasicBlock, Value*>(Value *Val) {
   return Val->getValueType() == Value::BasicBlockVal;
 }
 template <> inline bool isa<Function, const Value*>(const Value *Val) { 
-  return Val->getValueType() == Value::MethodVal;
+  return Val->getValueType() == Value::FunctionVal;
 }
 template <> inline bool isa<Function, Value*>(Value *Val) { 
-  return Val->getValueType() == Value::MethodVal;
+  return Val->getValueType() == Value::FunctionVal;
 }
 template <> inline bool isa<GlobalVariable, const Value*>(const Value *Val) { 
   return Val->getValueType() == Value::GlobalVariableVal;

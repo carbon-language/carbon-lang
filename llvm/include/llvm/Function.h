@@ -15,16 +15,12 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/ValueHolder.h"
 
-class Instruction;
-class BasicBlock;
-class MethodArgument;
 class MethodType;
-class Module;
 
 class Function : public GlobalValue, public SymTabValue {
 public:
-  typedef ValueHolder<MethodArgument, Method, Method> ArgumentListType;
-  typedef ValueHolder<BasicBlock    , Method, Method> BasicBlocksType;
+  typedef ValueHolder<FunctionArgument, Function, Function> ArgumentListType;
+  typedef ValueHolder<BasicBlock    , Function, Function> BasicBlocksType;
 
   // BasicBlock iterators...
   typedef BasicBlocksType::iterator iterator;
@@ -55,7 +51,7 @@ public:
   // this is true for external methods, defined as forward "declare"ations
   bool isExternal() const { return BasicBlocks.empty(); }
 
-  // Get the underlying elements of the Method... both the argument list and
+  // Get the underlying elements of the Function... both the argument list and
   // basic block list are empty for external methods.
   //
   inline const ArgumentListType &getArgumentList() const{ return ArgumentList; }
@@ -91,7 +87,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Function *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::MethodVal;
+    return V->getValueType() == Value::FunctionVal;
   }
 
   // dropAllReferences() - This function causes all the subinstructions to "let

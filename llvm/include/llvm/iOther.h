@@ -9,7 +9,7 @@
 #define LLVM_IOTHER_H
 
 #include "llvm/InstrTypes.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 
 //===----------------------------------------------------------------------===//
 //                                 CastInst Class
@@ -45,31 +45,31 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//                           MethodArgument Class
+//                           FunctionArgument Class
 //===----------------------------------------------------------------------===//
 
-class MethodArgument : public Value {  // Defined in the InstrType.cpp file
-  Method *Parent;
+class FunctionArgument : public Value {  // Defined in the InstrType.cpp file
+  Function *Parent;
 
-  friend class ValueHolder<MethodArgument,Method,Method>;
-  inline void setParent(Method *parent) { Parent = parent; }
+  friend class ValueHolder<FunctionArgument,Function,Function>;
+  inline void setParent(Function *parent) { Parent = parent; }
 
 public:
-  MethodArgument(const Type *Ty, const std::string &Name = "") 
-    : Value(Ty, Value::MethodArgumentVal, Name) {
+  FunctionArgument(const Type *Ty, const std::string &Name = "") 
+    : Value(Ty, Value::FunctionArgumentVal, Name) {
     Parent = 0;
   }
 
   // Specialize setName to handle symbol table majik...
   virtual void setName(const std::string &name, SymbolTable *ST = 0);
 
-  inline const Method *getParent() const { return Parent; }
-  inline       Method *getParent()       { return Parent; }
+  inline const Function *getParent() const { return Parent; }
+  inline       Function *getParent()       { return Parent; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MethodArgument *) { return true; }
+  static inline bool classof(const FunctionArgument *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == MethodArgumentVal;
+    return V->getValueType() == FunctionArgumentVal;
   }
 };
 
@@ -88,12 +88,16 @@ public:
   virtual Instruction *clone() const { return new CallInst(*this); }
   bool hasSideEffects() const { return true; }
 
-  const Method *getCalledMethod() const {
-    return dyn_cast<Method>(Operands[0]);
+  const Function *getCalledFunction() const {
+    return dyn_cast<Function>(Operands[0]);
   }
-  Method *getCalledMethod() {
-    return dyn_cast<Method>(Operands[0]); 
+  Function *getCalledFunction() {
+    return dyn_cast<Function>(Operands[0]);
   }
+
+  // FIXME: Remove getCalledMethod's
+  const Function*getCalledMethod()const{return dyn_cast<Function>(Operands[0]);}
+  Function *getCalledMethod() { return dyn_cast<Function>(Operands[0]); }
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
   inline const Value *getCalledValue() const { return Operands[0]; }
