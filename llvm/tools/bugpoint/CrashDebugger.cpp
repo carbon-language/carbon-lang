@@ -195,20 +195,23 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<BasicBlock*> &BBs) {
   // Loop over and delete any hack up any blocks that are not listed...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     for (Function::iterator BB = I->begin(), E = I->end(); BB != E; ++BB)
-      if (!Blocks.count(BB) && !isa<ReturnInst>(BB->getTerminator())) {
+      if (!Blocks.count(BB) && BB->getTerminator()->getNumSuccessors()) {
         // Loop over all of the successors of this block, deleting any PHI nodes
         // that might include it.
         for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
           (*SI)->removePredecessor(BB);
+
+        if (BB->getTerminator()->getType() != Type::VoidTy)
+          BB->getTerminator()->replaceAllUsesWith(
+                      Constant::getNullValue(BB->getTerminator()->getType()));
 
         // Delete the old terminator instruction...
         BB->getInstList().pop_back();
         
         // Add a new return instruction of the appropriate type...
         const Type *RetTy = BB->getParent()->getReturnType();
-        ReturnInst *RI = new ReturnInst(RetTy == Type::VoidTy ? 0 :
-                                        Constant::getNullValue(RetTy));
-        BB->getInstList().push_back(RI);
+        new ReturnInst(RetTy == Type::VoidTy ? 0 :
+                       Constant::getNullValue(RetTy), BB);
       }
 
   // The CFG Simplifier pass may delete one of the basic blocks we are
