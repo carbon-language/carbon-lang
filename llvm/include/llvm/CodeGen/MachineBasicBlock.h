@@ -60,6 +60,9 @@ public:
   Instructions Insts;
   MachineBasicBlock *Prev, *Next;
   const BasicBlock *BB;
+  std::vector<MachineBasicBlock *> Predecessors;
+  std::vector<MachineBasicBlock *> Successors;
+
 public:
   MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb) {
     Insts.parent = this;
@@ -94,6 +97,70 @@ public:
   const_reverse_iterator rbegin() const { return Insts.rbegin(); }
   reverse_iterator       rend  ()       { return Insts.rend();   }
   const_reverse_iterator rend  () const { return Insts.rend();   }
+
+  // Machine-CFG iterators
+  typedef std::vector<MachineBasicBlock *>::iterator       pred_iterator;
+  typedef std::vector<MachineBasicBlock *>::const_iterator const_pred_iterator;
+  typedef std::vector<MachineBasicBlock *>::iterator       succ_iterator;
+  typedef std::vector<MachineBasicBlock *>::const_iterator const_succ_iterator;
+  
+  pred_iterator        pred_begin()       { return Predecessors.begin (); }
+  const_pred_iterator  pred_begin() const { return Predecessors.begin (); }
+  pred_iterator        pred_end()         { return Predecessors.end ();   }
+  const_pred_iterator  pred_end()   const { return Predecessors.end ();   }
+  succ_iterator        succ_begin()       { return Successors.begin ();   }
+  const_succ_iterator  succ_begin() const { return Successors.begin ();   }
+  succ_iterator        succ_end()         { return Successors.end ();     }
+  const_succ_iterator  succ_end()   const { return Successors.end ();     }
+
+  // Machine-CFG mutators
+
+  /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
+  /// The Predecessors list of succ is automatically updated.
+  ///
+  void addSuccessor (MachineBasicBlock *succ) {
+    Successors.push_back (succ);
+    assert (std::find (Successors.begin (), Successors.end (), succ)
+            == Successors.end ()
+            && "Trying to addSuccessor a MBB which is already my successor");
+    succ->addPredecessor (this);
+  }
+
+  /// removeSuccessor - Remove succ from the successors list of this
+  /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
+  ///
+  void removeSuccessor (MachineBasicBlock *succ) {
+    succ->removePredecessor (this);
+    std::vector<MachineBasicBlock *>::iterator goner =
+      std::find (Successors.begin(), Successors.end (), succ);
+    assert (goner != Successors.end ()
+            && "Trying to removeSuccessor a MBB which isn't my successor");
+    Successors.erase (goner);
+  }
+
+  /// addPredecessor - Remove pred as a predecessor of this MachineBasicBlock.
+  /// Don't do this unless you know what you're doing, because it doesn't
+  /// update pred's successors list. Use pred->addSuccessor instead.
+  ///
+  void addPredecessor (MachineBasicBlock *pred) {
+    Predecessors.push_back (pred);
+    assert(std::find (Predecessors.begin (), Predecessors.end (), pred)
+           == Predecessors.end ()
+           && "Trying to addPredecessor a MBB which is already my predecessor");
+  }
+
+  /// removePredecessor - Remove pred as a predecessor of this
+  /// MachineBasicBlock. Don't do this unless you know what you're
+  /// doing, because it doesn't update pred's successors list. Use
+  /// pred->removeSuccessor instead.
+  ///
+  void removePredecessor (MachineBasicBlock *pred) {
+    std::vector<MachineBasicBlock *>::iterator goner =
+      std::find (Predecessors.begin(), Predecessors.end (), pred);
+    assert (goner != Predecessors.end ()
+            && "Trying to removePredecessor a MBB which isn't my predecessor");
+    Predecessors.erase (goner);
+  }
 
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
