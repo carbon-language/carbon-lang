@@ -1432,8 +1432,8 @@ static void markIncompleteNode(DSNode *N) {
   N->setIncompleteMarker();
 
   // Recursively process children...
-  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    if (DSNode *DSN = N->getLink(i).getNode())
+  for (DSNode::edge_iterator I = N->edge_begin(),E = N->edge_end(); I != E; ++I)
+    if (DSNode *DSN = I->getNode())
       markIncompleteNode(DSN);
 }
 
@@ -1729,8 +1729,9 @@ void DSNode::markReachableNodes(hash_set<const DSNode*> &ReachableNodes) const {
   if (this == 0) return;
   assert(getForwardNode() == 0 && "Cannot mark a forwarded node!");
   if (ReachableNodes.insert(this).second)        // Is newly reachable?
-    for (unsigned i = 0, e = getSize(); i < e; i += DS::PointerSize)
-      getLink(i).getNode()->markReachableNodes(ReachableNodes);
+    for (DSNode::const_edge_iterator I = edge_begin(), E = edge_end();
+         I != E; ++I)
+      I->getNode()->markReachableNodes(ReachableNodes);
 }
 
 void DSCallSite::markReachableNodes(hash_set<const DSNode*> &Nodes) const {
@@ -1764,9 +1765,8 @@ static bool CanReachAliveNodes(DSNode *N, hash_set<const DSNode*> &Alive,
   if (Visited.count(N)) return false;  // Found a cycle
   Visited.insert(N);   // No recursion, insert into Visited...
 
-  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
-    if (CanReachAliveNodes(N->getLink(i).getNode(), Alive, Visited,
-                           IgnoreGlobals)) {
+  for (DSNode::edge_iterator I = N->edge_begin(),E = N->edge_end(); I != E; ++I)
+    if (CanReachAliveNodes(I->getNode(), Alive, Visited, IgnoreGlobals)) {
       N->markReachableNodes(Alive);
       return true;
     }
