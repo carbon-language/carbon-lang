@@ -13,9 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
-#ifndef _POSIX_MAPPED_FILES
-#define _POSIX_MAPPED_FILES
-#endif
 #include "JIT.h"
 #include "llvm/Constant.h"
 #include "llvm/Module.h"
@@ -25,8 +22,7 @@
 #include "llvm/Target/TargetData.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
-#include "Config/unistd.h"
-#include "Config/sys/mman.h"
+#include "Support/SystemUtils.h"
 using namespace llvm;
 
 namespace {
@@ -53,55 +49,9 @@ namespace {
   };
 }
 
-// getMemory - Return a pointer to the specified number of bytes, which is
-// mapped as executable readable and writable.
-static void *getMemory(unsigned NumBytes) {
-  if (NumBytes == 0) return 0;
-  static const long pageSize = sysconf(_SC_PAGESIZE);
-  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
-
-/* FIXME: This should use the proper autoconf flags */
-#if defined(i386) || defined(__i386__) || defined(__x86__)
-  /* Linux and *BSD tend to have these flags named differently. */
-#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
-# define MAP_ANONYMOUS MAP_ANON
-#endif /* defined(MAP_ANON) && !defined(MAP_ANONYMOUS) */
-#elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-/* nothing */
-#else
-  std::cerr << "This architecture is not supported by the JIT!\n";
-  abort();
-  return 0;
-#endif
-
-#ifdef HAVE_MMAP
-  int fd = -1;
-#if defined(__linux__)
-  fd = 0;
-#endif
-  
-  unsigned mmapFlags = MAP_PRIVATE|MAP_ANONYMOUS;
-#ifdef MAP_NORESERVE
-  mmapFlags |= MAP_NORESERVE;
-#endif
-
-  void *pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-                  mmapFlags, fd, 0);
-  if (pa == MAP_FAILED) {
-    perror("mmap");
-    abort();
-  }
-  return pa;
-#else
-  std::cerr << "Do not know how to allocate mem for the JIT without mmap!\n";
-  abort();
-  return 0;
-#endif
-}
-
 JITMemoryManager::JITMemoryManager() {
   // Allocate a 16M block of memory...
-  MemBase = (unsigned char*)getMemory(16 << 20);
+  MemBase = (unsigned char*)AllocateRWXMemory(16 << 20);
   FunctionBase = MemBase + 512*1024; // Use 512k for stubs
 
   // Allocate stubs backwards from the function base, allocate functions forward
