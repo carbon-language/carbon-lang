@@ -47,28 +47,6 @@ void BranchInst::init(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond)
   Operands.push_back(Use(Cond, this));
 }
 
-BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
-                       Instruction *InsertBefore) 
-  : TerminatorInst(Instruction::Br, InsertBefore) {
-  init(True, False, Cond);
-}
-
-BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
-                       BasicBlock *InsertAtEnd) 
-  : TerminatorInst(Instruction::Br, InsertAtEnd) {
-  init(True, False, Cond);
-}
-
-BranchInst::BranchInst(BasicBlock *True, Instruction *InsertBefore) 
-  : TerminatorInst(Instruction::Br, InsertBefore) {
-  init(True);
-}
-
-BranchInst::BranchInst(BasicBlock *True, BasicBlock *InsertAtEnd) 
-  : TerminatorInst(Instruction::Br, InsertAtEnd) {
-  init(True);
-}
-
 BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
   Operands.reserve(BI.Operands.size());
   Operands.push_back(Use(BI.Operands[0], this));

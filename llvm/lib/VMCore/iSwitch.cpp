@@ -22,17 +22,6 @@ void SwitchInst::init(Value *Value, BasicBlock *Default)
   Operands.push_back(Use(Default, this));
 }
 
-SwitchInst::SwitchInst(Value *V, BasicBlock *D,
-                       Instruction *InsertBefore) 
-  : TerminatorInst(Instruction::Switch, InsertBefore) {
-  init(V, D);
-}
-
-SwitchInst::SwitchInst(Value *V, BasicBlock *D, BasicBlock *InsertAtEnd) 
-  : TerminatorInst(Instruction::Switch, InsertAtEnd) {
-  init(V, D);
-}
-
 SwitchInst::SwitchInst(const SwitchInst &SI) 
   : TerminatorInst(Instruction::Switch) {
   Operands.reserve(SI.Operands.size());

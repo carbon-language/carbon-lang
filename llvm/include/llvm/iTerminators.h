@@ -99,12 +99,26 @@ public:
   // BranchInst(BB* T, BB *F, Value *C, Inst *I) - 'br C, T, F', insert before I
   // BranchInst(BB* B, BB *I)                    - 'br B'        insert at end
   // BranchInst(BB* T, BB *F, Value *C, BB *I)   - 'br C, T, F', insert at end
-  BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0);
-  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *cond,
-             Instruction *InsertBefore = 0);
-  BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd);
-  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *cond,
-             BasicBlock *InsertAtEnd);
+  BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0)
+    : TerminatorInst(Instruction::Br, InsertBefore) {
+    init(IfTrue);
+  }
+  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
+             Instruction *InsertBefore = 0)
+    : TerminatorInst(Instruction::Br, InsertBefore) {
+    init(IfTrue, IfFalse, Cond);
+  }
+
+  BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Br, InsertAtEnd) {
+    init(IfTrue);
+  }
+
+  BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
+             BasicBlock *InsertAtEnd)
+    : TerminatorInst(Instruction::Br, InsertAtEnd) {
+    init(IfTrue, IfFalse, Cond);
+  }
 
   virtual Instruction *clone() const { return new BranchInst(*this); }
 
@@ -168,8 +182,14 @@ class SwitchInst : public TerminatorInst {
   void init(Value *Value, BasicBlock *Default);
 
 public:
-  SwitchInst(Value *Value, BasicBlock *Default, Instruction *InsertBefore = 0);
-  SwitchInst(Value *Value, BasicBlock *Default, BasicBlock  *InsertAtEnd);
+  SwitchInst(Value *Value, BasicBlock *Default, Instruction *InsertBefore = 0) 
+    : TerminatorInst(Instruction::Switch, InsertBefore) {
+    init(Value, Default);
+  }
+  SwitchInst(Value *Value, BasicBlock *Default, BasicBlock  *InsertAtEnd) 
+    : TerminatorInst(Instruction::Switch, InsertAtEnd) {
+    init(Value, Default);
+  }
 
   virtual Instruction *clone() const { return new SwitchInst(*this); }
 
