@@ -1,4 +1,5 @@
-;; Register allocation is doing a very poor job on this routine from Burg:
+;; Register allocation is doing a very poor job on this routine from yyparse
+;; in Burg:
 ;; -- at least two long-lived values are being allocated to %o? registers
 ;; -- even worse, those registers are being saved and restored repeatedly
 ;;    at function calls, even though there are no intervening uses.
