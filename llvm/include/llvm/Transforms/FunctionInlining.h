@@ -8,10 +8,6 @@
 #define LLVM_TRANSFORMS_FUNCTION_INLINING_H
 
 class CallInst;
-class Pass;
-
-Pass *createFunctionInliningPass();
-
 // InlineFunction - This function forcibly inlines the called function into the
 // basic block of the caller.  This returns true if it is not possible to inline
 // this call.  The program is still in a well defined state if this occurs 

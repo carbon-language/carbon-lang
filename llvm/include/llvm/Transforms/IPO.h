@@ -55,6 +55,11 @@ Pass *createFunctionExtractionPass(Function *F);
 //
 Pass *createFunctionResolvingPass();
 
+//===----------------------------------------------------------------------===//
+// createFunctionInliningPass - Return a new pass object that uses a heuristic
+// to inline direct function calls to small functions.
+//
+Pass *createFunctionInliningPass();
 
 //===----------------------------------------------------------------------===//
 // createInternalizePass - This pass loops over all of the functions in the
