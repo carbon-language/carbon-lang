@@ -8,12 +8,17 @@
 #define LLVM_ANALYSIS_DATA_STRUCTURE_H
 
 #include "llvm/Pass.h"
+#include "llvm/GlobalValue.h"
+#include "Support/HashExtras.h"
+#include <set>
+#include <hash_set>
 #include <string>
 
 class Type;
 class GlobalValue;
 class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
+class GlobalDSGraph;           // A common graph for globals in a program 
 class DSNodeIterator;          // Data structure graph traversal iterator
 class LocalDataStructures;     // A collection of local graphs for a program
 class BUDataStructures;        // A collection of bu graphs for a program
@@ -37,10 +42,11 @@ public:
   inline DSNodeHandle &operator=(DSNode *n);
 
   // Allow automatic, implicit, conversion to DSNode*
-  operator DSNode*() { return N; }
+  operator       DSNode*()       { return N; }
   operator const DSNode*() const { return N; }
-  operator bool() const { return N != 0; }
-  operator bool() { return N != 0; }
+  operator const DSNode*()       { return N; }
+  operator bool() const          { return N != 0; }
+  operator bool()                { return N != 0; }
 
   bool operator<(const DSNodeHandle &H) const {  // Allow sorting
     return N < H.N;
@@ -87,7 +93,7 @@ class DSNode {
   void operator=(const DSNode &); // DO NOT IMPLEMENT
 public:
   enum NodeTy {
-    ShadowNode = 0 << 0,   // Nothing is known about this node...
+    ShadowNode = 0,        // Nothing is known about this node...
     ScalarNode = 1 << 0,   // Scalar of the current function contains this value
     AllocaNode = 1 << 1,   // This node was allocated with alloca
     NewNode    = 1 << 2,   // This node was allocated with malloc
@@ -187,10 +193,17 @@ inline DSNodeHandle &DSNodeHandle::operator=(DSNode *n) {
 // DSGraph - The graph that represents a function.
 //
 class DSGraph {
+  friend class GlobalDSGraph;
+protected:
   Function &Func;
   std::vector<DSNode*> Nodes;
-  DSNodeHandle RetNode;               // Node that gets returned...
+  DSNodeHandle RetNode;                          // Node that gets returned...
   std::map<Value*, DSNodeHandle> ValueMap;
+
+  // GlobalsGraph -- Reference to the common graph of globally visible objects.
+  // This includes GlobalValues, New nodes, Cast nodes, and Calls.
+  // 
+  GlobalDSGraph* GlobalsGraph;
 
   // FunctionCalls - This vector maintains a single entry for each call
   // instruction in the current graph.  Each call entry contains DSNodeHandles
@@ -213,16 +226,16 @@ class DSGraph {
   // for formal arguments in the current graph cannot be eliminated, and
   // nodes in the graph reachable from the formal argument nodes or
   // global variable nodes must be considered incomplete. 
-  std::vector<Function*> PendingCallers;
+  std::set<Function*> PendingCallers;
   
-private:
+protected:
   // Define the interface only accessable to DataStructure
   friend class LocalDataStructures;
   friend class BUDataStructures;
   friend class TDDataStructures;
-  DSGraph(Function &F);            // Compute the local DSGraph
+  DSGraph(Function &F, GlobalDSGraph* GlobalsG); // Compute the local DSGraph
   DSGraph(const DSGraph &DSG);     // Copy ctor
-  ~DSGraph();
+  virtual ~DSGraph();
 
   // clone all the call nodes and save the copies in OrigFunctionCalls
   void saveOrigFunctionCalls() {
@@ -240,6 +253,11 @@ public:
 
   Function &getFunction() const { return Func; }
 
+  // getNodes - Get a vector of all the nodes in the graph
+  // 
+  const std::vector<DSNode*>& getNodes() const { return Nodes; }
+        std::vector<DSNode*>& getNodes()       { return Nodes; }
+
   // getValueMap - Get a map that describes what the nodes the scalars in this
   // function point to...
   //
@@ -249,8 +267,12 @@ public:
   std::vector<std::vector<DSNodeHandle> > &getFunctionCalls() {
     return FunctionCalls;
   }
+  const std::vector<std::vector<DSNodeHandle> > &getFunctionCalls() const {
+    return FunctionCalls;
+  }
 
   const DSNode *getRetNode() const { return RetNode; }
+        DSNode *getRetNode()       { return RetNode; }
 
   unsigned getGraphSize() const {
     return Nodes.size();
@@ -274,13 +296,13 @@ public:
   // the scope of current analysis may have modified it), the 'Incomplete' flag
   // is added to the NodeType.
   //
-  void markIncompleteNodes();
+  void markIncompleteNodes(bool markFormalArgs = true);
 
   // removeTriviallyDeadNodes - After the graph has been constructed, this
   // method removes all unreachable nodes that are created because they got
   // merged with other nodes in the graph.
   //
-  void removeTriviallyDeadNodes();
+  void removeTriviallyDeadNodes(bool KeepAllGlobals = false);
 
   // removeDeadNodes - Use a more powerful reachability analysis to eliminate
   // subgraphs that are unreachable.  This often occurs because the data
@@ -288,8 +310,7 @@ public:
   // from the caller's graph entirely.  This is only appropriate to use when
   // inlining graphs.
   //
-  void removeDeadNodes();
-
+  void removeDeadNodes(bool KeepAllGlobals = false, bool KeepCalls = true);
 
   // AddCaller - add a known caller node into the graph and mark it pending.
   // getCallers - get a vector of the functions that call this one
@@ -297,25 +318,64 @@ public:
   //                     caller's DSGraph has been resolved into this one.
   // 
   void addCaller(Function& caller) {
-    PendingCallers.push_back(&caller);
+    PendingCallers.insert(&caller);
   }
-  std::vector<Function*>& getPendingCallers() {
+  std::set<Function*>& getPendingCallers() {
     return PendingCallers;
   }
-  
+
   // cloneInto - Clone the specified DSGraph into the current graph, returning
   // the Return node of the graph.  The translated ValueMap for the old function
-  // is filled into the OldValMap member.  If StripLocals is set to true, Scalar
-  // and Alloca markers are removed from the graph, as the graph is being cloned
-  // into a calling function's graph.
+  // is filled into the OldValMap member.
+  // If StripScalars (StripAllocas) is set to true, Scalar (Alloca) markers
+  // are removed from the graph as the graph is being cloned.
+  // If CopyCallers is set to true, the PendingCallers list is copied.
+  // If CopyOrigCalls is set to true, the OrigFunctionCalls list is copied.
   //
   DSNode *cloneInto(const DSGraph &G, std::map<Value*, DSNodeHandle> &OldValMap,
                     std::map<const DSNode*, DSNode*>& OldNodeMap,
-                    bool StripLocals = true);
+                    bool StripScalars = false, bool StripAllocas = false,
+                    bool CopyCallers = true, bool CopyOrigCalls = true);
+
+  // cloneGlobalInto - Clone the given global node (or the node for the given
+  // GlobalValue) from the GlobalsGraph and all its target links (recursively).
+  // 
+  DSNode* cloneGlobalInto(const DSNode* GNode);
+  DSNode* cloneGlobalInto(GlobalValue* GV) {
+    assert(!GV || (((DSGraph*) GlobalsGraph)->ValueMap[GV] != 0));
+    return GV? cloneGlobalInto(((DSGraph*) GlobalsGraph)->ValueMap[GV]) : 0;
+  }
+
 private:
   bool isNodeDead(DSNode *N);
 };
 
+
+// GlobalDSGraph - A common graph for all the globals and their outgoing links
+// to externally visible nodes.  This includes GlobalValues, New nodes,
+// Cast nodes, and Calls.  This graph can only be used by one of the
+// individual function graphs, and it goes away when they all go away.
+// 
+class GlobalDSGraph: public DSGraph {
+  hash_set<const DSGraph*, hash<const DSGraph*> > Referrers;
+  void addReference(const DSGraph* referrer);
+  void removeReference(const DSGraph* referrer);
+  friend class DSGraph;                           // give access to Referrers
+  
+  GlobalDSGraph(const GlobalDSGraph &GlobalDSG);  // Do not implement
+
+  // Helper function for cloneGlobals and cloneCalls
+  DSNode* cloneNodeInto(DSNode *OldNode,
+                        std::map<const DSNode*, DSNode*> &NodeCache,
+                        bool GlobalsAreFinal = false);
+
+public:
+  GlobalDSGraph();                                // Create an empty DSGraph
+  virtual ~GlobalDSGraph();
+
+  void    cloneGlobals(DSGraph& Graph, bool CloneCalls = false);
+  void    cloneCalls  (DSGraph& Graph);
+};
 
 
 // LocalDataStructures - The analysis that computes the local data structure
@@ -326,7 +386,7 @@ private:
 //
 class LocalDataStructures : public Pass {
   // DSInfo, one graph for each function
-  std::map<Function*, DSGraph*> DSInfo;
+  std::map<const Function*, DSGraph*> DSInfo;
 public:
   static AnalysisID ID;            // DataStructure Analysis ID 
 
@@ -335,8 +395,8 @@ public:
   virtual bool run(Module &M);
 
   // getDSGraph - Return the data structure graph for the specified function.
-  DSGraph &getDSGraph(Function &F) const {
-    std::map<Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+  DSGraph &getDSGraph(const Function &F) const {
+    std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
@@ -360,7 +420,7 @@ public:
 //
 class BUDataStructures : public Pass {
   // DSInfo, one graph for each function
-  std::map<Function*, DSGraph*> DSInfo;
+  std::map<const Function*, DSGraph*> DSInfo;
 public:
   static AnalysisID ID;            // BUDataStructure Analysis ID 
 
@@ -369,12 +429,12 @@ public:
   virtual bool run(Module &M);
 
   // getDSGraph - Return the data structure graph for the specified function.
-  DSGraph &getDSGraph(Function &F) const {
-    std::map<Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+  DSGraph &getDSGraph(const Function &F) const {
+    std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
-  
+
   // print - Print out the analysis results...
   void print(std::ostream &O, const Module *M) const;
 
@@ -397,21 +457,17 @@ private:
 //
 class TDDataStructures : public Pass {
   // DSInfo, one graph for each function
-  std::map<Function*, DSGraph*> DSInfo;
+  std::map<const Function*, DSGraph*> DSInfo;
 public:
   static AnalysisID ID;            // TDDataStructure Analysis ID 
 
   ~TDDataStructures() { releaseMemory(); }
 
-  virtual const char *getPassName() const {
-    return "Top-down Data Structure Analysis Closure";
-  }
-
   virtual bool run(Module &M);
 
   // getDSGraph - Return the data structure graph for the specified function.
-  DSGraph &getDSGraph(Function &F) const {
-    std::map<Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
+  DSGraph &getDSGraph(const Function &F) const {
+    std::map<const Function*, DSGraph*>::const_iterator I = DSInfo.find(&F);
     assert(I != DSInfo.end() && "Function not in module!");
     return *I->second;
   }
