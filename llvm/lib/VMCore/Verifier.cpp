@@ -10,6 +10,7 @@
 //    with the same name as something in the symbol table, but with a different
 //    address as what is in the symbol table...
 //  * Both of a binary operator's parameters are the same type
+//  * Verify that the indices of mem access instructions match other operands
 //  . Verify that arithmetic and other things are only performed on first class
 //    types.  No adding structures or arrays.
 //  . All of the constants in a switch statement are of the correct type
@@ -29,7 +30,7 @@
 //  * It is illegal to have a internal function that is just a declaration
 //  * It is illegal to have a ret instruction that returns a value that does not
 //    agree with the function return value type.
-//  . All other things that are tested by asserts spread about the code...
+//  * All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,6 +43,7 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
+#include "llvm/iMemory.h"
 #include "llvm/Argument.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/CFG.h"
@@ -66,6 +68,14 @@ namespace {  // Anonymous namespace for class
       return false;
     }
 
+    bool doFinalization(Module *M) {
+      if (Broken) {
+        cerr << "Broken module found, compilation aborted!\n";
+        abort();
+      }
+      return false;
+    }
+
     // Verification methods...
     void verifySymbolTable(SymbolTable *ST);
     void visitFunction(Function *F);
@@ -73,6 +83,9 @@ namespace {  // Anonymous namespace for class
     void visitPHINode(PHINode *PN);
     void visitBinaryOperator(BinaryOperator *B);
     void visitCallInst(CallInst *CI);
+    void visitGetElementPtrInst(GetElementPtrInst *GEP);
+    void visitLoadInst(LoadInst *LI);
+    void visitStoreInst(StoreInst *SI);
     void visitInstruction(Instruction *I);
 
     // CheckFailed - A check failed, so print out the condition and the message
@@ -220,6 +233,33 @@ void Verifier::visitBinaryOperator(BinaryOperator *B) {
           B->getOperand(0), B->getOperand(1));
 
   visitInstruction(B);
+}
+
+void Verifier::visitGetElementPtrInst(GetElementPtrInst *GEP) {
+  const Type *ElTy =MemAccessInst::getIndexedType(GEP->getOperand(0)->getType(),
+                                                  GEP->copyIndices(), true);
+  Assert1(ElTy, "Invalid indices for GEP pointer type!", GEP);
+  Assert2(PointerType::get(ElTy) == GEP->getType(),
+          "GEP is not of right type for indices!\n", GEP, ElTy);
+  visitInstruction(GEP);
+}
+
+void Verifier::visitLoadInst(LoadInst *LI) {
+  const Type *ElTy = LoadInst::getIndexedType(LI->getOperand(0)->getType(),
+                                              LI->copyIndices());
+  Assert1(ElTy, "Invalid indices for load pointer type!", LI);
+  Assert2(ElTy == LI->getType(),
+          "Load is not of right type for indices!\n", LI, ElTy);
+  visitInstruction(LI);
+}
+
+void Verifier::visitStoreInst(StoreInst *SI) {
+  const Type *ElTy = StoreInst::getIndexedType(SI->getOperand(1)->getType(),
+                                               SI->copyIndices());
+  Assert1(ElTy, "Invalid indices for store pointer type!", SI);
+  Assert2(ElTy == SI->getOperand(0)->getType(),
+          "Stored value is not of right type for indices!\n", SI, ElTy);
+  visitInstruction(SI);
 }
 
 
