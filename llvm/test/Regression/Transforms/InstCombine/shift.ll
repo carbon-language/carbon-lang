@@ -87,9 +87,9 @@ uint %test14(uint %A) {
 	%D = shl uint %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
 	ret uint %D
 }
-int %test14a(int %A) {
-	%B = shl int %A, ubyte 4
-	%C = and int %B, -1234
-	%D = shr int %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
-	ret int %D
+uint %test14a(uint %A) {
+	%B = shl uint %A, ubyte 4
+	%C = and uint %B, 1234
+	%D = shr uint %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
+	ret uint %D
 }
