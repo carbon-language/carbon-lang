@@ -1010,6 +1010,14 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
   return I != BB->getParent()->end() ? &*I : 0;
 }
 
+/// canFoldSetCCIntoBranch - Return the setcc instruction if we can fold it
+/// into the conditional branch which is the only user of the cc instruction.
+/// This is the case if the conditional branch is the only user of the setcc.
+///
+static SetCondInst *canFoldSetCCIntoBranch(Value *V) {
+  return 0; // disable.
+}
+
 /// visitBranchInst - Handles conditional and unconditional branches.
 ///
 void V8ISel::visitBranchInst(BranchInst &I) {
@@ -1480,6 +1488,9 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
 }
 
 void V8ISel::visitSetCondInst(SetCondInst &I) {
+  if (canFoldSetCCIntoBranch(&I))
+    return;  // Fold this into a branch.
+
   unsigned Op0Reg = getReg (I.getOperand (0));
   unsigned Op1Reg = getReg (I.getOperand (1));
   unsigned DestReg = getReg (I);
