@@ -1273,7 +1273,7 @@ void DSGraph::cloneInto(const DSGraph &G, unsigned CloneFlags) {
   for (DSScalarMap::const_iterator I = G.ScalarMap.begin(),
          E = G.ScalarMap.end(); I != E; ++I) {
     DSNodeHandle &MappedNode = OldNodeMap[I->second.getNode()];
-    DSNodeHandle &H = ScalarMap[I->first];
+    DSNodeHandle &H = ScalarMap.getRawEntryRef(I->first);
     DSNode *MappedNodeN = MappedNode.getNode();
     H.mergeWith(DSNodeHandle(MappedNodeN,
                              I->second.getOffset()+MappedNode.getOffset()));
