@@ -82,8 +82,20 @@ int* %test12() {
 	ret int* %c
 }
 
-
 ubyte *%test13(long %A) {
 	%c = getelementptr [0 x ubyte]* cast ([32832 x ubyte]*  %inbuf to [0 x ubyte]*), long 0, long %A
 	ret ubyte* %c
 }
+
+bool %test14(sbyte %A) {
+        %B = cast sbyte %A to ubyte
+        %X = setlt ubyte %B, 128   ; setge %A, 0
+        ret bool %X
+}
+
+bool %test15(ubyte %A) {
+        %B = cast ubyte %A to sbyte
+        %X = setlt sbyte %B, 0   ; setgt %A, 127
+        ret bool %X
+}
+
