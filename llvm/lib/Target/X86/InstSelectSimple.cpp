@@ -814,6 +814,25 @@ void ISel::InsertFPRegKills() {
 }
 
 
+void ISel::getAddressingMode(Value *Addr, unsigned &BaseReg, unsigned &Scale,
+                             unsigned &IndexReg, unsigned &Disp) {
+  BaseReg = 0; Scale = 1; IndexReg = 0; Disp = 0;
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr)) {
+    if (isGEPFoldable(BB, GEP->getOperand(0), GEP->op_begin()+1, GEP->op_end(),
+                       BaseReg, Scale, IndexReg, Disp))
+      return;
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      if (isGEPFoldable(BB, CE->getOperand(0), CE->op_begin()+1, CE->op_end(),
+                        BaseReg, Scale, IndexReg, Disp))
+        return;
+  }
+
+  // If it's not foldable, reset addr mode.
+  BaseReg = getReg(Addr);
+  Scale = 1; IndexReg = 0; Disp = 0;
+}
+
 // canFoldSetCCIntoBranchOrSelect - Return the setcc instruction if we can fold
 // it into the conditional branch or select instruction which is the only user
 // of the cc instruction.  This is the case if the conditional branch is the
@@ -1953,13 +1972,20 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
       Opcode = OpcodeTab[OperatorClass][Ty == Type::DoubleTy];
     }
 
-    unsigned BaseReg, Scale, IndexReg, Disp;
-    getAddressingMode(cast<LoadInst>(Op1)->getOperand(0), BaseReg,
-                      Scale, IndexReg, Disp);
-
     unsigned Op0r = getReg(Op0);
-    addFullAddress(BuildMI(BB, Opcode, 2, DestReg).addReg(Op0r),
-                   BaseReg, Scale, IndexReg, Disp);
+    if (AllocaInst *AI =
+        dyn_castFixedAlloca(cast<LoadInst>(Op1)->getOperand(0))) {
+      unsigned FI = getFixedSizedAllocaFI(AI);
+      addFrameReference(BuildMI(BB, Opcode, 5, DestReg).addReg(Op0r), FI);
+
+    } else {
+      unsigned BaseReg, Scale, IndexReg, Disp;
+      getAddressingMode(cast<LoadInst>(Op1)->getOperand(0), BaseReg,
+                        Scale, IndexReg, Disp);
+      
+      addFullAddress(BuildMI(BB, Opcode, 5, DestReg).addReg(Op0r),
+                     BaseReg, Scale, IndexReg, Disp);
+    }
     return;
   }
 
@@ -1972,13 +1998,19 @@ void ISel::visitSimpleBinary(BinaryOperator &B, unsigned OperatorClass) {
     assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
     unsigned Opcode = Ty == Type::FloatTy ? X86::FSUBR32m : X86::FSUBR64m;
 
-    unsigned BaseReg, Scale, IndexReg, Disp;
-    getAddressingMode(cast<LoadInst>(Op0)->getOperand(0), BaseReg,
-                      Scale, IndexReg, Disp);
-
     unsigned Op1r = getReg(Op1);
-    addFullAddress(BuildMI(BB, Opcode, 2, DestReg).addReg(Op1r),
-                   BaseReg, Scale, IndexReg, Disp);
+    if (AllocaInst *AI =
+        dyn_castFixedAlloca(cast<LoadInst>(Op0)->getOperand(0))) {
+      unsigned FI = getFixedSizedAllocaFI(AI);
+      addFrameReference(BuildMI(BB, Opcode, 5, DestReg).addReg(Op1r), FI);
+    } else {
+      unsigned BaseReg, Scale, IndexReg, Disp;
+      getAddressingMode(cast<LoadInst>(Op0)->getOperand(0), BaseReg,
+                        Scale, IndexReg, Disp);
+      
+      addFullAddress(BuildMI(BB, Opcode, 5, DestReg).addReg(Op1r),
+                     BaseReg, Scale, IndexReg, Disp);
+    }
     return;
   }
 
@@ -2337,13 +2369,18 @@ void ISel::visitMul(BinaryOperator &I) {
         assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
         unsigned Opcode = Ty == Type::FloatTy ? X86::FMUL32m : X86::FMUL64m;
         
-        unsigned BaseReg, Scale, IndexReg, Disp;
-        getAddressingMode(LI->getOperand(0), BaseReg,
-                          Scale, IndexReg, Disp);
-        
         unsigned Op0r = getReg(Op0);
-        addFullAddress(BuildMI(BB, Opcode, 2, ResultReg).addReg(Op0r),
-                       BaseReg, Scale, IndexReg, Disp);
+        if (AllocaInst *AI = dyn_castFixedAlloca(LI->getOperand(0))) {
+          unsigned FI = getFixedSizedAllocaFI(AI);
+          addFrameReference(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r), FI);
+        } else {
+          unsigned BaseReg, Scale, IndexReg, Disp;
+          getAddressingMode(LI->getOperand(0), BaseReg,
+                            Scale, IndexReg, Disp);
+          
+          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r),
+                         BaseReg, Scale, IndexReg, Disp);
+        }
         return;
       }
   }
@@ -2476,13 +2513,18 @@ void ISel::visitDivRem(BinaryOperator &I) {
         assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
         unsigned Opcode = Ty == Type::FloatTy ? X86::FDIV32m : X86::FDIV64m;
         
-        unsigned BaseReg, Scale, IndexReg, Disp;
-        getAddressingMode(LI->getOperand(0), BaseReg,
-                          Scale, IndexReg, Disp);
-        
         unsigned Op0r = getReg(Op0);
-        addFullAddress(BuildMI(BB, Opcode, 2, ResultReg).addReg(Op0r),
-                       BaseReg, Scale, IndexReg, Disp);
+        if (AllocaInst *AI = dyn_castFixedAlloca(LI->getOperand(0))) {
+          unsigned FI = getFixedSizedAllocaFI(AI);
+          addFrameReference(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r), FI);
+        } else {
+          unsigned BaseReg, Scale, IndexReg, Disp;
+          getAddressingMode(LI->getOperand(0), BaseReg,
+                            Scale, IndexReg, Disp);
+          
+          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op0r),
+                         BaseReg, Scale, IndexReg, Disp);
+        }
         return;
       }
 
@@ -2492,13 +2534,16 @@ void ISel::visitDivRem(BinaryOperator &I) {
         assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
         unsigned Opcode = Ty == Type::FloatTy ? X86::FDIVR32m : X86::FDIVR64m;
         
-        unsigned BaseReg, Scale, IndexReg, Disp;
-        getAddressingMode(LI->getOperand(0), BaseReg,
-                          Scale, IndexReg, Disp);
-        
         unsigned Op1r = getReg(Op1);
-        addFullAddress(BuildMI(BB, Opcode, 2, ResultReg).addReg(Op1r),
-                       BaseReg, Scale, IndexReg, Disp);
+        if (AllocaInst *AI = dyn_castFixedAlloca(LI->getOperand(0))) {
+          unsigned FI = getFixedSizedAllocaFI(AI);
+          addFrameReference(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op1r), FI);
+        } else {
+          unsigned BaseReg, Scale, IndexReg, Disp;
+          getAddressingMode(LI->getOperand(0), BaseReg, Scale, IndexReg, Disp);
+          addFullAddress(BuildMI(BB, Opcode, 5, ResultReg).addReg(Op1r),
+                         BaseReg, Scale, IndexReg, Disp);
+        }
         return;
       }
   }
@@ -2796,26 +2841,6 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
 }
 
 
-void ISel::getAddressingMode(Value *Addr, unsigned &BaseReg, unsigned &Scale,
-                             unsigned &IndexReg, unsigned &Disp) {
-  BaseReg = 0; Scale = 1; IndexReg = 0; Disp = 0;
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Addr)) {
-    if (isGEPFoldable(BB, GEP->getOperand(0), GEP->op_begin()+1, GEP->op_end(),
-                       BaseReg, Scale, IndexReg, Disp))
-      return;
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Addr)) {
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      if (isGEPFoldable(BB, CE->getOperand(0), CE->op_begin()+1, CE->op_end(),
-                        BaseReg, Scale, IndexReg, Disp))
-        return;
-  }
-
-  // If it's not foldable, reset addr mode.
-  BaseReg = getReg(Addr);
-  Scale = 1; IndexReg = 0; Disp = 0;
-}
-
-
 /// visitLoadInst - Implement LLVM load instructions in terms of the x86 'mov'
 /// instruction.  The load and store instructions are the only place where we
 /// need to worry about the memory layout of the target machine.
@@ -2838,10 +2863,16 @@ void ISel::visitLoadInst(LoadInst &I) {
         static const unsigned Opcode[] = {
           0/*BYTE*/, X86::FILD16m, X86::FILD32m, 0/*FP*/, X86::FILD64m
         };
-        unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
-        getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
-        addFullAddress(BuildMI(BB, Opcode[Class], 5, DestReg),
-                       BaseReg, Scale, IndexReg, Disp);
+
+        if (AllocaInst *AI = dyn_castFixedAlloca(I.getOperand(0))) {
+          unsigned FI = getFixedSizedAllocaFI(AI);
+          addFrameReference(BuildMI(BB, Opcode[Class], 4, DestReg), FI);
+        } else {
+          unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
+          getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
+          addFullAddress(BuildMI(BB, Opcode[Class], 4, DestReg),
+                         BaseReg, Scale, IndexReg, Disp);
+        }
         return;
       } else {
         User = 0;
@@ -2887,33 +2918,49 @@ void ISel::visitLoadInst(LoadInst &I) {
     }
   }
 
-  unsigned DestReg = getReg(I);
-  unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
-  getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
-
-  if (Class == cLong) {
-    addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg),
-                   BaseReg, Scale, IndexReg, Disp);
-    addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg+1),
-                   BaseReg, Scale, IndexReg, Disp+4);
-    return;
-  }
-
   static const unsigned Opcodes[] = {
-    X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD32m
+    X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD32m, X86::MOV32rm
   };
   unsigned Opcode = Opcodes[Class];
   if (I.getType() == Type::DoubleTy) Opcode = X86::FLD64m;
-  addFullAddress(BuildMI(BB, Opcode, 4, DestReg),
-                 BaseReg, Scale, IndexReg, Disp);
+
+  unsigned DestReg = getReg(I);
+
+  if (AllocaInst *AI = dyn_castFixedAlloca(I.getOperand(0))) {
+    unsigned FI = getFixedSizedAllocaFI(AI);
+    if (Class == cLong) {
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, DestReg), FI);
+      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, DestReg+1), FI, 4);
+    } else {
+      addFrameReference(BuildMI(BB, Opcode, 4, DestReg), FI);
+    }
+  } else {
+    unsigned BaseReg = 0, Scale = 1, IndexReg = 0, Disp = 0;
+    getAddressingMode(I.getOperand(0), BaseReg, Scale, IndexReg, Disp);
+    
+    if (Class == cLong) {
+      addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg),
+                     BaseReg, Scale, IndexReg, Disp);
+      addFullAddress(BuildMI(BB, X86::MOV32rm, 4, DestReg+1),
+                     BaseReg, Scale, IndexReg, Disp+4);
+    } else {
+      addFullAddress(BuildMI(BB, Opcode, 4, DestReg),
+                     BaseReg, Scale, IndexReg, Disp);
+    }
+  }
 }
 
 /// visitStoreInst - Implement LLVM store instructions in terms of the x86 'mov'
 /// instruction.
 ///
 void ISel::visitStoreInst(StoreInst &I) {
-  unsigned BaseReg, Scale, IndexReg, Disp;
-  getAddressingMode(I.getOperand(1), BaseReg, Scale, IndexReg, Disp);
+  unsigned BaseReg = ~0U, Scale = ~0U, IndexReg = ~0U, Disp = ~0U;
+  unsigned AllocaFrameIdx = ~0U;
+
+  if (AllocaInst *AI = dyn_castFixedAlloca(I.getOperand(1)))
+    AllocaFrameIdx = getFixedSizedAllocaFI(AI);
+  else
+    getAddressingMode(I.getOperand(1), BaseReg, Scale, IndexReg, Disp);
 
   const Type *ValTy = I.getOperand(0)->getType();
   unsigned Class = getClassB(ValTy);
@@ -2921,21 +2968,36 @@ void ISel::visitStoreInst(StoreInst &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(0))) {
     uint64_t Val = CI->getRawValue();
     if (Class == cLong) {
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                     BaseReg, Scale, IndexReg, Disp).addImm(Val & ~0U);
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                     BaseReg, Scale, IndexReg, Disp+4).addImm(Val>>32);
+      if (AllocaFrameIdx != ~0U) {
+        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
+                          AllocaFrameIdx).addImm(Val & ~0U);
+        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
+                          AllocaFrameIdx, 4).addImm(Val>>32);
+      } else {
+        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                       BaseReg, Scale, IndexReg, Disp).addImm(Val & ~0U);
+        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                       BaseReg, Scale, IndexReg, Disp+4).addImm(Val>>32);
+      }
     } else {
       static const unsigned Opcodes[] = {
         X86::MOV8mi, X86::MOV16mi, X86::MOV32mi
       };
       unsigned Opcode = Opcodes[Class];
-      addFullAddress(BuildMI(BB, Opcode, 5),
-                     BaseReg, Scale, IndexReg, Disp).addImm(Val);
+      if (AllocaFrameIdx != ~0U) {
+        addFrameReference(BuildMI(BB, Opcode, 5), AllocaFrameIdx).addImm(Val);
+      } else {
+        addFullAddress(BuildMI(BB, Opcode, 5),
+                       BaseReg, Scale, IndexReg, Disp).addImm(Val);
+      }
     }
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
-    addFullAddress(BuildMI(BB, X86::MOV8mi, 5),
-                   BaseReg, Scale, IndexReg, Disp).addImm(CB->getValue());
+    if (AllocaFrameIdx != ~0U)
+      addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
+                        AllocaFrameIdx).addImm(CB->getValue());
+    else
+      addFullAddress(BuildMI(BB, X86::MOV8mi, 5),
+                     BaseReg, Scale, IndexReg, Disp).addImm(CB->getValue());
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0))) {
     // Store constant FP values with integer instructions to avoid having to
     // load the constants from the constant pool then do a store.
@@ -2945,27 +3007,45 @@ void ISel::visitStoreInst(StoreInst &I) {
         float    F;
       } V;
       V.F = CFP->getValue();
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                     BaseReg, Scale, IndexReg, Disp).addImm(V.I);
+      if (AllocaFrameIdx != ~0U)
+        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
+                          AllocaFrameIdx).addImm(V.I);
+      else
+        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                       BaseReg, Scale, IndexReg, Disp).addImm(V.I);
     } else {
       union {
         uint64_t I;
         double   F;
       } V;
       V.F = CFP->getValue();
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                     BaseReg, Scale, IndexReg, Disp).addImm((unsigned)V.I);
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
-                     BaseReg, Scale, IndexReg, Disp+4).addImm(
+      if (AllocaFrameIdx != ~0U) {
+        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
+                          AllocaFrameIdx).addImm((unsigned)V.I);
+        addFrameReference(BuildMI(BB, X86::MOV32mi, 5),
+                          AllocaFrameIdx, 4).addImm(unsigned(V.I >> 32));
+      } else {
+        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                       BaseReg, Scale, IndexReg, Disp).addImm((unsigned)V.I);
+        addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                       BaseReg, Scale, IndexReg, Disp+4).addImm(
                                                           unsigned(V.I >> 32));
+      }
     }
     
   } else if (Class == cLong) {
     unsigned ValReg = getReg(I.getOperand(0));
-    addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
-                   BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
-    addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
-                   BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
+    if (AllocaFrameIdx != ~0U) {
+      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
+                        AllocaFrameIdx).addReg(ValReg);
+      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
+                        AllocaFrameIdx, 4).addReg(ValReg+1);
+    } else {
+      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
+                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
+      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
+                     BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
+    }
   } else {
     unsigned ValReg = getReg(I.getOperand(0));
     static const unsigned Opcodes[] = {
@@ -2973,8 +3053,12 @@ void ISel::visitStoreInst(StoreInst &I) {
     };
     unsigned Opcode = Opcodes[Class];
     if (ValTy == Type::DoubleTy) Opcode = X86::FST64m;
-    addFullAddress(BuildMI(BB, Opcode, 1+4),
-                   BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
+
+    if (AllocaFrameIdx != ~0U)
+      addFrameReference(BuildMI(BB, Opcode, 5), AllocaFrameIdx).addReg(ValReg);
+    else
+      addFullAddress(BuildMI(BB, Opcode, 1+4),
+                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
   }
 }
 
@@ -3627,13 +3711,15 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
   }
 }
 
-
 /// visitAllocaInst - If this is a fixed size alloca, allocate space from the
 /// frame manager, otherwise do it the hard way.
 ///
 void ISel::visitAllocaInst(AllocaInst &I) {
+  // If this is a fixed size alloca in the entry block for the function, we
+  // statically stack allocate the space, so we don't need to do anything here.
+  //
   if (dyn_castFixedAlloca(&I)) return;
-
+  
   // Find the data size of the alloca inst's getAllocatedType.
   const Type *Ty = I.getAllocatedType();
   unsigned TySize = TM.getTargetData().getTypeSize(Ty);
