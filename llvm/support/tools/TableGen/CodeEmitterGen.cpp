@@ -2,7 +2,7 @@
 #include "Record.h"
 #include "CodeEmitterGen.h"
 
-int CodeEmitterGen::createEmitter(std::ostream &o) {
+bool CodeEmitterGen::run(std::ostream &o) {
   std::vector<Record*> Insts;
 
   const std::map<std::string, Record*> &Defs = Records.getDefs();
@@ -33,7 +33,7 @@ int CodeEmitterGen::createEmitter(std::ostream &o) {
     const RecordVal *InstVal = R->getValue("Inst");
     if (!InstVal) {
       std::cerr << "No 'Inst' record found in target description file!\n";
-      return 1;
+      return true;
     }
 
     Init *InitVal = InstVal->getValue();
@@ -229,5 +229,5 @@ int CodeEmitterGen::createEmitter(std::ostream &o) {
     << "  }\n"
     << "  return Value;\n"
     << "}\n";
-  return 0;
+  return false;
 }

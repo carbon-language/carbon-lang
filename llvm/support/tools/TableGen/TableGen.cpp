@@ -402,7 +402,7 @@ int main(int argc, char **argv) {
   switch (Action) {
   case Parse: ParseMachineCode(); break;
   case GenEmitter:
-    ErrorCode = CodeEmitterGen(Records).createEmitter(*Out);
+    ErrorCode = CodeEmitterGen(Records).run(*Out);
     break;
   case PrintRecords:
     *Out << Records;           // No argument, dump all contents
