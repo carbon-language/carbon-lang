@@ -1,7 +1,7 @@
 //===-- llvm/Type.h - Classes for handling data types ------------*- C++ -*--=//
 //
 // This file contains the declaration of the Type class.  For more "Type" type
-// stuff, look in DerivedTypes.h and Opt/ConstantHandling.h
+// stuff, look in DerivedTypes.h.
 //
 // Note that instances of the Type class are immutable: once they are created,
 // they are never changed.  Also note that only one instance of a particular 
@@ -98,6 +98,7 @@ protected:
   inline void setRecursive(bool Val) { Recursive = Val; }
 
 public:
+  virtual void print(std::ostream &O) const;
 
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types...
@@ -131,6 +132,10 @@ public:
   // virtual function invocation.
   //
   virtual bool isIntegral() const { return 0; }
+
+  // isFloatingPoint - Return true if this is one of the two floating point
+  // types
+  bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID; }
 
   // isAbstract - True if the type is either an Opaque type, or is a derived
   // type that includes an opaque type somewhere in it.  
@@ -214,8 +219,6 @@ public:
   // Methods for determining the subtype of this Type. This section defines a
   // family of isArrayType(), isLabelType(),  etc functions...
   //
-#define HANDLE_PRIM_TYPE(NAME, SIZE)                                      \
-  inline bool is##NAME##Type() const { return ID == NAME##TyID; }
 #define HANDLE_DERV_TYPE(NAME, CLASS)                                     \
   inline bool is##NAME##Type() const { return ID == NAME##TyID; }
 
