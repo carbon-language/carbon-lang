@@ -961,6 +961,7 @@ all of these clients (requiring lots of .cpp files to #include
 
 <p>To do this, set up your .h file with your option, like this for example:</p>
 
+<div class="doc_code">
 <pre>
 <i>// DebugFlag.h - Get access to the '-debug' command line option
 //
@@ -976,15 +977,15 @@ extern bool DebugFlag;
 // debug build, then the code specified as the option to the macro will be
 // executed.  Otherwise it will not be.  Example:
 //
-// DEBUG(cerr << "Bitset contains: " << Bitset << "\n");
+// DEBUG(std::cerr &lt;&lt; "Bitset contains: " &lt;&lt; Bitset &lt;&lt; "\n");
 //</i>
-<span class="doc_red">#ifdef NDEBUG
+<span class="doc_hilite">#ifdef NDEBUG
 #define DEBUG(X)
 #else
-#define DEBUG(X)</span> \
-  do { if (DebugFlag) { X; } } while (0)
-<span class="doc_red">#endif</span>
+#define DEBUG(X)</span> do { if (DebugFlag) { X; } } while (0)
+<span class="doc_hilite">#endif</span>
 </pre>
+</div>
 
 <p>This allows clients to blissfully use the <tt>DEBUG()</tt> macro, or the
 <tt>DebugFlag</tt> explicitly if they want to.  Now we just need to be able to
@@ -993,18 +994,19 @@ an additial argument to our command line argument processor, and we specify
 where to fill in with the <a href="#cl::location">cl::location</a>
 attribute:</p>
 
+<div class="doc_code">
 <pre>
-bool DebugFlag;      <i>// the actual value</i>
+bool DebugFlag;                  <i>// the actual value</i>
 static <a href="#cl::opt">cl::opt</a>&lt;bool, true&gt;       <i>// The parser</i>
-Debug("<i>debug</i>", <a href="#cl::desc">cl::desc</a>("<i>Enable debug output</i>"), <a href="#cl::Hidden">cl::Hidden</a>,
-      <a href="#cl::location">cl::location</a>(DebugFlag));
+Debug("<i>debug</i>", <a href="#cl::desc">cl::desc</a>("<i>Enable debug output</i>"), <a href="#cl::Hidden">cl::Hidden</a>, <a href="#cl::location">cl::location</a>(DebugFlag));
 </pre>
+</div>
 
 <p>In the above example, we specify "<tt>true</tt>" as the second argument to
-the <a href="#cl::opt">cl::opt</a> template, indicating that the template should
-not maintain a copy of the value itself.  In addition to this, we specify the <a
-href="#cl::location">cl::location</a> attribute, so that <tt>DebugFlag</tt> is
-automatically set.</p>
+the <tt><a href="#cl::opt">cl::opt</a></tt> template, indicating that the
+template should not maintain a copy of the value itself.  In addition to this,
+we specify the <tt><a href="#cl::location">cl::location</a></tt> attribute, so
+that <tt>DebugFlag</tt> is automatically set.</p>
 
 </div>
 
@@ -1055,8 +1057,8 @@ the section on <a href="#storage">Internal vs External Storage</a> for more
 information.</li>
 
 <li><a name="cl::aliasopt">The <b><tt>cl::aliasopt</tt></b></a> attribute
-specifies which option a <a href="#cl::alias">cl::alias</a> option is an alias
-for.</li>
+specifies which option a <tt><a href="#cl::alias">cl::alias</a></tt> option is
+an alias for.</li>
 
 <li><a name="cl::values">The <b><tt>cl::values</tt></b></a> attribute specifies
 the string-to-value mapping to be used by the generic parser.  It takes a
