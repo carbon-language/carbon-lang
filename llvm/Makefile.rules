@@ -395,9 +395,9 @@ RObjectsG := $(addprefix $(BUILD_OBJ_DIR)/Debug/,$(RObjs))
 ifdef DIRS
 all install clean test bytecode ::
 	$(VERB) for dir in ${DIRS}; do \
-		$(MKDIR) $$dir; \
 		if [ ! -f $$dir/Makefile ]; \
 		then \
+			$(MKDIR) $$dir; \
 			cp $(SourceDir)/$$dir/Makefile $$dir/Makefile; \
 		fi; \
 		($(MAKE) -C $$dir $@) || exit 1; \
@@ -413,7 +413,12 @@ test     :: $(addsuffix /.maketest    , $(PARALLEL_DIRS))
 bytecode :: $(addsuffix /.makebytecode, $(PARALLEL_DIRS))
 
 %/.makeall %/.makeinstall %/.makeclean %/.maketest %/.makebytecode:
-	$(VERB) $(MKDIR) $(@D); cp $(SourceDir)/$(@D)/Makefile $(@D); $(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
+	$(VERB) if [ ! -f $(@D)/Makefile ]; \
+	then \
+		$(MKDIR) $(@D); \
+		cp $(SourceDir)/$(@D)/Makefile $(@D)/Makefile; \
+	fi; \
+	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
 endif
 
 # Handle directories that may or may not exist
@@ -422,9 +427,9 @@ all install clean test bytecode ::
 	$(VERB) for dir in ${OPTIONAL_DIRS}; do \
 		if [ -d $(SourceDir)/$$dir ]; \
 		then\
-			$(MKDIR) $$dir; \
 			if [ ! -f $$dir/Makefile ]; \
 			then \
+				$(MKDIR) $$dir; \
 				cp $(SourceDir)/$$dir/Makefile $$dir/Makefile; \
 			fi; \
 			($(MAKE) -C$$dir $@) || exit 1; \
@@ -830,6 +835,7 @@ $(LLVM_OBJ_ROOT)/config.status:: $(LLVM_SRC_ROOT)/configure
 # build tree.
 Makefile :: $(BUILD_SRC_DIR)/Makefile
 	@${ECHO} "===== Updating Makefile from source dir: `dirname $<` ====="
+	$(MKDIR) $(@D)
 	cp -f $< $@
 
 #
