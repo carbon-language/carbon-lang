@@ -438,7 +438,7 @@ void Verifier::visitLoadInst(LoadInst &LI) {
   const Type *ElTy =
     cast<PointerType>(LI.getOperand(0)->getType())->getElementType();
   Assert2(ElTy == LI.getType(),
-          "Load is not of right type for indices!", &LI, ElTy);
+          "Load result type does not match pointer operand type!", &LI, ElTy);
   visitInstruction(LI);
 }
 
@@ -446,7 +446,7 @@ void Verifier::visitStoreInst(StoreInst &SI) {
   const Type *ElTy =
     cast<PointerType>(SI.getOperand(1)->getType())->getElementType();
   Assert2(ElTy == SI.getOperand(0)->getType(),
-          "Stored value is not of right type for indices!", &SI, ElTy);
+          "Stored value type does not match pointer operand type!", &SI, ElTy);
   visitInstruction(SI);
 }
 
