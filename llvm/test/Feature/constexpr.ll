@@ -6,6 +6,9 @@
 ;; Test constant cast expressions
 ;;-------------------------------
 
+global ulong u0x00001     ; hexadecimal unsigned integer constants
+global long  s0x0012312   ; hexadecimal signed integer constants
+
 %t2 = global int* %t1                             ;; Forward reference without cast
 %t3 = global uint* cast (int* %t1 to uint*)       ;; Forward reference with cast
 %t1 = global int 4                                ;; int* %0
