@@ -1,6 +1,6 @@
 //===- X86InstructionInfo.cpp - X86 Instruction Information ---------------===//
 //
-// This file contains the X86 implementation of the MInstructionInfo class.
+// This file contains the X86 implementation of the MachineInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 

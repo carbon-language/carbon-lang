@@ -36,9 +36,9 @@ namespace {
     }
 
     /// visitBasicBlock - This method is called when we are visiting a new basic
-    /// block.  This simply creates a new MBasicBlock to emit code into and adds
-    /// it to the current MFunction.  Subsequent visit* for instructions will be
-    /// invoked for all instructions in the basic block.
+    /// block.  This simply creates a new MachineBasicBlock to emit code into
+    /// and adds it to the current MachineFunction.  Subsequent visit* for
+    /// instructions will be invoked for all instructions in the basic block.
     ///
     void visitBasicBlock(BasicBlock &LLVM_BB) {
       BB = new MachineBasicBlock();

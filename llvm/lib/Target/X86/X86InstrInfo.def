@@ -17,7 +17,7 @@
 //  #1: Enum name - This ends up being the opcode symbol in the X86 namespace
 //  #2: Opcode name, as used by the gnu assembler
 //  #3: Instruction Flags - This should be a field or'd together that contains
-//      constants from the MInstructionInfo.h file.
+//      constants from the MachineInstrInfo.h file.
 //  #4: Target Specific Flags - Another bitfield containing X86 specific flags
 //      that we are interested in for each instruction
 //

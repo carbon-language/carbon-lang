@@ -1,6 +1,6 @@
 //===- X86InstructionInfo.h - X86 Instruction Information ---------*-C++-*-===//
 //
-// This file contains the X86 implementation of the MInstructionInfo class.
+// This file contains the X86 implementation of the MachineInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@ class X86InstructionInfo : public MachineInstrInfo {
 public:
   X86InstructionInfo();
 
-  /// getRegisterInfo - MInstructionInfo is a superset of MRegister info.  As
+  /// getRegisterInfo - MachineInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
