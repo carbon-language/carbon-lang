@@ -220,15 +220,15 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
           if (BlockLoop == 0) {   // Child block not processed yet...
             BlockLoop = Child;
           } else if (BlockLoop != Child) {
+            Loop *SubLoop = BlockLoop;
+            // Reparent all of the blocks which used to belong to BlockLoops
+            for (unsigned j = 0, e = SubLoop->Blocks.size(); j != e; ++j)
+              ContainingLoops[SubLoop->Blocks[j]] = Child;
+
             // There is already a loop which contains this block, that means
             // that we should reparent the loop which the block is currently
             // considered to belong to to be a child of this loop.
-            MoveSiblingLoopInto(BlockLoop, Child);
-            
-            // Reparent all of the blocks which used to belong to BlockLoops
-            for (unsigned j = 0, e = BlockLoop->Blocks.size(); j != e; ++j)
-              ContainingLoops[BlockLoop->Blocks[j]] = Child;
-            
+            MoveSiblingLoopInto(SubLoop, Child);
             --i;  // We just shrunk the SubLoops list.
           }
         }
