@@ -63,8 +63,9 @@ $(UserTargets)::
 SrcMakefiles       := $(filter %Makefile %Makefile.tests,\
                       $(wildcard $(BUILD_SRC_DIR)/Makefile*))
 ObjMakefiles       := $(subst $(BUILD_SRC_DIR),$(BUILD_OBJ_DIR),$(SrcMakefiles))
-ConfigureScript    := $(LLVM_SRC_ROOT)/configure
-ConfigStatusScript := $(LLVM_OBJ_ROOT)/config.status
+ConfigureScript    := $(BUILD_SRC_ROOT)/configure
+ConfigStatusScript := $(BUILD_OBJ_ROOT)/config.status
+LConfigStatusScript:= $(LLVM_OBJ_ROOT)/config.status
 MakefileConfigIn   := $(LLVM_SRC_ROOT)/Makefile.config.in
 MakefileConfig     := $(LLVM_OBJ_ROOT)/Makefile.config
 PreConditions      := $(ConfigStatusScript) $(MakefileConfig) $(ObjMakefiles)
@@ -129,9 +130,9 @@ $(ConfigStatusScript): $(ConfigureScript)
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
 #------------------------------------------------------------------------
-$(MakefileConfig): $(MakefileConfigIn) $(ConfigStatusScript)
+$(MakefileConfig): $(MakefileConfigIn) $(LConfigStatusScript)
 	$(Echo) Regenerating $@
-	$(Verb) cd $(LLVM_OBJ_ROOT) ; $(ConfigStatusScript) Makefile.config
+	$(Verb) cd $(LLVM_OBJ_ROOT) ; $(LConfigStatusScript) Makefile.config
 
 #------------------------------------------------------------------------
 # If the Makefile in the source tree has been updated, copy it over into the
