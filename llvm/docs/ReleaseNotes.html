@@ -148,6 +148,8 @@ cases).</li>
 
 <li>Constant initializers now generate loops instead of potentially <a href="http://llvm.cs.uiuc.edu/PR75">huge amounts of straight-line code</a>.</li>
 
+<li>Code for running C++ destructors is now properly shared when possible.  Before, the C++ front-end
+<a href="http://llvm.cs.uiuc.edu/PR11">generated N^2 amounts of duplicated cleanup code</a> in some cases.</li>
 </ol>
 
 <p>In this release, the following bugs in the previous release were fixed:</p>
@@ -512,10 +514,6 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.<p>
     <i>However</i>, the exception handling mechanism used by LLVM is very
     different from the model used in the Itanium ABI, so <b>exceptions will not
     interact correctly</b>. </li>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR11">Code for executing destructors when
-    unwinding is not shared</a> (this is a quality of implementation problem,
-    which does not effect functionality).</li>
 
 </ul>
 
