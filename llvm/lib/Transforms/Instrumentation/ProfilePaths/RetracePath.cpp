@@ -134,7 +134,6 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
   
   std::vector<Node *> nodes;
   std::vector<Edge> edges;
-  Node *tmp;
   Node *exitNode=0, *startNode=0;
 
   //Creat cfg just once for each function!
