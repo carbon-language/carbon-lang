@@ -139,22 +139,18 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
   ValueTypeCache::iterator CTMI = CTMap.find(V);
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
 
+  // If it's a constant... all constants can be converted to a different type We
+  // just ask the constant propogator to see if it can convert the value...
+  //
+  if (Constant *CPV = dyn_cast<Constant>(V))
+    return ConstantFoldCastInstruction(CPV, Ty);
+  
+
   CTMap[V] = Ty;
   if (V->getType() == Ty) return true;  // Expression already correct type!
 
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0) {
-    // It's not an instruction, check to see if it's a constant... all constants
-    // can be converted to an equivalent value (except pointers, they can't be
-    // const prop'd in general).  We just ask the constant propogator to see if
-    // it can convert the value...
-    //
-    if (Constant *CPV = dyn_cast<Constant>(V))
-      if (ConstantFoldCastInstruction(CPV, Ty))
-        return true;  // Don't worry about deallocating, it's a constant.
-
-    return false;              // Otherwise, we can't convert!
-  }
+  if (I == 0) return false;              // Otherwise, we can't convert!
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -323,18 +319,18 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
   DEBUG(cerr << "CETT: " << (void*)V << " " << V);
 
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0)
-    if (Constant *CPV = cast<Constant>(V)) {
-      // Constants are converted by constant folding the cast that is required.
-      // We assume here that all casts are implemented for constant prop.
-      Value *Result = ConstantFoldCastInstruction(CPV, Ty);
-      assert(Result && "ConstantFoldCastInstruction Failed!!!");
-      assert(Result->getType() == Ty && "Const prop of cast failed!");
+  if (I == 0) {
+    Constant *CPV = cast<Constant>(V)) {
+    // Constants are converted by constant folding the cast that is required.
+    // We assume here that all casts are implemented for constant prop.
+    Value *Result = ConstantFoldCastInstruction(CPV, Ty);
+    assert(Result && "ConstantFoldCastInstruction Failed!!!");
+    assert(Result->getType() == Ty && "Const prop of cast failed!");
 
-      // Add the instruction to the expression map
-      VMC.ExprMap[V] = Result;
-      return Result;
-    }
+    // Add the instruction to the expression map
+    //VMC.ExprMap[V] = Result;
+    return Result;
+  }
 
 
   BasicBlock *BB = I->getParent();
