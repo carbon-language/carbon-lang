@@ -385,37 +385,38 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 //               Derived Type setDerivedTypeProperties Function
 //===----------------------------------------------------------------------===//
 
-// getTypeProps - This is a recursive function that walks a type hierarchy
-// calculating the description for a type and whether or not it is abstract or
-// recursive.  Worst case it will have to do a lot of traversing if you have
-// some whacko opaque types, but in most cases, it will do some simple stuff
-// when it hits non-abstract types that aren't recursive.
+// isTypeAbstract - This is a recursive function that walks a type hierarchy
+// calculating whether or not a type is abstract.  Worst case it will have to do
+// a lot of traversing if you have some whacko opaque types, but in most cases,
+// it will do some simple stuff when it hits non-abstract types that aren't
+// recursive.
 //
-static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
-                         bool &isAbstract) {
-  if (!Ty->isAbstract())                       // Base case for the recursion
-    return;                                    // Primitive = leaf type
+bool Type::isTypeAbstract() {
+  if (!isAbstract())                           // Base case for the recursion
+    return false;                              // Primitive = leaf type
   
-  if (isa<OpaqueType>(Ty)) {                   // Base case for the recursion
-    isAbstract = true;                         // This whole type is abstract!
-    return;                                    // Opaque = leaf type
-  }
+  if (isa<OpaqueType>(this))                   // Base case for the recursion
+    return true;                               // This whole type is abstract!
 
-  // Check to see if the Type is already on the stack...
-  for (unsigned Slot = 0; Slot != TypeStack.size(); ++Slot)
-    if (TypeStack[Slot] == Ty)   // Scan for type
-      return;                    // is a recursive check.
+  // We have to guard against recursion.  To do this, we temporarily mark this
+  // type as concrete, so that if we get back to here recursively we will think
+  // it's not abstract, and thus not scan it again.
+  setAbstract(false);
 
-  // Recursive case: derived type...
-  TypeStack.push_back(Ty);    // Add us to the stack..
+  // Scan all of the sub-types.  If any of them are abstract, than so is this
+  // one!
+  for (Type::subtype_iterator I = subtype_begin(), E = subtype_end();
+       I != E; ++I)
+    if (const_cast<Type*>(*I)->isTypeAbstract()) {
+      setAbstract(true);
+      return true;
+    }
+  
+  // Restore the abstract bit.
+  setAbstract(true);
 
-  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I) {
-    getTypeProps(*I, TypeStack, isAbstract);
-    if (isAbstract) break;
-  }
-      
-  TypeStack.pop_back();       // Remove self from stack...
+  // Nothing looks abstract here...
+  return false;
 }
 
 
@@ -423,12 +424,8 @@ static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
 // setting for a type.  The getTypeProps function does all the dirty work.
 //
 void DerivedType::setDerivedTypeProperties() {
-  std::vector<const Type *> TypeStack;
-  bool isAbstract = false;
-
   setAbstract(true);
-  getTypeProps(this, TypeStack, isAbstract);
-  setAbstract(isAbstract);
+  setAbstract(isTypeAbstract());
 }
 
 
