@@ -94,11 +94,9 @@ User *Value::use_remove(use_iterator &I) {
   return i;
 }
 
-#ifndef NDEBUG      // Only in -g mode...
 void Value::dump() const {
   cerr << this;
 }
-#endif
 
 //===----------------------------------------------------------------------===//
 //                                 User Class
