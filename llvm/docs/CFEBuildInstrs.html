@@ -84,7 +84,7 @@ process, and you should <b>only</b> try to do it if:</p>
  % set CFEINSTALL = `pwd`/install
 </pre></li>
 
-<li><p>Configure, build and install the C front-end:</p>
+<li><p>Configure, build, and install the C front-end:</p>
 
 <p>
 <b>Linux/x86:</b>
@@ -92,7 +92,7 @@ process, and you should <b>only</b> try to do it if:</p>
 
 <pre>
  % cd build
- % ../src/configure --prefix=$CFEINSTALL --disable-nls --disable-shared \
+ % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
    --enable-languages=c,c++
  % gmake all-gcc
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
@@ -110,7 +110,7 @@ command line should like something like this:
 
 <pre>
  % cd build
- % ../src/configure --prefix=$CFEINSTALL --disable-nls --disable-shared \
+ % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
    --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8
  % gmake all-gcc
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
