@@ -8,6 +8,5 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-PARALLEL_DIRS := crtend libc libcurses libg libgcc libgdbm libm libmalloc \
-                 libtermcap libucb libutempter libutil
+PARALLEL_DIRS := crtend libc libgcc libm 
 include $(LEVEL)/Makefile.common
