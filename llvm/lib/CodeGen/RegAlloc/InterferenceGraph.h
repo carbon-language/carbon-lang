@@ -17,9 +17,8 @@
      setCurDegreeOfIGNodes() before pushing IGNodes on to stack for coloring.
 */
 
-
-#ifndef INTERFERENCE_GRAPH_H
-#define INTERFERENCE_GRAPH_H
+#ifndef INTERFERENCEGRAPH_H
+#define INTERFERENCEGRAPH_H
 
 #include <vector>
 class LiveRange;

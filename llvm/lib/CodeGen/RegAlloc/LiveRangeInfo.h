@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LIVE_RANGE_INFO_H
-#define LIVE_RANGE_INFO_H
+#ifndef LIVERANGEINFO_H
+#define LIVERANGEINFO_H
 
 #include "llvm/CodeGen/ValueSet.h"
 #include "Support/hash_map"

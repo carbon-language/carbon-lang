@@ -5,8 +5,8 @@
 
 */
 
-#ifndef REG_CLASS_H
-#define REG_CLASS_H
+#ifndef REGCLASS_H
+#define REGCLASS_H
 
 #include "llvm/Target/TargetRegInfo.h"
 #include "InterferenceGraph.h"

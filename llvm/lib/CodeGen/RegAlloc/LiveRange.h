@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LIVE_RANGE_H
-#define LIVE_RANGE_H
+#ifndef LIVERANGE_H
+#define LIVERANGE_H
 
 #include "llvm/CodeGen/ValueSet.h"
 #include "llvm/Value.h"

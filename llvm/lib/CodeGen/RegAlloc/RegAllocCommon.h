@@ -4,8 +4,8 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_REGALLOCCOMMON_H
-#define LLVM_CODEGEN_REGALLOCCOMMON_H
+#ifndef REGALLOCCOMMON_H
+#define REGALLOCCOMMON_H
 
 enum RegAllocDebugLevel_t {
   RA_DEBUG_None         = 0,
