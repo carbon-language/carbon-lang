@@ -279,10 +279,6 @@ private:
   /// @brief Insert a type into the symbol table with the specified name.
   void insertEntry(const std::string &Name, const Type *T);
 
-  /// Remove a specific value from a specific plane in the SymbolTable.
-  /// @returns the removed Value.
-  Value* removeEntry(plane_iterator Plane, value_iterator Entry);
-
   /// This function is called when one of the types in the type plane 
   /// is refined.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
