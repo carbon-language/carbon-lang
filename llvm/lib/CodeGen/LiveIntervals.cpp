@@ -625,10 +625,10 @@ void LiveIntervals::Interval::join(const LiveIntervals::Interval& other)
 LiveIntervals::Interval::Ranges::iterator
 LiveIntervals::Interval::mergeRangesForward(Ranges::iterator it)
 {
-    for (Ranges::iterator next = it + 1;
-         next != ranges.end() && it->second >= next->first; ) {
-        it->second = std::max(it->second, next->second);
-        next = ranges.erase(next);
+    for (Ranges::iterator n = next(it);
+         n != ranges.end() && ((it->second & 1) + it->second) >= n->first; ) {
+        it->second = std::max(it->second, n->second);
+        n = ranges.erase(n);
     }
     return it;
 }
@@ -637,12 +637,12 @@ LiveIntervals::Interval::Ranges::iterator
 LiveIntervals::Interval::mergeRangesBackward(Ranges::iterator it)
 {
     while (it != ranges.begin()) {
-        Ranges::iterator prev = it - 1;
-        if (it->first > prev->second) break;
+        Ranges::iterator p = prior(it);
+        if (it->first > ((p->second & 1) + p->second)) break;
 
-        it->first = std::min(it->first, prev->first);
-        it->second = std::max(it->second, prev->second);
-        it = ranges.erase(prev);
+        it->first = std::min(it->first, p->first);
+        it->second = std::max(it->second, p->second);
+        it = ranges.erase(p);
     }
 
     return it;
