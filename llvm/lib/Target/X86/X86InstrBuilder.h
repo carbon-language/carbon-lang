@@ -1,4 +1,11 @@
 //===-- X86InstrBuilder.h - Functions to aid building x86 insts -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file exposes functions that may be used with BuildMI from the
 // MachineInstrBuilder.h file to handle X86'isms in a clean way.

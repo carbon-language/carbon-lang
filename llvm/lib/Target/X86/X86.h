@@ -1,4 +1,11 @@
 //===-- X86.h - Top-level interface for X86 representation ------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the entry points for global functions defined in the x86
 // target library, as used by the LLVM JIT.

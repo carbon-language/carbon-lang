@@ -1,4 +1,11 @@
 //===-- LiveRangeInfo.h - Track all LiveRanges for a Function ----*- C++ -*-==//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the class LiveRangeInfo which constructs and keeps 
 // the LiveRangeMap which contains all the live ranges used in a method.

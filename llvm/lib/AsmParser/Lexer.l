@@ -1,4 +1,11 @@
 /*===-- Lexer.l - Scanner for llvm assembly files --------------*- C++ -*--===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 //  This file implements the flex scanner for LLVM assembly languages files.
 //

@@ -1,4 +1,11 @@
 //===- X86InstrInfo.td - Describe the X86 Instruction Set -------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file describes the X86 instruction set, defining the instructions, and
 // properties of the instructions which are needed for code generation, machine

@@ -1,4 +1,11 @@
 //===-- llvmAsmParser.y - Parser for llvm assembly files --------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 //  This file implements the bison parser for LLVM assembly languages files.
 //

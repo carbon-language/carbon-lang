@@ -1,4 +1,11 @@
 //===- X86RegisterInfo.td - Describe the X86 Register File ------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file describes the X86 Register file, defining the registers themselves,
 // aliases between the registers, and the register classes built out of the

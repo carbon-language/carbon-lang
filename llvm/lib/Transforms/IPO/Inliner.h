@@ -1,4 +1,11 @@
 //===- InlineCommon.h - Code common to all inliners -------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a simple policy-based bottom-up inliner.  This file
 // implements all of the boring mechanics of the bottom-up inlining, while the

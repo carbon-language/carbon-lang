@@ -1,5 +1,12 @@
 //===-- SparcInternals.h ----------------------------------------*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // This file defines stuff that is to be private to the Sparc backend, but is
 // shared among different portions of the backend.
 //

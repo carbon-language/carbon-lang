@@ -1,4 +1,11 @@
 //===-- SchedGraph.h - Scheduling Graph -------------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This is a scheduling graph based on SSA graph plus extra dependence edges
 // capturing dependences due to machine resources (machine registers, CC

@@ -1,4 +1,11 @@
 //===-- Graph.h -------------------------------------------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Header file for Graph: This Graph is used by PathProfiles class, and is used
 // for detecting proper points in cfg for code insertion

@@ -1,5 +1,10 @@
 //===- SparcV9_F4.td - Format 4 instructions: Sparc V9 Target -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
 //
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
 //===----------------------------------------------------------------------===//
 
 //----------------------- F4 classes -----------------------------------------

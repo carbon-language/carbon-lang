@@ -1,4 +1,11 @@
 //===- X86.td - Target definition file for the Intel X86 arch ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This is a target description file for the Intel i386 architecture, refered to
 // here as the "X86" architecture.

@@ -1,4 +1,11 @@
 //===- DSCallSiteIterator.h - Iterator for DSGraph call sites ---*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements an iterator for complete call sites in DSGraphs.  This
 // code can either iterator over the normal call list or the aux calls list, and

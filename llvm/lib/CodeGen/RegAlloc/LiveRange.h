@@ -1,4 +1,11 @@
 //===-- LiveRange.h - Store info about a live range -------------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Implements a live range using a ValueSet. A LiveRange is a simple set
 // of Values. 

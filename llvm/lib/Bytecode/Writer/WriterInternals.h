@@ -1,4 +1,11 @@
 //===- WriterInternals.h - Data structures shared by the Writer -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This header defines the interface used between components of the bytecode
 // writer.
