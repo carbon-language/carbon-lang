@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "../ProfilingUtils.h"
 
 namespace llvm {
