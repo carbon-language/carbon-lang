@@ -399,8 +399,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand Lo, Hi;
       ExpandOp(Node->getOperand(1), Lo, Hi);      
       unsigned Reg = cast<RegSDNode>(Node)->getReg();
-      Result = DAG.getCopyToReg(Tmp1, Lo, Reg);
-      Result = DAG.getCopyToReg(Result, Hi, Reg+1);
+      Lo = DAG.getCopyToReg(Tmp1, Lo, Reg);
+      Hi = DAG.getCopyToReg(Tmp1, Hi, Reg+1);
+      // Note that the copytoreg nodes are independent of each other.
+      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
       assert(isTypeLegal(Result.getValueType()) &&
              "Cannot expand multiple times yet (i64 -> i16)");
       break;
@@ -506,15 +508,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (!TLI.isLittleEndian())
         std::swap(Lo, Hi);
 
-      // FIXME: These two stores are independent of each other!
-      Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2);
+      Lo = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2);
 
-      unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
+      unsigned IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
       Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                          getIntPtrConstant(IncrementSize));
       assert(isTypeLegal(Tmp2.getValueType()) &&
              "Pointers must be legal!");
-      Result = DAG.getNode(ISD::STORE, MVT::Other, Result, Hi, Tmp2);
+      Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2);
+      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+      break;
     }
     break;
   case ISD::TRUNCSTORE:
@@ -1292,11 +1295,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
-    // FIXME: This load is independent of the first one.
-    Hi = DAG.getLoad(NVT, Lo.getValue(1), Ptr);
+    Hi = DAG.getLoad(NVT, Ch, Ptr);
+
+    // Build a factor node to remember that this load is independent of the
+    // other one.
+    SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                               Hi.getValue(1));
     
     // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
+    AddLegalizedOperand(Op.getValue(1), TF);
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
     break;
