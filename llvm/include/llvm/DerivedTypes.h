@@ -19,6 +19,7 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
