@@ -32,7 +32,7 @@ Program::FindProgramByName(const std::string& progName) {
   if (progName.length() == 0) // no program
     return Path();
   Path temp;
-  if (!temp.set_file(progName)) // invalid name
+  if (!temp.setFile(progName)) // invalid name
     return Path();
   if (temp.executable()) // already executable as is
     return temp;

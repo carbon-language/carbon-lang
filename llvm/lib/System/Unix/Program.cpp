@@ -37,7 +37,7 @@ Program::FindProgramByName(const std::string& progName) {
   if (progName.length() == 0) // no program
     return Path();
   Path temp;
-  if (!temp.set_file(progName)) // invalid name
+  if (!temp.setFile(progName)) // invalid name
     return Path();
   if (temp.executable()) // already executable as is
     return temp;
@@ -57,8 +57,8 @@ Program::FindProgramByName(const std::string& progName) {
 
     // Check to see if this first directory contains the executable...
     Path FilePath;
-    if (FilePath.set_directory(std::string(PathStr,Colon))) {
-      FilePath.append_file(progName);
+    if (FilePath.setDirectory(std::string(PathStr,Colon))) {
+      FilePath.appendFile(progName);
       if (FilePath.executable())
         return FilePath;                    // Found the executable!
     }

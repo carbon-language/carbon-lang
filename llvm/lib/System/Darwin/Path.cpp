@@ -23,7 +23,7 @@ namespace llvm {
 using namespace sys;
 
 bool 
-Path::is_valid() const {
+Path::isValid() const {
   if (path.empty()) 
     return false;
   if (path.length() >= MAXPATHLEN)
@@ -38,8 +38,8 @@ Path::GetTemporaryDirectory() {
   if (0 == mkdtemp(pathname))
     ThrowErrno(std::string(pathname) + ": Can't create temporary directory");
   Path result;
-  result.set_directory(pathname);
-  assert(result.is_valid() && "mkdtemp didn't create a valid pathname!");
+  result.setDirectory(pathname);
+  assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
   return result;
 }
 

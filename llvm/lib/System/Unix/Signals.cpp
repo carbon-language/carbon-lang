@@ -111,7 +111,7 @@ RETSIGTYPE SignalHandler(int Sig) {
 
   if (DirectoriesToRemove != 0)
     while (!DirectoriesToRemove->empty()) {
-      DirectoriesToRemove->back().destroy_directory(true);
+      DirectoriesToRemove->back().destroyDirectory(true);
       DirectoriesToRemove->pop_back();
     }
 
@@ -146,7 +146,7 @@ void sys::RemoveFileOnSignal(const std::string &Filename) {
 
 // RemoveDirectoryOnSignal - The public API
 void sys::RemoveDirectoryOnSignal(const llvm::sys::Path& path) {
-  if (!path.is_directory())
+  if (!path.isDirectory())
     return;
 
   if (DirectoriesToRemove == 0)

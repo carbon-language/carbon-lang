@@ -233,7 +233,7 @@ namespace {
           action.args.clear();
         } else {
           if (token == STRING || token == OPTION) {
-            action.program.set_file(ConfigLexerState.StringVal);
+            action.program.setFile(ConfigLexerState.StringVal);
           } else {
             error("Expecting a program name");
           }
@@ -421,33 +421,33 @@ CompilerDriver::ConfigData*
 LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
   CompilerDriver::ConfigData* result = 0;
   sys::Path confFile;
-  if (configDir.is_empty()) {
+  if (configDir.isEmpty()) {
     // Try the environment variable
     const char* conf = getenv("LLVM_CONFIG_DIR");
     if (conf) {
-      confFile.set_directory(conf);
-      confFile.append_file(ftype);
+      confFile.setDirectory(conf);
+      confFile.appendFile(ftype);
       if (!confFile.readable())
         throw std::string("Configuration file for '") + ftype + 
                           "' is not available.";
     } else {
       // Try the user's home directory
       confFile = sys::Path::GetUserHomeDirectory();
-      if (!confFile.is_empty()) {
-        confFile.append_directory(".llvm");
-        confFile.append_directory("etc");
-        confFile.append_file(ftype);
+      if (!confFile.isEmpty()) {
+        confFile.appendDirectory(".llvm");
+        confFile.appendDirectory("etc");
+        confFile.appendFile(ftype);
         if (!confFile.readable())
           confFile.clear();
       }
-      if (!confFile.is_empty()) {
+      if (!confFile.isEmpty()) {
         // Okay, try the LLVM installation directory
         confFile = sys::Path::GetLLVMConfigDir();
-        confFile.append_file(ftype);
+        confFile.appendFile(ftype);
         if (!confFile.readable()) {
           // Okay, try the "standard" place
           confFile = sys::Path::GetLLVMDefaultConfigDir();
-          confFile.append_file(ftype);
+          confFile.appendFile(ftype);
           if (!confFile.readable()) {
             throw std::string("Configuration file for '") + ftype + 
                               "' is not available.";
@@ -457,7 +457,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     }
   } else {
     confFile = configDir;
-    confFile.append_file(ftype);
+    confFile.appendFile(ftype);
     if (!confFile.readable())
       throw std::string("Configuration file for '") + ftype + 
                         "' is not available.";

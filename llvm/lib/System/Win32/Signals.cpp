@@ -93,7 +93,7 @@ void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
   if (CleanupExecuted)
     throw std::string("Process terminating -- cannot register for removal");
 
-  if (path.is_directory()) {
+  if (path.isDirectory()) {
     if (DirectoriesToRemove == NULL)
       DirectoriesToRemove = new std::vector<sys::Path>;
 
@@ -124,7 +124,7 @@ static void Cleanup() {
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
       try {
-        FilesToRemove->back().destroy_file();
+        FilesToRemove->back().destroyFile();
       } catch (...) {
       }
       FilesToRemove->pop_back();
@@ -133,7 +133,7 @@ static void Cleanup() {
   if (DirectoriesToRemove != NULL)
     while (!DirectoriesToRemove->empty()) {
       try {
-        DirectoriesToRemove->back().destroy_directory(true);
+        DirectoriesToRemove->back().destroyDirectory(true);
       } catch (...) {
       }
       DirectoriesToRemove->pop_back();

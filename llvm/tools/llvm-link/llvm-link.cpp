@@ -47,7 +47,7 @@ DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 //
 static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   sys::Path Filename;
-  if (!Filename.set_file(FN)) {
+  if (!Filename.setFile(FN)) {
     std::cerr << "Invalid file name: '" << FN << "'\n";
     return std::auto_ptr<Module>();
   }

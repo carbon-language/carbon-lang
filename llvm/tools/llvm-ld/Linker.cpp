@@ -45,7 +45,7 @@ std::string llvm::FindLib(const std::string &Filename,
                           bool SharedObjectOnly) {
   // Determine if the pathname can be found as it stands.
   sys::Path FilePath;
-  if (FilePath.set_file(Filename) && FilePath.readable())
+  if (FilePath.setFile(Filename) && FilePath.readable())
     return Filename;
 
   // Ask the System Path object to locate the library. This ensures that

@@ -161,7 +161,7 @@ namespace llvm {
       /// @brief Set the output machine name.
       virtual void setOutputMachine(const std::string& machineName) = 0;
 
-      /// @brief Set Preprocessor specific options
+      /// @brief Set the options for a given phase.
       virtual void setPhaseArgs(Phases phase, const StringVector& opts) = 0; 
 
       /// @brief Set Library Paths
@@ -173,9 +173,11 @@ namespace llvm {
       /// @brief Set Library Paths
       virtual void setLibraryPaths(const StringVector& paths) = 0;
 
-      /// @brief Set the list of library paths to be searched for
-      /// libraries.
+      /// @brief Add a path to the list of library paths
       virtual void addLibraryPath( const sys::Path& libPath )  = 0;
+
+      /// @brief Add a path to the list of paths in which to find tools
+      virtual void addToolPath( const sys::Path& toolPath) = 0;
 
       /// @brief Set the list of -f options to be passed through
       virtual void setfPassThrough(const StringVector& fOpts) = 0;

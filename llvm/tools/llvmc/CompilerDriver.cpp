@@ -134,7 +134,7 @@ public:
     StringVector::const_iterator E = paths.end();
     while (I != E) {
       sys::Path tmp;
-      tmp.set_directory(*I);
+      tmp.setDirectory(*I);
       IncludePaths.push_back(tmp);
       ++I;
     }
@@ -149,7 +149,7 @@ public:
     StringVector::const_iterator E = paths.end();
     while (I != E) {
       sys::Path tmp;
-      tmp.set_directory(*I);
+      tmp.setDirectory(*I);
       LibraryPaths.push_back(tmp);
       ++I;
     }
@@ -157,6 +157,10 @@ public:
 
   virtual void addLibraryPath( const sys::Path& libPath ) {
     LibraryPaths.push_back(libPath);
+  }
+
+  virtual void addToolPath( const sys::Path& toolPath ) {
+    ToolPaths.push_back(toolPath);
   }
 
   virtual void setfPassThrough(const StringVector& fOpts) {
@@ -182,8 +186,8 @@ private:
 
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
-      if (TempDir.is_directory() && TempDir.writable())
-        TempDir.destroy_directory(/*remove_contents=*/true);
+      if (TempDir.isDirectory() && TempDir.writable())
+        TempDir.destroyDirectory(/*remove_contents=*/true);
     } else {
       std::cout << "Temporary files are in " << TempDir.get() << "\n";
     }
@@ -192,9 +196,9 @@ private:
   sys::Path MakeTempFile(const std::string& basename, 
                          const std::string& suffix ) {
     sys::Path result(TempDir);
-    if (!result.append_file(basename))
+    if (!result.appendFile(basename))
       throw basename + ": can't use this file name";
-    if (!result.append_suffix(suffix))
+    if (!result.appendSuffix(suffix))
       throw suffix + ": can't use this file suffix";
     return result;
   }
@@ -373,7 +377,7 @@ private:
     if (!isSet(DRY_RUN_FLAG)) {
       sys::Path progpath = sys::Program::FindProgramByName(
         action->program.get());
-      if (progpath.is_empty())
+      if (progpath.isEmpty())
         throw std::string("Can't find program '"+progpath.get()+"'");
       else if (progpath.executable())
         action->program = progpath;
@@ -404,24 +408,24 @@ private:
                                         const sys::Path& dir,
                                         bool native = false) {
     sys::Path fullpath(dir);
-    fullpath.append_file(link_item);
+    fullpath.appendFile(link_item);
     if (native) {
-      fullpath.append_suffix("a");
+      fullpath.appendSuffix("a");
     } else {
-      fullpath.append_suffix("bc");
+      fullpath.appendSuffix("bc");
       if (fullpath.readable()) 
         return fullpath;
-      fullpath.elide_suffix();
-      fullpath.append_suffix("o");
+      fullpath.elideSuffix();
+      fullpath.appendSuffix("o");
       if (fullpath.readable()) 
         return fullpath;
       fullpath = dir;
-      fullpath.append_file(std::string("lib") + link_item);
-      fullpath.append_suffix("a");
+      fullpath.appendFile(std::string("lib") + link_item);
+      fullpath.appendSuffix("a");
       if (fullpath.readable())
         return fullpath;
-      fullpath.elide_suffix();
-      fullpath.append_suffix("so");
+      fullpath.elideSuffix();
+      fullpath.appendSuffix("so");
       if (fullpath.readable())
         return fullpath;
     }
@@ -446,14 +450,14 @@ private:
       // on the command line.
       PathVector::iterator PI = LibraryPaths.begin();
       PathVector::iterator PE = LibraryPaths.end();
-      while (PI != PE && fullpath.is_empty()) {
+      while (PI != PE && fullpath.isEmpty()) {
         fullpath = GetPathForLinkageItem(link_item.get(),*PI);
         ++PI;
       }
 
       // If we didn't find the file in any of the library search paths
       // so we have to bail. No where else to look.
-      if (fullpath.is_empty()) {
+      if (fullpath.isEmpty()) {
         err = 
           std::string("Can't find linkage item '") + link_item.get() + "'";
         return false;
@@ -466,7 +470,7 @@ private:
     set.insert(fullpath);
 
     // If its an LLVM bytecode file ...
-    if (fullpath.is_bytecode_file()) {
+    if (fullpath.isBytecodeFile()) {
       // Process the dependent libraries recursively
       Module::LibraryListType modlibs;
       if (GetBytecodeDependentLibraries(fullpath.get(),modlibs)) {
@@ -530,13 +534,13 @@ public:
       // If they are asking for linking and didn't provide an output
       // file then its an error (no way for us to "make up" a meaningful
       // file name based on the various linker input files).
-      if (finalPhase == LINKING && Output.is_empty())
+      if (finalPhase == LINKING && Output.isEmpty())
         throw std::string(
           "An output file name must be specified for linker output");
 
       // If they are not asking for linking, provided an output file and
       // there is more than one input file, its an error
-      if (finalPhase != LINKING && !Output.is_empty() && InpList.size() > 1)
+      if (finalPhase != LINKING && !Output.isEmpty() && InpList.size() > 1)
         throw std::string("An output file name cannot be specified ") +
           "with more than one input file name when not linking";
 
@@ -581,19 +585,19 @@ public:
 
         // Initialize the input and output files
         sys::Path InFile(I->first);
-        sys::Path OutFile(I->first.get_basename());
+        sys::Path OutFile(I->first.getBasename());
 
         // PRE-PROCESSING PHASE
         Action& action = cd->PreProcessor;
 
         // Get the preprocessing action, if needed, or error if appropriate
-        if (!action.program.is_empty()) {
+        if (!action.program.isEmpty()) {
           if (action.isSet(REQUIRED_FLAG) || finalPhase == PREPROCESSING) {
             if (finalPhase == PREPROCESSING) {
-              OutFile.append_suffix("E");
+              OutFile.appendSuffix("E");
               actions.push_back(GetAction(cd,InFile,OutFile,PREPROCESSING));
             } else {
-              sys::Path TempFile(MakeTempFile(I->first.get_basename(),"E"));
+              sys::Path TempFile(MakeTempFile(I->first.getBasename(),"E"));
               actions.push_back(GetAction(cd,InFile,TempFile,
                 PREPROCESSING));
               InFile = TempFile;
@@ -614,13 +618,13 @@ public:
         action = cd->Translator;
 
         // Get the translation action, if needed, or error if appropriate
-        if (!action.program.is_empty()) {
+        if (!action.program.isEmpty()) {
           if (action.isSet(REQUIRED_FLAG) || finalPhase == TRANSLATION) {
             if (finalPhase == TRANSLATION) {
-              OutFile.append_suffix("o");
+              OutFile.appendSuffix("o");
               actions.push_back(GetAction(cd,InFile,OutFile,TRANSLATION));
             } else {
-              sys::Path TempFile(MakeTempFile(I->first.get_basename(),"trans")); 
+              sys::Path TempFile(MakeTempFile(I->first.getBasename(),"trans")); 
               actions.push_back(GetAction(cd,InFile,TempFile,TRANSLATION));
               InFile = TempFile;
             }
@@ -630,10 +634,10 @@ public:
               /// The output of the translator is an LLVM Assembly program
               /// We need to translate it to bytecode
               Action* action = new Action();
-              action->program.set_file("llvm-as");
+              action->program.setFile("llvm-as");
               action->args.push_back(InFile.get());
               action->args.push_back("-o");
-              InFile.append_suffix("bc");
+              InFile.appendSuffix("bc");
               action->args.push_back(InFile.get());
               actions.push_back(action);
             }
@@ -653,13 +657,13 @@ public:
 
         // Get the optimization action, if needed, or error if appropriate
         if (!isSet(EMIT_RAW_FLAG)) {
-          if (!action.program.is_empty()) {
+          if (!action.program.isEmpty()) {
             if (action.isSet(REQUIRED_FLAG) || finalPhase == OPTIMIZATION) {
               if (finalPhase == OPTIMIZATION) {
-                OutFile.append_suffix("o");
+                OutFile.appendSuffix("o");
                 actions.push_back(GetAction(cd,InFile,OutFile,OPTIMIZATION));
               } else {
-                sys::Path TempFile(MakeTempFile(I->first.get_basename(),"opt"));
+                sys::Path TempFile(MakeTempFile(I->first.getBasename(),"opt"));
                 actions.push_back(GetAction(cd,InFile,TempFile,OPTIMIZATION));
                 InFile = TempFile;
               }
@@ -668,11 +672,11 @@ public:
                 /// The output of the optimizer is an LLVM Assembly program
                 /// We need to translate it to bytecode with llvm-as
                 Action* action = new Action();
-                action->program.set_file("llvm-as");
+                action->program.setFile("llvm-as");
                 action->args.push_back(InFile.get());
                 action->args.push_back("-f");
                 action->args.push_back("-o");
-                InFile.append_suffix("bc");
+                InFile.appendSuffix("bc");
                 action->args.push_back(InFile.get());
                 actions.push_back(action);
               }
@@ -695,20 +699,20 @@ public:
           if (isSet(EMIT_NATIVE_FLAG)) {
             // Use llc to get the native assembly file
             Action* action = new Action();
-            action->program.set_file("llc");
+            action->program.setFile("llc");
             action->args.push_back(InFile.get());
             action->args.push_back("-f");
             action->args.push_back("-o");
-            OutFile.append_suffix("s");
+            OutFile.appendSuffix("s");
             action->args.push_back(OutFile.get());
           } else {
             // Just convert back to llvm assembly with llvm-dis
             Action* action = new Action();
-            action->program.set_file("llvm-dis");
+            action->program.setFile("llvm-dis");
             action->args.push_back(InFile.get());
             action->args.push_back("-f");
             action->args.push_back("-o");
-            OutFile.append_suffix("ll");
+            OutFile.appendSuffix("ll");
             action->args.push_back(OutFile.get());
             actions.push_back(action);
           }
@@ -743,7 +747,7 @@ public:
 
         // Set up the linking action with llvm-ld
         Action* link = new Action();
-        link->program.set_file("llvm-ld");
+        link->program.setFile("llvm-ld");
 
         // Add in the optimization level requested
         switch (optLevel) {
@@ -834,6 +838,7 @@ private:
   std::string machine;          ///< Target machine name
   PathVector LibraryPaths;      ///< -L options
   PathVector IncludePaths;      ///< -I options
+  PathVector ToolPaths;         ///< -B options
   StringVector Defines;         ///< -D options
   sys::Path TempDir;            ///< Name of the temporary directory.
   StringTable AdditionalArgs;   ///< The -Txyz options

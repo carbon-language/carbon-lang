@@ -111,6 +111,10 @@ cl::list<std::string> WOpts("W", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Pass through -W options to compiler tools"),
   cl::value_desc("warnings category"));
 
+cl::list<std::string> BOpt("B", cl::ZeroOrMore, cl::Prefix, 
+  cl::desc("Indicate where llvmc sub-tools are installed"),
+  cl::value_desc("directory path containing bin and lib directories"));
+
 //===------------------------------------------------------------------------===
 //===          INPUT OPTIONS
 //===------------------------------------------------------------------------===

@@ -30,7 +30,7 @@ Path::Path(std::string unverified_path)
 {
   if (unverified_path.empty())
     return;
-  if (this->is_valid()) 
+  if (this->isValid()) 
     return;
   // oops, not valid.
   path.clear();
@@ -40,28 +40,28 @@ Path::Path(std::string unverified_path)
 Path
 Path::GetRootDirectory() {
   Path result;
-  result.set_directory("/");
+  result.setDirectory("/");
   return result;
 }
 
 static inline bool IsLibrary(Path& path, const std::string& basename) {
-  if (path.append_file(std::string("lib") + basename)) {
-    if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
+  if (path.appendFile(std::string("lib") + basename)) {
+    if (path.appendSuffix(Path::GetDLLSuffix()) && path.readable())
       return true;
-    else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
+    else if (path.elideSuffix() && path.appendSuffix("a") && path.readable())
       return true;
-    else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+    else if (path.elideSuffix() && path.appendSuffix("o") && path.readable())
       return true;
-    else if (path.elide_suffix() && path.append_suffix("bc") && path.readable())
+    else if (path.elideSuffix() && path.appendSuffix("bc") && path.readable())
       return true;
-  } else if (path.elide_file() && path.append_file(basename)) {
-    if (path.append_suffix(Path::GetDLLSuffix()) && path.readable())
+  } else if (path.elideFile() && path.appendFile(basename)) {
+    if (path.appendSuffix(Path::GetDLLSuffix()) && path.readable())
       return true;
-    else if (path.elide_suffix() && path.append_suffix("a") && path.readable())
+    else if (path.elideSuffix() && path.appendSuffix("a") && path.readable())
       return true;
-    else if (path.elide_suffix() && path.append_suffix("o") && path.readable())
+    else if (path.elideSuffix() && path.appendSuffix("o") && path.readable())
       return true;
-    else if (path.elide_suffix() && path.append_suffix("bc") && path.readable())
+    else if (path.elideSuffix() && path.appendSuffix("bc") && path.readable())
       return true;
   }
   path.clear();
@@ -76,20 +76,20 @@ Path::GetLibraryPath(const std::string& basename,
   // Try the paths provided
   for (std::vector<std::string>::const_iterator I = LibPaths.begin(),
        E = LibPaths.end(); I != E; ++I ) {
-    if (result.set_directory(*I) && IsLibrary(result,basename))
+    if (result.setDirectory(*I) && IsLibrary(result,basename))
       return result;
   }
 
   // Try the LLVM lib directory in the LLVM install area
-  if (result.set_directory(LLVM_LIBDIR) && IsLibrary(result,basename))
+  if (result.setDirectory(LLVM_LIBDIR) && IsLibrary(result,basename))
     return result;
 
   // Try /usr/lib
-  if (result.set_directory("/usr/lib/") && IsLibrary(result,basename))
+  if (result.setDirectory("/usr/lib/") && IsLibrary(result,basename))
     return result;
 
   // Try /lib
-  if (result.set_directory("/lib/") && IsLibrary(result,basename))
+  if (result.setDirectory("/lib/") && IsLibrary(result,basename))
     return result;
 
   // Can't find it, give up and return invalid path.
@@ -115,7 +115,7 @@ Path::GetLLVMDefaultConfigDir() {
 Path 
 Path::GetLLVMConfigDir() {
   Path result;
-  if (result.set_directory(LLVM_ETCDIR))
+  if (result.setDirectory(LLVM_ETCDIR))
     return result;
   return GetLLVMDefaultConfigDir();
 }
@@ -125,24 +125,24 @@ Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
   if (home) {
     Path result;
-    if (result.set_directory(home))
+    if (result.setDirectory(home))
       return result;
   }
   return GetRootDirectory();
 }
 
 bool
-Path::is_file() const {
-  return (is_valid() && path[path.length()-1] != '/');
+Path::isFile() const {
+  return (isValid() && path[path.length()-1] != '/');
 }
 
 bool
-Path::is_directory() const {
-  return (is_valid() && path[path.length()-1] == '/');
+Path::isDirectory() const {
+  return (isValid() && path[path.length()-1] == '/');
 }
 
 std::string
-Path::get_basename() const {
+Path::getBasename() const {
   // Find the last slash
   size_t slash = path.rfind('/');
   if (slash == std::string::npos)
@@ -153,7 +153,7 @@ Path::get_basename() const {
   return path.substr(slash, path.rfind('.'));
 }
 
-bool Path::has_magic_number(const std::string &Magic) const {
+bool Path::hasMagicNumber(const std::string &Magic) const {
   size_t len = Magic.size();
   char buf[ 1 + len];
   std::ifstream f(path.c_str());
@@ -163,17 +163,17 @@ bool Path::has_magic_number(const std::string &Magic) const {
 }
 
 bool 
-Path::is_bytecode_file() const {
+Path::isBytecodeFile() const {
   if (readable()) {
-    return has_magic_number("llvm");
+    return hasMagicNumber("llvm");
   }
   return false;
 }
 
 bool
-Path::is_archive() const {
+Path::isArchive() const {
   if (readable()) {
-    return has_magic_number("!<arch>\012");
+    return hasMagicNumber("!<arch>\012");
   }
   return false;
 }
@@ -221,7 +221,7 @@ Path::getLast() const {
 }
 
 bool
-Path::set_directory(const std::string& a_path) {
+Path::setDirectory(const std::string& a_path) {
   if (a_path.size() == 0)
     return false;
   Path save(*this);
@@ -229,7 +229,7 @@ Path::set_directory(const std::string& a_path) {
   size_t last = a_path.size() -1;
   if (last != 0 && a_path[last] != '/')
     path += '/';
-  if (!is_valid()) {
+  if (!isValid()) {
     path = save.path;
     return false;
   }
@@ -237,7 +237,7 @@ Path::set_directory(const std::string& a_path) {
 }
 
 bool
-Path::set_file(const std::string& a_path) {
+Path::setFile(const std::string& a_path) {
   if (a_path.size() == 0)
     return false;
   Path save(*this);
@@ -246,7 +246,7 @@ Path::set_file(const std::string& a_path) {
   while (last > 0 && a_path[last] == '/')
     last--;
   path.erase(last+1);
-  if (!is_valid()) {
+  if (!isValid()) {
     path = save.path;
     return false;
   }
@@ -254,13 +254,13 @@ Path::set_file(const std::string& a_path) {
 }
 
 bool
-Path::append_directory(const std::string& dir) {
-  if (is_file()) 
+Path::appendDirectory(const std::string& dir) {
+  if (isFile()) 
     return false;
   Path save(*this);
   path += dir;
   path += "/";
-  if (!is_valid()) {
+  if (!isValid()) {
     path = save.path;
     return false;
   }
@@ -268,8 +268,8 @@ Path::append_directory(const std::string& dir) {
 }
 
 bool
-Path::elide_directory() {
-  if (is_file()) 
+Path::elideDirectory() {
+  if (isFile()) 
     return false;
   size_t slashpos = path.rfind('/',path.size());
   if (slashpos == 0 || slashpos == std::string::npos)
@@ -283,12 +283,12 @@ Path::elide_directory() {
 }
 
 bool
-Path::append_file(const std::string& file) {
-  if (!is_directory()) 
+Path::appendFile(const std::string& file) {
+  if (!isDirectory()) 
     return false;
   Path save(*this);
   path += file;
-  if (!is_valid()) {
+  if (!isValid()) {
     path = save.path;
     return false;
   }
@@ -296,8 +296,8 @@ Path::append_file(const std::string& file) {
 }
 
 bool
-Path::elide_file() {
-  if (is_directory()) 
+Path::elideFile() {
+  if (isDirectory()) 
     return false;
   size_t slashpos = path.rfind('/',path.size());
   if (slashpos == std::string::npos)
@@ -307,13 +307,13 @@ Path::elide_file() {
 }
 
 bool
-Path::append_suffix(const std::string& suffix) {
-  if (is_directory()) 
+Path::appendSuffix(const std::string& suffix) {
+  if (isDirectory()) 
     return false;
   Path save(*this);
   path.append(".");
   path.append(suffix);
-  if (!is_valid()) {
+  if (!isValid()) {
     path = save.path;
     return false;
   }
@@ -321,8 +321,8 @@ Path::append_suffix(const std::string& suffix) {
 }
 
 bool 
-Path::elide_suffix() {
-  if (is_directory()) return false;
+Path::elideSuffix() {
+  if (isDirectory()) return false;
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
   if (slashpos != std::string::npos && dotpos != std::string::npos &&
@@ -335,9 +335,9 @@ Path::elide_suffix() {
 
 
 bool
-Path::create_directory( bool create_parents) {
+Path::createDirectory( bool create_parents) {
   // Make sure we're dealing with a directory
-  if (!is_directory()) return false;
+  if (!isDirectory()) return false;
 
   // Get a writeable copy of the path name
   char pathname[MAXPATHLEN];
@@ -372,9 +372,9 @@ Path::create_directory( bool create_parents) {
 }
 
 bool
-Path::create_file() {
+Path::createFile() {
   // Make sure we're dealing with a file
-  if (!is_file()) return false; 
+  if (!isFile()) return false; 
 
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
@@ -386,9 +386,9 @@ Path::create_file() {
 }
 
 bool
-Path::destroy_directory(bool remove_contents) {
+Path::destroyDirectory(bool remove_contents) {
   // Make sure we're dealing with a directory
-  if (!is_directory()) return false;
+  if (!isDirectory()) return false;
 
   // If it doesn't exist, we're done.
   if (!exists()) return true;
@@ -412,8 +412,8 @@ Path::destroy_directory(bool remove_contents) {
 }
 
 bool
-Path::destroy_file() {
-  if (!is_file()) return false;
+Path::destroyFile() {
+  if (!isFile()) return false;
   if (0 != unlink(path.c_str()))
     ThrowErrno(std::string(path.c_str()) + ": Can't destroy file");
   return true;

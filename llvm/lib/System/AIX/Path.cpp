@@ -24,7 +24,7 @@ using namespace sys;
 //===----------------------------------------------------------------------===//
 
 bool 
-Path::is_valid() const {
+Path::isValid() const {
   if (path.empty()) 
     return false;
   if (path.length() >= MAXPATHLEN)
@@ -43,8 +43,8 @@ Path::GetTemporaryDirectory() {
   if (!mkdir(TmpName, S_IRWXU))
     ThrowErrno(std::string(TmpName) + ": Can't create temporary directory");
   Path result;
-  result.set_directory(TmpName);
-  assert(result.is_valid() && "mkdtemp didn't create a valid pathname!");
+  result.setDirectory(TmpName);
+  assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
   return result;
 }
 

@@ -946,9 +946,9 @@ bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   // If the source library's module id is in the dependent library list of the
   // destination library, remove it since that module is now linked in.
   sys::Path modId;
-  modId.set_file(Src->getModuleIdentifier());
-  if (!modId.is_empty())
-    Dest->removeLibrary(modId.get_basename());
+  modId.setFile(Src->getModuleIdentifier());
+  if (!modId.isEmpty())
+    Dest->removeLibrary(modId.getBasename());
 
   return false;
 }
