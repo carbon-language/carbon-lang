@@ -412,7 +412,7 @@ llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
     return MP;
 
   } catch (...) {
-    // We only delete the ModuleProvider here because its destructor will
+    // We delete only the ModuleProvider here because its destructor will
     // also delete the Module (we used materializeModule not releaseModule).
     delete MP;
   }
