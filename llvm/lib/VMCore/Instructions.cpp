@@ -498,27 +498,31 @@ void LoadInst::AssertOK() {
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertBef), Volatile(false) {
+                     Load, Ptr, Name, InsertBef) {
+  setVolatile(false);
   AssertOK();
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertAE), Volatile(false) {
+                     Load, Ptr, Name, InsertAE) {
+  setVolatile(false);
   AssertOK();
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertBef), Volatile(isVolatile) {
+                     Load, Ptr, Name, InsertBef) {
+  setVolatile(isVolatile);
   AssertOK();
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertAE), Volatile(isVolatile) {
+                     Load, Ptr, Name, InsertAE) {
+  setVolatile(isVolatile);
   AssertOK();
 }
 
@@ -537,35 +541,36 @@ void StoreInst::AssertOK() {
 
 
 StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore),
-    Volatile(false) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
+  setVolatile(false);
   AssertOK();
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd), Volatile(false) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
+  setVolatile(false);
   AssertOK();
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile, 
                      Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore),
-    Volatile(isVolatile) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
+  setVolatile(isVolatile);
   AssertOK();
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile, 
                      BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd),
-    Volatile(isVolatile) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
+  setVolatile(isVolatile);
   AssertOK();
 }
 
