@@ -23,7 +23,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
-
+#include <math.h>
 
 //******************** Internal Data Declarations ************************/
 
@@ -1107,7 +1107,7 @@ CreateLoadConstInstr(const TargetMachine &target,
                                          dest);
         }
       else
-#endif MOVE_INT_TO_FP_REG_AVAILABLE
+#endif /*MOVE_INT_TO_FP_REG_AVAILABLE*/
         
         {
           // Make an instruction sequence to load the constant, viz:
@@ -2050,7 +2050,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                 // any) as implicit operands of the CALL machine instruction.
         {
         CallInst *callInstr = cast<CallInst>(subtreeRoot->getInstruction());
-        Method* callee = callInstr->getCalledMethod();
+        Value *callee = callInstr->getCalledValue();
         
         Instruction* jmpAddrReg = new TmpInstruction(Instruction::UserOp1,
                                                      callee, NULL);
