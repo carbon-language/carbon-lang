@@ -12,8 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Unix.h"
-#include <sys/time.h>
+#include "../Unix/Unix.cpp"
 
 namespace llvm {
 using namespace sys;
@@ -23,18 +22,6 @@ using namespace sys;
 //===          and must not be generic UNIX code (see ../Unix/TimeValue.cpp)
 //===----------------------------------------------------------------------===//
 
-TimeValue TimeValue::now() {
-  struct timeval the_time;
-  timerclear(&the_time);
-  if (0 != ::gettimeofday(&the_time,0)) 
-      ThrowErrno("Couldn't obtain time of day");
-
-  return TimeValue(
-    static_cast<TimeValue::SecondsType>( the_time.tv_sec +
-      PosixZeroTime.seconds_ ),
-    static_cast<TimeValue::NanoSecondsType>( the_time.tv_usec * 
-      NANOSECONDS_PER_MICROSECOND ) );
-}
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 
 }

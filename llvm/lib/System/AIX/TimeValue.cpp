@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the generic Unix implementation
-#include "../Unix/Unix.h"
+#include "../Unix/Unix.cpp"
 
 namespace llvm {
 using namespace sys;
@@ -21,8 +21,6 @@ using namespace sys;
 //=== WARNING: Implementation here must contain only AIX specific code 
 //===          and must not be generic UNIX code (see ../Unix/TimeValue.cpp)
 //===----------------------------------------------------------------------===//
-
-// FIXME: Need TimeValue::now()
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 
