@@ -92,7 +92,7 @@ class F4_3<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
 
 class F4_4<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
            string name> : F4_condcc {
-  bits<11> sim11;
+  bits<11> simm11;
   bits<5>  rd;
 
   set op   = opVal;
@@ -101,7 +101,7 @@ class F4_4<bits<2> opVal, bits<6> op3Val, bits<4> condVal,
   set Name = name;
   set Inst{29-25} = rd;
   set Inst{13} = 1; // i bit
-  set Inst{10-0} = sim11;
+  set Inst{10-0} = simm11;
 }  
   
 // FIXME: class F4_5
