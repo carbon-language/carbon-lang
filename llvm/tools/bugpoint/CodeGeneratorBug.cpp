@@ -48,8 +48,7 @@ public:
 
 
 bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
-                                          bool KeepFiles)
-{
+                                          bool KeepFiles) {
   std::cout << "Testing functions: ";
   BD.PrintFunctionList(Funcs);
   std::cout << "\t";
@@ -225,7 +224,7 @@ bool ReduceMisCodegenFunctions::TestFuncs(const std::vector<Function*> &Funcs,
   }
 
   // Make a shared library
-  std::string SharedObject = compileSharedObject(SafeModuleBC);
+  std::string SharedObject = BD.compileSharedObject(SafeModuleBC);
 
   delete SafeModule;
   delete TestModule;

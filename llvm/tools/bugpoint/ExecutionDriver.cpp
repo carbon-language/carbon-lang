@@ -67,10 +67,18 @@ bool BugDriver::initializeExecutionEnvironment() {
   // the command line
   std::string Message;
   switch (InterpreterSel) {
-  case RunLLI: Interpreter = createLLItool(getToolName(), Message); break;
-  case RunLLC: Interpreter = createLLCtool(getToolName(), Message); break;
-  case RunJIT: Interpreter = createJITtool(getToolName(), Message); break;
-  case RunCBE: Interpreter = createCBEtool(getToolName(), Message); break;
+  case RunLLI:
+    Interpreter = AbstractInterpreter::createLLI(getToolName(), Message);
+    break;
+  case RunLLC:
+    Interpreter = AbstractInterpreter::createLLC(getToolName(), Message);
+    break;
+  case RunJIT:
+    Interpreter = AbstractInterpreter::createJIT(getToolName(), Message);
+    break;
+  case RunCBE:
+    Interpreter = AbstractInterpreter::createCBE(getToolName(), Message);
+    break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
     break;
@@ -78,9 +86,9 @@ bool BugDriver::initializeExecutionEnvironment() {
   std::cerr << Message;
 
   // Initialize auxiliary tools for debugging
-  cbe = createCBEtool(getToolName(), Message);
+  cbe = AbstractInterpreter::createCBE(getToolName(), Message);
   if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
-  gcc = createGCCtool(getToolName(), Message);
+  gcc = GCC::create(getToolName(), Message);
   if (!gcc) { std::cout << Message << "\nExiting.\n"; exit(1); }
 
   // If there was an error creating the selected interpreter, quit with error.
@@ -94,9 +102,10 @@ bool BugDriver::initializeExecutionEnvironment() {
 ///
 std::string BugDriver::executeProgram(std::string OutputFile,
                                       std::string BytecodeFile,
-                                      std::string SharedObject,
+                                      const std::string &SharedObj,
                                       AbstractInterpreter *AI) {
-  assert((Interpreter||AI) && "Interpreter should have been created already!");
+  if (AI == 0) AI = Interpreter;
+  assert(AI && "Interpreter should have been created already!");
   bool CreatedBytecode = false;
   if (BytecodeFile.empty()) {
     // Emit the program to a bytecode file...
@@ -115,12 +124,15 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   // Check to see if this is a valid output filename...
   OutputFile = getUniqueFilename(OutputFile);
 
+  // Figure out which shared objects to run, if any.
+  std::vector<std::string> SharedObjs;
+  if (!SharedObj.empty())
+    SharedObjs.push_back(SharedObj);
+
   // Actually execute the program!
-  int RetVal = (AI != 0) ?
-    AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile, OutputFile,
-                       SharedObject) :
-    Interpreter->ExecuteProgram(BytecodeFile, InputArgv, 
-                                InputFile, OutputFile, SharedObject);
+  int RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
+                                  OutputFile, SharedObjs);
+
 
   // Remove the temporary bytecode file.
   if (CreatedBytecode) removeFile(BytecodeFile);
@@ -129,11 +141,6 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   return OutputFile;
 }
 
-std::string BugDriver::executeProgramWithCBE(std::string OutputFile,
-                                             std::string BytecodeFile,
-                                             std::string SharedObject) {
-  return executeProgram(OutputFile, BytecodeFile, SharedObject, cbe);
-}
 
 std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
@@ -153,7 +160,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 #endif
 
   std::string SharedObjectFile;
-  if (gcc->MakeSharedObject(OutputCFile, CFile, SharedObject))
+  if (gcc->MakeSharedObject(OutputCFile, GCC::CFile, SharedObjectFile))
     exit(1);
 
   // Remove the intermediate C file
