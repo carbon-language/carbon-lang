@@ -1343,11 +1343,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Op0I->getOperand(0));
     }
 
-  // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1^C2 == 0
+  // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
   Value *A, *B; ConstantInt *C1, *C2;
   if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
       match(Op1, m_And(m_Value(B), m_ConstantInt(C2))) &&
-      ConstantExpr::getXor(C1, C2)->isNullValue())
+      ConstantExpr::getAnd(C1, C2)->isNullValue())
     return BinaryOperator::createOr(Op0, Op1);
 
   // (setcc1 A, B) ^ (setcc2 A, B) --> (setcc3 A, B)
