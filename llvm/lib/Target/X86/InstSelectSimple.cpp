@@ -983,36 +983,64 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *BB,
                                      Value *Op0, Value *Op1,
                                      unsigned OperatorClass,unsigned TargetReg){
   unsigned Class = getClassB(Op0->getType());
-
-  static const unsigned OpcodeTab[][4] = {
-    // Arithmetic operators
-    { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32, X86::FpADD },  // ADD
-    { X86::SUBrr8, X86::SUBrr16, X86::SUBrr32, X86::FpSUB },  // SUB
-
-    // Bitwise operators
-    { X86::ANDrr8, X86::ANDrr16, X86::ANDrr32, 0 },  // AND
-    { X86:: ORrr8, X86:: ORrr16, X86:: ORrr32, 0 },  // OR
-    { X86::XORrr8, X86::XORrr16, X86::XORrr32, 0 },  // XOR
-  };
-
-  bool isLong = false;
-  if (Class == cLong) {
-    isLong = true;
-    Class = cInt;          // Bottom 32 bits are handled just like ints
-  }
-  
-  unsigned Opcode = OpcodeTab[OperatorClass][Class];
-  assert(Opcode && "Floating point arguments to logical inst?");
-  unsigned Op0r = getReg(Op0, BB, IP);
-  unsigned Op1r = getReg(Op1, BB, IP);
-  BMI(BB, IP, Opcode, 2, TargetReg).addReg(Op0r).addReg(Op1r);
-
-  if (isLong) {        // Handle the upper 32 bits of long values...
-    static const unsigned TopTab[] = {
-      X86::ADCrr32, X86::SBBrr32, X86::ANDrr32, X86::ORrr32, X86::XORrr32
+  if (!isa<ConstantInt>(Op1) || Class == cLong) {
+    static const unsigned OpcodeTab[][4] = {
+      // Arithmetic operators
+      { X86::ADDrr8, X86::ADDrr16, X86::ADDrr32, X86::FpADD },  // ADD
+      { X86::SUBrr8, X86::SUBrr16, X86::SUBrr32, X86::FpSUB },  // SUB
+      
+      // Bitwise operators
+      { X86::ANDrr8, X86::ANDrr16, X86::ANDrr32, 0 },  // AND
+      { X86:: ORrr8, X86:: ORrr16, X86:: ORrr32, 0 },  // OR
+      { X86::XORrr8, X86::XORrr16, X86::XORrr32, 0 },  // XOR
     };
-    BMI(BB, IP, TopTab[OperatorClass], 2,
-        TargetReg+1).addReg(Op0r+1).addReg(Op1r+1);
+    
+    bool isLong = false;
+    if (Class == cLong) {
+      isLong = true;
+      Class = cInt;          // Bottom 32 bits are handled just like ints
+    }
+    
+    unsigned Opcode = OpcodeTab[OperatorClass][Class];
+    assert(Opcode && "Floating point arguments to logical inst?");
+    unsigned Op0r = getReg(Op0, BB, IP);
+    unsigned Op1r = getReg(Op1, BB, IP);
+    BMI(BB, IP, Opcode, 2, TargetReg).addReg(Op0r).addReg(Op1r);
+    
+    if (isLong) {        // Handle the upper 32 bits of long values...
+      static const unsigned TopTab[] = {
+        X86::ADCrr32, X86::SBBrr32, X86::ANDrr32, X86::ORrr32, X86::XORrr32
+      };
+      BMI(BB, IP, TopTab[OperatorClass], 2,
+          TargetReg+1).addReg(Op0r+1).addReg(Op1r+1);
+    }
+  } else {
+    // Special case: op Reg, <const>
+    ConstantInt *Op1C = cast<ConstantInt>(Op1);
+
+    static const unsigned OpcodeTab[][3] = {
+      // Arithmetic operators
+      { X86::ADDri8, X86::ADDri16, X86::ADDri32 },  // ADD
+      { X86::SUBri8, X86::SUBri16, X86::SUBri32 },  // SUB
+      
+      // Bitwise operators
+      { X86::ANDri8, X86::ANDri16, X86::ANDri32 },  // AND
+      { X86:: ORri8, X86:: ORri16, X86:: ORri32 },  // OR
+      { X86::XORri8, X86::XORri16, X86::XORri32 },  // XOR
+    };
+
+    assert(Class < 3 && "General code handles 64-bit integer types!");
+    unsigned Opcode = OpcodeTab[OperatorClass][Class];
+    unsigned Op0r = getReg(Op0, BB, IP);
+    uint64_t Op1v;
+    if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op1C))
+      Op1v = CSI->getValue();
+    else
+      Op1v = cast<ConstantUInt>(Op1C)->getValue();
+
+    // Mask off any upper bits of the constant, if there are any...
+    Op1v &= (1ULL << (8 << Class)) - 1;
+    BMI(BB, IP, Opcode, 2, TargetReg).addReg(Op0r).addZImm(Op1v);
   }
 }
 
