@@ -529,8 +529,21 @@ void AssemblyWriter::printInstruction(const Instruction *I) {
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
   } else if (isa<CallInst>(I)) {
-    // TODO: Should try to print out short form of the Call instruction
-    writeOperand(Operand, true);
+    const PointerType *PTy = dyn_cast<PointerType>(Operand->getType());
+    const MethodType  *MTy = PTy ? dyn_cast<MethodType>(PTy->getValueType()) :0;
+    const Type      *RetTy = MTy ? MTy->getReturnType() : 0;
+
+    // If possible, print out the short form of the call instruction, but we can
+    // only do this if the first argument is a pointer to a nonvararg method,
+    // and if the value returned is not a pointer to a method.
+    //
+    if (RetTy && !MTy->isVarArg() &&
+        (!isa<PointerType>(RetTy)||!isa<MethodType>(cast<PointerType>(RetTy)))){
+      Out << " "; printType(RetTy);
+      writeOperand(Operand, false);
+    } else {
+      writeOperand(Operand, true);
+    }
     Out << "(";
     if (I->getNumOperands() > 1) writeOperand(I->getOperand(1), true);
     for (unsigned op = 2, Eop = I->getNumOperands(); op < Eop; ++op) {
