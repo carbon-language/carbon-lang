@@ -55,7 +55,8 @@ struct DSCallSiteIterator {
     return F->getName() == "printf"  || F->getName() == "sscanf" ||
       F->getName() == "fprintf" || F->getName() == "open" ||
       F->getName() == "sprintf" || F->getName() == "fputs" ||
-      F->getName() == "fscanf";
+      F->getName() == "fscanf" || F->getName() == "bzero" ||
+      F->getName() == "memset";
   }
   
   // isCompleteNode - Return true if we know all of the targets of this node,
