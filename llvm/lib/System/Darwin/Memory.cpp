@@ -21,14 +21,14 @@ namespace llvm {
 using namespace sys;
 
 //===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only Darwin specific code 
+//=== WARNING: Implementation here must contain only Darwin-specific code 
 //===          and must not be generic UNIX code (see ../Unix/Memory.cpp)
 //===----------------------------------------------------------------------===//
 
 /// AllocateRWXMemory - Allocate a slab of memory with read/write/execute
 /// permissions.  This is typically used for JIT applications where we want
-/// to emit code to the memory then jump to it.  Getting this type of memory
-/// is very OS specific.
+/// to emit code to the memory and then jump to it.  Getting this type of memory
+/// is very OS-specific.
 ///
 MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
   if (NumBytes == 0) return MemoryBlock();
