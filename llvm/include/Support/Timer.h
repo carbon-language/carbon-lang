@@ -1,24 +1,7 @@
 //===-- Support/Timer.h - Interval Timing Support ---------------*- C++ -*-===//
 //
-// This file defines three classes: Timer, TimeRegion, and TimerGroup.
-//
-// The Timer class is used to track the amount of time spent between invocations
-// of it's startTimer()/stopTimer() methods.  Given appropriate OS support it
-// can also keep track of the RSS of the program at various points.  By default,
-// the Timer will print the amount of time it has captured to standard error
-// when the laster timer is destroyed, otherwise it is printed when it's
-// TimerGroup is destroyed.  Timer's do not print their information if they are
-// never started.
-//
-// The TimeRegion class is used as a helper class to call the startTimer() and
-// stopTimer() methods of the Timer class.  When the object is constructed, it
-// starts the timer specified as it's argument.  When it is destroyed, it stops
-// the relevant timer.  This makes it easy to time a region of code.
-//
-// The TimerGroup class is used to group together related timers into a single
-// report that is printed when the TimerGroup is destroyed.  It is illegal to
-// destroy a TimerGroup object before all of the Timers in it are gone.  A
-// TimerGroup can be specified for a newly created timer in its constructor.
+// This file defines three classes: Timer, TimeRegion, and TimerGroup,
+// documented below.
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,6 +15,14 @@
 
 class TimerGroup;
 
+/// Timer - This class is used to track the amount of time spent between
+/// invocations of it's startTimer()/stopTimer() methods.  Given appropriate OS
+/// support it can also keep track of the RSS of the program at various points.
+/// By default, the Timer will print the amount of time it has captured to
+/// standard error when the laster timer is destroyed, otherwise it is printed
+/// when it's TimerGroup is destroyed.  Timer's do not print their information
+/// if they are never started.
+///
 class Timer {
   double Elapsed;        // Wall clock time elapsed in seconds
   double UserTime;       // User time elapsed
@@ -52,7 +43,7 @@ public:
   double getWallTime() const { return Elapsed; }
   long getMemUsed() const { return MemUsed; }
   long getPeakMem() const { return PeakMem; }
-  std::string   getName() const { return Name; }
+  std::string getName() const { return Name; }
 
   const Timer &operator=(const Timer &T) {
     Elapsed = T.Elapsed;
@@ -106,6 +97,11 @@ private:
 };
 
 
+/// The TimeRegion class is used as a helper class to call the startTimer() and
+/// stopTimer() methods of the Timer class.  When the object is constructed, it
+/// starts the timer specified as it's argument.  When it is destroyed, it stops
+/// the relevant timer.  This makes it easy to time a region of code.
+///
 class TimeRegion {
   Timer &T;
   TimeRegion(const TimeRegion &); // DO NOT IMPLEMENT
@@ -118,6 +114,22 @@ public:
   }
 };
 
+
+/// NamedRegionTimer - This class is basically a combination of TimeRegion and
+/// Timer.  It allows you to declare a new timer, AND specify the region to
+/// time, all in one statement.  All timers with the same name are merged.  This
+/// is primarily used for debugging and for hunting performance problems.
+///
+struct NamedRegionTimer : public TimeRegion {
+  NamedRegionTimer(const std::string &Name);
+};
+
+
+/// The TimerGroup class is used to group together related timers into a single
+/// report that is printed when the TimerGroup is destroyed.  It is illegal to
+/// destroy a TimerGroup object before all of the Timers in it are gone.  A
+/// TimerGroup can be specified for a newly created timer in its constructor.
+///
 class TimerGroup {
   std::string Name;
   unsigned NumTimers;
