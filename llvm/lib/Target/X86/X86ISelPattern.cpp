@@ -362,7 +362,7 @@ namespace {
     }
 
     void EmitCMP(SDOperand LHS, SDOperand RHS);
-    bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond);
+    bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
     void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
                       unsigned RTrue, unsigned RFalse, unsigned RDest);
     unsigned SelectExpr(SDOperand N);
@@ -559,7 +559,8 @@ static void EmitSetCC(MachineBasicBlock *BB, unsigned DestReg,
 /// the Dest block if the Cond condition is true.  If we cannot fold this
 /// condition into the branch, return true.
 ///
-bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
+bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
+                        SDOperand Cond) {
   // FIXME: Evaluate whether it would be good to emit code like (X < Y) | (A >
   // B) using two conditional branches instead of one condbr, two setcc's, and
   // an or.
@@ -568,6 +569,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
     // And and or set the flags for us, so there is no need to emit a TST of the
     // result.  It is only safe to do this if there is only a single use of the
     // AND/OR though, otherwise we don't know it will be emitted here.
+    Select(Chain);
     SelectExpr(Cond);
     BuildMI(BB, X86::JNE, 1).addMBB(Dest);
     return false;
@@ -577,7 +579,14 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
   if (Cond.getOpcode() == ISD::XOR)
     if (ConstantSDNode *NC = dyn_cast<ConstantSDNode>(Cond.Val->getOperand(1)))
       if (NC->isAllOnesValue()) {
-        unsigned CondR = SelectExpr(Cond.Val->getOperand(0));
+        unsigned CondR;
+        if (getRegPressure(Chain) > getRegPressure(Cond)) {
+          Select(Chain);
+          CondR = SelectExpr(Cond.Val->getOperand(0));
+        } else {
+          CondR = SelectExpr(Cond.Val->getOperand(0));
+          Select(Chain);
+        }
         BuildMI(BB, X86::TEST8rr, 2).addReg(CondR).addReg(CondR);
         BuildMI(BB, X86::JE, 1).addMBB(Dest);
         return false;
@@ -604,6 +613,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
     case ISD::SETULE: Opc = X86::JBE; break;
     case ISD::SETUGE: Opc = X86::JAE; break;
     }
+    Select(Chain);
     EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1));
     BuildMI(BB, Opc, 1).addMBB(Dest);
     return false;
@@ -660,6 +670,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Cond) {
     return true;    // FIXME: Emit more efficient code for this branch.
   }
 
+  Select(Chain);
   EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1));
   BuildMI(BB, Opc, 1).addMBB(Dest);
   if (Opc2)
@@ -1906,20 +1917,19 @@ void ISel::Select(SDOperand N) {
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
 
-    bool ChainFirst =
-      getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1));
-
-    if (ChainFirst) Select(N.getOperand(0));
-
     // Try to fold a setcc into the branch.  If this fails, emit a test/jne
     // pair.
-    if (EmitBranchCC(Dest, N.getOperand(1))) {
-      Tmp1 = SelectExpr(N.getOperand(1));
+    if (EmitBranchCC(Dest, N.getOperand(0), N.getOperand(1))) {
+      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+        Select(N.getOperand(0));
+        Tmp1 = SelectExpr(N.getOperand(1));
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Select(N.getOperand(0));
+      }
       BuildMI(BB, X86::TEST8rr, 2).addReg(Tmp1).addReg(Tmp1);
       BuildMI(BB, X86::JNE, 1).addMBB(Dest);
     }
-
-    if (!ChainFirst) Select(N.getOperand(0));
 
     return;
   }
