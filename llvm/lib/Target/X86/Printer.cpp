@@ -594,7 +594,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
 
     unsigned Reg = MI->getOperand(0).getReg();
     
-    O << TII.getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
     if (MI->getNumOperands() == 2 &&
 	(!MI->getOperand(1).isRegister() ||
@@ -627,7 +627,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
             (MI->getNumOperands() == 3 && MI->getOperand(2).isImmediate()))
            && "Bad format for MRMDestReg!");
 
-    O << TII.getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
@@ -646,7 +646,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     assert(isMem(MI, 0) && MI->getNumOperands() == 4+1 &&
            MI->getOperand(4).isRegister() && "Bad format for MRMDestMem!");
 
-    O << TII.getName(MI->getOpCode()) << " " << sizePtr(Desc) << " ";
+    O << TII.getName(MI->getOpcode()) << " " << sizePtr(Desc) << " ";
     printMemReference(MI, 0);
     O << ", ";
     printOp(MI->getOperand(4));
@@ -676,7 +676,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
              (MI->getOperand(2).isImmediate())))
            && "Bad format for MRMSrcReg!");
 
-    O << TII.getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
     O << ", ";
     printOp(MI->getOperand(1));
@@ -701,7 +701,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    O << TII.getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
     O << ", " << sizePtr(Desc) << " ";
     printMemReference(MI, MI->getNumOperands()-4);
@@ -732,7 +732,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
         MI->getOperand(0).getReg() != MI->getOperand(1).getReg())
       O << "**";
 
-    O << TII.getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
     printOp(MI->getOperand(0));
     if (MI->getOperand(MI->getNumOperands()-1).isImmediate()) {
       O << ", ";
@@ -767,7 +767,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // is misassembled by gas in intel_syntax mode as its 32-bit
     // equivalent "fstp DWORD PTR [...]". Workaround: Output the raw
     // opcode bytes instead of the instruction.
-    if (MI->getOpCode() == X86::FSTPr80) {
+    if (MI->getOpcode() == X86::FSTPr80) {
       if ((MI->getOperand(0).getReg() == X86::ESP)
 	  && (MI->getOperand(1).getImmedValue() == 1)) {
         if (Op3.isImmediate() && 
@@ -788,7 +788,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // misassembled by gas in intel_syntax mode as its 32-bit
     // equivalent "fld DWORD PTR [...]". Workaround: Output the raw
     // opcode bytes instead of the instruction.
-    if (MI->getOpCode() == X86::FLDr80 &&
+    if (MI->getOpcode() == X86::FLDr80 &&
         MI->getOperand(0).getReg() == X86::ESP &&
         MI->getOperand(1).getImmedValue() == 1) {
       if (Op3.isImmediate() && Op3.getImmedValue() >= -128 &&
@@ -808,7 +808,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // 64 bit modes." libopcodes disassembles it as "fild DWORD PTR
     // [...]", which is wrong. Workaround: Output the raw opcode bytes
     // instead of the instruction.
-    if (MI->getOpCode() == X86::FILDr64 &&
+    if (MI->getOpcode() == X86::FILDr64 &&
         MI->getOperand(0).getReg() == X86::ESP &&
         MI->getOperand(1).getImmedValue() == 1) {
       if (Op3.isImmediate() && Op3.getImmedValue() >= -128 &&
@@ -829,7 +829,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     // "fistpll DWORD PTR [...]", which is wrong. Workaround: Output
     // "fistpll DWORD PTR " instead, which is what libopcodes is
     // expecting to see.
-    if (MI->getOpCode() == X86::FISTPr64) {
+    if (MI->getOpcode() == X86::FISTPr64) {
       O << "fistpll DWORD PTR ";
       printMemReference(MI, 0);
       if (MI->getNumOperands() == 5) {
@@ -839,7 +839,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << "\t# ";
     }
     
-    O << TII.getName(MI->getOpCode()) << " ";
+    O << TII.getName(MI->getOpcode()) << " ";
     O << sizePtr(Desc) << " ";
     printMemReference(MI, 0);
     if (MI->getNumOperands() == 5) {
