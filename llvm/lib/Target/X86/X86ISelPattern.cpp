@@ -371,7 +371,8 @@ namespace {
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
 
-    bool isFoldableLoad(SDOperand Op, SDOperand OtherOp);
+    bool isFoldableLoad(SDOperand Op, SDOperand OtherOp,
+                        bool FloatPromoteOk = false);
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
     bool TryToFoldLoadOpStore(SDNode *Node);
 
@@ -1119,11 +1120,19 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
 
 /// isFoldableLoad - Return true if this is a load instruction that can safely
 /// be folded into an operation that uses it.
-bool ISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp) {
-  if (Op.getOpcode() != ISD::LOAD ||
-      // FIXME: currently can't fold constant pool indexes.
-      isa<ConstantPoolSDNode>(Op.getOperand(1)))
+bool ISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp, bool FloatPromoteOk){
+  if (Op.getOpcode() == ISD::LOAD) {
+    // FIXME: currently can't fold constant pool indexes.
+    if (isa<ConstantPoolSDNode>(Op.getOperand(1)))
+      return false;
+  } else if (FloatPromoteOk && Op.getOpcode() == ISD::EXTLOAD &&
+             cast<MVTSDNode>(Op)->getExtraValueType() == MVT::f32) {
+    // FIXME: currently can't fold constant pool indexes.
+    if (isa<ConstantPoolSDNode>(Op.getOperand(1)))
+      return false;
+  } else {
     return false;
+  }
 
   // If this load has already been emitted, we clearly can't fold it.
   assert(Op.ResNo == 0 && "Not a use of the value of the load?");
@@ -1686,12 +1695,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Op0 = N.getOperand(0);
     Op1 = N.getOperand(1);
 
-    if (isFoldableLoad(Op0, Op1)) {
+    if (isFoldableLoad(Op0, Op1, true)) {
       std::swap(Op0, Op1);
       goto FoldAdd;
     }
 
-    if (isFoldableLoad(Op1, Op0)) {
+    if (isFoldableLoad(Op1, Op0, true)) {
     FoldAdd:
       switch (N.getValueType()) {
       default: assert(0 && "Cannot add this type!");
@@ -1699,8 +1708,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i8:  Opc = X86::ADD8rm;  break;
       case MVT::i16: Opc = X86::ADD16rm; break;
       case MVT::i32: Opc = X86::ADD32rm; break;
-      case MVT::f32: Opc = X86::FADD32m; break;
-      case MVT::f64: Opc = X86::FADD64m; break;
+      case MVT::f64:
+        // For F64, handle promoted load operations (from F32) as well!
+        Opc = Op1.getOpcode() == ISD::LOAD ? X86::FADD64m : X86::FADD32m;
+        break;
       }
       X86AddressMode AM;
       EmitFoldedLoad(Op1, AM);
@@ -1893,18 +1904,18 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
     }
 
-    if (isFoldableLoad(Op0, Op1))
+    if (isFoldableLoad(Op0, Op1, true))
       if (Node->getOpcode() != ISD::SUB) {
         std::swap(Op0, Op1);
         goto FoldOps;
       } else {
-        // Emit 'reverse' subract, with a memory operand.
-        switch (N.getValueType()) {
-        default: Opc = 0; break;
-        case MVT::f32: Opc = X86::FSUBR32m; break;
-        case MVT::f64: Opc = X86::FSUBR64m; break;
-        }
-        if (Opc) {
+        // For FP, emit 'reverse' subract, with a memory operand.
+        if (N.getValueType() == MVT::f64) {
+          if (Op0.getOpcode() == ISD::EXTLOAD)
+            Opc = X86::FSUBR32m;
+          else
+            Opc = X86::FSUBR64m;
+
           X86AddressMode AM;
           EmitFoldedLoad(Op0, AM);
           Tmp1 = SelectExpr(Op1);
@@ -1913,7 +1924,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
       }
 
-    if (isFoldableLoad(Op1, Op0)) {
+    if (isFoldableLoad(Op1, Op0, true)) {
     FoldOps:
       switch (N.getValueType()) {
       default: assert(0 && "Cannot operate on this type!");
@@ -1921,8 +1932,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i8:  Opc = 5; break;
       case MVT::i16: Opc = 6; break;
       case MVT::i32: Opc = 7; break;
-      case MVT::f32: Opc = 8; break;
-      case MVT::f64: Opc = 9; break;
+        // For F64, handle promoted load operations (from F32) as well!
+      case MVT::f64: Opc = Op1.getOpcode() == ISD::LOAD ? 9 : 8; break;
       }
       switch (Node->getOpcode()) {
       default: assert(0 && "Unreachable!");
