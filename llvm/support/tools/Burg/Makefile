@@ -8,6 +8,8 @@ include $(LEVEL)/Makefile.common
 gram.tab.c gram.tab.h: gram.yc
 	$(VERB) $(BISON) -o gram.tab.c -d $<
 
+lex.c: gram.tab.h
+
 clean::
 	rm -ff gram.tab.h gram.tab.c core* *.aux *.log *.dvi sample sample.c tmp
 
