@@ -470,7 +470,7 @@ $(BUILD_ROOT)/Debug/%.o: %.c $(BUILD_ROOT)/Debug/.dir
 # 'make clean' nukes the tree
 clean::
 	$(VERB) rm -rf $(BUILD_ROOT)/Debug $(BUILD_ROOT)/Release $(BUILD_ROOT)/Profile $(BUILD_ROOT)/Depend
-	$(VERB) rm -f core *.o *.d *.so *~ *.flc
+	$(VERB) rm -f core core.[0-9][0-9]* *.o *.d *.so *~ *.flc
 
 # If dependancies were generated for the file that included this file,
 # include the dependancies now...
