@@ -29,9 +29,9 @@
 
 </ol>
 
-<div class="doc_text">
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
-                   <a href="http://misha.brukman.net">Misha Brukman</a></b></p>
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
+                <a href="http://misha.brukman.net">Misha Brukman</a></p>
 </div>
 
 </td>
@@ -148,7 +148,7 @@ compilation, compile your test-case to a <tt>.s</tt> file with the
 <tt>-save-temps</tt> option to <tt><b>llvm-gcc</b></tt>. Then run:</p>
 
 <div class="doc_code">
-<pre><b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null</pre>
+<p><tt><b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null</tt></p>
 </div>
 
 <p>... which will print a list of arguments, indicating the list of passes that
@@ -171,9 +171,9 @@ being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
 the full list of objects linked).  Then run:</p>
 
 <div class="doc_code">
-<pre>
-<b>llvm-as</b> &lt; /dev/null &gt; null.bc
-<b>gccld</b> -debug-pass=Arguments null.bc</tt></p>
+<p><tt><b>llvm-as</b> &lt; /dev/null &gt; null.bc<br>
+<b>gccld</b> -debug-pass=Arguments null.bc</tt>
+</p>
 </div>
 
 <p>... which will print a list of arguments, indicating the list of passes that
@@ -196,19 +196,19 @@ order to reduce the list of passes (which is probably large) and the input to
 something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:</p>
 
 <div class="doc_code">
-<pre><b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;</pre>
+<p><tt><b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;</tt></p>
 </div>
 
 <p><tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
 test-case, but it should eventually print something like this:</p>
 
 <div class="doc_code">
-<pre>
-...
-Emitted bytecode to 'bugpoint-reduced-simplified.bc'
-
-*** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm
-</pre>
+<p><tt>
+...<br>
+Emitted bytecode to 'bugpoint-reduced-simplified.bc'<br>
+<br>
+*** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm<br>
+</tt></p>
 </div>
 
 <p>Once you complete this, please send the LLVM bytecode file and the command
@@ -242,8 +242,8 @@ which code generator you wish to compile the program with (e.g. C backend, the
 JIT, or LLC) and optionally a series of LLVM passes to run.  For example:</p>
 
 <div class="doc_code">
-<pre>
-<b>bugpoint</b> -run-cbe [... optimization passes ...] file-to-test.bc --args -- [program arguments]</pre>
+<p><tt>
+<b>bugpoint</b> -run-cbe [... optzn passes ...] file-to-test.bc --args -- [program arguments]</tt></p>
 </div>
 
 <p><tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
@@ -295,10 +295,10 @@ debug the JIT, LLC, and CBE, using the pre-written Makefile targets, which
 will pass the program options specified in the Makefiles:</p>
 
 <div class="doc_code">
-<pre>
-cd llvm/test/../../program
+<p><tt>
+cd llvm/test/../../program<br>
 make bugpoint-jit
-</pre>
+</tt></p>
 </div>
 
 <p>At the end of a successful <tt>bugpoint</tt> run, you will be presented
@@ -314,28 +314,28 @@ the following:</p>
 <li><p>Regenerate the shared object from the safe bytecode file:</p>
 
 <div class="doc_code">
-<pre>
-<b>llc</b> -march=c safe.bc -o safe.c
+<p><tt>
+<b>llc</b> -march=c safe.bc -o safe.c<br>
 <b>gcc</b> -shared safe.c -o safe.so
-</pre>
+</tt></p>
 </div></li>
 
 <li><p>If debugging LLC, compile test bytecode native and link with the shared
     object:</p>
 
 <div class="doc_code">
-<pre>
-<b>llc</b> test.bc -o test.s -f
-<b>gcc</b> test.s safe.so -o test.llc
+<p><tt>
+<b>llc</b> test.bc -o test.s -f<br>
+<b>gcc</b> test.s safe.so -o test.llc<br>
 ./test.llc [program options]
-</pre>
+</tt></p>
 </div></li>
     
 <li><p>If debugging the JIT, load the shared object and supply the test
     bytecode:</p>
 
 <div class="doc_code">
-<pre><b>lli</b> -load=safe.so test.bc [program options]</pre>
+<p><tt><b>lli</b> -load=safe.so test.bc [program options]</tt></p>
 </div></li>  
 
 </ol>
