@@ -180,6 +180,14 @@ struct Init {
   ///
   virtual RecTy *getFieldType(const std::string &FieldName) const { return 0; }
 
+  /// getFieldInit - This method complements getFieldType to return the
+  /// initializer for the specified field.  If getFieldType returns non-null
+  /// this method should return non-null, otherwise it returns null.
+  ///
+  virtual Init *getFieldInit(Record &R, const std::string &FieldName) const {
+    return 0;
+  }
+
   /// resolveReferences - This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.
   /// If a value is set for the variable later, this method will be called on
@@ -352,6 +360,7 @@ public:
   virtual Init *resolveBitReference(Record &R, unsigned Bit);
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
+  virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
   
   virtual void print(std::ostream &OS) const { OS << VarName; }
 };
@@ -397,6 +406,9 @@ public:
   Record *getDef() const { return Def; }
 
   //virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+
+  virtual RecTy *getFieldType(const std::string &FieldName) const;
+  virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
   
   virtual void print(std::ostream &OS) const;
 };

@@ -82,25 +82,6 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
   return 0;
 }
 
-#if 0
-Init *BitsRecTy::convertValue(FieldInit *VI) {
-  if (BitsRecTy *BRT = dynamic_cast<BitsRecTy*>(VI->getType()))
-    if (BRT->Size == Size) {
-      BitsInit *Ret = new BitsInit(Size);
-      for (unsigned i = 0; i != Size; ++i)
-	Ret->setBit(i, new VarBitInit(VI, i));
-      return Ret;
-    }
-  if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType())) {
-    BitsInit *Ret = new BitsInit(1);
-    Ret->setBit(0, VI);
-    return Ret;
-  }
-  return 0;
-}
-#endif
-
-
 Init *IntRecTy::convertValue(BitsInit *BI) {
   int Result = 0;
   for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) 
@@ -168,8 +149,8 @@ Init *BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 
 void BitsInit::print(std::ostream &OS) const {
   //if (!printInHex(OS)) return;
-  if (!printAsVariable(OS)) return;
-  if (!printAsUnset(OS)) return;
+  //if (!printAsVariable(OS)) return;
+  //if (!printAsUnset(OS)) return;
 
   OS << "{ ";
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
@@ -282,13 +263,6 @@ Init *VarInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   return BI;
 }
 
-RecTy *VarInit::getFieldType(const std::string &FieldName) const {
-  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(getType()))
-    if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
-      return RV->getType();
-  return 0;
-}
-
 Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
   if (R.isTemplateArg(getName()))
     return this;
@@ -306,15 +280,42 @@ Init *VarInit::resolveBitReference(Record &R, unsigned Bit) {
   return this;
 }
 
+RecTy *VarInit::getFieldType(const std::string &FieldName) const {
+  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(getType()))
+    if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
+      return RV->getType();
+  return 0;
+}
+
+Init *VarInit::getFieldInit(Record &R, const std::string &FieldName) const {
+  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(getType()))
+    if (const RecordVal *RV = R.getValue(VarName))
+      if (Init *I = RV->getValue()->getFieldInit(R, FieldName))
+        return I;
+      else
+        return (Init*)this;
+  return 0;
+}
+
 
 
 Init *VarBitInit::resolveReferences(Record &R) {
   Init *I = getVariable()->resolveBitReference(R, getBitNum());
-
   if (I != getVariable())
     return I;
   return this;
 }
+
+RecTy *DefInit::getFieldType(const std::string &FieldName) const {
+  if (const RecordVal *RV = Def->getValue(FieldName))
+    return RV->getType();
+  return 0;
+}
+
+Init *DefInit::getFieldInit(Record &R, const std::string &FieldName) const {
+  return Def->getValue(FieldName)->getValue();
+}
+
 
 void DefInit::print(std::ostream &OS) const {
   OS << Def->getName();
@@ -337,7 +338,16 @@ Init *FieldInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 }
 
 Init *FieldInit::resolveBitReference(Record &R, unsigned Bit) {
-  // Can never be resolved yet.
+  Init *BitsVal = Rec->getFieldInit(R, FieldName);
+  assert(BitsVal && "No initializer found!");
+
+  if (BitsInit *BI = dynamic_cast<BitsInit*>(BitsVal)) {
+    assert(Bit < BI->getNumBits() && "Bit reference out of range!");
+    Init *B = BI->getBit(Bit);
+    
+    if (dynamic_cast<BitInit*>(B))  // If the bit is set...
+      return B;                     // Replace the VarBitInit with it.
+  }
   return this;
 }
 
