@@ -59,15 +59,15 @@ X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
 // does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 					       std::ostream &Out) {
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
-
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
   // FIXME: The code generator does not properly handle functions with
   // unreachable basic blocks.
   PM.add(createCFGSimplificationPass());
+
+  // FIXME: Implement the switch instruction in the instruction selector!
+  PM.add(createLowerSwitchPass());
 
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(*this));
@@ -115,8 +115,6 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
 /// not supported for this target.
 ///
 void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
 
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
@@ -124,6 +122,9 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: The code generator does not properly handle functions with
   // unreachable basic blocks.
   PM.add(createCFGSimplificationPass());
+
+  // FIXME: Implement the switch instruction in the instruction selector!
+  PM.add(createLowerSwitchPass());
 
   if (NoPatternISel)
     PM.add(createX86SimpleInstructionSelector(TM));
