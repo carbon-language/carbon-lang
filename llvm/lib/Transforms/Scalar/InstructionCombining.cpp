@@ -610,10 +610,19 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // Otherwise if all of the incoming values are the same for the PHI, replace
   // the PHI node with the incoming value.
   //
-  Value *InVal = PN.getIncomingValue(0);
-  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i)
-    if (PN.getIncomingValue(i) != InVal)
-      return 0;  // Not the same, bail out.
+  Value *InVal = 0;
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+    if (PN.getIncomingValue(i) != &PN)  // Not the PHI node itself...
+      if (InVal && PN.getIncomingValue(i) != InVal)
+        return 0;  // Not the same, bail out.
+      else
+        InVal = PN.getIncomingValue(i);
+
+  // The only case that could cause InVal to be null is if we have a PHI node
+  // that only has entries for itself.  In this case, there is no entry into the
+  // loop, so kill the PHI.
+  //
+  if (InVal == 0) InVal = Constant::getNullValue(PN.getType());
 
   // All of the incoming values are the same, replace the PHI node now.
   return ReplaceInstUsesWith(PN, InVal);
