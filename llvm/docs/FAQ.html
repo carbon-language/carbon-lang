@@ -48,6 +48,7 @@
   errors.</li>
   <li>I've built LLVM and am testing it, but the tests freeze.</li>
   <li>Why do test results differ when I perform different types of builds?</li>
+  <li>Compiling LLVM with GCC 3.3 on SuSE 9 fails, what should I do?</li>
   </ol></li>
 
   <li><a href="#cfe">Using the GCC Front End</a>
@@ -325,6 +326,15 @@ profiling builds.  Hence, tests that used to fail may pass.</p>
 available in the debug build.  These tests will fail in an optimized or profile
 build.</p>
 
+</div>
+
+<div class="question">
+<p>Compiling LLVM with GCC 3.3 on SuSE 9 fails, what should I do?</p>
+</div>
+
+<div class="answer">
+<p>This is a bug in the customized version of GCC shipped with SuSE, and effects
+   projects other than LLVM.  Complain loudly to SuSE.  :)</p>
 </div>
 
 <!-- *********************************************************************** -->
