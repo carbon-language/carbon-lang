@@ -369,16 +369,32 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "))";
       return;
     case Instruction::Add:
-      Out << "(";
-      printConstant(CE->getOperand(0));
-      Out << " + ";
-      printConstant(CE->getOperand(1));
-      Out << ")";
-      return;
     case Instruction::Sub:
+    case Instruction::Mul:
+    case Instruction::Div:
+    case Instruction::Rem:
+    case Instruction::SetEQ:
+    case Instruction::SetNE:
+    case Instruction::SetLT:
+    case Instruction::SetLE:
+    case Instruction::SetGT:
+    case Instruction::SetGE:
       Out << "(";
       printConstant(CE->getOperand(0));
-      Out << " - ";
+      switch (CE->getOpcode()) {
+      case Instruction::Add: Out << " + "; break;
+      case Instruction::Sub: Out << " - "; break;
+      case Instruction::Mul: Out << " * "; break;
+      case Instruction::Div: Out << " / "; break;
+      case Instruction::Rem: Out << " % "; break;
+      case Instruction::SetEQ: Out << " == "; break;
+      case Instruction::SetNE: Out << " != "; break;
+      case Instruction::SetLT: Out << " < "; break;
+      case Instruction::SetLE: Out << " <= "; break;
+      case Instruction::SetGT: Out << " > "; break;
+      case Instruction::SetGE: Out << " >= "; break;
+      default: assert(0 && "Illegal opcode here!");
+      }
       printConstant(CE->getOperand(1));
       Out << ")";
       return;
@@ -1186,7 +1202,7 @@ void CWriter::visitAllocaInst(AllocaInst &I) {
 }
 
 void CWriter::visitFreeInst(FreeInst &I) {
-  Out << "free(";
+  Out << "free((char*)";
   writeOperand(I.getOperand(0));
   Out << ")";
 }
