@@ -153,11 +153,9 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 
 uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 				      const std::vector<Value*> &Idx) const {
-  const PointerType *PtrTy = cast<const PointerType>(ptrTy);
+  const Type *Ty = ptrTy;
+  assert(isa<PointerType>(Ty) && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
-
-  // Get the type pointed to...
-  const Type *Ty = PtrTy->getElementType();
 
   for (unsigned CurIDX = 0; CurIDX < Idx.size(); ++CurIDX) {
     if (Idx[CurIDX]->getType() == Type::UIntTy) {
@@ -166,7 +164,10 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       unsigned arrayIdx = cast<ConstantUInt>(Idx[CurIDX])->getValue();
       uint64_t elementSize = this->getTypeSize(Ty);
       Result += arrayIdx * elementSize;
-      
+
+      // Update Ty to refer to current element
+      Ty = cast<SequentialType>(Ty)->getElementType();
+
     } else if (const StructType *STy = dyn_cast<const StructType>(Ty)) {
       assert(Idx[CurIDX]->getType() == Type::UByteTy && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
@@ -177,7 +178,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       // Add in the offset, as calculated by the structure layout info...
       assert(FieldNo < Layout->MemberOffsets.size() &&"FieldNo out of range!");
       Result += Layout->MemberOffsets[FieldNo];
-      
+
       // Update Ty to refer to current element
       Ty = STy->getElementTypes()[FieldNo];
 
