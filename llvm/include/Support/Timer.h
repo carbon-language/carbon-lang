@@ -34,8 +34,7 @@ class Timer {
   double Elapsed;        // Wall clock time elapsed in seconds
   double UserTime;       // User time elapsed
   double SystemTime;     // System time elapsed
-  unsigned long MaxRSS;  // Maximum resident set size (in bytes)
-  unsigned long RSSTemp; // Temp for calculating maxrss
+  long   MemUsed;        // Memory allocated (in bytes)
   std::string Name;      // The name of this time variable
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
@@ -47,15 +46,14 @@ public:
 
   double getProcessTime() const { return UserTime+SystemTime; }
   double getWallTime() const { return Elapsed; }
-  unsigned long getMaxRSS() const { return MaxRSS; }
+  long getMemUsed() const { return MemUsed; }
   std::string   getName() const { return Name; }
 
   const Timer &operator=(const Timer &T) {
     Elapsed = T.Elapsed;
     UserTime = T.UserTime;
     SystemTime = T.SystemTime;
-    MaxRSS = T.MaxRSS;
-    RSSTemp = T.RSSTemp;
+    MemUsed = T.MemUsed;
     Name = T.Name;
     Started = T.Started;
     assert (TG == T.TG && "Can only assign timers in the same TimerGroup!");
