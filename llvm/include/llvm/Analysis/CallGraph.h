@@ -166,6 +166,10 @@ public:
   ///
   void print(std::ostream &o, const Module *M) const;
 
+  /// dump - Print out this call graph.
+  ///
+  void dump() const;
+
   // stub - dummy function, just ignore it
   static void stub();
 private:
@@ -217,6 +221,10 @@ public:
   //
   CallGraphNode *operator[](unsigned i) const { return CalledFunctions[i];}
 
+  /// dump - Print out this call graph node.
+  ///
+  void dump() const;
+  void print(std::ostream &OS) const;
 
   //===---------------------------------------------------------------------
   // Methods to keep a call graph up to date with a function that has been
