@@ -15,14 +15,11 @@
 #define LLI_INTERPRETER_H
 
 #include "llvm/BasicBlock.h"
-#include "llvm/Assembly/CachedWriter.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/DataTypes.h"
-
-extern CachedWriter CW;     // Object to accelerate printing of LLVM
 
 struct FunctionInfo;        // Defined in ExecutionAnnotations.h
 
@@ -65,10 +62,8 @@ struct ExecutionContext {
   Function             *CurFunction;// The currently executing function
   BasicBlock           *CurBB;      // The currently executing BB
   BasicBlock::iterator  CurInst;    // The next instruction to execute
-  FunctionInfo         *FuncInfo;   // The FuncInfo annotation for the function
-  std::vector<ValuePlaneTy>  Values;// ValuePlanes for each type
+  std::map<Value *, GenericValue> Values; // LLVM values used in this invocation
   std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
-
   CallInst             *Caller;     // Holds the call that called subframes.
                                     // NULL if main func or debugger invoked fn
   AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
@@ -78,8 +73,6 @@ struct ExecutionContext {
 //
 class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   int ExitCode;                // The exit code to be returned by the lli util
-  bool Trace;                  // Tracing enabled?
-  int CurFrame;                // The current stack frame being inspected
   TargetData TD;
 
   // The runtime stack of executing code.  The top of the stack is the current
@@ -90,11 +83,9 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   // registered with the atexit() library function.
   std::vector<Function*> AtExitHandlers;
 
-  std::map<Function*, FunctionInfo*> FunctionInfoMap;
 public:
-  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
-              bool TraceMode);
-  inline ~Interpreter() { CW.setModule(0); }
+  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer);
+  inline ~Interpreter() { }
 
   /// runAtExitHandlers - Run any functions registered by the
   /// program's calls to atexit(3), which we intercept and store in
@@ -104,21 +95,16 @@ public:
 
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
-  static ExecutionEngine *create(Module *M, bool TraceMode);
+  static ExecutionEngine *create(Module *M);
 
   /// run - Start execution with the specified function and arguments.
   ///
   virtual GenericValue run(Function *F,
 			   const std::vector<GenericValue> &ArgValues);
 
-  // Methods used for debug printouts:
-  static void print(const Type *Ty, GenericValue V);
-  static void printValue(const Type *Ty, GenericValue V);
-
   // Methods used to execute code:
   // Place a call on the stack
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
-  void executeInstruction(); // Execute one instruction
   void run();                // Execute instructions until nothing left to do
 
   // Opcode Implementations
