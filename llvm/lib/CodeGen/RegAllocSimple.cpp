@@ -4,18 +4,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Function.h"
-#include "llvm/iTerminators.h"
-#include "llvm/Type.h"
-#include "llvm/Constants.h"
-#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/MachineInstrInfo.h"
-#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
+#include <iostream>
 
 namespace {
   struct RegAllocSimple : public FunctionPass {
