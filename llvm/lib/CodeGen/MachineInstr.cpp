@@ -345,7 +345,31 @@ ChooseRegOrImmed(Value* val,
 
 
 void
-PrintMachineInstructions(const Method* method)
+PrintMachineInstructions(const Method *const method)
+{
+  cout << "\n" << method->getReturnType()
+       << " \"" << method->getName() << "\"" << endl;
+  
+  for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
+    {
+      BasicBlock* bb = *BI;
+      cout << "\n"
+	   << (bb->hasName()? bb->getName() : "Label")
+	   << " (" << bb << ")" << ":"
+	   << endl;
+      
+      MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
+      for (unsigned i=0; i < mvec.size(); i++)
+	cout << "\t" << *mvec[i] << endl;
+    } 
+  cout << endl << "End method \"" << method->getName() << "\""
+       << endl << endl;
+}
+
+#if 0
+
+void PrintMachineInstructions(Method * method)
+
 {
   cout << "\n" << method->getReturnType()
        << " \"" << method->getName() << "\"" << endl;
@@ -365,3 +389,4 @@ PrintMachineInstructions(const Method* method)
   cout << endl << "End method \"" << method->getName() << "\""
        << endl << endl;
 }
+#endif 
