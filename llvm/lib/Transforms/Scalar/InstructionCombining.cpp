@@ -109,14 +109,49 @@ namespace {
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
 }
 
+// getComplexity:  Assign a complexity or rank value to LLVM Values...
+//   0 -> Constant, 1 -> Other, 2 -> Argument, 2 -> Unary, 3 -> OtherInst
+static unsigned getComplexity(Value *V) {
+  if (isa<Instruction>(V)) {
+    if (BinaryOperator::isNeg(V) || BinaryOperator::isNot(V))
+      return 2;
+    return 3;
+  }
+  if (isa<Argument>(V)) return 2;
+  return isa<Constant>(V) ? 0 : 1;
+}
 
-// Make sure that this instruction has a constant on the right hand side if it
-// has any constant arguments.  If not, fix it an return true.
+// SimplifyCommutative - This performs a few simplifications for commutative
+// operators:
 //
-static bool SimplifyBinOp(BinaryOperator &I) {
-  if (isa<Constant>(I.getOperand(0)) && !isa<Constant>(I.getOperand(1)))
-    return !I.swapOperands();
-  return false;
+//  1. Order operands such that they are listed from right (least complex) to
+//     left (most complex).  This puts constants before unary operators before
+//     binary operators.
+//
+//  2. Handle the case of (op (op V, C1), C2), changing it to:
+//     (op V, (op C1, C2))
+//
+static bool SimplifyCommutative(BinaryOperator &I) {
+  bool Changed = false;
+  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1)))
+    Changed = !I.swapOperands();
+  
+  if (!I.isAssociative()) return Changed;
+  Instruction::BinaryOps Opcode = I.getOpcode();
+  if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0))) {
+    if (Op->getOpcode() == Opcode && isa<Constant>(I.getOperand(1)) &&
+        isa<Constant>(Op->getOperand(1))) {
+      Instruction *New = BinaryOperator::create(I.getOpcode(), I.getOperand(1),
+                                                Op->getOperand(1));
+      Constant *Folded = ConstantFoldInstruction(New);
+      delete New;
+      assert(Folded && "Couldn't constant fold commutative operand?");
+      I.setOperand(0, Op->getOperand(0));
+      I.setOperand(1, Folded);
+      return true;
+    }
+  }
+  return Changed;
 }
 
 // dyn_castNegInst - Given a 'sub' instruction, return the RHS of the
@@ -157,7 +192,7 @@ static inline Value *dyn_castFoldableMul(Value *V) {
 
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
-  bool Changed = SimplifyBinOp(I);
+  bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   // Eliminate 'add int %X, 0'
@@ -171,26 +206,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // A + -B  -->  A - B
   if (Value *V = dyn_castNegInst(RHS))
     return BinaryOperator::create(Instruction::Sub, LHS, V);
-
-  // Simplify add instructions with a constant RHS...
-  if (Constant *Op2 = dyn_cast<Constant>(RHS)) {
-    if (BinaryOperator *ILHS = dyn_cast<BinaryOperator>(LHS)) {
-      if (ILHS->getOpcode() == Instruction::Add &&
-          isa<Constant>(ILHS->getOperand(1))) {
-        // Fold:
-        //    %Y = add int %X, 1
-        //    %Z = add int %Y, 1
-        // into:
-        //    %Z = add int %X, 2
-        //
-        if (Constant *Val = *Op2 + *cast<Constant>(ILHS->getOperand(1))) {
-          I.setOperand(0, ILHS->getOperand(0));
-          I.setOperand(1, Val);
-          return &I;
-        }
-      }
-    }
-  }
 
   // X*C + X --> X * (C+1)
   if (dyn_castFoldableMul(LHS) == RHS) {
@@ -279,7 +294,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
-  bool Changed = SimplifyBinOp(I);
+  bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0);
 
   // Simplify mul instructions with a constant RHS...
@@ -397,7 +412,7 @@ static bool isMinValuePlusOne(const ConstantInt *C) {
 
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
-  bool Changed = SimplifyBinOp(I);
+  bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // and X, X = X   and X, 0 == 0
@@ -429,7 +444,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
-  bool Changed = SimplifyBinOp(I);
+  bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // or X, X = X   or X, 0 == X
@@ -457,7 +472,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
 
 Instruction *InstCombiner::visitXor(BinaryOperator &I) {
-  bool Changed = SimplifyBinOp(I);
+  bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // xor X, X = 0
@@ -510,11 +525,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (Op0I->getOpcode() == Instruction::Or && Op0I->use_size() == 1) {
       if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
         cast<BinaryOperator>(Op0I)->swapOperands();
-      if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == ~B & A
+      if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
         Value *NotB = BinaryOperator::createNot(Op1, Op1->getName()+".not", &I);
         WorkList.push_back(cast<Instruction>(NotB));
-        return BinaryOperator::create(Instruction::And, NotB,
-                                      Op0I->getOperand(0));
+        return BinaryOperator::create(Instruction::And, Op0I->getOperand(0),
+                                      NotB);
       }
     }
 
@@ -543,7 +558,7 @@ static bool isTrueWhenEqual(Instruction &I) {
 }
 
 Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
-  bool Changed = SimplifyBinOp(I);
+  bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   const Type *Ty = Op0->getType();
 
