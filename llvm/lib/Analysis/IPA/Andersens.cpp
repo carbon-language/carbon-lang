@@ -578,7 +578,8 @@ Andersens::Node *Andersens::getNodeForConstantPointerTarget(Constant *C) {
 void Andersens::AddGlobalInitializerConstraints(Node *N, Constant *C) {
   if (C->getType()->isFirstClassType()) {
     if (isa<PointerType>(C->getType()))
-      N->addPointerTo(getNodeForConstantPointer(C));
+      N->copyFrom(getNodeForConstantPointer(C));
+                                       
   } else if (C->isNullValue()) {
     N->addPointerTo(&GraphNodes[NullObject]);
     return;
