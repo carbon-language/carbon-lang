@@ -1928,15 +1928,16 @@ void PPC32ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
             BB->getInstList().erase(CI);
             break;
           }
-          default:
+          default: {
             // All other intrinsic calls we must lower.
-            Instruction *Before = CI->getPrev();
+            BasicBlock::iterator me(CI);
+            bool atBegin(BB->begin() == me);
+            if (!atBegin)
+              --me;
             TM.getIntrinsicLowering().LowerIntrinsicCall(CI);
-            if (Before) {        // Move iterator to instruction after call
-              I = Before; ++I;
-            } else {
-              I = BB->begin();
-            }
+            // Move iterator to instruction after call
+            I = atBegin ? BB->begin() : ++me;
+          }
           }
 }
 
