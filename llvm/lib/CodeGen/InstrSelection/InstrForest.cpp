@@ -17,9 +17,6 @@
 //  and (2) O and I are part of the same basic block,
 //  and (3) O has only a single use, viz., I.
 // 
-// History:
-//	6/28/01	 -  Vikram Adve  -  Created
-// 
 //---------------------------------------------------------------------------
 
 #include "llvm/CodeGen/InstrForest.h"
@@ -27,7 +24,6 @@
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iMemory.h"
-#include "llvm/iPHINode.h"
 #include "llvm/ConstantVals.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -192,16 +188,14 @@ InstrForest::InstrForest(Function *F)
 {
   for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI) {
     BasicBlock *BB = *FI;
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      buildTreeForInstruction(*I);
+    for_each(BB->begin(), BB->end(),
+             bind_obj(this, &InstrForest::buildTreeForInstruction));
   }
 }
 
 InstrForest::~InstrForest()
 {
-  for (std::hash_map<const Instruction*,InstructionNode*>::iterator I=begin();
-       I != end(); ++I)
-      delete I->second;
+  for_each(treeRoots.begin(), treeRoots.end(), deleter<InstructionNode>);
 }
 
 void
@@ -282,11 +276,8 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
   // if a fixed array is too small.
   // 
   int numChildren = 0;
-  const unsigned int MAX_CHILD = 8;
-  static InstrTreeNode *fixedChildArray[MAX_CHILD];
   InstrTreeNode **childArray =
-    (instr->getNumOperands() > MAX_CHILD)
-    ? new (InstrTreeNode*)[instr->getNumOperands()] : fixedChildArray;
+    (InstrTreeNode **)alloca(instr->getNumOperands()*sizeof(InstrTreeNode *));
   
   //
   // Walk the operands of the instruction
@@ -329,7 +320,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
 	  InstrTreeNode* opTreeNode;
 	  if (isa<Instruction>(operand) && operand->use_size() == 1 &&
 	      cast<Instruction>(operand)->getParent() == instr->getParent() &&
-	      !isa<PHINode>(instr) &&
+	      instr->getOpcode() != Instruction::PHINode &&
 	      instr->getOpcode() != Instruction::Call)
 	    {
 	      // Recursively create a treeNode for it.
@@ -394,9 +385,5 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
       setRightChild(parent, childArray[numChildren - 1]);
     }
   
-  if (childArray != fixedChildArray)
-    delete [] childArray; 
-  
   return treeNode;
 }
-

@@ -136,7 +136,10 @@ public:
     LeftChild = RightChild = Parent = 0;
     opLabel   = InvalidOp;
   }
-  virtual ~InstrTreeNode() {}
+  virtual ~InstrTreeNode() {
+    delete LeftChild;
+    delete RightChild;
+  }
   
   InstrTreeNodeType	getNodeType	() const { return treeNodeType; }
   
