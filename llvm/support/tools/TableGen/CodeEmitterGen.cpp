@@ -46,30 +46,22 @@ void CodeEmitterGen::run(std::ostream &o) {
     DEBUG(o << "      // " << *R->getValue("Inst") << "\n");
     o << "      Value = " << Value << "U;\n\n";
     
-    // Loop over all of the fields in the instruction adding in any
-    // contributions to this value (due to bit references).
+    // Loop over all of the fields in the instruction determining which are the
+    // operands to the instruction. 
     //
     unsigned op = 0;
-    std::map<const std::string,unsigned> OpOrder;
-    std::map<const std::string,bool> OpContinuous;
+    std::map<std::string, unsigned> OpOrder;
+    std::map<std::string, bool> OpContinuous;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-      if (Vals[i].getName() != "Inst" && 
-          !Vals[i].getValue()->isComplete() &&
+      if (!Vals[i].getPrefix() &&  !Vals[i].getValue()->isComplete() &&
           /* ignore annul and predict bits since no one sets them yet */
-          Vals[i].getName() != "annul" && 
-          Vals[i].getName() != "predict")
+          Vals[i].getName() != "annul" && Vals[i].getName() != "predict")
       {
-        o << "      // op" << op << ": " << Vals[i].getName() << "\n"
-          << "      int64_t op" << op 
-          <<" = getMachineOpValue(MI, MI.getOperand("<<op<<"));\n";
-        //<< "      MachineOperand &op" << op <<" = MI.getOperand("<<op<<");\n";
-        OpOrder[Vals[i].getName()] = op++;
-
         // Is the operand continuous? If so, we can just mask and OR it in
         // instead of doing it bit-by-bit, saving a lot in runtime cost.        
         const BitsInit *InstInit = BI;
-        int beginBitInVar = -1, endBitInVar = -1,
-          beginBitInInst = -1, endBitInInst = -1;
+        int beginBitInVar = -1, endBitInVar = -1;
+        int beginBitInInst = -1, endBitInInst = -1;
         bool continuous = true;
 
         for (int bit = InstInit->getNumBits()-1; bit >= 0; --bit) {
@@ -111,9 +103,8 @@ void CodeEmitterGen::run(std::ostream &o) {
               // maintain same distance between bits in field and bits in
               // instruction. if the relative distances stay the same
               // throughout,
-              if ((beginBitInVar - (int)VBI->getBitNum()) !=
-                  (beginBitInInst - bit))
-              {
+              if (beginBitInVar - (int)VBI->getBitNum() !=
+                  beginBitInInst - bit) {
                 continuous = false;
                 break;
               }
@@ -121,39 +112,48 @@ void CodeEmitterGen::run(std::ostream &o) {
           }
         }
 
-        DEBUG(o << "      // Var: begin = " << beginBitInVar 
-                << ", end = " << endBitInVar
-                << "; Inst: begin = " << beginBitInInst
-                << ", end = " << endBitInInst << "\n");
-
-        if (continuous) {
-          DEBUG(o << "      // continuous: op" << OpOrder[Vals[i].getName()]
-                  << "\n");
+        if (beginBitInInst != -1) {
+          o << "      // op" << op << ": " << Vals[i].getName() << "\n"
+            << "      int64_t op" << op 
+            <<" = getMachineOpValue(MI, MI.getOperand("<<op<<"));\n";
+          //<< "   MachineOperand &op" << op <<" = MI.getOperand("<<op<<");\n";
+          OpOrder[Vals[i].getName()] = op++;
           
-          // Mask off the right bits
-          // Low mask (ie. shift, if necessary)
-          if (endBitInVar != 0) {
+          DEBUG(o << "      // Var: begin = " << beginBitInVar 
+                  << ", end = " << endBitInVar
+                  << "; Inst: begin = " << beginBitInInst
+                  << ", end = " << endBitInInst << "\n");
+          
+          if (continuous) {
+            DEBUG(o << "      // continuous: op" << OpOrder[Vals[i].getName()]
+                    << "\n");
+            
+            // Mask off the right bits
+            // Low mask (ie. shift, if necessary)
+            if (endBitInVar != 0) {
+              o << "      op" << OpOrder[Vals[i].getName()]
+                << " >>= " << endBitInVar << ";\n";
+              beginBitInVar -= endBitInVar;
+              endBitInVar = 0;
+            }
+            
+            // High mask
             o << "      op" << OpOrder[Vals[i].getName()]
-              << " >>= " << endBitInVar << ";\n";
-            beginBitInVar -= endBitInVar;
-            endBitInVar = 0;
-          }
-
-          // High mask
-          o << "      op" << OpOrder[Vals[i].getName()]
-            << " &= (1<<" << beginBitInVar+1 << ") - 1;\n";
-
-          // Shift the value to the correct place (according to place in instr)
-          if (endBitInInst != 0)
-            o << "      op" << OpOrder[Vals[i].getName()]
+              << " &= (1<<" << beginBitInVar+1 << ") - 1;\n";
+            
+            // Shift the value to the correct place (according to place in inst)
+            if (endBitInInst != 0)
+              o << "      op" << OpOrder[Vals[i].getName()]
               << " <<= " << endBitInInst << ";\n";
-
-          // Just OR in the result
-          o << "      Value |= op" << OpOrder[Vals[i].getName()] << ";\n";
+            
+            // Just OR in the result
+            o << "      Value |= op" << OpOrder[Vals[i].getName()] << ";\n";
+          }
+          
+          // otherwise, will be taken care of in the loop below using this
+          // value:
+          OpContinuous[Vals[i].getName()] = continuous;
         }
-
-        // otherwise, will be taken care of in the loop below using this value:
-        OpContinuous[Vals[i].getName()] = continuous;
       }
     }
 
