@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/AbstractTypeUser.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Constants.h"
@@ -18,6 +19,7 @@
 #include "Support/StringExtras.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
@@ -42,8 +44,8 @@ static std::vector<const Type *> UIDMappings;
 static std::map<const Type*, std::string> ConcreteTypeDescriptions;
 static std::map<const Type*, std::string> AbstractTypeDescriptions;
 
-Type::Type(const std::string &name, TypeID id)
-  : Value(Type::TypeTy, Value::TypeVal), RefCount(0), ForwardType(0) {
+Type::Type( const std::string& name, TypeID id )
+  : RefCount(0), ForwardType(0) {
   if (!name.empty())
     ConcreteTypeDescriptions[this] = name;
   ID = id;
@@ -56,7 +58,6 @@ void Type::setName(const std::string &Name, SymbolTable *ST) {
   assert(ST && "Type::setName - Must provide symbol table argument!");
   if (!Name.empty()) ST->insert(Name, this);
 }
-
 
 const Type *Type::getUniqueIDType(unsigned UID) {
   assert(UID < UIDMappings.size() && 
@@ -78,7 +79,6 @@ const Type *Type::getPrimitiveType(TypeID IDNumber) {
   case LongTyID  : return LongTy;
   case FloatTyID : return FloatTy;
   case DoubleTyID: return DoubleTy;
-  case TypeTyID  : return TypeTy;
   case LabelTyID : return LabelTy;
   default:
     return 0;
@@ -333,7 +333,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 // type.
 //
 struct SignedIntType : public Type {
-  SignedIntType(const std::string &Name, TypeID id) : Type(Name, id) {}
+  SignedIntType(std::string name, TypeID id) : Type(name, id) {}
 
   // isSigned - Return whether a numeric type is signed.
   virtual bool isSigned() const { return 1; }
@@ -345,7 +345,7 @@ struct SignedIntType : public Type {
 };
 
 struct UnsignedIntType : public Type {
-  UnsignedIntType(const std::string &N, TypeID id) : Type(N, id) {}
+  UnsignedIntType(std::string name, TypeID id) : Type(name,id) {}
 
   // isUnsigned - Return whether a numeric type is signed.
   virtual bool isUnsigned() const { return 1; }
@@ -357,12 +357,8 @@ struct UnsignedIntType : public Type {
 };
 
 struct OtherType : public Type {
-  OtherType(const std::string &N, TypeID id) : Type(N, id) {}
+   OtherType(std:;string name, TypeID id) : Type(name,id) {}
 };
-
-static struct TypeType : public Type {
-  TypeType() : Type("type", TypeTyID) {}
-} TheTypeTy;   // Implement the type that is global.
 
 
 //===----------------------------------------------------------------------===//
@@ -375,7 +371,7 @@ static SignedIntType   TheSByteTy ("sbyte" , Type::SByteTyID);
 static UnsignedIntType TheUByteTy ("ubyte" , Type::UByteTyID);
 static SignedIntType   TheShortTy ("short" , Type::ShortTyID);
 static UnsignedIntType TheUShortTy("ushort", Type::UShortTyID);
-static SignedIntType   TheIntTy   ("int"   , Type::IntTyID); 
+static SignedIntType   TheIntTy   ("int"   , Type::IntTyID);
 static UnsignedIntType TheUIntTy  ("uint"  , Type::UIntTyID);
 static SignedIntType   TheLongTy  ("long"  , Type::LongTyID);
 static UnsignedIntType TheULongTy ("ulong" , Type::ULongTyID);
@@ -395,7 +391,6 @@ Type *Type::LongTy   = &TheLongTy;
 Type *Type::ULongTy  = &TheULongTy;
 Type *Type::FloatTy  = &TheFloatTy;
 Type *Type::DoubleTy = &TheDoubleTy;
-Type *Type::TypeTy   = &TheTypeTy;
 Type *Type::LabelTy  = &TheLabelTy;
 
 
@@ -490,7 +485,7 @@ bool Type::isTypeAbstract() {
 
   // Scan all of the sub-types.  If any of them are abstract, than so is this
   // one!
-  for (Type::subtype_iterator I = subtype_begin(), E = subtype_end();
+  for (Type::subtype_iterator I = subtype_begin(), E = subtype_end(); 
        I != E; ++I)
     if (const_cast<Type*>(I->get())->isTypeAbstract()) {
       setAbstract(true);        // Restore the abstract bit.
@@ -516,7 +511,7 @@ bool Type::isTypeAbstract() {
 // that assumes that two graphs are the same until proven otherwise.
 //
 static bool TypesEqual(const Type *Ty, const Type *Ty2,
-		       std::map<const Type *, const Type *> &EqTypes) {
+                       std::map<const Type *, const Type *> &EqTypes) {
   if (Ty == Ty2) return true;
   if (Ty->getTypeID() != Ty2->getTypeID()) return false;
   if (isa<OpaqueType>(Ty))
@@ -582,8 +577,8 @@ static bool TypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
     return false;
   VisitedTypes.insert(VTI, CurTy);
 
-  for (Type::subtype_iterator I = CurTy->subtype_begin(),
-         E = CurTy->subtype_end(); I != E; ++I)
+  for (Type::subtype_iterator I = CurTy->subtype_begin(), 
+       E = CurTy->subtype_end(); I != E; ++I)
     if (TypeHasCycleThrough(TargetTy, *I, VisitedTypes))
       return true;
   return false;
@@ -595,7 +590,7 @@ static bool TypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
 static bool TypeHasCycleThroughItself(const Type *Ty) {
   assert(Ty->isAbstract() && "This code assumes that Ty was abstract!");
   std::set<const Type*> VisitedTypes;
-  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end(); 
        I != E; ++I)
     if (TypeHasCycleThrough(Ty, *I, VisitedTypes))
       return true;
@@ -1144,7 +1139,7 @@ void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
 // concrete type.
 //
 void ArrayType::refineAbstractType(const DerivedType *OldType,
-				   const Type *NewType) {
+                                   const Type *NewType) {
   ArrayTypes.finishRefinement(this, OldType, NewType);
 }
 
@@ -1158,7 +1153,7 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
 // concrete type.
 //
 void StructType::refineAbstractType(const DerivedType *OldType,
-				    const Type *NewType) {
+                                    const Type *NewType) {
   StructTypes.finishRefinement(this, OldType, NewType);
 }
 
@@ -1171,10 +1166,40 @@ void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
 // concrete type.
 //
 void PointerType::refineAbstractType(const DerivedType *OldType,
-				     const Type *NewType) {
+                                     const Type *NewType) {
   PointerTypes.finishRefinement(this, OldType, NewType);
 }
 
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
   refineAbstractType(AbsTy, AbsTy);
 }
+
+bool SequentialType::indexValid(const Value *V) const {
+  const Type *Ty = V->getType();
+  switch (Ty->getTypeID()) {
+  case Type::IntTyID:
+  case Type::UIntTyID:
+  case Type::LongTyID:
+  case Type::ULongTyID:
+    return true;
+  default:
+    return false;
+  }
+}
+
+namespace llvm {
+std::ostream &operator<<(std::ostream &OS, const Type *T) {
+  if (T == 0)
+    OS << "<null> value!\n";
+  else
+    T->print(OS);
+  return OS;
+}
+
+std::ostream &operator<<(std::ostream &OS, const Type &T) {
+  T.print(OS);
+  return OS;
+}
+}
+
+// vim: sw=2
