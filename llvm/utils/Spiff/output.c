@@ -124,7 +124,8 @@ _O_start_standout()
 	}
 	else
 	{
-		_O_doing_ul = 1;
+		/* _O_doing_ul = 1; */ /* disabled by brg 13-April-2004 - this
+ makes the output unreadable */
 	}
 }
 
