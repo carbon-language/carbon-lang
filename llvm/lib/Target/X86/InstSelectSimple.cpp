@@ -37,7 +37,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       unsigned DestReg) {
   assert(I >= MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
-  I = ++MBB->insert(I, MI);
+  I = MBB->insert(I, MI)+1;
   return MachineInstrBuilder(MI).addReg(DestReg, MOTy::Def);
 }
 
@@ -49,7 +49,7 @@ inline static MachineInstrBuilder BMI(MachineBasicBlock *MBB,
                                       unsigned NumOperands) {
   assert(I > MBB->begin() && I <= MBB->end() && "Bad iterator!");
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
-  I = ++MBB->insert(I, MI);
+  I = MBB->insert(I, MI)+1;
   return MachineInstrBuilder(MI);
 }
 
@@ -816,17 +816,43 @@ void ISel::visitShiftInst (ShiftInst &I) {
 
 
 /// visitLoadInst - Implement LLVM load instructions in terms of the x86 'mov'
-/// instruction.
+/// instruction.  The load and store instructions are the only place where we
+/// need to worry about the memory layout of the target machine.
 ///
 void ISel::visitLoadInst(LoadInst &I) {
+  bool isLittleEndian  = TM.getTargetData().isLittleEndian();
+  bool hasLongPointers = TM.getTargetData().getPointerSize() == 8;
+
   unsigned Class = getClass(I.getType());
   if (Class > 2)  // FIXME: Handle longs and others...
     visitInstruction(I);
 
   static const unsigned Opcode[] = { X86::MOVmr8, X86::MOVmr16, X86::MOVmr32 };
+  unsigned SrcAddrReg = getReg(I.getOperand(0));
 
-  unsigned AddressReg = getReg(I.getOperand(0));
-  addDirectMem(BuildMI(BB, Opcode[Class], 4, getReg(I)), AddressReg);
+  // We need to adjust the input pointer if we are emulating a big-endian
+  // long-pointer target.  On these systems, the pointer that we are interested
+  // in is in the upper part of the eight byte memory image of the pointer.  It
+  // also happens to be byte-swapped, but this will be handled later.
+  //
+  if (!isLittleEndian && hasLongPointers && isa<PointerType>(I.getType())) {
+    unsigned R = makeAnotherReg(Type::UIntTy);
+    BuildMI(BB, X86::ADDri32, 2, R).addReg(SrcAddrReg).addZImm(4);
+    SrcAddrReg = R;
+  }
+  unsigned DestReg = getReg(I);
+  unsigned IReg = DestReg;
+  if (!isLittleEndian) {  // If big endian we need an intermediate stage
+    IReg = makeAnotherReg(I.getType());
+    std::swap(IReg, DestReg);
+  }
+  addDirectMem(BuildMI(BB, Opcode[Class], 4, DestReg), SrcAddrReg);
+
+  if (!isLittleEndian) {
+    // Emit the byte swap instruction...
+    static const unsigned BSWAPOpcode[] = { X86::MOVrr8, X86::BSWAPr16, X86::BSWAPr32 };
+    BuildMI(BB, BSWAPOpcode[Class], 1, IReg).addReg(DestReg);
+  }
 }
 
 
@@ -834,6 +860,8 @@ void ISel::visitLoadInst(LoadInst &I) {
 /// instruction.
 ///
 void ISel::visitStoreInst(StoreInst &I) {
+  bool isLittleEndian  = TM.getTargetData().isLittleEndian();
+  bool hasLongPointers = TM.getTargetData().getPointerSize() == 8;
   unsigned Class = getClass(I.getOperand(0)->getType());
   if (Class > 2)  // FIXME: Handle longs and others...
     visitInstruction(I);
@@ -842,6 +870,21 @@ void ISel::visitStoreInst(StoreInst &I) {
 
   unsigned ValReg = getReg(I.getOperand(0));
   unsigned AddressReg = getReg(I.getOperand(1));
+
+  if (!isLittleEndian && hasLongPointers && isa<PointerType>(I.getOperand(0)->getType())) {
+    unsigned R = makeAnotherReg(Type::UIntTy);
+    BuildMI(BB, X86::ADDri32, 2, R).addReg(AddressReg).addZImm(4);
+    AddressReg = R;
+  }
+
+  if (!isLittleEndian && Class) {
+    // Emit the byte swap instruction...
+    static const unsigned BSWAPOpcode[] = { X86::MOVrr8, X86::BSWAPr16, X86::BSWAPr32 };
+    unsigned R = makeAnotherReg(I.getOperand(0)->getType());
+    BuildMI(BB, BSWAPOpcode[Class], 1, R).addReg(ValReg);
+    ValReg = R;
+  }
+
   addDirectMem(BuildMI(BB, Opcode[Class], 1+4), AddressReg).addReg(ValReg);
 }
 
@@ -983,7 +1026,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // be constant, we can get its value and use it to find the
       // right byte offset from the StructLayout class's list of
       // structure member offsets.
-      unsigned idxValue = CUI->getValue ();
+      unsigned idxValue = CUI->getValue();
       unsigned memberOffset =
 	TD.getStructLayout (StTy)->MemberOffsets[idxValue];
       // Emit an ADD to add memberOffset to the basePtr.
