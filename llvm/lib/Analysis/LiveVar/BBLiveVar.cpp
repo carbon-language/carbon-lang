@@ -33,9 +33,9 @@ void BBLiveVar::calcDefUseSets()
     assert(MInst);
     
     if( DEBUG_LV > 1) {                            // debug msg
-      cout << " *Iterating over machine instr ";
+      cerr << " *Iterating over machine instr ";
       MInst->dump();
-      cout << endl;
+      cerr << endl;
     }
 
     // iterate over  MI operands to find defs
@@ -79,11 +79,11 @@ void BBLiveVar::calcDefUseSets()
 	  assert( PhiArgMap[ ArgVal ] );
 	  
 	  if( DEBUG_LV > 1) {   // debug msg of level 2
-	    cout << "   - phi operand "; 
+	    cerr << "   - phi operand "; 
 	    printValue( ArgVal ); 
-	    cout  << " came from BB "; 
+	    cerr  << " came from BB "; 
 	    printValue( PhiArgMap[ ArgVal ]); 
-	    cout<<endl;
+	    cerr<<endl;
 	  }
 
 	} // if( IsPhi )
@@ -117,7 +117,7 @@ void  BBLiveVar::addDef(const Value *Op)
   InSetChanged = true; 
 
   if( DEBUG_LV > 1) {   
-    cout << "  +Def: "; printValue( Op ); cout << endl;
+    cerr << "  +Def: "; printValue( Op ); cerr << endl;
   }
 }
 
@@ -130,7 +130,7 @@ void  BBLiveVar::addUse(const Value *Op)
   InSetChanged = true; 
 
   if( DEBUG_LV > 1) {   // debug msg of level 2
-    cout << "   Use: "; printValue( Op ); cout << endl;
+    cerr << "   Use: "; printValue( Op ); cerr << endl;
   }
 
 }
@@ -220,15 +220,15 @@ bool BBLiveVar::applyFlowFunc(BBToBBLiveVarMapType LVMap)
 
 void BBLiveVar::printAllSets() const
 {
-  cout << "  Defs: ";   DefSet.printSet();  cout << endl;
-  cout << "  In: ";   InSet.printSet();  cout << endl;
-  cout << "  Out: ";   OutSet.printSet();  cout << endl;
+  cerr << "  Defs: ";   DefSet.printSet();  cerr << endl;
+  cerr << "  In: ";   InSet.printSet();  cerr << endl;
+  cerr << "  Out: ";   OutSet.printSet();  cerr << endl;
 }
 
 void BBLiveVar::printInOutSets() const
 {
-  cout << "  In: ";   InSet.printSet();  cout << endl;
-  cout << "  Out: ";   OutSet.printSet();  cout << endl;
+  cerr << "  In: ";   InSet.printSet();  cerr << endl;
+  cerr << "  Out: ";   OutSet.printSet();  cerr << endl;
 }
 
 

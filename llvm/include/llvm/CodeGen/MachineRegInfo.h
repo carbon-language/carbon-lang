@@ -79,7 +79,7 @@ class MachineRegInfo
     // RegClassArr.pushback( new SparcFloatCCRegClass(2) );
 
     if(DEBUG_RA)
-      cout << "Created machine register classes." << endl;
+      cerr << "Created machine register classes." << endl;
 
   }
 

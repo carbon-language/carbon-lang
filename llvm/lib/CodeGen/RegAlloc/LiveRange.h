@@ -101,7 +101,7 @@ class LiveRange : public ValueSet
     if(SuggestedColor == -1 )
       SuggestedColor = Col;
     else if (DEBUG_RA) 
-      cout << "Already has a suggested color " << Col << endl;
+      cerr << "Already has a suggested color " << Col << endl;
   }
 
   inline unsigned getSuggestedColor() const {

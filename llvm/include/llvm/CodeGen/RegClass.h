@@ -101,12 +101,12 @@ class RegClass
 
 
   inline void printIGNodeList() const {
-    cout << "IG Nodes for Register Class " << RegClassID << ":" << endl;
+    cerr << "IG Nodes for Register Class " << RegClassID << ":" << endl;
     IG.printIGNodeList(); 
   }
 
   inline void printIG() {  
-    cout << "IG for Register Class " << RegClassID << ":" << endl;
+    cerr << "IG for Register Class " << RegClassID << ":" << endl;
     IG.printIG(); 
   }
 
