@@ -365,10 +365,19 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     copyConstantToRegister(MBB, IPt, C, Reg);
     return Reg;
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    // GV is located at PC + distance
+    unsigned LRsave = makeAnotherReg(Type::IntTy);
+    unsigned CurPC = makeAnotherReg(Type::IntTy);
     unsigned Reg1 = makeAnotherReg(V->getType());
     unsigned Reg2 = makeAnotherReg(V->getType());
-    // Move the address of the global into the register
-    BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(PPC32::R0)
+    // Save the old LR
+    BuildMI(*MBB, IPt, PPC32::MFLR, 0, LRsave);
+    // Move PC to destination reg
+    BuildMI(*MBB, IPt, PPC32::MovePCtoLR, 0, CurPC);
+    // Restore the old LR
+    BuildMI(*MBB, IPt, PPC32::MTLR, 1).addReg(LRsave);
+    // Move value at PC + distance into return reg
+    BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(CurPC)
       .addGlobalAddress(GV);
     BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)
       .addGlobalAddress(GV);
