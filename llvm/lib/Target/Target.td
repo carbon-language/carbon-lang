@@ -159,6 +159,7 @@ class DagNodeValType;
 def DNVT_void  : DagNodeValType;  // Tree node always returns void
 def DNVT_val   : DagNodeValType;  // A non-void type
 def DNVT_arg0  : DagNodeValType;  // Tree node returns same type as Arg0
+def DNVT_arg1  : DagNodeValType;  // Tree node returns same type as Arg1
 def DNVT_ptr   : DagNodeValType;  // The target pointer type
 
 class DagNode<DagNodeValType ret, list<DagNodeValType> args> {
@@ -179,23 +180,23 @@ def set     : DagNode<DNVT_void, [DNVT_val, DNVT_arg0]>;
 
 // Terminals...
 def imm : BuiltinDagNode<DNVT_val, [], "Constant">;
-// def frameidx : BuiltinDagNode<DNVT_ptr, [], "FrameIndex">;
+def frameidx : BuiltinDagNode<DNVT_ptr, [], "FrameIndex">;
 
 // Arithmetic...
-def plus    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Plus">;
-def minus   : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Minus">;
-def times   : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Times">;
-def sdiv    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "SDiv">;
-def udiv    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "UDiv">;
-def srem    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "SRem">;
-def urem    : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "URem">;
-def and     : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "And">;
-def or      : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Or">;
-def xor     : BuiltinDagNode<DNVT_arg0, [DNVT_val, DNVT_arg0], "Xor">;
+def plus    : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Plus">;
+def minus   : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Minus">;
+def times   : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Times">;
+def sdiv    : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "SDiv">;
+def udiv    : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "UDiv">;
+def srem    : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "SRem">;
+def urem    : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "URem">;
+def and     : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "And">;
+def or      : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Or">;
+def xor     : BuiltinDagNode<DNVT_arg0, [DNVT_arg1, DNVT_arg0], "Xor">;
 
 
-def load    : DagNode<DNVT_val, [DNVT_ptr]>;
-//def store   : DagNode<2, DNVT_Void>;
+def load    : BuiltinDagNode<DNVT_val, [DNVT_ptr], "Load">;
+//def store   : BuiltinDagNode<DNVT_Void, [DNVT_ptr, DNVT_val]>;
 
 // Other...
 def ret     : BuiltinDagNode<DNVT_void, [DNVT_val], "Ret">;
