@@ -49,6 +49,7 @@ namespace {
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
+      AlignmentIsInBytes = false;    // Alignment is by power of 2.
     }
 
     /// Unique incrementer for label values for referencing Global values.
@@ -121,9 +122,8 @@ void PPC32AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.const\n";
-    O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
-      << "\n";
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t;"
+    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentChar
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -140,19 +140,19 @@ bool PPC32AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  O << "\t.text\n"; 
+  O << "\t.text\n";
+  emitAlignment(2);
   O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.align 2\n";
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t; "
-      << I->getBasicBlock()->getName() << "\n";
+    O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+      << CommentChar << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-      II != E; ++II) {
+         II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
       printMachineInstruction(II);
@@ -399,14 +399,14 @@ bool PPC32AsmPrinter::doFinalization(Module &M) {
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
       unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignment(C->getType());
+      unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
       if (C->isNullValue() && /* FIXME: Verify correct */
           (I->hasInternalLinkage() || I->hasWeakLinkage())) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
           O << ".lcomm " << name << "," << TD.getTypeSize(C->getType())
-            << "," << (unsigned)TD.getTypeAlignment(C->getType());
+            << "," << Align;
         else 
           O << ".comm " << name << "," << TD.getTypeSize(C->getType());
         O << "\t\t; ";
@@ -439,7 +439,7 @@ bool PPC32AsmPrinter::doFinalization(Module &M) {
           break;
         }
 
-        O << "\t.align " << Align << "\n";
+        emitAlignment(Align);
         O << name << ":\t\t\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
         O << " = ";
@@ -455,7 +455,7 @@ bool PPC32AsmPrinter::doFinalization(Module &M) {
   {
     O << ".data\n";
     O << ".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
-    O << "\t.align 2\n";
+    emitAlignment(2);
     O << "L" << *i << "$stub:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\tmflr r0\n";
