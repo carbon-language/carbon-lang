@@ -41,7 +41,7 @@ namespace {
     RegisterAnalysis<LiveIntervals> X("liveintervals",
                                       "Live Interval Analysis");
 
-    Statistic<> numIntervals("liveintervals", "Number of intervals");
+    Statistic<> numIntervals("liveintervals", "Number of original intervals");
     Statistic<> numJoined   ("liveintervals", "Number of intervals after "
                              "coalescing");
     Statistic<> numJoins    ("liveintervals", "Number of interval joins "
