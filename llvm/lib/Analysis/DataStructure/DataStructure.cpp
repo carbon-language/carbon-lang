@@ -1058,7 +1058,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 
   std::vector<bool> AuxFCallsAlive(AuxFunctionCalls.size());
   for (unsigned i = 0, e = AuxFunctionCalls.size(); i != e; ++i)
-    if (CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
+    if (!(Flags & DSGraph::RemoveUnreachableGlobals) ||
+        CallSiteUsesAliveArgs(AuxFunctionCalls[i], Alive, Visited)) {
       AuxFunctionCalls[i].markReachableNodes(Alive);
       AuxFCallsAlive[i] = true;
     }
