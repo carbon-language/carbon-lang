@@ -1103,7 +1103,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   if (Ty == Type::BoolTy) {
     // If this is <, >, or !=, we can change this into a simple xor instruction
     if (!isTrueWhenEqual(I))
-      return BinaryOperator::create(Instruction::Xor, Op0, Op1, I.getName());
+      return BinaryOperator::create(Instruction::Xor, Op0, Op1);
 
     // Otherwise we need to make a temporary intermediate instruction and insert
     // it into the instruction stream.  This is what we are after:
@@ -1116,7 +1116,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       Instruction *Xor = BinaryOperator::create(Instruction::Xor, Op0, Op1,
                                                 I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
-      return BinaryOperator::createNot(Xor, I.getName());
+      return BinaryOperator::createNot(Xor);
     }
 
     // Handle the setXe cases...
@@ -1129,7 +1129,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
     // Now we just have the SetLE case.
     Instruction *Not = BinaryOperator::createNot(Op0, I.getName()+"tmp");
     InsertNewInstBefore(Not, I);
-    return BinaryOperator::create(Instruction::Or, Not, Op1, I.getName());
+    return BinaryOperator::create(Instruction::Or, Not, Op1);
   }
 
   // Check to see if we are doing one of many comparisons against constant
@@ -1227,9 +1227,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
         return ReplaceInstUsesWith(I, ConstantBool::True);
       if (I.getOpcode() == Instruction::SetLE)       // A <= MIN -> A == MIN
-        return BinaryOperator::create(Instruction::SetEQ, Op0,Op1, I.getName());
+        return BinaryOperator::create(Instruction::SetEQ, Op0, Op1);
       if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
-        return BinaryOperator::create(Instruction::SetNE, Op0,Op1, I.getName());
+        return BinaryOperator::create(Instruction::SetNE, Op0, Op1);
 
     } else if (CI->isMaxValue()) {
       if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
@@ -1237,28 +1237,54 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
         return ReplaceInstUsesWith(I, ConstantBool::True);
       if (I.getOpcode() == Instruction::SetGE)       // A >= MAX -> A == MAX
-        return BinaryOperator::create(Instruction::SetEQ, Op0,Op1, I.getName());
+        return BinaryOperator::create(Instruction::SetEQ, Op0, Op1);
       if (I.getOpcode() == Instruction::SetLT)       // A < MAX -> A != MAX
-        return BinaryOperator::create(Instruction::SetNE, Op0,Op1, I.getName());
+        return BinaryOperator::create(Instruction::SetNE, Op0, Op1);
 
       // Comparing against a value really close to min or max?
     } else if (isMinValuePlusOne(CI)) {
       if (I.getOpcode() == Instruction::SetLT)       // A < MIN+1 -> A == MIN
-        return BinaryOperator::create(Instruction::SetEQ, Op0,
-                                      SubOne(CI), I.getName());
+        return BinaryOperator::create(Instruction::SetEQ, Op0, SubOne(CI));
       if (I.getOpcode() == Instruction::SetGE)       // A >= MIN-1 -> A != MIN
-        return BinaryOperator::create(Instruction::SetNE, Op0,
-                                      SubOne(CI), I.getName());
+        return BinaryOperator::create(Instruction::SetNE, Op0, SubOne(CI));
 
     } else if (isMaxValueMinusOne(CI)) {
       if (I.getOpcode() == Instruction::SetGT)       // A > MAX-1 -> A == MAX
-        return BinaryOperator::create(Instruction::SetEQ, Op0,
-                                      AddOne(CI), I.getName());
+        return BinaryOperator::create(Instruction::SetEQ, Op0, AddOne(CI));
       if (I.getOpcode() == Instruction::SetLE)       // A <= MAX-1 -> A != MAX
-        return BinaryOperator::create(Instruction::SetNE, Op0,
-                                      AddOne(CI), I.getName());
+        return BinaryOperator::create(Instruction::SetNE, Op0, AddOne(CI));
     }
   }
+
+  // Test to see if the operands of the setcc are casted versions of other
+  // values.  If the cast can be stripped off both arguments, we do so now.
+  if (CastInst *CI = dyn_cast<CastInst>(Op0))
+    if (CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(CI->getType())&&
+        !isa<Argument>(Op1) &&
+        (I.getOpcode() == Instruction::SetEQ ||
+         I.getOpcode() == Instruction::SetNE)) {
+      // We keep moving the cast from the left operand over to the right
+      // operand, where it can often be eliminated completely.
+      Op0 = CI->getOperand(0);
+      
+      // If operand #1 is a cast instruction, see if we can eliminate it as
+      // well.
+      if (CastInst *CI = dyn_cast<CastInst>(Op1))
+        if (CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(
+                                                               Op0->getType()))
+          Op1 = CI->getOperand(0);
+      
+      // If Op1 is a constant, we can fold the cast into the constant.
+      if (Op1->getType() != Op0->getType())
+        if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
+          Op1 = ConstantExpr::getCast(Op1C, Op0->getType());
+        } else {
+          // Otherwise, cast the RHS right before the setcc
+          Op1 = new CastInst(Op1, Op0->getType(), Op1->getName());
+          InsertNewInstBefore(cast<Instruction>(Op1), I);
+        }
+      return BinaryOperator::create(I.getOpcode(), Op0, Op1);
+    }
 
   return Changed ? &I : 0;
 }
