@@ -32,3 +32,6 @@ Debug/Sparc.burm : Debug/Sparc.burg.in1
 $(BUILD_ROOT)/Depend/Sparc.burm.d: $(BUILD_ROOT)/Depend/.dir
 	touch $@
 
+SparcV9CodeEmitter.inc: SparcV9.td
+	@echo "TableGen-erating $@"
+	cpp -P SparcV9.td | tblgen -gen-emitter > SparcV9CodeEmitter.inc
