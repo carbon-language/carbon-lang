@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 LIBRARYNAME = LLVMPowerPC
-TARGET = PowerPC
+TARGET = PowerPC PPC32 PPC64
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PowerPCGenInstrNames.inc PowerPCGenRegisterNames.inc \
