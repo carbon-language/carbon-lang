@@ -9,3 +9,6 @@ all:: $(addprefix Output/, $(TESTS:%.ll=%.ll.out))
 $(addprefix Output/, $(TESTS:%.ll=%.ll.out)):
 Output/%.ll.out: %.ll Output/.dir $(LOPT)
 	-$(TESTRUNR) $<
+
+clean::
+	-rm -f *.dot *.ps
