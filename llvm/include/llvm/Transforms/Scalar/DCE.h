@@ -9,6 +9,7 @@
 #define LLVM_OPT_DCE_H
 
 #include "llvm/Pass.h"
+#include "llvm/BasicBlock.h"
 
 namespace opt {
 
@@ -16,6 +17,14 @@ struct DeadCodeElimination : public Pass {
   // External Interface:
   //
   static bool doDCE(Method *M);
+
+  // dceInstruction - Inspect the instruction at *BBI and figure out if it's
+  // [trivially] dead.  If so, remove the instruction and update the iterator
+  // to point to the instruction that immediately succeeded the original
+  // instruction.
+  //
+  static bool dceInstruction(BasicBlock::InstListType &BBIL,
+                             BasicBlock::iterator &BBI);
 
   // Remove unused global values - This removes unused global values of no
   // possible value.  This currently includes unused method prototypes and
