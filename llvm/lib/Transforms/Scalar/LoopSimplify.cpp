@@ -153,8 +153,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   BasicBlock *NewBB = new BasicBlock(BB->getName()+Suffix, BB);
 
   // The preheader first gets an unconditional branch to the loop header...
-  BranchInst *BI = new BranchInst(BB);
-  NewBB->getInstList().push_back(BI);
+  BranchInst *BI = new BranchInst(BB, 0, 0, NewBB);
   
   // For every PHI node in the block, insert a PHI node into NewBB where the
   // incoming values from the out of loop edges are moved to NewBB.  We have two
@@ -380,8 +379,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 
   // Create and insert the new backedge block...
   BasicBlock *BEBlock = new BasicBlock(Header->getName()+".backedge", F);
-  Instruction *BETerminator = new BranchInst(Header);
-  BEBlock->getInstList().push_back(BETerminator);
+  BranchInst *BETerminator = new BranchInst(Header, 0, 0, BEBlock);
 
   // Move the new backedge block to right after the last backedge block.
   Function::iterator InsertPos = BackedgeBlocks.back(); ++InsertPos;

@@ -145,10 +145,8 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
     ti->setSuccessor(index, newBB);
         
     BasicBlock::InstListType &lt = newBB->getInstList();
-
-    Instruction *call = new CallInst(inCountMth);
-    lt.push_back(call);
-    lt.push_back(new BranchInst(BB));
+    lt.push_back(new CallInst(inCountMth));
+    new BranchInst(BB, newBB);
       
     //now iterate over *vl, and set its Phi nodes right
     for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end(); 

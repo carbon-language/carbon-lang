@@ -243,7 +243,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   } while (Inst != &*I);   // Loop until we move the specified instruction.
 
   // Add a branch instruction to the newly formed basic block.
-  InstList.push_back(new BranchInst(New));
+  new BranchInst(New, 0, 0, this);
 
   // Now we must loop through all of the successors of the New block (which
   // _were_ the successors of the 'this' block), and update any PHI nodes in

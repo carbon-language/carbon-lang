@@ -344,12 +344,10 @@ void insertBB(Edge ed,
     newBB->getInstList().push_back(newBI2);
     
     //triggerBB->getInstList().push_back(triggerInst);
-    Instruction *triggerBranch = new BranchInst(BB2);
-    triggerBB->getInstList().push_back(triggerBranch);
+    new BranchInst(BB2, 0, 0, triggerBB);
   }
   else{
-    Instruction *newBI2=new BranchInst(BB2);
-    newBB->getInstList().push_back(newBI2);
+    new BranchInst(BB2, 0, 0, newBB);
   }
 
   //now iterate over BB2, and set its Phi nodes right

@@ -132,8 +132,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   SetCondInst* Comp = new SetCondInst(Instruction::SetLT, Val, Pivot.first,
                                       "Pivot");
   NewNode->getInstList().push_back(Comp);
-  BranchInst* Br = new BranchInst(LBranch, RBranch, Comp);
-  NewNode->getInstList().push_back(Br);
+  new BranchInst(LBranch, RBranch, Comp, NewNode);
   return NewNode;
 }
 
@@ -158,8 +157,7 @@ BasicBlock* LowerSwitch::newLeafBlock(Case& Leaf, Value* Val,
 
   // Make the conditional branch...
   BasicBlock* Succ = Leaf.second;
-  Instruction* Br = new BranchInst(Succ, Default, Comp);
-  NewLeaf->getInstList().push_back(Br);
+  new BranchInst(Succ, Default, Comp, NewLeaf);
 
   // If there were any PHI nodes in this successor, rewrite one entry
   // from OrigBlock to come from NewLeaf.
@@ -188,7 +186,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
 
   // If there is only the default destination, don't bother with the code below.
   if (SI->getNumOperands() == 2) {
-    CurBlock->getInstList().push_back(new BranchInst(SI->getDefaultDest()));
+    new BranchInst(SI->getDefaultDest(), 0, 0, CurBlock);
     delete SI;
     return;
   }
@@ -198,7 +196,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   BasicBlock* NewDefault = new BasicBlock("NewDefault");
   F->getBasicBlockList().insert(Default, NewDefault);
 
-  NewDefault->getInstList().push_back(new BranchInst(Default));
+  new BranchInst(Default, 0, 0, NewDefault);
 
   // If there is an entry in any PHI nodes for the default edge, make sure
   // to update them as well.
@@ -221,7 +219,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
                                           OrigBlock, NewDefault);
 
   // Branch to our shiny new if-then stuff...
-  OrigBlock->getInstList().push_back(new BranchInst(SwitchBlock));
+  new BranchInst(SwitchBlock, 0, 0, OrigBlock);
 
   // We are now done with the switch instruction, delete it.
   delete SI;

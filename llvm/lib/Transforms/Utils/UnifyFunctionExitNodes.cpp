@@ -61,13 +61,13 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     UnwindBlock = UnwindingBlocks.front();
   } else {
     UnwindBlock = new BasicBlock("UnifiedUnwindBlock", &F);
-    UnwindBlock->getInstList().push_back(new UnwindInst());
+    new UnwindInst(UnwindBlock);
 
     for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(), 
            E = UnwindingBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
       BB->getInstList().pop_back();  // Remove the return insn
-      BB->getInstList().push_back(new BranchInst(UnwindBlock));
+      new BranchInst(UnwindBlock, 0, 0, BB);
     }
   }
 
@@ -91,10 +91,10 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     // If the function doesn't return void... add a PHI node to the block...
     PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
-    NewRetBlock->getInstList().push_back(new ReturnInst(PN));
+    new ReturnInst(PN, NewRetBlock);
   } else {
     // If it returns void, just add a return void instruction to the block
-    NewRetBlock->getInstList().push_back(new ReturnInst());
+    new ReturnInst(0, NewRetBlock);
   }
 
   // Loop over all of the blocks, replacing the return instruction with an
@@ -109,7 +109,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     if (PN) PN->addIncoming(BB->getTerminator()->getOperand(0), BB);
 
     BB->getInstList().pop_back();  // Remove the return insn
-    BB->getInstList().push_back(new BranchInst(NewRetBlock));
+    new BranchInst(NewRetBlock, 0, 0, BB);
   }
   ReturnBlock = NewRetBlock;
   return true;

@@ -314,12 +314,11 @@ BasicBlock* LowerSetJmp::GetRethrowBB(Function* Func)
   // The basic block we're going to jump to if we need to rethrow the
   // exception.
   BasicBlock* Rethrow = new BasicBlock("RethrowExcept", Func);
-  BasicBlock::InstListType& RethrowBlkIL = Rethrow->getInstList();
 
   // Fill in the "Rethrow" BB with a call to rethrow the exception. This
   // is the last instruction in the BB since at this point the runtime
   // should exit this function and go to the next function.
-  RethrowBlkIL.push_back(new UnwindInst());
+  new UnwindInst(Rethrow);
   return RethrowBBMap[Func] = Rethrow;
 }
 
@@ -348,7 +347,7 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
   BasicBlock* DecisionBB = new BasicBlock("LJDecisionBB", Func);
   BasicBlock::InstListType& DecisionBBIL = DecisionBB->getInstList();
 
-  LongJmpPreIL.push_back(new BranchInst(DecisionBB, Rethrow, Cond));
+  new BranchInst(DecisionBB, Rethrow, Cond, LongJmpPre);
 
   // Fill in the "decision" basic block.
   CallInst* LJVal = new CallInst(GetLJValue, std::vector<Value*>(), "LJVal");
@@ -357,8 +356,7 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
     CallInst(TryCatchLJ, make_vector<Value*>(GetSetJmpMap(Func), 0), "SJNum");
   DecisionBBIL.push_back(SJNum);
 
-  SwitchInst* SI = new SwitchInst(SJNum, Rethrow);
-  DecisionBBIL.push_back(SI);
+  SwitchInst* SI = new SwitchInst(SJNum, Rethrow, DecisionBB);
   return SwitchValMap[Func] = SwitchValuePair(SI, LJVal);
 }
 
@@ -511,8 +509,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
     CallInst(IsLJException, std::vector<Value*>(), "IsLJExcept");
   InstList.push_back(IsLJExcept);
 
-  BranchInst* BR = new BranchInst(PrelimBBMap[Func], ExceptBB, IsLJExcept);
-  InstList.push_back(BR);
+  new BranchInst(PrelimBBMap[Func], ExceptBB, IsLJExcept, NewExceptBB);
 
   II.setExceptionalDest(NewExceptBB);
   ++InvokesTransformed;

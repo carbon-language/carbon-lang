@@ -238,7 +238,7 @@ bool InlineFunction(CallSite CS) {
         // invoke site.  Once this happens, we know that the unwind would cause
         // a control transfer to the invoke exception destination, so we can
         // transform it into a direct branch to the exception destination.
-        BranchInst *BI = new BranchInst(InvokeDest, UI);
+        new BranchInst(InvokeDest, UI);
 
         // Delete the unwind instruction!
         UI->getParent()->getInstList().pop_back();

@@ -33,7 +33,7 @@
 #include "llvm/Pass.h"
 #include "Support/Statistic.h"
 
-namespace llvm {
+using namespace llvm;
 
 namespace {
   Statistic<> NumEliminated("tailcallelim", "Number of tail calls removed");
@@ -45,7 +45,9 @@ namespace {
 }
 
 // Public interface to the TailCallElimination pass
-FunctionPass *createTailCallEliminationPass() { return new TailCallElim(); }
+FunctionPass *llvm::createTailCallEliminationPass() {
+  return new TailCallElim();
+}
 
 
 bool TailCallElim::runOnFunction(Function &F) {
@@ -74,7 +76,7 @@ bool TailCallElim::runOnFunction(Function &F) {
               // us to branch back to the old entry block.
               OldEntry = &F.getEntryBlock();
               BasicBlock *NewEntry = new BasicBlock("tailrecurse", OldEntry);
-              NewEntry->getInstList().push_back(new BranchInst(OldEntry));
+              new BranchInst(OldEntry, 0, 0, NewEntry);
               
               // Now that we have created a new block, which jumps to the entry
               // block, insert a PHI node for each argument of the function.
@@ -107,5 +109,3 @@ bool TailCallElim::runOnFunction(Function &F) {
   
   return MadeChange;
 }
-
-} // End llvm namespace
