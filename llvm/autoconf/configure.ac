@@ -477,11 +477,7 @@ then
 fi
 AC_HEADER_MMAP_ANONYMOUS
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll strsignal)
-AC_CHECK_DECLS([sys_siglist],[],[],[
-#if HAVE_SIGNAL_H
-#include <signal.h>
-#endif])
+AC_CHECK_FUNCS(getcwd gettimeofday strcspn strdup strerror strspn strstr strtod strtol strtoq strtoll)
 
 dnl
 dnl Need to check mmap for MAP_PRIVATE, MAP_ANONYMOUS, MAP_ANON, MAP_FIXED
