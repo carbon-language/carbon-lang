@@ -134,6 +134,14 @@ Pass *createIPConstantPropagationPass();
 Pass *createSwapElementsPass();
 Pass *createSortElementsPass();
 
+
+//===----------------------------------------------------------------------===//
+//
+// LoopExtractor - This pass moves every natural loop into its own function.
+// Mostly useful in debugging via bugpoint.
+//
+Pass *createLoopExtractorPass();
+
 } // End llvm namespace
 
 #endif
