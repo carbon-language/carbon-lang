@@ -152,6 +152,15 @@ public:
   ///
   virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
 
+  /// hasNoModRefInfoForCalls - Return true if the analysis has no mod/ref
+  /// information for function calls other than "pure" and "const" functions.
+  /// This can be used by clients to avoid many pointless queries.  Remember
+  /// that if you override this and chain to another analysis, you must make
+  /// sure that it doesn't have mod/ref info either.
+  ///
+  virtual bool hasNoModRefInfoForCalls() const { return false; }
+
+
   /// Convenience functions...
   ModRefResult getModRefInfo(LoadInst *L, Value *P, unsigned Size);
   ModRefResult getModRefInfo(StoreInst *S, Value *P, unsigned Size);
