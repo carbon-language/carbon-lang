@@ -309,6 +309,23 @@ static bool ProcessGlobalsWithSameName(Module &M,
   }
 
   if (Globals.size() > 1) {         // Found a multiply defined global...
+    // If there are no external declarations, and there is at most one
+    // externally visible instance of the global, then there is nothing to do.
+    //
+    bool HasExternal = false;
+    unsigned NumInstancesWithExternalLinkage = 0;
+
+    for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
+      if (Globals[i]->isExternal())
+        HasExternal = true;
+      else if (!Globals[i]->hasInternalLinkage())
+        NumInstancesWithExternalLinkage++;
+    }
+    
+    if (!HasExternal && NumInstancesWithExternalLinkage <= 1)
+      return false;  // Nothing to do?  Must have multiple internal definitions.
+
+
     // We should find exactly one concrete function definition, which is
     // probably the implementation.  Change all of the function definitions and
     // uses to use it instead.
