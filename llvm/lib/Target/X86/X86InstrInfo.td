@@ -885,13 +885,11 @@ def FpSUB : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fsub 
 def FpMUL : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fmul f2, f3
 def FpDIV : FPI<0, Pseudo, TwoArgFP , (ops RFP, RFP, RFP), "">;    // f1 = fdiv f2, f3
 
-let Uses = [ST0] in {
-  def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // FPR = ST(0)
-}
+def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">,
+                  Imp<[ST0], []>;  // FPR = ST(0)
 
-let Defs = [ST0] in {
-  def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">;  // ST(0) = FPR
-}
+def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">,
+                  Imp<[], [ST0]>;  // ST(0) = FPR
 
 // FADD reg, mem: Before stackification, these are represented by: R1 = FADD* R2, [mem]
 def FADD32m  : FPI<0xD8, MRM0m, OneArgFPRW, (ops f32mem:$src), "fadd $src">;    // ST(0) = ST(0) + [mem32real]
