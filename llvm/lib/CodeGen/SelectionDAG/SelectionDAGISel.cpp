@@ -434,24 +434,33 @@ void SelectionDAGLowering::visitCast(User &I) {
 
   if (N.getValueType() == DestTy) {
     setValue(&I, N);  // noop cast.
-    return;
-  } else if (isInteger(SrcTy) && isInteger(DestTy)) {
-    if (DestTy < SrcTy)   // Truncating cast?
-      setValue(&I, DAG.getNode(ISD::TRUNCATE, DestTy, N));
-    else if (I.getOperand(0)->getType()->isSigned())
-      setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestTy, N));
-    else
-      setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestTy, N));
-    return;
-  } else if (isFloatingPoint(SrcTy) && isFloatingPoint(DestTy)) {
-    if (DestTy < SrcTy)   // Rounding cast?
-      setValue(&I, DAG.getNode(ISD::FP_ROUND, DestTy, N));
-    else
-      setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestTy, N));
+  } else if (isInteger(SrcTy)) {
+    if (isInteger(DestTy)) {        // Int -> Int cast
+      if (DestTy < SrcTy)   // Truncating cast?
+        setValue(&I, DAG.getNode(ISD::TRUNCATE, DestTy, N));
+      else if (I.getOperand(0)->getType()->isSigned())
+        setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestTy, N));
+      else
+        setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestTy, N));
+    } else {                        // Int -> FP cast
+      if (I.getOperand(0)->getType()->isSigned())
+        setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestTy, N));
+      else
+        setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestTy, N));
+    }
   } else {
-    // F->I or I->F
-    // FIXME: implement integer/fp conversions!
-    assert(0 && "This CAST is not yet implemented!\n");
+    assert(isFloatingPoint(SrcTy) && "Unknown value type!");
+    if (isFloatingPoint(DestTy)) {  // FP -> FP cast
+      if (DestTy < SrcTy)   // Rounding cast?
+        setValue(&I, DAG.getNode(ISD::FP_ROUND, DestTy, N));
+      else
+        setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestTy, N));
+    } else {                        // FP -> Int cast.
+      if (I.getType()->isSigned())
+        setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestTy, N));
+      else
+        setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestTy, N));
+    }
   }
 }
 

@@ -575,6 +575,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::TRUNCATE:
   case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
+
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));

@@ -396,6 +396,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SIGN_EXTEND: return getConstant(C->getSignExtended(), VT);
     case ISD::ZERO_EXTEND: return getConstant(Val, VT);
     case ISD::TRUNCATE:    return getConstant(Val, VT);
+    case ISD::SINT_TO_FP:  return getConstantFP(C->getSignExtended(), VT);
+    case ISD::UINT_TO_FP:  return getConstantFP(C->getValue(), VT);
     }
   }
 
@@ -404,6 +406,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::FP_ROUND:
     case ISD::FP_EXTEND:
       return getConstantFP(C->getValue(), VT);
+    case ISD::FP_TO_SINT:
+      return getConstant((int64_t)C->getValue(), VT);
+    case ISD::FP_TO_UINT:
+      return getConstant((uint64_t)C->getValue(), VT);
     }
 
   unsigned OpOpcode = Operand.Val->getOpcode();
@@ -820,6 +826,11 @@ void SDNode::dump() const {
   case ISD::TRUNCATE:    std::cerr << "truncate"; break;
   case ISD::FP_ROUND:    std::cerr << "fp_round"; break;
   case ISD::FP_EXTEND:   std::cerr << "fp_extend"; break;
+
+  case ISD::SINT_TO_FP:  std::cerr << "sint_to_fp"; break;
+  case ISD::UINT_TO_FP:  std::cerr << "uint_to_fp"; break;
+  case ISD::FP_TO_SINT:  std::cerr << "fp_to_sint"; break;
+  case ISD::FP_TO_UINT:  std::cerr << "fp_to_uint"; break;
 
     // Control flow instructions
   case ISD::BR:      std::cerr << "br"; break;
