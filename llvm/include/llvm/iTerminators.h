@@ -21,9 +21,9 @@
 namespace llvm {
 
 //===---------------------------------------------------------------------------
-// ReturnInst - Return a value (possibly void), from a function.  Execution does
-//              not continue in this function any longer.
-//
+/// ReturnInst - Return a value (possibly void), from a function.  Execution
+/// does not continue in this function any longer.
+///
 class ReturnInst : public TerminatorInst {
   ReturnInst(const ReturnInst &RI) : TerminatorInst(Instruction::Ret) {
     if (RI.Operands.size()) {
@@ -83,8 +83,8 @@ public:
 };
 
 //===---------------------------------------------------------------------------
-// BranchInst - Conditional or Unconditional Branch instruction.
-//
+/// BranchInst - Conditional or Unconditional Branch instruction.
+///
 class BranchInst : public TerminatorInst {
   BranchInst(const BranchInst &BI);
 public:
@@ -153,8 +153,8 @@ public:
 
 
 //===---------------------------------------------------------------------------
-// SwitchInst - Multiway switch
-//
+/// SwitchInst - Multiway switch
+///
 class SwitchInst : public TerminatorInst {
   // Operand[0]    = Value to switch on
   // Operand[1]    = Default basic block destination
@@ -254,10 +254,9 @@ public:
   }
 };
 
-
 //===---------------------------------------------------------------------------
-// InvokeInst - Invoke instruction
-//
+/// InvokeInst - Invoke instruction
+///
 class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
 public:
