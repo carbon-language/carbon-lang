@@ -38,10 +38,10 @@ endif
 
 # What the Sparc JIT requires
  ifdef ENABLE_SPARC_JIT
-  CPPFLAGS += -DENABLE_SPARC_JIT
-  THEOBJS  += SparcV9 SparcV9InstrSched SparcV9LiveVar SparcV9RegAlloc
-  THEOBJS  += ProfilePaths BCWriter
-  THELIBS  += Instrument Transforms IPO IPA DataStructure
+#  CPPFLAGS += -DENABLE_SPARC_JIT
+#  THEOBJS  += SparcV9 SparcV9InstrSched SparcV9LiveVar SparcV9RegAlloc
+#  THEOBJS  += ProfilePaths BCWriter
+#  THELIBS  += Instrument Transforms IPO IPA DataStructure
  endif
 
 llvm_db_LDADD = \
