@@ -210,12 +210,26 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // symbol over in the dest module... the initializer will be filled in
       // later by LinkGlobalInits...
       //
-      DGV = new GlobalVariable(SGV->getType()->getElementType(),
-                               SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                               SGV->getName(), Dest);
+      GlobalVariable *NewDGV =
+        new GlobalVariable(SGV->getType()->getElementType(),
+                           SGV->isConstant(), SGV->getLinkage(), /*init*/0,
+                           SGV->getName(), Dest);
+
+      // If the LLVM runtime renamed the global, but it is an externally visible
+      // symbol, DGV must be an existing global with internal linkage.  Rename
+      // it.
+      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasInternalLinkage()){
+        assert(DGV && DGV->getName() == SGV->getName() &&
+               DGV->hasInternalLinkage());
+        DGV->setName("");
+        NewDGV->setName(SGV->getName());  // Force the name back
+        DGV->setName(SGV->getName());     // This will cause a renaming
+        assert(NewDGV->getName() == SGV->getName() &&
+               DGV->getName() != SGV->getName());
+      }
 
       // Make sure to remember this mapping...
-      ValueMap.insert(std::make_pair(SGV, DGV));
+      ValueMap.insert(std::make_pair(SGV, NewDGV));
     } else if (!SGExtern && !DGExtern && SGV->getLinkage() !=DGV->getLinkage()){
       return Error(Err, "Global variables named '" + SGV->getName() +
                    "' have different linkage specifiers!");
@@ -313,11 +327,23 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
       // Function does not already exist, simply insert an function signature
       // identical to SF into the dest module...
-      Function *DF = new Function(SF->getFunctionType(), SF->getLinkage(),
-                                  SF->getName(), Dest);
+      Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
+                                     SF->getName(), Dest);
+
+      // If the LLVM runtime renamed the function, but it is an externally
+      // visible symbol, DF must be an existing function with internal linkage.
+      // Rename it.
+      if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage()) {
+        assert(DF && DF->getName() == SF->getName() &&DF->hasInternalLinkage());
+        DF->setName("");
+        NewDF->setName(SF->getName());  // Force the name back
+        DF->setName(SF->getName());     // This will cause a renaming
+        assert(NewDF->getName() == SF->getName() &&
+               DF->getName() != SF->getName());
+      }
 
       // ... and remember this mapping...
-      ValueMap.insert(std::make_pair(SF, DF));
+      ValueMap.insert(std::make_pair(SF, NewDF));
     } else if (SF->getLinkage() == GlobalValue::AppendingLinkage) {
       return Error(Err, "Functions named '" + SF->getName() +
                    "' have appending linkage!");
