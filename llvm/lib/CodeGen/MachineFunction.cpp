@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetCacheInfo.h"
@@ -102,12 +103,14 @@ MachineFunction::MachineFunction(const Function *F,
   SSARegMapping = new SSARegMap();
   MFInfo = new MachineFunctionInfo(*this);
   FrameInfo = new MachineFrameInfo();
+  ConstantPool = new MachineConstantPool();
 }
 
 MachineFunction::~MachineFunction() { 
   delete SSARegMapping;
   delete MFInfo;
   delete FrameInfo;
+  delete ConstantPool;
 }
 
 void MachineFunction::dump() const { print(std::cerr); }
@@ -118,6 +121,9 @@ void MachineFunction::print(std::ostream &OS) const {
 
   // Print Frame Information
   getFrameInfo()->print(OS);
+
+  // Print Constant Pool
+  getConstantPool()->print(OS);
   
   for (const_iterator BB = begin(); BB != end(); ++BB) {
     BasicBlock *LBB = BB->getBasicBlock();
@@ -171,10 +177,21 @@ void MachineFunction::clearSSARegMap() {
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
 
+/// CreateStackObject - Create a stack object for a value of the specified type.
+///
+int MachineFrameInfo::CreateStackObject(const Type *Ty, const TargetData &TD) {
+  return CreateStackObject(TD.getTypeSize(Ty), TD.getTypeAlignment(Ty));
+}
+
+int MachineFrameInfo::CreateStackObject(const TargetRegisterClass *RC) {
+  return CreateStackObject(RC->getSize(), RC->getAlignment());
+}
+
+
 void MachineFrameInfo::print(std::ostream &OS) const {
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
-    OS << "  <fi# " << (int)(i-NumFixedObjects) << "> is ";
+    OS << "  <fi #" << (int)(i-NumFixedObjects) << "> is ";
     if (SO.Size == 0)
       OS << "variable sized";
     else
@@ -199,6 +216,17 @@ void MachineFrameInfo::print(std::ostream &OS) const {
 
 void MachineFrameInfo::dump() const { print(std::cerr); }
 
+
+//===----------------------------------------------------------------------===//
+//  MachineConstantPool implementation
+//===----------------------------------------------------------------------===//
+
+void MachineConstantPool::print(std::ostream &OS) const {
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i)
+    OS << "  <cp #" << i << "> is" << *(Value*)Constants[i] << "\n";
+}
+
+void MachineConstantPool::dump() const { print(std::cerr); }
 
 //===----------------------------------------------------------------------===//
 //  MachineFunctionInfo implementation
