@@ -196,6 +196,10 @@ static bool AddressMightEscape(const Value *V) {
         return true;
       if (AddressMightEscape(I)) return true;
       break;
+    case Instruction::Ret:
+      // If returned, the address will escape to calling functions, but no
+      // callees could modify it.
+      break;
     default:
       return true;
     }
