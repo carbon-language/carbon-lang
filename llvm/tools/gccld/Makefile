@@ -1,6 +1,6 @@
 LEVEL = ../..
 
 TOOLNAME = gccld
-USEDLIBS = transforms bcreader bcwriter asmwriter analysis vmcore asmwriter support
+USEDLIBS = transforms bcreader bcwriter analysis vmcore support
 
 include $(LEVEL)/Makefile.common
