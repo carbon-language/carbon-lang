@@ -1519,7 +1519,6 @@ void PPC64ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::readio: {
             // On PPC, memory operations are in-order.  Lower this intrinsic
             // into a volatile load.
-            Instruction *Before = CI->getPrev();
             LoadInst * LI = new LoadInst(CI->getOperand(1), "", true, CI);
             CI->replaceAllUsesWith(LI);
             BB->getInstList().erase(CI);
@@ -1528,7 +1527,6 @@ void PPC64ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::writeio: {
             // On PPC, memory operations are in-order.  Lower this intrinsic
             // into a volatile store.
-            Instruction *Before = CI->getPrev();
             StoreInst *SI = new StoreInst(CI->getOperand(1),
                                           CI->getOperand(2), true, CI);
             CI->replaceAllUsesWith(SI);
