@@ -74,7 +74,7 @@ namespace {
     inline void visitBranchInst(BranchInst &I) { NumBranchInst++; }
     inline void visitPHINode(PHINode &I) { NumPHINode++; }
     inline void visitCastInst (CastInst &I) { NumCastInst++; }
-    inline void visitCallInst (CallInst &I) { NumCastInst++; }
+    inline void visitCallInst (CallInst &I) { NumCallInst++; }
     inline void visitMallocInst(MallocInst &I) { NumMallocInst++; }
     inline void visitAllocaInst(AllocaInst &I) { NumAllocaInst++; }
     inline void visitFreeInst  (FreeInst   &I) { NumFreeInst++; }
@@ -95,8 +95,8 @@ namespace {
     }
   };
 
-  RegisterOpt<InstCount> X("instcount",
-			   "Counts the various types of Instructions");
+  RegisterAnalysis<InstCount> X("instcount",
+		    	   "Counts the various types of Instructions");
                                                             
 }
 
@@ -108,40 +108,6 @@ Pass *createInstCountPass() { return new InstCount(); }
 // function.
 //
 bool InstCount::run(Module &M) {
-    /* Initialization */
-  NumReturnInst = 0;
-  NumBranchInst = 0;
-  NumPHINode = 0;
-  NumCastInst = 0;
-  NumCallInst = 0;
-  NumMallocInst = 0;
-  NumAllocaInst = 0;
-  NumFreeInst = 0;
-  NumLoadInst = 0;
-  NumStoreInst = 0;
-  NumGetElementPtrInst = 0;
-  NumSwitchInst = 0;
-  NumInvokeInst = 0;
-  NumBinaryOperator = 0;
-  NumShiftInst = 0;
-  NumShlInst = 0;
-  NumShrInst = 0;
-  NumAddInst = 0;
-  NumSubInst = 0;
-  NumMulInst = 0;
-  NumDivInst = 0;
-  NumRemInst = 0;
-  NumAndInst = 0;
-  NumOrInst = 0;
-  NumXorInst = 0;
-  NumSetCondInst = 0;
-  NumSetEQInst = 0;
-  NumSetNEInst = 0;
-  NumSetLEInst = 0;
-  NumSetGEInst = 0;
-  NumSetLTInst = 0;
-  NumSetGTInst = 0;
-
   for (Module::iterator mI = M.begin(), mE = M.end(); mI != mE; ++mI)
     for (inst_iterator I = inst_begin(*mI), E = inst_end(*mI); I != E; ++I)
       visit(*I);
