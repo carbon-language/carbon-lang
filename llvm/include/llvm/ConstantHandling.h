@@ -48,19 +48,6 @@ namespace llvm {
 class PointerType;
 
 //===----------------------------------------------------------------------===//
-//  Implement == and != directly...
-//===----------------------------------------------------------------------===//
-
-inline ConstantBool *operator==(const Constant &V1, const Constant &V2) {
-  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
-  return ConstantBool::get(&V1 == &V2);
-}
-
-inline ConstantBool *operator!=(const Constant &V1, const Constant &V2) {
-  return ConstantBool::get(&V1 != &V2);
-}
-
-//===----------------------------------------------------------------------===//
 //  Implement all other operators indirectly through TypeRules system
 //===----------------------------------------------------------------------===//
 
@@ -81,6 +68,8 @@ struct ConstRules {
 
   virtual ConstantBool *lessthan(const Constant *V1, 
                                  const Constant *V2) const = 0;
+  virtual ConstantBool *equalto(const Constant *V1, 
+                                const Constant *V2) const = 0;
 
   // Casting operators.  ick
   virtual ConstantBool *castToBool  (const Constant *V) const = 0;
@@ -195,10 +184,20 @@ inline ConstantBool *operator<(const Constant &V1,
   return ConstRules::get(V1, V2).lessthan(&V1, &V2);
 }
 
+inline ConstantBool *operator==(const Constant &V1, const Constant &V2) {
+  assert(V1.getType() == V2.getType() && "Constant types must be identical!");
+  return ConstRules::get(V1, V2).equalto(&V1, &V2);
+}
 
 //===----------------------------------------------------------------------===//
 //  Implement 'derived' operators based on what we already have...
 //===----------------------------------------------------------------------===//
+
+inline ConstantBool *operator!=(const Constant &V1, const Constant &V2) {
+  if (ConstantBool *V = (V1 == V2))
+    return V->inverted();                // !(V1 == V2)
+  return 0;
+}
 
 inline ConstantBool *operator>(const Constant &V1, 
                                const Constant &V2) {

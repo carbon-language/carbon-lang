@@ -256,6 +256,10 @@ class TemplateRules : public ConstRules {
                                  const Constant *V2) const { 
     return SubClassName::LessThan((const ArgType *)V1, (const ArgType *)V2);
   }
+  virtual ConstantBool *equalto(const Constant *V1, 
+                                const Constant *V2) const { 
+    return SubClassName::EqualTo((const ArgType *)V1, (const ArgType *)V2);
+  }
 
   // Casting operators.  ick
   virtual ConstantBool *castToBool(const Constant *V) const {
@@ -313,6 +317,9 @@ class TemplateRules : public ConstRules {
   static ConstantBool *LessThan(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
+  static ConstantBool *EqualTo(const ArgType *V1, const ArgType *V2) {
+    return 0;
+  }
 
   // Casting operators.  ick
   static ConstantBool *CastToBool  (const Constant *V) { return 0; }
@@ -339,6 +346,10 @@ class TemplateRules : public ConstRules {
 // EmptyRules provides a concrete base class of ConstRules that does nothing
 //
 struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
+  static ConstantBool *EqualTo(const Constant *V1, const Constant *V2) {
+    if (V1 == V2) return ConstantBool::True;
+    return 0;
+  }
 };
 
 
@@ -353,6 +364,10 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 
   static ConstantBool *LessThan(const ConstantBool *V1, const ConstantBool *V2){
     return ConstantBool::get(V1->getValue() < V2->getValue());
+  }
+
+  static ConstantBool *EqualTo(const Constant *V1, const Constant *V2) {
+    return ConstantBool::get(V1 == V2);
   }
 
   static Constant *And(const ConstantBool *V1, const ConstantBool *V2) {
@@ -397,6 +412,9 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 //
 struct NullPointerRules : public TemplateRules<ConstantPointerNull,
                                                NullPointerRules> {
+  static ConstantBool *EqualTo(const Constant *V1, const Constant *V2) {
+    return ConstantBool::True;  // Null pointers are always equal
+  }
   static ConstantBool *CastToBool  (const Constant *V) {
     return ConstantBool::False;
   }
@@ -474,6 +492,12 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
     bool R = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
     return ConstantBool::get(R);
   } 
+
+  static ConstantBool *EqualTo(const ConstantClass *V1,
+                               const ConstantClass *V2) {
+    bool R = (BuiltinType)V1->getValue() == (BuiltinType)V2->getValue();
+    return ConstantBool::get(R);
+  }
 
   static Constant *CastToPointer(const ConstantClass *V,
                                  const PointerType *PTy) {
