@@ -7,6 +7,7 @@
 #include "llvm/Value.h"
 #include "llvm/Target/MachineInstrInfo.h"  // FIXME: shouldn't need this!
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MRegisterInfo.h"
 using std::cerr;
 
 // Global variable holding an array of descriptors for machine instructions.
@@ -191,14 +192,20 @@ OutputValue(std::ostream &os, const Value* val)
     return os << (void*) val << ")";              // print address only
 }
 
-static inline std::ostream&
-OutputReg(std::ostream &os, unsigned int regNum)
-{
-  return os << "%mreg(" << regNum << ")";
+static inline void OutputReg(std::ostream &os, unsigned RegNo,
+                             const MRegisterInfo *MRI = 0) {
+  if (MRI) {
+    if (RegNo < MRegisterInfo::FirstVirtualRegister)
+      os << "%" << MRI->get(RegNo).Name;
+    else
+      os << "%reg" << RegNo;
+  } else
+    os << "%mreg(" << RegNo << ")";
 }
 
 static void print(const MachineOperand &MO, std::ostream &OS,
                   const TargetMachine &TM) {
+  const MRegisterInfo *MRI = TM.getRegisterInfo();
   bool CloseParen = true;
   if (MO.opHiBits32())
     OS << "%lm(";
@@ -220,18 +227,18 @@ static void print(const MachineOperand &MO, std::ostream &OS,
         OS << "==";
     }
     if (MO.hasAllocatedReg())
-      OutputReg(OS, MO.getAllocatedRegNum());
+      OutputReg(OS, MO.getAllocatedRegNum(), MRI);
     break;
   case MachineOperand::MO_CCRegister:
     OS << "%ccreg";
     OutputValue(OS, MO.getVRegValue());
     if (MO.hasAllocatedReg()) {
       OS << "==";
-      OutputReg(OS, MO.getAllocatedRegNum());
+      OutputReg(OS, MO.getAllocatedRegNum(), MRI);
     }
     break;
   case MachineOperand::MO_MachineRegister:
-    OutputReg(OS, MO.getMachineRegNum());
+    OutputReg(OS, MO.getMachineRegNum(), MRI);
     break;
   case MachineOperand::MO_SignExtendedImmed:
     OS << (long)MO.getImmedValue();
