@@ -255,7 +255,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
   // if a fixed array is too small.
   // 
   int numChildren = 0;
-  std::vector<InstrTreeNode*> childArray(instr->getNumOperands());
+  InstrTreeNode** childArray = new InstrTreeNode*[instr->getNumOperands()];
   
   //
   // Walk the operands of the instruction
@@ -362,6 +362,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
       assert(n == 1);
       setRightChild(parent, childArray[numChildren - 1]);
     }
-  
+
+  delete [] childArray;
   return treeNode;
 }

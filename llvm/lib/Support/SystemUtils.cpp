@@ -10,7 +10,6 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
-#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -33,13 +32,13 @@ std::string getUniqueFilename(const std::string &FilenameBase) {
     return FilenameBase;    // Couldn't open the file? Use it!
 
   // Create a pattern for mkstemp...
-  std::vector<char> FNBuffer(FilenameBase.size()+8);
-  strcpy(&FNBuffer[0], FilenameBase.c_str());
-  strcpy(&FNBuffer[FilenameBase.size()], "-XXXXXX");
+  char *FNBuffer = new char[FilenameBase.size()+8];
+  strcpy(FNBuffer, FilenameBase.c_str());
+  strcpy(FNBuffer+FilenameBase.size(), "-XXXXXX");
 
   // Agree on a temporary file name to use....
   int TempFD;
-  if ((TempFD = mkstemp(&FNBuffer[0])) == -1) {
+  if ((TempFD = mkstemp(FNBuffer)) == -1) {
     std::cerr << "bugpoint: ERROR: Cannot create temporary file in the current "
 	      << " directory!\n";
     exit(1);
@@ -48,7 +47,9 @@ std::string getUniqueFilename(const std::string &FilenameBase) {
   // We don't need to hold the temp file descriptor... we will trust that noone
   // will overwrite/delete the file while we are working on it...
   close(TempFD);
-  return std::string(&FNBuffer[0]);
+  std::string Result(FNBuffer);
+  delete[] FNBuffer;
+  return Result;
 }
 
 /// isExecutableFile - This function returns true if the filename specified
