@@ -402,52 +402,19 @@ static void getTypeProps(const Type *Ty, std::vector<const Type *> &TypeStack,
   }
 
   // Check to see if the Type is already on the stack...
-  unsigned Slot = 0, CurSize = TypeStack.size();
-  while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
-    
-  // This is another base case for the recursion.  In this case, we know 
-  // that we have looped back to a type that we have previously visited.
-  // Generate the appropriate upreference to handle this.
-  // 
-  if (Slot < CurSize) {
-    isRecursive = true;                         // We know we are recursive
-    return;
-  }
+  for (unsigned Slot = 0; Slot != TypeStack.size(); ++Slot)
+    if (TypeStack[Slot] == Ty) { // Scan for type
+      isRecursive = true;                         // We know we are recursive
+      return;
+    }
 
   // Recursive case: derived type...
   TypeStack.push_back(Ty);    // Add us to the stack..
-      
-  switch (Ty->getPrimitiveID()) {
-  case Type::FunctionTyID: {
-    const FunctionType *FTy = cast<FunctionType>(Ty);
-    getTypeProps(FTy->getReturnType(), TypeStack, isAbstract, isRecursive);
-    for (FunctionType::ParamTypes::const_iterator
-           I = FTy->getParamTypes().begin(),
-           E = FTy->getParamTypes().end(); I != E; ++I)
-      getTypeProps(*I, TypeStack, isAbstract, isRecursive);
-    break;
-  }
-  case Type::StructTyID: {
-    const StructType *STy = cast<StructType>(Ty);
-    for (StructType::ElementTypes::const_iterator
-           I = STy->getElementTypes().begin(),
-           E = STy->getElementTypes().end(); I != E; ++I)
-      getTypeProps(*I, TypeStack, isAbstract, isRecursive);
-    break;
-  }
-  case Type::PointerTyID: {
-    const PointerType *PTy = cast<PointerType>(Ty);
-    getTypeProps(PTy->getElementType(), TypeStack, isAbstract, isRecursive);
-    break;
-  }
-  case Type::ArrayTyID:
-    getTypeProps(cast<ArrayType>(Ty)->getElementType(), TypeStack,
-                 isAbstract, isRecursive);
-    break;
-  default:
-    assert(0 && "Unhandled type in getTypeProps!");
-  }
 
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+       I != E; ++I)
+    getTypeProps(*I, TypeStack, isAbstract, isRecursive);
+      
   TypeStack.pop_back();       // Remove self from stack...
 }
 
