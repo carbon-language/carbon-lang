@@ -10,6 +10,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/Annotation.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "Support/iterator"
 #include "Support/NonCopyable.h"
 #include <vector>
@@ -151,6 +152,19 @@ public:
   // operand type before invoking the corresponding accessor.
   // 
   MachineOperandType getType() const { return opType; }
+
+
+  // This is to finally stop caring whether we have a virtual or machine
+  // register -- an easier interface is to simply call both virtual and machine
+  // registers essentially the same, yet be able to distinguish when
+  // necessary. Thus the instruction selector can just add registers without
+  // abandon, and the register allocator won't be confused.
+  bool isVirtualRegister() const {
+    return (opType == MO_VirtualRegister || opType == MO_MachineRegister) 
+      && regNum >= MRegisterInfo::FirstVirtualRegister;
+  }
+
+  bool isMachineRegister() const { return !isVirtualRegister(); }
 
   inline Value*		getVRegValue	() const {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
