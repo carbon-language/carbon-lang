@@ -17,9 +17,7 @@
 #define LLVM_INTERVAL_PARTITION_H
 
 #include "llvm/Analysis/Interval.h"
-#include <map>
-
-class Method;
+#include "llvm/Pass.h"
 
 namespace cfg {
 
@@ -31,7 +29,7 @@ namespace cfg {
 // BasicBlock is a (possibly nonexistent) loop with a "tail" of non looping
 // nodes following it.
 //
-class IntervalPartition : public std::vector<Interval*> {
+class IntervalPartition : public MethodPass, public std::vector<Interval*> {
   typedef std::map<BasicBlock*, Interval*> IntervalMapTy;
   IntervalMapTy IntervalMap;
 
@@ -39,8 +37,12 @@ class IntervalPartition : public std::vector<Interval*> {
   Interval *RootInterval;
 
 public:
-  // IntervalPartition ctor - Build the partition for the specified method
-  IntervalPartition(Method *M);
+  static AnalysisID ID;    // We are an analysis, we must have an ID
+
+  IntervalPartition(AnalysisID AID) : RootInterval(0) { assert(AID == ID); }
+
+  // run - Calculate the interval partition for this method
+  virtual bool runOnMethod(Method *M);
 
   // IntervalPartition ctor - Build a reduced interval partition from an
   // existing interval graph.  This takes an additional boolean parameter to
@@ -49,7 +51,7 @@ public:
   IntervalPartition(IntervalPartition &I, bool);
 
   // Destructor - Free memory
-  ~IntervalPartition();
+  ~IntervalPartition() { destroy(); }
 
   // getRootInterval() - Return the root interval that contains the starting
   // block of the method.
@@ -67,7 +69,17 @@ public:
     return I != IntervalMap.end() ? I->second : 0;
   }
 
+  // getAnalysisUsageInfo - Implement the Pass API
+  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
+                                    AnalysisSet &Destroyed,
+                                    AnalysisSet &Provided) {
+    Provided.push_back(ID);
+  }
+
 private:
+  // destroy - Reset state back to before method was analyzed
+  void destroy();
+
   // addIntervalToPartition - Add an interval to the internal list of intervals,
   // and then add mappings from all of the basic blocks in the interval to the
   // interval itself (in the IntervalMap).

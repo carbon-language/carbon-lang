@@ -10,10 +10,8 @@
 #ifndef LLVM_ANALYSIS_LOOP_INFO_H
 #define LLVM_ANALYSIS_LOOP_INFO_H
 
-#include <vector>
-#include <map>
+#include "llvm/Pass.h"
 #include <set>
-class BasicBlock;
 
 namespace cfg {
   class DominatorSet;
@@ -62,13 +60,15 @@ private:
 // LoopInfo - This class builds and contains all of the top level loop
 // structures in the specified method.
 //
-class LoopInfo {
+class LoopInfo : public MethodPass {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
   std::map<const BasicBlock *, Loop*> BBMap;
   std::vector<Loop*> TopLevelLoops;
 public:
+  static AnalysisID ID;            // cfg::LoopInfo Analysis ID 
+
   // LoopInfo ctor - Calculate the natural loop information for a CFG
-  LoopInfo(const DominatorSet &DS);
+  LoopInfo(AnalysisID id) { assert(id == ID); }
 
   const std::vector<Loop*> &getTopLevelLoops() const { return TopLevelLoops; }
 
@@ -100,7 +100,16 @@ public:
   bool isLoopExit(const BasicBlock *BB) const;
 #endif
 
+  // runOnMethod - Pass framework implementation
+  virtual bool runOnMethod(Method *M);
+
+  // getAnalysisUsageInfo - Provide loop info, require dominator set
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 private:
+  void Calculate(const DominatorSet &DS);
   Loop *ConsiderForLoop(const BasicBlock *BB, const DominatorSet &DS);
 };
 

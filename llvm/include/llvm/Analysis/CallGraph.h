@@ -17,8 +17,7 @@
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
 #include "Support/GraphTraits.h"
-#include <map>
-#include <vector>
+#include "llvm/Pass.h"
 class Method;
 class Module;
 
@@ -62,7 +61,7 @@ private:                    // Stuff to construct the node, used by CallGraph
 };
 
 
-class CallGraph {
+class CallGraph : public Pass {
   Module *Mod;              // The module this call graph represents
 
   typedef std::map<const Method *, CallGraphNode *> MethodMapTy;
@@ -70,8 +69,10 @@ class CallGraph {
 
   CallGraphNode *Root;
 public:
-  CallGraph(Module *TheModule);
-  ~CallGraph();
+  static AnalysisID ID;    // We are an analysis, we must have an ID
+
+  CallGraph(AnalysisID AID) : Root(0) { assert(AID == ID); }
+  ~CallGraph() { destroy(); }
 
   typedef MethodMapTy::iterator iterator;
   typedef MethodMapTy::const_iterator const_iterator;
@@ -111,7 +112,18 @@ public:
     return removeMethodFromModule((*this)[Meth]);
   }
 
+  // run - Compute the call graph for the specified module.
+  virtual bool run(Module *TheModule);
+
+  // getAnalysisUsageInfo - This obviously provides a call graph
+  virtual void getAnalysisUsageInfo(AnalysisSet &Required,
+                                    AnalysisSet &Destroyed,
+                                    AnalysisSet &Provided) {
+    Provided.push_back(ID);
+  }
+
 private:   // Implementation of CallGraph construction
+  void destroy();
 
   // getNodeFor - Return the node for the specified method or create one if it
   // does not already exist.

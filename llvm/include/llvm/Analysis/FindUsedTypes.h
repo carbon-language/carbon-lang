@@ -10,17 +10,20 @@
 #include "llvm/Pass.h"
 #include <set>
 class SymbolTable;
+class Type;
 
-class FindUsedTypes : public MethodPass {
+class FindUsedTypes : public Pass {
   std::set<const Type *> UsedTypes;
 
   bool IncludeSymbolTables;
 public:
-
   // FindUsedTypes ctor - This pass can optionally include types that are
   // referenced only in symbol tables, but the default is not to.
   //
-  FindUsedTypes(bool IST = false) : IncludeSymbolTables(IST) {}
+  static AnalysisID ID;
+  static AnalysisID IncludeSymbolTableID;
+
+  FindUsedTypes(AnalysisID id) : IncludeSymbolTables(id != ID) {}
 
   // getTypes - After the pass has been run, return the set containing all of
   // the types used in the module.
@@ -45,14 +48,15 @@ private:
   void IncorporateSymbolTable(const SymbolTable *ST);
 
 public:
-  // doInitialization - This loops over global constants defined in the
-  // module, converting them to their new type.
+  // run - This incorporates all types used by the specified module
   //
-  bool doInitialization(Module *M);
+  bool run(Module *M);
 
-  // runOnMethod - This incorporates all types used by the specified method
+  // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
   //
-  bool runOnMethod(Method *M);
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 };
 
 #endif

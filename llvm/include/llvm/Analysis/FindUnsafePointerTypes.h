@@ -22,26 +22,35 @@
 
 class PointerType;
 
-struct FindUnsafePointerTypes : public MethodPass {
+struct FindUnsafePointerTypes : public Pass {
   // UnsafeTypes - Set of types that are not safe to transform.
   std::set<PointerType*> UnsafeTypes;
 public:
+  static AnalysisID ID;    // We are an analysis, we must have an ID
+
+  FindUnsafePointerTypes(AnalysisID id) { assert(ID == id); }
 
   // Accessor for underlying type set...
   inline const std::set<PointerType*> &getUnsafeTypes() const {
     return UnsafeTypes;
   }
 
-  // runOnMethod - Inspect the operations that the specified method does on
+  // run - Inspect the operations that the specified module does on
   // values of various types.  If they are deemed to be 'unsafe' note that the
   // type is not safe to transform.
   //
-  virtual bool runOnMethod(Method *M);
+  virtual bool run(Module *M);
 
   // printResults - Loop over the results of the analysis, printing out unsafe
   // types.
   //
-  void printResults(const Module *Mod, std::ostream &o);
+  void printResults(const Module *Mod, std::ostream &o) const;
+
+  // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 };
 
 #endif
