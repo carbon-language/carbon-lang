@@ -157,7 +157,8 @@ Constant *ConstantFoldGetElementPtr(const Constant *C,
   // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
   //
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1)
+    if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1 &&
+        IdxList[0]->isNullValue())
       if (const PointerType *SPT = 
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
