@@ -64,8 +64,7 @@ static inline void ThrowException(const std::string &message,
 //
 struct ValID {
   enum {
-    NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstStringVal, 
-    ConstFPVal, ConstNullVal
+    NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal
   } Type;
 
   union {
@@ -92,10 +91,6 @@ struct ValID {
     ValID D; D.Type = ConstUIntVal; D.UConstPool64 = Val; return D;
   }
 
-  static ValID create_conststr(char *Name) {
-    ValID D; D.Type = ConstStringVal; D.Name = Name; return D;
-  }
-
   static ValID create(double Val) {
     ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; return D;
   }
@@ -105,12 +100,12 @@ struct ValID {
   }
 
   inline void destroy() const {
-    if (Type == NameVal || Type == ConstStringVal)
+    if (Type == NameVal)
       free(Name);    // Free this strdup'd memory...
   }
 
   inline ValID copy() const {
-    if (Type != NameVal && Type != ConstStringVal) return *this;
+    if (Type != NameVal) return *this;
     ValID Result = *this;
     Result.Name = strdup(Name);
     return Result;
@@ -120,7 +115,6 @@ struct ValID {
     switch (Type) {
     case NumberVal     : return std::string("#") + itostr(Num);
     case NameVal       : return Name;
-    case ConstStringVal: return std::string("\"") + Name + std::string("\"");
     case ConstFPVal    : return ftostr(ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUIntVal  :
@@ -136,7 +130,6 @@ struct ValID {
     if (Type != V.Type) return Type < V.Type;
     switch (Type) {
     case NumberVal:     return Num < V.Num;
-    case ConstStringVal:
     case NameVal:       return strcmp(Name, V.Name) < 0;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;

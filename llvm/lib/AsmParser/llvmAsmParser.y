@@ -330,11 +330,6 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
       return ConstantUInt::get(Ty, D.UConstPool64);
     }
 
-  case ValID::ConstStringVal:    // Is it a string const pool reference?
-    cerr << "FIXME: TODO: String constants [sbyte] not implemented yet!\n";
-    abort();
-    return 0;
-
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
     if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP))
       ThrowException("FP constant invalid for type!!");
