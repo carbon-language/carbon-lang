@@ -30,7 +30,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Support/STLExtras.h"
+#include "Support/STLExtras.h"
 #include <string.h>
 #include <algorithm>
 
