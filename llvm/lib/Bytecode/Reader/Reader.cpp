@@ -303,7 +303,7 @@ void BytecodeParser::ParseSymbolTable(const unsigned char *&Buf,
         V = getValue(Typ, slot, false); // Find mapping...
       }
       if (V == 0)
-        throw std::string("Failed value look-up.");
+        throw "Failed value look-up for name '" + Name + "'";
       BCR_TRACE(4, "Map: '" << Name << "' to #" << slot << ":" << *V;
                 if (!isa<Instruction>(V)) std::cerr << "\n");
 
