@@ -31,6 +31,7 @@
 #define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 
 #include "llvm/Support/CallSite.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
 
@@ -158,6 +159,14 @@ public:
   bool canInstructionRangeModify(const Instruction &I1, const Instruction &I2,
                                  const Value *Ptr, unsigned Size);
 };
+
+// Because of the way .a files work, we must force the BasicAA implementation to
+// be pulled in if the AliasAnalysis header is included.  Otherwise we run
+// the risk of AliasAnalysis being used, but the default implementation not
+// being linked into the tool that uses it.
+//
+extern void BasicAAStub();
+static IncludeFile HDR_INCLUDE_BASICAA_CPP((void*)&BasicAAStub);
 
 } // End llvm namespace
 
