@@ -12,6 +12,7 @@
 
 #include "llvm/CodeGen/ValueTypes.h"
 #include <iosfwd>
+#include <string>
 #include <vector>
 class Record;
 class RecordKeeper;
