@@ -68,7 +68,7 @@ bool InlineFunction(CallSite CS) {
     for (BasicBlock::iterator I = InvokeDest->begin();
          PHINode *PN = dyn_cast<PHINode>(I); ++I) {
       // Save the value to use for this edge...
-      InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(OrigBB));
+      InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(AfterCallBB));
     }
 
     // Remove (unlink) the InvokeInst from the function...
@@ -252,7 +252,7 @@ bool InlineFunction(CallSite CS) {
     // PHI node) now.
     for (BasicBlock::iterator I = InvokeDest->begin();
          PHINode *PN = dyn_cast<PHINode>(I); ++I)
-      PN->removeIncomingValue(OrigBB);
+      PN->removeIncomingValue(AfterCallBB);
   }
   // Now that the function is correct, make it a little bit nicer.  In
   // particular, move the basic blocks inserted from the end of the function
