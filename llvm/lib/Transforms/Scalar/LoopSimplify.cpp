@@ -604,11 +604,8 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     // If NewBB strictly dominates other blocks, we need to update their idom's
     // now.  The only block that need adjustment is the NewBBSucc block, whose
     // idom should currently be set to PredBlocks[0].
-    if (NewBBDominatesNewBBSucc) {
-      assert(ID->get(NewBBSucc) == PredBlocks[0] &&
-             "Immediate dominator update code broken!");
+    if (NewBBDominatesNewBBSucc)
       ID->setImmediateDominator(NewBBSucc, NewBB);
-    }
   }
 
   // Update DominatorTree information if it is active.
@@ -633,8 +630,6 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     // dominator of NewBBSucc.  Update the dominator tree as appropriate.
     if (NewBBDominatesNewBBSucc) {
       DominatorTree::Node *NewBBSuccNode = DT->getNode(NewBBSucc);
-      assert(NewBBSuccNode->getIDom()->getBlock() == PredBlocks[0] &&
-             "Immediate tree update code broken!");
       DT->changeImmediateDominator(NewBBSuccNode, NewBBNode);
     }
   }
