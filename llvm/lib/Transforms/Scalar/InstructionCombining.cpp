@@ -34,14 +34,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Constants.h"
 #include "llvm/ConstantHandling.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
@@ -57,6 +58,7 @@ namespace {
                        public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.
     std::vector<Instruction*> WorkList;
+    TargetData *TD;
 
     void AddUsesToWorkList(Instruction &I) {
       // The instruction was simplified, add all users of the instruction to
@@ -73,6 +75,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
       AU.setPreservesCFG();
     }
 
@@ -1536,6 +1539,33 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     }
   }
 
+  // If we are casting a malloc or alloca to a pointer to a type of the same
+  // size, rewrite the allocation instruction to allocate the "right" type.
+  //
+  if (AllocationInst *AI = dyn_cast<AllocationInst>(Src))
+    if (AI->hasOneUse())
+      if (const PointerType *PTy = dyn_cast<PointerType>(CI.getType())) {
+        // Get the type really allocated and the type casted to...
+        const Type *AllocElTy = AI->getAllocatedType();
+        unsigned AllocElTySize = TD->getTypeSize(AllocElTy);
+        const Type *CastElTy = PTy->getElementType();
+        unsigned CastElTySize = TD->getTypeSize(CastElTy);
+        
+        // If the allocation is for an even multiple of the cast type size
+        if (AllocElTySize % CastElTySize == 0) {
+          Value *Amt = ConstantUInt::get(Type::UIntTy, 
+                                         AllocElTySize/CastElTySize);
+          std::string Name = AI->getName(); AI->setName("");
+          AllocationInst *New;
+          if (isa<MallocInst>(AI))
+            New = new MallocInst(CastElTy, Amt, Name);
+          else
+            New = new AllocaInst(CastElTy, Amt, Name);
+          InsertNewInstBefore(New, CI);
+          return ReplaceInstUsesWith(CI, New);
+        }
+      }
+
   // If the source value is an instruction with only this use, we can attempt to
   // propagate the cast into the instruction.  Also, only handle integral types
   // for now.
@@ -1975,6 +2005,7 @@ void InstCombiner::removeFromWorkList(Instruction *I) {
 
 bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
+  TD = &getAnalysis<TargetData>();
 
   WorkList.insert(WorkList.end(), inst_begin(F), inst_end(F));
 
