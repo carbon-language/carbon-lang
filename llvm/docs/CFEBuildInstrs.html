@@ -131,7 +131,7 @@ invalid code.  Instead, use the system assembler and linker.
 <pre>
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
-   --disable-shared --enable-languages=c,c++
+   --disable-shared --enable-languages=c,c++ --program-prefix=llvm-
  % gmake all; gmake install
 </pre>
 
@@ -140,7 +140,8 @@ invalid code.  Instead, use the system assembler and linker.
 <pre>
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
-   --disable-shared --enable-languages=c,c++ --disable-c-mbchar
+   --disable-shared --enable-languages=c,c++ --disable-c-mbchar \
+   --program-prefix=llvm-
  % gmake all; gmake install
 </pre>
 
@@ -158,7 +159,7 @@ functions from C as referenced from C++, so we typically configure with
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
    --disable-shared --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8 \
-   --disable-c-mbchar
+   --disable-c-mbchar --program-prefix=llvm-
  % gmake all; gmake install
 </pre>
 
@@ -207,9 +208,18 @@ functions from C as referenced from C++, so we typically configure with
  </ul>
 </li>
 
+<li><p>Put <tt>$CFEINSTALL/bin</tt> into your <tt>PATH</tt> environment
+variable.</p>
+  <ul>
+    <li>sh: <tt>export PATH=$CFEINSTALL/bin:$PATH</tt></li>
+    <li>csh: <tt>setenv PATH $CFEINSTALL/bin:$PATH</tt></li>
+    <li>win: <tt>set PATH=$CFEINSTALL/bin;$PATH</tt></li>
+  </ul>
+</li>
+
 <li><p>Go back into the LLVM source tree proper.  Rerun configure, using
-the <code>--with-llvmgccdir=$CFEINSTALL</code> option to specify the path
-to the newly built GCC front-end.</p></li>
+the same options as the last time. This will cause the configuration to now find
+the newly built llvm-gcc and llvm-g++ executables. </p></li>
 
 <li><p>If you edited header files during the C/C++ front-end build as
 described in "Fix 1" above, you must now copy those header files from
@@ -217,7 +227,7 @@ described in "Fix 1" above, you must now copy those header files from
 <code>$CFEINSTALL/lib/gcc/<i>target-triplet</i>/3.4-llvm/include</code>.
 (This should be the "include" directory in the same directory as the
 libgcc.a library, which you can find by running
-<code>$CFEINSTALL/bin/gcc --print-libgcc-file-name</code>.)</p></li>
+<code>$CFEINSTALL/bin/llvm-gcc --print-libgcc-file-name</code>.)</p></li>
 
 <li><p>Rebuild your CVS tree.  This shouldn't cause the whole thing to be
   rebuilt, but it should build the runtime libraries.  After the tree is
@@ -230,9 +240,9 @@ libgcc.a library, which you can find by running
 </pre></li>
 
 <li><p>Optionally, build a symbol table for the newly installed runtime 
-libraries. Although this step is optional, you are encouraged to do this as the
-symbol tables will make a significant difference in your link times. Use 
-the <tt>llvm-ranlib</tt> tool to do this, as follows:</p>
+libraries. Although this step is optional, you are strongly encouraged to 
+do this as the symbol tables will make a significant difference in your 
+link times. Use the <tt>llvm-ranlib</tt> tool to do this, as follows:</p>
 <pre>
  % cd $CFEINSTALL/lib
  % llvm-ranlib libiberty.a
@@ -246,8 +256,8 @@ the <tt>llvm-ranlib</tt> tool to do this, as follows:</p>
 <li><p>Test the newly-installed C frontend by one or more of the
 following means:</p>
  <ul>
+  <li> running the feature &amp; regression tests via <tt>make check</tt></li>
   <li> compiling and running a "hello, LLVM" program in C and C++.</li>
-  <li> running the regression tests in <tt>llvm/test</tt>
   <li> running the tests found in the <tt>llvm-test</tt> CVS module</li>
  </ul></li>
 </ol>
