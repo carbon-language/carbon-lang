@@ -479,36 +479,77 @@ static void ResolveTypes(std::map<ValID, PATypeHolder> &LateResolveTypes) {
 }
 
 
+static void setValueNameInternal(Value *V, const std::string &Name,
+                                 SymbolTable &ST) {
+  if (V->getType() == Type::VoidTy) 
+    ThrowException("Can't assign name '" + Name + "' to value with void type!");
+
+  // Set the name
+  V->setName(Name, &ST);
+
+  // If we're in function scope
+  if (inFunctionScope()) {
+    // Look up the symbol in the Function's local symboltable
+    Value *Existing = CurFun.LocalSymtab.lookup(V->getType(),Name);
+
+    // If it already exists, bail out.  We have to recheck this, because there
+    // may be entries inserted into the current basic block (which has not yet
+    // been inserted into the function) which collide.
+    if (Existing) {
+      ThrowException("Redefinition of value named '" + Name + "' in the '" +
+		   V->getType()->getDescription() + "' type plane!");
+    } else {
+      // otherwise, since it doesn't exist, insert it.
+      CurFun.LocalSymtab.insert(V);
+    }
+  }
+}
+
 // setValueName - Set the specified value to the name given.  The name may be
 // null potentially, in which case this is a noop.  The string passed in is
-// assumed to be a malloc'd string buffer, and is freed by this function.
+// assumed to be a malloc'd string buffer, and is free'd by this function.
+//
+static void setValueName(Value *V, char *NameStr) {
+  if (NameStr) {
+    std::string Name(NameStr);      // Copy string
+    free(NameStr);                  // Free old string
+    
+    assert(inFunctionScope() && "Must be in function scope!");
+    SymbolTable &ST = CurFun.CurrentFunction->getSymbolTable();
+    if (ST.lookup(V->getType(), Name))
+      ThrowException("Redefinition of value named '" + Name + "' in the '" +
+                     V->getType()->getDescription() + "' type plane!");
+    
+    setValueNameInternal(V, Name, ST);
+  }
+}
+
+// setValueNameMergingDuplicates - Set the specified value to the name given.
+// The name may be null potentially, in which case this is a noop.  The string
+// passed in is assumed to be a malloc'd string buffer, and is free'd by this
+// function.
 //
 // This function returns true if the value has already been defined, but is
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the typeplane, false is returned.
 //
-static bool setValueName(Value *V, char *NameStr) {
+static bool setValueNameMergingDuplicates(Value *V, char *NameStr) {
   if (NameStr == 0) return false;
-  
+
   std::string Name(NameStr);      // Copy string
   free(NameStr);                  // Free old string
 
-  if (V->getType() == Type::VoidTy) 
-    ThrowException("Can't assign name '" + Name + 
-		   "' to a null valued instruction!");
-
+  // FIXME: If we eliminated the function constant pool (which we should), this
+  // would just unconditionally look at the module symtab.
   SymbolTable &ST = inFunctionScope() ? 
     CurFun.CurrentFunction->getSymbolTable() : 
     CurModule.CurrentModule->getSymbolTable();
 
   Value *Existing = ST.lookup(V->getType(), Name);
-
   if (Existing) {    // Inserting a name that is already defined???
-    // We are a simple redefinition of a value, check to see if it
-    // is defined the same as the old one...
-    if (const Constant *C = dyn_cast<Constant>(Existing)) {
-      if (C == V) return true;      // Constants are equal to themselves
-    } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
+    // We are a simple redefinition of a value, check to see if it is defined
+    // the same as the old one...
+    if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
       // We are allowed to redefine a global variable in two circumstances:
       // 1. If at least one of the globals is uninitialized or 
       // 2. If both initializers have the same value.
@@ -529,34 +570,19 @@ static bool setValueName(Value *V, char *NameStr) {
           return true;   // They are equivalent!
         }
       }
+    } else if (const Constant *C = dyn_cast<Constant>(Existing)) {
+      if (C == V) return true;      // Constants are equal to themselves
     }
 
     ThrowException("Redefinition of value named '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
   }
-
-  // Set the name
-  V->setName(Name, &ST);
-
-  // If we're in function scope
-  if (inFunctionScope()) {
-    // Look up the symbol in the function's local symboltable
-    Existing = CurFun.LocalSymtab.lookup(V->getType(),Name);
-
-    // If it already exists
-    if (Existing) {
-      // Bail
-      ThrowException("Redefinition of value named '" + Name + "' in the '" +
-		   V->getType()->getDescription() + "' type plane!");
-
-    // otherwise, since it doesn't exist
-    } else {
-      // Insert it.
-      CurFun.LocalSymtab.insert(V);
-    }
-  }
+  
+  setValueNameInternal(V, Name, ST);
   return false;
 }
+
+
 
 // setTypeName - Set the specified type to the name given.  The name may be
 // null potentially, in which case this is a noop.  The string passed in is
@@ -1368,7 +1394,8 @@ FunctionList : FunctionList Function {
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign CONST ConstVal { 
-    if (!setValueName($4, $2))
+    // FIXME: THIS SHOULD REALLY BE ELIMINATED.  It is totally unneeded.
+    if (!setValueNameMergingDuplicates($4, $2))
       InsertValue($4);
   }
   | ConstPool OptAssign TYPE TypesV {  // Types can be defined in the const pool
@@ -1404,7 +1431,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
       ThrowException("Global value initializer is not a constant!");
     
     GlobalVariable *GV = new GlobalVariable(Ty, $4, $3, Initializer);
-    if (!setValueName(GV, $2)) {   // If not redefining...
+    if (!setValueNameMergingDuplicates(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
       int Slot = InsertValue(GV, CurModule.Values);
 
@@ -1420,7 +1447,7 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     const Type *Ty = *$5;
     // Global declarations appear in Constant Pool
     GlobalVariable *GV = new GlobalVariable(Ty,$4,GlobalValue::ExternalLinkage);
-    if (!setValueName(GV, $2)) {   // If not redefining...
+    if (!setValueNameMergingDuplicates(GV, $2)) {   // If not redefining...
       CurModule.CurrentModule->getGlobalList().push_back(GV);
       int Slot = InsertValue(GV, CurModule.Values);
 
@@ -1553,9 +1580,7 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
          I != $4->end(); ++I, ++ArgIt) {
       delete I->first;                          // Delete the typeholder...
 
-      if (setValueName(ArgIt, I->second))       // Insert arg into symtab...
-        assert(0 && "No arg redef allowed!");
-      
+      setValueName(ArgIt, I->second);           // Insert arg into symtab...
       InsertValue(ArgIt);
     }
 
@@ -1635,10 +1660,10 @@ ResolvedVal : Types ValueRef {
   };
 
 BasicBlockList : BasicBlockList BasicBlock {
-    ($$ = $1)->getBasicBlockList().push_back($2);
+    $$ = $1;
   }
   | FunctionHeader BasicBlock { // Do not allow functions with 0 basic blocks   
-    ($$ = $1)->getBasicBlockList().push_back($2);
+    $$ = $1;
   };
 
 
@@ -1646,7 +1671,7 @@ BasicBlockList : BasicBlockList BasicBlock {
 // br, br/cc, switch, ret
 //
 BasicBlock : InstructionList OptAssign BBTerminatorInst  {
-    if (setValueName($3, $2)) { assert(0 && "No redefn allowed!"); }
+    setValueName($3, $2);
     InsertValue($3);
 
     $1->getInstList().push_back($3);
@@ -1654,11 +1679,11 @@ BasicBlock : InstructionList OptAssign BBTerminatorInst  {
     $$ = $1;
   }
   | LABELSTR InstructionList OptAssign BBTerminatorInst  {
-    if (setValueName($4, $3)) { assert(0 && "No redefn allowed!"); }
+    setValueName($4, $3);
     InsertValue($4);
 
     $2->getInstList().push_back($4);
-    if (setValueName($2, $1)) { assert(0 && "No label redef allowed!"); }
+    setValueName($2, $1);
 
     InsertValue($2);
     $$ = $2;
@@ -1669,7 +1694,7 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    $$ = CurBB = new BasicBlock();
+    $$ = CurBB = new BasicBlock("", CurFun.CurrentFunction);
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
@@ -1782,7 +1807,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
 
 Inst : OptAssign InstVal {
   // Is this definition named?? if so, assign the name...
-  if (setValueName($2, $1)) { assert(0 && "No redefin allowed!"); }
+  setValueName($2, $1);
   InsertValue($2);
   $$ = $2;
 };
