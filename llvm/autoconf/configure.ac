@@ -432,7 +432,7 @@ dnl=== SECTION 9: Additional checks, variables, etc.
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-dnl See if the llvmgcc executable can compile to LLVM assembly
+dnl See if the llvm-gcc executable can compile to LLVM assembly
 AC_CACHE_CHECK([whether llvm-gcc is sane],[llvm_cv_llvmgcc_sanity],
 [llvm_cv_llvmgcc_sanity="no"
 if test -x "$LLVMGCC" ; then
@@ -444,7 +444,7 @@ if test -x "$LLVMGCC" ; then
   rm conftest.c
 fi])
 
-dnl Since we have a sane llvmgcc, identify it and its sub-tools 
+dnl Since we have a sane llvm-gcc, identify it and its sub-tools 
 if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
   AC_SUBST(LLVMCC1,$llvmcc1path)
@@ -546,7 +546,7 @@ AC_OUTPUT
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
- AC_MSG_WARN([***** llvmgcc/llvmg++ was not found, or does not appear to be ])
+ AC_MSG_WARN([***** llvm-gcc/llvm-g++ was not found, or does not appear to be ])
  AC_MSG_WARN([***** working. Please make sure you have llvmgcc and llvmg++ in])
  AC_MSG_WARN([***** your path before configuring LLVM. The runtime libraries])
  AC_MSG_WARN([***** (llvm/runtime) will not be built but you should be able to])
