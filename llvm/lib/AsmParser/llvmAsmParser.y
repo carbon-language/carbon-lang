@@ -463,21 +463,6 @@ static void ResolveTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
 }
 
 
-// ResolveSomeTypes - This goes through the forward referenced type table and
-// completes references that are now done.  This is so that types are
-// immediately resolved to be as concrete as possible.  This does not cause
-// thrown exceptions if not everything is resolved.
-//
-static void ResolveSomeTypes(vector<PATypeHolder<Type> > &LateResolveTypes) {
-  for (unsigned i = 0; i < LateResolveTypes.size(); ) {
-    if (ResolveType(LateResolveTypes[i]))
-      ++i;                                                // Type didn't resolve
-    else
-      LateResolveTypes.erase(LateResolveTypes.begin()+i); // Type resolved!
-  }
-}
-
-
 // setValueName - Set the specified value to the name given.  The name may be
 // null potentially, in which case this is a noop.  The string passed in is
 // assumed to be a malloc'd string buffer, and is freed by this function.
@@ -1041,11 +1026,9 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
         InsertType($4->get(),
                    inMethodScope() ? CurMeth.Types : CurModule.Types);
       }
-      delete $4;
-
-      ResolveSomeTypes(inMethodScope() ? CurMeth.LateResolveTypes :
-                       CurModule.LateResolveTypes);
     }
+
+    delete $4;
   }
   | ConstPool MethodProto {            // Method prototypes can be in const pool
   }
