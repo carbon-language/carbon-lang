@@ -1,7 +1,9 @@
 
-global %MyVar     = int *
-global %MyIntList = { \2 *, int } *
-global int *     ; int*:0
+%MyVar     = uninitialized global int
+%MyIntList = uninitialized global { \2 *, int }
+             uninitialized global int      ; int*:0
+
+%AConst    = constant int 123
 
 implementation
 
