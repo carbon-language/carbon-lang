@@ -2438,11 +2438,30 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
       assert(idx->getType() == Type::LongTy && "Bad GEP array index!");
 
       // If idx is a constant, fold it into the offset.
+      unsigned TypeSize = TD.getTypeSize(SqTy->getElementType());
       if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(idx)) {
-        Disp += TD.getTypeSize(SqTy->getElementType())*CSI->getValue();
+        Disp += TypeSize*CSI->getValue();
       } else {
-        // If we can't handle it, return.
-        return;
+        // If the index reg is already taken, we can't handle this index.
+        if (IndexReg) return;
+
+        // If this is a size that we can handle, then add the index as 
+        switch (TypeSize) {
+        case 1: case 2: case 4: case 8:
+          // These are all acceptable scales on X86.
+          Scale = TypeSize;
+          break;
+        default:
+          // Otherwise, we can't handle this scale
+          return;
+        }
+
+        if (CastInst *CI = dyn_cast<CastInst>(idx))
+          if (CI->getOperand(0)->getType() == Type::IntTy ||
+              CI->getOperand(0)->getType() == Type::UIntTy)
+            idx = CI->getOperand(0);
+
+        IndexReg = MBB ? getReg(idx, MBB, IP) : 1;
       }
 
       GEPOps.pop_back();        // Consume a GEP operand
@@ -2456,7 +2475,7 @@ void ISel::getGEPIndex(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
   // FIXME: When addressing modes are more powerful/correct, we could load
   // global addresses directly as 32-bit immediates.
   assert(BaseReg == 0);
-  BaseReg = MBB ? getReg(GEPOps[0], MBB, IP) : 0;
+  BaseReg = MBB ? getReg(GEPOps[0], MBB, IP) : 1;
   GEPOps.pop_back();        // Consume the last GEP operand
 }
 
@@ -2538,26 +2557,6 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       }
       break;                // we are now done
 
-    } else if (const StructType *StTy = dyn_cast<StructType>(GEPTypes.back())) {
-      // It's a struct access.  CUI is the index into the structure,
-      // which names the field. This index must have unsigned type.
-      const ConstantUInt *CUI = cast<ConstantUInt>(GEPOps.back());
-      GEPOps.pop_back();        // Consume a GEP operand
-      GEPTypes.pop_back();
-
-      // Use the TargetData structure to pick out what the layout of the
-      // structure is in memory.  Since the structure index must be constant, we
-      // can get its value and use it to find the right byte offset from the
-      // StructLayout class's list of structure member offsets.
-      unsigned idxValue = CUI->getValue();
-      unsigned FieldOff = TD.getStructLayout(StTy)->MemberOffsets[idxValue];
-      if (FieldOff) {
-        unsigned Reg = makeAnotherReg(Type::UIntTy);
-        // Emit an ADD to add FieldOff to the basePtr.
-        BMI(MBB, IP, X86::ADDri32, 2, TargetReg).addReg(Reg).addZImm(FieldOff);
-        --IP;            // Insert the next instruction before this one.
-        TargetReg = Reg; // Codegen the rest of the GEP into this
-      }
     } else {
       // It's an array or pointer access: [ArraySize x ElementType].
       const SequentialType *SqTy = cast<SequentialType>(GEPTypes.back());
