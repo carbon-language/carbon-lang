@@ -19,3 +19,13 @@ bool %test2(int %A, int %B) {
 	%Ret = xor bool %cond, true
 	ret bool %Ret
 }
+
+
+; Test that demorgans law can be instcombined
+int %test3(int %A, int %B) {
+	%a = xor int %A, -1
+	%b = xor int %B, -1
+	%c = and int %a, %b
+	%d = xor int %c, -1
+	ret int %d
+}
