@@ -142,15 +142,25 @@ I(MOVrm32     , "mov",  0x89,             0, X86II::MRMDestMem | X86II::Void |
 // Arithmetic instructions
 I(ADDrr8      , "add",  0x00, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  += R8
 I(ADDrr16     , "add",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 += R16
-I(ADDrr32     , "add",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 += R32
-I(ADDri32     , "add",  0x81, M_2_ADDR_FLAG, X86II::MRMS0r | X86II::Arg32, NoIR, NoIR)      // R32 += imm32
+I(ADDrr32     , "add",  0x01, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::Arg32, NoIR, NoIR)  // R32 += R32
+
+I(ADDri8      , "add",  0x80, M_2_ADDR_FLAG, X86II::MRMS0r     | X86II::Arg8, NoIR, NoIR)  // R8  += imm8
+I(ADDri16     , "add",  0x81, M_2_ADDR_FLAG, X86II::MRMS0r     | X86II::OpSize | X86II::Arg16, NoIR, NoIR) // R16 += imm16
+I(ADDri32     , "add",  0x81, M_2_ADDR_FLAG, X86II::MRMS0r     | X86II::Arg32, NoIR, NoIR)  // R32 += imm32
+
 I(ADCrr32     , "adc",  0x11, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::Arg32, NoIR, NoIR)  // R32 += R32 + Carry
 
 I(SUBrr8      , "sub",  0x28, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  -= R8
 I(SUBrr16     , "sub",  0x29, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 -= R16
 I(SUBrr32     , "sub",  0x29, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 -= R32
+
+I(SUBri8      , "sub",  0x80, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg8 , NoIR, NoIR)      // R8  -= imm8
+I(SUBri16     , "sub",  0x81, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::OpSize | X86II::Arg16, NoIR, NoIR)  // R16 -= imm16
 I(SUBri32     , "sub",  0x81, M_2_ADDR_FLAG, X86II::MRMS5r | X86II::Arg32, NoIR, NoIR)      // R32 -= imm32
+
 I(SBBrr32     , "sbb",  0x19, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::Arg32, NoIR, NoIR)  // R32 -= R32 + Carry
+
+
 I(MULr8       , "mul",  0xF6,             0, X86II::MRMS4r | X86II::Void, O_AL, O_AX)       // AX   = AL*R8
 I(MULr16      , "mul",  0xF7,             0, X86II::MRMS4r | X86II::Void |                  // DX:AX= AX*R16
                                               X86II::OpSize, O_AX, T_AXDX)
@@ -174,13 +184,24 @@ I(IDIVr32     , "idiv", 0xF7,             0, X86II::MRMS7r | X86II::Void, T_EAXE
 I(ANDrr8      , "and",   0x20, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  &= R8
 I(ANDrr16     , "and",   0x21, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 &= R16
 I(ANDrr32     , "and",   0x21, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 &= R32
+I(ANDri8      , "and",   0x80, M_2_ADDR_FLAG, X86II::MRMS4r     | X86II::Arg8 , NoIR, NoIR)  // R8  &= imm8
+I(ANDri16     , "and",   0x81, M_2_ADDR_FLAG, X86II::MRMS4r     | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // R16 &= imm16
 I(ANDri32     , "and",   0x81, M_2_ADDR_FLAG, X86II::MRMS4r     | X86II::Arg32, NoIR, NoIR)  // R32 &= imm32
+
+
 I(ORrr8       , "or",    0x08, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  |= R8
 I(ORrr16      , "or",    0x09, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 |= R16
 I(ORrr32      , "or",    0x09, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 |= R32
+I(ORri8       , "or",    0x80, M_2_ADDR_FLAG, X86II::MRMS1r     | X86II::Arg8 , NoIR, NoIR)  // R8  |= imm8
+I(ORri16      , "or",    0x81, M_2_ADDR_FLAG, X86II::MRMS1r     | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // R16 |= imm16
+I(ORri32      , "or",    0x81, M_2_ADDR_FLAG, X86II::MRMS1r     | X86II::Arg32, NoIR, NoIR)  // R32 |= imm32
+
 I(XORrr8      , "xor",   0x30, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R8  ^= R8
 I(XORrr16     , "xor",   0x31, M_2_ADDR_FLAG, X86II::MRMDestReg | X86II::OpSize, NoIR, NoIR) // R16 ^= R16
 I(XORrr32     , "xor",   0x31, M_2_ADDR_FLAG, X86II::MRMDestReg, NoIR, NoIR)                 // R32 ^= R32
+I(XORri8      , "xor",   0x80, M_2_ADDR_FLAG, X86II::MRMS6r     | X86II::Arg8 , NoIR, NoIR)  // R8  ^= imm8
+I(XORri16     , "xor",   0x81, M_2_ADDR_FLAG, X86II::MRMS6r     | X86II::Arg16 | X86II::OpSize, NoIR, NoIR)  // R16 ^= imm16
+I(XORri32     , "xor",   0x81, M_2_ADDR_FLAG, X86II::MRMS6r     | X86II::Arg32, NoIR, NoIR)  // R32 ^= imm32
 
 // test instructions are just like and, except they don't generate a result (but
 // they do set flags).
