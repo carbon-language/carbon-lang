@@ -307,7 +307,8 @@ bool FunctionResolvingPass::run(Module &M) {
     if (F->use_empty() && F->isExternal()) {
       M.getFunctionList().erase(F);
       Changed = true;
-    } else if (!F->hasInternalLinkage() && !F->getName().empty())
+    } else if (!F->hasInternalLinkage() && !F->getName().empty() &&
+               !F->getIntrinsicID())
       Globals[F->getName()].push_back(F);
   }
 
