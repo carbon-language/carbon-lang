@@ -35,7 +35,7 @@ IMPREGSLIST(O_EDX, X86::EDX, 0)
 IMPREGSLIST(O_EBP, X86::EBP, 0)
 IMPREGSLIST(T_AXDX  , X86::AX , X86::DX , 0)
 IMPREGSLIST(T_EAXEDX, X86::EAX, X86::EDX, 0)
-
+IMPREGSLIST(C_CLOBBER, X86::EAX, X86::ECX, X86::EDX, 0)  // Callee clobber regs
 #undef IMPREGSLIST
 
 
@@ -67,9 +67,9 @@ I(JE          , "je",    0x84, M_BRANCH_FLAG, X86II::RawFrm | X86II::TB | X86II:
                                                                                        NoIR) // je foo
 I(CALLpcrel32 , "call",  0xE8, M_BRANCH_FLAG, X86II::Void, NoIR, NoIR)                       // call pc+42
 I(CALLr32     , "call",  0xFF, M_BRANCH_FLAG, X86II::Void | X86II::MRMS2r | X86II::Arg32,
-                                              NoIR, NoIR)                                    // call [r32]
+                                              NoIR, C_CLOBBER)                               // call [r32]
 I(CALLm32     , "call",  0xFF, M_BRANCH_FLAG, X86II::Void | X86II::MRMS2m | X86II::Arg32,
-                                              NoIR, NoIR)                                    // call [m32]
+                                              NoIR, C_CLOBBER)                               // call [m32]
 
 // Misc instructions
 I(LEAVE       , "leave", 0xC9,             0, X86II::RawFrm, O_EBP, O_EBP)                   // leave
