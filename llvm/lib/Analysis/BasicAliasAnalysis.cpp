@@ -290,7 +290,7 @@ BasicAliasAnalysis::CheckGEPInstructions(GetElementPtrInst *GEP1, unsigned G1S,
       if (isa<Constant>(Op2))
         Indices2.push_back((Value*)Op2);
       else // Conservatively assume the minimum value for this index
-        Indices2.push_back(Constant::getNullValue(Op1->getType()));
+        Indices2.push_back(Constant::getNullValue(Op2->getType()));
     }
   }
   
