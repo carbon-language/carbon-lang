@@ -800,11 +800,11 @@ SourceDepend := $(SourceBaseNames:%=$(BUILD_OBJ_DIR)/Depend/%.d)
 
 # Create dependencies for the *.cpp files...
 $(BUILD_OBJ_DIR)/Depend/%.d: %.cpp $(BUILD_OBJ_DIR)/Depend/.dir
-	$(VERB) $(Depend) $< | $(SED) 's|\.o|\.lo|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
+	$(VERB) $(Depend) $< | $(SED) 's|\.o$$|\.lo|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
 
 # Create dependencies for the *.c files...
 $(BUILD_OBJ_DIR)/Depend/%.d: %.c $(BUILD_OBJ_DIR)/Depend/.dir
-	$(VERB) $(DependC) -o $@ $< | $(SED) 's|\.o|\.lo|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
+	$(VERB) $(DependC) -o $@ $< | $(SED) 's|\.o$$|\.lo|' | $(SED) 's|$*\.lo *|$(BUILD_OBJ_DIR)/Release/& $(BUILD_OBJ_DIR)/Profile/& $(BUILD_OBJ_DIR)/Debug/& $(BUILD_OBJ_DIR)/Depend/$(@F)|g' > $@
 
 #
 # Autoconf Dependencies.
