@@ -586,6 +586,8 @@ static string getAsCString(const ConstantArray *CVA) {
 
     if (C == '"') {
       Result += "\\\"";
+    } else if (C == '\\') {
+      Result += "\\\\";
     } else if (isprint(C)) {
       Result += C;
     } else {
