@@ -1,0 +1,27 @@
+/*
+ * LLVM website style sheet
+ */
+
+/* Common styles */
+.body { text: black; background: white; margin: 0 0 0 0 }
+
+/* 
+ * Documentation 
+ */
+/* Common for title and header */
+.doc_title, .doc_section, .doc_subsection { 
+  color: #eeeeff; background: #330077;
+  font-family: "Georgia,Palatino,Times,Roman"; font-weight: bold;
+  padding-left: 8pt
+}
+
+.doc_title      { text-align: left;   font-size: 25pt }
+.doc_section    { text-align: center; font-size: 22pt }
+.doc_subsection { background: #441188; width: 50%;
+                  text-align: left;   font-size: 12pt; padding: 4 4 4 22 }
+.doc_text       { text-align: left;   padding-left: 20pt }
+
+/* Publications */
+.pub_title  { font-family: "Georgia,Palatino,Times,Roman"; font-size: 24pt; 
+              text-align: center }
+.pub_author { font-size: 14pt; text-align: center }
