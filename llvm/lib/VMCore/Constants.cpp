@@ -1109,13 +1109,21 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
 
-  if (ReqTy == C1->getType())
+  if (ReqTy == C1->getType() || (Instruction::isRelational(Opcode) &&
+                                 ReqTy == Type::BoolTy))
     if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
       return FC;          // Fold a few common cases...
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key = std::make_pair(Opcode, argVec);
   return ExprConstants.getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+  if (Instruction::isRelational(Opcode))
+    return getTy(Type::BoolTy, Opcode, C1, C2);
+  else
+    return getTy(C1->getType(), Opcode, C1, C2);
 }
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
