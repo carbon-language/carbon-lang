@@ -32,6 +32,28 @@ static int ParseInt(const char *Str) {
 
 static int CommentDepth = 0;
 
+int Fileparse();
+
+void ParseFile(const std::string &Filename) {
+  FILE *F = stdin;
+  if (Filename != "-") {
+    F = fopen(Filename.c_str(), "r");
+
+    if (F == 0) {
+      std::cerr << "Could not open input file '" + Filename + "'!\n";
+      abort();
+    }
+  }
+
+  Filein = F;
+  Filelineno = 1;
+  Fileparse();
+
+  if (F != stdin)
+    fclose(F);
+  Filein = stdin;
+}
+
 %}
 
 Comment     \/\/.*

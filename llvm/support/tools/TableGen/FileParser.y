@@ -7,43 +7,19 @@
 %{
 #include "Record.h"
 #include "Support/StringExtras.h"
-#include <iostream>
 #include <algorithm>
 #include <cstdio>
 #define YYERROR_VERBOSE 1
 
 int yyerror(const char *ErrorMsg);
 int yylex();
-extern FILE *Filein;
 extern int Filelineno;
-int Fileparse();
 static Record *CurRec = 0;
 
 typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 
 static std::vector<std::pair<std::pair<std::string, std::vector<unsigned>*>,
                              Init*> > SetStack;
-
-void ParseFile(const std::string &Filename) {
-  FILE *F = stdin;
-  if (Filename != "-") {
-    F = fopen(Filename.c_str(), "r");
-
-    if (F == 0) {
-      std::cerr << "Could not open input file '" + Filename + "'!\n";
-      abort();
-    }
-  }
-
-
-  Filein = F;
-  Filelineno = 1;
-  Fileparse();
-
-  if (F != stdin)
-    fclose(F);
-  Filein = stdin;
-}
 
 static std::ostream &err() {
   return std::cerr << "Parsing Line #" << Filelineno << ": ";
