@@ -1690,14 +1690,23 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   unsigned Class = getClassB(Op0->getType());
 
   // sub 0, X -> neg X
-  if (OperatorClass == 1 && Class != cLong)
+  if (OperatorClass == 1)
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) {
       if (CI->isNullValue()) {
         unsigned op1Reg = getReg(Op1, MBB, IP);
         static unsigned const NEGTab[] = {
-          X86::NEG8r, X86::NEG16r, X86::NEG32r
+          X86::NEG8r, X86::NEG16r, X86::NEG32r, 0, X86::NEG32r
         };
         BuildMI(*MBB, IP, NEGTab[Class], 1, DestReg).addReg(op1Reg);
+
+        if (Class == cLong) {
+          // We just emitted: Dl = neg Sl
+          // Now emit       : T  = addc Sh, 0
+          //                : Dh = neg T
+          unsigned T = makeAnotherReg(Type::IntTy);
+          BuildMI(*MBB, IP, X86::ADC32ri, 2, T).addReg(op1Reg+1).addImm(0);
+          BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg+1).addReg(T);
+        }
         return;
       }
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
