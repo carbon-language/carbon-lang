@@ -430,3 +430,12 @@ def FUCOMPPr  : X86Inst<"fucompp", 0xE9, RawFrm   , ArgF80>, DA, Imp<[ST0],[]>; 
 def FNSTSWr8  : X86Inst<"fnstsw" , 0xE0, RawFrm   , ArgF80>, DF, Imp<[],[AX]>;   // AX = fp flags
 def FNSTCWm16 : X86Inst<"fnstcw" , 0xD9, MRMS7m   , Arg16 >;                     // [mem16] = X87 control world
 def FLDCWm16  : X86Inst<"fldcw"  , 0xD9, MRMS5m   , Arg16 >;                     // X87 control world = [mem16]
+
+
+//===----------------------------------------------------------------------===//
+//  Instruction Expanders
+//
+
+def RET_R32 : Expander<(ret R32:$reg),
+                       [(MOVrr32 EAX, R32:$reg),
+                        (RET)]>;
