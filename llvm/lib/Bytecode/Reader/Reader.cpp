@@ -420,7 +420,7 @@ Module *ParseBytecodeFile(const string &Filename) {
   Module *Result = 0;
 
   if (Filename != string("-")) {        // Read from a file...
-    int FD = open(Filename.data(), O_RDONLY);
+    int FD = open(Filename.c_str(), O_RDONLY);
     if (FD == -1) return 0;
 
     if (fstat(FD, &StatBuf) == -1) { close(FD); return 0; }
