@@ -122,13 +122,13 @@ static inline void output(const std::string &s, std::deque<unsigned char> &Out,
     align32(Out);                   // Make sure we are now aligned...
 }
 
-static inline void output_data(void *Ptr, void *End,
+static inline void output_data(const void *Ptr, const void *End,
                                std::deque<unsigned char> &Out,
                                bool Align = false) {
 #ifdef ENDIAN_LITTLE
-  Out.insert(Out.end(), (unsigned char*)Ptr, (unsigned char*)End);
+  Out.insert(Out.end(), (const unsigned char*)Ptr, (const unsigned char*)End);
 #else
-  unsigned char *E = (unsigned char *)End;
+  const unsigned char *E = (const unsigned char *)End;
   while (Ptr != E)
     Out.push_back(*--E);
 #endif
