@@ -386,17 +386,29 @@ bool LiveIntervals::Interval::liveAt(unsigned index) const
 
 bool LiveIntervals::Interval::overlaps(const Interval& other) const
 {
-    std::vector<bool> bitMap(end(), false);
-    for (Ranges::const_iterator r = ranges.begin(); r != ranges.end(); ++r) {
-        for (unsigned i = r->first; i < r->second; ++i)
-            bitMap[i] = true;
-    }
-    for (Ranges::const_iterator r = other.ranges.begin();
-         r != other.ranges.end(); ++r) {
-        for (unsigned i = r->first;
-             i < r->second && i < bitMap.size(); ++i)
-            if (bitMap[i])
+    Ranges::const_iterator i = ranges.begin();
+    Ranges::const_iterator j = other.ranges.begin();
+
+    while (i != ranges.end() && j != other.ranges.end()) {
+        if (i->first < j->first) {
+            if (i->second > j->first) {
                 return true;
+            }
+            else {
+                ++i;
+            }
+        }
+        else if (j->first < i->first) {
+            if (j->second > i->first) {
+                return true;
+            }
+            else {
+                ++j;
+            }
+        }
+        else {
+            return true;
+        }
     }
 
     return false;
