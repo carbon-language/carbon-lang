@@ -116,6 +116,8 @@ namespace {
     Instruction *visitSetCondInstWithCastAndConstant(BinaryOperator&I,
                                                      CastInst*LHSI,
                                                      ConstantInt* CI);
+    Instruction *FoldGEPSetCC(User *GEPLHS, Value *RHS,
+                              Instruction::BinaryOps Cond, Instruction &I);
     Instruction *visitShiftInst(ShiftInst &I);
     Instruction *visitCastInst(CastInst &CI);
     Instruction *visitSelectInst(SelectInst &CI);
@@ -345,6 +347,16 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
         }
     }
   return 0;
+}
+
+/// dyn_castGetElementPtr - If this is a getelementptr instruction or constant
+/// expression, return it.
+static User *dyn_castGetElementPtr(Value *V) {
+  if (isa<GetElementPtrInst>(V)) return cast<User>(V);
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::GetElementPtr)
+      return cast<User>(V);
+  return false;
 }
 
 // Log2 - Calculate the log base 2 for the specified value if it is exactly a
@@ -2078,6 +2090,91 @@ static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
          cast<ConstantSInt>(In1)->getValue();
 }
 
+/// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
+/// code necessary to compute the offset from the base pointer (without adding
+/// in the base pointer).  Return the result as a signed integer of intptr size.
+static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
+  TargetData &TD = IC.getTargetData();
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  const Type *UIntPtrTy = TD.getIntPtrType();
+  const Type *SIntPtrTy = UIntPtrTy->getSignedVersion();
+  Value *Result = Constant::getNullValue(SIntPtrTy);
+
+  // Build a mask for high order bits.
+  uint64_t PtrSizeMask = ~0ULL;
+  PtrSizeMask >>= 64-(TD.getPointerSize()*8);
+
+  ++GTI;   // Measure type stepping over.
+  for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
+    Value *Op = GEP->getOperand(i);
+    uint64_t Size = TD.getTypeSize(*GTI) & PtrSizeMask;
+    Constant *Scale = ConstantExpr::getCast(ConstantUInt::get(UIntPtrTy, Size),
+                                            SIntPtrTy);
+    if (Constant *OpC = dyn_cast<Constant>(Op)) {
+      if (!OpC->isNullValue()) {
+        Scale = ConstantExpr::getMul(OpC, Scale);
+        if (Constant *RC = dyn_cast<Constant>(Result))
+          Result = ConstantExpr::getAdd(RC, Scale);
+        else {
+          // Emit an add instruction.
+          Result = IC.InsertNewInstBefore(
+             BinaryOperator::createAdd(Result, Scale,
+                                       GEP->getName()+".offs"), I);
+        }
+      }
+    } else {
+      // We'll let instcombine(mul) convert this to a shl if possible.
+      Value *Offs = 
+        IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
+                                                   GEP->getName()+".idx"), I);
+
+      // Emit an add instruction.
+      Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Offs, Result,
+                                                    GEP->getName()+".offs"), I);
+    }
+  }
+  return Result;
+}
+
+/// FoldGEPSetCC - Fold comparisons between a GEP instruction and something
+/// else.  At this point we know that the GEP is on the LHS of the comparison.
+Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
+                                        Instruction::BinaryOps Cond,
+                                        Instruction &I) {
+  assert(dyn_castGetElementPtr(GEPLHS) && "LHS is not a getelementptr!");
+                                             
+  Value *PtrBase = GEPLHS->getOperand(0);
+  if (PtrBase == RHS) {
+    // As an optimization, we don't actually have to compute the actual value of
+    // OFFSET if this is a seteq or setne comparison, just return whether each
+    // index is zero or not.
+
+    // Only lower this if the setcc is the only user of the GEP or if we expect
+    // the result to fold to a constant!
+    if (isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) {
+      // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
+      Value *Offset = EmitGEPOffset(GEPLHS, I, *this);
+      return new SetCondInst(Cond, Offset,
+                             Constant::getNullValue(Offset->getType()));
+    }
+  } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
+    if (PtrBase != GEPRHS->getOperand(0))
+      return 0;
+
+    // Only lower this if the setcc is the only user of the GEP or if we expect
+    // the result to fold to a constant!
+    if ((isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) &&
+        (isa<ConstantExpr>(GEPRHS) || GEPRHS->hasOneUse())) {
+      // ((gep Ptr, OFFSET1) cmp (gep Ptr, OFFSET2)  --->  (OFFSET1 cmp OFFSET2)
+      Value *L = EmitGEPOffset(GEPLHS, I, *this);
+      Value *R = EmitGEPOffset(GEPRHS, I, *this);
+      return new SetCondInst(Cond, L, R);
+    }
+  }
+  return 0;
+}
+
+
 Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -2624,6 +2721,15 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       }
     }
   }
+
+  // If we can optimize a 'setcc GEP, P' or 'setcc P, GEP', do so now.
+  if (User *GEP = dyn_castGetElementPtr(Op0))
+    if (Instruction *NI = FoldGEPSetCC(GEP, Op1, I.getOpcode(), I))
+      return NI;
+  if (User *GEP = dyn_castGetElementPtr(Op1))
+    if (Instruction *NI = FoldGEPSetCC(GEP, Op0,
+                           SetCondInst::getSwappedCondition(I.getOpcode()), I))
+      return NI;
 
   // Test to see if the operands of the setcc are casted versions of other
   // values.  If the cast can be stripped off both arguments, we do so now.
@@ -3951,12 +4057,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   std::vector<Value*> SrcGEPOperands;
-  if (GetElementPtrInst *Src = dyn_cast<GetElementPtrInst>(PtrOp)) {
+  if (User *Src = dyn_castGetElementPtr(PtrOp))
     SrcGEPOperands.assign(Src->op_begin(), Src->op_end());
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(PtrOp)) {
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      SrcGEPOperands.assign(CE->op_begin(), CE->op_end());
-  }
 
   if (!SrcGEPOperands.empty()) {
     // Note that if our source is a gep chain itself that we wait for that
@@ -4079,7 +4181,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
                 GEP.setOperand(0, X);
                 return &GEP;
               }
-      } else if (GEP.getNumOperands() == 2) {
+      } else if (GEP.getNumOperands() == 2 &&
+                 isa<PointerType>(CE->getOperand(0)->getType())) {
         // Transform things like:
         // %t = getelementptr ubyte* cast ([2 x sbyte]* %str to ubyte*), uint %V
         // into:  %t1 = getelementptr [2 x sbyte*]* %str, int 0, uint %V; cast
