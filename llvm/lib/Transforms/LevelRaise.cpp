@@ -36,6 +36,7 @@
 #include "llvm/iMemory.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Optimizations/ConstantHandling.h"
 #include <map>
 #include <algorithm>
 
@@ -70,8 +71,8 @@ const TargetData TD("LevelRaise: Should be GCC though!");
 // another without gaining or losing precision, or altering the bits in any way.
 //
 static bool losslessCastableTypes(const Type *T1, const Type *T2) {
-  assert(T1->isPrimitiveType() || isa<PointerType>(T1));
-  assert(T2->isPrimitiveType() || isa<PointerType>(T2));
+  if (!T1->isPrimitiveType() && !isa<PointerType>(T1)) return false;
+  if (!T2->isPrimitiveType() && !isa<PointerType>(T2)) return false;
 
   if (T1->getPrimitiveID() == T2->getPrimitiveID())
     return true;  // Handles identity cast, and cast of differing pointer types
@@ -195,7 +196,16 @@ static void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 // ExpressionConvertableToType - Return true if it is possible
 static bool ExpressionConvertableToType(Value *V, const Type *Ty) {
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0) return false;              // Noninstructions can't convert
+  if (I == 0) {
+    // It's not an instruction, check to see if it's a constant... all constants
+    // can be converted to an equivalent value (except pointers, they can't be
+    // const prop'd in general).
+    //
+    if (isa<ConstPoolVal>(V) &&
+        !isa<PointerType>(V->getType()) && !isa<PointerType>(Ty)) return true;
+
+    return false;              // Otherwise, we can't convert!
+  }
   if (I->getType() == Ty) return false;  // Expression already correct type!
 
   switch (I->getOpcode()) {
@@ -216,9 +226,20 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty) {
 }
 
 
-static Instruction *ConvertExpressionToType(Value *V, const Type *Ty) {
-  Instruction *I = cast<Instruction>(V);
-  assert(ExpressionConvertableToType(I, Ty) && "Inst is not convertable!");
+static Value *ConvertExpressionToType(Value *V, const Type *Ty) {
+  assert(ExpressionConvertableToType(V, Ty) && "Value is not convertable!");
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0)
+    if (ConstPoolVal *CPV = cast<ConstPoolVal>(V)) {
+      // Constants are converted by constant folding the cast that is required.
+      // We assume here that all casts are implemented for constant prop.
+      Value *Result = opt::ConstantFoldCastInstruction(CPV, Ty);
+      if (!Result) cerr << "Couldn't fold " << CPV << " to " << Ty << endl;
+      assert(Result && "ConstantFoldCastInstruction Failed!!!");
+      return Result;
+    }
+
+
   BasicBlock *BB = I->getParent();
   BasicBlock::InstListType &BIL = BB->getInstList();
   string Name = I->getName();  if (!Name.empty()) I->setName("");
@@ -438,6 +459,7 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
 
 static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = *BI;
+  // TODO: replace this with a DCE call
   if (I->use_size() == 0 && I->getType() != Type::VoidTy) return false;
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
@@ -451,7 +473,8 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       CI->replaceAllUsesWith(Src);
       if (!Src->hasName() && CI->hasName()) {
         string Name = CI->getName();
-        CI->setName(""); Src->setName(Name);
+        CI->setName(""); Src->setName(Name, 
+                                      BB->getParent()->getSymbolTable());
       }
       return true;
     }
@@ -473,10 +496,10 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
     // Check to see if it's a cast of an instruction that does not depend on the
     // specific type of the operands to do it's job.
-    if (SrcI && !isReinterpretingCast(CI) && 
-        ExpressionConvertableToType(SrcI, DestTy)) {
-      PRINT_PEEPHOLE2("EXPR-CONV:in ", CI, SrcI);
-      CI->setOperand(0, ConvertExpressionToType(SrcI, DestTy));
+    if (!isReinterpretingCast(CI) && 
+        ExpressionConvertableToType(Src, DestTy)) {
+      PRINT_PEEPHOLE2("EXPR-CONV:in ", CI, Src);
+      CI->setOperand(0, ConvertExpressionToType(Src, DestTy));
       BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
       PRINT_PEEPHOLE2("EXPR-CONV:out", CI, CI->getOperand(0));
       return true;
@@ -489,6 +512,12 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     Value *Val     = SI->getOperand(0);
     Value *Pointer = SI->getPtrOperand();
     
+    // Peephole optimize the following instructions:
+    // %t1 = getelementptr {<...>} * %StructPtr, <element indices>
+    // store <elementty> %v, <elementty> * %t1
+    //
+    // Into: store <elementty> %v, {<...>} * %StructPtr, <element indices>
+    //
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Pointer)) {
       PRINT_PEEPHOLE2("gep-store:in", GEP, SI);
       ReplaceInstWithInst(BB->getInstList(), BI,
@@ -497,10 +526,46 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       PRINT_PEEPHOLE1("gep-store:out", SI);
       return true;
     }
+    
+    // Peephole optimize the following instructions:
+    // %t = cast <T1>* %P to <T2> * ;; If T1 is losslessly convertable to T2
+    // store <T2> %V, <T2>* %t
+    //
+    // Into: 
+    // %t = cast <T2> %V to <T1>
+    // store <T1> %t2, <T1>* %P
+    //
+    if (CastInst *CI = dyn_cast<CastInst>(Pointer))
+      if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
+        if (PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
+          if (losslessCastableTypes(Val->getType(), // convertable types!
+                                    CSPT->getValueType()) &&
+              !SI->hasIndices()) {      // No subscripts yet!
+            PRINT_PEEPHOLE3("st-src-cast:in ", Pointer, Val, SI);
+
+            // Insert the new T cast instruction... stealing old T's name
+            CastInst *NCI = new CastInst(Val, CSPT->getValueType(),
+                                         CI->getName());
+            CI->setName("");
+            BI = BB->getInstList().insert(BI, NCI)+1;
+
+            // Replace the old store with a new one!
+            ReplaceInstWithInst(BB->getInstList(), BI,
+                                SI = new StoreInst(NCI, CastSrc));
+            PRINT_PEEPHOLE3("st-src-cast:out", NCI, CastSrc, SI);
+            return true;
+          }
+
 
   } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     Value *Pointer = LI->getPtrOperand();
     
+    // Peephole optimize the following instructions:
+    // %t1 = getelementptr {<...>} * %StructPtr, <element indices>
+    // %V  = load <elementty> * %t1
+    //
+    // Into: load {<...>} * %StructPtr, <element indices>
+    //
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Pointer)) {
       PRINT_PEEPHOLE2("gep-load:in", GEP, LI);
       ReplaceInstWithInst(BB->getInstList(), BI,
