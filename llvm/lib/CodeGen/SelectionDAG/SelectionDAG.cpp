@@ -511,6 +511,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   unsigned OpOpcode = Operand.Val->getOpcode();
   switch (Opcode) {
+  case ISD::TokenFactor:
+    return Operand;         // Factor of one node?  No factor.
   case ISD::SIGN_EXTEND:
     if (Operand.getValueType() == VT) return Operand;   // noop extension
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
