@@ -112,7 +112,7 @@ bool WriteSymbolTable(std::ofstream &ArchiveFile) {
 
   //Name of symbol table is '/'
   Hdr.name[0] = '/';
-  Hdr.name[1] = '/0';
+  Hdr.name[1] = '\0';
   
   //Set the header trailer to a newline
   memcpy(Hdr.fmag,ARFMAG,sizeof(ARFMAG));
