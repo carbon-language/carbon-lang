@@ -1,4 +1,4 @@
-#===-- Makefile.common - Common make rules for LLVM -------*- makefile -*--====
+#===-- Makefile.rules - Common make rules for LLVM -------*- makefile -*--====
 #
 # This file is included by all of the LLVM makefiles.  This file defines common
 # rules to do things like compile a .cpp file or generate dependency info.
@@ -86,12 +86,12 @@ bytecode::
 
 # Print out the directories used for building
 prdirs::
-	@echo "Build Source Root: " $(BUILD_SRC_ROOT)
-	@echo "Build Source Dir : " $(BUILD_SRC_DIR)
-	@echo "Build Object Root: " $(BUILD_OBJ_ROOT)
-	@echo "Build Object Dir : " $(BUILD_OBJ_DIR)
-	@echo "LLVM  Source Root: " $(LLVM_SRC_ROOT)
-	@echo "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
+	@${ECHO} "Build Source Root: " $(BUILD_SRC_ROOT)
+	@${ECHO} "Build Source Dir : " $(BUILD_SRC_DIR)
+	@${ECHO} "Build Object Root: " $(BUILD_OBJ_ROOT)
+	@${ECHO} "Build Object Dir : " $(BUILD_OBJ_DIR)
+	@${ECHO} "LLVM  Source Root: " $(LLVM_SRC_ROOT)
+	@${ECHO} "LLVM  Object Root: " $(LLVM_OBJ_ROOT)
 
 ###########################################################################
 # Suffixes and implicit rules:
@@ -451,7 +451,7 @@ bytecodelib:: $(LIBNAME_BC)
 bytecodelib-install:: $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc
 
 $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc: $(LIBNAME_BC)
-	@echo ======= Installing $(LIBRARYNAME) bytecode library =======
+	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======
 	cp $< $@
 
 # Does the library want a .o version built?
@@ -482,23 +482,23 @@ endif
 
 # Rule for building bytecode libraries.
 $(LIBNAME_BC): $(ObjectsBC) $(LibSubDirs) $(DESTLIBBYTECODE)/.dir
-	@echo ======= Linking $(LIBRARYNAME) bytecode library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) bytecode library =======
 	$(VERB) $(LinkBCLib) -o $@ $(ObjectsBC) $(LibSubDirs) $(LibLinkOpts)
 #
 # Rules for building dynamically linked libraries.
 #
 $(LIBNAME_O): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@echo ======= Linking $(LIBRARYNAME) dynamic release library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) dynamic release library =======
 	$(VERB) $(Link) -o $*.la $(ObjectsO) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 
 $(LIBNAME_P): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@echo ======= Linking $(LIBRARYNAME) dynamic profile library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) dynamic profile library =======
 	$(VERB) $(Link) -o $*.la $(ObjectsP) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 
 $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@echo ======= Linking $(LIBRARYNAME) dynamic debug library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) dynamic debug library =======
 	$(VERB) $(Link) -o $*.la $(ObjectsG) $(LibSubDirs) $(LibLinkOpts)
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 
@@ -506,17 +506,17 @@ $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 # Rules for building static archive libraries.
 #
 $(LIBNAME_AO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@echo ======= Linking $(LIBRARYNAME) archive release library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) archive release library =======
 	@$(RM) -f $@
 	$(VERB) $(Link) -03 -o $@ $(ObjectsO) $(LibSubDirs) -static
 
 $(LIBNAME_AP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@echo ======= Linking $(LIBRARYNAME) archive profile library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) archive profile library =======
 	@$(RM) -f $@
 	$(VERB) $(Link) -03 $(PROFILE) -o $@ $(ObjectsP) $(LibSubDirs) -static
 
 $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@echo ======= Linking $(LIBRARYNAME) archive debug library =======
+	@${ECHO} ======= Linking $(LIBRARYNAME) archive debug library =======
 	@$(RM) -f $@
 	$(VERB) $(Link) -g $(STRIP) -o $@ $(ObjectsG) $(LibSubDirs) -static
 
@@ -536,15 +536,15 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 #	I think that is safe.
 #
 $(LIBNAME_OBJO): $(ObjectsO) $(LibSubDirs) $(DESTLIBRELEASE)/.dir
-	@echo "Linking `basename $@`"
+	@${ECHO} "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsO) $(LibSubDirs)
 
 $(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
-	@echo "Linking `basename $@`"
+	@${ECHO} "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsP) $(LibSubDirs)
 
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
-	@echo "Linking `basename $@`"
+	@${ECHO} "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsG) $(LibSubDirs)
 
 endif
@@ -629,15 +629,15 @@ clean::
 	$(VERB) $(RM) -f $(TOOLEXENAMES)
 
 $(TOOLEXENAME_G): $(ObjectsG) $(USED_LIB_PATHS_G) $(DESTTOOLDEBUG)/.dir
-	@echo ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
+	@${ECHO} ======= Linking $(TOOLNAME) debug executable $(STRIP_WARN_MSG) =======
 	$(VERB) $(LinkG) -o $@ $(ObjectsG) $(LIB_OPTS_G) $(LINK_OPTS) $(LIBS)
 
 $(TOOLEXENAME_O): $(ObjectsO) $(USED_LIB_PATHS_O) $(DESTTOOLRELEASE)/.dir
-	@echo ======= Linking $(TOOLNAME) release executable =======
+	@${ECHO} ======= Linking $(TOOLNAME) release executable =======
 	$(VERB) $(LinkO) -o $@ $(ObjectsO) $(LIB_OPTS_O) $(LINK_OPTS) $(LIBS)
 
 $(TOOLEXENAME_P): $(ObjectsP) $(USED_LIB_PATHS_P) $(DESTTOOLPROFILE)/.dir
-	@echo ======= Linking $(TOOLNAME) profile executable =======
+	@${ECHO} ======= Linking $(TOOLNAME) profile executable =======
 	$(VERB) $(LinkP) -o $@ $(ObjectsP) $(LIB_OPTS_P) $(LINK_OPTS) $(LIBS)
 
 endif
@@ -650,39 +650,39 @@ endif
 
 # Create .lo files in the ObjectFiles directory from the .cpp and .c files...
 $(BUILD_OBJ_DIR)/Release/%.lo: %.cpp $(BUILD_OBJ_DIR)/Release/.dir
-	@echo "Compiling `basename $<`"
+	@${ECHO} "Compiling `basename $<`"
 	$(VERB) $(CompileO) $< -o $@
 
 $(BUILD_OBJ_DIR)/Release/%.lo: %.c $(BUILD_OBJ_DIR)/Release/.dir
-	@echo "Compiling `basename $<`"
+	@${ECHO} "Compiling `basename $<`"
 	$(VERB) $(CompileCO) $< -o $@
 
 $(BUILD_OBJ_DIR)/Profile/%.lo: %.cpp $(BUILD_OBJ_DIR)/Profile/.dir
-	@echo "Compiling `basename $<`"
+	@${ECHO} "Compiling `basename $<`"
 	$(VERB) $(CompileP) $< -o $@
 
 $(BUILD_OBJ_DIR)/Profile/%.lo: %.c $(BUILD_OBJ_DIR)/Profile/.dir
-	@echo "Compiling `basename $<`"
+	@${ECHO} "Compiling `basename $<`"
 	$(VERB) $(CompileCP) $< -o $@
 
 $(BUILD_OBJ_DIR)/Debug/%.lo: %.cpp $(BUILD_OBJ_DIR)/Debug/.dir
-	@echo "Compiling `basename $<`"
+	@${ECHO} "Compiling `basename $<`"
 	$(VERB) $(CompileG) $< -o $@
 
 $(BUILD_OBJ_DIR)/Debug/%.lo: %.c $(BUILD_OBJ_DIR)/Debug/.dir 
-	@echo "Compiling `basename $<`"
+	@${ECHO} "Compiling `basename $<`"
 	$(VERB) $(CompileCG) $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.cpp $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1XX)
-	@echo "Compiling `basename $<` to bytecode"
+	@${ECHO} "Compiling `basename $<` to bytecode"
 	$(VERB) $(LLVMGXX) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.c $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LCC1)
-	@echo "Compiling `basename $<` to bytecode"
+	@${ECHO} "Compiling `basename $<` to bytecode"
 	$(VERB) $(LLVMGCC) $(CompileWarnings) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_OBJ_DIR)/BytecodeObj/%.bc: %.ll $(BUILD_OBJ_DIR)/BytecodeObj/.dir $(LLVMAS)
-	@echo "Compiling `basename $<` to bytecode"
+	@${ECHO} "Compiling `basename $<` to bytecode"
 	$(VERB) $(LLVMAS) $< -f -o $@
 
 
@@ -704,7 +704,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 # FIXME.  (f.e. char Buffer[10000] )
 #
 %.cpp: %.l
-	@echo Flexing $<
+	@${ECHO} Flexing $<
 	$(VERB) $(FLEX) -t $< | \
           $(SED) '/^find_rule/d' | \
           $(SED) 's/void yyunput/inline void yyunput/' | \
@@ -719,7 +719,7 @@ YACC_OUTPUT = $(addprefix $(YACC_FILES:%.y=%), .h .cpp .output)
 %.c: %.y     # Cancel built-in rules for yacc
 %.h: %.y     # Cancel built-in rules for yacc
 %.cpp %.h : %.y
-	@echo Bisoning $<
+	@${ECHO} Bisoning $<
 	$(VERB) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c  $<
 	$(VERB) cmp -s $*.tab.c $*.cpp > /dev/null || ${MV} -f $*.tab.c $*.cpp
 	$(VERB) cmp -s $*.tab.h $*.h   > /dev/null || ${MV} -f $*.tab.h $*.h
