@@ -19,8 +19,15 @@ static void TrapHandler(int TN, siginfo_t *SI, ucontext_t *ucp) {
 #ifdef REG_EIP   /* this code does not compile on Sparc! */
   if (SI->si_code != SEGV_MAPERR || SI->si_addr != 0 ||
       ucp->uc_mcontext.gregs[REG_EIP] != 0) {
-    std::cerr << "Bad SEGV encountered!\n";
-    abort();
+    std::cerr << "Bad SEGV encountered EIP = 0x" << std::hex
+	      << ucp->uc_mcontext.gregs[REG_EIP] << " addr = "
+	      << SI->si_addr << "!\n";
+
+    struct sigaction SA;              // Restore old SEGV handler...
+    SA.sa_handler = SIG_DFL;
+    SA.sa_flags = SA_NOMASK;
+    sigaction(SIGSEGV, &SA, 0);
+    return;  // Should core dump now...
   }
 
   // The call instruction should have pushed the return value onto the stack...
