@@ -55,6 +55,9 @@ namespace {
         return MIOpNo != Other.MIOpNo || OpVT != Other.OpVT;
       return false;
     }
+    bool operator==(const AsmWriterOperand &Other) const {
+      return !operator!=(Other);
+    }
     void EmitCode(std::ostream &OS) const;
   };
 
@@ -201,6 +204,25 @@ unsigned AsmWriterInst::MatchesAllButOneOp(const AsmWriterInst &Other)const{
   return MismatchOperand;
 }
 
+static void PrintCases(std::vector<std::pair<std::string,
+                       AsmWriterOperand> > &OpsToPrint, std::ostream &O) {
+  O << "    case " << OpsToPrint.back().first << ": ";
+  AsmWriterOperand TheOp = OpsToPrint.back().second;
+  OpsToPrint.pop_back();
+
+  // Check to see if any other operands are identical in this list, and if so,
+  // emit a case label for them.
+  for (unsigned i = OpsToPrint.size(); i != 0; --i)
+    if (OpsToPrint[i-1].second == TheOp) {
+      O << "\n    case " << OpsToPrint[i-1].first << ": ";
+      OpsToPrint.erase(OpsToPrint.begin()+i-1);
+    }
+
+  // Finally, emit the code.
+  TheOp.EmitCode(O);
+  O << "break;\n";
+}
+
 
 /// EmitInstructions - Emit the last instruction in the vector and any other
 /// instructions that are suitably similar to it.
@@ -242,16 +264,20 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
       // If this is the operand that varies between all of the instructions,
       // emit a switch for just this operand now.
       O << "    switch (MI->getOpcode()) {\n";
-      O << "    case " << Namespace << "::"
-        << FirstInst.CGI->TheDef->getName() << ": ";
-      FirstInst.Operands[i].EmitCode(O);
-      O << "break;\n";
+      std::vector<std::pair<std::string, AsmWriterOperand> > OpsToPrint;
+      OpsToPrint.push_back(std::make_pair(Namespace+"::"+
+                                          FirstInst.CGI->TheDef->getName(),
+                                          FirstInst.Operands[i]));
+                                          
       for (unsigned si = 0, e = SimilarInsts.size(); si != e; ++si) {
-        O << "    case " << Namespace << "::"
-          << SimilarInsts[si].CGI->TheDef->getName() << ": ";
-        SimilarInsts[si].Operands[i].EmitCode(O);
-        O << "break;\n";
+        AsmWriterInst &AWI = SimilarInsts[si];
+        OpsToPrint.push_back(std::make_pair(Namespace+"::"+
+                                            AWI.CGI->TheDef->getName(),
+                                            AWI.Operands[i]));
       }
+      std::reverse(OpsToPrint.begin(), OpsToPrint.end());
+      while (!OpsToPrint.empty())
+        PrintCases(OpsToPrint, O);
       O << "    }";
     }
     O << "\n";
