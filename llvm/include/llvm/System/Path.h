@@ -391,6 +391,22 @@ namespace sys {
         StatusInfo info; getStatusInfo(info); return info.fileSize;
       }
 
+      /// This method attempts to make the file referenced by the Path object
+      /// available for reading so that the readable() method will return true.
+      /// @brief Make the file readable;
+      void makeReadable();
+
+      /// This method attempts to make the file referenced by the Path object
+      /// available for writing so that the writable() method will return true.
+      /// @brief Make the file writable;
+      void makeWriteable();
+
+      /// This method attempts to make the file referenced by the Path object
+      /// available for execution so that the executable() method will return 
+      /// true.
+      /// @brief Make the file readable;
+      void makeExecutable();
+
       /// This method attempts to set the Path object to \p unverified_path
       /// and interpret the name as a directory name.  The \p unverified_path 
       /// is verified. If verification succeeds then \p unverified_path 

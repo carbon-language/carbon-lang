@@ -256,6 +256,42 @@ Path::getStatusInfo(StatusInfo& info) const {
     path += '/';
 }
 
+static bool AddPermissionBits(const std::string& Filename, int bits) {
+  // Get the umask value from the operating system.  We want to use it
+  // when changing the file's permissions. Since calling umask() sets
+  // the umask and returns its old value, we must call it a second
+  // time to reset it to the user's preference.
+  int mask = umask(0777); // The arg. to umask is arbitrary.
+  umask(mask);            // Restore the umask.
+
+  // Get the file's current mode.
+  struct stat st;
+  if ((stat(Filename.c_str(), &st)) == -1)
+    return false;
+
+  // Change the file to have whichever permissions bits from 'bits'
+  // that the umask would not disable.
+  if ((chmod(Filename.c_str(), (st.st_mode | (bits & ~mask)))) == -1)
+    return false;
+
+  return true;
+}
+
+void Path::makeReadable() {
+  if (!AddPermissionBits(path,0444))
+    ThrowErrno(path + ": can't make file readable");
+}
+
+void Path::makeWriteable() {
+  if (!AddPermissionBits(path,0222))
+    ThrowErrno(path + ": can't make file writable");
+}
+
+void Path::makeExecutable() {
+  if (!AddPermissionBits(path,0111))
+    ThrowErrno(path + ": can't make file executable");
+}
+
 bool
 Path::getDirectoryContents(std::set<Path>& result) const {
   if (!isDirectory())

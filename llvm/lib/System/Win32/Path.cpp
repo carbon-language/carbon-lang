@@ -287,6 +287,15 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
+void Path::makeReadable() {
+}
+
+void Path::makeWriteable() {
+}
+
+void Path::makeExecutable() {
+}
+
 bool
 Path::setDirectory(const std::string& a_path) {
   if (a_path.size() == 0)
