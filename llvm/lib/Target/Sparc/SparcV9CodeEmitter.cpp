@@ -1,5 +1,6 @@
-//===-- SparcV9CodeEmitter.cpp -  --------===//
+//===-- SparcV9CodeEmitter.cpp --------------------------------------------===//
 //
+// FIXME: document
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/Statistic.h"
+#include "Support/Debug.h"
 #include "Support/hash_set"
 #include "SparcInternals.h"
 #include "SparcV9CodeEmitter.h"
