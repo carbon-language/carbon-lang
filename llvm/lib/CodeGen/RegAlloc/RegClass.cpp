@@ -165,7 +165,7 @@ IGNode * RegClass::getIGNodeWithMinSpillCost()
 
     if( ! IGNode->isOnStack() ) {
 
-      unsigned SpillCost = IGNode->getParentLR()->getSpillCost();
+      long SpillCost = (long) IGNode->getParentLR()->getSpillCost();
     
       if( MinSpillCost == -1) {         // for the first IG node
 	MinSpillCost = SpillCost;

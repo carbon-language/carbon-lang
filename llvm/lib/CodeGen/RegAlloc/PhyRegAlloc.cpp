@@ -466,7 +466,8 @@ void PhyRegAlloc::updateMachineCode()
 	
 	// Tmp stack poistions are needed by some calls that have spilled args
 	// So reset it before we call each such method
-	// TODO: mcInfo.popAllTempValues(TM);  
+	//
+	mcInfo.popAllTempValues(TM);  
 	
 	if( (TM.getInstrInfo()).isCall( Opcode ) )
 	  MRI.colorCallArgs( MInst, LRI, AI, *this, *BBI );
