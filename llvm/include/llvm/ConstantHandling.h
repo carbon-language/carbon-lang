@@ -36,6 +36,7 @@
 #define LLVM_OPT_CONSTANTHANDLING_H
 
 #include "llvm/ConstPoolVals.h"
+#include "llvm/Instruction.h"
 #include "llvm/Type.h"
 
 //===----------------------------------------------------------------------===//
@@ -140,6 +141,37 @@ inline ConstPoolBool *operator<=(const ConstPoolVal &V1,
   ConstPoolBool *Result = V1 > V2;
   Result->setValue(!Result->getValue());     // Invert value
   return Result;      // !(V1 > V2)
+}
+
+
+//===----------------------------------------------------------------------===//
+//  Implement higher level instruction folding type instructions
+//===----------------------------------------------------------------------===//
+
+inline ConstPoolVal *ConstantFoldUnaryInstruction(unsigned Opcode, 
+                                                  ConstPoolVal *V) {
+  switch (Opcode) {
+  case Instruction::Not:  return !*V;
+  case Instruction::Neg:  return -*V;
+  }
+  return 0;
+}
+
+inline ConstPoolVal *ConstantFoldBinaryInstruction(unsigned Opcode,
+                                                   ConstPoolVal *V1, 
+                                                   ConstPoolVal *V2) {
+  switch (Opcode) {
+  case Instruction::Add:     return *V1 + *V2;
+  case Instruction::Sub:     return *V1 - *V2;
+
+  case Instruction::SetEQ:   return *V1 == *V2;
+  case Instruction::SetNE:   return *V1 != *V2;
+  case Instruction::SetLE:   return *V1 <= *V2;
+  case Instruction::SetGE:   return *V1 >= *V2;
+  case Instruction::SetLT:   return *V1 <  *V2;
+  case Instruction::SetGT:   return *V1 >  *V2;
+  }
+  return 0;
 }
 
 #endif
