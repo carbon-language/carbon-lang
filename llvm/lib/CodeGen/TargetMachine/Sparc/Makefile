@@ -12,7 +12,7 @@ Source  = \
 
 include $(LEVEL)/Makefile.common
 
-BURG = burg -I
+BURG = /home/vadve/vadve/Research/DynOpt/Burg/burg -I
 
 %.burm.cpp: %.burg
 	$(BURG) -o $@ $<
