@@ -254,6 +254,12 @@ FunctionPass *createLowerAllocationsPass();
 //
 FunctionPass *createLowerSwitchPass();
 
+//===----------------------------------------------------------------------===//
+// This pass converts SelectInst instructions into conditional branch and PHI
+// instructions.  If the OnlyFP flag is set to true, then only floating point
+// select instructions are lowered.
+//
+FunctionPass *createLowerSelectPass(bool OnlyFP = false);
 
 //===----------------------------------------------------------------------===//
 // This pass converts 'invoke' instructions calls, and 'unwind' instructions
