@@ -44,7 +44,7 @@ test_each: $(TESTS)
 
 % : %.s testing.s
 	@$(ECHO) "Compiling and Linking $< to $*"
-	$(VERB)gcc -ggdb -L$(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION) testing.s -lstkr_runtime -o $* $*.s
+	$(VERB)$(CC) -ggdb -L$(BUILD_OBJ_ROOT)/lib/$(CONFIGURATION) testing.s -lstkr_runtime -o $* $*.s
 
 %.s : %.bc
 	@$(ECHO) "Compiling $< to $*.s"
