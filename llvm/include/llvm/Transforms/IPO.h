@@ -6,12 +6,9 @@
 #ifndef LLVM_TRANSFORMS_CLEANUPGCCOUTPUT_H
 #define LLVM_TRANSFORMS_CLEANUPGCCOUTPUT_H
 
-#include "llvm/Analysis/FindUsedTypes.h"
+#include "llvm/Pass.h"
 
-class CleanupGCCOutput : public MethodPass {
-  FindUsedTypes FUT;      // Use FUT to eliminate type names that are never used
-public:
-
+struct CleanupGCCOutput : public MethodPass {
   // PatchUpMethodReferences - This is a part of the functionality exported by
   // the CleanupGCCOutput pass.  This causes functions with different signatures
   // to be linked together if they have the same name.
@@ -32,6 +29,12 @@ public:
 
   // doPassFinalization - Strip out type names that are unused by the program
   bool doFinalization(Module *M);
+
+  // getAnalysisUsageInfo - This function needs FindUsedTypes to do its job...
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 };
 
 #endif

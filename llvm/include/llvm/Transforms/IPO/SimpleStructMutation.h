@@ -23,8 +23,15 @@ public:
     return Changed;
   }
 
+  // getAnalysisUsageInfo - This function needs the results of the
+  // FindUsedTypes and FindUnsafePointerTypes analysis passes...
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
+
 private:
-  static TransformsType getTransforms(Module *M, enum Transform);
+  TransformsType getTransforms(Module *M, enum Transform);
 };
 
 #endif

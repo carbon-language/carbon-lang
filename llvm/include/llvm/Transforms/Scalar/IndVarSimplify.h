@@ -10,10 +10,16 @@
 
 #include "llvm/Pass.h"
 
-struct InductionVariableSimplify : public MethodPass {
-  static bool doit(Method *M);
+namespace cfg { class LoopInfo; }
 
-  virtual bool runOnMethod(Method *M) { return doit(M); }
+struct InductionVariableSimplify : public MethodPass {
+  static bool doit(Method *M, cfg::LoopInfo &Loops);
+
+  virtual bool runOnMethod(Method *M);
+
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 };
 
 #endif

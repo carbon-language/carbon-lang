@@ -15,8 +15,10 @@
 #define LLVM_TRANSFORMS_MUTATESTRUCTTYPES_H
 
 #include "llvm/Pass.h"
-#include <map>
+#include "llvm/AbstractTypeUser.h"
 
+class Value;
+class Type;
 class StructType;
 class CompositeType;
 class GlobalValue;
@@ -57,6 +59,13 @@ public:
 
   // run - do the transformation
   virtual bool run(Module *M);
+
+  // getAnalysisUsageInfo - This function needs the results of the
+  // FindUsedTypes and FindUnsafePointerTypes analysis passes...
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 
 protected:
 

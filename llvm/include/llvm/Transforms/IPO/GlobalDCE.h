@@ -18,6 +18,14 @@ struct GlobalDCE : public Pass {
   // the specified callgraph to reflect the changes.
   //
   bool run(Module *M);
+
+  // getAnalysisUsageInfo - This function works on the call graph of a module.
+  // It is capable of updating the call graph to reflect the new state of the
+  // module.
+  //
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 };
 
 #endif

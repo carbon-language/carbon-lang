@@ -9,7 +9,7 @@
 #define LLVM_OPT_DCE_H
 
 #include "llvm/Pass.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/Method.h"
 
 //===----------------------------------------------------------------------===//
 // DeadInstElimination - This pass quickly removes trivially dead instructions
@@ -68,13 +68,13 @@ struct DeadCodeElimination : public MethodPass {
 // it more successful are removing non-obviously dead instructions.
 //
 struct AgressiveDCE : public MethodPass {
-  // DoADCE - Execute the Agressive Dead Code Elimination Algorithm
-  //
-  static bool doADCE(Method *M);                        // Defined in ADCE.cpp
+  virtual bool runOnMethod(Method *M);
 
-  virtual bool runOnMethod(Method *M) {
-    return doADCE(M);
-  }
+  // getAnalysisUsageInfo - We require post dominance frontiers (aka Control
+  // Dependence Graph)
+  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+                                    Pass::AnalysisSet &Destroyed,
+                                    Pass::AnalysisSet &Provided);
 };
 
 

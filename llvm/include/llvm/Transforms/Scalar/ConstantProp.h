@@ -4,10 +4,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OPT_CONSTANT_PROPOGATION_H
-#define LLVM_OPT_CONSTANT_PROPOGATION_H
+#ifndef LLVM_TRANSFORMS_SCALAR_CONSTANT_PROPOGATION_H
+#define LLVM_TRANSFORMS_SCALAR_CONSTANT_PROPOGATION_H
 
 #include "llvm/Pass.h"
+#include "llvm/BasicBlock.h"
 class TerminatorInst;
 
 struct ConstantPropogation : public MethodPass {

@@ -9,15 +9,19 @@
 #define LLVM_OPT_INDUCTION_VARS_H
 
 #include "llvm/Pass.h"
+namespace cfg { class IntervalPartition; }
 
 struct InductionVariableCannonicalize : public MethodPass {
   // doInductionVariableCannonicalize - Simplify induction variables in loops
   //
-  static bool doIt(Method *M);
+  static bool doIt(Method *M, cfg::IntervalPartition &IP);
 
-  virtual bool runOnMethod(Method *M) {
-    return doIt(M);
-  }
+  virtual bool runOnMethod(Method *M);
+
+  // getAnalysisUsageInfo - Declare that we need IntervalPartitions
+  void getAnalysisUsageInfo(Pass::AnalysisSet &Required,
+                            Pass::AnalysisSet &Destroyed,
+                            Pass::AnalysisSet &Provided);
 };
 
 #endif

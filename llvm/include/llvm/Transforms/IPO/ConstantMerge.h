@@ -18,7 +18,6 @@
 #define LLVM_TRANSFORMS_CONSTANTMERGE_H
 
 #include "llvm/Pass.h"
-#include <map>
 class Constant;
 class GlobalVariable;
 
