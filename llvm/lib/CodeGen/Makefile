@@ -1,4 +1,4 @@
 LEVEL = ../..
-DIRS  = InstrSelection InstrSched RegAlloc Mapping
+DIRS  = PreSelection InstrSelection InstrSched RegAlloc Mapping
 
 include $(LEVEL)/Makefile.common
