@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
+#include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
 
 static const uint32_t MAXLO   = (1 << 10) - 1; // set bits set by %lo(*)

@@ -222,7 +222,7 @@ void PreSelection::visitPHINode(PHINode &PN) {
   // so just handle PHIs and other instructions separately.
   // 
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-    visitOneOperand(I, PN.getIncomingValue(i),
+    visitOneOperand(PN, PN.getIncomingValue(i),
                     PN.getOperandNumForIncomingValue(i),
                     *PN.getIncomingBlock(i)->getTerminator());
   // do not call visitOperands!
