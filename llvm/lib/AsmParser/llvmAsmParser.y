@@ -874,7 +874,7 @@ ConstPool : ConstPool OptAssign ConstVal {
   | ConstPool GLOBAL OptAssign Types { // Global declarations appear in CP
     if (!$4->get()->isPointerType() || 
 	(((PointerType*)$4->get())->isArrayType() && 
-	 ((PointerType*)$4->get())->isArrayType()->isUnsized())) {
+	 ((PointerType*)$4->get())->castArrayType()->isUnsized())) {
       ThrowException("Type '" + $4->get()->getDescription() +
 		     "' is not a pointer to a sized type!");
     }
@@ -1209,7 +1209,7 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
   | CALL TypesV ValueRef '(' ValueRefListE ')' {
     const MethodType *Ty;
 
-    if (!(Ty = (*$2)->isMethodType())) {
+    if (!(Ty = (*$2)->dyncastMethodType())) {
       // Pull out the types of all of the arguments...
       vector<const Type*> ParamTypes;
       for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
