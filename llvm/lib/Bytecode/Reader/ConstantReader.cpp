@@ -165,9 +165,7 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
                 << ArgValSlot << "\n");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
-      Constant *C = getConstantValue(ArgTy, ArgValSlot);
-      if (C == 0) throw std::string("No arg value or placeholder found.");
-      ArgVec.push_back(C);
+      ArgVec.push_back(getConstantValue(ArgTy, ArgValSlot));
     }
     
     // Construct a ConstantExpr of the appropriate kind
@@ -241,9 +239,7 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     while (NumElements--) {   // Read all of the elements of the constant.
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) throw Error_readvbr;
-      Constant *C = getConstantValue(AT->getElementType(), Slot);
-      if (!C) throw std::string("Unable to get const value of array slot.");
-      Elements.push_back(C);
+      Elements.push_back(getConstantValue(AT->getElementType(), Slot));
     }
     return ConstantArray::get(AT, Elements);
   }
@@ -256,9 +252,7 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     for (unsigned i = 0; i < ET.size(); ++i) {
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) throw Error_readvbr;
-      Constant *C = getConstantValue(ET[i], Slot);
-      if (!C) throw std::string("Could not read const value in struct slot.");
-      Elements.push_back(C);
+      Elements.push_back(getConstantValue(ET[i], Slot));
     }
 
     return ConstantStruct::get(ST, Elements);
