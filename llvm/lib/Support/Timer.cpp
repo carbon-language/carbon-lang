@@ -14,7 +14,9 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/Process.h"
+#include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 
