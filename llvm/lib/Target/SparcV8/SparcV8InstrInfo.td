@@ -181,6 +181,10 @@ let isCall = 1 in
 def WRrr : F3_1<2, 0b110000, "wr">;                    // wr rs1, rs2, rd
 def WRri : F3_2<2, 0b110000, "wr">;                    // wr rs1, imm, rd
 
+// Convert Integer to Floating-point Instructions, p. 141
+def FITOS : F3_3<2, 0b110100, 0b011000100, "fitos">;
+def FITOD : F3_3<2, 0b110100, 0b011001000, "fitos">;
+
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, "fstod">;
 def FDTOS : F3_3<2, 0b110100, 0b011000110, "fdtos">;
@@ -190,4 +194,16 @@ def FMOVS : F3_3<2, 0b110100, 0b000000001, "fmovs">;
 def FNEGS : F3_3<2, 0b110100, 0b000000101, "fnegs">;
 def FABSS : F3_3<2, 0b110100, 0b000001001, "fabss">;
 
+// Floating-point Add and Subtract Instructions, p. 146
+def FADDS  : F3_3<2, 0b110100, 0b001000001, "fadds">;
+def FADDD  : F3_3<2, 0b110100, 0b001000010, "faddd">;
+def FSUBS  : F3_3<2, 0b110100, 0b001000101, "fsubs">;
+def FSUBD  : F3_3<2, 0b110100, 0b001000110, "fsubd">;
+
+// Floating-point Multiply and Divide Instructions, p. 147
+def FMULS  : F3_3<2, 0b110100, 0b001001001, "fmuls">;
+def FMULD  : F3_3<2, 0b110100, 0b001001010, "fmuld">;
+def FSMULD : F3_3<2, 0b110100, 0b001101001, "fsmuld">;
+def FDIVS  : F3_3<2, 0b110100, 0b001001101, "fdivs">;
+def FDIVD  : F3_3<2, 0b110100, 0b001001110, "fdivd">;
 
