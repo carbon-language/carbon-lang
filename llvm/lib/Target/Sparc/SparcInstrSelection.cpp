@@ -1037,7 +1037,7 @@ GetInstructionsForProlog(BasicBlock* entryBB,
   
   if (unsigned padsz = (staticStackSize %
                         (unsigned) frameInfo.getStackFrameSizeAlignment()))
-    staticStackSize += padsz;
+    staticStackSize += frameInfo.getStackFrameSizeAlignment() - padsz;
   
   assert(target.getInstrInfo().constantFitsInImmedField(SAVE, staticStackSize)
          && "Stack size too large for immediate field of SAVE instruction. Need additional work as described in the comment above");
