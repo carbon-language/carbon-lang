@@ -53,6 +53,23 @@ static void DestroyFirstNodeOfPair(DSNode *N1, DSNode *N2) {
     assert(RanOnce && "Node on user set but cannot find the use!");
   }
 
+  // If we are about to eliminate a call node that returns a pointer, make the
+  // shadow node it points to not be critical anymore!
+  //
+  if (isa<CallDSNode>(N1) && N1->getNumLinks()) {
+    assert(N1->getNumLinks() == 1 && "Call node can only return one pointer!");
+    PointerValSet &PVS = N1->getLink(0);
+    
+    for (unsigned i = 0, e = PVS.size(); i != e; ++i)
+      if (ShadowDSNode *Shad = dyn_cast<ShadowDSNode>(PVS[i].Node))
+        if (Shad->isCriticalNode()) {
+          Shad->resetCriticalMark();  // Only unmark _ONE_ node..
+          break;
+        }
+
+  }
+
+
   N1->removeAllIncomingEdges();
   delete N1;
 }
@@ -170,10 +187,7 @@ bool FunctionDSGraph::UnlinkUndistinguishableNodes() {
   return
     removeIndistinguishableNodes(AllocNodes) |
     removeIndistinguishableNodes(ShadowNodes) |
-    //FIXME: We cannot naively remove call nodes here because if there is a
-    // shadow node that is the result of the call, we have to make sure to
-    // merge the shadow node as well!!!
-    //    removeIndistinguishableNodePairs(CallNodes) |
+    removeIndistinguishableNodePairs(CallNodes) |
     removeIndistinguishableNodePairs(GlobalNodes);
 }
 
