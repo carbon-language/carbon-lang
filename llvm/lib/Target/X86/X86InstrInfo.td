@@ -53,7 +53,7 @@ def Mem8   : MemType<1>;
 def Mem16  : MemType<2>;
 def Mem32  : MemType<3>;
 def Mem64  : MemType<4>;
-def Mem80  : MemType<4>;
+def Mem80  : MemType<5>;
 def Mem128 : MemType<6>;
 
 // FPFormat - This specifies what form this FP instruction has.  This is used by
