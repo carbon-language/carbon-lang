@@ -150,9 +150,9 @@ IGNode * RegClass::getIGNodeWithMinSpillCost()
 {
 
   unsigned int IGNodeListSize = IG.getIGNodeList().size(); 
-  long MinSpillCost = -1;
+  double MinSpillCost;
   IGNode *MinCostIGNode = NULL;
-
+  bool isFirstNode = true;
 
   // pass over IGNodeList to find the IGNode with minimum spill cost
   // among all IGNodes that are not yet pushed on to the stack
@@ -165,11 +165,13 @@ IGNode * RegClass::getIGNodeWithMinSpillCost()
 
     if( ! IGNode->isOnStack() ) {
 
-      long SpillCost = (long) IGNode->getParentLR()->getSpillCost();
+      double SpillCost = (double) IGNode->getParentLR()->getSpillCost() /
+	(double) (IGNode->getCurDegree() + 1);
     
-      if( MinSpillCost == -1) {         // for the first IG node
+      if( isFirstNode ) {         // for the first IG node
 	MinSpillCost = SpillCost;
 	MinCostIGNode = IGNode;
+	isFirstNode = false;
       }
 
       else if( MinSpillCost > SpillCost) {
