@@ -504,7 +504,7 @@ void AssemblyWriter::printModule(const Module *M) {
   for_each(M->gbegin(), M->gend(), 
 	   bind_obj(this, &AssemblyWriter::printGlobal));
 
-  Out << "implementation\n";
+  Out << "\n; Functions:\n";
   
   // Output all of the functions...
   for_each(M->begin(), M->end(), bind_obj(this,&AssemblyWriter::printFunction));
