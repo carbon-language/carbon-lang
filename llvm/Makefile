@@ -21,5 +21,5 @@ configure: autoconf/configure.ac autoconf/aclocal.m4
 	cd autoconf && $(AUTOCONF) -o ../configure configure.ac
 
 include/Config/config.h.in: autoconf/configure.ac autoconf/aclocal.m4
-	autoheader -I autoconf autoconf/configure.ac
+	$(AUTOHEADER) -I autoconf autoconf/configure.ac
 
