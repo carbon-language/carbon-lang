@@ -394,10 +394,12 @@ int main(int argc, char **argv) {
     RemoveFileOnSignal(OutputFilename);
   }
 
+  int ErrorCode = 0;
+
   switch (Action) {
   case Parse: ParseMachineCode(); break;
   case GenEmitter:
-    CodeEmitterGen(Records).createEmitter(*Out);
+    ErrorCode = CodeEmitterGen(Records).createEmitter(*Out);
     break;
   case PrintRecords:
     *Out << Records;           // No argument, dump all contents
@@ -421,5 +423,5 @@ int main(int argc, char **argv) {
   }
 
   if (Out != &std::cout) delete Out;
-  return 0;
+  return ErrorCode;
 }

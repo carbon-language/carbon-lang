@@ -15,7 +15,7 @@ struct CodeEmitterGen {
 public:
   CodeEmitterGen(RecordKeeper &R) : Records(R) {}
   
-  void createEmitter(std::ostream &o);
+  int createEmitter(std::ostream &o);
   void emitMachineOpEmitter(std::ostream &o, const std::string &Namespace);
   void emitGetValueBit(std::ostream &o, const std::string &Namespace);
 };

@@ -2,7 +2,7 @@
 #include "Record.h"
 #include "CodeEmitterGen.h"
 
-void CodeEmitterGen::createEmitter(std::ostream &o) {
+int CodeEmitterGen::createEmitter(std::ostream &o) {
   std::vector<Record*> Insts;
 
   const std::map<std::string, Record*> &Defs = Records.getDefs();
@@ -31,8 +31,12 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
       << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
 
     const RecordVal *InstVal = R->getValue("Inst");
-    Init *InitVal = InstVal->getValue();
+    if (!InstVal) {
+      std::cerr << "No 'Inst' record found in target description file!\n";
+      return 1;
+    }
 
+    Init *InitVal = InstVal->getValue();
     assert(dynamic_cast<BitsInit*>(InitVal) &&
            "Can only handle undefined bits<> types!");
     BitsInit *BI = (BitsInit*)InitVal;
@@ -225,4 +229,5 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
     << "  }\n"
     << "  return Value;\n"
     << "}\n";
+  return 0;
 }
