@@ -14,7 +14,10 @@
 #include <map>
 class DagInit;
 class Init;
+class InstrSelectorEmitter;
 
+/// NodeType - Represents Information parsed from the DagNode entries.
+///
 struct NodeType {
   enum ArgResultTypes {
     // Both argument and return types...
@@ -39,12 +42,17 @@ struct NodeType {
   static ArgResultTypes Translate(Record *R);
 };
 
+
+
+/// TreePatternNode - Represent a node of the tree patterns.
+///
 class TreePatternNode {
   /// Operator - The operation that this node represents... this is null if this
   /// is a leaf.
   Record *Operator;
 
   /// Type - The inferred value type...
+  ///
   MVT::ValueType                Type;
 
   /// Children - If this is not a leaf (Operator != 0), this is the subtrees
@@ -52,6 +60,7 @@ class TreePatternNode {
   std::vector<TreePatternNode*> Children;
 
   /// Value - If this node is a leaf, this indicates what the thing is.
+  ///
   Init *Value;
 public:
   TreePatternNode(Record *o, const std::vector<TreePatternNode*> &c)
@@ -68,6 +77,11 @@ public:
     assert(Operator != 0 && "This is a leaf node!");
     return Children;
   }
+  TreePatternNode *getChild(unsigned c) const {
+    assert(c < Children.size() && "Child access out of range!");
+    return getChildren()[c];
+  }
+
   Init *getValue() const {
     assert(Operator == 0 && "This is not a leaf node!");
     return Value;
@@ -80,16 +94,97 @@ std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N);
 
 
 
+/// Pattern - Represent a pattern of one form or another.  Currently, three
+/// types of patterns are possible: Instruction's, Nonterminals, and Expanders.
+///
+struct Pattern {
+  enum PatternType {
+    Nonterminal, Instruction, Expander
+  };
+private:
+  /// PTy - The type of pattern this is.
+  ///
+  PatternType PTy;
+
+  /// Tree - The tree pattern which corresponds to this pattern.  Note that if
+  /// there was a (set) node on the outside level that it has been stripped off.
+  ///
+  TreePatternNode *Tree;
+  
+  /// Result - If this is an instruction or expander pattern, this is the
+  /// register result, specified with a (set) in the pattern.
+  ///
+  Record *Result;
+
+  /// TheRecord - The actual TableGen record corresponding to this pattern.
+  ///
+  Record *TheRecord;
+
+  /// Resolved - This is true of the pattern is useful in practice.  In
+  /// particular, some non-terminals will have non-resolvable types.  When a
+  /// user of the non-terminal is later found, they will have inferred a type
+  /// for the result of the non-terminal, which cause a clone of an unresolved
+  /// nonterminal to be made which is "resolved".
+  ///
+  bool Resolved;
+
+  /// ISE - the instruction selector emitter coordinating this madness.
+  ///
+  InstrSelectorEmitter &ISE;
+public:
+
+  /// Pattern constructor - Parse the specified DagInitializer into the current
+  /// record.
+  Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
+          InstrSelectorEmitter &ise);
+
+  /// getPatternType - Return what flavor of Record this pattern originated from
+  ///
+  PatternType getPatternType() const { return PTy; }
+
+  /// getTree - Return the tree pattern which corresponds to this pattern.
+  ///
+  TreePatternNode *getTree() const { return Tree; }
+  
+  Record *getResult() const { return Result; }
+
+  /// getRecord - Return the actual TableGen record corresponding to this
+  /// pattern.
+  ///
+  Record *getRecord() const { return TheRecord; }
+
+  bool isResolved() const { return Resolved; }
+
+private:
+  TreePatternNode *ParseTreePattern(DagInit *DI);
+  bool InferTypes(TreePatternNode *N, bool &MadeChange);
+  void error(const std::string &Msg);
+};
+
+std::ostream &operator<<(std::ostream &OS, const Pattern &P);
+
+
+
+/// InstrSelectorEmitter - The top-level class which coordinates construction
+/// and emission of the instruction selector.
+///
 class InstrSelectorEmitter : public TableGenBackend {
   RecordKeeper &Records;
   CodeGenTarget Target;
 
   std::map<Record*, NodeType> NodeTypes;
+
+  /// Patterns - a list of all of the patterns defined by the target description
+  ///
+  std::map<Record*, Pattern*> Patterns;
 public:
   InstrSelectorEmitter(RecordKeeper &R) : Records(R) {}
   
   // run - Output the instruction set description, returning true on failure.
   void run(std::ostream &OS);
+
+  const CodeGenTarget &getTarget() const { return Target; }
+  std::map<Record*, NodeType> &getNodeTypes() { return NodeTypes; }
 
 private:
   // ProcessNodeTypes - Process all of the node types in the current
@@ -99,26 +194,11 @@ private:
 
   // ProcessNonTerminals - Read in all nonterminals and incorporate them into
   // our pattern database.
-  void ProcessNonTerminals();
+  void ProcessNonterminals();
 
   // ProcessInstructionPatterns - Read in all subclasses of Instruction, and
   // process those with a useful Pattern field.
   void ProcessInstructionPatterns();
-
-  // ParseTreePattern - Parse the specified DagInit into a TreePattern which we
-  // can use.
-  //
-  TreePatternNode *ParseTreePattern(DagInit *DI, const std::string &RecName);
-
-  // InferTypes - Perform type inference on the tree, returning true if there
-  // are any remaining untyped nodes and setting MadeChange if any changes were
-  // made.
-  bool InferTypes(TreePatternNode *N, const std::string &RecName,
-                  bool &MadeChange);
-
-  // ReadAndCheckPattern - Parse the specified DagInit into a pattern and then
-  // perform full type inference.
-  TreePatternNode *ReadAndCheckPattern(DagInit *DI, const std::string &RecName);
 };
 
 #endif

@@ -93,12 +93,60 @@ static MVT::ValueType getIntrinsicType(Record *R) {
 
 // Parse the specified DagInit into a TreePattern which we can use.
 //
-TreePatternNode *InstrSelectorEmitter::ParseTreePattern(DagInit *DI,
-                                                   const std::string &RecName) {
+Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
+                 InstrSelectorEmitter &ise)
+  : PTy(pty), TheRecord(TheRec), ISE(ise) {
+
+  // First, parse the pattern...
+  Tree = ParseTreePattern(RawPat);
+  
+  bool MadeChange, AnyUnset;
+  do {
+    MadeChange = false;
+    AnyUnset = InferTypes(Tree, MadeChange);
+  } while ((AnyUnset || MadeChange) && !(AnyUnset && !MadeChange));
+
+  if (PTy == Instruction) {
+    // Check to make sure there is not any unset types in the tree pattern...
+    if (AnyUnset) {
+      std::cerr << "In instruction pattern: " << *Tree << "\n";
+      error("Could not infer all types!");
+    }
+
+    // Check to see if we have a top-level (set) of a register.
+    if (Tree->getOperator()->getName() == "set") {
+      assert(Tree->getChildren().size() == 2 && "Set with != 2 arguments?");
+      if (!Tree->getChild(0)->isLeaf())
+        error("Arg #0 of set should be a register or register class!");
+      DefInit *RegInit = dynamic_cast<DefInit*>(Tree->getChild(0)->getValue());
+      if (RegInit == 0)
+        error("LHS of 'set' expected to be a register or register class!");
+
+      Result = RegInit->getDef();
+      Tree = Tree->getChild(1);
+
+    }
+  }
+
+  Resolved = !AnyUnset;
+}
+
+void Pattern::error(const std::string &Msg) {
+  std::string M = "In ";
+  switch (PTy) {
+  case Nonterminal: M += "nonterminal "; break;
+  case Instruction: M += "instruction "; break;
+  case Expander   : M += "expander "; break;
+  }
+  throw M + TheRecord->getName() + ": " + Msg;  
+}
+
+
+TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
   Record *Operator = DI->getNodeType();
 
-  if (!NodeTypes.count(Operator))
-    throw "Illegal node for instruction pattern: '" + Operator->getName() +"'!";
+  if (!ISE.getNodeTypes().count(Operator))
+    error("Unrecognized node '" + Operator->getName() + "'!");
 
   const std::vector<Init*> &Args = DI->getArgs();
   std::vector<TreePatternNode*> Children;
@@ -106,14 +154,14 @@ TreePatternNode *InstrSelectorEmitter::ParseTreePattern(DagInit *DI,
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     Init *Arg = Args[i];
     if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
-      Children.push_back(ParseTreePattern(DI, RecName));
+      Children.push_back(ParseTreePattern(DI));
     } else if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
       Children.push_back(new TreePatternNode(DI));
       // If it's a regclass or something else known, set the type.
       Children.back()->setType(getIntrinsicType(DI->getDef()));
     } else {
       Arg->dump();
-      throw "Unknown value for tree pattern in '" + RecName + "'!";
+      error("Unknown leaf value for tree pattern!");
     }
   }
 
@@ -138,37 +186,36 @@ static bool UpdateNodeType(TreePatternNode *N, MVT::ValueType VT,
 // InferTypes - Perform type inference on the tree, returning true if there
 // are any remaining untyped nodes and setting MadeChange if any changes were
 // made.
-bool InstrSelectorEmitter::InferTypes(TreePatternNode *N,
-                                      const std::string &RecName,
-                                      bool &MadeChange) {
+bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
   if (N->isLeaf()) return N->getType() == MVT::Other;
 
   bool AnyUnset = false;
   Record *Operator = N->getOperator();
-  assert(NodeTypes.count(Operator) && "No node info for node!");
-  const NodeType &NT = NodeTypes[Operator];
+  assert(ISE.getNodeTypes().count(Operator) && "No node info for node!");
+  const NodeType &NT = ISE.getNodeTypes()[Operator];
 
   // Check to see if we can infer anything about the argument types from the
   // return types...
   const std::vector<TreePatternNode*> &Children = N->getChildren();
   if (Children.size() != NT.ArgTypes.size())
-    throw "In record " + RecName + " incorrect number of children for " +
-          Operator->getName() + " node!";
+    error("Incorrect number of children for " + Operator->getName() + " node!");
 
   for (unsigned i = 0, e = Children.size(); i != e; ++i) {
-    AnyUnset |= InferTypes(Children[i], RecName, MadeChange);
-
+    AnyUnset |= InferTypes(Children[i], MadeChange);
 
     switch (NT.ArgTypes[i]) {
     case NodeType::Arg0:
-      MadeChange |= UpdateNodeType(Children[i], Children[0]->getType(),RecName);
+      MadeChange |= UpdateNodeType(Children[i], Children[0]->getType(),
+                                   TheRecord->getName());
       break;
     case NodeType::Val:
       if (Children[i]->getType() == MVT::isVoid)
-        throw "In pattern for " + RecName + " should not get a void node!";
+        error("Inferred a void node in an illegal place!");
       break;
     case NodeType::Ptr:
-      MadeChange |= UpdateNodeType(Children[i],Target.getPointerType(),RecName);
+      MadeChange |= UpdateNodeType(Children[i],
+                                   ISE.getTarget().getPointerType(),
+                                   TheRecord->getName());
       break;
     default: assert(0 && "Invalid argument ArgType!");
     }
@@ -177,18 +224,20 @@ bool InstrSelectorEmitter::InferTypes(TreePatternNode *N,
   // See if we can infer anything about the return type now...
   switch (NT.ResultType) {
   case NodeType::Void:
-    MadeChange |= UpdateNodeType(N, MVT::isVoid, RecName);
+    MadeChange |= UpdateNodeType(N, MVT::isVoid, TheRecord->getName());
     break;
   case NodeType::Arg0:
-    MadeChange |= UpdateNodeType(N, Children[0]->getType(), RecName);
+    MadeChange |= UpdateNodeType(N, Children[0]->getType(),
+                                 TheRecord->getName());
     break;
 
   case NodeType::Ptr:
-    MadeChange |= UpdateNodeType(N, Target.getPointerType(), RecName);
+    MadeChange |= UpdateNodeType(N, ISE.getTarget().getPointerType(),
+                                 TheRecord->getName());
     break;
   case NodeType::Val:
     if (N->getType() == MVT::isVoid)
-      throw "In pattern for " + RecName + " should not get a void node!";
+      error("Inferred a void node in an illegal place!");
     break;
   default:
     assert(0 && "Unhandled type constraint!");
@@ -198,39 +247,36 @@ bool InstrSelectorEmitter::InferTypes(TreePatternNode *N,
   return AnyUnset | N->getType() == MVT::Other;
 }
 
+std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
+  switch (P.getPatternType()) {
+  case Pattern::Nonterminal: OS << "Nonterminal pattern "; break;
+  case Pattern::Instruction: OS << "Instruction pattern "; break;
+  case Pattern::Expander:    OS << "Expander pattern    "; break;
+  }
 
-// ReadAndCheckPattern - Parse the specified DagInit into a pattern and then
-// perform full type inference.
-//
-TreePatternNode *InstrSelectorEmitter::ReadAndCheckPattern(DagInit *DI,
-                                                  const std::string &RecName) {
-  // First, parse the pattern...
-  TreePatternNode *Pattern = ParseTreePattern(DI, RecName);
-  
-  bool MadeChange, AnyUnset;
-  do {
-    MadeChange = false;
-    AnyUnset = InferTypes(Pattern, RecName, MadeChange);
-    if (AnyUnset && !MadeChange) {
-      std::cerr << "In pattern: " << *Pattern << "\n";
-      throw "Cannot infer types for " + RecName;
-    }
-  } while (AnyUnset || MadeChange);
+  OS << P.getRecord()->getName() << ":\t";
 
-  return Pattern;
+  if (Record *Result = P.getResult())
+    OS << Result->getName() << " = ";
+  OS << *P.getTree();
+
+  if (!P.isResolved())
+    OS << " [not completely resolved]";
+  return OS;
 }
+
 
 // ProcessNonTerminals - Read in all nonterminals and incorporate them into
 // our pattern database.
-void InstrSelectorEmitter::ProcessNonTerminals() {
+void InstrSelectorEmitter::ProcessNonterminals() {
   std::vector<Record*> NTs = Records.getAllDerivedDefinitions("Nonterminal");
   for (unsigned i = 0, e = NTs.size(); i != e; ++i) {
     DagInit *DI = NTs[i]->getValueAsDag("Pattern");
 
-    TreePatternNode *Pattern = ReadAndCheckPattern(DI, NTs[i]->getName());
+    Pattern *P = new Pattern(Pattern::Nonterminal, DI, NTs[i], *this);
 
-    DEBUG(std::cerr << "Parsed nonterm pattern " << NTs[i]->getName() << "\t= "
-          << *Pattern << "\n");
+
+    DEBUG(std::cerr << "Parsed " << *P << "\n");
   }
 }
 
@@ -243,10 +289,9 @@ void InstrSelectorEmitter::ProcessInstructionPatterns() {
   for (unsigned i = 0, e = Insts.size(); i != e; ++i) {
     Record *Inst = Insts[i];
     if (DagInit *DI = dynamic_cast<DagInit*>(Inst->getValueInit("Pattern"))) {
-      TreePatternNode *Pattern = ReadAndCheckPattern(DI, Inst->getName());
+      Pattern *P = new Pattern(Pattern::Instruction, DI, Inst, *this);
 
-      DEBUG(std::cerr << "Parsed inst pattern " << Inst->getName() << "\t= "
-                      << *Pattern << "\n");
+      DEBUG(std::cerr << "Parsed " << *P << "\n");
     }
   }
 }
@@ -257,7 +302,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   ProcessNodeTypes();
   
   // Read in all of the nonterminals...
-  //ProcessNonTerminals();
+  ProcessNonterminals();
 
   // Read all of the instruction patterns in...
   ProcessInstructionPatterns();
