@@ -667,13 +667,20 @@ void ISel::SelectBranchCC(SDOperand N)
 
   // Get the MBB we will fall through to so that we can hand it off to the
   // branch selection pass as an argument to the PPC::COND_BRANCH pseudo op.
-  ilist<MachineBasicBlock>::iterator It = BB;
-  MachineBasicBlock *Fallthrough = ++It;
+  //ilist<MachineBasicBlock>::iterator It = BB;
+  //MachineBasicBlock *Fallthrough = ++It;
   
   Select(N.getOperand(0));  //chain
   unsigned Opc = SelectSetCR0(N.getOperand(1));
-  BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
-    .addMBB(Dest).addMBB(Fallthrough);
+  // FIXME: Use this once we have something approximating two-way branches
+  // We cannot currently use this in case the ISel hands us something like
+  // BRcc MBBx
+  // BR MBBy
+  // since the fallthrough basic block for the conditional branch does not start
+  // with the unconditional branch (it is skipped over).
+  //BuildMI(BB, PPC::COND_BRANCH, 4).addReg(PPC::CR0).addImm(Opc)
+  //  .addMBB(Dest).addMBB(Fallthrough);
+  BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(Dest);
   return;
 }
 
