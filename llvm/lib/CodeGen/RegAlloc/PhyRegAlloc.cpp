@@ -15,7 +15,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
-#include "llvm/Analysis/LoopDepth.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Method.h"
@@ -52,7 +52,7 @@ namespace {
       LVI.analyze();
       
       PhyRegAlloc PRA(M, Target, &LVI,
-                      &getAnalysis<cfg::LoopDepthCalculator>());
+                      &getAnalysis<cfg::LoopInfo>());
       PRA.allocateRegisters();
       
       if (DEBUG_RA) cerr << "\nRegister allocation complete!\n";
@@ -62,7 +62,7 @@ namespace {
     virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
                                       Pass::AnalysisSet &Destroyed,
                                       Pass::AnalysisSet &Provided) {
-      Requires.push_back(cfg::LoopDepthCalculator::ID);
+      Requires.push_back(cfg::LoopInfo::ID);
     }
   };
 }
@@ -77,7 +77,7 @@ MethodPass *getRegisterAllocator(TargetMachine &T) {
 PhyRegAlloc::PhyRegAlloc(Method *M, 
 			 const TargetMachine& tm, 
 			 MethodLiveVarInfo *Lvi,
-                         cfg::LoopDepthCalculator *LDC) 
+                         cfg::LoopInfo *LDC) 
                        :  TM(tm), Meth(M),
                           mcInfo(MachineCodeForMethod::get(M)),
                           LVI(Lvi), LRI(M, tm, RegClassList), 

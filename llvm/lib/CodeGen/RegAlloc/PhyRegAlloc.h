@@ -37,7 +37,7 @@ class MachineCodeForMethod;
 class MachineRegInfo;
 class MethodLiveVarInfo;
 class MachineInstr;
-namespace cfg { class LoopDepthCalculator; }
+namespace cfg { class LoopInfo; }
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
@@ -80,13 +80,13 @@ class PhyRegAlloc: public NonCopyable {
 
   
   AddedInstrMapType AddedInstrMap;      // to store instrns added in this phase
-  cfg::LoopDepthCalculator *LoopDepthCalc;    // to calculate loop depths 
+  cfg::LoopInfo *LoopDepthCalc;         // to calculate loop depths 
   ReservedColorListType ResColList;     // A set of reserved regs if desired.
                                         // currently not used
 
 public:
   PhyRegAlloc(Method *M, const TargetMachine& TM, MethodLiveVarInfo *Lvi,
-              cfg::LoopDepthCalculator *LoopDepthCalc);
+              cfg::LoopInfo *LoopDepthCalc);
   ~PhyRegAlloc();
 
   // main method called for allocating registers
