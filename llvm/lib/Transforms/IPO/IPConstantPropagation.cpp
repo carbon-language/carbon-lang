@@ -180,9 +180,12 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   if (ReplacedAllUsers && F.hasInternalLinkage() && !isa<UndefValue>(RetVal)) {
     Value *RV = UndefValue::get(RetVal->getType());
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
-        RI->setOperand(0, RV);
-    MadeChange = true;
+      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+        if (RI->getOperand(0) != RV) {
+          RI->setOperand(0, RV);
+          MadeChange = true;
+        }
+      }
   }
 
   if (MadeChange) ++NumReturnValProped;
