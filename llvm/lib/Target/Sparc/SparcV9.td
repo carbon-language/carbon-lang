@@ -77,27 +77,24 @@ set isDeprecated = 1 in {
 }
 #endif
 
-// These instructions are hacked to really represent A.5 instructions,
-// but with cc hardcoded to be %fcc0. Hence, they behave like FBPfcc instrs.
+// We now make these same opcodes represent the FBPfcc instructions
 set op2 = 0b101 in {
-  set cc = 0b00 in {
-    def FBA     : F2_3<0b1000, "fba">;              // Branch always
-    def FBN     : F2_3<0b0000, "fbn">;              // Branch never
-    def FBU     : F2_3<0b0111, "fbu">;              // Branch on unordered
-    def FBG     : F2_3<0b0110, "fbg">;              // Branch >
-    def FBUG    : F2_3<0b0101, "fbug">;             // Branch on unordered or >
-    def FBL     : F2_3<0b0100, "fbl">;              // Branch <
-    def FBUL    : F2_3<0b0011, "fbul">;             // Branch on unordered or <
-    def FBLG    : F2_3<0b0010, "fblg">;             // Branch < or >
-    def FBNE    : F2_3<0b0001, "fbne">;             // Branch !=
-    def FBE     : F2_3<0b1001, "fbe">;              // Branch ==
-    def FBUE    : F2_3<0b1010, "fbue">;             // Branch on unordered or ==
-    def FBGE    : F2_3<0b1011, "fbge">;             // Branch > or ==
-    def FBUGE   : F2_3<0b1100, "fbuge">;            // Branch unord or > or ==
-    def FBLE    : F2_3<0b1101, "fble">;             // Branch < or ==
-    def FBULE   : F2_3<0b1110, "fbule">;            // Branch unord or < or ==
-    def FBO     : F2_3<0b1111, "fbo">;              // Branch on ordered
-  }
+  def FBA     : F2_3<0b1000, "fba">;              // Branch always
+  def FBN     : F2_3<0b0000, "fbn">;              // Branch never
+  def FBU     : F2_3<0b0111, "fbu">;              // Branch on unordered
+  def FBG     : F2_3<0b0110, "fbg">;              // Branch >
+  def FBUG    : F2_3<0b0101, "fbug">;             // Branch on unordered or >
+  def FBL     : F2_3<0b0100, "fbl">;              // Branch <
+  def FBUL    : F2_3<0b0011, "fbul">;             // Branch on unordered or <
+  def FBLG    : F2_3<0b0010, "fblg">;             // Branch < or >
+  def FBNE    : F2_3<0b0001, "fbne">;             // Branch !=
+  def FBE     : F2_3<0b1001, "fbe">;              // Branch ==
+  def FBUE    : F2_3<0b1010, "fbue">;             // Branch on unordered or ==
+  def FBGE    : F2_3<0b1011, "fbge">;             // Branch > or ==
+  def FBUGE   : F2_3<0b1100, "fbuge">;            // Branch unord or > or ==
+  def FBLE    : F2_3<0b1101, "fble">;             // Branch < or ==
+  def FBULE   : F2_3<0b1110, "fbule">;            // Branch unord or < or ==
+  def FBO     : F2_3<0b1111, "fbo">;              // Branch on ordered
 }
 
 // Section A.5: Branch on FP condition codes with prediction - p143
