@@ -20,6 +20,13 @@ AC_INIT([[[LLVM]]],[[[1.0]]],[llvmbugs@cs.uiuc.edu])
 dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])
 
+dnl Quit if the source directory has already been configured.
+if test -f ${srcdir}/include/Config/config.h
+then
+	AC_MSG_ERROR([Already configured in ${srcdir}])
+fi
+
+
 dnl Configure a header file
 AC_CONFIG_HEADERS(include/Config/config.h)
 AC_CONFIG_MAKEFILE(Makefile)
