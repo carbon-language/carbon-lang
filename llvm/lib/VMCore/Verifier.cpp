@@ -30,6 +30,7 @@
 //  * It is illegal to have a internal function that is just a declaration
 //  * It is illegal to have a ret instruction that returns a value that does not
 //    agree with the function return value type.
+//  * Function call argument types match the function prototype
 //  * All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
@@ -228,6 +229,22 @@ void Verifier::visitCallInst(CallInst *CI) {
   PointerType *FPTy = cast<PointerType>(CI->getOperand(0)->getType());
   Assert1(isa<FunctionType>(FPTy->getElementType()),
           "Called function is not pointer to function type!", CI);
+
+  FunctionType *FTy = cast<FunctionType>(FPTy->getElementType());
+
+  // Verify that the correct number of arguments are being passed
+  if (FTy->isVarArg())
+    Assert1(CI->getNumOperands()-1 >= FTy->getNumParams(),
+            "Called function requires more parameters than were provided!", CI);
+  else
+    Assert1(CI->getNumOperands()-1 == FTy->getNumParams(),
+            "Incorrect number of arguments passed to called function!", CI);
+
+  // Verify that all arguments to the call match the function type...
+  for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+    Assert2(CI->getOperand(i+1)->getType() == FTy->getParamType(i),
+            "Call parameter type does not match function signature!",
+            CI->getOperand(i+1), FTy->getParamType(i));
 }
 
 // visitBinaryOperator - Check that both arguments to the binary operator are
