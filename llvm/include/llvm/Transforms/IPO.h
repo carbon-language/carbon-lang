@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class FunctionPass;
 class ModulePass;
 class Function;
 class BasicBlock;
@@ -150,12 +151,12 @@ ModulePass *createIPSCCPPass();
 /// createLoopExtractorPass - This pass extracts all natural loops from the
 /// program into a function if it can.
 ///
-ModulePass *createLoopExtractorPass();
+FunctionPass *createLoopExtractorPass();
 
 /// createSingleLoopExtractorPass - This pass extracts one natural loop from the
 /// program into a function if it can.  This is used by bugpoint.
 ///
-ModulePass *createSingleLoopExtractorPass();
+FunctionPass *createSingleLoopExtractorPass();
 
 // createBlockExtractorPass - This pass extracts all blocks (except those
 // specified in the argument list) from the functions in the module.

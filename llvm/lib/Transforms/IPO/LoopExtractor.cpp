@@ -61,7 +61,7 @@ namespace {
 // createLoopExtractorPass - This pass extracts all natural loops from the
 // program into a function if it can.
 //
-ModulePass *llvm::createLoopExtractorPass() { return new LoopExtractor(); }
+FunctionPass *llvm::createLoopExtractorPass() { return new LoopExtractor(); }
 
 bool LoopExtractor::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
@@ -131,7 +131,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
 // createSingleLoopExtractorPass - This pass extracts one natural loop from the
 // program into a function if it can.  This is used by bugpoint.
 //
-ModulePass *llvm::createSingleLoopExtractorPass() {
+FunctionPass *llvm::createSingleLoopExtractorPass() {
   return new SingleLoopExtractor();
 }
 
