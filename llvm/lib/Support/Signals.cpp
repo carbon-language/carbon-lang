@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdio>
-#include <execinfo.h>
+//#include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
 #include "Config/config.h"     // Get the signal handler return type
@@ -55,8 +55,8 @@ static RETSIGTYPE SignalHandler(int Sig) {
 
   // Otherwise if it is a fault (like SEGV) output the stacktrace to
   // STDERR and reissue the signal to die...
-  int depth = backtrace(StackTrace, sizeof(StackTrace)/sizeof(StackTrace[0]));
-  backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
+  //int depth = backtrace(StackTrace, sizeof(StackTrace)/sizeof(StackTrace[0]));
+  //backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
   signal(Sig, SIG_DFL);
 }
 
