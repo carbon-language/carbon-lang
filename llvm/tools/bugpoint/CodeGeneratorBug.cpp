@@ -381,15 +381,11 @@ bool BugDriver::debugCodeGenerator() {
     BB->getInstList().push_back(call);
     
     // if the type of old function wasn't void, return value of call
-    ReturnInst *ret;
     if (oldMain->getReturnType() != Type::VoidTy) {
-      ret = new ReturnInst(call);
+      new ReturnInst(call, BB);
     } else {
-      ret = new ReturnInst();
+      new ReturnInst(0, BB);
     }
-
-    // Add the return instruction to the BasicBlock
-    BB->getInstList().push_back(ret);
   }
 
   DisambiguateGlobalSymbols(Program);
