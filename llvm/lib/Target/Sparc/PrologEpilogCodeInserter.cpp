@@ -63,9 +63,9 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
   
   int32_t C = - (int) staticStackSize;
   int SP = TM.getRegInfo().getStackPointer();
-  if (TM.getInstrInfo().constantFitsInImmedField(V9::SAVE,staticStackSize)) {
-    mvec.push_back(BuildMI(V9::SAVE, 3).addMReg(SP).addSImm(C).addMReg(SP,
-                                                                    MOTy::Def));
+  if (TM.getInstrInfo().constantFitsInImmedField(V9::SAVEi,staticStackSize)) {
+    mvec.push_back(BuildMI(V9::SAVEi, 3).addMReg(SP).addSImm(C)
+                   .addMReg(SP, MOTy::Def));
   } else {
     // We have to put the stack size value into a register before SAVE.
     // Use register %g1 since it is volatile across calls.  Note that the
@@ -81,17 +81,17 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
     M->setOperandHi32(0);
     mvec.push_back(M);
     
-    M = BuildMI(V9::OR, 3).addMReg(uregNum).addSImm(C)
+    M = BuildMI(V9::ORi, 3).addMReg(uregNum).addSImm(C)
       .addMReg(uregNum, MOTy::Def);
     M->setOperandLo32(1);
     mvec.push_back(M);
     
-    M = BuildMI(V9::SRA, 3).addMReg(uregNum).addZImm(0)
+    M = BuildMI(V9::SRAi6, 3).addMReg(uregNum).addZImm(0)
       .addMReg(uregNum, MOTy::Def);
     mvec.push_back(M);
     
     // Now generate the SAVE using the value in register %g1
-    M = BuildMI(V9::SAVE, 3).addMReg(SP).addMReg(uregNum).addMReg(SP,MOTy::Def);
+    M = BuildMI(V9::SAVEr,3).addMReg(SP).addMReg(uregNum).addMReg(SP,MOTy::Def);
     mvec.push_back(M);
   }
 
@@ -116,7 +116,7 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
       int nextArgOffset = firstArgOffset + numFixedArgs * argSize;
 
       for (int i=numFixedArgs; i < numArgRegs; ++i) {
-        mvec.push_back(BuildMI(V9::STX, 3).addMReg(firstArgReg+i).
+        mvec.push_back(BuildMI(V9::STXi, 3).addMReg(firstArgReg+i).
                        addMReg(fpReg).addSImm(nextArgOffset));
         nextArgOffset += argSize;
       }
@@ -139,7 +139,7 @@ void InsertPrologEpilogCode::InsertEpilogCode(MachineFunction &MF)
     {
       int ZR = TM.getRegInfo().getZeroRegNum();
       MachineInstr *Restore = 
-        BuildMI(V9::RESTORE, 3).addMReg(ZR).addSImm(0).addMReg(ZR, MOTy::Def);
+        BuildMI(V9::RESTOREi, 3).addMReg(ZR).addSImm(0).addMReg(ZR, MOTy::Def);
       
       MachineCodeForInstruction &termMvec =
         MachineCodeForInstruction::get(TermInst);

@@ -108,12 +108,12 @@ CreateSETUWConst(const TargetMachine& target, uint32_t C,
   if (miSETHI==NULL || C & MAXLO) {
     if (miSETHI) {
       // unsigned value with high-order bits set using SETHI
-      miOR = BuildMI(V9::OR,3).addReg(dest).addZImm(C).addRegDef(dest);
+      miOR = BuildMI(V9::ORi,3).addReg(dest).addZImm(C).addRegDef(dest);
       miOR->setOperandLo32(1);
     } else {
       // unsigned or small signed value that fits in simm13 field of OR
       assert(smallNegValue || (C & ~MAXSIMM) == 0);
-      miOR = BuildMI(V9::OR, 3).addMReg(target.getRegInfo()
+      miOR = BuildMI(V9::ORi, 3).addMReg(target.getRegInfo()
                                         .getZeroRegNum())
         .addSImm(sC).addRegDef(dest);
     }
@@ -145,7 +145,7 @@ CreateSETSWConst(const TargetMachine& target, int32_t C,
   // Sign-extend to the high 32 bits if needed.
   // NOTE: The value C = 0x80000000 is bad: -C == C and so -C is < MAXSIMM
   if (C < 0 && (C == -C || -C > (int32_t) MAXSIMM))
-    mvec.push_back(BuildMI(V9::SRA, 3).addReg(dest).addZImm(0).addRegDef(dest));
+    mvec.push_back(BuildMI(V9::SRAi6, 3).addReg(dest).addZImm(0).addRegDef(dest));
 }
 
 
@@ -172,14 +172,14 @@ CreateSETXConst(const TargetMachine& target, uint64_t C,
   CreateSETUWConst(target, (C >> 32), tmpReg, mvec);
   
   // Shift tmpReg left by 32 bits
-  mvec.push_back(BuildMI(V9::SLLX, 3).addReg(tmpReg).addZImm(32)
+  mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
                  .addRegDef(tmpReg));
   
   // Code to set the low 32 bits of the value in register `dest'
   CreateSETUWConst(target, C, dest, mvec);
   
   // dest = OR(tmpReg, dest)
-  mvec.push_back(BuildMI(V9::OR,3).addReg(dest).addReg(tmpReg).addRegDef(dest));
+  mvec.push_back(BuildMI(V9::ORr,3).addReg(dest).addReg(tmpReg).addRegDef(dest));
 }
 
 
@@ -201,7 +201,7 @@ CreateSETUWLabel(const TargetMachine& target, Value* val,
   mvec.push_back(MI);
   
   // Set the low 10 bits in dest
-  MI = BuildMI(V9::OR, 3).addReg(dest).addReg(val).addRegDef(dest);
+  MI = BuildMI(V9::ORr, 3).addReg(dest).addReg(val).addRegDef(dest);
   MI->setOperandLo32(1);
   mvec.push_back(MI);
 }
@@ -227,20 +227,20 @@ CreateSETXLabel(const TargetMachine& target,
   MI->setOperandHi64(0);
   mvec.push_back(MI);
   
-  MI = BuildMI(V9::OR, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
+  MI = BuildMI(V9::ORi, 3).addReg(tmpReg).addPCDisp(val).addRegDef(tmpReg);
   MI->setOperandLo64(1);
   mvec.push_back(MI);
   
-  mvec.push_back(BuildMI(V9::SLLX, 3).addReg(tmpReg).addZImm(32)
+  mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
                  .addRegDef(tmpReg));
   MI = BuildMI(V9::SETHI, 2).addPCDisp(val).addRegDef(dest);
   MI->setOperandHi32(0);
   mvec.push_back(MI);
   
-  MI = BuildMI(V9::OR, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
+  MI = BuildMI(V9::ORr, 3).addReg(dest).addReg(tmpReg).addRegDef(dest);
   mvec.push_back(MI);
   
-  MI = BuildMI(V9::OR, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
+  MI = BuildMI(V9::ORi, 3).addReg(dest).addPCDisp(val).addRegDef(dest);
   MI->setOperandLo32(1);
   mvec.push_back(MI);
 }
@@ -311,20 +311,20 @@ MaxConstantForInstr(unsigned llvmOpCode)
 
   if (llvmOpCode >= Instruction::BinaryOpsBegin &&
       llvmOpCode <  Instruction::BinaryOpsEnd)
-    modelOpCode = V9::ADD;
+    modelOpCode = V9::ADDi;
   else
     switch(llvmOpCode) {
-    case Instruction::Ret:   modelOpCode = V9::JMPLCALL; break;
+    case Instruction::Ret:   modelOpCode = V9::JMPLCALLi; break;
 
     case Instruction::Malloc:         
     case Instruction::Alloca:         
     case Instruction::GetElementPtr:  
     case Instruction::PHINode:       
     case Instruction::Cast:
-    case Instruction::Call:  modelOpCode = V9::ADD; break;
+    case Instruction::Call:  modelOpCode = V9::ADDi; break;
 
     case Instruction::Shl:
-    case Instruction::Shr:   modelOpCode = V9::SLLX; break;
+    case Instruction::Shr:   modelOpCode = V9::SLLXi6; break;
 
     default: break;
     };
@@ -673,12 +673,12 @@ CreateBitExtensionInstructions(bool signExtend,
     TmpInstruction *tmpI = new TmpInstruction(destVal->getType(),
                                               srcVal, destVal, "make32");
     mcfi.addTemp(tmpI);
-    mvec.push_back(BuildMI(V9::SLLX, 3).addReg(srcVal)
+    mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(srcVal)
                    .addZImm(32-numLowBits).addRegDef(tmpI));
     srcVal = tmpI;
   }
 
-  mvec.push_back(BuildMI(signExtend? V9::SRA : V9::SRL, 3)
+  mvec.push_back(BuildMI(signExtend? V9::SRAi6 : V9::SRLi6, 3)
                  .addReg(srcVal).addZImm(32-numLowBits).addRegDef(destVal));
 }
 
