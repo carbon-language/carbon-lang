@@ -311,10 +311,9 @@ where include files can be found.
 
 Print a summary of command line options.
 
-=item B<-V> or B<--version>
+=item B<--version>
 
-This option will cause B<llvmc> to print out its version number
-and terminate.
+This option will cause B<llvmc> to print out its version number and terminate.
 
 =back
 
@@ -345,7 +344,7 @@ item I<name> in the section named I<section>. This is a quick way to override
 a configuration item on the command line without resorting to changing the
 configuration files. 
 
-=item B<--config-file> F<dirname>
+=item B<--config-dir> F<dirname>
 
 This option tells B<llvmc> to read configuration data from the I<directory>
 named F<dirname>. Data from such directories will be read in the order
@@ -360,7 +359,6 @@ This option tells B<llvmc> to skip the normal processing of configuration
 files and only configure from the contents of the F<dirname> directory. Multiple
 B<--config-only-from> options may be given in which case the directories are
 read in the order given on the command line.
-
 
 =item B<--emit-raw-code>
 
