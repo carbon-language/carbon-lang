@@ -50,6 +50,7 @@ X86InstrInfo::reverseBranchCondition(MachineBasicBlock::iterator MI) const {
   assert(isBranch(Opcode) && "MachineInstr must be a branch");
   unsigned ROpcode;
   switch (Opcode) {
+  default: assert(0 && "Cannot reverse unconditional branches!");
   case X86::JB:  ROpcode = X86::JAE; break;
   case X86::JAE: ROpcode = X86::JB;  break;
   case X86::JE:  ROpcode = X86::JNE; break;
@@ -62,8 +63,6 @@ X86InstrInfo::reverseBranchCondition(MachineBasicBlock::iterator MI) const {
   case X86::JGE: ROpcode = X86::JL;  break;
   case X86::JLE: ROpcode = X86::JG;  break;
   case X86::JG:  ROpcode = X86::JLE; break;
-  default:
-    assert(0 && "Cannot reverse unconditional branches!");
   }
   MachineBasicBlock* MBB = MI->getParent();
   MachineBasicBlock* TMBB = MI->getOperand(0).getMachineBasicBlock();
