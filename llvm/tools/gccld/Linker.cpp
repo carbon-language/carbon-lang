@@ -346,7 +346,8 @@ bool llvm::LinkFiles(const char *progname, Module *HeadModule,
         return true;
       }
     } else {
-      std::cerr << "Warning: invalid file `" << Pathname << "' ignored.\n";
+      std::cerr << progname << ": Warning: invalid file `" << Pathname 
+                << "' ignored.\n";
     }
   }
 
