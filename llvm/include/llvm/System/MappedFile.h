@@ -94,7 +94,7 @@ namespace sys {
 
     /// This function returns the number of bytes in the file. 
     /// @throws std::string if an error occurs
-    size_t size();
+    size_t size() const;
 
   /// @}
   /// @name Mutators
@@ -137,7 +137,7 @@ namespace sys {
     sys::Path path_;       ///< Path to the file.
     int options_;          ///< Options used to create the mapping
     void* base_;           ///< Pointer to the base memory address
-    MappedFileInfo* info_; ///< Platform specific info for the mapping
+    mutable MappedFileInfo* info_; ///< Platform specific info for the mapping
 
   /// @}
   /// @name Disabled
