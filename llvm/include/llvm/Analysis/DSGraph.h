@@ -268,8 +268,8 @@ public:
   /// is useful for clearing out markers like Incomplete.
   ///
   void maskNodeTypes(unsigned Mask) {
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      Nodes[i]->maskNodeTypes(Mask);
+    for (node_iterator I = node_begin(), E = node_end(); I != E; ++I)
+      (*I)->maskNodeTypes(Mask);
   }
   void maskIncompleteMarkers() { maskNodeTypes(~DSNode::Incomplete); }
 
