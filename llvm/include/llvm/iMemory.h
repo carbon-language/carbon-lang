@@ -19,32 +19,21 @@
 // AllocaInst.
 //
 class AllocationInst : public Instruction {
-public:
+protected:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
-		 const std::string &Name = "")
-    : Instruction(Ty, iTy, Name) {
-    assert(Ty->isPointerType() && "Can't allocate a non pointer type!");
-
-    if (ArraySize) {
-      assert(ArraySize->getType() == Type::UIntTy &&
-             "Malloc/Allocation array size != UIntTy!");
-
-      Operands.reserve(1);
-      Operands.push_back(Use(ArraySize, this));
-    }
-  }
+		 const std::string &Name = "");
+public:
 
   // isArrayAllocation - Return true if there is an allocation size parameter
   // to the allocation instruction that is not 1.
   //
   bool isArrayAllocation() const;
 
-  inline const Value *getArraySize() const {
-    assert(isArrayAllocation()); return Operands[0];
-  }
-  inline Value *getArraySize() {
-    assert(isArrayAllocation()); return Operands[0];
-  }
+  // getArraySize - Get the number of element allocated, for a simple allocation
+  // of a single element, this will return a constant 1 value.
+  //
+  inline const Value *getArraySize() const { return Operands[0]; }
+  inline Value *getArraySize() { return Operands[0]; }
 
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
@@ -81,8 +70,7 @@ public:
     : AllocationInst(Ty, ArraySize, Malloc, Name) {}
 
   virtual Instruction *clone() const { 
-    return new MallocInst(getType(), 
-			  Operands.size() ? (Value*)Operands[0].get() : 0);
+    return new MallocInst(getType(), (Value*)Operands[0].get());
   }
 
   virtual const char *getOpcodeName() const { return "malloc"; }
@@ -108,8 +96,7 @@ public:
     : AllocationInst(Ty, ArraySize, Alloca, Name) {}
 
   virtual Instruction *clone() const { 
-    return new AllocaInst(getType(),
-			  Operands.size() ? (Value*)Operands[0].get() : 0);
+    return new AllocaInst(getType(), (Value*)Operands[0].get());
   }
 
   virtual const char *getOpcodeName() const { return "alloca"; }
