@@ -5,10 +5,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/iMemory.h"
+#include "llvm/ConstantVals.h"
 
 static inline const Type *checkType(const Type *Ty) {
   assert(Ty && "Invalid indices for type!");
   return Ty;
+}
+
+bool AllocationInst::isArrayAllocation() const {
+  return getNumOperands() == 1 &&
+         getOperand(0) != ConstantUInt::get(Type::UIntTy, 1);
 }
 
 //===----------------------------------------------------------------------===//

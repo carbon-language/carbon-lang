@@ -35,9 +35,9 @@ public:
   }
 
   // isArrayAllocation - Return true if there is an allocation size parameter
-  // to the allocation instruction.
+  // to the allocation instruction that is not 1.
   //
-  inline bool isArrayAllocation() const { return Operands.size() == 1; }
+  bool isArrayAllocation() const;
 
   inline const Value *getArraySize() const {
     assert(isArrayAllocation()); return Operands[0];
