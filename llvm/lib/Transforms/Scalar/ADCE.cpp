@@ -209,6 +209,18 @@ bool ADCE::doADCE() {
     return MadeChanges;
   }
 
+  // Scan the function marking blocks without post-dominance information as
+  // live.  Blocks without post-dominance information occur when there is an
+  // infinite loop in the program.  Because the infinite loop could contain a
+  // function which unwinds, exits or has side-effects, we don't want to delete
+  // the infinite loop or those blocks leading up to it.
+  for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
+    if (DT[I] == 0)
+      for (pred_iterator PI = pred_begin(I), E = pred_end(I); PI != E; ++PI)
+        markInstructionLive((*PI)->getTerminator());
+
+
+
   DEBUG(std::cerr << "Processing work list\n");
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
