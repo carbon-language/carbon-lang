@@ -17,6 +17,8 @@ bb0:					;[#uses=0]
 	%cast1007 = cast %Disjunct * * %reg1000 to sbyte * *		; <sbyte * *> [#uses=1]
 	%reg110 = load sbyte * * %cast1007		; <sbyte *> [#uses=1]
 	%cast1008 = cast ulong 4 to sbyte *		; <sbyte *> [#uses=1]
-	%reg1001 = add sbyte * %reg110, %cast1008		; <sbyte *> [#uses=0]
+	%A = cast sbyte * %reg110 to ulong
+	%B = cast sbyte * %cast1008 to ulong
+	%reg1001 = add ulong %A, %B		; <sbyte *> [#uses=0]
 	ret void
 end
