@@ -20,8 +20,10 @@
     <li><a href="#passes">Bugs in LLVM passes</a>
     </ul>
   <li><a href="#miscompilations">Miscompilations</a>
+  <li><a href="#codegen">Incorrect code generation (JIT and LLC)</a>
 
-  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></b><p>
+  <p><b>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
+                   <a href="http://misha.brukman.net">Misha Brukman</a></b><p>
 </ol><p></font>
 </td><td valign=top align=right>
 <img src="Debugging.gif" width=444 height=314>
@@ -138,7 +140,7 @@ being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
 the full list of objects linked).  Then run:<p>
 
 <pre>
-  <b>as</b> &lt; /dev/null &gt; null.bc
+  <b>llvm-as</b> &lt; /dev/null &gt; null.bc
   <b>gccld</b> -debug-pass=Arguments null.bc
 </pre><p>
 
@@ -180,13 +182,80 @@ to reproduce the problem to the llvmbugs mailing list.<p>
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="miscompilations">Miscompilations
+<a name="miscompilations">Miscompilations</a>
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-Fortunately we haven't had too many miscompilations.  Because of this, this
-section is a TODO.  Basically, use bugpoint to track down the problem.<p>
+A miscompilation occurs when a pass does not correctly transform a program, thus
+producing errors that are only noticed during execution. This is different from
+producing invalid LLVM code (i.e., code not in SSA form, using values before
+defining them, etc.) which the verifier will check for after a pass finishes its
+run.<p>
 
+To debug a miscompilation, you should choose which program you wish to run the
+output through, e.g. C backend, the JIT, or LLC, and a selection of passes, one
+of which may be causing the error, and run, for example:
+
+<pre>
+  <b>bugpoint</b> -run-cbe -mode=compile [... optimization passes ...] file-to-test.bc
+</pre>
+
+<tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
+that causes an error, and simplify the bytecode file as much as it can to assist
+you. It will print a message letting you know how to reproduce the resulting
+error.
+
+<!-- *********************************************************************** -->
+</ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
+<tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
+<a name="codegen">Incorrect code generation</a>
+</b></font></td></tr></table><ul>
+<!-- *********************************************************************** -->
+
+Similarly to debugging incorrect compilation by mis-behaving passes, you can
+debug incorrect code generation by either LLC or the JIT, using
+<tt>bugpoint</tt>. The process <tt>bugpoint</tt> follows in this case is to try
+to narrow the code down to a function that is miscompiled by one or the other
+method, but since for correctness, the entire program must be run,
+<tt>bugpoint</tt> will compile the code it deems to not be affected with the C
+Backend, and then link in the shared object it generates.<p>
+
+To debug the JIT:
+<pre>
+  <b>bugpoint</b> -run-jit -mode=codegen -output=[correct output file] [bytecodefile]
+</pre>
+
+Similarly, to debug the LLC, one would run:
+<pre>
+  <b>bugpoint</b> -run-llc -mode=codegen -output=[correct output file] [bytecodefile]
+</pre>
+
+At the end of a successful <tt>bugpoint</tt> run, you will be presented
+with two bytecode files: a <em>safe</em> file which can be compiled with the C
+backend and the <em>test</em> file which either LLC or the JIT
+mis-codegenerates, and thus causes the error.<p>
+
+To reproduce the error that <tt>bugpoint</tt> found, it is sufficient to do the
+following:
+
+<ol>
+  <li>Regenerate the shared object from the safe bytecode file:<br>
+<pre>
+  <b>llvm-dis</b> -c safe.bc -o safe.c<br>
+  <b>gcc</b> -shared safe.c -o safe.so
+</pre></li>
+  <li>If debugging LLC, compile test bytecode native and link with the shared object:<br>
+<pre>
+  <b>llc</b> test.bc -o test.s -f<br>
+  gcc test.s safe.so -o test.llc<br>
+  ./test.llc [program options]
+</pre></li>
+      <p>
+     If debugging the JIT, load the shared object and supply the test bytecode:<br>
+<pre>
+  <b>lli</b> -load=safe.so test.bc [program options]
+</pre></li>  
+</ol>
 
 <!-- *********************************************************************** -->
 </ul>
@@ -196,6 +265,6 @@ section is a TODO.  Basically, use bugpoint to track down the problem.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri May 23 09:48:53 CDT 2003
+Last modified: Wed Sep 17 13:49:15 CDT 2003
 <!-- hhmts end -->
 </font></body></html>
