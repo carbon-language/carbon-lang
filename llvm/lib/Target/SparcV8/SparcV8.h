@@ -23,8 +23,8 @@ namespace llvm {
   class TargetMachine;
 
   FunctionPass *createSparcV8SimpleInstructionSelector(TargetMachine &TM);
-// FunctionPass *createSparcV8CodePrinterPass(std::ostream &OS,
-//                                            TargetMachine &TM);
+  FunctionPass *createSparcV8CodePrinterPass(std::ostream &OS,
+                                             TargetMachine &TM);
 
 } // end namespace llvm;
 

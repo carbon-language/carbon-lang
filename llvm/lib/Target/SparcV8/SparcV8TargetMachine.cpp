@@ -53,6 +53,8 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // are producing.
   PM.add(createMachineFunctionPrinterPass(&Out));
 
+  PM.add(createSparcV8CodePrinterPass(Out, *this));
+
   PM.add(createMachineCodeDeleter());
   return false;
 }
