@@ -574,6 +574,7 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
       const Type *ElTy = PTy->getElementType();
       while (ElTy != DPTy->getElementType()) {
         if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+          if (STy->getNumElements() == 0) break;
           ElTy = STy->getElementType(0);
           IdxList.push_back(Constant::getNullValue(Type::UIntTy));
         } else if (const SequentialType *STy = dyn_cast<SequentialType>(ElTy)) {
