@@ -220,7 +220,7 @@ CodeBlock:
 </tt></div>
 
 <p>The <tt>llvm_gc_allocate</tt> function is a global function defined by the
-garbage collector implementation to allocate memory.  It should return a
+garbage collector implementation to allocate memory.  It returns a
 zeroed-out block of memory of the appropriate size.</p>
 
 </div>
@@ -242,8 +242,9 @@ collectors) need to be informed when the mutator (the program that needs garbage
 collection) reads or writes object references into the heap.  In the case of a
 generational collector, it needs to keep track of which "old" generation objects
 have references stored into them.  The amount of code that typically needs to be
-executed is usually quite small, so the overall performance impact of the
-inserted code is tolerable.</p>
+executed is usually quite small (and not on the critical path of any 
+computation), so the overall performance impact of the inserted code is 
+tolerable.</p>
 
 <p>To support garbage collectors that use read or write barriers, LLVM provides
 the <tt>llvm.gcread</tt> and <tt>llvm.gcwrite</tt> intrinsics.  The first
