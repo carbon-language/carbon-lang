@@ -33,14 +33,14 @@ class InstV9 : Instruction {          // Sparc instruction baseline
 //
 
 // Section A.2: Add - p137
-def ADDr    : F3_1<2, 0b000000, "add">;             // add r, r, r
-def ADDi    : F3_2<2, 0b000000, "add">;             // add r, i, r
-def ADDccr  : F3_1<2, 0b010000, "addcc">;           // addcc r, r, r
-def ADDcci  : F3_2<2, 0b010000, "addcc">;           // addcc r, i, r
-def ADDCr   : F3_1<2, 0b001000, "addC">;            // addC r, r, r
-def ADDCi   : F3_2<2, 0b001000, "addC">;            // addC r, i, r
-def ADDCccr : F3_1<2, 0b011000, "addCcc">;          // addCcc r, r, r
-def ADDCcci : F3_2<2, 0b011000, "addCcc">;          // addCcc r, i, r
+def ADDr    : F3_1<2, 0b000000, "add">;             // add    rs1, rs2, rd
+def ADDi    : F3_2<2, 0b000000, "add">;             // add    rs1, imm, rd
+def ADDccr  : F3_1<2, 0b010000, "addcc">;           // addcc  rs1, rs2, rd
+def ADDcci  : F3_2<2, 0b010000, "addcc">;           // addcc  rs1, imm, rd
+def ADDCr   : F3_1<2, 0b001000, "addC">;            // addC   rs1, rs2, rd
+def ADDCi   : F3_2<2, 0b001000, "addC">;            // addC   rs1, imm, rd
+def ADDCccr : F3_1<2, 0b011000, "addCcc">;          // addCcc rs1, rs2, rd
+def ADDCcci : F3_2<2, 0b011000, "addCcc">;          // addCcc rs1, imm, rd
 
 // Section A.3: Branch on Integer Register with Prediction - p138
 set op2 = 0b011 in {
@@ -309,80 +309,79 @@ def FSQRTQ : F3_14<2, 0b110100, 0b000101011, "fsqrts">;  // fsqrts r, r
 
 // Section A.24: Jump and Link - p172
 // Mimicking the Sparc's instr def...
-def JMPLCALLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
-def JMPLCALLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
-def JMPLRETr  : F3_1<2, 0b111000, "jmpl">;              // jmpl [r+r], r
-def JMPLRETi  : F3_2<2, 0b111000, "jmpl">;              // jmpl [r+i], r
+def JMPLCALLr : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
+def JMPLCALLi : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
+def JMPLRETr  : F3_1<2, 0b111000, "jmpl">;              // jmpl [rs1+rs2], rd
+def JMPLRETi  : F3_2<2, 0b111000, "jmpl">;              // jmpl [rs1+imm], rd
 
 // Section A.25: Load Floating-Point - p173
-def LDFr  : F3_1<3, 0b100000, "ld">;             // ld [r+r], r
-def LDFi  : F3_2<3, 0b100000, "ld">;             // ld [r+i], r
-def LDDFr : F3_1<3, 0b100011, "ldd">;            // ldd [r+r], r
-def LDDFi : F3_2<3, 0b100011, "ldd">;            // ldd [r+i], r
-def LDQFr : F3_1<3, 0b100010, "ldq">;            // ldq [r+r], r
-def LDQFi : F3_2<3, 0b100010, "ldq">;            // ldq [r+i], r
+def LDFr  : F3_1<3, 0b100000, "ld">;             // ld [rs1+rs2], rd
+def LDFi  : F3_2<3, 0b100000, "ld">;             // ld [rs1+imm], rd
+def LDDFr : F3_1<3, 0b100011, "ldd">;            // ldd [rs1+rs2], rd
+def LDDFi : F3_2<3, 0b100011, "ldd">;            // ldd [rs1+imm], rd
+def LDQFr : F3_1<3, 0b100010, "ldq">;            // ldq [rs1+rs2], rd
+def LDQFi : F3_2<3, 0b100010, "ldq">;            // ldq [rs1+imm], rd
 set isDeprecated = 1 in {
   set rd = 0 in {
-    def LDFSRr : F3_1<3, 0b100001, "ld">;        // ld [r+r], r
-    def LDFSRi : F3_2<3, 0b100001, "ld">;        // ld [r+i], r
+    def LDFSRr : F3_1<3, 0b100001, "ld">;        // ld [rs1+rs2], rd
+    def LDFSRi : F3_2<3, 0b100001, "ld">;        // ld [rs1+imm], rd
   }
 }
 set rd = 1 in {
-  def LDXFSRr : F3_1<3, 0b100001, "ldx">;         // ldx [r+r], r
-  def LDXFSRi : F3_2<3, 0b100001, "ldx">;         // ldx [r+i], r
+  def LDXFSRr : F3_1<3, 0b100001, "ldx">;         // ldx [rs1+rs2], rd
+  def LDXFSRi : F3_2<3, 0b100001, "ldx">;         // ldx [rs1+imm], rd
 }
 
 // Section A.27: Load Integer - p178
-def LDSBr : F3_1<3, 0b001001, "ldsb">;           // ldsb [r+r], r
-def LDSBi : F3_2<3, 0b001001, "ldsb">;           // ldsb [r+i], r
-def LDSHr : F3_1<3, 0b001010, "ldsh">;           // ldsh [r+r], r
-def LDSHi : F3_2<3, 0b001010, "ldsh">;           // ldsh [r+i], r
-def LDSWr : F3_1<3, 0b001000, "ldsw">;           // ldsh [r+r], r 
-def LDSWi : F3_2<3, 0b001000, "ldsw">;           // ldsh [r+i], r
-def LDUBr : F3_1<3, 0b000001, "ldub">;           // ldub [r+r], r
-def LDUBi : F3_2<3, 0b000001, "ldub">;           // ldub [r+i], r
-def LDUHr : F3_1<3, 0b000010, "lduh">;           // lduh [r+r], r
-def LDUHi : F3_2<3, 0b000010, "lduh">;           // lduh [r+i], r
+def LDSBr : F3_1<3, 0b001001, "ldsb">;           // ldsb [rs1+rs2], rd
+def LDSBi : F3_2<3, 0b001001, "ldsb">;           // ldsb [rs1+imm], rd
+def LDSHr : F3_1<3, 0b001010, "ldsh">;           // ldsh [rs1+rs2], rd
+def LDSHi : F3_2<3, 0b001010, "ldsh">;           // ldsh [rs1+imm], rd
+def LDSWr : F3_1<3, 0b001000, "ldsw">;           // ldsh [rs1+rs2], rd
+def LDSWi : F3_2<3, 0b001000, "ldsw">;           // ldsh [rs1+imm], rd
+def LDUBr : F3_1<3, 0b000001, "ldub">;           // ldub [rs1+rs2], rd
+def LDUBi : F3_2<3, 0b000001, "ldub">;           // ldub [rs1+imm], rd
+def LDUHr : F3_1<3, 0b000010, "lduh">;           // lduh [rs1+rs2], rd
+def LDUHi : F3_2<3, 0b000010, "lduh">;           // lduh [rs1+imm], rd
 // synonym: LD
-def LDUWr : F3_1<3, 0b000000, "lduw">;           // lduw [r+r], r
-def LDUWi : F3_2<3, 0b000000, "lduw">;           // lduw [r+i], r
-// LDD should no longer be used, LDX should be used instead
-def LDXr : F3_1<3, 0b001011, "ldx">;              // ldx [r+r], r
-def LDXi : F3_2<3, 0b001011, "ldx">;              // ldx [r+i], r
+def LDUWr : F3_1<3, 0b000000, "lduw">;           // lduw [rs1+rs2], rd
+def LDUWi : F3_2<3, 0b000000, "lduw">;           // lduw [rs1+imm], rd
+def LDXr  : F3_1<3, 0b001011, "ldx">;            // ldx  [rs1+rs2], rd
+def LDXi  : F3_2<3, 0b001011, "ldx">;            // ldx  [rs1+imm], rd
 #if 0
 set isDeprecated = 1 in {
-  def LDDr : F3_1<3, 0b000011, "ldd">;            // ldd [r+r], r
-  def LDDi : F3_2<3, 0b000011, "ldd">;            // ldd [r+i], r
+  def LDDr : F3_1<3, 0b000011, "ldd">;            // ldd [rs1+rs2], rd
+  def LDDi : F3_2<3, 0b000011, "ldd">;            // ldd [rs1+imm], rd
 }
 #endif
 
 // Section A.31: Logical operations
-def ANDr    : F3_1<2, 0b000001, "and">;          // and r, r, r
-def ANDi    : F3_2<2, 0b000001, "and">;          // and r, r, i
-def ANDccr  : F3_1<2, 0b010001, "andcc">;        // andcc r, r, r
-def ANDcci  : F3_2<2, 0b010001, "andcc">;        // andcc r, r, i
-def ANDNr   : F3_1<2, 0b000101, "andn">;         // andn r, r, r
-def ANDNi   : F3_2<2, 0b000101, "andn">;         // andn r, r, i
-def ANDNccr : F3_1<2, 0b010101, "andncc">;       // andncc r, r, r
-def ANDNcci : F3_2<2, 0b010101, "andncc">;       // andncc r, r, i
+def ANDr    : F3_1<2, 0b000001, "and">;          // and    rs1, rs2, rd
+def ANDi    : F3_2<2, 0b000001, "and">;          // and    rs1, imm, rd
+def ANDccr  : F3_1<2, 0b010001, "andcc">;        // andcc  rs1, rs2, rd
+def ANDcci  : F3_2<2, 0b010001, "andcc">;        // andcc  rs1, imm, rd
+def ANDNr   : F3_1<2, 0b000101, "andn">;         // andn   rs1, rs2, rd
+def ANDNi   : F3_2<2, 0b000101, "andn">;         // andn   rs1, imm, rd
+def ANDNccr : F3_1<2, 0b010101, "andncc">;       // andncc rs1, rs2, rd
+def ANDNcci : F3_2<2, 0b010101, "andncc">;       // andncc rs1, imm, rd
 
-def ORr    : F3_1<2, 0b000010, "or">;            // or r, r, r
-def ORi    : F3_2<2, 0b000010, "or">;            // or r, r, i
-def ORccr  : F3_1<2, 0b010010, "orcc">;          // orcc r, r, r
-def ORcci  : F3_2<2, 0b010010, "orcc">;          // orcc r, r, i
-def ORNr   : F3_1<2, 0b000110, "orn">;           // orn r, r, r
-def ORNi   : F3_2<2, 0b000110, "orn">;           // orn r, r, i
-def ORNccr : F3_1<2, 0b010110, "orncc">;         // orncc r, r, r
-def ORNcci : F3_2<2, 0b010110, "orncc">;         // orncc r, r, i
+def ORr    : F3_1<2, 0b000010, "or">;            // or     rs1, rs2, rd
+def ORi    : F3_2<2, 0b000010, "or">;            // or     rs1, imm, rd
+def ORccr  : F3_1<2, 0b010010, "orcc">;          // orcc   rs1, rs2, rd
+def ORcci  : F3_2<2, 0b010010, "orcc">;          // orcc   rs1, imm, rd
+def ORNr   : F3_1<2, 0b000110, "orn">;           // orn    rs1, rs2, rd
+def ORNi   : F3_2<2, 0b000110, "orn">;           // orn    rs1, imm, rd
+def ORNccr : F3_1<2, 0b010110, "orncc">;         // orncc  rs1, rs2, rd
+def ORNcci : F3_2<2, 0b010110, "orncc">;         // orncc  rs1, imm, rd
 
-def XORr    : F3_1<2, 0b000011, "xor">;          // xor r, r, r
-def XORi    : F3_2<2, 0b000011, "xor">;          // xor r, r, i
-def XORccr  : F3_1<2, 0b010011, "xorcc">;        // xorcc r, r, r
-def XORcci  : F3_2<2, 0b010011, "xorcc">;        // xorcc r, r, i
-def XNORr   : F3_1<2, 0b000111, "xnor">;         // xnor r, r, r
-def XNORi   : F3_2<2, 0b000111, "xnor">;         // xnor r, r, i
-def XNORccr : F3_1<2, 0b010111, "xnorcc">;       // xnorcc r, r, r
-def XNORcci : F3_2<2, 0b010111, "xnorcc">;       // xnorcc r, r, i
+def XORr    : F3_1<2, 0b000011, "xor">;          // xor    rs1, rs2, rd
+def XORi    : F3_2<2, 0b000011, "xor">;          // xor    rs1, imm, rd
+def XORccr  : F3_1<2, 0b010011, "xorcc">;        // xorcc  rs1, rs2, rd
+def XORcci  : F3_2<2, 0b010011, "xorcc">;        // xorcc  rs1, imm, rd
+def XNORr   : F3_1<2, 0b000111, "xnor">;         // xnor   rs1, rs2, rd
+def XNORi   : F3_2<2, 0b000111, "xnor">;         // xnor   rs1, imm, rd
+def XNORccr : F3_1<2, 0b010111, "xnorcc">;       // xnorcc rs1, rs2, rd
+def XNORcci : F3_2<2, 0b010111, "xnorcc">;       // xnorcc rs1, imm, rd
 
 // Section A.32: Memory Barrier - p186
 // Not currently used in the Sparc backend
