@@ -950,8 +950,11 @@ void GraphBuilder::visitFreeInst(FreeInst &FI) {
 void GraphBuilder::visitCastInst(CastInst &CI) {
   if (isPointerType(CI.getType()))
     if (isPointerType(CI.getOperand(0)->getType())) {
+      DSNodeHandle Ptr = getValueDest(*CI.getOperand(0));
+      if (Ptr.getNode() == 0) return;
+
       // Cast one pointer to the other, just act like a copy instruction
-      setDestTo(CI, getValueDest(*CI.getOperand(0)));
+      setDestTo(CI, Ptr);
     } else {
       // Cast something (floating point, small integer) to a pointer.  We need
       // to track the fact that the node points to SOMETHING, just something we
