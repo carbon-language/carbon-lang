@@ -59,9 +59,10 @@ static const StructType *getST(const PATypeHolder &TH) {
 // recurses down into derived types, merging the used types if the parent types
 // are compatible.
 //
-static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
-                                  const PATypeHolder &SrcTy,
-                                  SymbolTable *DestST, const std::string &Name){
+static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
+                                   const PATypeHolder &SrcTy,
+                                   SymbolTable *DestST, const std::string &Name,
+                std::vector<std::pair<PATypeHolder, PATypeHolder> > &Pointers) {
   const Type *SrcTyT = SrcTy.get();
   const Type *DestTyT = DestTy.get();
   if (DestTyT == SrcTyT) return false;       // If already equal, noop
@@ -81,8 +82,9 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
         cast<FunctionType>(SrcTyT)->isVarArg())
       return true;
     for (unsigned i = 0, e = getFT(DestTy)->getNumContainedTypes(); i != e; ++i)
-      if (RecursiveResolveTypes(getFT(DestTy)->getContainedType(i),
-                                getFT(SrcTy)->getContainedType(i), DestST, ""))
+      if (RecursiveResolveTypesI(getFT(DestTy)->getContainedType(i),
+                                 getFT(SrcTy)->getContainedType(i), DestST, "",
+                                 Pointers))
         return true;
     return false;
   }
@@ -90,8 +92,9 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
     if (getST(DestTy)->getNumContainedTypes() != 
         getST(SrcTy)->getNumContainedTypes()) return 1;
     for (unsigned i = 0, e = getST(DestTy)->getNumContainedTypes(); i != e; ++i)
-      if (RecursiveResolveTypes(getST(DestTy)->getContainedType(i),
-                                getST(SrcTy)->getContainedType(i), DestST, ""))
+      if (RecursiveResolveTypesI(getST(DestTy)->getContainedType(i),
+                                 getST(SrcTy)->getContainedType(i), DestST, "",
+                                 Pointers))
         return true;
     return false;
   }
@@ -99,16 +102,38 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
     const ArrayType *DAT = cast<ArrayType>(DestTy.get());
     const ArrayType *SAT = cast<ArrayType>(SrcTy.get());
     if (DAT->getNumElements() != SAT->getNumElements()) return true;
-    return RecursiveResolveTypes(DAT->getElementType(), SAT->getElementType(),
-                                 DestST, "");
+    return RecursiveResolveTypesI(DAT->getElementType(), SAT->getElementType(),
+                                  DestST, "", Pointers);
   }
-  case Type::PointerTyID:
-    return RecursiveResolveTypes(
-                              cast<PointerType>(DestTy.get())->getElementType(),
-                              cast<PointerType>(SrcTy.get())->getElementType(),
-                                 DestST, "");
+  case Type::PointerTyID: {
+    // If this is a pointer type, check to see if we have already seen it.  If
+    // so, we are in a recursive branch.  Cut off the search now.  We cannot use
+    // an associative container for this search, because the type pointers (keys
+    // in the container) change whenever types get resolved...
+    //
+    for (unsigned i = 0, e = Pointers.size(); i != e; ++i)
+      if (Pointers[i].first == DestTy)
+        return Pointers[i].second != SrcTy;
+
+    // Otherwise, add the current pointers to the vector to stop recursion on
+    // this pair.
+    Pointers.push_back(std::make_pair(DestTyT, SrcTyT));
+    bool Result =
+      RecursiveResolveTypesI(cast<PointerType>(DestTy.get())->getElementType(),
+                             cast<PointerType>(SrcTy.get())->getElementType(),
+                             DestST, "", Pointers);
+    Pointers.pop_back();
+    return Result;
+  }
   default: assert(0 && "Unexpected type!"); return true;
   }  
+}
+
+static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
+                                  const PATypeHolder &SrcTy,
+                                  SymbolTable *DestST, const std::string &Name){
+  std::vector<std::pair<PATypeHolder, PATypeHolder> > PointerTypes;
+  return RecursiveResolveTypesI(DestTy, SrcTy, DestST, Name, PointerTypes);
 }
 
 
