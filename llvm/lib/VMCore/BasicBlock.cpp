@@ -13,6 +13,7 @@
 #include "llvm/Type.h"
 #include "llvm/CFG.h"
 #include "llvm/iOther.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 // Instantiate Templates - This ugliness is the price we have to pay
 // for having a ValueHolderImpl.h file seperate from ValueHolder.h!  :(
@@ -20,7 +21,10 @@
 template class ValueHolder<Instruction, BasicBlock, Method>;
 
 BasicBlock::BasicBlock(const string &name, Method *Parent)
-  : Value(Type::LabelTy, Value::BasicBlockVal, name), InstList(this, 0) {
+  : Value(Type::LabelTy, Value::BasicBlockVal, name),
+    InstList(this, 0),
+    machineInstrVec(new MachineCodeForBasicBlock)
+{
   if (Parent)
     Parent->getBasicBlocks().push_back(this);
 }
@@ -28,6 +32,7 @@ BasicBlock::BasicBlock(const string &name, Method *Parent)
 BasicBlock::~BasicBlock() {
   dropAllReferences();
   InstList.delete_all();
+  delete machineInstrVec;
 }
 
 // Specialize setName to take care of symbol table majik

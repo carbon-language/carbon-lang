@@ -29,12 +29,14 @@
 class Instruction;
 class Method;
 class TerminatorInst;
+class MachineCodeForBasicBlock;
 
 class BasicBlock : public Value {       // Basic blocks are data objects also
 public:
   typedef ValueHolder<Instruction, BasicBlock, Method> InstListType;
 private :
   InstListType InstList;
+  MachineCodeForBasicBlock* machineInstrVec;
 
   friend class ValueHolder<BasicBlock,Method,Method>;
   void setParent(Method *parent);
@@ -67,6 +69,12 @@ public:
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
 
+  
+  // Machine code accessor...
+  inline MachineCodeForBasicBlock& getMachineInstrVec() const {
+    return *machineInstrVec; 
+  }
+  
   //===--------------------------------------------------------------------===//
   // Instruction iterator methods
   inline iterator                begin()       { return InstList.begin(); }
