@@ -183,7 +183,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     assert(isReg(MI->getOperand(0)) &&
            (MI->getNumOperands() == 1 || 
             (MI->getNumOperands() == 2 &&
-             (MI->getOperand(1).getVRegValue() ||
+             (MI->getOperand(1).getVRegValueOrNull() ||
               isImmediate(MI->getOperand(1))))) &&
            "Illegal form for AddRegFrm instruction!");
 
