@@ -1,3 +1,4 @@
+* Need to implement constant propogation of cast instructions!
 * Fix DCE to elminate br <c>, %L1, %L1 so that it can optimize the main of
   fib.ll better.  Currently I have to do this to get best results:
      as < fib.ll | opt -inline -sccp -dce -sccp -dce |dis
