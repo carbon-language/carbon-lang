@@ -11,6 +11,8 @@
 #include "llvm/Module.h"
 #include "llvm/Support/InstIterator.h"
 
+static RegisterAnalysis<FindUsedTypes>
+X("printusedtypes", "Find Used Types");
 AnalysisID FindUsedTypes::ID(AnalysisID::create<FindUsedTypes>());
 
 // IncorporateType - Incorporate one type and all of its subtypes into the

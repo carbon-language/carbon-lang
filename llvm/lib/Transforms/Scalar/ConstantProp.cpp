@@ -31,7 +31,7 @@ namespace {
     }
   };
 
-RegisterPass<ConstantPropogation> X("constprop", "Simple constant propogation");
+  RegisterOpt<ConstantPropogation> X("constprop","Simple constant propogation");
 }
 
 Pass *createConstantPropogationPass() {

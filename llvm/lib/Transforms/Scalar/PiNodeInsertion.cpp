@@ -55,7 +55,7 @@ namespace {
     bool insertPiNodeFor(Value *V, BasicBlock *BB, Value *Rep = 0);
   };
 
-  RegisterPass<PiNodeInserter> X("pinodes", "Pi Node Insertion");
+  RegisterOpt<PiNodeInserter> X("pinodes", "Pi Node Insertion");
 }
 
 Pass *createPiNodeInsertionPass() { return new PiNodeInserter(); }

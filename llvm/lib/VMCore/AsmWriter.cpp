@@ -29,8 +29,10 @@ using std::map;
 using std::vector;
 using std::ostream;
 
-static RegisterPass<PrintModulePass>   X("printm", "Print module to stderr");
-static RegisterPass<PrintFunctionPass> Y("print", "Print function to stderr");
+static RegisterPass<PrintModulePass>
+X("printm", "Print module to stderr",PassInfo::Analysis|PassInfo::Optimization);
+static RegisterPass<PrintFunctionPass>
+Y("print","Print function to stderr",PassInfo::Analysis|PassInfo::Optimization);
 
 static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
                                    map<const Type *, string> &TypeTable,

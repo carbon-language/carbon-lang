@@ -545,5 +545,5 @@ Pass *createRaisePointerReferencesPass(const TargetData &TD) {
   return new RaisePointerReferences(TD);
 }
 
-static RegisterPass<RaisePointerReferences>
+static RegisterOpt<RaisePointerReferences>
 X("raise", "Raise Pointer References", createRaisePointerReferencesPass);

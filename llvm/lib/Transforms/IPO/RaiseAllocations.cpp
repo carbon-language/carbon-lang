@@ -39,8 +39,8 @@ public:
   bool runOnBasicBlock(BasicBlock &BB);
 };
 
-RegisterPass<RaiseAllocations>
-X("raiseallocs", "Raise allocations from calls to instructions");
+  RegisterOpt<RaiseAllocations>
+  X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace
 
 

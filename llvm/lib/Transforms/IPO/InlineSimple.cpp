@@ -261,7 +261,7 @@ namespace {
       return doFunctionInlining(F);
     }
   };
-  RegisterPass<FunctionInlining> X("inline", "Function Integration/Inlining");
+  RegisterOpt<FunctionInlining> X("inline", "Function Integration/Inlining");
 }
 
 Pass *createFunctionInliningPass() { return new FunctionInlining(); }

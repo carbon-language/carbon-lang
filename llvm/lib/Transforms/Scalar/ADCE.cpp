@@ -84,7 +84,7 @@ private:
   }
 };
 
-  RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
+  RegisterOpt<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
 
 Pass *createAggressiveDCEPass() { return new ADCE(); }

@@ -66,7 +66,7 @@ namespace {
     void FindSafeAllocas(Function &F);
   };
 
-  RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
+  RegisterOpt<PromotePass> X("mem2reg", "Promote Memory to Register");
 }  // end of anonymous namespace
 
 

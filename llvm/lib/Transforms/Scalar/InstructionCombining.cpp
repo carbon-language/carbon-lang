@@ -79,7 +79,7 @@ namespace {
     Instruction *visitInstruction(Instruction &I) { return 0; }
   };
 
-  RegisterPass<InstCombiner> X("instcombine", "Combine redundant instructions");
+  RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
 }
 
 

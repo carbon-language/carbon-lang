@@ -27,8 +27,8 @@ namespace {
     static void decomposeArrayRef(BasicBlock::iterator &BBI);
   };
 
-RegisterPass<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
-                              "structure/array references");
+  RegisterOpt<DecomposePass> X("lowerrefs", "Decompose multi-dimensional "
+                               "structure/array references");
 }
 
 Pass *createDecomposeMultiDimRefsPass() {

@@ -52,7 +52,7 @@ Pass *createLowerAllocationsPass(const TargetData &TD) {
   return new LowerAllocations(TD);
 }
 
-static RegisterPass<LowerAllocations>
+static RegisterOpt<LowerAllocations>
 X("lowerallocs", "Lower allocations from instructions to calls (TD)",
   createLowerAllocationsPass);
 

@@ -51,15 +51,15 @@ namespace {
       AU.setPreservesAll();
     }
   };
-  RegisterPass<SymbolStripping> X("strip", "Strip symbols from functions");
+  RegisterOpt<SymbolStripping> X("strip", "Strip symbols from functions");
 
   struct FullSymbolStripping : public SymbolStripping {
     virtual bool doInitialization(Module &M) {
       return StripSymbolTable(M.getSymbolTable());
     }
   };
-  RegisterPass<FullSymbolStripping> Y("mstrip",
-                                    "Strip symbols from module and functions");
+  RegisterOpt<FullSymbolStripping> Y("mstrip",
+                                     "Strip symbols from module and functions");
 }
 
 Pass *createSymbolStrippingPass() {

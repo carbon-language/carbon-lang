@@ -47,7 +47,7 @@ namespace {
     bool ReassociateBB(BasicBlock *BB);
   };
 
-  RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
+  RegisterOpt<Reassociate> X("reassociate", "Reassociate expressions");
 }
 
 Pass *createReassociatePass() { return new Reassociate(); }

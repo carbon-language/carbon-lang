@@ -103,7 +103,7 @@ namespace {
     }
   };
 
-  RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
+  RegisterOpt<LICM> X("licm", "Loop Invariant Code Motion");
 }
 
 Pass *createLICMPass() { return new LICM(); }

@@ -220,7 +220,7 @@ private:
   }
 };
 
-  RegisterPass<SCCP> X("sccp", "Sparse Conditional Constant Propogation");
+  RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propogation");
 } // end anonymous namespace
 
 

@@ -97,8 +97,8 @@ namespace {
   };
 
   // Register the passes...
-  RegisterPass<FunctionTracer>  X("tracem","Insert Function trace code only");
-  RegisterPass<BasicBlockTracer> Y("trace","Insert BB and Function trace code");
+  RegisterOpt<FunctionTracer>  X("tracem","Insert Function trace code only");
+  RegisterOpt<BasicBlockTracer> Y("trace","Insert BB and Function trace code");
 } // end anonymous namespace
 
 

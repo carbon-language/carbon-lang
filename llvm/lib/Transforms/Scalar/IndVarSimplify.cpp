@@ -198,7 +198,7 @@ namespace {
       AU.preservesCFG();
     }
   };
-  RegisterPass<InductionVariableSimplify> X("indvars",
+  RegisterOpt<InductionVariableSimplify> X("indvars",
                                            "Cannonicalize Induction Variables");
 }
 
