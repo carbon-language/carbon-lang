@@ -64,7 +64,7 @@ namespace {
                                "Print enum values for a class"),
                     clEnumValN(Parse, "parse",
                                "Interpret machine code (testing only)"),
-                    0));
+                    clEnumValEnd));
 
   cl::opt<std::string>
   Class("class", cl::desc("Print Enum list for this class"),
