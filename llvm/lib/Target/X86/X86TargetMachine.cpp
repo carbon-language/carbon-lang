@@ -16,6 +16,14 @@
 #include "Support/Statistic.h"
 
 namespace {
+  cl::opt<RegAllocName>
+  RegAlloc("regalloc",
+           cl::desc("Register allocator to use:"), cl::Prefix,
+           cl::values(clEnumVal(simple, "simple register allocator)"),
+                      clEnumVal(local, "local register allocator"),
+                      clEnumVal(linearscan, "linear scan global register allocator")),
+           cl::init(local));
+
   cl::opt<bool> NoLocalRA("disable-local-ra",
                           cl::desc("Use Simple RA instead of Local RegAlloc"));
   cl::opt<bool> PrintCode("print-machineinstrs",
@@ -113,10 +121,19 @@ bool X86TargetMachine::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createMachineFunctionPrinterPass());
 
   // Perform register allocation to convert to a concrete x86 representation
-  if (NoLocalRA)
+  switch (RegAlloc) {
+  case simple:
     PM.add(createSimpleRegisterAllocator());
-  else
+    break;
+  case local:
     PM.add(createLocalRegisterAllocator());
+    break;
+  case linearscan:
+    PM.add(createLinearScanRegisterAllocator());
+    break;
+  default:
+    assert(0 && "no register allocator selected");
+  }
 
   if (PrintCode)
     PM.add(createMachineFunctionPrinterPass());
