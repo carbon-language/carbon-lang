@@ -52,23 +52,55 @@ public:
   typedef const unsigned* const_iterator;
 
 private:
-  const unsigned RegSize;               // Size of register in bytes
+  const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
-  TargetRegisterClass(unsigned RS, iterator RB, iterator RE)
-    : RegSize(RS), RegsBegin(RB), RegsEnd(RE) {}
+  TargetRegisterClass(unsigned RS, unsigned Al, iterator RB, iterator RE)
+    : RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 
+  // begin/end - Return all of the registers in this class.
   iterator       begin() const { return RegsBegin; }
   iterator         end() const { return RegsEnd; }
 
+  // getNumRegs - Return the number of registers in this class
   unsigned getNumRegs() const { return RegsEnd-RegsBegin; }
+
+  // getRegister - Return the specified register in the class
   unsigned getRegister(unsigned i) const {
     assert(i < getNumRegs() && "Register number out of range!");
     return RegsBegin[i];
   }
 
-  unsigned getDataSize() const { return RegSize; }
+  /// allocation_order_begin/end - These methods define a range of registers
+  /// which specify the registers in this class that are valid to register
+  /// allocate, and the preferred order to allocate them in.  For example,
+  /// callee saved registers should be at the end of the list, because it is
+  /// cheaper to allocate caller saved registers.
+  ///
+  /// These methods take a MachineFunction argument, which can be used to tune
+  /// the allocatable registers based on the characteristics of the function.
+  /// One simple example is that the frame pointer register can be used if
+  /// frame-pointer-elimination is performed.
+  ///
+  /// By default, these methods return all registers in the class.
+  ///
+  virtual iterator allocation_order_begin(MachineFunction &MF) const {
+    return begin();
+  }
+  virtual iterator allocation_order_end(MachineFunction &MF)   const {
+    return end();
+  }
+  
+
+
+  /// getSize - Return the size of the register in bytes, which is also the size
+  /// of a stack slot allocated to hold a spilled copy of this register.
+  unsigned getSize() const { return RegSize; }
+
+  /// getAlignment - Return the minimum required alignment for a register of
+  /// this class.
+  unsigned getAlignment() const { return Alignment; }
 };
 
 
@@ -87,9 +119,11 @@ private:
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
 
   const TargetRegisterClass **PhysRegClasses; // Reg class for each register
+  int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 protected:
   MRegisterInfo(const MRegisterDesc *D, unsigned NR,
-                regclass_iterator RegClassBegin, regclass_iterator RegClassEnd);
+                regclass_iterator RegClassBegin, regclass_iterator RegClassEnd,
+		int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);
   virtual ~MRegisterInfo();
 public:
 
@@ -139,11 +173,7 @@ public:
     return get(RegNo).AliasSet;
   }
 
-  virtual unsigned getFramePointer() const = 0;
-  virtual unsigned getStackPointer() const = 0;
-
   virtual const unsigned* getCalleeSaveRegs() const = 0;
-  virtual const unsigned* getCallerSaveRegs() const = 0;
 
 
   //===--------------------------------------------------------------------===//
@@ -161,34 +191,74 @@ public:
 
 
   //===--------------------------------------------------------------------===//
-  // Interfaces used primarily by the register allocator to move data around
-  // between registers, immediates and memory.
+  // Interfaces used by the register allocator and stack frame manipulation
+  // passes to move data around between registers, immediates and memory.
   //
 
-  virtual void emitPrologue(MachineFunction &MF, unsigned Bytes) const = 0;
-  virtual void emitEpilogue(MachineBasicBlock &MBB, unsigned Bytes) const = 0;
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+				   MachineBasicBlock::iterator &MBBI,
+				   unsigned SrcReg, int FrameIndex,
+				   const TargetRegisterClass *RC) const = 0;
 
-  virtual void storeReg2RegOffset(MachineBasicBlock &MBB,
-				  MachineBasicBlock::iterator &MBBI,
-				  unsigned SrcReg, unsigned DestReg,
-				  unsigned ImmOffset,
-				  const TargetRegisterClass *RC) const = 0;
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+				    MachineBasicBlock::iterator &MBBI,
+				    unsigned DestReg, int FrameIndex,
+				    const TargetRegisterClass *RC) const = 0;
 
-  virtual void loadRegOffset2Reg(MachineBasicBlock &MBB,
-				 MachineBasicBlock::iterator &MBBI,
-				 unsigned DestReg, unsigned SrcReg,
-				 unsigned ImmOffset,
-				 const TargetRegisterClass *RC) const = 0;
+  virtual void copyRegToReg(MachineBasicBlock &MBB,
+			    MachineBasicBlock::iterator &MBBI,
+			    unsigned DestReg, unsigned SrcReg,
+			    const TargetRegisterClass *RC) const = 0;
 
-  virtual void moveReg2Reg(MachineBasicBlock &MBB,
-			   MachineBasicBlock::iterator &MBBI,
-			   unsigned DestReg, unsigned SrcReg,
-			   const TargetRegisterClass *RC) const = 0;
 
-  virtual void moveImm2Reg(MachineBasicBlock &MBB,
-			   MachineBasicBlock::iterator &MBBI,
-			   unsigned DestReg, unsigned Imm,
-			   const TargetRegisterClass *RC) const = 0;
+  /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
+  /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
+  /// targets use pseudo instructions in order to abstract away the difference
+  /// between operating with a frame pointer and operating without, through the
+  /// use of these two instructions.
+  ///
+  int getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
+  int getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
+
+
+  /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog
+  /// code insertion to eliminate call frame setup and destroy pseudo
+  /// instructions (but only if the Target is using them).  It is responsible
+  /// for eliminating these instructions, replacing them with concrete
+  /// instructions.  This method need only be implemented if using call frame
+  /// setup/destroy pseudo instructions.
+  ///
+  virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
+					     MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator &I) const {
+    assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
+	   "eliminateCallFramePseudoInstr must be implemented if using"
+	   " call frame setup/destroy pseudo instructions!");
+    assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
+  }
+
+  /// processFunctionBeforeFrameFinalized - This method is called immediately
+  /// before the specified functions frame layout (MF.getFrameInfo()) is
+  /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
+  /// replaced with direct constants.  This method is optional.
+  ///
+  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
+
+  /// eliminateFrameIndex - This method must be overriden to eliminate abstract
+  /// frame indices from instructions which may use them.  The instruction
+  /// referenced by the iterator contains an MO_FrameIndex operand which must be
+  /// eliminated by this method.  This method may modify or replace the
+  /// specified instruction, as long as it keeps the iterator pointing the the
+  /// finished product.
+  ///
+  virtual void eliminateFrameIndex(MachineFunction &MF,
+				   MachineBasicBlock::iterator &II) const = 0;
+
+  /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
+  /// the function.
+  virtual void emitPrologue(MachineFunction &MF) const = 0;
+  virtual void emitEpilogue(MachineFunction &MF,
+			    MachineBasicBlock &MBB) const = 0;
 };
 
 #endif
