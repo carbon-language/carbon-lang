@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include <iostream>
 using namespace llvm;
@@ -50,11 +51,9 @@ unsigned PowerPCTargetMachine::getModuleMatchQuality(const Module &M) {
 
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
-/// FIXME: Should double alignment be 8 bytes?  Then we get a PtrAl != DoubleAl
-/// abort
 PowerPCTargetMachine::PowerPCTargetMachine(const Module &M,
                                            IntrinsicLowering *IL)
-  : TargetMachine("PowerPC", IL, false, 4, 4, 4, 4, 4, 4, 4, 4),
+  : TargetMachine("PowerPC", IL, false, 4, 4, 8, 4, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, -4), JITInfo(*this) {
 }
 
@@ -62,7 +61,7 @@ PowerPCTargetMachine::PowerPCTargetMachine(const Module &M,
 /// to implement a static compiler for this target.
 ///
 bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
-					       std::ostream &Out) {
+                                                   std::ostream &Out) {
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
@@ -115,4 +114,3 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
 }
-
