@@ -175,13 +175,13 @@ private:
     hash_map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
       
-    if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      // The address of a global is a constant...
+      ValueState[V].markConstant(GV);
+    } else if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
       ValueState[CPV].markConstant(CPV);
     } else if (isa<Argument>(V)) {                // Arguments are overdefined
       ValueState[V].markOverdefined();
-    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-      // The address of a global is a constant...
-      ValueState[V].markConstant(ConstantPointerRef::get(GV));
     }
     // All others are underdefined by default...
     return ValueState[V];
@@ -784,9 +784,6 @@ void SCCP::visitLoadInst(LoadInst &I) {
       return;
     }
       
-    if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Ptr))
-      Ptr = CPR->getValue();
-
     // Transform load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr))
       if (GV->isConstant() && !GV->isExternal()) {
@@ -797,15 +794,13 @@ void SCCP::visitLoadInst(LoadInst &I) {
     // Transform load (constantexpr_GEP global, 0, ...) into the value loaded.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
       if (CE->getOpcode() == Instruction::GetElementPtr)
-        if (ConstantPointerRef *G
-            = dyn_cast<ConstantPointerRef>(CE->getOperand(0)))
-          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getValue()))
-            if (GV->isConstant() && !GV->isExternal())
-              if (Constant *V =
-                  GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
-                markConstant(IV, &I, V);
-                return;
-              }
+	if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+	  if (GV->isConstant() && !GV->isExternal())
+	    if (Constant *V = 
+		GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
+	      markConstant(IV, &I, V);
+	      return;
+	    }
   }
 
   // Otherwise we cannot say for certain what value this load will produce.
