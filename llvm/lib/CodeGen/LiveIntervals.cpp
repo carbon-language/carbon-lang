@@ -162,21 +162,22 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         // update interval index for this register
         r2iMap_.insert(r2iit, std::make_pair(reg, --intervals_.end()));
         interval = &intervals_.back();
+
+        // iterate over all of the blocks that the variable is
+        // completely live in, adding them to the live
+        // interval. obviously we only need to do this once.
+        for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
+            if (vi.AliveBlocks[i]) {
+                MachineBasicBlock* mbb = lv_->getIndexMachineBasicBlock(i);
+                if (!mbb->empty()) {
+                    interval->addRange(getInstructionIndex(mbb->front()),
+                                       getInstructionIndex(mbb->back()) + 1);
+                }
+            }
+        }
     }
     else {
         interval = &*r2iit->second;
-    }
-
-    // iterate over all of the blocks that the variable is completely
-    // live in, adding them to the live interval
-    for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
-        if (vi.AliveBlocks[i]) {
-            MachineBasicBlock* mbb = lv_->getIndexMachineBasicBlock(i);
-            if (!mbb->empty()) {
-                interval->addRange(getInstructionIndex(mbb->front()),
-                                   getInstructionIndex(mbb->back()) + 1);
-            }
-        }
     }
 
     bool killedInDefiningBasicBlock = false;
