@@ -13,7 +13,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
-#include "Support/SystemUtils.h"
+#include "Support/FileUtilities.h"
 #include <fstream>
 #include <stdlib.h>
 #include <unistd.h>

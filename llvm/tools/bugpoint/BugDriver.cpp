@@ -13,7 +13,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
-#include "Support/SystemUtils.h"
+#include "Support/FileUtilities.h"
 #include <memory>
 
 // Anonymous namespace to define command line options for debugging.

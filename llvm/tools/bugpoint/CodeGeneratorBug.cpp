@@ -22,7 +22,7 @@
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
-#include "Support/SystemUtils.h"
+#include "Support/FileUtilities.h"
 #include <algorithm>
 #include <set>
 

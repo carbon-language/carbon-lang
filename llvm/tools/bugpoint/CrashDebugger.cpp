@@ -18,7 +18,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "Support/SystemUtils.h"
+#include "Support/FileUtilities.h"
 #include <fstream>
 #include <set>
 

@@ -10,7 +10,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Linker.h"
-#include "Support/SystemUtils.h"
+#include "Support/FileUtilities.h"
 
 class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
   BugDriver &BD;
