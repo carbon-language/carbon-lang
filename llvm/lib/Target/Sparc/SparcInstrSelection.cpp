@@ -1109,15 +1109,21 @@ CreateCodeForFixedSizeAlloca(const TargetMachine& target,
   Function *F = result->getParent()->getParent();
   MachineFunction &mcInfo = MachineFunction::get(F);
 
-  // Check if the offset would small enough to use as an immediate in
-  // load/stores (check LDX because all load/stores have the same-size immediate
-  // field).  If not, put the variable in the dynamically sized area of the
-  // frame.
-  unsigned paddedSizeIgnored;
+  // Put the variable in the dynamically sized area of the frame if either:
+  // (a) The offset is too large to use as an immediate in load/stores
+  //     (check LDX because all load/stores have the same-size immed. field).
+  // (b) The object is "large", so it could cause many other locals,
+  //     spills, and temporaries to have large offsets.
+  //     NOTE: We use LARGE = 8 * argSlotSize = 64 bytes.
+  // You've gotta love having only 13 bits for constant offset values :-|.
+  // 
+  unsigned paddedSize;
   int offsetFromFP = mcInfo.getInfo()->computeOffsetforLocalVar(result,
-                                                     paddedSizeIgnored,
-                                                     tsize * numElements);
-  if (! target.getInstrInfo().constantFitsInImmedField(V9::LDXi,offsetFromFP)) {
+                                                                paddedSize,
+                                                         tsize * numElements);
+
+  if (((int)paddedSize) > 8 * target.getFrameInfo().getSizeOfEachArgOnStack() ||
+      ! target.getInstrInfo().constantFitsInImmedField(V9::LDXi,offsetFromFP)) {
     CreateCodeForVariableSizeAlloca(target, result, tsize, 
 				    ConstantSInt::get(Type::IntTy,numElements),
 				    getMvec);
