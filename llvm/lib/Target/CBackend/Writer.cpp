@@ -33,6 +33,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
+#include "Support/MathExtras.h"
 #include "Config/config.h"
 #include <algorithm>
 #include <iostream>
@@ -556,14 +557,32 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FPConstant" << I->second << ")";
     } else {
+      std::string Num;
 #if HAVE_PRINTF_A
       // Print out the constant as a floating point number.
       char Buffer[100];
       sprintf(Buffer, "%a", FPC->getValue());
-      Out << Buffer << " /*" << FPC->getValue() << "*/ ";
+      Num = Buffer;
 #else
-      Out << ftostr(FPC->getValue());
+      Num = ftostr(FPC->getValue());
 #endif
+
+      if (IsNAN(FPC->getValue())) {
+        // The value is NaN
+        if (FPC->getType() == Type::FloatTy)
+          Out << "LLVM_NANF(\"" << Num << "\") /*nan*/ ";
+        else
+          Out << "LLVM_NAN(\"" << Num << "\") /*nan*/ ";
+      } else if (IsInf(FPC->getValue())) {
+        // The value is Inf
+        if (FPC->getValue() < 0) Out << "-";
+        if (FPC->getType() == Type::FloatTy)
+          Out << "LLVM_INFF /*inf*/ ";
+        else
+          Out << "LLVM_INF /*inf*/ ";
+      } else {
+        Out << Num;
+      }
     }
     break;
   }
@@ -700,6 +719,49 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#else\n"
       << "#define __ATTRIBUTE_WEAK__\n"
       << "#endif\n\n";
+
+  // Define NaN and Inf as GCC builtins if using GCC, as 0 otherwise
+  // From the GCC documentation:
+  // 
+  //   double __builtin_nan (const char *str)
+  //
+  // This is an implementation of the ISO C99 function nan.
+  //
+  // Since ISO C99 defines this function in terms of strtod, which we do
+  // not implement, a description of the parsing is in order. The string is
+  // parsed as by strtol; that is, the base is recognized by leading 0 or
+  // 0x prefixes. The number parsed is placed in the significand such that
+  // the least significant bit of the number is at the least significant
+  // bit of the significand. The number is truncated to fit the significand
+  // field provided. The significand is forced to be a quiet NaN.
+  //
+  // This function, if given a string literal, is evaluated early enough
+  // that it is considered a compile-time constant.
+  //
+  //   float __builtin_nanf (const char *str)
+  //
+  // Similar to __builtin_nan, except the return type is float.
+  //
+  //   double __builtin_inf (void)
+  //
+  // Similar to __builtin_huge_val, except a warning is generated if the
+  // target floating-point format does not support infinities. This
+  // function is suitable for implementing the ISO C99 macro INFINITY.
+  //
+  //   float __builtin_inff (void)
+  //
+  // Similar to __builtin_inf, except the return type is float.
+  Out << "#ifdef __GNUC__\n"
+      << "#define LLVM_NAN(NanStr)  __builtin_nan(NanStr)   /* Double */\n"
+      << "#define LLVM_NANF(NanStr) __builtin_nan(NanStr)   /* Float */\n"
+      << "#define LLVM_INF          __builtin_inf()         /* Double */\n"
+      << "#define LLVM_INFF         __builtin_inff()        /* Float */\n"
+      << "#else\n"
+      << "#define LLVM_NAN(NanStr)  ((double)0.0)           /* Double */\n"
+      << "#define LLVM_NANF(NanStr) 0.0F                    /* Float */\n"
+      << "#define LLVM_INF          ((double)0.0)           /* Double */\n"
+      << "#define LLVM_INFF         0.0F                    /* Float */\n"
+      << "#endif\n";
 }
 
 bool CWriter::doInitialization(Module &M) {
