@@ -68,10 +68,11 @@ bool SimplifyCFG(BasicBlock *BB);
 ///
 bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
 
-/// BreakCriticalEdge - Insert a new node node to split the critical edge.  This
-/// will update DominatorSet and DominatorTree information if it is available,
-/// thus calling this pass will not invalidate either of them.
+/// SplitCriticalEdge - Insert a new node node to split the critical edge.  This
+/// will update DominatorSet, ImmediateDominator and DominatorTree information
+/// if it is available, thus calling this pass will not invalidate either of
+/// them.
 ///
-void BreakCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
+void SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
 
 #endif
