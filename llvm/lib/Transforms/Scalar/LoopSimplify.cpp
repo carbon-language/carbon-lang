@@ -33,12 +33,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/Constant.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include "Support/SetOperations.h"
 #include "Support/Statistic.h"
@@ -164,18 +164,22 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   // incoming edges in BB into new PHI nodes in NewBB.
   //
   if (!Preds.empty()) {  // Is the loop not obviously dead?
-    if (Preds.size() == 1) {
-      // No need to insert one operand PHI nodes!  Instead, just update the
-      // incoming block ID's.
-      for (BasicBlock::iterator I = BB->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-        unsigned i = PN->getBasicBlockIndex(Preds[0]);
-        PN->setIncomingBlock(i, NewBB);
-      }
-    } else {
-      for (BasicBlock::iterator I = BB->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-        
+    // Check to see if the values being merged into the new block need PHI
+    // nodes.  If so, insert them.
+    for (BasicBlock::iterator I = BB->begin();
+         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+      
+      // Check to see if all of the values coming in are the same.  If so, we
+      // don't need to create a new PHI node.
+      Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
+      for (unsigned i = 1, e = Preds.size(); i != e; ++i)
+        if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
+          InVal = 0;
+          break;
+        }
+      
+      // If the values coming into the block are not the same, we need a PHI.
+      if (InVal == 0) {
         // Create the new PHI node, insert it into NewBB at the end of the block
         PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
         
@@ -184,11 +188,17 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
           Value *V = PN->removeIncomingValue(Preds[i]);
           NewPHI->addIncoming(V, Preds[i]);
         }
-        
-        // Add an incoming value to the PHI node in the loop for the preheader
-        // edge.
-        PN->addIncoming(NewPHI, NewBB);
+        InVal = NewPHI;
+      } else {
+        // Remove all of the edges coming into the PHI nodes from outside of the
+        // block.
+        for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+          PN->removeIncomingValue(Preds[i], false);
       }
+
+      // Add an incoming value to the PHI node in the loop for the preheader
+      // edge.
+      PN->addIncoming(InVal, NewBB);
     }
     
     // Now that the PHI nodes are updated, actually move the edges from
