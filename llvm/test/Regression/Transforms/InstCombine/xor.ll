@@ -3,6 +3,9 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'xor '
 
+%G1 = global uint 0
+%G2 = global uint 0
+
 implementation
 
 bool %test0(bool %A) {
@@ -128,3 +131,14 @@ uint %test19(uint %A, uint %B) {
 	%D = xor uint %C, %A  ; A terms cancel, D = B
 	ret uint %D
 }
+
+void %test20(uint %A, uint %B) {  ; The "swap idiom"
+        %tmp.2 = xor uint %B, %A
+        %tmp.5 = xor uint %tmp.2, %B
+        %tmp.8 = xor uint %tmp.5, %tmp.2
+        store uint %tmp.8, uint* %G1   ; tmp.8 = B
+        store uint %tmp.5, uint* %G2   ; tmp.5 = A
+        ret void
+}
+
+
