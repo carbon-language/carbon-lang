@@ -1061,9 +1061,9 @@ void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
 
 
 bool LocalDataStructures::runOnModule(Module &M) {
-  GlobalsGraph = new DSGraph(getAnalysis<TargetData>());
-
   const TargetData &TD = getAnalysis<TargetData>();
+
+  GlobalsGraph = new DSGraph(TD);
 
   {
     GraphBuilder GGB(*GlobalsGraph);
