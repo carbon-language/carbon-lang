@@ -8,12 +8,6 @@
 #include "llvm/Target/MachineSchedInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
-// External object describing the machine instructions
-// Initialized only when the TargetMachine class is created
-// and reset when that class is destroyed.
-// 
-const MachineInstrDescriptor* TargetInstrDescriptors = 0;
-
 resourceId_t MachineResource::nextId = 0;
 
 // Check if fromRVec and toRVec have *any* common entries.

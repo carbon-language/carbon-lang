@@ -9,6 +9,12 @@
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 
+// External object describing the machine instructions
+// Initialized only when the TargetMachine class is created
+// and reset when that class is destroyed.
+// 
+const MachineInstrDescriptor* TargetInstrDescriptors = 0;
+
 //---------------------------------------------------------------------------
 // class MachineInstructionInfo
 //	Interface to description of machine instructions
