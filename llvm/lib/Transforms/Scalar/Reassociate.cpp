@@ -1,7 +1,7 @@
 //===- Reassociate.cpp - Reassociate binary expressions -------------------===//
 //
 // This pass reassociates commutative expressions in an order that is designed
-// to promote better constant propogation, GCSE, LICM, PRE...
+// to promote better constant propagation, GCSE, LICM, PRE...
 //
 // For example: 4 + (x + 5) -> x + (4 + 5)
 //
