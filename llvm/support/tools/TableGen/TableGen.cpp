@@ -3,9 +3,30 @@
 #include "CodeEmitterGen.h"
 #include <algorithm>
 
-static cl::opt<std::string> Class("class", cl::desc("Print Enum list for this class"));
-static cl::opt<bool>        Parse("parse");
-static cl::opt<bool>        GenEmitter("gen-emitter");
+enum ActionType {
+  PrintRecords,
+  GenEmitter,
+  PrintEnums,
+  Parse,
+};
+
+namespace {
+  cl::opt<ActionType>
+  Action(cl::desc("Action to perform:"),
+         cl::values(clEnumValN(PrintRecords, "print-records",
+                               "Print all records to stdout"),
+                    clEnumValN(GenEmitter, "gen-emitter",
+                               "Generate machine code emitter"),
+                    clEnumValN(PrintEnums, "print-enums",
+                               "Print enum values for a class"),
+                    clEnumValN(Parse, "parse",
+                               "Interpret machine code (testing only)"),
+                    0));
+
+  cl::opt<std::string>
+  Class("class", cl::desc("Print Enum list for this class"));
+}
+
 
 void ParseFile();
 
@@ -353,20 +374,15 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
   ParseFile();
 
-  if (Parse) {
-    ParseMachineCode();
-    return 0;
-  }
-
-  if (GenEmitter) {
-    CodeEmitterGen CEG(Records);
-    CEG.createEmitter(std::cout);
-    return 0;
-  }
-
-  if (Class == "") {
+  switch (Action) {
+  case Parse: ParseMachineCode(); break;
+  case GenEmitter:
+    CodeEmitterGen(Records).createEmitter(std::cout);
+    break;
+  case PrintRecords:
     std::cout << Records;           // No argument, dump all contents
-  } else {
+    break;
+  case PrintEnums:
     Record *R = Records.getClass(Class);
     if (R == 0) {
       std::cerr << "Cannot find class '" << Class << "'!\n";
@@ -381,6 +397,7 @@ int main(int argc, char **argv) {
       }
     }
     std::cout << "\n";
+    break;
   }
   return 0;
 }
