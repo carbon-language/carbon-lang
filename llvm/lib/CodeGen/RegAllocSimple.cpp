@@ -29,7 +29,8 @@ namespace {
     unsigned NumBytesAllocated, ByteAlignment;
     
     // Maps SSA Regs => offsets on the stack where these values are stored
-    std::map<unsigned, unsigned> RegMap; // FIXME: change name to VirtReg2OffsetMap
+    // FIXME: change name to VirtReg2OffsetMap
+    std::map<unsigned, unsigned> RegMap;
 
     // Maps SSA Regs => physical regs
     std::map<unsigned, unsigned> SSA2PhysRegMap;
@@ -235,7 +236,8 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
           if (op.opIsDef()) {
             physReg = getFreeReg(virtualReg);
             MachineBasicBlock::iterator J = I;
-            I = saveVirtRegToStack(J, virtualReg, physReg);
+            J = saveVirtRegToStack(++J, virtualReg, physReg);
+            I = --J;
           } else {
             I = moveUseToReg(I, virtualReg, physReg);
           }
