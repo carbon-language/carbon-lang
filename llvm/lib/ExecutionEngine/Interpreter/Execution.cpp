@@ -348,6 +348,15 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
 #define IMPLEMENT_SETCC(OP, TY) \
    case Type::TY##TyID: Dest.BoolVal = Src1.TY##Val OP Src2.TY##Val; break
 
+// Handle pointers specially because they must be compared with only as much
+// width as the host has.  We _do not_ want to be comparing 64 bit values when
+// running on a 32-bit target, otherwise the upper 32 bits might mess up
+// comparisons if they contain garbage.
+#define IMPLEMENT_POINTERSETCC(OP) \
+   case Type::PointerTyID: \
+        Dest.BoolVal = (void*)(intptr_t)Src1.PointerVal OP \
+                       (void*)(intptr_t)Src2.PointerVal; break
+
 static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2, 
 				     const Type *Ty) {
   GenericValue Dest;
@@ -362,7 +371,7 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(==, Long);
     IMPLEMENT_SETCC(==, Float);
     IMPLEMENT_SETCC(==, Double);
-    IMPLEMENT_SETCC(==, Pointer);
+    IMPLEMENT_POINTERSETCC(==);
   default:
     std::cout << "Unhandled type for SetEQ instruction: " << *Ty << "\n";
     abort();
@@ -384,7 +393,7 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(!=, Long);
     IMPLEMENT_SETCC(!=, Float);
     IMPLEMENT_SETCC(!=, Double);
-    IMPLEMENT_SETCC(!=, Pointer);
+    IMPLEMENT_POINTERSETCC(!=);
 
   default:
     std::cout << "Unhandled type for SetNE instruction: " << *Ty << "\n";
@@ -407,7 +416,7 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<=, Long);
     IMPLEMENT_SETCC(<=, Float);
     IMPLEMENT_SETCC(<=, Double);
-    IMPLEMENT_SETCC(<=, Pointer);
+    IMPLEMENT_POINTERSETCC(<=);
   default:
     std::cout << "Unhandled type for SetLE instruction: " << Ty << "\n";
     abort();
@@ -429,7 +438,7 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>=, Long);
     IMPLEMENT_SETCC(>=, Float);
     IMPLEMENT_SETCC(>=, Double);
-    IMPLEMENT_SETCC(>=, Pointer);
+    IMPLEMENT_POINTERSETCC(>=);
   default:
     std::cout << "Unhandled type for SetGE instruction: " << *Ty << "\n";
     abort();
@@ -451,7 +460,7 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<, Long);
     IMPLEMENT_SETCC(<, Float);
     IMPLEMENT_SETCC(<, Double);
-    IMPLEMENT_SETCC(<, Pointer);
+    IMPLEMENT_POINTERSETCC(<);
   default:
     std::cout << "Unhandled type for SetLT instruction: " << *Ty << "\n";
     abort();
@@ -473,7 +482,7 @@ static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>, Long);
     IMPLEMENT_SETCC(>, Float);
     IMPLEMENT_SETCC(>, Double);
-    IMPLEMENT_SETCC(>, Pointer);
+    IMPLEMENT_POINTERSETCC(>);
   default:
     std::cout << "Unhandled type for SetGT instruction: " << *Ty << "\n";
     abort();
