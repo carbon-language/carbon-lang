@@ -1,1049 +1,1097 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
-  <head>
-    <title>Getting Started with LLVM System</title>
-  </head>
+<head>
+  <title>Getting Started with LLVM System</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
 
-  <body bgcolor=white>
-    <center><h1>Getting Started with the LLVM System<br><font size=3>By: <a
-    href="mailto:gshi1@uiuc.edu">Guochun Shi</a>,
-    <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
-    <a href="mailto:criswell@uiuc.edu">John Criswell</a>, 
-    <a href="http://misha.brukman.net">Misha Brukman</a>, and
-    <a href="http://www.cs.uiuc.edu/~vadve">Vikram Adve</a>
-    </font></h1></center>
+<div class="doc_title">
+  Getting Started with the LLVM System  
+</div>
 
-    <!--=====================================================================-->
-    <h2><a name="Contents">Contents</a></h2>
-    <!--=====================================================================-->
-
-    <ul>
-      <li><a href="#overview">Overview</a>
-      <li><a href="#quickstart">Getting Started Quickly (A Summary)</a>
-      <li><a href="#requirements">Requirements</a>
-      <ol>
-          <li><a href="#hardware">Hardware</a>
-          <li><a href="#software">Software</a>
-      </ol>
-
-      <li><a href="#starting">Getting Started with LLVM</a>
-        <ol>
-          <li><a href="#terminology">Terminology and Notation</tt></a>
-          <li><a href="#environment">Setting Up Your Environment</a>
-          <li><a href="#unpack">Unpacking the LLVM Archives</a>
-          <li><a href="#checkout">Checkout LLVM from CVS</a>
-          <li><a href="#installcf">Install the GCC Front End</a>
-          <li><a href="#config">Local LLVM Configuration</tt></a>
-          <li><a href="#compile">Compiling the LLVM Suite Source Code</a>
-          <li><a href="#objfiles">The Location of LLVM Object Files</tt></a>
-        </ol>
-      <li><a href="#layout">Program layout</a>
-      <ol>
-        <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
-        <li><a href="#include"><tt>llvm/include</tt></a>
-        <li><a href="#lib"><tt>llvm/lib</tt></a>
-        <li><a href="#runtime"><tt>llvm/runtime</tt></a>  
-        <li><a href="#test"><tt>llvm/test</tt></a>
-        <li><a href="#tools"><tt>llvm/tools</tt></a>  
-        <li><a href="#utils"><tt>llvm/utils</tt></a>
-    	</ol>
-      <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
-      <li><a href="#problems">Common Problems</a>
-      <li><a href="#links">Links</a>
-    </ul>
-
-
-    <!--=====================================================================-->
-    <center>
-    <h2><a name="overview"><b>Overview</b></a></h2>
-    </center>
-    <hr>
-    <!--=====================================================================-->
-
-    Welcome to LLVM!  In order to get started, you first need to know some
-    basic information.
-
-    <p>
-    First, LLVM comes in two pieces.  The first piece is the LLVM suite.  This
-    contains all of the tools, libraries, and header files needed to use the
-    low level virtual machine.  It contains an assembler, disassembler,
-    bytecode analyzer, and bytecode optimizer.  It also contains a test suite
-    that can be used to test the LLVM tools and the GCC front end.
-    <p>
-    The second piece is the GCC front end.  This component provides a version
-    of GCC that compiles C  and C++ code into LLVM bytecode.  Currently, the
-    GCC front end is a modified version of GCC 3.4 (we track the GCC 3.4
-    development).  Once compiled into LLVM bytecode, a program can be
-    manipulated with the LLVM tools from the LLVM suite.
-
-    <!--=====================================================================-->
-    <center>
-    <h2><a name="quickstart"><b>Getting Started Quickly (A Summary)</b></a></h2>
-    </center>
-    <hr>
-    <!--=====================================================================-->
-
-    Here's the short story for getting up and running quickly with LLVM:
+<ul>
+  <li><a href="#overview">Overview</a>
+  <li><a href="#quickstart">Getting Started Quickly (A Summary)</a>
+  <li><a href="#requirements">Requirements</a>
     <ol>
-        <li>Install the GCC front end:
-        <ol>
-            <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt>
-            <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf
-            -</tt>
-            <li><b>Sparc Only:</b><br>
-            <tt>
-            cd cfrontend/sparc<br>
-            ./fixheaders
-            </tt>
-        </ol>
+      <li><a href="#hardware">Hardware</a>
+      <li><a href="#software">Software</a>
+    </ol></li>
 
-        <p>
-
-        <li>Get the Source Code
-        <ul>
-            <li>With the distributed files:
-            <ol>
-                <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-                <li><tt>gunzip --stdout llvm.tar.gz | tar -xvf -</tt>
-                <li><tt>cd llvm</tt>
-            </ol>
-
-            <p>
-
-            <li>With anonymous CVS access:
-            <ol>
-                <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-                <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
-				<li>Hit the return key when prompted for the password.
-                <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
-                <li><tt>cd llvm</tt>
-            </ol>
-        </ul>
-        </ul>
-
-        <p>
-
-        <li>Configure the LLVM Build Environment
-        <ol>
-            <li>Change directory to where you want to store the LLVM object
-            files and run <tt>configure</tt> to configure the Makefiles and
-            header files for the default platform.
-            Useful options include:
-                <ul>
-                    <li><tt>--with-llvmgccdir=<i>directory</i></tt>
-                    <br>
-                    Specify where the LLVM GCC frontend is installed.
-                    <p>
-
-                    <li><tt>--enable-spec2000=<i>directory</i></tt>
-                    <br>
-                    Enable the SPEC2000 benchmarks for testing.  The SPEC2000
-                    benchmarks should be available in <tt><i>directory</i></tt>.
-                </ul>
-        </ol>
-
-        <p>
-
-        <li>Build the LLVM Suite
-        <ol>
-            <li>Set your LLVM_LIB_SEARCH_PATH environment variable.
-            <li><tt>gmake -k |& tee gnumake.out
-            &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt>
-        </ol>
-
-        <p>
-
-    </ol>
-
-    <p>
-    Consult the <a href="starting">Getting Started with LLVM</a> section for
-    detailed information on configuring and compiling LLVM.  See
-    <a href="#environment">Setting Up Your Environment</a> for tips that
-    simplify working with the GCC front end and LLVM tools.  Go to
-    <a href="#layout">Program Layout</a> to learn about the layout of the
-    source code tree.
-
-    <!--=====================================================================-->
-    <center>
-    <h2><a name="requirements"><b>Requirements</b></a></h2>
-    </center>
-    <hr>
-    <!--=====================================================================-->
-
-    Before you begin to use the LLVM system, review the requirements given
-    below.  This may save you some trouble by knowing ahead of time what
-    hardware and software you will need.
-
-    <!--=====================================================================-->
-    <h3><a name="hardware"><b>Hardware</b></a></h3>
-    <!--=====================================================================-->
-    LLVM is known to work on the following platforms:
-    <ul>
-        <li> Linux on x86 (Pentium and above)
-        <ul>
-            <li> Approximately 760 MB of Free Disk Space
-            <ul>
-                <li>Source code: 30 MB
-                <li>Object code: 670 MB
-                <li>GCC front end: 60 MB
-            </ul>
-        </ul>
-
-        <p>
-
-        <li> Solaris on SparcV9 (Ultrasparc)
-        <ul>
-            <li> Approximately 1.24 GB of Free Disk Space
-            <ul>
-                <li>Source code: 30 MB
-                <li>Object code: 1000 MB
-                <li>GCC front end: 210 MB
-            </ul>
-        </ul>
-    </ul>
-
-    The LLVM suite <i>may</i> compile on other platforms, but it is not
-    guaranteed to do so.  If compilation is successful, the LLVM utilities
-    should be able to assemble, disassemble, analyze, and optimize LLVM
-    bytecode.  Code generation should work as well, although the generated
-    native code may not work on your platform.
-    <p>
-    The GCC front end is not very portable at the moment.  If you want to get
-    it to work on another platform, you can download a copy of the source
-    and try to compile it on your platform.
-    </p>
-
-    <!--=====================================================================-->
-    <h3><a name="software"><b>Software</b></a></h3>
-    <!--=====================================================================-->
-    <p>
-
-    Compiling LLVM requires that you have several software packages installed:
-
-    <ul compact>
-        <li>
-        <a href="http://gcc.gnu.org">GCC 3.x with C and C++ language support</a>
-
-        <li>
-        <a href="http://savannah.gnu.org/projects/make">GNU Make</a>
-
-        <li>
-        <a href="http://www.gnu.org/software/flex">Flex</a>
-
-        <li>
-        <a href="http://www.gnu.org/software/bison/bison.html">Bison</a>
-    </ul>
-
-    <p>
-    There are some additional tools that you may want to have when working with
-    LLVM:
-    </p>
-
-    <ul>
-        <li><A href="http://www.gnu.org/software/autoconf">GNU Autoconf</A>
-        <li><A href="http://savannah.gnu.org/projects/m4">GNU M4</A>
-        <p>
-        If you want to make changes to the configure scripts, you will need
-        GNU autoconf (2.57 or higher), and consequently, GNU M4 (version 1.4
-        or higher).
-        </p>
-
-		<li><A href="http://www.codesourcery.com/qm/qmtest">QMTest</A>
-		<li><A href="http://www.python.org">Python</A>
-        <p>
-        These are needed to use the LLVM test suite.
-    </ul>
-
-
-    <p>The remainder of this guide is meant to get you up and running with
-    LLVM and to give you some basic information about the LLVM environment.
-    A <a href="#starting">complete guide to installation</a> is provided in the
-    next section.
-
-    <p>The later sections of this guide describe the <a
-    href="#layout">general layout</a> of the the LLVM source tree, a <a
-    href="#tutorial">simple example</a> using the LLVM tool chain, and <a
-    href="#links">links</a> to find more information about LLVM or to get
-    help via e-mail.
-
-    <!--=====================================================================-->
-    <center>
-    <h2><a name="starting"><b>Getting Started with LLVM</b></a></h2>
-    </center>
-    <hr>
-    <!--=====================================================================-->
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="terminology">Terminology and Notation</a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>Throughout this manual, the following names are used to denote paths
-    specific to the local system and working environment.  <i>These are not
-    environment variables you need to set but just strings used in the rest
-    of this document below</i>.  In any of the examples below, simply replace
-    each of these names with the appropriate pathname on your local system.
-    All these paths are absolute:</p>
-    <dl compact>
-        <dt>SRC_ROOT
-        <dd>
-        This is the top level directory of the LLVM source tree.
-        <p>
-
-        <dt>OBJ_ROOT
-        <dd>
-        This is the top level directory of the LLVM object tree (i.e. the
-        tree where object files and compiled programs will be placed.  It
-        can be the same as SRC_ROOT).
-        <p>
-
-        <dt>LLVMGCCDIR
-        <dd>
-        This is the where the LLVM GCC Front End is installed.
-        <p>
-        For the pre-built GCC front end binaries, the LLVMGCCDIR is
-        <tt>cfrontend/<i>platform</i>/llvm-gcc</tt>.
-    </dl>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="environment">Setting Up Your Environment</a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>
-    In order to compile and use LLVM, you will need to set some environment
-    variables.  There are also some shell aliases which you may find useful.
-    You can set these on the command line, or better yet, set them in your
-    <tt>.cshrc</tt> or <tt>.profile</tt>.
-
-    <dl compact>
-        <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/bytecode-libs</tt>
-        <dd>
-        This environment variable helps the LLVM GCC front end find bytecode
-        libraries that it will need for compilation.
-        <p>
-
-        <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
-        <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt>
-        <dd>
-        This alias allows you to use the LLVM C and C++ front ends without putting
-        them in your <tt>PATH</tt> or typing in their complete pathnames.
-    </dl>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="unpack">Unpacking the LLVM Archives</a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>
-    If you have the LLVM distribution, you will need to unpack it before you
-    can begin to compile it.  LLVM is distributed as a set of three files.  Each
-    file is a TAR archive that is compressed with the gzip program.
-    </p>
-
-    <p> The three files are as follows:
-    <dl compact>
-        <dt>llvm.tar.gz
-        <dd>This is the source code to the LLVM suite.
-        <p>
-
-        <dt>cfrontend.sparc.tar.gz
-        <dd>This is the binary release of the GCC front end for Solaris/Sparc.
-        <p>
-
-        <dt>cfrontend.x86.tar.gz
-        <dd>This is the binary release of the GCC front end for Linux/x86.
-    </dl>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="checkout">Checkout LLVM from CVS</a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>If you have access to our CVS repository, you can get a fresh copy of
-    the entire source code.  All you need to do is check it out from CVS as
-    follows:
-    <ul>
-    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-	<li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
-	<li>Hit the return key when prompted for the password.
-	<li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm</tt>
-    </ul>
-
-    <p>This will create an '<tt>llvm</tt>' directory in the current
-    directory and fully populate it with the LLVM source code, Makefiles,
-    test directories, and local copies of documentation files.</p>
-
-    <p>
-    Note that the GCC front end is not included in the CVS repository.  You
-    should have downloaded the binary distribution for your platform.
-    </p>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="installcf">Install the GCC Front End</a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>
-    Before configuring and compiling the LLVM suite, you need to extract the
-    LLVM GCC front end from the binary distribution.  It is used for building
-    the
-    bytecode libraries later used by the GCC front end for linking programs, and
-    its location must be specified when the LLVM suite is configured.
-    </p>
-
-    <p>
-    To install the GCC front end, do the following:
+  <li><a href="#starting">Getting Started with LLVM</a>
     <ol>
-        <li><tt>cd <i>where-you-want-the-front-end-to-live</i></tt>
-        <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf
-        -</tt>
-    </ol>
+      <li><a href="#terminology">Terminology and Notation</a>
+      <li><a href="#environment">Setting Up Your Environment</a>
+      <li><a href="#unpack">Unpacking the LLVM Archives</a>
+      <li><a href="#checkout">Checkout LLVM from CVS</a>
+      <li><a href="#installcf">Install the GCC Front End</a>
+      <li><a href="#config">Local LLVM Configuration</a>
+      <li><a href="#compile">Compiling the LLVM Suite Source Code</a>
+      <li><a href="#objfiles">The Location of LLVM Object Files</a>
+    </ol></li>
 
-    If you are on a Sparc/Solaris machine, you will need to fix the header
-    files:
+  <li><a href="#layout">Program layout</a>
+    <ol>
+      <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
+      <li><a href="#include"><tt>llvm/include</tt></a>
+      <li><a href="#lib"><tt>llvm/lib</tt></a>
+      <li><a href="#runtime"><tt>llvm/runtime</tt></a>  
+      <li><a href="#test"><tt>llvm/test</tt></a>
+      <li><a href="#tools"><tt>llvm/tools</tt></a>  
+      <li><a href="#utils"><tt>llvm/utils</tt></a>
+    </ol></li>
 
+  <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
+  <li><a href="#problems">Common Problems</a>
+  <li><a href="#links">Links</a>
+</ul>
+
+<p>By: 
+  <a href="mailto:gshi1@uiuc.edu">Guochun Shi</a>,
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
+  <a href="mailto:criswell@uiuc.edu">John Criswell</a>, 
+  <a href="http://misha.brukman.net">Misha Brukman</a>, and
+  <a href="http://www.cs.uiuc.edu/~vadve">Vikram Adve</a>.</p>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="overview"><b>Overview</b></a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Welcome to LLVM! In order to get started, you first need to know some
+basic information.</p>
+
+<p>First, LLVM comes in two pieces. The first piece is the LLVM suite. This
+contains all of the tools, libraries, and header files needed to use the low
+level virtual machine.  It contains an assembler, disassembler, bytecode
+analyzer, and bytecode optimizer.  It also contains a test suite that can be
+used to test the LLVM tools and the GCC front end.</p>
+
+<p>The second piece is the GCC front end.  This component provides a version of
+GCC that compiles C and C++ code into LLVM bytecode.  Currently, the GCC front
+end is a modified version of GCC 3.4 (we track the GCC 3.4 development).  Once
+compiled into LLVM bytecode, a program can be manipulated with the LLVM tools
+from the LLVM suite.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="quickstart"><b>Getting Started Quickly (A Summary)</b></a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Here's the short story for getting up and running quickly with LLVM:</p>
+
+<ol>
+  <li>Install the GCC front end:
+    <ol>
+      <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt>
+      <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf -</tt>
+      <li><b>Sparc Only:</b><br>
+      <tt>cd cfrontend/sparc<br>
+          ./fixheaders</tt>
+    </ol></li>
+
+  <li>Get the Source Code
+  <ul>
+    <li>With the distributed files:
+    <ol>
+      <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+      <li><tt>gunzip --stdout llvm.tar.gz | tar -xvf -</tt>
+      <li><tt>cd llvm</tt>
+    </ol></li>
+
+    <li>With anonymous CVS access:
+    <ol>
+      <li><tt>cd <i>where-you-want-llvm-to-live</i></tt></li>
+      <li><tt>cvs -d
+          :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt></li>
+      <li>Hit the return key when prompted for the password.
+      <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm 
+          co llvm</tt></li>
+      <li><tt>cd llvm</tt></li>
+    </ol></li>
+  </ul></li>
+
+  <li>Configure the LLVM Build Environment
+  <ol>
+    <li>Change directory to where you want to store the LLVM object
+        files and run <tt>configure</tt> to configure the Makefiles and
+        header files for the default platform. Useful options include:
+      <ul>
+        <li><tt>--with-llvmgccdir=<i>directory</i></tt>
+            <p>Specify where the LLVM GCC frontend is installed.</p></li>
+        <li><tt>--enable-spec2000=<i>directory</i></tt>
+            <p>Enable the SPEC2000 benchmarks for testing.  The SPEC2000
+            benchmarks should be available in
+            <tt><i>directory</i></tt>.</p></li>
+      </ul>
+  </ol></li>
+
+  <li>Build the LLVM Suite:
+  <ol>
+      <li>Set your LLVM_LIB_SEARCH_PATH environment variable.
+      <li><tt>gmake -k |& tee gnumake.out
+      &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt>
+  </ol>
+
+</ol>
+
+<p>Consult the <a href="starting">Getting Started with LLVM</a> section for
+detailed information on configuring and compiling LLVM.  See <a
+href="#environment">Setting Up Your Environment</a> for tips that simplify
+working with the GCC front end and LLVM tools.  Go to <a href="#layout">Program
+Layout</a> to learn about the layout of the source code tree.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="requirements"><b>Requirements</b></a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Before you begin to use the LLVM system, review the requirements given below.
+This may save you some trouble by knowing ahead of time what hardware and
+software you will need.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="hardware"><b>Hardware</b></a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM is known to work on the following platforms:</p>
+
+<ul>
+
+  <li>Linux on x86 (Pentium and above)
+  <ul>
+    <li>Approximately 760 MB of Free Disk Space
+    <ul>
+      <li>Source code: 30 MB</li>
+      <li>Object code: 670 MB</li>
+      <li>GCC front end: 60 MB</li>
+    </ul></li>
+  </ul></li>
+
+  <li>Solaris on SparcV9 (Ultrasparc)
+  <ul>
+    <li>Approximately 1.24 GB of Free Disk Space
+      <ul>
+        <li>Source code: 30 MB</li>
+        <li>Object code: 1000 MB</li>
+        <li>GCC front end: 210 MB</li>
+      </ul></li>
+  </ul></li>
+
+</ul>
+
+<p>The LLVM suite <i>may</i> compile on other platforms, but it is not
+guaranteed to do so.  If compilation is successful, the LLVM utilities should be
+able to assemble, disassemble, analyze, and optimize LLVM bytecode.  Code
+generation should work as well, although the generated native code may not work
+on your platform.</p>
+
+<p>The GCC front end is not very portable at the moment.  If you want to get it
+to work on another platform, you can download a copy of the source and try to
+compile it on your platform.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="software"><b>Software</b></a>
+</div>
+
+<div class="doc_text">
+
+<p>Compiling LLVM requires that you have several software packages
+installed:</p>
+
+<ul>
+  <li><a href="http://gcc.gnu.org">GCC 3.x with C and C++ language
+  support</a></li>
+
+  <li><a href="http://savannah.gnu.org/projects/make">GNU Make</a></li>
+
+  <li><a href="http://www.gnu.org/software/flex">Flex</a></li>
+
+  <li><a href="http://www.gnu.org/software/bison/bison.html">Bison</a></li>
+</ul>
+
+<p>There are some additional tools that you may want to have when working with
+LLVM:</p>
+
+<ul>
+  <li><A href="http://www.gnu.org/software/autoconf">GNU Autoconf</A>
+  <li><A href="http://savannah.gnu.org/projects/m4">GNU M4</A>
+
+      <p>If you want to make changes to the configure scripts, you will need GNU
+      autoconf (2.57 or higher), and consequently, GNU M4 (version 1.4 or
+      higher).</p></li>
+
+  <li><A href="http://www.codesourcery.com/qm/qmtest">QMTest</A></li>
+  <li><A href="http://www.python.org">Python</A>
+
+      <p>These are needed to use the LLVM test suite.</p></li>
+
+</ul>
+
+
+<p>The remainder of this guide is meant to get you up and running with
+LLVM and to give you some basic information about the LLVM environment.
+A <a href="#starting">complete guide to installation</a> is provided in the
+next section.</p>
+
+<p>The later sections of this guide describe the <a
+href="#layout">general layout</a> of the the LLVM source tree, a <a
+href="#tutorial">simple example</a> using the LLVM tool chain, and <a
+href="#links">links</a> to find more information about LLVM or to get
+help via e-mail.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="starting"><b>Getting Started with LLVM</b></a>
+</div>
+<!-- *********************************************************************** -->
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="terminology">Terminology and Notation</a>
+</div>
+
+<div class="doc_text">
+
+<p>Throughout this manual, the following names are used to denote paths
+specific to the local system and working environment.  <i>These are not
+environment variables you need to set but just strings used in the rest
+of this document below</i>.  In any of the examples below, simply replace
+each of these names with the appropriate pathname on your local system.
+All these paths are absolute:</p>
+
+<dl compact>
+    <dt>SRC_ROOT
+    <dd>
+    This is the top level directory of the LLVM source tree.
     <p>
 
-    <tt>
-    cd cfrontend/sparc
+    <dt>OBJ_ROOT
+    <dd>
+    This is the top level directory of the LLVM object tree (i.e. the
+    tree where object files and compiled programs will be placed.  It
+    can be the same as SRC_ROOT).
+    <p>
+
+    <dt>LLVMGCCDIR
+    <dd>
+    This is the where the LLVM GCC Front End is installed.
+    <p>
+    For the pre-built GCC front end binaries, the LLVMGCCDIR is
+    <tt>cfrontend/<i>platform</i>/llvm-gcc</tt>.
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="environment">Setting Up Your Environment</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+In order to compile and use LLVM, you will need to set some environment
+variables.  There are also some shell aliases which you may find useful.
+You can set these on the command line, or better yet, set them in your
+<tt>.cshrc</tt> or <tt>.profile</tt>.
+
+<dl compact>
+    <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt><i>LLVMGCCDIR</i>/bytecode-libs</tt>
+    <dd>
+    This environment variable helps the LLVM GCC front end find bytecode
+    libraries that it will need for compilation.
+    <p>
+
+    <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
+    <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt>
+    <dd>
+    This alias allows you to use the LLVM C and C++ front ends without putting
+    them in your <tt>PATH</tt> or typing in their complete pathnames.
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="unpack">Unpacking the LLVM Archives</a></h3>
+</div>
+
+<div class="doc_text">
+
+<p>
+If you have the LLVM distribution, you will need to unpack it before you
+can begin to compile it.  LLVM is distributed as a set of three files.  Each
+file is a TAR archive that is compressed with the gzip program.
+</p>
+
+<p> The three files are as follows:
+<dl compact>
+    <dt>llvm.tar.gz
+    <dd>This is the source code to the LLVM suite.
+    <p>
+
+    <dt>cfrontend.sparc.tar.gz
+    <dd>This is the binary release of the GCC front end for Solaris/Sparc.
+    <p>
+
+    <dt>cfrontend.x86.tar.gz
+    <dd>This is the binary release of the GCC front end for Linux/x86.
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="checkout">Checkout LLVM from CVS</a></h3>
+</div>
+
+<div class="doc_text">
+
+<p>If you have access to our CVS repository, you can get a fresh copy of
+the entire source code.  All you need to do is check it out from CVS as
+follows:</p>
+
+<ul>
+<li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+  <li><tt>cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt>
+  <li>Hit the return key when prompted for the password.
+  <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co
+      llvm</tt>
+</ul>
+
+<p>This will create an '<tt>llvm</tt>' directory in the current
+directory and fully populate it with the LLVM source code, Makefiles,
+test directories, and local copies of documentation files.</p>
+
+<p>Note that the GCC front end is not included in the CVS repository. You
+should have downloaded the binary distribution for your platform.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="installcf">Install the GCC Front End</a></h3>
+</div>
+
+<div class="doc_text">
+
+<p>Before configuring and compiling the LLVM suite, you need to extract the LLVM
+GCC front end from the binary distribution.  It is used for building the
+bytecode libraries later used by the GCC front end for linking programs, and its
+location must be specified when the LLVM suite is configured.</p>
+
+<p>To install the GCC front end, do the following:</p>
+
+<ol>
+  <li><tt>cd <i>where-you-want-the-front-end-to-live</i></tt></li>
+  <li><tt>gunzip --stdout cfrontend.<i>platform</i>.tar.gz | tar -xvf
+      -</tt></li>
+</ol>
+
+<p>If you are on a Sparc/Solaris machine, you will need to fix the header
+files:</p>
+
+<p><tt>cd cfrontend/sparc<br>
+   ./fixheaders</tt></p>
+
+<p>The binary versions of the GCC front end may not suit all of your needs.  For
+example, the binary distribution may include an old version of a system header
+file, not "fix" a header file that needs to be fixed for GCC, or it may be
+linked with libraries not available on your system.</p>
+
+<p>In cases like these, you may want to try <a
+href="CFEBuildInstrs.html">building the GCC front end from source.</a> This is
+not for the faint of heart, so be forewarned.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="config">Local LLVM Configuration</a>
+</div>
+
+<div class="doc_text">
+
+<p>Once checked out from the CVS repository, the LLVM suite source code must be
+configured via the <tt>configure</tt> script.  This script sets variables in
+<tt>llvm/Makefile.config</tt> and <tt>llvm/include/Config/config.h</tt>.  It
+also populates <i>OBJ_ROOT</i> with the Makefiles needed to build LLVM.</p>
+
+<p>The following environment variables are used by the <tt>configure</tt>
+script to configure the build system:</p>
+
+<table border=1>
+  <tr>
+   <th>Variable</th>
+   <th>Purpose</th>
+  </tr>
+
+  <tr>
+    <td>CC</td>
+    <td>Tells <tt>configure</tt> which C compiler to use.  By default,
+        <tt>configure</tt> will look for the first GCC C compiler in
+        <tt>PATH</tt>.  Use this variable to override
+        <tt>configure</tt>'s default behavior.</td>
+  </tr>
+
+  <tr>
+    <td>CXX</td>
+    <td>Tells <tt>configure</tt> which C++ compiler to use.  By default,
+       <tt>configure</tt> will look for the first GCC C++ compiler in
+       <tt>PATH</tt>.  Use this variable to override
+       <tt>configure</tt>'s default behavior.</td>
+  </tr>
+</table>
+
+<p>The following options can be used to set or enable LLVM specific options:</p>
+
+<dl compact>
+  <dt><i>--with-llvmgccdir=LLVMGCCDIR</i>
+  <dd>
+    Path to the location where the LLVM C front end binaries and
+    associated libraries will be installed.
+    <p>
+  <dt><i>--enable-optimized</i>
+  <dd>
+    Enables optimized compilation by default (debugging symbols are removed
+    and GCC optimization flags are enabled).  The default is to use an
+    unoptimized build (also known as a debug build).
+    <p>
+  <dt><i>--enable-jit</i>
+  <dd>
+    Compile the Just In Time (JIT) functionality.  This is not available
+    on all platforms.  The default is dependent on platform, so it is best
+    to explicitly enable it if you want it.
+    <p>
+  <dt><i>--enable-spec2000</i>
+  <dt><i>--enable-spec2000=&lt;<tt>directory</tt>&gt;</i>
+  <dd>
+    Enable the use of SPEC2000 when testing LLVM.  This is disabled by default
+    (unless <tt>configure</tt> finds SPEC2000 installed).  By specifying
+    <tt>directory</tt>, you can tell configure where to find the SPEC2000
+    benchmarks.  If <tt>directory</tt> is left unspecified, <tt>configure</tt>
+    uses the default value
+    <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
+</dl>
+
+<p>To configure LLVM, follow these steps:</p>
+
+<ol>
+    <li>Change directory into the object root directory:
     <br>
-    ./fixheaders
-    </tt>
-
+    <tt>cd <i>OBJ_ROOT</i></tt>
     <p>
-    The binary versions of the GCC front end may not suit all of your needs.
-    For example, the binary distribution may include an old version of a system
-    header file, not "fix" a header file that needs to be fixed for GCC, or it
-    may be linked with libraries not available on your system.
-    </p>
 
+    <li>Run the <tt>configure</tt> script located in the LLVM source tree:
+    <br>
+    <tt><i>SRC_ROOT</i>/configure</tt>
     <p>
-    In cases like these, you may want to try
-    <a href="CFEBuildInstrs.html">building the GCC front end from source.</a>
-    This is not for the faint of heart, so be forewarned.
-    </p>
-    <!------------------------------------------------------------------------->
-    <h3><a name="config">Local LLVM Configuration</a></h3>
-    <!------------------------------------------------------------------------->
+</ol>
 
-    <p>Once checked out from the CVS repository, the LLVM suite source code
-    must be configured via the <tt>configure</tt> script.  This script sets
-    variables in <tt>llvm/Makefile.config</tt> and
-    <tt>llvm/include/Config/config.h</tt>.  It also populates <i>OBJ_ROOT</i>
-    with the Makefiles needed to build LLVM.
+<p>In addition to running <tt>configure</tt>, you must set the
+<tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup scripts.
+This environment variable is used to locate "system" libraries like
+"<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set to
+the absolute path for the bytecode-libs subdirectory of the GCC front end
+install, or <i>LLVMGCCDIR</i>/bytecode-libs.  For example, one might set
+<tt>LLVM_LIB_SEARCH_PATH</tt> to
+<tt>/home/vadve/lattner/local/x86/llvm-gcc/bytecode-libs</tt> for the X86
+version of the GCC front end on our research machines.</p>
 
-    <p>
-    The following environment variables are used by the <tt>configure</tt>
-    script to configure the build system:
-    </p>
+</div>
 
-    <table border=1>
-        <tr>
-            <th>Variable</th>
-            <th>
-            Purpose
-            </th>
-        </tr>
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="compile">Compiling the LLVM Suite Source Code</a>
+</div>
 
-        <tr>
-            <td>CC</td>
-            <td>
-            Tells <tt>configure</tt> which C compiler to use.  By default,
-            <tt>configure</tt> will look for the first GCC C compiler in
-            <tt>PATH</tt>.  Use this variable to override
-            <tt>configure</tt>'s default behavior.
-            </td>
-        </tr>
+<div class="doc_text">
 
-        <tr>
-            <td>CXX</td>
-            <td>
-            Tells <tt>configure</tt> which C++ compiler to use.  By default,
-            <tt>configure</tt> will look for the first GCC C++ compiler in
-            <tt>PATH</tt>.  Use this variable to override
-            <tt>configure</tt>'s default behavior.
-            </td>
-        </tr>
-    </table>
+<p>Once you have configured LLVM, you can build it.  There are three types of
+builds:</p>
 
-    <p>
-    The following options can be used to set or enable LLVM specific options:
-    </p>
-
-    <dl compact>
-    <dt><i>--with-llvmgccdir=LLVMGCCDIR</i>
+<dl compact>
+    <dt>Debug Builds
     <dd>
-        Path to the location where the LLVM C front end binaries and
-        associated libraries will be installed.
-        <p>
-    <dt><i>--enable-optimized</i>
+    These builds are the default when one types <tt>gmake</tt> (unless the
+    <tt>--enable-optimized</tt> option was used during configuration).  The
+    build system will compile the tools and libraries with debugging
+    information.
+    <p>
+
+    <dt>Release (Optimized) Builds
     <dd>
-        Enables optimized compilation by default (debugging symbols are removed
-        and GCC optimization flags are enabled).  The default is to use an
-        unoptimized build (also known as a debug build).
-        <p>
-    <dt><i>--enable-jit</i>
+    These builds are enabled with the <tt>--enable-optimized</tt> option to
+    <tt>configure</tt> or by specifying <tt>ENABLE_OPTIMIZED=1</tt> on the
+    <tt>gmake</tt> command line.  For these builds, the build system will
+    compile the tools and libraries with GCC optimizations enabled and strip
+    debugging information from the libraries and executables it generates. 
+    <p>
+
+    <dt>Profile Builds
     <dd>
-        Compile the Just In Time (JIT) functionality.  This is not available
-        on all platforms.  The default is dependent on platform, so it is best
-        to explicitly enable it if you want it.
-        <p>
-    <dt><i>--enable-spec2000</i>
-    <dt><i>--enable-spec2000=&lt;<tt>directory</tt>&gt;</i>
-    <dd>
-        Enable the use of SPEC2000 when testing LLVM.  This is disabled by default
-        (unless <tt>configure</tt> finds SPEC2000 installed).  By specifying
-        <tt>directory</tt>, you can tell configure where to find the SPEC2000
-        benchmarks.  If <tt>directory</tt> is left unspecified, <tt>configure</tt>
-        uses the default value
-        <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
-    </dl>
-
-    <p>
-    To configure LLVM, follow these steps:
-    <ol>
-        <li>Change directory into the object root directory:
-        <br>
-        <tt>cd <i>OBJ_ROOT</i></tt>
-        <p>
-
-        <li>Run the <tt>configure</tt> script located in the LLVM source tree:
-        <br>
-        <tt><i>SRC_ROOT</i>/configure</tt>
-        <p>
-    </ol>
-    </p>
-
-    In addition to running <tt>configure</tt>, you must set the
-    <tt>LLVM_LIB_SEARCH_PATH</tt> environment variable in your startup scripts.
-    This environment variable is used to locate "system" libraries like
-    "<tt>-lc</tt>" and "<tt>-lm</tt>" when linking.  This variable should be set
-    to the absolute path for the bytecode-libs subdirectory of the GCC front end
-    install, or <i>LLVMGCCDIR</i>/bytecode-libs.  For example, one might
-    set <tt>LLVM_LIB_SEARCH_PATH</tt> to
-    <tt>/home/vadve/lattner/local/x86/llvm-gcc/bytecode-libs</tt> for the X86
-    version of the GCC front end on our research machines.<p>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="compile">Compiling the LLVM Suite Source Code</a></h3>
-    <!------------------------------------------------------------------------->
-
-    Once you have configured LLVM, you can build it.  There are three types of
-    builds:
-
-    <dl compact>
-        <dt>Debug Builds
-        <dd>
-        These builds are the default when one types <tt>gmake</tt> (unless the
-        <tt>--enable-optimized</tt> option was used during configuration).  The
-        build system will compile the tools and libraries with debugging
-        information.
-        <p>
-
-        <dt>Release (Optimized) Builds
-        <dd>
-        These builds are enabled with the <tt>--enable-optimized</tt> option to
-        <tt>configure</tt> or by specifying <tt>ENABLE_OPTIMIZED=1</tt> on the
-        <tt>gmake</tt> command line.  For these builds, the build system will
-        compile the tools and libraries with GCC optimizations enabled and strip
-        debugging information from the libraries and executables it generates. 
-        <p>
-
-        <dt>Profile Builds
-        <dd>
-        These builds are for use with profiling.  They compile profiling
-        information into the code for use with programs like <tt>gprof</tt>.
-        Profile builds must be started by specifying <tt>ENABLE_PROFILING=1</tt>
-        on the <tt>gmake</tt> command line.
-    </dl>
-
-    Once you have LLVM configured, you can build it by entering the
-    <i>OBJ_ROOT</i> directory and issuing the following command:
-    <p>
-    <tt>gmake</tt>
-
-    <p>
-    If you have multiple processors in your machine, you may wish to use some
-    of the parallel build options provided by GNU Make.  For example, you could
-    use the command:
-    </p>
-
-    <p>
-    <tt>gmake -j2</tt>
-
-    <p>
-    There are several special targets which are useful when working with the LLVM
-    source code:
-
-    <dl compact>
-        <dt><tt>gmake clean</tt>
-        <dd>
-        Removes all files generated by the build.  This includes object files,
-        generated C/C++ files, libraries, and executables.
-        <p>
-
-        <dt><tt>gmake distclean</tt>
-        <dd>
-        Removes everything that <tt>gmake clean</tt> does, but also removes
-        files generated by <tt>configure</tt>.  It attempts to return the
-        source tree to the original state in which it was shipped.
-        <p>
-
-        <dt><tt>gmake install</tt>
-        <dd>
-        Installs LLVM files into the proper location.  For the most part,
-        this does nothing, but it does install bytecode libraries into the
-        GCC front end's bytecode library directory.  If you need to update
-        your bytecode libraries, this is the target to use once you've built
-        them.
-        <p>
-
-    </dl>
-
-    It is also possible to override default values from <tt>configure</tt> by
-    declaring variables on the command line.  The following are some examples:
-
-    <dl compact>
-        <dt><tt>gmake ENABLE_OPTIMIZED=1</tt>
-        <dd>
-        Perform a Release (Optimized) build.
-        <p>
-
-        <dt><tt>gmake ENABLE_PROFILING=1</tt>
-        <dd>
-        Perform a Profiling build.
-        <p>
-
-        <dt><tt>gmake VERBOSE=1</tt>
-        <dd>
-        Print what <tt>gmake</tt> is doing on standard output.
-        <p>
-    </dl>
-
-    Every directory in the LLVM object tree includes a <tt>Makefile</tt> to
-    build it and any subdirectories that it contains.  Entering any directory
-    inside the LLVM object tree and typing <tt>gmake</tt> should rebuild
-    anything in or below that directory that is out of date.
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="objfiles">The Location of LLVM Object Files</a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>
-    The LLVM build system is capable of sharing a single LLVM source tree among
-    several LLVM builds.  Hence, it is possible to build LLVM for several
-    different platforms or configurations using the same source tree.
-    <p>
-    This is accomplished in the typical autoconf manner:
-    <ul>
-        <li>Change directory to where the LLVM object files should live:
-        <p>
-        <tt>cd <i>OBJ_ROOT</i></tt>
-
-        <li>Run the <tt>configure</tt> script found in the LLVM source directory:
-        <p>
-        <tt><i>SRC_ROOT</i>/configure</tt>
-    </ul>
-
-    <p>
-    The LLVM build will place files underneath <i>OBJ_ROOT</i> in directories
-    named after the build type:
-    </p>
-
-    <dl compact>
-        <dt>Debug Builds
-        <dd>
-        <dl compact>
-            <dt>Tools
-            <dd><tt><i>OBJ_ROOT</i>/tools/Debug</tt>
-            <dt>Libraries
-            <dd><tt><i>OBJ_ROOT</i>/lib/Debug</tt>
-        </dl>
-        <p>
-
-        <dt>Release Builds
-        <dd>
-        <dl compact>
-            <dt>Tools
-            <dd><tt><i>OBJ_ROOT</i>/tools/Release</tt>
-            <dt>Libraries
-            <dd><tt><i>OBJ_ROOT</i>/lib/Release</tt>
-        </dl>
-        <p>
-
-        <dt>Profile Builds
-        <dd>
-        <dl compact>
-            <dt>Tools
-            <dd><tt><i>OBJ_ROOT</i>/tools/Profile</tt>
-            <dt>Libraries
-            <dd><tt><i>OBJ_ROOT</i>/lib/Profile</tt>
-        </dl>
-    </dl>
-
-    <!--=====================================================================-->
-    <center>
-    <h2><a name="layout"><b>Program Layout</b></a></h2>
-    </center>
-    <hr>
-    <!--=====================================================================-->
-
-    <p>
-    One useful source of information about the LLVM source base is the LLVM <a
-    href="http://www.doxygen.org">doxygen</a> documentation, available at <tt><a
-    href="http://llvm.cs.uiuc.edu/doxygen/">http://llvm.cs.uiuc.edu/doxygen/</a></tt>.
-    The following is a brief introduction to code layout:
-    </p>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="cvsdir"><tt>CVS</tt> directories</a></h3>
-    <!------------------------------------------------------------------------->
-
-    Every directory checked out of CVS will contain a <tt>CVS</tt> directory;
-    for the most part these can just be ignored.
-
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="include"><tt>llvm/include</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    This directory contains public header files exported from the LLVM
-    library. The three main subdirectories of this directory are:<p>
-
-    <ol>
-       <li><tt>llvm/include/llvm</tt> - This directory contains all of the LLVM
-       specific header files.  This directory also has subdirectories for
-       different portions of LLVM: <tt>Analysis</tt>, <tt>CodeGen</tt>,
-       <tt>Target</tt>, <tt>Transforms</tt>, etc...
-
-       <li><tt>llvm/include/Support</tt> - This directory contains generic
-       support libraries that are independent of LLVM, but are used by LLVM.
-       For example, some C++ STL utilities and a Command Line option processing
-       library store their header files here.
-
-       <li><tt>llvm/include/Config</tt> - This directory contains header files
-       configured by the <tt>configure</tt> script.  They wrap "standard" UNIX
-       and C header files.  Source code can include these header files which
-       automatically take care of the conditional #includes that the
-       <tt>configure</tt> script generates.
-    </ol>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="lib"><tt>llvm/lib</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    This directory contains most of the source files of the LLVM system. In
-    LLVM, almost all
-    code exists in libraries, making it very easy to share code among the
-    different <a href="#tools">tools</a>.<p>
-
-     <dl compact>
-      <dt><tt>llvm/lib/VMCore/</tt><dd> This directory holds the core LLVM
-      source files that implement core classes like Instruction and BasicBlock.
-
-      <dt><tt>llvm/lib/AsmParser/</tt><dd> This directory holds the source code
-      for the LLVM assembly language parser library.
-
-      <dt><tt>llvm/lib/ByteCode/</tt><dd> This directory holds code for reading
-      and write LLVM bytecode.
-
-      <dt><tt>llvm/lib/CWriter/</tt><dd> This directory implements the LLVM to C
-      converter.
-
-      <dt><tt>llvm/lib/Analysis/</tt><dd> This directory contains a variety of
-      different program analyses, such as Dominator Information, Call Graphs,
-      Induction Variables, Interval Identification, Natural Loop Identification,
-      etc...
-
-      <dt><tt>llvm/lib/Transforms/</tt><dd> This directory contains the source
-      code for the LLVM to LLVM program transformations, such as Aggressive Dead
-      Code Elimination, Sparse Conditional Constant Propagation, Inlining, Loop
-      Invariant Code Motion, Dead Global Elimination, and many others...
-
-      <dt><tt>llvm/lib/Target/</tt><dd> This directory contains files that
-      describe various target architectures for code generation.  For example,
-      the llvm/lib/Target/Sparc directory holds the Sparc machine
-      description.<br>
-	      
-      <dt><tt>llvm/lib/CodeGen/</tt><dd> This directory contains the major parts
-      of the code generator: Instruction Selector, Instruction Scheduling, and
-      Register Allocation.
-
-      <dt><tt>llvm/lib/Support/</tt><dd> This directory contains the source code
-      that corresponds to the header files located in
-      <tt>llvm/include/Support/</tt>.
-    </dl>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="runtime"><tt>llvm/runtime</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>
-    This directory contains libraries which are compiled into LLVM bytecode and
-    used when linking programs with the GCC front end.  Most of these libraries
-    are skeleton versions of real libraries; for example, libc is a stripped down
-    version of glibc.
-    </p>
-
-    <p>
-    Unlike the rest of the LLVM suite, this directory needs the LLVM GCC front end
-    to compile.
-    </p>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="test"><tt>llvm/test</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>This directory contains regression tests and source code that is used to
-    test the LLVM infrastructure.
-    </p>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="tools"><tt>llvm/tools</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    <p>The <b>tools</b> directory contains the executables built out of the
-    libraries above, which form the main part of the user interface.  You can
-    always get help for a tool by typing <tt>tool_name --help</tt>.  The
-    following is a brief introduction to the most important tools.</p>
-
-    <dl compact>
-      <dt>
-
-      <dt><tt><b>analyze</b></tt><dd> <tt>analyze</tt> is used to run a specific
-      analysis on an input LLVM bytecode file and print out the results.  It is
-      primarily useful for debugging analyses, or familiarizing yourself with
-      what an analysis does.<p>
-
-      <dt><tt><b>bugpoint</b></tt><dd> <tt>bugpoint</tt> is used to debug
-      optimization passes or code generation backends by narrowing down the
-      given test case to the minimum number of passes and/or instructions that
-      still cause a problem, whether it is a crash or miscompilation. See <a
-      href="HowToSubmitABug.html">HowToSubmitABug.html</a> for more information
-      on using <tt>bugpoint</tt>.<p>
-
-      <dt><tt><b>llvm-ar</b></tt><dd>The archiver produces an archive containing
-      the given LLVM bytecode files, optionally with an index for faster
-      lookup.<p>
-      
-      <dt><tt><b>llvm-as</b></tt><dd>The assembler transforms the human readable
-      LLVM assembly to LLVM bytecode.<p>
-
-      <dt><tt><b>llvm-dis</b></tt><dd>The disassembler transforms the LLVM
-      bytecode to human readable LLVM assembly.  Additionally, it can convert
-      LLVM bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
-
-      <dt><tt><b>llvm-link</b></tt><dd> <tt>llvm-link</tt>, not surprisingly,
-      links multiple LLVM modules into a single program.<p>
-      
-      <dt><tt><b>lli</b></tt><dd> <tt>lli</tt> is the LLVM interpreter, which
-      can directly execute LLVM bytecode (although very slowly...). In addition
-      to a simple interpreter, <tt>lli</tt> also has a tracing mode (entered by
-      specifying <tt>-trace</tt> on the command line). Finally, for
-      architectures that support it (currently only x86 and Sparc), by default,
-      <tt>lli</tt> will function as a Just-In-Time compiler (if the
-      functionality was compiled in), and will execute the code <i>much</i>
-      faster than the interpreter.<p>
-
-      <dt><tt><b>llc</b></tt><dd> <tt>llc</tt> is the LLVM backend compiler,
-      which translates LLVM bytecode to a SPARC or x86 assembly file.<p>
-
-      <dt><tt><b>llvmgcc</b></tt><dd> <tt>llvmgcc</tt> is a GCC-based C frontend
-      that has been retargeted to emit LLVM code as the machine code output.  It
-      works just like any other GCC compiler, taking the typical <tt>-c, -S, -E,
-      -o</tt> options that are typically used.  The source code for the
-      <tt>llvmgcc</tt> tool is currently not included in the LLVM CVS tree
-      because it is quite large and not very interesting.<p>
-
-      <ol>
-        <dt><tt><b>gccas</b></tt><dd> This tool is invoked by the
-        <tt>llvmgcc</tt> frontend as the "assembler" part of the compiler.  This
-        tool actually assembles LLVM assembly to LLVM bytecode,
-        performs a variety of optimizations, and outputs LLVM bytecode.  Thus
-        when you invoke <tt>llvmgcc -c x.c -o x.o</tt>, you are causing
-        <tt>gccas</tt> to be run, which writes the <tt>x.o</tt> file (which is
-        an LLVM bytecode file that can be disassembled or manipulated just like
-        any other bytecode file).  The command line interface to <tt>gccas</tt>
-        is designed to be as close as possible to the <b>system</b>
-        `<tt>as</tt>' utility so that the gcc frontend itself did not have to be
-        modified to interface to a "weird" assembler.<p>
-
-        <dt><tt><b>gccld</b></tt><dd> <tt>gccld</tt> links together several LLVM
-        bytecode files into one bytecode file and does some optimization.  It is
-        the linker invoked by the GCC frontend when multiple .o files need to be
-        linked together.  Like <tt>gccas</tt>, the command line interface of
-        <tt>gccld</tt> is designed to match the system linker, to aid
-        interfacing with the GCC frontend.<p>
-      </ol>
-
-      <dt><tt><b>opt</b></tt><dd> <tt>opt</tt> reads LLVM bytecode, applies a
-      series of LLVM to LLVM transformations (which are specified on the command
-      line), and then outputs the resultant bytecode.  The '<tt>opt --help</tt>'
-      command is a good way to get a list of the program transformations
-      available in LLVM.<p>
-
-    </dl>
-
-    <!------------------------------------------------------------------------->
-    <h3><a name="utils"><tt>llvm/utils</tt></a></h3>
-    <!------------------------------------------------------------------------->
-
-    This directory contains utilities for working with LLVM source code, and some
-    of the utilities are actually required as part of the build process because
-    they are code generators for parts of LLVM infrastructure.
-
-    <dl compact>
-      <td><tt><b>Burg/</b></tt><dd> <tt>Burg</tt> is an instruction selector
-      generator -- it builds trees on which it then performs pattern-matching to
-      select instructions according to the patterns the user has specified. Burg
-      is currently used in the Sparc V9 backend.<p>
-
-      <dt><tt><b>codegen-diff</b></tt><dd> <tt>codegen-diff</tt> is a script
-      that finds differences between code that LLC generates and code that LLI
-      generates. This is a useful tool if you are debugging one of them,
-      assuming that the other generates correct output. For the full user
-      manual, run <tt>`perldoc codegen-diff'</tt>.<p>
-
-      <dt><tt><b>cvsupdate</b></tt><dd> <tt>cvsupdate</tt> is a script that will
-      update your CVS tree, but produce a much cleaner and more organized output
-      than simply running <tt>`cvs -z3 up -dP'</tt> will. For example, it will group
-      together all the new and updated files and modified files in separate
-      sections, so you can see at a glance what has changed. If you are at the
-      top of your LLVM CVS tree, running <tt>utils/cvsupdate</tt> is the
-      preferred way of updating the tree.<p>
-
-      <dt><tt><b>emacs/</b></tt><dd> The <tt>emacs</tt> directory contains
-      syntax-highlighting files which will work with Emacs and XEmacs editors,
-      providing syntax highlighting support for LLVM assembly files and TableGen
-      description files. For information on how to use the syntax files, consult
-      the <tt>README</tt> file in that directory.<p>
-
-      <dt><tt><b>getsrcs.sh</b></tt><dd> The <tt>getsrcs.sh</tt> script finds
-      and outputs all non-generated source files, which is useful if one wishes
-      to do a lot of development across directories and does not want to
-      individually find each file. One way to use it is to run, for example:
-      <tt>xemacs `utils/getsources.sh`</tt> from the top of your LLVM source
-      tree.<p>
-      
-      <dt><tt><b>makellvm</b></tt><dd> The <tt>makellvm</tt> script compiles all
-      files in the current directory and then compiles and links the tool that
-      is the first argument. For example, assuming you are in the directory
-      <tt>llvm/lib/Target/Sparc</tt>, if <tt>makellvm</tt> is in your path,
-      simply running <tt>makellvm llc</tt> will make a build of the current
-      directory, switch to directory <tt>llvm/tools/llc</tt> and build it,
-      causing a re-linking of LLC.<p>
-
-      <dt><tt><b>NightlyTest.pl</b></tt> and
-      <tt><b>NightlyTestTemplate.html</b></tt><dd> These files are used in a
-      cron script to generate nightly status reports of the functionality of
-      tools, and the results can be seen by following the appropriate link on
-      the <a href="http://llvm.cs.uiuc.edu/">LLVM homepage</a>.<p>
-
-      <dt><tt><b>TableGen/</b></tt><dd> The <tt>TableGen</tt> directory contains
-      the tool used to generate register descriptions, instruction set
-      descriptions, and even assemblers from common TableGen description
-      files.<p>
-
-      <dt><tt><b>vim/</b></tt><dd> The <tt>vim</tt> directory contains
-      syntax-highlighting files which will work with the VIM editor, providing
-      syntax highlighting support for LLVM assembly files and TableGen
-      description files. For information on how to use the syntax files, consult
-      the <tt>README</tt> file in that directory.<p>
- 
-    </dl>
-
-    <!--=====================================================================-->
-    <h2>
-    <center><a name="tutorial">An Example Using the LLVM Tool Chain</center>
-    </h2>
-    <hr>
-    <!--=====================================================================-->
-
-    <ol>
-    <li>First, create a simple C file, name it 'hello.c':
+    These builds are for use with profiling.  They compile profiling
+    information into the code for use with programs like <tt>gprof</tt>.
+    Profile builds must be started by specifying <tt>ENABLE_PROFILING=1</tt>
+    on the <tt>gmake</tt> command line.
+</dl>
+
+<p>Once you have LLVM configured, you can build it by entering the
+<i>OBJ_ROOT</i> directory and issuing the following command:</p>
+
+<p><tt>gmake</tt></p>
+
+<p>If you have multiple processors in your machine, you may wish to use some of
+the parallel build options provided by GNU Make.  For example, you could use the
+command:</p>
+
+<p><tt>gmake -j2</tt></p>
+
+<p>There are several special targets which are useful when working with the LLVM
+source code:</p>
+
+<dl compact>
+  <dt><tt>gmake clean</tt>
+  <dd>
+  Removes all files generated by the build.  This includes object files,
+  generated C/C++ files, libraries, and executables.
+  <p>
+
+  <dt><tt>gmake distclean</tt>
+  <dd>
+  Removes everything that <tt>gmake clean</tt> does, but also removes
+  files generated by <tt>configure</tt>.  It attempts to return the
+  source tree to the original state in which it was shipped.
+  <p>
+
+  <dt><tt>gmake install</tt>
+  <dd>
+  Installs LLVM files into the proper location.  For the most part,
+  this does nothing, but it does install bytecode libraries into the
+  GCC front end's bytecode library directory.  If you need to update
+  your bytecode libraries, this is the target to use once you've built
+  them.
+  <p>
+</dl>
+
+<p>It is also possible to override default values from <tt>configure</tt> by
+declaring variables on the command line.  The following are some examples:</p>
+
+<dl compact>
+  <dt><tt>gmake ENABLE_OPTIMIZED=1</tt>
+  <dd>
+  Perform a Release (Optimized) build.
+  <p>
+
+  <dt><tt>gmake ENABLE_PROFILING=1</tt>
+  <dd>
+  Perform a Profiling build.
+  <p>
+
+  <dt><tt>gmake VERBOSE=1</tt>
+  <dd>
+  Print what <tt>gmake</tt> is doing on standard output.
+  <p>
+</dl>
+
+<p>Every directory in the LLVM object tree includes a <tt>Makefile</tt> to build
+it and any subdirectories that it contains.  Entering any directory inside the
+LLVM object tree and typing <tt>gmake</tt> should rebuild anything in or below
+that directory that is out of date.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="objfiles">The Location of LLVM Object Files</a>
+</div>
+
+<div class="doc_text">
+
+<p>The LLVM build system is capable of sharing a single LLVM source tree among
+several LLVM builds.  Hence, it is possible to build LLVM for several different
+platforms or configurations using the same source tree.</p>
+
+<p>This is accomplished in the typical autoconf manner:</p>
+
+<ul>
+  <li><p>Change directory to where the LLVM object files should live:</p>
+
+      <p><tt>cd <i>OBJ_ROOT</i></tt></p></li>
+
+  <li><p>Run the <tt>configure</tt> script found in the LLVM source
+      directory:</p>
+
+      <p><tt><i>SRC_ROOT</i>/configure</tt></p></li>
+</ul>
+
+<p>The LLVM build will place files underneath <i>OBJ_ROOT</i> in directories
+named after the build type:</p>
+
+<dl compact>
+  <dt>Debug Builds
+  <dd>
+  <dl compact>
+    <dt>Tools
+    <dd><tt><i>OBJ_ROOT</i>/tools/Debug</tt>
+    <dt>Libraries
+    <dd><tt><i>OBJ_ROOT</i>/lib/Debug</tt>
+  </dl>
+  <p>
+
+  <dt>Release Builds
+  <dd>
+  <dl compact>
+    <dt>Tools
+    <dd><tt><i>OBJ_ROOT</i>/tools/Release</tt>
+    <dt>Libraries
+    <dd><tt><i>OBJ_ROOT</i>/lib/Release</tt>
+  </dl>
+  <p>
+
+  <dt>Profile Builds
+  <dd>
+  <dl compact>
+    <dt>Tools
+    <dd><tt><i>OBJ_ROOT</i>/tools/Profile</tt>
+    <dt>Libraries
+    <dd><tt><i>OBJ_ROOT</i>/lib/Profile</tt>
+  </dl>
+</dl>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="layout"><b>Program Layout</b></a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>One useful source of information about the LLVM source base is the LLVM <a
+href="http://www.doxygen.org">doxygen</a> documentation, available at <tt><a
+href="http://llvm.cs.uiuc.edu/doxygen/">http://llvm.cs.uiuc.edu/doxygen/</a></tt>.
+The following is a brief introduction to code layout:</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="cvsdir"><tt>CVS</tt> directories</a>
+</div>
+
+<div class="doc_text">
+
+<p>Every directory checked out of CVS will contain a <tt>CVS</tt> directory; for
+the most part these can just be ignored.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="include"><tt>llvm/include</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>This directory contains public header files exported from the LLVM
+library. The three main subdirectories of this directory are:</p>
+
+<ol>
+  <li><tt>llvm/include/llvm</tt> - This directory contains all of the LLVM
+      specific header files.  This directory also has subdirectories for
+      different portions of LLVM: <tt>Analysis</tt>, <tt>CodeGen</tt>,
+      <tt>Target</tt>, <tt>Transforms</tt>, etc...</li>
+
+  <li><tt>llvm/include/Support</tt> - This directory contains generic
+      support libraries that are independent of LLVM, but are used by LLVM.
+      For example, some C++ STL utilities and a Command Line option processing
+      library store their header files here.</li>
+
+  <li><tt>llvm/include/Config</tt> - This directory contains header files
+      configured by the <tt>configure</tt> script.  They wrap "standard" UNIX
+      and C header files.  Source code can include these header files which
+      automatically take care of the conditional #includes that the
+      <tt>configure</tt> script generates.</li>
+</ol>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="lib"><tt>llvm/lib</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>This directory contains most of the source files of the LLVM system. In LLVM,
+almost all code exists in libraries, making it very easy to share code among the
+different <a href="#tools">tools</a>.</p>
+
+<dl compact>
+  <dt><tt>llvm/lib/VMCore/</tt><dd> This directory holds the core LLVM
+  source files that implement core classes like Instruction and BasicBlock.
+
+  <dt><tt>llvm/lib/AsmParser/</tt><dd> This directory holds the source code
+  for the LLVM assembly language parser library.
+
+  <dt><tt>llvm/lib/ByteCode/</tt><dd> This directory holds code for reading
+  and write LLVM bytecode.
+
+  <dt><tt>llvm/lib/CWriter/</tt><dd> This directory implements the LLVM to C
+  converter.
+
+  <dt><tt>llvm/lib/Analysis/</tt><dd> This directory contains a variety of
+  different program analyses, such as Dominator Information, Call Graphs,
+  Induction Variables, Interval Identification, Natural Loop Identification,
+  etc...
+
+  <dt><tt>llvm/lib/Transforms/</tt><dd> This directory contains the source
+  code for the LLVM to LLVM program transformations, such as Aggressive Dead
+  Code Elimination, Sparse Conditional Constant Propagation, Inlining, Loop
+  Invariant Code Motion, Dead Global Elimination, and many others...
+
+  <dt><tt>llvm/lib/Target/</tt><dd> This directory contains files that
+  describe various target architectures for code generation.  For example,
+  the llvm/lib/Target/Sparc directory holds the Sparc machine
+  description.<br>
+    
+  <dt><tt>llvm/lib/CodeGen/</tt><dd> This directory contains the major parts
+  of the code generator: Instruction Selector, Instruction Scheduling, and
+  Register Allocation.
+
+  <dt><tt>llvm/lib/Support/</tt><dd> This directory contains the source code
+  that corresponds to the header files located in
+  <tt>llvm/include/Support/</tt>.
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="runtime"><tt>llvm/runtime</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>This directory contains libraries which are compiled into LLVM bytecode and
+used when linking programs with the GCC front end.  Most of these libraries are
+skeleton versions of real libraries; for example, libc is a stripped down
+version of glibc.</p>
+
+<p>Unlike the rest of the LLVM suite, this directory needs the LLVM GCC front
+end to compile.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="test"><tt>llvm/test</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>This directory contains regression tests and source code that is used to test
+the LLVM infrastructure.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="tools"><tt>llvm/tools</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>The <b>tools</b> directory contains the executables built out of the
+libraries above, which form the main part of the user interface.  You can
+always get help for a tool by typing <tt>tool_name --help</tt>.  The
+following is a brief introduction to the most important tools.</p>
+
+<dl compact>
+  <dt>
+
+  <dt><tt><b>analyze</b></tt><dd> <tt>analyze</tt> is used to run a specific
+  analysis on an input LLVM bytecode file and print out the results.  It is
+  primarily useful for debugging analyses, or familiarizing yourself with
+  what an analysis does.<p>
+
+  <dt><tt><b>bugpoint</b></tt><dd> <tt>bugpoint</tt> is used to debug
+  optimization passes or code generation backends by narrowing down the
+  given test case to the minimum number of passes and/or instructions that
+  still cause a problem, whether it is a crash or miscompilation. See <a
+  href="HowToSubmitABug.html">HowToSubmitABug.html</a> for more information
+  on using <tt>bugpoint</tt>.<p>
+
+  <dt><tt><b>llvm-ar</b></tt><dd>The archiver produces an archive containing
+  the given LLVM bytecode files, optionally with an index for faster
+  lookup.<p>
+  
+  <dt><tt><b>llvm-as</b></tt><dd>The assembler transforms the human readable
+  LLVM assembly to LLVM bytecode.<p>
+
+  <dt><tt><b>llvm-dis</b></tt><dd>The disassembler transforms the LLVM
+  bytecode to human readable LLVM assembly.  Additionally, it can convert
+  LLVM bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
+
+  <dt><tt><b>llvm-link</b></tt><dd> <tt>llvm-link</tt>, not surprisingly,
+  links multiple LLVM modules into a single program.<p>
+  
+  <dt><tt><b>lli</b></tt><dd> <tt>lli</tt> is the LLVM interpreter, which
+  can directly execute LLVM bytecode (although very slowly...). In addition
+  to a simple interpreter, <tt>lli</tt> also has a tracing mode (entered by
+  specifying <tt>-trace</tt> on the command line). Finally, for
+  architectures that support it (currently only x86 and Sparc), by default,
+  <tt>lli</tt> will function as a Just-In-Time compiler (if the
+  functionality was compiled in), and will execute the code <i>much</i>
+  faster than the interpreter.<p>
+
+  <dt><tt><b>llc</b></tt><dd> <tt>llc</tt> is the LLVM backend compiler,
+  which translates LLVM bytecode to a SPARC or x86 assembly file.<p>
+
+  <dt><tt><b>llvmgcc</b></tt><dd> <tt>llvmgcc</tt> is a GCC-based C frontend
+  that has been retargeted to emit LLVM code as the machine code output.  It
+  works just like any other GCC compiler, taking the typical <tt>-c, -S, -E,
+  -o</tt> options that are typically used.  The source code for the
+  <tt>llvmgcc</tt> tool is currently not included in the LLVM CVS tree
+  because it is quite large and not very interesting.<p>
+
+  <ol>
+    <dt><tt><b>gccas</b></tt><dd> This tool is invoked by the
+    <tt>llvmgcc</tt> frontend as the "assembler" part of the compiler.  This
+    tool actually assembles LLVM assembly to LLVM bytecode,
+    performs a variety of optimizations, and outputs LLVM bytecode.  Thus
+    when you invoke <tt>llvmgcc -c x.c -o x.o</tt>, you are causing
+    <tt>gccas</tt> to be run, which writes the <tt>x.o</tt> file (which is
+    an LLVM bytecode file that can be disassembled or manipulated just like
+    any other bytecode file).  The command line interface to <tt>gccas</tt>
+    is designed to be as close as possible to the <b>system</b>
+    `<tt>as</tt>' utility so that the gcc frontend itself did not have to be
+    modified to interface to a "weird" assembler.<p>
+
+    <dt><tt><b>gccld</b></tt><dd> <tt>gccld</tt> links together several LLVM
+    bytecode files into one bytecode file and does some optimization.  It is
+    the linker invoked by the GCC frontend when multiple .o files need to be
+    linked together.  Like <tt>gccas</tt>, the command line interface of
+    <tt>gccld</tt> is designed to match the system linker, to aid
+    interfacing with the GCC frontend.<p>
+  </ol>
+
+  <dt><tt><b>opt</b></tt><dd> <tt>opt</tt> reads LLVM bytecode, applies a
+  series of LLVM to LLVM transformations (which are specified on the command
+  line), and then outputs the resultant bytecode.  The '<tt>opt --help</tt>'
+  command is a good way to get a list of the program transformations
+  available in LLVM.<p>
+
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="utils"><tt>llvm/utils</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>This directory contains utilities for working with LLVM source code, and some
+of the utilities are actually required as part of the build process because they
+are code generators for parts of LLVM infrastructure.</p>
+
+<dl compact>
+  <td><tt><b>Burg/</b></tt><dd> <tt>Burg</tt> is an instruction selector
+  generator -- it builds trees on which it then performs pattern-matching to
+  select instructions according to the patterns the user has specified. Burg
+  is currently used in the Sparc V9 backend.<p>
+
+  <dt><tt><b>codegen-diff</b></tt><dd> <tt>codegen-diff</tt> is a script
+  that finds differences between code that LLC generates and code that LLI
+  generates. This is a useful tool if you are debugging one of them,
+  assuming that the other generates correct output. For the full user
+  manual, run <tt>`perldoc codegen-diff'</tt>.<p>
+
+  <dt><tt><b>cvsupdate</b></tt><dd> <tt>cvsupdate</tt> is a script that will
+  update your CVS tree, but produce a much cleaner and more organized output
+  than simply running <tt>`cvs -z3 up -dP'</tt> will. For example, it will group
+  together all the new and updated files and modified files in separate
+  sections, so you can see at a glance what has changed. If you are at the
+  top of your LLVM CVS tree, running <tt>utils/cvsupdate</tt> is the
+  preferred way of updating the tree.<p>
+
+  <dt><tt><b>emacs/</b></tt><dd> The <tt>emacs</tt> directory contains
+  syntax-highlighting files which will work with Emacs and XEmacs editors,
+  providing syntax highlighting support for LLVM assembly files and TableGen
+  description files. For information on how to use the syntax files, consult
+  the <tt>README</tt> file in that directory.<p>
+
+  <dt><tt><b>getsrcs.sh</b></tt><dd> The <tt>getsrcs.sh</tt> script finds
+  and outputs all non-generated source files, which is useful if one wishes
+  to do a lot of development across directories and does not want to
+  individually find each file. One way to use it is to run, for example:
+  <tt>xemacs `utils/getsources.sh`</tt> from the top of your LLVM source
+  tree.<p>
+  
+  <dt><tt><b>makellvm</b></tt><dd> The <tt>makellvm</tt> script compiles all
+  files in the current directory and then compiles and links the tool that
+  is the first argument. For example, assuming you are in the directory
+  <tt>llvm/lib/Target/Sparc</tt>, if <tt>makellvm</tt> is in your path,
+  simply running <tt>makellvm llc</tt> will make a build of the current
+  directory, switch to directory <tt>llvm/tools/llc</tt> and build it,
+  causing a re-linking of LLC.<p>
+
+  <dt><tt><b>NightlyTest.pl</b></tt> and
+  <tt><b>NightlyTestTemplate.html</b></tt><dd> These files are used in a
+  cron script to generate nightly status reports of the functionality of
+  tools, and the results can be seen by following the appropriate link on
+  the <a href="http://llvm.cs.uiuc.edu/">LLVM homepage</a>.<p>
+
+  <dt><tt><b>TableGen/</b></tt><dd> The <tt>TableGen</tt> directory contains
+  the tool used to generate register descriptions, instruction set
+  descriptions, and even assemblers from common TableGen description
+  files.<p>
+
+  <dt><tt><b>vim/</b></tt><dd> The <tt>vim</tt> directory contains
+  syntax-highlighting files which will work with the VIM editor, providing
+  syntax highlighting support for LLVM assembly files and TableGen
+  description files. For information on how to use the syntax files, consult
+  the <tt>README</tt> file in that directory.<p>
+
+</dl>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="tutorial">An Example Using the LLVM Tool Chain</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<ol>
+  <li>First, create a simple C file, name it 'hello.c':
        <pre>
    #include &lt;stdio.h&gt;
    int main() {
      printf("hello world\n");
      return 0;
    }
-       </pre>
+       </pre></li>
 
-    <li>Next, compile the C file into a LLVM bytecode file:<p>
+  <li><p>Next, compile the C file into a LLVM bytecode file:</p>
+      <p><tt>% llvmgcc hello.c -o hello</tt></p>
 
-      <tt>% llvmgcc hello.c -o hello</tt><p>
-
-      This will create two result files: <tt>hello</tt> and
+      <p>This will create two result files: <tt>hello</tt> and
       <tt>hello.bc</tt>. The <tt>hello.bc</tt> is the LLVM bytecode that
       corresponds the the compiled program and the library facilities that it
       required.  <tt>hello</tt> is a simple shell script that runs the bytecode
-      file with <tt>lli</tt>, making the result directly executable.<p>
+      file with <tt>lli</tt>, making the result directly executable.</p></li>
 
-    <li>Run the program. To make sure the program ran, execute one of the
-    following commands:<p>
+  <li><p>Run the program. To make sure the program ran, execute one of the
+      following commands:</p>
       
-      <tt>% ./hello</tt><p>
+      <p><tt>% ./hello</tt></p>
  
-      or<p>
+      <p>or</p>
 
-      <tt>% lli hello.bc</tt><p>
+      <p><tt>% lli hello.bc</tt></p></li>
 
-    <li>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
-    code:<p>
+  <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
+      code:</p>
 
-      <tt>% llvm-dis < hello.bc | less</tt><p>
+      <p><tt>% llvm-dis &lt; hello.bc | less</tt><p></li>
 
-    <li>Compile the program to native Sparc assembly using the code
-    generator (assuming you are currently on a Sparc system):<p>
+  <li><p>Compile the program to native Sparc assembly using the code
+      generator (assuming you are currently on a Sparc system):</p>
 
-      <tt>% llc hello.bc -o hello.s</tt><p>
+      <p><tt>% llc hello.bc -o hello.s</tt></p>
 
-    <li>Assemble the native sparc assemble file into a program:<p>
+  <li><p>Assemble the native sparc assemble file into a program:</p>
 
-      <tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.sparc</tt><p>
+      <p><tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.sparc</tt></p>
 
-    <li>Execute the native sparc program:<p>
+  <li><p>Execute the native sparc program:</p>
 
-      <tt>% ./hello.sparc</tt><p>
+      <p><tt>% ./hello.sparc</tt></p></li>
 
-    </ol>
+</ol>
 
+</div>
 
-    <!--=====================================================================-->
-    <h2>
-    <center><a name="problems">Common Problems</a></center>
-    </h2>
-    <hr>
-    <!--=====================================================================-->
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="problems">Common Problems</a>
+</div>
+<!-- *********************************************************************** -->
 
-    If you are having problems building or using LLVM, or if you have any other
-    general questions about LLVM, please consult the
-	<a href="FAQ.html">Frequently Asked Questions</a> page.
+<div class="doc_text">
 
-    <!--=====================================================================-->
-    <h2><center><a name="links">Links</a></center></h2>
-    <hr>
-    <!--=====================================================================-->
+<p>If you are having problems building or using LLVM, or if you have any other
+general questions about LLVM, please consult the <a href="FAQ.html">Frequently
+Asked Questions</a> page.</p>
 
-    <p>This document is just an <b>introduction</b> to how to use LLVM to do
-    some simple things... there are many more interesting and complicated things
-    that you can do that aren't documented here (but we'll gladly accept a patch
-    if you want to write something up!).  For more information about LLVM, check
-    out:</p>
+</div>
 
-    <ul>
-    <li><a href="http://llvm.cs.uiuc.edu/">LLVM homepage</a></li>
-    <li><a href="http://llvm.cs.uiuc.edu/doxygen/">LLVM doxygen tree</a></li>
-    <li><a href="http://llvm.cs.uiuc.edu/docs/Projects.html">Starting a Project that Uses LLVM</a></li>
-    </ul>
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="links">Links</a>
+</div>
+<!-- *********************************************************************** -->
 
-    <hr>
+<div class="doc_text">
 
-    If you have any questions or run into any snags (or you have any
-    additions...), please send an email to
-    <a href="mailto:sabre@nondot.org">Chris Lattner</a>.</p>
-    <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
-    <br>
+<p>This document is just an <b>introduction</b> to how to use LLVM to do
+some simple things... there are many more interesting and complicated things
+that you can do that aren't documented here (but we'll gladly accept a patch
+if you want to write something up!).  For more information about LLVM, check
+out:</p>
 
-	<!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
-	<!-- hhmts start -->
-Last modified: Thu Nov  6 14:50:33 CST 2003
-<!-- hhmts end -->
-  </body>
+<ul>
+  <li><a href="http://llvm.cs.uiuc.edu/">LLVM homepage</a></li>
+  <li><a href="http://llvm.cs.uiuc.edu/doxygen/">LLVM doxygen tree</a></li>
+  <li><a href="http://llvm.cs.uiuc.edu/docs/Projects.html">Starting a Project
+  that Uses LLVM</a></li>
+</ul>
+
+</div>
+
+<!-- *********************************************************************** -->
+
+<hr>
+<div class="doc_footer">
+  <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
+  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a>
+  <br>
+  Last modified: $Date$
+</div>
+
+</body>
 </html>
