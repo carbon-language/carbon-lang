@@ -17,9 +17,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "Support/Statistic.h"
 #include "Support/VectorExtras.h"
-using std::vector;
-using std::map;
-using std::multimap;
 using namespace PA;
 
 namespace {
@@ -32,7 +29,7 @@ namespace {
   //                        poolfree?)
   const Type *PoolDescType = 
   StructType::get(make_vector<const Type*>(VoidPtrTy, Type::UIntTy, 
-					   Type::UIntTy, 0));
+                                           Type::UIntTy, 0));
   
   const PointerType *PoolDescPtr = PointerType::get(PoolDescType);
   
@@ -49,9 +46,9 @@ void PoolAllocate::getAnalysisUsage(AnalysisUsage &AU) const {
 // Prints out the functions mapped to the leader of the equivalence class they
 // belong to.
 void PoolAllocate::printFuncECs() {
-  map<Function*, Function*> &leaderMap = FuncECs.getLeaderMap();
+  std::map<Function*, Function*> &leaderMap = FuncECs.getLeaderMap();
   std::cerr << "Indirect Function Map \n";
-  for (map<Function*, Function*>::iterator LI = leaderMap.begin(),
+  for (std::map<Function*, Function*>::iterator LI = leaderMap.begin(),
 	 LE = leaderMap.end(); LI != LE; ++LI) {
     std::cerr << LI->first->getName() << ": leader is "
 	      << LI->second->getName() << "\n";
@@ -78,7 +75,7 @@ void PoolAllocate::buildIndirectFunctionSets(Module &M) {
     // For each call site in the function
     // All the functions that can be called at the call site are put in the
     // same equivalence class.
-    for (vector<DSCallSite>::iterator CSI = callSites.begin(), 
+    for (std::vector<DSCallSite>::iterator CSI = callSites.begin(), 
 	   CSE = callSites.end(); CSI != CSE ; ++CSI) {
       if (CSI->isIndirectCall()) {
 	DSNode *DSN = CSI->getCalleeNode();
@@ -234,7 +231,7 @@ void PoolAllocate::FindFunctionPoolArgs(Function &F) {
         Nodes[i]->markReachableNodes(MarkedNodes);
 
   // Marked the returned node as alive...
-  if (DSNode *RetNode = G.getRetNode().getNode())
+  if (DSNode *RetNode = G.getReturnNodeFor(F).getNode())
     if (RetNode->isHeapNode())
       RetNode->markReachableNodes(MarkedNodes);
 
@@ -423,7 +420,7 @@ void PoolAllocate::ProcessFunctionBody(Function &F, Function &NewF) {
   }
   
   // Transform the body of the function now...
-  TransformFunctionBody(NewF, G, FI);
+  TransformFunctionBody(NewF, F, G, FI);
 }
 
 
@@ -540,9 +537,9 @@ namespace {
   };
 }
 
-void PoolAllocate::TransformFunctionBody(Function &F, DSGraph &G, FuncInfo &FI){
-  DSGraph &TDG = TDDS->getDSGraph(G.getFunction());
-  FuncTransform(*this, G, TDG, FI).visit(F);
+void PoolAllocate::TransformFunctionBody(Function &F, Function &OldF,
+                                         DSGraph &G, FuncInfo &FI) {
+  FuncTransform(*this, G, TDDS->getDSGraph(OldF), FI).visit(F);
 }
 
 // Returns true if V is a function pointer
@@ -672,8 +669,8 @@ void FuncTransform::visitMallocInst(MallocInst &MI) {
   // Remove old malloc instruction
   MI.getParent()->getInstList().erase(&MI);
   
-  hash_map<Value*, DSNodeHandle> &SM = G.getScalarMap();
-  hash_map<Value*, DSNodeHandle>::iterator MII = SM.find(&MI);
+  DSGraph::ScalarMapTy &SM = G.getScalarMap();
+  DSGraph::ScalarMapTy::iterator MII = SM.find(&MI);
   
   // If we are modifying the original function, update the DSGraph... 
   if (MII != SM.end()) {
@@ -754,16 +751,16 @@ void FuncTransform::visitCallInst(CallInst &CI) {
   }
 
   std::vector<Value*> Args;  
-  if (!CF) {
-    // Indirect call
-    
+  if (!CF) {   // Indirect call
     DEBUG(std::cerr << "  Handling call: " << CI);
     
     std::map<unsigned, Value*> PoolArgs;
     Function *FuncClass;
     
-    std::pair<multimap<CallInst*, Function*>::iterator, multimap<CallInst*, Function*>::iterator> Targets = PAInfo.CallInstTargets.equal_range(&CI);
-    for (multimap<CallInst*, Function*>::iterator TFI = Targets.first,
+    std::pair<std::multimap<CallInst*, Function*>::iterator,
+              std::multimap<CallInst*, Function*>::iterator> Targets =
+      PAInfo.CallInstTargets.equal_range(&CI);
+    for (std::multimap<CallInst*, Function*>::iterator TFI = Targets.first,
 	   TFE = Targets.second; TFI != TFE; ++TFI) {
       if (TFI == Targets.first) {
 	FuncClass = PAInfo.FuncECs.findClass(TFI->second);
@@ -791,7 +788,8 @@ void FuncTransform::visitCallInst(CallInst &CI) {
       assert(OpNum == CI.getNumOperands() && "Varargs calls not handled yet!");
       
       if (CI.getType() != Type::VoidTy)
-	CalcNodeMapping(getDSNodeFor(&CI), CG.getRetNode().getNode(), 
+	CalcNodeMapping(getDSNodeFor(&CI),
+                        CG.getReturnNodeFor(*TFI->second).getNode(), 
 			NodeMapping);
       
       unsigned idx = CFI->PoolArgFirst;
@@ -881,7 +879,7 @@ void FuncTransform::visitCallInst(CallInst &CI) {
     
     // Map the return value as well...
     if (CI.getType() != Type::VoidTy)
-      CalcNodeMapping(getDSNodeFor(&CI), CG.getRetNode().getNode(), 
+      CalcNodeMapping(getDSNodeFor(&CI), CG.getReturnNodeFor(*CF).getNode(),
 		      NodeMapping);
 
     // Okay, now that we have established our mapping, we can figure out which
