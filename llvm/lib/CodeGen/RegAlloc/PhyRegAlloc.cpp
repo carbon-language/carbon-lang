@@ -1204,6 +1204,7 @@ void PhyRegAlloc::verifySavedState () {
   }
 }
 
+
 /// Finish the job of saveState(), by collapsing FnAllocState into an LLVM
 /// Constant and stuffing it inside the Module. (NOTE: Soon, there will be
 /// other, better ways of storing the saved state; this one is cumbersome and
@@ -1213,8 +1214,11 @@ bool PhyRegAlloc::doFinalization (Module &M) {
   if (!SaveRegAllocState)
     return false; // Nothing to do here, unless we're saving state.
 
+  // If saving state into the module, just copy new elements to the
+  // correct global.
   if (!SaveStateToModule) {
     ExportedFnAllocState = FnAllocState;
+    // FIXME: should ONLY copy new elements in FnAllocState
     return false;
   }
 
