@@ -51,7 +51,84 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
 
 
 
+#if 0  // Unneccesary code, handled by convert exprs
+// Peephole optimize the following instructions:
+// %t1 = cast ? to x *
+// %t2 = add x * %SP, %t1              ;; Constant must be 2nd operand
+//
+// Into: %t3 = getelementptr {<...>} * %SP, <element indices>
+//       %t2 = cast <eltype> * %t3 to {<...>}*
+//
+static bool HandleCastToPointer(BasicBlock::iterator BI,
+                                const PointerType *DestPTy) {
+  CastInst *CI = cast<CastInst>(*BI);
 
+  // Scan all of the uses, looking for any uses that are not add
+  // instructions.  If we have non-adds, do not make this transformation.
+  //
+  for (Value::use_iterator I = CI->use_begin(), E = CI->use_end();
+       I != E; ++I) {
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*I)) {
+      if (BO->getOpcode() != Instruction::Add)
+        return false;
+    } else {
+      return false;
+    }
+  }
+
+  vector<Value*> Indices;
+  Value *Src = CI->getOperand(0);
+  const Type *Result = ConvertableToGEP(DestPTy, Src, Indices, &BI);
+  const PointerType *UsedType = DestPTy;
+
+  // If we fail, check to see if we have an pointer source type that, if
+  // converted to an unsized array type, would work.  In this case, we propogate
+  // the cast forward to the input of the add instruction.
+  //
+  if (Result == 0 && getPointedToComposite(DestPTy) == 0) {
+    // Make an unsized array and try again...
+    UsedType = PointerType::get(ArrayType::get(DestPTy->getElementType()));
+    Result = ConvertableToGEP(UsedType, Src, Indices, &BI);    
+  }
+
+  if (Result == 0) return false;  // Not convertable...
+
+  PRINT_PEEPHOLE2("cast-add-to-gep:in", Src, CI);
+
+  // If we have a getelementptr capability... transform all of the 
+  // add instruction uses into getelementptr's.
+  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
+       UI != E; ++UI) {
+    Instruction *I = cast<Instruction>(*UI);
+    assert(I->getOpcode() == Instruction::Add && I->getNumOperands() == 2 &&
+           "Use is not a valid add instruction!");
+    
+    // Get the value added to the cast result pointer...
+    Value *OtherPtr = I->getOperand((I->getOperand(0) == CI) ? 1 : 0);
+
+    BasicBlock *BB = I->getParent();
+    BasicBlock::iterator AddIt = find(BB->getInstList().begin(),
+                                      BB->getInstList().end(), I);
+
+    if (UsedType != DestPTy) {
+      // Insert a cast of the incoming value to something addressable...
+      CastInst *C = new CastInst(OtherPtr, UsedType, OtherPtr->getName());
+      AddIt = BB->getInstList().insert(AddIt, C)+1;
+      OtherPtr = C;
+    }
+
+    GetElementPtrInst *GEP = new GetElementPtrInst(OtherPtr, Indices,
+                                                   I->getName());
+
+    PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
+    
+    // Replace the old add instruction with the shiny new GEP inst
+    ReplaceInstWithInst(BB->getInstList(), AddIt, GEP);
+    PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
+  }
+  return true;
+}
+#endif
 
 // Peephole optimize the following instructions:
 // %t1 = cast ulong <const int> to {<...>} *
@@ -128,7 +205,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
     // Peephole optimize the following instructions:
     // %tmp = cast <ty> %V to <ty2>
-    // %V  = cast <ty2> %tmp to <ty3>     ; Where ty & ty2 are same size
+    // %V   = cast <ty2> %tmp to <ty3>     ; Where ty & ty2 are same size
     //
     // Into: cast <ty> %V to <ty3>
     //
@@ -149,6 +226,9 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Check to see if it's a cast of an instruction that does not depend on the
     // specific type of the operands to do it's job.
     if (!isReinterpretingCast(CI)) {
+      // Check to see if we can convert the source of the cast to match the
+      // destination type of the cast...
+      //
       ValueTypeCache ConvertedTypes;
       if (ValueConvertableToType(CI, Src->getType(), ConvertedTypes)) {
         PRINT_PEEPHOLE2("CAST-DEST-EXPR-CONV:in ", Src, CI);
@@ -165,28 +245,40 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         cerr << "DONE CONVERTING EXPR TYPE: \n\n";// << BB->getParent();
 #endif
         return true;
-      } else {
-        ConvertedTypes.clear();
-        if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes)) {
-          PRINT_PEEPHOLE2("CAST-SRC-EXPR-CONV:in ", Src, CI);
+      }
+
+      // Check to see if we can convert the users of the cast value to match the
+      // source type of the cast...
+      //
+      ConvertedTypes.clear();
+      if (ExpressionConvertableToType(Src, DestTy, ConvertedTypes)) {
+        PRINT_PEEPHOLE2("CAST-SRC-EXPR-CONV:in ", Src, CI);
           
 #ifdef DEBUG_PEEPHOLE_INSTS
-          cerr << "\nCONVERTING SRC EXPR TYPE:\n";
+        cerr << "\nCONVERTING SRC EXPR TYPE:\n";
 #endif
-          ValueMapCache ValueMap;
-          Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
-          if (Constant *CPV = dyn_cast<Constant>(E))
-            CI->replaceAllUsesWith(CPV);
+        ValueMapCache ValueMap;
+        Value *E = ConvertExpressionToType(Src, DestTy, ValueMap);
+        if (Constant *CPV = dyn_cast<Constant>(E))
+          CI->replaceAllUsesWith(CPV);
 
-          BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
-          PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
+        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
+        PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
 #ifdef DEBUG_PEEPHOLE_INSTS
-          cerr << "DONE CONVERTING SRC EXPR TYPE: \n\n";// << BB->getParent();
+        cerr << "DONE CONVERTING SRC EXPR TYPE: \n\n";// << BB->getParent();
 #endif
-          return true;
-        }
+        return true;
       }
-      
+#if 0
+      // Otherwise find out it this cast is a cast to a pointer type, which is
+      // then added to some other pointer, then loaded or stored through.  If
+      // so, convert the add into a getelementptr instruction...
+      //
+      if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
+        if (HandleCastToPointer(BI, DestPTy))
+          return true;
+      }
+#endif
     }
 
     // Check to see if we are casting from a structure pointer to a pointer to
@@ -355,7 +447,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       return true;
     }
 
-
+#if 0
     // Peephole optimize the following instructions:
     // %t1 = cast <ty> * %t0 to <ty2> *
     // %V  = load <ty2> * %t1
@@ -394,6 +486,7 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         return true;
       }
     }
+#endif
   } else if (I->getOpcode() == Instruction::Add &&
              isa<CastInst>(I->getOperand(1))) {
 
@@ -544,6 +637,10 @@ static bool DoInsertArrayCasts(Method *M) {
   // TODO: insert casts for alloca, malloc, and function call results.  Also, 
   // look for pointers that already have casts, to add to the map.
 
+  if (Changed) {
+    cerr << "Inserted casts:\n" << M;
+  }
+
   return Changed;
 }
 
@@ -564,12 +661,15 @@ bool RaisePointerReferences::doit(Method *M) {
   // arrays...
   //
   bool Changed = false, LocalChange;
-  Changed |= DoInsertArrayCasts(M);
-
+  
   do {
+#ifdef DEBUG_PEEPHOLE_INSTS
+    cerr << "Looping: \n" << M;
+#endif
+    LocalChange = DoInsertArrayCasts(M);
+
     // Iterate over the method, refining it, until it converges on a stable
     // state
-    bool LocalChange = false;
     while (DoRaisePass(M)) LocalChange = true;
     Changed |= LocalChange;
 

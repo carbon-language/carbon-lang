@@ -477,7 +477,6 @@ Value *ConvertExpressionToType(Value *V, const Type *Ty, ValueMapCache &VMC) {
 #ifdef DEBUG_EXPR_CONVERT
   cerr << "ExpIn: " << (void*)I << " " << I
        << "ExpOut: " << (void*)Res << " " << Res;
-  cerr << "ExpCREATED: " << (void*)Res << " " << Res;
 #endif
 
   if (I->use_empty()) {
@@ -553,9 +552,8 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     return true;
 
   case Instruction::Add:
-    if (V == I->getOperand(0) && isa<CastInst>(I->getOperand(1)) &&
-        isa<PointerType>(Ty)) {
-      Value *IndexVal = cast<CastInst>(I->getOperand(1))->getOperand(0);
+    if (isa<PointerType>(Ty)) {
+      Value *IndexVal = I->getOperand(V == I->getOperand(0) ? 1 : 0);
       vector<Value*> Indices;
       if (const Type *ETy = ConvertableToGEP(Ty, IndexVal, Indices)) {
         const Type *RetTy = PointerType::get(ETy);
@@ -732,9 +730,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     break;
 
   case Instruction::Add:
-    if (OldVal == I->getOperand(0) && isa<CastInst>(I->getOperand(1)) &&
-        isa<PointerType>(NewTy)) {
-      Value *IndexVal = cast<CastInst>(I->getOperand(1))->getOperand(0);
+    if (isa<PointerType>(NewTy)) {
+      Value *IndexVal = I->getOperand(OldVal == I->getOperand(0) ? 1 : 0);
       vector<Value*> Indices;
       BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
 
@@ -742,7 +739,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         // If successful, convert the add to a GEP
         const Type *RetTy = PointerType::get(ETy);
         // First operand is actually the given pointer...
-        Res = new GetElementPtrInst(NewVal, Indices);
+        Res = new GetElementPtrInst(NewVal, Indices, Name);
         assert(cast<PointerType>(Res->getType())->getElementType() == ETy &&
                "ConvertableToGEP broken!");
         break;
@@ -904,7 +901,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 ValueHandle::ValueHandle(ValueMapCache &VMC, Value *V)
   : Instruction(Type::VoidTy, UserOp1, ""), Cache(VMC) {
 #ifdef DEBUG_EXPR_CONVERT
-  cerr << "VH AQUIRING: " << (void*)V << " " << V;
+  //cerr << "VH AQUIRING: " << (void*)V << " " << V;
 #endif
   Operands.push_back(Use(V, this));
 }
@@ -915,7 +912,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
   assert(I->getParent() && "Inst not in basic block!");
 
 #ifdef DEBUG_EXPR_CONVERT
-  cerr << "VH DELETING: " << (void*)I << " " << I;
+  //cerr << "VH DELETING: " << (void*)I << " " << I;
 #endif
 
   for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
@@ -946,7 +943,7 @@ ValueHandle::~ValueHandle() {
     RecursiveDelete(Cache, dyn_cast<Instruction>(V));
   } else {
 #ifdef DEBUG_EXPR_CONVERT
-    cerr << "VH RELEASING: " << (void*)Operands[0].get() << " " << Operands[0]->use_size() << " " << Operands[0];
+    //cerr << "VH RELEASING: " << (void*)Operands[0].get() << " " << Operands[0]->use_size() << " " << Operands[0];
 #endif
   }
 }
