@@ -510,8 +510,6 @@ void Printer::printImmOp(const MachineOperand &MO, unsigned ArgType) {
   int Imm = MO.getImmedValue();
   if (ArgType == PPCII::Simm16 || ArgType == PPCII::Disimm16) {
     O << (short)Imm;
-  } else if (ArgType == PPCII::Zimm16) {
-    O << (unsigned short)Imm;
   } else {
     O << Imm;
   }
