@@ -85,7 +85,6 @@ namespace {
 
       return Reg;
     }
-
   };
 }
 
@@ -98,22 +97,22 @@ void ISel::copyConstantToRegister(Constant *C, unsigned R) {
 
   switch (C->getType()->getPrimitiveID()) {
   case Type::SByteTyID:
-    BuildMI(BB, X86::MOVir8, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir8, 1, R).addSImm(cast<ConstantSInt>(C)->getValue());
     break;
   case Type::UByteTyID:
-    BuildMI(BB, X86::MOVir8, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir8, 1, R).addZImm(cast<ConstantUInt>(C)->getValue());
     break;
   case Type::ShortTyID:
-    BuildMI(BB, X86::MOVir16, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir16, 1, R).addSImm(cast<ConstantSInt>(C)->getValue());
     break;
   case Type::UShortTyID:
-    BuildMI(BB, X86::MOVir16, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir16, 1, R).addZImm(cast<ConstantUInt>(C)->getValue());
     break;
   case Type::IntTyID:
-    BuildMI(BB, X86::MOVir32, R).addSImm(cast<ConstantSInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir32, 1, R).addSImm(cast<ConstantSInt>(C)->getValue());
     break;
   case Type::UIntTyID:
-    BuildMI(BB, X86::MOVir32, R).addZImm(cast<ConstantUInt>(C)->getValue());
+    BuildMI(BB, X86::MOVir32, 1, R).addZImm(cast<ConstantUInt>(C)->getValue());
     break;
   default: assert(0 && "Type not handled yet!");      
   }
@@ -150,13 +149,13 @@ void ISel::visitAdd(BinaryOperator &B) {
 
   switch (B.getType()->getPrimitiveSize()) {
   case 1:   // UByte, SByte
-    BuildMI(BB, X86::ADDrr8, DestReg).addReg(Op0r).addReg(Op1r);
+    BuildMI(BB, X86::ADDrr8, 2, DestReg).addReg(Op0r).addReg(Op1r);
     break;
   case 2:   // UShort, Short
-    BuildMI(BB, X86::ADDrr16, DestReg).addReg(Op0r).addReg(Op1r);
+    BuildMI(BB, X86::ADDrr16, 2, DestReg).addReg(Op0r).addReg(Op1r);
     break;
   case 4:   // UInt, Int
-    BuildMI(BB, X86::ADDrr32, DestReg).addReg(Op0r).addReg(Op1r);
+    BuildMI(BB, X86::ADDrr32, 2, DestReg).addReg(Op0r).addReg(Op1r);
     break;
 
   case 8:   // ULong, Long
