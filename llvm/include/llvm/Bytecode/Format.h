@@ -37,6 +37,10 @@ public:
     // Can also have ConstantPool block
     // Can also have SymbolTable block
     BasicBlock = 0x31,        // May contain many basic blocks
+
+    // InstructionList - The instructions in the body of a function.  This
+    // superceeds the old BasicBlock node.
+    InstructionList = 0x32,
   };
 };
 
