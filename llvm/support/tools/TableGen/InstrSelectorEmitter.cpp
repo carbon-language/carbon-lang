@@ -401,6 +401,7 @@ std::string Pattern::getSlotName(Record *R) {
   } else {
     assert(0 && "Don't know how to get a slot name for this!");
   }
+  return "";
 }
 
 //===----------------------------------------------------------------------===//
