@@ -89,7 +89,6 @@ const Type *BytecodeParser::parseTypeConstant(const unsigned char *&Buf,
 // something and when we reread the type later, we can replace the opaque type
 // with a new resolved concrete type.
 //
-namespace llvm { void debug_type_tables(); }
 void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
                                         const unsigned char *EndBuf,
 					TypeValuesListTy &Tab,
@@ -129,7 +128,6 @@ void BytecodeParser::parseTypeConstants(const unsigned char *&Buf,
   for (unsigned i = 0; i < NumEntries; ++i) {
     BCR_TRACE(5, (void*)Tab[i].get() << " - " << Tab[i].get() << "\n");
   }
-  debug_type_tables();
 }
 
 
