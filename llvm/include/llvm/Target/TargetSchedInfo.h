@@ -25,32 +25,6 @@ namespace llvm {
 typedef long long cycles_t; 
 static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
 static const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
-static const unsigned MAX_OPCODE_SIZE = 16;
-
-class OpCodePair {
-public:
-  long val;			// make long by concatenating two opcodes
-  OpCodePair(MachineOpCode op1, MachineOpCode op2)
-    : val((op1 < 0 || op2 < 0)?
-	-1 : (long)((((unsigned) op1) << MAX_OPCODE_SIZE) | (unsigned) op2)) {}
-  bool operator==(const OpCodePair& op) const {
-    return val == op.val;
-  }
-private:
-  OpCodePair();			// disable for now
-};
-
-} // End llvm namespace
-
-namespace HASH_NAMESPACE {
-  template <> struct hash<llvm::OpCodePair> {
-    size_t operator()(const llvm::OpCodePair& pair) const {
-      return hash<long>()(pair.val);
-    }
-  };
-} // End HASH_NAMESPACE (a macro) namespace
-
-namespace llvm {
 
 //---------------------------------------------------------------------------
 // class MachineResource 
