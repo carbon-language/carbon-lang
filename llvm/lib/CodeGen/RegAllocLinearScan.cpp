@@ -75,10 +75,12 @@ namespace {
             MachineFunctionPass::getAnalysisUsage(AU);
         }
 
-    private:
         /// runOnMachineFunction - register allocate the whole function
         bool runOnMachineFunction(MachineFunction&);
 
+        void releaseMemory();
+
+    private:
         /// initIntervalSets - initializa the four interval sets:
         /// unhandled, fixed, active and inactive
         void initIntervalSets(const LiveIntervals::Intervals& li);
@@ -202,6 +204,17 @@ namespace {
     };
 }
 
+void RA::releaseMemory()
+{
+    v2pMap_.clear();
+    v2ssMap_.clear();
+    unhandled_.clear();
+    active_.clear();
+    inactive_.clear();
+    fixed_.clear();
+
+}
+
 bool RA::runOnMachineFunction(MachineFunction &fn) {
     mf_ = &fn;
     tm_ = &fn.getTarget();
@@ -209,8 +222,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
     li_ = &getAnalysis<LiveIntervals>();
     initIntervalSets(li_->getIntervals());
 
-    v2pMap_.clear();
-    v2ssMap_.clear();
     memset(regUse_, 0, sizeof(regUse_));
     memset(regUseBackup_, 0, sizeof(regUseBackup_));
 
@@ -325,8 +336,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         }
         markPhysRegFree(reg);
     }
-    active_.clear();
-    inactive_.clear();
 
     typedef LiveIntervals::Reg2RegMap Reg2RegMap;
     const Reg2RegMap& r2rMap = li_->getJoinedRegMap();
@@ -559,7 +568,7 @@ void RA::processInactiveIntervals(IntervalPtrs::value_type cur)
 
 namespace {
     template <typename T>
-    void updateWeight(T rw[], int reg, T w)
+    void updateWeight(std::vector<T>& rw, int reg, T w)
     {
         if (rw[reg] == std::numeric_limits<T>::max() ||
             w == std::numeric_limits<T>::max())
@@ -574,10 +583,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
     DEBUG(std::cerr << "\t\tassigning stack slot at interval "
           << *cur << ":\n");
 
-    // set all weights to zero
-    float regWeight[MRegisterInfo::FirstVirtualRegister];
-    for (unsigned i = 0; i < MRegisterInfo::FirstVirtualRegister; ++i)
-        regWeight[i] = 0.0F;
+    std::vector<float> regWeight(mri_->getNumRegs(), 0.0);
 
     // for each interval in active
     for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
@@ -639,17 +645,17 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
         assignVirt2StackSlot(cur->reg);
     }
     else {
-        std::set<unsigned> toSpill;
-        toSpill.insert(minReg);
+        std::vector<bool> toSpill(mri_->getNumRegs(), false);
+        toSpill[minReg] = true;
         for (const unsigned* as = mri_->getAliasSet(minReg); *as; ++as)
-            toSpill.insert(*as);
+            toSpill[*as] = true;
 
         std::vector<unsigned> spilled;
         for (IntervalPtrs::iterator i = active_.begin();
              i != active_.end(); ) {
             unsigned reg = (*i)->reg;
             if (MRegisterInfo::isVirtualRegister(reg) &&
-                toSpill.find(v2pMap_[reg]) != toSpill.end() &&
+                toSpill[v2pMap_[reg]] &&
                 cur->overlaps(**i)) {
                 spilled.push_back(v2pMap_[reg]);
                 DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
@@ -664,7 +670,7 @@ void RA::assignStackSlotAtInterval(IntervalPtrs::value_type cur)
              i != inactive_.end(); ) {
             unsigned reg = (*i)->reg;
             if (MRegisterInfo::isVirtualRegister(reg) &&
-                toSpill.find(v2pMap_[reg]) != toSpill.end() &&
+                toSpill[v2pMap_[reg]] &&
                 cur->overlaps(**i)) {
                 DEBUG(std::cerr << "\t\t\t\tspilling : " << **i << '\n');
                 assignVirt2StackSlot(reg);
@@ -727,8 +733,10 @@ unsigned RA::getFreeTempPhysReg(unsigned virtReg)
 
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
     // go in reverse allocation order for the temp registers
-    for (TargetRegisterClass::iterator i = rc->allocation_order_end(*mf_) - 1;
-         i != rc->allocation_order_begin(*mf_) - 1; --i) {
+    typedef std::reverse_iterator<TargetRegisterClass::iterator> TRCRevIter;
+    for (TRCRevIter
+             i(rc->allocation_order_end(*mf_)),
+             e(rc->allocation_order_begin(*mf_)); i != e; ++i) {
         unsigned reg = *i;
         if (reserved_[reg] && !regUse_[reg]) {
             DEBUG(std::cerr << mri_->getName(reg) << '\n');
