@@ -356,39 +356,6 @@ unsigned RA::getFreeReg(const TargetRegisterClass *RC) {
 ///
 void RA::liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                          unsigned PhysReg) {
-  // FIXME: This code checks to see if a register is available, but it really
-  // wants to know if a reg is available BEFORE the instruction executes.  If
-  // called after killed operands are freed, it runs the risk of reallocating a
-  // used operand...
-#if 0
-  if (isPhysRegAvailable(PhysReg)) return;  // Already available...
-
-  // Check to see if the register is directly used, not indirectly used through
-  // aliases.  If aliased registers are the ones actually used, we cannot be
-  // sure that we will be able to save the whole thing if we do a reg-reg copy.
-  if (PhysRegsUsed[PhysReg] != -1) {
-    // The virtual register held...
-    unsigned VirtReg = PhysRegsUsed[PhysReg]->second;
-
-    // Check to see if there is a compatible register available.  If so, we can
-    // move the value into the new register...
-    //
-    const TargetRegisterClass *RC = RegInfo->getRegClass(PhysReg);
-    if (unsigned NewReg = getFreeReg(RC)) {
-      // Emit the code to copy the value...
-      RegInfo->copyRegToReg(MBB, I, NewReg, PhysReg, RC);
-
-      // Update our internal state to indicate that PhysReg is available and Reg
-      // isn't.
-      getVirt2PhysRegMapSlot[VirtReg] = 0;
-      removePhysReg(PhysReg);  // Free the physreg
-
-      // Move reference over to new register...
-      assignVirtToPhysReg(VirtReg, NewReg);
-      return;
-    }
-  }
-#endif
   spillPhysReg(MBB, I, PhysReg);
 }
 
