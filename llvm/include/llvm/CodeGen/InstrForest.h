@@ -159,7 +159,7 @@ public:
   }
   
   void dump(int dumpChildren, int indent) const;
-  
+
 protected:
   virtual void dumpNode(int indent) const = 0;
 
@@ -181,6 +181,12 @@ public:
 
   void markFoldedIntoParent() { codeIsFoldedIntoParent = true; }
   bool isFoldedIntoParent()   { return codeIsFoldedIntoParent; }
+
+  // Methods to support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const InstructionNode *N) { return true; }
+  static inline bool classof(const InstrTreeNode *N) {
+    return N->getNodeType() == InstrTreeNode::NTInstructionNode;
+  }
   
 protected:
   virtual void dumpNode(int indent) const;
@@ -192,6 +198,13 @@ public:
   VRegListNode() : InstrTreeNode(NTVRegListNode, 0) {
     opLabel = VRegListOp;
   }
+
+  // Methods to support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const VRegListNode  *N) { return true; }
+  static inline bool classof(const InstrTreeNode *N) {
+    return N->getNodeType() == InstrTreeNode::NTVRegListNode;
+  }
+
 protected:
   virtual void dumpNode(int indent) const;
 };
@@ -202,6 +215,13 @@ public:
   VRegNode(Value* _val) : InstrTreeNode(NTVRegNode, _val) {
     opLabel = VRegNodeOp;
   }
+
+  // Methods to support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const VRegNode  *N) { return true; }
+  static inline bool classof(const InstrTreeNode *N) {
+    return N->getNodeType() == InstrTreeNode::NTVRegNode;
+  }
+
 protected:
   virtual void dumpNode(int indent) const;
 };
@@ -214,6 +234,13 @@ public:
     opLabel = ConstantNodeOp;    
   }
   Constant *getConstVal() const { return (Constant*) val;}
+
+  // Methods to support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ConstantNode  *N) { return true; }
+  static inline bool classof(const InstrTreeNode *N) {
+    return N->getNodeType() == InstrTreeNode::NTConstNode;
+  }
+
 protected:
   virtual void dumpNode(int indent) const;
 };
@@ -226,6 +253,13 @@ public:
   }
 
   BasicBlock *getBasicBlock() const { return (BasicBlock*)val;}
+
+  // Methods to support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const LabelNode     *N) { return true; }
+  static inline bool classof(const InstrTreeNode *N) {
+    return N->getNodeType() == InstrTreeNode::NTLabelNode;
+  }
+
 protected:
   virtual void dumpNode(int indent) const;
 };
