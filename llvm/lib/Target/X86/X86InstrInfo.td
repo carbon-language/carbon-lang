@@ -486,6 +486,34 @@ def CMOVNS32rm: I<0x49, MRMSrcMem,       // if !signed, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovns {$src2, $dst|$dst, $src2}">, TB;
 
+def CMOVP16rr : I<0x4A, MRMSrcReg,       // if parity, R16 = R16
+                  (ops R16:$dst, R16:$src1, R16:$src2),
+                  "cmovp {$src2, $dst|$dst, $src2}">, TB, OpSize;
+def CMOVP16rm : I<0x4A, MRMSrcMem,       // if parity, R16 = [mem16]
+                  (ops R16:$dst, R16:$src1, i16mem:$src2),
+                  "cmovp {$src2, $dst|$dst, $src2}">, TB, OpSize;
+def CMOVP32rr : I<0x4A, MRMSrcReg,       // if parity, R32 = R32
+                  (ops R32:$dst, R32:$src1, R32:$src2),
+                  "cmovp {$src2, $dst|$dst, $src2}">, TB;
+def CMOVP32rm : I<0x4A, MRMSrcMem,       // if parity, R32 = [mem32]
+                  (ops R32:$dst, R32:$src1, i32mem:$src2),
+                  "cmovp {$src2, $dst|$dst, $src2}">, TB;
+
+ 
+def CMOVNP16rr : I<0x4B, MRMSrcReg,       // if !parity, R16 = R16
+                  (ops R16:$dst, R16:$src1, R16:$src2),
+                  "cmovnp {$src2, $dst|$dst, $src2}">, TB, OpSize;
+def CMOVNP16rm : I<0x4B, MRMSrcMem,       // if !parity, R16 = [mem16]
+                  (ops R16:$dst, R16:$src1, i16mem:$src2),
+                  "cmovnp {$src2, $dst|$dst, $src2}">, TB, OpSize;
+def CMOVNP32rr : I<0x4B, MRMSrcReg,       // if !parity, R32 = R32
+                  (ops R32:$dst, R32:$src1, R32:$src2),
+                  "cmovnp {$src2, $dst|$dst, $src2}">, TB;
+def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, R32 = [mem32]
+                  (ops R32:$dst, R32:$src1, i32mem:$src2),
+                  "cmovnp {$src2, $dst|$dst, $src2}">, TB;
+
+
 def CMOVL16rr : I<0x4C, MRMSrcReg,       // if <s, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovl {$src2, $dst|$dst, $src2}">, TB, OpSize;
@@ -1355,12 +1383,16 @@ let isTwoAddress = 1, Uses = [ST0], Defs = [ST0] in {
                     (ops RST:$op), "fcmovbe {$op, %ST(0)|%ST(0), $op}">, DA;
   def FCMOVE  : FPI<0xC8, AddRegFrm, CondMovFP,
                     (ops RST:$op), "fcmove {$op, %ST(0)|%ST(0), $op}">, DA;
+  def FCMOVP  : FPI<0xD8, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmovu  {$op, %ST(0)|%ST(0), $op}">, DA;
   def FCMOVAE : FPI<0xC0, AddRegFrm, CondMovFP,
                     (ops RST:$op), "fcmovae {$op, %ST(0)|%ST(0), $op}">, DB;
   def FCMOVA  : FPI<0xD0, AddRegFrm, CondMovFP,
                     (ops RST:$op), "fcmova {$op, %ST(0)|%ST(0), $op}">, DB;
   def FCMOVNE : FPI<0xC8, AddRegFrm, CondMovFP,
                     (ops RST:$op), "fcmovne {$op, %ST(0)|%ST(0), $op}">, DB;
+  def FCMOVNP : FPI<0xD8, AddRegFrm, CondMovFP,
+                    (ops RST:$op), "fcmovnu {$op, %ST(0)|%ST(0), $op}">, DB;
 }
 
 // Floating point loads & stores...

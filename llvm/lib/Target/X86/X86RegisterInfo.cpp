@@ -276,6 +276,10 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::CMOVS32rr: return MakeRMInst(X86::CMOVS32rm , FrameIndex, MI);
     case X86::CMOVNS16rr: return MakeRMInst(X86::CMOVNS16rm , FrameIndex, MI);
     case X86::CMOVNS32rr: return MakeRMInst(X86::CMOVNS32rm , FrameIndex, MI);
+    case X86::CMOVP16rr: return MakeRMInst(X86::CMOVP16rm , FrameIndex, MI);
+    case X86::CMOVP32rr: return MakeRMInst(X86::CMOVP32rm , FrameIndex, MI);
+    case X86::CMOVNP16rr: return MakeRMInst(X86::CMOVNP16rm , FrameIndex, MI);
+    case X86::CMOVNP32rr: return MakeRMInst(X86::CMOVNP32rm , FrameIndex, MI);
     case X86::CMOVL16rr: return MakeRMInst(X86::CMOVL16rm , FrameIndex, MI);
     case X86::CMOVL32rr: return MakeRMInst(X86::CMOVL32rm , FrameIndex, MI);
     case X86::CMOVGE16rr: return MakeRMInst(X86::CMOVGE16rm , FrameIndex, MI);
