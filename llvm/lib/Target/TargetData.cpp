@@ -191,9 +191,6 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 
       // Update Ty to refer to current element
       Ty = STy->getElementTypes()[FieldNo];
-
-    } else if (isa<const ArrayType>(Ty)) {
-      assert(0 && "Loading from arrays not implemented yet!");
     } else {
       assert(0 && "Indexing type that is not struct or array?");
       return 0;                         // Load directly through ptr
