@@ -62,6 +62,7 @@ static ConstPoolInt *getIntegralConstant(ConstantPool &CP, unsigned char V,
 static ConstPoolInt *getUnsignedConstant(ConstantPool &CP, uint64_t V,
 					 const Type *Ty) {
   // FIXME: Lookup prexisting constant in table!
+  if (Ty->isPointerType()) Ty = Type::ULongTy;
 
   ConstPoolInt *CPI;
   CPI = Ty->isSigned() ? new ConstPoolSInt(Ty, V) : new ConstPoolUInt(Ty, V);
@@ -273,7 +274,7 @@ ExprType analysis::ClassifyExpression(Value *Expr) {
     assert(CPV->getType()->isIntegral() && "Must have an integral type!");
     return (ConstPoolInt*)CPV;
   } // end case Instruction::Cast
-    // TODO: Handle SUB (at least!)
+    // TODO: Handle SUB, SHR?
 
   }  // end switch
 
