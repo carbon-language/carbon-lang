@@ -157,9 +157,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             // structure graph.  Strip locals and don't copy the list of callers
             DSNodeHandle RetVal = Graph->cloneInto(GI, OldValMap, OldNodeMap,
                                                    /*StripScalars*/   true,
-                                                   /*StripAllocas*/   true,
-                                                   /*CopyCallers*/    false,
-                                                   /*CopyOrigCalls*/  false);
+                                                   /*StripAllocas*/   true);
 
             // Resolve the arguments in the call to the actual values...
             ResolveArguments(Call, FI, OldValMap);

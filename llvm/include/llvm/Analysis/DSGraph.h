@@ -579,14 +579,11 @@ public:
   // is filled into the OldValMap member.
   // If StripScalars (StripAllocas) is set to true, Scalar (Alloca) markers
   // are removed from the graph as the graph is being cloned.
-  // If CopyCallers is set to true, the PendingCallers list is copied.
-  // If CopyOrigCalls is set to true, the OrigFunctionCalls list is copied.
   //
   DSNodeHandle cloneInto(const DSGraph &G,
                          std::map<Value*, DSNodeHandle> &OldValMap,
                          std::map<const DSNode*, DSNode*> &OldNodeMap,
-                         bool StripScalars = false, bool StripAllocas = false,
-                         bool CopyCallers = true, bool CopyOrigCalls = true);
+                         bool StripScalars = false, bool StripAllocas = false);
 
 #if 0
   // cloneGlobalInto - Clone the given global node (or the node for the given

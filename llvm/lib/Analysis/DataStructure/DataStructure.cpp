@@ -423,8 +423,7 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
                                 std::map<Value*, DSNodeHandle> &OldValMap,
                                 std::map<const DSNode*, DSNode*> &OldNodeMap,
-                                bool StripScalars, bool StripAllocas,
-                                bool CopyCallers, bool CopyOrigCalls) {
+                                bool StripScalars, bool StripAllocas) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
 
   unsigned FN = Nodes.size();           // First new node...

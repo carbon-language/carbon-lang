@@ -134,9 +134,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
       // 
       DSNodeHandle RetVal = Graph->cloneInto(CG, OldValMap, OldNodeMap,
                                              /*StripScalars*/ true,
-                                             /*StripAllocas*/ false,
-                                             /*CopyCallers*/  true,
-                                             /*CopyOrigCalls*/false);
+                                             /*StripAllocas*/ false);
       ResolveCallSite(*Graph, DSCallSite(CallSiteInCG, OldNodeMap));
     }
   }
