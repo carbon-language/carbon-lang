@@ -120,8 +120,7 @@ void DSNode::forwardNode(DSNode *To, unsigned Offset) {
   if (To->Size <= 1) Offset = 0;
   assert((Offset < To->Size || (Offset == To->Size && Offset == 0)) &&
          "Forwarded offset is wrong!");
-  ForwardNH.setNode(To);
-  ForwardNH.setOffset(Offset);
+  ForwardNH.setTo(To, Offset);
   NodeType = DEAD;
   Size = 0;
   Ty = Type::VoidTy;
@@ -1096,10 +1095,9 @@ void DSNode::remapLinks(DSGraph::NodeMapTy &OldNodeMap) {
   for (unsigned i = 0, e = Links.size(); i != e; ++i)
     if (DSNode *N = Links[i].getNode()) {
       DSGraph::NodeMapTy::const_iterator ONMI = OldNodeMap.find(N);
-      if (ONMI != OldNodeMap.end()) {
-        Links[i].setNode(ONMI->second.getNode());
-        Links[i].setOffset(Links[i].getOffset()+ONMI->second.getOffset());
-      }
+      if (ONMI != OldNodeMap.end())
+        Links[i].setTo(ONMI->second.getNode(),
+                       Links[i].getOffset()+ONMI->second.getOffset());
     }
 }
 
@@ -1475,7 +1473,7 @@ static inline void killIfUselessEdge(DSNodeHandle &Edge) {
       // No interesting info?
       if ((N->getNodeFlags() & ~DSNode::Incomplete) == 0 &&
           N->getType() == Type::VoidTy && !N->isNodeCompletelyFolded())
-        Edge.setNode(0);  // Kill the edge!
+        Edge.setTo(0, 0);  // Kill the edge!
 }
 
 static inline bool nodeContainsExternalFunction(const DSNode *N) {
@@ -1979,8 +1977,7 @@ void DSGraph::computeNodeMapping(const DSNodeHandle &NH1,
     return;
   }
   
-  Entry.setNode(N2);
-  Entry.setOffset(NH2.getOffset()-NH1.getOffset());
+  Entry.setTo(N2, NH2.getOffset()-NH1.getOffset());
 
   // Loop over all of the fields that N1 and N2 have in common, recursively
   // mapping the edges together now.

@@ -58,17 +58,18 @@ class DSNodeHandle {
   void operator==(const DSNode *N);  // DISALLOW, use to promote N to nodehandle
 public:
   // Allow construction, destruction, and assignment...
-  DSNodeHandle(DSNode *n = 0, unsigned offs = 0) : N(0), Offset(offs) {
-    setNode(n);
+  DSNodeHandle(DSNode *n = 0, unsigned offs = 0) : N(0), Offset(0) {
+    setTo(n, offs);
   }
   DSNodeHandle(const DSNodeHandle &H) : N(0), Offset(0) {
-    setNode(H.getNode());
-    Offset = H.Offset;      // Must read offset AFTER the getNode()
+    DSNode *NN = H.getNode();
+    setTo(NN, H.Offset);  // Must read offset AFTER the getNode()
   }
-  ~DSNodeHandle() { setNode((DSNode*)0); }
+  ~DSNodeHandle() { setTo(0, 0); }
   DSNodeHandle &operator=(const DSNodeHandle &H) {
     if (&H == this) return *this;  // Don't set offset to 0 if self assigning.
-    Offset = 0; setNode(H.getNode()); Offset = H.Offset;
+    DSNode *NN = H.getNode();  // Call getNode() before .Offset
+    setTo(NN, H.Offset);
     return *this;
   }
 
@@ -96,7 +97,6 @@ public:
   inline DSNode *getNode() const;  // Defined inline in DSNode.h
   unsigned getOffset() const { return Offset; }
 
-  inline void setNode(DSNode *N) const;  // Defined inline in DSNode.h
   void setOffset(unsigned O) {
     //assert((!N || Offset < N->Size || (N->Size == 0 && Offset == 0) ||
     //       !N->ForwardNH.isNull()) && "Node handle offset out of range!");
@@ -104,6 +104,8 @@ public:
     //       !N->ForwardNH.isNull()) && "Node handle offset out of range!");
     Offset = O;
   }
+
+  inline void setTo(DSNode *N, unsigned O) const; // Defined inline in DSNode.h
 
   void addEdgeTo(unsigned LinkNo, const DSNodeHandle &N);
   void addEdgeTo(const DSNodeHandle &N) { addEdgeTo(0, N); }
@@ -154,9 +156,7 @@ class DSCallSite {
     if (DSNode *N = Src.getNode()) {
       hash_map<const DSNode*, DSNode*>::const_iterator I = NodeMap.find(N);
       assert(I != NodeMap.end() && "Node not in mapping!");
-
-      NH.setOffset(Src.getOffset());
-      NH.setNode(I->second);
+      NH.setTo(I->second, Src.getOffset());
     }
   }
 
@@ -166,8 +166,8 @@ class DSCallSite {
       hash_map<const DSNode*, DSNodeHandle>::const_iterator I = NodeMap.find(N);
       assert(I != NodeMap.end() && "Node not in mapping!");
 
-      NH.setOffset(Src.getOffset()+I->second.getOffset());
-      NH.setNode(I->second.getNode());
+      DSNode *NN = I->second.getNode(); // Call getNode before getOffset()
+      NH.setTo(NN, Src.getOffset()+I->second.getOffset());
     }
   }
 

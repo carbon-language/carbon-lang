@@ -259,8 +259,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     N = createNode();
   }
 
-  NH.setNode(N);      // Remember that we are pointing to it...
-  NH.setOffset(0);
+  NH.setTo(N, 0);      // Remember that we are pointing to it...
   return NH;
 }
 

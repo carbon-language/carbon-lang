@@ -175,7 +175,7 @@ public:
   void stopForwarding() {
     assert(isForwarding() &&
            "Node isn't forwarding, cannot stopForwarding()!");
-    ForwardNH.setNode(0);
+    ForwardNH.setTo(0, 0);
     assert(ParentGraph == 0 &&
            "Forwarding nodes must have been removed from graph!");
     delete this;
@@ -336,7 +336,7 @@ public:
   void dropAllReferences() {
     Links.clear();
     if (isForwarding())
-      ForwardNH.setNode(0);
+      ForwardNH.setTo(0, 0);
   }
 
   /// remapLinks - Change all of the Links in the current node according to the
@@ -401,10 +401,11 @@ inline DSNode *DSNodeHandle::getNode() const {
   return HandleForwarding();
 }
 
-inline void DSNodeHandle::setNode(DSNode *n) const {
+inline void DSNodeHandle::setTo(DSNode *n, unsigned NewOffset) const {
   assert(!n || !n->isForwarding() && "Cannot set node to a forwarded node!");
   if (N) getNode()->NumReferrers--;
   N = n;
+  Offset = NewOffset;
   if (N) {
     N->NumReferrers++;
     if (Offset >= N->Size) {
@@ -457,8 +458,8 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) const {
     getNode()->mergeWith(Node, Offset);
   else {   // No node to merge with, so just point to Node
     Offset = 0;
-    setNode(Node.getNode());
-    Offset = Node.getOffset();
+    DSNode *NN = Node.getNode();
+    setTo(NN, Node.getOffset());
   }
 }
 
