@@ -442,7 +442,7 @@ bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
   case Type::ShortTyID:
     return (Val <= INT16_MAX && Val >= INT16_MIN);
   case Type::IntTyID:
-    return (Val <= INT32_MAX && Val >= INT32_MIN);
+    return (Val <= int(INT32_MAX) && Val >= int(INT32_MIN));
   case Type::LongTyID:
     return true;          // This is the largest type...
   }
