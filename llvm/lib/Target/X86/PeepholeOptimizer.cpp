@@ -154,6 +154,7 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
 
 
   case X86::ADDmi16:  case X86::ADDmi32:
+  case X86::SUBmi16:  case X86::SUBmi32:
   case X86::ANDmi16:  case X86::ANDmi32:
     assert(MI->getNumOperands() == 5 && "These should all have 5 operands!");
     if (MI->getOperand(4).isImmediate()) {
@@ -165,6 +166,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         default: assert(0 && "Unknown opcode value!");
         case X86::ADDmi16:  Opcode = X86::ADDmi16b; break;
         case X86::ADDmi32:  Opcode = X86::ADDmi32b; break;
+        case X86::SUBmi16:  Opcode = X86::SUBmi16b; break;
+        case X86::SUBmi32:  Opcode = X86::SUBmi32b; break;
         case X86::ANDmi16:  Opcode = X86::ANDmi16b; break;
         case X86::ANDmi32:  Opcode = X86::ANDmi32b; break;
         }
