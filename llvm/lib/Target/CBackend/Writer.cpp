@@ -1247,7 +1247,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
     BasicBlock *Succ = cast<BasicBlock>(SI.getOperand(i+1));
     printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
     printBranchToBlock(SI.getParent(), Succ, 2);
-    if (Succ == next(Function::iterator(SI.getParent())))
+    if (Function::iterator(Succ) == next(Function::iterator(SI.getParent())))
       Out << "    break;\n";
   }
   Out << "  }\n";
