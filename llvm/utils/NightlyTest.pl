@@ -21,6 +21,7 @@
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -enable-linscan  Enable linearscan tests
+#  -disable-codegen Disable LLC and JIT tests in the nightly tester.
 #  -verbose         Turn on some debug output
 #  -debug           Print information useful only to maintainers of this script.
 #
@@ -129,7 +130,7 @@ my $NOREGRESSIONS = 0;
 my $NOTEST     = 0;
 my $NORUNNINGTESTS = 0;
 my $MAKEOPTS   = "";
-my $ENABLELINEARSCAN = "";
+my $PROGTESTOPTS = "";
 my $VERBOSE  = 0;
 my $DEBUG = 0;
 
@@ -141,12 +142,13 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE   = 1; next; }
-  if (/^-nofeaturetests$/) { $NOFEATURES   = 1; next; }
-  if (/^-noregressiontests$/){ $NOREGRESSIONS   = 1; next; }
+  if (/^-nofeaturetests$/) { $NOFEATURES = 1; next; }
+  if (/^-noregressiontests$/){ $NOREGRESSIONS = 1; next; }
   if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
-  if (/^-enable-linscan$/) { $ENABLELINEARSCAN = "ENABLE_LINEARSCAN=1"; next; }
+  if (/^-enable-linscan$/) { $PROGTESTOPTS .= " ENABLE_LINEARSCAN=1"; next; }
+  if (/^-disable-codegen$/){ $PROGTESTOPTS .= " DISABLE_JIT=1 DISABLE_LLC=1"; next; }
   if (/^-verbose$/)        { $VERBOSE  = 1; next; }
   if (/^-debug$/)          { $DEBUG  = 1; next; }
 
@@ -467,7 +469,7 @@ sub TestDirectory {
 
   # Run the programs tests... creating a report.nightly.html file
   if (!$NOTEST) {
-    system "gmake -k $MAKEOPTS $ENABLELINEARSCAN report.nightly.html "
+    system "gmake -k $MAKEOPTS $PROGTESTOPTS report.nightly.html "
          . "TEST=nightly > $Prefix-$SubDir-ProgramTest.txt 2>&1";
   } else {
     system "gunzip $Prefix-$SubDir-ProgramTest.txt.gz";
