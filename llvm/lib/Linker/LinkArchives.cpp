@@ -12,10 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gccld.h"
+#include "llvm/Linker.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Bytecode/Archive.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
@@ -136,7 +138,7 @@ llvm::GetAllUndefinedSymbols(Module *M,
 /// module it contains (wrapped in an auto_ptr), or 0 and set ErrorMessage if an
 /// error occurs.
 ///
-std::auto_ptr<Module> llvm::LoadObject(const std::string &FN,
+static std::auto_ptr<Module> LoadObject(const std::string &FN,
                                        std::string &ErrorMessage) {
   std::string ParserErrorMessage;
   Module *Result = ParseBytecodeFile(FN, &ParserErrorMessage);
@@ -161,9 +163,9 @@ std::auto_ptr<Module> llvm::LoadObject(const std::string &FN,
 ///  TRUE  - An error occurred.
 ///  FALSE - No errors.
 ///
-static bool LinkInArchive(Module *M,
+bool llvm::LinkInArchive(Module *M,
                           const std::string &Filename,
-                          std::string &ErrorMessage,
+                          std::string* ErrorMessage,
                           bool Verbose)
 {
   // Find all of the symbols currently undefined in the bytecode program.
@@ -176,71 +178,45 @@ static bool LinkInArchive(Module *M,
     return false;  // No need to link anything in!
   }
 
-  // Load in the archive objects.
+  // Open the archive file
   if (Verbose) std::cerr << "  Loading archive file '" << Filename << "'\n";
-  std::vector<Module*> Objects;
-  if (ReadArchiveFile(Filename, Objects, &ErrorMessage))
-    return true;
-
-  // Figure out which symbols are defined by all of the modules in the archive.
-  std::vector<std::set<std::string> > DefinedSymbols;
-  DefinedSymbols.resize(Objects.size());
-  for (unsigned i = 0; i != Objects.size(); ++i) {
-    GetAllDefinedSymbols(Objects[i], DefinedSymbols[i]);
-  }
+  Archive* arch = Archive::OpenAndLoadSymbols(sys::Path(Filename));
 
   // While we are linking in object files, loop.
-  bool Linked = true;
-  while (Linked) {     
-    Linked = false;
+  while (true) {     
+    std::set<ModuleProvider*> Modules;
+    // Find the modules we need to link
+    arch->findModulesDefiningSymbols(UndefinedSymbols,Modules);
 
-    for (unsigned i = 0; i != Objects.size(); ++i) {
-      // Consider whether we need to link in this module...  we only need to
-      // link it in if it defines some symbol which is so far undefined.
-      //
-      const std::set<std::string> &DefSymbols = DefinedSymbols[i];
+    // If we didn't find any more modules to link this time, we are done.
+    if (Modules.empty())
+      break;
 
-      bool ObjectRequired = false;
+    // Loop over all the ModuleProviders that we got back from the archive
+    for (std::set<ModuleProvider*>::iterator I=Modules.begin(), E=Modules.end();
+         I != E; ++I) {
+      // Get the module we must link in.
+      Module* aModule = (*I)->releaseModule();
+      std::cout << "Linked: " << aModule->getModuleIdentifier() << "\n";
 
-      //
-      // If the object defines main() and the program currently has main()
-      // undefined, then automatically link in the module.  Otherwise, look to
-      // see if it defines a symbol that is currently undefined.
-      //
-      if ((M->getMainFunction() == NULL) &&
-          ((DefSymbols.find ("main")) != DefSymbols.end())) {
-        ObjectRequired = true;
-      } else {
-        for (std::set<std::string>::iterator I = UndefinedSymbols.begin(),
-               E = UndefinedSymbols.end(); I != E; ++I)
-          if (DefSymbols.count(*I)) {
-            if (Verbose)
-              std::cerr << "  Found object '"
-                        << Objects[i]->getModuleIdentifier ()
-                        << "' providing symbol '" << *I << "'...\n";
-            ObjectRequired = true;
-            break;
-          }
+      // Link it in
+      if (LinkModules(M, aModule, ErrorMessage)) {
+        // don't create a memory leak
+        delete aModule;
+        delete arch;
+        return true;   // Couldn't link in the right object file...        
       }
-
-      // We DO need to link this object into the program...
-      if (ObjectRequired) {
-        if (LinkModules(M, Objects[i], &ErrorMessage))
-          return true;   // Couldn't link in the right object file...        
         
-        // Since we have linked in this object, delete it from the list of
-        // objects to consider in this archive file.
-        std::swap(Objects[i], Objects.back());
-        std::swap(DefinedSymbols[i], DefinedSymbols.back());
-        Objects.pop_back();
-        DefinedSymbols.pop_back();
-        --i;   // Do not skip an entry
-        
-        // The undefined symbols set should have shrunk.
-        GetAllUndefinedSymbols(M, UndefinedSymbols);
-        Linked = true;  // We have linked something in!
-      }
+      // Since we have linked in this object, throw it away now.
+      delete aModule;
     }
+
+    // We have linked in a set of modules determined by the archive to satisfy
+    // our missing symbols. Linking in the new modules will have satisfied some
+    // symbols but may introduce additional missing symbols. We need to update
+    // the list of undefined symbols and try again until the archive doesn't
+    // have any modules that satisfy our symbols. 
+    GetAllUndefinedSymbols(M, UndefinedSymbols);
   }
   
   return false;
@@ -331,7 +307,7 @@ bool llvm::LinkFiles(const char *progname, Module *HeadModule,
       if (Verbose)
         std::cerr << "Trying to link archive '" << Pathname << "'\n";
 
-      if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
+      if (LinkInArchive(HeadModule, Pathname, &ErrorMessage, Verbose)) {
         std::cerr << progname << ": Error linking in archive '" << Pathname 
                   << "': " << ErrorMessage << "\n";
         return true;
@@ -400,7 +376,7 @@ void llvm::LinkLibraries(const char *progname, Module *HeadModule,
         std::cerr << "Trying to link archive '" << Pathname << "' (-l"
                   << Libraries[i] << ")\n";
 
-      if (LinkInArchive(HeadModule, Pathname, ErrorMessage, Verbose)) {
+      if (LinkInArchive(HeadModule, Pathname, &ErrorMessage, Verbose)) {
         std::cerr << progname << ": " << ErrorMessage
                   << ": Error linking in archive '" << Pathname << "' (-l"
                   << Libraries[i] << ")\n";
