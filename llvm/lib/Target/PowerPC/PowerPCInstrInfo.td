@@ -324,10 +324,13 @@ def CROR   : XLForm_1<19, 449, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
 
 // XFX-Form instructions.  Instructions that deal with SPRs
 //
-def MFCTR : XFXForm_1_ext<31, 339, 9, 0, 0, (ops GPRC:$rT), "mfctr $rT">;
-def MFLR  : XFXForm_1_ext<31, 339, 8, 0, 0, (ops GPRC:$rT), "mflr $rT">;
-def MTCTR : XFXForm_7_ext<31, 467, 9, 0, 0, (ops GPRC:$rS), "mtctr $rS">;
-def MTLR  : XFXForm_7_ext<31, 467, 8, 0, 0, (ops GPRC:$rS), "mtlr $rS">;
+// Note that although LR should be listed as `8' and CTR as `9' in the SPR
+// field, the manual lists the groups of bits as [5-9] = 0, [0-4] = 8 or 9
+// which means the SPR value needs to be multiplied by a factor of 32.
+def MFCTR : XFXForm_1_ext<31, 339, 288, 0, 0, (ops GPRC:$rT), "mfctr $rT">;
+def MFLR  : XFXForm_1_ext<31, 339, 256, 0, 0, (ops GPRC:$rT), "mflr $rT">;
+def MTCTR : XFXForm_7_ext<31, 467, 288, 0, 0, (ops GPRC:$rS), "mtctr $rS">;
+def MTLR  : XFXForm_7_ext<31, 467, 256, 0, 0, (ops GPRC:$rS), "mtlr $rS">;
 
 
 // XS-Form instructions.  Just 'sradi'
