@@ -6,25 +6,23 @@ llvm-bcanalyzer - LLVM bytecode analyzer
 
 =head1 SYNOPSIS
 
-B<llvm-bcanalyzer> [I<options>] [I<filename>]
+B<llvm-bcanalyzer> [I<options>] [F<filename>]
 
 =head1 DESCRIPTION
 
 The B<llvm-bcanalyzer> command is a small utility for analyzing bytecode files.
 The tool reads a bytecode file (such as generated with the B<llvm-as> tool) and
 produces a statistical report on the contents of the byteocde file.  The tool
-will also dump a low level but human readable version of the bytecode file. 
+can also dump a low level but human readable version of the bytecode file. 
 This tool is probably not of much interest or utility except for those working 
 directly with the bytecode file format. Most LLVM users can just ignore
 this tool.
 
 If F<filename> is omitted or is C<->, then B<llvm-bcanalyzer> reads its input 
 from standard input. This is useful for combining the tool into a pipeline.
-
 Output is written to the standard output.
 
 =head1 OPTIONS
-
 
 =over
 
@@ -37,11 +35,11 @@ level summary. The details for individual functions are not displayed.
 
 Causes B<llvm-bcanalyzer> to dump the bytecode in a human readable format. This 
 format is significantly different from LLVM assembly and provides details about 
-the encoding of the bytecode file. 
+the encoding of the bytecode file.
 
 =item B<-verify>
 
-Causes B<llvm-bcanalyzer> to verify the module produced by by reading the 
+Causes B<llvm-bcanalyzer> to verify the module produced by reading the 
 bytecode. This ensures that the statistics generated are based on a consistent
 module.
 
@@ -112,7 +110,7 @@ The size, in bytes, of all the compaction tables in all the functions.
 Percentage is relative to File Size. Note that this value is also included in
 the Function Bytes.
 
-=item B<Compaction Table Bytes>
+=item B<Symbol Table Bytes>
 
 The size, in bytes, of all the symbol tables in all the functions. Percentage is
 relative to File Size. Note that this value is also included in the Function
@@ -280,20 +278,20 @@ computed by dividing Byte Size by Instructions. Note that this is not the same
 as Average Instruction Size. It computes a number relative to the total function
 size not just the size of the instruction list.
 
-=item B<# of VBR 32-bit Integers>
+=item B<Number of VBR 32-bit Integers>
 
 The total number of 32-bit integers found in this function (for any use).
 
-=item B<# of VBR 64-bit Integers>
+=item B<Number of VBR 64-bit Integers>
 
 The total number of 64-bit integers found in this function (for any use).
 
-=item B<# of VBR Compressed Bytes>
+=item B<Number of VBR Compressed Bytes>
 
 The total number of bytes in this function consumed by the 32-bit and 64-bit 
 integers that use the Variable Bit Rate encoding scheme.
 
-=item B<# of VBR Expanded Bytes>
+=item B<Number of VBR Expanded Bytes>
 
 The total number of bytes in this function that would have been consumed by 
 the 32-bit and 64-bit integers had they not been compressed with the Variable 
