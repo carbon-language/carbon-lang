@@ -8,10 +8,8 @@
 # Syntax:   profile.pl [OPTIONS] bytecodefile <arguments>
 #
 # OPTIONS may include one or more of the following:
-#     NONE SO FAR
+#     -block - Enable basic block level profiling
 #
-#
-
 
 my $ProfilePass = "-insert-function-profiling";
 
@@ -21,7 +19,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   last if /^--$/;  # Stop processing arguments on --
 
   # List command line options here...
-  #if (/^-enable-foo$/)     { $FOO = 1; next; }
+  if (/^-block$/) { $ProfilePass = "-insert-block-profiling"; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -38,7 +36,7 @@ chomp $LLIPath;
 
 my $LibProfPath = $LLIPath . "/../../lib/Debug/libprofile_rt.so";
 
-system "opt $ProfilePass < $BytecodeFile | lli -load $LibProfPath - " .
-         (join ' ', @ARGV);
+system "opt $ProfilePass < $BytecodeFile | lli -fake-argv0 '$BytecodeFile'" .
+       " -load $LibProfPath - " . (join ' ', @ARGV);
 
 system "llvm-prof $BytecodeFile";
