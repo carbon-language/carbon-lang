@@ -240,10 +240,12 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                           const Value *V2, unsigned V2Size) {
   // Strip off any constant expression casts if they exist
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V1))
-    if (CE->getOpcode() == Instruction::Cast)
+    if (CE->getOpcode() == Instruction::Cast &&
+        isa<PointerType>(CE->getOperand(0)->getType()))
       V1 = CE->getOperand(0);
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V2))
-    if (CE->getOpcode() == Instruction::Cast)
+    if (CE->getOpcode() == Instruction::Cast &&
+        isa<PointerType>(CE->getOperand(0)->getType()))
       V2 = CE->getOperand(0);
 
   // Are we checking for alias of the same value?
@@ -255,9 +257,11 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
   // Strip off cast instructions...
   if (const Instruction *I = dyn_cast<CastInst>(V1))
-    return alias(I->getOperand(0), V1Size, V2, V2Size);
+    if (isa<PointerType>(I->getOperand(0)->getType()))
+      return alias(I->getOperand(0), V1Size, V2, V2Size);
   if (const Instruction *I = dyn_cast<CastInst>(V2))
-    return alias(V1, V1Size, I->getOperand(0), V2Size);
+    if (isa<PointerType>(I->getOperand(0)->getType()))
+      return alias(V1, V1Size, I->getOperand(0), V2Size);
 
   // Figure out what objects these things are pointing to if we can...
   const Value *O1 = getUnderlyingObject(V1);
