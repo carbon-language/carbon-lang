@@ -234,7 +234,8 @@ public:
   // source.  You need to set a new GlobalsGraph with the setGlobalsGraph
   // method.
   //
-  DSGraph(const DSGraph &DSG, EquivalenceClasses<GlobalValue*> &ECs);
+  DSGraph(const DSGraph &DSG, EquivalenceClasses<GlobalValue*> &ECs,
+          unsigned CloneFlags = 0);
   DSGraph(const DSGraph &DSG, NodeMapTy &NodeMap,
           EquivalenceClasses<GlobalValue*> &ECs);
   ~DSGraph();
