@@ -122,6 +122,11 @@ public:
     Provided.push_back(ID);
   }
 
+  // releaseMemory - Data structures can be large, so free memory agressively.
+  virtual void releaseMemory() {
+    destroy();
+  }
+
 private:   // Implementation of CallGraph construction
   void destroy();
 
