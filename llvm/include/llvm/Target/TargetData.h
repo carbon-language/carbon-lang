@@ -64,7 +64,7 @@ public:
   unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
   unsigned char getPointerAlignment() const { return PointerAlignment; }
   unsigned char getPointerSize()      const { return      PointerSize; }
-  unsigned char getIntegerRegize()    const { return   IntegerRegSize; }
+  unsigned char getIntegerRegSize()   const { return   IntegerRegSize; }
   AnnotationID  getStructLayoutAID()  const { return AID; }
 
   // getTypeSize - Return the number of bytes neccesary to hold the specified
