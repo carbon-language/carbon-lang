@@ -7,18 +7,12 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// Representation of the sequence of machine instructions created for a single
-// VM instruction.  Additionally records information about hidden and implicit
-// values used by the machine instructions: about hidden values used by the
-// machine instructions:
-// 
-// "Temporary values" are intermediate values used in the machine instruction
-// sequence, but not in the VM instruction. Note that such values should be
-// treated as pure SSA values with no interpretation of their operands (i.e., as
-// a TmpInstruction object which actually represents such a value).
-// 
-// (2) "Implicit uses" are values used in the VM instruction but not in the
-//     machine instruction sequence
+// Container for the sequence of MachineInstrs created for a single
+// LLVM Instruction.  MachineCodeForInstruction also tracks temporary values
+// (TmpInstruction objects) created during SparcV9 code generation, so that
+// they can be deleted when they are no longer needed, and finally, it also
+// holds some extra information for 'call' Instructions (using the
+// CallArgsDescriptor object, which is also implemented in this file).
 // 
 //===----------------------------------------------------------------------===//
 
@@ -31,24 +25,23 @@
 #include "MachineFunctionInfo.h"
 #include "MachineInstrAnnot.h"
 #include "SparcV9TmpInstr.h"
+#include "SparcV9RegisterInfo.h"
 using namespace llvm;
 
 MachineCodeForInstruction &MachineCodeForInstruction::get(const Instruction *I){
   MachineFunction &MF = MachineFunction::get(I->getParent()->getParent());
   return MF.getInfo<SparcV9FunctionInfo>()->MCFIEntries[I];
 }
+
 void MachineCodeForInstruction::destroy(const Instruction *I) {
   MachineFunction &MF = MachineFunction::get(I->getParent()->getParent());
   MF.getInfo<SparcV9FunctionInfo>()->MCFIEntries.erase(I);
 }
 
-void
-MachineCodeForInstruction::dropAllReferences()
-{
+void MachineCodeForInstruction::dropAllReferences() {
   for (unsigned i=0, N=tempVec.size(); i < N; i++)
     cast<Instruction>(tempVec[i])->dropAllReferences();
 }
-
 
 MachineCodeForInstruction::~MachineCodeForInstruction() {
   // Let go of all uses in temp. instructions
@@ -64,7 +57,6 @@ MachineCodeForInstruction::~MachineCodeForInstruction() {
   // Free the CallArgsDescriptor if it exists.
   delete callArgsDesc;
 }
-
 
 CallArgsDescriptor::CallArgsDescriptor(CallInst* _callInstr,
                                        TmpInstruction* _retAddrReg,
@@ -91,21 +83,26 @@ CallInst *CallArgsDescriptor::getReturnValue() const {
   return (callInstr->getType() == Type::VoidTy? NULL : callInstr);
 }
 
-// Mechanism to get the descriptor for a CALL MachineInstr.
-// We get the LLVM CallInstr from the ret. addr. register argument
-// of the CALL MachineInstr (which is explicit operand #3 for indirect
-// calls or the last implicit operand for direct calls).  We then get
-// the CallArgsDescriptor from the MachineCodeForInstruction object for
-// the CallInstr.
-// This is roundabout but avoids adding a new map or annotation just
-// to keep track of CallArgsDescriptors.
-// 
-CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr* MI) {
-  const TmpInstruction* retAddrReg =
-    cast<TmpInstruction>(isa<Function>(MI->getOperand(0).getVRegValue())
-                         ? MI->getImplicitRef(MI->getNumImplicitRefs()-1)
-                         : MI->getOperand(2).getVRegValue());
+/// CallArgsDescriptor::get - Mechanism to get the descriptor for a CALL
+/// MachineInstr.  We get the LLVM CallInst from the return-address register
+/// argument of the CALL MachineInstr (which is explicit operand #2 for
+/// indirect calls or the last implicit operand for direct calls).  We then get
+/// the CallArgsDescriptor from the MachineCodeForInstruction object for the
+/// CallInstr.  This is roundabout but avoids adding a new map or annotation
+/// just to keep track of CallArgsDescriptors.
+/// 
+CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr *MI) {
+  const Value *retAddrVal = 0;
+  if ((MI->getOperand (0).getType () == MachineOperand::MO_MachineRegister
+       && MI->getOperand (0).getReg () == SparcV9::g0)
+      || (MI->getOperand (0).getType () == MachineOperand::MO_VirtualRegister
+          && !isa<Function> (MI->getOperand (0).getVRegValue ()))) {
+    retAddrVal = MI->getOperand (2).getVRegValue ();
+  } else {
+    retAddrVal = MI->getImplicitRef (MI->getNumImplicitRefs () - 1);
+  }
 
+  const TmpInstruction* retAddrReg = cast<TmpInstruction> (retAddrVal);
   assert(retAddrReg->getNumOperands() == 1 &&
          isa<CallInst>(retAddrReg->getOperand(0)) &&
          "Location of callInstr arg for CALL instr. changed? FIX THIS CODE!");
