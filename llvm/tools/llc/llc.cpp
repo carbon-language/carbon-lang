@@ -5,10 +5,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
-#include "llvm/Optimizations/Normalize.h"
 #include "llvm/Target/Sparc.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation/TraceValues.h"
+#include "llvm/Transforms/LowerAllocations.h"
+#include "llvm/Transforms/HoistPHIConstants.h"
+#include "llvm/Transforms/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
@@ -26,284 +28,77 @@ cl::Flag   TraceBBValues ("trace",
                           cl::NoFlags, false);
 cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits",
                              cl::NoFlags, false);
-
-#include "llvm/Assembly/Writer.h"   // For DumpAsm
-
-//-------------------------- Internal Functions ------------------------------//
-
-
-/////
-// TODO: Remove to external file.... When Chris gets back he'll do it
-/////
-#include "llvm/DerivedTypes.h"
-#include "llvm/iMemory.h"
-#include "llvm/iOther.h"
-#include "llvm/SymbolTable.h"
+cl::Flag   DebugTrace    ("dumptrace",
+                          "output trace code to a <fn>.trace.ll file",
+                          cl::Hidden, false);
 
 
-Method *MallocMeth = 0, *FreeMeth = 0;
-
-// InsertMallocFreeDecls - Insert an external declaration for malloc and an
-// external declaration for free for use by the ReplaceMallocFree function.
-//
-static void InsertMallocFreeDecls(Module *M) {
-  const MethodType *MallocType = 
-    MethodType::get(PointerType::get(Type::UByteTy),
-                    vector<const Type*>(1, Type::UIntTy), false);
-
-  SymbolTable *SymTab = M->getSymbolTableSure();
-  
-  // Check for a definition of malloc
-  if (Value *V = SymTab->lookup(PointerType::get(MallocType), "malloc")) {
-    MallocMeth = cast<Method>(V);      // Yup, got it
-  } else {                             // Nope, add one
-    M->getMethodList().push_back(MallocMeth = new Method(MallocType, "malloc"));
-  }
-
-  const MethodType *FreeType = 
-    MethodType::get(Type::VoidTy,
-                    vector<const Type*>(1, PointerType::get(Type::UByteTy)),
-		    false);
-
-  // Check for a definition of free
-  if (Value *V = SymTab->lookup(PointerType::get(FreeType), "free")) {
-    FreeMeth = cast<Method>(V);      // Yup, got it
-  } else {                             // Nope, add one
-    M->getMethodList().push_back(FreeMeth = new Method(FreeType, "free"));
-  }
-}
-
-
-static void ReplaceMallocFree(Method *M, const TargetData &DataLayout) {
-  assert(MallocMeth && FreeMeth && M && "Must call InsertMallocFreeDecls!");
-
-  // Loop over all of the instructions, looking for malloc or free instructions
-  for (Method::iterator BBI = M->begin(), BBE = M->end(); BBI != BBE; ++BBI) {
-    BasicBlock *BB = *BBI;
-    for (unsigned i = 0; i < BB->size(); ++i) {
-      BasicBlock::InstListType &BBIL = BB->getInstList();
-      if (MallocInst *MI = dyn_cast<MallocInst>(*(BBIL.begin()+i))) {
-        BBIL.remove(BBIL.begin()+i);   // remove the malloc instr...
-        
-        const Type *AllocTy = cast<PointerType>(MI->getType())->getValueType();
-
-        // If the user is allocating an unsized array with a dynamic size arg,
-        // start by getting the size of one element.
-        //
-        if (const ArrayType *ATy = dyn_cast<ArrayType>(AllocTy)) 
-          if (ATy->isUnsized()) AllocTy = ATy->getElementType();
-
-        // Get the number of bytes to be allocated for one element of the
-        // requested type...
-        unsigned Size = DataLayout.getTypeSize(AllocTy);
-
-        // malloc(type) becomes sbyte *malloc(constint)
-        Value *MallocArg = ConstPoolUInt::get(Type::UIntTy, Size);
-        if (MI->getNumOperands() && Size == 1) {
-          MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
-        } else if (MI->getNumOperands()) {
-          // Multiply it by the array size if neccesary...
-          MallocArg = BinaryOperator::create(Instruction::Mul,MI->getOperand(0),
-                                             MallocArg);
-          BBIL.insert(BBIL.begin()+i++, cast<Instruction>(MallocArg));
-        }
-
-        // Create the call to Malloc...
-        CallInst *MCall = new CallInst(MallocMeth,
-                                       vector<Value*>(1, MallocArg));
-        BBIL.insert(BBIL.begin()+i, MCall);
-
-        // Create a cast instruction to convert to the right type...
-        CastInst *MCast = new CastInst(MCall, MI->getType());
-        BBIL.insert(BBIL.begin()+i+1, MCast);
-
-        // Replace all uses of the old malloc inst with the cast inst
-        MI->replaceAllUsesWith(MCast);
-        delete MI;                          // Delete the malloc inst
-      } else if (FreeInst *FI = dyn_cast<FreeInst>(*(BBIL.begin()+i))) {
-        BBIL.remove(BB->getInstList().begin()+i);
-
-        // Cast the argument to free into a ubyte*...
-        CastInst *MCast = new CastInst(FI->getOperand(0), 
-                                       PointerType::get(Type::UByteTy));
-        BBIL.insert(BBIL.begin()+i, MCast);
-
-        // Insert a call to the free function...
-        CallInst *FCall = new CallInst(FreeMeth,
-                                       vector<Value*>(1, MCast));
-        BBIL.insert(BBIL.begin()+i+1, FCall);
-
-        // Delete the old free instruction
-        delete FI;
-      }
-    }
-  }
-}
-
-
-// END TODO: Remove to external file....
-
-static void NormalizeMethod(Method *M) {
-  NormalizePhiConstantArgs(M);
-}
-
-inline string
-GetFileNameRoot(const string& InputFilename)
-{
+// GetFileNameRoot - Helper function to get the basename of a filename...
+static inline string GetFileNameRoot(const string &InputFilename) {
   string IFN = InputFilename;
   string outputFilename;
   int Len = IFN.length();
   if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c') {
     outputFilename = string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
   } else {
-    outputFilename = IFN;   // Append a .s to it
+    outputFilename = IFN;
   }
   return outputFilename;
 }
 
-inline string
-GetTraceAssemblyFileName(const string& inFilename)
-{
-  assert(inFilename != "-" && "files on stdin not supported with tracing");
-  string traceFileName = GetFileNameRoot(inFilename);
-  traceFileName += ".trace.ll"; 
-  return traceFileName;
-}
 
 //===---------------------------------------------------------------------===//
-// Function PreprocessModule()
-// 
-// Normalization to simplify later passes.
-//===---------------------------------------------------------------------===//
-
-int
-PreprocessModule(Module* module)
-{
-  InsertMallocFreeDecls(module);
-  
-  for (Module::const_iterator MI=module->begin(); MI != module->end(); ++MI)
-    if (! (*MI)->isExternal())
-      NormalizeMethod(*MI);
-  
-  return 0;
-}
-
-
-//===---------------------------------------------------------------------===//
-// Function OptimizeModule()
-// 
-// Module optimization.
-//===---------------------------------------------------------------------===//
-
-int
-OptimizeModule(Module* module)
-{
-  return 0;
-}
-
-
-//===---------------------------------------------------------------------===//
-// Function GenerateCodeForModule()
+// GenerateCodeForTarget Pass
 // 
 // Native code generation for a specified target.
 //===---------------------------------------------------------------------===//
 
-int
-GenerateCodeForModule(Module* module, TargetMachine* target)
-{
-  // Since any transformation pass may introduce external function decls
-  // into the method list, find current methods first and then walk only those.
-  // 
-  vector<Method*> initialMethods(module->begin(), module->end());
-  
-  
-  // Replace malloc and free instructions with library calls
-  // 
-  for (unsigned i=0, N = initialMethods.size(); i < N; i++)
-    if (! initialMethods[i]->isExternal())
-      ReplaceMallocFree(initialMethods[i], target->DataLayout);
-  
-  
-  // Insert trace code to assist debugging
-  // 
-  if (TraceBBValues || TraceMethodValues)
-    {
-      // Insert trace code in all methods in the module
-      for (unsigned i=0, N = initialMethods.size(); i < N; i++)
-        if (! initialMethods[i]->isExternal())
-          InsertCodeToTraceValues(initialMethods[i], TraceBBValues,
-                                  TraceBBValues || TraceMethodValues);
-      
-      // Then write the module with tracing code out in assembly form
-      string traceFileName = GetTraceAssemblyFileName(InputFilename);
-      ofstream* ofs = new ofstream(traceFileName.c_str(), 
-                                   (Force ? 0 : ios::noreplace)|ios::out);
-      if (!ofs->good()) {
-        cerr << "Error opening " << traceFileName << "!\n";
-        delete ofs;
-        return 1;
-      }
-      WriteToAssembly(module, *ofs);
-      delete ofs;
+class GenerateCodeForTarget : public ConcretePass<GenerateCodeForTarget> {
+  TargetMachine &Target;
+public:
+  inline GenerateCodeForTarget(TargetMachine &T) : Target(T) {}
+
+  // doPerMethodWork - This method does the actual work of generating code for
+  // the specified method.
+  //
+  bool doPerMethodWorkVirt(Method *M) {
+    if (!M->isExternal() && Target.compileMethod(M)) {
+      cerr << "Error compiling " << InputFilename << "!\n";
+      return true;
     }
-  
-  
-  // Generate native target code for all methods
-  // 
-  for (unsigned i=0, N = initialMethods.size(); i < N; i++)
-    if (! initialMethods[i]->isExternal())
-      {
-        if (DumpAsm)
-          cerr << "Method after xformations: \n" << initialMethods[i];
-        
-        if (target->compileMethod(initialMethods[i])) {
-          cerr << "Error compiling " << InputFilename << "!\n";
-          return 1;
-        }
-      }
-  
-  return 0;
-}
+    
+    return false;
+  }
+};
 
 
 //===---------------------------------------------------------------------===//
-// Function EmitAssemblyForModule()
+// EmitAssembly Pass
 // 
-// Write assembly code to specified output file; <ModuleName>.s by default.
+// Write assembly code to specified output stream
 //===---------------------------------------------------------------------===//
 
-int
-EmitAssemblyForModule(Module* module, TargetMachine* target)
-{
-  // Figure out where we are going to send the output...
-  ostream *Out = 0;
-  if (OutputFilename != "") {   // Specified an output filename?
-    Out = new ofstream(OutputFilename.c_str(), 
-                       (Force ? 0 : ios::noreplace)|ios::out);
-  } else {
-    if (InputFilename == "-") {
-      OutputFilename = "-";
-      Out = &cout;
-    } else {
-      string OutputFilename = GetFileNameRoot(InputFilename); 
-      OutputFilename += ".s";
-      Out = new ofstream(OutputFilename.c_str(), 
-                         (Force ? 0 : ios::noreplace)|ios::out);
-      if (!Out->good()) {
-        cerr << "Error opening " << OutputFilename << "!\n";
-        delete Out;
-        return 1;
-      }
-    }
+class EmitAssembly : public ConcretePass<EmitAssembly> {
+  const TargetMachine &Target;   // Target to compile for
+  ostream *Out;                  // Stream to print on
+  bool DeleteStream;             // Delete stream in dtor?
+
+  Module *TheMod;
+public:
+  inline EmitAssembly(const TargetMachine &T, ostream *O, bool D)
+    : Target(T), Out(O), DeleteStream(D) {}
+
+  virtual bool doPassInitializationVirt(Module *M) {
+    TheMod = M;
+    return false;
   }
 
-  // Emit the output...
-  target->emitAssembly(module, *Out);
+  ~EmitAssembly() {
+    Target.emitAssembly(TheMod, *Out);
 
-  if (Out != &cout) delete Out;
-
-  return 0;
-}
+    if (DeleteStream) delete Out;
+  }
+};
 
 
 //===---------------------------------------------------------------------===//
@@ -321,6 +116,9 @@ main(int argc, char **argv)
   // Allocate a target... in the future this will be controllable on the
   // command line.
   auto_ptr<TargetMachine> target(allocateSparcTargetMachine());
+  assert(target.get() && "Could not allocate target machine!");
+
+  TargetMachine &Target = *target.get();
   
   // Load the module to be compiled...
   auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
@@ -328,16 +126,74 @@ main(int argc, char **argv)
     cerr << "bytecode didn't read correctly.\n";
     return 1;
   }
+
+  // Build up all of the passes that we want to do to the module...
+  vector<Pass*> Passes;
+
+  // Replace malloc and free instructions with library calls
+  Passes.push_back(new LowerAllocations(Target.DataLayout));
+
+  // Hoist constants out of PHI nodes into predecessor BB's
+  Passes.push_back(new HoistPHIConstants());
+
+  if (TraceBBValues || TraceMethodValues)    // If tracing enabled...
+    // Insert trace code in all methods in the module
+    Passes.push_back(new InsertTraceCode(TraceBBValues, 
+                                         TraceBBValues || TraceMethodValues));
+
+
+  if (DebugTrace) {                          // If Trace Debugging is enabled...
+    // Then write the module with tracing code out in assembly form
+    assert(InputFilename != "-" && "files on stdin not supported with tracing");
+    string traceFileName = GetFileNameRoot(InputFilename) + ".trace.ll";
+
+    ostream *os = new ofstream(traceFileName.c_str(), 
+                               (Force ? 0 : ios::noreplace)|ios::out);
+    if (!os->good()) {
+      cerr << "Error opening " << traceFileName << "!\n";
+      delete os;
+      return 1;
+    }
+
+    Passes.push_back(new PrintModulePass("", os, true));
+  }
+
+  // If LLVM dumping after transformations is requested, add it to the pipeline
+  if (DumpAsm)
+    Passes.push_back(new PrintModulePass("Method after xformations: \n",&cerr));
+
+  // Generate Target code...
+  Passes.push_back(new GenerateCodeForTarget(Target));
+
+  if (!DoNotEmitAssembly) {                // If asm output is enabled...
+    // Figure out where we are going to send the output...
+    ostream *Out = 0;
+    if (OutputFilename != "") {   // Specified an output filename?
+      Out = new ofstream(OutputFilename.c_str(), 
+                         (Force ? 0 : ios::noreplace)|ios::out);
+    } else {
+      if (InputFilename == "-") {
+        OutputFilename = "-";
+        Out = &cout;
+      } else {
+        string OutputFilename = GetFileNameRoot(InputFilename); 
+        OutputFilename += ".s";
+        Out = new ofstream(OutputFilename.c_str(), 
+                           (Force ? 0 : ios::noreplace)|ios::out);
+        if (!Out->good()) {
+          cerr << "Error opening " << OutputFilename << "!\n";
+          delete Out;
+          return 1;
+        }
+      }
+    }
+    
+    // Output assembly language to the .s file
+    Passes.push_back(new EmitAssembly(Target, Out, Out != &cout));
+  }
   
-  if (PreprocessModule(M.get())) return 1;
-  
-  if (OptimizeModule(M.get())) return 1;
-  
-  if (GenerateCodeForModule(M.get(), target.get())) return 1;
-  
-  if (!DoNotEmitAssembly)
-    if (EmitAssemblyForModule(M.get(), target.get())) return 1;
-  
-  return 0;
+  // Run our queue of passes all at once now, efficiently.
+  return Pass::runAllPassesAndFree(M.get(), Passes);
 }
+
 
