@@ -711,8 +711,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "Second argument to llvm.gcroot must be a constant!", &CI);
     NumArgs = 2;
     break;
-  case Intrinsic::gcread:          NumArgs = 1; break;
-  case Intrinsic::gcwrite:         NumArgs = 2; break;
+  case Intrinsic::gcread:          NumArgs = 2; break;
+  case Intrinsic::gcwrite:         NumArgs = 3; break;
 
   case Intrinsic::dbg_stoppoint:   NumArgs = 4; break;
   case Intrinsic::dbg_region_start:NumArgs = 1; break;
