@@ -472,19 +472,6 @@ static unsigned sizeOfImm(const TargetInstrDescriptor &Desc) {
   }
 }
 
-static unsigned sizeOfPtr(const TargetInstrDescriptor &Desc) {
-  switch (Desc.TSFlags & X86II::MemMask) {
-  case X86II::Mem8:   return 1;
-  case X86II::Mem16:  return 2;
-  case X86II::Mem32:  return 4;
-  case X86II::Mem64:  return 8;
-  case X86II::Mem80:  return 10;
-  case X86II::Mem128: return 16;
-  default: assert(0 && "Memory size not set!");
-    return 0;
-  }
-}
-
 void Emitter::emitInstruction(const MachineInstr &MI) {
   NumEmitted++;  // Keep track of the # of mi's emitted
 
