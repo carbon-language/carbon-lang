@@ -122,9 +122,6 @@ public:
   /// The Predecessors list of succ is automatically updated.
   ///
   void addSuccessor (MachineBasicBlock *succ) {
-    assert (std::find (Successors.begin (), Successors.end (), succ)
-            == Successors.end ()
-            && "Trying to addSuccessor a MBB which is already my successor");
     Successors.push_back (succ);
     succ->addPredecessor (this);
   }
@@ -136,8 +133,6 @@ public:
     succ->removePredecessor (this);
     std::vector<MachineBasicBlock *>::iterator goner =
       std::find (Successors.begin(), Successors.end (), succ);
-    assert (goner != Successors.end ()
-            && "Trying to removeSuccessor a MBB which isn't my successor");
     Successors.erase (goner);
   }
 
@@ -178,9 +173,6 @@ private:   // Methods used to maintain doubly linked list of blocks...
   /// update pred's successors list. Use pred->addSuccessor instead.
   ///
   void addPredecessor (MachineBasicBlock *pred) {
-    assert(std::find (Predecessors.begin (), Predecessors.end (), pred)
-           == Predecessors.end ()
-           && "Trying to addPredecessor a MBB which is already my predecessor");
     Predecessors.push_back (pred);
   }
 
@@ -192,8 +184,6 @@ private:   // Methods used to maintain doubly linked list of blocks...
   void removePredecessor (MachineBasicBlock *pred) {
     std::vector<MachineBasicBlock *>::iterator goner =
       std::find (Predecessors.begin(), Predecessors.end (), pred);
-    assert (goner != Predecessors.end ()
-            && "Trying to removePredecessor a MBB which isn't my predecessor");
     Predecessors.erase (goner);
   }
 };
