@@ -509,8 +509,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   }
 
   // X + X --> X << 1
-  if (I.getType()->isInteger())
+  if (I.getType()->isInteger()) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
+  }
 
   // -A + B  -->  B - A
   if (Value *V = dyn_castNegVal(LHS))
@@ -745,8 +746,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (uint64_t C = Log2(Val))            // Replace X*(2^C) with X << C
         return new ShiftInst(Instruction::Shl, Op0,
                              ConstantUInt::get(Type::UByteTy, C));
-    } else {
-      ConstantFP *Op1F = cast<ConstantFP>(Op1);
+    } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
       if (Op1F->isNullValue())
         return ReplaceInstUsesWith(I, Op1);
 
