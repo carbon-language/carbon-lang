@@ -1023,7 +1023,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   if (Node->getOpcode() == ISD::CopyFromReg)
     // Just use the specified register as our input.
-    return dyn_cast<CopyRegSDNode>(Node)->getReg();
+    return dyn_cast<RegSDNode>(Node)->getReg();
   
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
@@ -2111,7 +2111,7 @@ void ISel::Select(SDOperand N) {
       Tmp1 = SelectExpr(N.getOperand(1));
       Select(N.getOperand(0));
     }
-    Tmp2 = cast<CopyRegSDNode>(N)->getReg();
+    Tmp2 = cast<RegSDNode>(N)->getReg();
     
     if (Tmp1 != Tmp2) {
       switch (N.getOperand(1).getValueType()) {

@@ -772,8 +772,9 @@ SDOperand SelectionDAGISel::
 CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   SelectionDAG &DAG = SDL.DAG;
   SDOperand Op = SDL.getValue(V);
-  if (CopyRegSDNode *CR = dyn_cast<CopyRegSDNode>(Op))
-    assert(CR->getReg() != Reg && "Copy from a reg to the same reg!");
+  assert((Op.getOpcode() != ISD::CopyFromReg ||
+          cast<RegSDNode>(Op)->getReg() != Reg) &&
+         "Copy from a reg to the same reg!");
   return DAG.getCopyToReg(DAG.getRoot(), Op, Reg);
 }
 

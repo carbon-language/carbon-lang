@@ -880,6 +880,7 @@ const char *SDNode::getOperationName() const {
   case ISD::ConstantPool:  return "ConstantPoolIndex";
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
+  case ISD::ImplicitDef:   return "ImplicitDef";
 
   case ISD::ADD:    return "add";
   case ISD::SUB:    return "sub";
@@ -1006,7 +1007,7 @@ void SDNode::dump() const {
     if (LBB)
       std::cerr << LBB->getName() << " ";
     std::cerr << (const void*)BBDN->getBasicBlock() << ">";
-  } else if (const CopyRegSDNode *C2V = dyn_cast<CopyRegSDNode>(this)) {
+  } else if (const RegSDNode *C2V = dyn_cast<RegSDNode>(this)) {
     std::cerr << "<reg #" << C2V->getReg() << ">";
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {

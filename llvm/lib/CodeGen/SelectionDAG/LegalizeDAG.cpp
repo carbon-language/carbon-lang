@@ -244,6 +244,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     assert(getTypeAction(Node->getValueType(0)) == Legal &&
            "This must be legal!");
     break;
+  case ISD::ImplicitDef:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getImplicitDef(cast<RegSDNode>(Node)->getReg());
+    break;
   case ISD::Constant:
     // We know we don't need to expand constants here, constants only have one
     // value and we check that it is fine above.
@@ -398,13 +403,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Legalize the incoming value (must be legal).
       Tmp2 = LegalizeOp(Node->getOperand(1));
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getCopyToReg(Tmp1, Tmp2,
-                                  cast<CopyRegSDNode>(Node)->getReg());
+        Result = DAG.getCopyToReg(Tmp1, Tmp2, cast<RegSDNode>(Node)->getReg());
       break;
     case Expand: {
       SDOperand Lo, Hi;
       ExpandOp(Node->getOperand(1), Lo, Hi);      
-      unsigned Reg = cast<CopyRegSDNode>(Node)->getReg();
+      unsigned Reg = cast<RegSDNode>(Node)->getReg();
       Result = DAG.getCopyToReg(Tmp1, Lo, Reg);
       Result = DAG.getCopyToReg(Result, Hi, Reg+1);
       assert(isTypeLegal(Result.getValueType()) &&
@@ -748,7 +752,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   case ISD::CopyFromReg: {
-    unsigned Reg = cast<CopyRegSDNode>(Node)->getReg();
+    unsigned Reg = cast<RegSDNode>(Node)->getReg();
     // Aggregate register values are always in consequtive pairs.
     Lo = DAG.getCopyFromReg(Reg, NVT);
     Hi = DAG.getCopyFromReg(Reg+1, NVT);
