@@ -22,14 +22,20 @@
 #include <fstream>
 using std::string;
 
-cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
-cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
-cl::Flag   Force         ("f", "Overwrite output files");
-cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation",
-                          cl::Hidden);
-cl::Flag   TraceBBValues ("trace",
-                          "Trace values at basic block and method exits");
-cl::Flag   TraceMethodValues("tracem", "Trace values only at method exits");
+static cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
+static cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
+static cl::Flag   Force         ("f", "Overwrite output files");
+static cl::Flag   DumpAsm       ("d", "Print bytecode before native code generation", cl::Hidden);
+
+enum TraceLevel {
+  TraceOff, TraceMethods, TraceBasicBlocks
+};
+
+static cl::Enum<enum TraceLevel> TraceValues("trace", cl::NoFlags,
+  "Trace values through methods or basic blocks",
+  clEnumValN(TraceOff        , "off",        "Disable trace code"),
+  clEnumValN(TraceMethods    , "method",     "Trace each method"),
+  clEnumValN(TraceBasicBlocks, "basicblock", "Trace each basic block"), 0);
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename...
@@ -73,15 +79,19 @@ int main(int argc, char **argv) {
   PassManager Passes;
 
   // Hoist constants out of PHI nodes into predecessor BB's
-  Passes.add(new HoistPHIConstants());
+  Passes.add(createHoistPHIConstantsPass());
 
-  if (TraceBBValues || TraceMethodValues) {   // If tracing enabled...
+  if (TraceValues != TraceOff) {   // If tracing enabled...
     // Insert trace code in all methods in the module
-    Passes.add(new InsertTraceCode(TraceBBValues, 
-                                   TraceBBValues ||TraceMethodValues));
+    if (TraceValues == TraceBasicBlocks)
+      Passes.add(createTraceValuesPassForBasicBlocks());
+    else if (TraceValues == TraceMethods)
+      Passes.add(createTraceValuesPassForMethod());
+    else
+      assert(0 && "Bad value for TraceValues!");
 
     // Eliminate duplication in constant pool
-    Passes.add(new DynamicConstantMerge());
+    Passes.add(createDynamicConstantMergePass());
       
     // Then write out the module with tracing code before code generation 
     assert(InputFilename != "-" &&
@@ -109,7 +119,7 @@ int main(int argc, char **argv) {
   // Replace malloc and free instructions with library calls.
   // Do this after tracing until lli implements these lib calls.
   // For now, it will emulate malloc and free internally.
-  Passes.add(new LowerAllocations(Target.DataLayout));
+  Passes.add(createLowerAllocationsPass(Target.DataLayout));
   
   // If LLVM dumping after transformations is requested, add it to the pipeline
   if (DumpAsm)
