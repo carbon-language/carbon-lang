@@ -306,6 +306,11 @@ public:
   AliasSet *getAliasSetForPointerIfExists(Value *P, unsigned Size) {
     return findAliasSetForPointer(P, Size);
   }
+  
+  /// containsPointer - Return true if the specified location is represented by
+  /// this alias set, false otherwise.  This does not modify the AST object or
+  /// alias sets.
+  bool containsPointer(Value *P, unsigned Size) const;
 
   /// getAliasAnalysis - Return the underlying alias analysis object used by
   /// this tracker.

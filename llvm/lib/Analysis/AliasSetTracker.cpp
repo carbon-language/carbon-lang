@@ -189,6 +189,18 @@ AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
   return FoundSet;
 }
 
+/// containsPointer - Return true if the specified location is represented by
+/// this alias set, false otherwise.  This does not modify the AST object or
+/// alias sets.
+bool AliasSetTracker::containsPointer(Value *Ptr, unsigned Size) const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    if (!I->Forward && I->aliasesPointer(Ptr, Size, AA))
+      return true;
+  return false;
+}
+
+
+
 AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
   AliasSet *FoundSet = 0;
   for (iterator I = begin(), E = end(); I != E; ++I)
