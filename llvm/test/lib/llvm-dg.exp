@@ -1,0 +1,103 @@
+proc llvm-runtest { programs srcdir subdir target_triplet} {
+
+    set path [file join $srcdir $subdir]
+    
+    #Make Output Directory if it does not exist already
+    cd $path
+    
+    file mkdir Output
+ 
+    foreach test $programs {
+	
+	set timeout 40
+	set filename [file tail $test]
+	set output [file join Output $filename.out]
+	set script $output.script
+	set outcome PASS
+	set tmpFile testscript.
+	append tmpFile $filename .tmp
+
+	#set hasRunline bool to check if testcase has a runline
+	set hasRunline 0
+
+	#check if script files exists, and delete if it does
+	if { [file exists $script] } {
+	    file delete $script
+	}
+	
+	#create script file and write run line out to it
+	set scriptFileId [open $script w 0700]
+	set testFileId [ open $test r]
+	foreach line [split [read $testFileId] \n] {
+	    
+	    #see if this is our run line
+	    if {[regexp {RUN:(.+)} $line match runline]} {
+		set runline
+		set hasRunline 1
+
+		#replace %s with filename
+		regsub -all {%s} $runline $filename new_runline
+		
+		regsub -all {%t} $new_runline [file join Output $tmpFile] new_runline
+	
+		puts $scriptFileId $new_runline
+	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
+		set targets
+		
+
+		#split up target if more then 1 specified
+		foreach target [split $targets ,] {
+		    if { [regexp {\*} $target match] } {
+			set outcome XFAIL
+		    } elseif { [regexp $target $target_triplet match] } {
+			set outcome XFAIL
+		    }
+		    
+		}
+	    }
+	    
+	}
+	
+	close $testFileId
+	close $scriptFileId
+	
+	
+	if { $hasRunline == 0 } {
+	    fail "$test: \nDoes not have a RUN line\n"
+	} else {
+
+	    #run script and catch errors
+	    set retval [ catch {exec /bin/sh $script >& $output} ]
+	    
+	    if { $retval == 1 } {
+		#Get output
+		set outputFile [open $output {RDONLY}]
+		set result [read $outputFile]
+		close $outputFile
+		file delete $outputFile
+		
+		switch $outcome {
+		    PASS {
+			file delete $output
+			fail "$test: \n$result"
+		    }
+		    XFAIL {
+			xfail "$test: \n$result"
+		    }
+		    default {
+			file delete $output
+			fail "$test: $result"
+		    }
+		}
+	    } else {
+		switch $outcome {
+		    XFAIL {
+			xpass "$test"
+		    }
+		    default {
+			pass "$test"}
+		}
+	    }
+	}
+    }
+}
