@@ -14,10 +14,6 @@ class MachineInstr;
 
 extern AnnotationID MCFBB_AID;
 
-// FIXME: this should go away soon
-class MachineBasicBlock;
-typedef MachineBasicBlock MachineCodeForBasicBlock;
-
 class MachineBasicBlock : public Annotation {
   std::vector<MachineInstr*> Insts;
 public:
