@@ -72,7 +72,6 @@ public:
 private:
   PrimitiveID ID;        // The current base type of this type...
   unsigned    UID;       // The unique ID number for this class
-  std::string Desc;      // The printed name of the string...
   bool        Abstract;  // True if type contains an OpaqueType
   bool        Recursive; // True if the type is recursive
 
@@ -81,10 +80,6 @@ protected:
   Type(const std::string &Name, PrimitiveID id);
   virtual ~Type() {}
 
-  /// When types are refined, they update their description to be more concrete.
-  ///
-  inline void setDescription(const std::string &D) { Desc = D; }
-  
   /// setName - Associate the name with this type in the symbol table, but don't
   /// set the local name to be equal specified name.
   ///
@@ -119,7 +114,7 @@ public:
   inline unsigned getUniqueID() const { return UID; }
 
   /// getDescription - Return the string representation of the type...
-  inline const std::string &getDescription() const { return Desc; }
+  const std::string &getDescription() const;
 
   /// isSigned - Return whether an integral numeric type is signed.  This is
   /// true for SByteTy, ShortTy, IntTy, LongTy.  Note that this is not true for
