@@ -41,7 +41,13 @@ class SymbolTable;
 /// as operands to other values.
 ///
 class Value {
-  unsigned SubclassID;               // Subclass identifier (for isa/dyn_cast)
+  unsigned short SubclassID;         // Subclass identifier (for isa/dyn_cast)
+protected:
+  /// SubclassData - This member is defined by this class, but is not used for
+  /// anything.  Subclasses can use it to hold whatever state they find useful.
+  /// This field is initialized to zero by the ctor.
+  unsigned short SubclassData;
+private:
   PATypeHolder Ty;
   Use *UseList;
   std::string Name;
