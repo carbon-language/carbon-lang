@@ -52,15 +52,16 @@ namespace {
   // A single GlobalVariable is created for each constant in the pool
   // representing the memory for that constant.  
   // 
-  static AnnotationID CPFM_AID(
+  AnnotationID CPFM_AID(
                  AnnotationManager::getID("CodeGen::ConstantPoolForModule"));
 
-  class ConstantPoolForModule: private Annotation, public NonCopyable {
+  class ConstantPoolForModule : private Annotation {
     Module* myModule;
     std::map<const Constant*, GlobalVariable*> gvars;
     std::map<const Constant*, GlobalVariable*> origGVars;
     ConstantPoolForModule(Module* M);   // called only by annotation builder
-    ConstantPoolForModule();            // do not implement
+    ConstantPoolForModule();                      // DO NOT IMPLEMENT
+    void operator=(const ConstantPoolForModule&); // DO NOT IMPLEMENT
   public:
     static ConstantPoolForModule& get(Module* M) {
       ConstantPoolForModule* cpool =
