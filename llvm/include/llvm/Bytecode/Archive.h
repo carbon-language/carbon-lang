@@ -49,12 +49,13 @@ class ArchiveMember {
     /// access to the flags. The flags are not user settable.
     enum Flags {
       CompressedFlag = 1,          ///< Member is a normal compressed file
-      ForeignSymbolTableFlag = 2,  ///< Member is a foreign symbol table
-      LLVMSymbolTableFlag = 4,     ///< Member is an LLVM symbol table
-      BytecodeFlag = 8,            ///< Member is uncompressed bytecode
-      CompressedBytecodeFlag = 16, ///< Member is compressed bytecode
-      HasPathFlag = 32,            ///< Member has a full or partial path
-      HasLongFilenameFlag = 64,    ///< Member uses the long filename syntax
+      SVR4SymbolTableFlag = 2,     ///< Member is a SVR4 symbol table
+      BSD4SymbolTableFlag = 4,     ///< Member is a BSD4 symbol table
+      LLVMSymbolTableFlag = 8,     ///< Member is an LLVM symbol table
+      BytecodeFlag = 16,           ///< Member is uncompressed bytecode
+      CompressedBytecodeFlag = 32, ///< Member is compressed bytecode
+      HasPathFlag = 64,            ///< Member has a full or partial path
+      HasLongFilenameFlag = 128,   ///< Member uses the long filename syntax
       StringTableFlag = 256,       ///< Member is an ar(1) format string table
     };
 
@@ -117,9 +118,13 @@ class ArchiveMember {
     /// @brief Determine if the member is a compressed regular file.
     bool isCompressed() const { return flags&CompressedFlag; }
 
-    /// @returns true iff the member is a foreign (non-LLVM) symbol table
-    /// @brief Determine if this member is a foreign symbol table.
-    bool isForeignSymbolTable() const { return flags&ForeignSymbolTableFlag; }
+    /// @returns true iff the member is a SVR4 (non-LLVM) symbol table
+    /// @brief Determine if this member is a SVR4 symbol table.
+    bool isSVR4SymbolTable() const { return flags&SVR4SymbolTableFlag; }
+
+    /// @returns true iff the member is a BSD4.4 (non-LLVM) symbol table
+    /// @brief Determine if this member is a BSD4.4 symbol table.
+    bool isBSD4SymbolTable() const { return flags&BSD4SymbolTableFlag; }
 
     /// @returns true iff the archive member is the LLVM symbol table
     /// @brief Determine if this member is the LLVM symbol table.

@@ -105,8 +105,10 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   bool writeLongName = false;
   if (mbr.isStringTable()) {
     memcpy(hdr.name,ARFILE_STRTAB_NAME,16);
-  } else if (mbr.isForeignSymbolTable()) {
-    memcpy(hdr.name,ARFILE_SYMTAB_NAME,16);
+  } else if (mbr.isSVR4SymbolTable()) {
+    memcpy(hdr.name,ARFILE_SVR4_SYMTAB_NAME,16);
+  } else if (mbr.isBSD4SymbolTable()) {
+    memcpy(hdr.name,ARFILE_BSD4_SYMTAB_NAME,16);
   } else if (mbr.isLLVMSymbolTable()) {
     memcpy(hdr.name,ARFILE_LLVM_SYMTAB_NAME,16);
   } else if (TruncateNames) {
@@ -240,10 +242,11 @@ Archive::writeMember(
   // Determine if we actually should compress this member
   bool willCompress = 
       (ShouldCompress && 
-      !member.isForeignSymbolTable() &&
-      !member.isLLVMSymbolTable() &&
       !member.isCompressed() && 
-      !member.isCompressedBytecode());
+      !member.isCompressedBytecode() &&
+      !member.isLLVMSymbolTable() &&
+      !member.isSVR4SymbolTable() &&
+      !member.isBSD4SymbolTable());
 
   // Perform the compression. Note that if the file is uncompressed bytecode
   // then we turn the file into compressed bytecode rather than treating it as
@@ -418,7 +421,11 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
       // Write the file magic number
       FinalFile << ARFILE_MAGIC;
 
-      // If there is a foreign symbol table, put it into the file now.
+      // If there is a foreign symbol table, put it into the file now. Most
+      // ar(1) implementations require the symbol table to be first but llvm-ar
+      // can deal with it being after a foreign symbol table. This ensures
+      // compatibility with other ar(1) implementations as well as allowing the
+      // archive to store both native .o and LLVM .bc files, both indexed.
       if (foreignST) {
         writeMember(*foreignST, FinalFile, false, false, false);
       }

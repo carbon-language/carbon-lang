@@ -65,11 +65,17 @@ void ArchiveMember::replaceWith(const sys::Path& newFile) {
   data = 0;
   path = newFile;
 
-  // Foreign symbol tables have an empty name
-  if (path.get() == ARFILE_SYMTAB_NAME)
-    flags |= ForeignSymbolTableFlag;
+  // SVR4 symbol tables have an empty name
+  if (path.get() == ARFILE_SVR4_SYMTAB_NAME)
+    flags |= SVR4SymbolTableFlag;
   else
-    flags &= ~ForeignSymbolTableFlag;
+    flags &= ~SVR4SymbolTableFlag;
+
+  // BSD4.4 symbol tables have a special name
+  if (path.get() == ARFILE_BSD4_SYMTAB_NAME)
+    flags |= BSD4SymbolTableFlag;
+  else
+    flags &= ~BSD4SymbolTableFlag;
 
   // LLVM symbol tables have a very specific name
   if (path.get() == ARFILE_LLVM_SYMTAB_NAME)

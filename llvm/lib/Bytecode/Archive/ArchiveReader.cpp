@@ -41,7 +41,7 @@ Archive::parseSymbolTable(const void* data, unsigned size) {
     if (At + length > End)
       throw std::string("malformed symbol table");
     // we don't care if it can't be inserted (duplicate entry)
-    symTab.insert(std::make_pair(std::string(At,length),offset));
+    symTab.insert(std::make_pair(std::string(At, length), offset));
     At += length;
   }
   symTabSize = size;
@@ -96,14 +96,14 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
       if (Hdr->name[1] == '1' && Hdr->name[2] == '/') {
         if (isdigit(Hdr->name[3])) {
           unsigned len = atoi(&Hdr->name[3]);
-          pathname.assign(At,len);
+          pathname.assign(At, len);
           At += len;
           MemberSize -= len;
           flags |= ArchiveMember::HasLongFilenameFlag;
         } else
           throw std::string("invalid long filename");
       } else if (Hdr->name[1] == '_' && 
-                 (0==memcmp(Hdr->name,ARFILE_LLVM_SYMTAB_NAME,16))) {
+                 (0 == memcmp(Hdr->name, ARFILE_LLVM_SYMTAB_NAME, 16))) {
         // The member is using a long file name (>15 chars) format.
         // This format is standard for 4.4BSD and Mac OSX operating
         // systems. LLVM uses it similarly. In this format, the
@@ -116,18 +116,18 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
       break;
     case '/':
       if (Hdr->name[1]== '/') {
-        if (0==memcmp(Hdr->name,ARFILE_STRTAB_NAME,16)) {
+        if (0 == memcmp(Hdr->name, ARFILE_STRTAB_NAME, 16)) {
           pathname.assign(ARFILE_STRTAB_NAME);
           flags |= ArchiveMember::StringTableFlag;
         } else {
           throw std::string("invalid string table name");
         }
       } else if (Hdr->name[1] == ' ') {
-        if (0==memcmp(Hdr->name,ARFILE_SYMTAB_NAME,16)) {
-          pathname.assign(ARFILE_SYMTAB_NAME);
-          flags |= ArchiveMember::ForeignSymbolTableFlag;
+        if (0 == memcmp(Hdr->name, ARFILE_SVR4_SYMTAB_NAME, 16)) {
+          pathname.assign(ARFILE_SVR4_SYMTAB_NAME);
+          flags |= ArchiveMember::SVR4SymbolTableFlag;
         } else {
-          throw std::string("invalid foreign symbol table name");
+          throw std::string("invalid SVR4 symbol table name");
         }
       } else if (isdigit(Hdr->name[1])) {
         unsigned index = atoi(&Hdr->name[1]);
@@ -138,7 +138,7 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
           const char* last_p = p;
           while (p < endp) {
             if (*p == '\n' && *last_p == '/') {
-              pathname.assign(namep,last_p-namep);
+              pathname.assign(namep, last_p - namep);
               flags |= ArchiveMember::HasLongFilenameFlag;
               break;
             }
@@ -152,17 +152,24 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
         }
       }
       break;
+    case '_':
+      if (Hdr->name[1] == '_' && 
+          (0 == memcmp(Hdr->name, ARFILE_BSD4_SYMTAB_NAME, 16))) {
+        pathname.assign(ARFILE_BSD4_SYMTAB_NAME);
+        flags |= ArchiveMember::BSD4SymbolTableFlag;
+      }
+      break;
 
     default:
-      char* slash = (char*) memchr(Hdr->name,'/',16);
+      char* slash = (char*) memchr(Hdr->name, '/', 16);
       if (slash == 0)
         slash = Hdr->name + 16;
-      pathname.assign(Hdr->name,slash-Hdr->name);
+      pathname.assign(Hdr->name, slash - Hdr->name);
       break;
   }
 
   // Determine if this is a bytecode file
-  switch (sys::IdentifyFileType(At,4)) {
+  switch (sys::IdentifyFileType(At, 4)) {
     case sys::BytecodeFileType:
       flags |= ArchiveMember::BytecodeFlag;
       break;
@@ -183,7 +190,7 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
   member->path.setFile(pathname);
   member->info.fileSize = MemberSize;
   member->info.modTime.fromEpochTime(atoi(Hdr->date));
-  sscanf(Hdr->mode,"%o",&(member->info.mode));
+  sscanf(Hdr->mode, "%o", &(member->info.mode));
   member->info.user = atoi(Hdr->uid);
   member->info.group = atoi(Hdr->gid);
   member->flags = flags;
@@ -195,7 +202,7 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
 void
 Archive::checkSignature() {
   // Check the magic string at file's header
-  if (mapfile->size() < 8 || memcmp(base, ARFILE_MAGIC,8))
+  if (mapfile->size() < 8 || memcmp(base, ARFILE_MAGIC, 8))
     throw std::string("invalid signature for an archive file");
 }
 
@@ -222,9 +229,14 @@ Archive::loadArchive() {
     ArchiveMember* mbr = parseMemberHeader(At, End);
 
     // check if this is the foreign symbol table
-    if (mbr->isForeignSymbolTable()) {
+    if (mbr->isSVR4SymbolTable() || mbr->isBSD4SymbolTable()) {
       // We just save this but don't do anything special
       // with it. It doesn't count as the "first file".
+      if (foreignST) {
+        // What? Multiple foreign symbol tables? Just chuck it
+        // and retain the last one found.
+        delete foreignST;
+      }
       foreignST = mbr;
       At += mbr->getSize();
       if ((intptr_t(At) & 1) == 1)
@@ -234,7 +246,7 @@ Archive::loadArchive() {
       // variable. This will be used to get the names of the
       // members that use the "/ddd" format for their names
       // (SVR4 style long names).
-      strtab.assign(At,mbr->getSize());
+      strtab.assign(At, mbr->getSize());
       At += mbr->getSize();
       if ((intptr_t(At) & 1) == 1)
         At++;
@@ -244,7 +256,7 @@ Archive::loadArchive() {
       // already, its an error. Otherwise, parse the symbol table and move on.
       if (seenSymbolTable)
         throw std::string("invalid archive: multiple symbol tables");
-      parseSymbolTable(mbr->getData(),mbr->getSize());
+      parseSymbolTable(mbr->getData(), mbr->getSize());
       seenSymbolTable = true;
       At += mbr->getSize();
       if ((intptr_t(At) & 1) == 1)
@@ -269,7 +281,7 @@ Archive::loadArchive() {
 Archive*
 Archive::OpenAndLoad(const sys::Path& file) {
 
-  Archive* result = new Archive(file,true);
+  Archive* result = new Archive(file, true);
 
   result->loadArchive();
   
@@ -314,7 +326,7 @@ Archive::loadSymbolTable() {
   const char* FirstFile = At;
   ArchiveMember* mbr = parseMemberHeader(At, End);
 
-  if (mbr->isForeignSymbolTable()) {
+  if (mbr->isSVR4SymbolTable() || mbr->isBSD4SymbolTable()) {
     // Skip the foreign symbol table, we don't do anything with it
     At += mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
@@ -323,24 +335,24 @@ Archive::loadSymbolTable() {
 
     // Read the next one
     FirstFile = At;
-    mbr = parseMemberHeader(At,End);
+    mbr = parseMemberHeader(At, End);
   }
 
   if (mbr->isStringTable()) {
     // Process the string table entry
-    strtab.assign((const char*)mbr->getData(),mbr->getSize());
+    strtab.assign((const char*)mbr->getData(), mbr->getSize());
     At += mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
       At++;
     delete mbr;
     // Get the next one
     FirstFile = At;
-    mbr = parseMemberHeader(At,End);
+    mbr = parseMemberHeader(At, End);
   }
 
   // See if its the symbol table
   if (mbr->isLLVMSymbolTable()) {
-    parseSymbolTable(mbr->getData(),mbr->getSize());
+    parseSymbolTable(mbr->getData(), mbr->getSize());
     FirstFile = At + mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
       FirstFile++;
@@ -358,7 +370,7 @@ Archive::loadSymbolTable() {
 // Open the archive and load just the symbol tables
 Archive*
 Archive::OpenAndLoadSymbols(const sys::Path& file) {
-  Archive* result = new Archive(file,true);
+  Archive* result = new Archive(file, true);
 
   result->loadSymbolTable();
 
@@ -399,7 +411,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol) {
       (const unsigned char*) mbr->getData(), mbr->getSize(), 
       FullMemberName, 0);
 
-  modules.insert(std::make_pair(fileOffset,std::make_pair(mp,mbr)));
+  modules.insert(std::make_pair(fileOffset, std::make_pair(mp, mbr)));
 
   return mp;
 }
@@ -441,11 +453,11 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
           // Insert the module's symbols into the symbol table
           for (std::vector<std::string>::iterator I = symbols.begin(), 
                E=symbols.end(); I != E; ++I ) {
-            symTab.insert(std::make_pair(*I,offset));
+            symTab.insert(std::make_pair(*I, offset));
           }
           // Insert the ModuleProvider and the ArchiveMember into the table of
           // modules.
-          modules.insert(std::make_pair(offset,std::make_pair(MP,mbr)));
+          modules.insert(std::make_pair(offset, std::make_pair(MP, mbr)));
         } else {
           throw std::string("Can't parse bytecode member: ") +
             mbr->getPath().get();
