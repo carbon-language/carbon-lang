@@ -432,9 +432,38 @@ void Interpreter::exitCalled(GenericValue GV) {
   ECStack.clear();
 }
 
+/// Pop the last stack frame off of ECStack and then copy the result
+/// back into the result variable if we are not returning void. The
+/// result variable may be the ExitCode, or the Value of the calling
+/// CallInst if there was a previous stack frame. This procedure may
+/// invalidate any ECStack iterators you have.
+///
+void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
+                                                  GenericValue Result) {
+  // Pop the current stack frame.
+  ECStack.pop_back();
+
+  if (ECStack.empty()) {  // Finished main.  Put result into exit code... 
+    if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?       
+      ExitCode = Result.IntVal;   // Capture the exit code of the program 
+    } else { 
+      ExitCode = 0; 
+    } 
+  } else { 
+    // If we have a previous stack frame, and we have a previous call, 
+    // fill in the return value... 
+    ExecutionContext &CallingSF = ECStack.back();
+    if (CallingSF.Caller) {
+      if (CallingSF.Caller->getType() != Type::VoidTy)      // Save result...
+        SetValue(CallingSF.Caller, Result, CallingSF);
+      CallingSF.Caller = 0;          // We returned from the call...
+    }
+  }
+}
+
 void Interpreter::visitReturnInst(ReturnInst &I) {
   ExecutionContext &SF = ECStack.back();
-  const Type *RetTy = 0;
+  const Type *RetTy = Type::VoidTy;
   GenericValue Result;
 
   // Save away the return value... (if we are not 'ret void')
@@ -443,25 +472,7 @@ void Interpreter::visitReturnInst(ReturnInst &I) {
     Result = getOperandValue(I.getReturnValue(), SF);
   }
 
-  // Pop the current stack frame... this invalidates SF
-  ECStack.pop_back();
-
-  if (ECStack.empty()) {  // Finished main.  Put result into exit code...
-    if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?
-      ExitCode = Result.IntVal;   // Capture the exit code of the program
-    } else {
-      ExitCode = 0;
-    }
-  } else {
-    // If we have a previous stack frame, and we have a previous call,
-    // fill in the return value...
-    ExecutionContext &NewSF = ECStack.back();
-    if (NewSF.Caller) {
-      if (NewSF.Caller->getType() != Type::VoidTy)      // Save result...
-        SetValue(NewSF.Caller, Result, NewSF);
-      NewSF.Caller = 0;          // We returned from the call...
-    }
-  }
+  popStackAndReturnValueToCaller(RetTy, Result);
 }
 
 void Interpreter::visitBranchInst(BranchInst &I) {
@@ -796,27 +807,20 @@ void Interpreter::callFunction(Function *F,
   assert((ECStack.empty() || ECStack.back().Caller == 0 || 
 	  ECStack.back().Caller->getNumOperands()-1 == ArgVals.size()) &&
 	 "Incorrect number of arguments passed into function call!");
-  if (F->isExternal()) {
-    GenericValue Result = callExternalFunction(F, ArgVals);
-    const Type *RetTy = F->getReturnType();
-
-    // Copy the result back into the result variable if we are not returning
-    // void.
-    if (RetTy != Type::VoidTy) {
-      if (!ECStack.empty() && ECStack.back().Caller) {
-        ExecutionContext &SF = ECStack.back();
-        SetValue(SF.Caller, Result, SF);
-        SF.Caller = 0;          // We returned from the call...
-      }
-    }
-
-    return;
-  }
-
   // Make a new stack frame... and fill it in.
   ECStack.push_back(ExecutionContext());
   ExecutionContext &StackFrame = ECStack.back();
   StackFrame.CurFunction = F;
+
+  // Special handling for external functions.
+  if (F->isExternal()) {
+    GenericValue Result = callExternalFunction (F, ArgVals);
+    // Simulate a 'ret' instruction of the appropriate type.
+    popStackAndReturnValueToCaller (F->getReturnType (), Result);
+    return;
+  }
+
+  // Get pointers to first LLVM BB & Instruction in function.
   StackFrame.CurBB     = F->begin();
   StackFrame.CurInst   = StackFrame.CurBB->begin();
 

@@ -157,6 +157,7 @@ private:  // Helper functions
   GenericValue getOperandValue(Value *V, ExecutionContext &SF);
   GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
 				    ExecutionContext &SF);
+  void popStackAndReturnValueToCaller(const Type *RetTy, GenericValue Result);
 };
 
 #endif
