@@ -1778,109 +1778,115 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
           ac_config_commands="$ac_config_commands test/Programs/MultiSource/Makefile.multisrc"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Burg/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Applications/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Fhourstones/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Applications/Burg/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/01-qbsort/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/03-testtrie/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/04-bisect/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/05-eks/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/08-main/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/09-vor/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/12-IOtest/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/15-trie/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/17-bintr/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/McCat/18-imp/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/bh/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/bisort/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/em3d/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/health/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/mst/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/perimeter/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/health/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/power/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/treeadd/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/tsp/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/power/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Olden/voronoi/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile"
 
 
           ac_config_commands="$ac_config_commands test/Programs/MultiSource/OptimizerEval/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Ptrdist/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Ptrdist/anagram/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Ptrdist/bc/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Ptrdist/ft/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Ptrdist/ks/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Ptrdist/yacr2/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/aha/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Applications/aha/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/llubenchmark/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/sgefa/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Applications/sgefa/Makefile"
 
 
-          ac_config_commands="$ac_config_commands test/Programs/MultiSource/sim/Makefile"
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/sim/Makefile"
 
 
           ac_config_commands="$ac_config_commands test/Programs/NoSource/Makefile"
@@ -4377,7 +4383,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4380 "configure"' > conftest.$ac_ext
+  echo '#line 4386 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5218,7 +5224,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5221:" \
+echo "$as_me:5227:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6227,11 +6233,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6230: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6236: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6234: \$? = $ac_status" >&5
+   echo "$as_me:6240: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6459,11 +6465,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6462: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6468: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6466: \$? = $ac_status" >&5
+   echo "$as_me:6472: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6526,11 +6532,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6529: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6535: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6533: \$? = $ac_status" >&5
+   echo "$as_me:6539: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8538,7 +8544,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8541 "configure"
+#line 8547 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8636,7 +8642,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8639 "configure"
+#line 8645 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10772,11 +10778,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10775: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10781: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10779: \$? = $ac_status" >&5
+   echo "$as_me:10785: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10839,11 +10845,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10842: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10848: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10846: \$? = $ac_status" >&5
+   echo "$as_me:10852: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12082,7 +12088,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12085 "configure"
+#line 12091 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12180,7 +12186,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12183 "configure"
+#line 12189 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13002,11 +13008,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13005: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13011: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13009: \$? = $ac_status" >&5
+   echo "$as_me:13015: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13069,11 +13075,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13072: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13078: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13076: \$? = $ac_status" >&5
+   echo "$as_me:13082: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15013,11 +15019,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15016: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15022: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15020: \$? = $ac_status" >&5
+   echo "$as_me:15026: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15245,11 +15251,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15248: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15254: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15252: \$? = $ac_status" >&5
+   echo "$as_me:15258: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15312,11 +15318,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15315: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15321: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15319: \$? = $ac_status" >&5
+   echo "$as_me:15325: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17324,7 +17330,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17327 "configure"
+#line 17333 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17422,7 +17428,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17425 "configure"
+#line 17431 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23356,41 +23362,43 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/External/SPEC/CINT2000/3
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/LLVMSource/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Makefile.multisrc`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Burg/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Fhourstones/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/01-qbsort/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/03-testtrie/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/04-bisect/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/05-eks/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/08-main/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/09-vor/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/12-IOtest/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/15-trie/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/17-bintr/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/McCat/18-imp/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/bh/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/bisort/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/em3d/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/health/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/mst/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/perimeter/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/power/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/treeadd/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/tsp/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Olden/voronoi/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Applications/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Applications/Burg/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/health/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/power/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/OptimizerEval/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Ptrdist/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Ptrdist/anagram/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Ptrdist/bc/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Ptrdist/ft/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Ptrdist/ks/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Ptrdist/yacr2/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/aha/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/llubenchmark/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/sgefa/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/sim/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Applications/aha/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Applications/sgefa/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/sim/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Flex/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/NoSource/Larn/Makefile`
@@ -23540,41 +23548,43 @@ do
   "test/Programs/LLVMSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/LLVMSource/Makefile" ;;
   "test/Programs/MultiSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Makefile" ;;
   "test/Programs/MultiSource/Makefile.multisrc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Makefile.multisrc" ;;
-  "test/Programs/MultiSource/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Burg/Makefile" ;;
-  "test/Programs/MultiSource/Fhourstones/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Fhourstones/Makefile" ;;
-  "test/Programs/MultiSource/McCat/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/Makefile" ;;
-  "test/Programs/MultiSource/McCat/01-qbsort/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/01-qbsort/Makefile" ;;
-  "test/Programs/MultiSource/McCat/03-testtrie/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/03-testtrie/Makefile" ;;
-  "test/Programs/MultiSource/McCat/04-bisect/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/04-bisect/Makefile" ;;
-  "test/Programs/MultiSource/McCat/05-eks/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/05-eks/Makefile" ;;
-  "test/Programs/MultiSource/McCat/08-main/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/08-main/Makefile" ;;
-  "test/Programs/MultiSource/McCat/09-vor/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/09-vor/Makefile" ;;
-  "test/Programs/MultiSource/McCat/12-IOtest/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/12-IOtest/Makefile" ;;
-  "test/Programs/MultiSource/McCat/15-trie/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/15-trie/Makefile" ;;
-  "test/Programs/MultiSource/McCat/17-bintr/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/17-bintr/Makefile" ;;
-  "test/Programs/MultiSource/McCat/18-imp/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/McCat/18-imp/Makefile" ;;
-  "test/Programs/MultiSource/Olden/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/Makefile" ;;
-  "test/Programs/MultiSource/Olden/bh/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/bh/Makefile" ;;
-  "test/Programs/MultiSource/Olden/bisort/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/bisort/Makefile" ;;
-  "test/Programs/MultiSource/Olden/em3d/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/em3d/Makefile" ;;
-  "test/Programs/MultiSource/Olden/health/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/health/Makefile" ;;
-  "test/Programs/MultiSource/Olden/mst/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/mst/Makefile" ;;
-  "test/Programs/MultiSource/Olden/perimeter/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/perimeter/Makefile" ;;
-  "test/Programs/MultiSource/Olden/power/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/power/Makefile" ;;
-  "test/Programs/MultiSource/Olden/treeadd/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/treeadd/Makefile" ;;
-  "test/Programs/MultiSource/Olden/tsp/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/tsp/Makefile" ;;
-  "test/Programs/MultiSource/Olden/voronoi/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Olden/voronoi/Makefile" ;;
+  "test/Programs/MultiSource/Applications/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Applications/Makefile" ;;
+  "test/Programs/MultiSource/Applications/Burg/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Applications/Burg/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/health/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/health/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/power/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/power/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile" ;;
   "test/Programs/MultiSource/OptimizerEval/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/OptimizerEval/Makefile" ;;
-  "test/Programs/MultiSource/Ptrdist/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Ptrdist/Makefile" ;;
-  "test/Programs/MultiSource/Ptrdist/anagram/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Ptrdist/anagram/Makefile" ;;
-  "test/Programs/MultiSource/Ptrdist/bc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Ptrdist/bc/Makefile" ;;
-  "test/Programs/MultiSource/Ptrdist/ft/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Ptrdist/ft/Makefile" ;;
-  "test/Programs/MultiSource/Ptrdist/ks/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Ptrdist/ks/Makefile" ;;
-  "test/Programs/MultiSource/Ptrdist/yacr2/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Ptrdist/yacr2/Makefile" ;;
-  "test/Programs/MultiSource/aha/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/aha/Makefile" ;;
-  "test/Programs/MultiSource/llubenchmark/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/llubenchmark/Makefile" ;;
-  "test/Programs/MultiSource/sgefa/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/sgefa/Makefile" ;;
-  "test/Programs/MultiSource/sim/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/sim/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile" ;;
+  "test/Programs/MultiSource/Applications/aha/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Applications/aha/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile" ;;
+  "test/Programs/MultiSource/Applications/sgefa/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Applications/sgefa/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/sim/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/sim/Makefile" ;;
   "test/Programs/NoSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Makefile" ;;
   "test/Programs/NoSource/Flex/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Flex/Makefile" ;;
   "test/Programs/NoSource/Larn/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/NoSource/Larn/Makefile" ;;
@@ -24354,41 +24364,43 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/LLVMSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/LLVMSource/Makefile test/Programs/LLVMSource/Makefile ;;
     test/Programs/MultiSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Makefile test/Programs/MultiSource/Makefile ;;
     test/Programs/MultiSource/Makefile.multisrc ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Makefile.multisrc test/Programs/MultiSource/Makefile.multisrc ;;
-    test/Programs/MultiSource/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Burg/Makefile test/Programs/MultiSource/Burg/Makefile ;;
-    test/Programs/MultiSource/Fhourstones/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Fhourstones/Makefile test/Programs/MultiSource/Fhourstones/Makefile ;;
-    test/Programs/MultiSource/McCat/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/Makefile test/Programs/MultiSource/McCat/Makefile ;;
-    test/Programs/MultiSource/McCat/01-qbsort/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/01-qbsort/Makefile test/Programs/MultiSource/McCat/01-qbsort/Makefile ;;
-    test/Programs/MultiSource/McCat/03-testtrie/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/03-testtrie/Makefile test/Programs/MultiSource/McCat/03-testtrie/Makefile ;;
-    test/Programs/MultiSource/McCat/04-bisect/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/04-bisect/Makefile test/Programs/MultiSource/McCat/04-bisect/Makefile ;;
-    test/Programs/MultiSource/McCat/05-eks/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/05-eks/Makefile test/Programs/MultiSource/McCat/05-eks/Makefile ;;
-    test/Programs/MultiSource/McCat/08-main/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/08-main/Makefile test/Programs/MultiSource/McCat/08-main/Makefile ;;
-    test/Programs/MultiSource/McCat/09-vor/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/09-vor/Makefile test/Programs/MultiSource/McCat/09-vor/Makefile ;;
-    test/Programs/MultiSource/McCat/12-IOtest/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/12-IOtest/Makefile test/Programs/MultiSource/McCat/12-IOtest/Makefile ;;
-    test/Programs/MultiSource/McCat/15-trie/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/15-trie/Makefile test/Programs/MultiSource/McCat/15-trie/Makefile ;;
-    test/Programs/MultiSource/McCat/17-bintr/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/17-bintr/Makefile test/Programs/MultiSource/McCat/17-bintr/Makefile ;;
-    test/Programs/MultiSource/McCat/18-imp/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/McCat/18-imp/Makefile test/Programs/MultiSource/McCat/18-imp/Makefile ;;
-    test/Programs/MultiSource/Olden/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/Makefile test/Programs/MultiSource/Olden/Makefile ;;
-    test/Programs/MultiSource/Olden/bh/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/bh/Makefile test/Programs/MultiSource/Olden/bh/Makefile ;;
-    test/Programs/MultiSource/Olden/bisort/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/bisort/Makefile test/Programs/MultiSource/Olden/bisort/Makefile ;;
-    test/Programs/MultiSource/Olden/em3d/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/em3d/Makefile test/Programs/MultiSource/Olden/em3d/Makefile ;;
-    test/Programs/MultiSource/Olden/health/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/health/Makefile test/Programs/MultiSource/Olden/health/Makefile ;;
-    test/Programs/MultiSource/Olden/mst/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/mst/Makefile test/Programs/MultiSource/Olden/mst/Makefile ;;
-    test/Programs/MultiSource/Olden/perimeter/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/perimeter/Makefile test/Programs/MultiSource/Olden/perimeter/Makefile ;;
-    test/Programs/MultiSource/Olden/power/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/power/Makefile test/Programs/MultiSource/Olden/power/Makefile ;;
-    test/Programs/MultiSource/Olden/treeadd/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/treeadd/Makefile test/Programs/MultiSource/Olden/treeadd/Makefile ;;
-    test/Programs/MultiSource/Olden/tsp/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/tsp/Makefile test/Programs/MultiSource/Olden/tsp/Makefile ;;
-    test/Programs/MultiSource/Olden/voronoi/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Olden/voronoi/Makefile test/Programs/MultiSource/Olden/voronoi/Makefile ;;
+    test/Programs/MultiSource/Applications/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Applications/Makefile test/Programs/MultiSource/Applications/Makefile ;;
+    test/Programs/MultiSource/Applications/Burg/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Applications/Burg/Makefile test/Programs/MultiSource/Applications/Burg/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Makefile test/Programs/MultiSource/Benchmarks/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/Makefile test/Programs/MultiSource/Benchmarks/McCat/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile test/Programs/MultiSource/Benchmarks/McCat/04-bisect/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile test/Programs/MultiSource/Benchmarks/McCat/05-eks/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile test/Programs/MultiSource/Benchmarks/McCat/08-main/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile test/Programs/MultiSource/Benchmarks/McCat/09-vor/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile test/Programs/MultiSource/Benchmarks/McCat/12-IOtest/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile test/Programs/MultiSource/Benchmarks/McCat/15-trie/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile test/Programs/MultiSource/Benchmarks/McCat/17-bintr/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile test/Programs/MultiSource/Benchmarks/McCat/18-imp/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/Makefile test/Programs/MultiSource/Benchmarks/Olden/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile test/Programs/MultiSource/Benchmarks/Olden/bh/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile test/Programs/MultiSource/Benchmarks/Olden/bisort/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile test/Programs/MultiSource/Benchmarks/Olden/em3d/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/health/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/health/Makefile test/Programs/MultiSource/Benchmarks/Olden/health/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile test/Programs/MultiSource/Benchmarks/Olden/mst/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile test/Programs/MultiSource/Benchmarks/Olden/perimeter/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/power/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/power/Makefile test/Programs/MultiSource/Benchmarks/Olden/power/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile test/Programs/MultiSource/Benchmarks/Olden/treeadd/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile test/Programs/MultiSource/Benchmarks/Olden/tsp/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile test/Programs/MultiSource/Benchmarks/Olden/voronoi/Makefile ;;
     test/Programs/MultiSource/OptimizerEval/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/OptimizerEval/Makefile test/Programs/MultiSource/OptimizerEval/Makefile ;;
-    test/Programs/MultiSource/Ptrdist/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Ptrdist/Makefile test/Programs/MultiSource/Ptrdist/Makefile ;;
-    test/Programs/MultiSource/Ptrdist/anagram/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Ptrdist/anagram/Makefile test/Programs/MultiSource/Ptrdist/anagram/Makefile ;;
-    test/Programs/MultiSource/Ptrdist/bc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Ptrdist/bc/Makefile test/Programs/MultiSource/Ptrdist/bc/Makefile ;;
-    test/Programs/MultiSource/Ptrdist/ft/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Ptrdist/ft/Makefile test/Programs/MultiSource/Ptrdist/ft/Makefile ;;
-    test/Programs/MultiSource/Ptrdist/ks/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Ptrdist/ks/Makefile test/Programs/MultiSource/Ptrdist/ks/Makefile ;;
-    test/Programs/MultiSource/Ptrdist/yacr2/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Ptrdist/yacr2/Makefile test/Programs/MultiSource/Ptrdist/yacr2/Makefile ;;
-    test/Programs/MultiSource/aha/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/aha/Makefile test/Programs/MultiSource/aha/Makefile ;;
-    test/Programs/MultiSource/llubenchmark/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/llubenchmark/Makefile test/Programs/MultiSource/llubenchmark/Makefile ;;
-    test/Programs/MultiSource/sgefa/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/sgefa/Makefile test/Programs/MultiSource/sgefa/Makefile ;;
-    test/Programs/MultiSource/sim/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/sim/Makefile test/Programs/MultiSource/sim/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/anagram/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/bc/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/ft/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/ks/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile test/Programs/MultiSource/Benchmarks/Ptrdist/yacr2/Makefile ;;
+    test/Programs/MultiSource/Applications/aha/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Applications/aha/Makefile test/Programs/MultiSource/Applications/aha/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile test/Programs/MultiSource/Benchmarks/llubenchmark/Makefile ;;
+    test/Programs/MultiSource/Applications/sgefa/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Applications/sgefa/Makefile test/Programs/MultiSource/Applications/sgefa/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/sim/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/sim/Makefile test/Programs/MultiSource/Benchmarks/sim/Makefile ;;
     test/Programs/NoSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Makefile test/Programs/NoSource/Makefile ;;
     test/Programs/NoSource/Flex/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Flex/Makefile test/Programs/NoSource/Flex/Makefile ;;
     test/Programs/NoSource/Larn/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/NoSource/Larn/Makefile test/Programs/NoSource/Larn/Makefile ;;
