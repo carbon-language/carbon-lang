@@ -26,6 +26,11 @@ char *strcpy(char *s1, const char *s2) {
   return s1;
 }
 
+char *strcat(char *s1, const char *s2) {
+  strcpy(s1+strlen(s1), s2);
+  return s1;
+}
+
 
 /* Compare S1 and S2, returning less than, equal to or
    greater than zero if S1 is lexicographically less than,
