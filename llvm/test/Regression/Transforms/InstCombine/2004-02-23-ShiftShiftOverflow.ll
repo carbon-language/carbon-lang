@@ -6,3 +6,10 @@ int %test(int %X) {
 	%Z = shr int %Y, ubyte 17
 	ret int %Z
 }
+
+int %test2(int %X) {
+	; Do not fold into shl X, 34, as this uses undefined behavior!
+	%Y = shl int %X, ubyte 17
+	%Z = shl int %Y, ubyte 17
+	ret int %Z
+}
