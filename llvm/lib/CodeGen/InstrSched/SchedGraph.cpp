@@ -100,26 +100,24 @@ SchedGraph::~SchedGraph() {
 }
 
 void SchedGraph::dump() const {
-  std::cerr << "  Sched Graph for Basic Block: ";
-  std::cerr << MBB.getBasicBlock()->getName()
-            << " (" << MBB.getBasicBlock() << ")";
-  
-  std::cerr << "\n\n    Actual Root nodes : ";
-  for (unsigned i=0, N=graphRoot->outEdges.size(); i < N; i++)
-    std::cerr << graphRoot->outEdges[i]->getSink()->getNodeId()
-              << ((i == N-1)? "" : ", ");
-  
+  std::cerr << "  Sched Graph for Basic Block: "
+            << MBB.getBasicBlock()->getName()
+            << " (" << MBB.getBasicBlock() << ")"
+            << "\n\n    Actual Root nodes: ";
+  for (SchedGraphNodeCommon::const_iterator I = graphRoot->beginOutEdges(),
+                                            E = graphRoot->endOutEdges();
+       I != E; ++I) {
+    std::cerr << (*I)->getSink ()->getNodeId ();
+    if (I + 1 != E) { std::cerr << ", "; }
+  }
   std::cerr << "\n    Graph Nodes:\n";
-  for (const_iterator I=begin(); I != end(); ++I)
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
     std::cerr << "\n" << *I->second;
-  
   std::cerr << "\n";
 }
 
-
-
 void SchedGraph::addDummyEdges() {
-  assert(graphRoot->outEdges.size() == 0);
+  assert(graphRoot->getNumOutEdges() == 0);
   
   for (const_iterator I=begin(); I != end(); ++I) {
     SchedGraphNode* node = (*I).second;
@@ -635,19 +633,10 @@ void SchedGraph::buildGraph(const TargetMachine& target) {
   // Then add incoming def-use (SSA) edges for each machine instruction.
   for (unsigned i=0, N=MBB.size(); i < N; i++)
     addEdgesForInstruction(*MBB[i], valueToDefVecMap, target);
-  
-#ifdef NEED_SEPARATE_NONSSA_EDGES_CODE
-  // Then add non-SSA edges for all VM instructions in the block.
-  // We assume that all machine instructions that define a value are
-  // generated from the VM instruction corresponding to that value.
-  // TODO: This could probably be done much more efficiently.
-  for (BasicBlock::const_iterator II = bb->begin(); II != bb->end(); ++II)
-    this->addNonSSAEdgesForValue(*II, target);
-#endif //NEED_SEPARATE_NONSSA_EDGES_CODE
-  
+
   // Then add edges for dependences on machine registers
   this->addMachineRegEdges(regToRefVecMap, target);
-  
+
   // Finally, add edges from the dummy root and to dummy leaf
   this->addDummyEdges();		
 }
