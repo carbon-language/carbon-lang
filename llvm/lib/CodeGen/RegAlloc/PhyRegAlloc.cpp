@@ -592,9 +592,10 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 				       const BasicBlock *BB,
 				       const unsigned OpNum) {
 
-  assert(! TM.getInstrInfo().isCall(MInst->getOpCode()) &&
-	 (! TM.getInstrInfo().isReturn(MInst->getOpCode())) &&
-	 "Arg of a call/ret must be handled elsewhere");
+  assert((! TM.getInstrInfo().isCall(MInst->getOpCode()) || OpNum == 0) &&
+         "Outgoing arg of a call must be handled elsewhere (func arg ok)");
+  assert(! TM.getInstrInfo().isReturn(MInst->getOpCode()) &&
+	 "Return value of a ret must be handled elsewhere");
 
   MachineOperand& Op = MInst->getOperand(OpNum);
   bool isDef =  MInst->operandIsDefined(OpNum);
