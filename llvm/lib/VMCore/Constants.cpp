@@ -59,25 +59,57 @@ void Constant::destroyConstantImpl() {
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getPrimitiveID()) {
-  case Type::BoolTyID:   return ConstantBool::get(false);
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID:   return ConstantSInt::get(Ty, 0);
+  case Type::BoolTyID: {
+    static Constant *NullBool = ConstantBool::get(false);
+    return NullBool;
+  }
+  case Type::SByteTyID: {
+    static Constant *NullSByte = ConstantSInt::get(Type::SByteTy, 0);
+    return NullSByte;
+  }
+  case Type::UByteTyID: {
+    static Constant *NullUByte = ConstantUInt::get(Type::UByteTy, 0);
+    return NullUByte;
+  }
+  case Type::ShortTyID: {
+    static Constant *NullShort = ConstantSInt::get(Type::ShortTy, 0);
+    return NullShort;
+  }
+  case Type::UShortTyID: {
+    static Constant *NullUShort = ConstantUInt::get(Type::UShortTy, 0);
+    return NullUShort;
+  }
+  case Type::IntTyID: {
+    static Constant *NullInt = ConstantSInt::get(Type::IntTy, 0);
+    return NullInt;
+  }
+  case Type::UIntTyID: {
+    static Constant *NullUInt = ConstantUInt::get(Type::UIntTy, 0);
+    return NullUInt;
+  }
+  case Type::LongTyID: {
+    static Constant *NullLong = ConstantSInt::get(Type::LongTy, 0);
+    return NullLong;
+  }
+  case Type::ULongTyID: {
+    static Constant *NullULong = ConstantUInt::get(Type::ULongTy, 0);
+    return NullULong;
+  }
 
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID:  return ConstantUInt::get(Ty, 0);
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return ConstantFP::get(Ty, 0);
+  case Type::FloatTyID: {
+    static Constant *NullFloat = ConstantFP::get(Type::FloatTy, 0);
+    return NullFloat;
+  }
+  case Type::DoubleTyID: {
+    static Constant *NullDouble = ConstantFP::get(Type::DoubleTy, 0);
+    return NullDouble;
+  }
 
   case Type::PointerTyID: 
     return ConstantPointerNull::get(cast<PointerType>(Ty));
+
   case Type::StructTyID: {
     const StructType *ST = cast<StructType>(Ty);
-
     const StructType::ElementTypes &ETs = ST->getElementTypes();
     std::vector<Constant*> Elements;
     Elements.resize(ETs.size());
