@@ -9,7 +9,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMAlpha
 TARGET = Alpha
-SHARED_LIBRARY=1
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = AlphaGenRegisterInfo.h.inc AlphaGenRegisterNames.inc \
