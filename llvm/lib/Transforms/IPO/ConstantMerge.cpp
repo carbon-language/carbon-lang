@@ -15,27 +15,39 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/ConstantMerge.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "Support/StatisticReporter.h"
 
 static Statistic<> NumMerged("constmerge\t\t- Number of global constants merged");
 
-// mergeDuplicateConstants - Workhorse for the pass.  This eliminates duplicate
+namespace {
+  struct ConstantMerge : public Pass {
+    const char *getPassName() const {return "Merge Duplicate Global Constants";}
+    
+    // run - For this pass, process all of the globals in the module,
+    // eliminating duplicate constants.
+    //
+    bool run(Module &M);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.preservesCFG();
+    }
+  };
+}
+
+Pass *createConstantMergePass() { return new ConstantMerge(); }
+
+
+// ConstantMerge::run - Workhorse for the pass.  This eliminates duplicate
 // constants, starting at global ConstantNo, and adds vars to the map if they
 // are new and unique.
 //
-static inline 
-bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
-                             std::map<Constant*, GlobalVariable*> &CMap) {
-  Module::GlobalListType &GList = M->getGlobalList();
-  if (GList.size() <= ConstantNo) return false;   // No new constants
+bool ConstantMerge::run(Module &M) {
+  std::map<Constant*, GlobalVariable*> CMap;
   bool MadeChanges = false;
   
-  for (; ConstantNo < GList.size(); ++ConstantNo) {
-    GlobalVariable *GV = GList[ConstantNo];
+  for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
     if (GV->isConstant()) {  // Only process constants
       assert(GV->hasInitializer() && "Globals constants must have inits!");
       Constant *Init = GV->getInitializer();
@@ -44,68 +56,19 @@ bool mergeDuplicateConstants(Module *M, unsigned &ConstantNo,
       std::map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
 
       if (I == CMap.end()) {    // Nope, add it to the map
-        CMap.insert(std::make_pair(Init, GV));
+        CMap.insert(I, std::make_pair(Init, GV));
       } else {                  // Yup, this is a duplicate!
         // Make all uses of the duplicate constant use the cannonical version...
         GV->replaceAllUsesWith(I->second);
 
-        // Remove and delete the global value from the module...
-        delete GList.remove(GList.begin()+ConstantNo);
+        // Delete the global value from the module... and back up iterator to
+        // not skip the next global...
+        GV = --M.getGlobalList().erase(GV);
 
-        --ConstantNo;  // Don't skip the next constant.
         ++NumMerged;
         MadeChanges = true;
       }
     }
-  }
+
   return MadeChanges;
 }
-
-namespace {
-  // FIXME: ConstantMerge should not be a FunctionPass!!!
-  class ConstantMerge : public FunctionPass {
-  protected:
-    std::map<Constant*, GlobalVariable*> Constants;
-    unsigned LastConstantSeen;
-  public:
-    inline ConstantMerge() : LastConstantSeen(0) {}
-
-    const char *getPassName() const {return "Merge Duplicate Global Constants";}
-    
-    // doInitialization - For this pass, process all of the globals in the
-    // module, eliminating duplicate constants.
-    //
-    bool doInitialization(Module *M) {
-      return ::mergeDuplicateConstants(M, LastConstantSeen, Constants);
-    }
-    
-    bool runOnFunction(Function *) { return false; }
-    
-    // doFinalization - Clean up internal state for this module
-    //
-    bool doFinalization(Module *M) {
-      LastConstantSeen = 0;
-      Constants.clear();
-      return false;
-    }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-    }
-  };
-  
-  struct DynamicConstantMerge : public ConstantMerge {
-    const char *getPassName() const { return "Dynamic Constant Merge"; }
-
-    // runOnFunction - Check to see if any globals have been added to the 
-    // global list for the module.  If so, eliminate them.
-    //
-    bool runOnFunction(Function *F) {
-      return ::mergeDuplicateConstants(F->getParent(), LastConstantSeen,
-                                       Constants);
-    }
-  };
-}
-
-Pass *createConstantMergePass() { return new ConstantMerge(); }
-Pass *createDynamicConstantMergePass() { return new DynamicConstantMerge(); }
