@@ -93,7 +93,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             DEBUG(std::cerr << "\t[BU] Self Inlining: " << F.getName() << "\n");
 
             // Handle self recursion by resolving the arguments and return value
-            Graph->mergeInGraph(Call, *Graph, true);
+            Graph->mergeInGraph(Call, *Graph, DSGraph::StripAllocaBit);
 
             // Erase the entry in the callees vector
             Callees.erase(Callees.begin()+c--);
@@ -120,7 +120,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             CallSitesForFunc.back().setCallee(0);
 
             // Handle self recursion by resolving the arguments and return value
-            Graph->mergeInGraph(Call, GI, true);
+            Graph->mergeInGraph(Call, GI, DSGraph::StripAllocaBit);
 
             // Erase the entry in the Callees vector
             Callees.erase(Callees.begin()+c--);

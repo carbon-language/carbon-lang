@@ -177,7 +177,7 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
     // Strip scalars but not allocas since they are alive in callee.
     // 
     DSNodeHandle RetVal = Graph->cloneInto(CG, OldValMap, OldNodeMap,
-                                           /*StripAllocas*/ false);
+                                           DSGraph::KeepAllocaBit);
     ResolveCallSite(*Graph, DSCallSite(CallSiteInCG, OldNodeMap));
   }
 

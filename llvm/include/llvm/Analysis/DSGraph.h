@@ -125,25 +125,30 @@ public:
   //
   void removeDeadNodes(bool KeepAllGlobals = false, bool KeepCalls = true);
 
+  enum AllocaBit {
+    StripAllocaBit,
+    KeepAllocaBit
+  };
+
   // cloneInto - Clone the specified DSGraph into the current graph, returning
   // the Return node of the graph.  The translated ScalarMap for the old
-  // function is filled into the OldValMap member.  If StripScalars
-  // (StripAllocas) is set to true, Scalar (Alloca) markers are removed from the
-  // graph as the graph is being cloned.
+  // function is filled into the OldValMap member.  If StripAllocas is set to
+  // 'StripAllocaBit', Alloca markers are removed from the graph as the graph is
+  // being cloned.
   //
   DSNodeHandle cloneInto(const DSGraph &G,
                          std::map<Value*, DSNodeHandle> &OldValMap,
                          std::map<const DSNode*, DSNode*> &OldNodeMap,
-                         bool StripAllocas = false);
+                         AllocaBit StripAllocas = KeepAllocaBit);
 
   /// mergeInGraph - The method is used for merging graphs together.  If the
   /// argument graph is not *this, it makes a clone of the specified graph, then
   /// merges the nodes specified in the call site with the formal arguments in
-  /// the graph.  If the StripAlloca's argument is true then Alloca markers are
-  /// removed from nodes.
+  /// the graph.  If the StripAlloca's argument is 'StripAllocaBit' then Alloca
+  /// markers are removed from nodes.
   ///
-  void mergeInGraph(DSCallSite &CS, const DSGraph &Graph, bool StripAllocas);
-
+  void mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
+                    AllocaBit StripAllocas);
 
 #if 0
   // cloneGlobalInto - Clone the given global node (or the node for the given

@@ -526,7 +526,7 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
                                 std::map<Value*, DSNodeHandle> &OldValMap,
                                 std::map<const DSNode*, DSNode*> &OldNodeMap,
-                                bool StripAllocas) {
+                                AllocaBit StripAllocas) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
 
   unsigned FN = Nodes.size();           // First new node...
@@ -544,11 +544,10 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
   for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
     Nodes[i]->remapLinks(OldNodeMap);
 
-  // Remove local markers as specified
-  unsigned char StripBits = StripAllocas ? DSNode::AllocaNode : 0;
-  if (StripBits)
+  // Remove alloca markers as specified
+  if (StripAllocas == StripAllocaBit)
     for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
-      Nodes[i]->NodeType &= ~StripBits;
+      Nodes[i]->NodeType &= ~DSNode::AllocaNode;
 
   // Copy the value map... and merge all of the global nodes...
   for (std::map<Value*, DSNodeHandle>::const_iterator I = G.ScalarMap.begin(),
@@ -580,7 +579,7 @@ DSNodeHandle DSGraph::cloneInto(const DSGraph &G,
 /// graph.
 ///
 void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
-                           bool StripAllocas) {
+                           AllocaBit StripAllocas) {
   std::map<Value*, DSNodeHandle> OldValMap;
   DSNodeHandle RetVal;
   std::map<Value*, DSNodeHandle> *ScalarMap = &OldValMap;
