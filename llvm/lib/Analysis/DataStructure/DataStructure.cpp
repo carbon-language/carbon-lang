@@ -1183,12 +1183,22 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
 }
 
 static bool PathExistsToClonedNode(const DSNode *N, ReachabilityCloner &RC) {
-  for (df_iterator<const DSNode*> I = df_begin(N), E = df_end(N); I != E; ++I)
-    if (RC.hasClonedNode(*I))
-      return true;
+  if (N)
+    for (df_iterator<const DSNode*> I = df_begin(N), E = df_end(N); I != E; ++I)
+      if (RC.hasClonedNode(*I))
+        return true;
   return false;
 }
 
+static bool PathExistsToClonedNode(const DSCallSite &CS,
+                                   ReachabilityCloner &RC) {
+  if (PathExistsToClonedNode(CS.getRetVal().getNode(), RC))
+    return true;
+  for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i)
+    if (PathExistsToClonedNode(CS.getPtrArg(i).getNode(), RC))
+      return true;
+  return false;
+}
 
 /// mergeInGraph - The method is used for merging graphs together.  If the
 /// argument graph is not *this, it makes a clone of the specified graph, then
@@ -1231,20 +1241,21 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     if (!CS.getRetVal().isNull())
       RC.merge(CS.getRetVal(), Graph.getReturnNodeFor(F));
     
-    // If requested, copy the calls or aux-calls lists.
+    // If requested, copy all of the calls.
     if (!(CloneFlags & DontCloneCallNodes)) {
       // Copy the function calls list...
       FunctionCalls.reserve(FunctionCalls.size()+Graph.FunctionCalls.size());
       for (unsigned i = 0, ei = Graph.FunctionCalls.size(); i != ei; ++i)
         FunctionCalls.push_back(DSCallSite(Graph.FunctionCalls[i], RC));
     }
-    
+
+    // If the user has us copying aux calls (the normal case), set up a data
+    // structure to keep track of which ones we've copied over.
+    std::vector<bool> CopiedAuxCall;
     if (!(CloneFlags & DontCloneAuxCallNodes)) {
-      // Copy the auxiliary function calls list...
       AuxFunctionCalls.reserve(AuxFunctionCalls.size()+
                                Graph.AuxFunctionCalls.size());
-      for (unsigned i = 0, ei = Graph.AuxFunctionCalls.size(); i != ei; ++i)
-        AuxFunctionCalls.push_back(DSCallSite(Graph.AuxFunctionCalls[i], RC));
+      CopiedAuxCall.resize(Graph.AuxFunctionCalls.size());
     }
     
     // Clone over all globals that appear in the caller and callee graphs.
@@ -1263,18 +1274,35 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // maintain the connection information.  Every time we decide to include a
     // new global, this might make other globals live, so we must iterate
     // unfortunately.
-    bool MadeChange = false;
-    for (hash_set<GlobalVariable*>::iterator I = NonCopiedGlobals.begin();
-         I != NonCopiedGlobals.end();) {
-      DSNode *GlobalNode = Graph.getNodeForValue(*I).getNode();
-      if (RC.hasClonedNode(GlobalNode)) {
-        // Already cloned it, remove from set.
-        NonCopiedGlobals.erase(I++);
-      } else if (PathExistsToClonedNode(GlobalNode, RC)) {
-        RC.getClonedNH(Graph.getNodeForValue(*I));
-        NonCopiedGlobals.erase(I++);
-      } else {
-        ++I;
+    bool MadeChange = true;
+    while (MadeChange) {
+      MadeChange = false;
+      for (hash_set<GlobalVariable*>::iterator I = NonCopiedGlobals.begin();
+           I != NonCopiedGlobals.end();) {
+        DSNode *GlobalNode = Graph.getNodeForValue(*I).getNode();
+        if (RC.hasClonedNode(GlobalNode)) {
+          // Already cloned it, remove from set.
+          NonCopiedGlobals.erase(I++);
+          MadeChange = true;
+        } else if (PathExistsToClonedNode(GlobalNode, RC)) {
+          RC.getClonedNH(Graph.getNodeForValue(*I));
+          NonCopiedGlobals.erase(I++);
+          MadeChange = true;
+        } else {
+          ++I;
+        }
+      }
+
+      // If requested, copy any aux calls that can reach copied nodes.
+      if (!(CloneFlags & DontCloneAuxCallNodes)) {
+        for (unsigned i = 0, ei = Graph.AuxFunctionCalls.size(); i != ei; ++i)
+          if (!CopiedAuxCall[i] &&
+              PathExistsToClonedNode(Graph.AuxFunctionCalls[i], RC)) {
+            AuxFunctionCalls.push_back(DSCallSite(Graph.AuxFunctionCalls[i],
+                                                  RC));
+            CopiedAuxCall[i] = true;
+            MadeChange = true;
+          }
       }
     }
 
