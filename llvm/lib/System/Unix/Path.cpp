@@ -290,7 +290,7 @@ Path::setDirectory(const std::string& a_path) {
   Path save(*this);
   path = a_path;
   size_t last = a_path.size() -1;
-  if (last != 0 && a_path[last] != '/')
+  if (a_path.size() == 0 || a_path[last] != '/')
     path += '/';
   if (!isValid()) {
     path = save.path;
