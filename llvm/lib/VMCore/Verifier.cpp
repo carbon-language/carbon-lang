@@ -41,6 +41,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iTerminators.h"
+#include "llvm/iOther.h"
 #include "llvm/Argument.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/CFG.h"
@@ -71,6 +72,7 @@ namespace {  // Anonymous namespace for class
     void visitBasicBlock(BasicBlock *BB);
     void visitPHINode(PHINode *PN);
     void visitBinaryOperator(BinaryOperator *B);
+    void visitCallInst(CallInst *CI);
     void visitInstruction(Instruction *I);
 
     // CheckFailed - A check failed, so print out the condition and the message
@@ -89,11 +91,11 @@ namespace {  // Anonymous namespace for class
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \
-  do { if (!(C)) { CheckFailed(#C, M); } } while (0)
+  do { if (!(C)) { CheckFailed(#C, M); return; } } while (0)
 #define Assert1(C, M, V1) \
-  do { if (!(C)) { CheckFailed(#C, M, V1); } } while (0)
+  do { if (!(C)) { CheckFailed(#C, M, V1); return; } } while (0)
 #define Assert2(C, M, V1, V2) \
-  do { if (!(C)) { CheckFailed(#C, M, V1, V2); } } while (0)
+  do { if (!(C)) { CheckFailed(#C, M, V1, V2); return; } } while (0)
 
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
@@ -156,7 +158,7 @@ void Verifier::visitBasicBlock(BasicBlock *BB) {
   Assert1(BB->getTerminator(), "Basic Block does not have terminator!\n", BB);
 
   // Check that the terminator is ok as well...
-  if (BB->getTerminator() && isa<ReturnInst>(BB->getTerminator())) {
+  if (isa<ReturnInst>(BB->getTerminator())) {
     Instruction *I = BB->getTerminator();
     Function *F = I->getParent()->getParent();
     if (I->getNumOperands() == 0)
@@ -189,7 +191,7 @@ void Verifier::visitPHINode(PHINode *PN) {
       find(Preds.begin(), Preds.end(), BB);
     Assert2(PI != Preds.end(), "PHI node has entry for basic block that"
             " is not a predecessor!", PN, BB);
-    if (PI != Preds.end()) Preds.erase(PI);
+    Preds.erase(PI);
   }
   
   // There should be no entries left in the predecessor list...
@@ -201,6 +203,13 @@ void Verifier::visitPHINode(PHINode *PN) {
   visitInstruction(PN);
 }
 
+void Verifier::visitCallInst(CallInst *CI) {
+  Assert1(isa<PointerType>(CI->getOperand(0)->getType()),
+          "Called function must be a pointer!", CI);
+  PointerType *FPTy = cast<PointerType>(CI->getOperand(0)->getType());
+  Assert1(isa<FunctionType>(FPTy->getElementType()),
+          "Called function is not pointer to function type!", CI);
+}
 
 // visitBinaryOperator - Check that both arguments to the binary operator are
 // of the same type!
@@ -227,9 +236,9 @@ void Verifier::visitInstruction(Instruction *I) {
        UI != UE; ++UI) {
     Assert1(isa<Instruction>(*UI), "Use of instruction is not an instruction!",
             *UI);
-    if (Instruction *Used = dyn_cast<Instruction>(*UI))
-      Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
-              " embeded in a basic block!", I, Used);
+    Instruction *Used = cast<Instruction>(*UI);
+    Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
+            " embeded in a basic block!", I, Used);
   }
 
   if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
