@@ -21,6 +21,7 @@
 #include "Support/Signals.h"
 #include <memory>
 #include <fstream>
+using std::cerr;
 
 static cl::String InputFilename   ("", "Parse <arg> file, compile to bytecode",
                                    cl::Required, "");
@@ -64,7 +65,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   addPass(PM, createRaisePointerReferencesPass());// Eliminate casts
   addPass(PM, createPromoteMemoryToRegister());   // Promote alloca's to regs
-  addPass(PM, createReassociatePass());           // Reassociate expressions
+  /* addPass(PM, createReassociatePass());*/           // Reassociate expressions
   addPass(PM, createInstructionCombiningPass());  // Combine silly seq's
   addPass(PM, createDeadInstEliminationPass());   // Kill InstCombine remnants
   addPass(PM, createLICMPass());                  // Hoist loop invariants
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
     // Parse the file now...
     M.reset(ParseAssemblyFile(InputFilename));
   } catch (const ParseException &E) {
-    cerr << E.getMessage() << endl;
+    cerr << E.getMessage() << std::endl;
     return 1;
   }
 
@@ -107,7 +108,7 @@ int main(int argc, char **argv) {
     OutputFilename += ".o";
   }
 
-  std::ofstream Out(OutputFilename.c_str(), ios::out);
+  std::ofstream Out(OutputFilename.c_str(), std::ios::out);
   if (!Out.good()) {
     cerr << "Error opening " << OutputFilename << "!\n";
     return 1;

@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
-
+using std::cerr;
 
 cl::StringList InputFilenames("", "Load <arg> files, linking them together", 
 			      cl::OneOrMore);
@@ -66,7 +66,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     if (Verbose) {
       cerr << "Error opening bytecode file: '" << Filename << "'";
       if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << endl;
+      cerr << std::endl;
     }
     
     if (NextLibPathIdx == LibPaths.size()) break;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
   if (!Libraries.empty()) {
     // Sort libraries list...
-    sort(Libraries.begin(), Libraries.end());
+    //sort(Libraries.begin(), Libraries.end());
 
     // Remove duplicate libraries entries...
     Libraries.erase(unique(Libraries.begin(), Libraries.end()),

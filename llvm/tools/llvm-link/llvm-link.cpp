@@ -19,7 +19,9 @@
 #include <memory>
 #include <sys/types.h>     // For FileExists
 #include <sys/stat.h>
+#include <iostream>
 
+using std::cerr;
 
 cl::StringList InputFilenames("", "Load <arg> files, linking them together", 
 			      cl::OneOrMore);
@@ -106,7 +108,7 @@ int main(int argc, char **argv) {
 
   if (DumpAsm) cerr << "Here's the assembly:\n" << Composite.get();
 
-  ostream *Out = &cout;  // Default to printing to stdout...
+  std::ostream *Out = &std::cout;  // Default to printing to stdout...
   if (OutputFilename != "-") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!

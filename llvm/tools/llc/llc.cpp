@@ -22,6 +22,7 @@
 #include <memory>
 #include <fstream>
 using std::string;
+using std::cerr;
 
 static cl::String InputFilename ("", "Input filename", cl::NoFlags, "-");
 static cl::String OutputFilename("o", "Output filename", cl::NoFlags, "");
