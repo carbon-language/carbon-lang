@@ -50,9 +50,9 @@ LinkOneLibrary(const char*progname, Module* HeadModule,
     // If the pathname does not exist, then simply return if we're doing a 
     // native link and give a warning if we're doing a bytecode link.
     if (!Native) {
-      std::cerr << progname << ": error: Cannot find library '"
+      std::cerr << progname << ": warning: Cannot find library '"
                 << Lib << "'\n";
-      return true;
+      return false;
     }
   }
 
