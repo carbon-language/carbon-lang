@@ -24,7 +24,6 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Pass.h"
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.
 static RegisterAnalysisGroup<AliasAnalysis> X("Alias Analysis");
