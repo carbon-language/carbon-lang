@@ -17,7 +17,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdio>
+#include <execinfo.h>
 #include <signal.h>
+#include <unistd.h>
 #include "Config/config.h"     // Get the signal handler return type
 using namespace llvm;
 
@@ -39,6 +41,7 @@ static const int KillSigs[] = {
 };
 static const int *KillSigsEnd = KillSigs + sizeof(KillSigs)/sizeof(KillSigs[0]);
 
+static void* StackTrace[256];
 
 // SignalHandler - The signal handler that runs...
 static RETSIGTYPE SignalHandler(int Sig) {
@@ -50,7 +53,10 @@ static RETSIGTYPE SignalHandler(int Sig) {
   if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd)
     exit(1);   // If this is an interrupt signal, exit the program
 
-  // Otherwise if it is a fault (like SEGV) reissue the signal to die...
+  // Otherwise if it is a fault (like SEGV) output the stacktrace to
+  // STDERR and reissue the signal to die...
+  int depth = backtrace(StackTrace, sizeof(StackTrace)/sizeof(StackTrace[0]));
+  backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
   signal(Sig, SIG_DFL);
 }
 
