@@ -26,15 +26,13 @@ namespace llvm {
 
   class VirtRegMap {
   public:
-    typedef DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
-    typedef DenseMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
-    typedef std::multimap<MachineInstr*, unsigned> MI2VirtMap;
+    typedef std::multimap<MachineInstr*, unsigned> MI2VirtMapTy;
 
   private:
-    MachineFunction* mf_;
-    Virt2PhysMap v2pMap_;
-    Virt2StackSlotMap v2ssMap_;
-    MI2VirtMap mi2vMap_;
+    MachineFunction &MF;
+    DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
+    DenseMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
+    MI2VirtMapTy MI2VirtMap;
     
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
@@ -45,8 +43,8 @@ namespace llvm {
     };
 
   public:
-    VirtRegMap(MachineFunction& mf)
-      : mf_(&mf), v2pMap_(NO_PHYS_REG), v2ssMap_(NO_STACK_SLOT) {
+    VirtRegMap(MachineFunction &mf)
+      : MF(mf), Virt2PhysMap(NO_PHYS_REG), Virt2StackSlotMap(NO_STACK_SLOT) {
       grow();
     }
 
@@ -58,27 +56,27 @@ namespace llvm {
 
     unsigned getPhys(unsigned virtReg) const {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
-      return v2pMap_[virtReg];
+      return Virt2PhysMap[virtReg];
     }
 
     void assignVirt2Phys(unsigned virtReg, unsigned physReg) {
       assert(MRegisterInfo::isVirtualRegister(virtReg) &&
              MRegisterInfo::isPhysicalRegister(physReg));
-      assert(v2pMap_[virtReg] == NO_PHYS_REG &&
+      assert(Virt2PhysMap[virtReg] == NO_PHYS_REG &&
              "attempt to assign physical register to already mapped "
              "virtual register");
-      v2pMap_[virtReg] = physReg;
+      Virt2PhysMap[virtReg] = physReg;
     }
 
     void clearVirt(unsigned virtReg) {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
-      assert(v2pMap_[virtReg] != NO_PHYS_REG &&
+      assert(Virt2PhysMap[virtReg] != NO_PHYS_REG &&
              "attempt to clear a not assigned virtual register");
-      v2pMap_[virtReg] = NO_PHYS_REG;
+      Virt2PhysMap[virtReg] = NO_PHYS_REG;
     }
 
     void clearAllVirt() {
-      v2pMap_.clear();
+      Virt2PhysMap.clear();
       grow();
     }
 
@@ -88,7 +86,7 @@ namespace llvm {
 
     int getStackSlot(unsigned virtReg) const {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
-      return v2ssMap_[virtReg];
+      return Virt2StackSlotMap[virtReg];
     }
 
     int assignVirt2StackSlot(unsigned virtReg);
@@ -97,9 +95,9 @@ namespace llvm {
     void virtFolded(unsigned virtReg, MachineInstr* oldMI,
                     MachineInstr* newMI);
 
-    std::pair<MI2VirtMap::const_iterator, MI2VirtMap::const_iterator>
+    std::pair<MI2VirtMapTy::const_iterator, MI2VirtMapTy::const_iterator>
     getFoldedVirts(MachineInstr* MI) const {
-      return mi2vMap_.equal_range(MI);
+      return MI2VirtMap.equal_range(MI);
     }
 
     void print(std::ostream &OS) const;

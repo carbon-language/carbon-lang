@@ -52,64 +52,62 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 void VirtRegMap::grow() {
-  v2pMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
-  v2ssMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
+  Virt2PhysMap.grow(MF.getSSARegMap()->getLastVirtReg());
+  Virt2StackSlotMap.grow(MF.getSSARegMap()->getLastVirtReg());
 }
 
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
   assert(MRegisterInfo::isVirtualRegister(virtReg));
-  assert(v2ssMap_[virtReg] == NO_STACK_SLOT &&
+  assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
-  const TargetRegisterClass* RC = mf_->getSSARegMap()->getRegClass(virtReg);
-  int frameIndex = mf_->getFrameInfo()->CreateStackObject(RC->getSize(),
-                                                          RC->getAlignment());
-  v2ssMap_[virtReg] = frameIndex;
+  const TargetRegisterClass* RC = MF.getSSARegMap()->getRegClass(virtReg);
+  int frameIndex = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                        RC->getAlignment());
+  Virt2StackSlotMap[virtReg] = frameIndex;
   ++NumSpills;
   return frameIndex;
 }
 
 void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex) {
   assert(MRegisterInfo::isVirtualRegister(virtReg));
-  assert(v2ssMap_[virtReg] == NO_STACK_SLOT &&
+  assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
-  v2ssMap_[virtReg] = frameIndex;
+  Virt2StackSlotMap[virtReg] = frameIndex;
 }
 
 void VirtRegMap::virtFolded(unsigned virtReg,
                             MachineInstr* oldMI,
                             MachineInstr* newMI) {
   // move previous memory references folded to new instruction
-  MI2VirtMap::iterator i, e;
-  std::vector<MI2VirtMap::mapped_type> regs;
-  for (tie(i, e) = mi2vMap_.equal_range(oldMI); i != e; ) {
+  MI2VirtMapTy::iterator i, e;
+  std::vector<MI2VirtMapTy::mapped_type> regs;
+  for (tie(i, e) = MI2VirtMap.equal_range(oldMI); i != e; ) {
     regs.push_back(i->second);
-    mi2vMap_.erase(i++);
+    MI2VirtMap.erase(i++);
   }
   for (unsigned i = 0, e = regs.size(); i != e; ++i)
-    mi2vMap_.insert(std::make_pair(newMI, i));
+    MI2VirtMap.insert(std::make_pair(newMI, i));
 
   // add new memory reference
-  mi2vMap_.insert(std::make_pair(newMI, virtReg));
+  MI2VirtMap.insert(std::make_pair(newMI, virtReg));
 }
 
-void VirtRegMap::print(std::ostream& os) const {
-  const MRegisterInfo* mri = mf_->getTarget().getRegisterInfo();
+void VirtRegMap::print(std::ostream &OS) const {
+  const MRegisterInfo* MRI = MF.getTarget().getRegisterInfo();
 
-  std::cerr << "********** REGISTER MAP **********\n";
+  OS << "********** REGISTER MAP **********\n";
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
-         e = mf_->getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
-    if (v2pMap_[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
-      std::cerr << "[reg" << i << " -> "
-                << mri->getName(v2pMap_[i]) << "]\n";
+         e = MF.getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
+    if (Virt2PhysMap[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
+      OS << "[reg" << i << " -> " << MRI->getName(Virt2PhysMap[i]) << "]\n";
+         
   }
 
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
-         e = mf_->getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
-    if (v2ssMap_[i] != VirtRegMap::NO_STACK_SLOT)
-      std::cerr << "[reg" << i << " -> fi#"
-                << v2ssMap_[i] << "]\n";
-  }
-  std::cerr << '\n';
+         e = MF.getSSARegMap()->getLastVirtReg(); i <= e; ++i)
+    if (Virt2StackSlotMap[i] != VirtRegMap::NO_STACK_SLOT)
+      OS << "[reg" << i << " -> fi#" << Virt2StackSlotMap[i] << "]\n";
+  OS << '\n';
 }
 
 void VirtRegMap::dump() const { print(std::cerr); }
@@ -133,7 +131,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
   DEBUG(std::cerr << "********** Function: "
                   << MF.getFunction()->getName() << '\n');
   const TargetMachine& TM = MF.getTarget();
-  const MRegisterInfo& mri = *TM.getRegisterInfo();
+  const MRegisterInfo& MRI = *TM.getRegisterInfo();
 
   DenseMap<bool, VirtReg2IndexFunctor> Loaded;
 
@@ -151,7 +149,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
           unsigned physReg = VRM.getPhys(virtReg);
           if (mop.isUse() && VRM.hasStackSlot(mop.getReg()) &&
               !Loaded[virtReg]) {
-            mri.loadRegFromStackSlot(*mbbi, mii, physReg,
+            MRI.loadRegFromStackSlot(*mbbi, mii, physReg,
                                      VRM.getStackSlot(virtReg));
             Loaded[virtReg] = true;
             DEBUG(std::cerr << '\t';
@@ -160,7 +158,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction& MF,
           }
 
           if (mop.isDef() && VRM.hasStackSlot(mop.getReg())) {
-            mri.storeRegToStackSlot(*mbbi, next(mii), physReg,
+            MRI.storeRegToStackSlot(*mbbi, next(mii), physReg,
                                     VRM.getStackSlot(virtReg));
             ++NumStores;
           }
@@ -304,7 +302,7 @@ void LocalSpiller::eliminateVirtRegsInMbb(MachineBasicBlock &MBB) {
     // if we have references to memory operands make sure
     // we clear all physical registers that may contain
     // the value of the spilled virtual register
-    VirtRegMap::MI2VirtMap::const_iterator i, e;
+    VirtRegMap::MI2VirtMapTy::const_iterator i, e;
     for (tie(i, e) = VRM->getFoldedVirts(MI); i != e; ++i) {
       if (VRM->hasPhys(i->second))
         vacateJustPhysReg(MBB, MI, VRM->getPhys(i->second));
