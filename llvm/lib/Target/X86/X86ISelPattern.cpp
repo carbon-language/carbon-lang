@@ -2034,6 +2034,34 @@ unsigned ISel::SelectExpr(SDOperand N) {
            "We don't support this operator!");
 
     if (N.getOpcode() == ISD::SDIV)
+
+      // We can fold loads into FpDIVs, but not really into any others.
+      if (N.getValueType() == MVT::f64) {
+        // Check for reversed and unreversed DIV.
+        if (isFoldableLoad(N.getOperand(0), N.getOperand(1), true)) {
+          if (N.getOperand(0).getOpcode() == ISD::EXTLOAD)
+            Opc = X86::FDIVR32m;
+          else
+            Opc = X86::FDIVR64m;
+          X86AddressMode AM;
+          EmitFoldedLoad(N.getOperand(0), AM);
+          Tmp1 = SelectExpr(N.getOperand(1));
+          addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
+          return Result;
+        } else if (isFoldableLoad(N.getOperand(1), N.getOperand(0), true) &&
+                   N.getOperand(1).getOpcode() == ISD::LOAD) {
+          if (N.getOperand(1).getOpcode() == ISD::EXTLOAD)
+            Opc = X86::FDIV32m;
+          else
+            Opc = X86::FDIV64m;
+          X86AddressMode AM;
+          EmitFoldedLoad(N.getOperand(1), AM);
+          Tmp1 = SelectExpr(N.getOperand(0));
+          addFullAddress(BuildMI(BB, Opc, 5, Result).addReg(Tmp1), AM);
+          return Result;
+        }
+      }
+
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
         // FIXME: These special cases should be handled by the lowering impl!
         unsigned RHS = CN->getValue();
