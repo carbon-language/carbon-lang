@@ -80,7 +80,7 @@ public:
 // ID#'s are stored sequentially.
 //
 class Annotable {
-  Annotation *AnnotationList;
+  mutable Annotation *AnnotationList;
 public:
   Annotable() : AnnotationList(0) {}
   virtual ~Annotable() {   // Virtual because it's designed to be subclassed...
@@ -107,11 +107,11 @@ public:
   // no annotation with the specified ID, then use the AnnotationManager to
   // create one.
   //
-  inline Annotation *getOrCreateAnnotation(AnnotationID ID);
+  inline Annotation *getOrCreateAnnotation(AnnotationID ID) const;
 
   // addAnnotation - Insert the annotation into the list in a sorted location.
   //
-  void addAnnotation(Annotation *A) {
+  void addAnnotation(Annotation *A) const {
     assert(A->Next == 0 && "Annotation already in list?!?");
 
     Annotation **AL = &AnnotationList;
@@ -124,7 +124,7 @@ public:
   // unlinkAnnotation - Remove the first annotation of the specified ID... and
   // then return the unlinked annotation.  The annotation object is not deleted.
   //
-  inline Annotation *unlinkAnnotation(AnnotationID ID) {
+  inline Annotation *unlinkAnnotation(AnnotationID ID) const {
     for (Annotation **A = &AnnotationList; *A; A = &((*A)->Next))
       if ((*A)->getID() == ID) {
 	Annotation *Ret = *A;
@@ -138,7 +138,7 @@ public:
   // deleteAnnotation - Delete the first annotation of the specified ID in the
   // list.  Unlink unlinkAnnotation, this actually deletes the annotation object
   //
-  bool deleteAnnotation(AnnotationID ID) {
+  bool deleteAnnotation(AnnotationID ID) const {
     Annotation *A = unlinkAnnotation(ID);
     delete A;
     return A != 0;
@@ -176,13 +176,13 @@ struct AnnotationManager {
   // Annotable::getOrCreateAnnotation method.
   //
   static void registerAnnotationFactory(AnnotationID ID, 
-                          Annotation *(*Func)(AnnotationID, Annotable *, void*),
+                    Annotation *(*Func)(AnnotationID, const Annotable *, void *),
 					void *ExtraData = 0);
 
   // createAnnotation - Create an annotation of the specified ID for the
   // specified object, using a register annotation creation function.
   //
-  static Annotation *createAnnotation(AnnotationID ID, Annotable *Obj);
+  static Annotation *createAnnotation(AnnotationID ID, const Annotable *Obj);
 };
 
 
@@ -191,7 +191,7 @@ struct AnnotationManager {
 // no annotation with the specified ID, then use the AnnotationManager to
 // create one.
 //
-inline Annotation *Annotable::getOrCreateAnnotation(AnnotationID ID) {
+inline Annotation *Annotable::getOrCreateAnnotation(AnnotationID ID) const {
   Annotation *A = getAnnotation(ID);   // Fast path, check for preexisting ann
   if (A) return A;
 
