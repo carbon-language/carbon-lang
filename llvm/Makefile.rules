@@ -288,8 +288,10 @@ STRIP = $(PLATFORMSTRIPOPTS)
 STRIP_WARN_MSG = "(without symbols)"
 endif
 
-# Allow gnu extensions...
+# Allow GNU extensions:
 CPPFLAGS += -D_GNU_SOURCE
+# Pull in limit macros from stdint.h, even in C++:
+CPPFLAGS += -D__STDC_LIMIT_MACROS
 
 CompileWarnings  := -Wall -W  -Wwrite-strings -Wno-unused
 CompileCommonOpts := $(CompileWarnings) -fshort-enums
