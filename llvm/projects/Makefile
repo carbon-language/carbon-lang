@@ -8,7 +8,9 @@
 ##===----------------------------------------------------------------------===##
 LEVEL=..
 
-DIRS=
-OPTIONAL_DIRS:=$(shell ls | grep -v CVS)
+include $(LEVEL)/Makefile.config
 
-include $(LEVEL)/Makefile.common
+DIRS=
+OPTIONAL_DIRS:=$(basename $(shell ls $(SourceDir) | grep -v CVS | grep -v Makefile))
+
+include $(BUILD_SRC_ROOT)/Makefile.rules
