@@ -46,6 +46,17 @@ bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
       destReg = MI.getOperand(0).getReg();
       return true;
     }
+  } else if (oc == PPC::ORI) {             // ori r1, r2, 0
+    assert(MI.getNumOperands() == 3 &&
+           MI.getOperand(0).isRegister() &&
+           MI.getOperand(1).isRegister() &&
+           MI.getOperand(2).isImmediate() &&
+           "invalid PPC ORI instruction!");
+    if (MI.getOperand(2).getImmedValue()==0) {
+      sourceReg = MI.getOperand(1).getReg();
+      destReg = MI.getOperand(0).getReg();
+      return true;
+    }
   } else if (oc == PPC::FMR) {              // fmr r1, r2
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isRegister() &&
