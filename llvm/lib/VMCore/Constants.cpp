@@ -31,11 +31,8 @@ ConstantBool *ConstantBool::False = new ConstantBool(false);
 //                              Constant Class
 //===----------------------------------------------------------------------===//
 
-// Specialize setName to take care of symbol table majik
-void Constant::setName(const std::string &Name, SymbolTable *ST) {
-  assert(ST && "Type::setName - Must provide symbol table argument!");
-
-  if (Name.size()) ST->insert(Name, this);
+void Constant::setName(const std::string &Name) {
+  // Constants can't take names.
 }
 
 void Constant::destroyConstantImpl() {
