@@ -81,7 +81,7 @@ void LoopInfo::print(std::ostream &OS) const {
 }
 
 Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
-  if (BBMap.find(BB) != BBMap.end()) return 0;   // Havn't processed this node?
+  if (BBMap.find(BB) != BBMap.end()) return 0;   // Haven't processed this node?
 
   std::vector<BasicBlock *> TodoStack;
 
@@ -127,4 +127,54 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   }
 
   return L;
+}
+
+/// getLoopPreheader - If there is a preheader for this loop, return it.  A
+/// loop has a preheader if there is only one edge to the header of the loop
+/// from outside of the loop.  If this is the case, the block branching to the
+/// header of the loop is the preheader node.  The "preheaders" pass can be
+/// "Required" to ensure that there is always a preheader node for every loop.
+///
+/// This method returns null if there is no preheader for the loop (either
+/// because the loop is dead or because multiple blocks branch to the header
+/// node of this loop).
+///
+BasicBlock *Loop::getLoopPreheader() const {
+  // Keep track of nodes outside the loop branching to the header...
+  BasicBlock *Out = 0;
+
+  // Loop over the predecessors of the header node...
+  BasicBlock *Header = getHeader();
+  for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
+       PI != PE; ++PI)
+    if (!contains(*PI)) { // If the block is not in the loop...
+      if (Out) return 0;  // Multiple predecessors outside the loop
+      Out = *PI;
+    }
+
+  // If there is exactly one preheader, return it.  If there was zero, then Out
+  // is still null.
+  return Out;
+}
+
+/// addBasicBlockToLoop - This function is used by other analyses to update loop
+/// information.  NewBB is set to be a new member of the current loop.  Because
+/// of this, it is added as a member of all parent loops, and is added to the
+/// specified LoopInfo object as being in the current basic block.  It is not
+/// valid to replace the loop header with this method.
+///
+void Loop::addBasicBlockToLoop(BasicBlock *NewBB, LoopInfo &LI) {
+  assert(LI[getHeader()] == this && "Incorrect LI specified for this loop!");
+  assert(NewBB && "Cannot add a null basic block to the loop!");
+  assert(LI[NewBB] == 0 && "BasicBlock already in the loop!");
+
+  // Add the loop mapping to the LoopInfo object...
+  LI.BBMap[NewBB] = this;
+
+  // Add the basic block to this loop and all parent loops...
+  Loop *L = this;
+  while (L) {
+    L->Blocks.push_back(NewBB);
+    L = L->getParentLoop();
+  }
 }
