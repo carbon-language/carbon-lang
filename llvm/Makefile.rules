@@ -264,11 +264,16 @@ LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 # Adjust to user's request
 #--------------------------------------------------------------------
 
-# Adjust LIBTOOL flags for shared libraries, or not.
-ifndef SHARED_LIBRARY
-  LibTool.Flags += --tag=disable-shared
-else
+# Adjust LD.Flags and Libtool.Flags depending on the kind of library that is
+# to be built. Note that if LOADABLE_MODULE is specified then the resulting
+# shared library can be opened with dlopen
+ifdef SHARED_LIBRARY
   LD.Flags += -rpath $(LibDir)
+  ifdef LOADABLE_MODULE
+    LD.Flags += -module
+  endif
+else
+  LibTool.Flags += --tag=disable-shared
 endif
 
 ifdef TOOL_VERBOSE
@@ -571,7 +576,11 @@ ifdef LIBRARYNAME
 
 # Make sure there isn't any extranous whitespace on the LIBRARYNAME option
 LIBRARYNAME := $(strip $(LIBRARYNAME))
+ifdef LOADABLE_MODULE
+LibName.LA := $(LibDir)/$(LIBRARYNAME).la
+else
 LibName.LA := $(LibDir)/lib$(LIBRARYNAME).la
+endif
 LibName.A  := $(LibDir)/lib$(LIBRARYNAME).a
 LibName.O  := $(LibDir)/$(LIBRARYNAME).o
 LibName.BCA:= $(LibDir)/lib$(LIBRARYNAME).bca
