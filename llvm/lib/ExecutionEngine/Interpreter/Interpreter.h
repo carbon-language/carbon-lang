@@ -10,35 +10,22 @@
 // Uncomment this line to enable profiling of structure field accesses.
 //#define PROFILE_STRUCTURE_FIELDS 1
 
-#include "llvm/Module.h"
+#include "../ExecutionEngine.h"
 #include "Support/DataTypes.h"
 #include "llvm/Assembly/CachedWriter.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/BasicBlock.h"
+#include "../GenericValue.h"
 
-extern CachedWriter CW;     // Object to accellerate printing of LLVM
+extern CachedWriter CW;     // Object to accelerate printing of LLVM
 
 struct MethodInfo;          // Defined in ExecutionAnnotations.h
 class CallInst;
 class ReturnInst;
 class BranchInst;
+class LoadInst;
+class StoreInst;
 class AllocationInst;
-
-typedef uint64_t PointerTy;
-
-union GenericValue {
-  bool            BoolVal;
-  unsigned char   UByteVal;
-  signed   char   SByteVal;
-  unsigned short  UShortVal;
-  signed   short  ShortVal;
-  unsigned int    UIntVal;
-  signed   int    IntVal;
-  uint64_t        ULongVal;
-  int64_t         LongVal;
-  double          DoubleVal;
-  float           FloatVal;
-  PointerTy       PointerVal;
-  unsigned char   Untyped[8];
-};
 
 // AllocaHolder - Object to track all of the blocks of memory allocated by
 // alloca.  When the function returns, this object is poped off the execution
@@ -90,25 +77,31 @@ struct ExecutionContext {
 
 // Interpreter - This class represents the entirety of the interpreter.
 //
-class Interpreter {
-  Module *CurMod;              // The current Module being executed (0 if none)
+class Interpreter : public ExecutionEngine {
   int ExitCode;                // The exit code to be returned by the lli util
+  bool Debug;                  // Debug mode enabled?
   bool Profile;                // Profiling enabled?
   bool Trace;                  // Tracing enabled?
   int CurFrame;                // The current stack frame being inspected
+  TargetData TD;
 
   // The runtime stack of executing code.  The top of the stack is the current
   // function record.
   std::vector<ExecutionContext> ECStack;
 
 public:
-  Interpreter();
-  inline ~Interpreter() { CW.setModule(0); delete CurMod; }
+  Interpreter(Module *M, unsigned Config, bool DebugMode, bool TraceMode);
+  inline ~Interpreter() { CW.setModule(0); }
 
   // getExitCode - return the code that should be the exit code for the lli
   // utility.
   inline int getExitCode() const { return ExitCode; }
-  inline Module *getModule() const { return CurMod; }
+
+  /// run - Start execution with the specified function and arguments.
+  ///
+  virtual int run(const std::string &FnName,
+		  const std::vector<std::string> &Args);
+ 
 
   // enableProfiling() - Turn profiling on, clear stats?
   void enableProfiling() { Profile = true; }
@@ -117,8 +110,6 @@ public:
   void handleUserInput();
 
   // User Interation Methods...
-  void loadModule(const std::string &Filename);
-  bool flushModule();
   bool callMethod(const std::string &Name);      // return true on failure
   void setBreakpoint(const std::string &Name);
   void infoValue(const std::string &Name);
@@ -128,7 +119,6 @@ public:
 
   bool callMainMethod(const std::string &MainName,
                       const std::vector<std::string> &InputFilename);
-  GenericValue CreateArgv(const std::vector<std::string> &InputArgv);
 
   void list();             // Do the 'list' command
   void printStackTrace();  // Do the 'backtrace' command
@@ -161,7 +151,17 @@ public:
   //
   inline bool isStopped() const { return !ECStack.empty(); }
 
+  //FIXME: private:
+public:
+  GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
+				   User::op_iterator E, ExecutionContext &SF);
+  void executeLoadInst(LoadInst &I, ExecutionContext &SF);
+  void executeStoreInst(StoreInst &I, ExecutionContext &SF);
+
+
 private:  // Helper functions
+  void *getPointerToFunction(const Function *F) { return (void*)F; }
+
   // getCurrentExecutablePath() - Return the directory that the lli executable
   // lives in.
   //

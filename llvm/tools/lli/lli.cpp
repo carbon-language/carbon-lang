@@ -1,85 +1,101 @@
-//===----------------------------------------------------------------------===//
-// LLVM INTERPRETER/DEBUGGER/PROFILER UTILITY 
+//===- lli.cpp - LLVM Interpreter / Dynamic compiler ----------------------===//
 //
-// This utility is an interactive frontend to almost all other LLVM
-// functionality.  It may be used as an interpreter to run code, a debugger to
-// find problems, or a profiler to analyze execution frequencies.
+// This utility provides a way to execute LLVM bytecode without static
+// compilation.  This consists of a very simple and slow (but portable)
+// interpreter, along with capability for system specific dynamic compilers.  At
+// runtime, the fastest (stable) execution engine is selected to run the
+// program.  This means the JIT compiler for the current platform if it's
+// available.
 //
 //===----------------------------------------------------------------------===//
 
-#include "Interpreter.h"
+#include "ExecutionEngine.h"
 #include "Support/CommandLine.h"
+#include "llvm/Bytecode/Reader.h"
+#include "llvm/Module.h"
+#include "llvm/Target/TargetMachineImpls.h"
 
-static cl::opt<std::string>
-InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
+namespace {
+  cl::opt<std::string>
+  InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
 
-static cl::list<std::string>
-InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
+  cl::list<std::string>
+  InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
 
-static cl::opt<std::string>
-MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
-              cl::value_desc("function name"));
+  cl::opt<std::string>
+  MainFunction ("f", cl::desc("Function to execute"), cl::init("main"),
+		cl::value_desc("function name"));
 
-static cl::opt<bool>
-DebugMode("d", cl::desc("Start program in debugger"));
+  cl::opt<bool> DebugMode("d", cl::desc("Start program in debugger"));
 
-static cl::opt<bool>
-TraceMode("trace", cl::desc("Enable Tracing"));
+  cl::opt<bool> TraceMode("trace", cl::desc("Enable Tracing"));
 
-static cl::opt<bool>
-ProfileMode("profile", cl::desc("Enable Profiling [unimp]"));
-
+  cl::opt<bool> ForceInterpreter("force-interpreter",
+				 cl::desc("Force interpretation: disable JIT"),
+				 cl::init(true));
+}
 
 //===----------------------------------------------------------------------===//
-// Interpreter ctor - Initialize stuff
+// ExecutionEngine Class Implementation
 //
-Interpreter::Interpreter() : ExitCode(0), Profile(ProfileMode), 
-                             Trace(TraceMode), CurFrame(-1) {
-  CurMod = 0;
-  loadModule(InputFile);
 
-  // Initialize the "backend"
-  initializeExecutionEngine();
-  initializeExternalMethods();
+ExecutionEngine::~ExecutionEngine() {
+  delete &CurMod;
 }
 
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
 int main(int argc, char** argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm interpreter\n");
+  cl::ParseCommandLineOptions(argc, argv,
+			      " llvm interpreter & dynamic compiler\n");
 
-  // Add the module name to the start of the argv vector...
-  //
-  InputArgv.insert(InputArgv.begin(), InputFile);
-
-  // Create the interpreter...
-  Interpreter I;
-
-  // Handle alternate names of the program.  If started as llp, enable profiling
-  // if started as ldb, enable debugging...
-  //
-  if (argv[0] == "ldb")       // TODO: Obviously incorrect, but you get the idea
-    DebugMode = true;
-  else if (argv[0] == "llp")
-    ProfileMode = true;
-
-  // If running with the profiler, enable it now...
-  if (ProfileMode) I.enableProfiling();
-  if (TraceMode) I.enableTracing();
-
-  // Start interpreter into the main function...
-  //
-  if (!I.callMainMethod(MainFunction, InputArgv) && !DebugMode) {
-    // If not in debug mode and if the call succeeded, run the code now...
-    I.run();
+  // Load the bytecode...
+  string ErrorMsg;
+  Module *M = ParseBytecodeFile(InputFile, &ErrorMsg);
+  if (M == 0) {
+    cout << "Error parsing '" << InputFile << "': "
+         << ErrorMsg << "\n";
+    exit(1);
   }
 
-  // If debug mode, allow the user to interact... also, if the user pressed 
-  // ctrl-c or execution hit an error, enter the event loop...
-  if (DebugMode || I.isStopped())
-    I.handleUserInput();
+#if 0
+  // Link in the runtime library for LLI...
+  string RuntimeLib = getCurrentExecutablePath();
+  if (!RuntimeLib.empty()) RuntimeLib += "/";
+  RuntimeLib += "RuntimeLib.bc";
 
-  // Return the status code of the program executed...
-  return I.getExitCode();
+  if (Module *SupportLib = ParseBytecodeFile(RuntimeLib, &ErrorMsg)) {
+    if (LinkModules(M, SupportLib, &ErrorMsg))
+      std::cerr << "Error Linking runtime library into current module: "
+                << ErrorMsg << "\n";
+  } else {
+    std::cerr << "Error loading runtime library '"+RuntimeLib+"': "
+              << ErrorMsg << "\n";
+  }
+#endif
+
+  // FIXME: This should look at the PointerSize and endianness of the bytecode
+  // file to determine the endianness and pointer size of target machine to use.
+  unsigned Config = TM::PtrSize64 | TM::BigEndian;
+
+  ExecutionEngine *EE = 0;
+
+  // If there is nothing that is forcing us to use the interpreter, make a JIT.
+  if (!ForceInterpreter && !DebugMode && !TraceMode)
+    EE = ExecutionEngine::createJIT(M, Config);
+
+  // If we can't make a JIT, make an interpreter instead.
+  if (EE == 0)
+    EE = ExecutionEngine::createInterpreter(M, Config, DebugMode, TraceMode);
+
+  // Add the module name to the start of the argv vector...
+  InputArgv.insert(InputArgv.begin(), InputFile);
+
+  // Run the main function!
+  int ExitCode = EE->run(MainFunction, InputArgv);
+
+  // Now that we are done executing the program, shut down the execution engine
+  delete EE;
+  return ExitCode;
 }

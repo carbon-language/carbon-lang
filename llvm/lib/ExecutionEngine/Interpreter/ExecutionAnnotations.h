@@ -90,32 +90,4 @@ static AnnotationID BreakpointAID(
 // Just use an Annotation directly, Breakpoint is currently just a marker
 
 
-//===----------------------------------------------------------------------===//
-// Support for the GlobalAddress annotation
-//===----------------------------------------------------------------------===//
-
-// This annotation (attached only to GlobalValue objects) is used to hold the
-// address of the chunk of memory that represents a global value.  For
-// Functions, this pointer is the Function object pointer that represents it.
-// For global variables, this is the dynamically allocated (and potentially
-// initialized) chunk of memory for the global.  This annotation is created on
-// demand.
-//
-static AnnotationID GlobalAddressAID(
-	            AnnotationManager::getID("Interpreter::GlobalAddress"));
-
-struct GlobalAddress : public Annotation {
-  void *Ptr;   // The pointer itself
-  bool Delete; // Should I delete them memory on destruction?
-
-  GlobalAddress(void *ptr, bool d) : Annotation(GlobalAddressAID), Ptr(ptr), 
-                                     Delete(d) {}
-  ~GlobalAddress() { if (Delete) free(Ptr); }
-  
-  // Create - Factory function to allow GlobalAddress annotations to be
-  // created on demand.
-  //
-  static Annotation *Create(AnnotationID AID, const Annotable *O, void *);
-};
-
 #endif

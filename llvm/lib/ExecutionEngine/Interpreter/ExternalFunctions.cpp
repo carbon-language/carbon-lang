@@ -12,6 +12,7 @@
 
 #include "Interpreter.h"
 #include "ExecutionAnnotations.h"
+#include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Target/TargetData.h"
@@ -22,8 +23,6 @@
 #include <stdio.h>
 using std::vector;
 using std::cout;
-
-extern TargetData TD;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
 static std::map<const Function *, ExFunc> Functions;
@@ -440,8 +439,8 @@ static FILE *getFILE(PointerTy Ptr) {
   static PointerTy IOBBase = 0;
   static unsigned FILESize;
 
-  if (LastMod != TheInterpreter->getModule()) {  // Module change or initialize?
-    Module *M = LastMod = TheInterpreter->getModule();
+  if (LastMod != &TheInterpreter->getModule()) { // Module change or initialize?
+    Module *M = LastMod = &TheInterpreter->getModule();
 
     // Check to see if the currently loaded module contains an __iob symbol...
     GlobalVariable *IOB = 0;
@@ -456,6 +455,7 @@ static FILE *getFILE(PointerTy Ptr) {
       if (IOB) break;
     }
 
+#if 0   /// FIXME!  __iob support for LLI
     // If we found an __iob symbol now, find out what the actual address it's
     // held in is...
     if (IOB) {
@@ -472,6 +472,7 @@ static FILE *getFILE(PointerTy Ptr) {
       else
         FILESize = 16*8;  // Default size
     }
+#endif
   }
 
   // Check to see if this is a reference to __iob...

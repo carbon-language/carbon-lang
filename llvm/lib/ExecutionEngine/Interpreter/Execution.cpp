@@ -6,6 +6,8 @@
 
 #include "Interpreter.h"
 #include "ExecutionAnnotations.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Function.h"
 #include "llvm/iPHINode.h"
 #include "llvm/iOther.h"
 #include "llvm/iTerminators.h"
@@ -13,7 +15,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
 #include <math.h>  // For fmod
@@ -23,11 +24,14 @@ using std::vector;
 using std::cout;
 using std::cerr;
 
+Interpreter *TheEE = 0;
+
 namespace {
   Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
 
   cl::opt<bool>
-  QuietMode("quiet", cl::desc("Do not emit any non-program output"));
+  QuietMode("quiet", cl::desc("Do not emit any non-program output"),
+	    cl::init(true));
 
   cl::alias 
   QuietModeA("q", cl::desc("Alias for -quiet"), cl::aliasopt(QuietMode));
@@ -43,9 +47,7 @@ namespace {
 // Create a TargetData structure to handle memory addressing and size/alignment
 // computations
 //
-TargetData TD("lli Interpreter");
 CachedWriter CW;     // Object to accelerate printing of LLVM
-
 
 #ifdef PROFILE_STRUCTURE_FIELDS
 static cl::opt<bool>
@@ -87,48 +89,12 @@ static unsigned getOperandSlot(Value *V) {
   return SN->SlotNum;
 }
 
-#define GET_CONST_VAL(TY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = cast<CLASS>(C)->getValue(); break
-
 // Operations used by constant expr implementations...
 static GenericValue executeCastOperation(Value *Src, const Type *DestTy,
                                          ExecutionContext &SF);
-static GenericValue executeGEPOperation(Value *Src, User::op_iterator IdxBegin,
-                                        User::op_iterator IdxEnd,
-                                        ExecutionContext &SF);
 static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2, 
 				   const Type *Ty, ExecutionContext &SF);
 
-static GenericValue getConstantValue(const Constant *C) {
-  GenericValue Result;
-  switch (C->getType()->getPrimitiveID()) {
-    GET_CONST_VAL(Bool   , ConstantBool);
-    GET_CONST_VAL(UByte  , ConstantUInt);
-    GET_CONST_VAL(SByte  , ConstantSInt);
-    GET_CONST_VAL(UShort , ConstantUInt);
-    GET_CONST_VAL(Short  , ConstantSInt);
-    GET_CONST_VAL(UInt   , ConstantUInt);
-    GET_CONST_VAL(Int    , ConstantSInt);
-    GET_CONST_VAL(ULong  , ConstantUInt);
-    GET_CONST_VAL(Long   , ConstantSInt);
-    GET_CONST_VAL(Float  , ConstantFP);
-    GET_CONST_VAL(Double , ConstantFP);
-  case Type::PointerTyID:
-    if (isa<ConstantPointerNull>(C)) {
-      Result.PointerVal = 0;
-    } else if (const ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)){
-      GlobalAddress *Address = 
-       (GlobalAddress*)CPR->getValue()->getOrCreateAnnotation(GlobalAddressAID);
-      Result.PointerVal = (PointerTy)Address->Ptr;
-    } else {
-      assert(0 && "Unknown constant pointer type!");
-    }
-    break;
-  default:
-    cout << "ERROR: Constant unimp for type: " << C->getType() << "\n";
-  }
-  return Result;
-}
 
 static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
@@ -136,8 +102,8 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
     case Instruction::Cast:
       return executeCastOperation(CE->getOperand(0), CE->getType(), SF);
     case Instruction::GetElementPtr:
-      return executeGEPOperation(CE->getOperand(0), CE->op_begin()+1,
-                                 CE->op_end(), SF);
+      return TheEE->executeGEPOperation(CE->getOperand(0), CE->op_begin()+1,
+					CE->op_end(), SF);
     case Instruction::Add:
       return executeAddInst(getOperandValue(CE->getOperand(0), SF),
                             getOperandValue(CE->getOperand(1), SF),
@@ -148,13 +114,9 @@ static GenericValue getOperandValue(Value *V, ExecutionContext &SF) {
       { GenericValue V; return V; }
     }
   } else if (Constant *CPV = dyn_cast<Constant>(V)) {
-    return getConstantValue(CPV);
+    return TheEE->getConstantValue(CPV);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    GlobalAddress *Address = 
-      (GlobalAddress*)GV->getOrCreateAnnotation(GlobalAddressAID);
-    GenericValue Result;
-    Result.PointerVal = (PointerTy)(GenericValue*)Address->Ptr;
-    return Result;
+    return PTOGV(TheEE->getPointerToGlobal(GV));
   } else {
     unsigned TyP = V->getType()->getUniqueID();   // TypePlane for value
     unsigned OpSlot = getOperandSlot(V);
@@ -201,83 +163,10 @@ static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
 //===----------------------------------------------------------------------===//
 
 void Interpreter::initializeExecutionEngine() {
+  TheEE = this;
   AnnotationManager::registerAnnotationFactory(MethodInfoAID,
                                                &MethodInfo::Create);
-  AnnotationManager::registerAnnotationFactory(GlobalAddressAID, 
-                                               &GlobalAddress::Create);
   initializeSignalHandlers();
-}
-
-static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
-                               const Type *Ty);
-
-// InitializeMemory - Recursive function to apply a Constant value into the
-// specified memory location...
-//
-static void InitializeMemory(const Constant *Init, char *Addr) {
-
-  if (Init->getType()->isFirstClassType()) {
-    GenericValue Val = getConstantValue(Init);
-    StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
-    return;
-  }
-
-  switch (Init->getType()->getPrimitiveID()) {
-  case Type::ArrayTyID: {
-    const ConstantArray *CPA = cast<ConstantArray>(Init);
-    const vector<Use> &Val = CPA->getValues();
-    unsigned ElementSize = 
-      TD.getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
-    for (unsigned i = 0; i < Val.size(); ++i)
-      InitializeMemory(cast<Constant>(Val[i].get()), Addr+i*ElementSize);
-    return;
-  }
-
-  case Type::StructTyID: {
-    const ConstantStruct *CPS = cast<ConstantStruct>(Init);
-    const StructLayout *SL=TD.getStructLayout(cast<StructType>(CPS->getType()));
-    const vector<Use> &Val = CPS->getValues();
-    for (unsigned i = 0; i < Val.size(); ++i)
-      InitializeMemory(cast<Constant>(Val[i].get()),
-                       Addr+SL->MemberOffsets[i]);
-    return;
-  }
-
-  default:
-    CW << "Bad Type: " << Init->getType() << "\n";
-    assert(0 && "Unknown constant type to initialize memory with!");
-  }
-}
-
-Annotation *GlobalAddress::Create(AnnotationID AID, const Annotable *O, void *){
-  assert(AID == GlobalAddressAID);
-
-  // This annotation will only be created on GlobalValue objects...
-  GlobalValue *GVal = cast<GlobalValue>((Value*)O);
-
-  if (isa<Function>(GVal)) {
-    // The GlobalAddress object for a function is just a pointer to function
-    // itself.  Don't delete it when the annotation is gone though!
-    return new GlobalAddress(GVal, false);
-  }
-
-  // Handle the case of a global variable...
-  assert(isa<GlobalVariable>(GVal) && 
-         "Global value found that isn't a function or global variable!");
-  GlobalVariable *GV = cast<GlobalVariable>(GVal);
-  
-  // First off, we must allocate space for the global variable to point at...
-  const Type *Ty = GV->getType()->getElementType();  // Type to be allocated
-
-  // Allocate enough memory to hold the type...
-  void *Addr = calloc(1, TD.getTypeSize(Ty));
-  assert(Addr != 0 && "Null pointer returned by malloc!");
-
-  // Initialize the memory if there is an initializer...
-  if (GV->hasInitializer())
-    InitializeMemory(GV->getInitializer(), (char*)Addr);
-
-  return new GlobalAddress(Addr, true);  // Simply invoke the ctor
 }
 
 //===----------------------------------------------------------------------===//
@@ -760,8 +649,7 @@ void Interpreter::executeAllocInst(AllocationInst &I, ExecutionContext &SF) {
   // FIXME: Don't use CALLOC, use a tainted malloc.
   void *Memory = calloc(NumElements, TD.getTypeSize(Ty));
 
-  GenericValue Result;
-  Result.PointerVal = (PointerTy)Memory;
+  GenericValue Result = PTOGV(Memory);
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
   SetValue(&I, Result, SF);
 
@@ -773,15 +661,15 @@ static void executeFreeInst(FreeInst &I, ExecutionContext &SF) {
   assert(isa<PointerType>(I.getOperand(0)->getType()) && "Freeing nonptr?");
   GenericValue Value = getOperandValue(I.getOperand(0), SF);
   // TODO: Check to make sure memory is allocated
-  free((void*)Value.PointerVal);   // Free memory
+  free(GVTOP(Value));   // Free memory
 }
 
 
 // getElementOffset - The workhorse for getelementptr.
 //
-static GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
-                                        User::op_iterator E,
-                                        ExecutionContext &SF) {
+GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
+					      User::op_iterator E,
+					      ExecutionContext &SF) {
   assert(isa<PointerType>(Ptr->getType()) &&
          "Cannot getElementOffset of a nonpointer type!");
 
@@ -834,13 +722,13 @@ static GenericValue executeGEPOperation(Value *Ptr, User::op_iterator I,
 }
 
 static void executeGEPInst(GetElementPtrInst &I, ExecutionContext &SF) {
-  SetValue(&I, executeGEPOperation(I.getPointerOperand(),
+  SetValue(&I, TheEE->executeGEPOperation(I.getPointerOperand(),
                                    I.idx_begin(), I.idx_end(), SF), SF);
 }
 
-static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
+void Interpreter::executeLoadInst(LoadInst &I, ExecutionContext &SF) {
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  GenericValue *Ptr = (GenericValue*)SRC.PointerVal;
+  GenericValue *Ptr = (GenericValue*)GVTOP(SRC);
   GenericValue Result;
 
   if (TD.isLittleEndian()) {
@@ -910,101 +798,13 @@ static void executeLoadInst(LoadInst &I, ExecutionContext &SF) {
   SetValue(&I, Result, SF);
 }
 
-static void StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
-                               const Type *Ty) {
-  if (TD.isLittleEndian()) {
-    switch (Ty->getPrimitiveID()) {
-    case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Ptr->Untyped[0] = Val.UShortVal & 255;
-                            Ptr->Untyped[1] = (Val.UShortVal >> 8) & 255;
-                            break;
-    case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Ptr->Untyped[0] =  Val.UIntVal        & 255;
-                            Ptr->Untyped[1] = (Val.UIntVal >>  8) & 255;
-                            Ptr->Untyped[2] = (Val.UIntVal >> 16) & 255;
-                            Ptr->Untyped[3] = (Val.UIntVal >> 24) & 255;
-                            break;
-    case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:    
-    case Type::PointerTyID: Ptr->Untyped[0] =  Val.ULongVal        & 255;
-                            Ptr->Untyped[1] = (Val.ULongVal >>  8) & 255;
-                            Ptr->Untyped[2] = (Val.ULongVal >> 16) & 255;
-                            Ptr->Untyped[3] = (Val.ULongVal >> 24) & 255;
-                            Ptr->Untyped[4] = (Val.ULongVal >> 32) & 255;
-                            Ptr->Untyped[5] = (Val.ULongVal >> 40) & 255;
-                            Ptr->Untyped[6] = (Val.ULongVal >> 48) & 255;
-                            Ptr->Untyped[7] = (Val.ULongVal >> 56) & 255;
-                            break;
-    default:
-      cout << "Cannot store value of type " << Ty << "!\n";
-    }
-  } else {
-    switch (Ty->getPrimitiveID()) {
-    case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Ptr->Untyped[1] = Val.UShortVal & 255;
-                            Ptr->Untyped[0] = (Val.UShortVal >> 8) & 255;
-                            break;
-    case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Ptr->Untyped[3] =  Val.UIntVal        & 255;
-                            Ptr->Untyped[2] = (Val.UIntVal >>  8) & 255;
-                            Ptr->Untyped[1] = (Val.UIntVal >> 16) & 255;
-                            Ptr->Untyped[0] = (Val.UIntVal >> 24) & 255;
-                            break;
-    case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:    
-    case Type::PointerTyID: Ptr->Untyped[7] =  Val.ULongVal        & 255;
-                            Ptr->Untyped[6] = (Val.ULongVal >>  8) & 255;
-                            Ptr->Untyped[5] = (Val.ULongVal >> 16) & 255;
-                            Ptr->Untyped[4] = (Val.ULongVal >> 24) & 255;
-                            Ptr->Untyped[3] = (Val.ULongVal >> 32) & 255;
-                            Ptr->Untyped[2] = (Val.ULongVal >> 40) & 255;
-                            Ptr->Untyped[1] = (Val.ULongVal >> 48) & 255;
-                            Ptr->Untyped[0] = (Val.ULongVal >> 56) & 255;
-                            break;
-    default:
-      cout << "Cannot store value of type " << Ty << "!\n";
-    }
-  }
-}
-
-static void executeStoreInst(StoreInst &I, ExecutionContext &SF) {
+void Interpreter::executeStoreInst(StoreInst &I, ExecutionContext &SF) {
   GenericValue Val = getOperandValue(I.getOperand(0), SF);
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
-  StoreValueToMemory(Val, (GenericValue *)SRC.PointerVal,
+  StoreValueToMemory(Val, (GenericValue *)GVTOP(SRC),
                      I.getOperand(0)->getType());
 }
 
-
-GenericValue Interpreter::CreateArgv(const std::vector<std::string> &InputArgv){
-  // Pointers are 64 bits...
-  PointerTy *Result = new PointerTy[InputArgv.size()+1];  // 64 bit assumption
-
-  for (unsigned i = 0; i < InputArgv.size(); ++i) {
-    unsigned Size = InputArgv[i].size()+1;
-    char *Dest = new char[Size];
-    copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
-    Dest[Size-1] = 0;
-
-    GenericValue GV; GV.PointerVal = (PointerTy)Dest;
-    // Endian safe: Result[i] = (PointerTy)Dest;
-    StoreValueToMemory(GV, (GenericValue*)(Result+i),
-                       Type::LongTy);  // 64 bit assumption
-  }
-
-  Result[InputArgv.size()] = 0;
-  GenericValue GV; GV.PointerVal = (PointerTy)Result;
-  return GV;
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -1022,7 +822,7 @@ void Interpreter::executeCallInst(CallInst &I, ExecutionContext &SF) {
   // and treat it as a function pointer.
   GenericValue SRC = getOperandValue(I.getCalledValue(), SF);
   
-  callMethod((Function*)SRC.PointerVal, ArgVals);
+  callMethod((Function*)GVTOP(SRC), ArgVals);
 }
 
 static void executePHINode(PHINode &I, ExecutionContext &SF) {
@@ -1433,7 +1233,7 @@ void Interpreter::printValue(const Type *Ty, GenericValue V) {
   case Type::ULongTyID:  cout << (unsigned long)V.ULongVal;  break;
   case Type::FloatTyID:  cout << V.FloatVal;  break;
   case Type::DoubleTyID: cout << V.DoubleVal; break;
-  case Type::PointerTyID:cout << (void*)V.PointerVal; break;
+  case Type::PointerTyID:cout << (void*)GVTOP(V); break;
   default:
     cout << "- Don't know how to print value of this type!";
     break;

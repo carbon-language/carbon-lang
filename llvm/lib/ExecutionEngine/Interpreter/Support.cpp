@@ -7,6 +7,7 @@
 #include "Interpreter.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Module.h"
 #include <iostream>
 using std::cout;
 
@@ -38,7 +39,7 @@ std::vector<Value*> Interpreter::LookupMatchingNames(const std::string &Name) {
   Function *CurMeth = getCurrentMethod();
   
   if (CurMeth) ::LookupMatchingNames(Name, CurMeth->getSymbolTable(), Results);
-  if (CurMod ) ::LookupMatchingNames(Name, CurMod ->getSymbolTable(), Results);
+  ::LookupMatchingNames(Name, getModule().getSymbolTable(), Results);
   return Results;
 }
 

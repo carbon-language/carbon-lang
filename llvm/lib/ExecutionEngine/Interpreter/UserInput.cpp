@@ -7,6 +7,7 @@
 #include "Interpreter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/Transforms/Utils/Linker.h"
 #include <algorithm>
 using std::string;
@@ -18,8 +19,8 @@ enum CommandID {
   Print, Info, List, StackTrace, Up, Down,    // Inspection
   Next, Step, Run, Finish, Call,              // Control flow changes
   Break, Watch,                               // Debugging
-  Load, Flush,
-  TraceOpt, ProfileOpt                              // Toggle features
+  Flush,
+  TraceOpt,                                   // Toggle features
 };
 
 // CommandTable - Build a lookup table for the commands available to the user...
@@ -53,11 +54,9 @@ static struct CommandTableElement {
   { "break"    , Break      }, { "b", Break },
   { "watch"    , Watch      },
 
-  { "load"     , Load       },
   { "flush"    , Flush      },
 
   { "trace"    , TraceOpt   },
-  { "profile"  , ProfileOpt },
 };
 static CommandTableElement *CommandTableEnd = 
    CommandTable+sizeof(CommandTable)/sizeof(CommandTable[0]);
@@ -90,11 +89,6 @@ void Interpreter::handleUserInput() {
 
     switch (E->CID) {
     case Quit:       UserQuit = true;   break;
-    case Load:
-      cin >> Command;
-      loadModule(Command);
-      break;
-    case Flush: flushModule(); break;
     case Print:
       cin >> Command;
       print(Command);
@@ -132,72 +126,12 @@ void Interpreter::handleUserInput() {
       cout << "Tracing " << (Trace ? "enabled\n" : "disabled\n");
       break;
 
-    case ProfileOpt:
-      Profile = !Profile;
-      cout << "Profiling " << (Trace ? "enabled\n" : "disabled\n");
-      break;
-
     default:
       cout << "Command '" << Command << "' unimplemented!\n";
       break;
     }
 
   } while (!UserQuit);
-}
-
-//===----------------------------------------------------------------------===//
-// loadModule - Load a new module to execute...
-//
-void Interpreter::loadModule(const string &Filename) {
-  string ErrorMsg;
-  if (CurMod && !flushModule()) return;  // Kill current execution
-
-  CurMod = ParseBytecodeFile(Filename, &ErrorMsg);
-  if (CurMod == 0) {
-    cout << "Error parsing '" << Filename << "': No module loaded: "
-         << ErrorMsg << "\n";
-    return;
-  }
-  CW.setModule(CurMod);  // Update Writer
-
-#if 0
-  string RuntimeLib = getCurrentExecutablePath();
-  if (!RuntimeLib.empty()) RuntimeLib += "/";
-  RuntimeLib += "RuntimeLib.bc";
-
-  if (Module *SupportLib = ParseBytecodeFile(RuntimeLib, &ErrorMsg)) {
-    if (LinkModules(CurMod, SupportLib, &ErrorMsg))
-      std::cerr << "Error Linking runtime library into current module: "
-                << ErrorMsg << "\n";
-  } else {
-    std::cerr << "Error loading runtime library '"+RuntimeLib+"': "
-              << ErrorMsg << "\n";
-  }
-#endif
-}
-
-
-//===----------------------------------------------------------------------===//
-// flushModule - Return true if the current program has been unloaded.
-//
-bool Interpreter::flushModule() {
-  if (CurMod == 0) {
-    cout << "Error flushing: No module loaded!\n";
-    return false;
-  }
-
-  if (!ECStack.empty()) {
-    // TODO: if use is not sure, return false
-    cout << "Killing current execution!\n";
-    ECStack.clear();
-    CurFrame = -1;
-  }
-
-  CW.setModule(0);
-  delete CurMod;
-  CurMod = 0;
-  ExitCode = 0;
-  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -272,7 +206,7 @@ bool Interpreter::callMainMethod(const string &Name,
       return true;
     }
 
-    Args.push_back(CreateArgv(InputArgv));
+    Args.push_back(PTOGV(CreateArgv(InputArgv)));
   }
     // fallthrough
   case 1:
