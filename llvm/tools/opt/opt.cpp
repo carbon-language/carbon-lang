@@ -25,7 +25,9 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Tools/CommandLine.h"
-#include "llvm/Opt/AllOpts.h"
+#include "llvm/Optimizations/AllOpts.h"
+
+using namespace opt;
 
 struct {
   const string ArgName, Name;
@@ -37,8 +39,9 @@ struct {
   { "-strip"     , "Strip Symbols",         DoSymbolStripping     },
   { "-mstrip"    , "Strip Module Symbols",  DoFullSymbolStripping },
   { "-indvars"   , "Simplify Induction Vars",DoInductionVariableCannonicalize },
-  { "-sccp"      , "Sparse Conditional Constant Prop", DoSCCP<Module> },
+  { "-sccp"      , "Sparse Conditional Constant Prop", DoSCCP },
   { "-cpm"       , "Constant Pool Merging", DoConstantPoolMerging },
+  { "-adce"      , "Agressive DCE",         DoADCE },
 };
 
 int main(int argc, char **argv) {
