@@ -286,6 +286,12 @@ public:
     return I->second;
   }
 
+  /// containsFunction - Return true if this DSGraph contains information for
+  /// the specified function.
+  bool containsFunction(Function *F) const {
+    return ReturnNodes.count(F);
+  }
+
   /// getGraphSize - Return the number of nodes in this graph.
   ///
   unsigned getGraphSize() const {
@@ -383,12 +389,17 @@ public:
   void getFunctionArgumentsForCall(Function *F,
                                    std::vector<DSNodeHandle> &Args) const;
 
+  /// mergeInGraph - This graph merges in the minimal number of
+  /// nodes from G2 into 'this' graph, merging the bindings specified by the
+  /// call site (in this graph) with the bindings specified by the vector in G2.
+  /// If the StripAlloca's argument is 'StripAllocaBit' then Alloca markers are
+  /// removed from nodes.
+  ///
+  void mergeInGraph(const DSCallSite &CS, std::vector<DSNodeHandle> &Args,
+                    const DSGraph &G2, unsigned CloneFlags);
 
-  /// mergeInGraph - The method is used for merging graphs together.  If the
-  /// argument graph is not *this, it makes a clone of the specified graph, then
-  /// merges the nodes specified in the call site with the formal arguments in
-  /// the graph.  If the StripAlloca's argument is 'StripAllocaBit' then Alloca
-  /// markers are removed from nodes.
+  /// mergeInGraph - This method is the same as the above method, but the
+  /// argument bindings are provided by using the formal arguments of F.
   ///
   void mergeInGraph(const DSCallSite &CS, Function &F, const DSGraph &Graph,
                     unsigned CloneFlags);
