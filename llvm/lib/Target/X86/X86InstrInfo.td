@@ -379,24 +379,51 @@ def ANDmi32b : I2A8 <"and", 0x83, MRMS4m    >;            // [mem32] &= imm8
 
 
 
+
 def ORrr8    : I2A8 <"or" , 0x08, MRMDestReg>,         Pattern<(set R8 , (or  R8 , R8 ))>;
 def ORrr16   : I2A16<"or" , 0x09, MRMDestReg>, OpSize, Pattern<(set R16, (or  R16, R16))>;
 def ORrr32   : I2A32<"or" , 0x09, MRMDestReg>,         Pattern<(set R32, (or  R32, R32))>;
+def ORmr8    : I2A8 <"or" , 0x08, MRMDestMem>;            // [mem8]  |= R8
+def ORmr16   : I2A16<"or" , 0x09, MRMDestMem>, OpSize;    // [mem16] |= R16
+def ORmr32   : I2A32<"or" , 0x09, MRMDestMem>;            // [mem32] |= R32
+def ORrm8    : I2A8 <"or" , 0x0A, MRMSrcMem >;            // R8  |= [mem8]
+def ORrm16   : I2A16<"or" , 0x0B, MRMSrcMem >, OpSize;    // R16 |= [mem16]
+def ORrm32   : I2A32<"or" , 0x0B, MRMSrcMem >;            // R32 |= [mem32]
+
 def ORri8    : I2A8 <"or" , 0x80, MRMS1r    >,         Pattern<(set R8 , (or  R8 , imm))>;
 def ORri16   : I2A16<"or" , 0x81, MRMS1r    >, OpSize, Pattern<(set R16, (or  R16, imm))>;
 def ORri32   : I2A32<"or" , 0x81, MRMS1r    >,         Pattern<(set R32, (or  R32, imm))>;
-def ORri16b  : I2A8 <"or" , 0x83, MRMS1r    >, OpSize;
-def ORri32b  : I2A8 <"or" , 0x83, MRMS1r    >;
+def ORmi8    : I2A8 <"or" , 0x80, MRMS1m    >;            // [mem8]  |= imm8
+def ORmi16   : I2A16<"or" , 0x81, MRMS1m    >, OpSize;    // [mem16] |= imm16
+def ORmi32   : I2A32<"or" , 0x81, MRMS1m    >;            // [mem32] |= imm32
+
+def ORri16b  : I2A8 <"or" , 0x83, MRMS1r    >, OpSize;    // R16 |= imm8
+def ORri32b  : I2A8 <"or" , 0x83, MRMS1r    >;            // R32 |= imm8
+def ORmi16b  : I2A8 <"or" , 0x83, MRMS1m    >, OpSize;    // [mem16] |= imm8
+def ORmi32b  : I2A8 <"or" , 0x83, MRMS1m    >;            // [mem32] |= imm8
 
 
 def XORrr8   : I2A8 <"xor", 0x30, MRMDestReg>,         Pattern<(set R8 , (xor R8 , R8 ))>;
 def XORrr16  : I2A16<"xor", 0x31, MRMDestReg>, OpSize, Pattern<(set R16, (xor R16, R16))>;
 def XORrr32  : I2A32<"xor", 0x31, MRMDestReg>,         Pattern<(set R32, (xor R32, R32))>;
+def XORmr8   : I2A8 <"xor", 0x30, MRMDestMem>;            // [mem8]  ^= R8
+def XORmr16  : I2A16<"xor", 0x31, MRMDestMem>, OpSize;    // [mem16] ^= R16
+def XORmr32  : I2A32<"xor", 0x31, MRMDestMem>;            // [mem32] ^= R32
+def XORrm8   : I2A8 <"xor", 0x32, MRMSrcMem >;            // R8  ^= [mem8]
+def XORrm16  : I2A16<"xor", 0x33, MRMSrcMem >, OpSize;    // R16 ^= [mem16]
+def XORrm32  : I2A32<"xor", 0x33, MRMSrcMem >;            // R32 ^= [mem32]
+
 def XORri8   : I2A8 <"xor", 0x80, MRMS6r    >,         Pattern<(set R8 , (xor R8 , imm))>;
 def XORri16  : I2A16<"xor", 0x81, MRMS6r    >, OpSize, Pattern<(set R16, (xor R16, imm))>;
 def XORri32  : I2A32<"xor", 0x81, MRMS6r    >,         Pattern<(set R32, (xor R32, imm))>;
-def XORri16b : I2A8 <"xor", 0x83, MRMS6r    >, OpSize;
-def XORri32b : I2A8 <"xor", 0x83, MRMS6r    >;
+def XORmi8   : I2A8 <"xor", 0x80, MRMS6m    >;            // [mem8] ^= R8
+def XORmi16  : I2A16<"xor", 0x81, MRMS6m    >, OpSize;    // [mem16] ^= R16
+def XORmi32  : I2A32<"xor", 0x81, MRMS6m    >;            // [mem32] ^= R32
+
+def XORri16b : I2A8 <"xor", 0x83, MRMS6r    >, OpSize;    // R16 ^= imm8
+def XORri32b : I2A8 <"xor", 0x83, MRMS6r    >;            // R32 ^= imm8
+def XORmi16b : I2A8 <"xor", 0x83, MRMS6m    >, OpSize;    // [mem16] ^= imm8
+def XORmi32b : I2A8 <"xor", 0x83, MRMS6m    >;            // [mem32] ^= imm8
 
 // Test instructions are just like AND, except they don't generate a result.
 def TESTrr8  : X86Inst<"test", 0x84, MRMDestReg, Arg8 >;          // flags = R8  & R8

@@ -156,6 +156,8 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
   case X86::ADDmi16:  case X86::ADDmi32:
   case X86::SUBmi16:  case X86::SUBmi32:
   case X86::ANDmi16:  case X86::ANDmi32:
+  case X86::ORmi16:  case X86::ORmi32:
+  case X86::XORmi16:  case X86::XORmi32:
     assert(MI->getNumOperands() == 5 && "These should all have 5 operands!");
     if (MI->getOperand(4).isImmediate()) {
       int Val = MI->getOperand(4).getImmedValue();
@@ -170,6 +172,10 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
         case X86::SUBmi32:  Opcode = X86::SUBmi32b; break;
         case X86::ANDmi16:  Opcode = X86::ANDmi16b; break;
         case X86::ANDmi32:  Opcode = X86::ANDmi32b; break;
+        case X86::ORmi16:   Opcode = X86::ORmi16b; break;
+        case X86::ORmi32:   Opcode = X86::ORmi32b; break;
+        case X86::XORmi16:  Opcode = X86::XORmi16b; break;
+        case X86::XORmi32:  Opcode = X86::XORmi32b; break;
         }
         unsigned R0 = MI->getOperand(0).getReg();
         unsigned Scale = MI->getOperand(1).getImmedValue();
