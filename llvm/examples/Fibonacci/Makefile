@@ -1,4 +1,4 @@
-##===- projects/HowToUseJIT/Makefile -----------------------*- Makefile -*-===##
+##===- projects/Fibonacci/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -10,6 +10,6 @@ LEVEL = ../..
 TOOLNAME = Fibonacci
 USEDLIBS = lli-jit lli-interpreter codegen executionengine x86 selectiondag \
 	   scalaropts analysis.a transformutils.a bcreader target.a vmcore \
-	   support.a
+	   support.a LLVMsystem.a
 
 include $(LEVEL)/Makefile.common

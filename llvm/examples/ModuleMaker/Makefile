@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LEVEL=../..
 TOOLNAME=ModuleMaker
-USEDLIBS= bcwriter vmcore support.a
+USEDLIBS= bcwriter vmcore support.a LLVMsystem.a
 
 include $(LEVEL)/Makefile.common

@@ -10,6 +10,6 @@ LEVEL = ../..
 TOOLNAME = HowToUseJIT
 USEDLIBS = lli-jit lli-interpreter codegen executionengine x86 selectiondag \
 	   scalaropts analysis.a transformutils.a bcreader target.a vmcore \
-	   support.a
+	   support.a LLVMsystem.a
 
 include $(LEVEL)/Makefile.common
