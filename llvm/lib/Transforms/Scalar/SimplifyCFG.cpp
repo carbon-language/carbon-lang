@@ -60,7 +60,6 @@ static bool MarkAliveBlocks(BasicBlock *BB, std::set<BasicBlock*> &Reachable) {
           (*I)->removePredecessor(BB);
 
         new UnreachableInst(SI);
-        std::cerr << "Inserted UNREACHABLE instruction!\n";
 
         // All instructions after this are dead.
         for (; BBI != E; ) {
