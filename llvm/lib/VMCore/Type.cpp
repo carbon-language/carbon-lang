@@ -326,58 +326,28 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 
 
 //===----------------------------------------------------------------------===//
-//                           Auxiliary classes
-//===----------------------------------------------------------------------===//
-//
-// These classes are used to implement specialized behavior for each different
-// type.
-//
-struct SignedIntType : public Type {
-  SignedIntType(std::string name, TypeID id) : Type(name, id) {}
-
-  // isSigned - Return whether a numeric type is signed.
-  virtual bool isSigned() const { return 1; }
-
-  // isInteger - Equivalent to isSigned() || isUnsigned, but with only a single
-  // virtual function invocation.
-  //
-  virtual bool isInteger() const { return 1; }
-};
-
-struct UnsignedIntType : public Type {
-  UnsignedIntType(std::string name, TypeID id) : Type(name,id) {}
-
-  // isUnsigned - Return whether a numeric type is signed.
-  virtual bool isUnsigned() const { return 1; }
-
-  // isInteger - Equivalent to isSigned() || isUnsigned, but with only a single
-  // virtual function invocation.
-  //
-  virtual bool isInteger() const { return 1; }
-};
-
-struct OtherType : public Type {
-   OtherType(std::string name, TypeID id) : Type(name,id) {}
-};
-
-
-//===----------------------------------------------------------------------===//
 //                           Static 'Type' data
 //===----------------------------------------------------------------------===//
 
-static OtherType       TheVoidTy  ("void"  , Type::VoidTyID);
-static OtherType       TheBoolTy  ("bool"  , Type::BoolTyID);
-static SignedIntType   TheSByteTy ("sbyte" , Type::SByteTyID);
-static UnsignedIntType TheUByteTy ("ubyte" , Type::UByteTyID);
-static SignedIntType   TheShortTy ("short" , Type::ShortTyID);
-static UnsignedIntType TheUShortTy("ushort", Type::UShortTyID);
-static SignedIntType   TheIntTy   ("int"   , Type::IntTyID);
-static UnsignedIntType TheUIntTy  ("uint"  , Type::UIntTyID);
-static SignedIntType   TheLongTy  ("long"  , Type::LongTyID);
-static UnsignedIntType TheULongTy ("ulong" , Type::ULongTyID);
-static OtherType       TheFloatTy ("float" , Type::FloatTyID);
-static OtherType       TheDoubleTy("double", Type::DoubleTyID);
-static OtherType       TheLabelTy ("label" , Type::LabelTyID);
+namespace {
+  struct PrimType : public Type {
+    PrimType(const char *S, TypeID ID) : Type(S, ID) {}
+  };
+}
+
+static PrimType TheVoidTy  ("void"  , Type::VoidTyID);
+static PrimType TheBoolTy  ("bool"  , Type::BoolTyID);
+static PrimType TheSByteTy ("sbyte" , Type::SByteTyID);
+static PrimType TheUByteTy ("ubyte" , Type::UByteTyID);
+static PrimType TheShortTy ("short" , Type::ShortTyID);
+static PrimType TheUShortTy("ushort", Type::UShortTyID);
+static PrimType TheIntTy   ("int"   , Type::IntTyID);
+static PrimType TheUIntTy  ("uint"  , Type::UIntTyID);
+static PrimType TheLongTy  ("long"  , Type::LongTyID);
+static PrimType TheULongTy ("ulong" , Type::ULongTyID);
+static PrimType TheFloatTy ("float" , Type::FloatTyID);
+static PrimType TheDoubleTy("double", Type::DoubleTyID);
+static PrimType TheLabelTy ("label" , Type::LabelTyID);
 
 Type *Type::VoidTy   = &TheVoidTy;
 Type *Type::BoolTy   = &TheBoolTy;
