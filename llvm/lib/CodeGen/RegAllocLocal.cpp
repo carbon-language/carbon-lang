@@ -1,10 +1,10 @@
 //===-- RegAllocLocal.cpp - A BasicBlock generic register allocator -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This register allocator allocates registers to a basic block at a time,
@@ -30,7 +30,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumSpilled ("ra-local", "Number of registers spilled");
   Statistic<> NumReloaded("ra-local", "Number of registers reloaded");
-  cl::opt<bool> DisableKill("disable-kill", cl::Hidden, 
+  cl::opt<bool> DisableKill("disable-kill", cl::Hidden,
                             cl::desc("Disable register kill in local-ra"));
 
   class RA : public MachineFunctionPass {
@@ -58,13 +58,7 @@ namespace {
              && "VirtReg not in map!");
       return Virt2PhysRegMap[VirtReg-MRegisterInfo::FirstVirtualRegister];
     }
-    unsigned &getOrInsertVirt2PhysRegMapSlot(unsigned VirtReg) {
-      assert(VirtReg >= MRegisterInfo::FirstVirtualRegister &&"Illegal VREG #");
-      if (VirtReg-MRegisterInfo::FirstVirtualRegister >= Virt2PhysRegMap.size())
-        Virt2PhysRegMap.resize(VirtReg-MRegisterInfo::FirstVirtualRegister+1);
-      return Virt2PhysRegMap[VirtReg-MRegisterInfo::FirstVirtualRegister];
-    }
-    
+
     // PhysRegsUsed - This array is effectively a map, containing entries for
     // each physical register that currently has a value (ie, it is in
     // Virt2PhysRegMap).  The value mapped to is the virtual register
@@ -73,7 +67,7 @@ namespace {
     // because it is used by a future instruction.  If the entry for a physical
     // register is -1, then the physical register is "not in the map".
     //
-    int PhysRegsUsed[MRegisterInfo::FirstVirtualRegister];
+    std::vector<int> PhysRegsUsed;
 
     // PhysRegsUseOrder - This contains a list of the physical registers that
     // currently have a virtual register value in them.  This list provides an
@@ -102,7 +96,7 @@ namespace {
     bool isVirtRegModified(unsigned Reg) const {
       assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
       assert(Reg - MRegisterInfo::FirstVirtualRegister < VirtRegModified.size()
-	     && "Illegal virtual register!");
+             && "Illegal virtual register!");
       return VirtRegModified[Reg - MRegisterInfo::FirstVirtualRegister];
     }
 
@@ -111,14 +105,14 @@ namespace {
       if (PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
 
       for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
-	if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) {
-	  unsigned RegMatch = PhysRegsUseOrder[i-1];       // remove from middle
-	  PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
-	  // Add it to the end of the list
-	  PhysRegsUseOrder.push_back(RegMatch);
-	  if (RegMatch == Reg) 
-	    return;    // Found an exact match, exit early
-	}
+        if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) {
+          unsigned RegMatch = PhysRegsUseOrder[i-1];       // remove from middle
+          PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
+          // Add it to the end of the list
+          PhysRegsUseOrder.push_back(RegMatch);
+          if (RegMatch == Reg)
+            return;    // Found an exact match, exit early
+        }
     }
 
   public:
@@ -128,7 +122,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       if (!DisableKill)
-	AU.addRequired<LiveVariables>();
+        AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
       AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -190,7 +184,7 @@ namespace {
     /// the way or spilled to memory.
     ///
     void liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-			 unsigned PhysReg);
+                         unsigned PhysReg);
 
     /// isPhysRegAvailable - Return true if the specified physical register is
     /// free and available for use.  This also includes checking to see if
@@ -202,14 +196,14 @@ namespace {
     /// specified register class.  If not, return 0.
     ///
     unsigned getFreeReg(const TargetRegisterClass *RC);
-    
+
     /// getReg - Find a physical register to hold the specified virtual
     /// register.  If all compatible physical registers are used, this method
     /// spills the last used virtual register to the stack, and uses that
     /// register.
     ///
     unsigned getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-		    unsigned VirtReg);
+                    unsigned VirtReg);
 
     /// reloadVirtReg - This method loads the specified virtual register into a
     /// physical register, returning the physical register chosen.  This updates
@@ -242,7 +236,7 @@ int RA::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
 }
 
 
-/// removePhysReg - This method marks the specified physical register as no 
+/// removePhysReg - This method marks the specified physical register as no
 /// longer being in use.
 ///
 void RA::removePhysReg(unsigned PhysReg) {
@@ -319,7 +313,7 @@ void RA::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
   // Update information to note the fact that this register was just used, and
   // it holds VirtReg.
   PhysRegsUsed[PhysReg] = VirtReg;
-  getOrInsertVirt2PhysRegMapSlot(VirtReg) = PhysReg;
+  getVirt2PhysRegMapSlot(VirtReg) = PhysReg;
   PhysRegsUseOrder.push_back(PhysReg);   // New use of PhysReg
 }
 
@@ -364,7 +358,7 @@ unsigned RA::getFreeReg(const TargetRegisterClass *RC) {
 /// or spilled to memory.
 ///
 void RA::liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-			 unsigned PhysReg) {
+                         unsigned PhysReg) {
   // FIXME: This code checks to see if a register is available, but it really
   // wants to know if a reg is available BEFORE the instruction executes.  If
   // called after killed operands are freed, it runs the risk of reallocating a
@@ -386,12 +380,12 @@ void RA::liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     if (unsigned NewReg = getFreeReg(RC)) {
       // Emit the code to copy the value...
       RegInfo->copyRegToReg(MBB, I, NewReg, PhysReg, RC);
-      
+
       // Update our internal state to indicate that PhysReg is available and Reg
       // isn't.
       getVirt2PhysRegMapSlot[VirtReg] = 0;
       removePhysReg(PhysReg);  // Free the physreg
-      
+
       // Move reference over to new register...
       assignVirtToPhysReg(VirtReg, NewReg);
       return;
@@ -407,7 +401,7 @@ void RA::liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 /// the last used virtual register to the stack, and uses that register.
 ///
 unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-		    unsigned VirtReg) {
+                    unsigned VirtReg) {
   const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
 
   // First check to see if we have a free register of the requested type...
@@ -423,7 +417,7 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
     for (unsigned i = 0; PhysReg == 0; ++i) {
       assert(i != PhysRegsUseOrder.size() &&
              "Couldn't find a register of the appropriate class!");
-      
+
       unsigned R = PhysRegsUseOrder[i];
 
       // We can only use this register if it holds a virtual register (ie, it
@@ -471,7 +465,7 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
 unsigned RA::reloadVirtReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &I,
                            unsigned VirtReg) {
-  if (unsigned PR = getOrInsertVirt2PhysRegMapSlot(VirtReg)) {
+  if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
     MarkPhysRegRecentlyUsed(PR);
     return PR;               // Already have this value available!
   }
@@ -527,7 +521,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned PhysSrcReg = reloadVirtReg(MBB, MI, VirtSrcReg);
         MI->SetMachineOperandReg(i, PhysSrcReg);  // Assign the input register
       }
-    
+
     if (!DisableKill) {
       // If this instruction is the last user of anything in registers, kill the
       // value, freeing the register being used, so it doesn't need to be
@@ -594,7 +588,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned DestPhysReg;
 
         // If DestVirtReg already has a value, use it.
-        if (!(DestPhysReg = getOrInsertVirt2PhysRegMapSlot(DestVirtReg)))
+        if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg)))
           DestPhysReg = getReg(MBB, MI, DestVirtReg);
         markVirtRegModified(DestVirtReg);
         MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
@@ -648,7 +642,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     }
   assert(AllOk && "Virtual registers still in phys regs?");
 #endif
-  
+
   // Clear any physical register which appear live at the end of the basic
   // block, but which do not hold any virtual registers.  e.g., the stack
   // pointer.
@@ -664,12 +658,11 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   TM = &Fn.getTarget();
   RegInfo = TM->getRegisterInfo();
 
-  memset(PhysRegsUsed, -1, RegInfo->getNumRegs()*sizeof(unsigned));
+  PhysRegsUsed.assign(RegInfo->getNumRegs(), -1);
 
-  // Reserve some space for a moderate number of registers.  If we know what the
-  // max virtual register number was we could use that instead and save some
-  // runtime overhead...
-  Virt2PhysRegMap.resize(1024);
+  // initialize the virtual->physical register map to have a 'null'
+  // mapping for all virtual registers
+  Virt2PhysRegMap.assign(MF->getSSARegMap()->getNumVirtualRegs(), 0);
 
   if (!DisableKill)
     LV = &getAnalysis<LiveVariables>();
@@ -680,6 +673,7 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
     AllocateBasicBlock(*MBB);
 
   StackSlotForVirtReg.clear();
+  PhysRegsUsed.clear();
   VirtRegModified.clear();
   Virt2PhysRegMap.clear();
   return true;
@@ -688,4 +682,3 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
 FunctionPass *llvm::createLocalRegisterAllocator() {
   return new RA();
 }
-
