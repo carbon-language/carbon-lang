@@ -1,6 +1,6 @@
 //===-- Verifier.cpp - Implement the Module Verifier -------------*- C++ -*-==//
 //
-// This file defines the method verifier interface, that can be used for some
+// This file defines the function verifier interface, that can be used for some
 // sanity checking of input to the system.
 //
 // Note that this does not provide full 'java style' security and verifications,
@@ -20,13 +20,14 @@
 //  * Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
 //  * PHI nodes must have an entry for each predecessor, with no extras.
 //  * All basic blocks should only end with terminator insts, not contain them
-//  * The entry node to a method must not have predecessors
+//  * The entry node to a function must not have predecessors
 //  * All Instructions must be embeded into a basic block
 //  . Verify that none of the Value getType()'s are null.
-//  . Method's cannot take a void typed parameter
-//  . Verify that a method's argument list agrees with it's declared type.
+//  . Function's cannot take a void typed parameter
+//  . Verify that a function's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
 //  * It is illegal to specify a name for a void value.
+//  * It is illegal to have a internal function that is just a declaration
 //  . All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
@@ -34,7 +35,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Pass.h"
-#include "llvm/Method.h"
+#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
@@ -171,15 +172,18 @@ static bool verifySymbolTable(const SymbolTable *ST) {
 // verifyModule and direct clients of the verifyMethod function are correctly
 // informed.
 //
-bool verifyMethod(const Method *M) {
-  if (M->isExternal()) return false;  // Can happen if called by verifyModule
+bool verifyMethod(const Function *F) {
+  if (F->isExternal()) return false;  // Can happen if called by verifyModule
+  bool Broken = verifySymbolTable(F->getSymbolTable());
 
-  bool Broken = verifySymbolTable(M->getSymbolTable());
-  const BasicBlock *Entry = M->front();
+  Assert1(!F->isExternal() || F->hasExternalLinkage(),
+          "Function cannot be an 'internal' 'declare'ation!", F);
+
+  const BasicBlock *Entry = F->getEntryNode();
   Assert1(pred_begin(Entry) == pred_end(Entry),
           "Entry block to method must not have predecessors!", Entry);
 
-  Broken |= reduce_apply_bool(M->begin(), M->end(), verifyBasicBlock);
+  Broken |= reduce_apply_bool(F->begin(), F->end(), verifyBasicBlock);
   return Broken;
 }
 
