@@ -11,7 +11,6 @@
 #include "llvm/iPHINode.h"
 #include "llvm/iMemory.h"
 #include "llvm/ConstantHandling.h"
-#include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Analysis/Expressions.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
