@@ -21,9 +21,6 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
-#include "Support/Alloca.h"
-using std::cerr;
-using std::vector;
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
@@ -117,9 +114,9 @@ void
 InstructionNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cerr << "    ";
-  cerr << getInstruction()->getOpcodeName()
-       << " [label " << getOpLabel() << "]" << "\n";
+    std::cerr << "    ";
+  std::cerr << getInstruction()->getOpcodeName()
+            << " [label " << getOpLabel() << "]" << "\n";
 }
 
 
@@ -127,9 +124,9 @@ void
 VRegListNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cerr << "    ";
+    std::cerr << "    ";
   
-  cerr << "List" << "\n";
+  std::cerr << "List" << "\n";
 }
 
 
@@ -137,29 +134,29 @@ void
 VRegNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cerr << "    ";
+    std::cerr << "    ";
   
-  cerr << "VReg " << getValue() << "\t(type "
-       << (int) getValue()->getValueType() << ")" << "\n";
+  std::cerr << "VReg " << getValue() << "\t(type "
+            << (int) getValue()->getValueType() << ")" << "\n";
 }
 
 void
 ConstantNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cerr << "    ";
+    std::cerr << "    ";
   
-  cerr << "Constant " << getValue() << "\t(type "
-       << (int) getValue()->getValueType() << ")" << "\n";
+  std::cerr << "Constant " << getValue() << "\t(type "
+            << (int) getValue()->getValueType() << ")" << "\n";
 }
 
 void
 LabelNode::dumpNode(int indent) const
 {
   for (int i=0; i < indent; i++)
-    cerr << "    ";
+    std::cerr << "    ";
   
-  cerr << "Label " << getValue() << "\n";
+  std::cerr << "Label " << getValue() << "\n";
 }
 
 //------------------------------------------------------------------------
@@ -258,8 +255,7 @@ InstrForest::buildTreeForInstruction(Instruction *instr)
   // if a fixed array is too small.
   // 
   int numChildren = 0;
-  InstrTreeNode **childArray =
-    (InstrTreeNode **)alloca(instr->getNumOperands()*sizeof(InstrTreeNode *));
+  std::vector<InstrTreeNode*> childArray(instr->getNumOperands());
   
   //
   // Walk the operands of the instruction
