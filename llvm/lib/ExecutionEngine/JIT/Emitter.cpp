@@ -252,13 +252,6 @@ namespace {
     virtual uint64_t getCurrentPCOffset();
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
 
-    // forceCompilationOf - Force the compilation of the specified function, and
-    // return its address, because we REALLY need the address now.
-    //
-    // FIXME: This is JIT specific!
-    //
-    virtual uint64_t forceCompilationOf(Function *F);
-
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
   };
@@ -415,10 +408,6 @@ uint64_t Emitter::getCurrentPCValue() {
 
 uint64_t Emitter::getCurrentPCOffset() {
   return (intptr_t)CurByte-(intptr_t)CurBlock;
-}
-
-uint64_t Emitter::forceCompilationOf(Function *F) {
-  return (intptr_t)TheJIT->getPointerToFunction(F);
 }
 
 // getPointerToNamedFunction - This function is used as a global wrapper to

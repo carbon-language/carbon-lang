@@ -94,13 +94,6 @@ public:
   //
   virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
 
-  // forceCompilationOf - Force the compilation of the specified function, and
-  // return its address, because we REALLY need the address now.
-  //
-  // FIXME: This is JIT specific!
-  //
-  virtual uint64_t forceCompilationOf(Function *F) = 0;
-  
   /// createDebugEmitter - Return a dynamically allocated machine
   /// code emitter, which just prints the opcodes and fields out the cout.  This
   /// can be used for debugging users of the MachineCodeEmitter interface.
