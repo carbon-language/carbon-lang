@@ -26618,10 +26618,7 @@ fi
 
 
 
-
-
 for ac_func in backtrace getcwd gettimeofday isatty getrusage mkstemp mktemp
-                mkdtemp realpath
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -26725,7 +26722,9 @@ done
 
 
 
-for ac_func in strdup strtoq strtoll
+
+
+for ac_func in mkdtemp realpath strdup strtoq strtoll
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
