@@ -84,25 +84,6 @@ public:
   /// not supported for this target.
   ///
   virtual bool addPassesToJITCompile(PassManager &PM) { return true; }
-
-  /// getPrologEpilogCodeInserter - Create pass to insert prolog/epilog code.
-  /// 
-  virtual Pass* getPrologEpilogInsertionPass() = 0;
-
-  /// getFunctionAsmPrinterPass - Create a pass to write out the generated
-  /// machine code for a single function to the generated assembly file.
-  /// 
-  virtual Pass* getFunctionAsmPrinterPass(std::ostream &Out) = 0;
-
-  /// getModuleAsmPrinterPass - Create a pass to write out module-level
-  /// information to the generated assembly file.
-  /// 
-  virtual Pass* getModuleAsmPrinterPass(std::ostream &Out) = 0;
-
-  /// getEmitBytecodeToAsmPass - Create a pass to emit the final LLVM bytecode
-  /// to the generated assembly file.
-  /// 
-  virtual Pass* getEmitBytecodeToAsmPass(std::ostream &Out) = 0;
 };
 
 #endif
