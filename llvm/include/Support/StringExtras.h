@@ -11,6 +11,24 @@
 #include <string>
 #include <stdio.h>
 
+static inline std::string utohexstr(uint64_t X) {
+  char Buffer[40];
+  char *BufPtr = Buffer+39;
+
+  *BufPtr = 0;                  // Null terminate buffer...
+  if (X == 0) *--BufPtr = '0';  // Handle special case...
+
+  while (X) {
+    unsigned Mod = X & 15;
+    if (Mod < 10)
+      *--BufPtr = '0' + Mod;
+    else
+      *--BufPtr = 'A' + Mod-10;
+    X >>= 4;
+  }
+  return std::string(BufPtr);
+}
+
 static inline std::string utostr(uint64_t X, bool isNeg = false) {
   char Buffer[40];
   char *BufPtr = Buffer+39;
