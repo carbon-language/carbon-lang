@@ -1114,12 +1114,63 @@ void V8ISel::emitOp64LibraryCall (MachineBasicBlock *MBB,
 
 void V8ISel::emitShift64 (MachineBasicBlock *MBB,
                           MachineBasicBlock::iterator IP, Instruction &I,
-                          unsigned DestReg, unsigned Op0Reg, unsigned Op1Reg) {
+                          unsigned DestReg, unsigned SrcReg,
+                          unsigned ShiftAmtReg) {
   bool isSigned = I.getType()->isSigned();
 
   switch (I.getOpcode ()) {
   case Instruction::Shl:
   case Instruction::Shr:
+    if (!isSigned) {
+      unsigned CarryReg = makeAnotherReg (Type::IntTy),
+               ThirtyTwo = makeAnotherReg (Type::IntTy),
+               HalfShiftReg = makeAnotherReg (Type::IntTy),
+               NegHalfShiftReg = makeAnotherReg (Type::IntTy),
+               TempReg = makeAnotherReg (Type::IntTy);
+      unsigned OneShiftOutReg = makeAnotherReg (Type::ULongTy),
+               TwoShiftsOutReg = makeAnotherReg (Type::ULongTy);
+
+      /*
+      .lshr_begin:
+      ...
+      // Check whether the shift amount is zero:
+      V8::G0 = V8::SUBCCrr V8::G0, ShiftAmountReg
+      V8::BE .lshr_continue
+      V8::BA .lshr_shift
+
+      .lshr_shift: // [preds: begin]
+      // Calculate 32 - shamt:
+      ThirtyTwo = V8::ORri V8::G0, 32
+      HalfShiftReg = V8::SUBCCrr ThirtyTwo, ShiftAmountReg
+      // See whether it was greater than 0:
+      V8::BG .lshr_two_shifts
+      V8::BA .lshr_one_shift
+
+      .lshr_two_shifts: // [preds: shift]
+      CarryReg = V8::SLLrr SrcReg, HalfShiftReg
+      TwoShiftsOutReg = V8::SRLrr SrcReg, ShiftAmountReg
+      TempReg = V8::SRLrr SrcReg+1, ShiftAmountReg
+      TwoShiftsOutReg+1 = V8::ORrr TempReg, CarryReg
+      V8::BA .lshr_continue
+
+      .lshr_one_shift: // [preds: shift]
+      OneShiftOutReg = V8::ORrr V8::G0, V8::G0
+      NegHalfShiftReg = V8::SUBrr V8::G0, HalfShiftReg
+      OneShiftOutReg+1 = V8::SRLrr SrcReg, NegHalfShiftReg
+      V8::BA .lshr_continue
+
+      .lshr_continue: // [preds: begin, do_one_shift, do_two_shifts]
+      DestReg = V8::PHI (SrcReg, begin), (TwoShiftsOutReg, two_shifts),
+                        (OneShiftOutReg, one_shift)
+      DestReg+1 = V8::PHI (SrcReg+1, begin), (TwoShiftsOutReg+1, two_shifts),
+                          (OneShiftOutReg+1, one_shift)
+      ...
+      */
+
+      std::cerr << "Sorry, 64-bit lshr is not yet supported:\n" << I;
+      abort ();
+      return;
+    }
   default:
     std::cerr << "Sorry, 64-bit shifts are not yet supported:\n" << I;
     abort ();
