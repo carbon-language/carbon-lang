@@ -24,6 +24,7 @@ namespace llvm {
 class ArrayType;
 class StructType;
 class PointerType;
+class PackedType;
 
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
@@ -422,6 +423,44 @@ public:
   static bool classof(const Value *V) {
     return V->getValueType() == SimpleConstantVal &&
            V->getType()->getTypeID() == Type::StructTyID;
+  }
+};
+
+//===---------------------------------------------------------------------------
+/// ConstantPacked - Constant Packed Declarations
+///
+class ConstantPacked : public Constant {
+  friend struct ConstantCreator<ConstantPacked, PackedType,
+                                    std::vector<Constant*> >;
+  ConstantPacked(const ConstantPacked &);      // DO NOT IMPLEMENT
+protected:
+  ConstantPacked(const PackedType *T, const std::vector<Constant*> &Val);
+public:
+  /// get() - Static factory methods - Return objects of the specified value
+  static Constant *get(const PackedType *T, const std::vector<Constant*> &);
+  static Constant *get(const std::vector<Constant*> &V);
+  
+  /// getType - Specialize the getType() method to always return an PackedType,
+  /// which reduces the amount of casting needed in parts of the compiler.
+  ///
+  inline const PackedType *getType() const {
+    return reinterpret_cast<const PackedType*>(Value::getType());
+  }
+
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.  This always returns false because zero arrays are always
+  /// created as ConstantAggregateZero objects.
+  virtual bool isNullValue() const { return false; }
+
+  virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                           bool DisableChecking = false);
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ConstantPacked *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueType() == SimpleConstantVal &&
+           V->getType()->getTypeID() == Type::PackedTyID;
   }
 };
 

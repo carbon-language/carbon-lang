@@ -564,8 +564,10 @@ void BinaryOperator::init(BinaryOps iType, Value *S1, Value *S2)
   case Rem:
     assert(getType() == S1->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || getType()->isFloatingPoint()) && 
-           "Tried to create an arithmetic operation on a non-arithmetic type!");
+    assert((getType()->isInteger() || 
+            getType()->isFloatingPoint() || 
+            isa<PackedType>(getType()) ) && 
+          "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case And: case Or:
   case Xor:

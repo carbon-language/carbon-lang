@@ -120,6 +120,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
 
   case Type::StructTyID:
   case Type::ArrayTyID:
+  case Type::PackedTyID:
     return ConstantAggregateZero::get(Ty);
   default:
     // Function, Label, or Opaque type?
@@ -264,6 +265,17 @@ ConstantStruct::ConstantStruct(const StructType *T,
               V[i]->getType()->isAbstract()) &&
              T->getElementType(i)->getTypeID() == V[i]->getType()->getTypeID())) &&
            "Initializer for struct element doesn't match struct element type!");
+    Operands.push_back(Use(V[i], this));
+  }
+}
+
+ConstantPacked::ConstantPacked(const PackedType *T,
+                               const std::vector<Constant*> &V) : Constant(T) {
+  Operands.reserve(V.size());
+  for (unsigned i = 0, e = V.size(); i != e; ++i) {
+    assert(V[i]->getType() == T->getElementType() ||
+           (T->isAbstract() &&
+            V[i]->getType()->getTypeID() == T->getElementType()->getTypeID()));
     Operands.push_back(Use(V[i], this));
   }
 }
@@ -482,6 +494,31 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   // Delete the old constant!
   destroyConstant();
+}
+
+void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                 bool DisableChecking) {
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+
+  std::vector<Constant*> Values;
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
+    if (Val == From) Val = cast<Constant>(To);
+    Values.push_back(Val);
+  }
+  
+  Constant *Replacement = ConstantPacked::get(getType(), Values);
+  assert(Replacement != this && "I didn't contain From!");
+
+  // Everyone using this now uses the replacement...
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();  
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
@@ -956,6 +993,61 @@ Constant *ConstantStruct::get(const std::vector<Constant*> &V) {
 //
 void ConstantStruct::destroyConstant() {
   StructConstants.remove(this);
+  destroyConstantImpl();
+}
+
+//---- ConstantPacked::get() implementation...
+//
+namespace llvm {
+  template<>
+  struct ConvertConstantType<ConstantPacked, PackedType> {
+    static void convert(ConstantPacked *OldC, const PackedType *NewTy) {
+      // Make everyone now use a constant of the new type...
+      std::vector<Constant*> C;
+      for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
+        C.push_back(cast<Constant>(OldC->getOperand(i)));
+      Constant *New = ConstantPacked::get(NewTy, C);
+      assert(New != OldC && "Didn't replace constant??");
+      OldC->uncheckedReplaceAllUsesWith(New);
+      OldC->destroyConstant();    // This constant is now dead, destroy it.
+    }
+  };
+}
+
+static std::vector<Constant*> getValType(ConstantPacked *CP) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CP->getNumOperands());
+  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+    Elements.push_back(CP->getOperand(i));
+  return Elements;
+}
+
+static ValueMap<std::vector<Constant*>, PackedType,
+                ConstantPacked> PackedConstants;
+
+Constant *ConstantPacked::get(const PackedType *Ty,
+                              const std::vector<Constant*> &V) {
+  // If this is an all-zero packed, return a ConstantAggregateZero object
+  if (!V.empty()) {
+    Constant *C = V[0];
+    if (!C->isNullValue())
+      return PackedConstants.getOrCreate(Ty, V);
+    for (unsigned i = 1, e = V.size(); i != e; ++i)
+      if (V[i] != C)
+        return PackedConstants.getOrCreate(Ty, V);
+  }
+  return ConstantAggregateZero::get(Ty);
+}
+
+Constant *ConstantPacked::get(const std::vector<Constant*> &V) {
+  assert(!V.empty() && "Cannot infer type if V is empty");
+  return get(PackedType::get(V.front()->getType(),V.size()), V);
+}
+
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstantPacked::destroyConstant() {
+  PackedConstants.remove(this);
   destroyConstantImpl();
 }
 

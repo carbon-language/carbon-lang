@@ -261,6 +261,14 @@ static std::string getTypeDescription(const Type *Ty,
     Result += getTypeDescription(ATy->getElementType(), TypeStack) + "]";
     break;
   }
+  case Type::PackedTyID: {
+    const PackedType *PTy = cast<PackedType>(Ty);
+    unsigned NumElements = PTy->getNumElements();
+    Result = "<";
+    Result += utostr(NumElements) + " x ";
+    Result += getTypeDescription(PTy->getElementType(), TypeStack) + ">";
+    break;
+  }
   default:
     Result = "<error>";
     assert(0 && "Unhandled type in getTypeDescription!");
@@ -397,6 +405,16 @@ ArrayType::ArrayType(const Type *ElType, unsigned NumEl)
   setAbstract(ElType->isAbstract());
 }
 
+PackedType::PackedType(const Type *ElType, unsigned NumEl)
+  : SequentialType(PackedTyID, ElType) {
+  NumElements = NumEl;
+
+  assert(NumEl > 0 && "NumEl of a PackedType must be greater than 0");
+  assert((ElType->isIntegral() || ElType->isFloatingPoint()) && 
+         "Elements of a PackedType must be a primitive type");
+}
+
+
 PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
   // Calculate whether or not this type is abstract
   setAbstract(E->isAbstract());
@@ -503,6 +521,10 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     const ArrayType *ATy2 = cast<ArrayType>(Ty2);
     return ATy->getNumElements() == ATy2->getNumElements() &&
            TypesEqual(ATy->getElementType(), ATy2->getElementType(), EqTypes);
+  } else if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
+    const PackedType *PTy2 = cast<PackedType>(Ty2);
+    return PTy->getNumElements() == PTy2->getNumElements() &&
+           TypesEqual(PTy->getElementType(), PTy2->getElementType(), EqTypes);
   } else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     const FunctionType *FTy2 = cast<FunctionType>(Ty2);
     if (FTy->isVarArg() != FTy2->isVarArg() ||
@@ -846,6 +868,56 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   return AT;
 }
 
+
+//===----------------------------------------------------------------------===//
+// Packed Type Factory...
+//
+namespace llvm {
+class PackedValType {
+  const Type *ValTy;
+  unsigned Size;
+public:
+  PackedValType(const Type *val, int sz) : ValTy(val), Size(sz) {}
+
+  static PackedValType get(const PackedType *PT) {
+    return PackedValType(PT->getElementType(), PT->getNumElements());
+  }
+
+  static unsigned hashTypeStructure(const PackedType *PT) {
+    return PT->getNumElements();
+  }
+
+  // Subclass should override this... to update self as usual
+  void doRefinement(const DerivedType *OldType, const Type *NewType) {
+    assert(ValTy == OldType);
+    ValTy = NewType;
+  }
+
+  inline bool operator<(const PackedValType &MTV) const {
+    if (Size < MTV.Size) return true;
+    return Size == MTV.Size && ValTy < MTV.ValTy;
+  }
+};
+}
+static TypeMap<PackedValType, PackedType> PackedTypes;
+
+
+PackedType *PackedType::get(const Type *ElementType, unsigned NumElements) {
+  assert(ElementType && "Can't get packed of null types!");
+
+  PackedValType PVT(ElementType, NumElements);
+  PackedType *PT = PackedTypes.get(PVT);
+  if (PT) return PT;           // Found a match, return it!
+
+  // Value not found.  Derive a new type!
+  PackedTypes.add(PVT, PT = new PackedType(ElementType, NumElements));
+
+#ifdef DEBUG_MERGE_TYPES
+  std::cerr << "Derived new type: " << *PT << "\n";
+#endif
+  return PT;
+}
+
 //===----------------------------------------------------------------------===//
 // Struct Type Factory...
 //
@@ -1107,6 +1179,18 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
   refineAbstractType(AbsTy, AbsTy);
 }
 
+// refineAbstractType - Called when a contained type is found to be more
+// concrete - this could potentially change us from an abstract type to a
+// concrete type.
+//
+void PackedType::refineAbstractType(const DerivedType *OldType,
+                                   const Type *NewType) {
+  PackedTypes.finishRefinement(this, OldType, NewType);
+}
+
+void PackedType::typeBecameConcrete(const DerivedType *AbsTy) {
+  refineAbstractType(AbsTy, AbsTy);
+}
 
 // refineAbstractType - Called when a contained type is found to be more
 // concrete - this could potentially change us from an abstract type to a

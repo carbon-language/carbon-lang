@@ -48,6 +48,7 @@ class FunctionType;
 class OpaqueType;
 class PointerType;
 class StructType;
+class PackedType;
 
 struct Type {
   ///===-------------------------------------------------------------------===//
@@ -71,7 +72,7 @@ struct Type {
     FunctionTyID  , StructTyID,         // Functions... Structs...
     ArrayTyID     , PointerTyID,        // Array... pointer...
     OpaqueTyID,                         // Opaque type instances...
-    //PackedTyID  ,                     // SIMD 'packed' format... TODO
+    PackedTyID,                         // SIMD 'packed' format... 
     //...
 
     NumTypeIDs,                         // Must remain as last defined ID
@@ -189,7 +190,8 @@ public:
 
   /// isFirstClassType - Return true if the value is holdable in a register.
   inline bool isFirstClassType() const {
-    return (ID != VoidTyID && ID <= LastPrimitiveTyID) || ID == PointerTyID;
+    return (ID != VoidTyID && ID <= LastPrimitiveTyID) || 
+            ID == PointerTyID || ID == PackedTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
@@ -197,7 +199,7 @@ public:
   /// TargetData subsystem to do this.
   ///
   bool isSized() const {
-    return (ID >= BoolTyID && ID <= DoubleTyID) || ID == PointerTyID ||
+    return (ID >= BoolTyID && ID <= DoubleTyID) || ID == PointerTyID || 
            isSizedDerivedType();
   }
 

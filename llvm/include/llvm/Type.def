@@ -58,6 +58,7 @@ HANDLE_DERV_TYPE(Array   , ArrayType)
 HANDLE_DERV_TYPE(Pointer , PointerType)
 HANDLE_DERV_TYPE(Struct  , StructType)
 HANDLE_DERV_TYPE(Opaque  , OpaqueType)
+HANDLE_DERV_TYPE(Packed  , PackedType)
 
 // Kill the macros on exit...
 #undef HANDLE_PRIM_TYPE

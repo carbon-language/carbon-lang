@@ -323,6 +323,13 @@ static void calcTypeName(const Type *Ty,
     Result += "]";
     break;
   }
+  case Type::PackedTyID: {
+    const PackedType *PTy = cast<PackedType>(Ty);
+    Result += "<" + utostr(PTy->getNumElements()) + " x ";
+    calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
+    Result += ">";
+    break;
+  }
   case Type::OpaqueTyID:
     Result += "opaque";
     break;
@@ -492,6 +499,22 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     }
 
     Out << " }";
+  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
+      const Type *ETy = CP->getType()->getElementType();
+      assert(CP->getNumOperands() > 0 && 
+             "Number of operands for a PackedConst must be > 0");
+      Out << '<';
+      Out << ' ';
+      printTypeInt(Out, ETy, TypeTable);
+      WriteAsOperandInternal(Out, CP->getOperand(0),
+                             PrintName, TypeTable, Machine);
+      for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
+          Out << ", ";
+          printTypeInt(Out, ETy, TypeTable);
+          WriteAsOperandInternal(Out, CP->getOperand(i), PrintName,
+                                 TypeTable, Machine);
+      }
+      Out << " >";
   } else if (isa<ConstantPointerNull>(CV)) {
     Out << "null";
 

@@ -1033,6 +1033,17 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
     delete $4;
   }
+  | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
+     const llvm::Type* ElemTy = $4->get();
+     if ((unsigned)$2 != $2) {
+        ThrowException("Unsigned result not equal to signed result");
+     }
+     if(!ElemTy->isPrimitiveType()) {
+        ThrowException("Elemental type of a PackedType must be primitive");
+     }
+     $$ = new PATypeHolder(HandleUpRefs(PackedType::get(*$4, (unsigned)$2)));
+     delete $4;
+  }
   | '{' TypeListI '}' {                        // Structure type?
     std::vector<const Type*> Elements;
     mapto($2->begin(), $2->end(), std::back_inserter(Elements), 
@@ -1143,6 +1154,31 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     free($3);
     $$ = ConstantArray::get(ATy, Vals);
     delete $1;
+  }
+  | Types '<' ConstVector '>' { // Nonempty unsized arr
+    const PackedType *PTy = dyn_cast<PackedType>($1->get());
+    if (PTy == 0)
+      ThrowException("Cannot make packed constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+    const Type *ETy = PTy->getElementType();
+    int NumElements = PTy->getNumElements();
+
+    // Verify that we have the correct size...
+    if (NumElements != -1 && NumElements != (int)$3->size())
+      ThrowException("Type mismatch: constant sized packed initialized with " +
+                     utostr($3->size()) +  " arguments, but has size of " + 
+                     itostr(NumElements) + "!");
+
+    // Verify all elements are correct type!
+    for (unsigned i = 0; i < $3->size(); i++) {
+      if (ETy != (*$3)[i]->getType())
+        ThrowException("Element #" + utostr(i) + " is not of type '" + 
+           ETy->getDescription() +"' as required!\nIt is of type '"+
+           (*$3)[i]->getType()->getDescription() + "'.");
+    }
+
+    $$ = ConstantPacked::get(PTy, *$3);
+    delete $1; delete $3;
   }
   | Types '{' ConstVector '}' {
     const StructType *STy = dyn_cast<StructType>($1->get());
@@ -1651,6 +1687,30 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | NULL_TOK {
     $$ = ValID::createNull();
   }
+  | '<' ConstVector '>' { // Nonempty unsized packed vector
+    const Type *ETy = (*$2)[0]->getType();
+    int NumElements = $2->size(); 
+    
+    PackedType* pt = PackedType::get(ETy, NumElements);
+    PATypeHolder* PTy = new PATypeHolder(
+                                         HandleUpRefs(
+                                            PackedType::get(
+                                                ETy, 
+                                                NumElements)
+                                            )
+                                         );
+    
+    // Verify all elements are correct type!
+    for (unsigned i = 0; i < $2->size(); i++) {
+      if (ETy != (*$2)[i]->getType())
+        ThrowException("Element #" + utostr(i) + " is not of type '" + 
+                     ETy->getDescription() +"' as required!\nIt is of type '" +
+                     (*$2)[i]->getType()->getDescription() + "'.");
+    }
+
+    $$ = ValID::create(ConstantPacked::get(pt, *$2));
+    delete PTy; delete $2;
+  }
   | ConstExpr {
     $$ = ValID::create($1);
   };
@@ -1852,8 +1912,14 @@ ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
 ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; };
 
 InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
-    if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint())
-      ThrowException("Arithmetic operator requires integer or FP operands!");
+    if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint() && 
+        !isa<PackedType>((*$2).get()))
+      ThrowException(
+        "Arithmetic operator requires integer, FP, or packed operands!");
+    if(isa<PackedType>((*$2).get()) && $1 == Instruction::Rem) {
+      ThrowException(
+        "Rem not supported on packed types!");
+    }
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");

@@ -387,6 +387,27 @@ public:
     bca.numValues++;
   }
 
+  virtual void handleConstantPacked( 
+    const PackedType* PT,                
+    std::vector<Constant*>& Elements,
+    unsigned TypeSlot,                  
+    Constant* PackedVal) 
+  {
+    dump << "      PACKD: " << PT->getDescription() 
+         << " TypeSlot=" << TypeSlot << "\n";
+    for ( unsigned i = 0; i < Elements.size(); ++i ) {
+      dump << "        #" << i;
+      Elements[i]->print(dump);
+      dump << "\n";
+    }
+    dump << "        Value=";
+    PackedVal->print(dump);
+    dump << "\n";
+
+    bca.numConstants++;
+    bca.numValues++;
+  }
+
   virtual void handleConstantPointer( const PointerType* PT, 
       unsigned Slot, GlobalValue* GV ) {
     dump << "       PNTR: " << PT->getDescription() 

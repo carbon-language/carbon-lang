@@ -243,6 +243,16 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   }
 
+ case Type::PackedTyID: {
+    const PackedType *PT = cast<PackedType>(T);
+    int Slot = Table.getSlot(PT->getElementType());
+    assert(Slot != -1 && "Type used but not available!!");
+    output_typeid((unsigned)Slot);
+    output_vbr(PT->getNumElements());
+    break;
+  }
+
+
   case Type::StructTyID: {
     const StructType *ST = cast<StructType>(T);
 
@@ -333,6 +343,17 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
 
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i) {
       int Slot = Table.getSlot(CPA->getOperand(i));
+      assert(Slot != -1 && "Constant used but not available!!");
+      output_vbr((unsigned)Slot);
+    }
+    break;
+  }
+
+  case Type::PackedTyID: {
+    const ConstantPacked *CP = cast<ConstantPacked>(CPV);
+
+    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
+      int Slot = Table.getSlot(CP->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot);
     }

@@ -488,8 +488,9 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Arithmetic operators must have same type for operands and result!",
             &B);
-    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint(),
-            "Arithmetic operators must have integer or fp type!", &B);
+    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() || 
+            isa<PackedType>(B.getType()),
+            "Arithmetic operators must have integer, fp, or packed type!", &B);
   }
   
   visitInstruction(B);

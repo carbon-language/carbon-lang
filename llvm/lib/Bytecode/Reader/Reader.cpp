@@ -1170,6 +1170,12 @@ const Type *BytecodeReader::ParseType() {
     Result =  ArrayType::get(ElementType, NumElements);
     break;
   }
+  case Type::PackedTyID: {
+    const Type *ElementType = readSanitizedType();
+    unsigned NumElements = read_vbr_uint();
+    Result =  PackedType::get(ElementType, NumElements);
+    break;
+  }
   case Type::StructTyID: {
     std::vector<const Type*> Elements;
     unsigned Typ = 0;
@@ -1395,6 +1401,20 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
     if (Handler) Handler->handleConstantStruct(ST, Elements, Result);
     return Result;
   }    
+
+  case Type::PackedTyID: {
+    const PackedType *PT = cast<PackedType>(Ty);
+    unsigned NumElements = PT->getNumElements();
+    unsigned TypeSlot = getTypeSlot(PT->getElementType());
+    std::vector<Constant*> Elements;
+    Elements.reserve(NumElements);
+    while (NumElements--)     // Read all of the elements of the constant.
+      Elements.push_back(getConstantValue(TypeSlot,
+                                          read_vbr_uint()));
+    Constant* Result = ConstantPacked::get(PT, Elements);
+    if (Handler) Handler->handleConstantPacked(PT, Elements, TypeSlot, Result);
+    return Result;
+  }
 
   case Type::PointerTyID: {  // ConstantPointerRef value...
     const PointerType *PT = cast<PointerType>(Ty);

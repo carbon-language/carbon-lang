@@ -28,6 +28,7 @@ class FunctionValType;
 class ArrayValType;
 class StructValType;
 class PointerValType;
+class PackedValType;
 
 class DerivedType : public Type, public AbstractTypeUser {
   // AbstractTypeUsers - Implement a list of the users that need to be notified
@@ -152,8 +153,8 @@ public:
 };
 
 
-/// CompositeType - Common super class of ArrayType, StructType, and PointerType
-///
+/// CompositeType - Common super class of ArrayType, StructType, PointerType
+/// and PackedType
 class CompositeType : public DerivedType {
 protected:
   inline CompositeType(TypeID id) : DerivedType(id) { }
@@ -170,7 +171,8 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID || 
            T->getTypeID() == StructTyID ||
-           T->getTypeID() == PointerTyID;
+           T->getTypeID() == PointerTyID ||
+           T->getTypeID() == PackedTyID;
   }
 };
 
@@ -227,11 +229,13 @@ public:
 };
 
 
-/// SequentialType - This is the superclass of the array and pointer type
-/// classes.  Both of these represent "arrays" in memory.  The array type
+/// SequentialType - This is the superclass of the array, pointer and packed 
+/// type classes.  All of these represent "arrays" in memory.  The array type
 /// represents a specifically sized array, pointer types are unsized/unknown
-/// size arrays.  SequentialType holds the common features of both, which stem
-/// from the fact that both lay their components out in memory identically.
+/// size arrays, packed types represent specifically sized arrays that 
+/// allow for use of SIMD instructions.  SequentialType holds the common 
+/// features of all, which stem from the fact that all three lay their 
+/// components out in memory identically.
 ///
 class SequentialType : public CompositeType {
   SequentialType(const SequentialType &);                  // Do not implement!
@@ -258,7 +262,8 @@ public:
   static inline bool classof(const SequentialType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
-           T->getTypeID() == PointerTyID;
+           T->getTypeID() == PointerTyID ||
+           T->getTypeID() == PackedTyID;
   }
 };
 
@@ -296,6 +301,42 @@ public:
   static inline bool classof(const ArrayType *T) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID;
+  }
+};
+
+/// PackedType - Class to represent packed types
+///
+class PackedType : public SequentialType {
+  friend class TypeMap<PackedValType, PackedType>;
+  unsigned NumElements;
+
+  PackedType(const PackedType &);                   // Do not implement
+  const PackedType &operator=(const PackedType &);  // Do not implement
+protected:
+  /// This should really be private, but it squelches a bogus warning
+  /// from GCC to make them protected:  warning: `class PackedType' only 
+  /// defines private constructors and has no friends
+  ///
+  /// Private ctor - Only can be created by a static member...
+  ///
+  PackedType(const Type *ElType, unsigned NumEl);
+
+public:
+  /// PackedType::get - This static method is the primary way to construct an
+  /// PackedType
+  ///
+  static PackedType *get(const Type *ElementType, unsigned NumElements);
+
+  inline unsigned    getNumElements() const { return NumElements; }
+
+  // Implement the AbstractTypeUser interface.
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const PackedType *T) { return true; }
+  static inline bool classof(const Type *T) {
+    return T->getTypeID() == PackedTyID;
   }
 };
 
