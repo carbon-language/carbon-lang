@@ -272,15 +272,21 @@ Backend, and then link in the shared object it generates.</p>
 <p>To debug the JIT:</p>
 
 <div class="doc_code">
-<p><tt><b>bugpoint</b> -run-jit -output=[correct output file] [bytecode file]
---args -- [program arguments]</tt></p>
+<pre>
+bugpoint -run-jit -output=[correct output file] [bytecode file]  \
+         --tool-args -- [arguments to pass to lli]               \
+         --args -- [program arguments]
+</pre>
 </div>
 
 <p>Similarly, to debug the LLC, one would run:</p>
 
 <div class="doc_code">
-<p><tt><b>bugpoint</b> -run-llc -output=[correct output file] [bytecode file]
---args -- [program arguments]</tt></p>
+<pre>
+bugpoint -run-llc -output=[correct output file] [bytecode file]  \
+         --tool-args -- [arguments to pass to llc]               \
+         --args -- [program arguments]
+</pre>
 </div>
 
 <p><b>Special note:</b> if you are debugging MultiSource or SPEC tests that
