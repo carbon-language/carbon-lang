@@ -10,7 +10,7 @@ CCFLAGS = -g $(ARCHFLAGS)
 
 TESTS := $(wildcard *.ll)
 
-LLCTESTS := $(shell /bin/ls *.ll | grep -v testswitch | grep -v opttest | grep -v xx.ll | grep -v select.ll )
+LLCTESTS := $(shell /bin/ls *.ll | grep -v testswitch | grep -v opttest | grep -v xx )
 
 
 test all : testasmdis testopt testcodegen
