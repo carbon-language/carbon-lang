@@ -966,6 +966,7 @@ $(TARGET:%=%GenRegisterNames.inc): \
 %GenRegisterNames.inc : $(ObjDir)/%GenRegisterNames.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
 
+
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.h.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.h.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register information header with tblgen"
@@ -974,6 +975,7 @@ $(ObjDir)/%GenRegisterInfo.h.inc.tmp : %.td $(ObjDir)/.dir
 $(TARGET:%=%GenRegisterInfo.h.inc): \
 %GenRegisterInfo.h.inc : $(ObjDir)/%GenRegisterInfo.h.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
+
 
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.inc.tmp : %.td $(ObjDir)/.dir
@@ -984,6 +986,7 @@ $(TARGET:%=%GenRegisterInfo.inc): \
 %GenRegisterInfo.inc : $(ObjDir)/%GenRegisterInfo.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
 
+
 $(TARGET:%=$(ObjDir)/%GenInstrNames.inc.tmp): \
 $(ObjDir)/%GenInstrNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction names with tblgen"
@@ -992,6 +995,7 @@ $(ObjDir)/%GenInstrNames.inc.tmp : %.td $(ObjDir)/.dir
 $(TARGET:%=%GenInstrNames.inc): \
 %GenInstrNames.inc : $(ObjDir)/%GenInstrNames.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
+
 
 $(TARGET:%=$(ObjDir)/%GenInstrInfo.inc.tmp): \
 $(ObjDir)/%GenInstrInfo.inc.tmp : %.td $(ObjDir)/.dir
@@ -1002,6 +1006,7 @@ $(TARGET:%=%GenInstrInfo.inc): \
 %GenInstrInfo.inc : $(ObjDir)/%GenInstrInfo.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
 
+
 $(TARGET:%=$(ObjDir)/%GenAsmWriter.inc.tmp): \
 $(ObjDir)/%GenAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer with tblgen"
@@ -1011,32 +1016,15 @@ $(TARGET:%=%GenAsmWriter.inc): \
 %GenAsmWriter.inc : $(ObjDir)/%GenAsmWriter.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
 
-$(TARGET:%=$(ObjDir)/%GenATTAsmWriter.inc.tmp): \
-$(ObjDir)/%GenATTAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) AT&T assembly writer with tblgen"
-	$(Verb) $(TableGen) -gen-asm-writer -o $@ $< 
-
-$(TARGET:%=%GenATTAsmWriter.inc): \
-%GenATTAsmWriter.inc : $(ObjDir)/%GenATTAsmWriter.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
-
-$(TARGET:%=$(ObjDir)/%GenIntelAsmWriter.inc.tmp): \
-$(ObjDir)/%GenIntelAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) Intel assembly writer with tblgen"
+$(TARGET:%=$(ObjDir)/%GenAsmWriter1.inc.tmp): \
+$(ObjDir)/%GenAsmWriter1.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) assembly writer #1 with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $@ $< 
 
-$(TARGET:%=%GenIntelAsmWriter.inc): \
-%GenIntelAsmWriter.inc : $(ObjDir)/%GenIntelAsmWriter.inc.tmp
+$(TARGET:%=%GenAsmWriter1.inc): \
+%GenAsmWriter1.inc : $(ObjDir)/%GenAsmWriter1.inc.tmp
 	$(Verb) cmp -s $@ $< || cp $< $@
 
-$(TARGET:%=$(ObjDir)/%GenInstrSelector.inc.tmp): \
-$(ObjDir)/%GenInstrSelector.inc.tmp: %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) instruction selector with tblgen"
-	$(Verb) $(TableGen) -gen-instr-selector -o $@ $< 
-
-$(TARGET:%=%GenInstrSelector.inc): \
-%GenInstrSelector.inc : $(ObjDir)/%GenInstrSelector.inc.tmp
-	$(Verb) cmp -s $@ $< || cp $< $@
 
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
