@@ -174,9 +174,8 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
   // Recursively traverse all of the callee graphs.
   for (DSGraph::fc_iterator CI = G.fc_begin(), E = G.fc_end(); CI != E; ++CI) {
     Instruction *CallI = CI->getCallSite().getInstruction();
-    BUDataStructures::ActualCalleesTy::const_iterator I = 
+    BUDataStructures::callee_iterator I = 
       BUInfo->callee_begin(CallI), E = BUInfo->callee_end(CallI);
-
     for (; I != E; ++I)
       ComputePostOrder(*I->second, Visited, PostOrder);
   }
@@ -326,7 +325,7 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
 
     Instruction *CallI = CI->getCallSite().getInstruction();
     // For each function in the invoked function list at this call site...
-    BUDataStructures::ActualCalleesTy::const_iterator IPI =
+    BUDataStructures::callee_iterator IPI =
       BUInfo->callee_begin(CallI), IPE = BUInfo->callee_end(CallI);
 
     // Skip over all calls to this graph (SCC calls).

@@ -339,8 +339,8 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
     Instruction *Call = CI->getCallSite().getInstruction();
 
     // Loop over all of the actually called functions...
-    ActualCalleesTy::const_iterator I = callee_begin(Call),E = callee_end(Call);
-    for (; I != E; ++I)
+    for (callee_iterator I = callee_begin(Call), E = callee_end(Call);
+         I != E; ++I)
       if (!I->second->isExternal()) {
         // Process the callee as necessary.
         unsigned M = processSCC(getOrCreateGraph(*I->second),
@@ -414,8 +414,7 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
     // graph so we only need to do this once.
     // 
     DSGraph* CalleeGraph = NULL;
-    ActualCalleesTy::const_iterator I = callee_begin(TheCall);
-    ActualCalleesTy::const_iterator E = callee_end(TheCall);
+    callee_iterator I = callee_begin(TheCall), E = callee_end(TheCall);
     unsigned TNum, Num;
 
     // Loop over all potential callees to find the first non-external callee.

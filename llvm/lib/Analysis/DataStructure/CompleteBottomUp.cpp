@@ -120,7 +120,7 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
     Instruction *Call = CI->getCallSite().getInstruction();
 
     // Loop over all of the actually called functions...
-    ActualCalleesTy::iterator I = callee_begin(Call), E = callee_end(Call);
+    callee_iterator I = callee_begin(Call), E = callee_end(Call);
     for (; I != E && I->first == Call; ++I) {
       assert(I->first == Call && "Bad callee construction!");
       if (!I->second->isExternal()) {
@@ -197,7 +197,7 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
     // Inline direct calls as well as indirect calls because the direct
     // callee may have indirect callees and so may have changed.
     // 
-    ActualCalleesTy::iterator I = callee_begin(TheCall),E = callee_end(TheCall);
+    callee_iterator I = callee_begin(TheCall),E = callee_end(TheCall);
     unsigned TNum = 0, Num = 0;
     DEBUG(Num = std::distance(I, E));
     for (; I != E; ++I, ++TNum) {
