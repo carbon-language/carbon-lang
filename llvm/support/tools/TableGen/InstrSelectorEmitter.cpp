@@ -38,6 +38,49 @@ bool TreePatternNode::updateNodeType(MVT::ValueType VT,
   throw "Type inferfence contradiction found for pattern " + RecName;
 }
 
+/// InstantiateNonterminals - If this pattern refers to any nonterminals which
+/// are not themselves completely resolved, clone the nonterminal and resolve it
+/// with the using context we provide.
+///
+void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
+  if (!isLeaf()) {
+    for (unsigned i = 0, e = Children.size(); i != e; ++i)
+      Children[i]->InstantiateNonterminals(ISE);
+    return;
+  }
+  
+  // If this is a leaf, it might be a reference to a nonterminal!  Check now.
+  if (DefInit *DI = dynamic_cast<DefInit*>(getValue()))
+    if (DI->getDef()->isSubClassOf("Nonterminal")) {
+      Pattern *NT = ISE.getPattern(DI->getDef());
+      if (!NT->isResolved()) {
+        // We found an unresolved nonterminal reference.  Ask the ISE to clone
+        // it for us, then update our reference to the fresh, new, resolved,
+        // nonterminal.
+        
+        Value = new DefInit(ISE.InstantiateNonterminal(NT, getType()));
+      }
+    }
+}
+
+
+/// clone - Make a copy of this tree and all of its children.
+///
+TreePatternNode *TreePatternNode::clone() const {
+  TreePatternNode *New;
+  if (isLeaf()) {
+    New = new TreePatternNode(Value);
+  } else {
+    std::vector<TreePatternNode*> CChildren(Children.size());
+    for (unsigned i = 0, e = Children.size(); i != e; ++i)
+      CChildren[i] = Children[i]->clone();
+    New = new TreePatternNode(Operator, CChildren);
+  }
+  New->setType(Type);
+  return New;
+}
+
+
 std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N) {
   if (N.isLeaf())
     return OS << N.getType() << ":" << *N.getValue();
@@ -67,16 +110,13 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
 
   // First, parse the pattern...
   Tree = ParseTreePattern(RawPat);
-  
-  bool MadeChange, AnyUnset;
-  do {
-    MadeChange = false;
-    AnyUnset = InferTypes(Tree, MadeChange);
-  } while ((AnyUnset || MadeChange) && !(AnyUnset && !MadeChange));
+
+  // Run the type-inference engine...
+  InferAllTypes();
 
   if (PTy == Instruction || PTy == Expander) {
     // Check to make sure there is not any unset types in the tree pattern...
-    if (AnyUnset) {
+    if (!isResolved()) {
       std::cerr << "In pattern: " << *Tree << "\n";
       error("Could not infer all types!");
     }
@@ -92,12 +132,11 @@ Pattern::Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
 
       Result = RegInit->getDef();
       Tree = Tree->getChild(1);
-
     }
   }
-
-  Resolved = !AnyUnset;
 }
+
+
 
 void Pattern::error(const std::string &Msg) const {
   std::string M = "In ";
@@ -175,6 +214,15 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *DI) {
   return new TreePatternNode(Operator, Children);
 }
 
+void Pattern::InferAllTypes() {
+  bool MadeChange, AnyUnset;
+  do {
+    MadeChange = false;
+    AnyUnset = InferTypes(Tree, MadeChange);
+  } while ((AnyUnset || MadeChange) && !(AnyUnset && !MadeChange));
+  Resolved = !AnyUnset;
+}
+
 
 // InferTypes - Perform type inference on the tree, returning true if there
 // are any remaining untyped nodes and setting MadeChange if any changes were
@@ -240,13 +288,14 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
   return AnyUnset | N->getType() == MVT::Other;
 }
 
-/// InstantiateNonterminalsReferenced - If this pattern refers to any
-/// nonterminals which are not themselves completely resolved, clone the
-/// nonterminal and resolve it with the using context we provide.
+/// clone - This method is used to make an exact copy of the current pattern,
+/// then change the "TheRecord" instance variable to the specified record.
 ///
-void Pattern::InstantiateNonterminalsReferenced() {
-
+Pattern *Pattern::clone(Record *R) const {
+  assert(PTy == Nonterminal && "Can only clone nonterminals");
+  return new Pattern(Tree->clone(), R, Resolved, ISE);
 }
+
 
 
 std::ostream &operator<<(std::ostream &OS, const Pattern &P) {
@@ -362,10 +411,50 @@ void InstrSelectorEmitter::ReadExpanderPatterns() {
 // information from the context that they are used in.
 //
 void InstrSelectorEmitter::InstantiateNonterminals() {
+  DEBUG(std::cerr << "Instantiating nonterminals:\n");
   for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
          E = Patterns.end(); I != E; ++I)
     if (I->second->isResolved())
-      I->second->InstantiateNonterminalsReferenced();
+      I->second->InstantiateNonterminals();
+}
+
+/// InstantiateNonterminal - This method takes the nonterminal specified by
+/// NT, which should not be completely resolved, clones it, applies ResultTy
+/// to its root, then runs the type inference stuff on it.  This should
+/// produce a newly resolved nonterminal, which we make a record for and
+/// return.  To be extra fancy and efficient, this only makes one clone for
+/// each type it is instantiated with.
+Record *InstrSelectorEmitter::InstantiateNonterminal(Pattern *NT,
+                                                     MVT::ValueType ResultTy) {
+  assert(!NT->isResolved() && "Nonterminal is already resolved!");
+
+  // Check to see if we have already instantiated this pair...
+  Record* &Slot = InstantiatedNTs[std::make_pair(NT, ResultTy)];
+  if (Slot) return Slot;
+  
+  DEBUG(std::cerr << "  Nonterminal '" << NT->getRecord()->getName()
+                  << "' for type '" << getName(ResultTy) << "'\n");
+
+  Record *New = new Record(NT->getRecord()->getName()+"_"+getName(ResultTy));
+
+  // Copy the pattern...
+  Pattern *NewPat = NT->clone(New);
+
+  // Apply the type to the root...
+  NewPat->getTree()->updateNodeType(ResultTy, New->getName());
+
+  // Infer types...
+  NewPat->InferAllTypes();
+
+  // Make sure everything is good to go now...
+  if (!NewPat->isResolved())
+    NewPat->error("Instantiating nonterminal did not resolve all types!");
+
+  // Add the pattern to the patterns map, add the record to the RecordKeeper,
+  // return the new record.
+  Patterns[New] = NewPat;
+  Records.addDef(New);
+  return Slot = New;
 }
 
 
@@ -381,4 +470,11 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   // Instantiate any unresolved nonterminals with information from the context
   // that they are used in.
   InstantiateNonterminals();
+
+
+  std::cerr << "Patterns aquired:\n";
+  for (std::map<Record*, Pattern*>::iterator I = Patterns.begin(),
+         E = Patterns.end(); I != E; ++I)
+    if (I->second->isResolved())
+      std::cerr << "  " << *I->second << "\n";
 }

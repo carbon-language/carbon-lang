@@ -87,8 +87,16 @@ public:
     return Value;
   }
 
+  /// clone - Make a copy of this tree and all of its children.
+  ///
+  TreePatternNode *clone() const;
+
   void dump() const;
 
+  /// InstantiateNonterminals - If this pattern refers to any nonterminals which
+  /// are not themselves completely resolved, clone the nonterminal and resolve
+  /// it with the using context we provide.
+  void InstantiateNonterminals(InstrSelectorEmitter &ISE);
 
   // UpdateNodeType - Set the node type of N to VT if VT contains information.
   // If N already contains a conflicting type, then throw an exception.  This
@@ -145,6 +153,11 @@ public:
   Pattern(PatternType pty, DagInit *RawPat, Record *TheRec,
           InstrSelectorEmitter &ise);
 
+  /// Pattern - Constructor used for cloning nonterminal patterns
+  Pattern(TreePatternNode *tree, Record *rec, bool res,
+          InstrSelectorEmitter &ise) : PTy(Nonterminal), Tree(tree), Result(0),
+                                       TheRecord(rec), Resolved(res), ISE(ise){}
+
   /// getPatternType - Return what flavor of Record this pattern originated from
   ///
   PatternType getPatternType() const { return PTy; }
@@ -162,15 +175,30 @@ public:
 
   bool isResolved() const { return Resolved; }
 
-  /// InstantiateNonterminalsReferenced - If this pattern refers to any
-  /// nonterminals which are not themselves completely resolved, clone the
-  /// nonterminal and resolve it with the using context we provide.
-  void InstantiateNonterminalsReferenced();
+  /// InferAllTypes - Runs the type inference engine on the current pattern,
+  /// stopping when nothing can be inferred, then updating the Resolved field.
+  void InferAllTypes();
+
+  /// InstantiateNonterminals - If this pattern refers to any nonterminals which
+  /// are not themselves completely resolved, clone the nonterminal and resolve
+  /// it with the using context we provide.
+  void InstantiateNonterminals() {
+    Tree->InstantiateNonterminals(ISE);
+  }
+
+  /// clone - This method is used to make an exact copy of the current pattern,
+  /// then change the "TheRecord" instance variable to the specified record.
+  ///
+  Pattern *clone(Record *R) const;
+
+  /// error - Throw an exception, prefixing it with information about this
+  /// pattern.
+  void error(const std::string &Msg) const;
+
 private:
   MVT::ValueType getIntrinsicType(Record *R) const;
   TreePatternNode *ParseTreePattern(DagInit *DI);
   bool InferTypes(TreePatternNode *N, bool &MadeChange);
-  void error(const std::string &Msg) const;
 };
 
 std::ostream &operator<<(std::ostream &OS, const Pattern &P);
@@ -189,6 +217,11 @@ class InstrSelectorEmitter : public TableGenBackend {
   /// Patterns - a list of all of the patterns defined by the target description
   ///
   std::map<Record*, Pattern*> Patterns;
+
+  /// InstantiatedNTs - A data structure to keep track of which nonterminals
+  /// have been instantiated already...
+  ///
+  std::map<std::pair<Pattern*,MVT::ValueType>, Record*> InstantiatedNTs;
 public:
   InstrSelectorEmitter(RecordKeeper &R) : Records(R) {}
   
@@ -208,6 +241,14 @@ public:
   /// ReadNonterminal - This method parses the specified record as a
   /// nonterminal, but only if it hasn't been read in already.
   Pattern *ReadNonterminal(Record *R);
+
+  /// InstantiateNonterminal - This method takes the nonterminal specified by
+  /// NT, which should not be completely resolved, clones it, applies ResultTy
+  /// to its root, then runs the type inference stuff on it.  This should
+  /// produce a newly resolved nonterminal, which we make a record for and
+  /// return.  To be extra fancy and efficient, this only makes one clone for
+  /// each type it is instantiated with.
+  Record *InstantiateNonterminal(Pattern *NT, MVT::ValueType ResultTy);
 
 private:
   // ReadNodeTypes - Read in all of the node types in the current RecordKeeper,
