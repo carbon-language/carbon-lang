@@ -368,8 +368,10 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     unsigned Reg1 = makeAnotherReg(V->getType());
     unsigned Reg2 = makeAnotherReg(V->getType());
     // Move the address of the global into the register
-    BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(PPC32::R0).addGlobalAddress(GV);
-    BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1).addGlobalAddress(GV);
+    BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(PPC32::R0)
+      .addGlobalAddress(GV);
+    BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1)i
+      .addGlobalAddress(GV);
     return Reg2;
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     // Do not emit noop casts at all.
@@ -483,9 +485,12 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
       unsigned hiTmp = makeAnotherReg(Type::IntTy);
       unsigned loTmp = makeAnotherReg(Type::IntTy);
-      BuildMI(*MBB, IP, PPC32::ADDIS, 2, loTmp).addReg(PPC32::R0).addImm(Val >> 48);
-      BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(loTmp).addImm((Val >> 32) & 0xFFFF);
-      BuildMI(*MBB, IP, PPC32::ADDIS, 2, hiTmp).addReg(PPC32::R0).addImm((Val >> 16) & 0xFFFF);
+      BuildMI(*MBB, IP, PPC32::ADDIS, 2, loTmp).addReg(PPC32::R0)
+        .addImm(Val >> 48);
+      BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(loTmp)
+        .addImm((Val >> 32) & 0xFFFF);
+      BuildMI(*MBB, IP, PPC32::ADDIS, 2, hiTmp).addReg(PPC32::R0)
+        .addImm((Val >> 16) & 0xFFFF);
       BuildMI(*MBB, IP, PPC32::ORI, 2, R+1).addReg(hiTmp).addImm(Val & 0xFFFF);
       return;
     }
@@ -493,19 +498,24 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     assert(Class <= cInt && "Type not handled yet!");
 
     if (C->getType() == Type::BoolTy) {
-      BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(C == ConstantBool::True);
+      BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0)
+        .addImm(C == ConstantBool::True);
     } else if (Class == cByte || Class == cShort) {
       ConstantInt *CI = cast<ConstantInt>(C);
-      BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(CI->getRawValue());
+      BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0)
+        .addImm(CI->getRawValue());
     } else {
       ConstantInt *CI = cast<ConstantInt>(C);
       int TheVal = CI->getRawValue() & 0xFFFFFFFF;
       if (TheVal < 32768 && TheVal >= -32768) {
-        BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(CI->getRawValue());
+        BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0)
+          .addImm(CI->getRawValue());
       } else {
         unsigned TmpReg = makeAnotherReg(Type::IntTy);
-        BuildMI(*MBB, IP, PPC32::ADDIS, 2, TmpReg).addReg(PPC32::R0).addImm(CI->getRawValue() >> 16);
-        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TmpReg).addImm(CI->getRawValue() & 0xFFFF);
+        BuildMI(*MBB, IP, PPC32::ADDIS, 2, TmpReg).addReg(PPC32::R0)
+          .addImm(CI->getRawValue() >> 16);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TmpReg)
+          .addImm(CI->getRawValue() & 0xFFFF);
       }
     }
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
@@ -514,7 +524,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       unsigned CPI = CP->getConstantPoolIndex(CFP);
       const Type *Ty = CFP->getType();
 
-      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!"); 
+      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
       unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
       addConstantPoolReference(BuildMI(*MBB, IP, LoadOpcode, 2, R), CPI);
   } else if (isa<ConstantPointerNull>(C)) {
@@ -848,6 +858,8 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         //
 
         // FIXME: Not Yet Implemented
+        std::cerr << "EmitComparison unimplemented: Opnum >= 2\n";
+        abort();
         return OpNum;
       }
     }
@@ -887,6 +899,8 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       //
 
       // FIXME: Not Yet Implemented
+      std::cerr << "EmitComparison (cLong) unimplemented: Opnum >= 2\n";
+      abort();
       return OpNum;
     }
   }
@@ -1537,7 +1551,7 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
     }
 
   // General case.
-  static const unsigned OpcodeTab[4] = {
+  static const unsigned OpcodeTab[] = {
     PPC32::FADD, PPC32::FSUB, PPC32::FMUL, PPC32::FDIV
   };
 
@@ -1561,7 +1575,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   unsigned Class = getClassB(Op0->getType());
 
   // Arithmetic and Bitwise operators
-  static const unsigned OpcodeTab[5] = {
+  static const unsigned OpcodeTab[] = {
     PPC32::ADD, PPC32::SUB, PPC32::AND, PPC32::OR, PPC32::XOR
   };
   // Otherwise, code generate the full operation with a constant.
