@@ -575,7 +575,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   // Okay, we can do the transformation: create the new PHI node.
   PHINode *NewPN = new PHINode(I.getType(), I.getName());
   I.setName("");
-  NewPN->op_reserve(PN->getNumOperands());
+  NewPN->reserveOperandSpace(PN->getNumOperands()/2);
   InsertNewInstBefore(NewPN, *PN);
 
   // Next, add all of the operands to the PHI.
@@ -4142,7 +4142,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // correct type, and PHI together all of the LHS's of the instructions.
   PHINode *NewPN = new PHINode(FirstInst->getOperand(0)->getType(),
                                PN.getName()+".in");
-  NewPN->op_reserve(PN.getNumOperands());
+  NewPN->reserveOperandSpace(PN.getNumOperands()/2);
 
   Value *InVal = FirstInst->getOperand(0);
   NewPN->addIncoming(InVal, PN.getIncomingBlock(0));

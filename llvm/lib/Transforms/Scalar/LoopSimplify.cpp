@@ -575,7 +575,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
     PHINode *PN = cast<PHINode>(I);
     PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".be",
                                  BETerminator);
-    NewPN->op_reserve(2*BackedgeBlocks.size());
+    NewPN->reserveOperandSpace(BackedgeBlocks.size());
 
     // Loop over the PHI node, moving all entries except the one for the
     // preheader over to the new PHI node.
@@ -604,7 +604,9 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
       PN->setIncomingValue(0, PN->getIncomingValue(PreheaderIdx));
       PN->setIncomingBlock(0, PN->getIncomingBlock(PreheaderIdx));
     }
-    PN->op_erase(PN->op_begin()+2, PN->op_end());
+    // Nuke all entries except the zero'th.
+    for (unsigned i = 0, e = PN->getNumIncomingValues()-1; i != e; ++i)
+      PN->removeIncomingValue(e-i, false);
 
     // Finally, add the newly constructed PHI node as the entry for the BEBlock.
     PN->addIncoming(NewPN, BEBlock);

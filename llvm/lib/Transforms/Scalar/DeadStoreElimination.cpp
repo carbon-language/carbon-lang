@@ -156,13 +156,12 @@ void DSE::DeleteDeadInstructionChains(Instruction *I,
   // See if this made any operands dead.  We do it this way in case the
   // instruction uses the same operand twice.  We don't want to delete a
   // value then reference it.
-  while (unsigned NumOps = I->getNumOperands()) {
-    Instruction *Op = dyn_cast<Instruction>(I->getOperand(NumOps-1));
-    I->op_erase(I->op_end()-1);         // Drop from the operand list.
-    
-    if (Op) DeadInsts.insert(Op);       // Attempt to nuke it later.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+    if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
+      DeadInsts.insert(Op);      // Attempt to nuke it later.
+    I->setOperand(i, 0);         // Drop from the operand list.
   }
   
-  I->getParent()->getInstList().erase(I);
+  I->eraseFromParent();
   ++NumOther;
 }
