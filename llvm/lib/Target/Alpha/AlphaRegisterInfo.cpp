@@ -208,7 +208,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (NumBytes <= 32767) {
     MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-NumBytes).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
-  } else if (NumBytes <= 32767 * 65536) {
+  } else if ((unsigned long)NumBytes <= (unsigned long)32767 * (unsigned long)65536) {
     long y = NumBytes / 65536;
     if (NumBytes % 65536 > 32767)
       ++y;
@@ -217,7 +217,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(-(NumBytes - y * 65536)).addReg(Alpha::R30);
     MBB.insert(MBBI, MI);
   } else {
-    std::cerr << "Too big a stack frame\n";
+    std::cerr << "Too big a stack frame at " << NumBytes << "\n";
     abort();
   }
 }
@@ -235,14 +235,21 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
 
    if (NumBytes != 0) 
      {
-       if (NumBytes <= 32000) //FIXME: do this better 
-	 {
-	   MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes).addReg(Alpha::R30);
-	   MBB.insert(MBBI, MI);
-	 } else {
-	   std::cerr << "Too big a stack frame\n";
-	   abort();
-	 }
+       if (NumBytes <= 32767) {
+         MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes).addReg(Alpha::R30);
+         MBB.insert(MBBI, MI);
+       } else if ((unsigned long)NumBytes <= (unsigned long)32767 * (unsigned long)65536) {
+         long y = NumBytes / 65536;
+         if (NumBytes % 65536 > 32767)
+           ++y;
+         MI=BuildMI(Alpha::LDAH, 2, Alpha::R30).addImm(y).addReg(Alpha::R30);
+         MBB.insert(MBBI, MI);
+         MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes - y * 65536).addReg(Alpha::R30);
+         MBB.insert(MBBI, MI);
+       } else {
+         std::cerr << "Too big a stack frame at " << NumBytes << "\n";
+         abort();
+       }
      }
 }
 
