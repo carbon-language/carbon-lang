@@ -166,9 +166,9 @@ void SparcAsmPrinter::emitMachineInst(const MachineInstr *MI) {
     assert(MI->getNumOperands() == 3 && "Unexpected JMPL instr!");
     printOperand(MI->getOperand(0));
     Out << "+";
-    printOperand(MI->getOperand(0));
+    printOperand(MI->getOperand(1));
     Out << ", ";
-    printOperand(MI->getOperand(0));
+    printOperand(MI->getOperand(2));
     Out << endl;
     return;
   default: break;
