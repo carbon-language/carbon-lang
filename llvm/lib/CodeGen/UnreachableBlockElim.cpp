@@ -1,0 +1,68 @@
+//===-- UnreachableBlockElim.cpp - Remove unreachable blocks for codegen --===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
+// This pass is an extremely simple version of the SimplifyCFG pass.  Its sole
+// job is to delete LLVM basic blocks that are not reachable from the entry
+// node.  To do this, it performs a simple depth first traversal of the CFG,
+// then deletes any unvisited nodes.
+//
+// Note that this pass is really a hack.  In particular, the instruction
+// selectors for various targets should just not generate code for unreachable
+// blocks.  Until LLVM has a more systematic way of defining instruction
+// selectors, however, we cannot really expect them to handle additional
+// complexity.
+//
+//===----------------------------------------------------------------------===//
+
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/CFG.h"
+#include "Support/DepthFirstIterator.h"
+using namespace llvm;
+
+namespace {
+  class UnreachableBlockElim : public FunctionPass {
+    virtual bool runOnFunction(Function &F);
+  };
+  RegisterOpt<UnreachableBlockElim>
+  X("unreachableblockelim", "Remove unreachable blocks from the CFG");
+}
+
+FunctionPass *llvm::createUnreachableBlockEliminationPass() {
+  return new UnreachableBlockElim();
+}
+
+bool UnreachableBlockElim::runOnFunction(Function &F) {
+  std::set<BasicBlock*> Reachable;
+
+  // Mark all reachable blocks.
+  for (df_ext_iterator<Function*> I = df_ext_begin(&F, Reachable),
+         E = df_ext_end(&F, Reachable); I != E; ++I)
+    /* Mark all reachable blocks */;
+
+  // Loop over all dead blocks, remembering them and deleting all instructions
+  // in them.
+  std::vector<BasicBlock*> DeadBlocks;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (!Reachable.count(I)) {
+      DeadBlocks.push_back(I);
+      for (succ_iterator SI = succ_begin(&*I), E = succ_end(&*I); SI != E; ++SI)
+        (*SI)->removePredecessor(I);
+      I->dropAllReferences();
+    }
+
+  if (DeadBlocks.empty()) return false;
+
+  // Actually remove the blocks now.
+  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
+    F.getBasicBlockList().erase(DeadBlocks[i]);
+
+  return true;
+}
