@@ -26,9 +26,10 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumFolds          ("dsnode", "Number of nodes completely folded");
-  Statistic<> NumCallNodesMerged("dsnode", "Number of call nodes merged");
-  Statistic<> NumNodeAllocated  ("dsnode", "Number of nodes allocated");
+  Statistic<> NumFolds          ("dsa", "Number of nodes completely folded");
+  Statistic<> NumCallNodesMerged("dsa", "Number of call nodes merged");
+  Statistic<> NumNodeAllocated  ("dsa", "Number of nodes allocated");
+  Statistic<> NumDNE            ("dsa", "Number of nodes removed by reachability");
 
   cl::opt<bool>
   EnableDSNodeGlobalRootsHack("enable-dsa-globalrootshack", cl::Hidden,
@@ -73,7 +74,7 @@ DSNode::DSNode(const Type *T, DSGraph *G)
   : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(0) {
   // Add the type entry if it is specified...
   if (T) mergeTypeInfo(T, 0);
-  G->getNodes().push_back(this);
+  G->addNode(this);
   ++NumNodeAllocated;
 }
 
@@ -85,7 +86,7 @@ DSNode::DSNode(const DSNode &N, DSGraph *G, bool NullLinks)
     Links = N.Links;
   else
     Links.resize(N.Links.size()); // Create the appropriate number of null links
-  G->getNodes().push_back(this);
+  G->addNode(this);
   ++NumNodeAllocated;
 }
 
@@ -1757,6 +1758,7 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   DeadNodes.reserve(Nodes.size());
   for (unsigned i = 0; i != Nodes.size(); ++i)
     if (!Alive.count(Nodes[i])) {
+      ++NumDNE;
       DSNode *N = Nodes[i];
       Nodes[i--] = Nodes.back();            // move node to end of vector
       Nodes.pop_back();                     // Erase node from alive list.

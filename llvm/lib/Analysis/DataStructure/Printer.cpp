@@ -30,8 +30,8 @@ using namespace llvm;
 namespace {
   cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
   cl::opt<bool> DontPrintAnything("dont-print-ds", cl::ReallyHidden);
-  Statistic<> MaxGraphSize   ("dsnode", "Maximum graph size");
-  Statistic<> NumFoldedNodes ("dsnode", "Number of folded nodes (in final graph)");
+  Statistic<> MaxGraphSize   ("dsa", "Maximum graph size");
+  Statistic<> NumFoldedNodes ("dsa", "Number of folded nodes (in final graph)");
 }
 
 void DSNode::dump() const { print(std::cerr, 0); }
@@ -249,10 +249,12 @@ static void printCollection(const Collection &C, std::ostream &O,
           << Gr.getGraphSize() << "+" << NumCalls << "]\n";
       }
 
-      if (MaxGraphSize < Gr.getNodes().size())
-        MaxGraphSize = Gr.getNodes().size();
-      for (unsigned i = 0, e = Gr.getNodes().size(); i != e; ++i)
-        if (Gr.getNodes()[i]->isNodeCompletelyFolded())
+      unsigned GraphSize = std::distance(Gr.node_begin(), Gr.node_end());
+      if (MaxGraphSize < GraphSize) MaxGraphSize = GraphSize;
+
+      for (DSGraph::node_iterator NI = Gr.node_begin(), E = Gr.node_end();
+           NI != E; ++NI)
+        if ((*NI)->isNodeCompletelyFolded())
           ++NumFoldedNodes;
     }
 
