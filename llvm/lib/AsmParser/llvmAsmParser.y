@@ -205,11 +205,6 @@ static int InsertValue(Value *V,
   return List.size()-1;
 }
 
-// TODO: FIXME when Type are not const
-static void InsertType(const Type *Ty, std::vector<PATypeHolder> &Types) {
-  Types.push_back(Ty);
-}
-
 static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
   case ValID::NumberVal: {                 // Is it a numbered definition?
@@ -367,24 +362,23 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 // defined later, all uses of the placeholder variable are replaced with the
 // real thing.
 //
-static Value *getVal(const Type *Ty, const ValID &D) {
+static Value *getVal(const Type *Ty, const ValID &ID) {
+  if (Ty == Type::LabelTy)
+    ThrowException("Cannot use a basic block here");
 
-  // See if the value has already been defined...
-  Value *V = getValNonImprovising(Ty, D);
+  // See if the value has already been defined.
+  Value *V = getValNonImprovising(Ty, ID);
   if (V) return V;
 
   // If we reached here, we referenced either a symbol that we don't know about
   // or an id number that hasn't been read yet.  We may be referencing something
   // forward, so just create an entry to be resolved later and get to it...
   //
-  if (Ty == Type::LabelTy)
-    V = new BasicBlock();
-  else
-    V = new Argument(Ty);
+  V = new Argument(Ty);
 
   // Remember where this forward reference came from.  FIXME, shouldn't we try
   // to recycle these things??
-  CurModule.PlaceHolderInfo.insert(std::make_pair(V, std::make_pair(D,
+  CurModule.PlaceHolderInfo.insert(std::make_pair(V, std::make_pair(ID,
                                                                llvmAsmlineno)));
 
   if (inFunctionScope())
@@ -392,6 +386,23 @@ static Value *getVal(const Type *Ty, const ValID &D) {
   else 
     InsertValue(V, CurModule.LateResolveValues);
   return V;
+}
+
+static BasicBlock *getBBVal(const ValID &ID) {
+  assert(inFunctionScope() && "Can't get basic block at global scope!");
+
+  // See if the value has already been defined.
+  Value *V = getValNonImprovising(Type::LabelTy, ID);
+  if (V) return cast<BasicBlock>(V);
+
+  BasicBlock *BB = new BasicBlock();
+  // Remember where this forward reference came from.  FIXME, shouldn't we try
+  // to recycle these things??
+  CurModule.PlaceHolderInfo.insert(std::make_pair(BB, std::make_pair(ID,
+                                                               llvmAsmlineno)));
+
+  InsertValue(BB, CurFun.LateResolveValues);
+  return BB;
 }
 
 
@@ -1378,7 +1389,10 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     if (!setTypeName(*$4, $2) && !$2) {
       // If this is a named type that is not a redefinition, add it to the slot
       // table.
-      InsertType(*$4, inFunctionScope() ? CurFun.Types : CurModule.Types);
+      if (inFunctionScope())
+        CurFun.Types.push_back(*$4);
+      else
+        CurModule.Types.push_back(*$4);
     }
 
     delete $4;
@@ -1667,16 +1681,13 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = new ReturnInst();
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
-    $$ = new BranchInst(cast<BasicBlock>(getVal(Type::LabelTy, $3)));
+    $$ = new BranchInst(getBBVal($3));
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    $$ = new BranchInst(cast<BasicBlock>(getVal(Type::LabelTy, $6)), 
-			cast<BasicBlock>(getVal(Type::LabelTy, $9)),
-			getVal(Type::BoolTy, $3));
+    $$ = new BranchInst(getBBVal($6), getBBVal($9), getVal(Type::BoolTy, $3));
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
-    SwitchInst *S = new SwitchInst(getVal($2, $3), 
-                                   cast<BasicBlock>(getVal(Type::LabelTy, $6)));
+    SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6));
     $$ = S;
 
     std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
@@ -1686,12 +1697,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     delete $8;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
-    SwitchInst *S = new SwitchInst(getVal($2, $3), 
-                                   cast<BasicBlock>(getVal(Type::LabelTy, $6)));
+    SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6));
     $$ = S;
   }
-  | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO ResolvedVal 
-    UNWIND ResolvedVal {
+  | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO LABEL ValueRef
+    UNWIND LABEL ValueRef {
     const PointerType *PFTy;
     const FunctionType *Ty;
 
@@ -1714,11 +1724,8 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
     Value *V = getVal(PFTy, $3);   // Get the function we're calling...
 
-    BasicBlock *Normal = dyn_cast<BasicBlock>($8);
-    BasicBlock *Except = dyn_cast<BasicBlock>($10);
-
-    if (Normal == 0 || Except == 0)
-      ThrowException("Invoke instruction without label destinations!");
+    BasicBlock *Normal = getBBVal($9);
+    BasicBlock *Except = getBBVal($12);
 
     // Create the call node...
     if (!$5) {                                   // Has no arguments?
@@ -1756,7 +1763,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(std::make_pair(V, cast<BasicBlock>(getVal($5, $6))));
+    $$->push_back(std::make_pair(V, getBBVal($6)));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
@@ -1765,7 +1772,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     if (V == 0)
       ThrowException("May only switch on a constant pool value!");
 
-    $$->push_back(std::make_pair(V, cast<BasicBlock>(getVal($4, $5))));
+    $$->push_back(std::make_pair(V, getBBVal($5)));
   };
 
 Inst : OptAssign InstVal {
@@ -1777,14 +1784,13 @@ Inst : OptAssign InstVal {
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = new std::list<std::pair<Value*, BasicBlock*> >();
-    $$->push_back(std::make_pair(getVal(*$1, $3), 
-                                 cast<BasicBlock>(getVal(Type::LabelTy, $5))));
+    $$->push_back(std::make_pair(getVal(*$1, $3), getBBVal($5)));
     delete $1;
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
     $1->push_back(std::make_pair(getVal($1->front().first->getType(), $4),
-                                 cast<BasicBlock>(getVal(Type::LabelTy, $6))));
+                                 getBBVal($6)));
   };
 
 
