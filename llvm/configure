@@ -22879,7 +22879,7 @@ done
 
 echo "$as_me:$LINENO: checking if printf has the %a format character" >&5
 echo $ECHO_N "checking if printf has the %a format character... $ECHO_C" >&6
-if test "${ac_cv_printf_a+set}" = set; then
+if test "${llvm_cv_c_printf_a+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_ext=c
@@ -22889,7 +22889,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
  if test "$cross_compiling" = yes; then
-  ac_c_printf_a=no
+  llvmac_cv_c_printf_a=no
 else
   cat >conftest.$ac_ext <<_ACEOF
 
@@ -22932,14 +22932,14 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_c_printf_a=yes
+  llvm_cv_c_printf_a=yes
 else
   echo "$as_me: program exited with status $ac_status" >&5
 echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 ( exit $ac_status )
-ac_c_printf_a=no
+llvmac_cv_c_printf_a=no
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
@@ -22950,9 +22950,9 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
-echo "$as_me:$LINENO: result: $ac_cv_printf_a" >&5
-echo "${ECHO_T}$ac_cv_printf_a" >&6
- if test "$ac_cv_printf_a" = "yes"; then
+echo "$as_me:$LINENO: result: $llvm_cv_c_printf_a" >&5
+echo "${ECHO_T}$llvm_cv_c_printf_a" >&6
+ if test "$llvm_cv_c_printf_a" = "yes"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_PRINTF_A 1
@@ -27243,17 +27243,6 @@ echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
   done
 fi
 
-
-if test $bzip2_found -ne 1 ; then
- if test $zlib_found -ne 1 ; then
-  { echo "$as_me:$LINENO: WARNING: *** Neither zlib nor bzip2 compression libraries were found." >&5
-echo "$as_me: WARNING: *** Neither zlib nor bzip2 compression libraries were found." >&2;}
-  { echo "$as_me:$LINENO: WARNING: *** Bytecode archives will not support compression!" >&5
-echo "$as_me: WARNING: *** Bytecode archives will not support compression!" >&2;}
-  { echo "$as_me:$LINENO: WARNING: *** To correct, install the libraries and and re-run configure." >&5
-echo "$as_me: WARNING: *** To correct, install the libraries and and re-run configure." >&2;}
- fi
-fi
 
 if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
  { echo "$as_me:$LINENO: WARNING: ***** llvm C/C++ front end was not found, or does not" >&5

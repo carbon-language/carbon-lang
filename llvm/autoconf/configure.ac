@@ -556,15 +556,6 @@ AC_CONFIG_MAKEFILE(projects/Makefile)
 dnl Finally, crank out the output
 AC_OUTPUT
 
-dnl Warn if we don't have a compression library
-if test $bzip2_found -ne 1 ; then
- if test $zlib_found -ne 1 ; then
-  AC_MSG_WARN([*** Neither zlib nor bzip2 compression libraries were found.])
-  AC_MSG_WARN([*** Bytecode archives will not support compression!])
-  AC_MSG_WARN([*** To correct, install the libraries and and re-run configure.])
- fi
-fi
-
 dnl Warn loudly if llvm-gcc was not obviously working
 if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
  AC_MSG_WARN([***** llvm C/C++ front end was not found, or does not])
