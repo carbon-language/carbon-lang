@@ -88,7 +88,7 @@ public:
   ///
   void refineAbstractTypeTo(const Type *NewType);
 
-  void dump() const { Value::dump(); }
+  void dump() const { Type::dump(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const DerivedType *T) { return true; }
