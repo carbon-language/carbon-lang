@@ -24,8 +24,8 @@ lists.llvm.lib                0.0029    0.0057    0.0057    0.0203    0m0.077s  
 llubenchmark.llvm.lib         0.0012    0.0011    0.0017    0.0111    0m0.036s  |    9680      2144      9944      32776     |    *    49+8      4+1     4+1     
 matrix.llvm.lib               0.0008    0.0013    0.0014    0.0079    0m0.038s  |    7848      10416     2200      36176     |    *    32+0      0+0     0+0     
 matrixTranspose.llvm.lib      0.0004    0.0015    0.0019    0.0054    0m0.031s  |    9136      14520     25336     48992     |    *    10+0      1+0     1+0     
-methcall.llvm.lib             analyze: DataStructure.cpp:191: bool DSNode::mergeTypeInfo(const Type*, unsigned int): Assertion `Offset < Size && "Cannot merge something into a part of our type that doesn't exist!"' failed.
-objinst.llvm.lib              analyze: DataStructure.cpp:191: bool DSNode::mergeTypeInfo(const Type*, unsigned int): Assertion `Offset < Size && "Cannot merge something into a part of our type that doesn't exist!"' failed.
+methcall.llvm.lib             0.0010    0.0018    0.0030    0.0108    0m0.080s  |    3952      17528     9024      44160     |    30   112+52    7+4     7+4     
+objinst.llvm.lib              0.0011    0.0018    0.0058    0.0149    0m0.061s  |    9480      19064     13192     55392     |    37   163+80    7+4     7+4     
 pi.llvm.lib                   0.0005    0.0004    0.0005    0.0032    0m0.027s  |    4744      1248      4368      10360     |    *    14+0      0+0     0+0     
 printargs.llvm.lib            0.0003    0.0005    0.0003    0.0023    0m0.042s  |    888       504       512       1904      |    *    5+0       0+0     0+0     
 random.llvm.lib               0.0005    0.0005    0.0005    0.0056    0m0.032s  |    1584      4704      5752      25264     |    *    21+0      2+0     2+0     
@@ -51,7 +51,7 @@ sim.llvm.lib                  0.0134    0.2127    1.1230    1.3938    0m1.559s  
 181.mcf.lib                   0.0121    0.0354    0.1096    0.1780    0m0.292s  |    120504    192920    545720    876032    |    195  753+0     14+0    14+0    
 197.parser.lib                analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
 254.gap.lib                   analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
-255.vortex.lib                analyze: DataStructure.cpp:191: bool DSNode::mergeTypeInfo(const Type*, unsigned int): Assertion `Offset < Size && "Cannot merge something into a part of our type that doesn't exist!"' failed.
+255.vortex.lib                analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
 256.bzip2.lib                 0.0149    0.0604    0.6503    0.7810    0m1.027s  |    210880    387776    3371632   4041800   |    18   5005+76   65+1    65+1    
 300.twolf.lib                 0.1806    0.5248    42.5463   43.8329   0m45.785s |    522056    653816    10076992  11252864  |    1269 *         410+12  410+12  
 burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:74: DSNode::~DSNode(): Assertion `Referrers.empty() && "Referrers to dead node exist!"' failed.
@@ -61,7 +61,7 @@ burg.llvm.lib                 analyze: ../../../include/llvm/Analysis/DSNode.h:7
     <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Wed Nov  6 19:57:57 CST 2002 -->
 <!-- hhmts start -->
-Last modified: Wed Nov  6 20:18:06 CST 2002
+Last modified: Wed Nov  6 21:50:19 CST 2002
 <!-- hhmts end -->
   </body>
 </html>
