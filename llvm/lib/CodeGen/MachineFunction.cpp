@@ -15,6 +15,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/iOther.h"
 #include <limits.h>
+#include <iostream>
 
 const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
 
@@ -283,19 +284,17 @@ MachineCodeForMethod::getOffset(const Value* val) const
 void
 MachineCodeForMethod::dump() const
 {
-  cerr << "\n" << method->getReturnType()
-       << " \"" << method->getName() << "\"\n";
+  std::cerr << "\n" << method->getReturnType()
+            << " \"" << method->getName() << "\"\n";
   
   for (Method::const_iterator BI = method->begin(); BI != method->end(); ++BI)
     {
       BasicBlock* bb = *BI;
-      cerr << "\n"
-	   << (bb->hasName()? bb->getName() : "Label")
-	   << " (" << bb << ")" << ":\n";
+      std::cerr << "\n" << bb->getName() << " (" << bb << ")" << ":\n";
 
       MachineCodeForBasicBlock& mvec = bb->getMachineInstrVec();
       for (unsigned i=0; i < mvec.size(); i++)
-	cerr << "\t" << *mvec[i];
+	std::cerr << "\t" << *mvec[i];
     } 
-  cerr << "\nEnd method \"" << method->getName() << "\"\n\n";
+  std::cerr << "\nEnd method \"" << method->getName() << "\"\n\n";
 }
