@@ -1828,7 +1828,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
-    delete $2;
 
     Value *V = getVal(PFTy, $3);   // Get the function we're calling...
 
@@ -1858,6 +1857,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
       $$ = new CallInst(V, *$5);
     }
+    delete $2;
     delete $5;
   }
   | MemoryInst {
