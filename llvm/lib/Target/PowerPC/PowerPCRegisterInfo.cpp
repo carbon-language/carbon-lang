@@ -101,7 +101,7 @@ int PowerPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 // if frame pointer elimination is disabled.
 //
 static bool hasFP(MachineFunction &MF) {
-	return NoFPElim || MF.getFrameInfo()->hasVarSizedObjects();
+	return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 void PowerPCRegisterInfo::
