@@ -2779,8 +2779,13 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
             .addImm(32-Amount).addImm(Amount).addImm(31);
           BuildMI(*MBB, IP, PPC::RLWIMI, 5, DestReg+1).addReg(TempReg)
             .addReg(SrcReg).addImm(32-Amount).addImm(0).addImm(Amount-1);
-          BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
-            .addImm(32-Amount).addImm(Amount).addImm(31);
+          if (isSigned) {
+            BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg)
+              .addImm(Amount);
+          } else {
+            BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg)
+              .addImm(32-Amount).addImm(Amount).addImm(31);
+          }
         }
       } else {                 // Shifting more than 32 bits
         Amount -= 32;
@@ -2805,7 +2810,11 @@ void PPC32ISel::emitShiftOperation(MachineBasicBlock *MBB,
             BuildMI(*MBB, IP, PPC::OR, 2, DestReg+1).addReg(SrcReg)
               .addReg(SrcReg);
           }
-          BuildMI(*MBB, IP,PPC::LI, 1, DestReg).addSImm(0);
+          if (isSigned)
+            BuildMI(*MBB, IP, PPC::SRAWI, 2, DestReg).addReg(SrcReg)
+              .addImm(31);
+          else
+            BuildMI(*MBB, IP,PPC::LI, 1, DestReg).addSImm(0);
         }
       }
     } else {
