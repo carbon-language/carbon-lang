@@ -138,11 +138,11 @@ void X86RegisterInfo::eliminateFrameIndex(MachineFunction &MF,
 
   // Now add the frame object offset to the offset from EBP.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(i+3).getImmedValue();
+               MI.getOperand(i+3).getImmedValue()+4;
 
   if (!hasFP(MF) && hasSPAdjust(MF)) {
     const MachineFrameInfo *MFI = MF.getFrameInfo();
-    Offset += MFI->getStackSize() + MFI->getMaxCallFrameSize();
+    Offset += MFI->getStackSize();
   }
 
   MI.SetMachineOperandConst(i+3, MachineOperand::MO_SignExtendedImmed, Offset);
@@ -161,7 +161,7 @@ void X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -169,7 +169,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1);
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
 
     MI = addRegOffset(BuildMI(X86::MOVrm32, 5),    // mov [ESP-<offset>], EBP
 		      X86::ESP, EBPOffset).addReg(X86::EBP);
@@ -190,6 +190,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // eliminates the need for add/sub ESP brackets around call sites.
     //
     NumBytes += MFI->getMaxCallFrameSize();
+
+    // Update frame info to pretend that this is part of the stack...
+    MFI->setStackSize(NumBytes);
   }
 
   if (NumBytes) {
@@ -210,7 +213,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1);
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
     
     // mov ESP, EBP
     MI = BuildMI(X86::MOVrr32, 1,X86::ESP).addReg(X86::EBP);
@@ -224,7 +227,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
-    NumBytes += MFI->getMaxCallFrameSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
       MI =BuildMI(X86::ADDri32, 2, X86::ESP).addReg(X86::ESP).addZImm(NumBytes);
