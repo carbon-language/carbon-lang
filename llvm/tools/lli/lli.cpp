@@ -75,8 +75,10 @@ int main(int argc, char** argv, const char ** envp) {
   }
 #endif
 
-  unsigned Config = (M->isLittleEndian()   ? TM::LittleEndian : TM::BigEndian) |
-                    (M->has32BitPointers() ? TM::PtrSize32    : TM::PtrSize64);
+  // FIXME: in adddition to being gross, this is also wrong: This should use the
+  // pointersize/endianness of the host if the pointer size is not specified!!
+  unsigned Config = (M->getEndianness() != Module::BigEndian ? TM::LittleEndian : TM::BigEndian) |
+                    (M->getPointerSize() != Module::Pointer64 ? TM::PtrSize32    : TM::PtrSize64);
   ExecutionEngine *EE = 0;
 
   // If there is nothing that is forcing us to use the interpreter, make a JIT.

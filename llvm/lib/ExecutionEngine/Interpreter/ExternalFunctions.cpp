@@ -308,7 +308,8 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
       case 'u': case 'o':
       case 'x': case 'X':
         if (HowLong >= 1) {
-          if (HowLong == 1 && TheInterpreter->getModule().has64BitPointers() &&
+          if (HowLong == 1 &&
+              TheInterpreter->getModule().getPointerSize()==Module::Pointer64 &&
               sizeof(long) < sizeof(long long)) {
             // Make sure we use %lld with a 64 bit argument because we might be
             // compiling LLI on a 32 bit compiler.
