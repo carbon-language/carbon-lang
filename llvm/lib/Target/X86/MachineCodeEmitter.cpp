@@ -13,10 +13,12 @@
 
 namespace {
   struct Emitter : public FunctionPass {
-    TargetMachine &TM;
-    MachineCodeEmitter &MCE;
+    X86TargetMachine    &TM;
+    const X86InstrInfo  &II;
+    MachineCodeEmitter  &MCE;
 
-    Emitter(TargetMachine &tm, MachineCodeEmitter &mce) : TM(tm), MCE(mce) {}
+    Emitter(X86TargetMachine &tm, MachineCodeEmitter &mce)
+      : TM(tm), II(TM.getInstrInfo()), MCE(mce) {}
 
     bool runOnFunction(Function &F);
 
@@ -56,14 +58,21 @@ void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
 
 void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
-  const MachineInstrDescriptor &Desc = TM.getInstrInfo().get(Opcode);
+  const MachineInstrDescriptor &Desc = II.get(Opcode);
 
   // Emit instruction prefixes if neccesary
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
-  if (Desc.TSFlags & X86II::TB) MCE.emitByte(0x0F);    // Two-byte opcode prefix
+  if (Desc.TSFlags & X86II::TB)     MCE.emitByte(0x0F);// Two-byte opcode prefix
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::RawFrm:
-    ;
+    MCE.emitByte(II.getBaseOpcodeFor(Opcode));
+
+    if (MI.getNumOperands() == 1) {
+      assert(MI.getOperand(0).getType() == MachineOperand::MO_PCRelativeDisp);
+      MCE.emitPCRelativeDisp(MI.getOperand(0).getVRegValue());
+    }
+
+    break;
   }
 }
