@@ -58,6 +58,8 @@ static inline void addPass(PassManager &PM, Pass *P) {
 
     // Keep track of how many passes we made for -stopAfterNPasses
     ++NumPassesCreated;
+  } else {
+    delete P;             // We don't want this pass to run, just delete it now
   }
 }
 
