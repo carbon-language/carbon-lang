@@ -204,6 +204,19 @@ long long llvm::getFileSize(const std::string &Filename) {
   return StatBuf.st_size;  
 }
 
+/// getFileTimestamp - Get the last modified time for the specified file in an
+/// unspecified format.  This is useful to allow checking to see if a file was
+/// updated since that last time the timestampt was aquired.  If the file does
+/// not exist or there is an error getting the time-stamp, zero is returned.
+unsigned long long llvm::getFileTimestamp(const std::string &Filename) {
+  struct stat StatBuf;
+  if (stat(Filename.c_str(), &StatBuf) == -1)
+    return 0;
+  return StatBuf.st_mtime;  
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 // FDHandle class implementation
