@@ -10,7 +10,6 @@
 #include "llvm/iTerminators.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include <map>
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
