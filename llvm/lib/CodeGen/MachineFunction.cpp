@@ -8,6 +8,7 @@
 
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/MachineInstr.h"  // For debug output
+#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineFrameInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
@@ -277,9 +278,9 @@ MachineCodeForMethod::dump() const
   
   for (Function::const_iterator BB = method->begin(); BB != method->end(); ++BB)
     {
-      std::cerr << "\n" << BB->getName() << " (" << *BB << ")" << ":\n";
+      std::cerr << "\n" << BB->getName() << " (" << (const void*) BB << ")" << ":\n";
 
-      MachineCodeForBasicBlock& mvec = BB->getMachineInstrVec();
+      MachineCodeForBasicBlock& mvec = MachineCodeForBasicBlock::get(BB);
       for (unsigned i=0; i < mvec.size(); i++)
 	std::cerr << "\t" << *mvec[i];
     } 
