@@ -50,6 +50,10 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<bool>
+DisableStrip("disable-strip",
+          cl::desc("Do not strip the LLVM bytecode included in the executable"));
+
+static cl::opt<bool>
 DumpAsm("d", cl::desc("Print bytecode before native code generation"),
         cl::Hidden);
 
@@ -227,7 +231,8 @@ main(int argc, char **argv)
     Passes.add(new PrintFunctionPass("Code after xformations: \n", &std::cerr));
 
   // Strip all of the symbols from the bytecode so that it will be smaller...
-  Passes.add(createSymbolStrippingPass());
+  if (!DisableStrip)
+    Passes.add(createSymbolStrippingPass());
 
   // Figure out where we are going to send the output...
   std::ostream *Out = 0;
