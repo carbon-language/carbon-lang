@@ -42,7 +42,7 @@
 
 #include "llvm/Assembly/Writer.h"
 
-#define DEBUG_PEEPHOLE_INSTS 1
+//#define DEBUG_PEEPHOLE_INSTS 1
 
 #ifdef DEBUG_PEEPHOLE_INSTS
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
@@ -356,11 +356,8 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         PRINT_PEEPHOLE2("CAST-DEST-EXPR-CONV:in ", CI, Src);
 
         ValueMapCache ValueMap;
-        ConvertUsersType(CI, Src, ValueMap);
-        if (!Src->hasName() && CI->hasName()) {
-          string Name = CI->getName(); CI->setName("");
-          Src->setName(Name, BB->getParent()->getSymbolTable());
-        }
+        ConvertUsersType(CI, Src, ValueMap);  // This will delete CI!
+
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", I);
         return true;

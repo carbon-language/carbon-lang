@@ -19,12 +19,36 @@
 
 #include "llvm/Assembly/Writer.h"
 
+//#define DEBUG_EXPR_CONVERT 1
+
+static inline const Type *getTy(const Value *V, ValueTypeCache &CT) {
+  ValueTypeCache::iterator I = CT.find(V);
+  if (I == CT.end()) return V->getType();
+  return I->second;
+}
+
+
+static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
+                                     ValueTypeCache &ConvertedTypes);
+
+static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
+                                 ValueMapCache &VMC);
+
+
 // ExpressionConvertableToType - Return true if it is possible
 static bool ExpressionConvertableToType(Value *V, const Type *Ty,
                                         ValueTypeCache &CTMap) {
   ValueTypeCache::iterator CTMI = CTMap.find(V);
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
   CTMap[V] = Ty;
+
+  // Expressions are only convertable if all of the users of the expression can
+  // have this value converted.  This makes use of the map to avoid infinite
+  // recursion.
+  //
+  for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I)
+    if (!OperandConvertableToType(*I, V, Ty, CTMap))
+      return false;
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
@@ -101,6 +125,10 @@ static bool ExpressionConvertableToType(Value *V, const Type *Ty,
 
 static Value *ConvertExpressionToType(Value *V, const Type *Ty,
                                       ValueMapCache &VMC) {
+  ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
+  if (VMCI != VMC.ExprMap.end())
+    return VMCI->second;
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0)
     if (ConstPoolVal *CPV = cast<ConstPoolVal>(V)) {
@@ -109,6 +137,9 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
       Value *Result = opt::ConstantFoldCastInstruction(CPV, Ty);
       if (!Result) cerr << "Couldn't fold " << CPV << " to " << Ty << endl;
       assert(Result && "ConstantFoldCastInstruction Failed!!!");
+
+      // Add the instruction to the expression map
+      VMC.ExprMap[V] = Result;
       return Result;
     }
 
@@ -194,26 +225,29 @@ static Value *ConvertExpressionToType(Value *V, const Type *Ty,
   assert(It != BIL.end() && "Instruction not in own basic block??");
   BIL.insert(It, Res);
 
-  //cerr << "RInst: " << Res << "BB After: " << BB << endl << endl;
+  // Add the instruction to the expression map
+  VMC.ExprMap[I] = Res;
+
+  // Expressions are only convertable if all of the users of the expression can
+  // have this value converted.  This makes use of the map to avoid infinite
+  // recursion.
+  //
+  unsigned NumUses = I->use_size();
+  for (unsigned It = 0; It < NumUses; ) {
+    unsigned OldSize = NumUses;
+    ConvertOperandToType(*(I->use_begin()+It), I, Res, VMC);
+    NumUses = I->use_size();
+    if (NumUses == OldSize) ++It;
+  }
+
+#ifdef DEBUG_EXPR_CONVERT
+  cerr << "ExpIn: " << I << "ExpOut: " << Res;
+#endif
 
   return Res;
 }
 
 
-
-
-
-
-
-static inline const Type *getTy(const Value *V, ValueTypeCache &CT) {
-  ValueTypeCache::iterator I = CT.find(V);
-  if (I == CT.end()) return V->getType();
-  return I->second;
-}
-
-
-static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
-                                     ValueTypeCache &ConvertedTypes);
 
 // RetValConvertableToType - Return true if it is possible
 bool RetValConvertableToType(Value *V, const Type *Ty,
@@ -231,6 +265,11 @@ bool RetValConvertableToType(Value *V, const Type *Ty,
 
   return true;
 }
+
+
+
+
+
 
 
 // OperandConvertableToType - Return true if it is possible to convert operand
@@ -347,29 +386,42 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
 }
 
 
-
-
-
-
-static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
-                                 ValueMapCache &VMC);
-
 void ConvertUsersType(Value *V, Value *NewVal, ValueMapCache &VMC) {
-  
-  // It is safe to convert the specified value to the specified type IFF all of
-  // the uses of the value can be converted to accept the new typed value.
-  //
-  while (!V->use_empty()) {
-    unsigned OldSize = V->use_size();
-    ConvertOperandToType(V->use_back(), V, NewVal, VMC);
-    assert(V->use_size() != OldSize && "Use didn't detatch from value!");
+  unsigned NumUses = V->use_size();
+  for (unsigned It = 0; It < NumUses; ) {
+    unsigned OldSize = NumUses;
+    ConvertOperandToType(*(V->use_begin()+It), V, NewVal, VMC);
+    NumUses = V->use_size();
+    if (NumUses == OldSize) ++It;
   }
+
+  if (NumUses == 0)
+    if (Instruction *I = dyn_cast<Instruction>(V)) {
+      BasicBlock *BB = I->getParent();
+
+      // Now we just need to remove the old instruction so we don't get infinite
+      // loops.  Note that we cannot use DCE because DCE won't remove a store
+      // instruction, for example.
+      //
+      BasicBlock::iterator It = find(BB->begin(), BB->end(), I);
+      assert(It != BB->end() && "Instruction no longer in basic block??");
+#ifdef DEBUG_EXPR_CONVERT
+      cerr << "DELETING: " << (void*)I << " " << I;
+#endif
+      delete BB->getInstList().remove(It);
+    }
 }
 
 
 
 static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                                  ValueMapCache &VMC) {
+  if (isa<ValueHandle>(U)) return;  // Valuehandles don't let go of operands...
+
+  if (VMC.OperandsMapped.count(make_pair(U, OldVal))) return;
+
+  VMC.OperandsMapped.insert(make_pair(U, OldVal));
+
   Instruction *I = cast<Instruction>(U);  // Only Instructions convertable
 
   BasicBlock *BB = I->getParent();
@@ -378,6 +430,12 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   Instruction *Res;     // Result of conversion
 
   //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I << "BB Before: " << BB << endl;
+
+  // Prevent I from being removed...
+  ValueHandle IHandle(I);
+#ifdef DEBUG_EXPR_CONVERT
+  cerr << "VH AQUIRING: " << I;
+#endif
 
   switch (I->getOpcode()) {
   case Instruction::Cast:
@@ -472,23 +530,63 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   assert(It != BIL.end() && "Instruction not in own basic block??");
   BIL.insert(It, Res);   // Keep It pointing to old instruction
 
-#if DEBUG_PEEPHOLE_INSTS
+#ifdef DEBUG_EXPR_CONVERT
   cerr << "In: " << I << "Out: " << Res;
 #endif
 
-  //cerr << "RInst: " << Res << "BB After: " << BB << endl << endl;
-
   if (I->getType() != Res->getType())
     ConvertUsersType(I, Res, VMC);
-  else
-    I->replaceAllUsesWith(Res);
+  else {
+    for (unsigned It = 0; It < I->use_size(); ) {
+      User *Use = *(I->use_begin()+It);
+      if (isa<ValueHandle>(Use))            // Don't remove ValueHandles!
+        ++It;
+      else
+        Use->replaceUsesOfWith(I, Res);
+    }
 
-  // Now we just need to remove the old instruction so we don't get infinite
-  // loops.  Note that we cannot use DCE because DCE won't remove a store
-  // instruction, for example.
-  assert(I->use_size() == 0 && "Uses of Instruction remain!!!");
+    if (I->use_size() == 0) {
+      // Now we just need to remove the old instruction so we don't get infinite
+      // loops.  Note that we cannot use DCE because DCE won't remove a store
+      // instruction, for example.
+      //
+      BasicBlock::iterator It = find(BIL.begin(), BIL.end(), I);
+      assert(It != BIL.end() && "Instruction no longer in basic block??");
+#ifdef DEBUG_EXPR_CONVERT
+      cerr << "DELETING: " << (void*)I << " " << I;
+#endif
+      delete BIL.remove(It);
+    } else {
+      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+           UI != UE; ++UI)
+        assert(isa<ValueHandle>((Value*)*UI) && "Uses of Instruction remain!!!");
+    }
+  }
+}
 
-  It = find(BIL.begin(), BIL.end(), I);
-  assert(It != BIL.end() && "Instruction no longer in basic block??");
-  delete BIL.remove(It);
+
+ValueHandle::~ValueHandle() {
+  if (Operands[0]->use_size() == 1) {
+    Value *V = Operands[0];
+    Operands.clear();   // Drop use!
+
+    // Now we just need to remove the old instruction so we don't get infinite
+    // loops.  Note that we cannot use DCE because DCE won't remove a store
+    // instruction, for example.
+    //
+    Instruction *I = cast<Instruction>(V);
+    BasicBlock *BB = I->getParent();
+    assert(BB && "Inst not in basic block!");
+
+    BasicBlock::iterator It = find(BB->begin(), BB->end(), I);
+    assert(It != BB->end() && "Instruction no longer in basic block??");
+#ifdef DEBUG_EXPR_CONVERT
+    cerr << "VH DELETING: " << (void*)I << " " << I;
+#endif
+    delete BB->getInstList().remove(It);
+  } else {
+#ifdef DEBUG_EXPR_CONVERT
+    cerr << "VH RELEASING: " << Operands[0];
+#endif
+  }
 }
