@@ -62,3 +62,11 @@ int %gep_distance_test2({int,int}* %A, long %distance) {
         %r = sub int %REMOVEu, %REMOVEv
         ret int %r
 }
+
+int %foo(int * %A) {
+	%X = load int* %A
+	%B = cast int* %A to sbyte*
+	%C = getelementptr sbyte* %B, long 4
+	%Y = load sbyte* %C
+	ret int 8
+}
