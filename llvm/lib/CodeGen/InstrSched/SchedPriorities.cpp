@@ -17,6 +17,12 @@
 #include "Support/PostOrderIterator.h"
 using std::cerr;
 
+std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd) {
+  return os << "Delay for node " << nd->node->getNodeId()
+	    << " = " << (long)nd->delay << "\n";
+}
+
+
 SchedPriorities::SchedPriorities(const Function *, const SchedGraph *G,
                                  FunctionLiveVarInfo &LVI)
   : curTime(0), graph(G), methodLiveVarInfo(LVI),

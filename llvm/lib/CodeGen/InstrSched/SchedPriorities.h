@@ -18,7 +18,6 @@
 #include "llvm/Target/MachineSchedInfo.h"
 #include "Support/hash_set"
 #include <list>
-#include <iosfwd>
 
 class Function;
 class MachineInstr;
@@ -202,9 +201,6 @@ inline void SchedPriorities::updateTime(cycles_t c) {
   mcands.clear();
 }
 
-inline std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd) {
-  return os << "Delay for node " << nd->node->getNodeId()
-	    << " = " << (long)nd->delay << "\n";
-}
+std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd);
 
 #endif
