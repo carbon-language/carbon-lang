@@ -66,6 +66,7 @@ release implements the following new features:<p>
 
 <ol>
 <li><a href="http://mail.cs.uiuc.edu/pipermail/llvmdev/2003-November/000528.html">A new LLVM profiler, similar to gprof</a> is available</li>
+<li>The LLVM C/C++ front-end now compiles on Mac OSX!</li>
 </ol><p>
 
 In this release, the following Quality of Implementation issues were fixed:<p>
@@ -99,6 +100,10 @@ In this release, the following bugs in the previous release were fixed:<p>
 <li><a href="http://llvm.cs.uiuc.edu/PR89">[C++] Catch blocks make unparsable labels</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR90">[C++] Initializing array with constructable objects fail</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR91">[gccld] The -r (relinking) option does not work correctly</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR92">[bcreader] Cannot read shift constant expressions from bytecode file</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR93">[lowersetjmp] Lowersetjmp pass breaks dominance properties!</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR94">llvm-gcc tries to add bools</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR98">[buildscripts] Building into objdir with .o in it fails</a></li>
 </ol><p>
 
 At this time, LLVM is known to work properly with SPEC CPU 2000, the Olden
@@ -405,6 +410,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Wed Nov  5 00:07:20 CST 2003
+Last modified: Thu Nov  6 13:21:28 CST 2003
 <!-- hhmts end -->
 </body></html>
