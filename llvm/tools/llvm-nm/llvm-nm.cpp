@@ -22,6 +22,7 @@
 #include "Support/FileUtilities.h"
 #include "Support/Signals.h"
 #include <cctype>
+#include <cerrno>
 #include <cstring>
 
 using namespace llvm;
