@@ -24,6 +24,7 @@
 #include "llvm/iMemory.h"
 #include <list>
 #include <utility>            // Get definition of pair class
+#include <algorithm>          // Get definition of find_if
 #include <stdio.h>            // This embarasment is due to our flex lexer...
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit 
@@ -312,6 +313,41 @@ static ConstPoolVal *addConstValToConstantPool(ConstPoolVal *C) {
     return C;
   } 
 }
+
+
+struct EqualsType {
+  const Type *T;
+  inline EqualsType(const Type *t) { T = t; }
+  inline bool operator()(const ConstPoolVal *CPV) const {
+    return static_cast<const ConstPoolType*>(CPV)->getValue() == T;
+  }
+};
+
+
+// checkNewType - We have to be careful to add all types referenced by the
+// program to the constant pool of the method or module.  Because of this, we
+// often want to check to make sure that types used are in the constant pool,
+// and add them if they aren't.  That's what this function does.
+//
+static const Type *checkNewType(const Type *Ty) {
+  ConstantPool &CP = CurMeth.CurrentMethod ? 
+                          CurMeth.CurrentMethod->getConstantPool() : 
+                          CurModule.CurrentModule->getConstantPool();
+
+  // Get the type type plane...
+  ConstantPool::PlaneType &P = CP.getPlane(Type::TypeTy);
+  ConstantPool::PlaneType::const_iterator PI = find_if(P.begin(), P.end(), 
+						       EqualsType(Ty));
+  if (PI == P.end()) {
+    vector<ValueList> &ValTab = CurMeth.CurrentMethod ? 
+                                CurMeth.Values : CurModule.Values;
+    ConstPoolVal *CPT = new ConstPoolType(Ty);
+    CP.insert(CPT);
+    InsertValue(CPT, ValTab);
+  }
+  return Ty;
+}
+
 
 //===----------------------------------------------------------------------===//
 //            RunVMAsmParser - Define an interface to this parser
@@ -721,28 +757,28 @@ Types : ValueRef {
   | TypesV '(' TypeList ')' {               // Method derived type?
     MethodType::ParamTypes Params($3->begin(), $3->end());
     delete $3;
-    $$ = MethodType::getMethodType($1, Params);
+    $$ = checkNewType(MethodType::getMethodType($1, Params));
   }
   | TypesV '(' ')' {               // Method derived type?
     MethodType::ParamTypes Params;     // Empty list
-    $$ = MethodType::getMethodType($1, Params);
+    $$ = checkNewType(MethodType::getMethodType($1, Params));
   }
   | '[' Types ']' {
-    $$ = ArrayType::getArrayType($2);
+    $$ = checkNewType(ArrayType::getArrayType($2));
   }
   | '[' EUINT64VAL 'x' Types ']' {
-    $$ = ArrayType::getArrayType($4, (int)$2);
+    $$ = checkNewType(ArrayType::getArrayType($4, (int)$2));
   }
   | '{' TypeList '}' {
     StructType::ElementTypes Elements($2->begin(), $2->end());
     delete $2;
-    $$ = StructType::getStructType(Elements);
+    $$ = checkNewType(StructType::getStructType(Elements));
   }
   | '{' '}' {
-    $$ = StructType::getStructType(StructType::ElementTypes());
+    $$ = checkNewType(StructType::getStructType(StructType::ElementTypes()));
   }
   | Types '*' {
-    $$ = PointerType::getPointerType($1);
+    $$ = checkNewType(PointerType::getPointerType($1));
   }
 
 
@@ -942,30 +978,23 @@ UByteList : ',' ConstVector {
 }
 
 MemoryInst : MALLOC Types {
-    const Type *Ty = PointerType::getPointerType($2);
-    addConstValToConstantPool(new ConstPoolType(Ty));
-    $$ = new MallocInst(Ty);
+    $$ = new MallocInst(checkNewType(PointerType::getPointerType($2)));
   }
   | MALLOC Types ',' UINT ValueRef {
     if (!$2->isArrayType() || ((const ArrayType*)$2)->isSized())
       ThrowException("Trying to allocate " + $2->getName() + 
 		     " as unsized array!");
-    const Type *Ty = PointerType::getPointerType($2);
-    addConstValToConstantPool(new ConstPoolType(Ty));
-    Value *ArrSize = getVal($4, $5);
-    $$ = new MallocInst(Ty, ArrSize);
+    const Type *Ty = checkNewType(PointerType::getPointerType($2));
+    $$ = new MallocInst(Ty, getVal($4, $5));
   }
   | ALLOCA Types {
-    const Type *Ty = PointerType::getPointerType($2);
-    addConstValToConstantPool(new ConstPoolType(Ty));
-    $$ = new AllocaInst(Ty);
+    $$ = new AllocaInst(checkNewType(PointerType::getPointerType($2)));
   }
   | ALLOCA Types ',' UINT ValueRef {
     if (!$2->isArrayType() || ((const ArrayType*)$2)->isSized())
       ThrowException("Trying to allocate " + $2->getName() + 
 		     " as unsized array!");
-    const Type *Ty = PointerType::getPointerType($2);
-    addConstValToConstantPool(new ConstPoolType(Ty));
+    const Type *Ty = checkNewType(PointerType::getPointerType($2));    
     Value *ArrSize = getVal($4, $5);
     $$ = new AllocaInst(Ty, ArrSize);
   }
@@ -1003,7 +1032,7 @@ MemoryInst : MALLOC Types {
       ThrowException("Can't get element ptr '" + $2->getName() + "'!");
     $$ = new GetElementPtrInst(getVal($2, $3), *$4);
     delete $4;
-    addConstValToConstantPool(new ConstPoolType($$->getType()));
+    checkNewType($$->getType());
   }
 
 %%
