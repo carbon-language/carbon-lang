@@ -1,4 +1,4 @@
-##===- runtime/libtrace/Makefile ------------------------------*- Makefile -*-===##
+##===- runtime/libtrace/Makefile ---------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
