@@ -38,6 +38,8 @@ namespace {
   Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
   Statistic<> NumFnDeleted("globalopt", "Number of functions deleted");
   Statistic<> NumGlobUses ("globalopt", "Number of global uses devirtualized");
+  Statistic<> NumShrunkToBool("globalopt",
+                              "Number of global vars shrunk to booleans");
 
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -817,6 +819,50 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
   return false;
 }
 
+/// ShrinkGlobalToBoolean - At this point, we have learned that the only two
+/// values ever stored into GV are its initializer and OtherVal.  
+static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
+  // Create the new global, initializing it to false.
+  GlobalVariable *NewGV = new GlobalVariable(Type::BoolTy, false,
+         GlobalValue::InternalLinkage, ConstantBool::False, GV->getName()+".b");
+  GV->getParent()->getGlobalList().insert(GV, NewGV);
+
+  Constant *InitVal = GV->getInitializer();
+  assert(InitVal->getType() != Type::BoolTy && "No reason to shrink to bool!");
+
+  // If initialized to zero and storing one into the global, we can use a cast
+  // instead of a select to synthesize the desired value.
+  bool IsOneZero = false;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(OtherVal))
+    IsOneZero = InitVal->isNullValue() && CI->equalsInt(1);
+
+  while (!GV->use_empty()) {
+    Instruction *UI = cast<Instruction>(GV->use_back());
+    if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
+      // Change the store into a boolean store.
+      bool StoringOther = SI->getOperand(0) == OtherVal;
+      // Only do this if we weren't storing a loaded value.
+      if (StoringOther || SI->getOperand(0) == InitVal)
+        new StoreInst(ConstantBool::get(StoringOther), NewGV, SI);
+    } else {
+      // Change the load into a load of bool then a select.
+      LoadInst *LI = cast<LoadInst>(UI);
+      std::string Name = LI->getName(); LI->setName("");
+      LoadInst *NLI = new LoadInst(NewGV, Name+".b", LI);
+      Value *NSI;
+      if (IsOneZero)
+        NSI = new CastInst(NLI, LI->getType(), Name, LI);
+      else 
+        NSI = new SelectInst(NLI, OtherVal, InitVal, Name, LI);
+      LI->replaceAllUsesWith(NSI);
+    }
+    UI->eraseFromParent();
+  }
+
+  GV->eraseFromParent();
+}
+
+
 /// ProcessInternalGlobal - Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
 bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
@@ -875,35 +921,45 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         return true;
       }
     } else if (GS.StoredType == GlobalStatus::isStoredOnce) {
-      // If the initial value for the global was an undef value, and if only one
-      // other value was stored into it, we can just change the initializer to
-      // be an undef value, then delete all stores to the global.  This allows
-      // us to mark it constant.
-      if (isa<UndefValue>(GV->getInitializer()) &&
-          isa<Constant>(GS.StoredOnceValue)) {
-        // Change the initial value here.
-        GV->setInitializer(cast<Constant>(GS.StoredOnceValue));
-        
-        // Clean up any obviously simplifiable users now.
-        CleanupConstantGlobalUsers(GV, GV->getInitializer());
-
-        if (GV->use_empty()) {
-          DEBUG(std::cerr << "   *** Substituting initializer allowed us to "
-                "simplify all users and delete global!\n");
-          GV->eraseFromParent();
-          ++NumDeleted;
-        } else {
-          GVI = GV;
+      // If the initial value for the global was an undef value, and if only
+      // one other value was stored into it, we can just change the
+      // initializer to be an undef value, then delete all stores to the
+      // global.  This allows us to mark it constant.
+      if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
+        if (isa<UndefValue>(GV->getInitializer())) {
+          // Change the initial value here.
+          GV->setInitializer(SOVConstant);
+          
+          // Clean up any obviously simplifiable users now.
+          CleanupConstantGlobalUsers(GV, GV->getInitializer());
+          
+          if (GV->use_empty()) {
+            DEBUG(std::cerr << "   *** Substituting initializer allowed us to "
+                  "simplify all users and delete global!\n");
+            GV->eraseFromParent();
+            ++NumDeleted;
+          } else {
+            GVI = GV;
+          }
+          ++NumSubstitute;
+          return true;
         }
-        ++NumSubstitute;
-        return true;
-      }
 
       // Try to optimize globals based on the knowledge that only one value
       // (besides its initializer) is ever stored to the global.
       if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GVI,
                                    getAnalysis<TargetData>()))
         return true;
+
+      // Otherwise, if the global was not a boolean, we can shrink it to be a
+      // boolean.
+      if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
+        if (GV->getType()->getElementType() != Type::BoolTy) {
+          DEBUG(std::cerr << "   *** SHRINKING TO BOOL: " << *GV);
+          ShrinkGlobalToBoolean(GV, SOVConstant);
+          ++NumShrunkToBool;
+          return true;
+        }
     }
   }
   return false;
