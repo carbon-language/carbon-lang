@@ -26,7 +26,7 @@ namespace llvm {
 /// This class provides a way to keep a set of things that also has the 
 /// property of a deterministic iteration order. The order of iteration is the
 /// order of insertion.
-/// @breif A vector that has set insertion semantics.
+/// @brief A vector that has set insertion semantics.
 template <typename T>
 class SetVector {
 public:
