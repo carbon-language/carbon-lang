@@ -52,13 +52,24 @@ bool ConstantMerge::run(Module &M) {
 
       if (I == CMap.end()) {    // Nope, add it to the map
         CMap.insert(I, std::make_pair(Init, GV));
-      } else {                  // Yup, this is a duplicate!
+      } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
         // Make all uses of the duplicate constant use the canonical version...
         GV->replaceAllUsesWith(I->second);
-
+        
         // Delete the global value from the module... and back up iterator to
         // not skip the next global...
         GV = --M.getGlobalList().erase(GV);
+
+        ++NumMerged;
+        MadeChanges = true;
+      } else if (I->second->hasInternalLinkage()) {
+        // Make all uses of the duplicate constant use the canonical version...
+        I->second->replaceAllUsesWith(GV);
+        
+        // Delete the global value from the module... and back up iterator to
+        // not skip the next global...
+        M.getGlobalList().erase(I->second);
+        I->second = GV;
 
         ++NumMerged;
         MadeChanges = true;
