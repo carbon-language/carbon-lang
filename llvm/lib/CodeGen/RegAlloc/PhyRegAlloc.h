@@ -25,21 +25,19 @@
 
       PhyRegAlloc PRA(*MethodI, target, &LVI);     // allocate regs
       PRA.allocateRegisters();
-
-
-
 */ 
 
 #ifndef PHY_REG_ALLOC_H
 #define PHY_REG_ALLOC_H
 
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/Analysis/LoopDepth.h"
 #include <deque>
 class MachineCodeForMethod;
+class MachineRegInfo;
+class MethodLiveVarInfo;
+class MachineInstr;
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:

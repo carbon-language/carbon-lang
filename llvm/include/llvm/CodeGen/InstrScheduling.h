@@ -1,23 +1,15 @@
-// $Id$ -*- C++ -*-
-//***************************************************************************
-// File:
-//	InstrScheduling.h
-// 
-// Purpose:
-//	
-// History:
-//	7/23/01	 -  Vikram Adve  -  Created
-//***************************************************************************
+//===-- InstrScheduling.h - Interface To Instruction Scheduling --*- C++ -*-==//
+//
+// This file defines a minimal, but complete, interface to instruction
+// scheduling.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_INSTR_SCHEDULING_H
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
-#include "llvm/CodeGen/MachineInstr.h"
-
 class Method;
-class SchedulingManager;
 class TargetMachine;
-class MachineSchedInfo;
 
 //---------------------------------------------------------------------------
 // Function: ScheduleInstructionsWithSSA
@@ -42,18 +34,6 @@ bool ScheduleInstructionsWithSSA(Method *M, const TargetMachine &Target);
 //---------------------------------------------------------------------------
 
 // Not implemented yet.
-bool		ScheduleInstructions		(Method* method,
-						 const TargetMachine &Target);
+bool ScheduleInstructions(Method *M, const TargetMachine &Target);
 
-//---------------------------------------------------------------------------
-// Function: instrIsFeasible
-// 
-// Purpose:
-//   Used by the priority analysis to filter out instructions
-//   that are not feasible to issue in the current cycle.
-//   Should only be used during schedule construction..
-//---------------------------------------------------------------------------
-
-bool		instrIsFeasible			(const SchedulingManager& S,
-						 MachineOpCode opCode);
 #endif

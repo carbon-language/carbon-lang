@@ -26,12 +26,8 @@ class IGNode;
 // of Values. 
 //----------------------------------------------------------------------------
 
-class LiveRange : public ValueSet
-{
- private:
-
+class LiveRange : public ValueSet {
   RegClass *MyRegClass;       // register classs (e.g., int, FP) for this LR
-
 
   bool doesSpanAcrossCalls;
   //
@@ -168,7 +164,7 @@ class LiveRange : public ValueSet
   }
   
   inline Type::PrimitiveID getTypeID() const {
-    return this->getType()->getPrimitiveID();
+    return getType()->getPrimitiveID();
   }
 
   inline void setSuggestedColor(int Col) {
@@ -176,8 +172,10 @@ class LiveRange : public ValueSet
 
     if(SuggestedColor == -1 )
       SuggestedColor = Col;
+#if 0
     else if (DEBUG_RA) 
       std::cerr << "Already has a suggested color " << Col << "\n";
+#endif
   }
 
   inline unsigned getSuggestedColor() const {
@@ -206,12 +204,6 @@ class LiveRange : public ValueSet
   inline unsigned getSpillCost() const {
     return SpillCost;
   }
-
 };
 
-
-
-
-
 #endif
-

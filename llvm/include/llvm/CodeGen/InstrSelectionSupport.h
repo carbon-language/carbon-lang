@@ -16,12 +16,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-class Method;
-class InstrForest;
-class MachineInstr;
 class InstructionNode;
-class TmpInstruction;
-class Constant;
 class TargetMachine;
 
 
@@ -104,8 +99,8 @@ void		Set3OperandsFromInstr	(MachineInstr* minstr,
 // 
 //---------------------------------------------------------------------------
 
-MachineOperand::MachineOperandType
-		ChooseRegOrImmed        (Value* val,
+MachineOperand::MachineOperandType ChooseRegOrImmed(
+                                         Value* val,
                                          MachineOpCode opCode,
                                          const TargetMachine& targetMachine,
                                          bool canUseImmed,

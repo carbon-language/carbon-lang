@@ -28,6 +28,8 @@
 
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/CodeGen/LiveRange.h"
+class LiveRange;
+class RegClass;
 
 //----------------------------------------------------------------------------
 // Class IGNode
@@ -35,8 +37,7 @@
 // Represents a node in an interference graph.
 //----------------------------------------------------------------------------
 
-class IGNode
-{
+class IGNode {
   const int Index;            // index within IGNodeList 
 
   bool OnStack;               // this has been pushed on to stack for coloring
@@ -51,9 +52,7 @@ class IGNode
   // After that, never incremented/set again nor used.
 
   LiveRange *const ParentLR;  // parent LR (cannot be a const)
-
-
- public:
+public:
 
   // constructor
   //
@@ -117,8 +116,9 @@ class IGNode
   inline void setRegClass(RegClass *const RC) 
     { ParentLR->setRegClass(RC);  }
 
-  inline RegClass *const getRegClass() const 
-    { return ParentLR->getRegClass(); } 
+  inline RegClass *const getRegClass() const {
+    return ParentLR->getRegClass();
+  }
 
   inline bool hasColor() const 
     { return ParentLR->hasColor();  }

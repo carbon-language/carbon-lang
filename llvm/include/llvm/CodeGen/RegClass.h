@@ -10,12 +10,12 @@
 
 #include "llvm/CodeGen/IGNode.h"
 #include "llvm/CodeGen/InterferenceGraph.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MachineRegInfo.h"
 #include <stack>
 #include <iostream>
+class MachineRegClassInfo;
 
-typedef std::vector<unsigned int> ReservedColorListType;
+typedef std::vector<unsigned> ReservedColorListType;
 
 
 //-----------------------------------------------------------------------------
@@ -35,14 +35,9 @@ typedef std::vector<unsigned int> ReservedColorListType;
 //   methods are called thru a register class.
 //
 //-----------------------------------------------------------------------------
-class RegClass
-{
-
- private:
+class RegClass {
   const Method *const Meth;             // Method we are working on
-
   const MachineRegClassInfo *const MRC; // corresponding MRC
-
   const unsigned RegClassID;            // my int ID
 
   InterferenceGraph IG;                 // Interference graph - constructed by

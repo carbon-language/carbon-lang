@@ -1,11 +1,10 @@
 
-#include "Support/CommandLine.h"
 
 #ifndef REG_ALLOC_COMMON_H
 #define  REG_ALLOC_COMMON_H
 
-// THIS IS NOW SPECIFIED VIA A COMMANDLINE ARGUMENT TO LLC
-//
+#include "Support/CommandLine.h"
+
 // set DEBUG_RA for printing out debug messages
 // if DEBUG_RA is 1 normal output messages
 // if DEBUG_RA is 2 extensive debug info for each instr
