@@ -147,6 +147,14 @@ public:
     regNum = reg;
   }
 
+  // used to get the reg number if when one is allocted (must be
+  // called only after reg alloc)
+  inline unsigned int  getAllocatedRegNum() const {
+    assert(opType == MO_VirtualRegister || opType == MO_CCRegister || 
+	   opType == MO_MachineRegister);
+    return regNum;
+  }
+
  
 };
 
