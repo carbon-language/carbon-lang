@@ -833,38 +833,65 @@ CreateCodeForVariableSizeAlloca(const TargetMachine& target,
                                 Value* numElementsVal,
                                 vector<MachineInstr*>& getMvec)
 {
+  Value* totalSizeVal;
   MachineInstr* M;
   MachineCodeForInstruction& mcfi = MachineCodeForInstruction::get(result);
+  Function *F = result->getParent()->getParent();
 
-  // Create a Value to hold the (constant) element size
-  Value* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
+  // Enforce the alignment constraints on the stack pointer at
+  // compile time if the total size is a known constant.
+  if (isa<Constant>(numElementsVal))
+    {
+      bool isValid;
+      int64_t numElem = GetConstantValueAsSignedInt(numElementsVal, isValid);
+      assert(isValid && "Unexpectedly large array dimension in alloca!");
+      int64_t total = numElem * tsize;
+      if (int extra= total % target.getFrameInfo().getStackFrameSizeAlignment())
+        total += target.getFrameInfo().getStackFrameSizeAlignment() - extra;
+      totalSizeVal = ConstantSInt::get(Type::IntTy, total);
+    }
+  else
+    {
+      // The size is not a constant.  Generate code to compute it and
+      // code to pad the size for stack alignment.
+      // Create a Value to hold the (constant) element size
+      Value* tsizeVal = ConstantSInt::get(Type::IntTy, tsize);
+
+      // Create temporary values to hold the result of MUL, SLL, SRL
+      // THIS CASE IS INCOMPLETE AND WILL BE FIXED SHORTLY.
+      TmpInstruction* tmpProd = new TmpInstruction(numElementsVal, tsizeVal);
+      TmpInstruction* tmpSLL  = new TmpInstruction(numElementsVal, tmpProd);
+      TmpInstruction* tmpSRL  = new TmpInstruction(numElementsVal, tmpSLL);
+      mcfi.addTemp(tmpProd);
+      mcfi.addTemp(tmpSLL);
+      mcfi.addTemp(tmpSRL);
+
+      // Instruction 1: mul numElements, typeSize -> tmpProd
+      // This will optimize the MUL as far as possible.
+      CreateMulInstruction(target, F, numElementsVal, tsizeVal, tmpProd,getMvec,
+                           mcfi, INVALID_MACHINE_OPCODE);
+
+      assert(0 && "Need to insert padding instructions here!");
+
+      totalSizeVal = tmpProd;
+    }
 
   // Get the constant offset from SP for dynamically allocated storage
   // and create a temporary Value to hold it.
-  assert(result && result->getParent() && "Result value is not part of a fn?");
-  Function *F = result->getParent()->getParent();
   MachineFunction& mcInfo = MachineFunction::get(F);
   bool growUp;
   ConstantSInt* dynamicAreaOffset =
     ConstantSInt::get(Type::IntTy,
-                      target.getFrameInfo().getDynamicAreaOffset(mcInfo,growUp));
+                     target.getFrameInfo().getDynamicAreaOffset(mcInfo,growUp));
   assert(! growUp && "Has SPARC v9 stack frame convention changed?");
 
-  // Create a temporary value to hold the result of MUL
-  TmpInstruction* tmpProd = new TmpInstruction(numElementsVal, tsizeVal);
-  mcfi.addTemp(tmpProd);
-  
-  // Instruction 1: mul numElements, typeSize -> tmpProd
-  CreateMulInstruction(target, F, numElementsVal, tsizeVal, tmpProd, getMvec,
-                       mcfi, INVALID_MACHINE_OPCODE);
-        
-  // Instruction 2: sub %sp, tmpProd -> %sp
+  // Instruction 2: sub %sp, totalSizeVal -> %sp
   M = new MachineInstr(SUB);
   M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
-  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, tmpProd);
+  M->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, totalSizeVal);
   M->SetMachineOperandReg(2, target.getRegInfo().getStackPointer());
   getMvec.push_back(M);
-  
+
   // Instruction 3: add %sp, frameSizeBelowDynamicArea -> result
   M = new MachineInstr(ADD);
   M->SetMachineOperandReg(0, target.getRegInfo().getStackPointer());
@@ -1991,11 +2018,12 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         bool isVarArgs = funcType->isVarArg();
         bool noPrototype = isVarArgs && funcType->getNumParams() == 0;
         
-        // Use an annotation to pass information about call arguments
-        // to the register allocator.
+        // Use a descriptor to pass information about call arguments
+        // to the register allocator.  This descriptor will be "owned"
+        // and freed automatically when the MachineCodeForInstruction
+        // object for the callInstr goes away.
         CallArgsDescriptor* argDesc = new CallArgsDescriptor(callInstr,
                                          retAddrReg, isVarArgs, noPrototype);
-        M->addAnnotation(argDesc);
         
         assert(callInstr->getOperand(0) == callee
                && "This is assumed in the loop below!");
