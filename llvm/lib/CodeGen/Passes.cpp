@@ -20,16 +20,17 @@ using namespace llvm;
 namespace {
   enum RegAllocName { simple, local, linearscan, iterativescan };
 
-  cl::opt<RegAllocName>
-  RegAlloc("regalloc",
-           cl::desc("Register allocator to use: (default = simple)"),
-           cl::Prefix,
-           cl::values(clEnumVal(simple,       "  simple register allocator"),
-                      clEnumVal(local,        "  local register allocator"),
-                      clEnumVal(linearscan,   "  linear scan register allocator"),
-                      clEnumVal(iterativescan,"  iterative scan register allocator"),
-                      clEnumValEnd),
-           cl::init(local));
+  cl::opt<RegAllocName RegAlloc(
+    "regalloc",
+    cl::desc("Register allocator to use: (default = simple)"),
+    cl::Prefix,
+    cl::values(
+       clEnumVal(simple,        "  simple register allocator"),
+       clEnumVal(local,         "  local register allocator"),
+       clEnumVal(linearscan,    "  linear scan register allocator"),
+       clEnumVal(iterativescan, "  iterative scan register allocator"),
+       clEnumValEnd),
+    cl::init(local));
 }
 
 FunctionPass *llvm::createRegisterAllocator() {
