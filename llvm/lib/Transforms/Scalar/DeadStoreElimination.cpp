@@ -45,6 +45,7 @@ namespace {
     // getAnalysisUsage - We require post dominance frontiers (aka Control
     // Dependence Graph)
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequired<TargetData>();
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<AliasAnalysis>();
