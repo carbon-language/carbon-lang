@@ -513,12 +513,6 @@ def AND8rr   : I<0x20, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2), "and $d
 def AND16rr  : I<0x21, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2), "and $dst, $src2">, OpSize;
 def AND32rr  : I<0x21, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2), "and $dst, $src2">;
 
-let isTwoAddress = 0 in {
-  def AND8mr   : I<0x20, MRMDestMem, (ops i8mem :$dst, R8 :$src), "and $dst, $src">;
-  def AND16mr  : I<0x21, MRMDestMem, (ops i16mem:$dst, R16:$src), "and $dst, $src">, OpSize;
-  def AND32mr  : I<0x21, MRMDestMem, (ops i32mem:$dst, R32:$src), "and $dst, $src">;
-}
-
 def AND8rm   : I<0x22, MRMSrcMem , (ops R8 :$dst, R8 :$src1, i8mem :$src2), "and $dst, $src2">;
 def AND16rm  : I<0x23, MRMSrcMem , (ops R16:$dst, R16:$src1, i16mem:$src2), "and $dst, $src2">, OpSize;
 def AND32rm  : I<0x23, MRMSrcMem , (ops R32:$dst, R32:$src1, i32mem:$src2), "and $dst, $src2">;
@@ -529,16 +523,22 @@ def AND16ri  : Ii16<0x81, MRM4r, (ops R16:$dst, R16:$src1, i16imm:$src2),
                     "and $dst, $src2">, OpSize;
 def AND32ri  : Ii32<0x81, MRM4r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "and $dst, $src2">;
-def AND8mi   : Im8i8  <"and", 0x80, MRM4m    >;            // [mem8]  &= imm8
-def AND16mi  : Im16i16<"and", 0x81, MRM4m    >, OpSize;    // [mem16] &= imm16
-def AND32mi  : Im32i32<"and", 0x81, MRM4m    >;            // [mem32] &= imm32
-
 def AND16ri8 : Ii8<0x83, MRM4r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "and $dst, $src2" >, OpSize;
 def AND32ri8 : Ii8<0x83, MRM4r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "and $dst, $src2">;
-def AND16mi8 : Im16i8<"and", 0x83, MRM4m     >, OpSize;    // [mem16] &= imm8
-def AND32mi8 : Im32i8<"and", 0x83, MRM4m     >;            // [mem32] &= imm8
+
+let isTwoAddress = 0 in {
+  def AND8mr   : I<0x20, MRMDestMem, (ops i8mem :$dst, R8 :$src), "and $dst, $src">;
+  def AND16mr  : I<0x21, MRMDestMem, (ops i16mem:$dst, R16:$src), "and $dst, $src">, OpSize;
+  def AND32mr  : I<0x21, MRMDestMem, (ops i32mem:$dst, R32:$src), "and $dst, $src">;
+  def AND8mi   : Im8i8  <"and", 0x80, MRM4m    >;            // [mem8]  &= imm8
+  def AND16mi  : Im16i16<"and", 0x81, MRM4m    >, OpSize;    // [mem16] &= imm16
+  def AND32mi  : Im32i32<"and", 0x81, MRM4m    >;            // [mem32] &= imm32
+  def AND16mi8 : Im16i8<"and", 0x83, MRM4m     >, OpSize;    // [mem16] &= imm8
+  def AND32mi8 : Im32i8<"and", 0x83, MRM4m     >;            // [mem32] &= imm8
+}
+
 
 
 def OR8rr    : I<0x08, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2),
@@ -547,14 +547,6 @@ def OR16rr   : I<0x09, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
                  "or $dst, $src2">, OpSize;
 def OR32rr   : I<0x09, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  "or $dst, $src2">;
-let isTwoAddress = 0 in {
-  def OR8mr  : I<0x08, MRMDestMem, (ops i8mem:$dst, R8:$src),
-                 "or $dst, $src">;
-  def OR16mr : I<0x09, MRMDestMem, (ops i16mem:$dst, R16:$src),
-                 "or $dst, $src">, OpSize;
-  def OR32mr : I<0x09, MRMDestMem, (ops i32mem:$dst, R32:$src),
-                 "or $dst, $src">;
-}
 def OR8rm    : I<0x0A, MRMSrcMem , (ops R8 :$dst, R8 :$src1, i8mem :$src2),
                  "or $dst, $src2">;
 def OR16rm   : I<0x0B, MRMSrcMem , (ops R16:$dst, R16:$src1, i16mem:$src2),
@@ -568,17 +560,21 @@ def OR16ri   : Ii16<0x81, MRM1r, (ops R16:$dst, R16:$src1, i16imm:$src2),
                     "or $dst, $src2">, OpSize;
 def OR32ri   : Ii32<0x81, MRM1r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "or $dst, $src2">;
-let isTwoAddress = 0 in {
-  def OR8mi    : Im8i8  <"or" , 0x80, MRM1m>;            // [mem8]  |= imm8
-  def OR16mi   : Im16i16<"or" , 0x81, MRM1m>, OpSize;    // [mem16] |= imm16
-  def OR32mi   : Im32i32<"or" , 0x81, MRM1m>;            // [mem32] |= imm32
-}
 
 def OR16ri8  : Ii8<0x83, MRM1r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "or $dst, $src2">, OpSize;
 def OR32ri8  : Ii8<0x83, MRM1r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "or $dst, $src2">;
 let isTwoAddress = 0 in {
+  def OR8mr  : I<0x08, MRMDestMem, (ops i8mem:$dst, R8:$src),
+                 "or $dst, $src">;
+  def OR16mr : I<0x09, MRMDestMem, (ops i16mem:$dst, R16:$src),
+                 "or $dst, $src">, OpSize;
+  def OR32mr : I<0x09, MRMDestMem, (ops i32mem:$dst, R32:$src),
+                 "or $dst, $src">;
+  def OR8mi    : Im8i8  <"or" , 0x80, MRM1m>;            // [mem8]  |= imm8
+  def OR16mi   : Im16i16<"or" , 0x81, MRM1m>, OpSize;    // [mem16] |= imm16
+  def OR32mi   : Im32i32<"or" , 0x81, MRM1m>;            // [mem32] |= imm32
   def OR16mi8  : Im16i8<"or" , 0x83, MRM1m>, OpSize;    // [mem16] |= imm8
   def OR32mi8  : Im32i8<"or" , 0x83, MRM1m>;            // [mem32] |= imm8
 }
@@ -587,11 +583,6 @@ let isTwoAddress = 0 in {
 def XOR8rr   : I<0x30, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2), "xor $dst, $src2">;
 def XOR16rr  : I<0x31, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2), "xor $dst, $src2">, OpSize;
 def XOR32rr  : I<0x31, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2), "xor $dst, $src2">;
-let isTwoAddress = 0 in {
-  def XOR8mr : I<0x30, MRMDestMem, (ops i8mem :$dst, R8 :$src), "xor $dst, $src">;
-  def XOR16mr: I<0x31, MRMDestMem, (ops i16mem:$dst, R16:$src), "xor $dst, $src">, OpSize;
-  def XOR32mr: I<0x31, MRMDestMem, (ops i32mem:$dst, R32:$src), "xor $dst, $src">;
-}
 def XOR8rm   : I<0x32, MRMSrcMem , (ops R8 :$dst, R8:$src1, i8mem :$src2), "xor $dst, $src2">;
 def XOR16rm  : I<0x33, MRMSrcMem , (ops R16:$dst, R8:$src1, i16mem:$src2), "xor $dst, $src2">, OpSize;
 def XOR32rm  : I<0x33, MRMSrcMem , (ops R32:$dst, R8:$src1, i32mem:$src2), "xor $dst, $src2">;
@@ -599,16 +590,17 @@ def XOR32rm  : I<0x33, MRMSrcMem , (ops R32:$dst, R8:$src1, i32mem:$src2), "xor 
 def XOR8ri   : Ii8   <0x80, MRM6r, (ops R8:$dst, R8:$src1, i8imm:$src2), "xor $dst, $src2">;
 def XOR16ri  : Ii16  <0x81, MRM6r, (ops R16:$dst, R16:$src1, i16imm:$src2), "xor $dst, $src2">, OpSize;
 def XOR32ri  : Ii32  <0x81, MRM6r, (ops R32:$dst, R32:$src1, i32imm:$src2), "xor $dst, $src2">;
-let isTwoAddress = 0 in {
-  def XOR8mi : Im8i8  <"xor", 0x80, MRM6m    >;            // [mem8] ^= R8
-  def XOR16mi: Im16i16<"xor", 0x81, MRM6m    >, OpSize;    // [mem16] ^= R16
-  def XOR32mi: Im32i32<"xor", 0x81, MRM6m    >;            // [mem32] ^= R32
-}
 def XOR16ri8 : Ii8<0x83, MRM6r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "xor $dst, $src2">, OpSize;
 def XOR32ri8 : Ii8<0x83, MRM6r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "xor $dst, $src2">;
 let isTwoAddress = 0 in {
+  def XOR8mr : I<0x30, MRMDestMem, (ops i8mem :$dst, R8 :$src), "xor $dst, $src">;
+  def XOR16mr: I<0x31, MRMDestMem, (ops i16mem:$dst, R16:$src), "xor $dst, $src">, OpSize;
+  def XOR32mr: I<0x31, MRMDestMem, (ops i32mem:$dst, R32:$src), "xor $dst, $src">;
+  def XOR8mi : Im8i8  <"xor", 0x80, MRM6m    >;            // [mem8] ^= R8
+  def XOR16mi: Im16i16<"xor", 0x81, MRM6m    >, OpSize;    // [mem16] ^= R16
+  def XOR32mi: Im32i32<"xor", 0x81, MRM6m    >;            // [mem32] ^= R32
   def XOR16mi8 : Im16i8<"xor", 0x83, MRM6m     >, OpSize;    // [mem16] ^= imm8
   def XOR32mi8 : Im32i8<"xor", 0x83, MRM6m     >;            // [mem32] ^= imm8
 }
@@ -618,35 +610,34 @@ let isTwoAddress = 0 in {
 def SHL8rCL  : I<0xD2, MRM4r, (ops R8 :$dst, R8 :$src), "shl $dst, %CL">, Imp<[CL],[]>;
 def SHL16rCL : I<0xD3, MRM4r, (ops R16:$dst, R16:$src), "shl $dst, %CL">, Imp<[CL],[]>, OpSize;
 def SHL32rCL : I<0xD3, MRM4r, (ops R32:$dst, R32:$src), "shl $dst, %CL">, Imp<[CL],[]>;
-let isTwoAddress = 0 in {
-  def SHL8mCL  : I<0xD2, MRM4m, (ops i8mem :$dst), "shl $dst, %CL">, Imp<[CL],[]>;
-  def SHL16mCL : I<0xD3, MRM4m, (ops i16mem:$dst), "shl $dst, %CL">, Imp<[CL],[]>, OpSize;
-  def SHL32mCL : I<0xD3, MRM4m, (ops i32mem:$dst), "shl $dst, %CL">, Imp<[CL],[]>;
-}
-
 def SHL8ri   : Ii8<0xC0, MRM4r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "shl $dst, $src2">;
 def SHL16ri  : Ii8<0xC1, MRM4r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "shl $dst, $src2">, OpSize;
 def SHL32ri  : Ii8<0xC1, MRM4r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "shl $dst, $src2">;
-def SHL8mi   : Im8i8 <"shl", 0xC0, MRM4m     >;                 // [mem8]  <<= imm8
-def SHL16mi  : Im16i8<"shl", 0xC1, MRM4m     >, OpSize;         // [mem16] <<= imm8
-def SHL32mi  : Im32i8<"shl", 0xC1, MRM4m     >;                 // [mem32] <<= imm8
+
+let isTwoAddress = 0 in {
+  def SHL8mCL  : I<0xD2, MRM4m, (ops i8mem :$dst), "shl $dst, %CL">, Imp<[CL],[]>;
+  def SHL16mCL : I<0xD3, MRM4m, (ops i16mem:$dst), "shl $dst, %CL">, Imp<[CL],[]>, OpSize;
+  def SHL32mCL : I<0xD3, MRM4m, (ops i32mem:$dst), "shl $dst, %CL">, Imp<[CL],[]>;
+  def SHL8mi   : Im8i8 <"shl", 0xC0, MRM4m     >;                 // [mem8]  <<= imm8
+  def SHL16mi  : Im16i8<"shl", 0xC1, MRM4m     >, OpSize;         // [mem16] <<= imm8
+  def SHL32mi  : Im32i8<"shl", 0xC1, MRM4m     >;                 // [mem32] <<= imm8
+}
 
 def SHR8rCL  : I<0xD2, MRM5r, (ops R8 :$dst, R8 :$src), "shr $dst, %CL">, Imp<[CL],[]>;
 def SHR16rCL : I<0xD3, MRM5r, (ops R16:$dst, R16:$src), "shr $dst, %CL">, Imp<[CL],[]>, OpSize;
 def SHR32rCL : I<0xD3, MRM5r, (ops R32:$dst, R32:$src), "shr $dst, %CL">, Imp<[CL],[]>;
-let isTwoAddress = 0 in {
-  def SHR8mCL  : I<0xD2, MRM5m, (ops i8mem :$dst), "shr $dst, %CL">, Imp<[CL],[]>;
-  def SHR16mCL : I<0xD3, MRM5m, (ops i16mem:$dst), "shr $dst, %CL">, Imp<[CL],[]>, OpSize;
-  def SHR32mCL : I<0xD3, MRM5m, (ops i32mem:$dst), "shr $dst, %CL">, Imp<[CL],[]>;
-}
 
 def SHR8ri   : Ii8   <0xC0, MRM5r, (ops R8:$dst, R8:$src1, i8imm:$src2), "shr $dst, $src2">;
 def SHR16ri  : Ii8   <0xC1, MRM5r, (ops R16:$dst, R16:$src1, i8imm:$src2), "shr $dst, $src2">, OpSize;
 def SHR32ri  : Ii8   <0xC1, MRM5r, (ops R32:$dst, R32:$src1, i8imm:$src2), "shr $dst, $src2">;
+
 let isTwoAddress = 0 in {
+  def SHR8mCL  : I<0xD2, MRM5m, (ops i8mem :$dst), "shr $dst, %CL">, Imp<[CL],[]>;
+  def SHR16mCL : I<0xD3, MRM5m, (ops i16mem:$dst), "shr $dst, %CL">, Imp<[CL],[]>, OpSize;
+  def SHR32mCL : I<0xD3, MRM5m, (ops i32mem:$dst), "shr $dst, %CL">, Imp<[CL],[]>;
   def SHR8mi   : Ii8 <0xC0, MRM5m, (ops i8mem :$dst, i8imm:$src), "shr $dst, $src">;
   def SHR16mi  : Ii8<0xC1, MRM5m, (ops i16mem:$dst, i8imm:$src), "shr $dst, $src">, OpSize;
   def SHR32mi  : Ii8<0xC1, MRM5m, (ops i32mem:$dst, i8imm:$src), "shr $dst, $src">;
@@ -655,11 +646,6 @@ let isTwoAddress = 0 in {
 def SAR8rCL  : I<0xD2, MRM7r, (ops R8 :$dst, R8 :$src), "sar $dst, %CL">, Imp<[CL],[]>;
 def SAR16rCL : I<0xD3, MRM7r, (ops R16:$dst, R16:$src), "sar $dst, %CL">, Imp<[CL],[]>, OpSize;
 def SAR32rCL : I<0xD3, MRM7r, (ops R32:$dst, R32:$src), "sar $dst, %CL">, Imp<[CL],[]>;
-let isTwoAddress = 0 in {
-  def SAR8mCL  : I<0xD2, MRM7m, (ops i8mem :$dst), "sar $dst, %CL">, Imp<[CL],[]>;
-  def SAR16mCL : I<0xD3, MRM7m, (ops i16mem:$dst), "sar $dst, %CL">, Imp<[CL],[]>, OpSize;
-  def SAR32mCL : I<0xD3, MRM7m, (ops i32mem:$dst), "sar $dst, %CL">, Imp<[CL],[]>;
-}
 
 def SAR8ri   : Ii8<0xC0, MRM7r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "sar $dst, $src2">;
@@ -667,9 +653,14 @@ def SAR16ri  : Ii8<0xC1, MRM7r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "sar $dst, $src2">, OpSize;
 def SAR32ri  : Ii8<0xC1, MRM7r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "sar $dst, $src2">;
-def SAR8mi   : Im8i8 <"sar", 0xC0, MRM7m     >;                 // [mem8]  >>>= imm8
-def SAR16mi  : Im16i8<"sar", 0xC1, MRM7m     >, OpSize;         // [mem16] >>>= imm8
-def SAR32mi  : Im32i8<"sar", 0xC1, MRM7m     >;                 // [mem32] >>>= imm8
+let isTwoAddress = 0 in {
+  def SAR8mCL  : I<0xD2, MRM7m, (ops i8mem :$dst), "sar $dst, %CL">, Imp<[CL],[]>;
+  def SAR16mCL : I<0xD3, MRM7m, (ops i16mem:$dst), "sar $dst, %CL">, Imp<[CL],[]>, OpSize;
+  def SAR32mCL : I<0xD3, MRM7m, (ops i32mem:$dst), "sar $dst, %CL">, Imp<[CL],[]>;
+  def SAR8mi   : Im8i8 <"sar", 0xC0, MRM7m     >;                 // [mem8]  >>>= imm8
+  def SAR16mi  : Im16i8<"sar", 0xC1, MRM7m     >, OpSize;         // [mem16] >>>= imm8
+  def SAR32mi  : Im32i8<"sar", 0xC1, MRM7m     >;                 // [mem32] >>>= imm8
+}
 
 def SHLD32rrCL : I<0xA5, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                   "shld $dst, $src2, %CL">, Imp<[CL],[]>, TB;
@@ -696,11 +687,6 @@ let isTwoAddress = 0 in {
 def ADD8rr   : I<0x00, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2), "add $dst, $src2">;
 def ADD16rr  : I<0x01, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2), "add $dst, $src2">, OpSize;
 def ADD32rr  : I<0x01, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2), "add $dst, $src2">;
-let isTwoAddress = 0 in {
-  def ADD8mr   : I<0x00, MRMDestMem, (ops i8mem :$dst, R8 :$src2), "add $dst, $src2">;
-  def ADD16mr  : I<0x01, MRMDestMem, (ops i16mem:$dst, R16:$src2), "add $dst, $src2">, OpSize;
-  def ADD32mr  : I<0x01, MRMDestMem, (ops i32mem:$dst, R32:$src2), "add $dst, $src2">;
-}
 def ADD8rm   : I<0x02, MRMSrcMem, (ops R8 :$dst, R8 :$src1, i8mem :$src2), "add $dst, $src2">;
 def ADD16rm  : I<0x03, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2), "add $dst, $src2">, OpSize;
 def ADD32rm  : I<0x03, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2), "add $dst, $src2">;
@@ -708,16 +694,17 @@ def ADD32rm  : I<0x03, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2), "add 
 def ADD8ri   : Ii8   <0x80, MRM0r, (ops R8:$dst, R8:$src1, i8imm:$src2), "add $dst, $src2">;
 def ADD16ri  : Ii16  <0x81, MRM0r, (ops R16:$dst, R16:$src1, i16imm:$src2), "add $dst, $src2">, OpSize;
 def ADD32ri  : Ii32  <0x81, MRM0r, (ops R32:$dst, R32:$src1, i32imm:$src2), "add $dst, $src2">;
-let isTwoAddress = 0 in {
-  def ADD8mi   : Im8i8  <"add", 0x80, MRM0m    >;         // [mem8] += I8
-  def ADD16mi  : Im16i16<"add", 0x81, MRM0m    >, OpSize; // [mem16] += I16
-  def ADD32mi  : Im32i32<"add", 0x81, MRM0m    >;         // [mem32] += I32
-}
 
 def ADD16ri8 : Ii8   <0x83, MRM0r, (ops R16:$dst, R16:$src1, i8imm:$src2), "add $dst, $src2">, OpSize;
 def ADD32ri8 : Ii8   <0x83, MRM0r, (ops R32:$dst, R32:$src1, i8imm:$src2), "add $dst, $src2">;
 
 let isTwoAddress = 0 in {
+  def ADD8mr   : I<0x00, MRMDestMem, (ops i8mem :$dst, R8 :$src2), "add $dst, $src2">;
+  def ADD16mr  : I<0x01, MRMDestMem, (ops i16mem:$dst, R16:$src2), "add $dst, $src2">, OpSize;
+  def ADD32mr  : I<0x01, MRMDestMem, (ops i32mem:$dst, R32:$src2), "add $dst, $src2">;
+  def ADD8mi   : Im8i8  <"add", 0x80, MRM0m    >;         // [mem8] += I8
+  def ADD16mi  : Im16i16<"add", 0x81, MRM0m    >, OpSize; // [mem16] += I16
+  def ADD32mi  : Im32i32<"add", 0x81, MRM0m    >;         // [mem32] += I32
   def ADD16mi8 : Im16i8<"add", 0x83, MRM0m     >, OpSize; // [mem16] += I8
   def ADD32mi8 : Im32i8<"add", 0x83, MRM0m     >;         // [mem32] += I8
 }
@@ -736,11 +723,6 @@ let isTwoAddress = 0 in {
 def SUB8rr   : I<0x28, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2), "sub $dst, $src2">;
 def SUB16rr  : I<0x29, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2), "sub $dst, $src2">, OpSize;
 def SUB32rr  : I<0x29, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2), "sub $dst, $src2">;
-let isTwoAddress = 0 in {
-  def SUB8mr   : I<0x28, MRMDestMem, (ops i8mem :$dst, R8 :$src2), "sub $dst, $src2">;
-  def SUB16mr  : I<0x29, MRMDestMem, (ops i16mem:$dst, R16:$src2), "sub $dst, $src2">, OpSize;
-  def SUB32mr  : I<0x29, MRMDestMem, (ops i32mem:$dst, R32:$src2), "sub $dst, $src2">;
-}
 def SUB8rm   : I<0x2A, MRMSrcMem, (ops R8 :$dst, R8 :$src1, i8mem :$src2), "sub $dst, $src2">;
 def SUB16rm  : I<0x2B, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2), "sub $dst, $src2">, OpSize;
 def SUB32rm  : I<0x2B, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2), "sub $dst, $src2">;
@@ -751,17 +733,17 @@ def SUB16ri  : Ii16<0x81, MRM5r, (ops R16:$dst, R16:$src1, i16imm:$src2),
                     "sub $dst, $src2">, OpSize;
 def SUB32ri  : Ii32<0x81, MRM5r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "sub $dst, $src2">;
-let isTwoAddress = 0 in {
-  def SUB8mi   : Im8i8  <"sub", 0x80, MRM5m    >;         // [mem8] -= I8
-  def SUB16mi  : Im16i16<"sub", 0x81, MRM5m    >, OpSize; // [mem16] -= I16
-  def SUB32mi  : Im32i32<"sub", 0x81, MRM5m    >;         // [mem32] -= I32
-}
-
 def SUB16ri8 : Ii8<0x83, MRM5r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "sub $dst, $src2">, OpSize;
 def SUB32ri8 : Ii8<0x83, MRM5r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "sub $dst, $src2">;
 let isTwoAddress = 0 in {
+  def SUB8mr   : I<0x28, MRMDestMem, (ops i8mem :$dst, R8 :$src2), "sub $dst, $src2">;
+  def SUB16mr  : I<0x29, MRMDestMem, (ops i16mem:$dst, R16:$src2), "sub $dst, $src2">, OpSize;
+  def SUB32mr  : I<0x29, MRMDestMem, (ops i32mem:$dst, R32:$src2), "sub $dst, $src2">;
+  def SUB8mi   : Im8i8  <"sub", 0x80, MRM5m    >;         // [mem8] -= I8
+  def SUB16mi  : Im16i16<"sub", 0x81, MRM5m    >, OpSize; // [mem16] -= I16
+  def SUB32mi  : Im32i32<"sub", 0x81, MRM5m    >;         // [mem32] -= I32
   def SUB16mi8 : Im16i8<"sub", 0x83, MRM5m     >, OpSize; // [mem16] -= I8
   def SUB32mi8 : Im32i8<"sub", 0x83, MRM5m     >;         // [mem32] -= I8
 }
