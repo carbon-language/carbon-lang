@@ -554,10 +554,6 @@ static bool setValueName(Value *V, char *NameStr) {
       }
     }
 
-    // Clear the symbol table so it doesn't complain when it
-    // gets destructed
-    CurFun.LocalSymtab.clear();
-
     ThrowException("Redefinition of value named '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
   }
@@ -572,10 +568,6 @@ static bool setValueName(Value *V, char *NameStr) {
 
     // If it already exists
     if (Existing) {
-      // Clear the symbol table so it doesn't complain when it
-      // gets destructed
-      CurFun.LocalSymtab.clear();
-
       // Bail
       ThrowException("Redefinition of value named '" + Name + "' in the '" +
 		   V->getType()->getDescription() + "' type plane!");
@@ -646,7 +638,15 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
   // Allocate a new module to read
   CurModule.CurrentModule = new Module(Filename);
-  yyparse();       // Parse the file.
+
+  try {
+    yyparse();       // Parse the file.
+  } catch (...) {
+    // Clear the symbol table so it doesn't complain when it
+    // gets destructed
+    CurFun.LocalSymtab.clear();
+    throw;
+  }
 
   Module *Result = ParserResult;
 
