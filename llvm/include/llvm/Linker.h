@@ -36,9 +36,10 @@ bool LinkModules(
   std::string* ErrorMsg  ///< Optional error message string
 );
 
-/// This function links the bytecode \p Files into the \p HeadModule. No 
-/// matching of symbols is done. It simply calls loads each module and calls
-/// LinkModules for each one.
+/// This function links the bytecode \p Files into the \p HeadModule. Note that
+/// this does not do any linking of unresolved symbols. The \p Files are all
+/// completely linked into \p HeadModule regardless of unresolved symbols. This
+/// function just loads each bytecode file and calls LinkModules on them. 
 /// @returns true if an error occurs, false otherwise
 bool LinkFiles (
   const char * progname, ///< Name of the program being linked (for output)
