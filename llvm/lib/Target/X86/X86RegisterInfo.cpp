@@ -69,15 +69,3 @@ const unsigned* X86RegisterInfo::getCallerSaveRegs() const {
                                              MRegisterInfo::NoRegister };
   return CallerSaveRegs;
 }
-
-void
-X86RegisterInfo::buildReg2RegClassMap
-(std::map<unsigned,
- const TargetRegisterClass*>& Reg2RegClassMap) const
-{
-  for (MRegisterInfo::const_iterator I = const_regclass_begin(),
-         E = const_regclass_end(); I != E; ++I)
-  {
-    I->buildReg2RegClassMap(Reg2RegClassMap);
-  }
-}

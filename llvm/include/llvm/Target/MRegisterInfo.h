@@ -61,7 +61,7 @@ public:
 
   virtual unsigned getDataSize() const { return 0; }
 
-  virtual void
+  void
   buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
                        Reg2RegClassMap) const
   {
@@ -146,7 +146,13 @@ public:
 
   virtual void
   buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
-                       Reg2RegClassMap) const=0;
+                       Reg2RegClassMap) const {
+    for (MRegisterInfo::const_iterator I = const_regclass_begin(),
+           E = const_regclass_end(); I != E; ++I) {
+      I->buildReg2RegClassMap(Reg2RegClassMap);
+    }
+  }
+
 };
 
 #endif

@@ -43,9 +43,6 @@ struct X86RegisterInfo : public MRegisterInfo {
 
   unsigned getNumRegClasses() const;
 
-  void buildReg2RegClassMap(std::map<unsigned,const TargetRegisterClass*>&
-                            Reg2RegClassMap) const;
-
 };
 
 #endif
