@@ -63,8 +63,8 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
       if (Vals[i].getName() != "Inst" && 
           !Vals[i].getValue()->isComplete() &&
+          /* ignore annul and predict bits since no one sets them yet */
           Vals[i].getName() != "annul" && 
-          Vals[i].getName() != "cc" &&
           Vals[i].getName() != "predict")
       {
         o << "      // op" << op << ": " << Vals[i].getName() << "\n"
@@ -105,6 +105,7 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
           }
         } 
       } else {
+        // ignore annul and predict bits since no one sets them yet
         if (Vals[f].getName() == "annul" || Vals[f].getName() == "predict")
           --Offset;
       }
