@@ -24,6 +24,12 @@
 #include <fstream>
 #include <malloc.h>
 
+static void FlipBackSlashes(std::string& s) {
+  for (size_t i = 0; i < s.size(); i++)
+    if (s[i] == '\\')
+      s[i] = '/';
+}
+
 namespace llvm {
 namespace sys {
 
@@ -32,17 +38,35 @@ Path::is_valid() const {
   if (path.empty())
     return false;
 
-  // On Unix, the realpath function is used, which only requires that the
-  // directories leading up the to final file name are valid.  The file itself
-  // need not exist.  To get this behavior on Windows, we must elide the file
-  // name manually.
-  Path dir(*this);
-  dir.elide_file();
-  if (dir.path.empty())
-    return true;
+  // If there is a colon, it must be the second character, preceded by a letter
+  // and followed by something.
+  size_t len = path.size();
+  size_t pos = path.rfind(':',len);
+  if (pos != std::string::npos) {
+    if (pos != 1 || !isalpha(path[0]) || len < 3)
+      return false;
+  }
 
-  DWORD attr = GetFileAttributes(dir.path.c_str());
-  return (attr != INVALID_FILE_ATTRIBUTES) && (attr & FILE_ATTRIBUTE_DIRECTORY);
+  // Check for illegal characters.
+  if (path.find_first_of("\\<>\"|\001\002\003\004\005\006\007\010\011\012"
+                         "\013\014\015\016\017\020\021\022\023\024\025\026"
+                         "\027\030\031\032\033\034\035\036\037")
+      != std::string::npos)
+    return false;
+
+  // A file or directory name may not end in a period.
+  if (path[len-1] == '.')
+    return false;
+  if (len >= 2 && path[len-2] == '.' && path[len-1] == '/')
+    return false;
+
+  // A file or directory name may not end in a space.
+  if (path[len-1] == ' ')
+    return false;
+  if (len >= 2 && path[len-2] == ' ' && path[len-1] == '/')
+    return false;
+
+  return true;
 }
 
 static Path *TempDirectory = NULL;
@@ -54,7 +78,7 @@ Path::GetTemporaryDirectory() {
 
   char pathname[MAX_PATH];
   if (!GetTempPath(MAX_PATH, pathname))
-    ThrowError("Can't determine temporary directory");
+    throw std::string("Can't determine temporary directory");
 
   Path result;
   result.set_directory(pathname);
@@ -77,13 +101,14 @@ Path::GetTemporaryDirectory() {
 Path::Path(std::string unverified_path)
   : path(unverified_path)
 {
+  FlipBackSlashes(path);
   if (unverified_path.empty())
     return;
   if (this->is_valid())
     return;
   // oops, not valid.
   path.clear();
-  ThrowError(unverified_path + ": path is not valid");
+  throw std::string(unverified_path + ": path is not valid");
 }
 
 // FIXME: the following set of functions don't map to Windows very well.
@@ -92,6 +117,11 @@ Path::GetRootDirectory() {
   Path result;
   result.set_directory("/");
   return result;
+}
+
+std::string
+Path::GetDLLSuffix() {
+  return "dll";
 }
 
 static inline bool IsLibrary(Path& path, const std::string& basename) {
@@ -281,6 +311,7 @@ Path::set_directory(const std::string& a_path) {
     return false;
   Path save(*this);
   path = a_path;
+  FlipBackSlashes(path);
   size_t last = a_path.size() -1;
   if (last != 0 && a_path[last] != '/')
     path += '/';
@@ -297,6 +328,7 @@ Path::set_file(const std::string& a_path) {
     return false;
   Path save(*this);
   path = a_path;
+  FlipBackSlashes(path);
   size_t last = a_path.size() - 1;
   while (last > 0 && a_path[last] == '/')
     last--;
@@ -396,31 +428,46 @@ Path::create_directory( bool create_parents) {
 
   // Get a writeable copy of the path name
   char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
-  path.copy(pathname,path.length()+1);
+  path.copy(pathname,path.length());
+  pathname[path.length()] = 0;
 
-  // Null-terminate the last component
-  int lastchar = path.length() - 1 ;
-  if (pathname[lastchar] == '/')
-    pathname[lastchar] = 0;
+  // Determine starting point for initial / search.
+  char *next = pathname;
+  if (pathname[0] == '/' && pathname[1] == '/') {
+    // Skip host name.
+    next = strchr(pathname+2, '/');
+    if (next == NULL)
+      throw std::string(pathname) + ": badly formed remote directory";
+    // Skip share name.
+    next = strchr(next+1, '/');
+    if (next == NULL)
+      throw std::string(pathname) + ": badly formed remote directory";
+    next++;
+    if (*next == 0)
+      throw std::string(pathname) + ": badly formed remote directory";
+  } else {
+    if (pathname[1] == ':')
+      next += 2;    // skip drive letter
+    if (*next == '/')
+      next++;       // skip root directory
+  }
 
   // If we're supposed to create intermediate directories
-  if ( create_parents ) {
-    // Find the end of the initial name component
-    char * next = strchr(pathname,'/');
-    if ( pathname[0] == '/')
-      next = strchr(&pathname[1],'/');
-
+  if (create_parents) {
     // Loop through the directory components until we're done
-    while ( next != 0 ) {
+    while (*next) {
+      next = strchr(next, '/');
       *next = 0;
       if (!CreateDirectory(pathname, NULL))
           ThrowError(std::string(pathname) + ": Can't create directory: ");
-      char* save = next;
-      next = strchr(pathname,'/');
-      *save = '/';
+      *next++ = '/';
     }
-  } else if (!CreateDirectory(pathname, NULL)) {
-    ThrowError(std::string(pathname) + ": Can't create directory: ");
+  } else {
+    // Drop trailing slash.
+    pathname[path.size()-1] = 0;
+    if (!CreateDirectory(pathname, NULL)) {
+      ThrowError(std::string(pathname) + ": Can't create directory: ");
+    }
   }
   return true;
 }
@@ -431,7 +478,7 @@ Path::create_file() {
   if (!is_file()) return false;
 
   // Create the file
-  HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+  HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE)
     ThrowError(std::string(path.c_str()) + ": Can't create file: ");
