@@ -665,7 +665,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
 	int argOffset = PRA.mcInfo.allocateOptionalArg(target, LR->getType()); 
 
-	AdMI = cpReg2MemMI(UniLRReg, getFramePointer(), argOffset, RegType );
+	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, RegType );
       }
 
       AddedInstrnsBefore.push_back( AdMI );  // Now add the instruction
@@ -716,7 +716,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	Ad1 = cpReg2MemMI(TReg, getFramePointer(), TmpOff, RegType );
 	Ad2 = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), 
 			  TReg, RegType ); 
-	Ad3 = cpReg2MemMI(TReg, getFramePointer(), argOffset, RegType );
+	Ad3 = cpReg2MemMI(TReg, getStackPointer(), argOffset, RegType );
 	Ad4 = cpMem2RegMI(getFramePointer(), TmpOff, TReg, RegType ); 
 
 	// We directly add to CallAI->InstrnsBefore instead of adding to
