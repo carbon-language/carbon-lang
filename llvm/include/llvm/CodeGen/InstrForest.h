@@ -24,16 +24,26 @@
 #ifndef LLVM_CODEGEN_INSTRFOREST_H
 #define LLVM_CODEGEN_INSTRFOREST_H
 
-#include "llvm/Support/NonCopyable.h"
-#include "llvm/Instruction.h"
+//************************** System Include Files **************************/
+
 #include <hash_map>
 #include <hash_set>
+
+//*************************** User Include Files ***************************/
+
+#include "llvm/Support/NonCopyable.h"
+#include "llvm/Support/HashExtras.h"
+#include "llvm/Instruction.h"
+
+//************************* Opaque Declarations ****************************/
 
 class ConstPoolVal;
 class BasicBlock;
 class Method;
 class InstrTreeNode;
 class InstrForest;
+
+/******************** Exported Data Types and Constants ********************/
 
 //--------------------------------------------------------------------------
 // OpLabel values for special-case nodes created for instruction selection.
@@ -108,12 +118,8 @@ extern void		printtree	(BasicTreeNode*);
 extern int		treecost	(BasicTreeNode*, int, int);
 extern void		printMatches	(BasicTreeNode*);
 
-//************************ Exported Data Types *****************************/
 
-// Provide a hash function for arbitrary pointers...
-template <class T> struct hash<T *> {
-  inline size_t operator()(T *Val) const { return (size_t)Val; }
-};
+//*********************** Public Class Declarations ************************/
 
 //------------------------------------------------------------------------ 
 // class InstrTreeNode
@@ -185,8 +191,10 @@ protected:
 class InstructionNode: public InstrTreeNode {
 public:
   /*ctor*/	InstructionNode		(Instruction* _instr);
-  Instruction*	getInstruction		() const { return (Instruction*) val; }
-  void		reverseBinaryArgumentOrder();
+  Instruction*	getInstruction		() const {
+    assert(treeNodeType == NTInstructionNode);
+    return (Instruction*) val;
+  }
 protected:
   virtual void		dumpNode	(int indent) const;
 };
@@ -282,6 +290,7 @@ private:
   InstructionNode* buildTreeForInstruction(Instruction* instr);
 };
 
-//---------------------------------------------------------------------------
 
-#endif  /* #ifndef INSTRFOREST_H */
+/***************************************************************************/
+
+#endif
