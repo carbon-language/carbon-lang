@@ -21,6 +21,7 @@
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
 #include <cctype>
+#include <cstring>
 
 using namespace llvm;
 
@@ -113,18 +114,26 @@ void DumpSymbolNamesFromModule (Module *M) {
 
 void DumpSymbolNamesFromFile (std::string &Filename) {
   std::string ErrorMessage;
+  if (!FileOpenable (Filename)) {
+    std::cerr << ToolName << ": " << Filename << ": " << strerror (errno)
+              << "\n";
+    return;
+  }
   if (IsBytecode (Filename)) {
     Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
     if (Result) {
       DumpSymbolNamesFromModule (Result);
     } else {
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
+      return;
     }
   } else if (IsArchive (Filename)) {
     std::vector<Module *> Modules;
-    if (ReadArchiveFile (Filename, Modules, &ErrorMessage))
+    if (ReadArchiveFile (Filename, Modules, &ErrorMessage)) {
       std::cerr << ToolName << ": " << Filename << ": "
                 << ErrorMessage << "\n";
+      return;
+    }
     MultipleFiles = true;
     std::for_each (Modules.begin (), Modules.end (), DumpSymbolNamesFromModule);
   }
