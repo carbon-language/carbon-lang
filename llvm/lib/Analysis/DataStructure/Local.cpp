@@ -394,7 +394,8 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {
   // Mark that the node is written to...
-  getValueDest(*FI.getOperand(0)).getNode()->NodeType |= DSNode::Modified;
+  getValueDest(*FI.getOperand(0)).getNode()->NodeType
+    |= DSNode::Modified | DSNode::HeapNode;
 }
 
 /// Handle casts...
