@@ -89,10 +89,10 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull = false) {
 Comment    ;.*
 
 /* Variable(Value) identifiers start with a % sign */
-VarID       %[a-zA-Z$._][a-zA-Z$._0-9]*
+VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
 
 /* Label identifiers end with a colon */
-Label       [a-zA-Z$._0-9]+:
+Label       [-a-zA-Z$._0-9]+:
 
 /* Quoted names can contain any character except " and \ */
 StringConstant \"[^\"]+\"
