@@ -19,7 +19,7 @@ SymbolTable::~SymbolTable() {
   if (TyPlane != end()) {
     VarMap &TyP = TyPlane->second;
     for (VarMap::iterator I = TyP.begin(), E = TyP.end(); I != E; ++I) {
-      const Type *Ty = cast<const Type>(I->second);
+      const Type *Ty = cast<Type>(I->second);
       if (Ty->isAbstract())   // If abstract, drop the reference...
 	cast<DerivedType>(Ty)->removeAbstractTypeUser(this);
     }
@@ -122,7 +122,7 @@ Value *SymbolTable::removeEntry(iterator Plane, type_iterator Entry) {
   // If we are removing an abstract type, remove the symbol table from it's use
   // list...
   if (Ty == Type::TypeTy) {
-    const Type *T = cast<const Type>(Result);
+    const Type *T = cast<Type>(Result);
     if (T->isAbstract()) {
 #if DEBUG_ABSTYPE
       std::cerr << "Removing abs type from symtab" << T->getDescription()<<"\n";
@@ -179,7 +179,7 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 
   // If we are adding an abstract type, add the symbol table to it's use list.
   if (VTy == Type::TypeTy) {
-    const Type *T = cast<const Type>(V);
+    const Type *T = cast<Type>(V);
     if (T->isAbstract()) {
       cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
@@ -311,7 +311,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
 #if DEBUG_ABSTYPE
           std::cerr << "Added type " << NewType->getDescription() << "\n";
 #endif
-          cast<const DerivedType>(NewType)->addAbstractTypeUser(this);
+          cast<DerivedType>(NewType)->addAbstractTypeUser(this);
         }
       }
   }

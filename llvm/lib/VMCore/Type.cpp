@@ -293,7 +293,7 @@ static std::string getTypeProps(const Type *Ty,
       
       switch (Ty->getPrimitiveID()) {
       case Type::FunctionTyID: {
-	const FunctionType *MTy = cast<const FunctionType>(Ty);
+	const FunctionType *MTy = cast<FunctionType>(Ty);
 	Result = getTypeProps(MTy->getReturnType(), TypeStack,
 			      isAbstract, isRecursive)+" (";
 	for (FunctionType::ParamTypes::const_iterator
@@ -311,7 +311,7 @@ static std::string getTypeProps(const Type *Ty,
 	break;
       }
       case Type::StructTyID: {
-	const StructType *STy = cast<const StructType>(Ty);
+	const StructType *STy = cast<StructType>(Ty);
 	Result = "{ ";
 	for (StructType::ElementTypes::const_iterator
 	       I = STy->getElementTypes().begin(),
@@ -324,13 +324,13 @@ static std::string getTypeProps(const Type *Ty,
 	break;
       }
       case Type::PointerTyID: {
-	const PointerType *PTy = cast<const PointerType>(Ty);
+	const PointerType *PTy = cast<PointerType>(Ty);
 	Result = getTypeProps(PTy->getElementType(), TypeStack,
 			      isAbstract, isRecursive) + " *";
 	break;
       }
       case Type::ArrayTyID: {
-	const ArrayType *ATy = cast<const ArrayType>(Ty);
+	const ArrayType *ATy = cast<ArrayType>(Ty);
 	unsigned NumElements = ATy->getNumElements();
 	Result = "[";
 	Result += utostr(NumElements) + " x ";
@@ -400,10 +400,10 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   // algorithm is the fact that arraytypes have sizes that differentiates types,
   // and that method types can be varargs or not.  Consider this now.
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    if (ATy->getNumElements() != cast<const ArrayType>(Ty2)->getNumElements())
+    if (ATy->getNumElements() != cast<ArrayType>(Ty2)->getNumElements())
       return false;
   } else if (const FunctionType *MTy = dyn_cast<FunctionType>(Ty)) {
-    if (MTy->isVarArg() != cast<const FunctionType>(Ty2)->isVarArg())
+    if (MTy->isVarArg() != cast<FunctionType>(Ty2)->isVarArg())
       return false;
   }
 

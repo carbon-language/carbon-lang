@@ -139,7 +139,7 @@ public:
     return T->getPrimitiveID() == FunctionTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -172,7 +172,7 @@ public:
            T->getPrimitiveID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -228,7 +228,7 @@ public:
     return T->getPrimitiveID() == StructTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -279,7 +279,7 @@ public:
            T->getPrimitiveID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -314,7 +314,7 @@ public:
     return T->getPrimitiveID() == ArrayTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 
@@ -347,7 +347,7 @@ public:
     return T->getPrimitiveID() == PointerTyID;
   }
   static inline bool classof(const Value *V) {
-    return isa<Type>(V) && classof(cast<const Type>(V));
+    return isa<Type>(V) && classof(cast<Type>(V));
   }
 };
 

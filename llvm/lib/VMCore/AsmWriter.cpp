@@ -36,29 +36,29 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
                                    SlotCalculator *Table);
 
 static const Module *getModuleFromVal(const Value *V) {
-  if (const Argument *MA = dyn_cast<const Argument>(V))
+  if (const Argument *MA = dyn_cast<Argument>(V))
     return MA->getParent() ? MA->getParent()->getParent() : 0;
-  else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V))
+  else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
     return BB->getParent() ? BB->getParent()->getParent() : 0;
-  else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
+  else if (const Instruction *I = dyn_cast<Instruction>(V)) {
     const Function *M = I->getParent() ? I->getParent()->getParent() : 0;
     return M ? M->getParent() : 0;
-  } else if (const GlobalValue *GV = dyn_cast<const GlobalValue>(V))
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return GV->getParent();
   return 0;
 }
 
 static SlotCalculator *createSlotCalculator(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
-  if (const Argument *FA = dyn_cast<const Argument>(V)) {
+  if (const Argument *FA = dyn_cast<Argument>(V)) {
     return new SlotCalculator(FA->getParent(), true);
-  } else if (const Instruction *I = dyn_cast<const Instruction>(V)) {
+  } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
     return new SlotCalculator(I->getParent()->getParent(), true);
-  } else if (const BasicBlock *BB = dyn_cast<const BasicBlock>(V)) {
+  } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
     return new SlotCalculator(BB->getParent(), true);
-  } else if (const GlobalVariable *GV = dyn_cast<const GlobalVariable>(V)){
+  } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)){
     return new SlotCalculator(GV->getParent(), true);
-  } else if (const Function *Func = dyn_cast<const Function>(V)) {
+  } else if (const Function *Func = dyn_cast<Function>(V)) {
     return new SlotCalculator(Func, true);
   }
   return 0;
@@ -79,7 +79,7 @@ static void fillTypeNameTable(const Module *M,
       // As a heuristic, don't insert pointer to primitive types, because
       // they are used too often to have a single useful name.
       //
-      const Type *Ty = cast<const Type>(I->second);
+      const Type *Ty = cast<Type>(I->second);
       if (!isa<PointerType>(Ty) ||
           !cast<PointerType>(Ty)->getElementType()->isPrimitiveType())
         TypeNames.insert(std::make_pair(Ty, "%"+I->first));
@@ -114,7 +114,7 @@ static std::string calcTypeName(const Type *Ty,
   std::string Result;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID: {
-    const FunctionType *FTy = cast<const FunctionType>(Ty);
+    const FunctionType *FTy = cast<FunctionType>(Ty);
     Result = calcTypeName(FTy->getReturnType(), TypeStack, TypeNames) + " (";
     for (FunctionType::ParamTypes::const_iterator
            I = FTy->getParamTypes().begin(),
@@ -131,7 +131,7 @@ static std::string calcTypeName(const Type *Ty,
     break;
   }
   case Type::StructTyID: {
-    const StructType *STy = cast<const StructType>(Ty);
+    const StructType *STy = cast<StructType>(Ty);
     Result = "{ ";
     for (StructType::ElementTypes::const_iterator
            I = STy->getElementTypes().begin(),
@@ -144,11 +144,11 @@ static std::string calcTypeName(const Type *Ty,
     break;
   }
   case Type::PointerTyID:
-    Result = calcTypeName(cast<const PointerType>(Ty)->getElementType(), 
+    Result = calcTypeName(cast<PointerType>(Ty)->getElementType(), 
                           TypeStack, TypeNames) + "*";
     break;
   case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<const ArrayType>(Ty);
+    const ArrayType *ATy = cast<ArrayType>(Ty);
     Result = "[" + utostr(ATy->getNumElements()) + " x ";
     Result += calcTypeName(ATy->getElementType(), TypeStack, TypeNames) + "]";
     break;
@@ -377,14 +377,14 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
   if (PrintName && V->hasName()) {
     Out << "%" << V->getName();
   } else {
-    if (const Constant *CV = dyn_cast<const Constant>(V)) {
+    if (const Constant *CV = dyn_cast<Constant>(V)) {
       WriteConstantInt(Out, CV, PrintName, TypeTable, Table);
     } else {
       int Slot;
       if (Table) {
 	Slot = Table->getValSlot(V);
       } else {
-        if (const Type *Ty = dyn_cast<const Type>(V)) {
+        if (const Type *Ty = dyn_cast<Type>(V)) {
           Out << Ty->getDescription();
           return;
         }
@@ -580,9 +580,9 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
     
     for (; I != End; ++I) {
       const Value *V = I->second;
-      if (const Constant *CPV = dyn_cast<const Constant>(V)) {
+      if (const Constant *CPV = dyn_cast<Constant>(V)) {
 	printConstant(CPV);
-      } else if (const Type *Ty = dyn_cast<const Type>(V)) {
+      } else if (const Type *Ty = dyn_cast<Type>(V)) {
 	Out << "\t%" << I->first << " = type ";
 
         // Make sure we print out at least one level of the type structure, so
@@ -959,7 +959,7 @@ CachedWriter &CachedWriter::operator<<(const Value *V) {
   switch (V->getValueType()) {
   case Value::ConstantVal:
   case Value::ArgumentVal:       AW->writeOperand(V, true, true); break;
-  case Value::TypeVal:           AW->write(cast<const Type>(V)); break;
+  case Value::TypeVal:           AW->write(cast<Type>(V)); break;
   case Value::InstructionVal:    AW->write(cast<Instruction>(V)); break;
   case Value::BasicBlockVal:     AW->write(cast<BasicBlock>(V)); break;
   case Value::FunctionVal:       AW->write(cast<Function>(V)); break;

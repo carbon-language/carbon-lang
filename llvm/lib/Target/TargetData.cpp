@@ -69,10 +69,10 @@ Annotation *TargetData::TypeAnFactory(AnnotationID AID, const Annotable *T,
 				      void *D) {
   const TargetData &TD = *(const TargetData*)D;
   assert(AID == TD.AID && "Target data annotation ID mismatch!");
-  const Type *Ty = cast<const Type>((const Value *)T);
+  const Type *Ty = cast<Type>((const Value *)T);
   assert(isa<StructType>(Ty) && 
 	 "Can only create StructLayout annotation on structs!");
-  return new StructLayout((const StructType *)Ty, TD);
+  return new StructLayout(cast<StructType>(Ty), TD);
 }
 
 //===----------------------------------------------------------------------===//

@@ -262,7 +262,7 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
     }
 
   // If it's a type, make sure that all subtypes of the type are included...
-  if (const Type *TheTy = dyn_cast<const Type>(D)) {
+  if (const Type *TheTy = dyn_cast<Type>(D)) {
 
     // Insert the current type before any subtypes.  This is important because
     // recursive types elements are inserted in a bottom up order.  Changing

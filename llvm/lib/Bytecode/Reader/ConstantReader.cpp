@@ -277,7 +277,7 @@ bool BytecodeParser::parseConstantValue(const unsigned char *&Buf,
     abort();
 
   case Type::ArrayTyID: {
-    const ArrayType *AT = cast<const ArrayType>(Ty);
+    const ArrayType *AT = cast<ArrayType>(Ty);
     unsigned NumElements = AT->getNumElements();
 
     std::vector<Constant*> Elements;
@@ -310,7 +310,7 @@ bool BytecodeParser::parseConstantValue(const unsigned char *&Buf,
   }    
 
   case Type::PointerTyID: {
-    const PointerType *PT = cast<const PointerType>(Ty);
+    const PointerType *PT = cast<PointerType>(Ty);
     unsigned SubClass;
     if (HasImplicitZeroInitializer)
       SubClass = 1;

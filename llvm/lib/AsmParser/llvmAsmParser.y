@@ -242,7 +242,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     }
 
     D.destroy();  // Free old strdup'd memory...
-    return cast<const Type>(N);
+    return cast<Type>(N);
   }
   default:
     ThrowException("Internal parser error: Invalid symbol type reference!");
@@ -506,7 +506,7 @@ static bool setValueName(Value *V, char *NameStr) {
   if (Existing) {    // Inserting a name that is already defined???
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
-    if (const Type *Ty = dyn_cast<const Type>(Existing)) {
+    if (const Type *Ty = dyn_cast<Type>(Existing)) {
       if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Ty)) {
 	// We ARE replacing an opaque type!
 	((OpaqueType*)OpTy)->refineAbstractTypeTo(cast<Type>(V));
@@ -519,7 +519,7 @@ static bool setValueName(Value *V, char *NameStr) {
     if (const Type *Ty = dyn_cast<Type>(Existing)) {
       if (Ty == cast<Type>(V)) return true;  // Yes, it's equal.
       // std::cerr << "Type: " << Ty->getDescription() << " != "
-      //      << cast<const Type>(V)->getDescription() << "!\n";
+      //      << cast<Type>(V)->getDescription() << "!\n";
     } else if (const Constant *C = dyn_cast<Constant>(Existing)) {
       if (C == V) return true;      // Constants are equal to themselves
     } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
@@ -875,7 +875,7 @@ ArgTypeListI : TypeListI
 // ResolvedVal, ValueRef and ConstValueRef productions.
 //
 ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
-    const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>($1->get());
     if (ATy == 0)
       ThrowException("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'!");
@@ -900,7 +900,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1; delete $3;
   }
   | Types '[' ']' {
-    const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>($1->get());
     if (ATy == 0)
       ThrowException("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'!");
@@ -913,7 +913,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
   }
   | Types 'c' STRINGCONSTANT {
-    const ArrayType *ATy = dyn_cast<const ArrayType>($1->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>($1->get());
     if (ATy == 0)
       ThrowException("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'!");
@@ -941,7 +941,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
   }
   | Types '{' ConstVector '}' {
-    const StructType *STy = dyn_cast<const StructType>($1->get());
+    const StructType *STy = dyn_cast<StructType>($1->get());
     if (STy == 0)
       ThrowException("Cannot make struct constant with type: '" + 
                      (*$1)->getDescription() + "'!");
@@ -961,7 +961,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1; delete $3;
   }
   | Types '{' '}' {
-    const StructType *STy = dyn_cast<const StructType>($1->get());
+    const StructType *STy = dyn_cast<StructType>($1->get());
     if (STy == 0)
       ThrowException("Cannot make struct constant with type: '" + 
                      (*$1)->getDescription() + "'!");
@@ -973,7 +973,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
   }
   | Types NULL_TOK {
-    const PointerType *PTy = dyn_cast<const PointerType>($1->get());
+    const PointerType *PTy = dyn_cast<PointerType>($1->get());
     if (PTy == 0)
       ThrowException("Cannot make null pointer constant with type: '" + 
                      (*$1)->getDescription() + "'!");
@@ -982,7 +982,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
   }
   | Types SymbolicValueRef {
-    const PointerType *Ty = dyn_cast<const PointerType>($1->get());
+    const PointerType *Ty = dyn_cast<PointerType>($1->get());
     if (Ty == 0)
       ThrowException("Global const reference must be a pointer type!");
 

@@ -413,7 +413,7 @@ SparcFunctionAsmPrinter::printOneOperand(const MachineOperand &mop,
         const Value *Val = mop.getVRegValue();
         assert(Val && "\tNULL Value in SparcFunctionAsmPrinter");
         
-        if (const BasicBlock *BB = dyn_cast<const BasicBlock>(Val))
+        if (const BasicBlock *BB = dyn_cast<BasicBlock>(Val))
           toAsm << getID(BB);
         else if (const Function *M = dyn_cast<Function>(Val))
           toAsm << getID(M);

@@ -76,13 +76,13 @@ public:
     return cast<Constant>(getValue());
   }
   inline const Constant *getConstant() const {
-    return cast<const Constant>(getValue());
+    return cast<Constant>(getValue());
   }
   inline BasicBlock *getBasicBlock() {
     return cast<BasicBlock>(getValue());
   }
   inline const BasicBlock *getBasicBlock() const {
-    return cast<const BasicBlock>(getValue());
+    return cast<BasicBlock>(getValue());
   }
   inline Instruction *getInstruction() {
     assert(isInstruction() && "getInstruction() on non instruction node!");
