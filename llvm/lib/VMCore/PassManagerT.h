@@ -15,6 +15,7 @@
 #include "llvm/Pass.h"
 #include <string>
 #include <algorithm>
+class Annotable;
 
 //===----------------------------------------------------------------------===//
 // PMDebug class - a set of debugging functions, that are not to be
@@ -25,7 +26,7 @@ struct PMDebug {
   // -debug-pass on the command line of the tool being used.
   //
   static void PrintPassStructure(Pass *P);
-  static void PrintPassInformation(unsigned,const char*,Pass *, Value *);
+  static void PrintPassInformation(unsigned,const char*,Pass *, Annotable *);
   static void PrintAnalysisSetInfo(unsigned,const char*,Pass *P,
                                    const std::vector<AnalysisID> &);
 };
@@ -105,7 +106,8 @@ public:
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
       PassClass *P = Passes[i];
       
-      PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P, (Value*)M);
+      PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P,
+                                    (Annotable*)M);
 
       // Get information about what analyses the pass uses...
       AnalysisUsage AnUsage;
@@ -128,7 +130,7 @@ public:
 
       if (Changed)
         PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P,
-                                      (Value*)M);
+                                      (Annotable*)M);
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Preserved", P,
                                     AnUsage.getPreservedSet());
       PMDebug::PrintAnalysisSetInfo(getDepth(), "Provided", P,
@@ -165,7 +167,7 @@ public:
       for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
            I != E; ++I) {
         PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I,
-                                      (Value*)M);
+                                      (Annotable*)M);
         (*I)->releaseMemory();
       }
     }

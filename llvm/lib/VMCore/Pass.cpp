@@ -49,22 +49,21 @@ void PMDebug::PrintPassStructure(Pass *P) {
 }
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
-                                   Pass *P, Value *V) {
+                                   Pass *P, Annotable *V) {
   if (PassDebugging >= PassExecutions) {
     std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
               << typeid(*P).name();
     if (V) {
       std::cerr << "' on ";
-      switch (V->getValueType()) {
-      case Value::ModuleVal:
+
+      if (dynamic_cast<Module*>(V)) {
         std::cerr << "Module\n"; return;
-      case Value::FunctionVal:
-        std::cerr << "Function '" << V->getName(); break;
-      case Value::BasicBlockVal:
-        std::cerr << "BasicBlock '" << V->getName(); break;
-      default:
-        std::cerr << typeid(*V).name() << " '" << V->getName(); break;
-      }
+      } else if (Function *F = dynamic_cast<Function*>(V))
+        std::cerr << "Function '" << F->getName();
+      else if (BasicBlock *BB = dynamic_cast<BasicBlock*>(V))
+        std::cerr << "BasicBlock '" << BB->getName();
+      else if (Value *Val = dynamic_cast<Value*>(V))
+        std::cerr << typeid(*Val).name() << " '" << Val->getName();
     }
     std::cerr << "'...\n";
   }
