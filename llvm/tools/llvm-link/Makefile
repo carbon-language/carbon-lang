@@ -1,6 +1,6 @@
 LEVEL = ../..
 
 TOOLNAME = link
-USEDLIBS = transforms bcreader bcwriter vmcore support
+USEDLIBS = bcreader bcwriter transformutils vmcore support
 
 include $(LEVEL)/Makefile.common
