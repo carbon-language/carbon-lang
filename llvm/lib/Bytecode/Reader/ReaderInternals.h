@@ -89,10 +89,10 @@ private:          // All of this data is transient across calls to ParseBytecode
   std::vector<std::pair<const PointerType *, unsigned> > FunctionSignatureList;
 
 private:
-  bool ParseModule          (const uchar * Buf, const uchar *End, Module *&);
-  bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End, Module *);
+  bool ParseModule          (const uchar * Buf, const uchar *End);
+  bool ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End);
   bool ParseSymbolTable   (const uchar *&Buf, const uchar *End, SymbolTable *);
-  bool ParseMethod        (const uchar *&Buf, const uchar *End, Module *);
+  bool ParseMethod        (const uchar *&Buf, const uchar *End);
   bool ParseBasicBlock    (const uchar *&Buf, const uchar *End, BasicBlock *&);
   bool ParseInstruction   (const uchar *&Buf, const uchar *End, Instruction *&,
                            BasicBlock *BB /*HACK*/);

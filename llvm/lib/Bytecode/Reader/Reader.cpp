@@ -28,7 +28,7 @@ bool BytecodeParser::getTypeSlot(const Type *Ty, unsigned &Slot) {
   if (Ty->isPrimitiveType()) {
     Slot = Ty->getPrimitiveID();
   } else {
-    // Check the method level types first...
+    // Check the function level types first...
     TypeValuesListTy::iterator I = find(MethodTypeValues.begin(),
 					MethodTypeValues.end(), Ty);
     if (I != MethodTypeValues.end()) {
@@ -90,7 +90,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
     if (Num < ModuleTypeValues.size())
       return (Value*)ModuleTypeValues[Num].get();
 
-    // Nope, is it a method level type?
+    // Nope, is it a function level type?
     Num -= ModuleTypeValues.size();
     if (Num < MethodTypeValues.size())
       return (Value*)MethodTypeValues[Num].get();
@@ -112,7 +112,7 @@ Value *BytecodeParser::getValue(const Type *Ty, unsigned oNum, bool Create) {
   Value *d = 0;
   switch (Ty->getPrimitiveID()) {
   case Type::FunctionTyID:
-    std::cerr << "Creating method pholder! : " << type << ":" << oNum << " " 
+    std::cerr << "Creating function pholder! : " << type << ":" << oNum << " " 
               << Ty->getName() << "\n";
     d = new FunctionPHolder(Ty, oNum);
     if (insertValue(d, LateResolveModuleValues) == -1) return 0;
@@ -274,18 +274,17 @@ void BytecodeParser::ResolveReferencesToValue(Value *NewV, unsigned Slot) {
   GlobalRefs.erase(I);                // Remove the map entry for it
 }
 
-bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf, 
-				 Module *C) {
+bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf) {
   // Clear out the local values table...
   Values.clear();
   if (FunctionSignatureList.empty()) {
     Error = "Function found, but FunctionSignatureList empty!";
-    return true;  // Unexpected method!
+    return true;  // Unexpected function!
   }
 
   const PointerType *PMTy = FunctionSignatureList.back().first; // PtrMeth
   const FunctionType *MTy  = dyn_cast<FunctionType>(PMTy->getElementType());
-  if (MTy == 0) return true;  // Not ptr to method!
+  if (MTy == 0) return true;  // Not ptr to function!
 
   unsigned isInternal;
   if (read_vbr(Buf, EndBuf, isInternal)) return true;
@@ -294,14 +293,14 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   FunctionSignatureList.pop_back();
   Function *M = new Function(MTy, isInternal != 0);
 
-  BCR_TRACE(2, "METHOD TYPE: " << MTy << "\n");
+  BCR_TRACE(2, "FUNCTION TYPE: " << MTy << "\n");
 
   const FunctionType::ParamTypes &Params = MTy->getParamTypes();
   Function::aiterator AI = M->abegin();
   for (FunctionType::ParamTypes::const_iterator It = Params.begin();
        It != Params.end(); ++It, ++AI) {
     if (insertValue(AI, Values) == -1) {
-      Error = "Error reading method arguments!\n";
+      Error = "Error reading function arguments!\n";
       delete M; return true; 
     }
   }
@@ -358,7 +357,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
 
   if (postResolveValues(LateResolveValues) ||
       postResolveValues(LateResolveModuleValues)) {
-    Error = "Error resolving method values!";
+    Error = "Error resolving function values!";
     delete M; return true;     // Unresolvable references!
   }
 
@@ -370,15 +369,15 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   assert(!getTypeSlot(MTy, type) && "How can meth type not exist?");
   getTypeSlot(PMTy, type);
 
-  C->getFunctionList().push_back(M);
+  TheModule->getFunctionList().push_back(M);
 
-  // Replace placeholder with the real method pointer...
+  // Replace placeholder with the real function pointer...
   ModuleValues[type][MethSlot] = M;
 
-  // Clear out method level types...
+  // Clear out function level types...
   MethodTypeValues.clear();
 
-  // If anyone is using the placeholder make them use the real method instead
+  // If anyone is using the placeholder make them use the real function instead
   FunctionPHolder->replaceAllUsesWith(M);
 
   // We don't need the placeholder anymore!
@@ -389,8 +388,7 @@ bool BytecodeParser::ParseMethod(const uchar *&Buf, const uchar *EndBuf,
   return false;
 }
 
-bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
-					   Module *Mod) {
+bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End){
   if (!FunctionSignatureList.empty()) {
     Error = "Two ModuleGlobalInfo packets found!";
     return true;  // Two ModuleGlobal blocks?
@@ -430,7 +428,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     int DestSlot = insertValue(GV, ModuleValues);
     if (DestSlot == -1) return true;
 
-    Mod->getGlobalList().push_back(GV);
+    TheModule->getGlobalList().push_back(GV);
 
     ResolveReferencesToValue(GV, (unsigned)DestSlot);
 
@@ -440,7 +438,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     if (read_vbr(Buf, End, VarType)) return true;
   }
 
-  // Read the method signatures for all of the methods that are coming, and 
+  // Read the function signatures for all of the functions that are coming, and 
   // create fillers in the Value tables.
   unsigned FnSignature;
   if (read_vbr(Buf, End, FnSignature)) return true;
@@ -452,13 +450,13 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
       return true; 
     }
 
-    // We create methods by passing the underlying FunctionType to create...
+    // We create functions by passing the underlying FunctionType to create...
     Ty = cast<PointerType>(Ty)->getElementType();
 
-    // When the ModuleGlobalInfo section is read, we load the type of each 
-    // method and the 'ModuleValues' slot that it lands in.  We then load a 
-    // placeholder into its slot to reserve it.  When the method is loaded, this
-    // placeholder is replaced.
+    // When the ModuleGlobalInfo section is read, we load the type of each
+    // function and the 'ModuleValues' slot that it lands in.  We then load a
+    // placeholder into its slot to reserve it.  When the function is loaded,
+    // this placeholder is replaced.
 
     // Insert the placeholder...
     Value *Val = new FunctionPHolder(Ty, 0);
@@ -471,7 +469,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
     unsigned SlotNo = ModuleValues[TypeSlot].size()-1;
     
     // Keep track of this information in a linked list that is emptied as 
-    // methods are loaded...
+    // functions are loaded...
     //
     FunctionSignatureList.push_back(
            std::make_pair(cast<const PointerType>(Val->getType()), SlotNo));
@@ -492,9 +490,7 @@ bool BytecodeParser::ParseModuleGlobalInfo(const uchar *&Buf, const uchar *End,
   return false;
 }
 
-bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf, 
-                                 Module *&Mod) {
-
+bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf) {
   unsigned Type, Size;
   if (readBlock(Buf, EndBuf, Type, Size)) return true;
   if (Type != BytecodeFormat::Module || Buf+Size != EndBuf) {
@@ -510,40 +506,31 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   if (align32(Buf, EndBuf)) return true;
   BCR_TRACE(1, "FirstDerivedTyID = " << FirstDerivedTyID << "\n");
 
-  TheModule = Mod = new Module();
-
   while (Buf < EndBuf) {
     const unsigned char *OldBuf = Buf;
-    if (readBlock(Buf, EndBuf, Type, Size)) { delete Mod; return true;}
+    if (readBlock(Buf, EndBuf, Type, Size)) return true;
     switch (Type) {
     case BytecodeFormat::ConstantPool:
       BCR_TRACE(1, "BLOCK BytecodeFormat::ConstantPool: {\n");
-      if (ParseConstantPool(Buf, Buf+Size, ModuleValues, ModuleTypeValues)) {
-	delete Mod; return true;
-      }
+      if (ParseConstantPool(Buf, Buf+Size, ModuleValues, ModuleTypeValues))
+	return true;
       break;
 
     case BytecodeFormat::ModuleGlobalInfo:
       BCR_TRACE(1, "BLOCK BytecodeFormat::ModuleGlobalInfo: {\n");
-
-      if (ParseModuleGlobalInfo(Buf, Buf+Size, Mod)) {
-	delete Mod; return true;
-      }
+      if (ParseModuleGlobalInfo(Buf, Buf+Size))	return true;
       break;
 
     case BytecodeFormat::Function: {
       BCR_TRACE(1, "BLOCK BytecodeFormat::Function: {\n");
-      if (ParseMethod(Buf, Buf+Size, Mod)) {
-	delete Mod; return true;              // Error parsing function
-      }
+      if (ParseMethod(Buf, Buf+Size)) return true;  // Error parsing function
       break;
     }
 
     case BytecodeFormat::SymbolTable:
       BCR_TRACE(1, "BLOCK BytecodeFormat::SymbolTable: {\n");
-      if (ParseSymbolTable(Buf, Buf+Size, &Mod->getSymbolTable())) {
-	delete Mod; return true;
-      }
+      if (ParseSymbolTable(Buf, Buf+Size, &TheModule->getSymbolTable()))
+        return true;
       break;
 
     default:
@@ -553,10 +540,10 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
       break;
     }
     BCR_TRACE(1, "} end block\n");
-    if (align32(Buf, EndBuf)) { delete Mod; return true; }
+    if (align32(Buf, EndBuf)) return true;
   }
 
-  if (!FunctionSignatureList.empty()) {     // Expected more methods!
+  if (!FunctionSignatureList.empty()) {     // Expected more functions!
     Error = "Function expected, but bytecode stream at end!";
     return true;
   }
@@ -565,19 +552,25 @@ bool BytecodeParser::ParseModule(const uchar *Buf, const uchar *EndBuf,
   return false;
 }
 
+static inline Module *Error(std::string *ErrorStr, const char *Message) {
+  if (ErrorStr) *ErrorStr = Message;
+  return 0;
+}
+
 Module *BytecodeParser::ParseBytecode(const uchar *Buf, const uchar *EndBuf) {
   LateResolveValues.clear();
   unsigned Sig;
   // Read and check signature...
   if (read(Buf, EndBuf, Sig) ||
-      Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24)) {
-    Error = "Invalid bytecode signature!";
-    return 0;                          // Invalid signature!
-  }
+      Sig != ('l' | ('l' << 8) | ('v' << 16) | 'm' << 24))
+    return ::Error(&Error, "Invalid bytecode signature!");
 
-  Module *Result;
-  if (ParseModule(Buf, EndBuf, Result)) return 0;
-  return Result;
+  TheModule = new Module();
+  if (ParseModule(Buf, EndBuf)) {
+    delete TheModule;
+    TheModule = 0;
+  }
+  return TheModule;
 }
 
 
@@ -601,11 +594,6 @@ public:
     if (FD != -1) close(FD);
   }
 };
-
-static inline Module *Error(std::string *ErrorStr, const char *Message) {
-  if (ErrorStr) *ErrorStr = Message;
-  return 0;
-}
 
 // Parse and return a class file...
 //
