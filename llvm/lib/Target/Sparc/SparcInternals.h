@@ -301,6 +301,7 @@ class UltraSparcRegInfo : public MachineRegInfo
     else { 
       cerr << "TypeID: " << ty << endl;
       assert(0 && "Cannot resolve register class for type");
+      return 0;
     }
 
     if(isCCReg)

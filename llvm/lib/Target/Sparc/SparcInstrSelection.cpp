@@ -825,7 +825,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
   MemAccessInst* memInst = (MemAccessInst*) vmInstrNode->getInstruction();
   
   // Initialize so we default to storing the offset in a register.
-  int64_t smallConstOffset;
+  int64_t smallConstOffset = 0;
   Value* valueForRegOffset = NULL;
   MachineOperand::MachineOperandType offsetOpType =MachineOperand::MO_VirtualRegister;
 
@@ -835,7 +835,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
   if (idxVec.size() > 0)
     {
       bool isConstantOffset = false;
-      unsigned offset;
+      unsigned offset = 0;
       
       const PointerType* ptrType = (PointerType*) ptrVal->getType();
       
@@ -1616,7 +1616,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         
         bool mustClearReg;
         int valueToMove;
-        MachineOpCode movOpCode;
+        MachineOpCode movOpCode = 0;
         Value* ccValue = NULL;
         
         if (subtreeRoot->leftChild()->getValue()->getType()->isIntegral() ||

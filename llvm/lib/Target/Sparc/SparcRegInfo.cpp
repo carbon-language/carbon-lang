@@ -523,9 +523,10 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
       CorrectCol = SparcIntRegOrder::o0;
     else if(RegClassID == FloatRegClassID)
       CorrectCol = SparcFloatRegOrder::f0;
-    else 
+    else {
       assert( 0 && "Unknown RegClass");
-
+      return;
+    }
 
     // if the LR received the correct color, NOTHING to do
 
@@ -787,15 +788,15 @@ void UltraSparcRegInfo::colorRetValue(const  MachineInstr *const RetMI,
     unsigned RegClassID =  getRegClassIDOfValue(RetVal);
     unsigned RegType = getRegType( RetVal );
 
-
     unsigned CorrectCol;
     if(RegClassID == IntRegClassID)
       CorrectCol = SparcIntRegOrder::i0;
     else if(RegClassID == FloatRegClassID)
       CorrectCol = SparcFloatRegOrder::f0;
-    else 
+    else {
       assert( 0 && "Unknown RegClass");
-
+      return;
+    }
 
     // if the LR received the correct color, NOTHING to do
 
