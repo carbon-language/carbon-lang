@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gccld.h"
-#include "llvm/Linker.h"
+#include "llvm/System/Program.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
@@ -26,6 +26,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/CommandLine.h"
+
 using namespace llvm;
 
 namespace {
@@ -234,42 +235,35 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
 ///  InputFilename  - The name of the output bytecode file.
 ///  OutputFilename - The name of the file to generate.
 ///  llc            - The pathname to use for LLC.
-///  envp           - The environment to use when running LLC.
 ///
 /// Return non-zero value on error.
 ///
 int llvm::GenerateAssembly(const std::string &OutputFilename,
                            const std::string &InputFilename,
-                           const std::string &llc,
-                           char ** const envp) {
+                           const sys::Path &llc) {
   // Run LLC to convert the bytecode file into assembly code.
-  const char *cmd[6];
-  cmd[0] = llc.c_str();
-  cmd[1] = "-f";
-  cmd[2] = "-o";
-  cmd[3] = OutputFilename.c_str();
-  cmd[4] = InputFilename.c_str();
-  cmd[5] = 0;
+  std::vector<std::string> args;
+  args.push_back("-f");
+  args.push_back("-o");
+  args.push_back(OutputFilename);
+  args.push_back(InputFilename);
 
-  return ExecWait(cmd, envp);
+  return sys::Program::ExecuteAndWait(llc, args);
 }
 
 /// GenerateAssembly - generates a native assembly language source file from the
 /// specified bytecode file.
 int llvm::GenerateCFile(const std::string &OutputFile,
                         const std::string &InputFile,
-                        const std::string &llc, char ** const envp) {
+                        const sys::Path &llc ) {
   // Run LLC to convert the bytecode file into C.
-  const char *cmd[7];
-
-  cmd[0] = llc.c_str();
-  cmd[1] = "-march=c";
-  cmd[2] = "-f";
-  cmd[3] = "-o";
-  cmd[4] = OutputFile.c_str();
-  cmd[5] = InputFile.c_str();
-  cmd[6] = 0;
-  return ExecWait(cmd, envp);
+  std::vector<std::string> args;
+  args.push_back("-march=c");
+  args.push_back("-f");
+  args.push_back("-o");
+  args.push_back(OutputFile);
+  args.push_back(InputFile);
+  return sys::Program::ExecuteAndWait(llc, args);
 }
 
 /// GenerateNative - generates a native assembly language source file from the
@@ -279,7 +273,6 @@ int llvm::GenerateCFile(const std::string &OutputFile,
 ///  InputFilename  - The name of the output bytecode file.
 ///  OutputFilename - The name of the file to generate.
 ///  Libraries      - The list of libraries with which to link.
-///  LibPaths       - The list of directories in which to find libraries.
 ///  gcc            - The pathname to use for GGC.
 ///  envp           - A copy of the process's current environment.
 ///
@@ -291,8 +284,7 @@ int llvm::GenerateCFile(const std::string &OutputFile,
 int llvm::GenerateNative(const std::string &OutputFilename,
                          const std::string &InputFilename,
                          const std::vector<std::string> &Libraries,
-                         const std::vector<std::string> &LibPaths,
-                         const std::string &gcc, char ** const envp) {
+                         const sys::Path &gcc, char ** const envp) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
   // environment variables so that the programs it uses can configure
@@ -309,7 +301,6 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   RemoveEnv("COMPILER_PATH", clean_env);
   RemoveEnv("COLLECT_GCC", clean_env);
 
-  std::vector<const char *> cmd;
 
   // Run GCC to assemble and link the program into native code.
   //
@@ -317,38 +308,20 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   //  We can't just assemble and link the file with the system assembler
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
-  cmd.push_back(gcc.c_str());
-  cmd.push_back("-fno-strict-aliasing");
-  cmd.push_back("-O3");
-  cmd.push_back("-o");
-  cmd.push_back(OutputFilename.c_str());
-  cmd.push_back(InputFilename.c_str());
-
-  // Adding the library paths creates a problem for native generation.  If we
-  // include the search paths from llvmgcc, then we'll be telling normal gcc
-  // to look inside of llvmgcc's library directories for libraries.  This is
-  // bad because those libraries hold only bytecode files (not native object
-  // files).  In the end, we attempt to link the bytecode libgcc into a native
-  // program.
-#if 0
-  // Add in the library path options.
-  for (unsigned index=0; index < LibPaths.size(); index++) {
-    cmd.push_back("-L");
-    cmd.push_back(LibPaths[index].c_str());
-  }
-#endif
+  std::vector<std::string> args;
+  args.push_back("-fno-strict-aliasing");
+  args.push_back("-O3");
+  args.push_back("-o");
+  args.push_back(OutputFilename);
+  args.push_back(InputFilename);
 
   // Add in the libraries to link.
-  std::vector<std::string> Libs(Libraries);
-  for (unsigned index = 0; index < Libs.size(); index++) {
-    if (Libs[index] != "crtend") {
-      Libs[index] = "-l" + Libs[index];
-      cmd.push_back(Libs[index].c_str());
-    }
+  for (unsigned index = 0; index < Libraries.size(); index++) {
+    if (Libraries[index] != "crtend")
+      args.push_back("-l" + Libraries[index]);
   }
-  cmd.push_back(NULL);
 
   // Run the compiler to assembly and link together the program.
-  return ExecWait(&(cmd[0]), clean_env);
+  return sys::Program::ExecuteAndWait(gcc, args, (const char**)clean_env);
 }
 

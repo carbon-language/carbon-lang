@@ -283,20 +283,19 @@ int main(int argc, char **argv, char **envp ) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
         // Determine the locations of the llc and gcc programs.
-        std::string llc = FindExecutable("llc", argv[0]).toString();
-        if (llc.empty())
+        sys::Path llc = FindExecutable("llc", argv[0]);
+        if (llc.isEmpty())
           return PrintAndReturn(argv[0], "Failed to find llc");
 
-        std::string gcc = FindExecutable("gcc", argv[0]).toString();
-        if (gcc.empty())
+        sys::Path gcc = FindExecutable("gcc", argv[0]);
+        if (gcc.isEmpty())
           return PrintAndReturn(argv[0], "Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
         if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc, envp );
+        GenerateAssembly(AssemblyFile, RealBytecodeOutput, llc);
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, AssemblyFile, Libraries, LibPaths, 
-                       gcc, envp );
+        GenerateNative(OutputFilename, AssemblyFile, Libraries, gcc, envp );
 
         // Remove the assembly language file.
         removeFile (AssemblyFile);
@@ -308,19 +307,19 @@ int main(int argc, char **argv, char **envp ) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
         // Determine the locations of the llc and gcc programs.
-        std::string llc = FindExecutable("llc", argv[0]).toString();
-        if (llc.empty())
+        sys::Path llc = FindExecutable("llc", argv[0]);
+        if (llc.isEmpty())
           return PrintAndReturn(argv[0], "Failed to find llc");
 
-        std::string gcc = FindExecutable("gcc", argv[0]).toString();
-        if (gcc.empty())
+        sys::Path gcc = FindExecutable("gcc", argv[0]);
+        if (gcc.isEmpty())
           return PrintAndReturn(argv[0], "Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
         if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateCFile(CFile, RealBytecodeOutput, llc, envp );
+        GenerateCFile(CFile, RealBytecodeOutput, llc);
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, CFile, Libraries, LibPaths, gcc, envp );
+        GenerateNative(OutputFilename, CFile, Libraries, gcc, envp );
 
         // Remove the assembly language file.
         removeFile(CFile);
