@@ -20,7 +20,7 @@ include ${LEVEL}/Makefile.common
 
 # LLVM Tool Definitions...
 #
-LCC      = $(LLVMGCCDIR)/bin/gcc
+LCC      = $(LLVMGCCDIR)/bin/llvm-gcc
 LCC1     = $(LLVMGCCDIR)/lib/gcc-lib/llvm/3.1/cc1
 TOOLS    = $(BUILD_ROOT_TOP)/tools/Debug
 LLI      = $(TOOLS)/lli
