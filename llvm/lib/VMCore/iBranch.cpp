@@ -26,6 +26,13 @@ BranchInst::BranchInst(BasicBlock *True, BasicBlock *False, Value *Cond,
          "May only branch on boolean predicates!!!!");
 }
 
+BranchInst::BranchInst(BasicBlock *True, Instruction *InsertBefore) 
+  : TerminatorInst(Instruction::Br, InsertBefore) {
+  assert(True != 0 && "True branch destination may not be null!!!");
+  Operands.reserve(1);
+  Operands.push_back(Use(True, this));
+}
+
 BranchInst::BranchInst(const BranchInst &BI) : TerminatorInst(Instruction::Br) {
   Operands.reserve(BI.Operands.size());
   Operands.push_back(Use(BI.Operands[0], this));
