@@ -372,16 +372,19 @@ to support it.</p>
 <a name="ci_class_struct">Use of <tt>class</tt> and <tt>struct</tt> Keywords</a>
 </div>
 <div class="doc_text">
-  <p>In C++ the <tt>class</tt> and <tt>struct</tt> keywoards can be used almost
-  interchangeably. The only difference is when they are used to declare a class:
-  <tt>class</tt> makes all members private by default while <tt>struct</tt>
-  makes all members public by defaut.<p>
-  <p>Unfortunately, not all compilers follow the rules and some will generate
-  different symbols based on whether <tt>class</tt> or <tt>struct</tt> was used
-  to declare the symbol. This can lead to problems at link time.</p>
-  <p>So, the rule for LLVM is this: "always use the <tt>class</tt> keyword, 
-  unless <b>all</b> members are public in which case <tt>struct</tt> is
-  allowed.</p>
+
+<p>In C++, the <tt>class</tt> and <tt>struct</tt> keywords can be used almost
+interchangeably. The only difference is when they are used to declare a class:
+<tt>class</tt> makes all members private by default while <tt>struct</tt> makes
+all members public by default.</p>
+
+<p>Unfortunately, not all compilers follow the rules and some will generate
+different symbols based on whether <tt>class</tt> or <tt>struct</tt> was used to
+declare the symbol.  This can lead to problems at link time.</p> 
+
+<p>So, the rule for LLVM is to always use the <tt>class</tt> keyword, unless
+<b>all</b> members are public, in which case <tt>struct</tt> is allowed.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
