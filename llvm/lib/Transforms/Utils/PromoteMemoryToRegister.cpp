@@ -131,6 +131,13 @@ namespace {
     // Visited - The set of basic blocks the renamer has already visited.
     std::set<BasicBlock*> Visited;
 
+    // BasicBlockNumbering - Holds a numbering of the basic blocks in the
+    // function in a stable order that does not depend on their address.
+    std::map<BasicBlock*, unsigned> BasicBlockNumbering;
+
+    // NumberedBasicBlock - Holds the inverse mapping of BasicBlockNumbering.
+    std::vector<BasicBlock*> NumberedBasicBlock;
+
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, const TargetData &td)
@@ -161,6 +168,7 @@ void PromoteMem2Reg::run() {
   // individual basic blocks are sometimes large, we group together all allocas
   // that are live in a single basic block by the basic block they are live in.
   std::map<BasicBlock*, std::vector<AllocaInst*> > LocallyUsedAllocas;
+
 
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
     AllocaInst *AI = Allocas[AllocaNum];
@@ -278,11 +286,22 @@ void PromoteMem2Reg::run() {
       continue;
     }
 
+    // If we haven't computed a numbering for the BB's in the function, do so
+    // now.
+    if (NumberedBasicBlock.empty()) {
+      unsigned n = 0;
+      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I, ++n) {
+        NumberedBasicBlock.push_back(I);
+        BasicBlockNumbering[I] = n;
+      }
+    }
+
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
     //
     unsigned CurrentVersion = 0;
     std::set<PHINode*> InsertedPHINodes;
+    std::vector<unsigned> DFBlocks;
     while (!DefiningBlocks.empty()) {
       BasicBlock *BB = DefiningBlocks.back();
       DefiningBlocks.pop_back();
@@ -291,10 +310,25 @@ void PromoteMem2Reg::run() {
       DominanceFrontier::const_iterator it = DF.find(BB);
       if (it != DF.end()) {
         const DominanceFrontier::DomSetType &S = it->second;
+
+        // In theory we don't need the indirection through the DFBlocks vector.
+        // In practice, the order of calling QueuePhiNode would depend on the
+        // (unspecified) ordering of basic blocks in the dominance frontier,
+        // which would give PHI nodes non-determinstic subscripts.  Fix this by
+        // processing blocks in order of the occurance in the function.
         for (DominanceFrontier::DomSetType::iterator P = S.begin(),PE = S.end();
              P != PE; ++P)
-          if (QueuePhiNode(*P, AllocaNum, CurrentVersion, InsertedPHINodes))
-            DefiningBlocks.push_back(*P);
+          DFBlocks.push_back(BasicBlockNumbering[*P]);
+
+        // Sort by which the block ordering in the function.
+        std::sort(DFBlocks.begin(), DFBlocks.end());
+
+        for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
+          BasicBlock *BB = NumberedBasicBlock[DFBlocks[i]];
+          if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
+            DefiningBlocks.push_back(BB);
+        }
+        DFBlocks.clear();
       }
     }
 
