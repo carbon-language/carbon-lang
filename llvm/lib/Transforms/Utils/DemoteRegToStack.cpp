@@ -1,4 +1,4 @@
-//===- DemoteRegToStack.cpp - Move a virtual reg. to stack ----------------===//
+//===- DemoteRegToStack.cpp - Move a virtual register to the stack --------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -21,26 +21,25 @@
 #include "llvm/iTerminators.h"
 #include "llvm/Type.h"
 #include "Support/hash_set"
-#include <stack>
 
 typedef hash_set<PHINode*>           PhiSet;
 typedef hash_set<PHINode*>::iterator PhiSetIterator;
 
 // Helper function to push a phi *and* all its operands to the worklist!
 // Do not push an instruction if it is already in the result set of Phis to go.
-inline void PushOperandsOnWorkList(std::stack<Instruction*>& workList,
+inline void PushOperandsOnWorkList(std::vector<Instruction*>& workList,
                                    PhiSet& phisToGo, PHINode* phiN) {
   for (User::op_iterator OI = phiN->op_begin(), OE = phiN->op_end();
-       OI != OE; ++OI)
-    if (Instruction* opI = dyn_cast<Instruction>(OI))
-      if (!isa<PHINode>(opI) ||
-          phisToGo.find(cast<PHINode>(opI)) == phisToGo.end())
-        workList.push(opI);
+       OI != OE; ++OI) {
+    Instruction* opI = cast<Instruction>(OI);
+    if (!isa<PHINode>(opI) || !phisToGo.count(cast<PHINode>(opI)))
+      workList.push_back(opI);
+  }
 }
 
 static void FindPhis(Instruction& X, PhiSet& phisToGo) {
-  std::stack<Instruction*> workList;
-  workList.push(&X);
+  std::vector<Instruction*> workList;
+  workList.push_back(&X);
 
   // Handle the case that X itself is a Phi!
   if (PHINode* phiX = dyn_cast<PHINode>(&X)) {
@@ -50,30 +49,20 @@ static void FindPhis(Instruction& X, PhiSet& phisToGo) {
 
   // Now use a worklist to find all phis reachable from X, and
   // (recursively) all phis reachable from operands of such phis.
-  for (Instruction* workI; !workList.empty(); workList.pop()) {
-    workI = workList.top();
-    for (Value::use_iterator UI=workI->use_begin(), UE=workI->use_end();
-         UI != UE; ++UI)
+  while (!workList.empty()) {
+    Instruction *I = workList.back();
+    workList.pop_back();
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI)
       if (PHINode* phiN = dyn_cast<PHINode>(*UI))
         if (phisToGo.find(phiN) == phisToGo.end()) {
           // Seeing this phi for the first time: it must go!
           phisToGo.insert(phiN);
-          workList.push(phiN);
+          workList.push_back(phiN);
           PushOperandsOnWorkList(workList, phisToGo, phiN);
         }
   }
 }
 
-
-// Create the Alloca for X
-static AllocaInst* CreateAllocaForX(Instruction& X) {
-  Function* parentFunc = X.getParent()->getParent();
-  Instruction* entryInst = parentFunc->getEntryBlock().begin();
-  return new AllocaInst(X.getType(), /*arraySize*/ NULL,
-                        X.hasName()? X.getName()+std::string("OnStack")
-                                   : "DemotedTmp",
-                        entryInst);
-}
 
 // Insert loads before all uses of I, except uses in Phis
 // since all such Phis *must* be deleted.
@@ -105,8 +94,7 @@ static void AddLoadsAndStores(AllocaInst* XSlot, Instruction& X,
     for (unsigned i=0, N=pn->getNumIncomingValues(); i < N; ++i) {
       Value* phiOp = pn->getIncomingValue(i);
       if (phiOp != &X &&
-          (!isa<PHINode>(phiOp) ||
-           phisToGo.find(cast<PHINode>(phiOp)) == phisToGo.end())) {
+          (!isa<PHINode>(phiOp) || !phisToGo.count(cast<PHINode>(phiOp)))) {
         // This operand is not a phi that will be deleted: need to store.
         assert(!isa<TerminatorInst>(phiOp));
 
@@ -128,12 +116,6 @@ static void AddLoadsAndStores(AllocaInst* XSlot, Instruction& X,
   }
 }
 
-static void DeletePhis(PhiSet& phisToGo) {
-  for (PhiSetIterator PI = phisToGo.begin(), PE =phisToGo.end(); PI != PE; ++PI)
-    (*PI)->getParent()->getInstList().erase(*PI);
-  phisToGo.clear();
-}
-
 //---------------------------------------------------------------------------- 
 // function DemoteRegToStack()
 // 
@@ -148,11 +130,10 @@ static void DeletePhis(PhiSet& phisToGo) {
 // (4) Delete all the Phis, which should all now be dead.
 //
 // Returns the pointer to the alloca inserted to create a stack slot for X.
-//---------------------------------------------------------------------------- 
-
+//
 AllocaInst* DemoteRegToStack(Instruction& X) {
   if (X.getType() == Type::VoidTy)
-    return NULL;                             // nothing to do!
+    return 0;                             // nothing to do!
 
   // Find all Phis involving X or recursively using such Phis or Phis
   // involving operands of such Phis (essentially all Phis in the "web" of X)
@@ -160,7 +141,10 @@ AllocaInst* DemoteRegToStack(Instruction& X) {
   FindPhis(X, phisToGo);
 
   // Create a stack slot to hold X
-  AllocaInst* XSlot = CreateAllocaForX(X);
+  Function* parentFunc = X.getParent()->getParent();
+  AllocaInst *XSlot = new AllocaInst(X.getType(), 0, X.getName(),
+                                     parentFunc->getEntryBlock().begin());
+
 
   // Insert loads before all uses of X and (*only then*) insert store after X
   assert(X.getNext() && "Non-terminator (since non-void) with no successor?");
@@ -171,6 +155,8 @@ AllocaInst* DemoteRegToStack(Instruction& X) {
   AddLoadsAndStores(XSlot, X, phisToGo);
 
   // Delete the phis and return the alloca instruction
-  DeletePhis(phisToGo);
+  for (PhiSetIterator PI = phisToGo.begin(), E = phisToGo.end(); PI != E; ++PI)
+    (*PI)->getParent()->getInstList().erase(*PI);
+
   return XSlot;
 }
