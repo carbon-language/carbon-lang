@@ -576,6 +576,7 @@ void ConstantArray::destroyConstant() {
   destroyConstantImpl();
 }
 
+#if 0
 /// refineAbstractType - If this callback is invoked, then this constant is of a
 /// derived type, change all users to use a concrete constant of the new type.
 ///
@@ -593,7 +594,7 @@ void ConstantArray::refineAbstractType(const DerivedType *OldTy,
     destroyConstant();    // This constant is now dead, destroy it.
   }
 }
-
+#endif
 
 // ConstantArray::get(const string&) - Return an array that is initialized to
 // contain the specified string.  A null terminator is added to the specified
@@ -644,6 +645,7 @@ void ConstantStruct::destroyConstant() {
   destroyConstantImpl();
 }
 
+#if 0
 /// refineAbstractType - If this callback is invoked, then this constant is of a
 /// derived type, change all users to use a concrete constant of the new type.
 ///
@@ -661,7 +663,7 @@ void ConstantStruct::refineAbstractType(const DerivedType *OldTy,
     destroyConstant();    // This constant is now dead, destroy it.
   }
 }
-
+#endif
 
 //---- ConstantPointerNull::get() implementation...
 //
@@ -687,6 +689,7 @@ void ConstantPointerNull::destroyConstant() {
   destroyConstantImpl();
 }
 
+#if 0
 /// refineAbstractType - If this callback is invoked, then this constant is of a
 /// derived type, change all users to use a concrete constant of the new type.
 ///
@@ -703,6 +706,7 @@ void ConstantPointerNull::refineAbstractType(const DerivedType *OldTy,
     destroyConstant();
   }
 }
+#endif
 
 
 
@@ -820,6 +824,7 @@ void ConstantExpr::destroyConstant() {
   destroyConstantImpl();
 }
 
+#if 0
 /// refineAbstractType - If this callback is invoked, then this constant is of a
 /// derived type, change all users to use a concrete constant of the new type.
 ///
@@ -853,6 +858,7 @@ void ConstantExpr::refineAbstractType(const DerivedType *OldTy,
     destroyConstant();    // This constant is now dead, destroy it.
   }
 }
+#endif
 
 
 
