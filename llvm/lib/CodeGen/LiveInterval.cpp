@@ -42,6 +42,9 @@ bool LiveInterval::liveAt(unsigned I) const {
   return r->contains(I);
 }
 
+// overlaps - Return true if the intersection of the two live intervals is
+// not empty.
+//
 // An example for overlaps():
 //
 // 0: A = ...
@@ -56,11 +59,16 @@ bool LiveInterval::liveAt(unsigned I) const {
 //
 // A->overlaps(C) should return false since we want to be able to join
 // A and C.
-bool LiveInterval::overlaps(const LiveInterval& other) const {
-  Ranges::const_iterator i = ranges.begin();
-  Ranges::const_iterator ie = ranges.end();
-  Ranges::const_iterator j = other.ranges.begin();
-  Ranges::const_iterator je = other.ranges.end();
+//
+bool LiveInterval::overlapsFrom(const LiveInterval& other,
+                                const_iterator StartPos) const {
+  const_iterator i = begin();
+  const_iterator ie = end();
+  const_iterator j = StartPos;
+  const_iterator je = other.end();
+
+  assert((StartPos->start <= i->start || StartPos == other.begin()) &&
+         "Bogus start position hint!");
 
   if (i->start < j->start) {
     i = std::upper_bound(i, ie, j->start);

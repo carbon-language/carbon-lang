@@ -76,10 +76,13 @@ namespace llvm {
       : reg(Reg), weight(Weight), NumValues(0) {
     }
 
-
     typedef Ranges::iterator iterator;
     iterator begin() { return ranges.begin(); }
     iterator end()   { return ranges.end(); }
+
+    typedef Ranges::const_iterator const_iterator;
+    const_iterator begin() const { return ranges.begin(); }
+    const_iterator end() const  { return ranges.end(); }
 
 
     /// advanceTo - Advance the specified iterator to point to the LiveRange
@@ -139,7 +142,16 @@ namespace llvm {
     bool joinable(const LiveInterval& other, unsigned CopyIdx) const;
 
 
-    bool overlaps(const LiveInterval& other) const;
+    /// overlaps - Return true if the intersection of the two live intervals is
+    /// not empty.
+    bool overlaps(const LiveInterval& other) const {
+      return overlapsFrom(other, other.begin());
+    }
+
+    /// overlapsFrom - Return true if the intersection of the two live intervals
+    /// is not empty.  The specified iterator is a hint that we can begin
+    /// scanning the Other interval starting at I.
+    bool overlapsFrom(const LiveInterval& other, const_iterator I) const;
 
     /// addRange - Add the specified LiveRange to this interval, merging
     /// intervals as appropriate.  This returns an iterator to the inserted live
