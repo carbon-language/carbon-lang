@@ -319,6 +319,20 @@ CreateConvertToIntInstr(Type::PrimitiveID destTID, Value* srcVal,Value* destVal)
 // CreateCodeToConvertFloatToInt: Convert FP value to signed or unsigned integer
 // The FP value must be converted to the dest type in an FP register,
 // and the result is then copied from FP to int register via memory.
+//
+// Since fdtoi converts to signed integers, any FP value V between MAXINT+1
+// and MAXUNSIGNED (i.e., 2^31 <= V <= 2^32-1) would be converted incorrectly
+// *only* when converting to an unsigned int.  (Unsigned byte, short or long
+// don't have this problem.)
+// For unsigned int, we therefore have to generate the code sequence:
+// 
+//      if (V > (float) MAXINT) {
+//        unsigned result = (unsigned) (V  - (float) MAXINT);
+//        result = result + (unsigned) MAXINT;
+//      }
+//      else
+//        result = (unsigned int) V;
+// 
 static void
 CreateCodeToConvertFloatToInt(const TargetMachine& target,
                               Value* opVal,
@@ -331,9 +345,9 @@ CreateCodeToConvertFloatToInt(const TargetMachine& target,
   // depends on the type of FP register to use: single-prec for a 32-bit
   // int or smaller; double-prec for a 64-bit int.
   // 
-  const Type* destTypeToUse = (destI->getType() == Type::LongTy)? Type::DoubleTy
-                                                                : Type::FloatTy;
-  Value* destForCast = new TmpInstruction(destTypeToUse, opVal);
+  size_t destSize = target.DataLayout.getTypeSize(destI->getType());
+  const Type* destTypeToUse = (destSize > 4)? Type::DoubleTy : Type::FloatTy;
+  TmpInstruction* destForCast = new TmpInstruction(destTypeToUse, opVal);
   mcfi.addTemp(destForCast);
 
   // Create the fp-to-int conversion code
@@ -344,7 +358,7 @@ CreateCodeToConvertFloatToInt(const TargetMachine& target,
   // Create the fpreg-to-intreg copy code
   target.getInstrInfo().
     CreateCodeToCopyFloatToInt(target, destI->getParent()->getParent(),
-                               (TmpInstruction*)destForCast, destI, mvec, mcfi);
+                               destForCast, destI, mvec, mcfi);
 }
 
 
@@ -990,28 +1004,34 @@ SetOperandsForMemInstr(vector<MachineInstr*>& mvec,
           // offset.  (An extra leading zero offset, if any, can be ignored.)
           // Generate code sequence to compute address from index.
           // 
-          assert(idxVec.size() == 1U + IsZero(idxVec[0])
+          bool firstIdxIsZero = IsZero(idxVec[0]);
+          assert(idxVec.size() == 1U + firstIdxIsZero 
                  && "Array refs must be lowered before Instruction Selection");
 
-          Value* idxVal = idxVec[IsZero(idxVec[0])];
+          Value* idxVal = idxVec[firstIdxIsZero];
           assert(! isa<Constant>(idxVal) && "Need to sign-extend uint to 64b!");
 
           vector<MachineInstr*> mulVec;
           Instruction* addr = new TmpInstruction(Type::UIntTy, memInst);
           MachineCodeForInstruction::get(memInst).addTemp(addr);
 
+          // Get the array type indexed by idxVal, and compute its element size.
           // The call to getTypeSize() will fail if size is not constant.
-          unsigned int eltSize =
-            target.DataLayout.getTypeSize(ptrType->getElementType());
-          assert(eltSize > 0 && "Invalid or non-const array element size");
-          ConstantUInt* eltVal = ConstantUInt::get(Type::UIntTy, eltSize);
+          const Type* vecType = (firstIdxIsZero
+                                 ? GetElementPtrInst::getIndexedType(ptrType,
+                                           std::vector<Value*>(1U, idxVec[0]),
+                                           /*AllowCompositeLeaf*/ true)
+                                 : ptrType);
+          const Type* eltType = cast<SequentialType>(vecType)->getElementType();
+          ConstantUInt* eltSizeVal = ConstantUInt::get(Type::UIntTy,
+                                       target.DataLayout.getTypeSize(eltType));
 
           // CreateMulInstruction() folds constants intelligently enough.
           CreateMulInstruction(target,
                                memInst->getParent()->getParent(),
-                               idxVal,         /* lval, not likely const */
-                               eltVal,         /* rval, likely constant */
-                               addr,           /* result*/
+                               idxVal,         /* lval, not likely to be const*/
+                               eltSizeVal,     /* rval, likely to be constant */
+                               addr,           /* result */
                                mulVec,
                                MachineCodeForInstruction::get(memInst),
                                INVALID_MACHINE_OPCODE);
@@ -1531,11 +1551,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
         break;
       }  
-      
+
       case  31:	// reg:   ToFloatTy(reg):
       case  32:	// reg:   ToDoubleTy(reg):
       case 232:	// reg:   ToDoubleTy(Constant):
-        
+
         // If this instruction has a parent (a user) in the tree 
         // and the user is translated as an FsMULd instruction,
         // then the cast is unnecessary.  So check that first.
@@ -1572,18 +1592,18 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                     // register used: single-prec for a 32-bit int or smaller,
                     // double-prec for a 64-bit int.
                     // 
-                    const Type* srcTypeToUse =
-                      (leftVal->getType() == Type::LongTy)? Type::DoubleTy
-                                                          : Type::FloatTy;
-                    
-                    srcForCast = new TmpInstruction(srcTypeToUse, dest);
+                    uint64_t srcSize =
+                      target.DataLayout.getTypeSize(leftVal->getType());
+                    Type* tmpTypeToUse =
+                      (srcSize <= 4)? Type::FloatTy : Type::DoubleTy;
+                    srcForCast = new TmpInstruction(tmpTypeToUse, dest);
                     MachineCodeForInstruction &destMCFI = 
                       MachineCodeForInstruction::get(dest);
                     destMCFI.addTemp(srcForCast);
-                    
+
                     target.getInstrInfo().CreateCodeToCopyIntToFloat(target,
                          dest->getParent()->getParent(),
-                         leftVal, (TmpInstruction*) srcForCast,
+                         leftVal, cast<Instruction>(srcForCast),
                          mvec, destMCFI);
                   }
                 else
@@ -2150,7 +2170,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       if (dest->getType()->isUnsigned())
         {
           unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
-          if (destSize < target.DataLayout.getIntegerRegize())
+          if (destSize <= 4)
             { // Mask high bits.  Use a TmpInstruction to represent the
               // intermediate result before masking.  Since those instructions
               // have already been generated, go back and substitute tmpI
@@ -2162,12 +2182,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
               for (unsigned i=0, N=mvec.size(); i < N; ++i)
                 mvec[i]->substituteValue(dest, tmpI);
 
-              M = Create3OperandInstr(AND, tmpI,
-                                      ConstantUInt::get(Type::ULongTy,
-                                              ((uint64_t) 1 << 8*destSize) - 1),
-                                      dest);
+              M = Create3OperandInstr_UImmed(SRL, tmpI, 4-destSize, dest);
               mvec.push_back(M);
             }
+          else if (destSize < target.DataLayout.getIntegerRegize())
+            assert(0 && "Unsupported type size: 32 < size < 64 bits");
         }
     }
 }
