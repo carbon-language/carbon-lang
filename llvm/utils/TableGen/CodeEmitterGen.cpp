@@ -14,21 +14,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeEmitterGen.h"
+#include "CodeGenTarget.h"
 #include "Record.h"
 #include "Support/Debug.h"
 using namespace llvm;
 
 void CodeEmitterGen::run(std::ostream &o) {
+  CodeGenTarget Target;
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   EmitSourceFileHeader("Machine Code Emitter", o);
 
   std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
-  std::string ClassName = Insts[0]->getValueAsString("ClassPrefix") + 
-    "CodeEmitter::";
 
   //const std::string &Namespace = Inst->getValue("Namespace")->getName();
-  o << "unsigned " << ClassName
+  o << "unsigned " << Target.getName() << "CodeEmitter::"
     << "getBinaryCodeForInstr(MachineInstr &MI) {\n"
     << "  unsigned Value = 0;\n"
     << "  DEBUG(std::cerr << MI);\n"
