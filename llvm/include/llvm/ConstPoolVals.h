@@ -9,7 +9,6 @@
 #define LLVM_CONSTPOOLVALS_H
 
 #include "llvm/User.h"
-#include "llvm/SymTabValue.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
 
@@ -21,38 +20,17 @@ class StructType;
 //===----------------------------------------------------------------------===//
 
 class ConstPoolVal : public User {
-  SymTabValue *Parent;
-
-  friend class ValueHolder<ConstPoolVal, SymTabValue, SymTabValue>;
-  inline void setParent(SymTabValue *parent) { 
-    Parent = parent;
-  }
-
 protected:
-  inline ConstPoolVal(const Type *Ty, const string &Name = "") 
-    : User(Ty, Value::ConstantVal, Name) { Parent = 0; }
+  inline ConstPoolVal(const Type *Ty) : User(Ty, Value::ConstantVal) {}
 
 public:
   // Specialize setName to handle symbol table majik...
-  virtual void setName(const string &name);
-
-  // Static constructor to create a '0' constant of arbitrary type...
-  static ConstPoolVal *getNullConstant(const Type *Ty);
-
-  // clone() - Create a copy of 'this' value that is identical in all ways
-  // except the following:
-  //   * The value has no parent
-  //   * The value has no name
-  //
-  virtual ConstPoolVal *clone() const = 0;
+  virtual void setName(const string &name, SymbolTable *ST = 0);
 
   virtual string getStrValue() const = 0;
-  virtual bool equals(const ConstPoolVal *V) const = 0;
 
-  inline const SymTabValue *getParent() const { return Parent; }
-  inline       SymTabValue *getParent()       { return Parent; }
-  inline const     Value *getParentV() const { return Parent->getSTVParent(); }
-  inline           Value *getParentV()       { return Parent->getSTVParent(); }
+  // Static constructor to get a '0' constant of arbitrary type...
+  static ConstPoolVal *getNullConstant(const Type *Ty);
 };
 
 
@@ -66,22 +44,20 @@ public:
 //
 class ConstPoolBool : public ConstPoolVal {
   bool Val;
-  ConstPoolBool(const ConstPoolBool &CP);
+  ConstPoolBool(const ConstPoolBool &);     // DO NOT IMPLEMENT
+  ConstPoolBool(bool V);
 public:
-  ConstPoolBool(const Type *Ty, bool V, const string &Name = "");
-  ConstPoolBool(bool V, const string &Name = "");
+  static ConstPoolBool *True, *False;  // The True & False values
+
+  // Factory objects - Return objects of the specified value
+  static ConstPoolBool *get(bool Value) { return Value ? True : False; }
+  static ConstPoolBool *get(const Type *Ty, bool Value) { return get(Value); }
+
+  // inverted - Return the opposite value of the current value.
+  inline ConstPoolBool *inverted() const { return (this==True) ? False : True; }
 
   virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
-
-  virtual ConstPoolVal *clone() const { return new ConstPoolBool(*this); }
-
   inline bool getValue() const { return Val; }
-
-  // setValue - Be careful... if there is more than one 'use' of this node, then
-  // they will ALL see the value that you set...
-  //
-  inline void setValue(bool v) { Val = v; } 
 };
 
 
@@ -95,19 +71,16 @@ protected:
     int64_t  Signed;
     uint64_t Unsigned;
   } Val;
-  ConstPoolInt(const ConstPoolInt &CP);
+  ConstPoolInt(const ConstPoolInt &);      // DO NOT IMPLEMENT
+  ConstPoolInt(const Type *Ty, uint64_t V);
 public:
-  ConstPoolInt(const Type *Ty,  int64_t V, const string &Name = "");
-  ConstPoolInt(const Type *Ty, uint64_t V, const string &Name = "");
-
-  virtual bool equals(const ConstPoolVal *V) const;
-
   // equalsInt - Provide a helper method that can be used to determine if the 
   // constant contained within is equal to a constant.  This only works for very
   // small values, because this is all that can be represented with all types.
   //
   bool equalsInt(unsigned char V) const {
-    assert(V <= 127 && "equals: Can only be used with very small constants!");
+    assert(V <= 127 &&
+	   "equals: Can only be used with very small positive constants!");
     return Val.Unsigned == V;
   }
 
@@ -122,11 +95,11 @@ public:
 // ConstPoolSInt - Signed Integer Values [sbyte, short, int, long]
 //
 class ConstPoolSInt : public ConstPoolInt {
-  ConstPoolSInt(const ConstPoolSInt &CP) : ConstPoolInt(CP) {}
+  ConstPoolSInt(const ConstPoolSInt &);      // DO NOT IMPLEMENT
+protected:
+  ConstPoolSInt(const Type *Ty, int64_t V);
 public:
-  ConstPoolSInt(const Type *Ty, int64_t V, const string &Name = "");
-
-  virtual ConstPoolVal *clone() const { return new ConstPoolSInt(*this); }
+  static ConstPoolSInt *get(const Type *Ty,  int64_t V);
 
   virtual string getStrValue() const;
 
@@ -139,11 +112,11 @@ public:
 // ConstPoolUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]
 //
 class ConstPoolUInt : public ConstPoolInt {
-  ConstPoolUInt(const ConstPoolUInt &CP) : ConstPoolInt(CP) {}
+  ConstPoolUInt(const ConstPoolUInt &);      // DO NOT IMPLEMENT
+protected:
+  ConstPoolUInt(const Type *Ty, uint64_t V);
 public:
-  ConstPoolUInt(const Type *Ty, uint64_t V, const string &Name = "");
-
-  virtual ConstPoolVal *clone() const { return new ConstPoolUInt(*this); }
+  static ConstPoolUInt *get(const Type *Ty, uint64_t V);
 
   virtual string getStrValue() const;
 
@@ -157,13 +130,13 @@ public:
 //
 class ConstPoolFP : public ConstPoolVal {
   double Val;
-  ConstPoolFP(const ConstPoolFP &CP);
+  ConstPoolFP(const ConstPoolFP &);      // DO NOT IMPLEMENT
+protected:
+  ConstPoolFP(const Type *Ty, double V);
 public:
-  ConstPoolFP(const Type *Ty, double V, const string &Name = "");
+  static ConstPoolFP *get(const Type *Ty, double V);
 
-  virtual ConstPoolVal *clone() const { return new ConstPoolFP(*this); }
   virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
 
   static bool isValueValidForType(const Type *Ty, double V);
   inline double getValue() const { return Val; }
@@ -171,34 +144,16 @@ public:
 
 
 //===---------------------------------------------------------------------------
-// ConstPoolType - Type Declarations
-//
-class ConstPoolType : public ConstPoolVal {
-  const Type *Val;
-  ConstPoolType(const ConstPoolType &CPT);
-public:
-  ConstPoolType(const Type *V, const string &Name = "");
-
-  virtual ConstPoolVal *clone() const { return new ConstPoolType(*this); }
-  virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
-
-  inline const Type *getValue() const { return Val; }
-};
-
-
-//===---------------------------------------------------------------------------
 // ConstPoolArray - Constant Array Declarations
 //
 class ConstPoolArray : public ConstPoolVal {
-  ConstPoolArray(const ConstPoolArray &CPT);
+  ConstPoolArray(const ConstPoolArray &);      // DO NOT IMPLEMENT
+protected:
+  ConstPoolArray(const ArrayType *T, const vector<ConstPoolVal*> &Val);
 public:
-  ConstPoolArray(const ArrayType *T, vector<ConstPoolVal*> &V, 
-		 const string &Name = "");
+  static ConstPoolArray *get(const ArrayType *T, const vector<ConstPoolVal*> &);
 
-  virtual ConstPoolVal *clone() const { return new ConstPoolArray(*this); }
   virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
 
   inline const vector<Use> &getValues() const { return Operands; }
 };
@@ -208,14 +163,14 @@ public:
 // ConstPoolStruct - Constant Struct Declarations
 //
 class ConstPoolStruct : public ConstPoolVal {
-  ConstPoolStruct(const ConstPoolStruct &CPT);
+  ConstPoolStruct(const ConstPoolStruct &);      // DO NOT IMPLEMENT
+protected:
+  ConstPoolStruct(const StructType *T, const vector<ConstPoolVal*> &Val);
 public:
-  ConstPoolStruct(const StructType *T, vector<ConstPoolVal*> &V, 
-		  const string &Name = "");
+  static ConstPoolStruct *get(const StructType *T,
+			      const vector<ConstPoolVal*> &V);
 
-  virtual ConstPoolVal *clone() const { return new ConstPoolStruct(*this); }
   virtual string getStrValue() const;
-  virtual bool equals(const ConstPoolVal *V) const;
 
   inline const vector<Use> &getValues() const { return Operands; }
 };
