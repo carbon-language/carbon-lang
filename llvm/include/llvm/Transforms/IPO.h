@@ -104,7 +104,7 @@ Pass *createInternalizePass();
 Pass *createDeadArgEliminationPass();
 
 // DeadArgHacking pass - Same as DAE, but delete arguments of external functions
-// as well.  This is definately not safe, and should only be used by bugpoint.
+// as well.  This is definitely not safe, and should only be used by bugpoint.
 Pass *createDeadArgHackingPass();
 
 //===----------------------------------------------------------------------===//
