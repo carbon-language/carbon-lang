@@ -285,11 +285,28 @@ public:
   void addGlobal(GlobalValue *GV);
   void mergeGlobals(const std::vector<GlobalValue*> &RHS);
   void clearGlobals() { std::vector<GlobalValue*>().swap(Globals); }
-  const std::vector<GlobalValue*> &getGlobals() const { return Globals; }
 
-  typedef std::vector<GlobalValue*>::const_iterator global_iterator;
-  global_iterator global_begin() const { return Globals.begin(); }
-  global_iterator global_end() const { return Globals.end(); }
+  /// getGlobalsList - Return the set of global leaders that are represented by
+  /// this node.  Note that globals that are in this equivalence class but are
+  /// not leaders are not returned: for that, use addFullGlobalsList().
+  const std::vector<GlobalValue*> &getGlobalsList() const { return Globals; }
+
+  /// addFullGlobalsList - Compute the full set of global values that are
+  /// represented by this node.  Unlike getGlobalsList(), this requires fair
+  /// amount of work to compute, so don't treat this method call as free.
+  void addFullGlobalsList(std::vector<GlobalValue*> &List) const;
+
+  /// addFullFunctionList - Identical to addFullGlobalsList, but only return the
+  /// functions in the full list.
+  void addFullFunctionList(std::vector<Function*> &List) const;
+
+  /// globals_iterator/begin/end - Provide iteration methods over the global
+  /// value leaders set that is merged into this node.  Like the getGlobalsList
+  /// method, these iterators do not return globals that are part of the
+  /// equivalence classes for globals in this node, but aren't leaders.
+  typedef std::vector<GlobalValue*>::const_iterator globals_iterator;
+  globals_iterator globals_begin() const { return Globals.begin(); }
+  globals_iterator globals_end() const { return Globals.end(); }
 
 
   /// maskNodeTypes - Apply a mask to the node types bitfield.
