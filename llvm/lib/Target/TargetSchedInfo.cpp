@@ -126,7 +126,7 @@ MachineSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
   // First get the resource usage information from the class resource usages.
   for (MachineOpCode op = 0; op < numOpCodes; ++op) {
     InstrSchedClass sc = getSchedClass(op);
-    assert(sc >= 0 && sc < numSchedClasses);
+    assert(sc < numSchedClasses);
     instrRUsages[op] = instrRUForClasses[sc];
   }
   
