@@ -12,14 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LIB_TRANSFORMS_UTILS_VALUE_MAPPER_H
-#define LIB_TRANSFORMS_UTILS_VALUE_MAPPER_H
+#ifndef VALUEMAPPER_H
+#define VALUEMAPPER_H
 
 #include <map>
 
 namespace llvm {
   class Value;
-  Value *MapValue(const Value *V, std::map<const Value*, Value*> &VM);
+  class Instruction;
+  typedef std::map<const Value *, Value *> ValueMapTy;
+
+  Value *MapValue(const Value *V, ValueMapTy &VM);
+  void RemapInstruction(Instruction *I, ValueMapTy &VM);
 } // End llvm namespace
 
 #endif

@@ -20,25 +20,6 @@
 #include "ValueMapper.h"
 using namespace llvm;
 
-// RemapInstruction - Convert the instruction operands from referencing the 
-// current values into those specified by ValueMap.
-//
-static inline void RemapInstruction(Instruction *I, 
-                                    std::map<const Value *, Value*> &ValueMap) {
-  for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
-    const Value *Op = I->getOperand(op);
-    Value *V = MapValue(Op, ValueMap);
-#ifndef NDEBUG
-    if (!V) {
-      std::cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
-      std::cerr << "\nInst = " << I;
-    }
-#endif
-    assert(V && "Referenced value not in value map!");
-    I->setOperand(op, V);
-  }
-}
-
 // CloneBasicBlock - See comments in Cloning.h
 BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   std::map<const Value*, Value*> &ValueMap,
