@@ -250,15 +250,36 @@ private:
 ///   3. Optimizations conform to all of the contstraints of FunctionPass's.
 ///
 struct BasicBlockPass : public FunctionPass {
+  /// doInitialization - Virtual method overridden by subclasses to do
+  /// any neccesary per-module initialization.
+  ///
+  virtual bool doInitialization(Module &M) { return false; }
+
+  /// doInitialization - Virtual method overridden by BasicBlockPass subclasses
+  /// to do any neccesary per-function initialization.
+  ///
+  virtual bool doInitialization(Function &F) { return false; }
+
   /// runOnBasicBlock - Virtual method overriden by subclasses to do the
   /// per-basicblock processing of the pass.
   ///
   virtual bool runOnBasicBlock(BasicBlock &BB) = 0;
 
-  /// To run this pass on a function, we simply call runOnBasicBlock once for
-  /// each function.
+  /// doFinalization - Virtual method overriden by BasicBlockPass subclasses to
+  /// do any post processing needed after all passes have run.
   ///
-  virtual bool runOnFunction(Function &F);
+  virtual bool doFinalization(Function &F) { return false; }
+
+  /// doFinalization - Virtual method overriden by subclasses to do any post
+  /// processing needed after all passes have run.
+  ///
+  virtual bool doFinalization(Module &M) { return false; }
+
+
+  // To run this pass on a function, we simply call runOnBasicBlock once for
+  // each function.
+  //
+  bool runOnFunction(Function &F);
 
   /// To run directly on the basic block, we initialize, runOnBasicBlock, then
   /// finalize.

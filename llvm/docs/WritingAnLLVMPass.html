@@ -25,13 +25,19 @@
         </ul>
      <li><a href="#FunctionPass">The <tt>FunctionPass</tt> class</a>
         <ul>
-        <li><a href="#doInitialization">The <tt>doInitialization</tt> method</a>
+        <li><a href="#doInitialization_mod">The <tt>doInitialization(Module
+                                            &amp;)</tt> method</a>
         <li><a href="#runOnFunction">The <tt>runOnFunction</tt> method</a>
-        <li><a href="#doFinalization">The <tt>doFinalization</tt> method</a>
+        <li><a href="#doFinalization_mod">The <tt>doFinalization(Module
+                                            &amp;)</tt> method</a>
         </ul>
      <li><a href="#BasicBlockPass">The <tt>BasicBlockPass</tt> class</a>
         <ul>
+        <li><a href="#doInitialization_fn">The <tt>doInitialization(Function
+                                             &amp;)</tt> method</a>
         <li><a href="#runOnBasicBlock">The <tt>runOnBasicBlock</tt> method</a>
+        <li><a href="#doFinalization_fn">The <tt>doFinalization(Function
+                                             &amp;)</tt> method</a>
         </ul>
      </ul>
   <li><a href="#registration">Pass Registration</a>
@@ -424,8 +430,8 @@ may overload three virtual methods to do their work.  All of these methods
 should return true if they modified the program, or false if they didn't.<p>
 
 <!-- _______________________________________________________________________ -->
-</ul><h4><a name="doInitialization"><hr size=0>The <tt>doInitialization</tt>
-method</h4><ul>
+</ul><h4><a name="doInitialization_mod"><hr size=0>The
+<tt>doInitialization(Module &amp;)</tt> method</h4><ul>
 
 <pre>
   <b>virtual bool</b> doInitialization(Module &amp;M);
@@ -433,10 +439,11 @@ method</h4><ul>
 
 The <tt>doIninitialize</tt> method is allowed to do most of the things that
 <tt>FunctionPass</tt>'s are not allowed to do.  They can add and remove
-functions, get pointers to functions, etc.  The <tt>doInitialize</tt> method is
-designed to do simple initialization type of stuff that does not depend on the
-functions being processed.  The <tt>doInitialization</tt> function call is not
-scheduled to overlap with any other pass executions.<p>
+functions, get pointers to functions, etc.  The <tt>doInitialization</tt> method
+is designed to do simple initialization type of stuff that does not depend on
+the functions being processed.  The <tt>doInitialization</tt> method call is not
+scheduled to overlap with any other pass executions (thus it should be very
+fast).<p>
 
 A good example of how this method should be used is the <a
 href="http://llvm.cs.uiuc.edu/doxygen/LowerAllocations_8cpp-source.html">LowerAllocations</a>
@@ -457,7 +464,7 @@ transformation or analysis work of your pass.  As usual, a true value should be
 returned if the function is modified.<p>
 
 <!-- _______________________________________________________________________ -->
-</ul><h4><a name="doFinalization"><hr size=0>The <tt>doFinalization</tt> method</h4><ul>
+</ul><h4><a name="doFinalization_mod"><hr size=0>The <tt>doFinalization(Module &amp;)</tt> method</h4><ul>
 
 <pre>
   <b>virtual bool</b> doFinalization(Module &amp;M);
@@ -493,10 +500,26 @@ As such, they are <b>not</b> allowed to do any of the following:<p>
 
 <tt>BasicBlockPass</tt>'s are useful for traditional local and "peephole"
 optimizations.  They may override the same <a
-href="#doInitialization"><tt>doInitialization</tt></a> and <a
-href="#doFinalization"><tt>doFinalization</tt></a> methods that <a
-href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have a
-<tt>runOnBasicBlock</tt> method:<p>
+href="#doInitialization_mod"><tt>doInitialization(Module &amp;)</tt></a> and <a
+href="#doFinalization_mod"><tt>doFinalization(Module &amp;)</tt></a> methods that <a
+href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the following virtual methods that may also be implemented:<p>
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="doInitialization_fn"><hr size=0>The
+<tt>doInitialization(Function &amp;)</tt> method</h4><ul>
+
+<pre>
+  <b>virtual bool</b> doInitialization(Function &amp;F);
+</pre><p>
+
+The <tt>doIninitialize</tt> method is allowed to do most of the things that
+<tt>BasicBlockPass</tt>'s are not allowed to do, but that
+<tt>FunctionPass</tt>'s can.  The <tt>doInitialization</tt> method is designed
+to do simple initialization type of stuff that does not depend on the
+BasicBlocks being processed.  The <tt>doInitialization</tt> method call is not
+scheduled to overlap with any other pass executions (thus it should be very
+fast).<p>
+
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="runOnBasicBlock"><hr size=0>The <tt>runOnBasicBlock</tt> method</h4><ul>
@@ -509,6 +532,22 @@ Override this function to do the work of the <tt>BasicBlockPass</tt>.  This
 function is not allowed to inspect or modify basic blocks other than the
 parameter, and are not allowed to modify the CFG.  A true value must be returned
 if the basic block is modified.<p>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><h4><a name="doFinalization_fn"><hr size=0>The <tt>doFinalization(Function
+&amp;)</tt> method</h4><ul>
+
+<pre>
+  <b>virtual bool</b> doFinalization(Function &amp;F);
+</pre</p>
+
+The <tt>doFinalization</tt> method is an infrequently used method that is called
+when the pass framework has finished calling <a
+href="#runOnBasicBlock"><tt>runOnBasicBlock</tt></a> for every BasicBlock in the
+program being compiled.  This can be used to perform per-function
+finalization.<p>
+
 
 
 <!-- *********************************************************************** -->
@@ -1164,6 +1203,6 @@ href="#Pass"><tt>Pass</tt></a>, only the other way around.<p>
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Thu Sep  5 15:06:01 CDT 2002
+Last modified: Thu Sep 12 11:46:40 CDT 2002
 <!-- hhmts end -->
 </font></body></html>
