@@ -875,7 +875,7 @@ bool SCCP::runOnFunction(Function &F) {
       Instruction *Inst = BI++;
       if (Inst->getType() != Type::VoidTy) {
         LatticeVal &IV = Values[Inst];
-        if (IV.isConstant() || IV.isUndefined()) {
+        if (IV.isConstant() || IV.isUndefined() && !isa<TerminatorInst>(Inst)) {
           Constant *Const;
           if (IV.isConstant()) {
             Const = IV.getConstant();
@@ -900,4 +900,3 @@ bool SCCP::runOnFunction(Function &F) {
 
   return MadeChanges;
 }
-
