@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "indvar"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
@@ -34,15 +35,16 @@ namespace {
   class IndVarSimplify : public FunctionPass {
     LoopInfo *Loops;
     TargetData *TD;
+    bool Changed;
   public:
     virtual bool runOnFunction(Function &) {
       Loops = &getAnalysis<LoopInfo>();
       TD = &getAnalysis<TargetData>();
-      
+      Changed = false;
+
       // Induction Variables live in the header nodes of loops
-      bool Changed = false;
       for (unsigned i = 0, e = Loops->getTopLevelLoops().size(); i != e; ++i)
-        Changed |= runOnLoop(Loops->getTopLevelLoops()[i]);
+        runOnLoop(Loops->getTopLevelLoops()[i]);
       return Changed;
     }
 
@@ -55,7 +57,7 @@ namespace {
     Value *ComputeAuxIndVarValue(InductionVariable &IV, Value *CIV);  
     void ReplaceIndVar(InductionVariable &IV, Value *Counter);
 
-    bool runOnLoop(Loop *L);
+    void runOnLoop(Loop *L);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();   // Need pointer size
@@ -73,11 +75,10 @@ Pass *llvm::createIndVarSimplifyPass() {
 }
 
 
-bool IndVarSimplify::runOnLoop(Loop *Loop) {
+void IndVarSimplify::runOnLoop(Loop *Loop) {
   // Transform all subloops before this loop...
-  bool Changed = false;
   for (unsigned i = 0, e = Loop->getSubLoops().size(); i != e; ++i)
-    Changed |= runOnLoop(Loop->getSubLoops()[i]);
+    runOnLoop(Loop->getSubLoops()[i]);
 
   // Get the header node for this loop.  All of the phi nodes that could be
   // induction variables must live in this basic block.
@@ -95,7 +96,7 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
   // AfterPHIIt now points to first non-phi instruction...
 
   // If there are no phi nodes in this basic block, there can't be indvars...
-  if (IndVars.empty()) return Changed;
+  if (IndVars.empty()) return;
   
   // Loop over the induction variables, looking for a canonical induction
   // variable, and checking to make sure they are not all unknown induction
@@ -125,7 +126,42 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
   }
 
   // No induction variables, bail early... don't add a canonical indvar
-  if (MaxSize == 0) return Changed;
+  if (MaxSize == 0) return;
+
+
+  // Figure out what the exit condition of the loop is.  We can currently only
+  // handle loops with a single exit.  If we cannot figure out what the
+  // termination condition is, we leave this variable set to null.
+  //
+  SetCondInst *TermCond = 0;
+  if (Loop->getExitBlocks().size() == 1) {
+    // Get ExitingBlock - the basic block in the loop which contains the branch
+    // out of the loop.
+    BasicBlock *Exit = Loop->getExitBlocks()[0];
+    pred_iterator PI = pred_begin(Exit);
+    assert(PI != pred_end(Exit) && "Should have one predecessor in loop!");
+    BasicBlock *ExitingBlock = *PI;
+    assert(++PI == pred_end(Exit) && "Exit block should have one pred!");
+    assert(Loop->isLoopExit(ExitingBlock) && "Exiting block is not loop exit!");
+
+    // Since the block is in the loop, yet branches out of it, we know that the
+    // block must end with multiple destination terminator.  Which means it is
+    // either a conditional branch, a switch instruction, or an invoke.
+    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator())) {
+      assert(BI->isConditional() && "Unconditional branch has multiple succs?");
+      TermCond = dyn_cast<SetCondInst>(BI->getCondition());
+    } else {
+      // NOTE: if people actually exit loops with switch instructions, we could
+      // handle them, but I don't think this is important enough to spend time
+      // thinking about.
+      assert(isa<SwitchInst>(ExitingBlock->getTerminator()) ||
+             isa<InvokeInst>(ExitingBlock->getTerminator()) &&
+             "Unknown multi-successor terminator!");
+    }
+  }
+
+  if (TermCond)
+    DEBUG(std::cerr << "INDVAR: Found termination condition: " << *TermCond);
 
   // Okay, we want to convert other induction variables to use a canonical
   // indvar.  If we don't have one, add one now...
@@ -172,15 +208,18 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
     Canonical = &IndVars.back();
     ++NumInserted;
     Changed = true;
+    DEBUG(std::cerr << "INDVAR: Inserted canonical iv: " << *PN);
   } else {
     // If we have a canonical induction variable, make sure that it is the first
     // one in the basic block.
     if (&Header->front() != Canonical->Phi)
       Header->getInstList().splice(Header->begin(), Header->getInstList(),
                                    Canonical->Phi);
+    DEBUG(std::cerr << "IndVar: Existing canonical iv used: "
+                    << *Canonical->Phi);
   }
 
-  DEBUG(std::cerr << "Induction variables:\n");
+  DEBUG(std::cerr << "INDVAR: Replacing Induction variables:\n");
 
   // Get the current loop iteration count, which is always the value of the
   // canonical phi node...
@@ -202,8 +241,6 @@ bool IndVarSimplify::runOnLoop(Loop *Loop) {
       ++NumRemoved;
     }
   }
-
-  return Changed;
 }
 
 /// ComputeAuxIndVarValue - Given an auxillary induction variable, compute and
@@ -269,7 +306,6 @@ Value *IndVarSimplify::ComputeAuxIndVarValue(InductionVariable &IV, Value *CIV){
   return Val;
 }
 
-
 // ReplaceIndVar - Replace all uses of the specified induction variable with
 // expressions computed from the specified loop iteration counter variable.
 // Return true if instructions were deleted.
@@ -286,8 +322,9 @@ void IndVarSimplify::ReplaceIndVar(InductionVariable &IV, Value *CIV) {
   PHIOps.push_back(Phi->getIncomingValue(0));
   PHIOps.push_back(Phi->getIncomingValue(1));
 
-  // Delete all of the operands of the PHI node... FIXME, this should be more
-  // intelligent.
+  // Delete all of the operands of the PHI node... so that the to-be-deleted PHI
+  // node does not cause any expressions to be computed that would not otherwise
+  // be.
   Phi->dropAllReferences();
 
   // Now that we are rid of unneeded uses of the PHI node, replace any remaining
