@@ -126,15 +126,11 @@ stable LLVM is as a whole.  The columns of the tables are:<p>
 <li><a name="Bytecode">Bytecode - The size of the bytecode for the program
 <li><a name="Instrs">Instrs - The number of LLVM instructions in the
     compiled bytecode
-<li><a name="LLC">LLC - The time taken compile with the Sparc Backend.  Note
-    that this justs tests to see if the backend runs successfully, not if the
-    generated code works.
+<li><a name="LLC">LLC - The time taken compile with LLC (the static X86 backend)
+<li><a name="NAT">NAT - The time taken to execute the program when compiled
+    with GCC -O3.
 <li><a name="CBE">CBE - The time taken to execute the program after compilation
     through the C Backend.  If the diff fails, this a *.
-<li><a name="LLI">LLI - How long does the program take to execute in
-    LLI's interpreter (note that this is capped to ~300s).
-<li><a name="DynInstrs">DynInstrs - How many dynamic instructions are executed
-    by the interpreter, if it finishes.
 <li><a name="JIT">JIT - How long does the program take to execute in the
     Just-In-Time compiler.
 <li><a name="MachCode">MachCode - The number of bytes of machine code
