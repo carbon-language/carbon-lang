@@ -5,11 +5,11 @@
   <title>LLVM Bytecode File Format</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
   <style type="text/css">
-    TR, TD { border: 2px solid gray; padding: 4pt 4pt 4pt 4pt; }
+    TR, TD { border: 2px solid gray; padding-left: 4pt; padding-right: 4pt; padding-top: 2pt; padding-bottom: 2pt; }
     TH { border: 2px solid gray; font-weight: bold; font-size: 105%; }
-    TABLE { text-align: center; padding: 4pt 4pt 4pt 4pt; border: 2px solid black; 
+    TABLE { text-align: center; border: 2px solid black; 
             border-collapse: collapse; margin-top: 1em; margin-left: 1em; margin-right: 1em; margin-bottom: 1em; }
-    .td_left { border: 2px solid gray; padding: 4pt 4pt 4pt 4pt; text-align: left; }
+    .td_left { border: 2px solid gray; text-align: left; }
   </style>
 </head>
 <body>
@@ -161,7 +161,7 @@ also contributes to the value. For the final byte (byte &amp; 0x80) is false
 the value. Consequently 32-bit quantities can take from one to <em>five</em> 
 bytes to encode. In general, smaller quantities will encode in fewer bytes, 
 as follows:</p>
-<table class="doc_table_nw">
+<table>
   <tr>
     <th>Byte #</th>
     <th>Significant Bits</th>
@@ -222,9 +222,9 @@ variable bit rate encoding as described above.</p>
     <td class="td_left">A single bit within some larger integer field.</td>
   </tr><tr>
     <td><a name="string">string</a></td>
-    <td class="td_left">A uint_vbr indicating the length of the character string 
-    immediately followed by the characters of the string. There is no 
-    terminating null byte in the string.</td>
+    <td class="td_left">A uint_vbr indicating the type of the character string 
+      which also includes its length, immediately followed by the characters of 
+      the string. There is no  terminating null byte in the string.</td>
   </tr><tr>
     <td><a name="data">data</a></td>
     <td class="td_left">An arbitrarily long segment of data to which no 
@@ -419,7 +419,7 @@ It simply provides a few bytes of data to identify the file as being an LLVM
 bytecode file. This block is always four bytes in length and differs from the
 other blocks because there is no identifier and no block length at the start
 of the block. Essentially, this block is just the "magic number" for the file.
-<table class="doc_table_nw" >
+<table>
   <tr>
     <th><b>Type</b></th>
     <th class="td_left"><b>Field Description</b></th>
@@ -447,7 +447,7 @@ the file. The table below shows the structure of the module block. Note that it
 only provides the module identifier, size of the module block, and the format
 information. Everything else is contained in other blocks, described in other
 sections.</p>
-<table class="doc_table_nw" >
+<table>
   <tr>
     <th><b>Type</b></th>
     <th class="td_left"><b>Field Description</b></th>
@@ -535,28 +535,29 @@ block of a module. If it is not, attempts to read the file will fail because
 both forward and backward type resolution will not be possible.</p>
 <p>The type pool is simply a list of type definitions, as shown in the table 
 below.</p>
-<table class="doc_table_nw" >
+<table>
   <tr>
     <th><b>Type</b></th>
     <th class="td_left"><b>Field Description</b></th>
   </tr><tr>
     <td><a href="#unsigned">unsigned</a></td>
-    <td class="td_left">Type Pool Identifier (0x13)</td>
+    <td class="td_left">Type Pool Identifier (0x15)</td>
   </tr><tr>
     <td><a href="#unsigned">unsigned</a></td>
-    <td class="td_left">Size in bytes of the symbol table block.</td>
+    <td class="td_left">Size in bytes of the type pool block.</td>
   </tr><tr>
     <td><a href="#uint32_vbr">uint32_vbr</a></td>
-    <td class="td_left">Number of entries in type plane</td>
+    <td class="td_left">Number of type definitions that follow in the next
+      field.</td>
   </tr><tr>
     <td><a href="#type">type</a></td>
     <td class="td_left">Each of the type definitions (see below)<sup>1</sup></td>
-  </tr><tr>
-    <td class="td_left" colspan="2">
-      <sup>1</sup>Repeated field.<br/>
-    </td>
   </tr>
 </table>
+Notes:
+<ol>
+  <li>Repeated field.</li>
+</ol>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="type">Type Definitions</a></div>
@@ -572,13 +573,13 @@ basic type of type as given in the following sections.</p>
   </tr><tr>
     <td><a href="#uint32_vbr">uint32_vbr</td>
     <td class="td_left">Type ID For The Primitive (1-11)<sup>1</sup></td>
-  </tr><tr>
-    <td class="td_left" colspan="2">
-      <sup>1</sup>See the definition of Type::TypeID in Type.h for the numeric
-      equivalents of the primitive type ids.<br/>
-    </td>
   </tr>
 </table>
+Notes:
+<ol>
+  <li>See the definition of Type::TypeID in Type.h for the numeric equivalents 
+  of the primitive type ids.</li>
+</ol>
 <h3>Function Types</h3>
 <table>
   <tr>
@@ -599,13 +600,13 @@ basic type of type as given in the following sections.</p>
   </tr><tr>
     <td><a href="#uint32_vbr">uint32_vbr</td>
     <td class="td_left">Value 0 if this is a varargs function.<sup>2</sup></td>
-  </tr><tr>
-    <td class="td_left" colspan="2">
-      <sup>1</sup>Repeated field.<br/>
-      <sup>2</sup>Optional field.
-    </td>
   </tr>
 </table>
+Notes:
+<ol>
+  <li>Repeated field.</li>
+  <li>Optional field.</li>
+</ol>
 <h3>Structure Types</h3>
 <table>
   <tr>
@@ -620,12 +621,12 @@ basic type of type as given in the following sections.</p>
   </tr><tr>
     <td><a href="#uint32_vbr">uint32_vbr</td>
     <td class="td_left">Null Terminator (VoidTy type id)</td>
-  </tr><tr>
-    <td class="td_left" colspan="2">
-      <sup>1</sup>Repeated field.<br/>
-    </td>
   </tr>
 </table>
+Notes:
+<ol>
+  <li>Repeatable field.</li>
+</ol>
 <h3>Array Types</h3>
 <table>
   <tr>
@@ -669,12 +670,200 @@ basic type of type as given in the following sections.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="globalinfo">Module Global Info</a> </div>
 <div class="doc_text">
-  <p>To be determined.</p>
+  <p>The module global info block contains the definitions of all global 
+  variables including their initializers and the <em>declaration</em> of all 
+  functions. The format is shown in the table below</p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Module global info identifier (0x14)</td>
+    </tr><tr>
+      <td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Size in bytes of the module global info block.</td>
+    </tr><tr>
+      <td><a href="#globalvar">globalvar</a></td>
+      <td class="td_left">Definition of the global variable (see below).
+	<sup>1</sup>
+      </td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Slot number of the global variable's constant 
+	initializer.<sup>1,2</sup>
+      </td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Zero. This terminates the list of global variables.
+      </td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Type slot number of a function defined in this 
+	bytecode file.<sup>3</sup>
+      </td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Zero. This terminates the list of function 
+	declarations.
+    </tr>
+  </table>
+  Notes:<ol>
+    <li>Both these fields are repeatable but in pairs.</li>
+    <li>Optional field.</li>
+    <li>Repeatable field.</li>
+  </ol>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="globalvar">Global Variable Field</a>
+</div>
+<div class="doc_text">
+  <p>Global variables are written using a single 
+  <a href="#uint32_vbr">uint32_vbr</a> that encodes information about the global
+  variable. The table below provides the bit layout of the value written for
+  each global variable.</p>
+  <table>
+  <tr>
+    <th><b>Bit(s)</b></th>
+    <th><b>Type</b></th>
+    <th class="td_left"><b>Description</b></th>
+  </tr><tr>
+    <td>0</td><td>bit</td>
+    <td class="td_left">Is constant?</td>
+  </tr><tr>
+    <td>1</td><td>bit</td>
+    <td class="td_left">Has initializer?<sup>1</sup></td>
+  </tr><tr>
+    <td>2-4</td><td>enumeration</td>
+    <td class="td_left">Linkage type: 0=External, 1=Weak, 2=Appending, 
+      3=Internal, 4=LinkOnce</td>
+  </tr><tr>
+  <td>5-31</td><td>type slot</td>
+    <td class="td_left">Slot number of type for the global variable.</td>
+  </tr>
+  </table>
+  Notes:
+  <ol>
+    <li>This bit determines whether the constant initializer field follows 
+    immediately after this field</li>
+  </ol>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="constantpool">Constant Pool</a> </div>
 <div class="doc_text">
-  <p>To be determined.</p>
+  <p>A constant pool defines as set of constant values.  There are actually two 
+  types of constant pool blocks: one for modules and one for functions. For 
+  modules, the block begins with the constant strings encountered anywhere in 
+  the module. For functions, the block begins with types only encountered in 
+  the function. In both cases the header is identical.  The tables the follow, 
+  show the header, module constant pool preamble, function constant pool 
+  preamble, and the part common to both function and module constant pools.</p>
+  <p><b>Common Block Header</b></p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#unsigned">unsigned</a></td>
+      <td class="td_left">Constant pool identifier (0x12)</td>
+    </tr>
+  </table>
+  <p><b>Module Constant Pool Preamble (constant strings)</b></p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The number of constant strings that follow.</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Zero. This identifies the following "plane" as
+	containing the constant strings.
+      </td>
+    </tr><tr>
+      <td><a href="#string">string</a></td>
+      <td class="td_left">Slot number of the constant string's type which
+	includes the length of the string.<sup>1</sup>
+      </td>
+    </tr>
+  </table>
+  Notes:
+  <ol>
+    <li>Repeated field.</li>
+  </ol>
+  <p><b>Function Constant Pool Preamble (function types)</b></p>
+  <p>The structure of the types for functions is identical to the
+  <a href="#globaltypes">Global Type Pool</a>. Please refer to that section
+  for the details.
+  <p><b>Common Part (other constants)</b></p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Number of entries in this type plane.</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Type slot number of this plane.</td>
+    </tr><tr>
+      <td><a href="#constant">constant</a></td>
+      <td class="td_left">The definition of a constant (see below).</td>
+    </tr>
+  </table>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="constant">Constant Field</a></div>
+<div class="doc_text">
+  <p>Constants come in many shapes and flavors. The sections that followe define
+  the format for each of them. All constants start with a
+  <a href="#uint32_vbr">uint32_vbr</a> encoded integer that provides the number
+  of operands for the constant. For primitive, structure, and array constants,
+  this will always be zero since those types of constants have no operands.
+  In this case, we have the following field definitions:</p>
+  <ul>
+    <li><b>Bool</b>. This is written as an <a href="#uint32_vbr">uint32_vbr</a> 
+    of value 1U or 0U.</li>
+    <li><b>Signed Integers (sbyte,short,int,long)</b>. These are written as 
+    an <a href="#int64_vbr">int64_vbr</a> with the corresponding value.</li>
+    <li><b>Unsigned Integers (ubyte,ushort,uint,ulong)</b>. These are written 
+    as an <a href="#uint64_vbr">uint64_vbr</a> with the corresponding value.
+    </li>
+    <li><b>Floating Point</b>. Both the float and double types are written 
+    literally in binary format.</li>
+    <li><b>Arrays</b>. Arrays are written simply as a list of 
+    <a href="#uint32_vbr">uint32_vbr</a> encoded slot numbers to the constant 
+    element values.</li>
+    <li><b>Structures</b>. Structures are written simply as a list of 
+    <a href="#uint32_vbr">uint32_vbr</a> encoded slot numbers to the constant 
+    field values of the structure.</li>
+  </ul>
+  <p>When the number of operands to the constant is non-zero, we have a 
+  constant expression and its field format is provided in the table below.</p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Op code of the instruction for the constant 
+	expression.</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The slot number of the constant value for an 
+	operand.<sup>1</sup></td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The slot number for the type of the constant value 
+	for an operand.<sup>1</sup></td>
+    </tr>
+  </table>
+  Notes:<ol>
+    <li>Both these fields are repeatable but only in pairs.</li>
+  </ol>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="functiondefs">Function Definition</a> </div>
@@ -684,8 +873,59 @@ basic type of type as given in the following sections.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="compactiontable">Compaction Table</a> </div>
 <div class="doc_text">
-  <p>To be determined.</p>
+  <p>Compaction tables are part of a function definition. They are merely a 
+  device for reducing the size of bytecode files. The size of a bytecode
+  file is dependent on the <em>value</em> of the slot numbers used because 
+  larger values use more bytes in the variable bit rate encoding scheme. 
+  Furthermore, the compresses instruction format reserves only six bits for
+  the type of the instruction. In large modules, declaring hundreds or thousands
+  of types, the values of the slot numbers can be quite large. However, 
+  functions may use only a small fraction of the global types. In such cases
+  a compaction table is created that maps the global type and value slot
+  numbers to smaller values used by a function. Compaction tables have the
+  format shown in the table below.</p>
+  <table>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The number of types that follow</td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The slot number in the global type plane of the
+	type that will be referenced in the function with the index of
+	this entry in the compaction table.<sup>1</sup></td>
+    </tr><tr>
+      <td><a href="#type_len">type_len</a></td>
+      <td class="td_left">An encoding of the type and number of values that 
+	follow.<sup>2</sup></td>
+    </tr><tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">The slot number in the globals of the value that
+	will be referenced in the function with the index of this entry in
+	the compaction table<sup>1</sup></td>
+    </tr>
+  </table>
+  Notes:<ol>
+    <li>Repeated field.</li>
+    <li>This field's encoding varies depending on the size of the type plane. 
+    See <a href="#type_len">Type and Length</a> for further details.
+  </ol>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="type_len">Type and Length</a></div>
+<div class="doc_text">
+  <p>The type and length of a compaction table type plane is encoded differently
+  depending on the length of the plane. For planes of length 1 or 2, the length
+  is encoded into bits 0 and 1 of a <a href="#uint32_vbr">uint32_vbr</a> and the
+  type is encoded into bits 2-31. Because type numbers are often small, this 
+  often saves an extra byte per plane. If the length of the plane is greater 
+  than 2 then the encoding uses a <a href="#uint32_vbr">uint32_vbr</a> for each
+  of the length and type, in that order.</p>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="instructionlist">Instruction List</a> </div>
 <div class="doc_text">
@@ -700,7 +940,7 @@ of entries in the plane and the type plane's slot number (so the type can be
 looked up in the global type pool). For each entry in a type plane, the slot 
 number of the value and the name associated with that value are written.  The 
 format is given in the table below. </p>
-<table class="doc_table_nw" >
+<table>
   <tr>
     <th><b>Byte(s)</b></th>
     <th><b>Bit(s)</b></th>
@@ -726,11 +966,13 @@ format is given in the table below. </p>
     <td>variable<sup>1,2</sup></td><td>-</td><td>No</td><td>string</td>
     <td class="td_left">Name of the value in the symbol table.</td>
   </tr>
-  <tr>
-    <td class="td_left" colspan="5"><sup>1</sup>Maximum length shown, 
-      may be smaller<br><sup>2</sup>Repeated field.
   </tr>
 </table>
+Notes:
+<ol>
+  <li>Maximum length shown, may be smaller</li>
+  <li>Repeated field.</li>
+</ol>
 </div>
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="versiondiffs">Version Differences</a> </div>
