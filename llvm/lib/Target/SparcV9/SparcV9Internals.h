@@ -29,6 +29,7 @@ namespace llvm {
 class LiveRange;
 class SparcV9TargetMachine;
 class ModulePass;
+class GetElementPtrInst;
 
 enum SparcV9InstrSchedClass {
   SPARC_NONE,		/* Instructions with no scheduling restrictions */
@@ -96,6 +97,19 @@ FunctionPass *createStackSlotsPass(const TargetMachine &TM);
 /// Specializes LLVM code for a target machine.
 ///
 FunctionPass *createPreSelectionPass(const TargetMachine &TM);
+
+// DecomposeMultiDimRefs - Convert multi-dimensional references consisting of
+// any combination of 2 or more array and structure indices into a sequence of
+// instructions (using getelementpr and cast) so that each instruction has at
+// most one index (except structure references, which need an extra leading
+// index of [0]).
+// This pass decomposes all multi-dimensional references in a function.
+FunctionPass *createDecomposeMultiDimRefsPass();
+
+// This function decomposes a single instance of such a reference.
+// Return value: true if the instruction was replaced; false otherwise.
+// 
+bool DecomposeArrayRef(GetElementPtrInst* GEP);
 
 /// Peephole optimization pass operating on machine code
 ///

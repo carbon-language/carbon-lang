@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "SparcV9Internals.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Constant.h"
