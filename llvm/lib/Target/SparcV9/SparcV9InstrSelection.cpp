@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/InstrSelection.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionInfo.h"

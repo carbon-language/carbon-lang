@@ -21,7 +21,6 @@
 #include "llvm/iOther.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/InstrForest.h"
-#include "llvm/CodeGen/InstrSelectionSupport.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
