@@ -610,7 +610,7 @@ static bool setTypeName(Type *T, char *NameStr) {
   }
 
   // Okay, its a newly named type. Set its name.
-  T->setName(Name,&ST);
+  if (!Name.empty()) ST.insert(Name, T);
 
   // If we're in function scope
   if (inFunctionScope()) {
