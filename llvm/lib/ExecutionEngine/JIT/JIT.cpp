@@ -330,3 +330,9 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
   TJI.replaceMachineCodeForFunction(OldAddr, Addr);
   return Addr;
 }
+
+/// freeMachineCodeForFunction - release machine code memory for given Function
+///
+void JIT::freeMachineCodeForFunction(Function *F) {
+  // currently a no-op
+}

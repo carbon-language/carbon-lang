@@ -120,6 +120,10 @@ public:
     return getPointerToFunction(F);
   }
 
+  /// freeMachineCodeForFunction - The interpreter does not generate any code.
+  ///
+  void freeMachineCodeForFunction(Function *F) { }
+  
   // Methods used to execute code:
   // Place a call on the stack
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);

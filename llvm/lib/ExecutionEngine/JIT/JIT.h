@@ -90,6 +90,11 @@ public:
   ///
   void *recompileAndRelinkFunction(Function *F);
 
+  /// freeMachineCodeForFunction - deallocate memory used to code-generate this
+  /// Function.
+  ///
+  void freeMachineCodeForFunction(Function *F);
+
 private:
   static MachineCodeEmitter *createEmitter(JIT &J);
   void runJITOnFunction (Function *F);
