@@ -20,6 +20,6 @@ class Module;
 //
 Module *ParseBytecodeFile(const std::string &Filename,
                           std::string *ErrorStr = 0);
-Module *ParseBytecodeBuffer(const char *Buffer, unsigned BufferSize);
+Module *ParseBytecodeBuffer(const uchar *Buffer, unsigned BufferSize);
 
 #endif
