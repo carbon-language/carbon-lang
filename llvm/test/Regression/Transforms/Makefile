@@ -1,3 +1,3 @@
 LEVEL  = ../../..
-DIRS   = LevelRaise
+DIRS   = LevelRaise DecomposeMultiDimRefs Mem2Reg
 include $(LEVEL)/Makefile.common
