@@ -21905,9 +21905,9 @@ else
 fi;
 if test ${enableval} = "no"
 then
-	if test -d /home/vadve/criswell/Downloads/povray-3.50c
+	if test -d /home/vadve/shared/benchmarks/povray31
 	then
-		POVRAY_ROOT=/home/vadve/criswell/Downloads/povray-3.50c
+		POVRAY_ROOT=/home/vadve/shared/benchmarks/povray31
 
 		USE_POVRAY=USE_POVRAY=1
 
@@ -21919,7 +21919,7 @@ then
 else
 	if test ${enableval} = ""
 	then
-		POVRAY_ROOT=/home/vadve/criswell/Downloads/povray-3.50c
+		POVRAY_ROOT=/home/vadve/shared/benchmarks/povray31
 
 	else
 		POVRAY_ROOT=${enableval}
