@@ -2,7 +2,7 @@
 // LLVM 'LINK' UTILITY 
 //
 // This utility may be invoked in the following manner:
-//  link a.bc b.bc c.bc -o x.bc
+//  llvm-link a.bc b.bc c.bc -o x.bc
 //
 //===----------------------------------------------------------------------===//
 
@@ -72,7 +72,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 
   if (FoundAFile)
     std::cerr << "Bytecode file '" << FN << "' corrupt!  "
-              << "Use 'link -v ...' for more info.\n";
+              << "Use 'llvm-link -v ...' for more info.\n";
   else
     std::cerr << "Could not locate bytecode file: '" << FN << "'\n";
   return std::auto_ptr<Module>();
