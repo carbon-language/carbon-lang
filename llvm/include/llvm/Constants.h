@@ -418,6 +418,14 @@ public:
     return false;
   }
 
+  Constant* getElementAt(unsigned i) const {
+    return cast<Constant>(Operands[i]);
+  }
+
+  unsigned getNumElements() const {
+    return Operands.size();
+  }
+
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
                                            bool DisableChecking = false);
