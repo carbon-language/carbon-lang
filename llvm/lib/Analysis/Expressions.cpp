@@ -202,9 +202,8 @@ static ExprType handleAddition(ExprType Left, ExprType Right, Value *V) {
 //
 static inline ExprType negate(const ExprType &E, Value *V) {
   const Type *Ty = V->getType();
-  const Type *ETy = E.getExprType(Ty);
-  ConstantInt *Zero   = getUnsignedConstant(0, ETy);
-  ConstantInt *One    = getUnsignedConstant(1, ETy);
+  ConstantInt *Zero   = getUnsignedConstant(0, Ty);
+  ConstantInt *One    = getUnsignedConstant(1, Ty);
   ConstantInt *NegOne = cast<ConstantInt>(*Zero - *One);
   if (NegOne == 0) return V;  // Couldn't subtract values...
 
