@@ -774,6 +774,24 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
   }
 }
 
+static void ReduceAllOperands(TreePatternNode *N, const std::string &Name,
+             std::vector<std::pair<TreePatternNode*, std::string> > &Operands,
+                              std::ostream &OS) {
+  if (!N->isLeaf()) {
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+      std::string ChildName = Name + "_Op" + utostr(i);
+      OS << "    SelectionDAGNode *" << ChildName << " = " << Name
+         << "->getUse(" << i << ");\n";
+      ReduceAllOperands(N->getChild(i), ChildName, Operands, OS);
+    }
+  } else {
+    std::string SlotName = Pattern::getSlotName(N->getValueRecord());
+    OS << "    ReducedValue_" << SlotName << " *" << Name << "Val = Reduce_"
+       << SlotName << "(" << Name << ", MBB);\n";
+    Operands.push_back(std::make_pair(N, Name+"Val"));
+  }
+}
+
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
   ReadNodeTypes();
@@ -832,7 +850,9 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
   }
   OS << "};\n\n";
 
-  // Start emitting the class...
+  //===--------------------------------------------------------------------===//
+  // Emit the class definition...
+  //
   OS << "namespace {\n"
      << "  class " << Target.getName() << "ISel {\n"
      << "    SelectionDAG &DAG;\n"
@@ -873,6 +893,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
        << "MachineBasicBlock *MBB);\n";
   OS << "  };\n}\n\n";
 
+  // Emit the generateCode entry-point...
   OS << "void X86ISel::generateCode() {\n"
      << "  SelectionDAGNode *Root = DAG.getRoot();\n"
      << "  assert(Root->getValueType() == MVT::isVoid && "
@@ -891,6 +912,9 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
      << "//  Matching methods...\n"
      << "//\n\n";
 
+  //===--------------------------------------------------------------------===//
+  // Emit all of the matcher methods...
+  //
   for (PatternOrganizer::iterator I = ComputableValues.begin(),
          E = ComputableValues.end(); I != E; ++I) {
     const std::string &SlotName = I->first;
@@ -950,6 +974,50 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
            << "}\n";
       }
     }
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Emit all of the reducer methods...
+  //
+  OS << "\n\n//===" << std::string(70, '-') << "===//\n"
+     << "// Reducer methods...\n"
+     << "//\n";
+
+  for (PatternOrganizer::iterator I = ComputableValues.begin(),
+         E = ComputableValues.end(); I != E; ++I) {
+    const std::string &SlotName = I->first;
+    OS << "ReducedValue_" << SlotName << " *" << Target.getName()
+       << "ISel::Reduce_" << SlotName
+       << "(SelectionDAGNode *N, MachineBasicBlock *MBB) {\n"
+       << "  ReducedValue_" << SlotName << " *Val = N->hasValue<ReducedValue_"
+       << SlotName << ">(" << SlotName << "_Slot);\n"
+       << "  if (Val) return Val;\n"
+       << "  if (N->getBB()) MBB = N->getBB();\n\n"
+       << "  switch (N->getPatternFor(" << SlotName << "_Slot)) {\n";
+
+    // Loop over all of the patterns that can produce a value for this slot...
+    PatternOrganizer::NodesForSlot &NodesForSlot = I->second;
+    for (PatternOrganizer::NodesForSlot::iterator J = NodesForSlot.begin(),
+           E = NodesForSlot.end(); J != E; ++J)
+      for (unsigned i = 0, e = J->second.size(); i != e; ++i) {
+        Pattern *P = J->second[i];
+        OS << "  case " << P->getRecord()->getName() << "_Pattern: {\n"
+           << "    // " << *P << "\n";
+        // Loop over the operands, reducing them...
+        std::vector<std::pair<TreePatternNode*, std::string> > Operands;
+        ReduceAllOperands(P->getTree(), "N", Operands, OS);
+        
+        
+        OS << "    std::cerr << \"  " << P->getRecord()->getName()<< "\\n\";\n";
+        OS << "    Val = new ReducedValue_" << SlotName << "(0);\n"
+           << "    break;\n"
+           << "  }\n";
+      }
+    
+    
+    OS << "  default: assert(0 && \"Unknown " << SlotName << " pattern!\");\n"
+       << "  }\n\n  N->addValue(Val);  // Do not ever recalculate this\n"
+       << "  return Val;\n}\n\n";
   }
 }
 
