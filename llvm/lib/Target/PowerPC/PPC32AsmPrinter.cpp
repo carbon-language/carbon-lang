@@ -94,6 +94,11 @@ namespace {
       }
     }
 
+    void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                            MVT::ValueType VT) {
+      O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
+    }
+
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);    
     bool doInitialization(Module &M);

@@ -22,6 +22,10 @@ class II<dag OL, string asmstr> {
   string AsmString = asmstr;
 }
 
+def u16imm  : Operand<i16> {
+  let PrintMethod = "printU16ImmOperand";
+}
+
 
 // Pseudo-instructions:
 def PHI : Pseudo<"PHI">;          // PHI node...
@@ -45,7 +49,9 @@ def ADD : XOForm_1<"add", 31, 266, 0, 0, 0, 0>;
 def ADDC : XOForm_1<"addc", 31, 10, 0, 0, 0, 0>;
 def ADDE : XOForm_1<"adde", 31, 138, 0, 0, 0, 0>;
 def ADDZE : XOForm_3<"addze", 31, 202, 0, 0, 0, 0>;
-def ANDIo : DForm_4<"andi.",  28, 0, 0>;
+def ANDIo : DForm_4<28, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "andi. $dst, $src1, $src2">;
 def AND  : XForm_6<"and",  31, 28, 0, 0, 0>;
 def ANDC  : XForm_6<"andc",  31, 60, 0, 0, 0>;
 
@@ -139,8 +145,12 @@ def NAND  : XForm_6<"nand",  31, 476, 0, 0, 0>;
 def NEG : XOForm_3<"neg", 31, 104, 0, 0, 0, 0>;
 def NOR  : XForm_6<"nor",  31, 124, 0, 0, 0>;
 def NOP : DForm_4_zero<"nop", 24, 0, 0>;
-def ORI  : DForm_4<"ori",  24, 0, 0>;
-def ORIS : DForm_4<"oris", 25, 0, 0>;
+def ORI  : DForm_4<24, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "ori $dst, $src1, $src2">;
+def ORIS : DForm_4<25, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "oris $dst, $src1, $src2">;
 def OR  : XForm_6<"or",  31, 444, 0, 0, 0>;
 def ORo : XForm_6<"or.", 31, 444, 1, 0, 0>;
 def RLDICL : MDForm_1<"rldicl", 30, 0, 0, 1, 0>;
@@ -181,7 +191,11 @@ def SUBC : XOForm_1_rev<"subc", 31, 8, 0, 0, 0, 0>;
 def SUBFC : XOForm_1<"subfc", 31, 8, 0, 0, 0, 0>;
 def SUBFE : XOForm_1<"subfe", 31, 136, 0, 0, 0, 0>;
 def SUBFZE : XOForm_3<"subfze", 31, 200, 0, 0, 0, 0>;
-def XORI  : DForm_4<"xori",  26, 0, 0>;
-def XORIS : DForm_4<"xoris", 27, 0, 0>;
+def XORI  : DForm_4<26, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "xori $dst, $src1, $src2">;
+def XORIS : DForm_4<27, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "xoris $dst, $src1, $src2">;
 def XOR  : XForm_6<"xor",  31, 316, 0, 0, 0>;
-def MULLI : DForm_2 <"mulli", 7, 0, 0>;
+def MULLI : DForm_2<"mulli", 7, 0, 0>;
