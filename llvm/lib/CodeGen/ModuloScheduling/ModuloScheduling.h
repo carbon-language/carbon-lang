@@ -89,13 +89,18 @@ namespace llvm {
     void predIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
     void succIntersect(std::vector<MSchedGraphNode*> &CurrentSet, std::vector<MSchedGraphNode*> &IntersectResult);
     
-    void reconstructLoop(const MachineBasicBlock*);
+    void reconstructLoop(MachineBasicBlock*);
     
     //void saveValue(const MachineInstr*, const std::set<Value*>&, std::vector<Value*>*);
 
-    void writePrologues(std::vector<MachineBasicBlock *> &prologues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues);
+    void writePrologues(std::vector<MachineBasicBlock *> &prologues, MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_prologues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
 
-    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues);
+    void writeEpilogues(std::vector<MachineBasicBlock *> &epilogues, const MachineBasicBlock *origBB, std::vector<BasicBlock*> &llvm_epilogues, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave,std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
+  
+    
+    void writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MSchedGraphNode*, int> > &valuesToSave, std::map<Value*, std::map<int, std::vector<Value*> > > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation);
+
+    void removePHIs(const MachineBasicBlock *origBB, std::vector<MachineBasicBlock *> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation);
   
   public:
     ModuloSchedulingPass(TargetMachine &targ) : target(targ) {}

@@ -49,12 +49,12 @@ bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
 bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 
   //Get Resource usage for this instruction
-  const TargetSchedInfo & msi = node->getParent()->getTarget()->getSchedInfo();
+  const TargetSchedInfo *msi = node->getParent()->getTarget()->getSchedInfo();
   int currentCycle = cycle;
   bool success = true;
 
     //Get resource usage for this instruction
-    InstrRUsage rUsage = msi.getInstrRUsage(node->getInst()->getOpcode());
+    InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
     std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
 
     //Loop over resources in each cycle and increments their usage count
@@ -101,7 +101,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
       int oldCycle = cycle;
       DEBUG(std::cerr << "Backtrack\n");
       //Get resource usage for this instruction
-      InstrRUsage rUsage = msi.getInstrRUsage(node->getInst()->getOpcode());
+      InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
       std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
       
       //Loop over resources in each cycle and increments their usage count

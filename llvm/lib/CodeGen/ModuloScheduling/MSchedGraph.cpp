@@ -103,7 +103,7 @@ MSchedGraph::~MSchedGraph () {
 void MSchedGraph::buildNodesAndEdges() {
   
   //Get Machine target information for calculating latency
-  const TargetInstrInfo &MTI = Target.getInstrInfo();
+  const TargetInstrInfo *MTI = Target.getInstrInfo();
 
   std::vector<MSchedGraphNode*> memInstructions;
   std::map<int, std::vector<OpIndexNodePair> > regNumtoNodeMap;
@@ -124,16 +124,16 @@ void MSchedGraph::buildNodesAndEdges() {
 #if 0  // FIXME: LOOK INTO THIS
     //Check if subsequent instructions can be issued before
     //the result is ready, if so use min delay.
-    if(MTI.hasResultInterlock(MIopCode))
-      delay = MTI.minLatency(MIopCode);
+    if(MTI->hasResultInterlock(MIopCode))
+      delay = MTI->minLatency(MIopCode);
     else
 #endif
       //Get delay
-      delay = MTI.maxLatency(opCode);
+      delay = MTI->maxLatency(opCode);
     
     //Create new node for this machine instruction and add to the graph.
     //Create only if not a nop
-    if(MTI.isNop(opCode))
+    if(MTI->isNop(opCode))
       continue;
     
     //Add PHI to phi instruction list to be processed later
@@ -143,7 +143,7 @@ void MSchedGraph::buildNodesAndEdges() {
     bool isBranch = false;
 
     //We want to flag the branch node to treat it special
-    if(MTI.isBranch(opCode))
+    if(MTI->isBranch(opCode))
       isBranch = true;
 
     //Node is created and added to the graph automatically
@@ -152,7 +152,7 @@ void MSchedGraph::buildNodesAndEdges() {
     DEBUG(std::cerr << "Created Node: " << *node << "\n"); 
 
     //Check OpCode to keep track of memory operations to add memory dependencies later.    
-    if(MTI.isLoad(opCode) || MTI.isStore(opCode))
+    if(MTI->isLoad(opCode) || MTI->isStore(opCode))
       memInstructions.push_back(node);
 
     //Loop over all operands, and put them into the register number to
@@ -370,7 +370,7 @@ void MSchedGraph::addMachRegEdges(std::map<int, std::vector<OpIndexNodePair> >& 
 void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst) {
 
   //Get Target machine instruction info
-  const TargetInstrInfo& TMI = Target.getInstrInfo();
+  const TargetInstrInfo *TMI = Target.getInstrInfo();
   
   //Loop over all memory instructions in the vector
   //Knowing that they are in execution, add true, anti, and output dependencies
@@ -383,15 +383,15 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst) {
     for(unsigned destIndex = srcIndex + 1; destIndex < memInst.size(); ++destIndex) {
        
       //source is a Load, so add anti-dependencies (store after load)
-      if(TMI.isLoad(srcNodeOpCode))
-	if(TMI.isStore(memInst[destIndex]->getInst()->getOpcode()))
+      if(TMI->isLoad(srcNodeOpCode))
+	if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
 	  memInst[srcIndex]->addOutEdge(memInst[destIndex], 
 			      MSchedGraphEdge::MemoryDep, 
 			      MSchedGraphEdge::AntiDep);
       
       //If source is a store, add output and true dependencies
-      if(TMI.isStore(srcNodeOpCode)) {
-	if(TMI.isStore(memInst[destIndex]->getInst()->getOpcode()))
+      if(TMI->isStore(srcNodeOpCode)) {
+	if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
 	   memInst[srcIndex]->addOutEdge(memInst[destIndex], 
 			      MSchedGraphEdge::MemoryDep, 
 			      MSchedGraphEdge::OutputDep);
@@ -405,13 +405,13 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst) {
     //All instructions before the src in execution order have an iteration delay of 1
     for(unsigned destIndex = 0; destIndex < srcIndex; ++destIndex) {
       //source is a Load, so add anti-dependencies (store after load)
-      if(TMI.isLoad(srcNodeOpCode))
-	if(TMI.isStore(memInst[destIndex]->getInst()->getOpcode()))
+      if(TMI->isLoad(srcNodeOpCode))
+	if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
 	  memInst[srcIndex]->addOutEdge(memInst[destIndex], 
 			      MSchedGraphEdge::MemoryDep, 
 			      MSchedGraphEdge::AntiDep, 1);
-      if(TMI.isStore(srcNodeOpCode)) {
-	if(TMI.isStore(memInst[destIndex]->getInst()->getOpcode()))
+      if(TMI->isStore(srcNodeOpCode)) {
+	if(TMI->isStore(memInst[destIndex]->getInst()->getOpcode()))
 	  memInst[srcIndex]->addOutEdge(memInst[destIndex], 
 			      MSchedGraphEdge::MemoryDep, 
 			      MSchedGraphEdge::OutputDep, 1);
