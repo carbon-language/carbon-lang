@@ -10,6 +10,10 @@
 #include "Support/Statistic.h"
 
 namespace {
+  Statistic<> TotalInsts ("instcount", "Number of instructions (of all types)");
+  Statistic<> TotalBlocks("instcount", "Number of basic blocks");
+  Statistic<> TotalFuncs ("instcount", "Number of non-external functions");
+
 #define HANDLE_INST(N, OPCODE, CLASS) \
     Statistic<> Num##OPCODE##Inst("instcount", "Number of " #OPCODE " insts");
 
@@ -18,8 +22,11 @@ namespace {
   class InstCount : public Pass, public InstVisitor<InstCount> {
     friend class InstVisitor<InstCount>;
 
+    void visitFunction  (Function &F) { ++TotalFuncs; }
+    void visitBasicBlock(BasicBlock &BB) { ++TotalBlocks; }
+
 #define HANDLE_INST(N, OPCODE, CLASS) \
-    void visit##OPCODE(CLASS &) { Num##OPCODE##Inst++; }
+    void visit##OPCODE(CLASS &) { ++Num##OPCODE##Inst; ++TotalInsts; }
 
 #include "llvm/Instruction.def"
 
@@ -33,7 +40,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
-    virtual void print(std::ostream &O, Module *M) const {}
+    virtual void print(std::ostream &O, const Module *M) const {}
 
   };
 
