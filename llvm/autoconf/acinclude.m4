@@ -6251,3 +6251,34 @@ AC_DEFUN([AC_LINK_USE_R],
     AC_DEFINE([HAVE_LINK_R],[1],[Define if you can use -Wl,-R. to pass -R. to the linker, in order to add the current directory to the dynamic linker search path.])
   fi
 ])
+
+
+dnl AC_SINGLE_CXX_CHECK(DEFINEVAR, CACHEVAR, FUNCTION, HEADER, PROGRAM)
+dnl                     $1,        $2,       $3,       $4,     $5
+dnl 
+AC_DEFUN([AC_SINGLE_CXX_CHECK],
+[AC_CACHE_CHECK([for $3 in $4], [$2],
+ [AC_LANG_PUSH(C++)
+  AC_COMPILE_IFELSE(AC_LANG_SOURCE([$5]),[$2=yes],[$2=no])
+ AC_LANG_POP(C++)])
+ if test "$$2" = "yes"
+ then
+   AC_DEFINE($1, 1, [Define to 1 if your compiler defines $3 in the $4
+                     header file.])
+ fi])
+
+AC_DEFUN([AC_FUNC_ISNAN],[
+AC_SINGLE_CXX_CHECK([HAVE_ISNAN_IN_MATH_H],    [ac_cv_func_isnan_in_math_h],   
+                    [isnan], [<math.h>],
+                    [#include <math.h>
+                     int foo(float f) {return isnan(f);}])
+AC_SINGLE_CXX_CHECK([HAVE_ISNAN_IN_CMATH],     [ac_cv_func_isnan_in_cmath],    
+                    [isnan], [<cmath>],
+                    [#include <cmath>
+                     int foo(float f) {return isnan(f);}])
+AC_SINGLE_CXX_CHECK([HAVE_STD_ISNAN_IN_CMATH], [ac_cv_func_std_isnan_in_cmath],
+                    [std::isnan], [<cmath>],
+                    [#include <cmath>
+                     using std::isnan; int foo(float f) {return isnan(f);}])
+])
+
