@@ -65,12 +65,13 @@ CP	= /bin/cp -f
 
 ## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
 ## mark that tracing on, and set the TRACELIBS variable.
+TRACEFLAGS = 
 ifeq ($(TRACE), yes)
-    LLCFLAGS += -trace
+    TRACEFLAGS += -trace
     DOTRACING = yes
 else
     ifeq ($(TRACEM), yes)
-	LLCFLAGS += -tracem
+	TRACEFLAGS += -tracem
 	DOTRACING = yes
     endif
 endif
