@@ -520,11 +520,7 @@ static bool setValueName(Value *V, char *NameStr) {
   if (Existing) {    // Inserting a name that is already defined???
     // We are a simple redefinition of a value, check to see if it
     // is defined the same as the old one...
-    if (const Type *Ty = dyn_cast<Type>(Existing)) {
-      if (Ty == cast<Type>(V)) return true;  // Yes, it's equal.
-      // std::cerr << "Type: " << Ty->getDescription() << " != "
-      //      << cast<Type>(V)->getDescription() << "!\n";
-    } else if (const Constant *C = dyn_cast<Constant>(Existing)) {
+    if (const Constant *C = dyn_cast<Constant>(Existing)) {
       if (C == V) return true;      // Constants are equal to themselves
     } else if (GlobalVariable *EGV = dyn_cast<GlobalVariable>(Existing)) {
       // We are allowed to redefine a global variable in two circumstances:
