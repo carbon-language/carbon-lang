@@ -1036,7 +1036,8 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs()
 	LiveRange *L = (*HMI).second;      // get the LiveRange
 	if(L)
 	  if( ! L->hasColor() ) 
-	    L->setSpillOffFromFP(mcInfo.allocateSpilledValue(TM,L->getType()));
+  /**** NOTE: THIS SHOULD USE THE RIGHT SIZE FOR THE REG BEING PUSHED ****/
+	    L->setSpillOffFromFP(mcInfo.allocateSpilledValue(TM, Type::LongTy /*L->getType()*/ ));
       }
     } // for all LR's in hash map
 }
