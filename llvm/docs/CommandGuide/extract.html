@@ -6,35 +6,33 @@ LLVM: extract tool
 <body>
 
 <center>
-<h1>LLVM: extract tool</h1>
+<h1>LLVM: <tt>extract</tt> tool</h1>
 </center>
 <HR>
 
-<h3>
-NAME
-</h3>
-
-extract
+<h3>NAME</h3>
+<tt>extract</tt>
 
 <h3>
 SYNOPSIS
 </h3>
 
-extract [options] [filename]
+<tt>extract [options] [filename]</tt>
 <h3>
 DESCRIPTION
 </h3>
 
-The extract command takes the name of a function and extracts it from the
-specified LLVM bytecode file.  It is primarily used as a debugging tool to
+The <tt>extract</tt> command takes the name of a function and extracts it from
+the specified LLVM bytecode file.  It is primarily used as a debugging tool to
 reduce test cases from larger programs that are triggering a bug.
 <p>
 
-In addition to extracting the bytecode of the specified function, extract will
-also remove unreachable global variables, prototypes, and unused types.
+In addition to extracting the bytecode of the specified function,
+<tt>extract</tt> will also remove unreachable global variables, prototypes, and
+unused types.
 <p>
 
-The extract command will read its input from standard input if filename is
+The <tt>extract</tt> command reads its input from standard input if filename is
 omitted or if filename is -.  The output is always written to standard output.
 
 <h3>
@@ -44,36 +42,26 @@ OPTIONS
 <ul>
 	<li>-func &lt;function&gt;
 	<br>
-	Extract function from the LLVM bytecode.
+	Extract the specified function from the LLVM bytecode.
 	<p>
 
 	<li> -help
 	<br>
 	Print a summary of command line options.
 	<p>
-
-	<li> -stats
-	<br>
-	Print statistics.
-	<p>
-
-	<li> -time-passes
-	<br>
-	Record the amount of time needed for each pass and print it to standard
-	error.
 </ul>
 
 <h3>
 EXIT STATUS
 </h3>
 
-If extract succeeds, it will exit with 0.  Otherwise, if an error occurs, it
-will exit with a non-zero value.
+If <tt>extract</tt> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
 
 <h3>
 SEE ALSO
 </h3>
-bugpoint
+<a href="bugpoint.html"><tt>bugpoint</tt></a>
 
 <HR>
 <a href="http://llvm.cs.uiuc.edu">LLVM Team</a>
