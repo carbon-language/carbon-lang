@@ -1224,8 +1224,8 @@ void CWriter::printPHICopiesForSuccessors(BasicBlock *CurBlock,
                                           unsigned Indent) {
   for (succ_iterator SI = succ_begin(CurBlock), E = succ_end(CurBlock);
        SI != E; ++SI)
-    for (BasicBlock::iterator I = SI->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    for (BasicBlock::iterator I = SI->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
       //  now we have to do the printing
       Out << std::string(Indent, ' ');
       Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";

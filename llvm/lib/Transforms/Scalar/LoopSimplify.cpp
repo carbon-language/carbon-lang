@@ -213,8 +213,8 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   if (!Preds.empty()) {  // Is the loop not obviously dead?
     // Check to see if the values being merged into the new block need PHI
     // nodes.  If so, insert them.
-    for (BasicBlock::iterator I = BB->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ) {
+    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
+      PHINode *PN = cast<PHINode>(I);
       ++I;
 
       // Check to see if all of the values coming in are the same.  If so, we
@@ -266,10 +266,11 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
     }
     
   } else {                       // Otherwise the loop is dead...
-    for (BasicBlock::iterator I = BB->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
       // Insert dummy values as the incoming value...
       PN->addIncoming(Constant::getNullValue(PN->getType()), NewBB);
+    }
   }  
   return NewBB;
 }
@@ -426,8 +427,8 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
 static PHINode *FindPHIToPartitionLoops(Loop *L) {
-  for (BasicBlock::iterator I = L->getHeader()->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ) {
+  for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
+    PHINode *PN = cast<PHINode>(I);
     ++I;
     if (Value *V = hasConstantValue(PN)) {
       // This is a degenerate PHI already, don't modify it!
@@ -565,8 +566,8 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   
   // Now that the block has been inserted into the function, create PHI nodes in
   // the backedge block which correspond to any PHI nodes in the header block.
-  for (BasicBlock::iterator I = Header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+  for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
     PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".be",
                                  BETerminator);
     NewPN->op_reserve(2*BackedgeBlocks.size());
