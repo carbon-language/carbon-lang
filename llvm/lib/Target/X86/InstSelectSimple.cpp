@@ -934,7 +934,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       BuildMI(*MBB, IP, X86::FNSTSW8r, 0);
       BuildMI(*MBB, IP, X86::SAHF, 1);
     } else {
-      BuildMI(*MBB, IP, X86::FUCOMIr, 2).addReg(Op0r).addReg(Op1r);
+      BuildMI(*MBB, IP, X86::FpUCOMI, 2).addReg(Op0r).addReg(Op1r);
     }
     break;
 
@@ -1774,6 +1774,10 @@ static bool isSafeToFoldLoadIntoInstruction(LoadInst &LI, Instruction &User) {
     case Instruction::Call:
     case Instruction::Invoke:
       return false;
+    case Instruction::Load:
+      if (cast<LoadInst>(It)->isVolatile() && LI.isVolatile())
+        return false;
+      break;
     }
   }
   return true;

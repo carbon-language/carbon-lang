@@ -722,7 +722,8 @@ def FpSUB : FPI<"FSUB", 0, Pseudo, TwoArgFP>;    // f1 = fsub f2, f3
 def FpMUL : FPI<"FMUL", 0, Pseudo, TwoArgFP>;    // f1 = fmul f2, f3
 def FpDIV : FPI<"FDIV", 0, Pseudo, TwoArgFP>;    // f1 = fdiv f2, f3
 
-def FpUCOM : FPI<"FUCOM", 0, Pseudo, TwoArgFP>;  // FPSW = fucom f1, f2
+def FpUCOM  : FPI<"FUCOM", 0, Pseudo, TwoArgFP>;  // FPSW = fucom f1, f2
+def FpUCOMI : FPI<"FUCOMI", 0, Pseudo, TwoArgFP>;  // CC = fucomi f1, f2
 def FpGETRESULT : FPI<"FGETRESULT",0, Pseudo, SpecialFP>;  // FPR = ST(0)
 def FpSETRESULT : FPI<"FSETRESULT",0, Pseudo, SpecialFP>;  // ST(0) = FPR
 
@@ -852,8 +853,8 @@ def FUCOMPr   : I<"fucomp" , 0xE8, AddRegFrm>, DD, Imp<[ST0],[]>;  // FPSW = com
 def FUCOMPPr  : I<"fucompp", 0xE9, RawFrm   >, DA, Imp<[ST0],[]>;  // compare ST(0) with ST(1), pop, pop
 
 let printImplicitUsesBefore = 1 in {
-  def FUCOMIr  : FPI<"fucomi", 0xE8, AddRegFrm, TwoArgFP>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
-  def FUCOMIPr : I<"fucomip" , 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>;            // CC = compare ST(0) with ST(i), pop
+  def FUCOMIr  : I<"fucomi" , 0xE8, AddRegFrm>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
+  def FUCOMIPr : I<"fucomip", 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i), pop
 }
 
 // Floating point flag ops

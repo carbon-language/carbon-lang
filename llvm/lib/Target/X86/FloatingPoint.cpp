@@ -494,42 +494,42 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
 
 // ForwardST0Table - Map: A = B op C  into: ST(0) = ST(0) op ST(i)
 static const TableEntry ForwardST0Table[] = {
-  { X86::FUCOMIr, X86::FUCOMIr  },
   { X86::FpADD  , X86::FADDST0r },
   { X86::FpDIV  , X86::FDIVST0r },
   { X86::FpMUL  , X86::FMULST0r },
   { X86::FpSUB  , X86::FSUBST0r },
   { X86::FpUCOM , X86::FUCOMr   },
+  { X86::FpUCOMI, X86::FUCOMIr  },
 };
 
 // ReverseST0Table - Map: A = B op C  into: ST(0) = ST(i) op ST(0)
 static const TableEntry ReverseST0Table[] = {
-  { X86::FUCOMIr, ~0             },
   { X86::FpADD  , X86::FADDST0r  },   // commutative
   { X86::FpDIV  , X86::FDIVRST0r },
   { X86::FpMUL  , X86::FMULST0r  },   // commutative
   { X86::FpSUB  , X86::FSUBRST0r },
   { X86::FpUCOM , ~0             },
+  { X86::FpUCOMI, ~0             },
 };
 
 // ForwardSTiTable - Map: A = B op C  into: ST(i) = ST(0) op ST(i)
 static const TableEntry ForwardSTiTable[] = {
-  { X86::FUCOMIr, X86::FUCOMIr   },
   { X86::FpADD  , X86::FADDrST0  },   // commutative
   { X86::FpDIV  , X86::FDIVRrST0 },
   { X86::FpMUL  , X86::FMULrST0  },   // commutative
   { X86::FpSUB  , X86::FSUBRrST0 },
   { X86::FpUCOM , X86::FUCOMr    },
+  { X86::FpUCOMI, X86::FUCOMIr   },
 };
 
 // ReverseSTiTable - Map: A = B op C  into: ST(i) = ST(i) op ST(0)
 static const TableEntry ReverseSTiTable[] = {
-  { X86::FUCOMIr, ~0            },
   { X86::FpADD  , X86::FADDrST0 },
   { X86::FpDIV  , X86::FDIVrST0 },
   { X86::FpMUL  , X86::FMULrST0 },
   { X86::FpSUB  , X86::FSUBrST0 },
   { X86::FpUCOM , ~0            },
+  { X86::FpUCOMI, ~0            },
 };
 
 
@@ -553,7 +553,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   unsigned NumOperands = MI->getNumOperands();
   bool isCompare = MI->getOpcode() == X86::FpUCOM ||
-                   MI->getOpcode() == X86::FUCOMIr;
+                   MI->getOpcode() == X86::FpUCOMI;
   assert((NumOperands == 3 || (NumOperands == 2 && isCompare)) &&
 	 "Illegal TwoArgFP instruction!");
   unsigned Dest = getFPReg(MI->getOperand(0));
