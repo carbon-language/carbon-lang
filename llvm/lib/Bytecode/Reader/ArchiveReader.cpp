@@ -19,8 +19,6 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
 #include "Support/FileUtilities.h"
-#include "Config/sys/mman.h"
-#include "Config/fcntl.h"
 #include <cstdlib>
 using namespace llvm;
 
@@ -166,25 +164,21 @@ static bool ReadArchiveBuffer(const std::string &ArchiveName,
 //
 bool llvm::ReadArchiveFile(const std::string &Filename,
                            std::vector<Module*> &Objects,std::string *ErrorStr){
-  int Length = getFileSize(Filename);
-  if (Length == -1)
-    return Error(ErrorStr, "Error getting file length!");
+  unsigned Length;
 
-  int FD = open(Filename.c_str(), O_RDONLY);
-  if (FD == -1)
-    return Error(ErrorStr, "Error opening file!");
-  
     // mmap in the file all at once...
-  unsigned char *Buffer = (unsigned char*)mmap(0, Length, PROT_READ, 
-                                               MAP_PRIVATE, FD, 0);
-  if (Buffer == (unsigned char*)MAP_FAILED)
-    return Error(ErrorStr, "Error mmapping file!");
+  unsigned char *Buffer = 
+     (unsigned char*)ReadFileIntoAddressSpace(Filename, Length);
+  if (Buffer == 0) {
+    if (ErrorStr) *ErrorStr = "Error reading file '" + Filename + "'!";
+    return true;
+  }
   
   // Parse the archive files we mmap'ped in
   bool Result = ReadArchiveBuffer(Filename, Buffer, Length, Objects, ErrorStr);
   
   // Unmmap the archive...
-  munmap((char*)Buffer, Length);
+  UnmapFileFromAddressSpace(Buffer, Length);
 
   if (Result)    // Free any loaded objects
     while (!Objects.empty()) {

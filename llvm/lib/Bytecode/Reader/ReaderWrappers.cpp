@@ -18,9 +18,7 @@
 #include "llvm/Instructions.h"
 #include "Support/FileUtilities.h"
 #include "Support/StringExtras.h"
-#include "Config/fcntl.h"
 #include "Config/unistd.h"
-#include "Config/sys/mman.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -34,7 +32,7 @@ namespace {
   class BytecodeFileReader : public BytecodeParser {
   private:
     unsigned char *Buffer;
-    int Length;
+    unsigned Length;
 
     BytecodeFileReader(const BytecodeFileReader&); // Do not implement
     void operator=(const BytecodeFileReader &BFR); // Do not implement
@@ -50,32 +48,22 @@ static std::string ErrnoMessage (int savedErrNum, std::string descr) {
 }
 
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
-  Length = getFileSize(Filename);
-  if (Length == -1)
-    throw ErrnoMessage(errno, "stat '" + Filename + "'");
-
-  FDHandle FD(open(Filename.c_str(), O_RDONLY));
-  if (FD == -1)
-    throw ErrnoMessage(errno, "open '" + Filename + "'");
-
-  // mmap in the file all at once...
-  Buffer = (unsigned char*)mmap(0, Length, PROT_READ, MAP_PRIVATE, FD, 0);
-
-  if (Buffer == (unsigned char*)MAP_FAILED)
-    throw ErrnoMessage(errno, "map '" + Filename + "' into memory");
+  Buffer = (unsigned char*)ReadFileIntoAddressSpace(Filename, Length);
+  if (Buffer == 0)
+    throw "Error reading file '" + Filename + "'.";
 
   try {
     // Parse the bytecode we mmapped in
     ParseBytecode(Buffer, Length, Filename);
   } catch (...) {
-    munmap((char*)Buffer, Length);
+    UnmapFileFromAddressSpace(Buffer, Length);
     throw;
   }
 }
 
 BytecodeFileReader::~BytecodeFileReader() {
   // Unmmap the bytecode...
-  munmap((char*)Buffer, Length);
+  UnmapFileFromAddressSpace(Buffer, Length);
 }
 
 //===----------------------------------------------------------------------===//
