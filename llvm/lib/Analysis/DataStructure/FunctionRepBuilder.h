@@ -61,7 +61,6 @@ class FunctionRepBuilder : InstVisitor<FunctionRepBuilder> {
   // Nodes - Keep track of all of the resultant nodes, because there may not
   // be edges connecting these to anything.
   //
-  std::vector<ArgDSNode*>    ArgNodes;
   std::vector<AllocDSNode*>  AllocNodes;
   std::vector<ShadowDSNode*> ShadowNodes;
   std::vector<GlobalDSNode*> GlobalNodes;
@@ -78,7 +77,6 @@ public:
     processWorkList();
   }
 
-  const std::vector<ArgDSNode*>    &getArgNodes() const { return ArgNodes; }
   const std::vector<AllocDSNode*>  &getAllocNodes() const { return AllocNodes; }
   const std::vector<ShadowDSNode*> &getShadowNodes() const {return ShadowNodes;}
   const std::vector<GlobalDSNode*> &getGlobalNodes() const {return GlobalNodes;}

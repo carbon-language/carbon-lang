@@ -11,7 +11,6 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/Argument.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 #include <sstream>
@@ -19,25 +18,49 @@
 bool AllocDSNode::isEquivalentTo(DSNode *Node) const {
   if (AllocDSNode *N = dyn_cast<AllocDSNode>(Node))
     return getType() == Node->getType();
-//  return N->Allocation == Allocation;
   return false;
 }
 
 bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
-  if (GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node))
-    return G->Val == Val;
+  if (GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node)) {
+    if (G->Val != Val) return false;
+
+    // Check that the outgoing links are identical...
+    assert(getNumLinks() == G->getNumLinks() && "Not identical shape?");
+    for (unsigned i = 0, e = getNumLinks(); i != e; ++i)
+      if (getLink(i) != G->getLink(i))          // Check links
+        return false;
+    return true;
+  }
   return false;
 }
 
+// Call node equivalency - Two call nodes are identical if all of the outgoing
+// links are the same, AND if all of the incoming links are identical.
+//
 bool CallDSNode::isEquivalentTo(DSNode *Node) const {
-  return false;
-  if (CallDSNode *C = dyn_cast<CallDSNode>(Node))
-    return C->CI->getCalledFunction() == CI->getCalledFunction() &&
-           C->ArgLinks == ArgLinks;
-  return false;
-}
+  if (CallDSNode *C = dyn_cast<CallDSNode>(Node)) {
+    if (C->CI->getCalledFunction() != CI->getCalledFunction() ||
+        getReferrers().size() != C->getReferrers().size())
+      return false; // Quick check...
 
-bool ArgDSNode::isEquivalentTo(DSNode *Node) const {
+    // Check that the outgoing links are identical...
+    assert(getNumLinks() == C->getNumLinks() && "Not identical shape?");
+    for (unsigned i = 0, e = getNumLinks(); i != e; ++i)
+      if (getLink(i) != C->getLink(i))          // Check links
+        return false;
+
+
+    std::vector<PointerValSet*> Refs1 = C->getReferrers();
+    std::vector<PointerValSet*> Refs2 = getReferrers();
+
+    sort(Refs1.begin(), Refs1.end());
+    sort(Refs2.begin(), Refs2.end());
+    if (Refs1 != Refs2) return false;               // Incoming edges different?
+
+    // Check that all outgoing links are the same...
+    return C->ArgLinks == ArgLinks;   // Check that the arguments are identical
+  }
   return false;
 }
 
@@ -289,23 +312,10 @@ void CallDSNode::mapNode(map<const DSNode*, DSNode*> &NodeMap,
     MapPVS(ArgLinks[i], Old->ArgLinks[i], NodeMap);
 }
 
-ArgDSNode::ArgDSNode(Argument *FA)
-  : DSNode(ArgNode, FA->getType()), FuncArg(FA) {
-}
-
-string ArgDSNode::getCaption() const {
-  stringstream OS;
-  OS << "arg %" << FuncArg->getName() << "|Ty: ";
-  WriteTypeSymbolic(OS, getType(), FuncArg->getParent()->getParent());
-  return OS.str();
-}
-
 void FunctionDSGraph::printFunction(std::ostream &O,
                                     const char *Label) const {
   O << "\tsubgraph cluster_" << Label << "_Function" << (void*)this << " {\n";
   O << "\t\tlabel=\"" << Label << " Function\\ " << Func->getName() << "\";\n";
-  for (unsigned i = 0, e = ArgNodes.size(); i != e; ++i)
-    ArgNodes[i]->print(O);
   for (unsigned i = 0, e = AllocNodes.size(); i != e; ++i)
     AllocNodes[i]->print(O);
   for (unsigned i = 0, e = ShadowNodes.size(); i != e; ++i)
@@ -347,20 +357,21 @@ void FunctionDSGraph::printFunction(std::ostream &O,
 // graph...
 //
 FunctionDSGraph::FunctionDSGraph(const FunctionDSGraph &DSG) : Func(DSG.Func) {
-  RetNode = cloneFunctionIntoSelf(DSG, true);
+  vector<PointerValSet> Args;
+  RetNode = cloneFunctionIntoSelf(DSG, true, Args);
 }
 
 
 // cloneFunctionIntoSelf - Clone the specified method graph into the current
 // method graph, returning the Return's set of the graph.   If ValueMap is set
 // to true, the ValueMap of the function is cloned into this function as well
-// as the data structure graph itself.
+// as the data structure graph itself.  Regardless, the arguments value sets
+// of DSG are copied into Args.
 //
 PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
-                                                     bool CloneValueMap) {
+                                                     bool CloneValueMap,
+                                                  vector<PointerValSet> &Args) {
   map<const DSNode*, DSNode*> NodeMap;  // Map from old graph to new graph...
-  unsigned StartArgSize = ArgNodes.size();
-  ArgNodes.reserve(StartArgSize+DSG.ArgNodes.size());
   unsigned StartAllocSize = AllocNodes.size();
   AllocNodes.reserve(StartAllocSize+DSG.AllocNodes.size());
   unsigned StartShadowSize = ShadowNodes.size();
@@ -369,13 +380,6 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
   GlobalNodes.reserve(StartGlobalSize+DSG.GlobalNodes.size());
   unsigned StartCallSize = CallNodes.size();
   CallNodes.reserve(StartCallSize+DSG.CallNodes.size());
-
-  // Clone all of the arg nodes...
-  for (unsigned i = 0, e = DSG.ArgNodes.size(); i != e; ++i) {
-    ArgDSNode *New = cast<ArgDSNode>(DSG.ArgNodes[i]->clone());
-    NodeMap[DSG.ArgNodes[i]] = New;
-    ArgNodes.push_back(New);
-  }
 
   // Clone all of the alloc nodes similarly...
   for (unsigned i = 0, e = DSG.AllocNodes.size(); i != e; ++i) {
@@ -408,8 +412,6 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
   // Convert all of the links over in the nodes now that the map has been filled
   // in all the way...
   //
-  for (unsigned i = 0, e = DSG.ArgNodes.size(); i != e; ++i)
-    ArgNodes[i+StartArgSize]->mapNode(NodeMap, DSG.ArgNodes[i]);
   for (unsigned i = 0, e = DSG.AllocNodes.size(); i != e; ++i)
     AllocNodes[i+StartAllocSize]->mapNode(NodeMap, DSG.AllocNodes[i]);
   for (unsigned i = 0, e = DSG.ShadowNodes.size(); i != e; ++i)
@@ -418,6 +420,18 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
     GlobalNodes[i+StartGlobalSize]->mapNode(NodeMap, DSG.GlobalNodes[i]);
   for (unsigned i = 0, e = DSG.CallNodes.size(); i != e; ++i)
     CallNodes[i+StartCallSize]->mapNode(NodeMap, DSG.CallNodes[i]);
+
+  // Convert over the arguments...
+  Function *OF = DSG.getFunction();
+  for (Function::ArgumentListType::iterator I = OF->getArgumentList().begin(),
+         E = OF->getArgumentList().end(); I != E; ++I)
+    if (isa<PointerType>(((Value*)*I)->getType())) {
+      PointerValSet ArgPVS;
+      assert(DSG.getValueMap().find((Value*)*I) != DSG.getValueMap().end());
+      MapPVS(ArgPVS, DSG.getValueMap().find((Value*)*I)->second, NodeMap);
+      assert(!ArgPVS.empty() && "Argument has no links!");
+      Args.push_back(ArgPVS);
+    }
 
 
   if (CloneValueMap) {
@@ -439,8 +453,6 @@ PointerValSet FunctionDSGraph::cloneFunctionIntoSelf(const FunctionDSGraph &DSG,
 FunctionDSGraph::~FunctionDSGraph() {
   RetNode.clear();
   ValueMap.clear();
-  for_each(ArgNodes.begin(), ArgNodes.end(),
-           mem_fun(&DSNode::dropAllReferences));
   for_each(AllocNodes.begin(), AllocNodes.end(),
            mem_fun(&DSNode::dropAllReferences));
   for_each(ShadowNodes.begin(), ShadowNodes.end(),
@@ -449,7 +461,6 @@ FunctionDSGraph::~FunctionDSGraph() {
            mem_fun(&DSNode::dropAllReferences));
   for_each(CallNodes.begin(), CallNodes.end(),
            mem_fun(&DSNode::dropAllReferences));
-  for_each(ArgNodes.begin(),    ArgNodes.end(),    deleter<DSNode>);
   for_each(AllocNodes.begin(),  AllocNodes.end(),  deleter<DSNode>);
   for_each(ShadowNodes.begin(), ShadowNodes.end(), deleter<DSNode>);
   for_each(GlobalNodes.begin(), GlobalNodes.end(), deleter<DSNode>);

@@ -147,18 +147,12 @@ void FunctionRepBuilder::initializeWorkList(Function *Func) {
     Value *Arg = (Value*)(*I);
     // Only process arguments that are of pointer type...
     if (PointerType *PT = dyn_cast<PointerType>(Arg->getType())) {
-      ArgDSNode *ArgNode = new ArgDSNode(*I);
-      ArgNodes.push_back(ArgNode);
-      
-      // Add a critical shadow value for it to represent what it is pointing
-      // to and add this to the value map...
+      // Add a shadow value for it to represent what it is pointing to and add
+      // this to the value map...
       ShadowDSNode *Shad = new ShadowDSNode(PT->getElementType(),
                                             Func->getParent(), true);
       ShadowNodes.push_back(Shad);
       ValueMap[Arg].add(PointerVal(Shad), Arg);
-      
-      // The value of the argument is the shadow value...
-      ArgNode->getLink(0).add(Shad);
       
       // Make sure that all users of the argument are processed...
       addAllUsesToWorkList(Arg);
@@ -332,7 +326,6 @@ void FunctionRepBuilder::visitPHINode(PHINode *PN) {
 //
 FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
   FunctionRepBuilder Builder(this);
-  ArgNodes    = Builder.getArgNodes();
   AllocNodes  = Builder.getAllocNodes();
   ShadowNodes = Builder.getShadowNodes();
   GlobalNodes = Builder.getGlobalNodes();
@@ -351,4 +344,3 @@ FunctionDSGraph::FunctionDSGraph(Function *F) : Func(F) {
     Changed |= RemoveUnreachableNodes();
   }
 }
-

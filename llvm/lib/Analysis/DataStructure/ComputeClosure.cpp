@@ -31,8 +31,17 @@ static void copyEdgesFromTo(PointerVal Val, DSNode *N) {
   }
 }
 
-static void ResolveNodesTo(const PointerVal &FromPtr,
+static void ResolveNodesTo(const PointerValSet &FromVals,
                            const PointerValSet &ToVals) {
+  // Only resolve the first pointer, although there many be many pointers here.
+  // The problem is that the inlined function might return one of the arguments
+  // to the function, and if so, extra values can be added to the arg or call
+  // node that point to what the other one got resolved to.  Since these will
+  // be added to the end of the PVS pointed in, we just ignore them.
+  //
+  assert(!FromVals.empty() && "From should have at least a shadow node!");
+  const PointerVal &FromPtr = FromVals[0];
+
   assert(FromPtr.Index == 0 &&
          "Resolved node return pointer should be index 0!");
   DSNode *N = FromPtr.Node;
@@ -58,14 +67,7 @@ static void ResolveNodeTo(DSNode *Node, const PointerValSet &ToVals) {
   assert(Node->getNumLinks() == 1 && "Resolved node can only be a scalar!!");
 
   const PointerValSet &PVS = Node->getLink(0);
-
-  // Only resolve the first pointer, although there many be many pointers here.
-  // The problem is that the inlined function might return one of the arguments
-  // to the function, and if so, extra values can be added to the arg or call
-  // node that point to what the other one got resolved to.  Since these will
-  // be added to the end of the PVS pointed in, we just ignore them.
-  //
-  ResolveNodesTo(PVS[0], ToVals);
+  ResolveNodesTo(PVS, ToVals);
 }
 
 // isResolvableCallNode - Return true if node is a call node and it is a call
@@ -167,40 +169,26 @@ void FunctionDSGraph::computeClosure(const DataStructure &DS) {
       // StartNode - The first node of the incorporated graph, last node of the
       // preexisting data structure graph...
       //
-      unsigned StartArgNode   = ArgNodes.size();
       unsigned StartAllocNode = AllocNodes.size();
 
       // Incorporate a copy of the called function graph into the current graph,
       // allowing us to do local transformations to local graph to link
       // arguments to call values, and call node to return value...
       //
-      RetVals = cloneFunctionIntoSelf(NewFunction, false);
+      vector<PointerValSet> Args;
+      RetVals = cloneFunctionIntoSelf(NewFunction, false, Args);
       CallMap.push_back(make_pair(CallDescriptor(CN->getArgs(), CN->getCall()),
                                   RetVals));
 
       // If the call node has arguments, process them now!
-      if (CN->getNumArgs()) {
-        // The ArgNodes of the incorporated graph should be the nodes starting
-        // at StartNode, ordered the same way as the call arguments.  The arg
-        // nodes are seperated by a single shadow node, but that shadow node
-        // might get eliminated in the process of optimization.
-        //
-        for (unsigned i = 0, e = CN->getNumArgs(); i != e; ++i) {
-          // Get the arg node of the incorporated method...
-          ArgDSNode *ArgNode = ArgNodes[StartArgNode];
-          
-          // Now we make all of the nodes inside of the incorporated method
-          // point to the real arguments values, not to the shadow nodes for the
-          // argument.
-          //
-          ResolveNodeTo(ArgNode, CN->getArgValues(i));
-          
-          // Remove the argnode from the set of nodes in this method...
-          ArgNodes.erase(ArgNodes.begin()+StartArgNode);
-            
-          // ArgNode is no longer useful, delete now!
-          delete ArgNode;
-        }
+      assert(Args.size() == CN->getNumArgs() &&
+             "Call node doesn't match function?");
+
+      for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+        // Now we make all of the nodes inside of the incorporated method
+        // point to the real arguments values, not to the shadow nodes for the
+        // argument.
+        ResolveNodesTo(Args[i], CN->getArgValues(i));
       }
 
       // Loop through the nodes, deleting alloca nodes in the inlined function.

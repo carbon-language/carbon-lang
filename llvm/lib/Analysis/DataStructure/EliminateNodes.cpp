@@ -250,11 +250,6 @@ void FunctionDSGraph::MarkEscapeableNodesReachable(
   // Recursively mark any shadow nodes pointed to by the newly live shadow
   // nodes as also alive.
   //
-  for (unsigned i = 0, e = ArgNodes.size(); i != e; ++i)
-    MarkReferredNodesReachable(ArgNodes[i],
-                               ShadowNodes, ReachableShadowNodes,
-                               AllocNodes, ReachableAllocNodes);
-  
   for (unsigned i = 0, e = GlobalNodes.size(); i != e; ++i)
     MarkReferredNodesReachable(GlobalNodes[i],
                                ShadowNodes, ReachableShadowNodes,
@@ -273,8 +268,10 @@ void FunctionDSGraph::MarkEscapeableNodesReachable(
 
 bool FunctionDSGraph::RemoveUnreachableNodes() {
   bool Changed = false;
-
-  while (1) {
+  bool LocalChange = true;
+  
+  while (LocalChange) {
+    LocalChange = false;
     // Reachable*Nodes - Contains true if there is an edge from a reachable
     // node to the numbered node...
     //
@@ -296,7 +293,6 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
     // a two part process, because we must drop all references before we delete
     // the shadow nodes [in case cycles exist].
     // 
-    bool LocalChange = false;
     for (unsigned i = 0; i != ShadowNodes.size(); ++i)
       if (!ReachableShadowNodes[i]) {
         // Track all unreachable nodes...
@@ -311,7 +307,7 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
         ReachableShadowNodes.erase(ReachableShadowNodes.begin()+i);
         ShadowNodes.erase(ShadowNodes.begin()+i);   // Remove node entry
         --i;  // Don't skip the next node.
-        LocalChange = true;
+        LocalChange = Changed = true;
       }
 
     for (unsigned i = 0; i != AllocNodes.size(); ++i)
@@ -328,13 +324,22 @@ bool FunctionDSGraph::RemoveUnreachableNodes() {
         ReachableAllocNodes.erase(ReachableAllocNodes.begin()+i);
         AllocNodes.erase(AllocNodes.begin()+i);   // Remove node entry
         --i;  // Don't skip the next node.
-        LocalChange = true;
+        LocalChange = Changed = true;
       }
-
-    if (!LocalChange) return Changed;      // No more dead nodes...
-
-    Changed = true;
   }
+
+  // Loop over the global nodes, removing nodes that have no edges into them.
+  //
+  for (std::vector<GlobalDSNode*>::iterator I = GlobalNodes.begin();
+       I != GlobalNodes.end(); )
+    if ((*I)->getReferrers().empty()) {       // No referrers...
+      delete *I;
+      I = GlobalNodes.erase(I);                     // Remove the node...
+      Changed = true;
+    } else {
+      ++I;
+    }
+  return Changed;
 }
 
 
