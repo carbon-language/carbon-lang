@@ -149,3 +149,10 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@test ! -f site.exp || mv site.exp site.bak
 	@mv site.tmp site.exp
 
+quick-test:
+	@if test -d "${QUICKTEST}" ; then \
+	  cd $(LLVM_SRC_ROOT)/test/$(QUICKTEST) ; \
+	  find . -name \*.ll -print -exec $(LLVM_SRC_ROOT)/test/TestRunner.sh {} \; ; \
+	else \
+	  echo "Set QUICKTEST=<some directory with TestRunner.sh .ll files in it" ; \
+	fi
