@@ -891,6 +891,9 @@ const char *SDNode::getOperationName() const {
   case ISD::DYNAMIC_STACKALLOC: return "dynamic_stackalloc";
   case ISD::EXTRACT_ELEMENT: return "extract_element";
   case ISD::BUILD_PAIR: return "build_pair";
+  case ISD::MEMSET:  return "memset";
+  case ISD::MEMCPY:  return "memcpy";
+  case ISD::MEMMOVE: return "memmove";
 
   case ISD::SETCC:
     const SetCCSDNode *SetCC = cast<SetCCSDNode>(this);
