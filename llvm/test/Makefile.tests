@@ -36,12 +36,7 @@ endif
 
 TOOLS    = $(LLVMTOOLCURRENT)
 
-# LLVM Tool Definitions...
-#
-LCC      = $(LLVMGCC)   ## FIXME: remove these definitions, use LLVMGCC directly
-LCXX     = $(LLVMGXX)   ## FIXME: remove these definitions, use LLVMGXX directly
-LAS      = $(LLVMAS)    ## FIXME: remove these definitions, use LLVMAS directly
-
+# LLVM Tool Definitions (LLVMGCC, LLVMGXX, LLVMAS are provided by Makefile.rules)
 LLI      = $(TOOLS)/lli
 LLC      = $(TOOLS)/llc
 LGCCAS   = $(TOOLS)/gccas
