@@ -19,82 +19,154 @@
 #include "llvm/Function.h"
 #include "llvm/iMemory.h"
 #include "llvm/iOther.h"
-#include "llvm/InstrTypes.h"
+#include "llvm/iOperators.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/InstVisitor.h"
 #include "../TransformInternals.h"
 
-static Instruction *CombineBinOp(BinaryOperator *I) {
-  bool Changed = false;
 
-  // First thing we do is make sure that this instruction has a constant on the
-  // right hand side if it has any constant arguments.
-  //
+namespace {
+  class InstCombiner : public MethodPass,
+                       public InstVisitor<InstCombiner, Instruction*> {
+    // Worklist of all of the instructions that need to be simplified.
+    std::vector<Instruction*> WorkList;
+
+    void AddUsesToWorkList(Instruction *I) {
+      // The instruction was simplified, add all users of the instruction to
+      // the work lists because they might get more simplified now...
+      //
+      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+           UI != UE; ++UI)
+        WorkList.push_back(cast<Instruction>(*UI));
+    }
+
+  public:
+
+
+    virtual bool runOnMethod(Function *F);
+
+    // Visitation implementation - Implement instruction combining for different
+    // instruction types.  The semantics are as follows:
+    // Return Value:
+    //    null        - No change was made
+    //     I          - Change was made, I is still valid
+    //   otherwise    - Change was made, replace I with returned instruction
+    //   
+
+    Instruction *visitAdd(BinaryOperator *I);
+    Instruction *visitSub(BinaryOperator *I);
+    Instruction *visitMul(BinaryOperator *I);
+    Instruction *visitCastInst(CastInst *CI);
+    Instruction *visitMemAccessInst(MemAccessInst *MAI);
+
+    // visitInstruction - Specify what to return for unhandled instructions...
+    Instruction *visitInstruction(Instruction *I) { return 0; }
+  };
+}
+
+
+
+// Make sure that this instruction has a constant on the right hand side if it
+// has any constant arguments.  If not, fix it an return true.
+//
+static bool SimplifyBinOp(BinaryOperator *I) {
   if (isa<Constant>(I->getOperand(0)) && !isa<Constant>(I->getOperand(1)))
     if (!I->swapOperands())
-      Changed = true;
+      return true;
+  return false;
+}
 
-  bool LocalChange = true;
-  while (LocalChange) {
-    LocalChange = false;
-    Value *Op1 = I->getOperand(0);
-    if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1))) {
-      switch (I->getOpcode()) {
-      case Instruction::Add:
-        if (I->getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(0)){
-          // Eliminate 'add int %X, 0'
-          I->replaceAllUsesWith(Op1);       // FIXME: This breaks the worklist
-          Changed = true;
+Instruction *InstCombiner::visitAdd(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead add instructions...
+  bool Changed = SimplifyBinOp(I);
+  Value *Op1 = I->getOperand(0);
+
+  // Simplify add instructions with a constant RHS...
+  if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1))) {
+    // Eliminate 'add int %X, 0'
+    if (I->getType()->isIntegral() && Op2->isNullValue()) {
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Op1);
+      return I;
+    }
+ 
+    if (BinaryOperator *IOp1 = dyn_cast<BinaryOperator>(Op1)) {
+      Changed |= SimplifyBinOp(IOp1);
+      
+      if (IOp1->getOpcode() == Instruction::Add &&
+          isa<Constant>(IOp1->getOperand(1))) {
+        // Fold:
+        //    %Y = add int %X, 1
+        //    %Z = add int %Y, 1
+        // into:
+        //    %Z = add int %X, 2
+        //
+        if (Constant *Val = *Op2 + *cast<Constant>(IOp1->getOperand(1))) {
+          I->setOperand(0, IOp1->getOperand(0));
+          I->setOperand(1, Val);
           return I;
         }
-
-        if (Instruction *IOp1 = dyn_cast<Instruction>(Op1)) {
-          if (IOp1->getOpcode() == Instruction::Add &&
-              isa<Constant>(IOp1->getOperand(1))) {
-            // Fold:
-            //    %Y = add int %X, 1
-            //    %Z = add int %Y, 1
-            // into:
-            //    %Z = add int %X, 2
-            //   
-            // Constant fold both constants...
-            Constant *Val = *Op2 + *cast<Constant>(IOp1->getOperand(1));
-            
-            if (Val) {
-              I->setOperand(0, IOp1->getOperand(0));
-              I->setOperand(1, Val);
-              LocalChange = true;
-              break;
-            }
-          }
-          
-        }
-        break;
-
-      case Instruction::Mul:
-        if (I->getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(1)){
-          // Eliminate 'mul int %X, 1'
-          I->replaceAllUsesWith(Op1);      // FIXME: This breaks the worklist
-          LocalChange = true;
-          break;
-        }
-
-      default:
-        break;
       }
     }
-    Changed |= LocalChange;
   }
 
-  if (!Changed) return 0;
-  return I;
+  return Changed ? I : 0;
+}
+
+Instruction *InstCombiner::visitSub(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead add instructions...
+  bool Changed = SimplifyBinOp(I);
+
+  // If this is a subtract instruction with a constant RHS, convert it to an add
+  // instruction of a negative constant
+  //
+  if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1)))
+    // Calculate 0 - RHS
+    if (Constant *RHS = *Constant::getNullConstant(I->getType()) - *Op2) {
+      return BinaryOperator::create(Instruction::Add, I->getOperand(0), RHS,
+                                    I->getName());
+    }
+
+  return Changed ? I : 0;
+}
+
+Instruction *InstCombiner::visitMul(BinaryOperator *I) {
+  if (I->use_empty()) return 0;       // Don't fix dead add instructions...
+  bool Changed = SimplifyBinOp(I);
+  Value *Op1 = I->getOperand(0);
+
+  // Simplify add instructions with a constant RHS...
+  if (Constant *Op2 = dyn_cast<Constant>(I->getOperand(1))) {
+    if (I->getType()->isIntegral() && cast<ConstantInt>(Op2)->equalsInt(1)){
+      // Eliminate 'mul int %X, 1'
+      AddUsesToWorkList(I);         // Add all modified instrs to worklist
+      I->replaceAllUsesWith(Op1);
+      return I;
+    }
+  }
+
+  return Changed ? I : 0;
+}
+
+
+// CastInst simplification - If the user is casting a value to the same type,
+// eliminate this cast instruction...
+//
+Instruction *InstCombiner::visitCastInst(CastInst *CI) {
+  if (CI->getType() == CI->getOperand(0)->getType() && !CI->use_empty()) {
+    AddUsesToWorkList(CI);         // Add all modified instrs to worklist
+    CI->replaceAllUsesWith(CI->getOperand(0));
+    return CI;
+  }
+  return 0;
 }
 
 // Combine Indices - If the source pointer to this mem access instruction is a
 // getelementptr instruction, combine the indices of the GEP into this
 // instruction
 //
-static Instruction *CombineIndicies(MemAccessInst *MAI) {
+Instruction *InstCombiner::visitMemAccessInst(MemAccessInst *MAI) {
   GetElementPtrInst *Src =
     dyn_cast<GetElementPtrInst>(MAI->getPointerOperand());
   if (!Src) return 0;
@@ -132,57 +204,32 @@ static Instruction *CombineIndicies(MemAccessInst *MAI) {
   return 0;
 }
 
-static bool CombineInstruction(Instruction *I) {
-  Instruction *Result = 0;
-  if (BinaryOperator *BOP = dyn_cast<BinaryOperator>(I))
-    Result = CombineBinOp(BOP);
-  else if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(I))
-    Result = CombineIndicies(MAI);
-  else if (CastInst *CI = dyn_cast<CastInst>(I)) {
-    if (CI->getType() == CI->getOperand(0)->getType() && !CI->use_empty()) {
-      CI->replaceAllUsesWith(CI->getOperand(0));
-      return true;
-    }
-      
-  }
 
-  if (!Result) return false;
-  if (Result == I) return true;
+bool InstCombiner::runOnMethod(Function *F) {
+  bool Changed = false;
 
-  // If we get to here, we are to replace I with Result.
-  ReplaceInstWithInst(I, Result);
-  return true;
-}
-
-static bool doInstCombining(Function *M) {
-  // Start the worklist out with all of the instructions in the function in it.
-  std::vector<Instruction*> WorkList(inst_begin(M), inst_end(M));
+  WorkList.insert(WorkList.end(), inst_begin(F), inst_end(F));
 
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist
     WorkList.pop_back();
 
     // Now that we have an instruction, try combining it to simplify it...
-    if (CombineInstruction(I)) {
-      // The instruction was simplified, add all users of the instruction to
-      // the work lists because they might get more simplified now...
-      //
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI)
-        if (Instruction *User = dyn_cast<Instruction>(*UI))
-          WorkList.push_back(User);
+    Instruction *Result = visit(I);
+    if (Result) {
+      // Should we replace the old instruction with a new one?
+      if (Result != I)
+        ReplaceInstWithInst(I, Result);
+
+      WorkList.push_back(Result);
+      AddUsesToWorkList(Result);
+      Changed = true;
     }
   }
 
-  return false;
-}
-
-namespace {
-  struct InstructionCombining : public MethodPass {
-    virtual bool runOnMethod(Function *F) { return doInstCombining(F); }
-  };
+  return Changed;
 }
 
 Pass *createInstructionCombiningPass() {
-  return new InstructionCombining();
+  return new InstCombiner();
 }
