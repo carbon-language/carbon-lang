@@ -9,6 +9,7 @@
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Target/MachineCacheInfo.h"
 #include "llvm/CodeGen/PreSelection.h"
+#include "llvm/CodeGen/StackSlots.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/RegisterAllocation.h"
@@ -118,6 +119,10 @@ TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
 {
   // Construct and initialize the MachineCodeForMethod object for this fn.
   PM.add(new ConstructMachineCodeForFunction(*this));
+
+  //Insert empty stackslots in the stack frame of each function
+  //so %fp+offset-8 and %fp+offset-16 are empty slots now!
+  PM.add(createStackSlotsPass(*this));
 
   // Specialize LLVM code for this target machine and then
   // run basic dataflow optimizations on LLVM code.
