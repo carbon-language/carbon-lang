@@ -212,6 +212,7 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.dbg.region.start")return Intrinsic::dbg_region_start;
     if (getName() == "llvm.dbg.region.end")  return Intrinsic::dbg_region_end;
     if (getName() == "llvm.dbg.func.start")  return Intrinsic::dbg_func_start;
+    if (getName() == "llvm.dbg.declare")     return Intrinsic::dbg_declare;
     break;
   case 'l':
     if (getName() == "llvm.longjmp")  return Intrinsic::longjmp;
