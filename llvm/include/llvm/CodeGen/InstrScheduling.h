@@ -1,4 +1,4 @@
-// $Id$
+// $Id$ -*- C++ -*-
 //***************************************************************************
 // File:
 //	InstrScheduling.h
@@ -13,17 +13,13 @@
 #define LLVM_CODEGEN_INSTR_SCHEDULING_H
 
 
-//************************ User Include Files *****************************/
-
 #include "llvm/Support/CommandLine.h"
-#include "llvm/CodeGen/TargetMachine.h"
-
-//************************ Opaque Declarations*****************************/
+#include "llvm/CodeGen/MachineInstr.h"
 
 class Method;
 class SchedulingManager;
+class TargetMachine;
 
-//************************ Exported Data Types *****************************/
 
 // Debug option levels for instruction scheduling
 enum SchedDebugLevel_t {
@@ -35,11 +31,6 @@ enum SchedDebugLevel_t {
 
 extern cl::Enum<SchedDebugLevel_t> SchedDebugLevel;
 
-
-//************************** External Classes ******************************/
-
-
-//************************* External Functions *****************************/
 
 
 //---------------------------------------------------------------------------
@@ -80,7 +71,4 @@ bool		ScheduleInstructions		(Method* method,
 
 bool		instrIsFeasible			(const SchedulingManager& S,
 						 MachineOpCode opCode);
-
-//**************************************************************************/
-
 #endif
