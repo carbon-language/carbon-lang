@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "Support/Debug.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
 #include <iostream>
 using namespace llvm;
 
@@ -134,8 +135,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 unsigned Added = MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
                 numInstrsAdded += Added;
 
-                MachineBasicBlock::iterator prevMi = mi;
-                --prevMi;
+                MachineBasicBlock::iterator prevMi = prior(mi);
                 DEBUG(std::cerr << "\t\tadded instruction: ";
                       prevMi->print(std::cerr, TM));
 

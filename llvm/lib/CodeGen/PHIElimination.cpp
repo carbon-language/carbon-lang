@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CFG.h"
+#include "Support/STLExtras.h"
 
 namespace llvm {
 
@@ -171,8 +172,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       bool HaveNotEmitted = true;
       
       if (I != opBlock.begin()) {
-        MachineBasicBlock::iterator PrevInst = I;
-        --PrevInst;
+        MachineBasicBlock::iterator PrevInst = prior(I);
         for (unsigned i = 0, e = PrevInst->getNumOperands(); i != e; ++i) {
           MachineOperand &MO = PrevInst->getOperand(i);
           if (MO.isRegister() && MO.getReg() == IncomingReg)
@@ -253,8 +253,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           // kills the incoming value!
           //
           if (!ValueIsLive) {
-            MachineBasicBlock::iterator Prev = I;
-            --Prev;
+            MachineBasicBlock::iterator Prev = prior(I);
             LV->addVirtualRegisterKilled(SrcReg, &opBlock, Prev);
           }
         }

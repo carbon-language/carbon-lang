@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "Support/STLExtras.h"
 
 namespace llvm {
 
@@ -31,7 +32,7 @@ DeleteInstruction(MachineBasicBlock& mvec,
   // Check if this instruction is in a delay slot of its predecessor.
   if (BBI != mvec.begin()) {
       const TargetInstrInfo& mii = target.getInstrInfo();
-      MachineBasicBlock::iterator predMI = BBI; --predMI;
+      MachineBasicBlock::iterator predMI = prior(BBI);
       if (unsigned ndelay = mii.getNumDelaySlots(predMI->getOpcode())) {
         // This instruction is in a delay slot of its predecessor, so
         // replace it with a nop. By replacing in place, we save having

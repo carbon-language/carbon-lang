@@ -16,6 +16,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
+
 using namespace llvm;
 
 namespace {
@@ -51,7 +53,7 @@ bool PH::runOnMachineFunction(MachineFunction &MF) {
 bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
 			  MachineBasicBlock::iterator &I) {
   assert(I != MBB.end());
-  MachineBasicBlock::iterator NextI = I; ++NextI;
+  MachineBasicBlock::iterator NextI = next(I);
 
   MachineInstr *MI = I;
   MachineInstr *Next = (NextI != MBB.end()) ? &*NextI : (MachineInstr*)0;
@@ -376,7 +378,7 @@ bool SSAPH::OptimizeAddress(MachineInstr *MI, unsigned OpNo) {
 
 bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator &I) {
-  MachineBasicBlock::iterator NextI = I; ++NextI;
+    MachineBasicBlock::iterator NextI = next(I);
 
   MachineInstr *MI = I;
   MachineInstr *Next = (NextI != MBB.end()) ? &*NextI : (MachineInstr*)0;

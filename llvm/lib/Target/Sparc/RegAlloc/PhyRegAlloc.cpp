@@ -514,7 +514,7 @@ void PhyRegAlloc::updateMachineCode()
     for (MachineBasicBlock::iterator MII = MBB.begin(); MII != MBB.end(); ++MII)
       if (unsigned delaySlots =
           TM.getInstrInfo().getNumDelaySlots(MII->getOpcode())) { 
-          MachineBasicBlock::iterator DelaySlotMI = MII; ++DelaySlotMI;
+          MachineBasicBlock::iterator DelaySlotMI = next(MII);
           assert(DelaySlotMI != MBB.end() && "no instruction for delay slot");
           
           // Check the 2 conditions above:
@@ -552,8 +552,7 @@ void PhyRegAlloc::updateMachineCode()
           else {
             // For non-branch instr with delay slots (probably a call), move
             // InstrAfter to the instr. in the last delay slot.
-            MachineBasicBlock::iterator tmp = MII;
-            std::advance(tmp, delaySlots);
+            MachineBasicBlock::iterator tmp = next(MII, delaySlots);
             move2DelayedInstr(MII, tmp);
           }
       }
@@ -646,8 +645,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
   // include all live variables before that branch or return -- we don't want to
   // trample those!  Verify that the set is included in the LV set before MInst.
   if (MII != MBB.begin()) {
-    MachineBasicBlock::iterator PredMI = MII;
-    --PredMI;
+    MachineBasicBlock::iterator PredMI = prior(MII);
     if (unsigned DS = TM.getInstrInfo().getNumDelaySlots(PredMI->getOpcode()))
       assert(set_difference(LVI->getLiveVarSetBeforeMInst(PredMI), LVSetBef)
              .empty() && "Live-var set before branch should be included in "

@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "Support/CommandLine.h"
+#include "Support/STLExtras.h"
 
 namespace llvm {
 
@@ -223,7 +224,7 @@ int X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   unsigned oldSize = MBB.size();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineBasicBlock::iterator MBBI = MBB.end(); --MBBI;
+  MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
   assert(MBBI->getOpcode() == X86::RET &&
          "Can only insert epilog into returning blocks");

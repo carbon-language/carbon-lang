@@ -42,6 +42,7 @@
 #include "Support/Debug.h"
 #include "Support/DepthFirstIterator.h"
 #include "Support/Statistic.h"
+#include "Support/STLExtras.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
@@ -199,11 +200,8 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       continue;  // Efficiently ignore non-fp insts!
 
     MachineInstr *PrevMI = 0;
-    if (I != BB.begin()) {
-        MachineBasicBlock::iterator tmp = I;
-        --tmp;
-        PrevMI = tmp;
-    }
+    if (I != BB.begin())
+        PrevMI = prior(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
     DEBUG(std::cerr << "\nFPInst:\t";
