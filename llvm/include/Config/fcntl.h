@@ -1,4 +1,4 @@
-// 
+/* 
  *                     The LLVM Compiler Infrastructure
  *
  * This file was developed by the LLVM research group and is distributed under
