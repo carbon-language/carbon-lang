@@ -18,6 +18,8 @@
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -parallel        Run two parallel jobs with GNU Make.
+#  -enable-linscan  Enable linearscan tests
+#
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
 #  just /dir if using a local repo.
@@ -117,7 +119,7 @@ my $NOREMOVE   = 0;
 my $NOTEST     = 0;
 my $NORUNNINGTESTS = 0;
 my $MAKEOPTS   = "";
-
+my $ENABLELINEARSCAN = "";
 
 # Parse arguments...
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
@@ -130,6 +132,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-notest$/)         { $NOTEST     = 1; $NORUNNINGTESTS = 1; next; }
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS   = "-j2 -l3.0"; next; }
+  if (/^-enable-linscan$/) { $ENABLELINEARSCAN = "ENABLE_LINEARSCAN=1"; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -323,8 +326,8 @@ sub TestDirectory {
 
   # Run the programs tests... creating a report.nightly.html file
   if (!$NOTEST) {
-    system "gmake -k $MAKEOPTS report.nightly.html TEST=nightly "
-         . "> $Prefix-$SubDir-ProgramTest.txt 2>&1";
+    system "gmake -k $MAKEOPTS $ENABLELINEARSCAN report.nightly.html "
+         . "TEST=nightly > $Prefix-$SubDir-ProgramTest.txt 2>&1";
   } else {
     system "gunzip $Prefix-$SubDir-ProgramTest.txt.gz";
   }
