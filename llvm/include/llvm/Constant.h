@@ -21,7 +21,7 @@ namespace llvm {
 class Constant : public User {
 protected:
   inline Constant(const Type *Ty, ValueTy vty = Value::SimpleConstantVal, 
-	          const std::string& Name = "" ) 
+                  const std::string& Name = "")
   : User(Ty, vty, Name) {}
   ~Constant() {}
 
@@ -48,7 +48,6 @@ public:
   /// destroyConstantImpl as the last thing they do, to destroy all users and
   /// delete this.
   virtual void destroyConstant() { assert(0 && "Not reached!"); }
-
   
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
@@ -57,8 +56,8 @@ public:
     return V->getValueType() == Value::SimpleConstantVal ||
            V->getValueType() == Value::ConstantExprVal ||
            V->getValueType() == Value::ConstantAggregateZeroVal ||
-	   V->getValueType() == Value::FunctionVal ||
-	   V->getValueType() == Value::GlobalVariableVal;
+           V->getValueType() == Value::FunctionVal ||
+           V->getValueType() == Value::GlobalVariableVal;
   }
 
   /// replaceUsesOfWithOnConstant - This method is a special form of
