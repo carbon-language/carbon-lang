@@ -48,7 +48,10 @@ IMPREGSLIST(O_ST0, X86::ST0, 0)
 
 // Arguments to be passed into the I macro
 //  #1: Enum name - This ends up being the opcode symbol in the X86 namespace
-//  #2: Opcode name, as used by the gnu assembler
+//  #2: Opcode name, as used by the Intel assembler. This should be in
+//      ALL CAPS for pseudo-instructions (which the assembler should never
+//      see), or all lowercase for real instructions (which the assembler
+//      should see).
 //  #3: The base opcode for the instruction
 //  #4: Instruction Flags - This should be a field or'd together that contains
 //      constants from the TargetInstrInfo.h file.
@@ -60,7 +63,7 @@ IMPREGSLIST(O_ST0, X86::ST0, 0)
 //
 
 // The first instruction must always be the PHI instruction:
-I(PHI         , "phi",      0,             0, X86II::Pseudo              , NoIR, NoIR)
+I(PHI         , "PHI",      0,             0, X86II::Pseudo              , NoIR, NoIR)
 
 // The second instruction must always be the noop instruction:
 I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void, NoIR, NoIR)             // nop
@@ -72,18 +75,18 @@ I(NOOP        , "nop",   0x90,             0, X86II::RawFrm | X86II::Void, NoIR,
 // instruction turns into a noop, but if the frame pointer is retained, this
 // turns into a 'sub ESP, <amount>'.
 //
-I(ADJCALLSTACKDOWN, "adjcallstackdown", 0, 0, X86II::Pseudo,               NoIR, NoIR)
+I(ADJCALLSTACKDOWN, "ADJCALLSTACKDOWN", 0, 0, X86II::Pseudo,               NoIR, NoIR)
 
 // This instruction is used to mark readjustment of the stack after a function
 // call.  If the frame pointer is retained, this becomes a 'add ESP, <amount>'
 // instruction after the call.
-I(ADJCALLSTACKUP  , "adjcallstackup"  , 0, 0, X86II::Pseudo,               NoIR, NoIR)
+I(ADJCALLSTACKUP  , "ADJCALLSTACKUP"  , 0, 0, X86II::Pseudo,               NoIR, NoIR)
 
 // This pseudo-instruction is used to record implicit uses of physical registers
 // at the end of the function.  This ensures that bad things aren't done to
 // registes that are live on exit from the function (for example, EAX).
 //
-I(IMPLICIT_USE, "implicit_use", 0, 0, X86II::Pseudo, NoIR, NoIR)
+I(IMPLICIT_USE, "IMPLICIT_USE", 0, 0, X86II::Pseudo, NoIR, NoIR)
 
 
 // Flow control instructions
@@ -288,15 +291,15 @@ I(MOVZXr32r16 , "movzx", 0xB7,             0, X86II::MRMSrcReg | X86II::TB, NoIR
 // FIXME: These need to indicate mod/ref sets for FP regs... & FP 'TOP'
 
 // Floating point pseudo instructions...
-I(FpMOV       , "fmov" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::SpecialFP, NoIR, NoIR)   // f1 = fmov f2
-I(FpADD       , "fadd" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fadd f2, f3
-I(FpSUB       , "fsub" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fsub f2, f3
-I(FpMUL       , "fmul" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fmul f2, f3
-I(FpDIV       , "fdiv" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fdiv f2, f3
-I(FpUCOM      , "fucom",     0, M_PSEUDO_FLAG,             X86II::Void | X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // FPSW = fucom f1, f2
+I(FpMOV       , "FMOV" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::SpecialFP, NoIR, NoIR)   // f1 = fmov f2
+I(FpADD       , "FADD" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fadd f2, f3
+I(FpSUB       , "FSUB" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fsub f2, f3
+I(FpMUL       , "FMUL" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fmul f2, f3
+I(FpDIV       , "FDIV" ,     0, M_PSEUDO_FLAG,                           X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // f1 = fdiv f2, f3
+I(FpUCOM      , "FUCOM",     0, M_PSEUDO_FLAG,             X86II::Void | X86II::ArgF80 | X86II::Pseudo | X86II::TwoArgFP , NoIR, NoIR)   // FPSW = fucom f1, f2
 
-I(FpGETRESULT , "fgetresult",0, M_PSEUDO_FLAG,                                           X86II::Pseudo | X86II::SpecialFP, NoIR, NoIR)  // FPR = ST(0)
-I(FpSETRESULT , "fsetresult",0, M_PSEUDO_FLAG | M_TERMINATOR_FLAG,         X86II::Void | X86II::Pseudo | X86II::SpecialFP, NoIR, NoIR)  // ST(0) = FPR
+I(FpGETRESULT , "FGETRESULT",0, M_PSEUDO_FLAG,                                           X86II::Pseudo | X86II::SpecialFP, NoIR, NoIR)  // FPR = ST(0)
+I(FpSETRESULT , "FSETRESULT",0, M_PSEUDO_FLAG | M_TERMINATOR_FLAG,         X86II::Void | X86II::Pseudo | X86II::SpecialFP, NoIR, NoIR)  // ST(0) = FPR
 
 // Floating point loads & stores...            PREFIX      ARGTYPE         ENCODING        FP INST TYPE      REF   MOD
 I(FLDr32      , "fld",   0xD9,            0,                           X86II::ArgF32 | X86II::MRMS0m | X86II::ZeroArgFP, NoIR, NoIR)   // load float
