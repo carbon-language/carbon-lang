@@ -146,7 +146,7 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 
 unsigned TargetData::getIndexedOffset(const Type *ptrTy,
 				      const vector<ConstPoolVal*> &Idx) const {
-  const PointerType *PtrTy = PtrTy->isPointerType();   // Returns null if not
+  const PointerType *PtrTy = ptrTy->isPointerType();   // Returns null if not
   assert(PtrTy && "getIndexedOffset on nonpointer!");
 
   unsigned Result = 0;
