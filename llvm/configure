@@ -23221,25 +23221,37 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
   if test "$cross_compiling" = yes; then
-  ac_cv_func_mmap_file=no
+  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
 else
   cat >conftest.$ac_ext <<_ACEOF
 
-#ifdef HAVE_SYS_TYPES_H
+    /* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
 #include <sys/types.h>
-#endif
-
-#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
+
+int
+main ()
+{
 
   int fd;
   int main () {
-  fd = creat ("foo",0777); fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0); unlink ("foo"); return (fd != (int) MAP_FAILED);}
+  fd = creat ("foo",0777);
+  fd = (int) mmap (0, 1, PROT_READ, MAP_SHARED, fd, 0);
+  unlink ("foo");
+  return (fd != (int) MAP_FAILED);}
+  ;
+  return 0;
+}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -23654,7 +23666,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
   oldcflags="$CFLAGS"
   CFLAGS="$CFLAGS -Wl,-R."
   cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
 int main() { return 0; }
+  ;
+  return 0;
+}
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
