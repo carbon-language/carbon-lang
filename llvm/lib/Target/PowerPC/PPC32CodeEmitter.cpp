@@ -7,6 +7,8 @@
 // 
 //===----------------------------------------------------------------------===//
 // 
+// This file defines the PowerPC 32-bit CodeEmitter and associated machinery to
+// JIT-compile bytecode to native PowerPC.
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +25,8 @@ namespace {
   class PPC32CodeEmitter : public MachineFunctionPass {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
+
+    int64_t getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
     PPC32CodeEmitter(TargetMachine &T, MachineCodeEmitter &M) 
@@ -41,12 +45,14 @@ namespace {
     /// emitWord - write a 32-bit word to memory at the current PC
     ///
     void emitWord(unsigned w) { MCE.emitWord(w); }
-
-    unsigned getValueBit(int64_t Val, unsigned bit);
+    
+    /// getValueBit - return the particular bit of Val
+    ///
+    unsigned getValueBit(int64_t Val, unsigned bit) { return (Val >> bit) & 1; }
 
     /// getBinaryCodeForInstr - returns the assembled code for an instruction
     ///
-    unsigned getBinaryCodeForInstr(MachineInstr &MI) { return 0; }
+    unsigned getBinaryCodeForInstr(MachineInstr &MI);
   };
 }
 
@@ -60,7 +66,7 @@ bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                     MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC
   PM.add(new PPC32CodeEmitter(*this, MCE)); 
-  // Delete machine code for this function after emitting it:
+  // Delete machine code for this function after emitting it
   PM.add(createMachineCodeDeleter());
   // We don't yet support machine code emission
   return true;
@@ -80,22 +86,26 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     emitWord(getBinaryCodeForInstr(*I));
 }
 
-unsigned PPC32CodeEmitter::getValueBit(int64_t Val, unsigned bit) {
-  Val >>= bit;
-  return (Val & 1);
+int64_t PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, 
+                                            MachineOperand &MO) {
+  abort();
+  return 0;
 }
+
 
 void *PPC32JITInfo::getJITStubForFunction(Function *F,
                                           MachineCodeEmitter &MCE) {
-  assert (0 && "PPC32JITInfo::getJITStubForFunction not implemented");
+  std::cerr << "PPC32JITInfo::getJITStubForFunction not implemented\n";
+  abort();
   return 0;
 }
 
 void PPC32JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
-  assert (0 && "PPC32JITInfo::replaceMachineCodeForFunction not implemented");
+  std::cerr << "PPC32JITInfo::replaceMachineCodeForFunction not implemented\n";
+  abort();
 }
 
-//#include "PowerPCGenCodeEmitter.inc"
+#include "PPC32GenCodeEmitter.inc"
 
 } // end llvm namespace
 
