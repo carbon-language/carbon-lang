@@ -24,6 +24,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/CallSite.h"
 #include "Support/Statistic.h"
 #include <algorithm>
 
@@ -73,6 +74,8 @@ namespace {
     Instruction *visitSetCondInst(BinaryOperator &I);
     Instruction *visitShiftInst(ShiftInst &I);
     Instruction *visitCastInst(CastInst &CI);
+    Instruction *visitCallInst(CallInst &CI);
+    Instruction *visitInvokeInst(InvokeInst &II);
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocationInst(AllocationInst &AI);
@@ -80,6 +83,9 @@ namespace {
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
+
+  private:
+    bool transformConstExprCastCall(CallSite CS);
 
     // InsertNewInstBefore - insert an instruction New before instruction Old
     // in the program.  Add the new instruction to the worklist.
@@ -107,7 +113,6 @@ namespace {
     // SimplifyCommutative - This performs a few simplifications for commutative
     // operators...
     bool SimplifyCommutative(BinaryOperator &I);
-
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -927,6 +932,145 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 
   return 0;
 }
+
+// CallInst simplification
+//
+Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+  if (transformConstExprCastCall(&CI)) return 0;
+  return 0;
+}
+
+// InvokeInst simplification
+//
+Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
+  if (transformConstExprCastCall(&II)) return 0;
+  return 0;
+}
+
+// getPromotedType - Return the specified type promoted as it would be to pass
+// though a va_arg area...
+static const Type *getPromotedType(const Type *Ty) {
+  switch (Ty->getPrimitiveID()) {
+  case Type::SByteTyID:
+  case Type::ShortTyID:  return Type::IntTy;
+  case Type::UByteTyID:
+  case Type::UShortTyID: return Type::UIntTy;
+  case Type::FloatTyID:  return Type::DoubleTy;
+  default:               return Ty;
+  }
+}
+
+// transformConstExprCastCall - If the callee is a constexpr cast of a function,
+// attempt to move the cast to the arguments of the call/invoke.
+//
+bool InstCombiner::transformConstExprCastCall(CallSite CS) {
+  if (!isa<ConstantExpr>(CS.getCalledValue())) return false;
+  ConstantExpr *CE = cast<ConstantExpr>(CS.getCalledValue());
+  if (CE->getOpcode() != Instruction::Cast ||
+      !isa<ConstantPointerRef>(CE->getOperand(0)))
+    return false;
+  ConstantPointerRef *CPR = cast<ConstantPointerRef>(CE->getOperand(0));
+  if (!isa<Function>(CPR->getValue())) return false;
+  Function *Callee = cast<Function>(CPR->getValue());
+  Instruction *Caller = CS.getInstruction();
+
+  // Okay, this is a cast from a function to a different type.  Unless doing so
+  // would cause a type conversion of one of our arguments, change this call to
+  // be a direct call with arguments casted to the appropriate types.
+  //
+  const FunctionType *FT = Callee->getFunctionType();
+  const Type *OldRetTy = Caller->getType();
+
+  if (Callee->isExternal() &&
+      !OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()))
+    return false;   // Cannot transform this return value...
+
+  unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
+  unsigned NumCommonArgs = std::min(FT->getNumParams(), NumActualArgs);
+                                    
+  CallSite::arg_iterator AI = CS.arg_begin();
+  for (unsigned i = 0, e = NumCommonArgs; i != e; ++i, ++AI) {
+    const Type *ParamTy = FT->getParamType(i);
+    bool isConvertible = (*AI)->getType()->isLosslesslyConvertibleTo(ParamTy);
+    if (Callee->isExternal() && !isConvertible) return false;    
+  }
+
+  if (FT->getNumParams() < NumActualArgs && !FT->isVarArg() &&
+      Callee->isExternal())
+    return false;   // Do not delete arguments unless we have a function body...
+
+  // Okay, we decided that this is a safe thing to do: go ahead and start
+  // inserting cast instructions as necessary...
+  std::vector<Value*> Args;
+  Args.reserve(NumActualArgs);
+
+  AI = CS.arg_begin();
+  for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
+    const Type *ParamTy = FT->getParamType(i);
+    if ((*AI)->getType() == ParamTy) {
+      Args.push_back(*AI);
+    } else {
+      Instruction *Cast = new CastInst(*AI, ParamTy, "tmp");
+      InsertNewInstBefore(Cast, *Caller);
+      Args.push_back(Cast);
+    }
+  }
+
+  // If the function takes more arguments than the call was taking, add them
+  // now...
+  for (unsigned i = NumCommonArgs; i != FT->getNumParams(); ++i)
+    Args.push_back(Constant::getNullValue(FT->getParamType(i)));
+
+  // If we are removing arguments to the function, emit an obnoxious warning...
+  if (FT->getNumParams() < NumActualArgs)
+    if (!FT->isVarArg()) {
+      std::cerr << "WARNING: While resolving call to function '"
+                << Callee->getName() << "' arguments were dropped!\n";
+    } else {
+      // Add all of the arguments in their promoted form to the arg list...
+      for (unsigned i = FT->getNumParams(); i != NumActualArgs; ++i, ++AI) {
+        const Type *PTy = getPromotedType((*AI)->getType());
+        if (PTy != (*AI)->getType()) {
+          // Must promote to pass through va_arg area!
+          Instruction *Cast = new CastInst(*AI, PTy, "tmp");
+          InsertNewInstBefore(Cast, *Caller);
+          Args.push_back(Cast);
+        } else {
+          Args.push_back(*AI);
+        }
+      }
+    }
+
+  if (FT->getReturnType() == Type::VoidTy)
+    Caller->setName("");   // Void type should not have a name...
+
+  Instruction *NC;
+  if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
+    NC = new InvokeInst(Callee, II->getNormalDest(), II->getExceptionalDest(),
+                        Args, Caller->getName(), Caller);
+  } else {
+    NC = new CallInst(Callee, Args, Caller->getName(), Caller);
+  }
+
+  // Insert a cast of the return type as necessary...
+  Value *NV = NC;
+  if (Caller->getType() != NV->getType() && !Caller->use_empty()) {
+    if (NV->getType() != Type::VoidTy) {
+      NV = NC = new CastInst(NC, Caller->getType(), "tmp");
+      InsertNewInstBefore(NC, *Caller);
+      AddUsesToWorkList(*Caller);
+    } else {
+      NV = Constant::getNullValue(Caller->getType());
+    }
+  }
+
+  if (Caller->getType() != Type::VoidTy && !Caller->use_empty())
+    Caller->replaceAllUsesWith(NV);
+  Caller->getParent()->getInstList().erase(Caller);
+  removeFromWorkList(Caller);
+  return true;
+}
+
 
 
 // PHINode simplification
