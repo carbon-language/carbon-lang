@@ -4,12 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-//#include "llvm/CodeGen/MachineCodeForBasicBlock.h"
-//#include "llvm/CodeGen/MachineCodeForMethod.h"
-//#include "llvm/Analysis/LiveVar/FunctionLiveVarInfo.h" // FIXME: Remove when modularized better
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
-#include "llvm/Instruction.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iPHINode.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -24,10 +20,6 @@
 #include "ModuloScheduling.h"
 #include <algorithm>
 #include <fstream>
-#include <iostream>
-
-using std::endl;
-using std::cerr;
 
 //************************************************************
 // printing Debug information
@@ -455,9 +447,9 @@ ModuloScheduling::constructKernel(BasicBlock *prologue,
   kernel_ist.erase(--kernel_ist.end());
 
   // set the first successor to itself
-  ((BranchInst *) cln)->setSuccessor(0, kernel);
+  cln->setSuccessor(0, kernel);
   // set the second successor to eiplogue
-  ((BranchInst *) cln)->setSuccessor(1, epilogue);
+  cln->setSuccessor(1, epilogue);
 
   //*****change the condition*******
 
@@ -907,38 +899,38 @@ ModuloScheduling::dumpScheduling(){
 void 
 ModuloScheduling::dumpFinalSchedule(){
 
-  cerr << "dump schedule:" << endl;
+  std::cerr << "dump schedule:" << "\n";
   const TargetSchedInfo & msi = target.getSchedInfo();
   unsigned numIssueSlots = msi.maxNumIssueTotal;
 
   for (unsigned i = 0; i < numIssueSlots; i++)
-    cerr << "\t#";
-  cerr << endl;
+    std::cerr << "\t#";
+  std::cerr << "\n";
 
   for (unsigned i = 0; i < schedule.size(); i++) {
-    cerr << "cycle" << i << ": ";
+    std::cerr << "cycle" << i << ": ";
     
     for (unsigned j = 0; j < schedule[i].size(); j++)
       if (schedule[i][j] != NULL)
-        cerr << schedule[i][j]->getNodeId() << "\t";
+        std::cerr << schedule[i][j]->getNodeId() << "\t";
       else
-        cerr << "\t";
-    cerr << endl;
+        std::cerr << "\t";
+    std::cerr << "\n";
   }
   
-  cerr << "dump coreSchedule:" << endl;
+  std::cerr << "dump coreSchedule:" << "\n";
   for (unsigned i = 0; i < numIssueSlots; i++)
-    cerr << "\t#";
-  cerr << endl;
+    std::cerr << "\t#";
+  std::cerr << "\n";
   
   for (unsigned i = 0; i < coreSchedule.size(); i++) {
-    cerr << "cycle" << i << ": ";
+    std::cerr << "cycle" << i << ": ";
     for (unsigned j = 0; j < coreSchedule[i].size(); j++)
       if (coreSchedule[i][j] != NULL)
-        cerr << coreSchedule[i][j]->getNodeId() << "\t";
+        std::cerr << coreSchedule[i][j]->getNodeId() << "\t";
       else
-        cerr << "\t";
-    cerr << endl;
+        std::cerr << "\t";
+    std::cerr << "\n";
   }
 }
 
@@ -979,13 +971,13 @@ ModuloSchedulingPass::runOnFunction(Function &F){
 
   ModuloSchedulingSet ModuloSchedulingSet(*graphSet);
   
-  DEBUG_PRINT(cerr<<"runOnFunction  in ModuloSchedulingPass returns\n"<<endl);
+  DEBUG_PRINT(std::cerr<<"runOnFunction  in ModuloSchedulingPass returns\n"<<"\n");
   return false;
 }
 
 
 Pass *
 createModuloSchedulingPass(const TargetMachine & tgt){
-  DEBUG_PRINT(cerr<<"creating modulo scheduling "<<endl);
+  DEBUG_PRINT(std::cerr<<"creating modulo scheduling\n");
   return new ModuloSchedulingPass(tgt);
 }
