@@ -299,6 +299,15 @@ void Pass::dump() const {
 }
 
 //===----------------------------------------------------------------------===//
+// ImmutablePass Implementation
+//
+void ImmutablePass::addToPassManager(PassManagerT<Module> *PM,
+                                     AnalysisUsage &AU) {
+  PM->addPass(this, AU);
+}
+
+
+//===----------------------------------------------------------------------===//
 // FunctionPass Implementation
 //
 

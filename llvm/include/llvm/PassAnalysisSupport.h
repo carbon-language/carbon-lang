@@ -86,6 +86,7 @@ public:
 struct AnalysisResolver {
   virtual Pass *getAnalysisOrNullUp(AnalysisID ID) const = 0;
   virtual Pass *getAnalysisOrNullDown(AnalysisID ID) const = 0;
+  virtual void addPass(ImmutablePass *IP, AnalysisUsage &AU) = 0;
   Pass *getAnalysis(AnalysisID ID) const {
     Pass *Result = getAnalysisOrNullUp(ID);
     assert(Result && "Pass has an incorrect analysis uses set!");

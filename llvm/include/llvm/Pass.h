@@ -32,6 +32,7 @@ class Function;
 class Module;
 class AnalysisUsage;
 class PassInfo;
+class ImmutablePass;
 template<class UnitType> class PassManagerT;
 struct AnalysisResolver;
 
@@ -193,6 +194,24 @@ private:
 inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
   P.print(OS, 0); return OS;
 }
+
+
+
+//===----------------------------------------------------------------------===//
+/// ImmutablePass class - This class is used to provide information that does
+/// not need to be run.  This is useful for things like target information and
+/// "basic" versions of AnalysisGroups.
+///
+struct ImmutablePass : public Pass {
+
+  // ImmutablePasses are never run.
+  virtual bool run(Module &M) { return false; }
+
+private:
+  friend class PassManagerT<Module>;
+  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
+};
+
 
 //===----------------------------------------------------------------------===//
 /// FunctionPass class - This class is used to implement most global

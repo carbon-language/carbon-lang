@@ -129,8 +129,10 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
   friend typename Traits::PassClass;
   friend typename Traits::SubPassClass;  
   friend class Traits;
+  friend class ImmutablePass;
 
   std::vector<PassClass*> Passes;    // List of passes to run
+  std::vector<ImmutablePass*> ImmutablePasses;  // List of immutable passes
 
   // The parent of this pass manager...
   ParentClass * const Parent;
@@ -157,6 +159,10 @@ public:
     for (typename std::vector<PassClass*>::iterator
            I = Passes.begin(), E = Passes.end(); I != E; ++I)
       delete *I;
+
+    for (std::vector<ImmutablePass*>::iterator
+           I = ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
+      delete *I;
   }
 
   // run - Run all of the queued passes on the specified module in an optimal
@@ -165,6 +171,17 @@ public:
     bool MadeChanges = false;
     closeBatcher();
     CurrentAnalyses.clear();
+
+    // Add any immutable passes to the CurrentAnalyses set...
+    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i)
+      if (const PassInfo *PI = ImmutablePasses[i]->getPassInfo()) {
+        CurrentAnalyses[PI] = ImmutablePasses[i];
+
+        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+        for (unsigned i = 0, e = II.size(); i != e; ++i)
+          CurrentAnalyses[II[i]] = ImmutablePasses[i];
+      }
+
 
     // LastUserOf - This contains the inverted LastUseOfMap...
     std::map<Pass *, std::vector<Pass*> > LastUserOf;
@@ -238,13 +255,17 @@ public:
               PreservedSet.end())
             ++I; // This analysis is preserved, leave it in the available set...
           else {
+            if (!dynamic_cast<ImmutablePass*>(I->second)) {
 #if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
-            I = CurrentAnalyses.erase(I);   // Analysis not preserved!
+              I = CurrentAnalyses.erase(I);   // Analysis not preserved!
 #else
-            // GCC 2.95.3 STL doesn't have correct erase member!
-            CurrentAnalyses.erase(I);
-            I = CurrentAnalyses.begin();
+              // GCC 2.95.3 STL doesn't have correct erase member!
+              CurrentAnalyses.erase(I);
+              I = CurrentAnalyses.begin();
 #endif
+            } else {
+              ++I;
+            }
           }
       }
 
@@ -345,11 +366,15 @@ public:
       // parent that we (the passmanager) are using the analysis so that it
       // frees the analysis AFTER this pass manager runs.
       //
-      assert(Parent != 0 && "Pass available but not found!");
-      Parent->markPassUsed(P, this);
+      if (Parent) {
+        Parent->markPassUsed(P, this);
+      } else {
+        assert(0 && "Pass available but not found! "
+               "Perhaps this is a module pass requiring a function pass?");
+      }
     }
   }
-
+  
   // Return the number of parent PassManagers that exist
   virtual unsigned getDepth() const {
     if (Parent == 0) return 0;
@@ -428,18 +453,15 @@ private:
     if (!AnUsage.preservesAll()) {
       const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
       for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
-             E = CurrentAnalyses.end(); I != E; )
-        if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) !=
-            PreservedSet.end())
-          ++I;  // This analysis is preserved, leave it in the available set...
-        else {
-#if MAP_DOESNT_HAVE_BROKEN_ERASE_MEMBER
-          I = CurrentAnalyses.erase(I);   // Analysis not preserved!
-#else
-          CurrentAnalyses.erase(I);// GCC 2.95.3 STL doesn't have correct erase!
+             E = CurrentAnalyses.end(); I != E; ) {
+        if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) ==
+            PreservedSet.end()) {             // Analysis not preserved!
+          CurrentAnalyses.erase(I);           // Remove from available analyses
           I = CurrentAnalyses.begin();
-#endif
+        } else {
+          ++I;
         }
+      }
     }
 
     // Add this pass to the currently available set...
@@ -474,6 +496,34 @@ private:
     if (Batcher) {
       Passes.push_back(Batcher);
       Batcher = 0;
+    }
+  }
+
+public:
+  // When an ImmutablePass is added, it gets added to the top level pass
+  // manager.
+  void addPass(ImmutablePass *IP, AnalysisUsage &AU) {
+    if (Parent) { // Make sure this request goes to the top level passmanager...
+      Parent->addPass(IP, AU);
+      return;
+    }
+
+    // Set the Resolver instance variable in the Pass so that it knows where to 
+    // find this object...
+    //
+    setAnalysisResolver(IP, this);
+    ImmutablePasses.push_back(IP);
+    
+    // Add this pass to the currently available set...
+    if (const PassInfo *PI = IP->getPassInfo()) {
+      CurrentAnalyses[PI] = IP;
+
+      // This pass is the current implementation of all of the interfaces it
+      // implements as well.
+      //
+      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+      for (unsigned i = 0, e = II.size(); i != e; ++i)
+        CurrentAnalyses[II[i]] = IP;
     }
   }
 };
