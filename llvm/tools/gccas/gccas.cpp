@@ -23,7 +23,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <memory>
 #include <fstream>
 

@@ -31,7 +31,7 @@
 #include "llvm/Transforms/Utils/Linker.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include "Support/SystemUtils.h"
 #include <fstream>
 #include <memory>

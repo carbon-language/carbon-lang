@@ -20,7 +20,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 
 using namespace llvm;
 

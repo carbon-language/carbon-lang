@@ -24,7 +24,7 @@
 #include "Config/config.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include "Support/SystemUtils.h"
 #include <algorithm>
 #include <fstream>

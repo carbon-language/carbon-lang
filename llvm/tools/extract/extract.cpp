@@ -19,7 +19,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <memory>
 #include <fstream>
 using namespace llvm;

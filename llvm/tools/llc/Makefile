@@ -10,6 +10,7 @@ LEVEL = ../..
 TOOLNAME = llc
 USEDLIBS = cwriter \
            sparcv9 \
+           sparcv8 \
            x86 \
            powerpc \
            selectiondag \

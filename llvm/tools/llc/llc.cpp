@@ -21,7 +21,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <memory>
 #include <fstream>
 

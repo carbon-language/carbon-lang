@@ -15,7 +15,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
 #include "Support/FileUtilities.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <string>
 #include <fstream>
 #include <cstdio>

@@ -19,7 +19,7 @@
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Bytecode/Reader.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <cstdio>
 #include <map>
 #include <set>

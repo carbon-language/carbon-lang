@@ -21,7 +21,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineImpls.h"
 #include "llvm/Support/PassNameParser.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include "Support/SystemUtils.h"
 #include <fstream>
 #include <memory>

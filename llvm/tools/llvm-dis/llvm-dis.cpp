@@ -22,7 +22,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include <fstream>
 #include <memory>
 

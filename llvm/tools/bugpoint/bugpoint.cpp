@@ -17,7 +17,7 @@
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/ToolRunner.h"
 #include "Support/CommandLine.h"
-#include "Support/Signals.h"
+#include "llvm/System/Signals.h"
 #include "Config/unistd.h"
 #include <sys/resource.h>
 using namespace llvm;
