@@ -67,12 +67,13 @@ void AliasSet::removeFromTracker(AliasSetTracker &AST) {
 }
 
 void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
-                          unsigned Size) {
+                          unsigned Size, bool KnownMustAlias) {
   assert(!Entry.second.hasAliasSet() && "Entry already in set!");
 
   AliasAnalysis &AA = AST.getAliasAnalysis();
 
-  if (isMustAlias())    // Check to see if we have to downgrade to _may_ alias
+  // Check to see if we have to downgrade to _may_ alias.
+  if (isMustAlias() && !KnownMustAlias)
     if (HashNodePair *P = getSomePointer()) {
       AliasAnalysis::AliasResult Result =
         AA.alias(P->first, P->second.getSize(), Entry.first, Size);
@@ -400,7 +401,10 @@ bool AliasSetTracker::remove(Instruction *I) {
 // dangling pointers to deleted instructions.
 //
 void AliasSetTracker::deleteValue(Value *PtrVal) {
-  // First, look up the PointerRec for this pointer...
+  // Notify the alias analysis implementation that this value is gone.
+  AA.deleteValue(PtrVal);
+
+  // First, look up the PointerRec for this pointer.
   hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(PtrVal);
   if (I == PointerMap.end()) return;  // Noop
 
@@ -414,6 +418,29 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
   AS->dropRef(*this);
   PointerMap.erase(I);
 }
+
+// copyValue - This method should be used whenever a preexisting value in the
+// program is copied or cloned, introducing a new value.  Note that it is ok for
+// clients that use this method to introduce the same value multiple times: if
+// the tracker already knows about a value, it will ignore the request.
+//
+void AliasSetTracker::copyValue(Value *From, Value *To) {
+  // Notify the alias analysis implementation that this value is copied.
+  AA.copyValue(From, To);
+
+  // First, look up the PointerRec for this pointer.
+  hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(From);
+  if (I == PointerMap.end() || !I->second.hasAliasSet())
+    return;  // Noop
+
+  AliasSet::HashNodePair &Entry = getEntryFor(To);
+  if (Entry.second.hasAliasSet()) return;    // Already in the tracker!
+
+  // Add it to the alias set it aliases...
+  AliasSet *AS = I->second.getAliasSet(*this);
+  AS->addPointer(*this, Entry, I->second.getSize(), true);
+}
+
 
 
 //===----------------------------------------------------------------------===//
