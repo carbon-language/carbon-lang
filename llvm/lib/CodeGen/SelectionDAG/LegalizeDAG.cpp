@@ -320,8 +320,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::BRCOND:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    // FIXME: booleans might not be legal!
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the condition.
+
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Expand: assert(0 && "It's impossible to expand bools");
+    case Legal:
+      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
+      break;
+    case Promote:
+      Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
+      break;
+    }
     // Basic block destination (Op#2) is always legal.
     if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
       Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
@@ -524,8 +532,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   case ISD::SELECT:
-    // FIXME: BOOLS MAY REQUIRE PROMOTION!
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Cond
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "It's impossible to expand bools");
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
+      break;
+    case Promote:
+      Tmp1 = PromoteOp(Node->getOperand(0));  // Promote the condition.
+      break;
+    }
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
     Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
 
@@ -770,11 +785,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch (Node->getOpcode()) {
       case ISD::ZERO_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Result.getValueType(),
+        // NOTE: Any extend would work here...
+        Result = DAG.getNode(ISD::ZERO_EXTEND, Op.getValueType(), Result);
+        Result = DAG.getNode(ISD::ZERO_EXTEND_INREG, Op.getValueType(),
                              Result, Node->getOperand(0).getValueType());
         break;
       case ISD::SIGN_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
+        // NOTE: Any extend would work here...
+        Result = DAG.getNode(ISD::SIGN_EXTEND, Op.getValueType(), Result);
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
                              Result, Node->getOperand(0).getValueType());
         break;
@@ -1101,7 +1120,15 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
   case ISD::SELECT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the condition
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "It's impossible to expand bools");
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));// Legalize the condition.
+      break;
+    case Promote:
+      Tmp1 = PromoteOp(Node->getOperand(0)); // Promote the condition.
+      break;
+    }
     Tmp2 = PromoteOp(Node->getOperand(1));   // Legalize the op0
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
     Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
@@ -1238,8 +1265,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
   case ISD::SELECT: {
     SDOperand C, LL, LH, RL, RH;
-    // FIXME: BOOLS MAY REQUIRE PROMOTION!
-    C = LegalizeOp(Node->getOperand(0));
+
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "It's impossible to expand bools");
+    case Legal:
+      C = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
+      break;
+    case Promote:
+      C = PromoteOp(Node->getOperand(0));  // Promote the condition.
+      break;
+    }
     ExpandOp(Node->getOperand(1), LL, LH);
     ExpandOp(Node->getOperand(2), RL, RH);
     Lo = DAG.getNode(ISD::SELECT, NVT, C, LL, RL);
