@@ -815,12 +815,12 @@
     following is a brief introduction to the most important tools.</p>
 
     <dl compact>
-      <dt><tt><b>as</b></tt><dd>The assembler transforms the human readable
+      <dt><tt><b>llvm-as</b></tt><dd>The assembler transforms the human readable
       LLVM assembly to LLVM bytecode.<p>
 
-      <dt><tt><b>dis</b></tt><dd>The disassembler transforms the LLVM bytecode
-      to human readable LLVM assembly.  Additionally it can convert LLVM
-      bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
+      <dt><tt><b>llvm-dis</b></tt><dd>The disassembler transforms the LLVM
+      bytecode to human readable LLVM assembly.  Additionally it can convert
+      LLVM bytecode to C, which is enabled with the <tt>-c</tt> option.<p>
 
       <dt><tt><b>lli</b></tt><dd> <tt>lli</tt> is the LLVM interpreter, which
       can directly execute LLVM bytecode (although very slowly...). In addition
@@ -851,7 +851,7 @@
         <tt>x.o</tt> file (which is an LLVM bytecode file that can be
         disassembled or manipulated just like any other bytecode file).  The
         command line interface to <tt>gccas</tt> is designed to be as close as
-        possible to the <b>system</b> '<tt>as</tt>' utility so that the gcc
+        possible to the <b>system</b> `<tt>as</tt>' utility so that the gcc
         frontend itself did not have to be modified to interface to a "weird"
         assembler.<p>
 
@@ -1035,10 +1035,10 @@
 
       <tt>% lli hello.bc</tt><p>
 
-    <li>Use the <tt>dis</tt> utility to take a look at the LLVM assembly
+    <li>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
     code:<p>
 
-      <tt>% dis < hello.bc | less</tt><p>
+      <tt>% llvm-dis < hello.bc | less</tt><p>
 
     <li>Compile the program to native Sparc assembly using the code
     generator (assuming you are currently on a Sparc system):<p>
