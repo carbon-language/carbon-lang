@@ -111,6 +111,8 @@ bool Steens::run(Module &M) {
   ResultGraph = new DSGraph();
   GlobalsGraph = new DSGraph();
   ResultGraph->setGlobalsGraph(GlobalsGraph);
+  ResultGraph->setPrintAuxCalls();
+
   // RetValMap - Keep track of the return values for all functions that return
   // valid pointers.
   //
