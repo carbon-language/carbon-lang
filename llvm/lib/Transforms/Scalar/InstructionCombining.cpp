@@ -61,6 +61,7 @@ namespace {
     Instruction *visitSub(BinaryOperator *I);
     Instruction *visitMul(BinaryOperator *I);
     Instruction *visitCastInst(CastInst *CI);
+    Instruction *visitGetElementPtrInst(GetElementPtrInst *GEP);
     Instruction *visitMemAccessInst(MemAccessInst *MAI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
@@ -163,17 +164,74 @@ Instruction *InstCombiner::visitMul(BinaryOperator *I) {
 }
 
 
-// CastInst simplification - If the user is casting a value to the same type,
-// eliminate this cast instruction...
+// isEliminableCastOfCast - Return true if it is valid to eliminate the CI
+// instruction.
+//
+static inline bool isEliminableCastOfCast(const CastInst *CI,
+                                          const CastInst *CSrc) {
+  assert(CI->getOperand(0) == CSrc);
+  const Type *SrcTy = CSrc->getOperand(0)->getType();
+  const Type *MidTy = CSrc->getType();
+  const Type *DstTy = CI->getType();
+
+  // It is legal to eliminate the instruction if casting A->B->A
+  if (SrcTy == DstTy) return true;
+
+  // Allow free casting and conversion of sizes as long as the sign doesn't
+  // change...
+  if (SrcTy->isSigned() == MidTy->isSigned() &&
+      MidTy->isSigned() == DstTy->isSigned())
+    return true;
+
+  // Otherwise, we cannot succeed.  Specifically we do not want to allow things
+  // like:  short -> ushort -> uint, because this can create wrong results if
+  // the input short is negative!
+  //
+  return false;
+}
+
+
+// CastInst simplification
 //
 Instruction *InstCombiner::visitCastInst(CastInst *CI) {
+  // If the user is casting a value to the same type, eliminate this cast
+  // instruction...
   if (CI->getType() == CI->getOperand(0)->getType() && !CI->use_empty()) {
     AddUsesToWorkList(CI);         // Add all modified instrs to worklist
     CI->replaceAllUsesWith(CI->getOperand(0));
     return CI;
   }
+
+
+  // If casting the result of another cast instruction, try to eliminate this
+  // one!
+  //
+  if (CastInst *CSrc = dyn_cast<CastInst>(CI->getOperand(0)))
+    if (isEliminableCastOfCast(CI, CSrc)) {
+      // This instruction now refers directly to the cast's src operand.  This
+      // has a good chance of making CSrc dead.
+      CI->setOperand(0, CSrc->getOperand(0));
+      return CI;
+    }
+
   return 0;
 }
+
+
+
+Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst *GEP) {
+  // Is it getelementptr %P, uint 0
+  // If so, elminate the noop.
+  if (GEP->getNumOperands() == 2 && !GEP->use_empty() &&
+      GEP->getOperand(1) == Constant::getNullValue(Type::UIntTy)) {
+    AddUsesToWorkList(GEP);         // Add all modified instrs to worklist
+    GEP->replaceAllUsesWith(GEP->getOperand(0));
+    return GEP;
+  }
+
+  return visitMemAccessInst(GEP);
+}
+
 
 // Combine Indices - If the source pointer to this mem access instruction is a
 // getelementptr instruction, combine the indices of the GEP into this
