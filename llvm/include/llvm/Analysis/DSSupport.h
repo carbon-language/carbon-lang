@@ -22,6 +22,10 @@ class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
 class DSNodeIterator;          // Data structure graph traversal iterator
 
+namespace DS {
+  extern const unsigned PointerShift;  // 64bit ptrs = 3, 32 bit ptrs = 2
+};
+
 //===----------------------------------------------------------------------===//
 /// DSNodeHandle - Implement a "handle" to a data structure node that takes care
 /// of all of the add/un'refing of the node to prevent the backpointers in the
@@ -32,6 +36,7 @@ class DSNodeIterator;          // Data structure graph traversal iterator
 /// defined in DSNode.h because they need knowledge of DSNode operation. Putting
 /// them in a CPP file wouldn't help making them inlined and keeping DSNode and
 /// DSNodeHandle (and friends) in one file complicates things.
+///
 class DSNodeHandle {
   DSNode *N;
   unsigned Offset;
@@ -77,8 +82,8 @@ public:
   /// getLink - Treat this current node pointer as a pointer to a structure of
   /// some sort.  This method will return the pointer a mem[this+Num]
   ///
-  inline const DSNodeHandle *getLink(unsigned Num) const;
-  inline DSNodeHandle *getLink(unsigned Num);
+  inline const DSNodeHandle &getLink(unsigned Num) const;
+  inline DSNodeHandle &getLink(unsigned Num);
 
   inline void setLink(unsigned Num, const DSNodeHandle &NH);
 };
@@ -90,23 +95,11 @@ public:
 ///
 struct DSTypeRec {
   const Type *Ty;                 // The type itself...
-  unsigned Offset;                // The offset in the node
   bool isArray;                   // Have we accessed an array of elements?
   
-  DSTypeRec() : Ty(0), Offset(0), isArray(false) {}
-  DSTypeRec(const Type *T, unsigned O) : Ty(T), Offset(O), isArray(false) {}
-  
-  bool operator<(const DSTypeRec &TR) const {
-    // Sort first by offset!
-    return Offset < TR.Offset || (Offset == TR.Offset && Ty < TR.Ty);
-  }
-  bool operator==(const DSTypeRec &TR) const {
-    return Ty == TR.Ty && Offset == TR.Offset;
-  }
-  bool operator!=(const DSTypeRec &TR) const { return !operator==(TR); }
+  DSTypeRec(const Type *T = 0, bool A = false)
+    : Ty(T), isArray(A) {}
 };
-
-
 
 
 

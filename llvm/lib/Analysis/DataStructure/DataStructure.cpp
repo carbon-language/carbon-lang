@@ -16,6 +16,15 @@
 
 using std::vector;
 
+namespace {
+  Statistic<> NumFolds("dsnode", "Number of nodes completely folded");
+};
+
+namespace DS {
+  const unsigned PointerShift = 3;  // 64bit ptrs = 3, 32 bit ptrs = 2
+  const unsigned PointerSize = 1 << PointerShift;
+};
+
 namespace DataStructureAnalysis {   // TODO: FIXME
   // isPointerType - Return true if this first class type is big enough to hold
   // a pointer.
@@ -29,15 +38,16 @@ using namespace DataStructureAnalysis;
 // DSNode Implementation
 //===----------------------------------------------------------------------===//
 
-DSNode::DSNode(enum NodeTy NT, const Type *T) : NodeType(NT) {
+DSNode::DSNode(enum NodeTy NT, const Type *T)
+  : Ty(Type::VoidTy), Size(0), NodeType(NT) {
   // Add the type entry if it is specified...
-  if (T) getTypeRec(T, 0);
+  if (T) mergeTypeInfo(T, 0);
 }
 
 // DSNode copy constructor... do not copy over the referrers list!
 DSNode::DSNode(const DSNode &N)
-  : Links(N.Links), MergeMap(N.MergeMap),
-    TypeEntries(N.TypeEntries), Globals(N.Globals), NodeType(N.NodeType) {
+  : Links(N.Links), Globals(N.Globals), Ty(N.Ty), Size(N.Size), 
+    NodeType(N.NodeType) {
 }
 
 void DSNode::removeReferrer(DSNodeHandle *H) {
@@ -70,229 +80,234 @@ void DSNode::addGlobal(GlobalValue *GV) {
 /// single byte with a single TypeEntry of "void".
 ///
 void DSNode::foldNodeCompletely() {
-  // We are no longer typed at all...
-  TypeEntries.clear();
-  TypeEntries.push_back(DSTypeRec(Type::VoidTy, 0));
+  if (isNodeCompletelyFolded()) return;
 
-  // Loop over all of our referrers, making them point to our one byte of space.
+  ++NumFolds;
+
+  // We are no longer typed at all...
+  Ty = DSTypeRec(Type::VoidTy, true);
+  Size = 1;
+
+  // Loop over all of our referrers, making them point to our zero bytes of
+  // space.
   for (vector<DSNodeHandle*>::iterator I = Referrers.begin(), E=Referrers.end();
        I != E; ++I)
     (*I)->setOffset(0);
 
-  // Fold the MergeMap down to a single byte of space...
-  MergeMap.resize(1);
-
   // If we have links, merge all of our outgoing links together...
-  if (!Links.empty()) {
-    MergeMap[0] = 0;      // We now contain an outgoing edge...
-    for (unsigned i = 1, e = Links.size(); i != e; ++i)
-      Links[0].mergeWith(Links[i]);
-    Links.resize(1);
-  } else {
-    MergeMap[0] = -1;
-  }
+  for (unsigned i = 1, e = Links.size(); i < e; ++i)
+    Links[0].mergeWith(Links[i]);
+  Links.resize(1);
 }
-
 /// isNodeCompletelyFolded - Return true if this node has been completely
 /// folded down to something that can never be expanded, effectively losing
 /// all of the field sensitivity that may be present in the node.
 ///
 bool DSNode::isNodeCompletelyFolded() const {
-  return getSize() == 1 && TypeEntries.size() == 1 &&
-         TypeEntries[0].Ty == Type::VoidTy;
+  return getSize() == 1 && Ty.Ty == Type::VoidTy && Ty.isArray;
 }
 
 
-
-/// setLink - Set the link at the specified offset to the specified
-/// NodeHandle, replacing what was there.  It is uncommon to use this method,
-/// instead one of the higher level methods should be used, below.
+/// mergeTypeInfo - This method merges the specified type into the current node
+/// at the specified offset.  This may update the current node's type record if
+/// this gives more information to the node, it may do nothing to the node if
+/// this information is already known, or it may merge the node completely (and
+/// return true) if the information is incompatible with what is already known.
 ///
-void DSNode::setLink(unsigned i, const DSNodeHandle &NH) {
-  // Create a new entry in the Links vector to hold a new element for offset.
-  if (!hasLink(i)) {
-    signed char NewIdx = Links.size();
-    // Check to see if we allocate more than 128 distinct links for this node.
-    // If so, just merge with the last one.  This really shouldn't ever happen,
-    // but it should work regardless of whether it does or not.
-    //
-    if (NewIdx >= 0) {
-      Links.push_back(NH);             // Allocate space: common case
-    } else {                           // Wrap around?  Too many links?
-      NewIdx--;                        // Merge with whatever happened last
-      assert(NewIdx > 0 && "Should wrap back around");
-      std::cerr << "\n*** DSNode found that requires more than 128 "
-                << "active links at once!\n\n";
-    } 
+/// This method returns true if the node is completely folded, otherwise false.
+///
+bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset) {
+  // Check to make sure the Size member is up-to-date.  Size can be one of the
+  // following:
+  //  Size = 0, Ty = Void: Nothing is known about this node.
+  //  Size = 0, Ty = FnTy: FunctionPtr doesn't have a size, so we use zero
+  //  Size = 1, Ty = Void, Array = 1: The node is collapsed
+  //  Otherwise, sizeof(Ty) = Size
+  //
+  assert(((Size == 0 && Ty.Ty == Type::VoidTy && !Ty.isArray) ||
+          (Size == 0 && !Ty.Ty->isSized() && !Ty.isArray) ||
+          (Size == 1 && Ty.Ty == Type::VoidTy && Ty.isArray) ||
+          (Size == 0 && !Ty.Ty->isSized() && !Ty.isArray) ||
+          (TD.getTypeSize(Ty.Ty) == Size)) &&
+         "Size member of DSNode doesn't match the type structure!");
+  assert(NewTy != Type::VoidTy && "Cannot merge void type into DSNode!");
 
-    signed char OldIdx = MergeMap[i];
-    assert (OldIdx < 0 && "Shouldn't contain link!");
+  if (Offset == 0 && NewTy == Ty.Ty)
+    return false;  // This should be a common case, handle it efficiently
 
-    // Make sure that anything aliasing this field gets updated to point to the
-    // new link field.
-    rewriteMergeMap(OldIdx, NewIdx);
-    assert(MergeMap[i] == NewIdx && "Field not replaced!");
-  } else {
-    assert(MergeMap[i] < (int)Links.size() && "MergeMap index out of range!");
-    Links[MergeMap[i]] = NH;
+  // Return true immediately if the node is completely folded.
+  if (isNodeCompletelyFolded()) return true;
+
+  // Figure out how big the new type we're merging in is...
+  unsigned NewTySize = NewTy->isSized() ? TD.getTypeSize(NewTy) : 0;
+
+  // Otherwise check to see if we can fold this type into the current node.  If
+  // we can't, we fold the node completely, if we can, we potentially update our
+  // internal state.
+  //
+  if (Ty.Ty == Type::VoidTy) {
+    // If this is the first type that this node has seen, just accept it without
+    // question....
+    assert(Offset == 0 && "Cannot have an offset into a void node!");
+    assert(Ty.isArray == false && "This shouldn't happen!");
+    Ty.Ty = NewTy;
+    Size = NewTySize;
+
+    // Calculate the number of outgoing links from this node.
+    Links.resize((Size+DS::PointerSize-1) >> DS::PointerShift);
+    return false;
   }
+
+  // Handle node expansion case here...
+  if (Offset+NewTySize > Size) {
+    // It is illegal to grow this node if we have treated it as an array of
+    // objects...
+    if (Ty.isArray) {
+      foldNodeCompletely();
+      return true;
+    }
+
+    if (Offset) {  // We could handle this case, but we don't for now...
+      std::cerr << "UNIMP: Trying to merge a growth type into offset != 0: "
+                << "Collapsing!\n";
+      foldNodeCompletely();
+      return true;
+    }
+
+    // Okay, the situation is nice and simple, we are trying to merge a type in
+    // at offset 0 that is bigger than our current type.  Implement this by
+    // switching to the new type and then merge in the smaller one, which should
+    // hit the other code path here.  If the other code path decides it's not
+    // ok, it will collapse the node as appropriate.
+    //
+    const Type *OldTy = Ty.Ty;
+    Ty.Ty = NewTy;
+    Size = NewTySize;
+
+    // Must grow links to be the appropriate size...
+    Links.resize((Size+DS::PointerSize-1) >> DS::PointerShift);
+
+    // Merge in the old type now... which is guaranteed to be smaller than the
+    // "current" type.
+    return mergeTypeInfo(OldTy, 0);
+  }
+
+  assert(Offset < Size &&
+         "Cannot merge something into a part of our type that doesn't exist!");
+
+  // Find the section of Ty.Ty that NewTy overlaps with... first we find the
+  // type that starts at offset Offset.
+  //
+  unsigned O = 0;
+  const Type *SubType = Ty.Ty;
+  while (O < Offset) {
+    assert(Offset-O < TD.getTypeSize(SubType) && "Offset out of range!");
+
+    switch (SubType->getPrimitiveID()) {
+    case Type::StructTyID: {
+      const StructType *STy = cast<StructType>(SubType);
+      const StructLayout &SL = *TD.getStructLayout(STy);
+
+      unsigned i = 0, e = SL.MemberOffsets.size();
+      for (; i+1 < e && SL.MemberOffsets[i+1] <= Offset-O; ++i)
+        /* empty */;
+
+      // The offset we are looking for must be in the i'th element...
+      SubType = STy->getElementTypes()[i];
+      O += SL.MemberOffsets[i];
+      break;
+    }
+    case Type::ArrayTyID: {
+      SubType = cast<ArrayType>(SubType)->getElementType();
+      unsigned ElSize = TD.getTypeSize(SubType);
+      unsigned Remainder = (Offset-O) % ElSize;
+      O = Offset-Remainder;
+      break;
+    }
+    default:
+      assert(0 && "Unknown type!");
+    }
+  }
+
+  assert(O == Offset && "Could not achieve the correct offset!");
+
+  // If we found our type exactly, early exit
+  if (SubType == NewTy) return false;
+
+  // Okay, so we found the leader type at the offset requested.  Search the list
+  // of types that starts at this offset.  If SubType is currently an array or
+  // structure, the type desired may actually be the first element of the
+  // composite type...
+  //
+  unsigned SubTypeSize = TD.getTypeSize(SubType);
+  while (SubType != NewTy) {
+    const Type *NextSubType = 0;
+    unsigned NextSubTypeSize;
+    switch (SubType->getPrimitiveID()) {
+    case Type::StructTyID:
+      NextSubType = cast<StructType>(SubType)->getElementTypes()[0];
+      NextSubTypeSize = TD.getTypeSize(SubType);
+      break;
+    case Type::ArrayTyID:
+      NextSubType = cast<ArrayType>(SubType)->getElementType();
+      NextSubTypeSize = TD.getTypeSize(SubType);
+      break;
+    default: ;
+      // fall out 
+    }
+
+    if (NextSubType == 0)
+      break;   // In the default case, break out of the loop
+
+    if (NextSubTypeSize < NewTySize)
+      break;   // Don't allow shrinking to a smaller type than NewTySize
+    SubType = NextSubType;
+    SubTypeSize = NextSubTypeSize;
+  }
+
+  // If we found the type exactly, return it...
+  if (SubType == NewTy)
+    return false;
+
+  // Check to see if we have a compatible, but different type...
+  if (NewTySize == SubTypeSize) {
+    // Check to see if this type is obviously convertable... int -> uint f.e.
+    if (NewTy->isLosslesslyConvertableTo(SubType))
+      return false;
+
+    // Check to see if we have a pointer & integer mismatch going on here,
+    // loading a pointer as a long, for example.
+    //
+    if (SubType->isInteger() && isa<PointerType>(NewTy) ||
+        NewTy->isInteger() && isa<PointerType>(SubType))
+      return false;
+
+  }
+
+
+
+  std::cerr << "MergeTypeInfo Folding OrigTy: " << Ty.Ty
+            << "\n due to:" << NewTy << " @ " << Offset << "!\n";
+  std::cerr << "SubType: " << SubType << "\n\n";
+
+  foldNodeCompletely();
+  return true;
 }
+
+
 
 // addEdgeTo - Add an edge from the current node to the specified node.  This
 // can cause merging of nodes in the graph.
 //
 void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
-  assert(Offset < getSize() && "Offset out of range!");
   if (NH.getNode() == 0) return;       // Nothing to do
 
-  if (DSNodeHandle *ExistingNH = getLink(Offset)) {
+  DSNodeHandle &ExistingEdge = getLink(Offset);
+  if (ExistingEdge.getNode()) {
     // Merge the two nodes...
-    ExistingNH->mergeWith(NH);
+    ExistingEdge.mergeWith(NH);
   } else {                             // No merging to perform...
     setLink(Offset, NH);               // Just force a link in there...
-  }
-}
-
-/// getTypeRec - This method returns the specified type record if it exists.
-/// If it does not yet exist, the method checks to see whether or not the
-/// request would result in an untrackable state.  If adding it would cause
-/// untrackable state, we foldNodeCompletely the node and return the void
-/// record, otherwise we add an new TypeEntry and return it.
-///
-DSTypeRec &DSNode::getTypeRec(const Type *Ty, unsigned Offset) {
-  // If the node is already collapsed, we can't do anything... bail out early
-  if (isNodeCompletelyFolded()) {
-    assert(TypeEntries.size() == 1 && "Node folded and Entries.size() != 1?");
-    return TypeEntries[0];
-  }
-
-  // First search to see if we already have a record for this...
-  DSTypeRec SearchFor(Ty, Offset);
-
-  std::vector<DSTypeRec>::iterator I;
-  if (TypeEntries.size() < 5) {  // Linear search if we have few entries.
-    I = TypeEntries.begin();
-    while (I != TypeEntries.end() && *I < SearchFor)
-      ++I;
-  } else {
-    I = std::lower_bound(TypeEntries.begin(), TypeEntries.end(), SearchFor);
-  }
-  
-  // At this point, I either points to the right entry or it points to the entry
-  // we are to insert the new entry in front of...
-  //
-  if (I != TypeEntries.end() && *I == SearchFor)
-    return *I;
-  
-  // ASSUME that it's okay to add this type entry.
-  // FIXME: This should check to make sure it's ok.
-  
-  // If the data size is different then our current size, try to resize the node
-  unsigned ReqSize = Ty->isSized() ? TD.getTypeSize(Ty) : 0;
-  if (getSize() < ReqSize) {
-    // If we are trying to make it bigger, and we can grow the node, do so.
-    if (growNode(ReqSize)) {
-      assert(isNodeCompletelyFolded() && "Node isn't folded?");
-      return TypeEntries[0];
-    }
-
-  } else if (getSize() > ReqSize) {
-    // If we are trying to make the node smaller, we don't have to do anything.
-
-  }
-
-  return *TypeEntries.insert(I, SearchFor);
-}
-
-/// growNode - Attempt to grow the node to the specified size.  This may do one
-/// of three things:
-///   1. Grow the node, return false
-///   2. Refuse to grow the node, but maintain a trackable situation, return
-///      false.
-///   3. Be unable to track if node was that size, so collapse the node and
-///      return true.
-///
-bool DSNode::growNode(unsigned ReqSize) {
-  unsigned OldSize = getSize();
-
-  if (0) {
-    // FIXME: DSNode::growNode() doesn't perform correct safety checks yet!
-    
-    foldNodeCompletely();
-    return true;
-  }
-
-  assert(ReqSize > OldSize && "Not growing node!");
-
-  // Resize the merge map to have enough space...
-  MergeMap.resize(ReqSize);
-
-  // Assign unique values to all of the elements of MergeMap
-  if (ReqSize < 128) {
-    // Handle the common case of reasonable size structures...
-    for (unsigned i = OldSize; i != ReqSize; ++i)
-      MergeMap[i] = -1-i;   // Assign -1, -2, -3, ...
-  } else {
-    // It's possible that we have something really big here.  In this case,
-    // divide the object into chunks until it will fit into 128 elements.
-    unsigned Multiple = ReqSize/128;
-    
-    // It's probably an array, and probably some power of two in size.
-    // Because of this, find the biggest power of two that is bigger than
-    // multiple to use as our real Multiple.
-    unsigned RealMultiple = 2;
-    while (RealMultiple <= Multiple) RealMultiple <<= 1;
-    
-    unsigned RealBound = ReqSize/RealMultiple;
-    assert(RealBound <= 128 && "Math didn't work out right");
-    
-    // Now go through and assign indexes that are between -1 and -128
-    // inclusive
-    //
-    for (unsigned i = OldSize; i != ReqSize; ++i)
-      MergeMap[i] = -1-(i % RealBound);   // Assign -1, -2, -3...
-  }
-  return false;
-}
-
-/// mergeMappedValues - This is the higher level form of rewriteMergeMap.  It is
-/// fully capable of merging links together if neccesary as well as simply
-/// rewriting the map entries.
-///
-void DSNode::mergeMappedValues(signed char V1, signed char V2) {
-  assert(V1 != V2 && "Cannot merge two identical mapped values!");
-  assert(V2 < (int)Links.size() &&
-         "Attempting to rewrite to invalid link number!");
-  assert(V1 < (int)Links.size() &&
-         "Attempting to rewrite to invalid link number!");
-  
-  if (V1 < 0) {  // If there is no outgoing link from V1, merge it with V2
-    if (V2 < 0 && V1 > V2)
-       // If both are not linked, merge to the field closer to 0
-      rewriteMergeMap(V2, V1);
-    else
-      rewriteMergeMap(V1, V2);
-  } else if (V2 < 0) {           // Is V2 < 0 && V1 >= 0?
-    rewriteMergeMap(V2, V1);     // Merge into the one with the link...
-  } else {                       // Otherwise, links exist at both locations
-    // Merge the V2 link into V1 so that we reduce the overall value of the
-    // links are reduced... 
-    //
-    if (V2 < V1) std::swap(V1, V2);     // Ensure V1 < V2
-    rewriteMergeMap(V2, V1);            // After this, V2 is "dead"
-
-    // Merge Links[V1] with Links[V2] so they point to the same place now...
-    Links[V1].mergeWith(Links[V2]);  // BROKEN, this can invalidate V2!!
-
-    // Change the user of the last link to use V2 instead
-    if ((unsigned)V2 != Links.size()-1) {
-      rewriteMergeMap(Links.size()-1, V2);  // Point to V2 instead of last el...
-      // Make sure V2 points the right DSNode
-      Links[V2] = Links.back();
-    }
-
-    // Reduce the number of distinct outgoing links...
-    Links.pop_back();
   }
 }
 
@@ -354,10 +369,16 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     return;  // Noop
 
   if (N == this) {
-    std::cerr << "WARNING: Cannot merge two portions of the same node yet, so we collapse instead!\n";
-    N->foldNodeCompletely();
+    // We cannot merge two pieces of the same node together, collapse the node
+    // completely.
+    std::cerr << "Attempting to merge two chunks of the same node together!\n";
+    foldNodeCompletely();
     return;
   }
+
+  // Merge the type entries of the two nodes together...
+  if (N->Ty.Ty != Type::VoidTy)
+    mergeTypeInfo(N->Ty.Ty, Offset);
 
   // If we are merging a node with a completely folded node, then both nodes are
   // now completely folded.
@@ -396,15 +417,6 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   // respect to NH.Offset) is now zero.
   //
   unsigned NOffset = NH.getOffset()-Offset;
-
-  // If our destination node is too small... try to grow it.
-  if (N->getSize()+NOffset > getSize() &&
-      growNode(N->getSize()+NOffset)) {
-    // Catastrophic failure occured and we had to collapse the node.  In this
-    // case, collapse the other node as well.
-    N->foldNodeCompletely();
-    NOffset = 0;
-  }
   unsigned NSize = N->getSize();
 
   // Remove all edges pointing at N, causing them to point to 'this' instead.
@@ -418,70 +430,28 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   // Make all of the outgoing links of N now be outgoing links of this.  This
   // can cause recursive merging!
   //
-  for (unsigned i = 0, e = NSize; i != e; ++i)
-    if (DSNodeHandle *Link = N->getLink(i)) {
-      addEdgeTo((i+NOffset) % getSize(), *Link);
-      N->MergeMap[i] = -1;  // Kill outgoing edge
-    }
+  for (unsigned i = 0; i < NSize; i += DS::PointerSize) {
+    DSNodeHandle &Link = N->getLink(i);
+    if (Link.getNode()) {
+      addEdgeTo((i+NOffset) % getSize(), Link);
 
-#if 0  
-  // We must merge fields in this node due to nodes merged in the source node.
-  // In order to handle this we build a map that converts from the source node's
-  // MergeMap values to our MergeMap values.  This map is indexed by the
-  // expression: MergeMap[SMM+SourceNodeSize] so we need to allocate at least
-  // 2*SourceNodeSize elements of space for the mapping.  We can do this because
-  // we know that there are at most SourceNodeSize outgoing links in the node
-  // (thus that many positive values) and at most SourceNodeSize distinct fields
-  // (thus that many negative values).
-  //
-  std::vector<signed char> MergeMapMap(NSize*2, 127);
-
-  // Loop through the structures, merging them together...
-  for (unsigned i = 0, e = NSize; i != e; ++i) {
-    // Get what this byte of N maps to...
-    signed char NElement = N->MergeMap[i];
-
-    // Get what we map this byte to...
-    signed char Element = MergeMap[i+NOffset];
-    assert(Element < (int)Links.size() && "Element in merge map out of range!");
-
-    // We use 127 as a sentinal and don't check for it's existence yet...
-    assert(Element != 127 && "MergeMapMap doesn't permit 127 values yet!");
-
-    signed char CurMappedVal = MergeMapMap[NElement+NSize];
-    if (CurMappedVal == 127) {               // Haven't seen this NElement yet?
-      MergeMapMap[NElement+NSize] = Element; // Map the two together...
-    } else if (CurMappedVal != Element) {
-      // If we are mapping two different fields together this means that we need
-      // to merge fields in the current node due to merging in the source node.
+      // It's possible that after adding the new edge that some recursive
+      // merging just occured, causing THIS node to get merged into oblivion.
+      // If that happens, we must not try to merge any more edges into it!
       //
-      mergeMappedValues(CurMappedVal, Element);
-      MergeMapMap[NElement+NSize] = MergeMap[i+NOffset];
-      assert(MergeMap[i+NOffset] < (int)Links.size()
-             && "Element in merge map out of range!");
+      if (Size == 0) return;
     }
   }
-#endif
 
   // Now that there are no outgoing edges, all of the Links are dead.
   N->Links.clear();
-  N->MergeMap.clear();
+  N->Size = 0;
+  N->Ty.Ty = Type::VoidTy;
+  N->Ty.isArray = false;
 
   // Merge the node types
   NodeType |= N->NodeType;
   N->NodeType = 0;   // N is now a dead node.
-
-  // Adjust all of the type entries we are merging in by the offset...
-  //
-  if (NOffset != 0) {  // This case is common enough to optimize for
-    // Offset all of the TypeEntries in N with their new offset
-    for (unsigned i = 0, e = N->TypeEntries.size(); i != e; ++i)
-      N->TypeEntries[i].Offset += NOffset;
-  }
-
-  // ... now add them to the TypeEntries list.
-  MergeSortedVectors(TypeEntries, N->TypeEntries);
-  N->TypeEntries.clear();   // N is dead, no type-entries need exist
 
   // Merge the globals list...
   if (!N->Globals.empty()) {
@@ -564,7 +534,6 @@ void DSNode::remapLinks(std::map<const DSNode*, DSNode*> &OldNodeMap) {
 DSNodeHandle DSGraph::cloneInto(const DSGraph &G, 
                                 std::map<Value*, DSNodeHandle> &OldValMap,
                                 std::map<const DSNode*, DSNode*> &OldNodeMap,
-                                bool StripScalars,  // FIXME: Kill StripScalars
                                 bool StripAllocas) {
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
 
@@ -655,9 +624,9 @@ static void markIncompleteNode(DSNode *N) {
   N->NodeType |= DSNode::Incomplete;
 
   // Recusively process children...
-  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
-    if (DSNodeHandle *DSNH = N->getLink(i))
-      markIncompleteNode(DSNH->getNode());
+  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
+    if (DSNode *DSN = N->getLink(i).getNode())
+      markIncompleteNode(DSN);
 }
 
 
@@ -694,9 +663,9 @@ void DSGraph::markIncompleteNodes(bool markFormalArgs) {
     if (Nodes[i]->NodeType & DSNode::GlobalNode) {
       DSNode *N = Nodes[i];
       // FIXME: Make more efficient by looking over Links directly
-      for (unsigned i = 0, e = N->getSize(); i != e; ++i)
-        if (DSNodeHandle *DSNH = N->getLink(i))
-          markIncompleteNode(DSNH->getNode());
+      for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
+        if (DSNode *DSN = N->getLink(i).getNode())
+          markIncompleteNode(DSN);
     }
 }
 
@@ -772,11 +741,10 @@ static void markAlive(DSNode *N, std::set<DSNode*> &Alive) {
   if (N == 0) return;
 
   Alive.insert(N);
-  // FIXME: Make more efficient by looking over Links directly
-  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
-    if (DSNodeHandle *DSNH = N->getLink(i))
-      if (!Alive.count(DSNH->getNode()))
-        markAlive(DSNH->getNode(), Alive);
+  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
+    if (DSNode *DSN = N->getLink(i).getNode())
+      if (!Alive.count(DSN))
+        markAlive(DSN, Alive);
 }
 
 static bool checkGlobalAlive(DSNode *N, std::set<DSNode*> &Alive,
@@ -787,17 +755,17 @@ static bool checkGlobalAlive(DSNode *N, std::set<DSNode*> &Alive,
   Visiting.insert(N);
 
   // If any immediate successor is alive, N is alive
-  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
-    if (DSNodeHandle *DSNH = N->getLink(i))
-      if (Alive.count(DSNH->getNode())) {
+  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
+    if (DSNode *DSN = N->getLink(i).getNode())
+      if (Alive.count(DSN)) {
         Visiting.erase(N);
         return true;
       }
 
   // Else if any successor reaches a live node, N is alive
-  for (unsigned i = 0, e = N->getSize(); i != e; ++i)
-    if (DSNodeHandle *DSNH = N->getLink(i))
-      if (checkGlobalAlive(DSNH->getNode(), Alive, Visiting)) {
+  for (unsigned i = 0, e = N->getSize(); i < e; i += DS::PointerSize)
+    if (DSNode *DSN = N->getLink(i).getNode())
+      if (checkGlobalAlive(DSN, Alive, Visiting)) {
         Visiting.erase(N); return true;
       }
 

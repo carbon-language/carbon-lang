@@ -17,46 +17,33 @@
 /// different types represented in this object.
 ///
 class DSNode {
-  /// Links - Contains one entry for every _distinct_ pointer field in the
-  /// memory block.  These are demand allocated and indexed by the MergeMap
-  /// vector.
-  ///
-  std::vector<DSNodeHandle> Links;
-
-  /// MergeMap - Maps from every byte in the object to a signed byte number.
-  /// This map is neccesary due to the merging that is possible as part of the
-  /// unification algorithm.  To merge two distinct bytes of the object together
-  /// into a single logical byte, the indexes for the two bytes are set to the
-  /// same value.  This fully general merging is capable of representing all
-  /// manners of array merging if neccesary.
-  ///
-  /// This map is also used to map outgoing pointers to various byte offsets in
-  /// this data structure node.  If this value is >= 0, then it indicates that
-  /// the numbered entry in the Links vector contains the outgoing edge for this
-  /// byte offset.  In this way, the Links vector can be demand allocated and
-  /// byte elements of the node may be merged without needing a Link allocated
-  /// for it.
-  ///
-  /// Initially, each each element of the MergeMap is assigned a unique negative
-  /// number, which are then merged as the unification occurs.
-  ///
-  std::vector<signed char> MergeMap;
-
   /// Referrers - Keep track of all of the node handles that point to this
   /// DSNode.  These pointers may need to be updated to point to a different
   /// node if this node gets merged with it.
   ///
   std::vector<DSNodeHandle*> Referrers;
 
-  /// TypeEntries - As part of the merging process of this algorithm, nodes of
-  /// different types can be represented by this single DSNode.  This vector is
-  /// kept sorted.
+  /// Links - Contains one entry for every sizeof(void*) bytes in this memory
+  /// object.  Note that if the node is not a multiple of size(void*) bytes
+  /// large, that there is an extra entry for the "remainder" of the node as
+  /// well.  For this reason, nodes of 1 byte in size do have one link.
   ///
-  std::vector<DSTypeRec> TypeEntries;
+  std::vector<DSNodeHandle> Links;
 
   /// Globals - The list of global values that are merged into this node.
   ///
   std::vector<GlobalValue*> Globals;
+
+  /// Type - Keep track of the current outer most type of this object, in
+  /// addition to whether or not it has been indexed like an array or not.  If
+  /// the isArray bit is set, the node cannot grow.
+  ///
+  DSTypeRec Ty;
+
+  /// Size - The current size of the node.  This should be equal to the size of
+  /// the current type record.
+  ///
+  unsigned Size;
 
   void operator=(const DSNode &); // DO NOT IMPLEMENT
 public:
@@ -99,10 +86,10 @@ public:
 
   /// getSize - Return the maximum number of bytes occupied by this object...
   ///
-  unsigned getSize() const { return MergeMap.size(); }
+  unsigned getSize() const { return Size; }
 
-  // getTypeEntries - Return the possible types and their offsets in this object
-  const std::vector<DSTypeRec> &getTypeEntries() const { return TypeEntries; }
+  // getType - Return the node type of this object...
+  const DSTypeRec &getType() const { return Ty; }
 
   /// getReferrers - Return a list of the pointers to this node...
   ///
@@ -117,51 +104,46 @@ public:
   bool isRead() const { return (NodeType & Read) != 0; }
 
 
-  /// hasLink - Return true if this memory object has a link at the specified
-  /// location.
+  /// hasLink - Return true if this memory object has a link in slot #LinkNo
   ///
-  bool hasLink(unsigned i) const {
-    assert(i < getSize() && "Field Link index is out of range!");
-    return MergeMap[i] >= 0;
+  bool hasLink(unsigned Offset) const {
+    assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&
+           "Pointer offset not aligned correctly!");
+    unsigned Index = Offset >> DS::PointerShift;
+    assert(Index < Links.size() && "Link index is out of range!");
+    return Links[Index].getNode();
+  }
+  DSNodeHandle &getLink(unsigned Offset) {
+    assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&
+           "Pointer offset not aligned correctly!");
+    unsigned Index = Offset >> DS::PointerShift;
+    assert(Index < Links.size() && "Link index is out of range!");
+    return Links[Index];
+  }
+  const DSNodeHandle &getLink(unsigned Offset) const {
+    assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&
+           "Pointer offset not aligned correctly!");
+    unsigned Index = Offset >> DS::PointerShift;
+    assert(Index < Links.size() && "Link index is out of range!");
+    return Links[Index];
   }
 
-  DSNodeHandle *getLink(unsigned i) {
-    if (hasLink(i)) {
-      assert((unsigned)MergeMap[i] < Links.size() &&
-             "MergeMap references Link that doesn't exist!");
-      return &Links[MergeMap[i]];
-    }
-    return 0;
-  }
-  const DSNodeHandle *getLink(unsigned i) const {
-    if (hasLink(i)) {
-      assert((unsigned)MergeMap[i] < Links.size() &&
-             "MergeMap references Link that doesn't exist!");
-      return &Links[MergeMap[i]];
-    }
-    return 0;
-  }
-
-  /// getMergeMapLabel - Return the merge map entry specified, to allow printing
-  /// out of DSNodes nicely for DOT graphs.
+  /// mergeTypeInfo - This method merges the specified type into the current
+  /// node at the specified offset.  This may update the current node's type
+  /// record if this gives more information to the node, it may do nothing to
+  /// the node if this information is already known, or it may merge the node
+  /// completely (and return true) if the information is incompatible with what
+  /// is already known.
   ///
-  int getMergeMapLabel(unsigned i) const {
-    assert(i < MergeMap.size() && "MergeMap index out of range!");
-    return MergeMap[i];
-  }
-
-  /// getTypeRec - This method returns the specified type record if it exists.
-  /// If it does not yet exist, the method checks to see whether or not the
-  /// request would result in an untrackable state.  If adding it would cause
-  /// untrackable state, we foldNodeCompletely the node and return the void
-  /// record, otherwise we add an new TypeEntry and return it.
+  /// This method returns true if the node is completely folded, otherwise
+  /// false.
   ///
-  DSTypeRec &getTypeRec(const Type *Ty, unsigned Offset);
+  bool mergeTypeInfo(const Type *Ty, unsigned Offset);
 
   /// foldNodeCompletely - If we determine that this node has some funny
   /// behavior happening to it that we cannot represent, we fold it down to a
   /// single, completely pessimistic, node.  This node is represented as a
-  /// single byte with a single TypeEntry of "void".
+  /// single byte with a single TypeEntry of "void" with isArray = true.
   ///
   void foldNodeCompletely();
 
@@ -175,7 +157,13 @@ public:
   /// NodeHandle, replacing what was there.  It is uncommon to use this method,
   /// instead one of the higher level methods should be used, below.
   ///
-  void setLink(unsigned i, const DSNodeHandle &NH);
+  void setLink(unsigned Offset, const DSNodeHandle &NH) {
+    assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&
+           "Pointer offset not aligned correctly!");
+    unsigned Index = Offset >> DS::PointerShift;
+    assert(Index < Links.size() && "Link index is out of range!");
+    Links[Index] = NH;
+  }
 
   /// addEdgeTo - Add an edge from the current node to the specified node.  This
   /// can cause merging of nodes in the graph.
@@ -190,18 +178,6 @@ public:
   /// The specified node may be a null pointer (in which case, nothing happens).
   ///
   void mergeWith(const DSNodeHandle &NH, unsigned Offset);
-
-  /// mergeIndexes - If we discover that two indexes are equivalent and must be
-  /// merged, this function is used to do the dirty work.
-  ///
-  void mergeIndexes(unsigned idx1, unsigned idx2) {
-    assert(idx1 < getSize() && idx2 < getSize() && "Indexes out of range!");
-    signed char MV1 = MergeMap[idx1];
-    signed char MV2 = MergeMap[idx2];
-    if (MV1 != MV2)
-      mergeMappedValues(MV1, MV2);
-  }
-
 
   /// addGlobal - Add an entry for a global value to the Globals list.  This
   /// also marks the node with the 'G' flag if it does not already have it.
@@ -226,34 +202,6 @@ private:
   // addReferrer - Keep the referrer set up to date...
   void addReferrer(DSNodeHandle *H) { Referrers.push_back(H); }
   void removeReferrer(DSNodeHandle *H);
-
-  /// rewriteMergeMap - Loop over the mergemap, replacing any references to the
-  /// index From to be references to the index To.
-  ///
-  void rewriteMergeMap(signed char From, signed char To) {
-    assert(From != To && "Cannot change something into itself!");
-    assert(To < (int)Links.size() &&
-           "Changing MergeMap entry to an illegal entry!");
-    for (unsigned i = 0, e = MergeMap.size(); i != e; ++i)
-      if (MergeMap[i] == From)
-        MergeMap[i] = To;
-  }
-
-  /// mergeMappedValues - This is the higher level form of rewriteMergeMap.  It
-  /// is fully capable of merging links together if neccesary as well as simply
-  /// rewriting the map entries.
-  ///
-  void mergeMappedValues(signed char V1, signed char V2);
-
-  /// growNode - Attempt to grow the node to the specified size.  This may do
-  /// one of three things:
-  ///   1. Grow the node, return false
-  ///   2. Refuse to grow the node, but maintain a trackable situation, return
-  ///      false.
-  ///   3. Be unable to track if node was that size, so collapse the node and
-  ///      return true.
-  ///
-  bool growNode(unsigned RequestedSize);
 };
 
 
@@ -276,26 +224,26 @@ inline bool DSNodeHandle::hasLink(unsigned Num) const {
 /// getLink - Treat this current node pointer as a pointer to a structure of
 /// some sort.  This method will return the pointer a mem[this+Num]
 ///
-inline const DSNodeHandle *DSNodeHandle::getLink(unsigned Num) const {
+inline const DSNodeHandle &DSNodeHandle::getLink(unsigned Off) const {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  return N->getLink(Num+Offset);
+  return N->getLink(Offset+Off);
 }
-inline DSNodeHandle *DSNodeHandle::getLink(unsigned Num) {
+inline DSNodeHandle &DSNodeHandle::getLink(unsigned Off) {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  return N->getLink(Num+Offset);
+  return N->getLink(Off+Offset);
 }
 
-inline void DSNodeHandle::setLink(unsigned Num, const DSNodeHandle &NH) {
+inline void DSNodeHandle::setLink(unsigned Off, const DSNodeHandle &NH) {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  N->setLink(Num+Offset, NH);
+  N->setLink(Off+Offset, NH);
 }
 
 ///  addEdgeTo - Add an edge from the current node to the specified node.  This
 /// can cause merging of nodes in the graph.
 ///
-inline void DSNodeHandle::addEdgeTo(unsigned LinkNo, const DSNodeHandle &Node) {
+inline void DSNodeHandle::addEdgeTo(unsigned Off, const DSNodeHandle &Node) {
   assert(N && "DSNodeHandle does not point to a node yet!");
-  N->addEdgeTo(LinkNo+Offset, Node);
+  N->addEdgeTo(Off+Offset, Node);
 }
 
 /// mergeWith - Merge the logical node pointed to by 'this' with the node
@@ -304,9 +252,8 @@ inline void DSNodeHandle::addEdgeTo(unsigned LinkNo, const DSNodeHandle &Node) {
 inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
   if (N != 0)
     N->mergeWith(Node, Offset);
-  else {   // No node to merge with, so just point to Node
+  else     // No node to merge with, so just point to Node
     *this = Node;
-  }
 }
 
 #endif

@@ -27,22 +27,24 @@ static string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;
   Module *M = G && &G->getFunction() ? G->getFunction().getParent() : 0;
 
-  for (unsigned i = 0, e = N->getTypeEntries().size(); i != e; ++i) {
-    WriteTypeSymbolic(OS, N->getTypeEntries()[i].Ty, M);
-    if (N->getTypeEntries()[i].Offset)
-      OS << "@" << N->getTypeEntries()[i].Offset;
-    if (N->getTypeEntries()[i].isArray)
+  if (N->isNodeCompletelyFolded())
+    OS << "FOLDED";
+  else {
+    WriteTypeSymbolic(OS, N->getType().Ty, M);
+    if (N->getType().isArray)
       OS << " array";
+  }
+  if (N->NodeType) {
+    OS << ": ";
+    if (N->NodeType & DSNode::AllocaNode ) OS << "S";
+    if (N->NodeType & DSNode::HeapNode   ) OS << "H";
+    if (N->NodeType & DSNode::GlobalNode ) OS << "G";
+    if (N->NodeType & DSNode::UnknownNode) OS << "U";
+    if (N->NodeType & DSNode::Incomplete ) OS << "I";
+    if (N->NodeType & DSNode::Modified   ) OS << "M";
+    if (N->NodeType & DSNode::Read       ) OS << "R";
     OS << "\n";
   }
-
-  if (N->NodeType & DSNode::AllocaNode ) OS << "S";
-  if (N->NodeType & DSNode::HeapNode   ) OS << "H";
-  if (N->NodeType & DSNode::GlobalNode ) OS << "G";
-  if (N->NodeType & DSNode::UnknownNode) OS << "U";
-  if (N->NodeType & DSNode::Incomplete ) OS << "I";
-  if (N->NodeType & DSNode::Modified   ) OS << "M";
-  if (N->NodeType & DSNode::Read       ) OS << "R";
 
   for (unsigned i = 0, e = N->getGlobals().size(); i != e; ++i) {
     WriteAsOperand(OS, N->getGlobals()[i], false, true, M);
@@ -75,11 +77,6 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     return "shape=Mrecord";//fontname=Courier";
   }
   
-  static int getEdgeSourceLabel(const DSNode *Node, DSNode::iterator I) {
-    assert(Node == I.getNode() && "Iterator not for this node!");
-    return Node->getMergeMapLabel(I.getOffset());
-  }
-
   /// addCustomGraphFeatures - Use this graph writing hook to emit call nodes
   /// and the return node.
   ///
@@ -95,7 +92,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
         GW.emitSimpleNode(I->first, "plaintext=circle", OS.str());
         
         // Add edge from return node to real destination
-        int EdgeDest = I->second.getOffset();
+        int EdgeDest = I->second.getOffset() >> DS::PointerShift;
         if (EdgeDest == 0) EdgeDest = -1;
         GW.emitEdge(I->first, -1, I->second.getNode(),
                     EdgeDest, "arrowtail=tee,color=gray63");
@@ -108,7 +105,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       GW.emitSimpleNode((void*)1, "plaintext=circle", "returning");
 
       // Add edge from return node to real destination
-      int RetEdgeDest = G->getRetNode().getOffset();
+      int RetEdgeDest = G->getRetNode().getOffset() >> DS::PointerShift;;
       if (RetEdgeDest == 0) RetEdgeDest = -1;
       GW.emitEdge((void*)1, -1, G->getRetNode().getNode(),
                   RetEdgeDest, "arrowtail=tee,color=gray63");
@@ -121,18 +118,18 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2);
 
       if (DSNode *N = Call.getRetVal().getNode()) {
-        int EdgeDest = Call.getRetVal().getOffset();
+        int EdgeDest = Call.getRetVal().getOffset() >> DS::PointerShift;
         if (EdgeDest == 0) EdgeDest = -1;
         GW.emitEdge(&Call, 0, N, EdgeDest, "color=gray63");
       }
       if (DSNode *N = Call.getCallee().getNode()) {
-        int EdgeDest = Call.getCallee().getOffset();
+        int EdgeDest = Call.getCallee().getOffset() >> DS::PointerShift;
         if (EdgeDest == 0) EdgeDest = -1;
         GW.emitEdge(&Call, 1, N, EdgeDest, "color=gray63");
       }
       for (unsigned j = 0, e = Call.getNumPtrArgs(); j != e; ++j)
         if (DSNode *N = Call.getPtrArg(j).getNode()) {
-          int EdgeDest = Call.getPtrArg(j).getOffset();
+          int EdgeDest = Call.getPtrArg(j).getOffset() >> DS::PointerShift;
           if (EdgeDest == 0) EdgeDest = -1;
           GW.emitEdge(&Call, j+2, N, EdgeDest, "color=gray63");
         }

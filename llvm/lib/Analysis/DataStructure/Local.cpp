@@ -184,13 +184,12 @@ DSNodeHandle GraphBuilder::getValueDest(Value &V) {
 ///
 DSNodeHandle &GraphBuilder::getLink(const DSNodeHandle &node, unsigned LinkNo) {
   DSNodeHandle &Node = const_cast<DSNodeHandle&>(node);
-  DSNodeHandle *Link = Node.getLink(LinkNo);
-  if (Link) return *Link;
-
-  // If the link hasn't been created yet, make and return a new shadow node
-  DSNode *N = createNode(DSNode::ShadowNode);
-  Node.setLink(LinkNo, N);
-  return *Node.getLink(LinkNo);
+  DSNodeHandle &Link = Node.getLink(LinkNo);
+  if (!Link.getNode()) {
+    // If the link hasn't been created yet, make and return a new shadow node
+    Link = createNode(DSNode::ShadowNode);
+  }
+  return Link;
 }
 
 
@@ -236,15 +235,14 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   unsigned Offset = 0;
   const PointerType *PTy = cast<PointerType>(GEP.getOperand(0)->getType());
   const Type *CurTy = PTy->getElementType();
-  DSTypeRec &TopTypeRec =
-    Value.getNode()->getTypeRec(PTy->getElementType(), Value.getOffset());
 
-  // If the node had to be folded... exit quickly
-  if (TopTypeRec.Ty == Type::VoidTy) {
+  if (Value.getNode()->mergeTypeInfo(CurTy, Value.getOffset())) {
+    // If the node had to be folded... exit quickly
     setDestTo(GEP, Value);  // GEP result points to folded node
     return;
   }
 
+#if 0
   // Handle the pointer index specially...
   if (GEP.getNumOperands() > 1 &&
       GEP.getOperand(1) != ConstantSInt::getNullValue(Type::LongTy)) {
@@ -269,6 +267,7 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
     }
   }
+#endif
 
   // All of these subscripts are indexing INTO the elements we have...
   for (unsigned i = 2, e = GEP.getNumOperands(); i < e; ++i)
@@ -276,6 +275,7 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Get the type indexing into...
       const SequentialType *STy = cast<SequentialType>(CurTy);
       CurTy = STy->getElementType();
+#if 0
       if (ConstantSInt *CS = dyn_cast<ConstantSInt>(GEP.getOperand(i))) {
         Offset += CS->getValue()*TD.getTypeSize(CurTy);
       } else {
@@ -298,6 +298,7 @@ void GraphBuilder::visitGetElementPtrInst(GetElementPtrInst &GEP) {
               N->mergeIndexes(RawOffset+j, RawOffset+i*ElSize+j);
         }
       }
+#endif
     } else if (GEP.getOperand(i)->getType() == Type::UByteTy) {
       unsigned FieldNo = cast<ConstantUInt>(GEP.getOperand(i))->getValue();
       const StructType *STy = cast<StructType>(CurTy);
@@ -320,7 +321,7 @@ void GraphBuilder::visitLoadInst(LoadInst &LI) {
   Ptr.getNode()->NodeType |= DSNode::Read;
 
   // Ensure a typerecord exists...
-  Ptr.getNode()->getTypeRec(LI.getType(), Ptr.getOffset());
+  Ptr.getNode()->mergeTypeInfo(LI.getType(), Ptr.getOffset());
 
   if (isPointerType(LI.getType()))
     setDestTo(LI, getLink(Ptr));
@@ -335,7 +336,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
   Dest.getNode()->NodeType |= DSNode::Modified;
 
   // Ensure a typerecord exists...
-  Dest.getNode()->getTypeRec(StoredTy, Dest.getOffset());
+  Dest.getNode()->mergeTypeInfo(StoredTy, Dest.getOffset());
 
   // Avoid adding edges from null, or processing non-"pointer" stores
   if (isPointerType(StoredTy))
