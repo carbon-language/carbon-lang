@@ -438,8 +438,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
     // If we have folded references to memory operands, make sure we clear all
     // physical registers that may contain the value of the spilled virtual
     // register
-    VirtRegMap::MI2VirtMapTy::const_iterator I, E;
-    for (tie(I, E) = VRM.getFoldedVirts(&MI); I != E; ++I) {
+    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
+    for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
       DEBUG(std::cerr << "Folded vreg: " << I->second.first << "  MR: "
                       << I->second.second);
       unsigned VirtReg = I->second.first;
