@@ -125,7 +125,7 @@ AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   // If P points to a constant memory location, the call definitely could not
   // modify the memory location.
   if ((Mask & Mod) && AA->pointsToConstantMemory(P))
-    Mask = Ref;
+    Mask = ModRefResult(Mask & ~Mod);
 
   return ModRefResult(Mask & AA->getModRefInfo(CS, P, Size));
 }
