@@ -1,4 +1,4 @@
-//===-- llvm/Target/SchedInfo.h - Target Instruction Sched Info --*- C++ -*-==//
+//===- Target/MachineSchedInfo.h - Target Instruction Sched Info -*- C++ -*-==//
 //
 // This file describes the target machine to the instruction scheduler.
 //
@@ -7,12 +7,12 @@
 #ifndef LLVM_TARGET_MACHINESCHEDINFO_H
 #define LLVM_TARGET_MACHINESCHEDINFO_H
 
-#include "llvm/Target/MachineInstrInfo.h"
 #include <ext/hash_map>
+#include "llvm/Target/MachineInstrInfo.h"
 
 typedef long long cycles_t; 
-const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
-const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
+static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));
+static const cycles_t INVALID_LATENCY = -HUGE_LATENCY; 
 static const unsigned MAX_OPCODE_SIZE = 16;
 
 class OpCodePair {
@@ -29,11 +29,11 @@ private:
 };
 
 namespace std {
-template <> struct hash<OpCodePair> {
-  size_t operator()(const OpCodePair& pair) const {
-    return hash<long>()(pair.val);
-  }
-};
+  template <> struct hash<OpCodePair> {
+    size_t operator()(const OpCodePair& pair) const {
+      return hash<long>()(pair.val);
+    }
+  };
 }
 
 //---------------------------------------------------------------------------
@@ -46,15 +46,14 @@ template <> struct hash<OpCodePair> {
 //---------------------------------------------------------------------------
 
 
-typedef unsigned int resourceId_t;
+typedef unsigned resourceId_t;
 
-class MachineResource {
-public:
+struct MachineResource {
   const std::string rname;
   resourceId_t rid;
   
-  /*ctor*/	MachineResource(const std::string& resourceName)
-			: rname(resourceName), rid(nextId++) {}
+  MachineResource(const std::string &resourceName)
+    : rname(resourceName), rid(nextId++) {}
   
 private:
   static resourceId_t nextId;
@@ -62,12 +61,11 @@ private:
 };
 
 
-class CPUResource : public MachineResource {
-public:
-  int		maxNumUsers;		// MAXINT if no restriction
+struct CPUResource : public MachineResource {
+  int maxNumUsers;   // MAXINT if no restriction
   
-  /*ctor*/	CPUResource(const std::string& rname, int maxUsers)
-			: MachineResource(rname), maxNumUsers(maxUsers) {}
+  CPUResource(const std::string& rname, int maxUsers)
+    : MachineResource(rname), maxNumUsers(maxUsers) {}
 };
 
 
@@ -96,30 +94,30 @@ struct InstrClassRUsage {
   int		totCycles;
   
   // Issue restrictions common to instructions in this class
-  unsigned int	maxNumIssue;
-  bool		isSingleIssue;
-  bool		breaksGroup;
-  cycles_t	numBubbles;
+  unsigned      maxNumIssue;
+  bool	        isSingleIssue;
+  bool	        breaksGroup;
+  cycles_t      numBubbles;
   
   // Feasible slots to use for instructions in this class.
   // The size of vector S[] is `numSlots'.
-  unsigned int	numSlots;
-  unsigned int	feasibleSlots[MAX_NUM_SLOTS];
+  unsigned      numSlots;
+  unsigned      feasibleSlots[MAX_NUM_SLOTS];
   
   // Resource usages common to instructions in this class.
   // The size of vector V[] is `numRUEntries'.
-  unsigned int	numRUEntries;
+  unsigned      numRUEntries;
   struct {
     resourceId_t resourceId;
-    unsigned int startCycle;
-    int		 numCycles;
-  }		V[MAX_NUM_CYCLES];
+    unsigned    startCycle;
+    int	        numCycles;
+  } V[MAX_NUM_CYCLES];
 };
 
 struct InstrRUsageDelta {
   MachineOpCode opCode;
   resourceId_t	resourceId;
-  unsigned int	startCycle;
+  unsigned      startCycle;
   int		numCycles;
 };
 
@@ -135,10 +133,6 @@ struct InstrIssueDelta {
 
 
 struct InstrRUsage {
-  /*ctor*/	InstrRUsage	() {}
-  /*ctor*/	InstrRUsage	(const InstrRUsage& instrRU);
-  InstrRUsage&	operator=	(const InstrRUsage& instrRU);
-  
   bool		sameAsClass;
   
   // Issue restrictions for this instruction
@@ -155,121 +149,23 @@ struct InstrRUsage {
   
 private:
   // Conveniences for initializing this structure
-  InstrRUsage&	operator=	(const InstrClassRUsage& classRU);
-  void		addIssueDelta	(const InstrIssueDelta& delta);
-  void		addUsageDelta	(const InstrRUsageDelta& delta);
-  void		setMaxSlots	(int maxNumSlots);
+  void setTo(const InstrClassRUsage& classRU);
+
+  void addIssueDelta(const InstrIssueDelta& delta) {
+    sameAsClass = false;
+    isSingleIssue = delta.isSingleIssue;
+    breaksGroup = delta.breaksGroup;
+    numBubbles = delta.numBubbles;
+  }
+
+  void addUsageDelta	(const InstrRUsageDelta& delta);
+  void setMaxSlots	(int maxNumSlots) {
+    feasibleSlots.resize(maxNumSlots);
+  }
   
   friend class MachineSchedInfo;	// give access to these functions
 };
 
-
-inline void
-InstrRUsage::setMaxSlots(int maxNumSlots)
-{
-  feasibleSlots.resize(maxNumSlots);
-}
-
-inline InstrRUsage&
-InstrRUsage::operator=(const InstrRUsage& instrRU)
-{
-  sameAsClass	   = instrRU.sameAsClass;
-  isSingleIssue    = instrRU.isSingleIssue;
-  breaksGroup      = instrRU.breaksGroup; 
-  numBubbles       = instrRU.numBubbles;
-  feasibleSlots    = instrRU.feasibleSlots;
-  numCycles	   = instrRU.numCycles;
-  resourcesByCycle = instrRU.resourcesByCycle;
-  return *this;
-}
-
-inline /*ctor*/
-InstrRUsage::InstrRUsage(const InstrRUsage& instrRU)
-{
-  *this = instrRU;
-}
-
-inline InstrRUsage&
-InstrRUsage::operator=(const InstrClassRUsage& classRU)
-{
-  sameAsClass	= true;
-  isSingleIssue = classRU.isSingleIssue;
-  breaksGroup   = classRU.breaksGroup; 
-  numBubbles    = classRU.numBubbles;
-  
-  for (unsigned i=0; i < classRU.numSlots; i++)
-    {
-      unsigned slot = classRU.feasibleSlots[i];
-      assert(slot < feasibleSlots.size() && "Invalid slot specified!");
-      this->feasibleSlots[slot] = true;
-    }
-  
-  this->numCycles   = classRU.totCycles;
-  this->resourcesByCycle.resize(this->numCycles);
-  
-  for (unsigned i=0; i < classRU.numRUEntries; i++)
-    for (unsigned c=classRU.V[i].startCycle, NC = c + classRU.V[i].numCycles;
-	 c < NC; c++)
-      this->resourcesByCycle[c].push_back(classRU.V[i].resourceId);
-  
-  // Sort each resource usage vector by resourceId_t to speed up conflict checking
-  for (unsigned i=0; i < this->resourcesByCycle.size(); i++)
-    sort(resourcesByCycle[i].begin(), resourcesByCycle[i].end());
-  
-  return *this;
-}
-
-
-inline void
-InstrRUsage::addIssueDelta(const InstrIssueDelta&  delta)
-{
-  sameAsClass = false;
-  isSingleIssue = delta.isSingleIssue;
-  breaksGroup = delta.breaksGroup;
-  numBubbles = delta.numBubbles;
-}
-
-
-// Add the extra resource usage requirements specified in the delta.
-// Note that a negative value of `numCycles' means one entry for that
-// resource should be deleted for each cycle.
-// 
-inline void
-InstrRUsage::addUsageDelta(const InstrRUsageDelta& delta)
-{
-  int NC = delta.numCycles;
-    
-  this->sameAsClass = false;
-  
-  // resize the resources vector if more cycles are specified
-  unsigned maxCycles = this->numCycles;
-  maxCycles = std::max(maxCycles, delta.startCycle + abs(NC) - 1);
-  if (maxCycles > this->numCycles)
-    {
-      this->resourcesByCycle.resize(maxCycles);
-      this->numCycles = maxCycles;
-    }
-    
-  if (NC >= 0)
-    for (unsigned c=delta.startCycle, last=c+NC-1; c <= last; c++)
-      this->resourcesByCycle[c].push_back(delta.resourceId);
-  else
-    // Remove the resource from all NC cycles.
-    for (unsigned c=delta.startCycle, last=(c-NC)-1; c <= last; c++)
-      {
-	// Look for the resource backwards so we remove the last entry
-	// for that resource in each cycle.
-	std::vector<resourceId_t>& rvec = this->resourcesByCycle[c];
-	int r;
-	for (r = (int) rvec.size(); r >= 0; r--)
-	  if (rvec[r] == delta.resourceId)
-	    {// found last entry for the resource
-	      rvec.erase(rvec.begin() + r);
-	      break;
-	    }
-	assert(r >= 0 && "Resource to remove was unused in cycle c!");
-      }
-}
 
 //---------------------------------------------------------------------------
 // class MachineSchedInfo
@@ -282,7 +178,7 @@ class MachineSchedInfo : public NonCopyableV {
 public:
   const TargetMachine& target;
   
-  unsigned int	maxNumIssueTotal;
+  unsigned maxNumIssueTotal;
   int	longestIssueConflict;
   
   int	branchMispredictPenalty;	// 4 for SPARC IIi
@@ -312,8 +208,8 @@ public:
 					 const InstrClassRUsage* _classRUsages,
 					 const InstrRUsageDelta* _usageDeltas,
 					 const InstrIssueDelta*  _issueDeltas,
-					 unsigned int _numUsageDeltas,
-					 unsigned int _numIssueDeltas);
+					 unsigned _numUsageDeltas,
+					 unsigned _numIssueDeltas);
   /*dtor*/ virtual ~MachineSchedInfo	() {}
   
   inline const MachineInstrInfo& getInstrInfo() const {
@@ -324,11 +220,11 @@ public:
     return numSchedClasses;
   }  
   
-  inline  unsigned int	getMaxNumIssueTotal() const {
+  inline  unsigned getMaxNumIssueTotal() const {
     return maxNumIssueTotal;
   }
   
-  inline  unsigned int	getMaxIssueForClass(const InstrSchedClass& sc) const {
+  inline  unsigned getMaxIssueForClass(const InstrSchedClass& sc) const {
     assert(sc >= 0 && sc < numSchedClasses);
     return classRUsages[sc].maxNumIssue;
   }
@@ -369,7 +265,7 @@ public:
     return getInstrRUsage(opCode).breaksGroup;
   }
   
-  inline  unsigned int 	numBubblesAfter	(MachineOpCode opCode) const {
+  inline  unsigned numBubblesAfter	(MachineOpCode opCode) const {
     return getInstrRUsage(opCode).numBubbles;
   }
   
@@ -386,8 +282,8 @@ protected:
   const	InstrClassRUsage*  classRUsages;        // raw array by sclass
   const	InstrRUsageDelta*  usageDeltas;	        // raw array [1:numUsageDeltas]
   const InstrIssueDelta*   issueDeltas;	        // raw array [1:numIssueDeltas]
-  unsigned int		   numUsageDeltas;
-  unsigned int		   numIssueDeltas;
+  unsigned 		   numUsageDeltas;
+  unsigned 		   numIssueDeltas;
   
   std::vector<InstrRUsage>      instrRUsages;   // indexed by opcode
   std::hash_map<OpCodePair,int> issueGaps;      // indexed by opcode pair

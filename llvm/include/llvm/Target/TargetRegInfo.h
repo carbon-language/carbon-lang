@@ -39,29 +39,22 @@ class BasicBlock;
 
 class MachineRegClassInfo {
 protected:
-  
   const unsigned RegClassID;        // integer ID of a reg class
   const unsigned NumOfAvailRegs;    // # of avail for coloring -without SP etc.
   const unsigned NumOfAllRegs;      // # of all registers -including SP,g0 etc.
   
 public:
-  
   inline unsigned getRegClassID()     const { return RegClassID; }
   inline unsigned getNumOfAvailRegs() const { return NumOfAvailRegs; }
   inline unsigned getNumOfAllRegs()   const { return NumOfAllRegs; }
 
-
-
   // This method should find a color which is not used by neighbors
   // (i.e., a false position in IsColorUsedArr) and 
-  virtual void colorIGNode(IGNode * Node, bool IsColorUsedArr[] ) const = 0;
-  virtual bool isRegVolatile(const int Reg) const = 0;
+  virtual void colorIGNode(IGNode *Node, bool IsColorUsedArr[]) const = 0;
+  virtual bool isRegVolatile(int Reg) const = 0;
 
-  MachineRegClassInfo(const unsigned ID, const unsigned NVR, 
-		      const unsigned NAR): RegClassID(ID), NumOfAvailRegs(NVR),
-                                             NumOfAllRegs(NAR)
-  { }                         // empty constructor
-
+  MachineRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)
+    : RegClassID(ID), NumOfAvailRegs(NVR), NumOfAllRegs(NAR) {}
 };
 
 
@@ -74,27 +67,15 @@ public:
 // 
 //--------------------------------------------------------------------------
 
-
-
-typedef std::hash_map<const MachineInstr *, AddedInstrns *> AddedInstrMapType;
-
-// A vector of all machine register classes
-//
-typedef std::vector<const MachineRegClassInfo *> MachineRegClassArrayType;
-
-
 class MachineRegInfo : public NonCopyableV {
-public:
-  const TargetMachine& target;
-
 protected:
-
-  MachineRegClassArrayType MachineRegClassArr;    
+  // A vector of all machine register classes
+  //
+  std::vector<const MachineRegClassInfo *> MachineRegClassArr;    
   
 public:
+  const TargetMachine &target;
 
-  // empty constructor
-  //
   MachineRegInfo(const TargetMachine& tgt) : target(tgt) { }
 
 
@@ -103,7 +84,7 @@ public:
   // condition code register. If isCCReg is true below, the ID of the condition
   // code regiter class will be returned. Otherwise, the normal register
   // class (eg. int, float) must be returned.
-  virtual unsigned getRegClassIDOfValue (const Value *const Val,
+  virtual unsigned getRegClassIDOfValue (const Value *Val,
 					 bool isCCReg = false) const =0;
 
 
@@ -111,37 +92,37 @@ public:
     return MachineRegClassArr.size(); 
   }  
 
-  const MachineRegClassInfo *const getMachineRegClass(unsigned i) const { 
+  const MachineRegClassInfo *getMachineRegClass(unsigned i) const { 
     return MachineRegClassArr[i]; 
   }
 
   // returns the register that is hardwired to zero if any (-1 if none)
   //
-  virtual inline int  getZeroRegNum()  const = 0;
+  virtual int getZeroRegNum() const = 0;
 
 
   // The following methods are used to color special live ranges (e.g.
   // method args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
   //
-  virtual void suggestRegs4MethodArgs(const Method *const Meth, 
-			 LiveRangeInfo & LRI) const = 0;
+  virtual void suggestRegs4MethodArgs(const Method *Meth, 
+			 LiveRangeInfo &LRI) const = 0;
 
-  virtual void suggestRegs4CallArgs(const MachineInstr *const CallI, 
-			LiveRangeInfo& LRI, std::vector<RegClass *> RCL) const = 0;
+  virtual void suggestRegs4CallArgs(const MachineInstr *CallI, 
+			LiveRangeInfo &LRI, std::vector<RegClass *> RCL) const = 0;
 
-  virtual void suggestReg4RetValue(const MachineInstr *const RetI, 
-				   LiveRangeInfo& LRI) const = 0;
+  virtual void suggestReg4RetValue(const MachineInstr *RetI, 
+				   LiveRangeInfo &LRI) const = 0;
 
-  virtual void colorMethodArgs(const Method *const Meth,  LiveRangeInfo& LRI,
-		       AddedInstrns *const FirstAI) const = 0;
+  virtual void colorMethodArgs(const Method *Meth,  LiveRangeInfo &LRI,
+                               AddedInstrns *FirstAI) const = 0;
 
-  virtual void colorCallArgs(const MachineInstr *const CalI, 
-			     LiveRangeInfo& LRI, AddedInstrns *const CallAI, 
+  virtual void colorCallArgs(const MachineInstr *CalI, 
+			     LiveRangeInfo& LRI, AddedInstrns *CallAI, 
 			     PhyRegAlloc &PRA, const BasicBlock *BB) const = 0;
 
-  virtual void colorRetValue(const MachineInstr *const RetI,LiveRangeInfo& LRI,
-			     AddedInstrns *const RetAI) const = 0;
+  virtual void colorRetValue(const MachineInstr *RetI, LiveRangeInfo &LRI,
+			     AddedInstrns *RetAI) const = 0;
 
 
 
@@ -150,21 +131,18 @@ public:
   // interface. However, they can be moved to MachineInstrInfo interface if
   // necessary.
   //
-  virtual MachineInstr * 
-  cpReg2RegMI(const unsigned SrcReg, const unsigned DestReg,
-	      const int RegType) const=0;
+  virtual MachineInstr *cpReg2RegMI(unsigned SrcReg, unsigned DestReg,
+                                    int RegType) const = 0;
 
-  virtual MachineInstr * 
-  cpReg2MemMI(const unsigned SrcReg, const unsigned DestPtrReg,
-	       const int Offset, const int RegType) const=0;
+  virtual MachineInstr *cpReg2MemMI(unsigned SrcReg, unsigned DestPtrReg,
+                                    int Offset, int RegType) const = 0;
 
-  virtual MachineInstr *
-   cpMem2RegMI(const unsigned SrcPtrReg, const int Offset,
-	       const unsigned DestReg, const int RegType) const=0;
+  virtual MachineInstr *cpMem2RegMI(unsigned SrcPtrReg, int Offset,
+                                    unsigned DestReg, int RegType) const = 0;
 
-  virtual MachineInstr *cpValue2Value( Value *Src, Value *Dest) const=0;
+  virtual MachineInstr *cpValue2Value(Value *Src, Value *Dest) const = 0;
 
-  virtual bool isRegVolatile(const int RegClassID, const int Reg) const=0;
+  virtual bool isRegVolatile(int RegClassID, int Reg) const = 0;
 
 
 
@@ -191,21 +169,21 @@ public:
 
   // Gives the type of a register based on the type of the LR
   //
-  virtual int getRegType(const LiveRange *const LR) const=0;
+  virtual int getRegType(const LiveRange *LR) const = 0;
 
   // Gives the return value contained in a CALL machine instruction
   //
-  virtual const Value * getCallInstRetVal(const MachineInstr *CallMI) const=0;
+  virtual const Value *getCallInstRetVal(const MachineInstr *CallMI) const = 0;
 
   // The following methods are used to get the frame/stack pointers
   // 
-  inline virtual unsigned getFramePointer() const=0;
-  inline virtual unsigned getStackPointer() const=0;
+  virtual unsigned getFramePointer() const = 0;
+  virtual unsigned getStackPointer() const = 0;
 
   // A register can be initialized to an invalid number. That number can
   // be obtained using this method.
   //
-  inline virtual int getInvalidRegNum() const=0;
+  virtual int getInvalidRegNum() const = 0;
 
 
   // Method for inserting caller saving code. The caller must save all the
@@ -215,22 +193,12 @@ public:
   //
   virtual void insertCallerSavingCode(const MachineInstr *MInst, 
 				      const BasicBlock *BB, 
-				      PhyRegAlloc &PRA ) const = 0;
+				      PhyRegAlloc &PRA) const = 0;
 
   // This method gives the the number of bytes of stack spaceallocated 
   // to a register when it is spilled to the stack.
   //
-  virtual inline int getSpilledRegSize(const int RegType) const = 0;
-
-
-
+  virtual int getSpilledRegSize(int RegType) const = 0;
 };
 
-
-
-
 #endif
-
-
-
-

@@ -1,30 +1,17 @@
-// $Id$ -*-c++-*-
-//***************************************************************************
-// File:
-//	MachineCacheInfo.h
-// 
-// Purpose:
-//      Describes properties of the target cache architecture.
-//**************************************************************************/
+//===-- llvm/Target/MachineCacheInfo.h ---------------------------*- C++ -*-==//
+//
+//  Describes properties of the target cache architecture.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGET_MACHINECACHEINFO_H
 #define LLVM_TARGET_MACHINECACHEINFO_H
 
-#include "llvm/Target/TargetMachine.h"
 #include "Support/DataTypes.h"
+class TargetMachine;
 
-
-//---------------------------------------------------------------------------
-// class MachineCacheInfo 
-// 
-// Purpose:
-//   Describes properties of the target cache architecture.
-//---------------------------------------------------------------------------
-
-class MachineCacheInfo : public NonCopyableV {
-public:
-  const TargetMachine& target;
-  
+struct MachineCacheInfo : public NonCopyableV {
+  const TargetMachine &target;
 protected:
   unsigned int           numLevels;
   std::vector<unsigned short> cacheLineSizes;
@@ -32,8 +19,7 @@ protected:
   std::vector<unsigned short> cacheAssoc;
   
 public:
-  /*ctor*/          MachineCacheInfo    (const TargetMachine& tgt);
-  /*dtor*/ virtual ~MachineCacheInfo    () {}
+  MachineCacheInfo(const TargetMachine& tgt);
   
   // Default parameters are:
   //    NumLevels    = 2
@@ -59,8 +45,5 @@ public:
     return cacheAssoc[level];
   }
 };
-
-
-//---------------------------------------------------------------------------
 
 #endif
