@@ -22,15 +22,17 @@ namespace llvm {
 
 class Module;
 
-/// This is the heart of the linker. The \p Src module is linked into the 
-/// \p Dest module. If an error occurs, true is returned, otherwise false. If
-/// \p ErrorMsg is not null and an error occurs, \p *ErrorMsg will be set to a
-/// readable string that indicates the nature of the error.
+/// This is the heart of the linker. The \p Src module is linked into the \p
+/// Dest module. If an error occurs, true is returned, otherwise false. If \p
+/// ErrorMsg is not null and an error occurs, \p *ErrorMsg will be set to a
+/// readable string that indicates the nature of the error.  Note that this can
+/// destroy the Src module in arbitrary ways.
+///
 /// @returns true if there's an error
 /// @brief Link two modules together
 bool LinkModules(
   Module* Dest,          ///< Module into which \p Src is linked
-  const Module* Src,     ///< Module linked into \p Dest
+  Module* Src,     ///< Module linked into \p Dest
   std::string* ErrorMsg  ///< Optional error message string
 );
 
