@@ -1,6 +1,8 @@
 ##----------------------------------------------------------*- Makefile -*-===##
+##
 ## Common rules for generating, linking, and compiling via LLVM.  This is
 ## used to implement a robust testing framework for LLVM
+##
 ##-------------------------------------------------------------------------===##
 
 # If the user specified a TEST= option on the command line, we do not want to do
@@ -65,22 +67,17 @@ CP	= /bin/cp -f
 ## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
 ## mark that tracing on, and set the TRACELIBS variable.
 TRACEFLAGS = 
-DOTRACING  =
 ifeq ($(TRACE), yes)
-    TRACEFLAGS += -trace
-    DOTRACING = yes
-else
-    ifeq ($(TRACEM), yes)
-	TRACEFLAGS += -tracem
-	DOTRACING = yes
-    endif
-endif
-ifdef DOTRACING
+    TRACEFLAGS = -trace
     TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
 endif
 
+ifeq ($(TRACEM), yes)
+    TRACEFLAGS = -tracem
+    TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr.$(ARCH)
+endif
 
-LLCLIBS := $(LLCLIBS) -lm
+LLCLIBS += -lm
 
 clean::
 	$(RM) -f a.out core
