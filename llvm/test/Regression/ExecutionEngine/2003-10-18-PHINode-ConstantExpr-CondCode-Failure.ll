@@ -1,5 +1,3 @@
-; RUN: llvm-as < %s | lli -force-interpreter=false
-
 %A = global int 0
 
 int %main() {
