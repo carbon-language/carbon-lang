@@ -97,6 +97,16 @@ static inline std::string ftostr(double V) {
   return Buffer;
 }
 
+
+/// getToken - This function extracts one token from source, ignoring any
+/// leading characters that appear in the Delimiters string, and ending the
+/// token at any of the characters that appear in the Delimiters string.  If
+/// there are no tokens in the source string, an empty string is returned.
+/// The Source source string is updated in place to remove the returned string
+/// and any delimiter prefix from it.
+std::string getToken(std::string &Source,
+                     const char *Delimiters = " \t\n\v\f\r");
+
 } // End llvm namespace
 
 #endif
