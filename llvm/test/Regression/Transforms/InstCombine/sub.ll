@@ -59,3 +59,16 @@ int %test9(int %A) {
         ret int %C
 }
 
+int %test10(int %A, int %B) {    ; -A*-B == A*B
+	%C = sub int 0, %A
+	%D = sub int 0, %B
+	%E = mul int %C, %D
+	ret int %E
+}
+
+int %test10(int %A) {    ; -A *c1 == A * -c1
+	%C = sub int 0, %A
+	%E = mul int %C, 7
+	ret int %E
+}
+
