@@ -46,7 +46,3 @@ bb7:					;[#uses=2]
 	ret %Graph null
 }
 
-int %main(int argc, sbyte** argv) {
-bb1:
-	%reg100 = call %struct.graph_st* (int, int)* %MakeGraph(1, 1)
-
