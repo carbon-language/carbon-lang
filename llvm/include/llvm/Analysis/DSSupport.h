@@ -68,6 +68,8 @@ public:
   }
   bool operator!=(const DSNodeHandle &H) const { return !operator==(H); }
 
+  inline void swap(DSNodeHandle &H);
+
   // Allow explicit conversion to DSNode...
   DSNode *getNode() const { return N; }
   unsigned getOffset() const { return Offset; }
@@ -95,6 +97,7 @@ public:
   inline void setLink(unsigned Num, const DSNodeHandle &NH);
 };
 
+inline void swap(DSNodeHandle &NH1, DSNodeHandle &NH2) { NH1.swap(NH2); }
 
 //===----------------------------------------------------------------------===//
 /// DSTypeRec - This structure is used to represent a single type that is held
@@ -205,11 +208,21 @@ public:
     return CallArgs[i];
   }
 
+  void swap(DSCallSite &CS) {
+    if (this != &CS) {
+      std::swap(Inst, CS.Inst);
+      std::swap(RetVal, CS.RetVal);
+      std::swap(Callee, CS.Callee);
+      std::swap(CallArgs, CS.CallArgs);
+      std::swap(ResolvingCaller, CS.ResolvingCaller);
+    }
+  }
+
   bool operator<(const DSCallSite &CS) const {
+    if (Callee < CS.Callee) return true;   // This must sort by callee first!
+    if (Callee > CS.Callee) return false;
     if (RetVal < CS.RetVal) return true;
     if (RetVal > CS.RetVal) return false;
-    if (Callee < CS.Callee) return true;
-    if (Callee > CS.Callee) return false;
     return CallArgs < CS.CallArgs;
   }
 
@@ -219,5 +232,6 @@ public:
   }
 };
 
+inline void swap(DSCallSite &CS1, DSCallSite &CS2) { CS1.swap(CS2); }
 
 #endif
