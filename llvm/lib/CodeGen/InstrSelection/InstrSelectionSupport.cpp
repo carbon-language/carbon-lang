@@ -103,12 +103,12 @@ ChooseRegOrImmed(Value* val,
   if (isa<PointerType>(CPV->getType()))
     intValue = 0;                       // We checked above that it is NULL 
   else if (ConstantBool* CB = dyn_cast<ConstantBool>(CPV))
-    intValue = (int64_t) CB->getValue();
+    intValue = CB->getValue();
   else if (CPV->getType()->isSigned())
     intValue = cast<ConstantSInt>(CPV)->getValue();
   else
     { // get the int value and sign-extend if original was less than 64 bits
-      intValue = (int64_t) cast<ConstantUInt>(CPV)->getValue();
+      intValue = cast<ConstantUInt>(CPV)->getValue();
       switch(CPV->getType()->getPrimitiveID())
         {
         case Type::UByteTyID:  intValue = (int64_t) (int8_t) intValue; break;
