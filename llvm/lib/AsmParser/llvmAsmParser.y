@@ -191,7 +191,7 @@ static void InsertType(const Type *Ty, vector<PATypeHolder> &Types) {
 
 static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
-  case 0: {                 // Is it a numbered definition?
+  case ValID::NumberVal: {                 // Is it a numbered definition?
     unsigned Num = (unsigned)D.Num;
 
     // Module constants occupy the lowest numbered slots...
@@ -205,7 +205,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
       return CurMeth.Types[Num];
     break;
   }
-  case 1: {                // Is it a named definition?
+  case ValID::NameVal: {                // Is it a named definition?
     string Name(D.Name);
     SymbolTable *SymTab = 0;
     if (inFunctionScope()) SymTab = CurMeth.CurrentFunction->getSymbolTable();
@@ -300,7 +300,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
       return ConstantBool::get(D.ConstPool64 != 0);
     } else {
       if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
-	ThrowException("Symbolic constant pool value '" +
+	ThrowException("Signed integral constant '" +
 		       itostr(D.ConstPool64) + "' is invalid for type '" + 
 		       Ty->getDescription() + "'!");
       return ConstantSInt::get(Ty, D.ConstPool64);
@@ -309,7 +309,8 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
     if (!ConstantUInt::isValueValidForType(Ty, D.UConstPool64)) {
       if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64)) {
-	ThrowException("Integral constant pool reference is invalid!");
+	ThrowException("Integral constant '" + utostr(D.UConstPool64) +
+                       "' is invalid or out of range!");
       } else {     // This is really a signed reference.  Transmogrify.
 	return ConstantSInt::get(Ty, D.ConstPool64);
       }
@@ -969,11 +970,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   };
 
 
-// FIXME: ConstExpr::get never return null!
+// FIXME: ConstExpr::get never return null!  Do checking here in the parser.
 ConstExpr: Types CAST ConstVal {
-    ConstantExpr* CPE = ConstantExpr::get($2, $3, $1->get());
-    if (CPE == 0) ThrowException("constant expression builder returned null!");
-    $$ = CPE;
+    $$ = ConstantExpr::get($2, $3, $1->get());
+    if ($$ == 0) ThrowException("constant expression builder returned null!");
   }
   | Types GETELEMENTPTR '(' ConstVal IndexList ')' {
     vector<Constant*> IdxVec;
@@ -985,24 +985,20 @@ ConstExpr: Types CAST ConstVal {
 
     delete $5;
 
-    ConstantExpr* CPE = ConstantExpr::get($2, $4, IdxVec, $1->get());
-    if (CPE == 0) ThrowException("constant expression builder returned null!");
-    $$ = CPE;
+    $$ = ConstantExpr::get($2, $4, IdxVec, $1->get());
+    if ($$ == 0) ThrowException("constant expression builder returned null!");
   }
   | Types UnaryOps ConstVal {
-    ConstantExpr* CPE = ConstantExpr::get($2, $3, $1->get());
-    if (CPE == 0) ThrowException("constant expression builder returned null!");
-    $$ = CPE;
+    $$ = ConstantExpr::get($2, $3, $1->get());
+    if ($$ == 0) ThrowException("constant expression builder returned null!");
   }
   | Types BinaryOps ConstVal ',' ConstVal {
-    ConstantExpr* CPE = ConstantExpr::get($2, $3, $5, $1->get());
-    if (CPE == 0) ThrowException("constant expression builder returned null!");
-    $$ = CPE;
+    $$ = ConstantExpr::get($2, $3, $5, $1->get());
+    if ($$ == 0) ThrowException("constant expression builder returned null!");
   }
   | Types ShiftOps ConstVal ',' ConstVal {
-    ConstantExpr* CPE = ConstantExpr::get($2, $3, $5, $1->get());
-    if (CPE == 0) ThrowException("constant expression builder returned null!");
-    $$ = CPE;
+    $$ = ConstantExpr::get($2, $3, $5, $1->get());
+    if ($$ == 0) ThrowException("constant expression builder returned null!");
   }
   ;
 
