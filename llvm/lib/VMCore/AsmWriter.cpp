@@ -34,6 +34,10 @@ using std::map;
 using std::vector;
 using std::ostream;
 
+static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
+                                   map<const Type *, string> &TypeTable,
+                                   SlotCalculator *Table);
+
 static const Module *getModuleFromVal(const Value *V) {
   if (const Argument *MA = dyn_cast<const Argument>(V))
     return MA->getParent() ? MA->getParent()->getParent() : 0;
@@ -65,40 +69,6 @@ static SlotCalculator *createSlotCalculator(const Value *V) {
     return new SlotCalculator(Mod, true);
   }
   return 0;
-}
-
-// WriteAsOperand - Write the name of the specified value out to the specified
-// ostream.  This can be useful when you just want to print int %reg126, not the
-// whole instruction that generated it.
-//
-static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
-                                   SlotCalculator *Table) {
-  if (PrintName && V->hasName()) {
-    Out << " %" << V->getName();
-  } else {
-    if (const Constant *CPV = dyn_cast<const Constant>(V)) {
-      Out << " " << CPV->getStrValue();
-    } else {
-      int Slot;
-      if (Table) {
-	Slot = Table->getValSlot(V);
-      } else {
-        if (const Type *Ty = dyn_cast<const Type>(V)) {
-          Out << " " << Ty->getDescription();
-          return;
-        }
-
-        Table = createSlotCalculator(V);
-        if (Table == 0) { Out << "BAD VALUE TYPE!"; return; }
-
-	Slot = Table->getValSlot(V);
-	delete Table;
-      }
-      if (Slot >= 0)  Out << " %" << Slot;
-      else if (PrintName)
-        Out << "<badref>";     // Not embeded into a location?
-    }
-  }
 }
 
 
@@ -244,6 +214,95 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
   }
 }
 
+static void WriteConstantInt(ostream &Out, const Constant *CV, bool PrintName,
+                             map<const Type *, string> &TypeTable,
+                             SlotCalculator *Table) {
+  if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
+    const Type *SubType = CA->getType()->getElementType();
+    if (SubType == Type::SByteTy) {
+      Out << CV->getStrValue();   // Output string format if possible...
+    } else {
+      Out << "[";
+      if (CA->getNumOperands()) {
+        Out << " ";
+        printTypeInt(Out, SubType, TypeTable);
+        WriteAsOperandInternal(Out, CA->getOperand(0),
+                               PrintName, TypeTable, Table);
+        for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
+          Out << ", ";
+          printTypeInt(Out, SubType, TypeTable);
+          WriteAsOperandInternal(Out, CA->getOperand(i), PrintName,
+                                 TypeTable, Table);
+        }
+      }
+      Out << " ]";
+    }
+  } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
+    Out << "{";
+    if (CS->getNumOperands()) {
+      Out << " ";
+      printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
+
+      WriteAsOperandInternal(Out, CS->getOperand(0),
+                             PrintName, TypeTable, Table);
+
+      for (unsigned i = 1; i < CS->getNumOperands(); i++) {
+        Out << ", ";
+        printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
+
+        WriteAsOperandInternal(Out, CS->getOperand(i),
+                               PrintName, TypeTable, Table);
+      }
+    }
+
+    Out << " }";
+  } else if (isa<ConstantPointerNull>(CV)) {
+    Out << "null";
+
+    // FIXME: Handle ConstantPointerRef + lots of others...
+  } else {
+    Out << CV->getStrValue();
+  }
+}
+
+
+// WriteAsOperand - Write the name of the specified value out to the specified
+// ostream.  This can be useful when you just want to print int %reg126, not the
+// whole instruction that generated it.
+//
+static void WriteAsOperandInternal(ostream &Out, const Value *V, bool PrintName,
+                                   map<const Type *, string> &TypeTable,
+                                   SlotCalculator *Table) {
+  Out << " ";
+  if (PrintName && V->hasName()) {
+    Out << "%" << V->getName();
+  } else {
+    if (const Constant *CV = dyn_cast<const Constant>(V)) {
+      WriteConstantInt(Out, CV, PrintName, TypeTable, Table);
+    } else {
+      int Slot;
+      if (Table) {
+	Slot = Table->getValSlot(V);
+      } else {
+        if (const Type *Ty = dyn_cast<const Type>(V)) {
+          Out << Ty->getDescription();
+          return;
+        }
+
+        Table = createSlotCalculator(V);
+        if (Table == 0) { Out << "BAD VALUE TYPE!"; return; }
+
+	Slot = Table->getValSlot(V);
+	delete Table;
+      }
+      if (Slot >= 0)  Out << "%" << Slot;
+      else if (PrintName)
+        Out << "<badref>";     // Not embeded into a location?
+    }
+  }
+}
+
+
 
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
@@ -251,10 +310,16 @@ ostream &WriteTypeSymbolic(ostream &Out, const Type *Ty, const Module *M) {
 //
 ostream &WriteAsOperand(ostream &Out, const Value *V, bool PrintType, 
 			bool PrintName, SlotCalculator *Table) {
-  if (PrintType)
-    WriteTypeSymbolic(Out, V->getType(), getModuleFromVal(V));
+  map<const Type *, string> TypeNames;
+  const Module *M = getModuleFromVal(V);
 
-  WriteAsOperandInternal(Out, V, PrintName, Table);
+  if (M && M->hasSymbolTable())
+    fillTypeNameTable(M, TypeNames);
+
+  if (PrintType)
+    printTypeInt(Out, V->getType(), TypeNames);
+  
+  WriteAsOperandInternal(Out, V, PrintName, TypeNames, Table);
   return Out;
 }
 
@@ -324,7 +389,7 @@ ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
            E = FTy->getParamTypes().end(); I != E; ++I) {
       if (I != FTy->getParamTypes().begin())
         Out << ", ";
-      Out << printType(*I);
+      printType(*I);
     }
     if (FTy->isVarArg()) {
       if (!FTy->getParamTypes().empty()) Out << ", ";
@@ -357,7 +422,7 @@ ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType, 
 				  bool PrintName) {
   if (PrintType) { Out << " "; printType(Operand->getType()); }
-  WriteAsOperandInternal(Out, Operand, PrintName, &Table);
+  WriteAsOperandInternal(Out, Operand, PrintName, TypeNames, &Table);
 }
 
 
@@ -424,13 +489,10 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   if (!CPV->hasName()) return;
 
   // Print out name...
-  Out << "\t%" << CPV->getName() << " = ";
-
-  // Print out the constant type...
-  printType(CPV->getType());
+  Out << "\t%" << CPV->getName() << " =";
 
   // Write the value out now...
-  writeOperand(CPV, false, false);
+  writeOperand(CPV, true, false);
 
   if (!CPV->hasName() && CPV->getType() != Type::VoidTy) {
     int Slot = Table.getValSlot(CPV); // Print out the def slot taken...
