@@ -16,12 +16,16 @@ class Type;
 class MachineFunction;
 
 /// MRegisterDesc - This record contains all of the information known about a
-/// particular register.
+/// particular register.  The AliasSet field (if not null) contains a pointer to
+/// a Zero terminated array of registers that this register aliases.  This is
+/// needed for architectures like X86 which have AL alias AX alias EAX.
+/// Registers that this does not apply to simply should set this to null.
 ///
 struct MRegisterDesc {
-  const char *Name;    // Assembly language name for the register
-  unsigned   Flags;    // Flags identifying register properties (defined below)
-  unsigned TSFlags;    // Target Specific Flags
+  const char     *Name;       // Assembly language name for the register
+  const unsigned *AliasSet;   // Register Alias Set, described above
+  unsigned        Flags;      // Flags identifying register properties (below)
+  unsigned        TSFlags;    // Target Specific Flags
 };
 
 /// MRF namespace - This namespace contains flags that pertain to machine
@@ -88,7 +92,7 @@ public:
     /// produce a value.  Some frontends may use this as an operand register to
     /// mean special things, for example, the Sparc backend uses R0 to mean %g0
     /// which always PRODUCES the value 0.  The X86 backend does not use this
-    /// value as an operand register.
+    /// value as an operand register, except for memory references.
     ///
     NoRegister = 0,
 
@@ -111,6 +115,13 @@ public:
   ///
   const MRegisterDesc &get(unsigned RegNo) const { return operator[](RegNo); }
 
+  /// getAliasSet - Return the set of registers aliased by the specified
+  /// register, or a null list of there are none.  The list returned is zero
+  /// terminated.
+  ///
+  const unsigned *getAliasSet(unsigned RegNo) const {
+    return get(RegNo).AliasSet;
+  }
 
   virtual MachineBasicBlock::iterator
   storeReg2RegOffset(MachineBasicBlock &MBB,
