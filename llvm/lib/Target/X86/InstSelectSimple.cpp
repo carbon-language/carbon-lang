@@ -461,8 +461,7 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // Copy zero (null pointer) to the register.
     BMI(MBB, IP, X86::MOVri32, 1, R).addZImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-    unsigned SrcReg = getReg(CPR->getValue(), MBB, IP);
-    BMI(MBB, IP, X86::MOVrr32, 1, R).addReg(SrcReg);
+    BMI(MBB, IP, X86::MOVri32, 1, R).addGlobalAddress(CPR->getValue());
   } else {
     std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
@@ -2048,7 +2047,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       break;
     }
     case Type::ULongTyID:
-      assert("FIXME: not implemented: cast ulong X to fp type!");
+      assert(0 && "FIXME: not implemented: cast ulong X to fp type!");
     default:  // No promotion needed...
       break;
     }
@@ -2212,6 +2211,9 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
                             User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData();
 
+  if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(Src))
+    Src = CPR->getValue();
+
   std::vector<Value*> GEPOps;
   GEPOps.resize(IdxEnd-IdxBegin+1);
   GEPOps[0] = Src;
@@ -2229,9 +2231,13 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
       // The getGEPIndex operation didn't want to build an LEA.  Check to see if
       // all operands are consumed but the base pointer.  If so, just load it
       // into the register.
-      unsigned BaseReg = getReg(GEPOps[0], MBB, IP);
-      BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
-      return;                // we are now done
+      if (GlobalValue *GV = dyn_cast<GlobalValue>(GEPOps[0])) {
+        BMI(MBB, IP, X86::MOVri32, 1, TargetReg).addGlobalAddress(GV);
+      } else {
+        unsigned BaseReg = getReg(GEPOps[0], MBB, IP);
+        BMI(MBB, IP, X86::MOVrr32, 1, TargetReg).addReg(BaseReg);
+      }
+      break;                // we are now done
     } else if (const StructType *StTy = dyn_cast<StructType>(GEPTypes.back())) {
       // It's a struct access.  CUI is the index into the structure,
       // which names the field. This index must have unsigned type.
