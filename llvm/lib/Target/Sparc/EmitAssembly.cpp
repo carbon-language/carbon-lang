@@ -227,7 +227,7 @@ SparcAsmPrinter::printOneOperand(const MachineOperand &op)
         int RegNum = (int)op.getAllocatedRegNum();
         
         // ****this code is temporary till NULL Values are fixed
-        if (RegNum == 10000) {
+        if (RegNum == Target.getRegInfo().getInvalidRegNum()) {
           toAsm << "<NULL VALUE>";
         } else {
           toAsm << "%" << Target.getRegInfo().getUnifiedRegName(RegNum);
