@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ModuleAnalyzer.h"
-#include "llvm/ConstantPool.h"
 #include "llvm/Method.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
@@ -19,10 +18,6 @@
 // processModule - Driver function to call all of my subclasses virtual methods.
 //
 bool ModuleAnalyzer::processModule(const Module *M) {
-  // Loop over the constant pool, process all of the constants...
-  if (processConstPool(M->getConstantPool(), false))
-    return true;
-
   return processMethods(M);
 }
 
@@ -74,41 +69,6 @@ inline bool ModuleAnalyzer::handleType(set<const Type *> &TypeSet,
 }
 
 
-bool ModuleAnalyzer::processConstPool(const ConstantPool &CP, bool isMethod) {
-  // TypeSet - Keep track of which types have already been processType'ed.  We 
-  // don't want to reprocess the same type more than once.
-  //
-  set<const Type *> TypeSet;
-
-  for (ConstantPool::plane_const_iterator PI = CP.begin(); 
-       PI != CP.end(); ++PI) {
-    const ConstantPool::PlaneType &Plane = **PI;
-    if (Plane.empty()) continue;        // Skip empty type planes...
-
-    if (processConstPoolPlane(CP, Plane, isMethod)) return true;
-
-    for (ConstantPool::PlaneType::const_iterator CI = Plane.begin(); 
-	 CI != Plane.end(); ++CI) {
-      if ((*CI)->getType() == Type::TypeTy)
-	if (handleType(TypeSet, ((const ConstPoolType*)(*CI))->getValue())) 
-	  return true;
-      if (handleType(TypeSet, (*CI)->getType())) return true;
-
-      if (processConstant(*CI)) return true;
-    }
-  }
-  
-  if (!isMethod) {
-    const Module *M = CP.getParentV()->castModuleAsserting();
-    // Process the method types after the constant pool...
-    for (Module::const_iterator I = M->begin(); I != M->end(); ++I) {
-      if (handleType(TypeSet, (*I)->getType())) return true;
-      if (visitMethod(*I)) return true;
-    }
-  }
-  return false;
-}
-
 bool ModuleAnalyzer::processMethods(const Module *M) {
   return apply_until(M->begin(), M->end(),
 		     bind_obj(this, &ModuleAnalyzer::processMethod));
@@ -120,9 +80,6 @@ bool ModuleAnalyzer::processMethod(const Method *M) {
 		  bind_obj(this, &ModuleAnalyzer::processMethodArgument)))
     return true;
 
-  // Loop over the constant pool, adding the constants to the table...
-  processConstPool(M->getConstantPool(), true);
-  
   // Loop over all the basic blocks, in order...
   return apply_until(M->begin(), M->end(),
 		     bind_obj(this, &ModuleAnalyzer::processBasicBlock));
