@@ -1262,6 +1262,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                       vector<MachineInstr*>& mvec)
 {
   bool checkCast = false;		// initialize here to use fall-through
+  bool maskUnsignedResult = false;
   int nextRule;
   int forwardOperandNum = -1;
   unsigned int allocaSize = 0;
@@ -1558,27 +1559,34 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
             const Type* destType = destI->getType();
             unsigned opSize = target.DataLayout.getTypeSize(opType);
             unsigned destSize = target.DataLayout.getTypeSize(destType);
-            if (opSize < destSize && !opType->isSigned())
-              { // operand is unsigned and smaller than dest: sign-extend
-                target.getInstrInfo().CreateSignExtensionInstructions(target, destI->getParent()->getParent(), opVal, 8*opSize, destI, mvec, mcfi);
-              }
-            else if (opSize > destSize)
-              { // operand is larger than dest: mask high bits using AND
-                // and then sign-extend using SRA by 0!
-                // 
-                TmpInstruction *tmpI = new TmpInstruction(destType, opVal,
-                                                          destI, "maskHi");
-                mcfi.addTemp(tmpI);
-                M = Create3OperandInstr(AND, opVal,
-                                        ConstantUInt::get(Type::UIntTy,
-                                              ((uint64_t) 1 << 8*destSize)-1),
-                                        tmpI);
-                mvec.push_back(M);
-                
-                target.getInstrInfo().CreateSignExtensionInstructions(target, destI->getParent()->getParent(), tmpI, 8*destSize, destI, mvec, mcfi);
+            
+            if (opSize < destSize ||
+                (opSize == destSize &&
+                 opSize == target.DataLayout.getIntegerRegize()))
+              { // operand is smaller or both operand and result fill register
+                forwardOperandNum = 0;          // forward first operand to user
               }
             else
-              forwardOperandNum = 0;          // forward first operand to user
+              { // need to mask (possibly) and then sign-extend (definitely)
+                Value* srcForSignExt = opVal;
+                unsigned srcSizeForSignExt = 8 * opSize;
+                if (opSize > destSize)
+                  { // operand is larger than dest: mask high bits
+                    TmpInstruction *tmpI = new TmpInstruction(destType, opVal,
+                                                              destI, "maskHi");
+                    mcfi.addTemp(tmpI);
+                    M = Create3OperandInstr(AND, opVal,
+                                            ConstantUInt::get(Type::ULongTy,
+                                              ((uint64_t) 1 << 8*destSize)-1),
+                                            tmpI);
+                    mvec.push_back(M);
+                    srcForSignExt = tmpI;
+                    srcSizeForSignExt = 8 * destSize;
+                  }
+                
+                // sign-extend
+                target.getInstrInfo().CreateSignExtensionInstructions(target, destI->getParent()->getParent(), srcForSignExt, srcSizeForSignExt, destI, mvec, mcfi);
+              }
           }
         else if (opType->isFloatingPoint())
           CreateCodeToConvertIntToFloat(target, opVal, destI, mvec, mcfi);
@@ -1661,6 +1669,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
 
       case 233:	// reg:   Add(reg, Constant)
+        maskUnsignedResult = true;
         M = CreateAddConstInstruction(subtreeRoot);
         if (M != NULL)
           {
@@ -1670,11 +1679,13 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // ELSE FALL THROUGH
         
       case 33:	// reg:   Add(reg, reg)
+        maskUnsignedResult = true;
         mvec.push_back(new MachineInstr(ChooseAddInstruction(subtreeRoot)));
         Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
 
       case 234:	// reg:   Sub(reg, Constant)
+        maskUnsignedResult = true;
         M = CreateSubConstInstruction(subtreeRoot);
         if (M != NULL)
           {
@@ -1684,6 +1695,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // ELSE FALL THROUGH
         
       case 34:	// reg:   Sub(reg, reg)
+        maskUnsignedResult = true;
         mvec.push_back(new MachineInstr(ChooseSubInstructionByType(
                                    subtreeRoot->getInstruction()->getType())));
         Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
@@ -1695,6 +1707,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 35:	// reg:   Mul(reg, reg)
       {
+        maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
                                  ? FSMULD
                                  : INVALID_MACHINE_OPCODE);
@@ -1712,6 +1725,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
 
       case 235:	// reg:   Mul(reg, Constant)
       {
+        maskUnsignedResult = true;
         MachineOpCode forceOp = ((checkCast && BothFloatToDouble(subtreeRoot))
                                  ? FSMULD
                                  : INVALID_MACHINE_OPCODE);
@@ -1725,6 +1739,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
       case 236:	// reg:   Div(reg, Constant)
+        maskUnsignedResult = true;
         L = mvec.size();
         CreateDivConstInstruction(target, subtreeRoot, mvec);
         if (mvec.size() > L)
@@ -1732,6 +1747,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         // ELSE FALL THROUGH
       
       case 36:	// reg:   Div(reg, reg)
+        maskUnsignedResult = true;
         mvec.push_back(new MachineInstr(ChooseDivInstruction(target, subtreeRoot)));
         Set3OperandsFromInstr(mvec.back(), subtreeRoot, target);
         break;
@@ -1739,6 +1755,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case  37:	// reg:   Rem(reg, reg)
       case 237:	// reg:   Rem(reg, Constant)
       {
+        maskUnsignedResult = true;
         Instruction* remInstr = subtreeRoot->getInstruction();
         
         TmpInstruction* quot = new TmpInstruction(
@@ -2142,22 +2159,6 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
-#undef NEED_PHI_MACHINE_INSTRS
-#ifdef NEED_PHI_MACHINE_INSTRS
-      {		// This instruction has variable #operands, so resultPos is 0.
-        Instruction* phi = subtreeRoot->getInstruction();
-        M = new MachineInstr(PHI, 1 + phi->getNumOperands());
-        M->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister,
-                                      subtreeRoot->getValue());
-        for (unsigned i=0, N=phi->getNumOperands(); i < N; i++)
-          M->SetMachineOperandVal(i+1, MachineOperand::MO_VirtualRegister,
-                                  phi->getOperand(i));
-        mvec.push_back(M);
-        break;
-      }  
-#endif // NEED_PHI_MACHINE_INSTRS
-      
-      
       case 71:	// reg:     VReg
       case 72:	// reg:     Constant
         break;                          // don't forward the value
@@ -2167,7 +2168,7 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         break;
       }
     }
-  
+
   if (forwardOperandNum >= 0)
     { // We did not generate a machine instruction but need to use operand.
       // If user is in the same tree, replace Value in its machine operand.
@@ -2187,6 +2188,35 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
                                         MachineCodeForInstruction::get(instr));
           assert(minstrVec.size() > 0);
           mvec.insert(mvec.end(), minstrVec.begin(), minstrVec.end());
+        }
+    }
+
+  if (maskUnsignedResult)
+    { // If result is unsigned and smaller than int reg size,
+      // we need to clear high bits of result value.
+      assert(forwardOperandNum < 0 && "Need mask but no instruction generated");
+      Instruction* dest = subtreeRoot->getInstruction();
+      if (! dest->getType()->isSigned())
+        {
+          unsigned destSize = target.DataLayout.getTypeSize(dest->getType());
+          if (destSize < target.DataLayout.getIntegerRegize())
+            { // Mask high bits.  Use a TmpInstruction to represent the
+              // intermediate result before masking.  Since those instructions
+              // have already been generated, go back and substitute tmpI
+              // for dest in the result position of each one of them.
+              TmpInstruction *tmpI = new TmpInstruction(dest->getType(), dest,
+                                                        NULL, "maskHi");
+              MachineCodeForInstruction::get(dest).addTemp(tmpI);
+
+              for (unsigned i=0, N=mvec.size(); i < N; ++i)
+                mvec[i]->substituteValue(dest, tmpI);
+
+              M = Create3OperandInstr(AND, tmpI,
+                                      ConstantUInt::get(Type::ULongTy,
+                                              ((uint64_t) 1 << 8*destSize) - 1),
+                                      dest);
+              mvec.push_back(M);
+            }
         }
     }
 }
