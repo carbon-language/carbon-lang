@@ -612,6 +612,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
       break;
 
+    case ISD::SHL:
+    case ISD::SRL:
+    case ISD::SRA:
+      if (C2 == 0) return N1;
+      break;
+
     case ISD::AND:
       if (!C2) return N2;         // X and 0 -> 0
       if (N2C->isAllOnesValue())
