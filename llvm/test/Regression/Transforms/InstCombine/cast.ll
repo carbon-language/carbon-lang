@@ -81,3 +81,9 @@ bool %test12(ubyte %A) {
         ret bool %C
 }
 
+bool %test13(ubyte %A, ubyte %b) {
+        %B = add ubyte %A, %b
+        %C = cast ubyte %B to bool    ; === A != 1
+        ret bool %C
+}
+
