@@ -28,8 +28,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_FUNCTIONFRAMEINFO_H
-#define LLVM_CODEGEN_FUNCTIONFRAMEINFO_H
+#ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
+#define LLVM_CODEGEN_MACHINEFRAMEINFO_H
+
+class TargetData;
+class TargetRegisterClass;
+#include <vector>
 
 class MachineFrameInfo {
 
@@ -180,6 +184,12 @@ public:
     Objects.push_back(StackObject(Size, Alignment, -1));
     return Objects.size()-NumFixedObjects-1;
   }
+
+  /// CreateStackObject - Create a stack object for a value of the specified
+  /// LLVM type or register class.
+  ///
+  int CreateStackObject(const Type *Ty, const TargetData &TD);
+  int CreateStackObject(const TargetRegisterClass *RC);
 
   /// CreateVariableSizedObject - Notify the MachineFrameInfo object that a
   /// variable sized object has been created.  This must be created whenever a
