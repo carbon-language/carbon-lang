@@ -894,7 +894,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
     Out << " )\n\t\t\tto";
     writeOperand(II->getNormalDest(), true);
-    Out << " unwind;
+    Out << " unwind";
     writeOperand(II->getUnwindDest(), true);
 
   } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
