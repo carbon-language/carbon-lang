@@ -96,6 +96,9 @@ now fully implemented and supported by all transformations, native code
 generators, and the interpreter.</li>
 <li>Bugpoint can now narrow down code-generation bugs to a loop nest, where
 before it could only narrow them down to a function being miscompiled.</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR40">Bugpoint can now debug arbitrary
+modes of llc</a> and lli, by passing them command line flags (e.g., 
+<tt>-regalloc=linearscan</tt>, <tt>-enable-correct-eh-support</tt>, etc.) </li>
 <li>The Control Flow Graph in the native code generators is no longer
 constrained to be the same as the CFG for the LLVM input code.</li>
 <li>The LLVM induction variable analysis routines have been rewritten.</li>
@@ -200,9 +203,9 @@ breaks SSA form</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR313">[X86] JIT miscompiles unsigned short
 to floating point cast</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR332">[adce] Crash handling unreachable code that unwinds</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/PR333">[sparc] LLC can't emit 2 functions of
+the same name, both having constant pools</a></li>
 </ol>
-
-
 
 <p>Bugs in the C/C++ front-end:</p>
 
