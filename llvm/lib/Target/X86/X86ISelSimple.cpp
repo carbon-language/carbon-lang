@@ -1632,8 +1632,8 @@ void X86ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         
       case cFP:
         if (ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(Args[i].Val)) {
-          // Store constant FP values with integer instructions to avoid having to
-          // load the constants from the constant pool then do a store.
+          // Store constant FP values with integer instructions to avoid having
+          // to load the constants from the constant pool then do a store.
           if (CFP->getType() == Type::FloatTy) {
             union {
               unsigned I;
