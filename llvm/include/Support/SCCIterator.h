@@ -176,11 +176,12 @@ public:
 
   // Direct loop termination test (I.fini() is more efficient than I == end())
   inline bool fini() const {
-    return VisitStack.empty();
+    assert(!CurrentSCC.empty() || VisitStack.empty());
+    return CurrentSCC.empty();
   }
 
   inline bool operator==(const _Self& x) const { 
-    return VisitStack == x.VisitStack;
+    return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
   }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
@@ -195,11 +196,11 @@ public:
 
   // Retrieve a pointer to the current SCC.  Returns NULL when done.
   inline const SccTy* operator*() const { 
-    assert(!CurrentSCC.empty() || fini());
+    assert(!CurrentSCC.empty() || VisitStack.empty());
     return CurrentSCC.empty()? NULL : &CurrentSCC;
   }
   inline SccTy* operator*() { 
-    assert(!CurrentSCC.empty() || fini());
+    assert(!CurrentSCC.empty() || VisitStack.empty());
     return CurrentSCC.empty()? NULL : &CurrentSCC;
   }
 };
