@@ -86,3 +86,11 @@ uint %test13(uint %A) {
 	%C = sub uint 0, %B        ; == sar A, 31
 	ret uint %C
 }
+
+int %test14(uint %A) {
+        %B = shr uint %A, ubyte 31
+        %C = cast uint %B to int
+        %D = sub int 0, %C
+        ret int %D
+}
+
