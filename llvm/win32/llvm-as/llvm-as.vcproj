@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="lli"
-	ProjectGUID="{FB6FFD68-C1E4-4DCF-AB02-36D205D5263E}"
+	Name="llvm-as"
+	ProjectGUID="{4FBC40A5-E626-4A6C-A9D3-FAE5C28D30CC}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -36,11 +36,10 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/lli.exe"
+				OutputFile="$(OutDir)/llvm-as.exe"
 				LinkIncremental="2"
-				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/lli.pdb"
+				ProgramDatabaseFile="$(OutDir)/llvm-as.pdb"
 				SubSystem="1"
 				TargetMachine="1"/>
 			<Tool
@@ -87,9 +86,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/lli.exe"
+				OutputFile="$(OutDir)/llvm-as.exe"
 				LinkIncremental="1"
-				ForceSymbolReferences="_X86TargetMachineModule"
 				GenerateDebugInformation="TRUE"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -125,7 +123,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\tools\lli\lli.cpp">
+				RelativePath="..\..\tools\llvm-as\llvm-as.cpp">
 			</File>
 		</Filter>
 		<Filter

@@ -2,8 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="lli"
-	ProjectGUID="{FB6FFD68-C1E4-4DCF-AB02-36D205D5263E}"
+	Name="AsmParser"
+	ProjectGUID="{3DC216F5-1DDD-478A-84F8-C124E5C31982}"
+	RootNamespace="AsmParser"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -12,15 +13,15 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(IntDir)"
+			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;.."
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;__STDC_LIMIT_MACROS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -35,14 +36,8 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/lli.exe"
-				LinkIncremental="2"
-				ForceSymbolReferences="_X86TargetMachineModule"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/lli.pdb"
-				SubSystem="1"
-				TargetMachine="1"/>
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/AsmParser.lib"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -57,8 +52,6 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -66,19 +59,18 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(IntDir)"
+			OutputDirectory="Release"
 			IntermediateDirectory="Release"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\include;.."
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;__STDC_LIMIT_MACROS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
 				RuntimeLibrary="2"
 				ForceConformanceInForLoopScope="TRUE"
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
-				BrowseInformation="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="3"
@@ -86,15 +78,8 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/lli.exe"
-				LinkIncremental="1"
-				ForceSymbolReferences="_X86TargetMachineModule"
-				GenerateDebugInformation="TRUE"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"/>
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/AsmParser.lib"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -109,8 +94,6 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -125,13 +108,71 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\tools\lli\lli.cpp">
+				RelativePath="..\..\lib\AsmParser\Lexer.l">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing flex"
+						CommandLine="..\tools\flex -t &gt;$(InputDir)$(InputName).cpp $(InputPath)"
+						Outputs="$(InputDir)$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing flex"
+						CommandLine="..\tools\flex -t &gt;$(InputDir)$(InputName).cpp $(InputPath)"
+						Outputs="$(InputDir)$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\lib\AsmParser\llvmAsmParser.y">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing bison"
+						CommandLine="..\tools\bison -pllvmAsm -tvdo$(InputDir)$(InputName).cpp $(InputPath)
+move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
+"
+						Outputs="$(InputDir)$(InputName).cpp;$(InputDir)$(InputName).h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing bison"
+						CommandLine="..\tools\bison -pllvmAsm -vdo$(InputDir)$(InputName).cpp $(InputPath)
+move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
+"
+						Outputs="$(InputDir)$(InputName).cpp;$(InputDir)$(InputName).h"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\lib\AsmParser\Parser.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\lib\AsmParser\ParserInternals.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Generated Files"
+			Filter="">
+			<File
+				RelativePath="..\..\lib\AsmParser\Lexer.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\AsmParser\llvmAsmParser.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\AsmParser\llvmAsmParser.h">
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

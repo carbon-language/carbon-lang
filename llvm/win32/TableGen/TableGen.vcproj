@@ -170,7 +170,7 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing bison"
-						CommandLine="..\tools\bison -pFile -tdo$(InputDir)$(InputName).cpp $(InputPath)
+						CommandLine="..\tools\bison -pFile -do$(InputDir)$(InputName).cpp $(InputPath)
 move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 "
 						Outputs="$(InputDir)$(InputName).cpp;$(InputDir)$(InputName).h"/>
