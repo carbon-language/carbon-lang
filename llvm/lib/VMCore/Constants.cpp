@@ -701,6 +701,11 @@ ConstantInt *ConstantInt::get(const Type *Ty, unsigned char V) {
 static ValueMap<double, Type, ConstantFP> FPConstants;
 
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
+  if (Ty == Type::FloatTy) {
+    // Force the value through memory to normalize it.
+    volatile float Tmp = V;
+    V = Tmp;
+  }
   return FPConstants.getOrCreate(Ty, V);
 }
 
