@@ -919,6 +919,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
     assert(((Slot << 5) >> 5) == Slot && "Slot # too big!");
     unsigned ID = (Slot << 5) + 1;
+    if (I->isExternal())   // If external, we don't have an FunctionInfo block.
+      ID |= 1 << 4;
     output_vbr(ID);
   }
   output_vbr((unsigned)Table.getSlot(Type::VoidTy) << 5);
@@ -942,11 +944,11 @@ void BytecodeWriter::outputInstructions(const Function *F) {
 }
 
 void BytecodeWriter::outputFunction(const Function *F) {
-  BytecodeBlock FunctionBlock(BytecodeFormat::FunctionBlockID, *this);
-  output_vbr(getEncodedLinkage(F));
-
   // If this is an external function, there is nothing else to emit!
   if (F->isExternal()) return;
+
+  BytecodeBlock FunctionBlock(BytecodeFormat::FunctionBlockID, *this);
+  output_vbr(getEncodedLinkage(F));
 
   // Get slot information about the function...
   Table.incorporateFunction(F);
