@@ -9,7 +9,7 @@
 declare void %use(bool)
 declare void %use(int)
 
-void %test(bool %c, int %V) {
+void %test(bool %c, int %V, int %V2) {
 	br bool %c, label %T, label %F
 T:
 	br label %F
@@ -22,6 +22,7 @@ F:
 	%I4 = phi int  [17, %T], [5, %0]
 	%I5 = phi int  [%V, %T], [0, %0]
 	%I6 = phi int  [%V, %0], [0, %T]
+	%I7 = phi int  [%V, %0], [%V2, %T]
 	call void %use(bool %B1)
 	call void %use(bool %B2)
 	call void %use(int  %I1)
