@@ -17,71 +17,30 @@
 
 #include "llvm/Transforms/Pass.h"
 
-class Instruction;
-class Value;
-class Type;
-
-
-//************************** External Functions ****************************/
-
-
-//--------------------------------------------------------------------------
-// Function GetPrintMethodForType
-// 
-// Creates an external declaration for "printf".
-// The signatures supported are:
-//   int printf(sbyte*,  sbyte*,  sbyte*,  sbyte*,  int      intValue)
-//   int printf(sbyte*,  sbyte*,  sbyte*,  sbyte*,  unsigned uintValue)
-//   int printf(sbyte*,  sbyte*,  sbyte*,  sbyte*,  float    floatValue)
-//   int printf(sbyte*,  sbyte*,  sbyte*,  sbyte*,  double   doubleValue)
-//   int printf(sbyte*,  sbyte*,  sbyte*,  sbyte*,  char*    stringValue)
-//   int printf(sbyte*,  sbyte*,  sbyte*,  sbyte*,  void*    ptrValue)
-// 
-// The invocation should be:
-//       call "printf"(fmt, bbName, valueName, valueType, value).
-//--------------------------------------------------------------------------
-
-const Method*	GetPrintMethodForType   (Module* module,
-                                         Type* vtype);
-
-
-//--------------------------------------------------------------------------
-// Function CreatePrintInstr
-// 
-// Creates an invocation of printf for the value `val' at the exit of the
-// basic block `bb'.  isMethodExit specifies if this is a method exit, 
-//--------------------------------------------------------------------------
-
-Instruction*	CreatePrintInstr        (Value* val,
-                                         const BasicBlock* bb,
-                                         Module* module,
-                                         unsigned int indent,
-                                         bool isMethodExit);
-
-//--------------------------------------------------------------------------
-// Function InsertCodeToTraceValues
-// 
-// Inserts tracing code for all live values at basic block and/or method exits
-// as specified by `traceBasicBlockExits' and `traceMethodExits'.
-//--------------------------------------------------------------------------
-
-void            InsertCodeToTraceValues (Method* method,
-                                         bool traceBasicBlockExits,
-                                         bool traceMethodExits);
-
-
-class InsertTraceCode : public ConcretePass {
+class InsertTraceCode : public Pass {
   bool TraceBasicBlockExits, TraceMethodExits;
 public:
   InsertTraceCode(bool traceBasicBlockExits, bool traceMethodExits)
     : TraceBasicBlockExits(traceBasicBlockExits), 
       TraceMethodExits(traceMethodExits) {}
 
+
+  //--------------------------------------------------------------------------
+  // Function InsertCodeToTraceValues
+  // 
+  // Inserts tracing code for all live values at basic block and/or method exits
+  // as specified by `traceBasicBlockExits' and `traceMethodExits'.
+  //--------------------------------------------------------------------------
+
+  static bool doInsertTraceCode(Method *M, bool traceBasicBlockExits,
+                                bool traceMethodExits);
+
+
+
   // doPerMethodWork - This method does the work.  Always successful.
   //
-  bool doPerMethodWorkVirt(Method *M) {
-    InsertCodeToTraceValues(M, TraceBasicBlockExits, TraceMethodExits);
-    return false;
+  bool doPerMethodWork(Method *M) {
+    return doInsertTraceCode(M, TraceBasicBlockExits, TraceMethodExits);
   }
 };
 
