@@ -158,11 +158,13 @@ canonicalization always makes 32-bit indvars</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR193">[constantmerge] Merging globals can
 cause use of invalid pointers!</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR212">[bcreader] Bytecode reader misreads 'long -9223372036854775808'!</a></li>
+<li><a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=174">Tail duplication does not update SSA form correctly.</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR218">VMCore mishandles double -0.0</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR219">[X86] X86 backend code generates -0.0 as +0.0</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR223">[loopsimplify] Loopsimplify incorrectly updates dominator information</a></li>
 <li><a href="http://llvm.cs.uiuc.edu/PR225">[pruneeh] -pruneeh pass removes invoke instructions it shouldn't</a></li>
 </ol>
+
 
 
 <p>Bugs in the C/C++ front-end:</p>
@@ -250,18 +252,7 @@ The gccld program
 does not link objects/archives in the order specified on the command line.
 </a>
 </li>
-
-<li>
-<a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=174">
-Tail duplication does not update SSA form correctly.
-</a>
-</li>
-
-<li><a href="http://llvm.cs.uiuc.edu/PR16">[lowerinvoke] The -lowerinvoke pass
-does not insert calls to setjmp/longjmp</a>.</li>
-
 </ul>
-
 </div>
 
 <!-- ======================================================================= -->
@@ -287,21 +278,6 @@ does not insert calls to setjmp/longjmp</a>.</li>
 Initialization of global union variables can only be done
 <a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=162">with the largest
 union member</a>.
-</li>
-
-<li>
-<a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=182">
-Functions marked "extern inline" are not compiled into LLVM with linkonce
-linkage.
-</a>
-</li>
-
-
-<li>
-The memory management functions in the libc runtime
-<a href="http://llvm.cs.uiuc.edu/PR186">need weak linkage so that they can be
-overridden.
-</a>
 </li>
 </ul>
 </div>
@@ -471,12 +447,6 @@ Please report any bugs or problems.</p>
 <ul>
 <li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
     front-end</a>.</li>
-
-<li>
-<a href="http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=137">
-Code is generated for empty classes.
-</a>
-</li>
 </ul>
 </div>
 
