@@ -16,29 +16,60 @@
 <h3>DESCRIPTION</h3>
 
 The <tt>bugpoint</tt> tool is a generally useful tool for narrowing down
-problems in LLVM tools and passes.<p>
+problems in LLVM tools and passes.  It can be used to debug three types of
+failures: optimizer crashes, miscompilations by optimizers, or invalid native
+code generation.  It aims to reduce testcases to something useful.  For example,
+if <tt><a href="gccas.html">gccas</a></tt> crashes while optimizing a file, it
+will identify the optimization (or combination of optimizations) that causes the
+crash, and reduce the file down to a small example which triggers the crash.<p>
 
-<tt>bugpoint</tt> reads the specified list of .bc or .ll files specified on the
-command-line and links them together.  It then runs the specified LLVM passes on
-the resultant bytecode file.  If any of the passes crash, or if they produce an
-LLVM module which is not verifiable, bugpoint enters "crash debugging mode".
-Otherwise, <tt>bugpoint</tt> tries to run the resultant program with a code
-generator.  If the code generated program does not match the reference output,
-it enters "miscompilation debugging mode".
+<tt>bugpoint</tt> reads the specified list of <tt>.bc</tt> or <tt>.ll</tt> files
+specified on the command-line and links them together.  If any LLVM passes are
+specified on the command line, it runs these passes on the resultant module.  If
+any of the passes crash, or if they produce an LLVM module which is not
+verifiable, <tt>bugpoint</tt> enters <a href="#crashdebug">crash debugging
+mode</a>.<p>
 
+Otherwise, if the <a href="#opt_output"><tt>-output</tt></a> option was not
+specified, <tt>bugpoint</tt> runs the initial program with the C backend (which
+is assumed to generate good code) to generate a reference output.  Once
+<tt>bugpoint</tt> has a reference output to match, it tries executing the
+original program with the <a href="#opt_run-">selected</a> code generator.  If
+the resultant output is different than the reference output, it exters <a
+href="#codegendebug">code generator debugging mode</a>.<p>
+
+Otherwise, <tt>bugpoint</tt> runs the LLVM program after all of the LLVM passes
+have been applied to it.  If the executed program matches the reference output,
+there is no problem <tt>bugpoint</tt> can debug.  Otherwise, it enters <a
+href="#miscompilationdebug">miscompilation debugging mode</a>.<p>
+
+<a name="crashdebug">
 <h4>Crash debugging mode</h4>
 
-If a pass crashes, bugpoint will try to narrow down the list of passes and the
-code to a more manageable amount. Using a sophisticated binary-search algorithm,
-<tt>bugpoint</tt> pares down the list of passes to a minimum set.
+If an optimizer crashes, <tt>bugpoint</tt> will try a variety of techniques to
+narrow down the list of passes and the code to a more manageable amount.  First,
+<tt>bugpoint</tt> figures out which combination of passes trigger the bug.  This
+is useful when debugging a problem exposed by <tt>gccas</tt> for example,
+because it has over 30 optimization it runs.<p>
 
-[unfinished]
+Next, <tt>bugpoint</tt> tries removing functions from the module, to reduce the
+size of the testcase to a reasonable amount.  Usually it is able to get it down
+to a single function for intraprocedural optimizations.  Once the number of
+functions has been reduced, it attempts to delete various edges in the control
+flow graph, to reduce the size of the function as much as possible.  Finally,
+<tt>bugpoint</tt> deletes any individual LLVM instructions whose absense does
+not eliminate the failure.  At the end, <tt>bugpoint</tt> should tell you what
+passes crash, give you a bytecode file, and give you instructions on how to
+reproduce the failure with <tt><a href="opt.html">opt</a></tt> or
+<tt><a href="analyze.html">analyze</a></tt>.<p>
 
-<h4>Miscompilation debugging mode</h4>
+<a name="codegendebug">
+<h4>Code generator debugging mode</h4>
 
 TODO
 
-<h4>Code generator debugging mode</h4>
+<a name="miscompilationdebug">
+<h4>Miscompilation debugging mode</h4>
 
 TODO
 
@@ -65,7 +96,7 @@ TODO
 	Print a summary of command line options.
 	<p>
 
-	<li> <tt>-input &lt;filename&gt;</tt>
+	<a name="opt_input"><li><tt>-input &lt;filename&gt;</tt>
 	<br>
 	Specify the contents of &lt;stdin&gt; when the program must be executed.
 	<p>
@@ -80,12 +111,12 @@ TODO
 	<tt>opt -load  &lt;plugin.so&gt; -help</tt>
 	<p>
 
-	<li> <tt>-output &lt;filename&gt;</tt>
+	<a name="opt_output"><li><tt>-output &lt;filename&gt;</tt>
 	<br>
 	Specify a reference output for the &lt;stdout&gt; file stream.
 	<p>
 
-	<li> <tt>-run-(lli|jit|llc|cbe)</tt>
+	<a name="opt_run-"><li><tt>-run-(int|jit|llc|cbe)</tt>
 	<br>
 	Specify which code generator <tt>bugpoint</tt> should use to run the
 	program.
