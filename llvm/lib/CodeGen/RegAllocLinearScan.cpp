@@ -150,10 +150,9 @@ namespace {
         /// stack slot
         void assignVirt2StackSlot(unsigned virtReg);
 
-        /// findOrCreateStackSlot - returns the offset of the
-        /// specified register on the stack allocating space if
-        /// necessary
-        int findOrCreateStackSlot(unsigned virtReg);
+        /// getStackSlot - returns the offset of the specified
+        /// register on the stack
+        int getStackSlot(unsigned virtReg);
 
         /// spillVirtReg - spills the virtual register
         void spillVirtReg(unsigned virtReg);
@@ -749,29 +748,27 @@ void RA::assignVirt2StackSlot(unsigned virtReg)
     if (v2pMap_.find(virtReg) != v2pMap_.end()) {
         clearVirtReg(virtReg);
     }
+    else {
+        v2pMap_[virtReg] = 0; // this marks that this virtual register
+                              // lives on the stack
+    }
 }
 
-int RA::findOrCreateStackSlot(unsigned virtReg)
+int RA::getStackSlot(unsigned virtReg)
 {
     // use lower_bound so that we can do a possibly O(1) insert later
     // if necessary
-    Virt2StackSlotMap::iterator it = v2ssMap_.lower_bound(virtReg);
-    if (it != v2ssMap_.end() && it->first == virtReg) {
-        return it->second;
-    }
-    const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
-    int frameIndex = mf_->getFrameInfo()->CreateStackObject(rc);
-
-    v2ssMap_.insert(it, std::make_pair(virtReg, frameIndex));
-
-    return frameIndex;
+    Virt2StackSlotMap::iterator it = v2ssMap_.find(virtReg);
+    assert(it != v2ssMap_.end() &&
+           "attempt to get stack slot on register that does not live on the stack");
+    return it->second;
 }
 
 void RA::spillVirtReg(unsigned virtReg)
 {
     DEBUG(std::cerr << "\t\t\tspilling register: " << virtReg);
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
-    int frameIndex = findOrCreateStackSlot(virtReg);
+    int frameIndex = getStackSlot(virtReg);
     DEBUG(std::cerr << " to stack slot #" << frameIndex << '\n');
     ++numSpilled;
     instrAdded_ += mri_->storeRegToStackSlot(*currentMbb_, currentInstr_,
@@ -783,7 +780,7 @@ void RA::loadVirt2PhysReg(unsigned virtReg, unsigned physReg)
 {
     DEBUG(std::cerr << "\t\t\tloading register: " << virtReg);
     const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(virtReg);
-    int frameIndex = findOrCreateStackSlot(virtReg);
+    int frameIndex = getStackSlot(virtReg);
     DEBUG(std::cerr << " from stack slot #" << frameIndex << '\n');
     instrAdded_ += mri_->loadRegFromStackSlot(*currentMbb_, currentInstr_,
                                               physReg, frameIndex, rc);
