@@ -27,7 +27,8 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
        I != E; ++I)
   {
     Record *R = *I;
-    o << "    case " << Namespace << R->getName() << ": {\n";
+    o << "    case " << Namespace << R->getName() << ": {\n"
+      << "      std::cerr << \"Emitting " << R->getName() << "\\n\";\n";
 
     const RecordVal *InstVal = R->getValue("Inst");
     Init *InitVal = InstVal->getValue();
@@ -49,9 +50,9 @@ void CodeEmitterGen::createEmitter(std::ostream &o) {
         o << "0";
       }
     }
-    o << "\n\n";
+    o << "\n";
 
-    o << "      // " << *InstVal << "\n\n";
+    o << "      // " << *InstVal << "\n";
     o << "      Value = " << Value << "U;\n\n";
     
     // Loop over all of the fields in the instruction adding in any
