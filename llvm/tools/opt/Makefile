@@ -2,8 +2,8 @@ LEVEL = ../..
 TOOLNAME = opt
 
 USEDLIBS = bcreader bcwriter instrument profpaths \
-	   sparc.a target.a mapping.a regalloc.a sched.a select.a preselect \
-	   livevar.a sparc.a scalaropts \
+	   sparc target.a mapping regalloc.a sched select preselect \
+	   livevar sparc scalaropts \
 	   ipo ipa.a datastructure.a transforms target.a analysis \
            transformutils vmcore support
 TOOLLINKOPTS = -ldl
