@@ -81,12 +81,12 @@ href="bugfix">bug fixes</a>.  Overall, this is our highest quality release to
 date, and we encourage you to upgrade if you are using LLVM 1.0 or 1.1.
 </p>
 
-<p><B> FIXME: UPDATE: </b>
-At this time, LLVM is known to correctly compile and run all C
-&amp; C++ SPEC CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist
-benchmarks.  It has also been used to compile <b>many</b> other programs.  LLVM
-now also works with a broad variety of C++ programs, though it has still
-received less testing than the C front-end.
+<p>
+At this time, LLVM is known to correctly compile and run all C &amp; C++ SPEC
+CPU2000 benchmarks, the Olden benchmarks, and the Ptrdist benchmarks.  It has
+also been used to compile <b>many</b> other programs.  LLVM now also works with
+a broad variety of C++ programs, though it has still received less testing than
+the C front-end.
 </p>
 
 <!--=========================================================================-->
@@ -127,6 +127,13 @@ tool.  You can activate it with "<tt>llc -march=c foo.bc -o foo.c</tt>".</li>
 <li>LLVM includes a new interprocedural optimization that marks global variables
 "constant" when they are provably never written to.</li>
 <li>LLVM now includes a new interprocedural optimization that converts small "by reference" arguments to "by value" arguments, which is often improve the performance of C++ programs substantially.</li>
+<li>Bugpoint can now do a better job reducing miscompilation problems by
+reducing programs down to a particular loop nest, instead of just the function
+being miscompiled.</li>
+<li>The GCSE and LICM passes can now operate on side-effect-free function calls, for example hoisting calls to "<tt>strlen</tt>" and folding "<tt>cos</tt>" common subexpressions.</li>
+<li>LLVM has early support for a new <a
+href="LangRef.html#i_select"><tt>select</tt></a> instruction, though it is
+currently only supported by the C backend.</li>
 </ol>
 
 
@@ -136,9 +143,9 @@ In this release, the following missing features were implemented:
 </div>
 
 <ol>
-<li><a href="http://llvm.cs.uiuc.edu/PR16">Exception handling support in the X86
-&amp; Sparc native code generators</a></li>
-<li>The C/C++ front-end now support the GCC <tt>__builtin_return_address</tt> and <tt>__builtin_frame_address</tt> extensions.</li>
+<li><a href="http://llvm.cs.uiuc.edu/PR16">Exception handling in the X86
+&amp; Sparc native code generators</a> is now supported</li>
+<li>The C/C++ front-end now support the GCC <tt>__builtin_return_address</tt> and <tt>__builtin_frame_address</tt> extensions.  These are also supported by the X86 backend and by the C backend.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR249">[X86] Missing cast from ULong -> Double, cast FP -> bool and support for -9223372036854775808</a></li>
 <li>The C/C++ front-end <a href="http://llvm.cs.uiuc.edu/PR273">now supports</a>
 the "<a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">labels as values</a>" GCC extension, often used to build "threaded interpreters".</a></li>
