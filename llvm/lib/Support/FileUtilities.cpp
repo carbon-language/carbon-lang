@@ -93,7 +93,8 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
 // with a number.  Because of this, if needed, we pad the file so that it starts
 // and ends with a null character.
 static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
-  if (isNumberChar(FileStart[0]) || isNumberChar(FileEnd[-1])) {
+  if (FileStart-FileEnd < 2 ||
+      isNumberChar(FileStart[0]) || isNumberChar(FileEnd[-1])) {
     unsigned FileLen = FileEnd-FileStart;
     char *NewFile = new char[FileLen+2];
     NewFile[0] = 0;              // Add null padding
