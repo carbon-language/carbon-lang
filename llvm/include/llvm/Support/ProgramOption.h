@@ -24,7 +24,6 @@
 //*************************** User Include Files ***************************/
 
 #include "llvm/Support/Unique.h"
-#include "llvm/Support/StringUtils.h"
 
 //********************** Local Variable Definitions ************************/
 

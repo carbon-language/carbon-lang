@@ -22,6 +22,7 @@
 #include "llvm/Support/Unique.h"
 #include <vector>
 #include <hash_map>
+#include <string>
 
 template <> struct hash<string> {
   size_t operator()(string const &str) const {
