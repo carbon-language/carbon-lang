@@ -120,8 +120,10 @@ void LiveRangeInfo::constructLiveRanges()
 			    OpI.getMachineOperand().getVRegValue(), isCC );
 
 
-	    if(isCC )
-	      cout << "\a" << "**created a LR for a CC reg**" << cout;
+	    if(isCC ) {
+	      cout  << "\a**created a LR for a CC reg:";
+	      printValue( OpI.getMachineOperand().getVRegValue() );
+	    }
 
 	    DefRange->setRegClass( RegClassList[ rcid ] );
 

@@ -28,7 +28,7 @@ PhyRegAlloc::PhyRegAlloc(const Method *const M,
 
 void PhyRegAlloc::createIGNodeListsAndIGs()
 {
-  cout << "Creating LR lists ..." << endl;
+  if(DEBUG_RA ) cout << "Creating LR lists ..." << endl;
 
   // hash map iterator
   LiveRangeMapType::const_iterator HMI = (LRI.getLiveRangeMap())->begin();   
@@ -113,7 +113,7 @@ void PhyRegAlloc::addInterference(const Value *const Def,
 	LROfVar->addCallInterference( (const Instruction *const) Def );   
       
     }
-    else if(DEBUG_RA)  { 
+    else if(DEBUG_RA > 1)  { 
       // we will not have LRs for values not explicitly allocated in the
       // instruction stream (e.g., constants)
       cout << " warning: no live range for " ; 
@@ -221,7 +221,73 @@ void PhyRegAlloc::updateMachineCode()
 
   for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
 
-    cout << endl << "BB "; printValue( *BBI); cout << ": ";
+    // get the iterator for machine instructions
+    MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
+    MachineCodeForBasicBlock::iterator MInstIterator = MIVec.begin();
+
+    // iterate over all the machine instructions in BB
+    for( ; MInstIterator != MIVec.end(); ++MInstIterator) {  
+      
+      MachineInstr *const MInst = *MInstIterator; 
+
+      //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
+
+      for(unsigned OpNum=0; OpNum < MInst->getNumOperands(); ++OpNum) {
+
+	MachineOperand& Op = MInst->getOperand(OpNum);
+
+	if( Op.getOperandType() ==  MachineOperand::MO_VirtualRegister || 
+	    Op.getOperandType() ==  MachineOperand::MO_CCRegister) {
+
+	  const Value *const Val =  Op.getVRegValue();
+
+	  // delete this condition checking later (must assert if Val is null)
+	  if( !Val ) { 
+	    cout << "Error: NULL Value found in instr." << endl;
+	    continue;
+	  }
+	  assert( Val && "Value is NULL");   
+
+	  const LiveRange *const LR = LRI.getLiveRangeForValue(Val);
+
+	  if ( !LR ) {
+	    if( ! ( (Val->getType())->isLabelType() || 
+		    (Val->getValueType() == Value::ConstantVal) ) ) {
+	      cout << "Warning: No LiveRange for: ";
+	      printValue( Val); cout << endl;
+	    }
+
+	    //assert( LR && "No LR found for Value");
+	    continue;
+	  }
+	
+	  unsigned RCID = (LR->getRegClass())->getID();
+
+	  Op.setRegForValue( MRI.getUnifiedRegNum(RCID, LR->getColor()) );
+
+	  int RegNum = MRI.getUnifiedRegNum(RCID, LR->getColor());
+
+	} 
+      }
+
+    }
+  }
+}
+
+
+
+
+void PhyRegAlloc::printMachineCode()
+{
+
+  cout << endl << ";************** Method ";
+  cout << Meth->getName() << " *****************" << endl;
+
+  Method::const_iterator BBI = Meth->begin();  // random iterator for BBs   
+
+  for( ; BBI != Meth->end(); ++BBI) {          // traverse BBs in random order
+
+    cout << endl ; printLabel( *BBI); cout << ": ";
 
     // get the iterator for machine instructions
     MachineCodeForBasicBlock& MIVec = (*BBI)->getMachineInstrVec();
@@ -232,8 +298,10 @@ void PhyRegAlloc::updateMachineCode()
       
       MachineInstr *const MInst = *MInstIterator; 
 
+
       cout << endl << "\t";
       cout << TargetInstrDescriptors[MInst->getOpCode()].opCodeString;
+      
 
       //for(MachineInstr::val_op_const_iterator OpI(MInst);!OpI.done();++OpI) {
 
@@ -247,7 +315,7 @@ void PhyRegAlloc::updateMachineCode()
 	  const Value *const Val =  Op.getVRegValue();
 
 	  if( !Val ) { 
-	    cout << "\t<** Value is NULL!!!**>";
+	    cout << "\t<*NULL Value*>";
 	    continue;
 	  }
 	  assert( Val && "Value is NULL");
@@ -255,6 +323,8 @@ void PhyRegAlloc::updateMachineCode()
 	  const LiveRange *const LR = LRI.getLiveRangeForValue(Val);
 
 	  if ( !LR ) {
+
+	    
 	    if( ! ( (Val->getType())->isLabelType() || 
 		    (Val->getValueType() == Value::ConstantVal) ) ) {
 	      cout <<  "\t" << "<*No LiveRange for: ";
@@ -271,21 +341,49 @@ void PhyRegAlloc::updateMachineCode()
 	  //cout << "Setting reg for value: "; printValue( Val );
 	  //cout << endl;
 
-	  //Op.setRegForValue( MRI.getUnifiedRegNum(RCID, LR->getColor()) );
+	  Op.setRegForValue( MRI.getUnifiedRegNum(RCID, LR->getColor()) );
 
 	  int RegNum = MRI.getUnifiedRegNum(RCID, LR->getColor());
 
 	  cout << "\t" << "%" << MRI.getUnifiedRegName( RegNum );
 
-	} 
+	}
+	else if( Op.getOperandType() ==  MachineOperand:: MO_MachineRegister) {
+	  cout << "\t" << "%"<< MRI.getUnifiedRegName( Op.getMachineRegNum() );
+	}
+	else if( Op.getOperandType() ==  MachineOperand::MO_PCRelativeDisp ) {
+	  const Value *const Val = Op.getVRegValue () ;
+	  if( !Val ) {
+	    cout << "\t<*NULL Value*>";
+	    continue;
+	  }
+	  if( (Val->getValueType() == Value::BasicBlockVal))
+	    { cout << "\t"; printLabel(	Op.getVRegValue	() ); }
+	  else { cout << "\t"; printValue( Val ); }
+	}
+
 	else 
 	  cout << "\t" << Op;      // use dump field
 
       }
 
     }
+
+    cout << endl;
+
   }
+
+  cout << endl;
 }
+
+void PhyRegAlloc::printLabel(const Value *const Val)
+{
+  if( Val->hasName() )
+    cout  << Val->getName();
+  else
+    cout << "Label" <<  Val;
+}
+
 
 
 
@@ -328,14 +426,16 @@ void PhyRegAlloc::allocateRegisters()
   }
 
   MRI.colorArgs(Meth, LRI);             // color method args
-  MRI.colorCallArgs(CallInstrList, LRI, AddedInstrMap); // color call args of call instrns
+                                        // color call args of call instrns
+  MRI.colorCallArgs(CallInstrList, LRI, AddedInstrMap); 
 
                                         // color all register classes
   for( unsigned int rc=0; rc < NumOfRegClasses ; rc++)  
     RegClassList[ rc ]->colorAllRegs();    
 
-  updateMachineCode(); 
-  //PrintMachineInstructions(Meth);
+  //updateMachineCode(); 
+  PrintMachineInstructions(Meth);
+  printMachineCode();                   // only for DEBUGGING
 }
 
 

@@ -169,34 +169,21 @@ void RegClass::colorIGNode(IGNode *const Node)
     MRC->colorIGNode(Node, IsColorUsedArr);
   }
   else {
-    cout << " Node " << Node->getIndex();
-    cout << " already colored with color " << Node->getColor() << endl;
+    if( DEBUG_RA ) {
+      cout << " Node " << Node->getIndex();
+      cout << " already colored with color " << Node->getColor() << endl;
+    }
   }
 
 
   if( !Node->hasColor() ) {
-    cout << " Node " << Node->getIndex();
-    cout << " - could not find a color (needs spilling)" << endl;
+    if( DEBUG_RA ) {
+      cout << " Node " << Node->getIndex();
+      cout << " - could not find a color (needs spilling)" << endl;
+    }
   }
 
 }
 
 
-#if 0
 
-  if( DEBUG_RA) {                       // printing code 
-    /*    cout << " Node " << Node->getIndex();
-    if( Node->hasColor() ) { 
-      cout << " colored with color " << Node->getColor() <<  " [" ;
-      cout << SparcFloatRegOrder::getRegName(Node->getColor());
-      if( Node->getTypeID() == Type::DoubleTyID )
-	cout << "+" << SparcFloatRegOrder::getRegName(Node->getColor()+1);
-      cout << "]" << endl;
-    }
-    */
-    // MRC->printReg( Node->getParentLR());
-    cout << " Node " << Node->getIndex();
-    if( Node->hasColor() ) 
-      cout << " colored with color " << Node->getColor() << endl;
-    
-#endif
