@@ -31,17 +31,18 @@ class FunctionType;
 template<> struct ilist_traits<BasicBlock>
   : public SymbolTableListTraits<BasicBlock, Function, Function> {
 
-  // createNode is used to create a node that marks the end of the list...
-  static BasicBlock *createNode();
-
+  // createSentinal is used to create a node that marks the end of the list...
+  static BasicBlock *createSentinal();
+  static void destroySentinal(BasicBlock *BB) { delete BB; }
   static iplist<BasicBlock> &getList(Function *F);
 };
 
 template<> struct ilist_traits<Argument>
   : public SymbolTableListTraits<Argument, Function, Function> {
 
-  // createNode is used to create a node that marks the end of the list...
-  static Argument *createNode();
+  // createSentinal is used to create a node that marks the end of the list...
+  static Argument *createSentinal();
+  static void destroySentinal(Argument *A) { delete A; }
   static iplist<Argument> &getList(Function *F);
 };
 
