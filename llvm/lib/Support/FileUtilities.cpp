@@ -296,6 +296,7 @@ void *llvm::ReadFileIntoAddressSpace(const std::string &Filename,
   return Buffer;
 #else
   // FIXME: implement with read/write
+#error Unimplemented ReadFileIntoAddressSpace - need to use read/write.
   return 0;
 #endif
 }
