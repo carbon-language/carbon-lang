@@ -142,7 +142,7 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
   typedef typename Traits::BatcherClass BatcherClass;
   typedef typename Traits::ParentClass   ParentClass;
 
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER) || defined(__HP_aCC)
   friend PassClass;
   friend SubPassClass;
 #else
