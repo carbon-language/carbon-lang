@@ -210,7 +210,7 @@ bool ADCE::doADCE() {
         if (F && AA->onlyReadsMemory(F)) {
           // The function cannot unwind.  Convert it to a call with a branch
           // after it to the normal destination.
-          std::vector<Value*> Args(II->op_begin()+1, II->op_end());
+          std::vector<Value*> Args(II->op_begin()+3, II->op_end());
           std::string Name = II->getName(); II->setName("");
           Instruction *NewCall = new CallInst(F, Args, Name, II);
           II->replaceAllUsesWith(NewCall);
