@@ -93,9 +93,21 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
   RefCount++;               // Entry points to alias set...
 }
 
-void AliasSet::addCallSite(CallSite CS) {
+void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
   CallSites.push_back(CS);
-  AliasTy = MayAlias;         // FIXME: Too conservative?
+
+  if (Function *F = CS.getCalledFunction()) {
+    if (AA.doesNotAccessMemory(F))
+      return;
+    else if (AA.onlyReadsMemory(F)) {
+      AliasTy = MayAlias;
+      AccessTy = Refs;
+      return;
+    }
+  }
+
+  // FIXME: This should use mod/ref information to make this not suck so bad
+  AliasTy = MayAlias;
   AccessTy = ModRef;
 }
 
@@ -129,7 +141,11 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
 }
 
 bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
-  // FIXME: Too conservative!
+  // FIXME: Use mod/ref information to prune this better!
+  if (Function *F = CS.getCalledFunction())
+    if (AA.doesNotAccessMemory(F))
+      return false;
+
   return true;
 }
 
@@ -213,7 +229,7 @@ void AliasSetTracker::add(CallSite CS) {
     AliasSets.push_back(AliasSet());
     AS = &AliasSets.back();
   }
-  AS->addCallSite(CS); 
+  AS->addCallSite(CS, AA); 
 }
 
 void AliasSetTracker::add(Instruction *I) {
