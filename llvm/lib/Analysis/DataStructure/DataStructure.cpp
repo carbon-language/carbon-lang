@@ -1101,31 +1101,36 @@ void DSGraph::cloneInto(const DSGraph &G, DSScalarMap &OldValMap,
   assert(OldNodeMap.empty() && "Returned OldNodeMap should be empty!");
   assert(&G != this && "Cannot clone graph into itself!");
 
-  unsigned FN = Nodes.size();           // First new node...
-
-  // Duplicate all of the nodes, populating the node map...
-  Nodes.reserve(FN+G.Nodes.size());
+  // Remember the last node that existed before, or node_end() if there are no
+  // nodes.
+  node_iterator FN = node_end();
+  if (FN != node_begin()) --FN;
 
   // Remove alloca or mod/ref bits as specified...
   unsigned BitsToClear = ((CloneFlags & StripAllocaBit)? DSNode::AllocaNode : 0)
     | ((CloneFlags & StripModRefBits)? (DSNode::Modified | DSNode::Read) : 0)
     | ((CloneFlags & StripIncompleteBit)? DSNode::Incomplete : 0);
   BitsToClear |= DSNode::DEAD;  // Clear dead flag...
-  for (unsigned i = 0, e = G.Nodes.size(); i != e; ++i) {
-    DSNode *Old = G.Nodes[i];
-    if (!Old->isForwarding()) {
-      DSNode *New = new DSNode(*Old, this);
+  for (node_iterator I = G.node_begin(), E = G.node_end(); I != E; ++I)
+    if (!(*I)->isForwarding()) {
+      DSNode *New = new DSNode(**I, this);
       New->maskNodeTypes(~BitsToClear);
-      OldNodeMap[Old] = New;
+      OldNodeMap[*I] = New;
     }
-  }
+
 #ifndef NDEBUG
   Timer::addPeakMemoryMeasurement();
 #endif
 
+  // Move FN to the first newly added node.
+  if (FN != node_end())
+    ++FN;
+  else
+    FN = node_begin();
+
   // Rewrite the links in the new nodes to point into the current graph now.
-  for (unsigned i = FN, e = Nodes.size(); i != e; ++i)
-    Nodes[i]->remapLinks(OldNodeMap);
+  for (; FN != node_end(); ++FN)
+    (*FN)->remapLinks(OldNodeMap);
 
   // Copy the scalar map... merging all of the global nodes...
   for (DSScalarMap::const_iterator I = G.ScalarMap.begin(),
@@ -1227,9 +1232,10 @@ void DSGraph::mergeInGraph(const DSCallSite &CS, Function &F,
     // If the user requested it, add the nodes that we need to clone to the
     // RootNodes set.
     if (!EnableDSNodeGlobalRootsHack)
-      for (unsigned i = 0, e = Graph.Nodes.size(); i != e; ++i)
-        if (!Graph.Nodes[i]->getGlobals().empty())
-          RC.getClonedNH(Graph.Nodes[i]);
+      for (node_iterator NI = Graph.node_begin(), E = Graph.node_end();
+           NI != E; ++NI)
+        if (!(*NI)->getGlobals().empty())
+          RC.getClonedNH(*NI);
                                                  
   } else {
     DSNodeHandle RetVal = getReturnNodeFor(F);
@@ -1335,9 +1341,9 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
 
   // Mark all global nodes as incomplete...
   if ((Flags & DSGraph::IgnoreGlobals) == 0)
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-      if (Nodes[i]->isGlobalNode() && Nodes[i]->getNumLinks())
-        markIncompleteNode(Nodes[i]);
+    for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
+      if ((*NI)->isGlobalNode() && (*NI)->getNumLinks())
+        markIncompleteNode(*NI);
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {
@@ -1466,8 +1472,8 @@ void DSGraph::removeTriviallyDeadNodes() {
   // Loop over all of the nodes in the graph, calling getNode on each field.
   // This will cause all nodes to update their forwarding edges, causing
   // forwarded nodes to be delete-able.
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-    DSNode *N = Nodes[i];
+  for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI) {
+    DSNode *N = *NI;
     for (unsigned l = 0, e = N->getNumLinks(); l != e; ++l)
       N->getLink(l*N->getPointerSize()).getNode();
   }
@@ -1489,13 +1495,15 @@ void DSGraph::removeTriviallyDeadNodes() {
 #endif
   bool isGlobalsGraph = !GlobalsGraph;
 
-  for (unsigned i = 0; i != Nodes.size(); ++i) {
-    DSNode *Node = Nodes[i];
+  for (NodeListTy::iterator NI = Nodes.begin(), E = Nodes.end(); NI != E; ) {
+    DSNode *Node = *NI;
 
     // Do not remove *any* global nodes in the globals graph.
     // This is a special case because such nodes may not have I, M, R flags set.
-    if (Node->isGlobalNode() && isGlobalsGraph)
+    if (Node->isGlobalNode() && isGlobalsGraph) {
+      ++NI;
       continue;
+    }
 
     if (Node->isComplete() && !Node->isModified() && !Node->isRead()) {
       // This is a useless node if it has no mod/ref info (checked above),
@@ -1525,9 +1533,10 @@ void DSGraph::removeTriviallyDeadNodes() {
 
     if (Node->getNodeFlags() == 0 && Node->hasNoReferrers()) {
       // This node is dead!
-      delete Node;                        // Free memory...
-      Nodes[i--] = Nodes.back();
-      Nodes.pop_back();                   // Remove from node list...
+      delete Node;                        // Free node memory.
+      NI = Nodes.erase(NI);               // Remove from node list.
+    } else {
+      ++NI;
     }
   }
 }
@@ -1756,16 +1765,16 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   //
   std::vector<DSNode*> DeadNodes;
   DeadNodes.reserve(Nodes.size());
-  for (unsigned i = 0; i != Nodes.size(); ++i)
-    if (!Alive.count(Nodes[i])) {
+  for (NodeListTy::iterator NI = Nodes.begin(), E = Nodes.end(); NI != E;)
+    if (!Alive.count(*NI)) {
       ++NumDNE;
-      DSNode *N = Nodes[i];
-      Nodes[i--] = Nodes.back();            // move node to end of vector
-      Nodes.pop_back();                     // Erase node from alive list.
+      DSNode *N = *NI;
+      NI = Nodes.erase(NI);          // Erase node from list.
       DeadNodes.push_back(N);
       N->dropAllReferences();
     } else {
-      assert(Nodes[i]->getForwardNode() == 0 && "Alive forwarded node?");
+      assert((*NI)->getForwardNode() == 0 && "Alive forwarded node?");
+      ++NI;
     }
 
   // Remove all unreachable globals from the ScalarMap.
@@ -1785,8 +1794,8 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
 }
 
 void DSGraph::AssertGraphOK() const {
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-    Nodes[i]->assertOK();
+  for (node_iterator NI = node_begin(), E = node_end(); NI != E; ++NI)
+    (*NI)->assertOK();
 
   for (ScalarMapTy::const_iterator I = ScalarMap.begin(),
          E = ScalarMap.end(); I != E; ++I) {
