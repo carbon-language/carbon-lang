@@ -88,15 +88,6 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   sprintf(buffer,  "%-6u", mbr.getGroup());
   memcpy(hdr.gid,buffer,6);
 
-  // Set the size field
-  if (sz < 0) {
-    buffer[0] = '-';
-    sprintf(&buffer[1],"%-9u",(unsigned)-sz);
-  } else {
-    sprintf(buffer, "%-10u", (unsigned)sz);
-  }
-  memcpy(hdr.size,buffer,10);
-
   // Set the last modification date
   uint64_t secondsSinceEpoch = mbr.getModTime().toEpochTime();
   sprintf(buffer,"%-12u", unsigned(secondsSinceEpoch));
@@ -130,8 +121,22 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
     std::string nm = "#1/";
     nm += utostr(mbrPath.length());
     nm.copy(hdr.name,nm.length());
+    if (sz < 0)
+      sz -= mbrPath.length();
+    else
+      sz += mbrPath.length();
     writeLongName = true;
   }
+
+  // Set the size field
+  if (sz < 0) {
+    buffer[0] = '-';
+    sprintf(&buffer[1],"%-9u",(unsigned)-sz);
+  } else {
+    sprintf(buffer, "%-10u", (unsigned)sz);
+  }
+  memcpy(hdr.size,buffer,10);
+
   return writeLongName;
 }
 
@@ -266,7 +271,6 @@ Archive::writeMember(
   // Write the long filename if its long
   if (writeLongName) {
     ARFile << member.getPath().c_str();
-    ARFile << '\n';
   }
 
   // Make sure we write the compressed bytecode magic number if we should.
