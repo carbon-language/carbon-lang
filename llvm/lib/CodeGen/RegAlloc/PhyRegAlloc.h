@@ -32,7 +32,7 @@
 
 #include "llvm/CodeGen/RegClass.h"
 #include "llvm/CodeGen/LiveRangeInfo.h"
-#include <deque>
+#include <vector>
 #include <map>
 
 class MachineCodeForMethod;
@@ -51,8 +51,8 @@ class LoopInfo;
 //----------------------------------------------------------------------------
 
 struct AddedInstrns {
-  std::deque<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
-  std::deque<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
+  vector<MachineInstr*> InstrnsBefore;// Added insts BEFORE an existing inst
+  vector<MachineInstr*> InstrnsAfter; // Added insts AFTER an existing inst
 };
 
 typedef std::map<const MachineInstr *, AddedInstrns> AddedInstrMapType;
