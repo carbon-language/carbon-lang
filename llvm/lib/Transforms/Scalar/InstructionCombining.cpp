@@ -707,7 +707,7 @@ struct FoldSetCCLogical {
     case Instruction::And: Code = LHSCode & RHSCode; break;
     case Instruction::Or:  Code = LHSCode | RHSCode; break;
     case Instruction::Xor: Code = LHSCode ^ RHSCode; break;
-    default: assert(0 && "Illegal logical opcode!");
+    default: assert(0 && "Illegal logical opcode!"); return 0;
     }
 
     Value *RV = getSetCCValue(Code, LHS, RHS);

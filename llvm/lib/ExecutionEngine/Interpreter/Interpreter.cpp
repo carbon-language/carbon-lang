@@ -14,7 +14,7 @@
 /// create - Create a new interpreter object.  This can never fail.
 ///
 ExecutionEngine *Interpreter::create(Module *M, bool TraceMode){
-  bool isLittleEndian;
+  bool isLittleEndian = false;
   switch (M->getEndianness()) {
   case Module::LittleEndian: isLittleEndian = true; break;
   case Module::BigEndian:    isLittleEndian = false; break;
@@ -25,7 +25,7 @@ ExecutionEngine *Interpreter::create(Module *M, bool TraceMode){
     break;
   }
 
-  bool isLongPointer;
+  bool isLongPointer = false;
   switch (M->getPointerSize()) {
   case Module::Pointer32: isLongPointer = false; break;
   case Module::Pointer64: isLongPointer = true; break;
