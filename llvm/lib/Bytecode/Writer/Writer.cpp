@@ -307,7 +307,7 @@ void BytecodeWriter::outputCompactionTable() {
 void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   // Do not output the Bytecode block for an empty symbol table, it just wastes
   // space!
-  if (MST.plane_begin() == MST.plane_end()) return;
+  if ( MST.isEmpty() ) return;
 
   BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTable, Out,
                             true/* ElideIfEmpty*/);
