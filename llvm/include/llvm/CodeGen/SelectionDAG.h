@@ -199,7 +199,7 @@ private:
 
   std::map<const GlobalValue*, SDNode*> GlobalValues;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> Constants;
-  std::map<std::pair<double, MVT::ValueType>, SDNode*> ConstantFPs;
+  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> ConstantFPs;
   std::map<int, SDNode*> FrameIndices;
   std::map<unsigned, SDNode*> ConstantPoolIndices;
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
