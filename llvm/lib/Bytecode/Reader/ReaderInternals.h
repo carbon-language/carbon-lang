@@ -8,16 +8,11 @@
 #define READER_INTERNALS_H
 
 #include "llvm/Bytecode/Primitives.h"
-#include "llvm/Function.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/Constant.h"
-#include "Support/NonCopyable.h"
-#include <map>
 #include <utility>
-#include <list>
-#include <iostream>
+#include <map>
 
 // Enable to trace to figure out what the heck is going on when parsing fails
 #define TRACE_LEVEL 0
@@ -41,38 +36,10 @@ struct RawInst {       // The raw fields out of the bytecode stream...
   };
 };
 
-
-class ConstantFwdRefs: public NonCopyable {
-  Module* TheModule;
-  
-  // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
-  // references to global values or constants.  Such values may be referenced
-  // before they are defined, and if so, the temporary object that they
-  // represent is held here.
-  //
-  typedef std::map<std::pair<const Type *, unsigned>,
-                   Value*>  GlobalRefsType;
-  GlobalRefsType GlobalRefs;
-
-  Value*       find                   (const Type* Ty, unsigned Slot);
-  void         insert                 (const Type* Ty, unsigned Slot, Value* V);
-  void         erase                  (const Type* Ty, unsigned Slot);
-
-public:
-  // sets the current module pointer: needed to insert placeholder globals
-  void         VisitingModule         (Module* M) { TheModule = M; }
-  
-  // get a forward reference to a global or a constant
-  GlobalValue* GetFwdRefToGlobal      (const PointerType* PT, unsigned Slot);
-  Constant*    GetFwdRefToConstant    (const Type* Ty,        unsigned Slot);
-
-  // resolve all references to the placeholder (if any) for the given value
-  void         ResolveRefsToValue     (Value* val, unsigned Slot);
-};
-
-
 class BytecodeParser : public AbstractTypeUser {
   std::string Error;     // Error message string goes here...
+  BytecodeParser(const BytecodeParser &);  // DO NOT IMPLEMENT
+  void operator=(const BytecodeParser &);  // DO NOT IMPLEMENT
 public:
   BytecodeParser() {
     // Define this in case we don't see a ModuleGlobalInfo block.
@@ -95,8 +62,14 @@ private:          // All of this data is transient across calls to ParseBytecode
   ValueTable Values, LateResolveValues;
   ValueTable ModuleValues, LateResolveModuleValues;
 
-  // fwdRefs - This manages forward references to global values.
-  ConstantFwdRefs fwdRefs;
+  // GlobalRefs - This maintains a mapping between <Type, Slot #>'s and forward
+  // references to global values or constants.  Such values may be referenced
+  // before they are defined, and if so, the temporary object that they
+  // represent is held here.
+  //
+  typedef std::map<std::pair<const Type *, unsigned>,
+                   Value*>  GlobalRefsType;
+  GlobalRefsType GlobalRefs;
 
   // TypesLoaded - This vector mirrors the Values[TypeTyID] plane.  It is used
   // to deal with forward references to types.
@@ -108,12 +81,12 @@ private:          // All of this data is transient across calls to ParseBytecode
   // Information read from the ModuleGlobalInfo section of the file...
   unsigned FirstDerivedTyID;
 
-  // When the ModuleGlobalInfo section is read, we load the type of each method
-  // and the 'ModuleValues' slot that it lands in.  We then load a placeholder
-  // into its slot to reserve it.  When the method is loaded, this placeholder
-  // is replaced.
+  // When the ModuleGlobalInfo section is read, we load the type of each
+  // function and the 'ModuleValues' slot that it lands in.  We then load a
+  // placeholder into its slot to reserve it.  When the function is loaded, this
+  // placeholder is replaced.
   //
-  std::list<std::pair<const PointerType *, unsigned> > MethodSignatureList;
+  std::vector<std::pair<const PointerType *, unsigned> > FunctionSignatureList;
 
 private:
   bool ParseModule          (const uchar * Buf, const uchar *End, Module *&);
@@ -140,11 +113,9 @@ private:
 
   bool getTypeSlot(const Type *Ty, unsigned &Slot);
 
-  // resolveRefsToGlobal   -- resolve forward references to a global
-  // resolveRefsToConstant -- resolve forward references to a constant
-  // 
-  void resolveRefsToGlobal(GlobalValue* GV, unsigned Slot);
-  void resolveRefsToConstant(Constant* C, unsigned Slot);
+  // resolve all references to the placeholder (if any) for the given value
+  void ResolveReferencesToValue(Value *Val, unsigned Slot);
+
   
   // refineAbstractType - The callback method is invoked when one of the
   // elements of TypeValues becomes more concrete...
@@ -155,7 +126,8 @@ private:
 template<class SuperType>
 class PlaceholderDef : public SuperType {
   unsigned ID;
-  PlaceholderDef();                     // do not implement
+  PlaceholderDef();                       // DO NOT IMPLEMENT
+  void operator=(const PlaceholderDef &); // DO NOT IMPLEMENT
 public:
   PlaceholderDef(const Type *Ty, unsigned id) : SuperType(Ty), ID(id) {}
   unsigned getID() { return ID; }
@@ -174,8 +146,8 @@ struct BBPlaceHolderHelper : public BasicBlock {
   }
 };
 
-struct MethPlaceHolderHelper : public Function {
-  MethPlaceHolderHelper(const Type *Ty) 
+struct FunctionPlaceHolderHelper : public Function {
+  FunctionPlaceHolderHelper(const Type *Ty) 
     : Function(cast<const FunctionType>(Ty), true) {
   }
 };
@@ -186,21 +158,21 @@ struct ConstantPlaceHolderHelper : public Constant {
   virtual bool isNullValue() const { return false; }
 };
 
-typedef PlaceholderDef<InstPlaceHolderHelper>  DefPHolder;
+typedef PlaceholderDef<InstPlaceHolderHelper>  ValPHolder;
 typedef PlaceholderDef<BBPlaceHolderHelper>    BBPHolder;
-typedef PlaceholderDef<MethPlaceHolderHelper>  MethPHolder;
+typedef PlaceholderDef<FunctionPlaceHolderHelper>  FunctionPHolder;
 typedef PlaceholderDef<ConstantPlaceHolderHelper>  ConstPHolder;
 
 
-static inline unsigned getValueIDNumberFromPlaceHolder(Value *Def) {
-  if (isa<Constant>(Def))
-    return ((ConstPHolder*)Def)->getID();
+static inline unsigned getValueIDNumberFromPlaceHolder(Value *Val) {
+  if (isa<Constant>(Val))
+    return ((ConstPHolder*)Val)->getID();
   
   // else discriminate by type
-  switch (Def->getType()->getPrimitiveID()) {
-  case Type::LabelTyID:    return ((BBPHolder*)Def)->getID();
-  case Type::FunctionTyID: return ((MethPHolder*)Def)->getID();
-  default:                 return ((DefPHolder*)Def)->getID();
+  switch (Val->getType()->getPrimitiveID()) {
+  case Type::LabelTyID:    return ((BBPHolder*)Val)->getID();
+  case Type::FunctionTyID: return ((FunctionPHolder*)Val)->getID();
+  default:                 return ((ValPHolder*)Val)->getID();
   }
 }
 
@@ -214,15 +186,6 @@ static inline bool readBlock(const uchar *&Buf, const uchar *EndBuf,
 #else
   return read(Buf, EndBuf, Type) || read(Buf, EndBuf, Size);
 #endif
-}
-
-
-// failure Template - This template function is used as a place to put
-// breakpoints in to debug failures of the bytecode parser.
-//
-template <typename X>
-static X failure(X Value) {
-  return Value;
 }
 
 #endif
