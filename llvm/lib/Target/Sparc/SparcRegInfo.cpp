@@ -1161,30 +1161,27 @@ MachineInstr * UltraSparcRegInfo::cpValue2Value(Value *Src, Value *Dest) const{
 
 //----------------------------------------------------------------------------
 // This method inserts caller saving/restoring instructons before/after
-// a call machine instruction.
+// a call machine instruction. The caller saving/restoring instructions are
+// inserted like:
+//
+//    ** caller saving instructions
+//    other instructions inserted for the call by ColorCallArg
+//    CALL instruction
+//    other instructions inserted for the call ColorCallArg
+//    ** caller restoring instructions
+//
 //----------------------------------------------------------------------------
 
 
 void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst, 
 					       const BasicBlock *BB,
 					       PhyRegAlloc &PRA) const {
-  // assert( (getInstrInfo()).isCall( MInst->getOpCode() ) );
 
-  // Clear the temp area of the stack
-  //PRA.mcInfo.popAllTempValues(target);
-  // TODO*** Don't do this since we can have a situation like
-  /*
-
-        stx     %o1     %i6     1999   <--- inserted by this code
-        stx     %o5     %i6     2007
-
-	*****
-        stx     %o1     %i6     2007 ????  <-- inserted by statck2stack call arg
-
-  */
-
-
+  // has set to record which registers were saved/restored
+  //
   hash_set<unsigned> PushedRegSet;
+
+
 
   // Now find the LR of the return value of the call
   // The last *implicit operand* is the return value of a call
@@ -1350,11 +1347,6 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
     
   } // for each value in the LV set after instruction
   
-  // Clear the temp area of the stack
-  // PRA.mcInfo.popAllTempValues(target);
-  // TODO *** see above call - optimize later
-
-
 }
 
 //---------------------------------------------------------------------------

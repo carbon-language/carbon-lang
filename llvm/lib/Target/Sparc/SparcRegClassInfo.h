@@ -15,7 +15,6 @@
 // Integer Register Class
 //-----------------------------------------------------------------------------
 
-
 // Int register names in same order as enum in class SparcIntRegOrder
 
 static string const IntRegNames[] = 
@@ -38,7 +37,7 @@ class SparcIntRegOrder{
      // --- following colors are volatile across function calls
      // %g0 can't be used for coloring - always 0
                      
-     //%g1-%g5  (g6-7 are reserved for system)  
+ 
      o0, o1, o2, o3, o4, o5, o7,  // %o0-%o5, 
 
      // %o6 is sp, 
@@ -59,9 +58,12 @@ class SparcIntRegOrder{
 
      i6, i7, g0,  g1, g2, g3, g4, g5, g6, g7, o6
      
-     //*** NOTE: If we decide to use globals, some of them are volatile 
-     //**** see sparc64ABI (change isRegVloatile method below)
- 
+     //*** NOTE: If we decide to use some %g regs, they are volatile
+     // (see sparc64ABI)
+     // Move the %g regs from the end of the enumeration to just above the
+     // enumeration of %o0 (change StartOfAllRegs below)
+     // change isRegVloatile method below
+     // Also change IntRegNames above.
 
    };
 
@@ -110,6 +112,9 @@ class SparcIntRegClass : public MachineRegClassInfo
 
 };
 
+
+
+
 //-----------------------------------------------------------------------------
 // Float Register Class
 //-----------------------------------------------------------------------------
@@ -156,7 +161,6 @@ class SparcFloatRegOrder{
     assert( reg < NumOfAllRegs );
     return FloatRegNames[reg];
   }
-
 
 
 };
@@ -219,10 +223,6 @@ class SparcIntCCRegOrder{
     return IntCCRegNames[reg];
   }
 
-  // according to  Sparc 64 ABI,  %ccr is volatile
-  inline bool isRegVolatile(const int Reg) const { return true; }
-
-
 };
 
 
@@ -238,10 +238,12 @@ public:
     Node->setColor(0);    // only one int cc reg is available
   }
 
-
+  // according to  Sparc 64 ABI,  %ccr is volatile
+  //
   inline bool isRegVolatile(const int Reg) const { return true; }
 
 };
+
 
 
 
@@ -271,10 +273,6 @@ class SparcFloatCCRegOrder{
     return FloatCCRegNames[reg];
   }
 
-  // according to  Sparc 64 ABI, all %fp regs are volatile
-  inline bool isRegVolatile(const int Reg) const { return true; }
-
-
 };
 
 
@@ -293,7 +291,9 @@ public:
     Node->setColor(c);   
   }
 
-  // *** TODO: Check this
+
+  // according to  Sparc 64 ABI, all %fp CC regs are volatile
+  //
   inline bool isRegVolatile(const int Reg) const { return true; }
 
 
