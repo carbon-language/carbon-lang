@@ -283,10 +283,12 @@ GenericValue lle_X_srand(MethodType *M, const vector<GenericValue> &Args) {
   return GenericValue();
 }
 
-// int printf(sbyte *, ...) - a very rough implementation to make output useful.
-GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
-  const char *FmtStr = (const char *)Args[0].PointerVal;
-  unsigned ArgNo = 1;
+// int sprintf(sbyte *, sbyte *, ...) - a very rough implementation to make
+// output useful.
+GenericValue lle_X_sprintf(MethodType *M, const vector<GenericValue> &Args) {
+  char *OutputBuffer = (char *)Args[0].PointerVal;
+  const char *FmtStr = (const char *)Args[1].PointerVal;
+  unsigned ArgNo = 2;
 
   // printf should return # chars printed.  This is completely incorrect, but
   // close enough for now.
@@ -295,14 +297,11 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
     switch (*FmtStr) {
     case 0: return GV;             // Null terminator...
     default:                       // Normal nonspecial character
-      cout << *FmtStr++;
+      sprintf(OutputBuffer++, "%c", *FmtStr++);
       break;
     case '\\': {                   // Handle escape codes
-      char Buffer[3];
-      Buffer[0] = *FmtStr++;
-      Buffer[1] = *FmtStr++;
-      Buffer[2] = 0;
-      cout << Buffer;
+      sprintf(OutputBuffer, "%c%c", *FmtStr, *(FmtStr+1));
+      FmtStr += 2; OutputBuffer += 2;
       break;
     }
     case '%': {                    // Handle format specifiers
@@ -341,12 +340,26 @@ GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
       default:  cout << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
-      cout << Buffer;
+      strcpy(OutputBuffer, Buffer);
+      OutputBuffer += strlen(Buffer);
       }
       break;
     }
   }
 }
+
+// int printf(sbyte *, ...) - a very rough implementation to make output useful.
+GenericValue lle_X_printf(MethodType *M, const vector<GenericValue> &Args) {
+  char Buffer[10000];
+  vector<GenericValue> NewArgs;
+  GenericValue GV; GV.PointerVal = (PointerTy)Buffer;
+  NewArgs.push_back(GV);
+  NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
+  GV = lle_X_sprintf(M, NewArgs);
+  cout << Buffer;
+  return GV;
+}
+
 
 } // End extern "C"
 
@@ -384,4 +397,5 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_lrand48"]      = lle_X_lrand48;
   FuncNames["lle_X_sqrt"]         = lle_X_sqrt;
   FuncNames["lle_X_printf"]       = lle_X_printf;
+  FuncNames["lle_X_sprintf"]      = lle_X_sprintf;
 }
