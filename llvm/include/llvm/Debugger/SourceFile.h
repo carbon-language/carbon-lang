@@ -16,7 +16,8 @@
 #ifndef LLVM_DEBUGGER_SOURCEFILE_H
 #define LLVM_DEBUGGER_SOURCEFILE_H
 
-#include <string>
+#include "llvm/System/Path.h"
+#include "llvm/System/MappedFile.h"
 #include <vector>
 
 namespace llvm {
@@ -25,7 +26,7 @@ namespace llvm {
   class SourceFile {
     /// Filename - This is the full path of the file that is loaded.
     ///
-    std::string Filename;
+    sys::Path Filename;
 
     /// Descriptor - The debugging descriptor for this source file.  If there
     /// are multiple descriptors for the same file, this is just the first one
@@ -33,10 +34,8 @@ namespace llvm {
     ///
     const GlobalVariable *Descriptor;
 
-    /// FileStart, FileEnd - These pointers point to the start and end of the
-    /// file data for this file.  If there was an error loading the file, these
-    /// pointers will both be null.
-    const char *FileStart, *FileEnd;
+    /// This is the memory mapping for the file so we can gain access to it.
+    sys::MappedFile File;
 
     /// LineOffset - This vector contains a mapping from source line numbers to
     /// their offsets in the file.  This data is computed lazily, the first time
@@ -51,11 +50,11 @@ namespace llvm {
     /// reading it, or if the user cancels the operation.  Instead, it will just
     /// be an empty source file.
     SourceFile(const std::string &fn, const GlobalVariable *Desc)
-      : Filename(fn), Descriptor(Desc), FileStart(0), FileEnd(0) {
+      : Filename(fn), Descriptor(Desc), File(Filename) {
       readFile();
     }
     ~SourceFile() {
-      delete[] FileStart;
+      File.unmap();
     }
 
     /// getDescriptor - Return the debugging decriptor for this source file.
@@ -64,7 +63,7 @@ namespace llvm {
     
     /// getFilename - Return the fully resolved path that this file was loaded
     /// from.
-    const std::string &getFilename() const { return Filename; }
+    const std::string &getFilename() const { return Filename.toString(); }
     
     /// getSourceLine - Given a line number, return the start and end of the
     /// line in the file.  If the line number is invalid, or if the file could
@@ -82,7 +81,7 @@ namespace llvm {
     }
 
   private:
-    /// readFile - Load Filename into FileStart and FileEnd.
+    /// readFile - Load Filename into memory
     ///
     void readFile();
     
