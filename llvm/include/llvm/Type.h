@@ -50,7 +50,8 @@ class PointerType;
 class StructType;
 class PackedType;
 
-struct Type {
+class Type {
+public:
   ///===-------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)

@@ -24,7 +24,8 @@ namespace llvm {
 
   /// TargetJITInfo - Target specific information required by the Just-In-Time
   /// code generator.
-  struct TargetJITInfo {
+  class TargetJITInfo {
+  public:
     virtual ~TargetJITInfo() {}
     
     /// addPassesToJITCompile - Add passes to the specified pass manager to

@@ -39,7 +39,8 @@ namespace llvm {
   class CallInst;
   class Module;
   
-  struct IntrinsicLowering {
+  class IntrinsicLowering {
+  public:
     virtual ~IntrinsicLowering() {}
 
     /// AddPrototypes - This method, if called, causes all of the prototypes
