@@ -343,17 +343,31 @@ Instruction *InstCombiner::visitXor(BinaryOperator *I) {
   return Changed ? I : 0;
 }
 
+// isTrueWhenEqual - Return true if the specified setcondinst instruction is
+// true when both operands are equal...
+//
+static bool isTrueWhenEqual(Instruction *I) {
+  return I->getOpcode() == Instruction::SetEQ ||
+         I->getOpcode() == Instruction::SetGE ||
+         I->getOpcode() == Instruction::SetLE;
+}
+
 Instruction *InstCombiner::visitSetCondInst(BinaryOperator *I) {
   if (I->use_empty()) return 0;       // Don't fix dead instructions...
   bool Changed = SimplifyBinOp(I);
 
   // setcc X, X
   if (I->getOperand(0) == I->getOperand(1)) {
-    bool NewVal = I->getOpcode() == Instruction::SetEQ ||
-                  I->getOpcode() == Instruction::SetGE ||
-                  I->getOpcode() == Instruction::SetLE;
     AddUsesToWorkList(I);         // Add all modified instrs to worklist
-    I->replaceAllUsesWith(ConstantBool::get(NewVal));
+    I->replaceAllUsesWith(ConstantBool::get(isTrueWhenEqual(I)));
+    return I;
+  }
+
+  // setcc <global*>, 0 - Global value addresses are never null!
+  if (isa<GlobalValue>(I->getOperand(0)) &&
+      isa<ConstantPointerNull>(I->getOperand(1))) {
+    AddUsesToWorkList(I);         // Add all modified instrs to worklist
+    I->replaceAllUsesWith(ConstantBool::get(!isTrueWhenEqual(I)));
     return I;
   }
 
