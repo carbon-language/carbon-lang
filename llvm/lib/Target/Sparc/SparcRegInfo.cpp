@@ -1298,30 +1298,29 @@ UltraSparcRegInfo::cpValue2Value(Value *Src,
   switch( RegType ) {
   case IntRegType:
     MI = new MachineInstr(ADD, 3);
-    MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
+    MI->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, Src);
     MI->SetMachineOperandReg(1, getZeroRegNum());
-    MI->SetMachineOperandVal(2, MachineOperand:: MO_VirtualRegister, Dest, true);
+    MI->SetMachineOperandVal(2, MachineOperand::MO_VirtualRegister, Dest, true);
     break;
 
   case FPSingleRegType:
     MI = new MachineInstr(FMOVS, 2);
-    MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
-    MI->SetMachineOperandVal(1, MachineOperand:: MO_VirtualRegister, Dest, true);
+    MI->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, Src);
+    MI->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, Dest, true);
     break;
 
 
   case FPDoubleRegType:
     MI = new MachineInstr(FMOVD, 2);
-    MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
-    MI->SetMachineOperandVal(1, MachineOperand:: MO_VirtualRegister, Dest, true);
+    MI->SetMachineOperandVal(0, MachineOperand::MO_VirtualRegister, Src);
+    MI->SetMachineOperandVal(1, MachineOperand::MO_VirtualRegister, Dest, true);
     break;
 
   default:
     assert(0 && "Unknow RegType in CpValu2Value");
   }
 
-  if (MI)
-    mvec.push_back(MI);
+  mvec.push_back(MI);
 }
 
 
