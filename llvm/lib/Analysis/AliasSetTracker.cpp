@@ -138,20 +138,38 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
       return true;
 
   // Check the call sites list and invoke list...
-  if (!CallSites.empty())
-    // FIXME: this is pessimistic!
-    return true;
+  if (!CallSites.empty()) {
+    if (AA.hasNoModRefInfoForCalls())
+      return true;
+
+    for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
+      if (AA.getModRefInfo(CallSites[i], const_cast<Value*>(Ptr), Size)
+                   != AliasAnalysis::NoModRef)
+        return true;
+  }
 
   return false;
 }
 
 bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
-  // FIXME: Use mod/ref information to prune this better!
   if (Function *F = CS.getCalledFunction())
     if (AA.doesNotAccessMemory(F))
       return false;
 
-  return true;
+  if (AA.hasNoModRefInfoForCalls())
+    return true;
+
+  for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
+    if (AA.getModRefInfo(CallSites[i], CS) != AliasAnalysis::NoModRef ||
+        AA.getModRefInfo(CS, CallSites[i]) != AliasAnalysis::NoModRef)
+      return true;
+
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (AA.getModRefInfo(CS, I.getPointer(), I.getSize()) !=
+           AliasAnalysis::NoModRef)
+      return true;
+
+  return false;
 }
 
 
