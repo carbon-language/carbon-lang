@@ -285,24 +285,35 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
   bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
 
   // Make sure the last character is a null char, as automatically added by C
-  if (CPA->getNumOperands() == 0 ||
-      !cast<Constant>(*(CPA->op_end()-1))->isNullValue())
+  if (isString && (CPA->getNumOperands() == 0 ||
+                   !cast<Constant>(*(CPA->op_end()-1))->isNullValue()))
     isString = false;
   
   if (isString) {
     Out << "\"";
+    // Keep track of whether the last number was a hexadecimal escape
+    bool LastWasHex = false;
+
     // Do not include the last character, which we know is null
     for (unsigned i = 0, e = CPA->getNumOperands()-1; i != e; ++i) {
       unsigned char C = (ETy == Type::SByteTy) ?
         (unsigned char)cast<ConstantSInt>(CPA->getOperand(i))->getValue() :
         (unsigned char)cast<ConstantUInt>(CPA->getOperand(i))->getValue();
       
-      if (isprint(C)) {
+      // Print it out literally if it is a printable character.  The only thing
+      // to be careful about is when the last letter output was a hex escape
+      // code, in which case we have to be careful not to print out hex digits
+      // explicitly (the C compiler things it is a continuation of the previous
+      // character, arg...)
+      //
+      if (isprint(C) && (!LastWasHex || !isxdigit(C))) {
+        LastWasHex = false;
         if (C == '"' || C == '\\')
           Out << "\\" << C;
         else
           Out << C;
       } else {
+        LastWasHex = false;
         switch (C) {
         case '\n': Out << "\\n"; break;
         case '\t': Out << "\\t"; break;
@@ -313,8 +324,9 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
         case '\'': Out << "\\\'"; break;           
         default:
           Out << "\\x";
-          Out << ( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A');
-          Out << ((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A');
+          Out << (char)(( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'));
+          Out << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
+          LastWasHex = true;
           break;
         }
       }
