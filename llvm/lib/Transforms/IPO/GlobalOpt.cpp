@@ -808,7 +808,8 @@ bool GlobalOpt::runOnModule(Module &M) {
     for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
       Function *F = FI++;
       F->removeDeadConstantUsers();
-      if (F->use_empty() && (F->hasInternalLinkage() || F->hasWeakLinkage())) {
+      if (F->use_empty() && (F->hasInternalLinkage() ||
+                             F->hasLinkOnceLinkage())) {
         M.getFunctionList().erase(F);
         LocalChange = true;
         ++NumFnDeleted;
