@@ -23,35 +23,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionInfo.h"
 #include "../Target/SparcV9/MachineInstrAnnot.h"
-#include "llvm/Instruction.h"
 using namespace llvm;
 
 MachineCodeForInstruction &MachineCodeForInstruction::get(const Instruction *I){
-  return *(MachineCodeForInstruction*)I->getOrCreateAnnotation(MCFI_AID);
+  MachineFunction &MF = MachineFunction::get(I->getParent()->getParent());
+  return MF.getInfo()->MCFIEntries[I];
 }
 void MachineCodeForInstruction::destroy(const Instruction *I) {
-  I->deleteAnnotation(MCFI_AID);
+  MachineFunction &MF = MachineFunction::get(I->getParent()->getParent());
+  MF.getInfo()->MCFIEntries.erase(I);
 }
-
-
-
-AnnotationID llvm::MCFI_AID(
-             AnnotationManager::getID("CodeGen::MachineCodeForInstruction"));
-
-static Annotation *CreateMCFI(AnnotationID AID, const Annotable *, void *) {
-  assert(AID == MCFI_AID);
-  return new MachineCodeForInstruction();  // Invoke constructor!
-}
-
-// Register the annotation with the annotation factory
-static struct MCFIInitializer {
-  MCFIInitializer() {
-    AnnotationManager::registerAnnotationFactory(MCFI_AID, &CreateMCFI);
-  }
-} RegisterCreateMCFI;
-
 
 void
 MachineCodeForInstruction::dropAllReferences()
