@@ -252,8 +252,8 @@ endif
 ifndef LOPT
 LOPT     := $(LLVMToolDir)/opt$(EXEEXT)
 endif
-LLVMGCCWITHPATH  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGCC)
-LLVMGXXWITHPATH  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGXX)
+LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
+LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 
 #--------------------------------------------------------------------
 # Adjust to user's request
