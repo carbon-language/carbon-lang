@@ -100,9 +100,11 @@ struct {
 
   { trace      , New<InsertTraceCode, bool, true, bool, true> },
   { tracem     , New<InsertTraceCode, bool, false, bool, true> },
-  { paths      , New<ProfilePaths> },
+  { paths      , createProfilePathsPass },
+
   { print      , NewPrintMethodPass },
   { verify     , createVerifierPass },
+
   { raiseallocs, New<RaiseAllocations> },
   { cleangcc   , New<CleanupGCCOutput> },
   { globaldce  , New<GlobalDCE> },

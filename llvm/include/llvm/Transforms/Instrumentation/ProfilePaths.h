@@ -27,17 +27,11 @@
 #ifndef LLVM_TRANSFORMS_INSTRUMENTATION_PROFILE_PATHS_H
 #define LLVM_TRANSFORMS_INSTRUMENTATION_PROFILE_PATHS_H
 
-#include "llvm/Pass.h"
+class Pass;
 
-class ProfilePaths: public MethodPass {
- public:
-  bool runOnMethod(Method *M);
-
-  // getAnalysisUsageInfo - transform cfg to have just one exit node
-  virtual void getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-                                    Pass::AnalysisSet &Destroyed,
-                                    Pass::AnalysisSet &Provided);
-};
+// createProfilePathsPass - Create a new pass to add path profiling
+//
+Pass *createProfilePathsPass();
 
 #endif
     

@@ -32,9 +32,31 @@
 #include "llvm/ConstantVals.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iMemory.h"
+#include "llvm/Pass.h"
 #include "Graph.h"
 
 using std::vector;
+
+class ProfilePaths: public MethodPass {
+ public:
+  bool runOnMethod(Method *M);
+
+  // Before this pass, make sure that there is only one 
+  // entry and only one exit node for the method in the CFG of the method
+  //
+  void ProfilePaths::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
+					  Pass::AnalysisSet &Destroyed,
+					  Pass::AnalysisSet &Provided) {
+    Requires.push_back(UnifyMethodExitNodes::ID);
+  }
+};
+
+// createProfilePathsPass - Create a new pass to add path profiling
+//
+Pass *createProfilePathsPass() {
+  return new ProfilePaths();
+}
+
 
 static Node *findBB(std::set<Node *> &st, BasicBlock *BB){
   for(std::set<Node *>::iterator si=st.begin(); si!=st.end(); ++si){
@@ -145,18 +167,3 @@ bool ProfilePaths::runOnMethod(Method *M){
 
   return true;  // Always modifies method
 }
-
-//Before this pass, make sure that there is only one 
-//entry and only one exit node for the method in the CFG of the method
-void ProfilePaths::getAnalysisUsageInfo(Pass::AnalysisSet &Requires,
-					  Pass::AnalysisSet &Destroyed,
-					  Pass::AnalysisSet &Provided) {
-  Requires.push_back(UnifyMethodExitNodes::ID);
-}
-
-
-
-
-
-
-
