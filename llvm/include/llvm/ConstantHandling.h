@@ -73,6 +73,36 @@ public:
   virtual ConstPoolBool *lessthan(const ConstPoolVal *V1, 
                                   const ConstPoolVal *V2) const = 0;
 
+  // Casting operators.  ick
+  virtual ConstPoolBool *castToBool  (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolSInt *castToSByte (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolUInt *castToUByte (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolSInt *castToShort (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolUInt *castToUShort(const ConstPoolVal *V) const = 0;
+  virtual ConstPoolSInt *castToInt   (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolUInt *castToUInt  (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolSInt *castToLong  (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolUInt *castToULong (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolFP   *castToFloat (const ConstPoolVal *V) const = 0;
+  virtual ConstPoolFP   *castToDouble(const ConstPoolVal *V) const = 0;
+
+  inline ConstPoolVal *castTo(const ConstPoolVal *V, const Type *Ty) const {
+    switch (Ty->getPrimitiveID()) {
+    case Type::BoolTyID:   return castToBool(V);
+    case Type::UByteTyID:  return castToUByte(V);
+    case Type::SByteTyID:  return castToSByte(V);
+    case Type::UShortTyID: return castToUShort(V);
+    case Type::ShortTyID:  return castToShort(V);
+    case Type::UIntTyID:   return castToUInt(V);
+    case Type::IntTyID:    return castToInt(V);
+    case Type::ULongTyID:  return castToULong(V);
+    case Type::LongTyID:   return castToLong(V);
+    case Type::FloatTyID:  return castToFloat(V);
+    case Type::DoubleTyID: return castToDouble(V);
+    default: return 0;
+    }
+  }
+
   // ConstRules::get - A type will cache its own type rules if one is needed...
   // we just want to make sure to hit the cache instead of doing it indirectly,
   //  if possible...
