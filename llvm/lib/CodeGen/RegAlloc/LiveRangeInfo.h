@@ -92,10 +92,15 @@ public:
   inline const LiveRangeMapType *getLiveRangeMap() const 
     { return &LiveRangeMap; }
 
-  // Method sed to get the corresponding live range of a Value
-  //
-  inline LiveRange *getLiveRangeForValue( const Value *Val) 
-    { return LiveRangeMap[Val]; }
+  // Method used to get the live range containing a Value.
+  // This may return NULL if no live range exists for a Value (eg, some consts)
+  inline LiveRange *getLiveRangeForValue(const Value *Val) {
+    return LiveRangeMap[Val];
+  }
+  inline const LiveRange *getLiveRangeForValue(const Value *Val) const {
+    LiveRangeMapType::const_iterator I = LiveRangeMap.find(Val);
+    return I->second;
+  }
 
   // Method for coalescing live ranges. Called only after interference info
   // is calculated.
