@@ -173,6 +173,9 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
       }
     }
 
+    // Clean up the graph before we start inlining a bunch again...
+    SCCGraph->removeTriviallyDeadNodes();
+
     // Now that we have one big happy family, resolve all of the call sites in
     // the graph...
     calculateGraph(*SCCGraph);
@@ -232,8 +235,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
     
     // Resolve the current call...
     Function *Callee = *I;
-    const DSCallSite &CS = I.getCallSite();
-    ActualCallees.insert(std::make_pair(&CS.getCallInst(), Callee));
+    DSCallSite CS = I.getCallSite();
 
     if (Callee->isExternal()) {
       // Ignore this case, simple varargs functions we cannot stub out!
@@ -246,6 +248,8 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
       Graph.mergeInGraph(CS, *Callee, Graph, 0);
 
     } else {
+      ActualCallees.insert(std::make_pair(&CS.getCallInst(), Callee));
+
       // Get the data structure graph for the called function.
       //
       DSGraph &GI = getDSGraph(*Callee);  // Graph to inline
