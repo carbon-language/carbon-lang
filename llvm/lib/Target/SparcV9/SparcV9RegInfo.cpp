@@ -744,82 +744,80 @@ SparcV9RegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
     mvec.push_back(MI);
 }
 
-//---------------------------------------------------------------------------
-// Copy from a register to memory (i.e., Store). Register number must 
-// be the unified register number
-//---------------------------------------------------------------------------
+/// cpReg2MemMI - Generate SparcV9 MachineInstrs to store a register
+/// (SrcReg) to memory, at [PtrReg + Offset].  Register numbers must be the
+/// unified register numbers.  RegType must be the SparcV9 register type
+/// of SrcReg. When SrcReg is %ccr, scratchReg must be the
+/// number of a free integer register.  The newly-generated MachineInstrs
+/// are appended to mvec.
+///
+void SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
+                                 unsigned SrcReg, unsigned PtrReg, int Offset,
+                                 int RegType, int scratchReg) const {
+  unsigned OffReg = SparcV9::g4; // Use register g4 for holding large offsets
+  bool useImmediateOffset = true;
 
+  // If the Offset will not fit in the signed-immediate field, we put it in
+  // register g4. This takes advantage of the fact that all the opcodes
+  // used below have the same size immed. field.
+  if (RegType != IntCCRegType
+      && !target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset)) {
+    // Put the offset into a register. We could do this in fewer steps,
+    // in some cases (see CreateSETSWConst()) but we're being lazy.
+    MachineInstr *MI = BuildMI(V9::SETHI, 2).addZImm(Offset).addMReg(OffReg,
+      MachineOperand::Def);
+    MI->getOperand(0).markHi32();
+    mvec.push_back(MI);
+    MI = BuildMI(V9::ORi,3).addMReg(OffReg).addZImm(Offset).addMReg(OffReg,
+      MachineOperand::Def);
+    MI->getOperand(1).markLo32();
+    mvec.push_back(MI);
+    MI = BuildMI(V9::SRAi5,3).addMReg(OffReg).addZImm(0).addMReg(OffReg,
+      MachineOperand::Def);
+    mvec.push_back(MI);
+    useImmediateOffset = false;
+  }
 
-void
-SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
-                               unsigned SrcReg, 
-                               unsigned PtrReg,
-                               int Offset, int RegType,
-                               int scratchReg) const {
-  MachineInstr * MI = NULL;
-  int OffReg = -1;
-
-  // If the Offset will not fit in the signed-immediate field, find an
-  // unused register to hold the offset value.  This takes advantage of
-  // the fact that all the opcodes used below have the same size immed. field.
-  // Use the register allocator, PRA, to find an unused reg. at this MI.
-  // 
-  if (RegType != IntCCRegType)          // does not use offset below
-    if (! target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset)) {
-#ifdef CAN_FIND_FREE_REGISTER_TRANSPARENTLY
-      RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
-      OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
-#else
-      // Default to using register g4 for holding large offsets
-      OffReg = getUnifiedRegNum(SparcV9RegInfo::IntRegClassID,
-                                SparcV9IntRegClass::g4);
-#endif
-      assert(OffReg >= 0 && "FIXME: cpReg2MemMI cannot find an unused reg.");
-      mvec.push_back(BuildMI(V9::SETSW, 2).addZImm(Offset).addReg(OffReg));
-    }
-
+  MachineInstr *MI = 0;
   switch (RegType) {
   case IntRegType:
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::STXi, Offset))
+    if (useImmediateOffset)
       MI = BuildMI(V9::STXi,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI = BuildMI(V9::STXr,3).addMReg(SrcReg).addMReg(PtrReg).addMReg(OffReg);
     break;
 
   case FPSingleRegType:
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::STFi, Offset))
+    if (useImmediateOffset)
       MI = BuildMI(V9::STFi, 3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI = BuildMI(V9::STFr, 3).addMReg(SrcReg).addMReg(PtrReg).addMReg(OffReg);
     break;
 
   case FPDoubleRegType:
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::STDFi, Offset))
+    if (useImmediateOffset)
       MI = BuildMI(V9::STDFi,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(Offset);
     else
       MI = BuildMI(V9::STDFr,3).addMReg(SrcReg).addMReg(PtrReg).addSImm(OffReg);
     break;
 
   case IntCCRegType:
-    assert(scratchReg >= 0 && "Need scratch reg to store %ccr to memory");
-    assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
-    MI = (BuildMI(V9::RDCCR, 2)
-          .addMReg(getUnifiedRegNum(SparcV9RegInfo::IntCCRegClassID,
-                                    SparcV9IntCCRegClass::ccr))
-          .addMReg(scratchReg, MachineOperand::Def));
+    assert(scratchReg >= 0 && getRegType(scratchReg) == IntRegType
+           && "Need a scratch reg of integer type to load or store %ccr");
+    MI = BuildMI(V9::RDCCR, 2).addMReg(SparcV9::ccr)
+           .addMReg(scratchReg, MachineOperand::Def);
     mvec.push_back(MI);
-    
     cpReg2MemMI(mvec, scratchReg, PtrReg, Offset, IntRegType);
     return;
 
   case SpecialRegType: // used only for %fsr itself.
   case FloatCCRegType: {
-    unsigned fsrReg =  getUnifiedRegNum(SparcV9RegInfo::SpecialRegClassID,
-                                           SparcV9SpecialRegClass::fsr);
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::STXFSRi, Offset))
-      MI=BuildMI(V9::STXFSRi,3).addMReg(fsrReg).addMReg(PtrReg).addSImm(Offset);
+    if (useImmediateOffset)
+      MI = BuildMI(V9::STXFSRi,3).addMReg(SparcV9::fsr).addMReg(PtrReg)
+             .addSImm(Offset);
     else
-      MI=BuildMI(V9::STXFSRr,3).addMReg(fsrReg).addMReg(PtrReg).addMReg(OffReg);
+      MI = BuildMI(V9::STXFSRr,3).addMReg(SparcV9::fsr).addMReg(PtrReg)
+             .addMReg(OffReg);
     break;
   }
   default:
@@ -828,45 +826,42 @@ SparcV9RegInfo::cpReg2MemMI(std::vector<MachineInstr*>& mvec,
   mvec.push_back(MI);
 }
 
+/// cpMem2RegMI - Generate SparcV9 MachineInstrs to load a register
+/// (DestReg) from memory, at [PtrReg + Offset].  Register numbers must be the
+/// unified register numbers.  RegType must be the SparcV9 register type
+/// of DestReg. When DestReg is %ccr, scratchReg must be the
+/// number of a free integer register.  The newly-generated MachineInstrs
+/// are appended to mvec.
+///
+void SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
+                                 unsigned PtrReg, int Offset, unsigned DestReg,
+                                 int RegType, int scratchReg) const {
+  unsigned OffReg = SparcV9::g4; // Use register g4 for holding large offsets
+  bool useImmediateOffset = true;
 
-//---------------------------------------------------------------------------
-// Copy from memory to a reg (i.e., Load) Register number must be the unified
-// register number
-//---------------------------------------------------------------------------
+  // If the Offset will not fit in the signed-immediate field, we put it in
+  // register g4. This takes advantage of the fact that all the opcodes
+  // used below have the same size immed. field.
+  if (RegType != IntCCRegType
+      && !target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset)) {
+    MachineInstr *MI = BuildMI(V9::SETHI, 2).addZImm(Offset).addMReg(OffReg,
+      MachineOperand::Def);
+    MI->getOperand(0).markHi32();
+    mvec.push_back(MI);
+    MI = BuildMI(V9::ORi,3).addMReg(OffReg).addZImm(Offset).addMReg(OffReg,
+      MachineOperand::Def);
+    MI->getOperand(1).markLo32();
+    mvec.push_back(MI);
+    MI = BuildMI(V9::SRAi5,3).addMReg(OffReg).addZImm(0).addMReg(OffReg,
+      MachineOperand::Def);
+    mvec.push_back(MI);
+    useImmediateOffset = false;
+  }
 
-
-void
-SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
-                               unsigned PtrReg,	
-                               int Offset,
-                               unsigned DestReg,
-                               int RegType,
-                               int scratchReg) const {
-  MachineInstr * MI = NULL;
-  int OffReg = -1;
-
-  // If the Offset will not fit in the signed-immediate field, find an
-  // unused register to hold the offset value.  This takes advantage of
-  // the fact that all the opcodes used below have the same size immed. field.
-  // Use the register allocator, PRA, to find an unused reg. at this MI.
-  // 
-  if (RegType != IntCCRegType)          // does not use offset below
-    if (! target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset)) {
-#ifdef CAN_FIND_FREE_REGISTER_TRANSPARENTLY
-      RegClass* RC = PRA.getRegClassByID(this->getRegClassIDOfRegType(RegType));
-      OffReg = PRA.getUnusedUniRegAtMI(RC, RegType, MInst, LVSetBef);
-#else
-      // Default to using register g4 for holding large offsets
-      OffReg = getUnifiedRegNum(SparcV9RegInfo::IntRegClassID,
-                                SparcV9IntRegClass::g4);
-#endif
-      assert(OffReg >= 0 && "FIXME: cpReg2MemMI cannot find an unused reg.");
-      mvec.push_back(BuildMI(V9::SETSW, 2).addZImm(Offset).addReg(OffReg));
-    }
-
+  MachineInstr *MI = 0;
   switch (RegType) {
   case IntRegType:
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDXi, Offset))
+    if (useImmediateOffset)
       MI = BuildMI(V9::LDXi, 3).addMReg(PtrReg).addSImm(Offset)
           .addMReg(DestReg, MachineOperand::Def);
     else
@@ -875,7 +870,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
 
   case FPSingleRegType:
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDFi, Offset))
+    if (useImmediateOffset)
       MI = BuildMI(V9::LDFi, 3).addMReg(PtrReg).addSImm(Offset)
           .addMReg(DestReg, MachineOperand::Def);
     else
@@ -884,7 +879,7 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
 
   case FPDoubleRegType:
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDDFi, Offset))
+    if (useImmediateOffset)
       MI= BuildMI(V9::LDDFi, 3).addMReg(PtrReg).addSImm(Offset)
           .addMReg(DestReg, MachineOperand::Def);
     else
@@ -893,26 +888,21 @@ SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     break;
 
   case IntCCRegType:
-    assert(scratchReg >= 0 && "Need scratch reg to load %ccr from memory");
-    assert(getRegType(scratchReg) ==IntRegType && "Invalid scratch reg");
+    assert(scratchReg >= 0 && getRegType(scratchReg) == IntRegType
+           && "Need a scratch reg of integer type to load or store %ccr");
     cpMem2RegMI(mvec, PtrReg, Offset, scratchReg, IntRegType);
-    MI = (BuildMI(V9::WRCCRr, 3)
-          .addMReg(scratchReg)
-          .addMReg(SparcV9IntRegClass::g0)
-          .addMReg(getUnifiedRegNum(SparcV9RegInfo::IntCCRegClassID,
-                                    SparcV9IntCCRegClass::ccr), MachineOperand::Def));
+    MI = BuildMI(V9::WRCCRr, 3).addMReg(scratchReg).addMReg(SparcV9::g0)
+           .addMReg(SparcV9::ccr, MachineOperand::Def);
     break;
     
   case SpecialRegType: // used only for %fsr itself
   case FloatCCRegType: {
-    unsigned fsrRegNum =  getUnifiedRegNum(SparcV9RegInfo::SpecialRegClassID,
-                                           SparcV9SpecialRegClass::fsr);
-    if (target.getInstrInfo()->constantFitsInImmedField(V9::LDXFSRi, Offset))
+    if (useImmediateOffset)
       MI = BuildMI(V9::LDXFSRi, 3).addMReg(PtrReg).addSImm(Offset)
-        .addMReg(fsrRegNum, MachineOperand::UseAndDef);
+        .addMReg(SparcV9::fsr, MachineOperand::Def);
     else
       MI = BuildMI(V9::LDXFSRr, 3).addMReg(PtrReg).addMReg(OffReg)
-        .addMReg(fsrRegNum, MachineOperand::UseAndDef);
+        .addMReg(SparcV9::fsr, MachineOperand::Def);
     break;
   }
   default:
