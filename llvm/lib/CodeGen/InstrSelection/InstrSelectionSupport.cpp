@@ -111,14 +111,14 @@ GetConstantValueAsSignedInt(const Value *V,
 
 Value*
 FoldGetElemChain(const InstructionNode* getElemInstrNode,
-		 vector<Constant*>& chainIdxVec)
+		 vector<Value*>& chainIdxVec)
 {
   MemAccessInst* getElemInst = (MemAccessInst*)
     getElemInstrNode->getInstruction();
   
   // Initialize return values from the incoming instruction
   Value* ptrVal = getElemInst->getPointerOperand();
-  chainIdxVec = getElemInst->getIndicesBROKEN(); // copies index vector values
+  chainIdxVec = getElemInst->copyIndices();
   
   // Now chase the chain of getElementInstr instructions, if any
   InstrTreeNode* ptrChild = getElemInstrNode->leftChild();
@@ -128,7 +128,7 @@ FoldGetElemChain(const InstructionNode* getElemInstrNode,
       // Child is a GetElemPtr instruction
       getElemInst = (MemAccessInst*)
 	((InstructionNode*) ptrChild)->getInstruction();
-      const vector<Constant*>& idxVec = getElemInst->getIndicesBROKEN();
+      const vector<Value*>& idxVec = getElemInst->copyIndices();
       
       // Get the pointer value out of ptrChild and *prepend* its index vector
       ptrVal = getElemInst->getPointerOperand();

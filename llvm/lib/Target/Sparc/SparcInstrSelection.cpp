@@ -34,7 +34,7 @@ static void SetMemOperands_Internal     (MachineInstr* minstr,
                                          const InstructionNode* vmInstrNode,
                                          Value* ptrVal,
                                          Value* arrayOffsetVal,
-                                         const vector<Constant*>& idxVec,
+                                         const vector<Value*>& idxVec,
                                          const TargetMachine& target);
 
 
@@ -742,9 +742,7 @@ SetOperandsForMemInstr(MachineInstr* minstr,
   // The major work here is to extract these for all 3 instruction types
   // and then call the common function SetMemOperands_Internal().
   // 
-  const vector<Constant*> OLDIDXVEC = memInst->getIndicesBROKEN();
-  const vector<Constant*>* idxVec = &OLDIDXVEC;  //FIXME
-  vector<Constant*>* newIdxVec = NULL;
+  vector<Value*> idxVec;
   Value* ptrVal;
   Value* arrayOffsetVal = NULL;
   
@@ -765,12 +763,8 @@ SetOperandsForMemInstr(MachineInstr* minstr,
       // instruction into one single index vector.
       // Finally, we never fold for an array instruction so make that NULL.
       
-      newIdxVec = new vector<Constant*>;
-      ptrVal = FoldGetElemChain((InstructionNode*) ptrChild, *newIdxVec);
-      
-      newIdxVec->insert(newIdxVec->end(), idxVec->begin(), idxVec->end());
-      idxVec = newIdxVec;
-      
+      ptrVal = FoldGetElemChain((InstructionNode*) ptrChild, idxVec);
+      idxVec.insert(idxVec.end(), memInst->idx_begin(), memInst->idx_end());
       assert(!((PointerType*)ptrVal->getType())->getElementType()->isArrayType()
              && "GetElemPtr cannot be folded into array refs in selection");
     }
@@ -778,7 +772,8 @@ SetOperandsForMemInstr(MachineInstr* minstr,
     {
       // There is no GetElemPtr instruction.
       // Use the pointer value and the index vector from the Mem instruction.
-      // If it is an array reference, get the array offset value.
+      // If it is an array reference, check that it has been lowered to
+      // at most a single offset, then get the array offset value.
       // 
       ptrVal = memInst->getPointerOperand();
 
@@ -788,16 +783,12 @@ SetOperandsForMemInstr(MachineInstr* minstr,
           assert((memInst->getNumOperands()
                   == (unsigned) 1 + memInst->getFirstIndexOperandNumber())
                  && "Array refs must be lowered before Instruction Selection");
-          
-          arrayOffsetVal = memInst->getOperand(memInst->getFirstIndexOperandNumber());
+          arrayOffsetVal = * memInst->idx_begin();
         }
     }
   
   SetMemOperands_Internal(minstr, vmInstrNode, ptrVal, arrayOffsetVal,
-                          *idxVec, target);
-  
-  if (newIdxVec != NULL)
-    delete newIdxVec;
+                          idxVec, target);
 }
 
 
@@ -806,7 +797,7 @@ SetMemOperands_Internal(MachineInstr* minstr,
                         const InstructionNode* vmInstrNode,
                         Value* ptrVal,
                         Value* arrayOffsetVal,
-                        const vector<Constant*>& idxVec,
+                        const vector<Value*>& idxVec,
                         const TargetMachine& target)
 {
   MemAccessInst* memInst = (MemAccessInst*) vmInstrNode->getInstruction();

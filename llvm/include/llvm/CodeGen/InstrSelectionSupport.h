@@ -54,7 +54,7 @@ int64_t         GetConstantValueAsSignedInt     (const Value *V,
 //---------------------------------------------------------------------------
 
 Value*		FoldGetElemChain    (const InstructionNode* getElemInstrNode,
-				     vector<Constant*>& chainIdxVec);
+				     vector<Value*>& chainIdxVec);
 
 
 //------------------------------------------------------------------------ 
