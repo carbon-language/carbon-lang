@@ -48,6 +48,14 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // Insert the call to abort
     new CallInst(M->getOrInsertFunction("abort", Type::VoidTy, 0), "", CI);
     break;
+
+  case Intrinsic::dbg_stoppoint:
+  case Intrinsic::dbg_region_start:
+  case Intrinsic::dbg_region_end:
+  case Intrinsic::dbg_func_start:
+    if (CI->getType() != Type::VoidTy)
+      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+    break;    // Simply strip out debugging intrinsics
   }
 
   assert(CI->use_empty() &&

@@ -548,6 +548,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::longjmp:         NumArgs = 2; break;
   case Intrinsic::sigsetjmp:       NumArgs = 2; break;
   case Intrinsic::siglongjmp:      NumArgs = 2; break;
+
+  case Intrinsic::dbg_stoppoint:   NumArgs = 4; break;
+  case Intrinsic::dbg_region_start:NumArgs = 1; break;
+  case Intrinsic::dbg_region_end:  NumArgs = 1; break;
+  case Intrinsic::dbg_func_start:  NumArgs = 1; break;
  
   case Intrinsic::alpha_ctlz:      NumArgs = 1; break;
   case Intrinsic::alpha_cttz:      NumArgs = 1; break;
