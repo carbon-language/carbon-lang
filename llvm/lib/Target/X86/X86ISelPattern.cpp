@@ -490,6 +490,27 @@ unsigned ISel::ComputeRegPressure(SDOperand O) {
   return Result;
 }
 
+/// NodeTransitivelyUsesValue - Return true if N or any of its uses uses Op.
+/// The DAG cannot have cycles in it, by definition, so the visited set is not
+/// needed to prevent infinite loops.  The DAG CAN, however, have unbounded
+/// reuse, so it prevents exponential cases.
+///
+static bool NodeTransitivelyUsesValue(SDOperand N, SDOperand Op,
+                                      std::set<SDNode*> &Visited) {
+  if (N == Op) return true;                        // Found it.
+  SDNode *Node = N.Val;
+  if (Node->getNumOperands() == 0) return false;   // Leaf?
+  if (!Visited.insert(Node).second) return false;  // Already visited?
+
+  // Recurse for the first N-1 operands.
+  for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
+    if (NodeTransitivelyUsesValue(Node->getOperand(i), Op, Visited))
+      return true;
+
+  // Tail recurse for the last operand.
+  return NodeTransitivelyUsesValue(Node->getOperand(0), Op, Visited);
+}
+
 X86AddressMode ISel::SelectAddrExprs(const X86ISelAddressMode &IAM) {
   X86AddressMode Result;
 
@@ -497,13 +518,33 @@ X86AddressMode ISel::SelectAddrExprs(const X86ISelAddressMode &IAM) {
   // register pressure first.
   if (IAM.BaseType == X86ISelAddressMode::RegBase &&
       IAM.Base.Reg.Val && IAM.IndexReg.Val) {
+    bool EmitBaseThenIndex;
     if (getRegPressure(IAM.Base.Reg) > getRegPressure(IAM.IndexReg)) {
+      std::set<SDNode*> Visited;
+      EmitBaseThenIndex = true;
+      // If Base ends up pointing to Index, we must emit index first.  This is
+      // because of the way we fold loads, we may end up doing bad things with
+      // the folded add.
+      if (NodeTransitivelyUsesValue(IAM.Base.Reg, IAM.IndexReg, Visited))
+        EmitBaseThenIndex = false;
+    } else {
+      std::set<SDNode*> Visited;
+      EmitBaseThenIndex = false;
+      // If Base ends up pointing to Index, we must emit index first.  This is
+      // because of the way we fold loads, we may end up doing bad things with
+      // the folded add.
+      if (NodeTransitivelyUsesValue(IAM.IndexReg, IAM.Base.Reg, Visited))
+        EmitBaseThenIndex = true;
+    }
+
+    if (EmitBaseThenIndex) {
       Result.Base.Reg = SelectExpr(IAM.Base.Reg);
       Result.IndexReg = SelectExpr(IAM.IndexReg);
     } else {
       Result.IndexReg = SelectExpr(IAM.IndexReg);
       Result.Base.Reg = SelectExpr(IAM.Base.Reg);
     }
+
   } else if (IAM.BaseType == X86ISelAddressMode::RegBase && IAM.Base.Reg.Val) {
     Result.Base.Reg = SelectExpr(IAM.Base.Reg);
   } else if (IAM.IndexReg.Val) {
@@ -1068,27 +1109,6 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
     Tmp1 = SelectExpr(LHS);
   }
   BuildMI(BB, Opc, 2).addReg(Tmp1).addReg(Tmp2);
-}
-
-/// NodeTransitivelyUsesValue - Return true if N or any of its uses uses Op.
-/// The DAG cannot have cycles in it, by definition, so the visited set is not
-/// needed to prevent infinite loops.  The DAG CAN, however, have unbounded
-/// reuse, so it prevents exponential cases.
-///
-static bool NodeTransitivelyUsesValue(SDOperand N, SDOperand Op,
-                                      std::set<SDNode*> &Visited) {
-  if (N == Op) return true;                        // Found it.
-  SDNode *Node = N.Val;
-  if (Node->getNumOperands() == 0) return false;   // Leaf?
-  if (!Visited.insert(Node).second) return false;  // Already visited?
-
-  // Recurse for the first N-1 operands.
-  for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
-    if (NodeTransitivelyUsesValue(Node->getOperand(i), Op, Visited))
-      return true;
-
-  // Tail recurse for the last operand.
-  return NodeTransitivelyUsesValue(Node->getOperand(0), Op, Visited);
 }
 
 /// isFoldableLoad - Return true if this is a load instruction that can safely
