@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <fstream>
+#include <utime.h>
+#include <dirent.h>
 
 namespace llvm {
 using namespace sys;
@@ -159,7 +161,19 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
   std::ifstream f(path.c_str());
   f.read(buf, len);
   buf[len] = '\0';
+  f.close();
   return Magic == buf;
+}
+
+bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
+  if (!isFile())
+    return false;
+  char buf[1 + len];
+  std::ifstream f(path.c_str());
+  f.read(buf,len);
+  buf[len] = '\0';
+  Magic = buf;
+  return true;
 }
 
 bool 
@@ -170,7 +184,9 @@ Path::isBytecodeFile() const {
   f.read(buffer, 4);
   if (f.bad())
     ThrowErrno("can't read file signature");
-  return 0 == memcmp(buffer,"llvc",4) || 0 == memcmp(buffer,"llvm",4);
+
+  return (buffer[0] == 'l' && buffer[1] == 'l' && buffer[2] == 'v' &&
+      (buffer[3] == 'c' || buffer[3] == 'm'));
 }
 
 bool
@@ -224,16 +240,46 @@ Path::getLast() const {
 }
 
 void
-Path::getStatusInfo(StatusInfo& info) const {
+Path::getStatusInfo(StatusInfo& info) {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     ThrowErrno(std::string("Can't get status: ")+path);
   }
   info.fileSize = buf.st_size;
-  info.modTime.fromPosixTime(buf.st_mtime);
+  info.modTime.fromEpochTime(buf.st_mtime);
   info.mode = buf.st_mode;
   info.user = buf.st_uid;
   info.group = buf.st_gid;
+  info.isDir = S_ISDIR(buf.st_mode);
+  if (info.isDir && path[path.length()-1] != '/')
+    path += '/';
+}
+
+bool
+Path::getDirectoryContents(Vector& result) const {
+  if (!isDirectory())
+    return false;
+  DIR* direntries = ::opendir(path.c_str());
+  if (direntries == 0)
+    ThrowErrno(path + ": can't open directory");
+
+  result.clear();
+  struct dirent* de = ::readdir(direntries);
+  while (de != 0) {
+    if (de->d_name[0] != '.') {
+      Path aPath(path + (const char*)de->d_name);
+      struct stat buf;
+      if (0 != stat(aPath.path.c_str(), &buf))
+        ThrowErrno(aPath.path + ": can't get status");
+      if (S_ISDIR(buf.st_mode))
+        aPath.path += "/";
+      result.push_back(aPath);
+    }
+    de = ::readdir(direntries);
+  }
+  
+  closedir(direntries);
+  return true;
 }
 
 bool
@@ -363,6 +409,8 @@ Path::createDirectory( bool create_parents) {
   int lastchar = path.length() - 1 ; 
   if (pathname[lastchar] == '/') 
     pathname[lastchar] = 0;
+  else 
+    pathname[lastchar+1] = 0;
 
   // If we're supposed to create intermediate directories
   if ( create_parents ) {
@@ -378,12 +426,14 @@ Path::createDirectory( bool create_parents) {
         if (0 != mkdir(pathname, S_IRWXU | S_IRWXG))
           ThrowErrno(std::string(pathname) + ": Can't create directory");
       char* save = next;
-      next = strchr(pathname,'/');
+      next = strchr(next+1,'/');
       *save = '/';
     }
-  } else if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
-    ThrowErrno(std::string(pathname) + ": Can't create directory");
   } 
+
+  if (0 != access(pathname, F_OK | R_OK))
+    if (0 != mkdir(pathname, S_IRWXU | S_IRWXG))
+      ThrowErrno(std::string(pathname) + ": Can't create directory");
   return true;
 }
 
@@ -409,6 +459,7 @@ Path::createTemporaryFile() {
   // Append the filename filler
   char pathname[MAXPATHLEN];
   path.copy(pathname,MAXPATHLEN);
+  pathname[path.length()] = 0;
   strcat(pathname,"XXXXXX");
   int fd = ::mkstemp(pathname);
   if (fd < 0) {
@@ -439,6 +490,8 @@ Path::destroyDirectory(bool remove_contents) {
     int lastchar = path.length() - 1 ; 
     if (pathname[lastchar] == '/') 
       pathname[lastchar] = 0;
+    else
+      pathname[lastchar+1] = 0;
     if ( 0 != rmdir(pathname))
       ThrowErrno(std::string(pathname) + ": Can't destroy directory");
   }
@@ -449,7 +502,28 @@ bool
 Path::destroyFile() {
   if (!isFile()) return false;
   if (0 != unlink(path.c_str()))
-    ThrowErrno(std::string(path.c_str()) + ": Can't destroy file");
+    ThrowErrno(path + ": Can't destroy file");
+  return true;
+}
+
+bool
+Path::renameFile(const Path& newName) {
+  if (!isFile()) return false;
+  if (0 != rename(path.c_str(), newName.c_str()))
+    ThrowErrno(std::string("can't rename ") + path + " as " + newName.get());
+  return true;
+}
+
+bool
+Path::setStatusInfo(const StatusInfo& si) const {
+  if (!isFile()) return false;
+  struct utimbuf utb;
+  utb.actime = si.modTime.toPosixTime();
+  utb.modtime = utb.actime;
+  if (0 != ::utime(path.c_str(),&utb))
+    ThrowErrno(path + ": can't set file modification time");
+  if (0 != ::chmod(path.c_str(),si.mode))
+    ThrowErrno(path + ": can't set mode");
   return true;
 }
 
