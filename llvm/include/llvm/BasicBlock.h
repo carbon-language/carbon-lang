@@ -6,24 +6,23 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-///
-/// \class BasicBlock
-///
-/// This file contains the declaration of the BasicBlock class, which represents
-/// a single basic block in the VM.
-///
-/// Note that basic blocks themselves are Value's, because they are referenced
-/// by instructions like branches and can go in switch tables and stuff...
-///
+//
+//
+// This file contains the declaration of the BasicBlock class, which represents
+// a single basic block in the VM.
+//
+// Note that basic blocks themselves are Value's, because they are referenced
+// by instructions like branches and can go in switch tables and stuff...
+//
 ///===---------------------------------------------------------------------===//
-///
-/// Note that well formed basic blocks are formed of a list of instructions 
-/// followed by a single TerminatorInst instruction.  TerminatorInst's may not
-/// occur in the middle of basic blocks, and must terminate the blocks.
-///
-/// This code allows malformed basic blocks to occur, because it may be useful
-/// in the intermediate stage modification to a program.
-///
+//
+// Note that well formed basic blocks are formed of a list of instructions 
+// followed by a single TerminatorInst instruction.  TerminatorInst's may not
+// occur in the middle of basic blocks, and must terminate the blocks.
+//
+// This code allows malformed basic blocks to occur, because it may be useful
+// in the intermediate stage modification to a program.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_BASICBLOCK_H
