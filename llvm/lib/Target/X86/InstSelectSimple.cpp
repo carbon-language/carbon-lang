@@ -408,9 +408,11 @@ ISel::visitCallInst (CallInst & CI)
 	  BuildMI (BB, X86::PUSHr32, 1).addReg (X86::EAX);
 	  break;
 	case cInt:
-	case cFloat:
-	  BuildMI (BB, X86::PUSHr32, 1).addReg(getReg(v));
+	case cFloat: {
+          unsigned Reg = getReg(v);
+          BuildMI (BB, X86::PUSHr32, 1).addReg(Reg);
 	  break;
+        }
 	default:
 	  // FIXME: long/ulong/double args not handled.
 	  visitInstruction (CI);
