@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <cassert>
 #include <string>
+#include <ostream>
 #include "bzip2/bzlib.h"
 using namespace llvm;
 
@@ -25,7 +26,7 @@ enum CompressionTypes {
   COMP_TYPE_BZIP2 = '2',
 };
 
-static int getdata(char*& buffer, unsigned& size, 
+static int getdata(char*& buffer, size_t &size, 
                    llvm::Compressor::OutputDataCallback* cb, void* context) {
   buffer = 0;
   size = 0;
@@ -44,13 +45,13 @@ static int getdata(char*& buffer, unsigned& size,
 
 struct NULLCOMP_stream {
   // User provided fields
-  char* next_in;
-  unsigned avail_in;
-  char* next_out;
-  unsigned avail_out;
+  char*  next_in;
+  size_t avail_in;
+  char*  next_out;
+  size_t avail_out;
 
   // Information fields
-  uint64_t output_count; // Total count of output bytes
+  size_t output_count; // Total count of output bytes
 };
 
 static void NULLCOMP_init(NULLCOMP_stream* s) {
@@ -118,8 +119,8 @@ namespace {
 /// @brief An internal buffer object used for handling decompression
 struct BufferContext {
   char* buff;
-  unsigned size;
-  BufferContext(unsigned compressedSize) { 
+  size_t size;
+  BufferContext(size_t compressedSize) { 
     // Null to indicate malloc of a new block
     buff = 0; 
 
@@ -146,12 +147,12 @@ struct BufferContext {
   /// This function handles allocation of the buffer used for decompression of
   /// compressed bytecode files. It is called by Compressor::decompress which is
   /// called by BytecodeReader::ParseBytecode. 
-  static unsigned callback(char*&buff, unsigned& sz, void* ctxt){
+  static size_t callback(char*&buff, size_t &sz, void* ctxt){
     // Case the context variable to our BufferContext
     BufferContext* bc = reinterpret_cast<BufferContext*>(ctxt);
 
     // Compute the new, doubled, size of the block
-    unsigned new_size = bc->size * 2;
+    size_t new_size = bc->size * 2;
 
     // Extend or allocate the block (realloc(0,n) == malloc(n))
     char* new_buff = (char*) ::realloc(bc->buff, new_size);
@@ -191,7 +192,7 @@ namespace {
 // written.
 struct WriterContext {
   // Initialize the context
-  WriterContext(std::ostream*OS, unsigned CS) 
+  WriterContext(std::ostream*OS, size_t CS) 
     : chunk(0), sz(0), written(0), compSize(CS), Out(OS) {}
 
   // Make sure we clean up memory
@@ -201,8 +202,8 @@ struct WriterContext {
   }
 
   // Write the chunk
-  void write(unsigned size = 0) {
-    unsigned write_size = (size == 0 ? sz : size);
+  void write(size_t size = 0) {
+    size_t write_size = (size == 0 ? sz : size);
     Out->write(chunk,write_size);
     written += write_size;
     delete [] chunk;
@@ -214,10 +215,9 @@ struct WriterContext {
   // allocate memory for the compression buffer. This function fulfills that
   // responsibility but also writes the previous (now filled) buffer out to the
   // stream. 
-  static unsigned callback(char*& buffer, unsigned& size, void* context) {
+  static size_t callback(char*& buffer, size_t &size, void* context) {
     // Cast the context to the structure it must point to.
-    WriterContext* ctxt = 
-      reinterpret_cast<WriterContext*>(context);
+    WriterContext* ctxt = reinterpret_cast<WriterContext*>(context);
 
     // If there's a previously allocated chunk, it must now be filled with
     // compressed data, so we write it out and deallocate it.
@@ -242,22 +242,22 @@ struct WriterContext {
   }
 
   char* chunk;       // pointer to the chunk of memory filled by compression
-  unsigned sz;       // size of chunk
-  unsigned written;  // aggregate total of bytes written in all chunks
-  unsigned compSize; // size of the uncompressed buffer
+  size_t sz;         // size of chunk
+  size_t written;    // aggregate total of bytes written in all chunks
+  size_t compSize;   // size of the uncompressed buffer
   std::ostream* Out; // The stream we write the data to.
 };
 
 }  // end anonymous namespace
 
 // Compress in one of three ways
-uint64_t Compressor::compress(const char* in, unsigned size, 
-    OutputDataCallback* cb, void* context ) {
+size_t Compressor::compress(const char* in, size_t size, 
+                            OutputDataCallback* cb, void* context) {
   assert(in && "Can't compress null buffer");
   assert(size && "Can't compress empty buffer");
   assert(cb && "Can't compress without a callback function");
 
-  uint64_t result = 0;
+  size_t result = 0;
 
   // For small files, we just don't bother compressing. bzip2 isn't very good
   // with tiny files and can actually make the file larger, so we just avoid
@@ -308,8 +308,9 @@ uint64_t Compressor::compress(const char* in, unsigned size,
     }
 
     // Finish
-    result = (static_cast<uint64_t>(bzdata.total_out_hi32) << 32) |
-        bzdata.total_out_lo32 + 1;
+    result = bzdata.total_out_lo32 + 1;
+    if (sizeof(size_t) == sizeof(uint64_t))
+      result |= static_cast<uint64_t>(bzdata.total_out_hi32) << 32;
 
     BZ2_bzCompressEnd(&bzdata);
   } else {
@@ -338,22 +339,21 @@ uint64_t Compressor::compress(const char* in, unsigned size,
   return result;
 }
 
-uint64_t 
-Compressor::compressToNewBuffer(const char* in, unsigned size, char*&out) {
+size_t Compressor::compressToNewBuffer(const char* in, size_t size, char*&out) {
   BufferContext bc(size);
-  uint64_t result = compress(in,size,BufferContext::callback,(void*)&bc);
+  size_t result = compress(in,size,BufferContext::callback,(void*)&bc);
   bc.trimTo(result);
   out = bc.buff;
   return result;
 }
 
-uint64_t 
-Compressor::compressToStream(const char*in, unsigned size, std::ostream& out) {
+size_t 
+Compressor::compressToStream(const char*in, size_t size, std::ostream& out) {
   // Set up the context and writer
-  WriterContext ctxt(&out,size / 2);
+  WriterContext ctxt(&out, size / 2);
 
-  // Compress everything after the magic number (which we'll alter)
-  uint64_t zipSize = Compressor::compress(in,size,
+  // Compress everything after the magic number (which we'll alter).
+  size_t zipSize = Compressor::compress(in,size,
     WriterContext::callback, (void*)&ctxt);
 
   if (ctxt.chunk) {
@@ -363,13 +363,13 @@ Compressor::compressToStream(const char*in, unsigned size, std::ostream& out) {
 }
 
 // Decompress in one of three ways
-uint64_t Compressor::decompress(const char *in, unsigned size,
-                                OutputDataCallback* cb, void* context) {
+size_t Compressor::decompress(const char *in, size_t size,
+                              OutputDataCallback* cb, void* context) {
   assert(in && "Can't decompress null buffer");
   assert(size > 1 && "Can't decompress empty buffer");
   assert(cb && "Can't decompress without a callback function");
 
-  uint64_t result = 0;
+  size_t result = 0;
 
   switch (*in++) {
     case COMP_TYPE_BZIP2: {
@@ -417,8 +417,9 @@ uint64_t Compressor::decompress(const char *in, unsigned size,
       }
 
       // Finish
-      result = (static_cast<uint64_t>(bzdata.total_out_hi32) << 32) |
-        bzdata.total_out_lo32;
+      result = bzdata.total_out_lo32;
+      if (sizeof(size_t) == sizeof(uint64_t))
+        result |= (static_cast<uint64_t>(bzdata.total_out_hi32) << 32);
       BZ2_bzDecompressEnd(&bzdata);
       break;
     }
@@ -451,21 +452,21 @@ uint64_t Compressor::decompress(const char *in, unsigned size,
   return result;
 }
 
-uint64_t 
-Compressor::decompressToNewBuffer(const char* in, unsigned size, char*&out) {
+size_t 
+Compressor::decompressToNewBuffer(const char* in, size_t size, char*&out) {
   BufferContext bc(size);
-  unsigned result = decompress(in,size,BufferContext::callback,(void*)&bc);
+  size_t result = decompress(in,size,BufferContext::callback,(void*)&bc);
   out = bc.buff;
   return result;
 }
-                                                                                                                                            
-uint64_t 
-Compressor::decompressToStream(const char*in, unsigned size, std::ostream& out){
+
+size_t 
+Compressor::decompressToStream(const char*in, size_t size, std::ostream& out){
   // Set up the context and writer
   WriterContext ctxt(&out,size / 2);
 
   // Compress everything after the magic number (which we'll alter)
-  uint64_t zipSize = Compressor::decompress(in,size,
+  size_t zipSize = Compressor::decompress(in,size,
     WriterContext::callback, (void*)&ctxt);
 
   if (ctxt.chunk) {
