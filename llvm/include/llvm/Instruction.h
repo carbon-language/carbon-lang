@@ -17,6 +17,8 @@
 
 #include "llvm/User.h"
 
+class AssemblyAnnotationWriter;
+
 template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
          typename SubClass> class SymbolTableListTraits;
@@ -108,7 +110,8 @@ public:
   }
   static bool isTrapping(unsigned op);
   
-  virtual void print(std::ostream &OS) const;
+  virtual void print(std::ostream &OS) const { print(OS, 0); }
+  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) { return true; }

@@ -181,7 +181,8 @@ public:
   const Argument           &aback() const { return ArgumentList.back(); }
         Argument           &aback()       { return ArgumentList.back(); }
 
-  virtual void print(std::ostream &OS) const;
+  virtual void print(std::ostream &OS) const { print(OS, 0); }
+  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
   /// viewCFG - This function is meant for use from the debugger.  You can just
   /// say 'call F->viewCFG()' and a ghostview window should pop up from the

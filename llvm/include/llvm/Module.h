@@ -187,7 +187,9 @@ public:
   inline const Function          &back() const { return FunctionList.back(); }
   inline       Function          &back()       { return FunctionList.back(); }
 
-  void print(std::ostream &OS) const;
+  void print(std::ostream &OS) const { print(OS, 0); }
+  void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
+
   void dump() const;
 
   /// dropAllReferences() - This function causes all the subinstructions to "let
