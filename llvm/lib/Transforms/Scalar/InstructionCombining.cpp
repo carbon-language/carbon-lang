@@ -1258,21 +1258,22 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
   // Test to see if the operands of the setcc are casted versions of other
   // values.  If the cast can be stripped off both arguments, we do so now.
-  if (CastInst *CI = dyn_cast<CastInst>(Op0))
-    if (CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(CI->getType())&&
+  if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
+    Value *CastOp0 = CI->getOperand(0);
+    if (CastOp0->getType()->isLosslesslyConvertibleTo(CI->getType()) &&
         !isa<Argument>(Op1) &&
         (I.getOpcode() == Instruction::SetEQ ||
          I.getOpcode() == Instruction::SetNE)) {
       // We keep moving the cast from the left operand over to the right
       // operand, where it can often be eliminated completely.
-      Op0 = CI->getOperand(0);
+      Op0 = CastOp0;
       
       // If operand #1 is a cast instruction, see if we can eliminate it as
       // well.
-      if (CastInst *CI = dyn_cast<CastInst>(Op1))
-        if (CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(
+      if (CastInst *CI2 = dyn_cast<CastInst>(Op1))
+        if (CI2->getOperand(0)->getType()->isLosslesslyConvertibleTo(
                                                                Op0->getType()))
-          Op1 = CI->getOperand(0);
+          Op1 = CI2->getOperand(0);
       
       // If Op1 is a constant, we can fold the cast into the constant.
       if (Op1->getType() != Op0->getType())
@@ -1286,6 +1287,56 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       return BinaryOperator::create(I.getOpcode(), Op0, Op1);
     }
 
+    // Handle the special case of: setcc (cast bool to X), <cst>
+    // This comes up when you have code like
+    //   int X = A < B;
+    //   if (X) ...
+    // For generality, we handle any zero-extension of any operand comparison
+    // with a constant.
+    if (ConstantInt *ConstantRHS = dyn_cast<ConstantInt>(Op1)) {
+      const Type *SrcTy = CastOp0->getType();
+      const Type *DestTy = Op0->getType();
+      if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
+          (SrcTy->isUnsigned() || SrcTy == Type::BoolTy)) {
+        // Ok, we have an expansion of operand 0 into a new type.  Get the
+        // constant value, masink off bits which are not set in the RHS.  These
+        // could be set if the destination value is signed.
+        uint64_t ConstVal = ConstantRHS->getRawValue();
+        ConstVal &= (1ULL << DestTy->getPrimitiveSize()*8)-1;
+
+        // If the constant we are comparing it with has high bits set, which
+        // don't exist in the original value, the values could never be equal,
+        // because the source would be zero extended.
+        unsigned SrcBits =
+          SrcTy == Type::BoolTy ? 1 : SrcTy->getPrimitiveSize()*8;
+        bool HasSignBit = 1ULL << (DestTy->getPrimitiveSize()*8-1);
+        if (ConstVal & ((1ULL << SrcBits)-1)) {
+          switch (I.getOpcode()) {
+          default: assert(0 && "Unknown comparison type!");
+          case Instruction::SetEQ:
+            return ReplaceInstUsesWith(I, ConstantBool::False);
+          case Instruction::SetNE:
+            return ReplaceInstUsesWith(I, ConstantBool::True);
+          case Instruction::SetLT:
+          case Instruction::SetLE:
+            if (DestTy->isSigned() && HasSignBit)
+              return ReplaceInstUsesWith(I, ConstantBool::False);
+            return ReplaceInstUsesWith(I, ConstantBool::True);
+          case Instruction::SetGT:
+          case Instruction::SetGE:
+            if (DestTy->isSigned() && HasSignBit)
+              return ReplaceInstUsesWith(I, ConstantBool::True);
+            return ReplaceInstUsesWith(I, ConstantBool::False);
+          }
+        }
+        
+        // Otherwise, we can replace the setcc with a setcc of the smaller
+        // operand value.
+        Op1 = ConstantExpr::getCast(cast<Constant>(Op1), SrcTy);
+        return BinaryOperator::create(I.getOpcode(), CastOp0, Op1);
+      }
+    }
+  }
   return Changed ? &I : 0;
 }
 
