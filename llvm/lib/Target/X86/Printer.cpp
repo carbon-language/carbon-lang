@@ -78,7 +78,11 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
     else
       O << "%reg" << MO.getReg();
     return;
-    
+
+  case MachineOperand::MO_SignExtendedImmed:
+  case MachineOperand::MO_UnextendedImmed:
+    O << (int)MO.getImmedValue();
+    return;
   default:
     O << "<unknown op ty>"; return;    
   }
@@ -97,10 +101,24 @@ static std::ostream &toHex(std::ostream &O, unsigned char V) {
   return O;
 }
 
+static std::ostream &emitConstant(std::ostream &O, unsigned Val, unsigned Size){
+  // Output the constant in little endian byte order...
+  for (unsigned i = 0; i != Size; ++i) {
+    toHex(O, Val) << " ";
+    Val >>= 8;
+  }
+  return O;
+}
+
 
 static bool isReg(const MachineOperand &MO) {
-  return MO.getType()==MachineOperand::MO_VirtualRegister ||
-         MO.getType()==MachineOperand::MO_MachineRegister;
+  return MO.getType() == MachineOperand::MO_VirtualRegister ||
+         MO.getType() == MachineOperand::MO_MachineRegister;
+}
+
+static bool isImmediate(const MachineOperand &MO) {
+  return MO.getType() == MachineOperand::MO_SignExtendedImmed ||
+         MO.getType() == MachineOperand::MO_UnextendedImmed;
 }
 
 
@@ -150,11 +168,12 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
 
   switch (Desc.TSFlags & X86II::FormMask) {
   case X86II::OtherFrm:
-    O << "\t\t";
+    O << "\t\t\t";
     O << "-"; MI->print(O, TM);
     break;
   case X86II::RawFrm:
-    toHex(O, getBaseOpcodeFor(Opcode)) << "\t\t";
+    toHex(O, getBaseOpcodeFor(Opcode));
+    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
 
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -165,9 +184,35 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     return;
 
 
-  case X86II::AddRegFrm:
-    O << "\t\t-"; MI->print(O, TM); break;
+  case X86II::AddRegFrm: {
+    // There are currently two forms of acceptable AddRegFrm instructions.
+    // Either the instruction JUST takes a single register (like inc, dec, etc),
+    // or it takes a register and an immediate of the same size as the register
+    // (move immediate f.e.).
+    //
+    assert(isReg(MI->getOperand(0)) &&
+           (MI->getNumOperands() == 1 || 
+            (MI->getNumOperands() == 2 && isImmediate(MI->getOperand(1)))) &&
+           "Illegal form for AddRegFrm instruction!");
 
+    unsigned Reg = MI->getOperand(0).getReg();
+    toHex(O, getBaseOpcodeFor(Opcode) + getX86RegNum(Reg)) << " ";
+
+    if (MI->getNumOperands() == 2) {
+      unsigned Size = 4;
+      emitConstant(O, MI->getOperand(1).getImmedValue(), Size);
+    }
+    
+    O << "\n\t\t\t\t";
+    O << getName(MI->getOpCode()) << " ";
+    printOp(O, MI->getOperand(0), RI);
+    if (MI->getNumOperands() == 2) {
+      O << ", ";
+      printOp(O, MI->getOperand(MI->getNumOperands()-1), RI);
+    }
+    O << "\n";
+    return;
+  }
   case X86II::MRMDestReg: {
     // There are two acceptable forms of MRMDestReg instructions, those with 3
     // and 2 operands:
@@ -193,7 +238,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     unsigned ExtraReg = MI->getOperand(MI->getNumOperands()-1).getReg();
     toHex(O, regModRMByte(ModRMReg, getX86RegNum(ExtraReg)));
 
-    O << "\t\t";
+    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
@@ -225,7 +270,7 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     unsigned ExtraReg = MI->getOperand(0).getReg();
     toHex(O, regModRMByte(ModRMReg, getX86RegNum(ExtraReg)));
 
-    O << "\t";
+    O << "\n\t\t\t\t";
     O << getName(MI->getOpCode()) << " ";
     printOp(O, MI->getOperand(0), RI);
     O << ", ";
@@ -236,6 +281,6 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
   case X86II::MRMDestMem:
   case X86II::MRMSrcMem:
   default:
-    O << "\t\t-"; MI->print(O, TM); break;
+    O << "\t\t\t-"; MI->print(O, TM); break;
   }
 }
