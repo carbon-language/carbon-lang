@@ -4,14 +4,6 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>The LLVM Compiler Driver (llvmc)</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <style type="text/css">
-    TR, TD { border: 2px solid gray; padding: 4pt 4pt 2pt 2pt; }
-    TH { border: 2px solid gray; font-weight: bold; font-size: 105%; }
-    TABLE { text-align: center; border: 2px solid black; 
-      border-collapse: collapse; margin-top: 1em; margin-left: 1em; 
-      margin-right: 1em; margin-bottom: 1em; }
-    .td_left { border: 2px solid gray; text-align: left; }
-  </style>
   <meta name="author" content="Reid Spencer">
   <meta name="description" 
   content="A description of the use and design of the LLVM Compiler Driver.">
@@ -74,8 +66,8 @@
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="purpose">Purpose</a></div>
 <div class="doc_text">
-  <p><tt>llvmc</tt> was invented to make compilation with LLVM based compilers 
-  easier. To accomplish this, <tt>llvmc</tt> strives to:</p>
+  <p><tt>llvmc</tt> was invented to make compilation of user programs with 
+  LLVM-based tools easier. To accomplish this, <tt>llvmc</tt> strives to:</p>
   <ul>
     <li>Be the single point of access to most of the LLVM tool set.</li>
     <li>Hide the complexities of the LLVM tools through a single interface.</li>
@@ -85,7 +77,7 @@
   with LLVM, because it:</p>
   <ul>
     <li>Makes integration of existing non-LLVM tools simple.</li>
-    <li>Extends the capabilities of minimal front ends by optimizing their
+    <li>Extends the capabilities of minimal compiler tools by optimizing their
     output.</li>
     <li>Reduces the number of interfaces a compiler writer must know about
     before a working compiler can be completed (essentially only the VMCore
@@ -112,7 +104,7 @@
     <dt><b>Read Configuration Files</b></dt>
     <dd>Based on the options and the suffixes of the filenames presented, a set 
     of configuration files are read to configure the actions <tt>llvmc</tt> will 
-    take.  Configuration files are provided by either LLVM or the front end 
+    take.  Configuration files are provided by either LLVM or the 
     compiler tools that <tt>llvmc</tt> invokes. These files determine what 
     actions <tt>llvmc</tt> will take in response to the user's request. See 
     the section on <a href="#configuration">configuration</a> for more details.
@@ -145,11 +137,11 @@
   <code>
     llvmc -O2 x.c y.c z.c -o xyz</code>
   <p>must produce <i>exactly</i> the same results as:</p>
-  <code>
+  <pre><tt>
     llvmc -O2 x.c
     llvmc -O2 y.c
     llvmc -O2 z.c
-    llvmc -O2 x.o y.o z.o -o xyz</code>
+    llvmc -O2 x.o y.o z.o -o xyz</tt></pre>
   <p>To accomplish this, <tt>llvmc</tt> uses a very simple goal oriented
   procedure to do its work. The overall goal is to produce a functioning
   executable. To accomplish this, <tt>llvmc</tt> always attempts to execute a 
@@ -230,7 +222,7 @@
       </ul></td>
       <td class="td_left"><dl>
           <dt><tt>-Ox</tt>
-          <dd>This group of options affects the amount of optimization 
+          <dd>This group of options controls the amount of optimization 
           performed.</dd>
       </dl></td>
     </tr>
@@ -273,7 +265,7 @@
 <div class="doc_text">
   <p>This section of the document describes the configuration files used by
   <tt>llvmc</tt>.  Configuration information is relatively static for a 
-  given release of LLVM and a front end compiler. However, the details may 
+  given release of LLVM and a compiler tool. However, the details may 
   change from release to release of either.  Users are encouraged to simply use 
   the various options of the <tt>llvmc</tt> command and ignore the configuration 
   of the tool. These configuration files are for compiler writers and LLVM 
@@ -297,32 +289,32 @@ should be invoked. Users may but are not advised to alter the compiler's
 
 <p>Because <tt>llvmc</tt> just invokes other programs, it must deal with the
 available command line options for those programs regardless of whether they
-were written for LLVM or not. Furthermore, not all compilation front ends will
-have the same capabilities. Some front ends will simply generate LLVM assembly
+were written for LLVM or not. Furthermore, not all compiler tools will
+have the same capabilities. Some compiler tools will simply generate LLVM assembly
 code, others will be able to generate fully optimized byte code. In general,
 <tt>llvmc</tt> doesn't make any assumptions about the capabilities or command 
 line options of a sub-tool. It simply uses the details found in the 
 configuration files and leaves it to the compiler writer to specify the 
 configuration correctly.</p>
 
-<p>This approach means that new compiler front ends can be up and working very
-quickly. As a first cut, a front end can simply compile its source to raw
+<p>This approach means that new compiler tools can be up and working very
+quickly. As a first cut, a tool can simply compile its source to raw
 (unoptimized) bytecode or LLVM assembly and <tt>llvmc</tt> can be configured 
 to pick up the slack (translate LLVM assembly to bytecode, optimize the 
-bytecode, generate native assembly, link, etc.).   In fact, the front end need 
-not use any LLVM libraries, and it could be written in any language (instead of 
-C++).  The configuration data will allow the full range of optimization, 
-assembly, and linking capabilities that LLVM provides to be added to these kinds
-of tools.  Enabling the rapid development of front-ends is one of the primary 
-goals of <tt>llvmc</tt>.</p>
+bytecode, generate native assembly, link, etc.).   In fact, the compiler tools 
+need not use any LLVM libraries, and it could be written in any language 
+(instead of C++).  The configuration data will allow the full range of 
+optimization, assembly, and linking capabilities that LLVM provides to be added 
+to these kinds of tools.  Enabling the rapid development of front-ends is one 
+of the primary goals of <tt>llvmc</tt>.</p>
 
-<p>As a compiler front end matures, it may utilize the LLVM libraries and tools 
+<p>As a compiler tool matures, it may utilize the LLVM libraries and tools 
 to more efficiently produce optimized bytecode directly in a single compilation 
 and optimization program. In these cases, multiple tools would not be needed 
 and the configuration data for the compiler would change.</p>
 
 <p>Configuring <tt>llvmc</tt> to the needs and capabilities of a source language 
-compiler is relatively straight forward.  A compiler writer must provide a 
+compiler is relatively straight-forward.  A compiler writer must provide a 
 definition of what to do for each of the five compilation phases for each of 
 the optimization levels. The specification consists simply of prototypical 
 command lines into which <tt>llvmc</tt> can substitute command line
@@ -335,21 +327,22 @@ optimization.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="filetypes"></a>Configuration Files</div>
+<div class="doc_subsection"><a name="filetypes">Configuration Files</a></div>
+<div class="doc_subsubsection"><a name="filecontents">File Contents</a></div>
 <div class="doc_text">
-  <h3>File Contents</h3>
   <p>Each configuration file provides the details for a single source language
   that is to be compiled.  This configuration information tells <tt>llvmc</tt> 
   how to invoke the language's pre-processor, translator, optimizer, assembler
   and linker. Note that a given source language needn't provide all these tools
   as many of them exist in llvm currently.</p>
-
-  <h3>Directory Search</h3>
+</div>
+<div class="doc_subsubsection"><a name="dirsearch">Directory Search</a></div>
+<div class="doc_text">
   <p><tt>llvmc</tt> always looks for files of a specific name. It uses the
   first file with the name its looking for by searching directories in the
   following order:<br/>
   <ol>
-    <li>Any directory specified by the <tt>--config-dir</tt> option will be
+    <li>Any directory specified by the <tt>-config-dir</tt> option will be
     checked first.</li>
     <li>If the environment variable LLVM_CONFIG_DIR is set, and it contains
     the name of a valid directory, that directory will be searched next.</li>
@@ -369,8 +362,10 @@ optimization.</p>
   <p>The first file found in this search will be used. Other files with the 
   same name will be ignored even if they exist in one of the subsequent search
   locations.</p>
+</div>
 
-  <h3>File Names</h3>
+<div class="doc_subsubsection"><a name="filenames">File Names</a></div>
+<div class="doc_text">
   <p>In the directories searched, each configuration file is given a specific
   name to foster faster lookup (so llvmc doesn't have to do directory searches).
   The name of a given language specific configuration file is simply the same 
@@ -379,11 +374,13 @@ optimization.</p>
   <tt>cpp</tt>, <tt>C</tt>, or <tt>cxx</tt>. For languages that support multiple
   file suffixes, multiple (probably identical) files (or symbolic links) will
   need to be provided.</p>
+</div>
 
-  <h3>What Gets Read</h3>
+<div class="doc_subsubsection"><a name="whatgetsread">What Gets Read</a></div>
+<div class="doc_text">
   <p>Which configuration files are read depends on the command line options and 
   the suffixes of the file names provided on <tt>llvmc</tt>'s command line. Note
-  that the <tt>--x LANGUAGE</tt> option alters the language that <tt>llvmc</tt>
+  that the <tt>-x LANGUAGE</tt> option alters the language that <tt>llvmc</tt>
   uses for the subsequent files on the command line.  Only the configuration 
   files actually needed to complete <tt>llvmc</tt>'s task are read. Other 
   language specific files will be ignored.</p>
@@ -397,7 +394,8 @@ optimization.</p>
   <ul>
     <li>The file encoding is ASCII.</li>
     <li>The file is line oriented. There should be one configuration definition 
-    per line. Lines are terminated by the newline character (0x0A).</li>
+    per line. Lines are terminated by the newline (0x0A) and/or carriage return
+    characters (0x0D)</li>
     <li>A backslash (<tt>\</tt>) before a newline causes the newline to be
     ignored. This is useful for line continuation of long definitions. A
     backslash anywhere else is recognized as a backslash.</li>
@@ -414,7 +412,7 @@ optimization.</p>
     <li>Integers are simply sequences of digits.</li>
     <li>Commands start with a program name and are followed by a sequence of
     words that are passed to that program as command line arguments. Program
-    arguments that begin and end with the <tt>@</tt> sign will have their value
+    arguments that begin and end with the <tt>%</tt> sign will have their value
     substituted. Program names beginning with <tt>/</tt> are considered to be
     absolute. Otherwise the <tt>PATH</tt> will be applied to find the program to
     execute.</li>
@@ -516,8 +514,8 @@ optimization.</p>
         <td><b>translator.command</b></td>
         <td>command</td>
         <td class="td_left">This provides the command prototype that will be used 
-          to run the translator. Valid substitutions are <tt>@in@</tt> for the 
-          input file and <tt>@out@</tt> for the output file.</td>
+          to run the translator. Valid substitutions are <tt>%in%</tt> for the 
+          input file and <tt>%out%</tt> for the output file.</td>
         <td>&lt;blank&gt;</td>
       </tr>
       <tr>
@@ -536,7 +534,7 @@ optimization.</p>
         <td><tt>false</tt></td>
       </tr>
       <tr>
-        <td><b>translator.optimizers</b></td>
+        <td><b>translator.optimizes</b></td>
         <td>boolean</td>
         <td class="td_left">Indicates that the translator also optimizes. If
           this is true, then <tt>llvmc</tt> will skip the optimization phase
@@ -558,8 +556,8 @@ optimization.</p>
         <td><b>optimizer.command</b></td>
         <td>command</td>
         <td class="td_left">This provides the command prototype that will be used 
-          to run the optimizer. Valid substitutions are <tt>@in@</tt> for the 
-          input file and <tt>@out@</tt> for the output file.</td>
+          to run the optimizer. Valid substitutions are <tt>%in%</tt> for the 
+          input file and <tt>%out%</tt> for the output file.</td>
         <td>&lt;blank&gt;</td>
       </tr>
       <tr>
@@ -600,8 +598,8 @@ optimization.</p>
         <td><b>assembler.command</b></td>
         <td>command</td>
         <td class="td_left">This provides the command prototype that will be used 
-          to run the assembler. Valid substitutions are <tt>@in@</tt> for the 
-          input file and <tt>@out@</tt> for the output file.</td>
+          to run the assembler. Valid substitutions are <tt>%in%</tt> for the 
+          input file and <tt>%out%</tt> for the output file.</td>
         <td>&lt;blank&gt;</td>
       </tr>
       <tr><td colspan="4"><h4>LINKER ITEMS</h4></td></tr>
@@ -659,8 +657,9 @@ optimization.</p>
         <td class="td_left">Replaced with all the tool-specific arguments given
           to <tt>llvmc</tt> via the <tt>-T</tt> set of options. This just allows
           you to place these arguments in the correct place on the command line.
-          If the %args% option does not appear on your command line, then you
-          are explicitly disallowing the <tt>-T</tt> option for your tool.
+          If the <tt>%args%</tt> option does not appear on your command line, 
+          then you are explicitly disallowing the <tt>-T</tt> option for your 
+          tool.
         </td>
       <tr>
         <td><tt>%in%</tt></td>
@@ -729,13 +728,13 @@ optimization.</p>
     -gcse -dse -scalarrepl -sccp 
   lang.opt3=-simplifycfg -instcombine -mem2reg -load-vn \
     -gcse -dse -scalarrepl -sccp -branch-combine -adce \
-    -globaldce -inline -licm -pre
+    -globaldce -inline -licm 
   lang.opt4=-simplifycfg -instcombine -mem2reg -load-vn \
     -gcse -dse -scalarrepl -sccp -ipconstprop \
-    -branch-combine -adce -globaldce -inline -licm -pre
+    -branch-combine -adce -globaldce -inline -licm 
   lang.opt5=-simplifycfg -instcombine -mem2reg --load-vn \
     -gcse -dse scalarrepl -sccp -ipconstprop \
-    -branch-combine -adce -globaldce -inline -licm -pre \
+    -branch-combine -adce -globaldce -inline -licm \
     -block-placement
 
 ##########################################################
