@@ -57,20 +57,20 @@ namespace {
 Pass *createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::BuildRankMap(Function &F) {
-  unsigned i = 1;
+  unsigned i = 2;
   ReversePostOrderTraversal<Function*> RPOT(&F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
          E = RPOT.end(); I != E; ++I)
-    RankMap[*I] = ++i;
+    RankMap[*I] = ++i << 16;
 }
 
 unsigned Reassociate::getRank(Value *V) {
   if (isa<Argument>(V)) return 1;   // Function argument...
   if (Instruction *I = dyn_cast<Instruction>(V)) {
-    // If this is an expression, return the MAX(rank(LHS), rank(RHS)) so that we
-    // can reassociate expressions for code motion!  Since we do not recurse for
-    // PHI nodes, we cannot have infinite recursion here, because there cannot
-    // be loops in the value graph that do not go through PHI nodes.
+    // If this is an expression, return the 1+MAX(rank(LHS), rank(RHS)) so that
+    // we can reassociate expressions for code motion!  Since we do not recurse
+    // for PHI nodes, we cannot have infinite recursion here, because there
+    // cannot be loops in the value graph that do not go through PHI nodes.
     //
     if (I->getOpcode() == Instruction::PHINode ||
         I->getOpcode() == Instruction::Alloca ||
@@ -87,7 +87,10 @@ unsigned Reassociate::getRank(Value *V) {
          i != e && Rank != MaxRank; ++i)
       Rank = std::max(Rank, getRank(I->getOperand(i)));
 
-    return CachedRank = Rank;
+    DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
+                    << Rank+1 << "\n");
+
+    return CachedRank = Rank+1;
   }
 
   // Otherwise it's a global or constant, rank 0.
@@ -145,6 +148,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
 
         // Since we modified the RHS instruction, make sure that we recheck it.
         ReassociateExpr(LHSI);
+        ReassociateExpr(I);
         return true;
       }
     }
