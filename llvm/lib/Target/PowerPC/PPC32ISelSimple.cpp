@@ -1628,7 +1628,7 @@ void PPC32ISel::visitBranchInst(BranchInst &BI) {
 /// it inserts the specified CallMI instruction into the stream.
 ///
 /// FIXME: See Documentation at the following URL for "correct" behavior
-/// <http://developer.apple.com/documentation/DeveloperTools/Conceptual/MachORuntime/2rt_powerpc_abi/chapter_9_section_5.html>
+/// <http://developer.apple.com/documentation/DeveloperTools/Conceptual/MachORuntime/PowerPCConventions/chapter_3_section_5.html>
 void PPC32ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
                        const std::vector<ValueRecord> &Args, bool isVarArg) {
   // Count how many bytes are to be pushed on the stack, including the linkage
@@ -1656,7 +1656,7 @@ void PPC32ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     if (NumBytes < 56) NumBytes = 56;
 
     // Adjust the stack pointer for the new arguments...
-    // These functions are automatically eliminated by the prolog/epilog pass
+    // These operations are automatically eliminated by the prolog/epilog pass
     BuildMI(BB, PPC::ADJCALLSTACKDOWN, 1).addImm(NumBytes);
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
