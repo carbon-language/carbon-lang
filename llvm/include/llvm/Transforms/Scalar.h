@@ -177,10 +177,19 @@ Pass *createCorrelatedExpressionEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// TailDuplication - Eliminate unconditional branches through controlled code
+// duplication, creating simpler CFG structures.
+//
+Pass *createTailDuplicationPass();
+
+
+//===----------------------------------------------------------------------===//
+//
 // CFG Simplification - Merge basic blocks, eliminate unreachable blocks,
 // simplify terminator instructions, etc...
 //
 Pass *createCFGSimplificationPass();
+
 
 //===----------------------------------------------------------------------===//
 //
