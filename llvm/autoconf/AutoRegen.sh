@@ -7,10 +7,12 @@ if test "$1" = --with-automake ; then
   outfile=configure_am
   configfile=configure.am
   with_automake=1
-else
+elif test -z "$1" ; then
   outfile=configure
   configfile=configure.ac
   with_automake=0
+else
+  die "Invalid option: $1"
 fi
 test -d autoconf && test -f autoconf/$configfile && cd autoconf
 test -f $configfile || die "Can't find 'autoconf' dir; please cd into it first"
@@ -48,7 +50,7 @@ echo ""
 echo "Regenerating aclocal.m4 with aclocal"
 cwd=`pwd`
 if test $with_automake -eq 1 ; then
-  cp configure.ac .configure.ac.save
+  mv configure.ac .configure.ac.save
   cp configure.am configure.ac
   cp configure.am ../configure.ac
 fi
@@ -61,9 +63,8 @@ autoheader -I autoconf -I autoconf/m4 autoconf/$configfile || die "autoheader fa
 if test $with_automake -eq 1 ; then
   echo "Regenerating makefiles with automake 1.9.2"
   cp autoconf/aclocal.m4 .
-  automake --foreign --add-missing --copy
-  rm configure.ac
+  automake --gnu --add-missing --copy --force-missing
   cd $cwd
-  cp .configure.ac.save configure.ac
+  mv .configure.ac.save configure.ac
 fi
 exit 0
