@@ -16,6 +16,7 @@
 
 #include "Support/DataTypes.h"
 #include <string>
+#include <ctype.h>
 #include <stdio.h>
 
 namespace llvm {
@@ -51,7 +52,6 @@ static inline std::string utostr(unsigned long long X, bool isNeg = false) {
   }
 
   if (isNeg) *--BufPtr = '-';   // Add negative sign...
-
   return std::string(BufPtr);
 }
 
@@ -98,9 +98,9 @@ static inline std::string ftostr(double V) {
 }
 
 static inline std::string LowercaseString(const std::string &S) { 
-  std::string result (S);
+  std::string result(S);
   for (unsigned i = 0; i < S.length(); ++i)
-    if (isupper (result[i]))
+    if (isupper(result[i]))
       result[i] = (char)tolower(result[i]);
   return result;
 }
