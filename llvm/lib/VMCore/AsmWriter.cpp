@@ -142,7 +142,6 @@ static std::string calcTypeName(const Type *Ty,
   // This is another base case for the recursion.  In this case, we know 
   // that we have looped back to a type that we have previously visited.
   // Generate the appropriate upreference to handle this.
-  // 
   if (Slot < CurSize)
     return "\\" + utostr(CurSize-Slot);       // Here's the upreference
 
@@ -200,9 +199,9 @@ static std::string calcTypeName(const Type *Ty,
 }
 
 
-// printTypeInt - The internal guts of printing out a type that has a
-// potentially named portion.
-//
+/// printTypeInt - The internal guts of printing out a type that has a
+/// potentially named portion.
+///
 static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
                               std::map<const Type *, std::string> &TypeNames) {
   // Primitive types always print out their description, regardless of whether
@@ -226,10 +225,10 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
 }
 
 
-// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
-// type, iff there is an entry in the modules symbol table for the specified
-// type or one of it's component types.  This is slower than a simple x << Type;
-//
+/// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
+/// type, iff there is an entry in the modules symbol table for the specified
+/// type or one of it's component types. This is slower than a simple x << Type
+///
 std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
                                       const Module *M) {
   Out << " "; 
@@ -414,20 +413,23 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
       }
       if (Slot >= 0)  Out << "%" << Slot;
       else if (PrintName)
-        Out << "<badref>";     // Not embedded into a location?
+        if (V->hasName())
+          Out << "<badref: " << getLLVMName(V->getName()) << ">";
+        else
+          Out << "<badref>";     // Not embedded into a location?
     }
   }
 }
 
 
 
-// WriteAsOperand - Write the name of the specified value out to the specified
-// ostream.  This can be useful when you just want to print int %reg126, not the
-// whole instruction that generated it.
-//
+/// WriteAsOperand - Write the name of the specified value out to the specified
+/// ostream.  This can be useful when you just want to print int %reg126, not
+/// the whole instruction that generated it.
+///
 std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
-                                   bool PrintType, 
-                             bool PrintName, const Module *Context) {
+                                   bool PrintType, bool PrintName, 
+                                   const Module *Context) {
   std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
