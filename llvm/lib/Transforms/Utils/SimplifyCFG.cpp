@@ -521,7 +521,15 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       SwitchInst *NewSI = new SwitchInst(CV, PredDefault, PTI);
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
         NewSI->addCase(PredCases[i].first, PredCases[i].second);
+
+      Instruction *DeadCond = 0;
+      if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
+        // If PTI is a branch, remember the condition.
+        DeadCond = dyn_cast<Instruction>(BI->getCondition());
       Pred->getInstList().erase(PTI);
+
+      // If the condition is dead now, remove the instruction tree.
+      if (DeadCond) ErasePossiblyDeadInstructionTree(DeadCond);
 
       // Okay, last check.  If BB is still a successor of PSI, then we must
       // have an infinite loop case.  If so, add an infinitely looping block
