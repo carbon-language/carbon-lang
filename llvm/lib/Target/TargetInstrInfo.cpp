@@ -1,4 +1,4 @@
-//===-- MachineInstrInfo.cpp - Target Instruction Information -------------===//
+//===-- TargetInstrInfo.cpp - Target Instruction Information --------------===//
 //
 //
 //===----------------------------------------------------------------------===//
@@ -12,34 +12,29 @@
 // Initialized only when the TargetMachine class is created
 // and reset when that class is destroyed.
 // 
-const MachineInstrDescriptor* TargetInstrDescriptors = 0;
-
-//---------------------------------------------------------------------------
-// class MachineInstructionInfo
-//	Interface to description of machine instructions
-//---------------------------------------------------------------------------
+const TargetInstrDescriptor* TargetInstrDescriptors = 0;
 
 
-MachineInstrInfo::MachineInstrInfo(const MachineInstrDescriptor* Desc,
-				   unsigned DescSize,
-				   unsigned NumRealOpCodes)
+TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
+				 unsigned DescSize,
+				 unsigned NumRealOpCodes)
   : desc(Desc), descSize(DescSize), numRealOpCodes(NumRealOpCodes) {
   // FIXME: TargetInstrDescriptors should not be global
   assert(TargetInstrDescriptors == NULL && desc != NULL);
   TargetInstrDescriptors = desc;	// initialize global variable
 }
 
-MachineInstrInfo::~MachineInstrInfo() {
+TargetInstrInfo::~TargetInstrInfo() {
   TargetInstrDescriptors = NULL;	// reset global variable
 }
 
-void MachineInstrInfo::print(const MachineInstr *MI, std::ostream &O,
-                             const TargetMachine &TM) const {
+void TargetInstrInfo::print(const MachineInstr *MI, std::ostream &O,
+			    const TargetMachine &TM) const {
   MI->print(O, TM);
 }
 
-bool MachineInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
-                                                int64_t intValue) const {
+bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
+					       int64_t intValue) const {
   // First, check if opCode has an immed field.
   bool isSignExtended;
   uint64_t maxImmedValue = maxImmedConstant(opCode, isSignExtended);
@@ -58,7 +53,7 @@ bool MachineInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
   return false;
 }
 
-bool MachineInstrInfo::ConstantTypeMustBeLoaded(const Constant* CV) const {
+bool TargetInstrInfo::ConstantTypeMustBeLoaded(const Constant* CV) const {
   assert(CV->getType()->isPrimitiveType() || isa<PointerType>(CV->getType()));
   return !(CV->getType()->isIntegral() || isa<PointerType>(CV->getType()));
 }
