@@ -19,11 +19,12 @@
       <li><a href="#layout">Program layout</a>
 	<ol>
           <li><a href="#cvsdir">CVS directories</a>
-	  <li><a href="#dd">Depend, Debug, &amp; Release directories</a></li>
-	  <li><a href="#include">llvm/include</a>
-	  <li><a href="#lib">llvm/lib</a>
-	  <li><a href="#test">llvm/test</a>
-	  <li><a href="#tools">llvm/tools</a>  
+	  <li><a href="#dd"><tt>Depend</tt>, <tt>Debug</tt>, &amp;
+               <tt>Release</tt> directories</a></li>
+	  <li><a href="#include"><tt>llvm/include</tt></a>
+	  <li><a href="#lib"><tt>llvm/lib</tt></a>
+	  <li><a href="#test"><tt>llvm/test</tt></a>
+	  <li><a href="#tools"><tt>llvm/tools</tt></a>  
 	</ol>
       <li><a href="#tutorial">An example using the LLVM tool chain</a>
       <li><a href="#links">Links</a>
@@ -49,10 +50,11 @@
     <p>First step is to get the actual source code.  To do this, all you need to
     do is check it out from CVS.  From your home directory, just enter:</p>
 
-    <p><tt>cvs -d /home/vadve/vadve/Research/DynOpt/CVSRepository checkout llvm</tt></p>
+    <p><tt>cvs -d /home/vadve/vadve/Research/DynOpt/CVSRepository checkout
+    llvm</tt></p>
 
-    <p>This will create an '<tt>llvm</tt>' directory in your home directory and fully
-    populate it with the source code for LLVM.</p>
+    <p>This will create an '<tt>llvm</tt>' directory in your home directory and
+    fully populate it with the source code for LLVM.</p>
     
 
     <!------------------------------------------------------------------------->
@@ -76,8 +78,9 @@
     <p>The C compiler is not included in the CVS tree you just checked out, so
     we just point to the cannonical location, and access it with the
     <tt>llvmgcc</tt> command.  The rest of the <a href="#tools">LLVM tools</a>
-    will be built into the llvm/tools/Debug directory inside of the sourcebase.
-    Adding them to your path will make it much easier to use them.</p>
+    will be built into the <tt>llvm/tools/Debug</tt> directory inside of the
+    sourcebase.  Adding them to your path will make it much easier to use
+    them.</p>
 
 
 
@@ -94,45 +97,57 @@
     in <tt>llvm/tools/Debug</tt>.  If you want to look at the libraries that
     were compiled, look in <tt>llvm/lib/Debug</tt>.</p>
 
+    <p>By default, the LLVM build process sends all temporary (<tt>.o</tt>,
+    <tt>.so</tt>, <tt>.a</tt>) files into a <tt>/shared/[your login
+    name]/...</tt> directory, which is supposed to be on a disk local to the
+    current machine.  If you get an error talking about a <tt>/shared</tt>
+    directory, and you find out that it doesn't exist, try enabling the
+    "<tt>BUILD_ROOT = .</tt> line in the top level <tt>Makefile.common</tt> that
+    will change LLVM to build into the current directory instead of
+    <tt>/shared</tt>.<p>
+
 
     <!--=====================================================================-->
     <h2><a name="layout">Program Layout</a></h2>
     <!--=====================================================================-->
 
-    <p>One useful source of infomation about the LLVM sourcebase is the LLVM
-    doxygen documentation, available at <tt><a
+    <p>One useful source of infomation about the LLVM sourcebase is the LLVM <a
+    href="http://www.doxygen.org">doxygen</a> documentation, available at <tt><a
     href="http://llvm.cs.uiuc.edu/doxygen/">http://llvm.cs.uiuc.edu/doxygen/</a></tt>. The
     following is a brief introduction to code layout:</p>
 
 
     <!------------------------------------------------------------------------->
-    <h3><a name="cvsdir">CVS directories</a></h3>
+    <h3><a name="cvsdir"><tt>CVS</tt> directories</a></h3>
     <!------------------------------------------------------------------------->
 
-    Every directory checked out of CVS will contain a CVS directory, for the
-    most part these can just be ignored.
+    Every directory checked out of CVS will contain a <tt>CVS</tt> directory,
+    for the most part these can just be ignored.
 
 
     <!------------------------------------------------------------------------->
-    <h3><a name="ddr">Depend, Debug, &amp; Release directories</a></h3>
+    <h3><a name="ddr"><tt>Depend</tt>, <tt>Debug</tt>, &amp; <tt>Release</tt>
+    directories</a></h3>
     <!------------------------------------------------------------------------->
 
-    Most source directories contain two directories, Depend and Debug. The
-    Depend directory contains automatically generated dependance files which are
-    used during compilation to make sure that source files get rebuilt if a
-    header file they use is modified. The Debug directory holds the object
+    If you are building with the "<tt>BUILD_ROOT=.</tt>" option enabled in the
+    <tt>Makefile.common</tt> file, most source directories will contain two
+    directories, <tt>Depend</tt> and <tt>Debug</tt>. The <tt>Depend</tt>
+    directory contains automatically generated dependance files which are used
+    during compilation to make sure that source files get rebuilt if a header
+    file they use is modified. The <tt>Debug</tt> directory holds the object
     files, library files and executables that are used for building a debug
-    enabled build.  The Release directory is created to hold the same files when
-    the <tt>ENABLE_OPTIMIZED=1</tt> flag is passed to <tt>gmake</tt>, causing an
-    optimized built to be performed.
+    enabled build.  The <tt>Release</tt> directory is created to hold the same
+    files when the <tt>ENABLE_OPTIMIZED=1</tt> flag is passed to <tt>gmake</tt>,
+    causing an optimized built to be performed.<p>
 
 
     <!------------------------------------------------------------------------->
-    <h3><a name="include">llvm/include</a></h3>
+    <h3><a name="include"><tt>llvm/include</tt></a></h3>
     <!------------------------------------------------------------------------->
 
     This directory contains public header files exported from the LLVM
-    library. The two main subdirectories of this directory are:
+    library. The two main subdirectories of this directory are:<p>
 
     <ol>
        <li><tt>llvm/include/llvm</tt> - This directory contains all of the LLVM
@@ -147,7 +162,7 @@
     </ol>
 
     <!------------------------------------------------------------------------->
-    <h3><a name="lib">llvm/lib</a></h3>
+    <h3><a name="lib"><tt>llvm/lib</tt></a></h3>
     <!------------------------------------------------------------------------->
 
     This directory contains most source files of LLVM system. In LLVM almost all
@@ -196,14 +211,14 @@
     </dl>
 
     <!------------------------------------------------------------------------->
-    <h3><a name="test">llvm/test</a></h3>
+    <h3><a name="test"><tt>llvm/test</tt></a></h3>
     <!------------------------------------------------------------------------->
 
     <p>This directory contains regression tests and source code that is used to
     test the LLVM infrastructure...</p>
 
     <!------------------------------------------------------------------------->
-    <h3><a name="tools">llvm/tools</a></h3>
+    <h3><a name="tools"><tt>llvm/tools</tt></a></h3>
     <!------------------------------------------------------------------------->
 
     <p>The <b>tools</b> directory contains the executables built out of the
@@ -348,7 +363,7 @@
 
 	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	    <!-- hhmts start -->
-Last modified: Wed Jul 24 14:57:57 CDT 2002
+Last modified: Fri Aug  9 11:13:34 CDT 2002
 <!-- hhmts end -->
   </body>
 </html>
