@@ -1401,7 +1401,7 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
                              MachineBasicBlock::iterator &IP,
                              Value *Src, const Type *DestTy,
                              unsigned DestReg) {
-  unsigned SrcReg = getReg(Src);
+  unsigned SrcReg = getReg(Src, BB, IP);
   const Type *SrcTy = Src->getType();
   unsigned SrcClass = getClassB(SrcTy);
   unsigned DestClass = getClassB(DestTy);
