@@ -21,7 +21,7 @@ class IntrinsicLowering;
 
 struct CTargetMachine : public TargetMachine {
   CTargetMachine(const Module &M, IntrinsicLowering *IL) :
-    TargetMachine("CBackend", IL) {}
+    TargetMachine("CBackend", IL, M) {}
 
   virtual const TargetInstrInfo &getInstrInfo() const { abort(); }
   virtual const TargetFrameInfo &getFrameInfo() const { abort(); }
