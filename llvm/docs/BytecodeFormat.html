@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="llvm.css" type="text/css">
   <style>
     table, tr, td { border: 2px solid gray }
-    th { border: 2px sold gray; font-weight: bold; }
+    th { border: 2px solid gray; font-weight: bold; }
     table { border-collapse: collapse; margin-top: 1em margin-bottom: 1em }
   </style>
 </head>
@@ -19,13 +19,15 @@
       <li><a href="#blocks">Blocks</a></li>
       <li><a href="#lists">Lists</a></li>
       <li><a href="#fields">Fields</a></li>
+      <li><a href="#encoding">Encoding Rules</a></li>
       <li><a href="#align">Alignment</a></li>
     </ol>
   <li><a href="#details">Detailed Layout</a>
     <ol>
       <li><a href="#notation">Notation</a></li>
       <li><a href="#blocktypes">Blocks Types</a></li>
-      <li><a href="#header">Header Block</a></li>
+      <li><a href="#signature">Signature Block</a></li>
+      <li><a href="#module">Module Block</a></li>
       <li><a href="#typeool">Global Type Pool</a></li>
       <li><a href="#modinfo">Module Info Block</a></li>
       <li><a href="#constants">Global Constant Pool</a></li>
@@ -63,7 +65,7 @@ without getting into bit and byte level specifics.</p>
 <p>LLVM bytecode files consist simply of a sequence of blocks of bytes. 
 Each block begins with an identification value that determines the type of 
 the next block.  The possible types of blocks are described below in the section 
-<a href="#blockstypes">Block Types</a>. The block identifier is used because
+<a href="#blocktypes">Block Types</a>. The block identifier is used because
 it is possible for entire blocks to be omitted from the file if they are
 empty. The block identifier helps the reader determine which kind of block is
 next in the file.</p>
@@ -80,8 +82,9 @@ next in the file.</p>
   <li><b>InstructionList (0x32)</b>.</li>
   <li><b>CompactionTable (0x33)</b>.</li>
 </ol>
-<p> Except for the <a href="#header">Header Block</a> all blocks are variable
-length. They consume just enough bytes to express their contents.</p>
+<p> All blocks are variable length. They consume just enough bytes to express 
+their contents.  Each block begins with an integer identifier and the length 
+of the block.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="lists">Lists</a> </div>
@@ -112,6 +115,88 @@ sections that follow will provide the details on how these fields are
 written and how the bits are to be interpreted.</p>
 </div>
 <!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="encoding">Encoding Primitives</a> </div>
+<div class="doc_text">
+<p>Each field that can be put out is encoded into the file using a small set 
+of primitives. The rules for these primitives are described below.</p>
+<h3>Variable Bit Rate Encoding</h3>
+<p>To minimize the number of bytes written for small quantities, an encoding
+scheme similar to UTF-8 is used to write integer data. The scheme is known as
+variable bit rate (vbr) encoding.  In this encoding, the high bit of each 
+byte is used to indicate if more bytes follow. If (byte &amp; 0x80) is non-zero 
+in any given byte, it means there is another byte immediately following that 
+also contributes to the value. For the final byte (byte &amp; 0x80) is false 
+(the high bit is not set). In each byte only the low seven bits contribute to 
+the value. Consequently 32-bit quantities can take from one to <em>five</em> 
+bytes to encode. In general, smaller quantities will encode in fewer bytes, 
+as follows:</p>
+<table class="doc_table_nw">
+  <tr>
+    <th>Byte #</th>
+    <th>Significant Bits</th>
+    <th>Maximum Value</th>
+  </tr>
+  <tr><td>1</td><td>0-6</td><td>127</td></tr>
+  <tr><td>2</td><td>7-13</td><td>16,383</td></tr>
+  <tr><td>3</td><td>14-20</td><td>2,097,151</td></tr>
+  <tr><td>4</td><td>21-27</td><td>268,435,455</td></tr>
+  <tr><td>5</td><td>28-34</td><td>34,359,738,367</td></tr>
+  <tr><td>6</td><td>35-41</td><td>4,398,046,511,103</td></tr>
+  <tr><td>7</td><td>42-48</td><td>562,949,953,421,311</td></tr>
+  <tr><td>8</td><td>49-55</td><td>72,057,594,037,927,935</td></tr>
+  <tr><td>9</td><td>56-62</td><td>9,223,372,036,854,775,807</td></tr>
+  <tr><td>10</td><td>63-69</td><td>1,180,591,620,717,411,303,423</td></tr>
+</table>
+<p>Note that in practice, the tenth byte could only encode bits 63 and 64
+since the maximum quantity to use this encoding is a 64-bit integer.</p>
+<p>The table below defines the encoding rules for type names used in the
+descriptions of blocks and fields in the next section. Any type name with
+the suffix <em>_vbr</em> indicate a quantity that is encoded using 
+variable bit rate encoding as described above.</p>
+<table class="doc_table" >
+  <tr>
+    <th><b>Type</b></th>
+    <th align="left"><b>Rule</b></th>
+  </tr>
+  <tr>
+    <td>unsigned</td>
+    <td align="left">A 32-bit unsigned integer that always occupies four 
+      consecutive bytes. The unsigned integer is encoded using LSB first 
+      ordering. That is bits 2<sup>0</sup> through 2<sup>7</sup> are in the 
+      byte with the lowest file offset (little endian).</td>
+  </tr><tr>
+    <td>uint_vbr</td>
+    <td align="left">A 32-bit unsigned integer that occupies from one to five 
+    bytes using variable bit rate encoding.</td>
+  </tr><tr>
+    <td>uint64_vbr</td>
+    <td align="left">A 64-bit unsigned integer that occupies from one to ten 
+    bytes using variable bit rate encoding.</td>
+  </tr><tr>
+    <td>int64_vbr</td>
+    <td align="left">A 64-bit signed integer that occupies from one to ten 
+    bytes using variable bit rate encoding.</td>
+  </tr><tr>
+    <td>char</td>
+    <td align="left">A single unsigned character encoded into one byte</td>
+  </tr><tr>
+    <td>bit</td>
+    <td align="left">A single bit within a byte.</td>
+  </tr><tr>
+    <td>string</td>
+    <td align="left">A uint_vbr indicating the length of the character string 
+    immediately followed by the characters of the string. There is no 
+    terminating null byte in the string. Characters are interpreted as unsigned 
+    char and are generally US-ASCII encoded.</td>
+  </tr><tr>
+    <td>data</td>
+    <td align="left">An arbitrarily long segment of data to which no 
+    interpretation is implied. This is used for float, double, and constant 
+    initializers.</td>
+  </tr>
+</table>
+</div>
+<!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="align">Alignment</a> </div>
 <div class="doc_text">
 <p>To support cross-platform differences, the bytecode file is aligned on 
@@ -123,8 +208,8 @@ will be added to ensure that the next entry is aligned to a 32-bit boundary.
 <div class="doc_section"> <a name="details">Detailed Layout</a> </div>
 <!-- *********************************************************************** -->
 <div class="doc_text">
-  <p>This section provides the detailed layout of the LLVM bytecode file format.
-  bit and byte level specifics.</p>
+<p>This section provides the detailed layout of the LLVM bytecode file format.
+bit and byte level specifics.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="notation">Notation</a></div>
@@ -153,9 +238,10 @@ will be added to ensure that the next entry is aligned to a 32-bit boundary.
   of bytes known as blocks. The blocks are written sequentially to the file in
   the following order:</p>
 <ol>
-  <li><a href="#header">Header</a>. This block contains the file signature 
-  (magic number), machine description and file format version (not LLVM 
-  version).</li>
+  <li><a href="#signature">Signature</a>. This block contains the file signature 
+  (magic number) that identifies the file as LLVM bytecode.</li>
+  <li><a href="#module">Module Block</a>. This is the top level block in a
+  bytecode file. It contains all the other blocks.</li>
   <li><a href="#gtypepool">Global Type Pool</a>. This block contains all the
   global (module) level types.</li>
   <li><a href="#modinfo">Module Info</a>. This block contains the types of the
@@ -171,77 +257,181 @@ will be added to ensure that the next entry is aligned to a 32-bit boundary.
 </ol>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="header">Header Block</a> </div>
+<div class="doc_subsection"><a name="signature">Signature Block</a> </div>
 <div class="doc_text">
-<p>The Header Block occurs in every LLVM bytecode file and is always first. It
-simply provides a few bytes of data to identify the file, its format, and the
-bytecode version. This block is fixed length and always eight bytes, as follows:
-<table class="doc_table" width="90%">
+<p>The signature block occurs in every LLVM bytecode file and is always first. 
+It simply provides a few bytes of data to identify the file as being an LLVM
+bytecode file. This block is always four bytes in length and differs from the
+other blocks because there is no identifier and no block length at the start
+of the block. Essentially, this block is just the "magic number" for the file.
+<table class="doc_table_nw" >
   <tr>
     <th><b>Byte(s)</b></th>
     <th><b>Bit(s)</b></th>
     <th><b>Align?</b></th>
     <th><b>Type</b></th>
     <th align="left"><b>Field Description</b></th>
-  </tr>
-  <tr>
-    <td>00</td><td>00-07</td><td>No</td><td>Char</td>
+  </tr><tr>
+    <td>00</td><td>-</td><td>No</td><td>char</td>
     <td align="left">Constant "l" (0x6C)</td>
-  </tr>
-  <tr>
-    <td>01</td><td>00-07</td><td>No</td><td>Char</td>
+  </tr><tr>
+    <td>01</td><td>-</td><td>No</td><td>char</td>
     <td align="left">Constant "l" (0x6C)</td>
-  </tr>
-  <tr>
-    <td>02</td><td>00-07</td><td>No</td><td>Char</td>
+  </tr><tr>
+    <td>02</td><td>-</td><td>No</td><td>char</td>
     <td align="left">Constant "v" (0x76)</td>
-  </tr>
-  <tr>
-    <td>03</td><td>00-07</td><td>No</td><td>Char</td>
+  </tr><tr>
+    <td>03</td><td>-</td><td>No</td><td>char</td>
     <td align="left">Constant "m" (0x6D)</td>
   </tr>
+</table>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="module">Module Block</a> </div>
+<div class="doc_text">
+<p>The module block contains a small pre-amble and all the other blocks in
+the file. Of particular note, the bytecode format number is simply a 28-bit
+monotonically increase integer that identifiers the version of the bytecode
+format. While the bytecode format version is not related to the LLVM release
+(it doesn't automatically get increased with each new LLVM release), there is
+a definite correspondence between the bytecode format version and the LLVM
+release.</p>
+<p>The table below shows the format of the module block header. The blocks it
+contains are detailed in other sections.</p>
+<table class="doc_table_nw" >
   <tr>
-    <td>04-07</td><td>00</td><td>No</td><td>Bool</td>
-    <td align="left">Target is big endian?</td>
-  </tr>
-  <tr>
-    <td>04-07</td><td>01</td><td>No</td><td>Bool</td>
-    <td align="left">Target has long pointers?</td>
-  </tr>
-  <tr>
-    <td>04-07</td><td>02</td><td>No</td><td>Bool</td>
-    <td align="left">Target has no endianess?</td>
-  </tr>
-  <tr>
-    <td>04-07</td><td>03</td><td>No</td><td>Bool</td>
-    <td align="left">Target has no pointer size?</td>
-  </tr>
-  <tr>
-    <td>04-07</td><td>04-31</td><td>Yes</td><td>Unsigned</td>
-    <td align="left">The LLVM bytecode format version number</td>
+    <th><b>Byte(s)</b></th>
+    <th><b>Bit(s)</b></th>
+    <th><b>Align?</b></th>
+    <th><b>Type</b></th>
+    <th align="left"><b>Field Description</b></th>
+  </tr><tr>
+    <td>04-07</td><td>-</td><td>No</td><td>unsigned</td>
+    <td align="left">Module Identifier (0x01)</td>
+  </tr><tr>
+    <td>08-11</td><td>-</td><td>No</td><td>unsigned</td>
+    <td align="left">Size of the module block in bytes</td>
+  </tr><tr>
+    <td>12-15</td><td>00</td><td>Yes</td><td>uint32_vbr</td>
+    <td align="left">Format Information</td>
+  </tr><tr>
+    <td>''</td><td>0</td><td>-</td><td>bit</td>
+    <td align="left">Big Endian?</td>
+  </tr><tr>
+    <td>''</td><td>1</td><td>-</td><td>bit</td>
+    <td align="left">Pointers Are 64-bit?</td>
+  </tr><tr>
+    <td>''</td><td>2</td><td>-</td><td>bit</td>
+    <td align="left">Has No Endianess?</td>
+  </tr><tr>
+    <td>''</td><td>3</td><td>-</td><td>bit</td>
+    <td align="left">Has No Pointer Size?</td>
+  </tr><tr>
+    <td>''</td><td>4-31</td><td>-</td><td>bit</td>
+    <td align="left">Bytecode Format Version</td>
+  </tr><tr>
+    <td>16-end</td><td>-</td><td>-</td><td>blocks</td>
+    <td align="left">The remaining bytes in the block consist
+    solely of other block types in sequence.</td>
   </tr>
 </table>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="gtypepool">Global Type Pool</a> </div>
 <div class="doc_text">
+<p>The global type pool consists of type definitions. Their order of appearnce
+in the file determines their slot number (0 based). Slot numbers are used to 
+replace pointers in the intermediate representation. Each slot number uniquely
+identifies one entry in a type plane (a collection of values of the same type).
+Since all values have types and are associated with the order in which the type
+pool is written, the global type pool <em>must</em> be written as the first 
+block of a module. If it is not, attempts to read the file will fail because
+both forward and backward type resolution will not be possible.</p>
+<p>The type pool is simply a list of types definitions, as shown in the table 
+below.</p>
+<table class="doc_table_nw" >
+  <tr>
+    <th><b>Byte(s)</b></th>
+    <th><b>Bit(s)</b></th>
+    <th><b>Align?</b></th>
+    <th><b>Type</b></th>
+    <th align="left"><b>Field Description</b></th>
+  </tr><tr>
+    <td>00-03</td><td>-</td><td>No</td><td>unsigned</td>
+    <td align="left">Type Pool Identifier (0x13)</td>
+  </tr><tr>
+    <td>04-07</td><td>-</td><td>No</td><td>unsigned</td>
+    <td align="left">Size in bytes of the symbol table block.</td>
+  </tr><tr>
+    <td>08-11<sup>1</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
+    <td align="left">Number of entries in type plane</td>
+  </tr><tr>
+    <td>12-15<sup>1</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
+    <td align="left">Type plane index for following entries</td>
+  </tr><tr>
+    <td>16-end<sup>1,2</sup></td><td>-</td><td>No</td><td>type</td>
+    <td align="left">Each of the type definitions.</td>
+  </tr><tr>
+    <td align="left" colspan="5"><sup>1</sup>Maximum length shown, 
+      may be smaller<br><sup>2</sup>Repeated field.
+  </tr>
+</table>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="modinfo">Module Info</a> </div>
 <div class="doc_text">
+  <p>To be determined.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="constants">Constants</a> </div>
 <div class="doc_text">
+  <p>To be determined.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="functions">Functions</a> </div>
 <div class="doc_text">
+  <p>To be determined.</p>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="symtab">Module Symbol Table</a> </div>
+<div class="doc_subsection"><a name="symtab">Symbol Table</a> </div>
 <div class="doc_text">
-<p>The module symbol table is a list of
+<p>A symbol table can be put out in conjunction with a module or a function.
+A symbol table is a list of type planes. Each type plane starts with the number
+of entries in the plane and the type plane's slot number (so the type can be 
+looked up in the global type pool). For each entry in a type plane, the slot 
+number of the value and the name associated with that value are written.  The 
+format is given in the table below. </p>
+<table class="doc_table_nw" >
+  <tr>
+    <th><b>Byte(s)</b></th>
+    <th><b>Bit(s)</b></th>
+    <th><b>Align?</b></th>
+    <th><b>Type</b></th>
+    <th align="left"><b>Field Description</b></th>
+  </tr><tr>
+    <td>00-03</td><td>-</td><td>No</td><td>unsigned</td>
+    <td align="left">Symbol Table Identifier (0x13)</td>
+  </tr><tr>
+    <td>04-07</td><td>-</td><td>No</td><td>unsigned</td>
+    <td align="left">Size in bytes of the symbol table block.</td>
+  </tr><tr>
+    <td>08-11<sup>1</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
+    <td align="left">Number of entries in type plane</td>
+  </tr><tr>
+    <td>12-15<sup>1</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
+    <td align="left">Type plane index for following entries</td>
+  </tr><tr>
+    <td>16-19<sup>1,2</sup></td><td>-</td><td>No</td><td>uint32_vbr</td>
+    <td align="left">Slot number of a value.</td>
+  </tr><tr>
+    <td>variable<sup>1,2</sup></td><td>-</td><td>No</td><td>string</td>
+    <td align="left">Name of the value in the symbol table.</td>
+  </tr>
+  <tr>
+    <td align="left" colspan="5"><sup>1</sup>Maximum length shown, 
+      may be smaller<br><sup>2</sup>Repeated field.
+  </tr>
+</table>
 </div>
 
 <!-- *********************************************************************** -->
