@@ -11,8 +11,6 @@
 #include "Support/DataTypes.h"
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
-#include <string>
-#include <vector>
 
 class MachineInstrDescriptor;
 class TmpInstruction;
@@ -55,7 +53,7 @@ extern const MachineInstrDescriptor *TargetInstrDescriptors;
 //---------------------------------------------------------------------------
 
 
-const unsigned int	M_NOP_FLAG		= 1;
+const unsigned int	M_NOP_FLAG		= 1 << 0;
 const unsigned int	M_BRANCH_FLAG		= 1 << 1;
 const unsigned int	M_CALL_FLAG		= 1 << 2;
 const unsigned int	M_RET_FLAG		= 1 << 3;
@@ -150,7 +148,7 @@ public:
         || getDescriptor(opCode).iclass & M_RET_FLAG;
   }
   bool isArith(MachineOpCode opCode) const {
-    return getDescriptor(opCode).iclass & M_RET_FLAG;
+    return getDescriptor(opCode).iclass & M_ARITH_FLAG;
   }
   bool isCCInstr(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_CC_FLAG;
@@ -164,7 +162,7 @@ public:
   bool isFloatInstr(MachineOpCode opCode) const {
     return getDescriptor(opCode).iclass & M_FLOAT_FLAG;
   }
-  bool isConditional(MachineOpCode opCode) const {
+  bool isConditional(MachineOpCode opCode) const { 
     return getDescriptor(opCode).iclass & M_CONDL_FLAG;
   }
   bool isLoad(MachineOpCode opCode) const {
