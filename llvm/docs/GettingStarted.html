@@ -13,6 +13,7 @@
       <li><a href="#quickstart">Getting started with LLVM</a>
         <ol>
           <li><a href="#cvs">Checkout LLVM from CVS</a>
+          <li><a href="#shared">Access to <tt>/shared</tt></a>
           <li><a href="#environment">Set up your environment</a>
           <li><a href="#compile">Compiling the Source Code</a>
         </ol>
@@ -55,7 +56,25 @@
 
     <p>This will create an '<tt>llvm</tt>' directory in your home directory and
     fully populate it with the source code for LLVM.</p>
-    
+
+
+    <!------------------------------------------------------------------------->
+    <h3><a name="shared">Access to <tt>/shared</tt></a></h3>
+    <!------------------------------------------------------------------------->
+
+    By default, LLVM is configured to send all compiled files into the
+    <tt>/shared/[yourloginname]/</tt> directory.  The idea is that this
+    directory is local to the machine you're working on, so the huge libraries
+    and <tt>.o</tt> files you will be compiling will not have to be sent over
+    NFS.  If you are in a situation where this setup is correct, you don't have
+    to do anything.  If you don't have a <tt>/shared</tt> directory, you will
+    have to make a couple of modifications to your setup.<p>
+ 
+    The first modification is that you need to enable the "<tt>BUILD_ROOT =
+    .</tt> line in the top level <tt>Makefile.common</tt>.  This will instruct
+    LLVM to build into the current directory tree instead of
+    <tt>/shared</tt>.<p>
+
 
     <!------------------------------------------------------------------------->
     <h3><a name="tools">Set up your environment</a></h3>
@@ -72,16 +91,21 @@
        alias llvmgcc /home/vadve/lattner/cvs/gcc_install/bin/gcc
 
        # Make the LLVM tools easy to use...
-       setenv PATH ~/llvm/tools/Debug:${PATH}
+       setenv PATH /shared/[yourloginname]/llvm/tools/Debug:${PATH}
     </pre>
 
     <p>The C compiler is not included in the CVS tree you just checked out, so
     we just point to the cannonical location, and access it with the
     <tt>llvmgcc</tt> command.  The rest of the <a href="#tools">LLVM tools</a>
-    will be built into the <tt>llvm/tools/Debug</tt> directory inside of the
-    sourcebase.  Adding them to your path will make it much easier to use
-    them.</p>
+    will be built into the <tt>llvm/tools/Debug</tt> directory.  If you do not
+    have access to <tt>/shared</tt>, use this line instead:</p>
 
+    <pre>
+       setenv PATH ~/llvm/tools/Debug:${PATH}
+    </pre>
+
+    Adding these two lines to your path will make it much easier to use the LLVM
+    tools.</p>
 
 
     <!------------------------------------------------------------------------->
@@ -101,10 +125,9 @@
     <tt>.so</tt>, <tt>.a</tt>) files into a <tt>/shared/[your login
     name]/...</tt> directory, which is supposed to be on a disk local to the
     current machine.  If you get an error talking about a <tt>/shared</tt>
-    directory, and you find out that it doesn't exist, try enabling the
-    "<tt>BUILD_ROOT = .</tt> line in the top level <tt>Makefile.common</tt> that
-    will change LLVM to build into the current directory instead of
-    <tt>/shared</tt>.<p>
+    directory, follow the instructions in the <a href="#shared">section about
+    <tt>/shared</tt></a>.<p>
+
 
 
     <!--=====================================================================-->
@@ -363,7 +386,7 @@
 
 	    <!-- Created: Mon Jul  1 02:29:02 CDT 2002 -->
 	    <!-- hhmts start -->
-Last modified: Fri Aug  9 11:13:34 CDT 2002
+Last modified: Tue Aug 13 16:09:25 CDT 2002
 <!-- hhmts end -->
   </body>
 </html>
