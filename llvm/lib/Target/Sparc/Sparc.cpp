@@ -9,14 +9,15 @@
 //	7/15/01	 -  Vikram Adve  -  Created
 //**************************************************************************/
 
-#include "llvm/Target/Sparc.h"
+
 #include "SparcInternals.h"
-#include "llvm/Method.h"
+#include "llvm/Target/Sparc.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/InstrSelection.h"
-
-#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
+#include "llvm/Analysis/LiveVar/MethodLiveVarInfo.h"
+#include "llvm/Method.h"
+
 
 // Build the MachineInstruction Description Array...
 const MachineInstrDescriptor SparcMachineInstrDesc[] = {
@@ -40,7 +41,7 @@ TargetMachine *allocateSparcTargetMachine() { return new UltraSparc(); }
 // Entry point for register allocation for a module
 //----------------------------------------------------------------------------
 
-void AllocateRegisters(Method *M, TargetMachine &TM)
+void AllocateRegisters(Method *M, TargetMachine &target)
 {
  
   if ( (M)->isExternal() )     // don't process prototypes
@@ -55,7 +56,7 @@ void AllocateRegisters(Method *M, TargetMachine &TM)
   LVI.analyze();
   
     
-  PhyRegAlloc PRA(M, TM , &LVI); // allocate registers
+  PhyRegAlloc PRA(M, target, &LVI); // allocate registers
   PRA.allocateRegisters();
     
 
@@ -63,6 +64,90 @@ void AllocateRegisters(Method *M, TargetMachine &TM)
 
 }
 
+
+// Initialize the required area of the stack frame.
+static void
+InitializeFrameLayout(Method *method, TargetMachine &target)
+{
+  int minFrameSize = ((UltraSparc&) target).getFrameInfo().MinStackFrameSize;
+  method->getMachineCode().incrementStackSize(minFrameSize);
+}
+
+//---------------------------------------------------------------------------
+// Function InsertPrologCode
+// Function InsertEpilogCode
+// Function InsertPrologEpilog
+// 
+// Insert prolog code at the unique method entry point.
+// Insert epilog code at each method exit point.
+// InsertPrologEpilog invokes these only if the method is not compiled
+// with the leaf method optimization.
+//---------------------------------------------------------------------------
+
+static MachineInstr* minstrVec[MAX_INSTR_PER_VMINSTR];
+
+static void
+InsertPrologCode(Method* method, TargetMachine& target)
+{
+  BasicBlock* entryBB = method->getEntryNode();
+  unsigned N = GetInstructionsForProlog(entryBB, target, minstrVec);
+  assert(N <= MAX_INSTR_PER_VMINSTR);
+  if (N > 0)
+    {
+      MachineCodeForBasicBlock& bbMvec = entryBB->getMachineInstrVec();
+      bbMvec.insert(bbMvec.begin(), minstrVec, minstrVec+N);
+    }
+}
+
+
+static void
+InsertEpilogCode(Method* method, TargetMachine& target)
+{
+  for (Method::iterator I=method->begin(), E=method->end(); I != E; ++I)
+    if ((*I)->getTerminator()->getOpcode() == Instruction::Ret)
+      {
+        BasicBlock* exitBB = *I;
+        unsigned N = GetInstructionsForEpilog(exitBB, target, minstrVec);
+        
+        MachineCodeForBasicBlock& bbMvec = exitBB->getMachineInstrVec();
+        MachineCodeForVMInstr& termMvec =
+          exitBB->getTerminator()->getMachineInstrVec();
+        
+        // Remove the NOPs in the delay slots of the return instruction
+        const MachineInstrInfo& mii = target.getInstrInfo();
+        unsigned numNOPs = 0;
+        while (termMvec.back()->getOpCode() == NOP)
+          {
+            assert( termMvec.back() == bbMvec.back());
+            termMvec.pop_back();
+            bbMvec.pop_back();
+            ++numNOPs;
+          }
+        assert(termMvec.back() == bbMvec.back());
+        
+        // Check that we found the right number of NOPs and have the right
+        // number of instructions to replace them.
+        unsigned ndelays = mii.getNumDelaySlots(termMvec.back()->getOpCode());
+        assert(numNOPs == ndelays && "Missing NOPs in delay slots?");
+        assert(N == ndelays && "Cannot use epilog code for delay slots?");
+        
+        // Append the epilog code to the end of the basic block.
+        bbMvec.push_back(minstrVec[0]);
+      }
+}
+
+
+// Insert SAVE/RESTORE instructions for the method
+static void
+InsertPrologEpilog(Method *method, TargetMachine &target)
+{
+  MachineCodeForMethod& mcodeInfo = method->getMachineCode();
+  if (mcodeInfo.isCompiledAsLeafMethod())
+    return;                             // nothing to do
+  
+  InsertPrologCode(method, target);
+  InsertEpilogCode(method, target);
+}
 
 
 //---------------------------------------------------------------------------
@@ -111,6 +196,35 @@ UltraSparcSchedInfo::initializeResources()
 }
 
 
+//---------------------------------------------------------------------------
+// class UltraSparcFrameInfo 
+// 
+// Purpose:
+//   Interface to stack frame layout info for the UltraSPARC.
+//   Note that there is no machine-independent interface to this information
+//---------------------------------------------------------------------------
+
+int
+UltraSparcFrameInfo::getFirstAutomaticVarOffsetFromFP (const Method* method)
+{
+  return StaticStackAreaOffsetFromFP;
+}
+
+int
+UltraSparcFrameInfo::getRegSpillAreaOffsetFromFP(const Method* method)
+{
+  unsigned int autoVarsSize = method->getMachineCode().getAutomaticVarsSize();
+  return  StaticStackAreaOffsetFromFP + autoVarsSize;
+}
+
+int
+UltraSparcFrameInfo::getFrameSizeBelowDynamicArea(const Method* method)
+{
+  unsigned int optArgsSize =
+    method->getMachineCode().getOptionalOutgoingArgsSize();
+  return optArgsSize + FirstOptionalOutgoingArgOffsetFromSP;
+}
+
 
 
 //---------------------------------------------------------------------------
@@ -128,7 +242,8 @@ UltraSparc::UltraSparc()
   : TargetMachine("UltraSparc-Native"),
     instrInfo(),
     schedInfo(&instrInfo),
-    regInfo( this )
+    regInfo( this ),
+    frameInfo()
 {
   optSizeForSubWordData = 4;
   minMemOpWordSize = 8; 
@@ -136,11 +251,24 @@ UltraSparc::UltraSparc()
 }
 
 
+void
+ApplyPeepholeOptimizations(Method *method, TargetMachine &target)
+{
+  return;
+  
+  // OptimizeLeafProcedures();
+  // DeleteFallThroughBranches();
+  // RemoveChainedBranches();    // should be folded with previous
+  // RemoveRedundantOps();       // operations with %g0, NOP, etc.
+}
 
 
 
-bool UltraSparc::compileMethod(Method *M) {
-
+bool
+UltraSparc::compileMethod(Method *M)
+{
+  InitializeFrameLayout(M, *this);        // initialize the required area of
+                                          // the stack frame
   if (SelectInstructionsForMethod(M, *this))
     {
       cerr << "Instruction selection failed for method " << M->getName()
@@ -155,11 +283,11 @@ bool UltraSparc::compileMethod(Method *M) {
       return true;
     }
   
-  AllocateRegisters(M, *this);    // allocate registers
-
-
+  AllocateRegisters(M, *this);          // allocate registers
+  
+  ApplyPeepholeOptimizations(M, *this); // machine-dependent peephole opts
+  
+  InsertPrologEpilog(M, *this);
+  
   return false;
 }
-
-
-
