@@ -19,7 +19,6 @@ Init *BitRecTy::convertValue(BitsInit *BI) {
 Init *BitRecTy::convertValue(IntInit *II) {
   int Val = II->getValue();
   if (Val != 0 && Val != 1) return 0;  // Only accept 0 or 1 for a bit!
-  delete II;
   
   return new BitInit(Val != 0); 
 }
@@ -50,7 +49,6 @@ Init *BitsRecTy::convertValue(BitInit *UI) {
 //
 Init *BitsRecTy::convertValue(IntInit *II) {
   int Value = II->getValue();
-  delete II;
 
   BitsInit *Ret = new BitsInit(Size);
   for (unsigned i = 0; i != Size; ++i)
