@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements a symbol table that has planed broken up by type.  
+// This file implements a symbol table that has planes broken up by type.  
 // Identical types may have overlapping symbol names as long as they are 
 // distinct.
 //
