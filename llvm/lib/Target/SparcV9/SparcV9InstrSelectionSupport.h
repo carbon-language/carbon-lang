@@ -226,6 +226,96 @@ ChooseRegOrImmed(Value* val, MachineOpCode opCode,
                  const TargetMachine& targetMachine, bool canUseImmed,
                  unsigned& getMachineRegNum, int64_t& getImmedValue);
 
+/// ConvertConstantToIntType - Get the value of an integral constant in the
+/// form that must be put into the machine register.  The specified constant is
+/// interpreted as (i.e., converted if necessary to) the specified destination
+/// type.  The result is always returned as an uint64_t, since the
+/// representation of int64_t and uint64_t are identical.  The argument can be
+/// any known const.  isValidConstant is set to true if a valid constant was
+/// found.
+/// 
+uint64_t ConvertConstantToIntType (const TargetMachine &target,
+  const Value *V, const Type *destType, bool &isValidConstant);
+
+/// ConstantMayNotFitInImmedField - Test if this constant may not fit in the
+/// immediate field of the machine instructions (probably) generated for this
+/// instruction.
+///
+bool ConstantMayNotFitInImmedField (const Constant *CV, const Instruction *I);
+
+/// CreateCodeToLoadConst - Create an instruction sequence to put the
+/// constant `val' into the virtual register `dest'.  `val' may be a Constant
+/// or a GlobalValue, viz., the constant address of a global variable or
+/// function.  The generated instructions are returned in `mvec'.  Any temp.
+/// registers (TmpInstruction) created are recorded in mcfi.
+/// 
+void CreateCodeToLoadConst (const TargetMachine &target, Function *F,
+  Value *val, Instruction *dest, std::vector<MachineInstr*> &mvec,
+  MachineCodeForInstruction &mcfi);
+
+/// CreateSignExtensionInstructions - Create instruction sequence to produce a
+/// sign-extended register value from an arbitrary sized value (sized in bits,
+/// not bytes).  The generated instructions are appended to `mvec'.  Any temp.
+/// registers (TmpInstruction) created are recorded in mcfi.
+///
+void CreateSignExtensionInstructions (const TargetMachine &target,
+  Function *F, Value *srcVal, Value *destVal, unsigned int numLowBits,
+  std::vector<MachineInstr*> &mvec, MachineCodeForInstruction &mcfi);
+
+/// CreateZeroExtensionInstructions - Create instruction sequence to produce a
+/// zero-extended register value from an arbitrary sized value (sized in bits,
+/// not bytes).  The generated instructions are appended to `mvec'.  Any temp.
+/// registers (TmpInstruction) created are recorded in mcfi.
+///
+void CreateZeroExtensionInstructions (const TargetMachine &target,
+  Function *F, Value *srcVal, Value *destVal, unsigned int numLowBits,
+  std::vector<MachineInstr*> &mvec, MachineCodeForInstruction &mcfi);
+
+/// CreateCodeToCopyIntToFloat - Create an instruction sequence to copy an
+/// integer value `val' to a floating point value `dest' by copying to memory
+/// and back.  val must be an integral type.  dest must be a Float or Double.
+/// The generated instructions are returned in `mvec'.  Any temp. registers
+/// (TmpInstruction) created are recorded in mcfi.
+/// 
+void CreateCodeToCopyIntToFloat (const TargetMachine &target,
+  Function *F, Value *val, Instruction *dest, std::vector<MachineInstr*> &mvec,
+  MachineCodeForInstruction &mcfi);
+
+/// CreateCodeToCopyFloatToInt - Create an instruction sequence to copy an FP
+/// value `val' to an integer value `dest' by copying to memory and back.  The
+/// generated instructions are returned in `mvec'.  Any temp. registers
+/// (TmpInstruction) created are recorded in mcfi.
+/// 
+void CreateCodeToCopyFloatToInt (const TargetMachine &target, Function *F,
+  Value *val, Instruction *dest, std::vector<MachineInstr*> &mvec,
+  MachineCodeForInstruction &mcfi);
+
+/// CreateCopyInstructionsByType - Create instruction(s) to copy src to dest,
+/// for arbitrary types The generated instructions are returned in `mvec'.  Any
+/// temp. registers (TmpInstruction) created are recorded in mcfi.
+/// 
+void CreateCopyInstructionsByType (const TargetMachine &target,
+  Function *F, Value *src, Instruction *dest, std::vector<MachineInstr*> &mvec,
+  MachineCodeForInstruction &mcfi);
+
+/// CreateSignExtensionInstructions - Create instruction sequence to produce a
+/// sign-extended register value from an arbitrary sized value (sized in bits,
+/// not bytes).  The generated instructions are appended to `mvec'.  Any temp.
+/// registers (TmpInstruction) created are recorded in mcfi.
+/// 
+void CreateSignExtensionInstructions (const TargetMachine &target,
+  Function *F, Value *srcVal, Value *destVal, unsigned int numLowBits,
+  std::vector<MachineInstr*> &mvec, MachineCodeForInstruction &mcfi);
+
+/// CreateZeroExtensionInstructions - Create instruction sequence to produce a
+/// zero-extended register value from an arbitrary sized value (sized in bits,
+/// not bytes).  The generated instructions are appended to `mvec'.  Any temp.
+/// registers (TmpInstruction) created are recorded in mcfi.
+/// 
+void CreateZeroExtensionInstructions (const TargetMachine &target,
+  Function *F, Value *srcVal, Value *destVal, unsigned int numLowBits,
+  std::vector<MachineInstr*> &mvec, MachineCodeForInstruction &mcfi);
+
 } // End llvm namespace
 
 #endif
