@@ -1545,6 +1545,51 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           }
         }
         break;
+      case Instruction::Shr:         // shr: (setcc (shr X, ShAmt), CI)
+        if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
+          unsigned ShAmtVal = ShAmt->getValue();
+          
+          switch (I.getOpcode()) {
+          default: break;
+          case Instruction::SetEQ:
+          case Instruction::SetNE: {
+            // If we are comparing against bits always shifted out, the
+            // comparison cannot succeed.
+            Constant *Comp = 
+              ConstantExpr::getShr(ConstantExpr::getShl(CI, ShAmt), ShAmt);
+            
+            if (Comp != CI) {// Comparing against a bit that we know is zero.
+              bool IsSetNE = I.getOpcode() == Instruction::SetNE;
+              Constant *Cst = ConstantBool::get(IsSetNE);
+              return ReplaceInstUsesWith(I, Cst);
+            }
+              
+            if (LHSI->hasOneUse() || CI->isNullValue()) {
+              // Otherwise strength reduce the shift into an and.
+              uint64_t Val = ~0ULL;          // All ones.
+              Val <<= ShAmtVal;              // Shift over to the right spot.
+
+              Constant *Mask;
+              if (CI->getType()->isUnsigned()) {
+                unsigned TypeBits = CI->getType()->getPrimitiveSize()*8;
+                Val &= (1ULL << TypeBits)-1;
+                Mask = ConstantUInt::get(CI->getType(), Val);
+              } else {
+                Mask = ConstantSInt::get(CI->getType(), Val);
+              }
+              
+              Instruction *AndI =
+                BinaryOperator::createAnd(LHSI->getOperand(0),
+                                          Mask, LHSI->getName()+".mask");
+              Value *And = InsertNewInstBefore(AndI, I);
+              return new SetCondInst(I.getOpcode(), And,
+                                     ConstantExpr::getShl(CI, ShAmt));
+            }
+            break;
+          }
+          }
+        }
+        break;
 
       case Instruction::Div:
         if (0 && isa<ConstantInt>(LHSI->getOperand(1))) {
