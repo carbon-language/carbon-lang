@@ -53,7 +53,7 @@ public:
   CallInst(Value *F, const std::vector<Value*> &Par,
            const std::string &Name = "", Instruction *InsertBefore = 0);
 
-  // Alternate CallInst ctors; no actuals one actual, respectively.
+  // Alternate CallInst ctors w/ no actuals & one actual, respectively.
   CallInst(Value *F, const std::string &Name = "",
            Instruction  *InsertBefore = 0);
   CallInst(Value *F, Value *Actual, const std::string& Name = "",
