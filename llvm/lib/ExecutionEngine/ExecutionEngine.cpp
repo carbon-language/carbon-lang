@@ -170,7 +170,8 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
 
 void *ExecutionEngine::CreateArgv(const std::vector<std::string> &InputArgv) {
   // Pointers are 64 bits...
-  PointerTy *Result = new PointerTy[InputArgv.size()+1];  // 64 bit assumption
+  // FIXME: Assumes 64 bit target
+  PointerTy *Result = new PointerTy[InputArgv.size()+1];
   DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
 
   for (unsigned i = 0; i < InputArgv.size(); ++i) {
