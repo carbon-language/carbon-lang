@@ -52,7 +52,7 @@ static inline string GetFileNameRoot(const string &InputFilename) {
 // Native code generation for a specified target.
 //===---------------------------------------------------------------------===//
 
-class GenerateCodeForTarget : public ConcretePass {
+class GenerateCodeForTarget : public Pass {
   TargetMachine &Target;
 public:
   inline GenerateCodeForTarget(TargetMachine &T) : Target(T) {}
@@ -60,7 +60,7 @@ public:
   // doPerMethodWork - This method does the actual work of generating code for
   // the specified method.
   //
-  bool doPerMethodWorkVirt(Method *M) {
+  bool doPerMethodWork(Method *M) {
     if (!M->isExternal() && Target.compileMethod(M)) {
       cerr << "Error compiling " << InputFilename << "!\n";
       return true;
@@ -77,27 +77,22 @@ public:
 // Write assembly code to specified output stream
 //===---------------------------------------------------------------------===//
 
-class EmitAssembly : public ConcretePass {
+class EmitAssembly : public Pass {
   const TargetMachine &Target;   // Target to compile for
   ostream *Out;                  // Stream to print on
   bool DeleteStream;             // Delete stream in dtor?
-
-  Module *TheMod;
 public:
   inline EmitAssembly(const TargetMachine &T, ostream *O, bool D)
     : Target(T), Out(O), DeleteStream(D) {}
 
-  virtual bool doPassInitializationVirt(Module *M) {
-    TheMod = M;
-    return false;
-  }
 
-  ~EmitAssembly() {
+  virtual bool doPassFinalization(Module *M) {
     // TODO: This should be performed as a moduleCleanup function, but we don't
     // have one yet!
-    Target.emitAssembly(TheMod, *Out);
+    Target.emitAssembly(M, *Out);
 
     if (DeleteStream) delete Out;
+    return false;
   }
 };
 
