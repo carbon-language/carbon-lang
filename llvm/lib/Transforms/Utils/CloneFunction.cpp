@@ -37,25 +37,16 @@ static inline void RemapInstruction(Instruction *I,
 // ArgMap values.
 //
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       const std::vector<Value*> &ArgMap,
+                       std::map<const Value*, Value*> &ValueMap,
                        std::vector<ReturnInst*> &Returns,
                        const char *NameSuffix) {
   assert(NameSuffix && "NameSuffix cannot be null!");
-  assert(OldFunc->asize() == ArgMap.size() &&
-         "Improper number of argument values to map specified!");
   
-  // Keep a mapping between the original function's values and the new
-  // duplicated code's values.  This includes all of: Function arguments,
-  // instruction values, constant pool entries, and basic blocks.
-  //
-  std::map<const Value *, Value*> ValueMap;
-
-  // Add all of the function arguments to the mapping...
-  unsigned i = 0;
+#ifndef NDEBUG
   for (Function::const_aiterator I = OldFunc->abegin(), E = OldFunc->aend();
-       I != E; ++I, ++i)
-    ValueMap[I] = ArgMap[i];
-
+       I != E; ++I)
+    assert(ValueMap.count(I) && "No mapping from source argument specified!");
+#endif
 
   // Loop over all of the basic blocks in the function, cloning them as
   // appropriate.  Note that we save BE this way in order to handle cloning of

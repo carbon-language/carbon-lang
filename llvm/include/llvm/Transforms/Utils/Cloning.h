@@ -12,12 +12,35 @@
 #define LLVM_TRANSFORMS_UTIlS_CLONING_H
 
 #include <vector>
+#include <map>
 class Module;
 class Function;
 class BasicBlock;
 class Value;
 class CallInst;
 class ReturnInst;
+
+/// CloneModule - Return an exact copy of the specified module
+///
+Module *CloneModule(Module *M);
+
+/// CloneFunction - Return a copy of the specified function, but without
+/// embedding the function into another module.  Also, any references specified
+/// in the ValueMap are changed to refer to their mapped value instead of the
+/// original one.  If any of the arguments to the function are in the ValueMap,
+/// the arguments are deleted from the resultant function.  The ValueMap is
+/// updated to include mappings from all of the instructions and basicblocks in
+/// the function from their old to new values.
+///
+Function *CloneFunction(const Function *F,
+                        std::map<const Value*, Value*> &ValueMap);
+
+/// CloneFunction - Version of the function that doesn't need the ValueMap.
+///
+inline Function *CloneFunction(const Function *F) {
+  std::map<const Value*, Value*> ValueMap;
+  return CloneFunction(F, ValueMap);
+}
 
 // Clone OldFunc into NewFunc, transforming the old arguments into references to
 // ArgMap values.  Note that if NewFunc already has basic blocks, the ones
@@ -26,7 +49,7 @@ class ReturnInst;
 // suffix to all values cloned.
 //
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                       const std::vector<Value*> &ArgMap,
+                       std::map<const Value*, Value*> &ValueMap,
                        std::vector<ReturnInst*> &Returns,
                        const char *NameSuffix = "");
 

@@ -90,9 +90,14 @@ bool InlineFunction(CallInst *CI) {
   Function::iterator LastBlock = &OrigBB->getParent()->back();
 
   // Calculate the vector of arguments to pass into the function cloner...
-  std::vector<Value*> ArgVector;
-  for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
-    ArgVector.push_back(CI->getOperand(i));
+  std::map<const Value*, Value*> ValueMap;
+  assert((unsigned)std::distance(CalledFunc->abegin(), CalledFunc->aend()) == 
+         CI->getNumOperands()-1 && "No varargs calls can be inlined yet!");
+
+  unsigned i = 1;
+  for (Function::const_aiterator I = CalledFunc->abegin(), E=CalledFunc->aend();
+       I != E; ++I, ++i)
+    ValueMap[I] = CI->getOperand(i);
 
   // Since we are now done with the CallInst, we can delete it.
   delete CI;
@@ -101,7 +106,7 @@ bool InlineFunction(CallInst *CI) {
   std::vector<ReturnInst*> Returns;
 
   // Do all of the hard part of cloning the callee into the caller...
-  CloneFunctionInto(OrigBB->getParent(), CalledFunc, ArgVector, Returns, ".i");
+  CloneFunctionInto(OrigBB->getParent(), CalledFunc, ValueMap, Returns, ".i");
 
   // Loop over all of the return instructions, turning them into unconditional
   // branches to the merge point now...
