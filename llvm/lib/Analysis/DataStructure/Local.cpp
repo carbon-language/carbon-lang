@@ -393,11 +393,8 @@ void GraphBuilder::visitCallInst(CallInst &CI) {
 }
 
 void GraphBuilder::visitFreeInst(FreeInst &FI) {
-  DSNodeHandle Dest = getValueDest(*FI.getOperand(0));
-  if (Dest.getNode() == 0) return;
-
   // Mark that the node is written to...
-  Dest.getNode()->NodeType |= DSNode::Modified;
+  getValueDest(*FI.getOperand(0)).getNode()->NodeType |= DSNode::Modified;
 }
 
 /// Handle casts...
