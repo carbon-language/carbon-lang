@@ -14,17 +14,20 @@
 #include "llvm/Type.h"
 
 class DerivedType : public Type {
+  char isRefining;                                   // Used for recursive types
+
   // AbstractTypeUsers - Implement a list of the users that need to be notified
   // if I am a type, and I get resolved into a more concrete type.
   //
   ///// FIXME: kill mutable nonsense when Type's are not const
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 
-  char isRefining;                                   // Used for recursive types
-
 protected:
   inline DerivedType(PrimitiveID id) : Type("", id) {
-    isRefining = false;
+    isRefining = 0;
+  }
+  ~DerivedType() {
+    assert(AbstractTypeUsers.empty());
   }
 
   // typeIsRefined - Notify AbstractTypeUsers of this type that the current type
@@ -50,14 +53,7 @@ public:
   // addAbstractTypeUser - Notify an abstract type that there is a new user of
   // it.  This function is called primarily by the PATypeHandle class.
   //
-  void addAbstractTypeUser(AbstractTypeUser *U) const {
-    assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-#if 0
-    cerr << "  addAbstractTypeUser[" << (void*)this << ", " << getDescription() 
-	 << "][" << AbstractTypeUsers.size() << "] User = " << U << endl;
-#endif
-    AbstractTypeUsers.push_back(U);
-  }
+  void addAbstractTypeUser(AbstractTypeUser *U) const;
 
   // removeAbstractTypeUser - Notify an abstract type that a user of the class
   // no longer has a handle to the type.  This function is called primarily by
@@ -65,12 +61,6 @@ public:
   // is anihilated, because there is no way to get a reference to it ever again.
   //
   void removeAbstractTypeUser(AbstractTypeUser *U) const;
-
-  // getNumAbstractTypeUsers - Return the number of users registered to the type
-  inline unsigned getNumAbstractTypeUsers() const {
-    assert(isAbstract() && "getNumAbstractTypeUsers: Type not abstract!");
-    return AbstractTypeUsers.size(); 
-  }
 
   // refineAbstractTypeTo - This function is used to when it is discovered that
   // the 'this' abstract type is actually equivalent to the NewType specified.
