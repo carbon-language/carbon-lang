@@ -74,10 +74,6 @@ OBJ_ROOT := .
 # want to override the value set by configure.
 LLVMGCCDIR := @LLVMGCCDIR@
 
-# Path to the PAPI code.  This is used by the reoptimizer only.
-#PAPIDIR := /home/vadve/shared/papi-2.3.4.1
-PAPIDIR := @PAPIDIR@
-
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1):
 
