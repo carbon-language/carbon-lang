@@ -193,14 +193,16 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           //
           LiveVariables::VarInfo &InRegVI = LV->getVarInfo(SrcReg);
 
-          // Loop over all of the successors of the basic block, checking to
-          // see if the value is either live in the block, or if it is killed
-          // in the block.
+          // Loop over all of the successors of the basic block, checking to see
+          // if the value is either live in the block, or if it is killed in the
+          // block.  Also check to see if this register is in use by another PHI
+          // node which has not yet been eliminated.  If so, it will be killed
+          // at an appropriate point later.
           //
           bool ValueIsLive = false;
           BasicBlock *BB = opBlock.getBasicBlock();
           for (succ_iterator SI = succ_begin(BB), E = succ_end(BB);
-               SI != E; ++SI) {
+               SI != E && !ValueIsLive; ++SI) {
             const std::pair<MachineBasicBlock*, unsigned> &
               SuccInfo = LV->getBasicBlockInfo(*SI);
             
@@ -219,32 +221,28 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
                 ValueIsLive = true;
                 break;
               }
+
+            // Is it used by any PHI instructions in this block?
+            if (ValueIsLive) break;
+
+            // Loop over all of the PHIs in this successor, checking to see if
+            // the register is being used...
+            for (MachineBasicBlock::iterator BBI = MBB->begin(), E=MBB->end();
+                 BBI != E && (*BBI)->getOpcode() == TargetInstrInfo::PHI;
+                 ++BBI)
+              for (unsigned i = 1, e = (*BBI)->getNumOperands(); i < e; i += 2)
+                if ((*BBI)->getOperand(i).getReg() == SrcReg) {
+                  ValueIsLive = true;
+                  break;
+                }
           }
           
           // Okay, if we now know that the value is not live out of the block,
           // we can add a kill marker to the copy we inserted saying that it
           // kills the incoming value!
           //
-          if (!ValueIsLive) {
-            // One more complication to worry about.  There may actually be
-            // multiple PHI nodes using this value on this branch.  If we aren't
-            // careful, the first PHI node will end up killing the value, not
-            // letting it get the to the copy for the final PHI node in the
-            // block.  Therefore we have to check to see if there is already a
-            // kill in this block, and if so, extend the lifetime to our new
-            // copy.
-            //
-            for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
-              if (InRegVI.Kills[i].first == &opBlock) {
-                std::pair<LiveVariables::killed_iterator,
-                          LiveVariables::killed_iterator> Range
-                  = LV->killed_range(InRegVI.Kills[i].second);
-                LV->removeVirtualRegistersKilled(Range.first, Range.second);
-                break;
-              }
-
+          if (!ValueIsLive)
             LV->addVirtualRegisterKilled(SrcReg, &opBlock, *(I-1));
-          }
         }
       }
     }
