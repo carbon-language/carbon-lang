@@ -5,14 +5,17 @@ implementation
 declare int %llvm.readport (ushort)
 declare void %llvm.writeport (int, ushort)
 
-uint %in (uint %p) {
-  %i1 = call int(ushort)* %llvm.readport (ushort 255)
-  ret uint 5
+int %in(ushort %p) {
+  %i1 = call int %llvm.readport (ushort 255)
+  %i2 = call int %llvm.readport (ushort %p)
+  %r = add int %i1, %i2
+  ret int %r
 }
 
 
-uint %out (uint %p) {
+void %out(ushort %p) {
   call void(int, ushort)* %llvm.writeport (int 1, ushort 255)
-  ret uint 5
+  call void(int, ushort)* %llvm.writeport (int 4, ushort %p)
+  ret void
 }
 
