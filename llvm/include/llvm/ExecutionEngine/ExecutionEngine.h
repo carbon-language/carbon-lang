@@ -53,13 +53,15 @@ public:
   Module &getModule() const { return CurMod; }
   const TargetData &getTargetData() const { return *TD; }
 
-  /// run - Start execution with the specified function, arguments, and
-  ///       environment.
-  ///
-  virtual GenericValue run(Function *F,
-                           const std::vector<GenericValue> &ArgValues) = 0;
-
+  /// create - This is the factory method for creating an execution engine which
+  /// is appropriate for the current machine.
   static ExecutionEngine *create(ModuleProvider *MP, bool ForceInterpreter);
+
+  /// runFunction - Execute the specified function with the specified arguments,
+  /// and return the result.
+  ///
+  virtual GenericValue runFunction(Function *F,
+                                const std::vector<GenericValue> &ArgValues) = 0;
 
   void addGlobalMapping(const GlobalValue *GV, void *Addr) {
     void *&CurVal = GlobalAddress[GV];
