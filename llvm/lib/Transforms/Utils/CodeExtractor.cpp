@@ -390,24 +390,20 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
       }
   }
 
-  // Now that we've done the deed, make the default destination of the switch
-  // instruction be a block with a call to abort() -- since this path should not
-  // be taken, this will abort sooner rather than later.
-  if (TheSwitch->getNumSuccessors() > 1) {
-    Function *container = codeReplacer->getParent();
-    BasicBlock *abortBB = new BasicBlock("abortBlock", container);
-    std::vector<const Type*> paramTypes;
-    FunctionType *abortTy = FunctionType::get(Type::VoidTy, paramTypes, false);
-    Function *abortFunc = 
-      container->getParent()->getOrInsertFunction("abort", abortTy);
-    abortBB->getInstList().push_back(new CallInst(abortFunc));
-    Function *ParentFunc = TheSwitch->getParent()->getParent();
-    if (ParentFunc->getReturnType() == Type::VoidTy)
-      new ReturnInst(0, abortBB);
-    else
-      new ReturnInst(Constant::getNullValue(ParentFunc->getReturnType()),
-                     abortBB);
-    TheSwitch->setSuccessor(0, abortBB);
+  // Now that we've done the deed, simplify the switch instruction.
+  unsigned NumSuccs = TheSwitch->getNumSuccessors();
+  if (NumSuccs > 1) {
+    if (NumSuccs-1 == 1) {
+      // Only a single destination, change the switch into an unconditional
+      // branch.
+      new BranchInst(TheSwitch->getSuccessor(1), TheSwitch);
+      TheSwitch->getParent()->getInstList().erase(TheSwitch);
+    } else {
+      // Otherwise, make the default destination of the switch instruction be
+      // one of the other successors.
+      TheSwitch->setSuccessor(0, TheSwitch->getSuccessor(NumSuccs-1));
+      TheSwitch->removeCase(NumSuccs-1);  // Remove redundant case
+    }    
   } else {
     // There is only 1 successor (the block containing the switch itself), which
     // means that previously this was the last part of the function, and hence
