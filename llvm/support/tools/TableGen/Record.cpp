@@ -452,6 +452,23 @@ std::ostream &operator<<(std::ostream &OS, const Record &R) {
   return OS << "}\n";
 }
 
+/// getValueAsString - This method looks up the specified field and returns its
+/// value as a string, throwing an exception if the field does not exist or if
+/// the value is not a string.
+///
+std::string Record::getValueAsString(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record '" + R->getName() + "' does not have a field named '" +
+          FieldName + "!\n";
+
+  if (const StringInit *SI = dynamic_cast<const StringInit*>(R->getValue()))
+    return SI->getValue();
+  throw "Record '" + R->getName() + "', field '" + FieldName +
+        "' does not have a string initializer!";
+}
+
+
 void RecordKeeper::dump() const { std::cerr << *this; }
 
 std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK) {
@@ -473,18 +490,17 @@ std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK) {
 /// getAllDerivedDefinitions - This method returns all concrete definitions
 /// that derive from the specified class name.  If a class with the specified
 /// name does not exist, an error is printed and true is returned.
-bool RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName,
-                                            std::vector<Record*> &Defs) const {
+std::vector<Record*>
+RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
   Record *Class = Records.getClass(ClassName);
-  if (!Class) {
-    std::cerr << "ERROR: Couldn't find the '" << ClassName << "' class!\n";
-    return true;
-  }
+  if (!Class)
+    throw "ERROR: Couldn't find the '" + ClassName + "' class!\n";
 
+  std::vector<Record*> Defs;
   for (std::map<std::string, Record*>::const_iterator I = getDefs().begin(),
          E = getDefs().end(); I != E; ++I)
     if (I->second->isSubClassOf(Class))
       Defs.push_back(I->second);
 
-  return false;
+  return Defs;
 }

@@ -319,6 +319,8 @@ class StringInit : public Init {
 public:
   StringInit(const std::string &V) : Value(V) {}
 
+  const std::string &getValue() const { return Value; }
+
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
@@ -592,6 +594,17 @@ public:
   void resolveReferences();
 
   void dump() const;
+
+  //===--------------------------------------------------------------------===//
+  // High-level methods useful to tablegen back-ends
+  //
+
+  /// getValueAsString - This method looks up the specified field and returns
+  /// its value as a string, throwing an exception if the field does not exist
+  /// or if the value is not a string.
+  ///
+  std::string getValueAsString(const std::string &FieldName) const;
+
 };
 
 std::ostream &operator<<(std::ostream &OS, const Record &R);
@@ -633,9 +646,9 @@ public:
 
   /// getAllDerivedDefinitions - This method returns all concrete definitions
   /// that derive from the specified class name.  If a class with the specified
-  /// name does not exist, an error is printed and true is returned.
-  bool getAllDerivedDefinitions(const std::string &ClassName,
-                                std::vector<Record*> &ReturnDefs) const;
+  /// name does not exist, an exception is thrown.
+  std::vector<Record*>
+  getAllDerivedDefinitions(const std::string &ClassName) const;
 
 
   void dump() const;
