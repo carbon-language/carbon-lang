@@ -163,7 +163,7 @@ public: // constructors and destructor
   
 public: // accessor functions to query chosen schedule
   const SchedGraphNode* getInstr	(unsigned int slotNum,
-					 CycleCount_t c) const {
+					 CycleCount_t c) {
     const InstrGroup* igroup = this->getIGroup(c);
     return (igroup == NULL)? NULL : (*igroup)[slotNum];
   }
