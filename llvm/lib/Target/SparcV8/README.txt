@@ -18,11 +18,23 @@ are the known SingleSource failures:
 	Benchmarks/Shootout-C++/moments
 	Benchmarks/Shootout-C++/random
 
-Here are some known MultiSource test failures - this is probably not a
-complete list right now.
+Here are the known MultiSource test failures, neglecting FreeBench
+and MallocBench:
 
-	burg siod lambda make_dparser hbd treecc hexxagon fhourstones
-	bisect testtrie eks imp power anagram bc distray
+  Applications/siod
+  Applications/lambda
+  Applications/d/make_dparser
+  Applications/hbd
+  Applications/hexxagon
+  Benchmarks/Fhourstones
+  Benchmarks/McCat/04-bisect
+  Benchmarks/McCat/03-testtrie
+  Benchmarks/McCat/18-imp
+  Benchmarks/Ptrdist/anagram
+  Benchmarks/sim
+  Benchmarks/Prolangs-C/TimberWolfMC
+  Benchmarks/Prolangs-C/allroots
+  Benchmarks/Prolangs-C/archie-client
 
 To-do
 -----
