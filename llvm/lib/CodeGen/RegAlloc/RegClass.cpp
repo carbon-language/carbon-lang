@@ -4,7 +4,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/RegClass.h"
+#include "RegClass.h"
 #include "RegAllocCommon.h"
 #include "llvm/CodeGen/IGNode.h"
 using std::cerr;

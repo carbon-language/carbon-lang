@@ -8,8 +8,8 @@
 #ifndef REG_CLASS_H
 #define REG_CLASS_H
 
-#include "llvm/CodeGen/InterferenceGraph.h"
 #include "llvm/Target/TargetRegInfo.h"
+#include "InterferenceGraph.h"
 #include <stack>
 class TargetRegClassInfo;
 
