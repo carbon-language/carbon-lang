@@ -344,11 +344,9 @@ bool SCCP::runOnFunction(Function &F) {
     }
   }
 
-  if (DebugFlag) {
-    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-      if (!BBExecutable.count(I))
-        std::cerr << "BasicBlock Dead:" << *I;
-  }
+  DEBUG(for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+          if (!BBExecutable.count(I))
+             std::cerr << "BasicBlock Dead:" << *I);
 
   // Iterate over all of the instructions in a function, replacing them with
   // constants if we have found them to be of constant values.
