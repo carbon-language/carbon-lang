@@ -107,6 +107,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
     assert(IndVars.back().InductionType == InductionVariable::Cannonical &&
            "Just inserted cannonical indvar that is not cannonical!");
     Cannonical = &IndVars.back();
+    Changed = true;
   }
 
 #ifdef DEBUG
@@ -177,6 +178,7 @@ static bool TransformLoop(cfg::LoopInfo *Loops, cfg::Loop *Loop) {
       Header->getInstList().remove(IV->Phi);
       delete IV->Phi;
       InsertPos--;            // Deleted an instr, decrement insert position
+      Changed = true;
     }
   }
 
