@@ -7,8 +7,8 @@ main(int argc, char** argv)
 {
   char     c1;
   short    s1, ssf1, ssd1;
-  uint8_t  ubs0;
-  int8_t   bs0;
+  unsigned char  ubs0;
+  signed char   bs0;
   unsigned char ubc0, uc2;
   unsigned short us2, usf1, usd1;
   int ic3, is3, sif1, sid1;
@@ -24,8 +24,8 @@ main(int argc, char** argv)
   s1 = (short) (argc >= 3)? atoi(argv[2]) : -769;   /* 0xf7ff = -769 */
   
   ubc0 = (unsigned char) c1;                      /* 100 = 'd' */
-  ubs0 = (uint8_t) s1;                            /* 0xff = 255 */
-  bs0  = (int8_t) s1;                             /* 0xff = -1 */
+  ubs0 = (unsigned char) s1;                            /* 0xff = 255 */
+  bs0  = (signed char) s1;                             /* 0xff = -1 */
   
   uc2 = (unsigned char) c1;                       /* 100 = 'd' */
   us2 = (unsigned short) s1;                      /* 0xf7ff = 64767 */
