@@ -144,25 +144,29 @@ install-local:: all-local
 
 ifdef ENABLE_PROFILING
   CONFIGURATION := Profile
-  CXXFLAGS += -O3 -DNDEBUG -felide-constructors -finline-functions -pg
-  CFLAGS   += -O3 -DNDEBUG -pg
-  LDFLAGS  += -O3 -DNDEBUG -pg 
+  LLVMCXXFLAGS := -O3 -DNDEBUG -felide-constructors -finline-functions -pg
+  LLVMCFLAGS   := -O3 -DNDEBUG -pg
+  LLVMLDFLAGS  := -O3 -DNDEBUG -pg 
 else
   ifdef ENABLE_OPTIMIZED
     CONFIGURATION := Release
-    CXXFLAGS  += -O3 -DNDEBUG -finline-functions -felide-constructors -fomit-frame-pointer
-    CFLAGS    += -O3 -DNDEBUG -fomit-frame-pointer
-    LDFLAGS   += -O3 -DNDEBUG 
+    LLVMCXXFLAGS  := -O3 -DNDEBUG -finline-functions -felide-constructors -fomit-frame-pointer
+    LLVMCFLAGS    := -O3 -DNDEBUG -fomit-frame-pointer
+    LLVMLDFLAGS   := -O3 -DNDEBUG 
   else
     CONFIGURATION := Debug
-    CXXFLAGS += -g -D_DEBUG 
-    CFLAGS   += -g -D_DEBUG
-    LDFLAGS  += -g -D_DEBUG 
+    LLVMCXXFLAGS := -g -D_DEBUG 
+    LLVMCFLAGS   := -g -D_DEBUG
+    LLVMLDFLAGS  := -g -D_DEBUG 
     KEEP_SYMBOLS := 1
   endif
 endif
 
-ARFLAGS := cru
+LLVMCXXFLAGS += $(CXXFLAGS)
+LLVMCFLAGS   += $(CFLAGS)
+LLVMCPPFLAGS += $(CPPFLAGS)
+LLVMLDFLAGS  += $(LDFLAGS)
+LLVMARFLAGS  := cru
 
 #--------------------------------------------------------------------
 # Directory locations
@@ -195,7 +199,7 @@ LLVMGCCLIBDIR := $(dir $(shell $(LLVMGCC) -print-file-name=libgcc.a))/
 ifndef SHARED_LIBRARY
   LIBTOOL += --tag=disable-shared
 else
-  LDFLAGS += -rpath $(LIBDIR)
+  LLVMLDFLAGS += -rpath $(LIBDIR)
 endif
 
 # Adjust settings for verbose mode
@@ -216,7 +220,7 @@ endif
 
 # Adjust linker flags for building an executable
 ifdef TOOLNAME
-  LDFLAGS += -rpath $(TOOLDIR) -export-dynamic
+  LLVMLDFLAGS += -rpath $(TOOLDIR) -export-dynamic
 endif
 
 #----------------------------------------------------------
@@ -225,8 +229,8 @@ endif
 
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 
-LDFLAGS  += -L$(LIBDIR) -L$(LLVMLIBDIR)
-CPPFLAGS += -I$(BUILD_OBJ_DIR) \
+LLVMLDFLAGS  += -L$(LIBDIR) -L$(LLVMLIBDIR)
+LLVMCPPFLAGS += -I$(BUILD_OBJ_DIR) \
 	    -I$(BUILD_SRC_DIR) \
 	    -I$(BUILD_SRC_ROOT)/include \
 	    -I$(BUILD_OBJ_ROOT)/include \
@@ -234,20 +238,20 @@ CPPFLAGS += -I$(BUILD_OBJ_DIR) \
 	    -I$(LLVM_SRC_ROOT)/include \
 	    -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 
-Compile.C     = $(CC) $(CPPFLAGS) $(CompileCommonOpts) -c $(CFLAGS)
-Compile.CXX   = $(CXX) $(CPPFLAGS) $(CompileCommonOpts) $(CXXFLAGS) -c
+Compile.C     = $(CC) $(LLVMCPPFLAGS) $(CompileCommonOpts) -c $(LLVMCFLAGS)
 LTCompile.C   = $(LIBTOOL) --mode=compile $(Compile.C)
+BCCompile.C   = $(LLVMGCC) $(LLVMCPPFLAGS) $(CompileCommonOpts) $(LLVMCFLAGS) -c
+Compile.CXX   = $(CXX) $(LLVMCPPFLAGS) $(CompileCommonOpts) $(LLVMCXXFLAGS) -c
 LTCompile.CXX = $(LIBTOOL) --tag=CXX --mode=compile $(Compile.CXX)
-BCCompile.CXX = $(LLVMGXX) $(CPPFLAGS) $(CompileCommonOpts) $(CXXFLAGS) -c
-BCCompile.C   = $(LLVMGCC) $(CPPFLAGS) $(CompileCommonOpts) $(CFLAGS) -c
-Link          = $(LIBTOOL) --tag=CXX --mode=link $(CXX) $(CPPFLAGS) \
-	        $(CompileCommonOpts) $(LDFLAGS) $(STRIP)
-Relink        = $(LIBTOOL) --tag=CXX --mode=link $(CXX) $(CPPFLAGS) \
+BCCompile.CXX = $(LLVMGXX) $(LLVMCPPFLAGS) $(CompileCommonOpts) $(LLVMCXXFLAGS) -c
+Link          = $(LIBTOOL) --tag=CXX --mode=link $(CXX) $(LLVMCPPFLAGS) \
+	        $(CompileCommonOpts) $(LLVMLDFLAGS) $(STRIP)
+Relink        = $(LIBTOOL) --tag=CXX --mode=link $(CXX) $(LLVMCPPFLAGS) \
                 $(CompileCommonOpts)
 BCLinkLib     = $(LLVMGCC) -shared -nostdlib
 Burg          = $(BURG) -I $(BUILD_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(BUILD_SRC_DIR)
-Archive       = $(AR) $(ARFLAGS)
+Archive       = $(AR) $(LLVMARFLAGS)
 ifdef RANLIB
 Ranlib        = $(RANLIB)
 else
@@ -1064,24 +1068,25 @@ endif
 #------------------------------------------------------------------------
 # Print out the directories used for building
 printvars::
-	@$(ECHO) "CONFIGURATION : " $(CONFIGURATION)
-	@$(ECHO) "BUILD_SRC_ROOT: " $(BUILD_SRC_ROOT)
-	@$(ECHO) "BUILD_SRC_DIR : " $(BUILD_SRC_DIR)
-	@$(ECHO) "BUILD_OBJ_ROOT: " $(BUILD_OBJ_ROOT)
-	@$(ECHO) "BUILD_OBJ_DIR : " $(BUILD_OBJ_DIR)
-	@$(ECHO) "LLVM_SRC_ROOT : " $(LLVM_SRC_ROOT)
-	@$(ECHO) "LLVM_OBJ_ROOT : " $(LLVM_OBJ_ROOT)
-	@$(ECHO) "libdir : " $(libdir)
-	@$(ECHO) "bindir : " $(bindir)
-	@$(ECHO) "sysconfdir : " $(sysconfdir)
-	@$(ECHO) "bytecode_libdir : " $(bytecode_libdir)
-	@$(ECHO) "USER_TARGETS : " $(USER_TARGETS)
-	@$(ECHO) "OBJMKFILES: $(OBJMKFILES)"
-	@$(ECHO) "SRCMKFILES: $(SRCMKFILES)"
-	@$(ECHO) "OBJDIR: " $(OBJDIR)
-	@$(ECHO) "LIBDIR: " $(LIBDIR)
-	@$(ECHO) "TOOLDIR: " $(TOOLDIR)
-	@$(ECHO) "TDFILES:" '$(TDFILES)'
-	@$(ECHO) "Compile.CXX: " '$(Compile.CXX)'
-	@$(ECHO) "Compile.C: " '$(Compile.C)'
+	@$(ECHO) "CONFIGURATION  : " '$(CONFIGURATION)'
+	@$(ECHO) "BUILD_SRC_ROOT : " '$(BUILD_SRC_ROOT)'
+	@$(ECHO) "BUILD_SRC_DIR  : " '$(BUILD_SRC_DIR)'
+	@$(ECHO) "BUILD_OBJ_ROOT : " '$(BUILD_OBJ_ROOT)'
+	@$(ECHO) "BUILD_OBJ_DIR  : " '$(BUILD_OBJ_DIR)'
+	@$(ECHO) "LLVM_SRC_ROOT  : " '$(LLVM_SRC_ROOT)'
+	@$(ECHO) "LLVM_OBJ_ROOT  : " '$(LLVM_OBJ_ROOT)'
+	@$(ECHO) "libdir         : " '$(libdir)'
+	@$(ECHO) "bindir         : " '$(bindir)'
+	@$(ECHO) "sysconfdir     : " '$(sysconfdir)'
+	@$(ECHO) "bytecode_libdir: " '$(bytecode_libdir)'
+	@$(ECHO) "USER_TARGETS   : " '$(USER_TARGETS)'
+	@$(ECHO) "OBJMKFILES     : " '$(OBJMKFILES)'
+	@$(ECHO) "SRCMKFILES     : " '$(SRCMKFILES)'
+	@$(ECHO) "OBJDIR         : " '$(OBJDIR)'
+	@$(ECHO) "LIBDIR         : " '$(LIBDIR)'
+	@$(ECHO) "TOOLDIR        : " '$(TOOLDIR)'
+	@$(ECHO) "TDFILES        : " '$(TDFILES)'
+	@$(ECHO) "Compile.CXX    : " '$(Compile.CXX)'
+	@$(ECHO) "Compile.C      : " '$(Compile.C)'
+	@$(ECHO) "Archive        : " '$(Archive)'
 
