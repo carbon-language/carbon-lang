@@ -174,9 +174,11 @@ private:
   inline InstVal &getValueState(Value *V) {
     hash_map<Value*, InstVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
-      
-    if (Constant *CPV = dyn_cast<Constant>(V)) {  // Constants are constant
-      ValueState[CPV].markConstant(CPV);
+
+    if (isa<UndefValue>(V)) {
+      // Nothing to do, remain undefined.
+    } else if (Constant *CPV = dyn_cast<Constant>(V)) {
+      ValueState[CPV].markConstant(CPV);          // Constants are constant
     } else if (isa<Argument>(V)) {                // Arguments are overdefined
       ValueState[V].markOverdefined();
     }
@@ -236,6 +238,7 @@ private:
     visitTerminatorInst(I);
   }
   void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
+  void visitUnreachableInst(TerminatorInst &I) { /*returns void*/ }
   void visitAllocationInst(Instruction &I) { markOverdefined(&I); }
   void visitVANextInst    (Instruction &I) { markOverdefined(&I); }
   void visitVAArgInst     (Instruction &I) { markOverdefined(&I); }
