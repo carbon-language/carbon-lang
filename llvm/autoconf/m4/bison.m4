@@ -6,8 +6,7 @@
 # 2) BISON is set to bison
 #
 AC_DEFUN([AC_PROG_BISON],
-[AC_CACHE_CHECK(,
-ac_cv_has_bison,
+[AC_CACHE_CHECK([if we have bison],[llvm_cv_has_bison],
 [AC_PROG_YACC()
 ])
 if test "$YACC" != "bison -y"; then
