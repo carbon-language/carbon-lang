@@ -101,37 +101,25 @@ process, and you should <b>only</b> try to do it if:</p>
 </pre>
 
 <p>
-<b>Solaris/Sparc:</b>
+<b>Solaris/SPARC:</b>
 </p>
 
 <p>
-For Solaris/Sparc, LLVM only supports SparcV9.  Therefore, the configure
-command line should like something like this:
+For Solaris/SPARC, LLVM only supports the SPARC V9.  Therefore, the
+configure command line should specify sparcv9, as shown below. Also,
+note that Solaris has trouble with various wide (multibyte) character
+functions from C as referenced from C++, so we typically configure with
+--disable-c-mbchar (cf. <a href="http://llvm.cs.uiuc.edu/PR206">Bug 206</a>).
 </p>
 
 <pre>
  % cd build
- % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls --disable-shared \
-   --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8
+ % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
+   --disable-shared --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8 \
+   --disable-c-mbchar
  % gmake all-gcc
  % setenv LLVM_LIB_SEARCH_PATH `pwd`/gcc 
- % gmake all
-</pre>
-
-<p>
-At this point, libstdc++ may fail to build because of wchar errors (look for
-errors that reference <tt>vfwscanf</tt> or <tt>wcstof</tt>).  If that happens,
-edit <tt>sparcv9-sun-solaris2.8/libstdc++-v3/config.h</tt> and comment out the
-line that defines <tt>_GLIBCXX_USE_WCHAR_T</tt>.
-</p>
-
-<p>
-Then, continue as below:
-</p>
-
-<pre>
- % gmake all
- % gmake install
+ % gmake all; gmake install
 </pre>
 
  <p><b>Common Problem:</b> You may get error messages regarding the fact
