@@ -471,9 +471,9 @@ void CWriter::printConstant(Constant *CPV) {
           << "*)&FloatConstant" << I->second << ")";
     } else {
       if (FPCSafeToPrint (FPC)) {
-	Out << ftostr (FPC->getValue ());
+        Out << ftostr (FPC->getValue ());
       } else {
-	Out << FPC->getValue(); // Who knows? Give it our best shot...
+        Out << FPC->getValue(); // Who knows? Give it our best shot...
       }
     }
     break;
@@ -674,7 +674,7 @@ void CWriter::printModule(Module *M) {
   }
 
   // Print Malloc prototype if needed
-  if (needsMalloc){
+  if (needsMalloc) {
     Out << "\n/* Malloc to make sun happy */\n";
     Out << "extern void * malloc();\n\n";
   }
@@ -691,7 +691,6 @@ void CWriter::printModule(Module *M) {
       }
   }
 
-  
   // Output the global variable definitions and contents...
   if (!M->gempty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
@@ -779,7 +778,7 @@ void CWriter::printSymbolTable(const SymbolTable &ST) {
 // this one depends on.
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const StructType*> &StructPrinted){
-  if (const StructType *STy = dyn_cast<StructType>(Ty)){
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     //Check to see if we have already printed this struct
     if (StructPrinted.count(STy) == 0) {
       // Print all contained types first...
@@ -860,7 +859,6 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   FunctionInnards << ")";
   // Print out the return type and the entire signature for that matter
   printType(Out, F->getReturnType(), FunctionInnards.str());
-  
 }
 
 void CWriter::printFunction(Function *F) {
