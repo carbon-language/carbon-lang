@@ -194,6 +194,15 @@ public:
       InitNH(CallArgs[i], FromCall.CallArgs[i], NodeMap);
   }
 
+  const DSCallSite &operator=(const DSCallSite &RHS) {
+    Inst     = RHS.Inst;
+    CalleeF  = RHS.CalleeF;
+    CalleeN  = RHS.CalleeN;
+    RetVal   = RHS.RetVal;
+    CallArgs = RHS.CallArgs;
+    return *this;
+  }
+
   /// isDirectCall - Return true if this call site is a direct call of the
   /// function specified by getCalleeFunc.  If not, it is an indirect call to
   /// the node specified by getCalleeNode.
