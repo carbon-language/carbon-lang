@@ -21,6 +21,13 @@ namespace {
     void startBasicBlock(MachineBasicBlock &BB) {
       std::cout << "\n--- Basic Block: " << BB.getBasicBlock()->getName()<<"\n";
     }
+
+    void startFunctionStub(Function &F, unsigned StubSize) {
+      std::cout << "\n--- Function stub for function: " << F.getName() << "\n";
+    }
+    void finishFunctionStub(Function &F) {
+      std::cout << "\n";
+    }
     
     void emitByte(unsigned char B) {
       std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
