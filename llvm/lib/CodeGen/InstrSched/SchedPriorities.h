@@ -16,8 +16,8 @@
 #include "SchedGraph.h"
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/Target/MachineSchedInfo.h"
+#include "Support/hash_set"
 #include <list>
-#include <Support/hash_set>
 
 class Function;
 class MachineInstr;

@@ -11,7 +11,7 @@
 
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Instruction.h"
-#include <Support/iterator>
+#include "Support/iterator"
 class Constant;
 
 class constant_iterator : public forward_iterator<const Constant, ptrdiff_t> {

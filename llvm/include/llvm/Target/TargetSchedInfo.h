@@ -8,7 +8,7 @@
 #define LLVM_TARGET_MACHINESCHEDINFO_H
 
 #include "llvm/Target/MachineInstrInfo.h"
-#include <Support/hash_map>
+#include "Support/hash_map"
 
 typedef long long cycles_t; 
 static const cycles_t HUGE_LATENCY = ~((long long) 1 << (sizeof(cycles_t)-2));

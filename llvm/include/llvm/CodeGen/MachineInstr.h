@@ -11,7 +11,7 @@
 
 #include "llvm/Target/MachineInstrInfo.h"
 #include "llvm/Annotation.h"
-#include <Support/iterator>
+#include "Support/iterator"
 class Instruction;
 
 //---------------------------------------------------------------------------

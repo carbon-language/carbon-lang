@@ -9,7 +9,7 @@
 #define LLVM_SUPPORT_DEPTH_FIRST_ITERATOR_H
 
 #include "Support/GraphTraits.h"
-#include <Support/iterator>
+#include "Support/iterator"
 #include <stack>
 #include <set>
 

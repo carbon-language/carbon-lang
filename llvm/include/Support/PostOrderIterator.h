@@ -10,7 +10,7 @@
 #define LLVM_SUPPORT_POSTORDER_ITERATOR_H
 
 #include "Support/GraphTraits.h"
-#include <Support/iterator>
+#include "Support/iterator"
 #include <stack>
 #include <set>
 
