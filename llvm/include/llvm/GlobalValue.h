@@ -42,7 +42,9 @@ protected:
   LinkageTypes Linkage;   // The linkage of this global
   Module *Parent;
 public:
-  virtual ~GlobalValue();
+  ~GlobalValue() {
+    removeDeadConstantUsers();   // remove any dead constants using this.
+  }
 
   /// If the usage is empty (except transitively dead constants), then this
   /// global value can can be safely deleted since the destructor will 
@@ -85,10 +87,10 @@ public:
   /// that want to check to see if a global is unused, but don't want to deal
   /// with potentially dead constants hanging off of the globals.
   ///
-  /// This function returns true if the global value is now dead.  If all 
-  /// users of this global are not dead, this method may return false and
-  /// leave some of them around.
-  bool removeDeadConstantUsers();
+  /// This method tries to make the global dead.  If it detects a user that
+  /// would prevent it from becoming completely dead, it gives up early,
+  /// potentially leaving some dead constant users around.
+  void removeDeadConstantUsers();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalValue *T) { return true; }
