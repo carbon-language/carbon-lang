@@ -1166,10 +1166,12 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	      if(AdIBefCC)
 		(PRA.AddedInstrMap[MInst]->InstrnsBefore).push_front(AdIBefCC);
 
-	      cerr << "\n!! Inserted caller saving (push) inst for %ccr:";
-	      if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
-	      cerr  << "\t" << *AdICpCC;
-	      if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
+	      if(DEBUG_RA) {
+		cerr << "\n!! Inserted caller saving (push) inst for %ccr:";
+		if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
+		cerr  << "\t" << *AdICpCC;
+		if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
+	      }
 
 	    } else  {  
 	      // for any other register type, just add the push inst
@@ -1199,10 +1201,13 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	      if(AdIAftCC)
 		(PRA.AddedInstrMap[MInst]->InstrnsAfter).push_back(AdIAftCC);
 
-	      cerr << "\n!! Inserted caller saving (pop) inst for %ccr:";
-	      if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
-	      cerr  << "\t" << *AdICpCC;
-	      if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
+	      if(DEBUG_RA) {
+
+		cerr << "\n!! Inserted caller saving (pop) inst for %ccr:";
+		if(AdIBefCC) cerr << "\t" <<  *(AdIBefCC);
+		cerr  << "\t" << *AdICpCC;
+		if(AdIAftCC) cerr  << "\t" << *(AdIAftCC);
+	      }
 
 	    } else {
 	      // for any other register type, just add the pop inst
@@ -1212,13 +1217,13 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 	    
 	    PushedRegSet.insert( Reg );
 
-	    if(1) {
+	    if(DEBUG_RA) {
 	      cerr << "\nFor call inst:" << *MInst;
-	      cerr << "\n  -inserted caller saving instrs:\n\t ";
+	      cerr << " -inserted caller saving instrs:\n\t ";
               if( RegType == IntCCRegType )
-                cerr << *AdIBefCC << "\n\t" << *AdIAftCC  ;
+                cerr << *AdIBefCC << "\t" << *AdIAftCC  ;
               else
-                cerr << *AdIBef   << "\n\t" << *AdIAft    ;
+                cerr << *AdIBef   << "\t" << *AdIAft    ;
 	    }	    
 	  } // if not already pushed
 
