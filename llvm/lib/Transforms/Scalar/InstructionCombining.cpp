@@ -2983,7 +2983,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
       // the same size.  Instead of casting the pointer before the load, cast
       // the result of the loaded value.
       Value *NewLoad = IC.InsertNewInstBefore(new LoadInst(CI->getOperand(0),
-                                                           CI->getName()), LI);
+                                                           CI->getName(),
+                                                           LI.isVolatile()),LI);
       // Now cast the result of the load.
       return new CastInst(NewLoad, LI.getType());
     }
@@ -2991,12 +2992,17 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   return 0;
 }
 
+/// isSafeToLoadUnconditionally - Return true if we know that executing a load
+/// from this value cannot trap.
+static bool isSafeToLoadUnconditionally(Value *V) {
+  return isa<AllocaInst>(V) || isa<GlobalVariable>(V);
+}
+
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
-  if (LI.isVolatile()) return 0;
 
   if (Constant *C = dyn_cast<Constant>(Op))
-    if (C->isNullValue())  // load null -> 0
+    if (C->isNullValue() && !LI.isVolatile())  // load null -> 0
       return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
 
   // Instcombine load (constant global) into the value loaded...
@@ -3021,6 +3027,57 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (Instruction *Res = InstCombineLoadCast(*this, LI))
       return Res;
 
+  if (!LI.isVolatile() && Op->hasOneUse()) {
+    // Change select and PHI nodes to select values instead of addresses: this
+    // helps alias analysis out a lot, allows many others simplifications, and
+    // exposes redundancy in the code.
+    //
+    // Note that we cannot do the transformation unless we know that the
+    // introduced loads cannot trap!  Something like this is valid as long as
+    // the condition is always false: load (select bool %C, int* null, int* %G),
+    // but it would not be valid if we transformed it to load from null
+    // unconditionally.
+    //
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op)) {
+      // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
+      if (isSafeToLoadUnconditionally(SI->getOperand(1)) &&
+          isSafeToLoadUnconditionally(SI->getOperand(2))) {
+        Value *V1 = InsertNewInstBefore(new LoadInst(SI->getOperand(1),
+                                     SI->getOperand(1)->getName()+".val"), *SI);
+        Value *V2 = InsertNewInstBefore(new LoadInst(SI->getOperand(2),
+                                     SI->getOperand(2)->getName()+".val"), *SI);
+        return new SelectInst(SI->getCondition(), V1, V2);
+      }
+
+    } else if (PHINode *PN = dyn_cast<PHINode>(Op)) {
+      // load (phi (&V1, &V2, &V3))  --> phi(load &V1, load &V2, load &V3)
+      bool Safe = true;
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (!isSafeToLoadUnconditionally(PN->getIncomingValue(i))) {
+          Safe = false;
+          break;
+        }
+      if (Safe) {
+        // Create the PHI.
+        PHINode *NewPN = new PHINode(LI.getType(), PN->getName());
+        InsertNewInstBefore(NewPN, *PN);
+        std::map<BasicBlock*,Value*> LoadMap;  // Don't insert duplicate loads
+
+        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+          BasicBlock *BB = PN->getIncomingBlock(i);
+          Value *&TheLoad = LoadMap[BB];
+          if (TheLoad == 0) {
+            Value *InVal = PN->getIncomingValue(i);
+            TheLoad = InsertNewInstBefore(new LoadInst(InVal,
+                                                       InVal->getName()+".val"),
+                                          *BB->getTerminator());
+          }
+          NewPN->addIncoming(TheLoad, BB);
+        }
+        return ReplaceInstUsesWith(LI, NewPN);
+      }
+    }
+  }
   return 0;
 }
 
