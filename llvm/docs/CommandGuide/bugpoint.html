@@ -47,43 +47,43 @@ any of the passes crash, or if they produce malformed output,
 <tt>bugpoint</tt> starts the <a href="#crashdebug">crash debugger</a>.<p>
 
 Otherwise, if the <a href="#opt_output"><tt>-output</tt></a> option was not
-specified, <tt>bugpoint</tt> runs the test program with the C backend (which
-is assumed to generate good code) to generate a reference output.  Once
+specified, <tt>bugpoint</tt> runs the test program with the C backend (which is
+assumed to generate good code) to generate a reference output.  Once
 <tt>bugpoint</tt> has a reference output for the test program, it tries
-executing it
-with the <a href="#opt_run-">selected</a> code generator.  If
-the resulting output differs from the reference output, it assumes the
-difference resulted from a code generator failure, and starts the
-<a href="#codegendebug">code generator debugger</a>.<p>
+executing it with the <a href="#opt_run-">selected</a> code generator.  If the
+selected code generator crashes, <tt>bugpoint</tt> starts the <a
+href="#crashdebug">crash debugger</a> on the code generator.  Otherwise, if the
+resulting output differs from the reference output, it assumes the difference
+resulted from a code generator failure, and starts the <a
+href="#codegendebug">code generator debugger</a>.<p>
 
-Otherwise, <tt>bugpoint</tt> runs the test program after all of the LLVM passes
-have been applied to it.  If its output differs from the reference output,
-it assumes the difference resulted from a failure in one of the LLVM passes,
-and enters the
-<a href="#miscompilationdebug">miscompilation debugger</a>. Otherwise,
-there is no problem <tt>bugpoint</tt> can debug.<p>
+Finally, if the output of the selected code generator matches the reference
+output, <tt>bugpoint</tt> runs the test program after all of the LLVM passes
+have been applied to it.  If its output differs from the reference output, it
+assumes the difference resulted from a failure in one of the LLVM passes, and
+enters the <a href="#miscompilationdebug">miscompilation
+debugger</a>. Otherwise, there is no problem <tt>bugpoint</tt> can debug.<p>
 
 <a name="crashdebug">
 <h4>Crash debugger</h4>
 
-If an optimizer crashes, <tt>bugpoint</tt> will try as hard as it can to
-reduce the list of passes and the size of the test program.  First,
-<tt>bugpoint</tt> figures out which combination of passes triggers the bug. This
-is useful when debugging a problem exposed by <tt>gccas</tt>, for example,
-because it runs over 25 optimizations.<p>
+If an optimizer or code generator crashes, <tt>bugpoint</tt> will try as hard as
+it can to reduce the list of passes (for optimizer crashes) and the size of the
+test program.  First, <tt>bugpoint</tt> figures out which combination of
+optimizer passes triggers the bug. This is useful when debugging a problem
+exposed by <tt>gccas</tt>, for example, because it runs over 25
+optimizations.<p>
 
 Next, <tt>bugpoint</tt> tries removing functions from the test program, to
-reduce its
-size.  Usually it is able to reduce a test program
-to a single function, when debugging intraprocedural optimizations.  Once the
-number of
+reduce its size.  Usually it is able to reduce a test program to a single
+function, when debugging intraprocedural optimizations.  Once the number of
 functions has been reduced, it attempts to delete various edges in the control
 flow graph, to reduce the size of the function as much as possible.  Finally,
 <tt>bugpoint</tt> deletes any individual LLVM instructions whose absence does
 not eliminate the failure.  At the end, <tt>bugpoint</tt> should tell you what
 passes crash, give you a bytecode file, and give you instructions on how to
-reproduce the failure with <tt><a href="opt.html">opt</a></tt> or
-<tt><a href="analyze.html">analyze</a></tt>.<p>
+reproduce the failure with <tt><a href="opt.html">opt</a></tt>, <tt><a
+href="analyze.html">analyze</a></tt>, or <tt><a href="llc.html">llc</a></tt>.<p>
 
 <a name="codegendebug">
 <h4>Code generator debugger</h4>
