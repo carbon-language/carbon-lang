@@ -95,7 +95,17 @@ bool ExpressionConvertableToType(Value *V, const Type *Ty,
     // We can convert the expr if the cast destination type is losslessly
     // convertable to the requested type.
     if (!losslessCastableTypes(Ty, I->getType())) return false;
-    break;
+#if 1
+    // We also do not allow conversion of a cast that casts from a ptr to array
+    // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
+    //
+    if (PointerType *SPT = dyn_cast<PointerType>(I->getOperand(0)->getType()))
+      if (PointerType *DPT = dyn_cast<PointerType>(I->getType()))
+        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getValueType()))
+          if (AT->getElementType() == DPT->getValueType())
+            return false;
+#endif
+    return true;
 
   case Instruction::Add:
   case Instruction::Sub:
@@ -395,6 +405,7 @@ bool RetValConvertableToType(Value *V, const Type *Ty,
 //
 static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
                                      ValueTypeCache &CTMap) {
+  // TODO: IS THIS A BUG????
   if (V->getType() == Ty) return true;   // Already the right type?
 
   // Expression type must be holdable in a register.
@@ -409,7 +420,19 @@ static bool OperandConvertableToType(User *U, Value *V, const Type *Ty,
     assert(I->getOperand(0) == V);
     // We can convert the expr if the cast destination type is losslessly
     // convertable to the requested type.
-    return losslessCastableTypes(Ty, I->getOperand(0)->getType());
+    if (!losslessCastableTypes(Ty, I->getOperand(0)->getType()))
+      return false;
+#if 1
+    // We also do not allow conversion of a cast that casts from a ptr to array
+    // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
+    //
+    if (PointerType *SPT = dyn_cast<PointerType>(I->getOperand(0)->getType()))
+      if (PointerType *DPT = dyn_cast<PointerType>(I->getType()))
+        if (ArrayType *AT = dyn_cast<ArrayType>(SPT->getValueType()))
+          if (AT->getElementType() == DPT->getValueType())
+            return false;
+#endif
+    return true;
 
   case Instruction::Add:
     if (V == I->getOperand(0) && isa<CastInst>(I->getOperand(1))) {

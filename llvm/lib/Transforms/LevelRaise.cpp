@@ -38,6 +38,7 @@
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Optimizations/ConstantHandling.h"
 #include "llvm/Optimizations/DCE.h"
+#include "llvm/Analysis/Expressions.h"
 #include <algorithm>
 
 #include "llvm/Assembly/Writer.h"
@@ -57,6 +58,9 @@
 #define PRINT_PEEPHOLE3(ID, I1, I2, I3) \
   do { PRINT_PEEPHOLE(ID, 0, I1); PRINT_PEEPHOLE(ID, 1, I2); \
        PRINT_PEEPHOLE(ID, 2, I3); } while (0)
+#define PRINT_PEEPHOLE4(ID, I1, I2, I3, I4) \
+  do { PRINT_PEEPHOLE(ID, 0, I1); PRINT_PEEPHOLE(ID, 1, I2); \
+       PRINT_PEEPHOLE(ID, 2, I3); PRINT_PEEPHOLE(ID, 3, I4); } while (0)
 
 
 // isReinterpretingCast - Return true if the cast instruction specified will
@@ -268,6 +272,174 @@ static bool PeepholeMallocInst(BasicBlock *BB, BasicBlock::iterator &BI) {
   return false;
 }
 
+
+
+// Peephole optimize the following instructions:
+// %t1 = cast ulong <const int> to {<...>} *
+// %t2 = add {<...>} * %SP, %t1              ;; Constant must be 2nd operand
+//
+//    or
+// %t1 = cast {<...>}* %SP to int*
+// %t5 = cast ulong <const int> to int*
+// %t2 = add int* %t1, %t5                   ;; int is same size as field
+//
+// Into: %t3 = getelementptr {<...>} * %SP, <element indices>
+//       %t2 = cast <eltype> * %t3 to {<...>}*
+//
+static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
+                                    Value *AddOp1, CastInst *AddOp2) {
+  Value            *OffsetVal = AddOp2->getOperand(0);
+  Value            *SrcPtr;  // Of type pointer to struct...
+  const StructType *StructTy;
+
+  if ((StructTy = getPointedToStruct(AddOp1->getType()))) {
+    SrcPtr = AddOp1;                      // Handle the first case...
+  } else if (CastInst *AddOp1c = dyn_cast<CastInst>(AddOp1)) {
+    SrcPtr = AddOp1c->getOperand(0);      // Handle the second case...
+    StructTy = getPointedToStruct(SrcPtr->getType());
+  }
+
+  // Only proceed if we have detected all of our conditions successfully...
+  if (!StructTy || !SrcPtr || !OffsetVal->getType()->isIntegral())
+    return false;
+
+  // See if the cast is of an integer expression that is either a constant,
+  // or a value scaled by some amount with a possible offset.
+  //
+  analysis::ExprType Expr = analysis::ClassifyExpression(OffsetVal);
+  unsigned         Offset = 0, Scale = 1;
+
+  // The expression must either be a constant, or a scaled index to be useful
+  if (!Expr.Offset && !Expr.Scale)
+    return false;
+
+  // Get the offset value if it exists...
+  if (Expr.Offset) {
+    if (ConstPoolSInt *CPSI = dyn_cast<ConstPoolSInt>(Expr.Offset))
+      Offset = (unsigned)CPSI->getValue();
+    else {
+      ConstPoolUInt *CPUI = cast<ConstPoolUInt>(Expr.Offset);
+      Offset = (unsigned)CPUI->getValue();
+    }
+    assert(Offset != 0 && "Expression analysis failure!");
+  }
+
+  // Get the scale value if it exists...
+  if (Expr.Scale) {
+    if (ConstPoolSInt *CPSI = dyn_cast<ConstPoolSInt>(Expr.Scale))
+      Scale = (unsigned)CPSI->getValue();
+    else {
+      ConstPoolUInt *CPUI = cast<ConstPoolUInt>(Expr.Scale);
+      Scale = (unsigned)CPUI->getValue();
+    }
+    assert(Scale != 1 && "Expression analysis failure!");
+  }
+  
+  // Check to make sure the offset is not negative or really large, outside the
+  // scope of this structure...
+  //
+  if (Offset >= TD.getTypeSize(StructTy))
+    return false;
+
+  const StructLayout *SL = TD.getStructLayout(StructTy);
+  vector<ConstPoolVal*> Offsets;
+  unsigned ActualOffset = Offset;
+  const Type *ElTy = getStructOffsetType(StructTy, ActualOffset, Offsets);
+  
+  if (getPointedToStruct(AddOp1->getType())) {  // case 1
+    PRINT_PEEPHOLE2("add-to-gep1:in", AddOp2, *BI);
+  } else {
+    PRINT_PEEPHOLE3("add-to-gep2:in", AddOp1, AddOp2, *BI);
+  }
+
+  GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Offsets);
+  //AddOp2->getName());
+  BI = BB->getInstList().insert(BI, GEP)+1;
+  
+  Instruction *AddrSrc = GEP;
+  
+  if (const ArrayType *AT = dyn_cast<ArrayType>(ElTy)) {
+    assert((Scale == 1 || Offset == ActualOffset) &&
+           "Cannot handle scaled expression and unused offset in the same "
+           "instruction until after GEP array works!");
+
+    // Check to see if we have bottomed out INSIDE of an array reference..
+    //
+    if (Offset != ActualOffset) {
+      // Insert a cast of the "rest" of the offset to the appropriate
+      // pointer type.
+      CastInst *OffInst =
+        new CastInst(ConstPoolUInt::get(Type::ULongTy, 
+                                        Offset-ActualOffset),
+                     GEP->getType());
+      BI = BB->getInstList().insert(BI, OffInst)+1;
+      
+      // Now insert an ADD to actually adjust the pointer...
+      Instruction *AddInst =
+        BinaryOperator::create(Instruction::Add, GEP, OffInst);
+      BI = BB->getInstList().insert(BI, AddInst)+1;
+
+      PRINT_PEEPHOLE2("add-to-gep:out1", OffInst, AddInst);
+      
+      AddrSrc = AddInst;
+    } else if (Scale != 1) {
+      // If the scale factor occurs, then this means that there is an index into
+      // this element of the array.  Check to make sure the scale factor is the
+      // same as the size of the datatype that we are dealing with.
+      //
+      assert(Scale == TD.getTypeSize(AT->getElementType()) && 
+             "Scaling by something other than the array element size!!");
+      
+      // TODO: In the future, we will not want to cast the index and scale to
+      // pointer types first.  We will want to create a GEP directly here.
+
+      // Now we must actually perform the scaling operation to get an
+      // appropriate value to add in... but the scale has to be done in the
+      // appropriate destination pointer type, so cast the index value now.
+      //
+      // Cast the base index pointer
+      CastInst *IdxValue = new CastInst(Expr.Var, GEP->getType());
+      BI = BB->getInstList().insert(BI, IdxValue)+1;
+
+      // Case the scale amount as well...
+      CastInst *ScaleAmt =
+        new CastInst(ConstPoolUInt::get(Type::ULongTy, Scale), GEP->getType());
+      BI = BB->getInstList().insert(BI, ScaleAmt)+1;
+
+      // Insert the multiply now.  Make sure to make the constant the second arg
+      Instruction *ScaledVal =
+        BinaryOperator::create(Instruction::Mul, IdxValue, ScaleAmt);
+      BI = BB->getInstList().insert(BI, ScaledVal)+1;
+
+      // Now insert an ADD to actually adjust the pointer...
+      Instruction *AddInst =
+        BinaryOperator::create(Instruction::Add, GEP, ScaledVal);
+      BI = BB->getInstList().insert(BI, AddInst)+1;
+
+      PRINT_PEEPHOLE4("add-to-gep:out1", IdxValue, ScaleAmt, ScaledVal, 
+                      AddInst);
+      AddrSrc = AddInst;
+    }
+    
+    // Insert a cast of the pointer to array of X to be a pointer to the
+    // element of the array.
+    //
+    // Insert a cast of the "rest" of the offset to the appropriate
+    // pointer type.
+    CastInst *ACI = new CastInst(AddrSrc, AT->getElementType());
+    BI = BB->getInstList().insert(BI, ACI)+1;
+    AddrSrc = ACI;
+    
+  } else {
+    assert(Offset == ActualOffset && "GEP to middle of non array!");
+    assert(Scale == 1 && "Scale factor for expr that is not an array idx!");
+  }
+  
+  Instruction *NCI = new CastInst(AddrSrc, AddOp1->getType());
+  ReplaceInstWithInst(BB->getInstList(), BI, NCI);
+  PRINT_PEEPHOLE2("add-to-gep:out", GEP, NCI);
+  return true;
+}
 
 // Peephole optimize the following instructions:
 //   %t1 = cast int (uint) * %reg111 to uint (...) *
@@ -578,57 +750,10 @@ static bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   } else if (I->getOpcode() == Instruction::Add &&
              isa<CastInst>(I->getOperand(1))) {
 
-    // Peephole optimize the following instructions:
-    // %t1 = cast ulong <const int> to {<...>} *
-    // %t2 = add {<...>} * %SP, %t1              ;; Constant must be 2nd operand
-    //
-    //    or
-    // %t1 = cast {<...>}* %SP to int*
-    // %t5 = cast ulong <const int> to int*
-    // %t2 = add int* %t1, %t5                   ;; int is same size as field
-    //
-    // Into: %t3 = getelementptr {<...>} * %SP, <element indices>
-    //       %t2 = cast <eltype> * %t3 to {<...>}*
-    //
-    Value            *AddOp1  = I->getOperand(0);
-    CastInst         *AddOp2  = cast<CastInst>(I->getOperand(1));
-    ConstPoolUInt    *OffsetV = dyn_cast<ConstPoolUInt>(AddOp2->getOperand(0));
-    unsigned          Offset  = OffsetV ? OffsetV->getValue() : 0;
-    Value            *SrcPtr;  // Of type pointer to struct...
-    const StructType *StructTy;
-
-    if ((StructTy = getPointedToStruct(AddOp1->getType()))) {
-      SrcPtr = AddOp1;                      // Handle the first case...
-    } else if (CastInst *AddOp1c = dyn_cast<CastInst>(AddOp1)) {
-      SrcPtr = AddOp1c->getOperand(0);      // Handle the second case...
-      StructTy = getPointedToStruct(SrcPtr->getType());
-    }
-    
-    // Only proceed if we have detected all of our conditions successfully...
-    if (Offset && StructTy && SrcPtr && Offset < TD.getTypeSize(StructTy)) {
-      const StructLayout *SL = TD.getStructLayout(StructTy);
-      vector<ConstPoolVal*> Offsets;
-      unsigned ActualOffset = Offset;
-      const Type *ElTy = getStructOffsetType(StructTy, ActualOffset, Offsets);
-
-      if (getPointedToStruct(AddOp1->getType())) {  // case 1
-        PRINT_PEEPHOLE2("add-to-gep1:in", AddOp2, I);
-      } else {
-        PRINT_PEEPHOLE3("add-to-gep2:in", AddOp1, AddOp2, I);
-      }
-
-      GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Offsets);
-      //AddOp2->getName());
-      BI = BB->getInstList().insert(BI, GEP)+1;
-
-      assert(Offset-ActualOffset == 0  &&
-             "GEP to middle of element not implemented yet!");
-
-      ReplaceInstWithInst(BB->getInstList(), BI, 
-                          I = new CastInst(GEP, I->getType()));
-      PRINT_PEEPHOLE2("add-to-gep:out", GEP, I);
+    if (PeepholeOptimizeAddCast(BB, BI, I->getOperand(0),
+                                cast<CastInst>(I->getOperand(1))))
       return true;
-    }
+
 #endif
   }
 

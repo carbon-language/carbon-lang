@@ -102,7 +102,7 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 const Type *getStructOffsetType(const Type *Ty, unsigned &Offset,
                                 vector<ConstPoolVal*> &Offsets,
                                 bool StopEarly = true) {
-  if (!isa<StructType>(Ty) || (Offset == 0 && StopEarly)) {
+  if (!isa<StructType>(Ty) || (Offset == 0 && StopEarly && !Offsets.empty())) {
     Offset = 0;   // Return the offset that we were able to acheive
     return Ty;    // Return the leaf type
   }

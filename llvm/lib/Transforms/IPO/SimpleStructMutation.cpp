@@ -12,6 +12,8 @@
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/DerivedTypes.h"
 
+#include "llvm/Assembly/Writer.h"
+
 // PruneTypes - Given a type Ty, make sure that neither it, or one of its
 // subtypes, occur in TypesToModify.
 //
@@ -21,14 +23,20 @@ static void PruneTypes(const Type *Ty, set<const StructType*> &TypesToModify,
   ProcessedTypes.insert(Ty);
 
   // If the element is in TypesToModify, remove it now...
-  if (const StructType *ST = dyn_cast<StructType>(Ty))
+  if (const StructType *ST = dyn_cast<StructType>(Ty)) {
     TypesToModify.erase(ST);  // This doesn't fail if the element isn't present
+    cerr << "Unable to swap type: " << ST << endl;
+  }
 
-  // Remove all types that this type contains as well...
+  // Remove all types that this type contains as well... do not remove types
+  // that are referenced only through pointers, because we depend on the size of
+  // the pointer, not on what the structure points to.
   //
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I)
-    PruneTypes(*I, TypesToModify, ProcessedTypes);
+       I != E; ++I) {
+    if (!isa<PointerType>(*I))
+      PruneTypes(*I, TypesToModify, ProcessedTypes);
+  }
 }
 
 
@@ -54,8 +62,8 @@ bool SwapStructContents::doPassInitialization(Module *M) {
   const set<const Type *> &UsedTypes  = FUT.getTypes();
 
 
-  // Combine the two sets, weeding out non structure types.  Closures should
-  // would be nice.
+  // Combine the two sets, weeding out non structure types.  Closures in C++
+  // sure would be nice.
   set<const StructType*> TypesToModify;
   for (set<const Type *>::const_iterator I = UsedTypes.begin(), 
          E = UsedTypes.end(); I != E; ++I)
@@ -68,8 +76,10 @@ bool SwapStructContents::doPassInitialization(Module *M) {
   //
   set<const Type*> ProcessedTypes;
   for (set<PointerType*>::const_iterator I = UnsafePTys.begin(),
-         E = UnsafePTys.end(); I != E; ++I)
+         E = UnsafePTys.end(); I != E; ++I) {
+    cerr << "Pruning type: " << *I << endl;
     PruneTypes(*I, TypesToModify, ProcessedTypes);
+  }
 
 
   // Build up a set of structure types that we are going to modify, and
