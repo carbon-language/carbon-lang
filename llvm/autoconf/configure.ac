@@ -30,6 +30,11 @@ then
 	fi
 fi
 
+if test -d ${srcdir}/projects/sample
+then
+  AC_CONFIG_SUBDIRS(projects/sample)
+fi
+
 if test -d ${srcdir}/projects/reopt
 then
   AC_CONFIG_SUBDIRS(projects/reopt)
@@ -206,13 +211,6 @@ AC_CONFIG_MAKEFILE(utils/Burg/Makefile)
 AC_CONFIG_MAKEFILE(utils/Burg/Doc/Makefile)
 AC_CONFIG_MAKEFILE(utils/TableGen/Makefile)
 AC_CONFIG_MAKEFILE(projects/Makefile)
-AC_CONFIG_MAKEFILE(projects/sample/Makefile)
-AC_CONFIG_MAKEFILE(projects/sample/Makefile.common)
-AC_CONFIG_MAKEFILE(projects/sample/Makefile.config)
-AC_CONFIG_MAKEFILE(projects/sample/lib/Makefile)
-AC_CONFIG_MAKEFILE(projects/sample/lib/sample/Makefile)
-AC_CONFIG_MAKEFILE(projects/sample/tools/Makefile)
-AC_CONFIG_MAKEFILE(projects/sample/tools/sample/Makefile)
 AC_CONFIG_MAKEFILE(projects/ModuleMaker/Makefile)
 AC_CONFIG_MAKEFILE(projects/ModuleMaker/Makefile.common)
 AC_CONFIG_MAKEFILE(projects/ModuleMaker/tools/Makefile)
