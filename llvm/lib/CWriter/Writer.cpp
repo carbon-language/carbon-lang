@@ -572,9 +572,13 @@ bool CWriter::nameAllUsedStructureTypes(Module &M) {
   return Changed;
 }
 
-static void generateAllocaDecl(std::ostream& Out) {
-  // On SunOS, we need to insert the alloca macro & proto for the builtin.
-  Out << "#ifdef sun\n"
+// generateCompilerSpecificCode - This is where we add conditional compilation
+// directives to cater to specific compilers as need be.
+//
+static void generateCompilerSpecificCode(std::ostream& Out) {
+  // Alloca is hard to get, and we don't want to include stdlib.h here...
+  Out << "/* get a declaration for alloca */\n"
+      << "#ifdef sun\n"
       << "extern void *__builtin_alloca(unsigned long);\n"
       << "#define alloca(x) __builtin_alloca(x)\n"
       << "#else\n"
@@ -582,6 +586,12 @@ static void generateAllocaDecl(std::ostream& Out) {
       << "#include <alloca.h>\n"
       << "#endif\n"
       << "#endif\n\n";
+
+  // We output GCC specific attributes to preserve 'linkonce'ness on globals.
+  // If we aren't being compiled with GCC, just drop these attributes.
+  Out << "#ifndef __GNUC__\n"
+      << "#define __attribute__(X)\n"
+      << "#endif\n";
 }
 
 void CWriter::printModule(Module *M) {
@@ -606,9 +616,9 @@ void CWriter::printModule(Module *M) {
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
-  generateAllocaDecl(Out);
   Out << "#include <stdarg.h>\n";
   Out << "#include <setjmp.h>\n";
+  generateCompilerSpecificCode(Out);
   
   // Provide a definition for `bool' if not compiling with a C++ compiler.
   Out << "\n"
