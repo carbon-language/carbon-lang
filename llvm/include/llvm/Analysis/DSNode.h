@@ -126,13 +126,19 @@ public:
   }
 
   DSNodeHandle *getLink(unsigned i) {
-    if (hasLink(i))
+    if (hasLink(i)) {
+      assert((unsigned)MergeMap[i] < Links.size() &&
+             "MergeMap references Link that doesn't exist!");
       return &Links[MergeMap[i]];
+    }
     return 0;
   }
   const DSNodeHandle *getLink(unsigned i) const {
-    if (hasLink(i))
+    if (hasLink(i)) {
+      assert((unsigned)MergeMap[i] < Links.size() &&
+             "MergeMap references Link that doesn't exist!");
       return &Links[MergeMap[i]];
+    }
     return 0;
   }
 
@@ -226,6 +232,8 @@ private:
   ///
   void rewriteMergeMap(signed char From, signed char To) {
     assert(From != To && "Cannot change something into itself!");
+    assert(To < (int)Links.size() &&
+           "Changing MergeMap entry to an illegal entry!");
     for (unsigned i = 0, e = MergeMap.size(); i != e; ++i)
       if (MergeMap[i] == From)
         MergeMap[i] = To;
