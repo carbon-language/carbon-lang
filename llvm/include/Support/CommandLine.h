@@ -173,6 +173,7 @@ public:
   // occurances of -ArgStr on the command line.
   //
   void addArgument(const char *ArgStr);
+  void removeArgument(const char *ArgStr);
 
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth() const = 0;
@@ -255,8 +256,8 @@ LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
 //===----------------------------------------------------------------------===//
 // Enum valued command line option
 //
-#define clEnumVal(ENUMVAL, DESC) #ENUMVAL, ENUMVAL, DESC
-#define clEnumValN(ENUMVAL, FLAGNAME, DESC) FLAGNAME, ENUMVAL, DESC
+#define clEnumVal(ENUMVAL, DESC) #ENUMVAL, (int)ENUMVAL, DESC
+#define clEnumValN(ENUMVAL, FLAGNAME, DESC) FLAGNAME, (int)ENUMVAL, DESC
 
 // values - For custom data types, allow specifying a group of values together
 // as the values that go into the mapping that the option handler uses.  Note
@@ -278,7 +279,7 @@ public:
 
     // Process the varargs portion of the values...
     while (const char *EnumName = va_arg(ValueArgs, const char *)) {
-      DataType EnumVal = va_arg(ValueArgs, DataType);
+      DataType EnumVal = (DataType)va_arg(ValueArgs, int);
       const char *EnumDesc = va_arg(ValueArgs, const char *);
       Values.push_back(std::make_pair(EnumName,      // Add value to value map
                                       std::make_pair(EnumVal, EnumDesc)));
