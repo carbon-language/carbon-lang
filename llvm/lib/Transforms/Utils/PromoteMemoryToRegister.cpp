@@ -13,7 +13,9 @@
 // Currently this just loops over all alloca instructions, looking for
 // instructions that are only used in simple load and stores.
 //
-// After this, the code is transformed by...something magical :)
+// After this, the code is transformed by looping over all of the alloca
+// instruction, calculating dominator frontiers, then inserting phi-nodes
+// following the usual SSA construction algorithm.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,23 +29,20 @@
 #include "llvm/Type.h"
 #include "Support/Statistic.h"
 
-using std::vector;
-using std::map;
-using std::set;
-
 namespace {
   Statistic<> NumPromoted("mem2reg", "Number of alloca's promoted");
 
   struct PromotePass : public FunctionPass {
-    vector<AllocaInst*>          Allocas;      // the alloca instruction..
-    map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
+    std::vector<AllocaInst*>          Allocas;      // the alloca instruction..
+    std::map<Instruction*, unsigned>  AllocaLookup; // reverse mapping of above
     
-    vector<vector<BasicBlock*> > PhiNodes;     // index corresponds to Allocas
+    std::vector<std::vector<BasicBlock*> > PhiNodes;// Idx corresponds 2 Allocas
     
     // List of instructions to remove at end of pass
-    vector<Instruction *>        KillList;
+    std::vector<Instruction *>        KillList;
     
-    map<BasicBlock*,vector<PHINode*> > NewPhiNodes; // the PhiNodes we're adding
+    std::map<BasicBlock*,
+             std::vector<PHINode*> >  NewPhiNodes; // the PhiNodes we're adding
 
   public:
     // runOnFunction - To run this pass, first we calculate the alloca
@@ -59,8 +58,9 @@ namespace {
     }
 
   private:
-    void Traverse(BasicBlock *BB, BasicBlock *Pred, vector<Value*> &IncVals,
-                  set<BasicBlock*> &Visited);
+    void RenamePass(BasicBlock *BB, BasicBlock *Pred,
+                    std::vector<Value*> &IncVals,
+                    std::set<BasicBlock*> &Visited);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx);
     void FindSafeAllocas(Function &F);
   };
@@ -95,7 +95,7 @@ void PromotePass::FindSafeAllocas(Function &F) {
   BasicBlock &BB = F.getEntryNode();  // Get the entry node for the function
 
   // Look at all instructions in the entry node
-  for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
+  for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(&*I))       // Is it an alloca?
       if (isSafeAlloca(AI)) {   // If safe alloca, add alloca to safe list
         AllocaLookup[AI] = Allocas.size();  // Keep reverse mapping
@@ -118,7 +118,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
   // Calculate the set of write-locations for each alloca.  This is analogous to
   // counting the number of 'redefinitions' of each variable.
-  vector<vector<BasicBlock*> > WriteSets;    // index corresponds to Allocas
+  std::vector<std::vector<BasicBlock*> > WriteSets;// Idx corresponds to Allocas
   WriteSets.resize(Allocas.size());
   for (unsigned i = 0; i != Allocas.size(); ++i) {
     AllocaInst *AI = Allocas[i];
@@ -159,15 +159,15 @@ bool PromotePass::runOnFunction(Function &F) {
   // the alloca's.  We do this in case there is a load of a value that has not
   // been stored yet.  In this case, it will get this null value.
   //
-  vector<Value *> Values(Allocas.size());
+  std::vector<Value *> Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
     Values[i] = Constant::getNullValue(Allocas[i]->getAllocatedType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  set<BasicBlock*> Visited;         // The basic blocks we've already visited
-  Traverse(F.begin(), 0, Values, Visited);
+  std::set<BasicBlock*> Visited;      // The basic blocks we've already visited
+  RenamePass(F.begin(), 0, Values, Visited);
 
   // Remove all instructions marked by being placed in the KillList...
   //
@@ -194,7 +194,7 @@ bool PromotePass::runOnFunction(Function &F) {
 //
 bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   // Look up the basic-block in question
-  vector<PHINode*> &BBPNs = NewPhiNodes[BB];
+  std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
 
   // If the BB already has a phi node added for the i'th alloca then we're done!
@@ -210,12 +210,12 @@ bool PromotePass::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo) {
   return true;
 }
 
-void PromotePass::Traverse(BasicBlock *BB, BasicBlock *Pred,
-                           vector<Value*> &IncomingVals,
-                           set<BasicBlock*> &Visited) {
+void PromotePass::RenamePass(BasicBlock *BB, BasicBlock *Pred,
+                             std::vector<Value*> &IncomingVals,
+                             std::set<BasicBlock*> &Visited) {
   // If this is a BB needing a phi node, lookup/create the phinode for each
   // variable we need phinodes for.
-  vector<PHINode *> &BBPNs = NewPhiNodes[BB];
+  std::vector<PHINode *> &BBPNs = NewPhiNodes[BB];
   for (unsigned k = 0; k != BBPNs.size(); ++k)
     if (PHINode *PN = BBPNs[k]) {
       // at this point we can assume that the array has phi nodes.. let's add
@@ -237,10 +237,8 @@ void PromotePass::Traverse(BasicBlock *BB, BasicBlock *Pred,
     Instruction *I = II; // get the instruction
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      Value *Ptr = LI->getPointerOperand();
-
-      if (AllocaInst *Src = dyn_cast<AllocaInst>(Ptr)) {
-        map<Instruction*, unsigned>::iterator AI = AllocaLookup.find(Src);
+      if (AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand())) {
+        std::map<Instruction*, unsigned>::iterator AI = AllocaLookup.find(Src);
         if (AI != AllocaLookup.end()) {
           Value *V = IncomingVals[AI->second];
 
@@ -250,11 +248,10 @@ void PromotePass::Traverse(BasicBlock *BB, BasicBlock *Pred,
         }
       }
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-      // delete this instruction and mark the name as the current holder of the
+      // Delete this instruction and mark the name as the current holder of the
       // value
-      Value *Ptr = SI->getPointerOperand();
-      if (AllocaInst *Dest = dyn_cast<AllocaInst>(Ptr)) {
-        map<Instruction *, unsigned>::iterator ai = AllocaLookup.find(Dest);
+      if (AllocaInst *Dest = dyn_cast<AllocaInst>(SI->getPointerOperand())) {
+        std::map<Instruction *, unsigned>::iterator ai =AllocaLookup.find(Dest);
         if (ai != AllocaLookup.end()) {
           // what value were we writing?
           IncomingVals[ai->second] = SI->getOperand(0);
@@ -265,8 +262,8 @@ void PromotePass::Traverse(BasicBlock *BB, BasicBlock *Pred,
     } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(I)) {
       // Recurse across our successors
       for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
-        vector<Value*> OutgoingVals(IncomingVals);
-        Traverse(TI->getSuccessor(i), BB, OutgoingVals, Visited);
+        std::vector<Value*> OutgoingVals(IncomingVals);
+        RenamePass(TI->getSuccessor(i), BB, OutgoingVals, Visited);
       }
     }
   }
