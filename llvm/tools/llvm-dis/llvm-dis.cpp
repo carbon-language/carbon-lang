@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
     sys::PrintStackTraceOnErrorSignal();
 
-    std::ostream *Out = &std::cout;  // Default to printing to stdout...
+    std::ostream *Out = &std::cout;  // Default to printing to stdout.
     std::string ErrorMessage;
 
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
@@ -98,8 +98,7 @@ int main(int argc, char **argv) {
       Out = &std::cout;
     }
 
-    // All that dis does is write the assembly or C out to a file...
-    //
+    // All that llvm-dis does is write the assembly to a file.
     PassManager Passes;
     Passes.add(new PrintModulePass(Out));
     Passes.run(*M.get());
