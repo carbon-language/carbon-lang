@@ -5,6 +5,9 @@
 
 .PHONY: clean default
 
+## keep %.linked.bc from being deleted
+.PRECIOUS: %.linked.bc
+
 
 TOOLS    = $(LEVEL)/tools/Debug
 
@@ -28,6 +31,7 @@ endif
 CC      = /opt/SUNWspro/bin/cc
 AS	= /opt/SUNWspro/bin/cc
 DIS     = /usr/ccs/bin/dis
+CP	= /bin/cp -p
 CFLAGS  = -g -xarch=v9
 CCFLAGS = $(CFLAGS)
 LDFLAGS = $(CFLAGS)
@@ -37,14 +41,19 @@ ASFLAGS = -c $(CFLAGS)
 ## 
 ifdef PROG
 
-default:    $(PROG).clean.bc $(PROG).native
-  #.SECONDARY: $(PROG).clean.bc	## keep %.clean.bc from being deleted
+  default:    $(PROG) $(PROG).native
 
-$(PROG).bc: $(OBJS)
-	$(LLINK) -f $(OBJS) -o $@
+  ifeq ($(strip $(OBJS)),)
+    BCOBJS = $(PROG).bc
+  else
+    BCOBJS = $(OBJS:.o=.bc)
+  endif
 
-$(PROG).native: $(OBJS:.o=.c)
-	gcc -o $@ $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall
+  $(PROG).linked.bc: $(BCOBJS)
+	$(LLINK) -f $(BCOBJS) -o $@
+
+  $(PROG).native: $(OBJS:.o=.c)
+	gcc $(OBJS:.o=.c) -O2 $(LOCAL_CFLAGS) -Wall -o $@
 endif
 
 ## Special target to force target-dependent library to be compiled
@@ -57,7 +66,7 @@ runtime.o: runtime.c
 	$(CC) -c $(CCFLAGS) $<
 
 clean :
-	rm -f *.[123] *.bc *.mc *.s *.o a.out core $(PROG) 
+	$(RM) *.[123] *.bc *.mc *.s *.o a.out core $(PROG) 
 
 %.mc: %.bc $(LLC) $(AS)
 	@echo "Generating machine instructions for $<"
@@ -66,32 +75,34 @@ clean :
 %.trace.bc: %.bc $(LLC)
 	$(LLC) -f -trace $(LLCFLAGS) $<
 
-%.o: %.c
-	$(LCC) $(LCFLAGS) $< -c -o $@
+## Leave this rule out to avoid problems in tests that have both .c and .ll
+## %.ll: %.c
+## 	$(LCC) $(LCFLAGS) -S $< -o $*.ll
+
+%.bc: %.c
+	$(LCC) $(LCFLAGS) -c $< -o $*.tmp.bc
+	$(LOPT) -cleangcc -raise -constprop -dce $*.tmp.bc -o $@
+	$(RM) $*.tmp.bc
 
 %.bc: %.ll
 	$(LAS) -f $<
 
-%.clean.bc: %.bc
-	$(LOPT) -cleangcc -raise -constprop -dce < $< > $@
+%.linked.bc: %.bc
+	$(CP) $< $@
 
-%.s: %.bc
-	$(LLC) -f $(LLCOPTS) $<
+%.s: %.linked.bc
+	$(LLC) -f $(LLCFLAGS) $< -o $@
 
 %: %.o $(LIBS)
-	$(CC) -o $@ $(LDFLAGS) $< $(LIBS)
+	$(CC) $(LDFLAGS) $< $(LIBS) -o $@
 
-## 
-## Use a single rule to go from %.bc to % to avoid ambiguity in
-## llvm bytecode files and native object code files, both named %.o
-## 
-%: %.clean.bc $(LIBS)
-	$(LLC) -f $(LLCFLAGS) -o $*.s $<
-	$(AS) $(ASFLAGS) $*.s
-	$(CC) -o $@ $(LDFLAGS) $*.o $(LIBS)
 
-## Cancel built-in implicit rule that overrides the above rule
+## Cancel built-in implicit rules that override above rules
 %: %.s
+
+%: %.c
+
+%.o: %.c
 
 ## The next two rules are for disassembling an executable or an object file
 %.dis: %
