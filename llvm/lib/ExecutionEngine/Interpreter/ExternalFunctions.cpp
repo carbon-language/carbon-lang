@@ -225,6 +225,12 @@ GenericValue lle_X_malloc(FunctionType *M, const vector<GenericValue> &Args) {
   return PTOGV(malloc(Args[0].UIntVal));
 }
 
+// void *calloc(uint, uint)
+GenericValue lle_X_calloc(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2 && "calloc expects two arguments!");
+  return PTOGV(calloc(Args[0].UIntVal, Args[1].UIntVal));
+}
+
 // void free(void *)
 GenericValue lle_X_free(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
@@ -526,6 +532,46 @@ GenericValue lle_i_clock(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+
+//===----------------------------------------------------------------------===//
+// String Functions...
+//===----------------------------------------------------------------------===//
+
+// int strcmp(const char *S1, const char *S2);
+GenericValue lle_X_strcmp(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
+  GenericValue Ret;
+  Ret.IntVal = strcmp((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]));
+  return Ret;
+}
+
+// char *strcat(char *Dest, const char *src);
+GenericValue lle_X_strcat(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
+  return PTOGV(strcat((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1])));
+}
+
+// char *strcpy(char *Dest, const char *src);
+GenericValue lle_X_strcpy(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 2);
+  return PTOGV(strcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1])));
+}
+
+// long strlen(const char *src);
+GenericValue lle_X_strlen(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue Ret;
+  Ret.LongVal = strlen((char*)GVTOP(Args[0]));
+  return Ret;
+}
+
+// void *memset(void *S, int C, size_t N)
+GenericValue lle_X_memset(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 3);
+  return PTOGV(memset(GVTOP(Args[0]), Args[1].IntVal, Args[2].UIntVal));
+}
+
+
 //===----------------------------------------------------------------------===//
 // IO Functions...
 //===----------------------------------------------------------------------===//
@@ -727,6 +773,7 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_abort"]        = lle_X_abort;
   FuncNames["lle_X_malloc"]       = lle_X_malloc;
+  FuncNames["lle_X_calloc"]       = lle_X_calloc;
   FuncNames["lle_X_free"]         = lle_X_free;
   FuncNames["lle_X_atoi"]         = lle_X_atoi;
   FuncNames["lle_X_pow"]          = lle_X_pow;
@@ -745,6 +792,13 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_sscanf"]       = lle_X_sscanf;
   FuncNames["lle_X_scanf"]        = lle_X_scanf;
   FuncNames["lle_i_clock"]        = lle_i_clock;
+
+  FuncNames["lle_X_strcmp"]       = lle_X_strcmp;
+  FuncNames["lle_X_strcat"]       = lle_X_strcat;
+  FuncNames["lle_X_strcpy"]       = lle_X_strcpy;
+  FuncNames["lle_X_strlen"]       = lle_X_strlen;
+  FuncNames["lle_X_memset"]       = lle_X_memset;
+
   FuncNames["lle_X_fopen"]        = lle_X_fopen;
   FuncNames["lle_X_fclose"]       = lle_X_fclose;
   FuncNames["lle_X_feof"]         = lle_X_feof;
