@@ -1,4 +1,13 @@
+# Libraries Makefile:  Build all subdirectories automatically
 
-all::
+LEVEL = ../..
+DIRS  := $(sort $(filter-out Output/, $(filter-out CVS/, $(wildcard */))))
+
+include ${LEVEL}/Makefile.common
+
+# Install target for libraries: Copy into the gcc install directory in chris's
+# tree...
+#
+install::
 
 clean::
