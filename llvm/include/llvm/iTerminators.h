@@ -78,11 +78,13 @@ public:
   inline bool isUnconditional() const { return Operands.size() == 1; }
   inline bool isConditional()   const { return Operands.size() == 3; }
 
-  inline const Value *getCondition() const {
-    return isUnconditional() ? 0 : Operands[2].get();
+  inline Value *getCondition() const {
+    return isUnconditional() ? 0 : (Value*)Operands[2].get();
   }
-  Value *getCondition() {
-    return isUnconditional() ? 0 : Operands[2].get();
+
+  void setCondition(Value *V) {
+    assert(isConditional() && "Cannot set condition of unconditional branch!");
+    setOperand(2, V);
   }
 
   // setUnconditionalDest - Change the current branch to an unconditional branch
