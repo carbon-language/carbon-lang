@@ -199,11 +199,6 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
 /// generation for the UltraSparcV9.
 ///
 void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  const TargetData &TD = TM.getTargetData();
-
-  PM.add(new TargetData("lli", TD.isLittleEndian(), TD.getPointerSize(),
-                        TD.getPointerAlignment(), TD.getDoubleAlignment()));
-
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
   
