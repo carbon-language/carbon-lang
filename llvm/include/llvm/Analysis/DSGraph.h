@@ -209,6 +209,18 @@ public:
   ///
   void mergeWith(const DSNodeHandle &NH, unsigned Offset);
 
+  /// mergeIndexes - If we discover that two indexes are equivalent and must be
+  /// merged, this function is used to do the dirty work.
+  ///
+  void mergeIndexes(unsigned idx1, unsigned idx2) {
+    assert(idx1 < getSize() && idx2 < getSize() && "Indexes out of range!");
+    signed char MV1 = MergeMap[idx1];
+    signed char MV2 = MergeMap[idx2];
+    if (MV1 != MV2)
+      mergeMappedValues(MV1, MV2);
+  }
+
+
   /// addGlobal - Add an entry for a global value to the Globals list.  This
   /// also marks the node with the 'G' flag if it does not already have it.
   ///
