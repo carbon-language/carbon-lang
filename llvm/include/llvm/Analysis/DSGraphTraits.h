@@ -115,13 +115,12 @@ template <> struct GraphTraits<DSGraph*> {
   typedef std::pointer_to_unary_function<DSNode *, DSNode&> DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef mapped_iterator<std::vector<DSNode*>::iterator,
-                          DerefFun> nodes_iterator;
+  typedef mapped_iterator<DSGraph::node_iterator, DerefFun> nodes_iterator;
   static nodes_iterator nodes_begin(DSGraph *G) {
-    return map_iterator(G->getNodes().begin(), DerefFun(dereference));
+    return map_iterator(G->node_begin(), DerefFun(dereference));
   }
   static nodes_iterator nodes_end(DSGraph *G) {
-    return map_iterator(G->getNodes().end(), DerefFun(dereference));
+    return map_iterator(G->node_end(), DerefFun(dereference));
   }
 
   static ChildIteratorType child_begin(NodeType *N) { return N->begin(); }
@@ -135,13 +134,12 @@ template <> struct GraphTraits<const DSGraph*> {
   typedef std::pointer_to_unary_function<const DSNode *,const DSNode&> DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  typedef mapped_iterator<std::vector<DSNode*>::const_iterator,
-                          DerefFun> nodes_iterator;
+  typedef mapped_iterator<DSGraph::node_iterator, DerefFun> nodes_iterator;
   static nodes_iterator nodes_begin(const DSGraph *G) {
-    return map_iterator(G->getNodes().begin(), DerefFun(dereferenceC));
+    return map_iterator(G->node_begin(), DerefFun(dereferenceC));
   }
   static nodes_iterator nodes_end(const DSGraph *G) {
-    return map_iterator(G->getNodes().end(), DerefFun(dereferenceC));
+    return map_iterator(G->node_end(), DerefFun(dereferenceC));
   }
 
   static ChildIteratorType child_begin(const NodeType *N) { return N->begin(); }

@@ -92,6 +92,7 @@ struct DSGraph {
   typedef DSScalarMap ScalarMapTy;
   typedef hash_map<Function*, DSNodeHandle> ReturnNodesTy;
   typedef hash_set<GlobalValue*> GlobalSetTy;
+  typedef std::vector<DSNode*> NodeListTy;
 
   /// NodeMapTy - This data type is used when cloning one graph into another to
   /// keep track of the correspondence between the nodes in the old and new
@@ -101,7 +102,7 @@ private:
   DSGraph *GlobalsGraph;   // Pointer to the common graph of global objects
   bool PrintAuxCalls;      // Should this graph print the Aux calls vector?
 
-  std::vector<DSNode*> Nodes;
+  NodeListTy Nodes;
   ScalarMapTy ScalarMap;
 
   // ReturnNodes - A return value for every function merged into this graph.
@@ -170,8 +171,9 @@ public:
 
   /// getNodes - Get a vector of all the nodes in the graph
   /// 
-  const std::vector<DSNode*> &getNodes() const { return Nodes; }
-        std::vector<DSNode*> &getNodes()       { return Nodes; }
+  typedef NodeListTy::const_iterator node_iterator;
+  node_iterator node_begin() const { return Nodes.begin(); }
+  node_iterator node_end()   const { return Nodes.end(); }
 
   /// getFunctionNames - Return a space separated list of the name of the
   /// functions in this graph (if any)
