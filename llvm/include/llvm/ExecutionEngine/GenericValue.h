@@ -33,6 +33,7 @@ union GenericValue {
   int64_t         LongVal;
   double          DoubleVal;
   float           FloatVal;
+  struct { unsigned int first; unsigned int second; } UIntPairVal;
   PointerTy       PointerVal;
   unsigned char   Untyped[8];
 
