@@ -23,7 +23,7 @@ X86GenInstrInfo.inc: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-instr-desc -o $@
 
 X86GenInstrSelector.inc: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
-	$(TBLGEN) $< -gen-instr-selector -o $@
+	$(TBLGEN) $< -debug -gen-instr-selector -o $@
 
 clean::
 	$(VERB) rm -f *.inc

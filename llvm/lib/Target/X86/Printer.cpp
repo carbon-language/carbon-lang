@@ -3,7 +3,7 @@
 // This file contains a printer that converts from our internal
 // representation of machine-dependent LLVM code to Intel-format
 // assembly language. This printer is the output mechanism used
-// by `llc' and `lli -printmachineinstrs' on X86.
+// by `llc' and `lli -print-machineinstrs' on X86.
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,8 +20,14 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
 #include "Support/StringExtras.h"
+#include "Support/CommandLine.h"
 
 namespace {
+  // FIXME: This should be automatically picked up by autoconf from the C
+  // frontend
+  cl::opt<bool> EmitCygwin("enable-cygwin-compatible-output", cl::Hidden,
+         cl::desc("Emit X86 assembly code suitable for consumption by cygwin"));
+
   struct Printer : public MachineFunctionPass {
     /// Output stream on which we're printing assembly code.
     ///
@@ -399,7 +405,8 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   O << "\t.align 16\n";
   O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.type\t" << CurrentFnName << ", @function\n";
+  if (!EmitCygwin)
+    O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
   // Number each basic block so that we can consistently refer to them
@@ -455,10 +462,11 @@ void Printer::printOp(const MachineOperand &MO,
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
-    if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
+    if (MO.getReg() < MRegisterInfo::FirstVirtualRegister) {
       // Bug Workaround: See note in Printer::doInitialization about %.
-      O << "%" << RI.get(MO.getReg()).Name;
-    else
+      if (!EmitCygwin) O << "%";
+      O << RI.get(MO.getReg()).Name;
+    } else
       O << "%reg" << MO.getReg();
     return;
 
@@ -559,7 +567,7 @@ void Printer::checkImplUses (const TargetInstrDescriptor &Desc) {
   if (Desc.TSFlags & X86II::PrintImplUses) {
     for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
       // Bug Workaround: See note in Printer::doInitialization about %.
-      O << ", %" << RI.get(*p).Name;
+      O << ", " << (EmitCygwin ? "" : "%") << RI.get(*p).Name;
     }
   }
 }
@@ -903,20 +911,22 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
   }
 }
 
-bool Printer::doInitialization(Module &M)
-{
-  // Tell gas we are outputting Intel syntax (not AT&T syntax)
-  // assembly.
+bool Printer::doInitialization(Module &M) {
+  // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly.
   //
-  // Bug: gas in `intel_syntax noprefix' mode interprets the symbol
-  // `Sp' in an instruction as a reference to the register named sp,
-  // and if you try to reference a symbol `Sp' (e.g. `mov ECX, OFFSET
-  // Sp') then it gets lowercased before being looked up in the symbol
-  // table. This creates spurious `undefined symbol' errors when
-  // linking. Workaround: Do not use `noprefix' mode, and decorate all
-  // register names with percent signs.
-  O << "\t.intel_syntax\n";
-  Mang = new Mangler(M);
+  // Bug: gas in `intel_syntax noprefix' mode interprets the symbol `Sp' in an
+  // instruction as a reference to the register named sp, and if you try to
+  // reference a symbol `Sp' (e.g. `mov ECX, OFFSET Sp') then it gets lowercased
+  // before being looked up in the symbol table. This creates spurious
+  // `undefined symbol' errors when linking. Workaround: Do not use `noprefix'
+  // mode, and decorate all register names with percent signs.
+  //
+  // Cygwin presumably doesn't have this problem, so drop the %'s.
+  //
+  O << "\t.intel_syntax";
+  if (EmitCygwin) O << " noprefix";
+  O << "\n";
+  Mang = new Mangler(M, EmitCygwin);
   return false; // success
 }
 
