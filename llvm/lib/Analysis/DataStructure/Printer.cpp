@@ -68,14 +68,9 @@ template<>
 struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
   static std::string getGraphName(const DSGraph *G) {
     switch (G->getReturnNodes().size()) {
-    case 0: return "Global graph";
-    case 1: return "Function " + G->getReturnNodes().begin()->first->getName();
-    default:
-      std::string Return = "Functions: ";
-      for (DSGraph::ReturnNodesTy::const_iterator I=G->getReturnNodes().begin();
-           I != G->getReturnNodes().end(); ++I)
-        Return += I->first->getName() + " ";
-      return Return;
+    case 0: return G->getFunctionNames();
+    case 1: return "Function " + G->getFunctionNames();
+    default: return "Functions: " + G->getFunctionNames();
     }
   }
 
