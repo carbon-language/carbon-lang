@@ -25,4 +25,13 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
   return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(0);
 }
 
+
+/// addRegOffset -
+/// 
+///
+inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
+                                               unsigned Reg, unsigned Offset) {
+  return MIB.addReg(Reg).addZImm(1).addMReg(0).addSImm(Offset);
+}
+
 #endif
