@@ -12,8 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Bytecode/Reader.h"
-#include "ReaderInternals.h"
+#include "Reader.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "Support/FileUtilities.h"
@@ -29,7 +30,7 @@ using namespace llvm;
 namespace {
   /// BytecodeFileReader - parses a bytecode file from a file
   ///
-  class BytecodeFileReader : public BytecodeParser {
+  class BytecodeFileReader : public BytecodeReader {
   private:
     unsigned char *Buffer;
     unsigned Length;
@@ -38,7 +39,7 @@ namespace {
     void operator=(const BytecodeFileReader &BFR); // Do not implement
 
   public:
-    BytecodeFileReader(const std::string &Filename);
+    BytecodeFileReader(const std::string &Filename, llvm::BytecodeHandler* H=0);
     ~BytecodeFileReader();
   };
 }
@@ -47,7 +48,10 @@ static std::string ErrnoMessage (int savedErrNum, std::string descr) {
    return ::strerror(savedErrNum) + std::string(", while trying to ") + descr;
 }
 
-BytecodeFileReader::BytecodeFileReader(const std::string &Filename) {
+BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
+                                       llvm::BytecodeHandler* H ) 
+  : BytecodeReader(H)
+{
   Buffer = (unsigned char*)ReadFileIntoAddressSpace(Filename, Length);
   if (Buffer == 0)
     throw "Error reading file '" + Filename + "'.";
@@ -73,7 +77,7 @@ BytecodeFileReader::~BytecodeFileReader() {
 namespace {
   /// BytecodeBufferReader - parses a bytecode file from a buffer
   ///
-  class BytecodeBufferReader : public BytecodeParser {
+  class BytecodeBufferReader : public BytecodeReader {
   private:
     const unsigned char *Buffer;
     bool MustDelete;
@@ -83,7 +87,8 @@ namespace {
 
   public:
     BytecodeBufferReader(const unsigned char *Buf, unsigned Length,
-                         const std::string &ModuleID);
+                         const std::string &ModuleID,
+			 llvm::BytecodeHandler* Handler = 0);
     ~BytecodeBufferReader();
 
   };
@@ -91,7 +96,9 @@ namespace {
 
 BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
                                            unsigned Length,
-                                           const std::string &ModuleID)
+                                           const std::string &ModuleID,
+					   llvm::BytecodeHandler* H )
+  : BytecodeReader(H)
 {
   // If not aligned, allocate a new buffer to hold the bytecode...
   const unsigned char *ParseBegin = 0;
@@ -125,7 +132,7 @@ BytecodeBufferReader::~BytecodeBufferReader() {
 namespace {
   /// BytecodeStdinReader - parses a bytecode file from stdin
   /// 
-  class BytecodeStdinReader : public BytecodeParser {
+  class BytecodeStdinReader : public BytecodeReader {
   private:
     std::vector<unsigned char> FileData;
     unsigned char *FileBuf;
@@ -134,11 +141,13 @@ namespace {
     void operator=(const BytecodeStdinReader &BFR);  // Do not implement
 
   public:
-    BytecodeStdinReader();
+    BytecodeStdinReader( llvm::BytecodeHandler* H = 0 );
   };
 }
 
-BytecodeStdinReader::BytecodeStdinReader() {
+BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H ) 
+  : BytecodeReader(H)
+{
   int BlockSize;
   unsigned char Buffer[4096*4];
 
@@ -238,8 +247,10 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
 ModuleProvider* 
 llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                       unsigned Length,
-                                      const std::string &ModuleID) {
-  return CheckVarargs(new BytecodeBufferReader(Buffer, Length, ModuleID));
+                                      const std::string &ModuleID,
+				      BytecodeHandler* H ) {
+  return CheckVarargs(
+      new BytecodeBufferReader(Buffer, Length, ModuleID, H));
 }
 
 /// ParseBytecodeBuffer - Parse a given bytecode buffer
@@ -259,11 +270,12 @@ Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
 
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
-ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename) {
+ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename,
+					        BytecodeHandler* H) {
   if (Filename != std::string("-"))        // Read from a file...
-    return CheckVarargs(new BytecodeFileReader(Filename));
+    return CheckVarargs(new BytecodeFileReader(Filename,H));
   else                                     // Read from stdin
-    return CheckVarargs(new BytecodeStdinReader());
+    return CheckVarargs(new BytecodeStdinReader(H));
 }
 
 /// ParseBytecodeFile - Parse the given bytecode file
@@ -279,3 +291,44 @@ Module *llvm::ParseBytecodeFile(const std::string &Filename,
   }
 }
 
+namespace llvm {
+extern BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca );
+}
+
+// AnalyzeBytecodeFile - analyze one file
+Module* llvm::AnalyzeBytecodeFile(const std::string &Filename, 
+                               BytecodeAnalysis& bca,
+                               std::string *ErrorStr) 
+{
+  try {
+    BytecodeHandler* analyzerHandler = createBytecodeAnalyzerHandler(bca);
+    std::auto_ptr<ModuleProvider> AMP(
+      getBytecodeModuleProvider(Filename,analyzerHandler));
+    return AMP->releaseModule();
+  } catch (std::string &err) {
+    if (ErrorStr) *ErrorStr = err;
+    return 0;
+  }
+}
+
+// AnalyzeBytecodeBuffer - analyze a buffer
+Module* llvm::AnalyzeBytecodeBuffer(
+       const unsigned char* Buffer, ///< Pointer to start of bytecode buffer
+       unsigned Length,             ///< Size of the bytecode buffer
+       const std::string& ModuleID, ///< Identifier for the module
+       BytecodeAnalysis& bca,       ///< The results of the analysis
+       std::string* ErrorStr        ///< Errors, if any.
+     ) 
+{
+  try {
+    BytecodeHandler* hdlr = createBytecodeAnalyzerHandler(bca);
+    std::auto_ptr<ModuleProvider>
+      AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, hdlr));
+    return AMP->releaseModule();
+  } catch (std::string &err) {
+    if (ErrorStr) *ErrorStr = err;
+    return 0;
+  }
+}
+
+// vim: sw=2 ai
