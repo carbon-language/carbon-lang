@@ -18913,7 +18913,8 @@ fi
 
 
 
-for ac_header in fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h
+
+for ac_header in fcntl.h limits.h sys/time.h unistd.h malloc.h sys/mman.h sys/resource.h dlfcn.h link.h execinfo.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -21449,7 +21450,8 @@ _ACEOF
 
 
 
-for ac_func in getcwd gettimeofday strdup strtoq strtoll
+
+for ac_func in getcwd gettimeofday strdup strtoq strtoll backtrace
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
