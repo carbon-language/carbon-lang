@@ -12,8 +12,9 @@
 #include "Support/STLExtras.h"
 #include "Support/TypeInfo.h"
 #include <typeinfo>
-#include <sys/time.h>
 #include <stdio.h>
+#include <sys/resource.h>
+#include <sys/unistd.h>
 
 //===----------------------------------------------------------------------===//
 //   AnalysisID Class Implementation
@@ -75,11 +76,65 @@ static cl::opt<bool>
 EnableTiming("time-passes",
             cl::desc("Time each pass, printing elapsed time for each on exit"));
 
-static double getTime() {
+static TimeRecord getTimeRecord() {
+  static unsigned long PageSize = 0;
+
+  if (PageSize == 0) {
+#ifdef _SC_PAGE_SIZE
+    PageSize = sysconf(_SC_PAGE_SIZE);
+#else
+#ifdef _SC_PAGESIZE
+    PageSize = sysconf(_SC_PAGESIZE);
+#else
+    PageSize = getpagesize();
+#endif
+#endif
+  }
+
+  struct rusage RU;
   struct timeval T;
   gettimeofday(&T, 0);
-  return T.tv_sec + T.tv_usec/1000000.0;
+  if (getrusage(RUSAGE_SELF, &RU)) {
+    perror("getrusage call failed: -time-passes info incorrect!");
+  }
+
+  TimeRecord Result;
+  Result.Elapsed    =           T.tv_sec +           T.tv_usec/1000000.0;
+  Result.UserTime   = RU.ru_utime.tv_sec + RU.ru_utime.tv_usec/1000000.0;
+  Result.SystemTime = RU.ru_stime.tv_sec + RU.ru_stime.tv_usec/1000000.0;
+  Result.MaxRSS = RU.ru_maxrss*PageSize;
+
+  return Result;
 }
+
+void TimeRecord::passStart(const TimeRecord &T) {
+  Elapsed    -= T.Elapsed;
+  UserTime   -= T.UserTime;
+  SystemTime -= T.SystemTime;
+  RSSTemp     = T.MaxRSS;
+}
+
+void TimeRecord::passEnd(const TimeRecord &T) {
+  Elapsed    += T.Elapsed;
+  UserTime   += T.UserTime;
+  SystemTime += T.SystemTime;
+  RSSTemp     = T.MaxRSS - RSSTemp;
+  MaxRSS      = std::max(MaxRSS, RSSTemp);
+}
+
+void TimeRecord::print(const char *PassName, const TimeRecord &Total) const {
+  fprintf(stderr, 
+          "  %7.4f (%5.1f%%)  %7.4f (%5.1f%%)  %7.4f (%5.1f%%)  %7.4f (%5.1f%%)  ",
+          UserTime  , UserTime  *100/Total.UserTime,
+          SystemTime, SystemTime*100/Total.SystemTime,
+          UserTime+SystemTime, (UserTime+SystemTime)*100/(Total.UserTime+Total.SystemTime),
+          Elapsed   , Elapsed   *100/Total.Elapsed);
+
+  if (Total.MaxRSS)
+    std::cerr << MaxRSS << "\t";
+  std::cerr << PassName << "\n";
+}
+
 
 // Create method.  If Timing is enabled, this creates and returns a new timing
 // object, otherwise it returns null.
@@ -88,40 +143,55 @@ TimingInfo *TimingInfo::create() {
   return EnableTiming ? new TimingInfo() : 0;
 }
 
-void TimingInfo::passStarted(Pass *P) { TimingData[P] -= getTime(); }
-void TimingInfo::passEnded(Pass *P) { TimingData[P] += getTime(); }
+void TimingInfo::passStarted(Pass *P) {
+  TimingData[P].passStart(getTimeRecord());
+}
+void TimingInfo::passEnded(Pass *P) {
+  TimingData[P].passEnd(getTimeRecord());
+}
+void TimeRecord::sum(const TimeRecord &TR) {
+  Elapsed    += TR.Elapsed;
+  UserTime   += TR.UserTime;
+  SystemTime += TR.SystemTime;
+  MaxRSS     += TR.MaxRSS;
+}
 
 // TimingDtor - Print out information about timing information
 TimingInfo::~TimingInfo() {
   // Iterate over all of the data, converting it into the dual of the data map,
   // so that the data is sorted by amount of time taken, instead of pointer.
   //
-  std::vector<std::pair<double, Pass*> > Data;
-  double TotalTime = 0;
-  for (std::map<Pass*, double>::iterator I = TimingData.begin(),
+  std::vector<std::pair<TimeRecord, Pass*> > Data;
+  TimeRecord Total;
+  for (std::map<Pass*, TimeRecord>::iterator I = TimingData.begin(),
          E = TimingData.end(); I != E; ++I)
     // Throw out results for "grouping" pass managers...
     if (!dynamic_cast<AnalysisResolver*>(I->first)) {
       Data.push_back(std::make_pair(I->second, I->first));
-      TotalTime += I->second;
+      Total.sum(I->second);
     }
   
   // Sort the data by time as the primary key, in reverse order...
-  std::sort(Data.begin(), Data.end(), std::greater<std::pair<double, Pass*> >());
+  std::sort(Data.begin(), Data.end(),
+            std::greater<std::pair<TimeRecord, Pass*> >());
 
   // Print out timing header...
   std::cerr << std::string(79, '=') << "\n"
-       << "                      ... Pass execution timing report ...\n"
-       << std::string(79, '=') << "\n  Total Execution Time: " << TotalTime
-       << " seconds\n\n  % Time: Seconds:\tPass Name:\n";
+            << "                      ... Pass execution timing report ...\n"
+            << std::string(79, '=') << "\n  Total Execution Time: "
+            << (Total.UserTime+Total.SystemTime) << " seconds ("
+            << Total.Elapsed << " wall clock)\n\n   ---User Time---   "
+            << "--System Time--   --User+System--   ---Wall Time---";
+
+  if (Total.MaxRSS)
+    std::cerr << " ---Mem---";
+  std::cerr << "  --- Pass Name ---\n";
 
   // Loop through all of the timing data, printing it out...
-  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
-    fprintf(stderr, "  %6.2f%% %fs\t%s\n", Data[i].first*100 / TotalTime,
-            Data[i].first, Data[i].second->getPassName());
-  }
-  std::cerr << "  100.00% " << TotalTime << "s\tTOTAL\n"
-       << std::string(79, '=') << "\n";
+  for (unsigned i = 0, e = Data.size(); i != e; ++i)
+    Data[i].first.print(Data[i].second->getPassName(), Total);
+
+  Total.print("TOTAL", Total);
 }
 
 

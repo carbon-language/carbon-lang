@@ -74,8 +74,26 @@ struct PMDebug {
 // amount of time each pass takes to execute.  This only happens when
 // -time-passes is enabled on the command line.
 //
+struct TimeRecord {      // TimeRecord - Data we collect and print for each pass
+  double Elapsed;        // Wall clock time elapsed in seconds
+  double UserTime;       // User time elapsed
+  double SystemTime;     // System time elapsed
+  unsigned long MaxRSS;  // Maximum resident set size (in bytes)
+  unsigned long RSSTemp; // Temp for calculating maxrss
+
+  TimeRecord() : Elapsed(0), UserTime(0), SystemTime(0), MaxRSS(0) {}
+  void passStart(const TimeRecord &T);
+  void passEnd(const TimeRecord &T);
+  void sum(const TimeRecord &TR);
+  bool operator<(const TimeRecord &TR) const {
+    return UserTime+SystemTime < TR.UserTime+TR.SystemTime;
+  }
+
+  void print(const char *PassName, const TimeRecord &TotalTime) const;
+};
+
 class TimingInfo {
-  std::map<Pass*, double> TimingData;
+  std::map<Pass*, TimeRecord> TimingData;
   TimingInfo() {}   // Private ctor, must use create member
 public:
   // Create method.  If Timing is enabled, this creates and returns a new timing
