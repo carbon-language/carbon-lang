@@ -20,15 +20,11 @@
 #  llvmdo [-dirs "DIRNAMES..." PROGRAM ARGS...
 #
 # The -dirs argument allows you to specify the set of directories that are 
-# searched. By default, everything is searched
-# (excluding certain things), runs "wc -l" on them to get the number of lines in
-# each file and then sums up and prints the total with awk. 
-#
-# The script takes no arguments but does expect to be run from the top llvm
-# source directory.
-#
-# This script is
-# greps.
+# searched. By default, everything is searched. Note that you must use quotes
+# around the list of directory names. After that you simply specify whatever
+# program you want to run against each file and the arguments to give it. The
+# PROGRAM will be given the file name as its last argument.
+##===----------------------------------------------------------------------===##
 
 if test $# -lt 1 ; then
   echo "Usage: llvmdo [-dirs "DIRNAMES..."] PROGRAM ARGS...";
