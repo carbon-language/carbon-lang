@@ -18,6 +18,10 @@
 static RegisterOpt<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
 
+Pass *createUnifyFunctionExitNodesPass() {
+  return new UnifyFunctionExitNodes();
+}
+
 void UnifyFunctionExitNodes::getAnalysisUsage(AnalysisUsage &AU) const{
   // We preserve the non-critical-edgeness property
   AU.addPreservedID(BreakCriticalEdgesID);
@@ -34,15 +38,36 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // return.
   //
   std::vector<BasicBlock*> ReturningBlocks;
+  std::vector<BasicBlock*> UnwindingBlocks;
   for(Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (isa<ReturnInst>(I->getTerminator()))
       ReturningBlocks.push_back(I);
+    else if (isa<UnwindInst>(I->getTerminator()))
+      UnwindingBlocks.push_back(I);
 
+  // Handle unwinding blocks first...
+  if (UnwindingBlocks.empty()) {
+    UnwindBlock = 0;
+  } else if (UnwindingBlocks.size() == 1) {
+    UnwindBlock = UnwindingBlocks.front();
+  } else {
+    UnwindBlock = new BasicBlock("UnifiedUnwindBlock", &F);
+    UnwindBlock->getInstList().push_back(new UnwindInst());
+
+    for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(), 
+           E = UnwindingBlocks.end(); I != E; ++I) {
+      BasicBlock *BB = *I;
+      BB->getInstList().pop_back();  // Remove the return insn
+      BB->getInstList().push_back(new BranchInst(UnwindBlock));
+    }
+  }
+
+  // Now handle return blocks...
   if (ReturningBlocks.empty()) {
-    ExitNode = 0;
+    ReturnBlock = 0;
     return false;                          // No blocks return
   } else if (ReturningBlocks.size() == 1) {
-    ExitNode = ReturningBlocks.front();    // Already has a single return block
+    ReturnBlock = ReturningBlocks.front(); // Already has a single return block
     return false;
   }
 
@@ -50,7 +75,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // node (if the function returns a value), and convert all of the return 
   // instructions into unconditional branches.
   //
-  BasicBlock *NewRetBlock = new BasicBlock("UnifiedExitNode", &F);
+  BasicBlock *NewRetBlock = new BasicBlock("UnifiedReturnBlock", &F);
 
   PHINode *PN = 0;
   if (F.getReturnType() != Type::VoidTy) {
@@ -77,7 +102,6 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     BB->getInstList().pop_back();  // Remove the return insn
     BB->getInstList().push_back(new BranchInst(NewRetBlock));
   }
-  ExitNode = NewRetBlock;
-
+  ReturnBlock = NewRetBlock;
   return true;
 }

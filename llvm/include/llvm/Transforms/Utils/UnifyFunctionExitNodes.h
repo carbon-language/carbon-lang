@@ -1,9 +1,10 @@
-//===-- UnifyFunctionExitNodes.h - Ensure fn's have one return ---*- C++ -*--=//
+//===-- UnifyFunctionExitNodes.h - Ensure fn's have one return --*- C++ -*-===//
 //
-// This pass is used to ensure that functions have at most one return
-// instruction in them.  Additionally, it keeps track of which node is the new
-// exit node of the CFG.  If there are no exit nodes in the CFG, the getExitNode
-// method will return a null pointer.
+// This pass is used to ensure that functions have at most one return and one
+// unwind instruction in them.  Additionally, it keeps track of which node is
+// the new exit node of the CFG.  If there are no return or unwind instructions
+// in the function, the getReturnBlock/getUnwindBlock methods will return a null
+// pointer.
 //
 //===----------------------------------------------------------------------===//
 
@@ -13,22 +14,22 @@
 #include "llvm/Pass.h"
 
 struct UnifyFunctionExitNodes : public FunctionPass {
-  BasicBlock *ExitNode;
+  BasicBlock *ReturnBlock, *UnwindBlock;
 public:
-  UnifyFunctionExitNodes() : ExitNode(0) {}
+  UnifyFunctionExitNodes() : ReturnBlock(0), UnwindBlock(0) {}
 
   // We can preserve non-critical-edgeness when we unify function exit nodes
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
-  // getExitNode - Return the new single (or nonexistant) exit node of the CFG.
+  // getReturn|UnwindBlock - Return the new single (or nonexistant) return or
+  // unwind basic blocks in the CFG.
   //
-  BasicBlock *getExitNode() const { return ExitNode; }
+  BasicBlock *getReturnBlock() const { return ReturnBlock; }
+  BasicBlock *getUnwindBlock() const { return UnwindBlock; }
 
   virtual bool runOnFunction(Function &F);
 };
 
-static inline Pass *createUnifyFunctionExitNodesPass() {
-  return new UnifyFunctionExitNodes();
-}
+Pass *createUnifyFunctionExitNodesPass();
 
 #endif
