@@ -151,6 +151,9 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
 
             ResolveArguments(Call, FI, OldValMap);
 
+            if (Call[0])  // Handle the return value if present
+              RetVal->mergeWith(Call[0]);
+            
             // Merge global value nodes in the inlined graph with the global
             // value nodes in the current graph if there are duplicates.
             //
