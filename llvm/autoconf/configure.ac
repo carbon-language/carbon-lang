@@ -199,28 +199,6 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
 esac
 
-dnl Find the LLVM GCC-based C/C++ front end
-AC_ARG_WITH(llvmgccdir,
-  AS_HELP_STRING(--with-llvmgccdir,[Location of LLVM GCC front-end]),
-  AC_SUBST(LLVMGCCDIR,[$withval]))
-
-dnl Provide some defaults for LLVMGCC for UIUC environments.
-if test "x$LLVMGCCDIR" = x ; then
-  case "$llvm_cv_platform_type" in
-    Linux)
-      if test -d /home/vadve/lattner/local/x86/llvm-gcc ; then
-        AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/x86/llvm-gcc/])
-      fi
-      ;;
-    SunOS)
-      if test -d /home/vadve/lattner/local/sparc/llvm-gcc ; then
-        AC_SUBST(LLVMGCCDIR,[/home/vadve/lattner/local/sparc/llvm-gcc/])
-      fi
-      ;;
-  esac
-fi
-
-
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -242,6 +220,8 @@ AC_PATH_PROG(CP, [cp], [cp])
 AC_PATH_PROG(DATE, [date], [date])
 AC_PATH_PROG(FIND, [find], [find])
 AC_PATH_PROG(GREP, [grep], [grep])
+AC_PATH_PROG(LLVMGCC, [llvm-gcc], [llvm-gcc])
+AC_PATH_PROG(LLVMGXX, [llvm-g++], [llvm-g++])
 AC_PATH_PROG(MKDIR,[mkdir],[mkdir])
 AC_PATH_PROG(MV,   [mv],   [mv])
 AC_PATH_PROG(PAX,  [pax],  [pax])
@@ -450,21 +430,12 @@ dnl=== SECTION 9: Additional checks, variables, etc.
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-dnl Figure out if there's an executable llvm-gcc in the llvmgccdir.
-AC_CACHE_CHECK([for llvm-gcc],[llvm_cv_llvmgcc],
-[llvm_cv_llvmgcc='llvmgcc_not_found'
-if test -d "$LLVMGCCDIR" ; then
-  if test -x "$LLVMGCCDIR/bin/gcc" ; then
-    llvm_cv_llvmgcc="$LLVMGCCDIR/bin/gcc"
-  fi
-fi])
-
 dnl See if the llvmgcc executable can compile to LLVM assembly
 AC_CACHE_CHECK([whether llvm-gcc is sane],[llvm_cv_llvmgcc_sanity],
 [llvm_cv_llvmgcc_sanity="no"
-if test -x "$llvm_cv_llvmgcc" ; then
+if test -x "$LLVMGCC" ; then
   cp /dev/null conftest.c
-  "$llvm_cv_llvmgcc" -S -o - conftest.c | grep implementation > /dev/null 2>&1
+  "$LLVMGCC" -S -o - conftest.c | grep implementation > /dev/null 2>&1
   if test $? -eq 0 ; then
     llvm_cv_llvmgcc_sanity="yes"
   fi
@@ -473,11 +444,12 @@ fi])
 
 dnl Since we have a sane llvmgcc, identify it and its sub-tools 
 if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
-  AC_SUBST(LLVMGCC,"$llvm_cv_llvmgcc")
-  llvmcc1path=`"$llvm_cv_llvmgcc" --print-prog-name=cc1`
+  llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
   AC_SUBST(LLVMCC1,$llvmcc1path)
-  llvmcc1pluspath=`"$llvm_cv_llvmgcc" --print-prog-name=cc1plus`
+  llvmcc1pluspath=`"$LLVMGCC" --print-prog-name=cc1plus`
   AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
+  llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
+  AC_SUBST(LLVMGCCDIR,$llvmgccdir)
 fi
 
 dnl Propagate the shared library extension that the libltdl checks did to 
@@ -572,10 +544,9 @@ AC_OUTPUT
 
 dnl Warn loudly if llvm-gcc was not obviously working
 if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
- AC_MSG_WARN([***** llvm C/C++ front end was not found, or does not])
- AC_MSG_WARN([***** appear to be working.])
- AC_MSG_WARN([***** ])
- AC_MSG_WARN([***** Please check configure's --with-llvmgccdir option.])
- AC_MSG_WARN([***** Runtime libraries (in llvm/runtime) will not be built,])
- AC_MSG_WARN([***** but you should be able to build the llvm tools.])
+ AC_MSG_WARN([***** llvmgcc/llvmg++ was not found, or does not appear to be ])
+ AC_MSG_WARN([***** working. Please make sure you have llvmgcc and llvmg++ in])
+ AC_MSG_WARN([***** your path before configuring LLVM. The runtime libraries])
+ AC_MSG_WARN([***** (llvm/runtime) will not be built but you should be able to])
+ AC_MSG_WARN([***** build the llvm tools.])
 fi
