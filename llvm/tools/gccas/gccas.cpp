@@ -102,12 +102,12 @@ int main(int argc, char **argv) {
     // Parse the file now...
     M.reset(ParseAssemblyFile(InputFilename));
   } catch (const ParseException &E) {
-    cerr << E.getMessage() << "\n";
+    cerr << argv[0] << ": " << E.getMessage() << "\n";
     return 1;
   }
 
   if (M.get() == 0) {
-    cerr << "assembly didn't read correctly.\n";
+    cerr << argv[0] << ": assembly didn't read correctly.\n";
     return 1;
   }
   
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 
   std::ofstream Out(OutputFilename.c_str(), std::ios::out);
   if (!Out.good()) {
-    cerr << "Error opening " << OutputFilename << "!\n";
+    cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
     return 1;
   }
 

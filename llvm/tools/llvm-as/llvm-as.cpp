@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     // Parse the file now...
     std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename));
     if (M.get() == 0) {
-      cerr << "assembly didn't read correctly.\n";
+      cerr << argv[0] << ": assembly didn't read correctly.\n";
       return 1;
     }
   
@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
     if (OutputFilename != "") {   // Specified an output filename?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+        cerr << argv[0] << ": error opening '" << OutputFilename
+             << "': file exists!\n"
              << "Use -f command line argument to force output\n";
         return 1;
       }
@@ -71,7 +72,8 @@ int main(int argc, char **argv) {
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+          cerr << argv[0] << ": error opening '" << OutputFilename
+               << "': file exists!\n"
                << "Use -f command line argument to force output\n";
           return 1;
         }
@@ -84,13 +86,13 @@ int main(int argc, char **argv) {
     }
   
     if (!Out->good()) {
-      cerr << "Error opening " << OutputFilename << "!\n";
+      cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
    
     WriteBytecodeToFile(M.get(), *Out);
   } catch (const ParseException &E) {
-    cerr << E.getMessage() << std::endl;
+    cerr << argv[0] << ": " << E.getMessage() << "\n";
     return 1;
   }
 

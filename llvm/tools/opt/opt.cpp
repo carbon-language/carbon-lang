@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-// LLVM 'OPT' UTILITY 
+// LLVM Modular Optimizer Utility: opt
 //
 // Optimizations may be specified an arbitrary number of times on the command
 // line, they are run in the order specified.
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   // Load the input module...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
   if (M.get() == 0) {
-    cerr << "bytecode didn't read correctly.\n";
+    cerr << argv[0] << ": bytecode didn't read correctly.\n";
     return 1;
   }
 
@@ -76,14 +76,15 @@ int main(int argc, char **argv) {
   if (OutputFilename != "") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+      cerr << argv[0] << ": error opening '" << OutputFilename
+           << "': file exists!\n"
            << "Use -f command line argument to force output\n";
       return 1;
     }
     Out = new std::ofstream(OutputFilename.c_str());
 
     if (!Out->good()) {
-      cerr << "Error opening " << OutputFilename << "!\n";
+      cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
 
@@ -106,7 +107,7 @@ int main(int argc, char **argv) {
     else if (Opt->getDataCtor())
       Passes.add(Opt->getDataCtor()(TD));  // Pass dummy target data...
     else
-      cerr << "Cannot create pass: " << Opt->getPassName() << "\n";
+      cerr << argv[0] << ": cannot create pass: " << Opt->getPassName() << "\n";
 
     if (PrintEachXForm)
       Passes.add(new PrintModulePass(&cerr));

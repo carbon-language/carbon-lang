@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
     if (LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      cerr << "Error linking in '" << InputFilenames[i] << "': "
+      cerr << argv[0] << ": error linking in '" << InputFilenames[i] << "': "
 	   << ErrorMessage << "\n";
       return 1;
     }
@@ -121,13 +121,14 @@ int main(int argc, char **argv) {
   if (OutputFilename != "-") {
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      cerr << "Error opening '" << OutputFilename << "': File exists!\n"
+      cerr << argv[0] << ": error opening '" << OutputFilename
+           << "': file exists!\n"
            << "Use -f command line argument to force output\n";
       return 1;
     }
     Out = new std::ofstream(OutputFilename.c_str());
     if (!Out->good()) {
-      cerr << "Error opening '" << OutputFilename << "'!\n";
+      cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
       return 1;
     }
 
