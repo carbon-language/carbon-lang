@@ -1705,6 +1705,16 @@ MemoryInst : MALLOC Types {
     delete $4; delete $6;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
+    for (unsigned i = 0, e = $4->size(); i != e; ++i) {
+      if ((*$4)[i]->getType() == Type::UIntTy) {
+        std::cerr << "WARNING: Use of uint type indexes to getelementptr "
+                  << "instruction: replacing with casts to long type.\n";
+        Instruction *I = new CastInst((*$4)[i], Type::LongTy);
+        CurBB->getInstList().push_back(I);
+        (*$4)[i] = I;
+      }
+    }
+
     if (!isa<PointerType>($2->get()))
       ThrowException("getelementptr insn requires pointer operand!");
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
