@@ -84,6 +84,11 @@ namespace {
         /// runOnMachineFunction - register allocate the whole function
         bool runOnMachineFunction(MachineFunction&);
 
+        /// verifyIntervals - verify that we have no inconsistencies
+        /// in the register assignments we have in active and inactive
+        /// lists
+        bool verifyIntervals();
+
         /// processActiveIntervals - expire old intervals and move
         /// non-overlapping ones to the incative list
         void processActiveIntervals(Intervals::const_iterator cur);
@@ -245,6 +250,8 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
         DEBUG(printIntervals("\tactive", active_.begin(), active_.end()));
         DEBUG(printIntervals("\tinactive", inactive_.begin(), inactive_.end()));
+        assert(verifyIntervals());
+
         processActiveIntervals(i);
         // processInactiveIntervals(i);
 
@@ -321,7 +328,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
                  i != e; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && op.isUse()) {
+                if (op.isVirtualRegister() && op.isUse() && !op.isDef()) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = v2pMap_[virtReg];
                     if (!physReg) {
@@ -361,81 +368,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 }
             }
 
-
-            // if the instruction is a two address instruction and the
-            // source operands are not identical we need to insert
-            // extra instructions.
-
-            unsigned opcode = (*currentInstr_)->getOpcode();
-            if (tm_->getInstrInfo().isTwoAddrInstr(opcode) &&
-                (*currentInstr_)->getOperand(0).getAllocatedRegNum() !=
-                (*currentInstr_)->getOperand(1).getAllocatedRegNum()) {
-                assert((*currentInstr_)->getOperand(1).isRegister() &&
-                       (*currentInstr_)->getOperand(1).getAllocatedRegNum() &&
-                       (*currentInstr_)->getOperand(1).isUse() &&
-                       "Two address instruction invalid");
-
-                unsigned regA =
-                    (*currentInstr_)->getOperand(0).getAllocatedRegNum();
-                unsigned regB =
-                    (*currentInstr_)->getOperand(1).getAllocatedRegNum();
-                unsigned regC =
-                    ((*currentInstr_)->getNumOperands() > 2 &&
-                     (*currentInstr_)->getOperand(2).isRegister()) ?
-                    (*currentInstr_)->getOperand(2).getAllocatedRegNum() :
-                    0;
-
-                const TargetRegisterClass* rc = mri_->getRegClass(regA);
-
-                // special case: "a = b op a". If b is a temporary
-                // reserved register rewrite as: "b = b op a; a = b"
-                // otherwise use a temporary reserved register t and
-                // rewrite as: "t = b; t = t op a; a = t"
-                if (regC && regA == regC) {
-                    // b is a temp reserved register
-                    if (find(reserved_.begin(), reserved_.end(),
-                             regB) != reserved_.end()) {
-                        (*currentInstr_)->SetMachineOperandReg(0, regB);
-                        ++currentInstr_;
-                        instrAdded_ += mri_->copyRegToReg(*currentMbb_,
-                                                          currentInstr_,
-                                                          regA,
-                                                          regB,
-                                                          rc);
-                        --currentInstr_;
-                    }
-                    // b is just a normal register
-                    else {
-                        unsigned tempReg = getFreeTempPhysReg(rc);
-                        assert (tempReg &&
-                                "no free temp reserved physical register?");
-                        instrAdded_ += mri_->copyRegToReg(*currentMbb_,
-                                                          currentInstr_,
-                                                          tempReg,
-                                                          regB,
-                                                          rc);
-                        (*currentInstr_)->SetMachineOperandReg(0, tempReg);
-                        (*currentInstr_)->SetMachineOperandReg(1, tempReg);
-                        ++currentInstr_;
-                        instrAdded_ += mri_->copyRegToReg(*currentMbb_,
-                                                          currentInstr_,
-                                                          regA,
-                                                          tempReg,
-                                                          rc);
-                        --currentInstr_;
-                    }
-                }
-                // "a = b op c" gets rewritten to "a = b; a = a op c"
-                else {
-                    instrAdded_ += mri_->copyRegToReg(*currentMbb_,
-                                                      currentInstr_,
-                                                      regA,
-                                                      regB,
-                                                      rc);
-                    (*currentInstr_)->SetMachineOperandReg(1, regA);
-                }
-            }
-
             DEBUG(std::cerr << "\t\tspilling temporarily defined operands "
                   "of this instruction:\n");
             ++currentInstr_; // we want to insert after this instruction
@@ -452,6 +384,35 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         }
     }
 
+    return true;
+}
+
+bool RA::verifyIntervals()
+{
+    std::set<unsigned> assignedRegisters;
+    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+        if ((*i)->reg >= MRegisterInfo::FirstVirtualRegister) {
+            unsigned reg = v2pMap_.find((*i)->reg)->second;
+
+            bool inserted = assignedRegisters.insert(reg).second;
+            assert(inserted && "registers in active list conflict");
+        }
+    }
+
+    for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+        unsigned reg = (*i)->reg;
+        if (reg >= MRegisterInfo::FirstVirtualRegister) {
+            reg = v2pMap_.find((*i)->reg)->second;
+        }
+
+        for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as) {
+            assert(assignedRegisters.find(*as) == assignedRegisters.end() &&
+                   "registers in active list alias each other");
+        }
+    }
+
+    // TODO: add checks between active and inactive and make sure we
+    // do not overlap anywhere
     return true;
 }
 

@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/TwoAddressInstructionPass.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -49,6 +50,7 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const
     AU.addRequired<LiveVariables>();
     AU.addPreservedID(PHIEliminationID);
     AU.addRequiredID(PHIEliminationID);
+    AU.addRequired<TwoAddressInstructionPass>();
     MachineFunctionPass::getAnalysisUsage(AU);
 }
 
