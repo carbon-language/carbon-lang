@@ -133,8 +133,14 @@ namespace {
       // If this operand is a constant, emit the code to copy the constant into
       // the register here...
       //
-      if (Constant *C = dyn_cast<Constant>(V))
+      if (Constant *C = dyn_cast<Constant>(V)) {
         copyConstantToRegister(C, Reg);
+      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+        // Move the address of the global into the register
+        BuildMI(BB, X86::MOVir32, 1, Reg).addReg(GV);
+      } else {
+        assert(0 && "Don't know how to handle a value of this type!");
+      }
 
       return Reg;
     }

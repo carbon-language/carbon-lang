@@ -11,6 +11,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Value.h"
 
 namespace {
   class Emitter : public FunctionPass {
@@ -224,7 +225,12 @@ void Emitter::emitInstruction(MachineInstr &MI) {
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2) {
       unsigned Size = 4;
-      emitConstant(MI.getOperand(1).getImmedValue(), Size);
+      if (Value *V = MI.getOperand(1).getVRegValue()) {
+        assert(Size == 4 && "Don't know how to emit non-pointer values!");
+        MCE.emitGlobalAddress(cast<GlobalValue>(V));
+      } else {
+        emitConstant(MI.getOperand(1).getImmedValue(), Size);
+      }
     }
     break;
   case X86II::MRMDestReg:

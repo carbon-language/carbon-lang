@@ -96,6 +96,10 @@ static void printOp(std::ostream &O, const MachineOperand &MO,
                     const MRegisterInfo &RI) {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
+    if (Value *V = MO.getVRegValue()) {
+      O << "<" << V->getName() << ">";
+      return;
+    }
   case MachineOperand::MO_MachineRegister:
     if (MO.getReg() < MRegisterInfo::FirstVirtualRegister)
       O << RI.get(MO.getReg()).Name;
@@ -172,11 +176,15 @@ void X86InstrInfo::print(const MachineInstr *MI, std::ostream &O,
     // There are currently two forms of acceptable AddRegFrm instructions.
     // Either the instruction JUST takes a single register (like inc, dec, etc),
     // or it takes a register and an immediate of the same size as the register
-    // (move immediate f.e.).
+    // (move immediate f.e.).  Note that this immediate value might be stored as
+    // an LLVM value, to represent, for example, loading the address of a global
+    // into a register.
     //
     assert(isReg(MI->getOperand(0)) &&
            (MI->getNumOperands() == 1 || 
-            (MI->getNumOperands() == 2 && isImmediate(MI->getOperand(1)))) &&
+            (MI->getNumOperands() == 2 &&
+             (MI->getOperand(1).getVRegValue() ||
+              isImmediate(MI->getOperand(1))))) &&
            "Illegal form for AddRegFrm instruction!");
 
     unsigned Reg = MI->getOperand(0).getReg();
