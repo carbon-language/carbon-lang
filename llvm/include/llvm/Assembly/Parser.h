@@ -1,6 +1,6 @@
-//===-- llvm/assembly/Parser.h - Parser for VM assembly files ----*- C++ -*--=//
+//===-- llvm/Assembly/Parser.h - Parser for VM assembly files ----*- C++ -*--=//
 //
-//  These classes are implemented by the lib/AssemblyParser library.
+//  These classes are implemented by the lib/AsmParser library.
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +14,9 @@ class ParseException;
 
 
 // The useful interface defined by this file... Parse an ascii file, and return
-// the internal representation in a nice slice'n'dice'able representation.
+// the internal representation in a nice slice'n'dice'able representation.  Note
+// that this does not verify that the generated LLVM is valid, so you should run
+// the verifier after parsing the file to check that it's ok.
 //
 Module *ParseAssemblyFile(const std::string &Filename);// throw (ParseException)
 
