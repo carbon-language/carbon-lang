@@ -1,7 +1,7 @@
 ; This testcase ensures that redundant loads are eliminated when they should 
 ; be.  All RL variables (redundant loads) should be eliminated.
 ;
-; RUN: if as < %s | opt -gcse | dis | grep %RL
+; RUN: if as < %s | opt -load-vn -gcse | dis | grep %RL
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi

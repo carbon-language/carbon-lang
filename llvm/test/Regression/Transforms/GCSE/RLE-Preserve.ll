@@ -1,7 +1,8 @@
 ; This testcase ensures that redundant loads are preserved when they are not 
 ; allowed to be eliminated.
 ; RUN: as < %s | dis > Output/%s.before
-; RUN: as < %s | opt -gcse | dis > Output/%s.after
+; RUN: as < %s | opt -load-vn -gcse | dis > Output/%s.after
+; RUN: echo some output
 ; RUN: diff Output/%s.before Output/%s.after
 ;
 int "test1"(int* %P) {
