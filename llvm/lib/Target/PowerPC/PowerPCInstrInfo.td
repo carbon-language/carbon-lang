@@ -1263,7 +1263,7 @@ def ADJCALLSTACKDOWN : PPC32InstPatternPseudo<"ADJCALLSTACKDOWN", Pseudo>;
 def ADJCALLSTACKUP : PPC32InstPatternPseudo<"ADJCALLSTACKUP", Pseudo>;
 def MovePCtoLR : PPC32InstPatternPseudo<"MovePCtoLR", Pseudo>;
 
-def LOADLoAddr : PPC32InstPattern0 <"lwz", Gpr, Gpr0, Simm16, 14, 0, 0>;
+def LOADLoAddr : PPC32InstPattern0 <"la", Gpr, Gpr0, Simm16, 14, 0, 0>;
 def LOADHiAddr : PPC32InstPattern0 <"addis", Gpr, Gpr0, Simm16, 15, 0, 0>;
 
 def ADDI : PPC32InstPattern0 <"addi", Gpr, Gpr0, Simm16, 14, 0, 0>;
@@ -1302,20 +1302,12 @@ def ANDCo : PPC32InstPattern5 <"andc.", Gpr, Gpr, Gpr, 31, 121, 0, 0>;
 let isBranch = 1, isTerminator = 1 in {
   def B : PPC32InstPattern6 <"b", PCRelimm24, 18, 0, 0, 0>;
   def BA : PPC32InstPattern6 <"ba", Imm24, 18, 0, 0, 0>;
-  def BL : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
-  def BLA : PPC32InstPattern6 <"bla", Imm24, 18, 1, 0, 0>;
   def BC : PPC32InstPattern7 <"bc", Imm5, Imm5, PCRelimm14, 16, 0, 0, 0>;
   def BCA : PPC32InstPattern7 <"bca", Imm5, Imm5, Imm14, 16, 0, 0, 0>;
-  def BCL : PPC32InstPattern7 <"bcl", Imm5, Imm5, PCRelimm14, 16, 1, 0, 0>;
-  def BCLA : PPC32InstPattern7 <"bcla", Imm5, Imm5, Imm14, 16, 1, 0, 0>;
   def BCCTR : PPC32InstPattern8 <"bcctr", Imm5, Imm5, Imm2, 19, 0, 32, 0, 0>;
-  def BCCTRL : PPC32InstPattern8 <"bcctrl", Imm5, Imm5, Imm2, 19, 0, 33, 0, 0>;
   def BCLR : PPC32InstPattern8 <"bclr", Imm5, Imm5, Imm2, 19, 0, 32, 0, 0>;
-  def BCLRL : PPC32InstPattern8 <"bclrl", Imm5, Imm5, Imm2, 19, 0, 33, 0, 0>;
   def BT : PPC32InstPattern9 <"bt", Imm5, PCRelimm14, 524, 0, 0, 0>;
-  def BTL : PPC32InstPattern9 <"btl", Imm5, PCRelimm14, 524, 1, 0, 0>;
   def BF : PPC32InstPattern9 <"bf", Imm5, PCRelimm14, 516, 0, 0, 0>;
-  def BFL : PPC32InstPattern9 <"bfl", Imm5, PCRelimm14, 516, 1, 0, 0>;
   def BDNZ : PPC32InstPattern10 <"bdnz", PCRelimm14, 16896, 0, 0, 0>;
   def BDNZL : PPC32InstPattern10 <"bdnzl", PCRelimm14, 16896, 1, 0, 0>;
   def BDNZT : PPC32InstPattern9 <"bdnzt", Imm5, PCRelimm14, 520, 0, 0, 0>;
@@ -1463,6 +1455,19 @@ let isBranch = 1, isTerminator = 1 in {
   def BUNCTRL : PPC32InstPattern12 <"bunctrl", Crf, Imm2, 620, 0, 33, 0, 0>;
   def BNUCTR : PPC32InstPattern12 <"bnuctr", Crf, Imm2, 612, 0, 32, 0, 0>;
   def BNUCTRL : PPC32InstPattern12 <"bnuctrl", Crf, Imm2, 612, 0, 33, 0, 0>;
+}
+
+let isBranch = 1, isTerminator = 1, isCall = 1, 
+  // All calls clobber the non-callee saved registers...
+  Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12] in {
+  def BL : PPC32InstPattern6 <"bl", PCRelimm24, 18, 1, 0, 0>;
+  def BLA : PPC32InstPattern6 <"bla", Imm24, 18, 1, 0, 0>;
+  def BCL : PPC32InstPattern7 <"bcl", Imm5, Imm5, PCRelimm14, 16, 1, 0, 0>;
+  def BCLA : PPC32InstPattern7 <"bcla", Imm5, Imm5, Imm14, 16, 1, 0, 0>;
+  def BCCTRL : PPC32InstPattern8 <"bcctrl", Imm5, Imm5, Imm2, 19, 0, 33, 0, 0>;
+  def BCLRL : PPC32InstPattern8 <"bclrl", Imm5, Imm5, Imm2, 19, 0, 33, 0, 0>;
+  def BTL : PPC32InstPattern9 <"btl", Imm5, PCRelimm14, 524, 1, 0, 0>;
+  def BFL : PPC32InstPattern9 <"bfl", Imm5, PCRelimm14, 516, 1, 0, 0>;
 }
 
 def CMPI : PPC32InstPattern13 <"cmpi", Imm3, Imm1, Gpr, Simm16, 11, 0, 0, 0>;
