@@ -24,8 +24,9 @@ namespace llvm {
   struct CodeGenRegister {
     Record *TheDef;
     const std::string &getName() const;
+    unsigned DeclaredSpillSize, DeclaredSpillAlignment;
     
-    CodeGenRegister(Record *R) : TheDef(R) {}
+    CodeGenRegister(Record *R);
   };
 
 
