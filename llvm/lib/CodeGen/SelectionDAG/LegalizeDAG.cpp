@@ -295,6 +295,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
+  case ISD::TokenFactor: {
+    std::vector<SDOperand> Ops;
+    bool Changed = false;
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+      Ops.push_back(LegalizeOp(Node->getOperand(i)));  // Legalize the operands
+      Changed |= Ops[i] != Node->getOperand(i);
+    }
+    if (Changed)
+      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
+    break;
+  }
+
   case ISD::ADJCALLSTACKDOWN:
   case ISD::ADJCALLSTACKUP:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -662,6 +674,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
     case Expand:
+      assert(Node->getOpcode() != ISD::SINT_TO_FP &&
+             Node->getOpcode() != ISD::UINT_TO_FP &&
+             "Cannot lower Xint_to_fp to a call yet!");
+
       // In the expand case, we must be dealing with a truncate, because
       // otherwise the result would be larger than the source.
       assert(Node->getOpcode() == ISD::TRUNCATE &&
