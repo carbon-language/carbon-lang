@@ -89,7 +89,7 @@ case $dirmode in
   *)
     if mkdir -m "$dirmode" -p --version . >/dev/null 2>&1 &&
        test ! -d ./--version; then
-      echo "mkdir -m $dirmode -p -- $*"
+      # echo "mkdir -m $dirmode -p -- $*"
       exec mkdir -m "$dirmode" -p -- "$@"
     else
       # Clean up after NextStep and OpenStep mkdir.
@@ -115,7 +115,7 @@ do
     esac
 
     if test ! -d "$pathcomp"; then
-      echo "mkdir $pathcomp"
+      # echo "mkdir $pathcomp"
 
       mkdir "$pathcomp" || lasterr=$?
 
@@ -123,7 +123,7 @@ do
 	errstatus=$lasterr
       else
 	if test ! -z "$dirmode"; then
-	  echo "chmod $dirmode $pathcomp"
+	  # echo "chmod $dirmode $pathcomp"
 	  lasterr=""
 	  chmod "$dirmode" "$pathcomp" || lasterr=$?
 
