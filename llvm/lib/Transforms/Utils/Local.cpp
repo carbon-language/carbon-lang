@@ -74,16 +74,13 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   case 0: return 0;
   }
 
-  if (isa<BinaryOperator>(I))
+  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))
     return ConstantExpr::get(I->getOpcode(), Op0, Op1);    
 
   switch (I->getOpcode()) {
   default: return 0;
   case Instruction::Cast:
     return ConstantExpr::getCast(Op0, I->getType());
-  case Instruction::Shl:
-  case Instruction::Shr:
-    return ConstantExpr::getShift(I->getOpcode(), Op0, Op1);
   case Instruction::GetElementPtr:
     std::vector<Constant*> IdxList;
     IdxList.reserve(I->getNumOperands()-1);
