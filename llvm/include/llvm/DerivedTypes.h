@@ -328,7 +328,7 @@ public:
   ///
   static PackedType *get(const Type *ElementType, unsigned NumElements);
 
-  inline unsigned    getNumElements() const { return NumElements; }
+  inline unsigned getNumElements() const { return NumElements; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
