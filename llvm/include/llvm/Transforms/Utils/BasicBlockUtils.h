@@ -13,7 +13,6 @@
 #include "llvm/BasicBlock.h"
 class Instruction;
 
-
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
 //
@@ -28,10 +27,18 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
                          BasicBlock::iterator &BI, Instruction *I);
 
 // ReplaceInstWithInst - Replace the instruction specified by From with the
-// instruction specified by To.  Note that this is slower than providing an
-// iterator directly, because the basic block containing From must be searched
-// for the instruction.
+// instruction specified by To.
 //
 void ReplaceInstWithInst(Instruction *From, Instruction *To);
+
+
+// RemoveSuccessor - Change the specified terminator instruction such that its
+// successor #SuccNum no longer exists.  Because this reduces the outgoing
+// degree of the current basic block, the actual terminator instruction itself
+// may have to be changed.  In the case where the last successor of the block is
+// deleted, a return instruction is inserted in its place which can cause a
+// suprising change in program behavior if it is not expected.
+//
+void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum);
 
 #endif
