@@ -13,6 +13,7 @@
 class MachineFunction;
 class MachineBasicBlock;
 class Value;
+class GlobalValue;
 
 struct MachineCodeEmitter {
   virtual ~MachineCodeEmitter() {}
@@ -42,6 +43,12 @@ struct MachineCodeEmitter {
   /// and jump instructions typically.
   ///
   virtual void emitPCRelativeDisp(Value *V) {}
+
+  /// emitGlobalAddress - This callback is invoked when we need to write out the
+  /// address of a global value to machine code.  This is important for indirect
+  /// calls as well as accessing global variables.
+  ///
+  virtual void emitGlobalAddress(GlobalValue *V) {}
 
 
   /// createDebugMachineCodeEmitter - Return a dynamically allocated machine
