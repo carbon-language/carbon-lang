@@ -18,60 +18,16 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Analysis/Writer.h"
 #include "llvm/Analysis/InstForest.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Expressions.h"
 #include "llvm/Analysis/InductionVariable.h"
-#include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/FindUnsafePointerTypes.h"
-#include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Support/InstIterator.h"
-#include "Support/CommandLine.h"
+#include "llvm/Support/PassNameParser.h"
 #include <algorithm>
 
 using std::ostream;
 
-//===----------------------------------------------------------------------===//
-// printPass - Specify how to print out a pass.  For most passes, the standard
-// way of using operator<< works great, so we use it directly...
-//
-template<class PassType>
-static void printPass(PassType &P, ostream &O, Module &M) {
-  O << P;
-}
-
-template<class PassType>
-static void printPass(PassType &P, ostream &O, Function &F) {
-  O << P;
-}
-
-// Other classes require more information to print out information, so we
-// specialize the template here for them...
-//
-template<>
-static void printPass(LocalDataStructures &P, ostream &O, Module &M) {
-  P.print(O, &M);
-}
-template<>
-static void printPass(BUDataStructures &P, ostream &O, Module &M) {
-  P.print(O, &M);
-}
-
-template<>
-static void printPass(FindUsedTypes &FUT, ostream &O, Module &M) {
-  FUT.printTypes(O, &M);
-}
-
-template<>
-static void printPass(FindUnsafePointerTypes &FUPT, ostream &O, Module &M) {
-  FUPT.printResults(&M, O);
-}
-
-
+#if 0
 
 template <class PassType, class PassName>
 class PassPrinter;  // Do not implement
@@ -115,20 +71,6 @@ public:
 };
 
 
-
-template <class PassType, class PassName>
-Pass *New() {
-  return new PassPrinter<PassType, PassName>(PassName::ID);
-}
-
-
-Pass *createPrintFunctionPass() {
-  return new PrintFunctionPass("", &std::cout);
-}
-Pass *createPrintModulePass() {
-  return new PrintModulePass(&std::cout);
-}
-
 struct InstForestHelper : public FunctionPass {
   const char *getPassName() const { return "InstForest Printer"; }
 
@@ -150,7 +92,7 @@ struct IndVars : public FunctionPass {
       if (PHINode *PN = dyn_cast<PHINode>(*I)) {
         InductionVariable IV(PN, &LI);
         if (IV.InductionType != InductionVariable::Unknown)
-          std::cout << IV;
+          IV.print(std::cout);
       }
   }
 
@@ -194,39 +136,62 @@ struct Exprs : public FunctionPass {
     AU.setPreservesAll();
   }
 };
+#endif
 
+struct ModulePassPrinter : public Pass {
+  Pass *PassToPrint;
+  ModulePassPrinter(Pass *PI) : PassToPrint(PI) {}
 
-template<class TraitClass>
-struct PrinterPass : public TraitClass {
-  PrinterPass() {}
-
-  virtual bool runOnFunction(Function &F) {
-    std::cout << "Running on function '" << F.getName() << "'\n";
-
-    TraitClass::doit(F);
+  virtual bool run(Module &M) {
+    std::cout << "Printing Analysis info for Pass "
+              << PassToPrint->getPassName() << ":\n";
+    PassToPrint->print(std::cout, &M);
+    
+    // Get and print pass...
     return false;
   }
 };
 
+struct FunctionPassPrinter : public FunctionPass {
+  const PassInfo *PassToPrint;
+  FunctionPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
 
-template<class PassClass>
-Pass *Create() {
-  return new PassClass();
-}
+  virtual bool runOnFunction(Function &F) {
+    std::cout << "Printing Analysis info for function '" << F.getName()
+              << "': Pass " << PassToPrint->getPassName() << ":\n";
+    getAnalysis<Pass>(PassToPrint).print(std::cout, F.getParent());
 
+    // Get and print pass...
+    return false;
+  }
 
-
-enum Ans {
-  // global analyses
-  print, intervals, exprs, instforest, loops, indvars,
-
-  // ip analyses
-  printmodule, callgraph, datastructure, budatastructure,
-  printusedtypes, unsafepointertypes,
-
-  domset, idom, domtree, domfrontier,
-  postdomset, postidom, postdomtree, postdomfrontier,
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(PassToPrint);
+    AU.setPreservesAll();
+  }
 };
+
+struct BasicBlockPassPrinter : public BasicBlockPass {
+  const PassInfo *PassToPrint;
+  BasicBlockPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnBasicBlock(BasicBlock &BB) {
+    std::cout << "Printing Analysis info for BasicBlock '" << BB.getName()
+              << "': Pass " << PassToPrint->getPassName() << ":\n";
+    getAnalysis<Pass>(PassToPrint).print(std::cout, BB.getParent()->getParent());
+
+    // Get and print pass...
+    return false;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+
+
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"),
@@ -236,66 +201,13 @@ static cl::opt<bool> Quiet("q", cl::desc("Don't print analysis pass names"));
 static cl::alias    QuietA("quiet", cl::desc("Alias for -q"),
                            cl::aliasopt(Quiet));
 
-static cl::list<enum Ans>
-AnalysesList(cl::desc("Analyses available:"),
-             cl::values(
-  clEnumVal(print          , "Print each function"),
-  clEnumVal(intervals      , "Print Interval Partitions"),
-  clEnumVal(exprs          , "Classify Expressions"),
-  clEnumVal(instforest     , "Print Instruction Forest"),
-  clEnumVal(loops          , "Print natural loops"),
-  clEnumVal(indvars        , "Print Induction Variables"),
+// The AnalysesList is automatically populated with registered Passes by the
+// PassNameParser.
+//
+static cl::list<const PassInfo*, bool,
+                FilteredPassNameParser<PassInfo::Analysis> >
+AnalysesList(cl::desc("Analyses available:"));
 
-  clEnumVal(printmodule    , "Print entire module"),
-  clEnumVal(callgraph      , "Print Call Graph"),
-  clEnumVal(datastructure  , "Print data structure information"),
-  clEnumVal(budatastructure, "Print bottom-up data structure information"),
-  clEnumVal(printusedtypes , "Print types used by module"),
-  clEnumVal(unsafepointertypes, "Print unsafe pointer types"),
-
-  clEnumVal(domset         , "Print Dominator Sets"),
-  clEnumVal(idom           , "Print Immediate Dominators"),
-  clEnumVal(domtree        , "Print Dominator Tree"),
-  clEnumVal(domfrontier    , "Print Dominance Frontier"),
-
-  clEnumVal(postdomset     , "Print Postdominator Sets"),
-  clEnumVal(postidom       , "Print Immediate Postdominators"),
-  clEnumVal(postdomtree    , "Print Post Dominator Tree"),
-  clEnumVal(postdomfrontier, "Print Postdominance Frontier"),
-0));
-
-
-struct {
-  enum Ans AnID;
-  Pass *(*PassConstructor)();
-} AnTable[] = {
-  // Global analyses
-  { print             , createPrintFunctionPass                 },
-  { intervals         , New<FunctionPass, IntervalPartition>    },
-  { loops             , New<FunctionPass, LoopInfo>             },
-  { instforest        , Create<PrinterPass<InstForestHelper> >  },
-  { indvars           , Create<PrinterPass<IndVars> >           },
-  { exprs             , Create<PrinterPass<Exprs> >             },
-
-  // IP Analyses...
-  { printmodule       , createPrintModulePass             },
-  { printusedtypes    , New<Pass, FindUsedTypes>          },
-  { callgraph         , New<Pass, CallGraph>              },
-  { datastructure     , New<Pass, LocalDataStructures>    },
-  { budatastructure   , New<Pass, BUDataStructures>       },
-  { unsafepointertypes, New<Pass, FindUnsafePointerTypes> },
-
-  // Dominator analyses
-  { domset            , New<FunctionPass, DominatorSet>        },
-  { idom              , New<FunctionPass, ImmediateDominators> },
-  { domtree           , New<FunctionPass, DominatorTree>       },
-  { domfrontier       , New<FunctionPass, DominanceFrontier>   },
-
-  { postdomset        , New<FunctionPass, PostDominatorSet>        },
-  { postidom          , New<FunctionPass, ImmediatePostDominators> },
-  { postdomtree       , New<FunctionPass, PostDominatorTree>       },
-  { postdomfrontier   , New<FunctionPass, PostDominanceFrontier>   },
-};
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
@@ -315,21 +227,28 @@ int main(int argc, char **argv) {
   // Create a PassManager to hold and optimize the collection of passes we are
   // about to build...
   //
-  PassManager Analyses;
+  PassManager Passes;
 
-  // Loop over all of the analyses looking for analyses to run...
+  // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < AnalysesList.size(); ++i) {
-    enum Ans AnalysisPass = AnalysesList[i];
+    const PassInfo *Analysis = AnalysesList[i];
+    
+    if (Analysis->getNormalCtor()) {
+      Pass *P = Analysis->getNormalCtor()();
+      Passes.add(P);
 
-    for (unsigned j = 0; j < sizeof(AnTable)/sizeof(AnTable[0]); ++j) {
-      if (AnTable[j].AnID == AnalysisPass) {
-        Analyses.add(AnTable[j].PassConstructor());
-        break;                       // get an error later
-      }
-    }
-  }  
+      if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
+        Passes.add(new BasicBlockPassPrinter(Analysis));
+      else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
+        Passes.add(new FunctionPassPrinter(Analysis));
+      else
+        Passes.add(new ModulePassPrinter(P));
 
-  Analyses.run(*CurMod);
+    } else
+      cerr << "Cannot create pass: " << Analysis->getPassName() << "\n";
+  }
+
+  Passes.run(*CurMod);
 
   delete CurMod;
   return 0;
