@@ -368,41 +368,6 @@ static Value *RemapOperand(const Value *In,
   return 0;
 }
 
-/// FindGlobalNamed - Look in the specified symbol table for a global with the
-/// specified name and type.  If an exactly matching global does not exist, see
-/// if there is a global which is "type compatible" with the specified
-/// name/type.  This allows us to resolve things like '%x = global int*' with
-/// '%x = global opaque*'.
-///
-static GlobalValue *FindGlobalNamed(const std::string &Name, const Type *Ty,
-                                    SymbolTable *ST) {
-  // See if an exact match exists in the symbol table...
-  if (Value *V = ST->lookup(Ty, Name)) return cast<GlobalValue>(V);
-
-  // It doesn't exist exactly, scan through all of the type planes in the symbol
-  // table, checking each of them for a type-compatible version.
-  //
-  for (SymbolTable::plane_iterator PI = ST->plane_begin(), PE = ST->plane_end();
-       PI != PE; ++PI) {
-    // Does this type plane contain an entry with the specified name?
-    SymbolTable::ValueMap &VM = PI->second;
-    SymbolTable::value_iterator VI = VM.find(Name);
-
-    if (VI != VM.end()) {
-      // Ensure that this type if placed correctly into the symbol table.
-      GlobalValue *ValPtr = cast<GlobalValue>(VI->second);
-      assert(ValPtr->getType() == PI->first && "Type conflict!");
-      
-      // Determine whether we can fold the two types together, resolving them.
-      // If so, we can use this value.
-      if (!ValPtr->hasInternalLinkage() &&
-          !RecursiveResolveTypes(Ty, PI->first, ST, ""))
-        return ValPtr;
-    }
-  }
-  return 0;  // Otherwise, nothing could be found.
-}
-
 /// ForceRenaming - The LLVM SymbolTable class autorenames globals that conflict
 /// in the symbol table.  This is good for all clients except for us.  Go
 /// through the trouble to force this back.
@@ -431,6 +396,7 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
 static bool LinkGlobals(Module *Dest, const Module *Src,
                         std::map<const Value*, Value*> &ValueMap,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
+                        std::map<std::string, GlobalValue*> &GlobalsByName,
                         std::string *Err) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
@@ -441,13 +407,12 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   for (Module::const_giterator I = Src->gbegin(), E = Src->gend(); I != E; ++I){
     const GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
+    // Check to see if may have to link the global.
     if (SGV->hasName() && !SGV->hasInternalLinkage()) {
-      // A same named thing is a global variable, because the only two things
-      // that may be in a module level symbol table are Global Vars and
-      // Functions, and they both have distinct, nonoverlapping, possible types.
-      // 
-      DGV = cast_or_null<GlobalVariable>(FindGlobalNamed(SGV->getName(), 
-                                                         SGV->getType(), ST));
+      std::map<std::string, GlobalValue*>::iterator EGV =
+        GlobalsByName.find(SGV->getName());
+      if (EGV != GlobalsByName.end())
+        DGV = dyn_cast<GlobalVariable>(EGV->second);
     }
 
     assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
@@ -610,6 +575,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 //
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
+                             std::map<std::string, GlobalValue*> &GlobalsByName,
                                std::string *Err) {
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
   
@@ -619,13 +585,13 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     Function *DF = 0;
-    if (SF->hasName() && !SF->hasInternalLinkage())
-      // The same named thing is a Function, because the only two things
-      // that may be in a module level symbol table are Global Vars and
-      // Functions, and they both have distinct, nonoverlapping, possible types.
-      // 
-      DF = cast_or_null<Function>(FindGlobalNamed(SF->getName(), SF->getType(),
-                                                  ST));
+    if (SF->hasName() && !SF->hasInternalLinkage()) {
+      // Check to see if may have to link the function.
+      std::map<std::string, GlobalValue*>::iterator EF =
+        GlobalsByName.find(SF->getName());
+      if (EF != GlobalsByName.end())
+        DF = dyn_cast<Function>(EF->second);
+    }
 
     if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
       // Function does not already exist, simply insert an function signature
@@ -886,16 +852,32 @@ bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   //
   std::multimap<std::string, GlobalVariable *> AppendingVars;
 
-  // Add all of the appending globals already in the Dest module to
-  // AppendingVars.
-  for (Module::giterator I = Dest->gbegin(), E = Dest->gend(); I != E; ++I)
+  // GlobalsByName - The LLVM SymbolTable class fights our best efforts at
+  // linking by separating globals by type.  Until PR411 is fixed, we replicate
+  // it's functionality here.
+  std::map<std::string, GlobalValue*> GlobalsByName;
+
+  for (Module::giterator I = Dest->gbegin(), E = Dest->gend(); I != E; ++I) {
+    // Add all of the appending globals already in the Dest module to
+    // AppendingVars.
     if (I->hasAppendingLinkage())
       AppendingVars.insert(std::make_pair(I->getName(), I));
+
+    // Keep track of all globals by name.
+    if (!I->hasInternalLinkage() && I->hasName())
+      GlobalsByName[I->getName()] = I;
+  }
+
+  // Keep track of all globals by name.
+  for (Module::iterator I = Dest->begin(), E = Dest->end(); I != E; ++I)
+    if (!I->hasInternalLinkage() && I->hasName())
+      GlobalsByName[I->getName()] = I;
 
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).
   //
-  if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, ErrorMsg)) return true;
+  if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, GlobalsByName, ErrorMsg))
+    return true;
 
   // Link the functions together between the two modules, without doing function
   // bodies... this just adds external function prototypes to the Dest
@@ -903,7 +885,8 @@ bool llvm::LinkModules(Module *Dest, const Module *Src, std::string *ErrorMsg) {
   // all of the global values that may be referenced are available in our
   // ValueMap.
   //
-  if (LinkFunctionProtos(Dest, Src, ValueMap, ErrorMsg)) return true;
+  if (LinkFunctionProtos(Dest, Src, ValueMap, GlobalsByName, ErrorMsg))
+    return true;
 
   // Update the initializers in the Dest module now that all globals that may
   // be referenced are in Dest.
