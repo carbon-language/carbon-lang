@@ -72,30 +72,29 @@ public:
   // 
   virtual unsigned int	findOptimalStorageSize	(const Type* ty) const;
   
-  // addPassesToEmitAssembly - Add passes to the specified pass manager to get
-  // assembly langage code emited.  Typically this will involve several steps of
-  // code generation.  This provides a default ordering of passes that could
-  // be overridden for a particular target.
-  //
-  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+  /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
+  /// assembly langage code emited.  Typically this will involve several steps
+  /// of code generation.
+  ///
+  virtual void addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) = 0;
 
-  // getPrologEpilogCodeInserter - Create pass to insert prolog/epilog code.
-  // 
+  /// getPrologEpilogCodeInserter - Create pass to insert prolog/epilog code.
+  /// 
   virtual Pass* getPrologEpilogInsertionPass() = 0;
 
-  // getFunctionAsmPrinterPass - Create a pass to write out the generated
-  // machine code for a single function to the generated assembly file.
-  // 
+  /// getFunctionAsmPrinterPass - Create a pass to write out the generated
+  /// machine code for a single function to the generated assembly file.
+  /// 
   virtual Pass* getFunctionAsmPrinterPass(std::ostream &Out) = 0;
 
-  // getModuleAsmPrinterPass - Create a pass to write out module-level
-  // information to the generated assembly file.
-  // 
+  /// getModuleAsmPrinterPass - Create a pass to write out module-level
+  /// information to the generated assembly file.
+  /// 
   virtual Pass* getModuleAsmPrinterPass(std::ostream &Out) = 0;
 
-  // getEmitBytecodeToAsmPass - Create a pass to emit the final LLVM bytecode
-  // to the generated assembly file.
-  // 
+  /// getEmitBytecodeToAsmPass - Create a pass to emit the final LLVM bytecode
+  /// to the generated assembly file.
+  /// 
   virtual Pass* getEmitBytecodeToAsmPass(std::ostream &Out) = 0;
 };
 
