@@ -393,6 +393,9 @@ ISel::visitBranchInst (BranchInst & BI)
 void
 ISel::visitCallInst (CallInst & CI)
 {
+  // keep a counter of how many bytes we pushed on the stack
+  unsigned bytesPushed = 0;
+
   // Push the arguments on the stack in reverse order, as specified by
   // the ABI.
   for (unsigned i = CI.getNumOperands()-1; i >= 1; --i)
@@ -406,11 +409,13 @@ ISel::visitCallInst (CallInst & CI)
 	  // then push EAX.
 	  promote32 (X86::EAX, v);
 	  BuildMI (BB, X86::PUSHr32, 1).addReg (X86::EAX);
+          bytesPushed += 4;
 	  break;
 	case cInt:
 	case cFloat: {
           unsigned Reg = getReg(v);
           BuildMI (BB, X86::PUSHr32, 1).addReg(Reg);
+          bytesPushed += 4;
 	  break;
         }
 	default:
@@ -421,6 +426,10 @@ ISel::visitCallInst (CallInst & CI)
     }
   // Emit a CALL instruction with PC-relative displacement.
   BuildMI (BB, X86::CALLpcrel32, 1).addPCDisp (CI.getCalledValue ());
+
+  // Adjust the stack by `bytesPushed' amount if non-zero
+  if (bytesPushed > 0)
+    BuildMI (BB, X86::ADDri32, 2).addReg(X86::ESP).addZImm(bytesPushed);
 }
 
 /// visitSimpleBinary - Implement simple binary operators for integral types...
