@@ -1035,10 +1035,13 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       if (Result.getValueType() > NVT)    // Truncate to NVT instead of VT
         Result = DAG.getNode(ISD::TRUNCATE, NVT, Result);
       break;
+    case Promote:
+      // The truncation is not required, because we don't guarantee anything
+      // about high bits anyway.
+      Result = PromoteOp(Node->getOperand(0));
+      break;
     case Expand:
       assert(0 && "Cannot handle expand yet");
-    case Promote:
-      assert(0 && "Cannot handle promote-promote yet");
     }
     break;
   case ISD::SIGN_EXTEND:
