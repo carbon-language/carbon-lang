@@ -21,8 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_BYTECODE_ARCHIVER_H
-#define LLVM_BYTECODE_ARCHIVER_H
+#ifndef LLVM_BYTECODE_ARCHIVE_H
+#define LLVM_BYTECODE_ARCHIVE_H
 
 #include "llvm/System/Path.h"
 #include <map>
@@ -52,20 +52,13 @@ class Archive {
     /// This typedef is just shorthand for a vector of Modules
     typedef std::vector<Module*> ModuleList;
 
-    /// This typedef is just shorthand for a vector of ModuleProvider
-    typedef std::vector<ModuleProvider*> ModuleProviderList;
-
-    /// This typedef is just shorthand for a vector of strings
-    typedef std::vector<std::string> StringList;
-
   /// @}
   /// @name Constructors
   /// @{
   public:
     /// Create an empty archive file, \p Filename. The returned Archive object
     /// will have no file members and an empty symbol table. The actual archive
-    /// file is not created until either the flush() method is called or the
-    /// returned Archive object is destructed.
+    /// file is not created until the returned Archive object is destructed.
     /// @throws std::string if an error occurs
     /// @returns An Archive* that represents the new archive file.
     /// @brief Create an empty archive file.
@@ -77,11 +70,11 @@ class Archive {
     /// The module's externally visible linkage symbols will be added to the 
     /// archive's symbol table.  The names of the file members will be obtained 
     /// from the Module::getModuleId() method. If that name is not unique, it will
-    /// be made unique by appending a monotonically increasng integer to it. If 
+    /// be made unique by appending a monotonically increasing integer to it. If 
     /// \p StripName is non-empty, it specifies a prefix to be stripped from the 
     /// name of the file members. This allows archives with relative path names 
-    /// to be created. The actual archive file is not created until either the 
-    /// flush() method is called or the returned Archive object is destructed. 
+    /// to be created. The actual archive file is not created until the
+    /// returned Archive object is destructed. 
     /// @returns An Archive* that that represents the newly created archive file. 
     /// @throws std::string if an error occurs
     /// @brief Create an archive file from modules.
@@ -155,10 +148,10 @@ class Archive {
       const std::string& symbol        ///< Symbol to be sought
     ) const;
 
-    /// Return the list of all the paths for the file members in the archive. 
+    /// Return the list of all the \p Paths for the file members in the archive.
     /// This is handy for generating the table of contents of the archive. Note
-    /// that the PathList object is cleared before it is populated. Any previous
-    /// contents will be lost.
+    /// that \p Paths is *not* cleared before it is populated. New entries are 
+    /// appended to the end of the PathList.
     /// @throw std::string if an error occurs
     /// @returns nothing
     /// @brief Get all the paths in the archive
@@ -166,7 +159,7 @@ class Archive {
       PathList& Paths                ///< The list of paths returned
     );
 
-    /// This method returns a caller readable SymTab object which is a std::map
+    /// This method returns a caller readable SymTab object which is a map
     /// of symbol names to ModuleProviders. Callers can traverse this symbol
     /// table, look up specific symbols, etc. and materialize any Modules they 
     /// want with the associated ModuleProviders.  It is unnecessary to call
@@ -251,11 +244,11 @@ class Archive {
       const std::string& StripName=""  ///< Prefix path to strip from names
     );
 
-
   /// @}
 };
 
 } // End llvm namespace
 
 // vim: sw=2 ai 
+
 #endif
