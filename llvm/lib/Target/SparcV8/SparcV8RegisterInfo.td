@@ -21,8 +21,9 @@ class Rf<bits<5> num> : Register {
   field bits<5> Num = num;
 }
 // Rd - Slots in the FP register file for 64-bit floating-point values.
-class Rd<bits<5> num> : Register {
+class Rd<bits<5> num, string realName> : Register {
   field bits<5> Num = num;
+  let Name = realName;
 }
 // Rs - Special "ancillary state registers" registers, like the Y, ASR, PSR,
 // WIM, TBR, etc registers
@@ -54,10 +55,12 @@ let Namespace = "V8" in {
   def F28 : Rf<28>; def F29 : Rf<29>; def F30 : Rf<30>; def F31 : Rf<31>;
 
   // Aliases of the F* registers used to hold 64-bit fp values (doubles).
-  def D0  : Rd< 0>; def D1  : Rd< 2>; def D2  : Rd< 4>; def D3  : Rd< 6>;
-  def D4  : Rd< 8>; def D5  : Rd<10>; def D6  : Rd<12>; def D7  : Rd<14>;
-  def D8  : Rd<16>; def D9  : Rd<18>; def D10 : Rd<20>; def D11 : Rd<22>;
-  def D12 : Rd<24>; def D13 : Rd<26>; def D14 : Rd<28>; def D15 : Rd<30>;
+  def D0  : Rd< 0,  "F0">; def D1  : Rd< 2,  "F2">; def D2  : Rd< 4,  "F4">;
+  def D3  : Rd< 6,  "F6">; def D4  : Rd< 8,  "F8">; def D5  : Rd<10, "F10">;
+  def D6  : Rd<12, "F12">; def D7  : Rd<14, "F14">; def D8  : Rd<16, "F16">;
+  def D9  : Rd<18, "F18">; def D10 : Rd<20, "F20">; def D11 : Rd<22, "F22">;
+  def D12 : Rd<24, "F24">; def D13 : Rd<26, "F26">; def D14 : Rd<28, "F28">;
+  def D15 : Rd<30, "F30">;
 
   // The Y register.
   def Y   : Rs<0>;
