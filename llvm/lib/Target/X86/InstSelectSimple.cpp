@@ -35,6 +35,43 @@ using namespace llvm;
 namespace {
   Statistic<>
   NumFPKill("x86-codegen", "Number of FP_REG_KILL instructions added");
+
+  /// TypeClass - Used by the X86 backend to group LLVM types by their basic X86
+  /// Representation.
+  ///
+  enum TypeClass {
+    cByte, cShort, cInt, cFP, cLong
+  };
+}
+
+/// getClass - Turn a primitive type into a "class" number which is based on the
+/// size of the type, and whether or not it is floating point.
+///
+static inline TypeClass getClass(const Type *Ty) {
+  switch (Ty->getPrimitiveID()) {
+  case Type::SByteTyID:
+  case Type::UByteTyID:   return cByte;      // Byte operands are class #0
+  case Type::ShortTyID:
+  case Type::UShortTyID:  return cShort;     // Short operands are class #1
+  case Type::IntTyID:
+  case Type::UIntTyID:
+  case Type::PointerTyID: return cInt;       // Int's and pointers are class #2
+
+  case Type::FloatTyID:
+  case Type::DoubleTyID:  return cFP;        // Floating Point is #3
+
+  case Type::LongTyID:
+  case Type::ULongTyID:   return cLong;      // Longs are class #4
+  default:
+    assert(0 && "Invalid type to getClass!");
+    return cByte;  // not reached
+  }
+}
+
+// getClassB - Just like getClass, but treat boolean values as bytes.
+static inline TypeClass getClassB(const Type *Ty) {
+  if (Ty == Type::BoolTy) return cByte;
+  return getClass(Ty);
 }
 
 namespace {
@@ -315,66 +352,34 @@ namespace {
     }
     unsigned getReg(Value *V, MachineBasicBlock *MBB,
                     MachineBasicBlock::iterator IPt) {
+      // If this operand is a constant, emit the code to copy the constant into
+      // the register here...
+      //
+      if (Constant *C = dyn_cast<Constant>(V)) {
+        unsigned Reg = makeAnotherReg(V->getType());
+        copyConstantToRegister(MBB, IPt, C, Reg);
+        return Reg;
+      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+        unsigned Reg = makeAnotherReg(V->getType());
+        // Move the address of the global into the register
+        BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
+        return Reg;
+      } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
+        // Do not emit noop casts at all.
+        if (getClassB(CI->getType()) == getClassB(CI->getOperand(0)->getType()))
+          return getReg(CI->getOperand(0), MBB, IPt);
+      }
+
       unsigned &Reg = RegMap[V];
       if (Reg == 0) {
         Reg = makeAnotherReg(V->getType());
         RegMap[V] = Reg;
       }
 
-      // If this operand is a constant, emit the code to copy the constant into
-      // the register here...
-      //
-      if (Constant *C = dyn_cast<Constant>(V)) {
-        copyConstantToRegister(MBB, IPt, C, Reg);
-        RegMap.erase(V);  // Assign a new name to this constant if ref'd again
-      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-        // Move the address of the global into the register
-        BuildMI(*MBB, IPt, X86::MOV32ri, 1, Reg).addGlobalAddress(GV);
-        RegMap.erase(V);  // Assign a new name to this address if ref'd again
-      }
-
       return Reg;
     }
   };
 }
-
-/// TypeClass - Used by the X86 backend to group LLVM types by their basic X86
-/// Representation.
-///
-enum TypeClass {
-  cByte, cShort, cInt, cFP, cLong
-};
-
-/// getClass - Turn a primitive type into a "class" number which is based on the
-/// size of the type, and whether or not it is floating point.
-///
-static inline TypeClass getClass(const Type *Ty) {
-  switch (Ty->getPrimitiveID()) {
-  case Type::SByteTyID:
-  case Type::UByteTyID:   return cByte;      // Byte operands are class #0
-  case Type::ShortTyID:
-  case Type::UShortTyID:  return cShort;     // Short operands are class #1
-  case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::PointerTyID: return cInt;       // Int's and pointers are class #2
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID:  return cFP;        // Floating Point is #3
-
-  case Type::LongTyID:
-  case Type::ULongTyID:   return cLong;      // Longs are class #4
-  default:
-    assert(0 && "Invalid type to getClass!");
-    return cByte;  // not reached
-  }
-}
-
-// getClassB - Just like getClass, but treat boolean values as bytes.
-static inline TypeClass getClassB(const Type *Ty) {
-  if (Ty == Type::BoolTy) return cByte;
-  return getClass(Ty);
-}
-
 
 /// copyConstantToRegister - Output the instructions required to put the
 /// specified constant into the specified register.
@@ -511,39 +516,51 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   MachineFrameInfo *MFI = F->getFrameInfo();
 
   for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
-    unsigned Reg = getReg(*I);
-    
+    bool ArgLive = !I->use_empty();
+    unsigned Reg = ArgLive ? getReg(*I) : 0;
     int FI;          // Frame object index
+
     switch (getClassB(I->getType())) {
     case cByte:
-      FI = MFI->CreateFixedObject(1, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOV8rm, 4, Reg), FI);
+      if (ArgLive) {
+        FI = MFI->CreateFixedObject(1, ArgOffset);
+        addFrameReference(BuildMI(BB, X86::MOV8rm, 4, Reg), FI);
+      }
       break;
     case cShort:
-      FI = MFI->CreateFixedObject(2, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Reg), FI);
+      if (ArgLive) {
+        FI = MFI->CreateFixedObject(2, ArgOffset);
+        addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Reg), FI);
+      }
       break;
     case cInt:
-      FI = MFI->CreateFixedObject(4, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg), FI);
+      if (ArgLive) {
+        FI = MFI->CreateFixedObject(4, ArgOffset);
+        addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg), FI);
+      }
       break;
     case cLong:
-      FI = MFI->CreateFixedObject(8, ArgOffset);
-      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg), FI);
-      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg+1), FI, 4);
+      if (ArgLive) {
+        FI = MFI->CreateFixedObject(8, ArgOffset);
+        addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg), FI);
+        addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Reg+1), FI, 4);
+      }
       ArgOffset += 4;   // longs require 4 additional bytes
       break;
     case cFP:
-      unsigned Opcode;
-      if (I->getType() == Type::FloatTy) {
-        Opcode = X86::FLD32m;
-        FI = MFI->CreateFixedObject(4, ArgOffset);
-      } else {
-        Opcode = X86::FLD64m;
-        FI = MFI->CreateFixedObject(8, ArgOffset);
-        ArgOffset += 4;   // doubles require 4 additional bytes
+      if (ArgLive) {
+        unsigned Opcode;
+        if (I->getType() == Type::FloatTy) {
+          Opcode = X86::FLD32m;
+          FI = MFI->CreateFixedObject(4, ArgOffset);
+        } else {
+          Opcode = X86::FLD64m;
+          FI = MFI->CreateFixedObject(8, ArgOffset);
+        }
+        addFrameReference(BuildMI(BB, Opcode, 4, Reg), FI);
       }
-      addFrameReference(BuildMI(BB, Opcode, 4, Reg), FI);
+      if (I->getType() == Type::DoubleTy)
+        ArgOffset += 4;   // doubles require 4 additional bytes
       break;
     default:
       assert(0 && "Unhandled argument type!");
@@ -2525,6 +2542,11 @@ void ISel::visitStoreInst(StoreInst &I) {
 ///
 void ISel::visitCastInst(CastInst &CI) {
   Value *Op = CI.getOperand(0);
+
+  // Noop casts are not even emitted.
+  if (getClassB(CI.getType()) == getClassB(Op->getType()))
+    return;
+
   // If this is a cast from a 32-bit integer to a Long type, and the only uses
   // of the case are GEP instructions, then the cast does not need to be
   // generated explicitly, it will be folded into the GEP.
