@@ -22,8 +22,6 @@
 #include <fstream>
 #include <memory>
 
-using namespace opt;
-
 enum Opts {
   // Basic optimizations
   dce, constprop, inlining, mergecons, strip, mstrip,
