@@ -98,7 +98,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
     if (HMI->first) { 
       LiveRange *L = HMI->second;   // get the LiveRange
       if (!L) { 
-        if (DEBUG_RA)
+        if (DEBUG_RA && !isa<ConstantIntegral> (HMI->first))
           std::cerr << "\n**** ?!?WARNING: NULL LIVE RANGE FOUND FOR: "
                << RAV(HMI->first) << "****\n";
         continue;
