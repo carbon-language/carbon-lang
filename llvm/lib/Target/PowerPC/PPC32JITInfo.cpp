@@ -78,6 +78,11 @@ asm(
     "addi r4, r1, 44\n"   // &FPRegs[0]
     "bl _PPC32CompilationCallbackC\n"
     );
+#else
+void PPC32CompilationCallback() {
+  assert(0 && "This is not a power pc, you can't execute this!");
+  abort();
+}
 #endif
 
 extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
