@@ -1,4 +1,4 @@
-##===- tools/llvm-abcd/Makefile ----------------------------*- Makefile -*-===##
+##===- tools/llvm-bcanalyzer/Makefile ----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 
-TOOLNAME = llvm-abcd
+TOOLNAME = llvm-bcanalyzer
 USEDLIBS = bcreader vmcore support.a
 include $(LEVEL)/Makefile.common

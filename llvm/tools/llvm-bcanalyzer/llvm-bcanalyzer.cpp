@@ -1,4 +1,4 @@
-//===-- llvm-abcd.cpp - Analysis of Byte Code Dumper ----------------------===//
+//===-- llvm-bcanalyzer.cpp - Byte Code Analyzer --------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This tool may be invoked in the following manner:
-//  llvm-abcd [options]      - Read LLVM bytecode from stdin
-//  llvm-abcd [options] x.bc - Read LLVM bytecode from the x.bc file
+//  llvm-bcanalyzer [options]      - Read LLVM bytecode from stdin
+//  llvm-bcanalyzer [options] x.bc - Read LLVM bytecode from the x.bc file
 //
 //  Options:
 //      --help      - Output information about command line switches
@@ -49,7 +49,7 @@ int
 main(int argc, char **argv) 
 {
   cl::ParseCommandLineOptions(argc, argv, 
-    " llvm-abcd Analysis of ByteCode Dumper\n");
+    " llvm-bcanalyzer Analysis of ByteCode Dumper\n");
 
   PrintStackTraceOnErrorSignal();
 
@@ -66,7 +66,7 @@ main(int argc, char **argv)
   /// Analyze the bytecode file
   Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage);
 
-  // All that abcd does is write the gathered statistics to the output
+  // All that bcanalyzer does is write the gathered statistics to the output
   PrintBytecodeAnalysis(bca,*Out);
 
   if ( M && Verify ) {
