@@ -213,30 +213,30 @@ sub GetDejagnuTestResults { # (filename, log)
         if ( m/^XPASS:/ || m/^FAIL:/ ) {
           $nocopy = 0;
           if ( $first_list ) {
-            push(@lines,"<h3>UNEXPECTED TEST RESULTS</h3><ol><li>\n");
+            push(@lines, "<h3>UNEXPECTED TEST RESULTS</h3><ol><li>\n");
             $first_list = 0;
             $should_break = 1;
-            push(@lines,"<b>$_</b><br/>\n");
+            push(@lines, "<b>$_</b><br/>\n");
             print "  $_\n";
           } else {
-            push(@lines,"</li><li><b>$_</b><br/>\n");
+            push(@lines, "</li><li><b>$_</b><br/>\n");
             print "  $_\n";
           }
         } elsif ( m/Summary/ ) {
           if ( $first_list ) {
-	    push(@lines,"<b>PERFECT!</b>"); 
-	    print "  PERFECT!\n";
-	  } else {
-	    push(@lines, "</li></ol>\n");
-	  }
-          push(@lines,"<h3>STATISTICS</h3><pre>\n");
-	  print "\nSTATISTICS:\n";
+            push(@lines, "<b>PERFECT!</b>"); 
+            print "  PERFECT!\n";
+          } else {
+            push(@lines, "</li></ol>\n");
+          }
+          push(@lines, "<h3>STATISTICS</h3><pre>\n");
+          print "\nSTATISTICS:\n";
           $should_break = 0;
           $nocopy = 0;
           $readingsum = 1;
         } elsif ( $readingsum ) {
           push(@lines,"$_\n");
-	  print "$_\n";
+          print "$_\n";
         }
       }
     }
@@ -244,7 +244,7 @@ sub GetDejagnuTestResults { # (filename, log)
   push(@lines, "</pre>\n");
   close SRCHFILE;
 
-  my $content = join("",@lines);
+  my $content = join("", @lines);
   return "$content</li></ol>\n";
 }
 
