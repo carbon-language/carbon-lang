@@ -10,8 +10,10 @@
 
 #include <vector>
 #include <map>
+#include <functional>
 
 class Function;
+class CallInst;
 class Value;
 class GlobalValue;
 class Type;
@@ -19,6 +21,7 @@ class Type;
 class DSNode;                  // Each node in the graph
 class DSGraph;                 // A graph for a function
 class DSNodeIterator;          // Data structure graph traversal iterator
+
 
 //===----------------------------------------------------------------------===//
 /// DSNodeHandle - Implement a "handle" to a data structure node that takes care
@@ -351,6 +354,35 @@ inline void DSNodeHandle::mergeWith(const DSNodeHandle &Node) {
 
 
 //===----------------------------------------------------------------------===//
+/// DSCallSite - Representation of a call site via its call instruction,
+/// the DSNode handle for the callee function (or function pointer), and
+/// the DSNode handles for the function arguments.
+/// 
+class DSCallSite: public std::vector<DSNodeHandle> {
+  Function* caller;
+  CallInst* callInst;
+  DSCallSite();                         // do not implement
+
+public:
+  DSCallSite(Function& _caller, CallInst& _callInst)
+    : caller(&_caller), callInst(&_callInst) { }
+
+  // Copy constructor with helper for cloning nodes.  The helper should be a
+  // model of unary_function<const DSNodeHandle*, DSNodeHandle>, i.e., it
+  // should take a pointer to DSNodeHandle and return a fresh DSNodeHandle.
+  // If no helper is specified, this defaults to a simple copy constructor.
+  template<typename _CopierFunction>
+  DSCallSite::DSCallSite(const DSCallSite& FromCall,
+                         _CopierFunction nodeCopier = *(_CopierFunction*) 0);
+
+  Function&     getCaller() const           { return *caller; }
+  CallInst&     getCallInst() const         { return *callInst; }
+  DSNodeHandle  getReturnValueNode() const  { return (*this)[0]; }
+  DSNodeHandle  getCalleeNode() const       { return (*this)[1]; }
+};
+
+
+//===----------------------------------------------------------------------===//
 /// DSGraph - The graph that represents a function.
 ///
 class DSGraph {
@@ -373,7 +405,7 @@ class DSGraph {
   // call, the second is the function scalar being invoked, and the rest are
   // pointer arguments to the function.
   //
-  std::vector<std::vector<DSNodeHandle> > FunctionCalls;
+  std::vector<DSCallSite> FunctionCalls;
 
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
 public:
@@ -400,10 +432,10 @@ public:
   std::map<Value*, DSNodeHandle> &getValueMap() { return ValueMap; }
   const std::map<Value*, DSNodeHandle> &getValueMap() const { return ValueMap;}
 
-  std::vector<std::vector<DSNodeHandle> > &getFunctionCalls() {
+  std::vector<DSCallSite> &getFunctionCalls() {
     return FunctionCalls;
   }
-  const std::vector<std::vector<DSNodeHandle> > &getFunctionCalls() const {
+  const std::vector<DSCallSite> &getFunctionCalls() const {
     return FunctionCalls;
   }
 
