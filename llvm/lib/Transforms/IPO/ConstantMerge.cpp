@@ -44,44 +44,54 @@ bool ConstantMerge::run(Module &M) {
   // Replacements - This vector contains a list of replacements to perform.
   std::vector<std::pair<GlobalVariable*, GlobalVariable*> > Replacements;
 
-  // First pass: identify all globals that can be merged together, filling in
-  // the Replacements vector.  We cannot do the replacement in this pass because
-  // doing so may cause initializers of other globals to be rewritten,
-  // invalidating the Constant* pointers in CMap.
-  //
-  for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
-    // Only process constants with initializers
-    if (GV->isConstant() && GV->hasInitializer()) {
-      Constant *Init = GV->getInitializer();
+  bool MadeChange = false;
 
-      // Check to see if the initializer is already known...
-      std::map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
-
-      if (I == CMap.end()) {    // Nope, add it to the map
-        CMap.insert(I, std::make_pair(Init, GV));
-      } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
-        // Make all uses of the duplicate constant use the canonical version...
-        Replacements.push_back(std::make_pair(GV, I->second));
-      } else if (I->second->hasInternalLinkage()) {
-        // Make all uses of the duplicate constant use the canonical version...
-        Replacements.push_back(std::make_pair(I->second, GV));
-        I->second = GV;
+  // Iterate constant merging while we are still making progress.  Merging two
+  // constants together may allow us to merge other constants together if the
+  // second level constants have initializers which point to the globals that
+  // were just merged.
+  while (1) {
+    // First pass: identify all globals that can be merged together, filling in
+    // the Replacements vector.  We cannot do the replacement in this pass
+    // because doing so may cause initializers of other globals to be rewritten,
+    // invalidating the Constant* pointers in CMap.
+    //
+    for (Module::giterator GV = M.gbegin(), E = M.gend(); GV != E; ++GV)
+      // Only process constants with initializers
+      if (GV->isConstant() && GV->hasInitializer()) {
+        Constant *Init = GV->getInitializer();
+        
+        // Check to see if the initializer is already known...
+        std::map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
+        
+        if (I == CMap.end()) {    // Nope, add it to the map
+          CMap.insert(I, std::make_pair(Init, GV));
+        } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
+          // Make all uses of the duplicate constant use the canonical version.
+          Replacements.push_back(std::make_pair(GV, I->second));
+        } else if (I->second->hasInternalLinkage()) {
+          // Make all uses of the duplicate constant use the canonical version.
+          Replacements.push_back(std::make_pair(I->second, GV));
+          I->second = GV;
+        }
       }
-    }
-
-  if (Replacements.empty()) return false;
-  CMap.clear();
-
-  // Now that we have figured out which replacements must be made, do them all
-  // now.  This avoid invalidating the pointers in CMap, which are unneeded now.
-  for (unsigned i = 0, e = Replacements.size(); i != e; ++i) {
-    // Eliminate any uses of the dead global...
-    Replacements[i].first->replaceAllUsesWith(Replacements[i].second);
     
-    // Delete the global value from the module...
-    M.getGlobalList().erase(Replacements[i].first);
+    if (Replacements.empty())
+      return MadeChange;
+    CMap.clear();
+    
+    // Now that we have figured out which replacements must be made, do them all
+    // now.  This avoid invalidating the pointers in CMap, which are unneeded
+    // now.
+    for (unsigned i = 0, e = Replacements.size(); i != e; ++i) {
+      // Eliminate any uses of the dead global...
+      Replacements[i].first->replaceAllUsesWith(Replacements[i].second);
+      
+      // Delete the global value from the module...
+      M.getGlobalList().erase(Replacements[i].first);
+    }
+    
+    NumMerged += Replacements.size();
+    Replacements.clear();
   }
-  
-  NumMerged += Replacements.size();
-  return true;
 }
