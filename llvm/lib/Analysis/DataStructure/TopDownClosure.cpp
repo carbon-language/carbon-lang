@@ -185,15 +185,6 @@ void TDDataStructures::inlineGraphIntoCallees(DSGraph &Graph) {
       break;
     }
 
-  // Now fold in the necessary globals from the GlobalsGraph.  A global G
-  // must be folded in if it exists in the current graph (i.e., is not dead)
-  // and it was not inlined from any of my callers.  If it was inlined from
-  // a caller, it would have been fully consistent with the GlobalsGraph
-  // in the caller so folding in is not necessary.  Otherwise, this node came
-  // solely from this function's BU graph and so has to be made consistent.
-  // 
-  Graph.updateFromGlobalGraph();
-
   // Recompute the Incomplete markers.  Depends on whether args are complete
   unsigned Flags
     = HasIncompleteArgs ? DSGraph::MarkFormalArgs : DSGraph::IgnoreFormalArgs;
