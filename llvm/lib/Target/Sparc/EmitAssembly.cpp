@@ -340,6 +340,8 @@ void AsmPrinter::printSingleConstantValue(const Constant* CV) {
         
       toAsm << "\t! " << CV->getType()->getDescription()
             << " value: " << Val << "\n";
+    } else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
+      toAsm << (int)CB->getValue() << "\n";
     } else {
       WriteAsOperand(toAsm, CV, false, false) << "\n";
     }
