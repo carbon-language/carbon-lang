@@ -106,6 +106,22 @@ public:
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
 				const std::string &Name,
                                 BasicBlock *InsertAtEnd);
+
+  /// create* - These methods just forward to create, and are useful when you
+  /// statically know what type of instruction you're going to create.  These
+  /// helpers just save some typing.
+#define HANDLE_BINARY_INST(N, OPC, CLASS) \
+  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+                                     const std::string &Name = "") {\
+    return create(Instruction::OPC, V1, V2, Name);\
+  }
+#include "llvm/Instruction.def"
+#define HANDLE_BINARY_INST(N, OPC, CLASS) \
+  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+                                     const std::string &Name, BasicBlock *BB) {\
+    return create(Instruction::OPC, V1, V2, Name, BB);\
+  }
+#include "llvm/Instruction.def"
                                
 
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
