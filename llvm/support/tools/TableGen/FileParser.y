@@ -24,12 +24,24 @@ typedef std::pair<Record*, std::vector<Init*>*> SubClassRefTy;
 static std::vector<std::pair<std::pair<std::string, std::vector<unsigned>*>,
                              Init*> > SetStack;
 
-void ParseFile() {
+void ParseFile(const std::string &Filename) {
   FILE *F = stdin;
+  if (Filename != "-") {
+    F = fopen(Filename.c_str(), "r");
+
+    if (F == 0) {
+      std::cerr << "Could not open input file '" + Filename + "'!\n";
+      abort();
+    }
+  }
+
 
   Filein = F;
   Filelineno = 1;
   Fileparse();
+
+  if (F != stdin)
+    fclose(F);
   Filein = stdin;
 }
 

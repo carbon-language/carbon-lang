@@ -29,13 +29,16 @@ namespace {
   Class("class", cl::desc("Print Enum list for this class"),
         cl::value_desc("class name"));
 
- cl::opt<std::string>
- OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
-                cl::init("-"));
+  cl::opt<std::string>
+  OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
+                 cl::init("-"));
+
+  cl::opt<std::string>
+  InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
 }
 
 
-void ParseFile();
+void ParseFile(const std::string &Filename);
 
 RecordKeeper Records;
 
@@ -379,7 +382,7 @@ static void ParseMachineCode() {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
-  ParseFile();
+  ParseFile(InputFilename);
 
   std::ostream *Out = &std::cout;
   if (OutputFilename != "-") {
