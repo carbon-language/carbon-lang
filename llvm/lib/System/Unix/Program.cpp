@@ -24,6 +24,8 @@
 #include <sys/wait.h>
 #endif
 
+extern char** environ;
+
 namespace llvm {
 using namespace sys;
 
