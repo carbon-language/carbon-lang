@@ -2125,24 +2125,39 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
     return;
   }
 
-  // sub 0, X -> neg X
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
-    if (OperatorClass == 1 && CI->isNullValue()) {
-      unsigned op1Reg = getReg(Op1, MBB, IP);
+    if (OperatorClass == 1) {
       static unsigned const NEGTab[] = {
         X86::NEG8r, X86::NEG16r, X86::NEG32r, 0, X86::NEG32r
       };
-      BuildMI(*MBB, IP, NEGTab[Class], 1, DestReg).addReg(op1Reg);
+
+      // sub 0, X -> neg X
+      if (CI->isNullValue()) {
+        unsigned op1Reg = getReg(Op1, MBB, IP);
+        BuildMI(*MBB, IP, NEGTab[Class], 1, DestReg).addReg(op1Reg);
       
-      if (Class == cLong) {
-        // We just emitted: Dl = neg Sl
-        // Now emit       : T  = addc Sh, 0
-        //                : Dh = neg T
-        unsigned T = makeAnotherReg(Type::IntTy);
-        BuildMI(*MBB, IP, X86::ADC32ri, 2, T).addReg(op1Reg+1).addImm(0);
-        BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg+1).addReg(T);
+        if (Class == cLong) {
+          // We just emitted: Dl = neg Sl
+          // Now emit       : T  = addc Sh, 0
+          //                : Dh = neg T
+          unsigned T = makeAnotherReg(Type::IntTy);
+          BuildMI(*MBB, IP, X86::ADC32ri, 2, T).addReg(op1Reg+1).addImm(0);
+          BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg+1).addReg(T);
+        }
+        return;
+      } else if (Op1->hasOneUse() && Class != cLong) {
+        // sub C, X -> tmp = neg X; DestReg = add tmp, C.  This is better
+        // than copying C into a temporary register, because of register
+        // pressure (tmp and destreg can share a register.
+        static unsigned const ADDRITab[] = { 
+          X86::ADD8ri, X86::ADD16ri, X86::ADD32ri, 0, X86::ADD32ri
+        };
+        unsigned op1Reg = getReg(Op1, MBB, IP);
+        unsigned Tmp = makeAnotherReg(Op0->getType());
+        BuildMI(*MBB, IP, NEGTab[Class], 1, Tmp).addReg(op1Reg);
+        BuildMI(*MBB, IP, ADDRITab[Class], 2, DestReg).addReg(Tmp).addImm(CI->getRawValue());
+        return;
       }
-      return;
     }
 
   // Special case: op Reg, <const int>
