@@ -105,7 +105,7 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   output_vbr(NC, Out);
 
   // Output the Type ID Number...
-  int Slot = Table.getValSlot(Plane.front()->getType());
+  int Slot = Table.getSlot(Plane.front()->getType());
   assert (Slot != -1 && "Type in constant pool but not in function!!");
   output_vbr((unsigned)Slot, Out);
 
@@ -174,7 +174,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   
   // Output the types for the global variables in the module...
   for (Module::const_giterator I = M->gbegin(), End = M->gend(); I != End;++I) {
-    int Slot = Table.getValSlot(I->getType());
+    int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3=Linkage,
@@ -185,21 +185,21 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
     // If we have an initializer, output it now.
     if (I->hasInitializer()) {
-      Slot = Table.getValSlot((Value*)I->getInitializer());
+      Slot = Table.getSlot((Value*)I->getInitializer());
       assert(Slot != -1 && "No slot for global var initializer!");
       output_vbr((unsigned)Slot, Out);
     }
   }
-  output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
+  output_vbr((unsigned)Table.getSlot(Type::VoidTy), Out);
 
   // Output the types of the functions in this module...
   for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
-    int Slot = Table.getValSlot(I->getType());
+    int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Module const pool is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
     output_vbr((unsigned)Slot, Out);
   }
-  output_vbr((unsigned)Table.getValSlot(Type::VoidTy), Out);
+  output_vbr((unsigned)Table.getSlot(Type::VoidTy), Out);
 
   align32(Out);
 }
@@ -248,13 +248,13 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
     // Symtab block header: [num entries][type id number]
     output_vbr(MST.type_size(TI->first), Out);
 
-    Slot = Table.getValSlot(TI->first);
+    Slot = Table.getSlot(TI->first);
     assert(Slot != -1 && "Type in symtab, but not in table!");
     output_vbr((unsigned)Slot, Out);
 
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
-      Slot = Table.getValSlot(I->second);
+      Slot = Table.getSlot(I->second);
       assert(Slot != -1 && "Value in symtab but has no slot number!!");
       output_vbr((unsigned)Slot, Out);
       output(I->first, Out, false); // Don't force alignment...

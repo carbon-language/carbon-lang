@@ -20,7 +20,7 @@ void BytecodeWriter::outputType(const Type *T) {
   switch (T->getPrimitiveID()) {   // Handle derived types now.
   case Type::FunctionTyID: {
     const FunctionType *MT = cast<FunctionType>(T);
-    int Slot = Table.getValSlot(MT->getReturnType());
+    int Slot = Table.getSlot(MT->getReturnType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
 
@@ -30,7 +30,7 @@ void BytecodeWriter::outputType(const Type *T) {
     // Output all of the arguments...
     FunctionType::ParamTypes::const_iterator I = MT->getParamTypes().begin();
     for (; I != MT->getParamTypes().end(); ++I) {
-      Slot = Table.getValSlot(*I);
+      Slot = Table.getSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_vbr((unsigned)Slot, Out);
     }
@@ -43,7 +43,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
   case Type::ArrayTyID: {
     const ArrayType *AT = cast<ArrayType>(T);
-    int Slot = Table.getValSlot(AT->getElementType());
+    int Slot = Table.getSlot(AT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
     //std::cerr << "Type slot = " << Slot << " Type = " << T->getName() << endl;
@@ -58,7 +58,7 @@ void BytecodeWriter::outputType(const Type *T) {
     // Output all of the element types...
     StructType::ElementTypes::const_iterator I = ST->getElementTypes().begin();
     for (; I != ST->getElementTypes().end(); ++I) {
-      int Slot = Table.getValSlot(*I);
+      int Slot = Table.getSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_vbr((unsigned)Slot, Out);
     }
@@ -70,7 +70,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
   case Type::PointerTyID: {
     const PointerType *PT = cast<PointerType>(T);
-    int Slot = Table.getValSlot(PT->getElementType());
+    int Slot = Table.getSlot(PT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_vbr((unsigned)Slot, Out);
     break;
@@ -103,10 +103,10 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
     output_vbr(CE->getOpcode(), Out);        // flags as an expr
     
     for (User::const_op_iterator OI = CE->op_begin(); OI != CE->op_end(); ++OI){
-      int Slot = Table.getValSlot(*OI);
+      int Slot = Table.getSlot(*OI);
       assert(Slot != -1 && "Unknown constant used in ConstantExpr!!");
       output_vbr((unsigned)Slot, Out);
-      Slot = Table.getValSlot((*OI)->getType());
+      Slot = Table.getSlot((*OI)->getType());
       output_vbr((unsigned)Slot, Out);
     }
     return false;
@@ -146,7 +146,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
     assert(size == cast<ArrayType>(CPA->getType())->getNumElements()
            && "ConstantArray out of whack!");
     for (unsigned i = 0; i < size; i++) {
-      int Slot = Table.getValSlot(CPA->getOperand(i));
+      int Slot = Table.getSlot(CPA->getOperand(i));
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot, Out);
     }
@@ -158,7 +158,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
     const std::vector<Use> &Vals = CPS->getValues();
 
     for (unsigned i = 0; i < Vals.size(); ++i) {
-      int Slot = Table.getValSlot(Vals[i]);
+      int Slot = Table.getSlot(Vals[i]);
       assert(Slot != -1 && "Constant used but not available!!");
       output_vbr((unsigned)Slot, Out);
     }      
@@ -169,7 +169,7 @@ bool BytecodeWriter::outputConstant(const Constant *CPV) {
     const ConstantPointer *CPP = cast<ConstantPointer>(CPV);
     assert(!isa<ConstantPointerNull>(CPP) && "Null should be already emitted!");
     const ConstantPointerRef *CPR = cast<ConstantPointerRef>(CPP);
-    int Slot = Table.getValSlot((Value*)CPR->getValue());
+    int Slot = Table.getSlot((Value*)CPR->getValue());
     assert(Slot != -1 && "Global used but not available!!");
     output_vbr((unsigned)Slot, Out);
     break;

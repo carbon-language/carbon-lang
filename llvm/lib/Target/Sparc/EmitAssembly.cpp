@@ -148,7 +148,7 @@ public:
 
     // Qualify all internal names with a unique id.
     if (!isExternal(V)) {
-      int valId = idTable->Table.getValSlot(V);
+      int valId = idTable->Table.getSlot(V);
       if (valId == -1) {
         GlobalIdTable::ValIdMapConstIterator I = idTable->valToIdMap.find(V);
         if (I == idTable->valToIdMap.end())

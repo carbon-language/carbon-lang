@@ -35,7 +35,7 @@ SlotCalculator::SlotCalculator(const Module *M, bool IgnoreNamed) {
   //
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::PrimitiveID)i));
-    insertVal(Type::getPrimitiveType((Type::PrimitiveID)i), true);
+    insertValue(Type::getPrimitiveType((Type::PrimitiveID)i), true);
   }
 
   if (M == 0) return;   // Empty table...
@@ -51,7 +51,7 @@ SlotCalculator::SlotCalculator(const Function *M, bool IgnoreNamed) {
   //
   for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
     assert(Type::getPrimitiveType((Type::PrimitiveID)i));
-    insertVal(Type::getPrimitiveType((Type::PrimitiveID)i), true);
+    insertValue(Type::getPrimitiveType((Type::PrimitiveID)i), true);
   }
 
   if (TheModule == 0) return;   // Empty table...
@@ -71,21 +71,21 @@ void SlotCalculator::processModule() {
   //
   for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
        I != E; ++I)
-    insertValue(I);
+    getOrCreateSlot(I);
 
   // Scavenge the types out of the functions, then add the functions themselves
   // to the value table...
   //
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    insertValue(I);
+    getOrCreateSlot(I);
 
   // Add all of the module level constants used as initializers
   //
   for (Module::const_giterator I = TheModule->gbegin(), E = TheModule->gend();
        I != E; ++I)
     if (I->hasInitializer())
-      insertValue(I->getInitializer());
+      getOrCreateSlot(I->getInitializer());
 
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
@@ -105,7 +105,7 @@ void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
   for (SymbolTable::const_iterator I = ST->begin(), E = ST->end(); I != E; ++I)
     for (SymbolTable::type_const_iterator TI = I->second.begin(), 
 	   TE = I->second.end(); TI != TE; ++TI)
-      insertValue(TI->second);
+      getOrCreateSlot(TI->second);
 }
 
 void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
@@ -113,7 +113,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
     for (SymbolTable::type_const_iterator TI = I->second.begin(), 
 	   TE = I->second.end(); TI != TE; ++TI)
       if (isa<Constant>(TI->second))
-	insertValue(TI->second);
+	getOrCreateSlot(TI->second);
 }
 
 
@@ -130,7 +130,7 @@ void SlotCalculator::incorporateFunction(const Function *M) {
 
   // Iterate over function arguments, adding them to the value table...
   for(Function::const_aiterator I = M->abegin(), E = M->aend(); I != E; ++I)
-    insertValue(I);
+    getOrCreateSlot(I);
 
   // Iterate over all of the instructions in the function, looking for constant
   // values that are referenced.  Add these to the value pools before any
@@ -147,7 +147,7 @@ void SlotCalculator::incorporateFunction(const Function *M) {
     // Emit all of the constants that are being used by the instructions in the
     // function...
     for_each(constant_begin(M), constant_end(M),
-	     bind_obj(this, &SlotCalculator::insertValue));
+	     bind_obj(this, &SlotCalculator::getOrCreateSlot));
 
     // If there is a symbol table, it is possible that the user has names for
     // constants that are not being used.  In this case, we will have problems
@@ -162,13 +162,13 @@ void SlotCalculator::incorporateFunction(const Function *M) {
 
   // Iterate over basic blocks, adding them to the value table...
   for (Function::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    insertValue(I);
+    getOrCreateSlot(I);
 
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the instructions to the type planes...
   for_each(inst_begin(M), inst_end(M),
-	   bind_obj(this, &SlotCalculator::insertValue));
+	   bind_obj(this, &SlotCalculator::getOrCreateSlot));
 
   if (!IgnoreNamedNodes) {
     SC_DEBUG("Inserting SymbolTable values:\n");
@@ -219,7 +219,7 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-int SlotCalculator::getValSlot(const Value *D) const {
+int SlotCalculator::getSlot(const Value *D) const {
   std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(D);
   if (I == NodeMap.end()) return -1;
  
@@ -227,8 +227,8 @@ int SlotCalculator::getValSlot(const Value *D) const {
 }
 
 
-int SlotCalculator::insertValue(const Value *V) {
-  int SlotNo = getValSlot(V);        // Check to see if it's already in!
+int SlotCalculator::getOrCreateSlot(const Value *V) {
+  int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
 
   if (!isa<GlobalValue>(V))
@@ -238,16 +238,16 @@ int SlotCalculator::insertValue(const Value *V) {
       //
       for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
            I != E; ++I)
-        insertValue(*I);
+        getOrCreateSlot(*I);
     }
 
-  return insertVal(V);
+  return insertValue(V);
 }
 
 
-int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
+int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
   assert(D && "Can't insert a null value!");
-  assert(getValSlot(D) == -1 && "Value is already in the table!");
+  assert(getSlot(D) == -1 && "Value is already in the table!");
 
   // If this node does not contribute to a plane, or if the node has a 
   // name and we don't want names, then ignore the silly node... Note that types
@@ -270,12 +270,9 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
     //
     //    global { \2 * } { { \2 }* null }
     //
-    int ResultSlot;
-    if ((ResultSlot = getValSlot(TheTy)) == -1) {
-      ResultSlot = doInsertVal(TheTy);
-      SC_DEBUG("  Inserted type: " << TheTy->getDescription() << " slot=" <<
-	       ResultSlot << "\n");
-    }
+    int ResultSlot = doInsertValue(TheTy);
+    SC_DEBUG("  Inserted type: " << TheTy->getDescription() << " slot=" <<
+             ResultSlot << "\n");
 
     // Loop over any contained types in the definition... in depth first order.
     //
@@ -284,9 +281,9 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
       if (*I != TheTy) {
 	// If we haven't seen this sub type before, add it to our type table!
 	const Type *SubTy = *I;
-	if (getValSlot(SubTy) == -1) {
+	if (getSlot(SubTy) == -1) {
 	  SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
-	  int Slot = doInsertVal(SubTy);
+	  int Slot = doInsertValue(SubTy);
 	  SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << 
 		   " slot=" << Slot << "\n");
 	}
@@ -295,13 +292,14 @@ int SlotCalculator::insertVal(const Value *D, bool dontIgnore) {
   }
 
   // Okay, everything is happy, actually insert the silly value now...
-  return doInsertVal(D);
+  return doInsertValue(D);
 }
 
 
-// doInsertVal - This is a small helper function to be called only be insertVal.
+// doInsertValue - This is a small helper function to be called only
+// be insertValue.
 //
-int SlotCalculator::doInsertVal(const Value *D) {
+int SlotCalculator::doInsertValue(const Value *D) {
   const Type *Typ = D->getType();
   unsigned Ty;
 
@@ -310,10 +308,10 @@ int SlotCalculator::doInsertVal(const Value *D) {
   //  cerr << "Inserting type '" << cast<Type>(D)->getDescription() << "'!\n";
 
   if (Typ->isDerivedType()) {
-    int ValSlot = getValSlot(Typ);
+    int ValSlot = getSlot(Typ);
     if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
-      ValSlot = insertVal(Typ, true);
+      ValSlot = insertValue(Typ, true);
       assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
     }
     Ty = (unsigned)ValSlot;

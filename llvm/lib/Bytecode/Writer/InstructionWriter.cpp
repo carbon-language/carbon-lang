@@ -33,13 +33,13 @@ static void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
   output_vbr(NumArgs + (isa<CastInst>(I) || isa<VarArgInst>(I)), Out);
 
   for (unsigned i = 0; i < NumArgs; ++i) {
-    int Slot = Table.getValSlot(I->getOperand(i));
+    int Slot = Table.getSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot, Out);
   }
 
   if (isa<CastInst>(I) || isa<VarArgInst>(I)) {
-    int Slot = Table.getValSlot(I->getType());
+    int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Cast/VarArg return type unknown?");
     output_vbr((unsigned)Slot, Out);
   }
@@ -72,7 +72,7 @@ static void outputInstrVarArgsCall(const Instruction *I, unsigned Opcode,
 
   // The type for the function has already been emitted in the type field of the
   // instruction.  Just emit the slot # now.
-  int Slot = Table.getValSlot(I->getOperand(0));
+  int Slot = Table.getSlot(I->getOperand(0));
   assert(Slot >= 0 && "No slot number for value!?!?");      
   output_vbr((unsigned)Slot, Out);
 
@@ -84,12 +84,12 @@ static void outputInstrVarArgsCall(const Instruction *I, unsigned Opcode,
 
   for (unsigned i = 1; i < NumArgs; ++i) {
     // Output Arg Type ID
-    Slot = Table.getValSlot(I->getOperand(i)->getType());
+    Slot = Table.getSlot(I->getOperand(i)->getType());
     assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot, Out);
 
     // Output arg ID itself
-    Slot = Table.getValSlot(I->getOperand(i));
+    Slot = Table.getSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");      
     output_vbr((unsigned)Slot, Out);
   }
@@ -176,7 +176,7 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
 
   for (unsigned i = 0; i < NumOperands; ++i) {
     const Value *Def = I.getOperand(i);
-    int slot = Table.getValSlot(Def);
+    int slot = Table.getSlot(Def);
     assert(slot != -1 && "Broken bytecode!");
     if (slot > MaxOpSlot) MaxOpSlot = slot;
     if (i < 3) Slots[i] = slot;
@@ -204,7 +204,7 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   }
 
   unsigned Type;
-  int Slot = Table.getValSlot(Ty);
+  int Slot = Table.getSlot(Ty);
   assert(Slot != -1 && "Type not available!!?!");
   Type = (unsigned)Slot;
 
@@ -217,7 +217,7 @@ void BytecodeWriter::processInstruction(const Instruction &I) {
   if (isa<CastInst>(I) || isa<VarArgInst>(I)) {
     // Cast has to encode the destination type as the second argument in the
     // packet, or else we won't know what type to cast to!
-    Slots[1] = Table.getValSlot(I.getType());
+    Slots[1] = Table.getSlot(I.getType());
     assert(Slots[1] != -1 && "Cast return type unknown?");
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;

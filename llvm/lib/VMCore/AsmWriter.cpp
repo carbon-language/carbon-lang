@@ -357,7 +357,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     if (V->hasName()) {
       Out << getLLVMName(V->getName());
     } else if (Table) {
-      int Slot = Table->getValSlot(V);
+      int Slot = Table->getSlot(V);
       if (Slot >= 0)
         Out << "%" << Slot;
       else
@@ -405,7 +405,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
     } else {
       int Slot;
       if (Table) {
-	Slot = Table->getValSlot(V);
+	Slot = Table->getSlot(V);
       } else {
         if (const Type *Ty = dyn_cast<Type>(V)) {
           Out << Ty->getDescription();
@@ -415,7 +415,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
         Table = createSlotCalculator(V);
         if (Table == 0) { Out << "BAD VALUE TYPE!"; return; }
 
-	Slot = Table->getValSlot(V);
+	Slot = Table->getSlot(V);
 	delete Table;
       }
       if (Slot >= 0)  Out << "%" << Slot;
@@ -706,7 +706,7 @@ void AssemblyWriter::printArgument(const Argument *Arg) {
   // Output name, if available...
   if (Arg->hasName())
     Out << " " << getLLVMName(Arg->getName());
-  else if (Table.getValSlot(Arg) < 0)
+  else if (Table.getSlot(Arg) < 0)
     Out << "<badref>";
 }
 
@@ -716,7 +716,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     Out << "\n" << BB->getName() << ":";
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
-    int Slot = Table.getValSlot(BB);
+    int Slot = Table.getSlot(BB);
     Out << "\n; <label>:";
     if (Slot >= 0) 
       Out << Slot;         // Extra newline separates out label's
@@ -756,7 +756,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     printType(V.getType()) << ">";
 
     if (!V.hasName()) {
-      int Slot = Table.getValSlot(&V); // Print out the def slot taken...
+      int Slot = Table.getSlot(&V); // Print out the def slot taken...
       if (Slot >= 0) Out << ":" << Slot;
       else Out << ":<badref>";
     }

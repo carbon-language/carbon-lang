@@ -39,8 +39,8 @@ public:
   SlotCalculator(const Function *M, bool IgnoreNamed);
   inline ~SlotCalculator() {}
   
-  // getValSlot returns < 0 on error!
-  int getValSlot(const Value *D) const;
+  // getSlot returns < 0 on error!
+  int getSlot(const Value *D) const;
 
   inline unsigned getNumPlanes() const { return Table.size(); }
   inline unsigned getModuleLevel(unsigned Plane) const { 
@@ -58,19 +58,20 @@ public:
   void purgeFunction();
 
 protected:
-  // insertVal - Insert a value into the value table... Return the slot that it
-  // occupies, or -1 if the declaration is to be ignored because of the
-  // IgnoreNamedNodes flag.
+  // getOrCreateSlot - Values can be crammed into here at will... if
+  // they haven't been inserted already, they get inserted, otherwise
+  // they are ignored.
   //
-  int insertVal(const Value *D, bool dontIgnore = false);
+  int getOrCreateSlot(const Value *D);
 
-  // insertValue - Values can be crammed into here at will... if they haven't
-  // been inserted already, they get inserted, otherwise they are ignored.
+  // insertValue - Insert a value into the value table... Return the
+  // slot that it occupies, or -1 if the declaration is to be ignored
+  // because of the IgnoreNamedNodes flag.
   //
-  int insertValue(const Value *D);
+  int insertValue(const Value *D, bool dontIgnore = false);
 
-  // doInsertVal - Small helper function to be called only be insertVal.
-  int doInsertVal(const Value *D);
+  // doInsertValue - Small helper function to be called only be insertVal.
+  int doInsertValue(const Value *D);
 
   // processModule - Process all of the module level function declarations and
   // types that are available.
