@@ -295,8 +295,8 @@ Archive::getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage) {
 
   for (iterator I=begin(), E=end(); I != E; ++I) {
     if (I->isBytecode() || I->isCompressedBytecode()) {
-      std::string FullMemberName = archPath.get() + 
-        "(" + I->getPath().get() + ")";
+      std::string FullMemberName = archPath.toString() + 
+        "(" + I->getPath().toString() + ")";
       Module* M = ParseBytecodeBuffer((const unsigned char*)I->getData(), 
           I->getSize(), FullMemberName, ErrMessage);
       if (!M)
@@ -407,8 +407,8 @@ Archive::findModuleDefiningSymbol(const std::string& symbol) {
   ArchiveMember* mbr = parseMemberHeader(modptr, base + mapfile->size());
 
   // Now, load the bytecode module to get the ModuleProvider
-  std::string FullMemberName = archPath.get() + "(" + 
-    mbr->getPath().get() + ")";
+  std::string FullMemberName = archPath.toString() + "(" + 
+    mbr->getPath().toString() + ")";
   ModuleProvider* mp = getBytecodeBufferModuleProvider(
       (const unsigned char*) mbr->getData(), mbr->getSize(), 
       FullMemberName, 0);
@@ -446,8 +446,8 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
       if (mbr->isBytecode() || mbr->isCompressedBytecode()) {
         // Get the symbols 
         std::vector<std::string> symbols;
-        std::string FullMemberName = archPath.get() + "(" + 
-          mbr->getPath().get() + ")";
+        std::string FullMemberName = archPath.toString() + "(" + 
+          mbr->getPath().toString() + ")";
         ModuleProvider* MP = GetBytecodeSymbols((const unsigned char*)At,
             mbr->getSize(), FullMemberName, symbols);
 
@@ -462,7 +462,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
           modules.insert(std::make_pair(offset, std::make_pair(MP, mbr)));
         } else {
           throw std::string("Can't parse bytecode member: ") +
-            mbr->getPath().get();
+            mbr->getPath().toString();
         }
       }
 

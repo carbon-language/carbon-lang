@@ -582,7 +582,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
       throw std::string("Configuration file for '") + ftype + 
                         "' is not available.";
   }
-  FileInputProvider fip( confFile.get() );
+  FileInputProvider fip( confFile.toString() );
   if (!fip.okay()) {
     throw std::string("Configuration file for '") + ftype + 
                       "' is not available.";

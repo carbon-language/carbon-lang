@@ -322,7 +322,7 @@ namespace sys {
       /// by other software.
       /// @returns std::string containing the path name.
       /// @brief Returns the path as a std::string.
-      std::string get() const { return path; }
+      std::string toString() const { return path; }
 
       /// This function returns the last component of the path name. If the
       /// isDirectory() function would return true then this returns the name
@@ -466,7 +466,7 @@ namespace sys {
       /// @brief Create the directory this Path refers to.
       bool createDirectory( bool create_parents = false );
 
-      /// This method attempts to create a file in the file system with the same 
+      /// This method attempts to create a file in the file system with the same
       /// name as the Path object. The intermediate directories must all exist
       /// at the time this method is called. Use createDirectories to 
       /// accomplish that. The created file will be empty upon return from this
@@ -500,7 +500,7 @@ namespace sys {
       /// @brief Removes the file or directory from the filesystem.
       bool destroyDirectory( bool destroy_contents = false );
 
-      /// This method attempts to destroy the file named by the last item in the 
+      /// This method attempts to destroy the file named by the last item in the
       /// Path name. 
       /// @returns false if the Path does not refer to a file, true otherwise.
       /// @throws std::string if there is an error.

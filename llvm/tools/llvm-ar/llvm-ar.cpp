@@ -345,7 +345,7 @@ void doPrint() {
           continue;
 
         if (Verbose)
-          std::cout << "Printing " << I->getPath().get() << "\n";
+          std::cout << "Printing " << I->getPath().toString() << "\n";
 
         if (I->isCompressedBytecode())
           Compressor::decompressToStream(data+4,I->getSize()-4,std::cout);
@@ -409,9 +409,9 @@ void doDisplayTable() {
         std::cout << " " << std::setw(8) << I->getSize();
         std::cout << " " << std::setw(20) << 
           I->getModTime().toString().substr(4);
-        std::cout << " " << I->getPath().get() << "\n";
+        std::cout << " " << I->getPath().toString() << "\n";
       } else {
-        std::cout << I->getPath().get() << "\n";
+        std::cout << I->getPath().toString() << "\n";
       }
     }
   }
@@ -505,7 +505,7 @@ void doMove() {
   if (AddBefore || InsertBefore || AddAfter) {
     for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end(); 
          I != E; ++I ) {
-      if (RelPos == I->getPath().get()) {
+      if (RelPos == I->getPath().toString()) {
         if (AddAfter) {
           moveto_spot = I;
           moveto_spot++;
@@ -582,7 +582,7 @@ void doReplaceOrInsert() {
     std::set<sys::Path>::iterator found = remaining.end();
     for (std::set<sys::Path>::iterator RI = remaining.begin(), 
          RE = remaining.end(); RI != RE; ++RI ) {
-      std::string compare(RI->get());
+      std::string compare(RI->toString());
       if (TruncateNames && compare.length() > 15) {
         const char* nm = compare.c_str();
         unsigned len = compare.length();
@@ -595,7 +595,7 @@ void doReplaceOrInsert() {
           len = 15;
         compare.assign(nm,len);
       }
-      if (compare == I->getPath().get()) {
+      if (compare == I->getPath().toString()) {
         found = RI;
         break;
       }
@@ -622,9 +622,9 @@ void doReplaceOrInsert() {
     }
 
     // Determine if this is the place where we should insert
-    if ((AddBefore || InsertBefore) && (RelPos == I->getPath().get()))
+    if ((AddBefore || InsertBefore) && (RelPos == I->getPath().toString()))
       insert_spot = I;
-    else if (AddAfter && (RelPos == I->getPath().get())) {
+    else if (AddAfter && (RelPos == I->getPath().toString())) {
       insert_spot = I;
       insert_spot++;
     }
@@ -675,7 +675,7 @@ int main(int argc, char **argv) {
     if (!ArchivePath.exists()) {
       // Produce a warning if we should and we're creating the archive
       if (!Create)
-        std::cerr << argv[0] << ": creating " << ArchivePath.get() << "\n";
+        std::cerr << argv[0] << ": creating " << ArchivePath.toString() << "\n";
       TheArchive = Archive::CreateEmpty(ArchivePath);
     } else {
       TheArchive = Archive::OpenAndLoad(ArchivePath);

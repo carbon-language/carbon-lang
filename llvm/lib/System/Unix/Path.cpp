@@ -21,7 +21,6 @@
 #include "Unix.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <fstream>
 #include <utime.h>
 #include <dirent.h>
 
@@ -192,10 +191,13 @@ bool
 Path::isBytecodeFile() const {
   char buffer[ 4];
   buffer[0] = 0;
-  std::ifstream f(path.c_str());
-  f.read(buffer, 4);
-  if (f.bad())
-    ThrowErrno("can't read file signature");
+  int fd = ::open(path.c_str(),O_RDONLY);
+  if (fd < 0)
+    return false;
+  ssize_t bytes_read = ::read(fd, buffer, 4);
+  ::close(fd);
+  if (4 != bytes_read) 
+    return false;
 
   return (buffer[0] == 'l' && buffer[1] == 'l' && buffer[2] == 'v' &&
       (buffer[3] == 'c' || buffer[3] == 'm'));
@@ -522,7 +524,8 @@ bool
 Path::renameFile(const Path& newName) {
   if (!isFile()) return false;
   if (0 != rename(path.c_str(), newName.c_str()))
-    ThrowErrno(std::string("can't rename ") + path + " as " + newName.get());
+    ThrowErrno(std::string("can't rename ") + path + " as " + 
+               newName.toString());
   return true;
 }
 

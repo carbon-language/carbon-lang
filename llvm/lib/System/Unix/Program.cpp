@@ -81,7 +81,7 @@ int
 Program::ExecuteAndWait(const Path& path, 
                         const std::vector<std::string>& args) {
   if (!path.executable())
-    throw path.get() + " is not executable"; 
+    throw path.toString() + " is not executable"; 
 
 #ifdef HAVE_SYS_WAIT_H
   // Create local versions of the parameters that can be passed into execve()
@@ -98,7 +98,8 @@ Program::ExecuteAndWait(const Path& path,
   switch (fork()) {
     // An error occured:  Return to the caller.
     case -1:
-      ThrowErrno(std::string("Couldn't execute program '") + path.get() + "'");
+      ThrowErrno(std::string("Couldn't execute program '") + path.toString() + 
+                 "'");
       break;
 
     // Child process: Execute the program.
@@ -116,13 +117,15 @@ Program::ExecuteAndWait(const Path& path,
   // Parent process: Wait for the child process to terminate.
   int status;
   if ((::wait (&status)) == -1)
-    ThrowErrno(std::string("Failed waiting for program '") + path.get() + "'");
+    ThrowErrno(std::string("Failed waiting for program '") + path.toString() 
+               + "'");
 
   // If the program exited normally with a zero exit status, return success!
   if (WIFEXITED (status))
     return WEXITSTATUS(status);
   else if (WIFSIGNALED(status))
-    throw std::string("Program '") + path.get() + "' received terminating signal.";
+    throw std::string("Program '") + path.toString() + 
+          "' received terminating signal.";
   else
     return 0;
     

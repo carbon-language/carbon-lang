@@ -44,17 +44,17 @@ void MappedFile::initialize() {
     if (info_->fd_ < 0) {
       delete info_;
       info_ = 0;
-      ThrowErrno(std::string("Can't open file: ") + path_.get());
+      ThrowErrno(std::string("Can't open file: ") + path_.toString());
     }
     struct stat sbuf;
     if(::fstat(info_->fd_, &info_->sbuf_) < 0) {
       ::close(info_->fd_);
       delete info_;
       info_ = 0;
-      ThrowErrno(std::string("Can't stat file: ") + path_.get());
+      ThrowErrno(std::string("Can't stat file: ") + path_.toString());
     }
   } else {
-    throw std::string("Can't open file: ") + path_.get();
+    throw std::string("Can't open file: ") + path_.toString();
   }
 }
 
@@ -103,7 +103,7 @@ void* MappedFile::map() {
 
     base_ = ::mmap(0, map_size, prot, flags, info_->fd_, 0);
     if (base_ == MAP_FAILED)
-      ThrowErrno(std::string("Can't map file:") + path_.get());
+      ThrowErrno(std::string("Can't map file:") + path_.toString());
   }
   return base_;
 }

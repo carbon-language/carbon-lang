@@ -241,7 +241,7 @@ const std::string GetFileType(const std::string& fname, unsigned pos ) {
 void handleTerminatingOptions(CompilerDriver* CD) {
   if (!PrintFileName.empty()) {
     sys::Path path = CD->GetPathForLinkageItem(PrintFileName,false);
-    std::string p = path.get();
+    std::string p = path.toString();
     if (p.empty())
       std::cout << "Can't locate '" << PrintFileName << "'.\n";
     else

@@ -374,7 +374,8 @@ void getSymbols(Module*M, std::vector<std::string>& symbols) {
 bool llvm::GetBytecodeSymbols(const sys::Path& fName,
                               std::vector<std::string>& symbols) {
   try {
-    std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fName.get()));
+    std::auto_ptr<ModuleProvider> AMP( 
+        getBytecodeModuleProvider(fName.toString()));
 
     // Get the module from the provider
     Module* M = AMP->materializeModule();

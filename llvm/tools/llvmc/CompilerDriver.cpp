@@ -190,7 +190,7 @@ private:
       if (TempDir.isDirectory() && TempDir.writable())
         TempDir.destroyDirectory(/*remove_contents=*/true);
     } else {
-      std::cout << "Temporary files are in " << TempDir.get() << "\n";
+      std::cout << "Temporary files are in " << TempDir.toString() << "\n";
     }
   }
 
@@ -270,12 +270,12 @@ private:
             break;
           case 'i':
             if (*PI == "%in%") {
-              action->args.push_back(input.get());
+              action->args.push_back(input.toString());
             } else if (*PI == "%incls%") {
               PathVector::iterator I = IncludePaths.begin();
               PathVector::iterator E = IncludePaths.end();
               while (I != E) {
-                action->args.push_back( std::string("-I") + I->get() );
+                action->args.push_back( std::string("-I") + I->toString() );
                 ++I;
               }
             } else
@@ -286,7 +286,7 @@ private:
               PathVector::iterator I = LibraryPaths.begin();
               PathVector::iterator E = LibraryPaths.end();
               while (I != E) {
-                action->args.push_back( std::string("-L") + I->get() );
+                action->args.push_back( std::string("-L") + I->toString() );
                 ++I;
               }
             } else
@@ -294,7 +294,7 @@ private:
             break;
           case 'o':
             if (*PI == "%out%") {
-              action->args.push_back(output.get());
+              action->args.push_back(output.toString());
             } else if (*PI == "%opt%") {
               if (!isSet(EMIT_RAW_FLAG)) {
                 if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
@@ -358,7 +358,7 @@ private:
           if (PI->length()>1 && (*PI)[0] == '%' && 
               (*PI)[PI->length()-1] == '%') {
             throw std::string("Invalid substitution token: '") + *PI +
-                  "' for command '" + pat->program.get() + "'";
+                  "' for command '" + pat->program.toString() + "'";
           } else if (!PI->empty()) {
             // It's not a legal substitution, just pass it through
             action->args.push_back(*PI);
@@ -381,18 +381,19 @@ private:
       WriteAction(action);
     if (!isSet(DRY_RUN_FLAG)) {
       sys::Path progpath = sys::Program::FindProgramByName(
-        action->program.get());
+        action->program.toString());
       if (progpath.isEmpty())
-        throw std::string("Can't find program '"+action->program.get()+"'");
+        throw std::string("Can't find program '" +
+                          action->program.toString()+"'");
       else if (progpath.executable())
         action->program = progpath;
       else
-        throw std::string("Program '"+action->program.get()+
+        throw std::string("Program '"+action->program.toString()+
                           "' is not executable.");
 
       // Invoke the program
       if (isSet(TIME_ACTIONS_FLAG)) {
-        Timer timer(action->program.get());
+        Timer timer(action->program.toString());
         timer.startTimer();
         int resultCode = 
           sys::Program::ExecuteAndWait(action->program,action->args);
@@ -418,7 +419,7 @@ private:
       return fullpath;
     for (PathVector::iterator PI = LibraryPaths.begin(), 
          PE = LibraryPaths.end(); PI != PE; ++PI) {
-      fullpath.setDirectory(PI->get());
+      fullpath.setDirectory(PI->toString());
       fullpath.appendFile(link_item);
       if (fullpath.readable())
         return fullpath;
@@ -462,13 +463,13 @@ private:
     if (!link_item.readable()) {
       // look for the library using the -L arguments specified
       // on the command line.
-      fullpath = GetPathForLinkageItem(link_item.get());
+      fullpath = GetPathForLinkageItem(link_item.toString());
 
       // If we didn't find the file in any of the library search paths
       // we have to bail. No where else to look.
       if (fullpath.isEmpty()) {
         err = 
-          std::string("Can't find linkage item '") + link_item.get() + "'";
+          std::string("Can't find linkage item '") + link_item.toString() + "'";
         return false;
       }
     } else {
@@ -482,7 +483,7 @@ private:
     if (fullpath.isBytecodeFile()) {
       // Process the dependent libraries recursively
       Module::LibraryListType modlibs;
-      if (GetBytecodeDependentLibraries(fullpath.get(),modlibs)) {
+      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs)) {
         // Traverse the dependent libraries list
         Module::lib_iterator LI = modlibs.begin();
         Module::lib_iterator LE = modlibs.end();
@@ -491,9 +492,9 @@ private:
             if (err.empty()) {
               err = std::string("Library '") + *LI + 
                     "' is not valid for linking but is required by file '" +
-                    fullpath.get() + "'";
+                    fullpath.toString() + "'";
             } else {
-              err += " which is required by file '" + fullpath.get() + "'";
+              err += " which is required by file '" + fullpath.toString() + "'";
             }
             return false;
           }
@@ -502,7 +503,7 @@ private:
       } else if (err.empty()) {
         err = std::string(
           "The dependent libraries could not be extracted from '") + 
-          fullpath.get();
+          fullpath.toString();
         return false;
       }
     }
@@ -529,11 +530,11 @@ public:
         std::cerr << "OutputMachine = " << machine << "\n";
         InputList::const_iterator I = InpList.begin();
         while ( I != InpList.end() ) {
-          std::cerr << "Input: " << I->first.get() << "(" << I->second 
+          std::cerr << "Input: " << I->first.toString() << "(" << I->second 
                     << ")\n";
           ++I;
         }
-        std::cerr << "Output: " << Output.get() << "\n";
+        std::cerr << "Output: " << Output.toString() << "\n";
       }
 
       // If there's no input, we're done.
@@ -577,7 +578,7 @@ public:
               "Pre-compiled objects found but linking not requested");
           }
           if (ftype.empty())
-            LibFiles.push_back(I->first.get());
+            LibFiles.push_back(I->first.toString());
           else
             LinkageItems.insert(I->first);
           continue; // short circuit remainder of loop
@@ -659,10 +660,10 @@ public:
               /// We need to translate it to bytecode
               Action* action = new Action();
               action->program.setFile("llvm-as");
-              action->args.push_back(InFile.get());
+              action->args.push_back(InFile.toString());
               action->args.push_back("-o");
               InFile.appendSuffix("bc");
-              action->args.push_back(InFile.get());
+              action->args.push_back(InFile.toString());
               actions.push_back(action);
             }
           }
@@ -701,11 +702,11 @@ public:
                 /// We need to translate it to bytecode with llvm-as
                 Action* action = new Action();
                 action->program.setFile("llvm-as");
-                action->args.push_back(InFile.get());
+                action->args.push_back(InFile.toString());
                 action->args.push_back("-f");
                 action->args.push_back("-o");
                 InFile.appendSuffix("bc");
-                action->args.push_back(InFile.get());
+                action->args.push_back(InFile.toString());
                 actions.push_back(action);
               }
             }
@@ -730,27 +731,27 @@ public:
           if (isSet(EMIT_NATIVE_FLAG)) {
             // Use llc to get the native assembly file
             action->program.setFile("llc");
-            action->args.push_back(InFile.get());
+            action->args.push_back(InFile.toString());
             action->args.push_back("-f");
             action->args.push_back("-o");
             if (Output.isEmpty()) {
               OutFile.appendSuffix("o");
-              action->args.push_back(OutFile.get());
+              action->args.push_back(OutFile.toString());
             } else {
-              action->args.push_back(Output.get());
+              action->args.push_back(Output.toString());
             }
             actions.push_back(action);
           } else {
             // Just convert back to llvm assembly with llvm-dis
             action->program.setFile("llvm-dis");
-            action->args.push_back(InFile.get());
+            action->args.push_back(InFile.toString());
             action->args.push_back("-f");
             action->args.push_back("-o");
             if (Output.isEmpty()) {
               OutFile.appendSuffix("ll");
-              action->args.push_back(OutFile.get());
+              action->args.push_back(OutFile.toString());
             } else {
-              action->args.push_back(Output.get());
+              action->args.push_back(Output.toString());
             }
           }
 
@@ -812,7 +813,7 @@ public:
         // -l arguments specified.
         for (PathVector::const_iterator I=LinkageItems.begin(), 
              E=LinkageItems.end(); I != E; ++I )
-          link->args.push_back(I->get());
+          link->args.push_back(I->toString());
 
         // Add in all the libraries we found.
         for (std::vector<std::string>::const_iterator I=LibFiles.begin(),
@@ -822,7 +823,7 @@ public:
         // Add in all the library paths to the command line
         for (PathVector::const_iterator I=LibraryPaths.begin(),
              E=LibraryPaths.end(); I != E; ++I)
-          link->args.push_back( std::string("-L") + I->get());
+          link->args.push_back( std::string("-L") + I->toString());
 
         // Add in the additional linker arguments requested
         for (StringVector::const_iterator I=AdditionalArgs[LINKING].begin(),
@@ -847,7 +848,7 @@ public:
 
         // Add in mandatory flags
         link->args.push_back("-o");
-        link->args.push_back(Output.get());
+        link->args.push_back(Output.toString());
 
         // Execute the link
         if (!DoAction(link))

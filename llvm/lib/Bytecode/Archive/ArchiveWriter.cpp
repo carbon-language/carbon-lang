@@ -94,7 +94,7 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   memcpy(hdr.date,buffer,12);
 
   // Get rid of trailing blanks in the name
-  std::string mbrPath = mbr.getPath().get();
+  std::string mbrPath = mbr.getPath().toString();
   size_t mbrLen = mbrPath.length();
   while (mbrLen > 0 && mbrPath[mbrLen-1] == ' ') {
     mbrPath.erase(mbrLen-1,1);
@@ -162,10 +162,10 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where) {
   mbr->path.getStatusInfo(mbr->info);
 
   unsigned flags = 0;
-  bool hasSlash = filePath.get().find('/') != std::string::npos;
+  bool hasSlash = filePath.toString().find('/') != std::string::npos;
   if (hasSlash)
     flags |= ArchiveMember::HasPathFlag;
-  if (hasSlash || filePath.get().length() > 15)
+  if (hasSlash || filePath.toString().length() > 15)
     flags |= ArchiveMember::HasLongFilenameFlag;
   std::string magic;
   mbr->path.getMagicNumber(magic,4);
@@ -212,7 +212,8 @@ Archive::writeMember(
   if (CreateSymbolTable && 
       (member.isBytecode() || member.isCompressedBytecode())) {
     std::vector<std::string> symbols;
-    std::string FullMemberName = archPath.get() + "(" + member.getPath().get() 
+    std::string FullMemberName = archPath.toString() + "(" + 
+      member.getPath().toString() 
       + ")";
     ModuleProvider* MP = GetBytecodeSymbols(
       (const unsigned char*)data,fSize,FullMemberName, symbols);
@@ -235,7 +236,7 @@ Archive::writeMember(
       delete MP;
     } else {
       throw std::string("Can't parse bytecode member: ") + 
-             member.getPath().get();
+             member.getPath().toString();
     }
   }
 
@@ -281,7 +282,8 @@ Archive::writeMember(
 
   // Write the long filename if its long
   if (writeLongName) {
-    ARFile.write(member.getPath().get().data(),member.getPath().get().length());
+    ARFile.write(member.getPath().toString().data(),
+                 member.getPath().toString().length());
   }
 
   // Make sure we write the compressed bytecode magic number if we should.
@@ -378,7 +380,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
   
     // Check for errors opening or creating archive file.
     if ( !ArchiveFile.is_open() || ArchiveFile.bad() ) {
-      throw std::string("Error opening archive file: ") + archPath.get();
+      throw std::string("Error opening archive file: ") + archPath.toString();
     }
 
     // If we're creating a symbol table, reset it now
@@ -414,7 +416,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
       // Open the final file to write and check it.
       std::ofstream FinalFile(archPath.c_str());
       if ( !FinalFile.is_open() || FinalFile.bad() ) {
-        throw std::string("Error opening archive file: ") + archPath.get();
+        throw std::string("Error opening archive file: ") + archPath.toString();
       }
 
       // Write the file magic number

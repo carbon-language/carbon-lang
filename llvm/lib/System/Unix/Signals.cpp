@@ -138,7 +138,7 @@ void sys::RemoveFileOnSignal(const sys::Path &Filename) {
   if (FilesToRemove == 0)
     FilesToRemove = new std::vector<std::string>;
 
-  FilesToRemove->push_back(Filename.get());
+  FilesToRemove->push_back(Filename.toString());
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
