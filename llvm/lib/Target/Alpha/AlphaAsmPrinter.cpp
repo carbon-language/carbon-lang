@@ -119,7 +119,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << "$LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+    O << "LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
       << "_" << MBBOp->getNumber() << "\t" << CommentString << " "
       << MBBOp->getBasicBlock()->getName();
     return;
@@ -169,7 +169,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   O << "\t.text\n";
-  emitAlignment(4);
+  emitAlignment(3);
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << "\t.ent\t" << CurrentFnName << "\n";
 
@@ -179,7 +179,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << "$LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+    O << "LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
       << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
@@ -190,7 +190,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
   ++LabelNumber;
 
-  O << "\t.end\t" << CurrentFnName << "\n";
+  O << "\t.end " << CurrentFnName << "\n";
 
   // We didn't modify anything.
   return false;

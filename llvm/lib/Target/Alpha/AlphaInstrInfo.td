@@ -25,7 +25,7 @@ def s21imm  : Operand<i32>;
 def s64imm  : Operand<i64>;
 
 def PHI : PseudoInstAlpha<(ops ), "#phi">;
-def IDEF : PseudoInstAlpha<(ops ), "#idef">;
+def IDEF : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA">;
 def WTF : PseudoInstAlpha<(ops ), "#wtf">;
 def ADJUSTSTACKUP : PseudoInstAlpha<(ops ), "ADJUP">;
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops ), "ADJDOWN">;
@@ -337,18 +337,19 @@ def CPYSE : FPForm<0x17, 0x022, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpyse $RA,$
 def CPYSN : FPForm<0x17, 0x021, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "cpysn $RA,$RB,$RC">; //Copy sign negate
 
 //Basic Floating point ops
-def ADDS  : FPForm<0x16, 0x080, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "adds $RA,$RB,$RC">;  //Add S_floating
-def ADDT  : FPForm<0x16, 0x0A0, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "addt $RA,$RB,$RC">;  //Add T_floating
-def SUBS  : FPForm<0x16, 0x081, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subs $RA,$RB,$RC">;  //Subtract S_floating
-def SUBT  : FPForm<0x16, 0x0A1, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subt $RA,$RB,$RC">;  //Subtract T_floating
-def DIVS  : FPForm<0x16, 0x083, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divs $RA,$RB,$RC">;  //Divide S_floating
-def DIVT  : FPForm<0x16, 0x0A3, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divt $RA,$RB,$RC">;  //Divide T_floating
-def MULS  : FPForm<0x16, 0x082, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "muls $RA,$RB,$RC">;  //Multiply S_floating
-def MULT  : FPForm<0x16, 0x0A2, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "mult $RA,$RB,$RC">;  //Multiply T_floating
+def ADDS  : FPForm<0x16, 0x080, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "adds/sui $RA,$RB,$RC">;  //Add S_floating
+def ADDT  : FPForm<0x16, 0x0A0, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "addt/sui $RA,$RB,$RC">;  //Add T_floating
+def SUBS  : FPForm<0x16, 0x081, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subs/sui $RA,$RB,$RC">;  //Subtract S_floating
+def SUBT  : FPForm<0x16, 0x0A1, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "subt/sui $RA,$RB,$RC">;  //Subtract T_floating
+def DIVS  : FPForm<0x16, 0x083, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divs/sui $RA,$RB,$RC">;  //Divide S_floating
+def DIVT  : FPForm<0x16, 0x0A3, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "divt/sui $RA,$RB,$RC">;  //Divide T_floating
+def MULS  : FPForm<0x16, 0x082, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "muls/sui $RA,$RB,$RC">;  //Multiply S_floating
+def MULT  : FPForm<0x16, 0x0A2, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "mult/sui $RA,$RB,$RC">;  //Multiply T_floating
 def SQRTS : FPForm<0x14, 0x08B, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrts $RA,$RB,$RC">;  //Square root S_floating
 def SQRTT : FPForm<0x14, 0x0AB, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), "sqrtt $RA,$RB,$RC">;  //Square root T_floating
 
 //INT reg to FP reg and back again
+//not supported on 21164
 def FTOIS : FPForm<0x1C, 0x078, (ops FPRC:$RC, GPRC:$RA), "ftois $RA,$RC">; //Floating to integer move, S_floating
 def FTOIT : FPForm<0x1C, 0x070, (ops FPRC:$RC, GPRC:$RA), "ftoit $RA,$RC">; //Floating to integer move, T_floating
 def ITOFS : FPForm<0x14, 0x004, (ops FPRC:$RC, GPRC:$RA), "itofs $RA,$RC">; //Integer to floating move, S_floating

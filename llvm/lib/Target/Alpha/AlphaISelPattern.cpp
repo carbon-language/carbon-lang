@@ -447,19 +447,38 @@ void ISel::SelectBranchCC(SDOperand N)
       //a = b: c = 0
       //a < b: c < 0
       //a > b: c > 0
-      unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
-      unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
-      unsigned Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::SUBT, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+
+      bool invTest = false;
+      unsigned Tmp3;
+
+      ConstantFPSDNode *CN;
+      if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+          && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+        Tmp3 = SelectExpr(SetCC->getOperand(0));
+      else if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+          && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+      {
+        Tmp3 = SelectExpr(SetCC->getOperand(1));
+        invTest = true;
+      }
+      else
+      {
+        unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
+        unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
+        bool isD = SetCC->getOperand(0).getValueType() == MVT::f64;
+        Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
+        BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
+          .addReg(Tmp1).addReg(Tmp2);
+      }
 
       switch (SetCC->getCondition()) {
       default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
-      case ISD::SETEQ: Opc = Alpha::FBEQ; break;
-      case ISD::SETLT: Opc = Alpha::FBLT; break;
-      case ISD::SETLE: Opc = Alpha::FBLE; break;
-      case ISD::SETGT: Opc = Alpha::FBGT; break;
-      case ISD::SETGE: Opc = Alpha::FBGE; break;
-      case ISD::SETNE: Opc = Alpha::FBNE; break;
+      case ISD::SETEQ: Opc = invTest ? Alpha::FBNE : Alpha::FBEQ; break;
+      case ISD::SETLT: Opc = invTest ? Alpha::FBGT : Alpha::FBLT; break;
+      case ISD::SETLE: Opc = invTest ? Alpha::FBGE : Alpha::FBLE; break;
+      case ISD::SETGT: Opc = invTest ? Alpha::FBLT : Alpha::FBGT; break;
+      case ISD::SETGE: Opc = invTest ? Alpha::FBLE : Alpha::FBGE; break;
+      case ISD::SETNE: Opc = invTest ? Alpha::FBEQ : Alpha::FBNE; break;
       }
       BuildMI(BB, Opc, 2).addReg(Tmp3).addMBB(Dest);
       return;
@@ -598,9 +617,19 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     case ISD::SUB: Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS; break;
     case ISD::SDIV: Opc = DestType == MVT::f64 ? Alpha::DIVT : Alpha::DIVS; break;
     };
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+
+    ConstantFPSDNode *CN;
+    if (opcode == ISD::SUB 
+        && (CN = dyn_cast<ConstantFPSDNode>(N.getOperand(0)))
+        && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+    {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp2).addReg(Tmp2);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    }
     return Result;
 
   case ISD::EXTLOAD:
@@ -1301,13 +1330,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // special calling conventions
     //Restore GP because it is a call after all...
     switch(opcode) {
-    case ISD::UREM: AlphaLowering.restoreGP(BB); Opc = Alpha::REMQU; break;
-    case ISD::SREM: AlphaLowering.restoreGP(BB); Opc = Alpha::REMQ; break;
-    case ISD::UDIV: AlphaLowering.restoreGP(BB); Opc = Alpha::DIVQU; break;
-    case ISD::SDIV: AlphaLowering.restoreGP(BB); Opc = Alpha::DIVQ; break;
+    case ISD::UREM: Opc = Alpha::REMQU; break;
+    case ISD::SREM: Opc = Alpha::REMQ; break;
+    case ISD::UDIV: Opc = Alpha::DIVQU; break;
+    case ISD::SDIV: Opc = Alpha::DIVQ; break;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
+    AlphaLowering.restoreGP(BB);
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
