@@ -173,6 +173,7 @@ main(int argc, char **argv)
   assert(target.get() && "Could not allocate target machine!");
 
   TargetMachine &Target = *target.get();
+  const TargetData &TD = Target.getTargetData();
 
   // Load the module to be compiled...
   std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
@@ -184,6 +185,10 @@ main(int argc, char **argv)
 
   // Build up all of the passes that we want to do to the module...
   PassManager Passes;
+
+  Passes.add(new TargetData("llc", TD.isLittleEndian(), TD.getSubWordDataSize(),
+                            TD.getIntegerRegSize(), TD.getPointerSize(),
+                            TD.getPointerAlignment()));
 
   // Create a new optimization pass for each one specified on the command line
   // Deal specially with tracing passes, which must be run differently than opt.
