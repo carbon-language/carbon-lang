@@ -103,7 +103,7 @@ if test -d "$TOPDIR" ; then
       \! -name 'FileParser.h' \
       \! -name 'StackerParser.h' \
       \! -name 'StackerParser.cpp' \
-     -exec $PROGRAM $ARGS {} \; \
+     -exec $PROGRAM "$@" {} \; \
     \)
 else
   echo "Can't find LLVM top directory in $TOPDIR"
