@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "jit"
 #include "X86TargetMachine.h"
 #include "X86.h"
 #include "llvm/PassManager.h"

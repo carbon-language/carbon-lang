@@ -5,6 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "fp"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
