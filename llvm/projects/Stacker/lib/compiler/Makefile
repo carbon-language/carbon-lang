@@ -8,7 +8,6 @@ LEVEL=../..
 #
 # Give the name of a library.  This will build a dynamic version.
 #
-SHARED_LIBRARY=1
 LIBRARYNAME=stkr_compiler
 
 #
