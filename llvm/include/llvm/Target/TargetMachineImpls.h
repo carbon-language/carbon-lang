@@ -20,7 +20,7 @@ namespace llvm {
   /// these should go in their own header eventually.
   ///
   extern bool PrintMachineCode;
-  extern bool NoFPElim;
+  extern bool NoFramePointerElim;
 
   class TargetMachine;
   class Module;

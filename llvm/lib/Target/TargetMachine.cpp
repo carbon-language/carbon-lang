@@ -23,7 +23,7 @@ using namespace llvm;
 
 namespace llvm { 
   bool PrintMachineCode;
-  bool NoFPElim;
+  bool NoFramePointerElim;
 };
 
 namespace {
@@ -34,7 +34,8 @@ namespace {
   cl::opt<bool, true> 
     DisableFPElim("disable-fp-elim",
                   cl::desc("Disable frame pointer elimination optimization"),
-                  cl::location(NoFPElim), cl::init(false));
+                  cl::location(NoFramePointerElim),
+                  cl::init(false));
 };
 
 //---------------------------------------------------------------------------
