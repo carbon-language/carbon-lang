@@ -9,10 +9,7 @@
 # llvm/runtime/GCCLibraries Makefile:  Build all subdirectories automatically
 
 LEVEL = ../..
-include $(LEVEL)/Makefile.config
-PARALLEL_DIRS  := $(sort $(filter-out README.txt, $(filter-out Makefile, $(filter-out Output, $(filter-out CVS, $(notdir $(wildcard $(SourceDir)/*)))))))
-PARALLEL_DIRS := $(filter-out libexception/, $(PARALLEL_DIRS))
-
+PARALLEL_DIRS := crtend libc libcurses libg libgcc libgdbm libm libmalloc libtermcap libucb libutempter libutil
 include $(LEVEL)/Makefile.common
 
 # Install target for libraries: Copy into the gcc install directory in chris's
