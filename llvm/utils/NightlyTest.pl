@@ -655,7 +655,9 @@ if ($BuildError eq "") {
 #
 my @PrevDays = map {s/.html//; $_} GetDir ".html";
 
-splice @PrevDays, 20;  # Trim down list to something reasonable...
+if ((scalar @PrevDays) > 20) {
+  splice @PrevDays, 20;  # Trim down list to something reasonable...
+}
 
 my $PrevDaysList =     # Format list for sidebar
   join "\n  ", map { "<a href=\"$_.html\">$_</a><br>" } @PrevDays;
