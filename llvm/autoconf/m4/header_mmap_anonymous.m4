@@ -16,6 +16,6 @@ ac_cv_header_mmap_anon,
   AC_LANG_POP([C])
 ])
 if test "$ac_cv_header_mmap_anon" = yes; then
-   AC_DEFINE([HAVE_MMAP_ANONYMOUS],[],[Define if mmap() uses MAP_ANONYMOUS to map anonymous pages, or undefine if it uses MAP_ANON])
+   AC_DEFINE([HAVE_MMAP_ANONYMOUS],[1],[Define if mmap() uses MAP_ANONYMOUS to map anonymous pages, or undefine if it uses MAP_ANON])
 fi
 ])
