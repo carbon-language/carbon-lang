@@ -17,34 +17,33 @@
 //  . It should be illegal to put a label into any other type (like a structure)
 //    or to return one. [except constant arrays!]
 //  . Right now 'add bool 0, 0' is valid.  This isn't particularly good.
-//  . Only phi nodes can be self referential: 'add int 0, 0 ; <int>:0' is bad
-//  . PHI nodes must have an entry for each predecessor, with no extras.
-//  . All other things that are tested by asserts spread about the code...
-//  . All basic blocks should only end with terminator insts, not contain them
-//  . The entry node to a method must not have predecessors!
+//  . Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
+//  * PHI nodes must have an entry for each predecessor, with no extras.
+//  * All basic blocks should only end with terminator insts, not contain them
+//  * The entry node to a method must not have predecessors
+//  * All Instructions must be embeded into a basic block
 //  . Verify that none of the Value getType()'s are null.
 //  . Method's cannot take a void typed parameter
 //  . Verify that a method's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
+//  . All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/Pass.h"
 #include "llvm/Method.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Type.h"
-using std::string;
-using std::vector;
+#include "llvm/iPHINode.h"
+#include "llvm/Support/CFG.h"
+#include "Support/STLExtras.h"
+#include <algorithm>
 
-
-// Error - Define a macro to do the common task of pushing a message onto the
-// end of the error list and setting Bad to true.
-//
-#define Error(msg) do { ErrorMsgs.push_back(msg); Bad = true; } while (0)
-
+#if 0
 #define t(x) (1 << (unsigned)Type::x)
-
 #define SignedIntegralTypes (t(SByteTyID) | t(ShortTyID) |  \
                              t(IntTyID)   | t(LongTyID))
 static long UnsignedIntegralTypes = t(UByteTyID) | t(UShortTyID) | 
@@ -53,42 +52,118 @@ static const long FloatingPointTypes    = t(FloatTyID) | t(DoubleTyID);
 
 static const long IntegralTypes = SignedIntegralTypes | UnsignedIntegralTypes;
 
-#if 0
 static long ValidTypes[Type::FirstDerivedTyID] = {
   [(unsigned)Instruction::UnaryOps::Not] t(BoolTyID),
   //[Instruction::UnaryOps::Add] = IntegralTypes,
   //  [Instruction::Sub] = IntegralTypes,
 };
+#undef t
 #endif
 
-#undef t
+// CheckFailed - A check failed, so print out the condition and the message that
+// failed.  This provides a nice place to put a breakpoint if you want to see
+// why something is not correct.
+//
+static inline void CheckFailed(const char *Cond, const string &Message,
+                               const Value *V1 = 0, const Value *V2 = 0) {
+  std::cerr << Message << "\n";
+  if (V1) std::cerr << V1 << "\n";
+  if (V2) std::cerr << V2 << "\n";
+}
 
-static bool verify(const BasicBlock *BB, vector<string> &ErrorMsgs) {
-  bool Bad = false;
-  if (BB->getTerminator() == 0) Error("Basic Block does not have terminator!");
+// Assert - We know that cond should be true, if not print an error message.
+#define Assert(C, M) \
+  do { if (!(C)) { CheckFailed(#C, M); Broken = true; } } while (0)
+#define Assert1(C, M, V1) \
+  do { if (!(C)) { CheckFailed(#C, M, V1); Broken = true; } } while (0)
+#define Assert2(C, M, V1, V2) \
+  do { if (!(C)) { CheckFailed(#C, M, V1, V2); Broken = true; } } while (0)
 
-  
-  return Bad;
+
+// verifyInstruction - Verify that a non-terminator instruction is well formed.
+//
+static bool verifyInstruction(const Instruction *I) {
+  bool Broken = false;
+  assert(I->getParent() && "Instruction not embedded in basic block!");
+  Assert1(!isa<TerminatorInst>(I),
+          "Terminator instruction found embedded in basic block!\n", I);
+
+  // Check that all uses of the instruction, if they are instructions
+  // themselves, actually have parent basic blocks.
+  //
+  for (User::use_const_iterator UI = I->use_begin(), UE = I->use_end();
+       UI != UE; ++UI) {
+    if (Instruction *Used = dyn_cast<Instruction>(*UI))
+      Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
+              " embeded in a basic block!", I, Used);
+  }
+
+  // Check that PHI nodes look ok
+  if (const PHINode *PN = dyn_cast<PHINode>(I)) {
+    vector<const BasicBlock*> Preds(pred_begin(I->getParent()),
+                                    pred_end(I->getParent()));
+    // Loop over all of the incoming values, make sure that there are
+    // predecessors for each one...
+    //
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      const BasicBlock *BB = PN->getIncomingBlock(i);
+      vector<const BasicBlock*>::iterator PI =
+        find(Preds.begin(), Preds.end(), BB);
+      Assert2(PI != Preds.end(), "PHI node has entry for basic block that"
+              " is not a predecessor!", PN, BB);
+      if (PI != Preds.end()) Preds.erase(PI);
+    }
+
+    // There should be no entries left in the predecessor list...
+    for (vector<const BasicBlock*>::iterator I = Preds.begin(), E = Preds.end();
+         I != E; ++I)
+      Assert2(0, "PHI node does not have entry for a predecessor basic block!",
+              PN, *I);
+  }
+  return Broken;
 }
 
 
-bool verify(const Method *M, vector<string> &ErrorMsgs) {
-  bool Bad = false;
-  
-  for (Method::const_iterator BBIt = M->begin();
-       BBIt != M->end(); ++BBIt)
-    Bad |= verify(*BBIt, ErrorMsgs);
+// verifyBasicBlock - Verify that a basic block is well formed...
+//
+static bool verifyBasicBlock(const BasicBlock *BB) {
+  bool Broken = false;
+  Assert1(BB->getTerminator(), "Basic Block does not have terminator!\n", BB);
 
-  return Bad;
+  // Verify all instructions, except the terminator...
+  Broken |= reduce_apply_bool(BB->begin(), BB->end()-1, verifyInstruction);
+  return Broken;
 }
 
-bool verify(const Module *C, vector<string> &ErrorMsgs) {
-  bool Bad = false;
-  assert(Type::FirstDerivedTyID-1 < sizeof(long)*8 && 
-	 "Resize ValidTypes table to handle more than 32 primitive types!");
 
-  for (Module::const_iterator MI = C->begin(); MI != C->end(); ++MI)
-    Bad |= verify(*MI, ErrorMsgs);
-  
-  return Bad;
+// verifyMethod - Verify that a method is ok.
+//
+static bool verifyMethod(const Method *M) {
+  if (M->isExternal()) return false;  // Can happen if called by verifyModule
+
+  bool Broken = false;
+  const BasicBlock *Entry = M->front();
+  Assert1(pred_begin(Entry) == pred_end(Entry),
+          "Entry block to method must not have predecessors!", Entry);
+
+  Broken |= reduce_apply_bool(M->begin(), M->end(), verifyBasicBlock);
+  return Broken;
+}
+
+
+namespace {  // Anonymous namespace for class
+  struct VerifierPass : public MethodPass {
+    bool runOnMethod(Method *M) { verifyMethod(M); return false; }
+  };
+}
+
+Pass *createVerifierPass() {
+  return new VerifierPass();
+}
+
+// verifyModule - Check a module for errors, printing messages on stderr.
+// Return true if the module is corrupt.
+//
+bool verifyModule(Module *M) {
+  return reduce_apply_bool(M->begin(), M->end(), verifyMethod);
 }
