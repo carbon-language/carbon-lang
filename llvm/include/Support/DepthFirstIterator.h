@@ -162,7 +162,7 @@ df_iterator<T> df_end(T G) {
 }
 
 // Provide global definitions of external depth first iterators...
-template <class T, class SetTy>
+template <class T, class SetTy = std::set<typename GraphTraits<T>::NodeType*> >
 struct df_ext_iterator : public df_iterator<T, SetTy, true> {
   df_ext_iterator(const df_iterator<T, SetTy, true> &V)
     : df_iterator<T, SetTy, true>(V) {}
