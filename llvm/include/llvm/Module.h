@@ -3,6 +3,10 @@
 // This file contains the declarations for the Module class that is used to 
 // maintain all the information related to a VM module.
 //
+// A module also maintains a GlobalValRefMap object that is used to hold all
+// constant references to global variables in the module.  When a global
+// variable is destroyed, it should have no entries in the GlobalValueRefMap.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MODULE_H
@@ -13,6 +17,8 @@
 #include "llvm/ValueHolder.h"
 class Method;
 class GlobalVariable;
+class GlobalValueRefMap;   // Used by ConstPoolVals.cpp
+class ConstPoolPointerReference;
 
 class Module : public Value, public SymTabValue {
 public:
@@ -35,6 +41,14 @@ private:
   GlobalListType GlobalList;     // The Global Variables
   MethodListType MethodList;     // The Methods
 
+  GlobalValueRefMap *GVRefMap;
+
+  // Accessor for the underlying GlobalValRefMap... only through the
+  // ConstPoolPointerReference class...
+  friend class ConstPoolPointerReference;
+  void mutateConstPoolPointerReference(GlobalValue *OldGV, GlobalValue *NewGV);
+  ConstPoolPointerReference *getConstPoolPointerReference(GlobalValue *GV);
+
 public:
   Module();
   ~Module();
@@ -46,7 +60,6 @@ public:
   bool reduceApply(bool (*Func)(const GlobalVariable*)) const;
   bool reduceApply(bool (*Func)(Method*));
   bool reduceApply(bool (*Func)(const Method*)) const;
-
 
   // Get the underlying elements of the Module...
   inline const GlobalListType &getGlobalList() const  { return GlobalList; }
