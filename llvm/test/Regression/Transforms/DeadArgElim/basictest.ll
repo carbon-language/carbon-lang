@@ -1,4 +1,4 @@
-; RUN: if as < %s | opt -load ~/llvm/lib/Debug/libhello.so -deadargelim | dis | grep DEADARG
+; RUN: if as < %s | opt -deadargelim | dis | grep DEADARG
 ; RUN: then exit 1
 ; RUN: else exit 0
 ; RUN: fi
@@ -25,3 +25,16 @@ internal void %evenhardertest(int %DEADARG3) {
 	ret void
 }
 
+internal void %needarg(int %TEST) {
+	call int %needarg2(int %TEST)
+	ret void
+}
+
+internal int %needarg2(int %TEST) {
+	ret int %TEST
+}
+
+internal void %needarg3(int %TEST3) {
+	call void %needarg(int %TEST3)
+	ret void
+}
