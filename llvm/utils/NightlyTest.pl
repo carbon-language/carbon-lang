@@ -281,6 +281,10 @@ if ($BuildError eq "") {
     $TestError = 1;
     $ProgramsTable = "<font color=white><h2>Error running tests!</h2></font>";
   } elsif (`grep '^gmake: .*No rule to make target' $Prefix-ProgramTest.txt | wc -l` + 0) {
+    $TestError = 1;
+    $ProgramsTable =
+      "<font color=white><h2>Makefile error running tests!</h2></font>";
+  } else {
     $TestError = 0;
     $ProgramsTable = ReadFile "report.nightly.html";
 
