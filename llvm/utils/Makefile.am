@@ -7,6 +7,6 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-include $(top_srcdir)/Makefile.rules.am
+include $(top_srcdir)/Makefile_config
 
 SUBDIRS = Burg fpcmp TableGen
