@@ -104,7 +104,8 @@ namespace {
       return "X86 Assembly Printer";
     }
 
-    void checkImplUses (const TargetInstrDescriptor &Desc);
+    void printImplUsesBefore(const TargetInstrDescriptor &Desc);
+    void printImplUsesAfter(const TargetInstrDescriptor &Desc);
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO,
 		 bool elideOffsetKeyword = false);
@@ -528,12 +529,26 @@ void Printer::printMemReference(const MachineInstr *MI, unsigned Op) {
   O << "]";
 }
 
-/// checkImplUses - Emit the implicit-use registers for the
-/// instruction described by DESC, if its PrintImplUses flag is set.
+
+/// printImplUsesBefore - Emit the implicit-use registers for the instruction
+/// described by DESC, if its PrintImplUsesBefore flag is set.
 ///
-void Printer::checkImplUses (const TargetInstrDescriptor &Desc) {
+void Printer::printImplUsesBefore(const TargetInstrDescriptor &Desc) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
-  if (Desc.TSFlags & X86II::PrintImplUses) {
+  if (Desc.TSFlags & X86II::PrintImplUsesBefore) {
+    for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
+      // Bug Workaround: See note in Printer::doInitialization about %.
+      O << "%" << RI.get(*p).Name << ", ";
+    }
+  }
+}
+
+/// printImplUsesAfter - Emit the implicit-use registers for the instruction
+/// described by DESC, if its PrintImplUsesAfter flag is set.
+///
+void Printer::printImplUsesAfter(const TargetInstrDescriptor &Desc) {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  if (Desc.TSFlags & X86II::PrintImplUsesAfter) {
     for (const unsigned *p = Desc.ImplicitUses; *p; ++p) {
       // Bug Workaround: See note in Printer::doInitialization about %.
       O << ", %" << RI.get(*p).Name;
@@ -628,6 +643,9 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     unsigned Reg = MI->getOperand(0).getReg();
     
     O << TII.getName(MI->getOpcode()) << " ";
+
+    printImplUsesBefore(Desc);   // fcmov*
+
     printOp(MI->getOperand(0));
     if (MI->getNumOperands() == 2 &&
 	(!MI->getOperand(1).isRegister() ||
@@ -637,7 +655,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(1));
     }
-    checkImplUses(Desc);
+    printImplUsesAfter(Desc);
     O << "\n";
     return;
   }
@@ -668,7 +686,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(2));
     }
-    checkImplUses(Desc);
+    printImplUsesAfter(Desc);
     O << "\n";
     return;
   }
@@ -690,7 +708,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(5));
     }
-    checkImplUses(Desc);
+    printImplUsesAfter(Desc);
     O << "\n";
     return;
   }
@@ -778,7 +796,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(MI->getNumOperands()-1));
     }
-    checkImplUses(Desc);
+    printImplUsesAfter(Desc);
     O << "\n";
 
     return;
@@ -841,7 +859,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOp(MI->getOperand(4));
     }
-    checkImplUses(Desc);
+    printImplUsesAfter(Desc);
     O << "\n";
     return;
   }
