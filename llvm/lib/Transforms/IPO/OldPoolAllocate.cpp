@@ -418,13 +418,13 @@ class NewInstructionCreator : public InstVisitor<NewInstructionCreator> {
     return RI;
   }
 
-  LoadInst *createPoolBaseInstruction(Value *PtrVal) {
+  Instruction *createPoolBaseInstruction(Value *PtrVal) {
     const ScalarInfo &SC = getScalarRef(PtrVal);
     vector<Value*> Args(3);
     Args[0] = ConstantUInt::get(Type::UIntTy, 0);  // No pointer offset
     Args[1] = ConstantUInt::get(Type::UByteTy, 0); // Field #0 of pool descriptr
     Args[2] = ConstantUInt::get(Type::UByteTy, 0); // Field #0 of poolalloc val
-    return new LoadInst(SC.Pool.Handle, Args, PtrVal->getName()+".poolbase");
+    return  new LoadInst(SC.Pool.Handle, Args, PtrVal->getName()+".poolbase");
   }
 
 
@@ -477,32 +477,37 @@ public:
 
   // Replace the load instruction with a new one.
   void visitLoadInst(LoadInst *I) {
-    Instruction *PoolBase = createPoolBaseInstruction(I->getOperand(0));
+    vector<Instruction *> BeforeInsts;
 
     // Cast our index to be a UIntTy so we can use it to index into the pool...
     CastInst *Index = new CastInst(Constant::getNullValue(POINTERTYPE),
                                    Type::UIntTy, I->getOperand(0)->getName());
-
+    BeforeInsts.push_back(Index);
     ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I->getOperand(0)));
+    
+    // Include the pool base instruction...
+    Instruction *PoolBase = createPoolBaseInstruction(I->getOperand(0));
+    BeforeInsts.push_back(PoolBase);
+
+    Instruction *IdxInst =
+      BinaryOperator::create(Instruction::Add, *I->idx_begin(), Index,
+                             I->getName()+".idx");
+    BeforeInsts.push_back(IdxInst);
 
     vector<Value*> Indices(I->idx_begin(), I->idx_end());
-    Instruction *IdxInst =
-      BinaryOperator::create(Instruction::Add, Indices[0], Index,
-                             I->getName()+".idx");
     Indices[0] = IdxInst;
-    Instruction *NewLoad = new LoadInst(PoolBase, Indices, I->getName());
+    Instruction *Address = new GetElementPtrInst(PoolBase, Indices,
+                                                 I->getName()+".addr");
+    BeforeInsts.push_back(Address);
+
+    Instruction *NewLoad = new LoadInst(Address, I->getName());
 
     // Replace the load instruction with the new load instruction...
     BasicBlock::iterator II = ReplaceInstWith(I, NewLoad);
 
-    // Add the pool base calculator instruction before the load...
-    II = NewLoad->getParent()->getInstList().insert(II, PoolBase) + 1;
-
-    // Add the idx calculator instruction before the load...
-    II = NewLoad->getParent()->getInstList().insert(II, Index) + 1;
-
-    // Add the cast before the load instruction...
-    NewLoad->getParent()->getInstList().insert(II, IdxInst);
+    // Add all of the instructions before the load...
+    NewLoad->getParent()->getInstList().insert(II, BeforeInsts.begin(),
+                                               BeforeInsts.end());
 
     // If not yielding a pool allocated pointer, use the new load value as the
     // value in the program instead of the old load value...
@@ -521,6 +526,7 @@ public:
            "Not imp yet!");
 
     Value *Val = I->getOperand(0);  // The value to store...
+
     // Check to see if the value we are storing is a data structure pointer...
     //if (const ScalarInfo *ValScalar = getScalar(I->getOperand(0)))
     if (isa<PointerType>(I->getOperand(0)->getType()))
@@ -533,13 +539,21 @@ public:
                                    Type::UIntTy, I->getOperand(1)->getName());
     ReferencesToUpdate.push_back(RefToUpdate(Index, 0, I->getOperand(1)));
 
-    vector<Value*> Indices(I->idx_begin(), I->idx_end());
+    // Instructions to add after the Index...
+    vector<Instruction*> AfterInsts;
+
     Instruction *IdxInst =
-      BinaryOperator::create(Instruction::Add, Indices[0], Index, "idx");
+      BinaryOperator::create(Instruction::Add, *I->idx_begin(), Index, "idx");
+    AfterInsts.push_back(IdxInst);
+
+    vector<Value*> Indices(I->idx_begin(), I->idx_end());
     Indices[0] = IdxInst;
+    Instruction *Address = new GetElementPtrInst(PoolBase, Indices,
+                                                 I->getName()+"storeaddr");
+    AfterInsts.push_back(Address);
 
-    Instruction *NewStore = new StoreInst(Val, PoolBase, Indices);
-
+    Instruction *NewStore = new StoreInst(Val, Address);
+    AfterInsts.push_back(NewStore);
     if (Val != I->getOperand(0))    // Value stored was a pointer?
       ReferencesToUpdate.push_back(RefToUpdate(NewStore, 0, I->getOperand(0)));
 
@@ -548,13 +562,11 @@ public:
     BasicBlock::iterator II = ReplaceInstWith(I, Index);
 
     // Add the pool base calculator instruction before the index...
-    II = Index->getParent()->getInstList().insert(II, PoolBase) + 2;
+    II = Index->getParent()->getInstList().insert(II, PoolBase)+2;
 
-    // Add the indexing instruction...
-    II = Index->getParent()->getInstList().insert(II, IdxInst) + 1;
-
-    // Add the store after the cast instruction...
-    Index->getParent()->getInstList().insert(II, NewStore);
+    // Add the instructions that go after the index...
+    Index->getParent()->getInstList().insert(II, AfterInsts.begin(),
+                                             AfterInsts.end());
   }
 
 
