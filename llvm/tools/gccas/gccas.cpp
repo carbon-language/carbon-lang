@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   // a little bit.  Do this now.
   //
   PassManager Passes;
-  Passes.add(new DeadCodeElimination());       // Remove Dead code/vars
+  Passes.add(new DeadInstElimination());       // Remove Dead code/vars
   Passes.add(new RaiseAllocations());          // call %malloc -> malloc inst
   Passes.add(new CleanupGCCOutput());          // Fix gccisms
   Passes.add(new InductionVariableSimplify()); // Simplify indvars
