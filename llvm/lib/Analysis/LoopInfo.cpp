@@ -18,7 +18,7 @@ AnalysisID LoopInfo::ID(AnalysisID::create<LoopInfo>(), true);
 //===----------------------------------------------------------------------===//
 // Loop implementation
 //
-bool Loop::contains(BasicBlock *BB) const {
+bool Loop::contains(const BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
