@@ -105,17 +105,28 @@ static void ReplaceUsesWithConstant(Instruction *I) {
 // PropogatePredecessors - This gets "Succ" ready to have the predecessors from
 // "BB".  This is a little tricky because "Succ" has PHI nodes, which need to
 // have extra slots added to them to hold the merge edges from BB's
-// predecessors.
+// predecessors.  This function returns true (failure) if the Succ BB already
+// has a predecessor that is a predecessor of BB.
 //
-// Assumption: BB is the single predecessor of Succ.
+// Assumption: Succ is the single successor for BB.
 //
-static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
+static bool PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
+  assert(*BB->succ_begin() == Succ && "Succ is not successor of BB!");
   assert(isa<PHINode>(Succ->front()) && "Only works on PHId BBs!");
 
   // If there is more than one predecessor, and there are PHI nodes in
   // the successor, then we need to add incoming edges for the PHI nodes
   //
   const vector<BasicBlock*> BBPreds(BB->pred_begin(), BB->pred_end());
+
+  // Check to see if one of the predecessors of BB is already a predecessor of
+  // Succ.  If so, we cannot do the transformation!
+  //
+  for (BasicBlock::pred_iterator PI = Succ->pred_begin(), PE = Succ->pred_end();
+         PI != PE; ++PI) {
+    if (find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end())
+      return true;
+  }
 
   BasicBlock::iterator I = Succ->begin();
   do {                     // Loop over all of the PHI nodes in the successor BB
@@ -131,6 +142,7 @@ static void PropogatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 
     ++I;
   } while (isa<PHINode>(*I));
+  return false;
 }
 
 
@@ -182,28 +194,29 @@ bool opt::SimplifyCFG(Method::iterator &BBIt) {
   // successor.  If so, replace block references with successor.
   BasicBlock::succ_iterator SI(BB->succ_begin());
   if (SI != BB->succ_end() && ++SI == BB->succ_end()) {  // One succ?
-    Instruction *I = BB->front();
-    if (I->isTerminator()) {   // Terminator is the only instruction!
+    if (BB->front()->isTerminator()) {   // Terminator is the only instruction!
       BasicBlock *Succ = *BB->succ_begin(); // There is exactly one successor
       //cerr << "Killing Trivial BB: \n" << BB;
       
       if (Succ != BB) {   // Arg, don't hurt infinite loops!
-	if (isa<PHINode>(Succ->front())) {
-	  // If our successor has PHI nodes, then we need to update them to
-	  // include entries for BB's predecessors, not for BB itself.
-	  //
-	  PropogatePredecessorsForPHIs(BB, Succ);
+        // If our successor has PHI nodes, then we need to update them to
+        // include entries for BB's predecessors, not for BB itself.
+        // Be careful though, if this transformation fails (returns true) then
+        // we cannot do this transformation!
+        //
+	if (!isa<PHINode>(Succ->front()) ||
+            !PropogatePredecessorsForPHIs(BB, Succ)) {
+          
+          BB->replaceAllUsesWith(Succ);
+          BB = M->getBasicBlocks().remove(BBIt);
+	
+          if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
+            Succ->setName(BB->getName());
+          delete BB;                              // Delete basic block
+          
+          //cerr << "Method after removal: \n" << M;
+          return true;
 	}
-	
-	BB->replaceAllUsesWith(Succ);
-	BB = M->getBasicBlocks().remove(BBIt);
-	
-	if (BB->hasName() && !Succ->hasName())  // Transfer name if we can
-	  Succ->setName(BB->getName());
-	delete BB;                              // Delete basic block
-	
-	//cerr << "Method after removal: \n" << M;
-	return true;
       }
     }
   }
