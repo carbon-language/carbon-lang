@@ -17,9 +17,10 @@
 /// - in them, so we mangle these characters into the strings "d_",
 /// "s_", and "D_", respectively.
 /// 
-std::string Mangler::makeNameProper(std::string x) {
+std::string Mangler::makeNameProper(const std::string &x) {
   std::string tmp;
-  for (std::string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
+  for (std::string::const_iterator sI = x.begin(), sEnd = x.end();
+       sI != sEnd; sI++)
     switch (*sI) {
     case '.': tmp += "d_"; break;
     case ' ': tmp += "s_"; break;
@@ -54,14 +55,14 @@ std::string Mangler::getValueName(const Value *V) {
         makeNameProper(V->getName());      
     }
   } else {
-    name = "ltmp_" + itostr(Count++) + "_"
+    name = "ltmp_" + utostr(Count++) + "_"
       + utostr(V->getType()->getUniqueID());
   }
   Memo[V] = name;
   return name;
 }
 
-Mangler::Mangler(Module &_M) : M(_M)
+Mangler::Mangler(Module &M_) : M(M_)
 {
   // Calculate which global values have names that will collide when we throw
   // away type information.

@@ -1,4 +1,4 @@
-//===-- Mangler.h - Self-contained c/asm llvm name mangler ----------------===//
+//===-- Mangler.h - Self-contained c/asm llvm name mangler -*- C++ -*- ----===//
 //
 // Unified name mangler for CWriter and assembly backends.
 //
@@ -9,6 +9,7 @@
 
 class Value;
 #include <map>
+#include <set>
 
 class Mangler {
 public:
@@ -17,7 +18,7 @@ public:
   ///
   std::string getValueName(const Value *V);
 
-  Mangler(Module &_M);
+  Mangler(Module &M_);
 
   /// makeNameProper - We don't want identifier names with ., space, or
   /// - in them, so we mangle these characters into the strings "d_",
@@ -26,7 +27,7 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   /// 
-  static std::string makeNameProper(std::string x);
+  static std::string makeNameProper(const std::string &x);
 
 private:
   /// This keeps track of which global values have had their names
@@ -39,7 +40,7 @@ private:
   typedef std::map<const Value *, std::string> ValueMap;
   ValueMap Memo;
 
-  long long Count;
+  unsigned int Count;
 };
 
 #endif // LLVM_SUPPORT_MANGLER_H
