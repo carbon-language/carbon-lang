@@ -366,12 +366,26 @@ splice @PrevDays, 20;  # Trim down list to something reasonable...
 my $PrevDaysList =     # Format list for sidebar
   join "\n  ", map { "<a href=\"$_.html\">$_</a><br>" } @PrevDays;
 
+#
+# Start outputing files into the web directory
+#
+chdir $WebDir or die "Could not change into web directory!";
+
+# Add information to the files which accumulate information for graphs...
+AddRecord($LOC, "running_loc.txt");
+AddRecord($BuildTime, "running_build_time.txt");
+
+#
+# Rebuild the graphs now...
+#
+system "/usr/dcs/software/supported/bin/gnuplot " .
+       "$BuildDir/llvm/utils/NightlyTest.gnuplot";
 
 #
 # Remove the cvs tree...
 #
-chdir $WebDir or die "Could not change into web directory!";
 system "rm -rf $BuildDir" if (!$NOCHECKOUT and !$NOREMOVE);
+
 
 
 #
@@ -420,7 +434,3 @@ sub AddRecord {
   WriteFile $Filename, (join "\n", @Records) . "\n";
   return @Records;
 }
-
-# Add information to the files which accumulate information for graphs...
-AddRecord($LOC, "running_loc.txt");
-AddRecord($BuildTime, "running_build_time.txt");
