@@ -306,6 +306,14 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 {FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
 {HexFPConstant} { llvmAsmlval.FPVal = HexToFP(yytext); return FPVAL; }
 
+<<EOF>>         {
+                  /* Make sure to free the internal buffers for flex when we are
+                   * done reading our input!
+                   */
+                  yy_delete_buffer(YY_CURRENT_BUFFER);
+                  return EOF;
+                }
+
 [ \t\n]         { /* Ignore whitespace */ }
 .               { return yytext[0]; }
 
