@@ -131,6 +131,7 @@ void CodeEmitterGen::run(std::ostream &o) {
             
             // Mask off the right bits
             // Low mask (ie. shift, if necessary)
+            assert(endBitInVar >= 0 && "Negative shift amount in masking!");
             if (endBitInVar != 0) {
               o << "      op" << OpOrder[Vals[i].getName()]
                 << " >>= " << endBitInVar << ";\n";
@@ -143,6 +144,7 @@ void CodeEmitterGen::run(std::ostream &o) {
               << " &= (1<<" << beginBitInVar+1 << ") - 1;\n";
             
             // Shift the value to the correct place (according to place in inst)
+            assert(endBitInInst >= 0 && "Negative shift amount in inst position!");
             if (endBitInInst != 0)
               o << "      op" << OpOrder[Vals[i].getName()]
               << " <<= " << endBitInInst << ";\n";
