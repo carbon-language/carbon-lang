@@ -57,6 +57,10 @@ namespace llvm {
               v2ssMap_(mf.getSSARegMap()->getNumVirtualRegs(), NO_STACK_SLOT) {
         }
 
+        bool hasPhys(unsigned virtReg) const {
+            return getPhys(virtReg) != NO_PHYS_REG;
+        }
+
         unsigned getPhys(unsigned virtReg) const {
             assert(MRegisterInfo::isVirtualRegister(virtReg));
             return v2pMap_[toIndex(virtReg)];
@@ -76,6 +80,10 @@ namespace llvm {
             assert(v2pMap_[toIndex(virtReg)] != NO_PHYS_REG &&
                    "attempt to clear a not assigned virtual register");
             v2pMap_[toIndex(virtReg)] = NO_PHYS_REG;
+        }
+
+        bool hasStackSlot(unsigned virtReg) const {
+            return getStackSlot(virtReg) != NO_STACK_SLOT;
         }
 
         int getStackSlot(unsigned virtReg) const {
