@@ -94,8 +94,6 @@ class IntervalIterator {
   bool IOwnMem;     // If True, delete intervals when done with them
                     // See file header for conditions of use
 public:
-  typedef BasicBlock* _BB;
-
   typedef IntervalIterator<NodeTy, OrigContainer_t> _Self;
   typedef std::forward_iterator_tag iterator_category;
  
