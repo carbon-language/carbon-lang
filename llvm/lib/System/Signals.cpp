@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/Signals.h"
+#include "llvm/Config/config.h"
 
 namespace llvm {
 using namespace sys;
@@ -25,6 +26,11 @@ using namespace sys;
 }
 
 // Include the platform-specific parts of this class.
-#include "platform/Signals.cpp"
+#ifdef LLVM_ON_UNIX
+#include "Unix/Signals.cpp"
+#endif
+#ifdef LLVM_ON_WIN32
+#include "Win32/Signals.cpp"
+#endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
