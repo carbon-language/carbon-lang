@@ -198,8 +198,8 @@ public:
     return get(RegNo).Name;
   }
 
-  /// getSpillSize - Return the size required of a stack slot used to spill
-  /// register into.
+  /// getSpillSize - Return the size in bits required of a stack slot used to
+  /// spill register into.
   unsigned getSpillSize(unsigned RegNo) const {
     return get(RegNo).SpillSize;
   }
