@@ -15,7 +15,7 @@
 #ifndef LLVM_SUPPORT_SYSTEMUTILS_H
 #define LLVM_SUPPORT_SYSTEMUTILS_H
 
-#include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 
 namespace llvm {
 
@@ -27,26 +27,27 @@ bool isStandardOutAConsole();
 /// being executed. This allows us to find another LLVM tool if it is built into
 /// the same directory, but that directory is neither the current directory, nor
 /// in the PATH.  If the executable cannot be found, return an empty string.
-/// 
+/// @brief Find a named executable.
 sys::Path FindExecutable(const std::string &ExeName,
-                           const std::string &ProgramPath);
+                         const std::string &ProgramPath);
 
-/// RunProgramWithTimeout - This function executes the specified program, with
-/// the specified null-terminated argument array, with the stdin/out/err fd's
-/// redirected, with a timeout specified by the last argument.  This terminates
-/// the calling program if there is an error executing the specified program.
-/// It returns the return value of the program, or -1 if a timeout is detected.
-///
-int RunProgramWithTimeout(const std::string &ProgramPath, const char **Args,
-                          const std::string &StdInFile = "",
-                          const std::string &StdOutFile = "",
-                          const std::string &StdErrFile = "",
-                          unsigned NumSeconds = 0);
-
-/// ExecWait - Execute a program with the given arguments and environment and 
-/// wait for it to terminate.
-///
-int ExecWait (const char * const argv[], const char * const envp[]);
+/// RunProgramWithTimeout - This function provides an alternate interface to the
+/// sys::Program::ExecuteAndWait interface.
+/// @see sys:Program::ExecuteAndWait
+inline int llvm::RunProgramWithTimeout(const sys::Path &ProgramPath,
+                                const char **Args,
+                                const sys::Path &StdInFile,
+                                const sys::Path &StdOutFile,
+                                const sys::Path &StdErrFile,
+                                unsigned NumSeconds = 0) {
+  const sys::Path* redirects[3];
+  redirects[0] = &StdInFile;
+  redirects[1] = &StdOutFile;
+  redirects[2] = &StdErrFile;
+  
+  return 
+    sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
+}
 
 } // End llvm namespace
 
