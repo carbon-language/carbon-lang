@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/PoolAllocate.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Analysis/DataStructure.h"
 #include "llvm/Analysis/DSGraph.h"
@@ -18,6 +18,8 @@
 #include "Support/Statistic.h"
 #include "Support/VectorExtras.h"
 
+using namespace PA;
+
 namespace {
   const Type *VoidPtrTy = PointerType::get(Type::SByteTy);
   // The type to allocate for a pool descriptor: { sbyte*, uint }
@@ -25,100 +27,16 @@ namespace {
     StructType::get(make_vector<const Type*>(VoidPtrTy, Type::UIntTy, 0));
   const PointerType *PoolDescPtr = PointerType::get(PoolDescType);
 
-
-  /// PoolInfo - This struct represents a single pool in the context of a
-  /// function.  Pools are mapped one to one with nodes in the DSGraph, so this
-  /// contains a pointer to the node it corresponds to.  In addition, the pool
-  /// is initialized by calling the "poolinit" library function with a chunk of
-  /// memory allocated with an alloca instruction.  This entry contains a
-  /// pointer to that alloca if the pool is locally allocated or the argument it
-  /// is passed in through if not.
-  ///
-  struct PoolInfo {
-    Value  *PoolHandle;      // Pool Handle, an alloca or incoming argument.
-    PoolInfo(Value *PH) : PoolHandle(PH) {}
-  };
-
-  struct FuncInfo {
-    /// MarkedNodes - The set of nodes which are not locally pool allocatable in
-    /// the current function.
-    ///
-    hash_set<DSNode*> MarkedNodes;
-
-    /// Clone - The cloned version of the function, if applicable.
-    Function *Clone;
-
-    /// ArgNodes - The list of DSNodes which have pools passed in as arguments.
-    ///
-    std::vector<DSNode*> ArgNodes;
-
-    /// PoolDescriptors - A PoolInfo object for each relevant DSNode in the
-    /// current graph.
-    std::map<DSNode*, PoolInfo> PoolDescriptors;
-
-    /// NewToOldValueMap - When and if a function needs to be cloned, this map
-    /// contains a mapping from all of the values in the new function back to
-    /// the values they correspond to in the old function.
-    ///
-    std::map<Value*, const Value*> NewToOldValueMap;
-  };
-
-  /// PA - The main pool allocation pass
-  ///
-  class PA : public Pass {
-    Module *CurModule;
-    BUDataStructures *BU;
-    
-    std::map<Function*, FuncInfo> FunctionInfo;
-  public:
-    Function *PoolInit, *PoolDestroy, *PoolAlloc, *PoolFree;
-  public:
-    bool run(Module &M);
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<BUDataStructures>();
-      AU.addRequired<TargetData>();
-    }
-
-    BUDataStructures &getBUDataStructures() const { return *BU; }
-
-    FuncInfo *getFuncInfo(Function &F) {
-      std::map<Function*, FuncInfo>::iterator I = FunctionInfo.find(&F);
-      return I != FunctionInfo.end() ? &I->second : 0;
-    }
-
-  private:
-
-    /// AddPoolPrototypes - Add prototypes for the pool functions to the
-    /// specified module and update the Pool* instance variables to point to
-    /// them.
-    ///
-    void AddPoolPrototypes();
-
-    /// MakeFunctionClone - If the specified function needs to be modified for
-    /// pool allocation support, make a clone of it, adding additional arguments
-    /// as neccesary, and return it.  If not, just return null.
-    ///
-    Function *MakeFunctionClone(Function &F);
-
-    /// ProcessFunctionBody - Rewrite the body of a transformed function to use
-    /// pool allocation where appropriate.
-    ///
-    void ProcessFunctionBody(Function &Old, Function &New);
-    
-    /// CreatePools - This creates the pool initialization and destruction code
-    /// for the DSNodes specified by the NodesToPA list.  This adds an entry to
-    /// the PoolDescriptors map for each DSNode.
-    ///
-    void CreatePools(Function &F, const std::vector<DSNode*> &NodesToPA,
-                     std::map<DSNode*, PoolInfo> &PoolDescriptors);
-
-    void TransformFunctionBody(Function &F, DSGraph &G, FuncInfo &FI);
-  };
-  RegisterOpt<PA> X("poolalloc", "Pool allocate disjoint data structures");
+  RegisterOpt<PoolAllocate>
+  X("poolalloc", "Pool allocate disjoint data structures");
 }
 
-bool PA::run(Module &M) {
+void PoolAllocate::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<BUDataStructures>();
+  AU.addRequired<TargetData>();
+}
+
+bool PoolAllocate::run(Module &M) {
   if (M.begin() == M.end()) return false;
   CurModule = &M;
   
@@ -155,7 +73,7 @@ bool PA::run(Module &M) {
 // AddPoolPrototypes - Add prototypes for the pool functions to the specified
 // module and update the Pool* instance variables to point to them.
 //
-void PA::AddPoolPrototypes() {
+void PoolAllocate::AddPoolPrototypes() {
   CurModule->addTypeName("PoolDescriptor", PoolDescType);
 
   // Get poolinit function...
@@ -193,7 +111,7 @@ void PA::AddPoolPrototypes() {
 // allocation support, make a clone of it, adding additional arguments as
 // neccesary, and return it.  If not, just return null.
 //
-Function *PA::MakeFunctionClone(Function &F) {
+Function *PoolAllocate::MakeFunctionClone(Function &F) {
   DSGraph &G = BU->getDSGraph(F);
   std::vector<DSNode*> &Nodes = G.getNodes();
   if (Nodes.empty()) return 0;  // No memory activity, nothing is required
@@ -245,11 +163,11 @@ Function *PA::MakeFunctionClone(Function &F) {
 
   // Set the rest of the new arguments names to be PDa<n> and add entries to the
   // pool descriptors map
-  std::map<DSNode*, PoolInfo> &PoolDescriptors = FI.PoolDescriptors;
+  std::map<DSNode*, Value*> &PoolDescriptors = FI.PoolDescriptors;
   Function::aiterator NI = New->abegin();
   for (unsigned i = 0, e = FI.ArgNodes.size(); i != e; ++i, ++NI) {
     NI->setName("PDa");  // Add pd entry
-    PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], PoolInfo(NI)));
+    PoolDescriptors.insert(std::make_pair(FI.ArgNodes[i], NI));
   }
 
   // Map the existing arguments of the old function to the corresponding
@@ -283,7 +201,7 @@ Function *PA::MakeFunctionClone(Function &F) {
 // processFunction - Pool allocate any data structures which are contained in
 // the specified function...
 //
-void PA::ProcessFunctionBody(Function &F, Function &NewF) {
+void PoolAllocate::ProcessFunctionBody(Function &F, Function &NewF) {
   DSGraph &G = BU->getDSGraph(F);
   std::vector<DSNode*> &Nodes = G.getNodes();
   if (Nodes.empty()) return;     // Quick exit if nothing to do...
@@ -305,7 +223,7 @@ void PA::ProcessFunctionBody(Function &F, Function &NewF) {
   DEBUG(std::cerr << NodesToPA.size() << " nodes to pool allocate\n");
   if (!NodesToPA.empty()) {
     // Create pool construction/destruction code
-    std::map<DSNode*, PoolInfo> &PoolDescriptors = FI.PoolDescriptors;
+    std::map<DSNode*, Value*> &PoolDescriptors = FI.PoolDescriptors;
     CreatePools(NewF, NodesToPA, PoolDescriptors);
   }
 
@@ -318,8 +236,9 @@ void PA::ProcessFunctionBody(Function &F, Function &NewF) {
 // the DSNodes specified by the NodesToPA list.  This adds an entry to the
 // PoolDescriptors map for each DSNode.
 //
-void PA::CreatePools(Function &F, const std::vector<DSNode*> &NodesToPA,
-                     std::map<DSNode*, PoolInfo> &PoolDescriptors) {
+void PoolAllocate::CreatePools(Function &F,
+                               const std::vector<DSNode*> &NodesToPA,
+                               std::map<DSNode*, Value*> &PoolDescriptors) {
   // Find all of the return nodes in the CFG...
   std::vector<BasicBlock*> ReturnNodes;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
@@ -346,7 +265,7 @@ void PA::CreatePools(Function &F, const std::vector<DSNode*> &NodesToPA,
     new CallInst(PoolInit, make_vector(AI, ElSize, 0), "", InsertPoint);
 
     // Update the PoolDescriptors map
-    PoolDescriptors.insert(std::make_pair(Node, PoolInfo(AI)));
+    PoolDescriptors.insert(std::make_pair(Node, AI));
 
     // Insert a call to pool destroy before each return inst in the function
     for (unsigned r = 0, e = ReturnNodes.size(); r != e; ++r)
@@ -360,11 +279,12 @@ namespace {
   /// FuncTransform - This class implements transformation required of pool
   /// allocated functions.
   struct FuncTransform : public InstVisitor<FuncTransform> {
-    PA &PAInfo;
+    PoolAllocate &PAInfo;
     DSGraph &G;
     FuncInfo &FI;
 
-    FuncTransform(PA &P, DSGraph &g, FuncInfo &fi) : PAInfo(P), G(g), FI(fi) {}
+    FuncTransform(PoolAllocate &P, DSGraph &g, FuncInfo &fi)
+      : PAInfo(P), G(g), FI(fi) {}
 
     void visitMallocInst(MallocInst &MI);
     void visitFreeInst(FreeInst &FI);
@@ -384,13 +304,13 @@ namespace {
     Value *getPoolHandle(Value *V) {
       DSNode *Node = getDSNodeFor(V);
       // Get the pool handle for this DSNode...
-      std::map<DSNode*, PoolInfo>::iterator I = FI.PoolDescriptors.find(Node);
-      return I != FI.PoolDescriptors.end() ? I->second.PoolHandle : 0;
+      std::map<DSNode*, Value*>::iterator I = FI.PoolDescriptors.find(Node);
+      return I != FI.PoolDescriptors.end() ? I->second : 0;
     }
   };
 }
 
-void PA::TransformFunctionBody(Function &F, DSGraph &G, FuncInfo &FI) {
+void PoolAllocate::TransformFunctionBody(Function &F, DSGraph &G, FuncInfo &FI){
   FuncTransform(*this, G, FI).visit(F);
 }
 
@@ -505,7 +425,7 @@ void FuncTransform::visitCallInst(CallInst &CI) {
       assert(NodeMapping.count(CFI->ArgNodes[i]) && "Node not in mapping!");
       DSNode *LocalNode = NodeMapping.find(CFI->ArgNodes[i])->second;
       assert(FI.PoolDescriptors.count(LocalNode) && "Node not pool allocated?");
-      Args.push_back(FI.PoolDescriptors.find(LocalNode)->second.PoolHandle);
+      Args.push_back(FI.PoolDescriptors.find(LocalNode)->second);
     } else {
       Args.push_back(Constant::getNullValue(PoolDescPtr));
     }
@@ -520,12 +440,4 @@ void FuncTransform::visitCallInst(CallInst &CI) {
 
   DEBUG(std::cerr << "  Result Call: " << *NewCall);
   CI.getParent()->getInstList().erase(&CI);
-}
-
-
-// createPoolAllocatePass - Global function to access the functionality of this
-// pass...
-//
-Pass *createPoolAllocatePass() { 
-  return new PA(); 
 }
