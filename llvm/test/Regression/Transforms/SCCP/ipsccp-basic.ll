@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep -v 'ret int 17' | not grep ret
+; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep -v 'ret int 17' | grep -v 'ret int undef' | not grep ret
 
 implementation
 
