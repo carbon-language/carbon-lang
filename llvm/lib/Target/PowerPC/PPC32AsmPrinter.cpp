@@ -45,7 +45,7 @@ namespace {
 
     PPC32AsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {
-      UsesUnderscorePrefix = 1;
+      GlobalPrefix = "_";
     }
 
     /// Unique incrementer for label values for referencing Global values.

@@ -666,7 +666,7 @@ bool Printer::doInitialization(Module &M) {
     O << '\n';
   }
 
-  Mang = new Mangler(M, true);
+  Mang = new Mangler(M, "_");
   return false; // success
 }
 
