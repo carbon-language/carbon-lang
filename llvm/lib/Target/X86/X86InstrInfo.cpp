@@ -51,3 +51,18 @@ bool X86InstrInfo::isNOPinstr(const MachineInstr &MI) const {
   return false;
 }
 
+bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
+                               unsigned& sourceReg,
+                               unsigned& destReg) const {
+  MachineOpCode oc = MI.getOpcode();
+  if (oc == X86::MOVrr8 || oc == X86::MOVrr16 || oc == X86::MOVrr32) {
+      assert(MI.getNumOperands() == 2 &&
+             MI.getOperand(0).isRegister() &&
+             MI.getOperand(1).isRegister() &&
+             "invalid register-register move instruction");
+      sourceReg = MI.getOperand(1).getAllocatedRegNum();
+      destReg = MI.getOperand(0).getAllocatedRegNum();
+      return true;
+  }
+  return false;
+}

@@ -169,6 +169,14 @@ public:
   ///
   MachineInstr* createNOPinstr() const;
 
+  //
+  // Return true if the instruction is a register to register move and
+  // leave the source and dest operands in the passed parameters.
+  //
+  virtual bool isMoveInstr(const MachineInstr& MI,
+                           unsigned& sourceReg,
+                           unsigned& destReg) const;
+
   /// isNOPinstr - not having a special NOP opcode, we need to know if a given
   /// instruction is interpreted as an `official' NOP instr, i.e., there may be
   /// more than one way to `do nothing' but only one canonical way to slack off.

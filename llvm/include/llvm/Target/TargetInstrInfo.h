@@ -214,6 +214,16 @@ public:
     return get(Opcode).Flags & M_TERMINATOR_FLAG;
   }
 
+  //
+  // Return true if the instruction is a register to register move and
+  // leave the source and dest operands in the passed parameters.
+  //
+  virtual bool isMoveInstr(const MachineInstr& MI,
+                           unsigned& sourceReg,
+                           unsigned& destReg) const {
+    return false;
+  }
+
   // Check if an instruction can be issued before its operands are ready,
   // or if a subsequent instruction that uses its result can be issued
   // before the results are ready.
