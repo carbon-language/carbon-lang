@@ -626,9 +626,13 @@ CreateSETUWConst(uint32_t C,
   int32_t sC = (int32_t) C;
   bool smallNegValue =isSigned && sC < 0 && sC != -sC && -sC < (int32_t)MAXSIMM;
 
+  //Create TmpInstruction for intermediate values
+  TmpInstruction *tmpReg;
+
   // Set the high 22 bits in dest if non-zero and simm13 field of OR not enough
   if (!smallNegValue && (C & ~MAXLO) && C > MAXSIMM) {
-    miSETHI = BuildMI(V9::SETHI, 2).addZImm(C).addRegDef(dest);
+    tmpReg = new TmpInstruction(mcfi, PointerType::get(val->getType()), (Instruction*) val);
+    miSETHI = BuildMI(V9::SETHI, 2).addZImm(C).addRegDef(tmpReg);
     miSETHI->getOperand(0).markHi32();
     mvec.push_back(miSETHI);
   }
@@ -638,7 +642,7 @@ CreateSETUWConst(uint32_t C,
   if (miSETHI==NULL || C & MAXLO) {
     if (miSETHI) {
       // unsigned value with high-order bits set using SETHI
-      miOR = BuildMI(V9::ORi,3).addReg(dest).addZImm(C).addRegDef(dest);
+      miOR = BuildMI(V9::ORi,3).addReg(tmpReg).addZImm(C).addRegDef(dest);
       miOR->getOperand(1).markLo32();
     } else {
       // unsigned or small signed value that fits in simm13 field of OR
@@ -648,6 +652,8 @@ CreateSETUWConst(uint32_t C,
     }
     mvec.push_back(miOR);
   }
+  else
+    mvec.push_back(BuildMI(V9::ORr,3).addReg(tmpReg).addMReg(SparcV9::g0).addRegDef(dest));
   
   assert((miSETHI || miOR) && "Oops, no code was generated!");
 }
@@ -662,13 +668,19 @@ static inline void
 CreateSETSWConst(int32_t C,
                  Instruction* dest, std::vector<MachineInstr*>& mvec, 
 		 MachineCodeForInstruction& mcfi, Value* val) {
+  
+  //TmpInstruction for intermediate values
+  TmpInstruction *tmpReg = new TmpInstruction(mcfi, (Instruction*) val);
+
   // Set the low 32 bits of dest
-  CreateSETUWConst((uint32_t) C,  dest, mvec, mcfi, val, /*isSigned*/true);
+  CreateSETUWConst((uint32_t) C,  tmpReg, mvec, mcfi, val, /*isSigned*/true);
 
   // Sign-extend to the high 32 bits if needed.
   // NOTE: The value C = 0x80000000 is bad: -C == C and so -C is < MAXSIMM
   if (C < 0 && (C == -C || -C > (int32_t) MAXSIMM))
-    mvec.push_back(BuildMI(V9::SRAi5,3).addReg(dest).addZImm(0).addRegDef(dest));
+    mvec.push_back(BuildMI(V9::SRAi5,3).addReg(tmpReg).addZImm(0).addRegDef(dest));
+  else
+    mvec.push_back(BuildMI(V9::ORr,3).addReg(tmpReg).addMReg(SparcV9::g0).addRegDef(dest));
 }
 
 /// CreateSETXConst - Set a 64-bit signed or unsigned constant in the
@@ -689,15 +701,21 @@ CreateSETXConst(uint64_t C,
   // Code to set the upper 32 bits of the value in register `tmpReg'
   CreateSETUWConst((C >> 32), tmpReg, mvec, mcfi, val);
   
+  //TmpInstruction for intermediate values
+  TmpInstruction *tmpReg2 = new TmpInstruction(mcfi, (Instruction*) val);
+
   // Shift tmpReg left by 32 bits
   mvec.push_back(BuildMI(V9::SLLXi6, 3).addReg(tmpReg).addZImm(32)
-                 .addRegDef(tmpReg));
+                 .addRegDef(tmpReg2));
   
+  //TmpInstruction for intermediate values
+  TmpInstruction *tmpReg3 = new TmpInstruction(mcfi, (Instruction*) val);
+
   // Code to set the low 32 bits of the value in register `dest'
-  CreateSETUWConst(C, dest, mvec, mcfi, val);
+  CreateSETUWConst(C, tmpReg3, mvec, mcfi, val);
   
   // dest = OR(tmpReg, dest)
-  mvec.push_back(BuildMI(V9::ORr,3).addReg(dest).addReg(tmpReg).addRegDef(dest));
+  mvec.push_back(BuildMI(V9::ORr,3).addReg(tmpReg3).addReg(tmpReg2).addRegDef(dest));
 }
 
 /// CreateSETUWLabel - Set a 32-bit constant (given by a symbolic label) in
