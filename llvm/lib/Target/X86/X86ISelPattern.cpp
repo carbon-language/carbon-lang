@@ -43,6 +43,7 @@ namespace {
       // X86 is wierd, it always uses i8 for shift amounts and setcc results.
       setShiftAmountType(MVT::i8);
       setSetCCResultType(MVT::i8);
+      setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
 
       // Set up the register classes.
       addRegisterClass(MVT::i8, X86::R8RegisterClass);
