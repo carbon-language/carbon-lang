@@ -63,7 +63,7 @@ namespace {
       // can be "used", instead of ones with bodies.
       std::vector<Function*> NewFunctions;
       
-      Function *Last = &M.back();  // Figure out where the last real fn is...
+      Function *Last = --M.end();  // Figure out where the last real fn is.
       
       for (Module::iterator I = M.begin(); ; ++I) {
         if (&*I != Named) {
