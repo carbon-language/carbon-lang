@@ -176,33 +176,6 @@ Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
 }
 
 
-void BytecodeParser::postResolveValues(ValueTable &ValTab) {
-  while (!ValTab.empty()) {
-    ValueList &VL = *ValTab.back();
-    ValTab.pop_back();    
-
-    while (!VL.empty()) {
-      Value *V = VL.back();
-      unsigned IDNumber = getValueIDNumberFromPlaceHolder(V);
-      VL.pop_back();
-
-      Value *NewVal = getValue(V->getType(), IDNumber, false);
-      if (NewVal == 0)
-        throw std::string("Unresolvable reference found: <" +
-                          V->getType()->getDescription() + ">:" + 
-                          utostr(IDNumber) + ".");
-
-      // Fixup all of the uses of this placeholder def...
-      V->replaceAllUsesWith(NewVal);
-      
-      // Now that all the uses are gone, delete the placeholder...
-      // If we couldn't find a def (error case), then leak a little
-      delete V;  // memory, 'cause otherwise we can't remove all uses!
-    }
-    delete &VL;
-  }
-}
-
 std::auto_ptr<BasicBlock>
 BytecodeParser::ParseBasicBlock(const unsigned char *&Buf,
                                 const unsigned char *EndBuf) {
@@ -381,9 +354,31 @@ void BytecodeParser::materializeFunction(Function* F) {
   }
 
   // Check for unresolvable references
-  postResolveValues(LateResolveValues);
+  while (!LateResolveValues.empty()) {
+    ValueList &VL = *LateResolveValues.back();
+    LateResolveValues.pop_back();    
 
-  //ResolveReferencesToValue(F, FunctionSlot);
+    while (!VL.empty()) {
+      Value *V = VL.back();
+      unsigned IDNumber = getValueIDNumberFromPlaceHolder(V);
+      VL.pop_back();
+
+      Value *NewVal = getValue(V->getType(), IDNumber, false);
+      if (NewVal == 0)
+        throw std::string("Unresolvable reference found: <" +
+                          V->getType()->getDescription() + ">:" + 
+                          utostr(IDNumber) + ".");
+
+      // Fixup all of the uses of this placeholder def...
+      V->replaceAllUsesWith(NewVal);
+      
+      // Now that all the uses are gone, delete the placeholder...
+      // If we couldn't find a def (error case), then leak a little
+      // memory, because otherwise we can't remove all uses!
+      delete V;
+    }
+    delete &VL;
+  }
 
   // Clear out function-level types...
   FunctionTypeValues.clear();

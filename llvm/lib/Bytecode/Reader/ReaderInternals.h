@@ -77,11 +77,9 @@ public:
     std::cerr << "BytecodeParser instance!\n";
   }
 
-private:          // All of this data is transient across calls to ParseBytecode
+private:
   struct ValueList : public User {
-    ValueList() : User(Type::TypeTy, Value::TypeVal) {
-    }
-    ~ValueList() {}
+    ValueList() : User(Type::TypeTy, Value::TypeVal) {}
 
     // vector compatibility methods
     unsigned size() const { return getNumOperands(); }
@@ -185,7 +183,6 @@ private:
 
   int insertValue(Value *V, ValueTable &Table);  // -1 = Failure
   void setValueTo(ValueTable &D, unsigned Slot, Value *V);
-  void postResolveValues(ValueTable &ValTab);
 
   unsigned getTypeSlot(const Type *Ty);
 
