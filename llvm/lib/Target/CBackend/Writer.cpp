@@ -1212,7 +1212,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
 }
 
 void CWriter::visitUnreachableInst(UnreachableInst &I) {
-  Out << "  /*UNREACHABLE*/\n";
+  Out << "  /*UNREACHABLE*/;\n";
 }
 
 bool CWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
