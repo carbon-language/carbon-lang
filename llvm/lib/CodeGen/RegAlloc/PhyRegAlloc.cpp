@@ -128,8 +128,10 @@ void PhyRegAlloc::addInterference(const Value *const Def,
       //the live range of this var interferes with this call
       if( isCallInst ) {
 	LROfVar->addCallInterference( (const Instruction *const) Def );   
-	// cout << "\n ++Added Call Interf to set:";
-	//LROfVar->printSet();
+	if( DEBUG_RA) {
+	  cout << "\n ++Added Call Interf to set:";
+	  LROfVar->printSet();
+	}
       }
     }
     else if(DEBUG_RA > 1)  { 
