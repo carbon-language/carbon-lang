@@ -232,8 +232,8 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       // Copy the value into the register pair.
       // R = top(more-significant) half, R+1 = bottom(less-significant) half
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-      unsigned topHalf = Val & 0xffffffffU;
-      unsigned bottomHalf = Val >> 32;
+      unsigned bottomHalf = Val & 0xffffffffU;
+      unsigned topHalf = Val >> 32;
       unsigned HH = topHalf >> 10;
       unsigned HM = topHalf & 0x03ff;
       unsigned LM = bottomHalf >> 10;
@@ -565,6 +565,17 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         break;
       }
       }
+    } else if (newTyClass == cLong) {
+      if (oldTyClass == cLong) {
+        // Just copy it
+        BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
+        BuildMI (*BB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0)
+          .addReg (SrcReg+1);
+      } else {
+        std::cerr << "Cast still unsupported: SrcTy = "
+                  << *SrcTy << ", DestTy = " << *DestTy << "\n";
+        abort ();
+      }
     } else {
       std::cerr << "Cast still unsupported: SrcTy = "
                 << *SrcTy << ", DestTy = " << *DestTy << "\n";
@@ -704,6 +715,10 @@ void V8ISel::visitReturnInst(ReturnInst &I) {
         break;
       case cFloat:
         BuildMI (BB, V8::FMOVS, 2, V8::F0).addReg(RetValReg);
+        break;
+      case cLong:
+        BuildMI (BB, V8::ORrr, 2, V8::I0).addReg(V8::G0).addReg(RetValReg);
+        BuildMI (BB, V8::ORrr, 2, V8::I1).addReg(V8::G0).addReg(RetValReg+1);
         break;
       default:
         std::cerr << "Return instruction of this type not handled: " << I;
