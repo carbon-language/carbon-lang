@@ -17,7 +17,6 @@
 #include "llvm/Method.h"
 #include "llvm/ConstPoolVals.h"
 #include "llvm/Instruction.h"
-#include <strstream>
 
 
 //************************ Class Implementations **************************/
@@ -105,47 +104,45 @@ operator<< (ostream& os, const MachineInstr& minstr)
   return os;
 }
 
-ostream&
-operator<< (ostream& os, const MachineOperand& mop)
-{
-  strstream regInfo;
-  if (mop.opType == MachineOperand::MO_VirtualRegister)
-    regInfo << "(val " << mop.value << ")" << ends;
-  else if (mop.opType == MachineOperand::MO_MachineRegister)
-    regInfo << "("       << mop.regNum << ")" << ends;
-  else if (mop.opType == MachineOperand::MO_CCRegister)
-    regInfo << "(val " << mop.value << ")" << ends;
+static inline ostream &OutputOperand(ostream &os, const MachineOperand &mop) {
+  switch (mop.getOperandType()) {
+  case MachineOperand::MO_CCRegister:
+  case MachineOperand::MO_VirtualRegister:
+    return os << "(val " << mop.getVRegValue() << ")";
+  case MachineOperand::MO_MachineRegister:
+    return os << "("     << mop.getMachineRegNum() << ")";
+  default:
+    assert(0 && "Unknown operand type");
+    return os;
+  }
+}
+
+
+ostream &operator<<(ostream &os, const MachineOperand &mop) {
+  switch(mop.opType) {
+  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_MachineRegister:
+    os << "%reg";
+    return OutputOperand(os, mop);
+  case MachineOperand::MO_CCRegister:
+    os << "%ccreg";
+    return OutputOperand(os, mop);
+    
+  case MachineOperand::MO_SignExtendedImmed:
+    return os << mop.immedVal;
+    
+  case MachineOperand::MO_UnextendedImmed:
+    return os << mop.immedVal;
+    
+  case MachineOperand::MO_PCRelativeDisp:
+    os << "%disp(label ";
+    return OutputOperand(os, mop) << ")";
+    
+  default:
+    assert(0 && "Unrecognized operand type");
+    break;
+  }
   
-  switch(mop.opType)
-    {
-    case MachineOperand::MO_VirtualRegister:
-    case MachineOperand::MO_MachineRegister:
-      os << "%reg" << regInfo.str();
-      free(regInfo.str());
-      break;
-      
-    case MachineOperand::MO_CCRegister:
-      os << "%ccreg" << regInfo.str();
-      free(regInfo.str());
-      break;
-
-    case MachineOperand::MO_SignExtendedImmed:
-      os << mop.immedVal;
-      break;
-
-    case MachineOperand::MO_UnextendedImmed:
-      os << mop.immedVal;
-      break;
-
-    case MachineOperand::MO_PCRelativeDisp:
-      os << "%disp(label " << mop.value << ")";
-      break;
-
-    default:
-      assert(0 && "Unrecognized operand type");
-      break;
-    }
-
   return os;
 }
 
