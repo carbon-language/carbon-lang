@@ -469,7 +469,7 @@ bool ISel::SelectAddress(SDOperand N, X86AddressMode &AM) {
     AM.Disp += cast<ConstantSDNode>(N)->getValue();
     return false;
   case ISD::SHL:
-    if (AM.IndexReg == 0 || AM.Scale == 1)
+    if (AM.IndexReg == 0 && AM.Scale == 1)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
         unsigned Val = CN->getValue();
         if (Val == 1 || Val == 2 || Val == 3) {
