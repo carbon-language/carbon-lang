@@ -526,10 +526,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     // Copy zero (null pointer) to the register.
     BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(0);
   } else if (ConstantPointerRef *CPR = dyn_cast<ConstantPointerRef>(C)) {
-    BuildMI(*MBB, IP, PPC32::ADDIS, 2, R).addReg(PPC32::R0)
-      .addGlobalAddress(CPR->getValue());
-    BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(PPC32::R0)
-      .addGlobalAddress(CPR->getValue());
+    unsigned AddrReg = getReg(CPR->getValue(), MBB, IP);
+    BuildMI(*MBB, IP, PPC32::OR, 2, R).addReg(AddrReg).addReg(AddrReg);
   } else {
     std::cerr << "Offending constant: " << C << "\n";
     assert(0 && "Type not handled yet!");
@@ -551,7 +549,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     PPC32::R7, PPC32::R8, PPC32::R9, PPC32::R10,
   };
   static const unsigned FPR[] = {
-    PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, PPC32::F7, 
+    PPC32::F1, PPC32::F2, PPC32::F3, PPC32::F4, PPC32::F5, PPC32::F6, PPC32::F7,
     PPC32::F8, PPC32::F9, PPC32::F10, PPC32::F11, PPC32::F12, PPC32::F13
   };
     
