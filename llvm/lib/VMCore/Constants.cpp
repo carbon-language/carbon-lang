@@ -191,7 +191,8 @@ ConstantFP::ConstantFP(const Type *Ty, double V) : Constant(Ty) {
 
 ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V) : Constant(T) {
-  for (unsigned i = 0; i < V.size(); i++) {
+  Operands.reserve(V.size());
+  for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert(V[i]->getType() == T->getElementType());
     Operands.push_back(Use(V[i], this));
   }
@@ -202,7 +203,8 @@ ConstantStruct::ConstantStruct(const StructType *T,
   const StructType::ElementTypes &ETypes = T->getElementTypes();
   assert(V.size() == ETypes.size() &&
          "Invalid initializer vector for constant structure");
-  for (unsigned i = 0; i < V.size(); i++) {
+  Operands.reserve(V.size());
+  for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert(V[i]->getType() == ETypes[i]);
     Operands.push_back(Use(V[i], this));
   }
