@@ -563,7 +563,8 @@ inline void SparcV9CodeEmitter::emitFarCall(uint64_t Target, Function *F) {
 }
 
 void UltraSparc::replaceMachineCodeForFunction (void *Old, void *New) {
-  if (!TheJITResolver) return true; // fail if not in JIT.
+  assert (TheJITResolver &&
+	"Can only call replaceMachineCodeForFunction from within JIT");
   uint64_t Target = (uint64_t)(intptr_t)New;
   uint64_t CodeBegin = (uint64_t)(intptr_t)Old;
   TheJITResolver->insertJumpAtAddr(Target, CodeBegin);

@@ -45,7 +45,7 @@ public:
   
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
-  virtual bool replaceMachineCodeForFunction (void *Old, void *New);
+  virtual void replaceMachineCodeForFunction (void *Old, void *New);
 };
 
 #endif
