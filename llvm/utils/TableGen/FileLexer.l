@@ -130,7 +130,7 @@ static void HandleInclude(const char *Buffer) {
     yyin = fopen(NextFilename.c_str(), "r");
     if (yyin == 0) {
       err() << "Could not find include file '" << Filename << "'!\n";
-      abort();
+      exit(1);
     }
     Filename = NextFilename;
   }
@@ -214,7 +214,7 @@ ${Identifier}  { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
 <comment>"/*"           { ++CommentDepth; }
 <comment>"/"+[^*]*      /* eat up /'s not followed by *'s */
 <comment>"*"+"/"        { if (!--CommentDepth) { BEGIN(INITIAL); } }
-<comment><<EOF>>        { err() << "Unterminated comment!\n"; abort(); }
+<comment><<EOF>>        { err() << "Unterminated comment!\n"; exit(1); }
 
 .              { return Filetext[0]; }
 

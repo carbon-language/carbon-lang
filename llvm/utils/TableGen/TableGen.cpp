@@ -97,7 +97,7 @@ static Init *getBit(Record *R, unsigned BitNo) {
     }
 
   std::cerr << "Cannot find requested bit!\n";
-  abort();
+  exit(1);
   return 0;
 }
 
@@ -273,7 +273,7 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
     if (RangeBegin == InstsB && RangeEnd == InstsE) {
       std::cerr << "Error: Could not distinguish among the following insts!:\n";
       PrintRange(InstsB, InstsE);
-      abort();
+      exit(1);
     }
     
 #if 0
