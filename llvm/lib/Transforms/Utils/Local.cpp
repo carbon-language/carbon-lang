@@ -61,12 +61,7 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
       // unconditional branch.
       BI->setUnconditionalDest(Destination);
       return true;
-    }
-#if 0
-    // FIXME: TODO: This doesn't work if the destination has PHI nodes with
-    // different incoming values on each branch!
-    //
-    else if (Dest2 == Dest1) {       // Conditional branch to same location?
+    } else if (Dest2 == Dest1) {       // Conditional branch to same location?
       // This branch matches something like this:  
       //     br bool %cond, label %Dest, label %Dest
       // and changes it into:  br label %Dest
@@ -79,7 +74,6 @@ bool ConstantFoldTerminator(BasicBlock *BB) {
       BI->setUnconditionalDest(Dest1);
       return true;
     }
-#endif
   }
   return false;
 }
