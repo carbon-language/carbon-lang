@@ -1,4 +1,4 @@
-LEVEL = ../..
+LEVEL = ../../..
 TOOLNAME = burg
 ExtraSource = gram.tab.c
 
