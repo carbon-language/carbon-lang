@@ -23,12 +23,6 @@ namespace {
              cl::Hidden);
 }
 
-// getNumBytesToNotCount - This function is supposed to return the number of
-// bytes that are to be considered not allocated, even though malloc thinks they
-// are allocated.
-//
-static unsigned getNumBytesToNotCount();
-
 static TimerGroup *DefaultTimerGroup = 0;
 static TimerGroup *getDefaultTimerGroup() {
   if (DefaultTimerGroup) return DefaultTimerGroup;
@@ -75,7 +69,7 @@ Timer::~Timer() {
 static long getMemUsage() {
   if (TrackSpace) {
     struct mallinfo MI = mallinfo();
-    return MI.uordblks/*+MI.hblkhd-getNumBytesToNotCount()*/;
+    return MI.uordblks/*+MI.hblkhd*/;
   } else {
     return 0;
   }
@@ -256,61 +250,4 @@ void TimerGroup::removeTimer() {
     delete DefaultTimerGroup;
     DefaultTimerGroup = 0;
   }
-}
-
-
-
-#if (__GNUC__ == 3) && (__GNUC_MINOR__ == 2) && (__GNUC_PATCHLEVEL__ == 0)
-// If we have GCC 3.2.0, we can calculate pool allocation bookkeeping info
-#define HAVE_POOL
-extern "C" {
-  // Taken from GCC 3.2's stl_alloc.h file:
-  enum {_ALIGN = 8, _MAX_BYTES = 128, NFREE = _MAX_BYTES / _ALIGN};
-  struct FreeList { FreeList *Next; };
-
-  FreeList *_ZNSt24__default_alloc_templateILb1ELi0EE12_S_free_listE[NFREE];
-  char *_ZNSt24__default_alloc_templateILb1ELi0EE13_S_start_freeE;
-  char *_ZNSt24__default_alloc_templateILb1ELi0EE11_S_end_freeE;
-  size_t _ZNSt24__default_alloc_templateILb1ELi0EE12_S_heap_sizeE;
-  
-  // Make the symbols possible to use...
-  FreeList* (&TheFreeList)[NFREE] = _ZNSt24__default_alloc_templateILb1ELi0EE12_S_free_listE;
-  char * &StartFree = _ZNSt24__default_alloc_templateILb1ELi0EE13_S_start_freeE;
-  char * &EndFree   = _ZNSt24__default_alloc_templateILb1ELi0EE11_S_end_freeE;
-  size_t &HeapSize  = _ZNSt24__default_alloc_templateILb1ELi0EE12_S_heap_sizeE;
-}
-#endif
-
-// getNumBytesToNotCount - This function is supposed to return the number of
-// bytes that are to be considered not allocated, even though malloc thinks they
-// are allocated.
-//
-static unsigned getNumBytesToNotCount() {
-#ifdef HAVE_POOL
-  // If we have GCC 3.2.0, we can subtract off pool allocation bookkeeping info
-
-  // Size of the free slab section... 
-  unsigned FreePoolMem = (unsigned)(EndFree-StartFree);
-
-  // Walk all of the free lists, adding memory to the free counter whenever we
-  // have a free bucket.
-  for (unsigned i = 0; i != NFREE; ++i) {
-    unsigned NumEntries = 0;
-    for (FreeList *FL = TheFreeList[i]; FL; ++NumEntries, FL = FL->Next)
-      /*empty*/ ;
-    
-#if 0
-    if (NumEntries)
-      std::cerr << "  For Size[" << (i+1)*_ALIGN << "]: " << NumEntries
-                << " Free entries\n";
-#endif
-    FreePoolMem += NumEntries*(i+1)*_ALIGN;
-  }
-  return FreePoolMem;
-  
-#else
-#warning "Don't know how to avoid pool allocation accounting overhead for this"
-#warning " compiler: Space usage numbers (with -time-passes) may be off!"
-  return 0;
-#endif
 }
