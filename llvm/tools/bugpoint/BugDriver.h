@@ -178,17 +178,13 @@ private:
   std::string executeProgram(std::string RequestedOutputFilename = "",
                              std::string Bytecode = "",
                              const std::string &SharedObjects = "",
-                             AbstractInterpreter *AI = 0);
+                             AbstractInterpreter *AI = 0,
+                             bool *ProgramExitedNonzero = 0);
 
   /// executeProgramWithCBE - Used to create reference output with the C
   /// backend, if reference output is not provided.
   ///
-  std::string executeProgramWithCBE(std::string OutputFile = "",
-                                    std::string BytecodeFile = "",
-                                    const std::string &SharedObj = "") {
-    return executeProgram(OutputFile, BytecodeFile, SharedObj,
-                          (AbstractInterpreter*)cbe);
-  }
+  std::string executeProgramWithCBE(std::string OutputFile = "");
 
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output

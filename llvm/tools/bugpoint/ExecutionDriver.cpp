@@ -49,6 +49,11 @@ namespace {
                             0),
                  cl::init(AutoPick));
 
+  cl::opt<bool>
+  CheckProgramExitCode("check-exit-code",
+                       cl::desc("Assume nonzero exit code is failure (default on)"),
+                       cl::init(true));
+
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
             cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
@@ -137,7 +142,8 @@ bool BugDriver::initializeExecutionEnvironment() {
 std::string BugDriver::executeProgram(std::string OutputFile,
                                       std::string BytecodeFile,
                                       const std::string &SharedObj,
-                                      AbstractInterpreter *AI) {
+                                      AbstractInterpreter *AI,
+                                      bool *ProgramExitedNonzero) {
   if (AI == 0) AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
   bool CreatedBytecode = false;
@@ -167,6 +173,8 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   int RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                   OutputFile, SharedObjs);
 
+  if (ProgramExitedNonzero != 0)
+    *ProgramExitedNonzero = (RetVal != 0);
 
   // Remove the temporary bytecode file.
   if (CreatedBytecode) removeFile(BytecodeFile);
@@ -175,6 +183,22 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   return OutputFile;
 }
 
+/// executeProgramWithCBE - Used to create reference output with the C
+/// backend, if reference output is not provided.
+///
+std::string BugDriver::executeProgramWithCBE(std::string OutputFile) {
+  bool ProgramExitedNonzero;
+  std::string outFN = executeProgram(OutputFile, "", "",
+                                     (AbstractInterpreter*)cbe,
+                                     &ProgramExitedNonzero);
+  if (ProgramExitedNonzero) {
+    std::cerr
+      << "Warning: While generating reference output, program exited with\n"
+      << "non-zero exit code. This will NOT be treated as a failure.\n";
+    CheckProgramExitCode = false;
+  }
+  return outFN;
+}
 
 std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
@@ -211,8 +235,15 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 bool BugDriver::diffProgram(const std::string &BytecodeFile,
                             const std::string &SharedObject,
                             bool RemoveBytecode) {
+  bool ProgramExitedNonzero;
+
   // Execute the program, generating an output file...
-  std::string Output = executeProgram("", BytecodeFile, SharedObject);
+  std::string Output = executeProgram("", BytecodeFile, SharedObject, 0,
+                                      &ProgramExitedNonzero);
+
+  // If we're checking the program exit code, assume anything nonzero is bad.
+  if (CheckProgramExitCode && ProgramExitedNonzero)
+    return true;
 
   std::string Error;
   bool FilesDifferent = false;
