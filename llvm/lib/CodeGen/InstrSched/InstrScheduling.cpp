@@ -1,14 +1,9 @@
-// $Id$
-//***************************************************************************
-// File:
-//	InstrScheduling.cpp
-// 
-// Purpose:
-//	
-// History:
-//	7/23/01	 -  Vikram Adve  -  Created
-//**************************************************************************/
-
+//===- InstrScheduling.cpp - Generic Instruction Scheduling support -------===//
+//
+// This file implements the llvm/CodeGen/InstrScheduling.h interface, along with
+// generic support routines for instruction scheduling.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -364,10 +359,14 @@ private:
 						// indexed by branch node ptr 
   
 public:
-  /*ctor*/	SchedulingManager	(const TargetMachine& _target,
-					 const SchedGraph* graph,
-					 SchedPriorities& schedPrio);
-  /*dtor*/	~SchedulingManager	() {}
+  SchedulingManager(const TargetMachine& _target, const SchedGraph* graph,
+                    SchedPriorities& schedPrio);
+  ~SchedulingManager() {
+    for (std::hash_map<const SchedGraphNode*,
+           DelaySlotInfo*>::iterator I = delaySlotInfoForBranches.begin(),
+           E = delaySlotInfoForBranches.end(); I != E; ++I)
+      delete I->second;
+  }
   
   //----------------------------------------------------------------------
   // Simplify access to the machine instruction info
@@ -497,30 +496,21 @@ public:
   inline DelaySlotInfo* getDelaySlotInfoForInstr(const SchedGraphNode* bn,
 						 bool createIfMissing=false)
   {
-    DelaySlotInfo* dinfo;
-    std::hash_map<const SchedGraphNode*, DelaySlotInfo* >::const_iterator
+    std::hash_map<const SchedGraphNode*, DelaySlotInfo*>::const_iterator
       I = delaySlotInfoForBranches.find(bn);
-    if (I == delaySlotInfoForBranches.end())
-      {
-	if (createIfMissing)
-	  {
-	    dinfo = new DelaySlotInfo(bn,
-                          getInstrInfo().getNumDelaySlots(bn->getOpCode()));
-	    delaySlotInfoForBranches[bn] = dinfo;
-	  }
-	else
-	  dinfo = NULL;
-      }
-    else
-      dinfo = (*I).second;
-    
-    return dinfo;
+    if (I != delaySlotInfoForBranches.end())
+      return I->second;
+
+    if (!createIfMissing) return 0;
+
+    DelaySlotInfo *dinfo =
+      new DelaySlotInfo(bn, getInstrInfo().getNumDelaySlots(bn->getOpCode()));
+    return delaySlotInfoForBranches[bn] = dinfo;
   }
   
 private:
-  /*ctor*/	SchedulingManager	();	// Disable: DO NOT IMPLEMENT.
-  void		updateEarliestStartTimes(const SchedGraphNode* node,
-					 cycles_t schedTime);
+  SchedulingManager();     // DISABLED: DO NOT IMPLEMENT
+  void updateEarliestStartTimes(const SchedGraphNode* node, cycles_t schedTime);
 };
 
 
