@@ -28,9 +28,9 @@
 				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
+				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4800;4244;4267"/>
+				DisableSpecificWarnings="4146,4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -72,7 +72,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4099;4800;4244;4267"/>
+				DisableSpecificWarnings="4146,4800"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
