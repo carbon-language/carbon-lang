@@ -1,4 +1,4 @@
-//===- Target/MRegisterInfo.h - Target Register Information -------*-C++-*-===//
+//===- Target/MRegisterInfo.h - Target Register Information -----*- C++ -*-===//
 //
 // This file describes an abstract interface used to get information about a
 // target machines register file.  This information is used for a variety of
@@ -26,25 +26,6 @@ struct MRegisterDesc {
   const unsigned *AliasSet;   // Register Alias Set, described above
   unsigned        Flags;      // Flags identifying register properties (below)
   unsigned        TSFlags;    // Target Specific Flags
-};
-
-/// MRF namespace - This namespace contains flags that pertain to machine
-/// registers
-///
-namespace MRF {  // MRF = Machine Register Flags
-  enum {
-    Other            =   0 << 0,   // This is a non-standard register
-    INT8             =   1 << 0,   // This is an 8 bit integer register
-    INT16            =   1 << 1,   // This is a 16 bit integer register
-    INT32            =   1 << 2,   // This is a 32 bit integer register
-    INT64            =   1 << 3,   // This is a 64 bit integer register
-    INT128           =   1 << 4,   // This is a 128 bit integer register
-
-    FP32             =   1 << 5,   // This is a 32 bit floating point register
-    FP64             =   1 << 6,   // This is a 64 bit floating point register
-    FP80             =   1 << 7,   // This is a 80 bit floating point register
-    FP128            =   1 << 8,   // This is a 128 bit floating point register
-  };
 };
 
 class TargetRegisterClass {
