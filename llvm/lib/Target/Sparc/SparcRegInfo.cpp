@@ -1151,8 +1151,8 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
   case IntRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(STX, Offset));
     MI = new MachineInstr(STX, 3);
-    MI->SetMachineOperandReg(0, SrcReg, false);
-    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcReg);
+    MI->SetMachineOperandReg(1, DestPtrReg);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     mvec.push_back(MI);
@@ -1161,8 +1161,8 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
   case FPSingleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(ST, Offset));
     MI = new MachineInstr(ST, 3);
-    MI->SetMachineOperandReg(0, SrcReg, false);
-    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcReg);
+    MI->SetMachineOperandReg(1, DestPtrReg);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     mvec.push_back(MI);
@@ -1171,8 +1171,8 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
   case FPDoubleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(STD, Offset));
     MI = new MachineInstr(STD, 3);
-    MI->SetMachineOperandReg(0, SrcReg, false);
-    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcReg);
+    MI->SetMachineOperandReg(1, DestPtrReg);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     mvec.push_back(MI);
@@ -1193,8 +1193,8 @@ UltraSparcRegInfo::cpReg2MemMI(vector<MachineInstr*>& mvec,
     assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
     assert(target.getInstrInfo().constantFitsInImmedField(STXFSR, Offset));
     MI = new MachineInstr(STXFSR, 3);
-    MI->SetMachineOperandReg(0, SrcReg, false);
-    MI->SetMachineOperandReg(1, DestPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcReg);
+    MI->SetMachineOperandReg(1, DestPtrReg);
     MI->SetMachineOperandConst(2, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     mvec.push_back(MI);
@@ -1224,7 +1224,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
   case IntRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(LDX, Offset));
     MI = new MachineInstr(LDX, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcPtrReg);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
@@ -1234,7 +1234,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
   case FPSingleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(LD, Offset));
     MI = new MachineInstr(LD, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcPtrReg);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
@@ -1244,7 +1244,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
   case FPDoubleRegType:
     assert(target.getInstrInfo().constantFitsInImmedField(LDD, Offset));
     MI = new MachineInstr(LDD, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcPtrReg);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
@@ -1266,7 +1266,7 @@ UltraSparcRegInfo::cpMem2RegMI(vector<MachineInstr*>& mvec,
     assert(0 && "Tell Vikram if this assertion fails: we may have to mask out the other bits here");
     assert(target.getInstrInfo().constantFitsInImmedField(LDXFSR, Offset));
     MI = new MachineInstr(LDXFSR, 3);
-    MI->SetMachineOperandReg(0, SrcPtrReg, false);
+    MI->SetMachineOperandReg(0, SrcPtrReg);
     MI->SetMachineOperandConst(1, MachineOperand:: MO_SignExtendedImmed, 
                                (int64_t) Offset);
     MI->SetMachineOperandReg(2, DestReg, true);
@@ -1299,7 +1299,7 @@ UltraSparcRegInfo::cpValue2Value(Value *Src,
   case IntRegType:
     MI = new MachineInstr(ADD, 3);
     MI->SetMachineOperandVal(0, MachineOperand:: MO_VirtualRegister, Src, false);
-    MI->SetMachineOperandReg(1, getZeroRegNum(), false);
+    MI->SetMachineOperandReg(1, getZeroRegNum());
     MI->SetMachineOperandVal(2, MachineOperand:: MO_VirtualRegister, Dest, true);
     break;
 
