@@ -847,7 +847,8 @@ static SetCondInst *canFoldSetCCIntoBranchOrSelect(Value *V) {
       if ((isa<BranchInst>(User) || isa<SelectInst>(User)) &&
           (getClassB(SCI->getOperand(0)->getType()) != cLong ||
            SCI->getOpcode() == Instruction::SetEQ ||
-           SCI->getOpcode() == Instruction::SetNE))
+           SCI->getOpcode() == Instruction::SetNE) &&
+          User->getOperand(0) == V)
         return SCI;
     }
   return 0;
