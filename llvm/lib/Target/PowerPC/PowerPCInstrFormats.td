@@ -527,8 +527,8 @@ class XOForm_3<string name, bits<6> opcode, bits<9> xo, bit oe, bit rc,
 }
 
 // 1.7.12 A-Form
-class AForm_1<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
-              bit vmx> : I<name, opcode, ppc64, vmx> {
+class AForm_1<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
+              bit vmx, dag OL, string asmstr> : I<"", opcode, ppc64, vmx> {
   let ArgCount = 4;
   field bits<5>  FRT;
   field bits<5>  FRA;
@@ -547,29 +547,24 @@ class AForm_1<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64,
   let Inst{21-25} = FRC;
   let Inst{26-30} = xo;
   let Inst{31}    = rc;
+  let OperandList = OL;
+  let AsmString = asmstr;
 }
 
-class AForm_2<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
-              bit vmx> : AForm_1<name, opcode, xo, rc, ppc64, vmx> {
+class AForm_2<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
+              string asmstr> 
+  : AForm_1<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
   let ArgCount = 3;
   let Arg3Type = 0;
   let FRC = 0;
 }
 
-class AForm_3<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
-              bit vmx> : AForm_1<name, opcode, xo, rc, ppc64, vmx> {
+class AForm_3<bits<6> opcode, bits<5> xo, bit rc, bit ppc64, bit vmx, dag OL,
+              string asmstr> 
+  : AForm_1<opcode, xo, rc, ppc64, vmx, OL, asmstr> {
   let ArgCount = 3;
   let Arg3Type = 0;
   let FRB = 0;
-}
-
-class AForm_4<string name, bits<6> opcode, bits<5> xo, bit rc, bit ppc64, 
-              bit vmx> : AForm_1<name, opcode, xo, rc, ppc64, vmx> {
-  let ArgCount = 2;
-  let Arg2Type = 0;
-  let Arg3Type = 0;
-  let FRA = 0;
-  let FRC = 0;
 }
 
 // 1.7.13 M-Form

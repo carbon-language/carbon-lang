@@ -52,9 +52,6 @@ def ADD : XOForm_1<"add", 31, 266, 0, 0, 0, 0>;
 def ADDC : XOForm_1<"addc", 31, 10, 0, 0, 0, 0>;
 def ADDE : XOForm_1<"adde", 31, 138, 0, 0, 0, 0>;
 def ADDZE : XOForm_3<"addze", 31, 202, 0, 0, 0, 0>;
-def ANDIo : DForm_4<28, 0, 0,
-                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                   "andi. $dst, $src1, $src2">;
 
 let isBranch = 1, isTerminator = 1 in {
   def COND_BRANCH : Pseudo<"COND_BRANCH">;
@@ -86,30 +83,11 @@ def CMPDI : DForm_5_ext<"cmpdi", 11, 1, 0>;
 def CMP : XForm_16<"cmp", 31, 0, 0, 0>;
 def CMPW : XForm_16_ext<"cmpw", 31, 0, 0, 0>;
 def CMPD : XForm_16_ext<"cmpd", 31, 0, 1, 0>;
-def CMPLI : DForm_6<10, 0, 0,
-                    (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
-                         "cmpli $dst, $size, $src1, $src2">;
-def CMPLWI : DForm_6_ext<10, 0, 0,
-                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
-                         "cmplwi $dst, $src1, $src2">;
-def CMPLDI : DForm_6_ext<10, 1, 0,
-                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
-                         "cmpldi $dst, $src1, $src2">;
 def CMPL : XForm_16<"cmpl", 31, 32, 0, 0>;
 def CMPLW : XForm_16_ext<"cmplw", 31, 32, 0, 0>;
 def CMPLD : XForm_16_ext<"cmpld", 31, 32, 1, 0>;
 def DIVW : XOForm_1<"divw", 31, 491, 0, 0, 0, 0>;
 def DIVWU : XOForm_1<"divwu", 31, 459, 0, 0, 0, 0>;
-def FADD : AForm_2<"fadd", 63, 21, 0, 0, 0>;
-def FADDS : AForm_2<"fadds", 59, 21, 0, 0, 0>;
-def FSUB : AForm_2<"fsub", 63, 20, 0, 0, 0>;
-def FSUBS : AForm_2<"fsubs", 59, 20, 0, 0, 0>;
-def FMADD : AForm_2<"fmul", 63, 29, 0, 0, 0>;
-def FMUL : AForm_3<"fmul", 63, 25, 0, 0, 0>;
-def FMULS : AForm_3<"fmuls", 59, 25, 0, 0, 0>;
-def FDIV : AForm_2<"fdiv", 63, 18, 0, 0, 0>;
-def FDIVS : AForm_2<"fdivs", 59, 18, 0, 0, 0>;
-def FSEL : AForm_1<"fsel", 63, 23, 0, 0, 0>;
 def FCMPU : XForm_17<"fcmpu", 63, 0, 0, 0>;
 def LBZ : DForm_1<"lbz", 35, 0, 0>;
 def LHA : DForm_1<"lha", 42, 0, 0>;
@@ -127,16 +105,11 @@ def MFCTR : XFXForm_1_ext<"mfctr", 31, 399, 9, 0, 0>;
 def MTLR : XFXForm_7_ext<"mtlr", 31, 467, 8, 0, 0>;
 def MTCTR : XFXForm_7_ext<"mtctr", 31, 467, 9, 0, 0>;
 def MULLD : XOForm_1<"mulld", 31, 233, 0, 0, 1, 0>;
+def MULLI : DForm_2<"mulli", 7, 0, 0>;
 def MULLW : XOForm_1<"mullw", 31, 235, 0, 0, 0, 0>;
 def MULHWU : XOForm_2<"mulhwu", 31, 11, 0, 0, 0>;
 def NEG : XOForm_3<"neg", 31, 104, 0, 0, 0, 0>;
 def NOP : DForm_4_zero<"nop", 24, 0, 0, (ops), "nop">;
-def ORI  : DForm_4<24, 0, 0,
-                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                   "ori $dst, $src1, $src2">;
-def ORIS : DForm_4<25, 0, 0,
-                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                   "oris $dst, $src1, $src2">;
 def RLDICL : MDForm_1<"rldicl", 30, 0, 0, 1, 0>;
 def RLDICR : MDForm_1<"rldicr", 30, 1, 0, 1, 0>;
 def RLWINM : MForm_2<"rlwinm", 21, 0, 0, 0>;
@@ -161,14 +134,62 @@ def SUBC : XOForm_1_rev<"subc", 31, 8, 0, 0, 0, 0>;
 def SUBFC : XOForm_1<"subfc", 31, 8, 0, 0, 0, 0>;
 def SUBFE : XOForm_1<"subfe", 31, 136, 0, 0, 0, 0>;
 def SUBFZE : XOForm_3<"subfze", 31, 200, 0, 0, 0, 0>;
+
+def FMADD : AForm_1<63, 29, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fmadd $FRT, $FRA, $FRC, $FRB">;
+def FSEL  : AForm_1<63, 23, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    "fsel $FRT, $FRA, $FRC, $FRB">;
+def FADD  : AForm_2<63, 21, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fadd $FRT, $FRA, $FRB">;
+def FADDS : AForm_2<59, 21, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fadds $FRT, $FRA, $FRB">;
+def FDIV  : AForm_2<63, 18, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fdiv $FRT, $FRA, $FRB">;
+def FDIVS : AForm_2<59, 18, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fdivs $FRT, $FRA, $FRB">;
+def FMUL  : AForm_3<63, 25, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fmul $FRT, $FRA, $FRB">;
+def FMULS : AForm_3<59, 25, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fmuls $FRT, $FRA, $FRB">;
+def FSUB  : AForm_2<63, 20, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fsub $FRT, $FRA, $FRB">;
+def FSUBS : AForm_2<59, 20, 0, 0, 0,
+                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    "fsubs $FRT, $FRA, $FRB">;
+
+def ANDIo : DForm_4<28, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "andi. $dst, $src1, $src2">;
+def ORI  : DForm_4<24, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "ori $dst, $src1, $src2">;
+def ORIS : DForm_4<25, 0, 0,
+                   (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+                   "oris $dst, $src1, $src2">;
 def XORI  : DForm_4<26, 0, 0,
                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                    "xori $dst, $src1, $src2">;
 def XORIS : DForm_4<27, 0, 0,
                    (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                    "xoris $dst, $src1, $src2">;
-def MULLI : DForm_2<"mulli", 7, 0, 0>;
-
+def CMPLI : DForm_6<10, 0, 0,
+                    (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
+                         "cmpli $dst, $size, $src1, $src2">;
+def CMPLWI : DForm_6_ext<10, 0, 0,
+                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+                         "cmplwi $dst, $src1, $src2">;
+def CMPLDI : DForm_6_ext<10, 1, 0,
+                         (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+                         "cmpldi $dst, $src1, $src2">;
 
 def LBZX : XForm_1<31,  87, 0, 0, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "lbzx $dst, $base, $index">;
@@ -255,6 +276,7 @@ def STFSX : XForm_28<31, 663, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfsx $frS, $rA, $rB">;
 def STFDX : XForm_28<31, 727, 0, 0, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfdx $frS, $rA, $rB">;
+
 def CRAND  : XLForm_1<19, 257, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
                       "crand $D, $A, $B">;
 def CRANDC : XLForm_1<19, 129, 0, 0, (ops u5imm:$D, u5imm:$A, u5imm:$B),
