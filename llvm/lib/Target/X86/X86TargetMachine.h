@@ -21,6 +21,9 @@ public:
   virtual const MachineFrameInfo &getFrameInfo() const { abort(); }
   virtual const MachineCacheInfo &getCacheInfo() const { abort(); }
   virtual const MachineOptInfo   &getOptInfo()   const { abort(); }
+  virtual const MRegisterInfo *getRegisterInfo() const {
+    return &instrInfo.getRegisterInfo();
+  }
 
   /// addPassesToJITCompile - Add passes to the specified pass manager to
   /// implement a fast dynamic compiler for this target.  Return true if this is
