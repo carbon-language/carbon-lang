@@ -143,13 +143,13 @@ bool ExpressionConvertibleToType(Value *V, const Type *Ty,
   ValueTypeCache::iterator CTMI = CTMap.find(V);
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
 
-  // If it's a constant... all constants can be converted to a different type. We
-  // just ask the constant propagator to see if it can convert the value...
+  // If it's a constant... all constants can be converted to a different
+  // type. We just ask the constant propagator to see if it can convert the
+  // value...
   //
   if (Constant *CPV = dyn_cast<Constant>(V))
     return ConstantFoldCastInstruction(CPV, Ty);
   
-
   CTMap[V] = Ty;
   if (V->getType() == Ty) return true;  // Expression already correct type!
 
