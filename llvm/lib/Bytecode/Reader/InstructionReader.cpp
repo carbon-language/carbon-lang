@@ -197,9 +197,9 @@ bool BytecodeParser::ParseInstruction(const uchar *&Buf, const uchar *EndBuf,
     if (M == 0) return failure(true);
 
     vector<Value *> Params;
-    const MethodType::ParamTypes &PL = M->getMethodType()->getParamTypes();
+    const MethodType::ParamTypes &PL = M->getType()->getParamTypes();
 
-    if (!M->getType()->isMethodType()->isVarArg()) {
+    if (!M->getType()->isVarArg()) {
       MethodType::ParamTypes::const_iterator It = PL.begin();
 
       switch (Raw.NumOperands) {
