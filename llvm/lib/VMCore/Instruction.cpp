@@ -56,6 +56,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Br:     return "br";
   case Switch: return "switch";
   case Invoke: return "invoke";
+  case Unwind: return "unwind";
     
   // Standard binary operators...
   case Add: return "add";
