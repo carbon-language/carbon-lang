@@ -377,7 +377,7 @@ if ($BuildError eq "") {
   my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
       $MachCodeSize) = ("","","","","","","");
   if (!$NORUNNINGTESTS) {
-    chdir "test/Programs/MultiSource/Olden" or die "Olden tests moved?";
+    chdir "test/Programs/MultiSource/Benchmarks/Olden" or die "Olden tests moved?";
 
     # Clean out previous results...
     system "gmake $MAKEOPTS clean > /dev/null 2>&1";
