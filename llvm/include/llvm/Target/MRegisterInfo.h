@@ -119,7 +119,6 @@ private:
 
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
 
-  const TargetRegisterClass **PhysRegClasses; // Reg class for each register
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 protected:
   MRegisterInfo(const MRegisterDesc *D, unsigned NR,
