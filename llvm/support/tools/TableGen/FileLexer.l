@@ -82,7 +82,7 @@ void ParseFile(const std::string &Filename, const std::string & IncludeDir) {
 
     if (F == 0) {
       std::cerr << "Could not open input file '" + Filename + "'!\n";
-      abort();
+      exit (1);
     }
     IncludeStack.push_back(IncludeRec(Filename, F));
   } else {
