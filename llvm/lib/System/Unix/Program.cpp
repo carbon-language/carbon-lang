@@ -19,6 +19,7 @@
 #include <llvm/Config/config.h>
 #include "Unix.h"
 #include <sys/stat.h>
+#include <signal.h>
 #include <fcntl.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
