@@ -8,14 +8,13 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines a simple object which can be used to let the user know what
-// is going on when a slow operation is happening,l and gives them the ability
-// to cancel it.  Potentially slow operations can stack allocate one of these
+// is going on when a slow operation is happening, and gives them the ability to
+// cancel it.  Potentially slow operations can stack allocate one of these
 // objects, and periodically call the "progress" method to update the progress
-// bar.  If the operation takes more than 3 seconds to complete, the progress
-// bar is automatically shown and updated every second.  As such, the slow
-// operation should not print stuff to the screen, and should not be confused if
-// an extra line appears on the screen (ie, the cursor should be at the start of
-// the line).
+// bar.  If the operation takes more than 1 second to complete, the progress bar
+// is automatically shown and updated.  As such, the slow operation should not
+// print stuff to the screen, and should not be confused if an extra line
+// appears on the screen (ie, the cursor should be at the start of the line).
 //
 // If the user presses CTRL-C during the operation, the next invocation of the
 // progress method with throw an std::string object indicating that the
@@ -23,9 +22,9 @@
 // the progress method.
 //
 // Because SlowOperationInformers fiddle around with signals, they cannot be
-// nested.  The SIGINT signal handler is restored after the
-// SlowOperationInformer is destroyed, but the SIGALRM handlers is set back to
-// the default.
+// nested, and interact poorly with threads.  The SIGALRM handler is set back to
+// SIGDFL, but the SIGINT signal handler is restored when the
+// SlowOperationInformer is destroyed.
 //
 //===----------------------------------------------------------------------===//
 
