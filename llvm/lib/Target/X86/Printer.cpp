@@ -351,7 +351,8 @@ void Printer::printConstantValueOnly(const Constant *CV) {
       printConstantValueOnly(field);
 
       // Insert the field padding unless it's zero bytes...
-      O << "\t.zero\t " << padSize << "\n";      
+      if (padSize)
+        O << "\t.zero\t " << padSize << "\n";      
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
