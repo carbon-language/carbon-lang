@@ -399,8 +399,8 @@ void RA::assignRegOrStackSlotAtInterval(IntervalPtrs::value_type cur)
         std::vector<LiveInterval*>::iterator addedItEnd = added.end();
         for (IntervalPtrs::iterator i = unhandled_.begin(), e =unhandled_.end();
              i != e && addedIt != addedItEnd; ++i) {
-            while ((*i)->start() > (*addedIt)->start() && 
-                   addedIt != addedItEnd) {
+            while (addedIt != addedItEnd &&
+                   (*i)->start() > (*addedIt)->start()) {
 #ifndef NDEBUG
                 // This code only works if addIntervalsForSpills retursn a
                 // sorted interval list.  Assert this is the case now.
