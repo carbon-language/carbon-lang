@@ -244,10 +244,10 @@ endif
 #--------------------------------------------------------------------------
 # Utilities used while building the LLVM tree, which live in the utils dir
 #
-BURG       := $(LLVMTOOLCURRENT)/burg
+BURG       := $(LLVMTOOLCURRENT)/burg$(EXEEXT)
 RunBurg    := $(BURG) $(BURG_OPTS)
-TBLGEN     := $(LLVMTOOLCURRENT)/tblgen
-LGCCLDPROG := $(LLVMTOOLCURRENT)/gccld
+TBLGEN     := $(LLVMTOOLCURRENT)/tblgen$(EXEEXT)
+LGCCLDPROG := $(LLVMTOOLCURRENT)/gccld$(EXEEXT)
 
 #--------------------------------------------------------------------------
 # The LLVM GCC front-end in C and C++ flavors
@@ -259,7 +259,7 @@ LLVMGXX := PATH=$(LLVMTOOLCURRENT):$(PATH) $(LLVMGCCDIR)/bin/g++
 # Some of the compiled LLVM tools which are used for compilation of runtime
 # libraries.
 #
-LLVMAS  := $(LLVMTOOLCURRENT)/llvm-as
+LLVMAS  := $(LLVMTOOLCURRENT)/llvm-as$(EXEEXT)
 
 
 ###########################################################################
