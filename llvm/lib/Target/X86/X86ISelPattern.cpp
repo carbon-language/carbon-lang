@@ -573,7 +573,7 @@ bool ISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
           // Okay, we know that we have a scale by now.  However, if the scaled
           // value is an add of something and a constant, we can fold the
           // constant into the disp field here.
-          if (ShVal.Val->getOpcode() == ISD::ADD && !ExprMap.count(ShVal) &&
+          if (ShVal.Val->getOpcode() == ISD::ADD && ShVal.hasOneUse() &&
               isa<ConstantSDNode>(ShVal.Val->getOperand(1))) {
             AM.IndexReg = ShVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
@@ -604,7 +604,7 @@ bool ISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
           // Okay, we know that we have a scale by now.  However, if the scaled
           // value is an add of something and a constant, we can fold the
           // constant into the disp field here.
-          if (MulVal.Val->getOpcode() == ISD::ADD && !ExprMap.count(MulVal) &&
+          if (MulVal.Val->getOpcode() == ISD::ADD && MulVal.hasOneUse() &&
               isa<ConstantSDNode>(MulVal.Val->getOperand(1))) {
             Reg = MulVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
