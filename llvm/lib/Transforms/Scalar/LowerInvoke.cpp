@@ -55,7 +55,6 @@ namespace {
     // Used for both models.
     Function *WriteFn;
     Function *AbortFn;
-    Constant *AbortMessageInit;
     Value *AbortMessage;
     unsigned AbortMessageLength;
 
@@ -120,24 +119,18 @@ bool LowerInvoke::doInitialization(Module &M) {
     LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
                                       PointerType::get(JmpBufTy),
                                       Type::IntTy, 0);
-    
+
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
     Constant *Msg =
       ConstantArray::get("ERROR: Exception thrown, but not caught!\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
-    AbortMessageInit = Msg;
-  
-    GlobalVariable *MsgGV = M.getGlobalVariable("abort.msg", Msg->getType());
-    if (MsgGV && (!MsgGV->hasInitializer() || MsgGV->getInitializer() != Msg))
-      MsgGV = 0;
-
-    if (MsgGV) {
-      std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
-      AbortMessage = 
-        ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
-    }
-
+    
+    GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
+                                               GlobalValue::InternalLinkage,
+                                               Msg, "abortmsg", &M);
+    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
+    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
     // enabled.
@@ -145,17 +138,12 @@ bool LowerInvoke::doInitialization(Module &M) {
       ConstantArray::get("Exception handler needed, but not enabled.  Recompile"
                          " program with -enable-correct-eh-support.\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
-    AbortMessageInit = Msg;
-  
-    GlobalVariable *MsgGV = M.getGlobalVariable("abort.msg", Msg->getType());
-    if (MsgGV && (!MsgGV->hasInitializer() || MsgGV->getInitializer() != Msg))
-      MsgGV = 0;
 
-    if (MsgGV) {
-      std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
-      AbortMessage =
-        ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
-    }
+    GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
+                                               GlobalValue::InternalLinkage,
+                                               Msg, "abortmsg", &M);
+    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
+    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
   }
 
   // We need the 'write' and 'abort' functions for both models.
@@ -183,17 +171,6 @@ bool LowerInvoke::doInitialization(Module &M) {
 
 void LowerInvoke::writeAbortMessage(Instruction *IB) {
   if (WriteFn) {
-    if (!AbortMessage) {
-      GlobalVariable *MsgGV = new GlobalVariable(AbortMessageInit->getType(),
-                                                 true,
-                                                 GlobalValue::InternalLinkage,
-                                                 AbortMessageInit, "abort.msg",
-                                                 WriteFn->getParent());
-      std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
-      AbortMessage = 
-        ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
-    }
-
     // These are the arguments we WANT...
     std::vector<Value*> Args;
     Args.push_back(ConstantInt::get(Type::IntTy, 2));
