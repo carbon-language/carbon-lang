@@ -834,6 +834,12 @@ void generic_parser_base::printOptionInfo(const Option &O,
 //===----------------------------------------------------------------------===//
 // --help and --help-hidden option implementation
 //
+
+// If this variable is set, it is a pointer to a function that the user wants
+// us to call after we print out the help info. Basically a hook to allow
+// additional help to be printed.
+void (*cl::MoreHelp)() = 0;
+
 namespace {
 
 class HelpPrinter {
@@ -906,6 +912,10 @@ public:
     std::cerr << "OPTIONS:\n";
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       Options[i].second->printOptionInfo(MaxArgLen);
+
+    // Call the user's hook so help output can be extended.
+    if (MoreHelp != 0)
+      (*MoreHelp)();
 
     // Halt the program if help information is printed
     exit(1);
