@@ -665,7 +665,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 
 	int argOffset = PRA.mcInfo.allocateOptionalArg(target, LR->getType()); 
 
-	AdMI = cpReg2MemMI(UniLRReg, getStackPointer(), argOffset, RegType );
+	AdMI = cpReg2MemMI(UniLRReg, getFramePointer(), argOffset, RegType );
       }
 
       AddedInstrnsBefore.push_back( AdMI );  // Now add the instruction
@@ -716,7 +716,7 @@ void UltraSparcRegInfo::colorCallArgs(const MachineInstr *const CallMI,
 	Ad1 = cpReg2MemMI(TReg, getFramePointer(), TmpOff, RegType );
 	Ad2 = cpMem2RegMI(getFramePointer(), LR->getSpillOffFromFP(), 
 			  TReg, RegType ); 
-	Ad3 = cpReg2MemMI(TReg, getStackPointer(), argOffset, RegType );
+	Ad3 = cpReg2MemMI(TReg, getFramePointer(), argOffset, RegType );
 	Ad4 = cpMem2RegMI(getFramePointer(), TmpOff, TReg, RegType ); 
 
 	// We directly add to CallAI->InstrnsBefore instead of adding to
@@ -1176,7 +1176,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	    } else  {  
 	      // for any other register type, just add the push inst
-	      AdIBef = cpReg2MemMI(Reg, getStackPointer(), StackOff, RegType );
+	      AdIBef = cpReg2MemMI(Reg, getFramePointer(), StackOff, RegType );
 	      ((PRA.AddedInstrMap[MInst])->InstrnsBefore).push_front(AdIBef);
 	    }
 
@@ -1212,7 +1212,7 @@ void UltraSparcRegInfo::insertCallerSavingCode(const MachineInstr *MInst,
 
 	    } else {
 	      // for any other register type, just add the pop inst
-	      AdIAft = cpMem2RegMI(getStackPointer(), StackOff, Reg, RegType );
+	      AdIAft = cpMem2RegMI(getFramePointer(), StackOff, Reg, RegType );
 	      ((PRA.AddedInstrMap[MInst])->InstrnsAfter).push_back(AdIAft);
 	    }
 	    
@@ -1510,7 +1510,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(vector<MachineInstr *> &OrdVec,
 	  const int StackOff =  PRA.mcInfo.pushTempValue(target, 8);
 	  
 	  // Save the UReg (%ox) on stack before it's destroyed
-	  AdIBef=cpReg2MemMI(UReg, getStackPointer(), StackOff, RegType);
+	  AdIBef=cpReg2MemMI(UReg, getFramePointer(), StackOff, RegType);
 	  OrdIt = OrdVec.insert( OrdIt, AdIBef);
 	  OrdIt++;  // points to current instr we processed
 	  
@@ -1520,7 +1520,7 @@ void UltraSparcRegInfo::moveInst2OrdVec(vector<MachineInstr *> &OrdVec,
 	  assert(DOp.opIsDef() && "Last operand is not the def");
 	  const int DReg = DOp.getMachineRegNum();
 	  
-	  AdIAft=cpMem2RegMI(getStackPointer(), StackOff, DReg, RegType);
+	  AdIAft=cpMem2RegMI(getFramePointer(), StackOff, DReg, RegType);
 	  OrdVec.push_back(AdIAft);
 	    
 	  cerr << "\nFixed CIRCULAR references by reordering";
