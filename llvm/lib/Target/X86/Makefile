@@ -7,22 +7,22 @@ $(SourceDepend): X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                  X86GenRegisterInfo.inc X86GenInstrNames.inc \
                  X86GenInstrInfo.inc X86GenInstrSelector.inc
 
-X86GenRegisterNames.inc:  X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
+X86GenRegisterNames.inc::  X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-register-enums -o $@
 
-X86GenRegisterInfo.h.inc: X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
+X86GenRegisterInfo.h.inc:: X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-register-desc-header -o $@
 
-X86GenRegisterInfo.inc: X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
+X86GenRegisterInfo.inc:: X86.td X86RegisterInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-register-desc -o $@
 
-X86GenInstrNames.inc: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
+X86GenInstrNames.inc:: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-instr-enums -o $@
 
-X86GenInstrInfo.inc: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
+X86GenInstrInfo.inc:: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-instr-desc -o $@
 
-X86GenInstrSelector.inc: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
+X86GenInstrSelector.inc:: X86.td X86InstrInfo.td ../Target.td $(TBLGEN)
 	$(TBLGEN) $< -gen-instr-selector -o $@
 
 clean::

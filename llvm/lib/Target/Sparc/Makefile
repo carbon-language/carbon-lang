@@ -48,7 +48,7 @@ TARGET_NAME := SparcV9
 
 TABLEGEN_FILES := $(wildcard *.td)
 
-$(TARGET_NAME)CodeEmitter.inc: $(TABLEGEN_FILES) $(TBLGEN)
+$(TARGET_NAME)CodeEmitter.inc:: $(TABLEGEN_FILES) $(TBLGEN)
 	$(TBLGEN) $(TARGET_NAME).td -gen-emitter -o $@
 
 clean::
