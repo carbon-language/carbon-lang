@@ -1238,7 +1238,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 ac_aux_dir=
-for ac_dir in autoconf $srcdir/autoconf; do
+for ac_dir in ../../autoconf $srcdir/../../autoconf; do
   if test -f $ac_dir/install-sh; then
     ac_aux_dir=$ac_dir
     ac_install_sh="$ac_aux_dir/install-sh -c"
@@ -1254,8 +1254,8 @@ for ac_dir in autoconf $srcdir/autoconf; do
   fi
 done
 if test -z "$ac_aux_dir"; then
-  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in autoconf $srcdir/autoconf" >&5
-echo "$as_me: error: cannot find install-sh or install.sh in autoconf $srcdir/autoconf" >&2;}
+  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in ../../autoconf $srcdir/../../autoconf" >&5
+echo "$as_me: error: cannot find install-sh or install.sh in ../../autoconf $srcdir/../../autoconf" >&2;}
    { (exit 1); exit 1; }; }
 fi
 ac_config_guess="$SHELL $ac_aux_dir/config.guess"
@@ -1263,8 +1263,33 @@ ac_config_sub="$SHELL $ac_aux_dir/config.sub"
 ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
 
-          ac_config_files="$ac_config_files Makefile.common"
 
+# Check whether --with-llvmsrc or --without-llvmsrc was given.
+if test "${with_llvmsrc+set}" = set; then
+  withval="$with_llvmsrc"
+  llvm_src="$withval"
+else
+  llvm_src=`cd ${srcdir}/../..; pwd`
+fi;
+  LLVM_SRC=$llvm_src
+
+
+# Check whether --with-llvmobj or --without-llvmobj was given.
+if test "${with_llvmobj+set}" = set; then
+  withval="$with_llvmobj"
+  llvm_obj="$withval"
+else
+  llvm_obj=`cd ../..; pwd`
+fi;
+  LLVM_OBJ=$llvm_obj
+
+            ac_config_commands="$ac_config_commands setup"
+
+
+
+
+
+          ac_config_files="$ac_config_files Makefile.common"
 
 
           ac_config_commands="$ac_config_commands Makefile"
@@ -1291,29 +1316,6 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
 
 
-
-
-
-# Check whether --with-llvmsrc or --without-llvmsrc was given.
-if test "${with_llvmsrc+set}" = set; then
-  withval="$with_llvmsrc"
-  LLVM_SRC=$withval
-
-else
-  LLVM_SRC=`cd ${srcdir}/../..; pwd`
-
-fi;
-
-
-# Check whether --with-llvmobj or --without-llvmobj was given.
-if test "${with_llvmobj+set}" = set; then
-  withval="$with_llvmobj"
-  LLVM_OBJ=$withval
-
-else
-  LLVM_OBJ=`cd ../..; pwd`
-
-fi;
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -1864,11 +1866,7 @@ cat >>$CONFIG_STATUS <<_ACEOF
 # INIT-COMMANDS section.
 #
 
-${srcdir}/autoconf/mkinstalldirs `dirname Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname lib/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname lib/sample/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/sample/Makefile`
+llvm_src="${LLVM_SRC}"
 
 _ACEOF
 
@@ -1880,6 +1878,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile.common" ) CONFIG_FILES="$CONFIG_FILES Makefile.common" ;;
+  "setup" ) CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Makefile" ;;
   "lib/sample/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/sample/Makefile" ;;
@@ -2320,11 +2319,16 @@ esac
   { echo "$as_me:$LINENO: executing $ac_dest commands" >&5
 echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
-    Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
-    lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
-    lib/sample/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/sample/Makefile lib/sample/Makefile ;;
-    tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
-    tools/sample/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/sample/Makefile tools/sample/Makefile ;;
+    Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
+    lib/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
+    lib/sample/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/sample/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/sample/Makefile lib/sample/Makefile ;;
+    tools/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
+    tools/sample/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/sample/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/sample/Makefile tools/sample/Makefile ;;
   esac
 done
 _ACEOF
