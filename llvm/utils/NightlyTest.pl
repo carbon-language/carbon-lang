@@ -23,7 +23,7 @@
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
 #  -pedantic        Enable additional GCC warnings to detect possible errors.
-#  -enable-linscan  Enable linearscan tests
+#  -enable-linscan  Accepted but ignored
 #  -disable-llc     Disable LLC tests in the nightly tester.
 #  -disable-jit     Disable JIT tests in the nightly tester.
 #  -verbose         Turn on some debug output
@@ -260,6 +260,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
       $MAKEOPTS   = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -ffor-scope'"; 
       next; 
   }
+  if (/^-enable-linscan$/) { next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
   if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
