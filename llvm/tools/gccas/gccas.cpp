@@ -1,22 +1,22 @@
 //===----------------------------------------------------------------------===//
 // LLVM 'GCCAS' UTILITY 
 //
-//  This utility is designed to be used by the GCC frontend for creating
-// bytecode files from it's intermediate llvm assembly.  The requirements for
-// this utility are thus slightly different than that of the standard as util.
+// This utility is designed to be used by the GCC frontend for creating bytecode
+// files from its intermediate LLVM assembly.  The requirements for this utility
+// are thus slightly different than that of the standard `as' util.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Parser.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/RaisePointerReferences.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/Target/TargetData.h"
 #include "Support/CommandLine.h"
 #include "Support/Signals.h"
 #include <memory>
@@ -75,7 +75,8 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createPromoteMemoryToRegister());  // Promote alloca's to regs
   addPass(PM, createIndVarSimplifyPass());       // Simplify indvars
   addPass(PM, createReassociatePass());          // Reassociate expressions
-  //addPass(PM, createCorrelatedExpressionEliminationPass());// Kill corr branches
+  // Kill corr branches
+  //addPass(PM, createCorrelatedExpressionEliminationPass());
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createLICMPass());                 // Hoist loop invariants
