@@ -44,7 +44,8 @@
 //					    instr sched class (defined above)
 //						instr class flags (defined in TargetInstrInfo.h)
 
-
+#define BRANCHFLAGS M_BRANCH_FLAG|M_TERMINATOR_FLAG
+#define RETFLAGS    M_RET_FLAG|M_TERMINATOR_FLAG
 
 I(NOP, "nop",		0,  -1,  0, false, 0,  1,  SPARC_NONE,  M_NOP_FLAG)
 
@@ -194,52 +195,52 @@ I(FITOQ, "fitoq",	2,  1,   0, false, 0, 0,  SPARC_FPA, 0)
 
 // Branch on integer comparison with zero.
 // Latency excludes the delay slot since it can be issued in same cycle.
-I(BRZ  , "brz", 	2, -1, B15, true , 1, 1,  SPARC_CTI,   M_BRANCH_FLAG)
-I(BRLEZ, "brlez",	2, -1, B15, true , 1, 1,  SPARC_CTI,   M_BRANCH_FLAG)
-I(BRLZ , "brlz",	2, -1, B15, true , 1, 1,  SPARC_CTI,   M_BRANCH_FLAG)
-I(BRNZ , "brnz",	2, -1, B15, true , 1, 1,  SPARC_CTI,   M_BRANCH_FLAG)
-I(BRGZ , "brgz",	2, -1, B15, true , 1, 1,  SPARC_CTI,   M_BRANCH_FLAG)
-I(BRGEZ, "brgez",	2, -1, B15, true , 1, 1,  SPARC_CTI,   M_BRANCH_FLAG)
+I(BRZ  , "brz", 	2, -1, B15, true , 1, 1,  SPARC_CTI, BRANCHFLAGS)
+I(BRLEZ, "brlez",	2, -1, B15, true , 1, 1,  SPARC_CTI, BRANCHFLAGS)
+I(BRLZ , "brlz",	2, -1, B15, true , 1, 1,  SPARC_CTI, BRANCHFLAGS)
+I(BRNZ , "brnz",	2, -1, B15, true , 1, 1,  SPARC_CTI, BRANCHFLAGS)
+I(BRGZ , "brgz",	2, -1, B15, true , 1, 1,  SPARC_CTI, BRANCHFLAGS)
+I(BRGEZ, "brgez",	2, -1, B15, true , 1, 1,  SPARC_CTI, BRANCHFLAGS)
 
 // Branch on integer condition code.
 // The first argument specifies the ICC register: %icc or %xcc
 // Latency includes the delay slot.
-I(BA  , "ba",		1, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BN  , "bn",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BNE , "bne",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BE  , "be",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BG  , "bg",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BLE , "ble",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BGE , "bge",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BL  , "bl",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BGU , "bgu",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BLEU, "bleu",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BCC , "bcc",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BCS , "bcs",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BPOS, "bpos",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BNEG, "bneg",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BVC , "bvc",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(BVS , "bvs",		2, -1, B21, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(BA  , "ba",		1, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BN  , "bn",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BNE , "bne",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BE  , "be",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BG  , "bg",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BLE , "ble",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BGE , "bge",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BL  , "bl",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BGU , "bgu",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BLEU, "bleu",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BCC , "bcc",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BCS , "bcs",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BPOS, "bpos",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BNEG, "bneg",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BVC , "bvc",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(BVS , "bvs",		2, -1, B21, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
 
 // Branch on floating point condition code.
 // The first argument is the FCCn register (0 <= n <= 3).
 // Latency includes the delay slot.
-I(FBA  , "fba",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBN  , "fbn",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBU  , "fbu",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBG  , "fbg",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBUG , "fbug",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBL  , "fbl",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBUL , "fbul",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBLG , "fblg",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBNE , "fbne",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBE  , "fbe",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBUE , "fbue",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBGE , "fbge",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBUGE, "fbuge",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBLE , "fble",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBULE, "fbule",	2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
-I(FBO  , "fbo",		2, -1, B18, true , 1, 2,  SPARC_CTI,  M_CC_FLAG | M_BRANCH_FLAG)
+I(FBA  , "fba",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBN  , "fbn",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBU  , "fbu",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBG  , "fbg",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBUG , "fbug",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBL  , "fbl",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBUL , "fbul",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBLG , "fblg",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBNE , "fbne",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBE  , "fbe",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBUE , "fbue",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBGE , "fbge",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBUGE, "fbuge",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBLE , "fble",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBULE, "fbule",	2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
+I(FBO  , "fbo",		2, -1, B18, true , 1, 2,  SPARC_CTI, M_CC_FLAG|BRANCHFLAGS)
 
 // Conditional move on integer comparison with zero.
 I(MOVRZr  , "movrz",	3,  2, B12, true , 0, 2,  SPARC_SINGLE,  0)
@@ -517,13 +518,11 @@ I(STXFSRi, "stx", 3, -1, B12, true , 0, 0,  SPARC_ST,  M_STORE_FLAG)
 // Call, Return and "Jump and link".  Operand (2) for JMPL is marked as
 // a "result" because JMPL stores the return address for the call in it.
 // Latency includes the delay slot.
-I(CALL,      "call",	1, -1, B29, true , 1, 2,  SPARC_CTI,  M_CALL_FLAG)
-I(JMPLCALLr, "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI,  M_CALL_FLAG)
-I(JMPLCALLi, "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI,  M_CALL_FLAG)
-I(JMPLRETr,  "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI,  M_RET_FLAG)
-I(JMPLRETi,  "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI,  M_RET_FLAG)
-I(RETURNr,   "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_RET_FLAG)
-I(RETURNi,   "return",	2, -1,   0, false, 1, 2,  SPARC_CTI,  M_RET_FLAG)
+I(CALL,      "call",	1, -1, B29, true , 1, 2,  SPARC_CTI, M_CALL_FLAG)
+I(JMPLCALLr, "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI, M_CALL_FLAG)
+I(JMPLCALLi, "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI, M_CALL_FLAG)
+I(JMPLRETr,  "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI, RETFLAGS)
+I(JMPLRETi,  "jmpl",	3,  2, B12, true , 1, 2,  SPARC_CTI, RETFLAGS)
 
 // SAVE and restore instructions
 I(SAVEr,    "save",	3,  2, B12, true , 0, 1,  SPARC_SINGLE, 0)
@@ -549,5 +548,8 @@ I(PHI, "<phi>", 	-1, 0,   0, false, 0, 0,  SPARC_NONE,  M_DUMMY_PHI_FLAG)
 #undef B21
 #undef B22
 #undef B29
+
+#undef BRANCHFLAGS
+#undef RETFLAGS
 
 #undef I
