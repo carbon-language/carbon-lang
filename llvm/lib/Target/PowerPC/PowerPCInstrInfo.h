@@ -14,8 +14,9 @@
 #ifndef POWERPCINSTRUCTIONINFO_H
 #define POWERPCINSTRUCTIONINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
+#include "PowerPC.h"
 #include "PowerPCRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
 
@@ -79,6 +80,18 @@ public:
   virtual bool isMoveInstr(const MachineInstr& MI,
                            unsigned& sourceReg,
                            unsigned& destReg) const;
+
+  static unsigned invertPPCBranchOpcode(unsigned Opcode) {
+    switch (Opcode) {
+    default: assert(0 && "Unknown PPC32 branch opcode!");
+    case PPC32::BEQ: return PPC32::BNE;
+    case PPC32::BNE: return PPC32::BEQ;
+    case PPC32::BLT: return PPC32::BGE;
+    case PPC32::BGE: return PPC32::BLT;
+    case PPC32::BGT: return PPC32::BLE;
+    case PPC32::BLE: return PPC32::BGT;
+    } 
+  }
 };
 
 }
