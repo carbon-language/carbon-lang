@@ -11,7 +11,6 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 #include "Support/Annotation.h"
-#include "Support/NonCopyable.h"
 #include "Support/iterator"
 #include <set>
 class Value;
@@ -341,8 +340,7 @@ private:
 //      a CALL (if any), and return value of a RETURN.
 //---------------------------------------------------------------------------
 
-class MachineInstr: public NonCopyable {      // Disable copy operations
-
+class MachineInstr {
   MachineOpCode    opCode;              // the opcode
   unsigned         opCodeFlags;         // flags modifying instrn behavior
   std::vector<MachineOperand> operands; // the operands
@@ -355,6 +353,8 @@ class MachineInstr: public NonCopyable {      // Disable copy operations
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
+  MachineInstr(const MachineInstr &);  // DO NOT IMPLEMENT
+  void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 public:
   MachineInstr(MachineOpCode Opcode, unsigned numOperands);
 
