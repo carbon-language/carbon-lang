@@ -131,7 +131,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
 void V8Printer::emitConstantValueOnly(const Constant *CV) {
-  if (CV->isNullValue())
+  if (CV->isNullValue() || isa<UndefValue> (CV))
     O << "0";
   else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     assert(CB == ConstantBool::True);
@@ -266,6 +266,10 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
       return;
     }
     }
+  } else if (isa<UndefValue> (CV)) {
+    unsigned size = TD.getTypeSize (CV->getType ());
+    O << "\t.skip\t " << size << "\n";      
+    return;
   }
 
   const Type *type = CV->getType();
