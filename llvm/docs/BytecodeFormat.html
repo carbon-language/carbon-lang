@@ -67,9 +67,21 @@ the next block.  The possible types of blocks are described below in the section
 it is possible for entire blocks to be omitted from the file if they are
 empty. The block identifier helps the reader determine which kind of block is
 next in the file.</p>
-<p>
-Except for the <a href="#header">Header Block</a> all blocks are variable
-length. The consume just enough bytes to express their contents.</p>
+<p>The following block identifiers are currently in use 
+(from llvm/Bytecode/Format.h):</p>
+<ol>
+  <li><b>Module (0x01)</b>.</li>
+  <li><b>Function (0x11)</b>.</li>
+  <li><b>ConstantPool (0x12)</b>.</li>
+  <li><b>SymbolTable (0x13)</b>.</li>
+  <li><b>ModuleGlobalInfo (0x14)</b>.</li>
+  <li><b>GlobalTypePlane (0x15)</b>.</li>
+  <li><b>BasicBlock (0x31)</b>.</li>
+  <li><b>InstructionList (0x32)</b>.</li>
+  <li><b>CompactionTable (0x33)</b>.</li>
+</ol>
+<p> Except for the <a href="#header">Header Block</a> all blocks are variable
+length. They consume just enough bytes to express their contents.</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="lists">Lists</a> </div>
@@ -130,6 +142,7 @@ will be added to ensure that the next entry is aligned to a 32-bit boundary.
     <li><b>Align?</b> Indicates if this field is aligned to 32 bits or not.
     This indicates where the <em>next</em> field starts, always on a 32 bit
     boundary.</li>
+    <li><b>Type</b>. The basic type of information contained in the field.</li>
     <li><b>Description</b>. Descripts the contents of the field.</li>
   </ol>
 </div>
@@ -168,42 +181,43 @@ bytecode version. This block is fixed length and always eight bytes, as follows:
     <th><b>Byte(s)</b></th>
     <th><b>Bit(s)</b></th>
     <th><b>Align?</b></th>
+    <th><b>Type</b></th>
     <th align="left"><b>Field Description</b></th>
   </tr>
   <tr>
-    <td>00</td><td>00-07</td><td>No</td>
-    <td align="left">Constant "l"</td>
+    <td>00</td><td>00-07</td><td>No</td><td>Char</td>
+    <td align="left">Constant "l" (0x6C)</td>
   </tr>
   <tr>
-    <td>01</td><td>00-07</td><td>No</td>
-    <td align="left">Constant "l"</td>
+    <td>01</td><td>00-07</td><td>No</td><td>Char</td>
+    <td align="left">Constant "l" (0x6C)</td>
   </tr>
   <tr>
-    <td>02</td><td>00-07</td><td>No</td>
-    <td align="left">Constant "v"</td>
+    <td>02</td><td>00-07</td><td>No</td><td>Char</td>
+    <td align="left">Constant "v" (0x76)</td>
   </tr>
   <tr>
-    <td>03</td><td>00-07</td><td>No</td>
-    <td align="left">Constant "m"</td>
+    <td>03</td><td>00-07</td><td>No</td><td>Char</td>
+    <td align="left">Constant "m" (0x6D)</td>
   </tr>
   <tr>
-    <td>04-07</td><td>00</td><td>No</td>
-    <td align="left">Target is big endian</td>
+    <td>04-07</td><td>00</td><td>No</td><td>Bool</td>
+    <td align="left">Target is big endian?</td>
   </tr>
   <tr>
-    <td>04-07</td><td>01</td><td>No</td>
-    <td align="left">Target has long pointers</td>
+    <td>04-07</td><td>01</td><td>No</td><td>Bool</td>
+    <td align="left">Target has long pointers?</td>
   </tr>
   <tr>
-    <td>04-07</td><td>02</td><td>No</td>
-    <td align="left">Target has no endianess</td>
+    <td>04-07</td><td>02</td><td>No</td><td>Bool</td>
+    <td align="left">Target has no endianess?</td>
   </tr>
   <tr>
-    <td>04-07</td><td>03</td><td>No</td>
-    <td align="left">Target has no pointer size</td>
+    <td>04-07</td><td>03</td><td>No</td><td>Bool</td>
+    <td align="left">Target has no pointer size?</td>
   </tr>
   <tr>
-    <td>04-07</td><td>04-31</td><td>Yes</td>
+    <td>04-07</td><td>04-31</td><td>Yes</td><td>Unsigned</td>
     <td align="left">The LLVM bytecode format version number</td>
   </tr>
 </table>
@@ -227,6 +241,7 @@ bytecode version. This block is fixed length and always eight bytes, as follows:
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="symtab">Module Symbol Table</a> </div>
 <div class="doc_text">
+<p>The module symbol table is a list of
 </div>
 
 <!-- *********************************************************************** -->
