@@ -44,10 +44,10 @@ public:
   virtual const char *getOpcodeName() const { return "ret"; }
 
   inline const Value *getReturnValue() const {
-    return Operands.size() ? Operands[0] : 0; 
+    return Operands.size() ? Operands[0].get() : 0; 
   }
   inline       Value *getReturnValue()       {
-    return Operands.size() ? Operands[0] : 0;
+    return Operands.size() ? Operands[0].get() : 0;
   }
 
   // Additionally, they must provide a method to get at the successors of this
@@ -84,10 +84,10 @@ public:
   }
 
   inline const Value *getCondition() const {
-    return isUnconditional() ? 0 : Operands[2];
+    return isUnconditional() ? 0 : Operands[2].get();
   }
   inline       Value *getCondition()       {
-    return isUnconditional() ? 0 : Operands[2];
+    return isUnconditional() ? 0 : Operands[2].get();
   }
 
   virtual const char *getOpcodeName() const { return "br"; }
@@ -184,6 +184,72 @@ public:
   static inline bool classof(const SwitchInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Switch);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+
+//===---------------------------------------------------------------------------
+// InvokeInst - Invoke instruction
+//
+class InvokeInst : public TerminatorInst {
+  InvokeInst(const InvokeInst &BI);
+public:
+  InvokeInst(Value *Meth, BasicBlock *IfNormal, BasicBlock *IfException,
+	     const vector<Value*> &Params, const  string &Name = "");
+
+  virtual Instruction *clone() const { return new InvokeInst(*this); }
+
+  // getCalledMethod - Return the method called, or null if this is an indirect
+  // method invocation...
+  //
+  inline const Method *getCalledMethod() const {
+    return dyn_cast<Method>(Operands[0].get());
+  }
+  inline Method *getCalledMethod() {
+    return dyn_cast<Method>(Operands[0].get());
+  }
+
+  // getCalledValue - Get a pointer to a method that is invoked by this inst.
+  inline const Value *getCalledValue() const { return Operands[0]; }
+  inline       Value *getCalledValue()       { return Operands[0]; }
+
+  // get*Dest - Return the destination basic blocks...
+  inline const BasicBlock *getNormalDest() const {
+    return cast<BasicBlock>(Operands[1]);
+  }
+  inline       BasicBlock *getNormalDest() {
+    return cast<BasicBlock>(Operands[1]);
+  }
+  inline const BasicBlock *getExceptionalDest() const {
+    return cast<BasicBlock>(Operands[2]);
+  }
+  inline       BasicBlock *getExceptionalDest() {
+    return cast<BasicBlock>(Operands[2]);
+  }
+
+  virtual const char *getOpcodeName() const { return "invoke"; }
+
+  // Additionally, they must provide a method to get at the successors of this
+  // terminator instruction.
+  //
+  virtual const BasicBlock *getSuccessor(unsigned i) const {
+    return (i == 0) ? getNormalDest() :
+          ((i == 1) ? getExceptionalDest() : 0);
+  }
+  inline BasicBlock *getSuccessor(unsigned i) {
+    return (i == 0) ? getNormalDest() :
+          ((i == 1) ? getExceptionalDest() : 0);
+  }
+
+  virtual unsigned getNumSuccessors() const { return 2; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const InvokeInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::Invoke);
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
