@@ -309,25 +309,6 @@ private:
 }; 
 
 
-// ArgDSNode - Represent an incoming argument to the current function...
-//
-class ArgDSNode : public DSNode {
-  Argument *FuncArg;
-public:
-  ArgDSNode(Argument *FA);
-  virtual std::string getCaption() const;
-
-  // isEquivalentTo - Return true if the nodes should be merged...
-  virtual bool isEquivalentTo(DSNode *Node) const;
-
-  // Support type inquiry through isa, cast, and dyn_cast...
-  static bool classof(const ArgDSNode *) { return true; }
-  static bool classof(const DSNode *N) { return N->NodeType == ArgNode; }
-private:
-  virtual ArgDSNode *cloneImpl() const { return new ArgDSNode(FuncArg); }
-};
-
-
 // ShadowDSNode - Represent a chunk of memory that we need to be able to
 // address.  These are generated due to (for example) pointer type method
 // arguments... if the pointer is dereferenced, we need to have a node to point
@@ -384,7 +365,6 @@ protected:
 //
 class FunctionDSGraph {
   Function *Func;
-  std::vector<ArgDSNode*>    ArgNodes;
   std::vector<AllocDSNode*>  AllocNodes;
   std::vector<ShadowDSNode*> ShadowNodes;
   std::vector<GlobalDSNode*> GlobalNodes;
@@ -395,9 +375,12 @@ class FunctionDSGraph {
   // cloneFunctionIntoSelf - Clone the specified method graph into the current
   // method graph, returning the Return's set of the graph.  If ValueMap is set
   // to true, the ValueMap of the function is cloned into this function as well
-  // as the data structure graph itself.
+  // as the data structure graph itself.  Regardless, the arguments value sets
+  // of DSG are copied into Args.
   //
-  PointerValSet cloneFunctionIntoSelf(const FunctionDSGraph &G, bool ValueMap);
+  PointerValSet cloneFunctionIntoSelf(const FunctionDSGraph &G, bool ValueMap,
+                                      std::vector<PointerValSet> &Args);
+
   bool RemoveUnreachableNodes();
   bool UnlinkUndistinguishableNodes();
   void MarkEscapeableNodesReachable(std::vector<bool> &RSN,
@@ -429,11 +412,12 @@ public:
   // function point to...
   //
   std::map<Value*, PointerValSet> &getValueMap() { return ValueMap; }
+  const std::map<Value*, PointerValSet> &getValueMap() const { return ValueMap;}
 
   const PointerValSet &getRetNodes() const { return RetNode; }
 
   unsigned getGraphSize() const {
-    return ArgNodes.size() + AllocNodes.size() + ShadowNodes.size() +
+    return AllocNodes.size() + ShadowNodes.size() +
       GlobalNodes.size() + CallNodes.size();
   }
 
