@@ -12,12 +12,12 @@ class TerminatorInst;
 
 namespace opt {
 
-struct ConstantPropogation : public StatelessPass<ConstantPropogation> {
+struct ConstantPropogation : public Pass {
   // doConstantPropogation - Do trivial constant propogation and expression
   // folding
   static bool doConstantPropogation(Method *M);
 
-  inline static bool doPerMethodWork(Method *M) {
+  inline bool doPerMethodWork(Method *M) {
     return doConstantPropogation(M);
   }
 };
@@ -34,11 +34,10 @@ bool ConstantFoldTerminator(TerminatorInst *T);
 //===----------------------------------------------------------------------===//
 // Sparse Conditional Constant Propogation Pass
 //
-
-struct SCCPPass : public StatelessPass<SCCPPass> {
+struct SCCPPass : public Pass {
   static bool doSCCP(Method *M);
 
-  inline static bool doPerMethodWork(Method *M) {
+  inline bool doPerMethodWork(Method *M) {
     return doSCCP(M);
   }
 };

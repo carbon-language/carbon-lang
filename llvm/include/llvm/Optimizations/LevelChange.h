@@ -51,8 +51,8 @@ namespace opt {
     return DoRaiseRepresentation(M, Level::Highest);
   }
 
-  struct RaiseRepresentation : public StatelessPass<RaiseRepresentation> {
-    inline static bool doPerMethodWork(Method *M) {
+  struct RaiseRepresentation : public Pass {
+    virtual bool doPerMethodWork(Method *M) {
       return DoRaiseRepresentation(M);
     }
   };

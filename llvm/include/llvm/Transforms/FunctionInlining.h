@@ -13,13 +13,13 @@ class CallInst;
 
 namespace opt {
 
-struct MethodInlining : public StatelessPass<MethodInlining> {
+struct MethodInlining : public Pass {
   // DoMethodInlining - Use a heuristic based approach to inline methods that
   // seem to look good.
   //
   static bool doMethodInlining(Method *M);
 
-  inline static bool doPerMethodWork(Method *M) {
+  virtual bool doPerMethodWork(Method *M) {
     return doMethodInlining(M);
   }
 };
