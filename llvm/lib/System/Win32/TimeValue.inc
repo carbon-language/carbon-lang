@@ -31,7 +31,7 @@ TimeValue TimeValue::now() {
 }
 
 std::string TimeValue::toString() const {
-#ifdef __MINGW
+#ifdef __MINGW32__
   // This ban may be lifted by either:
   // (i) a future MinGW version other than 1.0 inherents the __time64_t type, or
   // (ii) configure tests for either the time_t or __time64_t type.

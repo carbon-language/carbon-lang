@@ -13,7 +13,7 @@
 
 #include "Win32.h"
 
-#ifdef __MINGW
+#ifdef __MINGW32__
 #include <imagehlp.h>
 #else
 #include <dbghelp.h>
