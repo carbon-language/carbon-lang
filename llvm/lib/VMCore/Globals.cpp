@@ -120,7 +120,7 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
          "Attempt to replace GVar initializer with non-constant");
   
   // Okay, preconditions out of the way, replace the constant initializer.
-  this->setOperand(0,To);
+  this->setOperand(0, cast<Constant>(To));
 }
 
 // vim: sw=2 ai
