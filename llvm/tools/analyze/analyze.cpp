@@ -23,6 +23,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/PassNameParser.h"
+#include "Support/Signals.h"
 #include "Support/Timer.h"
 #include <algorithm>
 
@@ -115,6 +116,7 @@ namespace {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm analysis printer tool\n");
+  PrintStackTraceOnErrorSignal();
 
   Module *CurMod = 0;
   try {
