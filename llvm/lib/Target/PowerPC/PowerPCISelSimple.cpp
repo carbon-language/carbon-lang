@@ -1437,7 +1437,7 @@ void ISel::visitCallInst(CallInst &CI) {
     TheCall = BuildMI(PPC32::CALLpcrel, 1).addGlobalAddress(F, true);
   } else {  // Emit an indirect call through the CTR
     unsigned Reg = getReg(CI.getCalledValue());
-    BuildMI(PPC32::MTSPR, 2).addZImm(9).addReg(Reg);
+    BuildMI(BB, PPC32::MTSPR, 2).addZImm(9).addReg(Reg);
     TheCall = BuildMI(PPC32::CALLindirect, 1).addZImm(20).addZImm(0);
   }
 
