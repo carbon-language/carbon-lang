@@ -43,6 +43,12 @@ FunctionPass *getRegisterAllocator(TargetMachine &T) {
   return new PhyRegAlloc (T);
 }
 
+void PhyRegAlloc::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<LoopInfo> ();
+  AU.addRequired<FunctionLiveVarInfo> ();
+}
+
+
 
 //----------------------------------------------------------------------------
 // This method initially creates interference graphs (one in each reg class)

@@ -1,20 +1,18 @@
-/* Title:   PhyRegAlloc.h   -*- C++ -*-
-   Author:  Ruchira Sasanka
-   Date:    Aug 20, 01
-   Purpose: This is the main entry point for register allocation.
-
-   Notes:
-   =====
-
- * RegisterClasses: Each RegClass accepts a 
-   TargetRegClass which contains machine specific info about that register
-   class. The code in the RegClass is machine independent and they use
-   access functions in the TargetRegClass object passed into it to get
-   machine specific info.
-
- * Machine dependent work: All parts of the register coloring algorithm
-   except coloring of an individual node are machine independent.
-*/ 
+//===-- PhyRegAlloc.h - Graph Coloring Register Allocator -------*- c++ -*-===//
+//   
+// This is the main entry point for register allocation.
+//
+// Notes:
+// * RegisterClasses: Each RegClass accepts a 
+//   TargetRegClass which contains machine specific info about that register
+//   class. The code in the RegClass is machine independent and they use
+//   access functions in the TargetRegClass object passed into it to get
+//   machine specific info.
+//
+// * Machine dependent work: All parts of the register coloring algorithm
+//   except coloring of an individual node are machine independent.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef PHYREGALLOC_H
 #define PHYREGALLOC_H
@@ -91,10 +89,7 @@ public:
   ///
   virtual bool runOnFunction (Function &F);
 
-  virtual void getAnalysisUsage (AnalysisUsage &AU) const {
-    AU.addRequired<LoopInfo> ();
-    AU.addRequired<FunctionLiveVarInfo> ();
-  }
+  virtual void getAnalysisUsage (AnalysisUsage &AU) const;
 
   const char *getPassName () const {
     return "Traditional graph-coloring reg. allocator";
