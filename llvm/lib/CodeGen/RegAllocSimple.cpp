@@ -38,6 +38,9 @@ namespace {
 
     // Maps physical register to their register classes
     std::map<unsigned, const TargetRegisterClass*> PhysReg2RegClassMap;
+
+    // Made to combat the incorrect allocation of r2 = add r1, r1
+    std::map<unsigned, unsigned> VirtReg2PhysRegMap;
     
     // Maps RegClass => which index we can take a register from. Since this is a
     // simple register allocator, when we need a register of a certain class, we
@@ -225,17 +228,30 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
           DEBUG(std::cerr << "const\n");
         } else if (op.isVirtualRegister()) {
           virtualReg = (unsigned) op.getAllocatedRegNum();
-          // save register to stack if it's a def
           DEBUG(std::cerr << "op: " << op << "\n");
           DEBUG(std::cerr << "\t inst[" << i << "]: ";
                 MI->print(std::cerr, TM));
-          if (op.opIsDef()) {
-            physReg = getFreeReg(virtualReg);
-            MachineBasicBlock::iterator J = I;
-            J = saveVirtRegToStack(++J, virtualReg, physReg);
-            I = --J;
+
+          // make sure the same virtual register maps to the same physical
+          // register in any given instruction
+          if (VirtReg2PhysRegMap.find(virtualReg) != VirtReg2PhysRegMap.end()) {
+            physReg = VirtReg2PhysRegMap[virtualReg];
           } else {
-            I = moveUseToReg(I, virtualReg, physReg);
+            if (op.opIsDef()) {
+              if (TM.getInstrInfo().isTwoAddrInstr(MI->getOpcode()) && i == 0) {
+                // must be same register number as the first operand
+                // This maps a = b + c into b += c, and saves b into a's spot
+                physReg = (unsigned) MI->getOperand(1).getAllocatedRegNum();
+              } else {
+                physReg = getFreeReg(virtualReg);
+              }
+              MachineBasicBlock::iterator J = I;
+              J = saveVirtRegToStack(++J, virtualReg, physReg);
+              I = --J;
+            } else {
+              I = moveUseToReg(I, virtualReg, physReg);
+            }
+            VirtReg2PhysRegMap[virtualReg] = physReg;
           }
           MI->SetMachineOperandReg(i, physReg);
           DEBUG(std::cerr << "virt: " << virtualReg << 
@@ -244,6 +260,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
       }
 
       clearAllRegs();
+      VirtReg2PhysRegMap.clear();
     }
 
   }
