@@ -661,7 +661,7 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
   if (MRegisterInfo::isVirtualRegister(RegB))
     return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
   else
-    return RegClass->contains(RegB);
+    return !RegClass->contains(RegB);
 }
 
 bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
