@@ -1,4 +1,5 @@
 
+
 int %foo() {
   ret int 0
 }
@@ -49,6 +50,7 @@ int %main() {
   cast uint 0 to double
 
   ; cast long to ...
+  cast long 0 to bool
   cast long 0 to sbyte
   cast long 0 to ubyte
   cast long 0 to short
@@ -59,6 +61,8 @@ int %main() {
   cast long 0 to ulong
   cast long 0 to float
   cast long 0 to double
+
+  cast ulong 0 to bool
   
   ; cast float to ...
   ;cast float 0.0 to bool
