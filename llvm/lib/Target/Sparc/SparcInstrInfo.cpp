@@ -497,10 +497,10 @@ UltraSparcInstrInfo::CreateCodeToCopyIntToFloat(const TargetMachine& target,
     { // sign- or zero-extend respectively
       storeVal = new TmpInstruction(storeType, val);
       if (val->getType()->isSigned())
-        CreateSignExtensionInstructions(target, F, val, 8*srcSize, storeVal,
+        CreateSignExtensionInstructions(target, F, val, storeVal, 8*srcSize,
                                         mvec, mcfi);
       else
-        CreateZeroExtensionInstructions(target, F, val, 8*srcSize, storeVal,
+        CreateZeroExtensionInstructions(target, F, val, storeVal, 8*srcSize,
                                         mvec, mcfi);
     }
   MachineInstr* store=new MachineInstr(ChooseStoreInstruction(storeType));
@@ -640,27 +640,27 @@ CreateBitExtensionInstructions(bool signExtend,
                                const TargetMachine& target,
                                Function* F,
                                Value* srcVal,
-                               unsigned int srcSizeInBits,
-                               Value* dest,
+                               Value* destVal,
+                               unsigned int numLowBits,
                                vector<MachineInstr*>& mvec,
                                MachineCodeForInstruction& mcfi)
 {
   MachineInstr* M;
-  assert(srcSizeInBits <= 32 &&
-         "Hmmm... 32 < srcSizeInBits < 64 unexpected but could be handled.");
 
-  if (srcSizeInBits < 32)
+  assert(numLowBits <= 32 && "Otherwise, nothing should be done here!");
+
+  if (numLowBits < 32)
     { // SLL is needed since operand size is < 32 bits.
-      TmpInstruction *tmpI = new TmpInstruction(dest->getType(),
-                                                srcVal, dest,"make32");
+      TmpInstruction *tmpI = new TmpInstruction(destVal->getType(),
+                                                srcVal, destVal, "make32");
       mcfi.addTemp(tmpI);
-      M = Create3OperandInstr_UImmed(SLLX, srcVal, 32-srcSizeInBits, tmpI);
+      M = Create3OperandInstr_UImmed(SLLX, srcVal, 32-numLowBits, tmpI);
       mvec.push_back(M);
       srcVal = tmpI;
     }
 
   M = Create3OperandInstr_UImmed(signExtend? SRA : SRL,
-                                 srcVal, 32-srcSizeInBits, dest);
+                                 srcVal, 32-numLowBits, destVal);
   mvec.push_back(M);
 }
 
@@ -676,13 +676,13 @@ UltraSparcInstrInfo::CreateSignExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
                                         Value* srcVal,
-                                        unsigned int srcSizeInBits,
-                                        Value* dest,
+                                        Value* destVal,
+                                        unsigned int numLowBits,
                                         vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   CreateBitExtensionInstructions(/*signExtend*/ true, target, F, srcVal,
-                                 srcSizeInBits, dest, mvec, mcfi);
+                                 destVal, numLowBits, mvec, mcfi);
 }
 
 
@@ -698,11 +698,11 @@ UltraSparcInstrInfo::CreateZeroExtensionInstructions(
                                         const TargetMachine& target,
                                         Function* F,
                                         Value* srcVal,
-                                        unsigned int srcSizeInBits,
-                                        Value* dest,
+                                        Value* destVal,
+                                        unsigned int numLowBits,
                                         vector<MachineInstr*>& mvec,
                                         MachineCodeForInstruction& mcfi) const
 {
   CreateBitExtensionInstructions(/*signExtend*/ false, target, F, srcVal,
-                                 srcSizeInBits, dest, mvec, mcfi);
+                                 destVal, numLowBits, mvec, mcfi);
 }

@@ -194,8 +194,8 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
   virtual void CreateSignExtensionInstructions(const TargetMachine& target,
                                        Function* F,
                                        Value* srcVal,
-                                       unsigned int srcSizeInBits,
-                                       Value* dest,
+                                       Value* destVal,
+                                       unsigned int numLowBits,
                                        std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const;
 
@@ -208,8 +208,8 @@ struct UltraSparcInstrInfo : public MachineInstrInfo {
   virtual void CreateZeroExtensionInstructions(const TargetMachine& target,
                                        Function* F,
                                        Value* srcVal,
-                                       unsigned int srcSizeInBits,
-                                       Value* dest,
+                                       Value* destVal,
+                                       unsigned int numLowBits,
                                        std::vector<MachineInstr*>& mvec,
                                        MachineCodeForInstruction& mcfi) const;
 };
