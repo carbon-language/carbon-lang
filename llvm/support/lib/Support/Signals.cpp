@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <signal.h>
+#include "Config/config.h"     // Get the signal handler return type
 
 static std::vector<std::string> FilesToRemove;
 
