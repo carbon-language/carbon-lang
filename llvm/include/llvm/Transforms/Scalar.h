@@ -112,6 +112,16 @@ Pass *createPromoteMemoryToRegister();
 
 //===----------------------------------------------------------------------===//
 //
+// This pass reassociates commutative expressions in an order that is designed
+// to promote better constant propogation, GCSE, LICM, PRE...
+//
+// For example:  4 + (x + 5)  ->  x + (4 + 5)
+//
+Pass *createReassociatePass();
+
+
+//===----------------------------------------------------------------------===//
+//
 // These functions removes symbols from functions and modules.
 //
 Pass *createSymbolStrippingPass();
