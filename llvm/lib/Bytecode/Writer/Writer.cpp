@@ -179,8 +179,8 @@ inline BytecodeBlock::BytecodeBlock(unsigned ID, BytecodeWriter& w,
   Loc = w.size();
 }
 
-inline BytecodeBlock::~BytecodeBlock() {           // Do backpatch when block goes out
-				    // of scope...
+inline BytecodeBlock::~BytecodeBlock() { // Do backpatch when block goes out
+				         // of scope...
   if (Loc == Writer.size() && ElideIfEmpty) {
     // If the block is empty, and we are allowed to, do not emit the block at
     // all!
@@ -188,8 +188,6 @@ inline BytecodeBlock::~BytecodeBlock() {           // Do backpatch when block go
     return;
   }
 
-  //cerr << "OldLoc = " << Loc << " NewLoc = " << NewLoc << " diff = "
-  //     << (NewLoc-Loc) << endl;
   if (HasLongFormat)
     Writer.output(unsigned(Writer.size()-Loc), int(Loc-4));
   else
@@ -277,12 +275,10 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   }
 
-  case Type::OpaqueTyID: {
+  case Type::OpaqueTyID:
     // No need to emit anything, just the count of opaque types is enough.
     break;
-  }
 
-  //case Type::PackedTyID:
   default:
     std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
               << " Type '" << T->getDescription() << "'\n";
