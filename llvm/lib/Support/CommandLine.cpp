@@ -23,6 +23,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cerrno>
+#include <cstring>
 using namespace llvm;
 
 using namespace cl;
