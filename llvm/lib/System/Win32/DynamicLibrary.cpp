@@ -22,15 +22,21 @@ using namespace sys;
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
+DynamicLibrary::DynamicLibrary() : handle(0) {
+  handle = new HMODULE;
+  *((HMODULE*)handle) = GetModuleHandle(NULL);
+  
+  if (*((HMODULE*)handle) == 0) {
+    ThrowError("Can't GetModuleHandle: ");
+  }
+}
+
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
   handle = new HMODULE;
   *((HMODULE*)handle) = LoadLibrary(filename);
 
   if (*((HMODULE*)handle) == 0) {
-    char Buffer[100];
-    // FIXME: This should use FormatMessage
-    sprintf(Buffer, "Windows error code %d\n", GetLastError());
-    throw std::string(Buffer);
+    ThrowError("Can't LoadLibrary: ");
   }
 }
 

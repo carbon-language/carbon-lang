@@ -28,6 +28,16 @@ using namespace sys;
 
 #ifdef HAVE_LT_DLOPEN
 
+DynamicLibrary::DynamicLibrary() : handle(0) {
+  if (0 != lt_dlinit())
+    throw std::string(lt_dlerror());
+
+  handle = lt_dlopen(0);
+
+  if (handle == 0)
+    throw std::string("Can't open program as dynamic library");
+}
+
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
   if (0 != lt_dlinit())
     throw std::string(lt_dlerror());

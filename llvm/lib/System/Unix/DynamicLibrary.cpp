@@ -16,8 +16,16 @@
 namespace llvm {
 using namespace sys;
 
+DynamicLibrary::DynamicLibrary() : handle(0) {
+#if defined (HAVE_DLOPEN)
+  if ((handle = dlopen(0, RTLD_NOW | RTLD_GLOBAL)) == 0)
+    throw std::string( dlerror() );
+#else
+  assert(!"Dynamic object linking not implemented for this platform");
+#endif
+}
 
-DynamicLibrary::DynamicLibrary(const char *filename) {
+DynamicLibrary::DynamicLibrary(const char *filename) : handle(0) {
 #if defined (HAVE_DLOPEN)
   if ((handle = dlopen (filename, RTLD_NOW | RTLD_GLOBAL)) == 0)
     throw std::string( dlerror() );
