@@ -549,6 +549,21 @@ static unsigned getTypeSizeInBits(const Type *Ty) {
   return Ty == Type::BoolTy ? 1 : Ty->getPrimitiveSize()*8;
 }
 
+/// RemoveNoopCast - Strip off nonconverting casts from the value.
+///
+static Value *RemoveNoopCast(Value *V) {
+  if (CastInst *CI = dyn_cast<CastInst>(V)) {
+    const Type *CTy = CI->getType();
+    const Type *OpTy = CI->getOperand(0)->getType();
+    if (CTy->isInteger() && OpTy->isInteger()) {
+      if (CTy->getPrimitiveSize() == OpTy->getPrimitiveSize())
+        return RemoveNoopCast(CI->getOperand(0));
+    } else if (isa<PointerType>(CTy) && isa<PointerType>(OpTy))
+      return RemoveNoopCast(CI->getOperand(0));
+  }
+  return V;
+}
+
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -572,17 +587,18 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                       ConstantInt::get(I.getType(), 1)));
     // -((uint)X >> 31) -> ((int)X >> 31)
     // -((int)X >> 31) -> ((uint)X >> 31)
-    if (C->isNullValue())
-      if (ShiftInst *SI = dyn_cast<ShiftInst>(Op1))
+    if (C->isNullValue()) {
+      Value *NoopCastedRHS = RemoveNoopCast(Op1);
+      if (ShiftInst *SI = dyn_cast<ShiftInst>(NoopCastedRHS))
         if (SI->getOpcode() == Instruction::Shr)
           if (ConstantUInt *CU = dyn_cast<ConstantUInt>(SI->getOperand(1))) {
             const Type *NewTy;
-            if (C->getType()->isSigned())
-              NewTy = getUnsignedIntegralType(C->getType());
+            if (SI->getType()->isSigned())
+              NewTy = getUnsignedIntegralType(SI->getType());
             else
-              NewTy = getSignedIntegralType(C->getType());
+              NewTy = getSignedIntegralType(SI->getType());
             // Check to see if we are shifting out everything but the sign bit.
-            if (CU->getValue() == C->getType()->getPrimitiveSize()*8-1) {
+            if (CU->getValue() == SI->getType()->getPrimitiveSize()*8-1) {
               // Ok, the transformation is safe.  Insert a cast of the incoming
               // value, then the new shift, then the new cast.
               Instruction *FirstCast = new CastInst(SI->getOperand(0), NewTy,
@@ -590,10 +606,15 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
               Value *InV = InsertNewInstBefore(FirstCast, I);
               Instruction *NewShift = new ShiftInst(Instruction::Shr, FirstCast,
                                                     CU, SI->getName());
-              InV = InsertNewInstBefore(NewShift, I);
-              return new CastInst(NewShift, I.getType());
+              if (NewShift->getType() == I.getType())
+                return NewShift;
+              else {
+                InV = InsertNewInstBefore(NewShift, I);
+                return new CastInst(NewShift, I.getType());
+              }
             }
           }
+    }
   }
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
