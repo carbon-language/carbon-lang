@@ -1376,7 +1376,7 @@ void Interpreter::infoValue(const std::string &Name) {
 // printStackFrame - Print information about the specified stack frame, or -1
 // for the default one.
 //
-void Interpreter::printStackFrame(int FrameNo = -1) {
+void Interpreter::printStackFrame(int FrameNo) {
   if (FrameNo == -1) FrameNo = CurFrame;
   Function *F = ECStack[FrameNo].CurMethod;
   const Type *RetTy = F->getReturnType();
