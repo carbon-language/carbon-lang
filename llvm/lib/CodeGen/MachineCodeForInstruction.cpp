@@ -29,11 +29,11 @@ static Annotation *CreateMCFI(AnnotationID AID, const Annotable *, void *) {
 }
 
 // Register the annotation with the annotation factory
-static struct Initializer {
-  Initializer() {
+static struct MCFIInitializer {
+  MCFIInitializer() {
     AnnotationManager::registerAnnotationFactory(MCFI_AID, &CreateMCFI);
   }
-} RegisterAID;
+} RegisterCreateMCFI;
 
 
 MachineCodeForInstruction&
