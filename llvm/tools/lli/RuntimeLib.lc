@@ -1,0 +1,25 @@
+//===-- RuntimeLib.lc - LLVM Standard C Runtime Library -----------*- C -*-===//
+// 
+// This file contains definitions of C functions that are useful to get LLVM
+// programs up and running.  This library of functions is automatically linked
+// into programs loaded into LLI.
+//
+// This file is compiled by the LLVM port of GCC to get LLVM code.
+//
+//===----------------------------------------------------------------------===//
+
+// Prototypes for functions exported by LLI directly.
+void exit(int Code);
+int putchar(int);
+
+// The puts() function writes the string pointed to by s, followed by a 
+// NEWLINE character, to the standard output stream stdout. On success the 
+// number of characters written is returned; otherwise they return EOF.
+//
+int puts(const char *S) {
+  const char *Str = S;
+  while (*Str) putchar(*Str++);
+  putchar('\n');
+  return Str+1-S;
+}
+
