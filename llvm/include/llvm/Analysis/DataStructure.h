@@ -356,8 +356,8 @@ private:
 // Cast nodes, and Calls.  This graph can only be used by one of the
 // individual function graphs, and it goes away when they all go away.
 // 
-class GlobalDSGraph: public DSGraph {
-  hash_set<const DSGraph*, hash<const DSGraph*> > Referrers;
+class GlobalDSGraph : public DSGraph {
+  hash_set<const DSGraph*> Referrers;
   void addReference(const DSGraph* referrer);
   void removeReference(const DSGraph* referrer);
   friend class DSGraph;                           // give access to Referrers
