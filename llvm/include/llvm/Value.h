@@ -126,6 +126,7 @@ public:
     BasicBlockVal,            // This is an instance of BasicBlock
     FunctionVal,              // This is an instance of Function
     GlobalVariableVal,        // This is an instance of GlobalVariable
+    UndefValueVal,            // This is an instance of UndefValue
     ConstantExprVal,          // This is an instance of ConstantExpr
     ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
     SimpleConstantVal,        // This is some other type of Constant
@@ -189,11 +190,12 @@ void Use::set(Value *V) {
 // the subtype header files to test to see if the value is a subclass...
 //
 template <> inline bool isa_impl<Constant, Value>(const Value &Val) { 
-  return Val.getValueType() == Value::ConstantExprVal ||
-         Val.getValueType() == Value::SimpleConstantVal ||
-         Val.getValueType() == Value::ConstantAggregateZeroVal ||
+  return Val.getValueType() == Value::SimpleConstantVal ||
          Val.getValueType() == Value::FunctionVal ||
-	 Val.getValueType() == Value::GlobalVariableVal;
+	 Val.getValueType() == Value::GlobalVariableVal ||
+         Val.getValueType() == Value::ConstantExprVal ||
+         Val.getValueType() == Value::ConstantAggregateZeroVal ||
+         Val.getValueType() == Value::UndefValueVal;
 }
 template <> inline bool isa_impl<Argument, Value>(const Value &Val) { 
   return Val.getValueType() == Value::ArgumentVal;
