@@ -35,10 +35,8 @@
 #endif
 #endif
 
-#ifndef LITTLE_ENDIAN
-#if !defined(BIG_ENDIAN) || !defined(INT64_MAX)
+#if (!defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)) || !defined(INT64_MAX)
 #error "include/Support/DataTypes.h could not determine endianness!"
-#endif
 #endif
 
 #endif  /* LLVM_SUPPORT_DATATYPES_H */
