@@ -282,7 +282,7 @@ $(ALL_TARGETS)::
 	      $(MKDIR) $$dir; \
 	      cp $(BUILD_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
-	    ($(MAKE) -C$$dir $@ $(MFLAGS)) || exit 1; \
+	    ($(MAKE) -C$$dir $@ $(MFLAGS)) || exit 0; \
 	  fi \
 	done
 endif
@@ -575,7 +575,7 @@ $(OBJDIR)/%.bc: %.ll $(OBJDIR)/.dir $(LLVMAS)
 
 ifdef TARGET
 
-TDFILES := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(BUILD_SRC_ROOT)/lib/Target/Target.td)
+TDFILES := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td)
 
 $(BUILT_SOURCES): $(TDFILES) 
 
@@ -756,7 +756,7 @@ $(CONFIG_STATUS): $(CONFIGURE)
 $(MAKE_CONFIG): $(MAKE_CONFIG_IN)
 	@$(ECHO) Regenerating $@
 	$(VERB) cd $(LLVM_OBJ_ROOT) ; $(CONFIG_STATUS) Makefile.config
-	$(VERB) $(MAKE) $(MAKEFLAGS) $(MAKECMDGOALS)
+	$(VERB) $(MAKE) $(MFLAGS) $(MAKECMDGOALS)
 	@exit 0;
 
 #------------------------------------------------------------------------
@@ -768,7 +768,7 @@ $(OBJMKFILE): $(SRCMKFILE)
 	@$(ECHO) "Updating Makefile from : $(dir $<)"
 	$(VERB) $(MKDIR) $(@D)
 	$(VERB) cp -f $< $@
-	$(VERB) $(MAKE) $(MAKEFLAGS) $(MAKECMDGOALS)
+	$(VERB) $(MAKE) $(MFLAGS) $(MAKECMDGOALS)
 	@exit 0;
 endif
 
