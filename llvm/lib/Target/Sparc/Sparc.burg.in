@@ -67,7 +67,7 @@ Xdefine PANIC		printf
 %term GetElemPtr=GetElementPtrOPCODE
 %term GetElemPtrIdx=125         /* getElemPtr with index vector */
 
-%term Phi=PHINodeOPCODE
+%term Phi=PHIOPCODE
 
 %term Cast=CastOPCODE /* cast that will be ignored. others are made explicit */
 %term ToBoolTy=127
