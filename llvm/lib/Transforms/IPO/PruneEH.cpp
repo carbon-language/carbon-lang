@@ -48,11 +48,14 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
         std::find(SCC.begin(), SCC.end(), SCC[i]) == SCC.end()) {
       SCCMightThrow = true; break;
     } else if (Function *F = SCC[i]->getFunction())
-      if (!F->isExternal())
+      if (F->isExternal()) {
+        SCCMightThrow = true; break;
+      } else {
         for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
           if (isa<UnwindInst>(I->getTerminator())) {  // Uses unwind!
             SCCMightThrow = true; break;
           }
+      }
 
   bool MadeChange = false;
 
