@@ -109,3 +109,30 @@ bool %test14b(bool %C, int %X) {
 	ret bool %R
 }
 
+int %test15a(int %X) {       ;; Code sequence for (X & 16) ? 16 : 0
+        %t1 = and int %X, 16
+        %t2 = seteq int %t1, 0
+        %t3 = select bool %t2, int 0, int 16 ;; X & 16
+        ret int %t3
+}
+
+int %test15b(int %X) {       ;; Code sequence for (X & 32) ? 0 : 24
+        %t1 = and int %X, 32
+        %t2 = seteq int %t1, 0
+        %t3 = select bool %t2, int 32, int 0 ;; ~X & 32
+        ret int %t3
+}
+
+int %test15c(int %X) {       ;; Alternate code sequence for (X & 16) ? 16 : 0
+        %t1 = and int %X, 16
+        %t2 = seteq int %t1, 16
+        %t3 = select bool %t2, int 16, int 0 ;; X & 16
+        ret int %t3
+}
+
+int %test15d(int %X) {       ;; Alternate code sequence for (X & 16) ? 16 : 0
+        %t1 = and int %X, 16
+        %t2 = setne int %t1, 0
+        %t3 = select bool %t2, int 16, int 0 ;; X & 16
+        ret int %t3
+}
