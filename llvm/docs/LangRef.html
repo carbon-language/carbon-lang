@@ -19,7 +19,7 @@
       <li><a href="#t_derived">Derived Types</a>
         <ol>
           <li><a href="#t_array"  >Array Type</a>
-          <li><a href="#t_method" >Method Type</a>
+          <li><a href="#t_function">Function Type</a>
           <li><a href="#t_pointer">Pointer Type</a>
           <li><a href="#t_struct" >Structure Type</a>
           <li><a href="#t_packed" >Packed Type</a>
@@ -28,16 +28,16 @@
   <li><a href="#highlevel">High Level Structure</a>
     <ol>
       <li><a href="#modulestructure">Module Structure</a>
-      <li><a href="#methodstructure">Method Structure</a>
+      <li><a href="#functionstructure">Function Structure</a>
     </ol>
   <li><a href="#instref">Instruction Reference</a>
     <ol>
       <li><a href="#terminators">Terminator Instructions</a>
         <ol>
-          <li><a href="#i_ret"     >'<tt>ret</tt>' Instruction</a>
-          <li><a href="#i_br"      >'<tt>br</tt>' Instruction</a>
-          <li><a href="#i_switch"  >'<tt>switch</tt>' Instruction</a>
-          <li><a href="#i_callwith">'<tt>call .. with</tt>' Instruction</a>
+          <li><a href="#i_ret"   >'<tt>ret</tt>' Instruction</a>
+          <li><a href="#i_br"    >'<tt>br</tt>' Instruction</a>
+          <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a>
+          <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a>
         </ol>
       <li><a href="#unaryops">Unary Operations</a>
         <ol>
@@ -65,9 +65,9 @@
           <li><a href="#i_malloc"  >'<tt>malloc</tt>'   Instruction</a>
           <li><a href="#i_free"    >'<tt>free</tt>'     Instruction</a>
           <li><a href="#i_alloca"  >'<tt>alloca</tt>'   Instruction</a>
+	  <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
 	  <li><a href="#i_load"    >'<tt>load</tt>'     Instruction</a>
 	  <li><a href="#i_store"   >'<tt>store</tt>'    Instruction</a>
-	  <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
         </ol>
       <li><a href="#otherops">Other Operations</a>
         <ol>
@@ -100,10 +100,10 @@
 <!-- *********************************************************************** -->
 
 <blockquote>
-  This document describes the LLVM assembly language IR/VM.  LLVM is an SSA
-  based representation that attempts to be a useful midlevel IR by providing 
-  type safety, low level operations, flexibility, and the capability to 
-  represent 'all' high level languages cleanly.
+  This document describes the LLVM assembly language.  LLVM is an SSA based
+  representation that is a useful midlevel IR, providing type safety, low level
+  operations, flexibility, and the capability to represent 'all' high level
+  languages cleanly.
 </blockquote>
 
 
@@ -115,22 +115,44 @@
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-The LLVM is designed to exhibit a dual nature: on one hand, it is a useful compiler IR, on the other hand, it is a bytecode representation for dynamic compilation.  We contend that this is a natural and good thing, making LLVM a natural form of communication between different compiler phases, and also between a static and dynamic compiler.<p>
+The LLVM code representation is designed to be used in three different forms: as
+an in-memory compiler IR, as an on-disk bytecode representation, suitable for
+fast loading by a dynamic compiler, and as a human readable assembly language
+representation.  This allows LLVM to provide a powerful intermediate
+representation for efficient compiler transformations and analysis, while
+providing a natural means to debug and visualize the transformations.  The three
+different forms of LLVM are all equivalent.  This document describes the human
+readable representation and notation.<p>
 
-This dual nature leads to three different representations of LLVM (the human readable assembly representation, the compact bytecode representation, and the in memory, pointer based, representation).  This document describes the human readable representation and notation.<p>
-
-The LLVM representation aims to be a light weight and low level while being expressive, type safe, and extensible at the same time.  It aims to be a "universal IR" of sorts, by being at a low enough level that high level ideas may be cleanly mapped to it.  By providing type safety, LLVM can be used as the target of optimizations: for example, through pointer analysis, it can be proven that a C automatic variable is never accessed outside of the current function... allowing it to be promoted to a simple SSA value instead of a memory location.<p>
+The LLVM representation aims to be a light weight and low level while being
+expressive, type safe, and extensible at the same time.  It aims to be a
+"universal IR" of sorts, by being at a low enough level that high level ideas
+may be cleanly mapped to it (similar to how microprocessors are "universal
+IR's", allowing many source languages to be mapped to them).  By providing type
+safety, LLVM can be used as the target of optimizations: for example, through
+pointer analysis, it can be proven that a C automatic variable is never accessed
+outside of the current function... allowing it to be promoted to a simple SSA
+value instead of a memory location.<p>
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="wellformed"><h4><hr size=0>Well Formedness</h4><ul>
 
-It is important to note that this document describes 'well formed' llvm assembly language.  There is a difference between what the parser accepts and what is considered 'well formed'.  For example, the following instruction is syntactically okay, but not well formed:<p>
+It is important to note that this document describes 'well formed' llvm assembly
+language.  There is a difference between what the parser accepts and what is
+considered 'well formed'.  For example, the following instruction is
+syntactically okay, but not well formed:<p>
 
 <pre>
   %x = <a href="#i_add">add</a> int 1, %x
 </pre>
 
-...because only a <tt><a href="#i_phi">phi</a></tt> node may refer to itself.  The LLVM api provides a verification function (<tt>verify</tt>) that may be used to verify that a whole module or a single method is well formed.  It is useful to validate whether an optimization pass performed a well formed transformation to the code.<p>
+...because only a <tt><a href="#i_phi">phi</a></tt> node may refer to itself.
+The LLVM api provides a verification pass (created by the
+<tt>createVerifierPass</tt> function) that may be used to verify that an LLVM
+module is well formed.  This pass is automatically run by the parser after
+parsing input assembly, and by the optimizer before it outputs bytecode.  Often,
+violations pointed out by the verifier pass indicate bugs in transformation
+passes.<p>
 
 
 Describe the typesetting conventions here. 
@@ -150,11 +172,22 @@ LLVM uses three different forms of identifiers, for different purposes:<p>
 <li>Unnamed values are represented as an unsigned numeric value with a '%' prefix.  For example, %12, %2, %44.
 </ol><p>
 
-LLVM requires the values start with a '%' sign for two reasons: Compilers don't need to worry about name clashes with reserved words, and the set of reserved words may be expanded in the future without penalty.  Additionally, unnamed identifiers allow a compiler to quickly come up with a temporary variable without having to avoid symbol table conflicts.<p>
+LLVM requires the values start with a '%' sign for two reasons: Compilers don't
+need to worry about name clashes with reserved words, and the set of reserved
+words may be expanded in the future without penalty.  Additionally, unnamed
+identifiers allow a compiler to quickly come up with a temporary variable
+without having to avoid symbol table conflicts.<p>
 
-Reserved words in LLVM are very similar to reserved words in other languages.  There are keywords for different opcodes ('<tt><a href="#i_add">add</a></tt>', '<tt><a href="#i_cast">cast</a></tt>', '<tt><a href="#i_ret">ret</a></tt>', etc...), for primitive type names ('<tt><a href="#t_void">void</a></tt>', '<tt><a href="#t_uint">uint</a></tt>', etc...), and others.  These reserved words cannot conflict with variable names, because none of them may start with a '%' character.<p>
+Reserved words in LLVM are very similar to reserved words in other languages.
+There are keywords for different opcodes ('<tt><a href="#i_add">add</a></tt>',
+'<tt><a href="#i_cast">cast</a></tt>', '<tt><a href="#i_ret">ret</a></tt>',
+etc...), for primitive type names ('<tt><a href="#t_void">void</a></tt>',
+'<tt><a href="#t_uint">uint</a></tt>', etc...), and others.  These reserved
+words cannot conflict with variable names, because none of them start with a '%'
+character.<p>
 
-Here is an example of LLVM code to multiply the integer variable '<tt>%X</tt>' by 8:<p>
+Here is an example of LLVM code to multiply the integer variable '<tt>%X</tt>'
+by 8:<p>
 
 The easy way:
 <pre>
@@ -177,11 +210,15 @@ This last way of multiplying <tt>%X</tt> by 8 illustrates several important lexi
 
 <ol>
 <li>Comments are delimited with a '<tt>;</tt>' and go until the end of line.
-<li>Unnamed temporaries are created when the result of a computation is not assigned to a named value.
+<li>Unnamed temporaries are created when the result of a computation is not
+    assigned to a named value.
 <li>Unnamed temporaries are numbered sequentially
 </ol><p>
 
-...and it also show a convention that we follow in this document.  When demonstrating instructions, we will follow an instruction with a comment that defines the type and name of value produced.  Comments are shown in italic text.<p>
+...and it also show a convention that we follow in this document.  When
+demonstrating instructions, we will follow an instruction with a comment that
+defines the type and name of value produced.  Comments are shown in italic
+text.<p>
 
 
 
@@ -191,9 +228,15 @@ This last way of multiplying <tt>%X</tt> by 8 illustrates several important lexi
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-The LLVM type system is important to the overall usefulness of the language and VM runtime.  By being strongly typed, a number of optimizations may be performed on the IR directly, without having to do extra analysis to derive types.  A strong type system also makes it easier to comprehend generated code and assists with safety concerns.<p>
+The LLVM type system is critical to the overall usefulness of the language and
+runtime.  Being strongly typed enables a number of optimizations to be performed
+on the IR directly, without having to do extra analyses on the side before the
+transformation.  A strong type system makes it easier to read the generated code
+and enables novel analyses and transformations that are not feasible to perform
+on normal three address code representations.<p>
 
-The assembly language form for the type system was heavily influenced by the type problems in the C language<sup><a href="#rw_stroustrup">1</a></sup>.<p>
+The assembly language form for the type system was heavily influenced by the
+type problems in the C language<sup><a href="#rw_stroustrup">1</a></sup>.<p>
 
 
 
@@ -202,7 +245,8 @@ The assembly language form for the type system was heavily influenced by the typ
 <a name="t_primitive">Primitive Types
 </b></font></td></tr></table><ul>
 
-The primitive types are the fundemental building blocks of the LLVM system.  The current set of primitive types are as follows:<p>
+The primitive types are the fundemental building blocks of the LLVM system.  The
+current set of primitive types are as follows:<p>
 
 <table border=0 align=center><tr><td>
 
@@ -216,7 +260,7 @@ The primitive types are the fundemental building blocks of the LLVM system.  The
 <tr><td><tt>label</tt></td> <td>Branch destination</td></tr>
 </table>
 
-</td><td>
+</td><td valign=top>
 
 <table border=1 cellspacing=0 cellpadding=4 align=center>
 <tr><td><tt>bool</tt></td>  <td>True or False value</td></tr>
@@ -225,7 +269,6 @@ The primitive types are the fundemental building blocks of the LLVM system.  The
 <tr><td><tt>int</tt></td>   <td>Signed 32 bit value</td></tr>
 <tr><td><tt>long</tt></td>  <td>Signed 64 bit value</td></tr>
 <tr><td><tt>double</tt></td><td>64 bit floating point value</td></tr>
-<tr><td><tt>lock</tt></td>  <td>Recursive mutex value</td></tr>
 </table>
 
 </td></tr></table><p>
@@ -242,7 +285,7 @@ These different primitive types fall into a few useful classifications:<p>
 <tr><td><a name="t_unsigned">unsigned</td><td><tt>ubyte, ushort, uint, ulong</tt></td></tr>
 <tr><td><a name="t_integral">integral</td><td><tt>ubyte, sbyte, ushort, short, uint, int, ulong, long</tt></td></tr>
 <tr><td><a name="t_floating">floating point</td><td><tt>float, double</tt></td></tr>
-<tr><td><a name="t_firstclass">first class</td><td><tt>bool, ubyte, sbyte, ushort, short, uint, int, ulong, long, float, double, lock</tt></td></tr>
+<tr><td><a name="t_firstclass">first class</td><td><tt>bool, ubyte, sbyte, ushort, short,<br> uint, int, ulong, long, float, double</tt></td></tr>
 </table><p>
 
 
@@ -254,7 +297,10 @@ These different primitive types fall into a few useful classifications:<p>
 <a name="t_derived">Derived Types
 </b></font></td></tr></table><ul>
 
-The real power in LLVM comes from the derived types in the system.  This is what allows a programmer to represent arrays, methods, pointers, and other useful types.  Note that these derived types may be recursive: For example, it is possible to have a two dimensional array.<p>
+The real power in LLVM comes from the derived types in the system.  This is what
+allows a programmer to represent arrays, functions, pointers, and other useful
+types.  Note that these derived types may be recursive: For example, it is
+possible to have a two dimensional array.<p>
 
 
 
@@ -263,52 +309,73 @@ The real power in LLVM comes from the derived types in the system.  This is what
 
 <h5>Overview:</h5>
 
-The array type is a very simple derived type.  It arranges elements sequentially in memory.  There are two different forms of the array type:<p>
+The array type is a very simple derived type that arranges elements sequentially
+in memory.  The array type requires a size (number of elements) and an
+underlying data type.<p>
 
-<ol>
-<a name="t_array_fixed"><b><li>Fixed size array type:</b><br>
-   The simplest form of the array type, has a size hard coded in as part of the type.  Thus these are three distinct type qualifiers:<p>
+<h5>Syntax:</h5>
+<pre>
+  [&lt;# elements&gt; x &lt;elementtype&gt;]
+</pre>
 
+The number of elements is a constant integer value, elementtype may be any time
+with a size.<p>
+
+<h5>Examples:</h5>
+<ul>
    <tt>[40 x int ]</tt>: Array of 40 integer values.<br>
    <tt>[41 x int ]</tt>: Array of 41 integer values.<br>
    <tt>[40 x uint]</tt>: Array of 40 unsigned integer values.<p>
-
-Fixed sized arrays are very useful for compiler optimization passes and for representing analysis results.  Additionally, multidimensional arrays must have fixed sizes for all dimensions except the outer-most dimension.<p>
-
-<a name="t_array_unsized"><b><li>Dynamically sized array type:</b><br>
-  The dynamically sized arrays are very similar to the fixed size arrays, except that the size of the array is calculated at runtime by the virtual machine.  This is useful for representing generic methods that take any size array as an argument, or when representing Java style arrays.
-</ol><p>
+</ul>
 
 Here are some examples of multidimensional arrays:<p>
 <ul>
 <table border=0 cellpadding=0 cellspacing=0>
 <tr><td><tt>[3 x [4 x int]]</tt></td><td>: 3x4 array integer values.</td></tr>
-<tr><td><tt>[[10 x int]]</tt></td><td>: Nx10 array of integer values.</td></tr>
+<tr><td><tt>[12 x [10 x float]]</tt></td><td>: 2x10 array of single precision floating point values.</td></tr>
 <tr><td><tt>[2 x [3 x [4 x uint]]]</tt></td><td>: 2x3x4 array of unsigned integer values.</td></tr>
 </table>
 </ul>
 
 
-
 <!-- _______________________________________________________________________ -->
-</ul><a name="t_method"><h4><hr size=0>Method Type</h4><ul>
+</ul><a name="t_function"><h4><hr size=0>Function Type</h4><ul>
 
 <h5>Overview:</h5>
 
-The method type can be thought of as a method signature.  It consists of a return type and a list of formal parameter types.  Method types are usually used when to build virtual function tables (which are structures of pointers to methods) and for indirect method calls.<p>
+The function type can be thought of as a function signature.  It consists of a
+return type and a list of formal parameter types.  Function types are usually
+used when to build virtual function tables (which are structures of pointers to
+functions), for indirect function calls, and when defining a function.<p>
 
 <h5>Syntax:</h5>
 <pre>
   &lt;returntype&gt; (&lt;parameter list&gt;)
 </pre>
 
-Where '<tt>&lt;parameter list&gt;</tt>' is a comma seperated list of type specifiers.<p>
+Where '<tt>&lt;parameter list&gt;</tt>' is a comma seperated list of type
+specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
+which indicates that the function takes a variable number of arguments.  Note
+that there currently is no way to define a function in LLVM that takes a
+variable number of arguments, but it is possible to <b>call</b> a function that
+is vararg.<p>
 
 <h5>Examples:</h5>
 <ul>
 <table border=0 cellpadding=0 cellspacing=0>
-<tr><td><tt>int (int)</tt></td><td>: method taking an <tt>int</tt>, returning an <tt>int</tt></td></tr>
-<tr><td><tt>float (int, int *) *</tt></td><td>: <a href="#t_pointer">Pointer</a> to a method that takes an <tt>int</tt> and a <a href="#t_pointer">pointer</a> to <tt>int</tt>, returning <tt>float</tt>.</td></tr>
+
+<tr><td><tt>int (int)</tt></td><td>: function taking an <tt>int</tt>, returning
+an <tt>int</tt></td></tr>
+
+<tr><td><tt>float (int, int *) *</tt></td><td>: <a href="#t_pointer">Pointer</a>
+to a function that takes an <tt>int</tt> and a <a href="#t_pointer">pointer</a>
+to <tt>int</tt>, returning <tt>float</tt>.</td></tr>
+
+<tr><td><tt>int (sbyte *, ...)</tt></td><td>: A vararg function that takes at
+least one <a href="#t_pointer">pointer</a> to <tt>sbyte</tt> (signed char in C),
+which returns an integer.  This is the signature for <tt>printf</tt> in
+LLVM.</td></tr>
+
 </table>
 </ul>
 
@@ -331,21 +398,55 @@ Structures are accessed using '<tt><a href="#i_load">load</a></tt> and '<tt><a h
 
 <h5>Examples:</h5>
 <table border=0 cellpadding=0 cellspacing=0>
-<tr><td><tt>{ int, int, int }</tt></td><td>: a triple of three <tt>int</tt> values</td></tr>
-<tr><td><tt>{ float, int (int *) * }</tt></td><td>: A pair, where the first element is a <tt>float</tt> and the second element is a <a href="#t_pointer">pointer</a> to a <a href="t_method">method</a> that takes an <tt>int</tt>, returning an <tt>int</tt>.</td></tr>
+
+<tr><td><tt>{ int, int, int }</tt></td><td>: a triple of three <tt>int</tt>
+values</td></tr>
+
+<tr><td><tt>{ float, int (int *) * }</tt></td><td>: A pair, where the first
+element is a <tt>float</tt> and the second element is a <a
+href="#t_pointer">pointer</a> to a <a href="t_function">function</a> that takes
+an <tt>int</tt>, returning an <tt>int</tt>.</td></tr>
+
 </table>
 
 
 <!-- _______________________________________________________________________ -->
 </ul><a name="t_pointer"><h4><hr size=0>Pointer Type</h4><ul>
 
+<h5>Overview:</h5>
+
+As in many languages, the pointer type represents a pointer or reference to
+another object, which must live in memory.<p>
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;type&gt; *
+</pre>
+
+<h5>Examples:</h5>
+
+<table border=0 cellpadding=0 cellspacing=0>
+
+<tr><td><tt>[4x int]*</tt></td><td>: <a href="#t_pointer">pointer</a> to <a
+href="#t_array">array</a> of four <tt>int</tt> values</td></tr>
+
+<tr><td><tt>int (int *) *</tt></td><td>: A <a href="#t_pointer">pointer</a> to a
+<a href="t_function">function</a> that takes an <tt>int</tt>, returning an
+<tt>int</tt>.</td></tr>
+
+</table>
+<p>
+
 
 <!-- _______________________________________________________________________ -->
+<!--
 </ul><a name="t_packed"><h4><hr size=0>Packed Type</h4><ul>
 
 Mention/decide that packed types work with saturation or not. Maybe have a packed+saturated type in addition to just a packed type.<p>
 
 Packed types should be 'nonsaturated' because standard data types are not saturated.  Maybe have a saturated packed type?<p>
+
+-->
 
 
 <!-- *********************************************************************** -->
@@ -361,16 +462,16 @@ Packed types should be 'nonsaturated' because standard data types are not satura
 </b></font></td></tr></table><ul>
 
 
-talk about the elements of a module: constant pool and method list.<p>
+talk about the elements of a module: constant pool and function list.<p>
 
 
 <!-- ======================================================================= -->
 </ul><table width="100%" bgcolor="#441188" border=0 cellpadding=4 cellspacing=0><tr><td>&nbsp;</td><td width="100%">&nbsp; <font color="#EEEEFF" face="Georgia,Palatino"><b>
-<a name="methodstructure">Method Structure
+<a name="functionstructure">Function Structure
 </b></font></td></tr></table><ul>
 
 
-talk about the constant pool<p>
+talk about the optional constant pool<p>
 talk about how basic blocks delinate labels<p>
 talk about how basic blocks end with terminators<p>
 
@@ -391,10 +492,16 @@ do and stuff also.
 
 
 
-As was mentioned <a href="#methodstructure">previously</a>, every basic block in
-a program ends with a "Terminator" instruction.  Additionally, all terminators yield a '<tt>void</tt>' value: they produce control flow, not values.<p>
+As was mentioned <a href="#functionstructure">previously</a>, every basic block
+in a program ends with a "Terminator" instruction.  All of these terminator
+instructions yield a '<tt>void</tt>' value: they produce control flow, not
+values.<p>
 
-There are three different terminator instructions: the '<a href="#i_ret"><tt>ret</tt></a>' instruction, the '<a href="#i_br"><tt>br</tt></a>' instruction, and the '<a href="#i_switch"><tt>switch</tt></a>' instruction.<p>
+There are four different terminator instructions: the '<a
+href="#i_ret"><tt>ret</tt></a>' instruction, the '<a
+href="#i_br"><tt>br</tt></a>' instruction, the '<a
+href="#i_switch"><tt>switch</tt></a>' instruction, and the '<a
+href="#i_invoke"><tt>invoke</tt></a>' instruction.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -402,25 +509,36 @@ There are three different terminator instructions: the '<a href="#i_ret"><tt>ret
 
 <h5>Syntax:</h5>
 <pre>
-  ret &lt;type&gt; &lt;value&gt;       <i>; Return a value from a non-void method</i>
-  ret void                 <i>; Return from void method</i>
+  ret &lt;type&gt; &lt;value&gt;       <i>; Return a value from a non-void function</i>
+  ret void                 <i>; Return from void function</i>
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>ret</tt>' instruction is used to return control flow (and optionally a value) from a method, back to the caller.<p>
 
-There are two forms of the '<tt>ret</tt>' instructruction: one that returns a value and then causes control flow, and one that just causes control flow to occur.<p>
+ The '<tt>ret</tt>' instruction is used to return control flow (and optionally a
+ value) from a function, back to the caller.<p>
+
+There are two forms of the '<tt>ret</tt>' instructruction: one that returns a
+value and then causes control flow, and one that just causes control flow to
+occur.<p>
 
 <h5>Arguments:</h5>
-The '<tt>ret</tt>' instruction may return any '<a href="#t_firstclass">first class</a>' type.  Notice that a method is not <a href="#wellformed">well formed</a> if there exists a '<tt>ret</tt>' instruction inside of the method that returns a value that does not match the return type of the method.<p>
+
+The '<tt>ret</tt>' instruction may return any '<a href="#t_firstclass">first
+class</a>' type.  Notice that a function is not <a href="#wellformed">well
+formed</a> if there exists a '<tt>ret</tt>' instruction inside of the function
+that returns a value that does not match the return type of the function.<p>
 
 <h5>Semantics:</h5>
-When the '<tt>ret</tt>' instruction is executed, control flow returns back to the calling method's context.  If the instruction returns a value, that value shall be propogated into the calling method's data space.<p>
+
+When the '<tt>ret</tt>' instruction is executed, control flow returns back to
+the calling function's context.  If the instruction returns a value, that value
+shall be propogated into the calling function's data space.<p>
 
 <h5>Example:</h5>
 <pre>
   ret int 5                       <i>; Return an integer value of 5</i>
-  ret void                        <i>; Return from a void method</i>
+  ret void                        <i>; Return from a void function</i>
 </pre>
 
 
@@ -434,15 +552,25 @@ When the '<tt>ret</tt>' instruction is executed, control flow returns back to th
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>br</tt>' instruction is used to cause control flow to transfer to a different basic block in the current method.  There are two forms of this instruction, corresponding to a conditional branch and an unconditional branch.  The '<tt>br</tt>' instruction is a (useful) special case '<tt><a href="#i_switch">switch</a></tt>' instruction.<p>
+
+The '<tt>br</tt>' instruction is used to cause control flow to transfer to a
+different basic block in the current function.  There are two forms of this
+instruction, corresponding to a conditional branch and an unconditional
+branch.<p>
 
 <h5>Arguments:</h5>
 
-The conditional branch form of the '<tt>br</tt>' instruction shall take a single '<tt>bool</tt>' value and two '<tt>label</tt>' values.  The unconditional form of the '<tt>br</tt>' instruction takes a single '<tt>label</tt>' value as a target.<p>
+The conditional branch form of the '<tt>br</tt>' instruction takes a single
+'<tt>bool</tt>' value and two '<tt>label</tt>' values.  The unconditional form
+of the '<tt>br</tt>' instruction takes a single '<tt>label</tt>' value as a
+target.<p>
 
 <h5>Semantics:</h5>
 
-Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>bool</tt>' argument is evaluated.  If the value is <tt>true</tt>, control flows to the '<tt>iftrue</tt>' '<tt>label</tt>' argument.  If "cond" is <tt>false</tt>, control flows to the '<tt>iffalse</tt>' '<tt>label</tt>' argument.<p>
+Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>bool</tt>'
+argument is evaluated.  If the value is <tt>true</tt>, control flows to the
+'<tt>iftrue</tt>' '<tt>label</tt>' argument.  If "cond" is <tt>false</tt>,
+control flows to the '<tt>iffalse</tt>' '<tt>label</tt>' argument.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -472,23 +600,44 @@ IfUnequal:
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>switch</tt>' instruction is used to transfer control flow to one of several different places.  It is a simple generalization of the '<tt>br</tt>' instruction, and supports a strict superset of its functionality.<p>
 
-The '<tt>switch</tt>' statement supports two different styles of indirect branching: lookup branching and indexed branching.  Lookup branching is generally useful if the values to switch on are spread far appart, where index branching is useful if the values to switch on are generally dense.<p>
+The '<tt>switch</tt>' instruction is used to transfer control flow to one of
+several different places.  It is a generalization of the '<tt>br</tt>'
+instruction, allowing a branch to occur to one of many possible destinations.<p>
 
-The two different forms of the '<tt>switch</tt>' statement are simple hints to the underlying virtual machine implementation.  For example, a virtual machine may choose to implement a small indirect branch table as a series of predicated comparisons: if it is faster for the target architecture.<p>
+The '<tt>switch</tt>' statement supports two different styles of indirect
+branching: lookup branching and indexed branching.  Lookup branching is
+generally useful if the values to switch on are spread far appart, where index
+branching is useful if the values to switch on are generally dense.<p>
+
+The two different forms of the '<tt>switch</tt>' statement are simple hints to
+the underlying virtual machine implementation.  For example, a virtual machine
+may choose to implement a small indirect branch table as a series of predicated
+comparisons: if it is faster for the target architecture.<p>
 
 <h5>Arguments:</h5>
-The lookup form of the '<tt>switch</tt>' instruction uses three parameters: a '<tt>uint</tt>' comparison value '<tt>value</tt>', a default '<tt>label</tt>' destination, and a sized array of pairs of comparison value constants and '<tt>label</tt>'s.  The sized array must be a constant value.<p>
 
-The indexed form of the '<tt>switch</tt>' instruction uses three parameters: an '<tt>uint</tt>' index value, a default '<tt>label</tt>' and a sized array of '<tt>label</tt>'s.  The '<tt>dests</tt>' array must be a constant array.
+The lookup form of the '<tt>switch</tt>' instruction uses three parameters: a
+'<tt>uint</tt>' comparison value '<tt>value</tt>', a default '<tt>label</tt>'
+destination, and an array of pairs of comparison value constants and
+'<tt>label</tt>'s.  The sized array must be a constant value.<p>
+
+The indexed form of the '<tt>switch</tt>' instruction uses three parameters: an
+'<tt>uint</tt>' index value, a default '<tt>label</tt>' and a sized array of
+'<tt>label</tt>'s.  The '<tt>dests</tt>' array must be a constant array.
 
 <h5>Semantics:</h5>
 
-The lookup style switch statement specifies a table of values and destinations.  When the '<tt>switch</tt>' instruction is executed, this table is searched for the given value.  If the value is found, the corresponding destination is branched to. <p>
-The index branch form simply looks up a label element directly in a table and branches to it.<p>
+The lookup style switch statement specifies a table of values and destinations.
+When the '<tt>switch</tt>' instruction is executed, this table is searched for
+the given value.  If the value is found, the corresponding destination is
+branched to. <p>
 
-In either case, the compiler knows the static size of the array, because it is provided as part of the constant values type.<p>
+The index branch form simply looks up a label element directly in a table and
+branches to it.<p>
+
+In either case, the compiler knows the static size of the array, because it is
+provided as part of the constant values type.<p>
 
 <h5>Example:</h5>
 <pre>
@@ -502,11 +651,11 @@ In either case, the compiler knows the static size of the array, because it is p
   <i>; Implement a jump table using the constant pool:</i>
   void "testmeth"(int %arg0)
     %switchdests = [3 x label] [ label %onzero, label %onone, label %ontwo ]
-  {
+  begin
   ...
     switch uint %val, label %otherwise, [3 x label] %switchdests...
   ...
-  }
+  end
 
   <i>; Implement the equivilent jump table directly:</i>
   switch uint %val, label %otherwise, [3 x label] [ label %onzero, 
@@ -518,37 +667,54 @@ In either case, the compiler knows the static size of the array, because it is p
 
 
 <!-- _______________________________________________________________________ -->
-</ul><a name="i_callwith"><h4><hr size=0>'<tt>call .. with</tt>' Instruction</h4><ul>
+</ul><a name="i_invoke"><h4><hr size=0>'<tt>invoke</tt>' Instruction</h4><ul>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = call &lt;method ty&gt; %&lt;method name&gt;(&lt;method args&gt;) with label &lt;break label&gt;
+  &lt;result&gt; = invoke &lt;ptr to function ty&gt; %&lt;function ptr val&gt;(&lt;function args&gt;)
+                 to label &lt;normal label&gt; except label &lt;exception label&gt;
 </pre>
 
-<h5>Overview:</h5>
-The '<tt>call .. with</tt>' instruction is used to cause control flow to transfer to a specified method, with the possibility of control flow transfer to the '<tt>break label</tt>' label, in addition to the possibility of fallthrough to the next basic block.  The '<tt><a href="#i_call">call</a></tt>' instruction is closely related, but does guarantees that control flow either never returns from the invoked method, or that it returns to the instruction succeeding the '<tt><a href="#i_call">call</a></tt>' instruction.<p>
-
-TODO: icall .. with needs to be defined as well for an indirect call.<p>
+<h5>Overview:</h5> The '<tt>invoke</tt>' instruction is used to cause control
+flow to transfer to a specified function, with the possibility of control flow
+transfer to either the '<tt>normal label</tt>' label or the '<tt>exception
+label</tt>'.  The '<tt><a href="#i_call">call</a></tt>' instruction is closely
+related, but guarantees that control flow either never returns from the called
+function, or that it returns to the instruction succeeding the '<tt><a
+href="#i_call">call</a></tt>' instruction.<p>
 
 <h5>Arguments:</h5>
 
 This instruction requires several arguments:<p>
 <ol>
-<li>'<tt>method ty</tt>': shall be the signature of the named method being invoked.  This must be a <a href="#t_method">method type</a>.
-<li>'<tt>method name</tt>': method name to be invoked.
-<li>'<tt>method args</tt>': argument list whose types match the method signature argument types.
-<li>'<tt>break label</tt>': a label that specifies the break label associated with this call.
+
+<li>'<tt>ptr to function ty</tt>': shall be the signature of the pointer to
+function value being invoked.  In most cases, this is a direct method
+invocation, but indirect <tt>invoke</tt>'s are just as possible, branching off
+an arbitrary pointer to function value.<p>
+
+<li>'<tt>function ptr val</tt>': An LLVM value containing a pointer to a
+function to be invoked.
+
+<li>'<tt>function args</tt>': argument list whose types match the function
+signature argument types.
+
+<li>'<tt>normal label</tt>': the label reached when the called function executes
+a '<tt><a href="#i_ret">ret</a></tt>' instruction.
+
+<li>'<tt>exception label</tt>': the label reached when an exception is thrown.
 </ol>
 
 <h5>Semantics:</h5>
 
-This instruction is designed to operate as a standard '<tt><a href="#i_call">call</a></tt>' instruction in most regards.  The primary difference is that it assiciates a label with the method invocation that may be accessed via the runtime library provided by the execution environment.  This instruction is used in languages with destructors to ensure that proper cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown exception.  Additionally, this is important for implementation of '<tt>catch</tt>' clauses in high-level languages that support them.<p>
+This instruction is designed to operate as a standard '<tt><a href="#i_call">call</a></tt>' instruction in most regards.  The primary difference is that it assiciates a label with the function invocation that may be accessed via the runtime library provided by the execution environment.  This instruction is used in languages with destructors to ensure that proper cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown exception.  Additionally, this is important for implementation of '<tt>catch</tt>' clauses in high-level languages that support them.<p>
 
-For a more comprehensive explanation of this instruction look in the llvm/docs/2001-05-18-ExceptionHandling.txt document.
+For a more comprehensive explanation of this instruction look in the llvm/docs/2001-05-18-ExceptionHandling.txt document.<p>
 
 <h5>Example:</h5>
 <pre>
-  %retval = call int (int) %Test(int 15) with label %TestCleanup     <i>; {int}:retval set</i>
+  %retval = invoke int %Test(int 15)
+              to label %Continue except label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 
 
@@ -560,7 +726,7 @@ For a more comprehensive explanation of this instruction look in the llvm/docs/2
 
 Unary operators are used to do a simple operation to a single value.<p>
 
-There is only one unary operators: the '<a href="#i_not"><tt>not</tt></a>' instruction.<p>
+There is only one unary operator: the '<a href="#i_not"><tt>not</tt></a>' instruction.<p>
 
 
 <!-- _______________________________________________________________________ -->
@@ -581,8 +747,6 @@ The single argument to '<tt>not</tt>' must be of of <a href="#t_integral">integr
 <h5>Semantics:</h5>
 The '<tt>not</tt>' instruction returns the <a href="#logical_integrals">logical</a> inverse of an <a href="#t_integral">integral</a> type.<p>
 
-Note that the '<tt>not</tt>' instruction is is not defined over to '<tt>bool</tt>' type.  To invert a boolean value, the recommended method is to use:<p>
-
 <pre>
   &lt;result&gt; = xor bool true, &lt;var&gt; <i>; yields {bool}:result</i>
 </pre>
@@ -600,7 +764,10 @@ Note that the '<tt>not</tt>' instruction is is not defined over to '<tt>bool</tt
 <a name="binaryops">Binary Operations
 </b></font></td></tr></table><ul>
 
-Binary operators are used to do most of the computation in a program.  They require two operands, execute an operation on them, and produce a single value.  The result value of a binary operator is not neccesarily the same type as its operands.<p>
+Binary operators are used to do most of the computation in a program.  They
+require two operands, execute an operation on them, and produce a single value.
+The result value of a binary operator is not neccesarily the same type as its
+operands.<p>
 
 There are several different binary operators:<p>
 
@@ -637,12 +804,17 @@ The two arguments to the '<tt>add</tt>' instruction must be either <a href="#t_i
 </pre>
 
 <h5>Overview:</h5>
+
 The '<tt>sub</tt>' instruction returns the difference of its two operands.<p>
 
-Note that the '<tt>sub</tt>' instruction is the cannonical way the '<tt>neg</tt>' instruction is represented as well.<p>
+Note that the '<tt>sub</tt>' instruction is used to represent the '<tt>neg</tt>'
+instruction present in most other intermediate representations.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>sub</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+
+The two arguments to the '<tt>sub</tt>' instruction must be either <a
+href="#t_integral">integral</a> or <a href="#t_floating">floating point</a>
+values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 ...<p>
@@ -669,7 +841,9 @@ The two arguments to the '<tt>mul</tt>' instruction must be either <a href="#t_i
 
 <h5>Semantics:</h5>
 ...<p>
-There is no signed vs unsigned multiplication.  The appropriate action is taken based on the type of the operand. <p>
+
+There is no signed vs unsigned multiplication.  The appropriate action is taken
+based on the type of the operand. <p>
 
 
 <h5>Example:</h5>
@@ -687,10 +861,14 @@ There is no signed vs unsigned multiplication.  The appropriate action is taken 
 </pre>
 
 <h5>Overview:</h5>
+
 The  '<tt>div</tt>' instruction returns the quotient of its two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>div</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_floating">floating point</a> values.  Both arguments must have identical types.<p>
+
+The two arguments to the '<tt>div</tt>' instruction must be either <a
+href="#t_integral">integral</a> or <a href="#t_floating">floating point</a>
+values.  Both arguments must have identical types.<p>
 
 <h5>Semantics:</h5>
 ...<p>
@@ -741,8 +919,11 @@ TODO: remainder or modulus?<p>
 <h5>Overview:</h5>
 The '<tt>set<i>cc</i></tt>' family of instructions returns a boolean value based on a comparison of their two operands.<p>
 
-<h5>Arguments:</h5>
-The two arguments to the '<tt>set<i>cc</i></tt>' instructions must be of <a href="#t_firstclass">first class</a> or <a href="#t_derived">derived</a> type (it is not possible to compare '<tt>label</tt>'s or '<tt>void</tt>' values).  Both arguments must have identical types.<p>
+<h5>Arguments:</h5> The two arguments to the '<tt>set<i>cc</i></tt>'
+instructions must be of <a href="#t_firstclass">first class</a> or <a
+href="#t_pointer">pointer</a> type (it is not possible to compare
+'<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>' or '<tt>void</tt>'
+values).  Both arguments must have identical types.<p>
 
 The '<tt>setlt</tt>', '<tt>setgt</tt>', '<tt>setle</tt>', and '<tt>setge</tt>' instructions do not operate on '<tt>bool</tt>' typed arguments.<p>
 
@@ -809,11 +990,14 @@ The two arguments to the '<tt>and</tt>' instruction must be either <a href="#t_i
   &lt;result&gt; = or &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
-<h5>Overview:</h5>
-The '<tt>or</tt>' instruction returns the bitwise logical inclusive or of its two operands.<p>
+<h5>Overview:</h5> The '<tt>or</tt>' instruction returns the bitwise logical
+inclusive or of its two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>or</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.  Both arguments must have identical types.<p>
+
+The two arguments to the '<tt>or</tt>' instruction must be either <a
+href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.
+Both arguments must have identical types.<p>
 
 
 <h5>Semantics:</h5>
@@ -837,10 +1021,15 @@ The two arguments to the '<tt>or</tt>' instruction must be either <a href="#t_in
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>xor</tt>' instruction returns the bitwise logical exclusive or of its two operands.<p>
+
+The '<tt>xor</tt>' instruction returns the bitwise logical exclusive or of its
+two operands.<p>
 
 <h5>Arguments:</h5>
-The two arguments to the '<tt>xor</tt>' instruction must be either <a href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.  Both arguments must have identical types.<p>
+
+The two arguments to the '<tt>xor</tt>' instruction must be either <a
+href="#t_integral">integral</a> or <a href="#t_bool"><tt>bool</tt></a> values.
+Both arguments must have identical types.<p>
 
 
 <h5>Semantics:</h5>
@@ -864,10 +1053,15 @@ The two arguments to the '<tt>xor</tt>' instruction must be either <a href="#t_i
 </pre>
 
 <h5>Overview:</h5>
-The '<tt>shl</tt>' instruction returns the first operand shifted to the left a specified number of bits.
+
+The '<tt>shl</tt>' instruction returns the first operand shifted to the left a
+specified number of bits.
 
 <h5>Arguments:</h5>
-The first argument to the '<tt>shl</tt>' instruction must be an  <a href="#t_integral">integral</a> type.  The second argument must be an '<tt>ubyte</tt>' type.<p>
+
+The first argument to the '<tt>shl</tt>' instruction must be an <a
+href="#t_integral">integral</a> type.  The second argument must be an
+'<tt>ubyte</tt>' type.<p>
 
 <h5>Semantics:</h5>
 ... 0 bits are shifted into the emptied bit positions...<p>
@@ -924,8 +1118,8 @@ Accessing memory in SSA form is, well, sticky at best.  This section describes h
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = malloc  &lt;type&gt;                        <i>; yields { type  *}:result</i>
-  &lt;result&gt; = malloc [&lt;type&gt;], uint &lt;NumElements&gt;   <i>; yields {[type] *}:result</i>
+  &lt;result&gt; = malloc &lt;type&gt;, uint &lt;NumElements&gt;     <i>; yields {type*}:result</i>
+  &lt;result&gt; = malloc &lt;type&gt;                         <i>; yields {type*}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -933,9 +1127,13 @@ The '<tt>malloc</tt>' instruction allocates memory from the system heap and retu
 
 <h5>Arguments:</h5>
 
-There are two forms of the '<tt>malloc</tt>' instruction, one for allocating a variable of a fixed type, and one for allocating an array.  The array form is used to allocate an array, where the upper bound is not known until run time.  If the upper bound is known at compile time, it is recommended that the first form be used with a <a href="#t_array_fixed">sized array type</a>.<p>
+The the '<tt>malloc</tt>' instruction allocates
+<tt>sizeof(&lt;type&gt;)*NumElements</tt> bytes of memory from the operating
+system, and returns a pointer of the appropriate type to the program.  The
+second form of the instruction is a shorter version of the first instruction
+that defaults to allocating one element.<p>
 
-'<tt>type</tt>' may be any type except for a <a href="#t_array_unsized">unsized array type</a>.<p>
+'<tt>type</tt>' must be a sized type<p>
 
 <h5>Semantics:</h5>
 Memory is allocated, a pointer is returned.<p>
@@ -945,8 +1143,8 @@ Memory is allocated, a pointer is returned.<p>
   %array  = malloc [4 x ubyte ]                    <i>; yields {[%4 x ubyte]*}:array</i>
 
   %size   = <a href="#i_add">add</a> uint 2, 2                          <i>; yields {uint}:size = uint 4</i>
-  %array1 = malloc [ubyte], uint 4                 <i>; yields {[ubyte]*}:array1</i>
-  %array2 = malloc [ubyte], uint %size             <i>; yields {[ubyte]*}:array2</i>
+  %array1 = malloc ubyte, uint 4                   <i>; yields {ubyte*}:array1</i>
+  %array2 = malloc [12 x ubyte], uint %size        <i>; yields {[12 x ubyte]*}:array2</i>
 </pre>
 
 
@@ -984,30 +1182,75 @@ Memory is available for use after this point.  The contents of the '<tt>value</t
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = alloca  &lt;type&gt;                       <i>; yields {type*}:result</i>
-  &lt;result&gt; = alloca [&lt;type&gt;], uint &lt;NumElements&gt;  <i>; yields {[type] *}:result</i>
+  &lt;result&gt; = alloca &lt;type&gt;, uint &lt;NumElements&gt;  <i>; yields {type*}:result</i>
+  &lt;result&gt; = alloca &lt;type&gt;                      <i>; yields {type*}:result</i>
 </pre>
 
 <h5>Overview:</h5>
 
-The '<tt>alloca</tt>' instruction allocates memory on the current stack frame of the procedure that is live as long as the method does not return.<p>
+The '<tt>alloca</tt>' instruction allocates memory on the current stack frame of
+the procedure that is live until the current function returns to its caller.<p>
 
 <h5>Arguments:</h5>
-There are two forms of the '<tt>alloca</tt>' instruction, one for allocating a variable of a fixed type, and one for allocating an array.  The array form is used to allocate an array, where the upper bound is not known until run time.  If the upper bound is known at compile time, it is recommended that the first form be used with a <a href="#t_array_fixed">sized array type</a>.<p>
 
-'<tt>type</tt>' may be any type except for a <a href="#t_array_unsized">unsized array type</a>.<p>
+The the '<tt>alloca</tt>' instruction allocates
+<tt>sizeof(&lt;type&gt;)*NumElements</tt> bytes of memory on the runtime stack,
+returning a pointer of the appropriate type to the program.  The second form of
+the instruction is a shorter version of the first that defaults to allocating
+one element.<p>
 
-Note that a virtual machine may generate more efficient native code for a method if all of the fixed size '<tt>alloca</tt>' instructions live in the first basic block of that method.
-
+'<tt>type</tt>' may be any sized type.<p>
 
 <h5>Semantics:</h5>
-Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is automatically released when the method returns.  The '<tt>alloca</tt>' utility is how variable spills shall be implemented.<p>
+
+Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is
+automatically released when the function returns.  The '<tt>alloca</tt>'
+instruction is commonly used to represent automatic variables that must have an
+address available, as well as spilled variables.<p>
 
 <h5>Example:</h5>
 <pre>
   %ptr = alloca int                              <i>; yields {int*}:ptr</i>
-  %ptr = alloca [int], uint 4                    <i>; yields {[int]*}:ptr</i>
+  %ptr = alloca int, uint 4                      <i>; yields {int*}:ptr</i>
 </pre>
+
+
+<!-- _______________________________________________________________________ -->
+</ul><a name="i_getelementptr"><h4><hr size=0>'<tt>getelementptr</tt>' Instruction</h4><ul>
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;result&gt; = getelementptr &lt;ty&gt;* &lt;ptrval&gt;{, uint &lt;aidx&gt;|, ubyte &lt;sidx&gt;}*
+</pre>
+
+<h5>Overview:</h5>
+
+The '<tt>getelementptr</tt>' instruction is used to get the address of a
+subelement of an aggregate data structure.  In addition to being present as an
+explicit instruction, the '<tt>getelementptr</tt>' functionality is present in
+both the '<tt><a href="#i_load">load</a></tt>' and '<tt><a
+href="#i_store">store</a></tt>' instructions to allow more compact specification
+of common expressions.<p>
+
+<h5>Arguments:</h5>
+
+This instruction takes a list of <tt>uint</tt> values and <tt>ubyte</tt>
+constants that indicate what form of addressing to perform.  The actual types of
+the arguments provided depend on the type of the first pointer argument.  The
+'<tt>getelementptr</tt>' instruction is used to index down through the type
+levels of a structure.<p>
+
+TODO.
+
+<h5>Semantics:</h5>
+
+
+<h5>Example:</h5>
+<pre>
+  %aptr = getelementptr {int, [12 x ubyte]}* %sptr, 1   <i>; yields {[12 x ubyte]*}:aptr</i>
+  %ub   = load [12x ubyte]* %aptr, 4                    <i>;yields {ubyte}:ub</i>
+</pre>
+
 
 
 <!-- _______________________________________________________________________ -->
@@ -1015,9 +1258,8 @@ Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d memory is automa
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;                 <i>; yields {ty}:result</i>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;arrayptr&gt;{, uint &lt;idx&gt;}+    <i>; yields {ty}:result</i>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;structptr&gt;{, ubyte &lt;idx&gt;}+     <i>; yields field type</i>
+  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;
+  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt; &lt;index list&gt;
 </pre>
 
 <h5>Overview:</h5>
@@ -1084,33 +1326,6 @@ The semantics of this instruction closely match that of the <a href="#i_load">lo
   %val   = load {{int, float}}* %stptr, 0, 1      <i>; yields {float}:val</i>
 </pre>
 
-
-
-
-<!-- _______________________________________________________________________ -->
-</ul><a name="i_getelementptr"><h4><hr size=0>'<tt>getelementptr</tt>' Instruction</h4><ul>
-
-<h5>Syntax:</h5>
-<pre>
-  &lt;result&gt; = getelementptr &lt;ty&gt;* &lt;arrayptr&gt;{, uint &lt;idx&gt;}+    <i>; yields {ty*}:result</i>
-  &lt;result&gt; = getelementptr &lt;ty&gt;* &lt;structptr&gt;{, ubyte &lt;idx&gt;}+     <i>; yields field type*</i>
-</pre>
-
-<h5>Overview:</h5>
-
-'<tt>getelementptr</tt>' performs all of the same work that a '<tt><a href="#i_load">load</a>' instruction does, except for the actual memory fetch.  Instead, '<tt>getelementpr</tt>' simply performs the addressing arithmetic to get to the element in question, and returns it.  This is useful for indexing into a bimodal structure.
-
-<h5>Arguments:</h5>
-
-
-<h5>Semantics:</h5>
-
-
-<h5>Example:</h5>
-<pre>
-  %aptr = getelementptr {int, [12 x ubyte]}* %sptr, 1   <i>; yields {[12 x ubyte]*}:aptr</i>
-  %ub   = load [12x ubyte]* %aptr, 4                    <i>;yields {ubyte}:ub</i>
-</pre>
 
 
 
@@ -1215,7 +1430,7 @@ Example:
 
 <b>Notice:</b> Preliminary idea!<p>
 
-Builtin functions are very similar to normal functions, except they are defined by the implementation.  Invocations of these functions are very similar to method invocations, except that the syntax is a little less verbose.<p>
+Builtin functions are very similar to normal functions, except they are defined by the implementation.  Invocations of these functions are very similar to function invocations, except that the syntax is a little less verbose.<p>
 
 Builtin functions are useful to implement semi-high level ideas like a '<tt>min</tt>' or '<tt>max</tt>' operation that can have important properties when doing program analysis.  For example:
 
@@ -1223,10 +1438,10 @@ Builtin functions are useful to implement semi-high level ideas like a '<tt>min<
 <li>Some optimizations can make use of identities defined over the functions, 
     for example a parrallelizing compiler could make use of '<tt>min</tt>' 
     identities to parrellelize a loop.
-<li>Builtin functions would have polymorphic types, where normal method calls
+<li>Builtin functions would have polymorphic types, where normal function calls
     may only have a single type.
 <li>Builtin functions would be known to not have side effects, simplifying 
-    analysis over straight method calls.
+    analysis over straight function calls.
 <li>The syntax of the builtin are cleaner than the syntax of the 
     '<a href="#i_call"><tt>call</tt></a>' instruction (very minor point).
 </ul>
@@ -1236,7 +1451,7 @@ Because these invocations are explicit in the representation, the runtime can ch
 <ul>
 <li>Inlining the code directly into the invocation
 <li>Implementing the functions in some sort of Runtime class, convert invocation
-    to a standard method call.
+    to a standard function call.
 <li>Implementing the functions in some sort of Runtime class, and perform 
     standard inlining optimizations on it.
 </ul>
@@ -1245,7 +1460,7 @@ Note that these builtins do not use quoted identifiers: the name of the builtin 
 
 Example:
 <pre>
-  ; Example of a normal method call
+  ; Example of a normal function call
   %maximum = call int %maximum(int %arg1, int %arg2)   <i>; yields {int}:%maximum</i>
 
   ; Examples of potential builtin functions
@@ -1259,7 +1474,7 @@ Example:
   %cos = cos(float %arg)                               <i>; yields {float}:%cos</i>
 </pre>
 
-The '<tt>maximum</tt>' vs '<tt>max</tt>' example illustrates the difference in calling semantics between a '<a href="#i_call"><tt>call</tt></a>' instruction and a builtin function invocation.  Notice that the '<tt>maximum</tt>' example assumes that the method is defined local to the caller.<p>
+The '<tt>maximum</tt>' vs '<tt>max</tt>' example illustrates the difference in calling semantics between a '<a href="#i_call"><tt>call</tt></a>' instruction and a builtin function invocation.  Notice that the '<tt>maximum</tt>' example assumes that the function is defined local to the caller.<p>
 
 
 
@@ -1301,7 +1516,7 @@ In order to represent programs written in languages like C, we need to be able t
 <!-- _______________________________________________________________________ -->
 </ul><a name="explicitparrellelism"><h3><hr size=0>Explicit Parrellelism</h3><ul>
 
-With the rise of massively parrellel architectures (like <a href="#rw_ia64">the IA64 architecture</a>, multithreaded CPU cores, and SIMD data sets) it is becoming increasingly more important to extract all of the ILP from a code stream possible.  It would be interesting to research encoding methods that can explicitly represent this.  One straightforward way to do this would be to introduce a "stop" instruction that is equilivent to the IA64 stop bit.<p>
+With the rise of massively parrellel architectures (like <a href="#rw_ia64">the IA64 architecture</a>, multithreaded CPU cores, and SIMD data sets) it is becoming increasingly more important to extract all of the ILP from a code stream possible.  It would be interesting to research encoding functions that can explicitly represent this.  One straightforward way to do this would be to introduce a "stop" instruction that is equilivent to the IA64 stop bit.<p>
 
 
 
@@ -1375,7 +1590,7 @@ more...
 <address><a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Jan 23 15:19:28 CST 2001 -->
 <!-- hhmts start -->
-Last modified: Sun Jul  8 19:25:56 CDT 2001
+Last modified: Sun Apr 14 01:12:55 CDT 2002
 <!-- hhmts end -->
 </font>
 </body></html>
