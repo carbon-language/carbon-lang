@@ -386,7 +386,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   // [ESP + 8] -- second argument, if first argument is four bytes in size
   //    ... 
   //
-  unsigned ArgOffset = 4;
+  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   MachineFrameInfo *MFI = F->getFrameInfo();
 
   for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {

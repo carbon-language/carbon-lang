@@ -37,7 +37,7 @@ X86TargetMachine::X86TargetMachine(unsigned Config)
 		  1, 4, 
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4,
 		  (Config & TM::PtrSizeMask) == TM::PtrSize64 ? 8 : 4),
-  FrameInfo(TargetFrameInfo::StackGrowsDown, 1/*16*/, 0) {
+  FrameInfo(TargetFrameInfo::StackGrowsDown, 8/*16 for SSE*/, 4) {
 }
 
 /// addPassesToJITCompile - Add passes to the specified pass manager to

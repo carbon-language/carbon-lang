@@ -13,6 +13,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "Support/CommandLine.h"
 
 namespace {
@@ -105,6 +107,12 @@ void X86RegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
     // <amt>'
     unsigned Amount = Old->getOperand(0).getImmedValue();
     if (Amount != 0) {
+      // We need to keep the stack aligned properly.  To do this, we round the
+      // amount of space needed for the outgoing arguments up to the next
+      // alignment boundary.
+      unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
+      Amount = (Amount+Align-1)/Align*Align;
+
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
 	New=BuildMI(X86::SUBri32, 2, X86::ESP).addReg(X86::ESP).addZImm(Amount);
       } else {
@@ -190,6 +198,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // eliminates the need for add/sub ESP brackets around call sites.
     //
     NumBytes += MFI->getMaxCallFrameSize();
+
+    // Round the size to a multiple of the alignment (don't forget the 4 byte
+    // offset though).
+    unsigned Align = MF.getTarget().getFrameInfo().getStackAlignment();
+    NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
 
     // Update frame info to pretend that this is part of the stack...
     MFI->setStackSize(NumBytes);
