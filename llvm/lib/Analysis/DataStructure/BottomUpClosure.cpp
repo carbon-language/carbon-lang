@@ -146,6 +146,7 @@ DSGraph &BUDataStructures::calculateGraph(Function &F) {
             std::vector<DSCallSite> &CallSitesForFunc = CallSites[&FI];
             CallSitesForFunc.push_back(Call);
             CallSitesForFunc.back().setResolvingCaller(&F);
+            CallSitesForFunc.back().setCallee(0);
 
             // Clone the callee's graph into the current graph, keeping
             // track of where scalars in the old graph _used_ to point,
