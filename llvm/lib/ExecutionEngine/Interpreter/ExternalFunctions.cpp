@@ -531,11 +531,20 @@ GenericValue lle_X_fgets(FunctionType *M, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// FILE *freopen(const char *path, const char *mode, FILE *stream);
+GenericValue lle_X_freopen(FunctionType *M, const vector<GenericValue> &Args) {
+  assert(Args.size() == 3);
+  GenericValue GV;
+  GV.PointerVal = (PointerTy)freopen((char*)Args[0].PointerVal,
+                                     (char*)Args[1].PointerVal,
+                                     getFILE(Args[2].PointerVal));
+  return GV;
+}
+
 // int fflush(FILE *stream);
 GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-
   GV.IntVal = fflush(getFILE(Args[0].PointerVal));
   return GV;
 }
@@ -544,7 +553,6 @@ GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_getc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-
   GV.IntVal = getc(getFILE(Args[0].PointerVal));
   return GV;
 }
@@ -632,4 +640,5 @@ void Interpreter::initializeExternalMethods() {
   FuncNames["lle_X_fputc"]        = lle_X_fputc;
   FuncNames["lle_X_ungetc"]       = lle_X_ungetc;
   FuncNames["lle_X_fprintf"]      = lle_X_fprintf;
+  FuncNames["lle_X_freopen"]      = lle_X_freopen;
 }
