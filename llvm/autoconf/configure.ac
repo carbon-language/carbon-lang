@@ -377,6 +377,16 @@ AC_ARG_WITH(bcrepos,AC_HELP_STRING([--with-bcrepos],[Location of Bytecode Reposi
 dnl Location of PAPI
 AC_ARG_WITH(papi,AC_HELP_STRING([--with-papi],[Location of PAPI]),AC_SUBST(PAPIDIR,[$withval]),AC_SUBST(PAPIDIR,[/home/vadve/shared/Sparc/papi-2.3.4.1]))
 
+dnl Get libtool's idea of what the shared library suffix is.
+dnl (This is a hack; it relies on undocumented behavior.)
+AC_MSG_CHECKING([for shared library suffix])
+eval "SHLIBEXT=$shrext"
+AC_MSG_RESULT($SHLIBEXT)
+dnl Propagate it to the Makefiles and config.h (for gccld & bugpoint).
+AC_SUBST(SHLIBEXT,$SHLIBEXT)
+AC_DEFINE_UNQUOTED(SHLIBEXT,"$SHLIBEXT",
+                   [Extension that shared libraries have, e.g., ".so".])
+
 dnl Create the output files
 AC_OUTPUT(Makefile.config)
 
@@ -390,3 +400,4 @@ then
 	AC_MSG_WARN([***** Runtime libraries (in llvm/runtime) will not be built,])
 	AC_MSG_WARN([***** but you should be able to build the llvm tools.])
 fi
+
