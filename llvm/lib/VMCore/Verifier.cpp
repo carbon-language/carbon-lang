@@ -736,22 +736,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::memmove:         NumArgs = 4; break;
   case Intrinsic::memset:          NumArgs = 4; break;
  
-  case Intrinsic::alpha_ctlz:      NumArgs = 1; break;
-  case Intrinsic::alpha_cttz:      NumArgs = 1; break;
-  case Intrinsic::alpha_ctpop:     NumArgs = 1; break;
-  case Intrinsic::alpha_umulh:     NumArgs = 2; break;
-  case Intrinsic::alpha_vecop:     NumArgs = 4; break;
-  case Intrinsic::alpha_pup:       NumArgs = 3; break;
-  case Intrinsic::alpha_bytezap:   NumArgs = 2; break;
-  case Intrinsic::alpha_bytemanip: NumArgs = 3; break;
-  case Intrinsic::alpha_dfpbop:    NumArgs = 3; break;
-  case Intrinsic::alpha_dfpuop:    NumArgs = 2; break;
-  case Intrinsic::alpha_unordered: NumArgs = 2; break;
-  case Intrinsic::alpha_uqtodfp:   NumArgs = 2; break;
-  case Intrinsic::alpha_uqtosfp:   NumArgs = 2; break;
-  case Intrinsic::alpha_dfptosq:   NumArgs = 2; break;
-  case Intrinsic::alpha_sfptosq:   NumArgs = 2; break;
-
   case Intrinsic::not_intrinsic: 
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
   }

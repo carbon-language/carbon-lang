@@ -181,38 +181,7 @@ unsigned Function::getIntrinsicID() const {
 
   assert(getName().size() != 5 && "'llvm.' is an invalid intrinsic name!");
   
-  // a table of all Alpha intrinsic functions
-  struct {
-   std::string name;  // The name of the intrinsic 
-   unsigned id;       // Its ID number
-  } alpha_intrinsics[] = {
-     { "llvm.alpha.ctlz",      Intrinsic::alpha_ctlz },
-     { "llvm.alpha.cttz",      Intrinsic::alpha_cttz },
-     { "llvm.alpha.ctpop",     Intrinsic::alpha_ctpop },
-     { "llvm.alpha.umulh",     Intrinsic::alpha_umulh },
-     { "llvm.alpha.vecop",     Intrinsic::alpha_vecop },
-     { "llvm.alpha.pup",       Intrinsic::alpha_pup },
-     { "llvm.alpha.bytezap",   Intrinsic::alpha_bytezap },
-     { "llvm.alpha.bytemanip", Intrinsic::alpha_bytemanip },
-     { "llvm.alpha.dfp_bop",   Intrinsic::alpha_dfpbop }, 
-     { "llvm.alpha.dfp_uop",   Intrinsic::alpha_dfpuop },
-     { "llvm.alpha.unordered", Intrinsic::alpha_unordered },
-     { "llvm.alpha.uqtodfp",   Intrinsic::alpha_uqtodfp },
-     { "llvm.alpha.uqtosfp",   Intrinsic::alpha_uqtosfp },
-     { "llvm.alpha.dfptosq",   Intrinsic::alpha_dfptosq },
-     { "llvm.alpha.sfptosq",   Intrinsic::alpha_sfptosq },
-  };
-  const unsigned num_alpha_intrinsics = 
-                 sizeof(alpha_intrinsics) / sizeof(*alpha_intrinsics);
-
   switch (getName()[5]) {
-  case 'a':
-    if (getName().size() > 11 &&
-        std::string(getName().begin()+4, getName().begin()+11) == ".alpha.")
-      for (unsigned i = 0; i < num_alpha_intrinsics; ++i)
-        if (getName() == alpha_intrinsics[i].name)
-          return alpha_intrinsics[i].id;
-    break;
   case 'd':
     if (getName() == "llvm.dbg.stoppoint")   return Intrinsic::dbg_stoppoint;
     if (getName() == "llvm.dbg.region.start")return Intrinsic::dbg_region_start;
