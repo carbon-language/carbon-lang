@@ -92,7 +92,10 @@ public:
 public:
   /// If you'd like to deal with a function instead of just a module, use 
   /// this method to get its data into the SlotMachine.
-  void incorporateFunction(const Function *F) { TheFunction = F; }
+  void incorporateFunction(const Function *F) { 
+    TheFunction = F;  
+    FunctionProcessed = false;
+  }
 
   /// After calling incorporateFunction, use this method to remove the 
   /// most recently incorporated function from the SlotMachine. This 
@@ -138,6 +141,7 @@ public:
 
   /// @brief The function for which we are holding slot numbers
   const Function* TheFunction;
+  bool FunctionProcessed;
 
   /// @brief The TypePlanes map for the module level data
   TypedPlanes mMap;
@@ -1263,6 +1267,7 @@ CachedWriter& CachedWriter::operator<<(const Type &Ty) {
 SlotMachine::SlotMachine(const Module *M) 
   : TheModule(M)    ///< Saved for lazy initialization.
   , TheFunction(0)
+  , FunctionProcessed(false)
   , mMap()
   , mTypes()
   , fMap()
@@ -1275,6 +1280,7 @@ SlotMachine::SlotMachine(const Module *M)
 SlotMachine::SlotMachine(const Function *F ) 
   : TheModule( F ? F->getParent() : 0 ) ///< Saved for lazy initialization
   , TheFunction(F) ///< Saved for lazy initialization
+  , FunctionProcessed(false)
   , mMap()
   , mTypes()
   , fMap()
@@ -1287,7 +1293,7 @@ inline void SlotMachine::initialize(void) {
     processModule(); 
     TheModule = 0; ///< Prevent re-processing next time we're called.
   }
-  if ( TheFunction ) { 
+  if ( TheFunction && ! FunctionProcessed) { 
     processFunction(); 
   }
 }
@@ -1331,6 +1337,8 @@ void SlotMachine::processFunction() {
     }
   }
 
+  FunctionProcessed = true;
+
   SC_DEBUG("end processFunction!\n");
 }
 
@@ -1343,6 +1351,7 @@ void SlotMachine::purgeFunction() {
   fMap.clear(); // Simply discard the function level map
   fTypes.clear();
   TheFunction = 0;
+  FunctionProcessed = false;
   SC_DEBUG("end purgeFunction!\n");
 }
 
