@@ -298,7 +298,7 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     <tr>
       <td><a href="http://gcc.gnu.org">GCC</a></td>
       <td>3.4.2</td>
-      <td>C/C++ compiler (<a href="#Note4">Note 4</a>)</td>
+      <td>C/C++ compiler (<a href="#Note3">Note 3</a>)</td>
     </tr>
 
     <tr>
@@ -362,23 +362,9 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     </tr>
 
     <tr>
-      <td><a href="http://www.codesourcery.com/qmtest">QMTest</a></td>
-      <td>2.0.3</td>
-      <td>Automated test suite (<a href="#Note2">Note 2</a>,<a href="#Note3">
-          Note 3</a>)</td>
-    </tr>
-
-    <tr>
-      <td><a href="http://www.python.org">Python</a></td>
-      <td>2.3</td>
-      <td>Automated test suite (<a href="#Note2">Note 2</a>,<a href="#Note3">
-          Note 3</a>)</td>
-    </tr>
-
-    <tr>
       <td><a href="https://www.cvshome.org/downloads.html">CVS</a></td>
       <td>&gt;1.11</td>
-      <td>CVS access to LLVM (<a href="#Note5">Note 5</a>)</td>
+      <td>CVS access to LLVM (<a href="#Note4">Note 4</a>)</td>
     </tr>
 
   </table>
@@ -391,21 +377,12 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
       package.</a></li>
     <li><a name="Note2">Only needed if you want to run the automated test 
       suite in the <tt>test</tt> directory.</a></li>
-    <li><a name="Note3">These are needed to use the LLVM test suite.</a>
-      Please note that newer versions of QMTest may not work with the LLVM 
-      test suite.  QMTest 2.0.3 can be retrieved from the QMTest CVS 
-      repository using the following commands:
-      <ul>
-        <li><tt>cvs -d :pserver:anoncvs@cvs.codesourcery.com:/home/qm/Repository login</tt></li>
-        <li>When prompted, use <tt>anoncvs</tt> as the password. </li>
-        <li><tt>cvs -d :pserver:anoncvs@cvs.codesourcery.com:/home/qm/Repository co -r release-2-0-3 qm</tt></li>
-      </ul>
     </li>
-    <li><a name="Note4">Only the C and C++ languages are needed so there's no
+    <li><a name="Note3">Only the C and C++ languages are needed so there's no
       need to build the other languages for LLVM's purposes.</a> See 
       <a href="#brokengcc">below</a> for specific version info.
     </li>
-    <li><a name="Note5">You only need CVS if you intend to build from the 
+    <li><a name="Note4">You only need CVS if you intend to build from the 
       latest LLVM sources. If you're working from a release distribution, you
       don't need CVS.</a></li>
   </ol>
