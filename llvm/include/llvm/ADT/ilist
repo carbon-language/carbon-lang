@@ -58,9 +58,10 @@ struct ilist_traits {
   static void setPrev(NodeTy *N, NodeTy *Prev) { N->setPrev(Prev); }
   static void setNext(NodeTy *N, NodeTy *Next) { N->setNext(Next); }
 
-  static NodeTy *createNode() { return new NodeTy(); }
   static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
 
+  static NodeTy *createSentinal() { return new NodeTy(); }
+  static void destroySentinal(NodeTy *N) { delete N; }
 
   void addNodeToList(NodeTy *NTy) {}
   void removeNodeFromList(NodeTy *NTy) {}
@@ -301,11 +302,11 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(Traits::createNode()), Tail(Head) {
+  iplist() : Head(Traits::createSentinal()), Tail(Head) {
     setNext(Head, 0);
     setPrev(Head, 0);
   }
-  ~iplist() { clear(); delete Tail; }
+  ~iplist() { clear(); Traits::destroySentinal(Tail); }
 
   // Iterator creation methods.
   iterator begin()             { return iterator(Head); }
