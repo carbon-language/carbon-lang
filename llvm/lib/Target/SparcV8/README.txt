@@ -2,7 +2,7 @@
 SparcV8 backend skeleton
 ------------------------
 
-This directory houses a 32-bit SPARC V8 backend employing a expander-based
+This directory houses a 32-bit SPARC V8 backend employing an expander-based
 instruction selector.  It is not yet functionally complete.  Watch
 this space for more news coming soon!
 
