@@ -32,10 +32,6 @@ class User;
 // Use is here to make keeping the "use" list of a Value up-to-date really easy.
 //
 class Use {
-  Value *Val;
-  User *U;
-  Use *Prev, *Next;
-  friend struct ilist_traits<Use>;
 public:
   inline void init(Value *V, User *U);
 
@@ -65,19 +61,35 @@ public:
 
         Value *operator->()       { return Val; }
   const Value *operator->() const { return Val; }
+
+private:
+  // NOTE!! The Next/Prev fields MUST stay at the start of this structure.  The
+  // end-token for the ilist is allocated as JUST the next/prev pair to reduce
+  // memory usage instead of allocating an entire Use.
+  struct NextPrevPtrs {
+    Use *Next, *Prev;
+  } UseLinks;
+
+  Value *Val;
+  User *U;
+  friend struct ilist_traits<Use>;
 };
 
 template<>
 struct ilist_traits<Use> {
-  static Use *getPrev(Use *N) { return N->Prev; }
-  static Use *getNext(Use *N) { return N->Next; }
-  static const Use *getPrev(const Use *N) { return N->Prev; }
-  static const Use *getNext(const Use *N) { return N->Next; }
-  static void setPrev(Use *N, Use *Prev) { N->Prev = Prev; }
-  static void setNext(Use *N, Use *Next) { N->Next = Next; }
+  static Use *getPrev(Use *N) { return N->UseLinks.Prev; }
+  static Use *getNext(Use *N) { return N->UseLinks.Next; }
+  static const Use *getPrev(const Use *N) { return N->UseLinks.Prev; }
+  static const Use *getNext(const Use *N) { return N->UseLinks.Next; }
+  static void setPrev(Use *N, Use *Prev) { N->UseLinks.Prev = Prev; }
+  static void setNext(Use *N, Use *Next) { N->UseLinks.Next = Next; }
 
-  // createNode - this is used to create the end marker for the use list
-  static Use *createNode() { return new Use(0,0); }
+  /// createSentinal - this is used to create the end marker for the use list.
+  /// Note that we only allocate a UseLinks structure, which is just enough to
+  /// hold the next/prev pointers.  This saves us 8 bytes of memory for every
+  /// Value allocated.
+  static Use *createSentinal() { return (Use*)new Use::NextPrevPtrs(); }
+  static void destroySentinal(Use *S) { delete (Use::NextPrevPtrs*)S; }
 
   void addNodeToList(Use *NTy) {}
   void removeNodeFromList(Use *NTy) {}
