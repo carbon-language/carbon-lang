@@ -198,7 +198,8 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, unsigned Size,
   AliasSet::HashNodePair &Entry = getEntryFor(Pointer);
 
   // Check to see if the pointer is already known...
-  if (Entry.second.hasAliasSet() && Size <= Entry.second.getSize()) {
+  if (Entry.second.hasAliasSet()) {
+    Entry.second.updateSize(Size);
     // Return the set!
     return *Entry.second.getAliasSet(*this)->getForwardedTarget(*this);
   } else if (AliasSet *AS = findAliasSetForPointer(Pointer, Size)) {
