@@ -52,6 +52,7 @@ public:
   void insert(ConstPoolVal *N);
   bool remove(ConstPoolVal *N);   // Returns true on failure 
 
+  // delete_all - Remove all elements from the constant pool
   void delete_all();
 
   // find - Search to see if a constant of the specified value is already in
@@ -71,6 +72,12 @@ public:
   inline plane_const_iterator begin() const { return Planes.begin(); }
   inline plane_iterator       end()         { return Planes.end(); }
   inline plane_const_iterator end()   const { return Planes.end(); }
+
+  // ensureTypeAvailable - This is used to make sure that the specified type is
+  // in the constant pool.  If it is not already in the constant pool, it is
+  // added.
+  //
+  const Type *ensureTypeAvailable(const Type *);
 };
 
 #endif
