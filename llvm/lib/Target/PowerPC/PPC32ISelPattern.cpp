@@ -559,8 +559,37 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     return Result;
     
   case ISD::LOAD:
-  case ISD::EXTLOAD:
-    abort();
+  case ISD::EXTLOAD: {
+    MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
+      Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
+
+    // Make sure we generate both values.
+    if (Result != 1)
+      ExprMap[N.getValue(1)] = 1;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
+    SDOperand Chain   = N.getOperand(0);
+    SDOperand Address = N.getOperand(1);
+    Select(Chain);
+
+    switch (TypeBeingLoaded) {
+    default: assert(0 && "Cannot fp load this type!");
+    case MVT::f32:  Opc = PPC::LFS; break;
+    case MVT::f64:  Opc = PPC::LFD; break;
+    }
+    
+    if(Address.getOpcode() == ISD::FrameIndex) {
+      BuildMI(BB, Opc, 2, Result)
+      .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
+      .addReg(PPC::R1);
+    } else {
+      int offset;
+      SelectAddr(Address, Tmp1, offset);
+      BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+    }
+    return Result;
+  }
     
   case ISD::ConstantFP:
     abort();
@@ -681,6 +710,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD: {
+    bool sext = (ISD::SEXTLOAD == opcode);
+    bool byte = (MVT::i8 == Node->getValueType(0));
+    MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
+      Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
+      
     // Make sure we generate both values.
     if (Result != 1)
       ExprMap[N.getValue(1)] = 1;   // Generate the token
@@ -691,14 +725,20 @@ unsigned ISel::SelectExpr(SDOperand N) {
     SDOperand Address = N.getOperand(1);
     Select(Chain);
 
-    switch (Node->getValueType(0)) {
+    switch (TypeBeingLoaded) {
     default: assert(0 && "Cannot load this type!");
-    case MVT::i1:  Opc = PPC::LBZ; Tmp3 = 0; break;
-    case MVT::i8:  Opc = PPC::LBZ; Tmp3 = 1; break;
-    case MVT::i16: Opc = PPC::LHZ; Tmp3 = 0; break;
-    case MVT::i32: Opc = PPC::LWZ; Tmp3 = 0; break;
+    case MVT::i1:  Opc = PPC::LBZ; break;
+    case MVT::i8:  Opc = PPC::LBZ; break;
+    case MVT::i16: Opc = sext ? PPC::LHA : PPC::LHZ; break;
+    case MVT::i32: Opc = PPC::LWZ; break;
     }
     
+    // Since there's no load byte & sign extend instruction we have to split
+    // byte SEXTLOADs into lbz + extsb.  This requires we make a temp register.
+    if (sext && byte) {
+      Tmp3 = Result;
+      Result = MakeReg(MVT::i32);
+    }
     if(Address.getOpcode() == ISD::FrameIndex) {
       BuildMI(BB, Opc, 2, Result)
       .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
@@ -707,6 +747,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
       int offset;
       SelectAddr(Address, Tmp1, offset);
       BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+    }
+    if (sext && byte) {
+      BuildMI(BB, PPC::EXTSB, 1, Tmp3).addReg(Result);
+      Result = Tmp3;
     }
     return Result;
   }
@@ -809,16 +853,21 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::SIGN_EXTEND:
   case ISD::SIGN_EXTEND_INREG:
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, PPC::EXTSH, 1, Result).addReg(Tmp1);
+    switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+    default: Node->dump(); assert(0 && "Unhandled SIGN_EXTEND type"); break;
+    case MVT::i16:  
+      BuildMI(BB, PPC::EXTSH, 1, Result).addReg(Tmp1); 
+      break;
+    case MVT::i8:   
+      BuildMI(BB, PPC::EXTSB, 1, Result).addReg(Tmp1); 
+      break;
+    }
     return Result;
     
   case ISD::ZERO_EXTEND_INREG:
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
-    default:
-      Node->dump();
-      assert(0 && "Zero Extend InReg not there yet");
-      break;
+    default: Node->dump(); assert(0 && "Unhandled ZERO_EXTEND type"); break;
     case MVT::i16:  Tmp2 = 16; break;
     case MVT::i8:   Tmp2 = 24; break;
     case MVT::i1:   Tmp2 = 31; break;
