@@ -214,6 +214,15 @@ endif
 ifndef LLVMGXX
 LLVMGXX  := PATH=$(LLVMToolDir):$(PATH) $(LLVMGCCDIR)/bin/g++
 endif
+ifndef LDIS
+LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
+endif
+ifndef LLI
+LLI      := $(LLVMToolDir)/lli$(EXEEXT)
+endif
+ifndef LOPT
+LOPT     := $(LLVMToolDir)/lopt$(EXEEXT)
+endif
 
 #--------------------------------------------------------------------
 # Adjust to user's request
