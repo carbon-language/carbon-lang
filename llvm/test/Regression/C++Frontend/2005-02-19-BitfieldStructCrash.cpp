@@ -1,0 +1,11 @@
+// RUN: %llvmgxx -S %s -o -
+
+struct QChar {unsigned short X; QChar(unsigned short); } ;
+
+struct Command {
+        Command(QChar c) : c(c) {}
+        unsigned int type : 4;
+        QChar c;
+    };
+
+Command X(QChar('c'));
