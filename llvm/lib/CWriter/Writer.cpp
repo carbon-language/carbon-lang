@@ -94,7 +94,8 @@ namespace {
       // Must be an expression, must be used exactly once.  If it is dead, we
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || I.use_size() != 1 ||
-          isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I))
+          isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) || 
+          isa<LoadInst>(I)) // Don't inline a load across a store!
         return false;
 
       // Only inline instruction it it's use is in the same BB as the inst.
