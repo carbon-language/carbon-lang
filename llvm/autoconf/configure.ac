@@ -220,6 +220,7 @@ if test "x$LLVMGCCDIR" = x ; then
   esac
 fi
 
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -526,6 +527,8 @@ AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR",
                    [Installation directory for man pages])
 AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", 
                    [Time at which LLVM was configured])
+AC_DEFINE_UNQUOTED([LLVMGCCDIR],"$LLVMGCCDIR", 
+                   [Installation directory of llvm-gcc])
 
 dnl===-----------------------------------------------------------------------===
 dnl===
