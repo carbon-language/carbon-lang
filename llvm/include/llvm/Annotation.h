@@ -176,7 +176,8 @@ struct AnnotationManager {
   // Annotable::getOrCreateAnnotation method.
   //
   static void registerAnnotationFactory(AnnotationID ID, 
-                          Annotation *(*Func)(AnnotationID, Annotable *));
+                          Annotation *(*Func)(AnnotationID, Annotable *, void*),
+					void *ExtraData = 0);
 
   // createAnnotation - Create an annotation of the specified ID for the
   // specified object, using a register annotation creation function.
