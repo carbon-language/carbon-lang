@@ -679,7 +679,7 @@ void LICM::findPromotableValuesInLoop(
        I != E; ++I) {
     AliasSet &AS = *I;
     // We can promote this alias set if it has a store, if it is a "Must" alias
-    // set, and if the pointer is loop invariant.
+    // set, if the pointer is loop invariant, if if we are not eliminating any volatile loads or stores.
     if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
         !AS.isVolatile() && isLoopInvariant(AS.begin()->first)) {
       assert(AS.begin() != AS.end() &&
