@@ -19,7 +19,6 @@ C++Catch SimpleC++Test 2003-05-07-VarArgs 2003-07-09-SignedArgs
 To-do
 -----
 
-* support calling functions with more than 6 args
 * support 64-bit integer (long, ulong) arguments to functions
   - use libc procedures instead of open-coding for:
     __div64 __mul64 __rem64 __udiv64 __umul64 __urem64
