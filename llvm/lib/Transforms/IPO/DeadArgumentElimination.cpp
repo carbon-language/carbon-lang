@@ -39,10 +39,6 @@ namespace {
   /// DAE - The dead argument elimination pass.
   ///
   class DAE : public Pass {
-    /// DeleteFromExternalFunctions - Bugpoint sets this flag to indicate that
-    /// it is safe to hack apart functions without internal linkage.
-    bool DeleteFromExternalFunctions;
-
     /// Liveness enum - During our initial pass over the program, we determine
     /// that things are either definately alive, definately dead, or in need of
     /// interprocedural analysis (MaybeLive).
@@ -79,8 +75,9 @@ namespace {
     std::multimap<Function*, CallSite> CallSites;
 
   public:
-    DAE(bool DFEF = false) : DeleteFromExternalFunctions(DFEF) {}
     bool run(Module &M);
+
+    virtual bool ShouldHackArguments() const { return false; }
 
   private:
     Liveness getArgumentLiveness(const Argument &A);
@@ -95,17 +92,20 @@ namespace {
     void RemoveDeadArgumentsFromFunction(Function *F);
   };
   RegisterOpt<DAE> X("deadargelim", "Dead Argument Elimination");
+
+  /// DAH - DeadArgumentHacking pass - Same as dead argument elimination, but
+  /// deletes arguments to functions which are external.  This is only for use
+  /// by bugpoint.
+  struct DAH : public DAE {
+    virtual bool ShouldHackArguments() const { return true; }
+  };
 }
 
 /// createDeadArgEliminationPass - This pass removes arguments from functions
-/// which are not used by the body of the function.  If
-/// DeleteFromExternalFunctions is true, the pass will modify functions that
-/// have external linkage, which is not usually safe (this is used by bugpoint
-/// to reduce testcases).
+/// which are not used by the body of the function.
 ///
-Pass *createDeadArgEliminationPass(bool DeleteFromExternalFunctions) {
-  return new DAE(DeleteFromExternalFunctions);
-}
+Pass *createDeadArgEliminationPass() { return new DAE(); }
+Pass *createDeadArgHackingPass() { return new DAH(); }
 
 static inline bool CallPassesValueThoughVararg(Instruction *Call,
                                                const Value *Arg) {
@@ -163,7 +163,7 @@ void DAE::SurveyFunction(Function &F) {
   bool FunctionIntrinsicallyLive = false;
   Liveness RetValLiveness = F.getReturnType() == Type::VoidTy ? Live : Dead;
 
-  if (!F.hasInternalLinkage() && !DeleteFromExternalFunctions) 
+  if (!F.hasInternalLinkage() && !ShouldHackArguments()) 
     FunctionIntrinsicallyLive = true;
   else 
     for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
