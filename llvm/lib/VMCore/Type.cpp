@@ -208,8 +208,8 @@ static std::string getTypeDescription(const Type *Ty,
 
   TypeStack.pop_back();       // Remove self from stack...
 
-  // In order to reduce the amount of repeated computation, we cache the computd
-  // value for later.
+  // In order to reduce the amount of repeated computation, we cache the
+  // computed value for later.
   if (Ty->isAbstract())
     AbstractTypeDescriptions[Ty] = Result;
   else
@@ -348,6 +348,7 @@ FunctionType::FunctionType(const Type *Result,
   for (unsigned i = 0; i < Params.size(); ++i)
     ParamTys.push_back(PATypeHandle(Params[i], this));
 
+  setAbstract(true);
   setDerivedTypeProperties();
 }
 
@@ -358,16 +359,19 @@ StructType::StructType(const std::vector<const Type*> &Types)
     assert(Types[i] != Type::VoidTy && "Void type in method prototype!!");
     ETypes.push_back(PATypeHandle(Types[i], this));
   }
+  setAbstract(true);
   setDerivedTypeProperties();
 }
 
 ArrayType::ArrayType(const Type *ElType, unsigned NumEl)
   : SequentialType(ArrayTyID, ElType) {
   NumElements = NumEl;
+  setAbstract(true);
   setDerivedTypeProperties();
 }
 
 PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
+  setAbstract(true);
   setDerivedTypeProperties();
 }
 
@@ -408,8 +412,8 @@ bool Type::isTypeAbstract() {
   for (Type::subtype_iterator I = subtype_begin(), E = subtype_end();
        I != E; ++I)
     if (const_cast<Type*>(*I)->isTypeAbstract()) {
-      setAbstract(true);
-      return true;
+      setAbstract(true);        // Restore the abstract bit.
+      return true;              // This type is abstract if subtype is abstract!
     }
   
   // Restore the abstract bit.
@@ -424,6 +428,8 @@ bool Type::isTypeAbstract() {
 // setting for a type.  The getTypeProps function does all the dirty work.
 //
 void DerivedType::setDerivedTypeProperties() {
+  // If the type is currently thought to be abstract, rescan all of our subtypes
+  // to see if the type has just become concrete!
   setAbstract(true);
   setAbstract(isTypeAbstract());
 }
