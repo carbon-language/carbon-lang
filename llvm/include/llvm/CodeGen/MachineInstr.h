@@ -133,8 +133,10 @@ private:
   void			InitializeReg	(unsigned int regNum);
 
   friend class MachineInstr;
-  friend class MachineInstr::val_op_const_iterator;
-  friend class MachineInstr::val_op_iterator;
+  friend class  ValOpIterator<const MachineInstr, const Value>;
+
+  //friend class MachineInstr::val_op_const_iterator;
+  //friend class MachineInstr::val_op_iterator;
 };
 
 
