@@ -16,9 +16,6 @@ struct X86RegisterInfo : public MRegisterInfo {
 
   const unsigned* getCalleeSaveRegs() const;
 
-  /// Returns register class appropriate for input SSA register
-  /// 
-  const TargetRegisterClass *getClassForReg(unsigned Reg) const;
   const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
