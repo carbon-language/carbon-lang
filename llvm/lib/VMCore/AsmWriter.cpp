@@ -732,6 +732,17 @@ void AssemblyWriter::printModule(const Module *M) {
   case Module::Pointer64:    Out << "target pointersize = 64\n"; break;
   case Module::AnyPointerSize: break;
   }
+  Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
+  
+  // Loop over the dependent libraries and emit them
+  Out << "deplibs = [\n";
+  for (Module::const_literator LI = M->lbegin(), LE = M->lend(); LI != LE; ) {
+    Out << "\"" << *LI << "\"";
+    ++LI;
+    if ( LI != LE )
+      Out << ",\n";
+  }
+  Out << " ]\n";
   
   // Loop over the symbol table, emitting all named constants...
   printSymbolTable(M->getSymbolTable());
