@@ -202,12 +202,14 @@ something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:</p>
 <p><tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
 test-case, but it should eventually print something like this:</p>
 
+<div class="doc_code">
 <pre>
-  ...
-  Emitted bytecode to 'bugpoint-reduced-simplified.bc'
+...
+Emitted bytecode to 'bugpoint-reduced-simplified.bc'
 
-  *** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm
+*** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm
 </pre>
+</div>
 
 <p>Once you complete this, please send the LLVM bytecode file and the command
 line to reproduce the problem to the llvmbugs mailing list.</p>
