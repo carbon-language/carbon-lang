@@ -10,7 +10,7 @@
 
 class SparcV9CodeEmitter : public MachineFunctionPass {
   MachineCodeEmitter &MCE;
-  BasicBlock *BB;
+  BasicBlock *currBB;
 
 public:
   SparcV9CodeEmitter(MachineCodeEmitter &M) : MCE(M) {}

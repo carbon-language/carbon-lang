@@ -30,7 +30,7 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineOperand &MO) {
   } else if (MO.isImmediate()) {
     return MO.getImmedValue();
   } else if (MO.isPCRelativeDisp()) {
-    MCE->saveBBreference(currBB, MO);
+    //MCE.saveBBreference(currBB, MO);
     return 0;
   } else {
     assert(0 && "Unknown type of MachineOperand");
