@@ -262,8 +262,12 @@ FunctionPass *createLowerSwitchPass();
 FunctionPass *createLowerSelectPass(bool OnlyFP = false);
 
 //===----------------------------------------------------------------------===//
-// This pass converts 'invoke' instructions calls, and 'unwind' instructions
-// into calls to abort().
+// This pass converts invoke and unwind instructions to use sjlj exception
+// handling mechanisms.  Note that after this pass runs the CFG is not entirely
+// accurate (exceptional control flow edges are not correct anymore) so only
+// very simple things should be done after the lowerinvoke pass has run (like
+// generation of native code).  This should not be used as a general purpose "my
+// LLVM-to-LLVM pass doesn't support the invoke instruction yet" lowering pass.
 //
 FunctionPass *createLowerInvokePass();
 extern const PassInfo *LowerInvokePassID;
