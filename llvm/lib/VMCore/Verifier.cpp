@@ -507,14 +507,15 @@ void Verifier::visitInstruction(Instruction &I) {
 
     else if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
       BasicBlock *OpBlock = Op->getParent();
-      // Invoke results are only usable in the normal destination, not in the
-      // exceptional destination.
-      if (InvokeInst *II = dyn_cast<InvokeInst>(Op))
-        OpBlock = II->getNormalDest();
 
       // Check that a definition dominates all of its uses.
       //
       if (!isa<PHINode>(I)) {
+        // Invoke results are only usable in the normal destination, not in the
+        // exceptional destination.
+        if (InvokeInst *II = dyn_cast<InvokeInst>(Op))
+          OpBlock = II->getNormalDest();
+
         // Definition must dominate use unless use is unreachable!
         Assert2(DS->dominates(OpBlock, BB) ||
                 !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
