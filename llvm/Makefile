@@ -37,4 +37,4 @@ check ::
 tools-only: all
 
 check-dejagnu:
-	cd test; $(MAKE) check-dejagnu TEST=$(TEST)
+	cd test; $(MAKE) check-dejagnu TESTSUITE=$(TESTSUITE) TARGET=$(TARGET_TRIPLE)
