@@ -16,7 +16,6 @@
 #include "PowerPC.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MRegisterInfo.h"
 
 namespace llvm {
 
