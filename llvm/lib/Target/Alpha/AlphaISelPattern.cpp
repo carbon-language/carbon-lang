@@ -1703,34 +1703,58 @@ unsigned ISel::SelectExpr(SDOperand N) {
          N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
          cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() == 2)
       {
-        Tmp1 = SelectExpr(N.getOperand(1));
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-        BuildMI(BB, isAdd?Alpha::S4ADDQ:Alpha::S4SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        if (N.getOperand(1).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+          BuildMI(BB, isAdd?Alpha::S4ADDQi:Alpha::S4SUBQi, 2, Result).addReg(Tmp2)
+            .addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue());
+        else {
+          Tmp1 = SelectExpr(N.getOperand(1));
+          BuildMI(BB, isAdd?Alpha::S4ADDQ:Alpha::S4SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        }
       }
       else if(N.getOperand(0).getOpcode() == ISD::SHL &&
          N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
          cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() == 3)
       {
-        Tmp1 = SelectExpr(N.getOperand(1));
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-        BuildMI(BB, isAdd?Alpha::S4ADDQ:Alpha::S8SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        if (N.getOperand(1).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+          BuildMI(BB, isAdd?Alpha::S8ADDQi:Alpha::S8SUBQi, 2, Result).addReg(Tmp2)
+            .addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue());
+        else {
+          Tmp1 = SelectExpr(N.getOperand(1));
+          BuildMI(BB, isAdd?Alpha::S8ADDQ:Alpha::S8SUBQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        }
       }
       //Position prevents subs
       else if(N.getOperand(1).getOpcode() == ISD::SHL && isAdd &
          N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
          cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 2)
       {
-        Tmp1 = SelectExpr(N.getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
-        BuildMI(BB, Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        if (N.getOperand(0).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
+          BuildMI(BB, Alpha::S4ADDQi, 2, Result).addReg(Tmp2)
+            .addImm(cast<ConstantSDNode>(N.getOperand(0))->getValue());
+        else {
+          Tmp1 = SelectExpr(N.getOperand(0));
+          BuildMI(BB, Alpha::S4ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        }
       }
       else if(N.getOperand(0).getOpcode() == ISD::SHL && isAdd &&
          N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
          cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue() == 3)
       {
-        Tmp1 = SelectExpr(N.getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
-        BuildMI(BB, Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        if (N.getOperand(0).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
+          BuildMI(BB, Alpha::S8ADDQi, 2, Result).addReg(Tmp2)
+            .addImm(cast<ConstantSDNode>(N.getOperand(0))->getValue());
+        else {
+          Tmp1 = SelectExpr(N.getOperand(0));
+          BuildMI(BB, Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
+        }
       }
       //small addi
       else if(N.getOperand(1).getOpcode() == ISD::Constant &&
