@@ -59,11 +59,6 @@ namespace {
         SpillWeights spillWeights_;
 
     public:
-        RA()
-            : prt_(NULL) {
-
-        }
-
         virtual const char* getPassName() const {
             return "Linear Scan Register Allocator";
         }
