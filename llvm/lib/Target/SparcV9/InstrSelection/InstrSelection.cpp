@@ -16,8 +16,7 @@
 
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/Function.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"

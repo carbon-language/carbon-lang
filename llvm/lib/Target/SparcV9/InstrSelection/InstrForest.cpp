@@ -21,8 +21,7 @@
 
 #include "llvm/Constant.h"
 #include "llvm/Function.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iMemory.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/InstrForest.h"
 #include "llvm/CodeGen/MachineInstr.h"

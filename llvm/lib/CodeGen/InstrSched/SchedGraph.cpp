@@ -15,7 +15,7 @@
 
 #include "SchedGraph.h"
 #include "llvm/Function.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/MachineCodeForInstruction.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetInstrInfo.h"
