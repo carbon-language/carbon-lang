@@ -97,7 +97,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       if (MI->getNumOperands() && Size == 1) {
         MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
       } else if (MI->getNumOperands()) {
-        // Multiply it by the array size if neccesary...
+        // Multiply it by the array size if necessary...
         MallocArg = BinaryOperator::create(Instruction::Mul, MI->getOperand(0),
                                            MallocArg, "", I);
       }

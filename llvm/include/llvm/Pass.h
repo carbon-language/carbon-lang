@@ -81,7 +81,7 @@ public:
 
   /// print - Print out the internal state of the pass.  This is called by
   /// Analyze to print out the contents of an analysis.  Otherwise it is not
-  /// neccesary to implement this method.  Beware that the module pointer MAY be
+  /// necessary to implement this method.  Beware that the module pointer MAY be
   /// null.  This automatically forwards to a virtual function that does not
   /// provide the Module* in case the analysis doesn't need it it can just be
   /// ignored.
@@ -239,7 +239,7 @@ private:
 ///
 struct FunctionPass : public Pass {
   /// doInitialization - Virtual method overridden by subclasses to do
-  /// any neccesary per-module initialization.
+  /// any necessary per-module initialization.
   ///
   virtual bool doInitialization(Module &M) { return false; }
 
@@ -285,12 +285,12 @@ private:
 ///
 struct BasicBlockPass : public FunctionPass {
   /// doInitialization - Virtual method overridden by subclasses to do
-  /// any neccesary per-module initialization.
+  /// any necessary per-module initialization.
   ///
   virtual bool doInitialization(Module &M) { return false; }
 
   /// doInitialization - Virtual method overridden by BasicBlockPass subclasses
-  /// to do any neccesary per-function initialization.
+  /// to do any necessary per-function initialization.
   ///
   virtual bool doInitialization(Function &F) { return false; }
 

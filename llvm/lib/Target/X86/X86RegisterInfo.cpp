@@ -82,7 +82,7 @@ static bool hasFP(MachineFunction &MF) {
 }
 
 // hasSPAdjust - Return true if this function has ESP adjustment instructions in
-// the prolog and epilog which allocate local stack space.  This is neccesary
+// the prolog and epilog which allocate local stack space.  This is necessary
 // because we elide these instructions if there are no function calls in the
 // current function (ie, this is a leaf function).  In this case, we can refer
 // beyond the stack pointer because we know that nothing will trample on that

@@ -133,7 +133,7 @@ public:
 	if (Done) return *this;                 // Found a new interval! Use it!
       }
 
-      // Free interval memory... if neccesary
+      // Free interval memory... if necessary
       if (IOwnMem) delete IntStack.top().first;
 
       // We ran out of successors for this interval... pop off the stack

@@ -150,7 +150,7 @@ needed...
 Conditional move is effectly a special case of a predicated
 instruction... and I think that all predicated instructions can possibly
 be implemented later in LLVM.  It would significantly change things, and
-it doesn't seem to be very neccesary right now.  It would seem to
+it doesn't seem to be very necessary right now.  It would seem to
 complicate flow control analysis a LOT in the virtual machine.  I would
 tend to prefer that a predicated architecture like IA64 convert from a
 "basic block" representation to a predicated rep as part of it's dynamic

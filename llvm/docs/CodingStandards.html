@@ -93,7 +93,7 @@ Every source file should have a header on it that describes the basic purpose of
 //===----------------------------------------------------------------------===//
 </pre>
 
-A few things to note about this particular format.  The "<tt>-*- C++ -*-</tt>" string on the first line is there to tell Emacs that the source file is a C++ file, not a C file (Emacs assumes .h files are C files by default [Note that tag this is not neccesary in .cpp files]).  The name of the file is also on the first line, along with a very short description of the purpose of the file.  This is important when printing out code and flipping though lots of pages.<p>
+A few things to note about this particular format.  The "<tt>-*- C++ -*-</tt>" string on the first line is there to tell Emacs that the source file is a C++ file, not a C file (Emacs assumes .h files are C files by default [Note that tag this is not necessary in .cpp files]).  The name of the file is also on the first line, along with a very short description of the purpose of the file.  This is important when printing out code and flipping though lots of pages.<p>
 
 The main body of the description does not have to be very long in most cases.  Here it's only two lines.  If an algorithm is being implemented or something tricky is going on, a reference to the paper where it is published should be included, as well as any notes or "gotchas" in the code to watch out for.<p>
 
@@ -105,7 +105,7 @@ Classes are one fundemental part of a good object oriented design.  As such, a c
 
 <h4><li>Method information</h4>
 
-Methods defined in a class (as well as any global functions) should also be documented properly.  A quick note about what it does any a description of the borderline behaviour is all that is neccesary here (unless something particularly tricky or insideous is going on).  The hope is that people can figure out how to use your interfaces without reading the code itself... that is the goal metric.<p>
+Methods defined in a class (as well as any global functions) should also be documented properly.  A quick note about what it does any a description of the borderline behaviour is all that is necessary here (unless something particularly tricky or insideous is going on).  The hope is that people can figure out how to use your interfaces without reading the code itself... that is the goal metric.<p>
 
 Good things to talk about here are what happens when something unexpected happens: does the method return null?  Abort?  Format your hard disk?<p>
 </ol>

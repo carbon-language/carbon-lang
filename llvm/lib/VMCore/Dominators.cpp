@@ -21,7 +21,7 @@ static RegisterAnalysis<DominatorSet>
 A("domset", "Dominator Set Construction", true);
 
 // dominates - Return true if A dominates B.  This performs the special checks
-// neccesary if A and B are in the same basic block.
+// necessary if A and B are in the same basic block.
 //
 bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   BasicBlock *BBA = A->getParent(), *BBB = B->getParent();

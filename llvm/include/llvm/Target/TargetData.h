@@ -61,7 +61,7 @@ public:
   unsigned char getPointerSize()      const { return      PointerSize; }
   AnnotationID  getStructLayoutAID()  const { return AID; }
 
-  // getTypeSize - Return the number of bytes neccesary to hold the specified
+  // getTypeSize - Return the number of bytes necessary to hold the specified
   // type
   uint64_t      getTypeSize     (const Type *Ty) const;
 

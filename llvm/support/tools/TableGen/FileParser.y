@@ -130,7 +130,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
     abort();
   } else {    // This class expects template arguments...
     // Loop over all of the template arguments, setting them to the specified
-    // value or leaving them as the default as neccesary.
+    // value or leaving them as the default as necessary.
     for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
       if (i < TemplateArgs.size()) {  // A value is specified for this temp-arg?
 	// Set it now.

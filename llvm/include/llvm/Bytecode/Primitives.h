@@ -5,7 +5,7 @@
 //
 // Using the routines defined in this file does not require linking to any 
 // libraries, as all of the services are small self contained units that are to
-// be inlined as neccesary.
+// be inlined as necessary.
 //
 //===----------------------------------------------------------------------===//
 

@@ -177,7 +177,7 @@ static Value *NegateValue(Value *V, BasicBlock::iterator &BI) {
   //   X = -(A+12+C+D)   into    X = -A + -12 + -C + -D = -12 + -A + -C + -D
   // so that later, a: Y = 12+X could get reassociated with the -12 to eliminate
   // the constants.  We assume that instcombine will clean up the mess later if
-  // we introduce tons of unneccesary negation instructions...
+  // we introduce tons of unnecessary negation instructions...
   //
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::Add && I->use_size() == 1) {

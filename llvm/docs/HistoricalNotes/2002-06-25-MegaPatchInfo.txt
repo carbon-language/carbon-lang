@@ -43,7 +43,7 @@ Changes:
 
   which is much more natural and what users expect.
 
-* Simplification of #include's: Before, it was neccesary for a .cpp file to
+* Simplification of #include's: Before, it was necessary for a .cpp file to
   include every .h file that it used.  Now things are batched a little bit more
   to make it easier to use.  Specifically, the include graph now includes these
   edges:

@@ -130,7 +130,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
 
     // Remove duplicates from the CandidateLoads list because alias analysis
     // processing may be somewhat expensive and we don't want to do more work
-    // than neccesary.
+    // than necessary.
     //
     unsigned OldSize = CandidateLoads.size();
     std::sort(CandidateLoads.begin(), CandidateLoads.end());

@@ -260,7 +260,7 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
             "Function return type does not match operand "
             "type of return inst!", &RI, F->getReturnType());
 
-  // Check to make sure that the return value has neccesary properties for
+  // Check to make sure that the return value has necessary properties for
   // terminators...
   visitTerminatorInst(RI);
 }

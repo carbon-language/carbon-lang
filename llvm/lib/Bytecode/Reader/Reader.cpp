@@ -665,7 +665,7 @@ Module *ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
   Module *R = Parser.ParseBytecode(Buffer, Buffer+Length, ModuleID);
   if (ErrorStr) *ErrorStr = Parser.getError();
 
-  delete [] PtrToDelete;   // Delete alignment buffer if neccesary
+  delete [] PtrToDelete;   // Delete alignment buffer if necessary
   return R;
 }
 

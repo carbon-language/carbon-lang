@@ -449,7 +449,7 @@ void Emitter::emitInstruction(MachineInstr &MI) {
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDescriptor &Desc = II->get(Opcode);
 
-  // Emit instruction prefixes if neccesary
+  // Emit instruction prefixes if necessary
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
 
   switch (Desc.TSFlags & X86II::Op0Mask) {

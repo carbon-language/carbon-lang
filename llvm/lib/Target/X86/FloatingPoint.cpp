@@ -185,7 +185,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       if (Reg >= X86::FP0 && Reg <= X86::FP6) {
 	DEBUG(std::cerr << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
 	++I;                         // Insert fxch AFTER the instruction
-	moveToTop(Reg-X86::FP0, I);  // Insert fxch if neccesary
+	moveToTop(Reg-X86::FP0, I);  // Insert fxch if necessary
 	--I;                         // Move to fxch or old instruction
 	popStackAfter(I);            // Pop the top of the stack, killing value
       }

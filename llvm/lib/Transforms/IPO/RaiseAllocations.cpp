@@ -133,7 +133,7 @@ bool RaiseAllocations::runOnBasicBlock(BasicBlock &BB) {
         ++NumRaised;
       } else if (CI->getCalledValue() == FreeFunc) { // Replace call to free?
         // If no prototype was provided for free, we may need to cast the
-        // source pointer.  This should be really uncommon, but it's neccesary
+        // source pointer.  This should be really uncommon, but it's necessary
         // just in case we are dealing with wierd code like this:
         //   free((long)ptr);
         //

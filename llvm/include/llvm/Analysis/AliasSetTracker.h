@@ -77,7 +77,7 @@ class AliasSet {
   /// AccessType - Keep track of whether this alias set merely refers to the
   /// locations of memory, whether it modifies the memory, or whether it does
   /// both.  The lattice goes from "NoModRef" to either Refs or Mods, then to
-  /// ModRef as neccesary.
+  /// ModRef as necessary.
   ///
   enum AccessType {
     NoModRef = 0, Refs = 1,         // Ref = bit 1

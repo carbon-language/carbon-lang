@@ -1,6 +1,6 @@
 //===-- EmitAssembly.cpp - Emit Sparc Specific .s File ---------------------==//
 //
-// This file implements all of the stuff neccesary to output a .s file from
+// This file implements all of the stuff necessary to output a .s file from
 // LLVM.  The code in this file assumes that the specified module has already
 // been compiled into the internal data structures of the Module.
 //
@@ -90,10 +90,10 @@ public:
   }
   
   // enterSection - Use this method to enter a different section of the output
-  // executable.  This is used to only output neccesary section transitions.
+  // executable.  This is used to only output necessary section transitions.
   //
   void enterSection(enum Sections S) {
-    if (S == CurSection) return;        // Only switch section if neccesary
+    if (S == CurSection) return;        // Only switch section if necessary
     CurSection = S;
 
     toAsm << "\n\t.section ";

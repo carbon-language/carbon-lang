@@ -320,8 +320,8 @@ bool BugDriver::debugCrash() {
     std::cout << "\n*** Attempting to reduce testcase by deleting instruc"
               << "tions: Simplification Level #" << Simplification << "\n";
 
-    // Now that we have deleted the functions that are unneccesary for the
-    // program, try to remove instructions that are not neccesary to cause the
+    // Now that we have deleted the functions that are unnecessary for the
+    // program, try to remove instructions that are not necessary to cause the
     // crash.  To do this, we loop through all of the instructions in the
     // remaining functions, deleting them (replacing any values produced with
     // nulls), and then running ADCE and SimplifyCFG.  If the transformed input

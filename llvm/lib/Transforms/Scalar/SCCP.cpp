@@ -132,7 +132,7 @@ private:
   }
 
   // getValueState - Return the InstVal object that corresponds to the value.
-  // This function is neccesary because not all values should start out in the
+  // This function is necessary because not all values should start out in the
   // underdefined state... Argument's should be overdefined, and
   // constants should be marked as constants.  If a value is not known to be an
   // Instruction object, then use this accessor to get its value from the map.

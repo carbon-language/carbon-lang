@@ -208,7 +208,7 @@ bool ADCE::doADCE() {
   std::set<BasicBlock*> AliveBlocks;
 
   // Process the work list of instructions that just became live... if they
-  // became live, then that means that all of their operands are neccesary as
+  // became live, then that means that all of their operands are necessary as
   // well... make them live as well.
   //
   while (!WorkList.empty()) {

@@ -73,7 +73,7 @@ struct DefaultDOTGraphTraits {
 
   /// addCustomGraphFeatures - If a graph is made up of more than just
   /// straight-forward nodes and edges, this is the place to put all of the
-  /// custom stuff neccesary.  The GraphWriter object, instantiated with your
+  /// custom stuff necessary.  The GraphWriter object, instantiated with your
   /// GraphType is passed in as an argument.  You may call arbitrary methods on
   /// it to add things to the output graph.
   ///

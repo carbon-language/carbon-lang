@@ -155,7 +155,7 @@ struct InstVisitor {
 
   
   // Specific Instruction type classes... note that all of the casts are
-  // neccesary because we use the instruction classes as opaque types...
+  // necessary because we use the instruction classes as opaque types...
   //
   RetTy visitReturnInst(ReturnInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitBranchInst(BranchInst &I)              { DELEGATE(TerminatorInst);}

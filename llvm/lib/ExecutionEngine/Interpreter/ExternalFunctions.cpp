@@ -354,7 +354,7 @@ static void ByteswapSCANFResults(const char *Fmt, void *Arg0, void *Arg1,
   void *Args[] = { Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, 0 };
 
   // Loop over the format string, munging read values as appropriate (performs
-  // byteswaps as neccesary).
+  // byteswaps as necessary).
   unsigned ArgNo = 0;
   while (*Fmt) {
     if (*Fmt++ == '%') {

@@ -13,7 +13,7 @@
 // as store-sinking that is built into LICM.
 //
 // Note that the simplifycfg pass will clean up blocks which are split out but
-// end up being unneccesary, so usage of this pass does not neccesarily
+// end up being unnecessary, so usage of this pass does not neccesarily
 // pessimize generated code.
 //
 //===----------------------------------------------------------------------===//

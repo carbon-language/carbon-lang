@@ -177,7 +177,7 @@ const char *Pass::getPassName() const {
 }
 
 // print - Print out the internal state of the pass.  This is called by Analyse
-// to print out the contents of an analysis.  Otherwise it is not neccesary to
+// to print out the contents of an analysis.  Otherwise it is not necessary to
 // implement this method.
 //
 void Pass::print(std::ostream &O) const {

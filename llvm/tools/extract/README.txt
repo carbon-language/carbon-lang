@@ -7,7 +7,7 @@ This is useful because often something will die (for example SCCP
 miscompiles one function of a large benchmark), and so you want to just 
 cut the testcase down to the one function that is being a problem.  In 
 this case, 'extract' eliminates all of the extraneous global variables, 
-type information, and functions that aren't neccesary, giving you 
+type information, and functions that aren't necessary, giving you 
 something simpler.
 
 This is just an FYI, because I've found it useful and thought you guys 

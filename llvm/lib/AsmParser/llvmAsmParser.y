@@ -107,7 +107,7 @@ static struct PerModuleInfo {
 
     if (I != GlobalRefs.end()) {
       GlobalVariable *OldGV = I->second;   // Get the placeholder...
-      I->first.second.destroy();  // Free string memory if neccesary
+      I->first.second.destroy();  // Free string memory if necessary
       
       // Loop over all of the uses of the GlobalValue.  The only thing they are
       // allowed to be is ConstantPointerRef's.

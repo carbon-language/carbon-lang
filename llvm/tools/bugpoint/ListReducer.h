@@ -68,7 +68,7 @@ struct ListReducer {
         break;
       case NoFailure:
         // Otherwise the property doesn't hold.  Some of the elements we removed
-        // must be neccesary to maintain the property.
+        // must be necessary to maintain the property.
         MidTop = Mid;
         break;
       }

@@ -144,7 +144,7 @@ least*:
 2. A pointer to the dtor for the contained object
 3. The contained object itself
 
-Note that it is neccesary to maintain #1 & #2 in the exception object itself
+Note that it is necessary to maintain #1 & #2 in the exception object itself
 because objects without virtual function tables may be thrown (as in this 
 example).  Assuming this, TryHandler would look something like this:
 

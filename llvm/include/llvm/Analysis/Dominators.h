@@ -96,7 +96,7 @@ public:
   virtual void print(std::ostream &OS) const;
 
   /// dominates - Return true if A dominates B.  This performs the special
-  /// checks neccesary if A and B are in the same basic block.
+  /// checks necessary if A and B are in the same basic block.
   ///
   bool dominates(Instruction *A, Instruction *B) const;
 

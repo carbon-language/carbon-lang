@@ -109,7 +109,7 @@ ipo_iterator<T> ipo_end(T G){
 // computer RPO from a graph.  Because of this, the construction of the 
 // ReversePostOrderTraversal object is expensive (it must walk the entire graph
 // with a postorder iterator to build the data structures).  The moral of this
-// story is: Don't create more ReversePostOrderTraversal classes than neccesary.
+// story is: Don't create more ReversePostOrderTraversal classes than necessary.
 //
 // This class should be used like this:
 // {

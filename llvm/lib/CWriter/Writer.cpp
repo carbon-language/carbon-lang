@@ -924,7 +924,7 @@ void CWriter::printFunction(Function *F) {
 }
 
 // Specific Instruction type classes... note that all of the casts are
-// neccesary because we use the instruction classes as opaque types...
+// necessary because we use the instruction classes as opaque types...
 //
 void CWriter::visitReturnInst(ReturnInst &I) {
   // Don't output a void return if this is the last basic block in the function
@@ -1024,7 +1024,7 @@ void CWriter::visitBranchInst(BranchInst &I) {
         printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
       }
     } else {
-      // First goto not neccesary, assume second one is...
+      // First goto not necessary, assume second one is...
       Out << "  if (!";
       writeOperand(I.getCondition());
       Out << ") {\n";

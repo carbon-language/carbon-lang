@@ -710,7 +710,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       if (CTMI != CTMap.end()) {   // Operand #1 is in the table already?
         // If so, check to see if it's Ty*, or, more importantly, if it is a
         // pointer to a structure where the first element is a Ty... this code
-        // is neccesary because we might be trying to change the source and
+        // is necessary because we might be trying to change the source and
         // destination type of the store (they might be related) and the dest
         // pointer type might be a pointer to structure.  Below we allow pointer
         // to structures where the 0th element is compatible with the value,
@@ -864,7 +864,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 
       // Okay, at this point, we know that all of the arguments can be
       // converted.  We succeed if we can change the return type if
-      // neccesary...
+      // necessary...
       //
       return ValueConvertibleToType(I, FTy->getReturnType(), CTMap, TD);
     }

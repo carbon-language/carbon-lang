@@ -15,7 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 
-// Handle the Pass registration stuff neccesary to use TargetData's.
+// Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
   // Register the default SparcV9 implementation...
   RegisterPass<TargetData> X("targetdata", "Target Data Layout");
@@ -45,7 +45,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD)
     getTypeInfo(Ty, &TD, TySize, A);
     TyAlign = A;
 
-    // Add padding if neccesary to make the data element aligned properly...
+    // Add padding if necessary to make the data element aligned properly...
     if (StructSize % TyAlign != 0)
       StructSize = (StructSize/TyAlign + 1) * TyAlign;   // Add padding...
 

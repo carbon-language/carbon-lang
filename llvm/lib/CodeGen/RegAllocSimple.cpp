@@ -58,7 +58,7 @@ namespace {
     void AllocateBasicBlock(MachineBasicBlock &MBB);
 
     /// getStackSpaceFor - This returns the offset of the specified virtual
-    /// register on the stack, allocating space if neccesary.
+    /// register on the stack, allocating space if necessary.
     int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC);
 
     /// Given a virtual register, return a compatible physical register that is
