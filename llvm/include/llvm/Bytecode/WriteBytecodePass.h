@@ -24,18 +24,19 @@ namespace llvm {
 class WriteBytecodePass : public ModulePass {
   std::ostream *Out;           // ostream to print on
   bool DeleteStream;
+  bool CompressFile;
 public:
-  WriteBytecodePass() : Out(&std::cout), DeleteStream(false) {}
-  WriteBytecodePass(std::ostream *o, bool DS = false) 
-    : Out(o), DeleteStream(DS) {
-  }
+  WriteBytecodePass() 
+    : Out(&std::cout), DeleteStream(false), CompressFile(true) {}
+  WriteBytecodePass(std::ostream *o, bool DS = false, bool CF = false ) 
+    : Out(o), DeleteStream(DS),  CompressFile(CF) {}
 
   inline ~WriteBytecodePass() {
     if (DeleteStream) delete Out;
   }
   
   bool runOnModule(Module &M) {
-    WriteBytecodeToFile(&M, *Out);    
+    WriteBytecodeToFile(&M, *Out, CompressFile );
     return false;
   }
 };
