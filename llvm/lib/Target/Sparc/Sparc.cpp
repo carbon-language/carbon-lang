@@ -59,10 +59,6 @@ namespace {
 
   cl::opt<bool> DisableStrip("disable-strip",
                       cl::desc("Do not strip the LLVM bytecode in executable"));
-
-  cl::opt<bool> DumpInput("dump-input",
-                          cl::desc("Print bytecode before code generation"),
-                          cl::Hidden);
 }
 
 //===---------------------------------------------------------------------===//
@@ -154,17 +150,12 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
   //so %fp+offset-8 and %fp+offset-16 are empty slots now!
   PM.add(createStackSlotsPass(*this));
 
-  // Specialize LLVM code for this target machine
+  // Specialize LLVM code for this target machine and then
+  // run basic dataflow optimizations on LLVM code.
   PM.add(createPreSelectionPass(*this));
-  // Run basic dataflow optimizations on LLVM code
   PM.add(createReassociatePass());
   PM.add(createLICMPass());
   PM.add(createGCSEPass());
-
-  // If LLVM dumping after transformations is requested, add it to the pipeline
-  if (DumpInput)
-    PM.add(new PrintFunctionPass("Input code to instr. selection:\n",
-                                 &std::cerr));
 
   PM.add(createInstructionSelectionPass(*this));
 
@@ -172,7 +163,6 @@ SparcTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
 
   PM.add(getRegisterAllocator(*this));
-
   PM.add(createPrologEpilogInsertionPass());
 
   if (!DisablePeephole)
@@ -226,9 +216,7 @@ void SparcJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Specialize LLVM code for this target machine and then
   // run basic dataflow optimizations on LLVM code.
   PM.add(createPreSelectionPass(TM));
-  // Run basic dataflow optimizations on LLVM code
   PM.add(createReassociatePass());
-
   // FIXME: these passes crash the FunctionPassManager when being added...
   //PM.add(createLICMPass());
   //PM.add(createGCSEPass());
