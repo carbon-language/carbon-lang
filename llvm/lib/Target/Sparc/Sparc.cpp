@@ -66,25 +66,6 @@ void AllocateRegisters(Method *M, TargetMachine &TM)
 
 
 //---------------------------------------------------------------------------
-// class UltraSparcInstrInfo 
-// 
-// Purpose:
-//   Information about individual instructions.
-//   Most information is stored in the SparcMachineInstrDesc array above.
-//   Other information is computed on demand, and most such functions
-//   default to member functions in base class MachineInstrInfo. 
-//---------------------------------------------------------------------------
-
-/*ctor*/
-UltraSparcInstrInfo::UltraSparcInstrInfo()
-  : MachineInstrInfo(SparcMachineInstrDesc,
-		     /*descSize = */ NUM_TOTAL_OPCODES,
-		     /*numRealOpCodes = */ NUM_REAL_OPCODES)
-{
-}
-
-
-//---------------------------------------------------------------------------
 // class UltraSparcSchedInfo 
 // 
 // Purpose:
