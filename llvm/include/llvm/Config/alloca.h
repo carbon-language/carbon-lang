@@ -27,6 +27,8 @@
 /* noop on Visual C++ */
 #elif defined(HAVE_ALLOCA_H)
 #include <alloca.h>
+#elif defined(__MINGW_H) && defined(HAVE_MALLOC_H)
+#include <malloc.h>
 #elif !defined(__GNUC__)
 #	ifdef _AIX
  #		pragma alloca
