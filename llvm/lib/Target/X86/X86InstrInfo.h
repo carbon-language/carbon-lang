@@ -15,7 +15,14 @@
 ///
 namespace X86II {
   enum {
-    Void        = 1 << 0,  // Set if this instruction produces no value
+    /// Void - Set if this instruction produces no value
+    Void        = 1 << 0,
+
+    // TB - TwoByte - Set if this instruction has a two byte opcode, which
+    // starts with a 0x0F byte before the real opcode.
+    TB          = 1 << 1,
+
+    
   };
 }
 

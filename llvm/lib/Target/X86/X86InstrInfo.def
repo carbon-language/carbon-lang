@@ -118,16 +118,16 @@ I(FNSTSWr8    , "fnstsw",             0, X86II::Void) // AX = fp flags DF E0
 
 // Condition code ops, incl. set if equal/not equal/...
 I(SAHF        , "sahf",               0, 0)           // flags = AH    9E
-I(SETA        , "seta",               0, 0)           // R8 = > unsign 0F 97
-I(SETAE       , "setae",              0, 0)           // R8 = >=unsign 0F 93
-I(SETB        , "setb",               0, 0)           // R8 = < unsign 0F 92
-I(SETBE       , "setbe",              0, 0)           // R8 = <=unsign 0F 96
-I(SETE        , "sete",               0, 0)           // R8 = ==       0F 94
-I(SETG        , "setg",               0, 0)           // R8 = > signed 0F 9F
-I(SETGE       , "setge",              0, 0)           // R8 = >=signed 0F 9D
-I(SETL        , "setl",               0, 0)           // R8 = < signed 0F 9C
-I(SETLE       , "setle",              0, 0)           // R8 = <=signed 0F 9E
-I(SETNE       , "setne",              0, 0)           // R8 = !=       0F 95
+I(SETA        , "seta",               0, X86II::TB)           // R8 = > unsign 0F 97
+I(SETAE       , "setae",              0, X86II::TB)           // R8 = >=unsign 0F 93
+I(SETB        , "setb",               0, X86II::TB)           // R8 = < unsign 0F 92
+I(SETBE       , "setbe",              0, X86II::TB)           // R8 = <=unsign 0F 96
+I(SETE        , "sete",               0, X86II::TB)           // R8 = ==       0F 94
+I(SETG        , "setg",               0, X86II::TB)           // R8 = > signed 0F 9F
+I(SETGE       , "setge",              0, X86II::TB)           // R8 = >=signed 0F 9D
+I(SETL        , "setl",               0, X86II::TB)           // R8 = < signed 0F 9C
+I(SETLE       , "setle",              0, X86II::TB)           // R8 = <=signed 0F 9E
+I(SETNE       , "setne",              0, X86II::TB)           // R8 = !=       0F 95
 
 // Integer comparisons
 I(CMPrr8      , "cmpb",               0, 0)           // compare R8,R8   38/r
@@ -138,12 +138,12 @@ I(CMPrr32     , "cmpl",               0, 0)           // compare R32,R32 39/r
 I(CBW         , "cbw",                0, 0)     // AX = signext(AL)         98
 I(CWD         , "cwd",                0, 0)     // DX:AX = signext(AX)      99
 I(CDQ         , "cdq",                0, 0)     // EDX:EAX = signext(EAX)   99
-I(MOVSXr16r8  , "movsx",              0, 0)     // R32 = signext(R8)  0F BE /r
-I(MOVSXr32r8  , "movsx",              0, 0)     // R32 = signext(R8)  0F BE /r
-I(MOVSXr32r16 , "movsx",              0, 0)     // R32 = signext(R16) 0F BF /r
-I(MOVZXr16r8  , "movzx",              0, 0)     // R32 = zeroext(R8)  0F B6 /r
-I(MOVZXr32r8  , "movzx",              0, 0)     // R32 = zeroext(R8)  0F B6 /r
-I(MOVZXr32r16 , "movzx",              0, 0)     // R32 = zeroext(R16) 0F B7 /r
+I(MOVSXr16r8  , "movsx",              0, X86II::TB)     // R32 = signext(R8)  0F BE /r
+I(MOVSXr32r8  , "movsx",              0, X86II::TB)     // R32 = signext(R8)  0F BE /r
+I(MOVSXr32r16 , "movsx",              0, X86II::TB)     // R32 = signext(R16) 0F BF /r
+I(MOVZXr16r8  , "movzx",              0, X86II::TB)     // R32 = zeroext(R8)  0F B6 /r
+I(MOVZXr32r8  , "movzx",              0, X86II::TB)     // R32 = zeroext(R8)  0F B6 /r
+I(MOVZXr32r16 , "movzx",              0, X86II::TB)     // R32 = zeroext(R16) 0F B7 /r
 
 // At this point, I is dead, so undefine the macro
 #undef I
