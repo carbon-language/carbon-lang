@@ -26,8 +26,8 @@
 #include "Support/StringExtras.h"
 
 namespace {
-  Statistic<> NumReplaced("scalarrepl", "Number of alloca's broken up");
-  Statistic<> NumPromoted("scalarrepl", "Number of alloca's promoted");
+  Statistic<> NumReplaced("scalarrepl", "Number of allocas broken up");
+  Statistic<> NumPromoted("scalarrepl", "Number of allocas promoted");
 
   struct SROA : public FunctionPass {
     bool runOnFunction(Function &F);
