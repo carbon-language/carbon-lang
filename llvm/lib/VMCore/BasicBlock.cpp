@@ -26,7 +26,7 @@ namespace {
   /// DummyInst - An instance of this class is used to mark the end of the
   /// instruction list.  This is not a real instruction.
   struct DummyInst : public Instruction {
-    DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd) {
+    DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd, 0, 0) {
       // This should not be garbage monitored.
       LeakDetector::removeGarbageObject(this);
     }

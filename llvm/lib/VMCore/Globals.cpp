@@ -72,14 +72,17 @@ void GlobalValue::destroyConstant() {
 //===----------------------------------------------------------------------===//
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
-                               Constant *Initializer,
+                               Constant *InitVal,
                                const std::string &Name, Module *ParentModule)
-  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal, Link, Name),
+  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal,
+                &Initializer, InitVal != 0, Link, Name),
     isConstantGlobal(constant) {
-  if (Initializer) {
-    assert(Initializer->getType() == Ty &&
+  if (InitVal) {
+    assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
-    Operands.push_back(Use((Value*)Initializer, this));
+    Initializer.init(InitVal, this);
+  } else {
+    Initializer.init(0, this);
   }
 
   LeakDetector::addGarbageObject(this);

@@ -87,7 +87,7 @@ void Argument::setParent(Function *parent) {
 
 Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
-  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, Linkage, name) {
+  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, 0, 0, Linkage, name) {
   BasicBlocks.setItemParent(this);
   BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);

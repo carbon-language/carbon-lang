@@ -18,15 +18,11 @@
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 
-void Instruction::init() {
+Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
+                         const std::string &Name, Instruction *InsertBefore)
+  : User(ty, Value::InstructionVal + it, Ops, NumOps, Name), Parent(0) {
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
-}
-
-Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
-                         Instruction *InsertBefore)
-  : User(ty, Value::InstructionVal + it, Name), Parent(0) {
-  init();
 
   // If requested, insert this instruction into a basic block...
   if (InsertBefore) {
@@ -36,10 +32,11 @@ Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
   }
 }
 
-Instruction::Instruction(const Type *ty, unsigned it, const std::string &Name,
-                         BasicBlock *InsertAtEnd)
-  : User(ty, Value::InstructionVal + it, Name), Parent(0) {
-  init();
+Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
+                         const std::string &Name, BasicBlock *InsertAtEnd)
+  : User(ty, Value::InstructionVal + it, Ops, NumOps, Name), Parent(0) {
+  // Make sure that we get added to a basicblock
+  LeakDetector::addGarbageObject(this);
 
   // append this instruction into the basic block
   assert(InsertAtEnd && "Basic block to append to may not be NULL!");
