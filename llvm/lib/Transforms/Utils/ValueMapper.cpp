@@ -112,8 +112,8 @@ void llvm::RemapInstruction(Instruction *I,
     Value *V = MapValue(Op, ValueMap);
 #ifndef NDEBUG
     if (!V) {
-      std::cerr << "Val = \n" << Op << "Addr = " << (void*)Op;
-      std::cerr << "\nInst = " << I;
+      std::cerr << "Val = \n" << *Op << "Addr = " << (void*)Op;
+      std::cerr << "\nInst = " << *I;
     }
 #endif
     assert(V && "Referenced value not in value map!");

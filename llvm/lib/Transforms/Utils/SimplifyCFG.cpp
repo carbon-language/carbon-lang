@@ -567,7 +567,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) ||
       *pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB)) {
-    DEBUG(std::cerr << "Removing BB: \n" << BB);
+    DEBUG(std::cerr << "Removing BB: \n" << *BB);
 
     // Loop through all of our successors and make sure they know that one
     // of their predecessors is going away.
@@ -615,7 +615,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         // we cannot do this transformation!
         //
 	if (!PropagatePredecessorsForPHIs(BB, Succ)) {
-          DEBUG(std::cerr << "Killing Trivial BB: \n" << BB);
+          DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
           std::string OldName = BB->getName();
 
           std::vector<BasicBlock*>
@@ -921,7 +921,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   }
 
   if (OnlySucc) {
-    DEBUG(std::cerr << "Merging: " << BB << "into: " << OnlyPred);
+    DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
     TerminatorInst *Term = OnlyPred->getTerminator();
 
     // Resolve any PHI nodes at the start of the block.  They are all

@@ -348,7 +348,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     return VMCI->second;
   }
 
-  DEBUG(std::cerr << "CETT: " << (void*)V << " " << V);
+  DEBUG(std::cerr << "CETT: " << (void*)V << " " << *V);
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) {
@@ -553,8 +553,8 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     if (NumUses == OldSize) ++It;
   }
 
-  DEBUG(std::cerr << "ExpIn: " << (void*)I << " " << I
-                  << "ExpOut: " << (void*)Res << " " << Res);
+  DEBUG(std::cerr << "ExpIn: " << (void*)I << " " << *I
+                  << "ExpOut: " << (void*)Res << " " << *Res);
 
   return Res;
 }
@@ -1232,9 +1232,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   assert(It != BB->end() && "Instruction not in own basic block??");
   BB->getInstList().insert(It, Res);   // Keep It pointing to old instruction
 
-  DEBUG(std::cerr << "COT CREATED: "  << (void*)Res << " " << Res
-                  << "In: " << (void*)I << " " << I << "Out: " << (void*)Res
-                  << " " << Res);
+  DEBUG(std::cerr << "COT CREATED: "  << (void*)Res << " " << *Res
+                  << "In: " << (void*)I << " " << *I << "Out: " << (void*)Res
+                  << " " << *Res);
 
   // Add the instruction to the expression map
   VMC.ExprMap[I] = Res;

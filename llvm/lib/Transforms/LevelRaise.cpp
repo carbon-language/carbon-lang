@@ -137,7 +137,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
   // Cannot handle subtracts if there is more than one index required...
   if (HasSubUse && Indices.size() != 1) return false;
 
-  PRINT_PEEPHOLE2("cast-add-to-gep:in", Src, CI);
+  PRINT_PEEPHOLE2("cast-add-to-gep:in", *Src, CI);
 
   // If we have a getelementptr capability... transform all of the 
   // add instruction uses into getelementptr's.
@@ -151,7 +151,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
     Value *OtherPtr = I->getOperand((I->getOperand(0) == &CI) ? 1 : 0);
 
     Instruction *GEP = new GetElementPtrInst(OtherPtr, Indices, I->getName());
-    PRINT_PEEPHOLE1("cast-add-to-gep:i", I);
+    PRINT_PEEPHOLE1("cast-add-to-gep:i", *I);
 
     // If the instruction is actually a subtract, we are guaranteed to only have
     // one index (from code above), so we just need to negate the pointer index
@@ -173,14 +173,14 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
       // Insert the GEP instruction before the old add instruction...
       I->getParent()->getInstList().insert(I, GEP);
 
-      PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
+      PRINT_PEEPHOLE1("cast-add-to-gep:o", *GEP);
       GEP = new CastInst(GEP, I->getType());
 
       // Replace the old add instruction with the shiny new GEP inst
       ReplaceInstWithInst(I, GEP);
     }
 
-    PRINT_PEEPHOLE1("cast-add-to-gep:o", GEP);
+    PRINT_PEEPHOLE1("cast-add-to-gep:o", *GEP);
   }
   return true;
 }
@@ -220,9 +220,9 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
     return false;  // Not convertible... perhaps next time
 
   if (getPointedToComposite(AddOp1->getType())) {  // case 1
-    PRINT_PEEPHOLE2("add-to-gep1:in", AddOp2, *BI);
+    PRINT_PEEPHOLE2("add-to-gep1:in", *AddOp2, *BI);
   } else {
-    PRINT_PEEPHOLE3("add-to-gep2:in", AddOp1, AddOp2, *BI);
+    PRINT_PEEPHOLE3("add-to-gep2:in", *AddOp1, *AddOp2, *BI);
   }
 
   GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Indices,
@@ -230,7 +230,7 @@ static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
 
   Instruction *NCI = new CastInst(GEP, AddOp1->getType());
   ReplaceInstWithInst(BB->getInstList(), BI, NCI);
-  PRINT_PEEPHOLE2("add-to-gep:out", GEP, NCI);
+  PRINT_PEEPHOLE2("add-to-gep:out", *GEP, *NCI);
   return true;
 }
 
@@ -249,7 +249,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     // Into: <nothing>
     //
     if (DestTy == Src->getType()) {   // Check for a cast to same type as src!!
-      PRINT_PEEPHOLE1("cast-of-self-ty", CI);
+      PRINT_PEEPHOLE1("cast-of-self-ty", *CI);
       CI->replaceAllUsesWith(Src);
       if (!Src->hasName() && CI->hasName()) {
         std::string Name = CI->getName();
@@ -276,7 +276,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       //
       ConvertedTypes[CI] = CI->getType();  // Make sure the cast doesn't change
       if (ExpressionConvertibleToType(Src, DestTy, ConvertedTypes, TD)) {
-        PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", Src, CI, BB->getParent());
+        PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", *Src, *CI, *BB->getParent());
           
         DEBUG(std::cerr << "\nCONVERTING SRC EXPR TYPE:\n");
         { // ValueMap must be destroyed before function verified!
@@ -286,9 +286,9 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           if (Constant *CPV = dyn_cast<Constant>(E))
             CI->replaceAllUsesWith(CPV);
           
-          PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", E);
+          PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", *E);
           DEBUG(std::cerr << "DONE CONVERTING SRC EXPR TYPE: \n"
-                          << BB->getParent());
+                          << *BB->getParent());
         }
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
@@ -303,7 +303,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // Make sure the source doesn't change type
       ConvertedTypes[Src] = Src->getType();
       if (ValueConvertibleToType(CI, Src->getType(), ConvertedTypes, TD)) {
-        PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", Src, CI, BB->getParent());
+        PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", *Src, *CI, *BB->getParent());
 
         DEBUG(std::cerr << "\nCONVERTING EXPR TYPE:\n");
         { // ValueMap must be destroyed before function verified!
@@ -311,8 +311,9 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           ConvertValueToNewType(CI, Src, ValueMap, TD);  // This will delete CI!
         }
 
-        PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", Src);
-        DEBUG(std::cerr << "DONE CONVERTING EXPR TYPE: \n\n" << BB->getParent());
+        PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", *Src);
+        DEBUG(std::cerr << "DONE CONVERTING EXPR TYPE: \n\n" <<
+              *BB->getParent());
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
@@ -398,7 +399,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
           
           // Did we find what we were looking for? If so, do the transformation
           if (ElTy) {
-            PRINT_PEEPHOLE1("cast-for-first:in", CI);
+            PRINT_PEEPHOLE1("cast-for-first:in", *CI);
 
             std::string Name = CI->getName(); CI->setName("");
 
@@ -411,7 +412,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             //
             CI->setOperand(0, GEP);
             
-            PRINT_PEEPHOLE2("cast-for-first:out", GEP, CI);
+            PRINT_PEEPHOLE2("cast-for-first:out", *GEP, *CI);
             ++NumGEPInstFormed;
             return true;
           }
@@ -440,7 +441,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertible types?
           if (Val->getType()->isLosslesslyConvertibleTo(CSPT->getElementType())) {
-            PRINT_PEEPHOLE3("st-src-cast:in ", Pointer, Val, SI);
+            PRINT_PEEPHOLE3("st-src-cast:in ", *Pointer, *Val, *SI);
 
             // Insert the new T cast instruction... stealing old T's name
             std::string Name(CI->getName()); CI->setName("");
@@ -450,7 +451,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI,
                                 SI = new StoreInst(NCI, CastSrc));
-            PRINT_PEEPHOLE3("st-src-cast:out", NCI, CastSrc, SI);
+            PRINT_PEEPHOLE3("st-src-cast:out", *NCI, *CastSrc, *SI);
             ++NumLoadStorePeepholes;
             return true;
           }
@@ -478,7 +479,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertible types?
           if (PtrElType->isLosslesslyConvertibleTo(CSPT->getElementType())) {
-            PRINT_PEEPHOLE2("load-src-cast:in ", Pointer, LI);
+            PRINT_PEEPHOLE2("load-src-cast:in ", *Pointer, *LI);
 
             // Create the new load instruction... loading the pre-casted value
             LoadInst *NewLI = new LoadInst(CastSrc, LI->getName(), BI);
@@ -488,7 +489,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI, NCI);
-            PRINT_PEEPHOLE3("load-src-cast:out", NCI, CastSrc, NewLI);
+            PRINT_PEEPHOLE3("load-src-cast:out", *NCI, *CastSrc, *NewLI);
             ++NumLoadStorePeepholes;
             return true;
           }

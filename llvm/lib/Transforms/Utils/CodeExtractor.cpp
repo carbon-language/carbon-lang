@@ -262,23 +262,23 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (Values::const_iterator i = inputs.begin(),
          e = inputs.end(); i != e; ++i) {
     const Value *value = *i;
-    DEBUG(std::cerr << "value used in func: " << value << "\n");
+    DEBUG(std::cerr << "value used in func: " << *value << "\n");
     paramTy.push_back(value->getType());
   }
 
   // Add the types of the output values to the function's argument list.
   for (Values::const_iterator I = outputs.begin(), E = outputs.end();
        I != E; ++I) {
-    DEBUG(std::cerr << "instr used in func: " << *I << "\n");
+    DEBUG(std::cerr << "instr used in func: " << **I << "\n");
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
       paramTy.push_back(PointerType::get((*I)->getType()));
   }
 
-  DEBUG(std::cerr << "Function type: " << RetTy << " f(");
+  DEBUG(std::cerr << "Function type: " << *RetTy << " f(");
   DEBUG(for (std::vector<const Type*>::iterator i = paramTy.begin(),
-               e = paramTy.end(); i != e; ++i) std::cerr << *i << ", ");
+               e = paramTy.end(); i != e; ++i) std::cerr << **i << ", ");
   DEBUG(std::cerr << ")\n");
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
