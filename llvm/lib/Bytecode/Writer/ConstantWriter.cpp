@@ -101,14 +101,14 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
   case Type::UShortTyID:
   case Type::UIntTyID:
   case Type::ULongTyID:
-    output_vbr(((const ConstPoolUInt*)CPV)->getValue(), Out);
+    output_vbr(cast<const ConstPoolUInt>(CPV)->getValue(), Out);
     break;
 
   case Type::SByteTyID:   // Signed integer types...
   case Type::ShortTyID:
   case Type::IntTyID:
   case Type::LongTyID:
-    output_vbr(((const ConstPoolSInt*)CPV)->getValue(), Out);
+    output_vbr(cast<const ConstPoolSInt>(CPV)->getValue(), Out);
     break;
 
   case Type::TypeTyID:     // Serialize type type
@@ -116,7 +116,7 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
     break;
 
   case Type::ArrayTyID: {
-    const ConstPoolArray *CPA = (const ConstPoolArray *)CPV;
+    const ConstPoolArray *CPA = cast<const ConstPoolArray>(CPV);
     unsigned size = CPA->getValues().size();
     if (!((const ArrayType *)CPA->getType())->isSized())
       output_vbr(size, Out);            // Not for sized arrays!!!
@@ -130,7 +130,7 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
   }
 
   case Type::StructTyID: {
-    const ConstPoolStruct *CPS = (const ConstPoolStruct*)CPV;
+    const ConstPoolStruct *CPS = cast<const ConstPoolStruct>(CPV);
     const vector<Use> &Vals = CPS->getValues();
 
     for (unsigned i = 0; i < Vals.size(); ++i) {
@@ -142,17 +142,28 @@ bool BytecodeWriter::outputConstant(const ConstPoolVal *CPV) {
   }
 
   case Type::PointerTyID: {
-    output_vbr((unsigned)0, Out);
+    const ConstPoolPointer *CPP = cast<const ConstPoolPointer>(CPV);
+    if (isa<ConstPoolPointerNull>(CPP)) {
+      output_vbr((unsigned)0, Out);
+    } else if (const ConstPoolPointerReference *CPR = 
+	                dyn_cast<ConstPoolPointerReference>(CPP)) {
+      output_vbr((unsigned)1, Out);
+      int Slot = Table.getValSlot((Value*)CPR->getValue());
+      assert(Slot != -1 && "Global used but not available!!");
+      output_vbr((unsigned)Slot, Out);
+    } else {
+      assert(0 && "Unknown ConstPoolPointer Subclass!");
+    }
     break;
   }
 
   case Type::FloatTyID: {   // Floating point types...
-    float Tmp = (float)((const ConstPoolFP*)CPV)->getValue();
+    float Tmp = (float)cast<ConstPoolFP>(CPV)->getValue();
     output_data(&Tmp, &Tmp+1, Out);
     break;
   }
   case Type::DoubleTyID: {
-    double Tmp = ((const ConstPoolFP*)CPV)->getValue();
+    double Tmp = cast<ConstPoolFP>(CPV)->getValue();
     output_data(&Tmp, &Tmp+1, Out);
     break;
   }

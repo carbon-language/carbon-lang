@@ -16,6 +16,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/iOther.h"
+#include "llvm/iTerminators.h"
 #include <algorithm>
 
 typedef unsigned char uchar;
@@ -56,26 +57,29 @@ static void outputInstructionFormat0(const Instruction *I,
 static void outputInstrVarArgsCall(const Instruction *I,
 				   const SlotCalculator &Table, unsigned Type,
 				   deque<uchar> &Out) {
-  assert(I->getOpcode() == Instruction::Call /*|| 
-	 I->getOpcode() == Instruction::ICall */);
+  assert(isa<CallInst>(I) || isa<InvokeInst>(I));
   // Opcode must have top two bits clear...
   output_vbr(I->getOpcode(), Out);               // Instruction Opcode ID
   output_vbr(Type, Out);                         // Result type (varargs type)
 
   unsigned NumArgs = I->getNumOperands();
-  output_vbr((NumArgs-2)*2+2, Out); // Don't duplicate method & Arg1 types
+  output_vbr(NumArgs*2, Out);
+  // TODO: Don't need to emit types for the fixed types of the varargs method
+  // prototype...
 
-  // Output the method type without an extra type argument.
+  // The type for the method has already been emitted in the type field of the
+  // instruction.  Just emit the slot # now.
   int Slot = Table.getValSlot(I->getOperand(0));
   assert(Slot >= 0 && "No slot number for value!?!?");      
   output_vbr((unsigned)Slot, Out);
 
-  // VarArgs methods must have at least one specified operand
-  Slot = Table.getValSlot(I->getOperand(1));
-  assert(Slot >= 0 && "No slot number for value!?!?");      
-  output_vbr((unsigned)Slot, Out);
+  // Output a dummy field to fill Arg#2 in the reader that is currently unused
+  // for varargs calls.  This is a gross hack to make the code simpler, but we
+  // aren't really doing very small bytecode for varargs calls anyways.
+  // FIXME in the future: Smaller bytecode for varargs calls
+  output_vbr(0, Out);
 
-  for (unsigned i = 2; i < NumArgs; ++i) {
+  for (unsigned i = 1; i < NumArgs; ++i) {
     // Output Arg Type ID
     Slot = Table.getValSlot(I->getOperand(i)->getType());
     assert(Slot >= 0 && "No slot number for value!?!?");      
@@ -159,8 +163,6 @@ static void outputInstructionFormat3(const Instruction *I,
   output(Opcode, Out);
 }
 
-#include "llvm/Assembly/Writer.h"
-
 void BytecodeWriter::processInstruction(const Instruction *I) {
   assert(I->getOpcode() < 64 && "Opcode too big???");
 
@@ -216,7 +218,14 @@ void BytecodeWriter::processInstruction(const Instruction *I) {
     if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
     NumOperands++;
   } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {// Handle VarArg calls
-    if (CI->getCalledMethod()->getMethodType()->isVarArg()) {
+    PointerType *Ty = cast<PointerType>(CI->getCalledValue()->getType());
+    if (cast<MethodType>(Ty->getValueType())->isVarArg()) {
+      outputInstrVarArgsCall(I, Table, Type, Out);
+      return;
+    }
+  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) { // ...  & Invokes
+    PointerType *Ty = cast<PointerType>(II->getCalledValue()->getType());
+    if (cast<MethodType>(Ty->getValueType())->isVarArg()) {
       outputInstrVarArgsCall(I, Table, Type, Out);
       return;
     }

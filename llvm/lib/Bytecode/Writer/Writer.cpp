@@ -61,9 +61,6 @@ BytecodeWriter::BytecodeWriter(deque<unsigned char> &o, const Module *M)
     outputSymbolTable(*M->getSymbolTable());
 }
 
-// TODO: REMOVE
-#include "llvm/Assembly/Writer.h"
-
 void BytecodeWriter::outputConstants(bool isMethod) {
   BytecodeBlock CPool(BytecodeFormat::ConstantPool, Out);
 
@@ -109,8 +106,7 @@ void BytecodeWriter::outputConstants(bool isMethod) {
 	//     << Out.size() << "\n";
 	outputConstant(CPV);
       } else {
-	const Type *Ty = cast<const Type>(V);
-	outputType(Ty);
+	outputType(cast<const Type>(V));
       }
     }
   }
@@ -130,7 +126,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
                         isa<ConstPoolVal>(GV);
     output_vbr(oSlot, Out);
 
-    // If we have an initialized, output it now.
+    // If we have an initializer, output it now.
     if (GV->hasInitializer()) {
       Slot = Table.getValSlot(GV->getInitializer());
       assert(Slot != -1 && "No slot for global var initializer!");
