@@ -55,6 +55,8 @@ FE_OBJS = \
 	symtab.o \
 	y.tab.o
 
+all: burg
+
 burg: $(BU_OBJS) $(FE_OBJS)
 	$(CC) -o burg $(CFLAGS) $(BU_OBJS) $(FE_OBJS)
 
