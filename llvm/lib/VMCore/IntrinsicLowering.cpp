@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IntrinsicLowering.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/iOther.h"
@@ -49,6 +49,12 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     new CallInst(M->getOrInsertFunction("abort", Type::VoidTy, 0), "", CI);
     break;
 
+  case Intrinsic::returnaddress:
+  case Intrinsic::frameaddress:
+    CI->replaceAllUsesWith(ConstantPointerNull::get(
+                                            cast<PointerType>(CI->getType())));
+    break;
+
   case Intrinsic::dbg_stoppoint:
   case Intrinsic::dbg_region_start:
   case Intrinsic::dbg_region_end:
@@ -72,7 +78,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::memmove: {
-    // The memmove intrinsic take an extra alignment argument that the memcpy
+    // The memmove intrinsic take an extra alignment argument that the memmove
     // libc function does not.
     const FunctionType *CFT = Callee->getFunctionType();
     FunctionType *FT =
@@ -81,6 +87,19 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                         false);
     Function *MemMove = M->getOrInsertFunction("memmove", FT);
     new CallInst(MemMove, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
+                 CI->getName(), CI);
+    break;
+  }
+  case Intrinsic::memset: {
+    // The memset intrinsic take an extra alignment argument that the memset
+    // libc function does not.
+    const FunctionType *CFT = Callee->getFunctionType();
+    FunctionType *FT =
+      FunctionType::get(*CFT->param_begin(), 
+           std::vector<const Type*>(CFT->param_begin(), CFT->param_end()-1),
+                        false);
+    Function *MemSet = M->getOrInsertFunction("memset", FT);
+    new CallInst(MemSet, std::vector<Value*>(CI->op_begin()+1, CI->op_end()-1),
                  CI->getName(), CI);
     break;
   }

@@ -41,17 +41,14 @@
 
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iOther.h"
-#include "llvm/iOperators.h"
-#include "llvm/iMemory.h"
-#include "llvm/SymbolTable.h"
-#include "llvm/PassManager.h"
+#include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/PassManager.h"
+#include "llvm/SymbolTable.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
@@ -551,6 +548,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::va_end:          NumArgs = 1; break;
   case Intrinsic::va_copy:         NumArgs = 1; break;
 
+  case Intrinsic::returnaddress:
+  case Intrinsic::frameaddress:
+    Assert1(isa<PointerType>(FT->getReturnType()),
+            "llvm.(frame|return)address must return pointers", IF);
+    Assert1(FT->getNumParams() == 1 && isa<ConstantInt>(CI.getOperand(1)),
+       "llvm.(frame|return)address require a single constant integer argument",
+            &CI);
+    NumArgs = 1;
+    break;
+
   case Intrinsic::setjmp:          NumArgs = 1; break;
   case Intrinsic::longjmp:         NumArgs = 2; break;
   case Intrinsic::sigsetjmp:       NumArgs = 2; break;
@@ -564,6 +571,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
   case Intrinsic::memcpy:          NumArgs = 4; break;
   case Intrinsic::memmove:         NumArgs = 4; break;
+  case Intrinsic::memset:          NumArgs = 4; break;
  
   case Intrinsic::alpha_ctlz:      NumArgs = 1; break;
   case Intrinsic::alpha_cttz:      NumArgs = 1; break;

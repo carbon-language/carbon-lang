@@ -214,12 +214,19 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.dbg.func.start")  return Intrinsic::dbg_func_start;
     if (getName() == "llvm.dbg.declare")     return Intrinsic::dbg_declare;
     break;
+  case 'f':
+    if (getName() == "llvm.frameaddress")  return Intrinsic::frameaddress;
+    break;
   case 'l':
     if (getName() == "llvm.longjmp")  return Intrinsic::longjmp;
     break;
   case 'm':
     if (getName() == "llvm.memcpy")  return Intrinsic::memcpy;
     if (getName() == "llvm.memmove")  return Intrinsic::memmove;
+    if (getName() == "llvm.memset")  return Intrinsic::memset;
+    break;
+  case 'r':
+    if (getName() == "llvm.returnaddress")  return Intrinsic::returnaddress;
     break;
   case 's':
     if (getName() == "llvm.setjmp")     return Intrinsic::setjmp;

@@ -31,6 +31,15 @@ namespace Intrinsic {
     va_end,         // Used to implement the va_end macro in C
     va_copy,        // Used to implement the va_copy macro in C
 
+    // Code generator intrinsics...
+    returnaddress,  // Yields the return address of a dynamic call frame
+    frameaddress,   // Yields the frame address of a dynamic call frame
+
+    // Standard libc functions...
+    memcpy,         // Copy non-overlapping memory blocks
+    memmove,        // Copy potentially overlapping memory blocks
+    memset,         // Fill memory with a byte value
+
     // Setjmp/Longjmp intrinsics...
     setjmp,         // Used to represent a setjmp call in C
     longjmp,        // Used to represent a longjmp call in C
@@ -43,10 +52,6 @@ namespace Intrinsic {
     dbg_region_end,   // End of a region
     dbg_func_start,   // Start of a function
     dbg_declare,      // Declare a local object
-
-    // Standard libc functions...
-    memcpy,         // Used to copy non-overlapping memory blocks
-    memmove,        // Used to copy overlapping memory blocks
 
 
     // Standard libm functions...
