@@ -552,8 +552,8 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
 
   switch (RevisionNum) {
   case 2:               // LLVM pre-1.0 release: will be deleted on the next rev
-    // Version #2 added information about all 4 linkage types instead of just
-    // having internal and external.
+    // Version #2 only supported 4 linkage types.  It didn't support weak
+    // linkage.
     hasExtendedLinkageSpecs = false;
     hasOldStyleVarargs = true;
     hasVarArgCallPadding = true;
@@ -561,8 +561,11 @@ void BytecodeParser::ParseVersionInfo(const unsigned char *&Buf,
   case 0:               //  LLVM 1.0, 1.1 release version
     // Compared to rev #2, we added support for weak linkage, a more dense
     // encoding, and better varargs support.
+
+    // Base LLVM 1.0 bytecode format.
     break;
   case 1:               // LLVM 1.2 release version
+    // LLVM 1.2 added explicit support for emitting strings efficiently.
     break;
 
   default:

@@ -177,6 +177,9 @@ private:
                           TypeValuesListTy &Tab, unsigned NumEntries);
   const Type *parseTypeConstant(const unsigned char *&Buf,
                                 const unsigned char *EndBuf);
+  void parseStringConstants(const unsigned char *&Buf,
+                            const unsigned char *EndBuf,
+                            unsigned NumEntries, ValueTable &Tab);
 
   Value      *getValue(unsigned TypeID, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);

@@ -298,6 +298,42 @@ void BytecodeParser::ParseGlobalTypes(const unsigned char *&Buf,
   ParseConstantPool(Buf, EndBuf, T, ModuleTypeValues);
 }
 
+void BytecodeParser::parseStringConstants(const unsigned char *&Buf,
+                                          const unsigned char *EndBuf,
+                                          unsigned NumEntries, ValueTable &Tab){
+  unsigned Typ;
+  for (; NumEntries; --NumEntries) {
+    if (read_vbr(Buf, EndBuf, Typ)) throw Error_readvbr;
+    const Type *Ty = getType(Typ);
+    if (!isa<ArrayType>(Ty))
+      throw std::string("String constant data invalid!");
+    
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    if (ATy->getElementType() != Type::SByteTy &&
+        ATy->getElementType() != Type::UByteTy)
+      throw std::string("String constant data invalid!");
+    
+    // Read character data.  The type tells us how long the string is.
+    char Data[ATy->getNumElements()];
+    if (input_data(Buf, EndBuf, Data, Data+ATy->getNumElements()))
+      throw Error_inputdata;
+
+    std::vector<Constant*> Elements(ATy->getNumElements());
+    if (ATy->getElementType() == Type::SByteTy)
+      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
+        Elements[i] = ConstantSInt::get(Type::SByteTy, Data[i]);
+    else
+      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
+        Elements[i] = ConstantSInt::get(Type::UByteTy, Data[i]);
+
+    // Create the constant, inserting it as needed.
+    Constant *C = ConstantArray::get(ATy, Elements);
+    unsigned Slot = insertValue(C, Typ, Tab);
+    ResolveReferencesToConstant(C, Slot);
+  }
+}
+
+
 void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
                                        const unsigned char *EndBuf,
                                        ValueTable &Tab, 
@@ -310,6 +346,9 @@ void BytecodeParser::ParseConstantPool(const unsigned char *&Buf,
     if (Typ == Type::TypeTyID) {
       BCR_TRACE(3, "Type: 'type'  NumEntries: " << NumEntries << "\n");
       parseTypeConstants(Buf, EndBuf, TypeTab, NumEntries);
+    } else if (Typ == Type::VoidTyID) {
+      assert(&Tab == &ModuleValues && "Cannot read strings in functions!");
+      parseStringConstants(Buf, EndBuf, NumEntries, Tab);
     } else {
       BCR_TRACE(3, "Type: '" << *getType(Typ) << "'  NumEntries: "
                 << NumEntries << "\n");
