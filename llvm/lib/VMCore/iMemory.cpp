@@ -93,9 +93,8 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name = "")
 //                           StoreInst Implementation
 //===----------------------------------------------------------------------===//
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx,
-		     const std::string &Name = "")
-  : MemAccessInst(Type::VoidTy, Store, Name) {
+StoreInst::StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx)
+  : MemAccessInst(Type::VoidTy, Store, "") {
   assert(getIndexedType(Ptr->getType(), Idx) && "Store operands invalid!");
   
   Operands.reserve(2+Idx.size());
@@ -106,8 +105,8 @@ StoreInst::StoreInst(Value *Val, Value *Ptr, const std::vector<Value*> &Idx,
     Operands.push_back(Use(Idx[i], this));
 }
 
-StoreInst::StoreInst(Value *Val, Value *Ptr, const std::string &Name = "")
-  : MemAccessInst(Type::VoidTy, Store, Name) {
+StoreInst::StoreInst(Value *Val, Value *Ptr)
+  : MemAccessInst(Type::VoidTy, Store, "") {
   
   Operands.reserve(2);
   Operands.push_back(Use(Val, this));
@@ -130,8 +129,4 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 
   for (unsigned i = 0, E = Idx.size(); i != E; ++i)
     Operands.push_back(Use(Idx[i], this));
-}
-
-bool GetElementPtrInst::isStructSelector() const {
-  return ((PointerType*)Operands[0]->getType())->getElementType()->isStructType();
 }
