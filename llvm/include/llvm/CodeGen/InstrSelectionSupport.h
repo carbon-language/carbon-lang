@@ -54,7 +54,7 @@ int64_t         GetConstantValueAsSignedInt     (const Value *V,
 //---------------------------------------------------------------------------
 
 Value*          GetMemInstArgs  (InstructionNode* memInstrNode,
-                                 vector<Value*>& idxVec,
+                                 std::vector<Value*>& idxVec,
                                  bool& allConstantIndices);
 
 
