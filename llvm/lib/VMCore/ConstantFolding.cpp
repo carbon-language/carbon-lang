@@ -21,6 +21,7 @@
 #include "ConstantFolding.h"
 #include "llvm/Constants.h"
 #include "llvm/iPHINode.h"
+#include "llvm/iOperators.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -573,42 +574,344 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   }
 }
 
+/// IdxCompare - Compare the two constants as though they were getelementptr
+/// indices.  This allows coersion of the types to be the same thing.
+///
+/// If the two constants are the "same" (after coersion), return 0.  If the
+/// first is less than the second, return -1, if the second is less than the
+/// first, return 1.  If the constants are not integral, return -2.
+///
+static int IdxCompare(Constant *C1, Constant *C2) {
+  if (C1 == C2) return 0;
+
+  // Ok, we found a different index.  Are either of the operands
+  // ConstantExprs?  If so, we can't do anything with them.
+  if (!isa<ConstantInt>(C1) || !isa<ConstantInt>(C2))
+    return -2; // don't know!
+  
+  // Ok, we have two differing integer indices.  Convert them to
+  // be the same type.  Long is always big enough, so we use it.
+  C1 = ConstantExpr::getCast(C1, Type::LongTy);
+  C2 = ConstantExpr::getCast(C2, Type::LongTy);
+  if (C1 == C2) return 0;  // Are they just differing types?
+
+  // If they are really different, now that they are the same type, then we
+  // found a difference!
+  if (cast<ConstantSInt>(C1)->getValue() < cast<ConstantSInt>(C2)->getValue())
+    return -1;
+  else
+    return 1;
+}
+
+/// evaluateRelation - This function determines if there is anything we can
+/// decide about the two constants provided.  This doesn't need to handle simple
+/// things like integer comparisons, but should instead handle ConstantExpr's
+/// and ConstantPointerRef's.  If we can determine that the two constants have a
+/// particular relation to each other, we should return the corresponding SetCC
+/// code, otherwise return Instruction::BinaryOpsEnd.
+///
+/// To simplify this code we canonicalize the relation so that the first
+/// operand is always the most "complex" of the two.  We consider simple
+/// constants (like ConstantInt) to be the simplest, followed by
+/// ConstantPointerRef's, followed by ConstantExpr's (the most complex).
+///
+static Instruction::BinaryOps evaluateRelation(const Constant *V1,
+                                               const Constant *V2) {
+  assert(V1->getType() == V2->getType() &&
+         "Cannot compare different types of values!");
+  if (V1 == V2) return Instruction::SetEQ;
+
+  if (!isa<ConstantExpr>(V1) && !isa<ConstantPointerRef>(V1)) {
+    // If the first operand is simple, swap operands.
+    assert((isa<ConstantPointerRef>(V2) || isa<ConstantExpr>(V2)) &&
+           "Simple cases should have been handled by caller!");
+    return SetCondInst::getSwappedCondition(evaluateRelation(V2, V1));
+
+  } else if (const ConstantPointerRef *CPR1 = dyn_cast<ConstantPointerRef>(V1)){
+    if (isa<ConstantExpr>(V2))   // Swap as necessary.
+      return SetCondInst::getSwappedCondition(evaluateRelation(V2, V1));
+
+    // Now we know that the RHS is a ConstantPointerRef or simple constant,
+    // which (since the types must match) means that it's a ConstantPointerNull.
+    if (const ConstantPointerRef *CPR2 = dyn_cast<ConstantPointerRef>(V2)) {
+      assert(CPR1->getValue() != CPR2->getValue() &&
+             "CPRs for the same value exist at different addresses??");
+      // FIXME: If both globals are external weak, they might both be null!
+      return Instruction::SetNE;
+    } else {
+      assert(isa<ConstantPointerNull>(V2) && "Canonicalization guarantee!");
+      // Global can never be null.  FIXME: if we implement external weak
+      // linkage, this is not necessarily true!
+      return Instruction::SetNE;
+    }
+
+  } else {
+    // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
+    // constantexpr, a CPR, or a simple constant.
+    const ConstantExpr *CE1 = cast<ConstantExpr>(V1);
+    Constant *CE1Op0 = CE1->getOperand(0);
+
+    switch (CE1->getOpcode()) {
+    case Instruction::Cast:
+      // If the cast is not actually changing bits, and the second operand is a
+      // null pointer, do the comparison with the pre-casted value.
+      if (V2->isNullValue() &&
+          CE1->getType()->isLosslesslyConvertibleTo(CE1Op0->getType()))
+        return evaluateRelation(CE1Op0,
+                                Constant::getNullValue(CE1Op0->getType()));
+
+    case Instruction::GetElementPtr:
+      // Ok, since this is a getelementptr, we know that the constant has a
+      // pointer type.  Check the various cases.
+      if (isa<ConstantPointerNull>(V2)) {
+        // If we are comparing a GEP to a null pointer, check to see if the base
+        // of the GEP equals the null pointer.
+        if (isa<ConstantPointerRef>(CE1Op0)) {
+          // FIXME: this is not true when we have external weak references!
+          // No offset can go from a global to a null pointer.
+          return Instruction::SetGT;
+        } else if (isa<ConstantPointerNull>(CE1Op0)) {
+          // If we are indexing from a null pointer, check to see if we have any
+          // non-zero indices.
+          for (unsigned i = 1, e = CE1->getNumOperands(); i != e; ++i)
+            if (!CE1->getOperand(i)->isNullValue())
+              // Offsetting from null, must not be equal.
+              return Instruction::SetGT;
+          // Only zero indexes from null, must still be zero.
+          return Instruction::SetEQ;
+        }
+        // Otherwise, we can't really say if the first operand is null or not.
+      } else if (const ConstantPointerRef *CPR2 =
+                                             dyn_cast<ConstantPointerRef>(V2)) {
+        if (isa<ConstantPointerNull>(CE1Op0)) {
+          // FIXME: This is not true with external weak references.
+          return Instruction::SetLT;
+        } else if (const ConstantPointerRef *CPR1 =
+                   dyn_cast<ConstantPointerRef>(CE1Op0)) {
+          if (CPR1 == CPR2) {
+            // If this is a getelementptr of the same global, then it must be
+            // different.  Because the types must match, the getelementptr could
+            // only have at most one index, and because we fold getelementptr's
+            // with a single zero index, it must be nonzero.
+            assert(CE1->getNumOperands() == 2 &&
+                   !CE1->getOperand(1)->isNullValue() &&
+                   "Suprising getelementptr!");
+            return Instruction::SetGT;
+          } else {
+            // If they are different globals, we don't know what the value is,
+            // but they can't be equal.
+            return Instruction::SetNE;
+          }
+        }
+      } else {
+        const ConstantExpr *CE2 = cast<ConstantExpr>(V2);
+        const Constant *CE2Op0 = CE2->getOperand(0);
+
+        // There are MANY other foldings that we could perform here.  They will
+        // probably be added on demand, as they seem needed.
+        switch (CE2->getOpcode()) {
+        default: break;
+        case Instruction::GetElementPtr:
+          // By far the most common case to handle is when the base pointers are
+          // obviously to the same or different globals.
+          if (isa<ConstantPointerRef>(CE1Op0) &&
+              isa<ConstantPointerRef>(CE2Op0)) {
+            if (CE1Op0 != CE2Op0) // Don't know relative ordering, but not equal
+              return Instruction::SetNE;
+            // Ok, we know that both getelementptr instructions are based on the
+            // same global.  From this, we can precisely determine the relative
+            // ordering of the resultant pointers.
+            unsigned i = 1;
+            
+            // Compare all of the operands the GEP's have in common.
+            for (;i != CE1->getNumOperands() && i != CE2->getNumOperands(); ++i)
+              switch (IdxCompare(CE1->getOperand(i), CE2->getOperand(i))) {
+              case -1: return Instruction::SetLT;
+              case 1:  return Instruction::SetGT;
+              case -2: return Instruction::BinaryOpsEnd;
+              }
+
+            // Ok, we ran out of things they have in common.  If any leftovers
+            // are non-zero then we have a difference, otherwise we are equal.
+            for (; i < CE1->getNumOperands(); ++i)
+              if (!CE1->getOperand(i)->isNullValue())
+                return Instruction::SetGT;
+            for (; i < CE2->getNumOperands(); ++i)
+              if (!CE2->getOperand(i)->isNullValue())
+                return Instruction::SetLT;
+            return Instruction::SetEQ;
+          }
+        }
+      }
+      
+    default:
+      break;
+    }
+  }
+
+  return Instruction::BinaryOpsEnd;
+}
+
 Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                                               const Constant *V1,
                                               const Constant *V2) {
-  Constant *C;
+  Constant *C = 0;
   switch (Opcode) {
-  default:                   return 0;
-  case Instruction::Add:     return ConstRules::get(V1, V2).add(V1, V2);
-  case Instruction::Sub:     return ConstRules::get(V1, V2).sub(V1, V2);
-  case Instruction::Mul:     return ConstRules::get(V1, V2).mul(V1, V2);
-  case Instruction::Div:     return ConstRules::get(V1, V2).div(V1, V2);
-  case Instruction::Rem:     return ConstRules::get(V1, V2).rem(V1, V2);
-  case Instruction::And:     return ConstRules::get(V1, V2).op_and(V1, V2);
-  case Instruction::Or:      return ConstRules::get(V1, V2).op_or (V1, V2);
-  case Instruction::Xor:     return ConstRules::get(V1, V2).op_xor(V1, V2);
-
-  case Instruction::Shl:     return ConstRules::get(V1, V2).shl(V1, V2);
-  case Instruction::Shr:     return ConstRules::get(V1, V2).shr(V1, V2);
-
-  case Instruction::SetEQ:   return ConstRules::get(V1, V2).equalto(V1, V2);
-  case Instruction::SetLT:   return ConstRules::get(V1, V2).lessthan(V1, V2);
-  case Instruction::SetGT:   return ConstRules::get(V1, V2).lessthan(V2, V1);
+  default:                   break;
+  case Instruction::Add:     C = ConstRules::get(V1, V2).add(V1, V2); break;
+  case Instruction::Sub:     C = ConstRules::get(V1, V2).sub(V1, V2); break;
+  case Instruction::Mul:     C = ConstRules::get(V1, V2).mul(V1, V2); break;
+  case Instruction::Div:     C = ConstRules::get(V1, V2).div(V1, V2); break;
+  case Instruction::Rem:     C = ConstRules::get(V1, V2).rem(V1, V2); break;
+  case Instruction::And:     C = ConstRules::get(V1, V2).op_and(V1, V2); break;
+  case Instruction::Or:      C = ConstRules::get(V1, V2).op_or (V1, V2); break;
+  case Instruction::Xor:     C = ConstRules::get(V1, V2).op_xor(V1, V2); break;
+  case Instruction::Shl:     C = ConstRules::get(V1, V2).shl(V1, V2); break;
+  case Instruction::Shr:     C = ConstRules::get(V1, V2).shr(V1, V2); break;
+  case Instruction::SetEQ:   C = ConstRules::get(V1, V2).equalto(V1, V2); break;
+  case Instruction::SetLT:   C = ConstRules::get(V1, V2).lessthan(V1, V2);break;
+  case Instruction::SetGT:   C = ConstRules::get(V1, V2).lessthan(V2, V1);break;
   case Instruction::SetNE:   // V1 != V2  ===  !(V1 == V2)
     C = ConstRules::get(V1, V2).equalto(V1, V2);
+    if (C) return ConstantExpr::get(Instruction::Xor, C, ConstantBool::True);
     break;
   case Instruction::SetLE:   // V1 <= V2  ===  !(V2 < V1)
     C = ConstRules::get(V1, V2).lessthan(V2, V1);
+    if (C) return ConstantExpr::get(Instruction::Xor, C, ConstantBool::True);
     break;
   case Instruction::SetGE:   // V1 >= V2  ===  !(V1 < V2)
     C = ConstRules::get(V1, V2).lessthan(V1, V2);
+    if (C) return ConstantExpr::get(Instruction::Xor, C, ConstantBool::True);
     break;
   }
 
-  // If the folder broke out of the switch statement, invert the boolean
-  // constant value, if it exists, and return it.
-  if (!C) return 0;
-  return ConstantExpr::get(Instruction::Xor, ConstantBool::True, C);
+  // If we successfully folded the expression, return it now.
+  if (C) return C;
+
+  if (SetCondInst::isRelational(Opcode))
+    switch (evaluateRelation(V1, V2)) {
+    default: assert(0 && "Unknown relational!");
+    case Instruction::BinaryOpsEnd:
+      break;  // Couldn't determine anything about these constants.
+    case Instruction::SetEQ:   // We know the constants are equal!
+      // If we know the constants are equal, we can decide the result of this
+      // computation precisely.
+      return ConstantBool::get(Opcode == Instruction::SetEQ ||
+                               Opcode == Instruction::SetLE ||
+                               Opcode == Instruction::SetGE);
+    case Instruction::SetLT:
+      // If we know that V1 < V2, we can decide the result of this computation
+      // precisely.
+      return ConstantBool::get(Opcode == Instruction::SetLT ||
+                               Opcode == Instruction::SetNE ||
+                               Opcode == Instruction::SetLE);
+    case Instruction::SetGT:
+      // If we know that V1 > V2, we can decide the result of this computation
+      // precisely.
+      return ConstantBool::get(Opcode == Instruction::SetGT ||
+                               Opcode == Instruction::SetNE ||
+                               Opcode == Instruction::SetGE);
+    case Instruction::SetLE:
+      // If we know that V1 <= V2, we can only partially decide this relation.
+      if (Opcode == Instruction::SetGT) return ConstantBool::False;
+      if (Opcode == Instruction::SetLT) return ConstantBool::True;
+      break;
+
+    case Instruction::SetGE:
+      // If we know that V1 >= V2, we can only partially decide this relation.
+      if (Opcode == Instruction::SetLT) return ConstantBool::False;
+      if (Opcode == Instruction::SetGT) return ConstantBool::True;
+      break;
+      
+    case Instruction::SetNE:
+      // If we know that V1 != V2, we can only partially decide this relation.
+      if (Opcode == Instruction::SetEQ) return ConstantBool::False;
+      if (Opcode == Instruction::SetNE) return ConstantBool::True;
+      break;
+    }
+
+  if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(V1)) {
+    if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2)) {
+      // There are many possible foldings we could do here.  We should probably
+      // at least fold add of a pointer with an integer into the appropriate
+      // getelementptr.  This will improve alias analysis a bit.
+
+
+
+
+    } else {
+      // Just implement a couple of simple identities.
+      switch (Opcode) {
+      case Instruction::Add:
+        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X + 0 == X
+        break;
+      case Instruction::Sub:
+        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X - 0 == X
+        break;
+      case Instruction::Mul:
+        if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X * 0 == 0
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
+          if (CI->getRawValue() == 1)
+            return const_cast<Constant*>(V1);                     // X * 1 == X
+        break;
+      case Instruction::Div:
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
+          if (CI->getRawValue() == 1)
+            return const_cast<Constant*>(V1);                     // X / 1 == X
+        break;
+      case Instruction::Rem:
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
+          if (CI->getRawValue() == 1)
+            return Constant::getNullValue(CI->getType()); // X % 1 == 0
+        break;
+      case Instruction::And:
+        if (cast<ConstantIntegral>(V2)->isAllOnesValue())
+          return const_cast<Constant*>(V1);                       // X & -1 == X
+        if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X & 0 == 0
+        break;
+      case Instruction::Or:
+        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X | 0 == X
+        if (cast<ConstantIntegral>(V2)->isAllOnesValue())
+          return const_cast<Constant*>(V2);  // X | -1 == -1
+        break;
+      case Instruction::Xor:
+        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X ^ 0 == X
+        break;
+      }
+    }
+
+  } else if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2)) {
+    // If V2 is a constant expr and V1 isn't, flop them around and fold the
+    // other way if possible.
+    switch (Opcode) {
+    case Instruction::Add:
+    case Instruction::Mul:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
+    case Instruction::SetEQ:
+    case Instruction::SetNE:
+      // No change of opcode required.
+      return ConstantFoldBinaryInstruction(Opcode, V2, V1);
+
+    case Instruction::SetLT:
+    case Instruction::SetGT:
+    case Instruction::SetLE:
+    case Instruction::SetGE:
+      // Change the opcode as necessary to swap the operands.
+      Opcode = SetCondInst::getSwappedCondition((Instruction::BinaryOps)Opcode);
+      return ConstantFoldBinaryInstruction(Opcode, V2, V1);
+
+    case Instruction::Shl:
+    case Instruction::Shr:
+    case Instruction::Sub:
+    case Instruction::Div:
+    case Instruction::Rem:
+    default:  // These instructions cannot be flopped around.
+      break;
+    }
+  }
+  return 0;
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
