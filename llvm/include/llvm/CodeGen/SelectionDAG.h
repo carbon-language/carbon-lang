@@ -131,7 +131,8 @@ public:
     return NN;
   }
 
-  SDOperand getSetCC(ISD::CondCode, SDOperand LHS, SDOperand RHS);
+  SDOperand getSetCC(ISD::CondCode, MVT::ValueType VT,
+                     SDOperand LHS, SDOperand RHS);
 
   /// getNode - Gets or creates the specified node.
   ///

@@ -707,7 +707,6 @@ protected:
   friend class SelectionDAG;
   SetCCSDNode(ISD::CondCode Cond, SDOperand LHS, SDOperand RHS)
     : SDNode(ISD::SETCC, LHS, RHS), Condition(Cond) {
-    setValueTypes(MVT::i1);
   }
 public:
 
