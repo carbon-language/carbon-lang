@@ -86,6 +86,10 @@ namespace {
       BB = MBBMap[&LLVM_BB];
     }
 
+    void emitOp64LibraryCall (MachineBasicBlock *MBB,
+                              MachineBasicBlock::iterator IP,
+                              unsigned DestReg, const char *FuncName,
+                              unsigned Op0Reg, unsigned Op1Reg);
     void visitBinaryOperator(Instruction &I);
     void visitShiftInst (ShiftInst &SI) { visitBinaryOperator (SI); }
     void visitSetCondInst(SetCondInst &I);
@@ -1091,6 +1095,19 @@ void V8ISel::visitGetElementPtrInst (GetElementPtrInst &I) {
                     I.op_begin ()+1, I.op_end (), outputReg);
 }
 
+void V8ISel::emitOp64LibraryCall (MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator IP,
+                                  unsigned DestReg,
+                                  const char *FuncName,
+                                  unsigned Op0Reg, unsigned Op1Reg) {
+  BuildMI (*MBB, IP, V8::ORrr, 2, V8::O0).addReg (V8::G0).addReg (Op0Reg);
+  BuildMI (*MBB, IP, V8::ORrr, 2, V8::O1).addReg (V8::G0).addReg (Op0Reg+1);
+  BuildMI (*MBB, IP, V8::ORrr, 2, V8::O2).addReg (V8::G0).addReg (Op1Reg);
+  BuildMI (*MBB, IP, V8::ORrr, 2, V8::O3).addReg (V8::G0).addReg (Op1Reg+1);
+  BuildMI (*MBB, IP, V8::CALL, 1).addExternalSymbol (FuncName, true);
+  BuildMI (*MBB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (V8::O0);
+  BuildMI (*MBB, IP, V8::ORrr, 2, DestReg+1).addReg (V8::G0).addReg (V8::O1);
+}
 
 void V8ISel::visitBinaryOperator (Instruction &I) {
   unsigned DestReg = getReg (I);
@@ -1122,11 +1139,36 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
     ResultReg = makeAnotherReg (I.getType ());
 
   if (Class == cLong) {
+    const char *FuncName;
     DEBUG (std::cerr << "Class = cLong\n");
     DEBUG (std::cerr << "Op0Reg = " << Op0Reg << ", " << Op0Reg+1 << "\n");
     DEBUG (std::cerr << "Op1Reg = " << Op1Reg << ", " << Op1Reg+1 << "\n");
     DEBUG (std::cerr << "ResultReg = " << ResultReg << ", " << ResultReg+1 << "\n");
     DEBUG (std::cerr << "DestReg = " << DestReg << ", " << DestReg+1 <<  "\n");
+    switch (I.getOpcode ()) {
+    case Instruction::Add:
+      BuildMI (BB, V8::ADDCCrr, 2, ResultReg+1).addReg (Op0Reg+1)
+        .addReg (Op1Reg+1);
+      BuildMI (BB, V8::ADDXrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      return;
+    case Instruction::Sub:
+      BuildMI (BB, V8::SUBCCrr, 2, ResultReg+1).addReg (Op0Reg+1)
+        .addReg (Op1Reg+1);
+      BuildMI (BB, V8::SUBXrr, 2, ResultReg).addReg (Op0Reg).addReg (Op1Reg);
+      return;
+    case Instruction::Mul:
+      FuncName = I.getType ()->isSigned () ? "__mul64" : "__umul64";
+      emitOp64LibraryCall (BB, BB->end (), DestReg, FuncName, Op0Reg, Op1Reg);
+      return;
+    case Instruction::Div:
+      FuncName = I.getType ()->isSigned () ? "__div64" : "__udiv64";
+      emitOp64LibraryCall (BB, BB->end (), DestReg, FuncName, Op0Reg, Op1Reg);
+      return;
+    case Instruction::Rem:
+      FuncName = I.getType ()->isSigned () ? "__rem64" : "__urem64";
+      emitOp64LibraryCall (BB, BB->end (), DestReg, FuncName, Op0Reg, Op1Reg);
+      return;
+    }
   }
 
   // FIXME: support long, ulong.
@@ -1204,7 +1246,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
       // Nothing to do here.
       break;
     case cLong:
-      // Only support and, or, xor.
+      // Only support and, or, xor here - others taken care of above.
       if (OpCase < 3 || OpCase > 5) {
         visitInstruction (I);
         return;
@@ -1225,9 +1267,30 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   const Type *Ty = I.getOperand (0)->getType ();
   
   // Compare the two values.
-  assert (getClass (Ty) != cLong && "can't setcc on longs yet");
   if (getClass (Ty) < cLong) {
     BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);
+  } else if (getClass (Ty) == cLong) {
+    // Here is one way to open-code each of the setccs for SIGNED longs...
+    // I haven't checked it yet, but you *should* be able to just switch
+    // bl/bg/ble/bge with bcs/bgu/bleu/bcc to get the version for
+    // unsigned longs.
+    // setlt/setge subcc   %left_1, %right_1, %g0
+    // ^^^^^^^^^^^ subxcc  %left_0, %right_0, %g0
+    //             bl/bge (as with ordinary setcc)
+    // setle/setgt subcc   %g0, 1, %g0
+    // ^^^^^^^^^^^ subxcc  %left_1, %right_1, %g0
+    //             subxcc  %left_0, %right_0, %g0
+    //             ble/bg (as with ordinary setcc)
+    // seteq/setne xor %left_1, %right_1, %temp_0
+    // ^^^^^^^^^^^ xor %left_0, %right_0, %temp_1
+    //             subcc   %g0, %temp_1, %g0
+    //     seteq                           setne
+    //     ^^^^^                           ^^^^^
+    //     subx    %g0, -1, %temp_2        addx    %g0, 0, %temp_2
+    //             subcc   %g0, %temp_0, %g0
+    //     subx    %g0, -1, %temp_3        addx    %g0, 0, %temp_3
+    //     and %temp_2, %temp_3, %result   or  %temp_2, %temp_3, %result
+    assert (0 && "can't setcc on longs yet");
   } else if (getClass (Ty) == cFloat) {
     BuildMI(BB, V8::FCMPS, 2).addReg(Op0Reg).addReg(Op1Reg);
   } else if (getClass (Ty) == cDouble) {
