@@ -17,13 +17,13 @@ class PointerType;
 
 
 //===---------------------------------------------------------------------------
-// ConstantGenericIntegral - Shared superclass of boolean and integer constants.
+// ConstantIntegral - Shared superclass of boolean and integer constants.
 //
 // This class just defines some common interfaces to be implemented.
 //
-class ConstantGenericIntegral : public Constant {
+class ConstantIntegral : public Constant {
 protected:
-  ConstantGenericIntegral(const Type *Ty) : Constant(Ty) {}
+  ConstantIntegral(const Type *Ty) : Constant(Ty) {}
 public:
 
   // isNullValue - Return true if this is the value that would be returned by
@@ -45,8 +45,15 @@ public:
   //
   virtual bool isAllOnesValue() const = 0;
 
+  // Static constructor to get the maximum/minimum/allones constant of specified
+  // (integral) type...
+  //
+  static ConstantIntegral *getMaxValue(const Type *Ty);
+  static ConstantIntegral *getMinValue(const Type *Ty);
+  static ConstantIntegral *getAllOnesValue(const Type *Ty);
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantGenericIntegral *) { return true; }
+  static inline bool classof(const ConstantIntegral *) { return true; }
   static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
     return isa<Constant>(V) && classof(cast<Constant>(V));
@@ -57,7 +64,7 @@ public:
 //===---------------------------------------------------------------------------
 // ConstantBool - Boolean Values
 //
-class ConstantBool : public ConstantGenericIntegral {
+class ConstantBool : public ConstantIntegral {
   bool Val;
   ConstantBool(bool V);
   ~ConstantBool() {}
@@ -96,7 +103,7 @@ public:
 // ConstantInt - Superclass of ConstantSInt & ConstantUInt, to make dealing
 // with integral constants easier.
 //
-class ConstantInt : public ConstantGenericIntegral {
+class ConstantInt : public ConstantIntegral {
 protected:
   union {
     int64_t  Signed;
