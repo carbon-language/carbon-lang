@@ -1014,7 +1014,7 @@ void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
       DSNodeHandle NewNH(NH.getNode(), NH.getOffset()+SL->MemberOffsets[i]);
       MergeConstantInitIntoNode(NewNH, cast<Constant>(CS->getOperand(i)));
     }
-  } else if (ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(C)) {
+  } else if (isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) {
     // Noop
   } else {
     assert(0 && "Unknown constant type!");
