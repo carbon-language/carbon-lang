@@ -19827,6 +19827,8 @@ fi
 
 
 
+        echo "$as_me:$LINENO: checking for printf %a format specifier" >&5
+echo $ECHO_N "checking for printf %a format specifier... $ECHO_C" >&6
 
 
 	ac_ext=c
@@ -19898,6 +19900,8 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+        echo "$as_me:$LINENO: result: $ac_c_printf_a" >&5
+echo "${ECHO_T}$ac_c_printf_a" >&6
 	if test "$ac_c_printf_a" = "yes"; then
 
 cat >>confdefs.h <<\_ACEOF
@@ -22323,6 +22327,8 @@ fi
 
 
 
+  echo "$as_me:$LINENO: checking for compiler -Wl,-R<path> option" >&5
+echo $ECHO_N "checking for compiler -Wl,-R<path> option... $ECHO_C" >&6
 
 
   ac_ext=c
@@ -22363,6 +22369,8 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+  echo "$as_me:$LINENO: result: $ac_cv_link_use_r" >&5
+echo "${ECHO_T}$ac_cv_link_use_r" >&6
   if test "$ac_cv_link_use_r" = yes
   then
 
