@@ -809,7 +809,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     std::vector<const Type*> Params;
     mapto($3->begin(), $3->end(), std::back_inserter(Params), 
-	  std::mem_fun_ref(&PATypeHandle::get));
+	  std::mem_fun_ref(&PATypeHolder::get));
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
@@ -824,7 +824,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   | '{' TypeListI '}' {                        // Structure type?
     std::vector<const Type*> Elements;
     mapto($2->begin(), $2->end(), std::back_inserter(Elements), 
-	std::mem_fun_ref(&PATypeHandle::get));
+	std::mem_fun_ref(&PATypeHolder::get));
 
     $$ = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
     delete $2;
