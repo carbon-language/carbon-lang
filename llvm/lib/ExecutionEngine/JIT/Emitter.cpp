@@ -56,12 +56,17 @@ static void *getMemory(unsigned NumBytes) {
 #if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
 # define MAP_ANONYMOUS MAP_ANON
 #endif /* defined(MAP_ANON) && !defined(MAP_ANONYMOUS) */
-#define fd  0
 #elif defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-#define fd -1
+/* nothing */
 #else
   std::cerr << "This architecture is not supported by the JIT!\n";
   abort();
+#endif
+
+#if defined(__linux__)
+#define fd 0
+#else
+#define fd -1
 #endif
   
   unsigned mmapFlags = MAP_PRIVATE|MAP_ANONYMOUS;
