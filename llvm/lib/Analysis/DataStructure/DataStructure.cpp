@@ -380,6 +380,109 @@ static void MergeSortedVectors(vector<GlobalValue*> &Dest,
 }
 
 
+// MergeNodes() - Helper function for DSNode::mergeWith().
+// This function does the hard work of merging two nodes, CurNodeH
+// and NH after filtering out trivial cases and making sure that
+// CurNodeH.offset >= NH.offset.
+// 
+// ***WARNING***
+// Since merging may cause either node to go away, we must always
+// use the node-handles to refer to the nodes.  These node handles are
+// automatically updated during merging, so will always provide access
+// to the correct node after a merge.
+//
+void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
+  assert(CurNodeH.getOffset() >= NH.getOffset() &&
+         "This should have been enforced in the caller.");
+
+  // Now we know that Offset >= NH.Offset, so convert it so our "Offset" (with
+  // respect to NH.Offset) is now zero.  NOffset is the distance from the base
+  // of our object that N starts from.
+  //
+  unsigned NOffset = CurNodeH.getOffset()-NH.getOffset();
+  unsigned NSize = NH.getNode()->getSize();
+
+  // Merge the type entries of the two nodes together...
+  if (NH.getNode()->Ty != Type::VoidTy) {
+    CurNodeH.getNode()->mergeTypeInfo(NH.getNode()->Ty, NOffset);
+  }
+  assert((CurNodeH.getNode()->NodeType & DSNode::DEAD) == 0);
+
+  // If we are merging a node with a completely folded node, then both nodes are
+  // now completely folded.
+  //
+  if (CurNodeH.getNode()->isNodeCompletelyFolded()) {
+    if (!NH.getNode()->isNodeCompletelyFolded()) {
+      NH.getNode()->foldNodeCompletely();
+      assert(NH.getOffset()==0 && "folding did not make offset 0?");
+      NOffset = NH.getOffset();
+      NSize = NH.getNode()->getSize();
+      assert(NOffset == 0 && NSize == 1);
+    }
+  } else if (NH.getNode()->isNodeCompletelyFolded()) {
+    CurNodeH.getNode()->foldNodeCompletely();
+    assert(CurNodeH.getOffset()==0 && "folding did not make offset 0?");
+    NOffset = NH.getOffset();
+    NSize = NH.getNode()->getSize();
+    assert(NOffset == 0 && NSize == 1);
+  }
+
+  if (CurNodeH.getNode() == NH.getNode() || NH.getNode() == 0) return;
+  assert((CurNodeH.getNode()->NodeType & DSNode::DEAD) == 0);
+
+  // Remove all edges pointing at N, causing them to point to 'this' instead.
+  // Make sure to adjust their offset, not just the node pointer.
+  // Also, be careful to use the DSNode* rather than NH since NH is one of
+  // the referrers and once NH refers to CurNodeH.getNode() this will
+  // become an infinite loop.
+  DSNode* N = NH.getNode();
+  unsigned OldNHOffset = NH.getOffset();
+  while (!N->Referrers.empty()) {
+    DSNodeHandle &Ref = *N->Referrers.back();
+    Ref = DSNodeHandle(CurNodeH.getNode(), NOffset+Ref.getOffset());
+  }
+  NH = DSNodeHandle(N, OldNHOffset);  // reset NH to point back to where it was
+
+  assert((CurNodeH.getNode()->NodeType & DSNode::DEAD) == 0);
+
+  // Make all of the outgoing links of *NH now be outgoing links of
+  // this.  This can cause recursive merging!
+  // 
+  for (unsigned i = 0; i < NSize; i += DS::PointerSize) {
+    DSNodeHandle &Link = NH.getNode()->getLink(i);
+    if (Link.getNode()) {
+      // Compute the offset into the current node at which to
+      // merge this link.  In the common case, this is a linear
+      // relation to the offset in the original node (with
+      // wrapping), but if the current node gets collapsed due to
+      // recursive merging, we must make sure to merge in all remaining
+      // links at offset zero.
+      unsigned MergeOffset = 0;
+      if (CurNodeH.getNode()->Size != 1)
+        MergeOffset = (i+NOffset) % CurNodeH.getNode()->getSize();
+      CurNodeH.getNode()->addEdgeTo(MergeOffset, Link);
+    }
+  }
+
+  // Now that there are no outgoing edges, all of the Links are dead.
+  NH.getNode()->Links.clear();
+  NH.getNode()->Size = 0;
+  NH.getNode()->Ty = Type::VoidTy;
+
+  // Merge the node types
+  CurNodeH.getNode()->NodeType |= NH.getNode()->NodeType;
+  NH.getNode()->NodeType = DEAD;   // NH is now a dead node.
+
+  // Merge the globals list...
+  if (!NH.getNode()->Globals.empty()) {
+    MergeSortedVectors(CurNodeH.getNode()->Globals, NH.getNode()->Globals);
+
+    // Delete the globals from the old node...
+    NH.getNode()->Globals.clear();
+  }
+}
+
+
 // mergeWith - Merge this node and the specified node, moving all links to and
 // from the argument node into the current node, deleting the node argument.
 // Offset indicates what offset the specified node is to be merged into the
@@ -417,103 +520,11 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
     return;
   }
 
-  // Now we know that Offset >= NH.Offset, so convert it so our "Offset" (with
-  // respect to NH.Offset) is now zero.  NOffset is the distance from the base
-  // of our object that N starts from.
-  //
-  unsigned NOffset = Offset-NH.getOffset();
-  unsigned NSize = N->getSize();
-
-  // Merge the type entries of the two nodes together...
-  if (N->Ty != Type::VoidTy) {
-    mergeTypeInfo(N->Ty, NOffset);
-
-    // mergeTypeInfo can cause collapsing, which can cause this node to become
-    // dead.
-    if (hasNoReferrers()) return;
-  }
-  assert((NodeType & DSNode::DEAD) == 0);
-
-  // If we are merging a node with a completely folded node, then both nodes are
-  // now completely folded.
-  //
-  if (isNodeCompletelyFolded()) {
-    if (!N->isNodeCompletelyFolded()) {
-      N->foldNodeCompletely();
-      if (hasNoReferrers()) return;
-      NSize = N->getSize();
-    }
-  } else if (N->isNodeCompletelyFolded()) {
-    foldNodeCompletely();
-    if (hasNoReferrers()) return;
-    Offset = 0;
-    NOffset = NH.getOffset();
-    NSize = N->getSize();
-  }
-  N = NH.getNode();
-  if (this == N || N == 0) return;
-  assert((NodeType & DSNode::DEAD) == 0);
-
-#if 0
-  std::cerr << "\n\nMerging:\n";
-  N->print(std::cerr, 0);
-  std::cerr << " and:\n";
-  print(std::cerr, 0);
-#endif
-
-  // Remove all edges pointing at N, causing them to point to 'this' instead.
-  // Make sure to adjust their offset, not just the node pointer.
-  //
-  while (!N->Referrers.empty()) {
-    DSNodeHandle &Ref = *N->Referrers.back();
-    Ref = DSNodeHandle(this, NOffset+Ref.getOffset());
-  }
-  assert((NodeType & DSNode::DEAD) == 0);
-
-  // Make all of the outgoing links of N now be outgoing links of
-  // this.  This can cause recursive merging!  Note that such merging may
-  // cause the current node to be merged into some other node, and so go away.
-  // To make sure we can find the resulting node, we use a level of
-  // indirection through DSNodeHandle Temp.  This handle will always
-  // point to the node that resulting from any potential merge.
-  //
-  DSNodeHandle Temp = this;
-  for (unsigned i = 0; i < NSize; i += DS::PointerSize) {
-    DSNodeHandle &Link = N->getLink(i);
-    if (Link.getNode()) {
-      DSNode *TempNode = Temp.getNode(); // get current version of "this" node
-
-      // Compute the offset into the current node at which to
-      // merge this link.  In the common case, this is a linear
-      // relation to the offset in the original node (with
-      // wrapping), but if the current node gets collapsed due to
-      // recursive merging, we must make sure to merge in all remaining
-      // links at offset zero.
-      unsigned MergeOffset = 0;
-      if (TempNode->Size != 1)
-        MergeOffset = (i+NOffset) % TempNode->getSize();
-      TempNode->addEdgeTo(MergeOffset, Link);
-    }
-  }
-
-  DSNode *TempNode = Temp.getNode();
-
-  // Now that there are no outgoing edges, all of the Links are dead.
-  N->Links.clear();
-  N->Size = 0;
-  N->Ty = Type::VoidTy;
-
-  // Merge the node types
-  TempNode->NodeType |= N->NodeType;
-  N->NodeType = DEAD;   // N is now a dead node.
-
-  // Merge the globals list...
-  if (!N->Globals.empty()) {
-    MergeSortedVectors(TempNode->Globals, N->Globals);
-
-    // Delete the globals from the old node...
-    N->Globals.clear();
-  }
+  // Ok, now we can merge the two nodes.  Use a static helper that works with
+  // two node handles, since "this" may get merged away at intermediate steps.
+  DSNodeHandle CurNodeH(this, Offset);
+  DSNodeHandle NHCopy(NH);
+  DSNode::MergeNodes(CurNodeH, NHCopy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -689,6 +700,7 @@ void DSGraph::mergeInGraph(DSCallSite &CS, const DSGraph &Graph,
   // Resolve all of the function arguments...
   Function &F = Graph.getFunction();
   Function::aiterator AI = F.abegin();
+
   for (unsigned i = 0, e = CS.getNumPtrArgs(); i != e; ++i, ++AI) {
     // Advance the argument iterator to the first pointer argument...
     while (!isPointerType(AI->getType())) {
