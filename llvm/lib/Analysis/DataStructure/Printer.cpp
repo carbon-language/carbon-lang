@@ -144,9 +144,10 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
         GW.emitSimpleNode(I->first, "", OS.str());
         
         // Add edge from return node to real destination
+        DSNode *DestNode = I->second.getNode();
         int EdgeDest = I->second.getOffset() >> DS::PointerShift;
         if (EdgeDest == 0) EdgeDest = -1;
-        GW.emitEdge(I->first, -1, I->second.getNode(),
+        GW.emitEdge(I->first, -1, DestNode,
                     EdgeDest, "arrowtail=tee,color=gray63");
       }
 
@@ -165,9 +166,10 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
         GW.emitSimpleNode((void*)I->first, "plaintext=circle", Label);
 
         // Add edge from return node to real destination
+        DSNode *RetNode = I->second.getNode();
         int RetEdgeDest = I->second.getOffset() >> DS::PointerShift;;
         if (RetEdgeDest == 0) RetEdgeDest = -1;
-        GW.emitEdge((void*)I->first, -1, I->second.getNode(),
+        GW.emitEdge((void*)I->first, -1, RetNode,
                     RetEdgeDest, "arrowtail=tee,color=gray63");
       }
 
