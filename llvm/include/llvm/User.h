@@ -27,45 +27,42 @@ namespace llvm {
 class User : public Value {
   User(const User &);             // Do not implement
 protected:
-  std::vector<Use> Operands;
-public:
-  User(const Type *Ty, unsigned vty, const std::string &name = "")
-    : Value(Ty, vty, name) {}
+  /// OperandList - This is a pointer to the array of Users for this operand.
+  /// For nodes of fixed arity (e.g. a binary operator) this array will live
+  /// embedded into the derived class.  For nodes of variable arity
+  /// (e.g. ConstantArrays, CallInst, PHINodes, etc), this memory will be
+  /// dynamically allocated and should be destroyed by the classes virtual dtor.
+  Use *OperandList;
 
-  inline Value *getOperand(unsigned i) { 
-    assert(i < Operands.size() && "getOperand() out of range!");
-    return Operands[i];
+  /// NumOperands - The number of values used by this User.
+  ///
+  unsigned NumOperands;
+
+public:
+  User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps, 
+       const std::string &name = "")
+    : Value(Ty, vty, name), OperandList(OpList), NumOperands(NumOps) {}
+
+  Value *getOperand(unsigned i) const { 
+    assert(i < NumOperands && "getOperand() out of range!");
+    return OperandList[i];
   }
-  inline const Value *getOperand(unsigned i) const {
-    assert(i < Operands.size() && "getOperand() const out of range!");
-    return Operands[i];
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < NumOperands && "setOperand() out of range!");
+    OperandList[i] = Val;
   }
-  inline void setOperand(unsigned i, Value *Val) {
-    assert(i < Operands.size() && "setOperand() out of range!");
-    Operands[i] = Val;
-  }
-  inline unsigned getNumOperands() const { return (unsigned)Operands.size(); }
+  unsigned getNumOperands() const { return NumOperands; }
 
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
   //
-  typedef std::vector<Use>::iterator       op_iterator;
-  typedef std::vector<Use>::const_iterator const_op_iterator;
+  typedef Use*       op_iterator;
+  typedef const Use* const_op_iterator;
 
-  void op_reserve(unsigned NumElements) { Operands.reserve(NumElements); }
-
-  inline op_iterator       op_begin()       { return Operands.begin(); }
-  inline const_op_iterator op_begin() const { return Operands.begin(); }
-  inline op_iterator       op_end()         { return Operands.end(); }
-  inline const_op_iterator op_end()   const { return Operands.end(); }
-
-  /// op_erase - This method is used to remove one of the arguments from the
-  /// operands list.  Only use this if you know what you are doing.
-  ///
-  op_iterator op_erase(op_iterator I) { return Operands.erase(I); }
-  op_iterator op_erase(op_iterator I, op_iterator E) {
-    return Operands.erase(I, E);
-  }
+  inline op_iterator       op_begin()       { return OperandList; }
+  inline const_op_iterator op_begin() const { return OperandList; }
+  inline op_iterator       op_end()         { return OperandList+NumOperands; }
+  inline const_op_iterator op_end()   const { return OperandList+NumOperands; }
 
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this User refers to.  This allows one to
@@ -75,8 +72,10 @@ public:
   // valid on an object that has "dropped all references", except operator 
   // delete.
   //
-  inline void dropAllReferences() {
-    Operands.clear();
+  void dropAllReferences() {
+    Use *OL = OperandList;
+    for (unsigned i = 0, e = NumOperands; i != e; ++i)
+      OL[i].set(0);
   }
 
   /// replaceUsesOfWith - Replaces all references to the "From" definition with
