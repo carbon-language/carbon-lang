@@ -11,7 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <llvm/System/TimeValue.h>
+#include "llvm/System/TimeValue.h"
+#include "llvm/Config/config.h"
 
 namespace llvm {
 using namespace sys;
@@ -48,6 +49,11 @@ TimeValue::normalize( void ) {
 }
 
 /// Include the platform specific portion of TimeValue class
-#include "platform/TimeValue.cpp"
+#ifdef LLVM_ON_UNIX
+#include "Unix/TimeValue.cpp"
+#endif
+#ifdef LLVM_ON_WIN32
+#include "Win32/TimeValue.cpp"
+#endif
 
 // vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
