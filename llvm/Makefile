@@ -1,5 +1,5 @@
 LEVEL = .
-DIRS = lib/Support utils lib tools
+DIRS = lib/Support utils lib tools runtime
 OPTIONAL_DIRS = projects
 
 include $(LEVEL)/Makefile.common
