@@ -7,7 +7,7 @@
 int %test(bool %C) {
 	br label %Loop
 Loop:
-	%IV = phi uint [0, %0], [%IV2, %BE1], [%IV2, %BE2]
+	%IV = phi uint [1, %0], [%IV2, %BE1], [%IV2, %BE2]
 	%IV2 = add uint %IV, 2
 	br bool %C, label %BE1, label %BE2
 BE1:
