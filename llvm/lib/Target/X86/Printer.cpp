@@ -222,49 +222,41 @@ Printer::printSingleConstantValue(const Constant* CV)
     }
   O << "\t";
   
-  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV))
-    {
-      // Constant expression built from operators, constants, and
-      // symbolic addrs
-      O << ConstantExprToString(CE) << "\n";
+  if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(CV)) {
+    // Constant expression built from operators, constants, and
+    // symbolic addrs
+    O << ConstantExprToString(CE) << "\n";
+  } else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
+    O << (CB->getValue() ? "1\n" : "0\n");
+  } else if (type->isFloatingPoint()) {
+    // FP Constants are printed as integer constants to avoid losing
+    // precision...
+    double Val = cast<ConstantFP>(CV)->getValue();
+    if (type == Type::FloatTy) {
+      float FVal = (float)Val;
+      char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
+      O << *(unsigned int*)ProxyPtr;            
+    } else if (type == Type::DoubleTy) {
+      char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
+      O << *(uint64_t*)ProxyPtr;            
+    } else {
+      assert(0 && "Unknown floating point type!");
     }
-  else if (type->isPrimitiveType())
-    {
-      if (type->isFloatingPoint()) {
-	// FP Constants are printed as integer constants to avoid losing
-	// precision...
-	double Val = cast<ConstantFP>(CV)->getValue();
-	if (type == Type::FloatTy) {
-	  float FVal = (float)Val;
-	  char *ProxyPtr = (char*)&FVal;        // Abide by C TBAA rules
-	  O << *(unsigned int*)ProxyPtr;            
-	} else if (type == Type::DoubleTy) {
-	  char *ProxyPtr = (char*)&Val;         // Abide by C TBAA rules
-	  O << *(uint64_t*)ProxyPtr;            
-	} else {
-	  assert(0 && "Unknown floating point type!");
-	}
-        
-	O << "\t# " << type->getDescription() << " value: " << Val << "\n";
-      } else {
-	WriteAsOperand(O, CV, false, false) << "\n";
-      }
-    }
-  else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV))
-    {
-      // This is a constant address for a global variable or method.
-      // Use the name of the variable or method as the address value.
-      O << Mang->getValueName(CPR->getValue()) << "\n";
-    }
-  else if (isa<ConstantPointerNull>(CV))
-    {
-      // Null pointer value
-      O << "0\n";
-    }
-  else
-    {
-      assert(0 && "Unknown elementary type for constant");
-    }
+    
+    O << "\t# " << type->getDescription() << " value: " << Val << "\n";
+  } else if (type->isPrimitiveType()) {
+    
+    WriteAsOperand(O, CV, false, false) << "\n";
+  } else if (const ConstantPointerRef* CPR = dyn_cast<ConstantPointerRef>(CV)) {
+    // This is a constant address for a global variable or method.
+    // Use the name of the variable or method as the address value.
+    O << Mang->getValueName(CPR->getValue()) << "\n";
+  } else if (isa<ConstantPointerNull>(CV)) {
+    // Null pointer value
+    O << "0\n";
+  } else {
+    assert(0 && "Unknown elementary type for constant");
+  }
 }
 
 /// isStringCompatible - Can we treat the specified array as a string?
