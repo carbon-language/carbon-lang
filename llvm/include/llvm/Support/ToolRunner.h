@@ -44,8 +44,8 @@ public:
 // GCC abstraction
 //
 class GCC {
-  std::string GCCPath;          // The path to the gcc executable
-  GCC(const std::string &gccPath) : GCCPath(gccPath) { }
+  sys::Path GCCPath;          // The path to the gcc executable
+  GCC(const sys::Path &gccPath) : GCCPath(gccPath) { }
 public:
   enum FileType { AsmFile, CFile };
 
@@ -118,11 +118,11 @@ struct AbstractInterpreter {
 // CBE Implementation of AbstractIntepreter interface
 //
 class CBE : public AbstractInterpreter {
-  std::string LLCPath;          // The path to the `llc' executable
+  sys::Path LLCPath;          // The path to the `llc' executable
   std::vector<std::string> ToolArgs; // Extra args to pass to LLC
   GCC *gcc;
 public:
-  CBE(const std::string &llcPath, GCC *Gcc,
+  CBE(const sys::Path &llcPath, GCC *Gcc,
       const std::vector<std::string> *Args) : LLCPath(llcPath), gcc(Gcc) {
     ToolArgs.clear ();
     if (Args) { ToolArgs = *Args; }
