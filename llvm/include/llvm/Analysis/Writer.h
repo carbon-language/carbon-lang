@@ -62,9 +62,31 @@ namespace cfg {
   }
   
   void WriteToOutput(const CallGraphNode *, ostream &o);
-  inline ostream &operator <<(ostream &o, const CallGraphNode *CG) {
-    WriteToOutput(CG, o); return o;
+  inline ostream &operator <<(ostream &o, const CallGraphNode *CGN) {
+    WriteToOutput(CGN, o); return o;
   }
+
+  // Stuff for printing out Loop information
+  class Loop;
+  class LoopInfo;
+
+  void WriteToOutput(const LoopInfo &, ostream &o);
+  inline ostream &operator <<(ostream &o, const LoopInfo &LI) {
+    WriteToOutput(LI, o); return o;
+  }
+  
+  void WriteToOutput(const Loop *, ostream &o);
+  inline ostream &operator <<(ostream &o, const Loop *L) {
+    WriteToOutput(L, o); return o;
+  }
+  
 }  // End namespace CFG
+
+class InductionVariable;
+void WriteToOutput(const InductionVariable &, ostream &o);
+inline ostream &operator <<(ostream &o, const InductionVariable &IV) {
+  WriteToOutput(IV, o); return o;
+}
+
 
 #endif
