@@ -225,7 +225,8 @@ ConstantStruct::ConstantStruct(const StructType *T,
          "Invalid initializer vector for constant structure");
   Operands.reserve(V.size());
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert(V[i]->getType() == ETypes[i]);
+    assert(V[i]->getType() == ETypes[i] &&
+           "Initializer for struct element doesn't match struct element type!");
     Operands.push_back(Use(V[i], this));
   }
 }
@@ -671,12 +672,10 @@ void ConstantPointerNull::refineAbstractType(const DerivedType *OldTy,
   if (OldTy == NewTy) return;
 
   // Make everyone now use a constant of the new type...
-  if (NewTy != OldTy) {
-    replaceAllUsesWith(ConstantPointerNull::get(cast<PointerType>(NewTy)));
+  replaceAllUsesWith(ConstantPointerNull::get(cast<PointerType>(NewTy)));
     
-    // This constant is now dead, destroy it.
-    destroyConstant();
-  }
+  // This constant is now dead, destroy it.
+  destroyConstant();
 }
 
 
