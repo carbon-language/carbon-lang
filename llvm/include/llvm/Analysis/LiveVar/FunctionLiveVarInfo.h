@@ -123,7 +123,7 @@ class MethodLiveVarInfo
   // gets OutSet of a BB
   inline const LiveVarSet *getOutSetOfBB( const BasicBlock *const BB) const { 
     assert( HasAnalyzed && "call analyze() before calling this" );
-    return (   (* (BB2BBLVMap.find(BB)) ).second  )->getOutSet();
+    return  ( (* (BB2BBLVMap.find(BB)) ).second ) ->getOutSet();
   }
 
   // gets InSet of a BB
