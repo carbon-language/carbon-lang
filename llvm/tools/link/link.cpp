@@ -9,6 +9,7 @@
 #include "llvm/Transforms/Linker.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/Method.h"
@@ -20,6 +21,7 @@ cl::StringList InputFilenames("", "Load <arg> files, linking them together",
 			      cl::OneOrMore);
 cl::String OutputFilename("o", "Override output filename", cl::NoFlags, "-");
 cl::Flag   Force         ("f", "Overwrite output files", cl::NoFlags, false);
+cl::Flag   DumpAsm       ("d", "Print assembly as linked", cl::Hidden, false);
 
 
 int main(int argc, char **argv) {
@@ -46,6 +48,9 @@ int main(int argc, char **argv) {
       return 1;
     }
   }
+
+  if (DumpAsm)
+    cerr << "Here's the assembly:\n" << Composite.get();
 
   ostream *Out = &cout;  // Default to printing to stdout...
   if (OutputFilename != "-") {
