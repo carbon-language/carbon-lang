@@ -40,11 +40,11 @@ TESTRUNR = $(LEVEL)/test/TestRunner.sh
 
 # Native Tool Definitions
 NATGCC  = /usr/dcs/software/supported/bin/gcc
-CC      = /opt/SUNWspro/bin/cc
-AS	= /opt/SUNWspro/bin/cc
-DIS     = /usr/ccs/bin/dis
+## CC      = /opt/SUNWspro/bin/cc
+## AS	= /opt/SUNWspro/bin/cc
+## DIS     = /usr/ccs/bin/dis
+## CFLAGS  += -g -xarch=v9
 CP	= /bin/cp -f
-CFLAGS  += -g -xarch=v9
 
 
 ifeq ($(TRACE), yes)
