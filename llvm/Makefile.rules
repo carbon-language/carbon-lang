@@ -732,14 +732,15 @@ $(OBJDIR)/%.bc: %.ll $(OBJDIR)/.dir $(LLVMAS)
 ifdef TARGET
 
 TDFILES := $(strip $(wildcard $(BUILD_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td)
+INCFILES := $(filter %.inc,$(BUILT_SOURCES))
 
-$(BUILT_SOURCES): $(TDFILES) 
+$(INCFILES) : $(TBLGEN) $(TDFILES)
 
-%GenRegisterNames.inc : %.td
+%GenRegisterNames.inc : %.td 
 	@echo "Building $(<F) register names with tblgen"
 	$(VERB) $(TableGen) -gen-register-enums -o $@ $<
 
-%GenRegisterInfo.h.inc : %.td
+%GenRegisterInfo.h.inc : %.td 
 	@echo "Building $(<F) register information header with tblgen"
 	$(VERB) $(TableGen) -gen-register-desc-header -o $@ $<
 
