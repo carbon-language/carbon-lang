@@ -1,14 +1,15 @@
-
-
-
-// FIXME: document
+//===- CloneFunction.cpp - Clone a function into another function ---------===//
+//
+// This file implements the CloneFunctionInto interface, which is used as the
+// low-level function cloner.  This is used by the CloneFunction and function
+// inliner to do the dirty work of copying the body of a function around.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/iTerminators.h"
 #include "llvm/Function.h"
 #include <map>
-
-// FIXME: This should be merged with FunctionInlining
 
 // RemapInstruction - Convert the instruction operands from referencing the 
 // current values into those specified by ValueMap.
