@@ -2057,6 +2057,9 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
+      if (!(*$2)->isFirstClassType() && *$2 != Type::VoidTy)
+        ThrowException("LLVM functions cannot return aggregate types!");
+
       Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
