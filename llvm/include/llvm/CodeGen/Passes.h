@@ -10,6 +10,7 @@
 
 class FunctionPass;
 class PassInfo;
+class TargetMachine;
 
 // PHIElimination pass - This pass eliminates machine instruction PHI nodes by
 // inserting copy instructions.  This destroys SSA information, but is the
