@@ -78,7 +78,8 @@ unsigned JITResolver::resolveFunctionReference(unsigned RetAddr) {
   assert(I != LazyCodeGenMap.end() && "Not in map!");
   Function *F = I->second;
   LazyCodeGenMap.erase(I);
-  return MCE.forceCompilationOf(F);
+  // FIXME: this needs to be rewritten.
+  return 0; //MCE.forceCompilationOf(F);
 }
 
 /// emitStubForFunction - This method is used by the JIT when it needs to emit
@@ -220,8 +221,9 @@ unsigned PPC32CodeEmitter::getAddressOfExternalFunction(Function *F) {
   static std::map<Function*, unsigned> ExternalFn2Addr;
   std::map<Function*, unsigned>::iterator Addr = ExternalFn2Addr.find(F);
 
+  // FIXME: this needs to be rewritten.
   if (Addr == ExternalFn2Addr.end())
-    ExternalFn2Addr[F] = MCE.forceCompilationOf(F);
+    ExternalFn2Addr[F] = 0; //MCE.forceCompilationOf(F);
   return ExternalFn2Addr[F];
 }
 
