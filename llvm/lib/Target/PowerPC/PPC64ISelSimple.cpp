@@ -2558,10 +2558,8 @@ void ISel::emitCastOperation(MachineBasicBlock *MBB,
       else
         BuildMI(*MBB, IP, PPC::EXTSH, 1, DestReg).addReg(SrcReg);
       break;
-    case cLong:
-      ++SrcReg;
-      // Fall through
     case cInt:
+    case cLong:
       if (DestClass == cByte)
         BuildMI(*MBB, IP, PPC::EXTSB, 1, DestReg).addReg(SrcReg);
       else if (DestClass == cShort)
