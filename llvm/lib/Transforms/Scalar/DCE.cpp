@@ -53,14 +53,13 @@ struct BasicBlockDCE {
 };
 
 
-template<class ValueSubclass, class ItemParentType, class DCEController>
-static bool RemoveUnusedDefs(ValueHolder<ValueSubclass, ItemParentType> &Vals, 
-			     DCEController DCEControl) {
+template<class Container, class DCEController>
+static bool RemoveUnusedDefs(Container &Vals, DCEController DCEControl) {
   bool Changed = false;
-  typedef ValueHolder<ValueSubclass, ItemParentType> Container;
-
   int Offset = DCEController::EndOffs;
-  for (Container::iterator DI = Vals.begin(); DI != Vals.end()-Offset; ) {
+
+  for (typename Container::iterator DI = Vals.begin(); 
+       DI != Vals.end()-Offset; ) {
     // Look for un"used" definitions...
     if ((*DI)->use_empty() && DCEController::isDCEable(*DI)) {
       // Bye bye
