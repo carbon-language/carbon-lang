@@ -902,7 +902,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // SAR.  However, it is doubtful that any exist.
         unsigned BitsDiff = MVT::getSizeInBits(Node->getValueType(0)) -
                             MVT::getSizeInBits(ExtraVT);
-        SDOperand ShiftCst = DAG.getConstant(BitsDiff, MVT::i8);
+        SDOperand ShiftCst = DAG.getConstant(BitsDiff, TLI.getShiftAmountTy());
         Result = DAG.getNode(ISD::SHL, Node->getValueType(0),
                              Node->getOperand(0), ShiftCst);
         Result = DAG.getNode(ISD::SRA, Node->getValueType(0),
@@ -1302,7 +1302,6 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   return true;
 }
 
-
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value
 // does not fit into a register, return the lo part and set the hi part to the
 // by-reg argument.  If it does fit into a single register, return the result
@@ -1518,7 +1517,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
     unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
-    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1, MVT::i8));
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1,
+                                                       TLI.getShiftAmountTy()));
     break;
   }
   case ISD::ZERO_EXTEND:
