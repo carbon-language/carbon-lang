@@ -100,3 +100,16 @@ bool %test15(uint %A, uint %B) {
         ret bool %D
 }
 
+int %test16(int %A) {
+	%B = and int %A, 1
+	%C = and int %A, -2       ; -2 = ~1
+	%D = or int %B, %C        ; %D = and int %B, -1 == %B
+	ret int %D
+}
+
+int %test17(int %A) {
+	%B = and int %A, 1
+	%C = and int %A, 4
+	%D = or int %B, %C        ; %D = and int %B, 5
+	ret int %D
+}
