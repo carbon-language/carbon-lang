@@ -1,4 +1,4 @@
-##===- projects/HowToUseJIT/Makefile -----------------------*- Makefile -*-===##
+##===- examples/HowToUseJIT/Makefile -----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #

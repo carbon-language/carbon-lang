@@ -1,4 +1,4 @@
-//===--- fibonacci.cpp - An example use of the JIT ----------------------===//
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

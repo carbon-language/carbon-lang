@@ -1,4 +1,4 @@
-//===--- HowToUseJIT.cpp - An example use of the JIT ----------------------===//
+//===-- examples/HowToUseJIT/HowToUseJIT.cpp - An example use of the JIT --===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-##===- projects/Fibonacci/Makefile -------------------------*- Makefile -*-===##
+##===- examples/Fibonacci/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #

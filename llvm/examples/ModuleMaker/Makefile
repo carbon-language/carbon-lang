@@ -1,4 +1,4 @@
-##===- examples/ModuleMaker --------------------------------*- Makefile -*-===##
+##===- examples/ModuleMaker/Makefile -----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #

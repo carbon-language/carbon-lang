@@ -1,4 +1,4 @@
-//===- ModuleMaker.cpp - Example project which creates modules --*- C++ -*-===//
+//===- examples/ModuleMaker/ModuleMaker.cpp - Example project ---*- C++ -*-===//
 //
 // This programs is a simple example that creates an LLVM module "from scratch",
 // emitting it as a bytecode file to standard out.  This is just to show how
