@@ -178,8 +178,32 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   AliasAnalysis::ModRefResult Result =AliasAnalysis::getModRefInfo(CS, P, Size);
   Function *F = CS.getCalledFunction();
 
-  if (!F || F->isExternal() || Result == NoModRef)
+  if (!F || Result == NoModRef)
     return Result;
+
+  if (F->isExternal()) {
+    // If we are calling an external function, and if this global doesn't escape
+    // the portion of the program we have analyzed, we can draw conclusions
+    // based on whether the global escapes the program.
+    Function *Caller = CS.getInstruction()->getParent()->getParent();
+    DSGraph *G = &TD->getDSGraph(*Caller);
+    DSScalarMap::iterator NI = G->getScalarMap().find(P);
+    if (NI == G->getScalarMap().end()) {
+      // If it wasn't in the local function graph, check the global graph.  This
+      // can occur for globals who are locally reference but hoisted out to the
+      // globals graph despite that.
+      G = G->getGlobalsGraph();
+      NI = G->getScalarMap().find(P);
+      if (NI == G->getScalarMap().end())
+        return Result;
+    }
+
+    // If we found a node and it's complete, it cannot be passed out to the
+    // called function.
+    if (NI->second.getNode()->isComplete())
+      return NoModRef;
+    return Result;
+  }
 
   // Get the graphs for the callee and caller.  Note that we want the BU graph
   // for the callee because we don't want all caller's effects incorporated!
