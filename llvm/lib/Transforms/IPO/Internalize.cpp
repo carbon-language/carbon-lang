@@ -1,45 +1,58 @@
 //===-- Internalize.cpp - Mark functions internal -------------------------===//
 //
 // This pass loops over all of the functions in the input module, looking for a
-// main function.  If a main function is found, all other functions are marked
-// as internal.
+// main function.  If a main function is found, all other functions and all
+// global variables with initializers are marked as internal.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "Support/StatisticReporter.h"
 
-static Statistic<> NumChanged("internalize\t- Number of functions internal'd");
-
 namespace {
-class InternalizePass : public Pass {
-  virtual bool run(Module &M) {
-    bool FoundMain = false;   // Look for a function named main...
-    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->getName() == "main" && !I->isExternal()) {
-        FoundMain = true;
-        break;
-      }
-    
-    if (!FoundMain) return false;  // No main found, must be a library...
+  Statistic<> NumFunctions("internalize\t- Number of functions internalized");
+  Statistic<> NumGlobals  ("internalize\t- Number of global vars internalized");
 
-    bool Changed = false;
 
-    // Found a main function, mark all functions not named main as internal.
-    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->getName() != "main" &&   // Leave the main function external
-          !I->isExternal()) {         // Function must be defined here
-        I->setInternalLinkage(true);
-        Changed = true;
-        ++NumChanged;
-      }
+  class InternalizePass : public Pass {
+    virtual bool run(Module &M) {
+      bool FoundMain = false;   // Look for a function named main...
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+        if (I->getName() == "main" && !I->isExternal() &&
+            I->hasExternalLinkage()) {
+          FoundMain = true;
+          break;
+        }
+      
+      if (!FoundMain) return false;  // No main found, must be a library...
+      
+      bool Changed = false;
+      
+      // Found a main function, mark all functions not named main as internal.
+      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+        if (I->getName() != "main" &&   // Leave the main function external
+            !I->isExternal() &&         // Function must be defined here
+            !I->hasInternalLinkage()) { // Can't already have internal linkage
+          I->setInternalLinkage(true);
+          Changed = true;
+          ++NumFunctions;
+          DEBUG(std::cerr << "Internalizing func " << I->getName() << "\n");
+        }
 
-    return Changed;
-  }
-};
+      // Mark all global variables with initializers as internal as well...
+      for (Module::giterator I = M.gbegin(), E = M.gend(); I != E; ++I)
+        if (I->hasInitializer() && I->hasExternalLinkage()) {
+          I->setInternalLinkage(true);
+          Changed = true;
+          ++NumGlobals;
+          DEBUG(std::cerr << "Internalizing gvar " << I->getName() << "\n");
+        }
+      
+      return Changed;
+    }
+  };
 
   RegisterOpt<InternalizePass> X("internalize", "Internalize Functions");
 } // end anonymous namespace
