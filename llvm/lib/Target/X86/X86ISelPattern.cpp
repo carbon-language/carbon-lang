@@ -347,7 +347,7 @@ namespace {
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
 
 
-    void EmitCMP(SDOperand LHS, SDOperand RHS);
+    void EmitCMP(SDOperand LHS, SDOperand RHS, bool isOnlyUse);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
     void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
                       unsigned RTrue, unsigned RFalse, unsigned RDest);
@@ -741,7 +741,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
     case ISD::SETUGE: Opc = X86::JAE; break;
     }
     Select(Chain);
-    EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1));
+    EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1), SetCC->hasOneUse());
     BuildMI(BB, Opc, 1).addMBB(Dest);
     return false;
   }
@@ -798,7 +798,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
   }
 
   Select(Chain);
-  EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1));
+  EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1), SetCC->hasOneUse());
   BuildMI(BB, Opc, 1).addMBB(Dest);
   if (Opc2)
     BuildMI(BB, Opc2, 1).addMBB(Dest);
@@ -910,17 +910,17 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     }
   } else {
     // FIXME: CMP R, 0 -> TEST R, R
-    EmitCMP(Cond.getOperand(0), Cond.getOperand(1));
+    EmitCMP(Cond.getOperand(0), Cond.getOperand(1), Cond.Val->hasOneUse());
     std::swap(RTrue, RFalse);
   }
   BuildMI(BB, Opc, 2, RDest).addReg(RTrue).addReg(RFalse);
 }
 
-void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
+void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
   unsigned Opc;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(RHS)) {
     Opc = 0;
-    if (isFoldableLoad(LHS)) {
+    if (HasOneUse && isFoldableLoad(LHS)) {
       switch (RHS.getValueType()) {
       default: break;
       case MVT::i1:
@@ -959,7 +959,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS) {
   }
 
   Opc = 0;
-  if (isFoldableLoad(LHS)) {
+  if (HasOneUse && isFoldableLoad(LHS)) {
     switch (RHS.getValueType()) {
     default: break;
     case MVT::i1:
@@ -1947,7 +1947,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::SETCC:
-    EmitCMP(N.getOperand(0), N.getOperand(1));
+    EmitCMP(N.getOperand(0), N.getOperand(1), Node->hasOneUse());
     EmitSetCC(BB, Result, cast<SetCCSDNode>(N)->getCondition(),
               MVT::isFloatingPoint(N.getOperand(1).getValueType()));
     return Result;
