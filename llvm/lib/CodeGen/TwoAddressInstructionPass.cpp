@@ -98,7 +98,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
             ++numTwoAddressInstrs;
 
-            DEBUG(std::cerr << '\t'; mi->print(std::cerr, TM));
+            DEBUG(std::cerr << '\t'; mi->print(std::cerr, &TM));
 
             assert(mi->getOperand(1).isRegister() &&
                    mi->getOperand(1).getReg() &&
@@ -140,7 +140,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
                 MachineBasicBlock::iterator prevMi = prior(mi);
                 DEBUG(std::cerr << "\t\tprepend:\t";
-                      prevMi->print(std::cerr, TM));
+                      prevMi->print(std::cerr, &TM));
 
                 if (LV) {
                     // update live variables for regA
@@ -170,7 +170,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             mi->RemoveOperand(1);
 
             DEBUG(std::cerr << "\t\trewrite to:\t";
-                  mi->print(std::cerr, TM));
+                  mi->print(std::cerr, &TM));
         }
     }
 

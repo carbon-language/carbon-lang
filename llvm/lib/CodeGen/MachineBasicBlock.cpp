@@ -105,6 +105,6 @@ void MachineBasicBlock::print(std::ostream &OS) const
          << ", LLVM BB @" << (const void*) LBB << "):\n";
     for (const_iterator I = begin(); I != end(); ++I) {
         OS << "\t";
-        I->print(OS, getParent()->getTarget());
+        I->print(OS, &getParent()->getTarget());
     }
 }

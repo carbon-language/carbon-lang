@@ -194,7 +194,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
     ++NumFP;  // Keep track of # of pseudo instrs
     DEBUG(std::cerr << "\nFPInst:\t";
-	  MI->print(std::cerr, MF.getTarget()));
+	  MI->print(std::cerr, &(MF.getTarget())));
 
     // Get dead variables list now because the MI pointer may be deleted as part
     // of processing!
@@ -242,7 +242,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         // Rewind to first instruction newly inserted.
         while (Start != BB.begin() && prior(Start) != PrevI) --Start;
         std::cerr << "Inserted instructions:\n\t";
-        Start->print(std::cerr, MF.getTarget());
+        Start->print(std::cerr, &MF.getTarget());
         while (++Start != next(I));
       }
       dumpStack();

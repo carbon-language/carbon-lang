@@ -235,8 +235,14 @@ static inline void OutputReg(std::ostream &os, unsigned RegNo,
 }
 
 static void print(const MachineOperand &MO, std::ostream &OS,
-                  const TargetMachine &TM) {
-  const MRegisterInfo *MRI = TM.getRegisterInfo();
+                  const TargetMachine *TM) {
+ 
+ const MRegisterInfo *MRI = 0;
+  
+ if(TM)
+   MRI = TM->getRegisterInfo();
+  
+
   bool CloseParen = true;
   if (MO.isHiBits32())
     OS << "%lm(";
@@ -313,7 +319,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     OS << ")";
 }
 
-void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
+void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   unsigned StartOp = 0;
 
    // Specialize printing if op#0 is definition
@@ -322,7 +328,11 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine &TM) const {
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
-  OS << TM.getInstrInfo()->getName(getOpcode());
+
+  //Must check if Target machine is not null because machine BB could not
+  //be attached to a Machine function yet
+  if(TM)
+    OS << TM->getInstrInfo()->getName(getOpcode());
   
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand& mop = getOperand(i);
@@ -361,7 +371,10 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   // info for the instruction.
   if (const MachineBasicBlock *MBB = MI.getParent()) {
     const MachineFunction *MF = MBB->getParent();
-    MI.print(os, MF->getTarget());
+    if(MF)
+      MI.print(os, &MF->getTarget());
+    else
+      MI.print(os, 0);
     return os;
   }
 

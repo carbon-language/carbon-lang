@@ -179,7 +179,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             for (MachineBasicBlock::iterator mii = mbbi->begin(),
                      mie = mbbi->end(); mii != mie; ++mii) {
                 std::cerr << getInstructionIndex(mii) << '\t';
-                mii->print(std::cerr, *tm_);
+                mii->print(std::cerr, tm_);
             }
         });
 
@@ -427,7 +427,7 @@ void LiveIntervals::computeIntervals()
             const TargetInstrDescriptor& tid =
                 tm_->getInstrInfo()->get(mi->getOpcode());
             DEBUG(std::cerr << getInstructionIndex(mi) << "\t";
-                  mi->print(std::cerr, *tm_));
+                  mi->print(std::cerr, tm_));
 
             // handle implicit defs
             for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
@@ -467,7 +467,7 @@ void LiveIntervals::joinIntervals()
              mi != mie; ++mi) {
             const TargetInstrDescriptor& tid = tii.get(mi->getOpcode());
             DEBUG(std::cerr << getInstructionIndex(mi) << '\t';
-                  mi->print(std::cerr, *tm_););
+                  mi->print(std::cerr, tm_););
 
             // we only join virtual registers with allocatable
             // physical registers since we do not have liveness information

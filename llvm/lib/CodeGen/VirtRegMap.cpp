@@ -149,7 +149,7 @@ namespace {
                                     mf.getSSARegMap()->getRegClass(virtReg));
                                 loaded[virtReg] = true;
                                 DEBUG(std::cerr << '\t';
-                                      prior(mii)->print(std::cerr, tm));
+                                      prior(mii)->print(std::cerr, &tm));
                                 ++numLoads;
                             }
                             if (mop.isDef() &&
@@ -165,7 +165,7 @@ namespace {
                             mii->SetMachineOperandReg(i, physReg);
                         }
                     }
-                    DEBUG(std::cerr << '\t'; mii->print(std::cerr, tm));
+                    DEBUG(std::cerr << '\t'; mii->print(std::cerr, &tm));
                     loaded.clear();
                 }
             }
@@ -231,9 +231,9 @@ namespace {
                                           mri_->getRegClass(physReg));
                 ++numStores;
                 DEBUG(std::cerr << "added: ";
-                      prior(nextLastRef)->print(std::cerr, *tm_);
+                      prior(nextLastRef)->print(std::cerr, tm_);
                       std::cerr << "after: ";
-                      lastDef->print(std::cerr, *tm_));
+                      lastDef->print(std::cerr, tm_));
                 lastDef_[virtReg] = 0;
             }
             p2vMap_[physReg] = 0;
@@ -263,7 +263,7 @@ namespace {
                                                mri_->getRegClass(physReg));
                     ++numLoads;
                     DEBUG(std::cerr << "added: ";
-                          prior(mii)->print(std::cerr, *tm_));
+                          prior(mii)->print(std::cerr, tm_));
                     lastDef_[virtReg] = mii;
                 }
             }
@@ -339,7 +339,7 @@ namespace {
                         }
                 }
 
-                DEBUG(std::cerr << '\t'; mii->print(std::cerr, *tm_));
+                DEBUG(std::cerr << '\t'; mii->print(std::cerr, tm_));
             }
 
             for (unsigned i = 1, e = p2vMap_.size(); i != e; ++i)

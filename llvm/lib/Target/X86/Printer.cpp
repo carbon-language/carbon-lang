@@ -936,7 +936,7 @@ void Printer::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
   default:
-    O << "\tUNKNOWN FORM:\t\t-"; MI->print(O, TM); break;
+    O << "\tUNKNOWN FORM:\t\t-"; MI->print(O, &TM); break;
   }
 }
 

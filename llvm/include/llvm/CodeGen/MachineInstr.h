@@ -308,7 +308,13 @@ public:
     // code.' It's not clear where the duplication is.
     assert(hasAllocatedReg() && "This operand cannot have a register number!");
     regNum = Reg;
-  }    
+  }  
+
+  void setValueReg(Value *val) {
+    assert(getVRegValueOrNull() != 0 && "Original operand must of type Value*");
+    contents.value = val;
+  }
+  
   void setImmedValue(int immVal) {
     assert(isImmediate() && "Wrong MachineOperand mutator");
     contents.immedVal = immVal;
@@ -465,7 +471,7 @@ public:
   //
   // Debugging support
   //
-  void print(std::ostream &OS, const TargetMachine &TM) const;
+  void print(std::ostream &OS, const TargetMachine *TM) const;
   void dump() const;
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 

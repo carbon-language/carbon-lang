@@ -177,7 +177,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned virtualReg = (unsigned) op.getReg();
         DEBUG(std::cerr << "op: " << op << "\n");
         DEBUG(std::cerr << "\t inst[" << i << "]: ";
-              MI->print(std::cerr, *TM));
+              MI->print(std::cerr, TM));
         
         // make sure the same virtual register maps to the same physical
         // register in any given instruction
