@@ -1,4 +1,11 @@
 //===- PruneEH.cpp - Pass which deletes unused exception handlers ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a simple interprocedural pass which walks the
 // call-graph, turning invoke instructions into calls, iff the callee cannot

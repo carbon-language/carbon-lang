@@ -1,4 +1,11 @@
 //===- UnifyFunctionExitNodes.cpp - Make all functions have a single exit -===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is used to ensure that functions have at most one return
 // instruction in them.  Additionally, it keeps track of which node is the new

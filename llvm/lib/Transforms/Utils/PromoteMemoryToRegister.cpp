@@ -1,4 +1,11 @@
 //===- PromoteMemoryToRegister.cpp - Convert allocas to registers ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file promote memory references to be register references.  It promotes
 // alloca instructions which only have loads and stores as uses.  An alloca is

@@ -1,4 +1,11 @@
 //===- LevelRaise.cpp - Code to change LLVM to higher level ---------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the 'raising' part of the LevelChange API.  This is
 // useful because, in general, it makes the LLVM code terser and easier to

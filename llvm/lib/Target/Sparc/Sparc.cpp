@@ -1,4 +1,11 @@
 //===-- Sparc.cpp - General implementation file for the Sparc Target ------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the code for the Sparc Target that does not fit in any of
 // the other files in this directory.

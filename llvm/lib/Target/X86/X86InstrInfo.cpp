@@ -1,4 +1,11 @@
 //===- X86InstrInfo.cpp - X86 Instruction Information -----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the X86 implementation of the TargetInstrInfo class.
 //

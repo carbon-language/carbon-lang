@@ -1,4 +1,11 @@
 //===- llvm/Transforms/DecomposeMultiDimRefs.cpp - Lower array refs to 1D -===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // DecomposeMultiDimRefs - Convert multi-dimensional references consisting of
 // any combination of 2 or more array and structure indices into a sequence of

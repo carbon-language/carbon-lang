@@ -1,4 +1,11 @@
 //===- IndVarSimplify.cpp - Induction Variable Elimination ----------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Guarantees that all loops with identifiable, linear, induction variables will
 // be transformed to have a single, canonical, induction variable.  After this

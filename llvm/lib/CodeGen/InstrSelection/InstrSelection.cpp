@@ -1,4 +1,11 @@
 //===- InstrSelection.cpp - Machine Independent Inst Selection Driver -----===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Machine-independent driver file for instruction selection.  This file
 // constructs a forest of BURG instruction trees and then uses the

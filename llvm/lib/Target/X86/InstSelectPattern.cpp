@@ -1,4 +1,11 @@
 //===-- InstSelectPattern.cpp - A pattern matching inst selector for X86 --===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a pattern matching instruction selector for X86.
 //

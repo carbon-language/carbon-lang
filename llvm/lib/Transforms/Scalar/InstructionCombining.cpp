@@ -1,4 +1,11 @@
 //===- InstructionCombining.cpp - Combine multiple instructions -----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // InstructionCombining - Combine instructions to form fewer, simple
 // instructions.  This pass does not modify the CFG This pass is where algebraic

@@ -1,4 +1,11 @@
 //===- LowerAllocations.cpp - Reduce malloc & free insts to calls ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // The LowerAllocations transformation is a target dependent tranformation
 // because it depends on the size of data types and alignment constraints.

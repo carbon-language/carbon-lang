@@ -1,4 +1,11 @@
 //===- Dominators.cpp - Dominator Calculation -----------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements simple dominator construction algorithms for finding
 // forward dominators.  Postdominators are available in libanalysis, but are not

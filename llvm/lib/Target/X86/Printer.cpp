@@ -1,4 +1,11 @@
 //===-- X86/Printer.cpp - Convert X86 LLVM code to Intel assembly ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal
 // representation of machine-dependent LLVM code to Intel-format

@@ -1,4 +1,11 @@
 //===- RaiseAllocations.cpp - Convert %malloc & %free calls to insts ------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the RaiseAllocations pass which convert malloc and free
 // calls to malloc and free instructions.

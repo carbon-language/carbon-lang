@@ -1,4 +1,11 @@
 //===- Local.cpp - Compute a local data structure graph for a function ----===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Compute the local version of the data structure graph for a function.  The
 // external interface to this file is the DSGraph constructor.

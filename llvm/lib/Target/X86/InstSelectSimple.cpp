@@ -1,4 +1,11 @@
 //===-- InstSelectSimple.cpp - A simple instruction selector for x86 ------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a simple peephole instruction selector for the x86 target
 //

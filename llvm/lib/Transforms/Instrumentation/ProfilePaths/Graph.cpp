@@ -1,4 +1,11 @@
 //===-- Graph.cpp - Implements Graph class --------------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This implements Graph for helping in trace generation This graph gets used by
 // "ProfilePaths" class.

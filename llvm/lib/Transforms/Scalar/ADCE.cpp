@@ -1,4 +1,11 @@
 //===- ADCE.cpp - Code to perform aggressive dead code elimination --------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements "aggressive" dead code elimination.  ADCE is DCe where
 // values are assumed to be dead until proven otherwise.  This is similar to 

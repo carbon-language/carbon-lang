@@ -1,4 +1,11 @@
 //===-- DAGBuilder.cpp - Turn an LLVM BasicBlock into a DAG for selection -===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file turns an LLVM BasicBlock into a target independent SelectionDAG in
 // preparation for target specific optimizations and instruction selection.

@@ -1,4 +1,11 @@
 //===- StackSlots.cpp  - Specialize LLVM code for target machine ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass adds 2 empty slots at the top of function stack.  These two slots
 // are later used during code reoptimization for spilling the register values

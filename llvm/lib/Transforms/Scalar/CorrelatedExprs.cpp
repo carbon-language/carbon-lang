@@ -1,4 +1,11 @@
 //===- CorrelatedExprs.cpp - Pass to detect and eliminated c.e.'s ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Correlated Expression Elimination propagates information from conditional
 // branches to blocks dominated by destinations of the branch.  It propagates

@@ -1,4 +1,11 @@
 //===- InlineFunction.cpp - Code to perform function inlining -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements inlining of a function into a call site, resolving
 // parameters and the return value as appropriate.

@@ -1,4 +1,11 @@
 //===-- DeadArgumentElimination.cpp - Eliminate dead arguments ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass deletes dead arguments from internal functions.  Dead argument
 // elimination removes arguments which are directly dead, as well as arguments

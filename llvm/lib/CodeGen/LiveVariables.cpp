@@ -1,5 +1,12 @@
 //===-- LiveVariables.cpp - Live Variable Analysis for Machine Code -------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // This file implements the LiveVariable analysis pass.  For each machine
 // instruction in the function, this pass calculates the set of registers that
 // are immediately dead after the instruction (i.e., the instruction calculates

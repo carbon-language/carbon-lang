@@ -1,5 +1,12 @@
 //===-- MachineFunction.cpp -----------------------------------------------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // Collect native machine code information for a function.  This allows
 // target-specific information about the generated code to be stored with each
 // function.

@@ -1,4 +1,11 @@
 //===- AliasAnalysisCounter.cpp - Alias Analysis Query Counter ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a pass which can be used to count how many alias queries
 // are being made and how the alias analysis implementation being used responds.

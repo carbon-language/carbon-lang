@@ -1,4 +1,11 @@
 //===-- PrologEpilogInserter.cpp - Insert Prolog/Epilog code in function --===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is responsible for finalizing the functions frame layout, saving
 // callee saved registers, and for emitting prolog & epilog code for the

@@ -1,4 +1,11 @@
 //===-- TargetMachine.cpp - General Target Information ---------------------==//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file describes the general parts of a Target machine.
 // This file also implements TargetCacheInfo.

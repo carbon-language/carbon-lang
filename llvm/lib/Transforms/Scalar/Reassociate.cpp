@@ -1,4 +1,11 @@
 //===- Reassociate.cpp - Reassociate binary expressions -------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass reassociates commutative expressions in an order that is designed
 // to promote better constant propagation, GCSE, LICM, PRE...

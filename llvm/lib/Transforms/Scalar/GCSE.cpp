@@ -1,4 +1,11 @@
 //===-- GCSE.cpp - SSA based Global Common Subexpr Elimination ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is designed to be a very quick global transformation that
 // eliminates global common subexpressions from a function.  It does this by

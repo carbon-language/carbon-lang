@@ -1,4 +1,11 @@
 //===- Steensgaard.cpp - Context Insensitive Alias Analysis ---------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass uses the data structure graphs to implement a simple context
 // insensitive alias analysis.  It does this by computing the local analysis

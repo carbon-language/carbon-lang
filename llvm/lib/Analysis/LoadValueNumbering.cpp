@@ -1,4 +1,11 @@
 //===- LoadValueNumbering.cpp - Load Value #'ing Implementation -*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a value numbering pass that value #'s load instructions.
 // To do this, it finds lexically identical load instructions, and uses alias

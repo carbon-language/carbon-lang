@@ -1,4 +1,11 @@
 //===- TailDuplication.cpp - Simplify CFG through tail duplication --------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass performs a limited form of tail duplication, intended to simplify
 // CFGs by removing some unconditional branches.  This pass is necessary to

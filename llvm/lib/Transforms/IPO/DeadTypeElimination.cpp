@@ -1,4 +1,11 @@
 //===- DeadTypeElimination.cpp - Eliminate unused types for symbol table --===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is used to cleanup the output of GCC.  It eliminate names for types
 // that are unused in the entire translation unit, using the FindUsedTypes pass.

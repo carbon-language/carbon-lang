@@ -1,4 +1,11 @@
 //===-- iBranch.cpp - Implement the Branch instruction --------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the 'br' instruction, which can represent either a 
 // conditional or unconditional branch.

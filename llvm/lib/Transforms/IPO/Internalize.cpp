@@ -1,4 +1,11 @@
 //===-- Internalize.cpp - Mark functions internal -------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass loops over all of the functions in the input module, looking for a
 // main function.  If a main function is found, all other functions and all

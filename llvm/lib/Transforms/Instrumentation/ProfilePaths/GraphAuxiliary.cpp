@@ -1,4 +1,11 @@
 //===- GraphAuxiliary.cpp - Auxiliary functions on graph ------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // auxiliary function associated with graph: they all operate on graph, and help
 // in inserting instrumentation for trace generation

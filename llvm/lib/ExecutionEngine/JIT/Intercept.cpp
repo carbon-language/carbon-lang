@@ -1,4 +1,11 @@
 //===-- Intercept.cpp - System function interception routines -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // If a function call occurs to an external function, the JIT is designed to use
 // the dynamic loader interface to find a function to call.  This is useful for

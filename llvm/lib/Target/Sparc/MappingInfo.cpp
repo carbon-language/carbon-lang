@@ -1,4 +1,11 @@
 //===- MappingInfo.cpp - create LLVM info and output to .s file ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains a FunctionPass called MappingInfoAsmPrinter,
 // which creates two maps: one between LLVM Instructions and MachineInstrs

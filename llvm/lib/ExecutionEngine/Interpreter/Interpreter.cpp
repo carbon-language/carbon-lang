@@ -1,4 +1,11 @@
 //===- Interpreter.cpp - Top-Level LLVM Interpreter Implementation --------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the top-level functionality for the LLVM interpreter.
 // This interpreter is designed to be a very simple, portable, inefficient

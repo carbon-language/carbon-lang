@@ -1,4 +1,11 @@
 //===-- ConstantWriter.cpp - Functions for writing constants --------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the routines for encoding constants to a bytecode 
 // stream.

@@ -1,4 +1,11 @@
 //===-- ModuloScheduling.cpp - Software Pipeling Approach - SMS -----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // The is a software pipelining pass based on the Swing Modulo Scheduling
 // algorithm (SMS).

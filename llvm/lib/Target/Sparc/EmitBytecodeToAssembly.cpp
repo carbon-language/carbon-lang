@@ -1,4 +1,11 @@
 //===-- EmitBytecodeToAssembly.cpp - Emit bytecode to Sparc .s File --------==//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the pass that writes LLVM bytecode as data to a sparc
 // assembly file.  The bytecode gets assembled into a special bytecode section

@@ -1,4 +1,11 @@
 //===-- InstCount.cpp - Collects the count of all instructions ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass collects the count of all instructions and reports them 
 //

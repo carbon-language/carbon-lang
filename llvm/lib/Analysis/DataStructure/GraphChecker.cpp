@@ -1,4 +1,11 @@
 //===- GraphChecker.cpp - Assert that various graph properties hold -------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is used to test DSA with regression tests.  It can be used to check
 // that certain graph properties hold, such as two nodes being disjoint, whether

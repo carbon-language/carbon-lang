@@ -1,4 +1,11 @@
 //===-- LICM.cpp - Loop Invariant Code Motion Pass ------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass is a simple loop invariant code motion pass.  An interesting aspect
 // of this pass is that it uses alias analysis for two purposes:

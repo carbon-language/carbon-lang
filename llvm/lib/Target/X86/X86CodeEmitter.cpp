@@ -1,4 +1,11 @@
 //===-- X86/X86CodeEmitter.cpp - Convert X86 code to machine code ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file contains the pass that transforms the X86 machine instructions into
 // actual executable machine code.

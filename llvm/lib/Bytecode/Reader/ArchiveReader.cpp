@@ -1,4 +1,11 @@
 //===- ArchiveReader.cpp - Code to read LLVM bytecode from .a files -------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the ReadArchiveFile interface, which allows a linker to
 // read all of the LLVM bytecode files contained in a .a file.  This file

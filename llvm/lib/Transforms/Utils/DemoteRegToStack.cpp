@@ -1,5 +1,12 @@
 //===- DemoteRegToStack.cpp - Move a virtual reg. to stack ----------------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // This file provide the function DemoteRegToStack().  This function takes a
 // virtual register computed by an Instruction& X and replaces it with a slot in
 // the stack frame, allocated via alloca. It returns the pointer to the

@@ -1,4 +1,11 @@
 //===-- SelectionDAG.cpp - Implement the SelectionDAG* classes ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the SelectionDAG* classes, which are used to perform
 // DAG-based instruction selection in a target-specific manner.

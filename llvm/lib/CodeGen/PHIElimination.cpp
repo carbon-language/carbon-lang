@@ -1,4 +1,11 @@
 //===-- PhiElimination.cpp - Eliminate PHI nodes by inserting copies ------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass eliminates machine instruction PHI nodes by inserting copy
 // instructions.  This destroys SSA information, but is the desired input for

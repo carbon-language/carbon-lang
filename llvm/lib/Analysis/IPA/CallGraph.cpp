@@ -1,4 +1,11 @@
 //===- CallGraph.cpp - Build a Module's call graph ------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This interface is used to build and manipulate a call graph, which is a very 
 // useful tool for interprocedural optimization.

@@ -1,4 +1,11 @@
 //===-- EdgeCode.cpp - generate LLVM instrumentation code -----------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //It implements the class EdgeCode: which provides 
 //support for inserting "appropriate" instrumentation at
 //designated points in the graph

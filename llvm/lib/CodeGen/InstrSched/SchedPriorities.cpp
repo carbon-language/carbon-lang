@@ -1,5 +1,12 @@
 //===-- SchedPriorities.h - Encapsulate scheduling heuristics -------------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // Strategy:
 //    Priority ordering rules:
 //    (1) Max delay, which is the order of the heap S.candsAsHeap.

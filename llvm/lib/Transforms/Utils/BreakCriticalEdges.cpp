@@ -1,4 +1,11 @@
 //===- BreakCriticalEdges.cpp - Critical Edge Elimination Pass ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // BreakCriticalEdges pass - Break all of the critical edges in the CFG by
 // inserting a dummy basic block.  This pass may be "required" by passes that

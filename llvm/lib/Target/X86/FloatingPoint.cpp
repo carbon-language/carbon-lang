@@ -1,4 +1,11 @@
 //===-- FloatingPoint.cpp - Floating point Reg -> Stack converter ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the pass which converts floating point instructions from
 // virtual registers into register stack instructions.

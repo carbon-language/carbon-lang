@@ -1,4 +1,11 @@
 //===- FindUnsafePointerTypes.cpp - Check pointer usage safety ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a pass that can be used to determine, interprocedurally, 
 // which pointer types are accessed unsafely in a program.  If there is an

@@ -1,4 +1,11 @@
 //===- Parallelize.cpp - Auto parallelization using DS Graphs -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a pass that automatically parallelizes a program,
 // using the Cilk multi-threaded runtime system to execute parallel code.

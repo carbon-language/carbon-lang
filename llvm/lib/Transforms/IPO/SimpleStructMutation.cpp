@@ -1,4 +1,11 @@
 //===- SimpleStructMutation.cpp - Swap structure elements around ----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass does a simple transformation that swaps all of the elements of the
 // struct types in the program around.

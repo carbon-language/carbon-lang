@@ -1,4 +1,11 @@
 //===- FunctionResolution.cpp - Resolve declarations to implementations ---===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Loop over the functions that are in the module and look for functions that
 // have the same name.  More often than not, there will be things like:

@@ -1,4 +1,11 @@
 //===- PrintSCC.cpp - Enumerate SCCs in some key graphs -------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file provides passes to print out SCCs in a CFG or a CallGraph.
 // Normally, you would not use these passes; instead, you would use the

@@ -1,4 +1,11 @@
 //===- Parser.cpp - Main dispatch module for the Parser library -------------===
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This library implements the functionality defined in llvm/assembly/parser.h
 //

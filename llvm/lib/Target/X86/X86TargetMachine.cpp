@@ -1,5 +1,12 @@
 //===-- X86TargetMachine.cpp - Define TargetMachine for the X86 -----------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // This file defines the X86 specific subclass of TargetMachine.
 //
 //===----------------------------------------------------------------------===//

@@ -1,4 +1,11 @@
 //===- LowerInvoke.cpp - Eliminate Invoke & Unwind instructions -----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This transformation is designed for use by code generators which do not yet
 // support stack unwinding.  This pass gives them the ability to execute any

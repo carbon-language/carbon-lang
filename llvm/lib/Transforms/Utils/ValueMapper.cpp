@@ -1,4 +1,11 @@
 //===- ValueMapper.cpp - Interface shared by lib/Transforms/Utils ---------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the MapValue function, which is shared by various parts of
 // the lib/Transforms/Utils library.

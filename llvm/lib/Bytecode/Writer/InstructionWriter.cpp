@@ -1,4 +1,11 @@
 //===-- InstructionWriter.cpp - Functions for writing instructions --------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the routines for encoding instruction opcodes to a 
 // bytecode stream.

@@ -1,5 +1,12 @@
 //===- PgmDependenceGraph.cpp - Enumerate PDG for a function ----*- C++ -*-===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // The Program Dependence Graph (PDG) for a single function represents all
 // data and control dependences for the function.  This file provides an
 // iterator to enumerate all these dependences.  In particular, it enumerates:

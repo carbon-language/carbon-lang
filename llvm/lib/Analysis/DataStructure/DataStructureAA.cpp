@@ -1,4 +1,11 @@
 //===- DataStructureAA.cpp - Data Structure Based Alias Analysis ----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass uses the top-down data structure graphs to implement a simple
 // context sensitive alias analysis.

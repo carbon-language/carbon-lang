@@ -1,4 +1,11 @@
 //===-- EmitFunctions.cpp - interface to insert instrumentation -----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This inserts a global constant table with function pointers all along
 //

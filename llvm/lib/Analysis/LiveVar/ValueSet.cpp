@@ -1,4 +1,10 @@
-
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 // FIXME: Eliminate this file.
 
 #include "llvm/CodeGen/ValueSet.h"

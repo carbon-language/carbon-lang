@@ -1,4 +1,11 @@
 //===- ValueNumbering.cpp - Value #'ing Implementation ----------*- C++ -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the non-abstract Value Numbering methods as well as a
 // default implementation for the analysis group.

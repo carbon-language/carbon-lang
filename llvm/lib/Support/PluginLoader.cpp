@@ -1,4 +1,11 @@
 //===-- PluginLoader.cpp - Implement -load command line option ------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the -load <plugin> command line option processor.  When
 // linked into a program, this new command line option is available that allows

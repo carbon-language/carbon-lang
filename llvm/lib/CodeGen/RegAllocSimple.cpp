@@ -1,4 +1,11 @@
 //===-- RegAllocSimple.cpp - A simple generic register allocator ----------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements a simple register allocator. *Very* simple: It immediate
 // spills every value right after it is computed, and it reloads all used

@@ -1,4 +1,11 @@
 //===- ExprTypeConvert.cpp - Code to change an LLVM Expr Type -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the part of level raising that checks to see if it is
 // possible to coerce an entire expression tree into a different type.  If

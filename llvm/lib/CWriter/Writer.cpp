@@ -1,4 +1,11 @@
 //===-- Writer.cpp - Library for converting LLVM code to C ----------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This library converts LLVM code to C code, compilable by GCC.
 //

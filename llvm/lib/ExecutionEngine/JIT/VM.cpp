@@ -1,4 +1,11 @@
 //===-- VM.cpp - LLVM Just in Time Compiler -------------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This tool implements a just-in-time compiler for LLVM, allowing direct
 // execution of LLVM bytecode in an efficient manner.

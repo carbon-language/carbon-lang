@@ -1,4 +1,11 @@
 //===- DataStructureOpt.cpp - Data Structure Analysis Based Optimizations -===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This pass uses DSA to a series of simple optimizations, like marking
 // unwritten global variables 'constant'.

@@ -1,5 +1,12 @@
 //===-- ExternalFunctions.cpp - Implement External Functions --------------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 //  This file contains both code to deal with invoking "external" functions, but
 //  also contains code that implements "exported" external functions.
 //

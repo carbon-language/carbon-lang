@@ -1,5 +1,12 @@
 //===-- PeepholeOpts.cpp --------------------------------------------------===//
 // 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+// 
 // Support for performing several peephole opts in one or a few passes over the
 // machine code of a method.
 //

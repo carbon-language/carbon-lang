@@ -1,4 +1,11 @@
 //===-- EmitAssembly.cpp - Emit Sparc Specific .s File ---------------------==//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements all of the stuff necessary to output a .s file from
 // LLVM.  The code in this file assumes that the specified module has already

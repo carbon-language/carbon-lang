@@ -1,4 +1,11 @@
 //===- LoopInfo.cpp - Natural Loop Calculator -----------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
 // and determine the loop depth of various nodes of the CFG.  Note that the

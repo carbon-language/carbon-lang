@@ -1,4 +1,11 @@
 //===- Pass.cpp - LLVM Pass Infrastructure Implementation -----------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the LLVM Pass infrastructure.  It is primarily
 // responsible with ensuring that passes are executed and batched together

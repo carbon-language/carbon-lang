@@ -1,4 +1,11 @@
 //===-- Emitter.cpp - Write machine code to executable memory -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file defines a MachineCodeEmitter object that is used by Jello to write
 // machine code to memory and remember where relocatable values lie.

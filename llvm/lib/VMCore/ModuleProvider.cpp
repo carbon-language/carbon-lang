@@ -1,4 +1,11 @@
 //===-- ModuleProvider.cpp - Base implementation for module providers -----===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Minimal implementation of the abstract interface for providing a module.
 //

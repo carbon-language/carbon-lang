@@ -1,4 +1,11 @@
 //===- TraceValues.cpp - Value Tracing for debugging ----------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Support for inserting LLVM code to print values at basic block and function
 // exits.

@@ -1,4 +1,11 @@
 //===- CloneTrace.cpp - Clone a trace -------------------------------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the CloneTrace interface, which is used 
 // when writing runtime optimizations. It takes a vector of basic blocks

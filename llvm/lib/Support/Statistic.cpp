@@ -1,4 +1,11 @@
 //===-- Statistic.cpp - Easy way to expose stats information --------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // This file implements the 'Statistic' class, which is designed to be an easy
 // way to expose various success metrics from passes.  These statistics are

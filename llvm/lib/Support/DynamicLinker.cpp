@@ -1,4 +1,11 @@
 //===-- DynamicLinker.cpp - Implement DynamicLinker interface -------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // Lightweight interface to dynamic library linking and loading, and dynamic
 // symbol lookup functionality, in whatever form the operating system

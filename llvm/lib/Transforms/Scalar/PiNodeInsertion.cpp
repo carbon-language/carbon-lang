@@ -1,4 +1,11 @@
 //===- PiNodeInsertion.cpp - Insert Pi nodes into a program ---------------===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 // PiNodeInsertion - This pass inserts single entry Phi nodes into basic blocks
 // that are preceded by a conditional branch, where the branch gives

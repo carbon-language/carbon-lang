@@ -1,4 +1,11 @@
 //===-- InstrForest.cpp - Build instruction forest for inst selection -----===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
 //
 //  The key goal is to group instructions into a single
 //  tree if one or more of them might be potentially combined into a single
