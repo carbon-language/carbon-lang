@@ -9,10 +9,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExecutionEngine.h"
-#include "GenericValue.h"
 #include "Support/CommandLine.h"
 #include "Support/Debug.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetMachineImpls.h"

@@ -1,12 +1,11 @@
 LEVEL = ../..
 TOOLNAME = lli
-PARALLEL_DIRS = Interpreter JIT
 
 # Get the $(ARCH) setting
 include $(LEVEL)/Makefile.config
 
 # Generic JIT libraries
-JITLIBS   = lli-jit codegen
+JITLIBS   = lli-jit codegen executionengine
 ARCHLIBS  =
 
 # You can enable the X86 JIT on a non-X86 host by setting the flag
