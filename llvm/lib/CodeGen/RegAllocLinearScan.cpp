@@ -522,15 +522,26 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
 unsigned RA::getFreePhysReg(LiveInterval* cur)
 {
+  std::vector<unsigned> inactiveCounts(mri_->getNumRegs(), 0);
+  for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
+       i != e; ++i) {
+    unsigned reg = (*i)->reg;
+    if (MRegisterInfo::isVirtualRegister(reg))
+      reg = vrm_->getPhys(reg);
+    ++inactiveCounts[reg];
+  }
+
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
 
+  unsigned freeReg = 0;
   for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_);
        i != rc->allocation_order_end(*mf_); ++i) {
     unsigned reg = *i;
-    if (prt_->isRegAvail(reg))
-      return reg;
+    if (prt_->isRegAvail(reg) &&
+        (!freeReg || inactiveCounts[freeReg] < inactiveCounts[reg]))
+        freeReg = reg;
   }
-  return 0;
+  return freeReg;
 }
 
 FunctionPass* llvm::createLinearScanRegisterAllocator() {
