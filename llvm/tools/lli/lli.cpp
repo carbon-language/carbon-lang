@@ -52,6 +52,13 @@ int main(int argc, char** argv) {
   if (ProfileMode) I.enableProfiling();
   if (TraceMode) I.enableTracing();
 
+  // Ensure that there is at least one argument... the name of the program.
+  // This is only unavailable if the program was read from stdin, instead of a
+  // file.
+  //
+  if (InputArgv.empty())
+    InputArgv.push_back("from-stdin-prog");
+
   // Start interpreter into the main function...
   //
   if (!I.callMainMethod(MainFunction, InputArgv) && !DebugMode) {
