@@ -519,6 +519,9 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType,
 
 
 void AssemblyWriter::printModule(const Module *M) {
+  Out << "target endian = " << (M->isLittleEndian() ? "little" : "big") << "\n";
+  Out << "target pointersize = " << (M->has32BitPointers() ? 32 : 64) << "\n";
+
   // Loop over the symbol table, emitting all named constants...
   printSymbolTable(M->getSymbolTable());
   
