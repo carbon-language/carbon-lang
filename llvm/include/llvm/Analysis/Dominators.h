@@ -28,28 +28,45 @@ namespace cfg {
 
 //===----------------------------------------------------------------------===//
 //
+// DominatorBase - Base class that other, more interesting dominator analyses
+// inherit from.
+//
+class DominatorBase {
+protected:
+  const BasicBlock *Root;
+  inline DominatorBase(const BasicBlock *root = 0) : Root(root) {}
+public:
+  inline const BasicBlock *getRoot() const { return Root; }
+  bool isPostDominator() const;  // Returns true if analysis based of postdoms
+};
+
+//===----------------------------------------------------------------------===//
+//
 // DominatorSet - Maintain a set<const BasicBlock*> for every basic block in a
 // method, that represents the blocks that dominate the block.
 //
-class DominatorSet {
+class DominatorSet : public DominatorBase {
 public:
   typedef set<const BasicBlock*>              DomSetType;    // Dom set for a bb
   typedef map<const BasicBlock *, DomSetType> DomSetMapType; // Map of dom sets
 private:
   DomSetMapType Doms;
-  const BasicBlock *Root;
+
+  void calcForwardDominatorSet(const Method *M);
 public:
   // DominatorSet ctor - Build either the dominator set or the post-dominator
-  // set for a method...
+  // set for a method... Building the postdominator set may require the analysis
+  // routine to modify the method so that there is only a single return in the
+  // method.
   //
-  DominatorSet(const Method *M, bool PostDomSet = false);
+  DominatorSet(const Method *M);
+  DominatorSet(      Method *M, bool PostDomSet);
 
   // Accessor interface:
   typedef DomSetMapType::const_iterator const_iterator;
   inline const_iterator begin() const { return Doms.begin(); }
   inline const_iterator end()   const { return Doms.end(); }
   inline const_iterator find(const BasicBlock* B) const { return Doms.find(B); }
-  inline const BasicBlock *getRoot() const { return Root; }
 
   // getDominators - Return the set of basic blocks that dominate the specified
   // block.
@@ -73,16 +90,16 @@ public:
 // ImmediateDominators - Calculate the immediate dominator for each node in a
 // method.
 //
-class ImmediateDominators {
+class ImmediateDominators : public DominatorBase {
   map<const BasicBlock*, const BasicBlock*> IDoms;
-  const BasicBlock *Root;
   void calcIDoms(const DominatorSet &DS);
 public:
 
   // ImmediateDominators ctor - Calculate the idom mapping, for a method, or
   // from a dominator set calculated for something else...
   //
-  inline ImmediateDominators(const DominatorSet &DS) : Root(DS.getRoot()) {
+  inline ImmediateDominators(const DominatorSet &DS)
+    : DominatorBase(DS.getRoot()) {
     calcIDoms(DS);                         // Can be used to make rev-idoms
   }
 
@@ -92,7 +109,6 @@ public:
   inline const_iterator begin() const { return IDoms.begin(); }
   inline const_iterator end()   const { return IDoms.end(); }
   inline const_iterator find(const BasicBlock* B) const { return IDoms.find(B);}
-  inline const BasicBlock *getRoot() const { return Root; }
 
   // operator[] - Return the idom for the specified basic block.  The start
   // node returns null, because it does not have an immediate dominator.
@@ -109,9 +125,8 @@ public:
 //
 // DominatorTree - Calculate the immediate dominator tree for a method.
 //
-class DominatorTree {
+class DominatorTree : public DominatorBase {
   class Node;
-  const BasicBlock *Root;
   map<const BasicBlock*, Node*> Nodes;
   void calculate(const DominatorSet &DS);
   typedef map<const BasicBlock*, Node*> NodeMapType;
@@ -143,15 +158,13 @@ public:
 public:
   // DominatorTree ctors - Compute a dominator tree, given various amounts of
   // previous knowledge...
-  //inline DominatorTree(const Method *M) { calculate(DominatorSet(M)); }
-  inline DominatorTree(const DominatorSet &DS) : Root(DS.getRoot()) { 
+  inline DominatorTree(const DominatorSet &DS) : DominatorBase(DS.getRoot()) { 
     calculate(DS); 
   }
 
   DominatorTree(const ImmediateDominators &IDoms);
   ~DominatorTree();
 
-  inline const BasicBlock *getRoot() const { return Root; }
   inline const Node *operator[](const BasicBlock *BB) const {
     NodeMapType::const_iterator i = Nodes.find(BB);
     return (i != Nodes.end()) ? i->second : 0;
@@ -163,25 +176,36 @@ public:
 //
 // DominanceFrontier - Calculate the dominance frontiers for a method.
 //
-class DominanceFrontier {
+class DominanceFrontier : public DominatorBase {
   typedef set<const BasicBlock*>              DomSetType;    // Dom set for a bb
   typedef map<const BasicBlock *, DomSetType> DomSetMapType; // Map of dom sets
 private:
   DomSetMapType Frontiers;
-  const BasicBlock *Root;
   const DomSetType &calcDomFrontier(const DominatorTree &DT,
 				    const DominatorTree::Node *Node);
+  const DomSetType &calcPostDomFrontier(const DominatorTree &DT,
+					const DominatorTree::Node *Node);
 public:
-  DominanceFrontier(const DominatorSet &DS) : Root(DS.getRoot()) {
+  DominanceFrontier(const DominatorSet &DS) : DominatorBase(DS.getRoot()) {
     const DominatorTree DT(DS);
-    calcDomFrontier(DT, DT[Root]);
+    if (isPostDominator())
+      calcPostDomFrontier(DT, DT[Root]);
+    else
+      calcDomFrontier(DT, DT[Root]);
   }    
-  DominanceFrontier(const ImmediateDominators &ID) : Root(ID.getRoot()) {
+  DominanceFrontier(const ImmediateDominators &ID)
+    : DominatorBase(ID.getRoot()) {
     const DominatorTree DT(ID);
-    calcDomFrontier(DT, DT[Root]);
+    if (isPostDominator())
+      calcPostDomFrontier(DT, DT[Root]);
+    else
+      calcDomFrontier(DT, DT[Root]);
   }
-  DominanceFrontier(const DominatorTree &DT) : Root(DT.getRoot()) {
-    calcDomFrontier(DT, DT[Root]);
+  DominanceFrontier(const DominatorTree &DT) : DominatorBase(DT.getRoot()) {
+    if (isPostDominator())
+      calcPostDomFrontier(DT, DT[Root]);
+    else
+      calcDomFrontier(DT, DT[Root]);
   }
 
   // Accessor interface:
@@ -189,8 +213,6 @@ public:
   inline const_iterator begin() const { return Frontiers.begin(); }
   inline const_iterator end()   const { return Frontiers.end(); }
   inline const_iterator find(const BasicBlock* B) const { return Frontiers.find(B);}
-  inline const BasicBlock *getRoot() const { return Root; }
-
 };
 
 } // End namespace cfg
