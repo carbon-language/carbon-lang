@@ -1,4 +1,4 @@
-
+//===-- ExtractFunction.cpp - Function extraction pass --------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
