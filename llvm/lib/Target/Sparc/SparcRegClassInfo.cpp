@@ -1,8 +1,13 @@
+//===-- SparcRegClassInfo.cpp - Register class def'ns for Sparc -----------===//
+//
+//  This file defines the register classes used by the Sparc target description.
+//
+//===----------------------------------------------------------------------===//
+
 #include "SparcRegClassInfo.h"
 #include "llvm/CodeGen/RegAllocCommon.h"
 #include "llvm/Target/Sparc.h"
 #include "llvm/Type.h"
-#include <iostream>
 using std::cerr;
 using std::vector;
 
@@ -61,17 +66,17 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) 
   if( ! LR->isCallInterference() ) { 
 
     // start with volatiles (we can  allocate volatiles safely)
-    SearchStart = SparcIntRegOrder::StartOfAllRegs;  
+    SearchStart = SparcIntRegClass::StartOfAllRegs;  
   }
   else {           
     // start with non volatiles (no non-volatiles)
-    SearchStart =  SparcIntRegOrder::StartOfNonVolatileRegs;  
+    SearchStart =  SparcIntRegClass::StartOfNonVolatileRegs;  
   }
 
   unsigned c=0;                         // color
  
   // find first unused color
-  for( c=SearchStart; c < SparcIntRegOrder::NumOfAvailRegs; c++) { 
+  for( c=SearchStart; c < SparcIntRegClass::NumOfAvailRegs; c++) { 
     if(!IsColorUsedArr[c] ) { ColorFound = true; break; }
   }
 
@@ -86,10 +91,10 @@ void SparcIntRegClass::colorIGNode(IGNode * Node, vector<bool> &IsColorUsedArr) 
   else if( LR->isCallInterference() ) 
   { 
     // start from 0 - try to find even a volatile this time
-    SearchStart = SparcIntRegOrder::StartOfAllRegs;  
+    SearchStart = SparcIntRegClass::StartOfAllRegs;  
 
     // find first unused volatile color
-    for(c=SearchStart; c < SparcIntRegOrder::StartOfNonVolatileRegs; c++) { 
+    for(c=SearchStart; c < SparcIntRegClass::StartOfNonVolatileRegs; c++) { 
       if( ! IsColorUsedArr[ c ] ) { ColorFound = true; break; }
     }
 
@@ -200,11 +205,11 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     //if this Node is between calls (i.e., no call interferences )
     if( ! isCallInterf ) {
       // start with volatiles (we can  allocate volatiles safely)
-      SearchStart = SparcFloatRegOrder::StartOfAllRegs;  
+      SearchStart = SparcFloatRegClass::StartOfAllRegs;  
     }
     else {           
       // start with non volatiles (no non-volatiles)
-      SearchStart =  SparcFloatRegOrder::StartOfNonVolatileRegs;  
+      SearchStart =  SparcFloatRegClass::StartOfNonVolatileRegs;  
     }
     
     ColorFound = findFloatColor( LR, SearchStart, 32, IsColorUsedArr );
@@ -222,8 +227,8 @@ void SparcFloatRegClass::colorIGNode(IGNode * Node,
     // color could be found.
     // Now try to allocate even a volatile color
 
-    ColorFound = findFloatColor( LR, SparcFloatRegOrder::StartOfAllRegs, 
-				SparcFloatRegOrder::StartOfNonVolatileRegs,
+    ColorFound = findFloatColor( LR, SparcFloatRegClass::StartOfAllRegs, 
+				SparcFloatRegClass::StartOfNonVolatileRegs,
 				IsColorUsedArr);
   }
 

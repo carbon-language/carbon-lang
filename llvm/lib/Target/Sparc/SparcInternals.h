@@ -419,7 +419,7 @@ public:
   
   // Returns the assembly-language name of the specified machine register.
   //
-  virtual const std::string getUnifiedRegName(int reg) const;
+  virtual const char * const getUnifiedRegName(int reg) const;
 
 
   // returns the # of bytes of stack space allocated for each register

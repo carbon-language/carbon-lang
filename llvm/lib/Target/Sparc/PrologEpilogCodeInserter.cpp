@@ -89,7 +89,7 @@ void InsertPrologEpilogCode::InsertPrologCode(Function &F)
       int32_t C = - (int) staticStackSize;
       int uregNum = Target.getRegInfo().getUnifiedRegNum(
                            Target.getRegInfo().getRegClassIDOfType(Type::IntTy),
-                           SparcIntRegOrder::l0);
+                           SparcIntRegClass::l0);
       
       M = new MachineInstr(SETHI);
       M->SetMachineOperandConst(0, MachineOperand::MO_SignExtendedImmed, C);
