@@ -60,27 +60,21 @@ MachineCodeEmitter *MachineCodeEmitter::createDebugEmitter() {
 
 namespace {
   class FilePrinterEmitter : public MachineCodeEmitter {
-    std::ofstream f, actual;
+    std::ofstream actual;
     std::ostream &o;
     MachineCodeEmitter &MCE;
     unsigned counter;
-    bool mustClose;
     unsigned values[4];
     
   public:
     FilePrinterEmitter(MachineCodeEmitter &M, std::ostream &os)
-      : f("lli.out"), o(os), MCE(M), counter(0), mustClose(false) {
-      if (!f.good()) {
-        std::cerr << "Cannot open 'lli.out' for writing\n";
-        abort();
-      }
+      : o(os), MCE(M), counter(0) {
       openActual();
     }
     
     ~FilePrinterEmitter() { 
       o << "\n";
       actual.close();
-      if (mustClose) f.close();
     }
 
     void openActual() {
