@@ -252,9 +252,11 @@ namespace {
 
 /// ElementTypesAreCompatible - Check to see if the specified types are
 /// "physically" compatible.  If so, return true, else return false.  We only
-/// have to check the fields in T1: T2 may be larger than T1.
+/// have to check the fields in T1: T2 may be larger than T1.  If AllowLargerT1
+/// is true, then we also allow a larger T1.
 ///
-static bool ElementTypesAreCompatible(const Type *T1, const Type *T2) {
+static bool ElementTypesAreCompatible(const Type *T1, const Type *T2,
+                                      bool AllowLargerT1) {
   TypeElementWalker T1W(T1), T2W(T2);
   
   while (!T1W.isDone() && !T2W.isDone()) {
@@ -270,7 +272,7 @@ static bool ElementTypesAreCompatible(const Type *T1, const Type *T2) {
     T2W.StepToNextType();
   }
   
-  return T1W.isDone();
+  return AllowLargerT1 || T1W.isDone();
 }
 
 
@@ -327,8 +329,8 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   if (Ty == Type::VoidTy) {
     // If this is the first type that this node has seen, just accept it without
     // question....
-    assert(Offset == 0 && "Cannot have an offset into a void node!");
-    assert(!isArray() && "This shouldn't happen!");
+    assert(Offset == 0 && !isArray() &&
+           "Cannot have an offset into a void node!");
     Ty = NewTy;
     NodeType &= ~Array;
     if (WillBeArray) NodeType |= Array;
@@ -424,7 +426,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   // just require each element in the node to be compatible.
   if (NewTySize <= SubTypeSize && NewTySize && NewTySize < 256 &&
       SubTypeSize && SubTypeSize < 256 && 
-      ElementTypesAreCompatible(NewTy, SubType))
+      ElementTypesAreCompatible(NewTy, SubType, !isArray()))
     return false;
 
   // Okay, so we found the leader type at the offset requested.  Search the list
