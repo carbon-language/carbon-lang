@@ -75,7 +75,7 @@ namespace {
 
     void visitBinaryOperator(Instruction &I);
     void visitShiftInst (ShiftInst &SI) { visitBinaryOperator (SI); }
-    void visitSetCondInst(Instruction &I);
+    void visitSetCondInst(SetCondInst &I);
     void visitCallInst(CallInst &I);
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
@@ -924,7 +924,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
   }
 }
 
-void V8ISel::visitSetCondInst(Instruction &I) {
+void V8ISel::visitSetCondInst(SetCondInst &I) {
   unsigned Op0Reg = getReg (I.getOperand (0));
   unsigned Op1Reg = getReg (I.getOperand (1));
   unsigned DestReg = getReg (I);
