@@ -549,6 +549,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2) {
 #ifndef NDEBUG
   switch (Opcode) {
+  case ISD::TokenFactor:
+    assert(VT == MVT::Other && N1.getValueType() == MVT::Other &&
+           N2.getValueType() == MVT::Other && "Invalid token factor!");
+    break;
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
@@ -739,6 +743,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Finally, fold operations that do not require constants.
   switch (Opcode) {
+  case ISD::TokenFactor:
+    if (N1.getOpcode() == ISD::EntryToken)
+      return N2;
+    if (N2.getOpcode() == ISD::EntryToken)
+      return N1;
+    break;
+
   case ISD::AND:
   case ISD::OR:
     if (SetCCSDNode *LHS = dyn_cast<SetCCSDNode>(N1.Val))
