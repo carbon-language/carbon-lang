@@ -19,6 +19,7 @@
 
 %{
 #include "ParserInternals.h"
+#include "llvm/Module.h"
 #include <list>
 #include "llvmAsmParser.h"
 #include <ctype.h>
@@ -176,6 +177,11 @@ null            { return NULL_TOK; }
 to              { return TO; }
 except          { return EXCEPT; }
 not             { return NOT; }  /* Deprecated, turned into XOR */
+target          { return TARGET; }
+endian          { return ENDIAN; }
+pointersize     { return POINTERSIZE; }
+little          { return LITTLE; }
+big             { return BIG; }
 
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }

@@ -635,6 +635,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
   Instruction::TermOps              TermOpVal;
   Instruction::MemoryOps            MemOpVal;
   Instruction::OtherOps             OtherOpVal;
+  Module::Endianness                Endianness;
 }
 
 %type <ModuleVal>     Module FunctionList
@@ -653,6 +654,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 %type <JumpTable>     JumpTable
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
 %type <Linkage>       OptLinkage
+%type <Endianness>    BigOrLittle
 
 // ValueRef - Unresolved reference to a definition or BB
 %type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
@@ -683,7 +685,7 @@ Module *RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 %token IMPLEMENTATION TRUE FALSE BEGINTOK ENDTOK DECLARE GLOBAL CONSTANT
 %token TO EXCEPT DOTDOTDOT NULL_TOK CONST INTERNAL LINKONCE APPENDING
-%token OPAQUE NOT EXTERNAL
+%token OPAQUE NOT EXTERNAL TARGET ENDIAN POINTERSIZE LITTLE BIG
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -1177,7 +1179,26 @@ ConstPool : ConstPool OptAssign CONST ConstVal {
     }
     delete $5;
   }
+  | ConstPool TARGET TargetDefinition { 
+  }
   | /* empty: end of list */ { 
+  };
+
+
+
+BigOrLittle : BIG    { $$ = Module::BigEndian; };
+BigOrLittle : LITTLE { $$ = Module::LittleEndian; };
+
+TargetDefinition : ENDIAN '=' BigOrLittle {
+    CurModule.CurrentModule->setEndianness($3);
+  }
+  | POINTERSIZE '=' EUINT64VAL {
+    if ($3 == 32)
+      CurModule.CurrentModule->setPointerSize(Module::Pointer32);
+    else if ($3 == 64)
+      CurModule.CurrentModule->setPointerSize(Module::Pointer64);
+    else
+      ThrowException("Invalid pointer size: '" + utostr($3) + "'!");
   };
 
 
