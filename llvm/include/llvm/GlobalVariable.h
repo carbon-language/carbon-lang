@@ -36,9 +36,11 @@ public:
   //
   inline bool hasInitializer() const { return !Operands.empty(); }
   inline const ConstPoolVal *getInitializer() const {
+    assert(hasInitializer() && "GV doesn't have initializer!");
     return (const ConstPoolVal*)Operands[0].get();
   }
   inline ConstPoolVal *getInitializer() {
+    assert(hasInitializer() && "GV doesn't have initializer!");
     return (ConstPoolVal*)Operands[0].get();
   }
   inline void setInitializer(ConstPoolVal *CPV) {
