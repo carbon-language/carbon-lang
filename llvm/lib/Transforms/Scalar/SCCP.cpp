@@ -25,11 +25,9 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
@@ -99,6 +97,12 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
   hash_map<Value*, LatticeVal> ValueState;  // The state each value is in...
 
+  /// GlobalValue - If we are tracking any values for the contents of a global
+  /// variable, we keep a mapping from the constant accessor to the element of
+  /// the global, to the currently known value.  If the value becomes
+  /// overdefined, it's entry is simply removed from this map.
+  hash_map<GlobalVariable*, LatticeVal> TrackedGlobals;
+
   /// TrackedFunctionRetVals - If we are tracking arguments into and the return
   /// value out of a function, it will have an entry in this map, indicating
   /// what the known return value for the function is.
@@ -134,11 +138,18 @@ public:
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
 
-  /// TrackValueOfGlobalVariableIfPossible - Clients can use this method to
+  /// TrackValueOfGlobalVariable - Clients can use this method to
   /// inform the SCCPSolver that it should track loads and stores to the
   /// specified global variable if it can.  This is only legal to call if
   /// performing Interprocedural SCCP.
-  void TrackValueOfGlobalVariableIfPossible(GlobalVariable *GV);
+  void TrackValueOfGlobalVariable(GlobalVariable *GV) {
+    const Type *ElTy = GV->getType()->getElementType();
+    if (ElTy->isFirstClassType()) {
+      LatticeVal &IV = TrackedGlobals[GV];
+      if (!isa<UndefValue>(GV->getInitializer()))
+        IV.markConstant(GV->getInitializer());
+    }
+  }
 
   /// AddTrackedFunction - If the SCCP solver is supposed to track calls into
   /// and out of the specified function (which cannot have its address taken),
@@ -176,6 +187,12 @@ public:
   ///
   const hash_map<Function*, LatticeVal> &getTrackedFunctionRetVals() {
     return TrackedFunctionRetVals;
+  }
+
+  /// getTrackedGlobals - Get and return the set of inferred initializers for
+  /// global variables.
+  const hash_map<GlobalVariable*, LatticeVal> &getTrackedGlobals() {
+    return TrackedGlobals;
   }
 
 
@@ -303,7 +320,7 @@ private:
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
   // Instructions that cannot be folded away...
-  void visitStoreInst     (Instruction &I) { /*returns void*/ }
+  void visitStoreInst     (Instruction &I);
   void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (CallInst &I) { visitCallSite(CallSite::get(&I)); }
@@ -724,6 +741,22 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
   return C;
 }
 
+void SCCPSolver::visitStoreInst(Instruction &SI) {
+  if (TrackedGlobals.empty() || !isa<GlobalVariable>(SI.getOperand(1)))
+    return;
+  GlobalVariable *GV = cast<GlobalVariable>(SI.getOperand(1));
+  hash_map<GlobalVariable*, LatticeVal>::iterator I = TrackedGlobals.find(GV);
+  if (I == TrackedGlobals.end() || I->second.isOverdefined()) return;
+
+  // Get the value we are storing into the global.
+  LatticeVal &PtrVal = getValueState(SI.getOperand(0));
+
+  mergeInValue(I->second, GV, PtrVal);
+  if (I->second.isOverdefined())
+    TrackedGlobals.erase(I);      // No need to keep tracking this!
+}
+
+
 // Handle load instructions.  If the operand is a constant pointer to a constant
 // global, we can replace the load with the loaded constant value!
 void SCCPSolver::visitLoadInst(LoadInst &I) {
@@ -741,11 +774,22 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     }
       
     // Transform load (constant global) into the value loaded.
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr))
-      if (GV->isConstant() && !GV->isExternal()) {
-        markConstant(IV, &I, GV->getInitializer());
-        return;
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
+      if (GV->isConstant()) {
+        if (!GV->isExternal()) {
+          markConstant(IV, &I, GV->getInitializer());
+          return;
+        }
+      } else if (!TrackedGlobals.empty()) {
+        // If we are tracking this global, merge in the known value for it.
+        hash_map<GlobalVariable*, LatticeVal>::iterator It =
+          TrackedGlobals.find(GV);
+        if (It != TrackedGlobals.end()) {
+          mergeInValue(IV, &I, It->second);
+          return;
+        }
       }
+    }
 
     // Transform load (constantexpr_GEP global, 0, ...) into the value loaded.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
@@ -1029,6 +1073,8 @@ namespace {
   Statistic<> IPNumDeadBlocks ("ipsccp", "Number of basic blocks unreachable");
   Statistic<> IPNumArgsElimed ("ipsccp",
                                "Number of arguments constant propagated");
+  Statistic<> IPNumGlobalConst("ipsccp",
+                               "Number of globals found to be constant");
 
   //===--------------------------------------------------------------------===//
   //
@@ -1053,7 +1099,8 @@ static bool AddressIsTaken(GlobalValue *GV) {
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
        UI != E; ++UI)
     if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
-      if (SI->getOperand(0) == GV) return true;  // Storing addr of GV.
+      if (SI->getOperand(0) == GV || SI->isVolatile())
+        return true;  // Storing addr of GV.
     } else if (isa<InvokeInst>(*UI) || isa<CallInst>(*UI)) {
       // Make sure we are calling the function, not passing the address.
       CallSite CS = CallSite::get(cast<Instruction>(*UI));
@@ -1061,7 +1108,10 @@ static bool AddressIsTaken(GlobalValue *GV) {
              E = CS.arg_end(); AI != E; ++AI)
         if (*AI == GV)
           return true;
-    } else if (!isa<LoadInst>(*UI)) {
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+      if (LI->isVolatile())
+        return true;
+    } else {
       return true;
     }
   return false;
@@ -1083,6 +1133,13 @@ bool IPSCCP::runOnModule(Module &M) {
     } else {
       Solver.AddTrackedFunction(F);
     }
+
+  // Loop over global variables.  We inform the solver about any internal global
+  // variables that do not have their 'addresses taken'.  If they don't have
+  // their addresses taken, we can propagate constants through them.
+  for (Module::giterator G = M.gbegin(), E = M.gend(); G != E; ++G)
+    if (!G->isConstant() && G->hasInternalLinkage() && !AddressIsTaken(G))
+      Solver.TrackValueOfGlobalVariable(G);
 
   // Solve for constants.
   bool ResolvedBranches = true;
@@ -1208,6 +1265,22 @@ bool IPSCCP::runOnModule(Module &M) {
           if (!isa<UndefValue>(RI->getOperand(0)))
             RI->setOperand(0, UndefValue::get(F->getReturnType()));
     }
+
+  // If we infered constant or undef values for globals variables, we can delete
+  // the global and any stores that remain to it.
+  const hash_map<GlobalVariable*, LatticeVal> &TG = Solver.getTrackedGlobals();
+  for (hash_map<GlobalVariable*, LatticeVal>::const_iterator I = TG.begin(),
+         E = TG.end(); I != E; ++I) {
+    GlobalVariable *GV = I->first;
+    assert(!I->second.isOverdefined() &&
+           "Overdefined values should have been taken out of the map!");
+    DEBUG(std::cerr << "Found that GV '" << GV->getName()<< "' is constant!\n");
+    while (!GV->use_empty()) {
+      StoreInst *SI = cast<StoreInst>(GV->use_back());
+      SI->eraseFromParent();
+    }
+    M.getGlobalList().erase(GV);
+  }
   
   return MadeChanges;
 }
