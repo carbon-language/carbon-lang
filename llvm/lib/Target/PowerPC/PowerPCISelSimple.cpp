@@ -27,8 +27,8 @@
 using namespace llvm;
 
 namespace {
-  /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic PPC
-  /// Representation.
+  /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
+  /// PPC Representation.
   ///
   enum TypeClass {
     cByte, cShort, cInt, cFP, cLong
@@ -363,7 +363,7 @@ unsigned ISel::getReg(Value *V, MachineBasicBlock *MBB,
     return Reg;
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     unsigned Reg1 = makeAnotherReg(V->getType());
-	unsigned Reg2 = makeAnotherReg(V->getType());
+    unsigned Reg2 = makeAnotherReg(V->getType());
     // Move the address of the global into the register
     BuildMI(*MBB, IPt, PPC32::LOADHiAddr, 2, Reg1).addReg(PPC32::R0).addGlobalAddress(GV);
     BuildMI(*MBB, IPt, PPC32::LOADLoAddr, 2, Reg2).addReg(Reg1).addGlobalAddress(GV);
@@ -478,8 +478,8 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     if (Class == cLong) {
       // Copy the value into the register pair.
       uint64_t Val = cast<ConstantInt>(C)->getRawValue();
-	  unsigned hiTmp = makeAnotherReg(Type::IntTy);
-	  unsigned loTmp = makeAnotherReg(Type::IntTy);
+      unsigned hiTmp = makeAnotherReg(Type::IntTy);
+      unsigned loTmp = makeAnotherReg(Type::IntTy);
       BuildMI(*MBB, IP, PPC32::ADDIS, 2, loTmp).addReg(PPC32::R0).addImm(Val >> 48);
       BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(loTmp).addImm((Val >> 32) & 0xFFFF);
       BuildMI(*MBB, IP, PPC32::ADDIS, 2, hiTmp).addReg(PPC32::R0).addImm((Val >> 16) & 0xFFFF);
@@ -498,12 +498,12 @@ void ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       ConstantInt *CI = cast<ConstantInt>(C);
       int TheVal = CI->getRawValue() & 0xFFFFFFFF;
       if (TheVal < 32768 && TheVal >= -32768) {
-		BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(CI->getRawValue());
-	  } else {
-		unsigned TmpReg = makeAnotherReg(Type::IntTy);
-		BuildMI(*MBB, IP, PPC32::ADDIS, 2, TmpReg).addReg(PPC32::R0).addImm(CI->getRawValue() >> 16);
-		BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TmpReg).addImm(CI->getRawValue() & 0xFFFF);
-	  }
+        BuildMI(*MBB, IP, PPC32::ADDI, 2, R).addReg(PPC32::R0).addImm(CI->getRawValue());
+      } else {
+        unsigned TmpReg = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, PPC32::ADDIS, 2, TmpReg).addReg(PPC32::R0).addImm(CI->getRawValue() >> 16);
+        BuildMI(*MBB, IP, PPC32::ORI, 2, R).addReg(TmpReg).addImm(CI->getRawValue() & 0xFFFF);
+      }
     }
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       // We need to spill the constant to memory...
@@ -537,7 +537,7 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
   unsigned FPR_remaining = 13;
   unsigned GPR_idx = 3;
   unsigned FPR_idx = 1;
-	
+    
   MachineFrameInfo *MFI = F->getFrameInfo();
 
   for (Function::aiterator I = Fn.abegin(), E = Fn.aend(); I != E; ++I) {
@@ -549,49 +549,49 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
     case cByte:
       if (ArgLive) {
         FI = MFI->CreateFixedObject(1, ArgOffset);
-		if (GPR_remaining > 0) {
-			BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
-		} else {
-			addFrameReference(BuildMI(BB, PPC32::LBZ, 2, Reg), FI);
-		}
-	  }
+        if (GPR_remaining > 0) {
+            BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
+        } else {
+            addFrameReference(BuildMI(BB, PPC32::LBZ, 2, Reg), FI);
+        }
+      }
       break;
     case cShort:
       if (ArgLive) {
         FI = MFI->CreateFixedObject(2, ArgOffset);
-		if (GPR_remaining > 0) {
-			BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
-		} else {
-			addFrameReference(BuildMI(BB, PPC32::LHZ, 2, Reg), FI);
-		}
-	  }
+        if (GPR_remaining > 0) {
+            BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
+        } else {
+            addFrameReference(BuildMI(BB, PPC32::LHZ, 2, Reg), FI);
+        }
+      }
       break;
     case cInt:
       if (ArgLive) {
         FI = MFI->CreateFixedObject(4, ArgOffset);
-		if (GPR_remaining > 0) {
-			BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
-		} else {
-			addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
-		}
-	  }
+        if (GPR_remaining > 0) {
+            BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
+        } else {
+            addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
+        }
+      }
       break;
     case cLong:
       if (ArgLive) {
         FI = MFI->CreateFixedObject(8, ArgOffset);
-		if (GPR_remaining > 1) {
-			BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
-			BuildMI(BB, PPC32::OR, 2, Reg+1).addReg(PPC32::R0+GPR_idx+1).addReg(PPC32::R0+GPR_idx+1);
-		} else {
-			addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
-			addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg+1), FI, 4);
-		}
-	  }
+        if (GPR_remaining > 1) {
+            BuildMI(BB, PPC32::OR, 2, Reg).addReg(PPC32::R0+GPR_idx).addReg(PPC32::R0+GPR_idx);
+            BuildMI(BB, PPC32::OR, 2, Reg+1).addReg(PPC32::R0+GPR_idx+1).addReg(PPC32::R0+GPR_idx+1);
+        } else {
+            addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg), FI);
+            addFrameReference(BuildMI(BB, PPC32::LWZ, 2, Reg+1), FI, 4);
+        }
+      }
       ArgOffset += 4;   // longs require 4 additional bytes
-	  if (GPR_remaining > 1) {
-		GPR_remaining--;    // uses up 2 GPRs
-		GPR_idx++;
-	  }
+      if (GPR_remaining > 1) {
+        GPR_remaining--;    // uses up 2 GPRs
+        GPR_idx++;
+      }
       break;
     case cFP:
       if (ArgLive) {
@@ -603,30 +603,30 @@ void ISel::LoadArgumentsToVirtualRegs(Function &Fn) {
           Opcode = PPC32::LFD;
           FI = MFI->CreateFixedObject(8, ArgOffset);
         }
-		if (FPR_remaining > 0) {
-			BuildMI(BB, PPC32::FMR, 1, Reg).addReg(PPC32::F0+FPR_idx);
-			FPR_remaining--;
-			FPR_idx++;
-		} else {
-			addFrameReference(BuildMI(BB, Opcode, 2, Reg), FI);
-		}
-	  }
+        if (FPR_remaining > 0) {
+            BuildMI(BB, PPC32::FMR, 1, Reg).addReg(PPC32::F0+FPR_idx);
+            FPR_remaining--;
+            FPR_idx++;
+        } else {
+            addFrameReference(BuildMI(BB, Opcode, 2, Reg), FI);
+        }
+      }
       if (I->getType() == Type::DoubleTy) {
         ArgOffset += 4;   // doubles require 4 additional bytes
-		if (GPR_remaining > 0) {
-			GPR_remaining--;    // uses up 2 GPRs
-			GPR_idx++;
-		}
-	  }
+        if (GPR_remaining > 0) {
+            GPR_remaining--;    // uses up 2 GPRs
+            GPR_idx++;
+        }
+      }
       break;
     default:
       assert(0 && "Unhandled argument type!");
     }
     ArgOffset += 4;  // Each argument takes at least 4 bytes on the stack...
-	if (GPR_remaining > 0) {
-		GPR_remaining--;    // uses up 2 GPRs
-		GPR_idx++;
-	}
+    if (GPR_remaining > 0) {
+        GPR_remaining--;    // uses up 2 GPRs
+        GPR_idx++;
+    }
   }
 
   // If the function takes variable number of arguments, add a frame offset for
@@ -769,7 +769,7 @@ static unsigned getSetCCNumber(unsigned Opcode) {
 /// emitUCOM - emits an unordered FP compare.
 void ISel::emitUCOM(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
                      unsigned LHS, unsigned RHS) {
-	BuildMI(*MBB, IP, PPC32::FCMPU, 2, PPC32::CR0).addReg(LHS).addReg(RHS);
+    BuildMI(*MBB, IP, PPC32::FCMPU, 2, PPC32::CR0).addReg(LHS).addReg(RHS);
 }
 
 // EmitComparison - This function emits a comparison of the two operands,
@@ -792,13 +792,13 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       // Mask off any upper bits of the constant, if there are any...
       Op1v &= (1ULL << (8 << Class)) - 1;
 
-	  // Compare immediate or promote to reg?
-	  if (Op1v <= 32767) {
-		BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMPI : PPC32::CMPLI, 3, PPC32::CR0).addImm(0).addReg(Op0r).addImm(Op1v);
-	  } else {
-		unsigned Op1r = getReg(Op1, MBB, IP);
-		BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMP : PPC32::CMPL, 3, PPC32::CR0).addImm(0).addReg(Op0r).addReg(Op1r);
-	  }
+      // Compare immediate or promote to reg?
+      if (Op1v <= 32767) {
+        BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMPI : PPC32::CMPLI, 3, PPC32::CR0).addImm(0).addReg(Op0r).addImm(Op1v);
+      } else {
+        unsigned Op1r = getReg(Op1, MBB, IP);
+        BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMP : PPC32::CMPL, 3, PPC32::CR0).addImm(0).addReg(Op0r).addReg(Op1r);
+      }
       return OpNum;
     } else {
       assert(Class == cLong && "Unknown integer class!");
@@ -807,14 +807,14 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
       if (OpNum < 2) {    // seteq, setne
         unsigned LoTmp = Op0r;
         if (LowCst != 0) {
-		  unsigned LoLow = makeAnotherReg(Type::IntTy);
+          unsigned LoLow = makeAnotherReg(Type::IntTy);
           unsigned LoTmp = makeAnotherReg(Type::IntTy);
           BuildMI(*MBB, IP, PPC32::XORI, 2, LoLow).addReg(Op0r).addImm(LowCst);
           BuildMI(*MBB, IP, PPC32::XORIS, 2, LoTmp).addReg(LoLow).addImm(LowCst >> 16);
         }
         unsigned HiTmp = Op0r+1;
         if (HiCst != 0) {
-		  unsigned HiLow = makeAnotherReg(Type::IntTy);
+          unsigned HiLow = makeAnotherReg(Type::IntTy);
           unsigned HiTmp = makeAnotherReg(Type::IntTy);
           BuildMI(*MBB, IP, PPC32::XORI, 2, HiLow).addReg(Op0r+1).addImm(HiCst);
           BuildMI(*MBB, IP, PPC32::XORIS, 2, HiTmp).addReg(HiLow).addImm(HiCst >> 16);
@@ -834,7 +834,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
         //
 
         // FIXME: Not Yet Implemented
-		return OpNum;
+        return OpNum;
       }
     }
   }
@@ -845,7 +845,7 @@ unsigned ISel::EmitComparison(unsigned OpNum, Value *Op0, Value *Op1,
   case cByte:
   case cShort:
   case cInt:
-	BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMP : PPC32::CMPL, 2, PPC32::CR0).addReg(Op0r).addReg(Op1r);
+    BuildMI(*MBB, IP, CompTy->isSigned() ? PPC32::CMP : PPC32::CMPL, 2, PPC32::CR0).addReg(Op0r).addReg(Op1r);
     break;
   case cFP:
     emitUCOM(MBB, IP, Op0r, Op1r);
@@ -926,14 +926,14 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   unsigned FalseReg = getReg(FalseVal, MBB, IP);
 
   if (TrueReg == FalseReg) {
-	if (SelectClass == cFP) {
-		BuildMI(*MBB, IP, PPC32::FMR, 1, DestReg).addReg(TrueReg);
-	} else {
-		BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(TrueReg).addReg(TrueReg);
-	}
-	
+    if (SelectClass == cFP) {
+        BuildMI(*MBB, IP, PPC32::FMR, 1, DestReg).addReg(TrueReg);
+    } else {
+        BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(TrueReg).addReg(TrueReg);
+    }
+    
     if (SelectClass == cLong)
-		BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(TrueReg+1).addReg(TrueReg+1);
+        BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(TrueReg+1).addReg(TrueReg+1);
     return;
   }
 
@@ -954,11 +954,11 @@ void ISel::emitSelectOperation(MachineBasicBlock *MBB,
   BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(Temp1).addReg(Temp2);
   
   if (SelectClass == cLong) {
-	unsigned Temp3 = makeAnotherReg(Type::IntTy);
-	unsigned Temp4 = makeAnotherReg(Type::IntTy);
-	BuildMI(*MBB, IP, PPC32::AND, 2, Temp3).addReg(TrueReg+1).addReg(trueAll);
-	BuildMI(*MBB, IP, PPC32::AND, 2, Temp4).addReg(FalseReg+1).addReg(falseAll);
-	BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(Temp3).addReg(Temp4);
+    unsigned Temp3 = makeAnotherReg(Type::IntTy);
+    unsigned Temp4 = makeAnotherReg(Type::IntTy);
+    BuildMI(*MBB, IP, PPC32::AND, 2, Temp3).addReg(TrueReg+1).addReg(trueAll);
+    BuildMI(*MBB, IP, PPC32::AND, 2, Temp4).addReg(FalseReg+1).addReg(falseAll);
+    BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(Temp3).addReg(Temp4);
   }
   
   return;
@@ -985,12 +985,12 @@ void ISel::promote32(unsigned targetReg, const ValueRecord &VR) {
       int TheVal = CI->getRawValue() & 0xFFFFFFFF;
 
       if (TheVal < 32768 && TheVal >= -32768) {
-		BuildMI(BB, PPC32::ADDI, 2, targetReg).addReg(PPC32::R0).addImm(TheVal);
-	  } else {
-		unsigned TmpReg = makeAnotherReg(Type::IntTy);
-		BuildMI(BB, PPC32::ADDIS, 2, TmpReg).addReg(PPC32::R0).addImm(TheVal >> 16);
-		BuildMI(BB, PPC32::ORI, 2, targetReg).addReg(TmpReg).addImm(TheVal & 0xFFFF);
-	  }
+        BuildMI(BB, PPC32::ADDI, 2, targetReg).addReg(PPC32::R0).addImm(TheVal);
+      } else {
+        unsigned TmpReg = makeAnotherReg(Type::IntTy);
+        BuildMI(BB, PPC32::ADDIS, 2, TmpReg).addReg(PPC32::R0).addImm(TheVal >> 16);
+        BuildMI(BB, PPC32::ORI, 2, targetReg).addReg(TmpReg).addImm(TheVal & 0xFFFF);
+      }
       return;
     }
   }
@@ -1062,31 +1062,31 @@ static inline BasicBlock *getBlockAfter(BasicBlock *BB) {
 /// just make a fall-through (but we don't currently).
 ///
 void ISel::visitBranchInst(BranchInst &BI) {
-	// Update machine-CFG edges
-	BB->addSuccessor (MBBMap[BI.getSuccessor(0)]);
-	if (BI.isConditional())
-		BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
-	
-	BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
-	
-	if (!BI.isConditional()) {  // Unconditional branch?
-		if (BI.getSuccessor(0) != NextBB)
-			BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
-		return;
-	}
-	
+    // Update machine-CFG edges
+    BB->addSuccessor (MBBMap[BI.getSuccessor(0)]);
+    if (BI.isConditional())
+        BB->addSuccessor (MBBMap[BI.getSuccessor(1)]);
+    
+    BasicBlock *NextBB = getBlockAfter(BI.getParent());  // BB after current one
+    
+    if (!BI.isConditional()) {  // Unconditional branch?
+        if (BI.getSuccessor(0) != NextBB)
+            BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
+        return;
+    }
+    
   // See if we can fold the setcc into the branch itself...
   SetCondInst *SCI = canFoldSetCCIntoBranchOrSelect(BI.getCondition());
   if (SCI == 0) {
     // Nope, cannot fold setcc into this branch.  Emit a branch on a condition
     // computed some other way...
     unsigned condReg = getReg(BI.getCondition());
-	BuildMI(BB, PPC32::CMPLI, 3, PPC32::CR0).addImm(0).addReg(condReg).addImm(0);
+    BuildMI(BB, PPC32::CMPLI, 3, PPC32::CR0).addImm(0).addReg(condReg).addImm(0);
     if (BI.getSuccessor(1) == NextBB) {
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, PPC32::BC, 3).addImm(4).addImm(2).addMBB(MBBMap[BI.getSuccessor(0)]);
     } else {
-	  BuildMI(BB, PPC32::BC, 3).addImm(12).addImm(2).addMBB(MBBMap[BI.getSuccessor(1)]);
+      BuildMI(BB, PPC32::BC, 3).addImm(12).addImm(2).addMBB(MBBMap[BI.getSuccessor(1)]);
       
       if (BI.getSuccessor(0) != NextBB)
         BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(0)]);
@@ -1117,13 +1117,13 @@ void ISel::visitBranchInst(BranchInst &BI) {
   unsigned BIval = BITab[0];
 
   if (BI.getSuccessor(0) != NextBB) {
-		BuildMI(BB, PPC32::BC, 3).addImm(BO_true).addImm(BIval).addMBB(MBBMap[BI.getSuccessor(0)]);
+        BuildMI(BB, PPC32::BC, 3).addImm(BO_true).addImm(BIval).addMBB(MBBMap[BI.getSuccessor(0)]);
     if (BI.getSuccessor(1) != NextBB)
-		BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
+        BuildMI(BB, PPC32::B, 1).addMBB(MBBMap[BI.getSuccessor(1)]);
   } else {
     // Change to the inverse condition...
     if (BI.getSuccessor(1) != NextBB) {
-	  BuildMI(BB, PPC32::BC, 3).addImm(BO_false).addImm(BIval).addMBB(MBBMap[BI.getSuccessor(1)]);
+      BuildMI(BB, PPC32::BC, 3).addImm(BO_false).addImm(BIval).addMBB(MBBMap[BI.getSuccessor(1)]);
     }
   }
 }
@@ -1158,11 +1158,11 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
-	unsigned GPR_remaining = 8;
-	unsigned FPR_remaining = 13;
-	unsigned GPR_idx = 3;
-	unsigned FPR_idx = 1;
-	
+    unsigned GPR_remaining = 8;
+    unsigned FPR_remaining = 13;
+    unsigned GPR_idx = 3;
+    unsigned FPR_idx = 1;
+    
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       unsigned ArgReg;
       switch (getClassB(Args[i].Ty)) {
@@ -1171,79 +1171,79 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         // Promote arg to 32 bits wide into a temporary register...
         ArgReg = makeAnotherReg(Type::UIntTy);
         promote32(ArgReg, Args[i]);
-		  
-		// Reg or stack?
-		if (GPR_remaining > 0) {
-			BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg).addReg(ArgReg);
-		} else {
-			BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
-		}
-		break;
+          
+        // Reg or stack?
+        if (GPR_remaining > 0) {
+            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg).addReg(ArgReg);
+        } else {
+            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
+        }
+        break;
       case cInt:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
 
-		// Reg or stack?
-		if (GPR_remaining > 0) {
-		    BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg).addReg(ArgReg);
-		} else {
-		    BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
-		}
-		break;
+        // Reg or stack?
+        if (GPR_remaining > 0) {
+            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg).addReg(ArgReg);
+        } else {
+            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
+        }
+        break;
       case cLong:
-		ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
+        ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
 
-		// Reg or stack?
-		if (GPR_remaining > 1) {
-		    BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg).addReg(ArgReg);
-		    BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx + 1).addReg(ArgReg+1).addReg(ArgReg+1);
-		} else {
-		    BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
-		    BuildMI(BB, PPC32::STW, 3).addReg(ArgReg+1).addImm(ArgOffset+4).addReg(PPC32::R1);
-		}
+        // Reg or stack?
+        if (GPR_remaining > 1) {
+            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx).addReg(ArgReg).addReg(ArgReg);
+            BuildMI(BB, PPC32::OR, 2, PPC32::R0 + GPR_idx + 1).addReg(ArgReg+1).addReg(ArgReg+1);
+        } else {
+            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
+            BuildMI(BB, PPC32::STW, 3).addReg(ArgReg+1).addImm(ArgOffset+4).addReg(PPC32::R1);
+        }
 
         ArgOffset += 4;        // 8 byte entry, not 4.
-		if (GPR_remaining > 0) {
-			GPR_remaining -= 1;    // uses up 2 GPRs
-			GPR_idx += 1;
-		}
+        if (GPR_remaining > 0) {
+            GPR_remaining -= 1;    // uses up 2 GPRs
+            GPR_idx += 1;
+        }
         break;
       case cFP:
         ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
         if (Args[i].Ty == Type::FloatTy) {
-			// Reg or stack?
-			if (FPR_remaining > 0) {
-				BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
-				FPR_remaining--;
-				FPR_idx++;
-			} else {
-				BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
-			}
+            // Reg or stack?
+            if (FPR_remaining > 0) {
+                BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+                FPR_remaining--;
+                FPR_idx++;
+            } else {
+                BuildMI(BB, PPC32::STFS, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
+            }
         } else {
           assert(Args[i].Ty == Type::DoubleTy && "Unknown FP type!");
-			// Reg or stack?
-			if (FPR_remaining > 0) {
-				BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
-				FPR_remaining--;
-				FPR_idx++;
-			} else {
-				BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
-			}
+            // Reg or stack?
+            if (FPR_remaining > 0) {
+                BuildMI(BB, PPC32::FMR, 1, PPC32::F0 + FPR_idx).addReg(ArgReg);
+                FPR_remaining--;
+                FPR_idx++;
+            } else {
+                BuildMI(BB, PPC32::STFD, 3).addReg(ArgReg).addImm(ArgOffset).addReg(PPC32::R1);
+            }
 
-			ArgOffset += 4;       // 8 byte entry, not 4.
-			if (GPR_remaining > 0) {
-				GPR_remaining--;    // uses up 2 GPRs
-				GPR_idx++;
-			}
+            ArgOffset += 4;       // 8 byte entry, not 4.
+            if (GPR_remaining > 0) {
+                GPR_remaining--;    // uses up 2 GPRs
+                GPR_idx++;
+            }
         }
         break;
 
       default: assert(0 && "Unknown class!");
       }
       ArgOffset += 4;
-	  if (GPR_remaining > 0) {
-		GPR_remaining--;    // uses up 2 GPRs
-		GPR_idx++;
-	  }
+      if (GPR_remaining > 0) {
+        GPR_remaining--;    // uses up 2 GPRs
+        GPR_idx++;
+      }
     }
   } else {
     BuildMI(BB, PPC32::ADJCALLSTACKDOWN, 1).addImm(0);
@@ -1263,13 +1263,13 @@ void ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
     case cShort:
     case cInt:
       // Integral results are in r3
-	  BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
+      BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
     case cFP:     // Floating-point return values live in f1
       BuildMI(BB, PPC32::FMR, 1, Ret.Reg).addReg(PPC32::F1);
       break;
     case cLong:   // Long values are in r3:r4
-	  BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
-	  BuildMI(BB, PPC32::OR, 2, Ret.Reg+1).addReg(PPC32::R4).addReg(PPC32::R4);
+      BuildMI(BB, PPC32::OR, 2, Ret.Reg).addReg(PPC32::R3).addReg(PPC32::R3);
+      BuildMI(BB, PPC32::OR, 2, Ret.Reg+1).addReg(PPC32::R4).addReg(PPC32::R4);
       break;
     default: assert(0 && "Unknown class!");
     }
@@ -1419,8 +1419,8 @@ void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     if (isOnlyUsedByUnorderedComparisons(&CI)) return;
     TmpReg1 = getReg(CI.getOperand(1));
     emitUCOM(BB, BB->end(), TmpReg1, TmpReg1);
-	TmpReg2 = makeAnotherReg(Type::IntTy);
-	BuildMI(BB, PPC32::MFCR, TmpReg2);
+    TmpReg2 = makeAnotherReg(Type::IntTy);
+    BuildMI(BB, PPC32::MFCR, TmpReg2);
     TmpReg3 = getReg(CI);
     BuildMI(BB, PPC32::RLWINM, 4, TmpReg3).addReg(TmpReg2).addImm(4).addImm(31).addImm(31);
     return;
@@ -1462,13 +1462,13 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       };
 
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-	  unsigned TempReg = makeAnotherReg(Ty);
+      unsigned TempReg = makeAnotherReg(Ty);
       unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
       addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
 
       unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
       unsigned Op0r = getReg(Op0, BB, IP);
-	  BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(TempReg);
+      BuildMI(*BB, IP, Opcode, DestReg).addReg(Op0r).addReg(TempReg);
       return;
     }
   
@@ -1493,13 +1493,13 @@ void ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
       };
 
       assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
-	  unsigned TempReg = makeAnotherReg(Ty);
+      unsigned TempReg = makeAnotherReg(Ty);
       unsigned LoadOpcode = Ty == Type::FloatTy ? PPC32::LFS : PPC32::LFD;
       addConstantPoolReference(BuildMI(*BB, IP, LoadOpcode, 2, TempReg), CPI);
 
       unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
       unsigned Op1r = getReg(Op1, BB, IP);
-	  BuildMI(*BB, IP, Opcode, DestReg).addReg(TempReg).addReg(Op1r);
+      BuildMI(*BB, IP, Opcode, DestReg).addReg(TempReg).addReg(Op1r);
       return;
     }
 
@@ -1527,17 +1527,17 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
                                      unsigned OperatorClass, unsigned DestReg) {
   unsigned Class = getClassB(Op0->getType());
 
-    // Arithmetic and Bitwise operators
-    static const unsigned OpcodeTab[5] = {
-	  PPC32::ADD, PPC32::SUB, PPC32::AND, PPC32::OR, PPC32::XOR
-	};
-    // Otherwise, code generate the full operation with a constant.
-    static const unsigned BottomTab[] = {
-      PPC32::ADDC, PPC32::SUBC, PPC32::AND, PPC32::OR, PPC32::XOR
-    };
-    static const unsigned TopTab[] = {
-      PPC32::ADDE, PPC32::SUBFE, PPC32::AND, PPC32::OR, PPC32::XOR
-    };
+  // Arithmetic and Bitwise operators
+  static const unsigned OpcodeTab[5] = {
+    PPC32::ADD, PPC32::SUB, PPC32::AND, PPC32::OR, PPC32::XOR
+  };
+  // Otherwise, code generate the full operation with a constant.
+  static const unsigned BottomTab[] = {
+    PPC32::ADDC, PPC32::SUBC, PPC32::AND, PPC32::OR, PPC32::XOR
+  };
+  static const unsigned TopTab[] = {
+    PPC32::ADDE, PPC32::SUBFE, PPC32::AND, PPC32::OR, PPC32::XOR
+  };
   
   if (Class == cFP) {
     assert(OperatorClass < 2 && "No logical ops for FP!");
@@ -1552,10 +1552,10 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
       if (Value *LHS = dyncastIsNan(Op0))
         if (Value *RHS = dyncastIsNan(Op1)) {
           unsigned Op0Reg = getReg(RHS, MBB, IP), Op1Reg = getReg(LHS, MBB, IP);
-		  unsigned TmpReg = makeAnotherReg(Type::IntTy);
+          unsigned TmpReg = makeAnotherReg(Type::IntTy);
           emitUCOM(MBB, IP, Op0Reg, Op1Reg);
-		  BuildMI(*MBB, IP, PPC32::MFCR, TmpReg);
-		  BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(TmpReg).addImm(4).addImm(31).addImm(31);
+          BuildMI(*MBB, IP, PPC32::MFCR, TmpReg);
+          BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(TmpReg).addImm(4).addImm(31).addImm(31);
           return;
         }
   }
@@ -1567,13 +1567,13 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
       BuildMI(*MBB, IP, PPC32::NEG, 1, DestReg).addReg(op1Reg);
       
       if (Class == cLong) {
-		unsigned zeroes = makeAnotherReg(Type::IntTy);
-		unsigned overflow = makeAnotherReg(Type::IntTy);
+        unsigned zeroes = makeAnotherReg(Type::IntTy);
+        unsigned overflow = makeAnotherReg(Type::IntTy);
         unsigned T = makeAnotherReg(Type::IntTy);
-		BuildMI(*MBB, IP, PPC32::CNTLZW, 1, zeroes).addReg(op1Reg);
-		BuildMI(*MBB, IP, PPC32::RLWINM, 4, overflow).addReg(zeroes).addImm(27).addImm(5).addImm(31);
-		BuildMI(*MBB, IP, PPC32::ADD, 2, T).addReg(op1Reg+1).addReg(overflow);
-		BuildMI(*MBB, IP, PPC32::NEG, 1, DestReg+1).addReg(T);
+        BuildMI(*MBB, IP, PPC32::CNTLZW, 1, zeroes).addReg(op1Reg);
+        BuildMI(*MBB, IP, PPC32::RLWINM, 4, overflow).addReg(zeroes).addImm(27).addImm(5).addImm(31);
+        BuildMI(*MBB, IP, PPC32::ADD, 2, T).addReg(op1Reg+1).addReg(overflow);
+        BuildMI(*MBB, IP, PPC32::NEG, 1, DestReg+1).addReg(T);
       }
       return;
     }
@@ -1606,7 +1606,7 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
         BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(Op0r).addReg(Op0r);
       else
         BuildMI(*MBB, IP, PPC32::ADDI, 2, DestReg).addReg(PPC32::R0).addImm(0);
-	  BuildMI(*MBB, IP, Opcode, 2, DestReg+1).addReg(Op0r+1).addReg(Op1r+1);
+      BuildMI(*MBB, IP, Opcode, 2, DestReg+1).addReg(Op0r+1).addReg(Op1r+1);
       return;
     }
     
@@ -1637,8 +1637,8 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   unsigned Op1r = getReg(Op1, MBB, IP);
 
   if (Class != cLong) {
-	unsigned Opcode = OpcodeTab[OperatorClass];
-	BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
+    unsigned Opcode = OpcodeTab[OperatorClass];
+    BuildMI(*MBB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
   } else {
     BuildMI(*MBB, IP, BottomTab[OperatorClass], 2, DestReg).addReg(Op0r).addImm(Op1r);
     BuildMI(*MBB, IP, TopTab[OperatorClass], 2, DestReg+1).addReg(Op0r+1).addImm(Op1r+1);
@@ -1663,7 +1663,7 @@ void ISel::doMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator MBBI,
     BuildMI(*MBB, MBBI, PPC32::MULLW, 2, DestReg).addReg(op0Reg).addReg(op1Reg);
     return;
   default:
-	assert(0 && "doMultiply cannot operate on unknown type!");
+    assert(0 && "doMultiply cannot operate on unknown type!");
   }
 }
 
@@ -1776,13 +1776,13 @@ void ISel::emitMultiply(MachineBasicBlock *MBB, MachineBasicBlock::iterator IP,
     if (CLow == 1) {
       BuildMI(BB, IP, PPC32::OR, 2, DestReg).addReg(Op0Reg).addReg(Op0Reg);
     } else {
-	  unsigned TmpRegL = makeAnotherReg(Type::UIntTy);
+      unsigned TmpRegL = makeAnotherReg(Type::UIntTy);
       unsigned Op1RegL = makeAnotherReg(Type::UIntTy);
       OverflowReg = makeAnotherReg(Type::UIntTy);
-	  BuildMI(BB, IP, PPC32::ADDIS, 2, TmpRegL).addReg(PPC32::R0).addImm(CLow >> 16);
-	  BuildMI(BB, IP, PPC32::ORI, 2, Op1RegL).addReg(TmpRegL).addImm(CLow);
-	  BuildMI(BB, IP, PPC32::MULLW, 2, DestReg).addReg(Op0Reg).addReg(Op1RegL);
-	  BuildMI(BB, IP, PPC32::MULHW, 2, OverflowReg).addReg(Op0Reg).addReg(Op1RegL);
+      BuildMI(BB, IP, PPC32::ADDIS, 2, TmpRegL).addReg(PPC32::R0).addImm(CLow >> 16);
+      BuildMI(BB, IP, PPC32::ORI, 2, Op1RegL).addReg(TmpRegL).addImm(CLow);
+      BuildMI(BB, IP, PPC32::MULLW, 2, DestReg).addReg(Op0Reg).addReg(Op1RegL);
+      BuildMI(BB, IP, PPC32::MULHW, 2, OverflowReg).addReg(Op0Reg).addReg(Op1RegL);
     }
     
     unsigned AHBLReg = makeAnotherReg(Type::UIntTy);
@@ -1940,22 +1940,22 @@ void ISel::emitDivRemOperation(MachineBasicBlock *BB,
   unsigned Op1Reg = getReg(Op1, BB, IP);
 
   if (isDiv) {
-	if (Ty->isSigned()) {
-		BuildMI(*BB, IP, PPC32::DIVW, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
-	} else {
-		BuildMI(*BB, IP, PPC32::DIVWU, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
-	}
+    if (Ty->isSigned()) {
+        BuildMI(*BB, IP, PPC32::DIVW, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+    } else {
+        BuildMI(*BB, IP, PPC32::DIVWU, 2, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+    }
   } else { // Remainder
-	unsigned TmpReg1 = makeAnotherReg(Op0->getType());
-	unsigned TmpReg2 = makeAnotherReg(Op0->getType());
-	
-	if (Ty->isSigned()) {
-		BuildMI(*BB, IP, PPC32::DIVW, 2, TmpReg1).addReg(Op0Reg).addReg(Op1Reg);
-	} else {
-		BuildMI(*BB, IP, PPC32::DIVWU, 2, TmpReg1).addReg(Op0Reg).addReg(Op1Reg);
-	}
-	BuildMI(*BB, IP, PPC32::MULLW, 2, TmpReg2).addReg(TmpReg1).addReg(Op1Reg);
-	BuildMI(*BB, IP, PPC32::SUBF, 2, ResultReg).addReg(TmpReg2).addReg(Op0Reg);
+    unsigned TmpReg1 = makeAnotherReg(Op0->getType());
+    unsigned TmpReg2 = makeAnotherReg(Op0->getType());
+    
+    if (Ty->isSigned()) {
+        BuildMI(*BB, IP, PPC32::DIVW, 2, TmpReg1).addReg(Op0Reg).addReg(Op1Reg);
+    } else {
+        BuildMI(*BB, IP, PPC32::DIVWU, 2, TmpReg1).addReg(Op0Reg).addReg(Op1Reg);
+    }
+    BuildMI(*BB, IP, PPC32::MULLW, 2, TmpReg2).addReg(TmpReg1).addReg(Op1Reg);
+    BuildMI(*BB, IP, PPC32::SUBF, 2, ResultReg).addReg(TmpReg2).addReg(Op0Reg);
   }
 }
 
@@ -1991,12 +1991,12 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
       unsigned Amount = CUI->getValue();
       if (Amount < 32) {
         if (isLeftShift) {
-		  // FIXME: RLWIMI is a use-and-def of DestReg+1, but that violates SSA
+          // FIXME: RLWIMI is a use-and-def of DestReg+1, but that violates SSA
           BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg+1).addReg(SrcReg+1).addImm(Amount).addImm(0).addImm(31-Amount);
           BuildMI(*MBB, IP, PPC32::RLWIMI, 5).addReg(DestReg+1).addReg(SrcReg).addImm(Amount).addImm(32-Amount).addImm(31);
           BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addImm(Amount).addImm(0).addImm(31-Amount);
         } else {
-		  // FIXME: RLWIMI is a use-and-def of DestReg, but that violates SSA
+          // FIXME: RLWIMI is a use-and-def of DestReg, but that violates SSA
           BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addImm(32-Amount).addImm(Amount).addImm(31);
           BuildMI(*MBB, IP, PPC32::RLWIMI, 5).addReg(DestReg).addReg(SrcReg+1).addImm(32-Amount).addImm(0).addImm(Amount-1);
           BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg+1).addReg(SrcReg+1).addImm(32-Amount).addImm(Amount).addImm(31);
@@ -2005,17 +2005,17 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
         Amount -= 32;
         if (isLeftShift) {
           if (Amount != 0) {
-			BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg+1).addReg(SrcReg).addImm(Amount).addImm(0).addImm(31-Amount);
+            BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg+1).addReg(SrcReg).addImm(Amount).addImm(0).addImm(31-Amount);
           } else {
             BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(SrcReg).addReg(SrcReg);
           }
           BuildMI(*MBB, IP, PPC32::ADDI, 2, DestReg).addReg(PPC32::R0).addImm(0);
         } else {
           if (Amount != 0) {
-			if (isSigned)
-				BuildMI(*MBB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg+1).addImm(Amount);
-			else
-				BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg+1).addImm(32-Amount).addImm(Amount).addImm(31);
+            if (isSigned)
+                BuildMI(*MBB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg+1).addImm(Amount);
+            else
+                BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg+1).addImm(32-Amount).addImm(Amount).addImm(31);
           } else {
             BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg+1).addReg(SrcReg+1);
           }
@@ -2025,36 +2025,36 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
     } else {
       unsigned TmpReg1 = makeAnotherReg(Type::IntTy);
       unsigned TmpReg2 = makeAnotherReg(Type::IntTy);
-	  unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
-	  unsigned TmpReg4 = makeAnotherReg(Type::IntTy);
-	  unsigned TmpReg5 = makeAnotherReg(Type::IntTy);
-	  unsigned TmpReg6 = makeAnotherReg(Type::IntTy);
-	  unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
-	  
+      unsigned TmpReg3 = makeAnotherReg(Type::IntTy);
+      unsigned TmpReg4 = makeAnotherReg(Type::IntTy);
+      unsigned TmpReg5 = makeAnotherReg(Type::IntTy);
+      unsigned TmpReg6 = makeAnotherReg(Type::IntTy);
+      unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
+      
       if (isLeftShift) {
-		BuildMI(*MBB, IP, PPC32::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg).addImm(32);
-		BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg2).addReg(SrcReg+1).addReg(ShiftAmountReg);
-		BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg3).addReg(SrcReg).addReg(TmpReg1);
-		BuildMI(*MBB, IP, PPC32::OR, 2, TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
-		BuildMI(*MBB, IP, PPC32::ADDI, 2, TmpReg5).addReg(ShiftAmountReg).addImm(-32);
-		BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg6).addReg(SrcReg).addReg(TmpReg5);
-		BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(TmpReg4).addReg(TmpReg6);
-		BuildMI(*MBB, IP, PPC32::SLW, 2, DestReg).addReg(SrcReg).addReg(ShiftAmountReg);
-	  } else {
-		if (isSigned) {
-			// FIXME: Unimplmented
-			// Page C-3 of the PowerPC 32bit Programming Environments Manual
-		} else {
-			BuildMI(*MBB, IP, PPC32::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg).addImm(32);
-			BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg2).addReg(SrcReg).addReg(ShiftAmountReg);
-			BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg3).addReg(SrcReg+1).addReg(TmpReg1);
-			BuildMI(*MBB, IP, PPC32::OR, 2, TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
-			BuildMI(*MBB, IP, PPC32::ADDI, 2, TmpReg5).addReg(ShiftAmountReg).addImm(-32);
-			BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg6).addReg(SrcReg+1).addReg(TmpReg5);
-			BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(TmpReg4).addReg(TmpReg6);
-			BuildMI(*MBB, IP, PPC32::SRW, 2, DestReg+1).addReg(SrcReg+1).addReg(ShiftAmountReg);
-		}
-	  }
+        BuildMI(*MBB, IP, PPC32::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg).addImm(32);
+        BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg2).addReg(SrcReg+1).addReg(ShiftAmountReg);
+        BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg3).addReg(SrcReg).addReg(TmpReg1);
+        BuildMI(*MBB, IP, PPC32::OR, 2, TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
+        BuildMI(*MBB, IP, PPC32::ADDI, 2, TmpReg5).addReg(ShiftAmountReg).addImm(-32);
+        BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg6).addReg(SrcReg).addReg(TmpReg5);
+        BuildMI(*MBB, IP, PPC32::OR, 2, DestReg+1).addReg(TmpReg4).addReg(TmpReg6);
+        BuildMI(*MBB, IP, PPC32::SLW, 2, DestReg).addReg(SrcReg).addReg(ShiftAmountReg);
+      } else {
+        if (isSigned) {
+            // FIXME: Unimplmented
+            // Page C-3 of the PowerPC 32bit Programming Environments Manual
+        } else {
+            BuildMI(*MBB, IP, PPC32::SUBFIC, 2, TmpReg1).addReg(ShiftAmountReg).addImm(32);
+            BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg2).addReg(SrcReg).addReg(ShiftAmountReg);
+            BuildMI(*MBB, IP, PPC32::SLW, 2, TmpReg3).addReg(SrcReg+1).addReg(TmpReg1);
+            BuildMI(*MBB, IP, PPC32::OR, 2, TmpReg4).addReg(TmpReg2).addReg(TmpReg3);
+            BuildMI(*MBB, IP, PPC32::ADDI, 2, TmpReg5).addReg(ShiftAmountReg).addImm(-32);
+            BuildMI(*MBB, IP, PPC32::SRW, 2, TmpReg6).addReg(SrcReg+1).addReg(TmpReg5);
+            BuildMI(*MBB, IP, PPC32::OR, 2, DestReg).addReg(TmpReg4).addReg(TmpReg6);
+            BuildMI(*MBB, IP, PPC32::SRW, 2, DestReg+1).addReg(SrcReg+1).addReg(ShiftAmountReg);
+        }
+      }
     }
     return;
   }
@@ -2064,23 +2064,23 @@ void ISel::emitShiftOperation(MachineBasicBlock *MBB,
     assert(CUI->getType() == Type::UByteTy && "Shift amount not a ubyte?");
     unsigned Amount = CUI->getValue();
 
-	if (isLeftShift) {
-		BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addImm(Amount).addImm(0).addImm(31-Amount);
-	} else {
-		if (isSigned) {
-			BuildMI(*MBB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg).addImm(Amount);
-		} else {
-			BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addImm(32-Amount).addImm(Amount).addImm(31);
-		}
-	}
+    if (isLeftShift) {
+        BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addImm(Amount).addImm(0).addImm(31-Amount);
+    } else {
+        if (isSigned) {
+            BuildMI(*MBB, IP, PPC32::SRAWI, 2, DestReg).addReg(SrcReg).addImm(Amount);
+        } else {
+            BuildMI(*MBB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addImm(32-Amount).addImm(Amount).addImm(31);
+        }
+    }
   } else {                  // The shift amount is non-constant.
     unsigned ShiftAmountReg = getReg (ShiftAmount, MBB, IP);
 
-	if (isLeftShift) {
-		BuildMI(*MBB, IP, PPC32::SLW, 2, DestReg).addReg(SrcReg).addReg(ShiftAmountReg);
-	} else {
-		BuildMI(*MBB, IP, isSigned ? PPC32::SRAW : PPC32::SRW, 2, DestReg).addReg(SrcReg).addReg(ShiftAmountReg);
-	}
+    if (isLeftShift) {
+        BuildMI(*MBB, IP, PPC32::SLW, 2, DestReg).addReg(SrcReg).addReg(ShiftAmountReg);
+    } else {
+        BuildMI(*MBB, IP, isSigned ? PPC32::SRAW : PPC32::SRW, 2, DestReg).addReg(SrcReg).addReg(ShiftAmountReg);
+    }
   }
 }
 
@@ -2096,15 +2096,15 @@ void ISel::visitLoadInst(LoadInst &I) {
   unsigned DestReg = getReg(I);
 
   if (AllocaInst *AI = dyn_castFixedAlloca(I.getOperand(0))) {
-	unsigned FI = getFixedSizedAllocaFI(AI);
+    unsigned FI = getFixedSizedAllocaFI(AI);
     if (Class == cLong) {
-		addFrameReference(BuildMI(BB, PPC32::LWZ, 2, DestReg), FI);
-		addFrameReference(BuildMI(BB, PPC32::LWZ, 2, DestReg+1), FI, 4);
+        addFrameReference(BuildMI(BB, PPC32::LWZ, 2, DestReg), FI);
+        addFrameReference(BuildMI(BB, PPC32::LWZ, 2, DestReg+1), FI, 4);
     } else {
-		addFrameReference(BuildMI(BB, Opcode, 2, DestReg), FI);
-	}
+        addFrameReference(BuildMI(BB, Opcode, 2, DestReg), FI);
+    }
   } else {
-	unsigned SrcAddrReg = getReg(I.getOperand(0));
+    unsigned SrcAddrReg = getReg(I.getOperand(0));
     
     if (Class == cLong) {
       BuildMI(BB, PPC32::LWZ, 2, DestReg).addImm(0).addReg(SrcAddrReg);
@@ -2125,8 +2125,8 @@ void ISel::visitStoreInst(StoreInst &I) {
   unsigned Class = getClassB(ValTy);
 
   if (Class == cLong) {
-	BuildMI(BB, PPC32::STW, 3).addReg(ValReg).addImm(0).addReg(AddressReg);
-   	BuildMI(BB, PPC32::STW, 3).addReg(ValReg+1).addImm(4).addReg(AddressReg);
+    BuildMI(BB, PPC32::STW, 3).addReg(ValReg).addImm(0).addReg(AddressReg);
+       BuildMI(BB, PPC32::STW, 3).addReg(ValReg+1).addImm(4).addReg(AddressReg);
     return;
   }
 
@@ -2189,32 +2189,32 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   if (DestTy == Type::BoolTy) {
     switch (SrcClass) {
     case cByte:
-	case cShort:
+    case cShort:
     case cInt: {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
-	  BuildMI(*BB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg).addImm(-1);
-	  BuildMI(*BB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg);
+      BuildMI(*BB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg).addImm(-1);
+      BuildMI(*BB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg);
       break;
     }
     case cLong: {
       unsigned TmpReg = makeAnotherReg(Type::IntTy);
       unsigned SrcReg2 = makeAnotherReg(Type::IntTy);
       BuildMI(*BB, IP, PPC32::OR, 2, SrcReg2).addReg(SrcReg).addReg(SrcReg+1);
-	  BuildMI(*BB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg2).addImm(-1);
-	  BuildMI(*BB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg2);
+      BuildMI(*BB, IP, PPC32::ADDIC, 2, TmpReg).addReg(SrcReg2).addImm(-1);
+      BuildMI(*BB, IP, PPC32::SUBFE, 2, DestReg).addReg(TmpReg).addReg(SrcReg2);
       break;
     }
     case cFP:
       // FIXME
-	  // Load -0.0
-	  // Compare
-	  // move to CR1
-	  // Negate -0.0
-	  // Compare
-	  // CROR
-	  // MFCR
-	  // Left-align
-	  // SRA ?
+      // Load -0.0
+      // Compare
+      // move to CR1
+      // Negate -0.0
+      // Compare
+      // CROR
+      // MFCR
+      // Left-align
+      // SRA ?
       break;
     }
     return;
@@ -2223,9 +2223,9 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   // Implement casts between values of the same type class (as determined by
   // getClass) by using a register-to-register move.
   if (SrcClass == DestClass) {
-	if (SrcClass <= cInt) {
-	  BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-	} else if (SrcClass == cFP && SrcTy == DestTy) {
+    if (SrcClass <= cInt) {
+      BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    } else if (SrcClass == cFP && SrcTy == DestTy) {
       BuildMI(*BB, IP, PPC32::FMR, 1, DestReg).addReg(SrcReg);
     } else if (SrcClass == cFP) {
       if (SrcTy == Type::FloatTy) {  // float -> double
@@ -2234,11 +2234,11 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       } else {                       // double -> float
         assert(SrcTy == Type::DoubleTy && DestTy == Type::FloatTy &&
                "Unknown cFP member!");
-		BuildMI(*BB, IP, PPC32::FRSP, 1, DestReg).addReg(SrcReg);
+        BuildMI(*BB, IP, PPC32::FRSP, 1, DestReg).addReg(SrcReg);
       }
     } else if (SrcClass == cLong) {
-	  BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-	  BuildMI(*BB, IP, PPC32::OR, 2, DestReg+1).addReg(SrcReg+1).addReg(SrcReg+1);
+      BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+      BuildMI(*BB, IP, PPC32::OR, 2, DestReg+1).addReg(SrcReg+1).addReg(SrcReg+1);
     } else {
       assert(0 && "Cannot handle this type of cast instruction!");
       abort();
@@ -2256,14 +2256,14 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
     bool isUnsigned = SrcTy->isUnsigned() || SrcTy == Type::BoolTy;
     if (SrcClass < cInt) {
       if (isUnsigned) {
-    	unsigned shift = (SrcClass == cByte) ? 24 : 16;
-    	BuildMI(*BB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addZImm(0).addImm(shift).addImm(31);
+        unsigned shift = (SrcClass == cByte) ? 24 : 16;
+        BuildMI(*BB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addZImm(0).addImm(shift).addImm(31);
       } else {
         BuildMI(*BB, IP, (SrcClass == cByte) ? PPC32::EXTSB : PPC32::EXTSH, 1, DestReg).addReg(SrcReg);
-	  }
-	} else {
-	  BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-	}
+      }
+    } else {
+      BuildMI(*BB, IP, PPC32::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    }
 
     if (isLong) {  // Handle upper 32 bits as appropriate...
       if (isUnsigned)     // Zero out top bits...
@@ -2284,26 +2284,26 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
   if ((SrcClass <= cInt || SrcClass == cLong) && DestClass <= cInt
       && SrcClass > DestClass) {
     bool isUnsigned = SrcTy->isUnsigned() || SrcTy == Type::BoolTy;
-	if (isUnsigned) {
-    	unsigned shift = (SrcClass == cByte) ? 24 : 16;
-    	BuildMI(*BB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addZImm(0).addImm(shift).addImm(31);
-	} else {
-        BuildMI(*BB, IP, (SrcClass == cByte) ? PPC32::EXTSB : PPC32::EXTSH, 1, DestReg).addReg(SrcReg);
-	}
+    if (isUnsigned) {
+      unsigned shift = (SrcClass == cByte) ? 24 : 16;
+      BuildMI(*BB, IP, PPC32::RLWINM, 4, DestReg).addReg(SrcReg).addZImm(0).addImm(shift).addImm(31);
+    } else {
+      BuildMI(*BB, IP, (SrcClass == cByte) ? PPC32::EXTSB : PPC32::EXTSH, 1, DestReg).addReg(SrcReg);
+    }
     return;
   }
 
   // Handle casts from integer to floating point now...
   if (DestClass == cFP) {
 
-	// Emit a library call for long to float conversion
-	if (SrcClass == cLong) {
-		std::vector<ValueRecord> Args;
-		Args.push_back(ValueRecord(SrcReg, SrcTy));
-		MachineInstr *TheCall = BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__floatdidf", true);
-		doCall(ValueRecord(DestReg, DestTy), TheCall, Args);
-		return;
-	}
+    // Emit a library call for long to float conversion
+    if (SrcClass == cLong) {
+      std::vector<ValueRecord> Args;
+      Args.push_back(ValueRecord(SrcReg, SrcTy));
+      MachineInstr *TheCall = BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__floatdidf", true);
+      doCall(ValueRecord(DestReg, DestTy), TheCall, Args);
+      return;
+    }
 
     unsigned TmpReg = makeAnotherReg(Type::IntTy);
     switch (SrcTy->getTypeID()) {
@@ -2312,90 +2312,90 @@ void ISel::emitCastOperation(MachineBasicBlock *BB,
       BuildMI(*BB, IP, PPC32::EXTSB, 1, TmpReg).addReg(SrcReg);
       break;
     case Type::UByteTyID:
-	  BuildMI(*BB, IP, PPC32::RLWINM, 4, TmpReg).addReg(SrcReg).addZImm(0).addImm(24).addImm(31);
+      BuildMI(*BB, IP, PPC32::RLWINM, 4, TmpReg).addReg(SrcReg).addZImm(0).addImm(24).addImm(31);
       break;
     case Type::ShortTyID:
       BuildMI(*BB, IP, PPC32::EXTSB, 1, TmpReg).addReg(SrcReg);
       break;
     case Type::UShortTyID:
-	  BuildMI(*BB, IP, PPC32::RLWINM, 4, TmpReg).addReg(SrcReg).addZImm(0).addImm(16).addImm(31);
+      BuildMI(*BB, IP, PPC32::RLWINM, 4, TmpReg).addReg(SrcReg).addZImm(0).addImm(16).addImm(31);
       break;
-	case Type::IntTyID:
-	  BuildMI(*BB, IP, PPC32::OR, 2, TmpReg).addReg(SrcReg).addReg(SrcReg);
-	  break;
-	case Type::UIntTyID:
-	  BuildMI(*BB, IP, PPC32::OR, 2, TmpReg).addReg(SrcReg).addReg(SrcReg);
-	  break;
+    case Type::IntTyID:
+      BuildMI(*BB, IP, PPC32::OR, 2, TmpReg).addReg(SrcReg).addReg(SrcReg);
+      break;
+    case Type::UIntTyID:
+      BuildMI(*BB, IP, PPC32::OR, 2, TmpReg).addReg(SrcReg).addReg(SrcReg);
+      break;
     default:  // No promotion needed...
       break;
     }
     
     SrcReg = TmpReg;
-	
+    
     // Spill the integer to memory and reload it from there.
-	// Also spill room for a special conversion constant
-	int ConstantFrameIndex = 
+    // Also spill room for a special conversion constant
+    int ConstantFrameIndex = 
       F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
     int ValueFrameIdx =
       F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
 
-	unsigned constantHi = makeAnotherReg(Type::IntTy);
-	unsigned constantLo = makeAnotherReg(Type::IntTy);
-	unsigned ConstF = makeAnotherReg(Type::DoubleTy);
-	unsigned TempF = makeAnotherReg(Type::DoubleTy);
-	
+    unsigned constantHi = makeAnotherReg(Type::IntTy);
+    unsigned constantLo = makeAnotherReg(Type::IntTy);
+    unsigned ConstF = makeAnotherReg(Type::DoubleTy);
+    unsigned TempF = makeAnotherReg(Type::DoubleTy);
+    
     if (!SrcTy->isSigned()) {
-		BuildMI(*BB, IP, PPC32::ADDIS, 2, constantHi).addReg(PPC32::R0).addImm(0x4330);
-		BuildMI(*BB, IP, PPC32::ADDI, 2, constantLo).addReg(PPC32::R0).addImm(0);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ConstantFrameIndex);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantLo), ConstantFrameIndex, 4);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ValueFrameIdx);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(SrcReg), ValueFrameIdx, 4);
-		addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, ConstF), ConstantFrameIndex);
-		addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, TempF), ValueFrameIdx);
-		BuildMI(*BB, IP, PPC32::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
-	} else {
-		unsigned TempLo = makeAnotherReg(Type::IntTy);
-		BuildMI(*BB, IP, PPC32::ADDIS, 2, constantHi).addReg(PPC32::R0).addImm(0x4330);
-		BuildMI(*BB, IP, PPC32::ADDIS, 2, constantLo).addReg(PPC32::R0).addImm(0x8000);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ConstantFrameIndex);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantLo), ConstantFrameIndex, 4);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ValueFrameIdx);
-		BuildMI(*BB, IP, PPC32::XORIS, 2, TempLo).addReg(SrcReg).addImm(0x8000);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(TempLo), ValueFrameIdx, 4);
-		addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, ConstF), ConstantFrameIndex);
-		addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, TempF), ValueFrameIdx);
-		BuildMI(*BB, IP, PPC32::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
-	}
+      BuildMI(*BB, IP, PPC32::ADDIS, 2, constantHi).addReg(PPC32::R0).addImm(0x4330);
+      BuildMI(*BB, IP, PPC32::ADDI, 2, constantLo).addReg(PPC32::R0).addImm(0);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ConstantFrameIndex);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantLo), ConstantFrameIndex, 4);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ValueFrameIdx);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(SrcReg), ValueFrameIdx, 4);
+      addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, ConstF), ConstantFrameIndex);
+      addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, TempF), ValueFrameIdx);
+      BuildMI(*BB, IP, PPC32::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
+    } else {
+      unsigned TempLo = makeAnotherReg(Type::IntTy);
+      BuildMI(*BB, IP, PPC32::ADDIS, 2, constantHi).addReg(PPC32::R0).addImm(0x4330);
+      BuildMI(*BB, IP, PPC32::ADDIS, 2, constantLo).addReg(PPC32::R0).addImm(0x8000);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ConstantFrameIndex);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantLo), ConstantFrameIndex, 4);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(constantHi), ValueFrameIdx);
+      BuildMI(*BB, IP, PPC32::XORIS, 2, TempLo).addReg(SrcReg).addImm(0x8000);
+      addFrameReference(BuildMI(*BB, IP, PPC32::STW, 3).addReg(TempLo), ValueFrameIdx, 4);
+      addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, ConstF), ConstantFrameIndex);
+      addFrameReference(BuildMI(*BB, IP, PPC32::LFD, 2, TempF), ValueFrameIdx);
+      BuildMI(*BB, IP, PPC32::FSUB, 2, DestReg).addReg(TempF).addReg(ConstF);
+    }
     return;
   }
 
   // Handle casts from floating point to integer now...
   if (SrcClass == cFP) {
 
-	// emit library call
-	if (DestClass == cLong) {
-		std::vector<ValueRecord> Args;
-		Args.push_back(ValueRecord(SrcReg, SrcTy));
-		MachineInstr *TheCall = BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__fixdfdi", true);
-		doCall(ValueRecord(DestReg, DestTy), TheCall, Args);
-		return;
-	}
+    // emit library call
+    if (DestClass == cLong) {
+      std::vector<ValueRecord> Args;
+      Args.push_back(ValueRecord(SrcReg, SrcTy));
+      MachineInstr *TheCall = BuildMI(PPC32::CALLpcrel, 1).addExternalSymbol("__fixdfdi", true);
+      doCall(ValueRecord(DestReg, DestTy), TheCall, Args);
+      return;
+    }
 
     int ValueFrameIdx =
       F->getFrameInfo()->CreateStackObject(Type::DoubleTy, TM.getTargetData());
 
-	// load into 32 bit value, and then truncate as necessary
-	// FIXME: This is wrong for unsigned dest types
-	//if (DestTy->isSigned()) {
-		unsigned TempReg = makeAnotherReg(Type::DoubleTy);
-		BuildMI(*BB, IP, PPC32::FCTIWZ, 1, TempReg).addReg(SrcReg);
-		addFrameReference(BuildMI(*BB, IP, PPC32::STFD, 3).addReg(TempReg), ValueFrameIdx);
-		addFrameReference(BuildMI(*BB, IP, PPC32::LWZ, 2, DestReg), ValueFrameIdx+4);
-	//} else {
-	//}
-	
-	// FIXME: Truncate return value
+    // load into 32 bit value, and then truncate as necessary
+    // FIXME: This is wrong for unsigned dest types
+    //if (DestTy->isSigned()) {
+        unsigned TempReg = makeAnotherReg(Type::DoubleTy);
+        BuildMI(*BB, IP, PPC32::FCTIWZ, 1, TempReg).addReg(SrcReg);
+        addFrameReference(BuildMI(*BB, IP, PPC32::STFD, 3).addReg(TempReg), ValueFrameIdx);
+        addFrameReference(BuildMI(*BB, IP, PPC32::LWZ, 2, DestReg), ValueFrameIdx+4);
+    //} else {
+    //}
+    
+    // FIXME: Truncate return value
     return;
   }
 
@@ -2509,7 +2509,7 @@ void ISel::emitGEPOperation(MachineBasicBlock *MBB,
         BuildMI(*MBB, IP, PPC32::ADD, 2,TargetReg).addReg(Reg).addReg(idxReg);
         --IP;            // Insert the next instruction before this one.
         TargetReg = Reg; // Codegen the rest of the GEP into this
-      } else {
+     } else {
         unsigned idxReg = getReg(idx, MBB, IP);
         unsigned OffsetReg = makeAnotherReg(Type::UIntTy);
 
