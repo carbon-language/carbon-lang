@@ -158,33 +158,27 @@ static std::string getConstStrValue(const Constant* CPV) {
   }
 }
 
-// Internal function
 // Pass the Type* variable and and the variable name and this prints out the 
 // variable declaration.
-// This is different from calcTypeName because if you need to declare an array
-// the size of the array would appear after the variable name itself
-// For eg. int a[10];
+//
 static string calcTypeNameVar(const Type *Ty,
                               map<const Type *, string> &TypeNames, 
                               const string &NameSoFar, bool ignoreName = false){
   if (Ty->isPrimitiveType())
     switch (Ty->getPrimitiveID()) {
-    case Type::BoolTyID: 
-      return "bool " + NameSoFar;
-    case Type::UByteTyID: 
-      return "unsigned char " + NameSoFar;
-    case Type::SByteTyID:
-      return "signed char " + NameSoFar;
-    case Type::UShortTyID:
-      return "unsigned long long " + NameSoFar;
-    case Type::ULongTyID:
-      return "unsigned long long " + NameSoFar;
-    case Type::LongTyID:
-      return "signed long long " + NameSoFar;
-    case Type::UIntTyID:
-      return "unsigned " + NameSoFar;
+    case Type::VoidTyID:   return "void " + NameSoFar;
+    case Type::BoolTyID:   return "bool " + NameSoFar;
+    case Type::UByteTyID:  return "unsigned char " + NameSoFar;
+    case Type::SByteTyID:  return "signed char " + NameSoFar;
+    case Type::UShortTyID: return "unsigned short " + NameSoFar;
+    case Type::ShortTyID:  return "short " + NameSoFar;
+    case Type::UIntTyID:   return "unsigned " + NameSoFar;
+    case Type::IntTyID:    return "int " + NameSoFar;
+    case Type::ULongTyID:  return "unsigned long long " + NameSoFar;
+    case Type::LongTyID:   return "signed long long " + NameSoFar;
     default :
-      return Ty->getDescription() + " " + NameSoFar;
+      cerr << "Unknown primitive type: " << Ty << "\n";
+      abort();
     }
   
   // Check to see if the type is named.
@@ -233,14 +227,14 @@ static string calcTypeNameVar(const Type *Ty,
 
   case Type::PointerTyID: {
     Result = calcTypeNameVar(cast<const PointerType>(Ty)->getElementType(), 
-			     TypeNames, "(*" + NameSoFar + ")");
+			     TypeNames, "*" + NameSoFar);
     break;
   }
   
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<const ArrayType>(Ty);
     int NumElements = ATy->getNumElements();
-    Result = calcTypeNameVar(ATy->getElementType(),  TypeNames, 
+    Result = calcTypeNameVar(ATy->getElementType(), TypeNames, 
 			     NameSoFar + "[" + itostr(NumElements) + "]");
     break;
   }
@@ -283,7 +277,6 @@ namespace {
     void printGlobal(const GlobalVariable *GV);
     void printFunctionSignature(const Function *F);
     void printFunctionDecl(const Function *F); // Print just the forward decl
-    void printFunctionArgument(const Argument *FA);
     
     void printFunction(const Function *);
     
@@ -471,24 +464,24 @@ void CInstPrintVisitor::visitInvokeInst(InvokeInst *I) {
 void CInstPrintVisitor::visitMallocInst(MallocInst *I) {
   outputLValue(I);
   Out << "(";
+  CW.printType(I->getType());
+  Out << ")malloc(sizeof(";
   CW.printType(I->getType()->getElementType());
-  Out << "*)malloc(sizeof(";
-  CW.printTypeVar(I->getType()->getElementType(), "");
   Out << ")";
 
   if (I->isArrayAllocation()) {
     Out << " * " ;
     CW.writeOperand(I->getOperand(0));
   }
-  Out << ");";
+  Out << ");\n";
 }
 
 void CInstPrintVisitor::visitAllocaInst(AllocaInst *I) {
   outputLValue(I);
   Out << "(";
-  CW.printTypeVar(I->getType(), "");
+  CW.printType(I->getType());
   Out << ") alloca(sizeof(";
-  CW.printTypeVar(I->getType()->getElementType(), "");
+  CW.printType(I->getType()->getElementType());
   Out << ")";
   if (I->isArrayAllocation()) {
     Out << " * " ;
@@ -590,9 +583,9 @@ static string makeNameProper(string x) {
   string tmp;
   for (string::iterator sI = x.begin(), sEnd = x.end(); sI != sEnd; sI++)
     switch (*sI) {
-    case '.': tmp += "_d"; break;
-    case ' ': tmp += "_s"; break;
-    case '-': tmp += "_D"; break;
+    case '.': tmp += "d_"; break;
+    case ' ': tmp += "s_"; break;
+    case '-': tmp += "D_"; break;
     case '_': tmp += "__"; break;
     default:  tmp += *sI;
     }
@@ -633,8 +626,17 @@ void CWriter::printModule(const Module *M) {
     printSymbolTable(*M->getSymbolTable());
 
   Out << "\n\n/* Global Data */\n";
-  for_each(M->gbegin(), M->gend(), 
-	   bind_obj(this, &CWriter::printGlobal));
+  for (Module::const_giterator I = M->gbegin(), E = M->gend(); I != E; ++I) {
+    GlobalVariable *GV = *I;
+    if (GV->hasInternalLinkage()) Out << "static ";
+    printTypeVar(GV->getType()->getElementType(), getValueName(GV));
+
+    if (GV->hasInitializer()) {
+      Out << " = " ;
+      writeOperand(GV->getInitializer());
+    }
+    Out << ";\n";
+  }
 
   // First output all the declarations of the functions as C requires Functions 
   // be declared before they are used.
@@ -647,19 +649,6 @@ void CWriter::printModule(const Module *M) {
   for_each(M->begin(), M->end(), bind_obj(this, &CWriter::printFunction));
 }
 
-// prints the global constants
-void CWriter::printGlobal(const GlobalVariable *GV) {
-  if (GV->hasInternalLinkage()) Out << "static ";
-
-  printTypeVar(GV->getType()->getElementType(), getValueName(GV));
-
-  if (GV->hasInitializer()) {
-    Out << " = " ;
-    writeOperand(GV->getInitializer());
-  }
-
-  Out << ";\n";
-}
 
 // printSymbolTable - Run through symbol table looking for named constants
 // if a named constant is found, emit it's declaration...
@@ -715,8 +704,17 @@ void CWriter::printFunctionSignature(const Function *F) {
   Out << " " << getValueName(F) << "(";
     
   if (!F->isExternal()) {
-    for_each(F->getArgumentList().begin(), F->getArgumentList().end(),
-	     bind_obj(this, &CWriter::printFunctionArgument));
+    if (!F->getArgumentList().empty()) {
+      printTypeVar(F->getArgumentList().front()->getType(),
+                   getValueName(F->getArgumentList().front()));
+
+      for (Function::ArgumentListType::const_iterator
+             I = F->getArgumentList().begin()+1,
+             E = F->getArgumentList().end(); I != E; ++I) {
+        Out << ", ";
+        printTypeVar((*I)->getType(), getValueName(*I));
+      }
+    }
   } else {
     // Loop over the arguments, printing them...
     for (FunctionType::ParamTypes::const_iterator I = 
@@ -735,17 +733,6 @@ void CWriter::printFunctionSignature(const Function *F) {
   Out << ")";
 }
 
-
-// printFunctionArgument - This member is called for every argument that 
-// is passed into the method.  Simply print it out
-//
-void CWriter::printFunctionArgument(const Argument *Arg) {
-  // Insert commas as we go... the first arg doesn't get a comma
-  if (Arg != Arg->getParent()->getArgumentList().front()) Out << ", ";
-  
-  // Output type...
-  printTypeVar(Arg->getType(), getValueName(Arg));
-}
 
 void CWriter::printFunction(const Function *F) {
   if (F->isExternal()) return;
