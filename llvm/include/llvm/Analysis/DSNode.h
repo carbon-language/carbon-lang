@@ -220,9 +220,13 @@ public:
 
 private:
   friend class DSNodeHandle;
+
   // addReferrer - Keep the referrer set up to date...
   void addReferrer(DSNodeHandle *H) { Referrers.push_back(H); }
   void removeReferrer(DSNodeHandle *H);
+
+  // static mergeNodes - Helper for mergeWith()
+  static void MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH);
 };
 
 
