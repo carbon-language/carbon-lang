@@ -77,10 +77,12 @@ void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 void SparcV8RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  std::cerr
-    << "Sorry, I don't know how to eliminate call frame pseudo instrs yet, in\n"
-    << __FUNCTION__ << " at " << __FILE__ << ":" << __LINE__ << "\n";
-  abort();
+  MachineInstr &MI = *I;
+  int size = MI.getOperand (0).getImmedValue ();
+  if (MI.getOpcode () == V8::ADJCALLSTACKDOWN)
+    size = -size;
+  BuildMI (MBB, I, V8::ADDri, 2, V8::SP).addReg (V8::SP).addSImm (size);
+  MBB.erase (I);
 }
 
 void
@@ -115,8 +117,8 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo
   int NumBytes = (int) MFI->getStackSize();
 
-  // Emit the correct save instruction based on the number of bytes in the frame.
-  // Minimum stack frame size according to V8 ABI is:
+  // Emit the correct save instruction based on the number of bytes in
+  // the frame. Minimum stack frame size according to V8 ABI is:
   //   16 words for register window spill
   //    1 word for address of returned aggregate-value
   // +  6 words for passing parameters on the stack
