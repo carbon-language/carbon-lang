@@ -28,8 +28,17 @@ namespace {
     void emitPCRelativeDisp(Value *V) {
       std::cout << "<disp %" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
     }
-    void emitGlobalAddress(GlobalValue *V) {
+    void emitGlobalAddress(GlobalValue *V, bool isPCRelative) {
       std::cout << "<addr %" << V->getName() << ": 0xXX 0xXX 0xXX 0xXX> ";
+    }
+    void emitGlobalAddress(const std::string &Name, bool isPCRelative) {
+      std::cout << "<addr %" << Name << ": 0xXX 0xXX 0xXX 0xXX> ";
+    }
+
+    void emitFunctionConstantValueAddress(unsigned ConstantNum, int Offset) {
+      std::cout << "<addr const#" << ConstantNum;
+      if (Offset) std::cout << " + " << Offset;
+      std::cout << "> ";
     }
   };
 }
