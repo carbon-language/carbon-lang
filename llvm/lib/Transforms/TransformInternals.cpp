@@ -147,15 +147,14 @@ const Type *ConvertableToGEP(const Type *Ty, Value *OffsetVal,
 
           if (ScaleAmt && ScaleAmt != 1) {
             // If we have to scale up our index, do so now
-            Value *ScaleAmtVal = ConstantSInt::get(Type::LongTy,
-                                                   (unsigned)ScaleAmt);
+            Value *ScaleAmtVal = ConstantSInt::get(Type::LongTy, ScaleAmt);
             Expr.Var = BinaryOperator::create(Instruction::Mul, Expr.Var,
                                               ScaleAmtVal,
                                               Expr.Var->getName()+"-scale",*BI);
           }
 
           if (Index) {  // Add an offset to the index
-            Value *IndexAmt = ConstantSInt::get(Type::LongTy, (unsigned)Index);
+            Value *IndexAmt = ConstantSInt::get(Type::LongTy, Index);
             Expr.Var = BinaryOperator::create(Instruction::Add, Expr.Var,
                                               IndexAmt,
                                               Expr.Var->getName()+"-offset",
