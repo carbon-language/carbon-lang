@@ -72,7 +72,11 @@ public:
     O << DOTTraits::getGraphProperties(G);
     O << "\n";
 
+    // Emit all of the nodes in the graph...
     writeNodes();
+
+    // Output any customizations on the graph
+    DOTTraits::addCustomGraphFeatures(G, *this);
   }
 
   ~GraphWriter() {

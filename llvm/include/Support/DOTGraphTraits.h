@@ -60,6 +60,15 @@ struct DefaultDOTGraphTraits {
   /// edge.
   template<typename EdgeIter>
   static EdgeIter getEdgeTarget(void *Node, EdgeIter I) { return I; }
+
+  /// addCustomGraphFeatures - If a graph is made up of more than just
+  /// straight-forward nodes and edges, this is the place to put all of the
+  /// custom stuff neccesary.  The GraphWriter object, instantiated with your
+  /// GraphType is passed in as an argument.  You may call arbitrary methods on
+  /// it to add things to the output graph.
+  ///
+  template<typename GraphWriter>
+  static void addCustomGraphFeatures(void *Graph, GraphWriter &GW) {}
 };
 
 
