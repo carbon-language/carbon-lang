@@ -538,7 +538,7 @@ I(WRCCRi,  "wr",         3,   2, 0, false,  0,  1,  SPARC_SINGLE,   M_CC_FLAG)
 
 // Synthetic phi operation for near-SSA form of machine code
 // Number of operands is variable, indicated by -1.  Result is the first op.
-I(PHI, "<phi>", 	-1, 0,   0, false, 0, 0,  SPARC_INV,  M_DUMMY_PHI_FLAG)
+I(PHI, "<phi>", 	-1, 0,   0, false, 0, 0,  SPARC_NONE,  M_DUMMY_PHI_FLAG)
 
 
 #undef B5
