@@ -414,7 +414,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
         }
       } else {
         insertEntry(V.first, NewType, V.second);
-
       }
       // Remove the item from the old type plane
       OldPlane.erase(OldPlane.begin());
