@@ -71,7 +71,7 @@ static void *getMemory(unsigned NumBytes) {
 #endif
 
   void *pa = mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-                  MAP_PRIVATE|MAP_ANONYMOUS, fd, 0);
+                  mmapFlags, fd, 0);
   if (pa == MAP_FAILED) {
     perror("mmap");
     abort();
