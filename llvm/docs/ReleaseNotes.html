@@ -156,7 +156,8 @@ table in the archive).
 <li>The following Unix system functionality has not been tested and may not work:
 <ol>
    <li><tt>sigsetjmp</tt>, <tt>siglongjmp</tt> - These are not turned into the
-       appropriate <tt>invoke</tt>/<tt>unwind</tt> instructions.
+       appropriate <tt>invoke</tt>/<tt>unwind</tt> instructions.  Note that
+       <tt>setjmp</tt> and <tt>longjmp</tt> <em>are</em> compiled correctly.
    <li><tt>getcontext</tt>, <tt>setcontext</tt>, <tt>makecontext</tt>
        - These functions have not been tested.
 </ol><p>
@@ -270,9 +271,8 @@ table in the archive).
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="c++-fe"><hr size=0>Known problems with the C++ front-end</h4><ul>
 
-For this release, the C++ front-end is considered to be of <b>beta</b> quality.
-It works for a large number of simple programs, but has not been extensively
-tested.  We welcome bug reports though!<p>
+For this release, the C++ front-end is considered to be fully functional but
+of <b>beta</b> quality.  It has been tested and works for a number of simple programs that collectively exercise most of the language.  Nevertheless, it has not been in use as long as the C front-end.  Please report any bugs or problems.<p>
 
 <li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
     front-end</a><p>
@@ -369,6 +369,6 @@ via the mailing lists.<p>
 Maintained By: <a href="http://llvm.cs.uiuc.edu/">The LLVM Team</a><br>
 <!-- Created: Wed Oct  1 17:38:54 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Mon Oct 27 11:06:01 CST 2003
+Last modified: Mon Oct 27 11:40:00 CST 2003
 <!-- hhmts end -->
 </body></html>
