@@ -1,4 +1,4 @@
-//===-- Type.cpp - Implement the Type class ----------------------*- C++ -*--=//
+//===-- Type.cpp - Implement the Type class -------------------------------===//
 //
 // This file implements the Type class for the VMCore library.
 //
@@ -451,7 +451,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
 
   // Two really annoying special cases that breaks an otherwise nice simple
   // algorithm is the fact that arraytypes have sizes that differentiates types,
-  // and that method types can be varargs or not.  Consider this now.
+  // and that function types can be varargs or not.  Consider this now.
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     if (ATy->getNumElements() != cast<ArrayType>(Ty2)->getNumElements())
       return false;
@@ -483,13 +483,12 @@ class TypeMap : public AbstractTypeUser {
   typedef std::map<ValType, PATypeHandle> MapTy;
   MapTy Map;
 public:
+  typedef typename MapTy::iterator iterator;
   ~TypeMap() { print("ON EXIT"); }
 
   inline TypeClass *get(const ValType &V) {
-    typename std::map<ValType, PATypeHandle>::iterator I
-      = Map.find(V);
-    // TODO: FIXME: When Types are not CONST.
-    return (I != Map.end()) ? (TypeClass*)I->second.get() : 0;
+    iterator I = Map.find(V);
+    return I != Map.end() ? (TypeClass*)I->second.get() : 0;
   }
 
   inline void add(const ValType &V, TypeClass *T) {
@@ -497,13 +496,26 @@ public:
     print("add");
   }
 
+  iterator getEntryForType(TypeClass *Ty) {
+    iterator I = Map.find(ValType::get(Ty));
+    if (I == Map.end()) print("ERROR!");
+    assert(I != Map.end() && "Didn't find type entry!");
+    return I;
+  }
+
   // containsEquivalent - Return true if the typemap contains a type that is
   // structurally equivalent to the specified type.
   //
-  inline const TypeClass *containsEquivalent(const TypeClass *Ty) {
-    for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      if (I->second.get() != Ty && TypesEqual(Ty, I->second.get()))
-	return (TypeClass*)I->second.get();
+  inline TypeClass *containsEquivalent(TypeClass *Ty) { //iterator TyIt) {
+    //const TypeClass *Ty = (const TypeClass*)TyIt->second.get();
+    for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+      if (I->second.get() != Ty && TypesEqual(Ty, I->second.get())) {
+        TypeClass *New = (TypeClass*)I->second.get();
+#if 0
+        Map.erase(TyIt);                // The old entry is now dead!
+#endif
+	return New;
+      }
     return 0;
   }
 
@@ -518,8 +530,8 @@ public:
               << *OldTy << "  replacement == " << (void*)NewTy
               << ", " << *NewTy << "\n";
 #endif
-    for (typename MapTy::iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      if (I->second == OldTy) {
+    for (iterator I = Map.begin(), E = Map.end(); I != E; ++I)
+      if (I->second.get() == OldTy) {
         // Check to see if the type just became concrete.  If so, remove self
         // from user list.
         I->second.removeUserFromConcrete();
@@ -528,8 +540,13 @@ public:
   }
 
   void remove(const ValType &OldVal) {
-    typename MapTy::iterator I = Map.find(OldVal);
+    iterator I = Map.find(OldVal);
     assert(I != Map.end() && "TypeMap::remove, element not found!");
+    Map.erase(I);
+  }
+
+  void remove(iterator I) {
+    assert(I != Map.end() && "Cannot remove invalid iterator pointer!");
     Map.erase(I);
   }
 
@@ -537,9 +554,10 @@ public:
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "TypeMap<>::" << Arg << " table contents:\n";
     unsigned i = 0;
-    for (MapTy::const_iterator I = Map.begin(), E = Map.end(); I != E; ++I)
-      std::cerr << " " << (++i) << ". " << I->second << " " 
-                << *I->second << "\n";
+    for (typename MapTy::const_iterator I = Map.begin(), E = Map.end();
+         I != E; ++I)
+      std::cerr << " " << (++i) << ". " << (void*)I->second.get() << " " 
+                << *I->second.get() << "\n";
 #endif
   }
 
@@ -622,6 +640,8 @@ public:
       ArgTypes.push_back(PATypeHandle(MVT.ArgTypes[i], this));
   }
 
+  static FunctionValType get(const FunctionType *FT);
+
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
     if (RetTy == OldType) RetTy = NewType;
@@ -648,6 +668,17 @@ public:
 // Define the actual map itself now...
 static TypeMap<FunctionValType, FunctionType> FunctionTypes;
 
+FunctionValType FunctionValType::get(const FunctionType *FT) {
+  // Build up a FunctionValType
+  std::vector<const Type *> ParamTypes;
+  ParamTypes.reserve(FT->getParamTypes().size());
+  for (unsigned i = 0, e = FT->getParamTypes().size(); i != e; ++i)
+    ParamTypes.push_back(FT->getParamType(i));
+  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg(),
+                         FunctionTypes);
+}
+
+
 // FunctionType::get - The factory function for the FunctionType class...
 FunctionType *FunctionType::get(const Type *ReturnType, 
                                 const std::vector<const Type*> &Params,
@@ -663,6 +694,17 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 #endif
   return MT;
 }
+
+void FunctionType::dropAllTypeUses(bool inMap) {
+#if 0
+  //if (inMap) FunctionTypes.remove(FunctionTypes.getEntryForType(this));
+
+  // Drop all uses of other types, which might be recursive.
+  ResultType = Type::VoidTy;
+  ParamTys.clear();
+#endif
+}
+
 
 //===----------------------------------------------------------------------===//
 // Array Type Factory...
@@ -680,6 +722,9 @@ public:
   ArrayValType(const ArrayValType &AVT) 
     : ValTypeBase<ArrayValType, ArrayType>(AVT), ValTy(AVT.ValTy, this),
       Size(AVT.Size) {}
+
+  static ArrayValType get(const ArrayType *AT);
+
 
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
@@ -701,6 +746,11 @@ public:
 
 static TypeMap<ArrayValType, ArrayType> ArrayTypes;
 
+ArrayValType ArrayValType::get(const ArrayType *AT) {
+  return ArrayValType(AT->getElementType(), AT->getNumElements(), ArrayTypes);
+}
+
+
 ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get array of null types!");
 
@@ -716,6 +766,16 @@ ArrayType *ArrayType::get(const Type *ElementType, unsigned NumElements) {
 #endif
   return AT;
 }
+
+void ArrayType::dropAllTypeUses(bool inMap) {
+#if 0
+  //if (inMap) ArrayTypes.remove(ArrayTypes.getEntryForType(this));
+  ElementType = Type::IntTy;
+#endif
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 // Struct Type Factory...
@@ -744,6 +804,8 @@ public:
       ElTypes.push_back(PATypeHandle(SVT.ElTypes[i], this));
   }
 
+  static StructValType get(const StructType *ST);
+
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
     for (unsigned i = 0; i < ElTypes.size(); ++i)
@@ -763,6 +825,17 @@ public:
 
 static TypeMap<StructValType, StructType> StructTypes;
 
+StructValType StructValType::get(const StructType *ST) {
+  std::vector<const Type *> ElTypes;
+  ElTypes.reserve(ST->getElementTypes().size());
+  for (unsigned i = 0, e = ST->getElementTypes().size(); i != e; ++i)
+    ElTypes.push_back(ST->getElementTypes()[i]);
+  
+  return StructValType(ElTypes, StructTypes);
+}
+
+
+
 StructType *StructType::get(const std::vector<const Type*> &ETypes) {
   StructValType STV(ETypes, StructTypes);
   StructType *ST = StructTypes.get(STV);
@@ -776,6 +849,15 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes) {
 #endif
   return ST;
 }
+
+void StructType::dropAllTypeUses(bool inMap) {
+#if 0
+  //if (inMap) StructTypes.remove(StructTypes.getEntryForType(this));
+  ETypes.clear();
+#endif
+}
+
+
 
 //===----------------------------------------------------------------------===//
 // Pointer Type Factory...
@@ -794,6 +876,8 @@ public:
   //
   PointerValType(const PointerValType &PVT) 
     : ValTypeBase<PointerValType, PointerType>(PVT), ValTy(PVT.ValTy, this) {}
+
+  static PointerValType get(const PointerType *PT);
 
   // Subclass should override this... to update self as usual
   virtual void doRefinement(const DerivedType *OldType, const Type *NewType) {
@@ -814,6 +898,11 @@ public:
 
 static TypeMap<PointerValType, PointerType> PointerTypes;
 
+PointerValType PointerValType::get(const PointerType *PT) {
+  return PointerValType(PT->getElementType(), PointerTypes);
+}
+
+
 PointerType *PointerType::get(const Type *ValueType) {
   assert(ValueType && "Can't get a pointer to <null> type!");
   PointerValType PVT(ValueType, PointerTypes);
@@ -828,6 +917,13 @@ PointerType *PointerType::get(const Type *ValueType) {
   std::cerr << "Derived new type: " << *PT << "\n";
 #endif
   return PT;
+}
+
+void PointerType::dropAllTypeUses(bool inMap) {
+#if 0
+  //if (inMap) PointerTypes.remove(PointerTypes.getEntryForType(this));
+  ElementType = Type::IntTy;
+#endif
 }
 
 void debug_type_tables() {
@@ -891,12 +987,12 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
 }
 
 
-// refineAbstractTypeTo - This function is used to when it is discovered that
-// the 'this' abstract type is actually equivalent to the NewType specified.
-// This causes all users of 'this' to switch to reference the more concrete
-// type NewType and for 'this' to be deleted.
+// refineAbstractTypeToInternal - This function is used to when it is discovered
+// that the 'this' abstract type is actually equivalent to the NewType
+// specified.  This causes all users of 'this' to switch to reference the more
+// concrete type NewType and for 'this' to be deleted.
 //
-void DerivedType::refineAbstractTypeTo(const Type *NewType) {
+void DerivedType::refineAbstractTypeToInternal(const Type *NewType, bool inMap){
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
   
@@ -923,6 +1019,14 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // same type.
   //
   addAbstractTypeUser(this);
+
+#if 0
+  // To make the situation simpler, we ask the subclass to remove this type from
+  // the type map, and to replace any type uses with uses of non-abstract types.
+  // This dramatically limits the amount of recursive type trouble we can find
+  // ourselves in.
+  dropAllTypeUses(inMap);
+#endif
 
   // Count the number of self uses.  Stop looping when sizeof(list) == NSU.
   unsigned NumSelfUses = 0;
@@ -972,6 +1076,10 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   //
   assert((NewTy == this || AbstractTypeUsers.back() == this) &&
          "Only self uses should be left!");
+
+#if 0
+  assert(AbstractTypeUsers.size() == 1 && "This type should get deleted!");
+#endif
   removeAbstractTypeUser(this);
 }
 
@@ -1054,6 +1162,14 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
             << *OldType << "], " << (void*)NewType << " [" 
             << *NewType << "])\n";
 #endif
+
+  // Look up our current type map entry..
+#if 0
+  TypeMap<FunctionValType, FunctionType>::iterator TMI =
+    FunctionTypes.getEntryForType(this);
+  assert(TMI->second == this);
+#endif
+
   // Find the type element we are refining...
   if (ResultType == OldType) {
     ResultType.removeUserFromConcrete();
@@ -1066,7 +1182,7 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
     }
 
   if (const FunctionType *MT = FunctionTypes.containsEquivalent(this)) {
-    refineAbstractTypeTo(MT);            // Different type altogether...
+    refineAbstractTypeToInternal(MT, false);    // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
@@ -1088,12 +1204,19 @@ void ArrayType::refineAbstractType(const DerivedType *OldType,
             << *NewType << "])\n";
 #endif
 
+#if 0
+  // Look up our current type map entry..
+  TypeMap<ArrayValType, ArrayType>::iterator TMI =
+    ArrayTypes.getEntryForType(this);
+  assert(TMI->second == this);
+#endif
+
   assert(getElementType() == OldType);
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
   if (const ArrayType *AT = ArrayTypes.containsEquivalent(this)) {
-    refineAbstractTypeTo(AT);          // Different type altogether...
+    refineAbstractTypeToInternal(AT, false);    // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
@@ -1114,6 +1237,14 @@ void StructType::refineAbstractType(const DerivedType *OldType,
             << *OldType << "], " << (void*)NewType << " [" 
             << *NewType << "])\n";
 #endif
+
+#if 0
+  // Look up our current type map entry..
+  TypeMap<StructValType, StructType>::iterator TMI =
+    StructTypes.getEntryForType(this);
+  assert(TMI->second == this);
+#endif
+
   for (int i = ETypes.size()-1; i >= 0; --i)
     if (ETypes[i] == OldType) {
       ETypes[i].removeUserFromConcrete();
@@ -1123,7 +1254,7 @@ void StructType::refineAbstractType(const DerivedType *OldType,
     }
 
   if (const StructType *ST = StructTypes.containsEquivalent(this)) {
-    refineAbstractTypeTo(ST);          // Different type altogether...
+    refineAbstractTypeToInternal(ST, false);    // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
@@ -1144,12 +1275,19 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
             << *NewType << "])\n";
 #endif
 
+#if 0
+  // Look up our current type map entry..
+  TypeMap<PointerValType, PointerType>::iterator TMI =
+    PointerTypes.getEntryForType(this);
+  assert(TMI->second == this);
+#endif
+
   assert(ElementType == OldType);
   ElementType.removeUserFromConcrete();
   ElementType = NewType;
 
   if (const PointerType *PT = PointerTypes.containsEquivalent(this)) {
-    refineAbstractTypeTo(PT);          // Different type altogether...
+    refineAbstractTypeToInternal(PT, false);     // Different type altogether...
   } else {
     // If the type is currently thought to be abstract, rescan all of our
     // subtypes to see if the type has just become concrete!
