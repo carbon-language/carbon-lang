@@ -132,7 +132,8 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         needsLoad = true;
       }
       break;
-      case MVT::i64: ObjSize = 8; 
+      case MVT::i64: ObjSize = 8;
+      // FIXME: can split 64b load between reg/mem if it is last arg in regs
       if (GPR_remaining > 1) {
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx]);
         BuildMI(&BB, PPC::IMPLICIT_DEF, 0, GPR[GPR_idx+1]);
@@ -263,8 +264,9 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
       // register cannot be found for it.
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+      MVT::ValueType ArgVT = getValueType(Args[i].second);
       
-      switch (getValueType(Args[i].second)) {
+      switch (ArgVT) {
       default: assert(0 && "Unexpected ValueType for argument!");
       case MVT::i1:
       case MVT::i8:
@@ -287,27 +289,25 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         ArgOffset += 4;
         break;
       case MVT::i64:
-        // If we have 2 or more GPRs, we won't do anything and let the ISD::CALL
-        // functionality in SelectExpr move pieces for us.
-        if (GPR_remaining > 1) {
+        // If we have one free GPR left, we can place the upper half of the i64
+        // in it, and store the other half to the stack.  If we have two or more
+        // free GPRs, then we can pass both halves of the i64 in registers.
+        if (GPR_remaining > 0) {
           SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
             Args[i].first, DAG.getConstant(1, MVT::i32));
           SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
             Args[i].first, DAG.getConstant(0, MVT::i32));
-          args_to_use.push_back(Hi);          
-          args_to_use.push_back(Lo);          
-          GPR_remaining -= 2;
-        } else if (GPR_remaining > 0) {
-          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
-            Args[i].first, DAG.getConstant(1, MVT::i32));
-          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, 
-            Args[i].first, DAG.getConstant(0, MVT::i32));
-          args_to_use.push_back(Hi);          
-          SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
-          PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Lo, PtrOff));
-          --GPR_remaining;
+          args_to_use.push_back(Hi);
+          if (GPR_remaining > 1) {
+            args_to_use.push_back(Lo);
+            GPR_remaining -= 2;
+          } else {
+            SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
+            PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
+            Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                         Lo, PtrOff));
+            --GPR_remaining;
+          }
         } else {
           Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                        Args[i].first, PtrOff));
@@ -315,32 +315,33 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
         ArgOffset += 8;
         break;
       case MVT::f32:
-        if (FPR_remaining > 0 && GPR_remaining > 0 && isVarArg) {
-          --FPR_remaining;
-          ArgOffset += 4;
-        } else if (FPR_remaining > 0) {
-          args_to_use.push_back(Args[i].first);
-          --FPR_remaining;
-          if (GPR_remaining > 0) --GPR_remaining;
-        } else {
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff));
-        }
-        ArgOffset += 4;
-        break;
       case MVT::f64:
-        if (FPR_remaining > 0 && GPR_remaining > 0 && isVarArg) {
-          --FPR_remaining;
-        } else if (FPR_remaining > 0) {
+        if (FPR_remaining > 0) {
+          if (isVarArg) {
+            // FIXME: Need FunctionType information so we can conditionally
+            // store only the non-fixed arguments in a vararg function.
+            Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                         Args[i].first, PtrOff));
+            if (GPR_remaining > 0)
+              args_to_use.push_back(DAG.getLoad(MVT::i32, Chain, PtrOff));
+            if (GPR_remaining > 1) {
+              SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
+              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
+              args_to_use.push_back(DAG.getLoad(MVT::i32, Chain, PtrOff));
+            }
+          }
           args_to_use.push_back(Args[i].first);
           --FPR_remaining;
+          // If we have any FPRs remaining, we may also have GPRs remaining.
+          // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
+          // GPRs.
           if (GPR_remaining > 0) --GPR_remaining;
-          if (GPR_remaining > 0) --GPR_remaining;
+          if (GPR_remaining > 0 && MVT::f64 == ArgVT) --GPR_remaining;
         } else {
           Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                        Args[i].first, PtrOff));
         }
-        ArgOffset += 8;
+        ArgOffset += (ArgVT == MVT::f32) ? 4 : 8;
         break;
       }
     }
