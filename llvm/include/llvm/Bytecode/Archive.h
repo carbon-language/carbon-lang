@@ -66,6 +66,13 @@ class Archive {
       const sys::Path& Filename        ///< Name of archive file
     );
 
+#if 0
+
+This interface severely complicates the
+Archive class. Its commented out until
+a final determination is made of whether
+we will support adding modules or not.
+
     /// Create a new archive file, \p Filename, from the LLVM modules \p Modules.
     /// The module's externally visible linkage symbols will be added to the 
     /// archive's symbol table.  The names of the file members will be obtained 
@@ -83,6 +90,7 @@ class Archive {
       const ModuleList& Modules,       ///< Modules to be put in archive
       const std::string& StripName=""  ///< Prefix to strip from member names
     );
+#endif
 
     /// Create a new archive file, \p Filename, from a set of existing \p Files.
     /// Each entry in \p Files will be added to the archive. If any file is an
@@ -225,6 +233,13 @@ class Archive {
       const std::string& StripName=""  ///< Prefix path to strip from names
     );
 
+#if 0
+
+This interface severely complicates the
+Archive class. Its commented out until
+a final determination is made of whether
+we will support adding modules or not.
+
     /// Add a set of Modules to the archive.  Names of member files will
     /// be taken from the Module identifier (Module::getModuleIdentifier) if it
     /// is unique. Non-unique member names will be made unique by appending a 
@@ -242,6 +257,7 @@ class Archive {
       const ModuleList& Modules,       ///< The modules to add to the archive
       const std::string& StripName=""  ///< Prefix path to strip from names
     );
+#endif
 
   /// @}
   /// @name Data
@@ -249,6 +265,13 @@ class Archive {
   private:
     class ArchiveInternals;
     ArchiveInternals* impl;   ///< Implementation class
+  /// @}
+  /// @name Hidden
+  /// @{
+  private:
+    Archive();                          ///< Do not implement
+    Archive(const Archive&);            ///< Do not implement
+    Archive& operator=(const Archive&); ///< Do not implement
   /// @}
 };
 
