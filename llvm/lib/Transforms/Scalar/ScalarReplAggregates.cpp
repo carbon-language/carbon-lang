@@ -234,8 +234,11 @@ bool SROA::isSafeElementUse(Value *Ptr) {
        I != E; ++I) {
     Instruction *User = cast<Instruction>(*I);
     switch (User->getOpcode()) {
-    case Instruction::Load:  return true;
-    case Instruction::Store: return User->getOperand(0) != Ptr;
+    case Instruction::Load:  break;
+    case Instruction::Store:
+      // Store is ok if storing INTO the pointer, not storing the pointer
+      if (User->getOperand(0) == Ptr) return false;
+      break;
     case Instruction::GetElementPtr: {
       GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
       if (GEP->getNumOperands() > 1) {
@@ -243,7 +246,8 @@ bool SROA::isSafeElementUse(Value *Ptr) {
             !cast<Constant>(GEP->getOperand(1))->isNullValue())
           return false;  // Using pointer arithmetic to navigate the array...
       }
-      return isSafeElementUse(GEP);
+      if (!isSafeElementUse(GEP)) return false;
+      break;
     }
     default:
       DEBUG(std::cerr << "  Transformation preventing inst: " << *User);
