@@ -467,7 +467,7 @@ int main(int argc, char **argv) {
     {
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
-        *Out << Recs[i] << ", ";
+        *Out << Recs[i]->getName() << ", ";
       *Out << "\n";
       break;
     }
