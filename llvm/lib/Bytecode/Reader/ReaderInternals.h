@@ -180,7 +180,10 @@ private:
   Value      *getValue(unsigned TypeID, unsigned num, bool Create = true);
   const Type *getType(unsigned ID);
   BasicBlock *getBasicBlock(unsigned ID);
-  Constant   *getConstantValue(const Type *Ty, unsigned num);
+  Constant   *getConstantValue(unsigned TypeID, unsigned num);
+  Constant   *getConstantValue(const Type *Ty, unsigned num) {
+    return getConstantValue(getTypeSlot(Ty), num);
+  }
 
   unsigned insertValue(Value *V, ValueTable &Table);
   unsigned insertValue(Value *V, unsigned Type, ValueTable &Table);

@@ -168,13 +168,11 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
       unsigned ArgValSlot, ArgTypeSlot;
       if (read_vbr(Buf, EndBuf, ArgValSlot)) throw Error_readvbr;
       if (read_vbr(Buf, EndBuf, ArgTypeSlot)) throw Error_readvbr;
-      const Type *ArgTy = getType(ArgTypeSlot);
-      
-      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << *ArgTy << "'  slot: "
-                << ArgValSlot << "\n");
+      BCR_TRACE(4, "CE Arg " << i << ": Type: '" << *getType(ArgTypeSlot)
+                << "'  slot: " << ArgValSlot << "\n");
       
       // Get the arg value from its slot if it exists, otherwise a placeholder
-      ArgVec.push_back(getConstantValue(ArgTy, ArgValSlot));
+      ArgVec.push_back(getConstantValue(ArgTypeSlot, ArgValSlot));
     }
     
     // Construct a ConstantExpr of the appropriate kind
@@ -245,12 +243,12 @@ Constant *BytecodeParser::parseConstantValue(const unsigned char *&Buf,
   case Type::ArrayTyID: {
     const ArrayType *AT = cast<ArrayType>(Ty);
     unsigned NumElements = AT->getNumElements();
-
+    unsigned TypeSlot = getTypeSlot(AT->getElementType());
     std::vector<Constant*> Elements;
     while (NumElements--) {   // Read all of the elements of the constant.
       unsigned Slot;
       if (read_vbr(Buf, EndBuf, Slot)) throw Error_readvbr;
-      Elements.push_back(getConstantValue(AT->getElementType(), Slot));
+      Elements.push_back(getConstantValue(TypeSlot, Slot));
     }
     return ConstantArray::get(AT, Elements);
   }

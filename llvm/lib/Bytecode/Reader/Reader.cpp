@@ -172,13 +172,14 @@ BasicBlock *BytecodeParser::getBasicBlock(unsigned ID) {
 /// constant hasn't been parsed yet, a placeholder is defined and used.  Later,
 /// after the real value is parsed, the placeholder is eliminated.
 ///
-Constant *BytecodeParser::getConstantValue(const Type *Ty, unsigned Slot) {
-  if (Value *V = getValue(Ty, Slot, false))
+Constant *BytecodeParser::getConstantValue(unsigned TypeSlot, unsigned Slot) {
+  if (Value *V = getValue(TypeSlot, Slot, false))
     if (Constant *C = dyn_cast<Constant>(V))
       return C;   // If we already have the value parsed, just return it
     else
       throw std::string("Reference of a value is expected to be a constant!");
 
+  const Type *Ty = getType(TypeSlot);
   std::pair<const Type*, unsigned> Key(Ty, Slot);
   GlobalRefsType::iterator I = GlobalRefs.lower_bound(Key);
 
