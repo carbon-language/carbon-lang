@@ -37,13 +37,12 @@ unsigned Loop::getNumBackEdges() const {
   unsigned numBackEdges = 0;
   BasicBlock *header = Blocks.front();
 
-  for (std::vector<BasicBlock*>::const_iterator i = Blocks.begin(), e = Blocks.end();
-       i != e; ++i) {
-    for (BasicBlock::succ_iterator Successor = succ_begin(*i), SEnd = succ_end(*i);
-	 Successor != SEnd; ++Successor) {
-      if (header == *Successor)
+  for (std::vector<BasicBlock*>::const_iterator I = Blocks.begin(),
+         E = Blocks.end(); I != E; ++I) {
+    for (BasicBlock::succ_iterator SI = succ_begin(*I), SE = succ_end(*I);
+         SI != SE; ++SI)
+      if (header == *SI)
 	++numBackEdges;
-    }
   }
   return numBackEdges;
 }
@@ -138,17 +137,38 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   // they start subloops of their own.
   //
   for (std::vector<BasicBlock*>::reverse_iterator I = L->Blocks.rbegin(),
-	 E = L->Blocks.rend(); I != E; ++I) {
+	 E = L->Blocks.rend(); I != E; ++I)
 
     // Check to see if this block starts a new loop
-    if (Loop *NewLoop = ConsiderForLoop(*I, DS)) {
-      L->SubLoops.push_back(NewLoop);
-      NewLoop->ParentLoop = L;
-    }
-  
-    if (BBMap.find(*I) == BBMap.end())
-      BBMap.insert(std::make_pair(*I, L));
-  }
+    if (*I != BB)
+      if (Loop *NewLoop = ConsiderForLoop(*I, DS)) {
+        L->SubLoops.push_back(NewLoop);
+        NewLoop->ParentLoop = L;
+      } else {
+        std::map<BasicBlock*, Loop*>::iterator BBMI = BBMap.lower_bound(*I);
+        if (BBMI == BBMap.end() || BBMI->first != *I) {  // Not in map yet...
+          BBMap.insert(BBMI, std::make_pair(*I, L));
+        } else {
+          // If this is already in the BBMap then this means that we already added
+          // a loop for it, but incorrectly added the loop to a higher level loop
+          // instead of the current loop we are creating.  Fix this now by moving
+          // the loop into the correct subloop.
+          //
+          Loop *SubLoop = BBMI->second;
+          Loop *OldSubLoopParent = SubLoop->getParentLoop();
+          if (OldSubLoopParent != L) {
+            // Remove SubLoop from OldSubLoopParent's list of subloops...
+            std::vector<Loop*>::iterator I =
+              std::find(OldSubLoopParent->SubLoops.begin(),
+                        OldSubLoopParent->SubLoops.end(), SubLoop);
+            assert(I != OldSubLoopParent->SubLoops.end()
+                   && "Loop parent doesn't contain loop?");
+            OldSubLoopParent->SubLoops.erase(I);
+            SubLoop->ParentLoop = L;
+            L->SubLoops.push_back(SubLoop);
+          }
+        }
+      }
 
   return L;
 }
