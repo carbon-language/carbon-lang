@@ -28,6 +28,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "Support/STLExtras.h"
+#include <alloca.h>
 #include <iostream>
 using std::cerr;
 using std::vector;
