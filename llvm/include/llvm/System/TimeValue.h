@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/DataTypes.h"
+#include <string>
 
 #ifndef LLVM_SYSTEM_TIMEVALUE_H
 #define LLVM_SYSTEM_TIMEVALUE_H
@@ -238,16 +239,22 @@ namespace sys {
     /// Converts the TimeValue into the corresponding number of "ticks" for
     /// Posix, correcting for the difference in Posix zero time.
     /// @brief Convert to unix time (100 nanoseconds since 12:00:00a Jan 1,1970)
-    uint64_t ToPosixTime( void ) const {
+    uint64_t toPosixTime( void ) const {
       uint64_t result = seconds_ - PosixZeroTime.seconds_;
       result += nanos_ / NANOSECONDS_PER_POSIX_TICK;
       return result;
     }
 
+    /// Converts the TimeValue into the corresponding number of seconds 
+    /// since the epoch (00:00:00 Jan 1,1970). 
+    uint64_t toEpochTime(void) const {
+      return seconds_ - PosixZeroTime.seconds_;
+    }
+
     /// Converts the TiemValue into the correspodning number of "ticks" for
     /// Win32 platforms, correcting for the difference in Win32 zero time.
     /// @brief Convert to windows time (seconds since 12:00:00a Jan 1, 1601)
-    uint64_t ToWin32Time( void ) const {
+    uint64_t toWin32Time( void ) const {
       uint64_t result = seconds_ - Win32ZeroTime.seconds_;
       result += nanos_ / NANOSECONDS_PER_WIN32_TICK;
       return result;
@@ -256,10 +263,15 @@ namespace sys {
     /// Provides the seconds and nanoseconds as results in its arguments after
     /// correction for the Posix zero time.
     /// @brief Convert to timespec time (ala POSIX.1b)
-    void GetTimespecTime( uint64_t& seconds, uint32_t& nanos ) const {
+    void getTimespecTime( uint64_t& seconds, uint32_t& nanos ) const {
       seconds = seconds_ - PosixZeroTime.seconds_;
       nanos = nanos_;
     }
+
+    /// Provides conversion of the TimeValue into a readable time & date.
+    /// @returns std::string containing the readable time value
+    /// @brief Convert time to a string.
+    std::string toString();
 
   /// @}
   /// @name Mutators
@@ -318,7 +330,7 @@ namespace sys {
     /// Converts the \p seconds argument from PosixTime to the corresponding
     /// TimeValue and assigns that value to \p this.
     /// @brief Convert seconds form PosixTime to TimeValue
-    void fromPosixTime( SecondsType seconds  ) {
+    void fromEpochTime( SecondsType seconds ) {
       seconds_ = seconds + PosixZeroTime.seconds_;
       nanos_ = 0;
       this->normalize();
