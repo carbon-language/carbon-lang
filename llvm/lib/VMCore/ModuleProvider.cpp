@@ -24,15 +24,3 @@ ModuleProvider::ModuleProvider() : TheModule(0) { }
 ModuleProvider::~ModuleProvider() {
   delete TheModule;
 }
-
-/// materializeFunction - make sure the given function is fully read.
-///
-Module* ModuleProvider::materializeModule() {
-  assert(TheModule && "Attempting to materialize an invalid module!");
-
-  for (Module::iterator i = TheModule->begin(), e = TheModule->end();
-       i != e; ++i)
-    materializeFunction(i);
-
-  return TheModule;
-}
