@@ -17,6 +17,7 @@
 
 namespace {
   Statistic<> NumInlined("inline", "Number of functions inlined");
+  Statistic<> NumDeleted("inline", "Number of functions deleted because all callers found");
   cl::opt<unsigned>             // FIXME: 200 is VERY conservative
   InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
               cl::desc("Control the amount of inlining to perform (default = 200)"));
@@ -139,29 +140,39 @@ bool FunctionInlining::doInlining(Function *F) {
       bool ShouldInc = true;
       // Found a call instruction? FIXME: This should also handle INVOKEs
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
-        if (Function *Callee = CI->getCalledFunction())
+        if (Function *Callee = CI->getCalledFunction()) {
           doInlining(Callee);  // Inline in callees before callers!
 
-        // Decide whether we should inline this function...
-        if (ShouldInlineFunction(CI)) {
-          // Save an iterator to the instruction before the call if it exists,
-          // otherwise get an iterator at the end of the block... because the
-          // call will be destroyed.
-          //
-          BasicBlock::iterator SI;
-          if (I != BB->begin()) {
-            SI = I; --SI;           // Instruction before the call...
-          } else {
-            SI = BB->end();
-          }
-
-          // Attempt to inline the function...
-          if (InlineFunction(CI)) {
-            ++NumInlined;
-            Changed = true;
-            // Move to instruction before the call...
-            I = (SI == BB->end()) ? BB->begin() : SI;
-            ShouldInc = false;  // Don't increment iterator until next time
+          // Decide whether we should inline this function...
+          if (ShouldInlineFunction(CI)) {
+            // Save an iterator to the instruction before the call if it exists,
+            // otherwise get an iterator at the end of the block... because the
+            // call will be destroyed.
+            //
+            BasicBlock::iterator SI;
+            if (I != BB->begin()) {
+              SI = I; --SI;           // Instruction before the call...
+            } else {
+              SI = BB->end();
+            }
+            
+            // Attempt to inline the function...
+            if (InlineFunction(CI)) {
+              ++NumInlined;
+              Changed = true;
+              // Move to instruction before the call...
+              I = (SI == BB->end()) ? BB->begin() : SI;
+              ShouldInc = false;  // Don't increment iterator until next time
+              
+              // If we inlined the last possible call site to the function,
+              // delete the function body now.
+              if (Callee->use_empty() &&
+                  (Callee->hasInternalLinkage()||Callee->hasLinkOnceLinkage())){
+                F->getParent()->getFunctionList().erase(Callee);
+                ++NumDeleted;              
+                if (Callee == F) return true;
+              }
+            }
           }
         }
       }
