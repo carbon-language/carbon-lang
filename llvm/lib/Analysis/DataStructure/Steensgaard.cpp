@@ -102,8 +102,6 @@ void Steens::ResolveFunctionCall(Function *F, const DSCallSite &Call,
     if (I != ValMap.end())    // If its a pointer argument...
       I->second.mergeWith(Call.getPtrArg(PtrArgIdx++));
   }
-
-  assert(PtrArgIdx == Call.getNumPtrArgs() && "Argument resolution mismatch!");
 }
 
 
