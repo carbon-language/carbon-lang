@@ -23,6 +23,7 @@ class AllocaInst;
 class DominatorTree;
 class DominanceFrontier;
 class TargetData;
+class AliasSetTracker;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
@@ -34,9 +35,12 @@ bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD);
 /// use of DominanceFrontier information.  This function does not modify the CFG
 /// of the function at all.  All allocas must be from the same function.
 ///
+/// If AST is specified, the specified tracker is updated to reflect changes
+/// made to the IR.
+///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      DominatorTree &DT, DominanceFrontier &DF,
-                     const TargetData &TD);
+                     const TargetData &TD, AliasSetTracker *AST = 0);
 
 } // End llvm namespace
 
