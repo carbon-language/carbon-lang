@@ -13,9 +13,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "Support/CommandLine.h"
 #include "Support/Statistic.h"
-#include <math.h>  // For fmod
-#include <signal.h>
-#include <setjmp.h>
+#include <cmath>  // For fmod
 
 Interpreter *TheEE = 0;
 
@@ -37,27 +35,6 @@ namespace {
 // computations
 //
 CachedWriter CW;     // Object to accelerate printing of LLVM
-
-sigjmp_buf SignalRecoverBuffer;
-static bool InInstruction = false;
-
-extern "C" {
-static void SigHandler(int Signal) {
-  if (InInstruction)
-    siglongjmp(SignalRecoverBuffer, Signal);
-}
-}
-
-static void initializeSignalHandlers() {
-  struct sigaction Action;
-  Action.sa_handler = SigHandler;
-  Action.sa_flags   = SA_SIGINFO;
-  sigemptyset(&Action.sa_mask);
-  sigaction(SIGSEGV, &Action, 0);
-  sigaction(SIGBUS, &Action, 0);
-  sigaction(SIGINT, &Action, 0);
-  sigaction(SIGFPE, &Action, 0);
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -120,7 +97,6 @@ static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
 
 void Interpreter::initializeExecutionEngine() {
   TheEE = this;
-  initializeSignalHandlers();
 }
 
 //===----------------------------------------------------------------------===//
@@ -681,8 +657,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, User::op_iterator I,
           std::cerr << "Out of range memory access to element #" << Idx
                     << " of a " << AT->getNumElements() << " element array."
                     << " Subscript #" << *I << "\n";
-          // Get outta here!!!
-          siglongjmp(SignalRecoverBuffer, SIGTRAP);
+          abort();
         }
 
       Ty = ST->getElementType();
@@ -1006,17 +981,7 @@ void Interpreter::executeInstruction() {
   // Track the number of dynamic instructions executed.
   ++NumDynamicInsts;
 
-  // Set a sigsetjmp buffer so that we can recover if an error happens during
-  // instruction execution...
-  //
-  if (int SigNo = sigsetjmp(SignalRecoverBuffer, 1)) {
-    std::cout << "EXCEPTION OCCURRED [" << strsignal(SigNo) << "]\n";
-    exit(1);
-  }
-
-  InInstruction = true;
   visit(I);   // Dispatch to one of the visit* methods...
-  InInstruction = false;
   
   // Reset the current frame location to the top of stack
   CurFrame = ECStack.size()-1;
