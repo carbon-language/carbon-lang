@@ -347,6 +347,10 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
   // just plain inputs for non-scalars
   std::vector<Value*> params(inputs);
 
+  // Get an iterator to the first output argument.
+  Function::aiterator OutputArgBegin = newFunction->abegin();
+  std::advance(OutputArgBegin, inputs.size());
+
   for (unsigned i = 0, e = outputs.size(); i != e; ++i) {
     Value *Output = outputs[i];
     // Create allocas for scalar outputs
@@ -401,12 +405,12 @@ CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
 
           // Restore values just before we exit
           // FIXME: Use a GetElementPtr to bunch the outputs in a struct
-          for (unsigned out = 0, e = outputs.size(); out != e; ++out)
+          Function::aiterator OAI = OutputArgBegin;
+          for (unsigned out = 0, e = outputs.size(); out != e; ++out, ++OAI)
             if (!DS ||
                 DS->dominates(cast<Instruction>(outputs[out])->getParent(),
                               TI->getParent()))
-              new StoreInst(outputs[out], getFunctionArg(newFunction, out),
-                            NTRet);
+              new StoreInst(outputs[out], OAI, NTRet);
         }
 
         // rewrite the original branch instruction with this new target
