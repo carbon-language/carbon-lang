@@ -131,6 +131,11 @@ public:
   ///
   static ConstantInt *get(const Type *Ty, unsigned char V);
 
+  /// getRawValue - return the underlying value of this constant as a 64-bit
+  /// unsigned integer value.
+  ///
+  inline uint64_t getRawValue() const { return Val.Unsigned; }
+
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return Val.Unsigned == 0; }
@@ -157,12 +162,15 @@ protected:
   ConstantSInt(const Type *Ty, int64_t V);
 public:
   /// get() - Static factory methods - Return objects of the specified value
+  ///
   static ConstantSInt *get(const Type *Ty, int64_t V);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
+  ///
   static bool isValueValidForType(const Type *Ty, int64_t V);
 
   /// getValue - return the underlying value of this constant.
+  ///
   inline int64_t getValue() const { return Val.Signed; }
 
   virtual bool isAllOnesValue() const { return getValue() == -1; }
@@ -188,6 +196,7 @@ public:
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  ///
   static inline bool classof(const ConstantSInt *) { return true; }
   static bool classof(const Constant *CPV);  // defined in Constants.cpp
   static inline bool classof(const Value *V) {
@@ -205,12 +214,15 @@ protected:
   ConstantUInt(const Type *Ty, uint64_t V);
 public:
   /// get() - Static factory methods - Return objects of the specified value
+  ///
   static ConstantUInt *get(const Type *Ty, uint64_t V);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
+  ///
   static bool isValueValidForType(const Type *Ty, uint64_t V);
 
   /// getValue - return the underlying value of this constant.
+  ///
   inline uint64_t getValue() const { return Val.Unsigned; }
 
   /// isMaxValue - Return true if this is the largest value that may be
