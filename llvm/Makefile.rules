@@ -89,6 +89,7 @@ endif
 $(CONFIG_STATUS): $(CONFIGURE)
 	@$(ECHO) Reconfiguring with $<
 	$(VERB) $(CONFIG_STATUS) --recheck $(CONFIGUREFLAGS)
+	$(VERB) $(CONFIG_STATUS)
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
