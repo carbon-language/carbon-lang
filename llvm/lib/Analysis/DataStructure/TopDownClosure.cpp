@@ -12,6 +12,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "Support/Statistic.h"
+#include <set>
 
 static RegisterAnalysis<TDDataStructures>
 Y("tddatastructure", "Top-down Data Structure Analysis Closure");
@@ -34,10 +35,23 @@ void TDDataStructures::releaseMemory() {
 // program.
 //
 bool TDDataStructures::run(Module &M) {
-  // Simply calculate the graphs for each function...
+  BUDataStructures &BU = getAnalysis<BUDataStructures>();
+
+  // Calculate the CallSitesForFunction mapping from the BU info...
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal())
+      if (const std::vector<DSCallSite> *CS = BU.getCallSites(*I))
+        for (unsigned i = 0, e = CS->size(); i != e; ++i)
+          if (Function *F = (*CS)[i].getResolvingCaller())
+            CallSitesForFunction[F].push_back(&(*CS)[i]);
+
+  // Next calculate the graphs for each function...
   for (Module::reverse_iterator I = M.rbegin(), E = M.rend(); I != E; ++I)
     if (!I->isExternal())
       calculateGraph(*I);
+
+  // Destroy the temporary mapping...
+  CallSitesForFunction.clear();
   return false;
 }
 
@@ -82,8 +96,37 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   std::map<const DSNode*, DSNode*> BUNodeMap;
   Graph = new DSGraph(BUGraph, BUNodeMap);
 
+  // We only need the BUMap entries for the nodes that are used in call sites.
+  // Calculate which nodes are needed.
+  std::set<const DSNode*> NeededNodes;
+  std::map<const Function*, std::vector<const DSCallSite*> >::iterator CSFFI
+    = CallSitesForFunction.find(&F);
+  if (CSFFI == CallSitesForFunction.end()) {
+    BUNodeMap.clear();  // No nodes are neccesary
+  } else {
+    std::vector<const DSCallSite*> &CSV = CSFFI->second;
+    for (unsigned i = 0, e = CSV.size(); i != e; ++i) {
+      NeededNodes.insert(CSV[i]->getRetVal().getNode());
+      for (unsigned j = 0, je = CSV[i]->getNumPtrArgs(); j != je; ++j)
+        NeededNodes.insert(CSV[i]->getPtrArg(j).getNode());
+    }
+  }
+
+  // Loop through te BUNodeMap, keeping only the nodes that are "Needed"
+  for (std::map<const DSNode*, DSNode*>::iterator I = BUNodeMap.begin();
+       I != BUNodeMap.end(); )
+    if (NeededNodes.count(I->first) && I->first)  // Keep needed nodes...
+      ++I;
+    else {
+      std::map<const DSNode*, DSNode*>::iterator J = I++;
+      BUNodeMap.erase(J);
+    }
+
+  NeededNodes.clear();  // We are done with this temporary data structure
+
   // Convert the mapping from a node-to-node map into a node-to-nodehandle map
-  BUMaps[&F].insert(BUNodeMap.begin(), BUNodeMap.end());
+  BUNodeMapTy &BUMap = BUMaps[&F];
+  BUMap.insert(BUNodeMap.begin(), BUNodeMap.end());
   BUNodeMap.clear();   // We are done with the temporary map.
 
   const std::vector<DSCallSite> *CallSitesP = BU.getCallSites(F);
@@ -140,12 +183,11 @@ DSGraph &TDDataStructures::calculateGraph(Function &F) {
   }
 
   // Recompute the Incomplete markers and eliminate unreachable nodes.
-#if 0
   Graph->maskIncompleteMarkers();
   Graph->markIncompleteNodes(/*markFormals*/ !F.hasInternalLinkage()
                              /*&& FIXME: NEED TO CHECK IF ALL CALLERS FOUND!*/);
   Graph->removeDeadNodes(/*KeepAllGlobals*/ false, /*KeepCalls*/ false);
-#endif
+
   DEBUG(std::cerr << "  [TD] Done inlining callers for: " << F.getName() << " ["
         << Graph->getGraphSize() << "+" << Graph->getFunctionCalls().size()
         << "]\n");
