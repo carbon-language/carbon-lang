@@ -129,6 +129,7 @@ private:
                           const Value *V, int Insn, int Opnd);
   void saveState();
   void verifySavedState();
+  void finishSavingState(Module &M);
 
   void setCallInterferences(const MachineInstr *MI, 
 			    const ValueSet *LVSetAft);

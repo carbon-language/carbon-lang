@@ -1186,14 +1186,27 @@ void PhyRegAlloc::saveState () {
 ///
 void PhyRegAlloc::verifySavedState () {
   std::vector<AllocInfo> &state = FnAllocState[Fn];
+  int ArgNum = 0;
+  for (Function::const_aiterator i=Fn->abegin (), e=Fn->aend (); i != e; ++i) {
+    const Argument *Arg = &*i;
+    std::cerr << "Argument:  " << *Arg << "\n"
+              << "FnAllocState:\n";
+    for (unsigned i = 0; i < state.size (); ++i) {
+      AllocInfo &S = state[i];
+      if (S.Instruction == -1 && S.Operand == ArgNum)
+        std::cerr << "  " << S << "\n";
+    }
+    std::cerr << "----------\n";
+    ++ArgNum;
+  }
   int Insn = 0;
   for (const_inst_iterator II=inst_begin (Fn), IE=inst_end (Fn); II!=IE; ++II) {
     const Instruction *I = *II;
     MachineCodeForInstruction &Instrs = MachineCodeForInstruction::get (I);
-    std::cerr << "Instruction:\n" << "  " << *I << "\n"
+    std::cerr << "Instruction: " << *I
               << "MachineCodeForInstruction:\n";
     for (unsigned i = 0, n = Instrs.size (); i != n; ++i)
-      std::cerr << "  " << *Instrs[i] << "\n";
+      std::cerr << "  " << *Instrs[i];
     std::cerr << "FnAllocState:\n";
     for (unsigned i = 0; i < state.size (); ++i) {
       AllocInfo &S = state[i];
@@ -1206,21 +1219,29 @@ void PhyRegAlloc::verifySavedState () {
 }
 
 
-/// Finish the job of saveState(), by collapsing FnAllocState into an LLVM
-/// Constant and stuffing it inside the Module. (NOTE: Soon, there will be
-/// other, better ways of storing the saved state; this one is cumbersome and
-/// does not work well with the JIT.)
-///
 bool PhyRegAlloc::doFinalization (Module &M) { 
-  if (!SaveRegAllocState)
-    return false; // Nothing to do here, unless we're saving state.
+  if (SaveRegAllocState) finishSavingState (M);
+  return false;
+}
+
+
+/// Finish the job of saveState(), by collapsing FnAllocState into an LLVM
+/// Constant and stuffing it inside the Module.
+///
+/// FIXME: There should be other, better ways of storing the saved
+/// state; this one is cumbersome and does not work well with the JIT.
+///
+void PhyRegAlloc::finishSavingState (Module &M) {
+  std::cerr << "---- Saving reg. alloc state; SaveStateToModule = "
+            << SaveStateToModule << " ----\n";
+  abort ();
 
   // If saving state into the module, just copy new elements to the
   // correct global.
   if (!SaveStateToModule) {
     ExportedFnAllocState = FnAllocState;
     // FIXME: should ONLY copy new elements in FnAllocState
-    return false;
+    return;
   }
 
   // Convert FnAllocState to a single Constant array and add it
@@ -1282,7 +1303,6 @@ bool PhyRegAlloc::doFinalization (Module &M) {
   new GlobalVariable (ST2, true, GlobalValue::ExternalLinkage,
                       ConstantStruct::get (ST2, CV2), "_llvm_regAllocState",
                       &M);
-  return false; // No error.
 }
 
 
