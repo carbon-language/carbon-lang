@@ -79,6 +79,36 @@ namespace {
         RegClassIdx.clear();
     }
 
+    /// Invalidates any references, real or implicit, to physical registers
+    ///
+    void invalidatePhysRegs(const MachineInstr *MI) {
+      unsigned Opcode = MI->getOpcode();
+      const MachineInstrInfo &MII = TM.getInstrInfo();
+      const MachineInstrDescriptor &Desc = MII.get(Opcode);
+      const unsigned *regs = Desc.ImplicitUses;
+      while (*regs)
+        RegsUsed[*regs++] = 1;
+
+      regs = Desc.ImplicitDefs;
+      while (*regs)
+        RegsUsed[*regs++] = 1;
+      
+      
+      /*
+      for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
+        const MachineOperand &op = MI->getOperand(i);
+        if (op.isMachineRegister())
+          RegsUsed[op.getAllocatedRegNum()] = 1;
+      }
+
+      for (int i = MI->getNumImplicitRefs() - 1; i >= 0; --i) {
+        const MachineOperand &op = MI->getImplicitOp(i);
+        if (op.isMachineRegister())
+          RegsUsed[op.getAllocatedRegNum()] = 1;
+      }
+      */
+    }
+
     void cleanupAfterFunction() {
       RegMap.clear();
       SSA2PhysRegMap.clear();
@@ -222,6 +252,12 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
       // get rid of the phi
       MBB->erase(MBB->begin());
     
+      // a preliminary pass that will invalidate any registers that
+      // are used by the instruction (including implicit uses)
+      invalidatePhysRegs(MI);
+
+      DEBUG(std::cerr << "num invalid regs: " << RegsUsed.size() << "\n");
+
       DEBUG(std::cerr << "num ops: " << MI->getNumOperands() << "\n");
       MachineOperand &targetReg = MI->getOperand(0);
 
@@ -285,13 +321,13 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
             saveVirtRegToStack(opBlock, opI, virtualReg, opPhysReg);
           }
         } 
+
+        // make regs available to other instructions
+        clearAllRegs();
       }
       
       // really delete the instruction
       delete MI;
-
-      // make regs available to other instructions
-      clearAllRegs();
     }
 
     //loop over each basic block
@@ -299,8 +335,9 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
     {
       MachineInstr *MI = *I;
 
-      // FIXME: add a preliminary pass that will invalidate any registers that
+      // a preliminary pass that will invalidate any registers that
       // are used by the instruction (including implicit uses)
+      invalidatePhysRegs(MI);
 
       // Loop over uses, move from memory into registers
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
