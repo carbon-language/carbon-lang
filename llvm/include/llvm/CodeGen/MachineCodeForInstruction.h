@@ -45,14 +45,8 @@ public:
   MachineCodeForInstruction() : Annotation(MCFI_AID), callArgsDesc(NULL) {}
   ~MachineCodeForInstruction();
   
-  static MachineCodeForInstruction &get(const Instruction *I) {
-    assert(I != NULL);
-    return *(MachineCodeForInstruction*)
-      ((Annotable*)I)->getOrCreateAnnotation(MCFI_AID);
-  }
-  static void destroy(const Instruction *I) {
-    ((Annotable*)I)->deleteAnnotation(MCFI_AID);
-  }
+  static MachineCodeForInstruction &get(const Instruction *I);
+  static void destroy(const Instruction *I);
 
   // Access to underlying machine instructions...
   typedef std::vector<MachineInstr*>::iterator iterator;
