@@ -97,7 +97,7 @@ static inline std::string ftostr(double V) {
   return Buffer;
 }
 
-std::string LowercaseString (const std::string &S) { 
+static inline std::string LowercaseString (const std::string &S) { 
   std::string result (S);
   for (unsigned i = 0; i < S.length(); ++i)
     if (isupper (result[i]))
