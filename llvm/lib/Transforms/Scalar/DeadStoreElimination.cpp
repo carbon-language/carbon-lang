@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -63,13 +64,18 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   AliasSetTracker KillLocs(AA);
 
-  // If this block ends in a return, unwind, and eventually tailcall/barrier,
-  // then all allocas are dead at its end.
+  // If this block ends in a return, unwind, unreachable, and eventually
+  // tailcall, then all allocas are dead at its end.
   if (BB.getTerminator()->getNumSuccessors() == 0) {
     BasicBlock *Entry = BB.getParent()->begin();
     for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-        KillLocs.add(AI, ~0);
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+        unsigned Size = ~0U;
+        if (!AI->isArrayAllocation() &&
+            AI->getType()->getElementType()->isSized())
+          Size = TD.getTypeSize(AI->getType()->getElementType());
+        KillLocs.add(AI, Size);
+      }
   }
 
   // PotentiallyDeadInsts - Deleting dead stores from the program can make other
