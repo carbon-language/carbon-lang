@@ -35,8 +35,7 @@ protected:
 
   inline DominatorBase(bool isPostDom) : Root(0), IsPostDominators(isPostDom) {}
 public:
-  inline const BasicBlock *getRoot() const { return Root; }
-  inline       BasicBlock *getRoot()       { return Root; }
+  inline BasicBlock *getRoot() const { return Root; }
 
   // Returns true if analysis based of postdoms
   bool isPostDominator() const { return IsPostDominators; }
@@ -44,14 +43,14 @@ public:
 
 //===----------------------------------------------------------------------===//
 //
-// DominatorSet - Maintain a set<const BasicBlock*> for every basic block in a
+// DominatorSet - Maintain a set<BasicBlock*> for every basic block in a
 // function, that represents the blocks that dominate the block.
 //
 class DominatorSet : public DominatorBase {
 public:
-  typedef std::set<const BasicBlock*>         DomSetType;    // Dom set for a bb
+  typedef std::set<BasicBlock*> DomSetType;    // Dom set for a bb
   // Map of dom sets
-  typedef std::map<const BasicBlock*, DomSetType> DomSetMapType;
+  typedef std::map<BasicBlock*, DomSetType> DomSetMapType;
 private:
   DomSetMapType Doms;
 
@@ -75,13 +74,13 @@ public:
   inline       iterator begin()       { return Doms.begin(); }
   inline const_iterator end()   const { return Doms.end(); }
   inline       iterator end()         { return Doms.end(); }
-  inline const_iterator find(const BasicBlock* B) const { return Doms.find(B); }
-  inline       iterator find(      BasicBlock* B)       { return Doms.find(B); }
+  inline const_iterator find(BasicBlock* B) const { return Doms.find(B); }
+  inline       iterator find(BasicBlock* B)       { return Doms.find(B); }
 
   // getDominators - Return the set of basic blocks that dominate the specified
   // block.
   //
-  inline const DomSetType &getDominators(const BasicBlock *BB) const {
+  inline const DomSetType &getDominators(BasicBlock *BB) const {
     const_iterator I = find(BB);
     assert(I != end() && "BB not in function!");
     return I->second;
@@ -89,7 +88,7 @@ public:
 
   // dominates - Return true if A dominates B.
   //
-  inline bool dominates(const BasicBlock *A, const BasicBlock *B) const {
+  inline bool dominates(BasicBlock *A, BasicBlock *B) const {
     return getDominators(B).count(A) != 0;
   }
 
@@ -106,7 +105,7 @@ public:
 // function.
 //
 class ImmediateDominators : public DominatorBase {
-  std::map<const BasicBlock*, const BasicBlock*> IDoms;
+  std::map<BasicBlock*, BasicBlock*> IDoms;
   void calcIDoms(const DominatorSet &DS);
 public:
 
@@ -132,18 +131,17 @@ public:
   }
 
   // Accessor interface:
-  typedef std::map<const BasicBlock*, const BasicBlock*> IDomMapType;
+  typedef std::map<BasicBlock*, BasicBlock*> IDomMapType;
   typedef IDomMapType::const_iterator const_iterator;
   inline const_iterator begin() const { return IDoms.begin(); }
   inline const_iterator end()   const { return IDoms.end(); }
-  inline const_iterator find(const BasicBlock* B) const { return IDoms.find(B);}
+  inline const_iterator find(BasicBlock* B) const { return IDoms.find(B);}
 
   // operator[] - Return the idom for the specified basic block.  The start
   // node returns null, because it does not have an immediate dominator.
   //
-  inline const BasicBlock *operator[](const BasicBlock *BB) const {
-    std::map<const BasicBlock*, const BasicBlock*>::const_iterator I = 
-      IDoms.find(BB);
+  inline BasicBlock *operator[](BasicBlock *BB) const {
+    std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
   }
 
@@ -172,17 +170,17 @@ class DominatorTree : public DominatorBase {
 public:
   typedef Node2 Node;
 private:
-  std::map<const BasicBlock*, Node*> Nodes;
+  std::map<BasicBlock*, Node*> Nodes;
   void calculate(const DominatorSet &DS);
   void reset();
-  typedef std::map<const BasicBlock*, Node*> NodeMapType;
+  typedef std::map<BasicBlock*, Node*> NodeMapType;
 public:
   class Node2 : public std::vector<Node*> {
     friend class DominatorTree;
-    const BasicBlock *TheNode;
-    Node2 * const IDom;
+    BasicBlock *TheNode;
+    Node2 *IDom;
   public:
-    inline const BasicBlock *getNode() const { return TheNode; }
+    inline BasicBlock *getNode() const { return TheNode; }
     inline Node2 *getIDom() const { return IDom; }
     inline const std::vector<Node*> &getChildren() const { return *this; }
 
@@ -196,7 +194,7 @@ public:
     }
 
   private:
-    inline Node2(const BasicBlock *node, Node *iDom) 
+    inline Node2(BasicBlock *node, Node *iDom) 
       : TheNode(node), IDom(iDom) {}
     inline Node2 *addChild(Node *C) { push_back(C); return C; }
   };
@@ -222,7 +220,7 @@ public:
     return false;
   }
 
-  inline const Node *operator[](const BasicBlock *BB) const {
+  inline Node *operator[](BasicBlock *BB) const {
     NodeMapType::const_iterator i = Nodes.find(BB);
     return (i != Nodes.end()) ? i->second : 0;
   }
@@ -249,8 +247,8 @@ public:
 //
 class DominanceFrontier : public DominatorBase {
 public:
-  typedef std::set<const BasicBlock*>         DomSetType;    // Dom set for a bb
-  typedef std::map<const BasicBlock*, DomSetType> DomSetMapType; // Dom set map
+  typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
+  typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
 private:
   DomSetMapType Frontiers;
   const DomSetType &calcDomFrontier(const DominatorTree &DT,
@@ -286,7 +284,7 @@ public:
   typedef DomSetMapType::const_iterator const_iterator;
   inline const_iterator begin() const { return Frontiers.begin(); }
   inline const_iterator end()   const { return Frontiers.end(); }
-  inline const_iterator find(const BasicBlock* B) const { return Frontiers.find(B); }
+  inline const_iterator find(BasicBlock* B) const { return Frontiers.find(B); }
 
   // getAnalysisUsage - This obviously provides the dominance frontier, but it
   // uses dominator sets

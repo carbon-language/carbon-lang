@@ -18,7 +18,7 @@ AnalysisID cfg::LoopInfo::ID(AnalysisID::create<cfg::LoopInfo>());
 //===----------------------------------------------------------------------===//
 // cfg::Loop implementation
 //
-bool cfg::Loop::contains(const BasicBlock *BB) const {
+bool cfg::Loop::contains(BasicBlock *BB) const {
   return find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
 }
 
@@ -42,9 +42,9 @@ bool cfg::LoopInfo::runOnFunction(Function *F) {
 }
 
 void cfg::LoopInfo::Calculate(const DominatorSet &DS) {
-  const BasicBlock *RootNode = DS.getRoot();
+  BasicBlock *RootNode = DS.getRoot();
 
-  for (df_iterator<const BasicBlock*> NI = df_begin(RootNode),
+  for (df_iterator<BasicBlock*> NI = df_begin(RootNode),
 	 NE = df_end(RootNode); NI != NE; ++NI)
     if (Loop *L = ConsiderForLoop(*NI, DS))
       TopLevelLoops.push_back(L);
@@ -60,15 +60,15 @@ void cfg::LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 
-cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
-					  const DominatorSet &DS) {
+cfg::Loop *cfg::LoopInfo::ConsiderForLoop(BasicBlock *BB,
+                                          const DominatorSet &DS) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Havn't processed this node?
 
-  std::vector<const BasicBlock *> TodoStack;
+  std::vector<BasicBlock *> TodoStack;
 
   // Scan the predecessors of BB, checking to see if BB dominates any of
   // them.
-  for (pred_const_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
+  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
     if (DS.dominates(BB, *I))   // If BB dominates it's predecessor...
       TodoStack.push_back(*I);
 
@@ -79,7 +79,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
   BBMap[BB] = L;
 
   while (!TodoStack.empty()) {  // Process all the nodes in the loop
-    const BasicBlock *X = TodoStack.back();
+    BasicBlock *X = TodoStack.back();
     TodoStack.pop_back();
 
     if (!L->contains(X)) {                  // As of yet unprocessed??
@@ -94,7 +94,7 @@ cfg::Loop *cfg::LoopInfo::ConsiderForLoop(const BasicBlock *BB,
   // loop can be found for them.  Also check subsidary basic blocks to see if
   // they start subloops of their own.
   //
-  for (std::vector<const BasicBlock*>::reverse_iterator I = L->Blocks.rbegin(),
+  for (std::vector<BasicBlock*>::reverse_iterator I = L->Blocks.rbegin(),
 	 E = L->Blocks.rend(); I != E; ++I) {
 
     // Check to see if this block starts a new loop

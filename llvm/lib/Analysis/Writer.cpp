@@ -50,8 +50,8 @@ void cfg::WriteToOutput(const IntervalPartition &IP, ostream &o) {
 //  Dominator Printing Routines
 //===----------------------------------------------------------------------===//
 
-ostream &operator<<(ostream &o, const set<const BasicBlock*> &BBs) {
-  copy(BBs.begin(),BBs.end(), std::ostream_iterator<const BasicBlock*>(o,"\n"));
+ostream &operator<<(ostream &o, const set<BasicBlock*> &BBs) {
+  copy(BBs.begin(),BBs.end(), std::ostream_iterator<BasicBlock*>(o, "\n"));
   return o;
 }
 

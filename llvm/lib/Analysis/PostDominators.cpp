@@ -48,8 +48,8 @@ void cfg::DominatorSet::calcForwardDominatorSet(Function *M) {
     DomSetType WorkingSet;
     df_iterator<Function*> It = df_begin(M), End = df_end(M);
     for ( ; It != End; ++It) {
-      const BasicBlock *BB = *It;
-      pred_const_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
+      BasicBlock *BB = *It;
+      pred_iterator PI = pred_begin(BB), PEnd = pred_end(BB);
       if (PI != PEnd) {                // Is there SOME predecessor?
 	// Loop until we get to a predecessor that has had it's dom set filled
 	// in at least once.  We are guaranteed to have this because we are
@@ -80,7 +80,7 @@ void cfg::DominatorSet::calcForwardDominatorSet(Function *M) {
 // only have a single exit node (return stmt), then calculates the post
 // dominance sets for the function.
 //
-void cfg::DominatorSet::calcPostDominatorSet(Function *M) {
+void cfg::DominatorSet::calcPostDominatorSet(Function *F) {
   // Since we require that the unify all exit nodes pass has been run, we know
   // that there can be at most one return instruction in the function left.
   // Get it.
@@ -88,8 +88,8 @@ void cfg::DominatorSet::calcPostDominatorSet(Function *M) {
   Root = getAnalysis<UnifyFunctionExitNodes>().getExitNode();
 
   if (Root == 0) {  // No exit node for the function?  Postdomsets are all empty
-    for (Function::const_iterator MI = M->begin(), ME = M->end(); MI!=ME; ++MI)
-      Doms[*MI] = DomSetType();
+    for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
+      Doms[*FI] = DomSetType();
     return;
   }
 
@@ -101,8 +101,8 @@ void cfg::DominatorSet::calcPostDominatorSet(Function *M) {
     DomSetType WorkingSet;
     idf_iterator<BasicBlock*> It = idf_begin(Root), End = idf_end(Root);
     for ( ; It != End; ++It) {
-      const BasicBlock *BB = *It;
-      succ_const_iterator PI = succ_begin(BB), PEnd = succ_end(BB);
+      BasicBlock *BB = *It;
+      succ_iterator PI = succ_begin(BB), PEnd = succ_end(BB);
       if (PI != PEnd) {                // Is there SOME predecessor?
 	// Loop until we get to a successor that has had it's dom set filled
 	// in at least once.  We are guaranteed to have this because we are
@@ -158,7 +158,7 @@ void cfg::ImmediateDominators::calcIDoms(const DominatorSet &DS) {
   //
   for (DominatorSet::const_iterator DI = DS.begin(), DEnd = DS.end(); 
        DI != DEnd; ++DI) {
-    const BasicBlock *BB = DI->first;
+    BasicBlock *BB = DI->first;
     const DominatorSet::DomSetType &Dominators = DI->second;
     unsigned DomSetSize = Dominators.size();
     if (DomSetSize == 1) continue;  // Root node... IDom = null
@@ -237,7 +237,7 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
     // Iterate over all nodes in depth first order...
     for (df_iterator<BasicBlock*> I = df_begin(Root), E = df_end(Root);
          I != E; ++I) {
-      const BasicBlock *BB = *I;
+      BasicBlock *BB = *I;
       const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
       unsigned DomSetSize = Dominators.size();
       if (DomSetSize == 1) continue;  // Root node... IDom = null
@@ -278,7 +278,7 @@ void cfg::DominatorTree::calculate(const DominatorSet &DS) {
     // Iterate over all nodes in depth first order...
     for (idf_iterator<BasicBlock*> I = idf_begin(Root), E = idf_end(Root);
          I != E; ++I) {
-      const BasicBlock *BB = *I;
+      BasicBlock *BB = *I;
       const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
       unsigned DomSetSize = Dominators.size();
       if (DomSetSize == 1) continue;  // Root node... IDom = null
@@ -332,10 +332,10 @@ const cfg::DominanceFrontier::DomSetType &
 cfg::DominanceFrontier::calcDomFrontier(const DominatorTree &DT, 
 					const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
-  const BasicBlock *BB = Node->getNode();
+  BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
 
-  for (succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
+  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
        SI != SE; ++SI) {
     // Does Node immediately dominate this successor?
     if (DT[*SI]->getIDom() != Node)
@@ -365,11 +365,11 @@ const cfg::DominanceFrontier::DomSetType &
 cfg::DominanceFrontier::calcPostDomFrontier(const DominatorTree &DT, 
 					    const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
-  const BasicBlock *BB = Node->getNode();
+  BasicBlock *BB = Node->getNode();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
   if (!Root) return S;
 
-  for (pred_const_iterator SI = pred_begin(BB), SE = pred_end(BB);
+  for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB);
        SI != SE; ++SI) {
     // Does Node immediately dominate this predeccessor?
     if (DT[*SI]->getIDom() != Node)

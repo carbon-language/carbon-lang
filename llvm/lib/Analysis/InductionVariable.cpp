@@ -31,8 +31,8 @@ static bool isLoopInvariant(const Value *V, const cfg::Loop *L) {
   if (isa<Constant>(V) || isa<Argument>(V) || isa<GlobalValue>(V))
     return true;
   
-  const Instruction *I = cast<Instruction>(V);
-  const BasicBlock *BB = I->getParent();
+  Instruction *I = cast<Instruction>(V);
+  BasicBlock *BB = I->getParent();
 
   return !L->contains(BB);
 }

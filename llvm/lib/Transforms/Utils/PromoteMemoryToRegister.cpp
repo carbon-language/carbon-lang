@@ -141,8 +141,8 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier & DF) {
 			DominanceFrontier::DomSetType     s = (*it).second;
 			for (DominanceFrontier::DomSetType::iterator p = s.begin();p!=s.end(); ++p)
 			{
-				if (queuePhiNode((BasicBlock *)*p, i))
-				PhiNodes[i].push_back((BasicBlock *)*p);
+				if (queuePhiNode(*p, i))
+                                  PhiNodes[i].push_back(*p);
 			}
 		}
 		// perform iterative step
@@ -152,8 +152,8 @@ bool PromoteInstance::PromoteFunction(Function *F, DominanceFrontier & DF) {
 			DominanceFrontier::DomSetType     s = it->second;
 			for (DominanceFrontier::DomSetType::iterator p = s.begin(); p!=s.end(); ++p)
 			{
-				if (queuePhiNode((BasicBlock *)*p,i))
-				PhiNodes[i].push_back((BasicBlock*)*p);
+				if (queuePhiNode(*p,i))
+				PhiNodes[i].push_back(*p);
 			}
 		}
 	}
