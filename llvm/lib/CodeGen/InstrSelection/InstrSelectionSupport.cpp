@@ -433,7 +433,8 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
       if (mop.getType() == MachineOperand::MO_VirtualRegister)
         {
           assert(mop.getVRegValue() != NULL);
-          if (Constant *opConst = dyn_cast<Constant>(mop.getVRegValue())) {
+          opValue = mop.getVRegValue();
+          if (Constant *opConst = dyn_cast<Constant>(opValue)) {
             opType = ChooseRegOrImmed(opConst, opCode, target,
                                       (immedPos == (int)op), machineRegNum,
                                       immedValue);
