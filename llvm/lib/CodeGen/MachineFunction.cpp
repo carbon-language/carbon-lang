@@ -19,7 +19,7 @@
 
 const int INVALID_FRAME_OFFSET = INT_MAX; // std::numeric_limits<int>::max();
 
-static AnnotationID MCFM_AID(
+static AnnotationID MF_AID(
                  AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
 
 
@@ -86,7 +86,7 @@ Pass *createMachineCodeDestructionPass() {
 MachineFunction&
 MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 {
-  assert(Fn->getAnnotation(MCFM_AID) == 0 &&
+  assert(Fn->getAnnotation(MF_AID) == 0 &&
          "Object already exists for this function!");
   MachineFunction* mcInfo = new MachineFunction(Fn, Tar);
   Fn->addAnnotation(mcInfo);
@@ -96,13 +96,13 @@ MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 void
 MachineFunction::destruct(const Function *Fn)
 {
-  bool Deleted = Fn->deleteAnnotation(MCFM_AID);
+  bool Deleted = Fn->deleteAnnotation(MF_AID);
   assert(Deleted && "Machine code did not exist for function!");
 }
 
 MachineFunction& MachineFunction::get(const Function *F)
 {
-  MachineFunction *mc = (MachineFunction*)F->getAnnotation(MCFM_AID);
+  MachineFunction *mc = (MachineFunction*)F->getAnnotation(MF_AID);
   assert(mc && "Call construct() method first to allocate the object");
   return *mc;
 }
@@ -176,7 +176,7 @@ SizeToAlignment(unsigned int size, const TargetMachine& target)
 /*ctor*/
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine& target)
-  : Annotation(MCFM_AID),
+  : Annotation(MF_AID),
     Fn(F), Target(target), staticStackSize(0),
     automaticVarsSize(0), regSpillsSize(0),
     maxOptionalArgsSize(0), maxOptionalNumArgs(0),
