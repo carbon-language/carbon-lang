@@ -1,4 +1,4 @@
-##===- runtime/GCCLibraries/crtend/Makefile ------------------------------*- Makefile -*-===##
+##===- runtime/GCCLibraries/crtend/Makefile ----------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,6 +6,12 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+#
+# This directory contains the C and C++ runtime libraries for the LLVM GCC
+# front-ends.
+#
+##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
 BYTECODE_LIBRARY=1
 DONT_BUILD_RELINKED=1
