@@ -537,7 +537,7 @@ def ADC32mr  : Im32   <"adc", 0x13, MRMDestMem>;         // [mem32] += R32+Carry
 def ADC32ri  : Ii32   <"adc", 0x81, MRM2r     >;         // R32 += I32+Carry
 def ADC32ri8 : Ii8    <"adc", 0x83, MRM2r     >;         // R32 += I8+Carry
 def ADC32mi  : Im32i32<"adc", 0x81, MRM2m     >;         // [mem32] += I32+Carry
-def ADC32mi8 : Im32i8 <"adc", 0x83, MRM2m     >;         // [mem32[ += I8+Carry
+def ADC32mi8 : Im32i8 <"adc", 0x83, MRM2m     >;         // [mem32] += I8+Carry
 
 def SUB8rr   : I     <"sub", 0x28, MRMDestReg>,         Pattern<(set R8 , (minus R8 , R8 ))>;
 def SUB16rr  : I     <"sub", 0x29, MRMDestReg>, OpSize, Pattern<(set R16, (minus R16, R16))>;
@@ -567,7 +567,7 @@ def SBB32mr  : Im32   <"sbb", 0x1B, MRMDestMem>;         // [mem32] -= R32+Borro
 def SBB32ri  : Ii32   <"adc", 0x81, MRM3r     >;         // R32 -= I32+Borrow
 def SBB32ri8 : Ii8    <"adc", 0x83, MRM3r     >;         // R32 -= I8+Borrow
 def SBB32mi  : Im32i32<"adc", 0x81, MRM3m     >;         // [mem32] -= I32+Borrow
-def SBB32mi8 : Im32i8 <"adc", 0x83, MRM3m     >;         // [mem32[ -= I8+Borrow
+def SBB32mi8 : Im32i8 <"adc", 0x83, MRM3m     >;         // [mem32] -= I8+Borrow
 
 def IMUL16rr : I     <"imul", 0xAF, MRMSrcReg>, TB, OpSize, Pattern<(set R16, (times R16, R16))>;
 def IMUL32rr : I     <"imul", 0xAF, MRMSrcReg>, TB        , Pattern<(set R32, (times R32, R32))>;
