@@ -9,6 +9,7 @@
 #define LLVM_TRANSFORMS_IPO_H
 
 class Pass;
+class Function;
 
 //===----------------------------------------------------------------------===//
 // createConstantMergePass - This function returns a new pass that merges
@@ -32,6 +33,13 @@ Pass *createDeadTypeEliminationPass();
 // internal globals (functions or global variables)
 //
 Pass *createGlobalDCEPass();
+
+
+//===----------------------------------------------------------------------===//
+// createFunctionExtractionPass - This pass deletes as much of the module as
+// possible, except for the function specified.
+//
+Pass *createFunctionExtractionPass(Function *F);
 
 
 //===----------------------------------------------------------------------===//
