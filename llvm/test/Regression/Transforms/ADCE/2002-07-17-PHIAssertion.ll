@@ -2,8 +2,8 @@
 ;
 ; RUN: as < %s | opt -adce
 
-%bk = internal uninitialized global uint		; <uint*> [#uses=2]
-%hufts = internal uninitialized global uint		; <uint*> [#uses=1]
+%bk = external global uint		; <uint*> [#uses=2]
+%hufts = external global uint		; <uint*> [#uses=1]
 
 implementation   ; Functions:
 
