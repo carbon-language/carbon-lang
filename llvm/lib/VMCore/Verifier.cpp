@@ -10,6 +10,8 @@
 //    with the same name as something in the symbol table, but with a different
 //    address as what is in the symbol table...
 //  . Both of a binary operator's parameters are the same type
+//  . Verify that arithmetic and other things are only performed on first class
+//    types.  No adding structures or arrays.
 //  . All of the constants in a switch statement are of the correct type
 //  . The code is in valid SSA form
 //  . It should be illegal to put a label into any other type (like a structure)
@@ -20,7 +22,7 @@
 //  . All other things that are tested by asserts spread about the code...
 //  . All basic blocks should only end with terminator insts, not contain them
 //  . All methods must have >= 1 basic block
-//  . Verify that none of the Def getType()'s are null.
+//  . Verify that none of the Value getType()'s are null.
 //  . Method's cannot take a void typed parameter
 //  . Verify that a method's argument list agrees with it's declared type.
 //  . Verify that arrays and structures have fixed elements: No unsized arrays.
