@@ -114,7 +114,6 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
 }
 
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  return;
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
@@ -138,10 +137,6 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
-}
-
-void PowerPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  assert(0 && "Cannot execute PowerPCJITInfo::replaceMachineCodeForFunction()");
 }
 
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
