@@ -225,6 +225,8 @@ struct PointerRules : public TemplateRules<ConstantPointer, PointerRules> {
 
   inline static ConstantPointer *CastToPointer(const ConstantPointer *V,
                                                const PointerType *PTy) {
+    if (V->getType() == PTy)
+      return const_cast<ConstantPointer*>(V);  // Allow cast %PTy %ptr to %PTy
     if (V->isNullValue())
       return ConstantPointerNull::get(PTy);
     return 0;  // Can't const prop other types of pointers
@@ -244,10 +246,6 @@ template<class ConstantClass, class BuiltinType, Type **Ty>
 struct DirectRules 
   : public TemplateRules<ConstantClass, 
                          DirectRules<ConstantClass, BuiltinType, Ty> > {
-
-  inline static Constant *Not(const ConstantClass *V) { 
-    return ConstantClass::get(*Ty, !(BuiltinType)V->getValue());;
-  }
 
   inline static Constant *Add(const ConstantClass *V1, 
                               const ConstantClass *V2) {
@@ -310,6 +308,22 @@ struct DirectRules
 #undef DEF_CAST
 };
 
+
+//===----------------------------------------------------------------------===//
+//                           DirectIntRules Class
+//===----------------------------------------------------------------------===//
+//
+// DirectIntRules provides implementations of functions that are valid on
+// integer types, but not all types in general.
+//
+template <class ConstantClass, class BuiltinType, Type **Ty>
+struct DirectIntRules : public DirectRules<ConstantClass, BuiltinType, Ty> {
+  inline static Constant *Not(const ConstantClass *V) { 
+    return ConstantClass::get(*Ty, ~(BuiltinType)V->getValue());;
+  }
+};
+
+
 //===----------------------------------------------------------------------===//
 //                            DirectRules Subclasses
 //===----------------------------------------------------------------------===//
@@ -330,21 +344,21 @@ Annotation *ConstRules::find(AnnotationID AID, const Annotable *TyA, void *) {
   case Type::BoolTyID:    return new BoolRules();
   case Type::PointerTyID: return new PointerRules();
   case Type::SByteTyID:
-    return new DirectRules<ConstantSInt,   signed char , &Type::SByteTy>();
+    return new DirectIntRules<ConstantSInt,   signed char , &Type::SByteTy>();
   case Type::UByteTyID:
-    return new DirectRules<ConstantUInt, unsigned char , &Type::UByteTy>();
+    return new DirectIntRules<ConstantUInt, unsigned char , &Type::UByteTy>();
   case Type::ShortTyID:
-    return new DirectRules<ConstantSInt,   signed short, &Type::ShortTy>();
+    return new DirectIntRules<ConstantSInt,   signed short, &Type::ShortTy>();
   case Type::UShortTyID:
-    return new DirectRules<ConstantUInt, unsigned short, &Type::UShortTy>();
+    return new DirectIntRules<ConstantUInt, unsigned short, &Type::UShortTy>();
   case Type::IntTyID:
-    return new DirectRules<ConstantSInt,   signed int  , &Type::IntTy>();
+    return new DirectIntRules<ConstantSInt,   signed int  , &Type::IntTy>();
   case Type::UIntTyID:
-    return new DirectRules<ConstantUInt, unsigned int  , &Type::UIntTy>();
+    return new DirectIntRules<ConstantUInt, unsigned int  , &Type::UIntTy>();
   case Type::LongTyID:
-    return new DirectRules<ConstantSInt,  int64_t      , &Type::LongTy>();
+    return new DirectIntRules<ConstantSInt,  int64_t      , &Type::LongTy>();
   case Type::ULongTyID:
-    return new DirectRules<ConstantUInt, uint64_t      , &Type::ULongTy>();
+    return new DirectIntRules<ConstantUInt, uint64_t      , &Type::ULongTy>();
   case Type::FloatTyID:
     return new DirectRules<ConstantFP  , float         , &Type::FloatTy>();
   case Type::DoubleTyID:
