@@ -409,7 +409,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 }
 
 namespace {
-
+Statistic<>NotLogic("ppc-codegen", "Number of inverted logical ops");
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
 /// SelectionDAG operations.
@@ -1195,8 +1195,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::AND:
   case ISD::OR:
-  case ISD::XOR:
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
@@ -1205,7 +1203,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
         switch (opcode) {
         case ISD::AND: Opc = PPC::AND; break;
         case ISD::OR:  Opc = PPC::OR;  break;
-        case ISD::XOR: Opc = PPC::XOR; break;
         }
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
@@ -1213,7 +1210,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
         switch (opcode) {
         case ISD::AND: Opc = PPC::ANDIo; break;
         case ISD::OR:  Opc = PPC::ORI;   break;
-        case ISD::XOR: Opc = PPC::XORI;  break;
         }
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
@@ -1221,15 +1217,63 @@ unsigned ISel::SelectExpr(SDOperand N) {
         switch (opcode) {
         case ISD::AND: Opc = PPC::ANDISo;  break;
         case ISD::OR:  Opc = PPC::ORIS;    break;
-        case ISD::XOR: Opc = PPC::XORIS;   break;
         }
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
     }
     return Result;
 
+  case ISD::XOR: {
+    // Check for EQV: xor, (xor a, -1), b
+    if (N.getOperand(0).getOpcode() == ISD::XOR &&
+        N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue()) {
+      ++NotLogic;
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::EQV, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      return Result;
+    }
+    // Check for NOT, NOR, and NAND: xor (copy, or, and), -1
+    if (N.getOperand(1).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(N.getOperand(1))->isAllOnesValue()) {
+      ++NotLogic;
+      switch(N.getOperand(0).getOpcode()) {
+      case ISD::OR:
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        BuildMI(BB, PPC::NOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::AND:
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        BuildMI(BB, PPC::NAND, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      default:
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, PPC::NOR, 2, Result).addReg(Tmp1).addReg(Tmp1);
+        break;
+      }
+      return Result;
+    }
+    Tmp1 = SelectExpr(N.getOperand(0));
+    switch(canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
+      default: assert(0 && "unhandled result code");
+      case 0: // No immediate
+        Tmp2 = SelectExpr(N.getOperand(1));
+        BuildMI(BB, PPC::XOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case 1: // Low immediate
+        BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        break;
+      case 2: // Shifted immediate
+        BuildMI(BB, PPC::XORIS, 2, Result).addReg(Tmp1).addImm(Tmp2);
+        break;
+    }
+    return Result;
+  }
+
   case ISD::SUB:
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp2 = SelectExpr(N.getOperand(1));
     if (1 == canUseAsImmediateForOpcode(N.getOperand(0), opcode, Tmp1))
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
@@ -1240,7 +1284,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
     
   case ISD::MUL:
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
     if (1 == canUseAsImmediateForOpcode(N.getOperand(1), opcode, Tmp2))
       BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
@@ -1252,7 +1295,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SDIV:
   case ISD::UDIV:
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW;
@@ -1261,7 +1303,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::UREM:
   case ISD::SREM: {
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     Tmp3 = MakeReg(MVT::i32);
