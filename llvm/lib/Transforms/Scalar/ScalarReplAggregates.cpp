@@ -123,12 +123,12 @@ bool SROA::runOnFunction(Function &F) {
           // expanded itself once the worklist is rerun.
           //
           std::string OldName = GEPI->getName();  // Steal the old name...
+          std::vector<Value*> NewArgs;
+          NewArgs.push_back(Constant::getNullValue(Type::LongTy));
+          NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
           GEPI->setName("");
           RepValue =
-            new GetElementPtrInst(AllocaToUse, 
-                                  std::vector<Value*>(GEPI->op_begin()+3, 
-                                                      GEPI->op_end()),
-                                  OldName, GEPI);
+            new GetElementPtrInst(AllocaToUse, NewArgs, OldName, GEPI);
         }
 
         // Move all of the users over to the new GEP.
