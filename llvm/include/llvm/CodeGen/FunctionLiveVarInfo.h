@@ -49,7 +49,9 @@ class FunctionLiveVarInfo : public FunctionPass {
 
   // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst.
   // These sets are just pointers to sets in MInst2LVSetBI or BBLiveVar.
-  hash_map<const MachineInstr *, ValueSet *> MInst2LVSetAI; 
+  hash_map<const MachineInstr *, ValueSet *> MInst2LVSetAI;
+
+  hash_map<const BasicBlock*, BBLiveVar*> BBLiveVarInfo;
 
   // Stored Function that the data is computed with respect to
   const Function *M;
