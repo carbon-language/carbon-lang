@@ -38,7 +38,6 @@ struct AnalysisResolver;
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
 
-
 //===----------------------------------------------------------------------===//
 // Pass interface - Implemented by all 'passes'.  Subclass this if you are an
 // interprocedural optimization or you do not fit into any of the more
@@ -109,16 +108,18 @@ public:
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);
 
+
   // getPassInfo - Static method to get the pass information from a class name.
   template<typename AnalysisClass>
   static const PassInfo *getClassPassInfo() {
     return lookupPassInfo(typeid(AnalysisClass));
   }
 
-protected:
   // lookupPassInfo - Return the pass info object for the specified pass class,
   // or null if it is not known.
   static const PassInfo *lookupPassInfo(const std::type_info &TI);
+
+protected:
 
   // getAnalysis<AnalysisType>() - This function is used by subclasses to get to
   // the analysis information that they claim to use by overriding the
@@ -129,7 +130,16 @@ protected:
     assert(Resolver && "Pass has not been inserted into a PassManager object!");
     const PassInfo *PI = getClassPassInfo<AnalysisType>();
     assert(PI && "getAnalysis for unregistered pass!");
-    return *(AnalysisType*)Resolver->getAnalysis(PI);
+
+    // Because the AnalysisType may not be a subclass of pass (for
+    // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
+    // return pointer (because the class may multiply inherit, once from pass,
+    // once from AnalysisType).
+    //
+    AnalysisType *Result =
+      dynamic_cast<AnalysisType*>(Resolver->getAnalysis(PI));
+    assert(Result && "Pass does not implement interface required!");
+    return *Result;
   }
 
   template<typename AnalysisType>
