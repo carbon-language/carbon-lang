@@ -24,10 +24,10 @@ testsparc   : $(OTESTS:%.ll=%.s)
 testcbe     : $(OTESTS:%.ll=%.tc)
 
 Output/%.asmdis: % $(LAS) $(LDIS) Output/.dir
-	@./TestAsmDisasm.sh $< $(LLVMTOOLCURRENT) $(LLVMLIBCURRENTSOURCE)
+	@./TestAsmDisasm.sh $< $(LLVMTOOLCURRENT)
 
 Output/%.opt: % $(LAS) $(LDIS) $(LOPT) Output/.dir
-	@./TestOptimizer.sh $< $(LLVMTOOLCURRENT) $(LLVMLIBCURRENTSOURCE)
+	@./TestOptimizer.sh $< $(LLVMTOOLCURRENT)
 
 Output/%.tc: Output/%.bc $(LDIS)
 	@echo "======== Generating C code for $<"
