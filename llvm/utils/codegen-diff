@@ -1,11 +1,13 @@
 #!/usr/bin/perl
 
 use Getopt::Std;
+$DEBUG = 0;
 
 sub parse_objdump_file {
   my ($filename) = @_;
   my @result;
   open (INPUT, $filename) or die "$filename: $!\n";
+  print "opened objdump output file $filename\n" if $DEBUG;
   while (<INPUT>) {
     if (/\s*([0-9a-f]*):\t(([0-9a-f]{2} )+) *\t(.*)$/) {
       my ($addr, $bytes, $instr) = ($1, $2, $4);
@@ -13,6 +15,7 @@ sub parse_objdump_file {
       $bytes =~ s/\s*(.*\S)\s*/$1/; # trim any remaining whitespace
       $instr =~ s/\s*(.*\S)\s*/$1/;
       push (@result, {'addr' => $addr, 'bytes' => $bytes, 'instr' => $instr});
+      print "addr=$addr bytes='$bytes' instr='$instr'\n" if $DEBUG;
     }
   }
   close INPUT;
@@ -24,6 +27,7 @@ sub parse_gdb_file {
   my @result;
   my $got_addr;
   open (INPUT, $filename) or die "$filename: $!\n";
+  print "opened gdb output file $filename\n" if $DEBUG;
   while (<INPUT>) {
     if (/^(0x[0-9a-f]*):\t([^\t]*)\t[^:]*:\t((0x[0-9a-f]{2}\s*)+)\s*$/) {
       my ($addr, $bytes, $instr) = ($1, $3, $2);
@@ -32,6 +36,7 @@ sub parse_gdb_file {
       $bytes =~ s/\s*(.*\S)\s*/$1/;  # trim any remaining whitespace
       $instr =~ s/\s*(.*\S)\s*/$1/;
       push (@result, {'addr' => $addr, 'bytes' => $bytes, 'instr' => $instr});
+      print "addr=$addr bytes='$bytes' instr='$instr'\n" if $DEBUG;
     } elsif (/^(0x[0-9a-f]*):\t$/) { # deal with gdb's line breaker
       $got_addr = $1;
     } elsif ($got_addr && /^    ([^\t]*)\t[^:]*:\t((0x[0-9a-f]{2}\s*)+)\s*$/) {
@@ -41,6 +46,7 @@ sub parse_gdb_file {
       $bytes =~ s/\s*(.*\S)\s*/$1/;  # trim any remaining whitespace
       $instr =~ s/\s*(.*\S)\s*/$1/;
       push (@result, {'addr' => $addr, 'bytes' => $bytes, 'instr' => $instr});
+      print "addr=$addr bytes='$bytes' instr='$instr'\n" if $DEBUG;
       undef $got_addr;
     }
   }
