@@ -7,6 +7,12 @@
 // In this way, the interval partition may be used to reduce a flow graph down
 // to its degenerate single node interval partition (unless it is irreducible).
 //
+// TODO: Provide an interval iterator that codifies the internals of 
+// IntervalPartition.  Inside, it would have a stack of Interval*'s, and would
+// walk the interval partition in depth first order.  IntervalPartition would
+// then be a client of this iterator.  The iterator should work on Method*,
+// const Method*, IntervalPartition*, and const IntervalPartition*.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_INTERVALS_H
@@ -23,20 +29,25 @@ namespace cfg {
 
 class IntervalPartition;
 
+//===----------------------------------------------------------------------===//
+//
 // Interval Class - An Interval is a set of nodes defined such that every node
 // in the interval has all of its predecessors in the interval (except for the
 // header)
+//
 class Interval {
   friend class IntervalPartition;
-public:
-  typedef vector<BasicBlock*>::iterator succ_iterator;
-  typedef vector<BasicBlock*>::iterator pred_iterator;
-  typedef vector<BasicBlock*>::iterator node_iterator;
 
   // HeaderNode - The header BasicBlock, which dominates all BasicBlocks in this
   // interval.  Also, any loops in this interval must go through the HeaderNode.
   //
   BasicBlock *HeaderNode;
+public:
+  typedef vector<BasicBlock*>::iterator succ_iterator;
+  typedef vector<BasicBlock*>::iterator pred_iterator;
+  typedef vector<BasicBlock*>::iterator node_iterator;
+
+  inline BasicBlock *getHeaderNode() const { return HeaderNode; }
 
   // Nodes - The basic blocks in this interval.
   //
@@ -94,7 +105,8 @@ inline Interval::pred_iterator pred_end(Interval *I) {
 }
 
 
-
+//===----------------------------------------------------------------------===//
+//
 // IntervalPartition - This class builds and holds an "interval partition" for
 // a method.  This partition divides the control flow graph into a set of
 // maximal intervals, as defined with the properties above.  Intuitively, a
