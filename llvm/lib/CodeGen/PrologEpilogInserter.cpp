@@ -206,7 +206,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // of stack growth -- so it's always positive.
   int Offset = TFI.getOffsetOfLocalArea();
   if (StackGrowsDown)
-      Offset = -Offset;
+    Offset = -Offset;
   assert(Offset >= 0 
          && "Local area offset should be in direction of stack growth");
 
@@ -256,7 +256,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     Offset = (Offset+StackAlignment-1)/StackAlignment*StackAlignment;
 
   // Set the final value of the stack pointer...
-  FFI->setStackSize(Offset-TFI.getOffsetOfLocalArea());
+  FFI->setStackSize(Offset+TFI.getOffsetOfLocalArea());
 }
 
 
