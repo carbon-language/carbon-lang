@@ -89,6 +89,12 @@ end is a modified version of GCC 3.4 (we track the GCC 3.4 development).  Once
 compiled into LLVM bytecode, a program can be manipulated with the LLVM tools
 from the LLVM suite.</p>
 
+<p>
+There is a third, optional piece called llvm-test.  It is a suite of programs
+with a testing harness that can be used to further test LLVM's functionality
+and performance.
+</p>
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -526,7 +532,7 @@ You can set these on the command line, or better yet, set them in your
     <dt>alias llvmgcc <i>LLVMGCCDIR</i><tt>/bin/gcc</tt>
     <dt>alias llvmg++ <i>LLVMGCCDIR</i><tt>/bin/g++</tt>
     <dd>
-    This alias allows you to use the LLVM C and C++ front ends without putting
+    These aliases allow you to use the LLVM C and C++ front ends without putting
     them in your <tt>PATH</tt> or typing in their complete pathnames.
 </dl>
 
@@ -552,7 +558,7 @@ file is a TAR archive that is compressed with the gzip program.
   <dd>This is the source code for the LLVM libraries and tools.<br/></dd>
 
   <dt><tt>llvm-test-1.4.tar.gz</tt></dt>
-  <dd>This is the source code for the LLVM test suite</tt></dd>
+  <dd>This is the source code for the LLVM test suite.</tt></dd>
 
   <dt><tt>cfrontend-1.4.source.tar.gz</tt></dt>
   <dd>This is the source release of the GCC front end.<br/></dd>
@@ -626,7 +632,7 @@ from the CVS repository:</p>
 </pre>
 
 <p>Please note that you must follow <a href="CFEBuildInstrs.html">these 
-instructions</a> to successfully build the LLVM C front-end.</p>
+instructions</a> to successfully build the LLVM GCC front-end.</p>
 
 </div>
 
@@ -725,7 +731,7 @@ script to configure the build system:</p>
     Path to the location where the LLVM GCC front end binaries and
     associated libraries were installed.  This must be specified as an
     absolute pathname.
-    <p>
+    <p></p>
   </dd>
   <dt><i>--with-tclinclude</i></dt>
   <dd>Path to the tcl include directory under which the <tt>tclsh</tt> can be
@@ -733,13 +739,14 @@ script to configure the build system:</p>
   want to use a specific one (8.x) for LLVM. LLVM only uses tcl for running the
   dejagnu based test suite in <tt>llvm/test</tt>. If you don't specify this
   option, the LLVM configure script will search for tcl 8.4 and 8.3 releases.
+  <p></p>
   </dd>
   <dt><i>--enable-optimized</i></dt>
   <dd>
     Enables optimized compilation by default (debugging symbols are removed
     and GCC optimization flags are enabled).  The default is to use an
     unoptimized build (also known as a debug build).
-    <p>
+    <p></p>
   </dd>
   <dt><i>--enable-jit</i></dt>
   <dd>
@@ -747,7 +754,7 @@ script to configure the build system:</p>
     available
     on all platforms.  The default is dependent on platform, so it is best
     to explicitly enable it if you want it.
-    <p>
+    <p></p>
   </dd>
   <dt><i>--enable-doxygen</i></dt>
   <dd>Look for the doxygen program and enable construction of doxygen based
@@ -824,7 +831,7 @@ builds:</p>
 <p><tt>gmake</tt></p>
 
 <p>If the build fails, please <a href="#brokengcc">check here</a> to see if you
-are using a known broken version of GCC to compile LLVM with.</p>
+are using a version of GCC that is known not to compile LLVM.</p>
 
 <p>
 If you have multiple processors in your machine, you may wish to use some of
@@ -852,7 +859,8 @@ source code:</p>
 
   <dt><tt>gmake install</tt>
   <dd>
-  Installs LLVM header files, libraries, tools and documentation in a hierarchy 
+  Installs LLVM header files, libraries, tools, and documentation in a
+  hierarchy 
   under $PREFIX, specified with <tt>./configure --prefix=[dir]</tt>, which 
   defaults to <tt>/usr/local</tt>.
   <p>
@@ -891,7 +899,7 @@ declaring variables on the command line.  The following are some examples:</p>
 
   <dt><tt>gmake TOOL_VERBOSE=1</tt></dt>
   <dd>Ask each tool invoked by the makefiles to print out what it is doing on 
-  the standard output. This also implies <tt>VERBOSE=1</tt> so the makefile
+  the standard output. This also implies <tt>VERBOSE=1</tt>.
   <p></dd>
 </dl>
 
@@ -1145,9 +1153,10 @@ end to compile.</p>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="llvmtest"><tt>llvm-test</tt></a></div>
 <div class="doc_text">
-  <p>This is not a directory in the normal llvm module, it is a separate CVS
+  <p>This is not a directory in the normal llvm module; it is a separate CVS
   module that must be checked out (usually to <tt>projects/llvm-test</tt>). This
-  module contains a comprehensive correctness, performance and benchmarking test
+  module contains a comprehensive correctness, performance, and benchmarking
+  test
   suite for LLVM. It is a separate CVS module because not every LLVM user is
   interested in downloading or building such a comprehensive test. For further
   details on this test suite, please see the 
@@ -1342,7 +1351,7 @@ are code generators for parts of LLVM infrastructure.</p>
 <div class="doc_text">
   <p>This directory contains build scripts and project files for use with 
   Visual C++. This allows developers on Windows to build LLVM without the need
-  for cygwin. The contents of this directory should be considered experimental
+  for Cygwin. The contents of this directory should be considered experimental
   at this time.
   </p>
 </div>
