@@ -2879,23 +2879,45 @@ void ISel::visitStoreInst(StoreInst &I) {
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
     addFullAddress(BuildMI(BB, X86::MOV8mi, 5),
                    BaseReg, Scale, IndexReg, Disp).addImm(CB->getValue());
-  } else {    
-    if (Class == cLong) {
-      unsigned ValReg = getReg(I.getOperand(0));
-      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
-                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
-      addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
-                     BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
+  } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0))) {
+    // Store constant FP values with integer instructions to avoid having to
+    // load the constants from the constant pool then do a store.
+    if (CFP->getType() == Type::FloatTy) {
+      union {
+        unsigned I;
+        float    F;
+      } V;
+      V.F = CFP->getValue();
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                     BaseReg, Scale, IndexReg, Disp).addImm(V.I);
     } else {
-      unsigned ValReg = getReg(I.getOperand(0));
-      static const unsigned Opcodes[] = {
-        X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST32m
-      };
-      unsigned Opcode = Opcodes[Class];
-      if (ValTy == Type::DoubleTy) Opcode = X86::FST64m;
-      addFullAddress(BuildMI(BB, Opcode, 1+4),
-                     BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
+      union {
+        uint64_t I;
+        double   F;
+      } V;
+      V.F = CFP->getValue();
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                     BaseReg, Scale, IndexReg, Disp).addImm((unsigned)V.I);
+      addFullAddress(BuildMI(BB, X86::MOV32mi, 5),
+                     BaseReg, Scale, IndexReg, Disp+4).addImm(
+                                                          unsigned(V.I >> 32));
     }
+    
+  } else if (Class == cLong) {
+    unsigned ValReg = getReg(I.getOperand(0));
+    addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
+                   BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
+    addFullAddress(BuildMI(BB, X86::MOV32mr, 5),
+                   BaseReg, Scale, IndexReg, Disp+4).addReg(ValReg+1);
+  } else {
+    unsigned ValReg = getReg(I.getOperand(0));
+    static const unsigned Opcodes[] = {
+      X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST32m
+    };
+    unsigned Opcode = Opcodes[Class];
+    if (ValTy == Type::DoubleTy) Opcode = X86::FST64m;
+    addFullAddress(BuildMI(BB, Opcode, 1+4),
+                   BaseReg, Scale, IndexReg, Disp).addReg(ValReg);
   }
 }
 
