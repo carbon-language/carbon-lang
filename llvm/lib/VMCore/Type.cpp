@@ -36,6 +36,7 @@ void PATypeHolder::dump() const {
   cerr << "PATypeHolder(" << (void*)this << ")\n";
 }
 
+
 Type::Type(const string &name, PrimitiveID id)
   : Value(Type::TypeTy, Value::TypeVal) {
   setDescription(name);
@@ -444,6 +445,7 @@ public:
   // corrected.
   //
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+    assert(OldTy == NewTy || OldTy->isAbstract());
     if (OldTy == NewTy) {
       if (!OldTy->isAbstract()) {
         // Check to see if the type just became concrete.
@@ -508,16 +510,18 @@ protected:
   virtual void typeBecameConcrete(const DerivedType *Ty) = 0;
   
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+    assert(OldTy == NewTy || OldTy->isAbstract());
     if (OldTy == NewTy) {
       if (!OldTy->isAbstract())
         typeBecameConcrete(OldTy);
-      return;
+      // MUST fall through here to update map, even if the type pointers stay
+      // the same!
     }
     TypeMap<ValType, TypeClass> &Table = MyTable;     // Copy MyTable reference
     ValType Tmp(*(ValType*)this);                     // Copy this.
     PATypeHandle<TypeClass> OldType(Table.get(*(ValType*)this), this);
     Table.remove(*(ValType*)this);                    // Destroy's this!
-#if 1
+#if 0
     // Refine temporary to new state...
     Tmp.doRefinement(OldTy, NewTy); 
 
@@ -668,7 +672,8 @@ public:
   StructValType(const vector<const Type*> &args,
 		TypeMap<StructValType, StructType> &Tab)
     : ValTypeBase<StructValType, StructType>(Tab) {
-    for (unsigned i = 0; i < args.size(); ++i)
+    ElTypes.reserve(args.size());
+    for (unsigned i = 0, e = args.size(); i != e; ++i)
       ElTypes.push_back(PATypeHandle<Type>(args[i], this));
   }
 
@@ -678,7 +683,7 @@ public:
   StructValType(const StructValType &SVT) 
     : ValTypeBase<StructValType, StructType>(SVT){
     ElTypes.reserve(SVT.ElTypes.size());
-    for (unsigned i = 0; i < SVT.ElTypes.size(); ++i)
+    for (unsigned i = 0, e = SVT.ElTypes.size(); i != e; ++i)
       ElTypes.push_back(PATypeHandle<Type>(SVT.ElTypes[i], this));
   }
 
@@ -771,6 +776,23 @@ PointerType *PointerType::get(const Type *ValueType) {
 //===----------------------------------------------------------------------===//
 //                     Derived Type Refinement Functions
 //===----------------------------------------------------------------------===//
+
+// addAbstractTypeUser - Notify an abstract type that there is a new user of
+// it.  This function is called primarily by the PATypeHandle class.
+//
+void DerivedType::addAbstractTypeUser(AbstractTypeUser *U) const {
+  assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
+  if (U == (AbstractTypeUser*)0x2568a8) {
+    cerr << "Found bad guy!\n";
+  }
+
+#if DEBUG_MERGE_TYPES
+  cerr << "  addAbstractTypeUser[" << (void*)this << ", " << getDescription() 
+       << "][" << AbstractTypeUsers.size() << "] User = " << U << endl;
+#endif
+  AbstractTypeUsers.push_back(U);
+}
+
 
 // removeAbstractTypeUser - Notify an abstract type that a user of the class
 // no longer has a handle to the type.  This function is called primarily by
@@ -897,12 +919,12 @@ void DerivedType::typeIsRefined() {
   ++isRefining;
 
 #ifdef DEBUG_MERGE_TYPES
-  cerr << "typeIsREFINED type: " << (void*)this <<" "<<getDescription() << endl;
+  cerr << "typeIsREFINED type: " << (void*)this <<" "<<getDescription() << "\n";
 #endif
   for (unsigned i = 0; i < AbstractTypeUsers.size(); ) {
     AbstractTypeUser *ATU = AbstractTypeUsers[i];
 #ifdef DEBUG_MERGE_TYPES
-    cerr << " typeIsREFINED user " << i << " of abstract type ["
+    cerr << " typeIsREFINED user " << i << "[" << ATU << "] of abstract type ["
 	 << (void*)this << " " << getDescription() << "]\n";
 #endif
     ATU->refineAbstractType(this, this);
@@ -944,20 +966,21 @@ void FunctionType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
-
-  if (!OldType->isAbstract()) {
-    if (ResultType == OldType) ResultType.removeUserFromConcrete();
-    for (unsigned i = 0; i < ParamTys.size(); ++i)
-      if (ParamTys[i] == OldType) ParamTys[i].removeUserFromConcrete();
+  // Find the type element we are refining...
+  PATypeHandle<Type> *MatchTy = 0;
+  if (ResultType == OldType)
+    MatchTy = &ResultType;
+  else {
+    unsigned i;
+    for (i = 0; ParamTys[i] != OldType; ++i)
+      assert(i != ParamTys.size());
+    MatchTy = &ParamTys[i];
   }
 
-  if (OldType != NewType) {
-    if (ResultType == OldType) ResultType = NewType;
+  if (!OldType->isAbstract())
+    MatchTy->removeUserFromConcrete();
 
-    for (unsigned i = 0; i < ParamTys.size(); ++i)
-      if (ParamTys[i] == OldType) ParamTys[i] = NewType;
-  }
-
+  *MatchTy = NewType;
   const FunctionType *MT = FunctionTypes.containsEquivalent(this);
   if (MT && MT != this) {
     refineAbstractTypeTo(MT);            // Different type altogether...
@@ -1007,18 +1030,15 @@ void StructType::refineAbstractType(const DerivedType *OldType,
        << OldType->getDescription() << "], " << (void*)NewType << " [" 
        << NewType->getDescription() << "])\n";
 #endif
-  if (!OldType->isAbstract()) {
-    for (unsigned i = 0; i < ETypes.size(); ++i)
-      if (ETypes[i] == OldType)
-        ETypes[i].removeUserFromConcrete();
-  }
+  unsigned i;
+  for (i = 0; ETypes[i] != OldType; ++i)
+    assert(i != ETypes.size() && "OldType not found in this structure!");
 
-  if (OldType != NewType) {
-    // Update old type to new type in the array...
-    for (unsigned i = 0; i < ETypes.size(); ++i)
-      if (ETypes[i] == OldType)
-        ETypes[i] = NewType;
-  } 
+  if (!OldType->isAbstract())
+    ETypes[i].removeUserFromConcrete();
+
+  // Update old type to new type in the array...
+  ETypes[i] = NewType;
 
   const StructType *ST = StructTypes.containsEquivalent(this);
   if (ST && ST != this) {
