@@ -23,8 +23,12 @@ version of g++ that takes C++ programs and compiles them into LLVM bytecode or
 assembly language, depending upon the options.
 <p>
 
-The <tt>llvmg++</tt> program uses the <tt>gccas</tt> and <tt>gccld</tt> to
-assist with the creation of complete programs.
+Unless the <tt>-S</tt> option is specified, <tt>llvmg++</tt> will use the
+<a href="gccas.html"><tt>gccas</tt></a> program to perform some optimizations
+and create an LLVM bytecode file. Unless the <tt>-c</tt> option is specified,
+<tt>llvmg++</tt> will also use the <a href="gccld.html"><tt>gccld</tt></a>
+program to perform further optimizations and link the resulting bytecode
+file(s) with support libraries to create an executable program.
 <p>
 
 Being derived from the <a href="http://gcc.gnu.org">GNU Compiler Collection</a>,
