@@ -80,7 +80,8 @@ void X86JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
 ///
 unsigned JITResolver::addFunctionReference(unsigned Address, Function *F) {
   DEBUG(std::cerr << "Emitting lazily resolved reference to function '"
-        << F->getName() << "' at address " << std::hex << Address << "\n");
+        << F->getName() << "' at address " << std::hex << Address
+        << std::dec << "\n");
   LazyCodeGenMap[Address] = F;  
   return (intptr_t)&JITResolver::CompilationCallback;
 }
