@@ -67,7 +67,7 @@ clean :
 	$(LLC) -f -trace $(LLCFLAGS) $<
 
 %.o: %.c
-	$(LCC) $(LCFLAGS) -c -o $@ $<
+	$(LCC) $(LCFLAGS) $< -c -o $@
 
 %.bc: %.ll
 	$(LAS) -f $<
