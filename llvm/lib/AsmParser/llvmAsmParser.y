@@ -427,7 +427,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type <MethArgVal>    ArgVal
 %type <PHIList>       PHIList
 %type <ValueList>     ValueRefList ValueRefListE  // For call param lists
-%type <TypeList>      TypeList
+%type <TypeList>      TypeList ArgTypeList
 %type <JumpTable>     JumpTable
 
 %type <ValIDVal>      ValueRef ConstValueRef // Reference to a definition or BB
@@ -455,7 +455,7 @@ Module *RunVMAsmParser(const string &Filename, FILE *F) {
 %type  <StrVal>  OptVAR_ID OptAssign
 
 
-%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE TO
+%token IMPLEMENTATION TRUE FALSE BEGINTOK END DECLARE TO DOTDOTDOT
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH
@@ -713,6 +713,10 @@ ArgListH : ArgVal ',' ArgListH {
     $$ = new list<MethodArgument*>();
     $$->push_front($1);
   }
+  | DOTDOTDOT {
+    $$ = new list<MethodArgument*>();
+    $$->push_back(new MethodArgument(Type::VoidTy));
+  }
 
 ArgList : ArgListH {
     $$ = $1;
@@ -819,7 +823,7 @@ Types : ValueRef {
     ConstPoolType *CPT = (ConstPoolType*)D->castConstantAsserting();
     $$ = CPT->getValue();
   }
-  | TypesV '(' TypeList ')' {               // Method derived type?
+  | TypesV '(' ArgTypeList ')' {               // Method derived type?
     MethodType::ParamTypes Params($3->begin(), $3->end());
     delete $3;
     $$ = checkNewType(MethodType::getMethodType($1, Params));
@@ -846,13 +850,17 @@ Types : ValueRef {
     $$ = checkNewType(PointerType::getPointerType($1));
   }
 
-
 TypeList : Types {
     $$ = new list<const Type*>();
     $$->push_back($1);
   }
   | TypeList ',' Types {
     ($$=$1)->push_back($3);
+  }
+
+ArgTypeList : TypeList 
+  | TypeList ',' DOTDOTDOT {
+    ($$=$1)->push_back(Type::VoidTy);
   }
 
 
@@ -995,41 +1003,41 @@ InstVal : BinaryOps Types ValueRef ',' ValueRef {
     delete $2;  // Free the list...
   } 
   | CALL Types ValueRef '(' ValueRefListE ')' {
-    if (!$2->isMethodType())
-      ThrowException("Can only call methods: invalid type '" + 
-		     $2->getName() + "'!");
+    const MethodType *Ty;
 
-    const MethodType *Ty = (const MethodType*)$2;
+    if (!(Ty = $2->isMethodType())) {
+      // Pull out the types of all of the arguments...
+      vector<const Type*> ParamTypes;
+      for (list<Value*>::iterator I = $5->begin(), E = $5->end(); I != E; ++I)
+	ParamTypes.push_back((*I)->getType());
+      Ty = MethodType::get($2, ParamTypes);
+    }
 
-    Value *V = getVal(Ty, $3);
-    if (!V->isMethod() || V->getType() != Ty)
-      ThrowException("Cannot call: " + $3.getName() + "!");
+    Value *V = getVal(Ty, $3);   // Get the method we're calling...
 
-    // Create or access a new type that corresponds to the function call...
-    vector<Value *> Params;
-
-    if ($5) {
-      // Pull out just the arguments...
-      Params.insert(Params.begin(), $5->begin(), $5->end());
-      delete $5;
-
+    // Create the call node...
+    if (!$5) {                                   // Has no arguments?
+      $$ = new CallInst(V->castMethodAsserting(), vector<Value*>());
+    } else {                                     // Has arguments?
       // Loop through MethodType's arguments and ensure they are specified
       // correctly!
       //
       MethodType::ParamTypes::const_iterator I = Ty->getParamTypes().begin();
-      unsigned i;
-      for (i = 0; i < Params.size() && I != Ty->getParamTypes().end(); ++i,++I){
-	if (Params[i]->getType() != *I)
-	  ThrowException("Parameter " + utostr(i) + " is not of type '" + 
+      MethodType::ParamTypes::const_iterator E = Ty->getParamTypes().end();
+      list<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+
+      for (; ArgI != ArgE && I != E; ++ArgI, ++I)
+	if ((*ArgI)->getType() != *I)
+	  ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
 			 (*I)->getName() + "'!");
-      }
 
-      if (i != Params.size() || I != Ty->getParamTypes().end())
+      if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
 	ThrowException("Invalid number of parameters detected!");
-    }
 
-    // Create the call node...
-    $$ = new CallInst((Method*)V, Params);
+      $$ = new CallInst(V->castMethodAsserting(),
+			vector<Value*>($5->begin(), $5->end()));
+    }
+    delete $5;
   }
   | MemoryInst {
     $$ = $1;

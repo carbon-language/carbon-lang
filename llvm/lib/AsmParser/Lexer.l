@@ -94,6 +94,7 @@ true            { return TRUE;  }
 false           { return FALSE; }
 declare         { return DECLARE; }
 implementation  { return IMPLEMENTATION; }
+\.\.\.          { return DOTDOTDOT; }
 
 void            { llvmAsmlval.TypeVal = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.TypeVal = Type::BoolTy  ; return BOOL;   }
