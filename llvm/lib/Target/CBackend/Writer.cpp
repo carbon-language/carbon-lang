@@ -686,8 +686,7 @@ bool CWriter::doInitialization(Module &M) {
     Out << "\n/* Function Declarations */\n";
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
       // Don't print declarations for intrinsic functions.
-      if (!I->getIntrinsicID() &&
-          I->getName() != "setjmp" && I->getName() != "longjmp") {
+      if (!I->getIntrinsicID()) {
         printFunctionSignature(I, true);
         if (I->hasWeakLinkage()) Out << " __ATTRIBUTE_WEAK__";
         Out << ";\n";
@@ -1187,6 +1186,8 @@ void CWriter::lowerIntrinsics(Module &M) {
             case Intrinsic::va_end:
             case Intrinsic::returnaddress:
             case Intrinsic::frameaddress:
+            case Intrinsic::setjmp:
+            case Intrinsic::longjmp:
               // We directly implement these intrinsics
               break;
             default:
@@ -1243,6 +1244,18 @@ void CWriter::visitCallInst(CallInst &I) {
       case Intrinsic::frameaddress:
         Out << "__builtin_frame_address(";
         writeOperand(I.getOperand(1));
+        Out << ")";
+        return;
+      case Intrinsic::setjmp:
+        Out << "setjmp(*(jmp_buf*)";
+        writeOperand(I.getOperand(1));
+        Out << ")";
+        return;
+      case Intrinsic::longjmp:
+        Out << "longjmp(*(jmp_buf*)";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
+        writeOperand(I.getOperand(2));
         Out << ")";
         return;
       }
