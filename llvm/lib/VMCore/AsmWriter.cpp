@@ -108,9 +108,13 @@ bool AssemblyWriter::visitMethod(const Method *M) {
 bool AssemblyWriter::processConstPool(const ConstantPool &CP, bool isMethod) {
   // Done printing arguments...
   if (isMethod) {
-    if (CP.getParentV()->castMethodAsserting()->getType()->
-	isMethodType()->isVarArg())
-      Out << ", ...";  // Output varargs portion of signature!
+    const MethodType *MT = CP.getParentV()->castMethodAsserting()->getType()->
+                                            isMethodType();
+    if (MT->isVarArg()) {
+      if (MT->getParamTypes().size())
+	Out << ", ";
+      Out << "...";  // Output varargs portion of signature!
+    }
     Out << ")\n";
   }
 
@@ -354,23 +358,7 @@ void WriteToAssembly(const BasicBlock *BB, ostream &o) {
 
 void WriteToAssembly(const ConstPoolVal *CPV, ostream &o) {
   if (CPV == 0) { o << "<null> constant pool value\n"; return; }
-
-  SlotCalculator *SlotTable;
-
-  // A Constant pool value may have a parent that is either a method or a 
-  // module.  Untangle this now...
-  //
-  if (const Method *Meth = CPV->getParentV()->castMethod()) {
-    SlotTable = new SlotCalculator(Meth, true);
-  } else {
-    SlotTable =
-      new SlotCalculator(CPV->getParentV()->castModuleAsserting(), true);
-  }
-
-  AssemblyWriter W(o, *SlotTable);
-  W.write(CPV);
-
-  delete SlotTable;
+  WriteAsOperand(o, CPV, true, true, 0);
 }
 
 void WriteToAssembly(const Instruction *I, ostream &o) {
