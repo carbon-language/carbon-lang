@@ -33,6 +33,17 @@ using namespace cl;
 static const char *ProgramName = "<unknown>";
 static const char *ProgramOverview = 0;
 
+// This collects additional help to be printed.
+static std::vector<const char*> &MoreHelp() {
+  static std::vector<const char*> moreHelp;
+  return moreHelp;
+}
+
+extrahelp::extrahelp(const char* Help)
+  : morehelp(Help) {
+  MoreHelp().push_back(Help);
+}
+
 //===----------------------------------------------------------------------===//
 // Basic, shared command line option processing machinery...
 //
@@ -40,23 +51,19 @@ static const char *ProgramOverview = 0;
 // Return the global command line option vector.  Making it a function scoped
 // static ensures that it will be initialized correctly before its first use.
 //
-static std::map<std::string, Option*> *CommandLineOptions = 0;
 static std::map<std::string, Option*> &getOpts() {
-  if (CommandLineOptions == 0)
-    CommandLineOptions = new std::map<std::string,Option*>();
-  return *CommandLineOptions;
+  static std::map<std::string, Option*> CommandLineOptions;
+  return CommandLineOptions;
 }
 
 static Option *getOption(const std::string &Str) {
-  if (CommandLineOptions == 0) return 0;
-  std::map<std::string,Option*>::iterator I = CommandLineOptions->find(Str);
-  return I != CommandLineOptions->end() ? I->second : 0;
+  std::map<std::string,Option*>::iterator I = getOpts().find(Str);
+  return I != getOpts().end() ? I->second : 0;
 }
 
 static std::vector<Option*> &getPositionalOpts() {
-  static std::vector<Option*> *Positional = 0;
-  if (!Positional) Positional = new std::vector<Option*>();
-  return *Positional;
+  static std::vector<Option*> Positional;
+  return Positional;
 }
 
 static void AddArgument(const char *ArgName, Option *Opt) {
@@ -73,18 +80,13 @@ static void AddArgument(const char *ArgName, Option *Opt) {
 // options have already been processed and the map has been deleted!
 // 
 static void RemoveArgument(const char *ArgName, Option *Opt) {
-  if (CommandLineOptions == 0) return;
 #ifndef NDEBUG
   // This disgusting HACK is brought to you courtesy of GCC 3.3.2, which ICE's
   // If we pass ArgName directly into getOption here.
   std::string Tmp = ArgName;
   assert(getOption(Tmp) == Opt && "Arg not in map!");
 #endif
-  CommandLineOptions->erase(ArgName);
-  if (CommandLineOptions->empty()) {
-    delete CommandLineOptions;
-    CommandLineOptions = 0;
-  }
+  getOpts().erase(ArgName);
 }
 
 static inline bool ProvideOption(Option *Handler, const char *ArgName,
@@ -565,9 +567,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Free all of the memory allocated to the map.  Command line options may only
   // be processed once!
-  delete CommandLineOptions;
-  CommandLineOptions = 0;
+  getOpts().clear();
   PositionalOpts.clear();
+  MoreHelp().clear();
 
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
@@ -835,19 +837,6 @@ void generic_parser_base::printOptionInfo(const Option &O,
 // --help and --help-hidden option implementation
 //
 
-// If this variable is set, it is a pointer to a function that the user wants
-// us to call after we print out the help info. Basically a hook to allow
-// additional help to be printed.
-static  std::vector<const char*>* MoreHelp = 0;
-
-extrahelp::extrahelp(const char* Help)
-  : morehelp(Help) {
-  if (!MoreHelp) {
-    MoreHelp = new std::vector<const char*>;
-  }
-  MoreHelp->push_back(Help);
-}
-
 namespace {
 
 class HelpPrinter {
@@ -921,14 +910,11 @@ public:
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       Options[i].second->printOptionInfo(MaxArgLen);
 
-    // Print any extra help the user has declared. If MoreHelp is not null,
-    // then the user used at least one cl::extrahelp instance to provide
-    // additional help. We just print it out now.
-    if (MoreHelp != 0) {
-      for (std::vector<const char *>::iterator I = MoreHelp->begin(),
-           E = MoreHelp->end(); I != E; ++I)
-        std::cerr << *I;
-    }
+    // Print any extra help the user has declared.
+    for (std::vector<const char *>::iterator I = MoreHelp().begin(),
+          E = MoreHelp().end(); I != E; ++I)
+      std::cerr << *I;
+    MoreHelp().clear();
 
     // Halt the program since help information was printed
     exit(1);
