@@ -93,11 +93,8 @@ public:
 		  unsigned numRealOpCodes);
   virtual ~TargetInstrInfo();
 
-  // Invariant: All instruction sets use opcode #0 as the PHI instruction and
-  // opcode #1 as the noop instruction.
-  enum {
-    PHI = 0, NOOP = 1
-  };
+  // Invariant: All instruction sets use opcode #0 as the PHI instruction
+  enum { PHI = 0 };
   
   unsigned getNumRealOpCodes()  const { return numRealOpCodes; }
   unsigned getNumTotalOpCodes() const { return descSize; }
