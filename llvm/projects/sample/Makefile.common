@@ -4,12 +4,6 @@
 LLVM_SRC_ROOT = $(LEVEL)/../..
 
 #
-# Set this variable to the top level directory where LLVM was built
-# (this is *not* the same as OBJ_ROOT as defined in LLVM's Makefile.config).
-#
-#LLVM_OBJ_ROOT = $(LEVEL)/../..
-
-#
 # Include LLVM's Master Makefile.
 #
 include $(LLVM_SRC_ROOT)/Makefile.common
