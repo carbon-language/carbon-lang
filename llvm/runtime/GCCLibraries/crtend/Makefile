@@ -5,7 +5,7 @@ LIBRARYNAME=crtend
 
 Source = $(notdir $(wildcard $(SourceDir)/*.cpp $(SourceDir)/*.c)) listend.ll
 
-EXPORTED_SYMBOL_FILE = exported_symbol_list.lst
+EXPORTED_SYMBOL_FILE = $(SourceDir)/exported_symbol_list.lst
 
 include $(LEVEL)/Makefile.common
 
