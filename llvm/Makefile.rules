@@ -71,12 +71,13 @@ all::$(LLVM_OBJ_ROOT)/config.status
 ifdef SHARED_LIBRARY
 # if SHARED_LIBRARY is specified, the default is to build the dynamic lib
 all:: dynamic
+install:: install-dynamic
 endif
 
 ifdef BYTECODE_LIBRARY
 # if BYTECODE_LIBRARY is specified, the default is to build the bytecode lib
 all:: bytecodelib
-install:: bytecodelib-install
+install:: install-bytecode-library
 endif
 
 # Default Rule:  Make sure it's also a :: rule
@@ -116,7 +117,7 @@ prdirs::
 # slightly since GNU Make will not try to find implicit rules for targets
 # which are marked as Phony.
 #
-.PHONY: all dynamic bytecodelib bytecodelib-install
+.PHONY: all dynamic bytecodelib install-bytecode-library
 .PHONY: clean distclean install test bytecode prdirs
 
 ###########################################################################
@@ -462,13 +463,17 @@ LIBRARYNAME := $(strip $(LIBRARYNAME))
 LIBNAME_O    := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).so
 LIBNAME_P    := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).so
 LIBNAME_G    := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).so
+LIBNAME_CUR  := $(DESTLIBCURRENT)/lib$(LIBRARYNAME).so
 LIBNAME_AO   := $(DESTLIBRELEASE)/lib$(LIBRARYNAME).a
 LIBNAME_AP   := $(DESTLIBPROFILE)/lib$(LIBRARYNAME).a
 LIBNAME_AG   := $(DESTLIBDEBUG)/lib$(LIBRARYNAME).a
+LIBNAME_ACUR := $(DESTLIBCURRENT)/lib$(LIBRARYNAME).a
 LIBNAME_OBJO := $(DESTLIBRELEASE)/$(LIBRARYNAME).o
 LIBNAME_OBJP := $(DESTLIBPROFILE)/$(LIBRARYNAME).o
 LIBNAME_OBJG := $(DESTLIBDEBUG)/$(LIBRARYNAME).o
+LIBNAME_OBJCUR := $(DESTLIBCURRENT)/$(LIBRARYNAME).o
 LIBNAME_BC   := $(DESTLIBBYTECODE)/lib$(LIBRARYNAME).bc
+
 
 #--------------------------------------------------------------------
 # Library Targets
@@ -476,9 +481,9 @@ LIBNAME_BC   := $(DESTLIBBYTECODE)/lib$(LIBRARYNAME).bc
 #--------------------------------------------------------------------
 
 # dynamic target builds a shared object version of the library...
-dynamic:: $(DESTLIBCURRENT)/lib$(LIBRARYNAME).so
+dynamic:: $(LIBNAME_CUR)
 bytecodelib:: $(LIBNAME_BC)
-bytecodelib-install:: $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc
+install-bytecode-library:: $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc
 
 $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc: $(LIBNAME_BC)
 	@${ECHO} ======= Installing $(LIBRARYNAME) bytecode library =======
@@ -486,12 +491,14 @@ $(LLVMGCCDIR)/bytecode-libs/lib$(LIBRARYNAME).bc: $(LIBNAME_BC)
 
 # Does the library want a .o version built?
 ifndef DONT_BUILD_RELINKED
-all:: $(DESTLIBCURRENT)/$(LIBRARYNAME).o
+all:: $(LIBNAME_OBJCUR)
+install:: install-single-object-library
 endif
 
 # Does the library want an archive version built?
 ifdef BUILD_ARCHIVE
-all:: $(DESTLIBCURRENT)/lib$(LIBRARYNAME).a
+all:: $(LIBNAME_ACUR)
+install:: install-archive-library
 endif
 
 #--------------------------------------------------------------------
@@ -536,6 +543,10 @@ $(LIBNAME_G): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $*.la $(DESTLIBCURRENT)
 	@${ECHO} ======= Finished building $(LIBRARYNAME) dynamic debug library =======
 
+install-dynamic-library: $(LIBNAME_CUR)
+	$(MKDIR) $(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_CUR) $(libdir)/lib$(LIBRARYNAME).so
+
 #
 # Rules for building static archive libraries.
 #
@@ -557,6 +568,9 @@ $(LIBNAME_AG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	$(VERB) $(Link) -g $(STRIP) -o $@ $(ObjectsG) $(LibSubDirs) -static
 	@${ECHO} ======= Finished building $(LIBRARYNAME) archive debug library =======
 
+install-archive-library: $(LIBNAME_ACUR)
+	$(MKDIR) $(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_ACUR) $(libdir)/lib$(LIBRARYNAME).a
 
 #
 # Rules for building .o libraries.
@@ -583,6 +597,10 @@ $(LIBNAME_OBJP): $(ObjectsP) $(LibSubDirs) $(DESTLIBPROFILE)/.dir
 $(LIBNAME_OBJG): $(ObjectsG) $(LibSubDirs) $(DESTLIBDEBUG)/.dir
 	@${ECHO} "Linking `basename $@`"
 	$(VERB) $(Relink) -o $@ $(RObjectsG) $(LibSubDirs)
+
+install-single-object-library: $(LIBNAME_OBJCUR)
+	$(MKDIR) $(libdir)
+	$(VERB) $(LIBTOOL) --mode=install $(INSTALL) $(LIBNAME_OBJCUR) $(libdir)/$(LIBRARYNAME).o
 
 endif
 
