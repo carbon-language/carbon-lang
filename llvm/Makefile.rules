@@ -510,6 +510,10 @@ endif
 #---------------------------------------------------------
 ifdef BYTECODE_LIBRARY
 
+# make the C and C++ compilers strip debug info out of bytecode libraries.
+BCCompile.C += -Wa,-strip-debug
+BCCompile.CXX += -Wa,-strip-debug
+
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
