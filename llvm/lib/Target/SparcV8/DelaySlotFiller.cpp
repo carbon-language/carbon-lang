@@ -66,6 +66,7 @@ static bool hasDelaySlot (unsigned Opcode) {
     case V8::BLEU:
     case V8::BNE:
     case V8::CALL:
+    case V8::JMPLrr:
     case V8::RETL:
       return true;
     default:
