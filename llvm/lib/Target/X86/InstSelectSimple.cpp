@@ -1830,36 +1830,27 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
   unsigned Class = getClassB(Op0->getType());
 
   // sub 0, X -> neg X
-  if (OperatorClass == 1)
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) {
-      if (CI->isNullValue()) {
-        unsigned op1Reg = getReg(Op1, MBB, IP);
-        static unsigned const NEGTab[] = {
-          X86::NEG8r, X86::NEG16r, X86::NEG32r, 0, X86::NEG32r
-        };
-        BuildMI(*MBB, IP, NEGTab[Class], 1, DestReg).addReg(op1Reg);
-
-        if (Class == cLong) {
-          // We just emitted: Dl = neg Sl
-          // Now emit       : T  = addc Sh, 0
-          //                : Dh = neg T
-          unsigned T = makeAnotherReg(Type::IntTy);
-          BuildMI(*MBB, IP, X86::ADC32ri, 2, T).addReg(op1Reg+1).addImm(0);
-          BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg+1).addReg(T);
-        }
-        return;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0))
+    if (OperatorClass == 1 && CI->isNullValue()) {
+      unsigned op1Reg = getReg(Op1, MBB, IP);
+      static unsigned const NEGTab[] = {
+        X86::NEG8r, X86::NEG16r, X86::NEG32r, 0, X86::NEG32r
+      };
+      BuildMI(*MBB, IP, NEGTab[Class], 1, DestReg).addReg(op1Reg);
+      
+      if (Class == cLong) {
+        // We just emitted: Dl = neg Sl
+        // Now emit       : T  = addc Sh, 0
+        //                : Dh = neg T
+        unsigned T = makeAnotherReg(Type::IntTy);
+        BuildMI(*MBB, IP, X86::ADC32ri, 2, T).addReg(op1Reg+1).addImm(0);
+        BuildMI(*MBB, IP, X86::NEG32r, 1, DestReg+1).addReg(T);
       }
-    } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
-      if (CFP->isExactlyValue(-0.0)) {
-        // -0.0 - X === -X
-        unsigned op1Reg = getReg(Op1, MBB, IP);
-        BuildMI(*MBB, IP, X86::FCHS, 1, DestReg).addReg(op1Reg);
-        return;
-      }
+      return;
+    }
 
-  // Special case: op Reg, <const>
-  if (isa<ConstantInt>(Op1)) {
-    ConstantInt *Op1C = cast<ConstantInt>(Op1);
+  // Special case: op Reg, <const int>
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     unsigned Op0r = getReg(Op0, MBB, IP);
 
     // xor X, -1 -> not X
@@ -1952,6 +1943,56 @@ void ISel::emitSimpleBinaryOperation(MachineBasicBlock *MBB,
       return;
     }
   }
+
+  // Special case: op Reg, <const fp>
+  if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1))
+    if (!Op1C->isExactlyValue(+0.0) && !Op1C->isExactlyValue(+1.0)) {
+      assert(OperatorClass < 2 && "FP operations only support add/sub!");
+      
+      // Create a constant pool entry for this constant.
+      MachineConstantPool *CP = F->getConstantPool();
+      unsigned CPI = CP->getConstantPoolIndex(Op1C);
+      const Type *Ty = Op1->getType();
+
+      static const unsigned OpcodeTab[][2] = {
+        { X86::FADD32m, X86::FSUB32m },   // Float
+        { X86::FADD64m, X86::FSUB64m },   // Double
+      };
+
+      assert(Ty == Type::FloatTy || Ty == Type::DoubleTy && "Unknown FP type!");
+      unsigned Opcode = OpcodeTab[Ty != Type::FloatTy][OperatorClass];
+      unsigned Op0r = getReg(Op0, MBB, IP);
+      addConstantPoolReference(BuildMI(*MBB, IP, Opcode, 5,
+                                       DestReg).addReg(Op0r), CPI);
+      return;
+    }
+  
+  // Special case: R1 = sub <const fp>, R2
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(Op0))
+    if (OperatorClass == 1) {  // sub only
+      if (CFP->isExactlyValue(-0.0)) {
+        // -0.0 - X === -X
+        unsigned op1Reg = getReg(Op1, MBB, IP);
+        BuildMI(*MBB, IP, X86::FCHS, 1, DestReg).addReg(op1Reg);
+        return;
+      } else if (!CFP->isExactlyValue(+0.0) && !CFP->isExactlyValue(+1.0)) {
+        // R1 = sub CST, R2  -->  R1 = subr R2, CST
+
+        // Create a constant pool entry for this constant.
+        MachineConstantPool *CP = F->getConstantPool();
+        unsigned CPI = CP->getConstantPoolIndex(CFP);
+        const Type *Ty = CFP->getType();
+        
+        static const unsigned OpcodeTab[2] = { X86::FSUBR32m, X86::FSUBR64m };
+        
+        assert(Ty == Type::FloatTy||Ty == Type::DoubleTy && "Unknown FP type!");
+        unsigned Opcode = OpcodeTab[Ty != Type::FloatTy];
+        unsigned Op1r = getReg(Op1, MBB, IP);
+        addConstantPoolReference(BuildMI(*MBB, IP, Opcode, 5,
+                                         DestReg).addReg(Op1r), CPI);
+        return;
+      }
+    }
 
   // Finally, handle the general case now.
   static const unsigned OpcodeTab[][5] = {
