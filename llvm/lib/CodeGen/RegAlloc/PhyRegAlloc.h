@@ -20,11 +20,13 @@
 #define PHY_REG_ALLOC_H
 
 #include "LiveRangeInfo.h"
+#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Target/TargetRegInfo.h"
+#include "llvm/Target/TargetMachine.h" 
 #include <map>
 
 class MachineFunction;
-class TargetRegInfo;
 class FunctionLiveVarInfo;
 class MachineInstr;
 class LoopInfo;
@@ -42,22 +44,23 @@ class RegClass;
 struct AddedInstrns {
   std::vector<MachineInstr*> InstrnsBefore;//Insts added BEFORE an existing inst
   std::vector<MachineInstr*> InstrnsAfter; //Insts added AFTER an existing inst
+  inline void clear () { InstrnsBefore.clear (); InstrnsAfter.clear (); }
 };
 
 //----------------------------------------------------------------------------
 // class PhyRegAlloc:
-// Main class the register allocator. Call allocateRegisters() to allocate
+// Main class the register allocator. Call runOnFunction() to allocate
 // registers for a Function.
 //----------------------------------------------------------------------------
 
-class PhyRegAlloc {
+class PhyRegAlloc : public FunctionPass {
   std::vector<RegClass *> RegClassList; // vector of register classes
   const TargetMachine &TM;              // target machine
   const Function *Fn;                   // name of the function we work on
-  MachineFunction &MF;                  // descriptor for method's native code
-  FunctionLiveVarInfo *const LVI;       // LV information for this method 
+  MachineFunction *MF;                  // descriptor for method's native code
+  FunctionLiveVarInfo *LVI;             // LV information for this method 
                                         // (already computed for BBs) 
-  LiveRangeInfo LRI;                    // LR info  (will be computed)
+  LiveRangeInfo *LRI;                   // LR info  (will be computed)
   const TargetRegInfo &MRI;             // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
 
@@ -74,19 +77,29 @@ class PhyRegAlloc {
   ScratchRegsUsedTy ScratchRegsUsed;
 
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
-  LoopInfo *LoopDepthCalc;              // to calculate loop depths 
+  const LoopInfo *LoopDepthCalc;        // to calculate loop depths 
 
   PhyRegAlloc(const PhyRegAlloc&);     // DO NOT IMPLEMENT
   void operator=(const PhyRegAlloc&);  // DO NOT IMPLEMENT
 public:
-  PhyRegAlloc(Function *F, const TargetMachine& TM, FunctionLiveVarInfo *Lvi,
-              LoopInfo *LoopDepthCalc);
-  ~PhyRegAlloc();
+  inline PhyRegAlloc (const TargetMachine &TM_) :
+    TM (TM_), MRI (TM.getRegInfo ()),
+    NumOfRegClasses (MRI.getNumOfRegClasses ()) { }
+  virtual ~PhyRegAlloc() { }
 
-  // main method called for allocating registers
-  //
-  void allocateRegisters();           
+  /// runOnFunction - Main method called for allocating registers.
+  ///
+  virtual bool runOnFunction (Function &F);
 
+  virtual void getAnalysisUsage (AnalysisUsage &AU) const {
+    AU.addRequired<LoopInfo> ();
+    AU.addRequired<FunctionLiveVarInfo> ();
+  }
+
+  const char *getPassName () const {
+    return "Traditional graph-coloring reg. allocator";
+  }
+    
   // access to register classes by class ID
   // 
   const RegClass* getRegClassByID(unsigned id) const {
@@ -99,6 +112,7 @@ public:
 private:
   void addInterference(const Value *Def, const ValueSet *LVSet, 
 		       bool isCallInst);
+  bool markAllocatedRegs(MachineInstr* MInst);
 
   void addInterferencesForArgs();
   void createIGNodeListsAndIGs();
@@ -123,8 +137,6 @@ private:
                               std::vector<MachineInstr*>& instrnsAfter,
                               MachineInstr *CallMI,
                               const BasicBlock *BB);
-
-  inline void constructLiveRanges() { LRI.constructLiveRanges(); }      
 
   void colorIncomingArgs();
   void colorCallRetArgs();
