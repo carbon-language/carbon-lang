@@ -92,7 +92,7 @@ let isBranch = 1, isTerminator = 1, isCall = 1,
 // register and an immediate are of this type.
 //
 let isLoad = 1 in {
-def LBZ : DForm_1<35, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LBZ : DForm_1<34, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lbz $rD, $disp($rA)">;
 def LHA : DForm_1<42, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lha $rD, $disp($rA)">;
@@ -102,7 +102,7 @@ def LMW : DForm_1<46, 0, 0, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lmw $rD, $disp($rA)">;
 def LWZ : DForm_1<32, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lwz $rD, $disp($rA)">;
-def LWZU : DForm_1<33, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LWZU : DForm_1<35, 0, 0, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                    "lwzu $rD, $disp($rA)">;
 }
 def ADDI   : DForm_2<14, 0, 0, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
