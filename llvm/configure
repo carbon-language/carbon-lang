@@ -1847,6 +1847,51 @@ fi
           ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile"
 
 
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in"
+
+
           ac_config_commands="$ac_config_commands test/Programs/MultiSource/Benchmarks/McCat/Makefile"
 
 
@@ -4407,7 +4452,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4410 "configure"' > conftest.$ac_ext
+  echo '#line 4455 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5248,7 +5293,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5251:" \
+echo "$as_me:5296:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6257,11 +6302,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6260: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6305: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6264: \$? = $ac_status" >&5
+   echo "$as_me:6309: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6489,11 +6534,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6492: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6537: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6496: \$? = $ac_status" >&5
+   echo "$as_me:6541: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6556,11 +6601,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6559: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6604: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6563: \$? = $ac_status" >&5
+   echo "$as_me:6608: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8568,7 +8613,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8571 "configure"
+#line 8616 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8666,7 +8711,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8669 "configure"
+#line 8714 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10802,11 +10847,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10805: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10850: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10809: \$? = $ac_status" >&5
+   echo "$as_me:10854: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10869,11 +10914,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10872: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10917: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10876: \$? = $ac_status" >&5
+   echo "$as_me:10921: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12112,7 +12157,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12115 "configure"
+#line 12160 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12210,7 +12255,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12213 "configure"
+#line 12258 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13032,11 +13077,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13035: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13080: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13039: \$? = $ac_status" >&5
+   echo "$as_me:13084: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13099,11 +13144,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13102: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13147: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13106: \$? = $ac_status" >&5
+   echo "$as_me:13151: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15043,11 +15088,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15046: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15091: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15050: \$? = $ac_status" >&5
+   echo "$as_me:15095: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15275,11 +15320,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15278: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15323: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15282: \$? = $ac_status" >&5
+   echo "$as_me:15327: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15342,11 +15387,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15345: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15390: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15349: \$? = $ac_status" >&5
+   echo "$as_me:15394: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17354,7 +17399,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17357 "configure"
+#line 17402 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17452,7 +17497,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17455 "configure"
+#line 17500 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23709,6 +23754,21 @@ ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Applications
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Applications/sgefa/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile`
@@ -23891,6 +23951,21 @@ do
   "test/Programs/MultiSource/Applications/sgefa/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Applications/sgefa/Makefile" ;;
   "test/Programs/MultiSource/Benchmarks/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Makefile" ;;
   "test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile" ;;
+  "test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in" ;;
   "test/Programs/MultiSource/Benchmarks/McCat/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/Makefile" ;;
   "test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile" ;;
   "test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile" ;;
@@ -24704,6 +24779,21 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     test/Programs/MultiSource/Applications/sgefa/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Applications/sgefa/Makefile test/Programs/MultiSource/Applications/sgefa/Makefile ;;
     test/Programs/MultiSource/Benchmarks/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Makefile test/Programs/MultiSource/Benchmarks/Makefile ;;
     test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile test/Programs/MultiSource/Benchmarks/Fhourstones/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in test/Programs/MultiSource/Benchmarks/FreeBench/analyzer/test.in ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/distray/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in test/Programs/MultiSource/Benchmarks/FreeBench/distray/test.in ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in test/Programs/MultiSource/Benchmarks/FreeBench/fourinarow/test.in ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/mason/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in test/Programs/MultiSource/Benchmarks/FreeBench/mason/test.in ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/neural/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in test/Programs/MultiSource/Benchmarks/FreeBench/neural/test.in ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in test/Programs/MultiSource/Benchmarks/FreeBench/pcompress2/test.in ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile test/Programs/MultiSource/Benchmarks/FreeBench/pifft/Makefile ;;
+    test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in test/Programs/MultiSource/Benchmarks/FreeBench/pifft/test.in ;;
     test/Programs/MultiSource/Benchmarks/McCat/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/Makefile test/Programs/MultiSource/Benchmarks/McCat/Makefile ;;
     test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile test/Programs/MultiSource/Benchmarks/McCat/01-qbsort/Makefile ;;
     test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile test/Programs/MultiSource/Benchmarks/McCat/03-testtrie/Makefile ;;
