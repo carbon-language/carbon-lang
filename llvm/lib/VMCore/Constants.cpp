@@ -165,9 +165,18 @@ std::string ConstantUInt::getStrValue() const {
 //
 std::string ConstantFP::getStrValue() const {
   std::string StrVal = ftostr(Val);
-  double TestVal = atof(StrVal.c_str());  // Reparse stringized version!
-  if (TestVal == Val)
-    return StrVal;
+
+  // Check to make sure that the stringized number is not some string like "Inf"
+  // or NaN, that atof will accept, but the lexer will not.  Check that the
+  // string matches the "[-+]?[0-9]" regex.
+  //
+  if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+      ((StrVal[0] == '-' || StrVal[0] == '+') &&
+       (StrVal[0] >= '0' && StrVal[0] <= '9'))) {
+    double TestVal = atof(StrVal.c_str());  // Reparse stringized version!
+    if (TestVal == Val)
+      return StrVal;
+  }
 
   // Otherwise we could not reparse it to exactly the same value, so we must
   // output the string in hexadecimal format!
