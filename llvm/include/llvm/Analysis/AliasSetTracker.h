@@ -264,12 +264,12 @@ public:
   void add(BasicBlock &BB);       // Add all instructions in basic block
   void add(const AliasSetTracker &AST); // Add alias relations from another AST
 
-  /// remove method - This method is used to remove a pointer value from the
-  /// AliasSetTracker entirely.  It should be used when an instruction is
+  /// deleteValue method - This method is used to remove a pointer value from
+  /// the AliasSetTracker entirely.  It should be used when an instruction is
   /// deleted from the program to update the AST.  If you don't use this, you
   /// would have dangling pointers to deleted instructions.
   ///
-  void remove(Value *PtrVal);
+  void deleteValue(Value *PtrVal);
 
   /// getAliasSets - Return the alias sets that are active.
   const ilist<AliasSet> &getAliasSets() const { return AliasSets; }

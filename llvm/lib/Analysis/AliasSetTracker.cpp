@@ -277,12 +277,12 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
 }
 
 
-// remove method - This method is used to remove a pointer value from the
+// deleteValue method - This method is used to remove a pointer value from the
 // AliasSetTracker entirely.  It should be used when an instruction is deleted
 // from the program to update the AST.  If you don't use this, you would have
 // dangling pointers to deleted instructions.
 //
-void AliasSetTracker::remove(Value *PtrVal) {
+void AliasSetTracker::deleteValue(Value *PtrVal) {
   // First, look up the PointerRec for this pointer...
   hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(PtrVal);
   if (I == PointerMap.end()) return;  // Noop
