@@ -87,7 +87,7 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
-  : Annotation(MF_AID), Fn(F), Target(TM) {
+  : Annotation(MF_AID), Fn(F), Target(TM), NextMBBNumber(0) {
   SSARegMapping = new SSARegMap();
   MFInfo = new MachineFunctionInfo(*this);
   FrameInfo = new MachineFrameInfo();
