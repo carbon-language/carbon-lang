@@ -184,7 +184,7 @@ void LiveRangeInfo::constructLiveRanges() {
       // for each operand that is defined by the instruction
       for (MachineInstr::val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI)
-	if (OpI.isDefOnly() || OpI.isDefAndUse()) {     
+	if (OpI.isDef()) {     
 	  const Value *Def = *OpI;
           bool isCC = (OpI.getMachineOperand().getType()
                        == MachineOperand::MO_CCRegister);
@@ -203,8 +203,7 @@ void LiveRangeInfo::constructLiveRanges() {
       // iterate over implicit MI operands and create a new LR
       // for each operand that is defined by the instruction
       for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i) 
-	if (MInst->getImplicitOp(i).opIsDefOnly() ||
-            MInst->getImplicitOp(i).opIsDefAndUse()) {     
+	if (MInst->getImplicitOp(i).isDef()) {
 	  const Value *Def = MInst->getImplicitRef(i);
           LiveRange* LR = createOrAddToLiveRange(Def, /*isCC*/ false);
 
@@ -342,7 +341,7 @@ void LiveRangeInfo::coalesceLRs()
       // iterate over  MI operands to find defs
       for(MachineInstr::const_val_op_iterator DefI = MI->begin(),
             DefE = MI->end(); DefI != DefE; ++DefI) {
-	if (DefI.isDefOnly() || DefI.isDefAndUse()) { // this operand is modified
+	if (DefI.isDef()) { // this operand is modified
 	  LiveRange *LROfDef = getLiveRangeForValue( *DefI );
 	  RegClass *RCOfDef = LROfDef->getRegClass();
 

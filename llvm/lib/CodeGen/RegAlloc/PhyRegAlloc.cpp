@@ -250,7 +250,7 @@ void PhyRegAlloc::buildInterferenceGraphs() {
       // iterate over all MI operands to find defs
       for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI) {
-       	if (OpI.isDefOnly() || OpI.isDefAndUse()) // create a new LR since def
+       	if (OpI.isDef()) // create a new LR since def
 	  addInterference(*OpI, &LVSetAI, isCallInst);
 
 	// Calculate the spill cost of each live range
@@ -269,8 +269,7 @@ void PhyRegAlloc::buildInterferenceGraphs() {
       // instr (currently, only calls have this).
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
       for (unsigned z=0; z < NumOfImpRefs; z++) 
-        if (MInst->getImplicitOp(z).opIsDefOnly() ||
-	    MInst->getImplicitOp(z).opIsDefAndUse())
+        if (MInst->getImplicitOp(z).isDef())
 	  addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
 
     } // for all machine instructions in BB
@@ -295,7 +294,7 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
   for (MachineInstr::const_val_op_iterator It1 = MInst->begin(),
          ItE = MInst->end(); It1 != ItE; ++It1) {
     const LiveRange *LROfOp1 = LRI->getLiveRangeForValue(*It1); 
-    assert((LROfOp1 || !It1.isUseOnly())&&"No LR for Def in PSEUDO insruction");
+    assert((LROfOp1 || It1.isDef()) && "No LR for Def in PSEUDO insruction");
 
     MachineInstr::const_val_op_iterator It2 = It1;
     for (++It2; It2 != ItE; ++It2) {
@@ -645,8 +644,8 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
 	 "Return value of a ret must be handled elsewhere");
 
   MachineOperand& Op = MInst->getOperand(OpNum);
-  bool isDef =  Op.opIsDefOnly();
-  bool isDefAndUse = Op.opIsDefAndUse();
+  bool isDef =  Op.isDef();
+  bool isUse = Op.isUse();
   unsigned RegType = MRI.getRegTypeForLR(LR);
   int SpillOff = LR->getSpillOffFromFP();
   RegClass *RC = LR->getRegClass();
@@ -699,7 +698,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
       assert(scratchReg != MRI.getInvalidRegNum());
     }
   
-  if (!isDef || isDefAndUse) {
+  if (isUse) {
     // for a USE, we have to load the value of LR from stack to a TmpReg
     // and use the TmpReg as one operand of instruction
     
@@ -712,7 +711,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
     AdIMid.clear();
   }
   
-  if (isDef || isDefAndUse) {   // if this is a Def
+  if (isDef) {   // if this is a Def
     // for a DEF, we have to store the value produced by this instruction
     // on the stack position allocated for this LR
     

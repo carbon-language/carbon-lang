@@ -293,7 +293,7 @@ void LiveIntervals::computeIntervals()
                 if (!mop.isRegister())
                     continue;
 
-                if (mop.opIsDefOnly() || mop.opIsDefAndUse()) {
+                if (mop.isDef()) {
                     unsigned reg = mop.getAllocatedRegNum();
                     if (reg < MRegisterInfo::FirstVirtualRegister)
                         handlePhysicalRegisterDef(mbb, mi, reg);

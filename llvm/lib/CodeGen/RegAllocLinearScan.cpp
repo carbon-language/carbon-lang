@@ -213,7 +213,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                      ii = mbb->begin(), ie = mbb->end();
                  ii != ie; ++ii) {
                 MachineInstr* instr = *ii;
-                     
+
                 std::cerr << i++ << "\t";
                 instr->print(std::cerr, *tm_);
             }
@@ -245,7 +245,6 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
 
         DEBUG(printIntervals("\tactive", active_.begin(), active_.end()));
         DEBUG(printIntervals("\tinactive", inactive_.begin(), inactive_.end()));
-
         processActiveIntervals(i);
         // processInactiveIntervals(i);
 
@@ -281,7 +280,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
         }
         // remove interval from active
     }
-    
+
     DEBUG(std::cerr << "finished register allocation\n");
     DEBUG(printVirt2PhysMap());
 
@@ -322,7 +321,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
                  i != e; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && op.opIsUse()) {
+                if (op.isVirtualRegister() && op.isUse()) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = v2pMap_[virtReg];
                     if (!physReg) {
@@ -345,13 +344,13 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
             for (unsigned i = 0, e = (*currentInstr_)->getNumOperands();
                  i != e; ++i) {
                 MachineOperand& op = (*currentInstr_)->getOperand(i);
-                if (op.isVirtualRegister() && !op.opIsUse()) {
+                if (op.isVirtualRegister() && op.isDef()) {
                     unsigned virtReg = op.getAllocatedRegNum();
                     unsigned physReg = v2pMap_[virtReg];
                     if (!physReg) {
                         physReg = getFreeTempPhysReg(virtReg);
                     }
-                    if (op.opIsDefAndUse()) {
+                    if (op.isUse()) { // def and use
                         loadVirt2PhysReg(virtReg, physReg);
                     }
                     else {
@@ -373,7 +372,7 @@ bool RA::runOnMachineFunction(MachineFunction &fn) {
                 (*currentInstr_)->getOperand(1).getAllocatedRegNum()) {
                 assert((*currentInstr_)->getOperand(1).isRegister() &&
                        (*currentInstr_)->getOperand(1).getAllocatedRegNum() &&
-                       (*currentInstr_)->getOperand(1).opIsUse() &&
+                       (*currentInstr_)->getOperand(1).isUse() &&
                        "Two address instruction invalid");
 
                 unsigned regA =

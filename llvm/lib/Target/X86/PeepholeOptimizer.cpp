@@ -174,7 +174,7 @@ namespace {
           MachineInstr *MI = *I;
           for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
             MachineOperand &MO = MI->getOperand(i);
-            if (MO.isVirtualRegister() && MO.opIsDefOnly())
+            if (MO.isVirtualRegister() && MO.isDef() && !MO.isUse())
               setDefinition(MO.getReg(), MI);
           }
         }
@@ -233,7 +233,7 @@ namespace {
     /// register, return the machine instruction defining it, otherwise, return
     /// null.
     MachineInstr *getDefiningInst(MachineOperand &MO) {
-      if (!MO.opIsUse() || !MO.isVirtualRegister()) return 0;
+      if (MO.isDef() || !MO.isVirtualRegister()) return 0;
       return UDC->getDefinition(MO.getReg());
     }
 

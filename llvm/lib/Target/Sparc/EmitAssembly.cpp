@@ -735,13 +735,13 @@ SparcAsmPrinter::printOneOperand(const MachineOperand &mop,
 {
   bool needBitsFlag = true;
   
-  if (mop.opHiBits32())
+  if (mop.isHiBits32())
     toAsm << "%lm(";
-  else if (mop.opLoBits32())
+  else if (mop.isLoBits32())
     toAsm << "%lo(";
-  else if (mop.opHiBits64())
+  else if (mop.isHiBits64())
     toAsm << "%hh(";
-  else if (mop.opLoBits64())
+  else if (mop.isLoBits64())
     toAsm << "%hm(";
   else
     needBitsFlag = false;

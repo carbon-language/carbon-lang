@@ -226,7 +226,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // Process all explicit uses...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
 	MachineOperand &MO = MI->getOperand(i);
-	if (MO.opIsUse() || MO.opIsDefAndUse()) {
+	if (MO.isUse()) {
 	  if (MO.isVirtualRegister() && !MO.getVRegValueOrNull()) {
 	    HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
 	  } else if (MO.isPhysicalRegister() && 
@@ -244,7 +244,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       // Process all explicit defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
 	MachineOperand &MO = MI->getOperand(i);
-	if (MO.opIsDefOnly() || MO.opIsDefAndUse()) {
+	if (MO.isDef()) {
 	  if (MO.isVirtualRegister()) {
 	    VarInfo &VRInfo = getVarInfo(MO.getReg());
 

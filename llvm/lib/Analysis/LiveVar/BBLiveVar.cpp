@@ -52,12 +52,12 @@ void BBLiveVar::calcDefUseSets() {
     // iterate over  MI operands to find defs
     for (MachineInstr::const_val_op_iterator OpI = MI->begin(), OpE = MI->end();
          OpI != OpE; ++OpI)
-      if (OpI.isDefOnly() || OpI.isDefAndUse()) // add to Defs if this operand is a def
+      if (OpI.isDef()) // add to Defs if this operand is a def
 	addDef(*OpI);
 
     // do for implicit operands as well
     for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i)
-      if (MI->getImplicitOp(i).opIsDefOnly() || MI->getImplicitOp(i).opIsDefAndUse())
+      if (MI->getImplicitOp(i).isDef())
 	addDef(MI->getImplicitRef(i));
     
     // iterate over MI operands to find uses
@@ -68,8 +68,7 @@ void BBLiveVar::calcDefUseSets() {
       if (isa<BasicBlock>(Op))
 	continue;             // don't process labels
 
-      if (OpI.isUseOnly() || OpI.isDefAndUse()) {
-                                // add to Uses only if this operand is a use
+      if (OpI.isUse()) { // add to Uses only if this operand is a use
         //
         // *** WARNING: The following code for handling dummy PHI machine
         //     instructions is untested.  The previous code was broken and I
@@ -104,7 +103,7 @@ void BBLiveVar::calcDefUseSets() {
       if (Op->getType() == Type::LabelTy)             // don't process labels
 	continue;
 
-      if (MI->getImplicitOp(i).opIsUse() || MI->getImplicitOp(i).opIsDefAndUse())
+      if (MI->getImplicitOp(i).isUse())
 	addUse(Op);
     }
   } // for all machine instructions

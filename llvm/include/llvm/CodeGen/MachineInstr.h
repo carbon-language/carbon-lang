@@ -109,15 +109,13 @@ struct MachineOperand {
 private:
   // Bit fields of the flags variable used for different operand properties
   enum {
-    DEFONLYFLAG = 0x01,       // this is a def but not a use of the operand
-    DEFUSEFLAG  = 0x02,       // this is both a def and a use
+    DEFFLAG     = 0x01,       // this is a def of the operand
+    USEFLAG     = 0x02,       // this is a use of the operand
     HIFLAG32    = 0x04,       // operand is %hi32(value_or_immedVal)
     LOFLAG32    = 0x08,       // operand is %lo32(value_or_immedVal)
     HIFLAG64    = 0x10,       // operand is %hi64(value_or_immedVal)
     LOFLAG64    = 0x20,       // operand is %lo64(value_or_immedVal)
     PCRELATIVE  = 0x40,       // Operand is relative to PC, not a global address
-  
-    USEDEFMASK = 0x03,
   };
 
 private:
@@ -157,9 +155,9 @@ private:
       opType(OpTy),
       regNum(Reg) {
     switch (UseTy) {
-    case MOTy::Use:       flags = 0; break;
-    case MOTy::Def:       flags = DEFONLYFLAG; break;
-    case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
+    case MOTy::Use:       flags = USEFLAG; break;
+    case MOTy::Def:       flags = DEFFLAG; break;
+    case MOTy::UseAndDef: flags = DEFFLAG | USEFLAG; break;
     default: assert(0 && "Invalid value for UseTy!");
     }
   }
@@ -168,9 +166,9 @@ private:
 		 bool isPCRelative = false)
     : value(V), opType(OpTy), regNum(-1) {
     switch (UseTy) {
-    case MOTy::Use:       flags = 0; break;
-    case MOTy::Def:       flags = DEFONLYFLAG; break;
-    case MOTy::UseAndDef: flags = DEFUSEFLAG; break;
+    case MOTy::Use:       flags = DEFFLAG; break;
+    case MOTy::Def:       flags = USEFLAG; break;
+    case MOTy::UseAndDef: flags = DEFFLAG | USEFLAG; break;
     default: assert(0 && "Invalid value for UseTy!");
     }
     if (isPCRelative) flags |= PCRELATIVE;
@@ -283,13 +281,12 @@ public:
     return *SymbolName;
   }
 
-  bool          opIsUse         () const { return (flags & USEDEFMASK) == 0; }
-  bool		opIsDefOnly     () const { return flags & DEFONLYFLAG; }
-  bool		opIsDefAndUse	() const { return flags & DEFUSEFLAG; }
-  bool          opHiBits32      () const { return flags & HIFLAG32; }
-  bool          opLoBits32      () const { return flags & LOFLAG32; }
-  bool          opHiBits64      () const { return flags & HIFLAG64; }
-  bool          opLoBits64      () const { return flags & LOFLAG64; }
+  bool          isUse           () const { return flags & USEFLAG; }
+  bool		isDef           () const { return flags & DEFFLAG; }
+  bool          isHiBits32      () const { return flags & HIFLAG32; }
+  bool          isLoBits32      () const { return flags & LOFLAG32; }
+  bool          isHiBits64      () const { return flags & HIFLAG64; }
+  bool          isLoBits64      () const { return flags & LOFLAG64; }
 
   // used to check if a machine register has been allocated to this operand
   bool hasAllocatedReg() const {
@@ -681,9 +678,8 @@ public:
 
     inline VTy operator->() const { return operator*(); }
 
-    inline bool isUseOnly()   const { return MI->getOperand(i).opIsUse(); } 
-    inline bool isDefOnly()   const { return MI->getOperand(i).opIsDefOnly(); } 
-    inline bool isDefAndUse() const { return MI->getOperand(i).opIsDefAndUse();}
+    inline bool isUse()   const { return MI->getOperand(i).isUse(); } 
+    inline bool isDef()   const { return MI->getOperand(i).isDef(); } 
 
     inline _Self& operator++() { i++; skipToNextVal(); return *this; }
     inline _Self  operator++(int) { _Self tmp = *this; ++*this; return tmp; }

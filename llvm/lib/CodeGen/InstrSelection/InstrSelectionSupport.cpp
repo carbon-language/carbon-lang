@@ -178,8 +178,8 @@ FixConstantOperandsForInstr(Instruction* vmInstr,
 
         // Bit-selection flags indicate an instruction that is extracting
         // bits from its operand so ignore this even if it is a big constant.
-        if (mop.opHiBits32() || mop.opLoBits32() ||
-            mop.opHiBits64() || mop.opLoBits64())
+        if (mop.isHiBits32() || mop.isLoBits32() ||
+            mop.isHiBits64() || mop.isLoBits64())
           continue;
 
         opType = ChooseRegOrImmed(mop.getImmedValue(), isSigned,

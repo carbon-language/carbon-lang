@@ -699,13 +699,13 @@ int64_t SparcV9CodeEmitter::getMachineOpValue(MachineInstr &MI,
   // are used in SPARC assembly. (Some of these make no sense in combination
   // with some of the above; we'll trust that the instruction selector
   // will not produce nonsense, and not check for valid combinations here.)
-  if (MO.opLoBits32()) {          // %lo(val) == %lo() in Sparc ABI doc
+  if (MO.isLoBits32()) {          // %lo(val) == %lo() in Sparc ABI doc
     return rv & 0x03ff;
-  } else if (MO.opHiBits32()) {   // %lm(val) == %hi() in Sparc ABI doc
+  } else if (MO.isHiBits32()) {   // %lm(val) == %hi() in Sparc ABI doc
     return (rv >> 10) & 0x03fffff;
-  } else if (MO.opLoBits64()) {   // %hm(val) == %ulo() in Sparc ABI doc
+  } else if (MO.isLoBits64()) {   // %hm(val) == %ulo() in Sparc ABI doc
     return (rv >> 32) & 0x03ff;
-  } else if (MO.opHiBits64()) {   // %hh(val) == %uhi() in Sparc ABI doc
+  } else if (MO.isHiBits64()) {   // %hh(val) == %uhi() in Sparc ABI doc
     return rv >> 42;
   } else {                        // (unadorned) val
     return rv;
@@ -747,10 +747,10 @@ bool SparcV9CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
         int64_t branchTarget = (Location - (long)Ref) >> 2;
         // Save the flags.
         bool loBits32=false, hiBits32=false, loBits64=false, hiBits64=false;   
-        if (op.opLoBits32()) { loBits32=true; }
-        if (op.opHiBits32()) { hiBits32=true; }
-        if (op.opLoBits64()) { loBits64=true; }
-        if (op.opHiBits64()) { hiBits64=true; }
+        if (op.isLoBits32()) { loBits32=true; }
+        if (op.isHiBits32()) { hiBits32=true; }
+        if (op.isLoBits64()) { loBits64=true; }
+        if (op.isHiBits64()) { hiBits64=true; }
         MI->SetMachineOperandConst(ii, MachineOperand::MO_SignExtendedImmed,
                                    branchTarget);
         if (loBits32) { MI->setOperandLo32(ii); }
