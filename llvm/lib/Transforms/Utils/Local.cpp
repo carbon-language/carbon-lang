@@ -353,7 +353,8 @@ Value *llvm::hasConstantValue(PHINode *PN) {
   //
   Value *InVal = 0;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (PN->getIncomingValue(i) != PN)  // Not the PHI node itself...
+    if (PN->getIncomingValue(i) != PN &&  // Not the PHI node itself...
+        !isa<UndefValue>(PN->getIncomingValue(i)))
       if (InVal && PN->getIncomingValue(i) != InVal)
         return 0;  // Not the same, bail out.
       else
@@ -363,7 +364,7 @@ Value *llvm::hasConstantValue(PHINode *PN) {
   // that only has entries for itself.  In this case, there is no entry into the
   // loop, so kill the PHI.
   //
-  if (InVal == 0) InVal = Constant::getNullValue(PN->getType());
+  if (InVal == 0) InVal = UndefValue::get(PN->getType());
 
   // All of the incoming values are the same, return the value now.
   return InVal;
