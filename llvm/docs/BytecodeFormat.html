@@ -38,10 +38,9 @@
     </ol>
   </li>
 </ol>
-<div class="doc_text">
-<p><b>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a>
-and <a href="mailto:sabre@nondot.org">Chris Lattner</a></b></p>
-<p> </p>
+<div class="doc_author">
+<p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a>
+</p>
 </div>
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="abstract">Abstract </a></div>
@@ -128,13 +127,16 @@ Values. Since the bytecode file is a <em>direct</em> representation of LLVM's
 intermediate representation, there is a need to represent pointers in the file.
 Slots are used for this purpose. For example, if one has the following assembly:
 </p>
-<pre><code>
-  %MyType = type { int, sbyte };
-  %MyVar = external global %MyType ;
-</code></pre>
-<p>there are two definitions. The definition of %MyVar uses %MyType and %MyType
-is used by %MyVar. In the C++ IR this linkage between %MyVar and %MyType is
-made explicitly by the use of C++ pointers. In bytecode, however, there's no
+
+<div class="doc_code">
+  %MyType = type { int, sbyte }<br>
+  %MyVar = external global %MyType
+</div>
+
+<p>there are two definitions. The definition of <tt>%MyVar</tt> uses 
+<tt>%MyType</tt>. In the C++ IR this linkage between <tt>%MyVar</tt> and 
+<tt>%MyType</tt> is
+explicit through the use of C++ pointers. In bytecode, however, there's no
 ability to store memory addresses. Instead, we compute and write out slot 
 numbers for every type and Value written to the file.</p>
 <p>A slot number is simply an unsigned 32-bit integer encoded in the variable
@@ -146,7 +148,7 @@ written to the bytecode file in a list (sequentially). Their order in that list
 determines their slot number. This means that slot #1 doesn't mean anything
 unless you also specify for which type you want slot #1. Types are handled
 specially and are always written to the file first (in the Global Type Pool) and
-in such a way that both forward and backward references of the types can be
+in such a way that both forward and backward references of the types can often be
 resolved with a single pass through the type pool. </p>
 <p>Slot numbers are also kept small by rearranging their order. Because of the
 structure of LLVM, certain values are much more likely to be used frequently
