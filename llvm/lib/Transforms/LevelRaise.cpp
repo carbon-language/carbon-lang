@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/LevelChange.h"
+#include "llvm/Transforms/RaisePointerReferences.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "TransformInternals.h"
 #include "llvm/iOther.h"
