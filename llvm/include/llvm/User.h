@@ -52,6 +52,9 @@ public:
   /// operands list.  Only use this if you know what you are doing.
   ///
   op_iterator op_erase(op_iterator I) { return Operands.erase(I); }
+  op_iterator op_erase(op_iterator I, op_iterator E) {
+    return Operands.erase(I, E);
+  }
 
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this User refers to.  This allows one to
