@@ -35,7 +35,7 @@
 // Opts enum - All of the transformations we can do...
 enum Opts {
   // Basic optimizations
-  dce, constprop, inlining, constmerge, strip, mstrip, mergereturn,
+  dce, die, constprop, inlining, constmerge, strip, mstrip, mergereturn,
 
   // Miscellaneous Transformations
   raiseallocs, cleangcc,
@@ -64,6 +64,7 @@ struct {
   Pass * (*PassCtor)();
 } OptTable[] = {
   { dce        , createDeadCodeEliminationPass },
+  { die        , createDeadInstEliminationPass },
   { constprop  , createConstantPropogationPass }, 
   { inlining   , createMethodInliningPass },
   { constmerge , createConstantMergePass },
@@ -102,6 +103,7 @@ cl::Flag   Quiet         ("q", "Don't print modifying pass names", 0, false);
 cl::Alias  QuietA        ("quiet", "Alias for -q", cl::NoFlags, Quiet);
 cl::EnumList<enum Opts> OptimizationList(cl::NoFlags,
   clEnumVal(dce        , "Dead Code Elimination"),
+  clEnumVal(die        , "Dead Instruction Elimination"),
   clEnumVal(constprop  , "Simple constant propogation"),
  clEnumValN(inlining   , "inline", "Method integration"),
   clEnumVal(constmerge , "Merge identical global constants"),
