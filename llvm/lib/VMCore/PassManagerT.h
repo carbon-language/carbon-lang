@@ -142,12 +142,12 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
   typedef typename Traits::BatcherClass BatcherClass;
   typedef typename Traits::ParentClass   ParentClass;
 
-#ifndef _MSC_VER
-  friend class PassManagerTraits<UnitType>::PassClass;
-  friend class PassManagerTraits<UnitType>::SubPassClass;  
-#else
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
   friend PassClass;
   friend SubPassClass;
+#else
+  friend class PassManagerTraits<UnitType>::PassClass;
+  friend class PassManagerTraits<UnitType>::SubPassClass;  
 #endif
   friend class PassManagerTraits<UnitType>;
   friend class ImmutablePass;
