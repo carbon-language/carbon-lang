@@ -83,7 +83,7 @@ namespace {
 }
 
 
-Pass *llvm::createRaisePointerReferencesPass() {
+FunctionPass *llvm::createRaisePointerReferencesPass() {
   return new RPR();
 }
 
