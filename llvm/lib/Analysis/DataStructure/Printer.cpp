@@ -127,6 +127,8 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
       EdgeSourceCaptions[0] = "r";
       if (Call.isDirectCall())
         EdgeSourceCaptions[1] = Call.getCalleeFunc()->getName();
+      else
+        EdgeSourceCaptions[1] = "f";
 
       GW.emitSimpleNode(&Call, "shape=record", "call", Call.getNumPtrArgs()+2,
                         &EdgeSourceCaptions);
