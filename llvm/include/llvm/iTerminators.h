@@ -61,7 +61,6 @@ public:
   }
 };
 
-
 //===---------------------------------------------------------------------------
 // BranchInst - Conditional or Unconditional Branch instruction.
 //
@@ -264,6 +263,38 @@ public:
   static inline bool classof(const InvokeInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return (I->getOpcode() == Instruction::Invoke);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+
+//===---------------------------------------------------------------------------
+/// UnwindInst - Immediately exit the current function, unwinding the stack
+/// until an invoke instruction is found.
+///
+struct UnwindInst : public TerminatorInst {
+  UnwindInst(Instruction *InsertBefore = 0)
+    : TerminatorInst(Instruction::Unwind, InsertBefore) {
+  }
+
+  virtual Instruction *clone() const { return new UnwindInst(); }
+
+  virtual const BasicBlock *getSuccessor(unsigned idx) const {
+    assert(0 && "UnwindInst has no successors!");
+    abort();
+    return 0;
+  }
+  virtual void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(0 && "UnwindInst has no successors!");
+  }
+  virtual unsigned getNumSuccessors() const { return 0; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UnwindInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Unwind;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
