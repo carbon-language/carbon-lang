@@ -1506,7 +1506,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           // rights, as they sign-extend.
           if (ShAmt) {
             bool CanFold = Shift->getOpcode() != Instruction::Shr ||
-                          Shift->getType()->isUnsigned();
+                           Shift->getType()->isUnsigned();
             if (!CanFold) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
@@ -1519,9 +1519,11 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             }
             
             if (CanFold) {
-              unsigned ShiftOp = Shift->getOpcode() == Instruction::Shl
-                ? Instruction::Shr : Instruction::Shl;
-              Constant *NewCst = ConstantExpr::get(ShiftOp, CI, ShAmt);
+              Constant *NewCst;
+              if (Shift->getOpcode() == Instruction::Shl)
+                NewCst = ConstantExpr::getUShr(CI, ShAmt);
+              else
+                NewCst = ConstantExpr::getShl(CI, ShAmt);
 
               // Check to see if we are shifting out any of the bits being
               // compared.
@@ -1535,7 +1537,12 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                   return ReplaceInstUsesWith(I, ConstantBool::True);
               } else {
                 I.setOperand(1, NewCst);
-                LHSI->setOperand(1, ConstantExpr::get(ShiftOp, AndCST,ShAmt));
+                Constant *NewAndCST;
+                if (Shift->getOpcode() == Instruction::Shl)
+                  NewAndCST = ConstantExpr::getUShr(AndCST, ShAmt);
+                else
+                  NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
+                LHSI->setOperand(1, NewAndCST);
                 LHSI->setOperand(0, Shift->getOperand(0));
                 WorkList.push_back(Shift); // Shift is dead.
                 AddUsesToWorkList(I);
