@@ -27,7 +27,7 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
-// DeleteFunctionBody - "Remove" the function by deleting all of it's basic
+// DeleteFunctionBody - "Remove" the function by deleting all of its basic
 // blocks, making it external.
 //
 void DeleteFunctionBody(Function *F) {
