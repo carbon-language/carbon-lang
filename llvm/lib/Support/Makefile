@@ -1,4 +1,4 @@
-LEVEL = ../../..
+LEVEL = ../..
 LIBRARYNAME = support
 BUILD_ARCHIVE = 1
 
