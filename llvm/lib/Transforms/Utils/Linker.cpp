@@ -156,7 +156,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     // If the global variable has a name, and that name is already in use in the
     // Dest module, make sure that the name is a compatible global variable...
     //
-    if (SGV->hasName() && (V = ST->lookup(SGV->getType(), SGV->getName()))) {
+    if (SGV->hasExternalLinkage() && SGV->hasName() &&
+	(V = ST->lookup(SGV->getType(), SGV->getName())) &&
+	cast<GlobalVariable>(V)->hasExternalLinkage()) {
       // The same named thing is a global variable, because the only two things
       // that may be in a module level symbol table are Global Vars and Methods,
       // and they both have distinct, nonoverlapping, possible types.
@@ -178,7 +180,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       //
       GlobalVariable *DGV = 
         new GlobalVariable(SGV->getType()->getValueType(), SGV->isConstant(),
-                           0, SGV->getName());
+                           SGV->hasInternalLinkage(), 0, SGV->getName());
 
       // Add the new global to the dest module
       Dest->getGlobalList().push_back(DGV);
@@ -209,7 +211,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
         cast<ConstPoolVal>(RemapOperand(SGV->getInitializer(), ValueMap));
 
       GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
-      if (DGV->hasInitializer()) {
+      if (DGV->hasInitializer() && SGV->hasExternalLinkage() &&
+	  DGV->hasExternalLinkage()) {
         if (DGV->getInitializer() != DInit)
           return Error(Err, "Global Variable Collision on '" + 
                        SGV->getType()->getDescription() + "':%" +SGV->getName()+
@@ -243,7 +246,9 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
     // If the method has a name, and that name is already in use in the
     // Dest module, make sure that the name is a compatible method...
     //
-    if (SM->hasName() && (V = ST->lookup(SM->getType(), SM->getName()))) {
+    if (SM->hasExternalLinkage() && SM->hasName() &&
+	(V = ST->lookup(SM->getType(), SM->getName())) &&
+	cast<Method>(V)->hasExternalLinkage()) {
       // The same named thing is a Method, because the only two things
       // that may be in a module level symbol table are Global Vars and Methods,
       // and they both have distinct, nonoverlapping, possible types.
@@ -261,7 +266,8 @@ static bool LinkMethodProtos(Module *Dest, const Module *Src,
     } else {
       // Method does not already exist, simply insert an external method
       // signature identical to SM into the dest module...
-      Method *DM = new Method(SM->getMethodType(), SM->getName());
+      Method *DM = new Method(SM->getMethodType(), SM->hasInternalLinkage(),
+			      SM->getName());
 
       // Add the method signature to the dest module...
       Dest->getMethodList().push_back(DM);
