@@ -176,6 +176,16 @@ private:
     DEBUG_SCCP(cerr << "Marking BB Executable: " << BB);
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
+
+    // Visit all of the PHI nodes that merge values from this block...  Because
+    // this block is newly executable, PHI nodes that used to be constant now
+    // may not be.  Note that we only mark PHI nodes that live in blocks that
+    // can execute!
+    //
+    for (Value::use_iterator I = BB->use_begin(), E = BB->use_end(); I != E;++I)
+      if (PHINode *PN = dyn_cast<PHINode>(*I))
+        if (BBExecutable.count(PN->getParent()))
+          visitPHINode(PN);
   }
 
 
@@ -308,7 +318,7 @@ bool SCCP::runOnFunction(Function *F) {
       InstVal &IV = ValueState[Inst];
       if (IV.isConstant()) {
         Constant *Const = IV.getConstant();
-        DEBUG_SCCP(cerr << "Constant: " << Inst << "  is: " << Const);
+        DEBUG_SCCP(cerr << "Constant: " << Const << " = " << Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
         Inst->replaceAllUsesWith(Const);
