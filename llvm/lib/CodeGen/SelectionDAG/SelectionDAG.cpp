@@ -354,10 +354,10 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, SDOperand N1,
       case ISD::SETUGT: return getConstant(C1 >  C2, MVT::i1);
       case ISD::SETULE: return getConstant(C1 <= C2, MVT::i1);
       case ISD::SETUGE: return getConstant(C1 >= C2, MVT::i1);
-      case ISD::SETLT:  return getConstant((int64_t)C1 < (int64_t)C2, MVT::i1);
-      case ISD::SETGT:  return getConstant((int64_t)C1 < (int64_t)C2, MVT::i1);
-      case ISD::SETLE:  return getConstant((int64_t)C1 < (int64_t)C2, MVT::i1);
-      case ISD::SETGE:  return getConstant((int64_t)C1 < (int64_t)C2, MVT::i1);
+      case ISD::SETLT:  return getConstant((int64_t)C1 <  (int64_t)C2, MVT::i1);
+      case ISD::SETGT:  return getConstant((int64_t)C1 >  (int64_t)C2, MVT::i1);
+      case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, MVT::i1);
+      case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, MVT::i1);
       }
     } else {
       // Ensure that the constant occurs on the RHS.
