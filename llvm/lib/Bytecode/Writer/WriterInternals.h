@@ -22,7 +22,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "WriterPrimitives.h"
 #include "llvm/Bytecode/Format.h"
-#include "llvm/SlotCalculator.h"
+#include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Instruction.h"
 
 namespace llvm {
