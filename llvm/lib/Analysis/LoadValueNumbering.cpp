@@ -266,7 +266,7 @@ bool LoadVN::haveEqualValueNumber(LoadInst *L1, LoadInst *L2,
       return true;
     } else {
       // If we know that the downward scan found a modifier, return false.
-      assert(DownIt != B->end() && "Didn't find instructions??");
+      assert(DownIt != BB->end() && "Didn't find instructions??");
       if (!NoModifiesDown) return false;
       
       // Otherwise, continue the scan looking for a modifier or L2.
