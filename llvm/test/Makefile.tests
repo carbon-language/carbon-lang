@@ -63,15 +63,21 @@ TESTRUNR = $(LEVEL)/test/TestRunner.sh
 NATGCC  = /usr/dcs/software/supported/bin/gcc
 CP	= /bin/cp -f
 
+## If TRACE or TRACEM is "yes", set the appropriate llc flag (-trace or -tracem)
+## mark that tracing on, and set the TRACELIBS variable.
 ifeq ($(TRACE), yes)
-    LLCFLAGS += -trace basicblock
-    LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
+    LLCFLAGS += -trace
+    DOTRACING = yes
 else
     ifeq ($(TRACEM), yes)
-	LLCFLAGS += -trace function
-	LLCLIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
+	LLCFLAGS += -tracem
+	DOTRACING = yes
     endif
 endif
+ifeq ($(DOTRACING), yes)
+    TRACELIBS := -L$(LEVEL)/test/Libraries/Output -linstr64
+endif
+
 
 LLCLIBS := $(LLCLIBS) -lm
 
