@@ -30,8 +30,21 @@ namespace llvm {
 
   private:
     MachineFunction &MF;
+    /// Virt2PhysMap - This is a virtual to physical register
+    /// mapping. Each virtual register is required to have an entry in
+    /// it; even spilled virtual registers (the register mapped to a
+    /// spilled register is the temporary used to load it from the
+    /// stack).
     DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
+    /// Virt2StackSlotMap - This is virtual register to stack slot
+    /// mapping. Each spilled virtual register has an entry in it
+    /// which corresponds to the stack slot this register is spilled
+    /// at.
     DenseMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
+    /// MI2VirtMap - This is MachineInstr to virtual register
+    /// mapping. In the case of memory spill code being folded into
+    /// instructions, we need to know which virtual register was
+    /// read/written by this instruction.
     MI2VirtMapTy MI2VirtMap;
     
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
@@ -50,15 +63,21 @@ namespace llvm {
 
     void grow();
 
+    /// @brief returns true if the specified virtual register is
+    /// mapped to a physical register
     bool hasPhys(unsigned virtReg) const {
       return getPhys(virtReg) != NO_PHYS_REG;
     }
 
+    /// @brief returns the physical register mapped to the specified
+    /// virtual register
     unsigned getPhys(unsigned virtReg) const {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
       return Virt2PhysMap[virtReg];
     }
 
+    /// @brief creates a mapping for the specified virtual register to
+    /// the specified physical register
     void assignVirt2Phys(unsigned virtReg, unsigned physReg) {
       assert(MRegisterInfo::isVirtualRegister(virtReg) &&
              MRegisterInfo::isPhysicalRegister(physReg));
@@ -68,6 +87,8 @@ namespace llvm {
       Virt2PhysMap[virtReg] = physReg;
     }
 
+    /// @brief clears the specified virtual register's, physical
+    /// register mapping
     void clearVirt(unsigned virtReg) {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
       assert(Virt2PhysMap[virtReg] != NO_PHYS_REG &&
@@ -75,26 +96,39 @@ namespace llvm {
       Virt2PhysMap[virtReg] = NO_PHYS_REG;
     }
 
+    /// @brief clears all virtual to physical register mappings
     void clearAllVirt() {
       Virt2PhysMap.clear();
       grow();
     }
 
+    /// @brief returns true is the specified virtual register is
+    /// mapped to a stack slot
     bool hasStackSlot(unsigned virtReg) const {
       return getStackSlot(virtReg) != NO_STACK_SLOT;
     }
 
+    /// @brief returns the stack slot mapped to the specified virtual
+    /// register
     int getStackSlot(unsigned virtReg) const {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
       return Virt2StackSlotMap[virtReg];
     }
 
+    /// @brief create a mapping for the specifed virtual register to
+    /// the next available stack slot
     int assignVirt2StackSlot(unsigned virtReg);
+    /// @brief create a mapping for the specified virtual register to
+    /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
 
+    /// @brief updates information about the specified virtual
+    /// register's value folded into newMI machine instruction
     void virtFolded(unsigned virtReg, MachineInstr* oldMI,
                     MachineInstr* newMI);
 
+    /// @brief returns the virtual registers' values folded in memory
+    /// operands of this instruction
     std::pair<MI2VirtMapTy::const_iterator, MI2VirtMapTy::const_iterator>
     getFoldedVirts(MachineInstr* MI) const {
       return MI2VirtMap.equal_range(MI);
