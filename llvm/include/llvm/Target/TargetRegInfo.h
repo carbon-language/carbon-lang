@@ -45,6 +45,8 @@ public:
                            std::vector<bool> &IsColorUsedArr) const = 0;
   virtual bool isRegVolatile(int Reg) const = 0;
 
+  virtual const char* const getRegName(unsigned reg) const = 0;
+
   TargetRegClassInfo(unsigned ID, unsigned NVR, unsigned NAR)
     : RegClassID(ID), NumOfAvailRegs(NVR), NumOfAllRegs(NAR) {}
 };
@@ -75,11 +77,16 @@ public:
   // code register class will be returned. Otherwise, the normal register
   // class (eg. int, float) must be returned.
   virtual unsigned getRegClassIDOfType  (const Type *type,
-					 bool isCCReg = false) const =0;
-  virtual unsigned getRegClassIDOfReg   (int unifiedRegNum)    const =0;
-  virtual unsigned getRegClassIDOfRegType(int regType)         const =0;
-  
-  inline unsigned int getNumOfRegClasses() const { 
+					 bool isCCReg = false) const = 0;
+  virtual unsigned getRegClassIDOfRegType(int regType) const = 0;
+
+  unsigned getRegClassIDOfReg(int unifiedRegNum) const {
+    unsigned classId = 0;
+    (void) getClassRegNum(unifiedRegNum, classId);
+    return classId;
+  }
+
+  unsigned int getNumOfRegClasses() const { 
     return MachineRegClassArr.size(); 
   }  
 
@@ -169,13 +176,43 @@ public:
 
   // Each register class has a seperate space for register IDs. To convert
   // a regId in a register class to a common Id, or vice versa,
-  // we use the folloing methods.
+  // we use the folloing two methods.
   //
-  virtual int getUnifiedRegNum(unsigned regClassID, int reg) const = 0;
-  virtual int getClassRegNum(int unifiedRegNum, unsigned& regClassID) const =0;
+  // Thsi method converts from class reg. number to unified register number.
+  int getUnifiedRegNum(unsigned regClassID, int reg) const {
+    if (reg == getInvalidRegNum()) { return getInvalidRegNum(); }
+    assert(regClassID < getNumOfRegClasses() && "Invalid register class");
+    int totalRegs = 0;
+    for (unsigned rcid = 0; rcid < regClassID; ++rcid)
+      totalRegs += MachineRegClassArr[rcid]->getNumOfAllRegs();
+    return reg + totalRegs;
+  }
+
+  // This method converts the unified number to the number in its class,
+  // and returns the class ID in regClassID.
+  int getClassRegNum(int uRegNum, unsigned& regClassID) const {
+    if (uRegNum == getInvalidRegNum()) { return getInvalidRegNum(); }
+    
+    int totalRegs = 0, rcid = 0, NC = getNumOfRegClasses();  
+    while (rcid < NC &&
+           uRegNum >= totalRegs + (int) MachineRegClassArr[rcid]->getNumOfAllRegs()) {
+      totalRegs += MachineRegClassArr[rcid]->getNumOfAllRegs();
+      rcid++;
+    }
+    if (rcid == NC) {
+      assert(0 && "getClassRegNum(): Invalid register number");
+      return getInvalidRegNum();
+    }
+    regClassID = rcid;
+    return uRegNum - totalRegs;
+  }
   
   // Returns the assembly-language name of the specified machine register.
-  virtual const char * const getUnifiedRegName(int UnifiedRegNum) const = 0;
+  const char * const getUnifiedRegName(int UnifiedRegNum) const {
+    unsigned regClassID = getNumOfRegClasses(); // initialize to invalid value
+    int regNumInClass = getClassRegNum(UnifiedRegNum, regClassID);
+    return MachineRegClassArr[regClassID]->getRegName(regNumInClass);
+  }
 
   virtual int getRegType(const Type* type) const = 0;
   virtual int getRegType(const LiveRange *LR) const = 0;
@@ -190,7 +227,6 @@ public:
   // be obtained using this method.
   //
   virtual int getInvalidRegNum() const = 0;
-
 
   // Method for inserting caller saving code. The caller must save all the
   // volatile registers across a call based on the calling conventions of
