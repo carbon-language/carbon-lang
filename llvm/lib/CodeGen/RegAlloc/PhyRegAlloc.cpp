@@ -1,6 +1,10 @@
 #include "llvm/CodeGen/PhyRegAlloc.h"
 
-
+cl::Enum<RegAllocDebugLevel_t> DEBUG_RA("dregalloc", cl::NoFlags,
+  "enable register allocation debugging information",
+  clEnumValN(RA_DEBUG_None   , "n", "disable debug output"),
+  clEnumValN(RA_DEBUG_Normal , "y", "enable debug output"),
+  clEnumValN(RA_DEBUG_Verbose, "v", "enable extra debug output"), 0);
 
 
 //----------------------------------------------------------------------------
@@ -267,8 +271,9 @@ void PhyRegAlloc::updateMachineCode()
 	  const Value *const Val =  Op.getVRegValue();
 
 	  // delete this condition checking later (must assert if Val is null)
-	  if( !Val && DEBUG_RA) { 
-	    cout << "Warning: NULL Value found for operand" << endl;
+	  if( !Val) {
+            if (DEBUG_RA)
+              cout << "Warning: NULL Value found for operand" << endl;
 	    continue;
 	  }
 	  assert( Val && "Value is NULL");   
@@ -480,8 +485,10 @@ void PhyRegAlloc::allocateRegisters()
     RegClassList[ rc ]->colorAllRegs();    
 
   updateMachineCode(); 
-  PrintMachineInstructions(Meth);
-  printMachineCode();                   // only for DEBUGGING
+  if (DEBUG_RA) {
+    PrintMachineInstructions(Meth);
+    printMachineCode();                   // only for DEBUGGING
+  }
 }
 
 
