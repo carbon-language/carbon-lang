@@ -152,9 +152,6 @@ class Im32i32<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem32, Imm32>;
 class Im16i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem16, Imm8>;
 class Im32i8<string n, bits<8> o, Format f> : X86Inst<n, o, f, Mem32, Imm8>;
 
-// Helper for shift instructions
-class UsesCL { list<Register> Uses = [CL]; bit printImplicitUsesAfter = 1; }
-
 //===----------------------------------------------------------------------===//
 // Instruction list...
 //
@@ -519,15 +516,17 @@ def XOR32mi8 : Im32i8<"xor", 0x83, MRM6m     >;            // [mem32] ^= imm8
 
 // Shift instructions
 // FIXME: provide shorter instructions when imm8 == 1
-def SHL8rCL  : I     <"shl", 0xD2, MRM4r     >        , UsesCL, // R8  <<= cl
-              II<(ops R8:$dst, R8:$src), "shl $dst, %CL">;
-def SHL16rCL : I     <"shl", 0xD3, MRM4r     >, OpSize, UsesCL, // R16 <<= cl
-              II<(ops R16:$dst, R16:$src), "shl $dst, %CL">;
-def SHL32rCL : I     <"shl", 0xD3, MRM4r     >        , UsesCL, // R32 <<= cl
-              II<(ops R32:$dst, R32:$src), "shl $dst, %CL">;
-def SHL8mCL  : Im8   <"shl", 0xD2, MRM4m     >        , UsesCL; // [mem8]  <<= cl
-def SHL16mCL : Im16  <"shl", 0xD3, MRM4m     >, OpSize, UsesCL; // [mem16] <<= cl
-def SHL32mCL : Im32  <"shl", 0xD3, MRM4m     >        , UsesCL; // [mem32] <<= cl
+let Uses = [CL], printImplicitUsesAfter = 1 in {
+  def SHL8rCL  : I     <"shl", 0xD2, MRM4r     >        ,       // R8  <<= cl
+                II<(ops R8:$dst, R8:$src), "shl $dst, %CL">;
+  def SHL16rCL : I     <"shl", 0xD3, MRM4r     >, OpSize,       // R16 <<= cl
+                II<(ops R16:$dst, R16:$src), "shl $dst, %CL">;
+  def SHL32rCL : I     <"shl", 0xD3, MRM4r     >        ,       // R32 <<= cl
+                II<(ops R32:$dst, R32:$src), "shl $dst, %CL">;
+  def SHL8mCL  : Im8   <"shl", 0xD2, MRM4m     >        ;       // [mem8]  <<= cl
+  def SHL16mCL : Im16  <"shl", 0xD3, MRM4m     >, OpSize;       // [mem16] <<= cl
+  def SHL32mCL : Im32  <"shl", 0xD3, MRM4m     >        ;       // [mem32] <<= cl
+}
 
 def SHL8ri   : Ii8   <"shl", 0xC0, MRM4r     >;                 // R8  <<= imm8
 def SHL16ri  : Ii8   <"shl", 0xC1, MRM4r     >, OpSize;         // R16 <<= imm8
@@ -536,15 +535,17 @@ def SHL8mi   : Im8i8 <"shl", 0xC0, MRM4m     >;                 // [mem8]  <<= i
 def SHL16mi  : Im16i8<"shl", 0xC1, MRM4m     >, OpSize;         // [mem16] <<= imm8
 def SHL32mi  : Im32i8<"shl", 0xC1, MRM4m     >;                 // [mem32] <<= imm8
 
-def SHR8rCL  : I     <"shr", 0xD2, MRM5r     >        , UsesCL, // R8  >>= cl
-              II<(ops R8:$dst, R8:$src), "shr $dst, %CL">;
-def SHR16rCL : I     <"shr", 0xD3, MRM5r     >, OpSize, UsesCL, // R16 >>= cl
-              II<(ops R16:$dst, R16:$src), "shr $dst, %CL">;
-def SHR32rCL : I     <"shr", 0xD3, MRM5r     >        , UsesCL, // R32 >>= cl
-              II<(ops R32:$dst, R32:$src), "shr $dst, %CL">;
-def SHR8mCL  : Im8   <"shr", 0xD2, MRM5m     >        , UsesCL; // [mem8]  >>= cl
-def SHR16mCL : Im16  <"shr", 0xD3, MRM5m     >, OpSize, UsesCL; // [mem16] >>= cl
-def SHR32mCL : Im32  <"shr", 0xD3, MRM5m     >        , UsesCL; // [mem32] >>= cl
+let Uses = [CL], printImplicitUsesAfter = 1 in {
+  def SHR8rCL  : I     <"shr", 0xD2, MRM5r     >        ,       // R8  >>= cl
+                II<(ops R8:$dst, R8:$src), "shr $dst, %CL">;
+  def SHR16rCL : I     <"shr", 0xD3, MRM5r     >, OpSize,       // R16 >>= cl
+                II<(ops R16:$dst, R16:$src), "shr $dst, %CL">;
+  def SHR32rCL : I     <"shr", 0xD3, MRM5r     >        ,       // R32 >>= cl
+                II<(ops R32:$dst, R32:$src), "shr $dst, %CL">;
+  def SHR8mCL  : Im8   <"shr", 0xD2, MRM5m     >        ;       // [mem8]  >>= cl
+  def SHR16mCL : Im16  <"shr", 0xD3, MRM5m     >, OpSize;       // [mem16] >>= cl
+  def SHR32mCL : Im32  <"shr", 0xD3, MRM5m     >        ;       // [mem32] >>= cl
+}
 
 def SHR8ri   : Ii8   <"shr", 0xC0, MRM5r     >;                 // R8  >>= imm8
 def SHR16ri  : Ii8   <"shr", 0xC1, MRM5r     >, OpSize;         // R16 >>= imm8
@@ -553,12 +554,17 @@ def SHR8mi   : Im8i8 <"shr", 0xC0, MRM5m     >;                 // [mem8]  >>= i
 def SHR16mi  : Im16i8<"shr", 0xC1, MRM5m     >, OpSize;         // [mem16] >>= imm8
 def SHR32mi  : Im32i8<"shr", 0xC1, MRM5m     >;                 // [mem32] >>= imm8
 
-def SAR8rCL  : I     <"sar", 0xD2, MRM7r     >        , UsesCL; // R8  >>>= cl
-def SAR16rCL : I     <"sar", 0xD3, MRM7r     >, OpSize, UsesCL; // R16 >>>= cl
-def SAR32rCL : I     <"sar", 0xD3, MRM7r     >        , UsesCL; // R32 >>>= cl
-def SAR8mCL  : Im8   <"sar", 0xD2, MRM7m     >        , UsesCL; // [mem8]  >>>= cl
-def SAR16mCL : Im16  <"sar", 0xD3, MRM7m     >, OpSize, UsesCL; // [mem16] >>>= cl
-def SAR32mCL : Im32  <"sar", 0xD3, MRM7m     >        , UsesCL; // [mem32] >>>= cl
+let Uses = [CL], printImplicitUsesAfter = 1 in {
+  def SAR8rCL  : I     <"sar", 0xD2, MRM7r     >,               // R8  >>>= cl
+                II<(ops R8:$dst, R8:$src), "sar $dst, %CL">;
+  def SAR16rCL : I     <"sar", 0xD3, MRM7r     >, OpSize,       // R16 >>>= cl
+                II<(ops R16:$dst, R16:$src), "sar $dst, %CL">;
+  def SAR32rCL : I     <"sar", 0xD3, MRM7r     >,               // R32 >>>= cl
+                II<(ops R32:$dst, R32:$src), "sar $dst, %CL">;
+  def SAR8mCL  : Im8   <"sar", 0xD2, MRM7m     >        ;       // [mem8]  >>>= cl
+  def SAR16mCL : Im16  <"sar", 0xD3, MRM7m     >, OpSize;       // [mem16] >>>= cl
+  def SAR32mCL : Im32  <"sar", 0xD3, MRM7m     >        ;       // [mem32] >>>= cl
+}
 
 def SAR8ri   : Ii8   <"sar", 0xC0, MRM7r     >;                 // R8  >>>= imm8
 def SAR16ri  : Ii8   <"sar", 0xC1, MRM7r     >, OpSize;         // R16 >>>= imm8
@@ -567,13 +573,17 @@ def SAR8mi   : Im8i8 <"sar", 0xC0, MRM7m     >;                 // [mem8]  >>>= 
 def SAR16mi  : Im16i8<"sar", 0xC1, MRM7m     >, OpSize;         // [mem16] >>>= imm8
 def SAR32mi  : Im32i8<"sar", 0xC1, MRM7m     >;                 // [mem32] >>>= imm8
 
-def SHLD32rrCL : I     <"shld", 0xA5, MRMDestReg>, TB, UsesCL;    // R32 <<= R32,R32 cl
-def SHLD32mrCL : Im32  <"shld", 0xA5, MRMDestMem>, TB, UsesCL;    // [mem32] <<= [mem32],R32 cl
+let Uses = [CL], printImplicitUsesAfter = 1 in {
+  def SHLD32rrCL : I     <"shld", 0xA5, MRMDestReg>, TB,        // R32 <<= R32,R32 cl
+                II<(ops R32:$dst, R32:$src1, R32:$src2), "shld $dst, $src2, %CL">;
+  def SHLD32mrCL : Im32  <"shld", 0xA5, MRMDestMem>, TB;        // [mem32] <<= [mem32],R32 cl
+  def SHRD32rrCL : I     <"shrd", 0xAD, MRMDestReg>, TB,        // R32 >>= R32,R32 cl
+                II<(ops R32:$dst, R32:$src1, R32:$src2), "shrd $dst, $src2, %CL">;
+  def SHRD32mrCL : Im32  <"shrd", 0xAD, MRMDestMem>, TB;        // [mem32] >>= [mem32],R32 cl
+}
+
 def SHLD32rri8 : Ii8   <"shld", 0xA4, MRMDestReg>, TB;            // R32 <<= R32,R32 imm8
 def SHLD32mri8 : Im32i8<"shld", 0xA4, MRMDestMem>, TB;            // [mem32] <<= [mem32],R32 imm8
-
-def SHRD32rrCL : I     <"shrd", 0xAD, MRMDestReg>, TB, UsesCL;    // R32 >>= R32,R32 cl
-def SHRD32mrCL : Im32  <"shrd", 0xAD, MRMDestMem>, TB, UsesCL;    // [mem32] >>= [mem32],R32 cl
 def SHRD32rri8 : Ii8   <"shrd", 0xAC, MRMDestReg>, TB;            // R32 >>= R32,R32 imm8
 def SHRD32mri8 : Im32i8<"shrd", 0xAC, MRMDestMem>, TB;            // [mem32] >>= [mem32],R32 imm8
 
@@ -815,13 +825,19 @@ def FIDIVR32m : FPI32m<"fidivr", 0xDA, MRM7m, OneArgFPRW>;  // ST(0) = [mem32int
 
 
 // Floating point cmovs...
-let isTwoAddress = 1, Uses = [ST0], Defs = [ST0], printImplicitUsesBefore = 1 in {
-  def FCMOVB  : FPI   <"fcmovb" , 0xC0, AddRegFrm, CondMovFP>, DA;     // fcmovb  ST(i) -> ST(0)
-  def FCMOVBE : FPI   <"fcmovbe", 0xD0, AddRegFrm, CondMovFP>, DA;     // fcmovbe ST(i) -> ST(0)
-  def FCMOVE  : FPI   <"fcmove" , 0xC8, AddRegFrm, CondMovFP>, DA;     // fcmove  ST(i) -> ST(0)
-  def FCMOVAE : FPI   <"fcmovae", 0xC0, AddRegFrm, CondMovFP>, DB;     // fcmovae ST(i) -> ST(0)
-  def FCMOVA  : FPI   <"fcmova" , 0xD0, AddRegFrm, CondMovFP>, DB;     // fcmova  ST(i) -> ST(0)
-  def FCMOVNE : FPI   <"fcmovne", 0xC8, AddRegFrm, CondMovFP>, DB;     // fcmovne ST(i) -> ST(0)
+let isTwoAddress = 1, Uses = [ST0], Defs = [ST0] in {
+  def FCMOVB  : FPI<"fcmovb" , 0xC0, AddRegFrm, CondMovFP>, DA,     // fcmovb  ST(i) -> ST(0)
+                 II<(ops RST:$op), "fcmovb %ST(0), $op">;
+  def FCMOVBE : FPI<"fcmovbe", 0xD0, AddRegFrm, CondMovFP>, DA,     // fcmovbe ST(i) -> ST(0)
+                 II<(ops RST:$op), "fcmovbe %ST(0), $op">;
+  def FCMOVE  : FPI<"fcmove" , 0xC8, AddRegFrm, CondMovFP>, DA,     // fcmove  ST(i) -> ST(0)
+                 II<(ops RST:$op), "fcmove %ST(0), $op">;
+  def FCMOVAE : FPI<"fcmovae", 0xC0, AddRegFrm, CondMovFP>, DB,     // fcmovae ST(i) -> ST(0)
+                 II<(ops RST:$op), "fcmovae %ST(0), $op">;
+  def FCMOVA  : FPI<"fcmova" , 0xD0, AddRegFrm, CondMovFP>, DB,     // fcmova  ST(i) -> ST(0)
+                 II<(ops RST:$op), "fcmova %ST(0), $op">;
+  def FCMOVNE : FPI<"fcmovne", 0xC8, AddRegFrm, CondMovFP>, DB,     // fcmovne ST(i) -> ST(0)
+                 II<(ops RST:$op), "fcmovne %ST(0), $op">;
 }
 
 // Floating point loads & stores...
@@ -868,7 +884,6 @@ class FPST0rInst<string n, bits<8> o> : I<n, o, AddRegFrm>, D8 {
   list<Register> Defs = [ST0];
 }
 class FPrST0Inst<string n, bits<8> o> : I<n, o, AddRegFrm>, DC {
-  bit printImplicitUsesAfter = 1;
   list<Register> Uses = [ST0];
 }
 class FPrST0PInst<string n, bits<8> o> : I<n, o, AddRegFrm>, DE {
@@ -876,27 +891,27 @@ class FPrST0PInst<string n, bits<8> o> : I<n, o, AddRegFrm>, DE {
 }
 
 def FADDST0r   : FPST0rInst <"fadd",    0xC0>;
-def FADDrST0   : FPrST0Inst <"fadd",    0xC0>;
+def FADDrST0   : FPrST0Inst <"fadd",    0xC0>, II<(ops RST:$op), "fadd $op, %ST(0)">;
 def FADDPrST0  : FPrST0PInst<"faddp",   0xC0>;
 
 def FSUBRST0r  : FPST0rInst <"fsubr",   0xE8>;
-def FSUBrST0   : FPrST0Inst <"fsub",    0xE8>;
+def FSUBrST0   : FPrST0Inst <"fsub",    0xE8>, II<(ops RST:$op), "fsub $op, %ST(0)">;
 def FSUBPrST0  : FPrST0PInst<"fsubp",   0xE8>;
 
 def FSUBST0r   : FPST0rInst <"fsub",    0xE0>;
-def FSUBRrST0  : FPrST0Inst <"fsubr",   0xE0>;
+def FSUBRrST0  : FPrST0Inst <"fsubr",   0xE0>, II<(ops RST:$op), "fsubr $op, %ST(0)">;
 def FSUBRPrST0 : FPrST0PInst<"fsubrp",  0xE0>;
 
 def FMULST0r   : FPST0rInst <"fmul",    0xC8>;
-def FMULrST0   : FPrST0Inst <"fmul",    0xC8>;
+def FMULrST0   : FPrST0Inst <"fmul",    0xC8>, II<(ops RST:$op), "fmul $op, %ST(0)">;
 def FMULPrST0  : FPrST0PInst<"fmulp",   0xC8>;
 
 def FDIVRST0r  : FPST0rInst <"fdivr",   0xF8>;
-def FDIVrST0   : FPrST0Inst <"fdiv",    0xF8>;
+def FDIVrST0   : FPrST0Inst <"fdiv",    0xF8>, II<(ops RST:$op), "fdiv $op, %ST(0)">;
 def FDIVPrST0  : FPrST0PInst<"fdivp",   0xF8>;
 
 def FDIVST0r   : FPST0rInst <"fdiv",    0xF0>;   // ST(0) = ST(0) / ST(i)
-def FDIVRrST0  : FPrST0Inst <"fdivr",   0xF0>;   // ST(i) = ST(0) / ST(i)
+def FDIVRrST0  : FPrST0Inst <"fdivr",   0xF0>, II<(ops RST:$op), "fdivr $op, %ST(0)">;   // ST(i) = ST(0) / ST(i)
 def FDIVRPrST0 : FPrST0PInst<"fdivrp",  0xF0>;   // ST(i) = ST(0) / ST(i), pop
 
 // Floating point compares
@@ -906,10 +921,11 @@ def FUCOMPPr  : I<"fucompp", 0xE9, RawFrm   >, DA, Imp<[ST0],[]>,  // compare ST
                 II<(ops), "fucompp">;
 
 
-let printImplicitUsesBefore = 1 in {
-  def FUCOMIr  : FPI<"fucomi", 0xE8, AddRegFrm, CompareFP>, DB, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i)
-  def FUCOMIPr : I<"fucomip", 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>;  // CC = compare ST(0) with ST(i), pop
-}
+def FUCOMIr  : FPI<"fucomi", 0xE8, AddRegFrm, CompareFP>, DB, Imp<[ST0],[]>,  // CC = compare ST(0) with ST(i)
+               II<(ops RST:$reg), "fucomi %ST(0), $reg">;
+def FUCOMIPr : I<"fucomip", 0xE8, AddRegFrm>, DF, Imp<[ST0],[]>,  // CC = compare ST(0) with ST(i), pop
+               II<(ops RST:$reg), "fucomip %ST(0), $reg">;
+
 
 // Floating point flag ops
 def FNSTSW8r  : I   <"fnstsw" , 0xE0, RawFrm>, DF, Imp<[],[AX]>,   // AX = fp flags
