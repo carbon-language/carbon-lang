@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include <cmath>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

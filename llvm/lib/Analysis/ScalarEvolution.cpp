@@ -76,6 +76,7 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
 #include "Support/Statistic.h"
+#include <cmath>
 using namespace llvm;
 
 namespace {
