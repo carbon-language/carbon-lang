@@ -24,6 +24,7 @@
                                        in a <tt>BasicBlock</tt></a>
       <li><a href="#iterate_convert">Turning an iterator into a class
                                         pointer</a>
+      <li><a href="#iterate_complex">Finding call sites: a more complex example</a>
     </ul>
     <li><a href="#simplechanges">Making simple changes</a>
     <ul>
@@ -59,7 +60,7 @@
     </ul>
 -->
   </ul>
-  <li><a href="#coreclasses">The Core LLVM Class Heirarchy Reference</a>
+  <li><a href="#coreclasses">The Core LLVM Class Hierarchy Reference</a>
   <ul>
     <li><a href="#Value">The <tt>Value</tt> class</a>
     <ul>
@@ -106,8 +107,8 @@
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
-This document is meant to hi-light some of the important classes and interfaces
-available in the LLVM source-base.  This manual is not indended to explain what
+This document is meant to highlight some of the important classes and interfaces
+available in the LLVM source-base.  This manual is not intended to explain what
 LLVM is, how it works, and what LLVM code looks like.  It assumes that you know
 the basics of LLVM and are interested in writing transformations or otherwise
 analyzing or manipulating the code.<p>
@@ -188,9 +189,9 @@ This section describes how to perform some very simple transformations of LLVM
 code.  This is meant to give examples of common idioms used, showing the
 practical side of LLVM transformations.<p>
 
-Because this is a "howto" section, you should also read about the main classes
+Because this is a "how-to" section, you should also read about the main classes
 that you will be working with.  The <a href="#coreclasses">Core LLVM Class
-Heirarchy Reference</a> contains details and descriptions of the main classes
+Hierarchy Reference</a> contains details and descriptions of the main classes
 that you should know about.<p>
 
 <!-- NOTE: this section should be heavy on example code -->
@@ -211,23 +212,189 @@ Instruction.  Common patterns for all levels. -->
 </ul><h4><a name="iterate_function"><hr size=0>Iterating over the
 <tt>BasicBlock</tt>s in a <tt>Function</tt> </h4><ul>
 
+It's quite common to have a <tt>Function</tt> instance that you'd like
+to transform in some way; in particular, you'd like to manipulate its
+<tt>BasicBlock</tt>s.  To facilitate this, you'll need to iterate over
+all of the <tt>BasicBlock</tt>s that constitute the <tt>Function</tt>.
+The following is an example that prints the name of a
+<tt>BasicBlock</tt> and the number of <tt>Instruction</tt>s it
+contains:
 
+<pre>
+  // func is a pointer to a Function instance
+  for(Function::iterator i = func->begin(), e = func->end(); i != e; ++i) {
+
+      // print out the name of the basic block if it has one, and then the
+      // number of instructions that it contains
+
+      cerr << "Basic block (name=" << i->getName() << ") has " 
+           << i->size() << " instructions.\n";
+  }
+</pre>
+
+Note that i can be used as if it were a pointer for the purposes of
+invoking member functions of the <tt>Instruction</tt> class.  This is
+because the indirection operator is overloaded for the iterator
+classes.  In the above code, the expression <tt>i->size()</tt> is
+exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="iterate_basicblock"><hr size=0>Iterating over the
 <tt>Instruction</tt>s in a <tt>BasicBlock</tt> </h4><ul>
 
+Just like when dealing with <tt>BasicBlock</tt>s in <tt>Function</tt>s, it's
+easy to iterate over the individual instructions that make up
+<tt>BasicBlock</tt>s.  Here's a code snippet that prints out each instruction in
+a <tt>BasicBlock</tt>:
 
+<pre>
+  // blk is a pointer to a BasicBlock instance
+  for(BasicBlock::iterator i = blk->begin(), e = blk->end(); i != e; ++i) {
+     // the next statement works since operator<<(ostream&,...) 
+     // is overloaded for Instruction&
+
+     cerr << *i << endl;
+  }
+</pre>
+
+However, this isn't really the best way to print out the contents of a
+<tt>BasicBlock</tt>!  Since the ostream operators are overloaded for
+virtually anything you'll care about, you could have just invoked the
+print routine on the basic block itself: <tt>cerr << blk <<
+endl;</tt>.  You might expect this to print out the pointer value of
+blk, but operator<< is overloaded for BasicBlock* as well: if you
+really want to print the pointer value explicitly, you'll have to
+cast.
 
 <!-- _______________________________________________________________________ -->
 </ul><h4><a name="iterate_convert"><hr size=0>Turning an iterator into a class
 pointer </h4><ul>
+
+Sometimes, it'll be useful to grab a reference (or pointer) to a class
+instance when all you've got at hand is an iterator.  Well, extracting
+a reference or a pointer from an iterator is very straightforward.
+Assuming that <tt>i</tt> is a <tt>BasicBlock::iterator</tt> and
+<tt>j</tt> is a <tt>BasicBlock::const_iterator</tt>:
+
+<pre>
+    Instruction& inst = *i;   // grab reference to instruction reference
+    Instruction* pinst = &*i; // grab pointer to instruction reference
+    const Instruction& inst = *j;
+</pre>
+However, the iterators you'll be working with in the LLVM framework
+are special: they will automatically convert to a ptr-to-instance type
+whenever they need to.  Instead of dereferencing the iterator and then
+taking the address of the result, you can simply assign the iterator
+to the proper pointer type and you get the dereference and address-of
+operation as a result of the assignment (behind the scenes, this is a
+result of overloading casting mechanisms).  Thus the last line of the
+last example,
+
+<pre>Instruction* pinst = &*i;</pre>
+
+is semantically equivalent to
+
+<pre>Instruction* pinst = i;</pre>
+
+<b>Caveat emptor</b>: The above syntax works <i>only</i> when you're
+<i>not</i> working with <tt>dyn_cast</tt>.  The template definition of
+<tt>dyn_cast</tt> isn't implemented to handle this yet, so you'll
+still need the following in order for things to work properly:
+
+<pre>
+BasicBlock::iterator bbi = ...;
+BranchInst* b = dyn_cast<BranchInst>(&*bbi);
+</pre>
+
+The following code snippet illustrates use of the conversion
+constructors provided by LLVM iterators.  By using these, you can
+explicitly grab the iterator of something without actually obtaining
+it via iteration over some structure:
+
+<pre>
+void printNextInstruction(Instruction* inst) {
+    BasicBlock::iterator it(inst);
+    ++it; // after this line, it refers to the instruction after *inst.
+    if(it != inst->getParent()->end()) cerr << *it << endl;
+}
+</pre>
+
+Of course, this example is strictly pedagogical, because it'd be
+better to do something like 
+
+<pre>if(inst->getNext()) cerr << inst->getNext() << endl;</pre>
+
 
 <!--   dereferenced iterator = Class &
        iterators have converting constructor for 'Class *'
        iterators automatically convert to 'Class *' except in dyn_cast<> case
  -->
 
+<!--
+_______________________________________________________________________
+--> </ul><h4><a name="iterate_complex"><hr size=0>Finding call sites:
+a slightly more complex example
+</h4><ul>
+
+Say that you're writing a FunctionPass and would like to count all the
+locations in the entire module (that is, across every <tt>Function</tt>)
+where a certain function named foo (that takes an int and returns an
+int) is called.  As you'll learn later, you may want to use an
+<tt>InstVisitor</tt> to accomplish this in a much more straightforward
+manner, but this example will allow us to explore how you'd do it if
+you didn't have <tt>InstVisitor</tt> around.  In pseudocode, this is
+what we want to do:
+
+<pre>
+initialize callCounter to zero
+for each Function f in the Module
+    for each BasicBlock b in f
+      for each Instruction i in b
+        if(i is a CallInst and foo is the function it calls)
+          increment callCounter
+</pre>
+
+And the actual code is (remember, since we're writing a
+<tt>FunctionPass</tt> our <tt>FunctionPass</tt>-derived class simply
+has to override the <tt>runOnFunction</tt> method...):
+
+<pre>
+
+// Assume callCounter is a private member of the pass class being written,
+// and has been initialized in the pass class constructor.
+
+virtual runOnFunction(Function& F) {
+
+    // Remember, we assumed that the signature of foo was "int foo(int)";
+    // the first thing we'll do is grab the pointer to that function (as a
+    // Function*) so we can use it later when we're examining the
+    // parameters of a CallInst.  All of the code before the call to
+    // Module::getOrInsertFunction() is in preparation to do symbol-table
+    // to find the function pointer.
+
+    vector<const Type*> params;
+    params.push_back(Type::IntTy);
+    const FunctionType* fooType = FunctionType::get(Type::IntTy, params);
+    Function* foo = F.getParent()->getOrInsertFunction("foo", fooType);
+
+    // Start iterating and (as per the pseudocode), increment callCounter.
+
+    for(Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
+       for(BasicBlock::iterator i = b->begin(); ie = b->end(); i != ie; ++i) {
+           if(CallInst* callInst = dyn_cast<CallInst>(&*inst)) {
+               // we know we've encountered a call instruction, so we
+               // need to determine if it's a call to foo or not
+
+               if(callInst->getCalledFunction() == foo)
+	           ++callCounter;
+           }
+       }
+    }
+}
+</pre>
+
+We could then print out the value of callCounter (if we wanted to)
+inside the doFinalization method of our FunctionPass.
 
 
 <!-- ======================================================================= -->
@@ -249,7 +416,7 @@ pointer </h4><ul>
 <!-- *********************************************************************** -->
 </ul><table width="100%" bgcolor="#330077" border=0 cellpadding=4 cellspacing=0>
 <tr><td align=center><font color="#EEEEFF" size=+2 face="Georgia,Palatino"><b>
-<a name="coreclasses">The Core LLVM Class Heirarchy Reference
+<a name="coreclasses">The Core LLVM Class Hierarchy Reference
 </b></font></td></tr></table><ul>
 <!-- *********************************************************************** -->
 
@@ -286,7 +453,7 @@ of this relationship, the <tt>Value</tt> class keeps a list of all of the <a
 href="#User"><tt>User</tt></a>s that is using it (the <a
 href="#User"><tt>User</tt></a> class is a base class for all nodes in the LLVM
 graph that can refer to <tt>Value</tt>s).  This use list is how LLVM represents
-def-use information in the program, and is accessable through the <tt>use_</tt>*
+def-use information in the program, and is accessible through the <tt>use_</tt>*
 methods, shown below.<p>
 
 Because LLVM is a typed representation, every LLVM <tt>Value</tt> is typed, and
@@ -1071,6 +1238,6 @@ pointer to the parent Function.
 <a href="mailto:sabre@nondot.org">Chris Lattner</a></address>
 <!-- Created: Tue Aug  6 15:00:33 CDT 2002 -->
 <!-- hhmts start -->
-Last modified: Fri Sep  6 13:30:36 CDT 2002
+Last modified: Fri Sep  6 16:37:49 EDT 2002
 <!-- hhmts end -->
 </font></body></html>
