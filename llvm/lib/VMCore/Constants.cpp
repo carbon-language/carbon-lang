@@ -243,8 +243,14 @@ ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
   Operands.push_back(Use(C, this));
 }
 
+static bool isSetCC(unsigned Opcode) {
+  return Opcode == Instruction::SetEQ || Opcode == Instruction::SetNE ||
+         Opcode == Instruction::SetLT || Opcode == Instruction::SetGT ||
+         Opcode == Instruction::SetLE || Opcode == Instruction::SetGE;
+}
+
 ConstantExpr::ConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
-  : Constant(C1->getType()), iType(Opcode) {
+  : Constant(isSetCC(Opcode) ? Type::BoolTy : C1->getType()), iType(Opcode) {
   Operands.push_back(Use(C1, this));
   Operands.push_back(Use(C2, this));
 }
