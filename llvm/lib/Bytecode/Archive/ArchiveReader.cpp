@@ -90,7 +90,6 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
   // a '/' and blanks.
 
   std::string pathname;
-  unsigned index;
   switch (Hdr->name[0]) {
     case '#':
       if (Hdr->name[1] == '1' && Hdr->name[2] == '/') {

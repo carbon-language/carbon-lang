@@ -19,6 +19,7 @@
 #include "Reader.h"
 #include "llvm/Bytecode/BytecodeHandler.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Config/alloca.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/SymbolTable.h"
@@ -1501,7 +1502,7 @@ void BytecodeReader::ParseStringConstants(unsigned NumEntries, ValueTable &Tab){
       error("String constant data invalid!");
     
     // Read character data.  The type tells us how long the string is.
-    char Data[ATy->getNumElements()]; 
+    char *Data = reinterpret_cast<char *>(alloca(ATy->getNumElements())); 
     read_data(Data, Data+ATy->getNumElements());
 
     std::vector<Constant*> Elements(ATy->getNumElements());
