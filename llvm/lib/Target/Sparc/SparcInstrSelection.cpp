@@ -1541,22 +1541,19 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
   // Let's check for chain rules outside the switch so that we don't have
   // to duplicate the list of chain rule production numbers here again
   // 
-  if (ThisIsAChainRule(ruleForNode))
-    {
-      // Chain rules have a single nonterminal on the RHS.
-      // Get the rule that matches the RHS non-terminal and use that instead.
-      // 
-      assert(nts[0] && ! nts[1]
-             && "A chain rule should have only one RHS non-terminal!");
-      nextRule = burm_rule(subtreeRoot->state, nts[0]);
-      nts = burm_nts[nextRule];
-      GetInstructionsByRule(subtreeRoot, nextRule, nts, target, mvec);
-    }
-  else
-    {
-      switch(ruleForNode) {
-      case 1:	// stmt:   Ret
-      case 2:	// stmt:   RetValue(reg)
+  if (ThisIsAChainRule(ruleForNode)) {
+    // Chain rules have a single nonterminal on the RHS.
+    // Get the rule that matches the RHS non-terminal and use that instead.
+    // 
+    assert(nts[0] && ! nts[1]
+           && "A chain rule should have only one RHS non-terminal!");
+    nextRule = burm_rule(subtreeRoot->state, nts[0]);
+    nts = burm_nts[nextRule];
+    GetInstructionsByRule(subtreeRoot, nextRule, nts, target, mvec);
+  } else {
+    switch(ruleForNode) {
+      case 1:   // stmt:   Ret
+      case 2:   // stmt:   RetValue(reg)
       {         // NOTE: Prepass of register allocation is responsible
                 //	 for moving return value to appropriate register.
                 // Copy the return value to the required return register.
@@ -2192,11 +2189,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(BuildMI(V9::ANDNr, 3).addReg(lhs).addReg(notArg)
                                        .addReg(dest, MOTy::Def));
 
-        if (notArg->getType() == Type::BoolTy)
-          { // set 1 in result register if result of above is non-zero
-            mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
-                           .addReg(dest, MOTy::UseAndDef));
-          }
+        if (notArg->getType() == Type::BoolTy) {
+          // set 1 in result register if result of above is non-zero
+          mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
+                         .addReg(dest, MOTy::UseAndDef));
+        }
 
         break;
       }
@@ -2223,11 +2220,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(BuildMI(V9::ORNr, 3).addReg(lhs).addReg(notArg)
                        .addReg(dest, MOTy::Def));
 
-        if (notArg->getType() == Type::BoolTy)
-          { // set 1 in result register if result of above is non-zero
-            mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
-                           .addReg(dest, MOTy::UseAndDef));
-          }
+        if (notArg->getType() == Type::BoolTy) {
+          // set 1 in result register if result of above is non-zero
+          mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
+                         .addReg(dest, MOTy::UseAndDef));
+        }
 
         break;
       }
@@ -2253,11 +2250,11 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         mvec.push_back(BuildMI(V9::XNORr, 3).addReg(lhs).addReg(notArg)
                        .addReg(dest, MOTy::Def));
 
-        if (notArg->getType() == Type::BoolTy)
-          { // set 1 in result register if result of above is non-zero
-            mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
-                           .addReg(dest, MOTy::UseAndDef));
-          }
+        if (notArg->getType() == Type::BoolTy) {
+          // set 1 in result register if result of above is non-zero
+          mvec.push_back(BuildMI(V9::MOVRNZi, 3).addReg(dest).addZImm(1)
+                         .addReg(dest, MOTy::UseAndDef));
+        }
         break;
       }
 
@@ -2278,37 +2275,36 @@ GetInstructionsByRule(InstructionNode* subtreeRoot,
         bool computeBoolVal = (subtreeRoot->parent() == NULL ||
                                ! AllUsesAreBranches(setCCInstr));
 
-        if (computeBoolVal)
-          {
-            InstrTreeNode* constNode = subtreeRoot->rightChild();
-            assert(constNode &&
-                   constNode->getNodeType() ==InstrTreeNode::NTConstNode);
-            Constant *constVal = cast<Constant>(constNode->getValue());
-            bool isValidConst;
-            
-            if ((constVal->getType()->isInteger()
-                 || isa<PointerType>(constVal->getType()))
-                && target.getInstrInfo().ConvertConstantToIntType(target,
+        if (computeBoolVal) {
+          InstrTreeNode* constNode = subtreeRoot->rightChild();
+          assert(constNode &&
+                 constNode->getNodeType() ==InstrTreeNode::NTConstNode);
+          Constant *constVal = cast<Constant>(constNode->getValue());
+          bool isValidConst;
+          
+          if ((constVal->getType()->isInteger()
+               || isa<PointerType>(constVal->getType()))
+              && target.getInstrInfo().ConvertConstantToIntType(target,
                              constVal, constVal->getType(), isValidConst) == 0
-                && isValidConst)
-              {
-                // That constant is an integer zero after all...
-                // Use a MOVR[op] to compute the boolean result
-                // Unconditionally set register to 0
-                mvec.push_back(BuildMI(V9::SETHI, 2).addZImm(0)
-                               .addRegDef(setCCInstr));
+              && isValidConst)
+          {
+            // That constant is an integer zero after all...
+            // Use a MOVR[op] to compute the boolean result
+            // Unconditionally set register to 0
+            mvec.push_back(BuildMI(V9::SETHI, 2).addZImm(0)
+                           .addRegDef(setCCInstr));
                 
-                // Now conditionally move 1 into the register.
-                // Mark the register as a use (as well as a def) because the old
-                // value will be retained if the condition is false.
-                MachineOpCode movOpCode = ChooseMovpregiForSetCC(subtreeRoot);
-                mvec.push_back(BuildMI(movOpCode, 3)
-                               .addReg(subtreeRoot->leftChild()->getValue())
-                               .addZImm(1).addReg(setCCInstr, MOTy::UseAndDef));
+            // Now conditionally move 1 into the register.
+            // Mark the register as a use (as well as a def) because the old
+            // value will be retained if the condition is false.
+            MachineOpCode movOpCode = ChooseMovpregiForSetCC(subtreeRoot);
+            mvec.push_back(BuildMI(movOpCode, 3)
+                           .addReg(subtreeRoot->leftChild()->getValue())
+                           .addZImm(1).addReg(setCCInstr, MOTy::UseAndDef));
                 
-                break;
-              }
+            break;
           }
+        }
         // ELSE FALL THROUGH
       }
 
