@@ -10,7 +10,6 @@
 #include "llvm/Method.h"
 #include "llvm/iTerminators.h"
 #include "llvm/iOther.h"
-#include "llvm/CodeGen/InstrScheduling.h"
 #include "llvm/CodeGen/InstrSelection.h"
 #include "llvm/CodeGen/MachineCodeForMethod.h"
 #include "llvm/CodeGen/PhyRegAlloc.h"
