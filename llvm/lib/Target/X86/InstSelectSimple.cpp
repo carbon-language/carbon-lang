@@ -1267,18 +1267,18 @@ void ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
 void ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;
   switch (ID) {
-  case Intrinsic::va_start:
+  case Intrinsic::vastart:
     // Get the address of the first vararg value...
     TmpReg1 = getReg(CI);
     addFrameReference(BuildMI(BB, X86::LEA32r, 5, TmpReg1), VarArgsFrameIndex);
     return;
 
-  case Intrinsic::va_copy:
+  case Intrinsic::vacopy:
     TmpReg1 = getReg(CI);
     TmpReg2 = getReg(CI.getOperand(1));
     BuildMI(BB, X86::MOV32rr, 1, TmpReg1).addReg(TmpReg2);
     return;
-  case Intrinsic::va_end: return;   // Noop on X86
+  case Intrinsic::vaend: return;   // Noop on X86
 
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
