@@ -15,43 +15,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DataStructureGraph.h"
 #include "llvm/Value.h"
 #include "Support/STLExtras.h"
 #include <algorithm>
 
 //#define DEBUG_NODE_ELIMINATE 1
-
-bool AllocDSNode::isEquivalentTo(DSNode *Node) const {
-  if (AllocDSNode *N = dyn_cast<AllocDSNode>(Node))
-    return N->Allocation == Allocation;
-  return false;
-}
-
-bool GlobalDSNode::isEquivalentTo(DSNode *Node) const {
-  if (GlobalDSNode *G = dyn_cast<GlobalDSNode>(Node))
-    return G->Val == Val;
-  return false;
-}
-
-bool CallDSNode::isEquivalentTo(DSNode *Node) const {
-  if (CallDSNode *C = dyn_cast<CallDSNode>(Node))
-    return C->CI == CI && C->ArgLinks == ArgLinks;
-  return false;
-}
-
-bool ArgDSNode::isEquivalentTo(DSNode *Node) const {
-  return false;
-}
-
-// NodesAreEquivalent - Check to see if the nodes are equivalent in all ways
-// except node type.  Since we know N1 is a shadow node, N2 is allowed to be
-// any type.
-//
-bool ShadowDSNode::isEquivalentTo(DSNode *Node) const {
-  return !isCriticalNode();              // Must not be a critical node...
-}
-
 
 
 // isIndistinguishableNode - A node is indistinguishable if some other node
@@ -71,6 +40,8 @@ static bool isIndistinguishableNode(DSNode *DN) {
   // other nodes that are exactly equilivant to DN (with the exception of node
   // type), but are not DN.  If anything exists, then DN is indistinguishable.
   //
+
+  DSNode *IndFrom = 0;
   const std::vector<PointerValSet*> &Refs = DN->getReferrers();
   for (unsigned R = 0, RE = Refs.size(); R != RE; ++R) {
     const PointerValSet &Ptr = *Refs[R];
@@ -80,35 +51,67 @@ static bool isIndistinguishableNode(DSNode *DN) {
       if (Ptr[i].Index == 0 && N2 != cast<DSNode>(DN) &&
           DN->getType() == N2->getType() && DN->isEquivalentTo(N2)) {
 
-        // Otherwise, the nodes can be merged.  Make sure that N2 contains all
-        // of the  outgoing edges (fields) that DN does...
-        //
-        assert(DN->getNumLinks() == N2->getNumLinks() &&
-               "Same type, diff # fields?");
-        for (unsigned i = 0, e = DN->getNumLinks(); i != e; ++i)
-          N2->getLink(i).add(DN->getLink(i));
-        
-        // Now make sure that all of the nodes that point to the shadow node
-        // also  point to the node that we are merging it with...
-        //
-        const std::vector<PointerValSet*> &Refs = DN->getReferrers();
-        for (unsigned i = 0, e = Refs.size(); i != e; ++i) {
-          PointerValSet &PVS = *Refs[i];
-          // FIXME: this is incorrect if the referring pointer has index != 0
-          //
-          PVS.add(N2);
-        }
-        return true;
+        IndFrom = N2;
+        R = RE-1;
+        break;
       }
     }
   }
 
-  // Otherwise, nothing found, perhaps next time....
-  return false;
+  // If we haven't found an equivalent node to merge with, see if one of the
+  // nodes pointed to by this node is equivalent to this one...
+  //
+  if (IndFrom == 0) {
+    unsigned NumOutgoing = DN->getNumOutgoingLinks();
+    for (DSNode::iterator I = DN->begin(), E = DN->end(); I != E; ++I) {
+      DSNode *Linked = *I;
+      if (Linked != DN && Linked->getNumOutgoingLinks() == NumOutgoing &&
+          DN->getType() == Linked->getType() && DN->isEquivalentTo(Linked)) {
+#if 0
+        // Make sure the leftover node contains links to everything we do...
+        for (unsigned i = 0, e = DN->getNumLinks(); i != e; ++i)
+          Linked->getLink(i).add(DN->getLink(i));
+#endif
+
+        IndFrom = Linked;
+        break;
+      }
+    }
+  }
+
+
+  // If DN is indistinguishable from some other node, merge them now...
+  if (IndFrom == 0)
+    return false;     // Otherwise, nothing found, perhaps next time....
+
+  // The nodes can be merged.  Make sure that IndFrom contains all of the
+  // outgoing edges (fields) that DN does...
+  //
+  assert(DN->getNumLinks() == IndFrom->getNumLinks() &&
+         "Same type, diff # fields?");
+  for (unsigned i = 0, e = DN->getNumLinks(); i != e; ++i)
+    IndFrom->getLink(i).add(DN->getLink(i));
+  
+  // Now make sure that all of the nodes that point to the shadow node also
+  // point to the node that we are merging it with...
+  //
+  for (unsigned i = 0, e = Refs.size(); i != e; ++i) {
+    PointerValSet &PVS = *Refs[i];
+
+    bool RanOnce = false;
+    for (unsigned j = 0, je = PVS.size(); j != je; ++j)
+      if (PVS[j].Node == DN) {
+        RanOnce = true;
+        PVS.add(PointerVal(IndFrom, PVS[j].Index));
+      }
+
+    assert(RanOnce && "Node on user set but cannot find the use!");
+  }
+  return true;
 }
 
 template<typename NodeTy>
-bool removeIndistinguishableNode(std::vector<NodeTy*> &Nodes) {
+static bool removeIndistinguishableNodes(std::vector<NodeTy*> &Nodes) {
   bool Changed = false;
   std::vector<NodeTy*>::iterator I = Nodes.begin();
   while (I != Nodes.end()) {
@@ -128,6 +131,34 @@ bool removeIndistinguishableNode(std::vector<NodeTy*> &Nodes) {
   return Changed;
 }
 
+template<typename NodeTy>
+static bool removeIndistinguishableNodePairs(std::vector<NodeTy*> &Nodes) {
+  bool Changed = false;
+  std::vector<NodeTy*>::iterator I = Nodes.begin();
+  while (I != Nodes.end()) {
+    NodeTy *N1 = *I++;
+    for (std::vector<NodeTy*>::iterator I2 = I, I2E = Nodes.end();
+         I2 != I2E; ++I2) {
+      NodeTy *N2 = *I2;
+      if (N1->isEquivalentTo(N2)) {
+#ifdef DEBUG_NODE_ELIMINATE
+        cerr << "Found Indistinguishable Node:\n";
+        N1->print(cerr);
+#endif
+        N1->removeAllIncomingEdges();
+        delete N1;
+        --I;
+        I = Nodes.erase(I);
+        Changed = true;
+        break;
+      }
+    }
+  }
+  return Changed;
+}
+
+
+
 // UnlinkUndistinguishableNodes - Eliminate shadow nodes that are not
 // distinguishable from some other node in the graph...
 //
@@ -136,9 +167,13 @@ bool FunctionDSGraph::UnlinkUndistinguishableNodes() {
   // indistinguishable from some other node.  If so, eliminate the node!
   //
   return
-    removeIndistinguishableNode(AllocNodes) |
-    removeIndistinguishableNode(ShadowNodes) |
-    removeIndistinguishableNode(GlobalNodes);
+    removeIndistinguishableNodes(AllocNodes) |
+    removeIndistinguishableNodes(ShadowNodes) |
+    //FIXME: We cannot naively remove call nodes here because if there is a
+    // shadow node that is the result of the call, we have to make sure to
+    // merge the shadow node as well!!!
+    //    removeIndistinguishableNodePairs(CallNodes) |
+    removeIndistinguishableNodePairs(GlobalNodes);
 }
 
 static void MarkReferredNodesReachable(DSNode *N,
