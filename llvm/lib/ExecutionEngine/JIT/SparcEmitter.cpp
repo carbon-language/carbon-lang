@@ -32,8 +32,16 @@ namespace {
                           std::pair<unsigned*,MachineInstr*> > > BBRefs;
     std::map<BasicBlock*, unsigned> BBLocations;
     std::vector<void*> ConstantPoolAddresses;
+    std::vector<void*> funcMemory;
   public:
     SparcEmitter(VM &vm) : TheVM(vm) {}
+    ~SparcEmitter() {
+      while (! funcMemory.empty()) {
+        void* addr = funcMemory.back();
+        free(addr);
+        funcMemory.pop_back();
+      }
+    }
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
@@ -49,9 +57,11 @@ namespace {
 						  int Offset);
 
     virtual void saveBBreference(BasicBlock *BB, MachineInstr &MI);
+    
 
   private:
     void emitAddress(void *Addr, bool isPCRelative);
+    void* getMemory(unsigned NumPages);
   };
 }
 
@@ -66,22 +76,36 @@ MachineCodeEmitter *VM::createSparcEmitter(VM &V) {
 
 // FIXME: This should be rewritten to support a real memory manager for
 // executable memory pages!
-static void *getMemory(unsigned NumPages) {
-  return mmap(0, 4096*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
-              MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+void * SparcEmitter::getMemory(unsigned NumPages) {
+#if 0
+  void *pa = mmap(0, 4096*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
+                  MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+  if (pa == MAP_FAILED) {
+    perror("mmap");
+    abort();
+  }
+#endif
+  void *pa = malloc(4096*NumPages);
+  if (!pa) {
+    perror("malloc");
+    abort();
+  }
+  funcMemory.push_back(pa);
+  return pa;
 }
 
 
 void SparcEmitter::startFunction(MachineFunction &F) {
   CurBlock = (unsigned char *)getMemory(8);
+  std::cerr << "Starting function " << F.getFunction()->getName() << "\n";
   CurByte = CurBlock;  // Start writing at the beginning of the fn.
   TheVM.addGlobalMapping(F.getFunction(), CurBlock);
 }
 
 void SparcEmitter::finishFunction(MachineFunction &F) {
   ConstantPoolAddresses.clear();
+  // Re-write branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    // Re-write branches to BasicBlocks for the entire function
     unsigned Location = BBLocations[BBRefs[i].first];
     unsigned *Ref = BBRefs[i].second.first;
     MachineInstr *MI = BBRefs[i].second.second;
@@ -149,6 +173,7 @@ void SparcEmitter::emitByte(unsigned char B) {
 // BasicBlock -> pair<memloc, MachineInstr>
 // when the BB is emitted, machineinstr is modified with then-currbyte, 
 // processed with MCE, and written out at memloc.
+// Should be called by the emitter if its outputting a PCRelative disp
 void SparcEmitter::saveBBreference(BasicBlock *BB, MachineInstr &MI) {
   BBRefs.push_back(std::make_pair(BB, std::make_pair((unsigned*)CurByte, &MI)));
 }
