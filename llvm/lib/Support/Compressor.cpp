@@ -36,8 +36,8 @@ static int getdata(char*& buffer, size_t &size,
   return result;
 }
 
-static int getdata(char*& buffer, unsigned &size, 
-                   llvm::Compressor::OutputDataCallback* cb, void* context) {
+static int getdata_uns(char*& buffer, unsigned &size, 
+		       llvm::Compressor::OutputDataCallback* cb, void* context) {
   size_t SizeOut;
   int Res = getdata(buffer, SizeOut, cb, context);
   size = SizeOut;
@@ -290,7 +290,7 @@ size_t Compressor::compress(const char* in, size_t size,
     }
 
     // Get a block of memory
-    if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
+    if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
       BZ2_bzCompressEnd(&bzdata);
       throw std::string("Can't allocate output buffer");
     }
@@ -302,7 +302,7 @@ size_t Compressor::compress(const char* in, size_t size,
     // Compress it
     int bzerr = BZ_FINISH_OK;
     while (BZ_FINISH_OK == (bzerr = BZ2_bzCompress(&bzdata, BZ_FINISH))) {
-      if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
+      if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzCompressEnd(&bzdata);
         throw std::string("Can't allocate output buffer");
       }
@@ -400,7 +400,7 @@ size_t Compressor::decompress(const char *in, size_t size,
       }
 
       // Get a block of memory
-      if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
+      if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzDecompressEnd(&bzdata);
         throw std::string("Can't allocate output buffer");
       }
@@ -408,7 +408,7 @@ size_t Compressor::decompress(const char *in, size_t size,
       // Decompress it
       int bzerr = BZ_OK;
       while (BZ_OK == (bzerr = BZ2_bzDecompress(&bzdata))) {
-        if (0 != getdata(bzdata.next_out, bzdata.avail_out,cb,context)) {
+        if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
           BZ2_bzDecompressEnd(&bzdata);
           throw std::string("Can't allocate output buffer");
         }
