@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/BasicBlock.h"
+#include "llvm/Transforms/Utils/FunctionUtils.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -22,7 +22,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/FunctionUtils.h"
 #include "Support/Debug.h"
 #include "Support/StringExtras.h"
 #include <algorithm>
