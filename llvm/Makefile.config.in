@@ -115,6 +115,9 @@ PAPIDIR := @PAPIDIR@
 # Disable LLC diffs for testing.
 @DISABLE_LLC_DIFFS@
 
+# Shared library extension for this platform.
+SHLIBEXT = @SHLIBEXT@
+
 ###########################################################################
 # Directory Configuration
 #	This section of the Makefile determines what is where.  To be
