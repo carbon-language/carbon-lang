@@ -10,7 +10,7 @@ std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value
   if (v->hasName())
     return O << v << "(" << v->getName() << ") ";
   else if (Constant *C = dyn_cast<Constant>(v))
-    return O << v << "(" << C->getStrValue() << ") ";
+    return O << v << "(" << C << ") ";
   else
     return O << v  << " ";
 }
