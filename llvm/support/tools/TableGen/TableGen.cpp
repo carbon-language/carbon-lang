@@ -22,7 +22,7 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
-  GenInstrEnums,
+  GenInstrEnums, GenInstrs,
   PrintEnums,
   Parse,
 };
@@ -42,6 +42,8 @@ namespace {
                                "Generate a register info description header"),
                     clEnumValN(GenInstrEnums, "gen-instr-enums",
                                "Generate enum values for instructions"),
+                    clEnumValN(GenInstrs, "gen-instr-desc",
+                               "Generate instruction descriptions"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValN(Parse, "parse",
@@ -434,6 +436,9 @@ int main(int argc, char **argv) {
 
     case GenInstrEnums:
       InstrInfoEmitter(Records).runEnums(*Out);
+      break;
+    case GenInstrs:
+      InstrInfoEmitter(Records).run(*Out);
       break;
 
     case PrintEnums:
