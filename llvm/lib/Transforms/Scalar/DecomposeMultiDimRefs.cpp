@@ -1,11 +1,10 @@
 //===- llvm/Transforms/DecomposeMultiDimRefs.cpp - Lower array refs to 1D -===//
 //
-// DecomposeMultiDimRefs - 
-// Convert multi-dimensional references consisting of any combination
-// of 2 or more array and structure indices into a sequence of
-// instructions (using getelementpr and cast) so that each instruction
-// has at most one index (except structure references,
-// which need an extra leading index of [0]).
+// DecomposeMultiDimRefs - Convert multi-dimensional references consisting of
+// any combination of 2 or more array and structure indices into a sequence of
+// instructions (using getelementpr and cast) so that each instruction has at
+// most one index (except structure references, which need an extra leading
+// index of [0]).
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,7 +35,6 @@ Pass *createDecomposeMultiDimRefsPass() {
 //
 bool DecomposePass::runOnBasicBlock(BasicBlock *BB) {
   bool Changed = false;
-  
   for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ) {
     if (MemAccessInst *MAI = dyn_cast<MemAccessInst>(*II)) {
       if (MAI->getNumOperands() > MAI->getFirstIndexOperandNumber()+1) {
@@ -63,21 +61,21 @@ bool DecomposePass::runOnBasicBlock(BasicBlock *BB) {
 // uses the last ptr2 generated in the loop and a single index.
 // If any index is (uint) 0, we omit the getElementPtr instruction.
 // 
-void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI){
-  MemAccessInst *memI = cast<MemAccessInst>(*BBI);
-  BasicBlock* BB = memI->getParent();
-  Value* lastPtr = memI->getPointerOperand();
+void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI) {
+  MemAccessInst *MAI = cast<MemAccessInst>(*BBI);
+  BasicBlock *BB = MAI->getParent();
+  Value *LastPtr = MAI->getPointerOperand();
 
   // Remove the instruction from the stream
   BB->getInstList().remove(BBI);
 
-  vector<Instruction*> newIvec;
+  vector<Instruction*> NewInsts;
   
   // Process each index except the last one.
   // 
-  User::const_op_iterator OI = memI->idx_begin(), OE = memI->idx_end();
-  for (; OI != OE && OI+1 != OE; ++OI) {
-    assert(isa<PointerType>(lastPtr->getType()));
+  User::const_op_iterator OI = MAI->idx_begin(), OE = MAI->idx_end();
+  for (; OI+1 != OE; ++OI) {
+    assert(isa<PointerType>(LastPtr->getType()));
       
     // Check for a zero index.  This will need a cast instead of
     // a getElementPtr, or it may need neither.
@@ -87,85 +85,82 @@ void DecomposePass::decomposeArrayRef(BasicBlock::iterator &BBI){
     // Extract the first index.  If the ptr is a pointer to a structure
     // and the next index is a structure offset (i.e., not an array offset), 
     // we need to include an initial [0] to index into the pointer.
-    vector<Value*> idxVec(1, *OI);
-    PointerType* ptrType = cast<PointerType>(lastPtr->getType());
-    if (isa<StructType>(ptrType->getElementType())
-        && ! ptrType->indexValid(*OI))
-      idxVec.insert(idxVec.begin(), ConstantUInt::get(Type::UIntTy, 0));
-    
+    //
+    vector<Value*> Indices;
+    PointerType *PtrTy = cast<PointerType>(LastPtr->getType());
+    if (isa<StructType>(PtrTy->getElementType())
+        && !PtrTy->indexValid(*OI))
+      Indices.push_back(Constant::getNullValue(Type::UIntTy));
+    Indices.push_back(*OI);
+
     // Get the type obtained by applying the first index.
     // It must be a structure or array.
-    const Type* nextType = MemAccessInst::getIndexedType(lastPtr->getType(),
-                                                         idxVec, true);
-    assert(isa<StructType>(nextType) || isa<ArrayType>(nextType));
+    const Type *NextTy = MemAccessInst::getIndexedType(LastPtr->getType(),
+                                                       Indices, true);
+    assert(isa<CompositeType>(NextTy));
     
     // Get a pointer to the structure or to the elements of the array.
-    const Type* nextPtrType =
-      PointerType::get(isa<StructType>(nextType) ? nextType
-                       : cast<ArrayType>(nextType)->getElementType());
+    const Type *NextPtrTy =
+      PointerType::get(isa<StructType>(NextTy) ? NextTy
+                       : cast<ArrayType>(NextTy)->getElementType());
       
-    // Instruction 1: nextPtr1 = GetElementPtr lastPtr, idxVec
+    // Instruction 1: nextPtr1 = GetElementPtr LastPtr, Indices
     // This is not needed if the index is zero.
-    Value *gepValue;
-    if (indexIsZero)
-      gepValue = lastPtr;
-    else {
-      gepValue = new GetElementPtrInst(lastPtr, idxVec,"ptr1");
-      newIvec.push_back(cast<Instruction>(gepValue));
+    if (!indexIsZero) {
+      LastPtr = new GetElementPtrInst(LastPtr, Indices, "ptr1");
+      NewInsts.push_back(cast<Instruction>(LastPtr));
     }
       
-    // Instruction 2: nextPtr2 = cast nextPtr1 to nextPtrType
+    // Instruction 2: nextPtr2 = cast nextPtr1 to NextPtrTy
     // This is not needed if the two types are identical.
-    Value *castInst;
-    if (gepValue->getType() == nextPtrType)
-      castInst = gepValue;
-    else {
-      castInst = new CastInst(gepValue, nextPtrType, "ptr2");
-      newIvec.push_back(cast<Instruction>(castInst));
+    //
+    if (LastPtr->getType() != NextPtrTy) {
+      LastPtr = new CastInst(LastPtr, NextPtrTy, "ptr2");
+      NewInsts.push_back(cast<Instruction>(LastPtr));
     }
-      
-    lastPtr = castInst;
   }
   
   // 
   // Now create a new instruction to replace the original one
   //
-  PointerType *ptrType = cast<PointerType>(lastPtr->getType());
+  PointerType *PtrTy = cast<PointerType>(LastPtr->getType());
 
   // First, get the final index vector.  As above, we may need an initial [0].
-  vector<Value*> idxVec(1, *OI);
-  if (isa<StructType>(ptrType->getElementType())
-      && !ptrType->indexValid(*OI))
-    idxVec.insert(idxVec.begin(), Constant::getNullValue(Type::UIntTy));
-  
-  Instruction* newInst = NULL;
-  switch(memI->getOpcode()) {
+  vector<Value*> Indices;
+  if (isa<StructType>(PtrTy->getElementType())
+      && !PtrTy->indexValid(*OI))
+    Indices.push_back(Constant::getNullValue(Type::UIntTy));
+
+  Indices.push_back(*OI);
+
+  Instruction *NewI = 0;
+  switch(MAI->getOpcode()) {
   case Instruction::Load:
-    newInst = new LoadInst(lastPtr, idxVec, memI->getName());
+    NewI = new LoadInst(LastPtr, Indices, MAI->getName());
     break;
   case Instruction::Store:
-    newInst = new StoreInst(memI->getOperand(0), lastPtr, idxVec);
+    NewI = new StoreInst(MAI->getOperand(0), LastPtr, Indices);
     break;
   case Instruction::GetElementPtr:
-    newInst = new GetElementPtrInst(lastPtr, idxVec, memI->getName());
+    NewI = new GetElementPtrInst(LastPtr, Indices, MAI->getName());
     break;
   default:
     assert(0 && "Unrecognized memory access instruction");
   }
-  newIvec.push_back(newInst);
+  NewInsts.push_back(NewI);
   
   // Replace all uses of the old instruction with the new
-  memI->replaceAllUsesWith(newInst);
+  MAI->replaceAllUsesWith(NewI);
 
   // Now delete the old instruction...
-  delete memI;
+  delete MAI;
 
   // Convert our iterator into an index... that cannot get invalidated
   unsigned ItOffs = BBI-BB->begin();
 
   // Insert all of the new instructions...
-  BB->getInstList().insert(BBI, newIvec.begin(), newIvec.end());
+  BB->getInstList().insert(BBI, NewInsts.begin(), NewInsts.end());
   
   // Advance the iterator to the instruction following the one just inserted...
-  BBI = BB->begin() + (ItOffs+newIvec.size());
+  BBI = BB->begin() + ItOffs + NewInsts.size();
 }
