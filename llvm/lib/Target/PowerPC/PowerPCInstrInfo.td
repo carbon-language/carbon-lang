@@ -440,4 +440,12 @@ def RLDICR : MDForm_1<30, 1, 0, 1, 0,
                       (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$ME),
                       "rldicr $rA, $rS, $SH, $ME">;
 
+def PowerPCInstrInfo : InstrInfo {
+  let PHIInst  = PHI;
+
+  let TSFlagsFields = [ "VMX", "PPC64" ];
+  let TSFlagsShifts = [ 0, 1 ];
+
+  let isLittleEndianEncoding = 1;
+}
 

@@ -21,15 +21,6 @@ include "../Target.td"
 include "PPC64RegisterInfo.td"
 include "PowerPCInstrInfo.td"
 
-def PowerPCInstrInfo : InstrInfo {
-  let PHIInst  = PHI;
-
-  let TSFlagsFields = [ "VMX", "PPC64" ];
-  let TSFlagsShifts = [ 0, 1 ];
-
-  let isLittleEndianEncoding = 1;
-}
-
 def PowerPC : Target {
   // Pointers on PowerPC are 64-bits in size.
   let PointerType = i64;

@@ -21,15 +21,6 @@ include "../Target.td"
 include "PPC32RegisterInfo.td"
 include "PowerPCInstrInfo.td"
 
-def PowerPCInstrInfo : InstrInfo {
-  let PHIInst  = PHI;
-
-  let TSFlagsFields = [ "VMX", "PPC64" ];
-  let TSFlagsShifts = [ 0, 1 ];
-
-  let isLittleEndianEncoding = 1;
-}
-
 def PPC32 : Target {
   // Pointers on PPC32 are 32-bits in size.
   let PointerType = i32;
