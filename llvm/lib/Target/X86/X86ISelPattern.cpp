@@ -2511,6 +2511,9 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   case MVT::i32: Opc = TabPtr[5]; break;
   }
 
+  // Table entry doesn't exist?
+  if (Opc == 0) return false;
+
   if (!ExprMap.insert(std::make_pair(TheLoad.getValue(1), 1)).second)
     assert(0 && "Already emitted?");
   Select(Chain);
