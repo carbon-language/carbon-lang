@@ -74,6 +74,8 @@ namespace {
     void LowerUnknownIntrinsicFunctionCalls(Function &F);
     void visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI);
 
+    void LoadArgumentsToVirtualRegs(Function *F);
+
     /// copyConstantToRegister - Output the instructions required to put the
     /// specified constant into the specified register.
     ///
@@ -153,6 +155,7 @@ static TypeClass getClass (const Type *T) {
   switch (T->getPrimitiveID ()) {
     case Type::UByteTyID:  case Type::SByteTyID:  return cByte;
     case Type::UShortTyID: case Type::ShortTyID:  return cShort;
+    case Type::PointerTyID:
     case Type::UIntTyID:   case Type::IntTyID:    return cInt;
     case Type::ULongTyID:  case Type::LongTyID:   return cLong;
     case Type::FloatTyID:                         return cFloat;
@@ -220,6 +223,30 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
   assert (0 && "Can't copy this kind of constant into register yet");
 }
 
+void V8ISel::LoadArgumentsToVirtualRegs (Function *F) {
+  unsigned ArgOffset = 0;
+  static const unsigned IncomingArgRegs[] = { V8::I0, V8::I1, V8::I2,
+    V8::I3, V8::I4, V8::I5 };
+  assert (F->asize () < 7
+          && "Can't handle loading excess call args off the stack yet");
+
+  for (Function::aiterator I = F->abegin(), E = F->aend(); I != E; ++I) {
+    unsigned Reg = getReg(*I);
+    switch (getClassB(I->getType())) {
+    case cByte:
+    case cShort:
+    case cInt:
+      BuildMI(BB, V8::ORrr, 2, Reg).addReg (V8::G0)
+        .addReg (IncomingArgRegs[ArgOffset]);
+      break;
+    default:
+      assert (0 && "Only <=32-bit, integral arguments currently handled");
+      return;
+    }
+    ++ArgOffset;
+  }
+}
+
 bool V8ISel::runOnFunction(Function &Fn) {
   // First pass over the function, lower any unknown intrinsic functions
   // with the IntrinsicLowering class.
@@ -238,7 +265,7 @@ bool V8ISel::runOnFunction(Function &Fn) {
   //ReturnAddressIndex = F->getFrameInfo()->CreateFixedObject(4, -4);
   
   // Copy incoming arguments off of the stack and out of fixed registers.
-  //LoadArgumentsToVirtualRegs(Fn);
+  LoadArgumentsToVirtualRegs(&Fn);
   
   // Instruction select everything except PHI nodes
   visit(Fn);
@@ -256,13 +283,13 @@ bool V8ISel::runOnFunction(Function &Fn) {
 void V8ISel::visitCallInst(CallInst &I) {
   assert (I.getNumOperands () < 8
           && "Can't handle pushing excess call args on the stack yet");
-  static const unsigned IncomingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
+  static const unsigned OutgoingArgRegs[] = { V8::O0, V8::O1, V8::O2, V8::O3,
     V8::O4, V8::O5 };
   for (unsigned i = 1; i < 7; ++i)
     if (i < I.getNumOperands ()) {
       unsigned ArgReg = getReg (I.getOperand (i));
       // Schlep it over into the incoming arg register
-      BuildMI (BB, V8::ORrr, 2, IncomingArgRegs[i]).addReg (V8::G0)
+      BuildMI (BB, V8::ORrr, 2, OutgoingArgRegs[i - 1]).addReg (V8::G0)
         .addReg (ArgReg);
     }
 
