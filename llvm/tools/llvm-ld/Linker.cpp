@@ -25,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Signals.h"
+#include "llvm/System/Path.h"
 #include "llvm/Support/SystemUtils.h"
 #include <algorithm>
 #include <fstream>
@@ -43,37 +44,15 @@ std::string llvm::FindLib(const std::string &Filename,
                           const std::vector<std::string> &Paths,
                           bool SharedObjectOnly) {
   // Determine if the pathname can be found as it stands.
-  if (FileOpenable(Filename))
+  sys::Path FilePath;
+  if (FilePath.set_file(Filename) && FilePath.readable())
     return Filename;
 
-  // If that doesn't work, convert the name into a library name.
-  std::string LibName = "lib" + Filename;
+  // Ask the System Path object to locate the library. This ensures that
+  // the library search is done correctly for a given platform.
+  sys::Path LibPath = sys::Path::GetLibraryPath(Filename,Paths);
 
-  // Iterate over the directories in Paths to see if we can find the library
-  // there.
-  for (unsigned Index = 0; Index != Paths.size(); ++Index) {
-    std::string Directory = Paths[Index] + "/";
-
-    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".bc"))
-      return Directory + LibName + ".bc";
-
-    if (FileOpenable(Directory + LibName + SHLIBEXT))
-      return Directory + LibName + SHLIBEXT;
-
-    if (!SharedObjectOnly && FileOpenable(Directory + LibName + ".a"))
-      return Directory + LibName + ".a";
-  }
-
-  // One last hope: Check LLVM_LIB_SEARCH_PATH.
-  char *SearchPath = getenv("LLVM_LIB_SEARCH_PATH");
-  if (SearchPath == NULL)
-    return std::string();
-
-  LibName = std::string(SearchPath) + "/" + LibName;
-  if (FileOpenable(LibName))
-    return LibName;
-
-  return std::string();
+  return LibPath.get();
 }
 
 /// GetAllDefinedSymbols - Modifies its parameter DefinedSymbols to contain the
