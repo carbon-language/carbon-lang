@@ -65,9 +65,7 @@ const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const
 {
     AU.addPreserved<LiveVariables>();
-    AU.addRequired<LiveVariables>();
     AU.addPreservedID(PHIEliminationID);
-    AU.addRequiredID(PHIEliminationID);
     MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -79,7 +77,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     const TargetMachine &TM = MF.getTarget();
     const MRegisterInfo &MRI = *TM.getRegisterInfo();
     const TargetInstrInfo &TII = TM.getInstrInfo();
-    LiveVariables &LV = getAnalysis<LiveVariables>();
+    LiveVariables* LV = getAnalysisToUpdate<LiveVariables>();
 
     bool MadeChange = false;
 
@@ -139,18 +137,20 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 DEBUG(std::cerr << "\t\tadded instruction: ";
                       prevMi->print(std::cerr, TM));
 
-                // update live variables for regA
-                assert(Added == 1 &&
-                       "Cannot handle multi-instruction copies yet!");
-                LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
-                varInfo.DefInst = prevMi;
+                if (LV) {
+                    // update live variables for regA
+                    assert(Added == 1 &&
+                           "Cannot handle multi-instruction copies yet!");
+                    LiveVariables::VarInfo& varInfo = LV->getVarInfo(regA);
+                    varInfo.DefInst = prevMi;
 
-                // update live variables for regB
-                if (LV.removeVirtualRegisterKilled(regB, &*mbbi, mi))
-                    LV.addVirtualRegisterKilled(regB, &*mbbi, prevMi);
+                    // update live variables for regB
+                    if (LV->removeVirtualRegisterKilled(regB, &*mbbi, mi))
+                        LV->addVirtualRegisterKilled(regB, &*mbbi, prevMi);
 
-                if (LV.removeVirtualRegisterDead(regB, &*mbbi, mi))
-                    LV.addVirtualRegisterDead(regB, &*mbbi, prevMi);
+                    if (LV->removeVirtualRegisterDead(regB, &*mbbi, mi))
+                        LV->addVirtualRegisterDead(regB, &*mbbi, prevMi);
+                }
 
                 // replace all occurences of regB with regA
                 for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
