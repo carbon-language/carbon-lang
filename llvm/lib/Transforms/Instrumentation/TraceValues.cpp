@@ -60,7 +60,6 @@ PrintMethodNameForType(const Type* type)
     case Type::FloatTyID:   return "printFloat";
     case Type::DoubleTyID:  return "printDouble";
     case Type::PointerTyID: return "printPointer";
-    case Type::MethodTyID:  return "printPointer";
     default:
       assert(0 && "Unsupported type for printing");
       return NULL;
@@ -270,11 +269,9 @@ InsertPrintInsts(Value *Val,
 {
   const Type* ValTy = Val->getType();
   
-  assert(ValTy->isPrimitiveType() &&
-         ValTy->getPrimitiveID() != Type::VoidTyID &&
-         ValTy->getPrimitiveID() != Type::TypeTyID &&
-         ValTy->getPrimitiveID() != Type::LabelTyID && 
-         "Unsupported type for printing");
+  assert((ValTy->isPrimitiveType() || isa<PointerType>(ValTy)) &&
+         ValTy != Type::VoidTy && ValTy != Type::TypeTy &&
+         ValTy != Type::LabelTy && "Unsupported type for printing");
   
   const Value* scopeToUse = 
     isMethodExit ? (const Value*)BB->getParent() : (const Value*)BB;
