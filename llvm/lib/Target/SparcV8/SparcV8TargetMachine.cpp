@@ -45,7 +45,7 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   PM.add(createPrologEpilogCodeInserter());
   // <insert assembly code output passes here>
   PM.add(createMachineCodeDeleter());
-  return true; // change to `return false' when this actually works.
+  return false;
 }
 
 /// addPassesToJITCompile - Add passes to the specified pass manager to
