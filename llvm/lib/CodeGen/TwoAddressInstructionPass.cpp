@@ -129,7 +129,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &fn) {
             // because of SSA.
             for (unsigned i = 1; i < mi->getNumOperands(); ++i) {
                 assert(!mi->getOperand(i).isRegister() ||
-                       mi->getOperand(i).getAllocatedRegNum() != regA);
+                       mi->getOperand(i).getAllocatedRegNum() != (int)regA);
             }
 
             const TargetRegisterClass* rc = regAisPhysical ?
