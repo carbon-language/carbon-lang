@@ -93,6 +93,13 @@ public:
     }
   }
 
+  /// clearAllGlobalMappings - Clear all global mappings and start over again
+  /// use in dynamic compilation scenarios when you want to move globals
+  void clearAllGlobalMappings() {
+    GlobalAddressMap.clear();
+    GlobalAddressReverseMap.clear();
+  }
+
   /// updateGlobalMapping - Replace an existing mapping for GV with a new
   /// address.  This updates both maps as required.
   void updateGlobalMapping(const GlobalValue *GV, void *Addr) {
