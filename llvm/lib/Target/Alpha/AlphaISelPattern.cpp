@@ -760,7 +760,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     // Put a pointer to the space into the result register, by copying the stack
     // pointer.
-    BuildMI(BB, Alpha::BIS, 1, Result).addReg(Alpha::R30).addReg(Alpha::R30);
+    BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R30).addReg(Alpha::R30);
     return Result;
 
   case ISD::ConstantPool:
